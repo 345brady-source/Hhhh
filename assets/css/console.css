@@ -361,3 +361,7 @@ body.role-sponsor .cs { --cv-accent: var(--brand); --cv-accent-ink: var(--brand-
 
 /* The main region takes focus after navigation for screen readers; it is not a control, so no ring. */
 #main:focus, #main:focus-visible { outline: none; }
+
+/* Sponsors see offerings read-only; Carrow & Vale maintains them. */
+.cs-locked-note { display: flex; align-items: center; gap: 8px; margin: 0; }
+.cs-locked-note svg { width: 16px; height: 16px; flex: none; }

@@ -45,7 +45,7 @@ python3 -m http.server 8000
 | Role | Sees |
 |---|---|
 | Investor | Only the client's branded portal. No Carrow & Vale name or bar, and no access to the console |
-| Sponsor staff | Their own firm's console, in their own colors with their logo, and an unbranded "Investor preview" bar when they view the portal as an investor. No client switching, no "Powered by" setting, no configuration export |
+| Sponsor staff | Their own firm's console, in their own colors with their logo, and an unbranded "Investor preview" bar when they view the portal as an investor. Offerings are read-only: only Carrow & Vale adds offerings or changes their exit timing, distribution schedule, terms and ACH originator. The Portal and brand page is hidden. No client switching and no configuration export |
 | Carrow & Vale staff | Every client, the operator bar (client switcher, portal/console toggle, view as any investor) and new-client setup |
 
 In production the role comes from sign-in. Because this build has no server, a small "Demo · signed in as" control in the bottom-left corner switches roles. To remove it, set this before the scripts load:

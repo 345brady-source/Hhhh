@@ -12,6 +12,14 @@
   const W = () => NS.state.ws;
   const T = () => NS.state.ws.tenant;
   const today = () => NS.dates.today();
+  /* Adding offerings, configuring them and branding the portal are Carrow & Vale
+     work. Sponsors see offerings read-only and never see the brand page. */
+  const isStaff = () => S().role === 'staff';
+  const STAFF_ONLY = ['console-brand'];
+  const staffGuard = (fn) => function () {
+    if (!isStaff()) return U.toast('Only Carrow & Vale can change this. Contact your Carrow & Vale team.');
+    return fn.apply(this, arguments);
+  };
 
   /* ---------- Shell ---------- */
   const NAV = [
@@ -29,7 +37,7 @@
     return `<div class="cs">
       <aside class="cs-nav" aria-label="Sponsor console">
         <div class="cs-client">${B.lockup(t)}<span class="cs-client-meta">${h(t.domain)}</span></div>
-        <nav>${NAV.map(([k, l]) => `<a href="#${k}"${active === k ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
+        <nav>${NAV.filter(([k]) => isStaff() || STAFF_ONLY.indexOf(k) < 0).map(([k, l]) => `<a href="#${k}"${active === k ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
       </aside>
       <main class="cs-main" id="main" tabindex="-1">${inner}</main>
     </div>`;
@@ -67,12 +75,12 @@
       const t = T();
       const branded = t.domain && t.domain !== NS.TENANT_TEMPLATE.domain && t.support.email !== NS.TENANT_TEMPLATE.support.email;
       const steps = [
-        ['Brand the investor portal', 'Logo, colors, domain, support contact and disclosures.', branded, 'console-brand'],
+        ['Brand the investor portal', 'Logo, colors, domain, support contact and disclosures.', branded, 'console-brand', true],
         ['Set up ACH origination', 'The bank and company IDs used to pay distributions by ACH.', achReady(), 'console-ach'],
-        ['Add offerings', 'Each investment with its own exit timing, distribution schedule and terms.', w.offerings.length > 0, 'console-offerings'],
+        ['Add offerings', 'Each investment with its own exit timing, distribution schedule and terms.', w.offerings.length > 0, 'console-offerings', true],
         ['Invite investors', 'Add investors one at a time or import a list. Each receives an activation email.', w.investors.length > 0, 'console-investors'],
         ['Run the first distribution', 'Allocate a payment pro rata and generate the NACHA file for the bank.', w.runs.length > 0, 'console-distributions']
-      ];
+      ].filter((s) => isStaff() || !s[4]);
       const done = steps.filter((s) => s[2]).length;
       const yearAgo = NS.dates.addMonths(today(), -12);
       const paid12 = w.runs.filter((r) => r.status === 'paid' && r.date > yearAgo).reduce((a, r) => a + r.total, 0);
@@ -176,18 +184,20 @@
         })
         .join('');
       return shell(
-        `${head('Offerings', 'Each investment is configured separately: how exit is defined, how often it pays, and which terms investors see.', '<button class="cs-btn cs-btn-primary" type="button" data-action="off-add">Add offering</button>')}
+        `${isStaff()
+          ? head('Offerings', 'Each investment is configured separately: how exit is defined, how often it pays, and which terms investors see.', '<button class="cs-btn cs-btn-primary" type="button" data-action="off-add">Add offering</button>')
+          : head('Offerings', 'Your offerings as Carrow &amp; Vale has set them up. To add an offering or change how one is shown to investors, contact your Carrow &amp; Vale team.')}
         ${panel(
           '',
           w.offerings.length
             ? `<div class="tbl-scroll"><table class="cs-tbl"><thead><tr><th scope="col">Offering</th><th scope="col">Type</th><th scope="col">Closed</th><th scope="col" class="num">Raised</th><th scope="col" class="num">Investors</th><th scope="col">Distributions</th><th scope="col">Exit</th><th scope="col">Status</th></tr></thead><tbody>${rows}</tbody></table></div>`
-            : '<p class="cs-muted">No offerings yet. Add the first one to start inviting investors.</p>'
+            : `<p class="cs-muted">${isStaff() ? 'No offerings yet. Add the first one to start inviting investors.' : 'No offerings yet. Carrow &amp; Vale adds each offering for you.'}</p>`
         )}`,
         'console-offerings'
       );
     }
   };
-  NS.actions['off-add'] = () => {
+  NS.actions['off-add'] = staffGuard(() => {
     const type = 'Real estate syndication';
     const d = NS.OFFERING_TYPES[type];
     const id = 'off-' + Date.now().toString(36);
@@ -208,7 +218,7 @@
     });
     NS.app.save(true);
     NS.app.go('console-offering-' + id);
-  };
+  });
 
   const BASIS = [
     ['date', 'Projected exit date'],
@@ -248,11 +258,38 @@
       </div>
     </div>`;
   }
+  /** Sponsors' view of an offering: the configuration Carrow & Vale set, read-only. */
+  function offReadOnly(o) {
+    const n = holdersCount(o.id);
+    const x = NS.exitInfo(o);
+    const d = o.distribution || {};
+    const kv = (rows) => `<dl class="cs-kv">${rows.filter((r) => r[1] !== '' && r[1] != null).map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
+    const terms = (o.terms || []).filter((r) => r.label);
+    const ach = o.achOverride || {};
+    return shell(
+      `<a class="cs-back" href="#console-offerings">${icon('back')}Offerings</a>
+      ${head(h(o.name), `${h(o.type)} · ${n} investor${n === 1 ? '' : 's'} · ${usd(raised(o.id))} raised`, n ? `<button class="cs-btn" type="button" data-action="off-preview">Preview as investor</button>` : '')}
+      <p class="cs-muted cs-locked-note">${icon('lock')}Set up and maintained by Carrow &amp; Vale. To change anything on this offering, contact your Carrow &amp; Vale team.</p>
+      <div class="cs-split">
+        <div class="cs-split-main">
+          ${panel('Basics', kv([['Short name', h(o.shortName)], ['Status', h(o.status)], ['Closing date', date(o.closeDate)], ['Minimum investment', usd(o.minimum || 0)], ['Description', h(o.summary || '')]]))}
+          ${panel('Exit timing', kv([[h(x.label), h(x.value)], ['How exit is defined', h((BASIS.find((b) => b[0] === (o.exit || {}).basis) || ['', ''])[1])], ['Note shown to investors', h((o.exit || {}).note || '')]]))}
+          ${panel('Distributions', kv([['Frequency', h(d.frequency || '')], ['Payment day', periodMonths(d.frequency) && d.day ? NS.data.ordinal(Number(d.day)) + ' of the month' : ''], ['Next payment', nextOf(o) ? date(nextOf(o).date, 'wd') : ''], ['Payment type', h(d.type || '')], ['Target or rate', h(d.target || '')]]))}
+          ${panel('Key terms shown to investors', terms.length ? kv(terms.map((r) => [h(r.label) + (r.show ? '' : ' <span class="cs-muted">(hidden)</span>'), h(r.value) || '—'])) : '<p class="cs-muted">No terms.</p>')}
+          ${o.update ? panel('Latest update', `<p>${h(o.update)}</p>`) : ''}
+          ${panel('ACH originator for this offering', kv([['Company name', h(ach.companyName || T().ach.companyName || 'Client default')], ['Company ID', h(ach.companyId || 'Client default')]]))}
+        </div>
+        <aside class="cs-split-side" id="off-preview">${offPreview(o)}</aside>
+      </div>`,
+      'console-offerings'
+    );
+  }
   NS.views['console-offering'] = {
     mode: 'console',
     render() {
       const o = curOff();
       if (!o) return shell(`${head('Offering not found')}<p class="cs-muted"><a href="#console-offerings">Back to offerings</a></p>`, 'console-offerings');
+      if (!isStaff()) return offReadOnly(o);
       if (periodMonths(o.distribution.frequency) && !o.distribution.day) o.distribution.day = NS.data.paymentDay(W(), o);
       const e = o.exit;
       const exitFields =
@@ -327,7 +364,7 @@
   };
   NS.binders.off = (path, v) => {
     const o = curOff();
-    if (!o) return;
+    if (!o || !isStaff()) return;
     if (path === 'minimum') v = Number(v) || 0;
     if (path === 'distribution.day') v = Number(v) || 15;
     NS.app.setPath(o, path, v);
@@ -348,14 +385,14 @@
       if (pv) pv.innerHTML = offPreview(o);
     }
   };
-  NS.actions['term-add'] = () => {
+  NS.actions['term-add'] = staffGuard(() => {
     curOff().terms.push({ label: '', value: '', show: true });
     NS.app.save();
     NS.app.render();
     const ins = document.querySelectorAll('.term-row input[type="text"]');
     if (ins.length) ins[ins.length - 2].focus();
-  };
-  NS.actions['term-defaults'] = () => {
+  });
+  NS.actions['term-defaults'] = staffGuard(() => {
     const o = curOff();
     const have = o.terms.map((r) => r.label.toLowerCase());
     NS.OFFERING_TYPES[o.type].terms.forEach((l) => {
@@ -363,13 +400,13 @@
     });
     NS.app.save();
     NS.app.render();
-  };
-  NS.actions['term-del'] = (el) => {
+  });
+  NS.actions['term-del'] = staffGuard((el) => {
     curOff().terms.splice(Number(el.getAttribute('data-i')), 1);
     NS.app.save();
     NS.app.render();
-  };
-  NS.actions['term-move'] = (el) => {
+  });
+  NS.actions['term-move'] = staffGuard((el) => {
     const t = curOff().terms;
     const i = Number(el.getAttribute('data-i'));
     const j = i + Number(el.getAttribute('data-d'));
@@ -377,8 +414,8 @@
     [t[i], t[j]] = [t[j], t[i]];
     NS.app.save();
     NS.app.render();
-  };
-  NS.actions['off-del'] = () => {
+  });
+  NS.actions['off-del'] = staffGuard(() => {
     if (!S().ui.offDel) {
       S().ui.offDel = true;
       NS.app.render();
@@ -389,7 +426,7 @@
     NS.app.save(true);
     NS.app.go('console-offerings');
     U.toast('Offering removed');
-  };
+  });
   NS.actions['off-preview'] = () => {
     const o = curOff();
     const holder = NS.data.holdersAt(W().investors, o.id, '9999-12-31').find((x) => x.investor.onboarding.status === 'complete');
@@ -1590,6 +1627,7 @@
     }
   };
   NS.binders.tenant = (path, v, el) => {
+    if (!isStaff()) return;
     if (path.indexOf('colors.') === 0) {
       const hex = B.normHex(v);
       el.classList.toggle('is-invalid', !hex);
@@ -1610,18 +1648,18 @@
       if (opt) opt.textContent = v;
     }
   };
-  NS.actions.mark = (el) => {
+  NS.actions.mark = staffGuard((el) => {
     T().logo.type = el.getAttribute('data-mark');
     NS.app.applyTenant();
     NS.app.render();
-  };
-  NS.actions.preset = (el) => {
+  });
+  NS.actions.preset = staffGuard((el) => {
     T().colors.primary = el.getAttribute('data-p');
     T().colors.accent = el.getAttribute('data-a');
     NS.app.applyTenant();
     NS.app.render();
-  };
-  NS.changes['logo-file'] = (el) => {
+  });
+  NS.changes['logo-file'] = staffGuard((el) => {
     const file = el.files && el.files[0];
     const err = document.getElementById('tb-logo-err');
     if (!file) return;
@@ -1644,9 +1682,9 @@
       U.toast('Logo uploaded');
     };
     r.readAsDataURL(file);
-  };
+  });
   NS.actions['cfg-copy'] = () => U.copy(JSON.stringify({ tenant: T(), offerings: W().offerings }, null, 2));
-  NS.actions['cfg-reset'] = () => {
+  NS.actions['cfg-reset'] = staffGuard(() => {
     if (!S().ui.cfgReset) {
       S().ui.cfgReset = true;
       NS.app.render();
@@ -1657,5 +1695,5 @@
     NS.workspace.reset(id);
     NS.app.setClient(builtin ? id : NS.DEFAULT_TENANT, 'console');
     U.toast(builtin ? 'Sample data restored' : 'Client deleted');
-  };
+  });
 })(window.CVPortal);
