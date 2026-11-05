@@ -285,6 +285,18 @@
     };
     return String(text || '').replace(/\{(\w+)\}/g, (m, k) => (map[k] != null ? map[k] : m));
   };
+  /**
+   * What {investment} means for one recipient: the notice's offering if they hold it,
+   * otherwise the active investments they hold ("A and B").
+   */
+  NS.noticeInvestment = function (ws, inv, notice) {
+    const held = (o) => (inv.positions || []).some((p) => p.offeringId === o.id);
+    const o = notice && notice.audience && notice.audience !== 'all' ? ws.offerings.find((x) => x.id === notice.audience) : null;
+    if (o && held(o)) return o;
+    const names = ws.offerings.filter((x) => held(x) && x.status !== 'Exited').map((x) => x.name);
+    if (!names.length) return null;
+    return { name: names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0] };
+  };
   /** Notices an investor received and has not dismissed, newest first. */
   NS.noticesFor = function (ws, inv) {
     const read = inv.noticesRead || [];

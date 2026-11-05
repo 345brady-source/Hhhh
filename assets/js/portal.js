@@ -78,8 +78,9 @@
     return `<section class="notices" aria-label="Notices">${list
       .map((n) => {
         const o = n.audience === 'all' ? null : W().offerings.find((x) => x.id === n.audience);
+        const subj = NS.mergeNotice(n.subject, inv, t, n, NS.noticeInvestment(W(), inv, n));
         return `<div class="notice">
-          <div class="notice-text"><span class="notice-date">${date(n.date)}</span><strong>${h(NS.mergeNotice(n.subject, inv, t, n, o))}</strong></div>
+          <div class="notice-text"><span class="notice-date">${date(n.date)}</span><strong>${h(subj)}</strong></div>
           <div class="notice-actions"><button class="link-btn" type="button" data-action="notice-open" data-id="${h(n.id)}" data-off="${o ? h(o.id) : 'all'}">View documents</button><button class="link-btn notice-dismiss" type="button" data-action="notice-dismiss" data-id="${h(n.id)}">Dismiss</button></div>
         </div>`;
       })

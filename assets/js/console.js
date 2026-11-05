@@ -940,7 +940,7 @@
     const ui = S().ui;
     if (!ui.notice) {
       const o = W().offerings.find((x) => x.status !== 'Exited' && holdersCount(x.id)) || W().offerings[0];
-      ui.notice = { kind: 'quarterly', audience: o ? o.id : 'all', investor: '', includePending: true, quarter: latestQuarter(), docName: '', subject: '', body: '', subjectEdited: false, bodyEdited: false, confirm: false };
+      ui.notice = { kind: 'quarterly', audience: o ? o.id : 'all', investors: [], pickerOpen: false, pickerQuery: '', includePending: true, quarter: latestQuarter(), docName: '', subject: '', body: '', subjectEdited: false, bodyEdited: false, confirm: false };
       applyTemplate(ui.notice);
     }
     return ui.notice;
@@ -950,19 +950,55 @@
     if (!n.subjectEdited) n.subject = tpl.subject;
     if (!n.bodyEdited) n.body = tpl.body;
   }
-  const noticeOffering = (n) => (n.audience === 'all' ? null : W().offerings.find((o) => o.id === n.audience));
-  /** Investors in the selected group (all investors, or one offering's). */
-  function noticePool(n) {
-    return W().investors.filter((inv) => n.audience === 'all' || inv.positions.some((p) => p.offeringId === n.audience));
-  }
+  /** Chosen investors (any offering) take precedence over the Send to group. */
   function noticeRecipients(n) {
-    if (n.investor) return W().investors.filter((inv) => inv.id === n.investor);
-    return noticePool(n).filter((inv) => n.includePending || inv.onboarding.status === 'complete');
+    if (n.investors.length) return W().investors.filter((inv) => n.investors.indexOf(inv.id) >= 0);
+    return W().investors.filter((inv) => (n.audience === 'all' || inv.positions.some((p) => p.offeringId === n.audience)) && (n.includePending || inv.onboarding.status === 'complete'));
+  }
+  // {investment} for a recipient, given what the notice is about.
+  const investmentFor = (inv, n) => NS.noticeInvestment(W(), inv, n.investors && n.investors.length ? { audience: 'all' } : n);
+  function offeringNames(inv) {
+    return W()
+      .offerings.filter((o) => inv.positions.some((p) => p.offeringId === o.id))
+      .map((o) => o.shortName || o.name)
+      .join(', ');
+  }
+  /** Investor picker: search and check any number of investors across offerings. */
+  function pickerList(n) {
+    const q = String(n.pickerQuery || '').trim().toLowerCase();
+    const rows = W()
+      .investors.slice()
+      .sort((a, b) => a.title.localeCompare(b.title))
+      .filter((inv) => !q || [inv.title, inv.contact, inv.id, inv.email].join(' ').toLowerCase().indexOf(q) >= 0)
+      .map(
+        (inv) => `<label class="picker-item"><input type="checkbox" value="${h(inv.id)}" data-change="picker-pick"${n.investors.indexOf(inv.id) >= 0 ? ' checked' : ''}><span><strong>${h(inv.title)}</strong><span>${h(inv.id)} · ${h(offeringNames(inv))}${inv.onboarding.status !== 'complete' ? ' · not activated' : ''}</span></span></label>`
+      )
+      .join('');
+    return rows || '<p class="cs-muted picker-empty">No investors match.</p>';
+  }
+  function pickerHTML(n) {
+    const w = W();
+    const chosen = n.investors.map((id) => w.investors.find((i) => i.id === id)).filter(Boolean);
+    return `<div class="cs-field cs-wide picker" id="nt-picker">
+      <span id="nt-picker-label">Specific investors <em>Optional</em></span>
+      <button class="picker-btn" type="button" data-action="picker-toggle" aria-expanded="${!!n.pickerOpen}" aria-controls="nt-picker-panel" aria-describedby="nt-picker-label">${chosen.length ? `${chosen.length} investor${chosen.length === 1 ? '' : 's'} selected` : 'Choose investors'}<span aria-hidden="true">▾</span></button>
+      ${
+        n.pickerOpen
+          ? `<div class="picker-panel" id="nt-picker-panel">
+              <input type="search" id="nt-picker-q" placeholder="Search by name, account or email" value="${h(n.pickerQuery || '')}" data-input="picker-search" aria-label="Search investors" autocomplete="off">
+              <div class="picker-list" id="nt-picker-list" role="group" aria-label="Investors">${pickerList(n)}</div>
+              <div class="picker-foot"><button class="cs-btn cs-btn-small" type="button" data-action="picker-clear">Clear all</button><button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="picker-toggle">Done</button></div>
+            </div>`
+          : ''
+      }
+      ${chosen.length ? `<ul class="picker-chips">${chosen.map((inv) => `<li>${h(inv.title)}<button type="button" data-action="picker-remove" data-id="${h(inv.id)}" aria-label="Remove ${h(inv.title)}">×</button></li>`).join('')}</ul>` : ''}
+      <span class="cs-hint">Choose any investors, in any offering. When investors are chosen, the notice goes only to them.</span>
+    </div>`;
   }
   function emailPreview(n, inv) {
     const t = T();
-    const o = noticeOffering(n);
     if (!inv) return '<p class="cs-muted">No investors match this audience.</p>';
+    const o = investmentFor(inv, n);
     const subject = NS.mergeNotice(n.subject, inv, t, n, o);
     const paras = NS.mergeNotice(n.body, inv, t, n, o)
       .split(/\n\s*\n/)
@@ -986,15 +1022,16 @@
       const n = noticeDraft();
       const list = noticeRecipients(n);
       const pending = list.filter((i) => i.onboarding.status !== 'complete').length;
-      const o = noticeOffering(n);
       const offOpts = w.offerings.map((x) => `<option value="${h(x.id)}"${n.audience === x.id ? ' selected' : ''}>Investors in ${h(x.name)}</option>`).join('');
       const history = (w.notices || [])
         .slice()
         .sort((a, b) => (a.date < b.date ? 1 : -1))
         .map((x) => {
           const xo = x.audience === 'all' ? null : w.offerings.find((k) => k.id === x.audience);
-          const sample = w.investors.find((i) => i.id === x.recipients[0]) || { contact: 'Investor', title: '' };
-          return `<tr><td class="nowrap">${date(x.date)}</td><td>${h(NS.mergeNotice(x.subject, sample, t, x, xo))}</td><td>${x.investor ? h((w.investors.find((i) => i.id === x.investor) || { title: x.investor }).title) : xo ? h(xo.shortName || xo.name) : 'All investors'}</td><td class="num">${x.recipients.length}</td><td>${x.sentBy === 'staff' ? 'Carrow &amp; Vale' : h(t.shortName)}</td></tr>`;
+          const sample = w.investors.find((i) => i.id === x.recipients[0]) || { contact: 'Investor', title: '', positions: [] };
+          const picked = x.investors && x.investors.length ? x.investors : x.investor ? [x.investor] : [];
+          const audience = picked.length ? (picked.length === 1 ? h((w.investors.find((i) => i.id === picked[0]) || { title: picked[0] }).title) : `${picked.length} selected investors`) : xo ? h(xo.shortName || xo.name) : 'All investors';
+          return `<tr><td class="nowrap">${date(x.date)}</td><td>${h(NS.mergeNotice(x.subject, sample, t, x, NS.noticeInvestment(w, sample, picked.length ? { audience: 'all' } : x)))}</td><td>${audience}</td><td class="num">${x.recipients.length}</td><td>${x.sentBy === 'staff' ? 'Carrow &amp; Vale' : h(t.shortName)}</td></tr>`;
         })
         .join('');
       return shell(
@@ -1005,15 +1042,11 @@
               'New notice',
               `<div class="cs-grid">
                 <label class="cs-field" for="nt-kind"><span>Template</span><select id="nt-kind" data-bind="notice:kind">${Object.keys(NS.NOTICE_TEMPLATES).map((k) => `<option value="${k}"${n.kind === k ? ' selected' : ''}>${NS.NOTICE_TEMPLATES[k].label}</option>`).join('')}</select></label>
-                <label class="cs-field" for="nt-aud"><span>Send to</span><select id="nt-aud" data-bind="notice:audience"><option value="all"${n.audience === 'all' ? ' selected' : ''}>All investors</option>${offOpts}</select></label>
-                <label class="cs-field" for="nt-inv"><span>Investor</span><select id="nt-inv" data-bind="notice:investor"><option value="">Everyone ${n.audience === 'all' ? '(all investors)' : 'in this offering'}</option>${noticePool(n)
-                  .slice()
-                  .sort((a, b) => a.title.localeCompare(b.title))
-                  .map((inv) => `<option value="${h(inv.id)}"${n.investor === inv.id ? ' selected' : ''}>${h(inv.title)} · ${h(inv.id)}${inv.onboarding.status !== 'complete' ? ' (not activated)' : ''}</option>`)
-                  .join('')}</select><span class="cs-hint">Pick one investor to send to them only.</span></label>
+                <label class="cs-field" for="nt-aud"><span>Send to</span><select id="nt-aud" data-bind="notice:audience"${n.investors.length ? ' disabled' : ''}><option value="all"${n.audience === 'all' ? ' selected' : ''}>All investors</option>${offOpts}</select>${n.investors.length ? '<span class="cs-hint">Not used while specific investors are chosen.</span>' : ''}</label>
+                ${pickerHTML(n)}
                 ${n.kind === 'quarterly' ? `<label class="cs-field" for="nt-q"><span>Quarter</span><select id="nt-q" data-bind="notice:quarter">${quarterOptions().map((q) => `<option${q === n.quarter ? ' selected' : ''}>${q}</option>`).join('')}</select></label>` : ''}
                 ${n.kind === 'documents' ? `<label class="cs-field cs-wide" for="nt-docs"><span>What was uploaded</span><input id="nt-docs" type="text" data-bind="notice:docName" value="${h(n.docName)}" maxlength="120" placeholder="2025 Schedule K-1s"><span class="cs-hint">Fills {documents} in the message.</span></label>` : ''}
-                ${n.investor ? '' : `<label class="cs-check cs-wide" for="nt-pending"><input id="nt-pending" type="checkbox" data-bind="notice:includePending"${n.includePending ? ' checked' : ''}><span>Include investors who have not activated their accounts<span class="cs-hint">Their email links to account activation instead of sign-in.</span></span></label>`}
+                ${n.investors.length ? '' : `<label class="cs-check cs-wide" for="nt-pending"><input id="nt-pending" type="checkbox" data-bind="notice:includePending"${n.includePending ? ' checked' : ''}><span>Include investors who have not activated their accounts<span class="cs-hint">Their email links to account activation instead of sign-in.</span></span></label>`}
                 <label class="cs-field cs-wide" for="nt-subject"><span>Subject</span><input id="nt-subject" type="text" data-bind="notice:subject" value="${h(n.subject)}" maxlength="140"></label>
                 <label class="cs-field cs-wide" for="nt-body"><span>Message</span><textarea id="nt-body" rows="9" data-bind="notice:body" maxlength="4000">${h(n.body)}</textarea><span class="cs-hint">Personalized for each investor: ${NS.MERGE_FIELDS.map((f) => `<code>{${f}}</code>`).join(' ')}</span></label>
               </div>
@@ -1035,7 +1068,6 @@
     const n = noticeDraft();
     n[path] = v;
     n.confirm = false;
-    if (path === 'audience' && n.investor && !noticePool(n).some((i) => i.id === n.investor)) n.investor = '';
     if (path === 'subject') n.subjectEdited = true;
     if (path === 'body') n.bodyEdited = true;
     if (path === 'kind') {
@@ -1073,11 +1105,49 @@
     }
     const w = W();
     w.notices = w.notices || [];
-    w.notices.push({ id: 'n-' + Date.now().toString(36), date: today(), kind: n.kind, audience: n.audience, investor: n.investor || '', includePending: n.includePending, quarter: n.quarter, docName: n.docName, subject: n.subject, body: n.body, recipients: list.map((i) => i.id), sentBy: S().role === 'staff' ? 'staff' : 'sponsor' });
+    w.notices.push({ id: 'n-' + Date.now().toString(36), date: today(), kind: n.kind, audience: n.investors.length ? 'all' : n.audience, investors: n.investors.slice(), includePending: n.includePending, quarter: n.quarter, docName: n.docName, subject: n.subject, body: n.body, recipients: list.map((i) => i.id), sentBy: S().role === 'staff' ? 'staff' : 'sponsor' });
     NS.app.save(true);
     S().ui.notice = null;
     NS.app.render();
     U.toast(`Notice posted to ${list.length} investor portal${list.length === 1 ? '' : 's'}. Email delivery is not connected in this demo.`);
+  };
+  NS.actions['picker-toggle'] = () => {
+    const n = noticeDraft();
+    n.pickerOpen = !n.pickerOpen;
+    NS.app.render();
+    const el = document.getElementById(n.pickerOpen ? 'nt-picker-q' : 'nt-picker');
+    if (el && n.pickerOpen) el.focus();
+    else {
+      const b = document.querySelector('.picker-btn');
+      if (b) b.focus();
+    }
+  };
+  NS.changes['picker-search'] = (el) => {
+    const n = noticeDraft();
+    n.pickerQuery = el.value;
+    const list = document.getElementById('nt-picker-list');
+    if (list) list.innerHTML = pickerList(n);
+  };
+  NS.changes['picker-pick'] = (el) => {
+    const n = noticeDraft();
+    const id = el.value;
+    n.investors = el.checked ? n.investors.concat(n.investors.indexOf(id) >= 0 ? [] : [id]) : n.investors.filter((x) => x !== id);
+    n.confirm = false;
+    NS.app.render();
+    const again = document.querySelector(`.picker-item input[value="${id}"]`);
+    if (again) again.focus({ preventScroll: true });
+  };
+  NS.actions['picker-remove'] = (el) => {
+    const n = noticeDraft();
+    n.investors = n.investors.filter((x) => x !== el.getAttribute('data-id'));
+    n.confirm = false;
+    NS.app.render();
+  };
+  NS.actions['picker-clear'] = () => {
+    const n = noticeDraft();
+    n.investors = [];
+    n.confirm = false;
+    NS.app.render();
   };
   NS.actions['notice-cancel'] = () => {
     noticeDraft().confirm = false;

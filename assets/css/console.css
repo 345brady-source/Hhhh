@@ -231,6 +231,27 @@ body.role-sponsor .cs { --cv-accent: var(--brand); --cv-accent-ink: var(--brand-
 .cs-num { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--cv-ink-2); }
 .cs-bulk { display: flex; flex-direction: column; gap: 8px; }
 
+/* Investor picker (notices) */
+.picker { position: relative; }
+.picker > span:first-child { font-size: 12px; font-weight: 700; color: var(--cv-ink-2); }
+.picker-btn { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 38px; padding: 7px 10px; border: 1px solid var(--cv-line); border-radius: 3px; background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); font-size: 14px; font-weight: 500; text-align: left; cursor: pointer; }
+.picker-btn[aria-expanded="true"] { border-color: var(--cv-focus); box-shadow: 0 0 0 1px var(--cv-focus); }
+.picker-panel { position: absolute; z-index: 20; top: 62px; left: 0; right: 0; display: flex; flex-direction: column; background: var(--cv-panel); border: 1px solid var(--cv-line); border-radius: 4px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14); }
+.picker-panel input[type="search"] { margin: 10px; min-height: 36px; padding: 6px 10px; border: 1px solid var(--cv-line); border-radius: 3px; background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); font-size: 14px; }
+.picker-panel input[type="search"]:focus { outline: none; border-color: var(--cv-focus); box-shadow: 0 0 0 1px var(--cv-focus); }
+.picker-list { max-height: 280px; overflow-y: auto; border-top: 1px solid var(--cv-line-soft); border-bottom: 1px solid var(--cv-line-soft); }
+.picker-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 12px; cursor: pointer; font-weight: 500; }
+.picker-item:hover { background: var(--cv-panel-2); }
+.picker-item input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--cv-accent); flex: none; }
+.picker-item > span { display: flex; flex-direction: column; min-width: 0; font-size: 13px; color: var(--cv-ink); }
+.picker-item > span > span { font-size: 12px; color: var(--cv-ink-3); font-weight: 500; }
+.picker-empty { padding: 12px; }
+.picker-foot { display: flex; justify-content: space-between; gap: 8px; padding: 8px 10px; }
+.picker-chips { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.picker-chips li { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 9px; border: 1px solid var(--cv-line); border-radius: 3px; background: var(--cv-panel-2); font-size: 12px; font-weight: 600; color: var(--cv-ink); }
+.picker-chips button { width: 22px; height: 22px; border: 0; background: none; color: var(--cv-ink-3); font-size: 15px; line-height: 1; cursor: pointer; border-radius: 2px; }
+.picker-chips button:hover { color: var(--cv-ink); background: var(--cv-select); }
+
 /* Offering terms editor */
 .terms-edit { display: flex; flex-direction: column; gap: 6px; }
 .term-row { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr) auto auto; gap: 6px; align-items: center; }
