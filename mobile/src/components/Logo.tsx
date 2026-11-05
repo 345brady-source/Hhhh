@@ -7,7 +7,7 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { NS } from '../core';
 import type { Any } from '../lib/format';
-import { useColors, useSession } from '../lib/session';
+import { useColors } from '../lib/session';
 
 /** The core draws marks with CSS `style` attributes; react-native-svg wants plain attributes. */
 function toAttributes(svg: string): string {
@@ -59,45 +59,21 @@ export function Lockup({ tenant, size = 'md' }: { tenant: Any; size?: 'sm' | 'md
   );
 }
 
-/**
- * The app's own mark: the Carrow & Vale mark from the brand file, a square split
- * navy over teal by a rule in the page colour. Dark mode uses the brand's
- * reversed version (white over light teal).
- */
+/** Shareholder Desk's own mark: a ledger page with a rising line. */
 export function AppMark({ size = 48 }: { size?: number }) {
   const c = useColors();
-  const { scheme } = useSession();
-  const [a, b] = scheme === 'dark' ? ['#FFFFFF', '#3BA7B8'] : ['#0F2742', '#1F7A8C'];
-  const xml = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-    <path d="M0 0 L100 0 L0 100 Z" fill="${a}"/>
-    <path d="M100 0 L100 100 L0 100 Z" fill="${b}"/>
-    <line x1="-6" y1="106" x2="106" y2="-6" stroke="${c.bg}" stroke-width="11"/>
+  const xml = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+    <rect x="0" y="0" width="48" height="48" rx="11" fill="${c.fg}"/>
+    <path d="M13 34 H35" stroke="${c.bg}" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M13 28 L20 22 L26 25 L35 15" fill="none" stroke="${c.bg}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="35" cy="15" r="2.6" fill="${c.bg}"/>
   </svg>`;
-  return <SvgXml xml={xml} width={size} height={size} accessibilityLabel="Carrow & Vale" />;
-}
-
-/** Sign-in lockup before a firm is known: the mark, the app name and the Carrow & Vale name. */
-export function AppLockup() {
-  const c = useColors();
-  const { scheme } = useSession();
-  return (
-    <View style={styles.row} accessible accessibilityLabel="Shareholder Desk by Carrow & Vale">
-      <AppMark size={44} />
-      <View style={{ gap: 5 }}>
-        <Text style={[styles.appName, { color: c.fg }]}>Shareholder Desk</Text>
-        <Text style={[styles.appBy, { color: c.fg3 }]}>
-          CARROW <Text style={{ color: scheme === 'dark' ? '#3BA7B8' : '#1F7A8C' }}>{'&'}</Text> VALE
-        </Text>
-      </View>
-    </View>
-  );
+  return <SvgXml xml={xml} width={size} height={size} />;
 }
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   plate: { backgroundColor: '#FFFFFF', padding: 6, borderRadius: 4 },
   name: { fontWeight: '600', letterSpacing: 0.1 },
-  tag: { fontSize: 9, fontWeight: '600', letterSpacing: 2.4 },
-  appName: { fontSize: 20, fontWeight: '700', letterSpacing: -0.2 },
-  appBy: { fontSize: 10, fontWeight: '700', letterSpacing: 2.6 }
+  tag: { fontSize: 9, fontWeight: '600', letterSpacing: 2.4 }
 });

@@ -1,6 +1,6 @@
 # Shareholder Desk (iOS and Android app)
 
-The investor app for Carrow & Vale clients. Investors sign in with the login their investment firm issued and land straight in that firm's account, with its branding. The app itself carries the Carrow & Vale mark from the brand file (navy and teal split square): it's the app icon, the launch screen, and the logo on the sign-in screen until the investor's firm is known, shown as "Shareholder Desk" with "Carrow & Vale" beneath it. Every screen after sign-in shows only the firm's logo.
+The investor app for Carrow & Vale clients. Investors sign in with the login their investment firm issued and land straight in that firm's account, with its branding. The app icon is the Carrow & Vale mark from the brand file. Nothing inside the app shows Carrow & Vale: the sign-in screen shows Shareholder Desk until the investor's firm is known, then the firm's logo.
 
 One app serves every client firm, but each login belongs to exactly one firm, so there is no list of firms to pick from and no switching between them. An investor with two firms has two logins.
 
@@ -100,6 +100,6 @@ src/lib/format.ts         money, dates, time to redemption
 src/lib/storage.ts        Keychain storage (browser storage in web preview)
 src/components/           logo lockups, icons, shared UI
 src/app/                  screens (Expo Router): sign-in, tabs, investment and document detail, firm invitation link
-assets/                   Carrow & Vale app icon, Android adaptive and themed icon layers, launch screen (light and dark), favicon
+assets/                   Carrow & Vale app icon, Android adaptive and themed icon layers, favicon
 store/google-play/        Play listing text, data safety answers, icon, feature graphic, screenshots
 ```
