@@ -59,8 +59,8 @@ type Ctx = {
 const SessionContext = createContext<Ctx | null>(null);
 const LOCK_AFTER_MS = 5 * 60 * 1000;
 
-/** Neutral Shareholder Desk palette used before a sponsor is known. */
-const NEUTRAL = { colors: { primary: '#1C1C1E', accent: '#6E6E73' }, nav: 'light' };
+/** Carrow & Vale's palette (navy and teal), used before the investor's firm is known. */
+const NEUTRAL = { colors: { primary: '#0F2742', accent: '#1F7A8C' }, nav: 'light' };
 
 function toColors(tenantLike: Any, scheme: 'light' | 'dark'): Colors {
   const tk = NS.brand.derive(tenantLike);

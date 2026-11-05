@@ -1,6 +1,8 @@
 # Shareholder Desk (iOS and Android app)
 
-The investor app for Carrow & Vale clients. Investors sign in with the login their investment firm issued and land straight in that firm's account, with its branding, never Carrow & Vale's. One app serves every client firm, but each login belongs to exactly one firm, so there is no list of firms to pick from and no switching between them. An investor with two firms has two logins.
+The investor app for Carrow & Vale clients. Investors sign in with the login their investment firm issued and land straight in that firm's account, with its branding. The app itself carries the Carrow & Vale mark from the brand file (navy and teal split square): it's the app icon, the launch screen, and the logo on the sign-in screen until the investor's firm is known, shown as "Shareholder Desk" with "Carrow & Vale" beneath it. Every screen after sign-in shows only the firm's logo.
+
+One app serves every client firm, but each login belongs to exactly one firm, so there is no list of firms to pick from and no switching between them. An investor with two firms has two logins.
 
 The firm's logo sits in the header of every screen after sign-in. The first sign-in after download ties the device to the login's firm: from then on the app opens straight into that firm's account (or its biometric lock), and after signing out the sign-in screen still shows that firm's logo. A firm's invitation and activation emails can link to `shareholderdesk://firm/<firm id>` so the app opens on that firm's sign-in from the first launch. That link also settles the rare case of one email address registered separately with two firms.
 
@@ -98,6 +100,6 @@ src/lib/format.ts         money, dates, time to redemption
 src/lib/storage.ts        Keychain storage (browser storage in web preview)
 src/components/           logo lockups, icons, shared UI
 src/app/                  screens (Expo Router): sign-in, tabs, investment and document detail, firm invitation link
-assets/                   app icon, Android adaptive icon layers, splash and favicon
+assets/                   Carrow & Vale app icon, Android adaptive and themed icon layers, launch screen (light and dark), favicon
 store/google-play/        Play listing text, data safety answers, icon, feature graphic, screenshots
 ```

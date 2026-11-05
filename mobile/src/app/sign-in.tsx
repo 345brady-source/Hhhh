@@ -10,7 +10,7 @@ import React, { useEffect, useState } from 'react';
 import { BackHandler, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSession, type Account } from '../lib/session';
-import { AppMark, Lockup } from '../components/Logo';
+import { AppLockup, Lockup } from '../components/Logo';
 import { Button, Field, Screen } from '../components/ui';
 
 const DEMO_CODE = '482913';
@@ -71,12 +71,7 @@ export default function SignIn() {
       <View style={{ height: insets.top, backgroundColor: c.bg }} />
       <Screen>
         <View style={styles.brand}>
-          {shown ? <Lockup tenant={shown} size="lg" /> : (
-            <>
-              <AppMark size={44} />
-              <Text style={[styles.appName, { color: c.fg }]}>Shareholder Desk</Text>
-            </>
-          )}
+          {shown ? <Lockup tenant={shown} size="lg" /> : <AppLockup />}
         </View>
 
         {step === 'email' && (
@@ -125,7 +120,6 @@ export default function SignIn() {
 
 const styles = StyleSheet.create({
   brand: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 28, marginBottom: 40 },
-  appName: { fontSize: 20, fontWeight: '700', letterSpacing: -0.2 },
   h1: { fontSize: 28, fontWeight: '700', letterSpacing: -0.3, marginBottom: 8 },
   lede: { fontSize: 15, lineHeight: 21, marginBottom: 24 },
   links: { marginTop: 18, gap: 14 },
