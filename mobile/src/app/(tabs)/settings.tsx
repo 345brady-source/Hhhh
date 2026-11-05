@@ -17,7 +17,7 @@ export default function Settings() {
   }
 
   return (
-    <Screen topInset>
+    <Screen>
       <Title sub="Preferences for this device">Settings</Title>
 
       <Section label="Appearance" style={{ marginTop: 4 }}>

@@ -16,15 +16,15 @@ export default function TabsLayout() {
         headerTitleStyle: { color: c.fg, fontWeight: '600' },
         headerShadowVisible: false,
         headerTitleAlign: 'left',
-        headerShown: false
+        // The firm's logo heads every tab.
+        headerShown: true,
+        headerTitle: () => (tenant ? <Lockup tenant={tenant} size="sm" /> : null)
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Investments',
-          headerShown: true,
-          headerTitle: () => (tenant ? <Lockup tenant={tenant} size="sm" /> : null),
           tabBarIcon: ({ color }) => <InvestmentsIcon color={color} />
         }}
       />

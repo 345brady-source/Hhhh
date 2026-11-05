@@ -2,7 +2,7 @@
 
 The investor app for Carrow & Vale clients. Investors sign in with the login their investment firm issued and land straight in that firm's account, with its branding, never Carrow & Vale's. One app serves every client firm, but each login belongs to exactly one firm, so there is no list of firms to pick from and no switching between them. An investor with two firms has two logins.
 
-The app remembers the firm on the device, so after signing out the sign-in screen still shows that firm's logo. A firm's invitation and activation emails can link to `shareholderdesk://firm/<firm id>` so the app opens on that firm's sign-in from the first launch. That link also settles the rare case of one email address registered separately with two firms.
+The firm's logo sits in the header of every screen after sign-in. The first sign-in after download ties the device to the login's firm: from then on the app opens straight into that firm's account (or its Face ID lock), and after signing out the sign-in screen still shows that firm's logo. A firm's invitation and activation emails can link to `shareholderdesk://firm/<firm id>` so the app opens on that firm's sign-in from the first launch. That link also settles the rare case of one email address registered separately with two firms.
 
 Built with Expo (React Native), so it compiles to a native iOS app. It shares its data and brand logic with the web portal: `src/core` is a copy of `../assets/js/{brand,tenants,data,nacha}.js`, so every figure (amounts invested, distributions, time to redemption, next distribution dates) matches the portal exactly.
 

@@ -15,7 +15,7 @@ export default function Documents() {
   useEffect(() => {
     if (params.off) setOff(String(params.off));
   }, [params.off]);
-  if (!view) return <Screen topInset><Title>Documents</Title></Screen>;
+  if (!view) return <Screen><Title>Documents</Title></Screen>;
   const all: Any[] = NS.investorDocs(ws, view);
   const cats = Array.from(new Set(all.map((d) => d.cat))) as string[];
   const list = all.filter((d) => (cat === 'all' || d.cat === cat) && (off === 'all' || d.offeringId === off));
@@ -23,7 +23,7 @@ export default function Documents() {
   const offName = off === 'all' ? '' : name(off);
 
   return (
-    <Screen topInset>
+    <Screen>
       <Title sub="Reports, tax documents, statements and agreements">Documents</Title>
       {offName ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>

@@ -18,7 +18,7 @@ export default function RootLayout() {
 }
 
 function Root() {
-  const { ready, session, locked, colors: c, scheme } = useSession();
+  const { ready, session, locked, tenant, colors: c, scheme } = useSession();
   if (!ready) return <View style={{ flex: 1, backgroundColor: c.bg }} />;
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
   const theme = { ...base, colors: { ...base.colors, primary: c.brandText, background: c.bg, card: c.bg, text: c.fg, border: c.line } };
@@ -31,6 +31,9 @@ function Root() {
           headerStyle: { backgroundColor: c.bg },
           headerTitleStyle: { color: c.fg },
           headerShadowVisible: false,
+          headerBackButtonDisplayMode: 'minimal',
+          // The firm's logo heads every page after sign-in.
+          headerTitle: () => (tenant ? <Lockup tenant={tenant} size="sm" /> : null),
           contentStyle: { backgroundColor: c.bg }
         }}
       >
@@ -39,7 +42,7 @@ function Root() {
         </Stack.Protected>
         <Stack.Protected guard={!!session}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="investment/[id]" options={{ title: '', headerBackTitle: 'Investments' }} />
+          <Stack.Screen name="investment/[id]" options={{ title: 'Investment' }} />
           <Stack.Screen name="document/[id]" options={{ title: 'Document', presentation: 'modal' }} />
         </Stack.Protected>
       </Stack>

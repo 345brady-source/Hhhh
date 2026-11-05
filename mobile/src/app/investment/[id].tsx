@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { NS } from '../../core';
 import { useSession } from '../../lib/session';
 import { date, redemption, usd, usdc, type Any } from '../../lib/format';
@@ -30,7 +30,6 @@ export default function InvestmentDetail() {
   const pays = all ? p.payments : p.payments.slice(0, 12);
   return (
     <Screen>
-      <Stack.Screen options={{ title: o.shortName || '' }} />
       <Title sub={`${o.type}${o.summary ? ' · ' + o.summary : ''}`}>{o.name}</Title>
       <Figures
         items={[

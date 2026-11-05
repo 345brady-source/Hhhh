@@ -7,12 +7,12 @@ import { KV, Screen, Section, Title } from '../../components/ui';
 
 export default function Account() {
   const { investor, tenant, colors: c } = useSession();
-  if (!investor || !tenant) return <Screen topInset><Title>Account</Title></Screen>;
+  if (!investor || !tenant) return <Screen><Title>Account</Title></Screen>;
   const bank = investor.payment && investor.payment.method === 'ach' ? investor.payment.bank : null;
   const typeLabel = (NS.ENTITY_TYPES[investor.type] || {}).label || investor.type;
   const phoneDigits = String(tenant.support.phone).replace(/[^\d+]/g, '');
   return (
-    <Screen topInset>
+    <Screen>
       <Title sub={`${investor.title} · Account ${investor.id}`}>Account</Title>
       <Section label="Investor" style={{ marginTop: 4 }}>
         <KV label="Account title" value={investor.title} />

@@ -9,7 +9,7 @@ export default function Distributions() {
   const [year, setYear] = useState<string>('all');
   const [showAll, setShowAll] = useState(false);
   const years = useMemo<string[]>(() => (view ? Array.from(new Set<string>(view.payments.map((p: Any) => p.date.slice(0, 4)))).sort().reverse() : []), [view]);
-  if (!view || !investor) return <Screen topInset><Title>Distributions</Title></Screen>;
+  if (!view || !investor) return <Screen><Title>Distributions</Title></Screen>;
   const name = (id: string) => (ws.offerings.find((o: Any) => o.id === id) || {}).name || id;
   const list = view.payments.filter((p: Any) => year === 'all' || p.date.startsWith(year));
   const shown = showAll ? list : list.slice(0, 40);
@@ -17,7 +17,7 @@ export default function Distributions() {
   const bank = investor.payment && investor.payment.method === 'ach' ? investor.payment.bank : null;
 
   return (
-    <Screen topInset>
+    <Screen>
       <Title sub={bank ? `Paid by ACH to ${bank.type} account ending ${last4(bank.account)}` : 'Paid by check to your mailing address'}>Distributions</Title>
       <Figures
         items={[
