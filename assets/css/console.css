@@ -231,6 +231,15 @@ body.role-sponsor .cs { --cv-accent: var(--brand); --cv-accent-ink: var(--brand-
 .cs-num { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--cv-ink-2); }
 .cs-bulk { display: flex; flex-direction: column; gap: 8px; }
 
+/* Reports */
+.cs-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }
+.cs-report-bar { justify-content: flex-end; padding-top: 4px; border-top: 1px solid var(--cv-line-soft); }
+.cs-report-sum { margin-right: auto; font-size: 14px; color: var(--cv-ink-2); }
+.cs-report-sum strong { color: var(--cv-ink); font-size: 16px; }
+#con-emails-text { word-break: break-all; }
+@media (max-width: 900px) { .cs-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .cs-grid-3 { grid-template-columns: minmax(0, 1fr); } }
+
 /* Investor picker (notices) */
 .picker { position: relative; }
 .picker > span:first-child { font-size: 12px; font-weight: 700; color: var(--cv-ink-2); }

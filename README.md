@@ -32,6 +32,7 @@ python3 -m http.server 8000
 | Investors | Activation status and payment method for every investor; invite one investor or import a list; preview the branded invitation email; open an investor's activation |
 | Distributions | Allocate a payment pro rata by amount invested (to the cent), generate the NACHA file, and record the payment so investors see it |
 | Notices | Email investors that a quarterly report or new documents are in their portal. Templates, merge fields ({first_name}, {investment}, {quarter}, {documents} and others), audience of all investors, one offering, or any number of specific investors across offerings (separate searchable picker), optional inclusion of investors who have not activated, a branded preview, and a sent history. Each notice also appears in the recipients' portals |
+| Reports | Distribution reports for any period (this or last quarter, year to date, last year, last 12 months, since inception, or custom dates), for all offerings or one, viewed by investor, by payment or by offering, with totals and a CSV download. Investor contact lists filtered by offering, account status and payment method, with CSV download and copy-all-emails. Contact exports never include bank account numbers or taxpayer IDs |
 | ACH origination | ODFI and file-header values, company name and ID, entry description, and optional balanced files |
 | Portal and brand | Logo, colors with an accessibility check, typeface, header style, onboarding requirements, support contact and disclosures |
 

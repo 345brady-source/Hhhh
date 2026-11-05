@@ -20,6 +20,7 @@
     ['console-investors', 'Investors'],
     ['console-distributions', 'Distributions'],
     ['console-notices', 'Notices'],
+    ['console-reports', 'Reports'],
     ['console-ach', 'ACH origination'],
     ['console-brand', 'Portal and brand']
   ];
@@ -1152,6 +1153,257 @@
   NS.actions['notice-cancel'] = () => {
     noticeDraft().confirm = false;
     NS.app.render();
+  };
+
+  /* ---------- Reports: distributions for any period, investor contacts ---------- */
+  /** CSV cell: quoted when needed; text that could run as a spreadsheet formula is neutralized. */
+  function csvCell(v) {
+    if (v == null) return '';
+    if (typeof v === 'number') return String(v);
+    let s = String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  const toCsv = (rows) => rows.map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  const dollars = (c) => Math.round(c) / 100;
+  const slug = () => String(T().shortName || T().name).replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '');
+
+  function presetRange(preset) {
+    const now = today();
+    const d = NS.dates.parse(now);
+    const y = d.getUTCFullYear();
+    const q = Math.floor(d.getUTCMonth() / 3);
+    const iso = (yy, mm, dd) => `${yy}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+    const qEnd = (yy, qq) => NS.dates.isoOf(new Date(Date.UTC(yy, qq * 3 + 3, 0)));
+    switch (preset) {
+      case 'this-quarter':
+        return [iso(y, q * 3 + 1, 1), now];
+      case 'last-quarter': {
+        const lq = q === 0 ? 3 : q - 1;
+        const ly = q === 0 ? y - 1 : y;
+        return [iso(ly, lq * 3 + 1, 1), qEnd(ly, lq)];
+      }
+      case 'last-year':
+        return [iso(y - 1, 1, 1), iso(y - 1, 12, 31)];
+      case 'last-12':
+        return [NS.dates.addMonths(now, -12), now];
+      case 'inception': {
+        const first = W().runs.map((r) => r.date).sort()[0];
+        return [first || iso(y, 1, 1), now];
+      }
+      default:
+        return [iso(y, 1, 1), now];
+    }
+  }
+  const PERIODS = [
+    ['this-quarter', 'This quarter'],
+    ['last-quarter', 'Last quarter'],
+    ['ytd', 'Year to date'],
+    ['last-year', 'Last calendar year'],
+    ['last-12', 'Last 12 months'],
+    ['inception', 'Since inception'],
+    ['custom', 'Custom dates']
+  ];
+  function repState() {
+    const ui = S().ui;
+    if (!ui.rep) {
+      const [from, to] = presetRange('ytd');
+      ui.rep = { tab: 'dist', preset: 'ytd', from, to, offering: 'all', view: 'investor', scheduled: false, con: { offering: 'all', status: 'all', pay: 'all' } };
+    }
+    return ui.rep;
+  }
+  /** Every investor's share of every payment in the period. */
+  function distRows(r) {
+    const w = W();
+    const rows = [];
+    w.runs
+      .filter((run) => run.date >= r.from && run.date <= r.to && (r.offering === 'all' || run.offeringId === r.offering) && (r.scheduled || run.status === 'paid'))
+      .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+      .forEach((run) => {
+        const o = w.offerings.find((x) => x.id === run.offeringId) || { name: run.offeringId, shortName: run.offeringId };
+        NS.data.allocate(w, run).forEach((a) => {
+          if (a.cents > 0) rows.push({ run, o, inv: a.investor, cents: a.cents });
+        });
+      });
+    return rows;
+  }
+  const payMethod = (inv) => (inv.payment && inv.payment.method === 'ach' ? 'ACH' : 'Check');
+  function distTable(r, rows) {
+    const LIMIT = 200;
+    if (!rows.length) return { html: '<p class="cs-muted">No distributions in this period.</p>', csv: null };
+    let head;
+    let body;
+    let csvRows;
+    let foot;
+    const total = rows.reduce((a, x) => a + x.cents, 0);
+    if (r.view === 'payment') {
+      head = ['Payment date', 'Offering', 'Investor', 'Account', 'Type', 'Paid by', 'Amount'];
+      body = rows.map((x) => [date(x.run.date), h(x.o.shortName || x.o.name), h(x.inv.title), h(x.inv.id), h(x.run.type), payMethod(x.inv), usdc(x.cents)]);
+      csvRows = [['Payment date', 'Offering', 'Investor', 'Account', 'Contact', 'Type', 'Status', 'Paid by', 'Amount']].concat(
+        rows.map((x) => [x.run.date, x.o.name, x.inv.title, x.inv.id, x.inv.contact, x.run.type, x.run.status === 'paid' ? 'Paid' : 'Scheduled', payMethod(x.inv), dollars(x.cents)])
+      );
+      foot = [`${rows.length} payments`, '', '', '', '', '', usdc(total)];
+    } else if (r.view === 'offering') {
+      const map = {};
+      rows.forEach((x) => {
+        const k = x.o.name;
+        if (!map[k]) map[k] = { name: k, runs: new Set(), inv: new Set(), cents: 0 };
+        map[k].runs.add(x.run.id);
+        map[k].inv.add(x.inv.id);
+        map[k].cents += x.cents;
+      });
+      const list = Object.values(map).sort((a, b) => b.cents - a.cents);
+      head = ['Offering', 'Payments', 'Investors paid', 'Amount'];
+      body = list.map((g) => [h(g.name), g.runs.size, g.inv.size, usdc(g.cents)]);
+      csvRows = [['Offering', 'Payments', 'Investors paid', 'Amount']].concat(list.map((g) => [g.name, g.runs.size, g.inv.size, dollars(g.cents)]));
+      foot = ['Total', list.reduce((a, g) => a + g.runs.size, 0), new Set(rows.map((x) => x.inv.id)).size, usdc(total)];
+    } else {
+      const map = {};
+      rows.forEach((x) => {
+        const k = x.inv.id;
+        if (!map[k]) map[k] = { inv: x.inv, offs: new Set(), n: 0, cents: 0 };
+        map[k].offs.add(x.o.shortName || x.o.name);
+        map[k].n += 1;
+        map[k].cents += x.cents;
+      });
+      const list = Object.values(map).sort((a, b) => a.inv.title.localeCompare(b.inv.title));
+      head = ['Investor', 'Account', 'Offerings', 'Payments', 'Paid by', 'Amount'];
+      body = list.map((g) => [h(g.inv.title), h(g.inv.id), h(Array.from(g.offs).join(', ')), g.n, payMethod(g.inv), usdc(g.cents)]);
+      csvRows = [['Investor', 'Account', 'Contact', 'Email', 'Offerings', 'Payments', 'Paid by', 'Amount']].concat(
+        list.map((g) => [g.inv.title, g.inv.id, g.inv.contact, g.inv.email, Array.from(g.offs).join('; '), g.n, payMethod(g.inv), dollars(g.cents)])
+      );
+      foot = [`${list.length} investors`, '', '', list.reduce((a, g) => a + g.n, 0), '', usdc(total)];
+    }
+    const numCols = (i) => (typeof body[0][i] === 'number' || /^\$/.test(String(body[0][i])) || head[i] === 'Amount' ? ' class="num"' : '');
+    const shown = body.slice(0, LIMIT);
+    const html = `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact">
+        <thead><tr>${head.map((x, i) => `<th scope="col"${numCols(i)}>${x}</th>`).join('')}</tr></thead>
+        <tbody>${shown.map((row) => `<tr>${row.map((c, i) => `<td${numCols(i)}>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+        <tfoot><tr class="cs-total">${foot.map((c, i) => `<td${numCols(i)}>${c}</td>`).join('')}</tr></tfoot>
+      </table></div>${body.length > LIMIT ? `<p class="cs-hint">Showing the first ${LIMIT} of ${body.length} rows. The CSV includes all of them.</p>` : ''}`;
+    return { html, csv: toCsv(csvRows) };
+  }
+  function contactRows(c) {
+    return W()
+      .investors.filter(
+        (inv) =>
+          (c.offering === 'all' || inv.positions.some((p) => p.offeringId === c.offering)) &&
+          (c.status === 'all' || (c.status === 'active' ? inv.onboarding.status === 'complete' : inv.onboarding.status !== 'complete')) &&
+          (c.pay === 'all' || payMethod(inv).toLowerCase() === c.pay)
+      )
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }
+  const statusText = (inv) => (inv.onboarding.status === 'complete' ? 'Active' : inv.onboarding.status === 'in_progress' ? 'Activation in progress' : 'Invited');
+  const offeringsOf = (inv) =>
+    W()
+      .offerings.filter((o) => inv.positions.some((p) => p.offeringId === o.id))
+      .map((o) => o.shortName || o.name);
+
+  NS.views['console-reports'] = {
+    mode: 'console',
+    render() {
+      const w = W();
+      const r = repState();
+      const c = r.con;
+      const offSel = (bind, val) => `<select id="${bind.replace(/[:.]/g, '-')}" data-bind="${bind}"><option value="all">All offerings</option>${w.offerings.map((o) => `<option value="${h(o.id)}"${val === o.id ? ' selected' : ''}>${h(o.name)}</option>`).join('')}</select>`;
+      let body;
+      if (r.tab === 'dist') {
+        const rows = distRows(r);
+        const t = distTable(r, rows);
+        S().ui.repCsv = t.csv;
+        const total = rows.reduce((a, x) => a + x.cents, 0);
+        body = panel(
+          '',
+          `<div class="cs-grid cs-grid-3">
+            <label class="cs-field" for="rep-preset"><span>Period</span><select id="rep-preset" data-bind="rep:preset">${PERIODS.map(([k, l]) => `<option value="${k}"${r.preset === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+            <label class="cs-field" for="rep-from"><span>From</span><input id="rep-from" type="date" data-bind="rep:from" value="${h(r.from)}"></label>
+            <label class="cs-field" for="rep-to"><span>To</span><input id="rep-to" type="date" data-bind="rep:to" value="${h(r.to)}"></label>
+            <label class="cs-field" for="rep-offering"><span>Offering</span>${offSel('rep:offering', r.offering)}</label>
+            <fieldset class="cs-field"><legend>View</legend><div class="cs-seg">${[['investor', 'By investor'], ['payment', 'By payment'], ['offering', 'By offering']]
+              .map(([k, l]) => `<label><input type="radio" name="rep-view" value="${k}" data-bind="rep:view"${r.view === k ? ' checked' : ''}><span>${l}</span></label>`)
+              .join('')}</div></fieldset>
+            <label class="cs-check" for="rep-sched"><input id="rep-sched" type="checkbox" data-bind="rep:scheduled"${r.scheduled ? ' checked' : ''}><span>Include scheduled payments</span></label>
+          </div>
+          <div class="cs-row cs-report-bar">
+            <p class="cs-report-sum"><strong>${usdc(total)}</strong> in ${new Set(rows.map((x) => x.run.id)).size} payments to ${new Set(rows.map((x) => x.inv.id)).size} investors · ${date(r.from)} to ${date(r.to)}</p>
+            <button class="cs-btn cs-btn-primary" type="button" data-action="rep-csv"${t.csv ? '' : ' disabled'}>${icon('download')}Download CSV</button>
+          </div>
+          ${t.html}`
+        );
+      } else {
+        const list = contactRows(c);
+        S().ui.conList = list;
+        body = panel(
+          '',
+          `<div class="cs-grid cs-grid-3">
+            <label class="cs-field" for="con-offering"><span>Offering</span>${offSel('con:offering', c.offering)}</label>
+            <label class="cs-field" for="con-status"><span>Account status</span><select id="con-status" data-bind="con:status"><option value="all"${c.status === 'all' ? ' selected' : ''}>All investors</option><option value="active"${c.status === 'active' ? ' selected' : ''}>Active accounts</option><option value="pending"${c.status === 'pending' ? ' selected' : ''}>Not yet activated</option></select></label>
+            <label class="cs-field" for="con-pay"><span>Paid by</span><select id="con-pay" data-bind="con:pay"><option value="all"${c.pay === 'all' ? ' selected' : ''}>ACH or check</option><option value="ach"${c.pay === 'ach' ? ' selected' : ''}>ACH</option><option value="check"${c.pay === 'check' ? ' selected' : ''}>Check</option></select></label>
+          </div>
+          <div class="cs-row cs-report-bar">
+            <p class="cs-report-sum"><strong>${list.length}</strong> investor${list.length === 1 ? '' : 's'}</p>
+            <button class="cs-btn" type="button" data-action="con-emails"${list.length ? '' : ' disabled'}>${icon('copy')}Copy emails</button>
+            <button class="cs-btn cs-btn-primary" type="button" data-action="con-csv"${list.length ? '' : ' disabled'}>${icon('download')}Download CSV</button>
+          </div>
+          ${
+            list.length
+              ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Investor</th><th scope="col">Contact</th><th scope="col">Email</th><th scope="col">Phone</th><th scope="col">Mailing address</th><th scope="col">Offerings</th><th scope="col">Status</th></tr></thead><tbody>${list
+                  .map((inv) => `<tr><td><span class="strong">${h(inv.title)}</span><span class="sub">${h(inv.id)}</span></td><td>${h(inv.contact)}</td><td>${h(inv.email)}</td><td class="nowrap">${h(inv.phone || '—')}</td><td>${h(inv.address || '—')}</td><td>${h(offeringsOf(inv).join(', '))}</td><td>${statusText(inv)}</td></tr>`)
+                  .join('')}</tbody></table></div>`
+              : '<p class="cs-muted">No investors match these filters.</p>'
+          }
+          <p class="cs-hint" id="con-emails-text" hidden></p>
+          <p class="cs-hint">Bank account numbers and taxpayer IDs are never included in contact exports.</p>`
+        );
+      }
+      return shell(
+        `${head('Reports', 'Distribution reports for any period and investor contact lists. Downloads are CSV files that open in Excel.')}
+        <div class="cs-tabs" role="group" aria-label="Report"><button type="button" class="cs-tab" data-action="rep-tab" data-t="dist" aria-pressed="${r.tab === 'dist'}">Distributions</button><button type="button" class="cs-tab" data-action="rep-tab" data-t="contacts" aria-pressed="${r.tab === 'contacts'}">Contacts</button></div>
+        ${body}`,
+        'console-reports'
+      );
+    }
+  };
+  NS.binders.rep = (path, v) => {
+    const r = repState();
+    r[path] = v;
+    if (path === 'preset' && v !== 'custom') [r.from, r.to] = presetRange(v);
+    if (path === 'from' || path === 'to') {
+      r.preset = 'custom';
+      if (r.from && r.to && r.from > r.to) [r.from, r.to] = [r.to, r.from];
+    }
+    NS.app.render();
+  };
+  NS.binders.con = (path, v) => {
+    repState().con[path] = v;
+    NS.app.render();
+  };
+  NS.actions['rep-tab'] = (el) => {
+    repState().tab = el.getAttribute('data-t');
+    NS.app.render();
+  };
+  NS.actions['rep-csv'] = () => {
+    const r = repState();
+    if (!S().ui.repCsv) return;
+    const off = r.offering === 'all' ? '' : '_' + String((W().offerings.find((o) => o.id === r.offering) || {}).shortName || r.offering).replace(/[^A-Za-z0-9]+/g, '_');
+    U.download(`${slug()}_distributions${off}_${r.view}_${r.from}_to_${r.to}.csv`, S().ui.repCsv, { mime: 'text/csv' });
+  };
+  NS.actions['con-csv'] = () => {
+    const list = S().ui.conList || [];
+    const rows = [['Investor', 'Account', 'Contact', 'Email', 'Phone', 'Mailing address', 'Investing as', 'Offerings', 'Invested', 'Account status', 'Paid by']].concat(
+      list.map((inv) => [inv.title, inv.id, inv.contact, inv.email, inv.phone || '', inv.address || '', (NS.ENTITY_TYPES[inv.type] || {}).label || inv.type, offeringsOf(inv).join('; '), inv.positions.reduce((a, p) => a + p.amount, 0), statusText(inv), payMethod(inv)])
+    );
+    U.download(`${slug()}_investor_contacts_${today()}.csv`, toCsv(rows), { mime: 'text/csv' });
+  };
+  NS.actions['con-emails'] = () => {
+    const list = S().ui.conList || [];
+    const text = list.map((inv) => inv.email).join('; ');
+    const holder = document.getElementById('con-emails-text');
+    if (holder) {
+      holder.textContent = text;
+      holder.hidden = false;
+    }
+    U.copy(text, holder);
   };
 
   /* ---------- ACH origination ---------- */
