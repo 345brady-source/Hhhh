@@ -359,6 +359,76 @@
     return `Year ${yr} since closing`;
   };
 
+  /* ---------- Distribution schedule ---------- */
+  const ordinal = (n) => {
+    const s = ['th', 'st', 'nd', 'rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const firstOf = (iso) => iso.slice(0, 8) + '01';
+  function withDay(iso, day) {
+    const d = parse(iso);
+    const last = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
+    d.setUTCDate(Math.min(day, last));
+    return isoOf(d);
+  }
+  /** Payments due on a weekend or Federal Reserve holiday go out the next banking day. */
+  function bankingOnOrAfter(iso) {
+    const d = parse(iso);
+    const ok = (x) => (NS.nacha ? NS.nacha.isBankingDay(x) : [0, 6].indexOf(parse(x).getUTCDay()) < 0);
+    while (!ok(isoOf(d))) d.setUTCDate(d.getUTCDate() + 1);
+    return isoOf(d);
+  }
+  /** The day of the month an offering pays: as configured, else the day it has usually paid on. */
+  function paymentDay(ws, o) {
+    const set = Number(o.distribution && o.distribution.day);
+    if (set >= 1 && set <= 31) return set;
+    const counts = {};
+    ws.runs.forEach((r) => {
+      if (r.offeringId === o.id) {
+        const k = Number(r.date.slice(8, 10));
+        counts[k] = (counts[k] || 0) + 1;
+      }
+    });
+    const best = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a - b)[0];
+    return best ? Number(best) : Math.min(28, Number(String(o.closeDate || '').slice(8, 10)) || 15);
+  }
+  function scheduleText(ws, o, day) {
+    const f = o.distribution.frequency;
+    const step = FREQ_MONTHS[f];
+    if (step === 1) return `Monthly on the ${ordinal(day)}`;
+    const ref = ws.runs.filter((r) => r.offeringId === o.id).map((r) => r.date).sort().pop() || o.closeDate;
+    const m0 = Number(ref.slice(5, 7)) - 1;
+    const months = [];
+    for (let k = 0; k < 12; k += step) months.push((m0 + k) % 12);
+    months.sort((a, b) => a - b);
+    return `${f} on the ${ordinal(day)} of ${months.map((m) => MONTHS[m]).join(', ')}`;
+  }
+  /**
+   * Next distribution date for an offering. A payment already scheduled in the
+   * console wins; otherwise the regular schedule continues from the last payment.
+   */
+  NS.nextDistribution = function (ws, o, asOf) {
+    const now = asOf || today();
+    if (!o || o.status === 'Exited' || (o.exit && o.exit.basis === 'exited')) return null;
+    const step = FREQ_MONTHS[(o.distribution || {}).frequency];
+    const day = step ? paymentDay(ws, o) : null;
+    const schedule = step ? scheduleText(ws, o, day) : '';
+    const sched = ws.runs.filter((r) => r.offeringId === o.id && r.status === 'scheduled' && r.date >= now).map((r) => r.date).sort()[0];
+    if (sched) return { date: sched, nominal: sched, moved: false, scheduled: true, day, schedule };
+    if (!step) return null;
+    const paid = ws.runs.filter((r) => r.offeringId === o.id && r.status === 'paid').map((r) => r.date).sort();
+    let nominal = withDay(addMonths(firstOf(paid.length ? paid[paid.length - 1] : o.closeDate), step), day);
+    for (let guard = 0; bankingOnOrAfter(nominal) < now && guard < 600; guard++) nominal = withDay(addMonths(firstOf(nominal), step), day);
+    if (o.exit && o.exit.basis === 'maturity' && o.exit.date) {
+      if (o.exit.date < now) return null;
+      if (nominal > o.exit.date) nominal = o.exit.date;
+    }
+    const date = bankingOnOrAfter(nominal);
+    return { date, nominal, moved: date !== nominal, scheduled: false, day, schedule };
+  };
+
   /* ---------- Investor rollups ---------- */
   NS.investorView = function (ws, invId) {
     const inv = ws.investors.find((x) => x.id === invId) || ws.investors[0];
@@ -436,5 +506,5 @@
     return docs;
   };
 
-  NS.data = { allocate, split, holdersAt, investedAt, fakeRouting, abaCheckDigit, FREQ_MONTHS, ACCRED, rng, hashStr };
+  NS.data = { allocate, split, holdersAt, investedAt, fakeRouting, abaCheckDigit, FREQ_MONTHS, ACCRED, rng, hashStr, ordinal, paymentDay };
 })(window.CVPortal);

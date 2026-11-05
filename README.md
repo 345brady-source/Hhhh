@@ -15,7 +15,7 @@ python3 -m http.server 8000
 
 | Page | Contents |
 |---|---|
-| Portfolio | Amount invested, distributions received, and time until exit for each investment; exited investments; recent payments |
+| Portfolio | Amount invested, distributions received, and time until exit for each investment; exited investments; the next distribution date and recent payments |
 | Investment | One investment's figures, a timeline from closing to projected exit, the key terms the sponsor chose to show, the latest update, its payments and documents |
 | Distributions | Totals, received by year, full payment history filterable by year and investment |
 | Documents | Updates, tax documents (K-1, grantor trust letter or 1099-INT depending on the investment), statements and agreements, on the client's letterhead |
@@ -46,6 +46,10 @@ Exit timing is configured per offering with one of five definitions:
 | Maturity date | Notes and private credit | "Maturity Jun 30, 2027 · 7 months remaining" |
 | No set term | Royalties, evergreen programs | "No set term" plus the sponsor's note |
 | Exited | Sold or repaid | "Exited Aug 15, 2025 · Held 6 years, 3 months" |
+
+## Distribution schedule
+
+Each offering that pays on a regular schedule (monthly, quarterly, semi-annual or annual) has a payment day of the month, set in the offering editor. The next distribution date continues that schedule from the last payment; when the day falls on a weekend or Federal Reserve holiday, payment moves to the next banking day and investors see why. A payment recorded in the console for a future date takes precedence. Investors see the next date above their recent distributions, on each investment and on the Distributions page, and the console's new-distribution form defaults to it.
 
 Offering types (real estate syndication, DST, private equity fund, co-investment, private credit, energy infrastructure, oil and gas royalties) start with sensible defaults for frequency, payment type and key terms; everything can be changed.
 

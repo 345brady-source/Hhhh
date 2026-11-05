@@ -69,6 +69,39 @@
     return shell(`${title('Portfolio')}<p class="empty">No investments are recorded for this account yet. Your investments will appear here once your subscription is accepted and funded.</p>`, 'portfolio');
   }
 
+  /* ---------- Next distribution ---------- */
+  function upcoming(positions) {
+    const map = {};
+    positions.forEach((p) => {
+      const n = NS.nextDistribution(W(), p.offering);
+      if (!n) return;
+      (map[n.date] = map[n.date] || []).push({ p, n });
+    });
+    return Object.keys(map)
+      .sort()
+      .map((d) => ({ date: d, items: map[d] }));
+  }
+  /** "Next distribution" lines: one per payment date, listing what pays and on what schedule. */
+  function nextStrip(positions) {
+    const groups = upcoming(positions);
+    if (!groups.length) return '';
+    const rows = groups
+      .map((g, i) => {
+        const moved = g.items.find((x) => x.n.moved);
+        const why = moved ? NS.nacha.bankingDayReason(moved.n.nominal) : '';
+        return `<div class="next-row${i === 0 ? ' is-first' : ''}">
+          <dt>${i === 0 ? 'Next distribution' : 'Then'}</dt>
+          <dd>
+            <span class="next-date">${date(g.date, i === 0 ? 'wdlong' : 'wd')}</span>
+            ${g.items.map((x) => `<span class="next-item">${h(x.p.offering.name)}<span class="next-sched"> · ${x.n.scheduled ? 'Scheduled payment' : h(x.n.schedule)}</span></span>`).join('')}
+            ${moved && why ? `<span class="next-note">The ${NS.data.ordinal(moved.n.day)} ${why}, so payment is made the next banking day.</span>` : ''}
+          </dd>
+        </div>`;
+      })
+      .join('');
+    return `<dl class="next-dist">${rows}</dl>`;
+  }
+
   /* ---------- Portfolio ---------- */
   NS.views.portfolio = {
     mode: 'portal',
@@ -129,6 +162,7 @@
 
         <section class="sec">
           ${sec('Recent distributions', '<a class="sec-link" href="#distributions">All distributions</a>')}
+          ${nextStrip(v.active)}
           ${paymentsTable(recent, true)}
         </section>`,
         'portfolio'
@@ -178,13 +212,14 @@
               <p class="tl-note"><strong>${h(x.remaining)}.</strong> ${h(e.note || '')}</p>
             </div>`;
       const dist = o.distribution || {};
+      const next = NS.nextDistribution(W(), o);
       return shell(
         `<a class="back" href="#portfolio">${icon('back')}Portfolio</a>
         ${title(h(o.name), `${h(o.type)}${o.summary ? ' · ' + h(o.summary) : ''}`)}
         <dl class="figs">
           ${fig('Your investment', usd(p.invested), `Funded ${date(p.date)}`)}
           ${fig('Distributions received', usdc(p.received), `${pays.filter((q) => q.status === 'paid').length} payments`)}
-          ${fig('Distributions', h(dist.frequency || '—'), h(dist.target || ''))}
+          ${fig('Distributions', h(dist.frequency || '—'), [next ? `Next ${date(next.date)}` : '', h(dist.target || '')].filter(Boolean).join(' · '))}
           ${fig(h(x.label), h(x.value), h(x.state === 'exited' ? '' : NS.holdYear(o)))}
         </dl>
 
@@ -199,6 +234,7 @@
 
         <section class="sec">
           ${sec('Distributions from this investment', pays.length > 12 ? `<button class="sec-link link-btn" type="button" data-action="toggle-pays" data-id="${h(o.id)}">${showAll ? 'Show recent' : `Show all ${pays.length}`}</button>` : '')}
+          ${nextStrip([p])}
           ${paymentsTable(shown, false)}
         </section>
 
@@ -233,7 +269,12 @@
         <dl class="figs">
           ${fig('Total received', usdc(v.totals.received), 'All investments, to date')}
           ${fig(`Received in ${NS.dates.today().slice(0, 4)}`, usdc(v.totals.ytd), 'Year to date')}
-          ${fig('Scheduled', usdc(v.totals.scheduled), v.totals.scheduled ? 'Approved, not yet paid' : 'None scheduled')}
+          ${(() => {
+            const g = upcoming(v.active)[0];
+            if (!g) return fig('Next distribution', '—', 'No regular schedule');
+            const names = g.items.map((x) => x.p.offering.shortName || x.p.offering.name).join(', ');
+            return fig('Next distribution', date(g.date), h(names) + (v.totals.scheduled ? ` · ${usdc(v.totals.scheduled)} scheduled` : ''));
+          })()}
         </dl>
         <section class="sec">
           ${sec('Received by year')}

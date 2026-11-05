@@ -167,7 +167,7 @@
             <td class="nowrap">${date(o.closeDate)}</td>
             <td class="num">${usd(raised(o.id))}</td>
             <td class="num">${holdersCount(o.id)}</td>
-            <td>${h((o.distribution || {}).frequency || '')}</td>
+            <td>${h((o.distribution || {}).frequency || '')}${nextOf(o) ? `<span class="sub">Next ${date(nextOf(o).date)}</span>` : ''}</td>
             <td>${h(x.value)}<span class="sub">${h(x.label)}</span></td>
             <td>${h(o.status)}</td>
           </tr>`;
@@ -216,6 +216,7 @@
     ['exited', 'Exited']
   ];
   const curOff = () => W().offerings.find((o) => o.id === S().param);
+  const nextOf = (o) => NS.nextDistribution(W(), o);
 
   function offField(label, path, opts) {
     opts = opts || {};
@@ -225,7 +226,7 @@
     if (opts.select) {
       return `<label class="cs-field${opts.wide ? ' cs-wide' : ''}" for="${id}"><span>${label}</span><select id="${id}" data-bind="off:${path}">${opts.select
         .map((x) => (Array.isArray(x) ? x : [x, x]))
-        .map(([val, l]) => `<option value="${h(val)}"${v === val ? ' selected' : ''}>${h(l)}</option>`)
+        .map(([val, l]) => `<option value="${h(val)}"${String(v) === String(val) ? ' selected' : ''}>${h(l)}</option>`)
         .join('')}</select>${opts.hint ? `<span class="cs-hint">${opts.hint}</span>` : ''}</label>`;
     }
     if (opts.textarea) return `<label class="cs-field cs-wide" for="${id}"><span>${label}</span><textarea id="${id}" rows="${opts.rows || 3}" data-bind="off:${path}" maxlength="${opts.max || 600}">${h(v)}</textarea>${opts.hint ? `<span class="cs-hint">${opts.hint}</span>` : ''}</label>`;
@@ -239,7 +240,7 @@
       <div class="pv-portal">
         <h3>${h(o.name)}</h3>
         <p class="pv-sub">${h(o.type)}${o.summary ? ' · ' + h(o.summary) : ''}</p>
-        <dl class="pv-figs"><div><dt>Distributions</dt><dd>${h(o.distribution.frequency)}</dd><span>${h(o.distribution.target || '')}</span></div><div><dt>${h(x.label)}</dt><dd>${h(x.value)}</dd></div></dl>
+        <dl class="pv-figs"><div><dt>Distributions</dt><dd>${h(o.distribution.frequency)}</dd>${nextOf(o) ? `<span>Next ${date(nextOf(o).date)}</span>` : ''}<span>${h(o.distribution.target || '')}</span></div><div><dt>${h(x.label)}</dt><dd>${h(x.value)}</dd></div></dl>
         <div class="pv-hold">${NS.holdBar(x)}</div>
         ${terms.length ? `<dl class="pv-terms">${terms.map((r) => `<div><dt>${h(r.label)}</dt><dd>${h(r.value) || '<em>—</em>'}</dd></div>`).join('')}</dl>` : ''}
       </div>
@@ -250,6 +251,7 @@
     render() {
       const o = curOff();
       if (!o) return shell(`${head('Offering not found')}<p class="cs-muted"><a href="#console-offerings">Back to offerings</a></p>`, 'console-offerings');
+      if (periodMonths(o.distribution.frequency) && !o.distribution.day) o.distribution.day = NS.data.paymentDay(W(), o);
       const e = o.exit;
       const exitFields =
         e.basis === 'range'
@@ -289,6 +291,14 @@
             </div>`)}
             ${panel('Distributions', `<div class="cs-grid">
               ${offField('Frequency', 'distribution.frequency', { select: NS.FREQUENCIES })}
+              ${
+                periodMonths(o.distribution.frequency)
+                  ? offField('Payment day of month', 'distribution.day', {
+                      select: Array.from({ length: 28 }, (_, i) => [String(i + 1), NS.data.ordinal(i + 1)]),
+                      hint: `If it falls on a weekend or bank holiday, payment goes out the next banking day.${nextOf(o) ? ` Next payment: ${date(nextOf(o).date, 'wd')}.` : ''}`
+                    })
+                  : ''
+              }
               ${offField('Default payment type', 'distribution.type', { select: NS.DIST_TYPES })}
               ${offField('Target or rate shown to investors', 'distribution.target', { wide: true, max: 60, hint: 'For example "6.0% annualized". Leave blank to hide.' })}
             </div>`)}
@@ -317,6 +327,7 @@
     const o = curOff();
     if (!o) return;
     if (path === 'minimum') v = Number(v) || 0;
+    if (path === 'distribution.day') v = Number(v) || 15;
     NS.app.setPath(o, path, v);
     if (path === 'exit.basis') {
       // Give the new basis sensible dates so the investor preview always has something to show.
@@ -329,7 +340,7 @@
       if (v === 'exited') o.status = 'Exited';
     }
     NS.app.save();
-    if (path === 'exit.basis' || path === 'type') NS.app.render();
+    if (path === 'exit.basis' || path === 'type' || path === 'distribution.day' || path === 'distribution.frequency') NS.app.render();
     else {
       const pv = document.getElementById('off-preview');
       if (pv) pv.innerHTML = offPreview(o);
@@ -622,6 +633,11 @@
   function periodMonths(freq) {
     return NS.data.FREQ_MONTHS[freq] || 0;
   }
+  /** The offering's next scheduled payment date, or two banking days out when it has no schedule. */
+  function defaultDate(o) {
+    const n = o && nextOf(o);
+    return n && n.date > today() ? n.date : NS.nacha.nextBankingDay(today(), 2);
+  }
   function draft() {
     const ui = S().ui;
     if (!ui.dist) {
@@ -631,7 +647,7 @@
       ui.dist = {
         offeringId: o ? o.id : '',
         type: o ? o.distribution.type : 'Distribution',
-        date: NS.nacha.nextBankingDay(today(), 2),
+        date: defaultDate(o),
         mode: m && periodMonths(o.distribution.frequency) ? 'rate' : 'total',
         rate: m ? m[1] : '',
         total: '',
@@ -764,7 +780,7 @@
           `<div class="cs-grid">
             <label class="cs-field" for="ds-off"><span>Offering</span><select id="ds-off" data-bind="dist:offeringId">${w.offerings.map((x) => `<option value="${h(x.id)}"${x.id === d.offeringId ? ' selected' : ''}>${h(x.name)}${x.status === 'Exited' ? ' (exited)' : ''}</option>`).join('')}</select><span class="cs-hint">${holdersCount(o.id)} investors · ${usd(invested)} invested · pays ${h(o.distribution.frequency.toLowerCase())}</span></label>
             <label class="cs-field" for="ds-type"><span>Payment type</span><select id="ds-type" data-bind="dist:type">${NS.DIST_TYPES.map((x) => `<option${x === d.type ? ' selected' : ''}>${x}</option>`).join('')}</select></label>
-            <label class="cs-field" for="ds-date"><span>Payment (effective) date</span><input id="ds-date" type="date" data-bind="dist:date" value="${h(d.date)}" min="${today()}"><span class="${reason ? 'cs-error' : 'cs-hint'}">${reason ? `This date ${reason}. Next banking day: ${date(NS.nacha.nextBankingDay(d.date, 1))}.` : 'Banking days only. Most banks need files 1–2 banking days ahead.'}</span></label>
+            <label class="cs-field" for="ds-date"><span>Payment (effective) date</span><input id="ds-date" type="date" data-bind="dist:date" value="${h(d.date)}" min="${today()}"><span class="${reason ? 'cs-error' : 'cs-hint'}">${reason ? `This date ${reason}. Next banking day: ${date(NS.nacha.nextBankingDay(d.date, 1))}.` : nextOf(o) && nextOf(o).date === d.date ? `Next scheduled payment (${h(nextOf(o).schedule.toLowerCase())}). Most banks need files 1–2 banking days ahead.` : 'Banking days only. Most banks need files 1–2 banking days ahead.'}</span></label>
             <fieldset class="cs-field"><legend>Amount</legend><div class="cs-seg">
               <label><input type="radio" name="ds-mode" value="rate" data-bind="dist:mode"${d.mode === 'rate' ? ' checked' : ''}${months ? '' : ' disabled'}><span>Annualized rate</span></label>
               <label><input type="radio" name="ds-mode" value="total" data-bind="dist:mode"${d.mode === 'total' ? ' checked' : ''}><span>Total amount</span></label>
@@ -814,6 +830,7 @@
       d.type = o.distribution.type;
       d.mode = m && periodMonths(o.distribution.frequency) ? 'rate' : 'total';
       d.rate = m ? m[1] : '';
+      d.date = defaultDate(o);
     }
     if (path === 'rate' || path === 'total' || path === 'desc') {
       // Keep focus in the field: update only the dependent parts.

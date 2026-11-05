@@ -150,7 +150,7 @@
           closeDate: '2024-07-01',
           minimum: 50000,
           exit: { basis: 'maturity', date: '2027-06-30', from: '', to: '', note: 'Principal is repaid in full at maturity.' },
-          distribution: { frequency: 'Quarterly', type: 'Interest', target: '11.0% annual coupon' },
+          distribution: { frequency: 'Quarterly', type: 'Interest', target: '11.0% annual coupon', day: 15 },
           terms: [
             { label: 'Coupon', value: '11.0% fixed, paid quarterly', show: true },
             { label: 'Payment dates', value: 'Jan 15, Apr 15, Jul 15, Oct 15', show: true },
@@ -208,7 +208,7 @@
           closeDate: '2022-06-15',
           minimum: 50000,
           exit: { basis: 'range', date: '', from: '2027-06-15', to: '2029-06-15', note: 'Five-to-seven-year business plan. Timing depends on market conditions.' },
-          distribution: { frequency: 'Monthly', type: 'Income', target: '6.0% annualized' },
+          distribution: { frequency: 'Monthly', type: 'Income', target: '6.0% annualized', day: 15 },
           terms: [
             { label: 'Property', value: '288 units, built 2004', show: true },
             { label: 'Location', value: 'Raleigh, North Carolina', show: true },
@@ -229,7 +229,7 @@
           closeDate: '2023-03-01',
           minimum: 100000,
           exit: { basis: 'range', date: '', from: '2030-03-01', to: '2033-03-01', note: 'Seven-to-ten-year hold, aligned with the remaining lease terms.' },
-          distribution: { frequency: 'Monthly', type: 'Income', target: '5.25% annualized' },
+          distribution: { frequency: 'Monthly', type: 'Income', target: '5.25% annualized', day: 15 },
           terms: [
             { label: 'Property', value: 'Three medical office buildings, 118,400 sq ft', show: true },
             { label: 'Lease structure', value: 'Triple net, 8.4 years average remaining', show: true },
@@ -250,7 +250,7 @@
           closeDate: '2019-05-01',
           minimum: 50000,
           exit: { basis: 'exited', date: '2025-08-15', from: '', to: '', note: 'Sold for $34.6 million after a 6.3-year hold.' },
-          distribution: { frequency: 'Monthly', type: 'Income', target: '' },
+          distribution: { frequency: 'Monthly', type: 'Income', target: '', day: 15 },
           terms: [
             { label: 'Property', value: '196 units', show: true },
             { label: 'Location', value: 'Chattanooga, Tennessee', show: true },
@@ -307,7 +307,7 @@
           closeDate: '2021-10-01',
           minimum: 100000,
           exit: { basis: 'date', date: '2028-12-31', from: '', to: '', note: 'Projected sale of the portfolio to a long-term owner.' },
-          distribution: { frequency: 'Quarterly', type: 'Income', target: '8.0% annualized' },
+          distribution: { frequency: 'Quarterly', type: 'Income', target: '8.0% annualized', day: 15 },
           terms: [
             { label: 'Assets', value: 'Four solar projects in Colorado and New Mexico, 212 MW', show: true },
             { label: 'Contracted revenue', value: '20-year power purchase agreements', show: true },
@@ -326,7 +326,7 @@
           closeDate: '2023-02-01',
           minimum: 50000,
           exit: { basis: 'open', date: '', from: '', to: '', note: 'No set term. Royalties are paid for the producing life of the wells.' },
-          distribution: { frequency: 'Monthly', type: 'Royalty income', target: 'Varies with production and prices' },
+          distribution: { frequency: 'Monthly', type: 'Royalty income', target: 'Varies with production and prices', day: 20 },
           terms: [
             { label: 'Basin', value: 'Delaware Basin, Texas and New Mexico', show: true },
             { label: 'Net royalty acres', value: '1,840', show: true },
@@ -345,7 +345,7 @@
           closeDate: '2023-09-01',
           minimum: 100000,
           exit: { basis: 'range', date: '', from: '2030-01-01', to: '2031-12-31', note: 'Exit expected through a sale or recapitalization.' },
-          distribution: { frequency: 'Quarterly', type: 'Income', target: '6.0% annualized' },
+          distribution: { frequency: 'Quarterly', type: 'Income', target: '6.0% annualized', day: 15 },
           terms: [
             { label: 'Company', value: 'Desert Basin Water Holdings', show: true },
             { label: 'Industry', value: 'Regulated water and wastewater utilities', show: true },

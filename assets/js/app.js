@@ -14,7 +14,12 @@
   function date(iso, style) {
     if (!iso) return '';
     const d = NS.dates.parse(iso);
-    const o = style === 'my' ? { month: 'short', year: 'numeric' } : style === 'long' ? { month: 'long', day: 'numeric', year: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' };
+    const o =
+      style === 'my' ? { month: 'short', year: 'numeric' } :
+      style === 'long' ? { month: 'long', day: 'numeric', year: 'numeric' } :
+      style === 'wd' ? { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' } :
+      style === 'wdlong' ? { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' } :
+      { month: 'short', day: 'numeric', year: 'numeric' };
     return d.toLocaleDateString('en-US', Object.assign({ timeZone: 'UTC' }, o));
   }
   const last4 = (s) => String(s || '').replace(/\s/g, '').slice(-4);
