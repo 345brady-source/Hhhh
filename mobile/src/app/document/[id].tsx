@@ -32,7 +32,7 @@ export default function DocumentScreen() {
         <KV label="Format" value="PDF" />
       </View>
       <Text style={{ color: c.fg3, fontSize: 13, lineHeight: 19, marginTop: 16 }}>
-        Sample document. In the live app the PDF opens here, and you can save or share it from the iPhone share sheet.
+        Sample document. In the live app the PDF opens here, and you can save or share it from your phone's share menu.
       </Text>
       <Pressable onPress={() => router.back()} accessibilityRole="button" style={[styles.close, { borderColor: c.lineStrong }]}>
         <Text style={{ color: c.fg, fontSize: 16, fontWeight: '600' }}>Close</Text>

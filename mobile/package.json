@@ -11,6 +11,7 @@
     "expo-router": "~58.0.30",
     "expo-secure-store": "~58.0.2",
     "expo-status-bar": "~58.0.4",
+    "expo-system-ui": "~58.0.7",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-native": "0.88.1",
@@ -26,6 +27,7 @@
   "scripts": {
     "start": "expo start",
     "ios": "expo start --ios",
+    "android": "expo start --android",
     "web": "expo start --web",
     "sync-core": "node scripts/sync-core.js",
     "typecheck": "tsc --noEmit",

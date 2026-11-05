@@ -1,5 +1,6 @@
 /*
- * App state: who is signed in, the firm their login belongs to, Face ID lock,
+ * App state: who is signed in, the firm their login belongs to, biometric lock
+ * (Face ID or Touch ID on iPhone, fingerprint or face unlock on Android),
  * appearance, and the firm's brand colors.
  *
  * Every login belongs to one firm (the sponsor or manager that issued it), so
@@ -43,6 +44,8 @@ type Ctx = {
   appearance: Appearance;
   faceId: boolean;
   biometricsAvailable: boolean;
+  /** What this phone calls its biometric unlock, as in "Unlock with …": Face ID, Touch ID, fingerprint, face, or fingerprint or face. */
+  biometricLabel: string;
   lookup: (email: string) => Account[];
   signIn: (tenantId: string, investorId: string, email: string) => Promise<void>;
   setFirm: (tenantId: string | null) => Promise<void>;
@@ -108,6 +111,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [appearance, setAppearanceState] = useState<Appearance>('system');
   const [faceId, setFaceIdState] = useState(false);
   const [biometricsAvailable, setBiometricsAvailable] = useState(false);
+  const [biometricLabel, setBiometricLabel] = useState(Platform.OS === 'ios' ? 'Face ID' : 'fingerprint');
   const [rev, setRev] = useState(0);
   const backgroundedAt = useRef<number | null>(null);
   const system = useColorScheme();
@@ -146,6 +150,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       if (Platform.OS !== 'web') {
         try {
           canBio = (await LocalAuthentication.hasHardwareAsync()) && (await LocalAuthentication.isEnrolledAsync());
+          setBiometricLabel(labelFor(await LocalAuthentication.supportedAuthenticationTypesAsync()));
         } catch {
           canBio = false;
         }
@@ -169,7 +174,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     })();
   }, [workspaces, applyDismissed]);
 
-  // Lock again after five minutes in the background when Face ID is on.
+  // Lock again after five minutes in the background when biometric unlock is on.
   useEffect(() => {
     const sub = AppState.addEventListener('change', (st) => {
       if (st === 'background') backgroundedAt.current = Date.now();
@@ -222,7 +227,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       return true;
     }
     try {
-      const r = await LocalAuthentication.authenticateAsync({ promptMessage: 'Turn on Face ID for Shareholder Desk', cancelLabel: 'Cancel' });
+      const r = await LocalAuthentication.authenticateAsync({ promptMessage: 'Turn on biometric unlock for Shareholder Desk', cancelLabel: 'Cancel' });
       if (!r.success) return false;
       setFaceIdState(true);
       await setItem('faceId', '1');
@@ -251,10 +256,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value: Ctx = {
-    ready, session, locked, tenant, ws, investor, view, firm, colors, scheme, appearance, faceId, biometricsAvailable,
+    ready, session, locked, tenant, ws, investor, view, firm, colors, scheme, appearance, faceId, biometricsAvailable, biometricLabel,
     lookup, signIn, setFirm, signOut, unlock, setAppearance, setFaceId, dismissNotice
   };
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+}
+
+function labelFor(types: LocalAuthentication.AuthenticationType[]): string {
+  const face = types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION);
+  const finger = types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT);
+  if (Platform.OS === 'ios') return face ? 'Face ID' : 'Touch ID';
+  if (face && finger) return 'fingerprint or face';
+  return face ? 'face' : 'fingerprint';
 }
 
 export function useSession(): Ctx {

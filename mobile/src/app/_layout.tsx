@@ -51,9 +51,9 @@ function Root() {
   );
 }
 
-/** Covers the app until Face ID succeeds. */
+/** Covers the app until biometric unlock (Face ID, Touch ID, fingerprint or face) succeeds. */
 function LockScreen() {
-  const { tenant, unlock, signOut, colors: c } = useSession();
+  const { tenant, unlock, signOut, biometricLabel, colors: c } = useSession();
   useEffect(() => {
     unlock();
   }, [unlock]);
@@ -65,7 +65,7 @@ function LockScreen() {
         <Text style={{ color: c.fg2, fontSize: 15 }}>Locked</Text>
       </View>
       <Pressable onPress={unlock} accessibilityRole="button" style={[styles.btn, { backgroundColor: c.brand }]}>
-        <Text style={{ color: c.brandInk, fontSize: 16, fontWeight: '600' }}>Unlock with Face ID</Text>
+        <Text style={{ color: c.brandInk, fontSize: 16, fontWeight: '600' }}>Unlock with {biometricLabel}</Text>
       </Pressable>
       <Pressable onPress={signOut} accessibilityRole="button" hitSlop={12}>
         <Text style={{ color: c.brandText, fontSize: 15 }}>Sign in with password instead</Text>

@@ -6,8 +6,8 @@
  * Demo: any password works and the code is 482913. In production these steps
  * call the portal's authentication API.
  */
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { BackHandler, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSession, type Account } from '../lib/session';
 import { AppMark, Lockup } from '../components/Logo';
@@ -26,6 +26,18 @@ export default function SignIn() {
   const [error, setError] = useState('');
   const [note, setNote] = useState('');
   const [account, setAccount] = useState<Account | null>(null);
+
+  // Android back button: step back through sign-in instead of closing the app.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (step === 'email') return false;
+      setError('');
+      if (step === 'code') setStep('password');
+      else { setStep('email'); setAccount(null); setPassword(''); setNote(''); }
+      return true;
+    });
+    return () => sub.remove();
+  }, [step]);
 
   function submitEmail() {
     setError('');
@@ -55,7 +67,7 @@ export default function SignIn() {
 
   const shown = step !== 'email' && account ? account.tenant : firm;
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={{ height: insets.top, backgroundColor: c.bg }} />
       <Screen>
         <View style={styles.brand}>

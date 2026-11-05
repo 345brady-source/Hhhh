@@ -130,7 +130,7 @@ export function Segmented<T extends string>({ options, value, onChange, label }:
       {options.map(([v, l]) => {
         const on = v === value;
         return (
-          <Pressable key={v} onPress={() => onChange(v)} accessibilityRole="radio" accessibilityState={{ checked: on }} style={[s.segItem, on && { backgroundColor: c.surface, shadowOpacity: 0.12 }]}>
+          <Pressable key={v} onPress={() => onChange(v)} accessibilityRole="radio" accessibilityState={{ checked: on }} style={[s.segItem, on && { backgroundColor: c.surface, shadowOpacity: 0.12, elevation: 1 }]}>
             <Text style={[s.segText, { color: on ? c.fg : c.fg2, fontWeight: on ? '600' : '500' }]}>{l}</Text>
           </Pressable>
         );

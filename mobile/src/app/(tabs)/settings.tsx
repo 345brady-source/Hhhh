@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 import Constants from 'expo-constants';
 import { useSession } from '../../lib/session';
 import { Button, Screen, Section, Segmented, Title } from '../../components/ui';
 
 export default function Settings() {
-  const { appearance, setAppearance, faceId, setFaceId, biometricsAvailable, signOut, tenant, colors: c } = useSession();
+  const { appearance, setAppearance, faceId, setFaceId, biometricsAvailable, biometricLabel: bio, signOut, tenant, colors: c } = useSession();
   const [faceMsg, setFaceMsg] = useState('');
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
   const version = Constants.expoConfig?.version || '1.0.0';
@@ -13,7 +13,7 @@ export default function Settings() {
   async function toggleFace(on: boolean) {
     setFaceMsg('');
     const ok = await setFaceId(on);
-    if (!ok) setFaceMsg('Face ID was not turned on. Try again, or check Face ID in your iPhone settings.');
+    if (!ok) setFaceMsg(`Unlock with ${bio} was not turned on. Try again, or check your ${Platform.OS === 'ios' ? 'iPhone' : 'phone'} settings.`);
   }
 
   return (
@@ -29,10 +29,10 @@ export default function Settings() {
       <Section label="Security">
         <View style={[styles.row, { borderBottomColor: c.line }]}>
           <View style={{ flex: 1, gap: 2 }}>
-            <Text style={{ color: c.fg, fontSize: 15 }}>Unlock with Face ID</Text>
-            <Text style={{ color: c.fg3, fontSize: 13 }}>{biometricsAvailable ? 'Asks for Face ID when you open the app' : 'Face ID is not set up on this device'}</Text>
+            <Text style={{ color: c.fg, fontSize: 15 }}>Unlock with {bio}</Text>
+            <Text style={{ color: c.fg3, fontSize: 13 }}>{biometricsAvailable ? 'Asked each time you open the app' : `Not set up on this ${Platform.OS === 'ios' ? 'iPhone' : 'phone'}. Turn it on in your phone settings first.`}</Text>
           </View>
-          <Switch value={faceId} onValueChange={toggleFace} disabled={!biometricsAvailable} trackColor={{ true: c.brand, false: c.surface3 }} accessibilityLabel="Unlock with Face ID" />
+          <Switch value={faceId} onValueChange={toggleFace} disabled={!biometricsAvailable} trackColor={{ true: c.brand, false: c.surface3 }} accessibilityLabel={`Unlock with ${bio}`} />
         </View>
         {faceMsg ? <Text style={{ color: c.bad, fontSize: 13, marginTop: 8 }}>{faceMsg}</Text> : null}
         <Text style={{ color: c.fg3, fontSize: 13, marginTop: 10 }}>Two-step verification is on for your account.</Text>

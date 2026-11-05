@@ -1,5 +1,6 @@
 /*
- * Small key-value storage. On iPhone this is the Keychain (expo-secure-store);
+ * Small key-value storage. Encrypted on the phone (expo-secure-store): the
+ * Keychain on iPhone, Keystore-backed storage on Android;
  * in the web preview it falls back to browser storage.
  */
 import { Platform } from 'react-native';
