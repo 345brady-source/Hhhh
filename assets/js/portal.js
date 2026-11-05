@@ -105,10 +105,10 @@
         .map(
           (p) => `<tr>
           <th scope="row"><a href="#investment-${h(p.offering.id)}">${h(p.offering.name)}</a><span class="sub">${h(p.offering.type)}</span></th>
-          <td class="num" data-label="Invested">${usd(p.invested)}<span class="sub">${date(p.date, 'my')}</span></td>
+          <td class="num" data-label="Invested">${usd(p.invested)}</td>
           <td class="num" data-label="Distributions received">${usdc(p.received)}</td>
+          <td class="nowrap" data-label="Date invested">${date(p.date)}</td>
           <td data-label="${h(p.exit.label)}"><span class="strong">${h(p.exit.value)}</span><span class="sub sub-label">${h(p.exit.label)}</span></td>
-          <td class="col-hold" data-label="Time to exit">${holdBar(p.exit)}</td>
         </tr>`
         )
         .join('');
@@ -136,7 +136,7 @@
         <section class="sec">
           ${sec('Current investments')}
           <div class="tbl-scroll"><table class="tbl tbl-stack">
-            <thead><tr><th scope="col">Investment</th><th scope="col" class="num">Invested</th><th scope="col" class="num">Distributions received</th><th scope="col">Exit</th><th scope="col" class="col-hold">Time to exit</th></tr></thead>
+            <thead><tr><th scope="col">Investment</th><th scope="col" class="num">Invested</th><th scope="col" class="num">Distributions received</th><th scope="col">Date invested</th><th scope="col">Exit</th></tr></thead>
             <tbody>${activeRows || '<tr><td colspan="5" class="empty-cell">No active investments.</td></tr>'}</tbody>
             ${v.active.length > 1 ? `<tfoot><tr><th scope="row">Total</th><td class="num" data-label="Invested">${usd(v.totals.invested)}</td><td class="num" data-label="Distributions received">${usdc(activeTotal)}</td><td class="empty-td"></td><td class="empty-td"></td></tr></tfoot>` : ''}
           </table></div>
