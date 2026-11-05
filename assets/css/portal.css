@@ -2,29 +2,30 @@
  * Investor portal styles.
  * Layout: a white page under a slim branded header; content is a single
  * column of ruled sections and tables, the way a printed statement reads.
- * The tokens below are Carrow & Vale defaults; brand.js overwrites them per
- * client, in light and dark mode.
+ * Neutrals are true greys (white page in light mode, charcoal in dark);
+ * only the client's brand colors carry hue. brand.js overwrites these
+ * Carrow & Vale defaults per client.
  */
 :root {
-  --bg: #F6F8FA; --surface: #FFFFFF; --surface-2: #F4F6F8; --surface-3: #ECEFF3;
-  --line: #E1E6EB; --line-strong: #C9D1DA;
-  --fg: #14212F; --fg-2: #3E4C5B; --fg-3: #5C6A79;
-  --brand: #0F2742; --brand-ink: #FFFFFF; --brand-hover: #1D3A5C; --brand-soft: #E6EDF3; --brand-text: #0F2742;
-  --accent: #1F7A8C; --accent-ink: #FFFFFF; --accent-soft: #E2F0F2; --accent-text: #1F7A8C; --focus: #1F7A8C;
-  --nav-bg: #FFFFFF; --nav-fg: #3E4C5B; --nav-fg-strong: #14212F; --nav-muted: #5C6A79; --nav-line: #E1E6EB;
-  --nav-hover: #F4F6F8; --nav-active-bg: #E6EDF3; --nav-active-fg: #0F2742; --nav-marker: #0F2742;
+  --bg: #FFFFFF; --surface: #FFFFFF; --surface-2: #F7F7F7; --surface-3: #EEEEEE;
+  --line: #E3E3E3; --line-strong: #D0D0D0;
+  --fg: #1B1B1B; --fg-2: #474747; --fg-3: #6C6C6C;
+  --brand: #0F2742; --brand-ink: #FFFFFF; --brand-hover: #1D3A5C; --brand-soft: #E8ECF0; --brand-text: #0F2742;
+  --accent: #1F7A8C; --accent-ink: #FFFFFF; --accent-soft: #E3F0F2; --accent-text: #1F7A8C; --focus: #1F7A8C;
+  --nav-bg: #FFFFFF; --nav-fg: #444444; --nav-fg-strong: #1B1B1B; --nav-muted: #6C6C6C; --nav-line: #E3E3E3;
+  --nav-hover: #F7F7F7; --nav-active-bg: #F2F2F2; --nav-active-fg: #0F2742; --nav-marker: #0F2742;
   --nav-mark-p: #0F2742; --nav-mark-a: #1F7A8C; --nav-mark-ink: #FFFFFF;
-  --hero-bg: #0F2742; --hero-fg: #FFFFFF; --hero-fg-2: #C3D1DE; --hero-line: #2A4462;
+  --hero-bg: #0F2742; --hero-fg: #FFFFFF; --hero-fg-2: #C9CDD2; --hero-line: #2F3E4F;
   --hero-mark-p: #FFFFFF; --hero-mark-a: #3BA7B8; --hero-mark-ink: #0F2742;
   --mark-p: #0F2742; --mark-a: #1F7A8C; --mark-ink: #FFFFFF;
-  --chart-1: #0F2742; --chart-muted: #8A9BAD;
-  --seg-1: #0F2742; --seg-2: #1F7A8C; --seg-3: #C3D1DE; --seg-1-ink: #FFFFFF; --seg-2-ink: #FFFFFF; --seg-3-ink: #0B1622;
-  --paper-bg: #FFFFFF; --paper-fg: #14212F; --paper-fg-2: #3E4C5B; --paper-line: #E1E6EB; --paper-soft: #F4F6F8;
+  --chart-1: #0F2742; --chart-muted: #9A9A9A;
+  --seg-1: #0F2742; --seg-2: #1F7A8C; --seg-3: #CFCFCF; --seg-1-ink: #FFFFFF; --seg-2-ink: #FFFFFF; --seg-3-ink: #1B1B1B;
+  --paper-bg: #FFFFFF; --paper-fg: #1B1B1B; --paper-fg-2: #474747; --paper-line: #E3E3E3; --paper-soft: #F7F7F7;
   --paper-brand: #0F2742; --paper-brand-fill: #0F2742; --paper-brand-ink: #FFFFFF;
   --paper-mark-p: #0F2742; --paper-mark-a: #1F7A8C; --paper-mark-ink: #FFFFFF;
   --plate: #FFFFFF;
   --good: #1B6E45; --warn: #8A5300; --bad: #B3261E;
-  --shadow: 0 1px 2px rgba(15, 39, 66, 0.06), 0 10px 28px rgba(15, 39, 66, 0.1);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 10px 28px rgba(0, 0, 0, 0.1);
   --font-display: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
@@ -32,30 +33,32 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0D1724; --surface: #111C2A; --surface-2: #152233; --surface-3: #1A293B;
-    --line: #223247; --line-strong: #30445C;
-    --fg: #E8EEF4; --fg-2: #BAC7D5; --fg-3: #93A3B5;
-    --brand: #5B8FC7; --brand-ink: #0B1622; --brand-hover: #6E9DD0; --brand-soft: #1B2F47; --brand-text: #8DB5E2;
-    --accent: #3BA7B8; --accent-ink: #0B1622; --accent-soft: #163A44; --accent-text: #6CC4D2; --focus: #6CC4D2;
-    --nav-bg: #0F1A28; --nav-fg: #B5C4D4; --nav-fg-strong: #FFFFFF; --nav-muted: #8EA2B7; --nav-line: #1E3045; --nav-hover: #15283D; --nav-active-bg: #1E3A57; --nav-active-fg: #FFFFFF; --nav-marker: #8DB5E2;
-    --mark-p: #8DB5E2; --mark-a: #3BA7B8; --mark-ink: #111C2A;
-    --chart-1: #7FB0E3; --chart-muted: #6F8399;
+    --bg: #0F0F0F; --surface: #161616; --surface-2: #1D1D1D; --surface-3: #252525;
+    --line: #2E2E2E; --line-strong: #444444;
+    --fg: #EEEEEE; --fg-2: #C6C6C6; --fg-3: #A0A0A0;
+    --brand: #5B8FC7; --brand-ink: #111111; --brand-hover: #6E9DD0; --brand-soft: #23272C; --brand-text: #8DB5E2;
+    --accent: #3BA7B8; --accent-ink: #111111; --accent-soft: #1F2A2C; --accent-text: #6CC4D2; --focus: #6CC4D2;
+    --nav-bg: #141414; --nav-fg: #C6C6C6; --nav-fg-strong: #FFFFFF; --nav-muted: #A0A0A0; --nav-line: #2A2A2A; --nav-hover: #1D1D1D; --nav-active-bg: #262626; --nav-active-fg: #FFFFFF; --nav-marker: #8DB5E2;
+    --hero-bg: #1B1B1B; --hero-fg-2: #C6C6C6; --hero-line: #333333;
+    --mark-p: #8DB5E2; --mark-a: #3BA7B8; --mark-ink: #161616;
+    --chart-1: #7FB0E3; --chart-muted: #777777;
     --good: #5CC28D; --warn: #E6B24F; --bad: #F2867D;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.4);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.5);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0D1724; --surface: #111C2A; --surface-2: #152233; --surface-3: #1A293B;
-  --line: #223247; --line-strong: #30445C;
-  --fg: #E8EEF4; --fg-2: #BAC7D5; --fg-3: #93A3B5;
-  --brand: #5B8FC7; --brand-ink: #0B1622; --brand-hover: #6E9DD0; --brand-soft: #1B2F47; --brand-text: #8DB5E2;
-  --accent: #3BA7B8; --accent-ink: #0B1622; --accent-soft: #163A44; --accent-text: #6CC4D2; --focus: #6CC4D2;
-  --nav-bg: #0F1A28; --nav-fg: #B5C4D4; --nav-fg-strong: #FFFFFF; --nav-muted: #8EA2B7; --nav-line: #1E3045; --nav-hover: #15283D; --nav-active-bg: #1E3A57; --nav-active-fg: #FFFFFF; --nav-marker: #8DB5E2;
-  --mark-p: #8DB5E2; --mark-a: #3BA7B8; --mark-ink: #111C2A;
-  --chart-1: #7FB0E3; --chart-muted: #6F8399;
+  --bg: #0F0F0F; --surface: #161616; --surface-2: #1D1D1D; --surface-3: #252525;
+  --line: #2E2E2E; --line-strong: #444444;
+  --fg: #EEEEEE; --fg-2: #C6C6C6; --fg-3: #A0A0A0;
+  --brand: #5B8FC7; --brand-ink: #111111; --brand-hover: #6E9DD0; --brand-soft: #23272C; --brand-text: #8DB5E2;
+  --accent: #3BA7B8; --accent-ink: #111111; --accent-soft: #1F2A2C; --accent-text: #6CC4D2; --focus: #6CC4D2;
+  --nav-bg: #141414; --nav-fg: #C6C6C6; --nav-fg-strong: #FFFFFF; --nav-muted: #A0A0A0; --nav-line: #2A2A2A; --nav-hover: #1D1D1D; --nav-active-bg: #262626; --nav-active-fg: #FFFFFF; --nav-marker: #8DB5E2;
+  --hero-bg: #1B1B1B; --hero-fg-2: #C6C6C6; --hero-line: #333333;
+  --mark-p: #8DB5E2; --mark-a: #3BA7B8; --mark-ink: #161616;
+  --chart-1: #7FB0E3; --chart-muted: #777777;
   --good: #5CC28D; --warn: #E6B24F; --bad: #F2867D;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px rgba(0, 0, 0, 0.4);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.5);
   color-scheme: dark;
 }
 
@@ -213,7 +216,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .choice-row { display: flex; gap: 12px; align-items: flex-start; padding: 11px 14px; border: 1px solid var(--line-strong); margin-top: -1px; cursor: pointer; font-weight: 400; color: var(--fg); }
 .choice-row:first-of-type { border-radius: var(--r-md) var(--r-md) 0 0; margin-top: 0; }
 .choice-row:last-of-type { border-radius: 0 0 var(--r-md) var(--r-md); }
-.choice-row:has(input:checked) { background: var(--brand-soft); border-color: var(--brand); position: relative; z-index: 1; }
+.choice-row:has(input:checked) { background: var(--surface-2); border-color: var(--brand); position: relative; z-index: 1; }
 .choice-row input { margin-top: 3px; accent-color: var(--brand); }
 .choice-row strong { font-weight: 500; display: block; }
 .check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--fg-2); line-height: 1.5; }

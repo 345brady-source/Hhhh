@@ -1,5 +1,5 @@
 /*
- * Investor portal pages: Portfolio, Investment detail, Distributions,
+ * Investor portal pages: Investments, Investment detail, Distributions,
  * Documents, Account and Sign-in. Kept deliberately small: what each investor
  * put in, what they have received, and how long until each investment exits.
  */
@@ -23,7 +23,7 @@
 
   /* ---------- Shell ---------- */
   const NAV = [
-    ['portfolio', 'Portfolio'],
+    ['investments', 'Investments'],
     ['distributions', 'Distributions'],
     ['documents', 'Documents'],
     ['account', 'Account']
@@ -35,7 +35,7 @@
     return `<div class="pt${S().navOpen ? ' nav-open' : ''}">
       <header class="pt-head">
         <div class="pt-head-in">
-          <a class="pt-logo" href="#portfolio" aria-label="${h(t.name)} ${h(t.portalName)}">${B.lockup(t)}</a>
+          <a class="pt-logo" href="#investments" aria-label="${h(t.name)} ${h(t.portalName)}">${B.lockup(t)}</a>
           <nav class="pt-nav" id="pt-nav" aria-label="${h(t.portalName)}">${links}</nav>
           <div class="pt-user">${inv ? `<span class="pt-user-name">${h(inv.contact)}</span><span class="pt-user-acct">${h(inv.title)}</span>` : ''}<a class="pt-signout" href="#sign-in">Sign out</a></div>
           <button class="pt-menu" type="button" data-action="nav-toggle" aria-controls="pt-nav" aria-expanded="${S().navOpen}">${icon('menu')}<span>Menu</span></button>
@@ -66,7 +66,7 @@
   NS.holdBar = holdBar;
 
   function noAccount() {
-    return shell(`${title('Portfolio')}<p class="empty">No investments are recorded for this account yet. Your investments will appear here once your subscription is accepted and funded.</p>`, 'portfolio');
+    return shell(`${title('Investments')}<p class="empty">No investments are recorded for this account yet. Your investments will appear here once your subscription is accepted and funded.</p>`, 'portfolio');
   }
 
   /* ---------- Distributions by investment ---------- */
@@ -92,8 +92,8 @@
       <tbody>${rows}</tbody></table></div>${moved ? '<p class="meta">Payments due on a weekend or bank holiday are made the next banking day.</p>' : ''}`;
   }
 
-  /* ---------- Portfolio ---------- */
-  NS.views.portfolio = {
+  /* ---------- Investments ---------- */
+  NS.views.investments = {
     mode: 'portal',
     render() {
       const v = vm();
@@ -124,7 +124,7 @@
         .join('');
       const scheduled = v.payments.filter((p) => p.status === 'scheduled');
       return shell(
-        `${title('Portfolio', `${h(inv.title)} · Account ${h(inv.id)} · As of ${date(today, 'long')}`)}
+        `${title('Investments', `${h(inv.title)} · Account ${h(inv.id)} · As of ${date(today, 'long')}`)}
         <dl class="figs">
           ${fig('Invested', usd(v.totals.invested), `${v.active.length} active investment${v.active.length === 1 ? '' : 's'}`)}
           ${fig('Distributions received', usdc(v.totals.received), 'All investments, to date')}
@@ -133,7 +133,7 @@
         </dl>
 
         <section class="sec">
-          ${sec('Investments')}
+          ${sec('Current investments')}
           <div class="tbl-scroll"><table class="tbl tbl-stack">
             <thead><tr><th scope="col">Investment</th><th scope="col" class="num">Invested</th><th scope="col" class="num">Distributions received</th><th scope="col">Exit</th><th scope="col" class="col-hold">Time to exit</th></tr></thead>
             <tbody>${activeRows || '<tr><td colspan="5" class="empty-cell">No active investments.</td></tr>'}</tbody>
@@ -153,7 +153,7 @@
           ${sec('Recent distributions', '<a class="sec-link" href="#distributions">All distributions</a>')}
           ${byInvestmentTable(v.active)}
         </section>`,
-        'portfolio'
+        'investments'
       );
     }
   };
@@ -181,7 +181,7 @@
     render(id) {
       const v = vm();
       const p = v && v.positions.find((x) => x.offering.id === id);
-      if (!p) return shell(`${title('Investment not found')}<p class="empty">This investment is not on your account. <a href="#portfolio">Return to your portfolio</a>.</p>`, 'portfolio');
+      if (!p) return shell(`${title('Investment not found')}<p class="empty">This investment is not on your account. <a href="#investments">Return to your investments</a>.</p>`, 'portfolio');
       const o = p.offering;
       const x = p.exit;
       const t = T();
@@ -202,7 +202,7 @@
       const dist = o.distribution || {};
       const next = NS.nextDistribution(W(), o);
       return shell(
-        `<a class="back" href="#portfolio">${icon('back')}Portfolio</a>
+        `<a class="back" href="#investments">${icon('back')}Investments</a>
         ${title(h(o.name), `${h(o.type)}${o.summary ? ' · ' + h(o.summary) : ''}`)}
         <dl class="figs">
           ${fig('Your investment', usd(p.invested), `Funded ${date(p.date)}`)}
@@ -226,10 +226,11 @@
         </section>
 
         <section class="sec">${sec('Documents')}${docsTable(docs, false)}</section>`,
-        'portfolio'
+        'investments'
       );
     }
   };
+  NS.views.portfolio = NS.views.investments;
   NS.actions['toggle-pays'] = (el) => {
     S().ui.allPays = S().ui.allPays === el.getAttribute('data-id') ? null : el.getAttribute('data-id');
     NS.app.render();
@@ -458,7 +459,7 @@
     const inv = W().investors.find((x) => x.email.toLowerCase() === f.email.value.trim().toLowerCase());
     if (inv) S().viewer = inv.id;
     if (inv && inv.onboarding.status !== 'complete') NS.startOnboarding(inv.id);
-    else NS.app.go('portfolio');
+    else NS.app.go('investments');
   };
   NS.actions.forgot = () => U.toast('A password reset link would be emailed to the address on file.');
   NS.actions.activate = (el) => NS.startOnboarding(el.getAttribute('data-id'));

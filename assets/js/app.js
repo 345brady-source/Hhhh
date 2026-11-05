@@ -43,7 +43,7 @@
   };
   const icon = (name, cls) => `<svg class="i${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[name] || ''}</svg>`;
 
-  const CV_MARK = `<svg class="cv-mark" viewBox="0 0 100 100" aria-hidden="true"><path d="M0 0 L100 0 L0 100 Z" fill="#FFFFFF"/><path d="M100 0 L100 100 L0 100 Z" fill="#3BA7B8"/><line x1="-6" y1="106" x2="106" y2="-6" stroke="#0F2742" stroke-width="11"/></svg>`;
+  const CV_MARK = `<svg class="cv-mark" viewBox="0 0 100 100" aria-hidden="true"><path d="M0 0 L100 0 L0 100 Z" fill="#0F2742"/><path d="M100 0 L100 100 L0 100 Z" fill="#1F7A8C"/><line x1="-6" y1="106" x2="106" y2="-6" stroke="#FFFFFF" stroke-width="11"/></svg>`;
   NS.CV_MARK = CV_MARK;
 
   /* ---------- Toasts, dialogs, files ---------- */
@@ -124,7 +124,7 @@
   NS.ui = { h, usd, usdc, date, last4, pct, icon, toast, dialog, closeDialog, download, copy };
 
   /* ---------- State ---------- */
-  const state = { clientId: null, ws: null, route: 'portfolio', param: null, viewer: null, navOpen: false, ui: {} };
+  const state = { clientId: null, ws: null, route: 'investments', param: null, viewer: null, navOpen: false, ui: {} };
   NS.state = state;
   const ws = () => state.ws;
 
@@ -192,7 +192,7 @@
     const raw = (location.hash || '').replace(/^#/, '');
     for (const [p, key] of PREFIXED) if (raw.indexOf(p) === 0) return { key, param: raw.slice(p.length) };
     if (NS.views[raw]) return { key: raw, param: null };
-    return { key: 'portfolio', param: null };
+    return { key: 'investments', param: null };
   }
   function go(route) {
     if (location.hash.replace(/^#/, '') === route) onRoute();
@@ -230,7 +230,7 @@
         .map((c) => `<option value="${h(c.id)}"${c.id === state.clientId ? ' selected' : ''}>${h(c.name)}</option>`)
         .join('')}<option value="__new">Add a client…</option></select></label>
       <nav class="op-modes" aria-label="View">
-        <a href="#portfolio"${mode === 'portal' ? ' aria-current="page"' : ''}>Investor portal</a>
+        <a href="#investments"${mode === 'portal' ? ' aria-current="page"' : ''}>Investor portal</a>
         <a href="#console"${mode === 'console' ? ' aria-current="page"' : ''}>Sponsor console</a>
       </nav>
       ${viewer}
@@ -242,7 +242,7 @@
     const w = ws();
     if (!w) return;
     const key = state.route;
-    const view = NS.views[key] || NS.views.portfolio;
+    const view = NS.views[key] || NS.views.investments;
     const mode = modeOf(key);
     document.body.classList.toggle('mode-console', mode === 'console');
     document.body.classList.toggle('mode-portal', mode === 'portal');
@@ -344,13 +344,13 @@
       go('console-new-client');
       return;
     }
-    setClient(el.value, modeOf(state.route) === 'console' ? 'console' : 'portfolio');
+    setClient(el.value, modeOf(state.route) === 'console' ? 'console' : 'investments');
   };
   NS.changes.viewer = (el) => {
     state.viewer = el.value;
     const inv = ws().investors.find((x) => x.id === el.value);
     if (inv && inv.onboarding.status !== 'complete') NS.startOnboarding(inv.id);
-    else go('portfolio');
+    else go('investments');
   };
 
   NS.app = { state, render, go, setClient, save, applyTenant, applyAppearance, setPath, getPath, ws, modeOf };

@@ -615,7 +615,7 @@
   };
   NS.actions['view-as'] = (el) => {
     S().viewer = el.getAttribute('data-id');
-    NS.app.go('portfolio');
+    NS.app.go('investments');
   };
 
   /* ---------- Distributions and NACHA ---------- */
@@ -1018,9 +1018,9 @@
     return `<div class="pv">
       <p class="pv-label">Investor portal preview</p>
       <div class="pv-portal pv-shell">
-        <div class="pv-head"><span class="pt-logo">${B.lockup(t)}</span><span class="pv-nav"><span class="is-on">Portfolio</span><span>Distributions</span><span>Documents</span></span></div>
+        <div class="pv-head"><span class="pt-logo">${B.lockup(t)}</span><span class="pv-nav"><span class="is-on">Investments</span><span>Distributions</span><span>Documents</span></span></div>
         <div class="pv-in">
-          <h3>Portfolio</h3>
+          <h3>Investments</h3>
           <dl class="pv-figs"><div><dt>Invested</dt><dd>$500,000</dd></div><div><dt>Distributions received</dt><dd>$117,625.00</dd></div></dl>
           <div class="pv-row"><a>${h(t.shortName)} Sample Offering</a><span>$250,000</span></div>
           <div class="pv-hold">${NS.holdBar({ progress: 0.62, windowStart: 0.72, remaining: 'Exit window opens in 7 months' })}</div>

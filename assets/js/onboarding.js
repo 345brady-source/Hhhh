@@ -286,7 +286,7 @@
           <p class="lede">${
             bank ? `Future distributions will be paid by ACH to the ${bank.type} account ending ${h(U.last4(bank.account))}.` : 'Future distributions will be mailed by check to your address on file.'
           }${o.mode === 'bank' ? ` For your protection, ${h(t.support.team)} will call the number on file to confirm this change before the next payment.` : ''}</p>
-          <a class="btn btn-primary" href="#${o.mode === 'bank' ? 'account' : 'portfolio'}">${o.mode === 'bank' ? 'Back to account' : 'Go to your portfolio'}</a>
+          <a class="btn btn-primary" href="#${o.mode === 'bank' ? 'account' : 'investments'}">${o.mode === 'bank' ? 'Back to account' : 'Go to your investments'}</a>
         </div></main>${NS.portalFooter ? NS.portalFooter() : ''}</div>`;
       }
       const key = steps[o.step];

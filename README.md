@@ -15,7 +15,7 @@ python3 -m http.server 8000
 
 | Page | Contents |
 |---|---|
-| Portfolio | Amount invested, distributions received, and time until exit for each investment; exited investments; and, for each investment, its last distribution and next distribution date |
+| Investments | Amount invested, distributions received, and time until exit for each investment; exited investments; and, for each investment, its last distribution and next distribution date |
 | Investment | One investment's figures, a timeline from closing to projected exit, the key terms the sponsor chose to show, the latest update, its payments and documents |
 | Distributions | Totals, received by year, full payment history filterable by year and investment |
 | Documents | Updates, tax documents (K-1, grantor trust letter or 1099-INT depending on the investment), statements and agreements, on the client's letterhead |

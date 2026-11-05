@@ -161,23 +161,21 @@
     const A = normHex(t.colors && t.colors.accent) || '#1F7A8C';
     const brandNav = t.nav === 'brand';
     const p = toOklch(P);
-    const hue = p.h;
     const WHITE = '#FFFFFF';
 
-    // Neutrals carry a faint bias toward the brand hue so greys feel chosen.
-    const nc = Math.min(p.c, 0.05);
-    const N = (l, k) => oklch(l, nc * k, hue);
+    // Neutrals are true greys on a white page; only the brand colors carry hue.
+    const N = (l) => oklch(l, 0, 0);
 
     const L = {};
-    L.bg = N(0.982, 0.14);
+    L.bg = WHITE;
     L.surface = WHITE;
-    L['surface-2'] = N(0.968, 0.22);
-    L['surface-3'] = N(0.942, 0.3);
-    L.line = N(0.91, 0.3);
-    L['line-strong'] = N(0.84, 0.38);
-    L.fg = N(0.26, 0.9);
-    L['fg-2'] = N(0.44, 0.6);
-    L['fg-3'] = ensureContrast(N(0.55, 0.45), L.bg, 4.5);
+    L['surface-2'] = N(0.975);
+    L['surface-3'] = N(0.95);
+    L.line = N(0.915);
+    L['line-strong'] = N(0.85);
+    L.fg = N(0.22);
+    L['fg-2'] = N(0.4);
+    L['fg-3'] = ensureContrast(N(0.53), WHITE, 4.5);
 
     L.brand = P;
     L['brand-ink'] = onColor(P);
@@ -191,10 +189,10 @@
     L.focus = ensureContrast(A, WHITE, 3);
 
     L['chart-1'] = ensureContrast(P, WHITE, 3);
-    L['chart-muted'] = N(0.62, 0.4);
+    L['chart-muted'] = N(0.65);
     L['seg-1'] = L['chart-1'];
     L['seg-2'] = A;
-    L['seg-3'] = N(0.8, 0.5);
+    L['seg-3'] = N(0.82);
     ['seg-1', 'seg-2', 'seg-3'].forEach((k) => (L[k + '-ink'] = onColor(L[k])));
 
     // Navigation surface: either a light rail or a solid brand-color rail.
@@ -240,19 +238,18 @@
     L['mark-a'] = A;
     L['mark-ink'] = onColor(P);
 
-    /* Dark mode: its own steps from the same hues, not an inversion. */
-    const dc = Math.min(p.c, 0.045);
-    const ND = (l, k) => oklch(l, dc * k, hue);
+    /* Dark mode: neutral charcoal greys (no blue cast); brand colors are lifted until they read. */
+    const ND = (l) => oklch(l, 0, 0);
     const D = {};
-    D.bg = ND(0.17, 0.55);
-    D.surface = ND(0.205, 0.6);
-    D['surface-2'] = ND(0.236, 0.6);
-    D['surface-3'] = ND(0.272, 0.6);
-    D.line = ND(0.305, 0.55);
-    D['line-strong'] = ND(0.39, 0.5);
-    D.fg = ND(0.95, 0.25);
-    D['fg-2'] = ND(0.8, 0.3);
-    D['fg-3'] = ensureContrast(ND(0.68, 0.3), D.surface, 4.5);
+    D.bg = ND(0.17);
+    D.surface = ND(0.2);
+    D['surface-2'] = ND(0.235);
+    D['surface-3'] = ND(0.27);
+    D.line = ND(0.3);
+    D['line-strong'] = ND(0.39);
+    D.fg = ND(0.95);
+    D['fg-2'] = ND(0.8);
+    D['fg-3'] = ensureContrast(ND(0.68), D.surface, 4.5);
 
     const pb = ensureContrast(P, D.surface, 3.2);
     D.brand = pb;
@@ -266,13 +263,14 @@
     D['accent-text'] = ensureContrast(A, D.surface, 4.8);
     D.focus = ensureContrast(A, D.surface, 3.5);
     D['chart-1'] = ensureContrast(P, D.surface, 4);
-    D['chart-muted'] = ND(0.58, 0.4);
+    D['chart-muted'] = ND(0.58);
     D['seg-1'] = D['chart-1'];
     D['seg-2'] = D.accent;
-    D['seg-3'] = ND(0.46, 0.5);
+    D['seg-3'] = ND(0.46);
     ['seg-1', 'seg-2', 'seg-3'].forEach((k) => (D[k + '-ink'] = onColor(D[k])));
 
-    const navDark = brandNav ? oklch(0.215, Math.min(p.c, 0.07), hue) : ND(0.185, 0.6);
+    // A brand-colored header stays in the brand hue, darkened; a white header becomes charcoal.
+    const navDark = brandNav ? oklch(0.24, Math.min(p.c, 0.07), p.h) : ND(0.19);
     D['nav-bg'] = navDark;
     D['nav-fg-strong'] = '#FFFFFF';
     D['nav-fg'] = ensureContrast(mix(navDark, '#FFFFFF', 0.76), navDark, 4.5);
@@ -286,7 +284,7 @@
     D['nav-mark-a'] = D['nav-marker'];
     D['nav-mark-ink'] = navDark;
 
-    const heroDark = oklch(0.24, Math.min(p.c, 0.09), hue);
+    const heroDark = ND(0.22);
     D['hero-bg'] = heroDark;
     D['hero-fg'] = '#FFFFFF';
     D['hero-fg-2'] = ensureContrast(mix(heroDark, '#FFFFFF', 0.74), heroDark, 4.5);
