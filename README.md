@@ -34,7 +34,21 @@ python3 -m http.server 8000
 | ACH origination | ODFI and file-header values, company name and ID, entry description, and optional balanced files |
 | Portal and brand | Logo, colors with an accessibility check, typeface, header style, onboarding requirements, support contact and disclosures |
 
-The operator bar at the top switches clients and views, and lets you view the portal as any investor. It exists for Carrow & Vale staff; investors never see it.
+## Who sees what
+
+| Role | Sees |
+|---|---|
+| Investor | Only the client's branded portal. No Carrow & Vale name or bar, and no access to the console |
+| Sponsor staff | Their own firm's console, in their own colors with their logo, and an unbranded "Investor preview" bar when they view the portal as an investor. No client switching, no "Powered by" setting, no configuration export |
+| Carrow & Vale staff | Every client, the operator bar (client switcher, portal/console toggle, view as any investor) and new-client setup |
+
+In production the role comes from sign-in. Because this build has no server, a small "Demo · signed in as" control in the bottom-left corner switches roles. To remove it, set this before the scripts load:
+
+```html
+<script>window.CVPortalConfig = { demo: false };</script>
+```
+
+With demo mode off and no role supplied, the app defaults to the investor view. A server can pass the signed-in role as `window.CVPortalConfig = { demo: false, role: 'sponsor' }`; enforce access on the server as well, since anything in the browser can be changed by the user.
 
 ## Every investment is different
 

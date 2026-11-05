@@ -49,10 +49,28 @@ body.mode-console { background: var(--cv-bg); }
 .op-modes a[aria-current="page"] { background: var(--cv-select); color: var(--cv-ink); font-weight: 700; }
 .op-viewer { margin-left: auto; }
 
+/* Investor preview bar (sponsor staff) and demo role control: no Carrow & Vale branding */
+.pvbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; min-height: 44px; padding: 6px max(20px, env(safe-area-inset-right, 0px)) 6px max(20px, env(safe-area-inset-left, 0px)); background: var(--cv-panel-2); color: var(--cv-ink-2); border-bottom: 1px solid var(--cv-line); font-family: var(--cv-font); font-size: 13px; }
+.pvbar-label { font-weight: 800; color: var(--cv-ink); }
+.pvbar .op-viewer { margin-left: 0; }
+.pvbar-back { margin-left: auto; font-weight: 700; color: var(--cv-link); }
+.demo-role { position: fixed; z-index: 75; left: calc(16px + env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px; background: var(--cv-panel); color: var(--cv-ink-3); border: 1px solid var(--cv-line); border-radius: 4px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); font-family: var(--cv-font); font-size: 12px; font-weight: 600; max-width: calc(100vw - 32px); }
+.demo-role select { min-height: 30px; max-width: 240px; padding: 3px 24px 3px 6px; border: 1px solid var(--cv-line); border-radius: 3px; background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); font-size: 12px; font-weight: 700; min-width: 0; }
+.demo-role select:focus-visible { outline: 2px solid var(--cv-focus); outline-offset: 1px; }
+body.has-demo #view { padding-bottom: 64px; }
+body.has-demo.mode-portal #view { background: var(--surface); }
+
+/* Sponsor staff use the console in their own firm's colors */
+body.role-sponsor .cs { --cv-accent: var(--brand); --cv-accent-ink: var(--brand-ink); --cv-accent-hover: var(--brand-hover); --cv-link: var(--brand-text); --cv-focus: var(--focus); }
+
 /* ---------- Console frame ---------- */
 .cs { display: grid; grid-template-columns: 228px minmax(0, 1fr); min-height: calc(100vh - 48px); font-family: var(--cv-font); color: var(--cv-ink); background: var(--cv-bg); }
 .cs-nav { border-right: 1px solid var(--cv-line); background: var(--cv-panel); padding: 22px 12px 22px max(12px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 18px; }
-.cs-client { padding: 0 10px 16px; border-bottom: 1px solid var(--cv-line-soft); display: flex; flex-direction: column; gap: 2px; }
+.cs-client { padding: 0 10px 16px; border-bottom: 1px solid var(--cv-line-soft); display: flex; flex-direction: column; gap: 8px; color: var(--cv-ink); }
+.cs-client .lockup .mark { width: 30px; height: 30px; }
+.cs-client .lockup .wm-name { font-size: 16px; }
+.cs-client .lockup .wm-tag { color: var(--cv-ink-3); }
+.cs-client .logo-img { max-height: 34px; max-width: 170px; }
 .cs-client-name { font-weight: 800; font-size: 15px; line-height: 1.3; }
 .cs-client-meta { font-size: 12px; color: var(--cv-ink-3); overflow-wrap: anywhere; }
 .cs-nav nav { display: flex; flex-direction: column; gap: 1px; }
@@ -310,3 +328,6 @@ body.mode-console { background: var(--cv-bg); }
   .cs-steps li { grid-template-columns: 30px minmax(0, 1fr); }
   .cs-steps li .cs-btn { grid-column: 2; justify-self: start; }
 }
+
+/* The main region takes focus after navigation for screen readers; it is not a control, so no ring. */
+#main:focus, #main:focus-visible { outline: none; }

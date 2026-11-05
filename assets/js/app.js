@@ -219,17 +219,55 @@
   }
   const modeOf = (key) => (NS.views[key] && NS.views[key].mode) || 'portal';
 
+  /* ---------- Roles ----------
+   * investor: the client's branded portal only. No Carrow & Vale bar, no console.
+   * sponsor:  that client's console (in the client's colors) and investor previews.
+   * staff:    Carrow & Vale; every client, the operator bar and client setup.
+   * In production the role comes from sign-in. This build has no server, so in demo
+   * mode a small control sets it. Set window.CVPortalConfig = { demo: false } before
+   * the scripts load to remove that control.
+   */
+  const config = Object.assign({ demo: true }, window.CVPortalConfig || {});
+  const ROLES = ['staff', 'sponsor', 'investor'];
+  function initialRole() {
+    if (ROLES.indexOf(config.role) >= 0) return config.role;
+    const saved = NS.store.get('role', null);
+    if (config.demo && ROLES.indexOf(saved) >= 0) return saved;
+    return config.demo ? 'staff' : 'investor';
+  }
+  state.role = initialRole();
+  function allowed(key) {
+    if (state.role === 'staff') return true;
+    if (state.role === 'sponsor') return key !== 'console-new-client';
+    return modeOf(key) === 'portal';
+  }
+  const homeFor = (role) => (role === 'investor' ? 'investments' : 'console');
+
   /* ---------- Operator bar (Carrow & Vale only; investors never see it) ---------- */
+  function viewerSelect(id) {
+    const w = ws();
+    if (!w.investors.length) return '';
+    return `<label class="op-field op-viewer" for="${id}"><span>Viewing as</span><select id="${id}" data-change="viewer">${w.investors
+      .map((inv) => `<option value="${h(inv.id)}"${inv.id === state.viewer ? ' selected' : ''}>${h(inv.title)}${inv.onboarding.status !== 'complete' ? ' (not activated)' : ''}</option>`)
+      .join('')}</select></label>`;
+  }
+  /** Sponsor staff previewing their investors' view: plain bar, no Carrow & Vale branding. */
+  function previewBarHTML() {
+    return `<div class="pvbar" role="region" aria-label="Investor preview"><span class="pvbar-label">Investor preview</span>${viewerSelect('pv-viewer')}<a class="pvbar-back" href="#console">Back to console</a></div>`;
+  }
+  function demoHTML() {
+    if (!config.demo) return '';
+    const w = ws();
+    const inv = w.investors.find((x) => x.id === state.viewer);
+    const opt = (v, label) => `<option value="${v}"${state.role === v ? ' selected' : ''}>${label}</option>`;
+    return `<label class="demo-role" for="demo-role"><span>Demo · signed in as</span><select id="demo-role" data-change="demo-role">
+      ${opt('staff', 'Carrow &amp; Vale staff')}${opt('sponsor', `Sponsor staff · ${h(w.tenant.shortName)}`)}${opt('investor', `Investor · ${inv ? h(inv.title) : 'none yet'}`)}
+    </select></label>`;
+  }
   function opbarHTML() {
     const mode = modeOf(state.route);
     const clients = NS.workspace.list();
-    const w = ws();
-    const viewer =
-      mode === 'portal' && w.investors.length
-        ? `<label class="op-field op-viewer" for="op-viewer"><span>Viewing as</span><select id="op-viewer" data-change="viewer">${w.investors
-            .map((inv) => `<option value="${h(inv.id)}"${inv.id === state.viewer ? ' selected' : ''}>${h(inv.title)}${inv.onboarding.status !== 'complete' ? ' (not activated)' : ''}</option>`)
-            .join('')}</select></label>`
-        : '';
+    const viewer = mode === 'portal' ? viewerSelect('op-viewer') : '';
     return `<div class="op" role="region" aria-label="Carrow &amp; Vale operator controls">
       <div class="op-brand">${CV_MARK}<span class="op-word">CARROW <span>&amp;</span> VALE</span></div>
       <label class="op-field" for="op-client"><span>Client</span><select id="op-client" data-change="client">${clients
@@ -248,12 +286,19 @@
     const w = ws();
     if (!w) return;
     const key = state.route;
+    if (!allowed(key)) {
+      go(homeFor(state.role));
+      return;
+    }
     const view = NS.views[key] || NS.views.investments;
     const mode = modeOf(key);
+    ROLES.forEach((r) => document.body.classList.toggle('role-' + r, state.role === r));
+    document.body.classList.toggle('has-demo', !!config.demo);
     document.body.classList.toggle('mode-console', mode === 'console');
     document.body.classList.toggle('mode-portal', mode === 'portal');
     document.title = mode === 'console' ? `${w.tenant.shortName} · Sponsor Console` : `${w.tenant.portalName} · ${w.tenant.shortName}`;
-    document.getElementById('opbar').innerHTML = opbarHTML();
+    document.getElementById('opbar').innerHTML = state.role === 'staff' ? opbarHTML() : state.role === 'sponsor' && mode === 'portal' ? previewBarHTML() : '';
+    document.getElementById('demo').innerHTML = demoHTML();
     const el = document.getElementById('view');
     el.innerHTML = view.render(state.param);
     if (view.after) view.after(state.param);
@@ -296,7 +341,7 @@
   /* ---------- Events ---------- */
   function boot() {
     const app = document.getElementById('app');
-    app.innerHTML = `<div id="opbar"></div><div id="view"></div><dialog id="dlg" class="dlg"></dialog><div id="toasts" class="toasts" role="status" aria-live="polite"></div>`;
+    app.innerHTML = `<div id="opbar"></div><div id="view"></div><dialog id="dlg" class="dlg"></dialog><div id="toasts" class="toasts" role="status" aria-live="polite"></div><div id="demo"></div>`;
     document.addEventListener('click', (e) => {
       const a = e.target.closest('[data-action]');
       if (a && NS.actions[a.getAttribute('data-action')]) NS.actions[a.getAttribute('data-action')](a, e);
@@ -352,6 +397,14 @@
     }
     setClient(el.value, modeOf(state.route) === 'console' ? 'console' : 'investments');
   };
+  NS.changes['demo-role'] = (el) => {
+    state.role = el.value;
+    NS.store.set('role', state.role);
+    const inv = ws().investors.find((x) => x.id === state.viewer);
+    if (state.role === 'investor' && inv && inv.onboarding.status !== 'complete') NS.startOnboarding(inv.id);
+    else go(homeFor(state.role));
+    NS.ui.toast(state.role === 'staff' ? 'Signed in as Carrow & Vale staff' : state.role === 'sponsor' ? `Signed in as ${ws().tenant.shortName} staff` : `Signed in as ${inv ? inv.title : 'an investor'}`);
+  };
   NS.changes.viewer = (el) => {
     state.viewer = el.value;
     const inv = ws().investors.find((x) => x.id === el.value);
@@ -359,7 +412,7 @@
     else go('investments');
   };
 
-  NS.app = { state, render, go, setClient, save, applyTenant, applyAppearance, setAppearance, setPath, getPath, ws, modeOf };
+  NS.app = { state, config, allowed, render, go, setClient, save, applyTenant, applyAppearance, setAppearance, setPath, getPath, ws, modeOf };
 
   // Views register after this file loads, so boot once every script has run.
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

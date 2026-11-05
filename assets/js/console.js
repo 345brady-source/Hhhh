@@ -26,7 +26,7 @@
     const t = T();
     return `<div class="cs">
       <aside class="cs-nav" aria-label="Sponsor console">
-        <div class="cs-client"><span class="cs-client-name">${h(t.name)}</span><span class="cs-client-meta">${h(t.domain)}</span></div>
+        <div class="cs-client">${B.lockup(t)}<span class="cs-client-meta">${h(t.domain)}</span></div>
         <nav>${NAV.map(([k, l]) => `<a href="#${k}"${active === k ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
       </aside>
       <main class="cs-main" id="main" tabindex="-1">${inner}</main>
@@ -1083,9 +1083,9 @@
               ${tField('Sign-in heading', 'signin.headline', { max: 60 })}
               ${tField('Sign-in text', 'signin.sub', { max: 140 })}
               ${tField('Footer disclosure', 'disclaimer', { textarea: true, rows: 4 })}
-              ${tCheck('Show “Powered by Carrow & Vale”', 'showPoweredBy', 'Off by default. Investors see only the client.')}
+              ${S().role === 'staff' ? tCheck('Show “Powered by Carrow & Vale”', 'showPoweredBy', 'Off by default. Investors see only the client.') : ''}
             </div>`)}
-            ${panel('Configuration', `<p class="cs-hint">The client’s full configuration as JSON, for engineering hand-off or to copy a setup to another client.</p>
+            ${S().role !== 'staff' ? '' : panel('Configuration', `<p class="cs-hint">The client’s full configuration as JSON, for engineering hand-off or to copy a setup to another client.</p>
               <div class="cs-row"><button class="cs-btn" type="button" data-action="cfg-copy">Copy JSON</button><button class="cs-btn cs-btn-danger" type="button" data-action="cfg-reset">${S().ui.cfgReset ? 'Click again to confirm' : builtin ? 'Restore sample data' : 'Delete this client'}</button></div>`)}
           </div>
           <aside class="cs-split-side" id="tb-preview">${brandPreview()}</aside>
