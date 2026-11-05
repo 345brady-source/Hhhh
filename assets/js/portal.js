@@ -446,7 +446,7 @@
           <section class="sec">${sec('Tax and accreditation')}<dl class="terms">
             ${row('Tax form', inv.taxForm ? `${h(inv.taxForm)} on file` : 'Not provided')}
             ${row('Taxpayer ID', inv.tinLast4 ? `ending ${h(inv.tinLast4)}` : 'Not provided')}
-            ${row('Accreditation', inv.accreditation && inv.accreditation.basis ? h(inv.accreditation.basis) : 'Not provided')}
+            ${row('Accreditation', inv.accreditation && inv.accreditation.basis ? 'Verified accredited investor' : 'Not provided')}
             ${inv.accreditation && inv.accreditation.date ? row('Verified', date(inv.accreditation.date)) : ''}
           </dl></section>
           <section class="sec">${sec('Sign-in and delivery')}<dl class="terms">
