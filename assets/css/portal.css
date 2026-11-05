@@ -222,6 +222,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--fg-2); line-height: 1.5; }
 .check input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--brand); flex: none; }
 
+/* Settings */
+.settings-choice { max-width: 520px; margin-top: 16px; }
+
 /* Sign-in */
 .pt-auth .pt-head-in { min-height: 64px; }
 .auth { max-width: 880px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 260px); justify-content: space-between; gap: 48px; padding: 24px max(32px, env(safe-area-inset-right, 0px)) 0 max(32px, env(safe-area-inset-left, 0px)); }

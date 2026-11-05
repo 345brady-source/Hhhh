@@ -20,6 +20,7 @@ python3 -m http.server 8000
 | Distributions | Totals, received by year, full payment history filterable by year and investment |
 | Documents | Updates, tax documents (K-1, grantor trust letter or 1099-INT depending on the investment), statements and agreements, on the client's letterhead |
 | Account | Investor details, distribution bank account (update by re-verifying), tax and accreditation status |
+| Settings | Light, dark or match the device; saved in the browser and overrides the client default |
 | Sign-in and activation | Branded sign-in and a guided first-time activation |
 
 **Sponsor console** (Carrow & Vale and client staff)

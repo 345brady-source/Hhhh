@@ -176,11 +176,17 @@
   /* ---------- Appearance ---------- */
   const rootEl = document.documentElement;
   const hostTheme = rootEl.getAttribute('data-theme');
+  /** The viewer's own choice (Settings) wins; otherwise the client's default; otherwise the device. */
   function applyAppearance() {
-    const pref = ws() ? ws().tenant.appearance : 'system';
+    const mine = NS.store.get('appearance', null);
+    const pref = mine || (ws() ? ws().tenant.appearance : 'system');
     if (pref === 'light' || pref === 'dark') rootEl.setAttribute('data-theme', pref);
-    else if (hostTheme) rootEl.setAttribute('data-theme', hostTheme);
+    else if (!mine && hostTheme) rootEl.setAttribute('data-theme', hostTheme);
     else rootEl.removeAttribute('data-theme');
+  }
+  function setAppearance(pref) {
+    NS.store.set('appearance', pref);
+    applyAppearance();
   }
 
   /* ---------- Routing ---------- */
@@ -353,7 +359,7 @@
     else go('investments');
   };
 
-  NS.app = { state, render, go, setClient, save, applyTenant, applyAppearance, setPath, getPath, ws, modeOf };
+  NS.app = { state, render, go, setClient, save, applyTenant, applyAppearance, setAppearance, setPath, getPath, ws, modeOf };
 
   // Views register after this file loads, so boot once every script has run.
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

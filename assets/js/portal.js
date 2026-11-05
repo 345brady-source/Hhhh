@@ -26,7 +26,8 @@
     ['investments', 'Investments'],
     ['distributions', 'Distributions'],
     ['documents', 'Documents'],
-    ['account', 'Account']
+    ['account', 'Account'],
+    ['preferences', 'Settings']
   ];
   function shell(inner, active) {
     const t = T();
@@ -424,6 +425,41 @@
     }
   };
   NS.actions['update-bank'] = () => NS.startOnboarding(viewer().id, 'bank');
+
+  /* ---------- Settings ---------- */
+  // Route is #preferences: the bare name "settings" is reserved by the Claude artifact viewer.
+  const THEMES = [
+    ['light', 'Light', 'White background'],
+    ['dark', 'Dark', 'Dark background, easier on the eyes in low light'],
+    ['system', 'Match this device', 'Switches automatically with your device’s light or dark setting']
+  ];
+  NS.views.preferences = {
+    mode: 'portal',
+    render() {
+      const t = T();
+      const current = NS.store.get('appearance', null) || t.appearance || 'system';
+      return shell(
+        `${title('Settings', 'Preferences for this device')}
+        <section class="sec settings-sec">
+          ${sec('Appearance')}
+          <fieldset class="choice settings-choice">
+            <legend class="sr-only">Appearance</legend>
+            ${THEMES.map(([v, label, sub]) => `<label class="choice-row"><input type="radio" name="appearance" value="${v}" data-change="appearance-pref"${current === v ? ' checked' : ''}><span><strong>${label}</strong><span class="hint">${sub}</span></span></label>`).join('')}
+          </fieldset>
+          <p class="meta">Saved in this browser.</p>
+        </section>`,
+        'preferences'
+      );
+    }
+  };
+  NS.changes['appearance-pref'] = (el) => {
+    if (!el.checked) return;
+    NS.app.setAppearance(el.value);
+    NS.app.render();
+    const again = document.querySelector(`input[name="appearance"][value="${el.value}"]`);
+    if (again) again.focus();
+    U.toast(`Appearance set to ${el.value === 'system' ? 'match this device' : el.value}`);
+  };
 
   /* ---------- Sign-in ---------- */
   NS.views['sign-in'] = {
