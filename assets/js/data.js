@@ -162,7 +162,7 @@
         contact: 'Jordan Davis',
         title: 'Davis Family Trust',
         type: 'trust',
-        email: 'jordan.davis@example.com',
+        email: t.roster.login || 'jordan.davis@example.com',
         phone: '(917) 555-0136',
         address: '41 Orchard Lane, Montclair, NJ 07042',
         tinLast4: '4417',

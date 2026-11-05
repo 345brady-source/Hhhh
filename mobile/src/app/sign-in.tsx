@@ -1,6 +1,8 @@
 /*
- * Sign in: email, then password, then a 6-digit code. The email decides which
- * sponsor's account opens; an investor with several sponsors chooses one.
+ * Sign in: email, then password, then a 6-digit code. Each login belongs to
+ * one firm, so signing in opens that firm's account directly (no firm list).
+ * If the device already knows the firm (from its invitation link or the last
+ * sign-in), its logo shows from the first screen.
  * Demo: any password works and the code is 482913. In production these steps
  * call the portal's authentication API.
  */
@@ -10,13 +12,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSession, type Account } from '../lib/session';
 import { AppMark, Lockup } from '../components/Logo';
 import { Button, Field, Screen } from '../components/ui';
-import { ChevronIcon } from '../components/icons';
 
 const DEMO_CODE = '482913';
-type Step = 'email' | 'password' | 'code' | 'choose';
+type Step = 'email' | 'password' | 'code';
 
 export default function SignIn() {
-  const { lookup, signIn, colors: c } = useSession();
+  const { lookup, signIn, firm, colors: c } = useSession();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
@@ -24,20 +25,21 @@ export default function SignIn() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [note, setNote] = useState('');
-  const [matches, setMatches] = useState<Account[]>([]);
-
-  const active = matches.filter((m) => m.investor.onboarding.status === 'complete');
+  const [account, setAccount] = useState<Account | null>(null);
 
   function submitEmail() {
     setError('');
-    const found = lookup(email);
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) return setError('Enter the email address you use with your investment firm.');
+    const found = lookup(email);
+    // The login's own firm. The firm this device is tied to settles the rare
+    // case of one email registered separately with two firms.
+    const acc = (firm && found.find((m) => m.tenantId === firm.id)) || (found.length === 1 ? found[0] : null);
     if (!found.length) return setError('We could not find an investor account for that email. Check the address, or contact the firm you invested with.');
-    if (!found.some((m) => m.investor.onboarding.status === 'complete')) {
-      const t = found[0].tenant;
-      return setError(`This account is not activated yet. Use the activation link in your invitation email from ${t.shortName}, or call ${t.support.phone}.`);
+    if (!acc) return setError("This email is registered with more than one firm. Open Shareholder Desk from the link in your firm's invitation email to sign in to that firm.");
+    if (acc.investor.onboarding.status !== 'complete') {
+      return setError(`This account is not activated yet. Use the activation link in your invitation email from ${acc.tenant.shortName}, or call ${acc.tenant.support.phone}.`);
     }
-    setMatches(found);
+    setAccount(acc);
     setStep('password');
   }
   function submitPassword() {
@@ -48,17 +50,16 @@ export default function SignIn() {
   async function submitCode() {
     setError('');
     if (code.replace(/\D/g, '') !== DEMO_CODE) return setError('That code is not correct. Check your authenticator app and try again.');
-    if (active.length > 1) return setStep('choose');
-    await signIn(active[0].tenantId, active[0].investor.id, email.trim());
+    if (account) await signIn(account.tenantId, account.investor.id, email.trim());
   }
 
-  const single = active.length === 1 ? active[0] : null;
+  const shown = step !== 'email' && account ? account.tenant : firm;
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={{ height: insets.top, backgroundColor: c.bg }} />
       <Screen>
         <View style={styles.brand}>
-          {single && step !== 'email' ? <Lockup tenant={single.tenant} size="lg" /> : (
+          {shown ? <Lockup tenant={shown} size="lg" /> : (
             <>
               <AppMark size={44} />
               <Text style={[styles.appName, { color: c.fg }]}>Shareholder Desk</Text>
@@ -85,7 +86,7 @@ export default function SignIn() {
               <Pressable onPress={() => setNote(`We would email a password reset link to ${email.trim()}.`)} accessibilityRole="button" hitSlop={8}>
                 <Text style={[styles.link, { color: c.brandText }]}>Forgot your password?</Text>
               </Pressable>
-              <Pressable onPress={() => { setStep('email'); setPassword(''); setError(''); setNote(''); }} accessibilityRole="button" hitSlop={8}>
+              <Pressable onPress={() => { setStep('email'); setAccount(null); setPassword(''); setError(''); setNote(''); }} accessibilityRole="button" hitSlop={8}>
                 <Text style={[styles.link, { color: c.brandText }]}>Use a different email</Text>
               </Pressable>
             </View>
@@ -102,24 +103,8 @@ export default function SignIn() {
           </View>
         )}
 
-        {step === 'choose' && (
-          <View>
-            <Text style={[styles.h1, { color: c.fg }]} accessibilityRole="header">Choose an account</Text>
-            <Text style={[styles.lede, { color: c.fg2 }]}>Your email is linked to investments with {active.length} firms. You can switch later in Settings.</Text>
-            {active.map((m) => (
-              <Pressable key={m.tenantId} onPress={() => signIn(m.tenantId, m.investor.id, email.trim())} accessibilityRole="button" accessibilityLabel={`Open ${m.tenant.name}`} style={({ pressed }) => [styles.account, { borderColor: c.line, backgroundColor: pressed ? c.surface2 : c.surface }]}>
-                <View style={{ flex: 1, gap: 6 }}>
-                  <Lockup tenant={m.tenant} />
-                  <Text style={{ color: c.fg3, fontSize: 13 }}>{m.investor.title} · {m.investor.id}</Text>
-                </View>
-                <ChevronIcon color={c.fg3} />
-              </Pressable>
-            ))}
-          </View>
-        )}
-
         <View style={[styles.demo, { borderColor: c.line }]}>
-          <Text style={{ color: c.fg3, fontSize: 12, lineHeight: 18 }}>Sample login for this preview: jordan.davis@example.com, any password, code 482913.</Text>
+          <Text style={{ color: c.fg3, fontSize: 12, lineHeight: 18 }}>Sample logins for this preview, one per firm: jordan.davis@example.com (Kestrel Bay), jordan.davis@example.org (Ashwell Ridge), jordan.davis@example.net (Greywater). Any password, code 482913.</Text>
         </View>
       </Screen>
     </KeyboardAvoidingView>
@@ -134,6 +119,5 @@ const styles = StyleSheet.create({
   links: { marginTop: 18, gap: 14 },
   link: { fontSize: 15, textDecorationLine: 'underline' },
   note: { marginTop: 16, fontSize: 14 },
-  account: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderWidth: 1, borderRadius: 4, marginBottom: 10 },
   demo: { marginTop: 40, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth }
 });

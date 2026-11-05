@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Switch, Text, View } from 'react-native';
 import Constants from 'expo-constants';
 import { useSession } from '../../lib/session';
-import { Lockup } from '../../components/Logo';
 import { Button, Screen, Section, Segmented, Title } from '../../components/ui';
 
 export default function Settings() {
-  const { appearance, setAppearance, faceId, setFaceId, biometricsAvailable, accounts, session, switchAccount, signOut, tenant, colors: c } = useSession();
+  const { appearance, setAppearance, faceId, setFaceId, biometricsAvailable, signOut, tenant, colors: c } = useSession();
   const [faceMsg, setFaceMsg] = useState('');
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
   const version = Constants.expoConfig?.version || '1.0.0';
@@ -38,22 +37,6 @@ export default function Settings() {
         {faceMsg ? <Text style={{ color: c.bad, fontSize: 13, marginTop: 8 }}>{faceMsg}</Text> : null}
         <Text style={{ color: c.fg3, fontSize: 13, marginTop: 10 }}>Two-step verification is on for your account.</Text>
       </Section>
-
-      {accounts.length > 1 ? (
-        <Section label="Accounts">
-          {accounts.map((a) => {
-            const on = a.tenantId === session?.tenantId;
-            return (
-              <Pressable key={a.tenantId} onPress={() => switchAccount(a.tenantId)} disabled={on} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={`${a.tenant.name}${on ? ', current account' : ''}`} style={[styles.row, { borderBottomColor: c.line }]}>
-                <View style={{ flex: 1 }}>
-                  <Lockup tenant={a.tenant} size="sm" />
-                </View>
-                <Text style={{ color: on ? c.fg : c.brandText, fontSize: 14, fontWeight: on ? '600' : '400' }}>{on ? 'Current' : 'Switch'}</Text>
-              </Pressable>
-            );
-          })}
-        </Section>
-      ) : null}
 
       <View style={{ marginTop: 32, gap: 12 }}>
         <Button title="Sign out" kind="secondary" onPress={signOut} />

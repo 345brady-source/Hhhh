@@ -161,7 +161,7 @@
           seed: { rate: 0.11, freq: 'Quarterly', start: '2024-10-15', type: 'Interest' }
         }
       ],
-      roster: { size: 26, jordan: { 'kb-fund-ii': 250000, 'kb-harlow': 100000, 'kb-note-24a': 150000 } }
+      roster: { size: 26, login: 'jordan.davis@example.com', jordan: { 'kb-fund-ii': 250000, 'kb-harlow': 100000, 'kb-note-24a': 150000 } }
     },
     {
       id: 'ashwell-ridge',
@@ -260,7 +260,7 @@
           seed: { rate: 0.06, freq: 'Monthly', start: '2023-01-15', end: '2025-07-15', type: 'Income', final: ['2025-08-15', 1.62, 'Return of capital and gain'] }
         }
       ],
-      roster: { size: 28, jordan: { 'ar-cedar-row': 100000, 'ar-mob-dst': 250000, 'ar-larch': 75000 } }
+      roster: { size: 28, login: 'jordan.davis@example.org', jordan: { 'ar-cedar-row': 100000, 'ar-mob-dst': 250000, 'ar-larch': 75000 } }
     },
     {
       id: 'greywater',
@@ -355,7 +355,7 @@
           seed: { rate: 0.06, freq: 'Quarterly', start: '2024-01-15', type: 'Income' }
         }
       ],
-      roster: { size: 24, jordan: { 'gw-solar-i': 150000, 'gw-royalty-23': 100000, 'gw-water': 200000 } }
+      roster: { size: 24, login: 'jordan.davis@example.net', jordan: { 'gw-solar-i': 150000, 'gw-royalty-23': 100000, 'gw-water': 200000 } }
     }
   ];
 
