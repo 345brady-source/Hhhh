@@ -69,37 +69,27 @@
     return shell(`${title('Portfolio')}<p class="empty">No investments are recorded for this account yet. Your investments will appear here once your subscription is accepted and funded.</p>`, 'portfolio');
   }
 
-  /* ---------- Next distribution ---------- */
-  function upcoming(positions) {
-    const map = {};
-    positions.forEach((p) => {
-      const n = NS.nextDistribution(W(), p.offering);
-      if (!n) return;
-      (map[n.date] = map[n.date] || []).push({ p, n });
-    });
-    return Object.keys(map)
-      .sort()
-      .map((d) => ({ date: d, items: map[d] }));
-  }
-  /** "Next distribution" lines: one per payment date, listing what pays and on what schedule. */
-  function nextStrip(positions) {
-    const groups = upcoming(positions);
-    if (!groups.length) return '';
-    const rows = groups
-      .map((g, i) => {
-        const moved = g.items.find((x) => x.n.moved);
-        const why = moved ? NS.nacha.bankingDayReason(moved.n.nominal) : '';
-        return `<div class="next-row${i === 0 ? ' is-first' : ''}">
-          <dt>${i === 0 ? 'Next distribution' : 'Then'}</dt>
-          <dd>
-            <span class="next-date">${date(g.date, i === 0 ? 'wdlong' : 'wd')}</span>
-            ${g.items.map((x) => `<span class="next-item">${h(x.p.offering.name)}<span class="next-sched"> · ${x.n.scheduled ? 'Scheduled payment' : h(x.n.schedule)}</span></span>`).join('')}
-            ${moved && why ? `<span class="next-note">The ${NS.data.ordinal(moved.n.day)} ${why}, so payment is made the next banking day.</span>` : ''}
-          </dd>
-        </div>`;
+  /* ---------- Distributions by investment ---------- */
+  /** One row per investment: its last payment and its next distribution date. */
+  function byInvestmentTable(positions) {
+    if (!positions.length) return '<p class="empty">No active investments.</p>';
+    let moved = false;
+    const rows = positions
+      .map((p) => {
+        const last = p.payments.find((x) => x.status === 'paid');
+        const n = NS.nextDistribution(W(), p.offering);
+        if (n && n.moved) moved = true;
+        return `<tr>
+          <th scope="row"><a href="#investment-${h(p.offering.id)}">${h(p.offering.name)}</a><span class="sub">${h((p.offering.distribution || {}).frequency || '')}</span></th>
+          <td class="nowrap" data-label="Last distribution">${last ? date(last.date) : '—'}</td>
+          <td class="num" data-label="Amount">${last ? usdc(last.cents) : '—'}</td>
+          <td data-label="Next distribution">${n ? `<span class="strong">${date(n.date)}</span><span class="sub">${n.scheduled ? 'Scheduled payment' : h(n.schedule)}</span>` : '<span class="sub">No set schedule</span>'}</td>
+        </tr>`;
       })
       .join('');
-    return `<dl class="next-dist">${rows}</dl>`;
+    return `<div class="tbl-scroll"><table class="tbl tbl-stack">
+      <thead><tr><th scope="col">Investment</th><th scope="col">Last distribution</th><th scope="col" class="num">Amount</th><th scope="col">Next distribution</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>${moved ? '<p class="meta">Payments due on a weekend or bank holiday are made the next banking day.</p>' : ''}`;
   }
 
   /* ---------- Portfolio ---------- */
@@ -132,7 +122,6 @@
         </tr>`
         )
         .join('');
-      const recent = v.payments.slice(0, 6);
       const scheduled = v.payments.filter((p) => p.status === 'scheduled');
       return shell(
         `${title('Portfolio', `${h(inv.title)} · Account ${h(inv.id)} · As of ${date(today, 'long')}`)}
@@ -162,8 +151,7 @@
 
         <section class="sec">
           ${sec('Recent distributions', '<a class="sec-link" href="#distributions">All distributions</a>')}
-          ${nextStrip(v.active)}
-          ${paymentsTable(recent, true)}
+          ${byInvestmentTable(v.active)}
         </section>`,
         'portfolio'
       );
@@ -234,7 +222,6 @@
 
         <section class="sec">
           ${sec('Distributions from this investment', pays.length > 12 ? `<button class="sec-link link-btn" type="button" data-action="toggle-pays" data-id="${h(o.id)}">${showAll ? 'Show recent' : `Show all ${pays.length}`}</button>` : '')}
-          ${nextStrip([p])}
           ${paymentsTable(shown, false)}
         </section>
 
@@ -269,12 +256,7 @@
         <dl class="figs">
           ${fig('Total received', usdc(v.totals.received), 'All investments, to date')}
           ${fig(`Received in ${NS.dates.today().slice(0, 4)}`, usdc(v.totals.ytd), 'Year to date')}
-          ${(() => {
-            const g = upcoming(v.active)[0];
-            if (!g) return fig('Next distribution', '—', 'No regular schedule');
-            const names = g.items.map((x) => x.p.offering.shortName || x.p.offering.name).join(', ');
-            return fig('Next distribution', date(g.date), h(names) + (v.totals.scheduled ? ` · ${usdc(v.totals.scheduled)} scheduled` : ''));
-          })()}
+          ${fig('Scheduled', usdc(v.totals.scheduled), v.totals.scheduled ? 'Approved, not yet paid' : 'None scheduled')}
         </dl>
         <section class="sec">
           ${sec('Received by year')}
