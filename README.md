@@ -36,6 +36,10 @@ python3 -m http.server 8000
 | ACH origination | ODFI and file-header values, company name and ID, entry description, and optional balanced files |
 | Portal and brand | Logo, colors with an accessibility check, typeface, header style, onboarding requirements, support contact and disclosures |
 
+## iOS app: Shareholder Desk
+
+`mobile/` holds the investor app for iPhone, named **Shareholder Desk** so it carries no Carrow & Vale branding. Investors sign in with their email, password and a 6-digit code; the app opens the account of the firm they invested with, in that firm's branding. It shows investments, time to redemption, distributions with next payment dates, documents, notices, account details and settings (light or dark, Face ID). It is built with Expo (React Native) and shares this portal's core logic, so the figures match. See `mobile/README.md` for running, building and App Store submission.
+
 ## Who sees what
 
 | Role | Sees |
