@@ -318,7 +318,7 @@
       { key: 'button', label: 'Button text on primary', ratio: contrast(L['brand-ink'], P), target: 4.5 },
       { key: 'link', label: 'Primary as text on white', ratio: contrast(L['brand-text'], WHITE), target: 4.5, adjusted: L['brand-text'] !== P, original: contrast(P, WHITE) },
       { key: 'accent', label: 'Accent as text on white', ratio: contrast(L['accent-text'], WHITE), target: 4.5, adjusted: L['accent-text'] !== A, original: contrast(A, WHITE) },
-      { key: 'nav', label: 'Navigation text', ratio: contrast(L['nav-fg'], L['nav-bg']), target: 4.5 },
+      { key: 'nav', label: 'Header text', ratio: contrast(L['nav-fg'], L['nav-bg']), target: 4.5 },
       { key: 'dark', label: 'Primary in dark mode', ratio: contrast(D['brand-text'], D.surface), target: 4.5, adjusted: D['brand-text'] !== P, original: contrast(P, D.surface) },
       { key: 'chart', label: 'Chart colors apart', delta: deltaE(L['seg-1'], L['seg-2']), target: 15 }
     ];

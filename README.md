@@ -1,92 +1,119 @@
 # Carrow & Vale Investor Portal
 
-A white-label investor portal for Carrow & Vale Shareholder Advisors. One build serves any number of client firms. Each client's investors see only that firm: its logo, colors, typeface, domain, support team and disclosures. They never see the Carrow & Vale name unless the client turns on "Powered by".
+A white-label investor portal and sponsor console for Carrow & Vale Shareholder Advisors. Carrow & Vale's clients are investment firms and private placement sponsors; each client's investors see a portal carrying only that client's brand.
 
-It is a static app with no build step. Open `index.html` through any static file server.
+It is a static app with no build step:
 
 ```sh
 python3 -m http.server 8000
-# http://localhost:8000/?tenant=kestrel-bay
+# http://localhost:8000/?tenant=ashwell-ridge
 ```
 
-## What investors get
+## Two sides
 
-| Page | What it covers |
+**Investor portal** (what a client's investors see)
+
+| Page | Contents |
 |---|---|
-| Overview | Capital account balance, commitment, contributed, distributions, unfunded, TVPI/DPI, a capital account chart, the quarter's rollforward, new documents, upcoming dates and the firm's latest letter |
-| Investments | Allocation by capital account and per-position commitments, cash flows, TVPI, DPI and net IRR |
-| Calls & distributions | The open capital call with a wire-fraud warning, call history, distributions by quarter and payment history |
-| Documents | Searchable vault of reports, statements, tax documents, notices and legal documents. Previews render on the client's letterhead |
-| Tax center | K-1 status by year and tax-season support |
-| Messages | Secure messages with the firm's investor relations team. Replies are signed by the firm |
-| Opportunities | New offerings for existing investors, with a call request to a Series 7 and Series 63 registered representative |
-| Profile | Investor details, accreditation, distribution account, security, notifications, authorized users, appearance |
-| Sign-in | Branded sign-in with a 2-step verification step |
+| Portfolio | Amount invested, distributions received, and time until exit for each investment; exited investments; recent payments |
+| Investment | One investment's figures, a timeline from closing to projected exit, the key terms the sponsor chose to show, the latest update, its payments and documents |
+| Distributions | Totals, received by year, full payment history filterable by year and investment |
+| Documents | Updates, tax documents (K-1, grantor trust letter or 1099-INT depending on the investment), statements and agreements, on the client's letterhead |
+| Account | Investor details, distribution bank account (update by re-verifying), tax and accreditation status |
+| Sign-in and activation | Branded sign-in and a guided first-time activation |
 
-## How white-labeling works
+**Sponsor console** (Carrow & Vale and client staff)
 
-Everything client-specific lives in one config object per client in `assets/js/tenants.js`. `assets/js/brand.js` turns it into a complete set of CSS custom properties for light and dark mode.
+| Page | Contents |
+|---|---|
+| Overview | A five-step setup checklist for new clients, key figures, and items needing attention (investors not activated, investors without bank details, exits or maturities within 12 months) |
+| Offerings | Each investment configured separately: type, closing date, how exit is defined, distribution frequency, the key terms investors see, the latest update, and the ACH company name and ID it pays under. A live preview shows what investors will see |
+| Investors | Activation status and payment method for every investor; invite one investor or import a list; preview the branded invitation email; open an investor's activation |
+| Distributions | Allocate a payment pro rata by amount invested (to the cent), generate the NACHA file, and record the payment so investors see it |
+| ACH origination | ODFI and file-header values, company name and ID, entry description, and optional balanced files |
+| Portal and brand | Logo, colors with an accessibility check, typeface, header style, onboarding requirements, support contact and disclosures |
 
-- **Two colors in, full palette out.** From the primary and accent colors the engine derives neutrals tinted toward the brand hue, hover and tint states, navigation colors, chart colors and a separate dark palette.
-- **Contrast is guaranteed, not hoped for.** When a brand color is too light or too dark to read as text, the engine uses a deeper or brighter step of the same hue (OKLCH lightness) until it meets WCAG AA. Buttons and fills keep the exact brand color. Brand Studio shows each check.
-- **Logo.** Upload a PNG/SVG/JPG/WebP, or use a generated mark (monogram, wing, ridge, wave, arch) drawn in the client's colors. The favicon is generated to match.
-- **Type and shape.** Four type pairs (Manrope; Source Serif with Source Sans; IBM Plex Sans; Libre Franklin) and three corner styles.
-- **Features.** Capital calls, tax center, messaging and opportunities can be turned off per client.
-- **Which client loads.** `?tenant=<id>`, then the request hostname matched against each client's `domain`, then the last client opened in Brand Studio.
+The operator bar at the top switches clients and views, and lets you view the portal as any investor. It exists for Carrow & Vale staff; investors never see it.
 
-### Brand Studio
+## Every investment is different
 
-The floating "Brand Studio" button opens the Carrow & Vale operator panel. It always wears Carrow & Vale's own branding so it can't be mistaken for part of a client portal. Use it to switch between clients, create a new one, and edit identity, logo, colors, type, layout, features, support details and disclosures. Changes apply live and are saved in the browser. "Copy JSON" exports the finished config for engineering to add to `tenants.js`.
+Exit timing is configured per offering with one of five definitions:
 
-Brand Studio is a demo and onboarding tool. In production, gate it behind staff authentication or remove `studio.js` from client deployments.
+| Basis | Typical use | Investors see |
+|---|---|---|
+| Projected exit date | Funds, energy projects | "Projected exit Sep 2029 · 2 years, 10 months remaining" |
+| Projected exit window | Syndications, DSTs, co-investments | "Projected exit 2027–2029 · Exit window opens in 7 months" |
+| Maturity date | Notes and private credit | "Maturity Jun 30, 2027 · 7 months remaining" |
+| No set term | Royalties, evergreen programs | "No set term" plus the sponsor's note |
+| Exited | Sold or repaid | "Exited Aug 15, 2025 · Held 6 years, 3 months" |
 
-### Client config
+Offering types (real estate syndication, DST, private equity fund, co-investment, private credit, energy infrastructure, oil and gas royalties) start with sensible defaults for frequency, payment type and key terms; everything can be changed.
 
-```js
-{
-  id: 'kestrel-bay',
-  name: 'Kestrel Bay Capital',            // full firm name
-  shortName: 'Kestrel Bay',               // logo wordmark and running copy
-  tagline: 'Capital',                     // small line under the wordmark
-  legalName: 'Kestrel Bay Capital Management, LLC',
-  portalName: 'LP Portal',
-  domain: 'investors.kestrelbaycap.com',
-  logo: { type: 'wing', letters: 'KB', image: '', plate: false },
-  colors: { primary: '#14304F', accent: '#B4873F' },
-  font: 'serif',                          // manrope | serif | plex | franklin
-  radius: 'soft',                         // sharp | soft | round
-  nav: 'brand',                           // brand | light
-  appearance: 'system',                   // system | light | dark
-  modules: { capitalCalls: true, tax: true, messages: true, opportunities: true },
-  showPoweredBy: false,
-  support: { team, email, phone, hours, response },
-  disclaimer: '…',
-  signin: { headline, sub },
-  funds: [{ name, short, vintage, strategy }, …],
-  letter: { title, excerpt },
-  offering: { name, short, target, minimum, firstClose, strategy, highlights: [] }
-}
-```
+## Investor onboarding
 
-Missing fields fall back to `TENANT_TEMPLATE`, which uses Carrow & Vale's default navy and teal.
+An invited investor activates in five steps, configurable per client:
+
+1. Create a login
+2. Investor information: entity type (individual, joint, trust, entity, IRA), name on the account, address, taxpayer ID (only the last four digits are kept)
+3. Accreditation (can be turned off)
+4. Distribution payments: ACH bank details with live ABA routing-number validation and an ACH credit authorization; check by mail can be allowed
+5. Review and sign: e-delivery consent, substitute W-9 certification, typed signature
+
+Completing activation updates the investor's record, so their bank account is included in the next NACHA file.
+
+## NACHA files
+
+`assets/js/nacha.js` builds standard ACH files:
+
+- 94-character records, blocking factor 10, padded with `9` filler records
+- File header (1), batch header (5), entry detail (6), batch control (8), file control (9)
+- Credits use transaction code 22 (checking) or 32 (savings)
+- One batch per SEC code: PPD for individuals, joint accounts and trusts; CCD for entities and IRA custodians
+- Optional balanced files with an offsetting debit (27/37) to the settlement account
+- Entry hash, totals and block count computed per batch and per file
+- Checks before download: record length, ABA check digits, account numbers, effective date is a banking day (weekends and Federal Reserve holidays through 2028), totals reconcile, padding
+- Entries that fail validation are left out and listed; investors without bank details are listed as check payees
+
+The console shows the file with a field-by-field breakdown of any record. Files download as `.ach`. Inside Claude's artifact viewer they save as `.txt`, because that viewer only allows certain extensions; the content is identical.
+
+Confirm every value against your bank's ACH implementation guide before the first live upload.
+
+## White-label engine
+
+`assets/js/brand.js` turns two brand colors into a full light and dark palette. If a color is too light or too dark to read as text, it steps the OKLCH lightness of the same hue until it meets WCAG AA, while buttons keep the exact brand color. Logos can be uploaded or generated from five marks; the favicon follows.
 
 ## Sample data
 
-Kestrel Bay Capital, Ashwell Ridge Real Estate and Greywater Infrastructure Partners are fictional firms. The investor, Jordan Davis of the Davis Family Trust, is a sample. All figures come from `assets/js/data.js` and reconcile: each quarter's rollforward, the chart series, the tables and the statements are computed from the same cash flows. In production, replace `NS.buildData` with calls to the fund administrator's data feed.
+Kestrel Bay Capital, Ashwell Ridge Real Estate and Greywater Infrastructure Partners are fictional firms. Investors, bank names and account numbers are invented; routing numbers pass the ABA check digit but are not tied to real banks. Every figure reconciles: each investor's distributions are their exact pro-rata share of each payment.
 
-Placeholders such as "[Regulatory disclosures to be provided by counsel.]" are intentional and match the Carrow & Vale site.
+Placeholders such as "[Regulatory disclosures to be provided by counsel.]" are intentional.
+
+## Before production
+
+This build stores everything in the browser for demonstration. A production deployment needs:
+
+- A server-side database and the fund administrator's data in place of `data.js`
+- Authentication with two-step verification, and role-based access so the console is staff-only
+- Encryption of taxpayer IDs and bank account numbers at rest; never store full numbers in the browser
+- Bank-change verification (call-back) before updated ACH details are used
+- Secure file transfer (SFTP or the bank's portal) for NACHA uploads, with dual approval
+- Email delivery for invitations and notices
 
 ## Files
 
 ```
-index.html               entry point
-assets/css/portal.css    portal styles and default tokens
-assets/css/studio.css    Brand Studio styles (Carrow & Vale identity)
-assets/js/brand.js       white-label engine: color math, token derivation, logos
-assets/js/tenants.js     client configs
-assets/js/data.js        sample investor data
-assets/js/charts.js      SVG line and column charts
-assets/js/documents.js   letterhead document previews
-assets/js/studio.js      Brand Studio
-assets/js/app.js         shell, routing and pages
+index.html                 entry point
+assets/css/portal.css      investor portal styles and default tokens
+assets/css/console.css     sponsor console and operator bar
+assets/js/brand.js         white-label engine: color math, token derivation, logos
+assets/js/tenants.js       client configs, offering types
+assets/js/data.js          sample roster, distribution history, allocation, exit math
+assets/js/workspace.js     per-client storage
+assets/js/nacha.js         NACHA file builder and validation
+assets/js/charts.js        distributions column chart
+assets/js/app.js           shell, routing, operator bar, shared helpers
+assets/js/documents.js     letterhead document previews
+assets/js/portal.js        investor pages
+assets/js/onboarding.js    investor activation
+assets/js/console.js       sponsor console
 ```
