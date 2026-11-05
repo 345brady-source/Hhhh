@@ -1,0 +1,445 @@
+/*
+ * White-label engine.
+ * Turns one client brand config (two colors, a type pair, a corner style, a logo)
+ * into a complete, contrast-checked token set for light and dark mode, then
+ * writes it to the page as CSS custom properties.
+ */
+(function (global) {
+  'use strict';
+  const NS = (global.CVPortal = global.CVPortal || {});
+
+  /* ---------- Color math: sRGB <-> OKLab / OKLCH, WCAG contrast ---------- */
+
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+  function normHex(hex) {
+    let s = String(hex || '').trim().replace(/^#/, '');
+    if (s.length === 3) s = s.split('').map((c) => c + c).join('');
+    return /^[0-9a-f]{6}$/i.test(s) ? '#' + s.toUpperCase() : null;
+  }
+  function hexToRgb(hex) {
+    const n = normHex(hex) || '#000000';
+    return [1, 3, 5].map((i) => parseInt(n.slice(i, i + 2), 16) / 255);
+  }
+  function rgbToHex(rgb) {
+    return '#' + rgb.map((v) => Math.round(clamp(v, 0, 1) * 255).toString(16).padStart(2, '0')).join('').toUpperCase();
+  }
+  const toLin = (c) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  const toGam = (c) => (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055);
+
+  function rgbToOklab(rgb) {
+    const [r, g, b] = rgb.map(toLin);
+    const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+    const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+    const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+    return [
+      0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+      1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+      0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s
+    ];
+  }
+  function oklabToRgb(lab) {
+    const [L, a, b] = lab;
+    const l = Math.pow(L + 0.3963377774 * a + 0.2158037573 * b, 3);
+    const m = Math.pow(L - 0.1055613458 * a - 0.0638541728 * b, 3);
+    const s = Math.pow(L - 0.0894841775 * a - 1.291485548 * b, 3);
+    return [
+      toGam(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
+      toGam(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
+      toGam(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s)
+    ];
+  }
+  function toOklch(hex) {
+    const [L, a, b] = rgbToOklab(hexToRgb(hex));
+    return { l: L, c: Math.hypot(a, b), h: ((Math.atan2(b, a) * 180) / Math.PI + 360) % 360 };
+  }
+  const inGamut = (rgb) => rgb.every((v) => v >= -0.0005 && v <= 1.0005);
+
+  /** OKLCH -> hex, reducing chroma until the color fits in sRGB. */
+  function oklch(l, c, h) {
+    l = clamp(l, 0, 1);
+    const hr = (h * Math.PI) / 180;
+    const at = (cc) => oklabToRgb([l, cc * Math.cos(hr), cc * Math.sin(hr)]);
+    let rgb = at(c);
+    if (!inGamut(rgb)) {
+      let lo = 0;
+      let hi = c;
+      for (let i = 0; i < 24; i++) {
+        const mid = (lo + hi) / 2;
+        if (inGamut(at(mid))) lo = mid;
+        else hi = mid;
+      }
+      rgb = at(lo);
+    }
+    return rgbToHex(rgb);
+  }
+  function shiftL(hex, d) {
+    const { l, c, h } = toOklch(hex);
+    return oklch(l + d, c, h);
+  }
+  function luminance(hex) {
+    const [r, g, b] = hexToRgb(hex).map(toLin);
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+  function contrast(a, b) {
+    const la = luminance(a);
+    const lb = luminance(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+  /** Step a color's OKLCH lightness away from the background until it meets the target ratio. */
+  function ensureContrast(hex, bg, target) {
+    if (contrast(hex, bg) >= target) return normHex(hex);
+    const { l, c, h } = toOklch(hex);
+    const darken = luminance(bg) > 0.18;
+    for (let i = 1; i <= 100; i++) {
+      const nl = darken ? l - i * 0.01 : l + i * 0.01;
+      if (nl < 0 || nl > 1) break;
+      const out = oklch(nl, c, h);
+      if (contrast(out, bg) >= target) return out;
+    }
+    return darken ? '#000000' : '#FFFFFF';
+  }
+  function mix(a, b, t) {
+    const A = rgbToOklab(hexToRgb(a));
+    const B = rgbToOklab(hexToRgb(b));
+    return rgbToHex(oklabToRgb(A.map((v, i) => v + (B[i] - v) * t)));
+  }
+  const INK_DARK = '#0B1622';
+  function onColor(bg) {
+    const w = contrast('#FFFFFF', bg);
+    return w >= 4.5 || w >= contrast(INK_DARK, bg) ? '#FFFFFF' : INK_DARK;
+  }
+  /** Perceptual distance (OKLab x 100), the same scale the dataviz validator uses. */
+  function deltaE(a, b) {
+    const A = rgbToOklab(hexToRgb(a));
+    const B = rgbToOklab(hexToRgb(b));
+    return Math.hypot(A[0] - B[0], A[1] - B[1], A[2] - B[2]) * 100;
+  }
+
+  /* ---------- Type pairs and corner styles a client can choose ---------- */
+
+  const FONTS = {
+    manrope: {
+      label: 'Manrope',
+      note: 'Modern, geometric',
+      display: "'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif",
+      body: "'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif",
+      href: 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap'
+    },
+    serif: {
+      label: 'Source Serif & Sans',
+      note: 'Traditional, institutional',
+      display: "'Source Serif 4', Georgia, 'Times New Roman', serif",
+      body: "'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif",
+      href: 'https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Source+Sans+3:wght@400;500;600;700&display=swap'
+    },
+    plex: {
+      label: 'IBM Plex Sans',
+      note: 'Technical, precise',
+      display: "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
+      body: "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
+      href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap'
+    },
+    franklin: {
+      label: 'Libre Franklin',
+      note: 'Editorial, confident',
+      display: "'Libre Franklin', system-ui, -apple-system, 'Segoe UI', sans-serif",
+      body: "'Libre Franklin', system-ui, -apple-system, 'Segoe UI', sans-serif",
+      href: 'https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&display=swap'
+    }
+  };
+  const RADII = {
+    sharp: { sm: 2, md: 3, lg: 4, pill: '3px', label: 'Sharp' },
+    soft: { sm: 4, md: 8, lg: 14, pill: '999px', label: 'Soft' },
+    round: { sm: 8, md: 12, lg: 20, pill: '999px', label: 'Round' }
+  };
+
+  /* ---------- Token derivation ---------- */
+
+  function derive(t) {
+    const P = normHex(t.colors && t.colors.primary) || '#0F2742';
+    const A = normHex(t.colors && t.colors.accent) || '#1F7A8C';
+    const brandNav = t.nav === 'brand';
+    const p = toOklch(P);
+    const hue = p.h;
+    const WHITE = '#FFFFFF';
+
+    // Neutrals carry a faint bias toward the brand hue so greys feel chosen.
+    const nc = Math.min(p.c, 0.05);
+    const N = (l, k) => oklch(l, nc * k, hue);
+
+    const L = {};
+    L.bg = N(0.982, 0.14);
+    L.surface = WHITE;
+    L['surface-2'] = N(0.968, 0.22);
+    L['surface-3'] = N(0.942, 0.3);
+    L.line = N(0.91, 0.3);
+    L['line-strong'] = N(0.84, 0.38);
+    L.fg = N(0.26, 0.9);
+    L['fg-2'] = N(0.44, 0.6);
+    L['fg-3'] = ensureContrast(N(0.55, 0.45), L.bg, 4.5);
+
+    L.brand = P;
+    L['brand-ink'] = onColor(P);
+    L['brand-hover'] = shiftL(P, p.l > 0.45 ? -0.06 : 0.05);
+    L['brand-soft'] = mix(P, WHITE, 0.9);
+    L['brand-text'] = ensureContrast(P, WHITE, 4.5);
+    L.accent = A;
+    L['accent-ink'] = onColor(A);
+    L['accent-soft'] = mix(A, WHITE, 0.88);
+    L['accent-text'] = ensureContrast(A, WHITE, 4.5);
+    L.focus = ensureContrast(A, WHITE, 3);
+
+    L['chart-1'] = ensureContrast(P, WHITE, 3);
+    L['chart-muted'] = N(0.62, 0.4);
+    L['seg-1'] = L['chart-1'];
+    L['seg-2'] = A;
+    L['seg-3'] = N(0.8, 0.5);
+    ['seg-1', 'seg-2', 'seg-3'].forEach((k) => (L[k + '-ink'] = onColor(L[k])));
+
+    // Navigation surface: either a light rail or a solid brand-color rail.
+    if (brandNav) {
+      const ink = onColor(P);
+      L['nav-bg'] = P;
+      L['nav-fg-strong'] = ink;
+      L['nav-fg'] = ensureContrast(mix(P, ink, 0.8), P, 4.5);
+      L['nav-muted'] = ensureContrast(mix(P, ink, 0.62), P, 4.5);
+      L['nav-line'] = mix(P, ink, 0.16);
+      L['nav-hover'] = mix(P, ink, 0.08);
+      L['nav-active-bg'] = mix(P, ink, 0.15);
+      L['nav-active-fg'] = ink;
+      L['nav-marker'] = contrast(A, P) >= 3 ? A : ink;
+      L['nav-mark-p'] = ink;
+      L['nav-mark-a'] = contrast(A, P) >= 2.2 ? A : mix(ink, P, 0.45);
+      L['nav-mark-ink'] = P;
+    } else {
+      L['nav-bg'] = WHITE;
+      L['nav-fg-strong'] = L.fg;
+      L['nav-fg'] = L['fg-2'];
+      L['nav-muted'] = L['fg-3'];
+      L['nav-line'] = L.line;
+      L['nav-hover'] = L['surface-2'];
+      L['nav-active-bg'] = L['brand-soft'];
+      L['nav-active-fg'] = ensureContrast(P, L['brand-soft'], 4.5);
+      L['nav-marker'] = ensureContrast(P, L['brand-soft'], 3);
+      L['nav-mark-p'] = P;
+      L['nav-mark-a'] = A;
+      L['nav-mark-ink'] = onColor(P);
+    }
+
+    // Sign-in hero panel.
+    const heroInk = onColor(P);
+    L['hero-bg'] = P;
+    L['hero-fg'] = heroInk;
+    L['hero-fg-2'] = ensureContrast(mix(P, heroInk, 0.76), P, 4.5);
+    L['hero-line'] = mix(P, heroInk, 0.22);
+    L['hero-mark-p'] = heroInk;
+    L['hero-mark-a'] = contrast(A, P) >= 2.2 ? A : mix(heroInk, P, 0.45);
+    L['hero-mark-ink'] = P;
+    L['mark-p'] = P;
+    L['mark-a'] = A;
+    L['mark-ink'] = onColor(P);
+
+    /* Dark mode: its own steps from the same hues, not an inversion. */
+    const dc = Math.min(p.c, 0.045);
+    const ND = (l, k) => oklch(l, dc * k, hue);
+    const D = {};
+    D.bg = ND(0.17, 0.55);
+    D.surface = ND(0.205, 0.6);
+    D['surface-2'] = ND(0.236, 0.6);
+    D['surface-3'] = ND(0.272, 0.6);
+    D.line = ND(0.305, 0.55);
+    D['line-strong'] = ND(0.39, 0.5);
+    D.fg = ND(0.95, 0.25);
+    D['fg-2'] = ND(0.8, 0.3);
+    D['fg-3'] = ensureContrast(ND(0.68, 0.3), D.surface, 4.5);
+
+    const pb = ensureContrast(P, D.surface, 3.2);
+    D.brand = pb;
+    D['brand-ink'] = onColor(pb);
+    D['brand-hover'] = shiftL(pb, 0.05);
+    D['brand-soft'] = mix(D.surface, pb, 0.2);
+    D['brand-text'] = ensureContrast(P, D.surface, 4.8);
+    D.accent = ensureContrast(A, D.surface, 3.2);
+    D['accent-ink'] = onColor(D.accent);
+    D['accent-soft'] = mix(D.surface, D.accent, 0.2);
+    D['accent-text'] = ensureContrast(A, D.surface, 4.8);
+    D.focus = ensureContrast(A, D.surface, 3.5);
+    D['chart-1'] = ensureContrast(P, D.surface, 4);
+    D['chart-muted'] = ND(0.58, 0.4);
+    D['seg-1'] = D['chart-1'];
+    D['seg-2'] = D.accent;
+    D['seg-3'] = ND(0.46, 0.5);
+    ['seg-1', 'seg-2', 'seg-3'].forEach((k) => (D[k + '-ink'] = onColor(D[k])));
+
+    const navDark = brandNav ? oklch(0.215, Math.min(p.c, 0.07), hue) : ND(0.185, 0.6);
+    D['nav-bg'] = navDark;
+    D['nav-fg-strong'] = '#FFFFFF';
+    D['nav-fg'] = ensureContrast(mix(navDark, '#FFFFFF', 0.76), navDark, 4.5);
+    D['nav-muted'] = ensureContrast(mix(navDark, '#FFFFFF', 0.6), navDark, 4.5);
+    D['nav-line'] = mix(navDark, '#FFFFFF', 0.1);
+    D['nav-hover'] = mix(navDark, '#FFFFFF', 0.06);
+    D['nav-active-bg'] = mix(navDark, pb, 0.32);
+    D['nav-active-fg'] = '#FFFFFF';
+    D['nav-marker'] = ensureContrast(A, navDark, 3);
+    D['nav-mark-p'] = D['brand-text'];
+    D['nav-mark-a'] = D['nav-marker'];
+    D['nav-mark-ink'] = navDark;
+
+    const heroDark = oklch(0.24, Math.min(p.c, 0.09), hue);
+    D['hero-bg'] = heroDark;
+    D['hero-fg'] = '#FFFFFF';
+    D['hero-fg-2'] = ensureContrast(mix(heroDark, '#FFFFFF', 0.74), heroDark, 4.5);
+    D['hero-line'] = mix(heroDark, '#FFFFFF', 0.16);
+    D['hero-mark-p'] = '#FFFFFF';
+    D['hero-mark-a'] = ensureContrast(A, heroDark, 2.5);
+    D['hero-mark-ink'] = heroDark;
+    D['mark-p'] = D['brand-text'];
+    D['mark-a'] = D.accent;
+    D['mark-ink'] = D.surface;
+
+    // Paper (document previews) stays white in both themes, like a PDF.
+    const paper = {
+      'paper-bg': WHITE,
+      'paper-fg': L.fg,
+      'paper-fg-2': L['fg-2'],
+      'paper-line': L.line,
+      'paper-soft': L['surface-2'],
+      'paper-brand': L['brand-text'],
+      'paper-brand-fill': P,
+      'paper-brand-ink': onColor(P),
+      'paper-mark-p': P,
+      'paper-mark-a': A,
+      'paper-mark-ink': onColor(P)
+    };
+
+    // What the Brand Studio reports back to the operator.
+    const report = [
+      { key: 'button', label: 'Button text on primary', ratio: contrast(L['brand-ink'], P), target: 4.5 },
+      { key: 'link', label: 'Primary as text on white', ratio: contrast(L['brand-text'], WHITE), target: 4.5, adjusted: L['brand-text'] !== P, original: contrast(P, WHITE) },
+      { key: 'accent', label: 'Accent as text on white', ratio: contrast(L['accent-text'], WHITE), target: 4.5, adjusted: L['accent-text'] !== A, original: contrast(A, WHITE) },
+      { key: 'nav', label: 'Navigation text', ratio: contrast(L['nav-fg'], L['nav-bg']), target: 4.5 },
+      { key: 'dark', label: 'Primary in dark mode', ratio: contrast(D['brand-text'], D.surface), target: 4.5, adjusted: D['brand-text'] !== P, original: contrast(P, D.surface) },
+      { key: 'chart', label: 'Chart colors apart', delta: deltaE(L['seg-1'], L['seg-2']), target: 15 }
+    ];
+
+    return { light: L, dark: D, paper, report, primary: P, accent: A };
+  }
+
+  /* ---------- Logo marks ---------- */
+
+  const MARKS = {
+    monogram: { label: 'Monogram' },
+    wing: { label: 'Wing' },
+    ridge: { label: 'Ridge' },
+    wave: { label: 'Wave' },
+    arch: { label: 'Arch' }
+  };
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  /** Mark artwork, 40x40. `c` gives the three colors as CSS values (vars or hex). */
+  function markBody(type, letters, c, fontFamily) {
+    const L = esc(String(letters || '').slice(0, 3).toUpperCase());
+    switch (type) {
+      case 'wing':
+        return `<path d="M3 31 L23 7 L27.5 13 L12 31 Z" style="fill:${c.p}"/><path d="M16.5 31 L29.5 15.5 L37 31 Z" style="fill:${c.a}"/>`;
+      case 'ridge':
+        return `<rect x="1" y="1" width="38" height="38" rx="3" style="fill:${c.p}"/><circle cx="28.5" cy="12.5" r="3.6" style="fill:${c.a}"/><path d="M6 30 L14.5 18.5 L20 24.5 L26.5 16 L34 30" fill="none" style="stroke:${c.ink}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+      case 'wave':
+        return `<circle cx="20" cy="20" r="19" style="fill:${c.p}"/><path d="M8 17 Q 14 11.5 20 17 T 32 17" fill="none" style="stroke:${c.ink}" stroke-width="3" stroke-linecap="round"/><path d="M8 25 Q 14 19.5 20 25 T 32 25" fill="none" style="stroke:${c.a}" stroke-width="3" stroke-linecap="round"/>`;
+      case 'arch':
+        return `<path d="M5 37 V19 a15 15 0 0 1 30 0 V37 Z" style="fill:${c.p}"/><path d="M14 37 V21 a6 6 0 0 1 12 0 V37 Z" style="fill:${c.a}"/>`;
+      default:
+        return `<rect x="1" y="1" width="38" height="38" rx="9" style="fill:${c.p}"/><text x="20" y="20.5" text-anchor="middle" dominant-baseline="central" style="fill:${c.ink};font-family:${fontFamily};font-weight:700;font-size:${L.length > 2 ? 12.5 : 15.5}px;letter-spacing:0.02em">${L}</text>`;
+    }
+  }
+
+  /** Inline mark that follows the surrounding context's --mark-* variables. */
+  function markSVG(type, letters, cls) {
+    const c = { p: 'var(--mark-p)', a: 'var(--mark-a)', ink: 'var(--mark-ink)' };
+    return `<svg class="${cls || 'mark'}" viewBox="0 0 40 40" aria-hidden="true" focusable="false">${markBody(type, letters, c, 'var(--font-display)')}</svg>`;
+  }
+
+  function safeImage(src) {
+    return typeof src === 'string' && /^data:image\/(png|jpeg|webp|gif|svg\+xml);base64,[A-Za-z0-9+/=\s]+$/.test(src) ? src : '';
+  }
+
+  /** Logo lockup: uploaded image, or generated mark + wordmark. */
+  function lockup(t, opts) {
+    opts = opts || {};
+    const logo = t.logo || {};
+    const img = logo.type === 'image' ? safeImage(logo.image) : '';
+    if (img) {
+      return `<span class="lockup lockup-image${logo.plate ? ' has-plate' : ''}"><img class="logo-img" src="${img}" alt="${esc(t.name)}"></span>`;
+    }
+    const tag = t.tagline && !opts.compact ? `<span class="wm-tag">${esc(t.tagline)}</span>` : '';
+    return `<span class="lockup">${markSVG(logo.type, logo.letters)}<span class="wm"><span class="wm-name">${esc(t.shortName || t.name)}</span>${tag}</span></span>`;
+  }
+
+  /* ---------- Applying a brand to the page ---------- */
+
+  const block = (o) => Object.keys(o).map((k) => `--${k}:${o[k]};`).join('');
+  let loadedFont = '';
+
+  function loadFont(href) {
+    if (!href || href === loadedFont) return;
+    loadedFont = href;
+    let link = document.getElementById('cv-tenant-font');
+    if (!link) {
+      link = document.createElement('link');
+      link.id = 'cv-tenant-font';
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+    }
+    link.href = href;
+  }
+
+  function setFavicon(t, tk) {
+    const logo = t.logo || {};
+    let href;
+    const img = logo.type === 'image' ? safeImage(logo.image) : '';
+    if (img) href = img;
+    else {
+      const c = { p: tk.primary, a: tk.accent, ink: onColor(tk.primary) };
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">${markBody(logo.type, logo.letters, c, 'Arial, sans-serif')}</svg>`;
+      href = 'data:image/svg+xml,' + encodeURIComponent(svg);
+    }
+    let link = document.querySelector('link[rel="icon"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = href;
+  }
+
+  function apply(t) {
+    const tk = derive(t);
+    const f = FONTS[t.font] || FONTS.manrope;
+    const r = RADII[t.radius] || RADII.soft;
+    let el = document.getElementById('cv-brand-tokens');
+    if (!el) {
+      // Appended at the end of <body> so it comes after the stylesheet defaults in the cascade.
+      el = document.createElement('style');
+      el.id = 'cv-brand-tokens';
+      document.body.appendChild(el);
+    }
+    const base = `--font-display:${f.display};--font-body:${f.body};--r-sm:${r.sm}px;--r-md:${r.md}px;--r-lg:${r.lg}px;--r-pill:${r.pill};`;
+    el.textContent =
+      `:root{${block(tk.light)}${block(tk.paper)}${base}}\n` +
+      `@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${block(tk.dark)}color-scheme:dark}}\n` +
+      `:root[data-theme="dark"]{${block(tk.dark)}color-scheme:dark}`;
+    loadFont(f.href);
+    try {
+      setFavicon(t, tk);
+    } catch (e) {
+      /* favicon is cosmetic */
+    }
+    return tk;
+  }
+
+  NS.brand = {
+    normHex, contrast, ensureContrast, mix, onColor, deltaE, toOklch, oklch,
+    FONTS, RADII, MARKS, derive, apply, markSVG, markBody, lockup, safeImage, esc
+  };
+})(window);
