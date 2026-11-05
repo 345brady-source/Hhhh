@@ -255,6 +255,42 @@
     return runs;
   }
 
+  /* ---------- Investor notices ---------- */
+  NS.NOTICE_TEMPLATES = {
+    quarterly: {
+      label: 'Quarterly report available',
+      subject: '{quarter} report for {investment} is now available',
+      body: 'Dear {first_name},\n\nThe {quarter} quarterly report for {investment} has been posted to your {portal_name}. Sign in and open Documents to read it.\n\nIf you have any questions, contact {team} at {phone}.\n\n{firm}'
+    },
+    documents: {
+      label: 'New documents uploaded',
+      subject: 'New documents are available in your {portal_name}',
+      body: 'Dear {first_name},\n\nNew documents have been uploaded to your {portal_name}: {documents}. Sign in and open Documents to view them.\n\nIf you have any questions, contact {team} at {phone}.\n\n{firm}'
+    },
+    custom: { label: 'Custom message', subject: '', body: 'Dear {first_name},\n\n\n\n{firm}' }
+  };
+  NS.MERGE_FIELDS = ['first_name', 'account_name', 'investment', 'quarter', 'documents', 'portal_name', 'firm', 'team', 'phone'];
+  /** Fill {merge_fields} for one investor. Unknown fields are left as typed. */
+  NS.mergeNotice = function (text, inv, tenant, notice, offering) {
+    const map = {
+      first_name: String(inv.contact || '').split(' ')[0],
+      account_name: inv.title,
+      investment: offering ? offering.name : 'your investments',
+      quarter: notice.quarter || '',
+      documents: notice.docName || 'new documents',
+      portal_name: tenant.portalName,
+      firm: tenant.name,
+      team: tenant.support.team,
+      phone: tenant.support.phone
+    };
+    return String(text || '').replace(/\{(\w+)\}/g, (m, k) => (map[k] != null ? map[k] : m));
+  };
+  /** Notices an investor received and has not dismissed, newest first. */
+  NS.noticesFor = function (ws, inv) {
+    const read = inv.noticesRead || [];
+    return (ws.notices || []).filter((n) => n.recipients.indexOf(inv.id) >= 0 && read.indexOf(n.id) < 0).sort((a, b) => (a.date < b.date ? 1 : -1));
+  };
+
   /** Build a fresh workspace for a client from its seed config. */
   NS.seedWorkspace = function (seed) {
     const tenant = merge(NS.TENANT_TEMPLATE, seed);
@@ -264,7 +300,23 @@
     offerings.forEach((o) => delete o.seed);
     delete tenant.offerings;
     delete tenant.roster;
-    return { v: 2, tenant, offerings, investors, runs };
+    const year = today().slice(0, 4);
+    const notices = investors.length
+      ? [{
+          id: 'n-seed-q3',
+          date: `${year}-11-03`,
+          kind: 'documents',
+          audience: 'all',
+          includePending: true,
+          quarter: `Q3 ${year}`,
+          docName: `Q3 ${year} investor updates and account statements`,
+          subject: NS.NOTICE_TEMPLATES.documents.subject,
+          body: NS.NOTICE_TEMPLATES.documents.body,
+          recipients: investors.map((i) => i.id),
+          sentBy: 'staff'
+        }]
+      : [];
+    return { v: 2, tenant, offerings, investors, runs, notices };
   };
 
   /* ---------- Allocation ---------- */

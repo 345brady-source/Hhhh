@@ -49,6 +49,7 @@
     ws.offerings = ws.offerings || [];
     ws.investors = ws.investors || [];
     ws.runs = ws.runs || [];
+    ws.notices = ws.notices || [];
     return ws;
   }
 

@@ -70,6 +70,37 @@
     return shell(`${title('Investments')}<p class="empty">No investments are recorded for this account yet. Your investments will appear here once your subscription is accepted and funded.</p>`, 'portfolio');
   }
 
+  /* ---------- Notices from the sponsor ---------- */
+  function noticesHTML(inv) {
+    const list = NS.noticesFor(W(), inv);
+    if (!list.length) return '';
+    const t = T();
+    return `<section class="notices" aria-label="Notices">${list
+      .map((n) => {
+        const o = n.audience === 'all' ? null : W().offerings.find((x) => x.id === n.audience);
+        return `<div class="notice">
+          <div class="notice-text"><span class="notice-date">${date(n.date)}</span><strong>${h(NS.mergeNotice(n.subject, inv, t, n, o))}</strong></div>
+          <div class="notice-actions"><button class="link-btn" type="button" data-action="notice-open" data-id="${h(n.id)}" data-off="${o ? h(o.id) : 'all'}">View documents</button><button class="link-btn notice-dismiss" type="button" data-action="notice-dismiss" data-id="${h(n.id)}">Dismiss</button></div>
+        </div>`;
+      })
+      .join('')}</section>`;
+  }
+  function markRead(id) {
+    const inv = viewer();
+    inv.noticesRead = (inv.noticesRead || []).concat([id]);
+    NS.app.save(true);
+  }
+  NS.actions['notice-dismiss'] = (el) => {
+    markRead(el.getAttribute('data-id'));
+    NS.app.render();
+  };
+  NS.actions['notice-open'] = (el) => {
+    markRead(el.getAttribute('data-id'));
+    S().ui.docOff = el.getAttribute('data-off');
+    S().ui.docCat = 'all';
+    NS.app.go('documents');
+  };
+
   /* ---------- Time to redemption ---------- */
   function redemption(o) {
     const now = NS.dates.today();
@@ -161,6 +192,7 @@
       const scheduled = v.payments.filter((p) => p.status === 'scheduled');
       return shell(
         `${title('Investments', `${h(inv.title)} · Account ${h(inv.id)} · As of ${date(today, 'long')}`)}
+        ${noticesHTML(inv)}
         <dl class="figs">
           ${fig('Invested', usd(v.totals.invested), `${v.active.length} active investment${v.active.length === 1 ? '' : 's'}`)}
           ${fig('Distributions received', usdc(v.totals.received), 'All investments, to date')}

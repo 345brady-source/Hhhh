@@ -31,6 +31,7 @@ python3 -m http.server 8000
 | Offerings | Each investment configured separately: type, closing date, how exit is defined, distribution frequency, the key terms investors see, the latest update, and the ACH company name and ID it pays under. A live preview shows what investors will see |
 | Investors | Activation status and payment method for every investor; invite one investor or import a list; preview the branded invitation email; open an investor's activation |
 | Distributions | Allocate a payment pro rata by amount invested (to the cent), generate the NACHA file, and record the payment so investors see it |
+| Notices | Email investors that a quarterly report or new documents are in their portal. Templates, merge fields ({first_name}, {investment}, {quarter}, {documents} and others), audience of all investors or one offering, optional inclusion of investors who have not activated, a branded preview, and a sent history. Each notice also appears in the recipients' portals |
 | ACH origination | ODFI and file-header values, company name and ID, entry description, and optional balanced files |
 | Portal and brand | Logo, colors with an accessibility check, typeface, header style, onboarding requirements, support contact and disclosures |
 
@@ -116,7 +117,7 @@ This build stores everything in the browser for demonstration. A production depl
 - Encryption of taxpayer IDs and bank account numbers at rest; never store full numbers in the browser
 - Bank-change verification (call-back) before updated ACH details are used
 - Secure file transfer (SFTP or the bank's portal) for NACHA uploads, with dual approval
-- Email delivery for invitations and notices
+- An email service (for example Amazon SES, SendGrid or Postmark) to deliver invitations and notices; this build records notices and shows them in the portal but sends no email
 
 ## Files
 

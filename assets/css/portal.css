@@ -222,6 +222,16 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--fg-2); line-height: 1.5; }
 .check input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--brand); flex: none; }
 
+/* Notices from the sponsor */
+.notices { margin: -8px 0 28px; border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line-strong); }
+.notice { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 20px; padding: 12px 0; }
+.notice + .notice { border-top: 1px solid var(--line); }
+.notice-text { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; min-width: 0; }
+.notice-text strong { font-weight: 600; }
+.notice-date { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); }
+.notice-actions { display: flex; gap: 16px; font-size: 13px; }
+.notice-dismiss { color: var(--fg-3); }
+
 /* Settings */
 .settings-choice { max-width: 520px; margin-top: 16px; }
 

@@ -19,6 +19,7 @@
     ['console-offerings', 'Offerings'],
     ['console-investors', 'Investors'],
     ['console-distributions', 'Distributions'],
+    ['console-notices', 'Notices'],
     ['console-ach', 'ACH origination'],
     ['console-brand', 'Portal and brand']
   ];
@@ -908,6 +909,167 @@
   };
   NS.actions['hist-all'] = () => {
     S().ui.histAll = true;
+    NS.app.render();
+  };
+
+  /* ---------- Investor notices (mass email) ---------- */
+  function latestQuarter() {
+    const d = NS.dates.parse(today());
+    let q = Math.floor(d.getUTCMonth() / 3);
+    let y = d.getUTCFullYear();
+    if (q === 0) {
+      q = 4;
+      y -= 1;
+    }
+    return `Q${q} ${y}`;
+  }
+  function quarterOptions() {
+    const out = [];
+    let [q, y] = latestQuarter().slice(1).split(' ').map(Number);
+    for (let i = 0; i < 6; i++) {
+      out.push(`Q${q} ${y}`);
+      q -= 1;
+      if (q === 0) {
+        q = 4;
+        y -= 1;
+      }
+    }
+    return out;
+  }
+  function noticeDraft() {
+    const ui = S().ui;
+    if (!ui.notice) {
+      const o = W().offerings.find((x) => x.status !== 'Exited' && holdersCount(x.id)) || W().offerings[0];
+      ui.notice = { kind: 'quarterly', audience: o ? o.id : 'all', includePending: true, quarter: latestQuarter(), docName: '', subject: '', body: '', subjectEdited: false, bodyEdited: false, confirm: false };
+      applyTemplate(ui.notice);
+    }
+    return ui.notice;
+  }
+  function applyTemplate(n) {
+    const tpl = NS.NOTICE_TEMPLATES[n.kind];
+    if (!n.subjectEdited) n.subject = tpl.subject;
+    if (!n.bodyEdited) n.body = tpl.body;
+  }
+  const noticeOffering = (n) => (n.audience === 'all' ? null : W().offerings.find((o) => o.id === n.audience));
+  function noticeRecipients(n) {
+    return W().investors.filter((inv) => (n.audience === 'all' || inv.positions.some((p) => p.offeringId === n.audience)) && (n.includePending || inv.onboarding.status === 'complete'));
+  }
+  function emailPreview(n, inv) {
+    const t = T();
+    const o = noticeOffering(n);
+    if (!inv) return '<p class="cs-muted">No investors match this audience.</p>';
+    const subject = NS.mergeNotice(n.subject, inv, t, n, o);
+    const paras = NS.mergeNotice(n.body, inv, t, n, o)
+      .split(/\n\s*\n/)
+      .map((p) => `<p>${h(p).replace(/\n/g, '<br>')}</p>`)
+      .join('');
+    return `<article class="email">
+      <div class="email-head">${B.lockup(t)}</div>
+      <div class="email-body">
+        <p class="email-subject">To ${h(inv.email)}<br>Subject: ${h(subject) || '<em>No subject</em>'}</p>
+        ${paras}
+        <p><span class="email-btn">${inv.onboarding.status === 'complete' ? `Sign in to ${h(t.portalName)}` : 'Activate your account'}</span></p>
+      </div>
+      <div class="email-foot">${h(t.legalName)} · ${h(t.domain)} · You receive this because you are an investor of record.</div>
+    </article>`;
+  }
+  NS.views['console-notices'] = {
+    mode: 'console',
+    render() {
+      const w = W();
+      const t = T();
+      const n = noticeDraft();
+      const list = noticeRecipients(n);
+      const pending = list.filter((i) => i.onboarding.status !== 'complete').length;
+      const o = noticeOffering(n);
+      const offOpts = w.offerings.map((x) => `<option value="${h(x.id)}"${n.audience === x.id ? ' selected' : ''}>Investors in ${h(x.name)}</option>`).join('');
+      const history = (w.notices || [])
+        .slice()
+        .sort((a, b) => (a.date < b.date ? 1 : -1))
+        .map((x) => {
+          const xo = x.audience === 'all' ? null : w.offerings.find((k) => k.id === x.audience);
+          const sample = w.investors.find((i) => i.id === x.recipients[0]) || { contact: 'Investor', title: '' };
+          return `<tr><td class="nowrap">${date(x.date)}</td><td>${h(NS.mergeNotice(x.subject, sample, t, x, xo))}</td><td>${xo ? h(xo.shortName || xo.name) : 'All investors'}</td><td class="num">${x.recipients.length}</td><td>${x.sentBy === 'staff' ? 'Carrow &amp; Vale' : h(t.shortName)}</td></tr>`;
+        })
+        .join('');
+      return shell(
+        `${head('Notices', 'Email investors when reports or documents are posted. Each email is personalized and also appears as a notice in the investor’s portal.')}
+        <div class="cs-split">
+          <div class="cs-split-main">
+            ${panel(
+              'New notice',
+              `<div class="cs-grid">
+                <label class="cs-field" for="nt-kind"><span>Template</span><select id="nt-kind" data-bind="notice:kind">${Object.keys(NS.NOTICE_TEMPLATES).map((k) => `<option value="${k}"${n.kind === k ? ' selected' : ''}>${NS.NOTICE_TEMPLATES[k].label}</option>`).join('')}</select></label>
+                <label class="cs-field" for="nt-aud"><span>Send to</span><select id="nt-aud" data-bind="notice:audience"><option value="all"${n.audience === 'all' ? ' selected' : ''}>All investors</option>${offOpts}</select></label>
+                ${n.kind === 'quarterly' ? `<label class="cs-field" for="nt-q"><span>Quarter</span><select id="nt-q" data-bind="notice:quarter">${quarterOptions().map((q) => `<option${q === n.quarter ? ' selected' : ''}>${q}</option>`).join('')}</select></label>` : ''}
+                ${n.kind === 'documents' ? `<label class="cs-field cs-wide" for="nt-docs"><span>What was uploaded</span><input id="nt-docs" type="text" data-bind="notice:docName" value="${h(n.docName)}" maxlength="120" placeholder="2025 Schedule K-1s"><span class="cs-hint">Fills {documents} in the message.</span></label>` : ''}
+                <label class="cs-check cs-wide" for="nt-pending"><input id="nt-pending" type="checkbox" data-bind="notice:includePending"${n.includePending ? ' checked' : ''}><span>Include investors who have not activated their accounts<span class="cs-hint">Their email links to account activation instead of sign-in.</span></span></label>
+                <label class="cs-field cs-wide" for="nt-subject"><span>Subject</span><input id="nt-subject" type="text" data-bind="notice:subject" value="${h(n.subject)}" maxlength="140"></label>
+                <label class="cs-field cs-wide" for="nt-body"><span>Message</span><textarea id="nt-body" rows="9" data-bind="notice:body" maxlength="4000">${h(n.body)}</textarea><span class="cs-hint">Personalized for each investor: ${NS.MERGE_FIELDS.map((f) => `<code>{${f}}</code>`).join(' ')}</span></label>
+              </div>
+              <div class="cs-row">
+                <button class="cs-btn cs-btn-primary" type="button" data-action="notice-send"${list.length ? '' : ' disabled'}>${n.confirm ? `Confirm: send to ${list.length} investor${list.length === 1 ? '' : 's'}` : `Send to ${list.length} investor${list.length === 1 ? '' : 's'}`}</button>
+                ${n.confirm ? '<button class="cs-btn" type="button" data-action="notice-cancel">Cancel</button>' : ''}
+                <span class="cs-hint" id="nt-count">${list.length} recipient${list.length === 1 ? '' : 's'}${pending ? `, ${pending} not yet activated` : ''}</span>
+              </div>`
+            )}
+            ${panel('Sent notices', history ? `<div class="tbl-scroll"><table class="cs-tbl"><thead><tr><th scope="col">Date</th><th scope="col">Subject</th><th scope="col">Audience</th><th scope="col" class="num">Recipients</th><th scope="col">Sent by</th></tr></thead><tbody>${history}</tbody></table></div>` : '<p class="cs-muted">No notices sent yet.</p>')}
+          </div>
+          <aside class="cs-split-side" id="nt-preview"><div class="pv"><p class="pv-label">Preview for ${list[0] ? h(list[0].contact) : '—'}</p>${emailPreview(n, list[0])}</div></aside>
+        </div>`,
+        'console-notices'
+      );
+    }
+  };
+  NS.binders.notice = (path, v) => {
+    const n = noticeDraft();
+    n[path] = v;
+    n.confirm = false;
+    if (path === 'subject') n.subjectEdited = true;
+    if (path === 'body') n.bodyEdited = true;
+    if (path === 'kind') {
+      n.subjectEdited = false;
+      n.bodyEdited = false;
+      applyTemplate(n);
+      if (v === 'quarterly' && n.audience === 'all') {
+        const o = W().offerings.find((x) => x.status !== 'Exited' && holdersCount(x.id));
+        if (o) n.audience = o.id;
+      }
+    }
+    if (path === 'subject' || path === 'body' || path === 'docName') {
+      // Keep the cursor in the field: refresh only the preview.
+      const list = noticeRecipients(n);
+      const pv = document.getElementById('nt-preview');
+      if (pv) pv.innerHTML = `<div class="pv"><p class="pv-label">Preview for ${list[0] ? h(list[0].contact) : '—'}</p>${emailPreview(n, list[0])}</div>`;
+      const btn = document.querySelector('[data-action="notice-send"]');
+      if (btn) btn.textContent = `Send to ${list.length} investor${list.length === 1 ? '' : 's'}`;
+      return;
+    }
+    NS.app.render();
+  };
+  NS.actions['notice-send'] = () => {
+    const n = noticeDraft();
+    const list = noticeRecipients(n);
+    if (!list.length) return;
+    if (!String(n.subject).trim() || !String(n.body).trim()) {
+      U.toast('Add a subject and a message before sending.');
+      return;
+    }
+    if (!n.confirm) {
+      n.confirm = true;
+      NS.app.render();
+      return;
+    }
+    const w = W();
+    w.notices = w.notices || [];
+    w.notices.push({ id: 'n-' + Date.now().toString(36), date: today(), kind: n.kind, audience: n.audience, includePending: n.includePending, quarter: n.quarter, docName: n.docName, subject: n.subject, body: n.body, recipients: list.map((i) => i.id), sentBy: S().role === 'staff' ? 'staff' : 'sponsor' });
+    NS.app.save(true);
+    S().ui.notice = null;
+    NS.app.render();
+    U.toast(`Notice posted to ${list.length} investor portal${list.length === 1 ? '' : 's'}. Email delivery is not connected in this demo.`);
+  };
+  NS.actions['notice-cancel'] = () => {
+    noticeDraft().confirm = false;
     NS.app.render();
   };
 
