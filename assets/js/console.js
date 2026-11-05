@@ -940,7 +940,7 @@
     const ui = S().ui;
     if (!ui.notice) {
       const o = W().offerings.find((x) => x.status !== 'Exited' && holdersCount(x.id)) || W().offerings[0];
-      ui.notice = { kind: 'quarterly', audience: o ? o.id : 'all', includePending: true, quarter: latestQuarter(), docName: '', subject: '', body: '', subjectEdited: false, bodyEdited: false, confirm: false };
+      ui.notice = { kind: 'quarterly', audience: o ? o.id : 'all', investor: '', includePending: true, quarter: latestQuarter(), docName: '', subject: '', body: '', subjectEdited: false, bodyEdited: false, confirm: false };
       applyTemplate(ui.notice);
     }
     return ui.notice;
@@ -951,8 +951,13 @@
     if (!n.bodyEdited) n.body = tpl.body;
   }
   const noticeOffering = (n) => (n.audience === 'all' ? null : W().offerings.find((o) => o.id === n.audience));
+  /** Investors in the selected group (all investors, or one offering's). */
+  function noticePool(n) {
+    return W().investors.filter((inv) => n.audience === 'all' || inv.positions.some((p) => p.offeringId === n.audience));
+  }
   function noticeRecipients(n) {
-    return W().investors.filter((inv) => (n.audience === 'all' || inv.positions.some((p) => p.offeringId === n.audience)) && (n.includePending || inv.onboarding.status === 'complete'));
+    if (n.investor) return W().investors.filter((inv) => inv.id === n.investor);
+    return noticePool(n).filter((inv) => n.includePending || inv.onboarding.status === 'complete');
   }
   function emailPreview(n, inv) {
     const t = T();
@@ -989,7 +994,7 @@
         .map((x) => {
           const xo = x.audience === 'all' ? null : w.offerings.find((k) => k.id === x.audience);
           const sample = w.investors.find((i) => i.id === x.recipients[0]) || { contact: 'Investor', title: '' };
-          return `<tr><td class="nowrap">${date(x.date)}</td><td>${h(NS.mergeNotice(x.subject, sample, t, x, xo))}</td><td>${xo ? h(xo.shortName || xo.name) : 'All investors'}</td><td class="num">${x.recipients.length}</td><td>${x.sentBy === 'staff' ? 'Carrow &amp; Vale' : h(t.shortName)}</td></tr>`;
+          return `<tr><td class="nowrap">${date(x.date)}</td><td>${h(NS.mergeNotice(x.subject, sample, t, x, xo))}</td><td>${x.investor ? h((w.investors.find((i) => i.id === x.investor) || { title: x.investor }).title) : xo ? h(xo.shortName || xo.name) : 'All investors'}</td><td class="num">${x.recipients.length}</td><td>${x.sentBy === 'staff' ? 'Carrow &amp; Vale' : h(t.shortName)}</td></tr>`;
         })
         .join('');
       return shell(
@@ -1001,9 +1006,14 @@
               `<div class="cs-grid">
                 <label class="cs-field" for="nt-kind"><span>Template</span><select id="nt-kind" data-bind="notice:kind">${Object.keys(NS.NOTICE_TEMPLATES).map((k) => `<option value="${k}"${n.kind === k ? ' selected' : ''}>${NS.NOTICE_TEMPLATES[k].label}</option>`).join('')}</select></label>
                 <label class="cs-field" for="nt-aud"><span>Send to</span><select id="nt-aud" data-bind="notice:audience"><option value="all"${n.audience === 'all' ? ' selected' : ''}>All investors</option>${offOpts}</select></label>
+                <label class="cs-field" for="nt-inv"><span>Investor</span><select id="nt-inv" data-bind="notice:investor"><option value="">Everyone ${n.audience === 'all' ? '(all investors)' : 'in this offering'}</option>${noticePool(n)
+                  .slice()
+                  .sort((a, b) => a.title.localeCompare(b.title))
+                  .map((inv) => `<option value="${h(inv.id)}"${n.investor === inv.id ? ' selected' : ''}>${h(inv.title)} · ${h(inv.id)}${inv.onboarding.status !== 'complete' ? ' (not activated)' : ''}</option>`)
+                  .join('')}</select><span class="cs-hint">Pick one investor to send to them only.</span></label>
                 ${n.kind === 'quarterly' ? `<label class="cs-field" for="nt-q"><span>Quarter</span><select id="nt-q" data-bind="notice:quarter">${quarterOptions().map((q) => `<option${q === n.quarter ? ' selected' : ''}>${q}</option>`).join('')}</select></label>` : ''}
                 ${n.kind === 'documents' ? `<label class="cs-field cs-wide" for="nt-docs"><span>What was uploaded</span><input id="nt-docs" type="text" data-bind="notice:docName" value="${h(n.docName)}" maxlength="120" placeholder="2025 Schedule K-1s"><span class="cs-hint">Fills {documents} in the message.</span></label>` : ''}
-                <label class="cs-check cs-wide" for="nt-pending"><input id="nt-pending" type="checkbox" data-bind="notice:includePending"${n.includePending ? ' checked' : ''}><span>Include investors who have not activated their accounts<span class="cs-hint">Their email links to account activation instead of sign-in.</span></span></label>
+                ${n.investor ? '' : `<label class="cs-check cs-wide" for="nt-pending"><input id="nt-pending" type="checkbox" data-bind="notice:includePending"${n.includePending ? ' checked' : ''}><span>Include investors who have not activated their accounts<span class="cs-hint">Their email links to account activation instead of sign-in.</span></span></label>`}
                 <label class="cs-field cs-wide" for="nt-subject"><span>Subject</span><input id="nt-subject" type="text" data-bind="notice:subject" value="${h(n.subject)}" maxlength="140"></label>
                 <label class="cs-field cs-wide" for="nt-body"><span>Message</span><textarea id="nt-body" rows="9" data-bind="notice:body" maxlength="4000">${h(n.body)}</textarea><span class="cs-hint">Personalized for each investor: ${NS.MERGE_FIELDS.map((f) => `<code>{${f}}</code>`).join(' ')}</span></label>
               </div>
@@ -1025,6 +1035,7 @@
     const n = noticeDraft();
     n[path] = v;
     n.confirm = false;
+    if (path === 'audience' && n.investor && !noticePool(n).some((i) => i.id === n.investor)) n.investor = '';
     if (path === 'subject') n.subjectEdited = true;
     if (path === 'body') n.bodyEdited = true;
     if (path === 'kind') {
@@ -1062,7 +1073,7 @@
     }
     const w = W();
     w.notices = w.notices || [];
-    w.notices.push({ id: 'n-' + Date.now().toString(36), date: today(), kind: n.kind, audience: n.audience, includePending: n.includePending, quarter: n.quarter, docName: n.docName, subject: n.subject, body: n.body, recipients: list.map((i) => i.id), sentBy: S().role === 'staff' ? 'staff' : 'sponsor' });
+    w.notices.push({ id: 'n-' + Date.now().toString(36), date: today(), kind: n.kind, audience: n.audience, investor: n.investor || '', includePending: n.includePending, quarter: n.quarter, docName: n.docName, subject: n.subject, body: n.body, recipients: list.map((i) => i.id), sentBy: S().role === 'staff' ? 'staff' : 'sponsor' });
     NS.app.save(true);
     S().ui.notice = null;
     NS.app.render();
