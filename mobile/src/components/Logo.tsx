@@ -59,14 +59,13 @@ export function Lockup({ tenant, size = 'md' }: { tenant: Any; size?: 'sm' | 'md
   );
 }
 
-/** Shareholder Desk's own mark: a ledger page with a rising line. */
+/** Shareholder Desk's logo: the Carrow & Vale mark (navy and teal split square). */
 export function AppMark({ size = 48 }: { size?: number }) {
   const c = useColors();
-  const xml = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-    <rect x="0" y="0" width="48" height="48" rx="11" fill="${c.fg}"/>
-    <path d="M13 34 H35" stroke="${c.bg}" stroke-width="2.4" stroke-linecap="round"/>
-    <path d="M13 28 L20 22 L26 25 L35 15" fill="none" stroke="${c.bg}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="35" cy="15" r="2.6" fill="${c.bg}"/>
+  const xml = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <path d="M0 0 L100 0 L0 100 Z" fill="#0F2742"/>
+    <path d="M100 0 L100 100 L0 100 Z" fill="#1F7A8C"/>
+    <line x1="-6" y1="106" x2="106" y2="-6" stroke="${c.bg}" stroke-width="11"/>
   </svg>`;
   return <SvgXml xml={xml} width={size} height={size} />;
 }
