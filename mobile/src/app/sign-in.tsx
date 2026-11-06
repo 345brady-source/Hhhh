@@ -116,7 +116,7 @@ export default function SignIn() {
         )}
 
         <View style={[styles.demo, { borderColor: c.line }]}>
-          <Text style={{ color: c.fg3, fontSize: 12, lineHeight: 18 }}>Sample logins for this preview, one per firm: jordan.davis@example.com (Kestrel Bay), jordan.davis@example.org (Ashwell Ridge), jordan.davis@example.net (Greywater). Any password, code 482913.</Text>
+          <Text style={{ color: c.fg3, fontSize: 12, lineHeight: 18 }}>Sample logins for this preview, one per firm: jordan.davis@example.com (Kestrel Bay), jordan.davis@example.org (Ashwell Ridge), jordan.davis@example.net (Greywater), davis.trust@example.com (Pellbrook). Any password, code 482913.</Text>
         </View>
       </Screen>
     </KeyboardAvoidingView>

@@ -182,6 +182,7 @@
       list[k].onboarding = { status: 'invited', step: 0, invited: '2026-10-28', completed: '' };
       list[k].payment = { method: 'check', bank: null };
       list[k].accreditation = { basis: '', date: '' };
+      list[k].taxForm = '';
       list[k].edelivery = false;
     });
     [[n - 3, 2], [n - 4, 4]].forEach(([k, step]) => {
@@ -191,16 +192,23 @@
     list[n - 5].payment = { method: 'check', bank: null };
 
     const MULT = [1, 1, 1, 1.5, 2, 2, 2, 2.5, 3, 4, 5];
+    const OPEN = ['Hedge fund', 'Digital asset fund', 'Multi-strategy fund'];
     offerings.forEach((o) => {
+      // Drawdown funds: the roster amount is the commitment; `amount` is what has been called so far.
+      const called = o.calls ? o.calls.reduce((a, c) => a + c[1], 0) : 1;
+      const position = (amt, date) => (called < 1 ? { offeringId: o.id, amount: Math.round(amt * called), commitment: amt, date } : { offeringId: o.id, amount: amt, date });
+      // Open-ended funds take subscriptions on the first of any month after launch.
+      const open = OPEN.indexOf(o.type) >= 0;
+      const months = Math.max(1, monthsBetween(o.closeDate, today()));
       const jordanAmt = t.roster.jordan && t.roster.jordan[o.id];
-      if (jordanAmt) list[0].positions.push({ offeringId: o.id, amount: jordanAmt, date: o.closeDate });
+      if (jordanAmt) list[0].positions.push(position(jordanAmt, o.closeDate));
       const others = list.slice(1).filter(() => R() < 0.55);
       list.slice(1).forEach((inv) => {
         if (others.length < 11 && others.indexOf(inv) < 0) others.push(inv);
       });
       others.forEach((inv) => {
         const amt = Math.round((o.minimum * pick(R, MULT)) / 5000) * 5000;
-        inv.positions.push({ offeringId: o.id, amount: amt, date: o.closeDate });
+        inv.positions.push(position(amt, open ? addMonths(o.closeDate.slice(0, 8) + '01', Math.floor(R() * months)) : o.closeDate));
       });
     });
     return list.filter((inv) => inv.positions.length);

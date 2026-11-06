@@ -16,6 +16,12 @@
      work. Sponsors see offerings read-only and never see the brand page. */
   const isStaff = () => S().role === 'staff';
   const STAFF_ONLY = ['console-brand'];
+  /** Append an entry to the client's change log (see audit.js). */
+  const audit = (action, detail, fund, record) => NS.audit && NS.audit.log(W(), { action, detail, fund: fund || '', record: record || '' });
+  const short = (x) => {
+    const v = x === '' || x == null ? '(blank)' : String(x);
+    return v.length > 60 ? v.slice(0, 57) + '…' : v;
+  };
   const staffGuard = (fn) => function () {
     if (!isStaff()) return U.toast('Only Carrow & Vale can change this. Contact your Carrow & Vale team.');
     return fn.apply(this, arguments);
@@ -29,6 +35,7 @@
     ['console-distributions', 'Distributions'],
     ['console-notices', 'Notices'],
     ['console-reports', 'Reports'],
+    ['console-audit', 'Audit'],
     ['console-ach', 'ACH origination'],
     ['console-brand', 'Portal and brand']
   ];
@@ -216,6 +223,7 @@
       update: '',
       achOverride: { companyName: '', companyId: '' }
     });
+    audit('Offering created', `${id} (${type})`, id, id);
     NS.app.save(true);
     NS.app.go('console-offering-' + id);
   });
@@ -242,7 +250,7 @@
         .join('')}</select>${opts.hint ? `<span class="cs-hint">${opts.hint}</span>` : ''}</label>`;
     }
     if (opts.textarea) return `<label class="cs-field cs-wide" for="${id}"><span>${label}</span><textarea id="${id}" rows="${opts.rows || 3}" data-bind="off:${path}" maxlength="${opts.max || 600}">${h(v)}</textarea>${opts.hint ? `<span class="cs-hint">${opts.hint}</span>` : ''}</label>`;
-    return `<label class="cs-field${opts.wide ? ' cs-wide' : ''}" for="${id}"><span>${label}</span><input id="${id}" type="${opts.type || 'text'}" data-bind="off:${path}" value="${h(v == null ? '' : v)}"${opts.max ? ` maxlength="${opts.max}"` : ''}${opts.upper ? ' data-upper' : ''}${opts.spell === false ? ' spellcheck="false"' : ''}>${opts.hint ? `<span class="cs-hint">${opts.hint}</span>` : ''}</label>`;
+    return `<label class="cs-field${opts.wide ? ' cs-wide' : ''}" for="${id}"><span>${label}</span><input id="${id}" type="${opts.type || 'text'}" data-bind="off:${path}" value="${h(v == null ? '' : v)}"${opts.placeholder ? ` placeholder="${h(opts.placeholder)}"` : ''}${opts.step ? ` step="${opts.step}"` : ''}${opts.max ? ` maxlength="${opts.max}"` : ''}${opts.upper ? ' data-upper' : ''}${opts.spell === false ? ' spellcheck="false"' : ''}>${opts.hint ? `<span class="cs-hint">${opts.hint}</span>` : ''}</label>`;
   }
   function offPreview(o) {
     const x = NS.exitInfo(o);
@@ -277,11 +285,36 @@
           ${panel('Distributions', kv([['Frequency', h(d.frequency || '')], ['Payment day', periodMonths(d.frequency) && d.day ? NS.data.ordinal(Number(d.day)) + ' of the month' : ''], ['Next payment', nextOf(o) ? date(nextOf(o).date, 'wd') : ''], ['Payment type', h(d.type || '')], ['Target or rate', h(d.target || '')]]))}
           ${panel('Key terms shown to investors', terms.length ? kv(terms.map((r) => [h(r.label) + (r.show ? '' : ' <span class="cs-muted">(hidden)</span>'), h(r.value) || '—'])) : '<p class="cs-muted">No terms.</p>')}
           ${o.update ? panel('Latest update', `<p>${h(o.update)}</p>`) : ''}
+          ${(() => {
+            const cfg = NS.audit.settings(o);
+            const pc = (x) => `${+(x * 100).toFixed(2)}%`;
+            return panel('Fund accounting', kv([['Accounting', `${h(cfg.label)}, ${cfg.open ? 'open-ended (monthly NAV)' : 'closed-end (quarterly valuations)'}`], ['Management fee', `${pc(cfg.mgmtFee)} a year on ${h(NS.audit.FEE_BASIS[cfg.feeBasis].split(' (')[0].toLowerCase())}`], [cfg.open ? 'Incentive allocation' : 'Carried interest', cfg.carry ? `${pc(cfg.carry)}${cfg.open ? ' over a high-water mark' : cfg.pref ? ` over a ${pc(cfg.pref)} preferred return` : ''}` : 'None'], ['Auditor', h(cfg.auditor || T().auditor || 'Not set')]]));
+          })()}
           ${panel('ACH originator for this offering', kv([['Company name', h(ach.companyName || T().ach.companyName || 'Client default')], ['Company ID', h(ach.companyId || 'Client default')]]))}
         </div>
         <aside class="cs-split-side" id="off-preview">${offPreview(o)}</aside>
       </div>`,
       'console-offerings'
+    );
+  }
+  function accountingDefaults(o) {
+    const cfg = NS.audit.settings(Object.assign({}, o, { accounting: {} }));
+    const pc = (x) => `${+(x * 100).toFixed(2)}%`;
+    const text = `${pc(cfg.mgmtFee)} a year on ${NS.audit.FEE_BASIS[cfg.feeBasis].split(' (')[0].toLowerCase()}${cfg.carry ? `; ${pc(cfg.carry)} ${cfg.open ? 'incentive allocation over a high-water mark' : 'carried interest'}${!cfg.open && cfg.pref ? ` over a ${pc(cfg.pref)} preferred return` : ''}` : '; no carried interest'}`;
+    return { cfg, text };
+  }
+  function fundAccountingPanel(o) {
+    const { cfg, text } = accountingDefaults(o);
+    return panel(
+      'Fund accounting',
+      `<p class="cs-hint">Used for the audit package. ${h(o.type)} offerings use ${h(cfg.label.toLowerCase())} accounting: ${cfg.open ? 'open-ended, monthly net asset value' : 'closed-end, quarterly valuations'}. Leave a field blank to use the default (${h(text)}).</p>
+      <div class="cs-grid">
+        ${offField('Management fee (% a year)', 'accounting.mgmtFee', { type: 'number', step: '0.05', placeholder: String(+(cfg.mgmtFee * 100).toFixed(2)) })}
+        ${offField('Fee basis', 'accounting.feeBasis', { select: [['', `Default: ${NS.audit.FEE_BASIS[cfg.feeBasis].split(' (')[0].toLowerCase()}`], ['commitment', 'Commitments'], ['contributed', 'Contributed capital'], ['nav', 'Net asset value']] })}
+        ${offField(cfg.open ? 'Incentive allocation (%)' : 'Carried interest (%)', 'accounting.carry', { type: 'number', step: '0.5', placeholder: String(+(cfg.carry * 100).toFixed(2)) })}
+        ${cfg.open ? '' : offField('Preferred return (% a year)', 'accounting.pref', { type: 'number', step: '0.25', placeholder: String(+(cfg.pref * 100).toFixed(2)) })}
+        ${offField('Auditor', 'accounting.auditor', { placeholder: T().auditor || 'Audit firm', max: 80 })}
+      </div>`
     );
   }
   NS.views['console-offering'] = {
@@ -341,6 +374,7 @@
               ${offField('Default payment type', 'distribution.type', { select: NS.DIST_TYPES })}
               ${offField('Target or rate shown to investors', 'distribution.target', { wide: true, max: 60, hint: 'For example "6.0% annualized". Leave blank to hide.' })}
             </div>`)}
+            ${fundAccountingPanel(o)}
             ${panel(
               'Key terms shown to investors',
               `<div class="terms-edit">${terms || '<p class="cs-muted">No terms yet.</p>'}</div>
@@ -362,12 +396,21 @@
       );
     }
   };
+  const OFF_FIELDS = { name: 'Offering name', shortName: 'Short name', type: 'Type', status: 'Status', closeDate: 'Closing date', summary: 'Description', minimum: 'Minimum investment', 'exit.basis': 'Exit basis', 'exit.date': 'Exit date', 'exit.from': 'Exit window opens', 'exit.to': 'Exit window closes', 'exit.note': 'Exit note', 'distribution.frequency': 'Distribution frequency', 'distribution.day': 'Payment day', 'distribution.type': 'Payment type', 'distribution.target': 'Target shown to investors', update: 'Latest update', 'achOverride.companyName': 'ACH company name', 'achOverride.companyId': 'ACH company ID', 'accounting.mgmtFee': 'Management fee (%)', 'accounting.feeBasis': 'Fee basis', 'accounting.carry': 'Carried interest or incentive (%)', 'accounting.pref': 'Preferred return (%)', 'accounting.auditor': 'Auditor' };
+  function logOffEdit(o, path, from, to) {
+    const m = /^terms\.(\d+)\.(label|value|show)$/.exec(path);
+    const label = m ? `Term ${Number(m[1]) + 1} ${m[2] === 'show' ? 'shown to investors' : m[2]}` : OFF_FIELDS[path] || path;
+    if (NS.audit) NS.audit.log(W(), { coalesce: `off:${o.id}:${path}`, action: 'Offering updated', fund: o.id, record: o.id, from, to, detailFor: (a, b) => `${label}: ${short(a)} → ${short(b)}` });
+  }
   NS.binders.off = (path, v) => {
     const o = curOff();
     if (!o || !isStaff()) return;
+    const before = NS.app.getPath(o, path);
     if (path === 'minimum') v = Number(v) || 0;
     if (path === 'distribution.day') v = Number(v) || 15;
+    if (/^accounting\.(mgmtFee|carry|pref)$/.test(path)) v = v === '' || v == null ? '' : Number(v);
     NS.app.setPath(o, path, v);
+    logOffEdit(o, path, before, v);
     if (path === 'exit.basis') {
       // Give the new basis sensible dates so the investor preview always has something to show.
       const base = o.closeDate || today();
@@ -386,6 +429,7 @@
     }
   };
   NS.actions['term-add'] = staffGuard(() => {
+    audit('Offering terms changed', 'Term added', curOff().id, curOff().id);
     curOff().terms.push({ label: '', value: '', show: true });
     NS.app.save();
     NS.app.render();
@@ -393,6 +437,7 @@
     if (ins.length) ins[ins.length - 2].focus();
   });
   NS.actions['term-defaults'] = staffGuard(() => {
+    audit('Offering terms changed', 'Standard terms added', curOff().id, curOff().id);
     const o = curOff();
     const have = o.terms.map((r) => r.label.toLowerCase());
     NS.OFFERING_TYPES[o.type].terms.forEach((l) => {
@@ -402,11 +447,13 @@
     NS.app.render();
   });
   NS.actions['term-del'] = staffGuard((el) => {
+    audit('Offering terms changed', `Term ${Number(el.getAttribute('data-i')) + 1} removed`, curOff().id, curOff().id);
     curOff().terms.splice(Number(el.getAttribute('data-i')), 1);
     NS.app.save();
     NS.app.render();
   });
   NS.actions['term-move'] = staffGuard((el) => {
+    audit('Offering terms changed', `Term ${Number(el.getAttribute('data-i')) + 1} moved ${Number(el.getAttribute('data-d')) < 0 ? 'up' : 'down'}`, curOff().id, curOff().id);
     const t = curOff().terms;
     const i = Number(el.getAttribute('data-i'));
     const j = i + Number(el.getAttribute('data-d'));
@@ -422,6 +469,8 @@
       return;
     }
     S().ui.offDel = false;
+    const gone = curOff();
+    if (gone) audit('Offering removed', gone.name, gone.id, gone.id);
     W().offerings = W().offerings.filter((o) => o.id !== S().param);
     NS.app.save(true);
     NS.app.go('console-offerings');
@@ -536,9 +585,11 @@
     const same = W().investors.find((x) => x.email.toLowerCase() === r.email.toLowerCase());
     if (same) {
       same.positions.push(inv.positions[0]);
+      audit('Subscription added', `${same.title}: ${usd(r.amount)}`, r.offering, same.id);
       return same;
     }
     W().investors.push(inv);
+    audit('Investor invited', `${inv.title} (${inv.email}): ${usd(r.amount)}`, r.offering, inv.id);
     return inv;
   }
   NS.actions['invite-toggle'] = () => {
@@ -900,6 +951,7 @@
     const d = draft();
     d.file = buildFile(d);
     d.line = 2;
+    audit('NACHA file generated', `${d.file.filename}: ${d.file.batches.reduce((a, b) => a + b.entries, 0)} entries, ${usdc(d.file.batches.reduce((a, b) => a + b.credit, 0))}, effective ${date(d.date)}`, d.offeringId, d.file.filename);
     NS.app.render();
     const p = document.querySelector('.nacha-wrap');
     if (p) p.scrollIntoView({ block: 'nearest' });
@@ -913,6 +965,7 @@
   };
   NS.actions['nacha-download'] = () => {
     const f = draft().file;
+    if (f) audit('NACHA file downloaded', f.filename, draft().offeringId, f.filename);
     if (f) U.download(f.filename, f.text, { hostName: f.filename.replace(/\.ach$/i, '.txt') });
   };
   NS.actions['nacha-copy'] = () => {
@@ -925,6 +978,7 @@
     if (!(total > 0)) return;
     const id = `${d.offeringId}-${d.date}-${Date.now().toString(36)}`;
     W().runs.unshift({ id, offeringId: d.offeringId, date: d.date, type: d.type, total, status: d.date > today() ? 'scheduled' : 'paid', source: 'console', file: d.file ? d.file.filename : '' });
+    audit('Distribution recorded', `${d.type}: ${usdc(total)} ${d.date > today() ? 'scheduled for' : 'paid'} ${date(d.date)}; ${d.file ? d.file.filename : 'no NACHA file'}`, d.offeringId, id);
     W().runs.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
     NS.app.save(true);
     const o = W().offerings.find((x) => x.id === d.offeringId);
@@ -1143,7 +1197,9 @@
     }
     const w = W();
     w.notices = w.notices || [];
-    w.notices.push({ id: 'n-' + Date.now().toString(36), date: today(), kind: n.kind, audience: n.investors.length ? 'all' : n.audience, investors: n.investors.slice(), includePending: n.includePending, quarter: n.quarter, docName: n.docName, subject: n.subject, body: n.body, recipients: list.map((i) => i.id), sentBy: S().role === 'staff' ? 'staff' : 'sponsor' });
+    const nid = 'n-' + Date.now().toString(36);
+    audit('Notice sent', `“${short(n.subject)}” to ${list.length} investor${list.length === 1 ? '' : 's'}`, n.investors.length || n.audience === 'all' ? '' : n.audience, nid);
+    w.notices.push({ id: nid, date: today(), kind: n.kind, audience: n.investors.length ? 'all' : n.audience, investors: n.investors.slice(), includePending: n.includePending, quarter: n.quarter, docName: n.docName, subject: n.subject, body: n.body, recipients: list.map((i) => i.id), sentBy: S().role === 'staff' ? 'staff' : 'sponsor' });
     NS.app.save(true);
     S().ui.notice = null;
     NS.app.render();
@@ -1443,6 +1499,143 @@
     U.copy(text, holder);
   };
 
+  /* ---------- Audit: audit-ready schedules for each fund ---------- */
+  function audState() {
+    const u = S().ui;
+    const w = W();
+    if (!u.aud || !w.offerings.some((o) => o.id === u.aud.offering)) {
+      const o = w.offerings.find((x) => !x.exit || x.exit.basis !== 'exited') || w.offerings[0];
+      const pre = o ? NS.audit.presets(w, o)[0] : null;
+      u.aud = { offering: o ? o.id : '', preset: 'fy', from: pre ? pre.from : '', to: pre ? pre.to : '', tab: 'rollforward' };
+    }
+    return u.aud;
+  }
+  const audOff = () => W().offerings.find((o) => o.id === audState().offering);
+  function audApplyPreset(a) {
+    const o = audOff();
+    const p = o && NS.audit.presets(W(), o).find((x) => x.id === a.preset);
+    if (p) {
+      a.from = p.from;
+      a.to = p.to;
+    }
+  }
+  function audCheck(c) {
+    const ic = c.status === 'pass' ? icon('check') : c.status === 'na' ? '<span class="aud-dash" aria-hidden="true">–</span>' : icon('alert');
+    const res = c.status === 'pass' ? 'Pass' : c.status === 'na' ? 'Not applicable' : `${c.items.length} exception${c.items.length === 1 ? '' : 's'}`;
+    return `<li class="aud-check is-${c.status}">
+      <span class="aud-ic">${ic}</span>
+      <div class="aud-check-body">
+        <div class="aud-check-head"><strong>${h(c.title)}</strong><span class="aud-res">${res}</span></div>
+        <p>${h(c.detail)}</p>
+        ${c.items.length ? `<details${c.items.length <= 3 ? ' open' : ''}><summary>${c.items.length <= 3 ? 'Exceptions' : `Show ${c.items.length} exceptions`}</summary><ul>${c.items.map((x) => `<li>${h(x)}</li>`).join('')}</ul></details>` : ''}
+      </div>
+    </li>`;
+  }
+  function audTable(s, limit) {
+    const A = NS.audit;
+    const num = (c) => ['money', 'pct', 'ratio', 'price', 'int', 'qty'].indexOf(c.t) >= 0;
+    const cell = (c, v, tag) => {
+      const txt = A.display(c, v);
+      const hash = /hash/i.test(c.h) && txt.length > 16;
+      return `<${tag}${num(c) ? ' class="num"' : ''}${hash ? ` title="${h(txt)}"` : ''}>${h(hash ? txt.slice(0, 12) + '…' : txt)}</${tag}>`;
+    };
+    const body = s.rows.slice(0, limit).map((r) => `<tr>${s.cols.map((c, i) => cell(c, r[i], 'td')).join('')}</tr>`).join('');
+    const total = s.total ? `<tfoot><tr>${s.cols.map((c, i) => cell(c, s.total[i], 'td')).join('')}</tr></tfoot>` : '';
+    return `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact aud-tbl"><thead><tr>${s.cols.map((c) => `<th scope="col"${num(c) ? ' class="num"' : ''}>${h(c.h)}</th>`).join('')}</tr></thead><tbody>${body || `<tr><td colspan="${s.cols.length}" class="cs-muted">No rows for this period.</td></tr>`}</tbody>${total}</table></div>${s.rows.length > limit ? `<p class="cs-hint">Showing ${limit} of ${s.rows.length} rows. The CSV has every row.</p>` : ''}`;
+  }
+  NS.views['console-audit'] = {
+    mode: 'console',
+    render() {
+      const w = W();
+      const A = NS.audit;
+      if (!w.offerings.length) return shell(`${head('Audit')}${panel('', '<p class="cs-muted">No offerings yet. Audit schedules appear once an offering has investors.</p>')}`, 'console-audit');
+      const a = audState();
+      const o = audOff();
+      const cfg = A.settings(o);
+      const B = A.build(w, o, a.from, a.to);
+      S().ui.audBuild = B;
+      const P = B.P;
+      const f = P.fund;
+      const exCount = B.chk.filter((c) => c.status === 'exception').reduce((n, c) => n + c.items.length, 0);
+      const pass = B.chk.filter((c) => c.status === 'pass').length;
+      const applicable = B.chk.filter((c) => c.status !== 'na').length;
+      const tab = B.list.find((s) => s.id === a.tab) || B.list[0];
+      const lastExport = A.ensureLog(w).filter((e) => e.action === 'Audit package exported' && e.fund === o.id).pop();
+      const auditor = cfg.auditor || T().auditor;
+      return shell(
+        `${head('Audit', 'Audit-ready records for each fund: financial statements, capital accounts, investor register, capital activity, schedule of investments, fees, performance and a tamper-evident change log. Every schedule ties to the others, and the checks list anything to resolve before fieldwork.', `<button class="cs-btn cs-btn-primary" type="button" data-action="aud-zip">${icon('download')}Download audit package</button>`)}
+        ${panel(
+          '',
+          `<div class="cs-grid cs-grid-3">
+            <label class="cs-field cs-wide" for="aud-offering"><span>Fund</span><select id="aud-offering" data-bind="aud:offering">${w.offerings.map((x) => `<option value="${h(x.id)}"${x.id === o.id ? ' selected' : ''}>${h(x.name)} · ${h(A.settings(x).label)}</option>`).join('')}</select></label>
+            <label class="cs-field" for="aud-preset"><span>Period</span><select id="aud-preset" data-bind="aud:preset">${A.presets(w, o).map((p) => `<option value="${p.id}"${a.preset === p.id ? ' selected' : ''}>${h(p.label)}</option>`).join('')}<option value="custom"${a.preset === 'custom' ? ' selected' : ''}>Custom dates</option></select></label>
+            <label class="cs-field" for="aud-from"><span>From</span><input id="aud-from" type="date" data-bind="aud:from" value="${h(a.from)}"></label>
+            <label class="cs-field" for="aud-to"><span>To</span><input id="aud-to" type="date" data-bind="aud:to" value="${h(a.to)}"></label>
+          </div>
+          <p class="cs-hint">${h(o.type)}: ${cfg.open ? 'open-ended, monthly net asset value' : 'closed-end, quarterly valuations'}. Fiscal year ends December 31.${auditor ? ` Auditor: ${h(auditor)}.` : ''} Valuations are month-end, so this package covers ${date(P.from)} to ${date(P.to)}.</p>`
+        )}
+        <dl class="cs-figs">
+          <div><dt>Net assets, ${date(P.to)}</dt><dd>${usdc(f.end + f.gpEnd)}</dd></div>
+          <div><dt>Contributions</dt><dd>${usdc(f.contrib)}</dd></div>
+          <div><dt>Distributions</dt><dd>${usdc(f.dist)}</dd></div>
+          <div><dt>Net increase from operations</dt><dd>${usdc(f.income - f.fee + f.gain)}</dd></div>
+        </dl>
+        ${panel(`Audit readiness <span class="cs-count">${pass} of ${applicable} checks pass${exCount ? ` · ${exCount} exception${exCount === 1 ? '' : 's'} to resolve` : ''}</span>`, `<ul class="aud-checks">${B.chk.map(audCheck).join('')}</ul>`)}
+        ${panel(
+          `Audit package <span class="cs-count">${B.list.length + 2} files</span>`,
+          `<p class="cs-muted">One .zip with every schedule as a CSV, a README that explains how they tie and the basis of preparation, and a SHA-256 manifest so the auditor can confirm nothing changed after export. Every download is recorded in the change log.</p>
+          <div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">File</th><th scope="col">Schedule</th><th scope="col" class="num">Rows</th><th scope="col"><span class="sr-only">Download</span></th></tr></thead><tbody>
+          ${B.list.map((s) => `<tr><td class="nowrap"><code>${h(s.file)}</code></td><td>${h(s.title)}</td><td class="num">${s.rows.length}</td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="aud-csv" data-id="${s.id}">CSV</button></td></tr>`).join('')}
+          </tbody></table></div>
+          ${lastExport ? `<p class="cs-hint">Last exported ${date(lastExport.at.slice(0, 10))} by ${h(lastExport.actor)}: <code>${h(lastExport.record)}</code>. ${h(lastExport.detail)}.</p>` : ''}`
+        )}
+        ${panel(
+          'Preview',
+          `<div class="cs-tabs aud-tabs" role="group" aria-label="Schedule">${B.list.map((s) => `<button type="button" class="cs-tab" data-action="aud-tab" data-t="${s.id}" aria-pressed="${s.id === tab.id}">${h(s.title)}</button>`).join('')}</div>
+          <p class="cs-muted aud-desc">${h(tab.desc)}</p>
+          ${audTable(tab, 60)}`
+        )}`,
+        'console-audit'
+      );
+    }
+  };
+  NS.binders.aud = (path, v) => {
+    const a = audState();
+    if (path === 'offering') {
+      a.offering = v;
+      if (a.preset !== 'custom') audApplyPreset(a);
+    } else if (path === 'preset') {
+      a.preset = v;
+      if (v !== 'custom') audApplyPreset(a);
+    } else if (path === 'from' || path === 'to') {
+      if (!v) return;
+      a[path] = v;
+      a.preset = 'custom';
+    }
+    NS.app.render();
+  };
+  NS.actions['aud-tab'] = (el) => {
+    audState().tab = el.getAttribute('data-t');
+    NS.app.render();
+  };
+  NS.actions['aud-zip'] = () => {
+    const a = audState();
+    const o = audOff();
+    if (!o) return;
+    const pkg = NS.audit.exportPackage(W(), o, a.from, a.to);
+    U.download(pkg.name, pkg.bytes, { mime: 'application/zip' });
+    NS.app.render();
+  };
+  NS.actions['aud-csv'] = (el) => {
+    const B = S().ui.audBuild;
+    const o = audOff();
+    const s = B && o && B.list.find((x) => x.id === el.getAttribute('data-id'));
+    if (!s) return;
+    const fund = String(o.shortName || o.name).replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    NS.audit.log(W(), { action: 'Audit schedule downloaded', fund: o.id, record: s.file, detail: `${s.title}, ${date(B.P.from)} to ${date(B.P.to)}` });
+    U.download(`${slug()}_${fund}_${B.P.from}_to_${B.P.to}_${s.file}`, NS.audit.toCsv(s), { mime: 'text/csv' });
+  };
+
   /* ---------- ACH origination ---------- */
   function achField(label, path, opts) {
     opts = opts || {};
@@ -1492,6 +1685,9 @@
     }
   };
   NS.binders.ach = (path, v) => {
+    const before = NS.app.getPath(T().ach, path);
+    const mask = (x) => (/account/i.test(path) && x ? `ending ${String(x).slice(-4)}` : short(x));
+    if (NS.audit) NS.audit.log(W(), { coalesce: 'ach:' + path, action: 'ACH settings updated', record: 'ach', from: before, to: v, detailFor: (a, b) => `${path}: ${mask(a)} → ${mask(b)}` });
     NS.app.setPath(T().ach, path, v);
     NS.app.save();
     if (path === 'balanced') return NS.app.render();
@@ -1628,6 +1824,7 @@
   };
   NS.binders.tenant = (path, v, el) => {
     if (!isStaff()) return;
+    if (NS.audit) NS.audit.log(W(), { coalesce: 'tenant:' + path, action: 'Portal settings updated', record: 'portal', from: NS.app.getPath(T(), path), to: v, detailFor: (a, b) => `${path}: ${short(a)} → ${short(b)}` });
     if (path.indexOf('colors.') === 0) {
       const hex = B.normHex(v);
       el.classList.toggle('is-invalid', !hex);
@@ -1649,11 +1846,13 @@
     }
   };
   NS.actions.mark = staffGuard((el) => {
+    audit('Portal settings updated', `Logo mark: ${el.getAttribute('data-mark')}`, '', 'portal');
     T().logo.type = el.getAttribute('data-mark');
     NS.app.applyTenant();
     NS.app.render();
   });
   NS.actions.preset = staffGuard((el) => {
+    audit('Portal settings updated', `Colors: ${el.getAttribute('data-p')} and ${el.getAttribute('data-a')}`, '', 'portal');
     T().colors.primary = el.getAttribute('data-p');
     T().colors.accent = el.getAttribute('data-a');
     NS.app.applyTenant();

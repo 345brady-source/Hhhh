@@ -50,6 +50,7 @@ Sample logins, one per firm (any password, code `482913`):
 | `jordan.davis@example.com` | Kestrel Bay Capital |
 | `jordan.davis@example.org` | Ashwell Ridge Real Estate |
 | `jordan.davis@example.net` | Greywater Infrastructure Partners |
+| `davis.trust@example.com` | Pellbrook Partners (venture, hedge, digital asset, multi-strategy and SPV funds) |
 
 ## Publish to the App Store
 

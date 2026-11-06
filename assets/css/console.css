@@ -365,3 +365,30 @@ body.role-sponsor .cs { --cv-accent: var(--brand); --cv-accent-ink: var(--brand-
 /* Sponsors see offerings read-only; Carrow & Vale maintains them. */
 .cs-locked-note { display: flex; align-items: center; gap: 8px; margin: 0; }
 .cs-locked-note svg { width: 16px; height: 16px; flex: none; }
+
+/* Audit: readiness checks, package files and schedule preview */
+.aud-checks { list-style: none; margin: 0; padding: 0; }
+.aud-check { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; padding: 12px 0; border-top: 1px solid var(--cv-line); }
+.aud-check:first-child { border-top: 0; padding-top: 2px; }
+.aud-ic { display: flex; justify-content: center; padding-top: 1px; }
+.aud-ic .i { width: 18px; height: 18px; }
+.aud-check.is-pass .aud-ic { color: var(--cv-ok); }
+.aud-check.is-exception .aud-ic { color: var(--cv-warn); }
+.aud-check.is-na .aud-ic { color: var(--cv-ink-3); }
+.aud-dash { font-weight: 700; line-height: 18px; }
+.aud-check-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.aud-check-head strong { font-size: 14px; }
+.aud-res { font-size: 12px; font-weight: 700; white-space: nowrap; color: var(--cv-ink-3); }
+.aud-check.is-exception .aud-res { color: var(--cv-warn); }
+.aud-check p { margin: 3px 0 0; font-size: 13px; color: var(--cv-ink-2); line-height: 1.45; }
+.aud-check details { margin-top: 6px; font-size: 13px; }
+.aud-check summary { cursor: pointer; font-weight: 700; color: var(--cv-ink-2); }
+.aud-check details ul { margin: 6px 0 0; padding-left: 18px; }
+.aud-check details li { margin: 3px 0; line-height: 1.45; }
+.aud-tabs { margin-bottom: 12px; }
+.aud-desc { margin: 0 0 10px; font-size: 13px; }
+.aud-tbl th, .aud-tbl td { white-space: nowrap; }
+.aud-tbl tfoot td { font-weight: 700; border-top: 2px solid var(--cv-line); }
+@media (max-width: 720px) {
+  .aud-check-head { flex-direction: column; gap: 2px; }
+}

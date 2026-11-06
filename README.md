@@ -33,8 +33,35 @@ python3 -m http.server 8000
 | Distributions | Allocate a payment pro rata by amount invested (to the cent), generate the NACHA file, and record the payment so investors see it |
 | Notices | Email investors that a quarterly report or new documents are in their portal. Templates, merge fields ({first_name}, {investment}, {quarter}, {documents} and others), audience of all investors, one offering, or any number of specific investors across offerings (separate searchable picker), optional inclusion of investors who have not activated, a branded preview, and a sent history. Each notice also appears in the recipients' portals |
 | Reports | Distribution reports for any period (this or last quarter, year to date, last year, last 12 months, since inception, or custom dates), for all offerings or one, viewed by investor, by payment or by offering, with totals and a CSV download. Investor contact lists filtered by offering, account status and payment method, with CSV download and copy-all-emails. Contact exports never include bank account numbers or taxpayer IDs |
+| Audit | Audit-ready records for any fund and period: readiness checks, a preview of every schedule, and a one-click audit package (see below) |
 | ACH origination | ODFI and file-header values, company name and ID, entry description, and optional balanced files |
 | Portal and brand | Logo, colors with an accessibility check, typeface, header style, onboarding requirements, support contact and disclosures |
+
+## Audit-ready data
+
+The Audit page builds what a fund's auditor asks for, for any fund and any period (last fiscal year, year to date, last quarter, inception to date or custom dates). It works for venture capital, private equity, hedge, digital asset, SPV, real estate and multi-strategy funds, plus private credit and real assets. Sponsors and Carrow & Vale staff can both use it.
+
+**Accounting by fund type.** Closed-end drawdown funds (VC, PE, SPV, real estate, credit, real assets) take contributions by capital call, value positions quarterly, and accrue carried interest over a preferred return as if the fund were liquidated at net asset value. Open-ended funds (hedge, digital asset, multi-strategy) take subscriptions at month-end NAV, charge the management fee on NAV, and accrue an incentive allocation over each investor's high-water mark, crystallized every December 31. Capital accounts run monthly in whole cents, so fund totals are always the exact sum of the investors. Carrow & Vale staff set each offering's fee rate, fee basis, carry or incentive, preferred return and auditor under Fund accounting on the offering; sponsors see these read-only.
+
+**The package** is a .zip of CSV files that open in Excel, a README, and a SHA-256 manifest:
+
+| File | Contents |
+|---|---|
+| 01–03 | Statement of assets and liabilities, statement of operations, statement of changes in partners' capital (limited and general partners) |
+| 04 | Capital account rollforward for every investor: beginning, contributions, distributions, income, gains, fees, carry or incentive, ending, ownership |
+| 05 | Investor register: commitment, contributed, unfunded, distributed, ending capital, ownership, tax form, masked taxpayer ID, accreditation, portal status, payment method |
+| 06 | Capital activity ledger: every contribution and distribution with its bank reference (NACHA file and trace number, or check number) |
+| 07 | Distribution reconciliation: each payment's total against investor allocations, ACH entries and checks |
+| 08–10 | Schedule of investments with cost, fair value, ASC 820 level, valuation technique, key input and supporting document; fair value hierarchy; Level 3 inputs |
+| 11–12 | Management fee calculation; carried interest or incentive allocation by investor |
+| 13 | Performance: net IRR, DPI, RVPI and TVPI for closed-end funds; monthly, year-to-date and annualized net returns for open-ended funds |
+| 14 | By fund type: custody reconciliation (digital assets: book against custodian quantities by wallet), property schedule (real estate: appraisals, mortgages, loan to value, cap rates), strategy allocation (multi-strategy: allocation and return by strategy) |
+| 15 | Change log for the period |
+| 16 | Readiness checks |
+
+**Readiness checks** tie the schedules to each other (capital rolls forward, partners' capital equals net assets, the schedule of investments agrees to the balance sheet, ownership totals 100%), match distributions to bank files, and flag what to fix before fieldwork: missing tax forms or accreditation, stale Level 3 valuation support, custodian differences, distributions recorded without a NACHA file, and any break in the change log.
+
+**Change log.** Every distribution, NACHA file, capital call, valuation approval, investor invitation and activation, notice, offering edit, settings change and audit export is appended with who did it and when. Each entry is SHA-256 hashed together with the previous entry's hash, so any later edit is detected and reported. In production each entry carries the signed-in user's name and email.
 
 ## iOS app: Shareholder Desk
 
@@ -109,7 +136,9 @@ Confirm every value against your bank's ACH implementation guide before the firs
 
 ## Sample data
 
-Kestrel Bay Capital, Ashwell Ridge Real Estate and Greywater Infrastructure Partners are fictional firms. Investors, bank names and account numbers are invented; routing numbers pass the ABA check digit but are not tied to real banks. Every figure reconciles: each investor's distributions are their exact pro-rata share of each payment.
+A fourth sample client, **Pellbrook Partners**, runs a venture capital fund (with partly called commitments), a long/short hedge fund, a digital asset fund, a multi-strategy fund and an SPV, so every fund type has sample data. Holdings, valuations and auditors for all sample funds are fictional.
+
+Kestrel Bay Capital, Ashwell Ridge Real Estate, Greywater Infrastructure Partners and Pellbrook Partners are fictional firms. Investors, bank names and account numbers are invented; routing numbers pass the ABA check digit but are not tied to real banks. Every figure reconciles: each investor's distributions are their exact pro-rata share of each payment.
 
 Placeholders such as "[Regulatory disclosures to be provided by counsel.]" are intentional.
 
@@ -140,5 +169,6 @@ assets/js/app.js           shell, routing, operator bar, shared helpers
 assets/js/documents.js     letterhead document previews
 assets/js/portal.js        investor pages
 assets/js/onboarding.js    investor activation
+assets/js/audit.js         fund accounting, audit schedules, readiness checks, change log, zip package
 assets/js/console.js       sponsor console
 ```
