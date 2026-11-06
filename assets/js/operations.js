@@ -234,7 +234,7 @@
   }
   function submitSubscription(ws, inv, o, opts) {
     const open = isOpen(o);
-    const r = { id: `req-${Date.now().toString(36)}`, type: 'subscription', offeringId: o.id, investorId: inv.id, submitted: today(), dealing: open ? subscriptionDate(today()) : o.closeDate, cents: Math.round(opts.cents), additional: inv.positions.some((p) => p.offeringId === o.id), status: 'pending', signedBy: opts.signature, signedAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z') };
+    const r = { id: `req-${Date.now().toString(36)}`, type: 'subscription', offeringId: o.id, investorId: inv.id, cls: opts.cls || undefined, submitted: today(), dealing: open ? subscriptionDate(today()) : o.closeDate, cents: Math.round(opts.cents), additional: inv.positions.some((p) => p.offeringId === o.id), status: 'pending', signedBy: opts.signature, signedAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z') };
     ws.requests.push(r);
     log(ws, { action: open ? 'Subscription requested' : 'Subscription documents signed', fund: o.id, record: r.id, detail: `${inv.title} (${inv.id}): ${money(r.cents)} ${open ? 'subscription' : 'commitment'}; signed by ${opts.signature}`, actor: `${inv.title} (investor)` });
     save(ws);
@@ -277,8 +277,8 @@
     const o = ws.offerings.find((x) => x.id === r.offeringId);
     const inv = ws.investors.find((x) => x.id === r.investorId);
     if (r.type !== 'subscription' || r.status !== 'approved' || !o || !inv) return false;
-    if (isOpen(o)) inv.positions.push({ offeringId: o.id, amount: r.cents / 100, date: r.dealing, ref: r.id });
-    else inv.positions.push({ offeringId: o.id, amount: 0, commitment: r.cents / 100, date: today(), ref: r.id });
+    if (isOpen(o)) inv.positions.push(Object.assign({ offeringId: o.id, amount: r.cents / 100, date: r.dealing, ref: r.id }, r.cls ? { class: r.cls } : {}));
+    else inv.positions.push(Object.assign({ offeringId: o.id, amount: 0, commitment: r.cents / 100, date: today(), ref: r.id }, r.cls ? { class: r.cls } : {}));
     r.status = isOpen(o) ? 'funded' : 'accepted';
     r.completed = today();
     log(ws, { action: isOpen(o) ? 'Subscription funded' : 'Subscription accepted', fund: o.id, record: r.id, detail: `${inv.title} (${inv.id}): ${money(r.cents)} ${isOpen(o) ? `subscription effective ${dateShort(r.dealing)}` : 'commitment countersigned'}` });
@@ -376,7 +376,7 @@
   })();
   function docsFor(ws, inv) {
     const held = (oid) => inv.positions.some((p) => p.offeringId === oid);
-    return (ws.docs || []).filter((d) => (d.audience === 'investors' ? (d.investors || []).indexOf(inv.id) >= 0 : d.offeringId ? held(d.offeringId) : true));
+    return (ws.docs || []).filter((d) => !d.hidden && (d.audience === 'investors' ? (d.investors || []).indexOf(inv.id) >= 0 : d.offeringId ? held(d.offeringId) : true));
   }
   function recipientsOf(ws, d) {
     if (d.audience === 'investors') return ws.investors.filter((i) => (d.investors || []).indexOf(i.id) >= 0);

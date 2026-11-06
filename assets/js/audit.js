@@ -29,8 +29,10 @@
 
   /* ---------- Formatting ---------- */
   const pad2 = (n) => String(n).padStart(2, '0');
+  let CUR = 'USD';
   function money(c) {
     if (c == null) return '';
+    if (NS.structures && CUR !== 'USD') return NS.structures.fmt(c, CUR);
     const s = (Math.abs(c) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return (c < 0 ? '−$' : '$') + s;
   }
@@ -106,7 +108,17 @@
       holdings: o.holdings || cfg.holdings || [{ name: o.name, security: o.type, level: 3, method: 'Per the fund’s valuation policy', input: 'See valuation memo', weight: 100, cost: 0.9, support: { every: 3, doc: 'Quarterly valuation memo' } }],
       calls: o.calls || cfg.calls || null,
       sleeves: o.sleeves || cfg.sleeves || null,
-      auditor: a.auditor || ''
+      auditor: a.auditor || '',
+      administrator: a.administrator || '',
+      currency: NS.structures ? NS.structures.curOf(o) : 'USD',
+      classes: (o.classes && o.classes.length ? o.classes : cfg.classes) || null,
+      feeders: (o.feeders && o.feeders.length ? o.feeders : cfg.feeders) || null,
+      sidePocket: (((o.sidePockets || cfg.sidePockets || {}).pockets) || [])[0] || null,
+      sidePockets: o.sidePockets || cfg.sidePockets || null,
+      equalization: o.equalization || cfg.equalization || '',
+      catchUp: a.catchUp === '' || a.catchUp == null ? null : Number(a.catchUp),
+      tiers: (a.waterfall && a.waterfall.tiers && a.waterfall.tiers.length ? a.waterfall.tiers : null),
+      waterfallType: (a.waterfall && a.waterfall.type) || 'european'
     };
   }
 
@@ -247,8 +259,42 @@
       if (q.type === 'redemption' && q.offeringId === o.id && (q.status === 'approved' || q.status === 'paid') && q.dealing && keyOf(q.dealing) <= endKey) rBy[q.investorId + '|' + keyOf(q.dealing)] = q;
     });
     const st = {};
-    invs.forEach((i) => (st[i.id] = { cap: 0, carry: 0, hwm: 0, contrib: 0, dist: 0, commit: commitmentOf(i, o), firstKey: null }));
+    invs.forEach((i) => (st[i.id] = { cap: 0, sp: 0, carry: 0, hwm: 0, contrib: 0, dist: 0, commit: commitmentOf(i, o), firstKey: null }));
     const investEnd = D.addMonths(o.closeDate, 60);
+
+    // Fee terms by share class, and the waterfall for carried interest.
+    const X = NS.structures;
+    const terms = {};
+    invs.forEach((i) => (terms[i.id] = X ? X.termsFor(S, X.classOf(o, i, S.classes)) : { mgmtFee: S.mgmtFee, carry: S.carry, pref: S.pref, cls: null }));
+    L.terms = terms;
+    const tiersFor = (T) => (S.tiers ? S.tiers : X ? X.defaultTiers(T.carry, T.pref, S.catchUp) : null);
+    // Each investor's dated cash flows (for the waterfall) and carried interest already paid to the GP.
+    const flowsBy = {};
+    invs.forEach((i) => (flowsBy[i.id] = []));
+    contribs.forEach((c) => flowsBy[c.inv.id].push({ date: c.date, cents: -c.cents }));
+    dists.forEach((d) => flowsBy[d.inv.id].push({ date: d.date, cents: d.cents }));
+    const gpPaidBy = {};
+    ws.runs
+      .filter((r) => r.offeringId === o.id && r.status === 'paid' && r.gp > 0 && r.date <= now)
+      .forEach((run) =>
+        NS.data.allocate(ws, run).forEach((row) => {
+          if (row.cents > 0) (gpPaidBy[row.investor.id] = gpPaidBy[row.investor.id] || []).push({ date: run.date, cents: Math.round((run.gp * row.cents) / run.total) });
+        })
+      );
+    const upTo = (arr, end) => (arr || []).filter((f) => f.date <= end);
+    // Side pocket (open-ended funds): investors at its creation share it; it has its own valuation.
+    const SPc = S.open && S.sidePocket && S.sidePocket.created ? S.sidePocket : null;
+    const spKey = SPc ? keyOf(SPc.created) : null;
+    let spFrac = 0;
+    if (SPc) {
+      const Wt = S.holdings.reduce((a, h) => a + Math.max(0, h.weight), 0);
+      const hh = S.holdings.find((x) => x.name === SPc.holding);
+      spFrac = hh && Wt ? (hh.weight / Wt) * (1 - S.cash) : (Number(SPc.pct) || 5) / 100;
+    }
+    const RS = rng(hashStr(o.id + ':sidepocket'));
+    const spRet = {};
+    L.keys.forEach((k) => (spRet[k] = SPc && k > spKey && Number(k.slice(5, 7)) % 3 === 0 ? (Number(SPc.mu) || 0.1) / 4 + (Number(SPc.vol) || 0.06) * Math.sqrt(3) * gauss(RS) : 0));
+    L.sidePocket = SPc ? { cfg: SPc, key: spKey, frac: spFrac } : null;
 
     L.keys.forEach((k, idx) => {
       const mNum = Number(k.slice(5, 7));
@@ -262,25 +308,32 @@
       const incs = largest(Math.round(r.income * baseSum), bases);
       const gains = largest(Math.round(r.gain * baseSum), bases);
       const rows = {};
-      const F = { key: k, end, begin: 0, contrib: 0, dist: 0, income: 0, gain: 0, fee: 0, carry: 0, gpOut: 0, endCap: 0, gpBegin: 0, gpEnd: 0, r };
+      const F = { key: k, end, begin: 0, contrib: 0, dist: 0, income: 0, gain: 0, fee: 0, carry: 0, gpOut: 0, endCap: 0, gpBegin: 0, gpEnd: 0, sp: 0, r };
       invs.forEach((i, n) => {
         const s = st[i.id];
         const c = cBy[i.id + '|' + k] || 0;
         const d = dBy[i.id + '|' + k] || 0;
-        const begin = s.cap;
+        const beginMain = s.cap;
+        const begin = beginMain + s.sp;
+        const T = terms[i.id];
+        let spGain = 0;
+        if (s.sp && spRet[k]) {
+          spGain = Math.round(s.sp * spRet[k]);
+          s.sp += spGain;
+        }
         if (c && !s.firstKey) s.firstKey = k;
         s.contrib += c;
         s.dist += d;
         let inc = incs[n];
         let gain = gains[n];
         let feeBase = 0;
-        if (S.feeBasis === 'nav') feeBase = begin + c;
+        if (S.feeBasis === 'nav') feeBase = beginMain + c + (s.sp - spGain);
         else if (S.feeBasis === 'commitment' && end <= investEnd) feeBase = s.commit;
         else feeBase = s.contrib;
-        const fee = s.firstKey ? Math.round((feeBase * S.mgmtFee) / 12) : 0;
+        const fee = s.firstKey ? Math.round((feeBase * T.mgmtFee) / 12) : 0;
         if (S.open) s.hwm += c - d;
         const prevA = s.carry;
-        let pre = begin + c - d + inc + gain - fee + prevA;
+        let pre = beginMain + c - d + inc + gain - fee + prevA;
         let A = prevA;
         let out = 0;
         let hurdle = null;
@@ -290,17 +343,18 @@
           gain += A - pre;
           pre = A;
           out = A;
-        } else if (S.carry > 0) {
+        } else if (T.carry > 0 || S.tiers) {
           if (S.open) {
-            A = Math.max(0, Math.min(pre, Math.round(S.carry * (pre - s.hwm))));
+            A = Math.max(0, Math.min(pre, Math.round(T.carry * (pre - s.hwm))));
             if (mNum === 12) out = A;
           } else if (quarterEnd || last) {
+            // Carried interest accrues as if the investor's capital were distributed now through the waterfall.
             profit = s.dist + pre - s.contrib;
-            const yrs = (monthsFrom(s.firstKey || k, k) + 1) / 12;
-            hurdle = Math.round(s.contrib * (Math.pow(1 + S.pref, yrs) - 1));
-            let x = 0;
-            if (profit > hurdle) x = S.pref > 0 && profit <= hurdle / (1 - S.carry) ? profit - hurdle : Math.round(S.carry * profit);
-            A = Math.max(0, Math.min(pre, x));
+            const fl = upTo(flowsBy[i.id], end);
+            const gpPrior = upTo(gpPaidBy[i.id], end).reduce((a, x) => a + x.cents, 0);
+            const w = X ? X.waterfall(tiersFor(T), fl, gpPrior, pre, end) : { gp: 0 };
+            hurdle = T.pref && X ? Math.max(0, Math.round(X.shortfall(fl, T.pref, end, false) - X.shortfall(fl, 0, end, false))) : 0;
+            A = Math.max(0, Math.min(pre, w.gp));
           }
         }
         let endCap = pre - A;
@@ -311,6 +365,13 @@
         const carryChg = A - prevA;
         s.carry = out ? 0 : A;
         if (S.open && mNum === 12 && out > 0) s.hwm = endCap;
+        // Side pocket created this month: part of each existing investor's capital moves into it.
+        if (spKey === k && endCap > 0) {
+          const x = Math.round(endCap * spFrac);
+          endCap -= x;
+          s.sp += x;
+          s.hwm = Math.round(s.hwm * (1 - spFrac));
+        }
         // Redemption at this month-end dealing date: capital out at net asset value after fees.
         let redeem = null;
         const q = rBy[i.id + '|' + k];
@@ -327,16 +388,17 @@
         }
         s.cap = endCap;
         const dOut = d + (redeem || 0);
-        rows[i.id] = { begin, contrib: c, dist: dOut, redeem, income: inc, gain, fee, feeBase, carry: carryChg, gpOut: out, end: endCap, carryBegin: prevA, carryEnd: s.carry, contribCum: s.contrib, distCum: s.dist, hwm: s.hwm, hurdle, profit, pre };
+        rows[i.id] = { begin, contrib: c, dist: dOut, redeem, income: inc, gain: gain + spGain, fee, feeBase, feeRate: T.mgmtFee, cls: T.cls ? T.cls.id : '', carry: carryChg, gpOut: out, end: endCap + s.sp, sp: s.sp, carryBegin: prevA, carryEnd: s.carry, contribCum: s.contrib, distCum: s.dist, hwm: s.hwm, hurdle, profit, pre };
         F.begin += begin;
         F.contrib += c;
         F.dist += dOut;
         F.income += inc;
-        F.gain += gain;
+        F.gain += gain + spGain;
+        F.sp += s.sp;
         F.fee += fee;
         F.carry += carryChg;
         F.gpOut += out;
-        F.endCap += endCap;
+        F.endCap += endCap + s.sp;
         F.gpBegin += prevA;
         F.gpEnd += s.carry;
       });
@@ -384,19 +446,22 @@
     out.feePayable = F.fee;
     out.redemptionsPayable = (L.redemptions || []).filter((x) => x.date <= endOf(k) && (!x.req.paid || x.req.paid > endOf(k))).reduce((a, x) => a + x.cents, 0);
     const base = nav + F.fee + out.redemptionsPayable;
-    const netTarget = Math.round(base * (1 - S.cash));
     const H = S.holdings;
-    const W = H.reduce((a, h) => a + h.weight, 0) || 1;
-    const vals = H.map((h) => Math.round((netTarget * h.weight) / W));
-    let big = 0;
+    let spIdx = L.sidePocket && F.sp > 0 && H.length > 1 ? H.findIndex((h) => h.name === L.sidePocket.cfg.holding) : -1;
+    const spVal = spIdx >= 0 ? F.sp : 0;
+    const netTarget = Math.round((base - spVal) * (1 - S.cash));
+    const W = H.reduce((a, h, j) => a + (j === spIdx ? 0 : h.weight), 0) || 1;
+    const vals = H.map((h, j) => (j === spIdx ? 0 : Math.round((netTarget * h.weight) / W)));
+    let big = spIdx === 0 ? 1 : 0;
     H.forEach((h, j) => {
-      if (Math.abs(h.weight) > Math.abs(H[big].weight)) big = j;
+      if (j !== spIdx && Math.abs(h.weight) > Math.abs(H[big].weight)) big = j;
     });
     vals[big] += netTarget - vals.reduce((a, v) => a + v, 0);
+    if (spIdx >= 0) vals[spIdx] = spVal;
     let signed = 0;
     H.forEach((h, j) => {
       let v = vals[j];
-      const row = { h, name: h.name, security: h.security || '', sleeve: h.sleeve || '', level: h.level || 3, method: h.method || '', input: h.input || '', qty: null, price: null, fv: v, cost: 0, debt: 0, equity: v };
+      const row = { h, sidePocket: j === spIdx, name: h.name + (j === spIdx ? ' (side pocket)' : ''), security: h.security || '', sleeve: h.sleeve || '', level: h.level || 3, method: h.method || '', input: h.input || '', qty: null, price: null, fv: v, cost: 0, debt: 0, equity: v };
       if (h.price && L.prices[j]) {
         const price = L.prices[j][k];
         const dec = h.decimals == null ? 8 : h.decimals;
@@ -461,6 +526,7 @@
   /* ---------- One fund, one period ---------- */
   function period(ws, o, fromIn, toIn) {
     const L = ledger(ws, o);
+    CUR = L.S.currency || 'USD';
     const { from, to } = snap(fromIn, toIn);
     const fk = keyOf(from);
     const tk = keyOf(to);
@@ -491,10 +557,14 @@
       a.hurdle = e ? e.hurdle : null;
       a.profit = e ? e.profit : null;
       a.feeBase = e ? e.feeBase : 0;
+      a.feeRate = e && e.feeRate != null ? e.feeRate : L.terms && L.terms[i.id] ? L.terms[i.id].mgmtFee : L.S.mgmtFee;
+      a.sp = e ? e.sp || 0 : 0;
+      a.cls = L.terms && L.terms[i.id] && L.terms[i.id].cls ? L.terms[i.id].cls : null;
+      a.feeder = NS.structures && L.S.feeders ? NS.structures.feederOf(o, i, L.S.feeders) : null;
       return a;
     });
     const sum = (f) => inv.reduce((s, a) => s + a[f], 0);
-    const fund = { begin: sum('begin'), contrib: sum('contrib'), dist: sum('dist'), income: sum('income'), gain: sum('gain'), fee: sum('fee'), carry: sum('carry'), gpOut: sum('gpOut'), end: sum('end'), gpBegin: sum('carryBegin'), gpEnd: sum('carryEnd'), contribCum: sum('contribCum'), distCum: sum('distCum'), commit: sum('commit') };
+    const fund = { begin: sum('begin'), contrib: sum('contrib'), dist: sum('dist'), income: sum('income'), gain: sum('gain'), fee: sum('fee'), carry: sum('carry'), gpOut: sum('gpOut'), end: sum('end'), gpBegin: sum('carryBegin'), gpEnd: sum('carryEnd'), contribCum: sum('contribCum'), distCum: sum('distCum'), commit: sum('commit'), sp: sum('sp') };
     inv.forEach((a) => (a.own = fund.end > 0 ? a.end / fund.end : 0));
     const hold = holdingsAt(L, lastM && lastM.key >= fk ? lastM.key : lastM ? lastM.key : null);
     return { L, o, S: L.S, from, to, ms, inv, fund, hold, empty: !L.months.length, before };
@@ -737,6 +807,7 @@
     const usd0 = (c) => money(c).replace(/\.\d\d$/, '');
     ws.offerings.forEach((o) => {
       const S = settings(o);
+      CUR = S.currency || 'USD';
       add(D.addMonths(o.closeDate, -1), o.id + 'setup', staff, 'Offering set up', o.id, o.id, `${o.name} (${o.type}); ${S.label.toLowerCase()} accounting`);
       const calls = (ws.calls || []).filter((c) => c.offeringId === o.id);
       if (calls.length) {
@@ -774,6 +845,7 @@
       if (run.status !== 'paid' || run.date > now) return;
       const o = ws.offerings.find((x) => x.id === run.offeringId);
       if (!o) return;
+      CUR = settings(o).currency || 'USD';
       const E = runEvidence(ws, o, run);
       add(weekdayBack(run.date, 3), run.id + 'appr', sponsor, 'Distribution approved', o.id, run.id, `${run.type}: ${money(run.total)} to ${E.rows.length} investors`);
       if (E.file) add(weekdayBack(run.date, 2), run.id + 'file', sponsor, 'NACHA file generated', o.id, run.id, `${E.file}: ${E.ach.length} entries, ${money(E.achCents)}`);
@@ -796,6 +868,7 @@
       if (k.screenedOn) add(k.screenedOn, i.id + 'scr', sys, 'Sanctions and PEP screening run', '', i.id, `${i.title}: ${k.screening === 'potential_match' ? `potential match on the ${k.match.list} (${Math.round(k.match.score * 100)}% name similarity) sent for review` : 'no matches'}`);
     });
     (ws.notices || []).forEach((n) => add(n.date, n.id, n.sentBy === 'staff' ? staff : sponsor, 'Notice sent', n.audience === 'all' ? '' : n.audience, n.id, `“${n.subject.replace(/\{[a-z_]+\}/g, '…')}” to ${n.recipients.length} investors`));
+    CUR = 'USD';
     ev.sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
     let prev = GENESIS;
     ev.forEach((e, n) => {
@@ -956,7 +1029,7 @@
     P.ms.forEach((m) =>
       Object.keys(m.rows).forEach((id) => {
         const r = m.rows[id];
-        if (r.fee !== Math.round((r.feeBase * S.mgmtFee) / 12) && r.fee !== 0) feeBad.push(`${id} ${m.key}`);
+        if (r.fee !== Math.round((r.feeBase * (r.feeRate != null ? r.feeRate : S.mgmtFee)) / 12) && r.fee !== 0) feeBad.push(`${id} ${m.key}`);
       })
     );
     add('fees', 'Management fees recalculate', !feeBad.length, `${(S.mgmtFee * 100).toFixed(2)}% a year on ${FEE_BASIS[S.feeBasis].toLowerCase()}, charged monthly: ${money(f.fee)} in the period.`, feeBad);
@@ -1055,16 +1128,20 @@
 
     // 4. Capital account rollforward by investor
     const sorted = P.inv.slice().sort((a, b) => b.end - a.end || (a.investor.id < b.investor.id ? -1 : 1));
-    const rf = sorted.map((a) => [a.investor.id, a.investor.title, a.begin, a.contrib, -a.dist, a.income, a.gain, -a.fee, -a.carry, a.end, a.own]);
+    // Share class and feeder columns appear when the fund has them.
+    const xCols = [].concat(S.classes ? [COL('Class')] : [], S.feeders ? [COL('Feeder fund')] : []);
+    const xVals = (a) => [].concat(S.classes ? [a.cls ? a.cls.name : ''] : [], S.feeders ? [a.feeder ? a.feeder.name : ''] : []);
+    const xBlank = xCols.map(() => '');
+    const rf = sorted.map((a) => [a.investor.id, a.investor.title, ...xVals(a), a.begin, a.contrib, -a.dist, a.income, a.gain, -a.fee, -a.carry, a.end, a.own]);
     out.push(
       sched(
         'rollforward',
         '04_Capital_account_rollforward.csv',
         'Capital account rollforward by investor',
         `Each investor’s capital account, ${dateShort(P.from)} to ${dateShort(P.to)}. Income and gains are allocated monthly in proportion to opening capital plus that month’s contributions.`,
-        [COL('Investor ID'), COL('Investor'), COL('Beginning capital', 'money'), COL(S.open ? 'Subscriptions' : 'Contributions', 'money'), COL(S.open ? 'Redemptions' : 'Distributions', 'money'), COL('Investment income', 'money'), COL('Realized and unrealized gain (loss)', 'money'), COL('Management fees', 'money'), COL(gpWord, 'money'), COL('Ending capital', 'money'), COL('Ownership', 'pct')],
+        [COL('Investor ID'), COL('Investor'), ...xCols, COL('Beginning capital', 'money'), COL(S.open ? 'Subscriptions' : 'Contributions', 'money'), COL(S.open ? 'Redemptions' : 'Distributions', 'money'), COL('Investment income', 'money'), COL('Realized and unrealized gain (loss)', 'money'), COL('Management fees', 'money'), COL(gpWord, 'money'), COL('Ending capital', 'money'), COL('Ownership', 'pct')],
         rf,
-        ['', 'Total', f.begin, f.contrib, -f.dist, f.income, f.gain, -f.fee, -f.carry, f.end, f.end > 0 ? 1 : 0]
+        ['', 'Total', ...xBlank, f.begin, f.contrib, -f.dist, f.income, f.gain, -f.fee, -f.carry, f.end, f.end > 0 ? 1 : 0]
       )
     );
 
@@ -1077,7 +1154,7 @@
       const kl = k ? NS.ops.kycLabel(k, P.to) : null;
       const acc = i.accreditation && i.accreditation.basis ? `Verified accredited investor, ${dateShort(i.accreditation.date)}` : 'Not verified';
       const first = i.positions.filter((p) => p.offeringId === o.id).map((p) => p.date).sort()[0];
-      return [i.id, i.title, i.contact, (NS.ENTITY_TYPES[i.type] || {}).label || i.type, first, a.commit, a.contribCum, unf(a), a.distCum, a.end, a.own, i.taxForm ? `${i.taxForm} on file` : 'Missing', i.tinLast4 ? `ending ${i.tinLast4}` : 'Not provided', acc, kl ? kl.label + (k.screenedOn ? `, screened ${dateShort(k.screenedOn)}` : '') : '', k && k.nextReview ? k.nextReview : '', i.onboarding.status === 'complete' ? 'Active' : i.onboarding.status === 'in_progress' ? 'Onboarding' : 'Invited', payLabel(i)];
+      return [i.id, i.title, ...xVals(a), i.contact, (NS.ENTITY_TYPES[i.type] || {}).label || i.type, first, a.commit, a.contribCum, unf(a), a.distCum, a.end, a.own, i.taxForm ? `${i.taxForm} on file` : 'Missing', i.tinLast4 ? `ending ${i.tinLast4}` : 'Not provided', acc, kl ? kl.label + (k.screenedOn ? `, screened ${dateShort(k.screenedOn)}` : '') : '', k && k.nextReview ? k.nextReview : '', i.onboarding.status === 'complete' ? 'Active' : i.onboarding.status === 'in_progress' ? 'Onboarding' : 'Invited', payLabel(i)];
     });
     out.push(
       sched(
@@ -1085,9 +1162,9 @@
         '05_Investor_register.csv',
         'Investor register',
         `Commitments, capital and investor documentation as of ${dateLong(P.to)}. Bank account and taxpayer numbers are masked.`,
-        [COL('Investor ID'), COL('Investor'), COL('Primary contact'), COL('Investing as'), COL('Subscription date', 'date'), COL(S.open ? 'Subscriptions' : 'Commitment', 'money'), COL('Contributed to date', 'money'), COL('Unfunded commitment', 'money'), COL('Distributed to date', 'money'), COL('Ending capital', 'money'), COL('Ownership', 'pct'), COL('Tax form'), COL('Taxpayer ID'), COL('Accreditation'), COL('AML/KYC'), COL('Next KYC review', 'date'), COL('Portal account'), COL('Distribution method')],
+        [COL('Investor ID'), COL('Investor'), ...xCols, COL('Primary contact'), COL('Investing as'), COL('Subscription date', 'date'), COL(S.open ? 'Subscriptions' : 'Commitment', 'money'), COL('Contributed to date', 'money'), COL('Unfunded commitment', 'money'), COL('Distributed to date', 'money'), COL('Ending capital', 'money'), COL('Ownership', 'pct'), COL('Tax form'), COL('Taxpayer ID'), COL('Accreditation'), COL('AML/KYC'), COL('Next KYC review', 'date'), COL('Portal account'), COL('Distribution method')],
         reg,
-        ['', 'Total', '', '', '', f.commit, f.contribCum, P.inv.reduce((s, a) => s + unf(a), 0), f.distCum, f.end, f.end > 0 ? 1 : 0, '', '', '', '', '', '', '']
+        ['', 'Total', ...xBlank, '', '', '', f.commit, f.contribCum, P.inv.reduce((s, a) => s + unf(a), 0), f.distCum, f.end, f.end > 0 ? 1 : 0, '', '', '', '', '', '', '']
       )
     );
 
@@ -1150,7 +1227,7 @@
     out.push(sched('l3', '10_Level_3_valuation_inputs.csv', 'Level 3 valuation inputs', 'Significant unobservable inputs for each Level 3 position.', [COL('Investment'), COL('Fair value', 'money'), COL('Valuation technique'), COL('Unobservable input'), COL('Support as of', 'date')], l3));
 
     // 11. Management fees
-    const fees = sorted.map((a) => [a.investor.id, a.investor.title, FEE_BASIS[S.feeBasis], a.feeBase, S.mgmtFee, P.ms.length, a.fee]);
+    const fees = sorted.map((a) => [a.investor.id, a.investor.title, FEE_BASIS[S.feeBasis], a.feeBase, a.feeRate, P.ms.length, a.fee]);
     out.push(sched('fees', '11_Management_fee_calculation.csv', 'Management fee calculation', `${(S.mgmtFee * 100).toFixed(2)}% a year on ${FEE_BASIS[S.feeBasis].toLowerCase()}, charged monthly (one-twelfth of the annual rate on each month’s basis).`, [COL('Investor ID'), COL('Investor'), COL('Fee basis'), COL('Basis, final month', 'money'), COL('Annual rate', 'pct'), COL('Months', 'int'), COL('Fees for period', 'money')], fees, ['', 'Total', '', '', null, null, f.fee]));
 
     // 12. Carried interest or incentive allocation
@@ -1163,7 +1240,7 @@
       out.push(
         S.open
           ? sched('carry', '12_Incentive_allocation.csv', 'Incentive allocation', `${(S.carry * 100).toFixed(0)}% of net profits above each investor’s high-water mark, accrued monthly and crystallized at December 31.`, [COL('Investor ID'), COL('Investor'), COL('High-water mark', 'money'), COL('Capital before incentive', 'money'), COL('Accrued, beginning', 'money'), COL('Allocated in period', 'money'), COL('Crystallized and paid', 'money'), COL('Accrued, ending', 'money')], cr, ['', 'Total', null, f.end + f.gpEnd, f.gpBegin, f.carry, f.gpOut, f.gpEnd])
-          : sched('carry', '12_Carried_interest.csv', 'Carried interest', `${(S.carry * 100).toFixed(0)}% carried interest${S.pref ? ` over an ${(S.pref * 100).toFixed(0)}% preferred return with full catch-up` : ''}, accrued at each quarter-end as if the fund were liquidated at net asset value.`, [COL('Investor ID'), COL('Investor'), COL('Contributed', 'money'), COL('Distributed', 'money'), COL('Capital before carry', 'money'), COL('Profit', 'money'), COL('Preferred return', 'money'), COL('Accrued, beginning', 'money'), COL('Allocated in period', 'money'), COL('Paid', 'money'), COL('Accrued, ending', 'money')], cr, ['', 'Total', f.contribCum, f.distCum, f.end + f.gpEnd, null, null, f.gpBegin, f.carry, f.gpOut, f.gpEnd])
+          : sched('carry', '12_Carried_interest.csv', 'Carried interest', `Waterfall (${S.waterfallType === 'american' ? 'deal by deal' : 'whole fund'}): ${(S.tiers || (NS.structures ? NS.structures.defaultTiers(S.carry, S.pref, S.catchUp) : [])).map((t) => (NS.structures ? NS.structures.tierLabel(t) : t.kind)).join('; ')}. Accrued at each quarter-end as if the investor’s capital were distributed through the waterfall on that date.`, [COL('Investor ID'), COL('Investor'), COL('Contributed', 'money'), COL('Distributed', 'money'), COL('Capital before carry', 'money'), COL('Profit', 'money'), COL('Preferred return', 'money'), COL('Accrued, beginning', 'money'), COL('Allocated in period', 'money'), COL('Paid', 'money'), COL('Accrued, ending', 'money')], cr, ['', 'Total', f.contribCum, f.distCum, f.end + f.gpEnd, null, null, f.gpBegin, f.carry, f.gpOut, f.gpEnd])
       );
     }
 
@@ -1199,12 +1276,36 @@
       out.push(sched('sleeves', '14_Strategy_allocation.csv', 'Strategy allocation', `Target and actual allocation as of ${dateLong(asOf)}; returns are gross for the period.`, [COL('Strategy'), COL('Target allocation', 'pct'), COL('Fair value', 'money'), COL('% of net assets', 'pct'), COL('Gross return, period', 'pct'), COL('Contribution to gross return', 'pct')], sl));
     }
 
+    if (S.classes) {
+      const cl = S.classes.map((c) => {
+        const mem = P.inv.filter((a) => a.cls && a.cls.id === c.id);
+        const cap = mem.reduce((t, a) => t + a.end, 0);
+        const pc = (v, d) => (v === '' || v == null ? d : Number(v) / 100);
+        return [c.name, pc(c.mgmtFee, S.mgmtFee), pc(c.carry, S.carry), S.open ? null : pc(c.pref, S.pref), c.minimum ? Math.round(Number(c.minimum) * 100) : null, c.currency || S.currency, c.subscribedBy ? `Subscribed by ${dateShort(c.subscribedBy)}` : c.note || '', mem.length, cap, f.end ? cap / f.end : 0];
+      });
+      out.push(sched('classes', '17_Share_classes.csv', 'Share classes', `Terms and capital by class as of ${dateLong(asOf)}. Fees and ${gpWord.toLowerCase()} are charged at each class’s rates.`, [COL('Class'), COL('Management fee', 'pct'), COL(gpWord, 'pct'), COL('Preferred return', 'pct'), COL('Minimum', 'money'), COL('Currency'), COL('Eligibility'), COL('Investors', 'int'), COL('Ending capital', 'money'), COL('% of limited partners', 'pct')], cl, ['Total', null, null, null, null, '', '', P.inv.filter((a) => a.end > 0 || a.contrib).length, f.end, f.end ? 1 : 0]));
+    }
+    if (S.feeders) {
+      const fd = S.feeders.map((x) => {
+        const mem = P.inv.filter((a) => a.feeder && a.feeder.id === x.id);
+        const cap = mem.reduce((t, a) => t + a.end, 0);
+        return [x.name, x.domicile || '', x.for || '', mem.length, cap, f.end ? cap / f.end : 0];
+      });
+      out.push(sched('feeders', '18_Feeder_funds.csv', 'Feeder funds', `${o.name} is the master fund; investors hold their interests through these feeders. Capital as of ${dateLong(asOf)}.`, [COL('Feeder fund'), COL('Domicile'), COL('Investors'), COL('Investors', 'int'), COL('Capital in the master fund', 'money'), COL('% of master', 'pct')], fd, ['Total', '', '', P.inv.length, f.end, f.end ? 1 : 0]));
+    }
+    if (P.L.sidePocket && f.sp > 0) {
+      const sp = P.L.sidePocket;
+      const mem = P.inv.filter((a) => a.sp > 0).sort((a, b) => b.sp - a.sp);
+      out.push(sched('sidepocket', '19_Side_pocket.csv', 'Side pocket', `${sp.cfg.name || 'Side pocket'}: ${sp.cfg.holding}, created ${dateLong(sp.cfg.created)} with ${(sp.frac * 100).toFixed(2)}% of each investor’s capital at that date. Only investors at that date share in it; it is not redeemable until realized.`, [COL('Investor ID'), COL('Investor'), COL('Side pocket capital', 'money'), COL('% of side pocket', 'pct')], mem.map((a) => [a.investor.id, a.investor.title, a.sp, a.sp / f.sp]), ['', 'Total', f.sp, 1]));
+    }
+
     // Change log and readiness
     const ev = ensureLog(ws).filter((e) => e.at.slice(0, 10) >= P.from && e.at.slice(0, 10) <= P.to && (!e.fund || e.fund === o.id) && (e.fund === o.id || !e.record || !/^[A-Z]{2,4}-\d{4}$/.test(e.record) || P.inv.some((a) => a.investor.id === e.record)));
     const all = ensureLog(ws);
     const prevOf = (e) => (e.seq > 1 ? all[e.seq - 2].hash : GENESIS);
     out.push(sched('log', '15_Change_log.csv', 'Change log', `Entries for this fund, its investors and firm-wide settings in the period (${ev.length} of ${all.length}). Each hash is SHA-256 of the previous hash and the entry, so any later edit breaks the chain. ${ver.ok ? 'Chain verified.' : `Chain broken at entry ${ver.brokenAt}.`}`, [COL('Seq', 'int'), COL('Timestamp (UTC)'), COL('User'), COL('Action'), COL('Record'), COL('Detail'), COL('Previous hash'), COL('Hash')], ev.map((e) => [e.seq, e.at, e.actor, e.action, e.record, e.detail, prevOf(e), e.hash])));
     out.push(sched('checks', '16_Readiness_checks.csv', 'Readiness checks', 'Tie-outs and documentation checks run when this package was built.', [COL('Check'), COL('Result'), COL('Detail'), COL('Exceptions')], chk.map((c) => [c.title, c.status === 'pass' ? 'Pass' : c.status === 'na' ? 'Not applicable' : `${c.items.length} exception${c.items.length === 1 ? '' : 's'}`, c.detail, c.items.join(' | ')])));
+    out.forEach((x) => (x.currency = S.currency || 'USD'));
     return out;
   }
 
@@ -1230,7 +1331,7 @@
     }
   }
   function toCsv(s) {
-    const head = s.cols.map((c) => cellText({ t: 'text' }, c.h + (c.t === 'pct' ? ' (%)' : c.t === 'money' ? ' (USD)' : ''))).join(',');
+    const head = s.cols.map((c) => cellText({ t: 'text' }, c.h + (c.t === 'pct' ? ' (%)' : c.t === 'money' ? ` (${s.currency || 'USD'})` : ''))).join(',');
     const lines = [head].concat(s.rows.map((r) => s.cols.map((c, i) => cellText(c, r[i])).join(',')));
     if (s.total) lines.push(s.cols.map((c, i) => cellText(c, s.total[i])).join(','));
     return '﻿' + lines.join('\r\n') + '\r\n';
@@ -1272,6 +1373,11 @@
       `Generated:      ${built.at} UTC`,
       `Fund type:      ${o.type} (${S.label}, ${S.open ? 'open-ended' : 'closed-end'})`,
       `Fiscal year end: December 31`,
+      `Currency:       ${S.currency || 'USD'}`,
+      ...(S.classes ? [`Share classes:  ${S.classes.map((c) => c.name).join(', ')}`] : []),
+      ...(S.feeders ? [`Feeder funds:   ${S.feeders.map((x) => x.name).join('; ')}`] : []),
+      ...(P.L.sidePocket ? [`Side pocket:    ${P.L.sidePocket.cfg.holding}, created ${dateShort(P.L.sidePocket.cfg.created)}`] : []),
+      ...(S.equalization ? [`Equalization:   ${S.equalization}`] : []),
       '',
       'SUMMARY',
       `Net assets at ${dateShort(P.to)}:      ${money(f.end + f.gpEnd)}`,
@@ -1300,11 +1406,11 @@
       '',
       'BASIS OF PREPARATION',
       `- Capital accounts are maintained monthly in U.S. dollars to the cent. Income and gains are allocated in proportion to opening capital plus contributions in the month (largest-remainder rounding), so fund totals are the exact sum of investor amounts.`,
-      `- Management fee: ${(S.mgmtFee * 100).toFixed(2)}% a year on ${FEE_BASIS[S.feeBasis].toLowerCase()}, charged monthly.`,
+      `- Management fee: ${(S.mgmtFee * 100).toFixed(2)}% a year on ${FEE_BASIS[S.feeBasis].toLowerCase()}, charged monthly${S.classes ? ', at each share class’s own rates' : ''}.`,
       S.carry > 0
         ? S.open
           ? `- Incentive allocation: ${(S.carry * 100).toFixed(0)}% of net profits above each investor’s high-water mark, accrued monthly and crystallized at December 31.`
-          : `- Carried interest: ${(S.carry * 100).toFixed(0)}%${S.pref ? ` over an ${(S.pref * 100).toFixed(0)}% preferred return with full catch-up` : ''}, accrued at each quarter-end on a hypothetical liquidation at net asset value.`
+          : `- Carried interest: accrued at each quarter-end on a hypothetical liquidation at net asset value through the waterfall: ${(S.tiers || (NS.structures ? NS.structures.defaultTiers(S.carry, S.pref, S.catchUp) : [])).map((t) => (NS.structures ? NS.structures.tierLabel(t) : t.kind)).join('; ')}.`
         : '- No carried interest or incentive allocation applies.',
       `- Valuations: ${S.open ? 'monthly net asset value' : 'quarterly fair value marks'} under ASC 820; Level 3 positions list technique, key unobservable input and supporting document.`,
       '- Distributions are recorded on the payment date and split pro rata to the cent; ACH payments reference the NACHA file and trace number, checks reference the check number.',

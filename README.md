@@ -30,17 +30,39 @@ python3 -m http.server 8000
 |---|---|
 | Overview | A five-step setup checklist for new clients, key figures, net asset value, contributed, distributed and unfunded capital by fund, and items needing attention (investors not activated, investors without bank details, exits or maturities within 12 months, open capital calls, requests awaiting approval, screening matches and re-screens due) |
 | Offerings | Each investment configured separately: type, closing date, how exit is defined, distribution frequency, the key terms investors see, the latest update, and the ACH company name and ID it pays under. A live preview shows what investors will see |
+| Offering intake | Carrow & Vale only. Upload an offering's documents (PDF, Word or text: PPM, partnership or operating agreement, subscription documents, term sheet) and the portal reads them and sets the offering up (see below) |
 | Investors | Activation status and payment method for every investor; invite one investor or import a list; preview the branded invitation email; open an investor's activation |
 | Capital calls | Issue a call by percentage of commitments or dollar amount, split pro rata to commitments and checked against each investor's unfunded commitment; investors get the notice and wire instructions in their portal; record payments, send reminders, and track open and overdue amounts. Payments flow into capital accounts and the audit schedules |
 | Requests | Redemptions and subscriptions investors submit and e-sign in the portal: approve or decline, record redemption payments at the dealing-date net asset value, record subscription funding or countersign commitments. The investor register and capital accounts update automatically |
 | Documents | Publish reports, statements, tax documents and notices to one fund, all investors, or individual investors matched by the investor ID in each file name (for example a folder of K-1s); notify recipients; each file's SHA-256 is recorded in the change log |
 | AML/KYC | Identity verification status, risk rating, beneficial owners, sanctions and PEP screening results and next review date for every investor; review potential matches (clear as a false positive with a note, or escalate), approve identity, and re-screen investors who are due |
-| Distributions | Allocate a payment pro rata by amount invested (to the cent), generate the NACHA file, and record the payment so investors see it |
+| Distributions | Allocate a payment pro rata by amount invested (to the cent), generate the NACHA file, and record the payment so investors see it. For funds with carry, enter gross proceeds to split them through the offering's waterfall tier by tier; the investors' share is allocated and the GP's share is recorded as carried interest paid |
 | Notices | Email investors that a quarterly report or new documents are in their portal. Templates, merge fields ({first_name}, {investment}, {quarter}, {documents} and others), audience of all investors, one offering, or any number of specific investors across offerings (separate searchable picker), optional inclusion of investors who have not activated, a branded preview, and a sent history. Each notice also appears in the recipients' portals |
 | Reports | Distribution reports for any period (this or last quarter, year to date, last year, last 12 months, since inception, or custom dates), for all offerings or one, viewed by investor, by payment or by offering, with totals and a CSV download. Investor contact lists filtered by offering, account status and payment method, with CSV download and copy-all-emails. Contact exports never include bank account numbers or taxpayer IDs |
 | Audit | Audit-ready records for any fund and period: readiness checks, a preview of every schedule, and a one-click audit package (see below) |
 | ACH origination | ODFI and file-header values, company name and ID, entry description, and optional balanced files |
 | Portal and brand | Logo, colors with an accessibility check, typeface, header style, onboarding requirements, support contact and disclosures |
+
+## Offering intake
+
+Carrow & Vale staff upload an offering's documents and the portal sets the offering up from them:
+
+1. **Read.** PDFs (with page references), Word files and text are read in the browser. Long documents are trimmed to the cover pages plus every passage that mentions terms. When the portal is open in Claude, Claude reads the documents (the viewer is asked to allow it once); anywhere else, or if Claude is not allowed, a built-in reader finds the common terms by pattern.
+2. **Review.** Every term is shown in an editable form with where it came from (the quoted passage and page) and whether it was stated, inferred or needs checking. Lists (share classes, feeder funds, waterfall tiers, key terms) can be edited, added to or trimmed.
+3. **Apply.** The portal creates the offering, or updates an existing one: name, type, status, first close, minimum, currency, term and exit timing, distributions, management fee and basis, carry or incentive, preferred return, catch-up, high-water mark, waterfall tiers, share classes, feeder funds, side pockets, equalization, liquidity (redemption frequency, notice, lock-up, early redemption fee, gate), service providers, the key terms investors see and the description. The documents are kept with the offering, published to its investors and subscription page if chosen, and their SHA-256 fingerprints are recorded in the change log.
+
+Any offering's structure can be reopened in the same editor (Edit structure on the offering). Sponsors see the structure read-only.
+
+## Complex fund structures
+
+- **Share classes.** Each class can carry its own management fee, carry or incentive, preferred return, minimum and currency. A founders class can close on a date (for example the first anniversary of the first close); new subscribers choose from the open classes, and each investor is charged at their class's rates.
+- **Master-feeder.** Feeder funds with domicile and who each is for; investors are assigned by investor type (tax-exempt investors to the offshore feeder) unless set on the position. The class and feeder appear in the investor register and capital account rollforward.
+- **Distribution waterfalls.** Return of capital, preferred return (compounding or simple), GP catch-up, and splits that end when investors reach an IRR, in any order and any number (for example an 8% simple preference paid first, then capital, 70/30 to a 15% IRR, then 50/50). European (whole fund) or American (deal by deal). Carry accrues each quarter through the waterfall.
+- **Side pockets.** Illiquid holdings moved into a side pocket at a date belong only to investors in the fund then; they are valued separately, excluded from incentive until realized, and shown to each investor.
+- **Equalization.** Incentive is computed on each investor's own gains above their high-water mark (capital accounts, equalization or series of shares give the same result here).
+- **Currencies.** Offerings in euros, sterling, Swiss francs, Canadian, Australian, Singapore and Hong Kong dollars and yen show amounts in their currency, and the audit schedules are labeled with it.
+
+The audit package adds share class (17), feeder fund (18) and side pocket (19) schedules when an offering has them.
 
 ## Audit-ready data
 
@@ -178,5 +200,7 @@ assets/js/portal.js        investor pages
 assets/js/onboarding.js    investor activation
 assets/js/audit.js         fund accounting, audit schedules, readiness checks, change log, zip package
 assets/js/operations.js    capital calls, redemption and subscription requests, AML/KYC, published documents
+assets/js/structures.js    currencies, share classes, feeder funds, distribution waterfalls, equalization
+assets/js/intake.js        offering-document intake: PDF and Word reading, Claude and built-in readers, apply
 assets/js/console.js       sponsor console
 ```

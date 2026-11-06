@@ -15,7 +15,7 @@
   /* Adding offerings, configuring them and branding the portal are Carrow & Vale
      work. Sponsors see offerings read-only and never see the brand page. */
   const isStaff = () => S().role === 'staff';
-  const STAFF_ONLY = ['console-brand'];
+  const STAFF_ONLY = ['console-brand', 'console-intake'];
   /** Append an entry to the client's change log (see audit.js). */
   const audit = (action, detail, fund, record) => NS.audit && NS.audit.log(W(), { action, detail, fund: fund || '', record: record || '' });
   const short = (x) => {
@@ -31,6 +31,7 @@
   const NAV = [
     ['console', 'Overview'],
     ['console-offerings', 'Offerings'],
+    ['console-intake', 'Offering intake'],
     ['console-investors', 'Investors'],
     ['console-calls', 'Capital calls'],
     ['console-distributions', 'Distributions'],
@@ -253,7 +254,7 @@
         .join('');
       return shell(
         `${isStaff()
-          ? head('Offerings', 'Each investment is configured separately: how exit is defined, how often it pays, and which terms investors see.', '<button class="cs-btn cs-btn-primary" type="button" data-action="off-add">Add offering</button>')
+          ? head('Offerings', 'Each investment is configured separately: how exit is defined, how often it pays, and which terms investors see.', '<a class="cs-btn" href="#console-intake">Set up from documents</a><button class="cs-btn cs-btn-primary" type="button" data-action="off-add">Add offering</button>')
           : head('Offerings', 'Your offerings as Carrow &amp; Vale has set them up. To add an offering or change how one is shown to investors, contact your Carrow &amp; Vale team.')}
         ${panel(
           '',
@@ -351,6 +352,7 @@
             const pc = (x) => `${+(x * 100).toFixed(2)}%`;
             return panel('Fund accounting', kv([['Accounting', `${h(cfg.label)}, ${cfg.open ? 'open-ended (monthly NAV)' : 'closed-end (quarterly valuations)'}`], ['Management fee', `${pc(cfg.mgmtFee)} a year on ${h(NS.audit.FEE_BASIS[cfg.feeBasis].split(' (')[0].toLowerCase())}`], [cfg.open ? 'Incentive allocation' : 'Carried interest', cfg.carry ? `${pc(cfg.carry)}${cfg.open ? ' over a high-water mark' : cfg.pref ? ` over a ${pc(cfg.pref)} preferred return` : ''}` : 'None'], ['Auditor', h(cfg.auditor || T().auditor || 'Not set')]]));
           })()}
+          ${structurePanel(o)}
           ${panel('ACH originator for this offering', kv([['Company name', h(ach.companyName || T().ach.companyName || 'Client default')], ['Company ID', h(ach.companyId || 'Client default')]]))}
         </div>
         <aside class="cs-split-side" id="off-preview">${offPreview(o)}</aside>
@@ -436,6 +438,7 @@
               ${offField('Target or rate shown to investors', 'distribution.target', { wide: true, max: 60, hint: 'For example "6.0% annualized". Leave blank to hide.' })}
             </div>`)}
             ${fundAccountingPanel(o)}
+            ${structurePanel(o)}
             ${panel(
               'Key terms shown to investors',
               `<div class="terms-edit">${terms || '<p class="cs-muted">No terms yet.</p>'}</div>
@@ -943,6 +946,7 @@
             }
             <label class="cs-field" for="ds-desc"><span>Bank statement description (10)</span><input id="ds-desc" type="text" maxlength="10" data-upper data-bind="dist:desc" value="${h(d.desc)}" spellcheck="false"></label>
           </div>
+          ${wfPreview(o, d)}
           <div id="ds-alloc">${allocTable(rows, ach, chk, total)}</div>
           <div class="cs-row">
             <button class="cs-btn cs-btn-primary" type="button" data-action="nacha-build"${canFile ? '' : ' disabled'}>Generate NACHA file</button>
@@ -972,7 +976,18 @@
   }
   NS.binders.dist = (path, v) => {
     const d = draft();
+    if (path === 'gross') {
+      d.gross = v;
+      const el = document.getElementById('ds-wf-body');
+      const o = W().offerings.find((x) => x.id === d.offeringId);
+      if (el && o) el.innerHTML = wfBody(o, d);
+      return;
+    }
     d[path] = v;
+    if (path === 'offeringId') {
+      d.gross = '';
+      d.wf = null;
+    }
     d.file = null;
     d.line = null;
     if (path === 'offeringId') {
@@ -1038,8 +1053,9 @@
     const total = draftTotalCents(d);
     if (!(total > 0)) return;
     const id = `${d.offeringId}-${d.date}-${Date.now().toString(36)}`;
-    W().runs.unshift({ id, offeringId: d.offeringId, date: d.date, type: d.type, total, status: d.date > today() ? 'scheduled' : 'paid', source: 'console', file: d.file ? d.file.filename : '' });
-    audit('Distribution recorded', `${d.type}: ${usdc(total)} ${d.date > today() ? 'scheduled for' : 'paid'} ${date(d.date)}; ${d.file ? d.file.filename : 'no NACHA file'}`, d.offeringId, id);
+    const wf = d.wf && d.wf.lp === total ? d.wf : null;
+    W().runs.unshift(Object.assign({ id, offeringId: d.offeringId, date: d.date, type: d.type, total, status: d.date > today() ? 'scheduled' : 'paid', source: 'console', file: d.file ? d.file.filename : '' }, wf ? { gp: wf.gp, gross: wf.gross } : {}));
+    audit('Distribution recorded', `${d.type}: ${usdc(total)} ${d.date > today() ? 'scheduled for' : 'paid'} ${date(d.date)}${wf ? ` (waterfall: ${usdc(wf.gross)} gross, ${usdc(wf.gp)} to the GP)` : ''}; ${d.file ? d.file.filename : 'no NACHA file'}`, d.offeringId, id);
     W().runs.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
     NS.app.save(true);
     const o = W().offerings.find((x) => x.id === d.offeringId);
@@ -1830,7 +1846,7 @@
         .map((x) => {
           const o = x.offeringId ? offById(x.offeringId) : null;
           const n = OPS().recipientsOf(w, x).length;
-          return `<tr><td class="nowrap">${date(x.date)}</td><td>${h(x.title)}<span class="sub">${h(x.fileName)} · ${(x.size / 1024).toFixed(0)} KB</span></td><td>${h(o ? o.shortName || o.name : 'All investors')}</td><td>${x.audience === 'investors' ? `${n} matched investor${n === 1 ? '' : 's'}` : `${n} investor${n === 1 ? '' : 's'}`}</td><td>${h(x.cat)}${x.taxYear ? `<span class="sub">Tax year ${h(x.taxYear)}</span>` : ''}</td><td><code title="${h(x.sha256)}">${h(x.sha256.slice(0, 10))}…</code></td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="docs-remove" data-id="${h(x.id)}">Remove</button></td></tr>`;
+          return `<tr><td class="nowrap">${date(x.date)}</td><td>${h(x.title)}<span class="sub">${h(x.fileName)} · ${(x.size / 1024).toFixed(0)} KB${x.offeringDoc ? ` · offering document${x.hidden ? ', not shown to investors' : ''}` : ''}</span></td><td>${h(o ? o.shortName || o.name : 'All investors')}</td><td>${x.audience === 'investors' ? `${n} matched investor${n === 1 ? '' : 's'}` : `${n} investor${n === 1 ? '' : 's'}`}</td><td>${h(x.cat)}${x.taxYear ? `<span class="sub">Tax year ${h(x.taxYear)}</span>` : ''}</td><td><code title="${h(x.sha256)}">${h(x.sha256.slice(0, 10))}…</code></td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="docs-remove" data-id="${h(x.id)}">Remove</button></td></tr>`;
         })
         .join('');
       return shell(
@@ -2023,6 +2039,389 @@
     const inv = invById(el.getAttribute('data-id'));
     if (inv && OPS().approveIdentity(W(), inv)) NS.app.render();
   };
+
+  /* ---------- Offering intake: set an offering up from its documents (Carrow & Vale) ---------- */
+  const IK = () => NS.intake;
+  function ikState() {
+    const u = S().ui;
+    if (!u.intake) u.intake = { step: 'upload', files: [], samples: [], pasted: '', target: '', publish: true, docs: [], progress: '', method: '', profile: null, error: '', trimmed: false, busy: false, done: '' };
+    return u.intake;
+  }
+  const ikVal = (path) => NS.app.getPath(ikState().profile, path);
+  function ikChip(path, v) {
+    const p = ikState().profile;
+    if (v === '' || v == null || v === false || (Array.isArray(v) && !v.length)) return '<span class="ik-chip ik-none">Not found</span>';
+    const c = p.confidence[path];
+    return c === 'high' ? '<span class="ik-chip ik-high">Stated</span>' : c === 'medium' ? '<span class="ik-chip ik-medium">Inferred</span>' : c === 'low' ? '<span class="ik-chip ik-low">Check</span>' : ikState().method === 'manual' ? '' : '<span class="ik-chip ik-medium">Found</span>';
+  }
+  function ikSrc(path) {
+    const s = ikState().profile.sources[path];
+    if (!s) return '';
+    const t = String(s);
+    return `<span class="ik-src" title="${h(t)}">“${h(t.length > 150 ? t.slice(0, 147) + '…' : t)}”</span>`;
+  }
+  function ikField(label, path, opts) {
+    opts = opts || {};
+    const v = ikVal(path);
+    const id = 'ik-' + path.replace(/\./g, '-');
+    if (opts.check) return `<label class="cs-check" for="${id}"><input id="${id}" type="checkbox" data-bind="ik:${path}"${v ? ' checked' : ''}><span>${label} ${ikChip(path, v)}</span></label>`;
+    let input;
+    if (opts.select) input = `<select id="${id}" data-bind="ik:${path}">${opts.select.map(([val, l]) => `<option value="${h(val)}"${String(v == null ? '' : v) === String(val) ? ' selected' : ''}>${h(l)}</option>`).join('')}</select>`;
+    else if (opts.textarea) input = `<textarea id="${id}" rows="${opts.rows || 2}" data-bind="ik:${path}">${h(Array.isArray(v) ? v.join('\n') : v == null ? '' : v)}</textarea>`;
+    else input = `<input id="${id}" type="${opts.type || 'text'}"${opts.type === 'number' ? ' step="any"' : ''} data-bind="ik:${path}" value="${h(v == null ? '' : v)}">`;
+    return `<label class="cs-field${opts.wide ? ' cs-wide' : ''}" for="${id}"><span>${label} ${ikChip(path, v)}</span>${input}${opts.hint ? `<span class="cs-hint">${opts.hint}</span>` : ''}${ikSrc(path)}</label>`;
+  }
+  const IK_ROWS = {
+    classes: () => ({ name: `Class ${'ABCDEFGH'[(ikVal('classes') || []).length] || 'X'}`, mgmtFee: null, carry: null, pref: null, minimum: null, currency: '', eligibility: '' }),
+    'structure.feeders': () => ({ name: '', domicile: '', for: '' }),
+    'waterfall.tiers': () => ({ kind: 'split', rate: null, simple: false, gp: 20, lp: 80, upTo: null }),
+    investorTerms: () => ({ label: '', value: '' })
+  };
+  function ikList(title, list, cols, hint) {
+    const arr = ikVal(list) || [];
+    const cell = (path, v, t, opt) => {
+      const id = 'ik-' + path.replace(/\./g, '-');
+      if (t === 'select') return `<select id="${id}" aria-label="${h(path)}" data-bind="ik:${path}">${opt.map(([val, l]) => `<option value="${h(val)}"${String(v == null ? '' : v) === String(val) ? ' selected' : ''}>${h(l)}</option>`).join('')}</select>`;
+      if (t === 'check') return `<input id="${id}" type="checkbox" aria-label="${h(path)}" data-bind="ik:${path}"${v ? ' checked' : ''}>`;
+      return `<input id="${id}" type="${t === 'number' ? 'number' : 'text'}"${t === 'number' ? ' step="any"' : ''} aria-label="${h(path)}" data-bind="ik:${path}" value="${h(v == null ? '' : v)}">`;
+    };
+    const rows = arr.map((row, i) => `<tr>${cols.map(([k, , t, opt]) => `<td>${cell(`${list}.${i}.${k}`, row[k], t, opt)}</td>`).join('')}<td class="num"><button class="cs-icon" type="button" data-action="ik-row-del" data-list="${list}" data-i="${i}" aria-label="Remove">${icon('x')}</button></td></tr>`).join('');
+    return `<div class="ik-list cs-wide"><div class="ik-list-head"><strong>${title}</strong> ${ikChip(list, arr)} ${ikSrc(list)}</div>
+      <div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact ik-tbl"><thead><tr>${cols.map((c) => `<th scope="col">${c[1]}</th>`).join('')}<th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${rows || `<tr><td colspan="${cols.length + 1}" class="cs-muted">None.</td></tr>`}</tbody></table></div>
+      <button class="cs-btn cs-btn-small" type="button" data-action="ik-row-add" data-list="${list}">${icon('plus')}Add</button>${hint ? `<p class="cs-hint">${hint}</p>` : ''}</div>`;
+  }
+  function ikUpload() {
+    const st = ikState();
+    IK().claudeSample(); // start connecting to Claude now, so reading starts at once
+    const w = W();
+    const names = st.files.map((f) => f.name).concat(st.samples.map((x) => x.name));
+    const ready = st.files.length || st.samples.length || String(st.pasted).trim().length > 40;
+    return shell(
+      `${head('Offering intake', 'Upload a fund’s offering documents and the portal reads them and sets up the offering: what investors see, fees and waterfall, share classes, feeder funds, side pockets, equalization, currency, liquidity, distributions and service providers. You review every term, with the passage it came from, before anything changes.')}
+      ${panel(
+        'Documents',
+        `<div class="cs-grid">
+          <label class="cs-field cs-wide ik-drop" for="ik-files"><span>Private placement memorandum, partnership or operating agreement, subscription documents, term sheet</span><input id="ik-files" type="file" multiple accept=".pdf,.docx,.txt,.md,application/pdf" data-change="ik-files"><span class="cs-hint">${names.length ? `${names.length} document${names.length === 1 ? '' : 's'}: ${h(names.join(', '))}` : 'PDF, Word (.docx) or text. A scanned PDF with no text layer needs OCR first.'}</span></label>
+          <label class="cs-field cs-wide" for="ik-paste"><span>Or paste the summary of terms</span><textarea id="ik-paste" rows="4" data-input="ik-paste">${h(st.pasted)}</textarea></label>
+        </div>
+        <div class="cs-row ik-samples"><span class="cs-hint">No documents to hand? Try a sample:</span><button class="cs-btn cs-btn-small" type="button" data-action="ik-sample" data-s="hedge">Hedge fund: master-feeder, three share classes, side pockets</button><button class="cs-btn cs-btn-small" type="button" data-action="ik-sample" data-s="realestate">Real estate: multi-tier promote waterfall</button></div>
+        <div class="cs-grid cs-grid-3">
+          <label class="cs-field" for="ik-target"><span>Apply to</span><select id="ik-target" data-bind="ikt:target"><option value="">A new offering</option>${w.offerings.map((o) => `<option value="${h(o.id)}"${st.target === o.id ? ' selected' : ''}>Update ${h(o.name)}</option>`).join('')}</select></label>
+          <label class="cs-check" for="ik-publish"><input id="ik-publish" type="checkbox" data-bind="ikt:publish"${st.publish ? ' checked' : ''}><span>Make uploaded documents available to investors in this offering (and on its subscription page)</span></label>
+        </div>
+        ${st.error ? `<p class="cs-error">${h(st.error)}</p>` : ''}
+        <div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="ik-read"${ready ? '' : ' disabled'}>Read documents</button><span class="cs-hint">When this portal is open in Claude, Claude reads the documents (you are asked to allow it once). Elsewhere the built-in reader finds the common terms.</span></div>`
+      )}`,
+      'console-intake'
+    );
+  }
+  function ikReading() {
+    const st = ikState();
+    return shell(
+      `${head('Reading the documents')}
+      ${panel('', `<ul class="cs-list">${st.docs.map((d) => `<li><strong>${h(d.name)}</strong>: ${d.error ? `<span class="cs-error">${h(d.error)}</span>` : d.text != null ? `${d.pages ? `${d.pages} page${d.pages === 1 ? '' : 's'}, ` : ''}${Number(d.chars).toLocaleString('en-US')} characters${d.scanned ? ' <span class="cs-error">(little or no text: probably scanned; needs OCR)</span>' : ''}` : 'reading…'}</li>`).join('')}</ul>
+        <p class="cs-report-sum" id="ik-progress">${h(st.progress)}</p>
+        ${st.ctl ? '<button class="cs-btn" type="button" data-action="ik-stop">Stop</button>' : ''}`)}`,
+      'console-intake'
+    );
+  }
+  function ikReview() {
+    const st = ikState();
+    const p = st.profile;
+    const w = W();
+    const types = Object.keys(NS.OFFERING_TYPES).map((t) => [t, t]);
+    const curs = Object.keys(NS.structures.CURRENCIES).map((c) => [c, `${c} (${NS.structures.CURRENCIES[c].name})`]);
+    const target = st.target ? w.offerings.find((o) => o.id === st.target) : null;
+    const method = st.method === 'claude' ? 'Read by Claude' : st.method === 'manual' ? 'Current setup' : 'Read by the built-in reader';
+    const n = IK().filled(p);
+    const tiersHint = 'Tiers run in order: return of capital, preferred return (simple or compounding), GP catch-up, then splits that end when investors reach an IRR. Leave empty to use carry and preferred return with a full catch-up.';
+    return shell(
+      `${head(target && st.method === 'manual' ? `Structure: ${h(target.name)}` : 'Review the setup', st.method === 'manual' ? 'Edit the offering’s structure and terms, then apply.' : `${method} from ${st.docs.filter((d) => d.text != null).length} document${st.docs.filter((d) => d.text != null).length === 1 ? '' : 's'}: ${n} terms found${st.trimmed ? ' (long documents: the cover pages and every passage that mentions terms were read)' : ''}. Check each term against its source, then apply.`, `<button class="cs-btn" type="button" data-action="ik-restart">${st.method === 'manual' ? 'Cancel' : 'Start over'}</button><button class="cs-btn cs-btn-primary" type="button" data-action="ik-apply"${st.busy ? ' disabled' : ''}>${target ? `Apply to ${h(target.shortName || target.name)}` : 'Create the offering'}</button>`)}
+      ${p.notes.length ? panel('Notes', `<ul class="cs-list">${p.notes.map((x) => `<li>${h(x)}</li>`).join('')}</ul>`) : ''}
+      ${panel('Offering', `<div class="cs-grid cs-grid-3">
+        ${ikField('Name', 'offering.name', { wide: true })}
+        ${ikField('Short name', 'offering.shortName')}
+        ${ikField('Type', 'offering.type', { select: types, hint: 'Sets the accounting: closed-end with carried interest, or open-ended with an incentive allocation.' })}
+        ${ikField('Status', 'offering.status', { select: [['Raising', 'Raising (accepting subscriptions)'], ['Active', 'Active']] })}
+        ${ikField('First close', 'offering.firstClose', { type: 'date' })}
+        ${ikField('Minimum investment', 'offering.minimum', { type: 'number' })}
+        ${ikField('Target size', 'offering.targetSize', { type: 'number' })}
+        ${ikField('Currency', 'offering.currency', { select: curs })}
+        ${ikField('One-line description', 'offering.summary', { wide: true })}
+      </div>`)}
+      ${panel('Structure', `<div class="cs-grid cs-grid-3">
+        ${ikField('Vehicle', 'structure.vehicle')}
+        ${ikField('Domicile', 'structure.domicile')}
+        ${ikField('Securities exemption', 'structure.exemption')}
+        ${ikField('Investor eligibility', 'structure.eligibility')}
+        ${ikField('Master fund', 'structure.master', { hint: 'Fill in when investors invest through feeder funds.' })}
+        ${ikField('Equalization', 'structure.equalization', { select: [['', 'None'], ['capital accounts', 'Capital accounts'], ['equalization', 'Equalization'], ['series', 'Series of shares']] })}
+        ${ikField('Side pockets allowed', 'structure.sidePockets.allowed', { check: true })}
+        ${ikField('Side pocket limit (% of NAV)', 'structure.sidePockets.maxPct', { type: 'number' })}
+        ${ikList('Feeder funds', 'structure.feeders', [['name', 'Feeder fund', 'text'], ['domicile', 'Domicile', 'text'], ['for', 'For', 'text']])}
+      </div>`)}
+      ${panel('Share classes', `<div class="cs-grid">${ikList('Classes', 'classes', [['name', 'Class', 'text'], ['mgmtFee', 'Mgmt fee %', 'number'], ['carry', 'Carry or incentive %', 'number'], ['pref', 'Pref %', 'number'], ['minimum', 'Minimum', 'number'], ['currency', 'Currency', 'text'], ['eligibility', 'Eligibility', 'text']], 'Blank fees use the offering’s fees below. Each investor is charged at their class’s rates.')}</div>`)}
+      ${panel('Fees and waterfall', `<div class="cs-grid cs-grid-3">
+        ${ikField('Management fee (% a year)', 'fees.mgmtFee', { type: 'number' })}
+        ${ikField('Fee basis', 'fees.feeBasis', { select: [['', 'Default for the fund type'], ['commitment', 'Commitments'], ['contributed', 'Contributed capital'], ['nav', 'Net asset value']] })}
+        ${ikField('Carried interest or incentive (%)', 'fees.carry', { type: 'number' })}
+        ${ikField('Preferred return (% a year)', 'fees.pref', { type: 'number' })}
+        ${ikField('Preferred return', 'fees.prefCompounding', { select: [['', 'Not stated'], ['compound', 'Compounding'], ['simple', 'Simple (non-compounding)']] })}
+        ${ikField('GP catch-up (% to the GP)', 'fees.catchUp', { type: 'number' })}
+        ${ikField('High-water mark', 'fees.highWaterMark', { check: true })}
+        ${ikField('Incentive crystallizes', 'fees.crystallization', { select: [['', 'Not stated'], ['annual', 'Annually'], ['quarterly', 'Quarterly']] })}
+        ${ikField('Waterfall', 'waterfall.type', { select: [['', 'Not stated'], ['european', 'Whole fund (European)'], ['american', 'Deal by deal (American)']] })}
+        ${ikList('Waterfall tiers', 'waterfall.tiers', [['kind', 'Tier', 'select', [['roc', 'Return of capital'], ['pref', 'Preferred return'], ['catchup', 'GP catch-up'], ['split', 'Split']]], ['rate', 'Pref % a year', 'number'], ['simple', 'Simple', 'check'], ['lp', 'Investors %', 'number'], ['gp', 'GP %', 'number'], ['upTo', 'Until investor IRR %', 'number']], tiersHint)}
+        ${ikField('Other fees (one per line)', 'fees.other', { textarea: true, rows: 3, wide: true })}
+      </div>`)}
+      ${panel('Term and liquidity', `<div class="cs-grid cs-grid-3">
+        ${ikField('Term', 'term.basis', { select: [['', 'Default for the fund type'], ['date', 'Fixed term (exit date)'], ['range', 'Projected hold window'], ['maturity', 'Maturity date'], ['open', 'No set term (open-ended)']] })}
+        ${ikField('Term or hold (years)', 'term.years', { type: 'number' })}
+        ${ikField('Shortest hold (years)', 'term.fromYears', { type: 'number' })}
+        ${ikField('Exit or maturity date', 'term.date', { type: 'date' })}
+        ${ikField('Extensions', 'term.extensions')}
+        ${ikField('Investment period (years)', 'term.investmentPeriodYears', { type: 'number' })}
+        ${ikField('Note for investors', 'term.note', { wide: true })}
+        ${ikField('Redemptions', 'liquidity.frequency', { select: [['', 'None (closed-end)'], ['Monthly', 'Monthly'], ['Quarterly', 'Quarterly'], ['Semi-annual', 'Semi-annual'], ['Annual', 'Annual']] })}
+        ${ikField('Notice (days)', 'liquidity.noticeDays', { type: 'number' })}
+        ${ikField('Lock-up (months)', 'liquidity.lockupMonths', { type: 'number' })}
+        ${ikField('Lock-up type', 'liquidity.lockupType', { select: [['', 'Not stated'], ['hard', 'Hard'], ['soft', 'Soft (with a fee)']] })}
+        ${ikField('Early redemption fee (%)', 'liquidity.earlyRedemptionFee', { type: 'number' })}
+        ${ikField('Gate (% of NAV)', 'liquidity.gatePct', { type: 'number' })}
+      </div>`)}
+      ${panel('Distributions', `<div class="cs-grid cs-grid-3">
+        ${ikField('Frequency', 'distribution.frequency', { select: [['', 'Default for the fund type']].concat(NS.FREQUENCIES.map((f) => [f, f])) })}
+        ${ikField('Payment type', 'distribution.type', { select: [['', 'Default for the fund type']].concat(NS.DIST_TYPES.map((f) => [f, f])) })}
+        ${ikField('Target shown to investors', 'distribution.target')}
+        ${ikField('Payment day of month', 'distribution.day', { type: 'number' })}
+      </div>`)}
+      ${panel('What investors see', `<div class="cs-grid">${ikList('Key terms on the investment page', 'investorTerms', [['label', 'Term', 'text'], ['value', 'Shown as', 'text']])}${ikField('Description for investors', 'update', { textarea: true, rows: 3, wide: true })}</div>`)}
+      ${panel('Service providers', `<div class="cs-grid cs-grid-3">${ikField('Auditor', 'providers.auditor')}${ikField('Administrator', 'providers.administrator')}${ikField('Legal counsel', 'providers.counsel')}${ikField('Custodian', 'providers.custodian')}${ikField('Prime broker', 'providers.primeBroker')}</div>`)}
+      <div class="cs-row ik-foot"><button class="cs-btn" type="button" data-action="ik-restart">${st.method === 'manual' ? 'Cancel' : 'Start over'}</button><button class="cs-btn cs-btn-primary" type="button" data-action="ik-apply"${st.busy ? ' disabled' : ''}>${target ? `Apply to ${h(target.shortName || target.name)}` : 'Create the offering'}</button></div>`,
+      'console-intake'
+    );
+  }
+  function ikDone() {
+    const st = ikState();
+    const o = W().offerings.find((x) => x.id === st.done);
+    if (!o) return ikUpload();
+    const S0 = NS.audit.settings(o);
+    const tiers = S0.tiers || (S0.open ? null : NS.structures.defaultTiers(S0.carry, S0.pref, S0.catchUp));
+    const items = [
+      `${h(o.type)}, ${S0.open ? 'open-ended (monthly NAV, incentive allocation over a high-water mark)' : 'closed-end (quarterly valuations, carried interest through the waterfall)'}; currency ${h(S0.currency)}`,
+      `Fees: ${+(S0.mgmtFee * 100).toFixed(2)}% management fee on ${h(NS.audit.FEE_BASIS[S0.feeBasis].split(' (')[0].toLowerCase())}${S0.carry ? `, ${+(S0.carry * 100).toFixed(2)}% ${S0.open ? 'incentive' : 'carry'}` : ''}`,
+      tiers ? `Waterfall: ${tiers.map((t) => h(NS.structures.tierLabel(t))).join('; ')}` : '',
+      S0.classes ? `Share classes: ${S0.classes.map((c) => h(c.name)).join(', ')}` : '',
+      S0.feeders ? `Feeder funds: ${S0.feeders.map((f) => h(f.name)).join('; ')}` : '',
+      S0.sidePockets ? `Side pockets allowed${S0.sidePockets.maxPct ? ` up to ${S0.sidePockets.maxPct}% of NAV` : ''}` : '',
+      S0.equalization ? h(NS.structures.EQUALIZATION[S0.equalization] || `Equalization: ${S0.equalization}`) : '',
+      o.liquidity ? `Liquidity: ${h(o.liquidity.frequency)} on ${o.liquidity.notice} days’ notice${o.liquidity.lockup ? `, ${o.liquidity.lockup}-month ${o.liquidity.lockupType || ''} lock-up` : ''}${o.liquidity.gate ? `, ${o.liquidity.gate}% gate` : ''}` : '',
+      `${(o.terms || []).filter((t) => t.show).length} key terms shown to investors`,
+      (o.sourceDocs || []).length ? `Documents recorded: ${(o.sourceDocs || []).map((d) => h(d.name)).join(', ')} (each SHA-256 is in the change log)` : ''
+    ].filter(Boolean);
+    return shell(
+      `${head(`${h(o.name)} is set up`, o.status === 'Raising' ? 'Investors can now review the terms and subscribe online; capital calls, statements and audit schedules use these terms.' : 'Capital accounts, statements and audit schedules now use these terms.', `<a class="cs-btn" href="#console-intake" data-action="ik-restart">Set up another</a><a class="cs-btn cs-btn-primary" href="#console-offering-${h(o.id)}">Open the offering</a>`)}
+      ${panel('What was applied', `<ul class="cs-list">${items.map((x) => `<li>${x}</li>`).join('')}</ul><p class="cs-hint">Valuations and holdings come from the fund’s books once investors are in; until then the offering carries a placeholder portfolio line.</p>`)}`,
+      'console-intake'
+    );
+  }
+  NS.views['console-intake'] = {
+    mode: 'console',
+    render() {
+      const st = ikState();
+      if (st.step === 'reading') return ikReading();
+      if (st.step === 'review' && st.profile) return ikReview();
+      if (st.step === 'done') return ikDone();
+      return ikUpload();
+    }
+  };
+  NS.changes['ik-files'] = (el) => {
+    const st = ikState();
+    st.files = Array.from(el.files || []);
+    st.error = '';
+    NS.app.render();
+  };
+  NS.changes['ik-paste'] = (el) => {
+    const st = ikState();
+    const was = String(st.pasted).trim().length > 40;
+    st.pasted = el.value;
+    if (was !== String(st.pasted).trim().length > 40) {
+      const b = document.querySelector('[data-action=ik-read]');
+      if (b) b.disabled = !(st.files.length || st.samples.length || String(st.pasted).trim().length > 40);
+    }
+  };
+  NS.actions['ik-sample'] = (el) => {
+    const st = ikState();
+    const smp = IK().SAMPLES[el.getAttribute('data-s')];
+    if (smp && !st.samples.some((x) => x.name === smp.name)) st.samples.push(smp);
+    NS.app.render();
+  };
+  NS.binders.ikt = (path, v) => {
+    ikState()[path] = v;
+  };
+  NS.binders.ik = (path, v) => {
+    const st = ikState();
+    if (!st.profile) return;
+    if (path === 'fees.other') v = String(v).split('\n').map((x) => x.trim()).filter(Boolean);
+    NS.app.setPath(st.profile, path, v);
+    if (/\.kind$|^offering\.type$|^term\.basis$|^liquidity\.frequency$/.test(path)) NS.app.render();
+  };
+  NS.actions['ik-row-add'] = (el) => {
+    const list = el.getAttribute('data-list');
+    const arr = ikVal(list) || [];
+    arr.push(IK_ROWS[list] ? IK_ROWS[list]() : {});
+    NS.app.setPath(ikState().profile, list, arr);
+    NS.app.render();
+  };
+  NS.actions['ik-row-del'] = (el) => {
+    const arr = ikVal(el.getAttribute('data-list')) || [];
+    arr.splice(Number(el.getAttribute('data-i')), 1);
+    NS.app.render();
+  };
+  NS.actions['ik-restart'] = () => {
+    S().ui.intake = null;
+    NS.app.render();
+  };
+  NS.actions['ik-stop'] = () => {
+    const st = ikState();
+    if (st.ctl) st.ctl.abort();
+  };
+  NS.actions['ik-read'] = async () => {
+    const st = ikState();
+    if (st.step === 'reading') return;
+    st.error = '';
+    st.step = 'reading';
+    st.docs = [];
+    st.progress = 'Reading files…';
+    NS.app.render();
+    for (const f of st.files) {
+      const rec = { name: f.name };
+      st.docs.push(rec);
+      NS.app.render();
+      try {
+        Object.assign(rec, await IK().readFile(f));
+      } catch (e) {
+        rec.error = (e && e.message) || 'Could not read this file.';
+      }
+      NS.app.render();
+    }
+    st.samples.forEach((x) => st.docs.push({ name: x.name, text: x.text, chars: x.text.length, pages: null, sha256: NS.audit.sha256(x.text), type: 'text/plain', size: new Blob([x.text]).size, file: new Blob([x.text], { type: 'text/plain' }) }));
+    if (String(st.pasted).trim()) st.docs.push({ name: 'Pasted terms', text: st.pasted, chars: st.pasted.length, pages: null, sha256: NS.audit.sha256(st.pasted), type: 'text/plain', size: st.pasted.length });
+    const good = st.docs.filter((d) => d.text && d.text.trim().length > 40);
+    if (!good.length) {
+      st.step = 'upload';
+      st.error = 'No readable text was found. A scanned PDF needs OCR first, or paste the summary of terms.';
+      return NS.app.render();
+    }
+    const corp = IK().corpus(good, IK().LIMIT);
+    st.trimmed = corp.trimmed;
+    let raw = null;
+    let method = 'rules';
+    let why = '';
+    const sample = await IK().claudeSample();
+    if (sample) {
+      st.ctl = new AbortController();
+      st.progress = 'Claude is reading the documents. This usually takes one to three minutes.';
+      NS.app.render();
+      try {
+        raw = await IK().readWithClaude(sample, corp.text, {
+          signal: st.ctl.signal,
+          onText: ({ text }) => {
+            const el = document.getElementById('ik-progress');
+            if (el) el.textContent = `Claude is writing up the terms… ${text.length.toLocaleString('en-US')} characters`;
+          }
+        });
+        method = 'claude';
+      } catch (e) {
+        const c = e && e.code;
+        why = c === 'cancelled' ? 'Reading was stopped. ' : c === 'not_granted' || c === 'sampling_disabled' ? 'Claude was not allowed to read the documents. ' : c === 'prompt_too_large' ? 'The documents were too long to read at once. ' : c === 'rate_limited' ? 'Claude is busy or a usage limit was reached. ' : 'Claude could not finish reading. ';
+      }
+      st.ctl = null;
+    }
+    if (!raw) raw = IK().readWithRules(corp.text);
+    const prof = IK().normalize(raw);
+    if (why) prof.notes.unshift(`${why}The built-in reader was used instead.`);
+    st.profile = prof;
+    st.method = method;
+    st.step = 'review';
+    NS.app.render();
+    window.scrollTo(0, 0);
+  };
+  NS.actions['ik-apply'] = async () => {
+    const st = ikState();
+    if (!st.profile || st.busy) return;
+    if (!String(st.profile.offering.name || '').trim()) return U.toast('Enter the offering name.');
+    st.busy = true;
+    NS.app.render();
+    const docs = st.docs.filter((d) => d.text != null).map((d) => ({ name: d.name, sha256: d.sha256, pages: d.pages, chars: d.chars, size: d.size || (d.text || '').length, type: d.type || '', file: d.file || null }));
+    const o = await IK().apply(W(), st.profile, { targetId: st.target, docs, publish: st.publish, method: st.method, fields: IK().filled(st.profile) });
+    NS.app.save(true);
+    st.busy = false;
+    st.done = o.id;
+    st.step = 'done';
+    NS.app.render();
+    window.scrollTo(0, 0);
+    U.toast(`${o.name} ${st.target ? 'updated' : 'created'}.`);
+  };
+  NS.actions['struct-edit'] = (el) => {
+    const o = W().offerings.find((x) => x.id === el.getAttribute('data-id'));
+    if (!o) return;
+    S().ui.intake = { step: 'review', files: [], samples: [], pasted: '', target: o.id, publish: false, docs: [], progress: '', method: 'manual', profile: IK().fromOffering(W(), o), error: '', trimmed: false, busy: false, done: '' };
+    NS.app.go('console-intake');
+  };
+  /** Structure summary on an offering's page (read-only; Carrow & Vale can edit it). */
+  function structurePanel(o) {
+    if (!NS.audit || !NS.structures) return '';
+    const S0 = NS.audit.settings(o);
+    const X = NS.structures;
+    const pc = (x) => `${+(x * 100).toFixed(2)}%`;
+    const st = o.structure || {};
+    const rows = [
+      ['Accounting', `${h(S0.label)}, ${S0.open ? 'open-ended' : 'closed-end'}; currency ${h(S0.currency)}`],
+      st.vehicle ? ['Vehicle', h([st.vehicle, st.exemption, st.eligibility].filter(Boolean).join(' · '))] : null,
+      S0.classes ? ['Share classes', S0.classes.map((c) => `${h(c.name)}: ${pc(X.pct(c.mgmtFee, S0.mgmtFee))} / ${pc(X.pct(c.carry, S0.carry))}${c.currency ? ` (${h(c.currency)})` : ''}${c.subscribedBy ? `, founders by ${date(c.subscribedBy)}` : c.note ? `, ${h(c.note)}` : ''}`).join('<br>')] : null,
+      S0.feeders ? ['Feeder funds', S0.feeders.map((f) => `${h(f.name)}${f.domicile ? ` (${h(f.domicile)})` : ''}${f.for ? `: ${h(f.for)}` : ''}`).join('<br>')] : null,
+      !S0.open ? ['Waterfall', `${S0.waterfallType === 'american' ? 'Deal by deal' : 'Whole fund'}: ${(S0.tiers || X.defaultTiers(S0.carry, S0.pref, S0.catchUp)).map((t) => h(X.tierLabel(t))).join('; ')}`] : ['Incentive', `${pc(S0.carry)} over each investor’s high-water mark, crystallized annually`],
+      S0.sidePockets ? ['Side pockets', `${S0.sidePockets.maxPct ? `Up to ${S0.sidePockets.maxPct}% of NAV` : 'Allowed'}${S0.sidePocket ? `; ${h(S0.sidePocket.holding)} since ${date(S0.sidePocket.created)}` : ''}`] : null,
+      S0.equalization ? ['Equalization', h(X.EQUALIZATION[S0.equalization] || S0.equalization)] : null,
+      o.liquidity ? ['Liquidity', `${h(o.liquidity.frequency)} on ${o.liquidity.notice} days’ notice${o.liquidity.lockup ? `; ${o.liquidity.lockup}-month ${h(o.liquidity.lockupType || '')} lock-up${o.liquidity.fee ? ` (${o.liquidity.fee}% fee)` : ''}` : ''}${o.liquidity.gate ? `; ${o.liquidity.gate}% gate` : ''}`] : null,
+      (o.accounting && o.accounting.otherFees && o.accounting.otherFees.length) ? ['Other fees', o.accounting.otherFees.map(h).join('<br>')] : null,
+      (o.sourceDocs || []).length ? ['Set up from', (o.sourceDocs || []).map((d) => `${h(d.name)} (${d.method === 'claude' ? 'read by Claude' : d.method === 'manual' ? 'edited' : 'built-in reader'}, ${date(d.readOn)})`).join('<br>')] : null
+    ].filter(Boolean);
+    return panel('Structure', `<dl class="cs-kv ik-kv">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`, isStaff() ? `<button class="cs-btn cs-btn-small" type="button" data-action="struct-edit" data-id="${h(o.id)}">Edit structure</button>` : '');
+  }
+
+  /** Distribution waterfall: split gross proceeds between investors and the GP before allocating. */
+  function wfBody(o, d) {
+    const gross = Math.round((Number(String(d.gross || '').replace(/[^\d.]/g, '')) || 0) * 100);
+    if (!(gross > 0)) return '';
+    const S0 = NS.audit.settings(o);
+    const X = NS.structures;
+    const m = (c) => X.fmt(c, S0.currency);
+    const L = NS.audit.ledger(W(), o);
+    const flows = (L.contribs || []).filter((c) => c.date <= d.date).map((c) => ({ date: c.date, cents: -c.cents })).concat((L.dists || []).filter((x) => x.date <= d.date).map((x) => ({ date: x.date, cents: x.cents })));
+    const gpPrior = W().runs.filter((r) => r.offeringId === o.id && r.gp > 0 && r.date <= d.date).reduce((a, r) => a + r.gp, 0);
+    const r = X.waterfall(S0.tiers || X.defaultTiers(S0.carry, S0.pref, S0.catchUp), flows, gpPrior, gross, d.date);
+    S().ui.wf = { lp: r.lp, gp: r.gp, gross };
+    return `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Tier</th><th scope="col" class="num">Investors</th><th scope="col" class="num">GP</th></tr></thead><tbody>${r.tiers.map((t) => `<tr><td>${h(t.label)}</td><td class="num">${m(t.lp)}</td><td class="num">${m(t.gp)}</td></tr>`).join('')}</tbody><tfoot><tr class="cs-total"><th scope="row">Total</th><td class="num">${m(r.lp)}</td><td class="num">${m(r.gp)}</td></tr></tfoot></table></div>
+      <div class="cs-row"><button class="cs-btn cs-btn-small" type="button" data-action="dist-use-lp">Distribute the investors’ ${m(r.lp)}</button><span class="cs-hint">The GP’s ${m(r.gp)} is recorded with the distribution as carried interest paid.</span></div>`;
+  }
+  function wfPreview(o, d) {
+    if (!NS.audit || !NS.structures || !o) return '';
+    const S0 = NS.audit.settings(o);
+    if (S0.open || !(S0.carry > 0 || S0.tiers)) return '';
+    return `<div class="wf-box"><label class="cs-field" for="ds-gross"><span>Gross proceeds to split through the waterfall <em>Optional</em></span><input id="ds-gross" type="text" inputmode="decimal" data-bind="dist:gross" value="${h(d.gross || '')}"><span class="cs-hint">${h((S0.tiers || NS.structures.defaultTiers(S0.carry, S0.pref, S0.catchUp)).map((t) => NS.structures.tierLabel(t)).join('; '))}. Uses every contribution and distribution to date.</span></label><div id="ds-wf-body">${wfBody(o, d)}</div></div>`;
+  }
+  NS.actions['dist-use-lp'] = () => {
+    const d = draft();
+    const r = S().ui.wf;
+    if (!r) return;
+    d.mode = 'total';
+    d.total = (r.lp / 100).toFixed(2);
+    d.wf = { lp: r.lp, gp: r.gp, gross: r.gross };
+    NS.app.render();
+  };
+
 
   /* ---------- Audit: audit-ready schedules for each fund ---------- */
   function audState() {

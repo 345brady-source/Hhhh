@@ -240,7 +240,7 @@
   function allowed(key) {
     if (state.role === 'staff') return true;
     // Adding clients and branding the portal are Carrow & Vale only.
-    if (state.role === 'sponsor') return key !== 'console-new-client' && key !== 'console-brand';
+    if (state.role === 'sponsor') return key !== 'console-new-client' && key !== 'console-brand' && key !== 'console-intake';
     return modeOf(key) === 'portal';
   }
   const homeFor = (role) => (role === 'investor' ? 'investments' : 'console');

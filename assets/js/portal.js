@@ -8,6 +8,32 @@
   const B = NS.brand;
   const U = NS.ui;
   const { h, usd, usdc, date, icon } = U;
+  /* Offerings in other currencies show amounts in that currency (structures.js). */
+  const curOf = (o) => (NS.structures ? NS.structures.curOf(o) : 'USD');
+  const money = (amount, o) => (curOf(o) === 'USD' ? usd(amount) : NS.structures.fmtWhole(amount, curOf(o)));
+  const moneyc = (cents, o) => (curOf(o) === 'USD' ? usdc(cents) : NS.structures.fmt(cents, curOf(o)));
+  /** Share classes open to a new subscription (founders classes close on their date). */
+  const openClasses = (o) => (o.classes || []).filter((c) => !c.subscribedBy || NS.dates.today() <= c.subscribedBy);
+  const pctTxt = (v, d) => `${+((v === '' || v == null ? d : Number(v) / 100) * 100).toFixed(2)}%`;
+  /** Class, feeder fund and side pocket lines for an investor's interest. */
+  function structureTerms(inv, o) {
+    if (!NS.structures || !NS.audit) return [];
+    const X = NS.structures;
+    const cfg = NS.audit.settings(o);
+    const out = [];
+    const cls = cfg.classes && X.classOf(o, inv, cfg.classes);
+    if (cls) out.push(['Share class', `${h(cls.name)}: ${pctTxt(cls.mgmtFee, cfg.mgmtFee)} management fee, ${pctTxt(cls.carry, cfg.carry)} ${cfg.open ? 'incentive allocation' : 'carried interest'}`]);
+    const f = cfg.feeders && X.feederOf(o, inv, cfg.feeders);
+    if (f) out.push(['Invested through', `${h(f.name)}${f.domicile ? ` (${h(f.domicile)})` : ''}, a feeder into the master fund`]);
+    if (curOf(o) !== 'USD') out.push(['Currency', `${h(curOf(o))} (${h(X.CURRENCIES[curOf(o)].name)})`]);
+    if (cfg.sidePocket) {
+      const L = NS.audit.ledger(W(), o);
+      const F = L.months && L.months.length ? L.months[L.months.length - 1] : null;
+      const a = F && F.rows ? F.rows[inv.id] : null;
+      if (a && a.sp > 0) out.push(['Side pocket', `${h(cfg.sidePocket.holding)}: ${moneyc(a.sp, o)} of your capital, held until it is realized; it cannot be redeemed and is not charged incentive until then`]);
+    }
+    return out;
+  }
   const S = () => NS.state;
   const W = () => NS.state.ws;
   const T = () => NS.state.ws.tenant;
@@ -322,7 +348,7 @@
         return shell(
           `<a class="back" href="#investments">${icon('back')}Investments</a>
           ${title('Subscription documents signed', h(o.name))}
-          <div class="done-box"><p class="lede">${h(T().shortName)} has your signed subscription for a ${usd(f.done.cents / 100)} commitment. Investor relations will review it and countersign before the first close, targeted for ${date(o.closeDate)}.</p>
+          <div class="done-box"><p class="lede">${h(T().shortName)} has your signed subscription for a ${moneyc(f.done.cents, o)} commitment${f.done.cls && (o.classes || []).find((c) => c.id === f.done.cls) ? ` in ${h(o.classes.find((c) => c.id === f.done.cls).name)}` : ''}. Investor relations will review it and countersign before the first close, targeted for ${date(o.closeDate)}.</p>
           <p class="lede">No money is due now. When the fund calls capital, you will get a capital call notice here with the amount, due date and wire instructions.</p>
           <a class="btn btn-primary" href="#investments">Back to your investments</a></div>`,
           'investments'
@@ -330,21 +356,33 @@
       }
       const terms = (o.terms || []).filter((r) => r.show && r.label);
       const e = f.err || {};
+      const classes = openClasses(o);
+      if (classes.length && !classes.some((c) => c.id === f.cls)) f.cls = classes[0].id;
+      const feeder = NS.structures && cfg && cfg.feeders ? NS.structures.feederOf(o, inv, cfg.feeders) : null;
+      const odocs = (W().docs || []).filter((d) => d.offeringDoc && !d.hidden && d.offeringId === o.id);
+      const cur = curOf(o);
       return shell(
         `<a class="back" href="#investments">${icon('back')}Investments</a>
         ${title(`Subscribe to ${h(o.name)}`, `${h(o.type)}${o.summary ? ' · ' + h(o.summary) : ''}`)}
         <div class="cols">
           <section class="sec">${sec('Offering terms')}<dl class="terms">
-            <div><dt>Minimum commitment</dt><dd>${usd(o.minimum)}</dd></div>
+            <div><dt>Minimum commitment</dt><dd>${money(o.minimum, o)}</dd></div>
+            ${cur !== 'USD' ? `<div><dt>Currency</dt><dd>${h(cur)} (${h(NS.structures.CURRENCIES[cur].name)})</dd></div>` : ''}
+            ${feeder ? `<div><dt>You invest through</dt><dd>${h(feeder.name)}${feeder.for ? ` (${h(feeder.for)})` : ''}</dd></div>` : ''}
             <div><dt>First close</dt><dd>${date(o.closeDate)} (targeted)</dd></div>
-            ${cfg ? `<div><dt>Management fee</dt><dd>${+(cfg.mgmtFee * 100).toFixed(2)}% a year on ${h(NS.audit.FEE_BASIS[cfg.feeBasis].split(' (')[0].toLowerCase())}</dd></div><div><dt>${cfg.open ? 'Incentive allocation' : 'Carried interest'}</dt><dd>${cfg.carry ? `${+(cfg.carry * 100).toFixed(2)}%${!cfg.open && cfg.pref ? ` over a ${+(cfg.pref * 100).toFixed(2)}% preferred return` : ''}` : 'None'}</dd></div>` : ''}
-            ${terms.map((r) => `<div><dt>${h(r.label)}</dt><dd>${h(r.value)}</dd></div>`).join('')}
+            ${cfg && classes.length > 1 ? `<div><dt>Fees by share class</dt><dd>${classes.map((c) => `${h(c.name)}: ${pctTxt(c.mgmtFee, cfg.mgmtFee)} management fee, ${pctTxt(c.carry, cfg.carry)} ${cfg.open ? 'incentive' : 'carry'}`).join('<br>')}<br><span class="meta">Management fee on ${h(NS.audit.FEE_BASIS[cfg.feeBasis].split(' (')[0].toLowerCase())}${cfg.open ? ', incentive over a high-water mark' : ''}</span></dd></div>` : cfg ? `<div><dt>Management fee</dt><dd>${+(cfg.mgmtFee * 100).toFixed(2)}% a year on ${h(NS.audit.FEE_BASIS[cfg.feeBasis].split(' (')[0].toLowerCase())}</dd></div><div><dt>${cfg.open ? 'Incentive allocation' : 'Carried interest'}</dt><dd>${cfg.carry ? `${+(cfg.carry * 100).toFixed(2)}%${!cfg.open && cfg.pref ? ` over a ${+(cfg.pref * 100).toFixed(2)}% preferred return` : cfg.open ? ' over a high-water mark' : ''}` : 'None'}</dd></div>` : ''}
+            ${terms.filter((r) => !cfg || !/^(minimum (commitment|investment)|management fee|incentive (allocation|fee)|carried interest)$/i.test(r.label.trim())).map((r) => `<div><dt>${h(r.label)}</dt><dd>${h(r.value)}</dd></div>`).join('')}
           </dl></section>
-          <section class="sec">${sec('Subscription documents')}<ul class="doc-list"><li>Private placement memorandum</li><li>Limited partnership agreement</li><li>Subscription agreement and investor questionnaire</li></ul><p class="meta">Your investor information, tax certification and accreditation from your account are carried into the subscription agreement.</p></section>
+          <section class="sec">${sec('Subscription documents')}${
+            odocs.length
+              ? `<ul class="doc-list">${odocs.map((d) => `<li><button class="link-btn" type="button" data-action="sub-doc" data-id="${h(d.id)}">${h(d.title)}</button> <span class="meta">${(d.size / 1024).toFixed(0)} KB</span></li>`).join('')}<li>Subscription agreement and investor questionnaire</li></ul>`
+              : '<ul class="doc-list"><li>Private placement memorandum</li><li>Limited partnership agreement</li><li>Subscription agreement and investor questionnaire</li></ul>'
+          }<p class="meta">Your investor information, tax certification and accreditation from your account are carried into the subscription agreement.</p></section>
         </div>
         <form class="ob-form sub-form" data-form="sub-submit" novalidate>
           <div class="form-grid">
-            <label class="field" for="sb-amount"><span>Commitment ($)</span><input id="sb-amount" type="number" min="${o.minimum}" step="5000" data-bind="sb:amount" value="${h(f.amount)}"${e.amount ? ' aria-invalid="true"' : ''}><span class="hint">Minimum ${usd(o.minimum)}. Capital is called over time.</span>${e.amount ? `<span class="field-error">${h(e.amount)}</span>` : ''}</label>
+            <label class="field" for="sb-amount"><span>${cfg && cfg.open ? 'Subscription' : 'Commitment'} (${cur === 'USD' ? '$' : h(cur)})</span><input id="sb-amount" type="number" min="${o.minimum}" step="5000" data-bind="sb:amount" value="${h(f.amount)}"${e.amount ? ' aria-invalid="true"' : ''}><span class="hint">Minimum ${money(o.minimum, o)}.${cfg && cfg.open ? '' : ' Capital is called over time.'}</span>${e.amount ? `<span class="field-error">${h(e.amount)}</span>` : ''}</label>
+            ${classes.length > 1 ? `<label class="field" for="sb-cls"><span>Share class</span><select id="sb-cls" data-bind="sb:cls">${classes.map((c) => `<option value="${h(c.id)}"${c.id === f.cls ? ' selected' : ''}>${h(c.name)}: ${pctTxt(c.mgmtFee, cfg.mgmtFee)} / ${pctTxt(c.carry, cfg.carry)}${c.currency ? ` (${h(c.currency)})` : ''}${c.minimum ? `, minimum ${c.currency && NS.structures.CURRENCIES[c.currency] ? NS.structures.fmtWhole(Number(c.minimum), c.currency) : money(c.minimum, o)}` : ''}</option>`).join('')}</select><span class="hint">Management fee / ${cfg.open ? 'incentive allocation' : 'carried interest'}</span></label>` : ''}
             <label class="field" for="sb-acct"><span>Investing as</span><input id="sb-acct" type="text" value="${h(inv.title)} (${h((NS.ENTITY_TYPES[inv.type] || {}).label || inv.type)})" readonly></label>
             <label class="check field-wide" for="sb-acc"><input id="sb-acc" type="checkbox" data-bind="sb:accredited"${f.accredited ? ' checked' : ''}><span>${h(inv.title)} is an accredited investor (${h(inv.accreditation.basis)}) and this remains accurate.</span></label>${e.accredited ? `<span class="field-error">${h(e.accredited)}</span>` : ''}
             <label class="check field-wide" for="sb-docs"><input id="sb-docs" type="checkbox" data-bind="sb:docs"${f.docs ? ' checked' : ''}><span>I have received and read the private placement memorandum, limited partnership agreement and subscription agreement, and I make the representations in the subscription agreement.</span></label>${e.docs ? `<span class="field-error">${h(e.docs)}</span>` : ''}
@@ -368,13 +406,15 @@
     if (!u || !inv || !o) return;
     const e = {};
     const cents = Math.round((Number(u.amount) || 0) * 100);
-    if (cents < Math.round(o.minimum * 100)) e.amount = `The minimum commitment is ${usd(o.minimum)}.`;
+    const cls = (o.classes || []).find((c) => c.id === u.cls);
+    const min = Math.max(Number(o.minimum) || 0, (cls && Number(cls.minimum)) || 0);
+    if (cents < Math.round(min * 100)) e.amount = `The minimum ${cls && cls.minimum ? `for ${cls.name} ` : ''}is ${money(min, o)}.`;
     if (!u.accredited) e.accredited = 'Confirm your accreditation to continue.';
     if (!u.docs) e.docs = 'Confirm you have read the offering documents.';
     if (!u.esign) e.esign = 'Agree to electronic signature to continue.';
     if (!sameName(u.signature, inv.contact)) e.signature = `Type your name exactly as ${inv.contact}.`;
     u.err = Object.keys(e).length ? e : null;
-    if (!u.err) u.done = OPS().submitSubscription(W(), inv, o, { cents, signature: u.signature.trim() });
+    if (!u.err) u.done = OPS().submitSubscription(W(), inv, o, { cents, signature: u.signature.trim(), cls: cls ? cls.id : '' });
     NS.app.render();
     window.scrollTo(0, 0);
   };
@@ -556,8 +596,8 @@
         `<a class="back" href="#investments">${icon('back')}Investments</a>
         ${title(h(o.name), `${h(o.type)}${o.summary ? ' · ' + h(o.summary) : ''}`)}
         <dl class="figs">
-          ${fig('Your investment', usd(p.invested), `Funded ${date(p.date)}`)}
-          ${fig('Distributions received', usdc(p.received), `${pays.filter((q) => q.status === 'paid').length} payments`)}
+          ${fig('Your investment', money(p.invested, o), `Funded ${date(p.date)}`)}
+          ${fig('Distributions received', moneyc(p.received, o), `${pays.filter((q) => q.status === 'paid').length} payments`)}
           ${fig('Distributions', h(dist.frequency || '—'), [next ? `Next ${date(next.date)}` : '', h(dist.target || '')].filter(Boolean).join(' · '))}
           ${fig(h(x.label), h(x.value), h(x.state === 'exited' ? '' : NS.holdYear(o)))}
         </dl>
@@ -569,9 +609,10 @@
         ${liquidityHTML(v.investor, o, p)}
 
         <div class="cols">
-          <section class="sec">${sec('Key terms')}${
-            terms.length ? `<dl class="terms">${terms.map((r) => `<div><dt>${h(r.label)}</dt><dd>${h(r.value)}</dd></div>`).join('')}</dl>` : '<p class="empty">No terms published.</p>'
-          }</section>
+          <section class="sec">${sec('Key terms')}${(() => {
+            const st = structureTerms(v.investor, o);
+            return terms.length || st.length ? `<dl class="terms">${st.map(([k, val]) => `<div><dt>${k}</dt><dd>${val}</dd></div>`).join('')}${terms.map((r) => `<div><dt>${h(r.label)}</dt><dd>${h(r.value)}</dd></div>`).join('')}</dl>` : '<p class="empty">No terms published.</p>';
+          })()}</section>
           <section class="sec">${sec('Latest update')}${o.update ? `<p class="lede">${h(o.update)}</p><p class="meta">${h(t.shortName)}</p>` : '<p class="empty">No update published.</p>'}</section>
         </div>
 
@@ -744,6 +785,7 @@
         }
         if (S().ui.upUrl) URL.revokeObjectURL(S().ui.upUrl);
         const url = (S().ui.upUrl = URL.createObjectURL(blob));
+        if (/^text\//.test(blob.type) || /\.(txt|md)$/i.test(doc.fileName)) return blob.text().then((t) => (body.innerHTML = `<pre class="doc-text">${h(t)}</pre>`));
         body.innerHTML = /pdf/i.test(blob.type) || /\.pdf$/i.test(doc.fileName) ? `<iframe class="doc-frame" src="${url}" title="${h(doc.title)}"></iframe>` : '<p class="empty">Preview is not available for this file type. Use Download.</p>';
       })
       .catch(() => {
@@ -751,6 +793,10 @@
         if (body) body.innerHTML = '<p class="empty">This browser blocked document storage, so the file cannot be opened here.</p>';
       });
   }
+  NS.actions['sub-doc'] = (el) => {
+    const d = (W().docs || []).find((x) => x.id === el.getAttribute('data-id') && x.offeringDoc && !x.hidden);
+    if (d) openUploaded(d);
+  };
   NS.actions['up-download'] = (el) => {
     const doc = (W().docs || []).find((d) => d.id === el.getAttribute('data-id'));
     if (!doc) return;

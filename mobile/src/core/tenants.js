@@ -243,6 +243,7 @@
           ],
           update: 'Renovations are complete on 212 of 288 units. Occupancy was 95.1% at the end of September.',
           achOverride: { companyName: 'CEDAR ROW APTS', companyId: '1883301246' },
+          accounting: { carry: 30, pref: 8, waterfall: { type: 'american', tiers: [{ kind: 'pref', rate: 8, simple: true }, { kind: 'roc' }, { kind: 'split', lp: 70, gp: 30, upTo: 15 }, { kind: 'split', lp: 50, gp: 50 }] } },
           holdings: [{ name: 'The Residences at Cedar Row', security: '288-unit multifamily, built 2004', location: 'Raleigh, North Carolina', acquired: '2022-06-15', level: 3, method: 'Income approach: direct capitalization (third-party appraisal)', input: 'Cap rate 5.40%', weight: 100, cost: 0.86, ltv: 0.58, debtRate: '5.12% fixed', debtMaturity: '2032-07-01', support: { every: 12, anchor: '06-30', doc: 'Appraisal, Hollis Meyer Valuation Group' } }],
           seed: { rate: 0.06, freq: 'Monthly', start: '2022-09-15', type: 'Income' }
         },
@@ -542,6 +543,17 @@
             { label: 'Fees', value: '1.5% management fee; 15% incentive allocation over a high-water mark', show: true }
           ],
           update: 'All four strategies were positive for the third quarter; credit contributed the most.',
+          currency: 'USD',
+          classes: [
+            { id: 'A', name: 'Class A', mgmtFee: 1.5, carry: 15, minimum: 250000, note: 'Standard terms' },
+            { id: 'B', name: 'Class B (founders)', mgmtFee: 1, carry: 10, minimum: 250000, subscribedBy: '2020-06-30', note: 'Investors who subscribed by June 30, 2020; closed to new investors' }
+          ],
+          feeders: [
+            { id: 'onshore', name: 'Pellbrook Multi-Strategy Onshore Fund, L.P.', domicile: 'Delaware', for: 'U.S. taxable investors' },
+            { id: 'offshore', name: 'Pellbrook Multi-Strategy Offshore Fund, Ltd.', domicile: 'Cayman Islands', for: 'Non-U.S. and U.S. tax-exempt investors' }
+          ],
+          sidePockets: { maxPct: 10, pockets: [{ name: 'Side pocket 2023-A', holding: 'Litigation finance claims (3)', created: '2023-06-30', mu: 0.14, vol: 0.07 }] },
+          equalization: 'capital accounts',
           sleeves: [
             { name: 'Equity long/short', weight: 34, mu: 0.1, vol: 0.028 },
             { name: 'Credit', weight: 26, mu: 0.075, vol: 0.012 },
