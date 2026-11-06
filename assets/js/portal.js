@@ -81,7 +81,7 @@
         const subj = NS.mergeNotice(n.subject, inv, t, n, NS.noticeInvestment(W(), inv, n));
         return `<div class="notice">
           <div class="notice-text"><span class="notice-date">${date(n.date)}</span><strong>${h(subj)}</strong></div>
-          <div class="notice-actions"><button class="link-btn" type="button" data-action="notice-open" data-id="${h(n.id)}" data-off="${o ? h(o.id) : 'all'}">View documents</button><button class="link-btn notice-dismiss" type="button" data-action="notice-dismiss" data-id="${h(n.id)}">Dismiss</button></div>
+          <div class="notice-actions">${/^call/.test(n.kind || '') && o ? `<button class="link-btn" type="button" data-action="notice-call" data-id="${h(n.id)}" data-off="${h(o.id)}">View capital call</button>` : `<button class="link-btn" type="button" data-action="notice-open" data-id="${h(n.id)}" data-off="${o ? h(o.id) : 'all'}">View documents</button>`}<button class="link-btn notice-dismiss" type="button" data-action="notice-dismiss" data-id="${h(n.id)}">Dismiss</button></div>
         </div>`;
       })
       .join('')}</section>`;
@@ -95,11 +95,288 @@
     markRead(el.getAttribute('data-id'));
     NS.app.render();
   };
+  NS.actions['notice-call'] = (el) => {
+    markRead(el.getAttribute('data-id'));
+    NS.app.go('investment-' + el.getAttribute('data-off'));
+  };
   NS.actions['notice-open'] = (el) => {
     markRead(el.getAttribute('data-id'));
     S().ui.docOff = el.getAttribute('data-off');
     S().ui.docCat = 'all';
     NS.app.go('documents');
+  };
+
+  /* ---------- Capital calls, requests, capital accounts and subscriptions (operations.js, audit.js) ---------- */
+  const OPS = () => NS.ops;
+  const todayIso = () => NS.dates.today();
+  const sameName = (a, b) => String(a || '').trim().toLowerCase().replace(/\s+/g, ' ') === String(b || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  function callsDue(inv) {
+    const w = W();
+    const out = [];
+    if (!OPS()) return out;
+    (w.calls || []).forEach((c) =>
+      c.items.forEach((it) => {
+        const o = w.offerings.find((x) => x.id === c.offeringId);
+        if (o && it.investorId === inv.id && !it.received) out.push({ c, it, o });
+      })
+    );
+    return out.sort((a, b) => (a.c.due < b.c.due ? -1 : 1));
+  }
+  function wireBox(inv, o, c) {
+    const wi = OPS().wire(W(), o, inv, c);
+    const t = T();
+    return `<dl class="wire"><div><dt>Bank</dt><dd>${h(wi.bank)}</dd></div><div><dt>ABA routing number</dt><dd>${h(wi.aba)}</dd></div><div><dt>Account number</dt><dd>${h(wi.accountFull || wi.account)}</dd></div><div><dt>Beneficiary</dt><dd>${h(wi.beneficiary)}</dd></div><div><dt>Reference</dt><dd>${h(wi.reference)}</dd></div></dl>
+      <p class="wire-warn">${icon('alert')}<span>Before you send a wire, call ${h(t.support.team)} at ${h(t.support.phone)} to confirm these instructions. ${h(t.shortName)} will never change wire instructions by email.</span></p>`;
+  }
+  function callsDueHTML(inv) {
+    const due = callsDue(inv);
+    if (!due.length) return '';
+    return `<section class="sec calls-due" aria-label="Capital calls due">${sec('Capital calls due')}${due
+      .map(({ c, it, o }) => {
+        const late = todayIso() > c.due;
+        return `<div class="call-due">
+          <div class="call-due-head"><div><strong>${h(o.name)} · Call ${c.number}</strong><span class="sub">${h(c.purpose)} · notice ${date(c.noticeDate)}</span></div><div class="call-due-amt"><span class="num strong">${usdc(it.cents)}</span><span class="status ${late ? 'status-late' : 'status-pending'}">${late ? 'Past due since' : 'Due'} ${date(c.due)}</span></div></div>
+          <details><summary>Wire instructions</summary>${wireBox(inv, o, c)}</details>
+        </div>`;
+      })
+      .join('')}</section>`;
+  }
+  const REQ_STATUS = { pending: 'Received, under review', approved: 'Approved', rejected: 'Declined', paid: 'Paid', funded: 'Funded', accepted: 'Accepted' };
+  function myRequests(inv, oid) {
+    return (W().requests || []).filter((r) => r.investorId === inv.id && (!oid || r.offeringId === oid)).sort((a, b) => (a.submitted < b.submitted ? 1 : -1));
+  }
+  function requestsHTML(inv, oid, showFund) {
+    const list = myRequests(inv, oid);
+    if (!list.length) return '';
+    const w = W();
+    return `<div class="tbl-scroll"><table class="tbl tbl-stack"><thead><tr><th scope="col">Submitted</th>${showFund ? '<th scope="col">Investment</th>' : ''}<th scope="col">Request</th><th scope="col">Date</th><th scope="col">Status</th></tr></thead><tbody>${list
+      .map((r) => {
+        const o = w.offerings.find((x) => x.id === r.offeringId);
+        const amt = r.type === 'redemption' ? (r.paidCents != null ? usdc(r.paidCents) : r.full ? 'full balance' : usdc(r.cents)) : usdc(r.cents);
+        const kind = r.type === 'redemption' ? 'Redemption' : r.additional ? 'Additional subscription' : o && OPS().isOpen(o) ? 'Subscription' : 'Commitment';
+        const when = r.dealing ? `${r.type === 'redemption' ? 'Dealing date' : o && OPS().isOpen(o) ? 'Effective' : 'First close'} ${date(r.dealing)}` : '';
+        return `<tr><td class="nowrap td-lead">${date(r.submitted)}</td>${showFund ? `<td data-label="Investment">${h(o ? o.name : '')}</td>` : ''}<td data-label="Request">${kind}: ${amt}</td><td data-label="Date">${when}</td><td data-label="Status"><span class="status${r.status === 'pending' ? ' status-pending' : ''}">${REQ_STATUS[r.status] || h(r.status)}</span></td></tr>`;
+      })
+      .join('')}</tbody></table></div>`;
+  }
+  function openOfferingsHTML(inv) {
+    const w = W();
+    if (!OPS() || !(inv.accreditation && inv.accreditation.basis) || inv.onboarding.status !== 'complete') return '';
+    const list = w.offerings.filter((o) => o.status === 'Raising' && !inv.positions.some((p) => p.offeringId === o.id) && !myRequests(inv, o.id).some((r) => r.status === 'pending' || r.status === 'approved'));
+    if (!list.length) return '';
+    return `<section class="sec">${sec('Open for investment')}<div class="offers">${list
+      .map((o) => `<div class="offer"><div><strong>${h(o.name)}</strong><span class="sub">${h(o.type)}${o.summary ? ' · ' + h(o.summary) : ''}</span><span class="sub">Minimum ${usd(o.minimum)} · first close targeted ${date(o.closeDate)}</span></div><a class="btn btn-primary" href="#subscribe-${h(o.id)}">Review and subscribe</a></div>`)
+      .join('')}</div></section>`;
+  }
+  function capitalHTML(inv, o) {
+    if (!NS.audit || !OPS()) return '';
+    const end = NS.audit.lastMonthEnd(todayIso());
+    const cap = OPS().capital(W(), inv, o, '1990-01-01', end);
+    if (!cap || (!cap.a.contribCum && !cap.a.end)) return '';
+    const a = cap.a;
+    const open = cap.P.S.open;
+    const paid = a.contribCum;
+    const total = a.end + a.distCum;
+    const ret = open ? (paid ? (total - paid) / paid : null) : cap.irr;
+    const pct = (x) => (x == null ? '—' : `${x < 0 ? '−' : ''}${Math.abs(x * 100).toFixed(1)}%`);
+    return `<section class="sec">${sec('Your capital account', `<span class="sec-note">As of ${date(end)}</span>`)}
+      <dl class="figs figs-tight">
+        ${fig('Capital account', usdc(a.end), open ? 'Net asset value of your interest' : 'Your share of the fund’s net assets')}
+        ${fig(open ? 'Net return' : 'Net IRR', pct(ret), open ? 'Since you invested, after fees' : 'Since you invested, after fees and carry')}
+        ${fig('Total value', usdc(total), paid ? `${(total / paid).toFixed(2)}x your ${open ? 'subscriptions' : 'contributions'}` : '')}
+      </dl>
+      <div class="tbl-scroll"><table class="tbl capital-tbl"><tbody>
+        <tr><th scope="row">${open ? 'Subscriptions' : 'Contributions'}</th><td class="num">${usdc(a.contrib)}</td></tr>
+        <tr><th scope="row">${open ? 'Redemptions' : 'Distributions'}</th><td class="num">${usdc(-a.dist)}</td></tr>
+        <tr><th scope="row">Investment income</th><td class="num">${usdc(a.income)}</td></tr>
+        <tr><th scope="row">Realized and unrealized gains (losses)</th><td class="num">${usdc(a.gain)}</td></tr>
+        <tr><th scope="row">Management fees</th><td class="num">${usdc(-a.fee)}</td></tr>
+        ${a.carry ? `<tr><th scope="row">${open ? 'Incentive allocation' : 'Carried interest'}</th><td class="num">${usdc(-a.carry)}</td></tr>` : ''}
+        <tr class="row-total"><th scope="row">Capital account</th><td class="num">${usdc(a.end)}</td></tr>
+      </tbody></table></div>
+      <p class="meta">Values are unaudited estimates based on the latest valuation. Your quarterly capital account statement is in Documents.</p>
+    </section>`;
+  }
+  function callsHTML(inv, o) {
+    if (!OPS()) return '';
+    const mine = OPS()
+      .callsFor(W(), o)
+      .map((c) => ({ c, it: c.items.find((x) => x.investorId === inv.id) }))
+      .filter((x) => x.it);
+    if (!mine.length) return '';
+    const commit = OPS().commitOf(inv, o);
+    const paid = OPS().paidInOf(inv, o);
+    const open = mine.filter((x) => !x.it.received);
+    return `<section class="sec">${sec('Capital calls', `<span class="sec-note">${usdc(paid)} of your ${usdc(commit)} commitment contributed · ${usdc(Math.max(0, commit - paid))} unfunded</span>`)}
+      <div class="tbl-scroll"><table class="tbl tbl-stack"><thead><tr><th scope="col">Call</th><th scope="col">Notice</th><th scope="col">Due</th><th scope="col" class="num">Amount</th><th scope="col">Status</th></tr></thead><tbody>${mine
+        .slice()
+        .reverse()
+        .map(({ c, it }) => `<tr><td class="td-lead">Call ${c.number}<span class="sub">${h(c.purpose)}</span></td><td class="nowrap" data-label="Notice">${date(c.noticeDate)}</td><td class="nowrap" data-label="Due">${date(c.due)}</td><td class="num" data-label="Amount">${usdc(it.cents)}</td><td data-label="Status">${it.received ? `<span class="status">Received ${date(it.received)}</span>` : `<span class="status ${todayIso() > c.due ? 'status-late' : 'status-pending'}">${todayIso() > c.due ? 'Past due' : 'Due'}</span>`}</td></tr>`)
+        .join('')}</tbody></table></div>
+      ${open.length ? `<details class="wire-wrap"><summary>Wire instructions for call ${open[0].c.number}</summary>${wireBox(inv, o, open[0].c)}</details>` : ''}
+    </section>`;
+  }
+  function reqForm() {
+    return S().ui.reqForm || null;
+  }
+  function liquidityHTML(inv, o, p) {
+    if (!OPS() || !OPS().isOpen(o)) {
+      const reqs = requestsHTML(inv, o.id, false);
+      return reqs ? `<section class="sec">${sec('Requests')}${reqs}</section>` : '';
+    }
+    const L = OPS().liquidity(o);
+    const first = OPS().firstInvested(inv, o);
+    const deal = OPS().dealingDate(o, todayIso(), first);
+    const redeemed = p.exit.state === 'exited';
+    const f = reqForm() && reqForm().offeringId === o.id ? reqForm() : null;
+    const end = NS.audit.lastMonthEnd(todayIso());
+    const cap = OPS().capital(W(), inv, o, '1990-01-01', end);
+    const pendingRed = myRequests(inv, o.id).some((r) => r.type === 'redemption' && (r.status === 'pending' || r.status === 'approved'));
+    const lockEnd = L.lockup && first ? NS.dates.addMonths(first, L.lockup) : '';
+    let form = '';
+    if (f && f.type === 'redemption') {
+      form = `<form class="req-form" data-form="req-submit" novalidate>
+        <h3>Request a redemption</h3>
+        <fieldset class="field field-wide choice"><legend>Amount</legend>
+          <label class="choice-row"><input type="radio" name="rq-full" value="full" data-bind="rq:full"${f.full ? ' checked' : ''}><span><strong>Full redemption</strong><span class="hint">Your entire capital account at the dealing date${cap ? `, about ${usdc(cap.a.end)} today` : ''}</span></span></label>
+          <label class="choice-row"><input type="radio" name="rq-full" value="partial" data-bind="rq:full"${f.full ? '' : ' checked'}><span><strong>Partial redemption</strong><span class="hint">A dollar amount; at least $25,000 must remain invested</span></span></label>
+        </fieldset>
+        ${f.full ? '' : `<label class="field" for="rq-amount"><span>Amount ($)</span><input id="rq-amount" type="number" min="1" step="1000" data-bind="rq:amount" value="${h(f.amount)}"${f.err && f.err.amount ? ' aria-invalid="true"' : ''}>${f.err && f.err.amount ? `<span class="field-error">${h(f.err.amount)}</span>` : ''}</label>`}
+        <p class="meta">Paid at net asset value on the ${date(deal)} dealing date (${h(L.frequency.toLowerCase())} dealing, ${L.notice} days’ notice${L.lockup ? `, ${L.lockup}-month lock-up` : ''}), usually within 10 business days after the valuation is final, to your account on file.</p>
+        <label class="field field-wide" for="rq-sig"><span>Type your full name to sign</span><input id="rq-sig" type="text" data-bind="rq:signature" value="${h(f.signature)}" autocomplete="off"${f.err && f.err.signature ? ' aria-invalid="true"' : ''}><span class="hint">Signing as ${h(inv.contact)} for ${h(inv.title)} on ${date(todayIso(), 'long')}</span>${f.err && f.err.signature ? `<span class="field-error">${h(f.err.signature)}</span>` : ''}</label>
+        <div class="ob-actions"><button class="btn" type="button" data-action="req-cancel">Cancel</button><button class="btn btn-primary" type="submit">Sign and submit request</button></div>
+      </form>`;
+    } else if (f && f.type === 'subscription') {
+      form = `<form class="req-form" data-form="req-submit" novalidate>
+        <h3>Add to this investment</h3>
+        <label class="field" for="rq-amount"><span>Additional subscription ($)</span><input id="rq-amount" type="number" min="25000" step="5000" data-bind="rq:amount" value="${h(f.amount)}"${f.err && f.err.amount ? ' aria-invalid="true"' : ''}><span class="hint">Minimum $25,000</span>${f.err && f.err.amount ? `<span class="field-error">${h(f.err.amount)}</span>` : ''}</label>
+        <p class="meta">Effective ${date(OPS().subscriptionDate(todayIso()))} at that day’s net asset value. After ${h(T().shortName)} approves the request, wire instructions appear here. Your representations in the original subscription agreement apply.</p>
+        <label class="field field-wide" for="rq-sig"><span>Type your full name to sign</span><input id="rq-sig" type="text" data-bind="rq:signature" value="${h(f.signature)}" autocomplete="off"${f.err && f.err.signature ? ' aria-invalid="true"' : ''}><span class="hint">Signing as ${h(inv.contact)} for ${h(inv.title)} on ${date(todayIso(), 'long')}</span>${f.err && f.err.signature ? `<span class="field-error">${h(f.err.signature)}</span>` : ''}</label>
+        <div class="ob-actions"><button class="btn" type="button" data-action="req-cancel">Cancel</button><button class="btn btn-primary" type="submit">Sign and submit request</button></div>
+      </form>`;
+    }
+    const buttons = redeemed
+      ? ''
+      : `<div class="req-actions">${pendingRed ? '<span class="meta">You have a redemption request in progress.</span>' : lockEnd && lockEnd > todayIso() && !deal ? '' : `<button class="btn" type="button" data-action="req-form" data-type="redemption" data-off="${h(o.id)}">Request a redemption</button>`}<button class="btn" type="button" data-action="req-form" data-type="subscription" data-off="${h(o.id)}">Add to this investment</button></div>`;
+    return `<section class="sec">${sec('Liquidity')}
+      <dl class="terms"><div><dt>Dealing</dt><dd>${h(L.frequency)}, on ${L.notice} days’ notice</dd></div><div><dt>Lock-up</dt><dd>${L.lockup ? `${L.lockup} months from each subscription${lockEnd ? ` (yours ${lockEnd > todayIso() ? 'ends' : 'ended'} ${date(lockEnd)})` : ''}` : 'None'}</dd></div>${redeemed ? '' : `<div><dt>Next dealing date for a new request</dt><dd>${deal ? date(deal) : '—'}</dd></div>`}</dl>
+      ${f ? form : buttons}
+      ${requestsHTML(inv, o.id, false)}
+    </section>`;
+  }
+  NS.actions['req-form'] = (el) => {
+    S().ui.reqForm = { type: el.getAttribute('data-type'), offeringId: el.getAttribute('data-off'), full: el.getAttribute('data-type') === 'redemption', amount: '', signature: '', err: null };
+    NS.app.render();
+    const first = document.querySelector('.req-form input');
+    if (first) first.focus();
+  };
+  NS.actions['req-cancel'] = () => {
+    S().ui.reqForm = null;
+    NS.app.render();
+  };
+  NS.binders.rq = (path, v) => {
+    const f = reqForm();
+    if (!f) return;
+    if (path === 'full') {
+      f.full = v === 'full';
+      NS.app.render();
+    } else f[path] = v;
+  };
+  NS.forms['req-submit'] = () => {
+    const f = reqForm();
+    const inv = viewer();
+    const o = f && W().offerings.find((x) => x.id === f.offeringId);
+    if (!f || !inv || !o) return;
+    const err = {};
+    const cents = Math.round((Number(f.amount) || 0) * 100);
+    if (f.type === 'redemption' && !f.full) {
+      const cap = OPS().capital(W(), inv, o, '1990-01-01', NS.audit.lastMonthEnd(todayIso()));
+      if (!(cents > 0)) err.amount = 'Enter the amount to redeem.';
+      else if (cap && cap.a.end - cents < 2500000) err.amount = `At least $25,000 must remain invested. For more, choose a full redemption.`;
+    }
+    if (f.type === 'subscription' && cents < 2500000) err.amount = 'The minimum additional subscription is $25,000.';
+    if (!sameName(f.signature, inv.contact)) err.signature = `Type your name exactly as ${inv.contact}.`;
+    f.err = Object.keys(err).length ? err : null;
+    if (f.err) return NS.app.render();
+    const r = f.type === 'redemption' ? OPS().submitRedemption(W(), inv, o, { full: f.full, cents, signature: f.signature.trim() }) : OPS().submitSubscription(W(), inv, o, { cents, signature: f.signature.trim() });
+    S().ui.reqForm = null;
+    NS.app.render();
+    U.toast(r.type === 'redemption' ? `Redemption request received for the ${date(r.dealing)} dealing date.` : `Subscription request received, effective ${date(r.dealing)} once approved and funded.`);
+  };
+
+  /* ---------- Subscribe to an offering that is raising ---------- */
+  function subForm(o) {
+    const u = S().ui;
+    if (!u.sub || u.sub.offeringId !== o.id) u.sub = { offeringId: o.id, amount: String(o.minimum || ''), accredited: false, docs: false, esign: false, signature: '', err: null, done: null };
+    return u.sub;
+  }
+  NS.views.subscribe = {
+    mode: 'portal',
+    render(id) {
+      const inv = viewer();
+      const o = W().offerings.find((x) => x.id === id);
+      if (!inv || !o || o.status !== 'Raising') return shell(`${title('Not available')}<p class="empty">This offering is not accepting subscriptions. <a href="#investments">Return to your investments</a>.</p>`, 'investments');
+      const f = subForm(o);
+      const cfg = NS.audit ? NS.audit.settings(o) : null;
+      if (f.done) {
+        return shell(
+          `<a class="back" href="#investments">${icon('back')}Investments</a>
+          ${title('Subscription documents signed', h(o.name))}
+          <div class="done-box"><p class="lede">${h(T().shortName)} has your signed subscription for a ${usd(f.done.cents / 100)} commitment. Investor relations will review it and countersign before the first close, targeted for ${date(o.closeDate)}.</p>
+          <p class="lede">No money is due now. When the fund calls capital, you will get a capital call notice here with the amount, due date and wire instructions.</p>
+          <a class="btn btn-primary" href="#investments">Back to your investments</a></div>`,
+          'investments'
+        );
+      }
+      const terms = (o.terms || []).filter((r) => r.show && r.label);
+      const e = f.err || {};
+      return shell(
+        `<a class="back" href="#investments">${icon('back')}Investments</a>
+        ${title(`Subscribe to ${h(o.name)}`, `${h(o.type)}${o.summary ? ' · ' + h(o.summary) : ''}`)}
+        <div class="cols">
+          <section class="sec">${sec('Offering terms')}<dl class="terms">
+            <div><dt>Minimum commitment</dt><dd>${usd(o.minimum)}</dd></div>
+            <div><dt>First close</dt><dd>${date(o.closeDate)} (targeted)</dd></div>
+            ${cfg ? `<div><dt>Management fee</dt><dd>${+(cfg.mgmtFee * 100).toFixed(2)}% a year on ${h(NS.audit.FEE_BASIS[cfg.feeBasis].split(' (')[0].toLowerCase())}</dd></div><div><dt>${cfg.open ? 'Incentive allocation' : 'Carried interest'}</dt><dd>${cfg.carry ? `${+(cfg.carry * 100).toFixed(2)}%${!cfg.open && cfg.pref ? ` over a ${+(cfg.pref * 100).toFixed(2)}% preferred return` : ''}` : 'None'}</dd></div>` : ''}
+            ${terms.map((r) => `<div><dt>${h(r.label)}</dt><dd>${h(r.value)}</dd></div>`).join('')}
+          </dl></section>
+          <section class="sec">${sec('Subscription documents')}<ul class="doc-list"><li>Private placement memorandum</li><li>Limited partnership agreement</li><li>Subscription agreement and investor questionnaire</li></ul><p class="meta">Your investor information, tax certification and accreditation from your account are carried into the subscription agreement.</p></section>
+        </div>
+        <form class="ob-form sub-form" data-form="sub-submit" novalidate>
+          <div class="form-grid">
+            <label class="field" for="sb-amount"><span>Commitment ($)</span><input id="sb-amount" type="number" min="${o.minimum}" step="5000" data-bind="sb:amount" value="${h(f.amount)}"${e.amount ? ' aria-invalid="true"' : ''}><span class="hint">Minimum ${usd(o.minimum)}. Capital is called over time.</span>${e.amount ? `<span class="field-error">${h(e.amount)}</span>` : ''}</label>
+            <label class="field" for="sb-acct"><span>Investing as</span><input id="sb-acct" type="text" value="${h(inv.title)} (${h((NS.ENTITY_TYPES[inv.type] || {}).label || inv.type)})" readonly></label>
+            <label class="check field-wide" for="sb-acc"><input id="sb-acc" type="checkbox" data-bind="sb:accredited"${f.accredited ? ' checked' : ''}><span>${h(inv.title)} is an accredited investor (${h(inv.accreditation.basis)}) and this remains accurate.</span></label>${e.accredited ? `<span class="field-error">${h(e.accredited)}</span>` : ''}
+            <label class="check field-wide" for="sb-docs"><input id="sb-docs" type="checkbox" data-bind="sb:docs"${f.docs ? ' checked' : ''}><span>I have received and read the private placement memorandum, limited partnership agreement and subscription agreement, and I make the representations in the subscription agreement.</span></label>${e.docs ? `<span class="field-error">${h(e.docs)}</span>` : ''}
+            <label class="check field-wide" for="sb-esign"><input id="sb-esign" type="checkbox" data-bind="sb:esign"${f.esign ? ' checked' : ''}><span>I agree to sign these documents electronically.</span></label>${e.esign ? `<span class="field-error">${h(e.esign)}</span>` : ''}
+            <label class="field field-wide" for="sb-sig"><span>Type your full name to sign</span><input id="sb-sig" type="text" data-bind="sb:signature" value="${h(f.signature)}" autocomplete="off"${e.signature ? ' aria-invalid="true"' : ''}><span class="hint">Signing as ${h(inv.contact)} for ${h(inv.title)} on ${date(todayIso(), 'long')}</span>${e.signature ? `<span class="field-error">${h(e.signature)}</span>` : ''}</label>
+          </div>
+          <div class="ob-actions"><a class="btn" href="#investments">Cancel</a><button class="btn btn-primary" type="submit">Sign subscription documents</button></div>
+        </form>`,
+        'investments'
+      );
+    }
+  };
+  NS.binders.sb = (path, v) => {
+    const u = S().ui.sub;
+    if (u) u[path] = v;
+  };
+  NS.forms['sub-submit'] = () => {
+    const u = S().ui.sub;
+    const inv = viewer();
+    const o = u && W().offerings.find((x) => x.id === u.offeringId);
+    if (!u || !inv || !o) return;
+    const e = {};
+    const cents = Math.round((Number(u.amount) || 0) * 100);
+    if (cents < Math.round(o.minimum * 100)) e.amount = `The minimum commitment is ${usd(o.minimum)}.`;
+    if (!u.accredited) e.accredited = 'Confirm your accreditation to continue.';
+    if (!u.docs) e.docs = 'Confirm you have read the offering documents.';
+    if (!u.esign) e.esign = 'Agree to electronic signature to continue.';
+    if (!sameName(u.signature, inv.contact)) e.signature = `Type your name exactly as ${inv.contact}.`;
+    u.err = Object.keys(e).length ? e : null;
+    if (!u.err) u.done = OPS().submitSubscription(W(), inv, o, { cents, signature: u.signature.trim() });
+    NS.app.render();
+    window.scrollTo(0, 0);
   };
 
   /* ---------- Time to redemption ---------- */
@@ -194,6 +471,7 @@
       return shell(
         `${title('Investments', `${h(inv.title)} · Account ${h(inv.id)} · As of ${date(today, 'long')}`)}
         ${noticesHTML(inv)}
+        ${callsDueHTML(inv)}
         <dl class="figs">
           ${fig('Invested', usd(v.totals.invested), `${v.active.length} active investment${v.active.length === 1 ? '' : 's'}`)}
           ${fig('Distributions received', usdc(v.totals.received), 'All investments, to date')}
@@ -217,6 +495,10 @@
             <tbody>${exitedRows}</tbody></table></div></section>`
             : ''
         }
+
+        ${myRequests(inv).length ? `<section class="sec">${sec('Your requests')}${requestsHTML(inv, null, true)}</section>` : ''}
+
+        ${openOfferingsHTML(inv)}
 
         <section class="sec">
           ${sec('Recent distributions', '<a class="sec-link" href="#distributions">All distributions</a>')}
@@ -255,7 +537,7 @@
       const x = p.exit;
       const t = T();
       const terms = (o.terms || []).filter((r) => r.show && r.label);
-      const docs = NS.investorDocs(W(), v).filter((d) => d.offeringId === o.id);
+      const docs = allDocs(v).filter((d) => d.offeringId === o.id);
       const pays = p.payments;
       const showAll = S().ui.allPays === o.id;
       const shown = showAll ? pays : pays.slice(0, 12);
@@ -281,6 +563,10 @@
         </dl>
 
         <section class="sec">${sec(x.state === 'exited' ? 'Holding period' : x.state === 'open' ? 'Term' : 'Time to exit')}${timeline}</section>
+
+        ${capitalHTML(v.investor, o)}
+        ${callsHTML(v.investor, o)}
+        ${liquidityHTML(v.investor, o, p)}
 
         <div class="cols">
           <section class="sec">${sec('Key terms')}${
@@ -408,7 +694,7 @@
       const v = vm();
       if (!v || !v.positions.length) return noAccount();
       const ui = S().ui;
-      const all = NS.investorDocs(W(), v);
+      const all = allDocs(v);
       const fo = ui.docOff || 'all';
       const fc = ui.docCat || 'all';
       const cats = Array.from(new Set(all.map((d) => d.cat)));
@@ -433,10 +719,48 @@
     S().ui.docCat = el.value;
     NS.app.render();
   };
+  /** Generated statements and reports plus files the manager published (operations.js). */
+  function allDocs(v) {
+    const up = NS.ops ? NS.ops.docsFor(W(), v.investor).map((d) => ({ id: d.id, title: d.title, date: d.date, cat: d.cat, offeringId: d.offeringId, uploaded: true, fileName: d.fileName, type: d.type, size: d.size })) : [];
+    return NS.investorDocs(W(), v)
+      .concat(up)
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  }
+  function openUploaded(doc) {
+    U.dialog(
+      `<div class="dlg-head"><div><h2>${h(doc.title)}</h2><p>${date(doc.date)} · ${h(doc.fileName)} · ${(doc.size / 1024).toFixed(0)} KB</p></div>
+        <div class="dlg-actions"><button class="btn btn-small" type="button" data-action="up-download" data-id="${h(doc.id)}">${icon('download')}Download</button><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
+      <div class="dlg-body"><p class="empty">Loading…</p></div>`,
+      'dlg-doc'
+    );
+    NS.ops.files
+      .get(doc.id)
+      .then((blob) => {
+        const body = document.querySelector('#dlg .dlg-body');
+        if (!body) return;
+        if (!blob) {
+          body.innerHTML = '<p class="empty">This file was published from a different browser. In production, documents are stored in the document vault and open on any device.</p>';
+          return;
+        }
+        if (S().ui.upUrl) URL.revokeObjectURL(S().ui.upUrl);
+        const url = (S().ui.upUrl = URL.createObjectURL(blob));
+        body.innerHTML = /pdf/i.test(blob.type) || /\.pdf$/i.test(doc.fileName) ? `<iframe class="doc-frame" src="${url}" title="${h(doc.title)}"></iframe>` : '<p class="empty">Preview is not available for this file type. Use Download.</p>';
+      })
+      .catch(() => {
+        const body = document.querySelector('#dlg .dlg-body');
+        if (body) body.innerHTML = '<p class="empty">This browser blocked document storage, so the file cannot be opened here.</p>';
+      });
+  }
+  NS.actions['up-download'] = (el) => {
+    const doc = (W().docs || []).find((d) => d.id === el.getAttribute('data-id'));
+    if (!doc) return;
+    NS.ops.files.get(doc.id).then((blob) => (blob ? U.download(doc.fileName, blob, { mime: doc.type || 'application/octet-stream' }) : U.toast('This file is stored in a different browser.')));
+  };
   NS.actions['open-doc'] = (el) => {
     const v = vm();
-    const doc = NS.investorDocs(W(), v).find((d) => d.id === el.getAttribute('data-id'));
+    const doc = allDocs(v).find((d) => d.id === el.getAttribute('data-id'));
     if (!doc) return;
+    if (doc.uploaded) return openUploaded(doc);
     U.dialog(
       `<div class="dlg-head"><div><h2>${h(doc.title)}</h2><p>${date(doc.date)} · ${doc.pages} page${doc.pages === 1 ? '' : 's'} · PDF</p></div>
         <div class="dlg-actions"><button class="btn btn-small" type="button" data-action="doc-download">${icon('download')}Download</button><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>

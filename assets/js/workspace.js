@@ -55,11 +55,15 @@
 
   function load(id) {
     const saved = store.get('ws:' + id, null);
-    if (saved && saved.v === 2) return normalize(saved);
-    const seed = NS.TENANTS.find((t) => t.id === id);
-    if (seed) return NS.seedWorkspace(seed);
-    if (customIds().indexOf(id) >= 0) return normalize({ v: 2, tenant: merge(NS.TENANT_TEMPLATE, { id }), offerings: [], investors: [], runs: [] });
-    return null;
+    let ws = null;
+    if (saved && saved.v === 2) ws = normalize(saved);
+    else {
+      const seed = NS.TENANTS.find((t) => t.id === id);
+      if (seed) ws = NS.seedWorkspace(seed);
+      else if (customIds().indexOf(id) >= 0) ws = normalize({ v: 2, tenant: merge(NS.TENANT_TEMPLATE, { id }), offerings: [], investors: [], runs: [] });
+    }
+    // Capital calls, investor requests, AML/KYC files and documents (operations.js).
+    return ws && NS.ops ? NS.ops.ensure(ws) : ws;
   }
 
   let timer = 0;

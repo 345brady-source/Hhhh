@@ -194,6 +194,8 @@
     const MULT = [1, 1, 1, 1.5, 2, 2, 2, 2.5, 3, 4, 5];
     const OPEN = ['Hedge fund', 'Digital asset fund', 'Multi-strategy fund'];
     offerings.forEach((o) => {
+      // Offerings still raising have no investors until subscriptions are accepted.
+      if (o.status === 'Raising') return;
       // Drawdown funds: the roster amount is the commitment; `amount` is what has been called so far.
       const called = o.calls ? o.calls.reduce((a, c) => a + c[1], 0) : 1;
       const position = (amt, date) => (called < 1 ? { offeringId: o.id, amount: Math.round(amt * called), commitment: amt, date } : { offeringId: o.id, amount: amt, date });
@@ -290,7 +292,10 @@
       portal_name: tenant.portalName,
       firm: tenant.name,
       team: tenant.support.team,
-      phone: tenant.support.phone
+      phone: tenant.support.phone,
+      call_number: notice.callNumber != null ? String(notice.callNumber) : '',
+      call_amount: notice.amounts && notice.amounts[inv.id] != null ? '$' + (notice.amounts[inv.id] / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '',
+      due_date: notice.due ? parse(notice.due).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : ''
     };
     return String(text || '').replace(/\{(\w+)\}/g, (m, k) => (map[k] != null ? map[k] : m));
   };
@@ -510,9 +515,10 @@
     const ytdStart = now.slice(0, 4) + '-01-01';
     const byOffering = {};
     inv.positions.forEach((p) => {
-      if (!byOffering[p.offeringId]) byOffering[p.offeringId] = { invested: 0, first: p.date };
+      if (!byOffering[p.offeringId]) byOffering[p.offeringId] = { invested: 0, first: p.date, redeemed: p.redeemed || '' };
       byOffering[p.offeringId].invested += p.amount;
       if (p.date < byOffering[p.offeringId].first) byOffering[p.offeringId].first = p.date;
+      if (!p.redeemed) byOffering[p.offeringId].redeemed = '';
     });
     const payments = [];
     ws.runs.forEach((run) => {
@@ -533,17 +539,19 @@
           received: paid.reduce((a, p) => a + p.cents, 0),
           ytd: paid.filter((p) => p.date >= ytdStart).reduce((a, p) => a + p.cents, 0),
           payments: payments.filter((p) => p.offeringId === oid),
-          exit: NS.exitInfo(o, now)
+          exit: byOffering[oid].redeemed
+            ? { label: 'Redeemed', value: longDate(byOffering[oid].redeemed), remaining: `Held ${span(monthsBetween(byOffering[oid].first, byOffering[oid].redeemed))}`, progress: 1, state: 'exited' }
+            : NS.exitInfo(o, now)
         };
       })
       .filter(Boolean);
-    const active = positions.filter((p) => p.offering.exit.basis !== 'exited');
+    const active = positions.filter((p) => p.exit.state !== 'exited');
     const paidAll = payments.filter((p) => p.status === 'paid');
     return {
       investor: inv,
       positions,
       active,
-      exited: positions.filter((p) => p.offering.exit.basis === 'exited'),
+      exited: positions.filter((p) => p.exit.state === 'exited'),
       payments,
       totals: {
         invested: active.reduce((a, p) => a + p.invested, 0),
@@ -574,7 +582,7 @@
       }
       docs.push({ id: `sub-${o.id}`, title: o.type === 'Private credit' ? 'Note Purchase Agreement' : 'Subscription Agreement', offeringId: o.id, cat: 'Legal', kind: 'legal', date: p.date, pages: 38 });
     });
-    docs.push({ id: `stmt-${year}-q3`, title: `Account Statement, Q3 ${year}`, offeringId: null, cat: 'Statements', kind: 'statement', date: `${year}-10-15`, pages: 3 });
+    docs.push({ id: `stmt-${year}-q3`, title: `Capital Account Statement, Q3 ${year}`, offeringId: null, cat: 'Statements', kind: 'statement', date: `${year}-10-15`, pages: 3 });
     docs.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
     return docs;
   };

@@ -392,3 +392,14 @@ body.role-sponsor .cs { --cv-accent: var(--brand); --cv-accent-ink: var(--brand-
 @media (max-width: 720px) {
   .aud-check-head { flex-direction: column; gap: 2px; }
 }
+
+/* Operations: capital calls, requests, documents, AML/KYC */
+.cs-nav-count { display: inline-block; min-width: 18px; margin-left: 6px; padding: 0 5px; border-radius: 9px; background: var(--cv-warn-soft); color: var(--cv-warn); font-size: 11px; font-weight: 800; line-height: 18px; text-align: center; }
+.cs-badge-warn { background: var(--cv-warn-soft); color: var(--cv-warn); }
+.cs-badge-mute { background: var(--cv-panel-2); color: var(--cv-ink-3); }
+.cs-tbl tr.is-bad td { background: var(--cv-bad-soft); }
+.cs-tbl .strong { font-weight: 800; }
+.kyc-detail td { background: var(--cv-panel-2); }
+.kyc-match { display: grid; gap: 10px; padding: 6px 2px; max-width: 760px; white-space: normal; }
+.kyc-match p { margin: 0; font-size: 13px; line-height: 1.5; }
+button.cs-back { border: 0; background: none; padding: 0; cursor: pointer; font: inherit; font-size: 13px; }

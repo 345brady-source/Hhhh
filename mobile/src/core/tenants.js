@@ -454,6 +454,7 @@
           ],
           update: 'Two portfolio companies raised follow-on rounds in the third quarter. 60% of commitments have been called.',
           calls: [['2023-03-31', 0.15], ['2023-10-02', 0.15], ['2024-06-28', 0.15], ['2025-04-15', 0.15]],
+          openCall: { notice: '2026-10-28', due: '2026-11-12', pct: 0.1, purpose: 'Follow-on investments in Quillon Robotics and Lattice Ledger' },
           holdings: [
             { name: 'Quillon Robotics, Inc.', security: 'Series A and B preferred stock', level: 3, method: 'Recent financing round, calibrated', input: 'Series C price $4.12 per share', weight: 21, cost: 0.38, support: { every: 3, doc: 'Quarterly valuation memo' } },
             { name: 'Lattice Ledger, Inc.', security: 'Series A preferred stock', level: 3, method: 'Market approach: revenue multiple', input: 'EV/ARR 9.0x', weight: 17, cost: 0.62, support: { every: 3, doc: 'Quarterly valuation memo' } },
@@ -475,12 +476,14 @@
           summary: 'Global long/short equity, 20–40% net long',
           closeDate: '2021-01-01',
           minimum: 250000,
-          exit: { basis: 'open', date: '', from: '', to: '', note: 'Quarterly redemptions on 60 days’ notice after a one-year soft lock-up.' },
+          exit: { basis: 'open', date: '', from: '', to: '', note: 'Quarterly redemptions on 60 days’ notice after a one-year lock-up.' },
+          liquidity: { frequency: 'Quarterly', notice: 60, lockup: 12 },
+          requests: [{ who: 'holder', type: 'redemption', full: true, submitted: '2025-10-15', status: 'paid', paid: '2026-01-12' }],
           distribution: { frequency: 'None', type: 'Distribution', target: 'Gains are reinvested' },
           terms: [
             { label: 'Strategy', value: 'Fundamental long/short equity, developed markets', show: true },
             { label: 'Liquidity', value: 'Quarterly on 60 days’ notice', show: true },
-            { label: 'Lock-up', value: 'One-year soft lock-up (3% early redemption fee)', show: true },
+            { label: 'Lock-up', value: 'One year from each subscription', show: true },
             { label: 'Fees', value: '1.5% management fee; 20% incentive allocation over a high-water mark', show: true }
           ],
           update: 'Net exposure ended October at 31% long; gross exposure was 182%.',
@@ -501,6 +504,8 @@
           closeDate: '2022-07-01',
           minimum: 100000,
           exit: { basis: 'open', date: '', from: '', to: '', note: 'Monthly redemptions on 30 days’ notice.' },
+          liquidity: { frequency: 'Monthly', notice: 30, lockup: 0 },
+          requests: [{ who: 'jordan', type: 'redemption', amount: 25000, submitted: '2026-10-20', status: 'pending' }],
           distribution: { frequency: 'None', type: 'Distribution', target: 'Gains are reinvested' },
           terms: [
             { label: 'Strategy', value: 'Long-biased liquid digital assets, with staking income', show: true },
@@ -527,6 +532,8 @@
           closeDate: '2020-04-01',
           minimum: 250000,
           exit: { basis: 'open', date: '', from: '', to: '', note: 'Quarterly redemptions on 90 days’ notice after a one-year lock-up.' },
+          liquidity: { frequency: 'Quarterly', notice: 90, lockup: 12 },
+          requests: [{ who: 'holder', type: 'redemption', amount: 150000, submitted: '2026-03-20', status: 'paid', paid: '2026-07-10' }],
           distribution: { frequency: 'None', type: 'Distribution', target: 'Gains are reinvested' },
           terms: [
             { label: 'Strategies', value: 'Equity long/short, credit, global macro and event-driven', show: true },
@@ -570,6 +577,26 @@
           ],
           update: 'Quillon shipped its second-generation picking robot to three new warehouse customers in the third quarter.',
           holdings: [{ name: 'Quillon Robotics, Inc.', security: 'Series C preferred stock', level: 3, method: 'Recent financing round, calibrated', input: 'Series C price $4.12 per share', weight: 100, cost: 0.97, support: { every: 3, doc: 'Quarterly valuation memo' } }]
+        },
+        {
+          id: 'pb-ventures-ii',
+          name: 'Pellbrook Ventures II, L.P.',
+          shortName: 'Ventures II',
+          type: 'Venture capital fund',
+          status: 'Raising',
+          summary: 'Seed and Series A enterprise software; first close targeted for March 2027',
+          closeDate: '2027-03-31',
+          minimum: 250000,
+          exit: { basis: 'date', date: '2037-03-31', from: '', to: '', note: 'Ten-year fund term from the final close, plus up to three one-year extensions.' },
+          distribution: { frequency: 'As realized', type: 'Realization proceeds', target: '' },
+          terms: [
+            { label: 'Strategy', value: 'Seed and Series A enterprise software and data infrastructure', show: true },
+            { label: 'Fund size', value: '$175 million target', show: true },
+            { label: 'Fund term', value: '10 years, plus three 1-year extensions', show: true },
+            { label: 'Fees', value: '2.5% management fee on commitments; 20% carried interest', show: true }
+          ],
+          update: 'Ventures II is accepting subscriptions ahead of a first close targeted for March 31, 2027.',
+          requests: [{ who: 'new', type: 'subscription', amount: 500000, submitted: '2026-10-30', status: 'pending' }]
         }
       ],
       roster: { size: 24, login: 'davis.trust@example.com', jordan: { 'pb-ventures-i': 250000, 'pb-long-short': 500000, 'pb-digital': 100000, 'pb-multi': 250000, 'pb-spv-quillon': 50000 } }

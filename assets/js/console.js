@@ -32,19 +32,35 @@
     ['console', 'Overview'],
     ['console-offerings', 'Offerings'],
     ['console-investors', 'Investors'],
+    ['console-calls', 'Capital calls'],
     ['console-distributions', 'Distributions'],
+    ['console-requests', 'Requests'],
     ['console-notices', 'Notices'],
+    ['console-docs', 'Documents'],
     ['console-reports', 'Reports'],
     ['console-audit', 'Audit'],
+    ['console-kyc', 'AML/KYC'],
     ['console-ach', 'ACH origination'],
     ['console-brand', 'Portal and brand']
   ];
+  /** Items waiting on the manager, shown beside the menu entry. */
+  function navCount(k) {
+    const w = W();
+    if (!NS.ops || !w) return 0;
+    if (k === 'console-requests') return (w.requests || []).filter((r) => r.status === 'pending').length;
+    if (k === 'console-calls') return (w.calls || []).filter((c) => c.items.some((it) => !it.received)).length;
+    if (k === 'console-kyc') return w.investors.filter((i) => ['review', 'due'].indexOf(NS.ops.kycLabel(NS.ops.kycOf(i)).key) >= 0).length;
+    return 0;
+  }
   function shell(inner, active) {
     const t = T();
     return `<div class="cs">
       <aside class="cs-nav" aria-label="Sponsor console">
         <div class="cs-client">${B.lockup(t)}<span class="cs-client-meta">${h(t.domain)}</span></div>
-        <nav>${NAV.filter(([k]) => isStaff() || STAFF_ONLY.indexOf(k) < 0).map(([k, l]) => `<a href="#${k}"${active === k ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
+        <nav>${NAV.filter(([k]) => isStaff() || STAFF_ONLY.indexOf(k) < 0).map(([k, l]) => {
+          const n = navCount(k);
+          return `<a href="#${k}"${active === k ? ' aria-current="page"' : ''}>${l}${n ? ` <span class="cs-nav-count" aria-label="${n} need attention">${n}</span>` : ''}</a>`;
+        }).join('')}</nav>
       </aside>
       <main class="cs-main" id="main" tabindex="-1">${inner}</main>
     </div>`;
@@ -70,8 +86,37 @@
   function activation(inv) {
     const o = inv.onboarding;
     if (o.status === 'complete') return `Active${o.completed ? ' since ' + date(o.completed) : ''}`;
-    if (o.status === 'in_progress') return `In progress · ${o.step || 0} of 5 steps`;
+    if (o.status === 'in_progress') return `In progress · ${o.step || 0} of 6 steps`;
     return `Invited ${date(o.invited)}`;
+  }
+
+  /** Net asset value and capital by fund at the last month-end (from the capital accounts in audit.js). */
+  function fundsPanel(w) {
+    if (!NS.audit || !w.offerings.length) return '';
+    const end = NS.audit.lastMonthEnd(today());
+    const tot = { nav: 0, inv: 0, paid: 0, dist: 0, unf: 0 };
+    const rows = w.offerings
+      .map((o) => {
+        const L = NS.audit.ledger(w, o);
+        const m = L.byKey[end.slice(0, 7)] || (L.exitKey ? null : L.months[L.months.length - 1]);
+        const nav = m ? m.endCap + m.gpEnd : 0;
+        const holders = w.investors.filter((i) => i.positions.some((p) => p.offeringId === o.id)).length;
+        const paid = L.contribs.reduce((a, c) => a + c.cents, 0);
+        const dist = L.dists.reduce((a, d) => a + d.cents, 0) + (L.redemptions || []).reduce((a, x) => a + x.cents, 0);
+        const unf = NS.ops ? NS.ops.unfunded(w, o) : 0;
+        tot.nav += nav;
+        tot.inv += holders;
+        tot.paid += paid;
+        tot.dist += dist;
+        tot.unf += unf;
+        return `<tr><th scope="row"><a href="#console-offering-${h(o.id)}">${h(o.name)}</a><span class="sub">${h(NS.audit.settings(o).label)}${o.status === 'Raising' ? ' · raising' : o.exit && o.exit.basis === 'exited' ? ' · exited' : ''}</span></th><td class="num">${usdc(nav)}</td><td class="num">${holders}</td><td class="num">${usdc(paid)}</td><td class="num">${usdc(dist)}</td><td class="num">${unf ? usdc(unf) : '—'}</td></tr>`;
+      })
+      .join('');
+    return panel(
+      `Funds <span class="cs-count">Net asset value as of ${date(end)}</span>`,
+      `<div class="tbl-scroll"><table class="cs-tbl"><thead><tr><th scope="col">Fund</th><th scope="col" class="num">Net assets</th><th scope="col" class="num">Investors</th><th scope="col" class="num">Contributed</th><th scope="col" class="num">Distributed and redeemed</th><th scope="col" class="num">Unfunded</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><th scope="row">Total</th><td class="num">${usdc(tot.nav)}</td><td class="num"></td><td class="num">${usdc(tot.paid)}</td><td class="num">${usdc(tot.dist)}</td><td class="num">${tot.unf ? usdc(tot.unf) : '—'}</td></tr></tfoot></table></div>`,
+      '<a class="cs-link" href="#console-audit">Audit schedules</a>'
+    );
   }
 
   /* ---------- Overview and client setup ---------- */
@@ -105,6 +150,21 @@
       if (checks.length) attention.push(`<li><a href="#console-investors" data-action="inv-filter" data-f="nobank">${checks.length} investor${checks.length === 1 ? ' is' : 's are'} paid by check (no bank account on file)</a></li>`);
       soon.forEach(({ o, x }) => attention.push(`<li><a href="#console-offering-${h(o.id)}">${h(o.name)}: ${h(x.label.toLowerCase())} ${h(x.value)} (${h(x.remaining.toLowerCase())})</a></li>`));
       if (!achReady()) attention.push('<li><a href="#console-ach">ACH origination is not complete, so NACHA files cannot be generated</a></li>');
+      if (NS.ops) {
+        (w.calls || [])
+          .filter((c) => c.items.some((it) => !it.received))
+          .forEach((c) => {
+            const o = w.offerings.find((x) => x.id === c.offeringId);
+            const st = NS.ops.callStatus(c);
+            attention.push(`<li><a href="#console-calls" data-action="call-open" data-id="${h(c.id)}">${h(o ? o.name : c.offeringId)} call ${c.number}: ${usdc(st.out)} outstanding from ${st.count} investor${st.count === 1 ? '' : 's'}, due ${date(c.due)}${st.overdue ? ' (overdue)' : ''}</a></li>`);
+          });
+        const reqs = (w.requests || []).filter((r) => r.status === 'pending').length;
+        if (reqs) attention.push(`<li><a href="#console-requests">${reqs} investor request${reqs === 1 ? '' : 's'} waiting for approval</a></li>`);
+        const kyc = w.investors.map((i) => NS.ops.kycLabel(NS.ops.kycOf(i)).key);
+        const rev = kyc.filter((k) => k === 'review').length;
+        const due = kyc.filter((k) => k === 'due').length;
+        if (rev || due) attention.push(`<li><a href="#console-kyc">${[rev ? `${rev} screening match${rev === 1 ? '' : 'es'} to review` : '', due ? `${due} AML/KYC re-screen${due === 1 ? '' : 's'} due` : ''].filter(Boolean).join('; ')}</a></li>`);
+      }
       return shell(
         `${head(h(t.name), `${w.offerings.length} offerings · ${w.investors.length} investors`)}
         ${
@@ -123,6 +183,7 @@
           <div><dt>Capital raised</dt><dd>${usd(w.offerings.reduce((a, o) => a + raised(o.id), 0))}</dd></div>
           <div><dt>Distributed, last 12 months</dt><dd>${usdc(paid12)}</dd></div>
         </dl>
+        ${fundsPanel(w)}
         ${panel('Needs attention', attention.length ? `<ul class="cs-list">${attention.join('')}</ul>` : '<p class="cs-muted">Nothing needs attention.</p>')}
         ${panel(
           'Recent distributions',
@@ -1497,6 +1558,470 @@
       holder.hidden = false;
     }
     U.copy(text, holder);
+  };
+
+  /* ---------- Capital calls ---------- */
+  const OPS = () => NS.ops;
+  const invById = (id) => W().investors.find((i) => i.id === id);
+  const offById = (id) => W().offerings.find((o) => o.id === id);
+  const badge = (cls, text) => `<span class="cs-badge cs-badge-${cls}">${h(text)}</span>`;
+  function callState() {
+    const u = S().ui;
+    if (!u.calls) u.calls = { view: 'list', draft: null };
+    return u.calls;
+  }
+  function callDraft() {
+    const c = callState();
+    if (!c.draft) {
+      const o = OPS().callable(W())[0];
+      c.draft = { offeringId: o ? o.id : '', mode: 'pct', pct: 10, amount: '', due: OPS().businessDays(today(), 10), purpose: 'Portfolio investments and fund expenses', note: '' };
+    }
+    return c.draft;
+  }
+  const PURPOSES = ['Portfolio investments and fund expenses', 'New portfolio investment', 'Follow-on investments', 'Management fees', 'Fund expenses', 'Initial closing: investments and organizational expenses'];
+  function callBadge(st) {
+    return st.key === 'complete' ? badge('ok', 'Fully funded') : st.key === 'overdue' ? badge('bad', `${st.overdue} overdue`) : badge('warn', `${st.count} outstanding`);
+  }
+  function callList() {
+    const w = W();
+    const calls = (w.calls || []).slice().sort((a, b) => (a.noticeDate < b.noticeDate ? 1 : a.noticeDate > b.noticeDate ? -1 : b.number - a.number));
+    const funds = w.offerings.filter((o) => !OPS().isOpen(o) && OPS().callsFor(w, o).length + (OPS().callable(w).indexOf(o) >= 0 ? 1 : 0) > 0);
+    const fundRows = funds
+      .map((o) => {
+        const hold = w.investors.filter((i) => i.positions.some((p) => p.offeringId === o.id));
+        const commit = hold.reduce((a, i) => a + OPS().commitOf(i, o), 0);
+        const paid = hold.reduce((a, i) => a + OPS().paidInOf(i, o), 0);
+        return `<tr><th scope="row">${h(o.name)}<span class="sub">${h(o.type)}</span></th><td class="num">${usdc(commit)}</td><td class="num">${usdc(paid)}</td><td class="num">${commit ? ((paid / commit) * 100).toFixed(1) + '%' : '—'}</td><td class="num">${usdc(Math.max(0, commit - paid))}</td></tr>`;
+      })
+      .join('');
+    const rows = calls
+      .map((c) => {
+        const o = offById(c.offeringId);
+        const st = OPS().callStatus(c);
+        const recv = c.items.filter((it) => it.received).reduce((a, it) => a + it.cents, 0);
+        const total = c.items.reduce((a, it) => a + it.cents, 0);
+        return `<tr><th scope="row"><button class="link-btn" type="button" data-action="call-open" data-id="${h(c.id)}">${h(o ? o.shortName || o.name : c.offeringId)} · Call ${c.number}</button><span class="sub">${h(c.purpose)}</span></th><td class="nowrap">${date(c.noticeDate)}</td><td class="nowrap">${date(c.due)}</td><td class="num">${usdc(total)}</td><td class="num">${usdc(recv)}<span class="sub">${c.items.filter((it) => it.received).length} of ${c.items.length} investors</span></td><td>${callBadge(st)}</td></tr>`;
+      })
+      .join('');
+    const can = OPS().callable(w).length > 0;
+    return shell(
+      `${head('Capital calls', 'Call capital from investors in drawdown funds. Each investor’s share is pro rata to their commitment; investors get the notice and wire instructions in their portal, and every payment is tracked until the call is fully funded.', can ? '<button class="cs-btn cs-btn-primary" type="button" data-action="call-new">New capital call</button>' : '')}
+      ${funds.length ? panel('Commitments', `<div class="tbl-scroll"><table class="cs-tbl"><thead><tr><th scope="col">Fund</th><th scope="col" class="num">Commitments</th><th scope="col" class="num">Contributed</th><th scope="col" class="num">Called</th><th scope="col" class="num">Unfunded</th></tr></thead><tbody>${fundRows}</tbody></table></div>`) : ''}
+      ${panel('Calls', calls.length ? `<div class="tbl-scroll"><table class="cs-tbl"><thead><tr><th scope="col">Call</th><th scope="col">Notice</th><th scope="col">Due</th><th scope="col" class="num">Amount</th><th scope="col" class="num">Received</th><th scope="col">Status</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="cs-muted">No capital calls yet.${can ? '' : ' Capital calls apply to closed-end funds whose investors have unfunded commitments.'}</p>`)}`,
+      'console-calls'
+    );
+  }
+  function callNew() {
+    const w = W();
+    const d = callDraft();
+    const funds = OPS().callable(w);
+    const o = offById(d.offeringId) || funds[0];
+    if (!o) return callList();
+    const pv = OPS().previewCall(w, o, d.mode === 'pct' ? { pct: (Number(d.pct) || 0) / 100 } : { cents: Math.round((Number(d.amount) || 0) * 100) });
+    const ok = pv.total > 0 && !pv.over.length && d.due >= today();
+    const rows = pv.rows
+      .map((r) => `<tr${r.after < 0 ? ' class="is-bad"' : ''}><td>${h(r.inv.title)}<span class="sub">${h(r.inv.id)}</span></td><td class="num">${usdc(r.commit)}</td><td class="num">${usdc(r.before)}</td><td class="num strong">${usdc(r.cents)}</td><td class="num">${r.after < 0 ? `<span class="cs-error">Over by ${usdc(-r.after)}</span>` : usdc(r.after)}</td></tr>`)
+      .join('');
+    return shell(
+      `<button class="cs-back link-btn" type="button" data-action="call-back">${icon('back')}Capital calls</button>
+      ${head('New capital call', `${h(o.name)} · unfunded commitments ${usdc(OPS().unfunded(w, o))}`)}
+      ${panel(
+        '',
+        `<div class="cs-grid cs-grid-3">
+          <label class="cs-field cs-wide" for="cl-off"><span>Fund</span><select id="cl-off" data-bind="call:offeringId">${funds.map((x) => `<option value="${h(x.id)}"${x.id === o.id ? ' selected' : ''}>${h(x.name)}</option>`).join('')}</select></label>
+          <fieldset class="cs-field"><legend>Call amount</legend><div class="cs-seg">${[['pct', '% of commitments'], ['amount', 'Dollar amount']].map(([k, l]) => `<label><input type="radio" name="cl-mode" value="${k}" data-bind="call:mode"${d.mode === k ? ' checked' : ''}><span>${l}</span></label>`).join('')}</div></fieldset>
+          ${d.mode === 'pct' ? `<label class="cs-field" for="cl-pct"><span>Percent of commitments</span><input id="cl-pct" type="number" min="0" max="100" step="0.5" data-bind="call:pct" value="${h(d.pct)}"></label>` : `<label class="cs-field" for="cl-amt"><span>Total amount ($)</span><input id="cl-amt" type="number" min="0" step="1000" data-bind="call:amount" value="${h(d.amount)}"></label>`}
+          <label class="cs-field" for="cl-due"><span>Due date</span><input id="cl-due" type="date" data-bind="call:due" value="${h(d.due)}"><span class="cs-hint">Usually 10 business days after the notice.</span></label>
+          <label class="cs-field" for="cl-purpose"><span>Purpose</span><select id="cl-purpose" data-bind="call:purpose">${PURPOSES.map((x) => `<option${x === d.purpose ? ' selected' : ''}>${h(x)}</option>`).join('')}</select></label>
+          <label class="cs-field cs-wide" for="cl-note"><span>Note to investors <em>Optional</em></span><textarea id="cl-note" rows="2" maxlength="400" data-bind="call:note">${h(d.note)}</textarea></label>
+        </div>
+        <div class="cs-row cs-report-bar"><p class="cs-report-sum"><strong>${usdc(pv.total)}</strong> from ${pv.rows.filter((r) => r.cents > 0).length} investors · ${(pv.pct * 100).toFixed(2)}% of ${usdc(pv.totalCommit)} committed</p>
+          <button class="cs-btn cs-btn-primary" type="button" data-action="call-issue"${ok ? '' : ' disabled'}>Issue call and notify investors</button></div>
+        ${pv.over.length ? `<p class="cs-error">This call is larger than ${pv.over.length} investor${pv.over.length === 1 ? '’s' : 's’'} unfunded commitment. Reduce the amount.</p>` : ''}
+        ${d.due < today() ? '<p class="cs-error">The due date is in the past.</p>' : ''}`
+      )}
+      ${panel('Allocation by investor', `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Investor</th><th scope="col" class="num">Commitment</th><th scope="col" class="num">Unfunded before</th><th scope="col" class="num">This call</th><th scope="col" class="num">Unfunded after</th></tr></thead><tbody>${rows}</tbody></table></div>`)}`,
+      'console-calls'
+    );
+  }
+  function callDetail(id) {
+    const w = W();
+    const c = (w.calls || []).find((x) => x.id === id);
+    if (!c) return callList();
+    const o = offById(c.offeringId);
+    const st = OPS().callStatus(c);
+    const total = c.items.reduce((a, it) => a + it.cents, 0);
+    const recv = c.items.filter((it) => it.received).reduce((a, it) => a + it.cents, 0);
+    const sample = invById(c.items[0] && c.items[0].investorId);
+    const wi = sample ? OPS().wire(w, o, sample, c) : null;
+    const rows = c.items
+      .slice()
+      .sort((a, b) => (a.received ? 1 : 0) - (b.received ? 1 : 0) || (a.investorId < b.investorId ? -1 : 1))
+      .map((it) => {
+        const inv = invById(it.investorId);
+        const late = !it.received && today() > c.due;
+        return `<tr><td>${h(inv ? inv.title : it.investorId)}<span class="sub">${h(it.investorId)}</span></td><td class="num">${usdc(it.cents)}</td><td>${it.received ? badge('ok', `Received ${date(it.received)}`) : late ? badge('bad', 'Overdue') : badge('warn', 'Outstanding')}${it.reminders && it.reminders.length ? `<span class="sub">Reminded ${date(it.reminders[it.reminders.length - 1])}</span>` : ''}</td><td class="num">${it.received ? '' : `<button class="cs-btn cs-btn-small" type="button" data-action="call-receive" data-call="${h(c.id)}" data-inv="${h(it.investorId)}">Record payment</button>`}</td></tr>`;
+      })
+      .join('');
+    return shell(
+      `<button class="cs-back link-btn" type="button" data-action="call-back">${icon('back')}Capital calls</button>
+      ${head(`${h(o ? o.name : c.offeringId)} · Call ${c.number}`, `${h(c.purpose)} · notice ${date(c.noticeDate)} · due ${date(c.due)}`, st.out ? `<button class="cs-btn" type="button" data-action="call-remind" data-id="${h(c.id)}">Send reminder to ${st.count} investor${st.count === 1 ? '' : 's'}</button><button class="cs-btn" type="button" data-action="call-receive-all" data-id="${h(c.id)}">Record all as received</button>` : '')}
+      <dl class="cs-figs">
+        <div><dt>Called</dt><dd>${usdc(total)}</dd></div>
+        <div><dt>Received</dt><dd>${usdc(recv)}</dd></div>
+        <div><dt>Outstanding</dt><dd>${usdc(total - recv)}</dd></div>
+        <div><dt>Status</dt><dd>${callBadge(st)}</dd></div>
+      </dl>
+      ${panel('Payments', `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Investor</th><th scope="col" class="num">Amount</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Action</span></th></tr></thead><tbody>${rows}</tbody></table></div><p class="cs-hint">Recording a payment adds the contribution to the investor’s capital account and the audit schedules, and writes a change-log entry.</p>`)}
+      ${wi ? panel('Wire instructions investors see', `<dl class="cs-kv"><div><dt>Bank</dt><dd>${h(wi.bank)}</dd></div><div><dt>ABA routing</dt><dd>${h(wi.aba)}</dd></div><div><dt>Account</dt><dd>${h(wi.account)}</dd></div><div><dt>Beneficiary</dt><dd>${h(wi.beneficiary)}</dd></div><div><dt>Reference</dt><dd>${h(o.shortName || o.name)} call ${c.number}, investor ID</dd></div></dl><p class="cs-hint">The notice tells investors to confirm instructions by phone before wiring and that instructions are never changed by email.</p>`) : ''}`,
+      'console-calls'
+    );
+  }
+  NS.views['console-calls'] = {
+    mode: 'console',
+    render() {
+      const c = callState();
+      if (c.view === 'new') return callNew();
+      if (c.view && c.view !== 'list') return callDetail(c.view);
+      return callList();
+    }
+  };
+  NS.binders.call = (path, v) => {
+    const d = callDraft();
+    d[path] = v;
+    if (path === 'offeringId' || path === 'mode' || path === 'due' || path === 'purpose') NS.app.render();
+    else {
+      clearTimeout(S().ui.callT);
+      S().ui.callT = setTimeout(() => NS.app.render(), 350);
+    }
+  };
+  NS.actions['call-new'] = () => {
+    callState().view = 'new';
+    callState().draft = null;
+    NS.app.render();
+  };
+  NS.actions['call-back'] = () => {
+    callState().view = 'list';
+    NS.app.render();
+  };
+  NS.actions['call-open'] = (el) => {
+    callState().view = el.getAttribute('data-id');
+    NS.app.render();
+  };
+  NS.actions['call-issue'] = () => {
+    const d = callDraft();
+    const o = offById(d.offeringId) || OPS().callable(W())[0];
+    if (!o) return;
+    const call = OPS().issueCall(W(), o, Object.assign({ due: d.due, purpose: d.purpose, note: d.note }, d.mode === 'pct' ? { pct: (Number(d.pct) || 0) / 100 } : { cents: Math.round((Number(d.amount) || 0) * 100) }));
+    if (!call) return U.toast('Check the call amount.');
+    callState().view = call.id;
+    callState().draft = null;
+    NS.app.render();
+    U.toast(`Call ${call.number} issued: ${usdc(call.total)} due ${date(call.due)}. Investors see the notice and wire instructions in their portals.`);
+  };
+  NS.actions['call-receive'] = (el) => {
+    const c = (W().calls || []).find((x) => x.id === el.getAttribute('data-call'));
+    if (c && OPS().receive(W(), c, el.getAttribute('data-inv'))) NS.app.render();
+  };
+  NS.actions['call-receive-all'] = (el) => {
+    const c = (W().calls || []).find((x) => x.id === el.getAttribute('data-id'));
+    if (!c) return;
+    c.items.filter((it) => !it.received).forEach((it) => OPS().receive(W(), c, it.investorId));
+    NS.app.render();
+  };
+  NS.actions['call-remind'] = (el) => {
+    const c = (W().calls || []).find((x) => x.id === el.getAttribute('data-id'));
+    const n = c ? OPS().remind(W(), c) : 0;
+    if (n) {
+      NS.app.render();
+      U.toast(`Reminder posted to ${n} investor portal${n === 1 ? '' : 's'}.`);
+    }
+  };
+
+  /* ---------- Investor requests: redemptions and subscriptions ---------- */
+  function reqLabel(r, o) {
+    if (r.type === 'redemption') return `Redemption: ${r.full ? 'full' : usdc(r.cents || 0)}`;
+    return `${r.additional ? 'Additional subscription' : OPS().isOpen(o) ? 'Subscription' : 'New commitment'}: ${usdc(r.cents)}`;
+  }
+  function reqStatus(r) {
+    return { pending: badge('warn', 'Pending review'), approved: badge('adj', 'Approved'), rejected: badge('mute', 'Declined'), paid: badge('ok', `Paid ${date(r.paid)}`), funded: badge('ok', 'Funded'), accepted: badge('ok', 'Accepted') }[r.status] || badge('mute', r.status);
+  }
+  NS.views['console-requests'] = {
+    mode: 'console',
+    render() {
+      const w = W();
+      const tab = S().ui.reqTab || 'pending';
+      const all = (w.requests || []).slice().sort((a, b) => (a.submitted < b.submitted ? 1 : -1));
+      const open = all.filter((r) => r.status === 'pending' || r.status === 'approved');
+      const list = tab === 'pending' ? open : all;
+      const lastEnd = NS.audit.lastMonthEnd(today());
+      const rows = list
+        .map((r) => {
+          const o = offById(r.offeringId);
+          const inv = invById(r.investorId);
+          if (!o || !inv) return '';
+          let est = '';
+          if (r.type === 'redemption') {
+            const amt = OPS().redemptionAmount(w, r);
+            const cap = OPS().capital(w, inv, o, lastEnd.slice(0, 8) + '01', lastEnd);
+            est = amt != null ? usdc(amt) : r.full && cap ? `~${usdc(cap.a.end)}` : '';
+          }
+          let act = '';
+          if (r.status === 'pending') act = `<button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="req-approve" data-id="${h(r.id)}">Approve</button> <button class="cs-btn cs-btn-small" type="button" data-action="req-decline" data-id="${h(r.id)}">Decline</button>`;
+          else if (r.status === 'approved' && r.type === 'redemption') act = r.dealing <= lastEnd ? `<button class="cs-btn cs-btn-small" type="button" data-action="req-paid" data-id="${h(r.id)}">Record payment</button>` : `<span class="sub">Payable after ${date(r.dealing)}</span>`;
+          else if (r.status === 'approved') act = `<button class="cs-btn cs-btn-small" type="button" data-action="req-funded" data-id="${h(r.id)}">${OPS().isOpen(o) ? 'Record funding' : 'Countersign'}</button>`;
+          return `<tr><td class="nowrap">${date(r.submitted)}</td><td>${h(inv.title)}<span class="sub">${h(inv.id)}</span></td><td>${h(o.shortName || o.name)}</td><td>${h(reqLabel(r, o))}<span class="sub">E-signed by ${h(r.signedBy || inv.contact)}</span></td><td class="nowrap">${r.dealing ? date(r.dealing) : '—'}<span class="sub">${r.type === 'redemption' ? 'Dealing date' : OPS().isOpen(o) ? 'Effective' : 'Closing'}</span></td><td class="num">${est}</td><td>${reqStatus(r)}</td><td class="num nowrap">${act}</td></tr>`;
+        })
+        .join('');
+      return shell(
+        `${head('Investor requests', 'Redemptions and subscriptions investors submit and e-sign in their portal. Approve or decline, then record the payment or the funding: the investor register, capital accounts and audit schedules update automatically.')}
+        <div class="cs-tabs" role="group" aria-label="Requests"><button type="button" class="cs-tab" data-action="req-tab" data-t="pending" aria-pressed="${tab === 'pending'}">Open <span class="cs-count">${open.length}</span></button><button type="button" class="cs-tab" data-action="req-tab" data-t="all" aria-pressed="${tab === 'all'}">All <span class="cs-count">${all.length}</span></button></div>
+        ${panel('', list.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Submitted</th><th scope="col">Investor</th><th scope="col">Fund</th><th scope="col">Request</th><th scope="col">Date</th><th scope="col" class="num">Amount</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div><p class="cs-hint">Redemptions are paid at net asset value on the dealing date, which follows the fund’s notice period and lock-up. Payment can be recorded once that month’s valuation is final.</p>` : '<p class="cs-muted">No open requests.</p>')}`,
+        'console-requests'
+      );
+    }
+  };
+  NS.actions['req-tab'] = (el) => {
+    S().ui.reqTab = el.getAttribute('data-t');
+    NS.app.render();
+  };
+  const reqById = (id) => (W().requests || []).find((r) => r.id === id);
+  NS.actions['req-approve'] = (el) => {
+    const r = reqById(el.getAttribute('data-id'));
+    if (r && OPS().decide(W(), r, true)) {
+      NS.app.render();
+      U.toast(r.type === 'redemption' ? `Redemption approved for the ${date(r.dealing)} dealing date.` : 'Subscription approved. Record the funding when the wire arrives.');
+    }
+  };
+  NS.actions['req-decline'] = (el) => {
+    const r = reqById(el.getAttribute('data-id'));
+    if (r && OPS().decide(W(), r, false, 'Declined by the manager')) NS.app.render();
+  };
+  NS.actions['req-paid'] = (el) => {
+    const r = reqById(el.getAttribute('data-id'));
+    if (r && OPS().markPaid(W(), r)) {
+      NS.app.render();
+      U.toast(`Redemption payment of ${usdc(r.paidCents)} recorded.`);
+    } else U.toast('The dealing-date valuation is not final yet.');
+  };
+  NS.actions['req-funded'] = (el) => {
+    const r = reqById(el.getAttribute('data-id'));
+    if (r && OPS().markFunded(W(), r)) {
+      NS.app.render();
+      U.toast(r.status === 'funded' ? `Subscription funded, effective ${date(r.dealing)}.` : 'Subscription countersigned. The commitment is on the investor register.');
+    }
+  };
+
+  /* ---------- Documents: publish files to investor portals ---------- */
+  const DOC_CATS = ['Reports', 'Statements', 'Tax', 'Legal', 'Notices', 'Other'];
+  function dupState() {
+    const u = S().ui;
+    if (!u.dup) u.dup = { files: [], cat: 'Reports', offeringId: '', audience: 'fund', title: '', date: today(), taxYear: String(Number(today().slice(0, 4)) - 1), notify: true, busy: false, errors: [] };
+    return u.dup;
+  }
+  NS.views['console-docs'] = {
+    mode: 'console',
+    render() {
+      const w = W();
+      const d = dupState();
+      const docs = (w.docs || []).slice().sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
+      const matches = d.audience === 'investors' ? d.files.map((f) => ({ f, ids: OPS().matchIds(w, f.name) })) : [];
+      const rows = docs
+        .map((x) => {
+          const o = x.offeringId ? offById(x.offeringId) : null;
+          const n = OPS().recipientsOf(w, x).length;
+          return `<tr><td class="nowrap">${date(x.date)}</td><td>${h(x.title)}<span class="sub">${h(x.fileName)} · ${(x.size / 1024).toFixed(0)} KB</span></td><td>${h(o ? o.shortName || o.name : 'All investors')}</td><td>${x.audience === 'investors' ? `${n} matched investor${n === 1 ? '' : 's'}` : `${n} investor${n === 1 ? '' : 's'}`}</td><td>${h(x.cat)}${x.taxYear ? `<span class="sub">Tax year ${h(x.taxYear)}</span>` : ''}</td><td><code title="${h(x.sha256)}">${h(x.sha256.slice(0, 10))}…</code></td><td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="docs-remove" data-id="${h(x.id)}">Remove</button></td></tr>`;
+        })
+        .join('');
+      return shell(
+        `${head('Documents', `Publish quarterly reports, capital account statements, tax documents and notices to investor portals. Files named with an investor ID (for example ${h(T().idPrefix)}-1004_K-1_2025.pdf) go only to that investor.`)}
+        ${panel(
+          'Publish documents',
+          `<div class="cs-grid cs-grid-3">
+            <label class="cs-field cs-wide" for="dup-files"><span>Files</span><input id="dup-files" type="file" multiple accept=".pdf,.xlsx,.csv,.docx,.zip,application/pdf" data-change="dup-files"><span class="cs-hint">${d.files.length ? `${d.files.length} file${d.files.length === 1 ? '' : 's'} selected: ${h(d.files.map((f) => f.name).join(', '))}` : 'PDF preferred. Up to 25 MB each.'}</span></label>
+            <label class="cs-field" for="dup-cat"><span>Type</span><select id="dup-cat" data-bind="dup:cat">${DOC_CATS.map((c) => `<option${c === d.cat ? ' selected' : ''}>${c}</option>`).join('')}</select></label>
+            <label class="cs-field" for="dup-off"><span>Fund</span><select id="dup-off" data-bind="dup:offeringId"><option value="">All investors</option>${w.offerings.map((o) => `<option value="${h(o.id)}"${o.id === d.offeringId ? ' selected' : ''}>${h(o.name)}</option>`).join('')}</select></label>
+            <fieldset class="cs-field cs-wide"><legend>Who receives each file</legend><div class="cs-seg">${[['fund', d.offeringId ? 'Everyone in this fund' : 'All investors'], ['investors', 'Match investor IDs in file names']].map(([k, l]) => `<label><input type="radio" name="dup-aud" value="${k}" data-bind="dup:audience"${d.audience === k ? ' checked' : ''}><span>${l}</span></label>`).join('')}</div></fieldset>
+            ${d.files.length <= 1 ? `<label class="cs-field cs-wide" for="dup-title"><span>Title</span><input id="dup-title" type="text" maxlength="90" data-bind="dup:title" value="${h(d.title)}" placeholder="${h(d.files[0] ? docTitle(d.files[0].name, d.audience === 'investors' ? OPS().matchIds(w, d.files[0].name) : []) : 'Q3 2026 Investor Update')}"></label>` : ''}
+            <label class="cs-field" for="dup-date"><span>Document date</span><input id="dup-date" type="date" data-bind="dup:date" value="${h(d.date)}"></label>
+            ${d.cat === 'Tax' ? `<label class="cs-field" for="dup-ty"><span>Tax year</span><input id="dup-ty" type="number" min="2000" max="2100" data-bind="dup:taxYear" value="${h(d.taxYear)}"></label>` : ''}
+            <label class="cs-check" for="dup-notify"><input id="dup-notify" type="checkbox" data-bind="dup:notify"${d.notify ? ' checked' : ''}><span>Notify recipients that new documents are in their portal</span></label>
+          </div>
+          ${matches.length ? `<ul class="cs-list">${matches.map((m) => `<li>${h(m.f.name)}: ${m.ids.length ? `goes to ${h(m.ids.join(', '))}` : '<span class="cs-error">no investor ID found, will not be published</span>'}</li>`).join('')}</ul>` : ''}
+          ${d.errors.length ? `<p class="cs-error">${h(d.errors.join(' '))}</p>` : ''}
+          <div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="docs-publish"${d.files.length && !d.busy ? '' : ' disabled'}>${d.busy ? 'Publishing…' : 'Publish'}</button></div>`
+        )}
+        ${panel(`Published <span class="cs-count">${docs.length}</span>`, docs.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Date</th><th scope="col">Document</th><th scope="col">Fund</th><th scope="col">Recipients</th><th scope="col">Type</th><th scope="col">SHA-256</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead><tbody>${rows}</tbody></table></div><p class="cs-hint">Each file’s SHA-256 fingerprint is recorded in the change log when it is published. In this demo, files are kept in this browser; in production they are stored in the document vault.</p>` : '<p class="cs-muted">Nothing published from this page yet. Generated statements and reports already appear in investor portals.</p>')}`,
+        'console-docs'
+      );
+    }
+  };
+  /** A readable title from a file name, without the investor ID used for matching. */
+  function docTitle(name, ids) {
+    let t = String(name).replace(/\.[a-z0-9]+$/i, '');
+    (ids || []).forEach((id) => (t = t.replace(new RegExp(id, 'ig'), '')));
+    t = t.replace(/_+/g, ' ').replace(/\s+/g, ' ').replace(/^[\s-]+|[\s-]+$/g, '').trim();
+    return t || name;
+  }
+  NS.changes['dup-files'] = (el) => {
+    const d = dupState();
+    d.files = Array.from(el.files || []);
+    d.errors = d.files.filter((f) => f.size > 25 * 1024 * 1024).map((f) => `${f.name} is over 25 MB.`);
+    NS.app.render();
+  };
+  NS.binders.dup = (path, v) => {
+    dupState()[path] = v;
+    if (path !== 'title') NS.app.render();
+  };
+  NS.actions['docs-publish'] = async () => {
+    const w = W();
+    const d = dupState();
+    if (!d.files.length || d.busy) return;
+    d.busy = true;
+    NS.app.render();
+    const published = [];
+    const skipped = [];
+    for (const f of d.files) {
+      if (f.size > 25 * 1024 * 1024) {
+        skipped.push(f.name);
+        continue;
+      }
+      const ids = d.audience === 'investors' ? OPS().matchIds(w, f.name) : [];
+      if (d.audience === 'investors' && !ids.length) {
+        skipped.push(f.name);
+        continue;
+      }
+      const buf = new Uint8Array(await f.arrayBuffer());
+      const id = 'doc-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      try {
+        await OPS().files.put(id, new Blob([buf], { type: f.type || 'application/octet-stream' }));
+      } catch (e) {
+        skipped.push(f.name);
+        continue;
+      }
+      const title = (d.files.length === 1 && String(d.title).trim()) || docTitle(f.name, ids);
+      const doc = { id, title, fileName: f.name, type: f.type || '', size: f.size, sha256: NS.audit.sha256(buf), cat: d.cat, offeringId: d.offeringId || null, audience: d.audience, investors: ids, date: d.date || today(), taxYear: d.cat === 'Tax' ? String(d.taxYear) : '', publishedAt: new Date().toISOString(), publishedBy: S().role === 'staff' ? 'Carrow & Vale staff' : `${T().shortName} staff` };
+      w.docs = w.docs || [];
+      w.docs.push(doc);
+      const n = OPS().recipientsOf(w, doc).length;
+      audit('Document published', `${doc.title} (${doc.fileName}, ${(doc.size / 1024).toFixed(0)} KB) to ${n} investor${n === 1 ? '' : 's'}; SHA-256 ${doc.sha256}`, doc.offeringId || '', doc.id);
+      published.push(doc);
+    }
+    if (published.length && d.notify) {
+      const rec = new Set();
+      published.forEach((doc) => OPS().recipientsOf(w, doc).forEach((i) => rec.add(i.id)));
+      w.notices = w.notices || [];
+      w.notices.push({ id: 'n-' + Date.now().toString(36), date: today(), kind: 'documents', audience: published.every((x) => x.offeringId && x.offeringId === published[0].offeringId) ? published[0].offeringId : 'all', investors: [], includePending: true, quarter: '', docName: published.map((x) => x.title).join(', '), subject: NS.NOTICE_TEMPLATES.documents.subject, body: NS.NOTICE_TEMPLATES.documents.body, recipients: Array.from(rec), sentBy: S().role === 'staff' ? 'staff' : 'sponsor' });
+      audit('Notice sent', `New documents notice to ${rec.size} investors`, '', '');
+    }
+    NS.app.save(true);
+    S().ui.dup = null;
+    const nd = dupState();
+    nd.errors = skipped.length ? [`Not published: ${skipped.join(', ')}.`] : [];
+    NS.app.render();
+    U.toast(`${published.length} document${published.length === 1 ? '' : 's'} published${skipped.length ? `, ${skipped.length} skipped` : ''}.`);
+  };
+  NS.actions['docs-remove'] = (el) => {
+    const w = W();
+    const doc = (w.docs || []).find((x) => x.id === el.getAttribute('data-id'));
+    if (!doc) return;
+    w.docs = w.docs.filter((x) => x !== doc);
+    OPS().files.del(doc.id).catch(() => {});
+    audit('Document removed', `${doc.title} (${doc.fileName}) removed from investor portals`, doc.offeringId || '', doc.id);
+    NS.app.save(true);
+    NS.app.render();
+  };
+
+  /* ---------- AML / KYC ---------- */
+  NS.views['console-kyc'] = {
+    mode: 'console',
+    render() {
+      const w = W();
+      const tab = S().ui.kycTab || 'attention';
+      const rows0 = w.investors.map((i) => ({ i, k: OPS().kycOf(i), lab: OPS().kycLabel(OPS().kycOf(i)) }));
+      const count = (key) => rows0.filter((r) => r.lab.key === key).length;
+      const attention = rows0.filter((r) => r.lab.key !== 'cleared');
+      const list = (tab === 'attention' ? attention : rows0).slice().sort((a, b) => {
+        const order = { review: 0, due: 1, pending: 2, not_started: 3, cleared: 4 };
+        return (order[a.lab.key] - order[b.lab.key]) || (a.i.id < b.i.id ? -1 : 1);
+      });
+      const open = S().ui.kycOpen;
+      const rows = list
+        .map(({ i, k, lab }) => {
+          const st = { cleared: badge('ok', 'Cleared'), review: badge('bad', 'Needs review'), due: badge('warn', 'Re-screening due'), pending: badge('adj', 'In progress'), not_started: badge('mute', 'Not started') }[lab.key];
+          let act = '';
+          if (lab.key === 'review') act = `<button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="kyc-open" data-id="${h(i.id)}">Review match</button>`;
+          else if (lab.key === 'pending' && k.verifiedOn) act = `<button class="cs-btn cs-btn-small" type="button" data-action="kyc-approve" data-id="${h(i.id)}">Approve identity</button>`;
+          else if (lab.key === 'cleared' || lab.key === 'due') act = `<button class="cs-btn cs-btn-small" type="button" data-action="kyc-screen" data-id="${h(i.id)}">Re-screen</button>`;
+          const detail =
+            open === i.id && k.match
+              ? `<tr class="kyc-detail"><td colspan="8"><div class="kyc-match"><p><strong>Potential match:</strong> ${h(k.match.list)}, listed name “${h(k.match.name)}”, ${Math.round(k.match.score * 100)}% name similarity. ${h(k.match.detail)}</p>
+                <label class="cs-field" for="kyc-note"><span>Review note (kept in the change log)</span><textarea id="kyc-note" rows="2" maxlength="300" data-input="kyc-note">${h(S().ui.kycNote || '')}</textarea></label>
+                <div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="kyc-clear" data-id="${h(i.id)}">Clear as false positive</button><button class="cs-btn" type="button" data-action="kyc-escalate" data-id="${h(i.id)}">Escalate to compliance officer</button><button class="cs-btn" type="button" data-action="kyc-open" data-id="">Cancel</button></div>${k.escalated ? `<p class="cs-hint">Escalated ${date(k.escalated)}.</p>` : ''}</div></td></tr>`
+              : '';
+          return `<tr><td>${h(i.title)}<span class="sub">${h(i.id)} · ${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</span></td><td>${h(k.risk || '—')}</td><td>${k.verifiedOn ? `${date(k.verifiedOn)}<span class="sub">${h(k.method || '')}</span>` : '<span class="sub">Not submitted</span>'}</td><td>${k.screenedOn ? `${k.screening === 'potential_match' ? 'Potential match' : 'No matches'}<span class="sub">${date(k.screenedOn)}</span>` : '—'}</td><td class="nowrap">${k.nextReview ? date(k.nextReview) : '—'}</td><td>${(k.owners || []).map((x) => h(x.name)).join(', ')}</td><td>${st}</td><td class="num nowrap">${act}</td></tr>${detail}`;
+        })
+        .join('');
+      const due = rows0.filter((r) => r.lab.key === 'due');
+      return shell(
+        `${head('AML/KYC', 'Identity verification, sanctions and politically exposed person screening, and periodic re-screening for every investor. Potential matches wait here for the compliance officer’s review.', due.length ? `<button class="cs-btn" type="button" data-action="kyc-screen-due">Re-screen ${due.length} due</button>` : '')}
+        <dl class="cs-figs">
+          <div><dt>Cleared</dt><dd>${count('cleared')}</dd></div>
+          <div><dt>Needs review</dt><dd>${count('review')}</dd></div>
+          <div><dt>Re-screening due</dt><dd>${count('due')}</dd></div>
+          <div><dt>In progress or not started</dt><dd>${count('pending') + count('not_started')}</dd></div>
+        </dl>
+        <div class="cs-tabs" role="group" aria-label="Filter"><button type="button" class="cs-tab" data-action="kyc-tab" data-t="attention" aria-pressed="${tab === 'attention'}">Needs attention <span class="cs-count">${attention.length}</span></button><button type="button" class="cs-tab" data-action="kyc-tab" data-t="all" aria-pressed="${tab === 'all'}">All investors <span class="cs-count">${rows0.length}</span></button></div>
+        ${panel('', list.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Investor</th><th scope="col">Risk</th><th scope="col">Identity verified</th><th scope="col">Screening</th><th scope="col">Next review</th><th scope="col">Beneficial owners</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Action</span></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="cs-muted">Every investor is cleared and current.</p>')}
+        <p class="cs-hint">Screening covers OFAC SDN and consolidated lists, UN, EU and UK HMT sanctions, politically exposed persons and adverse media. Low-risk investors are re-screened every 24 months, medium every 12, high every 6. In production this connects to the screening provider; here results are simulated.</p>`,
+        'console-kyc'
+      );
+    }
+  };
+  NS.actions['kyc-tab'] = (el) => {
+    S().ui.kycTab = el.getAttribute('data-t');
+    NS.app.render();
+  };
+  NS.actions['kyc-open'] = (el) => {
+    S().ui.kycOpen = el.getAttribute('data-id') || null;
+    S().ui.kycNote = '';
+    NS.app.render();
+  };
+  NS.changes['kyc-note'] = (el) => (S().ui.kycNote = el.value);
+  NS.actions['kyc-clear'] = (el) => {
+    const inv = invById(el.getAttribute('data-id'));
+    const note = String(S().ui.kycNote || '').trim();
+    if (!note) return U.toast('Add a review note explaining why the match is a false positive.');
+    if (inv && OPS().clearMatch(W(), inv, note)) {
+      S().ui.kycOpen = null;
+      NS.app.render();
+      U.toast(`${inv.title} cleared.`);
+    }
+  };
+  NS.actions['kyc-escalate'] = (el) => {
+    const inv = invById(el.getAttribute('data-id'));
+    if (inv && OPS().escalate(W(), inv, String(S().ui.kycNote || '').trim() || 'Escalated for review.')) {
+      NS.app.render();
+      U.toast('Escalated to the compliance officer.');
+    }
+  };
+  NS.actions['kyc-screen'] = (el) => {
+    const inv = invById(el.getAttribute('data-id'));
+    if (inv) {
+      OPS().screen(W(), inv);
+      NS.app.render();
+      U.toast(`${inv.title} screened: no matches.`);
+    }
+  };
+  NS.actions['kyc-screen-due'] = () => {
+    const due = W().investors.filter((i) => OPS().kycLabel(OPS().kycOf(i)).key === 'due');
+    due.forEach((i) => OPS().screen(W(), i));
+    NS.app.render();
+    U.toast(`${due.length} investor${due.length === 1 ? '' : 's'} re-screened.`);
+  };
+  NS.actions['kyc-approve'] = (el) => {
+    const inv = invById(el.getAttribute('data-id'));
+    if (inv && OPS().approveIdentity(W(), inv)) NS.app.render();
   };
 
   /* ---------- Audit: audit-ready schedules for each fund ---------- */

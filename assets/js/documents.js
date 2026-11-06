@@ -33,22 +33,29 @@
     const o = pos ? pos.offering : null;
     const year = NS.dates.today().slice(0, 4);
     let body;
-    if (doc.kind === 'statement') {
+    if (doc.kind === 'statement' && NS.ops && NS.audit) {
+      // Capital account statement: each investment's capital account for the quarter and the year to date.
       const from = `${year}-07-01`;
       const end = `${year}-09-30`;
       const rows = v.positions
-        .map((p) => `<tr><td>${h(p.offering.name)}</td><td class="num">${usd(p.invested)}</td><td class="num">${usdc(quarterSum(p, from, end))}</td><td class="num">${usdc(quarterSum(p, `${year}-01-01`, end))}</td><td class="num">${usdc(quarterSum(p, '1900-01-01', end))}</td></tr>`)
-        .join('');
-      const tot = (f, e) => v.positions.reduce((a, p) => a + quarterSum(p, f, e), 0);
-      body = `${head(t, 'Account statement')}
+        .map((p) => ({ p, q: NS.ops.capital(ws, inv, p.offering, from, end), y: NS.ops.capital(ws, inv, p.offering, `${year}-01-01`, end) }))
+        .filter((x) => x.q && (x.q.a.begin || x.q.a.end || x.q.a.contrib || x.q.a.dist));
+      const net = (a) => a.income + a.gain - a.fee - a.carry;
+      const sum = (f, k) => rows.reduce((t, x) => t + f(x[k].a), 0);
+      body = `${head(t, 'Capital account statement')}
         <h1 class="paper-title">Quarter ended September 30, ${year}</h1>
         ${to(inv)}
         <div class="paper-table"><table>
-          <thead><tr><th scope="col">Investment</th><th scope="col" class="num">Invested</th><th scope="col" class="num">Q3 distributions</th><th scope="col" class="num">Year to date</th><th scope="col" class="num">Since inception</th></tr></thead>
-          <tbody>${rows}</tbody>
-          <tfoot><tr><th scope="row">Total</th><td class="num">${usd(v.totals.investedAll)}</td><td class="num">${usdc(tot(from, end))}</td><td class="num">${usdc(tot(`${year}-01-01`, end))}</td><td class="num">${usdc(tot('1900-01-01', end))}</td></tr></tfoot>
+          <thead><tr><th scope="col">Investment</th><th scope="col" class="num">Beginning capital</th><th scope="col" class="num">Contributions</th><th scope="col" class="num">Distributions and redemptions</th><th scope="col" class="num">Net income after fees</th><th scope="col" class="num">Ending capital</th></tr></thead>
+          <tbody>${rows.map((x) => `<tr><td>${h(x.p.offering.name)}</td><td class="num">${usdc(x.q.a.begin)}</td><td class="num">${usdc(x.q.a.contrib)}</td><td class="num">${usdc(-x.q.a.dist)}</td><td class="num">${usdc(net(x.q.a))}</td><td class="num">${usdc(x.q.a.end)}</td></tr>`).join('')}</tbody>
+          <tfoot><tr><th scope="row">Total</th><td class="num">${usdc(sum((a) => a.begin, 'q'))}</td><td class="num">${usdc(sum((a) => a.contrib, 'q'))}</td><td class="num">${usdc(-sum((a) => a.dist, 'q'))}</td><td class="num">${usdc(sum(net, 'q'))}</td><td class="num">${usdc(sum((a) => a.end, 'q'))}</td></tr></tfoot>
         </table></div>
-        <p class="paper-small">Distributions are shown on a cash basis by payment date. Amounts are unaudited.</p>`;
+        <h2 class="paper-h2">Year to date</h2>
+        <div class="paper-table"><table>
+          <thead><tr><th scope="col">Investment</th><th scope="col" class="num">Investment income</th><th scope="col" class="num">Gains (losses)</th><th scope="col" class="num">Management fees</th><th scope="col" class="num">Carry or incentive</th><th scope="col" class="num">Net income</th></tr></thead>
+          <tbody>${rows.map((x) => `<tr><td>${h(x.p.offering.name)}</td><td class="num">${usdc(x.y.a.income)}</td><td class="num">${usdc(x.y.a.gain)}</td><td class="num">${usdc(-x.y.a.fee)}</td><td class="num">${usdc(-x.y.a.carry)}</td><td class="num">${usdc(net(x.y.a))}</td></tr>`).join('')}</tbody>
+        </table></div>
+        <p class="paper-small">Capital accounts reflect the fund valuations as of September 30, ${year}, after management fees and accrued carried interest or incentive allocation. Amounts are unaudited and may change when the funds’ annual audits are completed.</p>`;
     } else if (doc.kind === 'update') {
       const q = doc.title.slice(0, 2);
       body = `${head(t, 'Investor update')}

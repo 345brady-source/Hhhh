@@ -148,7 +148,7 @@
   };
 
   function commitmentOf(inv, o) {
-    return inv.positions.filter((p) => p.offeringId === o.id).reduce((a, p) => a + Math.round((p.commitment || p.amount) * 100), 0);
+    return inv.positions.filter((p) => p.offeringId === o.id).reduce((a, p) => a + Math.round((p.commitment != null ? p.commitment : p.amount) * 100), 0);
   }
 
   function ledger(ws, o) {
@@ -158,21 +158,24 @@
     const now = D.today();
     const invs = ws.investors.filter((i) => i.positions.some((p) => p.offeringId === o.id));
 
-    // Contributions: capital calls for drawdown funds, otherwise the subscription itself.
+    // Contributions: recorded capital-call payments where the fund calls capital (operations.js),
+    // otherwise each funded subscription or closing.
     const contribs = [];
-    invs.forEach((inv) =>
-      inv.positions
-        .filter((p) => p.offeringId === o.id)
-        .forEach((p) => {
-          const cents = Math.round(p.amount * 100);
-          if (S.calls && !S.open) {
-            const parts = largest(cents, S.calls.map((c) => c[1]));
-            S.calls.forEach((c, n) => {
-              if (parts[n] > 0) contribs.push({ date: c[0] < p.date ? p.date : c[0], inv, cents: parts[n], kind: `Capital call ${n + 1}`, ref: `CALL-${n + 1}`, call: n + 1, pct: c[1] });
-            });
-          } else contribs.push({ date: p.date, inv, cents, kind: S.open ? 'Subscription' : 'Capital contribution at closing', ref: S.open ? `SUB-${p.date.replace(/-/g, '')}` : 'CLOSING' });
+    const calls = (ws.calls || []).filter((c) => c.offeringId === o.id);
+    if (calls.length && !S.open) {
+      calls.forEach((c) =>
+        c.items.forEach((it) => {
+          const inv = invs.find((i) => i.id === it.investorId);
+          if (inv && it.received && it.received <= now && it.cents > 0) contribs.push({ date: it.received, inv, cents: it.cents, kind: `Capital call ${c.number}`, ref: `CALL-${c.number}`, call: c.number, pct: c.pct });
         })
-    );
+      );
+    } else {
+      invs.forEach((inv) =>
+        inv.positions
+          .filter((p) => p.offeringId === o.id && p.amount > 0 && p.date <= now)
+          .forEach((p) => contribs.push({ date: p.date, inv, cents: Math.round(p.amount * 100), kind: S.open ? 'Subscription' : 'Capital contribution at closing', ref: S.open ? `SUB-${p.date.replace(/-/g, '')}` : 'CLOSING' }))
+      );
+    }
     contribs.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 
     // Distributions: each paid run, split exactly as investors were paid.
@@ -187,7 +190,7 @@
         });
       });
 
-    const L = { o, S, invs, contribs, dists, keys: [], months: [], byKey: {}, prices: {}, exitKey: null, inception: contribs.length ? contribs[0].date : null };
+    const L = { o, S, invs, contribs, dists, redemptions: [], keys: [], months: [], byKey: {}, prices: {}, exitKey: null, inception: contribs.length ? contribs[0].date : null };
     cache.set(ckey, L);
     if (!contribs.length) return L;
 
@@ -238,6 +241,10 @@
     dists.forEach((d) => {
       const k = d.inv.id + '|' + keyOf(d.date);
       dBy[k] = (dBy[k] || 0) + d.cents;
+    });
+    const rBy = {};
+    (ws.requests || []).forEach((q) => {
+      if (q.type === 'redemption' && q.offeringId === o.id && (q.status === 'approved' || q.status === 'paid') && q.dealing && keyOf(q.dealing) <= endKey) rBy[q.investorId + '|' + keyOf(q.dealing)] = q;
     });
     const st = {};
     invs.forEach((i) => (st[i.id] = { cap: 0, carry: 0, hwm: 0, contrib: 0, dist: 0, commit: commitmentOf(i, o), firstKey: null }));
@@ -304,11 +311,26 @@
         const carryChg = A - prevA;
         s.carry = out ? 0 : A;
         if (S.open && mNum === 12 && out > 0) s.hwm = endCap;
+        // Redemption at this month-end dealing date: capital out at net asset value after fees.
+        let redeem = null;
+        const q = rBy[i.id + '|' + k];
+        if (q && endCap > 0) {
+          redeem = q.paidCents != null ? Math.min(q.paidCents, endCap) : q.full ? endCap : Math.min(q.cents || 0, endCap);
+          if (q.full && s.carry) {
+            out += s.carry;
+            s.carry = 0;
+          }
+          s.hwm = q.full ? 0 : Math.round(s.hwm * (1 - redeem / endCap));
+          endCap -= redeem;
+          s.dist += redeem;
+          L.redemptions.push({ date: q.dealing, inv: i, cents: redeem, req: q });
+        }
         s.cap = endCap;
-        rows[i.id] = { begin, contrib: c, dist: d, income: inc, gain, fee, feeBase, carry: carryChg, gpOut: out, end: endCap, carryBegin: prevA, carryEnd: s.carry, contribCum: s.contrib, distCum: s.dist, hwm: s.hwm, hurdle, profit, pre };
+        const dOut = d + (redeem || 0);
+        rows[i.id] = { begin, contrib: c, dist: dOut, redeem, income: inc, gain, fee, feeBase, carry: carryChg, gpOut: out, end: endCap, carryBegin: prevA, carryEnd: s.carry, contribCum: s.contrib, distCum: s.dist, hwm: s.hwm, hurdle, profit, pre };
         F.begin += begin;
         F.contrib += c;
-        F.dist += d;
+        F.dist += dOut;
         F.income += inc;
         F.gain += gain;
         F.fee += fee;
@@ -354,13 +376,14 @@
   function holdingsAt(L, k) {
     const F = L.byKey[k];
     const S = L.S;
-    const out = { key: k, date: k ? endOf(k) : '', rows: [], cash: 0, feePayable: 0, debt: 0, longFV: 0, longCost: 0, shortFV: 0, shortProceeds: 0, nav: 0, totalAssets: 0, totalLiabilities: 0 };
+    const out = { key: k, date: k ? endOf(k) : '', rows: [], cash: 0, feePayable: 0, redemptionsPayable: 0, debt: 0, longFV: 0, longCost: 0, shortFV: 0, shortProceeds: 0, nav: 0, totalAssets: 0, totalLiabilities: 0 };
     if (!F) return out;
     const nav = F.endCap + F.gpEnd;
     out.nav = nav;
     if (nav <= 0) return out;
     out.feePayable = F.fee;
-    const base = nav + F.fee;
+    out.redemptionsPayable = (L.redemptions || []).filter((x) => x.date <= endOf(k) && (!x.req.paid || x.req.paid > endOf(k))).reduce((a, x) => a + x.cents, 0);
+    const base = nav + F.fee + out.redemptionsPayable;
     const netTarget = Math.round(base * (1 - S.cash));
     const H = S.holdings;
     const W = H.reduce((a, h) => a + h.weight, 0) || 1;
@@ -401,9 +424,9 @@
       }
       out.rows.push(row);
     });
-    out.cash = nav + out.feePayable + out.debt - signed;
+    out.cash = nav + out.feePayable + out.redemptionsPayable + out.debt - signed;
     out.totalAssets = out.longFV + out.cash;
-    out.totalLiabilities = out.shortFV + out.debt + out.feePayable;
+    out.totalLiabilities = out.shortFV + out.debt + out.feePayable + out.redemptionsPayable;
     out.rows.forEach((r) => (r.pctNav = r.fv / nav));
     return out;
   }
@@ -715,7 +738,16 @@
     ws.offerings.forEach((o) => {
       const S = settings(o);
       add(D.addMonths(o.closeDate, -1), o.id + 'setup', staff, 'Offering set up', o.id, o.id, `${o.name} (${o.type}); ${S.label.toLowerCase()} accounting`);
-      if (S.calls && !S.open) {
+      const calls = (ws.calls || []).filter((c) => c.offeringId === o.id);
+      if (calls.length) {
+        calls.forEach((c) => {
+          add(c.noticeDate, c.id + 'issue', sponsor, 'Capital call issued', o.id, c.id, `Call ${c.number}: ${money(c.items.reduce((a, it) => a + it.cents, 0))} (${(c.pct * 100).toFixed(2)}% of commitments) from ${c.items.length} investors, due ${dateShort(c.due)}`);
+          c.items.forEach((it) => {
+            const inv = ws.investors.find((x) => x.id === it.investorId);
+            if (it.received) add(it.received, c.id + it.investorId, sys, 'Capital call payment received', o.id, c.id, `${inv ? inv.title : it.investorId} (${it.investorId}): ${money(it.cents)} received ${dateShort(it.received)} for call ${c.number}`);
+          });
+        });
+      } else if (S.calls && !S.open) {
         S.calls.forEach((c, n) => {
           add(weekdayBack(c[0], 10), o.id + 'call' + n, sponsor, 'Capital call issued', o.id, `CALL-${n + 1}`, `Call ${n + 1}: ${(c[1] * 100).toFixed(1)}% of commitments, due ${dateShort(c[0])}`);
           add(c[0], o.id + 'callfund' + n, sys, 'Capital call funded', o.id, `CALL-${n + 1}`, `All wires received for call ${n + 1}`);
@@ -747,6 +779,21 @@
       if (E.file) add(weekdayBack(run.date, 2), run.id + 'file', sponsor, 'NACHA file generated', o.id, run.id, `${E.file}: ${E.ach.length} entries, ${money(E.achCents)}`);
       if (E.chk.length) add(weekdayBack(run.date, 2), run.id + 'chk', sponsor, 'Checks issued', o.id, run.id, `${E.chk.length} checks, ${money(E.chkCents)}`);
       add(run.date, run.id + 'paid', sys, 'Distribution paid', o.id, run.id, `Settlement confirmed for ${money(run.total)}`);
+    });
+    (ws.requests || []).forEach((q) => {
+      const o = ws.offerings.find((x) => x.id === q.offeringId);
+      const i = ws.investors.find((x) => x.id === q.investorId);
+      if (!o || !i) return;
+      const what = q.type === 'redemption' ? (q.full ? 'full redemption' : money(q.cents || 0)) : `${money(q.cents)} ${NS.ops && NS.ops.isOpen(o) ? 'subscription' : 'commitment'}`;
+      add(q.submitted, q.id + 'sub', `${i.title} (investor)`, q.type === 'redemption' ? 'Redemption requested' : 'Subscription documents signed', o.id, q.id, `${i.title} (${i.id}): ${what}${q.dealing ? ` at the ${dateShort(q.dealing)} ${q.type === 'redemption' ? 'dealing date' : 'closing'}` : ''}; signed by ${q.signedBy}`);
+      if (q.decided) add(q.decided, q.id + 'dec', sponsor, `${q.type === 'redemption' ? 'Redemption' : 'Subscription'} ${q.status === 'rejected' ? 'declined' : 'approved'}`, o.id, q.id, `${i.title} (${i.id})`);
+      if (q.paid) add(q.paid, q.id + 'paid', sponsor, 'Redemption paid', o.id, q.id, `${i.title} (${i.id}): ${q.full ? 'full' : 'partial'} redemption at ${dateShort(q.dealing)}, paid by ACH`);
+    });
+    ws.investors.forEach((i) => {
+      const k = i.kyc;
+      if (!k) return;
+      if (k.verifiedOn) add(k.verifiedOn, i.id + 'idv', sys, 'Identity verified', '', i.id, `${i.title}: ${k.method}`);
+      if (k.screenedOn) add(k.screenedOn, i.id + 'scr', sys, 'Sanctions and PEP screening run', '', i.id, `${i.title}: ${k.screening === 'potential_match' ? `potential match on the ${k.match.list} (${Math.round(k.match.score * 100)}% name similarity) sent for review` : 'no matches'}`);
     });
     (ws.notices || []).forEach((n) => add(n.date, n.id, n.sentBy === 'staff' ? staff : sponsor, 'Notice sent', n.audience === 'all' ? '' : n.audience, n.id, `“${n.subject.replace(/\{[a-z_]+\}/g, '…')}” to ${n.recipients.length} investors`));
     ev.sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
@@ -858,7 +905,36 @@
     add('bank', 'Distributions agree to bank records', !runIssues.length, runs.length ? `${runs.length} distributions totaling ${money(runs.reduce((a, r) => a + r.total, 0))}; each split to the cent and matched to a NACHA file or check.` : 'No distributions in the period.', runIssues, !runs.length);
 
     const calls = P.L.contribs.filter((c) => c.date >= P.from && c.date <= P.to);
-    add('contrib', S.open ? 'Subscriptions recorded at net asset value' : 'Capital calls fully funded', true, calls.length ? `${calls.length} ${S.open ? 'subscriptions' : 'contributions'} totaling ${money(calls.reduce((a, c) => a + c.cents, 0))}.` : `No ${S.open ? 'subscriptions' : 'contributions'} in the period.`, [], !calls.length);
+    // Calls due by period end that were not paid by then.
+    const late = [];
+    (ws.calls || [])
+      .filter((c) => c.offeringId === o.id && c.due <= P.to)
+      .forEach((c) =>
+        c.items.forEach((it) => {
+          if (!it.received || it.received > P.to) {
+            const inv = ws.investors.find((x) => x.id === it.investorId);
+            late.push(`${inv ? inv.title : it.investorId} (${it.investorId}): ${money(it.cents)} for call ${c.number}, due ${dateShort(c.due)}, ${it.received ? `paid late on ${dateShort(it.received)}` : 'not yet received'}.`);
+          }
+        })
+      );
+    add('contrib', S.open ? 'Subscriptions recorded at net asset value' : 'Capital calls fully funded', !late.length, calls.length || late.length ? `${calls.length} ${S.open ? 'subscriptions' : 'contributions'} totaling ${money(calls.reduce((a, c) => a + c.cents, 0))}${S.open ? '' : late.length ? `; ${late.length} payment${late.length === 1 ? '' : 's'} past due at period end` : '; every call due by period end was paid on time'}.` : `No ${S.open ? 'subscriptions' : 'contributions'} in the period.`, late, !calls.length && !late.length);
+
+    if (S.open) {
+      const reds = (P.L.redemptions || []).filter((x) => x.date >= P.from && x.date <= P.to);
+      const slow = reds.filter((x) => (x.req.paid || '9999-12-31') > D.addMonths(x.date, 1) && D.addMonths(x.date, 1) <= P.to);
+      add('redeem', 'Redemptions paid within terms', !slow.length, reds.length ? `${reds.length} redemption${reds.length === 1 ? '' : 's'} totaling ${money(reds.reduce((a, x) => a + x.cents, 0))} at net asset value on the dealing date; ${money(P.hold.redemptionsPayable || 0)} payable at period end.` : 'No redemptions in the period.', slow.map((x) => `${x.inv.title} (${x.inv.id}): ${money(x.cents)} redeemed ${dateShort(x.date)}, ${x.req.paid ? `paid ${dateShort(x.req.paid)}` : 'not yet paid'}; terms require payment within 30 days.`), !reds.length);
+    }
+
+    if (NS.ops) {
+      const kycIssues = [];
+      live.forEach((a) => {
+        const k = NS.ops.kycOf(a.investor);
+        const lab = NS.ops.kycLabel(k, P.to);
+        if (lab.key === 'cleared') return;
+        kycIssues.push(`${a.investor.title} (${a.investor.id}): ${lab.key === 'due' ? `re-screening was due ${dateShort(k.nextReview)}` : lab.key === 'review' ? `potential ${k.match ? k.match.list : 'screening'} match awaiting review` : lab.label.toLowerCase()}.`);
+      });
+      add('kyc', 'AML/KYC cleared and current', !kycIssues.length, `Identity verified and sanctions and PEP screening clear for ${live.length - kycIssues.length} of ${live.length} investors.`, kycIssues);
+    }
 
     const noTax = live.filter((a) => !a.investor.taxForm);
     add('tax', 'Tax forms on file', !noTax.length, `W-9 or W-8 on file for ${live.length - noTax.length} of ${live.length} investors.`, noTax.map((a) => `${a.investor.title} (${a.investor.id}): no tax form. Request a W-9 before year-end tax reporting.`));
@@ -944,6 +1020,7 @@
       ['Total assets', H.totalAssets],
       ...(H.shortFV ? [['Securities sold short, at fair value' + (H.shortProceeds ? ` (proceeds ${money(H.shortProceeds)})` : ''), H.shortFV]] : []),
       ...(H.debt ? [['Mortgage notes payable', H.debt]] : []),
+      ...(H.redemptionsPayable ? [['Redemptions payable', H.redemptionsPayable]] : []),
       ['Management fees payable', H.feePayable],
       ['Total liabilities', H.totalLiabilities],
       ['Net assets (partners’ capital)', H.totalAssets - H.totalLiabilities],
@@ -985,18 +1062,22 @@
         '04_Capital_account_rollforward.csv',
         'Capital account rollforward by investor',
         `Each investor’s capital account, ${dateShort(P.from)} to ${dateShort(P.to)}. Income and gains are allocated monthly in proportion to opening capital plus that month’s contributions.`,
-        [COL('Investor ID'), COL('Investor'), COL('Beginning capital', 'money'), COL('Contributions', 'money'), COL('Distributions', 'money'), COL('Investment income', 'money'), COL('Realized and unrealized gain (loss)', 'money'), COL('Management fees', 'money'), COL(gpWord, 'money'), COL('Ending capital', 'money'), COL('Ownership', 'pct')],
+        [COL('Investor ID'), COL('Investor'), COL('Beginning capital', 'money'), COL(S.open ? 'Subscriptions' : 'Contributions', 'money'), COL(S.open ? 'Redemptions' : 'Distributions', 'money'), COL('Investment income', 'money'), COL('Realized and unrealized gain (loss)', 'money'), COL('Management fees', 'money'), COL(gpWord, 'money'), COL('Ending capital', 'money'), COL('Ownership', 'pct')],
         rf,
         ['', 'Total', f.begin, f.contrib, -f.dist, f.income, f.gain, -f.fee, -f.carry, f.end, f.end > 0 ? 1 : 0]
       )
     );
 
     // 5. Investor register
+    const hasCommit = P.inv.some((a) => a.investor.positions.some((p) => p.offeringId === o.id && p.commitment != null && p.commitment > 0));
+    const unf = (a) => (hasCommit ? Math.max(0, a.commit - a.contribCum) : 0);
     const reg = sorted.map((a) => {
       const i = a.investor;
+      const k = NS.ops ? NS.ops.kycOf(i) : null;
+      const kl = k ? NS.ops.kycLabel(k, P.to) : null;
       const acc = i.accreditation && i.accreditation.basis ? `Verified accredited investor, ${dateShort(i.accreditation.date)}` : 'Not verified';
       const first = i.positions.filter((p) => p.offeringId === o.id).map((p) => p.date).sort()[0];
-      return [i.id, i.title, i.contact, (NS.ENTITY_TYPES[i.type] || {}).label || i.type, first, a.commit, a.contribCum, S.open || !S.calls ? 0 : a.commit - a.contribCum, a.distCum, a.end, a.own, i.taxForm ? `${i.taxForm} on file` : 'Missing', i.tinLast4 ? `ending ${i.tinLast4}` : 'Not provided', acc, i.onboarding.status === 'complete' ? 'Active' : i.onboarding.status === 'in_progress' ? 'Onboarding' : 'Invited', payLabel(i)];
+      return [i.id, i.title, i.contact, (NS.ENTITY_TYPES[i.type] || {}).label || i.type, first, a.commit, a.contribCum, unf(a), a.distCum, a.end, a.own, i.taxForm ? `${i.taxForm} on file` : 'Missing', i.tinLast4 ? `ending ${i.tinLast4}` : 'Not provided', acc, kl ? kl.label + (k.screenedOn ? `, screened ${dateShort(k.screenedOn)}` : '') : '', k && k.nextReview ? k.nextReview : '', i.onboarding.status === 'complete' ? 'Active' : i.onboarding.status === 'in_progress' ? 'Onboarding' : 'Invited', payLabel(i)];
     });
     out.push(
       sched(
@@ -1004,9 +1085,9 @@
         '05_Investor_register.csv',
         'Investor register',
         `Commitments, capital and investor documentation as of ${dateLong(P.to)}. Bank account and taxpayer numbers are masked.`,
-        [COL('Investor ID'), COL('Investor'), COL('Primary contact'), COL('Investing as'), COL('Subscription date', 'date'), COL(S.open ? 'Subscriptions' : 'Commitment', 'money'), COL('Contributed to date', 'money'), COL('Unfunded commitment', 'money'), COL('Distributed to date', 'money'), COL('Ending capital', 'money'), COL('Ownership', 'pct'), COL('Tax form'), COL('Taxpayer ID'), COL('Accreditation'), COL('Portal account'), COL('Distribution method')],
+        [COL('Investor ID'), COL('Investor'), COL('Primary contact'), COL('Investing as'), COL('Subscription date', 'date'), COL(S.open ? 'Subscriptions' : 'Commitment', 'money'), COL('Contributed to date', 'money'), COL('Unfunded commitment', 'money'), COL('Distributed to date', 'money'), COL('Ending capital', 'money'), COL('Ownership', 'pct'), COL('Tax form'), COL('Taxpayer ID'), COL('Accreditation'), COL('AML/KYC'), COL('Next KYC review', 'date'), COL('Portal account'), COL('Distribution method')],
         reg,
-        ['', 'Total', '', '', '', f.commit, f.contribCum, S.open || !S.calls ? 0 : f.commit - f.contribCum, f.distCum, f.end, f.end > 0 ? 1 : 0, '', '', '', '', '']
+        ['', 'Total', '', '', '', f.commit, f.contribCum, P.inv.reduce((s, a) => s + unf(a), 0), f.distCum, f.end, f.end > 0 ? 1 : 0, '', '', '', '', '', '', '']
       )
     );
 
@@ -1019,6 +1100,7 @@
       const ach = E.traces[d.inv.id];
       act.push([d.date, d.inv.id, d.inv.title, `Distribution: ${d.run.type}`, 0, -d.cents, d.run.id, ach ? 'ACH' : 'Check', ach ? `${E.file || 'No file'} · trace ${ach}` : `Check ${E.checks[d.inv.id] || ''}`]);
     });
+    (P.L.redemptions || []).filter((x) => x.date >= P.from && x.date <= P.to).forEach((x) => act.push([x.date, x.inv.id, x.inv.title, `Redemption (${x.req.full ? 'full' : 'partial'})`, 0, -x.cents, x.req.id, 'ACH', x.req.paid ? `Paid ${dateShort(x.req.paid)}` : 'Payable']));
     act.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : a[1] < b[1] ? -1 : 1));
     out.push(
       sched('activity', '06_Capital_activity_ledger.csv', 'Capital activity ledger', `Every contribution and distribution in the period, with its bank reference.`, [COL('Date', 'date'), COL('Investor ID'), COL('Investor'), COL('Activity'), COL('Contribution', 'money'), COL('Distribution', 'money'), COL('Reference'), COL('Method'), COL('Bank reference')], act, ['', '', 'Total', '', f.contrib, -f.dist, '', '', ''])

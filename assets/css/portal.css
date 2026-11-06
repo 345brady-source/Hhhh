@@ -379,3 +379,37 @@ button, input, select, textarea { font: inherit; color: inherit; }
   .tbl-docs .td-meta { order: 3; font-size: 12px; color: var(--fg-3); }
   .tbl-docs .td-sep::before { content: "· "; }
 }
+
+/* Capital calls, capital account, liquidity requests, subscriptions, published documents */
+.status-late { color: var(--bad, #B3261E); font-weight: 700; }
+.sub { display: block; font-size: 12px; color: var(--fg-3); font-weight: 400; margin-top: 2px; }
+.sec-note { font-size: 12px; color: var(--fg-3); font-weight: 500; }
+.calls-due { margin: -8px 0 32px; }
+.call-due { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.call-due-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; align-items: baseline; }
+.call-due-amt { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-variant-numeric: tabular-nums; }
+.call-due-amt .num { font-size: 20px; font-weight: 700; }
+.call-due details, .wire-wrap { margin-top: 10px; font-size: 14px; }
+.call-due summary, .wire-wrap summary { cursor: pointer; color: var(--brand-text, var(--brand)); font-weight: 600; }
+.wire { margin: 10px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px 24px; padding: 14px 16px; border: 1px solid var(--line-strong); background: var(--surface-2, transparent); }
+.wire dt { font-size: 12px; color: var(--fg-3); }
+.wire dd { margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.wire-warn { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0 0; font-size: 13px; color: var(--fg-2); line-height: 1.5; }
+.wire-warn .i { flex: none; width: 16px; height: 16px; margin-top: 2px; color: var(--warn, #8A5300); }
+.figs-tight { margin: 10px 0 14px; }
+.capital-tbl { max-width: 560px; }
+.capital-tbl th { text-align: left; font-weight: 400; color: var(--fg-2); padding: 7px 0; border-bottom: 1px solid var(--line); }
+.capital-tbl td { padding: 7px 0; border-bottom: 1px solid var(--line); }
+.capital-tbl .row-total th, .capital-tbl .row-total td { font-weight: 700; color: var(--fg); border-top: 1px solid var(--fg); border-bottom: 0; }
+.req-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 16px 0 6px; }
+.req-form { margin: 16px 0 8px; padding: 18px 20px; border: 1px solid var(--line-strong); display: grid; gap: 14px; max-width: 640px; }
+.req-form h3 { margin: 0; font-size: 16px; }
+.req-form .ob-actions { margin-top: 4px; }
+.offers { display: grid; gap: 0; }
+.offer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.offer strong { font-size: 15px; }
+.doc-list { margin: 12px 0 0; padding-left: 18px; line-height: 1.8; }
+.sub-form { margin-top: 8px; }
+.done-box { max-width: 680px; display: grid; gap: 10px; }
+.done-box .btn { justify-self: start; margin-top: 8px; }
+.doc-frame { width: 100%; height: 70vh; border: 1px solid var(--line); background: #fff; }

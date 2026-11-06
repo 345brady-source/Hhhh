@@ -192,6 +192,7 @@
   /* ---------- Routing ---------- */
   const PREFIXED = [
     ['investment-', 'investment'],
+    ['subscribe-', 'subscribe'],
     ['console-offering-', 'console-offering']
   ];
   function parseHash() {

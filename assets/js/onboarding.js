@@ -16,6 +16,7 @@
   const LABELS = {
     login: 'Create your login',
     profile: 'Investor information',
+    identity: 'Identity verification',
     accreditation: 'Accreditation',
     payment: 'Distribution payments',
     review: 'Review and sign'
@@ -23,7 +24,7 @@
   function stepsFor(mode) {
     const t = T();
     if (mode === 'bank') return ['payment'];
-    const s = ['login', 'profile'];
+    const s = ['login', 'profile', 'identity'];
     if (t.onboarding.accreditation) s.push('accreditation');
     s.push('payment', 'review');
     return s;
@@ -68,7 +69,17 @@
           achAuth: false,
           edelivery: true,
           w9: false,
-          signature: ''
+          signature: '',
+          dob: '',
+          citizen: 'us',
+          idType: 'drivers',
+          idFile: '',
+          formation: '',
+          owner1: inv.contact,
+          owner1pct: '100',
+          owner2: '',
+          owner2pct: '',
+          pep: ''
         },
         splitAddress(inv.address)
       )
@@ -138,6 +149,30 @@
         ${input('tin', tinLabel, { mode: 'numeric', max: 11, hint: 'Nine digits. Stored encrypted; only the last four are shown again.' })}
       </div>`;
   }
+  const ENTITY_KYC = (type) => type === 'entity' || type === 'trust' || type === 'ira';
+  function stepIdentity() {
+    const d = ob().d;
+    const ent = ENTITY_KYC(d.type);
+    return `<h1>${LABELS.identity}</h1>
+      <p class="lede">${h(T().shortName)} is required to verify the identity of every investor and screen them against sanctions lists before accepting an investment.</p>
+      <div class="form-grid">
+        ${
+          ent
+            ? `${input('formation', d.type === 'trust' ? 'State where the trust was formed' : d.type === 'ira' ? 'Custodian' : 'State or country of formation', { wide: false })}
+          <label class="field" for="ob-cp"><span>${d.type === 'trust' ? 'Trustee' : 'Controlling person'}</span><input id="ob-cp" type="text" value="${h(inv().contact)}" readonly></label>
+          <p class="field-wide meta">List each person who owns 25% or more${d.type === 'trust' ? ' of the trust’s beneficial interest' : ''}.</p>
+          ${input('owner1', 'Beneficial owner', { auto: 'name' })}${input('owner1pct', 'Ownership (%)', { mode: 'numeric', max: 3, narrow: true })}
+          ${input('owner2', 'Second beneficial owner <em>Optional</em>', { auto: 'off' })}${input('owner2pct', 'Ownership (%)', { mode: 'numeric', max: 3, narrow: true })}
+          <label class="field field-wide" for="ob-idFile"><span>${d.type === 'trust' ? 'Trust certificate' : d.type === 'ira' ? 'Custodian account statement' : 'Formation documents'} <em>Optional in this demo</em></span><input id="ob-idFile" type="file" accept="application/pdf,image/png,image/jpeg" data-change="ob-idfile"><span class="hint">${d.idFile ? `Attached: ${h(d.idFile)}` : 'PDF or photo'}</span></label>`
+            : `${input('dob', 'Date of birth', { type: 'date', auto: 'bday' })}
+          ${radios('citizen', 'Citizenship', [['us', 'United States'], ['other', 'Another country']])}
+          ${radios('idType', 'Government ID', [['drivers', 'Driver’s license'], ['passport', 'Passport'], ['state', 'State ID card']])}
+          <label class="field field-wide" for="ob-idFile"><span>Photo of your ID <em>Optional in this demo</em></span><input id="ob-idFile" type="file" accept="image/png,image/jpeg,application/pdf" capture="environment" data-change="ob-idfile"><span class="hint">${d.idFile ? `Attached: ${h(d.idFile)}` : 'Front of the card or the passport photo page'}</span></label>`
+        }
+        ${radios('pep', `Is ${ent ? 'any owner or controlling person' : 'any account owner'} a senior political figure, or a close family member or associate of one?`, [['no', 'No'], ['yes', 'Yes', 'Investor relations will contact you for enhanced due diligence']])}
+      </div>
+      <p class="meta">Your details are checked against OFAC and other sanctions lists and politically exposed person databases. They are encrypted and used only for anti-money-laundering compliance.</p>`;
+  }
   function stepAccreditation() {
     return `<h1>${LABELS.accreditation}</h1>
       <p class="lede">These offerings are available only to accredited investors under Regulation D. Select the basis that applies to ${h(ob().d.title)}.</p>
@@ -185,6 +220,7 @@
         ${row('Account', `${h(d.title)} · ${h(NS.ENTITY_TYPES[d.type].label)}`, steps.indexOf('profile'))}
         ${row('Mailing address', `${h(d.street)}, ${h(d.city)}, ${h(d.st)} ${h(d.zip)}`, steps.indexOf('profile'))}
         ${row('Taxpayer ID', `ending ${h(String(d.tin).replace(/\D/g, '').slice(-4))}`, steps.indexOf('profile'))}
+        ${steps.indexOf('identity') >= 0 ? row('Identity', ENTITY_KYC(d.type) ? `${h(d.owner1)} (${h(d.owner1pct)}%)${String(d.owner2).trim() ? `, ${h(d.owner2)} (${h(d.owner2pct)}%)` : ''}` : `Born ${h(U.date(d.dob, 'long'))} · ${h({ drivers: 'Driver’s license', passport: 'Passport', state: 'State ID' }[d.idType] || '')}`, steps.indexOf('identity')) : ''}
         ${steps.indexOf('accreditation') >= 0 ? row('Accreditation', h(d.accBasis), steps.indexOf('accreditation')) : ''}
         ${row('Distributions', d.method === 'ach' ? `ACH to ${d.acctType} account ending ${h(String(d.account).slice(-4))}` : 'Check by mail', steps.indexOf('payment'))}
       </dl>
@@ -216,6 +252,24 @@
       if (!/^[A-Z]{2}$/.test(String(d.st).toUpperCase())) e.st = 'Use the two-letter state code.';
       if (!/^\d{5}(-\d{4})?$/.test(String(d.zip).trim())) e.zip = 'Enter a 5-digit ZIP code.';
       if (digits(d.tin).length !== 9) e.tin = 'Enter all nine digits.';
+    }
+    if (step === 'identity') {
+      if (ENTITY_KYC(d.type)) {
+        if (!String(d.formation).trim()) e.formation = d.type === 'ira' ? 'Enter the custodian.' : 'Enter where it was formed.';
+        if (!String(d.owner1).trim()) e.owner1 = 'Enter at least one beneficial owner or controlling person.';
+        const p1 = Number(d.owner1pct);
+        if (!(p1 >= 1 && p1 <= 100)) e.owner1pct = 'Enter a percentage from 1 to 100.';
+        if (String(d.owner2).trim()) {
+          const p2 = Number(d.owner2pct);
+          if (!(p2 >= 1 && p2 <= 100) || p1 + p2 > 100) e.owner2pct = 'Ownership cannot total more than 100%.';
+        }
+      } else {
+        const dob = String(d.dob || '');
+        const age = dob ? NS.dates.monthsBetween(dob, NS.dates.today()) / 12 : 0;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) e.dob = 'Enter your date of birth.';
+        else if (age < 18 || age > 120) e.dob = 'Account owners must be at least 18.';
+      }
+      if (!d.pep) e.pep = 'Answer this question to continue.';
     }
     if (step === 'accreditation') {
       if (!d.accBasis) e.accBasis = 'Select the basis that applies.';
@@ -265,6 +319,25 @@
     i.edelivery = !!d.edelivery;
     i.payment = d.method === 'ach' ? { method: 'ach', bank: { holder: d.holder.trim(), routing: d.routing.replace(/\D/g, ''), account: d.account.replace(/\D/g, ''), type: d.acctType } } : { method: 'check', bank: null };
     i.onboarding = { status: 'complete', step: 5, invited: i.onboarding.invited, completed: now };
+    // AML/KYC: identity collected above; screening runs at activation (simulated in this demo).
+    const ent = ENTITY_KYC(d.type);
+    const pep = d.pep === 'yes';
+    const risk = pep ? 'High' : ent ? 'Medium' : 'Low';
+    const owners = ent ? [{ name: d.owner1.trim(), pct: Number(d.owner1pct) || 0 }].concat(String(d.owner2).trim() ? [{ name: d.owner2.trim(), pct: Number(d.owner2pct) || 0 }] : []) : [{ name: i.contact, pct: 100 }];
+    i.kyc = {
+      status: pep ? 'review' : 'cleared',
+      risk,
+      owners,
+      verifiedOn: now,
+      method: ent ? `${d.type === 'trust' ? 'Trust certificate' : d.type === 'ira' ? 'Custodian statement' : 'Formation documents'} and beneficial owner details${d.idFile ? ' (uploaded)' : ''}` : `${{ drivers: 'Driver’s license', passport: 'Passport', state: 'State ID' }[d.idType] || 'Government ID'}${d.idFile ? ' (uploaded)' : ''}, automated check`,
+      screenedOn: now,
+      screening: pep ? 'potential_match' : 'clear',
+      lists: 'OFAC SDN and consolidated lists, UN, EU, UK HMT, politically exposed persons, adverse media',
+      nextReview: NS.dates.addMonths(now, NS.ops ? NS.ops.REVIEW_MONTHS[risk] : 12),
+      pep,
+      match: pep ? { list: 'Self-declared politically exposed person', name: i.contact, score: 1, detail: 'The investor disclosed a political connection during onboarding; enhanced due diligence is required before investing.' } : undefined
+    };
+    if (NS.audit) NS.audit.log(W(), { action: 'Identity verified and screened', record: i.id, detail: `${i.title}: ${i.kyc.method}; ${pep ? 'politically exposed person disclosed, sent for review' : 'no sanctions or PEP matches'}`, actor: 'Portal (automatic)' });
     if (NS.audit) NS.audit.log(W(), { action: 'Account activated', record: i.id, detail: `Profile, ${i.taxForm || 'tax form'}${i.accreditation && i.accreditation.basis ? ', accreditation' : ''} and distribution account confirmed`, actor: `${i.title} (investor)` });
     NS.app.save(true);
   }
@@ -292,7 +365,7 @@
         </div></main>${NS.portalFooter ? NS.portalFooter() : ''}</div>`;
       }
       const key = steps[o.step];
-      const body = { login: stepLogin, profile: stepProfile, accreditation: stepAccreditation, payment: stepPayment, review: stepReview }[key]();
+      const body = { login: stepLogin, profile: stepProfile, identity: stepIdentity, accreditation: stepAccreditation, payment: stepPayment, review: stepReview }[key]();
       const list = steps
         .map((s, i) => `<li class="${i < o.step ? 'done' : i === o.step ? 'current' : ''}"${i === o.step ? ' aria-current="step"' : ''}><span class="ob-num">${i < o.step ? icon('check') : i + 1}</span><span>${LABELS[s]}</span></li>`)
         .join('');
@@ -327,6 +400,10 @@
       const m = document.getElementById('err-' + path);
       if (m) m.remove();
     }
+  };
+  NS.changes['ob-idfile'] = (el) => {
+    ob().d.idFile = el.files && el.files[0] ? el.files[0].name : '';
+    NS.app.render();
   };
   NS.changes['ob-file'] = (el) => {
     ob().d.accFile = el.files && el.files[0] ? el.files[0].name : '';

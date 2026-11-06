@@ -15,21 +15,26 @@ python3 -m http.server 8000
 
 | Page | Contents |
 |---|---|
-| Investments | Amount invested, distributions received, and time until exit for each investment; exited investments; and, for each investment, its last distribution and next distribution date |
-| Investment | One investment's figures, a timeline from closing to projected exit, the key terms the sponsor chose to show, the latest update, its payments and documents |
+| Investments | Amount invested, distributions received, and time until exit for each investment; completed investments; capital calls due with wire instructions; the investor's requests and their status; offerings open for investment; and, for each investment, its last distribution and next distribution date |
+| Investment | One investment's figures, a timeline from closing to projected exit, the investor's capital account (value, net IRR or net return, and a breakdown since inception), capital calls and unfunded commitment, liquidity terms with e-signed redemption and additional-subscription requests (open-ended funds), the key terms the sponsor chose to show, the latest update, its payments and documents |
+| Subscribe | Online subscription to an offering that is raising: offering terms, subscription documents, accreditation confirmation and e-signature |
 | Distributions | Totals, received by year, full payment history filterable by year and investment |
-| Documents | Updates, tax documents (K-1, grantor trust letter or 1099-INT depending on the investment), statements and agreements, on the client's letterhead |
+| Documents | Updates, quarterly capital account statements, tax documents (K-1, grantor trust letter or 1099-INT depending on the investment) and agreements on the client's letterhead, plus files the manager publishes (opened in the browser or downloaded) |
 | Account | Investor details, distribution bank account (update by re-verifying), tax and accreditation status |
 | Settings | Light, dark or match the device; saved in the browser and overrides the client default |
-| Sign-in and activation | Branded sign-in and a guided first-time activation |
+| Sign-in and activation | Branded sign-in and a guided first-time activation, including identity verification (ID for individuals; beneficial owners for entities and trusts), a politically-exposed-person question, and automatic sanctions screening |
 
 **Sponsor console** (Carrow & Vale and client staff)
 
 | Page | Contents |
 |---|---|
-| Overview | A five-step setup checklist for new clients, key figures, and items needing attention (investors not activated, investors without bank details, exits or maturities within 12 months) |
+| Overview | A five-step setup checklist for new clients, key figures, net asset value, contributed, distributed and unfunded capital by fund, and items needing attention (investors not activated, investors without bank details, exits or maturities within 12 months, open capital calls, requests awaiting approval, screening matches and re-screens due) |
 | Offerings | Each investment configured separately: type, closing date, how exit is defined, distribution frequency, the key terms investors see, the latest update, and the ACH company name and ID it pays under. A live preview shows what investors will see |
 | Investors | Activation status and payment method for every investor; invite one investor or import a list; preview the branded invitation email; open an investor's activation |
+| Capital calls | Issue a call by percentage of commitments or dollar amount, split pro rata to commitments and checked against each investor's unfunded commitment; investors get the notice and wire instructions in their portal; record payments, send reminders, and track open and overdue amounts. Payments flow into capital accounts and the audit schedules |
+| Requests | Redemptions and subscriptions investors submit and e-sign in the portal: approve or decline, record redemption payments at the dealing-date net asset value, record subscription funding or countersign commitments. The investor register and capital accounts update automatically |
+| Documents | Publish reports, statements, tax documents and notices to one fund, all investors, or individual investors matched by the investor ID in each file name (for example a folder of K-1s); notify recipients; each file's SHA-256 is recorded in the change log |
+| AML/KYC | Identity verification status, risk rating, beneficial owners, sanctions and PEP screening results and next review date for every investor; review potential matches (clear as a false positive with a note, or escalate), approve identity, and re-screen investors who are due |
 | Distributions | Allocate a payment pro rata by amount invested (to the cent), generate the NACHA file, and record the payment so investors see it |
 | Notices | Email investors that a quarterly report or new documents are in their portal. Templates, merge fields ({first_name}, {investment}, {quarter}, {documents} and others), audience of all investors, one offering, or any number of specific investors across offerings (separate searchable picker), optional inclusion of investors who have not activated, a branded preview, and a sent history. Each notice also appears in the recipients' portals |
 | Reports | Distribution reports for any period (this or last quarter, year to date, last year, last 12 months, since inception, or custom dates), for all offerings or one, viewed by investor, by payment or by offering, with totals and a CSV download. Investor contact lists filtered by offering, account status and payment method, with CSV download and copy-all-emails. Contact exports never include bank account numbers or taxpayer IDs |
@@ -58,6 +63,8 @@ The Audit page builds what a fund's auditor asks for, for any fund and any perio
 | 14 | By fund type: custody reconciliation (digital assets: book against custodian quantities by wallet), property schedule (real estate: appraisals, mortgages, loan to value, cap rates), strategy allocation (multi-strategy: allocation and return by strategy) |
 | 15 | Change log for the period |
 | 16 | Readiness checks |
+
+The investor register also shows each investor's AML/KYC status and next review date, the capital activity ledger includes redemptions, and the statement of assets and liabilities shows redemptions payable. Readiness checks include overdue capital calls, redemptions paid within terms and AML/KYC status.
 
 **Readiness checks** tie the schedules to each other (capital rolls forward, partners' capital equals net assets, the schedule of investments agrees to the balance sheet, ownership totals 100%), match distributions to bank files, and flag what to fix before fieldwork: missing tax forms or accreditation, stale Level 3 valuation support, custodian differences, distributions recorded without a NACHA file, and any break in the change log.
 
@@ -170,5 +177,6 @@ assets/js/documents.js     letterhead document previews
 assets/js/portal.js        investor pages
 assets/js/onboarding.js    investor activation
 assets/js/audit.js         fund accounting, audit schedules, readiness checks, change log, zip package
+assets/js/operations.js    capital calls, redemption and subscription requests, AML/KYC, published documents
 assets/js/console.js       sponsor console
 ```
