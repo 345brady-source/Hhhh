@@ -99,7 +99,7 @@
     if (t.kind === 'roc') return 'Return of contributed capital';
     if (t.kind === 'pref') return `Preferred return, ${t.rate}% a year${t.simple ? ' (simple)' : ''}`;
     if (t.kind === 'catchup') return `GP catch-up, ${t.gp == null ? 100 : t.gp}% to the GP`;
-    return `${t.lp}% to investors / ${t.gp}% to the GP${t.upTo != null && t.upTo !== '' ? `, until investors reach a ${t.upTo}% IRR` : ' thereafter'}`;
+    return `${t.lp}% to investors / ${t.gp}% to the GP${t.upTo != null && t.upTo !== '' ? `, until investors reach a ${t.upTo}% IRR` : t.upToX != null && t.upToX !== '' ? `, until investors receive ${t.upToX}x their capital` : ' thereafter'}`;
   }
   /**
    * Split `amount` (minor units) paid at `date` between investors (LP) and the
@@ -107,7 +107,8 @@
    * (contributions negative, distributions positive); `gpPrior` is carried
    * interest the GP has already received. Tiers run in order: return of
    * capital, preferred return (compounding unless `simple`), GP catch-up,
-   * then splits, each split ending when investors reach its IRR (`upTo`).
+   * then splits, each split ending when investors reach its IRR (`upTo`) or a
+   * multiple of their contributed capital (`upToX`).
    */
   function waterfall(tiers, flows, gpPrior, amount, date) {
     const contributed = -flows.filter((f) => f.cents < 0).reduce((a, f) => a + f.cents, 0);
@@ -138,6 +139,7 @@
           const a = (t.lp == null ? 100 : Number(t.lp)) / 100;
           let take = left;
           if (t.upTo != null && t.upTo !== '' && a > 0) take = Math.min(left, Math.round(Math.max(0, Math.round(shortfall(flows, Number(t.upTo) / 100, date, false)) - lp) / a));
+          else if (t.upToX != null && t.upToX !== '' && a > 0) take = Math.min(left, Math.round(Math.max(0, Math.round(Number(t.upToX) * contributed - distributed) - lp) / a));
           tl = Math.round(take * a);
           tg = take - tl;
         }

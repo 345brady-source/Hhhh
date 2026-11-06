@@ -1586,11 +1586,13 @@
     if (!u.calls) u.calls = { view: 'list', draft: null };
     return u.calls;
   }
+  /** Notice the offering's documents give for capital calls (business days), else the usual 10. */
+  const callDays = (o) => Number(((o && o.structure) || {}).callNoticeDays) || 10;
   function callDraft() {
     const c = callState();
     if (!c.draft) {
       const o = OPS().callable(W())[0];
-      c.draft = { offeringId: o ? o.id : '', mode: 'pct', pct: 10, amount: '', due: OPS().businessDays(today(), 10), purpose: 'Portfolio investments and fund expenses', note: '' };
+      c.draft = { offeringId: o ? o.id : '', mode: 'pct', pct: 10, amount: '', due: OPS().businessDays(today(), callDays(o)), purpose: 'Portfolio investments and fund expenses', note: '' };
     }
     return c.draft;
   }
@@ -1647,7 +1649,10 @@
           <label class="cs-field cs-wide" for="cl-off"><span>Fund</span><select id="cl-off" data-bind="call:offeringId">${funds.map((x) => `<option value="${h(x.id)}"${x.id === o.id ? ' selected' : ''}>${h(x.name)}</option>`).join('')}</select></label>
           <fieldset class="cs-field"><legend>Call amount</legend><div class="cs-seg">${[['pct', '% of commitments'], ['amount', 'Dollar amount']].map(([k, l]) => `<label><input type="radio" name="cl-mode" value="${k}" data-bind="call:mode"${d.mode === k ? ' checked' : ''}><span>${l}</span></label>`).join('')}</div></fieldset>
           ${d.mode === 'pct' ? `<label class="cs-field" for="cl-pct"><span>Percent of commitments</span><input id="cl-pct" type="number" min="0" max="100" step="0.5" data-bind="call:pct" value="${h(d.pct)}"></label>` : `<label class="cs-field" for="cl-amt"><span>Total amount ($)</span><input id="cl-amt" type="number" min="0" step="1000" data-bind="call:amount" value="${h(d.amount)}"></label>`}
-          <label class="cs-field" for="cl-due"><span>Due date</span><input id="cl-due" type="date" data-bind="call:due" value="${h(d.due)}"><span class="cs-hint">Usually 10 business days after the notice.</span></label>
+          <label class="cs-field" for="cl-due"><span>Due date</span><input id="cl-due" type="date" data-bind="call:due" value="${h(d.due)}"><span class="cs-hint">${(() => {
+            const oc = W().offerings.find((x) => x.id === d.offeringId);
+            return oc && oc.structure && oc.structure.callNoticeDays ? `This offering’s documents give ${oc.structure.callNoticeDays} days’ notice.` : 'Usually 10 business days after the notice.';
+          })()}</span></label>
           <label class="cs-field" for="cl-purpose"><span>Purpose</span><select id="cl-purpose" data-bind="call:purpose">${PURPOSES.map((x) => `<option${x === d.purpose ? ' selected' : ''}>${h(x)}</option>`).join('')}</select></label>
           <label class="cs-field cs-wide" for="cl-note"><span>Note to investors <em>Optional</em></span><textarea id="cl-note" rows="2" maxlength="400" data-bind="call:note">${h(d.note)}</textarea></label>
         </div>
@@ -1705,6 +1710,7 @@
   NS.binders.call = (path, v) => {
     const d = callDraft();
     d[path] = v;
+    if (path === 'offeringId') d.due = OPS().businessDays(today(), callDays(W().offerings.find((x) => x.id === v)));
     if (path === 'offeringId' || path === 'mode' || path === 'due' || path === 'purpose') NS.app.render();
     else {
       clearTimeout(S().ui.callT);
@@ -2074,7 +2080,8 @@
   const IK_ROWS = {
     classes: () => ({ name: `Class ${'ABCDEFGH'[(ikVal('classes') || []).length] || 'X'}`, mgmtFee: null, carry: null, pref: null, minimum: null, currency: '', eligibility: '' }),
     'structure.feeders': () => ({ name: '', domicile: '', for: '' }),
-    'waterfall.tiers': () => ({ kind: 'split', rate: null, simple: false, gp: 20, lp: 80, upTo: null }),
+    'waterfall.tiers': () => ({ kind: 'split', rate: null, simple: false, gp: 20, lp: 80, upTo: null, upToX: null }),
+    'providers.others': () => ({ role: '', name: '' }),
     investorTerms: () => ({ label: '', value: '' })
   };
   function ikList(title, list, cols, hint) {
@@ -2134,7 +2141,7 @@
     const target = st.target ? w.offerings.find((o) => o.id === st.target) : null;
     const method = st.method === 'claude' ? 'Read by Claude' : st.method === 'manual' ? 'Current setup' : 'Read by the built-in reader';
     const n = IK().filled(p);
-    const tiersHint = 'Tiers run in order: return of capital, preferred return (simple or compounding), GP catch-up, then splits that end when investors reach an IRR. Leave empty to use carry and preferred return with a full catch-up.';
+    const tiersHint = 'Tiers run in order: return of capital, preferred return (simple or compounding), GP catch-up, then splits that end when investors reach an IRR or a multiple of their capital. Leave empty to use carry and preferred return with a full catch-up.';
     return shell(
       `${head(target && st.method === 'manual' ? `Structure: ${h(target.name)}` : 'Review the setup', st.method === 'manual' ? 'Edit the offering’s structure and terms, then apply.' : `${method} from ${st.docs.filter((d) => d.text != null).length} document${st.docs.filter((d) => d.text != null).length === 1 ? '' : 's'}: ${n} terms found${st.trimmed ? ' (long documents: the cover pages and every passage that mentions terms were read)' : ''}. Check each term against its source, then apply.`, `<button class="cs-btn" type="button" data-action="ik-restart">${st.method === 'manual' ? 'Cancel' : 'Start over'}</button><button class="cs-btn cs-btn-primary" type="button" data-action="ik-apply"${st.busy ? ' disabled' : ''}>${target ? `Apply to ${h(target.shortName || target.name)}` : 'Create the offering'}</button>`)}
       ${p.notes.length ? panel('Notes', `<ul class="cs-list">${p.notes.map((x) => `<li>${h(x)}</li>`).join('')}</ul>`) : ''}
@@ -2146,6 +2153,8 @@
         ${ikField('First close', 'offering.firstClose', { type: 'date' })}
         ${ikField('Minimum investment', 'offering.minimum', { type: 'number' })}
         ${ikField('Target size', 'offering.targetSize', { type: 'number' })}
+        ${ikField('Hard cap', 'structure.hardCap', { type: 'number' })}
+        ${ikField('Final close', 'structure.finalClose')}
         ${ikField('Currency', 'offering.currency', { select: curs })}
         ${ikField('One-line description', 'offering.summary', { wide: true })}
       </div>`)}
@@ -2154,6 +2163,10 @@
         ${ikField('Domicile', 'structure.domicile')}
         ${ikField('Securities exemption', 'structure.exemption')}
         ${ikField('Investor eligibility', 'structure.eligibility')}
+        ${ikField('General partner or managing member', 'structure.gp')}
+        ${ikField('Manager or sponsor', 'structure.manager')}
+        ${ikField('GP commitment', 'structure.gpCommitment')}
+        ${ikField('Capital call notice (days)', 'structure.callNoticeDays', { type: 'number' })}
         ${ikField('Master fund', 'structure.master', { hint: 'Fill in when investors invest through feeder funds.' })}
         ${ikField('Equalization', 'structure.equalization', { select: [['', 'None'], ['capital accounts', 'Capital accounts'], ['equalization', 'Equalization'], ['series', 'Series of shares']] })}
         ${ikField('Side pockets allowed', 'structure.sidePockets.allowed', { check: true })}
@@ -2164,6 +2177,8 @@
       ${panel('Fees and waterfall', `<div class="cs-grid cs-grid-3">
         ${ikField('Management fee (% a year)', 'fees.mgmtFee', { type: 'number' })}
         ${ikField('Fee basis', 'fees.feeBasis', { select: [['', 'Default for the fund type'], ['commitment', 'Commitments'], ['contributed', 'Contributed capital'], ['nav', 'Net asset value']] })}
+        ${ikField('Fee after the investment period (% a year)', 'fees.stepDown', { type: 'number', hint: 'Leave blank if the fee does not step down.' })}
+        ${ikField('Fee basis after the investment period', 'fees.stepDownBasis', { select: [['', 'Same as above (commitments become contributed capital)'], ['commitment', 'Commitments'], ['contributed', 'Contributed or invested capital'], ['nav', 'Net asset value']] })}
         ${ikField('Carried interest or incentive (%)', 'fees.carry', { type: 'number' })}
         ${ikField('Preferred return (% a year)', 'fees.pref', { type: 'number' })}
         ${ikField('Preferred return', 'fees.prefCompounding', { select: [['', 'Not stated'], ['compound', 'Compounding'], ['simple', 'Simple (non-compounding)']] })}
@@ -2171,7 +2186,7 @@
         ${ikField('High-water mark', 'fees.highWaterMark', { check: true })}
         ${ikField('Incentive crystallizes', 'fees.crystallization', { select: [['', 'Not stated'], ['annual', 'Annually'], ['quarterly', 'Quarterly']] })}
         ${ikField('Waterfall', 'waterfall.type', { select: [['', 'Not stated'], ['european', 'Whole fund (European)'], ['american', 'Deal by deal (American)']] })}
-        ${ikList('Waterfall tiers', 'waterfall.tiers', [['kind', 'Tier', 'select', [['roc', 'Return of capital'], ['pref', 'Preferred return'], ['catchup', 'GP catch-up'], ['split', 'Split']]], ['rate', 'Pref % a year', 'number'], ['simple', 'Simple', 'check'], ['lp', 'Investors %', 'number'], ['gp', 'GP %', 'number'], ['upTo', 'Until investor IRR %', 'number']], tiersHint)}
+        ${ikList('Waterfall tiers', 'waterfall.tiers', [['kind', 'Tier', 'select', [['roc', 'Return of capital'], ['pref', 'Preferred return'], ['catchup', 'GP catch-up'], ['split', 'Split']]], ['rate', 'Pref % a year', 'number'], ['simple', 'Simple', 'check'], ['lp', 'Investors %', 'number'], ['gp', 'GP %', 'number'], ['upTo', 'Until investor IRR %', 'number'], ['upToX', 'Or until multiple (x)', 'number']], tiersHint)}
         ${ikField('Other fees (one per line)', 'fees.other', { textarea: true, rows: 3, wide: true })}
       </div>`)}
       ${panel('Term and liquidity', `<div class="cs-grid cs-grid-3">
@@ -2196,7 +2211,7 @@
         ${ikField('Payment day of month', 'distribution.day', { type: 'number' })}
       </div>`)}
       ${panel('What investors see', `<div class="cs-grid">${ikList('Key terms on the investment page', 'investorTerms', [['label', 'Term', 'text'], ['value', 'Shown as', 'text']])}${ikField('Description for investors', 'update', { textarea: true, rows: 3, wide: true })}</div>`)}
-      ${panel('Service providers', `<div class="cs-grid cs-grid-3">${ikField('Auditor', 'providers.auditor')}${ikField('Administrator', 'providers.administrator')}${ikField('Legal counsel', 'providers.counsel')}${ikField('Custodian', 'providers.custodian')}${ikField('Prime broker', 'providers.primeBroker')}</div>`)}
+      ${panel('Service providers', `<div class="cs-grid cs-grid-3">${ikField('Auditor', 'providers.auditor')}${ikField('Administrator', 'providers.administrator')}${ikField('Legal counsel', 'providers.counsel')}${ikField('Custodian', 'providers.custodian')}${ikField('Prime broker', 'providers.primeBroker')}${ikList('Other service providers', 'providers.others', [['role', 'Role', 'text'], ['name', 'Name', 'text']])}</div>`)}
       <div class="cs-row ik-foot"><button class="cs-btn" type="button" data-action="ik-restart">${st.method === 'manual' ? 'Cancel' : 'Start over'}</button><button class="cs-btn cs-btn-primary" type="button" data-action="ik-apply"${st.busy ? ' disabled' : ''}>${target ? `Apply to ${h(target.shortName || target.name)}` : 'Create the offering'}</button></div>`,
       'console-intake'
     );
@@ -2209,7 +2224,7 @@
     const tiers = S0.tiers || (S0.open ? null : NS.structures.defaultTiers(S0.carry, S0.pref, S0.catchUp));
     const items = [
       `${h(o.type)}, ${S0.open ? 'open-ended (monthly NAV, incentive allocation over a high-water mark)' : 'closed-end (quarterly valuations, carried interest through the waterfall)'}; currency ${h(S0.currency)}`,
-      `Fees: ${+(S0.mgmtFee * 100).toFixed(2)}% management fee on ${h(NS.audit.FEE_BASIS[S0.feeBasis].split(' (')[0].toLowerCase())}${S0.carry ? `, ${+(S0.carry * 100).toFixed(2)}% ${S0.open ? 'incentive' : 'carry'}` : ''}`,
+      `Fees: ${+(S0.mgmtFee * 100).toFixed(2)}% management fee on ${h(NS.audit.FEE_BASIS[S0.feeBasis].split(' (')[0].toLowerCase())}${S0.stepDown != null ? `, ${+(S0.stepDown * 100).toFixed(2)}% after the ${S0.investYears}-year investment period` : ''}${S0.carry ? `, ${+(S0.carry * 100).toFixed(2)}% ${S0.open ? 'incentive' : 'carry'}` : ''}`,
       tiers ? `Waterfall: ${tiers.map((t) => h(NS.structures.tierLabel(t))).join('; ')}` : '',
       S0.classes ? `Share classes: ${S0.classes.map((c) => h(c.name)).join(', ')}` : '',
       S0.feeders ? `Feeder funds: ${S0.feeders.map((f) => h(f.name)).join('; ')}` : '',
@@ -2379,6 +2394,10 @@
     const rows = [
       ['Accounting', `${h(S0.label)}, ${S0.open ? 'open-ended' : 'closed-end'}; currency ${h(S0.currency)}`],
       st.vehicle ? ['Vehicle', h([st.vehicle, st.exemption, st.eligibility].filter(Boolean).join(' · '))] : null,
+      st.manager || st.gp ? ['Sponsor', h([st.manager, st.gp ? `${st.gp} (general partner)` : ''].filter(Boolean).join('; '))] : null,
+      st.hardCap || st.finalClose ? ['Raise', h([st.targetSize ? `${NS.structures.fmtWhole(st.targetSize, S0.currency)} target` : '', st.hardCap ? `${NS.structures.fmtWhole(st.hardCap, S0.currency)} hard cap` : '', st.finalClose ? `final close ${st.finalClose.charAt(0).toLowerCase()}${st.finalClose.slice(1)}` : ''].filter(Boolean).join('; '))] : null,
+      S0.stepDown != null ? ['Fee step-down', `${pc(S0.stepDown)} a year after the ${S0.investYears}-year investment period${S0.stepDownBasis ? ` on ${h(NS.audit.FEE_BASIS[S0.stepDownBasis].split(' (')[0].toLowerCase())}` : ''}`] : null,
+      st.gpCommitment || st.callNoticeDays ? ['Commitments', h([st.gpCommitment ? `GP commits ${st.gpCommitment}` : '', st.callNoticeDays ? `capital calls on ${st.callNoticeDays} days’ notice` : ''].filter(Boolean).join('; '))] : null,
       S0.classes ? ['Share classes', S0.classes.map((c) => `${h(c.name)}: ${pc(X.pct(c.mgmtFee, S0.mgmtFee))} / ${pc(X.pct(c.carry, S0.carry))}${c.currency ? ` (${h(c.currency)})` : ''}${c.subscribedBy ? `, founders by ${date(c.subscribedBy)}` : c.note ? `, ${h(c.note)}` : ''}`).join('<br>')] : null,
       S0.feeders ? ['Feeder funds', S0.feeders.map((f) => `${h(f.name)}${f.domicile ? ` (${h(f.domicile)})` : ''}${f.for ? `: ${h(f.for)}` : ''}`).join('<br>')] : null,
       !S0.open ? ['Waterfall', `${S0.waterfallType === 'american' ? 'Deal by deal' : 'Whole fund'}: ${(S0.tiers || X.defaultTiers(S0.carry, S0.pref, S0.catchUp)).map((t) => h(X.tierLabel(t))).join('; ')}`] : ['Incentive', `${pc(S0.carry)} over each investor’s high-water mark, crystallized annually`],
@@ -2386,6 +2405,12 @@
       S0.equalization ? ['Equalization', h(X.EQUALIZATION[S0.equalization] || S0.equalization)] : null,
       o.liquidity ? ['Liquidity', `${h(o.liquidity.frequency)} on ${o.liquidity.notice} days’ notice${o.liquidity.lockup ? `; ${o.liquidity.lockup}-month ${h(o.liquidity.lockupType || '')} lock-up${o.liquidity.fee ? ` (${o.liquidity.fee}% fee)` : ''}` : ''}${o.liquidity.gate ? `; ${o.liquidity.gate}% gate` : ''}`] : null,
       (o.accounting && o.accounting.otherFees && o.accounting.otherFees.length) ? ['Other fees', o.accounting.otherFees.map(h).join('<br>')] : null,
+      (() => {
+        const pv = Object.assign({}, st.providers || {});
+        const a0 = o.accounting || {};
+        const list = [['Auditor', a0.auditor || pv.auditor], ['Administrator', a0.administrator || pv.administrator], ['Counsel', pv.counsel], ['Custodian', pv.custodian], ['Prime broker', pv.primeBroker]].filter((x) => x[1]).concat((pv.others || []).map((x) => [x.role, x.name]));
+        return list.length ? ['Service providers', list.map(([r, n]) => `${h(r)}: ${h(n)}`).join('<br>')] : null;
+      })(),
       (o.sourceDocs || []).length ? ['Set up from', (o.sourceDocs || []).map((d) => `${h(d.name)} (${d.method === 'claude' ? 'read by Claude' : d.method === 'manual' ? 'edited' : 'built-in reader'}, ${date(d.readOn)})`).join('<br>')] : null
     ].filter(Boolean);
     return panel('Structure', `<dl class="cs-kv ik-kv">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`, isStaff() ? `<button class="cs-btn cs-btn-small" type="button" data-action="struct-edit" data-id="${h(o.id)}">Edit structure</button>` : '');

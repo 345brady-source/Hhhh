@@ -47,17 +47,28 @@ python3 -m http.server 8000
 
 Carrow & Vale staff upload an offering's documents and the portal sets the offering up from them:
 
-1. **Read.** PDFs (with page references), Word files and text are read in the browser. Long documents are trimmed to the cover pages plus every passage that mentions terms. When the portal is open in Claude, Claude reads the documents (the viewer is asked to allow it once); anywhere else, or if Claude is not allowed, a built-in reader finds the common terms by pattern.
+1. **Read.** PDFs (with page references), Word files (tables included) and text are read in the browser. Long documents are trimmed to the cover pages plus every passage that mentions terms. When the portal is open in Claude, Claude reads the documents (the viewer is asked to allow it once). Anywhere else, or if Claude is not allowed, the built-in reader does the work (below).
 2. **Review.** Every term is shown in an editable form with where it came from (the quoted passage and page) and whether it was stated, inferred or needs checking. Lists (share classes, feeder funds, waterfall tiers, key terms) can be edited, added to or trimmed.
 3. **Apply.** The portal creates the offering, or updates an existing one: name, type, status, first close, minimum, currency, term and exit timing, distributions, management fee and basis, carry or incentive, preferred return, catch-up, high-water mark, waterfall tiers, share classes, feeder funds, side pockets, equalization, liquidity (redemption frequency, notice, lock-up, early redemption fee, gate), service providers, the key terms investors see and the description. The documents are kept with the offering, published to its investors and subscription page if chosen, and their SHA-256 fingerprints are recorded in the change log.
 
 Any offering's structure can be reopened in the same editor (Edit structure on the offering). Sponsors see the structure read-only.
 
+**The built-in reader** (`assets/js/reader.js`) works without Claude and is built to be thorough:
+
+- It splits the documents into sections by heading: summary-of-terms entries, memorandum and agreement headings ("4.1 Management Fee."), term-sheet rows (tabs or "Heading: value"), questions and answers. Each term is read from the section that defines it first, then from patterns across the whole text.
+- Text is cleaned first: numbers written in words ("two and one-half percent (2.5%)", "sixty (60) days", "seven to ten years"), basis points, fractions, abbreviations (Mgmt Fee, Min., yrs, p.a., $500K), hyphenated and wrapped PDF lines, page numbers, running headers and footers, and tables of contents.
+- Waterfalls are read step by step ("first, ... second, ... thereafter", "(i) ... (iv)", "Tier 1 ... Tier 3" tables): return of capital, preferred return (simple or compounding, including steps that only say "any unpaid preferred return"), catch-up and its GP share, and splits that end at an IRR or a multiple of capital. When a deal has separate operating and sale waterfalls, the fuller one is used and the other is noted.
+- It also reads the fund name and vehicle, general partner and manager, every service provider it can identify, fund size and hard cap, closings, minimums (initial and additional), management fee basis and step-down after the investment period, fee offsets and other fees, carry or incentive and crystallization, high-water mark, share classes from prose or tables (fees, minimums, currency, founders cut-off), master and feeder funds, side pockets, equalization, redemption terms (frequency, notice, lock-up and type, early redemption fee, fund and investor-level gates, holdbacks, payment timing), term, extensions, investment period, hold period or maturity, distributions (frequency, target, payment day), target returns, leverage, capital call notice, GP commitment, reporting, and facts by fund type (property, location, purchase price and financing; basin and royalty acres; company, security and lead investor; assets and custody).
+- Values that differ between passages or documents are flagged for checking, important terms it could not find are listed, and provisions worth knowing (clawback, key person, no-fault removal, advisory committee, side letters, recycling, subscription lines, default remedies, ERISA limits, transfer restrictions, suspension of redemptions) become notes.
+- It is measured against sets of offering documents in different styles (PPMs, LPAs, operating agreements, term sheets, Q&A memos, scanned-style PDFs with headers and wrapped lines).
+
+The capital call form uses the notice period the documents give, and a fee step-down after the investment period is applied in the capital accounts and audit schedules.
+
 ## Complex fund structures
 
 - **Share classes.** Each class can carry its own management fee, carry or incentive, preferred return, minimum and currency. A founders class can close on a date (for example the first anniversary of the first close); new subscribers choose from the open classes, and each investor is charged at their class's rates.
 - **Master-feeder.** Feeder funds with domicile and who each is for; investors are assigned by investor type (tax-exempt investors to the offshore feeder) unless set on the position. The class and feeder appear in the investor register and capital account rollforward.
-- **Distribution waterfalls.** Return of capital, preferred return (compounding or simple), GP catch-up, and splits that end when investors reach an IRR, in any order and any number (for example an 8% simple preference paid first, then capital, 70/30 to a 15% IRR, then 50/50). European (whole fund) or American (deal by deal). Carry accrues each quarter through the waterfall.
+- **Distribution waterfalls.** Return of capital, preferred return (compounding or simple), GP catch-up, and splits that end when investors reach an IRR or a multiple of their capital, in any order and any number (for example an 8% simple preference paid first, then capital, 70/30 to a 15% IRR, then 50/50). European (whole fund) or American (deal by deal). Carry accrues each quarter through the waterfall.
 - **Side pockets.** Illiquid holdings moved into a side pocket at a date belong only to investors in the fund then; they are valued separately, excluded from incentive until realized, and shown to each investor.
 - **Equalization.** Incentive is computed on each investor's own gains above their high-water mark (capital accounts, equalization or series of shares give the same result here).
 - **Currencies.** Offerings in euros, sterling, Swiss francs, Canadian, Australian, Singapore and Hong Kong dollars and yen show amounts in their currency, and the audit schedules are labeled with it.
@@ -201,6 +212,7 @@ assets/js/onboarding.js    investor activation
 assets/js/audit.js         fund accounting, audit schedules, readiness checks, change log, zip package
 assets/js/operations.js    capital calls, redemption and subscription requests, AML/KYC, published documents
 assets/js/structures.js    currencies, share classes, feeder funds, distribution waterfalls, equalization
-assets/js/intake.js        offering-document intake: PDF and Word reading, Claude and built-in readers, apply
+assets/js/reader.js        the built-in offering-document reader (sections, waterfalls, classes, conflicts)
+assets/js/intake.js        offering-document intake: PDF and Word reading, Claude or the built-in reader, apply
 assets/js/console.js       sponsor console
 ```

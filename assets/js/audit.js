@@ -117,6 +117,9 @@
       sidePockets: o.sidePockets || cfg.sidePockets || null,
       equalization: o.equalization || cfg.equalization || '',
       catchUp: a.catchUp === '' || a.catchUp == null ? null : Number(a.catchUp),
+      investYears: Number((o.structure || {}).investmentPeriodYears) || 5,
+      stepDown: a.stepDown === '' || a.stepDown == null || isNaN(Number(a.stepDown)) ? null : Number(a.stepDown) / 100,
+      stepDownBasis: ['commitment', 'contributed', 'nav'].indexOf(a.stepDownBasis) >= 0 ? a.stepDownBasis : '',
       tiers: (a.waterfall && a.waterfall.tiers && a.waterfall.tiers.length ? a.waterfall.tiers : null),
       waterfallType: (a.waterfall && a.waterfall.type) || 'european'
     };
@@ -260,7 +263,7 @@
     });
     const st = {};
     invs.forEach((i) => (st[i.id] = { cap: 0, sp: 0, carry: 0, hwm: 0, contrib: 0, dist: 0, commit: commitmentOf(i, o), firstKey: null }));
-    const investEnd = D.addMonths(o.closeDate, 60);
+    const investEnd = D.addMonths(o.closeDate, Math.round(12 * S.investYears));
 
     // Fee terms by share class, and the waterfall for carried interest.
     const X = NS.structures;
@@ -326,11 +329,15 @@
         s.dist += d;
         let inc = incs[n];
         let gain = gains[n];
+        // After the investment period the fee can step down in rate and change basis.
+        const after = !S.open && end > investEnd;
+        const basis = after && S.stepDownBasis ? S.stepDownBasis : S.feeBasis;
         let feeBase = 0;
-        if (S.feeBasis === 'nav') feeBase = beginMain + c + (s.sp - spGain);
-        else if (S.feeBasis === 'commitment' && end <= investEnd) feeBase = s.commit;
+        if (basis === 'nav') feeBase = beginMain + c + (s.sp - spGain);
+        else if (basis === 'commitment' && (end <= investEnd || S.stepDownBasis === 'commitment')) feeBase = s.commit;
         else feeBase = s.contrib;
-        const fee = s.firstKey ? Math.round((feeBase * T.mgmtFee) / 12) : 0;
+        const rate = after && S.stepDown != null ? S.stepDown : T.mgmtFee;
+        const fee = s.firstKey ? Math.round((feeBase * rate) / 12) : 0;
         if (S.open) s.hwm += c - d;
         const prevA = s.carry;
         let pre = beginMain + c - d + inc + gain - fee + prevA;
@@ -388,7 +395,7 @@
         }
         s.cap = endCap;
         const dOut = d + (redeem || 0);
-        rows[i.id] = { begin, contrib: c, dist: dOut, redeem, income: inc, gain: gain + spGain, fee, feeBase, feeRate: T.mgmtFee, cls: T.cls ? T.cls.id : '', carry: carryChg, gpOut: out, end: endCap + s.sp, sp: s.sp, carryBegin: prevA, carryEnd: s.carry, contribCum: s.contrib, distCum: s.dist, hwm: s.hwm, hurdle, profit, pre };
+        rows[i.id] = { begin, contrib: c, dist: dOut, redeem, income: inc, gain: gain + spGain, fee, feeBase, feeRate: rate, cls: T.cls ? T.cls.id : '', carry: carryChg, gpOut: out, end: endCap + s.sp, sp: s.sp, carryBegin: prevA, carryEnd: s.carry, contribCum: s.contrib, distCum: s.dist, hwm: s.hwm, hurdle, profit, pre };
         F.begin += begin;
         F.contrib += c;
         F.dist += dOut;
@@ -1032,7 +1039,7 @@
         if (r.fee !== Math.round((r.feeBase * (r.feeRate != null ? r.feeRate : S.mgmtFee)) / 12) && r.fee !== 0) feeBad.push(`${id} ${m.key}`);
       })
     );
-    add('fees', 'Management fees recalculate', !feeBad.length, `${(S.mgmtFee * 100).toFixed(2)}% a year on ${FEE_BASIS[S.feeBasis].toLowerCase()}, charged monthly: ${money(f.fee)} in the period.`, feeBad);
+    add('fees', 'Management fees recalculate', !feeBad.length, `${(S.mgmtFee * 100).toFixed(2)}% a year on ${FEE_BASIS[S.feeBasis].toLowerCase()}${S.stepDown != null ? `, ${(S.stepDown * 100).toFixed(2)}% after the ${S.investYears}-year investment period` : ''}, charged monthly: ${money(f.fee)} in the period.`, feeBad);
 
     const v = extra.verify;
     const logged = new Set(ensureLog(ws).filter((e) => e.action === 'Distribution paid' || e.action === 'Distribution recorded').map((e) => e.record));
