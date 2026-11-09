@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="sb-token" content="__SB_TOKEN__">
+  <title>Switchboard</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <div id="app">
+    <nav class="rail" aria-label="Apps">
+      <div class="rail-logo" title="Switchboard"><img src="/icon.svg" alt=""></div>
+      <button class="rail-btn" data-nav="mail" title="Mail (g m)"><span data-icon="mail"></span><span class="rail-label">Mail</span></button>
+      <button class="rail-btn" data-nav="calendar" title="Calendar (g c)"><span data-icon="calendar"></span><span class="rail-label">Calendar</span></button>
+      <button class="rail-btn" data-nav="contacts" title="People (g p)"><span data-icon="people"></span><span class="rail-label">People</span></button>
+      <div class="rail-spacer"></div>
+      <button class="rail-btn" data-nav="settings" title="Settings"><span data-icon="settings"></span><span class="rail-label">Settings</span></button>
+    </nav>
+    <header class="topbar">
+      <button class="icon-btn mobile-only" data-action="toggle-folders" title="Folders"><span data-icon="menu"></span></button>
+      <div class="search">
+        <span data-icon="search"></span>
+        <input id="search" type="search" placeholder="Search all mail — try from:dana has:attachment" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" data-action="sync-all" title="Check for new mail"><span data-icon="refresh"></span></button>
+        <button class="btn claude-btn" data-action="toggle-assistant" title="Ask Claude (Ctrl+K)"><span data-icon="sparkle"></span><span>Claude</span></button>
+      </div>
+    </header>
+    <main id="view"></main>
+    <aside id="assistant" class="assistant" hidden></aside>
+  </div>
+  <div id="toasts" aria-live="polite"></div>
+  <div id="overlay"></div>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

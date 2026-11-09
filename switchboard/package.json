@@ -1,0 +1,29 @@
+{
+  "name": "switchboard-mail",
+  "version": "1.0.0",
+  "description": "Outlook-style email and calendar for many accounts (Gmail, Microsoft, IMAP, POP3), built to be driven by Claude.",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "switchboard": "bin/switchboard.js",
+    "switchboard-mcp": "bin/mcp-stdio.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node bin/switchboard.js",
+    "mcp": "node bin/mcp-stdio.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "imapflow": "^2.11.0",
+    "mailparser": "^3.14.2",
+    "nodemailer": "^10.4.0"
+  },
+  "devDependencies": {
+    "smtp-server": "^3.21.3"
+  }
+}

@@ -216,3 +216,7 @@ assets/js/reader.js        the built-in offering-document reader (sections, wate
 assets/js/intake.js        offering-document intake: PDF and Word reading, Claude or the built-in reader, apply
 assets/js/console.js       sponsor console
 ```
+
+## Also in this repository
+
+[`switchboard/`](switchboard/) is a separate app: an Outlook-style email and calendar client that holds many accounts at once (Gmail, Microsoft, IMAP, POP3), merges their calendars into one master calendar, and is built to be driven by Claude. See [switchboard/README.md](switchboard/README.md).
