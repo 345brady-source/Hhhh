@@ -2,12 +2,13 @@ import { api, hydrateIcons, toast, withToken, modal, esc } from './util.js';
 import * as Mail from './mail.js';
 import * as Calendar from './calendar.js';
 import * as Contacts from './contacts.js';
+import * as Messages from './messages.js';
 import * as Settings from './settings.js';
 import * as Assistant from './assistant.js';
 import * as Compose from './compose.js';
 
 export const state = { boot: null, nav: 'mail' };
-const MODULES = { mail: Mail, calendar: Calendar, contacts: Contacts, settings: Settings };
+const MODULES = { mail: Mail, calendar: Calendar, messages: Messages, contacts: Contacts, settings: Settings };
 
 export async function refreshBoot() {
   state.boot = await api('/api/bootstrap');
@@ -40,7 +41,8 @@ export function currentContext() {
 /** Claude changed something: refresh whatever is on screen. */
 export function notifyChanged(toolName) {
   if (/event|invite/.test(toolName)) Calendar.onLive('changed');
-  if (/email|draft|invite|send/.test(toolName)) Mail.refresh();
+  if (/email|draft|invite|send_email/.test(toolName)) Mail.refresh();
+  if (/text/.test(toolName)) Messages.onLive();
 }
 
 function liveUpdates() {
@@ -70,6 +72,16 @@ function liveUpdates() {
       if (state.boot.settings.notifications !== false && 'Notification' in window && Notification.permission === 'granted' && document.hidden) {
         new Notification(a ? `New mail · ${a.label}` : 'New mail', { body: text, icon: '/icon.svg' });
       } else if (!document.hidden) toast(`New mail — ${text}`);
+    });
+    es.addEventListener('texts', () => Messages.onLive());
+    es.addEventListener('newtext', (e) => {
+      const d = JSON.parse(e.data);
+      const text = `${d.from}: ${d.text || 'Attachment'}`;
+      const viewing = state.nav === 'messages' && !document.hidden;
+      if (state.boot.settings.notifications !== false && 'Notification' in window && Notification.permission === 'granted' && document.hidden) {
+        const n = new Notification(d.from, { body: d.text || 'Attachment', icon: '/icon.svg', tag: `text-${d.conversationId}` });
+        n.onclick = () => { window.focus(); go('messages', null, { conversationId: d.conversationId }); };
+      } else if (!viewing) toast(`💬 ${text.slice(0, 120)}`, { action: 'Open', onAction: () => go('messages', null, { conversationId: d.conversationId }) });
     });
     es.addEventListener('reminder', (e) => {
       const r = JSON.parse(e.data);
@@ -102,7 +114,7 @@ function shortcuts() {
     if (document.getElementById('overlay').children.length) return;
     if (gPressed) {
       gPressed = false;
-      const target = { m: 'mail', c: 'calendar', p: 'contacts', s: 'settings' }[e.key];
+      const target = { m: 'mail', c: 'calendar', t: 'messages', p: 'contacts', s: 'settings' }[e.key];
       if (target) go(target);
       return;
     }
@@ -129,7 +141,7 @@ function shortcuts() {
 function showShortcuts() {
   const rows = [
     ['Ctrl/⌘ K', 'Ask Claude'], ['c or n', 'New message'], ['/', 'Search mail'], ['j / k', 'Next / previous message'], ['r', 'Reply'], ['a', 'Reply all'],
-    ['f', 'Forward'], ['e', 'Archive'], ['# or Delete', 'Delete'], ['s', 'Flag'], ['u', 'Mark read/unread'], ['v', 'Move'], ['g m / g c / g p', 'Go to Mail / Calendar / People'], ['Ctrl/⌘ Enter', 'Send (in compose)'],
+    ['f', 'Forward'], ['e', 'Archive'], ['# or Delete', 'Delete'], ['s', 'Flag'], ['u', 'Mark read/unread'], ['v', 'Move'], ['g m / g c / g t / g p', 'Go to Mail / Calendar / Messages / People'], ['Ctrl/⌘ Enter', 'Send (in compose)'],
   ];
   modal({ title: 'Keyboard shortcuts', body: `<table class="tbl">${rows.map(([k, d]) => `<tr><td style="width:160px"><span class="kbd">${esc(k)}</span></td><td>${esc(d)}</td></tr>`).join('')}</table>` });
 }
@@ -144,6 +156,7 @@ async function main() {
   }
   applyTheme();
   Assistant.init();
+  if (state.boot.texts?.reason === 'off') document.querySelector('.rail-btn[data-nav="messages"]')?.setAttribute('hidden', '');
   document.querySelectorAll('.rail-btn').forEach((b) => b.addEventListener('click', () => go(b.dataset.nav)));
   document.querySelector('.topbar').addEventListener('click', async (e) => {
     const a = e.target.closest('[data-action]')?.dataset.action;
@@ -172,10 +185,11 @@ async function main() {
     if (!search.value) Mail.setSearch('');
   });
   const [nav, sub] = location.hash.replace('#', '').split('/');
-  if (!state.boot.accounts.length) go('settings', 'accounts');
+  if (!state.boot.accounts.length && !MODULES[nav]) go('settings', 'accounts');
   else go(MODULES[nav] ? nav : 'mail', sub || null);
   liveUpdates();
   shortcuts();
+  Messages.refreshBadge();
   if (!state.boot.accounts.length) {
     toast('Welcome! Add your first email account to get started.', { timeout: 7000 });
   }

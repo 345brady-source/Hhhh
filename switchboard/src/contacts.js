@@ -1,4 +1,5 @@
 import { all, get, run, tx } from './db.js';
+import { searchAddressBook } from './addressbook.js';
 
 const BULK = /^(no-?reply|do-?not-?reply|notifications?|mailer-daemon|postmaster|bounce|news(letter)?|info|support|alerts?|updates?)([+._-].*)?@/i;
 
@@ -31,7 +32,38 @@ export function recordSent(recipients) {
   });
 }
 
+/** People to email: mail contacts plus address-book entries that have an email address. */
 export function searchContacts(q = '', limit = 20) {
+  const mailRows = searchMailContacts(q, limit);
+  const have = new Set(mailRows.map((r) => r.email.toLowerCase()));
+  const book = [];
+  for (const p of searchAddressBook(q, limit)) {
+    for (const email of p.emails) {
+      if (have.has(email.toLowerCase())) {
+        const m = mailRows.find((r) => r.email.toLowerCase() === email.toLowerCase());
+        if (m && !m.name) m.name = p.name;
+        if (m) m.phone = m.phone || p.phones[0]?.value || '';
+        continue;
+      }
+      have.add(email.toLowerCase());
+      book.push({ id: p.id, email, name: p.name, phone: p.phones[0]?.value || '', company: p.company, notes: p.notes, timesSent: 0, timesReceived: 0, lastSeen: null, manual: 0, source: 'address book' });
+    }
+  }
+  return [...mailRows, ...book].slice(0, limit);
+}
+
+/** Everyone, including address-book entries with only a phone number (for texts and the People page). */
+export function searchPeople(q = '', limit = 50) {
+  const people = searchAddressBook(q, limit);
+  const emails = new Set(people.flatMap((p) => p.emails.map((e) => e.toLowerCase())));
+  for (const c of searchMailContacts(q, limit)) {
+    if (emails.has(c.email.toLowerCase())) continue;
+    people.push({ id: c.id, name: c.name || '', company: c.company || '', notes: c.notes || '', emails: [c.email], phones: c.phone ? [{ type: '', value: c.phone }] : [], source: 'mail', timesSent: c.timesSent, timesReceived: c.timesReceived, lastSeen: c.lastSeen, manual: c.manual });
+  }
+  return people.slice(0, limit);
+}
+
+function searchMailContacts(q = '', limit = 20) {
   const s = `%${String(q).trim().toLowerCase()}%`;
   return all(
     `SELECT id, email, name, phone, company, notes, times_sent AS timesSent, times_received AS timesReceived, last_seen AS lastSeen, manual

@@ -149,8 +149,16 @@ async function doSync(id, { inboxOnly = false, calendars = true, folderId = null
       error = Object.assign(e, { calendar: true });
     }
   }
+  if (!error && calendars && !inboxOnly && !folderId && account.config?.carddavUrl) {
+    try {
+      const { syncAddressBook } = await import('./addressbook.js');
+      await syncAddressBook(id);
+    } catch (e) {
+      error = Object.assign(e, { contacts: true });
+    }
+  }
   if (error) {
-    const msg = (error.calendar ? 'Calendar: ' : '') + friendlyError(error);
+    const msg = (error.calendar ? 'Calendar: ' : error.contacts ? 'Contacts: ' : '') + friendlyError(error);
     const status = error.auth || error.authenticationFailed || error.status === 401 ? 'auth_error' : 'error';
     setStatus(id, getAccountRow(id)?.status === 'auth_error' ? 'auth_error' : status, msg);
   } else {

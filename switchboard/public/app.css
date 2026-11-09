@@ -64,6 +64,9 @@ svg.ico { width: 18px; height: 18px; flex: none; stroke: currentColor; fill: non
 .rail-btn:hover { background: var(--hover); color: var(--text); }
 .rail-btn.active { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
 .rail-label { font-size: 11px; }
+.rail-btn { position: relative; }
+.rail-btn[hidden] { display: none; }
+.rail-badge { position: absolute; top: 3px; right: 7px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 10.5px; font-weight: 700; line-height: 17px; text-align: center; }
 .rail-spacer { flex: 1; }
 
 .topbar { grid-column: 2 / 4; display: flex; align-items: center; gap: 12px; padding: 0 14px; background: var(--surface); border-bottom: 1px solid var(--border); }
@@ -400,6 +403,63 @@ table.tbl tr.click:hover td { background: var(--hover); cursor: pointer; }
 .toast { background: #1f2328; color: #fff; padding: 9px 14px; border-radius: 8px; box-shadow: var(--shadow-lg); font-size: 13.5px; display: flex; gap: 12px; align-items: center; pointer-events: auto; max-width: min(560px, 92vw); }
 .toast.err { background: #8f1d2c; }
 .toast button { background: none; border: 0; color: #9cd0ff; cursor: pointer; font-weight: 600; padding: 0; }
+
+/* Messages (texts) */
+:root { --bubble-me: #0a84ff; --bubble-sms: #30b350; --bubble-them: #e9e9eb; --bubble-them-text: #1b1f24; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bubble-them: #2c2f34; --bubble-them-text: #e8eaed; } }
+:root[data-theme="dark"] { --bubble-them: #2c2f34; --bubble-them-text: #e8eaed; }
+.texts { display: grid; grid-template-columns: minmax(280px, 360px) 1fr; height: 100%; min-height: 0; }
+.tlist { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--border); background: var(--surface); }
+.tsearch { display: flex; align-items: center; gap: 6px; margin: 8px 10px; padding: 0 9px; height: 32px; border-radius: 8px; background: var(--surface-3); color: var(--text-3); }
+.tsearch input { flex: 1; min-width: 0; border: 0; background: none; outline: none; color: var(--text); height: 100%; }
+.convs { flex: 1; overflow-y: auto; }
+.conv { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: none; padding: 9px 12px; border-bottom: 1px solid var(--border); cursor: pointer; color: inherit; position: relative; }
+.conv:hover { background: var(--hover); }
+.conv.selected { background: var(--selected); }
+.conv .grow { flex: 1; min-width: 0; }
+.conv .when { font-size: 12px; color: var(--text-3); white-space: nowrap; }
+.conv .prev { font-size: 13px; color: var(--text-3); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.35; margin-top: 1px; }
+.conv.unread strong { font-weight: 700; }
+.conv.unread .prev { color: var(--text-2); }
+.conv .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bubble-me); flex: none; }
+.conv mark { background: var(--warn-soft); color: inherit; border-radius: 2px; }
+.ellip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tthread { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--surface); }
+.thead { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--border); }
+.thead .grow { flex: 1; min-width: 0; }
+.thead .tn { font-weight: 650; font-size: 15px; }
+.bubbles { flex: 1; overflow-y: auto; padding: 14px 16px 10px; display: flex; flex-direction: column; gap: 3px; }
+.tstamp { text-align: center; font-size: 11.5px; color: var(--text-3); margin: 12px 0 6px; }
+.treact { text-align: center; font-size: 12px; color: var(--text-3); font-style: italic; margin: 2px 0; }
+.tmsg { display: flex; flex-direction: column; max-width: min(72%, 560px); }
+.tmsg.me { align-self: flex-end; align-items: flex-end; }
+.tmsg.them { align-self: flex-start; align-items: flex-start; }
+.tname { font-size: 11.5px; color: var(--text-3); margin: 6px 0 2px 10px; }
+.bubble { padding: 7px 12px; border-radius: 18px; font-size: 14.5px; line-height: 1.38; white-space: normal; overflow-wrap: anywhere; }
+.tmsg.me .bubble { background: var(--bubble-me); color: #fff; border-bottom-right-radius: 6px; }
+.tmsg.me.sms .bubble { background: var(--bubble-sms); }
+.tmsg.them .bubble { background: var(--bubble-them); color: var(--bubble-them-text); border-bottom-left-radius: 6px; }
+.tmsg.me .bubble a { color: #fff; }
+.timg { display: block; max-width: 260px; max-height: 320px; border-radius: 14px; margin: 2px 0; border: 1px solid var(--border); }
+.tfile { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 12px; margin: 2px 0; }
+.tcompose { display: flex; align-items: flex-end; gap: 8px; padding: 10px 14px 14px; border-top: 1px solid var(--border); }
+.tcompose textarea { flex: 1; resize: none; border: 1px solid var(--border-strong); border-radius: 18px; padding: 8px 14px; font: inherit; font-size: 14.5px; line-height: 1.35; background: var(--surface); color: var(--text); outline: none; max-height: 140px; }
+.tcompose textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.tcompose .send { width: 36px; height: 36px; border-radius: 50%; border: 0; background: var(--bubble-me); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: none; }
+.tcompose .send.sms { background: var(--bubble-sms); }
+.setup-card ol.steps { padding-left: 20px; margin: 10px 0 0; }
+.setup-card ol.steps li { margin: 6px 0; }
+.sugg-list { display: flex; flex-direction: column; margin-top: 6px; max-height: 260px; overflow-y: auto; }
+.sugg { text-align: left; border: 0; background: none; padding: 7px 8px; border-radius: 6px; cursor: pointer; color: inherit; }
+.sugg:hover { background: var(--hover); }
+@media (max-width: 860px) {
+  .texts { grid-template-columns: 1fr; }
+  .texts.has-chat .tlist { display: none; }
+  .texts:not(.has-chat) .tthread { display: none; }
+  .thead .claude-btn span:last-child { display: none; }
+  .tmsg { max-width: 84%; }
+  .rail-badge { right: calc(50% - 22px); }
+}
 
 .mobile-only { display: none; }
 @media (max-width: 1100px) {

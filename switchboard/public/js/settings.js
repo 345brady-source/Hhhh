@@ -43,6 +43,11 @@ async function save(patch, msg = 'Saved') {
     await api('/api/settings', { method: 'PATCH', body: patch });
     await refreshBoot();
     applyTheme();
+    document.querySelector('.rail-btn[data-nav="messages"]')?.toggleAttribute('hidden', state.boot.texts?.reason === 'off');
+    if ('textsEnabled' in patch) {
+      const el = root?.querySelector('#texts-status');
+      if (el) el.textContent = state.boot.texts?.available ? 'Connected to Messages on this Mac.' : state.boot.texts?.message || '';
+    }
     if (msg) toast(msg);
   } catch (e) {
     toast(e.message, { error: true });
@@ -105,6 +110,7 @@ function addAccount() {
     title: 'Add an email account',
     wide: true,
     body: `<div class="choice-grid">
+      <button class="choice" data-t="icloud" style="grid-column:1/-1"><span class="logo" style="background:#1f2937">${icon('globe')}</span><span><div class="t">Apple iCloud</div><div class="d">iCloud Mail, Calendars and Contacts in one step, with an app-specific password. Contacts also put names on your texts.</div></span></button>
       <button class="choice" data-t="gmail"><span class="logo" style="background:${TYPE.gmail.color}">G</span><span><div class="t">Google</div><div class="d">Gmail and Google Workspace. Mail, labels and Google Calendar.</div></span></button>
       <button class="choice" data-t="microsoft"><span class="logo" style="background:${TYPE.microsoft.color}">M</span><span><div class="t">Microsoft</div><div class="d">Outlook.com, Hotmail, Live and Microsoft 365. Mail and Outlook calendar.</div></span></button>
       <button class="choice" data-t="imap"><span class="logo" style="background:${TYPE.imap.color}">${icon('mail')}</span><span><div class="t">Other — IMAP</div><div class="d">Yahoo, iCloud, AOL, Fastmail, Zoho, your domain or work server. Keeps mail in sync on the server.</div></span></button>
@@ -119,6 +125,7 @@ function addAccount() {
     if (t === 'gmail') oauthSignIn('google');
     else if (t === 'microsoft') oauthSignIn('microsoft');
     else if (t === 'caldav') caldavAccount();
+    else if (t === 'icloud') icloudAccount();
     else manualAccount(t);
   });
 }
@@ -313,6 +320,51 @@ function manualAccount(type, existing = null) {
     } catch (e) {
       toast(e.message, { error: true });
     } finally {
+      btn.disabled = false;
+    }
+  };
+}
+
+function icloudAccount() {
+  const m = modal({
+    title: 'Connect iCloud',
+    wide: true,
+    body: `<ol class="steps">
+        <li>Go to <a href="https://account.apple.com/account/manage" target="_blank" rel="noopener">account.apple.com</a> → <strong>Sign-In and Security</strong> → <strong>App-Specific Passwords</strong>, and create one called “Switchboard”. (Two-factor authentication must be on.)</li>
+        <li>Paste it below. Your normal Apple ID password won’t work here, and Switchboard never sees it.</li>
+      </ol>
+      <div class="grid2">
+        <div><label class="lbl">iCloud email address</label><input class="field" data-f="email" placeholder="you@icloud.com"></div>
+        <div><label class="lbl">Apple ID (only if different)</label><input class="field" data-f="appleId" placeholder="Leave blank if it’s the same address"></div>
+      </div>
+      <div class="grid2">
+        <div><label class="lbl">App-specific password</label><input class="field" type="password" data-f="password" placeholder="xxxx-xxxx-xxxx-xxxx" autocomplete="off"></div>
+        <div><label class="lbl">Your name on outgoing mail</label><input class="field" data-f="displayName"></div>
+      </div>
+      <div class="row" style="flex-wrap:wrap;gap:4px 18px;margin-top:6px">
+        <label class="check"><input type="checkbox" data-f="mail" checked> Mail</label>
+        <label class="check"><input type="checkbox" data-f="calendar" checked> Calendars</label>
+        <label class="check"><input type="checkbox" data-f="contacts" checked> Contacts</label>
+      </div>
+      <div data-result></div>`,
+    footer: '<button class="btn" data-x="cancel">Cancel</button><button class="btn primary" data-x="save">Connect iCloud</button>',
+  });
+  const f = (k) => m.el.querySelector(`[data-f="${k}"]`);
+  m.el.querySelector('[data-x="cancel"]').onclick = () => m.close();
+  m.el.querySelector('[data-x="save"]').onclick = async () => {
+    const btn = m.el.querySelector('[data-x="save"]');
+    const result = m.el.querySelector('[data-result]');
+    btn.disabled = true;
+    result.innerHTML = '<div class="test-result">Connecting to iCloud…</div>';
+    try {
+      const r = await api('/api/accounts/icloud', { method: 'POST', body: { email: f('email').value, appleId: f('appleId').value, password: f('password').value, displayName: f('displayName').value, label: 'iCloud', mail: f('mail').checked, calendar: f('calendar').checked, contacts: f('contacts').checked } });
+      m.close();
+      await refreshBoot();
+      const parts = [r.report.mail ? 'mail' : null, r.report.calendars != null ? `${r.report.calendars} calendar(s)` : null, r.report.addressBooks != null ? 'contacts' : null].filter(Boolean);
+      toast(`iCloud connected — ${parts.join(', ')}. Syncing now…`);
+      render();
+    } catch (e) {
+      result.innerHTML = `<div class="test-result err">${esc(e.message)}</div>`;
       btn.disabled = false;
     }
   };
@@ -611,7 +663,15 @@ function renderGeneral(body) {
       <label class="check"><input type="checkbox" data-b="imapPush" ${s.imapPush !== false ? 'checked' : ''}> Instant new-mail alerts for IMAP accounts (keeps a connection open)</label>
       <p class="hint">Older mail stays on your servers and can still be found with “Search the mail servers”. Data folder: <code>${esc(state.boot.dataDir)}</code></p>
     </div>
+    <div class="card"><h3>${icon('chat', 'sm')} Texts</h3>
+      <label class="check"><input type="checkbox" data-b="textsEnabled" ${s.textsEnabled !== false ? 'checked' : ''}> Show my iMessages and SMS in Switchboard and let Claude read and send them (needs Switchboard on a Mac signed in to Messages)</label>
+      <p class="hint" id="texts-status"></p>
+    </div>
     ${state.boot.hosted?.login ? `<div class="card"><h3>Hosted</h3><p class="muted small">Switchboard is running as a hosted app${state.boot.hosted.publicUrl ? ` at ${esc(state.boot.hosted.publicUrl)}` : ''} and asks for the password on new devices.</p><a class="btn" href="/logout">Sign out of this device</a></div>` : ''}`;
+  api('/api/texts/status').then((st) => {
+    const el = body.querySelector('#texts-status');
+    if (el) el.textContent = st.available ? 'Connected to Messages on this Mac.' : st.message;
+  }).catch(() => {});
   body.querySelectorAll('[data-s]').forEach((el) => el.addEventListener('change', () => save({ [el.dataset.s]: el.value })));
   body.querySelectorAll('[data-n]').forEach((el) => el.addEventListener('change', () => save({ [el.dataset.n]: Number(el.value) })));
   body.querySelectorAll('[data-b]').forEach((el) =>

@@ -1,9 +1,11 @@
 # Switchboard
 
-An Outlook-style email and calendar app that holds all of your email accounts at once — Gmail, Microsoft (Outlook.com / Microsoft 365), any IMAP or POP3 mailbox, and CalDAV calendars (iCloud, Fastmail, Nextcloud…) — merges every calendar into one master calendar, and is built to be driven by Claude.
+An Outlook-style email and calendar app that holds all of your email accounts at once — Gmail, Microsoft (Outlook.com / Microsoft 365), iCloud, any IMAP or POP3 mailbox, and CalDAV calendars (Fastmail, Nextcloud…) — merges every calendar into one master calendar, shows your texts when it runs on a Mac, and is built to be driven by Claude.
 
 - **Every account in one place.** No account limit. All inboxes merge into “All inboxes”; each account keeps its own folders, color and signature.
 - **One master calendar.** Google, Outlook and CalDAV calendars, calendars kept on this computer, and web subscriptions, shown together and edited in place. Repeating events, reminders, invitations.
+- **iCloud in one step.** Mail, calendars and contacts with one app-specific password.
+- **Texts, on a Mac.** Read and reply to your iMessages and SMS, and let Claude do it with your approval (see [Texts](#texts-imessage-and-sms)).
 - **Claude, two ways.** A Claude panel inside the app (Ctrl+K), and an MCP server, so Claude Desktop and Claude Code can read your mail and manage your calendar directly. “Add dentist Tuesday at 3 to my personal calendar” works from either.
 
 Mail, tokens and passwords stay on the computer that runs Switchboard; passwords and tokens are stored encrypted.
@@ -74,9 +76,12 @@ Hosting is meant for one person’s own mail. Don’t share the password; anyone
 |---|---|---|
 | Gmail / Google Workspace | Google sign-in (OAuth) | Mail and labels (Gmail API), Google Calendar, drafts |
 | Outlook.com, Hotmail, Live, Microsoft 365 | Microsoft sign-in (OAuth) | Mail and folders, Outlook calendars, drafts (Microsoft Graph) |
-| IMAP (Yahoo, iCloud, AOL, Fastmail, Zoho, GMX, your domain…) | Server settings and password | Mail, folders and drafts both ways. Calendars over CalDAV when available, else a calendar on this computer |
+| Apple iCloud | Email, Apple ID and an app-specific password | Mail, folders and drafts (IMAP), iCloud Calendars (CalDAV), iCloud Contacts (CardDAV) |
+| IMAP (Yahoo, AOL, Fastmail, Zoho, GMX, your domain…) | Server settings and password | Mail, folders and drafts both ways. Calendars over CalDAV when available, else a calendar on this computer |
 | POP3 | Server settings and password | Mail downloaded to this computer. Calendar over CalDAV, or on this computer |
 | CalDAV calendar only (iCloud, Fastmail, Nextcloud, Radicale…) | Server address and password | Calendars, both ways |
+
+**iCloud.** Choose **Settings → Accounts → Add account → Apple iCloud**. Apple doesn’t let other apps use your Apple ID password, so first make an app-specific password: sign in at [account.apple.com](https://account.apple.com), open **Sign-In and Security → App-Specific Passwords**, click **+**, and name it “Switchboard”. Enter your iCloud email address, your Apple ID (if it’s a different address), and that password. Switchboard connects mail, calendars and contacts together and tells you what it found. Contacts are read-only here (edit them on your phone or at icloud.com); they fill in compose autocomplete and put names on your texts.
 
 **IMAP and POP3.** Type the email address and Switchboard fills in the mail server settings and, for iCloud, Yahoo, Fastmail, Zoho and AOL, the CalDAV calendar server, from built-in presets, DNS records, or a best guess. Yahoo, iCloud, AOL and Fastmail require an *app password*. Click **Test connection** before saving. If an address actually belongs to Google Workspace or Microsoft 365, Switchboard says so and offers the sign-in button instead.
 
@@ -123,8 +128,10 @@ Examples:
 - “Reply to Dana that Tuesday works, and send it tomorrow at 8am.”
 - “Move anything from LinkedIn into a Social folder and mark it read — from now on, too.”
 - “Accept the planning meeting invite.”
+- “Any texts I haven’t answered? Tell Sam I’ll grab milk on the way home.” (on a Mac)
+- “Put the dentist appointment from that text on the family calendar.”
 
-Before Claude sends an email, deletes something, or answers an invitation, the panel shows the action for you to approve. For an email you can edit the text before sending. You can change this in Settings: ask before any change, or never ask.
+Before Claude sends an email or a text, deletes something, or answers an invitation, the panel shows the action for you to approve. For an email or a text you can edit the wording before sending. You can change this in Settings: ask before any change, or never ask.
 
 The model defaults to Claude Opus 5.5. Sonnet 5.5, Haiku 5.5 and Fable 5.1 are available in Settings.
 
@@ -171,6 +178,19 @@ Everything Claude does, from either place, is listed in **Settings → Activity*
 - **Subscriptions:** any `webcal://` or `.ics` link. Calendars can be exported as `.ics`.
 - **Free time** is found across all calendars within your working hours.
 
+## Texts (iMessage and SMS)
+
+Apple has no public iMessage API, so texts work only when Switchboard runs **on a Mac that is signed in to Messages**. On Windows, Linux, a server or Docker, everything else works and the Messages page explains this. When it runs on a Mac:
+
+1. Open **Messages** and sign in with your Apple ID.
+2. For green-bubble SMS: on your iPhone, **Settings → Apps → Messages → Text Message Forwarding**, and turn on your Mac.
+3. Give **Full Disk Access** to the app that starts Switchboard: **System Settings → Privacy & Security → Full Disk Access**, then turn on **Terminal** (or iTerm), or **Claude** if Claude Desktop starts Switchboard. Restart Switchboard.
+4. The first time you send a text, macOS asks whether Switchboard may control Messages. Choose **OK** (later: **Privacy & Security → Automation**).
+
+Switchboard then reads your Messages history from `~/Library/Messages/chat.db` (read-only) and sends by asking the Messages app to send, so texts also appear on your iPhone. The **Messages** page lists conversations with unread counts, shows bubbles, reactions and photos, searches your texts, and starts new conversations (also from **People**). New texts raise a notification. Names come from your synced address book (iCloud Contacts).
+
+Claude gets four more tools: `list_text_conversations`, `read_text_conversation`, `search_texts` and `send_text`. The in-app panel asks you to approve every text and lets you edit it first. Texts are treated as untrusted content, like email. Turn texts off in **Settings → General → Texts**; Claude then loses the texting tools too.
+
 ## Mail features
 
 Unified inbox, per-account folders with unread counts, Unread / Flagged / Sent / Drafts / Scheduled views across accounts, Gmail-style search (`from:` `to:` `subject:` `has:attachment` `has:invite` `is:unread` `is:flagged` `in:` `account:` `after:` `before:` `newer_than:7d`) with an option to also search the servers for older mail, conversation view, reply / reply all / forward, rich-text compose with attachments (drag and drop) and contact autocomplete, per-account signatures, **undo send**, **send later**, **drafts kept in the account’s Drafts folder** (start on your phone, finish here), **rules** that sort new mail (move, mark read, flag, archive, delete, forward), multi-select, drag to folders, archive, move, flag, new folders, an address book built from your mail, desktop notifications, light and dark themes, a phone-sized layout, and keyboard shortcuts (press `?`).
@@ -182,7 +202,8 @@ IMAP accounts get new mail instantly (IMAP IDLE); others are checked every 5 min
 - By default the server listens only on `127.0.0.1`. Every API call needs a random token that only the app page and the MCP bridge have. Requests carrying another `Host` header are refused, which blocks DNS-rebinding attacks. When hosted, a password login sits in front of everything as well.
 - Passwords, OAuth tokens and the Anthropic key are encrypted with AES-256-GCM. The key is kept in the data folder with owner-only permissions.
 - Email HTML has scripts and active content removed, then is shown in a sandboxed frame with no scripts. Pictures from the internet are blocked until you choose to show them.
-- Claude is told that email content is untrusted and not to follow instructions written inside emails. Sends and deletes need your approval by default.
+- Claude is told that email and text content is untrusted and not to follow instructions written inside them. Sends (email and texts) and deletes need your approval by default.
+- Texts are read straight from the Mac’s Messages database, read-only, and nothing about them leaves the computer except what you or Claude send. Keep in mind that a hosted Switchboard running on your Mac makes your texts reachable to anyone with the Switchboard password.
 
 ## Data
 
@@ -193,22 +214,24 @@ Everything lives in `~/.switchboard` (or `SWITCHBOARD_DATA_DIR`): the SQLite dat
 - Gmail and Microsoft support was built against the documented Gmail, Google Calendar and Microsoft Graph APIs and tested against mocked responses of those APIs, not live accounts. IMAP, POP3, SMTP and CalDAV were tested against real servers. Report anything the first live sign-in turns up.
 - The Docker image and compose file follow standard practice but were not built in the development environment (it has no Docker daemon); `npm start` and `service install` paths were run.
 - S/MIME encryption and signing are not supported.
+- Texts were tested against a stand-in for the Messages database (same tables and columns, including `attributedBody`) and a stand-in for `osascript`, not on a real Mac. Apple changes the Messages database now and then; report anything that looks off. Switchboard can’t mark texts read on your phone (the database is read-only); opening a conversation clears its unread count in Switchboard only. Sending photos and tapback reactions isn’t supported yet.
+- iCloud was tested against standard IMAP, CalDAV and CardDAV servers standing in for Apple’s, not a live iCloud account.
 
 ## Demo
 
-`demo/` holds a self-contained demo: the real web app plus `demo/backend.js`, which stands in for the server in the browser with sample data for ten accounts. When the demo is opened as a claude.ai artifact, its Claude panel uses the viewer's own Claude (through the artifact runtime) with the demo's mail and calendar as tools. Build it with `node scripts/build-demo.mjs` (output in `demo/dist/`).
+`demo/` holds a self-contained demo: the real web app plus `demo/backend.js`, which stands in for the server in the browser with sample data for ten accounts and a handful of text conversations. When the demo is opened as a claude.ai artifact, its Claude panel uses the viewer's own Claude (through the artifact runtime) with the demo's mail and calendar as tools. Build it with `node scripts/build-demo.mjs` (output in `demo/dist/`).
 
 ## Development
 
 ```
 bin/            switchboard.js (launcher, service install) and mcp-stdio.js (Claude Desktop/Code bridge)
-src/            server, sync engine, mail/calendar/contacts/rules services, iCalendar, recurrence, time zones
-src/providers/  imap, pop3, smtp, gmail, graph, caldav
+src/            server, sync engine, mail/calendar/contacts/rules services, texts (messages.js), address book, iCalendar, vCard, recurrence, time zones
+src/providers/  imap, pop3, smtp, gmail, graph, caldav, carddav
 src/claude/     tools.js (shared tool definitions), mcp.js, assistant.js
 public/         the web app (no build step)
 demo/           in-browser demo backend and page shell; scripts/build-demo.mjs assembles demo/dist
 deploy/         docker-compose.yml (with Caddy for HTTPS) and .env.example
-test/           unit, feature, provider (mocked Gmail/Graph), CalDAV, end-to-end, hosting and browser tests
+test/           unit, feature, provider (mocked Gmail/Graph), CalDAV, iCloud/CardDAV, texts, end-to-end, hosting and browser tests
 ```
 
 ```sh
@@ -216,4 +239,4 @@ sudo npm run test:servers   # once per machine (Debian/Ubuntu): Dovecot IMAP/POP
 npm test
 ```
 
-`test/setup-servers.sh` installs and starts Dovecot (IMAPS 10993, POP3S 10995, users `user1@test.local`…`user12@test.local`) and Radicale (CalDAV on 5232). Tests that need those servers, or Playwright for the browser tests, skip themselves when they are missing. The full suite (49 tests) connects 12 accounts at once, checks flags/moves/deletes/rules/drafts on the IMAP server, sends mail between accounts, syncs CalDAV both ways with repeating events and conflicting edits, drives the MCP server, runs the in-app assistant against a stand-in for the Claude API (approved and declined sends), checks the hosted login, and clicks through the UI in Chromium.
+`test/setup-servers.sh` installs and starts Dovecot (IMAPS 10993, POP3S 10995, users `user1@test.local`…`user12@test.local`) and Radicale (CalDAV and CardDAV on 5232). Tests that need those servers, or Playwright for the browser tests, skip themselves when they are missing. The full suite (62 tests) connects 12 accounts at once, sets up iCloud against stand-in servers and syncs contacts, checks flags/moves/deletes/rules/drafts on the IMAP server, sends mail between accounts, syncs CalDAV both ways with repeating events and conflicting edits, drives the MCP server, runs the in-app assistant against a stand-in for the Claude API (approved and declined sends), reads and sends texts through a stand-in Messages database and `osascript` (`SWITCHBOARD_MESSAGES_DB`, `SWITCHBOARD_OSASCRIPT`), checks the hosted login, and clicks through the UI in Chromium.

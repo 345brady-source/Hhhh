@@ -166,6 +166,23 @@ CREATE TABLE IF NOT EXISTS contacts (
   manual INTEGER NOT NULL DEFAULT 0
 );
 
+CREATE TABLE IF NOT EXISTS text_seen (chat_id INTEGER PRIMARY KEY, last_rowid INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS address_book (
+  id INTEGER PRIMARY KEY,
+  account_id INTEGER REFERENCES accounts(id) ON DELETE CASCADE,
+  href TEXT,
+  etag TEXT,
+  uid TEXT,
+  name TEXT,
+  company TEXT,
+  notes TEXT,
+  emails_json TEXT NOT NULL DEFAULT '[]',
+  phones_json TEXT NOT NULL DEFAULT '[]',
+  phone_keys TEXT NOT NULL DEFAULT '',   -- " 5551234567 " style keys for phone lookups
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  UNIQUE(account_id, href)
+);
+
 CREATE TABLE IF NOT EXISTS drafts (
   id INTEGER PRIMARY KEY,
   account_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL,

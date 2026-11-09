@@ -250,6 +250,7 @@ export async function testSettings({ type, email, config, secrets }) {
 }
 
 export function friendlyError(e) {
+  if (e?.friendly) return String(e.message);
   const msg = String(e?.responseText || e?.response || e?.message || e);
   if (e?.authenticationFailed || /auth|login|credentials|password|535|AUTHENTICATIONFAILED/i.test(msg)) {
     return `Sign-in was rejected (${msg.slice(0, 160)}). Check the username and password. Many providers (Yahoo, iCloud, AOL, Gmail via IMAP) require an app password.`;
@@ -258,6 +259,74 @@ export function friendlyError(e) {
   if (/ECONNREFUSED|ETIMEDOUT|timed out|Timeout/i.test(msg)) return `Could not connect (${msg.slice(0, 120)}). Check the server name, port and security setting.`;
   if (/certificate|self.signed|SSL|TLS|wrong version/i.test(msg)) return `Secure connection failed (${msg.slice(0, 160)}). Check the port and security setting.`;
   return msg.slice(0, 300);
+}
+
+// iCloud: mail, calendars and contacts with one app-specific password ---------------------------
+
+export const ICLOUD_SERVERS = {
+  imap: { host: 'imap.mail.me.com', port: 993, security: 'ssl' },
+  smtp: { host: 'smtp.mail.me.com', port: 587, security: 'starttls' },
+  caldav: 'https://caldav.icloud.com/',
+  carddav: 'https://contacts.icloud.com/',
+};
+
+/**
+ * Connect iCloud. email = the @icloud.com/@me.com address; appleId = the Apple ID if it is a different
+ * address (calendars and contacts sign in with the Apple ID). password = an app-specific password.
+ */
+export async function setupICloud({ email, appleId, password, displayName = '', label = 'iCloud', mail = true, calendar = true, contacts = true }, servers = ICLOUD_SERVERS) {
+  email = String(email || '').trim();
+  appleId = String(appleId || '').trim() || email;
+  if (!email.includes('@') && mail) throw new Error('Enter your iCloud email address.');
+  if (!password) throw new Error('Enter an app-specific password (appleid.apple.com → Sign-In and Security → App-Specific Passwords).');
+  if (!mail && !calendar && !contacts) throw new Error('Choose at least one of mail, calendars or contacts.');
+  const secrets = { password: String(password).trim() };
+  const config = {};
+  const report = {};
+  if (mail) {
+    // iCloud's IMAP accepts the full address or just the part before the @; try both.
+    let lastErr = null;
+    for (const user of [...new Set([email, email.split('@')[0]])]) {
+      const cfg = {
+        imapHost: servers.imap.host, imapPort: servers.imap.port, imapSecurity: servers.imap.security, imapUser: user,
+        smtpHost: servers.smtp.host, smtpPort: servers.smtp.port, smtpSecurity: servers.smtp.security, smtpUser: email,
+        ...(servers.allowSelfSigned ? { allowSelfSigned: true } : {}),
+      };
+      try {
+        await new ImapProvider({ id: 0, email, config: cfg }, secrets).test();
+        Object.assign(config, cfg);
+        lastErr = null;
+        break;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    if (lastErr) throw new Error(`iCloud Mail: ${friendlyError(lastErr)}`);
+    report.mail = 'connected';
+  }
+  if (calendar) {
+    const cfg = { caldavUrl: servers.caldav, caldavUser: appleId };
+    try {
+      const r = await new CalDavProvider({ email, config: cfg }, secrets).test();
+      Object.assign(config, cfg);
+      report.calendars = r.calendars;
+    } catch (e) {
+      throw new Error(`iCloud Calendars: ${friendlyError(e)}`);
+    }
+  }
+  if (contacts) {
+    const cfg = { carddavUrl: servers.carddav, carddavUser: appleId };
+    try {
+      const { testCardDav } = await import('./addressbook.js');
+      const r = await testCardDav(cfg, secrets, appleId);
+      Object.assign(config, cfg);
+      report.addressBooks = r.books;
+    } catch (e) {
+      throw new Error(`iCloud Contacts: ${friendlyError(e)}`);
+    }
+  }
+  const account = createAccount({ type: mail ? 'imap' : 'caldav', email: mail ? email : appleId, displayName, label, config, secrets });
+  return { account, report };
 }
 
 // Server presets ---------------------------------------------------------------------------

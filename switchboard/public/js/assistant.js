@@ -80,6 +80,7 @@ function renderContext() {
     const subj = document.querySelector('.reader h1')?.textContent;
     label = `About the open email${subj ? `: “${subj.slice(0, 50)}”` : ''}`;
   } else if (ctx?.eventId) label = 'About the selected event';
+  else if (ctx?.textConversationId) label = `About your texts with ${ctx.textWith || 'this conversation'}`;
   else if (ctx?.view) label = `Looking at: ${ctx.view}`;
   box.innerHTML = label ? `${icon('sparkle', 'sm')}<span>${esc(label)}</span>` : '';
 }
@@ -112,6 +113,7 @@ function itemHtml(it, i) {
 }
 
 function toolIcon(name) {
+  if (/text/.test(name)) return 'chat';
   if (/event|calendar|free_time|invite/.test(name)) return 'calendar';
   if (/send|draft/.test(name)) return 'send';
   if (/contact/.test(name)) return 'people';
@@ -124,7 +126,8 @@ function toolLabel(name) {
     read_thread: 'Reading the conversation…', send_email: 'Sending…', create_draft: 'Writing draft…', update_emails: 'Updating mail…',
     list_calendars: 'Checking calendars…', list_events: 'Checking your calendar…', create_event: 'Adding to calendar…', update_event: 'Updating event…',
     delete_event: 'Deleting event…', find_free_time: 'Finding free time…', add_invite_to_calendar: 'Adding invitation…', respond_to_invite: 'Responding…',
-    search_contacts: 'Looking up contacts…', sync_now: 'Checking for new mail…', list_accounts: 'Checking accounts…', list_folders: 'Checking folders…',
+    search_contacts: 'Looking up contacts…', sync_now: 'Checking for new mail…', list_text_conversations: 'Checking texts…', read_text_conversation: 'Reading texts…',
+    search_texts: 'Searching texts…', send_text: 'Sending text…', list_accounts: 'Checking accounts…', list_folders: 'Checking folders…',
   }[name] || 'Working…';
 }
 
@@ -138,6 +141,9 @@ function confirmHtml(it, i) {
       <dt>Subject</dt><dd>${esc(inp.subject || (inp.reply_to_id ? '(Re: original subject)' : inp.forward_id ? '(Fwd: original subject)' : ''))}</dd>
       ${it.emails?.length ? `<dt>${inp.reply_to_id ? 'Reply to' : 'Forward'}</dt><dd>${esc(it.emails[0])}</dd>` : ''}</dl>
       ${it.state === 'pending' ? `<textarea class="field" data-edit-body>${esc(inp.body || '')}</textarea>` : `<div class="small" style="white-space:pre-wrap">${esc(inp.body || '')}</div>`}`;
+  } else if (it.name === 'send_text') {
+    details = `<dl><dt>To</dt><dd>${esc(it.textTo || inp.to || '')}</dd></dl>
+      ${it.state === 'pending' ? `<textarea class="field" data-edit-body>${esc(inp.text || '')}</textarea>` : `<div class="small" style="white-space:pre-wrap">${esc(inp.text || '')}</div>`}`;
   } else if (it.event) {
     details = `<dl><dt>Event</dt><dd>${esc(it.event.title)}</dd><dt>When</dt><dd>${esc(it.event.when)}</dd><dt>Calendar</dt><dd>${esc(it.event.calendar)}</dd></dl>`;
   } else if (it.emails?.length) {
@@ -146,7 +152,7 @@ function confirmHtml(it, i) {
     details = `<pre class="code">${esc(JSON.stringify(inp, null, 1))}</pre>`;
   }
   const buttons = it.state === 'pending'
-    ? `<div class="row"><button class="btn sm primary" data-confirm="${i}" data-ok="1">${it.name === 'send_email' ? `${icon('send', 'sm')} Send` : 'Approve'}</button><button class="btn sm" data-confirm="${i}" data-ok="0">${it.name === 'send_email' ? 'Don’t send' : 'Decline'}</button></div>`
+    ? `<div class="row"><button class="btn sm primary" data-confirm="${i}" data-ok="1">${/^send_(email|text)$/.test(it.name) ? `${icon('send', 'sm')} Send` : 'Approve'}</button><button class="btn sm" data-confirm="${i}" data-ok="0">${/^send_(email|text)$/.test(it.name) ? 'Don’t send' : 'Decline'}</button></div>`
     : `<div class="small muted" style="margin-top:6px">${it.state === 'approved' ? 'Approved' : 'Declined'}</div>`;
   return `<div class="as-confirm ${it.state !== 'pending' ? 'done' : ''}"><div class="t">${esc(it.title)}</div>${details}${buttons}</div>`;
 }
@@ -178,11 +184,12 @@ async function onClick(e) {
   if (c) {
     const it = A.items[Number(c.dataset.confirm)];
     const approved = c.dataset.ok === '1';
-    const edited = it.name === 'send_email' ? el.querySelector('[data-edit-body]')?.value : undefined;
+    const field = it.name === 'send_email' ? 'body' : it.name === 'send_text' ? 'text' : null;
+    const edited = field ? c.closest('.as-confirm')?.querySelector('[data-edit-body]')?.value : undefined;
     it.state = approved ? 'approved' : 'declined';
-    if (edited != null) it.input = { ...it.input, body: edited };
+    if (edited != null) it.input = { ...it.input, [field]: edited };
     renderItems();
-    await api('/api/assistant/confirm', { method: 'POST', body: { requestId: it.requestId, approved, input: approved && edited != null && edited !== undefined ? { body: edited } : undefined } }).catch(() => {});
+    await api('/api/assistant/confirm', { method: 'POST', body: { requestId: it.requestId, approved, input: approved && edited != null ? { [field]: edited } : undefined } }).catch(() => {});
   }
 }
 

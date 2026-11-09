@@ -12,10 +12,11 @@ import * as cal from './calendar.js';
 import * as contacts from './contacts.js';
 import * as oauth from './oauth.js';
 import * as rules from './rules.js';
+import * as texts from './messages.js';
 import { events, syncAccount, syncAll, startScheduler, stopScheduler, isSyncing, syncSettings } from './sync.js';
 import { handleMcpHttp } from './claude/mcp.js';
 import * as assistant from './claude/assistant.js';
-import { TOOLS } from './claude/tools.js';
+import { activeTools } from './claude/tools.js';
 import { systemTimeZone, isValidTimeZone } from './time.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -27,7 +28,7 @@ const PUBLIC_SETTINGS = {
   syncIntervalMinutes: 5, syncWindowDays: 90, theme: 'system', density: 'comfortable', readingPane: 'right',
   loadRemoteImages: false, markReadOnOpen: true, notifications: true, imapPush: true, prefetchBodies: 200,
   googleClientId: '', microsoftClientId: '', microsoftTenant: '', assistantModel: assistant.DEFAULT_MODEL,
-  assistantEffort: 'medium', assistantConfirm: 'send_delete', mcpSendMode: 'send', calendarView: 'week', conversationView: true, undoSendSeconds: 5, defaultReminderMinutes: 15,
+  assistantEffort: 'medium', assistantConfirm: 'send_delete', mcpSendMode: 'send', calendarView: 'week', conversationView: true, undoSendSeconds: 5, defaultReminderMinutes: 15, textsEnabled: true,
 };
 const SECRET_SETTINGS = ['googleClientSecret', 'microsoftClientSecret'];
 
@@ -162,6 +163,7 @@ route('GET', '/api/bootstrap', () => ({
   counts: mail.counts(),
   settings: settingsPayload(),
   assistant: assistant.assistantStatus(),
+  texts: texts.textsStatus(),
   oauth: { google: oauth.isConfigured('google'), microsoft: oauth.isConfigured('microsoft'), googleRedirect: oauth.redirectUri('google'), microsoftRedirect: oauth.redirectUri('microsoft') },
   dataDir: DATA_DIR,
   hosted: { login: loginRequired(), publicUrl: PUBLIC_URL },
@@ -171,6 +173,13 @@ route('GET', '/api/bootstrap', () => ({
 route('GET', '/api/accounts', () => accounts.listAccounts());
 route('GET', '/api/accounts/suggest', async ({ query }) => accounts.suggestSettings(query.email));
 route('POST', '/api/accounts/test', async ({ body }) => accounts.testSettings(body));
+route('POST', '/api/accounts/icloud', async ({ body }) => {
+  const { account, report } = await accounts.setupICloud(body);
+  cal.ensureLocalCalendars();
+  syncAccount(account.id);
+  return { account, report };
+});
+route('GET', '/api/people', ({ query }) => contacts.searchPeople(query.q || '', Math.min(Number(query.limit) || 100, 1000)));
 route('POST', '/api/accounts', async ({ body }) => {
   if (!['imap', 'pop3', 'caldav'].includes(body.type)) throw Object.assign(new Error('Use "Sign in" for Gmail and Microsoft accounts.'), { status: 400 });
   const a = accounts.createAccount(body);
@@ -306,6 +315,49 @@ route('DELETE', '/api/contacts/:id', ({ params }) => {
   return { ok: true };
 });
 
+// Texts (Messages on a Mac)
+const textsReady = () => {
+  const st = texts.textsStatus();
+  if (!st.available) throw Object.assign(new Error(st.message), { status: 409, reason: st.reason, friendly: true });
+};
+route('GET', '/api/texts/status', () => {
+  const st = texts.textsStatus();
+  if (st.available) texts.startWatching(); // e.g. Full Disk Access was just granted
+  return st;
+});
+route('GET', '/api/texts/conversations', ({ query }) => {
+  textsReady();
+  return texts.listConversations({ limit: Math.min(Number(query.limit) || 60, 300), unreadOnly: query.unread === '1' });
+});
+route('GET', '/api/texts/conversations/:id', ({ params, query }) => {
+  textsReady();
+  const c = texts.getConversation(Number(params.id), { limit: Math.min(Number(query.limit) || 80, 500), before: query.before ? Number(query.before) : null });
+  if (query.seen === '1') texts.markSeen(c.id);
+  return c;
+});
+route('GET', '/api/texts/find', ({ query }) => {
+  textsReady();
+  return { conversationId: texts.conversationWith(String(query.handle || '')) };
+});
+route('GET', '/api/texts/search', ({ query }) => {
+  textsReady();
+  return texts.searchTexts(query.q || '', { limit: Math.min(Number(query.limit) || 40, 200) });
+});
+route('POST', '/api/texts/send', async ({ body }) => {
+  textsReady();
+  return texts.sendText({ conversationId: body.conversationId ? Number(body.conversationId) : null, to: body.to, text: body.text }, 'you');
+});
+route('GET', '/api/texts/attachments/:id', ({ params, res }) => {
+  textsReady();
+  const a = texts.attachmentFile(Number(params.id));
+  const inlineOk = /^image\/(png|jpe?g|gif|webp|heic)$/i.test(a.type);
+  send(res, 200, fs.readFileSync(a.file), {
+    'Content-Type': a.type,
+    'Content-Disposition': `${inlineOk ? 'inline' : 'attachment'}; filename="${a.name.replace(/["\\\r\n]/g, '_')}"; filename*=UTF-8''${encodeURIComponent(a.name)}`,
+    'Content-Security-Policy': "default-src 'none'; sandbox",
+  });
+});
+
 // Settings
 route('GET', '/api/settings', () => settingsPayload());
 route('PATCH', '/api/settings', ({ body }) => {
@@ -316,6 +368,7 @@ route('PATCH', '/api/settings', ({ body }) => {
     } else if (SECRET_SETTINGS.includes(k) && v != null) setSetting(k, v);
   }
   if ('syncIntervalMinutes' in body) startScheduler();
+  if ('textsEnabled' in body) body.textsEnabled ? texts.startWatching() : texts.stopWatching();
   return settingsPayload();
 });
 route('GET', '/api/activity', ({ query }) => all('SELECT * FROM activity ORDER BY id DESC LIMIT ?', Math.min(Number(query.limit) || 100, 500)));
@@ -325,7 +378,7 @@ route('GET', '/api/claude/setup', () => {
   const token = apiToken();
   const bin = path.resolve(here, '..', 'bin', 'mcp-stdio.js');
   return {
-    tools: TOOLS.map((t) => ({ name: t.name, description: t.description.split('. ')[0] + '.' })),
+    tools: activeTools().map((t) => ({ name: t.name, description: t.description.split('. ')[0] + '.' })),
     mcpUrl: `${PUBLIC_URL || `http://127.0.0.1:${PORT}`}/mcp`,
     claudeDesktop: { mcpServers: { switchboard: { command: process.execPath, args: [bin] } } },
     claudeCode: `claude mcp add --scope user switchboard -- "${process.execPath}" "${bin}"`,
@@ -487,7 +540,7 @@ export function createServer() {
 function liveStream(req, res) {
   const emit = sseStart(res);
   const handlers = {};
-  for (const ev of ['account', 'mail', 'newmail', 'calendar', 'reminder']) {
+  for (const ev of ['account', 'mail', 'newmail', 'calendar', 'reminder', 'contacts', 'texts', 'newtext']) {
     handlers[ev] = (data) => emit(ev, data);
     events.on(ev, handlers[ev]);
   }
@@ -520,10 +573,14 @@ export async function startApp({ quiet = false, scheduler = true } = {}) {
     server.once('error', reject);
     server.listen(PORT, HOST, resolve);
   });
-  if (scheduler) startScheduler();
+  if (scheduler) {
+    startScheduler();
+    texts.startWatching();
+  }
   if (!quiet) logActivity('you', 'app.start', `listening on ${HOST}:${PORT}`);
   const stop = async () => {
     stopScheduler();
+    texts.closeMessages();
     await accounts.closeAllProviders();
     server.close();
   };
