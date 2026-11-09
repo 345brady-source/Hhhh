@@ -194,6 +194,10 @@ Everything lives in `~/.switchboard` (or `SWITCHBOARD_DATA_DIR`): the SQLite dat
 - The Docker image and compose file follow standard practice but were not built in the development environment (it has no Docker daemon); `npm start` and `service install` paths were run.
 - S/MIME encryption and signing are not supported.
 
+## Demo
+
+`demo/` holds a self-contained demo: the real web app plus `demo/backend.js`, which stands in for the server in the browser with sample data for ten accounts. When the demo is opened as a claude.ai artifact, its Claude panel uses the viewer's own Claude (through the artifact runtime) with the demo's mail and calendar as tools. Build it with `node scripts/build-demo.mjs` (output in `demo/dist/`).
+
 ## Development
 
 ```
@@ -202,6 +206,7 @@ src/            server, sync engine, mail/calendar/contacts/rules services, iCal
 src/providers/  imap, pop3, smtp, gmail, graph, caldav
 src/claude/     tools.js (shared tool definitions), mcp.js, assistant.js
 public/         the web app (no build step)
+demo/           in-browser demo backend and page shell; scripts/build-demo.mjs assembles demo/dist
 deploy/         docker-compose.yml (with Caddy for HTTPS) and .env.example
 test/           unit, feature, provider (mocked Gmail/Graph), CalDAV, end-to-end, hosting and browser tests
 ```

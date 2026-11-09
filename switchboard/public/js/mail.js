@@ -3,6 +3,14 @@ import { state, refreshBoot, go } from './app.js';
 import * as Compose from './compose.js';
 import * as Assistant from './assistant.js';
 
+function readCollapsed() {
+  try {
+    return JSON.parse(localStorage.getItem('sb.collapsed') || '[]');
+  } catch {
+    return [];
+  }
+}
+
 const S = {
   scope: { view: 'unified' },
   filter: 'all',
@@ -15,7 +23,7 @@ const S = {
   lastClicked: null,
   current: null,
   showImages: new Set(),
-  collapsed: new Set(JSON.parse(localStorage.getItem('sb.collapsed') || '[]')),
+  collapsed: new Set(readCollapsed()),
   drafts: null,
 };
 let root = null;
@@ -388,7 +396,9 @@ function onClick(e) {
   if (tog) {
     const id = Number(tog.dataset.toggleAcct);
     S.collapsed.has(id) ? S.collapsed.delete(id) : S.collapsed.add(id);
-    localStorage.setItem('sb.collapsed', JSON.stringify([...S.collapsed]));
+    try {
+      localStorage.setItem('sb.collapsed', JSON.stringify([...S.collapsed]));
+    } catch {}
     return renderFolders();
   }
   const filt = t.closest('[data-filter]');
