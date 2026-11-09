@@ -1,7 +1,7 @@
 import { apiFetch } from './http.js';
 import { cleanMessageId, decodeEntities, htmlToText, mapLimit, parseAddressList, parseReferences } from '../mailutil.js';
 import { randomId } from '../crypto.js';
-import { wallTimeToUtc } from '../time.js';
+import { wallTimeToUtc, addDaysToDate } from '../time.js';
 
 const GMAIL = 'https://gmail.googleapis.com/gmail/v1/users/me';
 const GCAL = 'https://www.googleapis.com/calendar/v3';
@@ -198,6 +198,30 @@ export class GmailProvider {
     await this.api('/messages/batchModify', { method: 'POST', json: { ids: remoteIds, removeLabelIds: [folder.remote_id === 'INBOX' ? 'INBOX' : folder.remote_id] } });
   }
 
+  async saveDraft(raw, prev, { messageId }) {
+    const body = { message: { raw: raw.toString('base64url') } };
+    const r = prev?.draftId
+      ? await this.api(`/drafts/${prev.draftId}`, { method: 'PUT', json: { id: prev.draftId, ...body } }).catch((e) => (e.status === 404 ? this.api('/drafts', { method: 'POST', json: body }) : Promise.reject(e)))
+      : await this.api('/drafts', { method: 'POST', json: body });
+    return { type: 'gmail', draftId: r.id, messageId };
+  }
+
+  async deleteDraft(ref) {
+    if (ref?.draftId) await this.api(`/drafts/${ref.draftId}`, { method: 'DELETE' }).catch((e) => (e.status === 404 ? null : Promise.reject(e)));
+  }
+
+  /** The Gmail draft id for a message shown in the Drafts label. */
+  async draftIdFor(messageRemoteId) {
+    let pageToken;
+    do {
+      const r = await this.api(`/drafts?maxResults=500${pageToken ? `&pageToken=${pageToken}` : ''}`);
+      const d = (r.drafts || []).find((x) => x.message?.id === messageRemoteId);
+      if (d) return d.id;
+      pageToken = r.nextPageToken;
+    } while (pageToken);
+    return null;
+  }
+
   async createFolder(name) {
     const r = await this.api('/labels', { method: 'POST', json: { name, labelListVisibility: 'labelShow', messageListVisibility: 'show' } });
     return { remote_id: r.id };
@@ -292,6 +316,7 @@ export class GmailProvider {
       body.reminders = ev.reminder_minutes == null ? { useDefault: true } : { useDefault: false, overrides: [{ method: 'popup', minutes: ev.reminder_minutes }] };
     }
     if (ev.show_as !== undefined) body.transparency = ev.show_as === 'free' ? 'transparent' : 'opaque';
+    if (ev.rrule !== undefined) body.recurrence = ev.rrule ? [`RRULE:${ev.rrule}`] : [];
     if (ev.online_meeting) body.conferenceData = { createRequest: { requestId: randomId(8), conferenceSolutionKey: { type: 'hangoutsMeet' } } };
     return body;
   }
@@ -303,19 +328,46 @@ export class GmailProvider {
     return this.mapEvent(r, tz);
   }
 
-  async updateEvent(cal, remoteId, patch, tz) {
+  async updateEvent(cal, remoteId, patch, tz, { row, scope } = {}) {
+    if (scope === 'series' && row?.series_id) return this.updateSeries(cal, row, patch, tz);
     const q = new URLSearchParams({ sendUpdates: patch.notify === false ? 'none' : 'all' });
     if (patch.online_meeting) q.set('conferenceDataVersion', '1');
     const r = await this.capi(`/calendars/${encodeURIComponent(cal.remote_id)}/events/${encodeURIComponent(remoteId)}?${q}`, { method: 'PATCH', json: this.eventBody(patch) });
     return this.mapEvent(r, tz);
   }
 
-  async deleteEvent(cal, remoteId, { notify = true } = {}) {
+  /** Change every occurrence: edit the series' master event, shifting its times by the change made to this occurrence. */
+  async updateSeries(cal, row, patch, tz) {
+    const path = `/calendars/${encodeURIComponent(cal.remote_id)}/events/${encodeURIComponent(row.series_id)}`;
+    const master = await this.capi(path);
+    const p = { ...patch };
+    if (patch.start !== undefined) {
+      if (patch.all_day && master.start?.date) {
+        const days = Math.round((Date.parse(patch.start_date) - Date.parse(row.start_date || patch.start_date)) / 86400_000);
+        const len = Math.round((Date.parse(patch.end_date) - Date.parse(patch.start_date)) / 86400_000);
+        p.start_date = addDaysToDate(master.start.date, days);
+        p.end_date = addDaysToDate(p.start_date, len);
+      } else if (master.start?.dateTime) {
+        const shift = Date.parse(patch.start) - Date.parse(row.start);
+        const dur = Date.parse(patch.end) - Date.parse(patch.start);
+        const ms = Date.parse(master.start.dateTime) + shift;
+        p.start = new Date(ms).toISOString();
+        p.end = new Date(ms + dur).toISOString();
+      }
+      p.timezone = master.start?.timeZone || patch.timezone || tz;
+    }
+    await this.capi(`${path}?sendUpdates=${patch.notify === false ? 'none' : 'all'}`, { method: 'PATCH', json: this.eventBody(p) });
+    return { resync: true };
+  }
+
+  async deleteEvent(cal, remoteId, { notify = true, row, scope } = {}) {
+    if (scope === 'series' && row?.series_id) remoteId = row.series_id;
     try {
       await this.capi(`/calendars/${encodeURIComponent(cal.remote_id)}/events/${encodeURIComponent(remoteId)}?sendUpdates=${notify ? 'all' : 'none'}`, { method: 'DELETE' });
     } catch (e) {
       if (e.status !== 410 && e.status !== 404) throw e;
     }
+    return scope === 'series' ? { resync: true } : null;
   }
 
   async respondToEvent(cal, remoteId, response, tz) {

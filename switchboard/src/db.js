@@ -189,6 +189,33 @@ CREATE TABLE IF NOT EXISTS chats (
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
+CREATE TABLE IF NOT EXISTS rules (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  account_id INTEGER REFERENCES accounts(id) ON DELETE CASCADE, -- null = every account
+  match TEXT NOT NULL DEFAULT 'all',  -- all | any
+  conditions_json TEXT NOT NULL DEFAULT '[]',
+  actions_json TEXT NOT NULL DEFAULT '[]',
+  stop INTEGER NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  times_applied INTEGER NOT NULL DEFAULT 0,
+  created_by TEXT NOT NULL DEFAULT 'you',
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+
+CREATE TABLE IF NOT EXISTS outbox (
+  id INTEGER PRIMARY KEY,
+  account_id INTEGER REFERENCES accounts(id) ON DELETE CASCADE,
+  payload_json TEXT NOT NULL,
+  send_at TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'scheduled', -- scheduled | sending | sent | failed | canceled
+  error TEXT,
+  created_by TEXT NOT NULL DEFAULT 'you',
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+CREATE INDEX IF NOT EXISTS idx_outbox_due ON outbox(status, send_at);
+
 CREATE TABLE IF NOT EXISTS activity (
   id INTEGER PRIMARY KEY,
   ts TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
@@ -199,11 +226,23 @@ CREATE TABLE IF NOT EXISTS activity (
 CREATE INDEX IF NOT EXISTS idx_activity_ts ON activity(ts DESC);
 `;
 
+// Columns added after the first release; applied to existing databases on open.
+const MIGRATIONS = [
+  ['events', 'rrule', 'TEXT'],         // recurrence rule of the series this event belongs to
+  ['events', 'href', 'TEXT'],          // CalDAV resource URL
+  ['drafts', 'server_ref', 'TEXT'],    // where the draft is mirrored on the mail server
+  ['drafts', 'send_at', 'TEXT'],
+];
+
 export function openDb(file = DB_PATH) {
   if (db) return db;
   ensureDirs();
   db = new DatabaseSync(file);
   db.exec(SCHEMA);
+  for (const [table, col, type] of MIGRATIONS) {
+    const cols = db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
+    if (!cols.includes(col)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${type}`);
+  }
   return db;
 }
 

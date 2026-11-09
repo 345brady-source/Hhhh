@@ -224,3 +224,118 @@ test('OAuth token refresh: expired tokens are refreshed once and saved; revoked 
   await assert.rejects(accounts.providerFor(b.id).test(), /revoked/);
   assert.equal(accounts.getAccount(b.id).status, 'auth_error');
 });
+
+test('Google: repeating events are created with an RRULE; series edits and deletes go to the master event', async () => {
+  const instances = [];
+  let master = null;
+  routes = [
+    ['GET', /calendar\/v3\/users\/me\/calendarList/, () => ({ items: [{ id: 'rec@gmail.com', summary: 'rec@gmail.com', primary: true, accessRole: 'owner' }] })],
+    ['GET', /calendar\/v3\/calendars\/rec%40gmail.com\/events\/M1$/, () => master],
+    ['GET', /calendar\/v3\/calendars\/rec%40gmail.com\/events\?/, () => ({ items: instances })],
+    ['POST', /calendar\/v3\/calendars\/rec%40gmail.com\/events\?/, (u, o) => {
+      const b = JSON.parse(o.body);
+      master = { id: 'M1', status: 'confirmed', summary: b.summary, start: b.start, end: b.end, recurrence: b.recurrence };
+      for (let i = 0; i < 3; i++) {
+        const s = new Date(Date.parse(b.start.dateTime) + i * 7 * 86400_000);
+        instances.push({ id: `M1_${i}`, recurringEventId: 'M1', status: 'confirmed', summary: b.summary, start: { dateTime: s.toISOString() }, end: { dateTime: new Date(s.getTime() + 3600_000).toISOString() } });
+      }
+      return master;
+    }],
+    ['PATCH', /calendar\/v3\/calendars\/rec%40gmail.com\/events\/M1\?/, (u, o) => {
+      const b = JSON.parse(o.body);
+      const shift = Date.parse(b.start.dateTime) - Date.parse(master.start.dateTime);
+      master = { ...master, ...b };
+      for (const x of instances) {
+        x.start = { dateTime: new Date(Date.parse(x.start.dateTime) + shift).toISOString() };
+        x.end = { dateTime: new Date(Date.parse(x.end.dateTime) + shift).toISOString() };
+      }
+      return master;
+    }],
+    ['DELETE', /calendar\/v3\/calendars\/rec%40gmail.com\/events\/M1\?/, () => { instances.length = 0; return null; }],
+  ];
+  const a = accounts.createAccount({ type: 'gmail', email: 'rec@gmail.com', secrets: { tokens } });
+  await cal.syncAccountCalendars(a.id);
+  calls.length = 0;
+  const r = await cal.createEvent({ title: '1:1', start: '2026-11-10T10:00', duration_minutes: 60, calendar: 'rec@gmail.com', recurrence: { frequency: 'weekly', count: 3 } });
+  const post = JSON.parse(calls.find((c) => c.method === 'POST').body);
+  assert.deepEqual(post.recurrence, ['RRULE:FREQ=WEEKLY;BYDAY=TU;COUNT=3']);
+  assert.equal(post.start.timeZone, 'America/New_York');
+  assert.equal(r.event.title, '1:1');
+  assert.equal(r.event.startLocal, '2026-11-10T10:00:00-05:00');
+  const mine = () => cal.listEvents({ from: '2026-11-01', to: '2026-12-31' }).filter((e) => e.accountEmail === 'rec@gmail.com');
+  assert.equal(mine().length, 3);
+  // Move the whole series from 10:00 to 11:30 by editing the second occurrence.
+  await cal.updateEvent(mine()[1].id, { start: '2026-11-17T11:30', scope: 'series' });
+  const patch = JSON.parse(calls.find((c) => c.method === 'PATCH').body);
+  assert.equal(patch.start.dateTime, '2026-11-10T16:30:00.000Z'); // the master's first occurrence, shifted
+  assert.ok(mine().every((e) => e.startLocal.slice(11, 16) === '11:30'));
+  await cal.deleteEvent(mine()[0].id, 'you', { scope: 'series' });
+  assert.ok(calls.some((c) => c.method === 'DELETE' && /events\/M1\?/.test(c.url)));
+  assert.equal(mine().length, 0);
+});
+
+test('Microsoft: repeating events use a patterned recurrence in local time; large messages upload in chunks', async () => {
+  const uploads = [];
+  routes = [
+    ['GET', /\/me\/calendars\?/, () => ({ value: [{ id: 'C1', name: 'Calendar', canEdit: true, isDefaultCalendar: true }] })],
+    ['GET', /\/me\/calendars\/C1\/calendarView/, () => ({ value: [{ id: 'occ1', seriesMasterId: 'S1', type: 'occurrence', subject: 'Sync', start: { dateTime: '2026-11-11T15:00:00.0000000', timeZone: 'UTC' }, end: { dateTime: '2026-11-11T15:30:00.0000000', timeZone: 'UTC' }, isAllDay: false }] })],
+    ['POST', /\/me\/calendars\/C1\/events$/, (u, o) => ({ id: 'S1', subject: JSON.parse(o.body).subject, type: 'seriesMaster', start: { dateTime: '2026-11-11T15:00:00.0000000', timeZone: 'UTC' }, end: { dateTime: '2026-11-11T15:30:00.0000000', timeZone: 'UTC' } })],
+    ['POST', /\/me\/messages$/, (u, o) => (o.headers['Content-Type'] === 'text/plain' ? { id: 'DRAFT1' } : { id: 'BIG1' })],
+    ['POST', /\/me\/messages\/BIG1\/attachments$/, () => ({ id: 'att-small' })],
+    ['POST', /\/me\/messages\/BIG1\/attachments\/createUploadSession$/, () => ({ uploadUrl: 'https://upload.example/session-1' })],
+    ['PUT', /upload\.example\/session-1/, (u, o) => {
+      uploads.push({ range: o.headers['Content-Range'], len: o.body.length, auth: o.headers.Authorization });
+      return new Response('{}', { status: 200 });
+    }],
+    ['POST', /\/me\/messages\/BIG1\/send$/, () => null],
+    ['DELETE', /\/me\/messages\/DRAFT1$/, () => null],
+  ];
+  const a = accounts.createAccount({ type: 'microsoft', email: 'rec@outlook.com', displayName: 'Rec', secrets: { tokens } });
+  await cal.syncAccountCalendars(a.id);
+  calls.length = 0;
+  const r = await cal.createEvent({ title: 'Sync', start: '2026-11-11T10:00', duration_minutes: 30, calendar: 'rec@outlook.com', recurrence: { frequency: 'weekly', days: ['WE'], until: '2026-12-31' } });
+  const body = JSON.parse(calls.find((c) => c.method === 'POST' && c.url.endsWith('/events')).body);
+  assert.deepEqual(body.start, { dateTime: '2026-11-11T10:00:00', timeZone: 'Eastern Standard Time' });
+  assert.deepEqual(body.recurrence.pattern, { type: 'weekly', interval: 1, daysOfWeek: ['wednesday'], firstDayOfWeek: 'sunday' });
+  assert.deepEqual(body.recurrence.range, { type: 'endDate', startDate: '2026-11-11', endDate: '2026-12-31', recurrenceTimeZone: 'Eastern Standard Time' });
+  assert.equal(r.event.recurring, true);
+
+  // A 7 MB attachment can't go through sendMail as MIME: draft + upload session + send.
+  store.syncFolderList(a.id, [{ remote_id: 'F-SENT', name: 'Sent Items', role: 'sent' }]);
+  calls.length = 0;
+  const big = Buffer.alloc(7 * 1024 * 1024, 7);
+  await mail.sendMessage({ accountId: a.id, to: 'x@contoso.com', subject: 'Big file', text: 'Here it is', attachments: [{ filename: 'small.txt', contentType: 'text/plain', dataBase64: Buffer.from('hi').toString('base64') }, { filename: 'big.bin', contentType: 'application/octet-stream', dataBase64: big.toString('base64') }] });
+  assert.ok(!calls.some((c) => c.url.endsWith('/me/sendMail')), 'did not use MIME sendMail');
+  assert.equal(uploads.length, 3);
+  assert.deepEqual(uploads.map((u) => u.range), ['bytes 0-3276799/7340032', 'bytes 3276800-6553599/7340032', 'bytes 6553600-7340031/7340032']);
+  assert.ok(uploads.every((u) => !u.auth), 'upload URLs are pre-authorized; no token is sent to them');
+  assert.ok(calls.some((c) => c.url.endsWith('/me/messages/BIG1/send')));
+
+  // Drafts are mirrored to the server's Drafts folder and removed when deleted here.
+  const d = mail.saveDraft({ accountId: a.id, to: 'y@contoso.com', subject: 'Draft', text: 'v1' });
+  const ref = await mail.mirrorDraft(d.id);
+  assert.equal(ref.id, 'DRAFT1');
+  mail.deleteDraft(d.id);
+  await new Promise((r2) => setTimeout(r2, 50));
+  assert.ok(calls.some((c) => c.method === 'DELETE' && c.url.endsWith('/me/messages/DRAFT1')));
+});
+
+test('Gmail drafts: created, updated in place, and deleted on the server', async () => {
+  routes = [
+    ['POST', /gmail\/v1\/users\/me\/drafts$/, () => ({ id: 'r-1', message: { id: 'm-1' } })],
+    ['PUT', /gmail\/v1\/users\/me\/drafts\/r-1$/, (u, o) => ({ id: 'r-1', message: { id: 'm-2', raw: JSON.parse(o.body).message.raw } })],
+    ['DELETE', /gmail\/v1\/users\/me\/drafts\/r-1$/, () => null],
+  ];
+  const a = accounts.createAccount({ type: 'gmail', email: 'drafts@gmail.com', secrets: { tokens } });
+  calls.length = 0;
+  const d = mail.saveDraft({ accountId: a.id, to: 'z@example.com', subject: 'Plan', text: 'v1' });
+  await mail.mirrorDraft(d.id);
+  mail.saveDraft({ id: d.id, accountId: a.id, to: 'z@example.com', subject: 'Plan v2', text: 'v2' });
+  await mail.mirrorDraft(d.id);
+  const put = calls.filter((c) => c.method === 'PUT').at(-1);
+  assert.ok(!calls.some((c) => c.method === 'POST' && calls.indexOf(c) > calls.indexOf(put)), 'updated in place, not re-created');
+  assert.match(Buffer.from(JSON.parse(put.body).message.raw, 'base64url').toString(), /Subject: Plan v2/);
+  mail.deleteDraft(d.id);
+  await new Promise((r) => setTimeout(r, 50));
+  assert.ok(calls.some((c) => c.method === 'DELETE' && c.url.endsWith('/drafts/r-1')));
+});

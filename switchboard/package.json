@@ -14,7 +14,10 @@
   "scripts": {
     "start": "node bin/switchboard.js",
     "mcp": "node bin/mcp-stdio.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test --test-concurrency=1 test/*.test.js",
+    "service:install": "node bin/switchboard.js service install",
+    "service:uninstall": "node bin/switchboard.js service uninstall",
+    "test:servers": "bash test/setup-servers.sh"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",

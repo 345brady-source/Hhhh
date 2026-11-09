@@ -161,7 +161,9 @@ function describeAction(name, input) {
   switch (name) {
     case 'send_email': return { title: input.reply_to_id ? 'Send this reply?' : input.forward_id ? 'Forward this email?' : 'Send this email?', kind: 'email' };
     case 'respond_to_invite': return { title: `${input.response === 'decline' ? 'Decline' : input.response === 'tentative' ? 'Tentatively accept' : 'Accept'} this invitation?`, kind: 'invite' };
-    case 'delete_event': return { title: 'Delete this event?', kind: 'event' };
+    case 'delete_event': return { title: input.scope === 'series' ? 'Delete every event in this series?' : 'Delete this event?', kind: 'event' };
+    case 'delete_rule': return { title: 'Delete this mail rule?', kind: 'other' };
+    case 'cancel_scheduled_email': return { title: 'Cancel this scheduled email?', kind: 'other' };
     case 'update_emails': return { title: input.action === 'delete' ? `Delete ${input.ids?.length || 0} email(s)?` : `Apply "${input.action}" to ${input.ids?.length || 0} email(s)?`, kind: 'emails' };
     default: return { title: `Allow Claude to ${name.replace(/_/g, ' ')}?`, kind: 'other' };
   }
@@ -335,7 +337,7 @@ function summarize(name, r) {
       case 'create_event': return `Added "${r.created.title}" — ${r.created.when} (${r.created.calendar})${r.conflicts?.length ? ` · ${r.conflicts.length} conflict(s)` : ''}`;
       case 'update_event': return `Updated "${r.updated.title}" — ${r.updated.when}`;
       case 'delete_event': return `Deleted "${r.deleted.title}"`;
-      case 'send_email': return r.sent ? `Sent "${r.subject}" to ${r.to.join(', ')}` : 'Saved as draft';
+      case 'send_email': return r.scheduled ? `Scheduled "${r.subject}" for ${r.when}` : r.sent ? `Sent "${r.subject}" to ${r.to.join(', ')}` : 'Saved as draft';
       case 'create_draft': return `Draft saved: "${r.subject}"`;
       case 'search_emails': return `${r.count} result(s)`;
       case 'list_emails': return `${r.emails.length} email(s)`;
@@ -346,6 +348,8 @@ function summarize(name, r) {
       case 'update_emails': return 'Done';
       case 'add_invite_to_calendar': return r.already_on_calendar ? 'Already on calendar' : `Added "${r.event.title}"`;
       case 'respond_to_invite': return `Responded: ${r.response}`;
+      case 'create_rule': return `Rule created: ${r.created.rule}`;
+      case 'list_rules': return `${r.length} rule(s)`;
       default: return 'Done';
     }
   } catch {

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { PORT, HOST, apiToken, DATA_DIR, APP_NAME } from './config.js';
+import { PORT, HOST, apiToken, DATA_DIR, APP_NAME, PUBLIC_URL, PASSWORD, EXTRA_HOSTS, loginRequired, isLoopback, secretKey } from './config.js';
 import { openDb, getSetting, setSetting, all, logActivity } from './db.js';
 import * as accounts from './accounts.js';
 import * as store from './store.js';
@@ -11,6 +11,7 @@ import * as mail from './mail.js';
 import * as cal from './calendar.js';
 import * as contacts from './contacts.js';
 import * as oauth from './oauth.js';
+import * as rules from './rules.js';
 import { events, syncAccount, syncAll, startScheduler, stopScheduler, isSyncing, syncSettings } from './sync.js';
 import { handleMcpHttp } from './claude/mcp.js';
 import * as assistant from './claude/assistant.js';
@@ -19,14 +20,14 @@ import { systemTimeZone, isValidTimeZone } from './time.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(here, '..', 'public');
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.json': 'application/json' };
+const MIME = { '.webmanifest': 'application/manifest+json', '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.json': 'application/json' };
 
 const PUBLIC_SETTINGS = {
   timeZone: '', defaultCalendarId: 0, defaultAccountId: 0, weekStart: 0, workStart: '09:00', workEnd: '17:00',
   syncIntervalMinutes: 5, syncWindowDays: 90, theme: 'system', density: 'comfortable', readingPane: 'right',
   loadRemoteImages: false, markReadOnOpen: true, notifications: true, imapPush: true, prefetchBodies: 200,
   googleClientId: '', microsoftClientId: '', microsoftTenant: '', assistantModel: assistant.DEFAULT_MODEL,
-  assistantEffort: 'medium', assistantConfirm: 'send_delete', mcpSendMode: 'send', calendarView: 'week', conversationView: true,
+  assistantEffort: 'medium', assistantConfirm: 'send_delete', mcpSendMode: 'send', calendarView: 'week', conversationView: true, undoSendSeconds: 5, defaultReminderMinutes: 15,
 };
 const SECRET_SETTINGS = ['googleClientSecret', 'microsoftClientSecret'];
 
@@ -70,7 +71,71 @@ async function readBody(req, limit = 40 * 1024 * 1024) {
   }
 }
 
-const allowedHosts = () => new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`, `[::1]:${PORT}`]);
+const allowedHosts = () => {
+  const set = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`, `[::1]:${PORT}`, ...EXTRA_HOSTS]);
+  if (PUBLIC_URL) {
+    const u = new URL(PUBLIC_URL);
+    set.add(u.host.toLowerCase());
+    set.add(u.hostname.toLowerCase());
+  }
+  return set;
+};
+
+// Login (hosted mode) -------------------------------------------------------------------------------
+
+const SESSION_DAYS = 30;
+const failures = new Map(); // ip -> { n, until }
+
+function sessionSecret() {
+  return crypto.createHmac('sha256', secretKey()).update('switchboard-session').digest();
+}
+
+function signSession() {
+  const payload = `${Date.now() + SESSION_DAYS * 86400_000}.${crypto.randomBytes(12).toString('base64url')}`;
+  return `${payload}.${crypto.createHmac('sha256', sessionSecret()).update(payload).digest('base64url')}`;
+}
+
+function validSession(req) {
+  const m = String(req.headers.cookie || '').match(/(?:^|;\s*)sb_session=([^;]+)/);
+  if (!m) return false;
+  const [exp, rand, sig] = decodeURIComponent(m[1]).split('.');
+  if (!exp || !rand || !sig || Number(exp) < Date.now()) return false;
+  return safeEqual(sig, crypto.createHmac('sha256', sessionSecret()).update(`${exp}.${rand}`).digest('base64url'));
+}
+
+function isHttps(req) {
+  return (PUBLIC_URL || '').startsWith('https:') || req.headers['x-forwarded-proto'] === 'https';
+}
+
+function loginPage(res, error = '') {
+  res.writeHead(error ? 401 : 200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; form-action 'self'", 'X-Frame-Options': 'DENY' });
+  res.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Switchboard — sign in</title><link rel="icon" href="/icon.svg">
+<style>:root{color-scheme:light dark}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font:15px system-ui,-apple-system,"Segoe UI",sans-serif;background:#f5f6f8;color:#1b1f24}
+@media (prefers-color-scheme:dark){body{background:#111315;color:#e8eaed}form{background:#1a1d21!important;border-color:#2c3138!important}input{background:#111315!important;color:#e8eaed!important;border-color:#3a4048!important}}
+form{background:#fff;border:1px solid #e3e6ea;border-radius:12px;padding:28px;width:min(340px,calc(100vw - 32px));box-sizing:border-box}h1{font-size:20px;margin:12px 0 4px}p{margin:0 0 16px;opacity:.7;font-size:13px}
+input{width:100%;box-sizing:border-box;height:40px;border:1px solid #cfd4da;border-radius:8px;padding:0 12px;font:inherit;margin-bottom:12px}button{width:100%;height:40px;border:0;border-radius:8px;background:#0f6cbd;color:#fff;font:600 15px system-ui;cursor:pointer}.err{color:#c4314b;opacity:1}</style></head>
+<body><form method="post" action="/login"><img src="/icon.svg" width="40" height="40" alt=""><h1>Switchboard</h1><p class="${error ? 'err' : ''}">${error ? escape(error) : 'Enter the password to open your mail.'}</p>
+<input type="password" name="password" placeholder="Password" autofocus autocomplete="current-password" required><button type="submit">Sign in</button></form></body></html>`);
+}
+
+async function handleLogin(req, res) {
+  const ip = req.socket.remoteAddress || '';
+  const f = failures.get(ip);
+  if (f && f.until > Date.now()) return loginPage(res, 'Too many attempts. Wait a few minutes and try again.');
+  const chunks = [];
+  for await (const c of req) chunks.push(c);
+  const password = new URLSearchParams(Buffer.concat(chunks).toString('utf8')).get('password') || '';
+  const ok = PASSWORD && crypto.timingSafeEqual(crypto.createHash('sha256').update(password).digest(), crypto.createHash('sha256').update(PASSWORD).digest());
+  if (!ok) {
+    const n = (f?.n || 0) + 1;
+    failures.set(ip, { n, until: n >= 5 ? Date.now() + 5 * 60_000 : 0 });
+    await new Promise((r) => setTimeout(r, 400));
+    return loginPage(res, 'That password is not right.');
+  }
+  failures.delete(ip);
+  res.writeHead(303, { Location: '/', 'Set-Cookie': `sb_session=${encodeURIComponent(signSession())}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_DAYS * 86400}${isHttps(req) ? '; Secure' : ''}` });
+  res.end();
+}
 
 function safeEqual(a, b) {
   const x = Buffer.from(String(a || ''));
@@ -99,6 +164,7 @@ route('GET', '/api/bootstrap', () => ({
   assistant: assistant.assistantStatus(),
   oauth: { google: oauth.isConfigured('google'), microsoft: oauth.isConfigured('microsoft'), googleRedirect: oauth.redirectUri('google'), microsoftRedirect: oauth.redirectUri('microsoft') },
   dataDir: DATA_DIR,
+  hosted: { login: loginRequired(), publicUrl: PUBLIC_URL },
 }));
 
 // Accounts
@@ -106,7 +172,7 @@ route('GET', '/api/accounts', () => accounts.listAccounts());
 route('GET', '/api/accounts/suggest', async ({ query }) => accounts.suggestSettings(query.email));
 route('POST', '/api/accounts/test', async ({ body }) => accounts.testSettings(body));
 route('POST', '/api/accounts', async ({ body }) => {
-  if (!['imap', 'pop3'].includes(body.type)) throw Object.assign(new Error('Use "Sign in" for Gmail and Microsoft accounts.'), { status: 400 });
+  if (!['imap', 'pop3', 'caldav'].includes(body.type)) throw Object.assign(new Error('Use "Sign in" for Gmail and Microsoft accounts.'), { status: 400 });
   const a = accounts.createAccount(body);
   cal.ensureLocalCalendars();
   syncAccount(a.id);
@@ -133,6 +199,11 @@ route('POST', '/api/sync', async () => {
 
 // Folders & messages
 route('POST', '/api/folders', async ({ body }) => mail.createFolder(Number(body.accountId), String(body.name || '').trim()));
+route('POST', '/api/folders/:id/sync', ({ params }) => {
+  const f = store.folderById(Number(params.id));
+  if (f && !f.local_only) syncAccount(f.account_id, { folderId: f.id, again: true });
+  return { ok: true };
+});
 route('GET', '/api/messages', ({ query }) =>
   mail.listMessages({
     folderId: query.folder ? Number(query.folder) : undefined,
@@ -177,10 +248,23 @@ route('POST', '/api/messages/actions', async ({ body }) => {
 route('GET', '/api/search/server', async ({ query }) => mail.searchServer(query.q || '', { accountId: query.account ? Number(query.account) : undefined }));
 route('POST', '/api/send', async ({ body }) => mail.sendMessage({ ...body, quoteOriginal: body.quoteOriginal ?? false }, 'you'));
 
+// Scheduled mail
+route('GET', '/api/outbox', () => mail.listOutbox());
+route('POST', '/api/outbox/:id/cancel', ({ params }) => mail.cancelOutbox(Number(params.id)));
+route('POST', '/api/outbox/:id/send-now', ({ params }) => mail.sendOutboxNow(Number(params.id)));
+route('POST', '/api/outbox/:id/edit', ({ params }) => mail.outboxToDraft(Number(params.id)));
+
+// Rules
+route('GET', '/api/rules', () => rules.listRules());
+route('POST', '/api/rules', ({ body }) => rules.saveRule(body, 'you'));
+route('DELETE', '/api/rules/:id', ({ params }) => rules.deleteRule(Number(params.id)));
+route('POST', '/api/rules/run', async ({ body }) => rules.runRulesNow({ ruleId: body.ruleId ? Number(body.ruleId) : null }));
+
 // Drafts
 route('GET', '/api/drafts', () => mail.listDrafts());
 route('GET', '/api/drafts/:id', ({ params }) => mail.getDraft(Number(params.id)));
 route('POST', '/api/drafts', ({ body }) => mail.saveDraft(body, 'you'));
+route('POST', '/api/messages/:id/edit-draft', async ({ params }) => mail.draftFromMessage(Number(params.id)));
 route('DELETE', '/api/drafts/:id', ({ params }) => {
   mail.deleteDraft(Number(params.id));
   return { ok: true };
@@ -206,7 +290,7 @@ route('GET', '/api/events/free', ({ query }) => cal.findFreeTime({ from: query.s
 route('GET', '/api/events/:id', ({ params }) => cal.getEvent(Number(params.id)));
 route('POST', '/api/events', async ({ body }) => cal.createEvent(body, 'you'));
 route('PATCH', '/api/events/:id', async ({ params, body }) => cal.updateEvent(Number(params.id), body, 'you'));
-route('DELETE', '/api/events/:id', async ({ params, query }) => cal.deleteEvent(Number(params.id), 'you', { notify: query.notify !== '0' }));
+route('DELETE', '/api/events/:id', async ({ params, query }) => cal.deleteEvent(Number(params.id), 'you', { notify: query.notify !== '0', scope: query.scope === 'series' ? 'series' : 'occurrence' }));
 route('POST', '/api/messages/:id/invite', async ({ params, body }) => {
   if (body.response) return cal.respondToInvite(Number(params.id), body.response, 'you');
   const m = await mail.getMessage(Number(params.id));
@@ -242,10 +326,10 @@ route('GET', '/api/claude/setup', () => {
   const bin = path.resolve(here, '..', 'bin', 'mcp-stdio.js');
   return {
     tools: TOOLS.map((t) => ({ name: t.name, description: t.description.split('. ')[0] + '.' })),
-    mcpUrl: `http://127.0.0.1:${PORT}/mcp`,
+    mcpUrl: `${PUBLIC_URL || `http://127.0.0.1:${PORT}`}/mcp`,
     claudeDesktop: { mcpServers: { switchboard: { command: process.execPath, args: [bin] } } },
     claudeCode: `claude mcp add --scope user switchboard -- "${process.execPath}" "${bin}"`,
-    claudeCodeHttp: `claude mcp add --scope user --transport http switchboard http://127.0.0.1:${PORT}/mcp --header "Authorization: Bearer ${token}"`,
+    claudeCodeHttp: `claude mcp add --scope user --transport http switchboard ${PUBLIC_URL || `http://127.0.0.1:${PORT}`}/mcp --header "Authorization: Bearer ${token}"`,
     assistant: assistant.assistantStatus(),
   };
 });
@@ -342,6 +426,21 @@ export function createServer() {
       if (!allowedHosts().has(String(req.headers.host || '').toLowerCase())) return send(res, 421, 'Misdirected request');
       const query = Object.fromEntries(url.searchParams);
 
+      if (loginRequired()) {
+        if (pathname === '/login' && req.method === 'POST') return await handleLogin(req, res);
+        if (pathname === '/login') return loginPage(res);
+        if (pathname === '/logout') {
+          res.writeHead(303, { Location: '/login', 'Set-Cookie': 'sb_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0' });
+          return res.end();
+        }
+        const open = pathname === '/icon.svg' || pathname === '/manifest.json' || pathname === '/api/health' || pathname === '/mcp' || /^\/oauth\/(google|microsoft)\/callback$/.test(pathname);
+        if (!open && !validSession(req)) {
+          if (pathname.startsWith('/api/')) return send(res, 401, { error: 'Sign in again', login: true });
+          res.writeHead(302, { Location: '/login' });
+          return res.end();
+        }
+      }
+
       if (pathname === '/oauth/google/start' || pathname === '/oauth/microsoft/start') {
         if (!safeEqual(query.token, token)) return send(res, 401, 'Unauthorized');
         return await oauthStart(pathname.includes('google') ? 'google' : 'microsoft', query, res);
@@ -388,7 +487,7 @@ export function createServer() {
 function liveStream(req, res) {
   const emit = sseStart(res);
   const handlers = {};
-  for (const ev of ['account', 'mail', 'newmail', 'calendar']) {
+  for (const ev of ['account', 'mail', 'newmail', 'calendar', 'reminder']) {
     handlers[ev] = (data) => emit(ev, data);
     events.on(ev, handlers[ev]);
   }
@@ -411,6 +510,9 @@ export async function probe() {
 }
 
 export async function startApp({ quiet = false, scheduler = true } = {}) {
+  if (!isLoopback() && !PASSWORD) {
+    throw new Error('Set SWITCHBOARD_PASSWORD when Switchboard listens beyond this computer (SWITCHBOARD_HOST is not 127.0.0.1). Without it anyone who can reach the port could read your mail.');
+  }
   openDb();
   cal.ensureLocalCalendars();
   const server = createServer();
@@ -425,7 +527,7 @@ export async function startApp({ quiet = false, scheduler = true } = {}) {
     await accounts.closeAllProviders();
     server.close();
   };
-  return { server, stop, url: `http://127.0.0.1:${PORT}/` };
+  return { server, stop, url: PUBLIC_URL ? `${PUBLIC_URL}/` : `http://127.0.0.1:${PORT}/`, login: loginRequired() };
 }
 
 export { syncSettings };

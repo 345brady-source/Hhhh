@@ -292,6 +292,30 @@ export class ImapProvider {
     });
   }
 
+  /** Keep a copy of a draft in the server's Drafts folder, replacing the previous copy. */
+  async saveDraft(raw, prev, { draftsFolder, messageId }) {
+    return this.withClient(async (c) => {
+      const r = await c.append(draftsFolder.remote_id, raw, ['\\Draft', '\\Seen']);
+      if (prev) await this.removeDraftWith(c, prev).catch(() => {});
+      return { type: 'imap', folder: draftsFolder.remote_id, uid: r?.uid || null, messageId };
+    });
+  }
+
+  async deleteDraft(ref) {
+    return this.withClient((c) => this.removeDraftWith(c, ref));
+  }
+
+  async removeDraftWith(c, ref) {
+    const lock = await c.getMailboxLock(ref.folder);
+    try {
+      let uids = ref.uid ? [ref.uid] : [];
+      if (!uids.length && ref.messageId) uids = (await c.search({ header: { 'message-id': ref.messageId } }, { uid: true })) || [];
+      if (uids.length) await c.messageDelete(uids, { uid: true });
+    } finally {
+      lock.release();
+    }
+  }
+
   async createFolder(name) {
     return this.withClient(async (c) => {
       const r = await c.mailboxCreate(name);

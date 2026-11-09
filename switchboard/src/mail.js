@@ -174,7 +174,8 @@ export function counts() {
   const unified = get("SELECT count(*) AS n FROM messages m JOIN folders f ON f.id = m.folder_id WHERE f.role = 'inbox' AND m.seen = 0").n;
   const flagged = get("SELECT count(DISTINCT m.account_id || ':' || m.remote_id) AS n FROM messages m JOIN folders f ON f.id = m.folder_id WHERE m.flagged = 1 AND coalesce(f.role,'') <> 'trash'").n;
   const drafts = get('SELECT count(*) AS n FROM drafts').n;
-  return { unified, flagged, drafts };
+  const scheduled = get("SELECT count(*) AS n FROM outbox WHERE status IN ('scheduled', 'failed')").n;
+  return { unified, flagged, drafts, scheduled };
 }
 
 // Reading -----------------------------------------------------------------------------------------
@@ -428,6 +429,11 @@ function forwardBlock(orig) {
  * replyToId / forwardId thread the message and quote or attach the original.
  */
 export async function sendMessage(input, actor = 'you') {
+  if (input.sendAt) {
+    const when = parseDateTime(input.sendAt, userTz());
+    if (!when) throw new Error(`Could not understand the send time "${input.sendAt}". Use e.g. 2026-11-12T08:00.`);
+    if (when.getTime() > Date.now() + 30_000) return scheduleSend({ ...input, sendAt: undefined }, when, actor);
+  }
   const account = input.accountId ? getAccount(Number(input.accountId)) : resolveAccount(input.account) || defaultSendingAccount();
   if (!account) throw new Error(input.account ? `No account matches "${input.account}".` : 'Add an email account first.');
   if (account.status === 'auth_error') throw new Error(`${account.email} needs to be reconnected in Settings → Accounts before it can send.`);
@@ -494,7 +500,9 @@ export async function sendMessage(input, actor = 'you') {
     from, to, cc, bcc, subject, text, html: html || undefined, inReplyTo, references, attachments, icalEvent: input.icalEvent,
   });
   const provider = providerFor(account.id);
-  if (account.type === 'gmail' || account.type === 'microsoft') {
+  if (account.type === 'microsoft' && raw.length > 3_500_000) {
+    await provider.sendLarge({ to, cc, bcc, subject, html: html || textToHtml(text), attachments, replyToRemoteId: orig && input.replyToId && orig.account_id === account.id ? orig.remote_id : null, replyAll: !!input.replyAll });
+  } else if (account.type === 'gmail' || account.type === 'microsoft') {
     await provider.sendRaw(raw, { threadId });
   } else {
     await smtpSendRaw(account, secretsOf(account.id), raw, envelope);
@@ -520,7 +528,10 @@ export async function sendMessage(input, actor = 'you') {
     store.setMessageFlags(of.id, orig.remote_id, { answered: true });
   }
   if (!input.skipContacts) recordSent([...to, ...cc, ...bcc]);
-  if (input.draftId) run('DELETE FROM drafts WHERE id = ?', input.draftId);
+  if (input.draftId) {
+    removeServerDraft(input.draftId);
+    run('DELETE FROM drafts WHERE id = ?', input.draftId);
+  }
   logActivity(actor, 'mail.send', `From ${account.email} to ${[...to, ...cc].map((x) => x.address).join(', ')} — ${subject}`);
   setTimeout(() => syncAccount(account.id, { again: true }), 2500).unref?.();
   return { sent: true, from: account.email, to: to.map(formatAddr), cc: cc.map(formatAddr), subject, messageId };
@@ -579,6 +590,70 @@ export function saveDraft(input, actor = 'you') {
   }
   if (actor !== 'you') logActivity(actor, 'draft.save', `${input.subject || '(no subject)'}`);
   events.emit('mail', { drafts: true });
+  mirrorDraft(id).catch(() => {});
+  return getDraft(id);
+}
+
+// Drafts are also kept in the account's Drafts folder on the server, so they show up on other devices.
+const mirrorQueue = new Map();
+
+export function mirrorDraft(id) {
+  const prev = mirrorQueue.get(id) || Promise.resolve();
+  const next = prev.catch(() => {}).then(() => doMirror(id));
+  mirrorQueue.set(id, next);
+  next.finally(() => mirrorQueue.get(id) === next && mirrorQueue.delete(id)).catch(() => {});
+  return next;
+}
+
+async function doMirror(id) {
+  const d = get('SELECT * FROM drafts WHERE id = ?', id);
+  if (!d?.account_id) return null;
+  const account = getAccount(d.account_id);
+  if (!account || !['imap', 'gmail', 'microsoft'].includes(account.type)) return null;
+  const draftsFolder = store.folderByRole(account.id, 'drafts');
+  if (account.type === 'imap' && !draftsFolder) return null;
+  const atts = json(d.attachments_json, []).map((a) => ({ filename: a.filename, contentType: a.contentType, content: Buffer.from(a.dataBase64 || '', 'base64') }));
+  const { raw, messageId } = await buildRaw({
+    from: { name: account.displayName || '', address: account.email }, to: json(d.to_json, []), cc: json(d.cc_json, []), bcc: json(d.bcc_json, []),
+    subject: d.subject || '', html: d.body_html || undefined, text: d.body_text || '', attachments: atts,
+  });
+  const ref = await providerFor(account.id).saveDraft(raw, json(d.server_ref, null), { draftsFolder, messageId });
+  if (get('SELECT id FROM drafts WHERE id = ?', id)) run('UPDATE drafts SET server_ref = ? WHERE id = ?', JSON.stringify(ref), id);
+  else await providerFor(account.id).deleteDraft(ref).catch(() => {}); // deleted while uploading
+  setTimeout(() => syncAccount(account.id, { again: true }), 1500).unref?.();
+  return ref;
+}
+
+function removeServerDraft(id) {
+  const d = get('SELECT account_id, server_ref FROM drafts WHERE id = ?', id);
+  const ref = json(d?.server_ref, null);
+  if (!ref || !d.account_id) return;
+  (mirrorQueue.get(id) || Promise.resolve())
+    .catch(() => {})
+    .then(() => providerFor(d.account_id).deleteDraft(ref))
+    .then(() => syncAccount(d.account_id, { again: true }))
+    .catch(() => {});
+}
+
+/** Open a draft that lives in an account's Drafts folder (made here or on another device) for editing. */
+export async function draftFromMessage(messageId) {
+  const row = await ensureBody(Number(messageId));
+  const folder = store.folderById(row.folder_id);
+  if (folder.role !== 'drafts') throw new Error('That message is not a draft.');
+  const mine = all('SELECT id, server_ref FROM drafts WHERE server_ref IS NOT NULL').find((d) => row.message_id && json(d.server_ref, {}).messageId === row.message_id);
+  if (mine) return getDraft(mine.id);
+  const account = getAccount(row.account_id);
+  const parsed = await parseRaw(await ensureRaw(row));
+  let ref = null;
+  if (account.type === 'imap') ref = { type: 'imap', folder: folder.remote_id, uid: Number(String(row.remote_id).split(':')[1]) || null, messageId: row.message_id };
+  else if (account.type === 'gmail') ref = { type: 'gmail', draftId: await providerFor(account.id).draftIdFor(row.remote_id), messageId: row.message_id };
+  else if (account.type === 'microsoft') ref = { type: 'graph', id: row.remote_id, messageId: row.message_id };
+  const atts = (parsed.parsed.attachments || []).filter((a) => !a.related).map((a) => ({ filename: a.filename, contentType: a.contentType, size: a.size, dataBase64: a.content.toString('base64') }));
+  const id = Number(run(
+    'INSERT INTO drafts(account_id, to_json, cc_json, bcc_json, subject, body_html, body_text, attachments_json, created_by, server_ref) VALUES(?,?,?,?,?,?,?,?,?,?)',
+    account.id, JSON.stringify(parsed.to), JSON.stringify(parsed.cc), JSON.stringify(parsed.bcc), parsed.subject, parsed.html || textToHtml(parsed.text), parsed.text, JSON.stringify(atts), 'you', ref ? JSON.stringify(ref) : null,
+  ).lastInsertRowid);
+  events.emit('mail', { drafts: true });
   return getDraft(id);
 }
 
@@ -591,6 +666,7 @@ function recipientsLoose(list) {
 }
 
 export function deleteDraft(id) {
+  removeServerDraft(id);
   run('DELETE FROM drafts WHERE id = ?', id);
   events.emit('mail', { drafts: true });
 }
@@ -665,4 +741,86 @@ export function formatForClaude(s, tz = userTz()) {
     ...(s.hasInvite ? { meeting_invite: true } : {}),
     preview: s.snippet,
   };
+}
+
+
+// Scheduled send ------------------------------------------------------------------------------------
+
+function scheduleSend(input, when, actor) {
+  const account = input.accountId ? getAccount(Number(input.accountId)) : resolveAccount(input.account) || defaultSendingAccount();
+  if (!account) throw new Error('Add an email account first.');
+  const to = recipients(input.to);
+  recipients(input.cc);
+  recipients(input.bcc);
+  if (!to.length && !input.replyToId && !(input.cc || []).length) throw new Error('Add at least one recipient.');
+  const payload = {
+    ...input,
+    accountId: account.id,
+    attachments: (input.attachments || []).map((a) => ({ filename: a.filename, contentType: a.contentType, dataBase64: a.dataBase64 || (a.content ? Buffer.from(a.content).toString('base64') : '') })),
+  };
+  const id = Number(run('INSERT INTO outbox(account_id, payload_json, send_at, created_by) VALUES(?,?,?,?)', account.id, JSON.stringify(payload), when.toISOString(), actor).lastInsertRowid);
+  if (input.draftId) {
+    removeServerDraft(input.draftId);
+    run('DELETE FROM drafts WHERE id = ?', input.draftId);
+  }
+  logActivity(actor, 'mail.schedule', `${input.subject || '(no subject)'} — ${describe(when, userTz())}`);
+  events.emit('mail', { outbox: true });
+  return { scheduled: true, id, send_at: toZonedIso(when, userTz()), when: describe(when, userTz()), from: account.email, to: to.map(formatAddr), subject: input.subject || '' };
+}
+
+export function listOutbox() {
+  return all("SELECT * FROM outbox WHERE status IN ('scheduled', 'sending', 'failed') ORDER BY send_at").map((r) => {
+    const p = json(r.payload_json, {});
+    const acc = r.account_id ? getAccount(r.account_id) : null;
+    return {
+      id: r.id, status: r.status, error: r.error, sendAt: r.send_at, when: describe(new Date(r.send_at), userTz()),
+      account: acc?.email || null, to: recipientsLoose(p.to).map(formatAddr), subject: p.subject || '', preview: makeSnippet(p.text || htmlToText(p.html || ''), 140), createdBy: r.created_by,
+    };
+  });
+}
+
+export function cancelOutbox(id, actor = 'you') {
+  const r = get('SELECT * FROM outbox WHERE id = ?', id);
+  if (!r || r.status === 'sent') throw new Error('That scheduled message was not found or has already been sent.');
+  run("UPDATE outbox SET status = 'canceled' WHERE id = ?", id);
+  logActivity(actor, 'mail.unschedule', json(r.payload_json, {}).subject || '');
+  events.emit('mail', { outbox: true });
+  return { canceled: true };
+}
+
+/** Turn a scheduled message back into a draft so it can be edited. */
+export function outboxToDraft(id) {
+  const r = get('SELECT * FROM outbox WHERE id = ?', id);
+  if (!r || r.status === 'sent') throw new Error('Not found');
+  const p = json(r.payload_json, {});
+  run("UPDATE outbox SET status = 'canceled' WHERE id = ?", id);
+  return saveDraft({ ...p, id: undefined }, 'you');
+}
+
+export function sendOutboxNow(id) {
+  run("UPDATE outbox SET send_at = ? , status = 'scheduled', error = NULL WHERE id = ? AND status IN ('scheduled','failed')", new Date().toISOString(), id);
+  return processOutbox();
+}
+
+let outboxBusy = false;
+export async function processOutbox() {
+  if (outboxBusy) return { sent: 0 };
+  outboxBusy = true;
+  let sent = 0;
+  try {
+    for (const r of all("SELECT * FROM outbox WHERE status = 'scheduled' AND send_at <= ? ORDER BY send_at", new Date().toISOString())) {
+      if (run("UPDATE outbox SET status = 'sending' WHERE id = ? AND status = 'scheduled'", r.id).changes !== 1) continue;
+      try {
+        await sendMessage({ ...json(r.payload_json, {}), sendAt: undefined }, r.created_by);
+        run("UPDATE outbox SET status = 'sent', error = NULL WHERE id = ?", r.id);
+        sent++;
+      } catch (e) {
+        run("UPDATE outbox SET status = 'failed', error = ? WHERE id = ?", String(e.message).slice(0, 300), r.id);
+      }
+    }
+  } finally {
+    outboxBusy = false;
+  }
+  if (sent) events.emit('mail', { outbox: true });
+  return { sent };
 }

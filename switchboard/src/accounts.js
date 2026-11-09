@@ -7,10 +7,19 @@ import { Pop3Provider } from './providers/pop3.js';
 import { GmailProvider } from './providers/gmail.js';
 import { GraphProvider } from './providers/graph.js';
 import { smtpVerify } from './providers/smtp.js';
+import { CalDavProvider } from './providers/caldav.js';
+
+/** Mail side of a calendar-only (CalDAV) account: no folders, nothing to sync. */
+class NoMailProvider {
+  static type = 'caldav';
+  async listFolders() { return []; }
+  async close() {}
+}
 
 export const ACCOUNT_COLORS = ['#2563eb', '#16a34a', '#db2777', '#ea580c', '#7c3aed', '#0891b2', '#ca8a04', '#dc2626', '#4f46e5', '#059669', '#c026d3', '#0d9488', '#9333ea', '#65a30d', '#e11d48', '#0284c7'];
 
 const providers = new Map();
+const calProviders = new Map();
 
 export function publicAccount(row) {
   if (!row) return null;
@@ -78,7 +87,7 @@ export function resolveAccount(ref) {
 }
 
 export function createAccount({ type, email, displayName, label, config = {}, secrets = {}, color }) {
-  if (!['gmail', 'microsoft', 'imap', 'pop3'].includes(type)) throw new Error('Unknown account type');
+  if (!['gmail', 'microsoft', 'imap', 'pop3', 'caldav'].includes(type)) throw new Error('Unknown account type');
   if (!email) throw new Error('Email address is required');
   const existing = get('SELECT id FROM accounts WHERE lower(email) = lower(?) AND type = ?', email, type);
   if (existing) throw new Error(`${email} is already added.`);
@@ -141,6 +150,7 @@ export async function deleteAccount(id) {
 export async function dropProvider(id) {
   const p = providers.get(id);
   providers.delete(id);
+  calProviders.delete(id);
   if (p) await p.close?.().catch?.(() => {});
 }
 
@@ -183,7 +193,28 @@ export function providerFor(id) {
   else if (row.type === 'pop3') p = new Pop3Provider(acc, secrets);
   else if (row.type === 'gmail') p = new GmailProvider(acc, secrets, tokenGetter(id, 'google'));
   else if (row.type === 'microsoft') p = new GraphProvider(acc, secrets, tokenGetter(id, 'microsoft'));
+  else if (row.type === 'caldav') p = new NoMailProvider();
   providers.set(id, p);
+  return p;
+}
+
+/** Does this account have calendars on a server (Google, Microsoft, or CalDAV)? */
+export function hasServerCalendars(account) {
+  return account.type === 'gmail' || account.type === 'microsoft' || account.type === 'caldav' || !!account.config?.caldavUrl;
+}
+
+/** The object that reads and writes this account's server calendars. */
+export function calendarProviderFor(id) {
+  const row = getAccountRow(id);
+  if (!row) throw new Error('Account not found');
+  if (row.type === 'gmail' || row.type === 'microsoft') return providerFor(id);
+  let p = calProviders.get(id);
+  if (!p) {
+    const acc = publicAccount(row);
+    if (!acc.config.caldavUrl) throw new Error('This account has no calendar server set up.');
+    p = new CalDavProvider(acc, decrypt(row.secrets));
+    calProviders.set(id, p);
+  }
   return p;
 }
 
@@ -194,7 +225,15 @@ export async function closeAllProviders() {
 /** Check manually entered server settings before saving them. */
 export async function testSettings({ type, email, config, secrets }) {
   const acc = { id: 0, type, email, config };
-  const result = { incoming: null, outgoing: null };
+  const result = { incoming: null, outgoing: null, calendar: null };
+  if (config?.caldavUrl) {
+    try {
+      result.calendar = { ok: true, ...(await new CalDavProvider(acc, secrets).test()) };
+    } catch (e) {
+      result.calendar = { ok: false, error: friendlyError(e) };
+    }
+  }
+  if (type === 'caldav') return result;
   try {
     const p = type === 'pop3' ? new Pop3Provider(acc, secrets) : new ImapProvider(acc, secrets);
     result.incoming = { ok: true, ...(await p.test()) };
@@ -226,14 +265,14 @@ export function friendlyError(e) {
 const PRESETS = {
   'gmail.com': { oauth: 'gmail' }, 'googlemail.com': { oauth: 'gmail' },
   'outlook.com': { oauth: 'microsoft' }, 'hotmail.com': { oauth: 'microsoft' }, 'live.com': { oauth: 'microsoft' }, 'msn.com': { oauth: 'microsoft' },
-  'yahoo.com': { imap: ['imap.mail.yahoo.com', 993, 'ssl'], pop: ['pop.mail.yahoo.com', 995, 'ssl'], smtp: ['smtp.mail.yahoo.com', 465, 'ssl'], note: 'Yahoo requires an app password (Account security → Generate app password).' },
+  'yahoo.com': { caldav: 'https://caldav.calendar.yahoo.com/', imap: ['imap.mail.yahoo.com', 993, 'ssl'], pop: ['pop.mail.yahoo.com', 995, 'ssl'], smtp: ['smtp.mail.yahoo.com', 465, 'ssl'], note: 'Yahoo requires an app password (Account security → Generate app password).' },
   'ymail.com': { alias: 'yahoo.com' }, 'rocketmail.com': { alias: 'yahoo.com' },
-  'icloud.com': { imap: ['imap.mail.me.com', 993, 'ssl'], smtp: ['smtp.mail.me.com', 587, 'starttls'], note: 'iCloud requires an app-specific password (appleid.apple.com → Sign-In and Security). Use your iCloud address as the username.' },
+  'icloud.com': { caldav: 'https://caldav.icloud.com/', imap: ['imap.mail.me.com', 993, 'ssl'], smtp: ['smtp.mail.me.com', 587, 'starttls'], note: 'iCloud requires an app-specific password (appleid.apple.com → Sign-In and Security). Use your iCloud address as the username.' },
   'me.com': { alias: 'icloud.com' }, 'mac.com': { alias: 'icloud.com' },
-  'aol.com': { imap: ['imap.aol.com', 993, 'ssl'], pop: ['pop.aol.com', 995, 'ssl'], smtp: ['smtp.aol.com', 465, 'ssl'], note: 'AOL requires an app password.' },
-  'zoho.com': { imap: ['imap.zoho.com', 993, 'ssl'], pop: ['pop.zoho.com', 995, 'ssl'], smtp: ['smtp.zoho.com', 465, 'ssl'] },
+  'aol.com': { caldav: 'https://caldav.aol.com/', imap: ['imap.aol.com', 993, 'ssl'], pop: ['pop.aol.com', 995, 'ssl'], smtp: ['smtp.aol.com', 465, 'ssl'], note: 'AOL requires an app password.' },
+  'zoho.com': { caldav: 'https://calendar.zoho.com/caldav/', imap: ['imap.zoho.com', 993, 'ssl'], pop: ['pop.zoho.com', 995, 'ssl'], smtp: ['smtp.zoho.com', 465, 'ssl'] },
   'zohomail.com': { alias: 'zoho.com' },
-  'fastmail.com': { imap: ['imap.fastmail.com', 993, 'ssl'], pop: ['pop.fastmail.com', 995, 'ssl'], smtp: ['smtp.fastmail.com', 465, 'ssl'], note: 'Fastmail requires an app password.' },
+  'fastmail.com': { caldav: 'https://caldav.fastmail.com/', imap: ['imap.fastmail.com', 993, 'ssl'], pop: ['pop.fastmail.com', 995, 'ssl'], smtp: ['smtp.fastmail.com', 465, 'ssl'], note: 'Fastmail requires an app password.' },
   'gmx.com': { imap: ['imap.gmx.com', 993, 'ssl'], pop: ['pop.gmx.com', 995, 'ssl'], smtp: ['mail.gmx.com', 587, 'starttls'] },
   'gmx.net': { imap: ['imap.gmx.net', 993, 'ssl'], pop: ['pop.gmx.net', 995, 'ssl'], smtp: ['mail.gmx.net', 587, 'starttls'] },
   'yandex.com': { imap: ['imap.yandex.com', 993, 'ssl'], pop: ['pop.yandex.com', 995, 'ssl'], smtp: ['smtp.yandex.com', 465, 'ssl'] },
@@ -266,6 +305,7 @@ export async function suggestSettings(email) {
       imap: p.imap && { host: p.imap[0], port: p.imap[1], security: p.imap[2] },
       pop: p.pop && { host: p.pop[0], port: p.pop[1], security: p.pop[2] },
       smtp: p.smtp && { host: p.smtp[0], port: p.smtp[1], security: p.smtp[2] },
+      caldav: p.caldav || null,
       note: p.note || null,
       allowSelfSigned: !!p.allowSelfSigned,
       source: 'preset',
@@ -277,12 +317,13 @@ export async function suggestSettings(email) {
     if (mx.some((m) => m.endsWith('mail.protection.outlook.com'))) return { domain, oauth: 'microsoft', reason: 'This domain uses Microsoft 365.' };
     if (mx.some((m) => m.endsWith('google.com') || m.endsWith('googlemail.com'))) return { domain, oauth: 'gmail', reason: 'This domain uses Google Workspace.' };
   } catch {}
-  const [imaps, pop3s, submission] = await Promise.all([srv(`_imaps._tcp.${domain}`), srv(`_pop3s._tcp.${domain}`), srv(`_submission._tcp.${domain}`)]);
+  const [imaps, pop3s, submission, caldavs] = await Promise.all([srv(`_imaps._tcp.${domain}`), srv(`_pop3s._tcp.${domain}`), srv(`_submission._tcp.${domain}`), srv(`_caldavs._tcp.${domain}`)]);
   return {
     domain,
     imap: imaps ? { host: imaps[0], port: imaps[1], security: 'ssl' } : { host: `imap.${domain}`, port: 993, security: 'ssl' },
     pop: pop3s ? { host: pop3s[0], port: pop3s[1], security: 'ssl' } : { host: `pop.${domain}`, port: 995, security: 'ssl' },
     smtp: submission ? { host: submission[0], port: submission[1], security: submission[1] === 465 ? 'ssl' : 'starttls' } : { host: `smtp.${domain}`, port: 465, security: 'ssl' },
+    caldav: caldavs ? `https://${caldavs[0]}${caldavs[1] === 443 ? '' : `:${caldavs[1]}`}/` : null,
     source: imaps || submission ? 'dns' : 'guess',
   };
 }

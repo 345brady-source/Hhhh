@@ -126,17 +126,21 @@ export function parseIcs(text, { tz = 'UTC', from, to, maxPerEvent = 500 } = {})
       if (!from || (new Date(base.end) >= from && new Date(base.start) <= to)) events.push({ ...base, recurring: true });
       continue;
     }
-    const rrule = prop(v, 'RRULE')?.value;
-    if (!rrule || !from || !to) {
-      events.push({ ...base, recurring: !!rrule, rrule: rrule || null });
-      continue;
-    }
+    const rrule = prop(v, 'RRULE')?.value?.trim() || null;
     const exdates = new Set();
+    const exdateList = [];
     for (const ex of v.props.EXDATE || []) {
       for (const part of ex.value.split(',')) {
         const d = parseIcsDate({ value: part, params: ex.params }, base._tz);
-        if (d) exdates.add(d.date.getTime());
+        if (d) {
+          exdates.add(d.date.getTime());
+          exdateList.push(d.allDay ? d.dateStr : d.date.toISOString());
+        }
       }
+    }
+    if (!rrule || !from || !to) {
+      events.push({ ...base, recurring: !!rrule, rrule, exdates: exdateList });
+      continue;
     }
     const ov = overrides.get(base.uid) || new Map();
     const durMs = new Date(base.end) - new Date(base.start);
@@ -145,7 +149,7 @@ export function parseIcs(text, { tz = 'UTC', from, to, maxPerEvent = 500 } = {})
       const s = new Date(startMs);
       const e = new Date(startMs + durMs);
       if (e < from || s > to) continue;
-      const inst = { ...base, start: s.toISOString(), end: e.toISOString(), recurring: true, series_id: base.uid, remote_id: `${base.uid}::${startMs}` };
+      const inst = { ...base, start: s.toISOString(), end: e.toISOString(), recurring: true, series_id: base.uid, remote_id: `${base.uid}::${startMs}`, rrule, exdates: exdateList, master_start: base.start, master_end: base.end };
       if (base.all_day) {
         inst.start_date = isoDateInTz(s, base._tz);
         inst.end_date = addDaysToDate(inst.start_date, Math.max(1, Math.round(durMs / 86400_000)));
@@ -340,6 +344,9 @@ export function buildIcs(events, { method = null, calName = 'Switchboard', organ
       lines.push(`DTSTART:${icsUtc(e.start)}`);
       lines.push(`DTEND:${icsUtc(e.end)}`);
     }
+    if (e.rrule) lines.push(`RRULE:${String(e.rrule).replace(/^RRULE:/i, '')}`);
+    for (const x of e.exdates || []) lines.push(/^\d{4}-\d{2}-\d{2}$/.test(x) ? `EXDATE;VALUE=DATE:${icsDate(x)}` : `EXDATE:${icsUtc(x)}`);
+    if (e.recurrence_id) lines.push(/^\d{4}-\d{2}-\d{2}$/.test(e.recurrence_id) ? `RECURRENCE-ID;VALUE=DATE:${icsDate(e.recurrence_id)}` : `RECURRENCE-ID:${icsUtc(e.recurrence_id)}`);
     lines.push(`SUMMARY:${escapeText(e.title)}`);
     if (e.description) lines.push(`DESCRIPTION:${escapeText(e.description)}`);
     if (e.location) lines.push(`LOCATION:${escapeText(e.location)}`);

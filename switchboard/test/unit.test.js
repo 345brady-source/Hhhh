@@ -158,7 +158,7 @@ test('tool inputs are validated and lightly coerced before anything runs', () =>
   assert.throws(() => tools.validateInput(t, { action: 'flag' }), /Missing required field "ids"/);
   const ce = tools.findTool('create_event');
   assert.throws(() => tools.validateInput(ce, { title: 'x', start: 5 }), /should be string/);
-  assert.equal(tools.TOOLS.length, 20);
+  assert.equal(tools.TOOLS.length, 25);
   for (const tool of tools.TOOLS) {
     assert.equal(tool.input_schema.type, 'object');
     assert.ok(tool.description.length > 30, tool.name);

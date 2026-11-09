@@ -15,6 +15,8 @@ const TITLES = {
   update_emails: 'Update emails', list_calendars: 'List calendars', list_events: 'List events', create_event: 'Add calendar event',
   update_event: 'Change calendar event', delete_event: 'Delete calendar event', find_free_time: 'Find free time',
   add_invite_to_calendar: 'Add invitation to calendar', respond_to_invite: 'Respond to invitation', search_contacts: 'Search contacts', sync_now: 'Check for new mail',
+  list_rules: 'List mail rules', create_rule: 'Create mail rule', delete_rule: 'Delete mail rule',
+  list_scheduled_emails: 'List scheduled emails', cancel_scheduled_email: 'Cancel scheduled email',
 };
 
 export function createMcpServer() {

@@ -71,6 +71,16 @@ function liveUpdates() {
         new Notification(a ? `New mail · ${a.label}` : 'New mail', { body: text, icon: '/icon.svg' });
       } else if (!document.hidden) toast(`New mail — ${text}`);
     });
+    es.addEventListener('reminder', (e) => {
+      const r = JSON.parse(e.data);
+      const when = r.minutes > 0 ? `in ${r.minutes} min` : r.minutes === 0 ? 'now' : 'started';
+      const text = `${r.title} — ${when}${r.location ? ` · ${r.location}` : ''}`;
+      if (state.boot.settings.notifications !== false && 'Notification' in window && Notification.permission === 'granted') {
+        const n = new Notification(`Reminder: ${r.title}`, { body: `${r.when}${r.location ? `\n${r.location}` : ''}`, icon: '/icon.svg', tag: `rem-${r.id}` });
+        n.onclick = () => { window.focus(); if (r.onlineMeetingUrl) window.open(r.onlineMeetingUrl, '_blank', 'noopener'); };
+      }
+      toast(`⏰ ${text}`, r.onlineMeetingUrl ? { action: 'Join', onAction: () => window.open(r.onlineMeetingUrl, '_blank', 'noopener'), timeout: 30000 } : { action: 'Open', onAction: () => go('calendar', null, { eventId: r.id }), timeout: 30000 });
+    });
     es.onerror = () => {
       es.close();
       setTimeout(connect, 5000);

@@ -161,7 +161,7 @@ test('end to end: 12 accounts, mail actions, calendar, MCP and the Claude assist
       if (r.isError) throw new Error(r.content[0].text);
       return JSON.parse(r.content[0].text);
     };
-    assert.equal((await client.listTools()).tools.length, 20);
+    assert.equal((await client.listTools()).tools.length, 25);
     const overview = await call('get_overview');
     assert.equal(overview.accounts.length, 12);
     const ev = await call('create_event', { title: 'Board meeting', start: '2026-11-13T10:00', duration_minutes: 90, calendar: 'charity' });

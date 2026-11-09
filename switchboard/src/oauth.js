@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { PORT } from './config.js';
+import { PORT, PUBLIC_URL } from './config.js';
 import { getSetting } from './db.js';
 import { randomId } from './crypto.js';
 
@@ -14,6 +14,7 @@ export const MICROSOFT_SCOPES = [
 ];
 
 export function redirectUri(provider) {
+  if (PUBLIC_URL) return `${PUBLIC_URL}/oauth/${provider}/callback`;
   // Google desktop clients use the loopback IP; Microsoft's portal only accepts "localhost".
   return provider === 'google'
     ? `http://127.0.0.1:${PORT}/oauth/google/callback`

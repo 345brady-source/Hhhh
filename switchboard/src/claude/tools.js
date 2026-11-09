@@ -7,6 +7,7 @@ import { get, getSetting, json } from '../db.js';
 import * as mail from '../mail.js';
 import * as cal from '../calendar.js';
 import { searchContacts } from '../contacts.js';
+import * as rules from '../rules.js';
 import { syncAccount, syncAll, ensureBody } from '../sync.js';
 import { describe, localDate, toZonedIso, weekdayName, addDaysToDate, parseDateTime } from '../time.js';
 import { formatAddr } from '../mailutil.js';
@@ -16,6 +17,21 @@ const int = (description, extra = {}) => ({ type: 'integer', description, ...ext
 const bool = (description) => ({ type: 'boolean', description });
 const arr = (description, items = { type: 'string' }) => ({ type: 'array', items, description });
 const obj = (properties, required = []) => ({ type: 'object', properties, required, additionalProperties: false });
+
+const RECURRENCE = {
+  type: 'object',
+  description: 'Make it repeat. E.g. {"frequency":"weekly","days":["MO","WE"],"count":10}, {"frequency":"weekdays"}, {"frequency":"monthly","until":"2027-06-30"}, {"frequency":"monthly","days":["-1FR"]} (last Friday).',
+  properties: {
+    frequency: { type: 'string', enum: ['daily', 'weekdays', 'weekly', 'monthly', 'yearly'] },
+    interval: { type: 'integer', minimum: 1, description: 'Every N days/weeks/months/years (default 1).' },
+    days: { type: 'array', items: { type: 'string' }, description: 'Weekdays as MO TU WE TH FR SA SU; for monthly, a position prefix like 1MO (first Monday) or -1FR (last Friday).' },
+    count: { type: 'integer', minimum: 1, description: 'Stop after this many occurrences.' },
+    until: { type: 'string', description: 'Last date, YYYY-MM-DD.' },
+  },
+  required: ['frequency'],
+  additionalProperties: false,
+};
+const SCOPE = { type: 'string', enum: ['occurrence', 'series'], description: 'For repeating events: "occurrence" (default) changes only this one; "series" changes every occurrence.' };
 
 const TIME_HELP = 'Use ISO 8601. "2026-11-12T14:30" is read in the user\'s time zone; an explicit offset ("...-05:00") or "Z" is honored. A date alone ("2026-11-12") means that whole day.';
 
@@ -216,6 +232,7 @@ export const TOOLS = [
         reply_to_id: int('Id of the email being replied to.'),
         reply_all: bool('With reply_to_id: also reply to everyone on the original.'),
         forward_id: int('Id of the email being forwarded.'),
+        send_at: str(`Send later instead of now, e.g. "2026-11-12T08:00". ${'Read in the user\'s time zone.'}`),
       },
       ['body'],
     ),
@@ -227,8 +244,22 @@ export const TOOLS = [
         const d = mail.saveDraft(p, ctx.actor);
         return { sent: false, saved_as_draft: true, draft_id: d.id, note: 'Sending from Claude is set to "save as draft" in Switchboard settings. The draft is waiting in Drafts for the user to review and send.' };
       }
-      return mail.sendMessage({ ...p, appendSignature: true }, ctx.actor);
+      return mail.sendMessage({ ...p, appendSignature: true, sendAt: input.send_at }, ctx.actor);
     },
+  },
+  {
+    name: 'list_scheduled_emails',
+    description: 'List emails waiting to be sent later (scheduled with send_at), with their ids.',
+    input_schema: obj({}),
+    readOnly: true,
+    run: () => mail.listOutbox().map((o) => ({ id: o.id, status: o.status, send_at: o.when, from: o.account, to: o.to.join(', '), subject: o.subject, ...(o.error ? { error: o.error } : {}) })),
+  },
+  {
+    name: 'cancel_scheduled_email',
+    description: 'Cancel an email scheduled to be sent later.',
+    input_schema: obj({ id: int('Scheduled email id from list_scheduled_emails.') }, ['id']),
+    destructive: true,
+    run: ({ id }, ctx) => mail.cancelOutbox(id, ctx.actor),
   },
   {
     name: 'create_draft',
@@ -346,6 +377,7 @@ export const TOOLS = [
         show_as: str('busy (default) or free.', { enum: ['busy', 'free', 'tentative'] }),
         timezone: str('IANA time zone for start/end if not the user\'s, e.g. "Europe/London".'),
         source_email_id: int('Id of the email this event came from, to link them.'),
+        recurrence: RECURRENCE,
       },
       ['title', 'start'],
     ),
@@ -372,6 +404,8 @@ export const TOOLS = [
         calendar: str('Move to this calendar (id, name or account).'),
         timezone: str('IANA time zone for start/end if not the user\'s.'),
         notify_attendees: bool('Send updates to attendees (default true).'),
+        scope: SCOPE,
+        recurrence: { ...RECURRENCE, description: 'New repeat pattern (with scope "series"), or omit to keep it.' },
       },
       ['id'],
     ),
@@ -383,10 +417,10 @@ export const TOOLS = [
   {
     name: 'delete_event',
     description: 'Delete an event from its calendar (and cancel it for attendees if the user organized it).',
-    input_schema: obj({ id: int('Event id.'), notify_attendees: bool('Tell attendees (default true).') }, ['id']),
+    input_schema: obj({ id: int('Event id.'), notify_attendees: bool('Tell attendees (default true).'), scope: SCOPE }, ['id']),
     destructive: true,
-    run: async ({ id, notify_attendees = true }, ctx) => {
-      const r = await cal.deleteEvent(id, ctx.actor, { notify: notify_attendees });
+    run: async ({ id, notify_attendees = true, scope = 'occurrence' }, ctx) => {
+      const r = await cal.deleteEvent(id, ctx.actor, { notify: notify_attendees, scope });
       return { deleted: { title: r.deleted.title, when: r.deleted.when, calendar: `${r.deleted.account} · ${r.deleted.calendar}` } };
     },
   },
@@ -430,6 +464,43 @@ export const TOOLS = [
       const r = await cal.respondToInvite(email_id, response, ctx.actor);
       return { response: r.response, event: r.event ? eventForClaude(r.event) : null };
     },
+  },
+  {
+    name: 'list_rules',
+    description: 'List the mail rules that sort incoming mail automatically.',
+    input_schema: obj({}),
+    readOnly: true,
+    run: () => rules.listRules().map((r) => ({ id: r.id, name: r.name, enabled: r.enabled, account: r.account, rule: r.summary, times_applied: r.timesApplied })),
+  },
+  {
+    name: 'create_rule',
+    description:
+      'Create a mail rule that runs on new mail as it arrives. Conditions test from / to / subject / body / any (contains, not_contains, is, ends_with) or has_attachment. Actions: move (to a folder, created if missing), mark_read, flag, archive, delete, forward (to an address). Example: newsletters → {"conditions":[{"field":"from","value":"newsletter"}],"actions":[{"type":"move","folder":"Newsletters"},{"type":"mark_read"}]}.',
+    input_schema: obj(
+      {
+        name: str('Short name for the rule.'),
+        account: str('Only for this account (email or label). Omit for every account.'),
+        match: str('Whether all conditions must match (default) or any.', { enum: ['all', 'any'] }),
+        conditions: arr('Conditions.', obj({ field: str('Field.', { enum: ['from', 'to', 'subject', 'body', 'any', 'has_attachment'] }), op: str('Comparison (default contains).', { enum: ['contains', 'not_contains', 'is', 'ends_with'] }), value: str('Text to look for (not needed for has_attachment).') }, ['field'])),
+        actions: arr('Actions.', obj({ type: str('Action.', { enum: ['move', 'mark_read', 'flag', 'archive', 'delete', 'forward'] }), folder: str('Folder name for move.'), to: str('Address for forward.') }, ['type'])),
+        stop: bool('Stop checking later rules when this one matches.'),
+        apply_to_existing: bool('Also run it now on inbox mail from the last 30 days.'),
+      },
+      ['name', 'conditions', 'actions'],
+    ),
+    run: async ({ apply_to_existing, ...input }, ctx) => {
+      const rule = rules.saveRule(input, ctx.actor);
+      const out = { created: { id: rule.id, name: rule.name, rule: rule.summary, account: rule.account } };
+      if (apply_to_existing) out.ran_on_existing = await rules.runRulesNow({ ruleId: rule.id });
+      return out;
+    },
+  },
+  {
+    name: 'delete_rule',
+    description: 'Delete a mail rule by id (see list_rules). Mail the rule already moved stays where it is.',
+    input_schema: obj({ id: int('Rule id from list_rules.') }, ['id']),
+    destructive: true,
+    run: ({ id }, ctx) => rules.deleteRule(id, ctx.actor),
   },
   {
     name: 'search_contacts',
@@ -488,7 +559,7 @@ export function eventForClaude(e) {
     ...(e.location ? { location: e.location } : {}),
     ...(e.attendees?.length ? { attendees: e.attendees.map((a) => (a.name ? `${a.name} <${a.email}>` : a.email) + (a.status ? ` (${a.status})` : '')) } : {}),
     ...(e.onlineMeetingUrl ? { meeting_link: e.onlineMeetingUrl } : {}),
-    ...(e.recurring ? { recurring: true } : {}),
+    ...(e.recurring ? { repeats: e.repeats || true } : {}),
     ...(e.description ? { notes: e.description.slice(0, 1500) } : {}),
   };
 }

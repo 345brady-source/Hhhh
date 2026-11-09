@@ -1,4 +1,4 @@
-import { api, esc, icon, addr, fullDate, toast, confirmDialog, debounce, fileToBase64, bytes } from './util.js';
+import { api, esc, icon, addr, fullDate, toast, confirmDialog, debounce, fileToBase64, bytes, modal, popover, closePopover, todayStr, addDays, dow } from './util.js';
 import { state } from './app.js';
 import * as Mail from './mail.js';
 
@@ -110,6 +110,7 @@ function render(w, accounts) {
     <div class="compose-atts"></div>
     <div class="compose-foot">
       <button class="btn primary" data-c="send">${icon('send', 'sm')} Send</button>
+      <button class="btn" data-c="later" title="Send later">${icon('clock', 'sm')} Later</button>
       <button class="btn" data-c="save">Save draft</button>
       <button class="icon-btn" data-c="discard" title="Discard">${icon('trash')}</button>
       <span class="status"></span>
@@ -197,6 +198,7 @@ function render(w, accounts) {
       e.target.closest('button').hidden = true;
       el.querySelector('[data-r="cc"] input').focus();
     } else if (c === 'send') send();
+    else if (c === 'later') sendLaterMenu(e.target.closest('button').getBoundingClientRect());
     else if (c === 'save') saveDraft(false);
     else if (c === 'discard') {
       if (w.dirty && !(await confirmDialog('Discard this message?', 'It will not be saved.', { ok: 'Discard', danger: true }))) return;
@@ -266,20 +268,55 @@ function render(w, accounts) {
     }
   }
 
-  async function send() {
+  function sendLaterMenu(rect) {
+    const today = todayStr();
+    const monday = addDays(today, ((8 - dow(today)) % 7) || 7);
+    const opts = [
+      ['Tomorrow morning', `${addDays(today, 1)}T08:00`],
+      ['Tomorrow afternoon', `${addDays(today, 1)}T13:00`],
+      ['Monday morning', `${monday}T08:00`],
+    ];
+    const pop = popover(rect, `<div class="t">Send later</div><div class="actions" style="flex-direction:column;align-items:stretch">${opts.map(([l, v]) => `<button class="btn sm" data-at="${v}">${esc(l)} <span class="muted small">${esc(fullDate(v))}</span></button>`).join('')}<button class="btn sm" data-at="pick">Pick a date and time…</button></div>`);
+    pop.addEventListener('click', (ev) => {
+      const at = ev.target.closest('[data-at]')?.dataset.at;
+      if (!at) return;
+      closePopover();
+      if (at !== 'pick') return send(at);
+      const m = modal({ title: 'Send later', body: `<label class="lbl">Send on</label><input class="field" type="datetime-local" value="${addDays(today, 1)}T08:00">`, footer: '<button class="btn" data-x="no">Cancel</button><button class="btn primary" data-x="ok">Schedule</button>' });
+      m.el.querySelector('[data-x="no"]').onclick = () => m.close();
+      m.el.querySelector('[data-x="ok"]').onclick = () => {
+        const v = m.el.querySelector('input').value;
+        m.close();
+        if (v) send(v);
+      };
+    });
+  }
+
+  async function send(sendAt = null) {
     const bad = [...w.to, ...w.cc, ...w.bcc].filter((r) => !EMAIL_RE.test(r.address));
     if (bad.length) return toast(`Check these addresses: ${bad.map((b) => b.address).join(', ')}`, { error: true });
     if (!w.to.length && !w.cc.length && !w.bcc.length) return toast('Add at least one recipient.', { error: true });
     if (!w.subject.trim() && !(await confirmDialog('Send without a subject?', 'This message has no subject.', { ok: 'Send anyway' }))) return;
+    const body = { ...payload(), draftId: w.draftId, quoteOriginal: false, includeAttachments: true, ...(sendAt ? { sendAt } : {}) };
+    const delay = sendAt ? 0 : Number(state.boot.settings.undoSendSeconds ?? 5);
+    if (delay > 0) {
+      // Undo send: hide the window and wait a few seconds before actually sending.
+      let undone = false;
+      el.style.display = 'none';
+      toast(`Sending in ${delay} seconds…`, { action: 'Undo', timeout: delay * 1000, onAction: () => { undone = true; el.style.display = ''; } });
+      await new Promise((r) => setTimeout(r, delay * 1000));
+      if (undone) return;
+    }
     const btn = el.querySelector('[data-c="send"]');
     btn.disabled = true;
-    el.querySelector('.status').textContent = 'Sending…';
+    el.querySelector('.status').textContent = sendAt ? 'Scheduling…' : 'Sending…';
     try {
-      const r = await api('/api/send', { method: 'POST', body: { ...payload(), draftId: w.draftId, quoteOriginal: false, includeAttachments: true } });
+      const r = await api('/api/send', { method: 'POST', body });
       close(true);
-      toast(`Sent to ${r.to.concat(r.cc).join(', ')}`);
+      toast(r.scheduled ? `Scheduled for ${r.when}` : `Sent to ${r.to.concat(r.cc).join(', ')}`);
       Mail.refresh();
     } catch (e) {
+      el.style.display = '';
       btn.disabled = false;
       el.querySelector('.status').textContent = '';
       toast(`Not sent: ${e.message}`, { error: true, timeout: 8000 });

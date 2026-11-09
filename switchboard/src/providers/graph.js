@@ -1,6 +1,14 @@
 import { apiFetch } from './http.js';
 import { cleanMessageId, mapLimit } from '../mailutil.js';
-import { WINDOWS_ZONES, wallTimeToUtc, addDaysToDate } from '../time.js';
+import { WINDOWS_ZONES, wallTimeToUtc, addDaysToDate, zonedParts, localDate } from '../time.js';
+import { toGraphRecurrence } from '../recurrence.js';
+
+const pad2 = (n) => String(n).padStart(2, '0');
+/** Wall-clock "YYYY-MM-DDTHH:MM:SS" of an instant in a zone. */
+function wall(date, tz) {
+  const p = zonedParts(new Date(date), tz);
+  return `${p.year}-${pad2(p.month)}-${pad2(p.day)}T${pad2(p.hour)}:${pad2(p.minute)}:${pad2(p.second)}`;
+}
 
 const GRAPH = 'https://graph.microsoft.com/v1.0';
 const WELL_KNOWN = { inbox: 'inbox', sentitems: 'sent', drafts: 'drafts', deleteditems: 'trash', junkemail: 'junk', archive: 'archive' };
@@ -139,6 +147,54 @@ export class GraphProvider {
     });
   }
 
+  /** Graph creates a draft from a base64 MIME body; there is no in-place update, so replace it. */
+  async saveDraft(raw, prev, { messageId }) {
+    const r = await this.api('/me/messages', { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: raw.toString('base64') });
+    if (prev?.id) await this.deleteDraft(prev).catch(() => {});
+    return { type: 'graph', id: r.id, messageId };
+  }
+
+  async deleteDraft(ref) {
+    if (ref?.id) await this.api(`/me/messages/${ref.id}`, { method: 'DELETE' }).catch((e) => (e.status === 404 ? null : Promise.reject(e)));
+  }
+
+  /**
+   * Messages over ~3.5 MB can't go through sendMail as MIME. Build a draft, upload attachments
+   * (large ones through an upload session, in 3.2 MB chunks), then send it.
+   */
+  async sendLarge({ to, cc, bcc, subject, html, attachments = [], replyToRemoteId = null, replyAll = false }) {
+    const msg = { subject, body: { contentType: 'HTML', content: html || '' }, toRecipients: toRecipients(to), ccRecipients: toRecipients(cc), bccRecipients: toRecipients(bcc) };
+    let draft;
+    if (replyToRemoteId) {
+      draft = await this.api(`/me/messages/${replyToRemoteId}/${replyAll ? 'createReplyAll' : 'createReply'}`, { method: 'POST', json: {} });
+      await this.api(`/me/messages/${draft.id}`, { method: 'PATCH', json: msg });
+    } else {
+      draft = await this.api('/me/messages', { method: 'POST', json: msg });
+    }
+    const CHUNK = 320 * 1024 * 10;
+    for (const a of attachments) {
+      const buf = Buffer.isBuffer(a.content) ? a.content : Buffer.from(a.content || '');
+      if (buf.length < 3 * 1024 * 1024) {
+        await this.api(`/me/messages/${draft.id}/attachments`, {
+          method: 'POST',
+          json: { '@odata.type': '#microsoft.graph.fileAttachment', name: a.filename, contentType: a.contentType || 'application/octet-stream', contentBytes: buf.toString('base64'), ...(a.cid ? { isInline: true, contentId: a.cid } : {}) },
+        });
+        continue;
+      }
+      const session = await this.api(`/me/messages/${draft.id}/attachments/createUploadSession`, {
+        method: 'POST',
+        json: { AttachmentItem: { attachmentType: 'file', name: a.filename, size: buf.length, contentType: a.contentType || 'application/octet-stream' } },
+      });
+      for (let off = 0; off < buf.length; off += CHUNK) {
+        const chunk = buf.subarray(off, Math.min(buf.length, off + CHUNK));
+        const res = await fetch(session.uploadUrl, { method: 'PUT', headers: { 'Content-Range': `bytes ${off}-${off + chunk.length - 1}/${buf.length}`, 'Content-Type': 'application/octet-stream' }, body: chunk });
+        if (!res.ok) throw new Error(`Uploading ${a.filename} failed (HTTP ${res.status}).`);
+      }
+    }
+    await this.api(`/me/messages/${draft.id}/send`, { method: 'POST' });
+    return {};
+  }
+
   async createFolder(name) {
     const r = await this.api('/me/mailFolders', { method: 'POST', json: { displayName: name } });
     return { remote_id: r.id };
@@ -236,12 +292,19 @@ export class GraphProvider {
         b.isAllDay = true;
         b.start = { dateTime: `${ev.start_date}T00:00:00`, timeZone: zone };
         b.end = { dateTime: `${ev.end_date}T00:00:00`, timeZone: zone };
+      } else if (ev.rrule) {
+        // Repeating events are expressed in local time so occurrences keep their time across DST changes.
+        const zone = IANA_TO_WINDOWS[tz] || tz || 'UTC';
+        b.isAllDay = false;
+        b.start = { dateTime: wall(ev.start, tz), timeZone: zone };
+        b.end = { dateTime: wall(ev.end, tz), timeZone: zone };
       } else {
         b.isAllDay = false;
         b.start = { dateTime: new Date(ev.start).toISOString().replace('Z', ''), timeZone: 'UTC' };
         b.end = { dateTime: new Date(ev.end).toISOString().replace('Z', ''), timeZone: 'UTC' };
       }
     }
+    if (ev.rrule) b.recurrence = toGraphRecurrence(ev.rrule, ev.all_day ? wallTimeToUtc(...ev.start_date.split('-').map(Number), 12, 0, 0, tz).toISOString() : ev.start, tz);
     if (ev.attendees !== undefined) b.attendees = (ev.attendees || []).map((a) => ({ emailAddress: { address: a.email, name: a.name || undefined }, type: 'required' }));
     if (ev.reminder_minutes !== undefined) {
       b.isReminderOn = ev.reminder_minutes != null;
@@ -261,7 +324,8 @@ export class GraphProvider {
     return this.mapEvent(r, tz);
   }
 
-  async updateEvent(cal, remoteId, patch, tz) {
+  async updateEvent(cal, remoteId, patch, tz, { row, scope } = {}) {
+    if (scope === 'series' && row?.series_id) return this.updateSeries(row, patch, tz);
     const r = await this.api(`/me/events/${remoteId}`, {
       method: 'PATCH',
       json: this.eventBody(patch, tz),
@@ -270,12 +334,32 @@ export class GraphProvider {
     return this.mapEvent(r, tz);
   }
 
-  async deleteEvent(cal, remoteId) {
+  /** Change every occurrence by editing the series master. */
+  async updateSeries(row, patch, tz) {
+    const master = await this.api(`/me/events/${row.series_id}?$select=start,end,isAllDay,recurrence`, { headers: { Prefer: 'outlook.timezone="UTC"' } });
+    const b = this.eventBody({ ...patch, start: undefined, end: undefined, start_date: undefined, rrule: undefined }, tz);
+    const zone = IANA_TO_WINDOWS[tz] || tz || 'UTC';
+    if (patch.start !== undefined && !patch.all_day) {
+      const shift = Date.parse(patch.start) - Date.parse(row.start);
+      const dur = Date.parse(patch.end) - Date.parse(patch.start);
+      const ms = Date.parse(`${master.start.dateTime.replace(/Z$/, '')}Z`) + shift;
+      b.start = { dateTime: wall(ms, tz), timeZone: zone };
+      b.end = { dateTime: wall(ms + dur, tz), timeZone: zone };
+      if (master.recurrence) b.recurrence = { ...master.recurrence, range: { ...master.recurrence.range, startDate: localDate(new Date(ms), tz) } };
+    }
+    if (patch.rrule) b.recurrence = toGraphRecurrence(patch.rrule, patch.start || `${master.start.dateTime.replace(/Z$/, '')}Z`, tz);
+    await this.api(`/me/events/${row.series_id}`, { method: 'PATCH', json: b });
+    return { resync: true };
+  }
+
+  async deleteEvent(cal, remoteId, { row, scope } = {}) {
+    const id = scope === 'series' && row?.series_id ? row.series_id : remoteId;
     try {
-      await this.api(`/me/events/${remoteId}`, { method: 'DELETE' });
+      await this.api(`/me/events/${id}`, { method: 'DELETE' });
     } catch (e) {
       if (e.status !== 404) throw e;
     }
+    return scope === 'series' ? { resync: true } : null;
   }
 
   async respondToEvent(cal, remoteId, response) {

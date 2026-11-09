@@ -348,7 +348,8 @@ async function showEvent(id, rect) {
   const e = CS.events.find((x) => x.id === id) || (await api(`/api/events/${id}`));
   const pop = popover(rect, `
     <div class="t"><span class="dot" style="background:${e.color};margin-top:6px"></span><span>${esc(e.title)}</span></div>
-    <div class="line">${icon('clock', 'sm')}<span>${esc(e.when)}${e.recurring ? ' · repeats' : ''}</span></div>
+    <div class="line">${icon('clock', 'sm')}<span>${esc(e.when)}</span></div>
+    ${e.recurring ? `<div class="line">${icon('refresh', 'sm')}<span>${esc(e.repeats || 'Repeats')}</span></div>` : ''}
     ${e.location ? `<div class="line">${icon('pin', 'sm')}<span>${esc(e.location)}</span></div>` : ''}
     ${e.onlineMeetingUrl ? `<div class="line">${icon('video', 'sm')}<a href="${esc(e.onlineMeetingUrl)}" target="_blank" rel="noopener">Join online meeting</a></div>` : ''}
     ${e.attendees?.length ? `<div class="line">${icon('users', 'sm')}<span>${e.attendees.slice(0, 8).map((a) => esc(a.name || a.email) + (a.status ? ` <span class="muted">(${esc(a.status)})</span>` : '')).join(', ')}${e.attendees.length > 8 ? ` +${e.attendees.length - 8}` : ''}</span></div>` : ''}
@@ -379,10 +380,34 @@ async function openEventById(id) {
   } catch {}
 }
 
+/** For repeating events: change just this one, or every occurrence? */
+function askScope(verb) {
+  return new Promise((resolve) => {
+    let done = false;
+    const m = modal({
+      title: `${verb} a repeating event`,
+      body: `<p>Do you want to ${verb.toLowerCase()} only this occurrence, or every event in the series?</p>`,
+      footer: `<button class="btn" data-s="cancel">Cancel</button><button class="btn" data-s="occurrence">This event</button><button class="btn primary" data-s="series">All events in the series</button>`,
+      onClose: () => !done && resolve(null),
+    });
+    m.el.addEventListener('click', (ev) => {
+      const v = ev.target.closest('[data-s]')?.dataset.s;
+      if (!v) return;
+      done = true;
+      m.close();
+      resolve(v === 'cancel' ? null : v);
+    });
+  });
+}
+
 async function deleteEvent(e) {
-  if (!(await confirmDialog('Delete event?', `"${e.title}" — ${e.when}${e.attendees?.length ? '. Attendees will be notified.' : ''}`, { ok: 'Delete', danger: true }))) return;
+  let scope = 'occurrence';
+  if (e.recurring) {
+    scope = await askScope('Delete');
+    if (!scope) return;
+  } else if (!(await confirmDialog('Delete event?', `"${e.title}" — ${e.when}${e.attendees?.length ? '. Attendees will be notified.' : ''}`, { ok: 'Delete', danger: true }))) return;
   try {
-    await api(`/api/events/${e.id}`, { method: 'DELETE' });
+    await api(`/api/events/${e.id}?scope=${scope}`, { method: 'DELETE' });
     toast('Event deleted');
     load();
   } catch (err) {
@@ -415,6 +440,7 @@ export function editEvent(e, slot = {}) {
         <div><label class="lbl">Starts</label><div class="row"><input class="field" type="date" data-e="sd" value="${sd}"><input class="field timef" type="time" data-e="st" value="${st}" style="width:130px"></div></div>
         <div><label class="lbl">Ends</label><div class="row"><input class="field" type="date" data-e="ed" value="${ed}"><input class="field timef" type="time" data-e="et" value="${et}" style="width:130px"></div></div>
       </div>
+      <label class="lbl">Repeat</label><select class="field" data-e="repeat"></select>
       <label class="lbl">Location</label><input class="field" data-e="location" value="${esc(e?.location || '')}" placeholder="Add a location">
       <label class="lbl">Invite attendees</label><input class="field" data-e="attendees" value="${esc((e?.attendees || []).map((a) => a.email).join(', '))}" placeholder="name@example.com, …">
       <div class="grid2">
@@ -431,6 +457,18 @@ export function editEvent(e, slot = {}) {
     const c = state.boot.calendars.find((x) => x.id === Number(q('calendar').value));
     m.el.querySelector('[data-online]').hidden = !isNew || c?.kind !== 'remote';
   };
+  const fillRepeat = () => {
+    const sel = q('repeat');
+    const prev = sel.value;
+    const d = q('sd').value || todayStr();
+    const wd = fmt(zoned(d, 12), { weekday: 'long' });
+    const opts = [['', 'Does not repeat'], ['daily', 'Every day'], ['weekdays', 'Every weekday (Mon–Fri)'], ['weekly', `Every week on ${wd}`], ['monthly', `Every month on day ${Number(d.slice(8))}`], ['yearly', `Every year on ${fmt(zoned(d, 12), { month: 'long', day: 'numeric' })}`]];
+    if (e?.recurring) opts.unshift(['keep', `Keep: ${e.repeats || 'repeats'}`]);
+    sel.innerHTML = opts.map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join('');
+    sel.value = prev && opts.some(([v]) => v === prev) ? prev : e?.recurring ? 'keep' : '';
+  };
+  fillRepeat();
+  q('sd').addEventListener('change', fillRepeat);
   syncTime();
   syncOnline();
   q('allday').onchange = syncTime;
@@ -458,6 +496,12 @@ export function editEvent(e, slot = {}) {
       description: q('description').value,
       ...(isNew && q('online').checked ? { online_meeting: true } : {}),
     };
+    const rep = q('repeat').value;
+    if (rep !== 'keep' && (rep || e?.recurring)) body.recurrence = rep ? { frequency: rep } : null;
+    if (!isNew && e.recurring) {
+      body.scope = body.recurrence !== undefined ? 'series' : await askScope('Change');
+      if (!body.scope) return;
+    }
     const btn = m.el.querySelector('[data-x="save"]');
     btn.disabled = true;
     try {

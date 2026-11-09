@@ -10,6 +10,10 @@ export async function api(path, { method = 'GET', body, raw = false } = {}) {
   const text = await res.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  if (res.status === 401 && data && data.login) {
+    location.href = '/login';
+    throw new Error('Signed out');
+  }
   if (!res.ok) throw new Error((data && data.error) || `Request failed (${res.status})`);
   return data;
 }

@@ -1,0 +1,33 @@
+# Hosted Switchboard with automatic HTTPS (Caddy + Let's Encrypt).
+#   1. Point a DNS name (e.g. mail.example.com) at this server; open ports 80 and 443.
+#   2. cp deploy/.env.example deploy/.env and fill it in.
+#   3. docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
+services:
+  switchboard:
+    build: ..
+    restart: unless-stopped
+    environment:
+      SWITCHBOARD_PUBLIC_URL: https://${SWITCHBOARD_DOMAIN}
+      SWITCHBOARD_PASSWORD: ${SWITCHBOARD_PASSWORD:?Set SWITCHBOARD_PASSWORD in deploy/.env}
+      TZ: ${TZ:-UTC}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID:-}
+      MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET:-}
+    volumes:
+      - switchboard-data:/data
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    command: caddy reverse-proxy --from ${SWITCHBOARD_DOMAIN} --to switchboard:4545
+    volumes:
+      - caddy-data:/data
+    depends_on:
+      - switchboard
+volumes:
+  switchboard-data:
+  caddy-data:

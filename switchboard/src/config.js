@@ -6,7 +6,21 @@ import crypto from 'node:crypto';
 export const APP_NAME = 'Switchboard';
 export const DATA_DIR = path.resolve(process.env.SWITCHBOARD_DATA_DIR || path.join(os.homedir(), '.switchboard'));
 export const PORT = Number(process.env.SWITCHBOARD_PORT || 4545);
-export const HOST = '127.0.0.1';
+/** Interface to listen on. 127.0.0.1 (default) keeps Switchboard private to this computer. */
+export const HOST = process.env.SWITCHBOARD_HOST || '127.0.0.1';
+/** Public address when hosted behind a domain, e.g. https://mail.example.com (used for sign-in redirects). */
+export const PUBLIC_URL = (process.env.SWITCHBOARD_PUBLIC_URL || '').replace(/\/+$/, '') || null;
+/** Password for the login page. Required whenever Switchboard listens beyond this computer. */
+export const PASSWORD = process.env.SWITCHBOARD_PASSWORD || null;
+export const EXTRA_HOSTS = (process.env.SWITCHBOARD_ALLOWED_HOSTS || '').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean);
+
+export function isLoopback(host = HOST) {
+  return host === '127.0.0.1' || host === 'localhost' || host === '::1';
+}
+
+export function loginRequired() {
+  return !!PASSWORD || !isLoopback();
+}
 export const CACHE_DIR = path.join(DATA_DIR, 'cache');
 export const DB_PATH = path.join(DATA_DIR, 'switchboard.db');
 export const TOKEN_PATH = path.join(DATA_DIR, 'token');
@@ -39,6 +53,6 @@ export function secretKey() {
   return Buffer.from(raw.toString().trim(), 'base64');
 }
 
-export function baseUrl(host = HOST) {
-  return `http://${host}:${PORT}`;
+export function baseUrl() {
+  return PUBLIC_URL || `http://127.0.0.1:${PORT}`;
 }

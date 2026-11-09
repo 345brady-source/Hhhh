@@ -77,6 +77,7 @@ function renderFolders() {
     { key: 'unread', label: 'Unread', icon: 'unread' },
     { key: 'flagged', label: 'Flagged', icon: 'flag', count: b.counts.flagged, muted: true },
     { key: 'drafts', label: 'Drafts', icon: 'draft', count: b.counts.drafts, muted: true },
+    { key: 'scheduled', label: 'Scheduled', icon: 'clock', count: b.counts.scheduled, muted: true },
     { key: 'sent', label: 'Sent', icon: 'sent' },
   ];
   const isActive = (v) => !S.scope.folderId && S.scope.view === v && !S.q;
@@ -87,7 +88,7 @@ function renderFolders() {
   if (!b.accounts.length) {
     html += `<div class="empty small">No accounts yet.<br><br><button class="btn sm" data-act="add-account">${icon('plus')} Add an account</button></div>`;
   }
-  for (const a of b.accounts) {
+  for (const a of b.accounts.filter((x) => x.type !== 'caldav')) {
     const folders = b.folders.filter((f) => f.accountId === a.id);
     const collapsed = S.collapsed.has(a.id);
     const status = a.syncing || a.status === 'syncing' ? `<span class="acct-status sync" title="Syncing">${icon('refresh')}</span>` : a.status === 'error' || a.status === 'auth_error' ? `<span class="acct-status err" title="${esc(a.lastError || 'Problem')}">${icon('warn')}</span>` : '';
@@ -125,12 +126,12 @@ function scopeTitle() {
     const a = state.boot.accounts.find((x) => x.id === f?.accountId);
     return f ? `${f.name}${a ? ` · ${a.label}` : ''}` : 'Folder';
   }
-  return { unified: 'All inboxes', unread: 'Unread', flagged: 'Flagged', drafts: 'Drafts', sent: 'Sent', all: 'All mail' }[S.scope.view] || 'Mail';
+  return { unified: 'All inboxes', unread: 'Unread', flagged: 'Flagged', drafts: 'Drafts', scheduled: 'Scheduled', sent: 'Sent', all: 'All mail' }[S.scope.view] || 'Mail';
 }
 
 function renderFilter() {
   root.querySelectorAll('#list-filter button').forEach((b) => b.classList.toggle('active', b.dataset.filter === S.filter));
-  root.querySelector('#list-filter').hidden = S.scope.view === 'drafts';
+  root.querySelector('#list-filter').hidden = S.scope.view === 'drafts' || S.scope.view === 'scheduled';
 }
 
 // Message list -------------------------------------------------------------------------------------
@@ -140,6 +141,7 @@ async function loadList({ append = false } = {}) {
   if (!el) return;
   root.querySelector('#list-title').textContent = scopeTitle();
   if (S.scope.view === 'drafts' && !S.q) return loadDrafts();
+  if (S.scope.view === 'scheduled' && !S.q) return loadScheduled();
   const req = ++listReq;
   S.loading = true;
   const q = new URLSearchParams({ limit: '60', offset: String(append ? S.messages.length : 0) });
@@ -174,6 +176,22 @@ async function loadDrafts() {
       <div class="from"><span style="color:var(--danger)">[Draft]</span> ${esc(d.to.map(shortAddr).join(', ') || '(no recipients)')}</div><div class="date">${listDate(d.updatedAt)}</div>
       <div class="subj">${esc(d.subject || '(no subject)')}</div><div class="icons">${d.createdBy !== 'you' ? `<span title="Written by Claude" style="color:var(--claude)">${icon('sparkle', 'sm')}</span>` : ''}</div>
       <div class="snip">${esc(d.text.slice(0, 160))}</div></div>`)
+    .join('');
+}
+
+async function loadScheduled() {
+  const el = root.querySelector('#msgs');
+  const items = await api('/api/outbox');
+  if (!items.length) {
+    el.innerHTML = `<div class="empty">${icon('clock')}<div>Nothing scheduled. Use “Later” in a message, or ask Claude to “send this tomorrow at 8am”.</div></div>`;
+    return;
+  }
+  el.innerHTML = items
+    .map((o) => `<div class="msg" data-outbox="${o.id}" style="cursor:default"><div class="bar"></div>
+      <div class="from">${o.status === 'failed' ? '<span style="color:var(--danger)">[Failed]</span> ' : ''}${esc(o.to.join(', '))}</div><div class="date">${esc(o.when)}</div>
+      <div class="subj">${esc(o.subject || '(no subject)')}</div><div class="icons">${o.createdBy !== 'you' ? `<span title="Scheduled by Claude" style="color:var(--claude)">${icon('sparkle', 'sm')}</span>` : ''}</div>
+      <div class="snip">${esc(o.account || '')} · ${esc(o.error || o.preview)}</div>
+      <div class="row" style="grid-column:1/3;margin-top:6px"><button class="btn sm" data-ob="send-now">Send now</button><button class="btn sm" data-ob="edit">Edit</button><button class="btn sm danger" data-ob="cancel">Cancel</button></div></div>`)
     .join('');
 }
 
@@ -339,6 +357,20 @@ function onClick(e) {
     if (b === 'all') { S.messages.forEach((m) => S.checked.add(m.id)); return renderList(); }
     return act(b, [...S.checked]);
   }
+  const ob = t.closest('[data-ob]');
+  if (ob) {
+    const id = Number(ob.closest('[data-outbox]').dataset.outbox);
+    const action = ob.dataset.ob;
+    api(`/api/outbox/${id}/${action}`, { method: 'POST' })
+      .then((r) => {
+        if (action === 'edit') Compose.open({ mode: 'draft', draftId: r.id });
+        else toast(action === 'cancel' ? 'Canceled' : 'Sending…');
+        refreshCounts();
+        loadScheduled();
+      })
+      .catch((err) => toast(err.message, { error: true }));
+    return;
+  }
   const fav = t.closest('[data-view]');
   if (fav) {
     S.scope = { view: fav.dataset.view };
@@ -349,6 +381,7 @@ function onClick(e) {
   if (folder) {
     S.scope = { folderId: Number(folder.dataset.folder), accountId: Number(folder.dataset.folderAccount) };
     resetScope();
+    api(`/api/folders/${S.scope.folderId}/sync`, { method: 'POST' }).catch(() => {}); // fresh contents arrive via live updates
     return;
   }
   const tog = t.closest('[data-toggle-acct]');
@@ -484,6 +517,15 @@ async function handleAct(name, el) {
       return;
     }
     case 'open-event': return go('calendar', null, { eventId: Number(el.dataset.event) });
+    case 'edit-draft': {
+      try {
+        const d = await api(`/api/messages/${m.id}/edit-draft`, { method: 'POST' });
+        Compose.open({ mode: 'draft', draftId: d.id });
+      } catch (e) {
+        toast(e.message, { error: true });
+      }
+      return;
+    }
   }
 }
 
@@ -562,6 +604,7 @@ function renderReader() {
           <div class="recips">${esc(recips)}</div></div>
         <div class="meta">${esc(fullDate(m.date))}<br><span class="pill"><span class="dot" style="background:${m.accountColor};width:7px;height:7px"></span>${esc(m.account)} · ${esc(m.folder)}</span></div>
       </div>
+      ${m.folderRole === 'drafts' ? `<div class="imgbar" style="margin-bottom:6px">${icon('draft', 'sm')} This is a draft. <button class="btn sm primary" data-act="edit-draft">Continue editing</button></div>` : ''}
       <div class="claude-actions">
         <button class="btn" data-act="ask" data-prompt="Summarize this email in a few bullet points and tell me if it needs anything from me.">${icon('sparkle', 'sm')} Summarize</button>
         <button class="btn" data-act="ask" data-prompt="Draft a reply to this email for me to review.">${icon('sparkle', 'sm')} Draft reply</button>

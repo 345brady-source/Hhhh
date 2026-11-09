@@ -27,6 +27,7 @@ export function syncSettings() {
 function makeCtx(account, opts) {
   const s = syncSettings();
   const newInbox = [];
+  const newIds = [];
   const ctx = {
     account,
     windowDays: s.windowDays,
@@ -47,6 +48,8 @@ function makeCtx(account, opts) {
         // Notify only for mail that arrived since the last sync (not the initial download).
         const since = account.lastSyncAt ? Date.parse(account.lastSyncAt) - 10 * 60_000 : Infinity;
         newInbox.push(...inserted.map((x) => x.meta).filter((m) => !m.seen && Date.parse(m.date) >= since));
+        // Rules run on mail that arrives after the account's first sync.
+        if (account.lastSyncAt) newIds.push(...inserted.map((x) => x.id));
       }
     },
     remove: (f, rid) => store.removeMessage(f.id, rid),
@@ -66,6 +69,7 @@ function makeCtx(account, opts) {
       ctx.upsertMany(f, [meta]);
     },
     newInbox,
+    newIds,
   };
   return ctx;
 }
@@ -91,7 +95,7 @@ export function isSyncing(id) {
   return running.has(Number(id));
 }
 
-async function doSync(id, { inboxOnly = false, calendars = true } = {}) {
+async function doSync(id, { inboxOnly = false, calendars = true, folderId = null } = {}) {
   const row = getAccountRow(id);
   if (!row || !row.enabled) return;
   const account = getAccount(id);
@@ -103,14 +107,16 @@ async function doSync(id, { inboxOnly = false, calendars = true } = {}) {
   const ctx = makeCtx(account, { refreshFlags: inboxOnly || cycle % 3 === 1 });
   let error = null;
   try {
-    if (!inboxOnly || !store.foldersOf(id).length) store.syncFolderList(id, await provider.listFolders());
+    if ((!inboxOnly && !folderId) || !store.foldersOf(id).length) store.syncFolderList(id, await provider.listFolders());
     if (provider.syncAccount) {
       await provider.syncAccount(ctx);
     } else {
       for (const folder of store.foldersOf(id)) {
         if (folder.local_only) continue;
+        if (folderId && folder.id !== folderId) continue;
         if (inboxOnly && folder.role !== 'inbox') continue;
-        if (!inboxOnly && folder.role !== 'inbox' && folder.role !== 'sent' && cycle % 2 === 0) continue; // other folders every other run
+        // Inbox, Sent and Drafts every run; other folders every other run (and whenever they are opened).
+        if (!folderId && !inboxOnly && !['inbox', 'sent', 'drafts'].includes(folder.role) && cycle % 2 === 0) continue;
         try {
           await provider.syncFolder(folder, ctx);
         } catch (e) {
@@ -118,6 +124,10 @@ async function doSync(id, { inboxOnly = false, calendars = true } = {}) {
           throw e;
         }
       }
+    }
+    if (ctx.newIds.length) {
+      const { applyRules } = await import('./rules.js');
+      await applyRules(ctx.newIds).catch(() => {});
     }
     store.updateFolderCounts(id);
     events.emit('mail', { accountId: id });
@@ -131,7 +141,7 @@ async function doSync(id, { inboxOnly = false, calendars = true } = {}) {
   } catch (e) {
     error = e;
   }
-  if (!error && calendars && !inboxOnly) {
+  if (!error && calendars && !inboxOnly && !folderId) {
     try {
       await syncAccountCalendars(id);
       events.emit('calendar', { accountId: id });
@@ -199,8 +209,25 @@ export function syncAll(opts = {}) {
   return mapLimit(accounts, 4, (a) => syncAccount(a.id, opts));
 }
 
+let minuteTimer = null;
+
+/** Every 20 seconds: send scheduled mail that is due, and announce event reminders. */
+async function minuteTick() {
+  try {
+    const { processOutbox } = await import('./mail.js');
+    await processOutbox();
+  } catch {}
+  try {
+    const { dueReminders } = await import('./calendar.js');
+    for (const r of dueReminders()) events.emit('reminder', r);
+  } catch {}
+}
+
 export function startScheduler() {
   stopScheduler();
+  minuteTimer = setInterval(minuteTick, 20_000);
+  minuteTimer.unref?.();
+  setTimeout(minuteTick, 3000).unref?.();
   const tick = () => {
     syncAll().catch(() => {});
     timer = setTimeout(tick, syncSettings().intervalMinutes * 60_000);
@@ -211,6 +238,7 @@ export function startScheduler() {
 }
 
 export function stopScheduler() {
+  clearInterval(minuteTimer);
   clearTimeout(timer);
   timer = null;
 }

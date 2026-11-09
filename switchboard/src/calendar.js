@@ -1,5 +1,6 @@
 import { all, get, run, tx, json, getSetting, logActivity } from './db.js';
-import { getAccount, listAccounts, providerFor } from './accounts.js';
+import { getAccount, listAccounts, calendarProviderFor, hasServerCalendars } from './accounts.js';
+import { toRRule, describeRRule, expandLocal } from './recurrence.js';
 import { parseIcs, buildIcs } from './ics.js';
 import { randomId } from './crypto.js';
 import { events } from './bus.js';
@@ -28,7 +29,7 @@ export function ensureLocalCalendars() {
   }
   // IMAP and POP3 accounts have no calendar on the server; like Outlook, give each a calendar kept on this computer.
   for (const a of listAccounts()) {
-    if ((a.type === 'imap' || a.type === 'pop3') && !get('SELECT id FROM calendars WHERE account_id = ?', a.id)) {
+    if ((a.type === 'imap' || a.type === 'pop3') && !a.config.caldavUrl && !get('SELECT id FROM calendars WHERE account_id = ?', a.id)) {
       run("INSERT INTO calendars(account_id, remote_id, name, color, kind) VALUES(?, 'local', 'Calendar', ?, 'local')", a.id, a.color);
     }
   }
@@ -125,11 +126,11 @@ export function defaultCalendar() {
 export async function syncAccountCalendars(accountId) {
   ensureLocalCalendars();
   const account = getAccount(accountId);
-  if (!account || (account.type !== 'gmail' && account.type !== 'microsoft')) return;
-  const provider = providerFor(accountId);
+  if (!account || !hasServerCalendars(account)) return;
+  const provider = calendarProviderFor(accountId);
   const tz = userTz();
   const remote = await provider.listCalendars();
-  const existing = new Map(all('SELECT * FROM calendars WHERE account_id = ?', accountId).map((c) => [c.remote_id, c]));
+  const existing = new Map(all("SELECT * FROM calendars WHERE account_id = ? AND kind = 'remote'", accountId).map((c) => [c.remote_id, c]));
   tx(() => {
     for (const c of remote) {
       const cur = existing.get(c.remote_id);
@@ -152,6 +153,15 @@ export async function syncAccountCalendars(accountId) {
   }
 }
 
+/** Re-read one server calendar (after writes that change several events, like series edits). */
+export async function resyncCalendar(calendarId) {
+  const cal = calendarRow(calendarId);
+  if (!cal || cal.kind !== 'remote') return;
+  const { from, to } = syncWindow();
+  const evs = await calendarProviderFor(cal.account_id).listEvents(cal, from, to, userTz());
+  replaceEvents(cal.id, evs, from, to);
+}
+
 function replaceEvents(calendarId, evs, from, to) {
   tx(() => {
     const keep = new Set();
@@ -170,13 +180,13 @@ function upsertEventRow(calendarId, e, extra = {}) {
     e.uid || null, e.title || '(No title)', e.description || null, e.location || null, e.start, e.end, e.all_day ? 1 : 0,
     e.start_date || null, e.end_date || null, e.timezone || null, JSON.stringify(e.attendees || []), e.organizer || null,
     e.status || null, e.show_as || 'busy', e.recurring ? 1 : 0, e.series_id || null, e.reminder_minutes ?? null,
-    e.web_link || null, e.online_meeting_url || null, e.etag || null,
+    e.web_link || null, e.online_meeting_url || null, e.etag || null, e.rrule || null, e.href || null,
   ];
   if (cur) {
     run(
       `UPDATE events SET uid=?, title=?, description=?, location=?, start=?, end=?, all_day=?, start_date=?, end_date=?, timezone=?,
          attendees_json=?, organizer=?, status=?, show_as=?, recurring=?, series_id=?, reminder_minutes=?, web_link=?, online_meeting_url=?, etag=?,
-         updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`,
+         rrule=?, href=?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`,
       ...vals, cur.id,
     );
     if (extra.source_message_id || extra.created_by) run('UPDATE events SET source_message_id = coalesce(?, source_message_id), created_by = coalesce(?, created_by) WHERE id = ?', extra.source_message_id || null, extra.created_by || null, cur.id);
@@ -184,8 +194,8 @@ function upsertEventRow(calendarId, e, extra = {}) {
   }
   const r = run(
     `INSERT INTO events(calendar_id, remote_id, uid, title, description, location, start, end, all_day, start_date, end_date, timezone,
-       attendees_json, organizer, status, show_as, recurring, series_id, reminder_minutes, web_link, online_meeting_url, etag, source_message_id, created_by)
-     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+       attendees_json, organizer, status, show_as, recurring, series_id, reminder_minutes, web_link, online_meeting_url, etag, rrule, href, source_message_id, created_by)
+     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     calendarId, e.remote_id, ...vals, extra.source_message_id || null, extra.created_by || null,
   );
   return Number(r.lastInsertRowid);
@@ -247,6 +257,9 @@ export function publicEvent(r, tz = userTz()) {
     status: r.status,
     showAs: r.show_as,
     recurring: !!r.recurring,
+    seriesId: r.series_id || null,
+    repeats: r.rrule ? describeRRule(r.rrule) : r.recurring ? 'Repeats' : null,
+    rrule: r.rrule || null,
     reminderMinutes: r.reminder_minutes,
     webLink: r.web_link,
     onlineMeetingUrl: r.online_meeting_url,
@@ -309,9 +322,13 @@ export function normalizeEventInput(input, { partial = false, existing = null } 
   if (input.show_as !== undefined) out.show_as = input.show_as;
   if (input.online_meeting) out.online_meeting = true;
   if (input.notify !== undefined) out.notify = input.notify;
+  const recurrenceIn = input.recurrence;
 
   const timesGiven = input.start !== undefined || input.end !== undefined || input.all_day !== undefined || input.duration_minutes !== undefined;
-  if (!timesGiven && partial) return out;
+  if (!timesGiven && partial) {
+    if (recurrenceIn !== undefined) out.rrule = recurrenceIn === null || recurrenceIn === 'none' || recurrenceIn === '' ? null : toRRule(recurrenceIn, { start: existing?.start, allDay: existing?.allDay, tz });
+    return out;
+  }
   const allDay = input.all_day ?? (existing ? existing.allDay : isDateOnly(input.start) && (input.end == null || isDateOnly(input.end)));
   const startIn = input.start ?? (existing ? (existing.allDay ? existing.startDate : existing.start) : null);
   if (!startIn) throw new Error('A start date/time is required.');
@@ -344,6 +361,7 @@ export function normalizeEventInput(input, { partial = false, existing = null } 
     out.start = s.toISOString();
     out.end = e.toISOString();
   }
+  if (recurrenceIn !== undefined) out.rrule = recurrenceIn === null || recurrenceIn === 'none' || recurrenceIn === '' ? null : toRRule(recurrenceIn, { start: out.start, allDay: out.all_day, tz });
   return out;
 }
 
@@ -355,13 +373,22 @@ export async function createEvent(input, actor = 'you') {
   const tz = userTz();
   const conflicts = conflictsFor(ev.start, ev.end).filter(() => !ev.all_day);
   let id;
+  const extra = { source_message_id: input.source_message_id, created_by: actor };
   if (cal.kind === 'remote') {
     const row = calendarRow(cal.id);
-    const created = await providerFor(cal.accountId).createEvent(row, ev, tz);
-    id = upsertEventRow(cal.id, created, { source_message_id: input.source_message_id, created_by: actor });
+    const created = await calendarProviderFor(cal.accountId).createEvent(row, ev, tz);
+    if (created?.resync || ev.rrule) {
+      await resyncCalendar(cal.id);
+      id = findAfterResync(cal.id, { uid: created?.uid, seriesId: created?.remote_id, remoteId: created?.remote_id, near: ev.start });
+      if (id) markCreated(cal.id, id, extra);
+    } else id = upsertEventRow(cal.id, created, extra);
+    if (!id) throw new Error('The event was saved on the server but could not be read back. It will appear after the next sync.');
   } else {
-    const local = { ...ev, remote_id: `local-${randomId(10)}`, uid: input.uid || `${randomId(12)}@switchboard`, status: 'confirmed', organizer: input.organizer || null };
-    id = upsertEventRow(cal.id, local, { source_message_id: input.source_message_id, created_by: actor });
+    const uid = input.uid || `${randomId(12)}@switchboard`;
+    const local = { ...ev, remote_id: `local-${randomId(10)}`, uid, status: 'confirmed', organizer: input.organizer || null };
+    if (ev.rrule) {
+      id = materializeSeries(cal.id, local, extra);
+    } else id = upsertEventRow(cal.id, local, extra);
     if (ev.attendees?.length && ev.notify !== false) await sendInvitation(getEvent(id), cal, 'REQUEST').catch((e) => { throw new Error(`Event saved, but the invitation email failed: ${e.message}`); });
   }
   const event = getEvent(id);
@@ -395,16 +422,26 @@ export async function updateEvent(id, patch, actor = 'you') {
     await deleteEvent(id, actor, { notify: false, quiet: true });
     return res;
   }
+  const scope = patch.scope === 'series' && (row.series_id || row.recurring) ? 'series' : 'occurrence';
   if (cal.kind === 'remote') {
-    const updated = await providerFor(cal.account_id).updateEvent(cal, row.remote_id, ev, tz);
-    upsertEventRow(cal.id, updated);
+    const result = await calendarProviderFor(cal.account_id).updateEvent(cal, row.remote_id, ev, tz, { row, scope });
+    if (result?.resync) {
+      await resyncCalendar(cal.id);
+      id = (get('SELECT id FROM events WHERE id = ?', id) && scope !== 'series' && !result.uid ? id : null) || findAfterResync(cal.id, { uid: result.uid, seriesId: row.series_id, remoteId: row.remote_id, near: ev.start || row.start }) || id;
+    } else upsertEventRow(cal.id, result);
+  } else if (scope === 'series' && row.series_id) {
+    id = updateLocalSeries(cal.id, row, ev);
   } else {
     const merged = { ...rowToProviderEvent(row), ...ev };
-    upsertEventRow(cal.id, merged);
+    if (ev.rrule && !row.series_id) {
+      run('DELETE FROM events WHERE id = ?', id);
+      id = materializeSeries(cal.id, { ...merged, remote_id: `local-${randomId(10)}` }, { created_by: row.created_by });
+    } else upsertEventRow(cal.id, merged);
     const after = getEvent(id);
     if (after.attendees?.length && patch.notify !== false && (ev.start || ev.title || ev.location)) await sendInvitation(after, publicCalendarById(cal.id), 'REQUEST').catch(() => {});
   }
   const event = getEvent(id);
+  if (!event) throw new Error('The event was updated on the server; it will appear after the next sync.');
   logActivity(actor, 'event.update', `${event.title} — ${event.when}`);
   events.emit('calendar', { changed: event.id });
   return { event, conflicts: event.allDay ? [] : conflictsFor(event.start, event.end, id) };
@@ -420,17 +457,98 @@ function rowToProviderEvent(r) {
     all_day: !!r.all_day, start_date: r.start_date, end_date: r.end_date, timezone: r.timezone, attendees: json(r.attendees_json, []),
     organizer: r.organizer, status: r.status, show_as: r.show_as, recurring: !!r.recurring, series_id: r.series_id,
     reminder_minutes: r.reminder_minutes, web_link: r.web_link, online_meeting_url: r.online_meeting_url, etag: r.etag,
+    rrule: r.rrule, href: r.href,
   };
 }
 
-export async function deleteEvent(id, actor = 'you', { notify = true, quiet = false } = {}) {
+/** Store every occurrence of a repeating event kept on this computer (two years ahead). */
+function materializeSeries(calendarId, master, extra = {}) {
+  const tz = userTz();
+  const durMs = Date.parse(master.end) - Date.parse(master.start);
+  const days = master.all_day ? Math.round((Date.parse(master.end_date) - Date.parse(master.start_date)) / 86400_000) : 0;
+  const from = new Date(Date.parse(master.start) - 86400_000);
+  const to = new Date(Date.parse(master.start) + 730 * 86400_000);
+  const starts = expandLocal(master.rrule, { start: master.start, allDay: master.all_day, tz, from, to }).filter((ms) => !(master.exdates || []).includes(new Date(ms).toISOString()));
+  if (!starts.length) starts.push(Date.parse(master.start));
+  let first = null;
+  tx(() => {
+    for (const ms of starts) {
+      const startIso = new Date(ms).toISOString();
+      const inst = { ...master, remote_id: `${master.uid}::${ms}`, series_id: master.uid, recurring: true, start: startIso, end: new Date(ms + durMs).toISOString() };
+      if (master.all_day) {
+        inst.start_date = localDate(new Date(ms), tz);
+        inst.end_date = addDaysToDate(inst.start_date, days || 1);
+      }
+      const rowId = upsertEventRow(calendarId, inst, extra);
+      if (first == null) first = rowId;
+    }
+  });
+  return first;
+}
+
+function updateLocalSeries(calendarId, row, ev) {
+  const rows = all('SELECT * FROM events WHERE calendar_id = ? AND series_id = ? ORDER BY start', calendarId, row.series_id);
+  const firstRow = rows[0];
+  const shift = ev.start ? Date.parse(ev.start) - Date.parse(row.start) : 0;
+  const newDur = ev.start ? Date.parse(ev.end) - Date.parse(ev.start) : null;
+  const fields = { ...ev };
+  delete fields.start; delete fields.end; delete fields.start_date; delete fields.end_date; delete fields.all_day;
+  if (ev.rrule !== undefined || ev.all_day !== undefined) {
+    // The pattern itself changed: rebuild the series from its first occurrence.
+    const base = { ...rowToProviderEvent(firstRow), ...fields, rrule: ev.rrule !== undefined ? ev.rrule : firstRow.rrule };
+    base.start = new Date(Date.parse(firstRow.start) + shift).toISOString();
+    base.end = new Date(Date.parse(base.start) + (newDur ?? Date.parse(firstRow.end) - Date.parse(firstRow.start))).toISOString();
+    if (ev.all_day !== undefined) Object.assign(base, { all_day: ev.all_day, start_date: ev.start_date, end_date: ev.end_date });
+    run('DELETE FROM events WHERE calendar_id = ? AND series_id = ?', calendarId, row.series_id);
+    return base.rrule ? materializeSeries(calendarId, base, { created_by: firstRow.created_by }) : upsertEventRow(calendarId, { ...base, remote_id: `local-${randomId(10)}`, recurring: false, series_id: null }, { created_by: firstRow.created_by });
+  }
+  const tz = userTz();
+  tx(() => {
+    for (const r of rows) {
+      const next = { ...rowToProviderEvent(r), ...fields };
+      if (ev.start) {
+        next.start = new Date(Date.parse(r.start) + shift).toISOString();
+        next.end = new Date(Date.parse(next.start) + newDur).toISOString();
+        if (r.all_day) {
+          next.start_date = localDate(new Date(next.start), tz);
+          next.end_date = addDaysToDate(next.start_date, Math.round(newDur / 86400_000) || 1);
+        }
+      }
+      upsertEventRow(calendarId, next);
+    }
+  });
+  return row.id;
+}
+
+function findAfterResync(calendarId, { uid, seriesId, remoteId, near }) {
+  const t = near ? new Date(near).toISOString() : null;
+  const pick = (sql, ...p) => get(`${sql} ORDER BY abs(julianday(start) - julianday(coalesce(?, start))) LIMIT 1`, ...p, t)?.id;
+  return (
+    (remoteId && get('SELECT id FROM events WHERE calendar_id = ? AND remote_id = ?', calendarId, remoteId)?.id) ||
+    (uid && pick('SELECT id, start FROM events WHERE calendar_id = ? AND uid = ?', calendarId, uid)) ||
+    (seriesId && pick('SELECT id, start FROM events WHERE calendar_id = ? AND series_id = ?', calendarId, seriesId)) ||
+    null
+  );
+}
+
+function markCreated(calendarId, id, extra) {
+  const row = get('SELECT series_id, uid FROM events WHERE id = ?', id);
+  const key = row?.series_id ? ['series_id', row.series_id] : row?.uid ? ['uid', row.uid] : ['id', id];
+  run(`UPDATE events SET created_by = coalesce(?, created_by), source_message_id = coalesce(?, source_message_id) WHERE calendar_id = ? AND ${key[0]} = ?`, extra.created_by || null, extra.source_message_id || null, calendarId, key[1]);
+}
+
+export async function deleteEvent(id, actor = 'you', { notify = true, quiet = false, scope = 'occurrence' } = {}) {
   const existing = getEvent(id);
   if (!existing) throw new Error('Event not found');
   if (existing.readOnly) throw new Error('This event is on a read-only calendar.');
   const row = get('SELECT * FROM events WHERE id = ?', id);
   const cal = calendarRow(row.calendar_id);
-  if (cal.kind === 'remote') await providerFor(cal.account_id).deleteEvent(cal, row.remote_id, { notify });
-  else if (notify && existing.attendees?.length && !existing.organizer) await sendInvitation(existing, publicCalendarById(cal.id), 'CANCEL').catch(() => {});
+  const series = scope === 'series' && row.series_id;
+  if (cal.kind === 'remote') {
+    const r = await calendarProviderFor(cal.account_id).deleteEvent(cal, row.remote_id, { notify, row, scope: series ? 'series' : 'occurrence' });
+    if (r?.resync || series) await resyncCalendar(cal.id);
+  } else if (notify && existing.attendees?.length && !existing.organizer) await sendInvitation(existing, publicCalendarById(cal.id), 'CANCEL').catch(() => {});
+  if (series && cal.kind !== 'remote') run('DELETE FROM events WHERE calendar_id = ? AND series_id = ?', cal.id, row.series_id);
   run('DELETE FROM events WHERE id = ?', id);
   if (!quiet) logActivity(actor, 'event.delete', `${existing.title} — ${existing.when}`);
   events.emit('calendar', { deleted: id });
@@ -577,7 +695,7 @@ export async function respondToInvite(messageId, response, actor = 'you') {
   if (existing) {
     const row = get('SELECT * FROM events WHERE id = ?', existing.id);
     const cal = calendarRow(row.calendar_id);
-    const provider = cal.kind === 'remote' ? providerFor(cal.account_id) : null;
+    const provider = cal.kind === 'remote' ? calendarProviderFor(cal.account_id) : null;
     if (provider?.respondToEvent) {
       await provider.respondToEvent(cal, row.remote_id, status, tz);
       run('UPDATE events SET status = ? WHERE id = ?', status, existing.id);
@@ -614,4 +732,27 @@ export function dayRange(dateStr = null, days = 1) {
   const [y, m, d] = start.split('-').map(Number);
   const [y2, m2, d2] = addDaysToDate(start, days).split('-').map(Number);
   return { from: wallTimeToUtc(y, m, d, 0, 0, 0, tz), to: wallTimeToUtc(y2, m2, d2, 0, 0, 0, tz), tz };
+}
+
+
+// Reminders ----------------------------------------------------------------------------------------
+
+const reminded = new Set();
+
+/** Events whose reminder time has come (each is returned once per run of the app). */
+export function dueReminders(now = Date.now()) {
+  const def = Number(getSetting('defaultReminderMinutes', 15));
+  const out = [];
+  for (const e of listEvents({ from: new Date(now - 5 * 60_000), to: new Date(now + 26 * 3600_000) })) {
+    if (e.allDay || e.status === 'declined') continue;
+    const mins = e.reminderMinutes ?? (def >= 0 ? def : null);
+    if (mins == null) continue;
+    const start = Date.parse(e.start);
+    const key = `${e.id}|${e.start}|${mins}`;
+    if (now >= start - mins * 60_000 && now < start + 5 * 60_000 && !reminded.has(key)) {
+      reminded.add(key);
+      out.push({ id: e.id, title: e.title, when: e.when, start: e.start, minutes: Math.round((start - now) / 60_000), location: e.location, onlineMeetingUrl: e.onlineMeetingUrl, calendar: `${e.account} · ${e.calendar}`, color: e.color });
+    }
+  }
+  return out;
 }
