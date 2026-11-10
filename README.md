@@ -1,13 +1,62 @@
 # Carrow & Vale Investor Portal
 
-A white-label investor portal and sponsor console for Carrow & Vale Shareholder Advisors. Carrow & Vale's clients are investment firms and private placement sponsors; each client's investors see a portal carrying only that client's brand.
+A white-label investor portal and sponsor console from Carrow & Vale Shareholder Advisors, in two editions: the managed portal Carrow & Vale runs for its clients (investment firms and private placement sponsors), and the Carrow & Vale DIY Portal that firms sign up for and run themselves. Either way, investors see a portal carrying only their firm's brand.
 
 It is a static app with no build step:
 
 ```sh
 python3 -m http.server 8000
-# http://localhost:8000/?tenant=ashwell-ridge
+# http://localhost:8000/?tenant=ashwell-ridge   managed edition
+# http://localhost:8000/diy.html                DIY portal (sign-up)
 ```
+
+## Two editions
+
+The same code runs as two products. Each keeps its own data in the browser (separate storage), so they can be opened side by side. Both use the same investor mobile app (Shareholder Desk).
+
+| | Carrow & Vale (managed) | Carrow & Vale DIY Portal |
+|---|---|---|
+| Entry point | `index.html` | `diy.html` (sets `window.CVPortalEdition = 'diy'`; `?edition=diy` also works) |
+| Who runs it | Carrow & Vale staff set up and run each client's portal | The firm signs itself up and runs its own portal |
+| Roles | Carrow & Vale staff, sponsor staff, investor | Admin, team member, investor |
+| Setup | Carrow & Vale's new-client setup and offering intake | Self-serve sign-up (firm name, brand color, logo), then a setup checklist |
+| Offerings | Added and configured only by Carrow & Vale | Added by the firm's admins, including offering intake |
+| Investor verification | Carrow & Vale's own AML/KYC process | Automated verification through providers the firm plugs in (below) |
+| Branding | Investors see only the client's brand; Carrow & Vale staff get an operator bar | Fully white-labeled: investors see only the firm's brand (no Carrow & Vale name and no "Powered by"). The product name appears only on the sign-up page firms use |
+
+Everything else is shared: investor portal, offerings, distributions and NACHA files, capital calls, requests, documents, notices, reports, audit package, structures, offering intake and e-signature.
+
+### Carrow & Vale DIY Portal
+
+- **Sign-up.** Firm name, admin name and email, a password, the kind of offerings, a brand color and a logo create the portal. Sample firms fill the form for a quick look.
+- **Setup checklist.** Brand, verification providers, ACH origination, first offering (from its documents), subscription agreement template, team, investors, first distribution. Each step links to its page and ticks itself off.
+- **Team.** Admins invite team members, change roles and remove people (at least one admin always remains). Team members operate the portal (investors, calls, distributions, documents, notices) but cannot change brand, integrations, offerings intake or the team. Every change is in the change log.
+- **Offering sign-up links.** Each offering that is raising has a link investors can use to join on their own: they enter their details, activate, verify and subscribe.
+
+## E-signature
+
+A built-in signing module for subscription agreements, side letters and any other PDF, in both editions.
+
+- **Envelopes.** Upload a PDF, pick a template or a published document, add investor signers (and optionally a countersigner from the firm), choose signing in order or in any order, and place fields: signature, initials, date signed, name, text and checkbox. Fields can be dragged, resized and placed with the keyboard.
+- **Signing.** Investors see a banner and a "Waiting for your signature" list. They agree to sign electronically (ESIGN and UETA consent), then type, draw or upload a signature that is reused for later fields. Required fields are checked before finishing; investors can decline with a reason.
+- **Completion.** Each signer's fields are stamped into the PDF, and the last signature adds a certificate of completion: envelope ID, document SHA-256 before and after, each signer's consent, viewed and signed times and browser, and the full history. The signed PDF is published to the investors' Documents.
+- **Tracking.** Status per signer, reminders, voiding, downloads of the signed PDF, the certificate and the original; every step is in the change log.
+- **Templates.** Save an envelope's fields as a template. A template marked as an offering's subscription agreement is sent to each new subscriber, with their commitment and details filled in.
+
+Before production: verify signers' identities (email codes or sign-in), capture IP addresses on the server and seal the certificate with a server-side signature.
+
+## Investor verification (DIY portal)
+
+Investors are verified while they onboard: identity (KYC), sanctions and politically exposed person screening (AML), and accredited investor status where an offering requires it (Rule 506(c), or always, or never, as the firm chooses). The portal does not choose providers: the firm plugs in the services it uses, as many as it likes for each check.
+
+- **Built in:** a sandbox (simulated results, to try the flow), upload for the team to review, screening by the team, self-certification (Rule 506(b) only), and the free U.S. Treasury sanctions lists (OFAC SDN and Consolidated), screened on the integration server.
+- **Plugged in:** any third-party service, connected either through the integration server (a connector) or as a hosted link from the provider.
+- **More than one:** when several identity or accreditation connections are on, investors choose which to use. Every screening connection that is on runs; any potential match holds the investor for review.
+- **Decisions:** investors are approved automatically when every required check passes (or held for the team if the firm prefers). Anything flagged waits on the AML/KYC page, where the team records results, approves or declines with a note. Accreditation expires after the firm's validity period (90 days by default) or the provider's date, whichever is earlier. Subscriptions are blocked until the investor is verified and, for 506(c) offerings, currently accredited.
+
+## Integration server
+
+`server/` is a small Node service (no dependencies) that holds provider credentials and receives their callbacks, so no secret ever reaches the browser. See `server/README.md`.
 
 ## Two sides
 
@@ -105,7 +154,7 @@ The investor register also shows each investor's AML/KYC status and next review 
 
 ## iOS app: Shareholder Desk
 
-`mobile/` holds the investor app for iPhone, named **Shareholder Desk** so it carries no Carrow & Vale branding. Investors sign in with their email, password and a 6-digit code; the app opens the account of the firm they invested with, in that firm's branding. It shows investments, time to redemption, distributions with next payment dates, documents, notices, account details and settings (light or dark, Face ID). It is built with Expo (React Native) and shares this portal's core logic, so the figures match. See `mobile/README.md` for running, building and App Store submission.
+`mobile/` holds the investor app for iPhone and Android, named **Shareholder Desk** so it carries no Carrow & Vale branding. Investors of both editions use the same app. Investors sign in with their email, password and a 6-digit code; the app opens the account of the firm they invested with, in that firm's branding. It shows investments, time to redemption, distributions with next payment dates, documents, notices, account details and settings (light or dark, Face ID). It is built with Expo (React Native) and shares this portal's core logic, so the figures match. See `mobile/README.md` for running, building and App Store submission.
 
 ## Who sees what
 
@@ -114,6 +163,8 @@ The investor register also shows each investor's AML/KYC status and next review 
 | Investor | Only the client's branded portal. No Carrow & Vale name or bar, and no access to the console |
 | Sponsor staff | Their own firm's console, in their own colors with their logo, and an unbranded "Investor preview" bar when they view the portal as an investor. Offerings are read-only: only Carrow & Vale adds offerings or changes their exit timing, distribution schedule, terms and ACH originator. The Portal and brand page is hidden. No client switching and no configuration export |
 | Carrow & Vale staff | Every client, the operator bar (client switcher, portal/console toggle, view as any investor) and new-client setup |
+
+In the DIY portal the roles are admin (everything, including brand, integrations, offering intake and the team), team member (day-to-day operations) and investor (only the firm's branded portal; no product name anywhere).
 
 In production the role comes from sign-in. Because this build has no server, a small "Demo · signed in as" control in the bottom-left corner switches roles. To remove it, set this before the scripts load:
 
@@ -196,7 +247,11 @@ This build stores everything in the browser for demonstration. A production depl
 ## Files
 
 ```
-index.html                 entry point
+index.html                 entry point, managed edition
+diy.html                   entry point, DIY portal (same files with window.CVPortalEdition = 'diy')
+assets/css/esign.css       e-signature screens
+assets/css/diy.css         DIY sign-up page and verification screens
+assets/js/edition.js       which edition is running: roles, storage, product name
 assets/css/portal.css      investor portal styles and default tokens
 assets/css/console.css     sponsor console and operator bar
 assets/js/brand.js         white-label engine: color math, token derivation, logos
@@ -215,6 +270,10 @@ assets/js/structures.js    currencies, share classes, feeder funds, distribution
 assets/js/reader.js        the built-in offering-document reader (sections, waterfalls, classes, conflicts)
 assets/js/intake.js        offering-document intake: PDF and Word reading, Claude or the built-in reader, apply
 assets/js/console.js       sponsor console
+assets/js/esign.js         e-signature: envelopes, field editor, signing, certificate of completion, templates
+assets/js/integrations.js  DIY investor verification: connections, checks, decisions, Integrations page
+assets/js/diy.js           DIY sign-up, team and offering sign-up links
+server/                    integration server for provider credentials and callbacks (see server/README.md)
 tools/form_d_prospects.py  finds prospective clients in new SEC Form D filings (see below)
 ```
 

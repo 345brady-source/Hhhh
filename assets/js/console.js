@@ -18,6 +18,8 @@
      sponsor's admins in the DIY edition. Everyone else sees offerings
      read-only and never sees the brand page (app.js can / allowed). */
   const E = NS.EDITION;
+  /** What a blank offering-level ACH value falls back to. */
+  const DEF = E.diy ? 'Firm default' : 'Client default';
   const canConfigure = () => NS.app.can('configure');
   /** Append an entry to the client's change log (see audit.js). */
   const audit = (action, detail, fund, record) => NS.audit && NS.audit.log(W(), { action, detail, fund: fund || '', record: record || '' });
@@ -145,7 +147,7 @@
             ['Plug in your verification providers', 'Connect the identity, sanctions screening and accredited investor services you use, one or several for each check. They run automatically when investors onboard.', !!(NS.integrations && NS.integrations.ready(w)), 'console-integrations', true],
             ['Set up ACH origination', 'The bank and company IDs used to pay distributions by ACH.', achReady(), 'console-ach'],
             ['Add your first offering', 'Upload the PPM or operating agreement and the portal sets the offering up for you to review.', w.offerings.length > 0, 'console-intake', true],
-            ['Prepare your subscription agreement', 'Place signature fields once; investors sign it online when they subscribe.', (w.esignTemplates || []).length > 0, 'console-esign'],
+            ['Prepare your subscription agreement', 'Place signature fields once; investors sign it online when they subscribe.', (w.esignTemplates || []).some((t) => t.subscription), 'console-esign'],
             ['Invite your team', 'Admins manage everything; team members run day-to-day operations.', (w.team || []).length > 1, 'console-team', true],
             ['Invite investors', 'Add investors one at a time or import a list. Each receives an activation email.', w.investors.length > 0, 'console-investors'],
             ['Run the first distribution', 'Allocate a payment pro rata and generate the NACHA file for the bank.', w.runs.length > 0, 'console-distributions']
@@ -379,7 +381,7 @@
             return panel('Fund accounting', kv([['Accounting', `${h(cfg.label)}, ${cfg.open ? 'open-ended (monthly NAV)' : 'closed-end (quarterly valuations)'}`], ['Management fee', `${pc(cfg.mgmtFee)} a year on ${h(NS.audit.FEE_BASIS[cfg.feeBasis].split(' (')[0].toLowerCase())}`], [cfg.open ? 'Incentive allocation' : 'Carried interest', cfg.carry ? `${pc(cfg.carry)}${cfg.open ? ' over a high-water mark' : cfg.pref ? ` over a ${pc(cfg.pref)} preferred return` : ''}` : 'None'], ['Auditor', h(cfg.auditor || T().auditor || 'Not set')]]));
           })()}
           ${structurePanel(o)}
-          ${panel('ACH originator for this offering', kv([['Company name', h(ach.companyName || T().ach.companyName || 'Client default')], ['Company ID', h(ach.companyId || 'Client default')]]))}
+          ${panel('ACH originator for this offering', kv([['Company name', h(ach.companyName || T().ach.companyName || DEF)], ['Company ID', h(ach.companyId || DEF)]]))}
         </div>
         <aside class="cs-split-side" id="off-preview">${offPreview(o)}</aside>
       </div>`,
@@ -474,8 +476,8 @@
             ${panel(
               'ACH originator for this offering',
               `<div class="cs-grid">
-                ${offField('Company name (16)', 'achOverride.companyName', { max: 16, upper: true, hint: `Appears on investors' bank statements. Blank uses ${h(T().ach.companyName || 'the client default')}.` })}
-                ${offField('Company ID (10)', 'achOverride.companyId', { max: 10, spell: false, hint: 'Usually 1 followed by the paying entity’s EIN. Blank uses the client default.' })}
+                ${offField('Company name (16)', 'achOverride.companyName', { max: 16, upper: true, hint: `Appears on investors' bank statements. Blank uses ${h(T().ach.companyName || `the ${DEF.toLowerCase()}`)}.` })}
+                ${offField('Company ID (10)', 'achOverride.companyId', { max: 10, spell: false, hint: 'Usually 1 followed by the paying entity’s EIN. Blank uses the ' + DEF.toLowerCase() + '.' })}
               </div>`
             )}
             ${n ? '' : panel('Remove offering', `<p class="cs-muted">This offering has no investors yet, so it can be removed.</p><button class="cs-btn cs-btn-danger" type="button" data-action="off-del">${S().ui.offDel ? 'Click again to remove' : 'Remove offering'}</button>`)}
@@ -2702,7 +2704,7 @@
       const overrides = w.offerings
         .map((o) => {
           const c = companyFor(o);
-          return `<tr><td><a href="#console-offering-${h(o.id)}">${h(o.name)}</a></td><td><code>${h(c.name)}</code></td><td><code>${h(c.id)}</code></td><td>${o.achOverride && (o.achOverride.companyName || o.achOverride.companyId) ? 'Offering' : 'Client default'}</td></tr>`;
+          return `<tr><td><a href="#console-offering-${h(o.id)}">${h(o.name)}</a></td><td><code>${h(c.name)}</code></td><td><code>${h(c.id)}</code></td><td>${o.achOverride && (o.achOverride.companyName || o.achOverride.companyId) ? 'Offering' : DEF}</td></tr>`;
         })
         .join('');
       return shell(
