@@ -1,6 +1,6 @@
 # Shareholder Desk (iOS and Android app)
 
-The investor app for Carrow & Vale clients. Investors sign in with the login their investment firm issued and land straight in that firm's account, with its branding. The app icon is the Carrow & Vale mark from the brand file. Nothing inside the app shows Carrow & Vale: the sign-in screen shows Shareholder Desk until the investor's firm is known, then the firm's logo.
+The investor app for both editions of the portal: Carrow & Vale's clients and firms that run their own portal on Shareholder Desk (the DIY edition) use the same app. Investors sign in with the login their investment firm issued and land straight in that firm's account, with its branding. The app icon is the Carrow & Vale mark from the brand file. Nothing inside the app shows Carrow & Vale: the sign-in screen shows Shareholder Desk until the investor's firm is known, then the firm's logo.
 
 One app serves every client firm, but each login belongs to exactly one firm, so there is no list of firms to pick from and no switching between them. An investor with two firms has two logins.
 
