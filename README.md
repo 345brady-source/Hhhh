@@ -215,4 +215,15 @@ assets/js/structures.js    currencies, share classes, feeder funds, distribution
 assets/js/reader.js        the built-in offering-document reader (sections, waterfalls, classes, conflicts)
 assets/js/intake.js        offering-document intake: PDF and Word reading, Claude or the built-in reader, apply
 assets/js/console.js       sponsor console
+tools/form_d_prospects.py  finds prospective clients in new SEC Form D filings (see below)
 ```
+
+## Finding clients
+
+`tools/form_d_prospects.py` lists sponsors who have just filed a Form D for a real estate, private equity, venture, hedge, other investment or oil and gas offering. It leaves out platform SPVs, crowdfunding platforms, wealth-platform feeders, large institutional managers and foreign filers, groups vehicles by sponsor, adds each sponsor's address and phone from EDGAR, and scores fit. Run it weekly:
+
+```
+SEC_USER_AGENT="Carrow & Vale yourname@yourdomain.com" python3 tools/form_d_prospects.py --days 7 --out new-this-week.csv
+```
+
+With a contact in `SEC_USER_AGENT`, add `--details` to read each filing for the amount being raised, the amount sold so far, the number of investors and the minimum.
