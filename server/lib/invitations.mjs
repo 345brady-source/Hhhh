@@ -53,9 +53,12 @@ function decode64(s, max, what) {
   if (buf.length > max) throw fail(413, `${what} is too large (at most ${Math.round(max / MB)} MB)`);
   return buf;
 }
+// The investor's page applies exactly these tests before it sends a file (assets/js/onboarding.js sendable): keep them in step.
 const isPdf = (buf) => buf.length > 5 && buf.subarray(0, 5).toString('latin1') === '%PDF-';
-const isPng = (buf) => buf.length > 8 && buf[0] === 0x89 && buf.subarray(1, 4).toString('latin1') === 'PNG' && buf[4] === 0x0d && buf[5] === 0x0a;
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const isPng = (buf) => buf.length > 8 && buf.subarray(0, 8).equals(PNG_SIGNATURE);
 const isJpeg = (buf) => buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+const reEsc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const fileName = (s, dflt) => clip(String(s || '').replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '_').trim(), 120) || dflt;
 
 /* ---------- What the console sends ---------- */
@@ -199,9 +202,46 @@ function cleanSubmission(body, rec, snap) {
   const envelope = body.envelope === undefined || body.envelope === null ? null : obj(body.envelope);
   if (body.envelope && !envelope) throw fail(400, 'envelope must be an object or null');
   out.envelope = envelope ? cleanEnvelope(cleanJson(envelope, 1 * MB, 'envelope'), snap) : null;
+  const env = out.envelope;
+  // The files this submission may carry: what it produced itself. Its envelope's copies keep esign.js's names (<envelope id>-work
+  // once the investor has signed, <envelope id>-signed once everyone has, so only for a completed envelope), and evidence is
+  // the investor's own upload named by their verification record (integrations.js names uploads kyc-<investor id>-<time>).
+  // The console imports nothing else either (assets/js/invitations.js merge). An investor already on file brings back an
+  // accreditation check at most, so only its evidence.
+  const allowed = {}; // file id -> 'agreement' (a PDF) or 'evidence' (a PDF, PNG or JPEG)
+  if (env && /^[\w.-]{1,70}$/.test(String(env.id || ''))) {
+    if (env.workDocId === `${env.id}-work`) allowed[env.workDocId] = 'agreement';
+    if (env.status === 'completed' && env.signedDocId === `${env.id}-signed`) allowed[env.signedDocId] = 'agreement';
+  }
+  const v = obj(out.investor.verify) || {};
+  const kycName = new RegExp(`^kyc-${reEsc(rec.investorId)}-[a-z0-9]+$`);
+  for (const k of snap.invitation && snap.invitation.existing ? ['accreditation'] : ['identity', 'accreditation']) {
+    const x = obj(v[k]);
+    if (x && typeof x.fileId === 'string' && kycName.test(x.fileId)) allowed[x.fileId] = 'evidence';
+  }
   if (body.docs !== undefined && !Array.isArray(body.docs)) throw fail(400, 'docs must be a list');
   if ((body.docs || []).length > 50) throw fail(400, 'docs: at most 50 entries');
-  out.docs = (cleanJson(body.docs || [], 1 * MB, 'docs') || []).filter(obj);
+  // One document listing at most: the investor's signed copy of a completed agreement (esign.js lists it once everyone has
+  // signed), for this investor alone. It is rebuilt from known fields, so a listing from the browser can never reach other
+  // investors (an audience or investor list of its own), pass as an offering document, or name a file it did not bring.
+  const signedId = env && allowed[env.signedDocId] ? env.signedDocId : '';
+  const listed = signedId ? (cleanJson(body.docs || [], 1 * MB, 'docs') || []).filter(obj).find((d) => d.id === signedId) : null;
+  out.docs = listed
+    ? [
+        {
+          id: signedId,
+          title: clip(listed.title, 200),
+          fileName: fileName(listed.fileName, 'Subscription_agreement_signed.pdf'),
+          type: 'application/pdf',
+          cat: 'Legal',
+          date: /^\d{4}-\d{2}-\d{2}$/.test(String(listed.date || '')) ? String(listed.date) : '',
+          audience: 'investors',
+          investors: [rec.investorId],
+          offeringId: (snap.offering && snap.offering.id) || null,
+          envelopeId: String(env.id)
+        }
+      ]
+    : [];
   if (body.audit !== undefined && !Array.isArray(body.audit)) throw fail(400, 'audit must be a list');
   out.audit = (body.audit || []).slice(0, 500).map((a) => {
     const x = obj(a) || {};
@@ -217,15 +257,24 @@ function cleanSubmission(body, rec, snap) {
   const entries = Object.entries(files);
   if (entries.length > 20) throw fail(400, 'files: at most 20 documents');
   let total = 0;
-  out.fileBufs = entries.map(([k, v]) => {
+  out.fileBufs = [];
+  out.dropped = 0;
+  for (const [k, val] of entries) {
     if (!/^[\w.-]{1,80}$/.test(k)) throw fail(400, 'files: document ids are letters, digits, dots and dashes');
-    const buf = decode64(v, INVITE_LIMITS.files, `files.${k}`);
+    // Any other file is dropped, unread, rather than refused: earlier versions of the investor's page also sent the firm's
+    // agreement template (envelope.docId), and the investor's submission must not fail for a file the console never takes.
+    if (!Object.prototype.hasOwnProperty.call(allowed, k)) {
+      out.dropped++;
+      continue;
+    }
+    const buf = decode64(val, INVITE_LIMITS.files, `files.${k}`);
     total += buf.length;
     if (total > INVITE_LIMITS.files) throw fail(413, 'files are too large together (at most 25 MB)');
     // Signed agreements are PDFs; an ID uploaded for the firm to review may be a photo.
+    if (allowed[k] === 'agreement' && !isPdf(buf)) throw fail(400, `files.${k} is not a PDF`);
     if (!isPdf(buf) && !isPng(buf) && !isJpeg(buf)) throw fail(400, `files.${k} is not a PDF, PNG or JPEG`);
-    return [k, buf];
-  });
+    out.fileBufs.push([k, buf]);
+  }
   return out;
 }
 
@@ -368,7 +417,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
           out.reminders++;
           const snap = unseal(rec, 'snapshot');
           if (snap && snap.notifyEmail) {
-            const msg = reminderMessage({ firm: snap.firm, investor: snap.investor, offering: snap.offering, consoleUrl: snap.consoleUrl, completedAt: rec.completedAt, deleteOn: iso(deleteAt) });
+            const msg = reminderMessage({ firm: snap.firm, investor: snap.investor, offering: snap.offering, consoleUrl: snap.consoleUrl, completedAt: rec.completedAt, deleteOn: iso(deleteAt), existing: !!(snap.invitation && snap.invitation.existing) });
             const rid = rec.id;
             mailer
               .send(Object.assign({ kind: 'submission_reminder', invitationId: rid, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.notifyEmail, toName: snap.firm.supportTeam || snap.firm.name, headers: { 'Auto-Submitted': 'auto-generated' } }, msg))
@@ -409,16 +458,25 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
 
   /**
    * The verification results in a submission are the investor's browser's own account of them. Only
-   * checks this server ran for the invited investor (same investor id and workspace) can say verified
-   * or clear: a result that names one of them takes this server's status; a better result than the
-   * investor could give themselves without one is held for the sponsor's review (identity,
-   * accreditation) or left pending for the console to screen again (sanctions). An approval or a
-   * cleared KYC status that the confirmed results do not support is held for review too.
-   * Returns what was confirmed, for the sponsor's summary; investor.verify is corrected in place.
+   * checks this server ran for this invitation (same investor id and workspace, created once the
+   * invitation existed) can say verified or clear: a result that names one of them takes that check's
+   * status and dates; a better result than the investor could give themselves without one is held for
+   * the sponsor's review (identity, accreditation) or left pending for the console to screen again
+   * (sanctions). An approval or a cleared KYC status that the confirmed results do not support is held
+   * for review too. Returns what was confirmed, for the sponsor's summary; investor.verify is corrected
+   * in place.
    */
   const SELF_REPORTABLE = ['not_started', 'pending', 'review', 'failed', 'rejected', 'submitted'];
+  const timeOf = (s) => Date.parse(s || '');
+  /** The UTC day of a stored time ('' when there is none). */
+  const dayOf = (s) => (Number.isFinite(timeOf(s)) ? new Date(timeOf(s)).toISOString().slice(0, 10) : '');
+  /** When a check's result arrived. Records kept before completedAt was recorded give their creation, the earliest it can be. */
+  const resultAt = (s) => (s.status === 'pending' ? '' : String(s.completedAt || s.createdAt || ''));
   function confirmChecks(investor, rec) {
-    const mine = (table) => store.list(table).filter((x) => x.investorId === rec.investorId && x.workspace === rec.workspace);
+    // This server keeps every check it ran, so an old one (a verification from last year, say) must not stand behind a new
+    // result: only checks created once this invitation existed count. A record without a valid time counts for nothing.
+    const since = timeOf(rec.createdAt || rec.sentAt);
+    const mine = (table) => store.list(table).filter((x) => x.investorId === rec.investorId && x.workspace === rec.workspace && timeOf(x.createdAt) >= since);
     const vers = mine('verifications');
     const scrs = mine('screenings');
     const v = (investor.verify = obj(investor.verify) || {});
@@ -426,15 +484,26 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     for (const kind of ['identity', 'accreditation']) {
       const c = (v[kind] = obj(v[kind]) || { status: 'not_started' });
       const s = typeof c.ref === 'string' ? vers.find((x) => x.id === c.ref && x.kind === kind) : null;
+      // An expiry is never the browser's to give. The console limits a verified accreditation from the dates set below.
+      delete c.expiresAt;
       if (s) {
-        Object.assign(c, { status: s.status, remote: true }, s.method ? { method: s.method } : {}, s.expiresAt ? { expiresAt: s.expiresAt } : {});
+        // The check's own dates replace the browser's: when its result arrived and, for a verified accreditation, the day.
+        const at = resultAt(s);
+        delete c.completedAt;
+        delete c.verifiedAt;
+        Object.assign(c, { status: s.status, remote: true }, s.method ? { method: s.method } : {}, s.expiresAt ? { expiresAt: s.expiresAt } : {}, at ? { completedAt: at } : {}, kind === 'accreditation' && s.status === 'verified' && dayOf(at) ? { verifiedAt: dayOf(at) } : {});
         out[kind] = { status: s.status, confirmed: true };
-      } else if (SELF_REPORTABLE.includes(c.status)) out[kind] = { status: c.status, confirmed: false };
+        continue;
+      }
+      // Not one of this invitation's checks: no pointer to a record here stays, or the console, which reads every record with
+      // the sponsor's token, would look it up later and take an older (or another investor's) result for this one.
+      if (c.ref !== undefined && (typeof c.ref !== 'string' || /^ver_/.test(c.ref))) c.ref = '';
+      delete c.remote;
+      if (SELF_REPORTABLE.includes(c.status)) out[kind] = { status: c.status, confirmed: false };
       else {
         // Self-certification and the sandbox run in the browser by design; the console decides on them with the firm's rules.
         const consoleRule = [c.connection, c.how].some((x) => x === 'sandbox' || (kind === 'accreditation' && x === 'self'));
         Object.assign(c, { status: 'review', reportedStatus: clip(c.status, 40), note: 'Reported by the investor’s browser; no check on the integration server confirms it' });
-        delete c.expiresAt;
         out[kind] = Object.assign({ status: 'review', confirmed: false, unconfirmed: true }, consoleRule ? { consoleRule: true } : {});
       }
     }
@@ -444,10 +513,12 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     let amlConfirmed = results.length > 0;
     for (const r of results) {
       const s = typeof r.ref === 'string' ? scrs.find((x) => x.id === r.ref) : null;
-      if (s) Object.assign(r, { status: s.status, hits: s.hits || [] });
+      if (s) Object.assign(r, { status: s.status, hits: s.hits || [], screenedAt: dayOf(resultAt(s)) });
       else {
         amlConfirmed = false;
-        if (!['pending', 'potential_match', 'match'].includes(r.status)) {
+        // A result with no screening of this invitation behind it is screened again. That includes a pending one that points at
+        // some other screening here: the console would read that screening later and take its result for this one.
+        if (!['pending', 'potential_match', 'match'].includes(r.status) || (r.status === 'pending' && r.ref)) {
           Object.assign(r, { status: 'pending', ref: '', hits: [], screenedAt: '', error: 'Not confirmed by the integration server; screen again' });
           amlUnconfirmed = true;
         }
@@ -461,7 +532,9 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
         amlUnconfirmed = true;
       }
     }
+    // Clear means every result is one of this invitation's screenings: the screening date is the earliest of theirs.
     if (aml.status !== 'clear') delete aml.screenedAt;
+    else aml.screenedAt = results.map((r) => r.screenedAt).filter(Boolean).sort()[0] || '';
     out.aml = { status: aml.status, confirmed: amlConfirmed, unconfirmed: amlUnconfirmed };
     const d = (v.decision = obj(v.decision) || { status: 'pending' });
     const backed = out.identity.confirmed && out.identity.status === 'passed' && amlConfirmed && aml.status === 'clear' && out.accreditation.status !== 'review';
@@ -587,6 +660,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       const checks = confirmChecks(sub.investor, rec);
       const blobs = [];
       const files = {};
+      const dropped = sub.dropped;
       sub.fileBufs.forEach(([docId, buf], n) => {
         const key = `${rec.id}-sub-${n}`;
         putBlob(key, buf);
@@ -594,6 +668,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
         files[docId] = { blob: key, size: buf.length, sha256: sha256Hex(buf) };
       });
       delete sub.fileBufs;
+      delete sub.dropped;
       const completedAt = iso();
       const stored = Object.assign({}, sub, { files, checks, receivedAt: completedAt });
       rec = store.put('invitations', {
@@ -608,7 +683,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
         hasSubmission: true
       });
       rec = addEvent(rec, 'onboarding_completed');
-      store.event({ type: 'invite_completed', id: rec.id, files: blobs.length });
+      store.event(Object.assign({ type: 'invite_completed', id: rec.id, files: blobs.length }, dropped ? { filesDropped: dropped } : {}));
       // The sponsor's notification: never blocks or fails the investor's submission.
       let notifyStatus = 'not_sent';
       if (snap.notifyEmail) {

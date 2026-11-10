@@ -206,6 +206,10 @@ export function createServer(opts = {}) {
         patch.providerStatus = '';
       }
     }
+    // When the result arrived: an invitation's submission dates a verification or screening from it (lib/invitations.mjs
+    // confirmChecks), never from the investor's browser. Set only when the status changes, so a repeated webhook cannot
+    // make an old result look new; cleared while the check is pending again.
+    if (patch.status && patch.status !== rec.status) patch.completedAt = patch.status === 'pending' ? '' : new Date(now()).toISOString();
     if (r.data && typeof r.data === 'object') patch.data = Object.assign({}, rec.data, r.data);
     return store.put(table, patch);
   }
@@ -261,7 +265,13 @@ export function createServer(opts = {}) {
   async function route(req, res) {
     const url = new URL(req.url, 'http://localhost');
     const path = url.pathname;
-    if (!cors(req, res, env.PORTAL_ORIGIN)) return send(res, 403, { error: 'Origin not allowed' });
+    // This server's own pages (the sandbox stand-in and the pages it hosts for provider flows) post their forms back to
+    // themselves. Browsers send this server's own origin with those posts, or "null" (these pages are served with
+    // Referrer-Policy: no-referrer), never the portal's, so PORTAL_ORIGIN would refuse them. Those routes take no token and
+    // are reached only through unguessable check ids (a client without a browser can simply leave Origin out), so the Origin
+    // check adds nothing there and is skipped; every other route, the API included, still answers PORTAL_ORIGIN only.
+    const ownPage = /^\/(sandbox|hosted)\//.test(path);
+    if (!ownPage && !cors(req, res, env.PORTAL_ORIGIN)) return send(res, 403, { error: 'Origin not allowed' });
     if (req.method === 'OPTIONS') return send(res, 204, '');
 
     if (req.method === 'GET' && path === '/health') return send(res, 200, { ok: true, providers: configured(env, PROVIDERS) });
@@ -439,7 +449,8 @@ export function createServer(opts = {}) {
       if (scope && investor.id !== scope.investorId) return send(res, 403, { error: 'This invitation can only verify its own investor' });
       if (scope) investor.workspace = scope.workspace;
       const vid = id('ver');
-      const rec = store.put('verifications', { id: vid, kind: body.kind, provider: body.provider, investorId: investor.id, workspace: investor.workspace, status: 'pending', settings: cleanSettings(body.settings), investor: sealPersonal('verifications', vid, 'investor', investor), returnUrl: returnTo(body.returnUrl), createdAt: new Date().toISOString() });
+      // createdAt is on the same clock as invitations: a submission counts only checks created once its invitation existed.
+      const rec = store.put('verifications', { id: vid, kind: body.kind, provider: body.provider, investorId: investor.id, workspace: investor.workspace, status: 'pending', settings: cleanSettings(body.settings), investor: sealPersonal('verifications', vid, 'investor', investor), returnUrl: returnTo(body.returnUrl), createdAt: new Date(now()).toISOString() });
       const r = (await p.createSession(ctx(body.provider, rec))) || {};
       const saved = apply('verifications', rec, Object.assign({}, r, { status: r.status || 'pending' }));
       store.event({ type: 'verification_started', provider: body.provider, id: rec.id, ref: saved.ref || '' });
@@ -480,7 +491,7 @@ export function createServer(opts = {}) {
       if (scope && inv.id !== scope.investorId) return send(res, 403, { error: 'This invitation can only screen its own investor' });
       if (scope) inv.workspace = scope.workspace;
       const sid = id('scr');
-      const rec = store.put('screenings', { id: sid, kind: 'aml', provider: body.provider, investorId: inv.id, workspace: inv.workspace, names: sealPersonal('screenings', sid, 'names', names), settings: cleanSettings(body.settings), investor: sealPersonal('screenings', sid, 'investor', inv), status: 'pending', createdAt: new Date().toISOString() });
+      const rec = store.put('screenings', { id: sid, kind: 'aml', provider: body.provider, investorId: inv.id, workspace: inv.workspace, names: sealPersonal('screenings', sid, 'names', names), settings: cleanSettings(body.settings), investor: sealPersonal('screenings', sid, 'investor', inv), status: 'pending', createdAt: new Date(now()).toISOString() });
       const r = (await p.screen(ctx(body.provider, rec, { names }))) || {};
       const saved = apply('screenings', rec, Object.assign({ hits: r.hits || [] }, r, { ref: r.ref || rec.id }));
       if (r.monitoring) store.put('screenings', { id: rec.id, monitoring: true });

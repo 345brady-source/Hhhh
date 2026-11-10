@@ -84,7 +84,9 @@ They can stop and pick up where they left off, on a phone or a computer. Verific
 <script>window.CVPortalConfig = { integrationServers: ['https://verify.yourfirm.example'] };</script>
 ```
 
-The server emails the link, keeps the investor's progress encrypted (AES-256-GCM), confirms verification results against its own checks, and deletes each finished onboarding as soon as the console has imported it (or after 30 days). See `server/README.md`.
+The server emails the link, keeps the investor's progress encrypted (AES-256-GCM), confirms verification results against its own checks, and deletes each finished onboarding as soon as the console has imported it (or after 30 days, with a reminder to the firm a week before). See `server/README.md`.
+
+**What the console accepts from an investor's device.** Everything an investor's browser sends could have been altered, so the console takes only what that investor could legitimately produce: their own signed agreement and the evidence files they uploaded (never replacing a file the console already has, and never publishing a document to anyone but that investor), verification results that the integration server's own checks confirm or that the firm's rules accept (self-certification only where verified accreditation is not required, sandbox results only while the sandbox is on), and accreditation valid for no longer than the firm's validity period. A countersignature never comes from the investor's side. Investors already on file keep the record the firm holds; only the new subscription, the signed agreement and any new accreditation result are added.
 
 ## Integration server
 

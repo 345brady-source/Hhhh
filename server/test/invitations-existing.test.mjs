@@ -96,20 +96,24 @@ test('the sponsor summary for an existing investor: no identity or screening row
     assert.match(n.text, /^Commitment: \$50,000$/m);
   }));
 
-test('a finished onboarding may carry ID photos (PNG, JPEG) next to PDFs; anything else is refused', () =>
+test('a finished onboarding may carry ID photos (PNG, JPEG) next to PDFs; any other format is refused', () =>
   start(async (base) => {
     const r = await create(base);
-    const bad = await complete(base, r.token, { investor: { id: 'HRC-0007', contact: 'Zelda Quixote' }, files: { 'id-front': GIF } });
+    // Evidence is the investor's own upload, named by their verification record (integrations.js: kyc-<investor id>-<time>).
+    const withId = (fileId) => ({ id: 'HRC-0007', contact: 'Zelda Quixote', verify: { identity: { status: 'review', how: 'manual', fileId } } });
+    const bad = await complete(base, r.token, { investor: withId('kyc-HRC-0007-front'), files: { 'kyc-HRC-0007-front': GIF } });
     assert.equal(bad.status, 400);
-    assert.match(bad.body.error, /files\.id-front is not a PDF, PNG or JPEG/);
-    const html = await complete(base, r.token, { investor: { id: 'HRC-0007', contact: 'Zelda Quixote' }, files: { page: HTML } });
+    assert.match(bad.body.error, /files\.kyc-HRC-0007-front is not a PDF, PNG or JPEG/);
+    const html = await complete(base, r.token, { investor: withId('kyc-HRC-0007-front'), files: { 'kyc-HRC-0007-front': HTML } });
     assert.equal(html.status, 400);
-    const ok = await complete(base, r.token, { investor: { id: 'HRC-0007', contact: 'Zelda Quixote' }, files: { agreement: PDF, 'id-front': PNG, 'id-back': JPEG } });
+    const investor = { id: 'HRC-0007', contact: 'Zelda Quixote', verify: { identity: { status: 'review', how: 'manual', fileId: 'kyc-HRC-0007-front' }, accreditation: { status: 'review', how: 'manual', fileId: 'kyc-HRC-0007-letter' } } };
+    const envelope = { id: 'env-9', status: 'sent', workDocId: 'env-9-work' };
+    const ok = await complete(base, r.token, { investor, envelope, files: { 'env-9-work': PDF, 'kyc-HRC-0007-front': PNG, 'kyc-HRC-0007-letter': JPEG } });
     assert.equal(ok.status, 200, JSON.stringify(ok.body));
     const sub = (await j(base, 'GET', `/v1/invitations/${r.id}/submission`)).body;
-    assert.equal(sub.files.agreement, PDF);
-    assert.equal(sub.files['id-front'], PNG);
-    assert.equal(sub.files['id-back'], JPEG);
+    assert.equal(sub.files['env-9-work'], PDF);
+    assert.equal(sub.files['kyc-HRC-0007-front'], PNG);
+    assert.equal(sub.files['kyc-HRC-0007-letter'], JPEG);
   }));
 
 test('results the server cannot confirm: self-certified and sandbox results are "to be confirmed" by the console, a provider claim needs review', () =>

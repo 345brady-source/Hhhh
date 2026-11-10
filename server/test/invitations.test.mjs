@@ -45,9 +45,10 @@ function submission(over = {}) {
     {
       investor: { id: 'HRC-0007', contact: 'Zelda Quixote', title: 'Zelda Quixote', email: 'zelda@investor.example', type: 'individual', payment: { method: 'ach', bank: 'First Example Bank', routing: '021000021', account: '000123456789' }, verify: { identity: { status: 'passed' }, aml: { status: 'clear' }, accreditation: { status: 'review' } }, onboarding: { status: 'complete' } },
       request: { id: 'req-1', type: 'subscription', offeringId: 'hr-fund-ii', investorId: 'HRC-0007', cents: 25000000, status: 'pending', envelopeId: 'env-1' },
-      envelope: { id: 'env-1', status: 'sent', requestId: 'req-1', docId: 'doc-env-1' },
-      files: { 'doc-env-1': pdf('SIGNEDMARKER').toString('base64') },
-      docs: [{ id: 'doc-env-1', title: 'Subscription agreement (signed by the investor)' }],
+      // What the investor's page sends: the work copy it signed (esign.js names it <envelope id>-work), never the firm's template.
+      envelope: { id: 'env-1', status: 'sent', requestId: 'req-1', docId: 'tpl-doc-1', workDocId: 'env-1-work' },
+      files: { 'env-1-work': pdf('SIGNEDMARKER').toString('base64') },
+      docs: [{ id: 'env-1-work', title: 'Subscription agreement (signed by the investor)' }],
       audit: [{ at: '2026-11-10T12:30:00Z', actor: 'Zelda Quixote (investor)', action: 'Envelope signed', detail: 'Signed by the investor' }],
       notifications: [{ id: 'n1', at: '2026-11-10T12:30:00Z', kind: 'agreement_signed', title: 'Zelda Quixote signed the subscription agreement', detail: '', route: 'console-envelope/env-1' }]
     },
@@ -225,8 +226,8 @@ test('complete with a signed PDF: the sponsor is emailed, the console fetches th
     assert.equal(sub.body.investor.payment.account, '000123456789');
     assert.equal(sub.body.request.cents, 25000000);
     assert.equal(sub.body.envelope.status, 'sent');
-    assert.deepEqual(Buffer.from(sub.body.files['doc-env-1'], 'base64'), pdf('SIGNEDMARKER'));
-    assert.equal(sub.body.docs[0].id, 'doc-env-1');
+    assert.deepEqual(Buffer.from(sub.body.files['env-1-work'], 'base64'), pdf('SIGNEDMARKER'));
+    assert.deepEqual(sub.body.docs, [], 'a document listing only for the signed copy of a completed agreement');
     assert.equal(sub.body.audit[0].action, 'Envelope signed');
     assert.equal(sub.body.notifications[0].kind, 'agreement_signed');
     assert.equal(sub.body.investor.verify.identity.status, 'passed');
@@ -258,9 +259,9 @@ test('complete: the payload is checked against the invitation', () =>
     const cases = [
       [submission({ investor: Object.assign(submission().investor, { id: 'HRC-0008' }) }), /investor.id does not match/],
       [submission({ request: Object.assign(submission().request, { investorId: 'HRC-0008' }) }), /request.investorId does not match/],
-      [submission({ files: { 'doc-env-1': Buffer.from('<html>not a pdf</html>').toString('base64') } }), /not a PDF/],
+      [submission({ files: { 'env-1-work': Buffer.from('<html>not a pdf</html>').toString('base64') } }), /not a PDF/],
       [submission({ files: { '../x': pdf('X').toString('base64') } }), /document ids/],
-      [submission({ files: { a: 'not base64 !!' } }), /base64/],
+      [submission({ files: { 'env-1-work': 'not base64 !!' } }), /base64/],
       [submission({ investor: null }), /investor is required/],
       [submission({ docs: 'x' }), /docs must be a list/]
     ];
@@ -524,13 +525,13 @@ test('body size limits: documents 10 MB, logo 600 KB, signed files 25 MB, small 
     r = await j(base, 'POST', '/v1/invitations', { body: 'x'.repeat(33 * 1024 * 1024) });
     assert.equal(r.status, 413);
     const ok = await create(base);
-    r = await complete(base, ok.token, submission({ files: { a: pdf('a', 26 * 1024 * 1024).toString('base64') } }));
+    r = await complete(base, ok.token, submission({ files: { 'env-1-work': pdf('a', 26 * 1024 * 1024).toString('base64') } }));
     assert.equal(r.status, 413);
     assert.match(r.body.error, /25 MB/);
     r = await progress(base, ok.token, { stepKey: 'tax', stepIndex: 1, stepCount: 10, stepLabel: 'x'.repeat(20 * 1024) });
     assert.equal(r.status, 413);
     // Within the limits, a large signed file is accepted.
-    r = await complete(base, ok.token, submission({ files: { a: pdf('a', 5 * 1024 * 1024).toString('base64') } }));
+    r = await complete(base, ok.token, submission({ files: { 'env-1-work': pdf('a', 5 * 1024 * 1024).toString('base64') } }));
     assert.deepEqual(r.body, { ok: true });
   }));
 

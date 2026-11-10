@@ -539,13 +539,25 @@ export function resendMessage({ firm, investor, offering, invitation, link, expi
 
 /**
  * To the sponsor, once, before a finished onboarding the console never imported is deleted: open the console (it imports
- * on its own) before the date, or the investor's paperwork is gone.
+ * on its own) before the date, or the investor's paperwork is gone. For an investor already on file (existing) it is their
+ * subscription that waits: the console keeps the record it holds and adds only what the link collected.
  */
-export function reminderMessage({ firm, investor, offering, consoleUrl, completedAt, deleteOn }) {
+export function reminderMessage({ firm, investor, offering, consoleUrl, completedAt, deleteOn, existing }) {
   const who = investor.contact || investor.title || 'An investor';
   const rows = [['Investor', who], ['Email', investor.email]];
   if (offering && offering.name) rows.push(['Offering', offering.name]);
   rows.push(['Finished', longDate(completedAt)], ['Deleted on', longDate(deleteOn)]);
+  if (existing) {
+    return compose(firm, `Waiting in your console: ${who}’s subscription`, {
+      paras: [`${who} finished their subscription${offering && offering.name ? ` to ${offering.name}` : ''} on ${longDate(completedAt)}, but the console has not added it to your records yet.`],
+      rows,
+      button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
+      after: [
+        `Open the console before ${longDate(deleteOn)}: it adds the subscription, the signed agreement and any new accreditation result as soon as it opens.`,
+        'After that date the submitted subscription and signed documents are deleted from the integration server to protect them, and the investor would have to submit their subscription again.'
+      ]
+    });
+  }
   return compose(firm, `Waiting in your console: ${who}’s onboarding`, {
     paras: [`${who} finished onboarding on ${longDate(completedAt)}, but the console has not added them to your investor records yet.`],
     rows,
@@ -566,6 +578,12 @@ export function notificationMessage({ firm, investor, offering, summary, console
     paras: [existing ? `${who} completed the subscription steps on ${longDate(completedAt)}.` : `${who} completed every onboarding step on ${longDate(completedAt)}.`],
     rows: summary.rows,
     button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
-    after: [summary.next, 'Their details, verification results, documents and signed agreement are added to your investor records the next time the console is open.']
+    after: [
+      summary.next,
+      // An investor already on file: the console keeps the record it holds and adds only what the link collected.
+      existing
+        ? 'Their subscription, signed agreement and any new accreditation result are added to your investor records the next time the console is open. The details you already hold for them stay as they are.'
+        : 'Their details, verification results, documents and signed agreement are added to your investor records the next time the console is open.'
+    ]
   });
 }
