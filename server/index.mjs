@@ -72,6 +72,14 @@ function cleanSettings(x) {
   for (const [k, v] of Object.entries(x).slice(0, 40)) if (/^[\w-]{1,40}$/.test(k) && ['string', 'number', 'boolean'].includes(typeof v)) out[k] = typeof v === 'string' ? v.slice(0, 2000) : v;
   return out;
 }
+/** The investor details a check may use: plain text fields only. */
+const INVESTOR_KEYS = ['id', 'name', 'account', 'email', 'type', 'address', 'phone', 'workspace', 'offering'];
+function cleanInvestor(x) {
+  const o = x && typeof x === 'object' && !Array.isArray(x) ? x : {};
+  const out = {};
+  for (const k of INVESTOR_KEYS) out[k] = ['string', 'number'].includes(typeof o[k]) ? clip(o[k], 300) : '';
+  return out;
+}
 function cleanHits(list) {
   if (!Array.isArray(list)) return null;
   return list.slice(0, 100).map((x) => {
@@ -375,9 +383,8 @@ export function createServer(opts = {}) {
       if (!p || !(p.kinds || [p.kind]).includes(body.kind) || body.kind === 'aml' || !p.createSession) return send(res, 400, { error: `No ${body.kind || ''} provider named "${body.provider || ''}"` });
       const missing = missingEnv(p, env);
       if (missing.length) return send(res, 400, { error: `Set ${missing.join(', ')} on the integration server` });
-      const inv = body.investor && typeof body.investor === 'object' ? body.investor : {};
-      if (!inv.id || !inv.name) return send(res, 400, { error: 'investor.id and investor.name are required' });
-      const investor = { id: String(inv.id), name: String(inv.name), account: inv.account || '', email: inv.email || '', type: inv.type || '', address: inv.address || '', phone: inv.phone || '', workspace: inv.workspace || '', offering: inv.offering || '' };
+      const investor = cleanInvestor(body.investor);
+      if (!investor.id || !investor.name) return send(res, 400, { error: 'investor.id and investor.name are required' });
       const rec = store.put('verifications', { id: id('ver'), kind: body.kind, provider: body.provider, investorId: investor.id, workspace: investor.workspace, status: 'pending', settings: cleanSettings(body.settings), investor, returnUrl: returnTo(body.returnUrl), createdAt: new Date().toISOString() });
       const r = (await p.createSession(ctx(body.provider, rec))) || {};
       const saved = apply('verifications', rec, Object.assign({}, r, { status: r.status || 'pending' }));
@@ -414,8 +421,8 @@ export function createServer(opts = {}) {
       if (body.names !== undefined && !Array.isArray(body.names)) return send(res, 400, { error: 'names must be a list' });
       const names = Array.from(new Set((body.names || []).map((n) => String(n || '').trim()).filter(Boolean))).slice(0, 25);
       if (!names.length) return send(res, 400, { error: 'names are required' });
-      const inv = body.investor && typeof body.investor === 'object' && !Array.isArray(body.investor) ? body.investor : {};
-      const rec = store.put('screenings', { id: id('scr'), kind: 'aml', provider: body.provider, investorId: inv.id || '', names, settings: cleanSettings(body.settings), investor: inv, status: 'pending', createdAt: new Date().toISOString() });
+      const inv = cleanInvestor(body.investor);
+      const rec = store.put('screenings', { id: id('scr'), kind: 'aml', provider: body.provider, investorId: inv.id, names, settings: cleanSettings(body.settings), investor: inv, status: 'pending', createdAt: new Date().toISOString() });
       const r = (await p.screen(ctx(body.provider, rec, { names }))) || {};
       const saved = apply('screenings', rec, Object.assign({ hits: r.hits || [] }, r, { ref: r.ref || rec.id }));
       if (r.monitoring) store.put('screenings', { id: rec.id, monitoring: true });

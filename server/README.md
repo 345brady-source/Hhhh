@@ -143,7 +143,7 @@ Fields:
 - `checks`: any of `identity`, `accreditation`, `aml`.
 - `env`: the environment variables it needs. Every `${env.NAME}` used anywhere must be listed.
 - `auth` (optional): `bearer` `{ token }`, `basic` `{ username, password }`, `header` `{ name, value }`, `query` `{ name, value }` or `oauth2` `{ tokenUrl, clientId, clientSecret, scope?, audience?, style }` (client credentials; `style` is `form`, `json` or `basic`; the token is cached until shortly before `expires_in` and renewed once on a 401). The secret part must come from `${env.NAME}`.
-- `start` (identity and accreditation): either `link`, a URL template filled in without any API call, or `request` plus `response` (`url` required; `ref` is the provider's id, defaulting to our reference; `status` optional).
+- `start` (identity and accreditation): either `link`, a URL template filled in without any API call (it is handed to the portal, so it cannot use `${env.NAME}`), or `request` plus `response` (`url` required; `ref` is the provider's id, defaulting to our reference; `status` optional).
 - `result` (optional): how to read the current result while a check is pending, and when a webhook asks for a re-read. Response paths: `status`, `detail`, `method`, `expiresAt`, `screeningStatus`, `screeningHits`.
 - `screen` (aml): `request` plus `response` paths `ref`, `status`, `hits` and `hit` (paths inside each hit: `name`, `listed`, `list`, `score`, `detail`). `"monitoring": true` when the provider keeps re-screening and sends alerts.
 - `screenResult` (optional): like `result`, for screenings that finish later.
@@ -156,7 +156,8 @@ Templates:
 - Placeholders: `{reference}` (our id, `ver_…` or `scr_…`), `{kind}`, `{ref}` (the provider's id), `{returnUrl}`, `{returnBase}`, `{webhookUrl}`, `{hostedUrl}`, `{investor.id|name|firstName|lastName|email|account|type|address|phone|workspace|offering}`, `{settings.<key>}` (non-secret values entered in the portal, such as a level or workflow id), `{names}` (screening) and `${env.NAME}`.
 - A JSON body is a template: a string that is exactly one placeholder takes the raw value (so `"{names}"` becomes an array); other strings are filled in as text. `request.form` sends a form-encoded body instead.
 - Response and webhook paths are dot paths with numeric indexes: `data.attributes.status`, `items.0.id`; `$` is the whole reply.
-- Values placed in URLs are URL-encoded. `{settings.*}` and `{investor.*}` values used in a URL must look like ids (letters, digits and `_ . : @ + -`, up to 200 characters) or the call is refused.
+- Values placed in URLs are URL-encoded. `{settings.*}` and `{investor.*}` values used in a URL must look like ids (letters, digits and `_ . : @ + -`, up to 200 characters) or the call is refused. A value of `.` or `..` is refused in any URL, so it cannot move a call to another path on the provider's API.
+- URL templates cannot contain line breaks or other control characters, and must name a host.
 
 ### 2. Hosted link plus the results API (no API integration)
 
@@ -226,6 +227,13 @@ Point the provider at `PUBLIC_URL/webhooks/<id>`. Deliveries are checked over th
 
 Other options: `algorithm` sha1, sha256 or sha512; `encoding` hex, base64 or base64url; `secretEncoding` utf8, base64 or hex; `signed` is the signed message built from `{body}`, `{timestamp}` and `{id}`. `"type": "none"` is refused. Schemes beyond these (public-key or JWT signatures) need a code plug-in.
 
+Rules that keep these checks meaningful:
+
+- A timestamp only protects against replays when it is signed, so `timestampHeader` or `timestampPattern` requires `{timestamp}` in `signed`.
+- Duplicates are dropped by a delivery id the signature covers: the `idHeader` value when `signed` includes `{id}`, otherwise the `id` path in the body. When `idHeader` is set but not signed and the body has no `id`, a hash of the exact body is used instead, so a replay with a changed header is still a duplicate.
+- `pattern` and `timestampPattern` run on headers anyone can send, before the signature is checked. They must be simple: a capture group around the value, no repeated groups such as `(a+)+`, no back-references or look-arounds, at most four quantifiers. They run with a 50 ms limit on signature headers of up to 2 KB.
+- Deliveries for a provider whose environment variables are not all set (an empty webhook secret, say) are refused.
+
 ## Security notes
 
 - Secrets live only in environment variables. Definitions refer to them as `${env.NAME}`; their values are sent only to the provider and are scrubbed from error messages, never returned to the portal and never logged. `settings` from the portal are treated as non-secret plain values.
@@ -233,6 +241,8 @@ Other options: `algorithm` sha1, sha256 or sha512; `encoding` hex, base64 or bas
 - Templates are filled by name lookup only: no `eval`, no `Function`, no template literals over untrusted input.
 - Adapter-private data (provider ids, tokens) stays on the server; the portal sees only normalized fields.
 - Webhooks are verified over the raw bytes, timestamp-checked and de-duplicated; unsigned webhooks are refused.
+- `GET /hosted/:id` never redirects to a link the portal supplied (the `link` provider), so this server's domain cannot be used as an open redirect.
+- Error messages are scrubbed of every secret, raw, URL-encoded or inside base64 (for example a basic-auth `user:password` echoed back by a provider).
 
 Before production:
 
