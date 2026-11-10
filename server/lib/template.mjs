@@ -87,8 +87,9 @@ export function fill(str, vars, mode = 'text') {
     let v = lookup(token, vars);
     if (Array.isArray(v)) v = v.join(',');
     v = v === undefined || v === null ? '' : String(v);
-    if (mode !== 'url') return v;
-    if (!envName && /^(investor|settings)\./.test(name) && !URL_SAFE.test(v)) throw fail(`The value for {${name}} cannot be used in a URL`);
+    if (mode !== 'url' && mode !== 'browser') return v;
+    // Server calls only take id-like values; a link only handed to the investor's browser may carry real names.
+    if (mode === 'url' && !envName && /^(investor|settings)\./.test(name) && !URL_SAFE.test(v)) throw fail(`The value for {${name}} cannot be used in a URL`);
     // "." and ".." survive encodeURIComponent and would move the call to another path on the provider's API.
     if (DOTS.test(v)) throw fail(`The value for ${envName ? 'a server setting' : `{${name}}`} cannot be used in a URL`);
     return encodeURIComponent(v);
@@ -144,9 +145,13 @@ export function urlProblems(url, allowHttp, what = 'url') {
   return [local ? `${what} uses http://, which is only allowed for local tests (ALLOW_HTTP_CONNECTORS=1)` : `${what} must start with https://`];
 }
 
-/** Fill a URL template and confirm the result still points at the host the template names. */
-export function fillUrl(tpl, vars) {
-  const url = fill(tpl, vars, 'url');
+/**
+ * Fill a URL template and confirm the result still points at the host the template names.
+ * opts.browser: the URL only goes to the investor's browser (the server never fetches it), so
+ * {investor.*} values such as a real name are allowed, URL-encoded.
+ */
+export function fillUrl(tpl, vars, opts = {}) {
+  const url = fill(tpl, vars, opts.browser ? 'browser' : 'url');
   let a;
   let b;
   try {

@@ -251,9 +251,11 @@ test('link start: no API call, encoded placeholders, our reference as the provid
     const created = await (await post(`${base}/v1/verifications`, { kind: 'accreditation', provider: 'acmelink', investor: INVESTOR })).json();
     assert.equal(created.url, `https://accredit.acme.example/start?ref=${created.id}&email=ann%2Btest%40investor.example&return=${encodeURIComponent(`http://verify.test/return/acmelink/${created.id}`)}`);
     assert.equal(f.calls.length, 0);
-    // A {investor.*} value that does not look like an id is refused in a URL.
-    const bad = makeConnector({ id: 'acmelink', name: 'Acme Link', checks: ['identity'], start: { link: 'https://a.acme.example/{investor.name}' } }, {});
-    await assert.rejects(bad.createSession({ env: {}, reference: 'ver_x', investor: INVESTOR, settings: {} }), (e) => e.status === 400 && /cannot be used in a URL/.test(e.message));
+    // A start link only goes to the investor's browser, so a real name is allowed there, URL-encoded
+    // (server-side calls still refuse such values: test/browser-link.test.mjs).
+    const named = makeConnector({ id: 'acmelink', name: 'Acme Link', checks: ['identity'], start: { link: 'https://a.acme.example/{investor.name}' } }, {});
+    const r = await named.createSession({ env: {}, reference: 'ver_x', investor: INVESTOR, settings: {} });
+    assert.equal(r.url, `https://a.acme.example/${encodeURIComponent(INVESTOR.name)}`);
   });
 });
 

@@ -443,7 +443,7 @@ export function makeConnector(def, env = {}) {
   if (def.start) {
     adapter.createSession = async (ctx) => {
       if (def.start.link) {
-        const url = fillUrl(def.start.link, Object.assign(varsFrom(ctx), { env: {}, allowEnv: false }));
+        const url = fillUrl(def.start.link, Object.assign(varsFrom(ctx), { env: {}, allowEnv: false }), { browser: true });
         return { ref: ctx.reference, url, status: 'pending' };
       }
       const data = await call(ctx, def.start.request);
