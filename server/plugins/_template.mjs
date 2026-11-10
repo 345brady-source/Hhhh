@@ -61,10 +61,11 @@ export async function fetchResult(ctx) {
 
 /** Webhooks: authentic and fresh, checked over the exact bytes received. */
 export function verifyWebhook({ rawBody, headers, env: e }) {
+  const secret = e.ACME_WEBHOOK_SECRET;
   const ts = String(header(headers, 'x-acme-timestamp') || '');
   const got = String(header(headers, 'x-acme-signature') || '');
-  if (!ts || !got || !fresh(ts, 300)) return false;
-  const want = createHmac('sha256', e.ACME_WEBHOOK_SECRET).update(Buffer.concat([Buffer.from(`${ts}.`), rawBody])).digest('hex');
+  if (!secret || !ts || !got || !fresh(ts, 300)) return false; // never accept a delivery signed with an empty key
+  const want = createHmac('sha256', secret).update(Buffer.concat([Buffer.from(`${ts}.`), rawBody])).digest('hex');
   return safeEqual(got.toLowerCase(), want);
 }
 

@@ -56,6 +56,13 @@ function resultsAuthorized(req, env) {
   return safeEqual(got, String(env.RESULTS_TOKEN));
 }
 
+/** A JSON request body that must be an object ({ ... }); anything else is a 400, not a crash. */
+function parseObject(raw) {
+  const body = parseJson(raw);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) throw Object.assign(new Error('The request body must be a JSON object'), { status: 400 });
+  return body;
+}
+
 /** Clean up a pushed result: only the documented fields, in the documented shapes. */
 const clip = (v, n) => (v === undefined || v === null ? '' : String(v).slice(0, n));
 /** Settings from the portal are non-secret plain values (a link, a level, a threshold). */
@@ -222,6 +229,11 @@ export function createServer(opts = {}) {
       const name = hook[1];
       const p = PROVIDERS[name];
       if (!p || !p.verifyWebhook) return send(res, 404, { error: 'Unknown provider' });
+      // A provider whose settings are not all set (an empty webhook secret, say) cannot accept deliveries.
+      if (missingEnv(p, env).length) {
+        store.event({ type: 'webhook_rejected', provider: name, reason: 'not_configured' });
+        return send(res, 404, { error: 'Unknown provider' });
+      }
       const raw = await readRaw(req);
       const ok = await p.verifyWebhook({ rawBody: raw, headers: req.headers, env, fetch: fetchFn, query: Object.fromEntries(url.searchParams) });
       if (!ok) {
@@ -280,14 +292,17 @@ export function createServer(opts = {}) {
       if (!rec || !p) return send(res, 404, 'Unknown verification');
       if (req.method === 'GET') {
         if (p.page) return send(res, 200, await p.page(rec, ctx(rec.provider, rec)), HTML);
-        if (rec.url && safeRedirect(rec.url) && rec.url !== `${publicUrl}/hosted/${rec.id}`) return hostedReply(res, rec, { redirect: rec.url });
+        // Links the portal supplied (the "link" provider) are never redirected to from this server's
+        // domain: that would make it an open redirect. The portal already has the link.
+        const portalLink = p.start === 'portal-link';
+        if (!portalLink && rec.url && safeRedirect(rec.url) && rec.url !== `${publicUrl}/hosted/${rec.id}`) return hostedReply(res, rec, { redirect: rec.url });
         return send(res, 404, 'Nothing to show');
       }
       if (limited(req)) return send(res, 429, { error: 'Too many requests' });
       if (!p.hostedPost) return send(res, 405, 'Not allowed');
       const raw = await readRaw(req, 256 * 1024);
       const type = String(header(req.headers, 'content-type') || '');
-      const form = type.includes('application/json') ? parseJson(raw) : Object.fromEntries(new URLSearchParams(raw.toString('utf8')));
+      const form = type.includes('application/json') ? parseObject(raw) : Object.fromEntries(new URLSearchParams(raw.toString('utf8')));
       const r = (await p.hostedPost(ctx(rec.provider, rec, { form }))) || {};
       const cur = apply('verifications', rec, r);
       if (type.includes('application/json')) return send(res, 200, { ok: true, status: cur.status, redirect: r.redirect && safeRedirect(r.redirect) ? r.redirect : '' });
@@ -318,7 +333,7 @@ export function createServer(opts = {}) {
       if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
       if (limited(req)) return send(res, 429, { error: 'Too many requests' });
       if (!resultsAuthorized(req, env)) return send(res, 401, { error: 'Not authorized' });
-      const body = parseJson(await readRaw(req, 256 * 1024));
+      const body = parseObject(await readRaw(req, 256 * 1024));
       const ref = String(body.reference || '');
       const table = ref.startsWith('scr_') ? 'screenings' : 'verifications';
       const rec = REF_ID.test(ref) ? store.get(table, ref) : null;
@@ -355,12 +370,12 @@ export function createServer(opts = {}) {
     if (req.method === 'GET' && path === '/v1/connectors') return send(res, 200, { connectors: describe(env, PROVIDERS) });
 
     if (req.method === 'POST' && path === '/v1/verifications') {
-      const body = parseJson(await readRaw(req));
+      const body = parseObject(await readRaw(req));
       const p = PROVIDERS[body.provider];
       if (!p || !(p.kinds || [p.kind]).includes(body.kind) || body.kind === 'aml' || !p.createSession) return send(res, 400, { error: `No ${body.kind || ''} provider named "${body.provider || ''}"` });
       const missing = missingEnv(p, env);
       if (missing.length) return send(res, 400, { error: `Set ${missing.join(', ')} on the integration server` });
-      const inv = body.investor || {};
+      const inv = body.investor && typeof body.investor === 'object' ? body.investor : {};
       if (!inv.id || !inv.name) return send(res, 400, { error: 'investor.id and investor.name are required' });
       const investor = { id: String(inv.id), name: String(inv.name), account: inv.account || '', email: inv.email || '', type: inv.type || '', address: inv.address || '', phone: inv.phone || '', workspace: inv.workspace || '', offering: inv.offering || '' };
       const rec = store.put('verifications', { id: id('ver'), kind: body.kind, provider: body.provider, investorId: investor.id, workspace: investor.workspace, status: 'pending', settings: cleanSettings(body.settings), investor, returnUrl: returnTo(body.returnUrl), createdAt: new Date().toISOString() });
@@ -391,14 +406,15 @@ export function createServer(opts = {}) {
     }
 
     if (req.method === 'POST' && path === '/v1/screenings') {
-      const body = parseJson(await readRaw(req));
+      const body = parseObject(await readRaw(req));
       const p = PROVIDERS[body.provider];
       if (!p || !(p.kinds || [p.kind]).includes('aml') || !p.screen) return send(res, 400, { error: `No screening provider named "${body.provider || ''}"` });
       const missing = missingEnv(p, env);
       if (missing.length) return send(res, 400, { error: `Set ${missing.join(', ')} on the integration server` });
+      if (body.names !== undefined && !Array.isArray(body.names)) return send(res, 400, { error: 'names must be a list' });
       const names = Array.from(new Set((body.names || []).map((n) => String(n || '').trim()).filter(Boolean))).slice(0, 25);
       if (!names.length) return send(res, 400, { error: 'names are required' });
-      const inv = body.investor || {};
+      const inv = body.investor && typeof body.investor === 'object' && !Array.isArray(body.investor) ? body.investor : {};
       const rec = store.put('screenings', { id: id('scr'), kind: 'aml', provider: body.provider, investorId: inv.id || '', names, settings: cleanSettings(body.settings), investor: inv, status: 'pending', createdAt: new Date().toISOString() });
       const r = (await p.screen(ctx(body.provider, rec, { names }))) || {};
       const saved = apply('screenings', rec, Object.assign({ hits: r.hits || [] }, r, { ref: r.ref || rec.id }));

@@ -15,7 +15,7 @@ const TOKEN = /\$\{env\.([A-Za-z_][A-Za-z0-9_]*)\}|\{([A-Za-z][\w.]*)\}/g;
 /** {settings.*} and {investor.*} values may go into a URL only when they look like an id, not like a path or a URL. */
 export const URL_SAFE = /^[\w.:@+-]{0,200}$/;
 /** Values that would become a dot segment ("." or "..", also when percent-encoded) in a URL path. */
-const DOTS = /^(?:\.|%2e){1,2}$/i;
+export const DOTS = /^(?:\.|%2e){1,2}$/i;
 /** Control characters (CR, LF, tab, NUL, DEL, ...) have no place in a URL template. */
 const CONTROL = /[\u0000-\u001f\u007f]/;
 
@@ -144,12 +144,6 @@ export function urlProblems(url, allowHttp, what = 'url') {
   return [local ? `${what} uses http://, which is only allowed for local tests (ALLOW_HTTP_CONNECTORS=1)` : `${what} must start with https://`];
 }
 
-/** The host a URL template spells out (lower case, no port), or '' when it has none. */
-function literalHost(tpl) {
-  const m = authority(tpl).match(/^[a-z][a-z0-9+.-]*:\/\/([^/?#:]*)/i);
-  return m ? m[1].toLowerCase() : '';
-}
-
 /** Fill a URL template and confirm the result still points at the host the template names. */
 export function fillUrl(tpl, vars) {
   const url = fill(tpl, vars, 'url');
@@ -161,7 +155,7 @@ export function fillUrl(tpl, vars) {
   } catch {
     throw fail('The provider URL is not valid');
   }
-  if (a.origin !== b.origin || a.hostname !== literalHost(tpl)) throw fail('The provider URL changed host after filling it in');
+  if (a.origin !== b.origin || !/^[a-z][a-z0-9+.-]*:\/\/[^/?#:]/i.test(tpl)) throw fail('The provider URL changed host after filling it in');
   return url;
 }
 

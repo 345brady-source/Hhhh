@@ -3,7 +3,7 @@
 // ({reference}, {returnUrl}, {investor.email}, ...) are filled in and URL-encoded; the page is never
 // fetched by this server. The provider (or the sponsor's own automation) reports the outcome through
 // POST /v1/results with the reference, or the sponsor records it by hand in the portal.
-import { placeholders, varsFrom, fill, urlProblems, authority } from '../lib/template.mjs';
+import { placeholders, varsFrom, fill, urlProblems, authority, DOTS } from '../lib/template.mjs';
 
 export const kind = 'identity';
 export const kinds = ['identity', 'accreditation'];
@@ -32,6 +32,7 @@ export async function createSession(ctx) {
   const vars = Object.assign(varsFrom(ctx), { env: {} });
   const url = tpl.replace(/\{[A-Za-z][\w.]*\}/g, (t) => {
     const v = fill(t, vars, 'text');
+    if (DOTS.test(v)) throw refuse(`The value for ${t} cannot be used in the link`);
     return encodeURIComponent(v);
   });
   if (authority(url) !== authority(tpl)) throw refuse('The link changed host after filling it in');

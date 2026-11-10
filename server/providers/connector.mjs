@@ -7,8 +7,9 @@
 // Nothing in a definition is evaluated. Templates are filled by name lookup (lib/template.mjs),
 // every URL must name its https host literally, and ${env.NAME} values (secrets) are only ever sent
 // to the provider: never returned to the portal, written to the log or included in error messages.
+import vm from 'node:vm';
 import { requestJson } from '../lib/request.mjs';
-import { hmac, safeEqual, fresh } from '../lib/crypto.mjs';
+import { hmac, sha256, safeEqual, fresh } from '../lib/crypto.mjs';
 import { header } from '../lib/http.mjs';
 import { STATUSES, CHECKS } from '../lib/statuses.mjs';
 import { placeholders, knownPlaceholder, varsFrom, fill, fillBody, fillUrl, urlProblems, get, PATH } from '../lib/template.mjs';
@@ -101,9 +102,26 @@ function callProblems(sec, where, envList, allowHttp, keys, required) {
   return out;
 }
 
+/**
+ * Patterns run on headers anyone can send, before the signature is checked, so only simple ones are
+ * accepted: no repeated groups such as (a+)+ or (ab)*, no back-references and no look-arounds. They
+ * also run with a time limit (see match()).
+ */
+function unsafeRegex(src) {
+  if (/\\[1-9]|\\k</.test(src)) return 'back-references';
+  if (/\(\?<?[=!]/.test(src)) return 'look-arounds';
+  // A quantifier straight after a group's closing parenthesis repeats the group.
+  const plain = src.replace(/\\./g, 'x').replace(/\[(?:[^\]\\]|\\.)*\]/g, 'x');
+  if (/\)(?:[*+?]|\{\d)/.test(plain)) return 'repeated groups';
+  if ((plain.match(/[*+?]|\{\d/g) || []).length > 4) return 'more than four quantifiers';
+  return '';
+}
+
 function regexProblem(src, where) {
   if (src === undefined || src === '') return [];
   if (typeof src !== 'string' || src.length > 200) return [`${where} must be a short regular expression`];
+  const unsafe = unsafeRegex(src);
+  if (unsafe) return [`${where} is too complex to run on unauthenticated headers (${unsafe} are not allowed); use a simple pattern such as "v1=([0-9a-f]+)"`];
   try {
     const n = new RegExp(`${src}|`).exec('').length - 1;
     return n < 1 ? [`${where} needs a capture group around the value`] : [];
@@ -149,6 +167,7 @@ function webhookProblems(w, def, envList) {
   if (typeof signed !== 'string' || !signed.includes('{body}')) out.push('webhook.verify.signed must include {body}');
   else out.push(...placeholderProblems(signed, 'webhook.verify.signed', envList, { only: ['body', 'timestamp', 'id'], noEnv: true }));
   if (typeof signed === 'string' && signed.includes('{timestamp}') && !v.timestampHeader && !v.timestampPattern) out.push('webhook.verify.signed uses {timestamp}, so timestampHeader or timestampPattern is required');
+  if (typeof signed === 'string' && !signed.includes('{timestamp}') && (v.timestampHeader || v.timestampPattern)) out.push('webhook.verify.signed must include {timestamp} when timestampHeader or timestampPattern is set (an unsigned timestamp can be rewritten, so it gives no replay protection)');
   if (typeof signed === 'string' && signed.includes('{id}') && !v.idHeader) out.push('webhook.verify.signed uses {id}, so idHeader is required');
   for (const k of ['timestampHeader', 'idHeader']) if (v[k] !== undefined && v[k] !== '' && (typeof v[k] !== 'string' || !HEADER_NAME.test(v[k]))) out.push(`webhook.verify.${k} must be a header name`);
   if (v.prefix !== undefined && typeof v.prefix !== 'string') out.push('webhook.verify.prefix must be text');
@@ -203,7 +222,8 @@ export function validateConnector(def, env = {}) {
       for (const k of Object.keys(s)) if (!['link', 'request', 'response'].includes(k)) out.push(`start has an unknown field "${k}"`);
       if ((s.link !== undefined) === (s.request !== undefined)) out.push('start needs either a "link" or a "request", not both');
       else if (s.link !== undefined) {
-        out.push(...urlProblems(s.link, allowHttp, 'start.link'), ...placeholderProblems(s.link, 'start.link', envList));
+        // The filled link is sent to the portal, so it can never carry a server environment value.
+        out.push(...urlProblems(s.link, allowHttp, 'start.link'), ...placeholderProblems(s.link, 'start.link', envList, { noEnv: true }));
         if (s.response !== undefined) out.push('start.response only applies to a start "request"');
       } else {
         out.push(...requestProblems(s.request, 'start', envList, allowHttp));
@@ -287,25 +307,33 @@ export function makeConnector(def, env = {}) {
   const label = def.name;
   const hitMap = def.screen && def.screen.response && def.screen.response.hit;
   let token = null; // oauth2 client-credentials token cache: { value, exp }
+  let pending = null; // the token request in flight, shared by concurrent calls
 
-  /** Error messages never carry secrets, even when a provider echoes one back. */
-  function scrub(e, cenv) {
+  /** Error messages never carry secrets, even when a provider echoes one back (raw, URL-encoded or inside base64). */
+  function scrub(e, cenv, sent = []) {
     let msg = String((e && e.message) || 'Provider request failed');
     const secrets = envList.map((k) => cenv[k]).filter((v) => typeof v === 'string' && v.length >= 4);
     if (token && token.value) secrets.push(token.value);
-    for (const v of secrets.slice()) secrets.push(encodeURIComponent(v), Buffer.from(v).toString('base64'));
-    for (const v of secrets) msg = msg.split(v).join('[redacted]');
+    const all = sent.filter((v) => typeof v === 'string' && v.length >= 4);
+    for (const v of secrets) all.push(v, encodeURIComponent(v), ...base64Cores(v));
+    // Longest first, so a whole credential is redacted before any piece of it.
+    for (const v of Array.from(new Set(all)).sort((x, y) => y.length - x.length)) msg = msg.split(v).join('[redacted]');
     return Object.assign(new Error(msg), { status: (e && e.status) || 502, providerStatus: e && e.providerStatus });
   }
 
-  async function accessToken(ctx, vars) {
-    if (token && Date.now() < token.exp) return token.value;
+  function accessToken(ctx, vars, sent) {
+    if (token && Date.now() < token.exp) return Promise.resolve(token.value);
+    if (!pending) pending = newToken(ctx, vars, sent).finally(() => (pending = null));
+    return pending;
+  }
+
+  async function newToken(ctx, vars, sent) {
     const a = def.auth;
     const fields = { grant_type: 'client_credentials' };
     const id = fill(a.clientId, vars);
     const secret = fill(a.clientSecret, vars);
     const headers = {};
-    if (a.style === 'basic') headers.Authorization = `Basic ${Buffer.from(`${id}:${secret}`).toString('base64')}`;
+    if (a.style === 'basic') sent.push((headers.Authorization = `Basic ${Buffer.from(`${id}:${secret}`).toString('base64')}`));
     else Object.assign(fields, { client_id: id, client_secret: secret });
     if (a.scope) fields.scope = fill(a.scope, vars);
     if (a.audience) fields.audience = fill(a.audience, vars);
@@ -317,20 +345,24 @@ export function makeConnector(def, env = {}) {
     return token.value;
   }
 
-  async function authorize(ctx, vars, url, headers) {
+  /** Add the credentials to a call. Every credential value built here is remembered in `sent` so errors can redact it. */
+  async function authorize(ctx, vars, url, headers, sent) {
     const a = def.auth;
     if (!a) return url;
-    if (a.type === 'bearer') headers.Authorization = `Bearer ${fill(a.token, vars)}`;
-    else if (a.type === 'basic') headers.Authorization = `Basic ${Buffer.from(`${fill(a.username, vars)}:${fill(a.password, vars)}`).toString('base64')}`;
-    else if (a.type === 'header') headers[a.name] = fill(a.value, vars);
+    if (a.type === 'bearer') sent.push((headers.Authorization = `Bearer ${fill(a.token, vars)}`));
+    else if (a.type === 'basic') {
+      const pair = Buffer.from(`${fill(a.username, vars)}:${fill(a.password, vars)}`).toString('base64');
+      sent.push(pair, (headers.Authorization = `Basic ${pair}`));
+    } else if (a.type === 'header') sent.push((headers[a.name] = fill(a.value, vars)));
     else if (a.type === 'query') return `${url}${url.includes('?') ? '&' : '?'}${encodeURIComponent(a.name)}=${encodeURIComponent(fill(a.value, vars))}`;
-    else if (a.type === 'oauth2') headers.Authorization = `Bearer ${await accessToken(ctx, vars)}`;
+    else if (a.type === 'oauth2') sent.push((headers.Authorization = `Bearer ${await accessToken(ctx, vars, sent)}`));
     return url;
   }
 
   /** One call described by a { request } block. */
   async function call(ctx, req, extra) {
     const vars = varsFrom(ctx, extra);
+    const sent = [];
     try {
       const attempt = async () => {
         const headers = {};
@@ -339,7 +371,7 @@ export function makeConnector(def, env = {}) {
           if (/[\r\n]/.test(val)) throw fail(`The ${k} header for ${label} contains a line break`, 400);
           headers[k] = val;
         }
-        const url = await authorize(ctx, vars, fillUrl(req.url, vars), headers);
+        const url = await authorize(ctx, vars, fillUrl(req.url, vars), headers, sent);
         const opts = { method: String(req.method || (req.body !== undefined || req.form !== undefined ? 'POST' : 'GET')).toUpperCase(), headers, label, redirect: 'manual' };
         if (req.form !== undefined) opts.form = Object.fromEntries(Object.entries(fillBody(req.form, vars)).map(([k, v]) => [k, typeof v === 'string' ? v : JSON.stringify(v)]));
         else if (req.body !== undefined) opts.body = fillBody(req.body, vars);
@@ -356,7 +388,7 @@ export function makeConnector(def, env = {}) {
         throw e;
       }
     } catch (e) {
-      throw scrub(e, ctx.env || {});
+      throw scrub(e, ctx.env || {}, sent);
     }
   }
 
@@ -411,7 +443,7 @@ export function makeConnector(def, env = {}) {
   if (def.start) {
     adapter.createSession = async (ctx) => {
       if (def.start.link) {
-        const url = fillUrl(def.start.link, varsFrom(ctx));
+        const url = fillUrl(def.start.link, Object.assign(varsFrom(ctx), { env: {}, allowEnv: false }));
         return { ref: ctx.reference, url, status: 'pending' };
       }
       const data = await call(ctx, def.start.request);
@@ -448,11 +480,17 @@ export function makeConnector(def, env = {}) {
     const w = def.webhook;
     const v = w.verify;
     adapter.verifyWebhook = ({ rawBody, headers, env: e, query }) => verify(v, rawBody, headers || {}, e || {}, query || {});
-    adapter.parseWebhook = ({ body, headers }) => {
+    // The delivery id used to drop duplicates must be one the signature covers: the id header when
+    // "signed" includes {id}, else the "id" path in the signed body. An unsigned id header alone could be
+    // changed on a replay, so it is replaced by a hash of the exact body received.
+    const idSigned = v.type === 'hmac' && String(v.signed || '').includes('{id}');
+    adapter.parseWebhook = ({ body, headers, rawBody }) => {
       const pick = (k) => (w[k] ? get(body, w[k]) : undefined);
       const ref = pick('ref');
+      const hdrId = v.idHeader ? String(header(headers || {}, v.idHeader) || '').slice(0, 200) : '';
+      const bodyId = text(pick('id'), 200);
       const ev = {
-        id: (v.idHeader && header(headers || {}, v.idHeader)) || text(pick('id'), 200) || undefined,
+        id: (idSigned && hdrId) || bodyId || (hdrId && rawBody ? `body-${sha256(rawBody)}` : undefined),
         ref: Array.isArray(ref) ? ref.map(String) : ref === undefined || ref === null ? undefined : String(ref),
         event: text(pick('event'), 80) || '',
         refetch: v.type === 'token' || w.refetch === true,
@@ -475,6 +513,37 @@ export function makeConnector(def, env = {}) {
 }
 
 /* ---------------- Webhook signatures ---------------- */
+
+const MAX_SIG_HEADER = 2048;
+const MATCH_MS = 50;
+const matcher = new vm.Script('Array.from(String(h).matchAll(new RegExp(p, "g")), (m) => m[1]).filter(Boolean).slice(0, all ? 20 : 1)');
+const sandbox = vm.createContext(Object.create(null));
+
+/**
+ * The first capture of every match of a sponsor-written pattern (or only the first match), with a time
+ * limit: a slow pattern on a header an attacker sends gives no candidates instead of stalling the server.
+ */
+function match(pattern, value, all) {
+  try {
+    Object.assign(sandbox, { h: value, p: pattern, all });
+    const out = matcher.runInContext(sandbox, { timeout: MATCH_MS });
+    return Array.from(out, String);
+  } catch {
+    return [];
+  }
+}
+
+/** The core of a secret's base64 form at each of the three byte alignments, so it is found inside a longer base64 value (for example "user:password"). */
+function base64Cores(v) {
+  const out = [];
+  const bytes = Buffer.from(v);
+  for (let k = 0; k < 3; k += 1) {
+    const enc = Buffer.concat([Buffer.alloc(k), bytes]).toString('base64');
+    const core = enc.slice(k ? 4 : 0, Math.floor((k + bytes.length) / 3) * 4);
+    if (core.length >= 6) out.push(core);
+  }
+  return out;
+}
 
 function secretBytes(v, env) {
   const s = fill(v.secret, { env, investor: {}, settings: {} });
@@ -502,8 +571,9 @@ export function verify(v, rawBody, headers, env, query) {
   const sigHeader = String(header(headers, v.header) || '');
   if (!secret || !secret.length || !alg || !sigHeader) return false;
   // Candidate signatures: every capture of "pattern" (several during secret rotation), or the whole header after "prefix".
+  if (sigHeader.length > MAX_SIG_HEADER) return false;
   let candidates;
-  if (v.pattern) candidates = Array.from(sigHeader.matchAll(new RegExp(v.pattern, 'g')), (m) => m[1]).filter(Boolean);
+  if (v.pattern) candidates = match(v.pattern, sigHeader, true);
   else {
     const val = sigHeader.trim();
     if (v.prefix && !val.startsWith(v.prefix)) return false;
@@ -512,7 +582,7 @@ export function verify(v, rawBody, headers, env, query) {
   if (!candidates.length) return false;
   let ts = '';
   if (v.timestampHeader) ts = String(header(headers, v.timestampHeader) || '');
-  else if (v.timestampPattern) ts = (sigHeader.match(new RegExp(v.timestampPattern)) || [])[1] || '';
+  else if (v.timestampPattern) ts = match(v.timestampPattern, sigHeader, false)[0] || '';
   const signed = v.signed || '{body}';
   if (signed.includes('{timestamp}') && !ts) return false;
   if (ts) {
