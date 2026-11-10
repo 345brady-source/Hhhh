@@ -1,11 +1,14 @@
-// Free U.S. sanctions screening against the OFAC Specially Designated Nationals (SDN) list,
-// including alternate names. U.S. sanctions only: no PEP or adverse media coverage.
-// The list is downloaded from Treasury's Sanctions List Service and cached for a day.
+// Free U.S. sanctions screening against OFAC's Specially Designated Nationals (SDN) list and
+// its Consolidated (non-SDN) sanctions list, including alternate names. U.S. sanctions only:
+// no PEP or adverse media coverage. The lists are downloaded from Treasury's Sanctions List
+// Service and cached for a day. OFAC sets no match threshold; 0.9 here is a documented choice
+// (OFAC_THRESHOLD), and every potential match still needs a person to compare dates of birth,
+// nationality, addresses and ID numbers before deciding.
 export const kind = 'aml';
 export const env = [];
+export const label = 'OFAC SDN and Consolidated lists';
 
-const SDN_URL = 'https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/SDN.CSV';
-const ALT_URL = 'https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/ALT.CSV';
+const BASE = 'https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/';
 const DAY = 24 * 3600 * 1000;
 let cache = null;
 
@@ -47,7 +50,7 @@ const STOP = new Set(['THE', 'LLC', 'L L C', 'LP', 'L P', 'LTD', 'LIMITED', 'INC
 export function normalize(name) {
   return String(name || '')
     .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase()
     .replace(/[^A-Z0-9 ]+/g, ' ')
     .split(/\s+/)
@@ -116,18 +119,34 @@ export function nameScore(query, listed) {
 
 async function load(ctx) {
   if (cache && Date.now() - cache.at < DAY) return cache.entries;
-  const get = async (url) => {
-    const r = await ctx.fetch(url);
-    if (!r.ok) throw new Error(`OFAC list download failed (${r.status})`);
+  const base = String(ctx.env.OFAC_BASE_URL || BASE).replace(/\/?$/, '/');
+  // The Sanctions List Service refuses requests without a User-Agent.
+  const headers = { 'User-Agent': ctx.env.OFAC_USER_AGENT || 'ShareholderDesk-IntegrationServer/1.0', Accept: 'text/csv, text/plain, */*' };
+  const get = async (file) => {
+    const r = await ctx.fetch(base + file, { headers });
+    if (!r.ok) throw Object.assign(new Error(`OFAC list download failed (${file}: ${r.status})`), { status: 502 });
     return r.text();
   };
-  const [sdn, alt] = await Promise.all([get(ctx.env.OFAC_SDN_URL || SDN_URL), get(ctx.env.OFAC_ALT_URL || ALT_URL).catch(() => '')]);
-  const entries = parseCsv(sdn).map((r) => ({ ent: r[0], name: r[1], type: r[2], program: r[3], remarks: r[11] || '', names: [r[1]] }));
-  const byEnt = new Map(entries.map((e) => [e.ent, e]));
-  parseCsv(alt).forEach((r) => {
-    const e = byEnt.get(r[0]);
-    if (e && r[3]) e.names.push(r[3]);
-  });
+  const consolidated = ctx.env.OFAC_CONSOLIDATED !== '0';
+  const [sdn, alt, cons, consAlt] = await Promise.all([
+    get('SDN.CSV'),
+    get('ALT.CSV').catch(() => ''),
+    consolidated ? get('CONS_PRIM.CSV').catch(() => '') : '',
+    consolidated ? get('CONS_ALT.CSV').catch(() => '') : ''
+  ]);
+  const entries = [];
+  const add = (main, alts, list) => {
+    const rows = parseCsv(main).map((r) => ({ ent: r[0], name: r[1], type: r[2] === '-0-' ? 'entity' : r[2], program: r[3], remarks: r[11] || '', names: [r[1]], list }));
+    const byEnt = new Map(rows.map((e) => [e.ent, e]));
+    parseCsv(alts).forEach((r) => {
+      const e = byEnt.get(r[0]);
+      if (e && r[3] && r[3] !== '-0-') e.names.push(r[3]);
+    });
+    entries.push(...rows);
+  };
+  add(sdn, alt, 'OFAC SDN');
+  if (cons) add(cons, consAlt, 'OFAC Consolidated (non-SDN)');
+  if (!entries.length) throw Object.assign(new Error('The OFAC list download was empty'), { status: 502 });
   cache = { at: Date.now(), entries };
   return entries;
 }
@@ -145,7 +164,7 @@ export async function screen(ctx) {
     for (const e of entries) {
       for (const n of e.names) {
         const s = nameScore(name, n);
-        if (s >= threshold && (!best || s > best.score)) best = { name, list: 'OFAC SDN', listed: n, score: s, detail: `${e.type || 'entry'} ${e.ent}; program ${e.program}${e.remarks && e.remarks !== '-0-' ? `; ${e.remarks.slice(0, 160)}` : ''}` };
+        if (s >= threshold && (!best || s > best.score)) best = { name, list: e.list || 'OFAC SDN', listed: n, score: s, detail: `${e.type || 'entry'} ${e.ent}; program ${e.program}${e.remarks && e.remarks !== '-0-' ? `; ${e.remarks.slice(0, 160)}` : ''}` };
       }
     }
     if (best) hits.push(best);

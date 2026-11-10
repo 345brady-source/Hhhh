@@ -234,9 +234,11 @@
   }
   function submitSubscription(ws, inv, o, opts) {
     const open = isOpen(o);
-    const r = { id: `req-${Date.now().toString(36)}`, type: 'subscription', offeringId: o.id, investorId: inv.id, cls: opts.cls || undefined, submitted: today(), dealing: open ? subscriptionDate(today()) : o.closeDate, cents: Math.round(opts.cents), additional: inv.positions.some((p) => p.offeringId === o.id), status: 'pending', signedBy: opts.signature, signedAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z') };
+    const r = { id: `req-${Date.now().toString(36)}`, type: 'subscription', offeringId: o.id, investorId: inv.id, cls: opts.cls || undefined, submitted: today(), dealing: open ? subscriptionDate(today()) : o.closeDate, cents: Math.round(opts.cents), additional: inv.positions.some((p) => p.offeringId === o.id), status: 'pending', signedBy: opts.signature, signedAt: opts.envelopeId ? '' : new Date().toISOString().replace(/\.\d{3}Z$/, 'Z') };
+    // Signed through an e-signature envelope (the offering's subscription agreement template): signedAt is set when it completes.
+    if (opts.envelopeId) r.envelopeId = opts.envelopeId;
     ws.requests.push(r);
-    log(ws, { action: open ? 'Subscription requested' : 'Subscription documents signed', fund: o.id, record: r.id, detail: `${inv.title} (${inv.id}): ${money(r.cents)} ${open ? 'subscription' : 'commitment'}; signed by ${opts.signature}`, actor: `${inv.title} (investor)` });
+    log(ws, { action: opts.envelopeId ? 'Subscription agreement sent for signature' : open ? 'Subscription requested' : 'Subscription documents signed', fund: o.id, record: r.id, detail: `${inv.title} (${inv.id}): ${money(r.cents)} ${open ? 'subscription' : 'commitment'}; ${opts.envelopeId ? `e-signature envelope ${opts.envelopeId}` : `signed by ${opts.signature}`}`, actor: `${inv.title} (investor)` });
     save(ws);
     return r;
   }

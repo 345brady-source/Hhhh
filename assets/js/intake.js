@@ -424,7 +424,7 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
       } catch (e) {
         continue;
       }
-      ws.docs.push({ id, title: d.name.replace(/\.[a-z0-9]+$/i, '').replace(/_+/g, ' '), fileName: d.name, type: d.type, size: d.size, sha256: d.sha256, cat: 'Legal', offeringId: o.id, audience: 'fund', investors: [], date: now, taxYear: '', publishedAt: new Date().toISOString(), publishedBy: NS.app && NS.app.actor ? NS.app.actor() : 'Carrow & Vale staff', offeringDoc: true, hidden: !opts.publish });
+      ws.docs.push({ id, title: d.name.replace(/\.[a-z0-9]+$/i, '').replace(/_+/g, ' '), fileName: d.name, type: d.type, size: d.size, sha256: d.sha256, cat: 'Legal', offeringId: o.id, audience: 'fund', investors: [], date: now, taxYear: '', publishedAt: new Date().toISOString(), publishedBy: NS.app && NS.app.actor ? NS.app.actor() : NS.EDITION && NS.EDITION.diy ? `${ws.tenant.shortName} admin` : 'Carrow & Vale staff', offeringDoc: true, hidden: !opts.publish });
     }
     if (NS.audit)
       NS.audit.log(ws, {

@@ -5,17 +5,22 @@
  *
  * The portal runs in the browser and must never hold provider API keys, so
  * this small server does the provider work:
- *   POST /v1/verifications      start an identity or accreditation check; returns { id, status, url }
- *   GET  /v1/verifications/:id  its latest status (refreshed from the provider while pending)
- *   POST /v1/screenings         sanctions / PEP screening of names; returns { id, status, hits }
- *   POST /webhooks/:provider    provider callbacks, signature-checked, update the records above
- *   GET  /health                which providers are configured
- *   GET  /sandbox/:ref          a stand-in hosted page for the "sandbox" provider (testing without accounts)
+ *   POST /v1/verifications        start an identity or accreditation check; returns { id, status, url }
+ *   GET  /v1/verifications/:id    its latest status (refreshed from the provider while pending)
+ *   POST /v1/screenings           sanctions / PEP screening of names; returns { id, status, hits }
+ *   GET  /v1/screenings/:id       a screening's latest result (monitoring alerts update it)
+ *   POST /webhooks/:provider      provider callbacks, signature-checked, update the records above
+ *   GET  /v1/verifications/:id/evidence/:n  a verification letter or certificate, fetched from the provider
+ *   GET  /return/:provider[/:id]  where a provider sends the investor back (OAuth codes, account links)
+ *   GET  /hosted/:id              a page this server hosts for a provider flow (for example a vendor SDK)
+ *   POST /hosted/:id              that page's form or SDK result
+ *   GET  /sandbox/:ref            a stand-in hosted page for the "sandbox" provider (testing without accounts)
+ *   GET  /health                  which providers are configured
  *
  * Node 18 or later, no dependencies. Configure with environment variables
  * (see README.md). Statuses are normalized for the portal: identity
  * pending | passed | review | failed; accreditation pending | verified |
- * review | rejected; screening clear | potential_match.
+ * review | rejected; screening pending | clear | potential_match.
  */
 import http from 'node:http';
 import { pathToFileURL } from 'node:url';
@@ -24,6 +29,15 @@ import { openStore } from './lib/store.mjs';
 import { id, safeEqual } from './lib/crypto.mjs';
 import { PROVIDERS, configured, missingEnv } from './providers/index.mjs';
 
+export const STATUSES = {
+  identity: ['pending', 'passed', 'review', 'failed'],
+  accreditation: ['pending', 'verified', 'review', 'rejected'],
+  aml: ['pending', 'clear', 'potential_match']
+};
+/** Normalized result fields adapters may return; anything else they need goes in `data`, which never leaves the server. */
+const RESULT_FIELDS = ['method', 'detail', 'expiresAt', 'screening', 'evidence'];
+const REFRESH_MS = 20000;
+
 /** In production, verify the portal session here (for example a signed session token); API_TOKEN suits server-to-server use. */
 function authorize(req, env) {
   if (!env.API_TOKEN) return true;
@@ -31,21 +45,118 @@ function authorize(req, env) {
   return safeEqual(got, env.API_TOKEN);
 }
 
-const REFRESH_MS = 20000;
+/** A small per-client limit on the calls that can cost money or create records. */
+function rateLimiter(env) {
+  const max = Number(env.RATE_LIMIT_PER_MIN === undefined ? 60 : env.RATE_LIMIT_PER_MIN);
+  const hits = new Map();
+  return (req) => {
+    if (!max) return false;
+    const fwd = env.TRUST_PROXY === '1' ? String(header(req.headers, 'x-forwarded-for') || '').split(',')[0].trim() : '';
+    const who = fwd || req.socket.remoteAddress || 'unknown';
+    const now = Date.now();
+    const h = hits.get(who);
+    if (!h || now > h.reset) {
+      hits.set(who, { count: 1, reset: now + 60000 });
+      if (hits.size > 10000) hits.clear();
+      return false;
+    }
+    h.count += 1;
+    return h.count > max;
+  };
+}
+
+const esc = (s) => String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+function donePage(rec, message) {
+  const back = rec && rec.returnUrl ? `<p><a href="${esc(rec.returnUrl)}" style="color:#0f2742;font-weight:700">Return to the portal</a></p>` : '<p>You can close this tab and return to the portal.</p>';
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Done</title></head><body style="font:16px/1.5 system-ui,sans-serif;margin:0;padding:32px 16px;background:#f6f6f6;color:#1b1b1b"><main style="max-width:520px;margin:0 auto;background:#fff;border:1px solid #ddd;border-radius:6px;padding:24px"><h1 style="font-size:22px;margin-top:0">${esc(message || 'Thank you')}</h1>${back}</main></body></html>`;
+}
+const HTML = { 'Content-Type': 'text/html; charset=utf-8', 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff' };
 
 export function createServer(opts = {}) {
   const env = opts.env || process.env;
   const store = opts.store || openStore(env.STORE_FILE || new URL('./data/store.json', import.meta.url).pathname);
   const fetchFn = opts.fetch || globalThis.fetch;
   const publicUrl = String(env.PUBLIC_URL || `http://localhost:${env.PORT || 8787}`).replace(/\/+$/, '');
-  const ctx = (provider, extra) => Object.assign({ env, fetch: fetchFn, publicUrl, webhookUrl: `${publicUrl}/webhooks/${provider}` }, extra);
+  const origins = String(env.PORTAL_ORIGIN || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const limited = rateLimiter(env);
 
-  async function refresh(rec) {
+  const ctx = (provider, rec, extra) =>
+    Object.assign(
+      {
+        env,
+        fetch: fetchFn,
+        publicUrl,
+        webhookUrl: `${publicUrl}/webhooks/${provider}`,
+        returnUrl: rec ? `${publicUrl}/return/${provider}/${rec.id}` : '',
+        returnBase: `${publicUrl}/return/${provider}`,
+        hostedUrl: rec ? `${publicUrl}/hosted/${rec.id}` : '',
+        reference: rec ? rec.id : '',
+        kind: rec ? rec.kind : '',
+        ref: rec ? rec.ref || '' : '',
+        data: rec ? Object.assign({}, rec.data) : {},
+        settings: rec ? rec.settings || {} : {},
+        investor: rec ? rec.investor || {} : {}
+      },
+      extra
+    );
+
+  /** Merge an adapter's normalized result into a record, ignoring statuses the portal would not understand. */
+  function apply(table, rec, r) {
+    if (!r || typeof r !== 'object') return rec;
+    const patch = { id: rec.id };
+    const kind = table === 'screenings' ? 'aml' : rec.kind;
+    if (r.status) {
+      if (STATUSES[kind].includes(r.status)) patch.status = r.status;
+      else store.event({ type: 'unknown_status', provider: rec.provider, id: rec.id, status: String(r.status).slice(0, 40) });
+    }
+    for (const k of RESULT_FIELDS) if (r[k] !== undefined && r[k] !== null && r[k] !== '') patch[k] = r[k];
+    if (r.ref) patch.ref = String(r.ref);
+    if (r.url) patch.url = String(r.url);
+    if (r.hits) {
+      patch.hits = r.hits;
+      if (!r.status) patch.status = r.hits.length ? 'potential_match' : 'clear';
+    }
+    if (r.data && typeof r.data === 'object') patch.data = Object.assign({}, rec.data, r.data);
+    return store.put(table, patch);
+  }
+
+  /** What the portal may see: never `data` (tokens, provider-private ids) or the investor's details. */
+  const view = (rec) => ({ id: rec.id, kind: rec.kind, provider: rec.provider, status: rec.status, method: rec.method || '', detail: rec.detail || '', expiresAt: rec.expiresAt || '', screening: rec.screening || null, evidence: rec.evidence || [], url: rec.url || '', updatedAt: rec.updatedAt || '' });
+  const screeningView = (rec) => ({ id: rec.id, provider: rec.provider, status: rec.status, hits: rec.hits || [], monitoring: !!rec.monitoring, updatedAt: rec.updatedAt || '' });
+
+  async function refresh(rec, force) {
     const p = PROVIDERS[rec.provider];
     if (!p || !p.fetchResult || rec.status !== 'pending' || !rec.ref) return rec;
-    if (rec.checkedAt && Date.now() - Date.parse(rec.checkedAt) < REFRESH_MS) return rec;
-    const r = await p.fetchResult(ctx(rec.provider, { ref: rec.ref, kind: rec.kind }));
-    return store.put('verifications', Object.assign({ id: rec.id, checkedAt: new Date().toISOString() }, r && r.status ? { status: r.status, method: r.method || rec.method || '', detail: r.detail || '' } : {}));
+    if (!force && rec.checkedAt && Date.now() - Date.parse(rec.checkedAt) < REFRESH_MS) return rec;
+    store.put('verifications', { id: rec.id, checkedAt: new Date().toISOString() });
+    const r = await p.fetchResult(ctx(rec.provider, rec));
+    return apply('verifications', store.get('verifications', rec.id), r);
+  }
+  async function refreshScreening(rec, force) {
+    const p = PROVIDERS[rec.provider];
+    if (!p || !p.fetchScreening || !rec.ref) return rec;
+    if (!force && rec.checkedAt && Date.now() - Date.parse(rec.checkedAt) < REFRESH_MS) return rec;
+    store.put('screenings', { id: rec.id, checkedAt: new Date().toISOString() });
+    const r = await p.fetchScreening(ctx(rec.provider, rec));
+    return apply('screenings', store.get('screenings', rec.id), r);
+  }
+
+  /** Redirects to provider pages must be https (or back to this server). */
+  const safeRedirect = (u) => typeof u === 'string' && (/^https:\/\//i.test(u) || u.startsWith(publicUrl + '/'));
+  /** The portal may ask to be linked back to after a hosted flow; only its own origins are accepted. */
+  function returnTo(u) {
+    if (typeof u !== 'string' || !/^https?:\/\//i.test(u)) return '';
+    if (!origins.length || origins.includes('*')) return u.slice(0, 500);
+    return origins.some((o) => u === o || u.startsWith(o + '/') || u.startsWith(o + '?') || u.startsWith(o + '#')) ? u.slice(0, 500) : '';
+  }
+  /** Reply to a hosted page or return URL with whatever the adapter asked for. */
+  function hostedReply(res, rec, r, fallback) {
+    if (r && r.redirect && safeRedirect(r.redirect)) {
+      res.writeHead(302, { Location: r.redirect, 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' });
+      return res.end();
+    }
+    if (r && r.html) return send(res, 200, r.html, HTML);
+    return send(res, 200, donePage(rec, (r && r.message) || fallback), HTML);
   }
 
   async function route(req, res) {
@@ -63,20 +174,67 @@ export function createServer(opts = {}) {
       const p = PROVIDERS[name];
       if (!p || !p.verifyWebhook) return send(res, 404, { error: 'Unknown provider' });
       const raw = await readRaw(req);
-      if (!p.verifyWebhook({ rawBody: raw, headers: req.headers, env })) {
+      const ok = await p.verifyWebhook({ rawBody: raw, headers: req.headers, env, fetch: fetchFn, query: Object.fromEntries(url.searchParams) });
+      if (!ok) {
         store.event({ type: 'webhook_rejected', provider: name });
         return send(res, 401, { error: 'Bad signature' });
       }
       const body = parseJson(raw);
-      const ev = p.parseWebhook({ body, headers: req.headers, rawBody: raw }) || {};
+      const ev = (await p.parseWebhook({ body, headers: req.headers, rawBody: raw, env })) || {};
+      if (ev.id && store.seen(`${name}:${ev.id}`)) return send(res, 200, { received: true, duplicate: true });
       store.event({ type: 'webhook', provider: name, event: ev.event || '', ref: ev.ref || '' });
-      const rec = ev.ref ? store.byRef('verifications', name, ev.ref) || store.byRef('screenings', name, ev.ref) : null;
-      if (rec) {
-        if (ev.status) store.put(rec.kind === 'aml' ? 'screenings' : 'verifications', { id: rec.id, status: ev.status, method: ev.method || rec.method || '', detail: ev.detail || '' });
-        else if (ev.refetch && p.fetchResult) await refresh(Object.assign({}, rec, { checkedAt: '' }));
-        if (ev.hits) store.put('screenings', { id: rec.id, hits: ev.hits, status: ev.hits.length ? 'potential_match' : 'clear' });
+      const refs = [].concat(ev.ref || []).filter(Boolean);
+      for (const ref of refs) {
+        const ver = store.byRef('verifications', name, ref);
+        const scr = ver ? null : store.byRef('screenings', name, ref);
+        if (ver) {
+          if (ev.refetch && p.fetchResult) await refresh(Object.assign({}, ver, { status: 'pending' }), true).catch((e) => store.event({ type: 'refresh_failed', provider: name, id: ver.id, error: e.message }));
+          else apply('verifications', ver, Object.assign({}, ev, { ref: undefined, url: undefined, data: undefined }));
+        } else if (scr) {
+          if (ev.refetch && p.fetchScreening) await refreshScreening(scr, true).catch((e) => store.event({ type: 'refresh_failed', provider: name, id: scr.id, error: e.message }));
+          else apply('screenings', scr, Object.assign({}, ev, { ref: undefined, url: undefined, data: undefined }));
+        }
       }
       return send(res, 200, { received: true });
+    }
+
+    // Where providers send the investor back (OAuth codes, account links). Our record id is in the
+    // path (ctx.returnUrl) or, for providers that only accept one registered redirect URL
+    // (ctx.returnBase), in a query parameter the adapter names (state, identifier or reference by default).
+    const back = path.match(/^\/return\/([a-z0-9]+)(?:\/(ver_[\w-]+))?$/);
+    if (req.method === 'GET' && back) {
+      const p = PROVIDERS[back[1]];
+      const q = Object.fromEntries(url.searchParams);
+      const rid = back[2] || (p && p.returnRecordId ? p.returnRecordId(q) : q.state || q.identifier || q.reference) || '';
+      const rec = /^ver_[\w-]+$/.test(rid) ? store.get('verifications', rid) : null;
+      if (!p || !rec || rec.provider !== back[1]) return send(res, 404, 'Unknown verification');
+      if (!p.handleReturn) return hostedReply(res, rec, null, 'Thank you. Your information was sent.');
+      const r = (await p.handleReturn(ctx(rec.provider, rec, { query: q }))) || {};
+      const cur = apply('verifications', rec, r);
+      store.event({ type: 'return', provider: rec.provider, id: rec.id });
+      return hostedReply(res, cur, r, cur.status === 'pending' ? 'Thank you. Your information was submitted for review.' : 'Thank you. You can return to the portal.');
+    }
+
+    // Pages this server hosts for a provider flow (for example to run a vendor SDK the portal cannot load).
+    const hosted = path.match(/^\/hosted\/(ver_[\w-]+)$/);
+    if (hosted && (req.method === 'GET' || req.method === 'POST')) {
+      const rec = store.get('verifications', hosted[1]);
+      const p = rec && PROVIDERS[rec.provider];
+      if (!rec || !p) return send(res, 404, 'Unknown verification');
+      if (req.method === 'GET') {
+        if (p.page) return send(res, 200, await p.page(rec, ctx(rec.provider, rec)), HTML);
+        if (rec.url && safeRedirect(rec.url) && rec.url !== `${publicUrl}/hosted/${rec.id}`) return hostedReply(res, rec, { redirect: rec.url });
+        return send(res, 404, 'Nothing to show');
+      }
+      if (limited(req)) return send(res, 429, { error: 'Too many requests' });
+      if (!p.hostedPost) return send(res, 405, 'Not allowed');
+      const raw = await readRaw(req, 256 * 1024);
+      const type = String(header(req.headers, 'content-type') || '');
+      const form = type.includes('application/json') ? parseJson(raw) : Object.fromEntries(new URLSearchParams(raw.toString('utf8')));
+      const r = (await p.hostedPost(ctx(rec.provider, rec, { form }))) || {};
+      const cur = apply('verifications', rec, r);
+      if (type.includes('application/json')) return send(res, 200, { ok: true, status: cur.status, redirect: r.redirect && safeRedirect(r.redirect) ? r.redirect : '' });
+      return hostedReply(res, cur, r, 'Thank you. You can return to the portal.');
     }
 
     // Sandbox provider: a stand-in hosted page so the live flow can be tried without provider accounts.
@@ -89,51 +247,74 @@ export function createServer(opts = {}) {
         const outcome = form.get('outcome');
         const allowed = rec.kind === 'identity' ? ['passed', 'review', 'failed'] : ['verified', 'review', 'rejected'];
         if (!allowed.includes(outcome)) return send(res, 400, 'Unknown outcome');
-        store.put('verifications', { id: rec.id, status: outcome, method: form.get('method') || '' });
-        return send(res, 200, '<!doctype html><meta charset="utf-8"><title>Done</title><p style="font:16px system-ui;padding:24px">Done. You can close this tab and return to the portal.</p>', { 'Content-Type': 'text/html; charset=utf-8' });
+        const extra = rec.kind === 'accreditation' && outcome === 'verified' ? { expiresAt: new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10) } : {};
+        apply('verifications', rec, Object.assign({ status: outcome, method: form.get('method') || '' }, extra));
+        return send(res, 200, donePage(rec, 'Done'), HTML);
       }
-      return send(res, 200, PROVIDERS.sandbox.page(rec), { 'Content-Type': 'text/html; charset=utf-8' });
+      return send(res, 200, PROVIDERS.sandbox.page(rec), HTML);
     }
 
     if (path.startsWith('/v1/') && !authorize(req, env)) return send(res, 401, { error: 'Not authorized' });
+    if (path.startsWith('/v1/') && req.method === 'POST' && limited(req)) return send(res, 429, { error: 'Too many requests' });
 
     if (req.method === 'POST' && path === '/v1/verifications') {
       const body = parseJson(await readRaw(req));
       const p = PROVIDERS[body.provider];
-      if (!p || !(p.kinds || [p.kind]).includes(body.kind) || !p.createSession) return send(res, 400, { error: `No ${body.kind || ''} provider named "${body.provider || ''}"` });
+      if (!p || !(p.kinds || [p.kind]).includes(body.kind) || body.kind === 'aml' || !p.createSession) return send(res, 400, { error: `No ${body.kind || ''} provider named "${body.provider || ''}"` });
       const missing = missingEnv(p, env);
       if (missing.length) return send(res, 400, { error: `Set ${missing.join(', ')} on the integration server` });
       const inv = body.investor || {};
       if (!inv.id || !inv.name) return send(res, 400, { error: 'investor.id and investor.name are required' });
-      const rec = { id: id('ver'), kind: body.kind, provider: body.provider, investorId: inv.id, workspace: inv.workspace || '', status: 'pending', createdAt: new Date().toISOString() };
-      const r = await p.createSession(ctx(body.provider, { investor: inv, settings: body.settings || {}, reference: rec.id, kind: body.kind }));
-      const saved = store.put('verifications', Object.assign(rec, { ref: r.ref, url: r.url || '', status: r.status || 'pending' }));
-      store.event({ type: 'verification_started', provider: body.provider, id: rec.id, ref: r.ref });
-      return send(res, 200, { id: saved.id, status: saved.status, url: saved.url });
+      const investor = { id: String(inv.id), name: String(inv.name), account: inv.account || '', email: inv.email || '', type: inv.type || '', address: inv.address || '', phone: inv.phone || '', workspace: inv.workspace || '', offering: inv.offering || '' };
+      const rec = store.put('verifications', { id: id('ver'), kind: body.kind, provider: body.provider, investorId: investor.id, workspace: investor.workspace, status: 'pending', settings: body.settings || {}, investor, returnUrl: returnTo(body.returnUrl), createdAt: new Date().toISOString() });
+      const r = (await p.createSession(ctx(body.provider, rec))) || {};
+      const saved = apply('verifications', rec, Object.assign({}, r, { status: r.status || 'pending' }));
+      store.event({ type: 'verification_started', provider: body.provider, id: rec.id, ref: saved.ref || '' });
+      return send(res, 200, { id: saved.id, status: saved.status, url: saved.url || '' });
     }
 
     const ver = path.match(/^\/v1\/verifications\/(ver_[\w-]+)$/);
     if (req.method === 'GET' && ver) {
       const rec = store.get('verifications', ver[1]);
       if (!rec) return send(res, 404, { error: 'Not found' });
-      const cur = await refresh(rec);
-      return send(res, 200, { id: cur.id, kind: cur.kind, provider: cur.provider, status: cur.status, method: cur.method || '', detail: cur.detail || '' });
+      return send(res, 200, view(await refresh(rec)));
+    }
+
+    // Evidence such as a verification letter, fetched from the provider with the server's credentials.
+    const evd = path.match(/^\/v1\/verifications\/(ver_[\w-]+)\/evidence\/(\d{1,2})$/);
+    if (req.method === 'GET' && evd) {
+      const rec = store.get('verifications', evd[1]);
+      const item = rec && (rec.evidence || [])[Number(evd[2])];
+      const p = rec && PROVIDERS[rec.provider];
+      if (!rec || !item || !p || !p.fetchEvidence) return send(res, 404, { error: 'Not found' });
+      const file = await p.fetchEvidence(ctx(rec.provider, rec, { item }));
+      if (!file || !file.body) return send(res, 404, { error: 'Not found' });
+      res.writeHead(200, { 'Content-Type': file.contentType || 'application/pdf', 'Content-Disposition': `attachment; filename="${String(file.fileName || 'evidence.pdf').replace(/[^\w.-]+/g, '_')}"`, 'Cache-Control': 'no-store' });
+      return res.end(Buffer.from(file.body));
     }
 
     if (req.method === 'POST' && path === '/v1/screenings') {
       const body = parseJson(await readRaw(req));
       const p = PROVIDERS[body.provider];
-      if (!p || p.kind !== 'aml' || !p.screen) return send(res, 400, { error: `No screening provider named "${body.provider || ''}"` });
+      if (!p || !(p.kinds || [p.kind]).includes('aml') || !p.screen) return send(res, 400, { error: `No screening provider named "${body.provider || ''}"` });
       const missing = missingEnv(p, env);
       if (missing.length) return send(res, 400, { error: `Set ${missing.join(', ')} on the integration server` });
       const names = Array.from(new Set((body.names || []).map((n) => String(n || '').trim()).filter(Boolean))).slice(0, 25);
       if (!names.length) return send(res, 400, { error: 'names are required' });
-      const rec = { id: id('scr'), kind: 'aml', provider: body.provider, investorId: (body.investor || {}).id || '', createdAt: new Date().toISOString() };
-      const r = await p.screen(ctx(body.provider, { investor: body.investor || {}, names, settings: body.settings || {}, reference: rec.id }));
-      const hits = r.hits || [];
-      store.put('screenings', Object.assign(rec, { ref: r.ref || rec.id, hits, status: hits.length ? 'potential_match' : 'clear' }));
-      store.event({ type: 'screening', provider: body.provider, id: rec.id, hits: hits.length });
-      return send(res, 200, { id: rec.id, status: hits.length ? 'potential_match' : 'clear', hits });
+      const inv = body.investor || {};
+      const rec = store.put('screenings', { id: id('scr'), kind: 'aml', provider: body.provider, investorId: inv.id || '', names, settings: body.settings || {}, investor: inv, status: 'pending', createdAt: new Date().toISOString() });
+      const r = (await p.screen(ctx(body.provider, rec, { names }))) || {};
+      const saved = apply('screenings', rec, Object.assign({ hits: r.hits || [] }, r, { ref: r.ref || rec.id }));
+      if (r.monitoring) store.put('screenings', { id: rec.id, monitoring: true });
+      store.event({ type: 'screening', provider: body.provider, id: rec.id, hits: (saved.hits || []).length });
+      return send(res, 200, { id: saved.id, status: saved.status, hits: saved.hits || [] });
+    }
+
+    const scr = path.match(/^\/v1\/screenings\/(scr_[\w-]+)$/);
+    if (req.method === 'GET' && scr) {
+      const rec = store.get('screenings', scr[1]);
+      if (!rec) return send(res, 404, { error: 'Not found' });
+      return send(res, 200, screeningView(rec.status === 'pending' ? await refreshScreening(rec) : rec));
     }
 
     return send(res, 404, { error: 'Not found' });
@@ -142,7 +323,7 @@ export function createServer(opts = {}) {
   const server = http.createServer((req, res) =>
     route(req, res).catch((e) => {
       if (!e.status && env.NODE_ENV !== 'test') console.error(e);
-      send(res, e.status || 502, { error: e.status ? e.message : `Provider request failed: ${e.message}` });
+      if (!res.headersSent) send(res, e.status || 502, { error: e.status ? e.message : `Provider request failed: ${e.message}` });
     })
   );
   server.store = store;

@@ -903,7 +903,7 @@
       const inv = st.ws && st.ws.investors.find((i) => i.id === st.viewer);
       return inv ? `${inv.title} (investor)` : 'Investor';
     }
-    return 'Carrow & Vale staff';
+    return NS.EDITION && NS.EDITION.diy ? `${t ? t.shortName : 'Firm'} admin` : 'Carrow & Vale staff';
   }
   const pending = new Map();
   let flushTimer = 0;
