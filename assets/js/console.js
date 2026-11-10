@@ -2859,7 +2859,7 @@
               ${tField('Sign-in heading', 'signin.headline', { max: 60 })}
               ${tField('Sign-in text', 'signin.sub', { max: 140 })}
               ${tField('Footer disclosure', 'disclaimer', { textarea: true, rows: 4 })}
-              ${canConfigure() ? tCheck(`Show “Powered by ${E.product}”`, 'showPoweredBy', E.managed ? 'Off by default. Investors see only the client.' : 'Off by default. Investors see only your firm.') : ''}
+              ${canConfigure() && E.poweredBy ? tCheck(`Show “Powered by ${E.poweredBy}”`, 'showPoweredBy', E.managed ? 'Off by default. Investors see only the client.' : 'Off by default. Investors see only your firm.') : ''}
             </div>`)}
             ${!canConfigure() ? '' : panel('Configuration', `<p class="cs-hint">${E.diy ? 'Your portal’s configuration as JSON, for backup or to move it.' : 'The client’s full configuration as JSON, for engineering hand-off or to copy a setup to another client.'}</p>
               <div class="cs-row"><button class="cs-btn" type="button" data-action="cfg-copy">Copy JSON</button><button class="cs-btn cs-btn-danger" type="button" data-action="cfg-reset">${S().ui.cfgReset ? 'Click again to confirm' : builtin ? 'Restore sample data' : 'Delete this client'}</button></div>`)}

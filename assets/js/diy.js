@@ -1,5 +1,6 @@
 /*
- * Shareholder Desk, the DIY edition: sign-up and the team.
+ * Carrow & Vale DIY Portal (the DIY edition): sign-up and the team. Investors never see
+ * this name: every page they see carries only their firm's brand.
  *
  * A sponsor creates its own portal here, with no Carrow & Vale staff
  * involved: firm, brand and the first admin account. The console overview
@@ -41,12 +42,12 @@
     if (!u.signup) u.signup = { firm: '', name: '', email: '', password: '', focus: 'realestate', color: '#0F2742', logo: '', logoName: '', errors: {} };
     return u.signup;
   }
-  const wordmark = () => `<span class="sd-brand">${NS.CV_MARK}<span class="sd-word">Shareholder Desk</span></span>`;
+  const wordmark = () => `<span class="sd-brand">${NS.CV_MARK}<span class="sd-word">Carrow &amp; Vale DIY Portal</span></span>`;
 
   NS.views['diy-start'] = {
     standalone: true,
     edition: 'diy',
-    title: 'Shareholder Desk · Create your investor portal',
+    title: 'Carrow & Vale DIY Portal · Create your investor portal',
     render() {
       const f = signupState();
       const e = f.errors;
@@ -72,7 +73,7 @@
                 <label class="field" for="sd-logo"><span>Logo <em>Optional</em></span><input id="sd-logo" type="file" accept="image/png,image/jpeg,image/svg+xml" data-change="diy-logo"><span class="hint">${f.logoName ? `Attached: ${h(f.logoName)}` : 'PNG, JPG or SVG. You can change it later.'}</span></label>
               </div>
               <button class="btn btn-primary sd-submit" type="submit">Create my portal</button>
-              <p class="hint">By creating a portal you agree to the Shareholder Desk terms of service. No card is needed to start.</p>
+              <p class="hint">By creating a portal you agree to the Carrow &amp; Vale terms of service. No card is needed to start.</p>
             </form>
             <aside class="sd-side">
               <div class="sd-card">
@@ -96,7 +97,7 @@
             </aside>
           </div>
         </main>
-        <footer class="sd-foot">Shareholder Desk is software from Carrow &amp; Vale. Prefer us to run it for you? Ask about the managed service.</footer>
+        <footer class="sd-foot">Your investors see only your firm’s brand. Prefer Carrow &amp; Vale to run your portal for you? Ask about the managed service.</footer>
       </div>`;
     }
   };
@@ -156,9 +157,9 @@
     NS.store.set('role', 'admin');
     S().ui.signup = null;
     NS.app.setClient(t.id, 'console');
-    if (NS.audit) NS.audit.log(NS.state.ws, { action: 'Portal created', record: t.id, detail: `${firm} signed up for Shareholder Desk; first admin ${f.name.trim()} (${f.email.trim()})` });
+    if (NS.audit) NS.audit.log(NS.state.ws, { action: 'Portal created', record: t.id, detail: `${firm} signed up for the Carrow & Vale DIY Portal; first admin ${f.name.trim()} (${f.email.trim()})` });
     NS.app.save(true);
-    U.toast(`Welcome to Shareholder Desk, ${f.name.trim().split(' ')[0]}`);
+    U.toast(`Welcome, ${f.name.trim().split(' ')[0]}. Your portal is ready.`);
   };
   NS.actions['diy-sample'] = (el, e) => {
     if (e) e.preventDefault();

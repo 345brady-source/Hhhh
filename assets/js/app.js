@@ -258,7 +258,7 @@
    * Managed edition (Carrow & Vale):
    *   staff    Carrow & Vale: every client, the operator bar, client setup and offering configuration.
    *   sponsor  the client's own staff: its console and investor previews; offerings read-only.
-   * DIY edition (Shareholder Desk):
+   * DIY edition (Carrow & Vale DIY Portal):
    *   admin    the sponsor's admins: everything, including brand, offerings, integrations and team.
    *   team     the sponsor's team members: operations; offerings, brand and integrations read-only.
    * Both: investor, the client's branded portal only.
@@ -364,7 +364,7 @@
     document.body.classList.toggle('mode-console', mode === 'console');
     document.body.classList.toggle('mode-portal', mode === 'portal');
     document.body.classList.toggle('mode-standalone', mode === 'standalone');
-    document.title = standalone ? view.title || E.product : mode === 'console' ? `${w.tenant.shortName} · ${E.diy ? 'Shareholder Desk' : 'Sponsor Console'}` : `${w.tenant.portalName} · ${w.tenant.shortName}`;
+    document.title = standalone ? view.title || (w ? w.tenant.portalName : 'Investor Portal') : mode === 'console' ? `${w.tenant.shortName} · ${E.diy ? 'Console' : 'Sponsor Console'}` : `${w.tenant.portalName} · ${w.tenant.shortName}`;
     // Carrow & Vale staff get the operator bar; a sponsor's own people get a plain preview bar in the investor view.
     document.getElementById('opbar').innerHTML = !w || standalone ? '' : E.managed && state.role === 'staff' ? opbarHTML() : state.role !== 'investor' && mode === 'portal' ? previewBarHTML() : '';
     document.getElementById('demo').innerHTML = standalone ? '' : demoHTML();

@@ -1,8 +1,8 @@
 {
-  "name": "shareholder-desk-integration-server",
+  "name": "diy-portal-integration-server",
   "version": "1.0.0",
   "private": true,
-  "description": "Provider calls and webhooks for automated investor verification (identity, sanctions screening, accreditation) in the Shareholder Desk portal.",
+  "description": "Provider calls and webhooks for automated investor verification (identity, sanctions screening, accreditation) in the Carrow & Vale DIY Portal.",
   "type": "module",
   "engines": { "node": ">=18" },
   "scripts": {
