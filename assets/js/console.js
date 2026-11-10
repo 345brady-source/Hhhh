@@ -347,6 +347,20 @@
     if (opts.textarea) return `<label class="cs-field cs-wide" for="${id}"><span>${label}</span><textarea id="${id}" rows="${opts.rows || 3}" data-bind="off:${path}" maxlength="${opts.max || 600}">${h(v)}</textarea>${opts.hint ? `<span class="cs-hint">${opts.hint}</span>` : ''}</label>`;
     return `<label class="cs-field${opts.wide ? ' cs-wide' : ''}" for="${id}"><span>${label}</span><input id="${id}" type="${opts.type || 'text'}" data-bind="off:${path}" value="${h(v == null ? '' : v)}"${opts.placeholder ? ` placeholder="${h(opts.placeholder)}"` : ''}${opts.step ? ` step="${opts.step}"` : ''}${opts.max ? ` maxlength="${opts.max}"` : ''}${opts.upper ? ' data-upper' : ''}${opts.spell === false ? ' spellcheck="false"' : ''}>${opts.hint ? `<span class="cs-hint">${opts.hint}</span>` : ''}</label>`;
   }
+  /** Exemptions offered on the offering page; a value read from documents that is not in the list stays selectable. */
+  const EXEMPTIONS = [
+    ['Rule 506(b)', 'Rule 506(b)'],
+    ['Rule 506(c)', 'Rule 506(c): verified accredited investors only'],
+    ['Regulation A', 'Regulation A'],
+    ['Regulation Crowdfunding', 'Regulation Crowdfunding'],
+    ['Regulation S', 'Regulation S'],
+    ['Section 4(a)(2)', 'Section 4(a)(2)']
+  ];
+  function exemptionOptions(o) {
+    const cur = ((o.structure || {}).exemption || '').trim();
+    const known = EXEMPTIONS.some(([v]) => v === cur);
+    return [['', 'Not set']].concat(cur && !known ? [[cur, cur]] : [], EXEMPTIONS);
+  }
   function offPreview(o) {
     const x = NS.exitInfo(o);
     const terms = (o.terms || []).filter((r) => r.show && r.label);
@@ -451,6 +465,7 @@
               ${offField('Closing date', 'closeDate', { type: 'date' })}
               ${offField('One-line description', 'summary', { wide: true, max: 100 })}
               ${offField('Minimum investment ($)', 'minimum', { type: 'number' })}
+              ${offField('Securities exemption', 'structure.exemption', { select: exemptionOptions(o), hint: E.diy ? 'Rule 506(c) offerings take verified accredited investors only: investors verify their status while they onboard, before they can subscribe.' : '' })}
             </div>`)}
             ${panel('Exit timing', `<div class="cs-grid">
               ${offField('How exit is defined', 'exit.basis', { select: BASIS, wide: true })}
@@ -493,7 +508,7 @@
       );
     }
   };
-  const OFF_FIELDS = { name: 'Offering name', shortName: 'Short name', type: 'Type', status: 'Status', closeDate: 'Closing date', summary: 'Description', minimum: 'Minimum investment', 'exit.basis': 'Exit basis', 'exit.date': 'Exit date', 'exit.from': 'Exit window opens', 'exit.to': 'Exit window closes', 'exit.note': 'Exit note', 'distribution.frequency': 'Distribution frequency', 'distribution.day': 'Payment day', 'distribution.type': 'Payment type', 'distribution.target': 'Target shown to investors', update: 'Latest update', 'achOverride.companyName': 'ACH company name', 'achOverride.companyId': 'ACH company ID', 'accounting.mgmtFee': 'Management fee (%)', 'accounting.feeBasis': 'Fee basis', 'accounting.carry': 'Carried interest or incentive (%)', 'accounting.pref': 'Preferred return (%)', 'accounting.auditor': 'Auditor' };
+  const OFF_FIELDS = { name: 'Offering name', shortName: 'Short name', type: 'Type', status: 'Status', closeDate: 'Closing date', summary: 'Description', minimum: 'Minimum investment', 'exit.basis': 'Exit basis', 'exit.date': 'Exit date', 'exit.from': 'Exit window opens', 'exit.to': 'Exit window closes', 'exit.note': 'Exit note', 'distribution.frequency': 'Distribution frequency', 'distribution.day': 'Payment day', 'distribution.type': 'Payment type', 'distribution.target': 'Target shown to investors', update: 'Latest update', 'achOverride.companyName': 'ACH company name', 'achOverride.companyId': 'ACH company ID', 'accounting.mgmtFee': 'Management fee (%)', 'accounting.feeBasis': 'Fee basis', 'accounting.carry': 'Carried interest or incentive (%)', 'accounting.pref': 'Preferred return (%)', 'accounting.auditor': 'Auditor', 'structure.exemption': 'Securities exemption' };
   function logOffEdit(o, path, from, to) {
     const m = /^terms\.(\d+)\.(label|value|show)$/.exec(path);
     const label = m ? `Term ${Number(m[1]) + 1} ${m[2] === 'show' ? 'shown to investors' : m[2]}` : OFF_FIELDS[path] || path;
@@ -593,11 +608,12 @@
       const rows = list
         .map((i) => {
           const invested = i.positions.reduce((a, p) => a + p.amount, 0);
+          const committed = i.positions.reduce((a, p) => a + (Number(p.commitment) || 0), 0);
           const done = i.onboarding.status === 'complete';
           return `<tr>
             <th scope="row"><span class="strong">${h(i.title)}</span><span class="sub">${h(i.contact)} · ${h(i.email)}</span></th>
             <td>${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</td>
-            <td class="num">${usd(invested)}<span class="sub">${i.positions.length} investment${i.positions.length === 1 ? '' : 's'}</span></td>
+            <td class="num">${usd(invested)}<span class="sub">${committed > invested ? `${usd(committed)} committed · ` : ''}${i.positions.length} investment${i.positions.length === 1 ? '' : 's'}</span></td>
             <td>${activation(i)}</td>
             <td>${payLabel(i)}</td>
             <td class="cs-row-actions">${
@@ -1597,8 +1613,8 @@
   };
   NS.actions['con-csv'] = () => {
     const list = S().ui.conList || [];
-    const rows = [['Investor', 'Account', 'Contact', 'Email', 'Phone', 'Mailing address', 'Investing as', 'Offerings', 'Invested', 'Account status', 'Paid by']].concat(
-      list.map((inv) => [inv.title, inv.id, inv.contact, inv.email, inv.phone || '', inv.address || '', (NS.ENTITY_TYPES[inv.type] || {}).label || inv.type, offeringsOf(inv).join('; '), inv.positions.reduce((a, p) => a + p.amount, 0), statusText(inv), payMethod(inv)])
+    const rows = [['Investor', 'Account', 'Contact', 'Email', 'Phone', 'Mailing address', 'Investing as', 'Offerings', 'Invested', 'Committed', 'Account status', 'Paid by']].concat(
+      list.map((inv) => [inv.title, inv.id, inv.contact, inv.email, inv.phone || '', inv.address || '', (NS.ENTITY_TYPES[inv.type] || {}).label || inv.type, offeringsOf(inv).join('; '), inv.positions.reduce((a, p) => a + p.amount, 0), inv.positions.reduce((a, p) => a + (Number(p.commitment) || 0), 0), statusText(inv), payMethod(inv)])
     );
     U.download(`${slug()}_investor_contacts_${today()}.csv`, toCsv(rows), { mime: 'text/csv' });
   };

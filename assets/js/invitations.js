@@ -413,14 +413,24 @@
       consoleUrl: `${portalPage()}#console-investors`,
       notifyEmail: senderEmail(ws),
       firm: { name: t.name, shortName: t.shortName, legalName: t.legalName, supportTeam: t.support.team, supportEmail: isEmail(t.support.email) ? t.support.email : '', supportPhone: t.support.phone || '', colors: { primary: t.colors.primary, accent: t.colors.accent }, logo, portalName: t.portalName, disclaimer: t.disclaimer || '', onboarding: clone(t.onboarding || {}) },
-      investor: { id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email },
+      investor: Object.assign({ id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email }, it.existing ? { existing: onFileSummary(ws, inv, it) } : {}),
       offering,
-      invitation: { cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy },
+      invitation: Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}),
       verification: { connections: clone(c.connections), use: clone(c.use), rules: clone(c.rules) },
       esign
     };
   }
 
+  /**
+   * What the investor's device needs about an investor already on file: whether their accreditation is current (and until when)
+   * and whether they already hold the offering. No personal details: the account stays in this console.
+   */
+  function onFileSummary(ws, inv, it) {
+    const I = IV();
+    const ok = !!(I && I.accreditationValid && I.accreditationValid(ws, inv));
+    const a = (inv.verify && inv.verify.accreditation) || {};
+    return { accredited: ok, accreditedUntil: ok && /^\d{4}-\d{2}-\d{2}$/.test(String(a.expiresAt || '')) ? a.expiresAt : '', holds: (inv.positions || []).some((p) => p.offeringId === it.offeringId) };
+  }
   /** Send (or hand to the sponsor's email app). Resolves to { emailStatus, error? }. */
   async function send(ws, it) {
     if (!it) return { emailStatus: 'failed', error: 'No invitation.' };
@@ -537,14 +547,28 @@
     const src = sub && sub.investor && typeof sub.investor === 'object' ? sub.investor : null;
     if (!src) throw new Error('The submission has no investor record.');
     let inv = invOf(ws, it.investorId);
+    // An invitation to subscribe sent to an investor on file: their record here is the one that counts, whatever its status now.
+    const onFile = !!it.existing && !!inv;
     if (!inv) {
       inv = { id: it.investorId, contact: '', title: '', type: 'individual', email: '', onboarding: {}, payment: { method: 'check', bank: null }, positions: [] };
       ws.investors.push(inv);
     }
-    Object.keys(src).forEach((k) => {
-      if (BAD_KEYS.indexOf(k) < 0) inv[k] = clone(src[k]);
-    });
-    inv.onboarding = Object.assign({}, inv.onboarding, { source: 'invitation', invitationId: it.id, offeringId: it.offeringId });
+    // An investor already on file (invited to another offering): their details, bank account, tax form and verification stay as
+    // this console holds them. Only what the link collected is taken: an accreditation check and the e-sign consent.
+    if (onFile) {
+      const acc = src.verify && src.verify.accreditation;
+      if (acc && typeof acc === 'object' && !acc.onFile && acc.status && acc.status !== 'not_started' && IV()) {
+        IV().vOf(inv).accreditation = clone(acc);
+        if (src.accreditation && typeof src.accreditation === 'object' && src.accreditation.basis) inv.accreditation = clone(src.accreditation);
+      }
+      if (src.esignConsent && typeof src.esignConsent === 'object') inv.esignConsent = clone(src.esignConsent);
+      if (!inv.onboarding || typeof inv.onboarding !== 'object') inv.onboarding = {};
+    } else {
+      Object.keys(src).forEach((k) => {
+        if (BAD_KEYS.indexOf(k) < 0) inv[k] = clone(src[k]);
+      });
+      inv.onboarding = Object.assign({}, inv.onboarding, { source: 'invitation', invitationId: it.id, offeringId: it.offeringId });
+    }
     delete inv.onboarding.flow;
     if (!Array.isArray(inv.positions)) inv.positions = [];
     // The investor's request always arrives pending: only the firm accepts it.
@@ -566,7 +590,10 @@
           forged = true;
         }
       });
-      if (forged || env.status === 'completed') Object.assign(env, { status: env.status === 'completed' || forged ? 'sent' : env.status, completedAt: null, signedDocId: null, sha256Signed: null });
+      // An agreement with a countersigner is never complete before the firm signs; one for the investor alone can arrive complete.
+      const counter = (env.signers || []).some((s) => s.role === 'countersigner');
+      const signedFile = env.signedDocId && sub.files && typeof sub.files[env.signedDocId] === 'string';
+      if (forged || (env.status === 'completed' && (counter || !signedFile))) Object.assign(env, { status: 'sent', completedAt: null, signedDocId: null, sha256Signed: null });
       if (r && r.id && !env.requestId) env.requestId = r.id;
       ws.envelopes.push(env);
     }
@@ -574,7 +601,8 @@
     for (const id of Object.keys(files)) {
       if (!/^[\w.-]{1,120}$/.test(id) || typeof files[id] !== 'string') continue;
       try {
-        if (NS.ops && NS.ops.files) await NS.ops.files.put(id, b64Blob(files[id], 'application/pdf'));
+        const type = /^iVBORw0KGgo/.test(files[id]) ? 'image/png' : /^\/9j\//.test(files[id]) ? 'image/jpeg' : 'application/pdf';
+        if (NS.ops && NS.ops.files) await NS.ops.files.put(id, b64Blob(files[id], type));
       } catch (e) {
         /* a file that cannot be stored is listed as missing where it is used */
       }
@@ -592,6 +620,10 @@
     });
     Object.assign(it, { status: 'completed', completedAt: sub.completedAt || it.completedAt || new Date().toISOString(), stepKey: 'done', stepLabel: 'Done', stepIndex: it.stepCount || it.stepIndex });
     await reconfirm(ws, inv, it);
+    if (onFile && IV() && IV().active(ws) && inv.verify) {
+      IV().decide(ws, inv);
+      IV().syncKyc(ws, inv);
+    }
   }
   /**
    * The integration server holds for review any result from the investor's browser that it has no record of.

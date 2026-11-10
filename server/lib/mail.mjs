@@ -472,6 +472,7 @@ const STEPS_SENTENCE = 'The link takes you through everything in one place: crea
 /** The invitation: who invited them, to what, the note, what they will need, the link and its expiry. */
 export function invitationMessage({ firm, investor, offering, invitation, link, expiresAt }) {
   const name = investor.contact || investor.title || 'investor';
+  if (invitation.existing && offering && offering.name) return subscribeMessage({ firm, name, offering, invitation, link, expiresAt });
   const subject = offering && offering.name ? `${offering.name}: complete your investor onboarding` : `Complete your investor onboarding with ${firm.name}`;
   const rows = [];
   if (offering && offering.name) rows.push(['Offering', offering.name]);
@@ -491,9 +492,37 @@ export function invitationMessage({ firm, investor, offering, invitation, link, 
   });
 }
 
+/** An investor already on file, invited to subscribe to another offering: no ID or bank details needed. */
+function subscribeMessage({ firm, name, offering, invitation, link, expiresAt }) {
+  const rows = [['Offering', offering.name]];
+  if (invitation.cents) rows.push(['Commitment', money(invitation.cents, offering.currency)]);
+  return compose(firm, `${offering.name}: your subscription`, {
+    greeting: `Dear ${name},`,
+    paras: [`${firm.name} has invited you to subscribe to ${offering.name}.`],
+    rows,
+    note: invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: invitation.note } : null,
+    button: { label: 'Review and subscribe', href: link },
+    after: [
+      'The link takes you through your subscription in one place: the offering documents, your commitment and the subscription agreement, which you sign online. Your account details are already on file. It takes about 5 minutes.',
+      `This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`,
+      `Questions? Reply to this email or contact ${supportLine(firm)}.`
+    ]
+  });
+}
+
 /** A new link for the same invitation (the earlier link stops working). */
 export function resendMessage({ firm, investor, offering, invitation, link, expiresAt, started }) {
   const name = investor.contact || investor.title || 'investor';
+  if (invitation.existing && offering && offering.name) {
+    return compose(firm, `Reminder: ${offering.name}: your subscription`, {
+      greeting: `Dear ${name},`,
+      paras: [`Here is a new link to your subscription to ${offering.name} with ${firm.name}. Any earlier link we sent no longer works.`, started ? 'You can pick up where you left off.' : 'It takes about 5 minutes. Your account details are already on file.'],
+      rows: invitation.cents ? [['Commitment', money(invitation.cents, offering.currency)]] : [],
+      note: invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: invitation.note } : null,
+      button: { label: started ? 'Continue your subscription' : 'Review and subscribe', href: link },
+      after: [`This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`, `Questions? Reply to this email or contact ${supportLine(firm)}.`]
+    });
+  }
   const subject = offering && offering.name ? `Reminder: ${offering.name}: complete your investor onboarding` : `Reminder: complete your investor onboarding with ${firm.name}`;
   return compose(firm, subject, {
     greeting: `Dear ${name},`,
@@ -508,12 +537,33 @@ export function resendMessage({ firm, investor, offering, invitation, link, expi
   });
 }
 
+/**
+ * To the sponsor, once, before a finished onboarding the console never imported is deleted: open the console (it imports
+ * on its own) before the date, or the investor's paperwork is gone.
+ */
+export function reminderMessage({ firm, investor, offering, consoleUrl, completedAt, deleteOn }) {
+  const who = investor.contact || investor.title || 'An investor';
+  const rows = [['Investor', who], ['Email', investor.email]];
+  if (offering && offering.name) rows.push(['Offering', offering.name]);
+  rows.push(['Finished', longDate(completedAt)], ['Deleted on', longDate(deleteOn)]);
+  return compose(firm, `Waiting in your console: ${who}’s onboarding`, {
+    paras: [`${who} finished onboarding on ${longDate(completedAt)}, but the console has not added them to your investor records yet.`],
+    rows,
+    button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
+    after: [
+      `Open the console before ${longDate(deleteOn)}: it adds the investor, their verification results, documents and signed agreement as soon as it opens.`,
+      'After that date their submitted details and signed documents are deleted from the integration server to protect them, and the investor would have to complete onboarding again.'
+    ]
+  });
+}
+
 /** To the sponsor: who finished, the offering and commitment, verification and agreement status, and a link to the console. */
 export function notificationMessage({ firm, investor, offering, summary, consoleUrl, completedAt }) {
   const who = investor.contact || investor.title || 'An investor';
-  const subject = `${who} finished onboarding${offering && offering.name ? ` for ${offering.name}` : ''}`;
+  const existing = !!(summary && summary.existing);
+  const subject = existing ? `${who} finished their subscription${offering && offering.name ? ` to ${offering.name}` : ''}` : `${who} finished onboarding${offering && offering.name ? ` for ${offering.name}` : ''}`;
   return compose(firm, subject, {
-    paras: [`${who} completed every onboarding step on ${longDate(completedAt)}.`],
+    paras: [existing ? `${who} completed the subscription steps on ${longDate(completedAt)}.` : `${who} completed every onboarding step on ${longDate(completedAt)}.`],
     rows: summary.rows,
     button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
     after: [summary.next, 'Their details, verification results, documents and signed agreement are added to your investor records the next time the console is open.']

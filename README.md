@@ -31,7 +31,8 @@ Everything else is shared: investor portal, offerings, distributions and NACHA f
 - **Sign-up.** Firm name, admin name and email, a password, the kind of offerings, a brand color and a logo create the portal. Sample firms fill the form for a quick look.
 - **Setup checklist.** Brand, verification providers, ACH origination, first offering (from its documents), subscription agreement template, team, investors, first distribution. Each step links to its page and ticks itself off.
 - **Team.** Admins invite team members, change roles and remove people (at least one admin always remains). Team members operate the portal (investors, calls, distributions, documents, notices) but cannot change brand, integrations, offerings intake or the team. Every change is in the change log.
-- **Offering sign-up links.** Each offering that is raising has a link investors can use to join on their own: they enter their details, activate, verify and subscribe.
+- **Turnkey investor onboarding.** Enter an investor's name, email, offering and commitment and send one link from the console; the link takes them through every step, and the console is notified and adds them when they finish (below).
+- **Offering sign-up links.** Each offering that is raising has a link investors can use to join on their own: they enter their details, then follow the same guided onboarding.
 
 ## E-signature
 
@@ -54,9 +55,40 @@ Investors are verified while they onboard: identity (KYC), sanctions and politic
 - **More than one:** when several identity or accreditation connections are on, investors choose which to use. Every screening connection that is on runs; any potential match holds the investor for review.
 - **Decisions:** investors are approved automatically when every required check passes (or held for the team if the firm prefers). Anything flagged waits on the AML/KYC page, where the team records results, approves or declines with a note. Accreditation expires after the firm's validity period (90 days by default) or the provider's date, whichever is earlier. Subscriptions are blocked until the investor is verified and, for 506(c) offerings, currently accredited.
 
+## Turnkey investor onboarding (DIY portal)
+
+The firm enters the basics and sends one link; the investor does everything else; the firm is told when it is done and the investor is already in the portal.
+
+**The firm (Investors page, Invite an investor).** Name, email, offering and commitment (share class and a personal note are optional). Send invitation emails the link from the firm: `From: "<firm name>"`, replies to the firm's support address, the firm's logo and colors, nothing naming this software. The invitations list shows each one's progress (sent, opened, step 4 of 10, completed) with Resend (a new link; the old one stops working), Copy link, Cancel and Invite again. Links expire after 30 days.
+
+**The investor (one link, one progress bar, the firm's brand only).**
+
+1. Welcome: who invited them, the offering and commitment, and consent to sign and receive documents electronically
+2. Create a login
+3. Investor information: individual, joint, trust, entity or IRA; address; taxpayer ID (only the last four digits are kept); beneficial owners for entities
+4. Identity verification, with sanctions and politically exposed person screening in the background
+5. Accredited investor verification, when the offering is Rule 506(c) or the firm's rules ask for it
+6. Tax certification: W-9, or W-8BEN / W-8BEN-E for non-U.S. investors
+7. Distribution payments: ACH bank details with routing-number validation, or check
+8. Subscription: the offering documents and the commitment the firm set
+9. The subscription agreement, filled in and signed inside the flow
+10. Done: a summary and what happens next
+
+They can stop and pick up where they left off, on a phone or a computer. Verification never blocks the paperwork: if a check is held for review, they still finish, and the firm decides. An investor already on file who is invited to another offering gets a short version (the subscription, plus accreditation only when that offering needs it and theirs is not current).
+
+**When they finish.** The firm gets a notification in the console (and an email when the integration server is used), and the investor is added: their record, verification results, tax form, bank account, the subscription request, the signed agreement (waiting for the firm's countersignature), their documents and the full audit trail. When the firm countersigns, the subscription is accepted automatically once the investor is verified (a rule on the Investors page, on by default): a closed-end commitment goes on the investor register, an open-ended subscription is approved for funding.
+
+**On one computer or across devices.** Without a server, invitations work in the same browser (to try the flow): the console shows the email for the firm to send from its own email app, and Open the investor's link walks the journey. For real use, run the integration server (`server/`): set `API_TOKEN`, `DATA_KEY`, `PUBLIC_URL`, `PORTAL_ORIGIN` and the `SMTP_*` settings, enter the server's address and token on the Integrations page, and list the server where the portal is published:
+
+```html
+<script>window.CVPortalConfig = { integrationServers: ['https://verify.yourfirm.example'] };</script>
+```
+
+The server emails the link, keeps the investor's progress encrypted (AES-256-GCM), confirms verification results against its own checks, and deletes each finished onboarding as soon as the console has imported it (or after 30 days). See `server/README.md`.
+
 ## Integration server
 
-`server/` is a small Node service (no dependencies) that holds provider credentials and receives their callbacks, so no secret ever reaches the browser. See `server/README.md`.
+`server/` is a small Node service (no dependencies) that holds provider credentials and receives their callbacks, so no secret ever reaches the browser. It also carries turnkey invitations across devices: it emails investors and the firm, holds each investor's progress encrypted, and hands finished onboardings to the console. See `server/README.md`.
 
 ## Two sides
 
@@ -194,7 +226,7 @@ Offering types (real estate syndication, DST, private equity fund, co-investment
 
 ## Investor onboarding
 
-An invited investor activates in five steps, configurable per client:
+In the DIY portal, invited investors follow the turnkey onboarding above. In the managed edition, an invited investor activates in five steps, configurable per client:
 
 1. Create a login
 2. Investor information: entity type (individual, joint, trust, entity, IRA), name on the account, address, taxpayer ID (only the last four digits are kept)
@@ -242,7 +274,7 @@ This build stores everything in the browser for demonstration. A production depl
 - Encryption of taxpayer IDs and bank account numbers at rest; never store full numbers in the browser
 - Bank-change verification (call-back) before updated ACH details are used
 - Secure file transfer (SFTP or the bank's portal) for NACHA uploads, with dual approval
-- An email service (for example Amazon SES, SendGrid or Postmark) to deliver invitations and notices; this build records notices and shows them in the portal but sends no email
+- An email service that offers SMTP submission, set on the integration server (`SMTP_*`, `MAIL_FROM` on a domain with SPF and DKIM), to deliver invitations and notifications; notices posted in the portal are shown there but are not emailed yet
 
 ## Files
 
@@ -263,7 +295,7 @@ assets/js/charts.js        distributions column chart
 assets/js/app.js           shell, routing, operator bar, shared helpers
 assets/js/documents.js     letterhead document previews
 assets/js/portal.js        investor pages
-assets/js/onboarding.js    investor activation
+assets/js/onboarding.js    investor activation and the DIY portal's guided onboarding from an invitation link
 assets/js/audit.js         fund accounting, audit schedules, readiness checks, change log, zip package
 assets/js/operations.js    capital calls, redemption and subscription requests, AML/KYC, published documents
 assets/js/structures.js    currencies, share classes, feeder funds, distribution waterfalls, equalization
@@ -273,7 +305,8 @@ assets/js/console.js       sponsor console
 assets/js/esign.js         e-signature: envelopes, field editor, signing, certificate of completion, templates
 assets/js/integrations.js  DIY investor verification: connections, checks, decisions, Integrations page
 assets/js/diy.js           DIY sign-up, team and offering sign-up links
-server/                    integration server for provider credentials and callbacks (see server/README.md)
+assets/js/invitations.js   DIY turnkey invitations: invite form, progress, notifications, import, automatic acceptance
+server/                    integration server: provider credentials and callbacks, invitations, email (see server/README.md)
 tools/form_d_prospects.py  finds prospective clients in new SEC Form D filings (see below)
 ```
 

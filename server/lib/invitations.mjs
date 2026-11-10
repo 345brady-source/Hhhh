@@ -11,7 +11,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { readRaw, parseJson, send } from './http.mjs';
 import { id } from './crypto.mjs';
 import { openVault } from './vault.mjs';
-import { createMailer, validAddress, invitationMessage, resendMessage, notificationMessage, money } from './mail.mjs';
+import { createMailer, validAddress, invitationMessage, resendMessage, notificationMessage, reminderMessage, money } from './mail.mjs';
 
 const DAY = 864e5;
 const KB = 1024;
@@ -54,6 +54,8 @@ function decode64(s, max, what) {
   return buf;
 }
 const isPdf = (buf) => buf.length > 5 && buf.subarray(0, 5).toString('latin1') === '%PDF-';
+const isPng = (buf) => buf.length > 8 && buf[0] === 0x89 && buf.subarray(1, 4).toString('latin1') === 'PNG' && buf[4] === 0x0d && buf[5] === 0x0a;
+const isJpeg = (buf) => buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
 const fileName = (s, dflt) => clip(String(s || '').replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '_').trim(), 120) || dflt;
 
 /* ---------- What the console sends ---------- */
@@ -89,7 +91,11 @@ function cleanInvestor(x) {
   if (!i || !/^[\w.-]{1,64}$/.test(String(i.id || ''))) throw fail(400, 'investor.id is required (letters, digits, dots, dashes; at most 64)');
   if (!clip(i.contact, 120).trim()) throw fail(400, 'investor.contact (the investor’s name) is required');
   if (!validAddress(i.email)) throw fail(400, 'investor.email is not a valid email address');
-  return { id: String(i.id), contact: clip(i.contact, 120).trim(), title: clip(i.title || i.contact, 200).trim(), type: clip(i.type, 40), email: i.email };
+  const out = { id: String(i.id), contact: clip(i.contact, 120).trim(), title: clip(i.title || i.contact, 200).trim(), type: clip(i.type, 40), email: i.email };
+  // An investor already on the firm's books, invited to subscribe to another offering: flags and a date, no personal details.
+  const e = obj(i.existing);
+  if (e) out.existing = { accredited: e.accredited === true, accreditedUntil: /^\d{4}-\d{2}-\d{2}$/.test(String(e.accreditedUntil || '')) ? String(e.accreditedUntil) : '', holds: e.holds === true };
+  return out;
 }
 /** Offering documents go to blob files (sealed); the snapshot keeps their names, sizes and hashes. */
 function cleanOffering(x) {
@@ -133,7 +139,7 @@ function cleanInvitation(x, nowMs, maxDays) {
   const max = nowMs + maxDays * DAY;
   const asked = Date.parse(i.expiresAt || '');
   const expires = Number.isFinite(asked) && asked > nowMs ? Math.min(asked, max) : max;
-  return { cents, cls: clip(i.cls, 64), note: clip(i.note, 2000), senderName: clip(i.senderName, 120), expiresAt: new Date(expires).toISOString() };
+  return Object.assign({ cents, cls: clip(i.cls, 64), note: clip(i.note, 2000), senderName: clip(i.senderName, 120) }, i.existing === true ? { existing: true } : {}, { expiresAt: new Date(expires).toISOString() });
 }
 function cleanEsign(x) {
   const e = obj(x);
@@ -207,7 +213,7 @@ function cleanSubmission(body, rec, snap) {
     return { id: clip(x.id, 64), at: clip(x.at, 40), kind: NOTIFICATION_KINDS.includes(x.kind) ? x.kind : 'invite_progress', title: clip(x.title, 200), detail: clip(x.detail, 1000), route: clip(x.route, 200), read: false };
   });
   const files = obj(body.files) || {};
-  if (body.files !== undefined && body.files !== null && !obj(body.files)) throw fail(400, 'files must be an object of { documentId: base64 PDF }');
+  if (body.files !== undefined && body.files !== null && !obj(body.files)) throw fail(400, 'files must be an object of { documentId: base64 PDF, PNG or JPEG }');
   const entries = Object.entries(files);
   if (entries.length > 20) throw fail(400, 'files: at most 20 documents');
   let total = 0;
@@ -216,7 +222,8 @@ function cleanSubmission(body, rec, snap) {
     const buf = decode64(v, INVITE_LIMITS.files, `files.${k}`);
     total += buf.length;
     if (total > INVITE_LIMITS.files) throw fail(413, 'files are too large together (at most 25 MB)');
-    if (!isPdf(buf)) throw fail(400, `files.${k} is not a PDF`);
+    // Signed agreements are PDFs; an ID uploaded for the firm to review may be a photo.
+    if (!isPdf(buf) && !isPng(buf) && !isJpeg(buf)) throw fail(400, `files.${k} is not a PDF, PNG or JPEG`);
     return [k, buf];
   });
   return out;
@@ -228,6 +235,8 @@ const word = (s) => WORDS[s] || (s ? String(s).replace(/_/g, ' ').replace(/^./, 
 /** A value from the investor's browser on one short line (it goes into an email to the sponsor). */
 const line = (v, n = 120) => clip(String(v === undefined || v === null ? '' : v).replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, ' ').replace(/\s+/g, ' ').trim(), n);
 const UNCONFIRMED = 'Needs your review: the investor’s browser reported a result that no check on record confirms';
+/** Self-certified and sandbox results never have a server record; the console applies the firm's rules to them on import. */
+const TO_CONFIRM = 'To be confirmed: your console checks this result against your rules when it adds the investor';
 
 /**
  * The sponsor's summary. Verification results come from checks (what this server confirmed, see
@@ -236,7 +245,7 @@ const UNCONFIRMED = 'Needs your review: the investor’s browser reported a resu
 export function summarize(sub, snap, checks) {
   const inv = sub.investor || {};
   const c = checks || { identity: { status: 'not_started' }, accreditation: { status: 'not_started' }, aml: { status: 'not_started' } };
-  const label = (x, dflt) => (x.unconfirmed ? UNCONFIRMED : word(x.status === 'not_started' ? '' : x.status) || dflt);
+  const label = (x, dflt) => (x.unconfirmed ? (x.consoleRule ? TO_CONFIRM : UNCONFIRMED) : word(x.status === 'not_started' ? '' : x.status) || dflt);
   const identity = label(c.identity, 'Not started');
   const aml = c.aml.unconfirmed ? 'Not confirmed; the console screens the investor again' : label(c.aml, 'Runs automatically');
   const offering = snap.offering || null;
@@ -262,14 +271,18 @@ export function summarize(sub, snap, checks) {
   if (type) rows.push(['Investing as', word(type)]);
   if (offering && offering.name) rows.push(['Offering', offering.name]);
   rows.push(['Commitment', cents ? money(cents, offering && offering.currency) : 'Not set']);
-  rows.push(['Identity', identity], ['Sanctions screening', aml], ['Accredited investor', accreditation], ['Subscription agreement', agreement]);
-  const held = /review|Pending|Potential|Not confirmed|Not started/.test(`${identity} ${aml} ${accreditation}`);
+  // An investor already on the firm's books: identity and screening are on file; accreditation shows only when this link asked for it.
+  const existing = !!(snap.invitation && snap.invitation.existing);
+  if (existing && /^(Not started|Not required)$/.test(accreditation)) accreditation = 'On file';
+  if (existing) rows.push(['Accredited investor', accreditation], ['Subscription agreement', agreement]);
+  else rows.push(['Identity', identity], ['Sanctions screening', aml], ['Accredited investor', accreditation], ['Subscription agreement', agreement]);
+  const held = /review|Pending|Potential|Not confirmed|Not started|To be confirmed/.test(existing ? accreditation : `${identity} ${aml} ${accreditation}`);
   const next = waiting
     ? `Next: countersign the subscription agreement in the console.${held ? ' Verification is not complete yet, so the subscription is accepted once it clears.' : ''}`
     : req
       ? `Next: review the subscription in the console.${held ? ' Verification is not complete yet.' : ''}`
       : 'Next: review the investor’s details in the console.';
-  return { rows, next, identity, aml, accreditation, agreement };
+  return { rows, next, identity, aml, accreditation, agreement, existing };
 }
 
 /* ---------- The routes ---------- */
@@ -338,12 +351,32 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
   let lastPurge = 0;
   function purge(nowMs = now()) {
     lastPurge = nowMs;
-    const out = { expired: 0, submissions: 0, invitations: 0, outbox: 0 };
+    const out = { expired: 0, reminders: 0, submissions: 0, invitations: 0, outbox: 0 };
     for (let rec of store.list('invitations')) {
       if (!ENDED.includes(rec.status) && expired(rec, nowMs)) {
         rec = store.put('invitations', { id: rec.id, status: 'expired' });
         rec = addEvent(rec, 'invite_expired');
         out.expired++;
+      }
+      // A finished onboarding the console has not imported: remind the sponsor once, a week before it is deleted
+      // (half-way, when submissions are kept a week or less).
+      if (rec.submission && rec.completedAt && !rec.reminderSentAt) {
+        const done = Date.parse(rec.completedAt);
+        const deleteAt = done + KEEP_DAYS * DAY;
+        if (nowMs >= done + Math.max(KEEP_DAYS - 7, KEEP_DAYS / 2) * DAY && nowMs < deleteAt) {
+          rec = store.put('invitations', { id: rec.id, reminderSentAt: iso(nowMs) });
+          out.reminders++;
+          const snap = unseal(rec, 'snapshot');
+          if (snap && snap.notifyEmail) {
+            const msg = reminderMessage({ firm: snap.firm, investor: snap.investor, offering: snap.offering, consoleUrl: snap.consoleUrl, completedAt: rec.completedAt, deleteOn: iso(deleteAt) });
+            const rid = rec.id;
+            mailer
+              .send(Object.assign({ kind: 'submission_reminder', invitationId: rid, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.notifyEmail, toName: snap.firm.supportTeam || snap.firm.name, headers: { 'Auto-Submitted': 'auto-generated' } }, msg))
+              .then((r) => store.get('invitations', rid) && store.put('invitations', { id: rid, reminderStatus: r.emailStatus }))
+              .catch((e) => store.event({ type: 'email_failed', kind: 'submission_reminder', invitationId: rid, error: String((e && e.message) || e).slice(0, 200) }));
+          }
+          store.event({ type: 'submission_reminder', id: rec.id });
+        }
       }
       if (rec.submission && rec.completedAt && nowMs > Date.parse(rec.completedAt) + KEEP_DAYS * DAY) {
         dropBlobs(rec.submissionBlobs);
@@ -398,9 +431,11 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
         out[kind] = { status: s.status, confirmed: true };
       } else if (SELF_REPORTABLE.includes(c.status)) out[kind] = { status: c.status, confirmed: false };
       else {
+        // Self-certification and the sandbox run in the browser by design; the console decides on them with the firm's rules.
+        const consoleRule = [c.connection, c.how].some((x) => x === 'sandbox' || (kind === 'accreditation' && x === 'self'));
         Object.assign(c, { status: 'review', reportedStatus: clip(c.status, 40), note: 'Reported by the investor’s browser; no check on the integration server confirms it' });
         delete c.expiresAt;
-        out[kind] = { status: 'review', confirmed: false, unconfirmed: true };
+        out[kind] = Object.assign({ status: 'review', confirmed: false, unconfirmed: true }, consoleRule ? { consoleRule: true } : {});
       }
     }
     const aml = (v.aml = obj(v.aml) || { status: 'not_started' });
@@ -504,7 +539,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       firm: snap.firm,
       investor: snap.investor,
       offering: snap.offering ? Object.assign({}, snap.offering, { documents }) : null,
-      invitation: { cents: snap.invitation.cents, cls: snap.invitation.cls, note: snap.invitation.note, senderName: snap.invitation.senderName, expiresAt: rec.expiresAt },
+      invitation: Object.assign({ cents: snap.invitation.cents, cls: snap.invitation.cls, note: snap.invitation.note, senderName: snap.invitation.senderName }, snap.invitation.existing ? { existing: true } : {}, { expiresAt: rec.expiresAt }),
       verification: snap.verification || {},
       esign
     };

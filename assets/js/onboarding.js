@@ -722,8 +722,15 @@
       }
     }
     const invId = str(si.id, 60);
-    ws.investors.push({ id: invId, contact: str(si.contact, 120), title: str(si.title || si.contact, 160), type: NS.ENTITY_TYPES[si.type] ? si.type : 'individual', email: str(si.email, 160), phone: '', address: '', tinLast4: '', accreditation: { basis: '', date: '' }, taxForm: '', edelivery: false, onboarding: { status: 'invited', step: 0, invited: NS.dates.today(), completed: '', source: 'invitation', invitationId: str(snap.id, 80), offeringId: so ? str(so.id, 80) : '' }, payment: { method: 'check', bank: null }, positions: [] });
-    ws.invitations.push({ id: str(snap.id, 80) || uid('invt'), serverId: str(snap.id, 80), investorId: invId, offeringId: so ? str(so.id, 80) : '', cents: Math.max(0, Math.round(Number(sv.cents) || 0)), cls: str(sv.cls, 60), note: str(sv.note, 2000), token: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: str(sv.sentAt || snap.sentAt, 40), openedAt: nowIso(), completedAt: '', expiresAt: str(sv.expiresAt || snap.expiresAt, 40), emailStatus: '', emailError: '', importedAt: '', sentBy: str(sv.senderName || sv.sentBy || snap.sentBy, 120) });
+    // An investor already on the firm's books, invited to another offering: their account is on file with the firm, so this
+    // device only needs to know they are verified and whether their accreditation is current (the console stays the authority).
+    const ex = sv.existing === true ? (si.existing && typeof si.existing === 'object' ? si.existing : {}) : null;
+    const until = ex && /^\d{4}-\d{2}-\d{2}$/.test(String(ex.accreditedUntil || '')) ? String(ex.accreditedUntil) : '';
+    const onFile = ex
+      ? { identity: { status: 'passed', onFile: true }, aml: { status: 'clear', onFile: true }, accreditation: ex.accredited === true ? { status: 'verified', expiresAt: until, onFile: true } : { status: 'not_started' }, decision: { status: 'approved', at: nowIso(), onFile: true } }
+      : null;
+    ws.investors.push(Object.assign({ id: invId, contact: str(si.contact, 120), title: str(si.title || si.contact, 160), type: NS.ENTITY_TYPES[si.type] ? si.type : 'individual', email: str(si.email, 160), phone: '', address: '', tinLast4: '', accreditation: { basis: '', date: '' }, taxForm: '', edelivery: false, onboarding: { status: ex ? 'complete' : 'invited', step: 0, invited: NS.dates.today(), completed: '', source: 'invitation', invitationId: str(snap.id, 80), offeringId: so ? str(so.id, 80) : '' }, payment: { method: 'check', bank: null }, positions: [] }, onFile ? { verify: onFile } : {}));
+    ws.invitations.push(Object.assign({ id: str(snap.id, 80) || uid('invt'), serverId: str(snap.id, 80), investorId: invId, offeringId: so ? str(so.id, 80) : '', cents: Math.max(0, Math.round(Number(sv.cents) || 0)), cls: str(sv.cls, 60), note: str(sv.note, 2000), token: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: str(sv.sentAt || snap.sentAt, 40), openedAt: nowIso(), completedAt: '', expiresAt: str(sv.expiresAt || snap.expiresAt, 40), emailStatus: '', emailError: '', importedAt: '', sentBy: str(sv.senderName || sv.sentBy || snap.sentBy, 120) }, ex ? { existing: true, holds: ex.holds === true } : {}));
     const v = snap.verification || {};
     ws.integrations = { connections: Array.isArray(v.connections) ? clone(v.connections) : [], use: v.use && typeof v.use === 'object' ? clone(v.use) : {}, rules: v.rules && typeof v.rules === 'object' ? clone(v.rules) : {}, server: { url: server, token: '' }, configured: true };
     if (NS.integrations) NS.integrations.ensure(ws);
@@ -830,7 +837,7 @@
   /** Verified (not self-certified) accreditation: the invited offering is Rule 506(c), or the firm's rules require it for approval. */
   const accVerifiedFor = (c) => !!IV() && ((c.off && NS.integrations.needsAccreditation(c.ws, c.inv, c.off)) || NS.integrations.needsAccreditation(c.ws, c.inv));
   // The agreement template is for new subscribers (esign.js); an investor adding to a holding signs the subscription form.
-  const tplReady = (c) => !!(c.off && NS.esign && NS.esign.templateReady && NS.esign.templateReady(c.ws, c.off.id) && !(c.inv.positions || []).some((p) => p.offeringId === c.off.id));
+  const tplReady = (c) => !!(c.off && NS.esign && NS.esign.templateReady && NS.esign.templateReady(c.ws, c.off.id) && !c.it.holds && !(c.inv.positions || []).some((p) => p.offeringId === c.off.id));
   function flowSteps(c) {
     if (c.it.existing) {
       // An active investor invited to a new offering: their account is on file, so the link covers the subscription.
@@ -1442,14 +1449,23 @@
         b = null;
       }
       if (!b || total + b.size > MAX_FILES) continue;
-      // The server takes PDFs only (an ID photo stays recorded by name for the team, who can ask for it again).
+      // The server takes PDFs and ID photos (PNG, JPEG); anything else stays recorded by name for the team, who can ask for it again.
       const head = new Uint8Array(await b.slice(0, 4).arrayBuffer());
-      if (String.fromCharCode.apply(null, head) !== '%PDF') continue;
+      const pdf = String.fromCharCode.apply(null, head) === '%PDF';
+      const png = head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47;
+      const jpeg = head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
+      if (!pdf && !png && !jpeg) continue;
       total += b.size;
       files[id] = await blobB64(b);
     }
     const investor = clone(i);
     delete investor.onboarding.flow;
+    if (c.it.existing) {
+      // The firm already holds this investor's record: only what this link collected goes back (an accreditation check, the e-sign consent).
+      const acc = investor.verify && investor.verify.accreditation;
+      investor.verify = acc && !acc.onFile && acc.status !== 'not_started' ? { accreditation: acc } : {};
+      delete investor.kyc;
+    }
     const payload = {
       investor,
       request: c.req ? clone(c.req) : null,
