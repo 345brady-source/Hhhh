@@ -2,7 +2,9 @@
  * E-sign (SignNow-style): envelopes and templates, a field editor in the
  * sponsor console, and one signing experience for investors and the sponsor's
  * countersigner. pdf.js renders pages; pdf-lib stamps fields and appends a
- * certificate of completion. Files live in IndexedDB (NS.ops.files).
+ * certificate of completion. Files live in IndexedDB (NS.ops.files). Names or values outside
+ * the standard PDF fonts' character set (Łukasz, Dvořák, Nguyễn) are written with DejaVu Sans,
+ * embedded through @pdf-lib/fontkit (both loaded from jsDelivr only when needed).
  *
  * Production needs beyond this demo:
  * - Signer authentication: portal login, or a one-time email link plus an SMS code.
@@ -202,8 +204,10 @@
       const cs = new Set(regular.getCharacterSet());
       return { regular, bold, uni: true, has: (ch) => cs.has(ch.codePointAt(0)) };
     } catch (e) {
+      // The Unicode font could not load (offline, or a page that blocks font downloads). Sign anyway with the
+      // standard font; characters it cannot draw print as "?", and the envelope history records it.
       const odd = Array.from(texts.join('')).filter((ch) => !winAnsi(ch)).slice(0, 3).join(' ');
-      throw new Error(`Could not load the font needed to print ${odd || 'some characters'} in the signed PDF. Check the connection and try again.`);
+      return { regular: await pdf.embedFont(L.StandardFonts.Helvetica), bold: await pdf.embedFont(L.StandardFonts.HelveticaBold), uni: false, fallback: odd || '?' };
     }
   }
 
@@ -709,6 +713,7 @@
       // pdf-lib cannot write an encrypted file: saving would produce a PDF no reader can open.
       if (pdf.isEncrypted) throw new Error(`This PDF is password-protected, so signatures cannot be added to it. ${T().name} needs to send an unprotected copy.`);
       const fonts = await fontsFor(L, pdf, fieldsOf(next, me).map(fieldText));
+      if (fonts.fallback) addEvent(next, 'System', 'Characters replaced', `The font for ${fonts.fallback} could not be loaded, so those characters print as "?" in the stamped fields`, at);
       await stampFields(L, pdf, next, me, fonts);
       const complete = next.signers.every((s) => s.status === 'signed');
       let out;
