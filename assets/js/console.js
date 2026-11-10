@@ -2018,11 +2018,13 @@
           const IVN = NS.integrations;
           // Which connection ran each check, and result buttons for checks waiting on the team (hosted links, uploads, team screening).
           const rec = ivd ? IVN.recordable(w, i) : [];
+          // A cleared investor can still have a check waiting on the team (a team screening after approval): keep the details reachable.
+          if (ivd && rec.length && (lab.key === 'cleared' || lab.key === 'due')) act += ` <button class="cs-btn cs-btn-small" type="button" data-action="kyc-open" data-id="${h(i.id)}">Details</button>`;
           const ST = { not_started: 'not started', pending: 'waiting for the result', passed: 'verified', verified: 'verified', clear: 'clear', review: 'needs review', potential_match: 'potential match', failed: 'not verified', rejected: 'not accredited', match: 'confirmed match' };
           const recordBtns = (kind, conn) => `<div class="iv-record" role="group" aria-label="Record result"><span>Record result</span>${IVN.RECORD[kind].map(([o, l]) => `<button class="cs-btn cs-btn-small" type="button" data-action="kyc-iv-record" data-id="${h(i.id)}" data-kind="${kind}" data-connection="${h(conn || '')}" data-outcome="${o}">${l}</button>`).join('')}</div>`;
           const canRecord = (kind, conn) => rec.some((r) => r.kind === kind && r.connection === conn);
           const ivLine = (label, x, kind) => `<li><strong>${label}:</strong> ${h(ST[x.status] || x.status)}${IVN.via(w, x, kind) ? ` · ${h(IVN.via(w, x, kind))}` : ''}${x.method ? ` · ${h(x.method)}` : ''}${x.ref ? ` · ref ${h(x.ref)}` : ''}${x.expiresAt ? ` · valid until ${date(x.expiresAt)}` : ''}${x.note ? ` · note: ${h(x.note)}` : ''}${x.recordedBy ? ` · recorded by ${h(x.recordedBy)}` : ''}${x.fileId ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(x.fileId)}" data-name="${h(x.fileName || 'file')}">${h(x.fileName || 'View file')}</button>` : ''}${canRecord(kind, x.connection) ? recordBtns(kind, x.connection) : ''}</li>`;
-          const amlLine = (x) => `<li><strong>Screening:</strong> ${h(ST[x.status] || x.status)}${(x.results || []).length ? `<ul class="iv-results">${x.results.map((r) => `<li>${h(r.via)}: ${h(ST[r.status] || r.status)}${r.ref ? ` · ref ${h(r.ref)}` : ''}${r.error ? ` · ${h(r.error)}` : ''}${r.note ? ` · note: ${h(r.note)}` : ''}${r.by ? ` · recorded by ${h(r.by)}` : ''}${canRecord('aml', r.connection) ? recordBtns('aml', r.connection) : ''}</li>`).join('')}</ul>` : IVN.via(w, x, 'aml') ? ` · ${h(IVN.via(w, x, 'aml'))}` : ''}</li>`;
+          const amlLine = (x) => `<li><strong>Screening:</strong> ${h(ST[x.status] || x.status)}${(x.results || []).length ? `<ul class="iv-results">${x.results.map((r) => `<li>${h(r.via)}: ${h(ST[r.status] || r.status)}${(r.hits || []).length ? ` · ${r.hits.map((x) => `${h(x.name)} on ${h(x.list)}${x.listed ? ` as “${h(x.listed)}”` : ''}${x.score ? `, ${Math.round(x.score * 100)}%` : ''}${x.detail ? ` (${h(x.detail)})` : ''}`).join('; ')}` : ''}${r.ref ? ` · ref ${h(r.ref)}` : ''}${r.error ? ` · ${h(r.error)}` : ''}${r.note ? ` · note: ${h(r.note)}` : ''}${r.by ? ` · recorded by ${h(r.by)}` : ''}${canRecord('aml', r.connection) ? recordBtns('aml', r.connection) : ''}</li>`).join('')}</ul>` : IVN.via(w, x, 'aml') ? ` · ${h(IVN.via(w, x, 'aml'))}` : ''}</li>`;
           if (ivd && !act && lab.key === 'pending') act = `<button class="cs-btn cs-btn-small${rec.length ? ' cs-btn-primary' : ''}" type="button" data-action="kyc-open" data-id="${h(i.id)}">${rec.length ? 'Record result' : 'Details'}</button>`;
           const detail =
             open === i.id && (k.match || ivd)
@@ -2035,6 +2037,7 @@
         })
         .join('');
       const due = rows0.filter((r) => r.lab.key === 'due');
+      if (NS.integrations && NS.integrations.active(w)) NS.integrations.resume(w); // poll open provider checks while this page is open
       return shell(
         `${head('AML/KYC', E.diy ? `Identity verification, sanctions and PEP screening and accredited investor checks run automatically through the connections you plug in: ${h(NS.integrations ? NS.integrations.activeNames(w).join(', ') : 'none yet')} (<a class="cs-link" href="#console-integrations">Integrations</a>). Anything flagged, and any check waiting on your team, waits here.` : 'Identity verification, sanctions and politically exposed person screening, and periodic re-screening for every investor. Potential matches wait here for the compliance officer’s review.', due.length ? `<button class="cs-btn" type="button" data-action="kyc-screen-due">Re-screen ${due.length} due</button>` : '')}
         <dl class="cs-figs">
@@ -2084,7 +2087,7 @@
       const r = await IVN.screen(W(), inv);
       IVN.decide(W(), inv);
       NS.app.save(true);
-      return r.status === 'clear' ? 'no matches' : 'a potential match to review';
+      return r.status === 'clear' ? 'no matches' : r.status === 'potential_match' ? 'a potential match to review' : 'waiting for results from some screening connections';
     }
     OPS().screen(W(), inv);
     return 'no matches';

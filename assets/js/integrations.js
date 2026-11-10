@@ -30,6 +30,10 @@
   const today = () => NS.dates.today();
   const nowIso = () => new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
   const addDays = (s, n) => new Date(Date.parse(s + 'T00:00:00Z') + n * 864e5).toISOString().slice(0, 10);
+  /** A whole number of days within bounds (approval rules come from a form). */
+  const days = (n, d, min, max) => Math.min(max || 365, Math.max(min || 1, Math.round(Number(n)) || d));
+  const RULE_DAYS = { validDays: [30, 365, 90], rescreenDays: [1, 365, 30] };
+  const ruleDays = (r, k) => days(r[k], RULE_DAYS[k][2], RULE_DAYS[k][0], RULE_DAYS[k][1]);
   const SYSTEM = 'Portal (automatic)';
 
   /* ---------- Checks and built-in connections (no vendors, no secrets) ---------- */
@@ -48,6 +52,8 @@
   /** Earlier settings named one provider per check; built-in ones map across, anything else starts in the sandbox. */
   const LEGACY = { identity: { sandbox: 'sandbox', manual: 'manual' }, aml: { sandbox: 'sandbox', bundled: 'sandbox', manual: 'team', ofac: 'ofac' }, accreditation: { sandbox: 'sandbox', letter: 'manual', self: 'self' } };
   const legacyId = (kind, p) => (LEGACY[kind] || {})[p] || 'sandbox';
+  /** A result from a provider the portal no longer names keeps a neutral label (never relabelled as the sandbox). */
+  const PREVIOUS = 'Previous provider';
   /** Result buttons the team uses on the AML/KYC page for checks waiting on a person. */
   const RECORD = {
     identity: [['passed', 'Passed'], ['review', 'Needs review'], ['failed', 'Failed']],
@@ -67,10 +73,31 @@
     CHECKS.forEach((k) => (use[k] = [legacyId(k, old[k] && old[k].provider)]));
     return { connections: [], use, server: Object.assign({}, old.server), rules: Object.assign({}, old.rules), configured: !!old.configured };
   }
+  /** Investor results recorded under the earlier settings: keep who ran them, and keep open checks pollable or recordable. */
+  function migrateInvestor(inv) {
+    const v = inv.verify;
+    if (!v) return;
+    ['identity', 'accreditation'].forEach((kind) => {
+      const x = v[kind];
+      if (!x || !x.provider || x.connection || x.via) return;
+      const b = (LEGACY[kind] || {})[x.provider];
+      if (b) return Object.assign(x, { connection: b, via: BUILTIN[b].name, how: b });
+      const named = kind === 'identity' ? (/^(.+?) \(ref /.exec((inv.kyc && inv.kyc.method) || '') || [])[1] : (inv.accreditation || {}).verifiedBy;
+      Object.assign(x, { via: named || PREVIOUS, how: 'server', remote: !!x.ref });
+    });
+    const a = v.aml;
+    if (a && a.provider && !Array.isArray(a.results) && SCREEN.indexOf(a.status) >= 0) {
+      const b = LEGACY.aml[a.provider];
+      a.results = [{ connection: b || '', via: b ? BUILTIN[b].name : PREVIOUS, how: b || 'server', status: a.status, hits: Array.isArray(a.hits) ? a.hits : [], ref: a.ref || a.id || '', screenedAt: a.status === 'pending' ? '' : a.screenedAt || '' }];
+    }
+  }
   /** Settings in place (older single-provider settings are migrated), with the built-in connections always present. */
   function ensure(ws) {
     let c = ws.integrations;
-    if (!c || !Array.isArray(c.connections)) c = ws.integrations = migrate(c || {});
+    if (!c || !Array.isArray(c.connections)) {
+      c = ws.integrations = migrate(c || {});
+      (ws.investors || []).forEach(migrateInvestor);
+    }
     fill(c, { use: {}, server: {}, rules: {}, configured: false });
     fill(c.server, { url: '', token: '', status: '', checkedAt: '', connectors: [] });
     fill(c.rules, { autoApprove: true, accreditationFor: '506c', rescreenDays: 30, validDays: 90, holdOnPep: true });
@@ -116,8 +143,10 @@
   function via(ws, x, kind) {
     if (!x) return '';
     if (x.via) return x.via;
-    const c = x.connection ? conn(ws, x.connection) : x.provider ? conn(ws, legacyId(kind, x.provider)) : null;
-    return c ? c.name : '';
+    if (x.connection) return (conn(ws, x.connection) || {}).name || '';
+    if (!x.provider) return '';
+    const b = (LEGACY[kind] || {})[x.provider];
+    return b ? BUILTIN[b].name : PREVIOUS;
   }
 
   /* ---------- Investor state ---------- */
@@ -176,6 +205,9 @@
   const safeUrl = (u) => (/^https?:\/\//i.test(String(u || '')) ? String(u) : '');
   const PLACEHOLDERS = /\{(reference|name|email|return)\}/g;
   const fillLink = (tpl, vals) => String(tpl).replace(PLACEHOLDERS, (m, k) => encodeURIComponent(vals[k] || ''));
+  /** The integration server's "link" provider names the same placeholders differently; it fills them in itself. */
+  const SERVER_PLACEHOLDERS = { reference: '{reference}', name: '{investor.name}', email: '{investor.email}', return: '{returnUrl}' };
+  const serverLink = (tpl) => String(tpl).replace(PLACEHOLDERS, (m, k) => SERVER_PLACEHOLDERS[k]);
   /** A hosted link must be https and use only the known placeholders. */
   function linkError(s) {
     const v = String(s || '').trim();
@@ -187,7 +219,9 @@
     } catch (e) {
       return 'Enter a complete link, starting with https://';
     }
-    return u.protocol === 'https:' ? '' : 'The link must start with https://';
+    if (u.protocol !== 'https:') return 'The link must start with https://';
+    if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i.test(u.hostname)) return 'Check the address: the site name is not valid.';
+    return v.indexOf('{reference}') < 0 ? 'Include {reference} so each result can be matched to the investor.' : '';
   }
   const returnUrl = () => String(location.href);
 
@@ -211,13 +245,14 @@
     let url;
     if (remote) {
       if (!server) throw new Error(`${ws.tenant.shortName} has not finished setting up this check. Contact ${ws.tenant.support.team}.`);
-      const r = await api(ws, 'POST', '/v1/verifications', { kind, provider: how === 'link' ? 'link' : x.connector, settings: how === 'link' ? { link: x.link } : {}, investor: investorPayload(ws, inv, extra), returnUrl: returnUrl() });
+      const r = await api(ws, 'POST', '/v1/verifications', { kind, provider: how === 'link' ? 'link' : x.connector, settings: how === 'link' ? { link: serverLink(x.link) } : {}, investor: investorPayload(ws, inv, extra), returnUrl: returnUrl() });
       ref = r.id;
       url = safeUrl(r.url);
     } else {
       ref = `${inv.id}-${kind}-${Date.now().toString(36)}`.toLowerCase();
-      url = safeUrl(fillLink(x.link, { reference: ref, name: inv.contact, email: inv.email, return: returnUrl() }));
+      url = linkError(x.link) ? '' : safeUrl(fillLink(x.link, { reference: ref, name: inv.contact, email: inv.email, return: returnUrl() }));
     }
+    if (!url) throw new Error(`${x.name} did not give a page to open. Try again, or contact ${ws.tenant.support.team}.`);
     vOf(inv)[kind] = { status: 'pending', connection: x.id, via: x.name, how, remote, ref: ref || '', url, startedAt: nowIso() };
     log(ws, inv, `${KINDS[kind]} started`, `${x.name}${ref ? ` (ref ${ref})` : ''}`);
     syncKyc(ws, inv);
@@ -238,7 +273,7 @@
     if (!v.via) v.via = via(ws, v, kind);
     if (kind === 'accreditation' && outcome === 'verified') {
       // The earlier of the provider's expiry and the sponsor's validity period.
-      const cap = addDays(today(), Math.max(1, Number(r.validDays) || 90));
+      const cap = addDays(today(), ruleDays(r, 'validDays'));
       const given = /^\d{4}-\d{2}-\d{2}/.test(String(d.expiresAt || '')) ? String(d.expiresAt).slice(0, 10) : '';
       v.verifiedAt = today();
       v.expiresAt = given && given < cap ? given : cap;
@@ -258,11 +293,12 @@
   /* ---------- Screening: every connection on runs ---------- */
   const SCREEN = ['clear', 'potential_match', 'pending'];
   const normScreen = (st, hits) => (SCREEN.indexOf(st) >= 0 ? st : (hits || []).length ? 'potential_match' : 'clear');
-  const tagHits = (hits, name) => (Array.isArray(hits) ? hits : []).map((x) => ({ name: String(x.name || ''), list: String(x.list || x.source || name), score: Number(x.score) || 0, via: name }));
+  /** Hits as the reviewer needs them: the name screened, the name as listed, the list, the score and the provider's detail. */
+  const tagHits = (hits, name) => (Array.isArray(hits) ? hits : []).map((x) => ({ name: String(x.name || ''), listed: String(x.listed || ''), list: String(x.list || x.source || name), score: Number(x.score) || 0, detail: String(x.detail || ''), via: name }));
   /** Any potential match holds; anything still waiting keeps the screening open; otherwise clear. */
   const aggregate = (results) => (results.some((r) => r.status === 'potential_match') ? 'potential_match' : results.some((r) => r.status === 'pending') ? 'pending' : 'clear');
   async function screenWith(ws, inv, x, names, pre) {
-    const r = { connection: x.id, via: x.name, how: howOf(x), status: 'pending', hits: [], ref: '', screenedAt: '' };
+    const r = { connection: x.id, via: x.name, how: howOf(x), status: 'pending', hits: [], ref: '', screenedAt: '', startedAt: nowIso() };
     const done = (st, hits, ref) => Object.assign(r, { status: st, hits: hits || [], ref: ref || '', screenedAt: st === 'pending' ? '' : today() });
     if (pre && pre.connection === x.id) return done(normScreen(pre.screening.status, pre.screening.hits), tagHits(pre.screening.hits, x.name), pre.screening.id || pre.screening.ref || '');
     if (r.how === 'sandbox') {
@@ -299,10 +335,11 @@
     const results = [];
     for (const x of activeFor(ws, 'aml')) results.push(await screenWith(ws, inv, x, names, pre));
     const pep = (inv.kyc && inv.kyc.pep) || false;
-    v.aml = { status: 'pending', results, names, screenedAt: today(), nextScreen: addDays(today(), Math.max(1, Number(ensure(ws).rules.rescreenDays) || 30)) };
+    v.aml = { status: 'pending', results, names, screenedAt: today(), nextScreen: addDays(today(), ruleDays(ensure(ws).rules, 'rescreenDays')) };
     refreshAml(v);
     log(ws, inv, 'Sanctions and PEP screening run', `${names.length} name${names.length === 1 ? '' : 's'} screened. ${results.map((r) => `${r.via}: ${resultText(r)}`).join('. ')}${pep ? '. Self-declared politically exposed person' : ''}`);
     syncKyc(ws, inv);
+    watch(ws, inv); // a screening the server answers later is polled until it does
     return v.aml;
   }
   /** The team records a screening result for one connection (Screening by your team, or a screening that never answered). */
@@ -318,7 +355,9 @@
     NS.app.save(true);
     return r;
   }
-  /** Checks waiting on a person: hosted links, uploads and team screening (or a screening that never answered). */
+  /** A provider check with no answer after a day: the team can record the result it got another way. */
+  const stale = (x) => !!x.startedAt && Date.parse(x.startedAt) < Date.now() - 864e5;
+  /** Checks waiting on a person: hosted links, uploads and team screening (or a check that never answered). */
   function recordable(ws, inv) {
     if (!inv.verify) return [];
     const v = vOf(inv);
@@ -326,10 +365,10 @@
     ['identity', 'accreditation'].forEach((kind) => {
       const x = v[kind];
       const how = x.how || howOf(conn(ws, x.connection));
-      if ((how === 'link' && x.status === 'pending') || (how === 'manual' && ['pending', 'review'].indexOf(x.status) >= 0)) out.push({ kind, connection: x.connection, via: via(ws, x, kind) });
+      if ((how === 'link' && x.status === 'pending') || (how === 'manual' && ['pending', 'review'].indexOf(x.status) >= 0) || (how === 'server' && x.status === 'pending' && stale(x))) out.push({ kind, connection: x.connection || '', via: via(ws, x, kind) });
     });
     (v.aml.results || []).forEach((r) => {
-      if (r.status === 'pending' && (r.how === 'team' || !r.ref)) out.push({ kind: 'aml', connection: r.connection, via: r.via });
+      if (r.status === 'pending' && (r.how === 'team' || !r.ref || r.error || stale(r))) out.push({ kind: 'aml', connection: r.connection, via: r.via });
     });
     return out;
   }
@@ -363,6 +402,16 @@
       st = r.autoApprove ? 'approved' : 'review';
       why = r.autoApprove ? 'all checks passed' : 'all checks passed; approval is set to manual';
     }
+    if (was === 'approved' && v.decision.at && !adverseSince(v, needAcc)) {
+      // An approved investor stays approved while a re-screen waits for results or a late result agrees; only a new adverse result holds them.
+      syncKyc(ws, inv);
+      return v.decision;
+    }
+    if (was === 'rejected' && v.decision.manual) {
+      // A person's decline stands until a person approves.
+      syncKyc(ws, inv);
+      return v.decision;
+    }
     if (st !== was || !v.decision.at) {
       v.decision = { status: st, at: nowIso(), by: st === 'approved' && r.autoApprove ? 'automatic' : '', reason: why };
       if (st !== 'pending') log(ws, inv, st === 'approved' ? 'Investor approved automatically' : st === 'rejected' ? 'Investor not approved' : 'Investor held for review', why);
@@ -370,16 +419,32 @@
     syncKyc(ws, inv);
     return v.decision;
   }
-  /** A person's decision from the AML/KYC page. */
+  /** After an approval: a failed or flagged check, or a potential match, that arrived since. */
+  function adverseSince(v, needAcc) {
+    const since = v.decision.at || '';
+    const fresh = (x) => (x.completedAt || '') >= since;
+    if (v.aml.status === 'match' || v.aml.status === 'potential_match') return true;
+    if (fresh(v.identity) && ['failed', 'review'].indexOf(v.identity.status) >= 0) return true;
+    return !!needAcc && fresh(v.accreditation) && ['review', 'rejected'].indexOf(v.accreditation.status) >= 0;
+  }
+  /** A person's decision from the AML/KYC page. Approving resolves what was flagged, so later results are judged on their own. */
   function decideManually(ws, inv, approve, note) {
     const v = vOf(inv);
-    v.decision = { status: approve ? 'approved' : 'rejected', at: nowIso(), by: NS.app.actor(), reason: note || (approve ? 'approved after review' : 'declined after review') };
-    if (approve && v.aml.status === 'potential_match') v.aml.status = 'clear';
+    const actor = NS.app.actor();
+    v.decision = { status: approve ? 'approved' : 'rejected', at: nowIso(), by: actor, manual: true, reason: note || (approve ? 'approved after review' : 'declined after review') };
+    if (approve) {
+      const results = v.aml.results || [];
+      results.forEach((r) => {
+        if (r.status === 'potential_match') Object.assign(r, { status: 'clear', clearedHits: r.hits, hits: [], screenedAt: today(), note: `Cleared after review${note ? `: ${note}` : ''}`, by: actor });
+      });
+      if (results.length) refreshAml(v);
+      else if (v.aml.status === 'potential_match') v.aml.status = 'clear';
+    }
     if (approve && v.identity.status === 'review') v.identity.status = 'passed';
     if (approve && v.accreditation.status === 'review') {
       v.accreditation.status = 'verified';
       v.accreditation.verifiedAt = today();
-      v.accreditation.expiresAt = addDays(today(), Math.max(1, Number(ensure(ws).rules.validDays) || 90));
+      v.accreditation.expiresAt = addDays(today(), ruleDays(ensure(ws).rules, 'validDays'));
     }
     log(ws, inv, approve ? 'Investor approved after review' : 'Investor declined after review', note || '', NS.app.actor());
     syncKyc(ws, inv);
@@ -400,14 +465,15 @@
     k.risk = k.risk || (k.pep ? 'High' : ['entity', 'trust', 'ira'].indexOf(inv.type) >= 0 ? 'Medium' : 'Low');
     if (v.identity.completedAt) k.verifiedOn = v.identity.completedAt.slice(0, 10);
     const idVia = via(ws, v.identity, 'identity');
-    k.method = idVia ? `${idVia}${v.identity.ref ? ` (ref ${v.identity.ref})` : ''}` : k.method || '';
+    // Results from before connections keep the method already on file.
+    k.method = idVia && (v.identity.connection || !k.method) ? `${idVia}${v.identity.ref ? ` (ref ${v.identity.ref})` : ''}` : k.method || '';
     if (v.aml.screenedAt) {
       k.screenedOn = v.aml.screenedAt;
       k.screening = v.aml.status === 'clear' ? 'clear' : v.aml.status === 'pending' ? 'pending' : 'potential_match';
       k.lists = listsText(v);
       k.nextReview = v.aml.nextScreen;
       const hit = (v.aml.hits || [])[0];
-      k.match = hit ? { list: hit.list, name: hit.name, score: hit.score, detail: `${hit.via || via(ws, v.aml, 'aml') || 'Screening'} returned a potential match.` } : k.pep ? k.match : undefined;
+      k.match = hit ? { list: hit.list, name: hit.listed || hit.name, score: hit.score, detail: `${hit.via || via(ws, v.aml, 'aml') || 'Screening'} returned a potential match${hit.detail ? `: ${hit.detail}` : '.'}` } : k.pep ? k.match : undefined;
     }
     inv.kyc = k;
   }
@@ -421,7 +487,7 @@
       const v = vOf(inv);
       if (v.decision.status === 'review') out.review.push(inv);
       else if (v.decision.status === 'pending' && v.identity.status !== 'not_started') out.pending.push(inv);
-      if (recordable(ws, inv).length) out.record.push(inv);
+      if (['approved', 'rejected'].indexOf(v.decision.status) < 0 && recordable(ws, inv).length) out.record.push(inv);
       if (v.aml.nextScreen && v.aml.nextScreen <= today()) out.rescreen.push(inv);
       if (v.accreditation.status === 'verified' && v.accreditation.expiresAt && v.accreditation.expiresAt <= in14 && v.accreditation.expiresAt >= soon) out.expiring.push(inv);
     });
@@ -437,14 +503,31 @@
     return list.length;
   }
   /** Ask the integration server for the latest status of open checks and screenings. */
+  /** Open checks the integration server will answer for. */
+  function openRemote(inv) {
+    if (!inv || !inv.verify) return false;
+    const v = vOf(inv);
+    return ['identity', 'accreditation'].some((k) => v[k].status === 'pending' && v[k].ref && v[k].remote) || (v.aml.results || []).some((r) => r.status === 'pending' && r.ref && (r.how === 'server' || r.how === 'ofac'));
+  }
   async function poll(ws, inv) {
-    if (!serverUrl(ws)) return false;
+    if (!serverUrl(ws) || !openRemote(inv)) return false;
     const v = vOf(inv);
     let changed = false;
+    let asked = 0;
+    let failed = null;
+    const ask = async (path) => {
+      asked++;
+      try {
+        return await api(ws, 'GET', path);
+      } catch (e) {
+        failed = e;
+        return {};
+      }
+    };
     for (const kind of ['identity', 'accreditation']) {
       const x = v[kind];
       if (x.status !== 'pending' || !x.ref || !x.remote) continue;
-      const r = await api(ws, 'GET', `/v1/verifications/${encodeURIComponent(x.ref)}`);
+      const r = await ask(`/v1/verifications/${encodeURIComponent(x.ref)}`);
       if (r.status && r.status !== 'pending') {
         await complete(ws, inv, kind, r.status, { method: r.method || x.method || '', detail: r.detail || '', expiresAt: r.expiresAt || '', screening: r.screening || null, evidence: Array.isArray(r.evidence) ? r.evidence : [], providerStatus: r.providerStatus || '' });
         changed = true;
@@ -453,13 +536,14 @@
     const open = (v.aml.results || []).filter((r) => r.status === 'pending' && r.ref && (r.how === 'server' || r.how === 'ofac'));
     let screened = false;
     for (const r of open) {
-      const s = await api(ws, 'GET', `/v1/screenings/${encodeURIComponent(r.ref)}`);
+      const s = await ask(`/v1/screenings/${encodeURIComponent(r.ref)}`);
       if (s.status && s.status !== 'pending') {
-        Object.assign(r, { status: normScreen(s.status, s.hits), hits: tagHits(s.hits, r.via), screenedAt: today() });
+        Object.assign(r, { status: normScreen(s.status, s.hits), hits: tagHits(s.hits, r.via), screenedAt: today(), error: '' });
         log(ws, inv, 'Screening result received', `${r.via}: ${resultText(r)}`);
         screened = true;
       }
     }
+    if (failed && !changed && !screened && asked) throw failed;
     if (screened) {
       refreshAml(v);
       syncKyc(ws, inv);
@@ -482,7 +566,10 @@
     // Screen once identity passes, and again if beneficial owners were added after the first screening.
     const owners = inv.kyc.owners.map((o) => o.name).filter(Boolean);
     if (v.identity.status === 'passed' && (v.aml.status === 'not_started' || owners.some((n) => (v.aml.names || []).indexOf(n) < 0))) await screen(ws, inv);
-    if (ensure(ws).use.accreditation.indexOf('self') >= 0 && form.accBasis) {
+    // Self-certification never replaces an accreditation another connection verified, or one still being checked.
+    const acc = v.accreditation;
+    const elsewhere = acc.connection !== 'self' && ['verified', 'pending', 'review'].indexOf(acc.status) >= 0;
+    if (ensure(ws).use.accreditation.indexOf('self') >= 0 && form.accBasis && !elsewhere) {
       vOf(inv).accreditation = { status: needsAccreditation(ws, inv) ? 'review' : 'verified', method: `Self-certified: ${form.accBasis}`, connection: 'self', via: conn(ws, 'self').name, how: 'self', completedAt: nowIso(), verifiedAt: today(), expiresAt: NS.dates.addMonths(today(), 12) };
     }
     decide(ws, inv);
@@ -539,9 +626,12 @@
     const handled = (x) => (x.builtin === 'sandbox' ? 'This portal is in sandbox mode: the check is simulated.' : x.builtin === 'manual' ? `You upload a document and ${h(t.support.team)} reviews it.` : `Handled by ${h(x.name)} for ${h(t.shortName)}.`);
     const one = opts.length === 1 ? opts[0] : null;
     const url = v.status === 'pending' ? safeUrl(v.url) : '';
+    // While an attempt through another connection (perhaps one since removed) is open, do not describe the remaining option as if it ran.
+    const other = done && v.connection && one && v.connection !== one.id;
+    watch(ws, inv, true);
     return `<div class="iv-panel field-wide" id="iv-${kind}">
       <div class="iv-row"><strong>${kind === 'identity' ? 'Identity check' : 'Accreditation check'}</strong>${chip(v.status, via(ws, v, kind))}</div>
-      <p class="hint">${what}${one ? ` ${handled(one)}` : ''}</p>
+      <p class="hint">${what}${one && !other ? ` ${handled(one)}` : ''}</p>
       ${one && one.note ? `<p class="hint">${h(one.note)}</p>` : ''}
       ${v.status === 'pending' && v.how === 'link' ? `<p class="hint iv-note">Submitted. ${h(t.shortName)} will confirm the result.${url ? ` <a href="${h(url)}" target="_blank" rel="noopener">Open ${h(v.via || 'the page')} again</a>` : ''}</p>` : ''}
       ${v.status === 'pending' && v.how === 'server' ? `<p class="hint iv-note">Finish in the tab that opened. This page updates when you are done.${url ? ` <a href="${h(url)}" target="_blank" rel="noopener">Open it again</a>` : ''}</p>` : ''}
@@ -553,18 +643,43 @@
     const st = vOf(inv)[kind].status;
     return ['passed', 'verified', 'pending', 'review'].indexOf(st) >= 0;
   }
+  /**
+   * Verification dialogs give focus back to the button that opened them when
+   * they close (the page re-renders meanwhile, so it is found again by selector).
+   */
+  let returnTo = '';
+  function ivDialog(html, back) {
+    returnTo = back || '';
+    U.dialog(html, 'dlg-iv');
+  }
+  document.addEventListener(
+    'close',
+    (e) => {
+      const d = e.target;
+      if (!d || d.id !== 'dlg' || d.open || !returnTo) return;
+      const sel = returnTo;
+      returnTo = '';
+      setTimeout(() => {
+        const el = document.querySelector(sel);
+        const a = document.activeElement;
+        if (el && (!a || a === document.body || !document.contains(a))) el.focus();
+      }, 0);
+    },
+    true
+  );
+  const opener = (kind, id) => `[data-action="iv-start"][data-kind="${kind}"]${id ? `[data-connection="${String(id).replace(/["\\]/g, '')}"]` : ':not([data-connection])'}`;
   /** Several connections on and no choice made yet (the subscribe page's button): ask which. */
-  function chooserDialog(kind, opts) {
-    U.dialog(
+  function chooserDialog(kind, opts, back) {
+    ivDialog(
       `<div class="dlg-head"><div><h2>${kind === 'identity' ? 'Verify your identity' : 'Verify your accreditation'}</h2><p>Choose how to verify</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
       <div class="dlg-body iv-dlg">${optionRows(kind, opts, true)}</div>`,
-      'dlg-iv'
+      back
     );
   }
   /** The simulated check (sandbox). */
-  function sandboxDialog(kind, x, inv) {
+  function sandboxDialog(kind, x, inv, back) {
     const accMethods = ['Income over $200,000 ($300,000 with spouse) in each of the last two years', 'Net worth over $1 million, excluding primary residence', 'Licensed professional (Series 7, 65 or 82)', 'Letter from a CPA, attorney, registered adviser or broker-dealer', 'Entity with over $5 million in assets', 'Existing verification from another platform'];
-    U.dialog(
+    ivDialog(
       `<div class="dlg-head"><div><h2>${kind === 'identity' ? 'Verify your identity' : 'Verify your accreditation'}</h2><p>${h(x.name)}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
       <div class="dlg-body iv-dlg">
         <p class="iv-sandbox">${icon('alert')}Sandbox: this simulates the check. No ID or financial documents are collected.</p>
@@ -578,18 +693,18 @@
         </fieldset>
         <div class="ob-actions"><button class="btn" type="button" data-action="close-dialog">Cancel</button><button class="btn btn-primary" type="button" data-action="iv-sandbox-finish" data-kind="${kind}" data-connection="${h(x.id)}">Complete check</button></div>
       </div>`,
-      'dlg-iv'
+      back
     );
   }
-  function uploadDialog(kind, x) {
-    U.dialog(
+  function uploadDialog(kind, x, back) {
+    ivDialog(
       `<div class="dlg-head"><div><h2>${kind === 'identity' ? 'Upload your ID' : 'Upload a verification letter'}</h2><p>Reviewed by ${h(W().tenant.support.team)}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
       <div class="dlg-body iv-dlg">
         <p class="hint">${kind === 'identity' ? 'A clear photo of a driver’s license, passport or state ID.' : 'A letter from a CPA, attorney, registered investment adviser or broker-dealer, dated within the last 90 days, confirming that the investor is accredited.'}</p>
         <label class="field" for="iv-file"><span>File</span><input id="iv-file" type="file" accept="application/pdf,image/png,image/jpeg"></label>
         <div class="ob-actions"><button class="btn" type="button" data-action="close-dialog">Cancel</button><button class="btn btn-primary" type="button" data-action="iv-upload" data-kind="${kind}" data-connection="${h(x.id)}">Submit for review</button></div>
       </div>`,
-      'dlg-iv'
+      back
     );
   }
   function investorInView() {
@@ -602,10 +717,13 @@
     const inv = investorInView();
     const kind = el.getAttribute('data-kind');
     if (!inv) return;
-    if (el.closest('#dlg')) U.closeDialog();
+    const fromDialog = !!el.closest('#dlg');
+    // From the chooser dialog, focus goes back to whatever opened the chooser.
+    const back = fromDialog ? returnTo : opener(kind, el.getAttribute('data-connection'));
+    if (fromDialog) U.closeDialog();
     const opts = options(ws, kind);
     const id = el.getAttribute('data-connection');
-    if (!id && opts.length > 1) return chooserDialog(kind, opts);
+    if (!id && opts.length > 1) return chooserDialog(kind, opts, back);
     const x = opts.find((y) => y.id === id) || opts[0];
     // Open the tab while the click still counts as the investor's, so the browser does not block it.
     const tab = x.type === 'server' || x.type === 'link' ? window.open('', '_blank') : null;
@@ -617,8 +735,8 @@
         else if (tab) tab.close();
         U.toast(r.remote ? `${r.connection.name} opened in a new tab. This page updates when you finish.` : `${r.connection.name} opened in a new tab. Submitted: ${ws.tenant.shortName} will confirm the result.`);
         if (r.remote) watch(ws, inv);
-      } else if (r.mode === 'upload') uploadDialog(kind, r.connection);
-      else sandboxDialog(kind, r.connection, inv);
+      } else if (r.mode === 'upload') uploadDialog(kind, r.connection, back);
+      else sandboxDialog(kind, r.connection, inv, back);
       NS.app.render();
     } catch (e) {
       if (tab) tab.close();
@@ -662,21 +780,41 @@
     NS.app.render();
     U.toast('Submitted for review');
   };
-  let watching = 0;
-  function watch(ws, inv) {
-    clearInterval(watching);
-    let n = 0;
-    watching = setInterval(async () => {
-      n++;
+  /**
+   * Poll the integration server for an investor's open checks and screenings:
+   * every 5 seconds for two minutes after a check starts, then every 30 seconds
+   * for half an hour. Pages that show verification resume it (slow) after a reload.
+   */
+  const watching = {};
+  const FAST = 24;
+  function watch(ws, inv, slow) {
+    if (!serverUrl(ws) || !openRemote(inv)) return;
+    const cur = watching[inv.id];
+    if (cur) {
+      if (!slow) cur.n = 0;
+      return;
+    }
+    const job = (watching[inv.id] = { n: slow ? FAST : 0, fails: 0 });
+    const tick = async () => {
+      job.n++;
       try {
-        if ((await poll(ws, inv)) || n > 120) {
-          clearInterval(watching);
-          NS.app.render();
-        }
+        if (await poll(ws, inv)) NS.app.render();
+        job.fails = 0;
       } catch (e) {
-        if (n > 5) clearInterval(watching);
+        job.fails++;
       }
-    }, 5000);
+      if (W() !== ws || !openRemote(inv) || job.fails > 5 || job.n > FAST + 60) {
+        delete watching[inv.id];
+        return;
+      }
+      job.timer = setTimeout(tick, job.n < FAST ? 5000 : 30000);
+    };
+    job.timer = setTimeout(tick, slow ? 3000 : 5000);
+  }
+  /** Resume polling for every investor with an open check (after a reload). */
+  function resume(ws) {
+    if (!active(ws) || !serverUrl(ws)) return;
+    ws.investors.forEach((inv) => watch(ws, inv, true));
   }
 
   /* ---------- Console: the Integrations page ---------- */
@@ -799,7 +937,8 @@
   };
   NS.binders.ivr = (path, v) => {
     const r = ensure(W()).rules;
-    r[path] = typeof r[path] === 'number' ? Math.max(1, Number(v) || r[path]) : v;
+    if (RULE_DAYS[path]) r[path] = days(v, r[path], RULE_DAYS[path][0], RULE_DAYS[path][1]);
+    else r[path] = v;
   };
   NS.binders.ivserver = (path, v) => {
     if (path === 'url' || path === 'token') ensure(W()).server[path] = String(v).trim();
@@ -863,23 +1002,25 @@
 
   /* ---------- Console: add or edit a connection ---------- */
   const CONNECTOR_ID = /^[a-z0-9][a-z0-9._-]{0,63}$/i;
-  function connDialog() {
+  /** The add/edit dialog re-renders on some changes: focus goes back to the control that changed, or to the first field with an error. */
+  function connDialog(focusId) {
     const ws = W();
     const c = ensure(ws);
     const d = pageState().draft;
     const e = d.errors || {};
     const err = (k) => (e[k] ? `<span class="cs-error" id="ivc-err-${k}">${h(e[k])}</span>` : '');
+    const inv = (k) => (e[k] ? ` aria-invalid="true" aria-describedby="ivc-err-${k}"` : '');
     const list = (c.server.connectors || []).filter((x) => !x.builtin);
     const sel = list.find((x) => x.id === d.connector);
     const server = d.type === 'server'
       ? list.length
-        ? `<label class="cs-field" for="ivc-connector"><span>Connector</span><select id="ivc-connector" data-change="ivc-connector"><option value="">Choose a connector</option>${list.map((x) => `<option value="${h(x.id)}"${x.id === d.connector ? ' selected' : ''}>${h(x.name)}${x.configured ? '' : ' (not configured)'}</option>`).join('')}${d.connector && !sel ? `<option value="${h(d.connector)}" selected>${h(d.connector)} (not on the server)</option>` : ''}</select>${err('connector')}<span class="cs-hint">${sel ? `${h(sel.description)}${sel.missing.length ? ` Missing on the server: ${sel.missing.map((m) => `<code>${h(m)}</code>`).join(', ')}. Set them in the server’s environment.` : ''}` : 'Connectors listed by your integration server.'}</span></label>`
-        : `<label class="cs-field" for="ivc-connector-id"><span>Connector ID</span><input id="ivc-connector-id" type="text" maxlength="64" value="${h(d.connector)}" placeholder="acme-verify" data-input="ivc" data-k="connector" spellcheck="false" autocomplete="off">${err('connector')}<span class="cs-hint">Add your integration server under Integration server and choose Check connection to list its connectors, or type the connector’s ID.</span></label>`
-      : `<label class="cs-field" for="ivc-link"><span>Link</span><input id="ivc-link" type="url" value="${h(d.link)}" placeholder="https://verify.vendor.example/start?ref={reference}&amp;return={return}" data-input="ivc" data-k="link" spellcheck="false" autocomplete="off">${err('link')}<span class="cs-hint">Filled in for each investor, URL-encoded: <code>{reference}</code> our reference for this check (send it back with the result), <code>{name}</code> and <code>{email}</code> the investor’s, <code>{return}</code> the portal page to come back to. With an integration server, results can arrive through its results API; otherwise your team records them on the AML/KYC page.</span></label>`;
+        ? `<label class="cs-field" for="ivc-connector"><span>Connector</span><select id="ivc-connector" data-change="ivc-connector"${inv('connector')}><option value="">Choose a connector</option>${list.map((x) => `<option value="${h(x.id)}"${x.id === d.connector ? ' selected' : ''}>${h(x.name)}${x.configured ? '' : ' (not configured)'}</option>`).join('')}${d.connector && !sel ? `<option value="${h(d.connector)}" selected>${h(d.connector)} (not on the server)</option>` : ''}</select>${err('connector')}<span class="cs-hint">${sel ? `${h(sel.description)}${sel.missing.length ? ` Missing on the server: ${sel.missing.map((m) => `<code>${h(m)}</code>`).join(', ')}. Set them in the server’s environment.` : ''}` : 'Connectors listed by your integration server.'}</span></label>`
+        : `<label class="cs-field" for="ivc-connector-id"><span>Connector ID</span><input id="ivc-connector-id" type="text" maxlength="64" value="${h(d.connector)}" placeholder="acme-verify" data-input="ivc" data-k="connector" spellcheck="false" autocomplete="off"${inv('connector')}>${err('connector')}<span class="cs-hint">Add your integration server under Integration server and choose Check connection to list its connectors, or type the connector’s ID.</span></label>`
+      : `<label class="cs-field" for="ivc-link"><span>Link</span><input id="ivc-link" type="url" value="${h(d.link)}" placeholder="https://verify.vendor.example/start?ref={reference}&amp;return={return}" data-input="ivc" data-k="link" spellcheck="false" autocomplete="off"${inv('link')}>${err('link')}<span class="cs-hint">Filled in for each investor, URL-encoded: <code>{reference}</code> our reference for this check (send it back with the result), <code>{name}</code> and <code>{email}</code> the investor’s, <code>{return}</code> the portal page to come back to. With an integration server, results can arrive through its results API; otherwise your team records them on the AML/KYC page.</span></label>`;
     U.dialog(
       `<div class="dlg-head"><div><h2>${d.id ? 'Edit connection' : 'Add a connection'}</h2><p>Any identity, screening or accreditation service you use</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
       <form class="dlg-body iv-dlg ivc-form" data-form="iv-conn-save" novalidate>
-        <label class="cs-field" for="ivc-name"><span>Name</span><input id="ivc-name" type="text" maxlength="60" value="${h(d.name)}" placeholder="Acme Verify" data-input="ivc" data-k="name" autocomplete="off">${err('name')}<span class="cs-hint">Investors see this name when they choose how to verify.</span></label>
+        <label class="cs-field" for="ivc-name"><span>Name</span><input id="ivc-name" type="text" maxlength="60" value="${h(d.name)}" placeholder="Acme Verify" data-input="ivc" data-k="name" autocomplete="off"${inv('name')}>${err('name')}<span class="cs-hint">Investors see this name when they choose how to verify.</span></label>
         <fieldset class="cs-field"><legend>How it connects</legend>
           <label class="cs-check" for="ivc-t-server"><input id="ivc-t-server" type="radio" name="ivc-type" value="server" data-change="ivc-type"${d.type === 'server' ? ' checked' : ''}><span>A connector on your integration server<span class="cs-hint">The server holds the provider’s keys, starts each check and receives the results.</span></span></label>
           <label class="cs-check" for="ivc-t-link"><input id="ivc-t-link" type="radio" name="ivc-type" value="link" data-change="ivc-type"${d.type === 'link' ? ' checked' : ''}><span>A hosted link from the provider<span class="cs-hint">Investors open the provider’s page in a new tab.</span></span></label>
@@ -891,6 +1032,9 @@
       </form>`,
       'dlg-iv dlg-ivc'
     );
+    const first = ['name', 'connector', 'link', 'checks'].find((k) => e[k]);
+    const target = first === 'checks' ? document.querySelector('.ivc-form [data-change="ivc-check"]:not([disabled])') : first ? document.querySelector(`#ivc-${first === 'connector' ? (list.length ? 'connector' : 'connector-id') : first}`) : focusId ? document.getElementById(focusId) : null;
+    if (target) target.focus();
   }
   NS.actions['iv-conn-add'] = () => {
     const c = ensure(W());
@@ -913,7 +1057,7 @@
     d.type = el.value === 'server' ? 'server' : 'link';
     if (d.type === 'link') d.checks = d.checks.filter((k) => k !== 'aml');
     d.errors = {};
-    connDialog();
+    connDialog(`ivc-t-${d.type}`);
   };
   NS.changes['ivc-connector'] = (el) => {
     const d = pageState().draft;
@@ -924,7 +1068,7 @@
       if (!String(d.name).trim()) d.name = k.name;
       if (!d.checks.length) d.checks = k.checks.slice();
     }
-    connDialog();
+    connDialog('ivc-connector');
   };
   NS.changes['ivc-check'] = (el) => {
     const d = pageState().draft;
@@ -972,10 +1116,28 @@
     NS.app.render();
     U.toast(d.id ? 'Connection saved' : `${name} added and turned on for ${checkList(checks).toLowerCase()}`);
   };
+  /** Removing asks first, naming the checks it is on for and the investors with a check still open through it. */
   NS.actions['iv-conn-remove'] = (el) => {
     const ws = W();
     const c = ensure(ws);
     const x = conn(ws, el.getAttribute('data-id'));
+    if (!x || x.type === 'builtin') return;
+    const on = CHECKS.filter((k) => c.use[k].indexOf(x.id) >= 0).map((k) => KINDS[k].toLowerCase());
+    const open = ws.investors.filter((inv) => inv.verify && (['identity', 'accreditation'].some((k) => inv.verify[k] && inv.verify[k].connection === x.id && inv.verify[k].status === 'pending') || ((inv.verify.aml || {}).results || []).some((r) => r.connection === x.id && r.status === 'pending'))).length;
+    U.dialog(
+      `<div class="dlg-head"><div><h2>Remove ${h(x.name)}?</h2><p>${h(HOW[x.type])}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
+      <div class="dlg-body iv-dlg">
+        <p>${on.length ? `It is turned on for ${h(on.join(', '))}. Investors will no longer see it.` : 'It is not turned on for any check.'}${open ? ` ${open} investor${open === 1 ? ' has a check' : 's have checks'} still open through it; ${open === 1 ? 'that record keeps' : 'those records keep'} its name, results still arrive, and your team can record them on the AML/KYC page.` : ''}</p>
+        <div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="iv-conn-remove-confirm" data-id="${h(x.id)}">Remove connection</button></div>
+      </div>`,
+      'dlg-iv'
+    );
+  };
+  NS.actions['iv-conn-remove-confirm'] = (el) => {
+    const ws = W();
+    const c = ensure(ws);
+    const x = conn(ws, el.getAttribute('data-id'));
+    U.closeDialog();
     if (!x || x.type === 'builtin') return;
     c.connections = c.connections.filter((y) => y.id !== x.id);
     CHECKS.forEach((k) => (c.use[k] = c.use[k].filter((y) => y !== x.id)));
@@ -988,6 +1150,7 @@
   /* ---------- Attention items, banners, re-screening ---------- */
   NS.hooks.consoleAttention.push((ws) => {
     if (!active(ws)) return '';
+    resume(ws);
     const d = due(ws);
     const c = ensure(ws);
     const items = [];
@@ -1011,11 +1174,12 @@
   NS.hooks.investmentsTop.push((inv) => {
     const ws = W();
     if (!active(ws) || !inv || !inv.verify || legacy(inv)) return '';
+    watch(ws, inv, true);
     const d = vOf(inv).decision.status;
     if (d === 'approved') return '';
     const msg = d === 'review' ? `${h(ws.tenant.support.team)} is reviewing your verification and will contact you if anything else is needed.` : d === 'rejected' ? `Contact ${h(ws.tenant.support.team)} at ${h(ws.tenant.support.email)} about your account.` : 'We are finishing your identity verification. You will get an email when your account is ready to invest.';
     return `<div class="iv-banner" role="status">${icon('alert')}<span>${msg}</span></div>`;
   });
 
-  NS.integrations = { CHECKS, KINDS, SHORT, HOW, BUILTINS, RECORD, ensure, active, ready, isLive, serverUrl, conn, activeFor, options, activeNames, via, linkError, fillLink, vOf, status, needsAccreditation, accreditationValid, start, complete, screen, recordable, recordResult, decide, decideManually, due, rescreenDue, poll, finishOnboarding, subscribeGate, stepPanel, canContinue, syncKyc, legacy };
+  NS.integrations = { CHECKS, KINDS, SHORT, HOW, BUILTINS, RECORD, ensure, active, ready, isLive, serverUrl, conn, activeFor, options, activeNames, via, linkError, fillLink, vOf, status, needsAccreditation, accreditationValid, start, complete, screen, recordable, resume, recordResult, decide, decideManually, due, rescreenDue, poll, finishOnboarding, subscribeGate, stepPanel, canContinue, syncKyc, legacy };
 })(window.CVPortal);
