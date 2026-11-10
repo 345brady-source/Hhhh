@@ -150,13 +150,57 @@
   }
 
   /* ---------- Investor state ---------- */
+  /** Investors onboarded before verification was connected keep their earlier result. */
+  function legacy(inv) {
+    return !inv.verify && inv.kyc && inv.kyc.status === 'cleared';
+  }
+  /**
+   * A legacy investor's verification as a record, from what is on file: identity passed and screening clear (the KYC they
+   * were cleared on), approved as of the day their identity was verified, and the accreditation on file valid for three
+   * months from its date (exactly as accreditationValid reads it for an investor without a record).
+   * Neither identity nor screening gets a completion date: the KYC fields on file stay as they are (syncKyc), and any
+   * result recorded from now on is newer than the approval, so a new adverse result still holds them (adverseSince).
+   */
+  function legacySeed(inv) {
+    const k = inv.kyc || {};
+    const day = (s) => (/^\d{4}-\d{2}-\d{2}/.test(String(s || '')) ? String(s).slice(0, 10) : '');
+    const on = day(k.verifiedOn) || day(k.screenedOn) || day((inv.onboarding || {}).completed) || today();
+    const acc = inv.accreditation || {};
+    const accOn = day(acc.date);
+    return {
+      identity: { status: 'passed', method: k.method || '', legacy: true },
+      aml: { status: 'clear', legacy: true },
+      accreditation: accOn ? { status: 'verified', method: acc.basis || '', verifiedAt: accOn, expiresAt: NS.dates.addMonths(accOn, 3), legacy: true } : { status: 'not_started' },
+      decision: { status: 'approved', at: `${on}T00:00:00Z`, reason: 'verified before automated verification was connected', legacy: true }
+    };
+  }
+  /** Give a legacy investor a verification record seeded from what is on file (approved), never blank defaults. Returns inv.verify, or null. */
+  function seedFromLegacy(inv) {
+    if (inv && legacy(inv)) inv.verify = legacySeed(inv);
+    return (inv && inv.verify) || null;
+  }
+  /**
+   * The investor's verification record, created when missing. Only paths that record a result use it: a legacy investor's
+   * record starts from seedFromLegacy, so recording one new result never un-approves them. Paths that only read use peek.
+   */
   function vOf(inv) {
+    seedFromLegacy(inv);
     const v = (inv.verify = inv.verify || {});
     ['identity', 'aml', 'accreditation'].forEach((k) => (v[k] = v[k] || { status: 'not_started' }));
     v.decision = v.decision || { status: 'pending' };
     return v;
   }
-  /** Accredited verification is required for Rule 506(c) offerings (or always / never, per the rules). */
+  /** The record as vOf would give it, read only: nothing is created or changed on the investor (a legacy investor reads as seeded). */
+  function peek(inv) {
+    const v = (inv && (inv.verify || (legacy(inv) ? legacySeed(inv) : null))) || {};
+    return { identity: v.identity || { status: 'not_started' }, aml: v.aml || { status: 'not_started' }, accreditation: v.accreditation || { status: 'not_started' }, decision: v.decision || { status: 'pending' } };
+  }
+  /**
+   * Is verified accreditation required? For an offering: Rule 506(c) (or always / never, per the rules). For an investor
+   * (approval): under the "every offering" rule, when they hold a Rule 506(c) offering, or when no offering names its
+   * exemption and the firm asks about accreditation. Another offering being Rule 506(c) does not make it required:
+   * subscribing to that offering is gated on its own (subscribeGate, and the invitation flow's offering check).
+   */
   function needsAccreditation(ws, inv, offering) {
     const r = ensure(ws).rules;
     if (r.accreditationFor === 'all') return true;
@@ -164,21 +208,31 @@
     const c = (o) => /506\(c\)/.test(((o && o.structure) || {}).exemption || '');
     if (offering) return c(offering);
     const held = inv ? ws.offerings.filter((o) => inv.positions.some((p) => p.offeringId === o.id)) : [];
-    return held.some(c) || ws.offerings.some((o) => o.status === 'Raising' && c(o)) || (!ws.offerings.some((o) => ((o.structure || {}).exemption || '').length) && !!ws.tenant.onboarding.accreditation);
+    return held.some(c) || (!ws.offerings.some((o) => ((o.structure || {}).exemption || '').length) && !!ws.tenant.onboarding.accreditation);
   }
-  /** Investors onboarded before verification was connected keep their earlier result. */
-  function legacy(inv) {
-    return !inv.verify && inv.kyc && inv.kyc.status === 'cleared';
-  }
+  /** A self-certification: the investor's own attestation, enough for Rule 506(b) only. It is never a verification. */
+  const selfCertified = (a) => !!a && (a.connection === 'self' || a.how === 'self' || a.provider === 'self');
+  /**
+   * Is the investor's accreditation VERIFIED and current? It is asked only where verification is required (Rule 506(c),
+   * or the firm's rules), so a self-certification never counts. Read only: it never creates inv.verify. An investor with no
+   * verification record (legacy) keeps the accreditation on file, valid for three months from its date.
+   */
   function accreditationValid(ws, inv) {
-    const a = vOf(inv).accreditation;
-    if (a.status === 'verified') return !a.expiresAt || a.expiresAt >= today();
-    if (!inv.verify && inv.accreditation && inv.accreditation.date) return NS.dates.addMonths(inv.accreditation.date, 3) >= today();
-    return false;
+    if (!inv) return false;
+    if (!inv.verify) return !!(inv.accreditation && inv.accreditation.date) && NS.dates.addMonths(inv.accreditation.date, 3) >= today();
+    const a = inv.verify.accreditation || {};
+    if (a.status !== 'verified' || selfCertified(a)) return false;
+    return !a.expiresAt || a.expiresAt >= today();
+  }
+  /** Where verified accreditation is required: has the investor done their part? Submitted counts; a self-certification or an expired verification does not. */
+  function accDone(ws, inv, x) {
+    if (selfCertified(x)) return false;
+    if (x.status === 'verified') return accreditationValid(ws, inv);
+    return x.status === 'pending' || x.status === 'review';
   }
   function status(ws, inv) {
     if (legacy(inv)) return { key: 'approved', label: 'Verified' };
-    const d = vOf(inv).decision.status;
+    const d = peek(inv).decision.status;
     return { approved: { key: 'approved', label: 'Verified' }, pending: { key: 'pending', label: 'Verification in progress' }, review: { key: 'review', label: 'Needs review' }, rejected: { key: 'rejected', label: 'Not approved' } }[d] || { key: d, label: d };
   }
 
@@ -357,20 +411,35 @@
   }
   /** A provider check with no answer after a day: the team can record the result it got another way. */
   const stale = (x) => !!x.startedAt && Date.parse(x.startedAt) < Date.now() - 864e5;
-  /** Checks waiting on a person: hosted links, uploads and team screening (or a check that never answered). */
+  /**
+   * Checks waiting on a person: hosted links, uploads and team screening (or a check that never answered), and an
+   * accreditation a provider or the sandbox left in review. That last one is not always behind a held decision (a Rule
+   * 506(c) offering gates the subscription, not the investor's approval), so the team records the result here.
+   */
   function recordable(ws, inv) {
     if (!inv.verify) return [];
-    const v = vOf(inv);
+    const v = peek(inv);
     const out = [];
     ['identity', 'accreditation'].forEach((kind) => {
       const x = v[kind];
       const how = x.how || howOf(conn(ws, x.connection));
-      if ((how === 'link' && x.status === 'pending') || (how === 'manual' && ['pending', 'review'].indexOf(x.status) >= 0) || (how === 'server' && x.status === 'pending' && stale(x))) out.push({ kind, connection: x.connection || '', via: via(ws, x, kind) });
+      if ((how === 'link' && x.status === 'pending') || (how === 'manual' && ['pending', 'review'].indexOf(x.status) >= 0) || (how === 'server' && x.status === 'pending' && stale(x)) || (kind === 'accreditation' && x.status === 'review' && !selfCertified(x))) out.push({ kind, connection: x.connection || '', via: via(ws, x, kind) });
     });
     (v.aml.results || []).forEach((r) => {
       if (r.status === 'pending' && (r.how === 'team' || !r.ref || r.error || stale(r))) out.push({ kind: 'aml', connection: r.connection, via: r.via });
     });
     return out;
+  }
+  /**
+   * The recordable checks that put an investor on the team's to-do lists (the overview and the AML/KYC page's Needs
+   * attention tab). A declined investor's do not. For an approved investor only an accreditation does: a Rule 506(c)
+   * subscription waits on it. A screening left open after a person approved them stays reachable without being listed.
+   */
+  function awaitingTeam(ws, inv) {
+    const d = peek(inv).decision.status;
+    if (d === 'rejected') return [];
+    const list = recordable(ws, inv);
+    return d === 'approved' ? list.filter((r) => r.kind === 'accreditation') : list;
   }
   /** A result recorded by the team on the AML/KYC page; a note is required and kept in the change log. */
   async function recordResult(ws, inv, kind, connectionId, outcome, note) {
@@ -484,10 +553,10 @@
     const out = { pending: [], review: [], rescreen: [], expiring: [], record: [] };
     ws.investors.forEach((inv) => {
       if (!inv.verify) return;
-      const v = vOf(inv);
+      const v = peek(inv);
       if (v.decision.status === 'review') out.review.push(inv);
       else if (v.decision.status === 'pending' && v.identity.status !== 'not_started') out.pending.push(inv);
-      if (['approved', 'rejected'].indexOf(v.decision.status) < 0 && recordable(ws, inv).length) out.record.push(inv);
+      if (awaitingTeam(ws, inv).length) out.record.push(inv);
       if (v.aml.nextScreen && v.aml.nextScreen <= today()) out.rescreen.push(inv);
       if (v.accreditation.status === 'verified' && v.accreditation.expiresAt && v.accreditation.expiresAt <= in14 && v.accreditation.expiresAt >= soon) out.expiring.push(inv);
     });
@@ -506,7 +575,7 @@
   /** Open checks the integration server will answer for. */
   function openRemote(inv) {
     if (!inv || !inv.verify) return false;
-    const v = vOf(inv);
+    const v = peek(inv);
     return ['identity', 'accreditation'].some((k) => v[k].status === 'pending' && v[k].ref && v[k].remote) || (v.aml.results || []).some((r) => r.status === 'pending' && r.ref && (r.how === 'server' || r.how === 'ofac'));
   }
   async function poll(ws, inv) {
@@ -579,14 +648,18 @@
   function subscribeGate(ws, inv, offering) {
     if (!active(ws) || !inv) return null;
     if (!legacy(inv) && inv.verify) {
-      const d = vOf(inv).decision.status;
+      const d = peek(inv).decision.status;
       if (d === 'pending') return { reason: 'Your identity verification is still in progress. You can subscribe once it is complete.' };
       if (d === 'review') return { reason: `Your verification is being reviewed by ${ws.tenant.support.team}. They will contact you if anything else is needed.` };
       if (d === 'rejected') return { reason: `Contact ${ws.tenant.support.team} about your account before subscribing.` };
     }
     if (needsAccreditation(ws, inv, offering) && !accreditationValid(ws, inv)) {
-      const a = vOf(inv).accreditation;
-      return { reason: a.status === 'pending' ? 'Your accreditation verification has been submitted and is being reviewed.' : a.status === 'verified' ? `Your accreditation verification expired on ${date(a.expiresAt)}. Rule 506(c) offerings need a current verification.` : 'This offering is open only to verified accredited investors (Rule 506(c)). Verify your accreditation to subscribe.', action: a.status === 'pending' ? '' : 'accreditation' };
+      const a = peek(inv).accreditation;
+      const c506 = /506\(c\)/.test(((offering && offering.structure) || {}).exemption || '');
+      const only = `This offering is open only to verified accredited investors${c506 ? ' (Rule 506(c))' : ''}.`;
+      // A self-certification reads as "verified" but is not a verification: say so rather than calling it expired.
+      if (selfCertified(a)) return { reason: `${only} A self-certification is not enough: verify your accreditation to subscribe.`, action: 'accreditation' };
+      return { reason: a.status === 'pending' ? 'Your accreditation verification has been submitted and is being reviewed.' : a.status === 'verified' ? `Your accreditation verification expired on ${date(a.expiresAt)}. ${c506 ? 'Rule 506(c) offerings need' : 'This offering needs'} a current verification.` : `${only} Verify your accreditation to subscribe.`, action: a.status === 'pending' ? '' : 'accreditation' };
     }
     return null;
   }
@@ -617,7 +690,9 @@
   /** The verification panel inside the onboarding identity or accreditation step. */
   function stepPanel(ws, inv, kind) {
     const opts = options(ws, kind);
-    const v = vOf(inv)[kind];
+    const cur = peek(inv)[kind];
+    // The accreditation panel is shown only where verification is required: a self-certification or an expired verification reads as not started, so the investor verifies.
+    const v = kind === 'accreditation' && ['verified', 'pending', 'review'].indexOf(cur.status) >= 0 && !accDone(ws, inv, cur) ? { status: 'not_started' } : cur;
     const t = ws.tenant;
     const done = ['passed', 'verified', 'pending', 'review'].indexOf(v.status) >= 0;
     const what = kind === 'identity'
@@ -640,8 +715,10 @@
     </div>`;
   }
   function canContinue(ws, inv, kind) {
-    const st = vOf(inv)[kind].status;
-    return ['passed', 'verified', 'pending', 'review'].indexOf(st) >= 0;
+    const x = peek(inv)[kind];
+    // Asked about accreditation only where verification is required (onboarding.js), so a self-certification or an expired verification does not do.
+    if (kind === 'accreditation') return accDone(ws, inv, x);
+    return ['passed', 'verified', 'pending', 'review'].indexOf(x.status) >= 0;
   }
   /**
    * Verification dialogs give focus back to the button that opened them when
@@ -1175,11 +1252,11 @@
     const ws = W();
     if (!active(ws) || !inv || !inv.verify || legacy(inv)) return '';
     watch(ws, inv, true);
-    const d = vOf(inv).decision.status;
+    const d = peek(inv).decision.status;
     if (d === 'approved') return '';
     const msg = d === 'review' ? `${h(ws.tenant.support.team)} is reviewing your verification and will contact you if anything else is needed.` : d === 'rejected' ? `Contact ${h(ws.tenant.support.team)} at ${h(ws.tenant.support.email)} about your account.` : 'We are finishing your identity verification. You will get an email when your account is ready to invest.';
     return `<div class="iv-banner" role="status">${icon('alert')}<span>${msg}</span></div>`;
   });
 
-  NS.integrations = { CHECKS, KINDS, SHORT, HOW, BUILTINS, RECORD, ensure, active, ready, isLive, serverUrl, conn, activeFor, options, activeNames, via, linkError, fillLink, vOf, status, needsAccreditation, accreditationValid, start, complete, screen, recordable, resume, recordResult, decide, decideManually, due, rescreenDue, poll, finishOnboarding, subscribeGate, stepPanel, canContinue, syncKyc, legacy };
+  NS.integrations = { CHECKS, KINDS, SHORT, HOW, BUILTINS, RECORD, ensure, active, ready, isLive, serverUrl, conn, activeFor, options, activeNames, via, linkError, fillLink, vOf, peek, seedFromLegacy, selfCertified, status, needsAccreditation, accreditationValid, start, complete, screen, recordable, awaitingTeam, resume, recordResult, decide, decideManually, due, rescreenDue, poll, finishOnboarding, subscribeGate, stepPanel, canContinue, syncKyc, legacy };
 })(window.CVPortal);

@@ -234,7 +234,9 @@
   }
   function submitSubscription(ws, inv, o, opts) {
     const open = isOpen(o);
-    const r = { id: `req-${Date.now().toString(36)}`, type: 'subscription', offeringId: o.id, investorId: inv.id, cls: opts.cls || undefined, submitted: today(), dealing: open ? subscriptionDate(today()) : o.closeDate, cents: Math.round(opts.cents), additional: inv.positions.some((p) => p.offeringId === o.id), status: 'pending', signedBy: opts.signature, signedAt: opts.envelopeId ? '' : new Date().toISOString().replace(/\.\d{3}Z$/, 'Z') };
+    // opts.additional: an investor known to hold the offering although this record shows no position (the onboarding flow's
+    // temporary record in server mode); otherwise the record's positions say whether this adds to a holding.
+    const r = { id: `req-${Date.now().toString(36)}`, type: 'subscription', offeringId: o.id, investorId: inv.id, cls: opts.cls || undefined, submitted: today(), dealing: open ? subscriptionDate(today()) : o.closeDate, cents: Math.round(opts.cents), additional: !!opts.additional || inv.positions.some((p) => p.offeringId === o.id), status: 'pending', signedBy: opts.signature, signedAt: opts.envelopeId ? '' : new Date().toISOString().replace(/\.\d{3}Z$/, 'Z') };
     // Signed through an e-signature envelope (the offering's subscription agreement template): signedAt is set when it completes.
     if (opts.envelopeId) r.envelopeId = opts.envelopeId;
     ws.requests.push(r);

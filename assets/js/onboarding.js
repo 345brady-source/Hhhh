@@ -836,13 +836,26 @@
   }
   /** Verified (not self-certified) accreditation: the invited offering is Rule 506(c), or the firm's rules require it for approval. */
   const accVerifiedFor = (c) => !!IV() && ((c.off && NS.integrations.needsAccreditation(c.ws, c.inv, c.off)) || NS.integrations.needsAccreditation(c.ws, c.inv));
+  /**
+   * The investor already holds the invited offering: a position on this record (local mode), or the firm's console says so
+   * (server mode: the temporary record built from the invitation has no positions, only the invitation's holds flag).
+   */
+  const holds = (c) => !!c.off && (!!c.it.holds || (c.inv.positions || []).some((p) => p.offeringId === c.off.id));
   // The agreement template is for new subscribers (esign.js); an investor adding to a holding signs the subscription form.
-  const tplReady = (c) => !!(c.off && NS.esign && NS.esign.templateReady && NS.esign.templateReady(c.ws, c.off.id) && !c.it.holds && !(c.inv.positions || []).some((p) => p.offeringId === c.off.id));
+  const tplReady = (c) => !!(c.off && NS.esign && NS.esign.templateReady && NS.esign.templateReady(c.ws, c.off.id) && !holds(c));
   function flowSteps(c) {
     if (c.it.existing) {
       // An active investor invited to a new offering: their account is on file, so the link covers the subscription.
       const s = ['welcome'];
-      if (c.fl.accStep === undefined) c.fl.accStep = !!(c.off && accVerifiedFor(c) && !NS.integrations.accreditationValid(c.ws, c.inv));
+      // Once asked for, the verification step stays listed (also after it is done). A "not needed" is looked at again until
+      // the subscription is made: the accreditation can lapse meanwhile, and an answer saved under an earlier rule may have
+      // counted a self-certification as current (accreditationValid never does: Rule 506(c) needs a verification).
+      if (c.fl.accStep === undefined || (c.fl.accStep === false && !c.req)) {
+        const was = c.fl.accStep;
+        c.fl.accStep = !!(c.off && accVerifiedFor(c) && !NS.integrations.accreditationValid(c.ws, c.inv));
+        // Newly needed after the investor moved past where it goes: they verify before they subscribe.
+        if (was === false && c.fl.accStep && c.fl.at === 'subscribe') c.fl.at = 'accreditation';
+      }
       if (c.fl.accStep) s.push('accreditation');
       if (c.off) {
         s.push('subscribe');
@@ -1169,12 +1182,17 @@
     const remoteWs = isRemote(c.ws);
     if (!c.fl.completedAt || (remoteWs && !c.fl.sentAt)) {
       if (o.finishError || (c.fl.completedAt && !o.finishing)) {
-        return `${ivfH1('Almost done')}<p class="lede" role="alert">We could not send your details to ${h(t.name)}${o.finishError ? `: ${h(o.finishError)}` : '.'} Check your connection, then try again. Nothing you entered is lost.</p>
+        const sup = t.support || {};
+        const why = o.finishError ? `: ${h(o.finishError)}${/[.!?]$/.test(o.finishError) ? '' : '.'}` : '.';
+        // When this device cannot send the signed agreement, a connection is not the problem: the investor contacts the firm.
+        const todo = o.finishContact ? `Contact ${h(sup.team || 'investor relations')}${sup.email ? ` at ${h(sup.email)}` : ''}${sup.phone ? ` or ${h(sup.phone)}` : ''} for help.` : 'Check your connection, then try again. Nothing you entered is lost.';
+        return `${ivfH1('Almost done')}<p class="lede" role="alert">We could not send your details to ${h(t.name)}${why} ${todo}</p>
           <div class="ob-actions"><button class="btn btn-primary" type="button" data-action="ivf-retry">Try again</button></div>`;
       }
       return `${ivfH1('Finishing your account…')}<p class="lede ivf-loading" role="status">Saving your details and sending them to ${h(t.name)}.</p>`;
     }
-    const v = IV() ? IV().vOf(i) : null;
+    // Read only (peek): showing the summary must not create a verification record (vOf does, for an investor without one).
+    const v = IV() ? (IV().peek ? IV().peek(i) : IV().vOf(i)) : null;
     const dec = IV() ? IV().status(c.ws, i).key : 'approved';
     const id = v ? v.identity.status : 'passed';
     const held = dec !== 'approved';
@@ -1186,17 +1204,25 @@
     const s = signerOf(env, i);
     const bank = i.payment && i.payment.method === 'ach' ? i.payment.bank : null;
     const signed = env && (env.status === 'completed' || (s && s.status === 'signed'));
+    const allSigned = !!env && env.status === 'completed';
+    // A countersignature is still to come only while one of the firm's signers has not signed. An agreement for the investor
+    // alone has none: it is complete once they sign.
+    const counter = !!env && !allSigned && env.signers.some((x) => x.role === 'countersigner' && x.status !== 'signed');
     const open = c.off && NS.ops && NS.ops.isOpen(c.off);
     const closedName = c.closed ? h(c.closed.name.replace(/\.$/, '')) : '';
     const next = [];
     if (held) next.push(`${h(t.shortName)} finishes verifying your account${c.req ? '. Your subscription can be accepted once that is done' : ''}.`);
     if (c.req) {
-      next.push(`${h(t.shortName)} reviews your subscription${env ? ' and countersigns the agreement' : ''}. Its status is shown in your portal under Investments.`);
-      if (signed) next.push('A copy of the agreement you signed is in your Documents now; the fully signed copy is added once it is countersigned.');
+      next.push(`${h(t.shortName)} reviews your subscription${counter ? ' and countersigns the agreement' : ''}. Its status is shown in your portal under Investments.`);
+      if (allSigned) next.push('A copy of the signed agreement is in your Documents now.');
+      else if (signed) next.push(`A copy of the agreement you signed is in your Documents now${counter ? '; the fully signed copy is added once it is countersigned' : ''}.`);
       else if (!env) next.push('Your signed subscription is kept with your account records.');
       next.push(open ? `No money is due until it is accepted. You will then get wire instructions for funding it before the dealing date.` : 'No money is due now. When capital is called you will get a notice in your portal with the amount, the due date and wire instructions.');
     } else if (c.closed) next.push(`${closedName} stopped accepting subscriptions before you reached that step, so no subscription was made. ${h(t.support.team)} has been told and will contact you about it.`);
     else next.push('Your investments, distributions, statements and tax documents will appear in your portal.');
+    // Evidence the integration server could not take with the rest (sendCompletion): the investor hears it from this page first.
+    const unsent = (c.fl.unsent || []).map((k) => (k === 'identity' ? 'the ID you uploaded' : 'the verification letter you uploaded'));
+    if (unsent.length) next.push(`${unsent.join(' and ').replace(/^t/, 'T')} could not be sent with your details, so ${h(t.support.team)} may ask you for ${unsent.length > 1 ? 'them' : 'it'} again.`);
     next.push(`Questions? ${h(t.support.team)}${t.support.email ? ` at ${h(t.support.email)}` : ''}${t.support.phone ? ` or ${h(t.support.phone)}` : ''}.`);
     const verifyRows = held
       ? statusRow('Verification', idTxt[0], idTxt[1])
@@ -1218,7 +1244,7 @@
         ${c.it.existing ? '' : statusRow('Tax form', h(i.taxForm || 'Not provided'), i.taxForm ? 'iv-ok' : 'iv-wait')}
         ${c.it.existing ? '' : statusRow('Distributions', bank ? `ACH to the ${h(bank.type)} account ending ${h(U.last4(bank.account))}` : 'Check by mail')}
         ${c.req && c.off ? statusRow('Subscription', `Submitted for ${money(c.off, c.req.cents / 100)} in ${h(c.off.name)}`, 'iv-ok') : c.closed ? statusRow('Subscription', `Not made: ${closedName} is no longer accepting subscriptions`, 'iv-wait') : ''}
-        ${env ? statusRow('Subscription agreement', env.status === 'completed' ? 'Signed by everyone' : s && s.status === 'signed' ? `Signed; waiting for ${h(t.shortName)}’s countersignature` : 'Waiting for your signature', signed ? 'iv-ok' : 'iv-wait') : ''}
+        ${env ? statusRow('Subscription agreement', allSigned ? 'Signed by everyone' : s && s.status === 'signed' ? (counter ? `Signed; waiting for ${h(t.shortName)}’s countersignature` : 'Signed') : 'Waiting for your signature', signed ? 'iv-ok' : 'iv-wait') : ''}
       </dl>
       <h2 class="ivf-h2">What happens next</h2>
       <ul class="ivf-need">${next.map((x) => `<li>${x}</li>`).join('')}</ul>
@@ -1375,7 +1401,9 @@
       const cls = openClasses(o).find((x) => x.id === d.cls);
       const cents = c.it.cents > 0 ? c.it.cents : Math.round((Number(d.amount) || 0) * 100);
       // Verification results that arrive later never hold up the paperwork: acceptance waits for them instead (console).
-      const r = NS.ops.submitSubscription(ws, i, o, { cents, signature: tplReady(c) ? i.contact : d.subSig.trim(), cls: cls ? cls.id : '', embedded: true });
+      // additional: adding to a holding. It is signed on this form only (no agreement envelope), and the request says so,
+      // also in server mode, where the temporary investor record has no positions to tell from.
+      const r = NS.ops.submitSubscription(ws, i, o, { cents, signature: tplReady(c) ? i.contact : d.subSig.trim(), cls: cls ? cls.id : '', embedded: true, additional: holds(c) });
       if (r) {
         fl.requestId = r.id;
         if (r.envelopeId) fl.envelopeId = r.envelopeId;
@@ -1431,15 +1459,40 @@
     if (NS.audit) NS.audit.log(c.ws, { action: 'Invitation opened', record: c.inv.id, fund: c.off ? c.off.id : '', detail: c.inv.title, actor: `${c.inv.title} (investor)` });
     NS.app.save(true);
   }
+  /**
+   * The integration server's own file tests (server/lib/invitations.mjs: isPdf, isPng, isJpeg). It refuses the whole
+   * submission for one file that fails them, and every Try again would fail the same way, so such a file is never sent.
+   */
+  async function sendable(b) {
+    const x = new Uint8Array(await b.slice(0, 8).arrayBuffer());
+    const n = b.size;
+    const pdf = n > 5 && String.fromCharCode(x[0], x[1], x[2], x[3], x[4]) === '%PDF-';
+    const png = n > 8 && [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((y, k) => x[k] === y);
+    const jpeg = n > 3 && x[0] === 0xff && x[1] === 0xd8 && x[2] === 0xff;
+    return pdf || png || jpeg;
+  }
+  const mb = (n) => (n / 1048576).toFixed(1).replace(/\.0$/, '');
   async function sendCompletion(c) {
     const ws = c.ws;
     const i = c.inv;
     const env = envOf(c);
-    const ids = [];
-    if (env) [env.docId, env.workDocId, env.signedDocId].forEach((x) => x && ids.indexOf(x) < 0 && ids.push(x));
+    // Only what the firm's console lacks, most important first, within the server's 25 MB for files. The console already has
+    // the agreement template (env.docId), so the agreement goes as the copy signed on this device: the completed copy once
+    // everyone has signed, otherwise the work copy with the investor's signature, which the firm countersigns.
+    const agreement = env ? (env.status === 'completed' ? env.signedDocId : env.workDocId) : null;
+    const ids = agreement ? [agreement] : [];
+    // Then the investor's evidence: the ID or verification letter they uploaded for the firm to review.
     const v = i.verify || {};
-    ['identity', 'accreditation'].forEach((k) => v[k] && v[k].fileId && ids.indexOf(v[k].fileId) < 0 && ids.push(v[k].fileId));
+    const kindOf = {};
+    ['identity', 'accreditation'].forEach((k) => {
+      const id = v[k] && v[k].fileId;
+      if (id && ids.indexOf(id) < 0) {
+        ids.push(id);
+        kindOf[id] = k;
+      }
+    });
     const files = {};
+    const unsent = [];
     let total = 0;
     for (const id of ids) {
       let b = null;
@@ -1448,15 +1501,22 @@
       } catch (e) {
         b = null;
       }
-      if (!b || total + b.size > MAX_FILES) continue;
-      // The server takes PDFs and ID photos (PNG, JPEG); anything else stays recorded by name for the team, who can ask for it again.
-      const head = new Uint8Array(await b.slice(0, 4).arrayBuffer());
-      const pdf = String.fromCharCode.apply(null, head) === '%PDF';
-      const png = head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47;
-      const jpeg = head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
-      if (!pdf && !png && !jpeg) continue;
-      total += b.size;
-      files[id] = await blobB64(b);
+      const fits = !!b && total + b.size <= MAX_FILES;
+      if (fits && (await sendable(b))) {
+        total += b.size;
+        files[id] = await blobB64(b);
+        continue;
+      }
+      if (id === agreement) {
+        // Never sent without the agreement signed here: the firm could neither countersign nor accept the subscription.
+        // The investor is told why, and who to contact (Try again cannot make the file smaller).
+        const e = new Error(!b ? 'Your signed subscription agreement could not be read from this browser’s storage.' : !fits ? `Your signed subscription agreement is ${mb(b.size)} MB, more than the ${mb(MAX_FILES)} MB this page can send.` : 'Your signed subscription agreement is not a PDF file this page can send.');
+        e.contact = true;
+        throw e;
+      }
+      // Evidence that cannot go (no room left, or not a PDF, PNG or JPEG) stays recorded by name for the firm, who can ask
+      // for it again; the investor's summary says so.
+      unsent.push(kindOf[id]);
     }
     const investor = clone(i);
     delete investor.onboarding.flow;
@@ -1477,6 +1537,7 @@
     };
     await remote.complete(ws.invite.server, ws.invite.token, payload);
     c.fl.sentAt = nowIso();
+    if (unsent.length) c.fl.unsent = unsent;
     // This device keeps only what the summary shows (the last four digits of the bank account), and never the
     // invitation token: on a shared device the next person finds the summary, not the investor's details.
     if (i.payment && i.payment.bank) i.payment.bank = Object.assign({}, i.payment.bank, { account: '****' + U.last4(i.payment.bank.account), routing: '****' + U.last4(i.payment.bank.routing), holder: '' });
@@ -1495,6 +1556,7 @@
     if (o.finishing) return;
     o.finishing = true;
     o.finishError = '';
+    o.finishContact = false;
     NS.app.render();
     try {
       const i = c.inv;
@@ -1535,6 +1597,8 @@
       if (first && !isRemote(ws)) U.toast(c.it.existing ? 'Subscription submitted' : 'Account activated');
     } catch (e) {
       o.finishError = (e && e.message) || 'Something went wrong.';
+      // Retrying cannot help (sendCompletion: the signed agreement cannot be sent from this device): the Done page says who to contact.
+      o.finishContact = !!(e && e.contact);
     }
     o.finishing = false;
     NS.app.save(true);
@@ -1545,11 +1609,12 @@
   function hookSigning() {
     if (hooked || !NS.esign || !NS.esign.onSigned) return;
     hooked = true;
-    NS.esign.onSigned((env, signer) => {
+    NS.esign.onSigned((env, signer, complete) => {
       const c = S().route === 'invite' ? fctx() : null;
       if (!c || !c.req || c.req.envelopeId !== env.id || !signer || signer.investorId !== c.inv.id) return false;
       c.fl.signedAt = signer.signedAt;
-      notify(c.ws, 'agreement_signed', `${c.inv.title} signed the subscription agreement`, `${env.title}: waiting for your countersignature`, `console-envelope-${env.id}`);
+      // An agreement for the investor alone is complete with their signature: nothing waits for the firm's countersignature.
+      notify(c.ws, 'agreement_signed', `${c.inv.title} signed the subscription agreement`, complete ? `${env.title}: complete; this agreement needs no countersignature` : `${env.title}: waiting for your countersignature`, `console-envelope-${env.id}`);
       c.fl.at = 'done';
       NS.app.save(true);
       setTimeout(() => completeFlow(fctx()), 0);

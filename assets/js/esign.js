@@ -2380,7 +2380,9 @@
     ops.submitSubscription = function (ws, inv, o, opts) {
       opts = Object.assign({}, opts);
       let env = null;
-      const isNew = inv && o && !(inv.positions || []).some((p) => p.offeringId === o.id);
+      // opts.additional: the caller knows the investor already holds the offering although this record shows no position
+      // (the onboarding flow in server mode works on a temporary record). Adding to a holding is signed on the form only.
+      const isNew = inv && o && !opts.additional && !(inv.positions || []).some((p) => p.offeringId === o.id);
       const tpl = !opts.envelopeId && isNew ? subscriptionTemplate(ws, o.id) : null;
       if (tpl) {
         try {

@@ -596,6 +596,11 @@
   };
 
   /* ---------- Investors ---------- */
+  /**
+   * An investor's total commitment, in cents. A position without a commitment field is fully called, so its commitment is its
+   * amount: the rule NS.ops.commitOf applies per offering, summed over the offerings the investor holds.
+   */
+  const committedCents = (inv) => Array.from(new Set(inv.positions.map((p) => p.offeringId))).reduce((a, id) => a + OPS().commitOf(inv, { id }), 0);
   NS.views['console-investors'] = {
     mode: 'console',
     render() {
@@ -608,12 +613,13 @@
       const rows = list
         .map((i) => {
           const invested = i.positions.reduce((a, p) => a + p.amount, 0);
-          const committed = i.positions.reduce((a, p) => a + (Number(p.commitment) || 0), 0);
+          const committed = committedCents(i);
           const done = i.onboarding.status === 'complete';
+          // The committed line shows only while some of the commitment is still to be called (compared in cents).
           return `<tr>
             <th scope="row"><span class="strong">${h(i.title)}</span><span class="sub">${h(i.contact)} · ${h(i.email)}</span></th>
             <td>${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</td>
-            <td class="num">${usd(invested)}<span class="sub">${committed > invested ? `${usd(committed)} committed · ` : ''}${i.positions.length} investment${i.positions.length === 1 ? '' : 's'}</span></td>
+            <td class="num">${usd(invested)}<span class="sub">${committed > Math.round(invested * 100) ? `${usd(committed / 100)} committed · ` : ''}${i.positions.length} investment${i.positions.length === 1 ? '' : 's'}</span></td>
             <td>${activation(i)}</td>
             <td>${payLabel(i)}</td>
             <td class="cs-row-actions">${
@@ -1614,7 +1620,7 @@
   NS.actions['con-csv'] = () => {
     const list = S().ui.conList || [];
     const rows = [['Investor', 'Account', 'Contact', 'Email', 'Phone', 'Mailing address', 'Investing as', 'Offerings', 'Invested', 'Committed', 'Account status', 'Paid by']].concat(
-      list.map((inv) => [inv.title, inv.id, inv.contact, inv.email, inv.phone || '', inv.address || '', (NS.ENTITY_TYPES[inv.type] || {}).label || inv.type, offeringsOf(inv).join('; '), inv.positions.reduce((a, p) => a + p.amount, 0), inv.positions.reduce((a, p) => a + (Number(p.commitment) || 0), 0), statusText(inv), payMethod(inv)])
+      list.map((inv) => [inv.title, inv.id, inv.contact, inv.email, inv.phone || '', inv.address || '', (NS.ENTITY_TYPES[inv.type] || {}).label || inv.type, offeringsOf(inv).join('; '), inv.positions.reduce((a, p) => a + p.amount, 0), committedCents(inv) / 100, statusText(inv), payMethod(inv)])
     );
     U.download(`${slug()}_investor_contacts_${today()}.csv`, toCsv(rows), { mime: 'text/csv' });
   };
@@ -2025,19 +2031,23 @@
     render() {
       const w = W();
       const tab = S().ui.kycTab || 'attention';
-      const rows0 = w.investors.map((i) => ({ i, k: OPS().kycOf(i), lab: OPS().kycLabel(OPS().kycOf(i)) }));
+      // DIY edition: checks waiting on the team (integrations.js), counted for every investor with a verification record.
+      const IVA = NS.integrations && NS.integrations.active(w) ? NS.integrations : null;
+      const rows0 = w.investors.map((i) => ({ i, k: OPS().kycOf(i), lab: OPS().kycLabel(OPS().kycOf(i)), team: IVA && i.verify ? IVA.awaitingTeam(w, i).length : 0 }));
       const count = (key) => rows0.filter((r) => r.lab.key === key).length;
-      const attention = rows0.filter((r) => r.lab.key !== 'cleared');
+      // A cleared investor stays on Needs attention while a check waits on the team (an accreditation letter can hold a Rule 506(c) subscription).
+      const attention = rows0.filter((r) => r.lab.key !== 'cleared' || r.team);
       const list = (tab === 'attention' ? attention : rows0).slice().sort((a, b) => {
         const order = { review: 0, rejected: 1, due: 2, pending: 3, not_started: 4, cleared: 5 };
-        return (order[a.lab.key] - order[b.lab.key]) || (a.i.id < b.i.id ? -1 : 1);
+        const rank = (r) => (r.team && r.lab.key === 'cleared' ? order.pending : order[r.lab.key]);
+        return (rank(a) - rank(b)) || (a.i.id < b.i.id ? -1 : 1);
       });
       const open = S().ui.kycOpen;
       const rows = list
-        .map(({ i, k, lab }) => {
+        .map(({ i, k, lab, team }) => {
           const st = { cleared: badge('ok', 'Cleared'), review: badge('bad', 'Needs review'), rejected: badge('bad', 'Not approved'), due: badge('warn', 'Re-screening due'), pending: badge('adj', 'In progress'), not_started: badge('mute', 'Not started') }[lab.key];
-          // DIY edition: the automated checks behind this investor's status (integrations.js).
-          const ivd = NS.integrations && NS.integrations.active(w) && i.verify ? NS.integrations.vOf(i) : null;
+          // DIY edition: the automated checks behind this investor's status (integrations.js), read without changing the record.
+          const ivd = IVA && i.verify ? IVA.peek(i) : null;
           let act = '';
           if (lab.key === 'review' || lab.key === 'rejected') act = `<button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="kyc-open" data-id="${h(i.id)}">${k.match ? 'Review match' : 'Review'}</button>`;
           else if (lab.key === 'pending' && k.verifiedOn && !ivd) act = `<button class="cs-btn cs-btn-small" type="button" data-action="kyc-approve" data-id="${h(i.id)}">Approve identity</button>`;
@@ -2045,12 +2055,13 @@
           const IVN = NS.integrations;
           // Which connection ran each check, and result buttons for checks waiting on the team (hosted links, uploads, team screening).
           const rec = ivd ? IVN.recordable(w, i) : [];
-          // A cleared investor can still have a check waiting on the team (a team screening after approval): keep the details reachable.
-          if (ivd && rec.length && (lab.key === 'cleared' || lab.key === 'due')) act += ` <button class="cs-btn cs-btn-small" type="button" data-action="kyc-open" data-id="${h(i.id)}">Details</button>`;
+          // A cleared investor can still have a check waiting on the team (a team screening after approval): keep the details reachable,
+          // and say so plainly when the check is what keeps them on Needs attention.
+          if (ivd && rec.length && (lab.key === 'cleared' || lab.key === 'due')) act += ` <button class="cs-btn cs-btn-small${team ? ' cs-btn-primary' : ''}" type="button" data-action="kyc-open" data-id="${h(i.id)}">${team ? 'Record result' : 'Details'}</button>`;
           const ST = { not_started: 'not started', pending: 'waiting for the result', passed: 'verified', verified: 'verified', clear: 'clear', review: 'needs review', potential_match: 'potential match', failed: 'not verified', rejected: 'not accredited', match: 'confirmed match' };
           const recordBtns = (kind, conn) => `<div class="iv-record" role="group" aria-label="Record result"><span>Record result</span>${IVN.RECORD[kind].map(([o, l]) => `<button class="cs-btn cs-btn-small" type="button" data-action="kyc-iv-record" data-id="${h(i.id)}" data-kind="${kind}" data-connection="${h(conn || '')}" data-outcome="${o}">${l}</button>`).join('')}</div>`;
           const canRecord = (kind, conn) => rec.some((r) => r.kind === kind && r.connection === conn);
-          const ivLine = (label, x, kind) => `<li><strong>${label}:</strong> ${h(ST[x.status] || x.status)}${IVN.via(w, x, kind) ? ` · ${h(IVN.via(w, x, kind))}` : ''}${x.method ? ` · ${h(x.method)}` : ''}${x.ref ? ` · ref ${h(x.ref)}` : ''}${x.expiresAt ? ` · valid until ${date(x.expiresAt)}` : ''}${x.note ? ` · note: ${h(x.note)}` : ''}${x.recordedBy ? ` · recorded by ${h(x.recordedBy)}` : ''}${x.fileId ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(x.fileId)}" data-name="${h(x.fileName || 'file')}">${h(x.fileName || 'View file')}</button>` : ''}${canRecord(kind, x.connection) ? recordBtns(kind, x.connection) : ''}</li>`;
+          const ivLine = (label, x, kind) => `<li><strong>${label}:</strong> ${h(ST[x.status] || x.status)}${IVN.via(w, x, kind) ? ` · ${h(IVN.via(w, x, kind))}` : ''}${x.method ? ` · ${h(x.method)}` : ''}${x.ref ? ` · ref ${h(x.ref)}` : ''}${x.expiresAt ? ` · valid until ${date(x.expiresAt)}` : ''}${x.note ? ` · note: ${h(x.note)}` : ''}${x.recordedBy ? ` · recorded by ${h(x.recordedBy)}` : ''}${x.fileId ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(x.fileId)}" data-name="${h(x.fileName || 'file')}">${h(x.fileName || 'View file')}</button>` : ''}${canRecord(kind, x.connection || '') ? recordBtns(kind, x.connection) : ''}</li>`;
           const amlLine = (x) => `<li><strong>Screening:</strong> ${h(ST[x.status] || x.status)}${(x.results || []).length ? `<ul class="iv-results">${x.results.map((r) => `<li>${h(r.via)}: ${h(ST[r.status] || r.status)}${(r.hits || []).length ? ` · ${r.hits.map((x) => `${h(x.name)} on ${h(x.list)}${x.listed ? ` as “${h(x.listed)}”` : ''}${x.score ? `, ${Math.round(x.score * 100)}%` : ''}${x.detail ? ` (${h(x.detail)})` : ''}`).join('; ')}` : ''}${r.ref ? ` · ref ${h(r.ref)}` : ''}${r.error ? ` · ${h(r.error)}` : ''}${r.note ? ` · note: ${h(r.note)}` : ''}${r.by ? ` · recorded by ${h(r.by)}` : ''}${canRecord('aml', r.connection) ? recordBtns('aml', r.connection) : ''}</li>`).join('')}</ul>` : IVN.via(w, x, 'aml') ? ` · ${h(IVN.via(w, x, 'aml'))}` : ''}</li>`;
           if (ivd && !act && lab.key === 'pending') act = `<button class="cs-btn cs-btn-small${rec.length ? ' cs-btn-primary' : ''}" type="button" data-action="kyc-open" data-id="${h(i.id)}">${rec.length ? 'Record result' : 'Details'}</button>`;
           const detail =
