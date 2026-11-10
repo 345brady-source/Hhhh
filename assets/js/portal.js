@@ -77,13 +77,15 @@
     return `<footer class="pt-foot"><div class="pt-wrap">
       <div class="pt-foot-row"><span>${h(t.support.team)}</span><span>${h(t.support.phone)}</span><span>${h(t.support.email)}</span><span>${h(t.support.hours)}</span></div>
       <p>${h(t.disclaimer)}</p>
-      <p class="pt-foot-legal">© ${new Date().getFullYear()} ${h(t.legalName)}${t.showPoweredBy ? ' · Powered by Carrow &amp; Vale' : ''}</p>
+      <p class="pt-foot-legal">© ${new Date().getFullYear()} ${h(t.legalName)}${t.showPoweredBy ? ` · Powered by ${h(NS.EDITION.product)}` : ''}</p>
     </div></footer>`;
   }
   NS.portalFooter = footer;
   const title = (t, sub) => `<div class="pt-title"><h1>${t}</h1>${sub ? `<p>${sub}</p>` : ''}</div>`;
   const fig = (label, value, note) => `<div class="fig"><dt>${label}</dt><dd>${value}</dd>${note ? `<span>${note}</span>` : ''}</div>`;
   const sec = (label, extra) => `<div class="sec-head"><h2>${label}</h2>${extra || ''}</div>`;
+  /** Page parts for investor pages defined in other files (esign.js, integrations.js). */
+  NS.portalKit = { shell, title, sec, fig, viewer: () => viewer(), footer, openOfferingsHTML: (inv) => openOfferingsHTML(inv) };
 
   function holdBar(x) {
     if (x.progress == null) return `<span class="hold-text">${h(x.remaining)}</span>`;
@@ -93,7 +95,10 @@
   NS.holdBar = holdBar;
 
   function noAccount() {
-    return shell(`${title('Investments')}<p class="empty">No investments are recorded for this account yet. Your investments will appear here once your subscription is accepted and funded.</p>`, 'portfolio');
+    // Investors who joined from an offering link have no investments yet: show verification status and what is open to them.
+    const inv = viewer();
+    const open = inv ? openOfferingsHTML(inv) : '';
+    return shell(`${title('Investments')}${inv ? NS.runHooks('investmentsTop', inv) : ''}${open}<p class="empty">${open ? 'You have no investments yet. Offerings open for investment are listed above.' : 'No investments are recorded for this account yet. Your investments will appear here once your subscription is accepted and funded.'}</p>`, 'portfolio');
   }
 
   /* ---------- Notices from the sponsor ---------- */
@@ -360,6 +365,8 @@
       if (classes.length && !classes.some((c) => c.id === f.cls)) f.cls = classes[0].id;
       const feeder = NS.structures && cfg && cfg.feeders ? NS.structures.feederOf(o, inv, cfg.feeders) : null;
       const odocs = (W().docs || []).filter((d) => d.offeringDoc && !d.hidden && d.offeringId === o.id);
+      // DIY edition: verified identity, and verified accreditation for Rule 506(c) offerings (integrations.js).
+      const gate = NS.integrations ? NS.integrations.subscribeGate(W(), inv, o) : null;
       const cur = curOf(o);
       return shell(
         `<a class="back" href="#investments">${icon('back')}Investments</a>
@@ -379,6 +386,7 @@
               : '<ul class="doc-list"><li>Private placement memorandum</li><li>Limited partnership agreement</li><li>Subscription agreement and investor questionnaire</li></ul>'
           }<p class="meta">Your investor information, tax certification and accreditation from your account are carried into the subscription agreement.</p></section>
         </div>
+        ${gate ? `<div class="iv-banner" role="status">${icon('alert')}<span>${h(gate.reason)}</span>${gate.action ? `<button class="btn btn-primary" type="button" data-action="iv-start" data-kind="${gate.action}">Verify my accreditation</button>` : ''}</div>` : ''}
         <form class="ob-form sub-form" data-form="sub-submit" novalidate>
           <div class="form-grid">
             <label class="field" for="sb-amount"><span>${cfg && cfg.open ? 'Subscription' : 'Commitment'} (${cur === 'USD' ? '$' : h(cur)})</span><input id="sb-amount" type="number" min="${o.minimum}" step="5000" data-bind="sb:amount" value="${h(f.amount)}"${e.amount ? ' aria-invalid="true"' : ''}><span class="hint">Minimum ${money(o.minimum, o)}.${cfg && cfg.open ? '' : ' Capital is called over time.'}</span>${e.amount ? `<span class="field-error">${h(e.amount)}</span>` : ''}</label>
@@ -405,6 +413,11 @@
     const o = u && W().offerings.find((x) => x.id === u.offeringId);
     if (!u || !inv || !o) return;
     const e = {};
+    const gate = NS.integrations ? NS.integrations.subscribeGate(W(), inv, o) : null;
+    if (gate) {
+      U.toast(gate.reason);
+      return;
+    }
     const cents = Math.round((Number(u.amount) || 0) * 100);
     const cls = (o.classes || []).find((c) => c.id === u.cls);
     const min = Math.max(Number(o.minimum) || 0, (cls && Number(cls.minimum)) || 0);
@@ -512,6 +525,7 @@
         `${title('Investments', `${h(inv.title)} · Account ${h(inv.id)} · As of ${date(today, 'long')}`)}
         ${noticesHTML(inv)}
         ${callsDueHTML(inv)}
+        ${NS.runHooks('investmentsTop', inv)}
         <dl class="figs">
           ${fig('Invested', usd(v.totals.invested), `${v.active.length} active investment${v.active.length === 1 ? '' : 's'}`)}
           ${fig('Distributions received', usdc(v.totals.received), 'All investments, to date')}
@@ -742,6 +756,7 @@
       const list = all.filter((d) => (fo === 'all' || d.offeringId === fo) && (fc === 'all' || d.cat === fc));
       return shell(
         `${title('Documents', 'Reports, tax documents, statements and agreements for your account')}
+        ${NS.runHooks('documentsTop', v.investor)}
         <div class="filters">
           <label for="d-off"><span>Investment</span><select id="d-off" data-change="doc-off"><option value="all">All investments</option>${v.positions.map((p) => `<option value="${h(p.offering.id)}"${fo === p.offering.id ? ' selected' : ''}>${h(p.offering.name)}</option>`).join('')}</select></label>
           <label for="d-cat"><span>Type</span><select id="d-cat" data-change="doc-cat"><option value="all">All types</option>${cats.map((c) => `<option${fc === c ? ' selected' : ''}>${c}</option>`).join('')}</select></label>
@@ -849,7 +864,15 @@
           <section class="sec">${sec('Tax and accreditation')}<dl class="terms">
             ${row('Tax form', inv.taxForm ? `${h(inv.taxForm)} on file` : 'Not provided')}
             ${row('Taxpayer ID', inv.tinLast4 ? `ending ${h(inv.tinLast4)}` : 'Not provided')}
-            ${row('Accreditation', inv.accreditation && inv.accreditation.basis ? 'Verified accredited investor' : 'Not provided')}
+            ${row('Accreditation', (() => {
+              const IVN = NS.integrations;
+              if (IVN && IVN.active(W()) && inv.verify) {
+                const a = IVN.vOf(inv).accreditation;
+                if (a.status === 'verified') return `Verified by ${h(IVN.provider('accreditation', a.provider).name)} on ${date(a.verifiedAt)}${a.expiresAt ? `, ${a.expiresAt < NS.dates.today() ? 'expired' : 'valid until'} ${date(a.expiresAt)}` : ''}${a.expiresAt && a.expiresAt < NS.dates.today() ? ' <button class="link-btn" type="button" data-action="iv-start" data-kind="accreditation">Verify again</button>' : ''}`;
+                return a.status === 'pending' || a.status === 'review' ? 'Verification under review' : 'Not verified <button class="link-btn" type="button" data-action="iv-start" data-kind="accreditation">Verify now</button>';
+              }
+              return inv.accreditation && inv.accreditation.basis ? 'Verified accredited investor' : 'Not provided';
+            })())}
             ${inv.accreditation && inv.accreditation.date ? row('Verified', date(inv.accreditation.date)) : ''}
           </dl></section>
           <section class="sec">${sec('Sign-in and delivery')}<dl class="terms">

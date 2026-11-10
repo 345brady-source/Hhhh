@@ -424,7 +424,7 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
       } catch (e) {
         continue;
       }
-      ws.docs.push({ id, title: d.name.replace(/\.[a-z0-9]+$/i, '').replace(/_+/g, ' '), fileName: d.name, type: d.type, size: d.size, sha256: d.sha256, cat: 'Legal', offeringId: o.id, audience: 'fund', investors: [], date: now, taxYear: '', publishedAt: new Date().toISOString(), publishedBy: 'Carrow & Vale staff', offeringDoc: true, hidden: !opts.publish });
+      ws.docs.push({ id, title: d.name.replace(/\.[a-z0-9]+$/i, '').replace(/_+/g, ' '), fileName: d.name, type: d.type, size: d.size, sha256: d.sha256, cat: 'Legal', offeringId: o.id, audience: 'fund', investors: [], date: now, taxYear: '', publishedAt: new Date().toISOString(), publishedBy: NS.app && NS.app.actor ? NS.app.actor() : 'Carrow & Vale staff', offeringDoc: true, hidden: !opts.publish });
     }
     if (NS.audit)
       NS.audit.log(ws, {
@@ -497,5 +497,8 @@ Reporting. Members will receive quarterly reports and annual Schedule K-1s. The 
     }
   };
 
+  /** Shared with esign.js: load a library from the CDN once, and pdf.js ready to render. */
+  NS.loadScript = loadScript;
+  NS.pdfLib = pdfLib;
   NS.intake = { readFile, corpus, claudeSample, readWithClaude, readWithRules, normalize, fromOffering, apply, filled, SAMPLES, LIMIT: 200000 };
 })(window.CVPortal);

@@ -1,5 +1,6 @@
 /*
- * Sponsor console (Carrow & Vale operated): client setup, per-offering
+ * Sponsor console, both editions (operated by Carrow & Vale in the managed
+ * edition, by the sponsor's own admins in the DIY edition): client setup, per-offering
  * configuration, investor roster and invitations, distributions with NACHA
  * file generation, ACH origination settings, and portal branding.
  */
@@ -12,10 +13,12 @@
   const W = () => NS.state.ws;
   const T = () => NS.state.ws.tenant;
   const today = () => NS.dates.today();
-  /* Adding offerings, configuring them and branding the portal are Carrow & Vale
-     work. Sponsors see offerings read-only and never see the brand page. */
-  const isStaff = () => S().role === 'staff';
-  const STAFF_ONLY = ['console-brand', 'console-intake'];
+  /* Adding and configuring offerings, offering intake and branding the portal
+     belong to the owner role: Carrow & Vale staff in the managed edition, the
+     sponsor's admins in the DIY edition. Everyone else sees offerings
+     read-only and never sees the brand page (app.js can / allowed). */
+  const E = NS.EDITION;
+  const canConfigure = () => NS.app.can('configure');
   /** Append an entry to the client's change log (see audit.js). */
   const audit = (action, detail, fund, record) => NS.audit && NS.audit.log(W(), { action, detail, fund: fund || '', record: record || '' });
   const short = (x) => {
@@ -23,16 +26,18 @@
     return v.length > 60 ? v.slice(0, 57) + '…' : v;
   };
   const staffGuard = (fn) => function () {
-    if (!isStaff()) return U.toast('Only Carrow & Vale can change this. Contact your Carrow & Vale team.');
+    if (!canConfigure()) return U.toast(E.managed ? 'Only Carrow & Vale can change this. Contact your Carrow & Vale team.' : 'Only admins can change this. Ask an admin on your team.');
     return fn.apply(this, arguments);
   };
 
   /* ---------- Shell ---------- */
+  // Pages show only when their module is loaded, the edition has them and the role may open them.
   const NAV = [
     ['console', 'Overview'],
     ['console-offerings', 'Offerings'],
     ['console-intake', 'Offering intake'],
     ['console-investors', 'Investors'],
+    ['console-esign', 'E-sign'],
     ['console-calls', 'Capital calls'],
     ['console-distributions', 'Distributions'],
     ['console-requests', 'Requests'],
@@ -41,13 +46,18 @@
     ['console-reports', 'Reports'],
     ['console-audit', 'Audit'],
     ['console-kyc', 'AML/KYC'],
+    ['console-integrations', 'Integrations'],
     ['console-ach', 'ACH origination'],
-    ['console-brand', 'Portal and brand']
+    ['console-brand', 'Portal and brand'],
+    ['console-team', 'Team']
   ];
+  /** Counts other modules show beside their menu entry: NS.navCounts[key] = (ws) => n. */
+  NS.navCounts = NS.navCounts || {};
   /** Items waiting on the manager, shown beside the menu entry. */
   function navCount(k) {
     const w = W();
     if (!NS.ops || !w) return 0;
+    if (NS.navCounts[k]) return NS.navCounts[k](w) || 0;
     if (k === 'console-requests') return (w.requests || []).filter((r) => r.status === 'pending').length;
     if (k === 'console-calls') return (w.calls || []).filter((c) => c.items.some((it) => !it.received)).length;
     if (k === 'console-kyc') return w.investors.filter((i) => ['review', 'due'].indexOf(NS.ops.kycLabel(NS.ops.kycOf(i)).key) >= 0).length;
@@ -58,7 +68,7 @@
     return `<div class="cs">
       <aside class="cs-nav" aria-label="Sponsor console">
         <div class="cs-client">${B.lockup(t)}<span class="cs-client-meta">${h(t.domain)}</span></div>
-        <nav>${NAV.filter(([k]) => isStaff() || STAFF_ONLY.indexOf(k) < 0).map(([k, l]) => {
+        <nav>${NAV.filter(([k]) => NS.views[k] && NS.app.allowed(k)).map(([k, l]) => {
           const n = navCount(k);
           return `<a href="#${k}"${active === k ? ' aria-current="page"' : ''}>${l}${n ? ` <span class="cs-nav-count" aria-label="${n} need attention">${n}</span>` : ''}</a>`;
         }).join('')}</nav>
@@ -68,6 +78,8 @@
   }
   const head = (title, sub, actions) => `<div class="cs-head"><div><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}</div>${actions ? `<div class="cs-actions">${actions}</div>` : ''}</div>`;
   const panel = (title, body, extra) => `<section class="cs-panel">${title ? `<div class="cs-panel-head"><h2>${title}</h2>${extra || ''}</div>` : ''}${body}</section>`;
+  /** Page parts for console pages defined in other files (diy.js, esign.js, integrations.js). */
+  NS.consoleKit = { shell, head, panel, audit, short };
   const ok = (good, label) => `<span class="cs-flag ${good ? 'is-ok' : 'is-todo'}">${icon(good ? 'check' : 'alert')}${label}</span>`;
 
   function raised(oid) {
@@ -127,13 +139,25 @@
       const w = W();
       const t = T();
       const branded = t.domain && t.domain !== NS.TENANT_TEMPLATE.domain && t.support.email !== NS.TENANT_TEMPLATE.support.email;
-      const steps = [
-        ['Brand the investor portal', 'Logo, colors, domain, support contact and disclosures.', branded, 'console-brand', true],
-        ['Set up ACH origination', 'The bank and company IDs used to pay distributions by ACH.', achReady(), 'console-ach'],
-        ['Add offerings', 'Each investment with its own exit timing, distribution schedule and terms.', w.offerings.length > 0, 'console-offerings', true],
-        ['Invite investors', 'Add investors one at a time or import a list. Each receives an activation email.', w.investors.length > 0, 'console-investors'],
-        ['Run the first distribution', 'Allocate a payment pro rata and generate the NACHA file for the bank.', w.runs.length > 0, 'console-distributions']
-      ].filter((s) => isStaff() || !s[4]);
+      const steps = (E.diy
+        ? [
+            ['Brand the investor portal', 'Logo, colors, domain, support contact and disclosures.', branded, 'console-brand', true],
+            ['Connect investor verification', 'Identity, sanctions screening and accredited investor checks run automatically when investors onboard.', !!(NS.integrations && NS.integrations.ready(w)), 'console-integrations', true],
+            ['Set up ACH origination', 'The bank and company IDs used to pay distributions by ACH.', achReady(), 'console-ach'],
+            ['Add your first offering', 'Upload the PPM or operating agreement and the portal sets the offering up for you to review.', w.offerings.length > 0, 'console-intake', true],
+            ['Prepare your subscription agreement', 'Place signature fields once; investors sign it online when they subscribe.', (w.esignTemplates || []).length > 0, 'console-esign'],
+            ['Invite your team', 'Admins manage everything; team members run day-to-day operations.', (w.team || []).length > 1, 'console-team', true],
+            ['Invite investors', 'Add investors one at a time or import a list. Each receives an activation email.', w.investors.length > 0, 'console-investors'],
+            ['Run the first distribution', 'Allocate a payment pro rata and generate the NACHA file for the bank.', w.runs.length > 0, 'console-distributions']
+          ]
+        : [
+            ['Brand the investor portal', 'Logo, colors, domain, support contact and disclosures.', branded, 'console-brand', true],
+            ['Set up ACH origination', 'The bank and company IDs used to pay distributions by ACH.', achReady(), 'console-ach'],
+            ['Add offerings', 'Each investment with its own exit timing, distribution schedule and terms.', w.offerings.length > 0, 'console-offerings', true],
+            ['Invite investors', 'Add investors one at a time or import a list. Each receives an activation email.', w.investors.length > 0, 'console-investors'],
+            ['Run the first distribution', 'Allocate a payment pro rata and generate the NACHA file for the bank.', w.runs.length > 0, 'console-distributions']
+          ]
+      ).filter((s) => (canConfigure() || !s[4]) && NS.views[s[3]]);
       const done = steps.filter((s) => s[2]).length;
       const yearAgo = NS.dates.addMonths(today(), -12);
       const paid12 = w.runs.filter((r) => r.status === 'paid' && r.date > yearAgo).reduce((a, r) => a + r.total, 0);
@@ -151,6 +175,7 @@
       if (checks.length) attention.push(`<li><a href="#console-investors" data-action="inv-filter" data-f="nobank">${checks.length} investor${checks.length === 1 ? ' is' : 's are'} paid by check (no bank account on file)</a></li>`);
       soon.forEach(({ o, x }) => attention.push(`<li><a href="#console-offering-${h(o.id)}">${h(o.name)}: ${h(x.label.toLowerCase())} ${h(x.value)} (${h(x.remaining.toLowerCase())})</a></li>`));
       if (!achReady()) attention.push('<li><a href="#console-ach">ACH origination is not complete, so NACHA files cannot be generated</a></li>');
+      attention.push(NS.runHooks('consoleAttention', w));
       if (NS.ops) {
         (w.calls || [])
           .filter((c) => c.items.some((it) => !it.received))
@@ -171,7 +196,7 @@
         ${
           done < steps.length
             ? panel(
-                `Client setup <span class="cs-count">${done} of ${steps.length} complete</span>`,
+                `${E.diy ? 'Setup' : 'Client setup'} <span class="cs-count">${done} of ${steps.length} complete</span>`,
                 `<ol class="cs-steps">${steps
                   .map((s, i) => `<li class="${s[2] ? 'is-done' : ''}"><span class="cs-step-n">${s[2] ? icon('check') : i + 1}</span><div><strong>${s[0]}</strong><span>${s[1]}</span></div><a class="cs-btn cs-btn-small${s[2] ? '' : ' cs-btn-primary'}" href="#${s[3]}">${s[2] ? 'Review' : 'Start'}</a></li>`)
                   .join('')}</ol>`
@@ -191,13 +216,14 @@
           w.runs.length ? runsTable(w.runs.slice(0, 6), false) : '<p class="cs-muted">No distributions yet. <a href="#console-distributions">Create the first one</a>.</p>',
           '<a class="cs-link" href="#console-distributions">All distributions</a>'
         )}
-        ${done === steps.length ? `<p class="cs-muted cs-setup-done">${icon('check')} Client setup complete.</p>` : ''}`,
+        ${done === steps.length ? `<p class="cs-muted cs-setup-done">${icon('check')} ${E.diy ? 'Setup' : 'Client setup'} complete.</p>` : ''}`,
         'console'
       );
     }
   };
 
   NS.views['console-new-client'] = {
+    edition: 'managed',
     mode: 'console',
     render() {
       return shell(
@@ -253,14 +279,14 @@
         })
         .join('');
       return shell(
-        `${isStaff()
+        `${canConfigure()
           ? head('Offerings', 'Each investment is configured separately: how exit is defined, how often it pays, and which terms investors see.', '<a class="cs-btn" href="#console-intake">Set up from documents</a><button class="cs-btn cs-btn-primary" type="button" data-action="off-add">Add offering</button>')
-          : head('Offerings', 'Your offerings as Carrow &amp; Vale has set them up. To add an offering or change how one is shown to investors, contact your Carrow &amp; Vale team.')}
+          : head('Offerings', E.managed ? 'Your offerings as Carrow &amp; Vale has set them up. To add an offering or change how one is shown to investors, contact your Carrow &amp; Vale team.' : 'Your offerings as your admins have set them up. Only admins can add an offering or change how one is shown to investors.')}
         ${panel(
           '',
           w.offerings.length
             ? `<div class="tbl-scroll"><table class="cs-tbl"><thead><tr><th scope="col">Offering</th><th scope="col">Type</th><th scope="col">Closed</th><th scope="col" class="num">Raised</th><th scope="col" class="num">Investors</th><th scope="col">Distributions</th><th scope="col">Exit</th><th scope="col">Status</th></tr></thead><tbody>${rows}</tbody></table></div>`
-            : `<p class="cs-muted">${isStaff() ? 'No offerings yet. Add the first one to start inviting investors.' : 'No offerings yet. Carrow &amp; Vale adds each offering for you.'}</p>`
+            : `<p class="cs-muted">${canConfigure() ? 'No offerings yet. Add the first one to start inviting investors.' : (E.managed ? 'No offerings yet. Carrow &amp; Vale adds each offering for you.' : 'No offerings yet. An admin on your team adds each offering.')}</p>`
         )}`,
         'console-offerings'
       );
@@ -328,7 +354,7 @@
       </div>
     </div>`;
   }
-  /** Sponsors' view of an offering: the configuration Carrow & Vale set, read-only. */
+  /** The read-only view of an offering for people who cannot configure it. */
   function offReadOnly(o) {
     const n = holdersCount(o.id);
     const x = NS.exitInfo(o);
@@ -338,8 +364,8 @@
     const ach = o.achOverride || {};
     return shell(
       `<a class="cs-back" href="#console-offerings">${icon('back')}Offerings</a>
-      ${head(h(o.name), `${h(o.type)} · ${n} investor${n === 1 ? '' : 's'} · ${usd(raised(o.id))} raised`, n ? `<button class="cs-btn" type="button" data-action="off-preview">Preview as investor</button>` : '')}
-      <p class="cs-muted cs-locked-note">${icon('lock')}Set up and maintained by Carrow &amp; Vale. To change anything on this offering, contact your Carrow &amp; Vale team.</p>
+      ${head(h(o.name), `${h(o.type)} · ${n} investor${n === 1 ? '' : 's'} · ${usd(raised(o.id))} raised`, `${E.diy && o.status === 'Raising' ? `<button class="cs-btn" type="button" data-action="join-link" data-id="${h(o.id)}">Investor sign-up link</button>` : ''}${n ? `<button class="cs-btn" type="button" data-action="off-preview">Preview as investor</button>` : ''}`)}
+      <p class="cs-muted cs-locked-note">${icon('lock')}${E.managed ? 'Set up and maintained by Carrow &amp; Vale. To change anything on this offering, contact your Carrow &amp; Vale team.' : 'Set up and maintained by your admins. To change anything on this offering, ask an admin on your team.'}</p>
       <div class="cs-split">
         <div class="cs-split-main">
           ${panel('Basics', kv([['Short name', h(o.shortName)], ['Status', h(o.status)], ['Closing date', date(o.closeDate)], ['Minimum investment', usd(o.minimum || 0)], ['Description', h(o.summary || '')]]))}
@@ -385,7 +411,7 @@
     render() {
       const o = curOff();
       if (!o) return shell(`${head('Offering not found')}<p class="cs-muted"><a href="#console-offerings">Back to offerings</a></p>`, 'console-offerings');
-      if (!isStaff()) return offReadOnly(o);
+      if (!canConfigure()) return offReadOnly(o);
       if (periodMonths(o.distribution.frequency) && !o.distribution.day) o.distribution.day = NS.data.paymentDay(W(), o);
       const e = o.exit;
       const exitFields =
@@ -407,7 +433,7 @@
       const n = holdersCount(o.id);
       return shell(
         `<a class="cs-back" href="#console-offerings">${icon('back')}Offerings</a>
-        ${head(h(o.name), `${h(o.type)} · ${n} investor${n === 1 ? '' : 's'} · ${usd(raised(o.id))} raised`, n ? `<button class="cs-btn" type="button" data-action="off-preview">Preview as investor</button>` : '')}
+        ${head(h(o.name), `${h(o.type)} · ${n} investor${n === 1 ? '' : 's'} · ${usd(raised(o.id))} raised`, `${E.diy && o.status === 'Raising' ? `<button class="cs-btn" type="button" data-action="join-link" data-id="${h(o.id)}">Investor sign-up link</button>` : ''}${n ? `<button class="cs-btn" type="button" data-action="off-preview">Preview as investor</button>` : ''}`)}
         <div class="cs-split">
           <div class="cs-split-main">
             ${panel('Basics', `<div class="cs-grid">
@@ -468,7 +494,7 @@
   }
   NS.binders.off = (path, v) => {
     const o = curOff();
-    if (!o || !isStaff()) return;
+    if (!o || !canConfigure()) return;
     const before = NS.app.getPath(o, path);
     if (path === 'minimum') v = Number(v) || 0;
     if (path === 'distribution.day') v = Number(v) || 15;
@@ -1200,7 +1226,7 @@
           const sample = w.investors.find((i) => i.id === x.recipients[0]) || { contact: 'Investor', title: '', positions: [] };
           const picked = x.investors && x.investors.length ? x.investors : x.investor ? [x.investor] : [];
           const audience = picked.length ? (picked.length === 1 ? h((w.investors.find((i) => i.id === picked[0]) || { title: picked[0] }).title) : `${picked.length} selected investors`) : xo ? h(xo.shortName || xo.name) : 'All investors';
-          return `<tr><td class="nowrap">${date(x.date)}</td><td>${h(NS.mergeNotice(x.subject, sample, t, x, NS.noticeInvestment(w, sample, picked.length ? { audience: 'all' } : x)))}</td><td>${audience}</td><td class="num">${x.recipients.length}</td><td>${x.sentBy === 'staff' ? 'Carrow &amp; Vale' : h(t.shortName)}</td></tr>`;
+          return `<tr><td class="nowrap">${date(x.date)}</td><td>${h(NS.mergeNotice(x.subject, sample, t, x, NS.noticeInvestment(w, sample, picked.length ? { audience: 'all' } : x)))}</td><td>${audience}</td><td class="num">${x.recipients.length}</td><td>${x.sentByName ? h(x.sentByName) : x.sentBy === 'staff' ? (E.managed ? 'Carrow &amp; Vale' : `${h(t.shortName)} admin`) : h(t.shortName)}</td></tr>`;
         })
         .join('');
       return shell(
@@ -1276,7 +1302,7 @@
     w.notices = w.notices || [];
     const nid = 'n-' + Date.now().toString(36);
     audit('Notice sent', `“${short(n.subject)}” to ${list.length} investor${list.length === 1 ? '' : 's'}`, n.investors.length || n.audience === 'all' ? '' : n.audience, nid);
-    w.notices.push({ id: nid, date: today(), kind: n.kind, audience: n.investors.length ? 'all' : n.audience, investors: n.investors.slice(), includePending: n.includePending, quarter: n.quarter, docName: n.docName, subject: n.subject, body: n.body, recipients: list.map((i) => i.id), sentBy: S().role === 'staff' ? 'staff' : 'sponsor' });
+    w.notices.push({ id: nid, date: today(), kind: n.kind, audience: n.investors.length ? 'all' : n.audience, investors: n.investors.slice(), includePending: n.includePending, quarter: n.quarter, docName: n.docName, subject: n.subject, body: n.body, recipients: list.map((i) => i.id), sentBy: canConfigure() ? 'staff' : 'sponsor', sentByName: NS.app.actor() });
     NS.app.save(true);
     S().ui.notice = null;
     NS.app.render();
@@ -1810,6 +1836,18 @@
   const reqById = (id) => (W().requests || []).find((r) => r.id === id);
   NS.actions['req-approve'] = (el) => {
     const r = reqById(el.getAttribute('data-id'));
+    // DIY: a subscription from an investor who is not verified (or not verified as accredited for Rule 506(c)) needs a second click, which is logged.
+    if (r && r.type === 'subscription' && NS.integrations && NS.integrations.active(W())) {
+      const inv = W().investors.find((x) => x.id === r.investorId);
+      const o = W().offerings.find((x) => x.id === r.offeringId);
+      const gate = NS.integrations.subscribeGate(W(), inv, o);
+      if (gate && S().ui.reqOverride !== r.id) {
+        S().ui.reqOverride = r.id;
+        return U.toast(`${inv ? inv.title : 'This investor'} is not fully verified: ${gate.reason} Click Approve again to approve anyway.`);
+      }
+      if (gate) audit('Subscription approved without full verification', `${inv ? inv.title : r.investorId}: ${gate.reason}`, r.offeringId, r.id);
+      S().ui.reqOverride = null;
+    }
     if (r && OPS().decide(W(), r, true)) {
       NS.app.render();
       U.toast(r.type === 'redemption' ? `Redemption approved for the ${date(r.dealing)} dealing date.` : 'Subscription approved. Record the funding when the wire arrives.');
@@ -1922,7 +1960,7 @@
         continue;
       }
       const title = (d.files.length === 1 && String(d.title).trim()) || docTitle(f.name, ids);
-      const doc = { id, title, fileName: f.name, type: f.type || '', size: f.size, sha256: NS.audit.sha256(buf), cat: d.cat, offeringId: d.offeringId || null, audience: d.audience, investors: ids, date: d.date || today(), taxYear: d.cat === 'Tax' ? String(d.taxYear) : '', publishedAt: new Date().toISOString(), publishedBy: S().role === 'staff' ? 'Carrow & Vale staff' : `${T().shortName} staff` };
+      const doc = { id, title, fileName: f.name, type: f.type || '', size: f.size, sha256: NS.audit.sha256(buf), cat: d.cat, offeringId: d.offeringId || null, audience: d.audience, investors: ids, date: d.date || today(), taxYear: d.cat === 'Tax' ? String(d.taxYear) : '', publishedAt: new Date().toISOString(), publishedBy: NS.app.actor() };
       w.docs = w.docs || [];
       w.docs.push(doc);
       const n = OPS().recipientsOf(w, doc).length;
@@ -1933,7 +1971,7 @@
       const rec = new Set();
       published.forEach((doc) => OPS().recipientsOf(w, doc).forEach((i) => rec.add(i.id)));
       w.notices = w.notices || [];
-      w.notices.push({ id: 'n-' + Date.now().toString(36), date: today(), kind: 'documents', audience: published.every((x) => x.offeringId && x.offeringId === published[0].offeringId) ? published[0].offeringId : 'all', investors: [], includePending: true, quarter: '', docName: published.map((x) => x.title).join(', '), subject: NS.NOTICE_TEMPLATES.documents.subject, body: NS.NOTICE_TEMPLATES.documents.body, recipients: Array.from(rec), sentBy: S().role === 'staff' ? 'staff' : 'sponsor' });
+      w.notices.push({ id: 'n-' + Date.now().toString(36), date: today(), kind: 'documents', audience: published.every((x) => x.offeringId && x.offeringId === published[0].offeringId) ? published[0].offeringId : 'all', investors: [], includePending: true, quarter: '', docName: published.map((x) => x.title).join(', '), subject: NS.NOTICE_TEMPLATES.documents.subject, body: NS.NOTICE_TEMPLATES.documents.body, recipients: Array.from(rec), sentBy: canConfigure() ? 'staff' : 'sponsor', sentByName: NS.app.actor() });
       audit('Notice sent', `New documents notice to ${rec.size} investors`, '', '');
     }
     NS.app.save(true);
@@ -1964,29 +2002,34 @@
       const count = (key) => rows0.filter((r) => r.lab.key === key).length;
       const attention = rows0.filter((r) => r.lab.key !== 'cleared');
       const list = (tab === 'attention' ? attention : rows0).slice().sort((a, b) => {
-        const order = { review: 0, due: 1, pending: 2, not_started: 3, cleared: 4 };
+        const order = { review: 0, rejected: 1, due: 2, pending: 3, not_started: 4, cleared: 5 };
         return (order[a.lab.key] - order[b.lab.key]) || (a.i.id < b.i.id ? -1 : 1);
       });
       const open = S().ui.kycOpen;
       const rows = list
         .map(({ i, k, lab }) => {
-          const st = { cleared: badge('ok', 'Cleared'), review: badge('bad', 'Needs review'), due: badge('warn', 'Re-screening due'), pending: badge('adj', 'In progress'), not_started: badge('mute', 'Not started') }[lab.key];
+          const st = { cleared: badge('ok', 'Cleared'), review: badge('bad', 'Needs review'), rejected: badge('bad', 'Not approved'), due: badge('warn', 'Re-screening due'), pending: badge('adj', 'In progress'), not_started: badge('mute', 'Not started') }[lab.key];
+          // DIY edition: the automated checks behind this investor's status (integrations.js).
+          const ivd = NS.integrations && NS.integrations.active(w) && i.verify ? NS.integrations.vOf(i) : null;
           let act = '';
-          if (lab.key === 'review') act = `<button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="kyc-open" data-id="${h(i.id)}">Review match</button>`;
+          if (lab.key === 'review' || lab.key === 'rejected') act = `<button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="kyc-open" data-id="${h(i.id)}">${k.match ? 'Review match' : 'Review'}</button>`;
           else if (lab.key === 'pending' && k.verifiedOn) act = `<button class="cs-btn cs-btn-small" type="button" data-action="kyc-approve" data-id="${h(i.id)}">Approve identity</button>`;
           else if (lab.key === 'cleared' || lab.key === 'due') act = `<button class="cs-btn cs-btn-small" type="button" data-action="kyc-screen" data-id="${h(i.id)}">Re-screen</button>`;
+          const IVN = NS.integrations;
+          const ivLine = (label, x, kind) => `<li><strong>${label}:</strong> ${h(({ not_started: 'not started', pending: 'waiting for the result', passed: 'verified', verified: 'verified', clear: 'clear', review: 'needs review', potential_match: 'potential match', failed: 'not verified', rejected: 'not accredited', match: 'confirmed match' })[x.status] || x.status)}${x.provider ? ` · ${h(IVN.provider(kind, x.provider).name)}` : ''}${x.method ? ` · ${h(x.method)}` : ''}${x.ref ? ` · ref ${h(x.ref)}` : ''}${x.expiresAt ? ` · valid until ${date(x.expiresAt)}` : ''}${x.fileId ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(x.fileId)}" data-name="${h(x.fileName || 'file')}">${h(x.fileName || 'View file')}</button>` : ''}</li>`;
           const detail =
-            open === i.id && k.match
-              ? `<tr class="kyc-detail"><td colspan="8"><div class="kyc-match"><p><strong>Potential match:</strong> ${h(k.match.list)}, listed name “${h(k.match.name)}”, ${Math.round(k.match.score * 100)}% name similarity. ${h(k.match.detail)}</p>
+            open === i.id && (k.match || ivd)
+              ? `<tr class="kyc-detail"><td colspan="8"><div class="kyc-match">${k.match ? `<p><strong>Potential match:</strong> ${h(k.match.list)}, listed name “${h(k.match.name)}”, ${Math.round(k.match.score * 100)}% name similarity. ${h(k.match.detail)}</p>` : ''}
+                ${ivd ? `<ul class="cs-list">${ivLine('Identity', ivd.identity, 'identity')}${ivLine('Screening', ivd.aml, 'aml')}${ivLine('Accreditation', ivd.accreditation, 'accreditation')}<li><strong>Decision:</strong> ${h(ivd.decision.status)}${ivd.decision.reason ? ` · ${h(ivd.decision.reason)}` : ''}</li></ul>` : ''}
                 <label class="cs-field" for="kyc-note"><span>Review note (kept in the change log)</span><textarea id="kyc-note" rows="2" maxlength="300" data-input="kyc-note">${h(S().ui.kycNote || '')}</textarea></label>
-                <div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="kyc-clear" data-id="${h(i.id)}">Clear as false positive</button><button class="cs-btn" type="button" data-action="kyc-escalate" data-id="${h(i.id)}">Escalate to compliance officer</button><button class="cs-btn" type="button" data-action="kyc-open" data-id="">Cancel</button></div>${k.escalated ? `<p class="cs-hint">Escalated ${date(k.escalated)}.</p>` : ''}</div></td></tr>`
+                <div class="cs-row">${k.match && !ivd ? `<button class="cs-btn cs-btn-primary" type="button" data-action="kyc-clear" data-id="${h(i.id)}">Clear as false positive</button>` : ''}${ivd ? `<button class="cs-btn cs-btn-primary" type="button" data-action="kyc-iv-approve" data-id="${h(i.id)}">Approve investor</button><button class="cs-btn" type="button" data-action="kyc-iv-decline" data-id="${h(i.id)}">Decline</button>` : ''}<button class="cs-btn" type="button" data-action="kyc-escalate" data-id="${h(i.id)}">Escalate to compliance officer</button><button class="cs-btn" type="button" data-action="kyc-open" data-id="">Cancel</button></div>${k.escalated ? `<p class="cs-hint">Escalated ${date(k.escalated)}.</p>` : ''}</div></td></tr>`
               : '';
           return `<tr><td>${h(i.title)}<span class="sub">${h(i.id)} · ${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</span></td><td>${h(k.risk || '—')}</td><td>${k.verifiedOn ? `${date(k.verifiedOn)}<span class="sub">${h(k.method || '')}</span>` : '<span class="sub">Not submitted</span>'}</td><td>${k.screenedOn ? `${k.screening === 'potential_match' ? 'Potential match' : 'No matches'}<span class="sub">${date(k.screenedOn)}</span>` : '—'}</td><td class="nowrap">${k.nextReview ? date(k.nextReview) : '—'}</td><td>${(k.owners || []).map((x) => h(x.name)).join(', ')}</td><td>${st}</td><td class="num nowrap">${act}</td></tr>${detail}`;
         })
         .join('');
       const due = rows0.filter((r) => r.lab.key === 'due');
       return shell(
-        `${head('AML/KYC', 'Identity verification, sanctions and politically exposed person screening, and periodic re-screening for every investor. Potential matches wait here for the compliance officer’s review.', due.length ? `<button class="cs-btn" type="button" data-action="kyc-screen-due">Re-screen ${due.length} due</button>` : '')}
+        `${head('AML/KYC', E.diy ? `Identity verification, sanctions and PEP screening and accredited investor checks run automatically through ${h(NS.integrations ? [NS.integrations.provider('identity', NS.integrations.ensure(w).identity.provider).name, NS.integrations.provider('aml', NS.integrations.ensure(w).aml.provider).name].filter((x, k, a) => a.indexOf(x) === k).join(' and ') : 'your providers')} (<a class="cs-link" href="#console-integrations">Integrations</a>). Anything flagged waits here for your review.` : 'Identity verification, sanctions and politically exposed person screening, and periodic re-screening for every investor. Potential matches wait here for the compliance officer’s review.', due.length ? `<button class="cs-btn" type="button" data-action="kyc-screen-due">Re-screen ${due.length} due</button>` : '')}
         <dl class="cs-figs">
           <div><dt>Cleared</dt><dd>${count('cleared')}</dd></div>
           <div><dt>Needs review</dt><dd>${count('review')}</dd></div>
@@ -2027,26 +2070,61 @@
       U.toast('Escalated to the compliance officer.');
     }
   };
-  NS.actions['kyc-screen'] = (el) => {
+  /** DIY investors verified through providers are re-screened through the screening provider. */
+  async function rescreen(inv) {
+    const IVN = NS.integrations;
+    if (IVN && IVN.active(W()) && inv.verify) {
+      const r = await IVN.screen(W(), inv);
+      IVN.decide(W(), inv);
+      NS.app.save(true);
+      return r.status === 'clear' ? 'no matches' : 'a potential match to review';
+    }
+    OPS().screen(W(), inv);
+    return 'no matches';
+  }
+  NS.actions['kyc-screen'] = async (el) => {
     const inv = invById(el.getAttribute('data-id'));
     if (inv) {
-      OPS().screen(W(), inv);
+      const res = await rescreen(inv);
       NS.app.render();
-      U.toast(`${inv.title} screened: no matches.`);
+      U.toast(`${inv.title} screened: ${res}.`);
     }
   };
-  NS.actions['kyc-screen-due'] = () => {
+  NS.actions['kyc-screen-due'] = async () => {
     const due = W().investors.filter((i) => OPS().kycLabel(OPS().kycOf(i)).key === 'due');
-    due.forEach((i) => OPS().screen(W(), i));
+    for (const i of due) await rescreen(i);
     NS.app.render();
     U.toast(`${due.length} investor${due.length === 1 ? '' : 's'} re-screened.`);
+  };
+  NS.actions['kyc-iv-approve'] = (el) => {
+    const inv = invById(el.getAttribute('data-id'));
+    const note = String(S().ui.kycNote || '').trim();
+    if (!note) return U.toast('Add a review note explaining the decision.');
+    NS.integrations.decideManually(W(), inv, true, note);
+    S().ui.kycOpen = null;
+    NS.app.render();
+    U.toast(`${inv.title} approved.`);
+  };
+  NS.actions['kyc-iv-decline'] = (el) => {
+    const inv = invById(el.getAttribute('data-id'));
+    const note = String(S().ui.kycNote || '').trim();
+    if (!note) return U.toast('Add a review note explaining the decision.');
+    NS.integrations.decideManually(W(), inv, false, note);
+    S().ui.kycOpen = null;
+    NS.app.render();
+    U.toast(`${inv.title} declined.`);
+  };
+  NS.actions['kyc-iv-file'] = (el) => {
+    OPS()
+      .files.get(el.getAttribute('data-id'))
+      .then((blob) => (blob ? U.download(el.getAttribute('data-name'), blob, { mime: blob.type }) : U.toast('This file was uploaded in a different browser.')));
   };
   NS.actions['kyc-approve'] = (el) => {
     const inv = invById(el.getAttribute('data-id'));
     if (inv && OPS().approveIdentity(W(), inv)) NS.app.render();
   };
 
-  /* ---------- Offering intake: set an offering up from its documents (Carrow & Vale) ---------- */
+  /* ---------- Offering intake: set an offering up from its documents (owner role) ---------- */
   const IK = () => NS.intake;
   function ikState() {
     const u = S().ui;
@@ -2384,7 +2462,7 @@
     S().ui.intake = { step: 'review', files: [], samples: [], pasted: '', target: o.id, publish: false, docs: [], progress: '', method: 'manual', profile: IK().fromOffering(W(), o), error: '', trimmed: false, busy: false, done: '' };
     NS.app.go('console-intake');
   };
-  /** Structure summary on an offering's page (read-only; Carrow & Vale can edit it). */
+  /** Structure summary on an offering's page (read-only; the owner role can edit it). */
   function structurePanel(o) {
     if (!NS.audit || !NS.structures) return '';
     const S0 = NS.audit.settings(o);
@@ -2413,7 +2491,7 @@
       })(),
       (o.sourceDocs || []).length ? ['Set up from', (o.sourceDocs || []).map((d) => `${h(d.name)} (${d.method === 'claude' ? 'read by Claude' : d.method === 'manual' ? 'edited' : 'built-in reader'}, ${date(d.readOn)})`).join('<br>')] : null
     ].filter(Boolean);
-    return panel('Structure', `<dl class="cs-kv ik-kv">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`, isStaff() ? `<button class="cs-btn cs-btn-small" type="button" data-action="struct-edit" data-id="${h(o.id)}">Edit structure</button>` : '');
+    return panel('Structure', `<dl class="cs-kv ik-kv">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`, canConfigure() ? `<button class="cs-btn cs-btn-small" type="button" data-action="struct-edit" data-id="${h(o.id)}">Edit structure</button>` : '');
   }
 
   /** Distribution waterfall: split gross proceeds between investors and the GP before allocating. */
@@ -2719,7 +2797,7 @@
         .join('');
       const img = B.safeImage(t.logo.image);
       return shell(
-        `${head('Portal and brand', 'How this client’s portal looks to investors, and what onboarding asks of them.')}
+        `${head('Portal and brand', E.diy ? 'How your portal looks to investors, and what onboarding asks of them.' : 'How this client’s portal looks to investors, and what onboarding asks of them.')}
         <div class="cs-split">
           <div class="cs-split-main">
             ${panel('Identity', `<div class="cs-grid">
@@ -2760,9 +2838,9 @@
               ${tField('Sign-in heading', 'signin.headline', { max: 60 })}
               ${tField('Sign-in text', 'signin.sub', { max: 140 })}
               ${tField('Footer disclosure', 'disclaimer', { textarea: true, rows: 4 })}
-              ${S().role === 'staff' ? tCheck('Show “Powered by Carrow & Vale”', 'showPoweredBy', 'Off by default. Investors see only the client.') : ''}
+              ${canConfigure() ? tCheck(`Show “Powered by ${E.product}”`, 'showPoweredBy', E.managed ? 'Off by default. Investors see only the client.' : 'Off by default. Investors see only your firm.') : ''}
             </div>`)}
-            ${S().role !== 'staff' ? '' : panel('Configuration', `<p class="cs-hint">The client’s full configuration as JSON, for engineering hand-off or to copy a setup to another client.</p>
+            ${!canConfigure() ? '' : panel('Configuration', `<p class="cs-hint">${E.diy ? 'Your portal’s configuration as JSON, for backup or to move it.' : 'The client’s full configuration as JSON, for engineering hand-off or to copy a setup to another client.'}</p>
               <div class="cs-row"><button class="cs-btn" type="button" data-action="cfg-copy">Copy JSON</button><button class="cs-btn cs-btn-danger" type="button" data-action="cfg-reset">${S().ui.cfgReset ? 'Click again to confirm' : builtin ? 'Restore sample data' : 'Delete this client'}</button></div>`)}
           </div>
           <aside class="cs-split-side" id="tb-preview">${brandPreview()}</aside>
@@ -2772,7 +2850,7 @@
     }
   };
   NS.binders.tenant = (path, v, el) => {
-    if (!isStaff()) return;
+    if (!canConfigure()) return;
     if (NS.audit) NS.audit.log(W(), { coalesce: 'tenant:' + path, action: 'Portal settings updated', record: 'portal', from: NS.app.getPath(T(), path), to: v, detailFor: (a, b) => `${path}: ${short(a)} → ${short(b)}` });
     if (path.indexOf('colors.') === 0) {
       const hex = B.normHex(v);
@@ -2841,7 +2919,11 @@
     const id = T().id;
     const builtin = NS.workspace.isBuiltin(id);
     NS.workspace.reset(id);
-    NS.app.setClient(builtin ? id : NS.DEFAULT_TENANT, 'console');
-    U.toast(builtin ? 'Sample data restored' : 'Client deleted');
+    // DIY: a deleted portal goes back to sign-up; sample firms reload fresh.
+    if (E.diy && !builtin) {
+      NS.store.del('active');
+      NS.app.setClient(null, 'diy-start');
+    } else NS.app.setClient(builtin ? id : NS.DEFAULT_TENANT, 'console');
+    U.toast(builtin ? 'Sample data restored' : E.diy ? 'Portal deleted' : 'Client deleted');
   });
 })(window.CVPortal);

@@ -49,7 +49,8 @@ CATEGORIES = [
     ('Other investment fund', 'Other Investment Fund', 18),
     ('Hedge fund', 'Hedge Fund', 15),
 ]
-EXEMPTIONS = {'06B': '506(b)', '06C': '506(c)', '3C.1': '3(c)(1)', '3C.7': '3(c)(7)', '04a5': '4(a)(5)', '06': '506', '3C': ''}
+EXEMPTIONS = {'06B': '506(b)', '06C': '506(c)', '06': '506', '04': 'Rule 504', '4A5': '4(a)(5)', '04a5': '4(a)(5)', '3C': ''}
+exemption = lambda code: EXEMPTIONS.get(code) if code in EXEMPTIONS else re.sub(r'^3C\.(\d+)$', r'3(c)(\1)', code)
 US = set('AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA PR RI SC SD TN TX UT VT VA WA WV WI WY'.split())
 
 # Vehicles that already have an administrator by construction.
@@ -66,6 +67,27 @@ INSTITUTIONAL = re.compile(
     r'neuberger|franklin|invesco|nuveen|hines|cantor|cnl|inland|griffin|stepstone|hamilton lane|pantheon|adams street|'
     r'harbourvest|ubs|credit suisse|barclays|wells fargo|bank of america|merrill|citigroup|jefferies|lazard|evercore|'
     r'man group|aqr|d\.?e\.? shaw|elliott|baupost|blue mountain|golub|hps|sixth street|owl rock|benefit street)\b', re.I)
+TAX_CREDIT = re.compile(r'\b(?:nmtc|new markets|lihtc|low[- ]income housing tax|tax credit|historic tax)\b', re.I)
+STRUCTURE = re.compile(r'\b(?:offshore|cayman|parallel|aiv|intermediate|blocker|lux(?:embourg)?|scsp|icav|ireland)\b', re.I)
+FUND_NO = re.compile(r'\b(?:fund|partners|ventures|equity|opportunities|credit|infrastructure|income|growth|capital)\s+([IVXL]{1,6}|\d{1,2})\b', re.I)
+ROMAN = {'I': 1, 'V': 5, 'X': 10, 'L': 50}
+
+
+def fund_number(name):
+    """The series number of a numbered fund ("Fund VII" → 7), else 0."""
+    m = FUND_NO.search(name)
+    if not m:
+        return 0
+    t = m.group(1).upper()
+    if t.isdigit():
+        return int(t)
+    total = 0
+    for i, ch in enumerate(t):
+        v = ROMAN[ch]
+        total += -v if i + 1 < len(t) and ROMAN[t[i + 1]] > v else v
+    return total
+
+
 DEAL_SPV = re.compile(r'\b20\d\d,?\s*(?:llc|l\.l\.c\.|lp|l\.p\.)\b|\bco-?invest(?:ment)?\b.*\b20\d\d\b', re.I)
 NUMBERED = re.compile(r'\b(?:fund|partners|capital|ventures|opportunit(?:y|ies)|income|growth|equity)\s+(?:i{2,3}|iv|v|vi{1,3}|ix|x|[2-9])\b', re.I)
 
@@ -146,6 +168,7 @@ def main():
     ap.add_argument('--top', type=int, default=300, help='sponsors to keep in the sponsor list (default 300)')
     ap.add_argument('--cap', type=int, default=3000, help='most filings to read per fund type (default 3000)')
     ap.add_argument('--details', action='store_true', help='also read each filing for amounts and investors (set SEC_USER_AGENT first)')
+    ap.add_argument('--cache', default='', help='where to keep EDGAR company lookups between runs (default: next to --out)')
     a = ap.parse_args()
 
     end = dt.date.today()
@@ -167,7 +190,7 @@ def main():
                 continue
             name = clean_name((src.get('display_names') or [''])[0])
             state = (src.get('biz_states') or [''])[0]
-            if state not in US or PLATFORM.search(name) or INSTITUTIONAL.search(name):
+            if state not in US or PLATFORM.search(name) or INSTITUTIONAL.search(name) or TAX_CREDIT.search(name):
                 continue
             prev = found.get(cik)
             if prev and prev['filed'] <= src['file_date']:
@@ -182,7 +205,7 @@ def main():
                 'adsh': src['adsh'],
                 'location': (src.get('biz_locations') or [''])[0],
                 'state': state,
-                'exemptions': ', '.join(x for x in (EXEMPTIONS.get(i, i) for i in src.get('items') or []) if x),
+                'exemptions': ', '.join(x for x in (exemption(i) for i in src.get('items') or []) if x),
                 'items': src.get('items') or [],
             }
             kept += 1
@@ -200,22 +223,40 @@ def main():
     rows = rows[: a.lookups]
     print(f'Looking up {len(rows)} issuers in EDGAR...', file=sys.stderr)
 
+    cache_path = a.cache or os.path.join(os.path.dirname(os.path.abspath(a.out)), '.form-d-cache.json')
+    try:
+        cache = json.load(open(cache_path))
+    except (OSError, ValueError):
+        cache = {}
+    fresh = (dt.date.today() - dt.timedelta(days=30)).isoformat()
     for n, r in enumerate(rows, 1):
-        raw = get(SUBMISSIONS.format(int(r['cik'])))
-        sub = json.loads(raw) if raw else {}
-        biz = (sub.get('addresses') or {}).get('business') or {}
-        rec = (sub.get('filings') or {}).get('recent') or {}
-        dates = rec.get('filingDate') or []
-        forms = rec.get('form') or []
-        r['phone'] = re.sub(r'\D', '', sub.get('phone') or '')
-        r['address'] = ', '.join(x for x in [biz.get('street1'), biz.get('street2'), biz.get('city'), biz.get('stateOrCountry'), biz.get('zipCode')] if x)
-        r['website'] = sub.get('website') or ''
-        r['first_sec_filing'] = min(dates) if dates else r['filed']
-        r['form_d_count'] = sum(1 for f in forms if f in ('D', 'D/A'))
+        hit = cache.get(r['cik'])
+        if not hit or hit.get('fetched', '') < fresh:
+            raw = get(SUBMISSIONS.format(int(r['cik'])))
+            sub = json.loads(raw) if raw else {}
+            biz = (sub.get('addresses') or {}).get('business') or {}
+            rec = (sub.get('filings') or {}).get('recent') or {}
+            dates = rec.get('filingDate') or []
+            forms = rec.get('form') or []
+            hit = {
+                'phone': re.sub(r'\D', '', sub.get('phone') or ''),
+                'address': ', '.join(x for x in [biz.get('street1'), biz.get('street2'), biz.get('city'), biz.get('stateOrCountry'), biz.get('zipCode')] if x),
+                'website': sub.get('website') or '',
+                'first_sec_filing': min(dates) if dates else r['filed'],
+                'form_d_count': sum(1 for f in forms if f in ('D', 'D/A')),
+                'fetched': dt.date.today().isoformat(),
+            }
+            if raw:
+                cache[r['cik']] = hit
+        r.update({k: v for k, v in hit.items() if k != 'fetched'})
         if a.details:
             r.update(details(r['cik'], r['adsh']))
         if n % 100 == 0:
             print(f'  {n}', file=sys.stderr)
+    try:
+        json.dump(cache, open(cache_path, 'w'))
+    except OSError:
+        pass
 
     # A phone shared by unrelated issuers in several cities belongs to a filing agent, not the sponsor.
     cities = {}
@@ -257,8 +298,25 @@ def main():
         stem = ' '.join(common).strip()
         return stem if len(stem) >= 4 else names[0]
 
+    def institutional(vs):
+        """Large managers with their own fund administrators: many parallel or offshore vehicles, high fund numbers, institution-only funds."""
+        n = len(vs)
+        open_market = any('06C' in v['items'] for v in vs)
+        qp_only = any('3C.7' in v['items'] for v in vs)
+        structure = any(STRUCTURE.search(v['name']) for v in vs)
+        top_no = max(fund_number(v['name']) for v in vs)
+        if n >= 15:
+            return True
+        if open_market:
+            return False
+        return n >= 10 or top_no >= 9 or (qp_only and (structure or top_no >= 6 or n >= 5))
+
     sponsors = []
+    dropped = 0
     for vs in groups.values():
+        if institutional(vs):
+            dropped += 1
+            continue
         vs.sort(key=lambda v: (-v['score'], v['filed']))
         top = vs[0]
         cats = sorted({v['category'] for v in vs})
@@ -313,7 +371,7 @@ def main():
         w.writeheader()
         for r in sorted(rows, key=lambda r: (-r['score'], r['filed'])):
             w.writerow({c: r.get(c, '') for c in vcols})
-    print(f'Wrote {len(sponsors)} sponsors to {a.out} and {len(rows)} vehicles to {vout}', file=sys.stderr)
+    print(f'Left out {dropped} institutional sponsors. Wrote {len(sponsors)} sponsors to {a.out} and {len(rows)} vehicles to {vout}', file=sys.stderr)
 
 
 if __name__ == '__main__':

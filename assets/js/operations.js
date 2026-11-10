@@ -143,7 +143,7 @@
           ? 'Dear {first_name},\n\nOur records show that your contribution of {call_amount} for capital call {call_number} of {investment} is due {due_date} and has not yet been received. Wire instructions are in your {portal_name}.\n\nIf you have already sent the wire, please disregard this reminder.\n\n{firm}'
           : 'Dear {first_name},\n\n{investment} is calling capital. Your contribution of {call_amount} is due {due_date}. Sign in to your {portal_name} for the wire instructions and the call notice.\n\nBefore sending a wire, call {team} at {phone} to confirm the instructions. We never change wire instructions by email.\n\n{firm}',
       recipients: list.map((it) => it.investorId),
-      sentBy: NS.state && NS.state.role === 'staff' ? 'staff' : 'sponsor',
+      sentBy: NS.app && NS.app.can('configure') ? 'staff' : 'sponsor',
       amounts,
       due: call.due,
       callNumber: call.number,
@@ -295,7 +295,7 @@
   }
   function kycLabel(k, asOf) {
     if (k.status === 'cleared' && k.nextReview && k.nextReview < (asOf || today())) return { key: 'due', label: 'Re-screening due' };
-    return { cleared: { key: 'cleared', label: 'Cleared' }, review: { key: 'review', label: 'Needs review' }, pending: { key: 'pending', label: 'Verification in progress' }, not_started: { key: 'not_started', label: 'Not started' } }[k.status] || { key: k.status, label: k.status };
+    return { cleared: { key: 'cleared', label: 'Cleared' }, review: { key: 'review', label: 'Needs review' }, pending: { key: 'pending', label: 'Verification in progress' }, not_started: { key: 'not_started', label: 'Not started' }, rejected: { key: 'rejected', label: 'Not approved' } }[k.status] || { key: k.status, label: k.status };
   }
   function screen(ws, inv) {
     const k = Object.assign(kycOf(inv), {});
@@ -318,7 +318,7 @@
     k.status = 'cleared';
     k.screening = 'clear';
     k.reviewedOn = today();
-    k.reviewer = NS.audit ? (NS.state && NS.state.role === 'sponsor' ? `${ws.tenant.shortName} staff` : 'Carrow & Vale staff') : '';
+    k.reviewer = NS.app && NS.app.actor ? NS.app.actor() : '';
     k.reviewNote = note;
     k.nextReview = D.addMonths(today(), REVIEW_MONTHS[k.risk || 'Low'] || 12);
     inv.kyc = k;

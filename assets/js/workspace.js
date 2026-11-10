@@ -5,7 +5,8 @@
  */
 (function (NS) {
   'use strict';
-  const PREFIX = 'cvp2:';
+  // Each edition keeps its own records so both can run in one browser (edition.js).
+  const PREFIX = NS.EDITION ? NS.EDITION.storagePrefix : 'cvp2:';
   const { clone, merge } = NS.util;
 
   const store = {
@@ -110,7 +111,8 @@
       logo: { type: 'monogram', letters, image: '', plate: false },
       idPrefix: letters
     });
-    const ws = { v: 2, tenant, offerings: [], investors: [], runs: [] };
+    // A new portal starts with an empty change log and no operations history (no sample back-fill).
+    const ws = { v: 2, tenant, offerings: [], investors: [], runs: [], notices: [], audit: [], calls: [], requests: [], docs: [] };
     store.set('clients', customIds().concat([id]));
     save(ws, true);
     return ws;

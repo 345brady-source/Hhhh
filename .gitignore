@@ -1,0 +1,11 @@
+# Python bytecode and the Form D finder's cache
+__pycache__/
+*.pyc
+.form-d-cache.json
+
+# Integration server runtime data (verification records, webhook log)
+server/data/
+
+# Local environment files with provider secrets
+.env
+.env.*

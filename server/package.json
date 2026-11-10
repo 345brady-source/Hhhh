@@ -1,0 +1,12 @@
+{
+  "name": "shareholder-desk-integration-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Provider calls and webhooks for automated investor verification (identity, sanctions screening, accreditation) in the Shareholder Desk portal.",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node index.mjs",
+    "test": "node --test"
+  }
+}

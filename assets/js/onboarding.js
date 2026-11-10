@@ -150,9 +150,13 @@
       </div>`;
   }
   const ENTITY_KYC = (type) => type === 'entity' || type === 'trust' || type === 'ira';
+  /** DIY edition: identity, screening and accreditation run through the sponsor's providers (integrations.js). */
+  const IV = () => (NS.integrations && NS.integrations.active(W()) ? NS.integrations : null);
+  const accVerified = () => IV() && NS.integrations.ensure(W()).accreditation.provider !== 'self' && NS.integrations.needsAccreditation(W(), inv());
   function stepIdentity() {
     const d = ob().d;
     const ent = ENTITY_KYC(d.type);
+    const iv = IV();
     return `<h1>${LABELS.identity}</h1>
       <p class="lede">${h(T().shortName)} is required to verify the identity of every investor and screen them against sanctions lists before accepting an investment.</p>
       <div class="form-grid">
@@ -166,14 +170,27 @@
           <label class="field field-wide" for="ob-idFile"><span>${d.type === 'trust' ? 'Trust certificate' : d.type === 'ira' ? 'Custodian account statement' : 'Formation documents'} <em>Optional in this demo</em></span><input id="ob-idFile" type="file" accept="application/pdf,image/png,image/jpeg" data-change="ob-idfile"><span class="hint">${d.idFile ? `Attached: ${h(d.idFile)}` : 'PDF or photo'}</span></label>`
             : `${input('dob', 'Date of birth', { type: 'date', auto: 'bday' })}
           ${radios('citizen', 'Citizenship', [['us', 'United States'], ['other', 'Another country']])}
-          ${radios('idType', 'Government ID', [['drivers', 'Driver’s license'], ['passport', 'Passport'], ['state', 'State ID card']])}
+          ${
+            iv
+              ? ''
+              : `${radios('idType', 'Government ID', [['drivers', 'Driver’s license'], ['passport', 'Passport'], ['state', 'State ID card']])}
           <label class="field field-wide" for="ob-idFile"><span>Photo of your ID <em>Optional in this demo</em></span><input id="ob-idFile" type="file" accept="image/png,image/jpeg,application/pdf" capture="environment" data-change="ob-idfile"><span class="hint">${d.idFile ? `Attached: ${h(d.idFile)}` : 'Front of the card or the passport photo page'}</span></label>`
+          }`
         }
+        ${iv ? iv.stepPanel(W(), inv(), 'identity') : ''}${err('ivIdentity')}
         ${radios('pep', `Is ${ent ? 'any owner or controlling person' : 'any account owner'} a senior political figure, or a close family member or associate of one?`, [['no', 'No'], ['yes', 'Yes', 'Investor relations will contact you for enhanced due diligence']])}
       </div>
       <p class="meta">Your details are checked against OFAC and other sanctions lists and politically exposed person databases. They are encrypted and used only for anti-money-laundering compliance.</p>`;
   }
   function stepAccreditation() {
+    if (accVerified()) {
+      return `<h1>${LABELS.accreditation}</h1>
+      <p class="lede">${h(T().shortName)} offers interests only to verified accredited investors (Rule 506(c)), so your accredited status is confirmed by a third party rather than self-certified.</p>
+      <div class="form-grid">
+        ${NS.integrations.stepPanel(W(), inv(), 'accreditation')}${err('ivAccreditation')}
+        ${check('accAttest', `I confirm the information I provide is accurate and will tell ${h(T().shortName)} if it changes.`)}
+      </div>`;
+    }
     return `<h1>${LABELS.accreditation}</h1>
       <p class="lede">These offerings are available only to accredited investors under Regulation D. Select the basis that applies to ${h(ob().d.title)}.</p>
       <div class="form-grid">
@@ -270,9 +287,12 @@
         else if (age < 18 || age > 120) e.dob = 'Account owners must be at least 18.';
       }
       if (!d.pep) e.pep = 'Answer this question to continue.';
+      if (IV() && !IV().canContinue(W(), inv(), 'identity')) e.ivIdentity = 'Complete the identity check to continue.';
     }
     if (step === 'accreditation') {
-      if (!d.accBasis) e.accBasis = 'Select the basis that applies.';
+      if (accVerified()) {
+        if (!IV().canContinue(W(), inv(), 'accreditation')) e.ivAccreditation = 'Complete the accreditation check to continue.';
+      } else if (!d.accBasis) e.accBasis = 'Select the basis that applies.';
       if (!d.accAttest) e.accAttest = 'Confirm the statement to continue.';
     }
     if (step === 'payment' && d.method === 'ach') {
@@ -314,11 +334,18 @@
     i.address = `${d.street.trim()}, ${d.city.trim()}, ${d.st.toUpperCase()} ${d.zip.trim()}`;
     i.phone = d.phone;
     i.tinLast4 = d.tin.replace(/\D/g, '').slice(-4);
-    if (T().onboarding.accreditation) i.accreditation = { basis: d.accBasis, date: now };
+    if (T().onboarding.accreditation && !accVerified()) i.accreditation = { basis: d.accBasis, date: now };
     if (T().onboarding.taxForm) i.taxForm = 'W-9';
     i.edelivery = !!d.edelivery;
     i.payment = d.method === 'ach' ? { method: 'ach', bank: { holder: d.holder.trim(), routing: d.routing.replace(/\D/g, ''), account: d.account.replace(/\D/g, ''), type: d.acctType } } : { method: 'check', bank: null };
-    i.onboarding = { status: 'complete', step: 5, invited: i.onboarding.invited, completed: now };
+    i.onboarding = Object.assign({}, i.onboarding, { status: 'complete', step: 5, completed: now });
+    if (IV()) {
+      // DIY edition: the providers' results decide; integrations.js screens owners and approves or holds.
+      if (NS.audit) NS.audit.log(W(), { action: 'Account activated', record: i.id, detail: `Profile, ${i.taxForm || 'tax form'} and distribution account confirmed; verification ${IV().vOf(i).decision.status}`, actor: `${i.title} (investor)` });
+      return IV()
+        .finishOnboarding(W(), i, d)
+        .then(() => NS.app.save(true));
+    }
     // AML/KYC: identity collected above; screening runs at activation (simulated in this demo).
     const ent = ENTITY_KYC(d.type);
     const pep = d.pep === 'yes';
@@ -357,7 +384,8 @@
         const i = inv();
         const bank = i.payment && i.payment.bank;
         return `<div class="pt pt-auth">${head}<main class="pt-main" id="main" tabindex="-1"><div class="pt-wrap ob-done">
-          <h1>${o.mode === 'bank' ? 'Bank account updated' : 'Your account is active'}</h1>
+          <h1>${o.mode === 'bank' ? 'Bank account updated' : IV() && IV().status(W(), i).key !== 'approved' ? 'Thank you. We are finishing your verification' : 'Your account is active'}</h1>
+          ${o.mode !== 'bank' && IV() && IV().status(W(), i).key !== 'approved' ? `<p class="lede">${IV().status(W(), i).key === 'review' ? `${h(t.support.team)} is reviewing your details and will contact you if anything else is needed.` : 'Your identity checks are still running. You will get an email as soon as your account is ready to invest.'}</p>` : ''}
           <p class="lede">${
             bank ? `Future distributions will be paid by ACH to the ${bank.type} account ending ${h(U.last4(bank.account))}.` : 'Future distributions will be mailed by check to your address on file.'
           }${o.mode === 'bank' ? ` For your protection, ${h(t.support.team)} will call the number on file to confirm this change before the next payment.` : ''}</p>
@@ -424,7 +452,7 @@
       window.scrollTo(0, 0);
     }
   };
-  NS.forms['ob-step'] = () => {
+  NS.forms['ob-step'] = async () => {
     const o = ob();
     const steps = stepsFor(o.mode);
     const key = steps[o.step];
@@ -437,7 +465,8 @@
       return;
     }
     const last = o.step === steps.length - 1;
-    applyToInvestor(last);
+    const pending = applyToInvestor(last);
+    if (pending && pending.then) await pending;
     if (last) o.done = true;
     else o.step += 1;
     NS.app.render();

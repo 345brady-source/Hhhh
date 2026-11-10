@@ -804,8 +804,10 @@
   function seedLog(ws) {
     const t = ws.tenant;
     const now = D.today();
-    const staff = 'Carrow & Vale staff';
-    const sponsor = `${t.shortName} staff`;
+    // Seeded history: in the DIY edition the sponsor's admins did what Carrow & Vale staff do in the managed edition.
+    const diy = NS.EDITION && NS.EDITION.diy;
+    const staff = diy ? `${t.shortName} admin` : 'Carrow & Vale staff';
+    const sponsor = diy ? `${t.shortName} team` : `${t.shortName} staff`;
     const sys = 'Portal (automatic)';
     const ev = [];
     const add = (day, salt, actor, action, fund, record, detail) => {
@@ -893,6 +895,7 @@
     return ws.audit;
   }
   function currentActor() {
+    if (NS.app && NS.app.actor && NS.state && NS.state.ws) return NS.app.actor();
     const st = NS.state || {};
     const t = st.ws ? st.ws.tenant : null;
     if (st.role === 'sponsor') return `${t ? t.shortName : 'Sponsor'} staff`;
@@ -1019,7 +1022,9 @@
     const noTax = live.filter((a) => !a.investor.taxForm);
     add('tax', 'Tax forms on file', !noTax.length, `W-9 or W-8 on file for ${live.length - noTax.length} of ${live.length} investors.`, noTax.map((a) => `${a.investor.title} (${a.investor.id}): no tax form. Request a W-9 before year-end tax reporting.`));
 
-    const noAcc = live.filter((a) => !(a.investor.accreditation && a.investor.accreditation.basis));
+    // DIY edition: an investor verified through a provider counts only while the verification is current.
+    const accOk = (inv) => (NS.integrations && NS.integrations.active(ws) && inv.verify ? NS.integrations.accreditationValid(ws, inv) || !NS.integrations.needsAccreditation(ws, inv) : !!(inv.accreditation && inv.accreditation.basis));
+    const noAcc = live.filter((a) => !accOk(a.investor));
     add('acc', 'Accreditation verified', !noAcc.length, `Verified accredited investor on file for ${live.length - noAcc.length} of ${live.length} investors.`, noAcc.map((a) => `${a.investor.title} (${a.investor.id}): accreditation not verified.`));
 
     const l3 = H.rows.filter((r) => r.level === 3);

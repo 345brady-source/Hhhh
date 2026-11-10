@@ -1,0 +1,74 @@
+/*
+ * Shareholder Desk (DIY edition): the sign-up page shown before a portal
+ * exists. Uses the portal tokens (portal.css); the template brand is the
+ * Carrow & Vale navy and teal until the sponsor picks its own.
+ */
+.sd { min-height: 100vh; display: flex; flex-direction: column; background: var(--surface-2); color: var(--fg); font-family: var(--font-body); }
+.sd-head { background: var(--surface); border-bottom: 1px solid var(--line); }
+.sd-head-in { max-width: 1120px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.sd-brand { display: inline-flex; align-items: center; gap: 10px; }
+.sd-brand .cv-mark { width: 30px; height: 30px; flex: none; }
+.sd-word { font-family: var(--font-display); font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: var(--fg); }
+.sd-signin { font-size: 14px; font-weight: 600; color: var(--brand-text); text-decoration: none; }
+.sd-signin:hover { text-decoration: underline; }
+.sd-main { flex: 1; width: 100%; max-width: 1120px; margin: 0 auto; padding: 40px 16px 56px; }
+.sd-hero { max-width: 760px; margin-bottom: 28px; }
+.sd-hero h1 { margin: 0 0 12px; font-family: var(--font-display); font-size: clamp(28px, 4.2vw, 42px); line-height: 1.12; letter-spacing: -0.02em; }
+.sd-lede { margin: 0; font-size: 17px; line-height: 1.6; color: var(--fg-2); }
+.sd-cols { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.sd-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md, 4px); padding: 22px; }
+.sd-card + .sd-card { margin-top: 20px; }
+.sd-card h2 { margin: 0 0 14px; font-size: 18px; font-weight: 800; }
+.sd-form { display: flex; flex-direction: column; gap: 14px; }
+.sd-form .field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: var(--fg-2); }
+.sd-form input[type="text"], .sd-form input[type="email"], .sd-form input[type="password"] { min-height: 42px; padding: 9px 12px; border: 1px solid var(--line-strong); border-radius: var(--r-md, 4px); background: var(--surface); color: var(--fg); font: inherit; font-size: 15px; font-weight: 500; }
+.sd-form input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.sd-form input[aria-invalid="true"] { border-color: var(--bad); }
+.sd-form fieldset { border: 0; margin: 0; padding: 0; }
+.sd-form legend { padding: 0 0 6px; }
+.sd-form .choice-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-weight: 500; color: var(--fg); }
+.sd-brandrow { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 14px; align-items: start; }
+.sd-brandrow input[type="color"] { width: 64px; height: 42px; padding: 2px; border: 1px solid var(--line-strong); border-radius: var(--r-md, 4px); background: var(--surface); }
+.sd-submit { width: 100%; min-height: 46px; font-size: 15px; }
+.sd-list { margin: 0; padding-left: 18px; line-height: 1.85; color: var(--fg-2); font-size: 14px; }
+.sd-samples { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.sd-samples li { display: flex; flex-direction: column; gap: 2px; }
+.sd-samples .link-btn { align-self: flex-start; font-size: 15px; font-weight: 700; }
+.sd-foot { padding: 18px 16px 28px; text-align: center; font-size: 13px; color: var(--fg-3); }
+.demo-start { position: fixed; z-index: 75; left: calc(16px + env(safe-area-inset-left, 0px)); bottom: calc(60px + env(safe-area-inset-bottom, 0px)); padding: 6px 12px; border: 1px solid var(--cv-line, #DCDCDC); border-radius: 4px; background: var(--cv-panel, #FFFFFF); color: var(--cv-ink-2, #474747); font: 600 12px var(--cv-font, sans-serif); cursor: pointer; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); }
+.demo-start:hover { color: var(--cv-ink, #1B1B1B); }
+@media (max-width: 860px) {
+  .sd-cols { grid-template-columns: minmax(0, 1fr); }
+  .sd-main { padding-top: 28px; }
+}
+@media (max-width: 480px) {
+  .sd-brandrow { grid-template-columns: minmax(0, 1fr); }
+  .sd-card { padding: 18px; }
+}
+
+/* ---------- Automated verification (integrations.js) ---------- */
+.iv-panel { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border: 1px solid var(--line-strong); border-radius: var(--r-md, 4px); background: var(--surface-2); }
+.iv-panel .btn { align-self: flex-start; }
+.iv-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.iv-chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--surface-3); color: var(--fg-2); white-space: nowrap; }
+.iv-ok { background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.iv-wait { background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); }
+.iv-bad { background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad); }
+.iv-banner { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 20px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--line)); border-radius: var(--r-md, 4px); background: color-mix(in srgb, var(--warn) 8%, var(--surface)); color: var(--fg); font-size: 14px; line-height: 1.5; }
+.iv-banner .i { color: var(--warn); flex: none; }
+.iv-banner span { flex: 1 1 260px; }
+.iv-dlg { display: flex; flex-direction: column; gap: 14px; padding: 18px 20px 20px; }
+.iv-dlg .field { display: flex; flex-direction: column; gap: 6px; font-weight: 700; font-size: 13px; }
+.iv-dlg .choice-row { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; font-weight: 500; font-size: 14px; }
+.iv-dlg fieldset { border: 0; margin: 0; padding: 0; }
+.iv-sandbox { display: flex; align-items: center; gap: 8px; margin: 0; padding: 8px 10px; border-radius: var(--r-md, 4px); background: var(--surface-3); color: var(--fg-2); font-size: 13px; font-weight: 600; }
+.iv-steps { margin: 0; padding-left: 20px; line-height: 1.8; color: var(--fg-2); font-size: 14px; }
+.iv-outcome { padding-top: 10px; border-top: 1px solid var(--line); }
+.dlg-iv { width: min(560px, calc(100vw - 32px)); }
+.iv-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.iv-card { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 12px 14px 12px 38px; border: 1px solid var(--cv-line); border-radius: 4px; background: var(--cv-panel); cursor: pointer; }
+.iv-card input { position: absolute; left: 13px; top: 14px; width: 16px; height: 16px; accent-color: var(--cv-accent); }
+.iv-card.is-on { border-color: var(--cv-accent); box-shadow: inset 0 0 0 1px var(--cv-accent); }
+.iv-card-name { font-size: 14px; font-weight: 800; color: var(--cv-ink); }
+.iv-card-how { font-size: 12px; font-weight: 500; line-height: 1.45; color: var(--cv-ink-3); }
+.sd-link { display: block; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: var(--r-md, 4px); background: var(--surface-2); font-size: 13px; overflow-wrap: anywhere; user-select: all; }

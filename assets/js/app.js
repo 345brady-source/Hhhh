@@ -1,11 +1,14 @@
 /*
- * App shell: state, routing, the Carrow & Vale operator bar, shared UI helpers
- * and event delegation. Views live in portal.js, onboarding.js and console.js.
+ * App shell: state, routing, roles and permissions for each edition
+ * (edition.js), the Carrow & Vale operator bar (managed edition), shared UI
+ * helpers and event delegation. Views live in portal.js, onboarding.js,
+ * console.js and diy.js.
  */
 (function () {
   'use strict';
   const NS = window.CVPortal;
   const B = NS.brand;
+  const E = NS.EDITION;
 
   /* ---------- Formatting ---------- */
   const h = B.esc;
@@ -133,6 +136,23 @@
   NS.changes = {};
   NS.forms = {};
   NS.binders = {};
+  /**
+   * Other modules add sections to shared pages without editing them:
+   * NS.hooks.investmentsTop.push((inv) => html), documentsTop (inv),
+   * consoleAttention (ws) → '<li>…</li>' items for the overview.
+   */
+  NS.hooks = { investmentsTop: [], documentsTop: [], consoleAttention: [] };
+  NS.runHooks = (name, ...args) =>
+    (NS.hooks[name] || [])
+      .map((fn) => {
+        try {
+          return fn(...args) || '';
+        } catch (e) {
+          if (window.console) console.error(e);
+          return '';
+        }
+      })
+      .join('');
 
   function resolveClient() {
     const list = NS.workspace.list();
@@ -149,10 +169,21 @@
     }
     const saved = NS.store.get('active', null);
     if (saved && list.some((c) => c.id === saved)) return saved;
-    return NS.DEFAULT_TENANT;
+    // A DIY visitor with no portal yet starts at sign-up.
+    return E.diy ? null : NS.DEFAULT_TENANT;
   }
 
   function setClient(id, route) {
+    if (!id && E.diy) {
+      state.clientId = null;
+      state.ws = null;
+      state.ui = {};
+      state.viewer = null;
+      B.apply(NS.TENANT_TEMPLATE);
+      applyAppearance();
+      go(route || 'diy-start');
+      return;
+    }
     const w = NS.workspace.load(id) || NS.workspace.load(NS.DEFAULT_TENANT);
     state.clientId = w.tenant.id;
     state.ws = w;
@@ -193,7 +224,10 @@
   const PREFIXED = [
     ['investment-', 'investment'],
     ['subscribe-', 'subscribe'],
-    ['console-offering-', 'console-offering']
+    ['console-offering-', 'console-offering'],
+    ['console-envelope-', 'console-envelope'],
+    ['sign-', 'sign'],
+    ['join-', 'join']
   ];
   function parseHash() {
     const raw = (location.hash || '').replace(/^#/, '');
@@ -221,27 +255,49 @@
   const modeOf = (key) => (NS.views[key] && NS.views[key].mode) || 'portal';
 
   /* ---------- Roles ----------
-   * investor: the client's branded portal only. No Carrow & Vale bar, no console.
-   * sponsor:  that client's console (in the client's colors) and investor previews.
-   * staff:    Carrow & Vale; every client, the operator bar and client setup.
+   * Managed edition (Carrow & Vale):
+   *   staff    Carrow & Vale: every client, the operator bar, client setup and offering configuration.
+   *   sponsor  the client's own staff: its console and investor previews; offerings read-only.
+   * DIY edition (Shareholder Desk):
+   *   admin    the sponsor's admins: everything, including brand, offerings, integrations and team.
+   *   team     the sponsor's team members: operations; offerings, brand and integrations read-only.
+   * Both: investor, the client's branded portal only.
    * In production the role comes from sign-in. This build has no server, so in demo
    * mode a small control sets it. Set window.CVPortalConfig = { demo: false } before
    * the scripts load to remove that control.
    */
   const config = Object.assign({ demo: true }, window.CVPortalConfig || {});
-  const ROLES = ['staff', 'sponsor', 'investor'];
+  const ROLES = E.roles;
   function initialRole() {
     if (ROLES.indexOf(config.role) >= 0) return config.role;
     const saved = NS.store.get('role', null);
     if (config.demo && ROLES.indexOf(saved) >= 0) return saved;
-    return config.demo ? 'staff' : 'investor';
+    return config.demo ? E.owner : 'investor';
   }
   state.role = initialRole();
+  /**
+   * What the signed-in role may do: 'portal' (investor pages), 'console',
+   * 'operate' (distributions, calls, requests, documents, notices), 'configure'
+   * (offerings, brand, offering intake, integrations, team) and 'clients'
+   * (switch between and add clients: Carrow & Vale only).
+   */
+  function can(what, role) {
+    role = role || state.role;
+    if (role === 'investor') return what === 'portal';
+    if (what === 'configure') return role === E.owner;
+    if (what === 'clients') return E.managed && role === E.owner;
+    return what === 'portal' || what === 'console' || what === 'operate';
+  }
+  /** Pages only the owner role opens (Carrow & Vale staff, or a DIY admin). */
+  const OWNER_ONLY = ['console-brand', 'console-intake', 'console-integrations', 'console-team'];
   function allowed(key) {
-    if (state.role === 'staff') return true;
-    // Adding clients and branding the portal are Carrow & Vale only.
-    if (state.role === 'sponsor') return key !== 'console-new-client' && key !== 'console-brand' && key !== 'console-intake';
-    return modeOf(key) === 'portal';
+    const v = NS.views[key];
+    if (v && v.edition && v.edition !== E.id) return false;
+    if (v && v.standalone) return true;
+    if (state.role === 'investor') return modeOf(key) === 'portal';
+    if (key === 'console-new-client') return can('clients');
+    if (OWNER_ONLY.indexOf(key) >= 0) return can('configure');
+    return true;
   }
   const homeFor = (role) => (role === 'investor' ? 'investments' : 'console');
 
@@ -260,11 +316,15 @@
   function demoHTML() {
     if (!config.demo) return '';
     const w = ws();
+    if (!w) return '';
     const inv = w.investors.find((x) => x.id === state.viewer);
     const opt = (v, label) => `<option value="${v}"${state.role === v ? ' selected' : ''}>${label}</option>`;
+    const labels = E.diy
+      ? { admin: `Admin · ${h(w.tenant.shortName)}`, team: `Team member · ${h(w.tenant.shortName)}`, investor: `Investor · ${inv ? h(inv.title) : 'none yet'}` }
+      : { staff: 'Carrow &amp; Vale staff', sponsor: `Sponsor staff · ${h(w.tenant.shortName)}`, investor: `Investor · ${inv ? h(inv.title) : 'none yet'}` };
     return `<label class="demo-role" for="demo-role"><span>Demo · signed in as</span><select id="demo-role" data-change="demo-role">
-      ${opt('staff', 'Carrow &amp; Vale staff')}${opt('sponsor', `Sponsor staff · ${h(w.tenant.shortName)}`)}${opt('investor', `Investor · ${inv ? h(inv.title) : 'none yet'}`)}
-    </select></label>`;
+      ${ROLES.map((r) => opt(r, labels[r])).join('')}
+    </select></label>${E.diy ? '<button class="demo-start" type="button" data-action="diy-start-over">New sign-up</button>' : ''}`;
   }
   function opbarHTML() {
     const mode = modeOf(state.route);
@@ -286,21 +346,28 @@
   /* ---------- Render ---------- */
   function render() {
     const w = ws();
-    if (!w) return;
     const key = state.route;
+    const standalone = NS.views[key] && NS.views[key].standalone;
+    if (!w && !standalone) {
+      if (E.diy) go('diy-start');
+      return;
+    }
     if (!allowed(key)) {
       go(homeFor(state.role));
       return;
     }
     const view = NS.views[key] || NS.views.investments;
-    const mode = modeOf(key);
+    const mode = standalone ? 'standalone' : modeOf(key);
     ROLES.forEach((r) => document.body.classList.toggle('role-' + r, state.role === r));
-    document.body.classList.toggle('has-demo', !!config.demo);
+    document.body.classList.toggle('edition-diy', E.diy);
+    document.body.classList.toggle('has-demo', !!config.demo && !!w);
     document.body.classList.toggle('mode-console', mode === 'console');
     document.body.classList.toggle('mode-portal', mode === 'portal');
-    document.title = mode === 'console' ? `${w.tenant.shortName} · Sponsor Console` : `${w.tenant.portalName} · ${w.tenant.shortName}`;
-    document.getElementById('opbar').innerHTML = state.role === 'staff' ? opbarHTML() : state.role === 'sponsor' && mode === 'portal' ? previewBarHTML() : '';
-    document.getElementById('demo').innerHTML = demoHTML();
+    document.body.classList.toggle('mode-standalone', mode === 'standalone');
+    document.title = standalone ? view.title || E.product : mode === 'console' ? `${w.tenant.shortName} · ${E.diy ? 'Shareholder Desk' : 'Sponsor Console'}` : `${w.tenant.portalName} · ${w.tenant.shortName}`;
+    // Carrow & Vale staff get the operator bar; a sponsor's own people get a plain preview bar in the investor view.
+    document.getElementById('opbar').innerHTML = !w || standalone ? '' : E.managed && state.role === 'staff' ? opbarHTML() : state.role !== 'investor' && mode === 'portal' ? previewBarHTML() : '';
+    document.getElementById('demo').innerHTML = standalone ? '' : demoHTML();
     const el = document.getElementById('view');
     el.innerHTML = view.render(state.param);
     if (view.after) view.after(state.param);
@@ -405,7 +472,7 @@
     const inv = ws().investors.find((x) => x.id === state.viewer);
     if (state.role === 'investor' && inv && inv.onboarding.status !== 'complete') NS.startOnboarding(inv.id);
     else go(homeFor(state.role));
-    NS.ui.toast(state.role === 'staff' ? 'Signed in as Carrow & Vale staff' : state.role === 'sponsor' ? `Signed in as ${ws().tenant.shortName} staff` : `Signed in as ${inv ? inv.title : 'an investor'}`);
+    NS.ui.toast(state.role === 'investor' ? `Signed in as ${inv ? inv.title : 'an investor'}` : state.role === 'staff' ? 'Signed in as Carrow & Vale staff' : `Signed in as ${E.roleLabel[state.role].toLowerCase()} of ${ws().tenant.shortName}`);
   };
   NS.changes.viewer = (el) => {
     state.viewer = el.value;
@@ -414,7 +481,28 @@
     else go('investments');
   };
 
-  NS.app = { state, config, allowed, render, go, setClient, save, applyTenant, applyAppearance, setAppearance, setPath, getPath, ws, modeOf };
+  /** The signed-in person as the change log names them. */
+  function actor() {
+    const w = ws();
+    const firm = w ? w.tenant.shortName : '';
+    if (state.role === 'investor') {
+      const inv = w && w.investors.find((i) => i.id === state.viewer);
+      return inv ? `${inv.title} (investor)` : 'Investor';
+    }
+    if (E.managed) return state.role === 'staff' ? 'Carrow & Vale staff' : `${firm || 'Sponsor'} staff`;
+    const me = w && (w.team || []).find((m) => m.current) || (w && (w.team || []).find((m) => m.role === state.role));
+    const what = state.role === 'admin' ? 'admin' : 'team';
+    return me ? `${me.name} (${firm} ${what})` : `${firm} ${what}`;
+  }
+
+  NS.actions['diy-start-over'] = () => {
+    NS.store.del('active');
+    state.role = E.owner;
+    NS.store.set('role', state.role);
+    setClient(null, 'diy-start');
+  };
+
+  NS.app = { state, config, allowed, can, actor, render, go, setClient, save, applyTenant, applyAppearance, setAppearance, setPath, getPath, ws, modeOf };
 
   // Views register after this file loads, so boot once every script has run.
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
