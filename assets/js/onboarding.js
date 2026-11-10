@@ -150,9 +150,10 @@
       </div>`;
   }
   const ENTITY_KYC = (type) => type === 'entity' || type === 'trust' || type === 'ira';
-  /** DIY edition: identity, screening and accreditation run through the sponsor's providers (integrations.js). */
+  /** DIY edition: identity, screening and accreditation run through the connections the sponsor plugs in (integrations.js). */
   const IV = () => (NS.integrations && NS.integrations.active(W()) ? NS.integrations : null);
-  const accVerified = () => IV() && NS.integrations.ensure(W()).accreditation.provider !== 'self' && NS.integrations.needsAccreditation(W(), inv());
+  /** Rule 506(c): accreditation is verified through a connection, never self-certified. */
+  const accVerified = () => !!IV() && NS.integrations.needsAccreditation(W(), inv());
   function stepIdentity() {
     const d = ob().d;
     const ent = ENTITY_KYC(d.type);
@@ -340,7 +341,7 @@
     i.payment = d.method === 'ach' ? { method: 'ach', bank: { holder: d.holder.trim(), routing: d.routing.replace(/\D/g, ''), account: d.account.replace(/\D/g, ''), type: d.acctType } } : { method: 'check', bank: null };
     i.onboarding = Object.assign({}, i.onboarding, { status: 'complete', step: 5, completed: now });
     if (IV()) {
-      // DIY edition: the providers' results decide; integrations.js screens owners and approves or holds.
+      // DIY edition: the connections' results decide; integrations.js screens owners and approves or holds.
       if (NS.audit) NS.audit.log(W(), { action: 'Account activated', record: i.id, detail: `Profile, ${i.taxForm || 'tax form'} and distribution account confirmed; verification ${IV().vOf(i).decision.status}`, actor: `${i.title} (investor)` });
       return IV()
         .finishOnboarding(W(), i, d)

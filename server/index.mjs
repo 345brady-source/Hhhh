@@ -9,33 +9,38 @@
  *   GET  /v1/verifications/:id    its latest status (refreshed from the provider while pending)
  *   POST /v1/screenings           sanctions / PEP screening of names; returns { id, status, hits }
  *   GET  /v1/screenings/:id       a screening's latest result (monitoring alerts update it)
+ *   GET  /v1/connectors           the providers plugged in (built-ins, connectors, plug-ins); no secrets
+ *   POST /v1/results              a provider or the sponsor's automation reports a result (RESULTS_TOKEN)
  *   POST /webhooks/:provider      provider callbacks, signature-checked, update the records above
  *   GET  /v1/verifications/:id/evidence/:n  a verification letter or certificate, fetched from the provider
  *   GET  /return/:provider[/:id]  where a provider sends the investor back (OAuth codes, account links)
- *   GET  /hosted/:id              a page this server hosts for a provider flow (for example a vendor SDK)
+ *   GET  /hosted/:id              a page this server hosts for a provider flow (for example a provider's JS SDK)
  *   POST /hosted/:id              that page's form or SDK result
  *   GET  /sandbox/:ref            a stand-in hosted page for the "sandbox" provider (testing without accounts)
  *   GET  /health                  which providers are configured
  *
+ * No verification vendor is built in: sponsors plug in the services they use
+ * (declarative connectors, code plug-ins, or hosted links plus the results
+ * API; see README.md), as many per check as they like.
+ *
  * Node 18 or later, no dependencies. Configure with environment variables
  * (see README.md). Statuses are normalized for the portal: identity
  * pending | passed | review | failed; accreditation pending | verified |
- * review | rejected; screening pending | clear | potential_match.
+ * review | rejected; screening pending | clear | potential_match. A provider
+ * status that maps to none of these is shown as providerStatus.
  */
 import http from 'node:http';
 import { pathToFileURL } from 'node:url';
 import { readRaw, parseJson, send, cors, header } from './lib/http.mjs';
 import { openStore } from './lib/store.mjs';
 import { id, safeEqual } from './lib/crypto.mjs';
-import { PROVIDERS, configured, missingEnv } from './providers/index.mjs';
+import { STATUSES } from './lib/statuses.mjs';
+import { PROVIDERS as PROVIDERS_DEFAULT, configured, missingEnv, describe } from './providers/index.mjs';
 
-export const STATUSES = {
-  identity: ['pending', 'passed', 'review', 'failed'],
-  accreditation: ['pending', 'verified', 'review', 'rejected'],
-  aml: ['pending', 'clear', 'potential_match']
-};
+export { STATUSES };
 /** Normalized result fields adapters may return; anything else they need goes in `data`, which never leaves the server. */
 const RESULT_FIELDS = ['method', 'detail', 'expiresAt', 'screening', 'evidence'];
+const REF_ID = /^(ver|scr)_[\w-]{1,64}$/;
 const REFRESH_MS = 20000;
 
 /** In production, verify the portal session here (for example a signed session token); API_TOKEN suits server-to-server use. */
@@ -43,6 +48,39 @@ function authorize(req, env) {
   if (!env.API_TOKEN) return true;
   const got = String(header(req.headers, 'authorization') || '').replace(/^Bearer\s+/i, '');
   return safeEqual(got, env.API_TOKEN);
+}
+
+/** The results API is off unless RESULTS_TOKEN is set; then it needs that token, compared in constant time. */
+function resultsAuthorized(req, env) {
+  const got = String(header(req.headers, 'authorization') || '').replace(/^Bearer\s+/i, '');
+  return safeEqual(got, String(env.RESULTS_TOKEN));
+}
+
+/** Clean up a pushed result: only the documented fields, in the documented shapes. */
+const clip = (v, n) => (v === undefined || v === null ? '' : String(v).slice(0, n));
+/** Settings from the portal are non-secret plain values (a link, a level, a threshold). */
+function cleanSettings(x) {
+  const out = {};
+  if (!x || typeof x !== 'object' || Array.isArray(x)) return out;
+  for (const [k, v] of Object.entries(x).slice(0, 40)) if (/^[\w-]{1,40}$/.test(k) && ['string', 'number', 'boolean'].includes(typeof v)) out[k] = typeof v === 'string' ? v.slice(0, 2000) : v;
+  return out;
+}
+function cleanHits(list) {
+  if (!Array.isArray(list)) return null;
+  return list.slice(0, 100).map((x) => {
+    const o = x && typeof x === 'object' ? x : {};
+    const score = Number(o.score);
+    return { name: clip(o.name, 200), listed: clip(o.listed, 200), list: clip(o.list, 200), score: Number.isFinite(score) ? score : null, detail: clip(o.detail, 300) };
+  });
+}
+function cleanEvidence(list) {
+  if (!Array.isArray(list)) return null;
+  return list.slice(0, 20).map((x) => {
+    const o = x && typeof x === 'object' ? x : {};
+    const e = { type: clip(o.type || 'document', 40), label: clip(o.label || 'Document', 120) };
+    if (typeof o.url === 'string' && /^https:\/\//i.test(o.url)) e.url = o.url.slice(0, 1000);
+    return e;
+  });
 }
 
 /** A small per-client limit on the calls that can cost money or create records. */
@@ -76,6 +114,7 @@ export function createServer(opts = {}) {
   const env = opts.env || process.env;
   const store = opts.store || openStore(env.STORE_FILE || new URL('./data/store.json', import.meta.url).pathname);
   const fetchFn = opts.fetch || globalThis.fetch;
+  const PROVIDERS = opts.providers || PROVIDERS_DEFAULT;
   const publicUrl = String(env.PUBLIC_URL || `http://localhost:${env.PORT || 8787}`).replace(/\/+$/, '');
   const origins = String(env.PORTAL_ORIGIN || '').split(',').map((s) => s.trim()).filter(Boolean);
   const limited = rateLimiter(env);
@@ -106,23 +145,33 @@ export function createServer(opts = {}) {
     const patch = { id: rec.id };
     const kind = table === 'screenings' ? 'aml' : rec.kind;
     if (r.status) {
-      if (STATUSES[kind].includes(r.status)) patch.status = r.status;
-      else store.event({ type: 'unknown_status', provider: rec.provider, id: rec.id, status: String(r.status).slice(0, 40) });
+      if (STATUSES[kind].includes(r.status)) {
+        patch.status = r.status;
+        patch.providerStatus = '';
+      } else {
+        // Leave the status as it is and show the provider's value so an admin can fix the mapping.
+        patch.providerStatus = String(r.status).slice(0, 60);
+        store.event({ type: 'unmapped_status', provider: rec.provider, id: rec.id, status: patch.providerStatus });
+      }
     }
     for (const k of RESULT_FIELDS) if (r[k] !== undefined && r[k] !== null && r[k] !== '') patch[k] = r[k];
     if (r.ref) patch.ref = String(r.ref);
     if (r.url) patch.url = String(r.url);
-    if (r.hits) {
+    // Hits that came with a status we do not understand are not applied either.
+    if (r.hits && !(r.status && !patch.status)) {
       patch.hits = r.hits;
-      if (!r.status) patch.status = r.hits.length ? 'potential_match' : 'clear';
+      if (!r.status) {
+        patch.status = r.hits.length ? 'potential_match' : 'clear';
+        patch.providerStatus = '';
+      }
     }
     if (r.data && typeof r.data === 'object') patch.data = Object.assign({}, rec.data, r.data);
     return store.put(table, patch);
   }
 
   /** What the portal may see: never `data` (tokens, provider-private ids) or the investor's details. */
-  const view = (rec) => ({ id: rec.id, kind: rec.kind, provider: rec.provider, status: rec.status, method: rec.method || '', detail: rec.detail || '', expiresAt: rec.expiresAt || '', screening: rec.screening || null, evidence: rec.evidence || [], url: rec.url || '', updatedAt: rec.updatedAt || '' });
-  const screeningView = (rec) => ({ id: rec.id, provider: rec.provider, status: rec.status, hits: rec.hits || [], monitoring: !!rec.monitoring, updatedAt: rec.updatedAt || '' });
+  const view = (rec) => ({ id: rec.id, kind: rec.kind, provider: rec.provider, status: rec.status, method: rec.method || '', detail: rec.detail || '', expiresAt: rec.expiresAt || '', screening: rec.screening || null, evidence: rec.evidence || [], url: rec.url || '', providerStatus: rec.providerStatus || '', updatedAt: rec.updatedAt || '' });
+  const screeningView = (rec) => ({ id: rec.id, provider: rec.provider, status: rec.status, hits: rec.hits || [], monitoring: !!rec.monitoring, providerStatus: rec.providerStatus || '', updatedAt: rec.updatedAt || '' });
 
   async function refresh(rec, force) {
     const p = PROVIDERS[rec.provider];
@@ -165,7 +214,7 @@ export function createServer(opts = {}) {
     if (!cors(req, res, env.PORTAL_ORIGIN)) return send(res, 403, { error: 'Origin not allowed' });
     if (req.method === 'OPTIONS') return send(res, 204, '');
 
-    if (req.method === 'GET' && path === '/health') return send(res, 200, { ok: true, providers: configured(env) });
+    if (req.method === 'GET' && path === '/health') return send(res, 200, { ok: true, providers: configured(env, PROVIDERS) });
 
     // Provider callbacks: verify the signature over the exact bytes received, then update the record.
     const hook = path.match(/^\/webhooks\/([a-z0-9]+)$/);
@@ -183,16 +232,24 @@ export function createServer(opts = {}) {
       const ev = (await p.parseWebhook({ body, headers: req.headers, rawBody: raw, env })) || {};
       if (ev.id && store.seen(`${name}:${ev.id}`)) return send(res, 200, { received: true, duplicate: true });
       store.event({ type: 'webhook', provider: name, event: ev.event || '', ref: ev.ref || '' });
-      const refs = [].concat(ev.ref || []).filter(Boolean);
+      const refs = [].concat(ev.ref || []).filter(Boolean).map(String);
+      // A provider's payload may name our reference (ver_…/scr_…) instead of its own id.
+      const own = (table, ref) => {
+        const rec = REF_ID.test(ref) ? store.get(table, ref) : null;
+        return rec && rec.provider === name ? rec : null;
+      };
+      const result = (kind) => Object.assign({}, p.webhookResult ? p.webhookResult(kind, ev) : ev, { ref: undefined, url: undefined, data: undefined, id: undefined });
       for (const ref of refs) {
-        const ver = store.byRef('verifications', name, ref);
-        const scr = ver ? null : store.byRef('screenings', name, ref);
+        const ver = store.byRef('verifications', name, ref) || own('verifications', ref);
+        const scr = ver ? null : store.byRef('screenings', name, ref) || own('screenings', ref);
         if (ver) {
-          if (ev.refetch && p.fetchResult) await refresh(Object.assign({}, ver, { status: 'pending' }), true).catch((e) => store.event({ type: 'refresh_failed', provider: name, id: ver.id, error: e.message }));
-          else apply('verifications', ver, Object.assign({}, ev, { ref: undefined, url: undefined, data: undefined }));
+          if (ev.refetch) {
+            if (p.fetchResult) await refresh(Object.assign({}, ver, { status: 'pending', ref: ver.ref || ver.id }), true).catch((e) => store.event({ type: 'refresh_failed', provider: name, id: ver.id, error: e.message }));
+          } else apply('verifications', ver, result(ver.kind));
         } else if (scr) {
-          if (ev.refetch && p.fetchScreening) await refreshScreening(scr, true).catch((e) => store.event({ type: 'refresh_failed', provider: name, id: scr.id, error: e.message }));
-          else apply('screenings', scr, Object.assign({}, ev, { ref: undefined, url: undefined, data: undefined }));
+          if (ev.refetch) {
+            if (p.fetchScreening) await refreshScreening(scr, true).catch((e) => store.event({ type: 'refresh_failed', provider: name, id: scr.id, error: e.message }));
+          } else apply('screenings', scr, result('aml'));
         }
       }
       return send(res, 200, { received: true });
@@ -215,7 +272,7 @@ export function createServer(opts = {}) {
       return hostedReply(res, cur, r, cur.status === 'pending' ? 'Thank you. Your information was submitted for review.' : 'Thank you. You can return to the portal.');
     }
 
-    // Pages this server hosts for a provider flow (for example to run a vendor SDK the portal cannot load).
+    // Pages this server hosts for a provider flow (for example to run a provider's JS SDK the portal cannot load).
     const hosted = path.match(/^\/hosted\/(ver_[\w-]+)$/);
     if (hosted && (req.method === 'GET' || req.method === 'POST')) {
       const rec = store.get('verifications', hosted[1]);
@@ -254,8 +311,48 @@ export function createServer(opts = {}) {
       return send(res, 200, PROVIDERS.sandbox.page(rec), HTML);
     }
 
+    // Results pushed by a provider or the sponsor's own automation (for "link" checks, or any provider
+    // that reports outcomes this way). Off unless RESULTS_TOKEN is set; it has its own token, not API_TOKEN.
+    if (path === '/v1/results') {
+      if (!env.RESULTS_TOKEN) return send(res, 404, { error: 'Not found' });
+      if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
+      if (limited(req)) return send(res, 429, { error: 'Too many requests' });
+      if (!resultsAuthorized(req, env)) return send(res, 401, { error: 'Not authorized' });
+      const body = parseJson(await readRaw(req, 256 * 1024));
+      const ref = String(body.reference || '');
+      const table = ref.startsWith('scr_') ? 'screenings' : 'verifications';
+      const rec = REF_ID.test(ref) ? store.get(table, ref) : null;
+      if (!rec) return send(res, 404, { error: 'No check with that reference' });
+      const kind = table === 'screenings' ? 'aml' : rec.kind;
+      if (!STATUSES[kind].includes(body.status)) return send(res, 400, { error: `status must be one of ${STATUSES[kind].join(', ')}` });
+      const r = { status: body.status };
+      if (table === 'verifications') {
+        if (body.method !== undefined) r.method = clip(body.method, 120);
+        if (body.detail !== undefined) r.detail = clip(body.detail, 300);
+        if (body.expiresAt !== undefined) {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(String(body.expiresAt))) return send(res, 400, { error: 'expiresAt must be YYYY-MM-DD' });
+          r.expiresAt = body.expiresAt;
+        }
+        if (body.evidence !== undefined) {
+          if (!(r.evidence = cleanEvidence(body.evidence))) return send(res, 400, { error: 'evidence must be a list' });
+        }
+        if (body.screening !== undefined && body.screening !== null) {
+          const sc = body.screening;
+          if (!sc || !['clear', 'potential_match'].includes(sc.status)) return send(res, 400, { error: 'screening.status must be clear or potential_match' });
+          r.screening = { status: sc.status, hits: cleanHits(sc.hits) || [] };
+        }
+      } else if (body.hits !== undefined) {
+        if (!(r.hits = cleanHits(body.hits))) return send(res, 400, { error: 'hits must be a list' });
+      }
+      const saved = apply(table, rec, r);
+      store.event({ type: 'result_pushed', provider: rec.provider, id: rec.id, status: saved.status });
+      return send(res, 200, { ok: true, id: saved.id, status: saved.status });
+    }
+
     if (path.startsWith('/v1/') && !authorize(req, env)) return send(res, 401, { error: 'Not authorized' });
     if (path.startsWith('/v1/') && req.method === 'POST' && limited(req)) return send(res, 429, { error: 'Too many requests' });
+
+    if (req.method === 'GET' && path === '/v1/connectors') return send(res, 200, { connectors: describe(env, PROVIDERS) });
 
     if (req.method === 'POST' && path === '/v1/verifications') {
       const body = parseJson(await readRaw(req));
@@ -266,7 +363,7 @@ export function createServer(opts = {}) {
       const inv = body.investor || {};
       if (!inv.id || !inv.name) return send(res, 400, { error: 'investor.id and investor.name are required' });
       const investor = { id: String(inv.id), name: String(inv.name), account: inv.account || '', email: inv.email || '', type: inv.type || '', address: inv.address || '', phone: inv.phone || '', workspace: inv.workspace || '', offering: inv.offering || '' };
-      const rec = store.put('verifications', { id: id('ver'), kind: body.kind, provider: body.provider, investorId: investor.id, workspace: investor.workspace, status: 'pending', settings: body.settings || {}, investor, returnUrl: returnTo(body.returnUrl), createdAt: new Date().toISOString() });
+      const rec = store.put('verifications', { id: id('ver'), kind: body.kind, provider: body.provider, investorId: investor.id, workspace: investor.workspace, status: 'pending', settings: cleanSettings(body.settings), investor, returnUrl: returnTo(body.returnUrl), createdAt: new Date().toISOString() });
       const r = (await p.createSession(ctx(body.provider, rec))) || {};
       const saved = apply('verifications', rec, Object.assign({}, r, { status: r.status || 'pending' }));
       store.event({ type: 'verification_started', provider: body.provider, id: rec.id, ref: saved.ref || '' });
@@ -302,7 +399,7 @@ export function createServer(opts = {}) {
       const names = Array.from(new Set((body.names || []).map((n) => String(n || '').trim()).filter(Boolean))).slice(0, 25);
       if (!names.length) return send(res, 400, { error: 'names are required' });
       const inv = body.investor || {};
-      const rec = store.put('screenings', { id: id('scr'), kind: 'aml', provider: body.provider, investorId: inv.id || '', names, settings: body.settings || {}, investor: inv, status: 'pending', createdAt: new Date().toISOString() });
+      const rec = store.put('screenings', { id: id('scr'), kind: 'aml', provider: body.provider, investorId: inv.id || '', names, settings: cleanSettings(body.settings), investor: inv, status: 'pending', createdAt: new Date().toISOString() });
       const r = (await p.screen(ctx(body.provider, rec, { names }))) || {};
       const saved = apply('screenings', rec, Object.assign({ hits: r.hits || [] }, r, { ref: r.ref || rec.id }));
       if (r.monitoring) store.put('screenings', { id: rec.id, monitoring: true });

@@ -16,9 +16,11 @@ export function providerMessage(data) {
  * Call a provider and return the parsed JSON (or the text when the reply is
  * not JSON). Throws an Error with status 502 on network errors, timeouts and
  * non-2xx replies; err.providerStatus and err.data carry the provider's reply.
+ * opts.redirect 'manual' stops the call from following a redirect to another
+ * host (the redirect then fails like any other non-2xx reply).
  */
 export async function requestJson(ctx, url, opts = {}) {
-  const { method = 'GET', headers = {}, body, form, timeoutMs = 15000, label = 'The provider' } = opts;
+  const { method = 'GET', headers = {}, body, form, timeoutMs = 15000, label = 'The provider', redirect } = opts;
   const h = Object.assign({ Accept: 'application/json' }, headers);
   let payload;
   if (form) {
@@ -32,7 +34,7 @@ export async function requestJson(ctx, url, opts = {}) {
   const timer = setTimeout(() => ac.abort(), timeoutMs);
   let res;
   try {
-    res = await ctx.fetch(url, { method, headers: h, body: payload, signal: ac.signal });
+    res = await ctx.fetch(url, Object.assign({ method, headers: h, body: payload, signal: ac.signal }, redirect ? { redirect } : {}));
   } catch (e) {
     throw Object.assign(new Error(`${label} could not be reached (${e && e.name === 'AbortError' ? 'timed out' : (e && e.message) || 'network error'})`), { status: 502 });
   } finally {

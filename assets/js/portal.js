@@ -868,7 +868,7 @@
               const IVN = NS.integrations;
               if (IVN && IVN.active(W()) && inv.verify) {
                 const a = IVN.vOf(inv).accreditation;
-                if (a.status === 'verified') return `Verified by ${h(IVN.provider('accreditation', a.provider).name)} on ${date(a.verifiedAt)}${a.expiresAt ? `, ${a.expiresAt < NS.dates.today() ? 'expired' : 'valid until'} ${date(a.expiresAt)}` : ''}${a.expiresAt && a.expiresAt < NS.dates.today() ? ' <button class="link-btn" type="button" data-action="iv-start" data-kind="accreditation">Verify again</button>' : ''}`;
+                if (a.status === 'verified') return `Verified by ${h(IVN.via(W(), a, 'accreditation') || 'a third party')} on ${date(a.verifiedAt)}${a.expiresAt ? `, ${a.expiresAt < NS.dates.today() ? 'expired' : 'valid until'} ${date(a.expiresAt)}` : ''}${a.expiresAt && a.expiresAt < NS.dates.today() ? ' <button class="link-btn" type="button" data-action="iv-start" data-kind="accreditation">Verify again</button>' : ''}`;
                 return a.status === 'pending' || a.status === 'review' ? 'Verification under review' : 'Not verified <button class="link-btn" type="button" data-action="iv-start" data-kind="accreditation">Verify now</button>';
               }
               return inv.accreditation && inv.accreditation.basis ? 'Verified accredited investor' : 'Not provided';

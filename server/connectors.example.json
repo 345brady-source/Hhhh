@@ -1,0 +1,141 @@
+{
+  "$comment": "Example connectors with made-up providers. Copy to connectors.json (or point CONNECTORS_FILE at your copy), change the URLs, paths and statuses to match your provider's API reference, and set the environment variables each one lists. See README.md, 'Declarative connectors'.",
+  "connectors": [
+    {
+      "id": "acmeid",
+      "name": "Acme Verify",
+      "description": "Government ID and selfie check, with sanctions and PEP screening in the same session.",
+      "checks": ["identity", "aml"],
+      "env": ["ACME_API_KEY", "ACME_WEBHOOK_SECRET"],
+      "auth": { "type": "bearer", "token": "${env.ACME_API_KEY}" },
+      "start": {
+        "request": {
+          "method": "POST",
+          "url": "https://api.acme.example/v1/sessions",
+          "headers": { "Idempotency-Key": "{reference}" },
+          "body": {
+            "reference": "{reference}",
+            "name": "{investor.name}",
+            "first_name": "{investor.firstName}",
+            "last_name": "{investor.lastName}",
+            "email": "{investor.email}",
+            "level": "{settings.level}",
+            "redirect_url": "{returnUrl}",
+            "callback_url": "{webhookUrl}"
+          }
+        },
+        "response": { "ref": "data.id", "url": "data.url", "status": "data.status" }
+      },
+      "result": {
+        "request": { "method": "GET", "url": "https://api.acme.example/v1/sessions/{ref}" },
+        "response": {
+          "status": "data.status",
+          "detail": "data.reason",
+          "method": "data.document_type",
+          "screeningStatus": "data.watchlist.status",
+          "screeningHits": "data.watchlist.matches"
+        }
+      },
+      "screen": {
+        "request": { "method": "POST", "url": "https://api.acme.example/v1/screenings", "body": { "names": "{names}", "reference": "{reference}" } },
+        "response": { "ref": "id", "status": "status", "hits": "matches", "hit": { "name": "query", "listed": "matched_name", "list": "list", "score": "score", "detail": "notes" } },
+        "monitoring": true
+      },
+      "screenResult": {
+        "request": { "method": "GET", "url": "https://api.acme.example/v1/screenings/{ref}" },
+        "response": { "status": "status", "hits": "matches" }
+      },
+      "webhook": {
+        "verify": { "type": "hmac", "header": "X-Acme-Signature", "algorithm": "sha256", "encoding": "hex", "prefix": "sha256=", "secret": "${env.ACME_WEBHOOK_SECRET}" },
+        "id": "id",
+        "event": "type",
+        "ref": "data.session_id",
+        "status": "data.status",
+        "detail": "data.reason",
+        "hits": "data.matches"
+      },
+      "statuses": {
+        "identity": { "approved": "passed", "declined": "failed", "needs_review": "review", "*": "pending" },
+        "aml": { "no_match": "clear", "match": "potential_match", "processing": "pending" }
+      }
+    },
+    {
+      "id": "acmeaccredit",
+      "name": "Acme Accreditation",
+      "description": "Accredited investor letters reviewed by licensed attorneys.",
+      "checks": ["accreditation"],
+      "env": ["ACME_CLIENT_ID", "ACME_CLIENT_SECRET", "ACME_SIGNING_SECRET"],
+      "auth": {
+        "type": "oauth2",
+        "tokenUrl": "https://auth.acme.example/oauth/token",
+        "clientId": "${env.ACME_CLIENT_ID}",
+        "clientSecret": "${env.ACME_CLIENT_SECRET}",
+        "scope": "verifications",
+        "style": "form"
+      },
+      "start": {
+        "link": "https://accredit.acme.example/start?ref={reference}&email={investor.email}&return={returnUrl}"
+      },
+      "result": {
+        "request": { "url": "https://api.acme.example/v2/verifications?reference={reference}" },
+        "response": { "status": "items.0.state", "method": "items.0.method", "expiresAt": "items.0.expires_on", "detail": "items.0.note" }
+      },
+      "webhook": {
+        "verify": {
+          "type": "hmac",
+          "header": "webhook-signature",
+          "pattern": "v1,([A-Za-z0-9+/=]+)",
+          "encoding": "base64",
+          "secret": "${env.ACME_SIGNING_SECRET}",
+          "secretEncoding": "base64",
+          "idHeader": "webhook-id",
+          "timestampHeader": "webhook-timestamp",
+          "signed": "{id}.{timestamp}.{body}",
+          "tolerance": 300
+        },
+        "ref": "reference",
+        "event": "type",
+        "refetch": true
+      },
+      "statuses": {
+        "accreditation": { "accredited": "verified", "not_accredited": "rejected", "more_info_needed": "review", "in_review": "pending" }
+      }
+    },
+    {
+      "id": "acmewatch",
+      "name": "Acme Watchlists",
+      "description": "Sanctions, PEP and adverse media screening with ongoing monitoring.",
+      "checks": ["aml"],
+      "env": ["ACME_WATCH_KEY", "ACME_WATCH_SECRET"],
+      "auth": { "type": "header", "name": "X-Api-Key", "value": "${env.ACME_WATCH_KEY}" },
+      "screen": {
+        "request": { "method": "POST", "url": "https://watch.acme.example/api/searches", "body": { "terms": "{names}", "client_ref": "{reference}", "fuzziness": "{settings.fuzziness}" } },
+        "response": { "ref": "search.id", "status": "search.state", "hits": "search.hits", "hit": { "name": "term", "listed": "entity.name", "list": "entity.source", "score": "match_score" } },
+        "monitoring": true
+      },
+      "screenResult": {
+        "request": { "url": "https://watch.acme.example/api/searches/{ref}" },
+        "response": { "status": "search.state", "hits": "search.hits" }
+      },
+      "webhook": {
+        "verify": {
+          "type": "hmac",
+          "header": "Acme-Signature",
+          "pattern": "v1=([0-9a-f]+)",
+          "timestampPattern": "t=(\\d+)",
+          "signed": "{timestamp}.{body}",
+          "secret": "${env.ACME_WATCH_SECRET}",
+          "tolerance": 300
+        },
+        "id": "event_id",
+        "ref": "search_id",
+        "event": "event",
+        "status": "state",
+        "hits": "hits"
+      },
+      "statuses": {
+        "aml": { "completed_no_hits": "clear", "completed_with_hits": "potential_match", "running": "pending" }
+      }
+    }
+  ]
+}

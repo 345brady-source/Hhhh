@@ -5,6 +5,9 @@ import { randomBytes } from 'node:crypto';
 export const kind = 'identity';
 export const kinds = ['identity', 'accreditation'];
 export const env = [];
+export const name = 'Sandbox';
+export const description = 'Simulated checks for trying the flow: the investor picks the outcome on a test page. Not a real verification.';
+export const start = 'simulated';
 
 const esc = (s) => String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 

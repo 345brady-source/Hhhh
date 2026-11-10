@@ -21,6 +21,13 @@
   const PK = () => NS.portalKit;
   const files = () => NS.ops.files;
   const PDFLIB_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+  const PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+  const PDFJS_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  // Loaded only when a name or value has characters the standard PDF fonts cannot print (Ł, ř, ễ …).
+  const FONTKIT_URL = 'https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js';
+  const UNICODE_FONT = { regular: 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf', bold: 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf' };
+  const MAX_BYTES = 25 * 1024 * 1024;
+  const MIN_TEXT_PT = 5;
   const COLORS = ['#2563EB', '#D9480F', '#0F8A5F', '#C2255C', '#7048E8', '#0B7285'];
   const INK = '#0B1F44';
   // Default size of each field type, in PDF points.
@@ -40,6 +47,8 @@
   const envs = (ws) => (ws.envelopes = ws.envelopes || []);
   const tpls = (ws) => (ws.esignTemplates = ws.esignTemplates || []);
   const envById = (ws, id) => envs(ws).find((e) => e.id === id) || null;
+  /** The template marked as an offering's subscription agreement (sent to new subscribers). */
+  const subscriptionTemplate = (ws, offeringId) => tpls(ws).find((t) => t.subscription && t.offeringId === offeringId) || null;
   const canOperate = () => NS.app.can('operate');
   const staffActor = () => (S().role === 'staff' ? 'Carrow & Vale staff' : S().role === 'investor' ? 'System' : `${T().shortName} staff`);
   const slug = (s) => String(s || 'document').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 60) || 'document';
@@ -60,9 +69,11 @@
       .map((p) => p[0].toUpperCase())
       .slice(0, 3)
       .join('');
-  function addEvent(env, actor, action, detail) {
-    env.events.push({ at: nowIso(), actor, action, detail: detail || '' });
+  function addEvent(env, actor, action, detail, at) {
+    env.events.push({ at: at || nowIso(), actor, action, detail: detail || '' });
   }
+  /** Required to finish: signature and initials unless the sponsor unticked Required; other fields only when ticked. */
+  const isReq = (f) => f.type !== 'date' && (f.type === 'signature' || f.type === 'initials' ? f.required !== false : !!f.required);
   function logChange(ws, action, env, detail, actor) {
     if (!NS.audit) return;
     const e = { action, fund: env.offeringId || '', record: env.id, detail: env.title + (detail ? ': ' + detail : '') };
@@ -107,14 +118,93 @@
   const countersignDue = (ws) => envs(ws).filter((e) => currentSigners(e).some((s) => s.role === 'countersigner'));
 
   /* ---------- Libraries ---------- */
-  function pdfjs() {
-    if (!NS.pdfLib) return Promise.reject(new Error('The PDF viewer is not available.'));
-    return NS.pdfLib();
+  // Our own loader: a failed load is forgotten, so the next attempt tries again (no reload needed).
+  const loads = {};
+  function loadOnce(src, ready) {
+    if (ready()) return Promise.resolve();
+    if (!loads[src])
+      loads[src] = new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.async = true;
+        s.onload = () => res();
+        s.onerror = () => {
+          s.remove();
+          rej(new Error('load failed: ' + src));
+        };
+        document.head.appendChild(s);
+      }).catch((e) => {
+        delete loads[src];
+        throw e;
+      });
+    return loads[src];
+  }
+  async function pdfjs() {
+    try {
+      if (NS.pdfLib) return await NS.pdfLib();
+    } catch (e) {
+      /* the shared loader keeps a failed attempt; retry with ours below */
+    }
+    try {
+      await loadOnce(PDFJS_URL, () => !!window.pdfjsLib);
+      await loadOnce(PDFJS_WORKER_URL, () => !!window.pdfjsWorker);
+    } catch (e) {
+      throw new Error('Could not load the PDF viewer. Check the connection and try again.');
+    }
+    const lib = window.pdfjsLib;
+    if (lib && lib.GlobalWorkerOptions) lib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+    return lib;
   }
   async function pdflib() {
-    await NS.loadScript(PDFLIB_URL);
+    try {
+      await loadOnce(PDFLIB_URL, () => !!window.PDFLib);
+    } catch (e) {
+      /* message below */
+    }
     if (!window.PDFLib) throw new Error('Could not load the PDF writer. Check the connection and try again.');
     return window.PDFLib;
+  }
+  const fontFiles = {};
+  function fetchFont(url) {
+    if (!fontFiles[url])
+      fontFiles[url] = fetch(url)
+        .then((r) => {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.arrayBuffer();
+        })
+        .catch((e) => {
+          delete fontFiles[url];
+          throw e;
+        });
+    return fontFiles[url];
+  }
+  // Characters the standard PDF fonts print (WinAnsi): ASCII, Latin-1 and a few typographic marks.
+  const WIN_ANSI_EXTRA = '€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ';
+  const winAnsi = (s) => {
+    for (const ch of String(s == null ? '' : s)) {
+      const c = ch.codePointAt(0);
+      if (!((c >= 0x20 && c <= 0x7e) || (c >= 0xa0 && c <= 0xff) || WIN_ANSI_EXTRA.indexOf(ch) >= 0)) return false;
+    }
+    return true;
+  };
+  /**
+   * Fonts for one pass of writing. Helvetica when every string fits WinAnsi; otherwise a Unicode
+   * font (DejaVu Sans) embedded with fontkit, so names such as Łukasz or Dvořák print exactly.
+   */
+  async function fontsFor(L, pdf, texts) {
+    if (texts.every((s) => winAnsi(pdfText(s)))) return { regular: await pdf.embedFont(L.StandardFonts.Helvetica), bold: await pdf.embedFont(L.StandardFonts.HelveticaBold), uni: false };
+    try {
+      await loadOnce(FONTKIT_URL, () => !!window.fontkit);
+      const [r, b] = await Promise.all([fetchFont(UNICODE_FONT.regular), fetchFont(UNICODE_FONT.bold)]);
+      pdf.registerFontkit(window.fontkit);
+      const regular = await pdf.embedFont(r, { subset: true });
+      const bold = await pdf.embedFont(b, { subset: true });
+      const cs = new Set(regular.getCharacterSet());
+      return { regular, bold, uni: true, has: (ch) => cs.has(ch.codePointAt(0)) };
+    } catch (e) {
+      const odd = Array.from(texts.join('')).filter((ch) => !winAnsi(ch)).slice(0, 3).join(' ');
+      throw new Error(`Could not load the font needed to print ${odd || 'some characters'} in the signed PDF. Check the connection and try again.`);
+    }
   }
 
   /* ---------- Page images (rendered once per stored file, kept as object URLs) ---------- */
@@ -129,6 +219,13 @@
       const bytes = new Uint8Array(await blob.arrayBuffer());
       const lib = await pdfjs();
       const doc = await lib.getDocument({ data: bytes }).promise;
+      // An owner password (no open password) still opens here, but the PDF cannot be signed: see es-create.
+      try {
+        const meta = await doc.getMetadata();
+        c.encrypted = !!(meta && meta.info && meta.info.EncryptFilterName) || (await doc.getPermissions()) != null;
+      } catch (e) {
+        c.encrypted = false;
+      }
       const out = [];
       for (let i = 1; i <= doc.numPages; i++) {
         const page = await doc.getPage(i);
@@ -169,7 +266,7 @@
   function pagesHTML(env, layer) {
     const c = pagesOf(env.docId);
     if (c.status === 'loading') return '<p class="es-loading" role="status">Loading document…</p>';
-    if (c.status === 'error') return `<p class="es-note es-note-bad">${h(c.error)}</p>`;
+    if (c.status === 'error') return `<div class="es-note es-note-bad" role="alert"><span>${h(c.error)}</span><button class="${S().route === 'sign' ? 'btn btn-small' : 'cs-btn cs-btn-small'}" type="button" data-action="es-pages-retry" data-doc="${h(env.docId)}">Try again</button></div>`;
     const n = c.pages.length;
     return c.pages
       .map(
@@ -177,7 +274,13 @@
       )
       .join('');
   }
+  NS.actions['es-pages-retry'] = (el) => {
+    delete pageCache[el.getAttribute('data-doc')];
+    NS.app.render();
+  };
   const boxStyle = (f, color) => `left:${(f.x * 100).toFixed(3)}%;top:${(f.y * 100).toFixed(3)}%;width:${(f.w * 100).toFixed(3)}%;height:${(f.h * 100).toFixed(3)}%;--sc:${h(color)}`;
+  /** The signer's own fields: placed by their centre so CSS can grow a small field to a 24px touch target. */
+  const mineStyle = (f, color) => `--x:${(f.x * 100).toFixed(3)}%;--y:${(f.y * 100).toFixed(3)}%;--w:${(f.w * 100).toFixed(3)}%;--h:${(f.h * 100).toFixed(3)}%;--sc:${h(color)}`;
 
   /* ---------- Creating, sending, reminding, voiding ---------- */
   function makeEnvelope(o) {
@@ -341,38 +444,58 @@
   }
 
   /* ---------- PDF writing ---------- */
-  // Helvetica covers Latin-1 only; replace what it cannot draw.
+  /** Normalize text for a PDF line: one line, no control or zero-width characters. */
   const pdfText = (s) =>
     String(s == null ? '' : s)
-      .replace(/[‘’]/g, "'")
-      .replace(/[“”]/g, '"')
-      .replace(/[–—−]/g, '-')
-      .replace(/…/g, '...')
-      .replace(/[·•]/g, '-')
+      .replace(/[​-‍﻿]/g, '')
+      .replace(/−/g, '-')
       .replace(/\s+/g, ' ')
-      .replace(/[^\x20-\x7E\xA0-\xFF]/g, '?');
-  function wrapText(s, font, size, maxW) {
+      .replace(/[\u0000-\u001F\u007F]/g, '');
+  /** Text that the font can draw: with the Unicode font, anything it has no glyph for becomes '?'. */
+  const drawable = (fonts, s) => {
+    const t = pdfText(s);
+    return fonts && fonts.uni ? Array.from(t).map((ch) => (fonts.has(ch) ? ch : '?')).join('') : t;
+  };
+  /** Split text into lines no wider than maxW at this size (long words are broken). */
+  function wrapWith(text, widthOf, size, maxW) {
     const out = [];
     let cur = '';
-    pdfText(s)
-      .split(' ')
-      .forEach((word) => {
-        const tryLine = cur ? cur + ' ' + word : word;
-        if (font.widthOfTextAtSize(tryLine, size) <= maxW) {
-          cur = tryLine;
-          return;
-        }
-        if (cur) out.push(cur);
-        while (font.widthOfTextAtSize(word, size) > maxW && word.length > 1) {
-          let k = word.length - 1;
-          while (k > 1 && font.widthOfTextAtSize(word.slice(0, k), size) > maxW) k--;
-          out.push(word.slice(0, k));
-          word = word.slice(k);
-        }
-        cur = word;
-      });
+    text.split(' ').forEach((word) => {
+      const tryLine = cur ? cur + ' ' + word : word;
+      if (widthOf(tryLine, size) <= maxW) {
+        cur = tryLine;
+        return;
+      }
+      if (cur) out.push(cur);
+      while (widthOf(word, size) > maxW && word.length > 1) {
+        let k = word.length - 1;
+        while (k > 1 && widthOf(word.slice(0, k), size) > maxW) k--;
+        out.push(word.slice(0, k));
+        word = word.slice(k);
+      }
+      cur = word;
+    });
     if (cur) out.push(cur);
     return out.length ? out : [''];
+  }
+  function wrapText(s, font, size, maxW) {
+    return wrapWith(s, (t, z) => font.widthOfTextAtSize(t, z), size, maxW);
+  }
+  /**
+   * Fit a value into a field box (points): one line, shrinking to 6 pt, then wrapped lines down
+   * to MIN_TEXT_PT. Returns null when it cannot fit legibly. The signing page uses the same rules
+   * with the browser's Helvetica/Arial metrics, so a value that would not fit is caught before Finish.
+   */
+  function fitText(text, widthOf, w, hh) {
+    const maxW = w - 3;
+    const top = Math.max(MIN_TEXT_PT, Math.min(hh * 0.72, 12));
+    for (let size = top; size >= 6; size -= 0.5) if (widthOf(text, size) <= maxW) return { size, lines: [text], lead: size * 1.15 };
+    for (let size = Math.min(top, 11); size >= MIN_TEXT_PT - 1e-9; size -= 0.25) {
+      const lead = size * 1.12;
+      const lines = wrapWith(text, widthOf, size, maxW);
+      if (lines.length * lead <= hh - 1 && lines.every((ln) => widthOf(ln, size) <= maxW)) return { size, lines, lead };
+    }
+    return null;
   }
   function cropBox(page) {
     try {
@@ -383,43 +506,82 @@
     const s = page.getSize();
     return { x: 0, y: 0, width: s.width, height: s.height };
   }
-  /** Draw one signer's fields onto the PDF. Fractions are of the displayed (crop) box, origin top-left. */
-  async function stampFields(L, pdf, env, signer) {
-    const font = await pdf.embedFont(L.StandardFonts.Helvetica);
+  /**
+   * How a page is displayed: its crop box turned by /Rotate, as pdf.js shows it in the editor.
+   * toPdf(u, v) maps a displayed point (points from the top-left) to PDF user space.
+   */
+  function pageFrame(page) {
+    const b = cropBox(page);
+    let r = 0;
+    try {
+      r = ((Math.round(page.getRotation().angle) % 360) + 360) % 360;
+    } catch (e) {
+      r = 0;
+    }
+    if (r % 90) r = 0;
+    const swap = r === 90 || r === 270;
+    const toPdf = (u, v) =>
+      r === 90 ? { x: b.x + v, y: b.y + u } : r === 180 ? { x: b.x + b.width - u, y: b.y + v } : r === 270 ? { x: b.x + b.width - v, y: b.y + b.height - u } : { x: b.x + u, y: b.y + b.height - v };
+    return { w: swap ? b.height : b.width, h: swap ? b.width : b.height, r, toPdf };
+  }
+  /** Values the signer typed or that are filled for them, as they will be printed. */
+  const fieldText = (f) => (f.type === 'text' || f.type === 'name' || f.type === 'date' ? String(f.value == null ? '' : f.value) : '');
+  /** Draw one signer's fields. Fractions are of the displayed page (origin top-left), so rotated pages come out upright. */
+  async function stampFields(L, pdf, env, signer, fonts) {
+    const font = fonts.regular;
     const ink = L.rgb(0.04, 0.12, 0.27);
     const imgs = {};
     for (const f of fieldsOf(env, signer)) {
       const page = pdf.getPage(f.page - 1);
-      const b = cropBox(page);
-      const x = b.x + f.x * b.width;
-      const w = f.w * b.width;
-      const hh = f.h * b.height;
-      const y = b.y + b.height - f.y * b.height - hh;
+      const fr = pageFrame(page);
+      const w = f.w * fr.w;
+      const hh = f.h * fr.h;
+      const u0 = f.x * fr.w;
+      const v1 = (f.y + f.h) * fr.h;
+      // A point inside the field: lx to the right, ly up from its bottom-left corner as displayed.
+      const P = (lx, ly) => fr.toPdf(u0 + lx, v1 - ly);
+      const rotate = L.degrees(fr.r);
       if (f.type === 'signature' || f.type === 'initials') {
         const sig = f.type === 'initials' ? signer.initials : signer.signature;
         if (!f.value || !sig || !sig.png) continue;
         const img = imgs[sig.png] || (imgs[sig.png] = await pdf.embedPng(sig.png));
         const s = Math.min(w / img.width, hh / img.height);
-        page.drawImage(img, { x, y: y + (hh - img.height * s) / 2, width: img.width * s, height: img.height * s });
+        page.drawImage(img, Object.assign(P(0, (hh - img.height * s) / 2), { width: img.width * s, height: img.height * s, rotate }));
       } else if (f.type === 'checkbox') {
         if (!f.value) continue;
         const t = Math.max(0.8, Math.min(w, hh) * 0.13);
-        const p = (a, c) => ({ x: x + a * w, y: y + (1 - c) * hh });
-        page.drawLine({ start: p(0.16, 0.52), end: p(0.42, 0.78), thickness: t, color: ink });
-        page.drawLine({ start: p(0.42, 0.78), end: p(0.86, 0.2), thickness: t, color: ink });
+        const p = (a, c) => P(a * w, c * hh);
+        page.drawLine({ start: p(0.16, 0.48), end: p(0.42, 0.22), thickness: t, color: ink });
+        page.drawLine({ start: p(0.42, 0.22), end: p(0.86, 0.8), thickness: t, color: ink });
       } else {
-        const text = pdfText(f.value);
+        const text = drawable(fonts, fieldText(f));
         if (!text) continue;
-        let size = Math.min(hh * 0.72, 12);
-        while (size > 4 && font.widthOfTextAtSize(text, size) > w - 3) size -= 0.5;
-        page.drawText(text, { x: x + 1.5, y: y + (hh - size) / 2 + size * 0.22, size, font, color: ink });
+        const fit = fitText(text, (s, z) => font.widthOfTextAtSize(s, z), w, hh);
+        if (!fit) throw new Error(`The text in “${f.label || TYPES[f.type].label}” is too long for its box. Shorten it and try again.`);
+        const pad = (hh - fit.lines.length * fit.lead) / 2;
+        fit.lines.forEach((ln, i) => {
+          const ly = hh - pad - (i + 1) * fit.lead + (fit.lead - fit.size) / 2 + fit.size * 0.22;
+          page.drawText(ln, Object.assign(P(1.5, ly), { size: fit.size, font, color: ink, rotate }));
+        });
       }
     }
   }
-  /** Append the certificate of completion (continues onto more pages only if the history is long). */
-  async function appendCertificate(L, pdf, env) {
-    const font = await pdf.embedFont(L.StandardFonts.Helvetica);
-    const bold = await pdf.embedFont(L.StandardFonts.HelveticaBold);
+  /** Every string the certificate prints (to choose its fonts). */
+  function certificateTexts(env) {
+    const out = [T().name, env.title, env.fileName, env.createdBy];
+    env.signers.forEach((s) => out.push(s.name, s.email, s.account, s.userAgent));
+    env.events.forEach((e) => out.push(e.actor, e.action, e.detail));
+    return out;
+  }
+  /**
+   * Append the certificate of completion (continues onto more pages only if the history is long).
+   * opts.standalone: generated on its own after completion, so it can quote the completed file's SHA-256.
+   */
+  async function appendCertificate(L, pdf, env, opts) {
+    opts = opts || {};
+    const fonts = await fontsFor(L, pdf, certificateTexts(env));
+    const font = fonts.regular;
+    const bold = fonts.bold;
     const PW = 612;
     const PH = 792;
     const M = 46;
@@ -428,7 +590,7 @@
     const rule = L.rgb(0.82, 0.82, 0.82);
     let page;
     let y;
-    const text = (s, x, size, f, color) => page.drawText(pdfText(s), { x, y, size, font: f || font, color: color || ink });
+    const text = (s, x, size, f, color) => page.drawText(drawable(fonts, s), { x, y, size, font: f || font, color: color || ink });
     const newPage = (cont) => {
       page = pdf.addPage([PW, PH]);
       y = PH - M - 14;
@@ -444,7 +606,7 @@
     };
     const kv = (label, value, size) => {
       size = size || 8;
-      const lines = wrapText(value, font, size, PW - M * 2 - 116);
+      const lines = wrapText(drawable(fonts, value), font, size, PW - M * 2 - 116);
       need(lines.length * (size + 2.5));
       text(label, M, size, bold, mute);
       lines.forEach((ln, i) => {
@@ -466,6 +628,8 @@
     kv('Document', env.title);
     kv('File', `${env.fileName} (${env.pages} page${env.pages === 1 ? '' : 's'} before this certificate)`);
     kv('Original SHA-256', env.sha256Original);
+    if (env.sha256SignedPages) kv('Signed pages SHA-256', env.sha256SignedPages);
+    if (opts.standalone && env.sha256Signed) kv('Completed file SHA-256', env.sha256Signed);
     kv('Sender', `${env.createdBy}, ${T().name} · signing order: ${env.sequential ? 'in order' : 'any order'}`);
     kv('Sent / completed', `${stamp(env.sentAt)} / ${stamp(env.completedAt)}`);
     heading('Signers');
@@ -495,23 +659,26 @@
     }
     heading('Event history (UTC)');
     env.events.forEach((e) => {
-      const lines = wrapText(`${e.action}${e.detail ? ': ' + e.detail : ''}`, font, 7, PW - M * 2 - 236);
+      const lines = wrapText(drawable(fonts, `${e.action}${e.detail ? ': ' + e.detail : ''}`), font, 7, PW - M * 2 - 236);
       need(lines.length * 9 + 2);
       text(stamp(e.at).replace(' UTC', ''), M, 7, font, mute);
-      text(wrapText(e.actor, font, 7, 108)[0], M + 112, 7);
+      text(wrapText(drawable(fonts, e.actor), font, 7, 108)[0], M + 112, 7);
       lines.forEach((ln, i) => {
         text(ln, M + 236, 7);
         if (i < lines.length - 1) y -= 8.5;
       });
       y -= 10;
     });
-    need(30);
+    need(40);
     y -= 8;
     text('Electronic signatures under the U.S. ESIGN Act (15 U.S.C. 7001 et seq.) and the Uniform Electronic Transactions Act.', M, 7, font, mute);
     y -= 9;
-    text('The SHA-256 of this completed file is recorded in the sponsor\'s change log.', M, 7, font, mute);
+    if (env.sha256SignedPages) {
+      text('Signed pages SHA-256: the hash of the document with every signature stamped, before this certificate was added.', M, 7, font, mute);
+      y -= 9;
+    }
+    text(opts.standalone ? 'This certificate was generated separately from the completed file, whose SHA-256 is listed above.' : 'The SHA-256 of this completed file (signed pages plus this certificate) is recorded with the envelope and in the sponsor\'s change log.', M, 7, font, mute);
   }
-
   /* ---------- Finishing a signature ---------- */
   async function finishSigning(env, signer, st) {
     const ws = W();
@@ -526,6 +693,7 @@
       const at = nowIso();
       const actor = actorFor(me);
       fieldsOf(next, me).forEach((f) => {
+        if (f.locked) return; // prefilled by the sponsor: the envelope's value stands, whatever the page holds
         const v = st.vals[f.id];
         f.value = f.type === 'checkbox' ? !!v : f.type === 'signature' || f.type === 'initials' ? (v ? 'adopted' : '') : String(v || '');
       });
@@ -534,22 +702,31 @@
       me.status = 'signed';
       me.signedAt = at;
       me.userAgent = navigator.userAgent;
-      addEvent(next, actor, 'Signed', `${fieldsOf(next, me).length} field${fieldsOf(next, me).length === 1 ? '' : 's'} completed`);
+      addEvent(next, actor, 'Signed', `${fieldsOf(next, me).length} field${fieldsOf(next, me).length === 1 ? '' : 's'} completed`, at);
       const src = await files().get(next.workDocId || next.docId);
       if (!src) throw new Error('The document is stored in a different browser.');
       const pdf = await L.PDFDocument.load(new Uint8Array(await src.arrayBuffer()), { ignoreEncryption: true });
-      await stampFields(L, pdf, next, me);
+      // pdf-lib cannot write an encrypted file: saving would produce a PDF no reader can open.
+      if (pdf.isEncrypted) throw new Error(`This PDF is password-protected, so signatures cannot be added to it. ${T().name} needs to send an unprotected copy.`);
+      const fonts = await fontsFor(L, pdf, fieldsOf(next, me).map(fieldText));
+      await stampFields(L, pdf, next, me, fonts);
       const complete = next.signers.every((s) => s.status === 'signed');
       let out;
       if (complete) {
         next.status = 'completed';
         next.completedAt = at;
-        addEvent(next, 'System', 'Completed', 'All signers finished; certificate of completion appended');
+        addEvent(next, 'System', 'Completed', 'All signers finished; certificate of completion appended', at);
         next.signers.forEach((s) => email(next, s, `Completed: ${next.title} (signed copy available)`));
-        await appendCertificate(L, pdf, next);
-        out = await pdf.save();
+        // The signed pages are saved (and hashed) first; the certificate quotes that hash, then is appended.
+        const pagesOut = await pdf.save();
+        next.sha256SignedPages = NS.audit.sha256(pagesOut);
+        next.workDocId = next.id + '-work';
+        const final = await L.PDFDocument.load(pagesOut);
+        await appendCertificate(L, final, next);
+        out = await final.save();
         next.signedDocId = next.id + '-signed';
         next.sha256Signed = NS.audit.sha256(out);
+        await files().put(next.workDocId, new Blob([pagesOut], { type: 'application/pdf' }));
         await files().put(next.signedDocId, new Blob([out], { type: 'application/pdf' }));
       } else {
         out = await pdf.save();
@@ -562,20 +739,25 @@
       if (complete) {
         const ids = env.signers.filter((s) => s.investorId).map((s) => s.investorId);
         ws.docs = ws.docs || [];
+        // The portal listing shares the envelope's file; removing the listing keeps the file (see docs-remove below).
         if (ids.length && !ws.docs.some((d) => d.id === env.signedDocId))
           ws.docs.push({ id: env.signedDocId, title: env.title, fileName: slug(env.title) + '_signed.pdf', type: 'application/pdf', size: out.length, sha256: env.sha256Signed, cat: 'Legal', offeringId: env.offeringId || null, audience: 'investors', investors: ids, date: NS.dates.today(), taxYear: '', publishedAt: nowIso(), publishedBy: 'E-sign', envelopeId: env.id });
-        logChange(ws, 'Envelope completed', env, `${env.signers.length} signer${env.signers.length === 1 ? '' : 's'}; signed PDF SHA-256 ${env.sha256Signed}; published to ${ids.length} investor portal${ids.length === 1 ? '' : 's'}`, actor);
+        // A subscription signed through this envelope (the offering's subscription agreement template).
+        (ws.requests || []).filter((r) => r.envelopeId === env.id && !r.signedAt).forEach((r) => (r.signedAt = at.replace(/\.\d{3}Z$/, 'Z')));
+        logChange(ws, 'Envelope completed', env, `${env.signers.length} signer${env.signers.length === 1 ? '' : 's'}; signed pages SHA-256 ${env.sha256SignedPages}; signed PDF SHA-256 ${env.sha256Signed}; published to ${ids.length} investor portal${ids.length === 1 ? '' : 's'}`, actor);
       }
       st.busy = false;
       st.finished = true;
+      S().ui.esFocus = '.es-done';
       NS.app.save(true);
       NS.app.render();
       U.toast(complete ? 'Signed. Everyone has signed; the completed copy was emailed to all parties (simulated).' : 'Signed. The next signer was emailed (simulated).');
     } catch (err) {
       st.busy = false;
+      S().ui.esFocus = '.es-finish';
       NS.app.render();
       U.toast((err && err.message) || 'Signing failed. Try again.');
-      if (window.console) console.error(err);
+      if (window.console) console.warn(err);
     }
   }
   function declineEnvelope(env, signer, reason) {
@@ -730,8 +912,19 @@
     window.scrollTo(0, 0);
   };
   NS.actions['es-tpl-del'] = (el) => {
+    const t = tpls(W()).find((x) => x.id === el.getAttribute('data-id'));
+    if (!t) return;
+    const o = t.subscription && t.offeringId ? W().offerings.find((x) => x.id === t.offeringId) : null;
+    U.dialog(
+      `<div class="dlg-head"><div><h2>Delete this template?</h2><p>${h(t.title)} and its ${(t.fields || []).length} field placement${(t.fields || []).length === 1 ? '' : 's'} will be removed. Envelopes already sent from it are not affected.${o ? ` It is the subscription agreement for ${h(o.name)}: new subscribers will no longer be sent an agreement to sign.` : ''}</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
+      <div class="dlg-body"><div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog" autofocus>Keep it</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-tpl-del-yes" data-id="${h(t.id)}">Delete template</button></div></div>`,
+      'dlg-es'
+    );
+  };
+  NS.actions['es-tpl-del-yes'] = (el) => {
     const w = W();
     const t = tpls(w).find((x) => x.id === el.getAttribute('data-id'));
+    U.closeDialog();
     if (!t) return;
     w.esignTemplates = tpls(w).filter((x) => x !== t);
     if (!envs(w).some((e) => e.docId === t.docId)) files().del(t.docId).catch(() => {});
@@ -827,6 +1020,8 @@
     const tpl = n.source === 'template' ? tpls(w).find((t) => t.id === n.templateId) : null;
     const pdoc = n.source === 'doc' ? (w.docs || []).find((d) => d.id === n.docId) : null;
     if (n.source === 'upload' && !n.file) return fail('Choose a PDF to upload.');
+    if (n.source === 'upload' && n.file.size > MAX_BYTES) return fail(`This file is over 25 MB (${(n.file.size / 1048576).toFixed(1)} MB). Upload a smaller PDF.`);
+    if (n.source === 'upload' && !(/\.pdf$/i.test(n.file.name) || /pdf/i.test(n.file.type))) return fail('Choose a PDF file.');
     if (n.source === 'template' && !tpl) return fail('Choose a template.');
     if (n.source === 'doc' && !pdoc) return fail('Choose a published PDF.');
     if (!String(n.title).trim()) return fail('Give the envelope a title.');
@@ -835,6 +1030,7 @@
     n.busy = true;
     n.error = '';
     NS.app.render();
+    let stored = null;
     try {
       const id = uid('env');
       let docId;
@@ -853,8 +1049,11 @@
         if (!isPdf(bytes)) throw new Error('This file is not a PDF.');
         docId = id + '-orig';
         await files().put(docId, new Blob([bytes], { type: 'application/pdf' }));
+        stored = docId;
       }
       const pages = await loadPages(docId);
+      if (pageCache[docId] && pageCache[docId].encrypted)
+        throw new Error('This PDF is password-protected (it restricts changes), so signatures cannot be added to it. Remove the protection, for example by saving or printing it as a new PDF, and upload that copy.');
       const env = makeEnvelope({ id, title: String(n.title).trim(), fileName, docId, pages: pages.length, pageSizes: pages.map((p) => ({ w: p.w, h: p.h })), sha256Original: tpl ? tpl.sha256 : NS.audit.sha256(bytes), offeringId: n.offeringId, templateId: tpl ? tpl.id : null, sequential: n.sequential, message: tpl ? tpl.message || '' : '' });
       n.investors.forEach((iid) => {
         const inv = w.investors.find((x) => x.id === iid);
@@ -867,10 +1066,15 @@
       envs(w).push(env);
       NS.app.save(true);
       S().ui.esNew = null;
-      Object.assign(esUi(), { tool: null, sel: null, signer: env.signers[0].id, placePage: 1, signAs: null });
+      Object.assign(esUi(), { tab: 'envelopes', tool: null, sel: null, signer: env.signers[0].id, placePage: 1, signAs: null });
       if (dropped) U.toast(`${dropped} template field${dropped === 1 ? ' was' : 's were'} left out because no signer fills that role.`);
       NS.app.go('console-envelope-' + env.id);
     } catch (err) {
+      // Nothing was created: drop the copy stored for it.
+      if (stored) {
+        files().del(stored).catch(() => {});
+        delete pageCache[stored];
+      }
       fail((err && err.message) || 'This PDF could not be opened.');
     }
   };
@@ -907,7 +1111,7 @@
     try {
       const L = await pdflib();
       const pdf = await L.PDFDocument.create();
-      await appendCertificate(L, pdf, env);
+      await appendCertificate(L, pdf, env, { standalone: true });
       const out = await pdf.save();
       U.download(slug(env.title) + '_certificate.pdf', new Blob([out], { type: 'application/pdf' }), { mime: 'application/pdf' });
     } catch (e) {
@@ -937,7 +1141,7 @@
     const s = signerById(env, f.signerId) || { name: 'Unassigned', color: '#888888' };
     const sel = ui.sel === f.id;
     const t = TYPES[f.type];
-    return `<div class="es-fld es-fld-${f.type}${sel ? ' is-sel' : ''}" data-fid="${h(f.id)}" tabindex="0" role="button" aria-pressed="${sel}" aria-label="${h(f.label || t.label)} for ${h(s.name)}, page ${f.page}${f.required ? ', required' : ''}. Arrow keys move, Delete removes." style="${boxStyle(f, s.color)}"><span class="es-fld-label">${f.type === 'checkbox' ? '' : h(f.label || t.label)}${f.required && f.type !== 'date' ? '<b aria-hidden="true">*</b>' : ''}</span><span class="es-handle" aria-hidden="true"></span></div>`;
+    return `<div class="es-fld es-fld-${f.type}${sel ? ' is-sel' : ''}" data-fid="${h(f.id)}" tabindex="0" role="button" aria-pressed="${sel}" aria-label="${h(f.label || t.label)} for ${h(s.name)}, page ${f.page}${isReq(f) ? ', required' : ''}. Arrow keys move, Delete removes." style="${boxStyle(f, s.color)}"><span class="es-fld-label">${f.type === 'checkbox' ? '' : h(f.label || t.label)}${isReq(f) ? '<b aria-hidden="true">*</b>' : ''}</span><span class="es-handle" aria-hidden="true"></span></div>`;
   }
   function editorHTML(env) {
     const K = CK();
@@ -958,7 +1162,7 @@
       ? `<div class="es-props"><h3>${h(TYPES[sel.type].label)} field <span class="cs-hint">page ${sel.page}</span></h3>
           <label class="cs-field" for="es-fs"><span>Signer</span><select id="es-fs" data-change="es-fprop" data-k="signerId">${env.signers.map((s) => `<option value="${h(s.id)}"${s.id === sel.signerId ? ' selected' : ''}>${h(s.name)}</option>`).join('')}</select></label>
           <label class="cs-field" for="es-fl"><span>Label <em>(shown to the signer; matches prefill keys)</em></span><input id="es-fl" type="text" maxlength="60" data-input="es-fprop" data-k="label" value="${h(sel.label || '')}" placeholder="${h(TYPES[sel.type].label)}"></label>
-          ${sel.type === 'date' ? '<p class="cs-hint">Filled automatically with the date the signer signs.</p>' : `<label class="cs-check" for="es-fr"><input id="es-fr" type="checkbox" data-change="es-fprop" data-k="required"${sel.required ? ' checked' : ''}><span>Required</span></label>`}
+          ${sel.type === 'date' ? '<p class="cs-hint">Filled automatically with the date the signer signs.</p>' : `<label class="cs-check" for="es-fr"><input id="es-fr" type="checkbox" data-change="es-fprop" data-k="required"${isReq(sel) ? ' checked' : ''}><span>Required${(sel.type === 'signature' || sel.type === 'initials') && !isReq(sel) ? '<span class="cs-hint">Optional: the signer can finish without signing here.</span>' : sel.type === 'checkbox' ? '<span class="cs-hint">Required means the signer must tick it to finish.</span>' : ''}</span></label>`}
           <button class="cs-btn cs-btn-small cs-btn-danger" type="button" data-action="es-fdel">${icon('x')}Remove field</button></div>`
       : '';
     const err = sendCheck(env);
@@ -1053,6 +1257,11 @@
     NS.app.render();
     window.scrollTo(0, 0);
   };
+  // Leaving the countersign screen any other way (menu, back button) ends it: reopening the envelope shows its status page.
+  window.addEventListener('hashchange', () => {
+    const ui = S().ui && S().ui.es;
+    if (ui && ui.signAs && location.hash !== '#console-envelope-' + ui.signAs) ui.signAs = null;
+  });
   NS.actions['es-sign-exit'] = () => {
     esUi().signAs = null;
     NS.app.render();
@@ -1130,7 +1339,7 @@
     save();
     if (k === 'label') {
       const lab = document.querySelector(`.es-fld[data-fid="${CSS.escape(f.id)}"] .es-fld-label`);
-      if (lab && f.type !== 'checkbox') lab.innerHTML = h(f.label || TYPES[f.type].label) + (f.required && f.type !== 'date' ? '<b aria-hidden="true">*</b>' : '');
+      if (lab && f.type !== 'checkbox') lab.innerHTML = h(f.label || TYPES[f.type].label) + (isReq(f) ? '<b aria-hidden="true">*</b>' : '');
       return;
     }
     S().ui.esFocus = `[data-k="${k}"]`;
@@ -1205,16 +1414,30 @@
     const w = W();
     const env = envById(w, el.getAttribute('data-id'));
     if (!env) return;
+    // Pre-ticked only when the envelope's offering has no subscription agreement yet, so saving never silently replaces one.
+    const preSub = !!env.offeringId && !subscriptionTemplate(w, env.offeringId);
     U.dialog(
       `<form class="es-dlg-form" data-form="es-save-tpl" data-id="${h(env.id)}"><div class="dlg-head"><div><h2>Save as template</h2><p>Keeps this PDF and its ${env.fields.length} field${env.fields.length === 1 ? '' : 's'} by role (${h(rolesOf(env).join(', '))}).</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
       <div class="dlg-body"><div class="cs-grid">
         <label class="cs-field cs-wide" for="es-tt"><span>Template name</span><input id="es-tt" name="title" type="text" maxlength="120" value="${h(env.title)}" required autofocus></label>
-        <label class="cs-check cs-wide" for="es-tsub"><input id="es-tsub" name="subscription" type="checkbox"${env.offeringId ? ' checked' : ''}><span>This is the subscription agreement for an offering<span class="cs-hint">New subscribers to the offering are sent this template to sign.</span></span></label>
-        <label class="cs-field cs-wide" for="es-toff"><span>Offering</span><select id="es-toff" name="offeringId"><option value="">None</option>${w.offerings.map((o) => `<option value="${h(o.id)}"${o.id === env.offeringId ? ' selected' : ''}>${h(o.name)}</option>`).join('')}</select></label>
+        <label class="cs-check cs-wide" for="es-tsub"><input id="es-tsub" name="subscription" type="checkbox" data-change="es-tpl-sub"${preSub ? ' checked' : ''}><span>This is the subscription agreement for an offering<span class="cs-hint">New subscribers to the offering are sent this template to sign when they subscribe in the portal.</span></span></label>
+        <label class="cs-field cs-wide" for="es-toff"><span>Offering</span><select id="es-toff" name="offeringId" data-change="es-tpl-sub"><option value="">None</option>${w.offerings.map((o) => `<option value="${h(o.id)}"${o.id === env.offeringId ? ' selected' : ''}>${h(o.name)}</option>`).join('')}</select></label>
+        <p class="cs-hint cs-wide es-tpl-replace" id="es-tpl-replace" aria-live="polite">${h(replaceNote(w, preSub, env.offeringId))}</p>
       </div>
       <div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog">Cancel</button><button class="cs-btn cs-btn-primary" type="submit">Save template</button></div></div></form>`,
       'dlg-es'
     );
+  };
+  /** Which template a new subscription agreement would replace, if any. */
+  function replaceNote(w, sub, offeringId) {
+    const cur = sub && offeringId ? subscriptionTemplate(w, offeringId) : null;
+    const o = cur ? w.offerings.find((x) => x.id === offeringId) : null;
+    return cur ? `This replaces “${cur.title}” as the subscription agreement for ${o ? o.name : 'this offering'}.` : '';
+  }
+  NS.changes['es-tpl-sub'] = (el) => {
+    const form = el.form;
+    const p = document.getElementById('es-tpl-replace');
+    if (form && p) p.textContent = replaceNote(W(), form.subscription.checked, form.offeringId.value);
   };
   NS.forms['es-save-tpl'] = (form) => {
     const w = W();
@@ -1365,18 +1588,23 @@
   function focusPending() {
     const sel = S().ui.esFocus;
     if (!sel) return;
-    S().ui.esFocus = null;
     const el = document.querySelector(sel);
+    // Pages still loading (first visit): keep the request; the re-render when they arrive places focus.
+    if (!el && document.querySelector('.es-loading')) return;
+    S().ui.esFocus = null;
     if (el) el.focus({ preventScroll: true });
   }
 
   /* =====================================================================
    * Signing experience (investor portal and sponsor countersignature)
    * ===================================================================== */
+  /** Entries for one signer of one envelope, kept for the session (switching envelopes keeps them). */
   function signingState(env, signerId) {
     const u = S().ui;
     const key = env.id + ':' + signerId;
-    if (!u.esSigning || u.esSigning.key !== key) {
+    u.esSigningAll = u.esSigningAll || {};
+    let st = u.esSigningAll[key];
+    if (!st) {
       const s = signerById(env, signerId);
       if (!s) return null;
       const vals = {};
@@ -1387,16 +1615,34 @@
         else if (f.type === 'checkbox') vals[f.id] = !!f.value;
         else vals[f.id] = false;
       });
-      u.esSigning = { key, vals, adopted: {}, busy: false, finished: false };
+      st = u.esSigningAll[key] = { key, vals, adopted: {}, busy: false, finished: false, cursor: null };
     }
-    return u.esSigning;
+    u.esSigning = st;
+    return st;
   }
-  const filledVal = (f, v) => (f.type === 'checkbox' ? true : f.type === 'text' || f.type === 'name' ? String(v || '').trim() !== '' : !!v);
+  const filledVal = (f, v) => (f.type === 'checkbox' ? !!v : f.type === 'text' || f.type === 'name' ? String(v || '').trim() !== '' : !!v);
+  /** Width of text at a size, in points, with the browser's Helvetica (Arial and Liberation Sans share its widths). */
+  let measureCtx = null;
+  function browserWidth(text, size) {
+    if (!measureCtx) measureCtx = document.createElement('canvas').getContext('2d');
+    measureCtx.font = `${size}px Helvetica, Arial, "Liberation Sans", sans-serif`;
+    // A little slack, and more for text that needs the wider Unicode font.
+    return measureCtx.measureText(text).width * (winAnsi(text) ? 1.03 : 1.18);
+  }
+  /** A typed value that cannot be printed legibly inside its box. */
+  function tooLong(env, f, v) {
+    if (f.type !== 'text' && f.type !== 'name') return false;
+    const t = pdfText(v).trim();
+    if (!t) return false;
+    const ps = env.pageSizes[f.page - 1] || { w: 612, h: 792 };
+    return !fitText(t, browserWidth, f.w * ps.w, f.h * ps.h);
+  }
   function missingFields(env, s, st) {
-    return fieldsOf(env, s).filter((f) => f.type !== 'date' && (f.required || f.type === 'signature' || f.type === 'initials') && !filledVal(f, st.vals[f.id]));
+    return fieldsOf(env, s).filter((f) => isReq(f) && !filledVal(f, st.vals[f.id]));
   }
+  const overLong = (env, s, st) => fieldsOf(env, s).filter((f) => !f.locked && tooLong(env, f, st.vals[f.id]));
   function progressText(env, s, st) {
-    const req = fieldsOf(env, s).filter((f) => f.type !== 'date' && (f.required || f.type === 'signature' || f.type === 'initials'));
+    const req = fieldsOf(env, s).filter(isReq);
     const left = missingFields(env, s, st).length;
     return left ? `${req.length - left} of ${req.length} required fields complete` : 'All required fields complete';
   }
@@ -1404,29 +1650,38 @@
   function filledFieldHTML(env, f, me) {
     const owner = signerById(env, f.signerId) || { name: '', color: '#888888' };
     const st = boxStyle(f, owner.color);
-    const has = f.type === 'checkbox' ? !!f.value : !!f.value;
-    if (!has) return `<div class="es-f es-f-other" style="${st}" title="${h(TYPES[f.type].label)} for ${h(owner.name)}"><span class="sr-only">${h(TYPES[f.type].label)} for ${h(owner.name)}, not signed yet</span></div>`;
+    const label = f.label || TYPES[f.type].label;
+    if (!f.value) {
+      // Someone who has signed left this optional field empty: it is complete, and blank.
+      if (owner.status === 'signed') return `<div class="es-f es-f-blank" style="${st}" title="${h(label)} for ${h(owner.name)}, left blank"><span class="sr-only">${h(label)} for ${h(owner.name)}, left blank</span></div>`;
+      return `<div class="es-f es-f-other" style="${st}" title="${h(TYPES[f.type].label)} for ${h(owner.name)}"><span class="sr-only">${h(TYPES[f.type].label)} for ${h(owner.name)}, not signed yet</span></div>`;
+    }
     let inner = '';
     if (f.type === 'signature' || f.type === 'initials') {
       const sig = f.type === 'initials' ? owner.initials : owner.signature;
       inner = sig && sig.png ? `<img src="${h(sig.png)}" alt="${h(TYPES[f.type].label)} of ${h(owner.name)}">` : '';
-    } else if (f.type === 'checkbox') inner = icon('check');
+    } else if (f.type === 'checkbox') inner = `${icon('check')}<span class="sr-only">${h(label)}: checked</span>`;
     else inner = `<span>${h(f.value)}</span>`;
     return `<div class="es-f es-f-done es-f-${f.type}" style="${st}">${inner}</div>`;
   }
   function myFieldHTML(env, s, f, st, disabled) {
     const v = st.vals[f.id];
-    const style = boxStyle(f, s.color);
+    const style = mineStyle(f, s.color);
     const label = f.label || TYPES[f.type].label;
-    const req = f.required || f.type === 'signature' || f.type === 'initials';
+    const req = isReq(f);
     const dis = disabled ? ' disabled' : '';
     if (f.type === 'signature' || f.type === 'initials') {
       const sig = st.adopted[f.type] || (f.type === 'initials' ? s.initials : s.signature);
-      return `<button type="button" class="es-f es-f-mine es-f-sig${v ? ' is-filled' : ''}" style="${style}" data-action="es-sig" data-fid="${h(f.id)}" aria-label="${h(label)}${req ? ', required' : ''}${v ? ', signed. Select to change.' : '. Select to sign.'}"${dis}>${v && sig ? `<img src="${h(sig.png)}" alt="">` : `<span class="es-f-cue">${f.type === 'initials' ? 'Initial' : 'Sign'}</span>`}</button>`;
+      return `<button type="button" class="es-f es-f-mine es-f-sig${v ? ' is-filled' : ''}" style="${style}" data-action="es-sig" data-fid="${h(f.id)}" aria-label="${h(label)}${req ? ', required' : ', optional'}${v ? ', signed. Select to change.' : '. Select to sign.'}"${dis}>${v && sig ? `<img src="${h(sig.png)}" alt="">` : `<span class="es-f-cue">${f.type === 'initials' ? 'Initial' : 'Sign'}${req ? '' : ' (optional)'}</span>`}</button>`;
     }
     if (f.type === 'date') return `<div class="es-f es-f-mine es-f-auto is-filled" style="${style}" title="Date signed (filled automatically)"><span>${h(v)}</span></div>`;
-    if (f.type === 'checkbox') return `<label class="es-f es-f-mine es-f-check${v ? ' is-filled' : ''}" style="${style}"><input type="checkbox" data-fid="${h(f.id)}" data-change="es-val"${v ? ' checked' : ''}${f.locked || disabled ? ' disabled' : ''}><span class="sr-only">${h(label)}${req ? ', required' : ''}</span></label>`;
-    return `<input class="es-f es-f-mine es-f-input${filledVal(f, v) ? ' is-filled' : ''}" style="${style}" type="text" data-fid="${h(f.id)}" data-input="es-val" value="${h(v)}" maxlength="200" aria-label="${h(label)}${req ? ', required' : ''}" placeholder="${h(label)}"${f.locked ? ' readonly' : ''}${dis}>`;
+    if (f.type === 'checkbox') {
+      // The label the sponsor gave is shown beside the box, with the required marker.
+      const tag = f.label || req ? `<span class="es-f-tag${f.x + f.w > 0.62 ? ' es-f-tag-l' : ''}" aria-hidden="true">${h(f.label || 'Required')}${req && f.label ? '<b>*</b>' : ''}</span>` : '';
+      return `<label class="es-f es-f-mine es-f-check${v ? ' is-filled' : ''}${req ? ' is-req' : ''}" style="${style}"><input type="checkbox" data-fid="${h(f.id)}" data-change="es-val"${v ? ' checked' : ''}${req ? ' required aria-required="true"' : ''}${f.locked || disabled ? ' disabled' : ''}><span class="sr-only">${h(label)}${req ? ', required' : ''}</span>${tag}</label>`;
+    }
+    const over = !f.locked && tooLong(env, f, v);
+    return `<label class="es-f es-f-mine es-f-text${filledVal(f, v) ? ' is-filled' : ''}${over ? ' is-over' : ''}${f.locked ? ' is-locked' : ''}" style="${style}"><input class="es-f-input" type="text" data-fid="${h(f.id)}" data-input="es-val" value="${h(v)}" maxlength="200" aria-label="${h(label)}${req ? ', required' : ''}${f.locked ? ', filled in by the sender' : ''}" placeholder="${h(label)}"${over ? ' aria-invalid="true"' : ''}${f.locked ? ' readonly' : ''}${dis}></label>`;
   }
   /** The signing page. opts.ctx is 'portal' (investor) or 'console' (sponsor countersigner). */
   function signHTML(env, s, opts) {
@@ -1446,7 +1701,7 @@
     const wrap = (inner) => `<div class="es-sign${con ? ' es-sign-console' : ''}">${back}${head}${inner}</div>`;
     if (st.finished || s.status === 'signed') {
       const complete = env.status === 'completed';
-      return wrap(`<section class="es-card es-done" aria-live="polite"><h2>${icon('check')}${con ? 'Countersigned' : 'You signed this document'}</h2><p>${s.signedAt ? `Signed ${h(stamp(s.signedAt))}. ` : ''}${complete ? 'Everyone has signed. The completed document, with its certificate of completion, is saved' + (con ? ' with the envelope.' : ' in your Documents.') : 'We will email you a copy when everyone has signed.'}</p>${complete ? `<div class="es-row"><button class="${btn(true)}" type="button" data-action="es-dl-signed" data-id="${h(env.id)}">${icon('download')}Download signed PDF</button>${con ? '' : `<a class="${btn()}" href="#documents">Go to Documents</a>`}</div>` : ''}</section>`);
+      return wrap(`<section class="es-card es-done" tabindex="-1" aria-live="polite"><h2>${icon('check')}${con ? 'Countersigned' : 'You signed this document'}</h2><p>${s.signedAt ? `Signed ${h(stamp(s.signedAt))}. ` : ''}${complete ? 'Everyone has signed. The completed document, with its certificate of completion, is saved' + (con ? ' with the envelope.' : ' in your Documents.') : 'We will email you a copy when everyone has signed.'}</p>${complete ? `<div class="es-row"><button class="${btn(true)}" type="button" data-action="es-dl-signed" data-id="${h(env.id)}">${icon('download')}Download signed PDF</button>${con ? '' : `<a class="${btn()}" href="#documents">Go to Documents</a>`}</div>` : ''}</section>`);
     }
     if (env.status === 'voided') return wrap(`<section class="es-card"><h2>This document was voided</h2><p>${h(t.name)} cancelled this request${env.voidReason ? `: ${h(env.voidReason)}` : '.'} No signature is needed.</p></section>`);
     if (env.status === 'declined' || s.status === 'declined') return wrap(`<section class="es-card"><h2>Signing was declined</h2><p>${s.status === 'declined' ? `You declined to sign${s.declinedReason ? `: “${h(s.declinedReason)}”` : '.'} ${h(t.name)} has been notified.` : 'Another signer declined, so this document will not be completed.'}</p></section>`);
@@ -1477,7 +1732,7 @@
         .sort(readingOrder)
         .map((f) => (f.signerId === s.id ? myFieldHTML(env, s, f, st, preview || st.busy) : filledFieldHTML(env, f, s)))
         .join('');
-    return wrap(`${note}<div class="es-bar" role="toolbar" aria-label="Signing">
+    return wrap(`${note}<div class="es-bar${con ? '' : ' es-bar-portal'}" role="toolbar" aria-label="Signing">
         <p class="es-progress" aria-live="polite">${h(progressText(env, s, st))}</p>
         <div class="es-row">
           <button class="${btn()}" type="button" data-action="es-next" data-id="${h(env.id)}" data-sid="${h(s.id)}"${preview ? ' disabled' : ''}>${icon('arrow')}Next field</button>
@@ -1524,7 +1779,7 @@
     s.consentAt = nowIso();
     addEvent(env, actorFor(s), 'Consent given', 'Agreed to use electronic records and signatures (ESIGN Act, UETA)');
     NS.app.save(true);
-    const first = fieldsOf(env, s)[0];
+    const first = fieldsOf(env, s).filter((f) => f.type !== 'date' && !f.locked)[0];
     S().ui.esFocus = first ? `.es-doc-sign [data-fid="${first.id}"]` : '.es-finish';
     NS.app.render();
   };
@@ -1532,42 +1787,72 @@
     const st = S().ui.esSigning;
     if (!st) return;
     const fid = el.getAttribute('data-fid');
-    st.vals[fid] = el.type === 'checkbox' ? el.checked : el.value;
-    el.classList.toggle('is-filled', el.type === 'checkbox' ? el.checked : String(el.value).trim() !== '');
-    if (el.type === 'checkbox' && el.parentElement) el.parentElement.classList.toggle('is-filled', el.checked);
     const [envId, sid] = st.key.split(':');
     const env = envById(W(), envId);
     const s = env && signerById(env, sid);
+    const f = env && env.fields.find((x) => x.id === fid);
+    // Only this signer's own, editable fields take input (a prefilled value cannot be changed from the page).
+    if (!f || !s || f.signerId !== s.id || f.locked || f.type === 'date') {
+      if (f && el.type === 'checkbox') el.checked = !!st.vals[fid];
+      else if (f) el.value = st.vals[fid] == null ? '' : st.vals[fid];
+      return;
+    }
+    st.vals[fid] = el.type === 'checkbox' ? el.checked : el.value;
+    const box = el.closest('.es-f') || el;
+    box.classList.toggle('is-filled', filledVal(f, st.vals[fid]));
+    if (el.type !== 'checkbox') {
+      const over = tooLong(env, f, el.value);
+      box.classList.toggle('is-over', over);
+      if (over) el.setAttribute('aria-invalid', 'true');
+      else el.removeAttribute('aria-invalid');
+    }
     const p = document.querySelector('.es-progress');
-    if (p && s) p.textContent = progressText(env, s, st);
+    if (p) p.textContent = progressText(env, s, st);
   };
+  // Where the signer is: the last field (or Finish) that had focus. Next field continues from there.
+  document.addEventListener('focusin', (e) => {
+    const st = S().ui.esSigning;
+    const t = e.target;
+    if (!st || !t || !t.closest) return;
+    if (t.closest('.es-finish')) st.cursor = 'finish';
+    else {
+      const fe = t.closest('.es-doc-sign [data-fid]');
+      if (fe) st.cursor = fe.getAttribute('data-fid');
+    }
+  });
   function focusField(env, s, f) {
     const el = document.querySelector(`.es-doc-sign [data-fid="${CSS.escape(f.id)}"]`);
     if (!el) return;
     el.scrollIntoView({ block: 'center', behavior: 'smooth' });
     el.focus({ preventScroll: true });
   }
-  function nextField(env, s, st, afterId) {
+  /**
+   * The next field to go to from `from` (a field id, 'finish' or null): the next incomplete required
+   * field (wrapping round); when none is left, the next empty optional field after this one, then Finish
+   * (null). From Finish, optional fields start again from the top.
+   */
+  function nextField(env, s, st, from) {
     const list = fieldsOf(env, s).filter((f) => f.type !== 'date' && !f.locked);
-    const open = list.filter((f) => !filledVal(f, st.vals[f.id]) || (f.type === 'checkbox' && !st.vals[f.id]));
-    const i = afterId ? list.findIndex((f) => f.id === afterId) : -1;
-    return open.find((f) => list.indexOf(f) > i) || open[0] || null;
+    const i = from && from !== 'finish' ? list.findIndex((f) => f.id === from) : -1;
+    const later = (arr) => arr.find((f) => list.indexOf(f) > i);
+    const todo = list.filter((f) => (isReq(f) && !filledVal(f, st.vals[f.id])) || tooLong(env, f, st.vals[f.id]));
+    if (todo.length) return later(todo) || todo[0];
+    const open = list.filter((f) => !filledVal(f, st.vals[f.id]));
+    return later(open) || null;
+  }
+  function focusFinish() {
+    const fin = document.querySelector('.es-finish');
+    if (!fin) return;
+    fin.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    fin.focus({ preventScroll: true });
   }
   NS.actions['es-next'] = (el) => {
     const { env, s } = signerFromEl(el);
     const st = env && s && signingState(env, s.id);
     if (!st) return;
-    const active = document.activeElement && document.activeElement.getAttribute && document.activeElement.getAttribute('data-fid');
-    const missing = missingFields(env, s, st);
-    const f = missing.length ? missing.find((x) => fieldsOf(env, s).indexOf(x) > fieldsOf(env, s).findIndex((y) => y.id === active)) || missing[0] : nextField(env, s, st, active);
+    const f = nextField(env, s, st, st.cursor);
     if (f) focusField(env, s, f);
-    else {
-      const fin = document.querySelector('.es-finish');
-      if (fin) {
-        fin.scrollIntoView({ block: 'center', behavior: 'smooth' });
-        fin.focus({ preventScroll: true });
-      }
-    }
+    else focusFinish();
   };
   NS.actions['es-finish'] = (el) => {
     const { env, s } = signerFromEl(el);
@@ -1578,6 +1863,12 @@
     if (missing.length) {
       U.toast(`${missing.length} required field${missing.length === 1 ? ' is' : 's are'} not complete.`);
       focusField(env, s, missing[0]);
+      return;
+    }
+    const over = overLong(env, s, st);
+    if (over.length) {
+      U.toast(`The text in “${over[0].label || TYPES[over[0].type].label}” is too long for its box. Shorten it to finish.`);
+      focusField(env, s, over[0]);
       return;
     }
     finishSigning(env, s, st);
@@ -1779,6 +2070,67 @@
     ctx.fillText(text, 24, 135);
     return trimPng(c, 600, 160);
   }
+  /**
+   * Make the paper transparent so only the ink is stamped. The paper's shade is read from the image's
+   * edges (white, cream or a grey photo of a page) and the ink's from its darkest pixels; pixels near
+   * the paper fade out, pixels near the ink stay. An image with too little contrast has no ink.
+   */
+  function knockOutPaper(ctx, w, hgt) {
+    const id = ctx.getImageData(0, 0, w, hgt);
+    const px = id.data;
+    const lum = (i) => 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+    const edge = [];
+    const take = (x, y) => {
+      const i = (y * w + x) * 4;
+      if (px[i + 3] > 200) edge.push(lum(i));
+    };
+    const sx = Math.max(1, Math.floor(w / 200));
+    const sy = Math.max(1, Math.floor(hgt / 200));
+    for (let x = 0; x < w; x += sx) {
+      take(x, 0);
+      take(x, hgt - 1);
+    }
+    for (let y = 0; y < hgt; y += sy) {
+      take(0, y);
+      take(w - 1, y);
+    }
+    if (edge.length < 8) {
+      // Already transparent around the ink (a PNG cut-out): only clear near-white pixels.
+      for (let i = 0; i < px.length; i += 4) if (lum(i) > 235) px[i + 3] = 0;
+      ctx.putImageData(id, 0, 0);
+      return;
+    }
+    edge.sort((a, b) => a - b);
+    const paper = edge[Math.floor(edge.length / 2)];
+    const hist = new Array(256).fill(0);
+    let n = 0;
+    for (let i = 0; i < px.length; i += 4)
+      if (px[i + 3] > 200) {
+        hist[Math.max(0, Math.min(255, Math.round(lum(i))))]++;
+        n++;
+      }
+    let inkL = 0;
+    for (let k = 0, acc = 0; k < 256; k++) {
+      acc += hist[k];
+      if (acc >= n * 0.005) {
+        inkL = k;
+        break;
+      }
+    }
+    const span = paper - inkL;
+    const clear = paper - span * 0.25;
+    const solid = inkL + span * 0.45;
+    for (let i = 0; i < px.length; i += 4) {
+      if (span < 40) {
+        px[i + 3] = 0;
+        continue;
+      }
+      const L = lum(i);
+      const a = L >= clear ? 0 : L <= solid ? 1 : (clear - L) / (clear - solid);
+      px[i + 3] = Math.round(px[i + 3] * a);
+    }
+    ctx.putImageData(id, 0, 0);
+  }
   NS.changes['es-upload'] = (el) => {
     const a = S().ui.esAdopt;
     const file = el.files && el.files[0];
@@ -1798,11 +2150,7 @@
       c.height = Math.max(1, Math.round(img.height * s));
       const ctx = c.getContext('2d');
       ctx.drawImage(img, 0, 0, c.width, c.height);
-      // Make a white or light background transparent so only the ink is stamped.
-      const id = ctx.getImageData(0, 0, c.width, c.height);
-      const px = id.data;
-      for (let i = 0; i < px.length; i += 4) if (px[i] > 225 && px[i + 1] > 225 && px[i + 2] > 225) px[i + 3] = 0;
-      ctx.putImageData(id, 0, 0);
+      knockOutPaper(ctx, c.width, c.height);
       a.upload = trimPng(c, 600, 200);
       URL.revokeObjectURL(url);
       if (box) box.innerHTML = a.upload ? `<img src="${a.upload}" alt="Uploaded ${a.kind === 'initials' ? 'initials' : 'signature'}">` : '<span class="hint">No ink found in this image.</span>';
@@ -1869,6 +2217,19 @@
   };
 
   /* ---------- Investor signing page ---------- */
+  /** Keep the signing bar just below the portal's sticky header (whatever its height on this screen). */
+  function stickBar() {
+    const head = document.querySelector('.pt-head');
+    let top = 0;
+    if (head) {
+      const cs = getComputedStyle(head);
+      if (cs.position === 'sticky' || cs.position === 'fixed') top = Math.max(0, Math.ceil(head.getBoundingClientRect().height + (parseFloat(cs.top) || 0)));
+    }
+    document.documentElement.style.setProperty('--es-bar-top', top + 'px');
+  }
+  window.addEventListener('resize', () => {
+    if (document.querySelector('.es-bar-portal')) stickBar();
+  });
   NS.views.sign = {
     mode: 'portal',
     render(id) {
@@ -1883,25 +2244,71 @@
       const env = envById(W(), id);
       const inv = PK().viewer();
       const s = env && inv ? env.signers.find((x) => x.investorId === inv.id) : null;
+      stickBar();
       signAfter(env, s, 'portal');
       focusPending();
     }
   };
 
   /* ---------- Hooks into shared pages ---------- */
-  NS.hooks.investmentsTop.push((inv) => {
-    const list = inv ? pendingFor(W(), inv.id) : [];
-    if (!list.length) return '';
-    const n = list.length;
-    return `<section class="es-banner" aria-label="Documents to sign"><span class="es-banner-icon">${PEN}</span><div class="es-banner-body"><strong>${n === 1 ? 'A document is' : `${n} documents are`} waiting for your signature</strong><span>${list.map((e) => h(e.title)).join(' · ')}</span></div><a class="btn btn-primary btn-small" href="#sign-${h(list[0].id)}">Review and sign</a></section>`;
-  });
-  NS.hooks.documentsTop.push((inv) => {
-    const list = inv ? pendingFor(W(), inv.id) : [];
-    if (!list.length) return '';
+  function waitingHTML(list) {
     return `<section class="sec es-waiting" aria-label="Waiting for your signature">${PK().sec('Waiting for your signature', `<span class="hint">${list.length} document${list.length === 1 ? '' : 's'}</span>`)}<div class="tbl-scroll"><table class="tbl tbl-mid"><thead><tr><th scope="col">Sent</th><th scope="col">Document</th><th scope="col"><span class="sr-only">Sign</span></th></tr></thead><tbody>${list
       .map((e) => `<tr><td class="nowrap td-meta">${date((e.sentAt || e.createdAt).slice(0, 10))}</td><td class="td-lead"><a href="#sign-${h(e.id)}">${h(e.title)}</a><span class="sub">From ${h(T().name)}${e.message ? ` · ${h(e.message.length > 90 ? e.message.slice(0, 87) + '…' : e.message)}` : ''}</span></td><td class="num"><a class="btn btn-primary btn-small" href="#sign-${h(e.id)}">${PEN}Review and sign</a></td></tr>`)
       .join('')}</tbody></table></div></section>`;
+  }
+  /** Signed copies published to this investor (shown where the Documents page cannot list them). */
+  const signedDocsFor = (ws, inv) => (ws.docs || []).filter((d) => d.envelopeId && !d.hidden && (d.investors || []).indexOf(inv.id) >= 0).sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
+  function signedHTML(list) {
+    return `<section class="sec es-signed" aria-label="Signed documents">${PK().sec('Signed documents', `<span class="hint">${list.length} document${list.length === 1 ? '' : 's'}</span>`)}<div class="tbl-scroll"><table class="tbl tbl-mid"><thead><tr><th scope="col">Signed</th><th scope="col">Document</th></tr></thead><tbody>${list
+      .map((d) => `<tr><td class="nowrap td-meta">${date(d.date)}</td><td class="td-lead"><button class="link-btn doc-link" type="button" data-action="es-open-doc" data-id="${h(d.id)}">${h(d.title)}</button><span class="sub">${h(d.fileName)} · with certificate of completion</span></td></tr>`)
+      .join('')}</tbody></table></div></section>`;
+  }
+  const hasPositions = (inv) => !!(inv && inv.positions && inv.positions.length);
+  NS.hooks.investmentsTop.push((inv) => {
+    if (!inv) return '';
+    const list = pendingFor(W(), inv.id);
+    // An investor with no investments yet (a new subscriber) gets this page in place of Documents too,
+    // so the waiting list and the signed copies are shown here.
+    if (!hasPositions(inv)) {
+      const signed = signedDocsFor(W(), inv);
+      if (S().route === 'documents') return (list.length ? waitingHTML(list) : '') + (signed.length ? signedHTML(signed) : '');
+      if (signed.length) return (list.length ? bannerHTML(list) : '') + signedHTML(signed);
+    }
+    return list.length ? bannerHTML(list) : '';
   });
+  function bannerHTML(list) {
+    const n = list.length;
+    return `<section class="es-banner" aria-label="Documents to sign"><span class="es-banner-icon">${PEN}</span><div class="es-banner-body"><strong>${n === 1 ? 'A document is' : `${n} documents are`} waiting for your signature</strong><span>${list.map((e) => h(e.title)).join(' · ')}</span></div><a class="btn btn-primary btn-small" href="#sign-${h(list[0].id)}">Review and sign</a></section>`;
+  }
+  NS.hooks.documentsTop.push((inv) => {
+    const list = inv ? pendingFor(W(), inv.id) : [];
+    return list.length ? waitingHTML(list) : '';
+  });
+  NS.actions['es-open-doc'] = (el) => {
+    const inv = PK().viewer();
+    const d = inv && signedDocsFor(W(), inv).find((x) => x.id === el.getAttribute('data-id'));
+    if (!d) return;
+    U.dialog(
+      `<div class="dlg-head"><div><h2>${h(d.title)}</h2><p>${date(d.date)} · ${h(d.fileName)} · ${(d.size / 1024).toFixed(0)} KB</p></div>
+        <div class="dlg-actions"><button class="btn btn-small" type="button" data-action="up-download" data-id="${h(d.id)}">${icon('download')}Download</button><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
+      <div class="dlg-body"><p class="empty">Loading…</p></div>`,
+      'dlg-doc'
+    );
+    files()
+      .get(d.id)
+      .then((blob) => {
+        const body = document.querySelector('#dlg .dlg-body');
+        if (!body) return;
+        if (!blob) return (body.innerHTML = '<p class="empty">This file was stored in a different browser. In production, documents are kept in the document vault and open on any device.</p>');
+        if (S().ui.esDocUrl) URL.revokeObjectURL(S().ui.esDocUrl);
+        const url = (S().ui.esDocUrl = URL.createObjectURL(blob));
+        body.innerHTML = `<iframe class="doc-frame" src="${url}" title="${h(d.title)}"></iframe>`;
+      })
+      .catch(() => {
+        const body = document.querySelector('#dlg .dlg-body');
+        if (body) body.innerHTML = '<p class="empty">This browser blocked document storage, so the file cannot be opened here.</p>';
+      });
+  };
   NS.hooks.consoleAttention.push((ws) => {
     const out = [];
     const cs = countersignDue(ws);
@@ -1914,5 +2321,90 @@
   NS.navCounts = NS.navCounts || {};
   NS.navCounts['console-esign'] = (ws) => countersignDue(ws).length;
 
-  NS.esign = { pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners };
+  /* ---------- Console Documents: removing a signed copy from portals keeps the envelope's file ---------- */
+  // The portal listing of a completed envelope shares the envelope's stored file (same id), so the
+  // generic Remove, which deletes a published file, must not run for it.
+  const removeDoc = NS.actions['docs-remove'];
+  if (removeDoc)
+    NS.actions['docs-remove'] = function (el) {
+      const w = W();
+      const doc = (w.docs || []).find((x) => x.id === el.getAttribute('data-id'));
+      const env = doc && doc.envelopeId ? envById(w, doc.envelopeId) : null;
+      if (!env || env.signedDocId !== doc.id) return removeDoc.apply(this, arguments);
+      w.docs = w.docs.filter((x) => x !== doc);
+      CK().audit('Document removed', `${doc.title} (${doc.fileName}) removed from investor portals; the envelope keeps its signed copy`, doc.offeringId || '', doc.id);
+      NS.app.save(true);
+      NS.app.render();
+      U.toast('Removed from investor portals. The envelope still has the signed PDF.');
+    };
+
+  /* ---------- Subscriptions: new subscribers are sent the offering's subscription agreement ---------- */
+  const money = (n) => '$' + Math.round(n).toLocaleString('en-US');
+  /** Values a subscription agreement template can carry, by field label (prefilled and locked). */
+  function subscriptionPrefill(inv, o, opts) {
+    const amt = money((opts.cents || 0) / 100);
+    const cls = opts.cls && (o.classes || []).find((c) => c.id === opts.cls);
+    const p = { Commitment: amt, 'Commitment amount': amt, 'Subscription amount': amt, Amount: amt, 'Capital commitment': amt, Investor: inv.title, 'Investor name': inv.title, 'Subscriber name': inv.title, 'Account name': inv.title, Offering: o.name, Fund: o.name };
+    if (cls) Object.assign(p, { 'Share class': cls.name, Class: cls.name });
+    return p;
+  }
+  const ops = NS.ops;
+  if (ops && ops.submitSubscription) {
+    const submit = ops.submitSubscription;
+    ops.submitSubscription = function (ws, inv, o, opts) {
+      opts = Object.assign({}, opts);
+      let env = null;
+      const isNew = inv && o && !(inv.positions || []).some((p) => p.offeringId === o.id);
+      const tpl = !opts.envelopeId && isNew ? subscriptionTemplate(ws, o.id) : null;
+      if (tpl) {
+        try {
+          env = createFromTemplate(ws, tpl.id, { investorId: inv.id, offeringId: o.id, title: `${tpl.title} - ${inv.title}`, prefill: subscriptionPrefill(inv, o, opts) });
+        } catch (e) {
+          env = null;
+        }
+        if (env && env.status === 'sent') opts.envelopeId = env.id;
+        else if (env) {
+          // The template could not be sent (for example a role has no signature field): fall back to the typed signature.
+          ws.envelopes = envs(ws).filter((x) => x !== env);
+          env = null;
+        }
+      }
+      const r = submit.call(this, ws, inv, o, opts);
+      if (env && r) {
+        env.requestId = r.id;
+        NS.app.save(true);
+      }
+      return r;
+    };
+  }
+  const subscribeForm = NS.forms['sub-submit'];
+  if (subscribeForm)
+    NS.forms['sub-submit'] = function () {
+      const out = subscribeForm.apply(this, arguments);
+      const u = S().ui.sub;
+      // Straight to the agreement: the subscription is complete once it is signed there.
+      if (u && u.done && u.done.envelopeId && envById(W(), u.done.envelopeId)) NS.app.go('sign-' + u.done.envelopeId);
+      return out;
+    };
+  const subscribeView = NS.views.subscribe;
+  if (subscribeView) {
+    const renderSubscribe = subscribeView.render;
+    subscribeView.render = function (id) {
+      const u = S().ui.sub;
+      const env = u && u.done && u.done.envelopeId && u.offeringId === id ? envById(W(), u.done.envelopeId) : null;
+      if (!env) return renderSubscribe.apply(this, arguments);
+      const P = PK();
+      const o = W().offerings.find((x) => x.id === id);
+      const signed = env.status === 'completed' || env.signers.some((s) => s.investorId && s.status === 'signed');
+      return P.shell(
+        `<a class="back" href="#investments">${icon('back')}Investments</a>
+        ${P.title(signed ? 'Subscription agreement signed' : 'Sign your subscription agreement', h(o ? o.name : ''))}
+        <div class="done-box"><p class="lede">${signed ? `${h(T().shortName)} has your signed subscription agreement. Investor relations will review it and countersign before the first close.` : `${h(T().shortName)} sent you its subscription agreement for this commitment, with the amount filled in. Your subscription is submitted once you sign it.`}</p>
+        <a class="btn btn-primary" href="${signed ? '#documents' : '#sign-' + h(env.id)}">${signed ? 'Go to Documents' : 'Review and sign'}</a></div>`,
+        'investments'
+      );
+    };
+  }
+
+  NS.esign = { pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate };
 })(window.CVPortal);

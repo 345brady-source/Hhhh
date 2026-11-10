@@ -7,6 +7,9 @@
 export const kind = 'aml';
 export const env = [];
 export const label = 'OFAC SDN and Consolidated lists';
+export const name = 'U.S. Treasury OFAC sanctions lists';
+export const description = "Free screening against OFAC's SDN and Consolidated sanctions lists, on this server. U.S. sanctions only: no PEP or adverse media.";
+export const start = 'none';
 
 const BASE = 'https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/';
 const DAY = 24 * 3600 * 1000;

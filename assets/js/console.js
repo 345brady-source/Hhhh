@@ -142,7 +142,7 @@
       const steps = (E.diy
         ? [
             ['Brand the investor portal', 'Logo, colors, domain, support contact and disclosures.', branded, 'console-brand', true],
-            ['Connect investor verification', 'Identity, sanctions screening and accredited investor checks run automatically when investors onboard.', !!(NS.integrations && NS.integrations.ready(w)), 'console-integrations', true],
+            ['Plug in your verification providers', 'Connect the identity, sanctions screening and accredited investor services you use, one or several for each check. They run automatically when investors onboard.', !!(NS.integrations && NS.integrations.ready(w)), 'console-integrations', true],
             ['Set up ACH origination', 'The bank and company IDs used to pay distributions by ACH.', achReady(), 'console-ach'],
             ['Add your first offering', 'Upload the PPM or operating agreement and the portal sets the offering up for you to review.', w.offerings.length > 0, 'console-intake', true],
             ['Prepare your subscription agreement', 'Place signature fields once; investors sign it online when they subscribe.', (w.esignTemplates || []).length > 0, 'console-esign'],
@@ -2013,23 +2013,30 @@
           const ivd = NS.integrations && NS.integrations.active(w) && i.verify ? NS.integrations.vOf(i) : null;
           let act = '';
           if (lab.key === 'review' || lab.key === 'rejected') act = `<button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="kyc-open" data-id="${h(i.id)}">${k.match ? 'Review match' : 'Review'}</button>`;
-          else if (lab.key === 'pending' && k.verifiedOn) act = `<button class="cs-btn cs-btn-small" type="button" data-action="kyc-approve" data-id="${h(i.id)}">Approve identity</button>`;
+          else if (lab.key === 'pending' && k.verifiedOn && !ivd) act = `<button class="cs-btn cs-btn-small" type="button" data-action="kyc-approve" data-id="${h(i.id)}">Approve identity</button>`;
           else if (lab.key === 'cleared' || lab.key === 'due') act = `<button class="cs-btn cs-btn-small" type="button" data-action="kyc-screen" data-id="${h(i.id)}">Re-screen</button>`;
           const IVN = NS.integrations;
-          const ivLine = (label, x, kind) => `<li><strong>${label}:</strong> ${h(({ not_started: 'not started', pending: 'waiting for the result', passed: 'verified', verified: 'verified', clear: 'clear', review: 'needs review', potential_match: 'potential match', failed: 'not verified', rejected: 'not accredited', match: 'confirmed match' })[x.status] || x.status)}${x.provider ? ` · ${h(IVN.provider(kind, x.provider).name)}` : ''}${x.method ? ` · ${h(x.method)}` : ''}${x.ref ? ` · ref ${h(x.ref)}` : ''}${x.expiresAt ? ` · valid until ${date(x.expiresAt)}` : ''}${x.fileId ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(x.fileId)}" data-name="${h(x.fileName || 'file')}">${h(x.fileName || 'View file')}</button>` : ''}</li>`;
+          // Which connection ran each check, and result buttons for checks waiting on the team (hosted links, uploads, team screening).
+          const rec = ivd ? IVN.recordable(w, i) : [];
+          const ST = { not_started: 'not started', pending: 'waiting for the result', passed: 'verified', verified: 'verified', clear: 'clear', review: 'needs review', potential_match: 'potential match', failed: 'not verified', rejected: 'not accredited', match: 'confirmed match' };
+          const recordBtns = (kind, conn) => `<div class="iv-record" role="group" aria-label="Record result"><span>Record result</span>${IVN.RECORD[kind].map(([o, l]) => `<button class="cs-btn cs-btn-small" type="button" data-action="kyc-iv-record" data-id="${h(i.id)}" data-kind="${kind}" data-connection="${h(conn || '')}" data-outcome="${o}">${l}</button>`).join('')}</div>`;
+          const canRecord = (kind, conn) => rec.some((r) => r.kind === kind && r.connection === conn);
+          const ivLine = (label, x, kind) => `<li><strong>${label}:</strong> ${h(ST[x.status] || x.status)}${IVN.via(w, x, kind) ? ` · ${h(IVN.via(w, x, kind))}` : ''}${x.method ? ` · ${h(x.method)}` : ''}${x.ref ? ` · ref ${h(x.ref)}` : ''}${x.expiresAt ? ` · valid until ${date(x.expiresAt)}` : ''}${x.note ? ` · note: ${h(x.note)}` : ''}${x.recordedBy ? ` · recorded by ${h(x.recordedBy)}` : ''}${x.fileId ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(x.fileId)}" data-name="${h(x.fileName || 'file')}">${h(x.fileName || 'View file')}</button>` : ''}${canRecord(kind, x.connection) ? recordBtns(kind, x.connection) : ''}</li>`;
+          const amlLine = (x) => `<li><strong>Screening:</strong> ${h(ST[x.status] || x.status)}${(x.results || []).length ? `<ul class="iv-results">${x.results.map((r) => `<li>${h(r.via)}: ${h(ST[r.status] || r.status)}${r.ref ? ` · ref ${h(r.ref)}` : ''}${r.error ? ` · ${h(r.error)}` : ''}${r.note ? ` · note: ${h(r.note)}` : ''}${r.by ? ` · recorded by ${h(r.by)}` : ''}${canRecord('aml', r.connection) ? recordBtns('aml', r.connection) : ''}</li>`).join('')}</ul>` : IVN.via(w, x, 'aml') ? ` · ${h(IVN.via(w, x, 'aml'))}` : ''}</li>`;
+          if (ivd && !act && lab.key === 'pending') act = `<button class="cs-btn cs-btn-small${rec.length ? ' cs-btn-primary' : ''}" type="button" data-action="kyc-open" data-id="${h(i.id)}">${rec.length ? 'Record result' : 'Details'}</button>`;
           const detail =
             open === i.id && (k.match || ivd)
               ? `<tr class="kyc-detail"><td colspan="8"><div class="kyc-match">${k.match ? `<p><strong>Potential match:</strong> ${h(k.match.list)}, listed name “${h(k.match.name)}”, ${Math.round(k.match.score * 100)}% name similarity. ${h(k.match.detail)}</p>` : ''}
-                ${ivd ? `<ul class="cs-list">${ivLine('Identity', ivd.identity, 'identity')}${ivLine('Screening', ivd.aml, 'aml')}${ivLine('Accreditation', ivd.accreditation, 'accreditation')}<li><strong>Decision:</strong> ${h(ivd.decision.status)}${ivd.decision.reason ? ` · ${h(ivd.decision.reason)}` : ''}</li></ul>` : ''}
-                <label class="cs-field" for="kyc-note"><span>Review note (kept in the change log)</span><textarea id="kyc-note" rows="2" maxlength="300" data-input="kyc-note">${h(S().ui.kycNote || '')}</textarea></label>
-                <div class="cs-row">${k.match && !ivd ? `<button class="cs-btn cs-btn-primary" type="button" data-action="kyc-clear" data-id="${h(i.id)}">Clear as false positive</button>` : ''}${ivd ? `<button class="cs-btn cs-btn-primary" type="button" data-action="kyc-iv-approve" data-id="${h(i.id)}">Approve investor</button><button class="cs-btn" type="button" data-action="kyc-iv-decline" data-id="${h(i.id)}">Decline</button>` : ''}<button class="cs-btn" type="button" data-action="kyc-escalate" data-id="${h(i.id)}">Escalate to compliance officer</button><button class="cs-btn" type="button" data-action="kyc-open" data-id="">Cancel</button></div>${k.escalated ? `<p class="cs-hint">Escalated ${date(k.escalated)}.</p>` : ''}</div></td></tr>`
+                ${ivd ? `<ul class="cs-list">${ivLine('Identity', ivd.identity, 'identity')}${amlLine(ivd.aml)}${ivLine('Accreditation', ivd.accreditation, 'accreditation')}<li><strong>Decision:</strong> ${h(ivd.decision.status)}${ivd.decision.reason ? ` · ${h(ivd.decision.reason)}` : ''}</li></ul>` : ''}
+                <label class="cs-field" for="kyc-note"><span>${rec.length ? 'Note (required to record a result or decide; kept in the change log)' : 'Review note (kept in the change log)'}</span><textarea id="kyc-note" rows="2" maxlength="300" data-input="kyc-note">${h(S().ui.kycNote || '')}</textarea></label>
+                <div class="cs-row">${k.match && !ivd ? `<button class="cs-btn cs-btn-primary" type="button" data-action="kyc-clear" data-id="${h(i.id)}">Clear as false positive</button>` : ''}${ivd ? `<button class="cs-btn${rec.length ? '' : ' cs-btn-primary'}" type="button" data-action="kyc-iv-approve" data-id="${h(i.id)}">Approve investor</button><button class="cs-btn" type="button" data-action="kyc-iv-decline" data-id="${h(i.id)}">Decline</button>` : ''}<button class="cs-btn" type="button" data-action="kyc-escalate" data-id="${h(i.id)}">Escalate to compliance officer</button><button class="cs-btn" type="button" data-action="kyc-open" data-id="">Cancel</button></div>${k.escalated ? `<p class="cs-hint">Escalated ${date(k.escalated)}.</p>` : ''}</div></td></tr>`
               : '';
-          return `<tr><td>${h(i.title)}<span class="sub">${h(i.id)} · ${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</span></td><td>${h(k.risk || '—')}</td><td>${k.verifiedOn ? `${date(k.verifiedOn)}<span class="sub">${h(k.method || '')}</span>` : '<span class="sub">Not submitted</span>'}</td><td>${k.screenedOn ? `${k.screening === 'potential_match' ? 'Potential match' : 'No matches'}<span class="sub">${date(k.screenedOn)}</span>` : '—'}</td><td class="nowrap">${k.nextReview ? date(k.nextReview) : '—'}</td><td>${(k.owners || []).map((x) => h(x.name)).join(', ')}</td><td>${st}</td><td class="num nowrap">${act}</td></tr>${detail}`;
+          return `<tr><td>${h(i.title)}<span class="sub">${h(i.id)} · ${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</span></td><td>${h(k.risk || '—')}</td><td>${k.verifiedOn ? `${date(k.verifiedOn)}<span class="sub">${h(k.method || '')}</span>` : '<span class="sub">Not submitted</span>'}</td><td>${k.screenedOn ? `${k.screening === 'potential_match' ? 'Potential match' : k.screening === 'pending' ? 'Waiting for results' : 'No matches'}<span class="sub">${date(k.screenedOn)}</span>` : '—'}</td><td class="nowrap">${k.nextReview ? date(k.nextReview) : '—'}</td><td>${(k.owners || []).map((x) => h(x.name)).join(', ')}</td><td>${st}</td><td class="num nowrap">${act}</td></tr>${detail}`;
         })
         .join('');
       const due = rows0.filter((r) => r.lab.key === 'due');
       return shell(
-        `${head('AML/KYC', E.diy ? `Identity verification, sanctions and PEP screening and accredited investor checks run automatically through ${h(NS.integrations ? [NS.integrations.provider('identity', NS.integrations.ensure(w).identity.provider).name, NS.integrations.provider('aml', NS.integrations.ensure(w).aml.provider).name].filter((x, k, a) => a.indexOf(x) === k).join(' and ') : 'your providers')} (<a class="cs-link" href="#console-integrations">Integrations</a>). Anything flagged waits here for your review.` : 'Identity verification, sanctions and politically exposed person screening, and periodic re-screening for every investor. Potential matches wait here for the compliance officer’s review.', due.length ? `<button class="cs-btn" type="button" data-action="kyc-screen-due">Re-screen ${due.length} due</button>` : '')}
+        `${head('AML/KYC', E.diy ? `Identity verification, sanctions and PEP screening and accredited investor checks run automatically through the connections you plug in: ${h(NS.integrations ? NS.integrations.activeNames(w).join(', ') : 'none yet')} (<a class="cs-link" href="#console-integrations">Integrations</a>). Anything flagged, and any check waiting on your team, waits here.` : 'Identity verification, sanctions and politically exposed person screening, and periodic re-screening for every investor. Potential matches wait here for the compliance officer’s review.', due.length ? `<button class="cs-btn" type="button" data-action="kyc-screen-due">Re-screen ${due.length} due</button>` : '')}
         <dl class="cs-figs">
           <div><dt>Cleared</dt><dd>${count('cleared')}</dd></div>
           <div><dt>Needs review</dt><dd>${count('review')}</dd></div>
@@ -2038,7 +2045,7 @@
         </dl>
         <div class="cs-tabs" role="group" aria-label="Filter"><button type="button" class="cs-tab" data-action="kyc-tab" data-t="attention" aria-pressed="${tab === 'attention'}">Needs attention <span class="cs-count">${attention.length}</span></button><button type="button" class="cs-tab" data-action="kyc-tab" data-t="all" aria-pressed="${tab === 'all'}">All investors <span class="cs-count">${rows0.length}</span></button></div>
         ${panel('', list.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Investor</th><th scope="col">Risk</th><th scope="col">Identity verified</th><th scope="col">Screening</th><th scope="col">Next review</th><th scope="col">Beneficial owners</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Action</span></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="cs-muted">Every investor is cleared and current.</p>')}
-        <p class="cs-hint">Screening covers OFAC SDN and consolidated lists, UN, EU and UK HMT sanctions, politically exposed persons and adverse media. Low-risk investors are re-screened every 24 months, medium every 12, high every 6. In production this connects to the screening provider; here results are simulated.</p>`,
+        <p class="cs-hint">${E.diy ? 'Screening runs through every screening connection that is on; any potential match holds the investor for review. Re-screening follows the interval set on the Integrations page.' : 'Screening covers OFAC SDN and consolidated lists, UN, EU and UK HMT sanctions, politically exposed persons and adverse media. Low-risk investors are re-screened every 24 months, medium every 12, high every 6. In production this connects to the screening provider; here results are simulated.'}</p>`,
         'console-kyc'
       );
     }
@@ -2070,7 +2077,7 @@
       U.toast('Escalated to the compliance officer.');
     }
   };
-  /** DIY investors verified through providers are re-screened through the screening provider. */
+  /** DIY investors are re-screened through every screening connection that is on. */
   async function rescreen(inv) {
     const IVN = NS.integrations;
     if (IVN && IVN.active(W()) && inv.verify) {
@@ -2113,6 +2120,17 @@
     S().ui.kycOpen = null;
     NS.app.render();
     U.toast(`${inv.title} declined.`);
+  };
+  NS.actions['kyc-iv-record'] = async (el) => {
+    const inv = invById(el.getAttribute('data-id'));
+    const note = String(S().ui.kycNote || '').trim();
+    if (!inv) return;
+    if (!note) return U.toast('Add a note explaining the result you are recording.');
+    const kind = el.getAttribute('data-kind');
+    await NS.integrations.recordResult(W(), inv, kind, el.getAttribute('data-connection'), el.getAttribute('data-outcome'), note);
+    S().ui.kycNote = '';
+    NS.app.render();
+    U.toast(`${NS.integrations.SHORT[kind]} result recorded for ${inv.title}.`);
   };
   NS.actions['kyc-iv-file'] = (el) => {
     OPS()
