@@ -98,7 +98,11 @@
     // Investors who joined from an offering link have no investments yet: show verification status and what is open to them.
     const inv = viewer();
     const open = inv ? openOfferingsHTML(inv) : '';
-    return shell(`${title('Investments')}${inv ? NS.runHooks('investmentsTop', inv) : ''}${open}<p class="empty">${open ? 'You have no investments yet. Offerings open for investment are listed above.' : 'No investments are recorded for this account yet. Your investments will appear here once your subscription is accepted and funded.'}</p>`, 'portfolio');
+    // A new subscriber (from an invitation or a sign-up link) sees the subscription they submitted, and can finish setting up.
+    const setup = inv && NS.inviteFlow ? NS.inviteFlow.openFor(W(), inv) : null;
+    const reqs = inv && myRequests(inv).length ? `<section class="sec">${sec('Your requests')}${requestsHTML(inv, null, true)}</section>` : '';
+    const resume = setup ? `<div class="done-box"><p class="lede">Finish setting up your account. Your progress so far is saved.</p><a class="btn btn-primary" href="#invite-${h(setup.token)}">Continue account setup</a></div>` : '';
+    return shell(`${title('Investments')}${resume}${inv ? NS.runHooks('investmentsTop', inv) : ''}${reqs}${open}<p class="empty">${open ? 'You have no investments yet. Offerings open for investment are listed above.' : 'No investments are recorded for this account yet. Your investments will appear here once your subscription is accepted and funded.'}</p>`, 'portfolio');
   }
 
   /* ---------- Notices from the sponsor ---------- */
@@ -347,6 +351,10 @@
       const inv = viewer();
       const o = W().offerings.find((x) => x.id === id);
       if (!inv || !o || o.status !== 'Raising') return shell(`${title('Not available')}<p class="empty">This offering is not accepting subscriptions. <a href="#investments">Return to your investments</a>.</p>`, 'investments');
+      // DIY: an investor still setting up their account subscribes at the end of their invitation flow.
+      const setup = NS.inviteFlow ? NS.inviteFlow.openFor(W(), inv) : null;
+      // An invitation to subscribe to another offering does not hold up this one.
+      if (setup && !(setup.existing && setup.offeringId !== o.id)) return shell(`<a class="back" href="#investments">${icon('back')}Investments</a>${title(`Subscribe to ${h(o.name)}`)}<div class="done-box"><p class="lede">${setup.existing ? `${h(T().shortName)} invited you to subscribe. Your invitation takes you through the documents and the subscription agreement.` : 'Finish setting up your account first. Your subscription is the last step, and your progress so far is saved.'}</p><a class="btn btn-primary" href="#invite-${h(setup.token)}">${setup.existing ? 'Continue your subscription' : 'Continue account setup'}</a></div>`, 'investments');
       const f = subForm(o);
       const cfg = NS.audit ? NS.audit.settings(o) : null;
       if (f.done) {
@@ -743,11 +751,23 @@
         .join('')}</tbody>
     </table></div>`;
   }
+  /** Documents for an investor with no investments yet (a new subscriber): what they signed, and the offering documents they were given. */
+  function earlyDocuments() {
+    const inv = viewer();
+    if (!inv || !NS.EDITION.diy) return noAccount();
+    const signing = NS.esign && NS.esign.investorDocsHTML ? NS.esign.investorDocsHTML(inv) : '';
+    const offs = myRequests(inv).filter((r) => r.type === 'subscription' && r.status !== 'rejected').map((r) => r.offeringId);
+    const docs = (W().docs || []).filter((d) => d.offeringDoc && !d.hidden && offs.indexOf(d.offeringId) >= 0);
+    const offered = docs.length
+      ? `<section class="sec">${sec('Offering documents', `<span class="hint">${docs.length} document${docs.length === 1 ? '' : 's'}</span>`)}<ul class="doc-list">${docs.map((d) => `<li><button class="link-btn" type="button" data-action="sub-doc" data-id="${h(d.id)}">${h(d.title)}</button> <span class="meta">${h((W().offerings.find((o) => o.id === d.offeringId) || {}).name || '')}</span></li>`).join('')}</ul></section>`
+      : '';
+    return shell(`${title('Documents', 'Agreements you signed and the documents for your subscription')}${signing}${offered}${signing || offered ? '' : '<p class="empty">No documents yet. Statements, tax documents and agreements appear here once your subscription is accepted.</p>'}`, 'documents');
+  }
   NS.views.documents = {
     mode: 'portal',
     render() {
       const v = vm();
-      if (!v || !v.positions.length) return noAccount();
+      if (!v || !v.positions.length) return earlyDocuments();
       const ui = S().ui;
       const all = allDocs(v);
       const fo = ui.docOff || 'all';

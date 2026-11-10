@@ -215,7 +215,7 @@
             <h1>${h(o.name)}</h1>
             <p class="lede">${h(o.type)}${o.summary ? ` · ${h(o.summary)}` : ''}</p>
             ${terms.length ? `<dl class="terms">${terms.map((r) => `<div><dt>${h(r.label)}</dt><dd>${h(r.value)}</dd></div>`).join('')}</dl>` : ''}
-            <p class="meta">Create an account to see the offering documents and subscribe. ${h(t.shortName)} verifies the identity of every investor${needAcc ? ' and, because this is a Rule 506(c) offering, confirms that each investor is accredited' : ''}. It takes about five minutes.</p>
+            <p class="meta">Create an account to see the offering documents and subscribe. ${h(t.shortName)} verifies the identity of every investor${needAcc ? ' and, because this is a Rule 506(c) offering, confirms that each investor is accredited' : ''}. One guided page takes you from your account to your subscription documents in about 10–15 minutes.</p>
             <form class="form-grid" data-form="join" novalidate>
               <label class="field" for="jn-name"><span>Your name</span><input id="jn-name" type="text" autocomplete="name" data-bind="join:name" value="${h(f.name)}"${e.name ? ' aria-invalid="true"' : ''}>${err('name')}</label>
               <label class="field" for="jn-email"><span>Email</span><input id="jn-email" type="email" autocomplete="email" data-bind="join:email" value="${h(f.email)}"${e.email ? ' aria-invalid="true"' : ''}>${err('email')}</label>
@@ -271,6 +271,13 @@
     if (inv.onboarding.status === 'complete') {
       S().viewer = inv.id;
       return NS.app.go(o ? `subscribe-${o.id}` : 'investments');
+    }
+    // The same guided flow as an emailed invitation: an invitation record of their own, opened straight away.
+    if (NS.inviteFlow) {
+      const it = NS.inviteFlow.selfInvite(ws, inv, o);
+      S().viewer = inv.id;
+      NS.app.save(true);
+      return NS.app.go('invite-' + it.token);
     }
     NS.startOnboarding(inv.id);
   };

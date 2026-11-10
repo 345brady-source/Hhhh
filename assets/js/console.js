@@ -36,6 +36,7 @@
   // Pages show only when their module is loaded, the edition has them and the role may open them.
   const NAV = [
     ['console', 'Overview'],
+    ['console-notifications', 'Notifications'],
     ['console-offerings', 'Offerings'],
     ['console-intake', 'Offering intake'],
     ['console-investors', 'Investors'],
@@ -70,6 +71,7 @@
     return `<div class="cs">
       <aside class="cs-nav" aria-label="Sponsor console">
         <div class="cs-client">${B.lockup(t)}<span class="cs-client-meta">${h(t.domain)}</span></div>
+        ${NS.runHooks('consoleBar', W())}
         <nav>${NAV.filter(([k]) => NS.views[k] && NS.app.allowed(k)).map(([k, l]) => {
           const n = navCount(k);
           return `<a href="#${k}"${active === k ? ' aria-current="page"' : ''}>${l}${n ? ` <span class="cs-nav-count" aria-label="${n} need attention">${n}</span>` : ''}</a>`;
@@ -99,6 +101,9 @@
     return b ? `ACH · ${b.type === 'savings' ? 'Savings' : 'Checking'} ••${h(U.last4(b.account))}` : 'Check';
   }
   function activation(inv) {
+    // DIY: an invited investor's progress through their invitation link (invitations.js).
+    const step = E.diy && NS.invitations ? NS.invitations.activationLabel(W(), inv) : '';
+    if (step) return step;
     const o = inv.onboarding;
     if (o.status === 'complete') return `Active${o.completed ? ' since ' + date(o.completed) : ''}`;
     if (o.status === 'in_progress') return `In progress · ${o.step || 0} of 6 steps`;
@@ -149,7 +154,7 @@
             ['Add your first offering', 'Upload the PPM or operating agreement and the portal sets the offering up for you to review.', w.offerings.length > 0, 'console-intake', true],
             ['Prepare your subscription agreement', 'Place signature fields once; investors sign it online when they subscribe.', (w.esignTemplates || []).some((t) => t.subscription), 'console-esign'],
             ['Invite your team', 'Admins manage everything; team members run day-to-day operations.', (w.team || []).length > 1, 'console-team', true],
-            ['Invite investors', 'Add investors one at a time or import a list. Each receives an activation email.', w.investors.length > 0, 'console-investors'],
+            ['Invite your investors', 'Enter a name and email: each investor gets one link that walks them through their account, verification, tax form, bank details and subscription documents. You are notified when they finish.', w.investors.length > 0 || (w.invitations || []).length > 0, 'console-investors', false, 'inv8-open-invite'],
             ['Run the first distribution', 'Allocate a payment pro rata and generate the NACHA file for the bank.', w.runs.length > 0, 'console-distributions']
           ]
         : [
@@ -200,7 +205,7 @@
             ? panel(
                 `${E.diy ? 'Setup' : 'Client setup'} <span class="cs-count">${done} of ${steps.length} complete</span>`,
                 `<ol class="cs-steps">${steps
-                  .map((s, i) => `<li class="${s[2] ? 'is-done' : ''}"><span class="cs-step-n">${s[2] ? icon('check') : i + 1}</span><div><strong>${s[0]}</strong><span>${s[1]}</span></div><a class="cs-btn cs-btn-small${s[2] ? '' : ' cs-btn-primary'}" href="#${s[3]}">${s[2] ? 'Review' : 'Start'}</a></li>`)
+                  .map((s, i) => `<li class="${s[2] ? 'is-done' : ''}"><span class="cs-step-n">${s[2] ? icon('check') : i + 1}</span><div><strong>${s[0]}</strong><span>${s[1]}</span></div><a class="cs-btn cs-btn-small${s[2] ? '' : ' cs-btn-primary'}" href="#${s[3]}"${s[5] ? ` data-action="${s[5]}"` : ''}>${s[2] ? 'Review' : 'Start'}</a></li>`)
                   .join('')}</ol>`
               )
             : ''
@@ -608,15 +613,19 @@
         ['onboarding', `Not activated (${incomplete.length})`],
         ['nobank', `Paid by check (${nobank.length})`]
       ];
+      // DIY: turnkey invitations (invitations.js): the basics only, one link through every step, and their progress.
+      const I8 = E.diy && NS.invitations;
+      const canInvite = !I8 || NS.app.can('operate');
       return shell(
-        `${head('Investors', 'Activation status and how each investor is paid.', `<button class="cs-btn cs-btn-primary" type="button" data-action="invite-toggle" aria-expanded="${!!ui.inviteOpen}">${ui.inviteOpen ? 'Close' : 'Invite investors'}</button>`)}
-        ${ui.inviteOpen ? invitePanel() : ''}
+        `${head('Investors', I8 ? 'Invite investors with one link, follow their progress, and see how each investor is paid.' : 'Activation status and how each investor is paid.', canInvite ? `<button class="cs-btn cs-btn-primary" type="button" data-action="invite-toggle" aria-expanded="${!!ui.inviteOpen}">${ui.inviteOpen ? 'Close' : I8 ? 'Invite an investor' : 'Invite investors'}</button>` : '')}
+        ${ui.inviteOpen && canInvite ? (I8 ? I8.invitePanel() : invitePanel()) : ''}
+        ${I8 ? I8.listPanel() : ''}
         <div class="cs-tabs" role="group" aria-label="Filter">${tabs.map(([k, l]) => `<button type="button" class="cs-tab" data-action="inv-filter" data-f="${k}" aria-pressed="${f === k}">${l}</button>`).join('')}</div>
         ${panel(
           '',
           list.length
             ? `<div class="tbl-scroll"><table class="cs-tbl"><thead><tr><th scope="col">Investor</th><th scope="col">Type</th><th scope="col" class="num">Invested</th><th scope="col">Activation</th><th scope="col">Paid by</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead><tbody>${rows}</tbody></table></div>`
-            : `<p class="cs-muted">${w.investors.length ? 'No investors match this filter.' : 'No investors yet. Use Invite investors to add them.'}</p>`
+            : `<p class="cs-muted">${w.investors.length ? 'No investors match this filter.' : `No investors yet. Use ${I8 ? 'Invite an investor' : 'Invite investors'} to add them.`}</p>`
         )}`,
         'console-investors'
       );

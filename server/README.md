@@ -31,10 +31,24 @@ Then, in the portal, open Integrations and enter this server's URL.
 | `PORT` | Port to listen on (default 8787). |
 | `PUBLIC_URL` | This server's public https URL, used to build webhook and return URLs (default `http://localhost:PORT`). |
 | `PORTAL_ORIGIN` | Comma-separated origins allowed to call the API from the browser, for example `https://portal.example`. Empty allows any origin (development only). |
-| `API_TOKEN` | When set, every `/v1/` call except `/v1/results` needs `Authorization: Bearer <API_TOKEN>`. |
+| `API_TOKEN` | When set, every `/v1/` call except `/v1/results` and the investor's invitation calls needs `Authorization: Bearer <API_TOKEN>`. Required for invitations. |
 | `RESULTS_TOKEN` | Turns on `POST /v1/results` and is the bearer token it requires. Unset, that endpoint answers 404. |
 | `STORE_FILE` | Where records are kept (default `server/data/store.json`). |
-| `RATE_LIMIT_PER_MIN` | Calls per minute per client for calls that create or change records (default 60; 0 turns it off). |
+| `RATE_LIMIT_PER_MIN` | Calls per minute per client for calls that create or change records (POST, PUT, DELETE) and for invitation links that fail to authenticate (default 60; 0 turns it off). |
+| `DATA_KEY` | 32 random bytes, base64 (`openssl rand -base64 32`). Encrypts invitations, submissions, documents and the outbox at rest. Required for invitations. |
+| `DATA_KEY_PREVIOUS` | The key `DATA_KEY` replaced, while you rotate: records sealed with it can still be read. |
+| `ALLOW_PLAINTEXT_STORE` | `1` lets invitations work without `DATA_KEY` (stored unencrypted). For local testing only; `NODE_ENV=test` does the same. |
+| `INVITE_DAYS` | How long an invitation link works (default 30). |
+| `SUBMISSION_DAYS` | Days after completion that a submission the console has not imported is deleted, and after an invitation ends that the whole invitation is deleted (default 30). |
+| `SMTP_HOST`, `SMTP_PORT` | Your mail server. Port 465 uses implicit TLS; any other port (587 by default) requires STARTTLS. Unset, messages go to the outbox instead. |
+| `SMTP_USER`, `SMTP_PASS` | SMTP credentials (AUTH PLAIN or LOGIN, whichever the server offers). Never sent over an unencrypted connection. |
+| `SMTP_ALLOW_PLAIN` | `1` allows a plain connection (for example port 25 to a relay on your own network). STARTTLS is still used when offered. |
+| `SMTP_SECURE` | `1` or `0` to force implicit TLS on or off regardless of the port. |
+| `SMTP_HELO` | The name sent in EHLO (default: the domain of `MAIL_FROM`). |
+| `SMTP_TIMEOUT_MS` | How long to wait for the mail server at each step (default 20000). |
+| `MAIL_FROM` | The address messages are sent from, for example `notices@yourfirm.com`. The display name is always the firm's name. |
+| `MAIL_REPLY_TO` | Reply-To used when the firm has no support email in its brand settings. |
+| `OUTBOX_DAYS` | How long outbox messages are kept, 1 to 365 days (default 30; any other value uses 30). |
 | `TRUST_PROXY` | `1` to take the client address from `X-Forwarded-For` (only behind your own proxy). |
 | `CONNECTORS_FILE` | Declarative connectors file (default `server/connectors.json`). |
 | `PLUGINS_DIR` | Code plug-ins folder (default `server/plugins`). |
@@ -60,6 +74,12 @@ Provider keys and webhook secrets are environment variables too: each connector 
 | `POST /v1/results` | A provider or your own automation reports a result (below). |
 | `POST /webhooks/:provider` | Provider callbacks, signature-checked. |
 | `GET /return/:provider[/:id]` | Where providers send the investor back. |
+| `POST /v1/invitations` | Invite an investor; the link is emailed from the firm (below). |
+| `GET /v1/invitations?workspace=` | Every invitation's status and current step. |
+| `GET` / `DELETE /v1/invitations/:id/submission` | The finished paperwork; delete it once the console has imported it. |
+| `POST /v1/invitations/:id/resend` / `cancel` | A new link (the old one stops working) / cancel the invitation. |
+| `GET /v1/outbox` | Messages kept here when no SMTP server is set. |
+| `GET /v1/invite`, `PUT /v1/invite/progress`, `POST /v1/invite/complete` | The investor's browser, with the link's token in `X-Invite-Token`. |
 
 `GET /v1/connectors` answers:
 
@@ -234,6 +254,88 @@ Rules that keep these checks meaningful:
 - `pattern` and `timestampPattern` run on headers anyone can send, before the signature is checked. They must be simple: a capture group around the value, no repeated groups such as `(a+)+`, no back-references or look-arounds, at most four quantifiers. They run with a 50 ms limit on signature headers of up to 2 KB.
 - Deliveries for a provider whose environment variables are not all set (an empty webhook secret, say) are refused.
 
+## Investor invitations
+
+The sponsor enters a few details in the console; this server emails the investor one link; the link walks the investor through every onboarding step on any device (login, investor information, identity and accredited investor verification, tax certification, distribution payments, subscription and the e-signed subscription agreement); the sponsor is emailed when it is finished; and the console imports everything into the investor's record. Everything the investor sees carries the firm's brand only.
+
+How it fits together:
+
+1. The console sends `POST /v1/invitations` with a snapshot of what the investor's onboarding needs (the firm's brand, the investor's basics, the offering with its documents, the subscription agreement template and PDF, and the non-secret verification settings).
+2. This server creates a token (32 random bytes, returned once; only its SHA-256 is stored), builds the link `<portalUrl>?server=<this server's PUBLIC_URL>#invite-<token>` and emails it from the firm.
+3. The investor's browser calls `GET /v1/invite` with `X-Invite-Token: <token>`, reports each step with `PUT /v1/invite/progress`, starts its own identity and accreditation checks and screening on `/v1/verifications` and `/v1/screenings` with the same header, and finishes with `POST /v1/invite/complete`. The sponsor is emailed.
+4. While the console is open it polls `GET /v1/invitations`, fetches each finished submission, merges it into the workspace and deletes it here.
+
+### Sponsor calls (API_TOKEN)
+
+`POST /v1/invitations` (body up to 32 MB):
+
+```json
+{
+  "workspace": "tenant-id",
+  "sendEmail": true,
+  "portalUrl": "https://portal.example/diy.html?tenant=tenant-id",
+  "consoleUrl": "https://portal.example/diy.html?tenant=tenant-id#console-investors",
+  "notifyEmail": "ops@yourfirm.example",
+  "firm": { "name": "", "shortName": "", "legalName": "", "supportTeam": "", "supportEmail": "", "supportPhone": "", "colors": { "primary": "#0F2742", "accent": "#1F7A8C" }, "logo": "data:image/png;base64,...", "portalName": "", "disclaimer": "", "onboarding": {} },
+  "investor": { "id": "INV-0007", "contact": "Ann Lee", "title": "Ann Lee", "type": "individual", "email": "ann@example.com" },
+  "offering": { "id": "", "name": "", "shortName": "", "type": "", "summary": "", "minimum": 0, "closeDate": "", "terms": [], "exemption": "Rule 506(c)", "classes": [], "currency": "USD", "documents": [{ "id": "", "title": "", "fileName": "ppm.pdf", "base64": "..." }] },
+  "invitation": { "cents": 25000000, "cls": "A", "note": "", "senderName": "", "expiresAt": "2026-12-10T00:00:00Z" },
+  "verification": { "connections": [], "use": {}, "rules": {} },
+  "esign": { "template": { "title": "", "roles": [], "fields": [], "pages": 1, "pageSizes": [], "sha256": "" }, "pdf": "base64..." }
+}
+```
+
+→ `{ id, token, link, emailStatus, emailError?, expiresAt }`. `emailStatus` is `sent`, `outbox` (no SMTP server set), `failed` (with `emailError`; the link still works and can be sent another way) or `not_sent` (`sendEmail: false`). Limits: logo 600 KB, offering documents 10 MB together (at most 20), agreement PDF 10 MB. `portalUrl` and `consoleUrl` must be valid http(s) addresses (otherwise 400, and nothing is stored), on `PORTAL_ORIGIN` when it is set. The link lives `INVITE_DAYS` (or until `invitation.expiresAt`, if sooner). `consoleUrl` defaults to the portal page with `#console-investors`; it is the link in the sponsor's notification.
+
+`GET /v1/invitations?workspace=…` → `[{ id, workspace, investorId, contact, email, offeringId, status, stepKey, stepLabel, stepIndex, stepCount, sentAt, openedAt, completedAt, cancelledAt, expiresAt, emailStatus, emailError, notifyStatus, hasSubmission, importedAt, events }]`, newest first. `status` is `sent`, `opened`, `in_progress`, `completed`, `cancelled` or `expired`. `events` lists the last 50 changes as `{ at, kind }` with `kind` `invite_opened`, `invite_progress` (with the step), `onboarding_completed`, `invite_resent`, `invite_cancelled` or `invite_expired`. `GET /v1/invitations/:id` is one entry.
+
+`GET /v1/invitations/:id/submission` → `{ invitationId, investorId, completedAt, investor, request, envelope, files: { <docId>: base64 PDF }, docs, audit, notifications, checks }`. `DELETE` it once imported (`{ ok, deleted }`). What this server corrects before storing it is under "What the server vouches for" below; `checks` is `{ identity, accreditation, aml: { status, confirmed, unconfirmed? }, decision }`, where `confirmed` means one of this server's own checks stands behind the status.
+
+`POST /v1/invitations/:id/resend` (`{ sendEmail?, portalUrl? }`) issues a new token and link, restarts the `INVITE_DAYS` clock, keeps the investor's progress and emails the investor again; the earlier link stops working. Refused (409) once completed or cancelled. `POST /v1/invitations/:id/cancel` ends it; the link then answers 410.
+
+### Investor calls (X-Invite-Token)
+
+The token in the link authorizes only these calls, for that invitation's investor:
+
+| Call | What it does |
+| --- | --- |
+| `GET /v1/invite` | The snapshot (firm, investor, offering with documents as base64, invitation terms, verification settings, agreement template and PDF, current step) without the sponsor's notification address. The first call marks the invitation opened. |
+| `PUT /v1/invite/progress` | `{ stepKey, stepLabel, stepIndex, stepCount }`. |
+| `POST /v1/invite/complete` | `{ investor, request, envelope, files: { <docId>: base64 PDF }, docs, audit, notifications }` (signed files 25 MB together, body 40 MB). `investor.id` must be the invited investor; `request.offeringId` must be the invited offering and, when the sponsor set a commitment, `request.cents` must be that commitment (otherwise 400). Answers `{ ok: true }` (`already: true` on a repeat) and emails the sponsor once. A cancel or resend that lands while the body uploads wins (410 or 401). |
+| `POST /v1/verifications`, `GET /v1/verifications/:id` | As for the console, but only for the invited investor in the invitation's workspace (another investor's id or check, or the same id in another workspace, is refused with 403). |
+| `POST /v1/screenings`, `GET /v1/screenings/:id` | The same. |
+
+An unknown token answers 401; an expired or cancelled invitation answers 410 with a message naming the firm. The invitation token is refused (401) on every other route, including the sponsor's, even when sent together with `API_TOKEN`.
+
+### What the server vouches for
+
+Everything in a submission comes from the investor's browser, so before it is stored and summarized for the sponsor:
+
+- **Verification results** are taken from this server's own checks for the invited investor (same investor id and workspace). An identity or accreditation result whose `ref` names one of them takes that check's status. A better result than the investor could report about themselves (anything but not started, pending, review, failed, rejected or submitted) with no such check is changed to `review`, with `reportedStatus` and a note, for the sponsor to look at. A sanctions result that does not name one of this server's screenings is set back to `pending` with no reference, so the console screens the investor again. An `approved` decision or a cleared KYC status that the confirmed results do not support is held for review. `investor.verify` is always present.
+- **The agreement.** Only the firm countersigns: a countersigner marked signed is reset to waiting, and an envelope marked completed goes back to `sent` unless the snapshot's template has investor roles only. The sponsor's email never says countersigned.
+- **The commitment and offering** the sponsor set on the invitation are enforced (see `POST /v1/invite/complete`); an investor with no offering on the invitation cannot submit a subscription.
+- **The sponsor's email** uses the investor's name and email from the invitation; other values from the browser (account name, investing as) are kept to one short line.
+
+## Email
+
+Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` and `MAIL_FROM` to send through your own mail service (any provider that offers SMTP submission). The client is built in (no dependencies): implicit TLS on 465, STARTTLS required on other ports (a server that does not offer it is refused unless `SMTP_ALLOW_PLAIN=1`), certificate checks on, credentials only over TLS, AUTH PLAIN or LOGIN, timeouts at every step, and replies sent before a STARTTLS upgrade are discarded.
+
+Every message is the firm's: `From: "<firm name>" <MAIL_FROM>`, `Reply-To:` the firm's support email (or `MAIL_REPLY_TO`), a plain-text and an HTML part (`multipart/alternative`, with the firm's logo inline when it is a PNG, JPEG or GIF), the firm's colors, legal name and disclaimer, and nothing naming this software. Headers carry `Date`, `Message-ID` and `MIME-Version`; non-ASCII names and subjects are sent as UTF-8 encoded-words; bodies are quoted-printable with lines under 76 characters; lines starting with a dot are dot-stuffed. Use a `MAIL_FROM` on a domain whose SPF and DKIM records cover your mail service.
+
+Three messages are sent: the invitation (who invited them, the offering and commitment, the personal note, what they will need, the link and its expiry), the resent invitation, and the sponsor's notification when an investor finishes (who, the offering, the commitment, identity, screening and accreditation status, the agreement status, what to do next and a link to the console; never bank details or tax ids).
+
+Without `SMTP_HOST`, messages are kept, encrypted, in an outbox: `GET /v1/outbox?workspace=…&invitation=…` (API_TOKEN) → `{ messages: [{ id, at, kind, invitationId, workspace, from, to, toName, replyTo, subject, text, html }] }`. Outbox messages carry live links, so they are deleted after `OUTBOX_DAYS`.
+
+## Data protection
+
+Invitations hold investors' personal details, bank details and signed documents, so:
+
+- **Encryption at rest.** Snapshots, submissions, outbox messages and the investor's details on verification and screening records (name, email, address, phone, the names screened) are sealed with AES-256-GCM using `DATA_KEY`, each with a fresh IV and the record id and field bound in as additional data (a sealed value cannot be moved to another record). Offering documents, the agreement PDF and signed PDFs are kept as sealed files in `<STORE_FILE>.blobs/`. The store file keeps only what the console's list needs in plain form: ids, statuses, steps and times. Email addresses quoted in a mail server's refusal are replaced with `[address]` before the error is stored. Without `DATA_KEY` the invitation routes answer 400 (`Set DATA_KEY on the integration server`) unless `NODE_ENV=test` or `ALLOW_PLAINTEXT_STORE=1`. To rotate, set the new key as `DATA_KEY` and the old one as `DATA_KEY_PREVIOUS`.
+- **Tokens.** 32 random bytes, returned once to the console (in the link) and never stored; the server keeps their SHA-256 and compares every stored hash in constant time on each lookup. Resend replaces the token. Links expire after `INVITE_DAYS`.
+- **What is deleted, and when.** A submission is deleted when the console deletes it after importing (it does so straight away), or automatically `SUBMISSION_DAYS` (30) after completion if it was never imported. The whole invitation (snapshot, documents and record) is deleted `SUBMISSION_DAYS` after it ends: completed, cancelled or expired. Outbox messages are deleted after `OUTBOX_DAYS`. Deletion runs every hour and on requests.
+- **Scope.** The invitation token reaches only its own investor's onboarding, verifications and screenings (the same investor id in the same workspace). Sponsor routes need `API_TOKEN`, which invitations require to be set.
+- **Limits.** Request bodies are capped per route (32 MB to create, 40 MB to complete, 16 KB for small calls) and oversized bodies answer 413. Writes and failed tokens are rate limited.
+
 ## Security notes
 
 - Secrets live only in environment variables. Definitions refer to them as `${env.NAME}`; their values are sent only to the provider and are scrubbed from error messages, never returned to the portal and never logged. `settings` from the portal are treated as non-secret plain values.
@@ -243,10 +345,12 @@ Rules that keep these checks meaningful:
 - Webhooks are verified over the raw bytes, timestamp-checked and de-duplicated; unsigned webhooks are refused.
 - `GET /hosted/:id` never redirects to a link the portal supplied (the `link` provider), so this server's domain cannot be used as an open redirect.
 - Error messages are scrubbed of every secret, raw, URL-encoded or inside base64 (for example a basic-auth `user:password` echoed back by a provider).
+- Invitations: personal data encrypted at rest with `DATA_KEY`, tokens stored only as hashes, links scoped to one investor, submissions deleted after import (see Data protection). SMTP credentials are never sent unencrypted or included in error messages.
 
 Before production:
 
 - Replace `API_TOKEN` with authenticated portal sessions (for example a signed session token checked in `authorize()` in `index.mjs`), so only signed-in sponsors and investors can start checks and only for their own records.
-- Replace the JSON-file store (`lib/store.mjs`) with a real database, keeping the same methods.
+- Replace the JSON-file store (`lib/store.mjs`) with a real database, keeping the same methods (blobs can go to object storage; keep them sealed). With a database, look invitations up by an index on the token hash.
+- Set `DATA_KEY` from your secret store and back it up: sealed records cannot be read without it.
 - Serve over HTTPS (`PUBLIC_URL` must be https for providers to call back), set `PORTAL_ORIGIN`, keep `RATE_LIMIT_PER_MIN` on, and set `TRUST_PROXY=1` only behind your own proxy.
 - Keep `RESULTS_TOKEN` long and random, and rotate it if it leaks.

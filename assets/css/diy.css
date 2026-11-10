@@ -115,3 +115,116 @@
   .iv-conns td.num { text-align: left; }
 }
 .sd-link { display: block; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: var(--r-md, 4px); background: var(--surface-2); font-size: 13px; overflow-wrap: anywhere; user-select: all; }
+
+/* ---------- Invitation flow ---------- */
+/* One guided flow for an invited investor (#invite-<token>, onboarding.js), in the firm's brand only. */
+.ivf-wrap { align-items: start; }
+.ivf-col { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.ivf-progress { display: flex; flex-direction: column; gap: 8px; }
+.ivf-progress .ob-count { margin: 0; }
+.ivf-count-label { text-transform: none; letter-spacing: 0; font-weight: 600; }
+.ivf-bar { height: 6px; border-radius: 999px; background: var(--surface-3, var(--line)); overflow: hidden; }
+.ivf-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--brand); transition: width 0.25s ease; }
+.ivf-form h1:focus { outline: none; }
+.ivf-form h1:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+.ivf-h2 { margin: 24px 0 8px; font-size: 15px; font-weight: 700; }
+.ivf-facts { margin: 16px 0 4px; }
+.ivf-note { margin: 18px 0 0; padding: 12px 16px; border-left: 3px solid var(--brand); background: var(--surface-2); }
+.ivf-note blockquote { margin: 0; font-size: 15px; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
+.ivf-note figcaption { margin-top: 6px; font-size: 13px; color: var(--fg-3); }
+.ivf-note figcaption::before { content: '— '; }
+.ivf-need { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; color: var(--fg-2); }
+.ivf-consent { margin-top: 20px; }
+.ivf-consent ul { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.ivf-consent + .form-grid { margin-top: 14px; }
+.ivf-certfacts { margin: 8px 0 10px; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; }
+.ivf-certfacts > div { display: contents; }
+.ivf-certfacts dt { color: var(--fg-3); }
+.ivf-certfacts dd { margin: 0; color: var(--fg); overflow-wrap: anywhere; }
+.ivf-docs { margin: 0 0 8px; }
+.ivf-owners { margin: 4px 0 0; }
+.ivf-form .field input[type="number"], .ivf-form .field input[type="date"] { min-height: 42px; padding: 9px 12px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--surface); color: var(--fg); font: inherit; font-size: 15px; font-weight: 400; width: 100%; color-scheme: light dark; }
+.ivf-form .field select[aria-invalid="true"] { border-color: var(--bad); }
+.ivf-saved { margin: 10px 0 0; font-size: 12px; color: var(--fg-3); text-align: right; }
+.ivf-agreement .ob-actions { justify-content: flex-start; }
+.ivf-agreement .ob-actions:empty { display: none; }
+.ivf-wide { grid-template-columns: 200px minmax(0, 1fr); gap: 40px; }
+.es-sign-flow { padding-top: 4px; }
+.es-sign-head-flow { padding: 0; border: 0; }
+.ivf-summary { margin: 16px 0 0; }
+.ivf-summary .iv-chip { white-space: normal; }
+.ivf-done { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.ivf-done .terms { align-self: stretch; }
+.ivf-done .btn { margin-top: 16px; }
+.ivf-msg { max-width: 640px; display: flex; flex-direction: column; gap: 12px; padding-top: 24px; }
+.ivf-msg h1 { font-family: var(--font-display); font-size: 26px; font-weight: 600; }
+.ivf-loading { color: var(--fg-2); }
+@media (max-width: 960px) {
+  .ivf-wide { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+}
+@media (max-width: 640px) {
+  .ivf-saved { text-align: left; }
+  .ivf-certfacts { grid-template-columns: minmax(0, 1fr); gap: 0 0; }
+  .ivf-certfacts dd { margin-bottom: 6px; }
+  .ivf-form .ob-actions { flex-wrap: wrap; }
+  .ivf-form .ob-actions .btn { flex: 1 1 auto; }
+}
+
+/* ---------- Invitations and notifications ---------- */
+/* Turnkey invitations on the console's Investors page, the invitation email to send from the sponsor's own email app, and the notification bell (invitations.js). */
+.inv8-lede { margin: 0 0 12px; font-size: 13px; }
+.inv8-form textarea { min-height: 76px; }
+.inv8-tbl .inv8-step { max-width: 280px; white-space: normal; }
+.inv8-activity { white-space: nowrap; }
+.inv8-when { display: block; font-size: 12px; color: var(--cv-ink-2); }
+.inv8-when:first-child { color: var(--cv-ink); }
+.cs-error-text { color: var(--cv-bad); font-weight: 600; }
+.inv8-rule { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--cv-line-soft); }
+.inv8-check { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.inv8-email { display: flex; flex-direction: column; gap: 14px; }
+.inv8-meta { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; font-size: 13px; }
+.inv8-meta > div { display: contents; }
+.inv8-meta dt { color: var(--fg-3); font-weight: 600; }
+.inv8-meta dd { margin: 0; color: var(--fg); overflow-wrap: anywhere; }
+.inv8-subject { font-weight: 700; }
+.inv8-email .email { width: 100%; }
+.inv8-raw { font-size: 12px; color: var(--fg-3); overflow-wrap: anywhere; }
+.inv8-linkfield input { font-size: 13px; }
+.inv8-actions { margin-top: 0; }
+.inv8-actions .cs-btn .i { width: 16px; height: 16px; margin-right: 6px; }
+.inv8-try { margin: 0; }
+.cs-nav { position: relative; }
+.cs-nav:has(.cs-bell) .cs-client { padding-right: 52px; }
+.cs-bell { position: absolute; top: 18px; right: 12px; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--cv-line); border-radius: 4px; background: var(--cv-panel); color: var(--cv-ink-2); cursor: pointer; }
+.cs-bell:hover { background: var(--cv-panel-2); color: var(--cv-ink); }
+.cs-bell:focus-visible { outline: 2px solid var(--cv-focus); outline-offset: 2px; }
+.cs-bell .i { width: 20px; height: 20px; }
+.cs-bell-n { position: absolute; top: -7px; right: -7px; min-width: 20px; padding: 0 5px; border-radius: 10px; background: var(--cv-bad); color: #FFFFFF; font: 800 11px/20px var(--cv-font, sans-serif); text-align: center; box-shadow: 0 0 0 2px var(--cv-panel); }
+.cs-bell-n[hidden] { display: none; }
+.dlg-ntf { width: min(480px, calc(100vw - 32px)); }
+.inv8-ntf-body { padding: 8px 12px 14px; }
+.inv8-ntfs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.inv8-ntf + .inv8-ntf { border-top: 1px solid var(--cv-line-soft); }
+.inv8-ntf-btn { display: flex; flex-direction: column; gap: 3px; width: 100%; padding: 10px 10px 10px 16px; border: 0; border-radius: 3px; background: none; color: var(--cv-ink); font: inherit; text-align: left; cursor: pointer; position: relative; }
+.inv8-ntf-btn:hover { background: var(--cv-panel-2); }
+.inv8-ntf-btn:focus-visible { outline: 2px solid var(--cv-focus); outline-offset: -2px; }
+.inv8-ntf.is-unread .inv8-ntf-btn::before { content: ''; position: absolute; left: 4px; top: 16px; width: 7px; height: 7px; border-radius: 50%; background: var(--cv-accent); }
+.inv8-ntf-top { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; font-weight: 700; color: var(--cv-ink-3); text-transform: uppercase; letter-spacing: 0.04em; }
+.inv8-ntf-at { text-transform: none; letter-spacing: 0; font-weight: 600; white-space: nowrap; }
+.inv8-ntf-title { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.inv8-ntf.is-unread .inv8-ntf-title { font-weight: 800; }
+.inv8-ntf-detail { font-size: 13px; color: var(--cv-ink-2); overflow-wrap: anywhere; }
+.inv8-ntf-more { margin: 10px 0 0; padding: 0 10px; font-size: 13px; }
+.inv8-ntf-more a { color: var(--cv-link); font-weight: 600; }
+.inv8-ntfs-page .inv8-ntf-btn { padding: 12px 12px 12px 20px; }
+@media (max-width: 900px) {
+  .cs-bell { top: 10px; right: max(16px, env(safe-area-inset-right, 0px)); }
+}
+@media (max-width: 640px) {
+  .inv8-meta { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .inv8-meta dd { margin-bottom: 6px; }
+  .inv8-actions { justify-content: stretch; }
+  .inv8-actions .cs-btn { flex: 1 1 auto; justify-content: center; }
+}
+.dlg-email:has(.inv8-email) .dlg-head, .dlg-ntf .dlg-head { flex-wrap: nowrap; align-items: flex-start; }
+.dlg-email:has(.inv8-email) .dlg-head > div:first-child, .dlg-ntf .dlg-head > div:first-child { min-width: 0; }

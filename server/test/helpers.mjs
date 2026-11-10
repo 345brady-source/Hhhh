@@ -3,8 +3,8 @@ import { createServer } from '../index.mjs';
 import { openStore } from '../lib/store.mjs';
 
 /** Run fn against a fresh server, always closing it (a failing assertion must not leave it open). */
-export async function withServer({ env = {}, fetch: fetchImpl, providers } = {}, fn) {
-  const server = createServer({ env: Object.assign({ NODE_ENV: 'test', PUBLIC_URL: 'http://verify.test' }, env), store: openStore(null), fetch: fetchImpl, providers });
+export async function withServer({ env = {}, fetch: fetchImpl, providers, now, store, mailTls } = {}, fn) {
+  const server = createServer({ env: Object.assign({ NODE_ENV: 'test', PUBLIC_URL: 'http://verify.test' }, env), store: store || openStore(null), fetch: fetchImpl, providers, now, mailTls });
   await new Promise((r) => server.listen(0, r));
   try {
     await fn(`http://127.0.0.1:${server.address().port}`, server);

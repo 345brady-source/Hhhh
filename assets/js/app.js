@@ -127,7 +127,8 @@
   NS.ui = { h, usd, usdc, date, last4, pct, icon, toast, dialog, closeDialog, download, copy };
 
   /* ---------- State ---------- */
-  const state = { clientId: null, ws: null, route: 'investments', param: null, viewer: null, navOpen: false, ui: {} };
+  /** remote: set when an investor opens an invitation from the integration server (DIY), { server }. */
+  const state = { clientId: null, ws: null, route: 'investments', param: null, viewer: null, navOpen: false, ui: {}, remote: null };
   NS.state = state;
   const ws = () => state.ws;
 
@@ -181,6 +182,8 @@
       state.viewer = null;
       B.apply(NS.TENANT_TEMPLATE);
       applyAppearance();
+      // An investor's invitation link opened where its portal is not stored: the invitation page explains (never the sign-up page).
+      if (!route && state.route === 'invite') return render();
       go(route || 'diy-start');
       return;
     }
@@ -197,6 +200,76 @@
   }
   function save(now) {
     NS.workspace.save(ws(), now);
+  }
+  /**
+   * Use a workspace that is not one of this browser's portals: the temporary one an invitation from the
+   * integration server builds (onboarding.js). It is saved under its own id and never becomes the active portal.
+   */
+  function useWorkspace(w) {
+    state.clientId = w.tenant.id;
+    state.ws = w;
+    B.apply(w.tenant);
+    applyAppearance();
+  }
+  /** An integration server address as one comparable string (scheme, host, port and path; no trailing slash), or ''. */
+  function serverKey(s) {
+    try {
+      const u = new URL(String(s || '').trim());
+      if (!/^https?:$/.test(u.protocol) || u.username || u.password || u.search || u.hash) return '';
+      // Plain http only for this computer (testing an integration server locally).
+      if (u.protocol === 'http:' && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(u.hostname)) return '';
+      return `${u.protocol}//${u.host}${u.pathname.replace(/\/+$/, '')}`.toLowerCase();
+    } catch (e) {
+      return '';
+    }
+  }
+  /**
+   * The integration servers this portal page may load invitations from. Anything else in ?server= is refused,
+   * so a link cannot make the firm's own portal page collect an investor's details for someone else's server:
+   *   window.CVPortalConfig.integrationServers   the firm's own server(s), set where the portal is published
+   *   the portal page's own origin                a server published on the same site
+   *   a server set up on the Integrations page of a portal stored in this browser (the sponsor trying a link)
+   */
+  function trustedServers() {
+    const out = [];
+    const add = (x) => {
+      const k = serverKey(x);
+      if (k && out.indexOf(k) < 0) out.push(k);
+    };
+    const cfg = config.integrationServers || config.integrationServer || [];
+    (Array.isArray(cfg) ? cfg : [cfg]).forEach(add);
+    try {
+      NS.workspace.list().forEach((c) => {
+        const w = NS.store.get('ws:' + c.id, null);
+        if (w && w.integrations && w.integrations.server) add(w.integrations.server.url);
+      });
+    } catch (e) {
+      /* ignore */
+    }
+    return out;
+  }
+  /** Will this portal page, as published, open invitations from this server on any device (not only in this browser)? */
+  function publishedServer(url) {
+    const k = serverKey(url);
+    if (!k) return false;
+    const o = location.origin.toLowerCase();
+    if (k === o || k.indexOf(o + '/') === 0) return true;
+    const cfg = config.integrationServers || config.integrationServer || [];
+    return (Array.isArray(cfg) ? cfg : [cfg]).some((x) => serverKey(x) === k);
+  }
+  /** ?server=<integration server> on an invitation link (DIY): { url, trusted }; the investor's browser loads the invitation from there. */
+  function inviteServer() {
+    if (!E.diy) return null;
+    let s = '';
+    try {
+      s = new URLSearchParams(location.search).get('server') || '';
+    } catch (e) {
+      /* ignore */
+    }
+    if (!s) return null;
+    const k = serverKey(s);
+    const url = k ? String(s).trim().replace(/\/+$/, '') : '';
+    return { url, trusted: !!k && (publishedServer(k) || trustedServers().indexOf(k) >= 0) };
   }
   function applyTenant() {
     B.apply(ws().tenant);
@@ -227,7 +300,8 @@
     ['console-offering-', 'console-offering'],
     ['console-envelope-', 'console-envelope'],
     ['sign-', 'sign'],
-    ['join-', 'join']
+    ['join-', 'join'],
+    ['invite-', 'invite']
   ];
   function parseHash() {
     const raw = (location.hash || '').replace(/^#/, '');
@@ -349,7 +423,9 @@
     const key = state.route;
     const standalone = NS.views[key] && NS.views[key].standalone;
     if (!w && !standalone) {
-      if (E.diy) go('diy-start');
+      // An investor using an invitation from the integration server goes back to it (never the sign-up page).
+      if (state.remote) go('invite-' + (NS.store.get('invite-last', '') || ''));
+      else if (E.diy) go('diy-start');
       return;
     }
     if (!allowed(key)) {
@@ -360,14 +436,14 @@
     const mode = standalone ? 'standalone' : modeOf(key);
     ROLES.forEach((r) => document.body.classList.toggle('role-' + r, state.role === r));
     document.body.classList.toggle('edition-diy', E.diy);
-    document.body.classList.toggle('has-demo', !!config.demo && !!w);
+    document.body.classList.toggle('has-demo', !!config.demo && !!w && !state.remote);
     document.body.classList.toggle('mode-console', mode === 'console');
     document.body.classList.toggle('mode-portal', mode === 'portal');
     document.body.classList.toggle('mode-standalone', mode === 'standalone');
     document.title = standalone ? view.title || (w ? w.tenant.portalName : 'Investor Portal') : mode === 'console' ? `${w.tenant.shortName} · ${E.diy ? 'Console' : 'Sponsor Console'}` : `${w.tenant.portalName} · ${w.tenant.shortName}`;
     // Carrow & Vale staff get the operator bar; a sponsor's own people get a plain preview bar in the investor view.
     document.getElementById('opbar').innerHTML = !w || standalone ? '' : E.managed && state.role === 'staff' ? opbarHTML() : state.role !== 'investor' && mode === 'portal' ? previewBarHTML() : '';
-    document.getElementById('demo').innerHTML = standalone ? '' : demoHTML();
+    document.getElementById('demo').innerHTML = standalone || state.remote ? '' : demoHTML();
     const el = document.getElementById('view');
     el.innerHTML = view.render(state.param);
     if (view.after) view.after(state.param);
@@ -450,6 +526,17 @@
     const r = parseHash();
     state.route = r.key;
     state.param = r.param;
+    const remote = inviteServer();
+    if (remote) {
+      // The invitation page loads the firm's brand, the offering and the investor from the server (onboarding.js).
+      // A server this portal is not set up to use is never contacted: the page says the link does not work here.
+      state.remote = remote.trusted ? { server: remote.url } : { server: '', refused: true };
+      state.role = 'investor';
+      B.apply(NS.TENANT_TEMPLATE);
+      applyAppearance();
+      render();
+      return;
+    }
     setClient(resolveClient());
   }
 
@@ -490,7 +577,9 @@
       return inv ? `${inv.title} (investor)` : 'Investor';
     }
     if (E.managed) return state.role === 'staff' ? 'Carrow & Vale staff' : `${firm || 'Sponsor'} staff`;
-    const me = w && (w.team || []).find((m) => m.current) || (w && (w.team || []).find((m) => m.role === state.role));
+    // The person signed in with this role (in the demo, switching to "team" acts as a team member, not the admin flagged current).
+    const team = (w && w.team) || [];
+    const me = team.find((m) => m.current && m.role === state.role) || team.find((m) => m.role === state.role && m.status !== 'invited') || null;
     const what = state.role === 'admin' ? 'admin' : 'team';
     return me ? `${me.name} (${firm} ${what})` : `${firm} ${what}`;
   }
@@ -502,7 +591,7 @@
     setClient(null, 'diy-start');
   };
 
-  NS.app = { state, config, allowed, can, actor, render, go, setClient, save, applyTenant, applyAppearance, setAppearance, setPath, getPath, ws, modeOf };
+  NS.app = { state, config, allowed, can, actor, render, go, setClient, useWorkspace, publishedServer, save, applyTenant, applyAppearance, setAppearance, setPath, getPath, ws, modeOf };
 
   // Views register after this file loads, so boot once every script has run.
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

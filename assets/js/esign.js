@@ -270,7 +270,7 @@
   function pagesHTML(env, layer) {
     const c = pagesOf(env.docId);
     if (c.status === 'loading') return '<p class="es-loading" role="status">Loading document…</p>';
-    if (c.status === 'error') return `<div class="es-note es-note-bad" role="alert"><span>${h(c.error)}</span><button class="${S().route === 'sign' ? 'btn btn-small' : 'cs-btn cs-btn-small'}" type="button" data-action="es-pages-retry" data-doc="${h(env.docId)}">Try again</button></div>`;
+    if (c.status === 'error') return `<div class="es-note es-note-bad" role="alert"><span>${h(c.error)}</span><button class="${S().route === 'sign' || S().route === 'invite' ? 'btn btn-small' : 'cs-btn cs-btn-small'}" type="button" data-action="es-pages-retry" data-doc="${h(env.docId)}">Try again</button></div>`;
     const n = c.pages.length;
     return c.pages
       .map(
@@ -375,7 +375,7 @@
     if (missing.length) return `Place a signature field for ${missing.map((s) => s.name).join(', ')}.`;
     return '';
   }
-  function send(ws, envId) {
+  function send(ws, envId, opts) {
     const env = envById(ws, envId);
     if (!env) return { ok: false, error: 'Envelope not found.' };
     const err = sendCheck(env);
@@ -387,7 +387,8 @@
     const asked = notifyTurn(env);
     logChange(ws, 'Envelope sent', env, `${env.signers.length} signer${env.signers.length === 1 ? '' : 's'} (${env.signers.map((s) => s.name).join(', ')}); original SHA-256 ${env.sha256Original}`);
     NS.app.save(true);
-    U.toast(`Signature request emailed to ${asked.map((s) => s.name).join(', ')} (simulated in this demo).`);
+    // Quiet: the signer signs straight away inside the investor onboarding flow, so no toast about the email.
+    if (!(opts && opts.quiet)) U.toast(`Signature request emailed to ${asked.map((s) => s.name).join(', ')} (simulated in this demo).`);
     return { ok: true, envelope: env };
   }
   function remind(ws, envId) {
@@ -436,8 +437,14 @@
     });
     addEvent(env, staffActor(), 'Created', `From template ${tpl.title}`);
     envs(ws).push(env);
-    send(ws, env.id);
+    send(ws, env.id, { quiet: !!opts.quiet });
     return env;
+  }
+  /** An offering's subscription agreement template that can be sent: every role it names has a signature or initials field. */
+  function templateReady(ws, offeringId) {
+    const tpl = subscriptionTemplate(ws, offeringId);
+    if (!tpl || !tpl.docId || !(tpl.roles || []).length || (tpl.roles || []).indexOf('Investor') < 0) return false;
+    return tpl.roles.every((r) => (tpl.fields || []).some((f) => f.signerRole === r && (f.type === 'signature' || f.type === 'initials')));
   }
   async function signedBlob(envId) {
     const env = envById(W(), envId);
@@ -684,6 +691,7 @@
     text(opts.standalone ? 'This certificate was generated separately from the completed file, whose SHA-256 is listed above.' : 'The SHA-256 of this completed file (signed pages plus this certificate) is recorded with the envelope and in the sponsor\'s change log.', M, 7, font, mute);
   }
   /* ---------- Finishing a signature ---------- */
+  const signedHooks = [];
   async function finishSigning(env, signer, st) {
     const ws = W();
     if (!isTurn(env, signer)) return U.toast('It is not this signer’s turn to sign.');
@@ -754,9 +762,18 @@
       st.busy = false;
       st.finished = true;
       S().ui.esFocus = '.es-done';
+      // Other modules react to a signature (the investor onboarding flow moves on by itself); one that handles it says so.
+      let handled = false;
+      signedHooks.forEach((fn) => {
+        try {
+          if (fn(env, signerById(env, signer.id), complete) === true) handled = true;
+        } catch (e) {
+          if (window.console) console.error(e);
+        }
+      });
       NS.app.save(true);
       NS.app.render();
-      U.toast(complete ? 'Signed. Everyone has signed; the completed copy was emailed to all parties (simulated).' : 'Signed. The next signer was emailed (simulated).');
+      if (!handled) U.toast(complete ? 'Signed. Everyone has signed; the completed copy was emailed to all parties (simulated).' : 'Signed. The next signer was emailed (simulated).');
     } catch (err) {
       st.busy = false;
       S().ui.esFocus = '.es-finish';
@@ -1695,18 +1712,22 @@
     const btn = (p) => (con ? `cs-btn${p ? ' cs-btn-primary' : ''}` : `btn${p ? ' btn-primary' : ''}`);
     const preview = !con && S().role !== 'investor';
     const st = signingState(env, s.id);
-    const back = con ? `<button class="${btn()} es-back" type="button" data-action="es-sign-exit">${icon('back')}Back to envelope</button>` : `<a class="es-back-link" href="#documents">${icon('back')}Documents</a>`;
-    const head = `<header class="es-sign-head">
+    const flow = opts.ctx === 'flow';
+    const back = con ? `<button class="${btn()} es-back" type="button" data-action="es-sign-exit">${icon('back')}Back to envelope</button>` : flow ? '' : `<a class="es-back-link" href="#documents">${icon('back')}Documents</a>`;
+    // Inside the onboarding flow the step already names the document: only the file and the signer are shown.
+    const head = flow
+      ? `<header class="es-sign-head es-sign-head-flow"><p class="es-sign-meta">${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · signing as <strong>${h(s.name)}</strong> &lt;${h(s.email)}&gt;</p></header>`
+      : `<header class="es-sign-head">
       ${con ? `<div class="es-sign-brand">${NS.brand.lockup(t)}</div>` : ''}
       <p class="es-eyebrow">${h(t.name)} sent you a document to sign</p>
       <h1>${h(env.title)}</h1>
       ${env.message ? `<p class="es-sign-msg">${h(env.message)}</p>` : ''}
       <p class="es-sign-meta">${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · signing as <strong>${h(s.name)}</strong> &lt;${h(s.email)}&gt;</p>
     </header>`;
-    const wrap = (inner) => `<div class="es-sign${con ? ' es-sign-console' : ''}">${back}${head}${inner}</div>`;
+    const wrap = (inner) => `<div class="es-sign${con ? ' es-sign-console' : ''}${flow ? ' es-sign-flow' : ''}">${back}${head}${inner}</div>`;
     if (st.finished || s.status === 'signed') {
       const complete = env.status === 'completed';
-      return wrap(`<section class="es-card es-done" tabindex="-1" aria-live="polite"><h2>${icon('check')}${con ? 'Countersigned' : 'You signed this document'}</h2><p>${s.signedAt ? `Signed ${h(stamp(s.signedAt))}. ` : ''}${complete ? 'Everyone has signed. The completed document, with its certificate of completion, is saved' + (con ? ' with the envelope.' : ' in your Documents.') : 'We will email you a copy when everyone has signed.'}</p>${complete ? `<div class="es-row"><button class="${btn(true)}" type="button" data-action="es-dl-signed" data-id="${h(env.id)}">${icon('download')}Download signed PDF</button>${con ? '' : `<a class="${btn()}" href="#documents">Go to Documents</a>`}</div>` : ''}</section>`);
+      return wrap(`<section class="es-card es-done" tabindex="-1" aria-live="polite"><h2>${icon('check')}${con ? 'Countersigned' : 'You signed this document'}</h2><p>${s.signedAt ? `Signed ${h(stamp(s.signedAt))}. ` : ''}${complete ? 'Everyone has signed. The completed document, with its certificate of completion, is saved' + (con ? ' with the envelope.' : ' in your Documents.') : 'We will email you a copy when everyone has signed.'}</p>${complete ? `<div class="es-row"><button class="${btn(true)}" type="button" data-action="es-dl-signed" data-id="${h(env.id)}">${icon('download')}Download signed PDF</button>${con || flow ? '' : `<a class="${btn()}" href="#documents">Go to Documents</a>`}</div>` : ''}</section>`);
     }
     if (env.status === 'voided') return wrap(`<section class="es-card"><h2>This document was voided</h2><p>${h(t.name)} cancelled this request${env.voidReason ? `: ${h(env.voidReason)}` : '.'} No signature is needed.</p></section>`);
     if (env.status === 'declined' || s.status === 'declined') return wrap(`<section class="es-card"><h2>Signing was declined</h2><p>${s.status === 'declined' ? `You declined to sign${s.declinedReason ? `: “${h(s.declinedReason)}”` : '.'} ${h(t.name)} has been notified.` : 'Another signer declined, so this document will not be completed.'}</p></section>`);
@@ -2363,7 +2384,7 @@
       const tpl = !opts.envelopeId && isNew ? subscriptionTemplate(ws, o.id) : null;
       if (tpl) {
         try {
-          env = createFromTemplate(ws, tpl.id, { investorId: inv.id, offeringId: o.id, title: `${tpl.title} - ${inv.title}`, prefill: subscriptionPrefill(inv, o, opts) });
+          env = createFromTemplate(ws, tpl.id, { investorId: inv.id, offeringId: o.id, title: `${tpl.title} - ${inv.title}`, prefill: subscriptionPrefill(inv, o, opts), quiet: !!opts.embedded });
         } catch (e) {
           env = null;
         }
@@ -2411,5 +2432,100 @@
     };
   }
 
-  NS.esign = { pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate };
+  /* ---------- Signing inside another page (the investor onboarding flow, onboarding.js) ---------- */
+  const flowSigner = (env, investorId) => (env ? env.signers.find((x) => x.investorId === investorId) || null : null);
+  /** The signing experience for an investor, without the portal page around it. */
+  function embed(envId, investorId) {
+    const env = envById(W(), envId);
+    const s = flowSigner(env, investorId);
+    if (!env || !s) return `<section class="es-card"><h2>This document is not available</h2><p>Contact ${h(T().support.team)} at ${h(T().support.email)}.</p></section>`;
+    return signHTML(env, s, { ctx: 'flow' });
+  }
+  /** What the signing page does after it renders: the first view is recorded, and focus goes where signing left it. */
+  function embedAfter(envId, investorId) {
+    const env = envById(W(), envId);
+    const s = flowSigner(env, investorId);
+    stickBar();
+    signAfter(env, s, 'portal');
+    focusPending();
+  }
+  /**
+   * The investor already agreed to electronic records and signatures (ESIGN Act, UETA) at the start of
+   * onboarding, with the same disclosures as the consent screen: record it on the envelope instead of asking again.
+   */
+  function recordConsent(ws, envId, investorId, givenAt) {
+    const env = envById(ws, envId);
+    const s = flowSigner(env, investorId);
+    if (!env || !s || s.consentAt || env.status !== 'sent') return false;
+    s.consentAt = nowIso();
+    addEvent(env, actorFor(s), 'Consent given', `Agreed to use electronic records and signatures (ESIGN Act, UETA)${givenAt ? ` on ${stamp(givenAt)}` : ''}, when starting onboarding, with the disclosures shown on the consent screen`);
+    NS.app.save(true);
+    return true;
+  }
+  /** fn(envelope, signer, complete) runs after each signature; return true to replace the default toast. */
+  const onSigned = (fn) => signedHooks.push(fn);
+  /**
+   * The investor corrected their details before signing (the onboarding flow): the envelope's signer and the
+   * prefilled, locked values follow the investor record. Nothing changes once the investor has signed.
+   */
+  function refreshSubscription(ws, envId, inv, o, opts) {
+    const env = envById(ws, envId);
+    const s = flowSigner(env, inv.id);
+    if (!env || !s || env.status !== 'sent' || s.status === 'signed' || !o) return false;
+    const was = s.account;
+    Object.assign(s, { name: inv.contact, email: inv.email, account: inv.title });
+    const pre = subscriptionPrefill(inv, o, opts || {});
+    env.fields.forEach((f) => {
+      if (f.locked && f.label && Object.prototype.hasOwnProperty.call(pre, f.label) && f.type !== 'checkbox') f.value = String(pre[f.label]);
+    });
+    if (was && env.title.slice(-(was.length + 3)) === ` - ${was}`) env.title = `${env.title.slice(0, -(was.length + 3))} - ${inv.title}`;
+    addEvent(env, actorFor(s), 'Details updated', `The investor corrected their details before signing: ${inv.title}`);
+    NS.app.save(true);
+    return true;
+  }
+  /** Agreements an investor signed that are waiting for the firm's countersignature (their copy so far can be opened). */
+  const awaitingFor = (ws, investorId) => envs(ws).filter((e) => e.status === 'sent' && e.signers.some((x) => x.investorId === investorId && x.status === 'signed'));
+  /** Documents for an investor with no investments yet: what to sign, what they signed, and the fully signed copies. */
+  function investorDocsHTML(inv) {
+    if (!inv) return '';
+    const ws = W();
+    const waiting = pendingFor(ws, inv.id);
+    const mine = awaitingFor(ws, inv.id);
+    const signed = signedDocsFor(ws, inv);
+    const sent = mine.length
+      ? `<section class="sec es-mine" aria-label="Signed by you">${PK().sec('Signed by you', `<span class="hint">Waiting for ${h(T().shortName)}’s countersignature</span>`)}<div class="tbl-scroll"><table class="tbl tbl-mid"><thead><tr><th scope="col">Signed</th><th scope="col">Document</th></tr></thead><tbody>${mine
+          .map((e) => {
+            const s = flowSigner(e, inv.id);
+            return `<tr><td class="nowrap td-meta">${date(String(s.signedAt || e.sentAt || '').slice(0, 10))}</td><td class="td-lead"><button class="link-btn doc-link" type="button" data-action="es-open-mine" data-id="${h(e.id)}">${h(e.title)}</button><span class="sub">Your signed copy. The fully signed agreement is added here once it is countersigned.</span></td></tr>`;
+          })
+          .join('')}</tbody></table></div></section>`
+      : '';
+    return (waiting.length ? waitingHTML(waiting) : '') + sent + (signed.length ? signedHTML(signed) : '');
+  }
+  NS.actions['es-open-mine'] = (el) => {
+    const inv = PK().viewer();
+    const env = inv && awaitingFor(W(), inv.id).find((e) => e.id === el.getAttribute('data-id'));
+    if (!env) return;
+    U.dialog(
+      `<div class="dlg-head"><div><h2>${h(env.title)}</h2><p>Signed by you · waiting for countersignature</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
+      <div class="dlg-body"><p class="empty">Loading…</p></div>`,
+      'dlg-doc'
+    );
+    files()
+      .get(env.workDocId || env.docId)
+      .then((blob) => {
+        const body = document.querySelector('#dlg .dlg-body');
+        if (!body) return;
+        if (!blob) return (body.innerHTML = '<p class="empty">This file was stored in a different browser. In production, documents are kept in the document vault and open on any device.</p>');
+        if (S().ui.esDocUrl) URL.revokeObjectURL(S().ui.esDocUrl);
+        const url = (S().ui.esDocUrl = URL.createObjectURL(blob));
+        body.innerHTML = `<iframe class="doc-frame" src="${url}" title="${h(env.title)}"></iframe>`;
+      })
+      .catch(() => {
+        const body = document.querySelector('#dlg .dlg-body');
+        if (body) body.innerHTML = '<p class="empty">This browser blocked document storage, so the file cannot be opened here.</p>';
+      });
+  };
+
+  NS.esign = { pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, investorDocsHTML };
 })(window.CVPortal);

@@ -1,10 +1,13 @@
-// A small JSON-file store for verifications, screenings and webhook events.
+// A small JSON-file store for verifications, screenings, invitations, the outbox and webhook events,
+// plus blob files for large binaries (offering documents, signed PDFs) kept next to it.
 // Replace with your database in production; keep the same methods.
-import { readFileSync, writeFileSync, mkdirSync, renameSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { readFileSync, writeFileSync, mkdirSync, renameSync, unlinkSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+
+const BLOB_KEY = /^[\w-]{1,120}$/;
 
 export function openStore(file) {
-  let data = { verifications: {}, screenings: {}, events: [], seen: [] };
+  let data = { verifications: {}, screenings: {}, invitations: {}, outbox: {}, events: [], seen: [] };
   if (file) {
     try {
       data = Object.assign(data, JSON.parse(readFileSync(file, 'utf8')));
@@ -24,12 +27,27 @@ export function openStore(file) {
     clearTimeout(timer);
     timer = setTimeout(flush, 50);
   };
+  // Blobs: files in "<store file>.blobs/" (in memory when the store has no file). Callers seal them first.
+  const memBlobs = new Map();
+  const blobDir = file ? `${file}.blobs` : '';
+  const blobPath = (key) => {
+    if (!BLOB_KEY.test(String(key))) throw new Error('Bad blob key');
+    return join(blobDir, String(key));
+  };
   return {
     get: (kind, id) => data[kind][id] || null,
     put(kind, rec) {
       data[kind][rec.id] = Object.assign({}, data[kind][rec.id], rec, { updatedAt: new Date().toISOString() });
       save();
       return data[kind][rec.id];
+    },
+    /** Every record of a kind, oldest first. */
+    list: (kind) => Object.values(data[kind] || {}),
+    remove(kind, id) {
+      if (!data[kind] || !data[kind][id]) return false;
+      delete data[kind][id];
+      save();
+      return true;
     },
     /** Find a record by the provider's own reference (webhooks carry that, not our id); the newest wins. */
     byRef(kind, provider, ref) {
@@ -51,6 +69,35 @@ export function openStore(file) {
       if (data.events.length > 5000) data.events.splice(0, data.events.length - 5000);
       save();
     },
+    putBlob(key, buf) {
+      if (!file) {
+        blobPath(key);
+        memBlobs.set(key, Buffer.from(buf));
+        return;
+      }
+      mkdirSync(blobDir, { recursive: true });
+      const p = blobPath(key);
+      writeFileSync(`${p}.tmp`, buf);
+      renameSync(`${p}.tmp`, p);
+    },
+    getBlob(key) {
+      if (!file) return memBlobs.has(key) ? memBlobs.get(key) : null;
+      try {
+        return readFileSync(blobPath(key));
+      } catch {
+        return null;
+      }
+    },
+    removeBlob(key) {
+      if (!file) return memBlobs.delete(key);
+      try {
+        unlinkSync(blobPath(key));
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    blobDir,
     flush,
     data: () => data
   };

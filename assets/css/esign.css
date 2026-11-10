@@ -66,6 +66,8 @@
 .es-f-auto span:not(.sr-only) { font-size: clamp(6px, min(64cqh, 17cqw), 15px); }
 /* Text and name: the box is the size container, so the typed text scales with the field. */
 .es-f-text { padding: 0; cursor: text; }
+/* The input inside the border is the tap target: at least 24px tall inside the 1.5px border (WCAG 2.5.8). */
+.es-f-mine.es-f-text { top: calc(var(--y) + var(--h) / 2 - max(27px, var(--h)) / 2); height: max(27px, var(--h)); }
 .es-f-input { display: block; box-sizing: border-box; width: 100%; height: 100%; min-width: 0; margin: 0; padding: 0 3px; border: 0; border-radius: 0; background: transparent; font-family: inherit; font-size: 11px; font-size: clamp(6px, 62cqh, 15px); line-height: 1; color: var(--es-paper-ink); appearance: none; -webkit-appearance: none; }
 .es-f-input:focus { outline: none; }
 .es-f-input::placeholder { color: color-mix(in srgb, var(--sc) 55%, #3D3D3D); opacity: 1; }

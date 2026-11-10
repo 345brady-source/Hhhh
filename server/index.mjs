@@ -19,6 +19,14 @@
  *   GET  /sandbox/:ref            a stand-in hosted page for the "sandbox" provider (testing without accounts)
  *   GET  /health                  which providers are configured
  *
+ * Investor invitations (lib/invitations.mjs; see README.md):
+ *   POST /v1/invitations          the console invites an investor; this server emails the link
+ *   GET  /v1/invitations          their statuses; GET/DELETE /v1/invitations/:id/submission, POST …/resend, …/cancel
+ *   GET  /v1/outbox               messages kept here when no SMTP server is set
+ *   GET  /v1/invite               the investor's browser loads its onboarding (X-Invite-Token)
+ *   PUT  /v1/invite/progress      …reports the step it is on
+ *   POST /v1/invite/complete      …sends back the finished paperwork; the sponsor is emailed
+ *
  * No verification vendor is built in: sponsors plug in the services they use
  * (declarative connectors, code plug-ins, or hosted links plus the results
  * API; see README.md), as many per check as they like.
@@ -35,6 +43,7 @@ import { readRaw, parseJson, send, cors, header } from './lib/http.mjs';
 import { openStore } from './lib/store.mjs';
 import { id, safeEqual } from './lib/crypto.mjs';
 import { STATUSES } from './lib/statuses.mjs';
+import { createInvitations } from './lib/invitations.mjs';
 import { PROVIDERS as PROVIDERS_DEFAULT, configured, missingEnv, describe } from './providers/index.mjs';
 
 export { STATUSES };
@@ -42,6 +51,9 @@ export { STATUSES };
 const RESULT_FIELDS = ['method', 'detail', 'expiresAt', 'screening', 'evidence'];
 const REF_ID = /^(ver|scr)_[\w-]{1,64}$/;
 const REFRESH_MS = 20000;
+
+/** An invitation token sees only its own investor's checks: the same investor id in the same workspace (ids are per-workspace sequences). */
+const ownCheck = (rec, scope) => rec.investorId === scope.investorId && (rec.workspace || '') === (scope.workspace || '');
 
 /** In production, verify the portal session here (for example a signed session token); API_TOKEN suits server-to-server use. */
 function authorize(req, env) {
@@ -133,6 +145,19 @@ export function createServer(opts = {}) {
   const publicUrl = String(env.PUBLIC_URL || `http://localhost:${env.PORT || 8787}`).replace(/\/+$/, '');
   const origins = String(env.PORTAL_ORIGIN || '').split(',').map((s) => s.trim()).filter(Boolean);
   const limited = rateLimiter(env);
+  const now = opts.now || (() => Date.now());
+
+  const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls });
+  /**
+   * Investors' details on verification and screening records (name, email, address, phone, the names
+   * screened) are sealed with DATA_KEY like invitations (lib/vault.mjs); providers get them in memory.
+   */
+  const sealPersonal = (table, rid, field, value) => invites.vault.seal(value, `${table}:${rid}:${field}`);
+  function openPersonal(rec, field) {
+    const box = rec[field];
+    if (!box || typeof box !== 'object' || Array.isArray(box) || (box.v === undefined && !Object.prototype.hasOwnProperty.call(box, 'plain'))) return box; // stored before sealing
+    return invites.vault.open(box, `${rec.id.startsWith('scr_') ? 'screenings' : 'verifications'}:${rec.id}:${field}`);
+  }
 
   const ctx = (provider, rec, extra) =>
     Object.assign(
@@ -149,7 +174,8 @@ export function createServer(opts = {}) {
         ref: rec ? rec.ref || '' : '',
         data: rec ? Object.assign({}, rec.data) : {},
         settings: rec ? rec.settings || {} : {},
-        investor: rec ? rec.investor || {} : {}
+        investor: rec ? openPersonal(rec, 'investor') || {} : {},
+        names: rec && rec.names ? openPersonal(rec, 'names') || [] : undefined
       },
       extra
     );
@@ -208,10 +234,18 @@ export function createServer(opts = {}) {
   /** Redirects to provider pages must be https (or back to this server). */
   const safeRedirect = (u) => typeof u === 'string' && (/^https:\/\//i.test(u) || u.startsWith(publicUrl + '/'));
   /** The portal may ask to be linked back to after a hosted flow; only its own origins are accepted. */
-  function returnTo(u) {
-    if (typeof u !== 'string' || !/^https?:\/\//i.test(u)) return '';
-    if (!origins.length || origins.includes('*')) return u.slice(0, 500);
-    return origins.some((o) => u === o || u.startsWith(o + '/') || u.startsWith(o + '?') || u.startsWith(o + '#')) ? u.slice(0, 500) : '';
+  function returnTo(raw) {
+    if (typeof raw !== 'string' || !/^https?:\/\//i.test(raw)) return '';
+    const u = raw.slice(0, 500);
+    // A valid web address only (a link built from it must parse too).
+    try {
+      const p = new URL(u);
+      if (!/^https?:$/.test(p.protocol) || !p.hostname) return '';
+    } catch {
+      return '';
+    }
+    if (!origins.length || origins.includes('*')) return u;
+    return origins.some((o) => u === o || u.startsWith(o + '/') || u.startsWith(o + '?') || u.startsWith(o + '#')) ? u : '';
   }
   /** Reply to a hosted page or return URL with whatever the adapter asked for. */
   function hostedReply(res, rec, r, fallback) {
@@ -222,6 +256,7 @@ export function createServer(opts = {}) {
     if (r && r.html) return send(res, 200, r.html, HTML);
     return send(res, 200, donePage(rec, (r && r.message) || fallback), HTML);
   }
+
 
   async function route(req, res) {
     const url = new URL(req.url, 'http://localhost');
@@ -299,7 +334,10 @@ export function createServer(opts = {}) {
       const p = rec && PROVIDERS[rec.provider];
       if (!rec || !p) return send(res, 404, 'Unknown verification');
       if (req.method === 'GET') {
-        if (p.page) return send(res, 200, await p.page(rec, ctx(rec.provider, rec)), HTML);
+        if (p.page) {
+          const c = ctx(rec.provider, rec);
+          return send(res, 200, await p.page(Object.assign({}, rec, { investor: c.investor }), c), HTML);
+        }
         // Links the portal supplied (the "link" provider) are never redirected to from this server's
         // domain: that would make it an open redirect. The portal already has the link.
         const portalLink = p.start === 'portal-link';
@@ -372,8 +410,21 @@ export function createServer(opts = {}) {
       return send(res, 200, { ok: true, id: saved.id, status: saved.status });
     }
 
-    if (path.startsWith('/v1/') && !authorize(req, env)) return send(res, 401, { error: 'Not authorized' });
-    if (path.startsWith('/v1/') && req.method === 'POST' && limited(req)) return send(res, 429, { error: 'Too many requests' });
+    // An invitation link's token (X-Invite-Token) authorizes the investor's own browser for its
+    // onboarding and its own verification and screening calls, never the sponsor's routes.
+    const inviteToken = header(req.headers, 'x-invite-token');
+    let scope = null;
+    if (path.startsWith('/v1/') && inviteToken !== undefined) {
+      if (!invites.investorPath(req.method, path)) return send(res, 401, { error: 'Not authorized' });
+      scope = invites.authenticate(req, inviteToken);
+    }
+    if (/^\/v1\/invite(\/|$)/.test(path)) {
+      if (['PUT', 'POST'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
+      return invites.investor(req, res, path, scope);
+    }
+
+    if (path.startsWith('/v1/') && !scope && !authorize(req, env)) return send(res, 401, { error: 'Not authorized' });
+    if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
 
     if (req.method === 'GET' && path === '/v1/connectors') return send(res, 200, { connectors: describe(env, PROVIDERS) });
 
@@ -385,7 +436,10 @@ export function createServer(opts = {}) {
       if (missing.length) return send(res, 400, { error: `Set ${missing.join(', ')} on the integration server` });
       const investor = cleanInvestor(body.investor);
       if (!investor.id || !investor.name) return send(res, 400, { error: 'investor.id and investor.name are required' });
-      const rec = store.put('verifications', { id: id('ver'), kind: body.kind, provider: body.provider, investorId: investor.id, workspace: investor.workspace, status: 'pending', settings: cleanSettings(body.settings), investor, returnUrl: returnTo(body.returnUrl), createdAt: new Date().toISOString() });
+      if (scope && investor.id !== scope.investorId) return send(res, 403, { error: 'This invitation can only verify its own investor' });
+      if (scope) investor.workspace = scope.workspace;
+      const vid = id('ver');
+      const rec = store.put('verifications', { id: vid, kind: body.kind, provider: body.provider, investorId: investor.id, workspace: investor.workspace, status: 'pending', settings: cleanSettings(body.settings), investor: sealPersonal('verifications', vid, 'investor', investor), returnUrl: returnTo(body.returnUrl), createdAt: new Date().toISOString() });
       const r = (await p.createSession(ctx(body.provider, rec))) || {};
       const saved = apply('verifications', rec, Object.assign({}, r, { status: r.status || 'pending' }));
       store.event({ type: 'verification_started', provider: body.provider, id: rec.id, ref: saved.ref || '' });
@@ -396,6 +450,7 @@ export function createServer(opts = {}) {
     if (req.method === 'GET' && ver) {
       const rec = store.get('verifications', ver[1]);
       if (!rec) return send(res, 404, { error: 'Not found' });
+      if (scope && !ownCheck(rec, scope)) return send(res, 403, { error: 'This invitation can only see its own investor’s checks' });
       return send(res, 200, view(await refresh(rec)));
     }
 
@@ -422,7 +477,10 @@ export function createServer(opts = {}) {
       const names = Array.from(new Set((body.names || []).map((n) => String(n || '').trim()).filter(Boolean))).slice(0, 25);
       if (!names.length) return send(res, 400, { error: 'names are required' });
       const inv = cleanInvestor(body.investor);
-      const rec = store.put('screenings', { id: id('scr'), kind: 'aml', provider: body.provider, investorId: inv.id, names, settings: cleanSettings(body.settings), investor: inv, status: 'pending', createdAt: new Date().toISOString() });
+      if (scope && inv.id !== scope.investorId) return send(res, 403, { error: 'This invitation can only screen its own investor' });
+      if (scope) inv.workspace = scope.workspace;
+      const sid = id('scr');
+      const rec = store.put('screenings', { id: sid, kind: 'aml', provider: body.provider, investorId: inv.id, workspace: inv.workspace, names: sealPersonal('screenings', sid, 'names', names), settings: cleanSettings(body.settings), investor: sealPersonal('screenings', sid, 'investor', inv), status: 'pending', createdAt: new Date().toISOString() });
       const r = (await p.screen(ctx(body.provider, rec, { names }))) || {};
       const saved = apply('screenings', rec, Object.assign({ hits: r.hits || [] }, r, { ref: r.ref || rec.id }));
       if (r.monitoring) store.put('screenings', { id: rec.id, monitoring: true });
@@ -434,8 +492,11 @@ export function createServer(opts = {}) {
     if (req.method === 'GET' && scr) {
       const rec = store.get('screenings', scr[1]);
       if (!rec) return send(res, 404, { error: 'Not found' });
+      if (scope && !ownCheck(rec, scope)) return send(res, 403, { error: 'This invitation can only see its own investor’s checks' });
       return send(res, 200, screeningView(rec.status === 'pending' ? await refreshScreening(rec) : rec));
     }
+
+    if (await invites.sponsor(req, res, url)) return;
 
     return send(res, 404, { error: 'Not found' });
   }
@@ -447,6 +508,8 @@ export function createServer(opts = {}) {
     })
   );
   server.store = store;
+  server.invitations = invites;
+  server.on('close', () => invites.stop());
   return server;
 }
 

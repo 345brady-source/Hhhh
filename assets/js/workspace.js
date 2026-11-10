@@ -101,7 +101,9 @@
     const root = id;
     while (taken.indexOf(id) >= 0) id = `${root}-${n++}`;
     const words = base.split(/\s+/);
-    const letters = (words[0][0] + (words[1] ? words[1][0] : words[0][1] || '')).toUpperCase();
+    // Letters and digits only: the prefix is part of every investor ID, which travels in links and file names ("Harbor & Pine" is HP).
+    const alnum = words.map((w) => w.replace(/[^A-Za-z0-9]/g, '')).filter(Boolean);
+    const letters = alnum.length ? (alnum[0][0] + (alnum[1] ? alnum[1][0] : alnum[0][1] || '')).toUpperCase() : 'IN';
     const tenant = merge(NS.TENANT_TEMPLATE, {
       id,
       name: base,

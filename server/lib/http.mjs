@@ -1,20 +1,35 @@
 // Small HTTP helpers: raw bodies (webhook signatures are computed over the exact bytes), JSON replies and CORS.
 
-/** The request body exactly as received. */
+/** Bytes past the limit that are read and dropped so the 413 reply reaches the client; beyond this the connection is cut. */
+const DRAIN_BYTES = 64 * 1024 * 1024;
+
+/** The request body exactly as received; 413 when it is larger than limit. */
 export function readRaw(req, limit = 1024 * 1024) {
   return new Promise((resolve, reject) => {
+    const tooLarge = () => Object.assign(new Error('Request body too large'), { status: 413 });
+    const declared = Number(req.headers['content-length']);
+    if (Number.isFinite(declared) && declared > limit + DRAIN_BYTES) {
+      reject(tooLarge());
+      req.destroy();
+      return;
+    }
     const chunks = [];
     let size = 0;
+    let over = Number.isFinite(declared) && declared > limit;
     req.on('data', (c) => {
       size += c.length;
-      if (size > limit) {
-        reject(Object.assign(new Error('Request body too large'), { status: 413 }));
-        req.destroy();
+      if (size > limit) over = true;
+      if (over) {
+        chunks.length = 0;
+        if (size > limit + DRAIN_BYTES) {
+          reject(tooLarge());
+          req.destroy();
+        }
         return;
       }
       chunks.push(c);
     });
-    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('end', () => (over ? reject(tooLarge()) : resolve(Buffer.concat(chunks))));
     req.on('error', reject);
   });
 }
@@ -43,8 +58,8 @@ export function cors(req, res, allowed) {
   if (ok) {
     res.setHeader('Access-Control-Allow-Origin', list.includes('*') || !list.length ? '*' : origin);
     res.setHeader('Vary', 'Origin');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Invite-Token');
     res.setHeader('Access-Control-Max-Age', '600');
   }
   return ok;
