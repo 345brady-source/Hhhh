@@ -152,7 +152,7 @@
 .ivf-wrap { align-items: start; }
 .ivf-col { min-width: 0; display: flex; flex-direction: column; gap: var(--space-md); }
 .ivf-progress { display: flex; flex-direction: column; gap: var(--space-xs); }
-.ivf-progress .ob-count { margin: 0; font-variant-numeric: tabular-nums; }
+.ivf-progress .ob-count { margin: 0; }
 .ivf-count-label { text-transform: none; letter-spacing: 0; font-weight: 500; }
 /* The bar's fill is as wide as the step count says (set inline by onboarding.js); it does not animate. */
 .ivf-bar { height: 6px; border-radius: var(--r-pill); background: var(--surface-3); overflow: hidden; }
@@ -173,7 +173,7 @@
 .ivf-certfacts { margin: var(--space-xs) 0 var(--space-sm); display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--space-2xs) var(--space-md); }
 .ivf-certfacts > div { display: contents; }
 .ivf-certfacts dt { color: var(--fg-3); }
-.ivf-certfacts dd { margin: 0; color: var(--fg); overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.ivf-certfacts dd { margin: 0; color: var(--fg); overflow-wrap: anywhere; }
 .ivf-docs { margin: 0 0 var(--space-xs); }
 .ivf-owners { margin: var(--space-2xs) 0 0; }
 /* Amounts and dates: the same wells as the text fields beside them. */
@@ -204,6 +204,7 @@
   .ivf-certfacts dd { margin-bottom: var(--space-xs); }
   .ivf-form .ob-actions { flex-wrap: wrap; }
   .ivf-form .ob-actions .btn { flex: 1 1 auto; }
+  .ivf-form .field input[type="number"], .ivf-form .field input[type="date"] { font-size: var(--text-md); padding-block: var(--space-2xs); }
 }
 
 /* ---------- Invitations and notifications ---------- */
@@ -288,8 +289,8 @@
 .inv8-file-note { color: var(--cv-ink); font-weight: 500; }
 #iv-file { max-width: 100%; }
 
-/* Team: the role of each person, a small well in its table row, set so the row keeps the height of its neighbours (the intake table keeps its own fields). */
-.cs-tbl:not(.ik-tbl) td select { min-height: var(--control-h-sm); max-width: 100%; margin-block: calc((1.5em - var(--control-h-sm)) / 2); padding: 0 28px 0 var(--space-sm); border: 1px solid var(--cv-line-strong); border-radius: var(--cv-r-inner); background: var(--cv-panel); color: var(--cv-ink); font: inherit; font-size: var(--text-sm); font-weight: 400; cursor: pointer; transition: border-color var(--dur-micro) var(--ease-out); }
+/* Team: the role of each person, a small well in its table row, on the line of the row's buttons (the intake table keeps its own fields). */
+.cs-tbl:not(.ik-tbl) td select { min-height: var(--control-h-sm); max-width: 100%; padding: 0 28px 0 var(--space-sm); border: 1px solid var(--cv-line-strong); border-radius: var(--cv-r-inner); background: var(--cv-panel); color: var(--cv-ink); font: inherit; font-size: var(--text-sm); font-weight: 400; cursor: pointer; transition: border-color var(--dur-micro) var(--ease-out); }
 .cs-tbl:not(.ik-tbl) td select:hover { border-color: var(--cv-ink-3); }
 .cs-tbl:not(.ik-tbl) td select:active { border-color: var(--cv-ink-2); }
 .cs-tbl:not(.ik-tbl) td select:focus-visible { outline: 2px solid var(--cv-focus); outline-offset: 2px; }

@@ -33,7 +33,7 @@
   --bg: oklch(98.2% 0.006 95); --page: oklch(98.2% 0.006 95);
   --surface: oklch(99.7% 0.004 95); --surface-2: oklch(96.4% 0.006 95); --surface-3: oklch(93.6% 0.008 95);
   --fg: oklch(23% 0.035 245); --fg-2: oklch(36% 0.035 245); --fg-3: oklch(50% 0.025 240);
-  --line: oklch(89.5% 0.008 230); --line-2: oklch(93.5% 0.006 230); --line-strong: #8C9195;
+  --line: oklch(89.5% 0.008 230); --line-2: oklch(93.5% 0.006 230); --line-strong: #868B8F;
 
   /* The accent: the main action, the current tab, focus, links on hover. */
   --brand: oklch(50% 0.12 234); --brand-hover: oklch(44% 0.12 236); --brand-ink: oklch(99% 0.003 95); --brand-soft: oklch(94% 0.025 220); --brand-text: oklch(50% 0.12 234);
@@ -85,7 +85,7 @@
     color-scheme: dark;
     --bg: #070D12; --page: #070D12; --surface: #0F151A; --surface-2: #151B21; --surface-3: #1C2228;
     --fg: #E4ECF3; --fg-2: #C3CCD3; --fg-3: #96A0A8;
-    --line: #272F34; --line-2: #1F2529; --line-strong: #5C646A;
+    --line: #272F34; --line-2: #1F2529; --line-strong: #626A70;
     --brand: #639AB9; --brand-hover: #72AAC9; --brand-ink: #070D12; --brand-soft: #1E2C36; --brand-text: #639AB9; --focus: #6FA6C6;
     --accent: #88B3C1; --accent-ink: #070D12; --accent-soft: #2F3F46; --accent-text: #88B3C1;
     --chart-1: #639AB9; --chart-muted: #798288; --tint-1: #263944; --tint-2: #2F3F46;
@@ -107,7 +107,7 @@
   color-scheme: dark;
   --bg: #070D12; --page: #070D12; --surface: #0F151A; --surface-2: #151B21; --surface-3: #1C2228;
   --fg: #E4ECF3; --fg-2: #C3CCD3; --fg-3: #96A0A8;
-  --line: #272F34; --line-2: #1F2529; --line-strong: #5C646A;
+  --line: #272F34; --line-2: #1F2529; --line-strong: #626A70;
   --brand: #639AB9; --brand-hover: #72AAC9; --brand-ink: #070D12; --brand-soft: #1E2C36; --brand-text: #639AB9; --focus: #6FA6C6;
   --accent: #88B3C1; --accent-ink: #070D12; --accent-soft: #2F3F46; --accent-text: #88B3C1;
   --chart-1: #639AB9; --chart-muted: #798288; --tint-1: #263944; --tint-2: #2F3F46;

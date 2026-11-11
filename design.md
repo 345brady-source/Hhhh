@@ -31,7 +31,7 @@ The spacing scale, the type scale, the easings and the durations are the scaffol
 
 ## Type
 - Display: `--font-display` at `--display-weight` (400; 300 for one figure at statement size), `--tracking-display`, sentence case, one color. Page titles, panel headings, headline figures.
-- Body: `--font-body` 400. Labels, table heads and times are the body face at 500, a step smaller, sentence case, never tracked, never capitals. `tabular-nums` where figures align in columns or stand as headline numbers, not in running text.
+- Body: `--font-body` 400. Labels, table heads and times are the body face at 500, a step smaller, sentence case, never tracked, never capitals. `tabular-nums` only where amounts align in a column (a firm's own typeface may set tabular figures much wider).
 - Only weights 400 and 500 of the body face and 300, 400 and 500 of the display face are loaded. Nothing is set heavier.
 
 ## Surfaces

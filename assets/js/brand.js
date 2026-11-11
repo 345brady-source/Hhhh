@@ -212,8 +212,9 @@
     L['surface-3'] = rf('paper3');
     L.line = rf('rule');
     L['line-2'] = rf('rule2');
-    // A field's edge has to be seen: 3:1 against the well it outlines.
-    L['line-strong'] = ensureContrast(rf('rule'), LIGHT, 3.05);
+    // A field's edge has to be seen: 3:1 against its ground, and the darkest ground a field stands on is the tinted
+    // well of a dialog or a request form (surface-2).
+    L['line-strong'] = ensureContrast(rf('rule'), L['surface-2'], 3.05);
     L.fg = INK;
     L['fg-2'] = rf('ink2');
     L['fg-3'] = rf('muted');
@@ -306,7 +307,7 @@
     D['surface-3'] = dk(0.25, 0.014);
     D.line = dk(0.3, 0.014, 235);
     D['line-2'] = dk(0.26, 0.012, 235);
-    D['line-strong'] = ensureContrast(dk(0.42, 0.014, 235), D.surface, 3.05);
+    D['line-strong'] = ensureContrast(dk(0.42, 0.014, 235), D['surface-2'], 3.05);
     D.fg = dk(0.94, 0.012, 240);
     D['fg-2'] = dk(0.84, 0.014, 240);
     D['fg-3'] = ensureContrast(dk(0.7, 0.016, 240), D['surface-2'], 4.5);
