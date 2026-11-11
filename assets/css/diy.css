@@ -240,3 +240,7 @@
 .inv8-manual .cs-check { margin: 0; }
 .inv8-file-note { color: var(--cv-ink); font-weight: 600; }
 #iv-file { max-width: 100%; }
+
+/* Sign-up page: the form on its own, centered (no headline or side column). */
+.sd-solo { max-width: 600px; margin: 0 auto; }
+.sd-card .sd-h { margin: 0 0 14px; font-family: inherit; font-size: 20px; font-weight: 800; line-height: 1.25; letter-spacing: 0; }

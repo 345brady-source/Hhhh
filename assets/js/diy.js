@@ -29,12 +29,6 @@
     ['open', 'Hedge, digital asset or other open-ended funds'],
     ['other', 'Something else']
   ];
-  const SAMPLES = [
-    ['kestrel-bay', 'Kestrel Bay Capital', 'Real estate and credit'],
-    ['ashwell-ridge', 'Ashwell Ridge Real Estate', 'Syndications and a DST'],
-    ['greywater', 'Greywater Infrastructure Partners', 'Energy and infrastructure'],
-    ['pellbrook', 'Pellbrook Partners', 'Venture, hedge, digital and multi-strategy funds']
-  ];
 
   /* ---------- Sign-up ---------- */
   /* Person names are asked as first and last name; the rest of the portal keeps the name as one string (name). */
@@ -63,12 +57,9 @@
       return `<div class="sd">
         <header class="sd-head"><div class="sd-head-in">${wordmark()}<a class="sd-signin" href="#" data-action="diy-sample" data-id="kestrel-bay">Explore a sample portal</a></div></header>
         <main class="sd-main" id="main" tabindex="-1">
-          <section class="sd-hero">
-            <h1>Your investor portal, run by you</h1>
-          </section>
-          <div class="sd-cols">
+          <div class="sd-solo">
             <form class="sd-card sd-form" data-form="diy-signup" novalidate>
-              <h2>Create your portal</h2>
+              <h1 class="sd-h">Create your portal</h1>
               <label class="field" for="sd-firm"><span>Firm name</span><input id="sd-firm" type="text" autocomplete="organization" data-bind="signup:firm" value="${h(f.firm)}"${inval('firm')}>${err('firm')}</label>
               ${nameInputs('field', 'sd', 'signup', f, inval('name'), err('name'))}
               <label class="field" for="sd-email"><span>Work email</span><input id="sd-email" type="email" autocomplete="email" data-bind="signup:email" value="${h(f.email)}"${inval('email')}>${err('email')}</label>
@@ -81,26 +72,6 @@
               <button class="btn btn-primary sd-submit" type="submit">Create my portal</button>
               <p class="hint">By creating a portal you agree to the Carrow &amp; Vale terms of service. No card is needed to start.</p>
             </form>
-            <aside class="sd-side">
-              <div class="sd-card">
-                <h2>Everything included</h2>
-                <ul class="sd-list">
-                  <li>Your brand on every page, email and document</li>
-                  <li>Offering setup from your PPM or operating agreement</li>
-                  <li>Investor onboarding with automatic KYC, AML and accreditation checks</li>
-                  <li>E-signature for subscription agreements and any document</li>
-                  <li>Capital calls, distributions by ACH and NACHA files</li>
-                  <li>Statements, K-1s, notices and reports</li>
-                  <li>Audit-ready capital accounts and a tamper-evident change log</li>
-                  <li>Team roles for admins and staff</li>
-                </ul>
-              </div>
-              <div class="sd-card">
-                <h2>See a sample portal</h2>
-                <p class="hint">Sample firms with offerings, investors and history. Changes stay in this browser.</p>
-                <ul class="sd-samples">${SAMPLES.map(([id, name, what]) => `<li><button class="link-btn" type="button" data-action="diy-sample" data-id="${id}">${h(name)}</button><span class="hint">${h(what)}</span></li>`).join('')}</ul>
-              </div>
-            </aside>
           </div>
         </main>
         <footer class="sd-foot">Your investors see only your firm’s brand. Prefer Carrow &amp; Vale to run your portal for you? Ask about the managed service.</footer>
