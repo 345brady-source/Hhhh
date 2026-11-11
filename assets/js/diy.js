@@ -152,10 +152,22 @@
 
   /* ---------- Offering sign-up link: prospective investors join on their own ---------- */
   const joinUrl = (ws, o) => `${location.origin}${location.pathname}?tenant=${encodeURIComponent(ws.tenant.id)}#join-${o.id}`;
+  /** An offering investors can subscribe to online: its own subscription agreement is uploaded and ready to sign (never a typed form). */
+  const signable = (ws, o) => !(NS.esign && NS.esign.templateReady) || NS.esign.templateReady(ws, o.id);
   NS.actions['join-link'] = (el) => {
     const ws = W();
     const o = ws.offerings.find((x) => x.id === el.getAttribute('data-id'));
     if (!o) return;
+    if (!signable(ws, o)) {
+      return U.dialog(
+        `<div class="dlg-head"><div><h2>Add the subscription agreement first</h2><p>${h(o.name)}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
+        <div class="dlg-body iv-dlg">
+          <p class="hint">Investors who use the sign-up link sign this offering’s subscription agreement itself, online. Add the agreement on the offering, then share the link.</p>
+          <div class="ob-actions"><button class="btn" type="button" data-action="close-dialog">Close</button>${NS.app.can('configure') ? `<button class="btn btn-primary" type="button" data-action="es-agreement-new" data-offering="${h(o.id)}">Add the subscription agreement</button>` : ''}</div>
+        </div>`,
+        'dlg-iv'
+      );
+    }
     const url = joinUrl(ws, o);
     U.dialog(
       `<div class="dlg-head"><div><h2>Investor sign-up link</h2><p>${h(o.name)}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
@@ -185,7 +197,7 @@
       const t = ws.tenant;
       const o = ws.offerings.find((x) => x.id === oid);
       const head = `<header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${NS.brand.lockup(t)}</span><span class="ob-note">Investor sign-up</span></div></header>`;
-      if (!o || o.status !== 'Raising') return `<div class="pt pt-auth">${head}<main class="pt-main" id="main" tabindex="-1"><div class="pt-wrap"><p class="empty">This offering is not accepting new investors. Contact ${h(t.support.team)} at ${h(t.support.email)}.</p></div></main></div>`;
+      if (!o || o.status !== 'Raising' || !signable(ws, o)) return `<div class="pt pt-auth">${head}<main class="pt-main" id="main" tabindex="-1"><div class="pt-wrap"><p class="empty">This offering is not accepting new investors. Contact ${h(t.support.team)} at ${h(t.support.email)}.</p></div></main></div>`;
       const f = joinState(oid);
       const e = f.errors;
       const err = (k) => (e[k] ? `<span class="field-error" id="jn-err-${k}">${h(e[k])}</span>` : '');

@@ -2601,124 +2601,664 @@
    * during onboarding: no envelope is prepared or sent by hand.
    * ===================================================================== */
   const AGR_INVESTOR = '__each_investor__'; // the placeholder signer: each subscriber fills this role
-  const clamp01 = (v, hi) => Math.max(0, Math.min(hi, v));
-  /** Text on each page with positions (fractions of the page, top-left origin), for placing fields at signature lines. */
-  async function pageText(docId) {
-    const blob = await files().get(docId);
-    if (!blob) return [];
-    const lib = await pdfjs();
-    const doc = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise;
-    const out = [];
-    try {
-      for (let i = 1; i <= doc.numPages; i++) {
-        const page = await doc.getPage(i);
-        const vp = page.getViewport({ scale: 1 });
-        const tc = await page.getTextContent();
-        out.push({
-          page: i,
-          w: vp.width,
-          h: vp.height,
-          items: tc.items
-            .filter((t) => t.str && t.str.trim())
-            .map((t) => ({ s: t.str.replace(/\s+/g, ' ').trim(), x: t.transform[4] / vp.width, y: 1 - t.transform[5] / vp.height, w: (t.width || 0) / vp.width, h: Math.max(6, Math.abs(t.transform[3] || 10)) / vp.height }))
-        });
-        page.cleanup();
-      }
-    } finally {
-      doc.destroy();
-    }
-    return out;
-  }
-  const SIG_RE = /^(authori[sz]ed\s+)?signature\b|^(subscriber|investor|purchaser)'?s?\s+signature\b|^signature\s+of\b|^by\s*:?\s*(_{2,})?$/i;
-  const NAME_RE = /^(print(ed)?\s+)?name(\s+of\s+(subscriber|investor|signatory|purchaser))?\s*:?\s*(_{2,})?$/i;
-  const DATE_RE = /^date(d)?\s*:?\s*(_{2,})?$/i;
-  const TITLE_RE = /^(its\s+)?title\s*:?\s*(_{2,})?$/i;
-  const AMOUNT_RE = /\b(subscription|commitment|capital\s+commitment|purchase)\s+amount\b|\bamount\s+of\s+(subscription|commitment)\b|^commitment\s*:|^amount\s*:?\s*\$?\s*(_{2,})?$/i;
-  const FIRM_RE = /accepted|agreed\s+(to\s+)?and\s+accepted|general\s+partner|managing\s+member|\bmanager\b|\bthe\s+(fund|company|issuer|partnership)\b|\bsponsor\b/i;
-  const INVESTOR_RE = /\b(subscriber|investor|purchaser|limited\s+partner|member)\b/i;
-  /**
-   * Places the fields each signer fills at the signature lines of the PDF's last signature page: a signature, the printed
-   * name, the date (and a title line for entities) next to each label, for the firm when the block sits under an acceptance
-   * heading; and the commitment amount next to its label. With no labels found, a standard block at the foot of the last page.
-   * Returns how many fields were placed.
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  /** How investors come to sign an offering's agreement: inside onboarding (self-serve), or when they subscribe in the portal (managed). */
+  const signWhen = () => (NS.EDITION && NS.EDITION.managed ? 'when they subscribe in the portal' : 'during onboarding');
+  /** Who may set up an offering's agreement: the role that configures offerings (admins; Carrow & Vale staff in the managed edition). */
+  const canSetUp = () => NS.app.can('configure');
+
+  /* ---------- Reading an agreement: where its signature lines are ----------
+   * autoFields() proposes the fields from two readings of the PDF: the text with its positions (pdf.js), and the
+   * horizontal lines actually drawn on the pages that carry a signature label (found in the rendered page, so
+   * underscores, vector rules and table borders all count). A label gets a field when its line can be told:
+   * to its right on the same baseline, above it (a caption under its line), or below it. Whose field it is comes
+   * from the label's own wording, else the nearest heading above it in the same column.
    */
-  async function autoFields(env) {
-    let pages = [];
-    try {
-      pages = await pageText(env.docId);
-    } catch (e) {
-      pages = [];
+  // Runs that stand for a blank to fill in: underscores, dot leaders, long dashes.
+  const BLANK_RE = /[_＿‗]{2,}|\.{5,}|…{2,}|-{5,}|[—–]{3,}/g;
+  // Field sizes on a line, in points: narrowest, widest, lowest. The default height is the type's (TYPES).
+  const AUTO = { signature: [70, 220, 16], name: [80, 260, 10], date: [56, 120, 10], text: [70, 260, 10] };
+  const ROLE_INV = '(?:subscriber|investor|purchaser|limited\\s+partner|member|shareholder|unit\\s?holder|applicant|account\\s+holder|holder|undersigned)';
+  const AUTH = 'authori[sz]ed\\s+(?:signatory|signer|representative|officer|person|individual|agent)';
+  const PRINT = '(?:please\\s+)?(?:print(?:ed)?|typed?|type\\s+or\\s+print|print\\s+or\\s+type|typed\\s+or\\s+printed|printed\\s+or\\s+typed)';
+  const LABELS = {
+    // Lines someone else signs or fills in: never a field for the investor.
+    skip: /witness|notar|spous|\bjoint\b|\bco-?\s?(?:subscriber|investor|owner|signer|signatory|applicant|purchaser|tenant|trustee)\b|\b(?:second|additional|other)\s+(?:subscriber|investor|owner|signer|signatory|applicant|purchaser|holder)\b/,
+    by: /^(?:by|x)$/,
+    sign: new RegExp(`^(?:sign(?:ed)?(?:\\s+here)?|signatures?|authori[sz]ed\\s+signature|${AUTH}|signature\\s+of\\s+(?:an?\\s+|the\\s+)?${AUTH}|${AUTH}(?:'s|s')?\\s+signature|signature\\s+of\\s+(?:the\\s+)?(?:person\\s+signing|individual|trustee|custodian|owner|officer|partner|entity)|(?:individual|trustee|custodian|owner|officer)(?:'s)?\\s+signature)$`),
+    signInv: new RegExp(`^signature\\s+of\\s+(?:the\\s+)?(?:individual\\s+)?${ROLE_INV}$|^(?:the\\s+)?(?:individual\\s+)?${ROLE_INV}(?:'s|s')?\\s+signature$`),
+    signFirm: /^signature\s+of\s+(?:the\s+)?(?:general\s+partner|managing\s+member|manager|sponsor|issuer|fund|company|partnership)$|^(?:general\s+partner|managing\s+member|manager|sponsor|issuer|fund|company)(?:'s)?\s+signature$/,
+    invName: new RegExp(`^(?:${PRINT}\\s+)?(?:(?:full|legal|exact|complete)\\s+)*name\\s+of\\s+(?:the\\s+)?(?:individual\\s+)?(?:${ROLE_INV}|entity|trust|subscribing\\s+entity|investing\\s+entity|account|registered\\s+(?:owner|holder))(?:\\s+or\\s+entity)?$|^(?:${ROLE_INV}|entity|trust|account|registration)(?:'s)?\\s+(?:(?:full|legal|printed|exact)\\s+)*name$|^name\\s+in\\s+which\\b`),
+    invRole: new RegExp(`^(?:the\\s+)?${ROLE_INV}$`),
+    name: new RegExp(`^(?:${PRINT}\\s+)?(?:(?:full|legal|your)\\s+)*name(?:\\s+(?:and|&)\\s+title)?(?:\\s+of\\s+(?:the\\s+)?(?:signatory|signer|signing\\s+party|${AUTH}|person\\s+signing|individual\\s+signing|individual|officer|trustee))?$`),
+    date: /^(?:date|dated|date\s+signed|date\s+of\s+(?:signature|signing|execution|subscription|acceptance)|dated\s+as\s+of|execution\s+date|signature\s+date|date\s+executed|acceptance\s+date|date\s+accepted)$/,
+    title: new RegExp(`^(?:its|title|title\\s+of\\s+(?:the\\s+)?(?:signatory|signer|${AUTH}|officer)|capacity|title\\s+or\\s+capacity|title\\s*/\\s*capacity|position)$`),
+    amount: /^(?:(?:total|aggregate)\s+)?(?:capital\s+)?commitment(?:\s+amount)?$|^(?:(?:total|aggregate)\s+)?(?:subscription|investment|purchase)\s+amount$|^(?:(?:total|aggregate)\s+)?amount\s+of\s+(?:the\s+)?(?:capital\s+commitment|commitment|subscription|investment|purchase)$|^(?:(?:total|aggregate)\s+)?(?:subscription|purchase)\s+price$|^(?:dollar\s+)?amount\s+(?:of|to\s+be)\s+invest(?:ed|ment)$/,
+    amountWeak: /^amount(?:\s+(?:subscribed|invested|committed))?$/,
+    amountFirm: /^(?:amount\s+of\s+)?(?:capital\s+commitment|commitment|subscription)\s+(?:amount\s+)?accepted$|^accepted\s+(?:capital\s+commitment|commitment|subscription)(?:\s+amount)?$|^amount\s+accepted$/
+  };
+  /**
+   * What a short piece of text on the page asks for, or null: { kind: signature | name | investorName | date | title | amount,
+   * who: 'investor' | 'firm' | '' (not said), colon, bracketed, sym (a currency sign is printed before the blank) … }.
+   */
+  function labelOf(raw) {
+    let t = String(raw).replace(/\s+/g, ' ').trim();
+    if (!t || t.length > 90) return null;
+    const bracketed = /^[([][^()[\]]+[)\]]$/.test(t); // "(Signature)": a caption under its line
+    if (bracketed) t = t.slice(1, -1).trim();
+    t = t.replace(/^(?:\(?[0-9a-z]{1,2}[.)]|[•·*])\s+/i, '');
+    const sym = /(?:US\$|\$|USD|€|£)\s*$/.test(t);
+    if (sym) t = t.replace(/\s*(?:US\$|\$|USD|€|£)\s*$/, '');
+    const colon = /[:：]$/.test(t);
+    t = t.replace(/\s*[:：]$/, '');
+    const c = t
+      .replace(/\s*[([][^()[\]]*[)\]]/g, ' ')
+      .replace(/,?\s*if\s+(?:any|applicable)$/i, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase()
+      .replace(/[’`]/g, "'");
+    if (!c || LABELS.skip.test(t.toLowerCase())) return null;
+    const out = (kind, more) => Object.assign({ kind, who: '', colon, bracketed, sym }, more || {});
+    if (LABELS.by.test(c)) return out('signature', { by: true, needLine: !colon });
+    if (LABELS.signInv.test(c)) return out('signature', { who: 'investor', ind: /individual/.test(c) });
+    if (LABELS.signFirm.test(c)) return out('signature', { who: 'firm' });
+    if (LABELS.sign.test(c)) return out('signature', { ent: /authori|trustee|custodian|officer|entity|partner/.test(c), ind: /individual/.test(c) });
+    if (LABELS.amountFirm.test(c)) return out('amount', { who: 'firm', needLine: !colon && !sym });
+    if (LABELS.amount.test(c)) return out('amount', { needLine: !colon && !sym });
+    if (LABELS.amountWeak.test(c)) return out('amount', { weak: true, needLine: !colon && !sym });
+    if (LABELS.invName.test(c)) return out('investorName', { ent: /entity|trust\b/.test(c), ind: /individual/.test(c) });
+    if (LABELS.invRole.test(c)) return out('investorName', { needLine: true }); // "Subscriber: ____"; a heading when no line follows
+    if (LABELS.name.test(c)) return out('name');
+    if (LABELS.date.test(c)) return out('date', { who: /accept/.test(c) ? 'firm' : '' });
+    if (LABELS.title.test(c)) return out('title');
+    return null;
+  }
+  const ENTITY_END = /\b(?:l\.?l\.?c|l\.?p|l\.?l\.?p|inc|incorporated|ltd|limited|corp|corporation|gp|fund(?:\s+[ivx0-9]+)?|partners|capital|management|advisors|advisers|holdings|trust\s+company)\b[.,]?$/;
+  /**
+   * Whose signature block a line of text announces, or null: { who: 'firm' | 'investor', kind: 'individual' | 'entity' | '',
+   * near: true when it only counts close above the block (a firm's name printed over its signature line) }.
+   */
+  function headingOf(raw, names) {
+    const t = String(raw).replace(/\s+/g, ' ').trim();
+    if (t.length < 3) return null;
+    const c = t.toLowerCase().replace(/[’`]/g, "'");
+    // A sentence of acceptance counts wherever it is ("The foregoing subscription is hereby accepted …").
+    if (/\b(?:is|are)\s+hereby\s+accepted\b|\bhereby\s+accepts?\b|\baccepted\s+and\s+agreed\b|\bagreed\s+(?:to\s+)?and\s+accepted\b|\baccepted\s+as\s+of\b|\bacceptance\s+of\s+(?:the\s+)?subscription\b/.test(c)) return { who: 'firm' };
+    const words = c.split(' ').length;
+    // Running text is not a heading: long lines, lines that end a clause, lines that continue a sentence.
+    if (words > 14 || /[;,]$/.test(c) || (/\.$/.test(c) && !ENTITY_END.test(c)) || (/^[a-z]/.test(t) && !/^(?:its|by)\b/.test(c))) return null;
+    const core = c
+      .replace(/\s*[([][^()[\]]*[)\]]/g, ' ')
+      .replace(/\s*[:：]\s*$/, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (/^(?:accepted|acceptance|agreed)\b/.test(core)) return { who: 'firm' };
+    if (/\bits\s+(?:general\s+partner|managing\s+member|manager|sole\s+member|investment\s+(?:manager|adviser|advisor)|authori[sz]ed\s+(?:signatory|representative))\b|\bon\s+behalf\s+of\s+the\s+(?:fund|company|partnership|issuer)\b/.test(core)) return { who: 'firm' };
+    if (/^(?:the\s+)?(?:general\s+partner|managing\s+member|manager|investment\s+(?:manager|adviser|advisor)|sponsor|issuer|fund|company|partnership)$/.test(core)) return { who: 'firm' };
+    const invWord = /\b(?:subscribers?|investors?|purchasers?|limited\s+partners?)\b/.test(core);
+    const ind = /\b(?:individuals?|natural\s+persons?|joint\s+(?:tenants|accounts?|owners?))\b/.test(core);
+    const ent = /\b(?:entit(?:y|ies)|corporations?|partnerships?|trusts?|llcs?|limited\s+liability\s+compan(?:y|ies)|institutions?|estates?|iras?)\b/.test(core);
+    if ((ind || ent) && (invWord || /^(?:for|if)\b/.test(core) || /^(?:individuals?|entit(?:y|ies)|natural\s+persons?)(?:\s+only)?$/.test(core))) return { who: 'investor', kind: ind && !ent ? 'individual' : ent && !ind ? 'entity' : '' };
+    if (/^(?:the\s+)?(?:subscribers?|investors?|purchasers?|limited\s+partners?|members?|undersigned)$/.test(core) || (invWord && words <= 5)) return { who: 'investor', kind: '' };
+    // The firm's or the fund's name, or any entity's name, printed over a signature line: the firm's block.
+    if (!/agreement|signature\s+page|subscription|questionnaire|exhibit|page\s+\d/.test(c) && words <= 12) {
+      const flat = c.replace(/[^a-z0-9]+/g, ' ').trim();
+      if (names.some((n) => flat.indexOf(n) >= 0) || ENTITY_END.test(c)) return { who: 'firm', near: true };
     }
+    return null;
+  }
+  let roughCtx = null;
+  /** Width of text in a generic font of its family: used only for proportions inside one text item. */
+  function roughWidth(s, fam) {
+    if (!roughCtx) roughCtx = document.createElement('canvas').getContext('2d');
+    roughCtx.font = `100px ${fam}`;
+    return roughCtx.measureText(s).width;
+  }
+  /** A page's text as rows of pieces, in points of the displayed page (origin top-left, rotation applied): words, and the blanks between them. */
+  async function pageRows(lib, page, vp) {
+    const tc = await page.getTextContent();
+    const items = [];
+    tc.items.forEach((it) => {
+      const s = String(it.str || '').replace(/ /g, ' ');
+      if (!s.trim()) return;
+      const m = lib.Util.transform(vp.transform, it.transform);
+      const fs = Math.hypot(m[2], m[3]) || Math.hypot(m[0], m[1]);
+      // Only text that reads left to right on the displayed page.
+      if (!(m[0] > 0) || Math.abs(m[1]) > Math.abs(m[0]) * 0.2 || !(fs > 1)) return;
+      const fam = String(((tc.styles || {})[it.fontName] || {}).fontFamily || '');
+      items.push({ s, x: m[4], y: m[5], w: it.width || 0, fs, fam: /mono/i.test(fam) ? 'monospace' : /sans/i.test(fam) ? 'sans-serif' : 'serif' });
+    });
+    const rows = [];
+    items
+      .sort((a, b) => a.y - b.y || a.x - b.x)
+      .forEach((it) => {
+        const row = rows[rows.length - 1];
+        if (row && Math.abs(row.y - it.y) <= Math.min(row.fs, it.fs) * 0.35) row.items.push(it);
+        else rows.push({ y: it.y, fs: it.fs, items: [it] });
+      });
+    rows.forEach((row) => {
+      const pieces = [];
+      row.items
+        .sort((a, b) => a.x - b.x)
+        .forEach((it) => {
+          const total = roughWidth(it.s, it.fam) || 1;
+          const at = (i) => it.x + (it.w * roughWidth(it.s.slice(0, i), it.fam)) / total;
+          const text = (a, b) => {
+            const part = it.s.slice(a, b);
+            const s = part.trim();
+            const lead = part.length - part.replace(/^\s+/, '').length;
+            if (s) pieces.push({ s, x0: at(a + lead), x1: at(a + lead + s.length), y: it.y, fs: it.fs });
+          };
+          let last = 0;
+          let m;
+          BLANK_RE.lastIndex = 0;
+          while ((m = BLANK_RE.exec(it.s))) {
+            text(last, m.index);
+            pieces.push({ blank: true, s: '', x0: at(m.index), x1: at(m.index + m[0].length), y: it.y, fs: it.fs });
+            last = m.index + m[0].length;
+          }
+          text(last, it.s.length);
+        });
+      // Neighbours on the row join into one piece: words into a phrase, blanks into one line.
+      row.toks = [];
+      pieces.forEach((p) => {
+        const q = row.toks[row.toks.length - 1];
+        if (q && !q.blank === !p.blank && p.x0 - q.x1 < (p.blank ? 0.3 : 0.75) * Math.max(q.fs, p.fs)) {
+          if (!p.blank) q.s += (p.x0 - q.x1 > 0.08 * q.fs || /[:,;.]$/.test(q.s) ? ' ' : '') + p.s;
+          q.x1 = Math.max(q.x1, p.x1);
+        } else row.toks.push(p);
+      });
+    });
+    return rows;
+  }
+  /**
+   * Horizontal lines drawn on a page, from its rendered image: long, thin runs of ink, so underscores, vector rules and
+   * table borders are all found, each with its true ends. Points of the displayed page, origin top-left.
+   */
+  async function pageRules(page) {
+    const v1 = page.getViewport({ scale: 1 });
+    const scale = Math.min(2, 2200 / Math.max(v1.width, v1.height));
+    const vp = page.getViewport({ scale });
+    const cv = document.createElement('canvas');
+    cv.width = Math.ceil(vp.width);
+    cv.height = Math.ceil(vp.height);
+    const ctx = cv.getContext('2d', { willReadFrequently: true });
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    const w = cv.width;
+    const hgt = cv.height;
+    const px = new Uint32Array(ctx.getImageData(0, 0, w, hgt).data.buffer);
+    const dark = (v) => ((v & 255) * 77 + ((v >>> 8) & 255) * 150 + ((v >>> 16) & 255) * 29) >> 8 < 215;
+    const minLen = Math.round(14 * scale);
+    const gapMax = Math.max(1, Math.round(0.8 * scale)); // seams between underscore glyphs
+    let open = [];
+    const done = [];
+    for (let y = 0; y < hgt; y++) {
+      const base = y * w;
+      const runs = [];
+      let x = 0;
+      while (x < w) {
+        if (!dark(px[base + x])) {
+          x++;
+          continue;
+        }
+        let end = x;
+        for (let k = x + 1, gap = 0; k < w && gap <= gapMax; k++) {
+          if (dark(px[base + k])) {
+            end = k;
+            gap = 0;
+          } else gap++;
+        }
+        if (end - x + 1 >= minLen) runs.push([x, end]);
+        x = end + 1;
+      }
+      const next = [];
+      runs.forEach(([a, b]) => {
+        const o = open.find((r) => !r.hit && Math.min(r.x1, b) - Math.max(r.x0, a) >= 0.6 * Math.min(r.x1 - r.x0, b - a));
+        if (o) {
+          o.hit = true;
+          o.x0 = Math.min(o.x0, a);
+          o.x1 = Math.max(o.x1, b);
+          o.y1 = y;
+          next.push(o);
+        } else next.push({ x0: a, x1: b, y0: y, y1: y, hit: true });
+      });
+      open.forEach((r) => {
+        if (!r.hit) done.push(r);
+      });
+      next.forEach((r) => (r.hit = false));
+      open = next;
+    }
+    cv.width = cv.height = 0;
+    // Thin only: a filled box or a picture is not a line.
+    return done
+      .concat(open)
+      .filter((r) => r.y1 - r.y0 + 1 <= 3.5 * scale)
+      .map((r) => ({ x0: r.x0 / scale, x1: (r.x1 + 1) / scale, y: r.y0 / scale, t: (r.y1 - r.y0 + 1) / scale }));
+  }
+  /** The lines of a page a field can sit on: the drawn ones, plus blanks in the text that no drawn line accounts for (dot leaders). */
+  function linesOf(pg, drawn) {
+    const texts = [];
+    const blanks = [];
+    pg.rows.forEach((row) => row.toks.forEach((k) => (k.blank ? blanks : texts).push(k)));
+    // An underline belongs to its words (an underlined heading), not to a blank.
+    const lines = (drawn || []).filter((r) => !texts.some((k) => r.y > k.y && r.y < k.y + 0.35 * k.fs && Math.abs(r.x0 - k.x0) <= 3 && Math.abs(r.x1 - k.x1) <= 3));
+    blanks.forEach((b) => {
+      const covered = lines.some((r) => Math.abs(r.y - b.y) < 0.6 * b.fs + 2 && Math.min(r.x1, b.x1) - Math.max(r.x0, b.x0) > 0.5 * (b.x1 - b.x0));
+      if (!covered) lines.push({ x0: b.x0, x1: b.x1, y: b.y + 0.1 * b.fs, t: 0.6, text: true });
+    });
+    return lines;
+  }
+  /** Finds each label's line on a page: sets L.target ({ mode, x0, x1, y }) where a field can go. */
+  function findTargets(pg) {
+    const labs = pg.labels;
+    const isLabel = new Set(labs.map((L) => L.t));
+    const claims = [];
+    const claim = (L, tg) => {
+      L.target = tg;
+      if (tg.r) claims.push({ r: tg.r, x0: tg.x0, x1: tg.x1 });
+    };
+    // 1. The line continues to the right of the label, on its baseline.
+    labs.forEach((L) => {
+      const t = L.t;
+      const fs = t.fs;
+      const toks = L.row.toks;
+      L.next = toks.slice(toks.indexOf(t) + 1).find((k) => !k.blank) || null;
+      const r = pg.lines
+        .filter((q) => q.y > t.y - 0.35 * fs && q.y < t.y + Math.max(1.1 * fs, 8) && q.x1 > t.x1 + 14 && q.x0 < t.x1 + 240)
+        .sort((a, b) => Math.abs(a.y - t.y - 1) * 3 + Math.max(0, a.x0 - t.x1) - (Math.abs(b.y - t.y - 1) * 3 + Math.max(0, b.x0 - t.x1)))[0];
+      if (!r) return;
+      const x0 = Math.max(r.x0, t.x1 + 3);
+      if (L.next && L.next.x0 < x0 + 8) {
+        // Text where the line would begin: a value already printed on it (or the next label's own line).
+        if (!isLabel.has(L.next)) L.printed = true;
+        return;
+      }
+      const x1 = Math.min(r.x1, L.next ? L.next.x0 - 4 : Infinity);
+      if (x1 - x0 >= 14) claim(L, { mode: 'line', x0, x1, y: r.y, r });
+    });
+    const textBetween = (ya, yb, xa, xb) => pg.rows.some((row) => row.y > ya && row.y < yb && row.toks.some((k) => !k.blank && k.x0 < xb && k.x1 > xa));
+    labs.forEach((L) => {
+      if (L.target || L.printed) return;
+      const t = L.t;
+      const fs = t.fs;
+      const tw = t.x1 - t.x0;
+      // "Name: Samuel Ortiz": already filled in.
+      if (L.colon && L.next && L.next.x0 - t.x1 < 150 && !isLabel.has(L.next)) {
+        L.printed = true;
+        return;
+      }
+      if (L.needLine) return;
+      const taken = (q) => claims.some((c) => c.r === q && c.x0 < Math.max(t.x1, t.x0 + 60) + 40 && c.x1 > t.x0 - 40);
+      // 2. The label is a caption under its line.
+      const up = pg.lines.filter((q) => q.y < t.y - 0.55 * fs && q.y > t.y - 2.6 * fs && q.x0 <= t.x0 + Math.max(14, tw * 0.5) && q.x1 >= t.x0 + Math.min(24, tw) && !taken(q)).sort((a, b) => b.y - a.y)[0];
+      if (up) return claim(L, { mode: 'above', x0: up.x0, x1: up.x1, y: up.y, r: up, shared: true });
+      // 3. The line is under the label, with room for a field between them.
+      const down = pg.lines.filter((q) => q.y - t.y >= 14 && q.y - t.y <= 64 && Math.abs(q.x0 - t.x0) <= 16 && !claims.some((c) => c.r === q) && !textBetween(t.y + 2, q.y - 1, q.x0, q.x1)).sort((a, b) => a.y - b.y)[0];
+      if (down) return claim(L, { mode: 'below', x0: down.x0, x1: down.x1, y: down.y, r: down, maxH: down.y - t.y - 0.3 * fs - 1 });
+      // 4. No line at all: beside a label that ends with a colon ("Signature:"), or under it at the right margin.
+      if (!L.colon && !L.sym) return;
+      const lim = Math.min(pg.w - 30, L.next ? L.next.x0 - 6 : Infinity);
+      if (lim - (t.x1 + 4) >= 40) claim(L, { mode: 'beside', x0: t.x1 + 4, x1: lim, y: t.y + 1 });
+      else if (!textBetween(t.y + 1, t.y + 0.3 * fs + 16, t.x0, t.x0 + 120)) claim(L, { mode: 'under', x0: t.x0, x1: Math.min(pg.w - 30, t.x0 + 240), top: t.y + 0.3 * fs + 2 });
+    });
+    // Captions that share one long line (a table border) each take their own stretch of it.
+    const shared = new Map();
+    labs.forEach((L) => {
+      if (L.target && L.target.shared) shared.set(L.target.r, (shared.get(L.target.r) || []).concat([L]));
+    });
+    shared.forEach((list) => {
+      list.sort((a, b) => a.t.x0 - b.t.x0);
+      list.forEach((L, i) => {
+        if (i) L.target.x0 = Math.max(L.target.x0, L.t.x0 - 2);
+        if (list[i + 1]) L.target.x1 = Math.min(L.target.x1, list[i + 1].t.x0 - 8);
+      });
+    });
+    labs.forEach((L) => {
+      if (L.target && L.target.x1 - L.target.x0 < 14) L.target = null;
+    });
+  }
+  /** Groups a page's labels into signature blocks and says whose each block is. */
+  function findBlocks(pg, names) {
+    const placed = pg.labels.filter((L) => L.target);
+    const used = new Set(placed.map((L) => L.t));
+    pg.heads = [];
+    pg.rows.forEach((row) =>
+      row.toks.forEach((k) => {
+        if (k.blank || used.has(k)) return;
+        const hd = headingOf(k.s, names);
+        if (hd) pg.heads.push(Object.assign(hd, { t: k }));
+      })
+    );
+    // Two signature lines side by side: a two-column signature page (say the investor on the left, the firm on the right).
+    const sigs = placed.filter((L) => L.kind === 'signature');
+    let split = 0;
+    sigs.forEach((a) =>
+      sigs.forEach((b) => {
+        if (b.t.x0 - a.t.x0 >= 0.28 * pg.w && Math.abs(a.t.y - b.t.y) <= 40) split = split ? Math.min(split, b.t.x0 - 8) : b.t.x0 - 8;
+      })
+    );
+    const sideOf = (x0, x1) => (!split ? 0 : x0 >= split - 4 ? 2 : x1 <= split + 4 ? 1 : 0); // 0: across both columns
+    placed.forEach((L) => (L.side = sideOf(L.t.x0, L.t.x0)));
+    pg.heads.forEach((hd) => (hd.side = sideOf(hd.t.x0, hd.t.x1)));
+    const same = (a, b) => !a || !b || a === b;
+    const blocks = [];
+    [0, 1, 2].forEach((sd) => {
+      let cur = null;
+      placed
+        .filter((L) => L.side === sd)
+        .sort((a, b) => a.t.y - b.t.y || a.t.x0 - b.t.x0)
+        .forEach((L) => {
+          const prev = cur && cur.labels[cur.labels.length - 1];
+          // A new block after a wide gap, or after a heading that announces one.
+          if (!cur || L.t.y - prev.t.y > 80 || pg.heads.some((hd) => same(hd.side, sd) && hd.t.y > prev.t.y + 1 && hd.t.y < L.t.y - 1)) blocks.push((cur = { page: pg.page, side: sd, labels: [] }));
+          cur.labels.push(L);
+          L.block = cur;
+        });
+    });
+    blocks.forEach((b) => {
+      const top = b.labels[0];
+      const said = b.labels.find((L) => L.who);
+      // The nearest heading above the block in its column, unless another block lies between them.
+      const hd = pg.heads
+        .filter((x) => same(x.side, b.side) && (x.t.y < top.t.y - 1 || (Math.abs(x.t.y - top.t.y) <= 1 && x.t.x1 <= top.t.x0 + 1)) && (!x.near || top.t.y - x.t.y <= 130))
+        .sort((x, y) => y.t.y - x.t.y)[0];
+      const gov = hd && !placed.some((L) => L.block !== b && same(L.side, b.side) && L.t.y > hd.t.y + 1 && L.t.y < top.t.y - 1) ? hd : null;
+      b.who = said ? said.who : gov ? gov.who : '';
+      b.kind = b.who === 'firm' ? '' : (gov && gov.who === 'investor' && gov.kind) || (b.labels.some((L) => L.ent) ? 'entity' : b.labels.some((L) => L.ind) ? 'individual' : '');
+      b.signs = b.labels.some((L) => L.kind === 'signature');
+    });
+    return blocks;
+  }
+  const overlap = (a, b) => a.x < b.x + b.w - 0.5 && b.x < a.x + a.w - 0.5 && a.y < b.y + b.h - 0.5 && b.y < a.y + a.h - 0.5;
+  /** The field box for a label's line: on the line, no wider than it, no taller than the clear space above it. Points. */
+  function boxOn(pg, type, tg, boxes) {
+    const [minW, maxW, minH] = AUTO[type];
+    const def = TYPES[type];
+    const room = tg.x1 - tg.x0;
+    let w;
+    if (tg.mode === 'beside' || tg.mode === 'under') w = Math.min(def.w, room);
+    else if (room >= minW) w = Math.min(maxW, room);
+    else {
+      // A short line ("$_____"): the value still needs room, so the box runs on into the clear space after it.
+      let free = pg.w - 24 - tg.x1;
+      pg.rows.forEach((row) => {
+        if (Math.abs(row.y - tg.y) > 8) return;
+        row.toks.forEach((k) => {
+          if (!k.blank && k.x0 >= tg.x1 - 1) free = Math.min(free, k.x0 - 4 - tg.x1);
+        });
+      });
+      w = Math.min(minW, room + Math.max(0, free));
+    }
+    if (tg.mode === 'under') {
+      let below = pg.h - 12;
+      pg.rows.forEach((row) => {
+        if (row.y > tg.top + 2 && row.toks.some((k) => !k.blank && k.x0 < tg.x0 + w && k.x1 > tg.x0)) below = Math.min(below, row.y - 0.8 * row.fs);
+      });
+      const h = Math.min(def.h, below - tg.top - 1);
+      return h >= minH ? { x: tg.x0, y: tg.top, w, h } : null;
+    }
+    // The foot sits just under the line, so what is written rests on it.
+    const foot = tg.y + (tg.mode === 'beside' ? 1 : 2);
+    const xa = tg.x0;
+    const xb = tg.x0 + w;
+    let ceil = 6;
+    pg.rows.forEach((row) => {
+      if (row.y > tg.y - 3) return;
+      if (row.toks.some((k) => !k.blank && k.x0 < xb && k.x1 > xa)) ceil = Math.max(ceil, row.y + 0.25 * row.fs);
+    });
+    pg.lines.forEach((r) => {
+      if (r.y <= tg.y - 4 && r.x0 < xb && r.x1 > xa) ceil = Math.max(ceil, r.y + r.t + 3);
+    });
+    boxes.forEach((b) => {
+      if (b.page === pg.page && b.y + b.h <= foot && b.x < xb && b.x + b.w > xa) ceil = Math.max(ceil, b.y + b.h + 1);
+    });
+    let h = foot - ceil - 1;
+    if (tg.maxH) h = Math.min(h, tg.maxH);
+    h = clamp(h, minH, def.h);
+    return { x: xa, y: foot - h, w, h };
+  }
+  /** Keeps a box on its page and clear of the boxes already there (trimmed, then moved; dropped if neither works). */
+  function settle(pg, box, boxes) {
+    const minH = box.type === 'signature' ? 12 : 8;
+    box.w = Math.min(box.w, pg.w - 4);
+    box.h = Math.min(box.h, pg.h - 4);
+    box.x = clamp(box.x, 2, pg.w - box.w - 2);
+    box.y = clamp(box.y, 2, pg.h - box.h - 2);
+    const others = boxes.filter((b) => b.page === box.page);
+    for (let pass = 0; pass < 6; pass++) {
+      const hit = others.find((b) => overlap(box, b));
+      if (!hit) return true;
+      const foot = box.y + box.h;
+      if (hit.y + hit.h < foot - minH) {
+        // The other box is above: lower this one's top.
+        box.y = hit.y + hit.h + 1;
+        box.h = foot - box.y;
+      } else if (hit.x > box.x + 24) box.w = hit.x - box.x - 2;
+      else if (hit.x + hit.w + 2 + 24 <= pg.w - 2) {
+        const right = box.x + box.w;
+        box.x = hit.x + hit.w + 2;
+        box.w = Math.max(24, Math.min(box.w, right - box.x, pg.w - 2 - box.x));
+      } else return false;
+    }
+    return !others.some((b) => overlap(box, b));
+  }
+  /** The top of a clear band on a page for a signature block of this height (after `after` when given, else the last one that fits), or -1. */
+  function clearBand(pg, need, boxes, after) {
+    const busy = [];
+    pg.rows.forEach((row) => row.toks.length && busy.push([row.y - row.fs, row.y + 0.3 * row.fs]));
+    (pg.lines || []).forEach((r) => busy.push([r.y - 1, r.y + r.t + 2]));
+    boxes.forEach((b) => b.page === pg.page && busy.push([b.y, b.y + b.h]));
+    busy.sort((a, b) => a[0] - b[0]);
+    const floor = pg.h - Math.max(24, 0.045 * pg.h);
+    const gaps = [];
+    let at = 36;
+    busy.concat([[floor, floor]]).forEach(([a, b]) => {
+      if (a > at) gaps.push([at, Math.min(a, floor)]);
+      at = Math.max(at, b);
+    });
+    const fits = gaps.map(([a, b]) => [Math.max(a, after || 0), b]).filter(([a, b]) => b - a >= need + 20);
+    if (!fits.length) return -1;
+    return (after ? fits[0] : fits[fits.length - 1])[0] + 14;
+  }
+  /** The standard block for a signer whose lines were not found: signature, printed name under it, date beside it. Points. */
+  function standardBlock(pg, role, top) {
+    const mx = clamp(0.1 * pg.w, 30, 72);
+    const room = pg.w - 2 * mx;
+    const S = TYPES.signature;
+    const sw = Math.min(S.w, room);
+    const date = room >= 320 ? { x: mx + sw + 22, y: top + S.h - TYPES.date.h } : { x: mx, y: top + S.h + 5 + TYPES.name.h + 5 };
+    return [
+      { type: 'signature', x: mx, y: top, w: sw, h: S.h, required: true },
+      { type: 'name', x: mx, y: top + S.h + 5, w: Math.min(TYPES.name.w, room), h: TYPES.name.h, required: true },
+      Object.assign({ type: 'date', w: Math.min(TYPES.date.w, room), h: TYPES.date.h, required: false }, date)
+    ].map((b) => Object.assign(b, { page: pg.page, role, label: '' }));
+  }
+  const blockHeight = (pg) => TYPES.signature.h + 5 + TYPES.name.h + (pg.w - 2 * clamp(0.1 * pg.w, 30, 72) >= 320 ? 0 : 5 + TYPES.date.h);
+  /**
+   * Proposes an agreement's fields: { boxes: [{ role: 'investor' | 'countersigner', type, page, x, y, w, h (points of the
+   * displayed page), label, required, only, noSymbol }], pages, info }. Never throws: a PDF or a page whose text cannot be
+   * read is treated as blank, and a signer whose lines are not found gets the standard block at the foot of the last page.
+   * hasFirm: the firm countersigns. want: which signers to place fields for. existing: boxes already on the pages.
+   */
+  async function planFields(env, hasFirm, want, existing) {
+    const sizes = env.pageSizes || [];
+    const pages = [];
+    const flat = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    const o = W().offerings.find((x) => x.id === (env.agreementFor || env.offeringId));
+    const names = [T().name, T().legalName, T().shortName, o && o.name, o && o.shortName].map(flat).filter((n) => n.length >= 5);
+    let doc = null;
+    try {
+      const blob = await files().get(env.docId);
+      const lib = await pdfjs();
+      doc = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise;
+      for (let i = 1; i <= doc.numPages; i++) {
+        const ps = sizes[i - 1] || { w: 612, h: 792 };
+        const pg = { page: i, w: ps.w, h: ps.h, rows: [], labels: [], heads: [], lines: [], drawn: null };
+        pages.push(pg);
+        try {
+          const page = await doc.getPage(i);
+          const vp = page.getViewport({ scale: 1 });
+          pg.w = vp.width;
+          pg.h = vp.height;
+          const rows = await pageRows(lib, page, vp);
+          rows.forEach((row) =>
+            row.toks.forEach((k) => {
+              const L = k.blank ? null : labelOf(k.s);
+              if (L) pg.labels.push(Object.assign(L, { t: k, row }));
+            })
+          );
+          pg.rows = rows;
+          page.cleanup();
+        } catch (e) {
+          pg.rows = [];
+          pg.labels = [];
+        }
+      }
+      // The drawn lines are read only on pages that can carry fields: signature pages first, then pages that ask for the amount.
+      const sig = (pg) => pg.labels.some((L) => L.kind === 'signature');
+      const need = pages.filter(sig).concat(pages.filter((pg) => !sig(pg) && pg.labels.some((L) => L.kind === 'amount' && !L.weak))).slice(0, 12);
+      for (const pg of need) {
+        try {
+          const page = await doc.getPage(pg.page);
+          pg.drawn = await pageRules(page);
+          page.cleanup();
+        } catch (e) {
+          pg.drawn = null;
+        }
+      }
+    } catch (e) {
+      /* not readable: every page is blank below */
+    }
+    if (doc) Promise.resolve(doc.destroy()).catch(() => {});
+    for (let i = pages.length; i < Math.max(1, sizes.length, env.pages || 0); i++) {
+      const ps = sizes[i] || { w: 612, h: 792 };
+      pages.push({ page: i + 1, w: ps.w, h: ps.h, rows: [], labels: [], heads: [], lines: [], drawn: null });
+    }
+    pages.forEach((pg) => {
+      pg.lines = linesOf(pg, pg.drawn);
+      findTargets(pg);
+    });
+    const blocks = [];
+    pages.forEach((pg) => {
+      if (pg.labels.some((L) => L.target && L.kind === 'signature')) findBlocks(pg, names).forEach((b) => blocks.push(b));
+    });
+    const signing = blocks.filter((b) => b.signs);
+    // No heading says whose the closing block is: when the firm countersigns and no block is the firm's, a last block signed "By:" or with a title is.
+    if (hasFirm && !signing.some((b) => b.who === 'firm')) {
+      const open = signing.filter((b) => !b.who);
+      const tail = open[open.length - 1];
+      if (tail && signing.indexOf(tail) > 0 && tail.labels.some((L) => L.kind === 'title' || L.by)) tail.who = 'firm';
+    }
+    signing.forEach((b) => (b.who = b.who || 'investor'));
+    const boxes = (existing || []).slice(); // everything on the pages so far: nothing may overlap it
+    const out = [];
+    const add = (pg, b) => {
+      if (!settle(pg, b, boxes)) return false;
+      boxes.push(b);
+      out.push(b);
+      return true;
+    };
+    const put = (pg, L, role, type, more) => {
+      const b = boxOn(pg, type, L.target, boxes);
+      if (b) add(pg, Object.assign(b, { page: pg.page, role, type, label: '', required: false }, more || {}));
+    };
+    signing.forEach((b) => {
+      const role = b.who === 'firm' ? 'countersigner' : 'investor';
+      if (role === 'countersigner' ? !hasFirm || !want.firm : !want.investor) return;
+      const pg = pages[b.page - 1];
+      // Separate blocks for individuals and for entities: each investor is shown only the block for how they invest.
+      const only = role === 'investor' && b.kind ? { only: b.kind } : null;
+      const sigs = b.labels.filter((L) => L.kind === 'signature');
+      // One required signature in a block; a second signatory's line is there if they need it.
+      sigs.forEach((L, i) => put(pg, L, role, 'signature', Object.assign({ required: i === 0 }, only)));
+      const got = new Map(sigs.map((L) => [L, {}]));
+      b.labels.forEach((L) => {
+        if (L.kind === 'signature' || L.kind === 'amount') return;
+        // Each signature line takes the nearest printed name, date and title, once.
+        const sg = sigs.slice().sort((x, y) => Math.abs(x.t.y - L.t.y) - Math.abs(y.t.y - L.t.y))[0];
+        const mine = got.get(sg);
+        if (mine[L.kind]) return;
+        mine[L.kind] = true;
+        const first = sg === sigs[0];
+        if (L.kind === 'investorName') {
+          if (role === 'investor') put(pg, L, role, 'text', Object.assign({ label: 'Investor name' }, only));
+        } else if (L.kind === 'name') put(pg, L, role, first ? 'name' : 'text', Object.assign(first ? { required: true } : { label: 'Name' }, only));
+        else if (L.kind === 'date') first && put(pg, L, role, 'date', only);
+        else put(pg, L, role, 'text', Object.assign({ label: 'Title' }, only));
+      });
+    });
+    // The commitment amount, filled in for the investor and locked, wherever the agreement asks for it (the firm's when it is the amount accepted).
+    let amounts = 0;
+    pages.forEach((pg) => {
+      const sigPage = pg.labels.some((L) => L.target && L.kind === 'signature');
+      pg.labels.forEach((L) => {
+        if (L.kind !== 'amount' || !L.target || amounts >= 3 || (L.weak && !sigPage)) return;
+        const firm = L.who === 'firm' || !!(L.block && L.block.signs && L.block.who === 'firm');
+        if (firm ? !hasFirm || !want.firm : !want.investor) return;
+        amounts++;
+        put(pg, L, firm ? 'countersigner' : 'investor', 'text', Object.assign({ label: 'Commitment amount' }, L.sym ? { noSymbol: true } : null));
+      });
+    });
+    const info = { lines: out.length, standard: [], split: out.some((b) => b.only), read: pages.some((pg) => pg.rows.length) };
+    const last = pages[pages.length - 1];
+    const signs = (role) => boxes.some((b) => b.role === role && b.type === 'signature');
+    const standard = (role) => {
+      // Under the other signer's block when there is clear space there; else after the text of the last page; else stacked at its foot.
+      const others = boxes.filter((b) => b.role && b.role !== role && b.type === 'signature');
+      const near = others.length ? pages[others[others.length - 1].page - 1] : null;
+      let pg = near || last;
+      let top = near ? clearBand(pg, blockHeight(pg), boxes, Math.max.apply(null, boxes.filter((b) => b.page === pg.page && b.role !== role).map((b) => b.y + b.h))) : -1;
+      if (top < 0) {
+        pg = last;
+        top = pg.rows.length ? clearBand(pg, blockHeight(pg), boxes, 0) : -1;
+      }
+      const need = blockHeight(pg);
+      const floor = pg.h - Math.max(30, 0.07 * pg.h);
+      // A blank page (a scan) or a full one: the investor's block above the firm's, at the foot.
+      const tries = top >= 0 ? [top] : [];
+      tries.push(floor - need - (role === 'investor' && hasFirm ? need + 16 : 0), floor - 2 * need - 16, floor - need, 40);
+      for (const y of tries) {
+        const block = standardBlock(pg, role, Math.max(8, y));
+        if (block.some((b) => boxes.some((q) => q.page === b.page && overlap(b, q)))) continue;
+        block.forEach((b) => add(pg, b));
+        break;
+      }
+      info.standard.push(role);
+    };
+    if (want.investor && !signs('investor')) standard('investor');
+    if (hasFirm && want.firm && !signs('countersigner')) standard('countersigner');
+    info.pages = Array.from(new Set(out.map((b) => b.page))).sort((a, b) => a - b);
+    return { boxes: out, pages, info };
+  }
+  /**
+   * Places the fields each signer completes on an agreement draft, at the PDF's own signature lines: the signature, printed
+   * name, date and title next to each label, for the firm when the block is the firm's (an acceptance heading, the firm's
+   * name over the line, the right-hand column), and the commitment amount next to its label. A signer whose lines cannot be
+   * found (a scan, say) gets a standard block at the foot of the last page. Fields never overlap or leave the page.
+   * opts.roles limits it to some signers (the countersigner, when one is added later). Returns how many fields were placed.
+   */
+  async function autoFields(env, opts) {
+    const roles = (opts && opts.roles) || ['investor', 'countersigner'];
     const inv = env.signers.find((s) => s.role === 'investor');
     const cs = env.signers.find((s) => s.role === 'countersigner');
-    const add = (sg, type, page, x, y, extra) => {
-      const t = TYPES[type];
-      const ps = env.pageSizes[page - 1] || { w: 612, h: 792 };
-      const w = Math.min(0.9, t.w / ps.w);
-      const hh = Math.min(0.5, t.h / ps.h);
-      const fx = clamp01(x, 1 - w);
-      const fy = clamp01(y, 1 - hh);
-      if (env.fields.some((f) => f.page === page && f.type === type && f.signerId === sg.id && Math.abs(f.x - fx) < 0.03 && Math.abs(f.y - fy) < 0.02)) return;
-      env.fields.push(Object.assign({ id: uid('fd'), signerId: sg.id, type, page, x: fx, y: fy, w, h: hh, required: type === 'signature' || type === 'name' || type === 'date', label: '', value: '' }, extra || {}));
-    };
-    const sigPages = pages.filter((p) => p.items.some((t) => SIG_RE.test(t.s)));
-    const sp = sigPages[sigPages.length - 1];
-    if (sp) {
-      // Whose block a label belongs to: the nearest heading above it (an acceptance or firm heading means the firm countersigns).
-      const ownerOf = (it) => {
-        let best = null;
-        sp.items.forEach((o) => {
-          if (o === it || o.y >= it.y || it.y - o.y > 0.3) return;
-          const firm = FIRM_RE.test(o.s);
-          const investor = INVESTOR_RE.test(o.s) && !firm;
-          if ((firm || investor) && (!best || o.y > best.y)) best = { y: o.y, firm };
-        });
-        return cs && best && best.firm ? cs : inv;
-      };
-      sp.items.forEach((it) => {
-        const type = SIG_RE.test(it.s) ? 'signature' : NAME_RE.test(it.s) ? 'name' : DATE_RE.test(it.s) ? 'date' : TITLE_RE.test(it.s) ? 'text' : '';
-        if (!type) return;
-        const sg = ownerOf(it);
-        const t = TYPES[type];
-        const fw = t.w / sp.w;
-        const fh = t.h / sp.h;
-        // To the right of the label on its line (bottom of the field on the text's baseline), or under it when there is no room.
-        let x = it.x + it.w + 0.008;
-        let y = it.y - fh;
-        if (x + fw > 0.98) {
-          x = it.x;
-          y = it.y + 0.004;
-        }
-        add(sg, type, sp.page, x, y, type === 'text' ? { label: 'Title', required: false } : null);
-      });
-    }
-    // The commitment amount, filled in from the invitation and locked, next to its label (on any page).
-    for (const p of pages) {
-      const it = p.items.find((t) => AMOUNT_RE.test(t.s));
-      if (!it) continue;
-      const fw = TYPES.text.w / p.w;
-      let x = it.x + it.w + 0.008;
-      let y = it.y - TYPES.text.h / p.h;
-      if (x + fw > 0.98) {
-        x = it.x;
-        y = it.y + 0.004;
-      }
-      add(inv, 'text', p.page, x, y, { label: 'Commitment amount', required: false });
-      break;
-    }
-    // No signature lines found (a scanned PDF, say): a standard block at the foot of the last page for each signer.
-    const last = env.pages;
-    if (!env.fields.some((f) => f.signerId === inv.id && f.type === 'signature')) {
-      add(inv, 'signature', last, 0.1, 0.66);
-      add(inv, 'name', last, 0.1, 0.73);
-      add(inv, 'date', last, 0.62, 0.68);
-    }
-    if (cs && !env.fields.some((f) => f.signerId === cs.id && f.type === 'signature')) {
-      add(cs, 'signature', last, 0.1, 0.82);
-      add(cs, 'name', last, 0.1, 0.89);
-      add(cs, 'date', last, 0.62, 0.84);
-    }
-    return env.fields.length;
+    const size = (p) => env.pageSizes[p - 1] || { w: 612, h: 792 };
+    const existing = env.fields.map((f) => {
+      const ps = size(f.page);
+      return { page: f.page, x: f.x * ps.w, y: f.y * ps.h, w: f.w * ps.w, h: f.h * ps.h, type: f.type, role: cs && f.signerId === cs.id ? 'countersigner' : 'investor' };
+    });
+    const plan = await planFields(env, !!cs, { investor: !!inv && roles.indexOf('investor') >= 0, firm: !!cs && roles.indexOf('countersigner') >= 0 }, existing);
+    plan.boxes.forEach((b) => {
+      const pg = plan.pages[b.page - 1];
+      const f = { id: uid('fd'), signerId: (b.role === 'countersigner' ? cs : inv).id, type: b.type, page: b.page, x: b.x / pg.w, y: b.y / pg.h, w: b.w / pg.w, h: b.h / pg.h, required: !!b.required, label: b.label || '', value: '' };
+      if (b.only) f.only = b.only;
+      if (b.noSymbol) f.noSymbol = true;
+      env.fields.push(f);
+    });
+    env.autoInfo = plan.info;
+    return plan.boxes.length;
   }
   /** What still stops an offering's agreement from being saved ('' when it can be). */
   function agreementTodo(env) {

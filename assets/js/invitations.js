@@ -138,6 +138,13 @@
   /** The end of a sentence after a name that may already end with a period ("Fund II, L.P."). */
   const sentence = (s) => String(s).replace(/\.*$/, '.');
 
+  /**
+   * The owner's rule: an investor signs the offering's own subscription agreement (the legal document, uploaded on the
+   * offering), never a typed form or a summary. So in the self-serve edition nobody is invited to subscribe to an offering
+   * until its agreement is there and ready to sign.
+   */
+  const needsAgreement = (ws, off) => !!(E.diy && off && NS.esign && NS.esign.templateReady && !NS.esign.templateReady(ws, off.id));
+  const agreementMissing = (off) => `${String(off.name || '').replace(/\.$/, '')} has no subscription agreement yet. Add it on the offering first: investors sign the agreement itself during onboarding.`;
   /** Field problems for a new invitation, by field: name, email, offering, amount, cls. */
   function validate(ws, o) {
     const e = {};
@@ -156,6 +163,7 @@
       else if (have && active(have) && off && (ws.requests || []).some((r) => r.investorId === have.id && r.offeringId === off.id && r.type === 'subscription' && r.status === 'pending')) e.offering = `${have.title} already has a subscription to ${off.name} waiting for review.`;
     }
     if (o.offeringId && (!off || off.status !== 'Raising')) e.offering = 'Choose an offering that is raising.';
+    else if (needsAgreement(ws, off)) e.offering = agreementMissing(off);
     const cents = Math.round(Number(o.cents) || 0);
     if (o.cents !== '' && o.cents != null && (!isFinite(Number(o.cents)) || Number(o.cents) < 0)) e.amount = 'Enter the commitment as an amount, or leave it blank.';
     else if (cents > 0 && !off) e.amount = 'Choose the offering this commitment is for.';
@@ -174,6 +182,7 @@
     if (!name) throw new Error('Enter the investor’s full name.');
     if (!isEmail(email)) throw new Error('Enter a valid email address.');
     const off = offOf(ws, o.offeringId);
+    if (needsAgreement(ws, off)) throw new Error(agreementMissing(off));
     const classes = openClasses(off);
     const cls = off && classes.some((c) => c.id === o.cls) ? o.cls : off && classes.length === 1 ? classes[0].id : '';
     const type = NS.ENTITY_TYPES[o.type] ? o.type : 'individual';
@@ -1158,6 +1167,12 @@
   }
   /** The invite form's optional fields, kept under More options. */
   const MORE_FIELDS = ['type', 'account', 'offeringId', 'amount', 'cls', 'note'];
+  NS.actions['inv8-no-offering'] = () => {
+    const d = draft();
+    Object.assign(d, { offeringId: '', amount: '', cls: '', more: true });
+    delete d.errors.offering;
+    NS.app.render();
+  };
   NS.binders.inv8 = (path, v) => {
     const d = draft();
     d[path] = v;
@@ -1187,7 +1202,9 @@
     const moreOpen = !!(d.more || d.errors.offering || d.errors.amount || d.errors.cls || /Choose an offering/.test(d.errors.email || '') || d.type !== 'individual' || d.account || d.amount !== '' || d.cls || d.note || (d.offeringId || '') !== dflt);
     const agreement = off && NS.esign && NS.esign.templateReady ? (NS.esign.templateReady(w, off.id) ? 'ready' : 'missing') : '';
     const what = off
-      ? `They will be invited to ${h(off.name.replace(/\.$/, ''))}${agreement === 'ready' ? ' and sign its subscription agreement during onboarding' : ''} (change under More options).`
+      ? agreement === 'missing'
+        ? ''
+        : `They will be invited to ${h(off.name.replace(/\.$/, ''))}${agreement === 'ready' ? ' and sign its subscription agreement during onboarding' : ''} (change under More options).`
       : offs.length
         ? 'No offering is chosen, so they set up their account only (choose one under More options).'
         : 'They can subscribe once you add an offering.';
@@ -1196,7 +1213,7 @@
       <label class="cs-field" for="iv-last"><span>Last name</span><input id="iv-last" name="last" maxlength="60" autocomplete="off" data-bind="inv8:last" value="${h(d.last || '')}"${inval(d, 'name')}>${fieldErr(d, 'name')}</label>
       <label class="cs-field cs-wide" for="iv-email"><span>Email</span><input id="iv-email" name="email" type="email" maxlength="120" autocomplete="off" data-bind="inv8:email" value="${h(d.email)}"${inval(d, 'email')}>${fieldErr(d, 'email')}</label>
       <p class="cs-hint cs-wide inv8-what" id="iv-what">They choose how they invest during onboarding. ${what}</p>
-      ${agreement === 'missing' ? `<p class="cs-hint cs-hint-warn cs-wide inv8-warn" id="iv-agreement-warn">${h(off.name.replace(/\.$/, ''))} has no subscription agreement yet. <a href="#console-offering-${h(off.id)}">Add it on the offering</a> so investors sign it during onboarding.</p>` : ''}
+      ${agreement === 'missing' ? `<div class="cs-wide inv8-block" id="iv-agreement-warn" role="status"><p><strong>Add the subscription agreement for ${h(off.name.replace(/\.$/, ''))} before you invite investors to it.</strong> Investors sign the agreement itself during onboarding, so it has to be on the offering first. Upload the PDF once and the signing fields are placed for you.</p><div class="cs-row">${NS.app.can('configure') ? `<button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-new" data-offering="${h(off.id)}">Add the subscription agreement</button>` : '<span class="cs-hint">Ask an admin to add it on the offering.</span>'}<button class="cs-btn" type="button" data-action="inv8-no-offering">Invite without an offering</button></div></div>` : ''}
       <details class="cs-wide inv8-more" id="iv-more"${moreOpen ? ' open' : ''}>
         <summary>More options (optional)</summary>
         <div class="cs-grid inv8-more-body">

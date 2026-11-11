@@ -149,7 +149,7 @@
    * The bank step's account holder. An individual's is asked as a first and a last name; a joint, trust, entity or IRA
    * account may be in another name at the bank, so it is one line. holderDefaults (when the form opens): a holder on file,
    * or one saved on a single line by an earlier visit, is kept (split in two for an individual), unless it is only the
-   * investor's or the account's own name. holderSync (when the step is shown): fields the investor has not filled in start
+   * investor's or the account's own name. holderSync (when the step is shown): fields the investor has not changed start
    * as the name given in the investor information step, and follow a correction made there.
    */
   function holderDefaults(d, i, onFile) {
@@ -161,12 +161,22 @@
     d.holder = ind || own ? '' : line;
   }
   function holderSync(d, i) {
+    // What the step last filled in by itself is remembered (holderPairAuto for the two names, holderAuto for the one line):
+    // undefined before the step is first shown, null once the fields hold the investor's own entry or the holder on file.
+    // Only fields still showing that value are filled in again, so a name the investor typed, or cleared, is left alone.
+    const mine = (cur, auto) => (auto === undefined ? !cur : cur === auto);
     if (d.type === 'individual') {
-      const cur = fullName(d.holderFirst, d.holderLast);
-      if (cur && cur !== d.holderPairAuto) return;
+      if (!mine(fullName(d.holderFirst, d.holderLast), d.holderPairAuto)) {
+        if (d.holderPairAuto === undefined) d.holderPairAuto = null;
+        return;
+      }
       [d.holderFirst, d.holderLast] = fullName(d.first, d.last) ? [tidy(d.first), tidy(d.last)] : splitName(i.contact);
       d.holderPairAuto = fullName(d.holderFirst, d.holderLast);
-    } else if (!tidy(d.holder) || tidy(d.holder) === d.holderAuto) {
+    } else {
+      if (!mine(tidy(d.holder), d.holderAuto)) {
+        if (d.holderAuto === undefined) d.holderAuto = null;
+        return;
+      }
       d.holder = d.holderAuto = d.type === 'joint' ? ownersText(d) : tidy(d.title) || tidy(i.title);
     }
   }
