@@ -191,7 +191,7 @@
     if (verified == null ? accVerified() : verified) {
       const why = opts && opts.why;
       return `<h1>${LABELS.accreditation}</h1>
-      <p class="lede">${why && why !== '506c' ? `${h(T().shortName)} accepts only verified accredited investors for this offering` : `${h(T().shortName)} offers interests only to verified accredited investors (Rule 506(c))`}, so your accredited status is confirmed by a third party rather than self-certified.</p>
+      <p class="lede">${why && why !== '506c' ? `${h(T().shortName)} accepts only verified accredited investors` : `${h(T().shortName)} offers interests only to verified accredited investors (Rule 506(c))`}, so your accredited status is confirmed by a third party rather than self-certified.</p>
       <div class="form-grid">
         ${NS.integrations.stepPanel(W(), inv(), 'accreditation')}${err('ivAccreditation')}
         ${check('accAttest', `I confirm the information I provide is accurate and will tell ${h(T().shortName)} if it changes.`)}
@@ -1635,7 +1635,7 @@
   }
   /** Server mode: can the investor sign the agreement again here? Its template, with the template's file, is still on this device. */
   async function resignable(c) {
-    const env = envOf(c);
+    const env = c ? envOf(c) : null;
     if (!c || !isRemote(c.ws) || !c.req || !c.off || !env || !NS.esign || !NS.esign.canResign) return false;
     try {
       return !!(await NS.esign.canResign(c.ws, env.id));

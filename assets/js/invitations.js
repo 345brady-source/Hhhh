@@ -316,7 +316,7 @@
     const st = inv && IV() && IV().active(ws) ? IV().status(ws, inv) : null;
     const parts = [];
     if (r && off) parts.push(`${money(off, r.cents)} subscription to ${off.name}`);
-    else if (off && it.requestDropped) parts.push(`${it.existing ? 'Their' : 'Account activated; their'} subscription to ${off.name} from their device was not imported (${it.requestDropped}); ask them to subscribe again`);
+    else if (it.requestDropped) parts.push(`${it.existing ? 'Their' : 'Account activated; their'} subscription${off ? ` to ${off.name}` : ''} from their device was not imported (${it.requestDropped}); ask them to subscribe again`);
     else if (off && !it.existing) parts.push(`Account activated; no subscription to ${off.name}${off.status !== 'Raising' ? ', which stopped raising before they reached that step' : ''}`);
     else if (off) parts.push(`No subscription to ${off.name}${off.status !== 'Raising' ? ', which stopped raising before they reached that step' : ''}`);
     else parts.push('Account activated');
@@ -723,7 +723,8 @@
    */
   function requestProblem(ws, it, r, off) {
     if (!/^[\w.-]{1,80}$/.test(String(r.id || ''))) return 'it has no valid reference';
-    if (!off || r.offeringId !== off.id) return 'it is not for the offering on this invitation';
+    if (!off) return it.offeringId ? 'the offering is no longer in the portal' : 'the invitation was for an account only';
+    if (r.offeringId !== off.id) return 'it is not for the offering on this invitation';
     const cls = r.cls === undefined || r.cls === null || r.cls === '' ? String(it.cls || '') : String(r.cls);
     if (it.cls && cls !== it.cls) return 'its share class is not the one set on the invitation';
     if (cls && !openClasses(off).some((c) => c.id === cls)) return 'its share class is not open on this offering';
@@ -800,8 +801,8 @@
     });
 
     // The investor's request always arrives pending: only the firm accepts it, for the offering this invitation is for, and only
-    // for an amount and share class that offering takes (requestProblem). A request that does not pass is not imported, nor is
-    // the agreement signed for it, and the change log and the import notification say why.
+    // for an amount and share class that offering takes (requestProblem). A request that does not pass is not imported (the
+    // agreement signed for it is kept only as a voided record), and the change log and the import notification say why.
     const r = sub.request && typeof sub.request === 'object' ? clone(sub.request) : null;
     ws.requests = ws.requests || [];
     const off = offOf(ws, it.offeringId);
