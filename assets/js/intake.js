@@ -434,7 +434,40 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
         detail: `${o.name}: ${opts.fields} terms applied, read by ${opts.method === 'claude' ? 'automatic reading' : opts.method === 'manual' ? 'manual edit' : 'the built-in reader'} from ${opts.docs.length ? opts.docs.map((d) => `${d.name} (SHA-256 ${String(d.sha256).slice(0, 12)}…)`).join(', ') : 'the structure editor'}`
       });
     if (NS.clearCaches) NS.clearCaches();
+    // The subscription agreement among the documents: its signing fields are prepared straight away, so the firm only has to
+    // check them on the offering page and every investor signs the agreement during onboarding.
+    await prepareAgreement(ws, o);
     return o;
+  }
+  /** A PDF among an offering's documents that reads as its subscription agreement (by its name), newest first. */
+  function agreementDoc(ws, o) {
+    const named = /subscri(ption|ber)|\bsub[\s_.-]*(agreement|agmt|docs?)\b/i;
+    return (
+      (ws.docs || [])
+        .slice()
+        .reverse()
+        .find((d) => d && d.offeringId === o.id && named.test(`${d.title || ''} ${d.fileName || ''}`) && (/pdf/i.test(d.type || '') || /\.pdf$/i.test(d.fileName || ''))) || null
+    );
+  }
+  /**
+   * Prepare the offering's subscription agreement from its documents (esign.js places the fields at the PDF's signature
+   * lines and leaves a draft for the firm to check). Nothing happens when the offering already has an agreement or a draft,
+   * when no document reads as one, or when the PDF cannot be prepared (the firm then adds it on the offering page).
+   */
+  async function prepareAgreement(ws, o) {
+    const es = NS.esign;
+    if (!es || !es.agreementDraft || !es.subscriptionTemplate) return null;
+    if (es.subscriptionTemplate(ws, o.id) || (ws.envelopes || []).some((e) => e.agreementFor === o.id && e.status === 'draft')) return null;
+    const d = agreementDoc(ws, o);
+    if (!d) return null;
+    try {
+      const env = await es.agreementDraft(ws, o.id, { docId: d.id, title: d.title || 'Subscription Agreement' });
+      if (env) env.fromDocuments = d.fileName || d.title || 'your documents';
+      if (NS.workspace) NS.workspace.save(ws);
+      return env;
+    } catch (e) {
+      return null;
+    }
   }
   /** How many fields a profile fills (for the review summary). */
   function filled(p) {
@@ -505,5 +538,5 @@ Reporting. Members will receive quarterly reports and annual Schedule K-1s. The 
     return window.JSZip;
   };
   NS.pdfLib = pdfLib;
-  NS.intake = { readFile, corpus, claudeSample, readWithClaude, readWithRules, normalize, fromOffering, apply, filled, SAMPLES, LIMIT: 200000 };
+  NS.intake = { readFile, corpus, claudeSample, readWithClaude, readWithRules, normalize, fromOffering, apply, filled, agreementDoc, prepareAgreement, SAMPLES, LIMIT: 200000 };
 })(window.CVPortal);

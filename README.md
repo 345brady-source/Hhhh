@@ -28,10 +28,11 @@ Everything else is shared: investor portal, offerings, distributions and NACHA f
 
 ### Carrow & Vale (self-serve)
 
-- **Sign-up.** Firm name, admin name and email, a password, the kind of offerings, a brand color and a logo create the portal. Sample firms fill the form for a quick look.
-- **Setup checklist.** Brand, verification providers, ACH origination, first offering (from its documents), subscription agreement template, team, investors, first distribution. Each step links to its page and ticks itself off.
+- **Sign-up.** Firm name, the admin's first and last name and email, a password, the kind of offerings, a brand color and a logo create the portal. The sign-up page is the only place the product name appears; the header links to a sample portal.
+- **Setup checklist.** Brand, verification providers, ACH origination, first offering (from its documents), the offering's subscription agreement, team, investors, first distribution. Each step links to its page and ticks itself off.
+- **Names.** Every form that asks for a person's name asks for first name and last name (sign-up, team, invitations, lists, joint owners, beneficial owners, countersigners). Organisation and account names stay one field; a typed signature is one line.
 - **Team.** Admins invite team members, change roles and remove people (at least one admin always remains). Team members operate the portal (investors, calls, distributions, documents, notices) but cannot change brand, integrations, offerings intake or the team. Every change is in the change log.
-- **Turnkey investor onboarding.** Enter an investor's name, email, offering and commitment and send one link from the console; the link takes them through every step, and the console is notified and adds them when they finish (below).
+- **Turnkey investor onboarding.** Enter an investor's first name, last name and email and send one link from the console; the link takes them through every step, including signing the offering's subscription agreement, and the console is notified and adds them when they finish (below). Investors can also be imported from a CSV or Excel file, or added manually when they were onboarded on paper.
 - **Offering sign-up links.** Each offering that is raising has a link investors can use to join on their own: they enter their details, then follow the same guided onboarding.
 
 ## E-signature
@@ -58,9 +59,14 @@ Investors are verified while they onboard: identity (KYC), sanctions and politic
 
 ## Turnkey investor onboarding (self-serve edition)
 
-The firm enters the basics and sends one link; the investor does everything else; the firm is told when it is done and the investor is already in the portal.
+The firm sets up each offering's subscription agreement once (see E-signature), enters a first name, last name and email, and sends one link; the investor does everything else, including signing the agreement; the firm is told when it is done and the investor is already in the portal. When the offering was set up from documents that include the subscription agreement, its signing fields are prepared automatically for the firm to check.
 
-**The firm (Investors page, Invite an investor).** Name, email, offering and commitment (share class and a personal note are optional). Send invitation emails the link from the firm: `From: "<firm name>"`, replies to the firm's support address, the firm's logo and colors, nothing naming this software. The invitations list shows each one's progress (sent, opened, step 4 of 10, completed) with Resend (a new link; the old one stops working), Copy link, Cancel and Invite again. Links expire after 30 days.
+**The firm (Investors page, Invite an investor).** First name, last name and email are all it takes. The offering is preselected when one is raising, and the form says whether the investor will sign its subscription agreement (with a link to add the agreement when it is missing). How they invest, the account name, a different offering, a fixed commitment, the share class and a personal note are under More options.
+
+- **Import a list.** Upload a `.csv` or `.xlsx` file (the first worksheet is read) or paste a list: first name, last name, email, then optionally offering, commitment and how they invest. A header row is recognized, the older `name, email, ...` order still works, and the list is checked and previewed before anything is sent.
+- **Add manually.** For an investor onboarded on paper: they are added as an active investor without the onboarding link, optionally with the subscription they signed (recorded as accepted under the team member's name), the team's offline identity, screening and accreditation checks, and a link to sign in to their portal.
+
+Send invitation emails the link from the firm: `From: "<firm name>"`, replies to the firm's support address, the firm's logo and colors, nothing naming this software. The invitations list shows each one's progress (sent, opened, step 4 of 10, completed) with Resend (a new link; the old one stops working), Copy link, Cancel and Invite again. Links expire after 30 days.
 
 **The investor (one link, one progress bar, the firm's brand only).**
 
