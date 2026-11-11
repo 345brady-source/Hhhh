@@ -286,6 +286,26 @@
     return n;
   }
   const unread = (ws) => (ws ? notes(ws).filter((n) => !n.read).length : 0);
+  /** The step the investor's device reports when it could not send their signed agreement (onboarding.js reportUnsent). */
+  const AGREEMENT_UNSENT = 'agreement-unsent';
+  const agreementUnsent = (it) => it.stepKey === AGREEMENT_UNSENT && OPEN.indexOf(it.status) >= 0;
+  /**
+   * The investor's signed agreement could not be sent from their browser: one unread notice of its own (the progress notice
+   * only changes its detail), not repeated while the step stays the same (it.unsentNotified), and again only if it happens
+   * again after the investor signs once more. Returns true when the invitation changed.
+   */
+  function unsentAlert(ws, it) {
+    if (it.stepKey !== AGREEMENT_UNSENT) {
+      if (!it.unsentNotified) return false;
+      delete it.unsentNotified;
+      return true;
+    }
+    if (it.unsentNotified || !agreementUnsent(it)) return false;
+    const inv = invOf(ws, it.investorId);
+    it.unsentNotified = new Date().toISOString();
+    Object.assign(notify(ws, 'invite_progress', `${inv ? inv.title : 'An investor'}'s subscription agreement could not be sent`, 'Contact the investor: their signed agreement could not be sent from their browser.', 'console-investors'), { about: it.id });
+    return true;
+  }
 
   /* ---------- Progress and completion (local mode; the investor flow reports here) ---------- */
   function progress(ws, it, stepKey, stepLabel, stepIndex, stepCount) {
@@ -300,6 +320,7 @@
     const have = notes(ws).find((n) => n.kind === 'invite_progress' && n.invitationId === it.id);
     if (have) Object.assign(have, { detail, at: new Date().toISOString() });
     else if (first) Object.assign(notify(ws, 'invite_progress', `${inv ? inv.title : 'An investor'} ${startedWhat(it)}`, detail, 'console-investors'), { invitationId: it.id });
+    unsentAlert(ws, it);
     if (inv && inv.onboarding.status === 'invited') inv.onboarding = Object.assign({}, inv.onboarding, { status: 'in_progress' });
   }
   function requestFor(ws, it) {
@@ -568,6 +589,7 @@
       if (have) Object.assign(have, { detail: stepText(it), at: new Date().toISOString() });
       else Object.assign(notify(ws, 'invite_progress', `${inv ? inv.title : 'An investor'} ${startedWhat(it)}`, stepText(it), 'console-investors'), { invitationId: it.id });
     }
+    if (unsentAlert(ws, it)) changed = true;
     if (inv && it.stepKey && inv.onboarding.status === 'invited') inv.onboarding = Object.assign({}, inv.onboarding, { status: 'in_progress' });
     return changed;
   }
@@ -1088,7 +1110,7 @@
   const STATUS = { sent: ['mute', 'Sent'], opened: ['adj', 'Opened'], in_progress: ['adj', 'In progress'], completed: ['ok', 'Completed'], cancelled: ['mute', 'Cancelled'], expired: ['bad', 'Expired'] };
   /** Status as the list shows it: an invitation the sponsor has not emailed yet says so. */
   const unsent = (it) => it.status === 'sent' && ['manual', 'not_sent', 'failed'].indexOf(it.emailStatus) >= 0;
-  const statusOf = (it) => (unsent(it) ? ['warn', 'Not sent yet'] : STATUS[it.status] || ['mute', it.status]);
+  const statusOf = (it) => (unsent(it) ? ['warn', 'Not sent yet'] : agreementUnsent(it) ? ['warn', 'Agreement not sent'] : STATUS[it.status] || ['mute', it.status]);
   const EMAIL = { sent: 'Emailed', outbox: 'In the server outbox', manual: 'Send from your email app', not_sent: 'Not sent yet', failed: 'Could not send' };
   function stepText(it) {
     if (it.status === 'completed') return 'Finished';
@@ -1114,7 +1136,7 @@
     if (!E.diy || !inv || inv.onboarding.status === 'complete') return '';
     const it = forInvestor(ws, inv.id);
     if (!it) return '';
-    if (it.status === 'in_progress' && it.stepCount) return h(stepText(it));
+    if (it.status === 'in_progress' && it.stepCount) return agreementUnsent(it) ? `<span class="cs-error-text">${h(stepText(it))}</span>` : h(stepText(it));
     if (unsent(it)) return it.emailStatus === 'failed' ? 'Invitation not sent: the email failed' : 'Invitation ready to send from your email app';
     return `${h(STATUS[it.status] ? STATUS[it.status][1] : it.status)}${it.status === 'sent' ? ` ${date(String(it.sentAt).slice(0, 10))}` : ''}`;
   }
@@ -1548,7 +1570,7 @@
         return `<tr data-invitation="${h(it.id)}">
           <th scope="row"><span class="strong">${h(inv.title)}</span><span class="sub">${h(inv.email)}</span></th>
           <td>${off ? h(off.shortName || off.name) : '<span class="cs-muted">Account only</span>'}<span class="sub">${off ? (it.cents ? h(money(off, it.cents)) : 'Investor chooses') : ''}</span></td>
-          <td>${badge(st[0], st[1])}<span class="sub inv8-step">${h(x ? x.text : stepText(it))}</span>${it.waitingFor ? `<span class="sub">${h(it.waitingFor)}</span>` : ''}</td>
+          <td>${badge(st[0], st[1])}<span class="sub inv8-step${!x && agreementUnsent(it) ? ' cs-error-text' : ''}">${h(x ? x.text : stepText(it))}</span>${it.waitingFor ? `<span class="sub">${h(it.waitingFor)}</span>` : ''}</td>
           <td class="inv8-activity">${activity}</td>
           <td>${em}</td>
           <td class="cs-row-actions">${acts.join('')}</td>
