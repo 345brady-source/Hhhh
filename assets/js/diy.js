@@ -61,7 +61,7 @@
             <form class="sd-card sd-form" data-form="diy-signup" novalidate>
               <h1 class="sd-h">Create your portal</h1>
               <label class="field" for="sd-firm"><span>Firm name</span><input id="sd-firm" type="text" autocomplete="organization" data-bind="signup:firm" value="${h(f.firm)}"${inval('firm')}>${err('firm')}</label>
-              ${nameInputs('field', 'sd', 'signup', f, inval('name'), err('name'))}
+              <div class="sd-row2">${nameInputs('field', 'sd', 'signup', f, inval('name'), err('name'))}</div>
               <label class="field" for="sd-email"><span>Work email</span><input id="sd-email" type="email" autocomplete="email" data-bind="signup:email" value="${h(f.email)}"${inval('email')}>${err('email')}</label>
               <label class="field" for="sd-password"><span>Password</span><input id="sd-password" type="password" autocomplete="new-password" data-bind="signup:password" value="${h(f.password)}"${inval('password')}><span class="hint">At least 10 characters. You will add a second sign-in step after this.</span>${err('password')}</label>
               <fieldset class="field choice"><legend>What do you raise?</legend>${FOCUS.map(([v, l]) => `<label class="choice-row"><input type="radio" name="sd-focus" value="${v}" data-bind="signup:focus"${f.focus === v ? ' checked' : ''}><span>${h(l)}</span></label>`).join('')}</fieldset>

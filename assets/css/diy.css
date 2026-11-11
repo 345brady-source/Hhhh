@@ -244,3 +244,9 @@
 /* Sign-up page: the form on its own, centered (no headline or side column). */
 .sd-solo { max-width: 600px; margin: 0 auto; }
 .sd-card .sd-h { margin: 0 0 14px; font-family: inherit; font-size: 20px; font-weight: 800; line-height: 1.25; letter-spacing: 0; }
+
+/* Sign-up: first and last name side by side (stacked on a phone). */
+.sd-row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 560px) {
+  .sd-row2 { grid-template-columns: minmax(0, 1fr); }
+}
