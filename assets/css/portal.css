@@ -176,7 +176,8 @@ a.list-title:active, .link-btn.list-title:active, a:active > .list-title { color
 .ov-contact strong { color: var(--fg); font-weight: 500; }
 .ov-contact a { position: relative; color: inherit; text-decoration: underline; text-decoration-color: color-mix(in oklab, currentColor 40%, transparent); }
 .ov-contact a:hover { color: var(--brand-text); text-decoration-color: currentColor; }
-.ov-contact a::after { content: ""; position: absolute; inset: -12px 0; }
+/* The address sits between two lines of plain text: its hit area stays inside its own line. */
+.ov-contact a::after { content: ""; position: absolute; inset: -1px 0; }
 
 /* Updates */
 .feed { max-width: 840px; padding: 0; }
@@ -337,6 +338,8 @@ a.list-title:active, .link-btn.list-title:active, a:active > .list-title { color
 .notice-text strong { font-weight: 500; }
 .notice-date { font-size: var(--text-sm); font-weight: 500; color: var(--fg-3); min-width: 88px; }
 .notice-actions { display: flex; gap: var(--space-md); font-size: var(--text-sm); }
+.notice-actions .link-btn, .tbl .doc-link, .call-due summary, .wire-wrap summary { position: relative; }
+.notice-actions .link-btn::after, .tbl .doc-link::after, .call-due summary::after, .wire-wrap summary::after { content: ""; position: absolute; inset: -6px 0; }
 .notice-dismiss { color: var(--fg-3); }
 
 /* Settings */
@@ -514,6 +517,8 @@ a.list-title:active, .link-btn.list-title:active, a:active > .list-title { color
   .nav-open .pt-nav { display: flex; }
   .nav-open .pt-head-in { padding-top: var(--space-sm); row-gap: var(--space-sm); }
   .pt-menu { position: relative; }
+  .pt-logo { position: relative; }
+  .pt-logo::after { content: ""; position: absolute; inset: -4px 0; }
   .pt-menu::after { content: ""; position: absolute; inset: -3px 0; }
   .pt-nav a { min-height: 44px; padding: var(--space-sm) 0; border: 0; border-top: 1px solid var(--nav-line); margin: 0; }
   .pt-nav a:hover, .pt-nav a:active { border-top-color: var(--nav-line); }
@@ -578,6 +583,7 @@ a.list-title:active, .link-btn.list-title:active, a:active > .list-title { color
   .tbl-stack .sub-label { display: none; }
   .tbl-stack .td-action { grid-column: 2; grid-row: 1; justify-self: end; }
   .tbl-stack .empty-td { display: none; }
+  .tbl-stack .status { white-space: normal; }
   .tbl-stack tfoot tr { border-top: 1px solid var(--line-strong); border-bottom: 0; padding-bottom: 0; }
   .tbl-stack tfoot th, .tbl-stack tfoot td { border-top: 0; }
   .col-hold { width: auto; min-width: 0; }
@@ -592,6 +598,8 @@ a.list-title:active, .link-btn.list-title:active, a:active > .list-title { color
   /* The document's name takes the whole row; the date and type follow it, then View at the right. */
   .tbl-docs .td-lead { flex-basis: 100%; }
   .tbl-docs .td-action { order: 4; }
+  /* A status takes the whole row too, so its pill stays on one line inside the panel. */
+  .tbl-stack td:has(> .status:only-child) { grid-column: 1 / -1; }
 }
 @media (max-width: 359px) {
   /* On the narrowest phones a headline figure takes the whole row, so no amount breaks in the middle. */
