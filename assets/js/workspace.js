@@ -68,7 +68,10 @@
         if (ws.tenant.font === 'hanken') ws.tenant.font = 'funnel';
       }
     }
-    ws.tenant.look = 4;
+    // Light is the standard look. A portal still on "Follow device", the previous standard, opens in light once;
+    // Follow device and Dark can be chosen again under Portal and brand, and each investor keeps their own choice.
+    if (look < 5 && (!ws.tenant.appearance || ws.tenant.appearance === 'system')) ws.tenant.appearance = 'light';
+    ws.tenant.look = 5;
     delete ws.tenant.offerings;
     delete ws.tenant.roster;
     ws.offerings = ws.offerings || [];

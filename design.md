@@ -7,6 +7,7 @@ The locked system. Every Hallmark run reads this first and pages share it. Chang
 - Shape of the first page: app screen (every signed-in page, the wizards and the signing page are app screens)
 - Theme: Refract (by request) · redesign: restyle · copy: verbatim
 - Axes: light/grotesk-sans/cool · posture: restrained
+- Light is the standard look and what every portal opens in. Dark is a choice: a firm's (Portal and brand) or a viewer's own (Account), as is following the device.
 - The theme's moving light is left out at the owner's request. The sign-in page alone carries an engraved plate beside the form (lathe-work lines, as on a share certificate), drawn in code in the firm's colors; a firm's own uploaded image takes its place.
 
 ## Tokens

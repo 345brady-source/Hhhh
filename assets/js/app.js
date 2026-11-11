@@ -285,11 +285,12 @@
 
   /* ---------- Appearance ---------- */
   const rootEl = document.documentElement;
-  const hostTheme = rootEl.getAttribute('data-theme');
-  /** The viewer's own choice (Settings) wins; otherwise the client's default; otherwise the device. */
+  // What a host frame asked for before the app loaded (the preview). The page's own static light default is not a host's choice.
+  const hostTheme = rootEl.hasAttribute('data-theme-static') ? null : rootEl.hasAttribute('data-host-theme') ? rootEl.getAttribute('data-host-theme') || null : rootEl.getAttribute('data-theme');
+  /** The viewer's own choice (Settings) wins; otherwise the client's default; otherwise light, the standard look. */
   function applyAppearance() {
     const mine = NS.store.get('appearance', null);
-    const pref = mine || (ws() ? ws().tenant.appearance : 'system');
+    const pref = mine || (ws() && ws().tenant.appearance) || 'light';
     if (pref === 'light' || pref === 'dark') rootEl.setAttribute('data-theme', pref);
     else if (!mine && hostTheme) rootEl.setAttribute('data-theme', hostTheme);
     else rootEl.removeAttribute('data-theme');

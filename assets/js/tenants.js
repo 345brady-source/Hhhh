@@ -52,7 +52,7 @@
     font: 'funnel',
     radius: 'soft',
     nav: 'light',
-    appearance: 'system',
+    appearance: 'light',
     support: { team: 'Investor Relations', email: 'investors@newclient.com', phone: '(212) 555-0100', hours: 'Mon–Fri, 9:00 a.m.–5:00 p.m. ET' },
     disclaimer: 'Information in this portal is provided to existing investors for informational purposes only and is not an offer to sell or a solicitation of an offer to buy any security. [Regulatory disclosures to be provided by counsel.]',
     signin: { headline: 'Investor Portal', sub: 'Sign in to view your investments, distributions and documents.' },
@@ -93,7 +93,7 @@
       font: 'funnel',
       radius: 'soft',
       nav: 'light',
-      appearance: 'system',
+      appearance: 'light',
       home: { about: 'Kestrel Bay Capital invests in lower-middle-market industrial and business services companies alongside founders and management teams. The firm has raised two funds and a series of co-investments and private notes since 2014.', m1v: '$640M', m1l: 'Capital managed', m2v: '14', m2l: 'Companies backed', m3v: '2014', m3l: 'Founded' },
       support: { team: 'Kestrel Bay Investor Relations', email: 'ir@kestrelbaycap.com', phone: '(212) 555-0148', hours: 'Mon–Fri, 8:30 a.m.–6:00 p.m. ET' },
       disclaimer:
@@ -205,7 +205,7 @@
       font: 'franklin',
       radius: 'soft',
       nav: 'light',
-      appearance: 'system',
+      appearance: 'light',
       home: { about: 'Ashwell Ridge acquires and operates multifamily and medical office properties across the Sun Belt, and offers them to investors as syndications and Delaware Statutory Trusts.', m1v: '$410M', m1l: 'Property acquired', m2v: '2,150', m2l: 'Apartment units', m3v: '2011', m3l: 'Founded' },
       support: { team: 'Ashwell Ridge Investor Services', email: 'investors@ashwellridge.com', phone: '(615) 555-0172', hours: 'Mon–Fri, 8:00 a.m.–5:00 p.m. CT' },
       disclaimer:
@@ -314,7 +314,7 @@
       font: 'plex',
       radius: 'soft',
       nav: 'brand',
-      appearance: 'system',
+      appearance: 'light',
       home: { about: 'Greywater owns contracted energy and water infrastructure: community solar, mineral royalties and regulated utilities, held for long-term income.', m1v: '$520M', m1l: 'Assets owned', m2v: '63', m2l: 'Operating assets', m3v: '2016', m3l: 'Founded' },
       support: { team: 'Greywater Investor Relations', email: 'ir@greywaterinfra.com', phone: '(303) 555-0119', hours: 'Mon–Fri, 7:30 a.m.–5:30 p.m. MT' },
       disclaimer:
@@ -419,7 +419,7 @@
       font: 'funnel',
       radius: 'soft',
       nav: 'light',
-      appearance: 'system',
+      appearance: 'light',
       home: { about: 'Pellbrook manages venture, long/short, digital asset and multi-strategy funds for families, endowments and individual investors.', m1v: '$1.9B', m1l: 'Assets under management', m2v: '6', m2l: 'Funds', m3v: '2009', m3l: 'Founded' },
       support: { team: 'Pellbrook Investor Relations', email: 'ir@pellbrookpartners.com', phone: '(415) 555-0163', hours: 'Mon–Fri, 8:00 a.m.–5:00 p.m. PT' },
       disclaimer:

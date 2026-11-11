@@ -1163,7 +1163,7 @@
     ['system', 'Match this device', 'Switches automatically with your device’s light or dark setting']
   ];
   function appearanceHTML() {
-    const current = NS.store.get('appearance', null) || T().appearance || 'system';
+    const current = NS.store.get('appearance', null) || T().appearance || 'light';
     return `<section class="sec settings-sec">
           ${sec('Appearance')}
           <fieldset class="choice settings-choice">
