@@ -40,7 +40,7 @@
     `<label class="${cls}" for="${idp}-name"><span>First name</span><input id="${idp}-name" type="text" autocomplete="given-name" maxlength="60" data-bind="${bind}:first" value="${h(f.first || '')}"${extra || ''}></label><label class="${cls}" for="${idp}-last"><span>Last name</span><input id="${idp}-last" type="text" autocomplete="family-name" maxlength="60" data-bind="${bind}:last" value="${h(f.last || '')}"${extra || ''}>${errHtml || ''}</label>`;
   function signupState() {
     const u = S().ui;
-    if (!u.signup) u.signup = { firm: '', name: '', email: '', password: '', focus: 'realestate', color: '#0F2742', logo: '', logoName: '', errors: {} };
+    if (!u.signup) u.signup = { firm: '', name: '', email: '', password: '', focus: 'realestate', color: '#006C95', logo: '', logoName: '', errors: {} };
     return u.signup;
   }
   const wordmark = () => `<span class="sd-brand">${NS.CV_MARK}<span class="sd-word">Carrow &amp; Vale</span></span>`;

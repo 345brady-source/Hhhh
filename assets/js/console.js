@@ -2832,6 +2832,7 @@
 
   /* ---------- Portal and brand ---------- */
   const PRESETS = [
+    ['#006C95', '#77B6CA', 'Pool blue and water (standard)'],
     ['#0F2742', '#1F7A8C', 'Navy and teal'],
     ['#14304F', '#B4873F', 'Navy and brass'],
     ['#7A2E3A', '#B38B59', 'Burgundy and sand'],

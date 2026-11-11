@@ -119,7 +119,7 @@
         const o = n.audience === 'all' ? null : W().offerings.find((x) => x.id === n.audience);
         const subj = NS.mergeNotice(n.subject, inv, t, n, NS.noticeInvestment(W(), inv, n));
         return `<div class="notice">
-          <div class="notice-text"><span class="notice-date">${date(n.date)}</span><strong>${h(subj)}</strong></div>
+          <div class="notice-text"><time class="notice-date" datetime="${h(n.date)}">${date(n.date)}</time><strong>${h(subj)}</strong></div>
           <div class="notice-actions">${/^call/.test(n.kind || '') && o ? `<button class="link-btn" type="button" data-action="notice-call" data-id="${h(n.id)}" data-off="${h(o.id)}">View capital call</button>` : `<button class="link-btn" type="button" data-action="notice-open" data-id="${h(n.id)}" data-off="${o ? h(o.id) : 'all'}">View documents</button>`}<button class="link-btn notice-dismiss" type="button" data-action="notice-dismiss" data-id="${h(n.id)}">Dismiss</button></div>
         </div>`;
       })
@@ -656,10 +656,10 @@
             ? `<section class="sec feed" aria-label="Updates">${posts
                 .map(
                   (x) => `<article class="post">
-                    <span class="post-date">${x.date ? date(x.date, 'long') : 'Latest'}</span>
+                    ${x.date ? `<time class="post-date" datetime="${h(x.date)}">${date(x.date, 'long')}</time>` : '<span class="post-date">Latest</span>'}
                     <div class="post-body">
-                      <span class="post-topic">${h(x.topic)}${x.about ? ` · ${h(x.about)}` : ''}</span>
                       <h2>${h(x.title)}</h2>
+                      <span class="post-topic">${h(x.topic)}${x.about ? ` · ${h(x.about)}` : ''}</span>
                       ${x.body ? `<p>${h(x.body)}</p>` : ''}
                       <div class="post-foot">${
                         x.notice
@@ -1198,7 +1198,7 @@
       const art = B.safeImage((t.home || {}).hero);
       return `<div class="pt pt-auth">
         <header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${B.lockup(t)}</span></div></header>
-        <main class="pt-main" id="main" tabindex="-1"><div class="auth${art ? ' has-art' : ''}">
+        <main class="pt-main" id="main" tabindex="-1"><div class="auth has-art">
           <div class="auth-card">
           <form class="auth-form" data-form="sign-in" novalidate>
             <h1>${h(t.signin.headline || t.portalName)}</h1>
@@ -1213,10 +1213,15 @@
           </form>
           <aside class="auth-help"><h2>Need help signing in?</h2><p>${h(t.support.team)}</p><p>${h(t.support.phone)}</p><p>${h(t.support.email)}</p><p>${h(t.support.hours)}</p></aside>
           </div>
-          ${art ? `<div class="auth-art" aria-hidden="true"><img src="${art}" alt=""></div>` : ''}
+          <div class="auth-art" aria-hidden="true">${art ? `<img src="${art}" alt="">` : '<canvas class="auth-engrave" aria-hidden="true"></canvas>'}</div>
         </div></main>
         ${footer()}
       </div>`;
+    },
+    after() {
+      // Decoration only: the engraved ground is drawn once the page is in place (engrave.js).
+      const c = document.querySelector('.auth-engrave');
+      if (c && NS.engrave) NS.engrave(c, T().id || T().name);
     }
   };
   NS.forms['sign-in'] = (f) => {

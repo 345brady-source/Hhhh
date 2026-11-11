@@ -1,0 +1,126 @@
+/*
+ * Design tokens: the Refract theme, under this project's own token names.
+ * This file is the source of truth for the standard look. brand.js writes the same names per firm at run time:
+ * a firm's primary color takes the accent role (--brand*), its second color the shade role (--accent*), and a firm
+ * on the standard colors gets exactly the values below. Nothing downstream uses a color, a font or a shadow that is
+ * not declared here. Spacing, type sizes, easings and durations are one shared scale.
+ */
+:root {
+  color-scheme: light;
+
+  /* Spacing: ten steps. Any other spacing length must still sit on the 4px grid. */
+  --space-3xs: 2px; --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px; --space-xl: 40px; --space-2xl: 64px; --space-3xl: 96px; --space-4xl: 144px;
+
+  /* Type: a fixed 1.2 scale for app screens, and its roles. */
+  --text-xs: 0.75rem; --text-sm: 0.875rem; --text-md: 1rem; --text-lg: 1.2rem; --text-xl: 1.44rem; --text-2xl: 1.728rem; --text-3xl: 2.074rem;
+  --text-display-s: 1.44rem; --text-display: 1.728rem; --text-section: 1.2rem; --text-title: 1rem; --text-lead: 1rem;
+  --font-display: "Funnel Display", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Funnel Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-sign: "Caveat", "Segoe Script", "Brush Script MT", cursive;
+  --display-weight: 400; --tracking-display: -0.032em;
+
+  /* Motion: state changes only. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); --ease-in: cubic-bezier(0.7, 0, 0.84, 0); --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms; --dur-short: 220ms; --dur-long: 420ms;
+
+  /* Layout and layers. */
+  --container: 1160px; --gutter: 32px;
+  --control-h: 40px; --control-h-sm: 32px;
+  --z-base: 1; --z-raised: 10; --z-dropdown: 100; --z-sticky: 200; --z-sticky-nav: 300; --z-modal: 400; --z-toast: 500; --z-tooltip: 600;
+
+  /* Paper and ink. */
+  --bg: oklch(98.2% 0.006 95); --page: oklch(98.2% 0.006 95);
+  --surface: oklch(99.7% 0.004 95); --surface-2: oklch(96.4% 0.006 95); --surface-3: oklch(93.6% 0.008 95);
+  --fg: oklch(23% 0.035 245); --fg-2: oklch(36% 0.035 245); --fg-3: oklch(50% 0.025 240);
+  --line: oklch(89.5% 0.008 230); --line-2: oklch(93.5% 0.006 230); --line-strong: #8C9195;
+
+  /* The accent: the main action, the current tab, focus, links on hover. */
+  --brand: oklch(50% 0.12 234); --brand-hover: oklch(44% 0.12 236); --brand-ink: oklch(99% 0.003 95); --brand-soft: oklch(94% 0.025 220); --brand-text: oklch(50% 0.12 234);
+  --focus: oklch(56% 0.14 234);
+
+  /* The shade: the second data tone. */
+  --accent: oklch(74% 0.07 220); --accent-ink: oklch(23% 0.035 245); --accent-soft: oklch(86% 0.05 212); --accent-text: #3D7C8E;
+
+  /* Data marks. */
+  --chart-1: oklch(50% 0.12 234); --chart-muted: oklch(50% 0.025 240); --tint-1: oklch(94% 0.025 220); --tint-2: oklch(86% 0.05 212);
+  --seg-1: oklch(50% 0.12 234); --seg-2: oklch(74% 0.07 220); --seg-3: oklch(93.6% 0.008 95);
+  --seg-1-ink: oklch(99% 0.003 95); --seg-2-ink: oklch(23% 0.035 245); --seg-3-ink: oklch(23% 0.035 245);
+
+  /* State. */
+  --good: oklch(50% 0.12 150); --warn: oklch(54% 0.12 70); --bad: oklch(52% 0.19 27);
+
+  /* The top bar and the logo marks. */
+  --nav-bg: oklch(99.7% 0.004 95); --nav-fg: oklch(36% 0.035 245); --nav-fg-strong: oklch(23% 0.035 245); --nav-muted: oklch(50% 0.025 240); --nav-line: oklch(89.5% 0.008 230);
+  --nav-hover: oklch(96.4% 0.006 95); --nav-active-bg: oklch(94% 0.025 220); --nav-active-fg: oklch(23% 0.035 245); --nav-marker: oklch(50% 0.12 234);
+  --nav-mark-p: oklch(50% 0.12 234); --nav-mark-a: oklch(74% 0.07 220); --nav-mark-ink: oklch(99% 0.003 95);
+  --hero-bg: oklch(50% 0.12 234); --hero-fg: oklch(99% 0.003 95); --hero-fg-2: #D3E6EE; --hero-line: #4D8BAB;
+  --hero-mark-p: oklch(99% 0.003 95); --hero-mark-a: oklch(74% 0.07 220); --hero-mark-ink: oklch(50% 0.12 234);
+  --mark-p: oklch(50% 0.12 234); --mark-a: oklch(74% 0.07 220); --mark-ink: oklch(99% 0.003 95);
+
+  /* Documents (statements, letters) stay paper in both modes, like a PDF. */
+  --paper-bg: oklch(99.7% 0.004 95); --paper-fg: oklch(23% 0.035 245); --paper-fg-2: oklch(36% 0.035 245); --paper-line: oklch(89.5% 0.008 230); --paper-soft: oklch(96.4% 0.006 95);
+  --paper-brand: oklch(50% 0.12 234); --paper-brand-fill: oklch(50% 0.12 234); --paper-brand-ink: oklch(99% 0.003 95);
+  --paper-mark-p: oklch(50% 0.12 234); --paper-mark-a: oklch(74% 0.07 220); --paper-mark-ink: oklch(99% 0.003 95);
+  --paper-shadow: 0 1px 3px oklch(40% 0.05 230 / 0.16), 0 8px 24px -8px oklch(40% 0.05 230 / 0.18);
+  --plate: oklch(99.7% 0.004 95);
+
+  /* Shape and surface. Panels are clear: a lit top edge and a shadow that falls down and right, tinted, never grey. */
+  --r-card: 22px; --r-inner: 12px; --r-pill: 999px; --r-sm: 8px; --r-md: 12px; --r-lg: 12px; --rule-hair: 1px;
+  --edge-light: inset 0 1px 0 oklch(100% 0 0 / 0.9), inset 0 0 0 1px oklch(100% 0 0 / 0.55);
+  --shadow-card: 18px 28px 48px -26px oklch(52% 0.09 220 / 0.38), 2px 3px 6px -2px oklch(40% 0.05 230 / 0.12);
+  --shadow-cast: 28px 40px 70px -30px oklch(60% 0.11 212 / 0.45);
+  --shadow-lift: 22px 34px 56px -26px oklch(52% 0.09 220 / 0.42), 2px 4px 8px -2px oklch(40% 0.05 230 / 0.14);
+  --shadow: 0 24px 64px -24px oklch(30% 0.06 230 / 0.45), 0 2px 6px -2px oklch(30% 0.05 230 / 0.18);
+  --scrim: oklch(23% 0.035 245 / 0.5);
+}
+
+/*
+ * Dark: the same system re-derived, never inverted. The paper goes deep in the ink's hue and each surface sits a step
+ * lighter than the one under it; the accent gives up chroma and gains lightness; shadows are off and a surface is
+ * edged with an inset hairline instead.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #070D12; --page: #070D12; --surface: #0F151A; --surface-2: #151B21; --surface-3: #1C2228;
+    --fg: #E4ECF3; --fg-2: #C3CCD3; --fg-3: #96A0A8;
+    --line: #272F34; --line-2: #1F2529; --line-strong: #5C646A;
+    --brand: #639AB9; --brand-hover: #72AAC9; --brand-ink: #070D12; --brand-soft: #1E2C36; --brand-text: #639AB9; --focus: #6FA6C6;
+    --accent: #88B3C1; --accent-ink: #070D12; --accent-soft: #2F3F46; --accent-text: #88B3C1;
+    --chart-1: #639AB9; --chart-muted: #798288; --tint-1: #263944; --tint-2: #2F3F46;
+    --seg-1: #639AB9; --seg-2: #88B3C1; --seg-3: #464E54; --seg-1-ink: #070D12; --seg-2-ink: #070D12; --seg-3-ink: #E4ECF3;
+    --good: oklch(78% 0.12 150); --warn: oklch(82% 0.11 80); --bad: oklch(74% 0.14 25);
+    --nav-bg: #0F151A; --nav-fg: #AFB7BE; --nav-fg-strong: #E4ECF3; --nav-muted: #8A9298; --nav-line: #272F34;
+    --nav-hover: #191F25; --nav-active-bg: #263944; --nav-active-fg: #E4ECF3; --nav-marker: #639AB9;
+    --nav-mark-p: #639AB9; --nav-mark-a: #88B3C1; --nav-mark-ink: #0F151A;
+    --hero-bg: #151B21; --hero-fg: #E4ECF3; --hero-fg-2: #A8B0B7; --hero-line: #31373E;
+    --hero-mark-p: #E4ECF3; --hero-mark-a: #88B3C1; --hero-mark-ink: #151B21;
+    --mark-p: #639AB9; --mark-a: #88B3C1; --mark-ink: #0F151A;
+    --edge-light: inset 0 0 0 1px #272F34;
+    --shadow-card: none; --shadow-cast: none; --shadow-lift: none;
+    --shadow: 0 24px 64px -24px oklch(8% 0.02 245 / 0.8);
+    --scrim: oklch(8% 0.02 245 / 0.66);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #070D12; --page: #070D12; --surface: #0F151A; --surface-2: #151B21; --surface-3: #1C2228;
+  --fg: #E4ECF3; --fg-2: #C3CCD3; --fg-3: #96A0A8;
+  --line: #272F34; --line-2: #1F2529; --line-strong: #5C646A;
+  --brand: #639AB9; --brand-hover: #72AAC9; --brand-ink: #070D12; --brand-soft: #1E2C36; --brand-text: #639AB9; --focus: #6FA6C6;
+  --accent: #88B3C1; --accent-ink: #070D12; --accent-soft: #2F3F46; --accent-text: #88B3C1;
+  --chart-1: #639AB9; --chart-muted: #798288; --tint-1: #263944; --tint-2: #2F3F46;
+  --seg-1: #639AB9; --seg-2: #88B3C1; --seg-3: #464E54; --seg-1-ink: #070D12; --seg-2-ink: #070D12; --seg-3-ink: #E4ECF3;
+  --good: oklch(78% 0.12 150); --warn: oklch(82% 0.11 80); --bad: oklch(74% 0.14 25);
+  --nav-bg: #0F151A; --nav-fg: #AFB7BE; --nav-fg-strong: #E4ECF3; --nav-muted: #8A9298; --nav-line: #272F34;
+  --nav-hover: #191F25; --nav-active-bg: #263944; --nav-active-fg: #E4ECF3; --nav-marker: #639AB9;
+  --nav-mark-p: #639AB9; --nav-mark-a: #88B3C1; --nav-mark-ink: #0F151A;
+  --hero-bg: #151B21; --hero-fg: #E4ECF3; --hero-fg-2: #A8B0B7; --hero-line: #31373E;
+  --hero-mark-p: #E4ECF3; --hero-mark-a: #88B3C1; --hero-mark-ink: #151B21;
+  --mark-p: #639AB9; --mark-a: #88B3C1; --mark-ink: #0F151A;
+  --edge-light: inset 0 0 0 1px #272F34;
+  --shadow-card: none; --shadow-cast: none; --shadow-lift: none;
+  --shadow: 0 24px 64px -24px oklch(8% 0.02 245 / 0.8);
+  --scrim: oklch(8% 0.02 245 / 0.66);
+}
