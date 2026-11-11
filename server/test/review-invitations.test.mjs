@@ -43,8 +43,8 @@ function submission(over = {}) {
     {
       investor: { id: 'HRC-0007', contact: 'Zelda Quixote', title: 'Zelda Quixote', email: 'zelda@investor.example', type: 'individual', verify: { identity: { status: 'not_started' }, aml: { status: 'not_started' }, accreditation: { status: 'not_started' } } },
       request: { id: 'req-1', type: 'subscription', offeringId: 'hr-fund-ii', investorId: 'HRC-0007', cents: 25000000, status: 'pending', envelopeId: 'env-1' },
-      envelope: { id: 'env-1', status: 'sent', requestId: 'req-1', docId: 'doc-env-1' },
-      files: { 'doc-env-1': pdf('SIGNED').toString('base64') },
+      envelope: { id: 'env-1', status: 'sent', requestId: 'req-1', docId: 'tpl-doc-1', workDocId: 'env-1-work' },
+      files: { 'env-1-work': pdf('SIGNED').toString('base64') },
       docs: [],
       audit: [],
       notifications: []
@@ -103,7 +103,7 @@ test('the sponsor’s notification does not repeat verification and countersigna
     // No verification was ever run on this server for HRC-0007, and the investor cannot countersign.
     const forged = submission({
       investor: Object.assign({}, submission().investor, { verify: { identity: { status: 'passed' }, aml: { status: 'clear' }, accreditation: { status: 'verified' } }, kyc: { status: 'approved' } }),
-      envelope: { id: 'env-1', status: 'completed', requestId: 'req-1', docId: 'doc-env-1' }
+      envelope: { id: 'env-1', status: 'completed', requestId: 'req-1', docId: 'tpl-doc-1', workDocId: 'env-1-work' }
     });
     assert.equal((await complete(base, r.token, forged)).status, 200);
     const note = await notification(base, r.id);

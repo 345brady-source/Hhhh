@@ -345,7 +345,7 @@
     i.onboarding = Object.assign({}, i.onboarding, { status: 'complete', step: 5, completed: now });
     if (IV()) {
       // DIY edition: the connections' results decide; integrations.js screens owners and approves or holds.
-      if (NS.audit) NS.audit.log(W(), { action: 'Account activated', record: i.id, detail: `Profile, ${i.taxForm || 'tax form'} and distribution account confirmed; verification ${IV().vOf(i).decision.status}`, actor: `${i.title} (investor)` });
+      if (NS.audit) NS.audit.log(W(), { action: 'Account activated', record: i.id, detail: `Profile, ${i.taxForm || 'tax form'} and distribution account confirmed; verification ${(IV().peek ? IV().peek(i) : IV().vOf(i)).decision.status}`, actor: `${i.title} (investor)` });
       return IV()
         .finishOnboarding(W(), i, d)
         .then(() => NS.app.save(true));
@@ -1460,16 +1460,17 @@
     NS.app.save(true);
   }
   /**
-   * The integration server's own file tests (server/lib/invitations.mjs: isPdf, isPng, isJpeg). It refuses the whole
-   * submission for one file that fails them, and every Try again would fail the same way, so such a file is never sent.
+   * The integration server's own file tests (server/lib/invitations.mjs: isPdf, isPng, isJpeg; an agreement copy must be a
+   * PDF). It refuses the whole submission for one file that fails them, and every Try again would fail the same way, so such
+   * a file is never sent.
    */
-  async function sendable(b) {
+  async function sendable(b, pdfOnly) {
     const x = new Uint8Array(await b.slice(0, 8).arrayBuffer());
     const n = b.size;
     const pdf = n > 5 && String.fromCharCode(x[0], x[1], x[2], x[3], x[4]) === '%PDF-';
     const png = n > 8 && [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((y, k) => x[k] === y);
     const jpeg = n > 3 && x[0] === 0xff && x[1] === 0xd8 && x[2] === 0xff;
-    return pdf || png || jpeg;
+    return pdf || (!pdfOnly && (png || jpeg));
   }
   const mb = (n) => (n / 1048576).toFixed(1).replace(/\.0$/, '');
   async function sendCompletion(c) {
@@ -1502,7 +1503,7 @@
         b = null;
       }
       const fits = !!b && total + b.size <= MAX_FILES;
-      if (fits && (await sendable(b))) {
+      if (fits && (await sendable(b, id === agreement))) {
         total += b.size;
         files[id] = await blobB64(b);
         continue;
@@ -1574,7 +1575,7 @@
         const st = IV() ? IV().status(ws, i) : { key: 'approved', label: 'Verified' };
         if (NS.audit && c.it.existing) NS.audit.log(ws, { action: 'Invitation to subscribe finished', record: i.id, fund: c.off ? c.off.id : c.it.offeringId, detail: `${i.title}: ${c.req && c.off ? `subscription of ${money(c.off, c.req.cents / 100)} submitted from the invitation link` : 'no subscription: the offering is no longer raising'}`, actor: `${i.title} (investor)` });
         else if (NS.audit) NS.audit.log(ws, { action: 'Account activated', record: i.id, fund: c.off ? c.off.id : '', detail: `${i.title}: onboarding finished from the invitation link; ${i.taxForm || 'tax form'} and distribution account confirmed; verification ${st.label.toLowerCase()}${c.req && c.off ? `; subscription of ${money(c.off, c.req.cents / 100)} submitted` : ''}`, actor: `${i.title} (investor)` });
-        if (st.key === 'review') notify(ws, 'verification_review', `${i.title} is held for verification review`, (IV().vOf(i).decision.reason || 'A check needs a person to look at it') + '. Their paperwork is complete.', 'console-kyc');
+        if (st.key === 'review') notify(ws, 'verification_review', `${i.title} is held for verification review`, ((IV().peek ? IV().peek(i) : IV().vOf(i)).decision.reason || 'A check needs a person to look at it') + '. Their paperwork is complete.', 'console-kyc');
         NS.app.save(true);
         if (!isRemote(ws)) {
           let done = false;

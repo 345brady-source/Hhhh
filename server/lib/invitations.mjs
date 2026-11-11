@@ -208,10 +208,11 @@ function cleanSubmission(body, rec, snap) {
   // the investor's own upload named by their verification record (integrations.js names uploads kyc-<investor id>-<time>).
   // The console imports nothing else either (assets/js/invitations.js merge). An investor already on file brings back an
   // accreditation check at most, so only its evidence.
-  const allowed = {}; // file id -> 'agreement' (a PDF) or 'evidence' (a PDF, PNG or JPEG)
+  const allowed = Object.create(null); // file id -> 'agreement' (a PDF) or 'evidence' (a PDF, PNG or JPEG)
+  let signedId = '';
   if (env && /^[\w.-]{1,70}$/.test(String(env.id || ''))) {
     if (env.workDocId === `${env.id}-work`) allowed[env.workDocId] = 'agreement';
-    if (env.status === 'completed' && env.signedDocId === `${env.id}-signed`) allowed[env.signedDocId] = 'agreement';
+    if (env.status === 'completed' && env.signedDocId === `${env.id}-signed`) allowed[(signedId = env.signedDocId)] = 'agreement';
   }
   const v = obj(out.investor.verify) || {};
   const kycName = new RegExp(`^kyc-${reEsc(rec.investorId)}-[a-z0-9]+$`);
@@ -221,27 +222,7 @@ function cleanSubmission(body, rec, snap) {
   }
   if (body.docs !== undefined && !Array.isArray(body.docs)) throw fail(400, 'docs must be a list');
   if ((body.docs || []).length > 50) throw fail(400, 'docs: at most 50 entries');
-  // One document listing at most: the investor's signed copy of a completed agreement (esign.js lists it once everyone has
-  // signed), for this investor alone. It is rebuilt from known fields, so a listing from the browser can never reach other
-  // investors (an audience or investor list of its own), pass as an offering document, or name a file it did not bring.
-  const signedId = env && allowed[env.signedDocId] ? env.signedDocId : '';
-  const listed = signedId ? (cleanJson(body.docs || [], 1 * MB, 'docs') || []).filter(obj).find((d) => d.id === signedId) : null;
-  out.docs = listed
-    ? [
-        {
-          id: signedId,
-          title: clip(listed.title, 200),
-          fileName: fileName(listed.fileName, 'Subscription_agreement_signed.pdf'),
-          type: 'application/pdf',
-          cat: 'Legal',
-          date: /^\d{4}-\d{2}-\d{2}$/.test(String(listed.date || '')) ? String(listed.date) : '',
-          audience: 'investors',
-          investors: [rec.investorId],
-          offeringId: (snap.offering && snap.offering.id) || null,
-          envelopeId: String(env.id)
-        }
-      ]
-    : [];
+  const docs = (cleanJson(body.docs || [], 1 * MB, 'docs') || []).filter(obj);
   if (body.audit !== undefined && !Array.isArray(body.audit)) throw fail(400, 'audit must be a list');
   out.audit = (body.audit || []).slice(0, 500).map((a) => {
     const x = obj(a) || {};
@@ -275,6 +256,27 @@ function cleanSubmission(body, rec, snap) {
     if (!isPdf(buf) && !isPng(buf) && !isJpeg(buf)) throw fail(400, `files.${k} is not a PDF, PNG or JPEG`);
     out.fileBufs.push([k, buf]);
   }
+  // One document listing at most: the investor's signed copy of a completed agreement (esign.js lists it once everyone has
+  // signed), when that copy came with this submission, for this investor alone. It is rebuilt from known fields, so a listing
+  // from the browser can never reach other investors (an audience or investor list of its own), pass as an offering document,
+  // or point at a file it did not bring.
+  const listed = signedId && out.fileBufs.some(([k]) => k === signedId) ? docs.find((d) => d.id === signedId) : null;
+  out.docs = listed
+    ? [
+        {
+          id: signedId,
+          title: clip(listed.title, 200),
+          fileName: fileName(listed.fileName, 'Subscription_agreement_signed.pdf'),
+          type: 'application/pdf',
+          cat: 'Legal',
+          date: /^\d{4}-\d{2}-\d{2}$/.test(String(listed.date || '')) ? String(listed.date) : '',
+          audience: 'investors',
+          investors: [rec.investorId],
+          offeringId: (snap.offering && snap.offering.id) || null,
+          envelopeId: String(env.id)
+        }
+      ]
+    : [];
   return out;
 }
 

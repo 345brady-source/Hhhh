@@ -758,6 +758,8 @@
       if (envIn.status === 'completed' && kept[envIn.signedDocId] === undefined) Object.assign(envIn, { status: 'sent', completedAt: null, signedDocId: null, sha256Signed: null });
       // A work copy that did not come with this submission must not be some other file already stored under that id.
       if (envIn.workDocId && kept[envIn.workDocId] === undefined && (await getFile(envIn.workDocId))) envIn.workDocId = null;
+      // A completed envelope arrives with its signed copy only (the device does not send the work copy then): no dangling pointer.
+      if (envIn.status === 'completed' && envIn.workDocId && kept[envIn.workDocId] === undefined) envIn.workDocId = null;
       envIn.requestId = rIn && rIn.envelopeId === envIn.id ? rIn.id : null;
       ws.envelopes.push(envIn);
     }
