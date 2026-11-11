@@ -890,7 +890,7 @@
             ${row('Taxpayer ID', inv.tinLast4 ? `ending ${h(inv.tinLast4)}` : 'Not provided')}
             ${row('Accreditation', (() => {
               const IVN = NS.integrations;
-              if (IVN && IVN.active(W()) && inv.verify) {
+              if (IVN && IVN.active(W()) && (inv.verify || IVN.peek)) {
                 const a = (IVN.peek ? IVN.peek(inv) : IVN.vOf(inv)).accreditation;
                 if (a.status === 'verified' && IVN.selfCertified && IVN.selfCertified(a)) return `Self-certified on ${date(a.verifiedAt)} (accepted for Rule 506(b) offerings; Rule 506(c) offerings need a verification)`;
                 if (a.status === 'verified') return `Verified by ${h(IVN.via(W(), a, 'accreditation') || 'a third party')} on ${date(a.verifiedAt)}${a.expiresAt ? `, ${a.expiresAt < NS.dates.today() ? 'expired' : 'valid until'} ${date(a.expiresAt)}` : ''}${a.expiresAt && a.expiresAt < NS.dates.today() ? ' <button class="link-btn" type="button" data-action="iv-start" data-kind="accreditation">Verify again</button>' : ''}`;

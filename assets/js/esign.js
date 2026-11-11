@@ -268,9 +268,11 @@
     return pageCache[docId];
   }
   function pagesHTML(env, layer) {
-    const c = pagesOf(env.docId);
+    // An imported envelope whose template file is gone keeps only its work or signed copy: show that rather than an error.
+    const src = env.docId || env.workDocId || env.signedDocId || '';
+    const c = pagesOf(src);
     if (c.status === 'loading') return '<p class="es-loading" role="status">Loading document…</p>';
-    if (c.status === 'error') return `<div class="es-note es-note-bad" role="alert"><span>${h(c.error)}</span><button class="${S().route === 'sign' || S().route === 'invite' ? 'btn btn-small' : 'cs-btn cs-btn-small'}" type="button" data-action="es-pages-retry" data-doc="${h(env.docId)}">Try again</button></div>`;
+    if (c.status === 'error') return `<div class="es-note es-note-bad" role="alert"><span>${h(c.error)}</span><button class="${S().route === 'sign' || S().route === 'invite' ? 'btn btn-small' : 'cs-btn cs-btn-small'}" type="button" data-action="es-pages-retry" data-doc="${h(src)}">Try again</button></div>`;
     const n = c.pages.length;
     return c.pages
       .map(
@@ -1151,6 +1153,7 @@
   NS.actions['es-dl-orig'] = (el) => {
     const env = envById(W(), el.getAttribute('data-id'));
     if (!env) return;
+    if (!env.docId) return U.toast('The original document is not stored for this agreement. Download the signed copy instead.');
     files()
       .get(env.docId)
       .then((b) => (b ? U.download(env.fileName, b, { mime: 'application/pdf' }) : U.toast('The file is stored in a different browser.')));

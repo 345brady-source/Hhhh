@@ -202,7 +202,8 @@ function cleanSubmission(body, rec, snap) {
     if (!locked) {
       const c = Number(request.cents);
       if (!Number.isInteger(c) || c <= 0 || c > 1e15) throw fail(400, 'request.cents must be a positive whole number of cents');
-      const min = Math.round((Number(off.minimum) || 0) * 100);
+      const cls = Array.isArray(off.classes) ? off.classes.find((x) => x && typeof x === 'object' && String(x.id) === String(request.cls || '')) : null;
+      const min = Math.round(Math.max(Number(off.minimum) || 0, (cls && Number(cls.minimum)) || 0) * 100);
       if (min > 0 && c < min) throw fail(400, 'request.cents is below the offering minimum');
     }
     out.request = Object.assign(cleanJson(request, 256 * KB, 'request'), { investorId: rec.investorId }, off.id ? { offeringId: off.id } : {}, locked ? { cents: snap.invitation.cents } : {});

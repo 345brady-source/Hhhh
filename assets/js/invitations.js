@@ -336,8 +336,9 @@
     const env = envOf(ws, r);
     const st = inv && IV() && IV().active(ws) ? IV().status(ws, inv) : null;
     const parts = [];
-    if (r && off) parts.push(`${money(off, r.cents)} subscription to ${off.name}`);
-    else if (it.requestDropped) parts.push(`${it.existing ? 'Their' : 'Account activated; their'} subscription${off ? ` to ${off.name}` : ''} from their device was not imported (${it.requestDropped}); ask them to subscribe again`);
+    // A request this invitation's import dropped comes first: an earlier request for the same offering is not this one.
+    if (it.requestDropped) parts.push(`${it.existing ? 'Their' : 'Account activated; their'} subscription${off ? ` to ${off.name}` : ''} from their device was not imported (${it.requestDropped}); ask them to subscribe again`);
+    else if (r && off) parts.push(`${money(off, r.cents)} subscription to ${off.name}`);
     else if (off && !it.existing) parts.push(`Account activated; no subscription to ${off.name}${off.status !== 'Raising' ? ', which stopped raising before they reached that step' : ''}`);
     else if (off) parts.push(`No subscription to ${off.name}${off.status !== 'Raising' ? ', which stopped raising before they reached that step' : ''}`);
     else parts.push('Account activated');
