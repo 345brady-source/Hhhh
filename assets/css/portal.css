@@ -593,3 +593,7 @@ a.list-title:active, .link-btn.list-title:active, a:active > .list-title { color
   .tbl-docs .td-lead { flex-basis: 100%; }
   .tbl-docs .td-action { order: 4; }
 }
+@media (max-width: 359px) {
+  /* On the narrowest phones a headline figure takes the whole row, so no amount breaks in the middle. */
+  .figs, .sec .figs, .sheet .figs { grid-template-columns: minmax(0, 1fr); }
+}
