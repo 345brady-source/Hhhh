@@ -316,7 +316,7 @@
             <td class="num">${holdersCount(o.id)}</td>
             <td>${h((o.distribution || {}).frequency || '')}${nextOf(o) ? `<span class="sub">Next ${date(nextOf(o).date)}</span>` : ''}</td>
             <td>${h(x.value)}<span class="sub">${h(x.label)}</span></td>
-            <td>${h(o.status)}</td>
+            <td>${badge('adj', o.status)}</td>
           </tr>`;
         })
         .join('');
@@ -875,7 +875,7 @@
     return `<div class="tbl-scroll"><table class="cs-tbl"><thead><tr><th scope="col">Payment date</th><th scope="col">Offering</th><th scope="col">Type</th><th scope="col" class="num">Amount</th><th scope="col" class="num">Investors</th><th scope="col">Status</th>${withFile ? '<th scope="col"><span class="sr-only">ACH file</span></th>' : ''}</tr></thead><tbody>${runs
       .map((r) => {
         const n = NS.data.allocate(W(), r).filter((a) => a.cents > 0).length;
-        return `<tr><td class="nowrap">${date(r.date)}</td><td>${h(name(r.offeringId))}</td><td>${h(r.type)}</td><td class="num">${usdc(r.total)}</td><td class="num">${n}</td><td>${r.status === 'scheduled' ? 'Scheduled' : 'Paid'}</td>${
+        return `<tr><td class="nowrap">${date(r.date)}</td><td>${h(name(r.offeringId))}</td><td>${h(r.type)}</td><td class="num">${usdc(r.total)}</td><td class="num">${n}</td><td>${r.status === 'scheduled' ? badge('warn', 'Scheduled') : badge('adj', 'Paid')}</td>${
           withFile ? `<td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="dist-load" data-id="${h(r.id)}">ACH file</button></td>` : ''
         }</tr>`;
       })

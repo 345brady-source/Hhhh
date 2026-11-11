@@ -1,179 +1,247 @@
+/* Hallmark · shape: app screen · genre: atmospheric · theme: Refract (by request)
+ * nav: the firm's top bar (portal) and the console menu · signature: the document being signed, on white paper · states: default, hover, focus, active, disabled, filled, over, locked, selected, loading, error · refract: light left out/pool
+ * axes: light/grotesk-sans/cool · posture: restrained · contrast: pass · redesign: restyle · v2.0.0 */
 /*
- * E-sign: envelope editor (console), signing experience (portal and
- * countersignature), adopt-signature dialog. Page images are always white
- * paper, so anything drawn on them uses paper ink in both themes; chrome
- * around them uses the portal (--fg …) or console (--cv-…) tokens.
+ * E-sign: envelope editor (console), signing experience (portal and countersignature), adopt-signature dialog.
+ * Page images are always white paper, so anything drawn on them uses paper ink in both themes; the chrome around
+ * them uses the --es-* tokens, which come from the console (--cv-…) in the console and from the firm's own theme
+ * (--brand, --fg …) wherever an investor signs. The page boxes and the field overlays keep their geometry: only
+ * their colors are tokens.
  */
 :root {
-  --es-paper: #FFFFFF; --es-paper-ink: #0B1F44; --es-paper-line: #D6D6D6;
-  --es-fg: var(--fg); --es-fg-2: var(--fg-2); --es-fg-3: var(--fg-3); --es-line: var(--line); --es-surface: var(--surface); --es-surface-2: var(--surface-2);
-  --es-accent: var(--brand); --es-accent-text: var(--brand-text); --es-focus: var(--focus); --es-good: var(--good); --es-bad: var(--bad);
-  --es-page-bg: var(--surface-3);
+  /* Paper, the signing ink and the required mark stay the same in light and dark, like a printed page. */
+  --es-paper: var(--paper-bg); --es-paper-ink: #0B1F44; --es-paper-ink-2: var(--paper-fg-2); --es-paper-line: var(--paper-line); --es-paper-soft: var(--paper-soft); --es-paper-bad: #B3261E;
+  --es-paper-shadow: var(--paper-shadow);
+  --es-fg: var(--fg); --es-fg-2: var(--fg-2); --es-fg-3: var(--fg-3); --es-line: var(--line); --es-line-strong: var(--line-strong); --es-surface: var(--surface); --es-surface-2: var(--surface-2);
+  --es-accent: var(--brand); --es-accent-ink: var(--brand-ink); --es-accent-text: var(--brand-text); --es-focus: var(--focus); --es-good: var(--good); --es-warn: var(--warn); --es-bad: var(--bad);
+  --es-page-bg: var(--surface-3); --es-font: var(--font-body); --es-mono: var(--font-mono);
 }
+/* The console: the product's own chrome. */
 .cs, .mode-console .dlg-es {
-  --es-fg: var(--cv-ink); --es-fg-2: var(--cv-ink-2); --es-fg-3: var(--cv-ink-3); --es-line: var(--cv-line); --es-surface: var(--cv-panel); --es-surface-2: var(--cv-panel-2);
-  --es-accent: var(--cv-accent); --es-accent-text: var(--cv-link); --es-focus: var(--cv-focus); --es-good: var(--cv-ok); --es-bad: var(--cv-bad);
-  --es-page-bg: var(--cv-panel-2);
+  --es-fg: var(--cv-ink); --es-fg-2: var(--cv-ink-2); --es-fg-3: var(--cv-ink-3); --es-line: var(--cv-line); --es-line-strong: var(--cv-line-strong, var(--line-strong)); --es-surface: var(--cv-panel); --es-surface-2: var(--cv-panel-2);
+  --es-accent: var(--cv-accent); --es-accent-ink: var(--cv-accent-ink); --es-accent-text: var(--cv-link); --es-focus: var(--cv-focus); --es-good: var(--cv-ok); --es-warn: var(--cv-warn); --es-bad: var(--cv-bad);
+  --es-page-bg: var(--cv-panel-2); --es-font: var(--cv-font, var(--font-body)); --es-mono: var(--cv-mono, var(--font-mono));
+}
+/* The investor portal, the invitation wizard and their dialogs: the firm's own theme, whatever surrounds them. */
+.pt, .mode-portal .dlg-es, .mode-standalone .dlg-es {
+  --es-fg: var(--fg); --es-fg-2: var(--fg-2); --es-fg-3: var(--fg-3); --es-line: var(--line); --es-line-strong: var(--line-strong); --es-surface: var(--surface); --es-surface-2: var(--surface-2);
+  --es-accent: var(--brand); --es-accent-ink: var(--brand-ink); --es-accent-text: var(--brand-text); --es-focus: var(--focus); --es-good: var(--good); --es-warn: var(--warn); --es-bad: var(--bad);
+  --es-page-bg: var(--surface-3); --es-font: var(--font-body); --es-mono: var(--font-mono);
 }
 
 /* ---------- Shared ---------- */
-.es-dot { display: inline-block; flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--sc); margin-right: 6px; vertical-align: baseline; }
-.es-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.es-row-end { justify-content: flex-end; margin-top: 16px; }
-.es-note { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; border: 1px solid var(--es-line); border-left: 3px solid var(--es-accent); background: var(--es-surface-2); color: var(--es-fg); font-size: 14px; line-height: 1.45; border-radius: 6px; }
-.es-note .i { flex: none; margin-top: 2px; }
-.es-note-bad { border-left-color: var(--es-bad); color: var(--es-bad); flex-wrap: wrap; align-items: center; justify-content: space-between; }
-.es-loading { padding: 40px 0; text-align: center; color: var(--es-fg-3); }
-.es-hash { font-family: var(--cv-mono, monospace); font-size: 12px; overflow-wrap: anywhere; word-break: break-all; }
+.es-dot { display: inline-block; flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--sc); margin-right: var(--space-xs); vertical-align: baseline; }
+.es-row { display: flex; flex-wrap: wrap; gap: var(--space-xs); align-items: center; }
+.es-row-end { justify-content: flex-end; margin-top: var(--space-md); }
+.es-note { display: flex; gap: var(--space-sm); align-items: flex-start; padding: var(--space-sm) var(--space-md); background: var(--es-surface-2); color: var(--es-fg); font-size: var(--text-sm); line-height: 1.45; border-radius: var(--r-inner); }
+.es-note .i { flex: none; margin-top: var(--space-3xs); color: var(--es-fg-3); }
+.es-note-bad { background: color-mix(in oklab, var(--es-bad) 9%, var(--es-surface)); color: var(--es-bad); flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.es-loading { padding: var(--space-xl) 0; text-align: center; color: var(--es-fg-3); }
+.es-hash { font-family: var(--es-mono); font-size: var(--text-xs); overflow-wrap: anywhere; word-break: break-all; }
+/* Emphasis is the body face at 500: no heavier weight is loaded. */
+.es-sign strong, .es-note strong, .es-adopt strong, .es-banner strong, .es-who strong, .es-kv strong, .es-sel strong { font-weight: 500; }
 
 /* ---------- Pages and field overlays ---------- */
-.es-doc { display: flex; flex-direction: column; gap: 6px; align-items: center; min-width: 0; padding: 16px; background: var(--es-page-bg); border-radius: 8px; }
+/* The tray is a well; the pages are paper lying in it. */
+.es-doc { display: flex; flex-direction: column; gap: var(--space-xs); align-items: center; min-width: 0; padding: var(--space-md); background: var(--es-page-bg); border-radius: var(--r-inner); }
 .es-page-wrap { width: 100%; max-width: 860px; }
-.es-page { position: relative; width: 100%; background: var(--es-paper); color-scheme: light; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18), 0 6px 18px rgba(0, 0, 0, 0.08); user-select: none; -webkit-user-select: none; }
+.es-page { position: relative; width: 100%; background: var(--es-paper); color-scheme: light; box-shadow: var(--es-paper-shadow); user-select: none; -webkit-user-select: none; }
 .es-page > img { display: block; width: 100%; height: 100%; pointer-events: none; }
-.es-page-no { margin: 6px 0 14px; text-align: center; font-size: 12px; color: var(--es-fg-3); }
+.es-page-no { margin: var(--space-xs) 0 var(--space-sm); text-align: center; font-size: var(--text-xs); font-variant-numeric: tabular-nums; color: var(--es-fg-3); }
 .es-doc.is-placing .es-page { cursor: crosshair; outline: 2px dashed var(--es-focus); outline-offset: 2px; }
 
 /* Editor fields */
 .es-fld { position: absolute; box-sizing: border-box; container-type: size; display: flex; align-items: center; padding: 0 3px; border: 1.5px solid var(--sc); border-radius: 2px; background: color-mix(in srgb, var(--sc) 16%, transparent); color: var(--es-paper-ink); cursor: move; touch-action: none; overflow: visible; }
+.es-fld:hover { background: color-mix(in srgb, var(--sc) 24%, transparent); }
+.es-fld:active { background: color-mix(in srgb, var(--sc) 30%, transparent); }
 .es-fld:focus { outline: none; }
-.es-fld:focus-visible, .es-fld.is-sel { box-shadow: 0 0 0 2px var(--es-paper), 0 0 0 4px var(--sc); z-index: 2; }
-.es-fld-label { min-width: 0; max-width: 100%; font-size: 11px; font-size: clamp(7px, 58cqh, 13px); font-weight: 600; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: color-mix(in srgb, var(--sc) 70%, #000); font-family: var(--cv-font, sans-serif); pointer-events: none; }
-.es-fld-label b { color: #B3261E; margin-left: 1px; }
+.es-fld:focus-visible { outline: 2px solid var(--sc); outline-offset: 2px; z-index: 2; }
+.es-fld.is-sel { box-shadow: 0 0 0 2px var(--es-paper), 0 0 0 4px var(--sc); z-index: 2; }
+.es-fld-label { min-width: 0; max-width: 100%; font-size: 12px; font-size: clamp(7px, 58cqh, 13px); font-weight: 500; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: color-mix(in srgb, var(--sc) 70%, var(--es-paper-ink)); font-family: var(--es-font); pointer-events: none; }
+.es-fld-label b { color: var(--es-paper-bad); margin-left: 1px; font-weight: 500; }
 /* The resize handle sits outside the corner, so even a tiny field (a checkbox on a phone) can be dragged from its middle. */
 .es-handle { position: absolute; right: -12px; bottom: -12px; width: 10px; height: 10px; border: 2px solid var(--es-paper); border-radius: 2px; background: var(--sc); cursor: nwse-resize; display: none; }
 .es-handle::after { content: ""; position: absolute; top: -3px; left: -3px; right: -9px; bottom: -9px; }
 .es-fld.is-sel .es-handle, .es-fld:hover .es-handle { display: block; }
 
 /* Signing fields */
-.es-f { position: absolute; box-sizing: border-box; container-type: size; display: flex; align-items: center; margin: 0; padding: 0 3px; border-radius: 2px; color: var(--es-paper-ink); font-family: var(--font-body, sans-serif); overflow: hidden; }
+.es-f { position: absolute; box-sizing: border-box; container-type: size; display: flex; align-items: center; margin: 0; padding: 0 3px; border-radius: 2px; color: var(--es-paper-ink); font-family: var(--font-body); overflow: hidden; }
 .es-f img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; object-position: left center; }
-.es-f span:not(.sr-only) { font-size: 11px; font-size: clamp(6px, 64cqh, 15px); line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.es-f span:not(.sr-only) { font-size: 12px; font-size: clamp(6px, 64cqh, 15px); line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .es-f-other { border: 1px dashed color-mix(in srgb, var(--sc) 60%, transparent); background: color-mix(in srgb, var(--sc) 6%, transparent); }
 .es-f-done { background: transparent; }
 .es-f-done .i { width: 100%; height: 100%; stroke-width: 3; color: var(--es-paper-ink); }
 /* The signer's own fields are centred on where they were placed and never smaller than a 24px target (WCAG 2.5.8). */
-.es-f-mine { left: calc(var(--x) + var(--w) / 2 - max(24px, var(--w)) / 2); top: calc(var(--y) + var(--h) / 2 - max(24px, var(--h)) / 2); width: max(24px, var(--w)); height: max(24px, var(--h)); border: 1.5px solid var(--sc); background: color-mix(in srgb, var(--sc) 18%, #FFFFFF); scroll-margin-top: calc(var(--es-bar-top, 0px) + 120px); scroll-margin-bottom: 24px; }
-.es-f-mine.is-filled { background: color-mix(in srgb, var(--sc) 6%, #FFFFFF); border-style: solid; border-color: color-mix(in srgb, var(--sc) 55%, transparent); }
-.es-f-mine:focus-visible, .es-f-mine:focus, .es-f-check:focus-within { outline: none; box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px var(--sc); z-index: 2; }
-.es-f-sig { justify-content: flex-start; cursor: pointer; font: inherit; text-align: left; }
-.es-f-sig:disabled { cursor: default; }
-.es-f-cue { font-weight: 600; letter-spacing: 0.02em; color: color-mix(in srgb, var(--sc) 75%, #000); }
-.es-f-sig:not(.is-filled) { animation: es-pulse 2.4s ease-in-out infinite; }
-@keyframes es-pulse { 50% { background: color-mix(in srgb, var(--sc) 30%, #FFFFFF); } }
-.es-f-auto { background: color-mix(in srgb, var(--sc) 6%, #FFFFFF); border: 1px solid color-mix(in srgb, var(--sc) 40%, transparent); }
+.es-f-mine { left: calc(var(--x) + var(--w) / 2 - max(24px, var(--w)) / 2); top: calc(var(--y) + var(--h) / 2 - max(24px, var(--h)) / 2); width: max(24px, var(--w)); height: max(24px, var(--h)); border: 1.5px solid var(--sc); background: color-mix(in srgb, var(--sc) 18%, var(--es-paper)); scroll-margin-top: calc(var(--es-bar-top, 0px) + 120px); scroll-margin-bottom: 24px; }
+.es-f-mine.is-filled { background: color-mix(in srgb, var(--sc) 6%, var(--es-paper)); border-style: solid; border-color: color-mix(in srgb, var(--sc) 55%, transparent); }
+.es-f-mine:focus { outline: none; }
+.es-f-mine:focus-visible, .es-f-sig:focus, .es-f-check:focus-within { outline: 2px solid var(--sc); outline-offset: 2px; z-index: 2; }
+.es-f-sig { justify-content: flex-start; cursor: pointer; font: inherit; text-align: left; transition: background-color var(--dur-micro) var(--ease-out); }
+/* The field still to be signed is the brightest thing on the page; it holds still. */
+.es-f-sig:not(.is-filled) { background: color-mix(in srgb, var(--sc) 22%, var(--es-paper)); }
+.es-f-sig:not(.is-filled):hover { background: color-mix(in srgb, var(--sc) 30%, var(--es-paper)); }
+.es-f-sig.is-filled:hover { background: color-mix(in srgb, var(--sc) 12%, var(--es-paper)); }
+.es-f-sig:active { background: color-mix(in srgb, var(--sc) 36%, var(--es-paper)); }
+.es-f-sig:disabled { cursor: not-allowed; opacity: 0.55; }
+.es-f-sig.is-filled:disabled { cursor: not-allowed; opacity: 1; }
+.es-f-cue { font-weight: 500; color: color-mix(in srgb, var(--sc) 75%, var(--es-paper-ink)); }
+.es-f-auto { background: color-mix(in srgb, var(--sc) 6%, var(--es-paper)); border: 1px solid color-mix(in srgb, var(--sc) 40%, transparent); }
 /* The date (MM/DD/YYYY) also scales with the box's width, so it is not cut off when a small field is enlarged for touch. */
-.es-f-auto span:not(.sr-only) { font-size: clamp(6px, min(64cqh, 17cqw), 15px); }
+.es-f-auto span:not(.sr-only) { font-size: clamp(6px, min(64cqh, 17cqw), 15px); font-variant-numeric: tabular-nums; }
 /* Text and name: the box is the size container, so the typed text scales with the field. */
 .es-f-text { padding: 0; cursor: text; }
 /* The input inside the border is the tap target: at least 24px tall inside the 1.5px border (WCAG 2.5.8). */
 .es-f-mine.es-f-text { top: calc(var(--y) + var(--h) / 2 - max(27px, var(--h)) / 2); height: max(27px, var(--h)); }
-.es-f-input { display: block; box-sizing: border-box; width: 100%; height: 100%; min-width: 0; margin: 0; padding: 0 3px; border: 0; border-radius: 0; background: transparent; font-family: inherit; font-size: 11px; font-size: clamp(6px, 62cqh, 15px); line-height: 1; color: var(--es-paper-ink); appearance: none; -webkit-appearance: none; }
-.es-f-input:focus { outline: none; }
-.es-f-input::placeholder { color: color-mix(in srgb, var(--sc) 55%, #3D3D3D); opacity: 1; }
-.es-f-text:focus-within { box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px var(--sc); z-index: 2; }
-.es-f-text.is-locked { background: #F5F5F5; border-style: dotted; cursor: default; }
-.es-f-text.is-over { border-color: #B3261E; border-style: solid; box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 3px #B3261E; }
+.es-f-input { display: block; box-sizing: border-box; width: 100%; height: 100%; min-width: 0; margin: 0; padding: 0 3px; border: 0; border-radius: 0; background: transparent; font-family: inherit; font-size: 12px; font-size: clamp(6px, 62cqh, 15px); line-height: 1; color: var(--es-paper-ink); appearance: none; -webkit-appearance: none; }
+/* The box around the input carries the ring, so the input inside it does not draw a second one. */
+.es-f-input:focus, .es-f-input:focus-visible { outline: none; }
+.es-f-input:disabled { cursor: not-allowed; opacity: 0.55; }
+.es-f-input::placeholder { color: color-mix(in srgb, var(--sc) 55%, var(--es-paper-ink-2)); opacity: 1; }
+.es-f-text:hover { background: color-mix(in srgb, var(--sc) 24%, var(--es-paper)); }
+.es-f-text.is-filled:hover { background: color-mix(in srgb, var(--sc) 10%, var(--es-paper)); }
+.es-f-text:focus-within { outline: 2px solid var(--sc); outline-offset: 2px; z-index: 2; }
+.es-f-text.is-locked, .es-f-text.is-locked:hover { background: var(--es-paper-soft); border-style: dotted; cursor: default; }
+.es-f-text.is-over { border-color: var(--es-paper-bad); border-style: solid; box-shadow: 0 0 0 2px var(--es-paper), 0 0 0 3px var(--es-paper-bad); }
 .es-f-check { justify-content: center; padding: 0; cursor: pointer; overflow: visible; }
+.es-f-check:hover { background: color-mix(in srgb, var(--sc) 26%, var(--es-paper)); }
 .es-f-check input { flex: none; width: max(24px, 90%); height: max(24px, 90%); margin: 0; accent-color: var(--es-paper-ink); cursor: pointer; color-scheme: light; }
-.es-f-check.is-req:not(.is-filled) { border-color: #B3261E; }
+.es-f-check input:focus-visible { outline: none; }
+.es-f-check input:disabled { cursor: not-allowed; opacity: 0.55; }
+.es-f-check.is-req:not(.is-filled) { border-color: var(--es-paper-bad); }
 /* The checkbox's label, shown beside it on the page (left of the box when it sits near the right edge). */
-.es-f span.es-f-tag { position: absolute; top: 50%; left: calc(100% + 5px); transform: translateY(-50%); max-width: min(240px, 46vw); padding: 2px 6px; border: 1px solid color-mix(in srgb, var(--sc) 50%, #FFFFFF); border-radius: 6px; background: #FFFFFF; color: var(--es-paper-ink); font-size: 12px; font-weight: 600; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; z-index: 1; }
+.es-f span.es-f-tag { position: absolute; top: 50%; left: calc(100% + 5px); transform: translateY(-50%); max-width: min(240px, 46vw); padding: var(--space-3xs) var(--space-xs); border: 1px solid color-mix(in srgb, var(--sc) 50%, var(--es-paper)); border-radius: var(--r-pill); background: var(--es-paper); color: var(--es-paper-ink); font-size: 12px; font-weight: 500; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; z-index: 1; }
 .es-f span.es-f-tag.es-f-tag-l { left: auto; right: calc(100% + 5px); }
-.es-f-tag b { color: #B3261E; margin-left: 2px; }
+.es-f-tag b { color: var(--es-paper-bad); margin-left: var(--space-3xs); font-weight: 500; }
 .es-f-blank { border: 0; background: transparent; }
+/* Where a document is signed, the signer's own fields take the firm's color as printed on paper and everyone
+   else's the paper's second ink; the role colors stay in the console's field editor, where they tell signers
+   apart. (!important: esign.js writes the role color inline as --sc.) */
+.es-doc-sign .es-f-mine { --sc: var(--paper-brand) !important; }
+.es-doc-sign .es-f-other { --sc: var(--paper-fg-2) !important; }
 
 /* ---------- Console: envelopes list and new envelope ---------- */
-.es-title-link { font-weight: 600; color: var(--cv-ink); text-decoration: none; }
-.es-title-link:hover { color: var(--cv-link); text-decoration: underline; }
-.es-who-list { display: flex; flex-direction: column; gap: 2px; }
+.es-title-link { font-weight: 500; color: var(--cv-ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.16em; transition: color var(--dur-micro) var(--ease-out); }
+.es-title-link:hover { color: var(--cv-link); }
+.es-title-link:active { color: var(--cv-ink-2); }
+.es-title-link:focus-visible { outline: 2px solid var(--cv-focus); outline-offset: 2px; border-radius: var(--r-sm); }
+.es-who-list { display: flex; flex-direction: column; gap: var(--space-3xs); }
 .es-who { display: inline-flex; align-items: center; white-space: nowrap; }
 .es-who .cs-hint { margin-left: 0.35em; }
-.es-picklist { max-height: 232px; overflow: auto; border: 1px solid var(--cv-line); border-radius: 6px; padding: 4px 10px; background: var(--cv-panel); display: flex; flex-direction: column; }
-.es-pick { padding: 6px 0; border-bottom: 1px solid var(--cv-line-soft); }
+/* The investors to pick from: a well of ruled rows inside the dialog. */
+.es-picklist { max-height: 232px; overflow: auto; border-radius: var(--r-inner); padding: var(--space-2xs) var(--space-sm); background: var(--cv-panel-2); display: flex; flex-direction: column; }
+.es-pick { padding: var(--space-xs) 0; border-bottom: 1px solid var(--cv-line); }
 .es-pick:last-child { border-bottom: 0; }
 .es-pick[hidden] { display: none; }
-.es-sel { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: var(--cv-ink); }
-.es-sel li { display: flex; align-items: center; gap: 4px; padding: 5px 8px; border: 1px solid var(--cv-line-soft); border-radius: 6px; background: var(--cv-panel-2); }
+.es-sel { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; font-size: var(--text-sm); font-weight: 500; color: var(--cv-ink); }
+.es-sel li { display: flex; align-items: center; gap: var(--space-2xs); min-height: var(--control-h); padding: var(--space-2xs) 0; border-bottom: 1px solid var(--cv-line-soft); }
+.es-sel li:last-child { border-bottom: 0; }
 .es-sel-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.es-sel .cs-btn-small { min-height: 26px; padding: 2px 6px; }
-.es-kv { margin: 0; display: flex; flex-direction: column; font-size: 13px; }
-.es-kv > div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--cv-line-soft); }
-.es-kv dt { color: var(--cv-ink-3); font-weight: 600; }
-.es-kv dd { margin: 0; overflow-wrap: anywhere; }
+.es-sel .cs-btn-small { min-height: var(--control-h-sm); padding: 0 var(--space-xs); }
+.es-kv { margin: 0; display: flex; flex-direction: column; font-size: var(--text-sm); }
+.es-kv > div { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: var(--space-sm); padding: var(--space-xs) 0; border-bottom: 1px solid var(--cv-line-soft); }
+.es-kv > div:last-child { border-bottom: 0; }
+.es-kv dt { color: var(--cv-ink-3); font-weight: 500; }
+.es-kv dd { margin: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 
 /* ---------- Console: editor ---------- */
-.es-editor { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 18px; align-items: start; }
-.es-side { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 12px; max-height: calc(100vh - 24px); overflow: auto; min-width: 0; }
-.es-side .cs-panel { padding: 14px; gap: 10px; }
-.es-signers { display: flex; flex-direction: column; gap: 4px; }
-.es-signer { display: flex; align-items: center; gap: 4px; width: 100%; padding: 7px 9px; border: 1px solid var(--cv-line); border-left: 4px solid var(--sc); border-radius: 6px; background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); font-size: 13px; text-align: left; cursor: pointer; }
+.es-editor { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 20px; align-items: start; }
+.es-side { position: sticky; top: 12px; display: flex; flex-direction: column; gap: var(--space-sm); max-height: calc(100vh - 24px); overflow: auto; min-width: 0; }
+.es-side .cs-panel { padding: var(--space-md); gap: var(--space-sm); }
+.es-signers { display: flex; flex-direction: column; gap: var(--space-2xs); }
+/* A signer is a row to pick: its dot carries the signer's color, the selected row takes a wash of it. */
+.es-signer { display: flex; align-items: center; gap: var(--space-2xs); width: 100%; min-height: 44px; padding: var(--space-xs) var(--space-sm); border: 1px solid var(--cv-line); border-radius: var(--r-inner); background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); font-size: var(--text-sm); text-align: left; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
 .es-signer > span:last-child { display: flex; flex-direction: column; min-width: 0; }
-.es-signer strong { overflow-wrap: anywhere; }
+.es-signer strong { overflow-wrap: anywhere; font-weight: 500; }
+.es-signer:hover { background: var(--cv-panel-2); }
+.es-signer:active { background: color-mix(in srgb, var(--sc) 8%, var(--cv-panel)); }
 .es-signer.is-on { background: color-mix(in srgb, var(--sc) 12%, var(--cv-panel)); border-color: var(--sc); }
-.es-signer:focus-visible, .es-tool:focus-visible { outline: 2px solid var(--cv-focus); outline-offset: 1px; }
-.es-palette { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-.es-tool { min-height: 36px; padding: 6px 8px; border: 1px solid var(--cv-line); border-radius: 6px; background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); font-size: 13px; font-weight: 600; cursor: pointer; }
+.es-signer:disabled { opacity: 0.55; cursor: not-allowed; }
+.es-signer:focus-visible, .es-tool:focus-visible { outline: 2px solid var(--cv-focus); outline-offset: 2px; }
+.es-palette { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xs); }
+/* The field types: secondary pills; the one being placed is the current selection. */
+.es-tool { min-height: var(--control-h); padding: var(--space-2xs) var(--space-sm); border: 1px solid var(--cv-line); border-radius: var(--r-pill); background: var(--cv-panel); box-shadow: var(--edge-light); color: var(--cv-ink); font-family: var(--cv-font); font-size: var(--text-sm); font-weight: 500; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out); }
 .es-tool:hover { background: var(--cv-panel-2); }
+.es-tool:active { transform: translateY(1px); }
 .es-tool.is-on { background: var(--cv-accent); border-color: var(--cv-accent); color: var(--cv-accent-ink); }
-.es-placer select { min-height: 30px; border: 1px solid var(--cv-line); border-radius: 6px; background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); }
-.es-props { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px solid var(--cv-line-soft); }
-.es-props h3 { font-size: 13px; font-weight: 600; color: var(--cv-ink); }
+.es-tool.is-on:hover { background: var(--cv-accent-hover, var(--cv-accent)); border-color: var(--cv-accent-hover, var(--cv-accent)); }
+.es-tool:disabled { opacity: 0.55; cursor: not-allowed; }
+.es-placer select { min-height: var(--control-h-sm); padding: 0 var(--space-xs); border: 1px solid var(--es-line-strong); border-radius: var(--r-inner); background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); font-size: var(--text-sm); }
+.es-placer select:hover { background: var(--cv-panel-2); }
+.es-placer select:focus-visible { outline: 2px solid var(--cv-focus); outline-offset: 2px; }
+.es-placer select:disabled { opacity: 0.55; cursor: not-allowed; }
+.es-props { display: flex; flex-direction: column; gap: var(--space-sm); padding-top: var(--space-sm); border-top: 1px solid var(--cv-line-soft); }
+.es-props h3 { font-family: var(--cv-font); font-size: var(--text-sm); font-weight: 500; letter-spacing: 0; line-height: 1.3; color: var(--cv-ink); }
 .es-props .cs-btn { align-self: flex-start; }
-.es-ready { display: flex; gap: 6px; align-items: center; color: var(--cv-ok); font-weight: 600; }
-.es-todo { color: var(--cv-warn); font-weight: 600; }
+.es-ready { display: flex; gap: var(--space-xs); align-items: center; color: var(--cv-ok); font-weight: 500; }
+.es-todo { color: var(--cv-warn); font-weight: 500; }
 
 /* ---------- Signing page ---------- */
-.es-sign { display: flex; flex-direction: column; gap: 18px; padding: 8px 0 32px; color: var(--es-fg); min-width: 0; }
-.es-back-link { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; color: var(--es-accent-text); font-size: 14px; font-weight: 600; text-decoration: none; }
-.es-back-link:hover { text-decoration: underline; }
+.es-sign { display: flex; flex-direction: column; gap: 20px; padding: var(--space-xs) 0 32px; color: var(--es-fg); min-width: 0; }
+.es-back-link { display: inline-flex; align-items: center; gap: var(--space-xs); align-self: flex-start; min-height: 24px; color: var(--es-fg-2); font-size: var(--text-sm); font-weight: 500; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.16em; transition: color var(--dur-micro) var(--ease-out); }
+.es-back-link:hover { color: var(--es-accent-text); }
+.es-back-link:active { color: var(--es-fg); }
+.es-back-link:focus-visible { outline: 2px solid var(--es-focus); outline-offset: 2px; border-radius: var(--r-sm); }
 .es-back { align-self: flex-start; }
-.es-sign-head { display: flex; flex-direction: column; gap: 6px; padding-bottom: 16px; border-bottom: 1px solid var(--es-line); }
-.es-sign-brand { margin-bottom: 8px; }
+.es-sign-head { display: flex; flex-direction: column; gap: var(--space-xs); padding-bottom: var(--space-md); border-bottom: 1px solid var(--es-line); }
+.es-sign-brand { margin-bottom: var(--space-xs); }
 .es-sign-brand .lockup { max-width: 100%; }
-.es-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--es-fg-3); }
-.es-sign-head h1 { font-size: 26px; font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; }
-.es-sign-msg { max-width: 70ch; font-size: 15px; line-height: 1.55; color: var(--es-fg-2); white-space: pre-line; }
-.es-sign-meta { font-size: 13px; color: var(--es-fg-3); overflow-wrap: anywhere; }
-.es-card { display: flex; flex-direction: column; gap: 12px; max-width: 760px; padding: 20px 22px; border: 1px solid var(--es-line); border-radius: 8px; background: var(--es-surface); }
-.es-card h2 { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; }
-.es-card p, .es-card li { font-size: 14px; line-height: 1.55; color: var(--es-fg-2); }
-.es-card ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
-.es-card strong { color: var(--es-fg); }
-.es-done h2 .i { color: var(--es-good); stroke-width: 2.5; }
-.es-bar { position: sticky; top: 0; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 10px 14px; border: 1px solid var(--es-line); border-radius: 8px; background: var(--es-surface); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08); }
+.es-eyebrow { font-size: var(--text-sm); font-weight: 500; color: var(--es-fg-3); }
+.es-sign-head h1 { font-size: var(--text-2xl); font-weight: var(--display-weight); line-height: 1.1; overflow-wrap: anywhere; text-wrap: balance; }
+.es-sign-msg { max-width: 70ch; font-size: var(--text-md); line-height: 1.55; color: var(--es-fg-2); white-space: pre-line; }
+.es-sign-meta { font-size: var(--text-sm); color: var(--es-fg-3); overflow-wrap: anywhere; }
+.es-sign-meta strong { font-weight: 500; color: var(--es-fg-2); }
+/* A clear panel on the page; inside the wizard's own panel it is plain content, never a card in a card. */
+.es-card { display: flex; flex-direction: column; gap: var(--space-sm); max-width: 760px; padding: var(--space-lg) 28px; border: 0; border-radius: var(--r-card); background: var(--es-surface); box-shadow: var(--edge-light), var(--shadow-card); }
+.es-card h2 { display: flex; align-items: center; gap: var(--space-xs); font-size: var(--text-lg); font-weight: var(--display-weight); text-wrap: balance; }
+.es-card p, .es-card li { font-size: var(--text-md); line-height: 1.55; color: var(--es-fg-2); }
+.es-card ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: var(--space-xs); }
+.es-card strong { color: var(--es-fg); font-weight: 500; }
+/* The head stays one color: the tick is ink, like the words beside it. */
+.es-done h2 .i { stroke-width: 2.5; }
+.es-sign-flow .es-card { max-width: none; padding: 0; border-radius: 0; background: none; box-shadow: none; }
+/* The signing bar floats over the document as it scrolls: the one clear panel that stays in view. */
+.es-bar { position: sticky; top: 0; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs) var(--space-md); padding: var(--space-xs) var(--space-sm) var(--space-xs) 20px; border: 0; border-radius: var(--r-inner); background: var(--es-surface); box-shadow: var(--edge-light), var(--shadow-card); }
 /* In the portal the bar sticks just below the portal's own sticky header (measured by esign.js). */
 .es-bar-portal { top: var(--es-bar-top, 72px); }
-.es-progress { font-size: 14px; font-weight: 600; color: var(--es-fg); }
-.es-doc-sign { padding: 12px; overflow-x: clip; }
+/* Inside the wizard's panel the bar is a plain well, like the others there, so the panel stays the only card. */
+.es-sign-flow .es-bar { background: var(--es-surface-2); box-shadow: none; }
+.es-progress { font-size: var(--text-sm); font-weight: 500; font-variant-numeric: tabular-nums; color: var(--es-fg); }
+.es-doc-sign { padding: var(--space-sm); overflow-x: clip; }
 .es-finish { scroll-margin-top: calc(var(--es-bar-top, 0px) + 12px); }
 
 /* ---------- Dialogs ---------- */
-.dlg-es { width: min(620px, calc(100vw - 24px)); }
-.dlg-es .dlg-body { padding: 18px 20px 20px; }
+.dlg-es { width: min(620px, calc(100% - var(--space-lg))); }
+.dlg-es .dlg-body { padding: 20px; }
 .es-dlg-form { display: contents; }
-.es-adopt { display: flex; flex-direction: column; gap: 14px; }
-.es-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
-.es-tab { padding: 8px 14px; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; color: var(--fg-2); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-.es-tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--brand); }
-.es-tab:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
-.es-pane { display: flex; flex-direction: column; gap: 10px; }
+.es-adopt { display: flex; flex-direction: column; gap: var(--space-md); }
+/* Draw, type or upload: the current tab carries the accent on the rule under it. */
+.es-tabs { display: flex; gap: var(--space-2xs); border-bottom: 1px solid var(--es-line); }
+.es-tab { min-height: var(--control-h); padding: var(--space-xs) var(--space-md); border: 0; border-bottom: 2px solid transparent; border-radius: var(--r-sm) var(--r-sm) 0 0; margin-bottom: -1px; background: none; color: var(--es-fg-3); font-family: inherit; font-size: var(--text-sm); font-weight: 500; cursor: pointer; transition: color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
+.es-tab:hover { color: var(--es-fg); background: var(--es-surface-2); }
+.es-tab:active { color: var(--es-fg); border-bottom-color: var(--es-line-strong); }
+.es-tab[aria-selected="true"] { color: var(--es-fg); border-bottom-color: var(--es-accent); }
+.es-tab:focus-visible { outline: 2px solid var(--es-focus); outline-offset: -2px; }
+.es-tab:disabled { opacity: 0.55; cursor: not-allowed; }
+.es-pane { display: flex; flex-direction: column; gap: var(--space-sm); }
 .es-pane[hidden] { display: none; }
-.es-paper { background: var(--es-paper); color: var(--es-paper-ink); border: 1px solid var(--es-paper-line); border-radius: 6px; color-scheme: light; }
-.es-paper .hint { color: #595959; }
-.es-type-preview { min-height: 96px; display: flex; align-items: center; padding: 8px 18px; font-family: 'Caveat', 'Segoe Script', 'Brush Script MT', cursive; font-weight: 500; font-size: 52px; line-height: 1.1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.es-paper { background: var(--es-paper); color: var(--es-paper-ink); border: 1px solid var(--es-paper-line); border-radius: var(--r-inner); color-scheme: light; }
+.es-paper .hint { color: var(--es-paper-ink-2); }
+.es-type-preview { min-height: 96px; display: flex; align-items: center; padding: var(--space-xs) 20px; font-family: var(--font-sign); font-weight: 500; font-size: 52px; line-height: 1.1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .es-pad { display: block; width: 100%; height: 180px; touch-action: none; cursor: crosshair; background-image: linear-gradient(to top, transparent 34px, var(--es-paper-line) 34px, var(--es-paper-line) 35px, transparent 35px); }
-.es-up-preview { min-height: 96px; display: flex; align-items: center; justify-content: center; padding: 8px; }
+.es-pad:focus-visible { outline: 2px solid var(--es-focus); outline-offset: 2px; }
+.es-up-preview { min-height: 96px; display: flex; align-items: center; justify-content: center; padding: var(--space-xs); }
 .es-up-preview img { max-width: 100%; max-height: 140px; }
 .es-adopt-legal { line-height: 1.5; }
 .field-error:empty { display: none; }
 
 /* ---------- Investor pages: banner and waiting list ---------- */
-.es-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin: -8px 0 28px; padding: 14px 16px; border: 1px solid var(--line-strong); border-left: 4px solid var(--brand); border-radius: var(--r-md); background: var(--brand-soft); color: var(--fg); }
-.es-banner-icon { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex: none; border-radius: 50%; background: var(--brand); color: var(--brand-ink); }
-.es-banner-body { flex: 1 1 240px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.es-banner-body strong { font-size: 15px; }
-.es-banner-body span { font-size: 13px; color: var(--fg-2); overflow-wrap: anywhere; }
+/* One clear panel: what is waiting, and the one action. */
+.es-banner { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-md); margin: 0 0 var(--space-lg); padding: var(--space-md) var(--space-lg); border: 0; border-radius: var(--r-card); background: var(--surface); box-shadow: var(--edge-light), var(--shadow-card); color: var(--fg); }
+.es-banner-icon { display: inline-flex; align-items: center; justify-content: center; flex: none; color: var(--fg-2); }
+.es-banner-icon .i { width: 20px; height: 20px; }
+.es-banner-body { flex: 1 1 240px; display: flex; flex-direction: column; gap: var(--space-3xs); min-width: 0; }
+.es-banner-body strong { font-size: var(--text-md); font-weight: 500; }
+.es-banner-body span { font-size: var(--text-sm); color: var(--fg-2); overflow-wrap: anywhere; }
 .es-waiting { margin-bottom: 28px; }
 .es-waiting td .btn .i { width: 16px; height: 16px; }
 
@@ -191,16 +259,21 @@
   .es-palette { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
-  .es-doc { padding: 8px; margin: 0 -4px; }
+  .es-doc { padding: var(--space-xs); margin: 0 calc(var(--space-2xs) * -1); }
+  /* The signing tray keeps its 6px edge, so a page is exactly as wide on a phone as it has always been. */
   .es-doc-sign { padding: 6px; }
-  .es-sign-head h1 { font-size: 21px; }
-  .es-card { padding: 16px; }
-  .es-bar { padding: 8px 10px; }
+  .es-sign-head h1 { font-size: var(--text-xl); }
+  .es-card { padding: var(--space-md); }
+  .es-sign-flow .es-card { padding: 0; }
+  .es-bar { padding: var(--space-xs) var(--space-sm); }
   .es-bar .es-row { width: 100%; }
-  .es-bar .btn, .es-bar .cs-btn { flex: 1 1 auto; padding-left: 10px; padding-right: 10px; }
-  .es-kv > div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .es-bar .btn, .es-bar .cs-btn { flex: 1 1 auto; padding-left: var(--space-sm); padding-right: var(--space-sm); }
+  .es-kv > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-3xs); }
   .es-type-preview { font-size: 40px; }
   .es-palette { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .es-banner { padding: var(--space-md); }
   .es-banner .btn { width: 100%; }
 }
-@media (prefers-reduced-motion: reduce) { .es-f-sig:not(.is-filled) { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .es-f-sig, .es-title-link, .es-signer, .es-tool, .es-back-link, .es-tab { transition: none; }
+}

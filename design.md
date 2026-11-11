@@ -7,7 +7,7 @@ The locked system. Every Hallmark run reads this first and pages share it. Chang
 - Shape of the first page: app screen (every signed-in page, the wizards and the signing page are app screens)
 - Theme: Refract (by request) · redesign: restyle · copy: verbatim
 - Axes: light/grotesk-sans/cool · posture: restrained
-- The theme's moving light is left out at the owner's request. The sign-in page alone carries an engraved ground (lathe-work lines, as on a share certificate) drawn in code in the firm's colors.
+- The theme's moving light is left out at the owner's request. The sign-in page alone carries an engraved plate beside the form (lathe-work lines, as on a share certificate), drawn in code in the firm's colors; a firm's own uploaded image takes its place.
 
 ## Tokens
 `assets/css/tokens.css` is the source of truth, under this project's own names. The roles:
@@ -31,7 +31,7 @@ The spacing scale, the type scale, the easings and the durations are the scaffol
 
 ## Type
 - Display: `--font-display` at `--display-weight` (400; 300 for one figure at statement size), `--tracking-display`, sentence case, one color. Page titles, panel headings, headline figures.
-- Body: `--font-body` 400. Labels, table heads and times are the body face at 500, a step smaller, sentence case, never tracked, never capitals. `tabular-nums` on every figure.
+- Body: `--font-body` 400. Labels, table heads and times are the body face at 500, a step smaller, sentence case, never tracked, never capitals. `tabular-nums` where figures align in columns or stand as headline numbers, not in running text.
 - Only weights 400 and 500 of the body face and 300, 400 and 500 of the display face are loaded. Nothing is set heavier.
 
 ## Surfaces
