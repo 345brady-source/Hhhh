@@ -54,6 +54,15 @@
     ['console-brand', 'Portal and brand'],
     ['console-team', 'Team']
   ];
+  /** The menu in sections, in the order a firm works: raise, run the fund, report, then settings. A page not listed here falls under the last section. */
+  const NAV_SECTIONS = [
+    ['', ['console', 'console-notifications']],
+    ['Raise', ['console-offerings', 'console-intake', 'console-investors', 'console-esign']],
+    ['Operate', ['console-calls', 'console-distributions', 'console-requests', 'console-notices', 'console-docs']],
+    ['Report', ['console-reports', 'console-audit', 'console-kyc']],
+    ['Settings', ['console-brand', 'console-integrations', 'console-ach', 'console-team']]
+  ];
+  const NAV_GROUPS = NAV_SECTIONS.map(([label, keys], i) => [label, i < NAV_SECTIONS.length - 1 ? keys : keys.concat(NAV.map(([k]) => k).filter((k) => !NAV_SECTIONS.some((g) => g[1].indexOf(k) >= 0)))]);
   /** Counts other modules show beside their menu entry: NS.navCounts[key] = (ws) => n. */
   NS.navCounts = NS.navCounts || {};
   /** Items waiting on the manager, shown beside the menu entry. */
@@ -72,9 +81,15 @@
       <aside class="cs-nav" aria-label="Sponsor console">
         <div class="cs-client">${B.lockup(t)}<span class="cs-client-meta">${h(t.domain)}</span></div>
         ${NS.runHooks('consoleBar', W())}
-        <nav>${NAV.filter(([k]) => NS.views[k] && NS.app.allowed(k)).map(([k, l]) => {
-          const n = navCount(k);
-          return `<a href="#${k}"${active === k ? ' aria-current="page"' : ''}>${l}${n ? ` <span class="cs-nav-count" aria-label="${n} need attention">${n}</span>` : ''}</a>`;
+        <nav>${NAV_GROUPS.map(([label, keys]) => {
+          const items = NAV.filter(([k]) => keys.indexOf(k) >= 0 && NS.views[k] && NS.app.allowed(k));
+          if (!items.length) return '';
+          return `<div class="cs-nav-group"${label ? ` role="group" aria-label="${label}"` : ''}>${label ? `<p class="cs-nav-label">${label}</p>` : ''}${items
+            .map(([k, l]) => {
+              const n = navCount(k);
+              return `<a href="#${k}"${active === k ? ' aria-current="page"' : ''}>${l}${n ? ` <span class="cs-nav-count" aria-label="${n} need attention">${n}</span>` : ''}</a>`;
+            })
+            .join('')}</div>`;
         }).join('')}</nav>
       </aside>
       <main class="cs-main" id="main" tabindex="-1">${inner}</main>
@@ -2861,8 +2876,9 @@
       <p class="pv-label">Investor portal preview</p>
       <div class="pv-portal pv-shell">
         <div class="pv-head"><span class="pt-logo">${B.lockup(t)}</span><span class="pv-nav"><span class="is-on">Home</span><span>Investments</span></span></div>
-        <div class="pv-hero${hero ? ' has-img' : ''}">${hero ? `<img src="${hero}" alt="">` : ''}<span>${h(t.name)}</span><strong>Welcome back, Jordan</strong></div>
+        ${hero ? `<div class="pv-banner"><img src="${hero}" alt=""></div>` : ''}
         <div class="pv-in">
+          <div class="pv-title"><strong>Davis Family Trust</strong><span>Account ${h(t.idPrefix || 'A')}-1001</span></div>
           <div class="pv-card"><h3>Portfolio</h3><span class="pv-bar"><span style="width:62%"></span></span><span class="pv-bar pv-bar-2"><span style="width:24%"></span></span>
             <div class="pv-row"><a>${h(t.shortName)} Sample Offering</a><span>$250,000</span></div>
             <div class="pv-hold">${NS.holdBar({ progress: 0.62, windowStart: 0.72, remaining: 'Exit window opens in 7 months' })}</div>

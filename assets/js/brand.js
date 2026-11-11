@@ -119,12 +119,12 @@
   /* ---------- Type pairs and corner styles a client can choose ---------- */
 
   const FONTS = {
-    manrope: {
-      label: 'Manrope',
-      note: 'Modern, geometric',
-      display: "'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif",
-      body: "'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif",
-      href: 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap'
+    hanken: {
+      label: 'Hanken Grotesk',
+      note: 'Clean, neutral',
+      display: "'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif",
+      body: "'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif",
+      href: 'https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap'
     },
     serif: {
       label: 'Source Serif & Sans',
@@ -140,18 +140,26 @@
       body: "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
       href: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap'
     },
+    // Public Sans keeps the Franklin look and, unlike Libre Franklin, lines its figures up in columns.
     franklin: {
-      label: 'Libre Franklin',
-      note: 'Editorial, confident',
-      display: "'Libre Franklin', system-ui, -apple-system, 'Segoe UI', sans-serif",
-      body: "'Libre Franklin', system-ui, -apple-system, 'Segoe UI', sans-serif",
-      href: 'https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&display=swap'
+      label: 'Public Sans',
+      note: 'Sturdy, official',
+      display: "'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
+      body: "'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
+      href: 'https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap'
+    },
+    manrope: {
+      label: 'Manrope',
+      note: 'Modern, geometric',
+      display: "'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif",
+      body: "'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif",
+      href: 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap'
     }
   };
   const RADII = {
     sharp: { sm: 2, md: 3, lg: 4, card: 4, pill: '3px', label: 'Sharp' },
-    soft: { sm: 6, md: 10, lg: 14, card: 16, pill: '999px', label: 'Soft' },
-    round: { sm: 8, md: 12, lg: 20, card: 22, pill: '999px', label: 'Round' }
+    soft: { sm: 4, md: 6, lg: 8, card: 10, pill: '999px', label: 'Soft' },
+    round: { sm: 6, md: 10, lg: 14, card: 16, pill: '999px', label: 'Round' }
   };
 
   /* ---------- Token derivation ---------- */
@@ -163,8 +171,9 @@
     const p = toOklch(P);
     const WHITE = '#FFFFFF';
 
-    // Neutrals are true greys on a white page; only the brand colors carry hue.
-    const N = (l) => oklch(l, 0, 0);
+    // Neutrals lean very slightly toward the brand's hue, so greys read as chosen for this firm rather than default.
+    const nc = Math.min(p.c, 0.03) * 0.3;
+    const N = (l, k) => oklch(l, nc * (k == null ? 1 : k), p.h);
 
     const L = {};
     L.bg = WHITE;
@@ -173,9 +182,9 @@
     L['surface-3'] = N(0.95);
     L.line = N(0.915);
     L['line-strong'] = N(0.85);
-    L.fg = N(0.22);
-    L['fg-2'] = N(0.4);
-    L['fg-3'] = ensureContrast(N(0.53), WHITE, 4.5);
+    L.fg = N(0.21, 2);
+    L['fg-2'] = N(0.4, 1.6);
+    L['fg-3'] = ensureContrast(N(0.54, 1.4), WHITE, 4.5);
 
     L.brand = P;
     L['brand-ink'] = onColor(P);
@@ -191,9 +200,9 @@
     L['chart-1'] = ensureContrast(P, WHITE, 3);
     L['chart-muted'] = N(0.65);
     // Investor portal: a page tinted very lightly with the brand hue, and pale steps of both brand colors for bars.
-    L.page = oklch(0.975, Math.min(p.c, 0.008), p.h);
-    L['tint-1'] = mix(L['chart-1'], WHITE, 0.8);
-    L['tint-2'] = mix(A, WHITE, 0.74);
+    L.page = N(0.972, 0.7);
+    L['tint-1'] = mix(L['chart-1'], WHITE, 0.82);
+    L['tint-2'] = mix(A, WHITE, 0.76);
     L['seg-1'] = L['chart-1'];
     L['seg-2'] = A;
     L['seg-3'] = N(0.82);
@@ -242,8 +251,8 @@
     L['mark-a'] = A;
     L['mark-ink'] = onColor(P);
 
-    /* Dark mode: neutral charcoal greys (no blue cast); brand colors are lifted until they read. */
-    const ND = (l) => oklch(l, 0, 0);
+    /* Dark mode: charcoal with the same slight lean toward the brand's hue; brand colors are lifted until they read. */
+    const ND = (l) => oklch(l, nc * 0.8, p.h);
     const D = {};
     D.bg = ND(0.17);
     D.surface = ND(0.2);
@@ -268,7 +277,7 @@
     D.focus = ensureContrast(A, D.surface, 3.5);
     D['chart-1'] = ensureContrast(P, D.surface, 4);
     D['chart-muted'] = ND(0.58);
-    D.page = oklch(0.165, Math.min(p.c, 0.008), p.h);
+    D.page = ND(0.155);
     D['tint-1'] = mix(D.surface, D['chart-1'], 0.32);
     D['tint-2'] = mix(D.surface, D.accent, 0.32);
     D['seg-1'] = D['chart-1'];
@@ -420,7 +429,7 @@
 
   function apply(t) {
     const tk = derive(t);
-    const f = FONTS[t.font] || FONTS.manrope;
+    const f = FONTS[t.font] || FONTS.hanken;
     const r = RADII[t.radius] || RADII.soft;
     let el = document.getElementById('cv-brand-tokens');
     if (!el) {

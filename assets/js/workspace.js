@@ -44,13 +44,16 @@
   }
 
   function normalize(ws) {
-    // The investor portal moved to rounded cards. A portal saved before that opens rounded once; "Square" can be chosen again under Portal and brand.
-    const before = !(ws.tenant && ws.tenant.look);
+    // A portal saved before the rounded layout opens rounded once; "Square" can be chosen again under Portal and brand.
+    const look = (ws.tenant && ws.tenant.look) || 1;
+    const before = look < 2;
     ws.tenant = merge(NS.TENANT_TEMPLATE, ws.tenant || {});
     if (before && ws.tenant.radius === 'sharp') ws.tenant.radius = 'soft';
     const seed = before && NS.TENANTS.find((t) => t.id === ws.tenant.id);
     if (seed && seed.home) ws.tenant.home = merge(ws.tenant.home, seed.home);
-    ws.tenant.look = 2;
+    // The standard typeface changed; a portal still on the old standard moves to the new one once (Manrope stays a choice).
+    if (look < 3 && ws.tenant.font === 'manrope') ws.tenant.font = 'hanken';
+    ws.tenant.look = 3;
     delete ws.tenant.offerings;
     delete ws.tenant.roster;
     ws.offerings = ws.offerings || [];

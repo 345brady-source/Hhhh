@@ -1,8 +1,8 @@
 /*
  * Investor portal pages: Home, Investments, Investment detail, Distributions,
- * Documents, Updates, Account and Sign-in. Home opens with the firm's hero
- * image, what is open for investment, a few lines about the firm and the
- * investor's portfolio at a glance; every block of content is a card.
+ * Documents, Updates, Account and Sign-in. Home leads with the investor's
+ * portfolio and investments, with what is open for investment, the firm's own
+ * overview and recent documents beside them.
  */
 (function (NS) {
   'use strict';
@@ -57,26 +57,22 @@
     ['updates', 'Updates'],
     ['account', 'Account']
   ];
-  const initials = (inv) => {
-    const parts = String(inv.contact || inv.title || '').trim().split(/\s+/).filter(Boolean);
-    return ((parts[0] || '').charAt(0) + (parts.length > 1 ? parts[parts.length - 1].charAt(0) : '')).toUpperCase();
-  };
-  /** The frame of every signed-in page. `opts.hero` is a full-width band shown above the page content (Home). */
+  /** The frame of every signed-in page. `opts.banner` is a full-width band shown above the page content (Home). */
   function shell(inner, active, opts) {
     const t = T();
     const inv = viewer();
-    const hero = (opts && opts.hero) || '';
+    const banner = (opts && opts.banner) || '';
     const links = NAV.map(([k, label]) => `<a href="#${k}"${active === k ? ' aria-current="page"' : ''}>${label}</a>`).join('');
     return `<div class="pt${S().navOpen ? ' nav-open' : ''}">
       <header class="pt-head">
         <div class="pt-head-in">
           <a class="pt-logo" href="#overview" aria-label="${h(t.name)} ${h(t.portalName)}">${B.lockup(t)}</a>
           <nav class="pt-nav" id="pt-nav" aria-label="${h(t.portalName)}">${links}<a class="pt-nav-out" href="#sign-in">Sign out</a></nav>
-          <div class="pt-user">${inv ? `<span class="pt-avatar" aria-hidden="true">${h(initials(inv))}</span><span class="pt-user-id"><span class="pt-user-name">${h(inv.contact)}</span>${inv.title && inv.title !== inv.contact ? `<span class="pt-user-acct">${h(inv.title)}</span>` : ''}</span>` : ''}<a class="pt-signout" href="#sign-in">Sign out</a></div>
+          <div class="pt-user">${inv ? `<span class="pt-user-id"><span class="pt-user-name">${h(inv.contact)}</span>${inv.title && inv.title !== inv.contact ? `<span class="pt-user-acct">${h(inv.title)}</span>` : ''}</span>` : ''}<a class="pt-signout" href="#sign-in">Sign out</a></div>
           <button class="pt-menu" type="button" data-action="nav-toggle" aria-controls="pt-nav" aria-expanded="${S().navOpen}">${icon('menu')}<span>Menu</span></button>
         </div>
       </header>
-      <main class="pt-main${hero ? ' pt-main-hero' : ''}" id="main" tabindex="-1">${hero}<div class="pt-wrap">${inner}</div></main>
+      <main class="pt-main${banner ? ' pt-main-banner' : ''}" id="main" tabindex="-1">${banner}<div class="pt-wrap">${inner}</div></main>
       ${footer()}
     </div>`;
   }
@@ -202,12 +198,6 @@
       })
       .join('')}</tbody></table></div>`;
   }
-  const TYPE_ICON = { realestate: 'building', credit: 'bank', realassets: 'bolt', spv: 'trend' };
-  /** A small tile in the firm's colors for an offering, with a symbol for its kind. */
-  function thumb(o, i) {
-    const profile = ((NS.OFFERING_TYPES || {})[o.type] || {}).profile;
-    return `<span class="thumb${i % 3 === 1 ? ' thumb-2' : i % 3 === 2 ? ' thumb-3' : ''}" aria-hidden="true">${icon(TYPE_ICON[profile] || 'bars')}</span>`;
-  }
   /** Offerings this investor can subscribe to now. */
   function openOfferings(inv) {
     const w = W();
@@ -218,7 +208,7 @@
     const list = openOfferings(inv);
     if (!list.length) return '';
     return `<section class="sec">${sec(label || 'Open for investment')}<div class="offers">${list
-      .map((o, i) => `<div class="offer">${thumb(o, i)}<div class="offer-main"><strong>${h(o.name)}</strong><span class="sub">${h(o.type)}${o.summary ? ' · ' + h(o.summary) : ''}</span><span class="sub">Minimum ${usd(o.minimum)} · first close targeted ${date(o.closeDate)}</span></div><a class="btn btn-primary" href="#subscribe-${h(o.id)}">Review and subscribe</a></div>`)
+      .map((o) => `<div class="offer"><div class="offer-main"><strong>${h(o.name)}</strong><span class="sub">${h(o.type)}${o.summary ? ' · ' + h(o.summary) : ''}</span><span class="sub">Minimum ${usd(o.minimum)} · first close targeted ${date(o.closeDate)}</span></div><a class="btn btn-primary" href="#subscribe-${h(o.id)}">Review and subscribe</a></div>`)
       .join('')}</div></section>`;
   }
   function capitalHTML(inv, o) {
@@ -522,38 +512,31 @@
   }
 
   /* ---------- Home ---------- */
-  const firstName = (inv) => String(inv.contact || '').trim().split(/\s+/)[0] || '';
-  /** The band across the top of Home: the firm's own image, or its brand color when it has not added one. */
-  function heroHTML(inv, returning) {
-    const t = T();
-    const img = B.safeImage((t.home || {}).hero);
-    const first = firstName(inv);
-    return `<section class="hm-hero${img ? ' has-img' : ''}" aria-label="Welcome">${img ? `<img class="hm-hero-img" src="${img}" alt="">` : ''}<div class="pt-wrap hm-hero-in"><p class="hm-kicker">${h(t.name)}</p><h1>${returning ? 'Welcome back' : 'Welcome'}${first ? `, ${h(first)}` : ''}</h1><p class="hm-hero-sub">${h(inv.title)} · Account ${h(inv.id)}</p></div></section>`;
-  }
   /** About the firm: its own words and up to three headline figures (Portal and brand), then who to contact. */
-  function overviewCard() {
+  function overviewHTML() {
     const t = T();
     const hm = t.home || {};
     const about = String(hm.about || '').trim();
     const metrics = [[hm.m1v, hm.m1l], [hm.m2v, hm.m2l], [hm.m3v, hm.m3l]].filter((m) => String(m[0] || '').trim());
     const s = t.support || {};
-    const mark = t.logo && t.logo.type !== 'image' ? B.markSVG(t.logo.type, t.logo.letters) : '';
-    return `<section class="card ov" aria-label="${about || metrics.length ? 'Company overview' : 'Investor relations'}">
-      <div class="card-head"><h2>${mark}${about || metrics.length ? 'Company overview' : 'Investor relations'}</h2></div>
+    const has = about || metrics.length;
+    return `<section class="sec" aria-label="${has ? 'Company overview' : 'Investor relations'}">
+      ${sec(has ? 'Company overview' : 'Investor relations')}
       ${about ? `<p class="ov-text">${h(about)}</p>` : ''}
       ${metrics.length ? `<dl class="ov-metrics">${metrics.map((m) => `<div><dt>${h(m[1] || '')}</dt><dd>${h(m[0])}</dd></div>`).join('')}</dl>` : ''}
-      <div class="ov-contact">${about || metrics.length ? `<strong>${h(s.team)}</strong>` : `<strong>${h(t.name)}</strong><span>${h(s.team)}</span>`}<span>${h(s.phone)}</span>${s.email ? `<a href="mailto:${h(s.email)}">${h(s.email)}</a>` : ''}<span>${h(s.hours)}</span></div>
+      <div class="ov-contact"><strong>${h(has ? s.team : t.name)}</strong>${has ? '' : `<span>${h(s.team)}</span>`}<span>${h(s.phone)}</span>${s.email ? `<a href="mailto:${h(s.email)}">${h(s.email)}</a>` : ''}<span>${h(s.hours)}</span></div>
     </section>`;
   }
   /**
    * The portfolio at a glance, in cents: what was committed and paid in, what has come back, and what the holdings are
-   * worth now (the capital account where the fund keeps one, otherwise the amount invested).
+   * worth now (the capital account where the fund keeps one, otherwise the amount invested). `byOffering` gives each
+   * active investment's value and whether it is at cost.
    */
   function portfolioTotals(v) {
     const inv = v.investor;
     const ops = OPS();
     const end = NS.audit ? NS.audit.lastMonthEnd(todayIso()) : todayIso();
-    const out = { commit: 0, paid: 0, dist: v.totals.received, value: 0, atCost: 0, valued: 0, end };
+    const out = { commit: 0, paid: 0, dist: v.totals.received, value: 0, atCost: 0, valued: 0, end, byOffering: {} };
     v.positions.forEach((p) => {
       const paid = ops ? ops.paidInOf(inv, p.offering) : Math.round(p.invested * 100);
       out.commit += Math.max(paid, ops ? ops.commitOf(inv, p.offering) : paid);
@@ -565,99 +548,98 @@
       } catch (e) {
         cap = null;
       }
-      if (cap && (cap.a.contribCum || cap.a.end)) {
-        out.value += cap.a.end;
-        out.valued += 1;
-      } else {
-        out.value += paid;
-        out.atCost += 1;
-      }
+      const valued = !!(cap && (cap.a.contribCum || cap.a.end));
+      const value = valued ? cap.a.end : paid;
+      out.value += value;
+      out[valued ? 'valued' : 'atCost'] += 1;
+      out.byOffering[p.offering.id] = { value, atCost: !valued };
     });
     return out;
   }
-  function portfolioCard(v) {
-    const x = portfolioTotals(v);
+  /** Headline amounts are shown to the dollar; tables and statements keep the cents. */
+  const amt = (c) => usd(Math.round(c / 100));
+  function portfolioHTML(v, x) {
     const total = x.dist + x.value;
     const scale = Math.max(x.commit, total, 1);
     const w = (n, d) => `${Math.max(0, Math.min(100, d ? (n / d) * 100 : 0)).toFixed(1)}%`;
-    // Whole-dollar amounts read without ".00".
-    const amt = (c) => (c % 100 === 0 ? usd(c / 100) : usdc(c));
+    const pct = (n, d) => (d ? `${Math.round((n / d) * 100)}%` : '0%');
     const year = todayIso().slice(0, 4);
-    const scheduled = v.payments.filter((p) => p.status === 'scheduled');
-    const multiple = x.paid && x.valued ? `${(total / x.paid).toFixed(2)}x` : '';
-    return `<section class="card pf" aria-label="Portfolio">
-      <div class="card-head"><h2>Portfolio</h2><a class="card-link" href="#investments">View investments</a></div>
-      <div class="pf-grid">
-        <div class="pf-bars" role="img" aria-label="${usdc(x.paid)} contributed of ${usdc(x.commit)} committed. ${usdc(x.dist)} distributed, and holdings valued at ${usdc(x.value)}.">
-          <span class="pf-track" style="width:${w(x.commit, scale)}"><span class="pf-fill" style="width:${w(x.paid, x.commit)}"></span></span>
-          <span class="pf-track pf-track-2" style="width:${w(total, scale)}"><span class="pf-fill" style="width:${w(x.dist, total)}"></span></span>
-        </div>
-        <dl class="pf-legend">
-          <div><dt><span class="dot"></span>Contributions</dt><dd>${amt(x.paid)}</dd></div>
-          <div><dt><span class="dot dot-2"></span>Commitment</dt><dd>${amt(x.commit)}</dd></div>
-          <div><dt><span class="dot dot-3"></span>Distributions</dt><dd>${amt(x.dist)}</dd></div>
-          <div><dt><span class="dot dot-4"></span>Value</dt><dd>${amt(x.value)}</dd></div>
-        </dl>
+    const kpi = (key, label, value, note) => `<div><dt><span class="key${key ? ' key-' + key : ''}"></span>${label}</dt><dd>${value}</dd><span class="kpi-note">${note}</span></div>`;
+    return `<section class="sec" aria-label="Portfolio">
+      ${sec('Portfolio', '<a class="sec-link" href="#investments">View investments</a>')}
+      <div class="pf-bars" role="img" aria-label="${usdc(x.paid)} contributed of ${usdc(x.commit)} committed. ${usdc(x.dist)} distributed, and holdings valued at ${usdc(x.value)}.">
+        <span class="pf-track" style="width:${w(x.commit, scale)}"><span class="pf-fill" style="width:${w(x.paid, x.commit)}"></span></span>
+        <span class="pf-track pf-track-2" style="width:${w(total, scale)}"><span class="pf-fill" style="width:${w(x.dist, total)}"></span></span>
       </div>
-      <dl class="pf-stats">
-        ${fig('Active investments', String(v.active.length), v.exited.length ? `${v.exited.length} completed` : '')}
-        ${fig(`Received in ${year}`, usdc(v.totals.ytd), 'Year to date')}
-        ${scheduled.length ? fig('Scheduled', usdc(v.totals.scheduled), `Next payment ${date(scheduled[scheduled.length - 1].date)}`) : ''}
-        ${multiple ? fig('Total value', multiple, 'Distributions plus value, over contributions') : ''}
+      <dl class="kpis">
+        ${kpi('', 'Contributed', amt(x.paid), `${pct(x.paid, x.commit)} of commitment`)}
+        ${kpi('2', 'Commitment', amt(x.commit), `${v.active.length} active investment${v.active.length === 1 ? '' : 's'}`)}
+        ${kpi('3', 'Distributed', amt(x.dist), `${usdc(v.totals.ytd)} in ${year}`)}
+        ${kpi('4', 'Current value', amt(x.value), x.valued ? `Unaudited, ${date(x.end)}` : 'At the amount invested')}
       </dl>
-      <p class="meta">${x.valued ? `Value is an unaudited estimate as of ${date(x.end)}.${x.atCost ? ' Investments without a current valuation are shown at the amount invested.' : ''}` : 'Value is shown at the amount invested.'}</p>
+      <p class="pf-foot">${x.paid ? `Total value <strong>${amt(total)}</strong>, <strong>${(total / x.paid).toFixed(2)}x</strong> the amount contributed. ` : ''}${x.valued && x.atCost ? 'Investments without a current valuation are shown at the amount invested.' : ''}</p>
     </section>`;
   }
-  function investmentRows(list) {
-    return `<div class="rows">${list
-      .map(
-        (p, i) => `<a class="row row-inv" href="#investment-${h(p.offering.id)}">${thumb(p.offering, i)}
-          <span class="row-main"><span class="row-title">${h(p.offering.name)}</span><span class="sub">${h(p.offering.type)}</span></span>
-          <span class="row-num"><span class="sub">Invested</span><strong>${money(p.invested, p.offering)}</strong></span>
-          <span class="row-num"><span class="sub">Distributions</span><strong>${moneyc(p.received, p.offering)}</strong></span>
-          <span class="row-hold">${holdBar(p.exit)}</span>
-          <span class="row-chev">${icon('chev')}</span>
-        </a>`
-      )
-      .join('')}</div>`;
+  function investmentsHTML(v, x) {
+    const valueCell = (p) => {
+      const r = x.byOffering[p.offering.id];
+      return r ? `${moneyc(r.value, p.offering)}${r.atCost ? '<span class="sub">At cost</span>' : ''}` : '—';
+    };
+    return `<section class="sec" aria-label="Your investments">
+      ${sec('Investments', '<a class="sec-link" href="#investments">All investments</a>')}
+      ${
+        v.active.length
+          ? `<div class="tbl-scroll"><table class="tbl tbl-stack">
+            <thead><tr><th scope="col">Investment</th><th scope="col" class="num">Invested</th><th scope="col" class="num">Distributions</th><th scope="col" class="num">Value</th><th scope="col">Time to exit</th></tr></thead>
+            <tbody>${v.active
+              .map(
+                (p) => `<tr>
+                <th scope="row"><a href="#investment-${h(p.offering.id)}">${h(p.offering.name)}</a><span class="sub">${h(p.offering.type)}</span></th>
+                <td class="num" data-label="Invested">${money(p.invested, p.offering)}</td>
+                <td class="num" data-label="Distributions">${moneyc(p.received, p.offering)}</td>
+                <td class="num" data-label="Value">${valueCell(p)}</td>
+                <td class="col-hold" data-label="Time to exit">${holdBar(p.exit)}</td>
+              </tr>`
+              )
+              .join('')}</tbody></table></div>`
+          : '<p class="empty">No active investments.</p>'
+      }
+    </section>`;
   }
-  function recentDocsCard(v) {
+  function recentDocsHTML(v) {
     const docs = allDocs(v).slice(0, 4);
     const w = W();
     const name = (id) => (id ? (w.offerings.find((x) => x.id === id) || {}).name || '' : 'All investments');
-    return `<section class="card" aria-label="Recent documents">
-      <div class="card-head"><h2>Recent documents</h2><a class="card-link" href="#documents">All documents</a></div>
-      ${docs.length ? `<div class="rows">${docs.map((d) => `<div class="row"><span class="thumb thumb-doc" aria-hidden="true">${icon('file')}</span><span class="row-main"><button class="link-btn row-title" type="button" data-action="open-doc" data-id="${h(d.id)}">${h(d.title)}</button><span class="sub">${date(d.date)} · ${h(d.cat)} · ${h(name(d.offeringId))}</span></span></div>`).join('')}</div>` : '<p class="empty">No documents yet.</p>'}
+    return `<section class="sec" aria-label="Recent documents">
+      ${sec('Recent documents', '<a class="sec-link" href="#documents">All documents</a>')}
+      ${docs.length ? `<ul class="list">${docs.map((d) => `<li><button class="link-btn list-title" type="button" data-action="open-doc" data-id="${h(d.id)}">${h(d.title)}</button><span class="list-meta">${date(d.date)} · ${h(d.cat)} · ${h(name(d.offeringId))}</span></li>`).join('')}</ul>` : '<p class="empty">No documents yet.</p>'}
     </section>`;
   }
 
   /* ---------- Updates ---------- */
-  const TOPIC = { call: ['Capital call', 'chip-warn'], documents: ['Documents', ''], quarterly: ['Quarterly report', ''] };
+  const TOPIC = { call: 'Capital call', documents: 'Documents', quarterly: 'Quarterly report' };
   /** News for one investor, newest first: every notice they were sent, and the latest update on each of their investments. */
   function postsFor(inv, v) {
     const w = W();
     const t = T();
-    const read = inv.noticesRead || [];
     const out = (w.notices || [])
       .filter((n) => n.recipients.indexOf(inv.id) >= 0)
       .map((n) => {
         const o = n.audience === 'all' ? null : w.offerings.find((x) => x.id === n.audience);
         const about = NS.noticeInvestment(w, inv, n);
         const call = /^call/.test(n.kind || '');
-        const topic = call ? TOPIC.call : TOPIC[n.kind] || [o ? 'Investment update' : 'Firm update', o ? 'chip-2' : ''];
-        return { id: n.id, date: n.date, topic: topic[0], tone: topic[1], title: NS.mergeNotice(n.subject, inv, t, n, about), body: NS.mergeNotice(n.body, inv, t, n, about), about: o ? o.name : '', notice: true, call: call && o ? o.id : '', off: o ? o.id : 'all', unread: read.indexOf(n.id) < 0 };
+        return { id: n.id, date: n.date, topic: call ? TOPIC.call : TOPIC[n.kind] || (o ? 'Investment update' : 'Firm update'), title: NS.mergeNotice(n.subject, inv, t, n, about), body: NS.mergeNotice(n.body, inv, t, n, about), about: o ? o.name : '', notice: true, call: call && o ? o.id : '', off: o ? o.id : 'all' };
       });
     (v ? v.positions : []).forEach((p) => {
-      if (p.offering.update) out.push({ id: 'u-' + p.offering.id, date: '', topic: 'Investment update', tone: 'chip-2', title: p.offering.name, body: p.offering.update, about: '', link: p.offering.id });
+      if (p.offering.update) out.push({ id: 'u-' + p.offering.id, date: '', topic: 'Investment update', title: p.offering.name, body: p.offering.update, about: '', link: p.offering.id });
     });
     return out.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
   }
-  const chip = (x) => `<span class="chip${x.tone ? ' ' + x.tone : ''}">${h(x.topic)}</span>`;
-  function updatesCard(inv, v) {
+  function updatesHTML(inv, v) {
     const posts = postsFor(inv, v).slice(0, 4);
-    return `<section class="card" aria-label="Latest updates">
-      <div class="card-head"><h2>Latest updates</h2><a class="card-link" href="#updates">All updates</a></div>
-      ${posts.length ? `<div class="rows">${posts.map((x) => `<a class="row row-post" href="#updates"><span class="row-main"><span class="row-title">${h(x.title)}</span><span class="sub">${[x.date ? date(x.date) : '', h(x.about)].filter(Boolean).join(' · ')}</span></span>${chip(x)}</a>`).join('')}</div>` : `<p class="empty">No updates from ${h(T().shortName)} yet.</p>`}
+    return `<section class="sec" aria-label="Latest updates">
+      ${sec('Latest updates', '<a class="sec-link" href="#updates">All updates</a>')}
+      ${posts.length ? `<div class="list">${posts.map((x) => `<a href="#updates"><span class="list-title">${h(x.title)}</span><span class="list-meta">${[x.date ? date(x.date) : '', h(x.topic)].filter(Boolean).join(' · ')}</span></a>`).join('')}</div>` : `<p class="empty">No updates from ${h(T().shortName)} yet.</p>`}
     </section>`;
   }
   NS.views.updates = {
@@ -671,22 +653,25 @@
         `${title('Updates', `News, notices and reports from ${h(t.name)}`)}
         ${
           posts.length
-            ? `<div class="posts">${posts
+            ? `<section class="sec feed" aria-label="Updates">${posts
                 .map(
-                  (x) => `<article class="card post">
-                    <div class="post-top">${chip(x)}${x.date ? `<span class="post-date">${date(x.date, 'long')}</span>` : ''}</div>
-                    <h2>${h(x.title)}</h2>
-                    ${x.body ? `<p>${h(x.body)}</p>` : ''}
-                    <div class="post-foot">${
-                      x.notice
-                        ? x.call
-                          ? `<a href="#investment-${h(x.call)}">View capital call</a>`
-                          : `<button class="link-btn" type="button" data-action="notice-open" data-id="${h(x.id)}" data-off="${h(x.off)}">View documents</button>`
-                        : `<a href="#investment-${h(x.link)}">View investment</a>`
-                    }${x.about ? `<span class="post-from">${h(x.about)}</span>` : ''}</div>
+                  (x) => `<article class="post">
+                    <span class="post-date">${x.date ? date(x.date, 'long') : 'Latest'}</span>
+                    <div class="post-body">
+                      <span class="post-topic">${h(x.topic)}${x.about ? ` · ${h(x.about)}` : ''}</span>
+                      <h2>${h(x.title)}</h2>
+                      ${x.body ? `<p>${h(x.body)}</p>` : ''}
+                      <div class="post-foot">${
+                        x.notice
+                          ? x.call
+                            ? `<a href="#investment-${h(x.call)}">View capital call</a>`
+                            : `<button class="link-btn" type="button" data-action="notice-open" data-id="${h(x.id)}" data-off="${h(x.off)}">View documents</button>`
+                          : `<a href="#investment-${h(x.link)}">View investment</a>`
+                      }</div>
+                    </div>
                   </article>`
                 )
-                .join('')}</div>`
+                .join('')}</section>`
             : `<p class="empty">No updates yet. News and notices from ${h(t.shortName)} appear here.</p>`
         }`,
         'updates'
@@ -700,6 +685,11 @@
       const v = vm();
       const inv = viewer();
       if (!inv) return noAccount();
+      const t = T();
+      const img = B.safeImage((t.home || {}).hero);
+      const banner = img ? `<div class="hm-banner"><img src="${img}" alt=""></div>` : '';
+      const typeLabel = (NS.ENTITY_TYPES[inv.type] || {}).label || '';
+      const head = (asOf) => `<header class="hm-head"><div><h1>${h(inv.title)}</h1><p>Account ${h(inv.id)}${typeLabel ? ` · ${h(typeLabel)}` : ''}</p></div>${asOf ? `<p class="hm-asof">${asOf}</p>` : ''}</header>`;
       if (!v || !v.positions.length) {
         // A new subscriber: what they have in progress, what is open to them, and the firm.
         const setup = NS.inviteFlow ? NS.inviteFlow.openFor(W(), inv) : null;
@@ -707,26 +697,29 @@
         const reqs = myRequests(inv).length ? `<section class="sec">${sec('Your requests')}${requestsHTML(inv, null, true)}</section>` : '';
         const resume = setup ? `<div class="done-box"><p class="lede">Finish setting up your account. Your progress so far is saved.</p><a class="btn btn-primary" href="#invite-${h(setup.token)}">Continue account setup</a></div>` : '';
         return shell(
-          `<div class="hm"><div class="hm-row hm-row-wide"><div class="hm-stack">${resume}${NS.runHooks('investmentsTop', inv)}${reqs}${open}<p class="empty">${open ? 'You have no investments yet. Offerings open for investment are listed above.' : 'No investments are recorded for this account yet. Your investments will appear here once your subscription is accepted and funded.'}</p></div>${overviewCard()}</div></div>`,
+          `${head('')}<div class="hm-grid"><div class="hm-main">${resume}${NS.runHooks('investmentsTop', inv)}${reqs}${open}<p class="empty">${open ? 'You have no investments yet. Offerings open for investment are listed above.' : 'No investments are recorded for this account yet. Your investments will appear here once your subscription is accepted and funded.'}</p></div><aside class="hm-side">${overviewHTML()}</aside></div>`,
           'overview',
-          { hero: heroHTML(inv, false) }
+          { banner }
         );
       }
-      const alerts = `${callsDueHTML(inv)}${noticesHTML(inv)}${NS.runHooks('investmentsTop', inv)}`;
-      const offers = openOfferingsHTML(inv, 'Latest offerings');
-      const mine = `<section class="card" aria-label="Your investments">
-        <div class="card-head"><h2>Your investments</h2><a class="card-link" href="#investments">All investments</a></div>
-        ${v.active.length ? investmentRows(v.active.slice(0, 5)) : '<p class="empty">No active investments.</p>'}
-      </section>`;
+      const x = portfolioTotals(v);
       return shell(
-        `<div class="hm">
-          ${alerts.trim() ? `<div class="hm-alerts">${alerts}</div>` : ''}
-          ${offers ? `<div class="hm-row">${offers}${overviewCard()}</div>${portfolioCard(v)}` : `<div class="hm-row hm-row-wide">${portfolioCard(v)}${overviewCard()}</div>`}
-          ${mine}
-          <div class="hm-row">${recentDocsCard(v)}${updatesCard(inv, v)}</div>
+        `${head(`As of ${date(todayIso(), 'long')}`)}
+        <div class="hm-grid">
+          <div class="hm-main">
+            ${callsDueHTML(inv)}${noticesHTML(inv)}${NS.runHooks('investmentsTop', inv)}
+            ${portfolioHTML(v, x)}
+            ${investmentsHTML(v, x)}
+            ${updatesHTML(inv, v)}
+          </div>
+          <aside class="hm-side">
+            ${openOfferingsHTML(inv, 'Latest offerings')}
+            ${overviewHTML()}
+            ${recentDocsHTML(v)}
+          </aside>
         </div>`,
         'overview',
-        { hero: heroHTML(inv, true) }
+        { banner }
       );
     }
   };
@@ -1205,7 +1198,7 @@
       const art = B.safeImage((t.home || {}).hero);
       return `<div class="pt pt-auth">
         <header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${B.lockup(t)}</span></div></header>
-        <main class="pt-main" id="main" tabindex="-1"><div class="auth">
+        <main class="pt-main" id="main" tabindex="-1"><div class="auth${art ? ' has-art' : ''}">
           <div class="auth-card">
           <form class="auth-form" data-form="sign-in" novalidate>
             <h1>${h(t.signin.headline || t.portalName)}</h1>
@@ -1220,7 +1213,7 @@
           </form>
           <aside class="auth-help"><h2>Need help signing in?</h2><p>${h(t.support.team)}</p><p>${h(t.support.phone)}</p><p>${h(t.support.email)}</p><p>${h(t.support.hours)}</p></aside>
           </div>
-          <div class="auth-art${art ? ' has-img' : ''}" aria-hidden="true">${art ? `<img class="hm-hero-img" src="${art}" alt="">` : ''}<p class="auth-art-name">${h(t.name)}</p>${String((t.home || {}).about || '').trim() ? `<p class="auth-art-sub">${h(String(t.home.about).trim().split(/(?<=[.!?])\s/)[0])}</p>` : ''}</div>
+          ${art ? `<div class="auth-art" aria-hidden="true"><img src="${art}" alt=""></div>` : ''}
         </div></main>
         ${footer()}
       </div>`;
