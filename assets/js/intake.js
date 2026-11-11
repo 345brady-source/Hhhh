@@ -463,6 +463,8 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
     try {
       const env = await es.agreementDraft(ws, o.id, { docId: d.id, title: d.title || 'Subscription Agreement' });
       if (env) env.fromDocuments = d.fileName || d.title || 'your documents';
+      // Saved straight away, so investors sign it during onboarding without another step (Edit fields on the offering adjusts it).
+      if (env && es.saveAgreement) es.saveAgreement(ws, env);
       if (NS.workspace) NS.workspace.save(ws);
       return env;
     } catch (e) {

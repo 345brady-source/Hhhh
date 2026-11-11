@@ -2846,8 +2846,12 @@
     try {
       const env = await agreementDraft(w, oid, { file: file || null, docId: file ? '' : docId, title: form.title.value, countersign: !!form.countersign.checked });
       U.closeDialog();
-      openAgreement(env);
-      U.toast(`${env.autoPlaced} field${env.autoPlaced === 1 ? '' : 's'} placed. Check them, then save the subscription agreement.`);
+      const n = env.fields.length;
+      if (saveAgreement(w, env)) {
+        NS.app.go('console-offering-' + oid);
+        NS.app.render();
+        U.toast(`Subscription agreement added with ${n} signing field${n === 1 ? '' : 's'}. Investors sign it during onboarding.`);
+      } else openAgreement(env);
     } catch (e) {
       if (btn) {
         btn.disabled = false;
@@ -2869,12 +2873,9 @@
       U.toast((e && e.message) || 'The agreement could not be opened.');
     }
   };
-  NS.actions['es-agreement-save'] = (el) => {
-    const w = W();
-    const env = envById(w, el.getAttribute('data-id'));
-    if (!env || !env.agreementFor) return;
-    const todo = agreementTodo(env);
-    if (todo) return U.toast(todo);
+  /** Store a draft as the offering's subscription agreement (the template every invited investor signs). Returns it, or null. */
+  function saveAgreement(w, env) {
+    if (!env || !env.agreementFor || agreementTodo(env)) return null;
     const o = w.offerings.find((x) => x.id === env.agreementFor);
     const tpl = templateFromEnv(env, env.title, true, env.agreementFor);
     // One subscription agreement per offering: the edited one is replaced; any other stops being the offering's agreement.
@@ -2884,6 +2885,15 @@
     w.envelopes = envs(w).filter((e) => e !== env);
     CK().audit('Subscription agreement saved', `${o ? o.name : env.agreementFor}: ${tpl.title}, ${tpl.fields.length} fields (${tpl.roles.join(', ')}); investors sign it during onboarding`, env.agreementFor, tpl.id);
     NS.app.save(true);
+    return tpl;
+  }
+  NS.actions['es-agreement-save'] = (el) => {
+    const w = W();
+    const env = envById(w, el.getAttribute('data-id'));
+    if (!env || !env.agreementFor) return;
+    const todo = agreementTodo(env);
+    if (todo) return U.toast(todo);
+    saveAgreement(w, env);
     U.toast('Subscription agreement saved. Investors sign it during onboarding.');
     NS.app.go('console-offering-' + env.agreementFor);
   };
@@ -2919,5 +2929,5 @@
     U.closeDialog();
     NS.app.render();
   };
-  NS.esign = { pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, investorDocsHTML, agreementPanel, agreementDraft, autoFields };
+  NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, investorDocsHTML, agreementPanel, agreementDraft, autoFields };
 })(window.CVPortal);
