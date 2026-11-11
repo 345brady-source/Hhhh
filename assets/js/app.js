@@ -394,18 +394,30 @@
   function previewBarHTML() {
     return `<div class="pvbar" role="region" aria-label="Investor preview"><span class="pvbar-label">Investor preview</span>${viewerSelect('pv-viewer')}<a class="pvbar-back" href="#console">Back to console</a></div>`;
   }
-  function demoHTML() {
+  /** Sample sponsors the self-serve preview offers beside the visitor's own portal, so there is something to explore. */
+  const DEMO_SPONSORS = ['kestrel-bay', 'ashwell-ridge', 'pellbrook'];
+  function sponsorPickHTML(current) {
+    if (!E.diy) return '';
+    const all = NS.workspace.list();
+    const mine = all.filter((c) => !c.sample);
+    const samples = all.filter((c) => c.sample && (DEMO_SPONSORS.indexOf(c.id) >= 0 || c.id === current)).sort((a, b) => DEMO_SPONSORS.indexOf(a.id) - DEMO_SPONSORS.indexOf(b.id));
+    if (!samples.length) return '';
+    const opt = (c) => `<option value="${h(c.id)}"${c.id === current ? ' selected' : ''}>${h(c.name)}</option>`;
+    return `<label class="demo-role" for="demo-sponsor"><span>Demo · sponsor</span><select id="demo-sponsor" data-change="demo-sponsor">${current ? '' : '<option value="">Choose a sample sponsor</option>'}${mine.length ? `<optgroup label="Your portal">${mine.map(opt).join('')}</optgroup>` : ''}<optgroup label="Sample sponsors">${samples.map(opt).join('')}</optgroup></select></label>`;
+  }
+  function demoHTML(standalone) {
     if (!config.demo) return '';
     const w = ws();
-    if (!w) return '';
+    // The sign-up page offers the sample sponsors. Other standalone pages (an investor's invitation, a signing link) show no demo controls.
+    if (standalone || !w) return E.diy && state.route === 'diy-start' ? `<div class="demo-bar">${sponsorPickHTML('')}</div>` : '';
     const inv = w.investors.find((x) => x.id === state.viewer);
     const opt = (v, label) => `<option value="${v}"${state.role === v ? ' selected' : ''}>${label}</option>`;
     const labels = E.diy
       ? { admin: `Admin · ${h(w.tenant.shortName)}`, team: `Team member · ${h(w.tenant.shortName)}`, investor: `Investor · ${inv ? h(inv.title) : 'none yet'}` }
       : { staff: 'Carrow &amp; Vale staff', sponsor: `Sponsor staff · ${h(w.tenant.shortName)}`, investor: `Investor · ${inv ? h(inv.title) : 'none yet'}` };
-    return `<label class="demo-role" for="demo-role"><span>Demo · signed in as</span><select id="demo-role" data-change="demo-role">
+    return `<div class="demo-bar">${sponsorPickHTML(w.tenant.id)}<label class="demo-role" for="demo-role"><span>${E.diy ? 'Signed in as' : 'Demo · signed in as'}</span><select id="demo-role" data-change="demo-role">
       ${ROLES.map((r) => opt(r, labels[r])).join('')}
-    </select></label>${E.diy ? '<button class="demo-start" type="button" data-action="diy-start-over">New sign-up</button>' : ''}`;
+    </select></label>${E.diy ? '<button class="demo-start" type="button" data-action="diy-start-over">New sign-up</button>' : ''}</div>`;
   }
   function opbarHTML() {
     const mode = modeOf(state.route);
@@ -450,7 +462,7 @@
     document.title = standalone ? view.title || (w ? w.tenant.portalName : 'Investor Portal') : mode === 'console' ? `${w.tenant.shortName} · ${E.diy ? 'Console' : 'Sponsor Console'}` : `${w.tenant.portalName} · ${w.tenant.shortName}`;
     // Carrow & Vale staff get the operator bar; a sponsor's own people get a plain preview bar in the investor view.
     document.getElementById('opbar').innerHTML = !w || standalone ? '' : E.managed && state.role === 'staff' ? opbarHTML() : state.role !== 'investor' && mode === 'portal' ? previewBarHTML() : '';
-    document.getElementById('demo').innerHTML = standalone || state.remote ? '' : demoHTML();
+    document.getElementById('demo').innerHTML = state.remote ? '' : demoHTML(standalone);
     const el = document.getElementById('view');
     el.innerHTML = view.render(state.param);
     if (view.after) view.after(state.param);
@@ -559,6 +571,12 @@
       return;
     }
     setClient(el.value, modeOf(state.route) === 'console' ? 'console' : 'overview');
+  };
+  NS.changes['demo-sponsor'] = (el) => {
+    if (!el.value) return;
+    state.role = E.owner;
+    NS.store.set('role', state.role);
+    setClient(el.value, 'console');
   };
   NS.changes['demo-role'] = (el) => {
     state.role = el.value;
