@@ -276,6 +276,8 @@ A server on the same origin as the portal page needs no listing. Until the serve
 
 **Investors already on file.** When the console invites an active investor to another offering, the snapshot says so (`investor.existing`, `invitation.existing`): the email invites them to subscribe without asking for ID or bank details, the link covers only the subscription (plus accredited investor verification when that offering needs it and theirs is not current), and the console keeps the investor's record on file, taking only what the link collected.
 
+**Portal links.** For an investor the firm added from paper documents, the console can send a link that only opens their portal (`invitation.existing` with `invitation.access`, and no offering): the email says their account is already set up ("<firm>: your investor portal"), the link asks for nothing but a login, the firm is told when they open it, and no deletion reminder is sent.
+
 ### Sponsor calls (API_TOKEN)
 
 `POST /v1/invitations` (body up to 32 MB):
