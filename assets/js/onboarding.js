@@ -149,7 +149,7 @@
    * The bank step's account holder. An individual's is asked as a first and a last name; a joint, trust, entity or IRA
    * account may be in another name at the bank, so it is one line. holderDefaults (when the form opens): a holder on file,
    * or one saved on a single line by an earlier visit, is kept (split in two for an individual), unless it is only the
-   * investor's or the account's own name. holderSync (when the step is shown): fields the investor has not changed start
+   * investor's or the account's own name. holderSync (when the step is shown): fields the investor has not filled in start
    * as the name given in the investor information step, and follow a correction made there.
    */
   function holderDefaults(d, i, onFile) {
@@ -161,22 +161,12 @@
     d.holder = ind || own ? '' : line;
   }
   function holderSync(d, i) {
-    // What the step last filled in by itself is remembered (holderPairAuto for the two names, holderAuto for the one line):
-    // undefined before the step is first shown, null once the fields hold the investor's own entry or the holder on file.
-    // Only fields still showing that value are filled in again, so a name the investor typed, or cleared, is left alone.
-    const mine = (cur, auto) => (auto === undefined ? !cur : cur === auto);
     if (d.type === 'individual') {
-      if (!mine(fullName(d.holderFirst, d.holderLast), d.holderPairAuto)) {
-        if (d.holderPairAuto === undefined) d.holderPairAuto = null;
-        return;
-      }
+      const cur = fullName(d.holderFirst, d.holderLast);
+      if (cur && cur !== d.holderPairAuto) return;
       [d.holderFirst, d.holderLast] = fullName(d.first, d.last) ? [tidy(d.first), tidy(d.last)] : splitName(i.contact);
       d.holderPairAuto = fullName(d.holderFirst, d.holderLast);
-    } else {
-      if (!mine(tidy(d.holder), d.holderAuto)) {
-        if (d.holderAuto === undefined) d.holderAuto = null;
-        return;
-      }
+    } else if (!tidy(d.holder) || tidy(d.holder) === d.holderAuto) {
       d.holder = d.holderAuto = d.type === 'joint' ? ownersText(d) : tidy(d.title) || tidy(i.title);
     }
   }
@@ -281,13 +271,29 @@
     return `<label class="field${opts.wide ? ' field-wide' : ''}" for="ob-${k}"><span>${label}</span><select id="ob-${k}" data-bind="ob:${k}"${opts.hint ? ` aria-describedby="hint-${k}"` : ''}>${options.map(([v, l]) => `<option value="${h(v)}"${d[k] === v ? ' selected' : ''}>${h(l)}</option>`).join('')}</select>${opts.hint ? `<span class="hint" id="hint-${k}">${opts.hint}</span>` : ''}</label>`;
   }
 
+  /** The login step asks for the investor's own first name and last name (two fields), filled in from the name on file. */
+  function loginNames(d, i) {
+    if (d.loginFirst === undefined) [d.loginFirst, d.loginLast] = splitName(i.contact);
+    return `${input('loginFirst', 'First name', { auto: 'given-name', max: 60 })}${input('loginLast', 'Last name', { auto: 'family-name', max: 60 })}`;
+  }
+  /** After the login step the name on file is what the investor typed, and the next step's name fields start from it. */
+  function applyLoginNames(d, i) {
+    const nm = fullName(d.loginFirst, d.loginLast);
+    if (!nm) return;
+    const was = i.contact;
+    const p = namePair(d.loginFirst, d.loginLast);
+    i.contact = nm;
+    if (PERSONAL(d.type || i.type)) Object.assign(d, { first: p.first, last: p.last });
+    if (i.type === 'individual' && (!i.title || sameName(i.title, was))) i.title = nm;
+  }
+
   /* ---------- Steps ---------- */
   function stepLogin() {
     const i = inv();
     return `<h1>${LABELS.login}</h1>
       <p class="lede">${h(T().shortName)} invited ${h(i.contact)} to activate an account for ${h(i.title)}.</p>
       <div class="form-grid">
-        <label class="field" for="ob-name"><span>Name</span><input id="ob-name" type="text" value="${h(i.contact)}" readonly></label>
+        ${loginNames(ob().d, i)}
         <label class="field" for="ob-email"><span>Email</span><input id="ob-email" type="email" value="${h(i.email)}" readonly></label>
         ${input('password', 'Password', { type: 'password', auto: 'new-password', hint: 'At least 10 characters' })}
         ${input('password2', 'Confirm password', { type: 'password', auto: 'new-password' })}
@@ -451,6 +457,7 @@
     const e = {};
     const digits = (s) => String(s || '').replace(/\D/g, '');
     if (step === 'login') {
+      personErrors(e, d.loginFirst, d.loginLast, 'loginFirst', 'loginLast', 'your');
       if (String(d.password).length < 10) e.password = 'Use at least 10 characters.';
       else if (d.password !== d.password2) e.password2 = 'The passwords do not match.';
     }
@@ -668,6 +675,7 @@
       if (target && target.focus) target.focus();
       return;
     }
+    if (key === 'login') applyLoginNames(o.d, inv());
     const last = o.step === steps.length - 1;
     const pending = applyToInvestor(last);
     if (pending && pending.then) await pending;
@@ -1067,7 +1075,14 @@
    */
   const holds = (c) => !!c.off && (!!c.it.holds || (c.inv.positions || []).some((p) => p.offeringId === c.off.id));
   // The agreement template is for new subscribers (esign.js); an investor adding to a holding signs the subscription form.
-  const tplReady = (c) => !!(c.off && NS.esign && NS.esign.templateReady && NS.esign.templateReady(c.ws, c.off.id) && !holds(c));
+  const tplReady = (c) => !!(c.off && NS.esign && NS.esign.templateReady && NS.esign.templateReady(c.ws, c.off.id));
+  // The investor signs the offering's own subscription agreement (the uploaded document), never a typed form in its place:
+  // without the agreement on the offering there is no subscription step, and the firm sends the agreement later.
+  const subSteps = (c, s) => {
+    if (!c.off || !(c.req || tplReady(c))) return;
+    s.push('subscribe');
+    if (c.req ? !!envOf(c) : true) s.push('agreement');
+  };
   function flowSteps(c) {
     if (c.it.existing) {
       // An active investor invited to a new offering: their account is on file, so the link covers the subscription.
@@ -1085,20 +1100,14 @@
         }
       }
       if (c.fl.accStep) s.push('accreditation');
-      if (c.off) {
-        s.push('subscribe');
-        if (c.req ? !!envOf(c) : tplReady(c)) s.push('agreement');
-      }
+      subSteps(c, s);
       s.push('done');
       return s;
     }
     const s = ['welcome', 'login', 'profile', 'identity'];
     if (accVerifiedFor(c) || c.ws.tenant.onboarding.accreditation) s.push('accreditation');
     s.push('tax', 'payment');
-    if (c.off) {
-      s.push('subscribe');
-      if (c.req ? !!envOf(c) : tplReady(c)) s.push('agreement');
-    }
+    subSteps(c, s);
     s.push('done');
     return s;
   }
@@ -1259,7 +1268,7 @@
     return `${ivfH1(FL.login)}
       <p class="lede">You will sign in to ${h(c.ws.tenant.portalName)} with this email and password.</p>
       <div class="form-grid">
-        <label class="field" for="ob-name"><span>Name</span><input id="ob-name" type="text" value="${h(i.contact)}" readonly></label>
+        ${loginNames(ob().d, i)}
         <label class="field" for="ob-email"><span>Email</span><input id="ob-email" type="email" value="${h(i.email)}" readonly autocomplete="username"></label>
         ${input('password', 'Password', { type: 'password', auto: 'new-password', hint: c.fl.loginAt ? 'Your login is set up. Enter a new password only to change it.' : 'At least 10 characters' })}
         ${input('password2', 'Confirm password', { type: 'password', auto: 'new-password' })}
@@ -1511,6 +1520,7 @@
       if (t.onboarding.esign && !d.edelivery) e.edelivery = 'Electronic delivery is required for this portal.';
     }
     if (key === 'login' && !(c.fl.loginAt && !d.password && !d.password2)) Object.assign(e, validate('login'));
+    else if (key === 'login') personErrors(e, d.loginFirst, d.loginLast, 'loginFirst', 'loginLast', 'your');
     if (key === 'profile') {
       const us = d.country === US;
       nameErrors(e, d);
@@ -1604,6 +1614,7 @@
       log('Electronic records consent given', `agreed to use electronic records and signatures${d.edelivery ? ', and to electronic delivery of documents' : ''}`);
     }
     if (key === 'login') {
+      applyLoginNames(d, i);
       if (!fl.loginAt) log('Investor login created', `${i.contact} <${i.email}>`);
       else if (d.password) log('Investor password changed', i.contact);
       fl.loginAt = fl.loginAt || nowIso();

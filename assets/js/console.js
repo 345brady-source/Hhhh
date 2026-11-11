@@ -146,7 +146,7 @@
       const w = W();
       const t = T();
       const branded = t.domain && t.domain !== NS.TENANT_TEMPLATE.domain && t.support.email !== NS.TENANT_TEMPLATE.support.email;
-      const steps = (E.diy
+      const allSteps = (E.diy
         ? [
             ['Brand the investor portal', 'Logo, colors, domain, support contact and disclosures.', branded, 'console-brand', true],
             ['Plug in your verification providers', 'Connect the identity, sanctions screening and accredited investor services you use, one or several for each check. They run automatically when investors onboard.', !!(NS.integrations && NS.integrations.ready(w)), 'console-integrations', true],
@@ -165,6 +165,9 @@
             ['Run the first distribution', 'Allocate a payment pro rata and generate the NACHA file for the bank.', w.runs.length > 0, 'console-distributions']
           ]
       ).filter((s) => (canConfigure() || !s[4]) && NS.views[s[3]]);
+      // Steps the firm removed from its list (kept by name; Restore brings them back).
+      const removed = (t.setupRemoved || []).filter((k) => allSteps.some((s) => s[0] === k));
+      const steps = allSteps.filter((s) => removed.indexOf(s[0]) < 0);
       const done = steps.filter((s) => s[2]).length;
       const yearAgo = NS.dates.addMonths(today(), -12);
       const paid12 = w.runs.filter((r) => r.status === 'paid' && r.date > yearAgo).reduce((a, r) => a + r.total, 0);
@@ -205,8 +208,8 @@
             ? panel(
                 `${E.diy ? 'Setup' : 'Client setup'} <span class="cs-count">${done} of ${steps.length} complete</span>`,
                 `<ol class="cs-steps">${steps
-                  .map((s, i) => `<li class="${s[2] ? 'is-done' : ''}"><span class="cs-step-n">${s[2] ? icon('check') : i + 1}</span><div><strong>${s[0]}</strong><span>${s[1]}</span></div><a class="cs-btn cs-btn-small${s[2] ? '' : ' cs-btn-primary'}" href="#${s[3]}"${s[5] ? ` data-action="${s[5]}"` : ''}>${s[2] ? 'Review' : 'Start'}</a></li>`)
-                  .join('')}</ol>`
+                  .map((s, i) => `<li class="${s[2] ? 'is-done' : ''}"><span class="cs-step-n">${s[2] ? icon('check') : i + 1}</span><div><strong>${s[0]}</strong><span>${s[1]}</span></div><div class="cs-step-act"><a class="cs-btn cs-btn-small${s[2] ? '' : ' cs-btn-primary'}" href="#${s[3]}"${s[5] ? ` data-action="${s[5]}"` : ''}>${s[2] ? 'Review' : 'Start'}</a>${canConfigure() ? `<button class="cs-step-rm" type="button" data-action="setup-remove" data-k="${h(s[0])}" aria-label="Remove the step: ${h(s[0])}">Remove</button>` : ''}</div></li>`)
+                  .join('')}</ol>${removed.length && canConfigure() ? `<p class="cs-hint cs-steps-removed">${removed.length} step${removed.length === 1 ? '' : 's'} removed. <button class="link-btn" type="button" data-action="setup-restore">Restore</button></p>` : ''}`
               )
             : ''
         }
@@ -266,6 +269,23 @@
   };
 
   /* ---------- Offerings ---------- */
+  NS.actions['setup-remove'] = (el) => {
+    if (!canConfigure()) return;
+    const k = el.getAttribute('data-k');
+    const t = T();
+    t.setupRemoved = (t.setupRemoved || []).filter((x) => x !== k).concat([k]);
+    audit('Setup step removed', k, '', t.id);
+    NS.app.save();
+    NS.app.render();
+  };
+  NS.actions['setup-restore'] = () => {
+    if (!canConfigure()) return;
+    const t = T();
+    t.setupRemoved = [];
+    audit('Setup steps restored', 'All setup steps are listed again', '', t.id);
+    NS.app.save();
+    NS.app.render();
+  };
   NS.views['console-offerings'] = {
     mode: 'console',
     render() {

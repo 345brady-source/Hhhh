@@ -355,6 +355,9 @@
       const setup = NS.inviteFlow ? NS.inviteFlow.openFor(W(), inv) : null;
       // An invitation to subscribe to another offering does not hold up this one.
       if (setup && !(setup.existing && setup.offeringId !== o.id)) return shell(`<a class="back" href="#investments">${icon('back')}Investments</a>${title(`Subscribe to ${h(o.name)}`)}<div class="done-box"><p class="lede">${setup.existing ? `${h(T().shortName)} invited you to subscribe. Your invitation takes you through the documents and the subscription agreement.` : 'Finish setting up your account first. Your subscription is the last step, and your progress so far is saved.'}</p><a class="btn btn-primary" href="#invite-${h(setup.token)}">${setup.existing ? 'Continue your subscription' : 'Continue account setup'}</a></div>`, 'investments');
+      // Self-serve edition: the investor signs the offering's own subscription agreement, never a typed form in its place.
+      const agr = NS.EDITION && NS.EDITION.diy && NS.esign && NS.esign.templateReady ? NS.esign.templateReady(W(), o.id) : null;
+      if (agr === false) return shell(`<a class="back" href="#investments">${icon('back')}Investments</a>${title(`Subscribe to ${h(o.name)}`)}<div class="done-box"><p class="lede">The subscription agreement for ${h(o.name)} is not available to sign online yet. Contact ${h(T().support.team)}${T().support.email ? ` at ${h(T().support.email)}` : ''}.</p></div>`, 'investments');
       const f = subForm(o);
       const cfg = NS.audit ? NS.audit.settings(o) : null;
       if (f.done) {
@@ -407,9 +410,9 @@
             <label class="check field-wide" for="sb-acc"><input id="sb-acc" type="checkbox" data-bind="sb:accredited"${f.accredited ? ' checked' : ''}><span>${h(inv.title)} is an accredited investor (${h(inv.accreditation.basis)}) and this remains accurate.</span></label>${e.accredited ? `<span class="field-error">${h(e.accredited)}</span>` : ''}
             <label class="check field-wide" for="sb-docs"><input id="sb-docs" type="checkbox" data-bind="sb:docs"${f.docs ? ' checked' : ''}><span>I have received and read the private placement memorandum, limited partnership agreement and subscription agreement, and I make the representations in the subscription agreement.</span></label>${e.docs ? `<span class="field-error">${h(e.docs)}</span>` : ''}
             <label class="check field-wide" for="sb-esign"><input id="sb-esign" type="checkbox" data-bind="sb:esign"${f.esign ? ' checked' : ''}><span>I agree to sign these documents electronically.</span></label>${e.esign ? `<span class="field-error">${h(e.esign)}</span>` : ''}
-            <label class="field field-wide" for="sb-sig"><span>Type your full name to sign</span><input id="sb-sig" type="text" data-bind="sb:signature" value="${h(f.signature)}" autocomplete="off"${e.signature ? ' aria-invalid="true"' : ''}><span class="hint">Signing as ${h(inv.contact)} for ${h(inv.title)} on ${date(todayIso(), 'long')}</span>${e.signature ? `<span class="field-error">${h(e.signature)}</span>` : ''}</label>
+            ${agr ? '<p class="hint field-wide">Next you sign the subscription agreement itself.</p>' : ''}<label class="field field-wide" for="sb-sig"${agr ? ' hidden' : ''}><span>Type your full name to sign</span><input id="sb-sig" type="text" data-bind="sb:signature" value="${h(f.signature)}" autocomplete="off"${e.signature ? ' aria-invalid="true"' : ''}><span class="hint">Signing as ${h(inv.contact)} for ${h(inv.title)} on ${date(todayIso(), 'long')}</span>${e.signature ? `<span class="field-error">${h(e.signature)}</span>` : ''}</label>
           </div>
-          <div class="ob-actions"><a class="btn" href="#investments">Cancel</a><button class="btn btn-primary" type="submit">Sign subscription documents</button></div>
+          <div class="ob-actions"><a class="btn" href="#investments">Cancel</a><button class="btn btn-primary" type="submit">${agr ? 'Continue to the agreement' : 'Sign subscription documents'}</button></div>
         </form>`,
         'investments'
       );
@@ -437,9 +440,10 @@
     if (!u.accredited) e.accredited = 'Confirm your accreditation to continue.';
     if (!u.docs) e.docs = 'Confirm you have read the offering documents.';
     if (!u.esign) e.esign = 'Agree to electronic signature to continue.';
-    if (!sameName(u.signature, inv.contact)) e.signature = `Type your name exactly as ${inv.contact}.`;
+    const onAgreement = !!(NS.EDITION && NS.EDITION.diy && NS.esign && NS.esign.templateReady && NS.esign.templateReady(W(), o.id));
+    if (!onAgreement && !sameName(u.signature, inv.contact)) e.signature = `Type your name exactly as ${inv.contact}.`;
     u.err = Object.keys(e).length ? e : null;
-    if (!u.err) u.done = OPS().submitSubscription(W(), inv, o, { cents, signature: u.signature.trim(), cls: cls ? cls.id : '' });
+    if (!u.err) u.done = OPS().submitSubscription(W(), inv, o, { cents, signature: onAgreement ? inv.contact : u.signature.trim(), cls: cls ? cls.id : '' });
     NS.app.render();
     window.scrollTo(0, 0);
   };

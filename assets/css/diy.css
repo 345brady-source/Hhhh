@@ -250,8 +250,3 @@
 @media (max-width: 560px) {
   .sd-row2 { grid-template-columns: minmax(0, 1fr); }
 }
-
-/* Invite form: the offering needs its subscription agreement first. */
-.inv8-block { border: 1px solid var(--line-strong); border-left: 3px solid var(--warn, #9A6700); border-radius: var(--r-md, 4px); background: var(--surface-2, var(--surface)); padding: 14px 16px; }
-.inv8-block p { margin: 0 0 12px; font-size: 14px; line-height: 1.5; color: var(--fg); }
-.inv8-block .cs-row { margin: 0; flex-wrap: wrap; gap: 8px; }
