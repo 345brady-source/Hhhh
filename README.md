@@ -7,7 +7,7 @@ It is a static app with no build step:
 ```sh
 python3 -m http.server 8000
 # http://localhost:8000/?tenant=ashwell-ridge   managed edition
-# http://localhost:8000/diy.html                self-serve edition (sign-up)
+# http://localhost:8000/portal.html             self-serve edition (sign-up)
 ```
 
 ## Two editions
@@ -16,7 +16,7 @@ The same code runs as two products. Each keeps its own data in the browser (sepa
 
 | | Carrow & Vale (managed) | Carrow & Vale (self-serve) |
 |---|---|---|
-| Entry point | `index.html` | `diy.html` (sets `window.CVPortalEdition = 'diy'`; `?edition=diy` also works) |
+| Entry point | `index.html` | `portal.html`, the page firms publish (sets `window.CVPortalEdition = 'selfserve'`). `diy.html` is the same page under its development name: "DIY" is an internal key and must not appear in a published address, because investors see the address in their invitation links |
 | Who runs it | Carrow & Vale staff set up and run each client's portal | The firm signs itself up and runs its own portal |
 | Roles | Carrow & Vale staff, sponsor staff, investor | Admin, team member, investor |
 | Setup | Carrow & Vale's new-client setup and offering intake | Self-serve sign-up (firm name, brand color, logo), then a setup checklist |
@@ -289,7 +289,8 @@ This build stores everything in the browser for demonstration. A production depl
 
 ```
 index.html                 entry point, managed edition
-diy.html                   entry point, self-serve edition (same files with window.CVPortalEdition = 'diy')
+portal.html                entry point, self-serve edition, as published (same files with window.CVPortalEdition = 'selfserve')
+diy.html                   the same page under its development name (tests use it)
 assets/css/esign.css       e-signature screens
 assets/css/diy.css         DIY sign-up page and verification screens
 assets/js/edition.js       which edition is running: roles, storage, product name

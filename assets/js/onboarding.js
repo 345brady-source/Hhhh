@@ -120,14 +120,19 @@
   const TITLE_MISSING = { trust: 'Enter the trust name.', entity: 'Enter the entity’s legal name.', ira: 'Enter the IRA account name.' };
   /** What is missing from the names in the investor information step. */
   function nameErrors(e, d) {
-    if (d.type === 'individual') personErrors(e, d.first, d.last, 'first', 'last', 'your');
-    else if (d.type === 'joint') {
-      personErrors(e, d.first, d.last, 'first', 'last', 'the first owner’s');
-      personErrors(e, d.first2, d.last2, 'first2', 'last2', 'the second owner’s');
-    } else if (!tidy(d.title)) e.title = TITLE_MISSING[d.type] || 'Enter the name on the account.';
+    // The first owner of a joint account is the investor filling in the form ("Your first name").
+    if (PERSONAL(d.type)) personErrors(e, d.first, d.last, 'first', 'last', 'your');
+    else if (!tidy(d.title)) e.title = TITLE_MISSING[d.type] || 'Enter the name on the account.';
+    if (d.type === 'joint') personErrors(e, d.first2, d.last2, 'first2', 'last2', 'the second owner’s');
   }
   /** Put the names the form has on the investor record: the account name, the investor's own name and a joint account's owners. */
   function applyNames(i, d) {
+    // A full name typed in a first-name field moves into both fields, so the form shows what the record says.
+    if (PERSONAL(d.type)) {
+      const a = namePair(d.first, d.last);
+      const b = namePair(d.first2, d.last2);
+      Object.assign(d, { first: a.first, last: a.last }, d.type === 'joint' ? { first2: b.first, last2: b.last } : {});
+    }
     i.type = d.type;
     i.title = accountName(d);
     // The investor's own name on file follows the spelling they gave here.
@@ -1658,6 +1663,8 @@
     if (!c.req || !env || !s || s.status === 'signed' || env.status !== 'sent') return;
     if (s.account === c.inv.title && s.name === c.inv.contact && s.email === c.inv.email) return;
     if (NS.esign.refreshSubscription && NS.esign.refreshSubscription(c.ws, env.id, c.inv, c.off, { cents: c.req.cents, cls: c.req.cls })) {
+      // The request is signed when its agreement is: until then it names the investor as now on file.
+      if (!c.req.signedAt) c.req.signedBy = c.inv.contact;
       if (NS.audit) NS.audit.log(c.ws, { action: 'Subscription agreement updated', record: c.req.id, fund: c.off ? c.off.id : '', detail: `${c.inv.title}: investor details corrected before signing; the agreement now shows them`, actor: `${c.inv.title} (investor)` });
     }
   }

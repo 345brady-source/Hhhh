@@ -21,7 +21,7 @@ const payload = (over = {}) =>
   Object.assign(
     {
       workspace: 'ws-harbor',
-      portalUrl: 'https://portal.example/diy.html',
+      portalUrl: 'https://portal.example/portal.html',
       notifyEmail: 'ops@harborridge.example',
       firm: FIRM,
       investor: { id: 'HRC-0007', contact: 'Zelda Quixote', type: 'individual', email: 'zelda@investor.example' },
@@ -186,4 +186,39 @@ test('with no commitment set by the sponsor, the investor’s amount must be a p
     assert.equal(ok.status, 200, JSON.stringify(ok.body));
     const sub = (await j(base, 'GET', `/v1/invitations/${r.id}/submission`)).body;
     assert.equal(sub.request.cents, 2500000);
+  }));
+
+test('a portal link for an investor added from paper documents: its own email, reminder and sponsor notice; nothing to fill in', () =>
+  start(async (base) => {
+    const r = await create(base, { offering: null, investor: { id: 'HRC-0031', contact: 'Paula Paper', email: 'paula@investor.example', existing: { accredited: false, accreditedUntil: '', holds: false } }, invitation: { cents: 0, existing: true, access: true } });
+    assert.ok(r.token, JSON.stringify(r));
+    const snap = (await j(base, 'GET', '/v1/invite', { token: r.token, auth: false })).body;
+    assert.equal(snap.invitation.access, true);
+    assert.equal(snap.invitation.existing, true);
+    const [m] = await outbox(base, r.id);
+    assert.equal(m.subject, 'Harbor Ridge Capital: your investor portal');
+    assert.match(m.text, /has set up your investor portal/);
+    assert.match(m.text, /nothing to fill in/);
+    assert.match(m.text, /Open your portal:/);
+    assert.ok(!/photo ID|bank details|onboarding|identity verification/i.test(m.text), m.text);
+    assert.ok(!/carrow|powered by|diy/i.test(m.text + m.html));
+    const again = await j(base, 'POST', `/v1/invitations/${r.id}/resend`, { body: {} });
+    assert.equal(again.status, 200, JSON.stringify(again.body));
+    const re = (await outbox(base, r.id)).find((x) => x.kind === 'invitation_resent');
+    assert.equal(re.subject, 'Reminder: Harbor Ridge Capital: your investor portal');
+    const done = await complete(base, again.body.token, { investor: { id: 'HRC-0031', contact: 'Paula Paper' } });
+    assert.equal(done.status, 200, JSON.stringify(done.body));
+    const n = (await outbox(base, r.id)).find((x) => x.kind === 'sponsor_notification');
+    assert.equal(n.subject, 'Paula Paper opened their investor portal');
+    assert.match(n.text, /created their login/);
+    assert.ok(!/subscription|Identity:|Sanctions/i.test(n.text), n.text);
+  }));
+
+test('the access flag only counts for an investor already on file', () =>
+  start(async (base) => {
+    const r = await create(base, { offering: null, investor: { id: 'HRC-0032', contact: 'Nina New', email: 'nina@investor.example' }, invitation: { cents: 0, access: true } });
+    const snap = (await j(base, 'GET', '/v1/invite', { token: r.token, auth: false })).body;
+    assert.equal(snap.invitation.access, undefined);
+    const [m] = await outbox(base, r.id);
+    assert.match(m.subject, /Complete your investor onboarding/);
   }));

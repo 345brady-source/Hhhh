@@ -10,17 +10,22 @@
  *            sanctions screening and accreditation providers the sponsor
  *            connects (integrations.js).
  *
- * The entry page picks one: index.html is the managed edition and diy.html
- * sets window.CVPortalEdition = 'diy' before the scripts load. ?edition=diy
- * (or managed) overrides it for testing.
+ * The entry page picks one: index.html is the managed edition; portal.html (the
+ * page firms publish) sets window.CVPortalEdition = 'selfserve' before the
+ * scripts load, and diy.html is the same page under its development name
+ * ('diy' is the edition's internal key and never shown to users, so it must not
+ * appear in a published address). ?edition=selfserve (or diy, or managed)
+ * overrides it for testing.
  */
 (function () {
   'use strict';
   const NS = (window.CVPortal = window.CVPortal || {});
-  let id = window.CVPortalEdition === 'diy' ? 'diy' : 'managed';
+  const SELF = ['diy', 'selfserve'];
+  let id = SELF.indexOf(window.CVPortalEdition) >= 0 ? 'diy' : 'managed';
   try {
     const q = new URLSearchParams(location.search).get('edition');
-    if (q === 'diy' || q === 'managed') id = q;
+    if (SELF.indexOf(q) >= 0) id = 'diy';
+    else if (q === 'managed') id = q;
   } catch (e) {
     /* ignore */
   }

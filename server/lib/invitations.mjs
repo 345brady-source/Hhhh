@@ -142,7 +142,8 @@ function cleanInvitation(x, nowMs, maxDays) {
   const max = nowMs + maxDays * DAY;
   const asked = Date.parse(i.expiresAt || '');
   const expires = Number.isFinite(asked) && asked > nowMs ? Math.min(asked, max) : max;
-  return Object.assign({ cents, cls: clip(i.cls, 64), note: clip(i.note, 2000), senderName: clip(i.senderName, 120) }, i.existing === true ? { existing: true } : {}, { expiresAt: new Date(expires).toISOString() });
+  // access: a link for an investor already on file (added by the firm from paper documents) to open their portal: nothing to fill in.
+  return Object.assign({ cents, cls: clip(i.cls, 64), note: clip(i.note, 2000), senderName: clip(i.senderName, 120) }, i.existing === true ? { existing: true } : {}, i.existing === true && i.access === true ? { access: true } : {}, { expiresAt: new Date(expires).toISOString() });
 }
 function cleanEsign(x) {
   const e = obj(x);
@@ -340,6 +341,11 @@ export function summarize(sub, snap, checks) {
   rows.push(['Commitment', cents ? money(cents, offering && offering.currency) : 'Not set']);
   // An investor already on the firm's books: identity and screening are on file; accreditation shows only when this link asked for it.
   const existing = !!(snap.invitation && snap.invitation.existing);
+  // A portal link (no offering): the investor only opened their portal.
+  if (existing && snap.invitation.access && !offering && !req) {
+    const r = [['Investor', snap.investor.contact], ['Email', snap.investor.email]];
+    return { rows: r, next: 'Nothing to do: their record stays as you hold it.', identity: '', aml: '', accreditation: '', agreement: '', existing: true, access: true, requested: false };
+  }
   if (existing && /^(Not started|Not required)$/.test(accreditation)) accreditation = 'On file';
   if (existing) rows.push(['Accredited investor', accreditation], ['Subscription agreement', agreement]);
   else rows.push(['Identity', identity], ['Sanctions screening', aml], ['Accredited investor', accreditation], ['Subscription agreement', agreement]);
@@ -437,7 +443,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
           if (snap && snap.notifyEmail) {
             const msg = reminderMessage({ firm: snap.firm, investor: snap.investor, offering: snap.offering, consoleUrl: snap.consoleUrl, completedAt: rec.completedAt, deleteOn: iso(deleteAt), existing: !!(snap.invitation && snap.invitation.existing) });
             const rid = rec.id;
-            mailer
+            if (!(snap.invitation && snap.invitation.access && !snap.offering)) mailer
               .send(Object.assign({ kind: 'submission_reminder', invitationId: rid, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.notifyEmail, toName: snap.firm.supportTeam || snap.firm.name, headers: { 'Auto-Submitted': 'auto-generated' } }, msg))
               .then((r) => store.get('invitations', rid) && store.put('invitations', { id: rid, reminderStatus: r.emailStatus }))
               .catch((e) => store.event({ type: 'email_failed', kind: 'submission_reminder', invitationId: rid, error: String((e && e.message) || e).slice(0, 200) }));
@@ -662,7 +668,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       firm: snap.firm,
       investor: snap.investor,
       offering: snap.offering ? Object.assign({}, snap.offering, { documents }) : null,
-      invitation: Object.assign({ cents: snap.invitation.cents, cls: snap.invitation.cls, note: snap.invitation.note, senderName: snap.invitation.senderName }, snap.invitation.existing ? { existing: true } : {}, { expiresAt: rec.expiresAt }),
+      invitation: Object.assign({ cents: snap.invitation.cents, cls: snap.invitation.cls, note: snap.invitation.note, senderName: snap.invitation.senderName }, snap.invitation.existing ? { existing: true } : {}, snap.invitation.access ? { access: true } : {}, { expiresAt: rec.expiresAt }),
       verification: snap.verification || {},
       esign
     };

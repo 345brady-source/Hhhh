@@ -284,8 +284,8 @@ A server on the same origin as the portal page needs no listing. Until the serve
 {
   "workspace": "tenant-id",
   "sendEmail": true,
-  "portalUrl": "https://portal.example/diy.html?tenant=tenant-id",
-  "consoleUrl": "https://portal.example/diy.html?tenant=tenant-id#console-investors",
+  "portalUrl": "https://portal.example/portal.html?tenant=tenant-id",
+  "consoleUrl": "https://portal.example/portal.html?tenant=tenant-id#console-investors",
   "notifyEmail": "ops@yourfirm.example",
   "firm": { "name": "", "shortName": "", "legalName": "", "supportTeam": "", "supportEmail": "", "supportPhone": "", "colors": { "primary": "#0F2742", "accent": "#1F7A8C" }, "logo": "data:image/png;base64,...", "portalName": "", "disclaimer": "", "onboarding": {} },
   "investor": { "id": "INV-0007", "contact": "Ann Lee", "title": "Ann Lee", "type": "individual", "email": "ann@example.com", "existing": { "accredited": true, "accreditedUntil": "2027-03-01", "holds": false } },

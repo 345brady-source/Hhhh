@@ -473,6 +473,7 @@ const STEPS_SENTENCE = 'The link takes you through everything in one place: crea
 export function invitationMessage({ firm, investor, offering, invitation, link, expiresAt }) {
   const name = investor.contact || investor.title || 'investor';
   if (invitation.existing && offering && offering.name) return subscribeMessage({ firm, name, offering, invitation, link, expiresAt });
+  if (invitation.existing && invitation.access) return accessMessage({ firm, name, invitation, link, expiresAt });
   const subject = offering && offering.name ? `${offering.name}: complete your investor onboarding` : `Complete your investor onboarding with ${firm.name}`;
   const rows = [];
   if (offering && offering.name) rows.push(['Offering', offering.name]);
@@ -489,6 +490,20 @@ export function invitationMessage({ firm, investor, offering, invitation, link, 
       `This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`,
       `Questions? Reply to this email or contact ${supportLine(firm)}.`
     ]
+  });
+}
+
+/** An investor the firm added from paper documents: a link to open their portal. Nothing to fill in. */
+function accessMessage({ firm, name, invitation, link, expiresAt, again }) {
+  return compose(firm, `${again ? 'Reminder: ' : ''}${firm.name}: your investor portal`, {
+    greeting: `Dear ${name},`,
+    paras: [
+      again ? `Here is a new link to your investor portal with ${firm.name}. Any earlier link we sent no longer works.` : `${firm.name} has set up your investor portal.`,
+      'Your account is already set up from the documents you completed with us, so there is nothing to fill in. The link below lets you create your login and opens your portal, where you will find your investments, statements and documents.'
+    ],
+    note: invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: invitation.note } : null,
+    button: { label: 'Open your portal', href: link },
+    after: [`This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`, `Questions? Reply to this email or contact ${supportLine(firm)}.`]
   });
 }
 
@@ -513,6 +528,7 @@ function subscribeMessage({ firm, name, offering, invitation, link, expiresAt })
 /** A new link for the same invitation (the earlier link stops working). */
 export function resendMessage({ firm, investor, offering, invitation, link, expiresAt, started }) {
   const name = investor.contact || investor.title || 'investor';
+  if (invitation.existing && invitation.access && !(offering && offering.name)) return accessMessage({ firm, name, invitation, link, expiresAt, again: true });
   if (invitation.existing && offering && offering.name) {
     return compose(firm, `Reminder: ${offering.name}: your subscription`, {
       greeting: `Dear ${name},`,
@@ -573,6 +589,15 @@ export function reminderMessage({ firm, investor, offering, consoleUrl, complete
 export function notificationMessage({ firm, investor, offering, summary, consoleUrl, completedAt }) {
   const who = investor.contact || investor.title || 'An investor';
   const existing = !!(summary && summary.existing);
+  // A portal link: the investor created their login and opened their portal; nothing else was asked of them.
+  if (summary && summary.access) {
+    return compose(firm, `${who} opened their investor portal`, {
+      paras: [`${who} used the portal link you sent and created their login on ${longDate(completedAt)}.`],
+      rows: summary.rows,
+      button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
+      after: [summary.next]
+    });
+  }
   // An investor on file who reached the end without subscribing (the offering stopped accepting subscriptions first).
   const none = existing && summary && summary.requested === false;
   const subject = none
