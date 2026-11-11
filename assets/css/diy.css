@@ -228,3 +228,15 @@
 }
 .dlg-email:has(.inv8-email) .dlg-head, .dlg-ntf .dlg-head { flex-wrap: nowrap; align-items: flex-start; }
 .dlg-email:has(.inv8-email) .dlg-head > div:first-child, .dlg-ntf .dlg-head > div:first-child { min-width: 0; }
+
+/* Invite form: only the name and email are asked for; the optional fields fold away under More options. */
+.inv8-what { margin: -4px 0 0; }
+.inv8-warn { margin: -6px 0 0; }
+.inv8-more { border-top: 1px solid var(--cv-line-soft); padding-top: 10px; }
+.inv8-more > summary { cursor: pointer; width: fit-content; padding: 4px 2px; font-size: 13px; font-weight: 700; color: var(--cv-ink-2); border-radius: 3px; }
+.inv8-more > summary:hover { color: var(--cv-ink); }
+.inv8-more > summary:focus-visible { outline: 2px solid var(--cv-focus); outline-offset: 2px; }
+.inv8-more-body { margin-top: 12px; }
+.inv8-manual .cs-check { margin: 0; }
+.inv8-file-note { color: var(--cv-ink); font-weight: 600; }
+#iv-file { max-width: 100%; }

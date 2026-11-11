@@ -143,6 +143,7 @@
     const e = {};
     const email = String(o.email || '').trim();
     if (!String(o.name || '').trim()) e.name = 'Enter the investor’s first and last name.';
+    else if (o.first !== undefined && !String(o.first || '').trim()) e.name = 'Enter the investor’s first name.';
     else if (o.first !== undefined && !String(o.last || '').trim() && !/\s/.test(String(o.name).trim())) e.name = 'Enter the investor’s last name.';
     const off = offOf(ws, o.offeringId);
     if (!isEmail(email)) e.email = 'Enter a valid email address.';
@@ -230,10 +231,12 @@
       sentBy: senderName(ws)
     };
     if (existing) invitation.existing = true;
+    // An investor added manually (onboarded offline) who is sent a link to their portal: no offering, nothing to fill in.
+    if (existing && o.access && !off) invitation.access = true;
     if (token) invitation.link = linkFor(ws, invitation);
     if (!have) ws.investors.push(investor);
     list(ws).push(invitation);
-    audit(ws, existing ? 'Investor invited to subscribe' : have ? 'Investor invited again' : 'Investor invited', `${investor.title} (${email})${off ? `: ${off.name}${invitation.cents ? `, ${money(off, invitation.cents)} commitment` : ''}` : ': account only'}`, off ? off.id : '', investor.id);
+    audit(ws, invitation.access ? 'Portal link sent to investor' : existing ? 'Investor invited to subscribe' : have ? 'Investor invited again' : 'Investor invited', `${investor.title} (${email})${off ? `: ${off.name}${invitation.cents ? `, ${money(off, invitation.cents)} commitment` : ''}` : invitation.access ? ': added manually, account already set up' : ': account only'}`, off ? off.id : '', investor.id);
     return { invitation, investor };
   }
 
@@ -247,17 +250,18 @@
     const given = full.indexOf(',') > 0 ? full.split(',').slice(1).join(' ').trim() || full : full;
     const first = given.split(/\s+/)[0].replace(/[^\p{L}\p{M}'’.-]/gu, '') || 'there';
     const cls = off && it.cls ? openClasses(off).concat(off.classes || []).find((c) => c.id === it.cls) : null;
-    const subject = off ? `${t.name}: your invitation to invest in ${off.name}` : `${t.name}: set up your investor account`;
+    const subject = off ? `${t.name}: your invitation to invest in ${off.name}` : it.access ? `${t.name}: your investor portal` : `${t.name}: set up your investor account`;
     const link = linkFor(ws, it);
     const by = date(String(it.expiresAt || '').slice(0, 10), 'long');
     const amount = off && it.cents ? `, for a commitment of ${money(off, it.cents)}${cls ? ` in ${cls.name}` : ''}` : '';
-    const what = off ? `${it.existing ? 'subscribe to' : 'set up your investor account and your subscription to'} ${off.name}${amount}` : 'set up your investor account';
+    const what = off ? `${it.existing ? 'subscribe to' : 'set up your investor account and your subscription to'} ${off.name}${amount}` : it.access ? 'open your investor portal' : 'set up your investor account';
     const lines = [
       `Dear ${first},`,
       sentence(`${it.sentBy && it.sentBy !== t.support.team ? `${it.sentBy} at ${t.name}` : t.name} has invited you to ${what}`)
     ];
     if (it.note) lines.push(it.note);
-    if (it.existing && off) lines.push('The link below takes you through your subscription in one place: the offering documents, your commitment and the subscription agreement, which you sign online. Your account details are already on file.');
+    if (it.access) lines.push('Your account is already set up from the documents you completed with us, so there is nothing to fill in. The link below opens your portal.');
+    else if (it.existing && off) lines.push('The link below takes you through your subscription in one place: the offering documents, your commitment and the subscription agreement, which you sign online. Your account details are already on file.');
     else
       lines.push(
         `The link below takes you through everything in one place, in about 10 to 15 minutes: your login, investor information, identity verification${off ? ', accreditation' : ''}, tax certification, where to send distributions${off ? ', and your subscription documents, which you sign online' : ''}. Your progress is saved, so you can stop and come back.`,
@@ -268,7 +272,7 @@
       `Questions? Contact ${t.support.team}${isEmail(t.support.email) ? ` at ${t.support.email}` : ''}${t.support.phone ? ` or ${t.support.phone}` : ''}.`
     ];
     const text = [lines.join('\n\n'), `Start here: ${link}`, tail.join('\n'), t.legalName || t.name].join('\n\n');
-    return { subject, lines, tail, link, text, to: inv.email, toName: inv.contact, fromName: t.name, replyTo: isEmail(t.support.email) ? t.support.email : '', button: off ? (it.existing ? 'Review and subscribe' : 'Start your onboarding') : 'Set up your account' };
+    return { subject, lines, tail, link, text, to: inv.email, toName: inv.contact, fromName: t.name, replyTo: isEmail(t.support.email) ? t.support.email : '', button: off ? (it.existing ? 'Review and subscribe' : 'Start your onboarding') : it.access ? 'Open your portal' : 'Set up your account' };
   }
   /** mailto: with the subject and body; CRLF line breaks (RFC 6068). */
   function mailtoFor(ws, it) {
@@ -1152,9 +1156,12 @@
     }
     return u.inv8;
   }
+  /** The invite form's optional fields, kept under More options. */
+  const MORE_FIELDS = ['type', 'account', 'offeringId', 'amount', 'cls', 'note'];
   NS.binders.inv8 = (path, v) => {
     const d = draft();
     d[path] = v;
+    if (MORE_FIELDS.indexOf(path) >= 0) d.more = true;
     // First and last name make up the investor's name (one string everywhere else).
     if (path === 'first' || path === 'last') d.name = [d.first, d.last].map((x) => String(x || '').trim()).filter(Boolean).join(' ');
     const k = path === 'offeringId' ? 'offering' : path === 'first' || path === 'last' ? 'name' : path;
@@ -1175,41 +1182,240 @@
     const classes = openClasses(off);
     const min = off ? minimumCents(off, d.cls || (classes[0] || {}).id) : 0;
     const cur = off ? curOf(off) : 'USD';
+    // Only the name and email are asked for; everything else is optional and stays folded away until it is used or has a problem.
+    const dflt = offs.length === 1 ? offs[0].id : '';
+    const moreOpen = !!(d.more || d.errors.offering || d.errors.amount || d.errors.cls || /Choose an offering/.test(d.errors.email || '') || d.type !== 'individual' || d.account || d.amount !== '' || d.cls || d.note || (d.offeringId || '') !== dflt);
+    const agreement = off && NS.esign && NS.esign.templateReady ? (NS.esign.templateReady(w, off.id) ? 'ready' : 'missing') : '';
+    const what = off
+      ? `They will be invited to ${h(off.name.replace(/\.$/, ''))}${agreement === 'ready' ? ' and sign its subscription agreement during onboarding' : ''} (change under More options).`
+      : offs.length
+        ? 'No offering is chosen, so they set up their account only (choose one under More options).'
+        : 'They can subscribe once you add an offering.';
     const single = `<form class="cs-form cs-grid inv8-form" data-form="invite-one" novalidate>
       <label class="cs-field" for="iv-contact"><span>First name</span><input id="iv-contact" name="contact" maxlength="60" autocomplete="off" data-bind="inv8:first" value="${h(d.first || '')}"${inval(d, 'name')}></label>
       <label class="cs-field" for="iv-last"><span>Last name</span><input id="iv-last" name="last" maxlength="60" autocomplete="off" data-bind="inv8:last" value="${h(d.last || '')}"${inval(d, 'name')}>${fieldErr(d, 'name')}</label>
-      <label class="cs-field" for="iv-email"><span>Email</span><input id="iv-email" name="email" type="email" maxlength="120" autocomplete="off" data-bind="inv8:email" value="${h(d.email)}"${inval(d, 'email')}>${fieldErr(d, 'email')}</label>
-      <label class="cs-field" for="iv-type"><span>Investing as</span><select id="iv-type" name="type" data-bind="inv8:type">${Object.keys(NS.ENTITY_TYPES).map((k) => `<option value="${k}"${d.type === k ? ' selected' : ''}>${h(NS.ENTITY_TYPES[k].label)}</option>`).join('')}</select></label>
-      <label class="cs-field" for="iv-title"><span>Account name <em>Optional</em></span><input id="iv-title" name="title" maxlength="120" autocomplete="off" placeholder="Defaults to the full name" data-bind="inv8:account" value="${h(d.account)}"><span class="cs-hint">For a trust, company or IRA, its legal name. The investor can correct it.</span></label>
-      <label class="cs-field" for="iv-off"><span>Offering <em>Optional</em></span><select id="iv-off" name="offering" data-bind="inv8:offeringId"${inval(d, 'offering')}><option value=""${!off ? ' selected' : ''}>No offering: account only</option>${offs.map((o) => `<option value="${h(o.id)}"${off && off.id === o.id ? ' selected' : ''}>${h(o.name)}</option>`).join('')}</select>${offs.length ? '' : '<span class="cs-hint">No offering is raising. The investor sets up their account and can subscribe later.</span>'}${off && NS.esign && NS.esign.templateReady ? (NS.esign.templateReady(w, off.id) ? '<span class="cs-hint">They sign this offering’s subscription agreement online during onboarding.</span>' : `<span class="cs-hint cs-hint-warn">${h(off.name)} has no subscription agreement yet. <a href="#console-offering-${h(off.id)}">Add it on the offering</a> so investors sign it during onboarding (until then they sign a typed subscription form).</span>`) : ''}${fieldErr(d, 'offering')}</label>
-      <label class="cs-field" for="iv-amt"><span>Commitment (${cur === 'USD' ? '$' : h(cur)}) <em>Optional</em></span><input id="iv-amt" name="amount" type="number" min="0" step="1000" inputmode="decimal" data-bind="inv8:amount" value="${h(d.amount)}"${off ? '' : ' disabled'}${inval(d, 'amount')}><span class="cs-hint">${off ? `Minimum ${h(money(off, min))}. Leave blank for the investor to choose; if you set it, they cannot change it.` : 'Choose an offering to set a commitment.'}</span>${fieldErr(d, 'amount')}</label>
-      ${classes.length > 1 ? `<label class="cs-field" for="iv-cls"><span>Share class</span><select id="iv-cls" name="cls" data-bind="inv8:cls"${inval(d, 'cls')}><option value="">Investor chooses</option>${classes.map((c) => `<option value="${h(c.id)}"${d.cls === c.id ? ' selected' : ''}>${h(c.name)}${Number(c.minimum) ? `, minimum ${h(money(off, Math.round(Number(c.minimum) * 100)))}` : ''}</option>`).join('')}</select>${fieldErr(d, 'cls')}</label>` : ''}
-      <label class="cs-field cs-wide" for="iv-note"><span>Personal note <em>Optional</em></span><textarea id="iv-note" name="note" rows="3" maxlength="2000" data-bind="inv8:note">${h(d.note)}</textarea><span class="cs-hint">Shown in the email and on the investor’s welcome page.</span></label>
+      <label class="cs-field cs-wide" for="iv-email"><span>Email</span><input id="iv-email" name="email" type="email" maxlength="120" autocomplete="off" data-bind="inv8:email" value="${h(d.email)}"${inval(d, 'email')}>${fieldErr(d, 'email')}</label>
+      <p class="cs-hint cs-wide inv8-what" id="iv-what">They choose how they invest during onboarding. ${what}</p>
+      ${agreement === 'missing' ? `<p class="cs-hint cs-hint-warn cs-wide inv8-warn" id="iv-agreement-warn">${h(off.name.replace(/\.$/, ''))} has no subscription agreement yet. <a href="#console-offering-${h(off.id)}">Add it on the offering</a> so investors sign it during onboarding.</p>` : ''}
+      <details class="cs-wide inv8-more" id="iv-more"${moreOpen ? ' open' : ''}>
+        <summary>More options (optional)</summary>
+        <div class="cs-grid inv8-more-body">
+          <label class="cs-field" for="iv-type"><span>Investing as <em>Optional</em></span><select id="iv-type" name="type" data-bind="inv8:type">${Object.keys(NS.ENTITY_TYPES).map((k) => `<option value="${k}"${d.type === k ? ' selected' : ''}>${h(NS.ENTITY_TYPES[k].label)}</option>`).join('')}</select><span class="cs-hint">The investor confirms or changes this during onboarding.</span></label>
+          <label class="cs-field" for="iv-title"><span>Account name <em>Optional</em></span><input id="iv-title" name="title" maxlength="120" autocomplete="off" placeholder="Defaults to the full name" data-bind="inv8:account" value="${h(d.account)}"><span class="cs-hint">For a trust, company or IRA, its legal name. The investor can correct it.</span></label>
+          <label class="cs-field" for="iv-off"><span>Offering <em>Optional</em></span><select id="iv-off" name="offering" data-bind="inv8:offeringId"${inval(d, 'offering')}><option value=""${!off ? ' selected' : ''}>No offering: account only</option>${offs.map((o) => `<option value="${h(o.id)}"${off && off.id === o.id ? ' selected' : ''}>${h(o.name)}</option>`).join('')}</select>${offs.length ? '' : '<span class="cs-hint">No offering is raising. The investor sets up their account and can subscribe later.</span>'}${fieldErr(d, 'offering')}</label>
+          <label class="cs-field" for="iv-amt"><span>Commitment (${cur === 'USD' ? '$' : h(cur)}) <em>Optional</em></span><input id="iv-amt" name="amount" type="number" min="0" step="1000" inputmode="decimal" data-bind="inv8:amount" value="${h(d.amount)}"${off ? '' : ' disabled'}${inval(d, 'amount')}><span class="cs-hint">${off ? `Minimum ${h(money(off, min))}. Leave blank for the investor to choose; if you set it, they cannot change it.` : 'Choose an offering to set a commitment.'}</span>${fieldErr(d, 'amount')}</label>
+          ${classes.length > 1 ? `<label class="cs-field" for="iv-cls"><span>Share class</span><select id="iv-cls" name="cls" data-bind="inv8:cls"${inval(d, 'cls')}><option value="">Investor chooses</option>${classes.map((c) => `<option value="${h(c.id)}"${d.cls === c.id ? ' selected' : ''}>${h(c.name)}${Number(c.minimum) ? `, minimum ${h(money(off, Math.round(Number(c.minimum) * 100)))}` : ''}</option>`).join('')}</select>${fieldErr(d, 'cls')}</label>` : ''}
+          <label class="cs-field cs-wide" for="iv-note"><span>Personal note <em>Optional</em></span><textarea id="iv-note" name="note" rows="3" maxlength="2000" data-bind="inv8:note">${h(d.note)}</textarea><span class="cs-hint">Shown in the email and on the investor’s welcome page.</span></label>
+        </div>
+      </details>
       <p class="cs-error cs-wide" id="iv-error" role="alert"${Object.keys(d.errors).length ? '' : ' hidden'}>${Object.keys(d.errors).length ? 'Check the highlighted fields.' : ''}</p>
       <div class="cs-row cs-wide"><button class="cs-btn cs-btn-primary" type="submit"${d.busy ? ' disabled aria-busy="true"' : ''}>${d.busy ? 'Sending…' : 'Send invitation'}</button></div>
     </form>`;
     const ui = S().ui;
+    const eg = h(offs[0] ? offs[0].shortName || offs[0].name : 'Fund I');
     const bulk = `<form class="cs-form" data-form="invite-bulk" novalidate>
-      <label class="cs-field" for="iv-csv"><span>Paste a list: name, email, offering, commitment</span><textarea id="iv-csv" name="csv" rows="6" spellcheck="false" placeholder="name,email,offering,commitment&#10;Anita Shah,anita.shah@example.com,${h(offs[0] ? offs[0].shortName || offs[0].name : 'Fund I')},100000&#10;Ravi Patel,ravi.patel@example.com">${h(ui.bulkText || '')}</textarea><span class="cs-hint">One investor per line. Offering and commitment are optional; the offering can be its short name or full name. Add a fifth column to say how they invest (individual, joint, trust, entity or IRA); otherwise they start as individuals and can change it.</span></label>
+      <label class="cs-field" for="iv-file"><span>Upload a CSV or Excel file</span><input id="iv-file" name="file" type="file" accept="${FILE_ACCEPT}" data-change="inv8-file"${ui.bulkFileError ? ' aria-invalid="true" aria-describedby="iv-file-msg"' : ''}><span class="cs-hint">A .csv or .xlsx file with one investor per row. Columns: first name, last name, email, then optionally offering, commitment and how they invest. A header row is recognized; the first worksheet of an Excel file is read.</span>${ui.bulkFileError ? `<span class="cs-error" id="iv-file-msg" role="alert">${h(ui.bulkFileError)}</span>` : ui.bulkFileNote ? `<span class="cs-hint inv8-file-note" id="iv-file-msg" role="status">${h(ui.bulkFileNote)}</span>` : ''}</label>
+      <label class="cs-field" for="iv-csv"><span>Or paste a list: first name, last name, email, offering, commitment</span><textarea id="iv-csv" name="csv" rows="6" spellcheck="false" placeholder="first name,last name,email,offering,commitment&#10;Anita,Shah,anita.shah@example.com,${eg},100000&#10;Ravi,Patel,ravi.patel@example.com">${h(ui.bulkText || '')}</textarea><span class="cs-hint">One investor per line. Offering and commitment are optional; the offering can be its short name or full name. Add a last column to say how they invest (individual, joint, trust, entity or IRA); otherwise they choose during onboarding. A list with the full name in one column (name, email, offering, commitment) also works.</span></label>
       ${ui.bulkResult || ''}
       <div class="cs-row"><button class="cs-btn" type="submit">Check list</button>${ui.bulkRows && ui.bulkRows.length ? `<button class="cs-btn cs-btn-primary" type="button" data-action="invite-bulk-add"${ui.bulkBusy ? ' disabled aria-busy="true"' : ''}>${ui.bulkBusy ? 'Sending…' : `Send ${ui.bulkRows.length} invitation${ui.bulkRows.length === 1 ? '' : 's'}`}</button>` : ''}</div>
     </form>`;
     const srvUrl = serverOn(w) ? IV().serverUrl(w) : '';
     const pin = srvUrl && NS.app.publishedServer && !NS.app.publishedServer(srvUrl) ? ` Investors’ links open only on a portal page that lists this server: where you publish the portal, add <code>window.CVPortalConfig = { integrationServers: ['${h(srvUrl)}'] }</code> before its scripts. Until then their links open only in this browser.` : '';
-    const how = serverOn(w)
-      ? `Your integration server emails each investor from ${h(w.tenant.name)}, with replies going to ${h(w.tenant.support.email)}. You get a notification when they finish.${pin}`
-      : `No integration server is connected, so you send the email from your own email app: the portal prepares it with the link. ${NS.app.can('configure') ? '<a href="#console-integrations">Connect your integration server</a>' : 'An admin can connect your integration server'} to send invitations automatically and let investors onboard on any device.`;
+    const how =
+      tab === 'manual'
+        ? 'An investor added manually is active straight away and is not asked to onboard online. Their documents stay with you on paper; you can publish documents to their portal afterwards.'
+        : serverOn(w)
+          ? `Your integration server emails each investor from ${h(w.tenant.name)}, with replies going to ${h(w.tenant.support.email)}. You get a notification when they finish.${pin}`
+          : `No integration server is connected, so you send the email from your own email app: the portal prepares it with the link. ${NS.app.can('configure') ? '<a href="#console-integrations">Connect your integration server</a>' : 'An admin can connect your integration server'} to send invitations automatically and let investors onboard on any device.`;
+    const tabs = [
+      ['single', 'One investor'],
+      ['bulk', 'Import a list'],
+      ['manual', 'Add manually']
+    ];
     return CK().panel(
       'Invite an investor',
-      `<p class="cs-hint inv8-lede">Enter the basics. The investor gets one link that walks them through everything: their login, investor information, identity and sanctions checks, accreditation, tax certification, bank details and the subscription documents. They are added to the portal as they go.</p>
-      <div class="cs-tabs cs-tabs-inline" role="group" aria-label="Invite method"><button type="button" class="cs-tab" data-action="invite-tab" data-t="single" aria-pressed="${tab === 'single'}">One investor</button><button type="button" class="cs-tab" data-action="invite-tab" data-t="bulk" aria-pressed="${tab === 'bulk'}">Import a list</button></div>
-      ${tab === 'single' ? single : bulk}
+      `<p class="cs-hint inv8-lede">${
+        tab === 'manual'
+          ? 'For an investor you onboarded offline on paper documents. They are added to the portal as an active investor without being sent the onboarding link.'
+          : 'Enter their name and email. The investor gets one link that walks them through everything: their login, investor information, identity and sanctions checks, accreditation, tax certification, bank details and the subscription documents. They are added to the portal as they go.'
+      }</p>
+      <div class="cs-tabs cs-tabs-inline" role="group" aria-label="Invite method">${tabs.map(([k, l]) => `<button type="button" class="cs-tab" data-action="invite-tab" data-t="${k}" aria-pressed="${tab === k}">${l}</button>`).join('')}</div>
+      ${tab === 'manual' ? manualForm() : tab === 'single' ? single : bulk}
       <p class="cs-hint">${how}</p>`
     );
   }
+
+  /* ---------- Console: adding an investor manually (onboarded offline) ---------- */
+  function manualDraft() {
+    const u = S().ui;
+    if (!u.inv8m) u.inv8m = { first: '', last: '', email: '', phone: '', type: 'individual', account: '', address: '', offeringId: '', amount: '', checked: false, link: false, errors: {}, busy: false };
+    return u.inv8m;
+  }
+  NS.binders.inv8m = (path, v) => {
+    const d = manualDraft();
+    d[path] = v;
+    const k = path === 'offeringId' ? 'offering' : path === 'first' || path === 'last' ? 'name' : path;
+    if (d.errors[k]) delete d.errors[k];
+    if (path === 'offeringId') NS.app.render();
+  };
+  function manualForm() {
+    const w = W();
+    const d = manualDraft();
+    const off = offOf(w, d.offeringId);
+    const cur = off ? curOf(off) : 'USD';
+    const err = (k) => (d.errors[k] ? `<span class="cs-error" id="im-err-${k}">${h(d.errors[k])}</span>` : '');
+    const bad = (k) => (d.errors[k] ? ` aria-invalid="true" aria-describedby="im-err-${k}"` : '');
+    const open = off && NS.ops && NS.ops.isOpen(off);
+    return `<form class="cs-form cs-grid inv8-form inv8-manual" data-form="invite-manual" novalidate>
+      <label class="cs-field" for="im-first"><span>First name</span><input id="im-first" name="first" maxlength="60" autocomplete="off" data-bind="inv8m:first" value="${h(d.first)}"${bad('name')}></label>
+      <label class="cs-field" for="im-last"><span>Last name</span><input id="im-last" name="last" maxlength="60" autocomplete="off" data-bind="inv8m:last" value="${h(d.last)}"${bad('name')}>${err('name')}</label>
+      <label class="cs-field" for="im-email"><span>Email</span><input id="im-email" name="email" type="email" maxlength="120" autocomplete="off" data-bind="inv8m:email" value="${h(d.email)}"${bad('email')}>${err('email')}</label>
+      <label class="cs-field" for="im-phone"><span>Phone <em>Optional</em></span><input id="im-phone" name="phone" type="tel" maxlength="40" autocomplete="off" data-bind="inv8m:phone" value="${h(d.phone)}"></label>
+      <label class="cs-field" for="im-type"><span>Investing as <em>Optional</em></span><select id="im-type" name="type" data-bind="inv8m:type">${Object.keys(NS.ENTITY_TYPES).map((k) => `<option value="${k}"${d.type === k ? ' selected' : ''}>${h(NS.ENTITY_TYPES[k].label)}</option>`).join('')}</select></label>
+      <label class="cs-field" for="im-title"><span>Account name <em>Optional</em></span><input id="im-title" name="title" maxlength="120" autocomplete="off" placeholder="Defaults to the full name" data-bind="inv8m:account" value="${h(d.account)}"><span class="cs-hint">For a trust, company or IRA, its legal name.</span></label>
+      <label class="cs-field cs-wide" for="im-address"><span>Mailing address <em>Optional</em></span><textarea id="im-address" name="address" rows="2" maxlength="300" data-bind="inv8m:address">${h(d.address)}</textarea></label>
+      <label class="cs-field" for="im-off"><span>Offering <em>Optional</em></span><select id="im-off" name="offering" data-bind="inv8m:offeringId"${bad('offering')}><option value=""${!off ? ' selected' : ''}>No offering: account only</option>${w.offerings.map((o) => `<option value="${h(o.id)}"${off && off.id === o.id ? ' selected' : ''}>${h(o.name)}</option>`).join('')}</select>${err('offering')}</label>
+      <label class="cs-field" for="im-amt"><span>Commitment (${cur === 'USD' ? '$' : h(cur)}) <em>Optional</em></span><input id="im-amt" name="amount" type="number" min="0" step="1000" inputmode="decimal" data-bind="inv8m:amount" value="${h(d.amount)}"${bad('amount')}><span class="cs-hint">${off ? (open ? 'Recorded as an approved subscription; record the funding when the wire arrives.' : 'Recorded as an accepted subscription, with the commitment on the investor register.') : 'With an offering, the subscription they signed on paper is recorded.'}</span>${err('amount')}</label>
+      <label class="cs-check cs-wide" for="im-checked"><input id="im-checked" name="checked" type="checkbox" data-bind="inv8m:checked"${d.checked ? ' checked' : ''}><span>Identity, sanctions screening and accreditation were checked offline<span class="cs-hint">Ticked: they are recorded as approved by your team, with your name in the change log. Not ticked: they appear on the AML/KYC page to be verified.</span></span></label>
+      <label class="cs-check cs-wide" for="im-link"><input id="im-link" name="link" type="checkbox" data-bind="inv8m:link"${d.link ? ' checked' : ''}><span>Send them a link to sign in to their portal<span class="cs-hint">Off: they are added without any email. You can invite them later.</span></span></label>
+      <p class="cs-error cs-wide" id="im-error" role="alert"${Object.keys(d.errors).length ? '' : ' hidden'}>${Object.keys(d.errors).length ? 'Check the highlighted fields.' : ''}</p>
+      <div class="cs-row cs-wide"><button class="cs-btn cs-btn-primary" type="submit"${d.busy ? ' disabled aria-busy="true"' : ''}>${d.busy ? 'Adding…' : 'Add investor'}</button></div>
+    </form>`;
+  }
+  /** Field problems for an investor added manually, by field: name, email, offering, amount. */
+  function validateManual(ws, o) {
+    const e = {};
+    const first = String(o.first || '').trim();
+    const last = String(o.last || '').trim();
+    if (!first && !last) e.name = 'Enter the investor’s first and last name.';
+    else if (!first) e.name = 'Enter the investor’s first name.';
+    else if (!last && !/\s/.test(first)) e.name = 'Enter the investor’s last name.';
+    const have = isEmail(o.email) ? byEmail(ws, o.email) : null;
+    if (!isEmail(o.email)) e.email = 'Enter a valid email address.';
+    else if (have) e.email = `${have.title} is already in the portal with this email address.`;
+    const off = offOf(ws, o.offeringId);
+    if (o.offeringId && !off) e.offering = 'Choose one of your offerings.';
+    const amt = o.amount === '' || o.amount == null ? '' : Number(String(o.amount).replace(/[$,\s]/g, ''));
+    if (amt !== '' && !(isFinite(amt) && amt > 0)) e.amount = 'Enter the commitment as an amount, or leave it blank.';
+    else if (amt !== '' && !off) e.amount = 'Choose the offering this commitment is for.';
+    else if (off && amt === '') e.amount = `Enter their commitment to ${sentence(off.name)}`;
+    return e;
+  }
+  /**
+   * Add an investor onboarded offline: an active record (no onboarding link), verification as the team says it stands, and
+   * the subscription they signed on paper. o: first, last, email, phone, type, account, address, offeringId, cents, checked.
+   */
+  async function addManually(ws, o) {
+    const first = String(o.first || '').trim();
+    const last = String(o.last || '').trim();
+    const name = [first, last].filter(Boolean).join(' ');
+    const email = String(o.email || '').trim();
+    if (!name) throw new Error('Enter the investor’s full name.');
+    if (!isEmail(email)) throw new Error('Enter a valid email address.');
+    if (byEmail(ws, email)) throw new Error('An investor with this email address is already in the portal.');
+    const off = offOf(ws, o.offeringId);
+    const cents = off ? Math.max(0, Math.round(Number(o.cents) || 0)) : 0;
+    const actor = NS.app.actor();
+    const investor = {
+      id: nextInvestorId(ws),
+      contact: name,
+      title: String(o.account || '').trim() || name,
+      type: NS.ENTITY_TYPES[o.type] ? o.type : 'individual',
+      email,
+      phone: String(o.phone || '').trim().slice(0, 40),
+      address: String(o.address || '').trim().slice(0, 300),
+      tinLast4: '',
+      accreditation: { basis: '', date: '' },
+      taxForm: '',
+      edelivery: false,
+      onboarding: { status: 'complete', step: 0, invited: today(), completed: today(), source: 'manual', offeringId: off ? off.id : '', addedBy: actor },
+      payment: { method: 'check', bank: null },
+      positions: []
+    };
+    ws.investors.push(investor);
+    audit(
+      ws,
+      'Investor added manually',
+      `${investor.title} (${email}): onboarded offline on paper documents, no onboarding link sent; ${o.checked ? 'identity, sanctions screening and accreditation checked offline' : 'verification still to do on the AML/KYC page'}${off && cents ? `; ${off.name}, ${money(off, cents)} ${NS.ops && NS.ops.isOpen(off) ? 'subscription' : 'commitment'}` : ''}`,
+      off ? off.id : '',
+      investor.id
+    );
+    const I = IV();
+    const note = `Checked offline by ${actor}`;
+    if (I && I.vOf) {
+      const v = I.vOf(investor);
+      const team = ws.tenant.support.team;
+      if (o.checked) {
+        // The team's own checks, made on paper: recorded as theirs (never as a connection's result), then approved by a person.
+        v.identity = { status: 'passed', connection: 'manual', how: 'manual', via: team, method: 'Checked offline', note, recordedBy: actor, completedAt: nowIso() };
+        v.aml = { status: 'clear', results: [], note, by: actor };
+        I.decideManually(ws, investor, true, note);
+        await I.complete(ws, investor, 'accreditation', 'verified', { connection: 'manual', how: 'manual', via: team, method: 'Checked offline', note, recordedBy: actor }, actor);
+      } else {
+        // Waiting on the team: the AML/KYC page lists them with Record result, which screens them and decides.
+        v.identity = { status: 'pending', connection: 'manual', how: 'manual', via: team, method: 'Paper documents on file', startedAt: nowIso() };
+        I.syncKyc(ws, investor);
+      }
+    } else if (o.checked) investor.kyc = { status: 'cleared', risk: 'Low', owners: [{ name, pct: 100 }], verifiedOn: today(), method: note };
+    let request = null;
+    if (off && cents > 0 && NS.ops) {
+      const classes = openClasses(off);
+      // additional: the paper documents are already signed, so no agreement is sent for signature (esign.js sends the
+      // offering's agreement to a new subscriber only). The request itself is a first subscription.
+      request = NS.ops.submitSubscription(ws, investor, off, { cents, signature: `${name} on paper documents (recorded by ${actor})`, cls: classes.length === 1 ? classes[0].id : '', additional: true });
+      if (request) {
+        request.additional = false;
+        request.source = 'manual';
+        if (NS.ops.decide(ws, request, true, `Subscribed offline on paper documents; recorded by ${actor}`) && !NS.ops.isOpen(off)) NS.ops.markFunded(ws, request);
+      }
+    }
+    NS.app.save(true);
+    return { investor, request };
+  }
+  NS.forms['invite-manual'] = async function (f) {
+    if (!E.diy) return;
+    if (!NS.app.can('operate')) return U.toast('Only your team can add investors.');
+    const w = W();
+    const d = manualDraft();
+    if (d.busy) return;
+    const v = (n) => (f.elements[n] ? String(f.elements[n].value || '').trim() : '');
+    Object.assign(d, { first: v('first'), last: v('last'), email: v('email'), phone: v('phone'), type: v('type') || 'individual', account: v('title'), address: v('address'), offeringId: v('offering'), amount: v('amount'), checked: !!f.elements.checked.checked, link: !!f.elements.link.checked });
+    d.errors = validateManual(w, d);
+    if (Object.keys(d.errors).length) {
+      NS.app.render();
+      const bad = document.querySelector('.inv8-manual [aria-invalid="true"]');
+      if (bad) bad.focus();
+      return;
+    }
+    d.busy = true;
+    NS.app.render();
+    let made;
+    try {
+      made = await addManually(w, Object.assign({}, d, { cents: d.amount === '' ? 0 : Math.round(Number(String(d.amount).replace(/[$,\s]/g, '')) * 100) }));
+    } catch (err) {
+      d.busy = false;
+      d.errors = { email: String((err && err.message) || err) };
+      NS.app.render();
+      return;
+    }
+    const inv = made.investor;
+    let it = null;
+    let res = null;
+    if (d.link) {
+      it = create(w, { name: inv.contact, email: inv.email, type: inv.type, account: inv.title, access: true }).invitation;
+      NS.app.save(true);
+      res = await send(w, it);
+    }
+    Object.assign(S().ui, { inv8m: null, inviteOpen: false, invFilter: 'all' });
+    NS.app.render();
+    U.toast(`${inv.title} added as an active investor${made.request ? `, with their ${made.request.status === 'accepted' ? 'commitment on the register' : 'subscription approved'}` : ''}.${d.checked ? '' : ' Verify them on the AML/KYC page.'}`);
+    if (it && res) afterSend(w, it, res);
+  };
   function readForm(f) {
     const v = (n) => (f.elements[n] ? String(f.elements[n].value || '') : '');
-    return { name: v('contact').trim(), email: v('email').trim(), type: v('type') || 'individual', account: v('title').trim(), offeringId: v('offering'), amount: v('amount').trim(), cls: v('cls'), note: v('note').trim() };
+    const first = v('contact').trim();
+    const last = v('last').trim();
+    return { first, last, name: [first, last].filter(Boolean).join(' '), email: v('email').trim(), type: v('type') || 'individual', account: v('title').trim(), offeringId: v('offering'), amount: v('amount').trim(), cls: v('cls'), note: v('note').trim() };
   }
   async function submitInvite(f) {
     const w = W();
@@ -1217,9 +1423,11 @@
     if (d.busy) return;
     const x = readForm(f);
     Object.assign(d, x);
+    const more = f.querySelector('.inv8-more');
+    if (more && more.open) d.more = true;
     const dollars = x.amount === '' ? '' : Number(x.amount.replace(/[$,\s]/g, ''));
     const cents = dollars === '' ? '' : isFinite(dollars) ? Math.round(dollars * 100) : NaN;
-    const e = validate(w, { name: x.name, email: x.email, offeringId: x.offeringId, cents: cents === '' ? '' : cents, cls: x.cls });
+    const e = validate(w, { name: x.name, first: x.first, last: x.last, email: x.email, offeringId: x.offeringId, cents: cents === '' ? '' : cents, cls: x.cls });
     if (cents !== '' && isNaN(cents)) e.amount = 'Enter the commitment as an amount, or leave it blank.';
     d.errors = e;
     if (Object.keys(e).length) {
@@ -1253,77 +1461,268 @@
     return submitInvite(f);
   };
 
-  /* ---------- Console: importing a list ---------- */
-  function csvCells(line) {
-    const out = [];
+  /* ---------- Console: importing a list (pasted, or a CSV or Excel file) ---------- */
+  const FILE_ACCEPT = '.csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  const MAX_LIST_BYTES = 5 * 1024 * 1024;
+  const MAX_LIST_ROWS = 2000;
+  // The same copy the document reader uses for Word files (intake.js), so it is loaded once.
+  const ZIP_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+  /** Delimited text as rows of trimmed cells: quotes, doubled quotes, separators and line breaks inside quotes, CRLF. Empty lines stay as empty rows so row numbers match. */
+  function csvRows(text) {
+    const s = String(text || '').replace(/^﻿/, '');
+    // Commas or tabs; a list exported with semicolons (no comma or tab on its first line) is read with semicolons.
+    const head = s.split(/\r?\n/, 1)[0] || '';
+    const semi = !/[,\t]/.test(head) && head.indexOf(';') >= 0;
+    const sep = (c) => c === ',' || c === '\t' || (semi && c === ';');
+    const rows = [];
+    let row = [];
     let cur = '';
     let q = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
+    const endRow = () => {
+      row.push(cur.trim());
+      rows.push(row.length === 1 && !row[0] ? [] : row);
+      row = [];
+      cur = '';
+    };
+    for (let i = 0; i < s.length; i++) {
+      const c = s[i];
       if (q) {
-        if (c === '"' && line[i + 1] === '"') {
+        if (c === '"' && s[i + 1] === '"') {
           cur += '"';
           i++;
         } else if (c === '"') q = false;
-        else cur += c;
+        else cur += c === '\r' || c === '\n' ? ' ' : c;
       } else if (c === '"') q = true;
-      else if (c === ',' || c === '\t') {
-        out.push(cur.trim());
+      else if (sep(c)) {
+        row.push(cur.trim());
         cur = '';
+      } else if (c === '\n' || c === '\r') {
+        if (c === '\r' && s[i + 1] === '\n') i++;
+        endRow();
       } else cur += c;
     }
-    out.push(cur.trim());
-    return out;
+    if (cur || row.length) endRow();
+    return rows;
   }
+  /** Rows of cells as the text the paste box holds. */
+  const csvText = (rows) =>
+    rows
+      .map((r) => r.map((c) => (/[",\t\r\n]/.test(c) ? `"${String(c).replace(/[\r\n]+/g, ' ').replace(/"/g, '""')}"` : c)).join(','))
+      .join('\n');
   const TYPE_WORDS = { individual: 'individual', joint: 'joint', trust: 'trust', entity: 'entity', company: 'entity', llc: 'entity', corporation: 'entity', partnership: 'entity', ira: 'ira' };
-  function parseBulk(text) {
+  const HEADERS = {
+    first: ['first name', 'first', 'firstname', 'given name'],
+    last: ['last name', 'last', 'lastname', 'surname', 'family name'],
+    email: ['email', 'e mail', 'email address', 'e mail address'],
+    name: ['name', 'full name', 'investor', 'investor name'],
+    offering: ['offering', 'fund'],
+    amount: ['commitment', 'amount', 'commitment amount'],
+    type: ['investing as', 'type', 'account type', 'investor type']
+  };
+  /** The columns a header row names (field: column index), or null when the row is not a header. */
+  function headerOf(cells) {
+    if (cells.some((c) => c.indexOf('@') >= 0)) return null;
+    const map = {};
+    cells.forEach((c, i) => {
+      const k = String(c).toLowerCase().replace(/[_-]+/g, ' ').replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim();
+      const f = Object.keys(HEADERS).find((x) => HEADERS[x].indexOf(k) >= 0);
+      if (f && map[f] === undefined) map[f] = i;
+    });
+    return map.email !== undefined || map.name !== undefined || map.first !== undefined ? map : null;
+  }
+  /** "Anita Shah" as first and last name: the last word is the last name. */
+  function splitName(full) {
+    const parts = String(full || '').trim().split(/\s+/).filter(Boolean);
+    return parts.length < 2 ? { first: parts[0] || '', last: '' } : { first: parts.slice(0, -1).join(' '), last: parts[parts.length - 1] };
+  }
+  /**
+   * Rows of cells as investors to invite. With a header row, its columns; without one, first name, last name, email,
+   * offering, commitment, type, or the earlier order with the full name in one column (name, email, offering, commitment,
+   * type): the column holding the '@' tells them apart.
+   */
+  function parseRows(all, word) {
     const w = W();
     const rows = [];
     const errors = [];
     const seen = {};
-    String(text || '')
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .forEach((line, idx) => {
-        if (!line) return;
-        const cells = csvCells(line);
-        if (idx === 0 && /^(full )?name$/i.test(cells[0])) return;
-        const [name, email, offName, amt, typ] = cells;
-        const o = offName ? w.offerings.find((x) => [x.id, x.shortName, x.name].some((n) => n && n.toLowerCase() === offName.toLowerCase())) : null;
-        const dollars = amt ? Number(String(amt).replace(/[$,\s]/g, '')) : 0;
-        const type = typ ? TYPE_WORDS[String(typ).toLowerCase().replace(/[^a-z]/g, '')] : 'individual';
-        let why = '';
-        if (!name) why = 'missing name';
-        else if (!isEmail(email)) why = `invalid email "${email || ''}"`;
-        else if (seen[email.toLowerCase()]) why = `${email} is listed twice`;
-        else if (offName && !o) why = `unknown offering "${offName}"`;
-        else if (o && o.status !== 'Raising') why = `${o.name} is not raising`;
-        else if (amt && !(dollars > 0)) why = `invalid commitment "${amt}"`;
-        else if (dollars > 0 && !o) why = 'a commitment needs an offering';
-        else if (typ && !type) why = `unknown investor type "${typ}"`;
-        else {
-          const e = validate(w, { name, email, offeringId: o ? o.id : '', cents: Math.round(dollars * 100) });
-          why = e.email ? (/already/.test(e.email) ? `${email} is already in the portal` : e.email) : e.amount || e.offering || '';
-        }
-        if (why) errors.push(`Line ${idx + 1}: ${why}`);
-        else {
-          seen[email.toLowerCase()] = true;
-          rows.push({ name, email, offeringId: o ? o.id : '', offeringName: o ? o.shortName || o.name : '', cents: Math.round(dollars * 100), type });
-        }
-      });
+    let cols = null;
+    let started = false;
+    all.forEach((cells, idx) => {
+      if (!cells || !cells.some((c) => c)) return;
+      if (!started) {
+        started = true;
+        cols = headerOf(cells);
+        if (cols) return;
+      }
+      const at = (k) => (cols[k] === undefined ? '' : String(cells[cols[k]] || '').trim());
+      let first, last, email, offName, amt, typ;
+      if (cols) {
+        first = at('first');
+        last = at('last');
+        // One name column, or a full name typed under "first name": the last word is the last name.
+        if (!first && !last) ({ first, last } = splitName(at('name')));
+        else if (first && !last && cols.last === undefined) ({ first, last } = splitName(first));
+        [email, offName, amt, typ] = [at('email'), at('offering'), at('amount'), at('type')];
+      } else if (String(cells[1] || '').indexOf('@') >= 0) {
+        ({ first, last } = splitName(cells[0]));
+        [email, offName, amt, typ] = cells.slice(1);
+      } else [first, last, email, offName, amt, typ] = cells;
+      email = String(email || '').trim();
+      const name = [first, last].map((x) => String(x || '').trim()).filter(Boolean).join(' ');
+      const o = offName ? w.offerings.find((x) => [x.id, x.shortName, x.name].some((n) => n && n.toLowerCase() === String(offName).toLowerCase())) : null;
+      const dollars = amt ? Number(String(amt).replace(/[$,\s]/g, '')) : 0;
+      const type = typ ? TYPE_WORDS[String(typ).toLowerCase().replace(/[^a-z]/g, '')] : 'individual';
+      let why = '';
+      if (!name) why = 'missing name';
+      else if (!first) why = 'missing first name';
+      else if (!last) why = `missing last name for "${name}"`;
+      else if (!isEmail(email)) why = `invalid email "${email || ''}"`;
+      else if (seen[email.toLowerCase()]) why = `${email} is listed twice`;
+      else if (offName && !o) why = `unknown offering "${offName}"`;
+      else if (o && o.status !== 'Raising') why = `${o.name} is not raising`;
+      else if (amt && !(dollars > 0)) why = `invalid commitment "${amt}"`;
+      else if (dollars > 0 && !o) why = 'a commitment needs an offering';
+      else if (typ && !type) why = `unknown investor type "${typ}"`;
+      else {
+        const e = validate(w, { name, first, last, email, offeringId: o ? o.id : '', cents: Math.round(dollars * 100) });
+        why = e.name || (e.email ? (/already/.test(e.email) ? `${email} is already in the portal` : e.email) : e.amount || e.offering || '');
+      }
+      if (why) errors.push(`${word || 'Line'} ${idx + 1}: ${why}`);
+      else {
+        seen[email.toLowerCase()] = true;
+        rows.push({ first: String(first).trim(), last: String(last).trim(), name, email, offeringId: o ? o.id : '', offeringName: o ? o.shortName || o.name : '', cents: Math.round(dollars * 100), type });
+      }
+    });
+    return { rows, errors };
+  }
+  const parseBulk = (text) => parseRows(csvRows(text));
+  /** Check the list in the paste box and show what would be sent (a pasted list and an uploaded file end up here alike). */
+  function checkBulk(text) {
+    const ui = S().ui;
+    const w = W();
+    ui.bulkText = String(text || '');
+    const { rows, errors } = parseBulk(ui.bulkText);
+    ui.bulkRows = rows;
+    ui.bulkResult = `<div class="cs-bulk">${rows.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact inv8-bulk-tbl"><thead><tr><th scope="col">First name</th><th scope="col">Last name</th><th scope="col">Email</th><th scope="col">Offering</th><th scope="col" class="num">Commitment</th></tr></thead><tbody>${rows
+      .map((r) => `<tr><td>${h(r.first)}</td><td>${h(r.last)}${r.type !== 'individual' ? `<span class="sub">${h(NS.ENTITY_TYPES[r.type].label)}</span>` : ''}</td><td>${h(r.email)}</td><td>${r.offeringName ? h(r.offeringName) : '<span class="cs-muted">Account only</span>'}</td><td class="num">${r.cents ? h(money(offOf(w, r.offeringId), r.cents)) : '<span class="cs-muted">Investor chooses</span>'}</td></tr>`)
+      .join('')}</tbody></table></div>` : ''}${errors.length ? `<ul class="cs-errors">${errors.map((e) => `<li>${h(e)}</li>`).join('')}</ul>` : ''}${!rows.length && !errors.length ? '<p class="cs-muted">No rows found.</p>' : ''}</div>`;
     return { rows, errors };
   }
   const baseBulk = NS.forms['invite-bulk'];
   NS.forms['invite-bulk'] = function (f) {
     if (!E.diy) return baseBulk && baseBulk.apply(this, arguments);
     const ui = S().ui;
-    ui.bulkText = f.elements.csv.value;
-    const { rows, errors } = parseBulk(ui.bulkText);
-    const w = W();
-    ui.bulkRows = rows;
-    ui.bulkResult = `<div class="cs-bulk">${rows.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Offering</th><th scope="col" class="num">Commitment</th></tr></thead><tbody>${rows
-      .map((r) => `<tr><td>${h(r.name)}${r.type !== 'individual' ? `<span class="sub">${h(NS.ENTITY_TYPES[r.type].label)}</span>` : ''}</td><td>${h(r.email)}</td><td>${r.offeringName ? h(r.offeringName) : '<span class="cs-muted">Account only</span>'}</td><td class="num">${r.cents ? h(money(offOf(w, r.offeringId), r.cents)) : '<span class="cs-muted">Investor chooses</span>'}</td></tr>`)
-      .join('')}</tbody></table></div>` : ''}${errors.length ? `<ul class="cs-errors">${errors.map((e) => `<li>${h(e)}</li>`).join('')}</ul>` : ''}${!rows.length && !errors.length ? '<p class="cs-muted">No rows found.</p>' : ''}</div>`;
+    ui.bulkFileError = '';
+    ui.bulkFileNote = '';
+    checkBulk(f.elements.csv.value);
+    NS.app.render();
+  };
+
+  /* An Excel workbook (.xlsx) is a zip of XML parts: the first worksheet's cells, as rows of text. */
+  const xmlOf = (s) => new DOMParser().parseFromString(s, 'application/xml');
+  const tags = (node, name) => Array.from(node.getElementsByTagNameNS('*', name));
+  const colIndex = (ref) => {
+    const m = /^([A-Za-z]+)/.exec(String(ref || ''));
+    if (!m) return -1;
+    let n = 0;
+    for (const ch of m[1].toUpperCase()) n = n * 26 + (ch.charCodeAt(0) - 64);
+    return n - 1;
+  };
+  /** The text of a string item or inline string: its runs joined, phonetic guides left out. */
+  const siText = (node) => tags(node, 't').filter((t) => !(t.parentNode && t.parentNode.localName === 'rPh')).map((t) => t.textContent).join('');
+  async function xlsxRows(bytes) {
+    if (!window.JSZip) {
+      if (!NS.loadScript) throw new Error('Excel files cannot be read here. Save the file as .csv and upload it again.');
+      try {
+        await NS.loadScript(ZIP_LIB);
+      } catch (e) {
+        throw new Error('The Excel reader could not be loaded (check your connection). Try again, or save the file as .csv.');
+      }
+    }
+    let zip;
+    try {
+      zip = await window.JSZip.loadAsync(bytes);
+    } catch (e) {
+      throw new Error('This file is not a readable Excel workbook. Save it as .xlsx or .csv and upload it again.');
+    }
+    const read = async (p) => (zip.file(p) ? zip.file(p).async('string') : '');
+    // The first sheet the workbook lists, through its relationship; sheet1.xml when the workbook does not say.
+    let sheetPath = '';
+    const wb = await read('xl/workbook.xml');
+    const rels = await read('xl/_rels/workbook.xml.rels');
+    if (wb && rels) {
+      const sheet = tags(xmlOf(wb), 'sheet')[0];
+      const rid = sheet ? sheet.getAttribute('r:id') || sheet.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id') || Array.from(sheet.attributes).filter((a) => a.localName === 'id').map((a) => a.value)[0] : '';
+      const rel = tags(xmlOf(rels), 'Relationship').find((r) => r.getAttribute('Id') === rid);
+      const target = rel ? String(rel.getAttribute('Target') || '') : '';
+      if (target) sheetPath = target.charAt(0) === '/' ? target.slice(1) : `xl/${target.replace(/^\.\//, '')}`;
+    }
+    if (!sheetPath || !zip.file(sheetPath)) sheetPath = zip.file('xl/worksheets/sheet1.xml') ? 'xl/worksheets/sheet1.xml' : (Object.keys(zip.files).filter((n) => /^xl\/worksheets\/[^/]+\.xml$/.test(n)).sort()[0] || '');
+    if (!sheetPath) throw new Error('This Excel file has no worksheet. Save it as .xlsx or .csv and upload it again.');
+    const ss = await read('xl/sharedStrings.xml');
+    const shared = ss ? tags(xmlOf(ss), 'si').map(siText) : [];
+    const rows = [];
+    tags(xmlOf(await read(sheetPath)), 'row').forEach((row, i) => {
+      const n = Number(row.getAttribute('r')) || i + 1;
+      const cells = [];
+      let next = 0;
+      tags(row, 'c').forEach((c) => {
+        const at = colIndex(c.getAttribute('r'));
+        const col = at >= 0 ? at : next;
+        next = col + 1;
+        const t = c.getAttribute('t') || 'n';
+        const vEl = tags(c, 'v')[0];
+        const raw = vEl ? vEl.textContent : '';
+        let val = '';
+        if (t === 's') val = shared[Number(raw)] || '';
+        else if (t === 'inlineStr') val = siText(c);
+        else if (t === 'b') val = raw === '1' ? 'TRUE' : 'FALSE';
+        else if (t === 'n') val = raw !== '' && isFinite(Number(raw)) ? String(Number(raw)) : raw;
+        else val = raw;
+        if (col < 200) cells[col] = String(val).replace(/[\r\n]+/g, ' ').trim();
+      });
+      for (let k = 0; k < cells.length; k++) if (cells[k] === undefined) cells[k] = '';
+      if (n >= 1 && n <= MAX_LIST_ROWS + 1) rows[n - 1] = cells;
+    });
+    for (let k = 0; k < rows.length; k++) if (!rows[k]) rows[k] = [];
+    return rows;
+  }
+  /** An uploaded list as rows of cells: CSV text, or the first worksheet of an .xlsx workbook. */
+  async function fileRows(file) {
+    if (!file) throw new Error('Choose a file.');
+    if (file.size > MAX_LIST_BYTES) throw new Error('This file is larger than 5 MB. Upload a smaller list.');
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const name = String(file.name || '').toLowerCase();
+    const zipped = bytes[0] === 0x50 && bytes[1] === 0x4b;
+    const legacy = bytes[0] === 0xd0 && bytes[1] === 0xcf && bytes[2] === 0x11 && bytes[3] === 0xe0;
+    if (legacy || (/\.xls$/.test(name) && !zipped)) throw new Error('This is an older Excel file (.xls), which cannot be read here. Open it in your spreadsheet app, save it as .xlsx or .csv, and upload that.');
+    if (zipped) return xlsxRows(bytes);
+    if (/\.xlsx$/.test(name)) throw new Error('This file is not a readable Excel workbook. Save it as .xlsx or .csv and upload it again.');
+    if (bytes.subarray(0, 4000).some((b) => b === 0)) throw new Error('This file is not a CSV or Excel list. Upload a .csv or .xlsx file.');
+    return csvRows(new TextDecoder('utf-8').decode(bytes));
+  }
+  NS.changes['inv8-file'] = async (el) => {
+    if (!E.diy) return;
+    const ui = S().ui;
+    const file = el.files && el.files[0];
+    if (!file) return;
+    if (!NS.app.can('operate')) return U.toast('Only your team can invite investors.');
+    ui.bulkFileError = '';
+    ui.bulkFileNote = '';
+    try {
+      let rows = await fileRows(file);
+      while (rows.length && !rows[rows.length - 1].some((c) => c)) rows.pop();
+      const n = rows.filter((r) => r.some((c) => c)).length;
+      if (!n) throw new Error('No rows were found in this file.');
+      if (rows.length > MAX_LIST_ROWS) throw new Error(`This list has more than ${MAX_LIST_ROWS} rows. Split it into smaller files.`);
+      // The file's rows go into the paste box, so an uploaded file and a pasted list are checked and sent the same way.
+      const { rows: ok, errors } = checkBulk(csvText(rows));
+      ui.bulkFileNote = `Read ${file.name}: ${ok.length} investor${ok.length === 1 ? '' : 's'} ready to invite${errors.length ? `, ${errors.length} row${errors.length === 1 ? '' : 's'} to fix` : ''}. Check the list below, then send.`;
+    } catch (e) {
+      ui.bulkFileError = String((e && e.message) || e);
+      ui.bulkRows = null;
+      ui.bulkResult = '';
+    }
     NS.app.render();
   };
   const baseBulkAdd = NS.actions['invite-bulk-add'];
@@ -1339,7 +1738,7 @@
     NS.app.save(true);
     const res = [];
     for (const it of made) res.push(await send(w, it));
-    Object.assign(ui, { bulkBusy: false, bulkRows: null, bulkResult: '', bulkText: '', inviteOpen: false, inv8Filter: 'open' });
+    Object.assign(ui, { bulkBusy: false, bulkRows: null, bulkResult: '', bulkText: '', bulkFileNote: '', bulkFileError: '', inviteOpen: false, inv8Filter: 'open' });
     NS.app.render();
     const manual = res.filter((r) => r.emailStatus === 'manual').length;
     const failed = res.filter((r) => r.emailStatus === 'failed').length;
@@ -1787,6 +2186,9 @@
     listPanel,
     showEmail,
     stepText,
-    rules
+    rules,
+    addManually,
+    parseList: parseBulk,
+    readListFile: fileRows
   };
 })(window.CVPortal);
