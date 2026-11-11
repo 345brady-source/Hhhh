@@ -559,6 +559,20 @@
   const reEsc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   /** The firm's accreditation validity in days (integrations.js ruleDays: 30 to 365, 90 when not set). */
   const validDays = (ws) => Math.min(365, Math.max(30, Math.round(Number(IV().ensure(ws).rules.validDays)) || 90));
+  /** The firm's re-screening interval in days (integrations.js ruleDays: 1 to 365, 30 when not set). */
+  const rescreenDays = (ws) => Math.min(365, Math.max(1, Math.round(Number(IV().ensure(ws).rules.rescreenDays)) || 30));
+  /**
+   * The next sanctions re-screening a new investor's device reports is no later than the firm's interval allows, counted
+   * from the day they were screened (the server sets screenedAt from its own records; never a day after today).
+   */
+  function capRescreen(ws, aml) {
+    if (!aml || typeof aml !== 'object' || !IV()) return;
+    const t = today();
+    const on = isDay(String(aml.screenedAt || '').slice(0, 10)) && String(aml.screenedAt).slice(0, 10) <= t ? String(aml.screenedAt).slice(0, 10) : t;
+    const cap = addDays(on, rescreenDays(ws));
+    const given = isDay(String(aml.nextScreen || '').slice(0, 10)) ? String(aml.nextScreen).slice(0, 10) : '';
+    if (aml.status === 'clear' || aml.nextScreen) aml.nextScreen = given && given < cap ? given : cap;
+  }
   /**
    * A verified accreditation from the investor's device lasts no longer than the firm's rule allows, counted from the day
    * it was verified (never a day after today: the device's dates are not the firm's). The earlier of that limit and the
@@ -682,6 +696,12 @@
     // Checks this import keeps from the device: every check for a new investor, only a new accreditation for one on file.
     const keptKinds = onFile ? (taken ? ['accreditation'] : []) : ['identity', 'accreditation'];
     if (inv.verify && typeof inv.verify === 'object' && keptKinds.indexOf('accreditation') >= 0) capAccreditation(ws, inv, inv.verify.accreditation);
+    // A new investor's screening comes from the device too: its re-screening date follows the firm's interval.
+    if (!onFile && inv.verify && typeof inv.verify === 'object') {
+      capRescreen(ws, inv.verify.aml);
+      const next = inv.verify.aml && inv.verify.aml.nextScreen;
+      if (next && inv.kyc && typeof inv.kyc === 'object' && (!inv.kyc.nextReview || String(inv.kyc.nextReview) > next)) inv.kyc.nextReview = next;
+    }
     // Their evidence (an ID or a verification letter) may only be this investor's own upload: integrations.js names uploads
     // kyc-<investor id>-<time>. A record pointing at any other file here loses the pointer, so it never shows that file.
     const evidence = [];

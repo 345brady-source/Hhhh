@@ -249,6 +249,11 @@ test('a completed agreement for the investor alone: its signed copy is kept and 
     assert.deepEqual(Object.keys(sub.files).sort(), ['env-9-signed', 'env-9-work']);
     assert.deepEqual(sub.docs, [{ id: 'env-9-signed', title: 'Subscription agreement (signed)', fileName: 'Agreement_signed.pdf', type: 'application/pdf', cat: 'Legal', date: '2026-01-05', audience: 'investors', investors: ['HRC-0007'], offeringId: 'hr-fund-ii', envelopeId: 'env-9' }]);
 
+    // No listing for a signed copy that did not come with the submission.
+    const r1 = await create(base, { esign: { template: { title: 'Agreement', roles: ['Investor'], fields: [] } } });
+    assert.equal((await complete(base, r1.token, { investor: { id: 'HRC-0007' }, envelope, docs, files: { 'env-9-work': pdf('WORK') } })).status, 200);
+    assert.deepEqual((await submissionOf(base, r1.id)).docs, []);
+
     // Back to waiting for the firm (the agreement has a countersigner): no signed copy, no listing.
     const r2 = await create(base);
     assert.equal((await complete(base, r2.token, { investor: { id: 'HRC-0007' }, envelope: Object.assign({}, envelope, { signers: [{ role: 'investor', status: 'signed' }, { role: 'countersigner', status: 'waiting' }] }), docs, files: { 'env-9-signed': pdf('SIGNED'), 'env-9-work': pdf('WORK') } })).status, 200);
