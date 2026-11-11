@@ -2254,7 +2254,7 @@
           <label class="cs-check" for="ik-publish"><input id="ik-publish" type="checkbox" data-bind="ikt:publish"${st.publish ? ' checked' : ''}><span>Make uploaded documents available to investors in this offering (and on its subscription page)</span></label>
         </div>
         ${st.error ? `<p class="cs-error">${h(st.error)}</p>` : ''}
-        <div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="ik-read"${ready ? '' : ' disabled'}>Read documents</button><span class="cs-hint">When this portal is open in Claude, Claude reads the documents (you are asked to allow it once). Elsewhere the built-in reader finds the common terms.</span></div>`
+        <div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="ik-read"${ready ? '' : ' disabled'}>Read documents</button><span class="cs-hint">The documents are read and their terms filled in for you to review (you may be asked to allow reading once).</span></div>`
       )}`,
       'console-intake'
     );
@@ -2276,7 +2276,7 @@
     const types = Object.keys(NS.OFFERING_TYPES).map((t) => [t, t]);
     const curs = Object.keys(NS.structures.CURRENCIES).map((c) => [c, `${c} (${NS.structures.CURRENCIES[c].name})`]);
     const target = st.target ? w.offerings.find((o) => o.id === st.target) : null;
-    const method = st.method === 'claude' ? 'Read by Claude' : st.method === 'manual' ? 'Current setup' : 'Read by the built-in reader';
+    const method = st.method === 'manual' ? 'Current setup' : 'Read from the documents';
     const n = IK().filled(p);
     const tiersHint = 'Tiers run in order: return of capital, preferred return (simple or compounding), GP catch-up, then splits that end when investors reach an IRR or a multiple of their capital. Leave empty to use carry and preferred return with a full catch-up.';
     return shell(
@@ -2473,20 +2473,20 @@
     const sample = await IK().claudeSample();
     if (sample) {
       st.ctl = new AbortController();
-      st.progress = 'Claude is reading the documents. This usually takes one to three minutes.';
+      st.progress = 'Reading the offering. This usually takes one to three minutes.';
       NS.app.render();
       try {
         raw = await IK().readWithClaude(sample, corp.text, {
           signal: st.ctl.signal,
           onText: ({ text }) => {
             const el = document.getElementById('ik-progress');
-            if (el) el.textContent = `Claude is writing up the terms… ${text.length.toLocaleString('en-US')} characters`;
+            if (el) el.textContent = `Reading the offering… ${text.length.toLocaleString('en-US')} characters`;
           }
         });
         method = 'claude';
       } catch (e) {
         const c = e && e.code;
-        why = c === 'cancelled' ? 'Reading was stopped. ' : c === 'not_granted' || c === 'sampling_disabled' ? 'Claude was not allowed to read the documents. ' : c === 'prompt_too_large' ? 'The documents were too long to read at once. ' : c === 'rate_limited' ? 'Claude is busy or a usage limit was reached. ' : 'Claude could not finish reading. ';
+        why = c === 'cancelled' ? 'Reading was stopped. ' : c === 'not_granted' || c === 'sampling_disabled' ? 'Reading was not allowed. ' : c === 'prompt_too_large' ? 'The documents were too long to read at once. ' : c === 'rate_limited' ? 'Reading is busy right now. ' : 'Reading could not finish. ';
       }
       st.ctl = null;
     }
@@ -2548,7 +2548,7 @@
         const list = [['Auditor', a0.auditor || pv.auditor], ['Administrator', a0.administrator || pv.administrator], ['Counsel', pv.counsel], ['Custodian', pv.custodian], ['Prime broker', pv.primeBroker]].filter((x) => x[1]).concat((pv.others || []).map((x) => [x.role, x.name]));
         return list.length ? ['Service providers', list.map(([r, n]) => `${h(r)}: ${h(n)}`).join('<br>')] : null;
       })(),
-      (o.sourceDocs || []).length ? ['Set up from', (o.sourceDocs || []).map((d) => `${h(d.name)} (${d.method === 'claude' ? 'read by Claude' : d.method === 'manual' ? 'edited' : 'built-in reader'}, ${date(d.readOn)})`).join('<br>')] : null
+      (o.sourceDocs || []).length ? ['Set up from', (o.sourceDocs || []).map((d) => `${h(d.name)} (${d.method === 'claude' ? 'read automatically' : d.method === 'manual' ? 'edited' : 'built-in reader'}, ${date(d.readOn)})`).join('<br>')] : null
     ].filter(Boolean);
     return panel('Structure', `<dl class="cs-kv ik-kv">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`, canConfigure() ? `<button class="cs-btn cs-btn-small" type="button" data-action="struct-edit" data-id="${h(o.id)}">Edit structure</button>` : '');
   }

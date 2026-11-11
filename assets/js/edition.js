@@ -4,7 +4,7 @@
  *   managed  Carrow & Vale runs each client's portal. Carrow & Vale staff use
  *            the operator bar, set up clients, and add and configure
  *            offerings; the sponsor's own staff run day-to-day operations.
- *   diy      Carrow & Vale DIY Portal: the sponsor signs up and runs everything
+ *   diy      self-serve: the sponsor signs up on Carrow & Vale and runs everything
  *            alone. Admins have every feature; team members run operations;
  *            investors are verified automatically through the identity,
  *            sanctions screening and accreditation providers the sponsor
@@ -30,8 +30,8 @@
     diy,
     managed: !diy,
     /** The product name firms see on sign-up. Investors never see it: their portal carries only their firm's brand. */
-    product: diy ? 'Carrow & Vale DIY Portal' : 'Carrow & Vale',
-    /** "Powered by" footer option (managed edition only; the DIY portal is fully white-labeled). */
+    product: 'Carrow & Vale',
+    /** "Powered by" footer option (managed edition only; the self-serve edition is fully white-labeled). */
     poweredBy: diy ? '' : 'Carrow & Vale',
     /** Kept apart so both editions can run in one browser. */
     storagePrefix: diy ? 'sdesk1:' : 'cvp2:',

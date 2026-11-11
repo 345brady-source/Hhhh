@@ -486,7 +486,7 @@
   };
 
   /* =====================================================================
-   * Invitation flow (DIY portal), route #invite-<token>
+   * Invitation flow (self-serve edition), route #invite-<token>
    *
    * One link walks an invited investor through everything: welcome and
    * consent, login, investor information, identity verification (sanctions

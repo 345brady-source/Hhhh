@@ -1,20 +1,20 @@
 # Carrow & Vale Investor Portal
 
-A white-label investor portal and sponsor console from Carrow & Vale Shareholder Advisors, in two editions: the managed portal Carrow & Vale runs for its clients (investment firms and private placement sponsors), and the Carrow & Vale DIY Portal that firms sign up for and run themselves. Either way, investors see a portal carrying only their firm's brand.
+A white-label investor portal and sponsor console from Carrow & Vale Shareholder Advisors, in two editions: the managed portal Carrow & Vale runs for its clients (investment firms and private placement sponsors), and the Carrow & Vale (self-serve) that firms sign up for and run themselves. Either way, investors see a portal carrying only their firm's brand.
 
 It is a static app with no build step:
 
 ```sh
 python3 -m http.server 8000
 # http://localhost:8000/?tenant=ashwell-ridge   managed edition
-# http://localhost:8000/diy.html                DIY portal (sign-up)
+# http://localhost:8000/diy.html                self-serve edition (sign-up)
 ```
 
 ## Two editions
 
 The same code runs as two products. Each keeps its own data in the browser (separate storage), so they can be opened side by side. Both use the same investor mobile app (Shareholder Desk).
 
-| | Carrow & Vale (managed) | Carrow & Vale DIY Portal |
+| | Carrow & Vale (managed) | Carrow & Vale (self-serve) |
 |---|---|---|
 | Entry point | `index.html` | `diy.html` (sets `window.CVPortalEdition = 'diy'`; `?edition=diy` also works) |
 | Who runs it | Carrow & Vale staff set up and run each client's portal | The firm signs itself up and runs its own portal |
@@ -26,7 +26,7 @@ The same code runs as two products. Each keeps its own data in the browser (sepa
 
 Everything else is shared: investor portal, offerings, distributions and NACHA files, capital calls, requests, documents, notices, reports, audit package, structures, offering intake and e-signature.
 
-### Carrow & Vale DIY Portal
+### Carrow & Vale (self-serve)
 
 - **Sign-up.** Firm name, admin name and email, a password, the kind of offerings, a brand color and a logo create the portal. Sample firms fill the form for a quick look.
 - **Setup checklist.** Brand, verification providers, ACH origination, first offering (from its documents), subscription agreement template, team, investors, first distribution. Each step links to its page and ticks itself off.
@@ -46,7 +46,7 @@ A built-in signing module for subscription agreements, side letters and any othe
 
 Before production: verify signers' identities (email codes or sign-in), capture IP addresses on the server and seal the certificate with a server-side signature.
 
-## Investor verification (DIY portal)
+## Investor verification (self-serve edition)
 
 Investors are verified while they onboard: identity (KYC), sanctions and politically exposed person screening (AML), and accredited investor status where an offering requires it (Rule 506(c), or always, or never, as the firm chooses). The portal does not choose providers: the firm plugs in the services it uses, as many as it likes for each check.
 
@@ -55,7 +55,7 @@ Investors are verified while they onboard: identity (KYC), sanctions and politic
 - **More than one:** when several identity or accreditation connections are on, investors choose which to use. Every screening connection that is on runs; any potential match holds the investor for review.
 - **Decisions:** investors are approved automatically when every required check passes (or held for the team if the firm prefers). Anything flagged waits on the AML/KYC page, where the team records results, approves or declines with a note. Accreditation expires after the firm's validity period (90 days by default) or the provider's date, whichever is earlier. Subscriptions are blocked until the investor is verified and, for 506(c) offerings, currently accredited.
 
-## Turnkey investor onboarding (DIY portal)
+## Turnkey investor onboarding (self-serve edition)
 
 The firm enters the basics and sends one link; the investor does everything else; the firm is told when it is done and the investor is already in the portal.
 
@@ -198,7 +198,7 @@ The investor register also shows each investor's AML/KYC status and next review 
 | Sponsor staff | Their own firm's console, in their own colors with their logo, and an unbranded "Investor preview" bar when they view the portal as an investor. Offerings are read-only: only Carrow & Vale adds offerings or changes their exit timing, distribution schedule, terms and ACH originator. The Portal and brand page is hidden. No client switching and no configuration export |
 | Carrow & Vale staff | Every client, the operator bar (client switcher, portal/console toggle, view as any investor) and new-client setup |
 
-In the DIY portal the roles are admin (everything, including brand, integrations, offering intake and the team), team member (day-to-day operations) and investor (only the firm's branded portal; no product name anywhere).
+In the self-serve edition the roles are admin (everything, including brand, integrations, offering intake and the team), team member (day-to-day operations) and investor (only the firm's branded portal; no product name anywhere).
 
 In production the role comes from sign-in. Because this build has no server, a small "Demo · signed in as" control in the bottom-left corner switches roles. To remove it, set this before the scripts load:
 
@@ -228,7 +228,7 @@ Offering types (real estate syndication, DST, private equity fund, co-investment
 
 ## Investor onboarding
 
-In the DIY portal, invited investors follow the turnkey onboarding above. In the managed edition, an invited investor activates in five steps, configurable per client:
+In the self-serve edition, invited investors follow the turnkey onboarding above. In the managed edition, an invited investor activates in five steps, configurable per client:
 
 1. Create a login
 2. Investor information: entity type (individual, joint, trust, entity, IRA), name on the account, address, taxpayer ID (only the last four digits are kept)
@@ -282,7 +282,7 @@ This build stores everything in the browser for demonstration. A production depl
 
 ```
 index.html                 entry point, managed edition
-diy.html                   entry point, DIY portal (same files with window.CVPortalEdition = 'diy')
+diy.html                   entry point, self-serve edition (same files with window.CVPortalEdition = 'diy')
 assets/css/esign.css       e-signature screens
 assets/css/diy.css         DIY sign-up page and verification screens
 assets/js/edition.js       which edition is running: roles, storage, product name
@@ -297,7 +297,7 @@ assets/js/charts.js        distributions column chart
 assets/js/app.js           shell, routing, operator bar, shared helpers
 assets/js/documents.js     letterhead document previews
 assets/js/portal.js        investor pages
-assets/js/onboarding.js    investor activation and the DIY portal's guided onboarding from an invitation link
+assets/js/onboarding.js    investor activation and the self-serve edition's guided onboarding from an invitation link
 assets/js/audit.js         fund accounting, audit schedules, readiness checks, change log, zip package
 assets/js/operations.js    capital calls, redemption and subscription requests, AML/KYC, published documents
 assets/js/structures.js    currencies, share classes, feeder funds, distribution waterfalls, equalization

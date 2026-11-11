@@ -332,7 +332,7 @@
    * Managed edition (Carrow & Vale):
    *   staff    Carrow & Vale: every client, the operator bar, client setup and offering configuration.
    *   sponsor  the client's own staff: its console and investor previews; offerings read-only.
-   * DIY edition (Carrow & Vale DIY Portal):
+   * Self-serve edition (internally "diy"):
    *   admin    the sponsor's admins: everything, including brand, offerings, integrations and team.
    *   team     the sponsor's team members: operations; offerings, brand and integrations read-only.
    * Both: investor, the client's branded portal only.

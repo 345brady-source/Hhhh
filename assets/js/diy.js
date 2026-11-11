@@ -1,5 +1,5 @@
 /*
- * Carrow & Vale DIY Portal (the DIY edition): sign-up and the team. Investors never see
+ * Carrow & Vale self-serve edition (internally "diy"): sign-up and the team. Investors never see
  * this name: every page they see carries only their firm's brand.
  *
  * A sponsor creates its own portal here, with no Carrow & Vale staff
@@ -42,12 +42,12 @@
     if (!u.signup) u.signup = { firm: '', name: '', email: '', password: '', focus: 'realestate', color: '#0F2742', logo: '', logoName: '', errors: {} };
     return u.signup;
   }
-  const wordmark = () => `<span class="sd-brand">${NS.CV_MARK}<span class="sd-word">Carrow &amp; Vale DIY Portal</span></span>`;
+  const wordmark = () => `<span class="sd-brand">${NS.CV_MARK}<span class="sd-word">Carrow &amp; Vale</span></span>`;
 
   NS.views['diy-start'] = {
     standalone: true,
     edition: 'diy',
-    title: 'Carrow & Vale DIY Portal · Create your investor portal',
+    title: 'Carrow & Vale · Create your investor portal',
     render() {
       const f = signupState();
       const e = f.errors;
@@ -58,7 +58,6 @@
         <main class="sd-main" id="main" tabindex="-1">
           <section class="sd-hero">
             <h1>Your investor portal, run by you</h1>
-            <p class="sd-lede">Online subscriptions with e-signature, automatic identity, sanctions and accreditation checks, capital calls, distributions by ACH, statements, K-1s and audit-ready records. All under your brand, set up in an afternoon.</p>
           </section>
           <div class="sd-cols">
             <form class="sd-card sd-form" data-form="diy-signup" novalidate>
@@ -157,7 +156,7 @@
     NS.store.set('role', 'admin');
     S().ui.signup = null;
     NS.app.setClient(t.id, 'console');
-    if (NS.audit) NS.audit.log(NS.state.ws, { action: 'Portal created', record: t.id, detail: `${firm} signed up for the Carrow & Vale DIY Portal; first admin ${f.name.trim()} (${f.email.trim()})` });
+    if (NS.audit) NS.audit.log(NS.state.ws, { action: 'Portal created', record: t.id, detail: `${firm} signed up for Carrow & Vale; first admin ${f.name.trim()} (${f.email.trim()})` });
     NS.app.save(true);
     U.toast(`Welcome, ${f.name.trim().split(' ')[0]}. Your portal is ready.`);
   };

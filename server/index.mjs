@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * Integration server for automated investor verification (the Carrow & Vale
- * DIY Portal).
+ * self-serve edition).
  *
  * The portal runs in the browser and must never hold provider API keys, so
  * this small server does the provider work:

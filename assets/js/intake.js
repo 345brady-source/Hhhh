@@ -431,7 +431,7 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
         action: isNew ? 'Offering created from documents' : 'Offering updated from documents',
         fund: o.id,
         record: o.id,
-        detail: `${o.name}: ${opts.fields} terms applied, read by ${opts.method === 'claude' ? 'Claude' : opts.method === 'manual' ? 'manual edit' : 'the built-in reader'} from ${opts.docs.length ? opts.docs.map((d) => `${d.name} (SHA-256 ${String(d.sha256).slice(0, 12)}…)`).join(', ') : 'the structure editor'}`
+        detail: `${o.name}: ${opts.fields} terms applied, read by ${opts.method === 'claude' ? 'automatic reading' : opts.method === 'manual' ? 'manual edit' : 'the built-in reader'} from ${opts.docs.length ? opts.docs.map((d) => `${d.name} (SHA-256 ${String(d.sha256).slice(0, 12)}…)`).join(', ') : 'the structure editor'}`
       });
     if (NS.clearCaches) NS.clearCaches();
     return o;

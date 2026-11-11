@@ -2,7 +2,7 @@
   "name": "diy-portal-integration-server",
   "version": "1.0.0",
   "private": true,
-  "description": "Provider calls and webhooks for automated investor verification (identity, sanctions screening, accreditation) in the Carrow & Vale DIY Portal.",
+  "description": "Provider calls and webhooks for automated investor verification (identity, sanctions screening, accreditation) in the Carrow & Vale investor portal.",
   "type": "module",
   "engines": { "node": ">=18" },
   "scripts": {
