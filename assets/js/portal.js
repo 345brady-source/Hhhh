@@ -856,6 +856,17 @@
   NS.actions['doc-download'] = () => U.toast('Sample document. No file is attached in this demo portal.');
 
   /* ---------- Account ---------- */
+  /**
+   * The owners of a joint account, each by first and last name: as they gave them during onboarding (onboarding.js keeps
+   * them on the record), or else as on the account's KYC record. The account title alone may shorten them ("Robert and
+   * Ellen Marsh, JTWROS").
+   */
+  function jointOwners(inv) {
+    if (inv.type !== 'joint') return [];
+    const given = NS.names ? NS.names.holders(inv) : [];
+    const kyc = ((inv.kyc && inv.kyc.owners) || []).map((o) => String((o && o.name) || '').trim()).filter(Boolean);
+    return given.length > 1 ? given : kyc.length > 1 ? kyc : [];
+  }
   NS.views.account = {
     mode: 'portal',
     render() {
@@ -865,12 +876,16 @@
       const bank = inv.payment && inv.payment.method === 'ach' ? inv.payment.bank : null;
       const typeLabel = (NS.ENTITY_TYPES[inv.type] || {}).label || inv.type;
       const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
+      const owners = jointOwners(inv);
+      const heldAs = NS.names ? NS.names.tenancyLabel(inv) : '';
       return shell(
         `${title('Account', `${h(inv.title)} · Account ${h(inv.id)}`)}
         <div class="cols">
           <section class="sec">${sec('Investor')}<dl class="terms">
             ${row('Account title', h(inv.title))}
             ${row('Investing as', h(typeLabel))}
+            ${owners.length ? row('Account owners', owners.map((n) => h(n)).join('<br>')) : ''}
+            ${heldAs ? row('Held as', h(heldAs)) : ''}
             ${row('Primary contact', h(inv.contact))}
             ${row('Email', h(inv.email))}
             ${row('Phone', h(inv.phone || '—'))}

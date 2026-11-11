@@ -240,7 +240,10 @@
     // Signed through an e-signature envelope (the offering's subscription agreement template): signedAt is set when it completes.
     if (opts.envelopeId) r.envelopeId = opts.envelopeId;
     ws.requests.push(r);
-    log(ws, { action: opts.envelopeId ? 'Subscription agreement sent for signature' : open ? 'Subscription requested' : 'Subscription documents signed', fund: o.id, record: r.id, detail: `${inv.title} (${inv.id}): ${money(r.cents)} ${open ? 'subscription' : 'commitment'}; ${opts.envelopeId ? `e-signature envelope ${opts.envelopeId}` : `signed by ${opts.signature}`}`, actor: `${inv.title} (investor)` });
+    // opts.offline: the firm records a subscription signed on paper (Add manually): its own entry in the change log, under the
+    // team member's name (opts.actor), and never the investor's.
+    if (opts.offline) r.offline = true;
+    log(ws, Object.assign({ action: opts.offline ? 'Subscription recorded from paper documents' : opts.envelopeId ? 'Subscription agreement sent for signature' : open ? 'Subscription requested' : 'Subscription documents signed', fund: o.id, record: r.id, detail: `${inv.title} (${inv.id}): ${money(r.cents)} ${open ? 'subscription' : 'commitment'}; ${opts.envelopeId ? `e-signature envelope ${opts.envelopeId}` : `signed by ${opts.signature}`}` }, opts.offline ? (opts.actor ? { actor: opts.actor } : {}) : { actor: `${inv.title} (investor)` }));
     save(ws);
     return r;
   }

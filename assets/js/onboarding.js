@@ -35,6 +35,152 @@
     return m ? { street: m[1], city: m[2], st: m[3], zip: m[4] } : { street: a || '', city: '', st: '', zip: '' };
   }
 
+  /* ---------- Names ----------
+   * Every form asks for a person's first and last name. The investor record keeps a person's name as one string
+   * (contact), and the account name (title) is made here: "First Last" for an individual; both owners and how they hold
+   * the account for a joint account ("Robert Marsh and Ellen Marsh, JTWROS"); and the one name typed for a trust, entity
+   * or IRA, which is an organisation's or an account's name. A joint account also keeps its owners (holders: first and
+   * last name of each) and how they hold it (tenancy) on the record, so both can be shown and screened.
+   */
+  const tidy = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+  const sameName = (a, b) => tidy(a).toLowerCase() === tidy(b).toLowerCase();
+  /** Split a stored full name into first and last name fields (the last word is the last name). */
+  const splitName = (n) => {
+    const p = tidy(n).split(' ').filter(Boolean);
+    return p.length < 2 ? [p[0] || '', ''] : [p.slice(0, -1).join(' '), p[p.length - 1]];
+  };
+  /** One name from a first and a last name field (a full name typed in the first field also counts). */
+  const fullName = (first, last) => [first, last].map(tidy).filter(Boolean).join(' ');
+  /** The same as a { first, last } pair for the record: a full name typed in the first field is split. */
+  const namePair = (first, last) => {
+    const [f, l] = tidy(last) ? [tidy(first), tidy(last)] : splitName(first);
+    return { first: f, last: l };
+  };
+  /** How the owners of a joint account hold it: the choice the form shows, and the words that end the account name. */
+  const TENANCY = {
+    jtwros: { label: 'Joint tenants with right of survivorship (JTWROS)', suffix: 'JTWROS' },
+    tic: { label: 'Tenants in common', suffix: 'Tenants in Common' },
+    community: { label: 'Community property', suffix: 'Community Property' },
+    entirety: { label: 'Tenants by the entirety', suffix: 'Tenants by the Entirety' }
+  };
+  const tenancyOf = (k) => (TENANCY[k] ? k : 'jtwros');
+  const PERSONAL = (type) => type === 'individual' || type === 'joint';
+  /** Both owners of a joint account as the form has them, for example "Robert Marsh and Ellen Marsh". */
+  const ownersText = (d) => [fullName(d.first, d.last), fullName(d.first2, d.last2)].filter(Boolean).join(' and ');
+  /** The account name the form gives (see the note above). */
+  function accountName(d) {
+    if (d.type === 'individual') return fullName(d.first, d.last);
+    if (d.type === 'joint') return `${ownersText(d)}, ${TENANCY[tenancyOf(d.tenancy)].suffix}`;
+    return tidy(d.title);
+  }
+  /**
+   * The owners named by a joint account's name on file, typed on one line before the form asked for each owner
+   * ("Robert and Ellen Marsh, JTWROS"): a best guess to start the form with, for the investor to check.
+   */
+  function jointFromTitle(title) {
+    let s = tidy(title);
+    const comma = s.lastIndexOf(',');
+    const tail = comma > 0 ? s.slice(comma + 1) : (s.match(/\sJTWROS$/i) || [''])[0];
+    const tenancy = /common|\bTIC\b|\bTEN\W*COM\b/i.test(tail) ? 'tic' : /community/i.test(tail) ? 'community' : /entiret|\bTEN\W*ENT\b/i.test(tail) ? 'entirety' : /\bJT|joint|surviv/i.test(tail) ? 'jtwros' : '';
+    if (tenancy) s = tidy(s.slice(0, s.length - tail.length).replace(/,\s*$/, ''));
+    const parts = s.split(/\s+(?:and|&)\s+/i).map(tidy).filter(Boolean);
+    if (parts.length !== 2) return { names: [], tenancy };
+    const b = splitName(parts[1]);
+    const a = splitName(parts[0]);
+    // "Robert and Ellen Marsh": one last name for both.
+    return { names: [fullName(a[0], a[1] || b[1]), fullName(b[0], b[1])], tenancy };
+  }
+  /** The form's name fields when it opens: the investor's name on file in two parts and, for a joint account, the other owner. */
+  function nameDefaults(inv) {
+    const hs = Array.isArray(inv.holders) ? inv.holders.filter((x) => x && typeof x === 'object') : [];
+    const mine = hs[0] && sameName(fullName(hs[0].first, hs[0].last), inv.contact) ? [tidy(hs[0].first), tidy(hs[0].last)] : splitName(inv.contact);
+    const out = { first: mine[0], last: mine[1], first2: '', last2: '', tenancy: tenancyOf(inv.tenancy) };
+    if (hs[1]) Object.assign(out, { first2: tidy(hs[1].first), last2: tidy(hs[1].last) });
+    else if (inv.type === 'joint') {
+      const g = jointFromTitle(inv.title);
+      const other = g.names.length === 2 ? (sameName(g.names[1], inv.contact) ? g.names[0] : g.names[1]) : '';
+      [out.first2, out.last2] = splitName(other);
+      if (g.tenancy) out.tenancy = g.tenancy;
+    }
+    return out;
+  }
+  /**
+   * The one-line account name to start with, should the account be a trust, entity or IRA: the name on file, unless that
+   * is only the investor's own name or a joint account's, which is not what a trust or an entity is called.
+   */
+  const orgTitle = (inv) => (inv.type === 'entity' || inv.type === 'trust' || inv.type === 'ira' ? tidy(inv.title || inv.contact) : inv.type === 'joint' || sameName(inv.title, inv.contact) ? '' : tidy(inv.title));
+  /** The investor's own name as the form has it (an individual, or the first owner of a joint account); otherwise the name on file. */
+  const personOf = (d, inv) => (PERSONAL(d.type) && fullName(d.first, d.last)) || tidy(inv.contact);
+  /** What is missing from a person's first and last name, on the field to fix (a full name typed in the first field counts). */
+  function personErrors(e, first, last, kf, kl, whose) {
+    if (!tidy(first) && !tidy(last)) e[kf] = `Enter ${whose} first and last name.`;
+    else if (!tidy(first)) e[kf] = `Enter ${whose} first name.`;
+    else if (!tidy(last) && !/\s/.test(tidy(first))) e[kl] = `Enter ${whose} last name.`;
+  }
+  const TITLE_MISSING = { trust: 'Enter the trust name.', entity: 'Enter the entity’s legal name.', ira: 'Enter the IRA account name.' };
+  /** What is missing from the names in the investor information step. */
+  function nameErrors(e, d) {
+    if (d.type === 'individual') personErrors(e, d.first, d.last, 'first', 'last', 'your');
+    else if (d.type === 'joint') {
+      personErrors(e, d.first, d.last, 'first', 'last', 'the first owner’s');
+      personErrors(e, d.first2, d.last2, 'first2', 'last2', 'the second owner’s');
+    } else if (!tidy(d.title)) e.title = TITLE_MISSING[d.type] || 'Enter the name on the account.';
+  }
+  /** Put the names the form has on the investor record: the account name, the investor's own name and a joint account's owners. */
+  function applyNames(i, d) {
+    i.type = d.type;
+    i.title = accountName(d);
+    // The investor's own name on file follows the spelling they gave here.
+    if (PERSONAL(d.type)) i.contact = fullName(d.first, d.last);
+    if (d.type === 'joint') {
+      i.holders = [namePair(d.first, d.last), namePair(d.first2, d.last2)];
+      i.tenancy = tenancyOf(d.tenancy);
+    } else {
+      delete i.holders;
+      delete i.tenancy;
+    }
+  }
+  /**
+   * The bank step's account holder. An individual's is asked as a first and a last name; a joint, trust, entity or IRA
+   * account may be in another name at the bank, so it is one line. holderDefaults (when the form opens): a holder on file,
+   * or one saved on a single line by an earlier visit, is kept (split in two for an individual), unless it is only the
+   * investor's or the account's own name. holderSync (when the step is shown): fields the investor has not filled in start
+   * as the name given in the investor information step, and follow a correction made there.
+   */
+  function holderDefaults(d, i, onFile) {
+    if (d.holderFirst !== undefined) return; // saved by this form: as the investor left it
+    const line = tidy(d.holder || onFile);
+    const own = !line || sameName(line, i.title) || sameName(line, i.contact);
+    const ind = d.type === 'individual';
+    [d.holderFirst, d.holderLast] = ind && !own ? splitName(line) : ['', ''];
+    d.holder = ind || own ? '' : line;
+  }
+  function holderSync(d, i) {
+    if (d.type === 'individual') {
+      const cur = fullName(d.holderFirst, d.holderLast);
+      if (cur && cur !== d.holderPairAuto) return;
+      [d.holderFirst, d.holderLast] = fullName(d.first, d.last) ? [tidy(d.first), tidy(d.last)] : splitName(i.contact);
+      d.holderPairAuto = fullName(d.holderFirst, d.holderLast);
+    } else if (!tidy(d.holder) || tidy(d.holder) === d.holderAuto) {
+      d.holder = d.holderAuto = d.type === 'joint' ? ownersText(d) : tidy(d.title) || tidy(i.title);
+    }
+  }
+  const bankHolder = (d) => (d.type === 'individual' ? fullName(d.holderFirst, d.holderLast) : tidy(d.holder));
+  /** For the other files that show or screen the people on an account (portal.js, integrations.js). */
+  NS.names = {
+    TENANCY,
+    split: splitName,
+    full: fullName,
+    /** The owners of a joint account by full name ([] for any other account, or when they were never given one by one). */
+    holders: (inv) => (inv && inv.type === 'joint' && Array.isArray(inv.holders) ? inv.holders.filter((x) => x && typeof x === 'object').map((x) => fullName(x.first, x.last)).filter(Boolean) : []),
+    tenancyLabel: (inv) => (inv && inv.type === 'joint' && TENANCY[inv.tenancy] ? TENANCY[inv.tenancy].label : ''),
+    /** The people behind a personal account, for its KYC record: the investor, or both owners of a joint account in equal shares. */
+    owners(inv) {
+      const hs = NS.names.holders(inv);
+      return hs.length > 1 ? hs.map((name) => ({ name, pct: Math.round(100 / hs.length) })) : [{ name: inv.contact, pct: 100 }];
+    }
+  };
+
   NS.startOnboarding = function (invId, mode) {
     const inv = W().investors.find((x) => x.id === invId);
     if (!inv) return;
@@ -46,49 +192,45 @@
     const steps = stepsFor(mode);
     // onboarding.step counts completed steps, so it is also the index to resume at.
     const resume = mode === 'bank' ? 0 : Math.min(inv.onboarding.step || 0, steps.length - 1);
-    S().ui.ob = {
-      invId,
-      mode: mode || 'full',
-      step: inv.onboarding.status === 'in_progress' ? resume : 0,
-      done: false,
-      errors: {},
-      d: Object.assign(
-        {
-          password: '',
-          password2: '',
-          type: inv.type || 'individual',
-          title: inv.title || inv.contact,
-          phone: inv.phone || '',
-          tin: '',
-          accBasis: (inv.accreditation && inv.accreditation.basis) || '',
-          accAttest: false,
-          accFile: '',
-          method: 'ach',
-          holder: bank.holder || inv.title || inv.contact,
-          routing: '',
-          account: '',
-          account2: '',
-          acctType: bank.type || 'checking',
-          achAuth: false,
-          edelivery: true,
-          w9: false,
-          signature: '',
-          dob: '',
-          citizen: 'us',
-          idType: 'drivers',
-          idFile: '',
-          formation: '',
-          owner1: splitName(inv.contact)[0],
-          owner1Last: splitName(inv.contact)[1],
-          owner1pct: '100',
-          owner2: '',
-          owner2Last: '',
-          owner2pct: '',
-          pep: ''
-        },
-        splitAddress(inv.address)
-      )
-    };
+    const d = Object.assign(
+      {
+        password: '',
+        password2: '',
+        type: inv.type || 'individual',
+        title: orgTitle(inv),
+        phone: inv.phone || '',
+        tin: '',
+        accBasis: (inv.accreditation && inv.accreditation.basis) || '',
+        accAttest: false,
+        accFile: '',
+        method: 'ach',
+        holder: '',
+        routing: '',
+        account: '',
+        account2: '',
+        acctType: bank.type || 'checking',
+        achAuth: false,
+        edelivery: true,
+        w9: false,
+        signature: '',
+        dob: '',
+        citizen: 'us',
+        idType: 'drivers',
+        idFile: '',
+        formation: '',
+        owner1: splitName(inv.contact)[0],
+        owner1Last: splitName(inv.contact)[1],
+        owner1pct: '100',
+        owner2: '',
+        owner2Last: '',
+        owner2pct: '',
+        pep: ''
+      },
+      nameDefaults(inv),
+      splitAddress(inv.address)
+    );
+    holderDefaults(d, inv, bank.holder);
+    S().ui.ob = { invId, mode: mode || 'full', step: inv.onboarding.status === 'in_progress' ? resume : 0, done: false, errors: {}, d };
     NS.app.go('onboarding');
   };
 
@@ -118,6 +260,11 @@
     const d = ob().d;
     return `<label class="check field-wide" for="ob-${k}"><input id="ob-${k}" type="checkbox" data-bind="ob:${k}"${d[k] ? ' checked' : ''}><span>${label}</span></label>${err(k)}`;
   }
+  function select(k, label, options, opts) {
+    opts = opts || {};
+    const d = ob().d;
+    return `<label class="field${opts.wide ? ' field-wide' : ''}" for="ob-${k}"><span>${label}</span><select id="ob-${k}" data-bind="ob:${k}"${opts.hint ? ` aria-describedby="hint-${k}"` : ''}>${options.map(([v, l]) => `<option value="${h(v)}"${d[k] === v ? ' selected' : ''}>${h(l)}</option>`).join('')}</select>${opts.hint ? `<span class="hint" id="hint-${k}">${opts.hint}</span>` : ''}</label>`;
+  }
 
   /* ---------- Steps ---------- */
   function stepLogin() {
@@ -135,18 +282,31 @@
   /** A beneficial owner's name from its first and last name fields (a full name typed in the first field also counts). */
   const ownerName = (d, n) => [d['owner' + n], d['owner' + n + 'Last']].map((x) => String(x || '').trim()).filter(Boolean).join(' ');
   const ownerProblem = (d) => (!ownerName(d, 1) ? 'Enter the first and last name of at least one beneficial owner or controlling person.' : !String(d.owner1Last || '').trim() && !/\s/.test(ownerName(d, 1)) ? 'Enter the beneficial owner’s last name.' : '');
-  /** Split a stored full name into first and last name fields (the last word is the last name). */
-  const splitName = (n) => {
-    const p = String(n || '').trim().split(/\s+/).filter(Boolean);
-    return p.length < 2 ? [p[0] || '', ''] : [p.slice(0, -1).join(' '), p[p.length - 1]];
-  };
+  const TITLE_LABEL = { trust: 'Trust name', entity: 'Entity legal name', ira: 'IRA account name' };
   const TITLE_HINT = {
-    individual: 'Your full legal name',
-    joint: 'Both owners, for example "Robert and Ellen Marsh, JTWROS"',
     trust: 'The trust name exactly as it appears on the trust agreement',
     entity: 'The legal name of the entity',
     ira: 'For example "Millbrook Trust Co. FBO Anita Shah IRA"'
   };
+  /** Under the joint account's fields: what the account will be called, kept up to date as the owners are typed (NS.binders.ob). */
+  const jointHint = (d) => (fullName(d.first, d.last) && fullName(d.first2, d.last2) ? `Your account will be named “${accountName(d)}”.` : 'The account is named after both owners and how they hold it, for example “Robert Marsh and Ellen Marsh, JTWROS”.');
+  /**
+   * The names in the investor information step (both flows): a person's first and last name, each owner of a joint
+   * account and how they hold it, or the one name of a trust, entity or IRA. Each has its own field in the form's
+   * state, so changing "Investing as" shows the right fields and loses nothing already typed.
+   */
+  function nameFields() {
+    const d = ob().d;
+    const legal = 'Your legal name, as on your government ID';
+    if (d.type === 'individual') return `${input('first', 'First name', { auto: 'given-name', max: 60, hint: legal })}${input('last', 'Last name', { auto: 'family-name', max: 60 })}`;
+    if (d.type === 'joint') {
+      d.tenancy = tenancyOf(d.tenancy);
+      return `${input('first', 'Your first name', { auto: 'given-name', max: 60, hint: legal })}${input('last', 'Your last name', { auto: 'family-name', max: 60 })}
+        ${input('first2', 'Second owner’s first name', { max: 60, hint: 'The other owner’s legal name' })}${input('last2', 'Second owner’s last name', { max: 60 })}
+        ${select('tenancy', 'How you hold the account', Object.keys(TENANCY).map((k) => [k, TENANCY[k].label]), { wide: true, hint: h(jointHint(d)) })}`;
+    }
+    return input('title', TITLE_LABEL[d.type] || 'Name on the account', { wide: true, hint: h(TITLE_HINT[d.type] || '') });
+  }
   function stepProfile() {
     const d = ob().d;
     const tinLabel = d.type === 'entity' || d.type === 'ira' ? 'Employer ID number (EIN)' : d.type === 'trust' ? 'Taxpayer ID (SSN or EIN of the trust)' : 'Social Security number';
@@ -154,7 +314,7 @@
       <p class="lede">This information appears on your account and tax documents.</p>
       <div class="form-grid">
         ${radios('type', 'Investing as', Object.keys(NS.ENTITY_TYPES).map((k) => [k, NS.ENTITY_TYPES[k].label]))}
-        ${input('title', 'Name on the account', { wide: true, hint: h(TITLE_HINT[d.type] || '') })}
+        ${nameFields()}
         ${input('street', 'Mailing address', { wide: true, auto: 'street-address' })}
         ${input('city', 'City', { auto: 'address-level2' })}
         <div class="field-pair">${input('st', 'State', { max: 2, upper: true, narrow: true, auto: 'address-level1' })}${input('zip', 'ZIP code', { max: 10, mode: 'numeric', narrow: true, auto: 'postal-code' })}</div>
@@ -208,7 +368,7 @@
       </div>`;
     }
     return `<h1>${LABELS.accreditation}</h1>
-      <p class="lede">These offerings are available only to accredited investors under Regulation D. Select the basis that applies to ${h(ob().d.title)}.</p>
+      <p class="lede">These offerings are available only to accredited investors under Regulation D. Select the basis that applies to ${h(ob().mode === 'invite' ? inv().title : accountName(ob().d))}.</p>
       <div class="form-grid">
         ${radios('accBasis', 'Basis for accreditation', NS.data.ACCRED.map((a) => [a, a]))}
         <label class="field field-wide" for="ob-accFile"><span>Verification letter <em>Optional</em></span><input id="ob-accFile" type="file" accept="application/pdf,image/png,image/jpeg" data-change="ob-file"><span class="hint">${ob().d.accFile ? `Attached: ${h(ob().d.accFile)}` : 'A letter from your CPA, attorney or registered adviser, dated within the last 90 days'}</span></label>
@@ -226,13 +386,14 @@
     const d = ob().d;
     const optional = t.onboarding.ach === 'optional' && ob().mode !== 'bank';
     const ach = d.method === 'ach';
+    holderSync(d, inv());
     return `<h1>${ob().mode === 'bank' ? 'Update your bank account' : LABELS.payment}</h1>
       <p class="lede">${optional ? `Choose how ${h(t.shortName)} pays your distributions.` : `${h(t.shortName)} pays distributions by direct deposit (ACH) to a U.S. bank account.`}</p>
       <div class="form-grid">
         ${optional ? radios('method', 'Payment method', [['ach', 'Direct deposit (ACH)', 'Funds arrive on the payment date'], ['check', 'Check by mail', 'Mailed to your address on file; allow 5–10 business days']]) : ''}
         ${
           ach
-            ? `${input('holder', 'Account holder name', { wide: true, hint: 'Must match the name on the account' })}
+            ? `${d.type === 'individual' ? `${input('holderFirst', 'Account holder’s first name', { max: 60, hint: 'Exactly as your bank has it' })}${input('holderLast', 'Account holder’s last name', { max: 60 })}` : input('holder', 'Name on the bank account', { wide: true, hint: 'Exactly as your bank has it' })}
           <label class="field" for="ob-routing"><span>Routing number</span><input id="ob-routing" type="text" inputmode="numeric" maxlength="9" autocomplete="off" data-bind="ob:routing" value="${h(d.routing)}"${ob().errors.routing ? ' aria-invalid="true"' : ''} aria-describedby="routing-status">${routingStatus(d.routing)}</label>
           ${radios('acctType', 'Account type', [['checking', 'Checking'], ['savings', 'Savings']])}
           ${input('account', 'Account number', { mode: 'numeric', max: 17 })}
@@ -250,10 +411,10 @@
     return `<h1>${LABELS.review}</h1>
       <p class="lede">Check your details, then sign to activate your account.</p>
       <dl class="review">
-        ${row('Account', `${h(d.title)} · ${h(NS.ENTITY_TYPES[d.type].label)}`, steps.indexOf('profile'))}
+        ${row('Account', `${h(accountName(d))} · ${h(NS.ENTITY_TYPES[d.type].label)}`, steps.indexOf('profile'))}
         ${row('Mailing address', `${h(d.street)}, ${h(d.city)}, ${h(d.st)} ${h(d.zip)}`, steps.indexOf('profile'))}
         ${row('Taxpayer ID', `ending ${h(String(d.tin).replace(/\D/g, '').slice(-4))}`, steps.indexOf('profile'))}
-        ${steps.indexOf('identity') >= 0 ? row('Identity', ENTITY_KYC(d.type) ? `${h(d.owner1)} (${h(d.owner1pct)}%)${String(d.owner2).trim() ? `, ${h(d.owner2)} (${h(d.owner2pct)}%)` : ''}` : `Born ${h(U.date(d.dob, 'long'))} · ${h({ drivers: 'Driver’s license', passport: 'Passport', state: 'State ID' }[d.idType] || '')}`, steps.indexOf('identity')) : ''}
+        ${steps.indexOf('identity') >= 0 ? row('Identity', ENTITY_KYC(d.type) ? `${h(ownerName(d, 1))} (${h(d.owner1pct)}%)${ownerName(d, 2) ? `, ${h(ownerName(d, 2))} (${h(d.owner2pct)}%)` : ''}` : `Born ${h(U.date(d.dob, 'long'))} · ${h({ drivers: 'Driver’s license', passport: 'Passport', state: 'State ID' }[d.idType] || '')}`, steps.indexOf('identity')) : ''}
         ${steps.indexOf('accreditation') >= 0 ? row('Accreditation', h(d.accBasis), steps.indexOf('accreditation')) : ''}
         ${row('Distributions', d.method === 'ach' ? `ACH to ${d.acctType} account ending ${h(String(d.account).slice(-4))}` : 'Check by mail', steps.indexOf('payment'))}
       </dl>
@@ -265,7 +426,7 @@
           ${check('w9', 'I certify the statements above.')}`
             : ''
         }
-        ${input('signature', 'Type your full name to sign', { wide: true, hint: `Signing as ${h(inv().contact)} on ${U.date(NS.dates.today(), 'long')}` })}
+        ${input('signature', 'Type your full name to sign', { wide: true, hint: `Signing as ${h(personOf(d, inv()))} on ${U.date(NS.dates.today(), 'long')}` })}
       </div>`;
   }
 
@@ -279,7 +440,7 @@
       else if (d.password !== d.password2) e.password2 = 'The passwords do not match.';
     }
     if (step === 'profile') {
-      if (!String(d.title).trim()) e.title = 'Enter the name on the account.';
+      nameErrors(e, d);
       if (!String(d.street).trim()) e.street = 'Enter a mailing address.';
       if (!String(d.city).trim()) e.city = 'Enter a city.';
       if (!/^[A-Z]{2}$/.test(String(d.st).toUpperCase())) e.st = 'Use the two-letter state code.';
@@ -312,7 +473,8 @@
       if (!d.accAttest) e.accAttest = 'Confirm the statement to continue.';
     }
     if (step === 'payment' && d.method === 'ach') {
-      if (!String(d.holder).trim()) e.holder = 'Enter the account holder name.';
+      if (d.type === 'individual') personErrors(e, d.holderFirst, d.holderLast, 'holderFirst', 'holderLast', 'the account holder’s');
+      else if (!tidy(d.holder)) e.holder = 'Enter the name on the bank account.';
       if (!NS.nacha.abaValid(d.routing)) e.routing = 'Enter a valid 9-digit routing number.';
       const a = digits(d.account);
       if (a.length < 4 || a.length > 17) e.account = 'Enter the account number (4 to 17 digits).';
@@ -323,8 +485,8 @@
       const t = T();
       if (t.onboarding.esign && !d.edelivery) e.edelivery = 'Electronic delivery is required for this portal.';
       if (t.onboarding.taxForm && !d.w9) e.w9 = 'Certify the W-9 statements to continue.';
-      const norm = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
-      if (norm(d.signature) !== norm(inv().contact)) e.signature = `Type your name exactly as ${inv().contact}.`;
+      // The name to sign with is the one given in the investor information step (it becomes the name on file below).
+      if (!sameName(d.signature, personOf(d, inv()))) e.signature = `Type your name exactly as ${personOf(d, inv())}.`;
     }
     return e;
   }
@@ -335,7 +497,7 @@
     const now = NS.dates.today();
     const step = ob().step + 1;
     if (ob().mode === 'bank') {
-      i.payment = { method: 'ach', bank: { holder: d.holder.trim(), routing: d.routing.replace(/\D/g, ''), account: d.account.replace(/\D/g, ''), type: d.acctType } };
+      i.payment = { method: 'ach', bank: { holder: bankHolder(d), routing: d.routing.replace(/\D/g, ''), account: d.account.replace(/\D/g, ''), type: d.acctType } };
       if (NS.audit) NS.audit.log(W(), { action: 'Distribution account changed', record: i.id, detail: `ACH, ${d.acctType} ending ${d.account.replace(/\D/g, '').slice(-4)}`, actor: `${i.title} (investor)` });
       NS.app.save(true);
       return;
@@ -345,15 +507,14 @@
       NS.app.save();
       return;
     }
-    i.type = d.type;
-    i.title = d.title.trim();
+    applyNames(i, d);
     i.address = `${d.street.trim()}, ${d.city.trim()}, ${d.st.toUpperCase()} ${d.zip.trim()}`;
     i.phone = d.phone;
     i.tinLast4 = d.tin.replace(/\D/g, '').slice(-4);
     if (T().onboarding.accreditation && !accVerified()) i.accreditation = { basis: d.accBasis, date: now };
     if (T().onboarding.taxForm) i.taxForm = 'W-9';
     i.edelivery = !!d.edelivery;
-    i.payment = d.method === 'ach' ? { method: 'ach', bank: { holder: d.holder.trim(), routing: d.routing.replace(/\D/g, ''), account: d.account.replace(/\D/g, ''), type: d.acctType } } : { method: 'check', bank: null };
+    i.payment = d.method === 'ach' ? { method: 'ach', bank: { holder: bankHolder(d), routing: d.routing.replace(/\D/g, ''), account: d.account.replace(/\D/g, ''), type: d.acctType } } : { method: 'check', bank: null };
     i.onboarding = Object.assign({}, i.onboarding, { status: 'complete', step: 5, completed: now });
     if (IV()) {
       // DIY edition: the connections' results decide; integrations.js screens owners and approves or holds.
@@ -366,7 +527,8 @@
     const ent = ENTITY_KYC(d.type);
     const pep = d.pep === 'yes';
     const risk = pep ? 'High' : ent ? 'Medium' : 'Low';
-    const owners = ent ? [{ name: ownerName(d, 1), pct: Number(d.owner1pct) || 0 }].concat(ownerName(d, 2) ? [{ name: ownerName(d, 2), pct: Number(d.owner2pct) || 0 }] : []) : [{ name: i.contact, pct: 100 }];
+    // The people screened: an entity's beneficial owners, both owners of a joint account, or the investor.
+    const owners = ent ? [{ name: ownerName(d, 1), pct: Number(d.owner1pct) || 0 }].concat(ownerName(d, 2) ? [{ name: ownerName(d, 2), pct: Number(d.owner2pct) || 0 }] : []) : NS.names.owners(i);
     i.kyc = {
       status: pep ? 'review' : 'cleared',
       risk,
@@ -436,6 +598,12 @@
     if (path === 'routing') {
       const st = document.getElementById('routing-status');
       if (st) st.outerHTML = routingStatus(v);
+    }
+    // The name fields change with the kind of account: a message about a field no longer shown goes with it.
+    if (path === 'type') ['title', 'first', 'last', 'first2', 'last2'].forEach((k) => delete ob().errors[k]);
+    if (['first', 'last', 'first2', 'last2', 'tenancy'].indexOf(path) >= 0) {
+      const note = document.getElementById('hint-tenancy');
+      if (note) note.textContent = jointHint(ob().d);
     }
     if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin'].indexOf(path) >= 0) {
       NS.app.render();
@@ -531,7 +699,6 @@
   const uid = (p) => `${p}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
   const INV8 = () => NS.invitations || {};
   const digitsOf = (s) => String(s || '').replace(/\D/g, '');
-  const sameName = (a, b) => String(a || '').trim().toLowerCase().replace(/\s+/g, ' ') === String(b || '').trim().toLowerCase().replace(/\s+/g, ' ');
   const clone = (x) => (x == null ? x : JSON.parse(JSON.stringify(x)));
   /** Fields of the flow's form kept on the investor record between visits (never the password or full ID and account numbers). */
   const SECRET = ['password', 'password2', 'tin', 'ftin', 'routing', 'account', 'account2'];
@@ -951,6 +1118,10 @@
     const bank = (i.payment && i.payment.bank) || {};
     const addr = splitAddress(i.address);
     const off = NS.state.ws.offerings.find((x) => x.id === it.offeringId);
+    const saved = Object.assign({}, fl.d || {});
+    // Answers saved before the form asked for first and last names hold the account name on one line. A person's own name
+    // or a joint account's is not kept that way any more: its fields start from the record instead (nameDefaults).
+    if (saved.first === undefined && PERSONAL(saved.type || i.type || 'individual')) delete saved.title;
     u.ob = {
       invId: i.id,
       itId: it.id,
@@ -965,7 +1136,7 @@
           password: '',
           password2: '',
           type: i.type || 'individual',
-          title: i.title || i.contact,
+          title: orgTitle(i),
           country: i.country || US,
           street: addr.street,
           city: addr.city,
@@ -996,7 +1167,7 @@
           w8: false,
           taxSig: '',
           method: i.payment && i.payment.method === 'check' && fl.d ? 'check' : 'ach',
-          holder: bank.holder || i.title || i.contact,
+          holder: '',
           acctType: bank.type || 'checking',
           achAuth: false,
           amount: it.cents ? String(it.cents / 100) : off ? String(off.minimum || '') : '',
@@ -1006,11 +1177,13 @@
           subEsign: false,
           subSig: ''
         },
-        fl.d || {},
+        nameDefaults(i),
+        saved,
         { password: '', password2: '', tin: '', ftin: '', routing: bank.routing || '', account: bank.account || '', account2: bank.account || '' },
         it.cents ? { amount: String(it.cents / 100) } : {}
       )
     };
+    holderDefaults(u.ob.d, i, bank.holder);
     return u.ob;
   }
 
@@ -1096,7 +1269,7 @@
       <p class="lede">This appears on your account, your subscription documents and your tax forms.</p>
       <div class="form-grid">
         ${radios('type', 'Investing as', Object.keys(NS.ENTITY_TYPES).map((k) => [k, NS.ENTITY_TYPES[k].label]))}
-        ${input('title', 'Name on the account', { wide: true, hint: h(TITLE_HINT[d.type] || '') })}
+        ${nameFields()}
         ${countrySelect('country', 'Country of mailing address', { wide: true })}
         ${input('street', 'Mailing address', { wide: true, auto: 'street-address' })}
         ${input('city', 'City', { auto: 'address-level2' })}
@@ -1325,7 +1498,7 @@
     if (key === 'login' && !(c.fl.loginAt && !d.password && !d.password2)) Object.assign(e, validate('login'));
     if (key === 'profile') {
       const us = d.country === US;
-      if (!String(d.title).trim()) e.title = 'Enter the name on the account.';
+      nameErrors(e, d);
       if (!d.country) e.country = 'Choose a country.';
       if (!String(d.street).trim()) e.street = 'Enter a mailing address.';
       if (!String(d.city).trim()) e.city = 'Enter a city.';
@@ -1423,8 +1596,8 @@
     }
     if (key === 'profile') {
       const us = d.country === US;
-      i.type = d.type;
-      i.title = String(d.title).trim();
+      const was = i.contact;
+      applyNames(i, d);
       i.country = d.country;
       i.address = us ? `${d.street.trim()}, ${d.city.trim()}, ${String(d.st).toUpperCase()} ${String(d.zip).trim()}` : [d.street.trim(), d.city.trim(), [String(d.st).trim(), String(d.zip).trim()].filter(Boolean).join(' '), d.country].filter(Boolean).join(', ');
       i.phone = d.phone;
@@ -1433,7 +1606,7 @@
       d.tin = '';
       if (IV()) await IV().finishOnboarding(ws, i, d);
       refreshSubscription(c);
-      log('Investor information confirmed', `${(NS.ENTITY_TYPES[i.type] || {}).label || i.type}; ${i.address}${i.tinLast4 ? `; taxpayer ID ending ${i.tinLast4}` : ''}`);
+      log('Investor information confirmed', `${(NS.ENTITY_TYPES[i.type] || {}).label || i.type}; ${i.address}${i.tinLast4 ? `; taxpayer ID ending ${i.tinLast4}` : ''}${sameName(was, i.contact) ? '' : `; the investor gave their name as ${i.contact} (it was ${was || 'not'} on file)`}`);
     }
     if (key === 'identity' && IV()) await IV().finishOnboarding(ws, i, d);
     if (key === 'accreditation') {
@@ -1455,7 +1628,7 @@
       log('Tax certification signed', `${usp ? 'Substitute Form W-9' : `${form} certification`}${usp ? (d.backup ? '; subject to backup withholding' : '') : `; tax residence ${d.taxCountry}${d.treaty ? `; treaty benefits as a resident of ${d.treaty}` : ''}`}; signed by ${d.taxSig.trim()}`);
     }
     if (key === 'payment') {
-      i.payment = d.method === 'ach' ? { method: 'ach', bank: { holder: d.holder.trim(), routing: digitsOf(d.routing), account: digitsOf(d.account), type: d.acctType } } : { method: 'check', bank: null };
+      i.payment = d.method === 'ach' ? { method: 'ach', bank: { holder: bankHolder(d), routing: digitsOf(d.routing), account: digitsOf(d.account), type: d.acctType } } : { method: 'check', bank: null };
       log('Distribution account added', d.method === 'ach' ? `ACH, ${d.acctType} ending ${digitsOf(d.account).slice(-4)}` : 'Check by mail');
     }
     if (key === 'subscribe' && !c.req && c.off && NS.ops) {
@@ -1636,7 +1809,7 @@
     // This device keeps only what the summary shows (the last four digits of the bank account), and never the
     // invitation token: on a shared device the next person finds the summary, not the investor's details.
     if (i.payment && i.payment.bank) i.payment.bank = Object.assign({}, i.payment.bank, { account: '****' + U.last4(i.payment.bank.account), routing: '****' + U.last4(i.payment.bank.routing), holder: '' });
-    ['address', 'phone', 'tinLast4', 'citizenship', 'taxCert', 'kyc', 'owners', 'esignConsent'].forEach((k) => delete i[k]);
+    ['address', 'phone', 'tinLast4', 'citizenship', 'taxCert', 'kyc', 'owners', 'holders', 'tenancy', 'esignConsent'].forEach((k) => delete i[k]);
     if (i.verify) ['identity', 'accreditation', 'aml'].forEach((k) => i.verify[k] && (i.verify[k] = { status: i.verify[k].status, connection: i.verify[k].connection || '' }));
     ws.audit = [];
     ws.invite.token = '';

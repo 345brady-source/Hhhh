@@ -1270,7 +1270,7 @@
       <label class="cs-field" for="im-first"><span>First name</span><input id="im-first" name="first" maxlength="60" autocomplete="off" data-bind="inv8m:first" value="${h(d.first)}"${bad('name')}></label>
       <label class="cs-field" for="im-last"><span>Last name</span><input id="im-last" name="last" maxlength="60" autocomplete="off" data-bind="inv8m:last" value="${h(d.last)}"${bad('name')}>${err('name')}</label>
       <label class="cs-field" for="im-email"><span>Email</span><input id="im-email" name="email" type="email" maxlength="120" autocomplete="off" data-bind="inv8m:email" value="${h(d.email)}"${bad('email')}>${err('email')}</label>
-      <label class="cs-field" for="im-phone"><span>Phone <em>Optional</em></span><input id="im-phone" name="phone" type="tel" maxlength="40" autocomplete="off" data-bind="inv8m:phone" value="${h(d.phone)}"></label>
+      <label class="cs-field" for="im-phone"><span>Phone <em>Optional</em></span><input id="im-phone" name="phone" type="text" inputmode="tel" maxlength="40" autocomplete="off" data-bind="inv8m:phone" value="${h(d.phone)}"></label>
       <label class="cs-field" for="im-type"><span>Investing as <em>Optional</em></span><select id="im-type" name="type" data-bind="inv8m:type">${Object.keys(NS.ENTITY_TYPES).map((k) => `<option value="${k}"${d.type === k ? ' selected' : ''}>${h(NS.ENTITY_TYPES[k].label)}</option>`).join('')}</select></label>
       <label class="cs-field" for="im-title"><span>Account name <em>Optional</em></span><input id="im-title" name="title" maxlength="120" autocomplete="off" placeholder="Defaults to the full name" data-bind="inv8m:account" value="${h(d.account)}"><span class="cs-hint">For a trust, company or IRA, its legal name.</span></label>
       <label class="cs-field cs-wide" for="im-address"><span>Mailing address <em>Optional</em></span><textarea id="im-address" name="address" rows="2" maxlength="300" data-bind="inv8m:address">${h(d.address)}</textarea></label>
@@ -1362,7 +1362,7 @@
       const classes = openClasses(off);
       // additional: the paper documents are already signed, so no agreement is sent for signature (esign.js sends the
       // offering's agreement to a new subscriber only). The request itself is a first subscription.
-      request = NS.ops.submitSubscription(ws, investor, off, { cents, signature: `${name} on paper documents (recorded by ${actor})`, cls: classes.length === 1 ? classes[0].id : '', additional: true });
+      request = NS.ops.submitSubscription(ws, investor, off, { cents, signature: `${name} on paper documents (recorded by ${actor})`, cls: classes.length === 1 ? classes[0].id : '', additional: true, offline: true, actor });
       if (request) {
         request.additional = false;
         request.source = 'manual';
@@ -1465,8 +1465,6 @@
   const FILE_ACCEPT = '.csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
   const MAX_LIST_BYTES = 5 * 1024 * 1024;
   const MAX_LIST_ROWS = 2000;
-  // The same copy the document reader uses for Word files (intake.js), so it is loaded once.
-  const ZIP_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
   /** Delimited text as rows of trimmed cells: quotes, doubled quotes, separators and line breaks inside quotes, CRLF. Empty lines stay as empty rows so row numbers match. */
   function csvRows(text) {
     const s = String(text || '').replace(/^﻿/, '');
@@ -1530,9 +1528,12 @@
     });
     return map.email !== undefined || map.name !== undefined || map.first !== undefined ? map : null;
   }
-  /** "Anita Shah" as first and last name: the last word is the last name. */
+  /** "Anita Shah" as first and last name: the last word is the last name ("Shah, Anita": the part before the comma). */
   function splitName(full) {
-    const parts = String(full || '').trim().split(/\s+/).filter(Boolean);
+    const t = String(full || '').trim();
+    const comma = t.indexOf(',');
+    if (comma > 0 && t.slice(comma + 1).trim()) return { first: t.slice(comma + 1).trim(), last: t.slice(0, comma).trim() };
+    const parts = t.split(/\s+/).filter(Boolean);
     return parts.length < 2 ? { first: parts[0] || '', last: '' } : { first: parts.slice(0, -1).join(' '), last: parts[parts.length - 1] };
   }
   /**
@@ -1556,26 +1557,26 @@
       }
       const at = (k) => (cols[k] === undefined ? '' : String(cells[cols[k]] || '').trim());
       let first, last, email, offName, amt, typ;
+      // A full name given in one column stays as it was typed ("Shah, Anita"); the preview shows how it splits.
+      let full = '';
       if (cols) {
         first = at('first');
         last = at('last');
         // One name column, or a full name typed under "first name": the last word is the last name.
-        if (!first && !last) ({ first, last } = splitName(at('name')));
-        else if (first && !last && cols.last === undefined) ({ first, last } = splitName(first));
+        if (!first && !last) ({ first, last } = splitName((full = at('name'))));
+        else if (first && !last && cols.last === undefined) ({ first, last } = splitName((full = first)));
         [email, offName, amt, typ] = [at('email'), at('offering'), at('amount'), at('type')];
       } else if (String(cells[1] || '').indexOf('@') >= 0) {
-        ({ first, last } = splitName(cells[0]));
+        ({ first, last } = splitName((full = String(cells[0] || '').trim())));
         [email, offName, amt, typ] = cells.slice(1);
       } else [first, last, email, offName, amt, typ] = cells;
       email = String(email || '').trim();
-      const name = [first, last].map((x) => String(x || '').trim()).filter(Boolean).join(' ');
+      const name = full || [first, last].map((x) => String(x || '').trim()).filter(Boolean).join(' ');
       const o = offName ? w.offerings.find((x) => [x.id, x.shortName, x.name].some((n) => n && n.toLowerCase() === String(offName).toLowerCase())) : null;
       const dollars = amt ? Number(String(amt).replace(/[$,\s]/g, '')) : 0;
       const type = typ ? TYPE_WORDS[String(typ).toLowerCase().replace(/[^a-z]/g, '')] : 'individual';
       let why = '';
       if (!name) why = 'missing name';
-      else if (!first) why = 'missing first name';
-      else if (!last) why = `missing last name for "${name}"`;
       else if (!isEmail(email)) why = `invalid email "${email || ''}"`;
       else if (seen[email.toLowerCase()]) why = `${email} is listed twice`;
       else if (offName && !o) why = `unknown offering "${offName}"`;
@@ -1583,6 +1584,8 @@
       else if (amt && !(dollars > 0)) why = `invalid commitment "${amt}"`;
       else if (dollars > 0 && !o) why = 'a commitment needs an offering';
       else if (typ && !type) why = `unknown investor type "${typ}"`;
+      else if (!first) why = 'missing first name';
+      else if (!last) why = `missing last name for "${name}"`;
       else {
         const e = validate(w, { name, first, last, email, offeringId: o ? o.id : '', cents: Math.round(dollars * 100) });
         why = e.name || (e.email ? (/already/.test(e.email) ? `${email} is already in the portal` : e.email) : e.amount || e.offering || '');
@@ -1632,9 +1635,10 @@
   const siText = (node) => tags(node, 't').filter((t) => !(t.parentNode && t.parentNode.localName === 'rPh')).map((t) => t.textContent).join('');
   async function xlsxRows(bytes) {
     if (!window.JSZip) {
-      if (!NS.loadScript) throw new Error('Excel files cannot be read here. Save the file as .csv and upload it again.');
+      // The same zip reader the document reader uses for Word files (intake.js), loaded once.
+      if (!NS.loadZip) throw new Error('Excel files cannot be read here. Save the file as .csv and upload it again.');
       try {
-        await NS.loadScript(ZIP_LIB);
+        await NS.loadZip();
       } catch (e) {
         throw new Error('The Excel reader could not be loaded (check your connection). Try again, or save the file as .csv.');
       }

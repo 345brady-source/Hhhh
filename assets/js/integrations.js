@@ -220,6 +220,13 @@
    */
   /** A beneficial owner's name from the onboarding form's first and last name fields. */
   const ownerFull = (form, n) => [form['owner' + n], form['owner' + n + 'Last']].map((x) => String(x || '').trim()).filter(Boolean).join(' ');
+  /** The owners of a joint account by full name (the onboarding form keeps each owner's first and last name on the record: holders). */
+  const holderNames = (inv) => (inv && inv.type === 'joint' && Array.isArray(inv.holders) ? inv.holders : []).map((x) => (x && typeof x === 'object' ? [x.first, x.last].map((y) => String(y || '').trim()).filter(Boolean).join(' ') : '')).filter(Boolean);
+  /** The people behind a personal account, for its KYC record: the investor, or both owners of a joint account in equal shares. */
+  const personOwners = (inv) => {
+    const hs = holderNames(inv);
+    return hs.length > 1 ? hs.map((name) => ({ name, pct: Math.round(100 / hs.length) })) : [{ name: inv.contact, pct: 100 }];
+  };
   function vOf(inv) {
     const v = seedFromKyc(inv);
     ['identity', 'aml', 'accreditation'].forEach((k) => (v[k] = v[k] || { status: 'not_started' }));
@@ -417,11 +424,15 @@
     v.aml.via = results.map((r) => r.via).join(', ');
   }
   const resultText = (r) => (r.status === 'clear' ? 'no matches' : r.status === 'pending' ? `waiting for the result${r.error ? ` (${r.error})` : ''}` : `${r.hits.length} potential match${r.hits.length === 1 ? '' : 'es'} (${r.hits.map((x) => `${x.name} on ${x.list}`).join('; ')})`);
-  /** Sanctions, PEP and adverse media screening of the investor and every beneficial owner, through every screening connection on. */
+  /** Every name a screening covers: the investor, the account, each owner of a joint account and each beneficial owner. */
+  function screenNames(inv) {
+    const owners = ((inv.kyc && inv.kyc.owners) || []).map((o) => o && o.name);
+    return Array.from(new Set([inv.contact, inv.title].concat(holderNames(inv), owners).map((n) => String(n || '').trim()).filter(Boolean)));
+  }
+  /** Sanctions, PEP and adverse media screening of the investor, every joint owner and every beneficial owner, through every screening connection on. */
   async function screen(ws, inv, pre) {
     const v = vOf(inv);
-    const owners = ((inv.kyc && inv.kyc.owners) || []).map((o) => o.name).filter(Boolean);
-    const names = Array.from(new Set([inv.contact, inv.title].concat(owners)));
+    const names = screenNames(inv);
     const results = [];
     for (const x of activeFor(ws, 'aml')) results.push(await screenWith(ws, inv, x, names, pre));
     const pep = (inv.kyc && inv.kyc.pep) || false;
@@ -583,7 +594,7 @@
   /** Write the result where the AML/KYC page and audit schedules read it. */
   function syncKyc(ws, inv) {
     const v = vOf(inv);
-    const k = Object.assign({ owners: [{ name: inv.contact, pct: 100 }] }, inv.kyc || {});
+    const k = Object.assign({ owners: personOwners(inv) }, inv.kyc || {});
     const d = v.decision.status;
     k.status = d === 'approved' ? 'cleared' : d === 'review' ? 'review' : d === 'rejected' ? 'rejected' : v.identity.status === 'not_started' ? 'not_started' : 'pending';
     k.risk = k.risk || (k.pep ? 'High' : ['entity', 'trust', 'ira'].indexOf(inv.type) >= 0 ? 'Medium' : 'Low');
@@ -682,14 +693,14 @@
     const v = vOf(inv);
     const ent = ['entity', 'trust', 'ira'].indexOf(form.type) >= 0;
     inv.kyc = Object.assign({}, inv.kyc, {
-      owners: ent ? [{ name: ownerFull(form, 1), pct: Number(form.owner1pct) || 0 }].concat(ownerFull(form, 2) ? [{ name: ownerFull(form, 2), pct: Number(form.owner2pct) || 0 }] : []) : [{ name: inv.contact, pct: 100 }],
+      owners: ent ? [{ name: ownerFull(form, 1), pct: Number(form.owner1pct) || 0 }].concat(ownerFull(form, 2) ? [{ name: ownerFull(form, 2), pct: Number(form.owner2pct) || 0 }] : []) : personOwners(inv),
       pep: form.pep === 'yes',
       risk: form.pep === 'yes' ? 'High' : ent ? 'Medium' : 'Low'
     });
     if (form.pep === 'yes') inv.kyc.match = { list: 'Self-declared politically exposed person', name: inv.contact, score: 1, detail: 'The investor disclosed a political connection during onboarding; enhanced due diligence is required before investing.' };
-    // Screen once identity passes, and again if beneficial owners were added after the first screening.
-    const owners = inv.kyc.owners.map((o) => o.name).filter(Boolean);
-    if (v.identity.status === 'passed' && (v.aml.status === 'not_started' || owners.some((n) => (v.aml.names || []).indexOf(n) < 0))) await screen(ws, inv);
+    // Screen once identity passes, and again if a name was added or corrected after the first screening (a beneficial
+    // owner, an owner of a joint account, the investor's own name or the account's).
+    if (v.identity.status === 'passed' && (v.aml.status === 'not_started' || screenNames(inv).some((n) => (v.aml.names || []).indexOf(n) < 0))) await screen(ws, inv);
     // Self-certification never replaces an accreditation another connection verified, or one still being checked.
     const acc = v.accreditation;
     const elsewhere = acc.connection !== 'self' && ['verified', 'pending', 'review'].indexOf(acc.status) >= 0;

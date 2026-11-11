@@ -499,6 +499,11 @@ Reporting. Members will receive quarterly reports and annual Schedule K-1s. The 
 
   /** Shared with esign.js: load a library from the CDN once, and pdf.js ready to render. */
   NS.loadScript = loadScript;
+  /** The zip reader (Word and Excel files are zip archives), loaded once. */
+  NS.loadZip = async () => {
+    await loadScript(LIBS.zip);
+    return window.JSZip;
+  };
   NS.pdfLib = pdfLib;
   NS.intake = { readFile, corpus, claudeSample, readWithClaude, readWithRules, normalize, fromOffering, apply, filled, SAMPLES, LIMIT: 200000 };
 })(window.CVPortal);
