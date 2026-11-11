@@ -1506,7 +1506,7 @@
       </dl>
       <h2 class="ivf-h2">What happens next</h2>
       <ul class="ivf-need">${next.map((x) => `<li>${x}</li>`).join('')}</ul>
-      <a class="btn btn-primary" href="#investments">Go to your portal</a>
+      <a class="btn btn-primary" href="#overview">Go to your portal</a>
     </div>`;
   }
 

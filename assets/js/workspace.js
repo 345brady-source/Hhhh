@@ -44,7 +44,13 @@
   }
 
   function normalize(ws) {
+    // The investor portal moved to rounded cards. A portal saved before that opens rounded once; "Square" can be chosen again under Portal and brand.
+    const before = !(ws.tenant && ws.tenant.look);
     ws.tenant = merge(NS.TENANT_TEMPLATE, ws.tenant || {});
+    if (before && ws.tenant.radius === 'sharp') ws.tenant.radius = 'soft';
+    const seed = before && NS.TENANTS.find((t) => t.id === ws.tenant.id);
+    if (seed && seed.home) ws.tenant.home = merge(ws.tenant.home, seed.home);
+    ws.tenant.look = 2;
     delete ws.tenant.offerings;
     delete ws.tenant.roster;
     ws.offerings = ws.offerings || [];

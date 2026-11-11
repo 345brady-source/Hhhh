@@ -42,7 +42,13 @@
     menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
     up: '<path d="M12 19V5m-6 6 6-6 6 6"/>',
     down: '<path d="M12 5v14m6-6-6 6-6-6"/>',
-    file: '<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/>'
+    file: '<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/>',
+    chev: '<path d="m9 6 6 6-6 6"/>',
+    building: '<path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16"/><path d="M15 10h4a1 1 0 0 1 1 1v10"/><path d="M3 21h18"/><path d="M8 8h3M8 12h3M8 16h3"/>',
+    bars: '<path d="M4 4v16h16"/><path d="M8.5 16v-4M12.5 16V8M16.5 16v-6"/>',
+    trend: '<path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+    bank: '<path d="m3 10 9-6 9 6"/><path d="M5.5 10v8M10 10v8M14 10v8M18.5 10v8"/><path d="M3 20h18"/>',
+    bolt: '<path d="M13 3 5 14h6l-1 7 8-11h-6z"/>'
   };
   const icon = (name, cls) => `<svg class="i${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[name] || ''}</svg>`;
 
@@ -128,7 +134,7 @@
 
   /* ---------- State ---------- */
   /** remote: set when an investor opens an invitation from the integration server (DIY), { server }. */
-  const state = { clientId: null, ws: null, route: 'investments', param: null, viewer: null, navOpen: false, ui: {}, remote: null };
+  const state = { clientId: null, ws: null, route: 'overview', param: null, viewer: null, navOpen: false, ui: {}, remote: null };
   NS.state = state;
   const ws = () => state.ws;
 
@@ -305,9 +311,10 @@
   ];
   function parseHash() {
     const raw = (location.hash || '').replace(/^#/, '');
-    for (const [p, key] of PREFIXED) if (raw.indexOf(p) === 0) return { key, param: raw.slice(p.length) };
+    // A page's own name wins over a prefix: "sign-in" is the sign-in page, not the signing page for a document called "in".
     if (NS.views[raw]) return { key: raw, param: null };
-    return { key: 'investments', param: null };
+    for (const [p, key] of PREFIXED) if (raw.indexOf(p) === 0) return { key, param: raw.slice(p.length) };
+    return { key: NS.views.overview ? 'overview' : 'investments', param: null };
   }
   function go(route) {
     if (location.hash.replace(/^#/, '') === route) onRoute();
@@ -373,7 +380,7 @@
     if (OWNER_ONLY.indexOf(key) >= 0) return can('configure');
     return true;
   }
-  const homeFor = (role) => (role === 'investor' ? 'investments' : 'console');
+  const homeFor = (role) => (role === 'investor' ? 'overview' : 'console');
 
   /* ---------- Operator bar (Carrow & Vale only; investors never see it) ---------- */
   function viewerSelect(id) {
@@ -410,7 +417,7 @@
         .map((c) => `<option value="${h(c.id)}"${c.id === state.clientId ? ' selected' : ''}>${h(c.name)}</option>`)
         .join('')}<option value="__new">Add a client…</option></select></label>
       <nav class="op-modes" aria-label="View">
-        <a href="#investments"${mode === 'portal' ? ' aria-current="page"' : ''}>Investor portal</a>
+        <a href="#overview"${mode === 'portal' ? ' aria-current="page"' : ''}>Investor portal</a>
         <a href="#console"${mode === 'console' ? ' aria-current="page"' : ''}>Sponsor console</a>
       </nav>
       ${viewer}
@@ -551,7 +558,7 @@
       go('console-new-client');
       return;
     }
-    setClient(el.value, modeOf(state.route) === 'console' ? 'console' : 'investments');
+    setClient(el.value, modeOf(state.route) === 'console' ? 'console' : 'overview');
   };
   NS.changes['demo-role'] = (el) => {
     state.role = el.value;
@@ -565,7 +572,7 @@
     state.viewer = el.value;
     const inv = ws().investors.find((x) => x.id === el.value);
     if (inv && inv.onboarding.status !== 'complete') NS.startOnboarding(inv.id);
-    else go('investments');
+    else go('overview');
   };
 
   /** The signed-in person as the change log names them. */

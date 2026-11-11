@@ -295,15 +295,35 @@ body.role-sponsor .cs { --cv-accent: var(--brand); --cv-accent-ink: var(--brand-
 .pv-terms dt { color: var(--fg-3); }
 .pv-terms dd { margin: 0; }
 .pv-terms em { color: var(--fg-3); }
-.pv-shell { padding: 0; overflow: hidden; }
-.pv-head { --mark-p: var(--nav-mark-p); --mark-a: var(--nav-mark-a); --mark-ink: var(--nav-mark-ink); background: var(--nav-bg); color: var(--nav-fg-strong); border-top: 3px solid var(--brand); border-bottom: 1px solid var(--nav-line); padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
+.pv-shell { padding: 0; overflow: hidden; border-radius: 12px; gap: 0; }
+.pv-head { --mark-p: var(--nav-mark-p); --mark-a: var(--nav-mark-a); --mark-ink: var(--nav-mark-ink); background: var(--nav-bg); color: var(--nav-fg-strong); border-bottom: 1px solid var(--nav-line); display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; }
 .pv-head .lockup .mark { width: 28px; height: 28px; }
 .pv-head .wm-name { font-size: 15px; }
-.pv-nav { display: flex; gap: 14px; font-size: 12px; color: var(--nav-fg); }
-.pv-nav .is-on { color: var(--nav-fg-strong); font-weight: 600; box-shadow: inset 0 -2px 0 var(--nav-marker); padding-bottom: 3px; }
-.pv-in { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-.pv-row { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.pv-head .logo-img { max-height: 30px; max-width: 120px; }
+.pv-nav { display: flex; gap: 2px; font-size: 12px; color: var(--nav-fg); min-width: 0; overflow: hidden; white-space: nowrap; }
+.pv-nav span { padding: 4px 9px; border-radius: 999px; }
+.pv-nav .is-on { color: var(--nav-active-fg); font-weight: 600; background: var(--nav-active-bg); }
+.pv-hero { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; gap: 2px; padding: 16px 14px 40px; background: var(--hero-bg); color: var(--hero-fg); font-size: 11px; }
+.pv-hero::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(120% 140% at 88% -20%, color-mix(in srgb, var(--accent) 40%, transparent) 0%, transparent 55%); }
+.pv-hero.has-img { color: #FFFFFF; }
+.pv-hero.has-img::before { background: linear-gradient(90deg, rgba(8, 15, 25, 0.6) 0%, rgba(8, 15, 25, 0.15) 100%); }
+.pv-hero img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; }
+.pv-hero strong { font-family: var(--font-display); font-size: 17px; font-weight: 600; }
+.pv-in { padding: 0 12px 14px; margin-top: -26px; position: relative; display: flex; flex-direction: column; gap: 10px; background: linear-gradient(180deg, transparent 26px, var(--page, var(--surface-2)) 26px); }
+.pv-card { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card, 12px); box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05); }
+.pv-card h3 { font-size: 14px; }
+.pv-bar { display: block; height: 12px; border-radius: 4px; overflow: hidden; background: var(--tint-1, var(--surface-3)); width: 78%; }
+.pv-bar span { display: block; height: 100%; background: var(--chart-1); }
+.pv-bar-2 { width: 100%; background: var(--tint-2, var(--surface-3)); }
+.pv-bar-2 span { background: var(--accent); }
+.pv-about { font-size: 12px; line-height: 1.5; color: var(--fg-2); }
+.pv-metrics { margin: 0; display: flex; gap: 14px; }
+.pv-metrics div { display: flex; flex-direction: column; min-width: 0; }
+.pv-metrics dd { margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+.pv-metrics dt { font-size: 10.5px; color: var(--fg-3); }
+.pv-row { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 8px 0 0; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
 .pv-row a { color: var(--fg); font-weight: 600; text-decoration: none; }
+.cs-hero-thumb { display: block; width: 100%; max-width: 420px; aspect-ratio: 16 / 5; object-fit: cover; border-radius: 10px; border: 1px solid var(--cv-line); }
 .pv-btn { align-self: flex-start; min-height: 32px; font-size: 13px; padding: 5px 12px; }
 
 /* Invitation email */

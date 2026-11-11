@@ -149,9 +149,9 @@
     }
   };
   const RADII = {
-    sharp: { sm: 2, md: 3, lg: 4, pill: '3px', label: 'Sharp' },
-    soft: { sm: 4, md: 8, lg: 14, pill: '999px', label: 'Soft' },
-    round: { sm: 8, md: 12, lg: 20, pill: '999px', label: 'Round' }
+    sharp: { sm: 2, md: 3, lg: 4, card: 4, pill: '3px', label: 'Sharp' },
+    soft: { sm: 6, md: 10, lg: 14, card: 16, pill: '999px', label: 'Soft' },
+    round: { sm: 8, md: 12, lg: 20, card: 22, pill: '999px', label: 'Round' }
   };
 
   /* ---------- Token derivation ---------- */
@@ -190,6 +190,10 @@
 
     L['chart-1'] = ensureContrast(P, WHITE, 3);
     L['chart-muted'] = N(0.65);
+    // Investor portal: a page tinted very lightly with the brand hue, and pale steps of both brand colors for bars.
+    L.page = oklch(0.975, Math.min(p.c, 0.008), p.h);
+    L['tint-1'] = mix(L['chart-1'], WHITE, 0.8);
+    L['tint-2'] = mix(A, WHITE, 0.74);
     L['seg-1'] = L['chart-1'];
     L['seg-2'] = A;
     L['seg-3'] = N(0.82);
@@ -264,6 +268,9 @@
     D.focus = ensureContrast(A, D.surface, 3.5);
     D['chart-1'] = ensureContrast(P, D.surface, 4);
     D['chart-muted'] = ND(0.58);
+    D.page = oklch(0.165, Math.min(p.c, 0.008), p.h);
+    D['tint-1'] = mix(D.surface, D['chart-1'], 0.32);
+    D['tint-2'] = mix(D.surface, D.accent, 0.32);
     D['seg-1'] = D['chart-1'];
     D['seg-2'] = D.accent;
     D['seg-3'] = ND(0.46);
@@ -422,7 +429,7 @@
       el.id = 'cv-brand-tokens';
       document.body.appendChild(el);
     }
-    const base = `--font-display:${f.display};--font-body:${f.body};--r-sm:${r.sm}px;--r-md:${r.md}px;--r-lg:${r.lg}px;--r-pill:${r.pill};`;
+    const base = `--font-display:${f.display};--font-body:${f.body};--r-sm:${r.sm}px;--r-md:${r.md}px;--r-lg:${r.lg}px;--r-card:${r.card}px;--r-pill:${r.pill};`;
     el.textContent =
       `:root{${block(tk.light)}${block(tk.paper)}${base}}\n` +
       `@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${block(tk.dark)}color-scheme:dark}}\n` +

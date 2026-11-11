@@ -851,7 +851,7 @@
   };
   NS.actions['view-as'] = (el) => {
     S().viewer = el.getAttribute('data-id');
-    NS.app.go('investments');
+    NS.app.go('overview');
   };
 
   /* ---------- Distributions and NACHA ---------- */
@@ -2853,16 +2853,23 @@
   }
   function brandPreview() {
     const t = T();
+    const hm = t.home || {};
+    const hero = B.safeImage(hm.hero);
+    const about = String(hm.about || '').trim();
+    const metrics = [[hm.m1v, hm.m1l], [hm.m2v, hm.m2l], [hm.m3v, hm.m3l]].filter((m) => String(m[0] || '').trim());
     return `<div class="pv">
       <p class="pv-label">Investor portal preview</p>
       <div class="pv-portal pv-shell">
-        <div class="pv-head"><span class="pt-logo">${B.lockup(t)}</span><span class="pv-nav"><span class="is-on">Investments</span><span>Distributions</span><span>Documents</span></span></div>
+        <div class="pv-head"><span class="pt-logo">${B.lockup(t)}</span><span class="pv-nav"><span class="is-on">Home</span><span>Investments</span></span></div>
+        <div class="pv-hero${hero ? ' has-img' : ''}">${hero ? `<img src="${hero}" alt="">` : ''}<span>${h(t.name)}</span><strong>Welcome back, Jordan</strong></div>
         <div class="pv-in">
-          <h3>Investments</h3>
-          <dl class="pv-figs"><div><dt>Invested</dt><dd>$500,000</dd></div><div><dt>Distributions received</dt><dd>$117,625.00</dd></div></dl>
-          <div class="pv-row"><a>${h(t.shortName)} Sample Offering</a><span>$250,000</span></div>
-          <div class="pv-hold">${NS.holdBar({ progress: 0.62, windowStart: 0.72, remaining: 'Exit window opens in 7 months' })}</div>
-          <span class="btn btn-primary pv-btn">Sign in</span>
+          <div class="pv-card"><h3>Portfolio</h3><span class="pv-bar"><span style="width:62%"></span></span><span class="pv-bar pv-bar-2"><span style="width:24%"></span></span>
+            <div class="pv-row"><a>${h(t.shortName)} Sample Offering</a><span>$250,000</span></div>
+            <div class="pv-hold">${NS.holdBar({ progress: 0.62, windowStart: 0.72, remaining: 'Exit window opens in 7 months' })}</div>
+          </div>
+          <div class="pv-card"><h3>${about || metrics.length ? 'Company overview' : 'Investor relations'}</h3>${about ? `<p class="pv-about">${h(about.length > 150 ? about.slice(0, 150).replace(/\s+\S*$/, '') + '…' : about)}</p>` : ''}${metrics.length ? `<dl class="pv-metrics">${metrics.map((m) => `<div><dd>${h(m[0])}</dd><dt>${h(m[1] || '')}</dt></div>`).join('')}</dl>` : ''}${about || metrics.length ? '' : `<p class="pv-about">${h(t.support.team)}<br>${h(t.support.phone)}</p>`}
+            <span class="btn btn-primary pv-btn">Review and subscribe</span>
+          </div>
         </div>
       </div>
       <p class="pv-label">Accessibility check</p>
@@ -2879,6 +2886,7 @@
         .map((k) => `<button type="button" class="cs-mark" data-action="mark" data-mark="${k}" aria-pressed="${t.logo.type === k}"><svg viewBox="0 0 40 40" aria-hidden="true">${B.markBody(k, t.logo.letters, { p: t.colors.primary, a: t.colors.accent, ink: B.onColor(t.colors.primary) }, 'Manrope, sans-serif')}</svg><span>${B.MARKS[k].label}</span></button>`)
         .join('');
       const img = B.safeImage(t.logo.image);
+      const hero = B.safeImage((t.home || {}).hero);
       return shell(
         `${head('Portal and brand', E.diy ? 'How your portal looks to investors, and what onboarding asks of them.' : 'How this client’s portal looks to investors, and what onboarding asks of them.')}
         <div class="cs-split">
@@ -2899,6 +2907,17 @@
               </div>`)}
             ${panel('Color', `<div class="cs-grid">${colorField('Primary', 'primary')}${colorField('Accent', 'accent')}</div>
               <div class="cs-presets">${PRESETS.map((p) => `<button type="button" class="cs-preset" data-action="preset" data-p="${p[0]}" data-a="${p[1]}" aria-label="${p[2]}" title="${p[2]}"><span style="background:${p[0]}"></span><span style="background:${p[1]}"></span></button>`).join('')}</div>`)}
+            ${panel('Investor home page', `<div class="cs-grid">
+              <div class="cs-field cs-wide"><span>Hero image</span>
+                ${hero ? `<img class="cs-hero-thumb" src="${hero}" alt="Your hero image">` : ''}
+                <div class="cs-row"><label class="cs-btn cs-upload" for="tb-hero">${icon('up')}${hero ? 'Replace image' : 'Upload image'}<input type="file" id="tb-hero" class="sr-only" accept="image/png,image/jpeg,image/webp" data-change="hero-file"></label>${hero ? '<button class="cs-btn" type="button" data-action="hero-remove">Remove</button>' : ''}</div>
+                <span class="cs-hint">A wide photo across the top of each investor’s home page and beside the sign-in form. JPG, PNG or WebP. Without one, the band is your primary color.</span><span class="cs-error" id="tb-hero-err" hidden></span></div>
+              ${tField('About your firm', 'home.about', { textarea: true, rows: 4, max: 600 })}
+              <p class="cs-hint cs-wide">A few sentences investors see under “Company overview”, with up to three headline figures. Leave any of them blank to hide it.</p>
+              ${tField('Headline figure 1', 'home.m1v', { max: 12 })}${tField('What it measures', 'home.m1l', { max: 40 })}
+              ${tField('Headline figure 2', 'home.m2v', { max: 12 })}${tField('What it measures', 'home.m2l', { max: 40 })}
+              ${tField('Headline figure 3', 'home.m3v', { max: 12 })}${tField('What it measures', 'home.m3l', { max: 40 })}
+            </div>`)}
             ${panel('Type and layout', `<div class="cs-grid">
               <fieldset class="cs-field cs-wide"><legend>Typeface</legend><div class="cs-fonts">${Object.keys(B.FONTS)
                 .map((k) => `<label class="cs-font"><input type="radio" name="tb-font" value="${k}" data-bind="tenant:font"${t.font === k ? ' checked' : ''}><span><span class="cs-font-aa" style="font-family:${h(B.FONTS[k].display)}">Aa</span><strong>${B.FONTS[k].label}</strong></span></label>`)
@@ -2991,6 +3010,54 @@
       U.toast('Logo uploaded');
     };
     r.readAsDataURL(file);
+  });
+  /** The hero image is scaled down in the browser so it stays small enough to keep with the portal's settings. */
+  function fitHero(img) {
+    const sizes = [[1920, 0.82], [1600, 0.78], [1280, 0.74], [1280, 0.6], [1024, 0.6]];
+    for (const [max, q] of sizes) {
+      const k = Math.min(1, max / img.naturalWidth);
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.naturalWidth * k));
+      c.height = Math.max(1, Math.round(img.naturalHeight * k));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      const url = c.toDataURL('image/jpeg', q);
+      if (url.length <= 520000) return url;
+    }
+    return '';
+  }
+  NS.changes['hero-file'] = staffGuard((el) => {
+    const file = el.files && el.files[0];
+    const err = document.getElementById('tb-hero-err');
+    const fail = (msg) => {
+      err.textContent = msg;
+      err.hidden = false;
+    };
+    if (!file) return;
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) return fail('Use a JPG, PNG or WebP photo.');
+    if (file.size > 20 * 1024 * 1024) return fail('That photo is over 20 MB. Use a smaller one.');
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const data = fitHero(img);
+      URL.revokeObjectURL(url);
+      if (!B.safeImage(data)) return fail('That image could not be read. Save it again as a JPG.');
+      T().home = Object.assign({}, T().home, { hero: data });
+      audit('Portal settings updated', 'Home page image uploaded', '', 'portal');
+      NS.app.save(true);
+      NS.app.render();
+      U.toast('Home page image added');
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      fail('That image could not be read. Save it again as a JPG.');
+    };
+    img.src = url;
+  });
+  NS.actions['hero-remove'] = staffGuard(() => {
+    T().home = Object.assign({}, T().home, { hero: '' });
+    audit('Portal settings updated', 'Home page image removed', '', 'portal');
+    NS.app.save(true);
+    NS.app.render();
   });
   NS.actions['cfg-copy'] = () => U.copy(JSON.stringify({ tenant: T(), offerings: W().offerings }, null, 2));
   NS.actions['cfg-reset'] = staffGuard(() => {

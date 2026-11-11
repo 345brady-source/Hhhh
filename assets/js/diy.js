@@ -255,7 +255,7 @@
     NS.app.save(true);
     if (inv.onboarding.status === 'complete') {
       S().viewer = inv.id;
-      return NS.app.go(o ? `subscribe-${o.id}` : 'investments');
+      return NS.app.go(o ? `subscribe-${o.id}` : 'overview');
     }
     // The same guided flow as an emailed invitation: an invitation record of their own, opened straight away.
     if (NS.inviteFlow) {

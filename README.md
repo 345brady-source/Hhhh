@@ -105,13 +105,14 @@ The server emails the link, keeps the investor's progress encrypted (AES-256-GCM
 
 | Page | Contents |
 |---|---|
+| Home | The firm's hero image (or a band in its primary color) with a welcome; capital calls due, notices and documents waiting for a signature; offerings open for investment; the company overview (the firm's own description, up to three headline figures, and who to contact); the portfolio at a glance (contributions against commitment, distributions against value); the investor's investments; recent documents and updates. Every block is a rounded card on a page tinted with the firm's color |
 | Investments | Amount invested, distributions received, and time until exit for each investment; completed investments; capital calls due with wire instructions; the investor's requests and their status; offerings open for investment; and, for each investment, its last distribution and next distribution date |
 | Investment | One investment's figures, a timeline from closing to projected exit, the investor's capital account (value, net IRR or net return, and a breakdown since inception), capital calls and unfunded commitment, liquidity terms with e-signed redemption and additional-subscription requests (open-ended funds), the key terms the sponsor chose to show, the latest update, its payments and documents |
 | Subscribe | Online subscription to an offering that is raising: offering terms, subscription documents, accreditation confirmation and e-signature |
 | Distributions | Totals, received by year, full payment history filterable by year and investment |
 | Documents | Updates, quarterly capital account statements, tax documents (K-1, grantor trust letter or 1099-INT depending on the investment) and agreements on the client's letterhead, plus files the manager publishes (opened in the browser or downloaded) |
-| Account | Investor details, distribution bank account (update by re-verifying), tax and accreditation status |
-| Settings | Light, dark or match the device; saved in the browser and overrides the client default |
+| Updates | Every notice the investor was sent and the latest update on each of their investments, as cards labelled by topic |
+| Account | Investor details, distribution bank account (update by re-verifying), tax and accreditation status, and appearance (light, dark or match the device; saved in the browser and overrides the client default) |
 | Sign-in and activation | Branded sign-in and a guided first-time activation, including identity verification (ID for individuals; beneficial owners for entities and trusts), a politically-exposed-person question, and automatic sanctions screening |
 
 **Sponsor console** (Carrow & Vale and client staff)
@@ -131,7 +132,7 @@ The server emails the link, keeps the investor's progress encrypted (AES-256-GCM
 | Reports | Distribution reports for any period (this or last quarter, year to date, last year, last 12 months, since inception, or custom dates), for all offerings or one, viewed by investor, by payment or by offering, with totals and a CSV download. Investor contact lists filtered by offering, account status and payment method, with CSV download and copy-all-emails. Contact exports never include bank account numbers or taxpayer IDs |
 | Audit | Audit-ready records for any fund and period: readiness checks, a preview of every schedule, and a one-click audit package (see below) |
 | ACH origination | ODFI and file-header values, company name and ID, entry description, and optional balanced files |
-| Portal and brand | Logo, colors with an accessibility check, typeface, header style, onboarding requirements, support contact and disclosures |
+| Portal and brand | Logo, colors with an accessibility check, the investor home page (hero image, a description of the firm and up to three headline figures), typeface, header style, rounded or square corners, onboarding requirements, support contact and disclosures |
 
 ## Offering intake
 
