@@ -49,6 +49,8 @@ const payload = (over = {}) =>
       investor: { id: 'HRC-0007', contact: 'Zelda Quixote', type: 'individual', email: 'zelda@investor.example' },
       offering: { id: 'hr-fund-ii', name: 'Harbor Ridge Fund II', exemption: 'Rule 506(c)', documents: [] },
       invitation: { cents: 0 },
+      // The firm's settings use these checks; an invitation's token may run only these (round 3).
+      verification: { connections: [{ id: 'c-sbx', name: 'Test checks', type: 'server', connector: 'sandbox', checks: ['identity', 'accreditation'] }, { id: 'c-scr', name: 'Test screening', type: 'server', connector: 'fakescreen', checks: ['aml'] }], use: { identity: ['c-sbx'], accreditation: ['c-sbx'], aml: ['c-scr'] }, rules: {} },
       esign: { template: { title: 'Subscription agreement', roles: ['Investor', 'Sponsor'], fields: [] } }
     },
     over

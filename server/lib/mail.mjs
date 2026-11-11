@@ -573,15 +573,29 @@ export function reminderMessage({ firm, investor, offering, consoleUrl, complete
 export function notificationMessage({ firm, investor, offering, summary, consoleUrl, completedAt }) {
   const who = investor.contact || investor.title || 'An investor';
   const existing = !!(summary && summary.existing);
-  const subject = existing ? `${who} finished their subscription${offering && offering.name ? ` to ${offering.name}` : ''}` : `${who} finished onboarding${offering && offering.name ? ` for ${offering.name}` : ''}`;
+  // An investor on file who reached the end without subscribing (the offering stopped accepting subscriptions first).
+  const none = existing && summary && summary.requested === false;
+  const subject = none
+    ? `${who}: no subscription${offering && offering.name ? ` to ${offering.name}` : ''}`
+    : existing
+      ? `${who} finished their subscription${offering && offering.name ? ` to ${offering.name}` : ''}`
+      : `${who} finished onboarding${offering && offering.name ? ` for ${offering.name}` : ''}`;
   return compose(firm, subject, {
-    paras: [existing ? `${who} completed the subscription steps on ${longDate(completedAt)}.` : `${who} completed every onboarding step on ${longDate(completedAt)}.`],
+    paras: [
+      none
+        ? `${who} went through your invitation on ${longDate(completedAt)}, but no subscription was submitted: the offering was no longer accepting subscriptions when they reached that step.`
+        : existing
+          ? `${who} completed the subscription steps on ${longDate(completedAt)}.`
+          : `${who} completed every onboarding step on ${longDate(completedAt)}.`
+    ],
     rows: summary.rows,
     button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
     after: [
       summary.next,
       // An investor already on file: the console keeps the record it holds and adds only what the link collected.
-      existing
+      none
+        ? 'Nothing is added to their investor record; the details you already hold for them stay as they are.'
+        : existing
         ? 'Their subscription, signed agreement and any new accreditation result are added to your investor records the next time the console is open. The details you already hold for them stay as they are.'
         : 'Their details, verification results, documents and signed agreement are added to your investor records the next time the console is open.'
     ]

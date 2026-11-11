@@ -215,8 +215,8 @@ export function createServer(opts = {}) {
   }
 
   /** What the portal may see: never `data` (tokens, provider-private ids) or the investor's details. */
-  const view = (rec) => ({ id: rec.id, kind: rec.kind, provider: rec.provider, status: rec.status, method: rec.method || '', detail: rec.detail || '', expiresAt: rec.expiresAt || '', screening: rec.screening || null, evidence: rec.evidence || [], url: rec.url || '', providerStatus: rec.providerStatus || '', updatedAt: rec.updatedAt || '' });
-  const screeningView = (rec) => ({ id: rec.id, provider: rec.provider, status: rec.status, hits: rec.hits || [], monitoring: !!rec.monitoring, providerStatus: rec.providerStatus || '', updatedAt: rec.updatedAt || '' });
+  const view = (rec) => ({ id: rec.id, kind: rec.kind, provider: rec.provider, status: rec.status, method: rec.method || '', detail: rec.detail || '', expiresAt: rec.expiresAt || '', screening: rec.screening || null, evidence: rec.evidence || [], url: rec.url || '', providerStatus: rec.providerStatus || '', completedAt: rec.completedAt || '', updatedAt: rec.updatedAt || '' });
+  const screeningView = (rec) => ({ id: rec.id, provider: rec.provider, status: rec.status, hits: rec.hits || [], monitoring: !!rec.monitoring, providerStatus: rec.providerStatus || '', completedAt: rec.completedAt || '', updatedAt: rec.updatedAt || '' });
 
   async function refresh(rec, force) {
     const p = PROVIDERS[rec.provider];
@@ -447,10 +447,12 @@ export function createServer(opts = {}) {
       const investor = cleanInvestor(body.investor);
       if (!investor.id || !investor.name) return send(res, 400, { error: 'investor.id and investor.name are required' });
       if (scope && investor.id !== scope.investorId) return send(res, 403, { error: 'This invitation can only verify its own investor' });
+      // An invitation's token runs only the checks the firm's settings use (never the test sandbox, which runs in the browser).
+      if (scope && !(invites.scopeRules(scope).providers[body.kind] || []).includes(body.provider)) return send(res, 403, { error: 'This check is not one the firm uses' });
       if (scope) investor.workspace = scope.workspace;
       const vid = id('ver');
       // createdAt is on the same clock as invitations: a submission counts only checks created once its invitation existed.
-      const rec = store.put('verifications', { id: vid, kind: body.kind, provider: body.provider, investorId: investor.id, workspace: investor.workspace, status: 'pending', settings: cleanSettings(body.settings), investor: sealPersonal('verifications', vid, 'investor', investor), returnUrl: returnTo(body.returnUrl), createdAt: new Date(now()).toISOString() });
+      const rec = store.put('verifications', { id: vid, kind: body.kind, provider: body.provider, investorId: investor.id, workspace: investor.workspace, invitationId: scope ? scope.id : undefined, status: 'pending', settings: cleanSettings(body.settings), investor: sealPersonal('verifications', vid, 'investor', investor), returnUrl: returnTo(body.returnUrl), createdAt: new Date(now()).toISOString() });
       const r = (await p.createSession(ctx(body.provider, rec))) || {};
       const saved = apply('verifications', rec, Object.assign({}, r, { status: r.status || 'pending' }));
       store.event({ type: 'verification_started', provider: body.provider, id: rec.id, ref: saved.ref || '' });
@@ -485,13 +487,16 @@ export function createServer(opts = {}) {
       const missing = missingEnv(p, env);
       if (missing.length) return send(res, 400, { error: `Set ${missing.join(', ')} on the integration server` });
       if (body.names !== undefined && !Array.isArray(body.names)) return send(res, 400, { error: 'names must be a list' });
-      const names = Array.from(new Set((body.names || []).map((n) => String(n || '').trim()).filter(Boolean))).slice(0, 25);
+      // From an invitation's link: only the screenings the firm uses, and always the investor's names as the sponsor entered them.
+      const rules = scope ? invites.scopeRules(scope) : null;
+      if (rules && !rules.providers.aml.includes(body.provider)) return send(res, 403, { error: 'This screening is not one the firm uses' });
+      const names = Array.from(new Set((rules ? rules.names : []).concat(body.names || []).map((n) => String(n || '').trim()).filter(Boolean))).slice(0, 25);
       if (!names.length) return send(res, 400, { error: 'names are required' });
       const inv = cleanInvestor(body.investor);
       if (scope && inv.id !== scope.investorId) return send(res, 403, { error: 'This invitation can only screen its own investor' });
       if (scope) inv.workspace = scope.workspace;
       const sid = id('scr');
-      const rec = store.put('screenings', { id: sid, kind: 'aml', provider: body.provider, investorId: inv.id, workspace: inv.workspace, names: sealPersonal('screenings', sid, 'names', names), settings: cleanSettings(body.settings), investor: sealPersonal('screenings', sid, 'investor', inv), status: 'pending', createdAt: new Date(now()).toISOString() });
+      const rec = store.put('screenings', { id: sid, kind: 'aml', provider: body.provider, investorId: inv.id, workspace: inv.workspace, invitationId: scope ? scope.id : undefined, names: sealPersonal('screenings', sid, 'names', names), settings: cleanSettings(body.settings), investor: sealPersonal('screenings', sid, 'investor', inv), status: 'pending', createdAt: new Date(now()).toISOString() });
       const r = (await p.screen(ctx(body.provider, rec, { names }))) || {};
       const saved = apply('screenings', rec, Object.assign({ hits: r.hits || [] }, r, { ref: r.ref || rec.id }));
       if (r.monitoring) store.put('screenings', { id: rec.id, monitoring: true });

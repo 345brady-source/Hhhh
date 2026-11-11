@@ -226,7 +226,7 @@ function cleanSubmission(body, rec, snap) {
   const kycName = new RegExp(`^kyc-${reEsc(rec.investorId)}-[a-z0-9]+$`);
   for (const k of snap.invitation && snap.invitation.existing ? ['accreditation'] : ['identity', 'accreditation']) {
     const x = obj(v[k]);
-    if (x && typeof x.fileId === 'string' && kycName.test(x.fileId)) allowed[x.fileId] = 'evidence';
+    if (x && typeof x.fileId === 'string' && kycName.test(x.fileId) && !allowed[x.fileId]) allowed[x.fileId] = 'evidence';
   }
   if (body.docs !== undefined && !Array.isArray(body.docs)) throw fail(400, 'docs must be a list');
   if ((body.docs || []).length > 50) throw fail(400, 'docs: at most 50 entries');
@@ -268,7 +268,14 @@ function cleanSubmission(body, rec, snap) {
   // signed), when that copy came with this submission, for this investor alone. It is rebuilt from known fields, so a listing
   // from the browser can never reach other investors (an audience or investor list of its own), pass as an offering document,
   // or point at a file it did not bring.
-  const listed = signedId && out.fileBufs.some(([k]) => k === signedId) ? docs.find((d) => d.id === signedId) : null;
+  const got = new Set(out.fileBufs.map(([k]) => k));
+  if (env) {
+    // The envelope points only at copies this submission brought; a completed envelope without its signed copy is not complete.
+    if (env.workDocId && !got.has(env.workDocId)) env.workDocId = null;
+    if (env.status === 'completed' && !(env.signedDocId && got.has(env.signedDocId))) Object.assign(env, { status: 'sent', completedAt: null, signedDocId: null, sha256Signed: null });
+    else if (env.signedDocId && !got.has(env.signedDocId)) env.signedDocId = null;
+  }
+  const listed = signedId && got.has(signedId) && env && env.status === 'completed' ? docs.find((d) => d.id === signedId) : null;
   out.docs = listed
     ? [
         {
@@ -341,7 +348,7 @@ export function summarize(sub, snap, checks) {
     : req
       ? `Next: review the subscription in the console.${held ? ' Verification is not complete yet.' : ''}`
       : 'Next: review the investor’s details in the console.';
-  return { rows, next, identity, aml, accreditation, agreement, existing };
+  return { rows, next, identity, aml, accreditation, agreement, existing, requested: !!req };
 }
 
 /* ---------- The routes ---------- */
@@ -482,13 +489,41 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
   const dayOf = (s) => (Number.isFinite(timeOf(s)) ? new Date(timeOf(s)).toISOString().slice(0, 10) : '');
   /** When a check's result arrived. Records kept before completedAt was recorded give their creation, the earliest it can be. */
   const resultAt = (s) => (s.status === 'pending' ? '' : String(s.completedAt || s.createdAt || ''));
+  /**
+   * What a call made with an invitation's token may do: run only the providers the firm's settings use for each check
+   * (sandbox checks run in the browser and never through this server for an investor), and screen at least the investor's
+   * names as the sponsor entered them.
+   */
+  function scopeRules(rec) {
+    const snap = rec ? unseal(rec, 'snapshot') : null;
+    const v = (snap && obj(snap.verification)) || {};
+    const conns = Array.isArray(v.connections) ? v.connections.filter(obj) : [];
+    const use = obj(v.use) || {};
+    const providers = {};
+    for (const kind of ['identity', 'accreditation', 'aml']) {
+      const set = new Set();
+      for (const cid of Array.isArray(use[kind]) ? use[kind] : []) {
+        const c = conns.find((x) => x.id === cid);
+        if (!c) continue;
+        if (c.type === 'server' && typeof c.connector === 'string' && c.connector) set.add(c.connector);
+        else if (c.type === 'link') set.add('link');
+        else if (c.type === 'builtin' && c.builtin === 'ofac') set.add('ofac');
+      }
+      providers[kind] = [...set];
+    }
+    const names = snap && snap.investor ? [snap.investor.contact, snap.investor.title].map((n) => String(n || '').trim()).filter(Boolean) : [];
+    return { providers, names: [...new Set(names)] };
+  }
   function confirmChecks(investor, rec) {
     // This server keeps every check it ran, so an old one (a verification from last year, say) must not stand behind a new
     // result: only checks created once this invitation existed count. A record without a valid time counts for nothing.
     const since = timeOf(rec.createdAt || rec.sentAt);
-    const mine = (table) => store.list(table).filter((x) => x.investorId === rec.investorId && x.workspace === rec.workspace && timeOf(x.createdAt) >= since);
-    const vers = mine('verifications');
-    const scrs = mine('screenings');
+    const SLACK = 10 * 60e3; // clocks on two instances, or a clock stepped back, may differ by a little
+    const rules = scopeRules(rec);
+    const ours = (x) => (x.invitationId ? x.invitationId === rec.id : timeOf(x.createdAt) >= since - SLACK);
+    const mine = (table) => store.list(table).filter((x) => x.investorId === rec.investorId && x.workspace === rec.workspace && ours(x));
+    const vers = mine('verifications').filter((x) => (rules.providers[x.kind] || []).includes(x.provider));
+    const scrs = mine('screenings').filter((x) => rules.providers.aml.includes(x.provider));
     const v = (investor.verify = obj(investor.verify) || {});
     const out = {};
     for (const kind of ['identity', 'accreditation']) {
@@ -499,9 +534,8 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       if (s) {
         // The check's own dates replace the browser's: when its result arrived and, for a verified accreditation, the day.
         const at = resultAt(s);
-        delete c.completedAt;
-        delete c.verifiedAt;
-        Object.assign(c, { status: s.status, remote: true }, s.method ? { method: s.method } : {}, s.expiresAt ? { expiresAt: s.expiresAt } : {}, at ? { completedAt: at } : {}, kind === 'accreditation' && s.status === 'verified' && dayOf(at) ? { verifiedAt: dayOf(at) } : {});
+        ['completedAt', 'verifiedAt', 'note', 'recordedBy', 'reportedStatus'].forEach((f) => delete c[f]);
+        Object.assign(c, { status: s.status, remote: true, method: s.method || '', how: s.provider === 'link' ? 'link' : 'server' }, s.expiresAt ? { expiresAt: s.expiresAt } : {}, at ? { completedAt: at } : {}, kind === 'accreditation' && s.status === 'verified' && dayOf(at) ? { verifiedAt: dayOf(at) } : {});
         out[kind] = { status: s.status, confirmed: true };
         continue;
       }
@@ -531,6 +565,9 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
         if (!['pending', 'potential_match', 'match'].includes(r.status) || (r.status === 'pending' && r.ref)) {
           Object.assign(r, { status: 'pending', ref: '', hits: [], screenedAt: '', error: 'Not confirmed by the integration server; screen again' });
           amlUnconfirmed = true;
+        } else if (r.status === 'match') {
+          // A match the browser reports about its own investor is adverse; with no screening here behind it, a person reviews it.
+          Object.assign(r, { status: 'potential_match', ref: '', screenedAt: '', note: 'Reported by the investor’s browser as a match; no screening here confirms it' });
         }
       }
     }
@@ -549,6 +586,8 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     const d = (v.decision = obj(v.decision) || { status: 'pending' });
     const backed = out.identity.confirmed && out.identity.status === 'passed' && amlConfirmed && aml.status === 'clear' && out.accreditation.status !== 'review';
     if (d.status === 'approved' && !backed) v.decision = { status: 'review', at: iso(), reason: 'Verification results from the investor’s browser could not all be confirmed by the integration server' };
+    else if (d.status === 'approved') v.decision = { status: 'approved', at: iso(), by: 'automatic', reason: 'all checks confirmed by the integration server' };
+    else if (d.status !== 'review' && d.status !== 'rejected') v.decision = { status: 'pending' };
     out.decision = v.decision.status;
     const k = obj(investor.kyc);
     if (k) {
@@ -886,6 +925,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
   return {
     investorPath,
     authenticate,
+    scopeRules,
     investor,
     sponsor,
     purge,

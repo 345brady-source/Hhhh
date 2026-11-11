@@ -32,7 +32,7 @@ function payload(over = {}) {
       investor: { id: 'HRC-0007', contact: 'Zelda Quixote', title: 'Zelda Quixote', type: 'individual', email: 'zelda@investor.example' },
       offering: { id: 'hr-fund-ii', name: 'Harbor Ridge Fund II', minimum: 100000, exemption: 'Rule 506(c)', currency: 'USD', documents: [] },
       invitation: { cents: 25000000, cls: 'A', note: '' },
-      verification: {},
+      verification: { connections: [{ id: 'c-sbx', name: 'Test checks', type: 'server', connector: 'sandbox', checks: ['identity', 'accreditation'] }, { id: 'c-scr', name: 'Test screening', type: 'server', connector: 'fakescreen', checks: ['aml'] }], use: { identity: ['c-sbx'], accreditation: ['c-sbx'], aml: ['c-scr'] }, rules: {} },
       esign: null
     },
     over

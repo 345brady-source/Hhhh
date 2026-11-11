@@ -24,6 +24,8 @@ const payload = (over = {}) =>
       investor: { id: 'HRC-0007', contact: 'Zelda Quixote', type: 'individual', email: 'zelda@investor.example' },
       offering: { id: 'hr-fund-ii', name: 'Harbor Ridge Fund II', exemption: 'Rule 506(c)', documents: [] },
       invitation: { cents: 0 },
+      // The firm's settings use these checks; an invitation's token may run only these (round 3).
+      verification: { connections: [{ id: 'c-sbx', name: 'Test checks', type: 'server', connector: 'sandbox', checks: ['identity', 'accreditation'] }, { id: 'c-scr', name: 'Test screening', type: 'server', connector: 'fakescreen', checks: ['aml'] }], use: { identity: ['c-sbx'], accreditation: ['c-sbx'], aml: ['c-scr'] }, rules: {} },
       esign: { template: { title: 'Subscription agreement', roles: ['Investor', 'Sponsor'], fields: [] } }
     },
     over
@@ -111,8 +113,13 @@ test('a countersignature never arrives from the investor; an investor-only agree
     assert.deepEqual([env.signers[1].status, env.signers[1].signature], ['waiting', null]);
     assert.match((await note(base, r.id)).text, /waiting for your countersignature/);
 
+    // An investor-only agreement is complete when its signed copy comes with it (an honest page always sends it); without the
+    // copy it is not complete (round 3).
+    const bare = await create(base, { esign: { template: { title: 'Agreement', roles: ['Investor'], fields: [] } } });
+    assert.equal((await complete(base, bare.token, { investor: investor({}), envelope: { id: 'env-3', status: 'completed', signedDocId: 'env-3-signed', signers: [{ role: 'investor', status: 'signed' }] } })).status, 200);
+    assert.equal((await submissionOf(base, bare.id)).envelope.status, 'sent');
     const solo = await create(base, { esign: { template: { title: 'Agreement', roles: ['Investor'], fields: [] } } });
-    assert.equal((await complete(base, solo.token, { investor: investor({}), envelope: { id: 'env-2', status: 'completed', signers: [{ role: 'investor', status: 'signed' }] } })).status, 200);
+    assert.equal((await complete(base, solo.token, { investor: investor({}), envelope: { id: 'env-2', status: 'completed', signedDocId: 'env-2-signed', signers: [{ role: 'investor', status: 'signed' }] }, files: { 'env-2-signed': pdf() } })).status, 200);
     assert.equal((await submissionOf(base, solo.id)).envelope.status, 'completed');
     const text = (await note(base, solo.id)).text;
     assert.match(text, /Subscription agreement: Signed by the investor/);

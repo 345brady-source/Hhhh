@@ -34,7 +34,7 @@ function payload(over = {}) {
       investor: { id: 'HRC-0007', contact: 'Zelda Quixote', title: 'Zelda Quixote', type: 'individual', email: 'zelda@investor.example' },
       offering: { id: 'hr-fund-ii', name: 'Harbor Ridge Fund II', shortName: 'Fund II', type: 'Private equity', summary: 'Buyout fund', minimum: 100000, closeDate: '2027-03-31', terms: [{ label: 'Term', value: '10 years' }], exemption: 'Rule 506(c)', classes: [{ id: 'A', name: 'Class A' }], currency: 'USD', documents: [{ id: 'ppm', title: 'Private placement memorandum', fileName: 'ppm.pdf', base64: pdf('PPMMARKER').toString('base64') }] },
       invitation: { cents: 25000000, cls: 'A', note: 'Welcome aboard, Zelda', expiresAt: new Date(T0 + 30 * DAY).toISOString() },
-      verification: { connections: [{ id: 'c1', check: 'identity', connector: 'sandbox' }], use: { identity: 'c1' }, rules: { accreditationFor: '506c' } },
+      verification: { connections: [{ id: 'c1', name: 'Test checks', type: 'server', connector: 'sandbox', checks: ['identity', 'accreditation'] }, { id: 'c2', name: 'Test screening', type: 'server', connector: 'fakescreen', checks: ['aml'] }], use: { identity: ['c1'], accreditation: ['c1'], aml: ['c2'] }, rules: { accreditationFor: '506c' } },
       esign: { template: { title: 'Subscription agreement', roles: ['investor', 'countersigner'], fields: [{ id: 'f1', role: 'investor', type: 'signature', page: 1 }], pages: 1, pageSizes: [[612, 792]], sha256: 'abc' }, pdf: pdf('TEMPLATEMARKER').toString('base64') }
     },
     over
@@ -150,7 +150,7 @@ test('the investor’s link: GET /v1/invite returns the snapshot and marks the i
     assert.deepEqual(Buffer.from(s.esign.pdf, 'base64'), pdf('TEMPLATEMARKER'));
     assert.equal(s.esign.template.title, 'Subscription agreement');
     assert.deepEqual(s.invitation, { cents: 25000000, cls: 'A', note: 'Welcome aboard, Zelda', senderName: '', expiresAt: r.expiresAt });
-    assert.equal(s.verification.use.identity, 'c1');
+    assert.deepEqual(s.verification.use.identity, ['c1']);
     assert.equal(s.serverUrl, PUBLIC);
     const text = JSON.stringify(s);
     for (const hidden of ['ops@harborridge.example', 'notifyEmail', 'portalUrl', 'tokenHash', 'blob']) assert.ok(!text.includes(hidden), `${hidden} is not sent to the investor`);
