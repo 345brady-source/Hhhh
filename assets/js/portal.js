@@ -358,11 +358,15 @@
       const f = subForm(o);
       const cfg = NS.audit ? NS.audit.settings(o) : null;
       if (f.done) {
+        // Signed on this form (no agreement envelope): the firm's team reviews it and countersigns the commitment when it
+        // accepts it (operations.js). An open-ended fund has no first close: it is funded once accepted.
+        const team = h(T().support.team || T().shortName);
+        const open = !!(OPS() && OPS().isOpen(o));
         return shell(
           `<a class="back" href="#investments">${icon('back')}Investments</a>
           ${title('Subscription documents signed', h(o.name))}
-          <div class="done-box"><p class="lede">${h(T().shortName)} has your signed subscription for a ${moneyc(f.done.cents, o)} commitment${f.done.cls && (o.classes || []).find((c) => c.id === f.done.cls) ? ` in ${h(o.classes.find((c) => c.id === f.done.cls).name)}` : ''}. Investor relations will review it and countersign before the first close, targeted for ${date(o.closeDate)}.</p>
-          <p class="lede">No money is due now. When the fund calls capital, you will get a capital call notice here with the amount, due date and wire instructions.</p>
+          <div class="done-box"><p class="lede">${h(T().shortName)} has your signed subscription for a ${moneyc(f.done.cents, o)} ${open ? 'subscription' : 'commitment'}${f.done.cls && (o.classes || []).find((c) => c.id === f.done.cls) ? ` in ${h(o.classes.find((c) => c.id === f.done.cls).name)}` : ''}. ${open ? `${team} will review it and confirm when it is accepted.` : `${team} will review it and countersign it${o.closeDate ? ` before the first close, targeted for ${date(o.closeDate)}` : ''}.`}</p>
+          <p class="lede">${open ? 'No money is due until it is accepted. You will then get wire instructions for funding it before the dealing date.' : 'No money is due now. When the fund calls capital, you will get a capital call notice here with the amount, due date and wire instructions.'}</p>
           <a class="btn btn-primary" href="#investments">Back to your investments</a></div>`,
           'investments'
         );

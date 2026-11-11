@@ -2424,10 +2424,21 @@
       const P = PK();
       const o = W().offerings.find((x) => x.id === id);
       const signed = env.status === 'completed' || env.signers.some((s) => s.investorId && s.status === 'signed');
+      const t = T();
+      const team = h(t.support.team || t.shortName);
+      // A countersignature is promised only while one of the firm's signers has yet to sign: an agreement for the investor
+      // alone (or one everyone has signed) is complete, and only the review of the subscription remains.
+      const counter = env.status !== 'completed' && env.signers.some((s) => s.role === 'countersigner' && s.status !== 'signed');
+      const open = !!(o && NS.ops && NS.ops.isOpen && NS.ops.isOpen(o));
+      const next = env.status === 'completed'
+        ? ` It is signed by everyone, and your copy is in your Documents. ${team} will review your subscription and confirm when it is accepted.`
+        : counter
+          ? ` ${team} will review it and countersign it${!open && o && o.closeDate ? ' before the first close' : ''}.`
+          : ` ${team} will review your subscription once everyone has signed the agreement.`;
       return P.shell(
         `<a class="back" href="#investments">${icon('back')}Investments</a>
         ${P.title(signed ? 'Subscription agreement signed' : 'Sign your subscription agreement', h(o ? o.name : ''))}
-        <div class="done-box"><p class="lede">${signed ? `${h(T().shortName)} has your signed subscription agreement. Investor relations will review it and countersign before the first close.` : `${h(T().shortName)} sent you its subscription agreement for this commitment, with the amount filled in. Your subscription is submitted once you sign it.`}</p>
+        <div class="done-box"><p class="lede">${signed ? `${h(t.shortName)} has your signed subscription agreement.${next}` : `${h(t.shortName)} sent you its subscription agreement for this commitment, with the amount filled in. Your subscription is submitted once you sign it.`}</p>
         <a class="btn btn-primary" href="${signed ? '#documents' : '#sign-' + h(env.id)}">${signed ? 'Go to Documents' : 'Review and sign'}</a></div>`,
         'investments'
       );
@@ -2485,6 +2496,47 @@
     NS.app.save(true);
     return true;
   }
+  /**
+   * Signing again (the investor onboarding flow, server mode): the copy the investor signed is gone from this browser's
+   * storage, or damaged, so it cannot be sent to the firm. Possible while the envelope's template, the offering's
+   * subscription agreement, is still on this device with its file.
+   */
+  async function canResign(ws, envId) {
+    const env = envById(ws, envId);
+    const tpl = env && env.templateId ? tpls(ws).find((t) => t.id === env.templateId) : null;
+    if (!tpl || !tpl.docId || subscriptionTemplate(ws, tpl.offeringId) !== tpl || !templateReady(ws, tpl.offeringId)) return false;
+    const b = await files().get(tpl.docId);
+    if (!b || !b.size || b.size > MAX_BYTES) return false;
+    return isPdf(new Uint8Array(await b.slice(0, 5).arrayBuffer()));
+  }
+  /**
+   * A new envelope from the same template for the same subscription, prefilled as the first one was; the first one is voided
+   * (on this device: it never reached the firm). Returns the new envelope, or null when it cannot be made.
+   */
+  function resign(ws, envId, inv, o, opts) {
+    const old = envById(ws, envId);
+    const tpl = old && old.templateId ? tpls(ws).find((t) => t.id === old.templateId) : null;
+    if (!old || !tpl || !inv || !o) return null;
+    let env = null;
+    try {
+      env = createFromTemplate(ws, tpl.id, { investorId: inv.id, offeringId: o.id, title: `${tpl.title} - ${inv.title}`, prefill: subscriptionPrefill(inv, o, opts || {}), quiet: true });
+    } catch (e) {
+      env = null;
+    }
+    if (!env || env.status !== 'sent') {
+      if (env) ws.envelopes = envs(ws).filter((x) => x !== env);
+      return null;
+    }
+    env.requestId = old.requestId || null;
+    const why = 'The signed copy could not be sent from the investor’s device; a new copy was prepared for them to sign';
+    Object.assign(old, { status: 'voided', voidedAt: nowIso(), voidReason: why });
+    addEvent(old, 'System', 'Voided', why);
+    logChange(ws, 'Envelope voided', old, why);
+    // A completed copy's listing goes with it: its file is the one that was lost.
+    ws.docs = (ws.docs || []).filter((d) => d.envelopeId !== old.id);
+    NS.app.save(true);
+    return env;
+  }
   /** Agreements an investor signed that are waiting for the firm's countersignature (their copy so far can be opened). */
   const awaitingFor = (ws, investorId) => envs(ws).filter((e) => e.status === 'sent' && e.signers.some((x) => x.investorId === investorId && x.status === 'signed'));
   /** Documents for an investor with no investments yet: what to sign, what they signed, and the fully signed copies. */
@@ -2529,5 +2581,5 @@
       });
   };
 
-  NS.esign = { pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, investorDocsHTML };
+  NS.esign = { pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, investorDocsHTML };
 })(window.CVPortal);

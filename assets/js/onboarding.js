@@ -182,14 +182,16 @@
           }`
         }
         ${iv ? iv.stepPanel(W(), inv(), 'identity') : ''}${err('ivIdentity')}
-        ${radios('pep', `Is ${ent ? 'any owner or controlling person' : 'any account owner'} a senior political figure, or a close family member or associate of one?`, [['no', 'No'], ['yes', 'Yes', 'Investor relations will contact you for enhanced due diligence']])}
+        ${radios('pep', `Is ${ent ? 'any owner or controlling person' : 'any account owner'} a senior political figure, or a close family member or associate of one?`, [['no', 'No'], ['yes', 'Yes', `${T().support.team || 'Investor relations'} will contact you for enhanced due diligence`]])}
       </div>
       <p class="meta">Your details are checked against OFAC and other sanctions lists and politically exposed person databases. They are encrypted and used only for anti-money-laundering compliance.</p>`;
   }
-  function stepAccreditation(verified) {
+  /** opts.why (the invitation flow): '506c' when the invited offering is Rule 506(c); otherwise the firm's rules ask for the verification. */
+  function stepAccreditation(verified, opts) {
     if (verified == null ? accVerified() : verified) {
+      const why = opts && opts.why;
       return `<h1>${LABELS.accreditation}</h1>
-      <p class="lede">${h(T().shortName)} offers interests only to verified accredited investors (Rule 506(c)), so your accredited status is confirmed by a third party rather than self-certified.</p>
+      <p class="lede">${why && why !== '506c' ? `${h(T().shortName)} accepts only verified accredited investors for this offering` : `${h(T().shortName)} offers interests only to verified accredited investors (Rule 506(c))`}, so your accredited status is confirmed by a third party rather than self-certified.</p>
       <div class="form-grid">
         ${NS.integrations.stepPanel(W(), inv(), 'accreditation')}${err('ivAccreditation')}
         ${check('accAttest', `I confirm the information I provide is accurate and will tell ${h(T().shortName)} if it changes.`)}
@@ -735,7 +737,25 @@
     ws.integrations = { connections: Array.isArray(v.connections) ? clone(v.connections) : [], use: v.use && typeof v.use === 'object' ? clone(v.use) : {}, rules: v.rules && typeof v.rules === 'object' ? clone(v.rules) : {}, server: { url: server, token: '' }, configured: true };
     if (NS.integrations) NS.integrations.ensure(ws);
     ws.invite = { mode: 'server', key, token, server, loadedAt: nowIso() };
+    // The console's own answer, worked out on all its offerings and this investor's holdings (absent from an older console).
+    if (typeof v.accreditationRequired === 'boolean') ws.invite.accRequired = v.accreditationRequired;
+    alignAccreditation(ws);
     return ws;
+  }
+  /**
+   * Server mode: whether this investor must verify their accreditation (rather than self-certify) is the console's to say.
+   * This workspace holds the invited offering only, so integrations.js's "no offering names its exemption" clause cannot be
+   * judged here, nor whether the investor holds a Rule 506(c) offering. The flow asks accVerifiedFor, which uses the console's
+   * answer; where neither that answer nor the offering's own rule asks for a verification, this copy of the firm's rules says
+   * so too, so the checks run on this device (a self-certification's status, the approval) agree with the steps it shows. The
+   * console decides again on import with its own rules.
+   */
+  function alignAccreditation(ws) {
+    const I = NS.integrations;
+    if (!isRemote(ws) || !I || !ws.integrations || !ws.integrations.rules || ws.invite.accRequired === true) return;
+    const off = ws.offerings[0] || null;
+    if (off && I.needsAccreditation(ws, ws.investors[0] || null, off)) return;
+    ws.integrations.rules.accreditationFor = 'none';
   }
   /** Open an invitation from the integration server: resume what this browser saved, or start from the server's snapshot. */
   const KEEP_DONE_MS = 30 * 864e5;
@@ -745,6 +765,7 @@
     ['offerings', 'investors', 'runs', 'notices', 'audit', 'calls', 'requests', 'docs', 'envelopes', 'esignTemplates', 'notifications', 'invitations'].forEach((k) => (stored[k] = stored[k] || []));
     stored.opsV = 1;
     if (NS.integrations) NS.integrations.ensure(stored);
+    alignAccreditation(stored);
     return stored;
   }
   async function openRemote(server, param) {
@@ -834,8 +855,20 @@
     const closed = !off && it.offeringId ? ws.offerings.find((x) => x.id === it.offeringId) || null : null;
     return { ws, it, inv: i, fl, req, off, closed };
   }
-  /** Verified (not self-certified) accreditation: the invited offering is Rule 506(c), or the firm's rules require it for approval. */
-  const accVerifiedFor = (c) => !!IV() && ((c.off && NS.integrations.needsAccreditation(c.ws, c.inv, c.off)) || NS.integrations.needsAccreditation(c.ws, c.inv));
+  /**
+   * Verified (not self-certified) accreditation: the invited offering is Rule 506(c), or the firm's rules require it for
+   * approval. Server mode: the temporary workspace holds the invited offering only, so the investor-level rule (holdings, "no
+   * offering names its exemption") is the console's answer from the snapshot; an older console sends none, and then only the
+   * offering's own rule counts. The offering's own rule always counts: it reads the same here as in the console.
+   */
+  function accVerifiedFor(c) {
+    if (!IV()) return false;
+    const forOffering = !!c.off && NS.integrations.needsAccreditation(c.ws, c.inv, c.off);
+    if (isRemote(c.ws)) return forOffering || c.ws.invite.accRequired === true;
+    return forOffering || NS.integrations.needsAccreditation(c.ws, c.inv);
+  }
+  /** Why the verification is asked for, for its wording: '506c' when the invited offering is Rule 506(c), otherwise 'rules'. */
+  const accWhy = (c) => (c.off && /506\(c\)/.test((c.off.structure || {}).exemption || '') ? '506c' : 'rules');
   /**
    * The investor already holds the invited offering: a position on this record (local mode), or the firm's console says so
    * (server mode: the temporary record built from the invitation has no positions, only the invitation's holds flag).
@@ -853,8 +886,11 @@
       if (c.fl.accStep === undefined || (c.fl.accStep === false && !c.req)) {
         const was = c.fl.accStep;
         c.fl.accStep = !!(c.off && accVerifiedFor(c) && !NS.integrations.accreditationValid(c.ws, c.inv));
-        // Newly needed after the investor moved past where it goes: they verify before they subscribe.
-        if (was === false && c.fl.accStep && c.fl.at === 'subscribe') c.fl.at = 'accreditation';
+        // Newly needed after the investor moved past where it goes: they verify before they subscribe, and the step says why.
+        if (was === false && c.fl.accStep && c.fl.at === 'subscribe') {
+          c.fl.at = 'accreditation';
+          c.fl.accLate = true;
+        }
       }
       if (c.fl.accStep) s.push('accreditation');
       if (c.off) {
@@ -875,8 +911,16 @@
     return s;
   }
   const stepLabel = (c, k) => (k === 'accreditation' && accVerifiedFor(c) ? 'Accredited investor verification' : FL[k]);
+  /** Why the verification step appeared after the investor had moved past it (flowSteps sets fl.accLate). */
+  function lateNote(c) {
+    const a = IV() && IV().peek ? IV().peek(c.inv).accreditation : {};
+    if (a.status === 'verified' && IV().selfCertified && IV().selfCertified(a)) return 'A self-certification is not enough for this offering: your accreditation needs to be verified before you subscribe.';
+    if (a.status === 'verified') return 'Your accreditation verification has expired, so it needs to be verified again before you subscribe.';
+    return 'Your accreditation needs to be verified for this offering before you subscribe.';
+  }
   function currentKey(c, steps) {
-    if (c.fl.completedAt) return 'done';
+    // Finished, unless the investor is signing the agreement again (its signed copy could not be sent: ivf-resign).
+    if (c.fl.completedAt && !c.fl.resignAt) return 'done';
     const k = c.fl.at || 'welcome';
     return steps.indexOf(k) >= 0 ? k : 'welcome';
   }
@@ -1170,6 +1214,7 @@
     const declined = env && (env.status === 'declined' || (s && s.status === 'declined'));
     return `${ivfH1(FL.agreement)}
       <p class="lede">${declined ? `You declined to sign. ${h(c.ws.tenant.support.team)} has been told and will contact you; you can also reach them at ${h(c.ws.tenant.support.email)}.` : `Review ${h(c.ws.tenant.shortName)}’s subscription agreement. Your commitment and details are filled in. Sign each highlighted field, then select Finish.`}</p>
+      ${c.fl.resignAt && !declined ? '<p class="meta ivf-why">The copy you signed earlier could not be sent from this device, so this is a new copy to sign. Your details and commitment are the same.</p>' : ''}
       ${env ? NS.esign.embed(env.id, c.inv.id) : ''}`;
   }
   function statusRow(label, value, cls) {
@@ -1184,10 +1229,14 @@
       if (o.finishError || (c.fl.completedAt && !o.finishing)) {
         const sup = t.support || {};
         const why = o.finishError ? `: ${h(o.finishError)}${/[.!?]$/.test(o.finishError) ? '' : '.'}` : '.';
-        // When this device cannot send the signed agreement, a connection is not the problem: the investor contacts the firm.
+        // When this device cannot send the signed agreement, or the link no longer works, a connection is not the problem and
+        // trying again cannot help: the investor contacts the firm, or signs a lost agreement again where that is possible.
         const todo = o.finishContact ? `Contact ${h(sup.team || 'investor relations')}${sup.email ? ` at ${h(sup.email)}` : ''}${sup.phone ? ` or ${h(sup.phone)}` : ''} for help.` : 'Check your connection, then try again. Nothing you entered is lost.';
+        const resign = o.finishContact && o.canResign;
+        const action = !o.finishContact ? '<button class="btn btn-primary" type="button" data-action="ivf-retry">Try again</button>' : resign ? '<button class="btn btn-primary" type="button" data-action="ivf-resign">Sign again</button>' : '';
         return `${ivfH1('Almost done')}<p class="lede" role="alert">We could not send your details to ${h(t.name)}${why} ${todo}</p>
-          <div class="ob-actions"><button class="btn btn-primary" type="button" data-action="ivf-retry">Try again</button></div>`;
+          ${resign ? `<p class="meta ivf-why">Or sign the agreement again on this page: ${h(t.shortName)}’s agreement is prepared again with the same details and commitment, and your details are sent once you sign it.</p>` : ''}
+          ${action ? `<div class="ob-actions">${action}</div>` : ''}`;
       }
       return `${ivfH1('Finishing your account…')}<p class="lede ivf-loading" role="status">Saving your details and sending them to ${h(t.name)}.</p>`;
     }
@@ -1376,6 +1425,7 @@
     }
     if (key === 'identity' && IV()) await IV().finishOnboarding(ws, i, d);
     if (key === 'accreditation') {
+      delete fl.accLate;
       if (!accVerifiedFor(c)) i.accreditation = Object.assign({}, i.accreditation, { basis: d.accBasis, date: NS.dates.today() });
       if (IV() && !c.it.existing) await IV().finishOnboarding(ws, i, accVerifiedFor(c) ? Object.assign({}, d, { accBasis: '' }) : d);
       else if (IV()) IV().decide(ws, i);
@@ -1450,6 +1500,22 @@
     }
     NS.app.save();
   }
+  /**
+   * Server mode: the signed agreement cannot be sent from this device (sendCompletion), so nothing reached the firm. The
+   * console's invitation row says so instead of "Subscription agreement" (a step of its own, so the console notices the change).
+   */
+  const UNSENT_LABEL = 'Subscription agreement: could not be sent; contact the investor';
+  function reportUnsent(c) {
+    if (!isRemote(c.ws) || !c.ws.invite.token) return;
+    const steps = flowSteps(c);
+    const n = steps.indexOf('agreement');
+    const tag = `agreement-unsent:${steps.length}`;
+    if (c.fl.reported === tag) return;
+    c.fl.reported = tag;
+    remote.progress(c.ws.invite.server, c.ws.invite.token, { stepKey: 'agreement-unsent', stepLabel: UNSENT_LABEL, stepIndex: n >= 0 ? n + 1 : Math.max(1, steps.length - 1), stepCount: steps.length }).catch(() => {
+      if (c.fl.reported === tag) c.fl.reported = '';
+    });
+  }
   function markOpened(c) {
     if (isRemote(c.ws) || c.it.status !== 'sent') return;
     c.it.status = 'opened';
@@ -1493,7 +1559,7 @@
       }
     });
     const files = {};
-    const unsent = [];
+    const unsent = []; // evidence that stays on this device: { kind, name, why }
     let total = 0;
     for (const id of ids) {
       let b = null;
@@ -1510,14 +1576,17 @@
       }
       if (id === agreement) {
         // Never sent without the agreement signed here: the firm could neither countersign nor accept the subscription.
-        // The investor is told why, and who to contact (Try again cannot make the file smaller).
+        // The investor is told why, and who to contact (Try again cannot make the file smaller). code: 'missing' (gone from
+        // this browser's storage) or 'format' (not a PDF) can be put right by signing again (ivf-resign); 'size' cannot.
         const e = new Error(!b ? 'Your signed subscription agreement could not be read from this browser’s storage.' : !fits ? `Your signed subscription agreement is ${mb(b.size)} MB, more than the ${mb(MAX_FILES)} MB this page can send.` : 'Your signed subscription agreement is not a PDF file this page can send.');
         e.contact = true;
+        e.code = !b ? 'missing' : !fits ? 'size' : 'format';
         throw e;
       }
-      // Evidence that cannot go (no room left, or not a PDF, PNG or JPEG) stays recorded by name for the firm, who can ask
-      // for it again; the investor's summary says so.
-      unsent.push(kindOf[id]);
+      // Evidence that cannot go (no room left, or not a PDF, PNG or JPEG) is not sent: the firm's copy of the record says so
+      // (below), and the investor's summary tells them the firm may ask for it again.
+      const k = kindOf[id];
+      unsent.push({ kind: k, name: str(v[k].fileName, 120), why: !b ? 'could not be read from the storage of the investor’s browser' : !fits ? (b.size > MAX_FILES ? `is ${mb(b.size)} MB, more than the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser` : `did not fit in the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser with the rest of their details`) : 'is not a PDF, PNG or JPEG file' });
     }
     const investor = clone(i);
     delete investor.onboarding.flow;
@@ -1527,6 +1596,17 @@
       investor.verify = acc && !acc.onFile && acc.status !== 'not_started' ? { accreditation: acc } : {};
       delete investor.kyc;
     }
+    // Evidence left on this device: the firm's copy of the record says what happened and to ask the investor for it, and
+    // points at no file (the console would offer a file it never received). This device's own record is left as it is.
+    const what = (x) => `${x.kind === 'identity' ? 'the ID' : 'the verification letter'} the investor uploaded${x.name ? ` (${x.name})` : ''}`;
+    unsent.forEach((x) => {
+      const r = investor.verify && investor.verify[x.kind];
+      if (!r || typeof r !== 'object') return;
+      const note = `${what(x).replace(/^t/, 'T')} ${x.why}, so it was not sent with their details. Ask the investor for it.`;
+      r.note = r.note ? `${r.note} ${note}` : note;
+      delete r.fileId;
+      delete r.fileName;
+    });
     const payload = {
       investor,
       request: c.req ? clone(c.req) : null,
@@ -1536,9 +1616,11 @@
       audit: (ws.audit || []).map((x) => ({ at: x.at, actor: x.actor, action: x.action, detail: x.detail, fund: x.fund || '', record: x.record || '' })),
       notifications: (ws.notifications || []).filter((n) => n.kind !== 'onboarding_completed').map(clone)
     };
+    // One entry in the firm's change log for it (on the payload only: a retry must not log it twice on this device).
+    if (unsent.length) payload.audit.push({ at: nowIso(), actor: 'Portal (automatic)', action: 'Uploaded evidence not sent', detail: `${i.title}: ${unsent.map((x) => `${what(x)} ${x.why}`).join('; ')}; ask the investor for ${unsent.length > 1 ? 'them' : 'it'}`, fund: c.off ? c.off.id : c.it.offeringId || '', record: i.id });
     await remote.complete(ws.invite.server, ws.invite.token, payload);
     c.fl.sentAt = nowIso();
-    if (unsent.length) c.fl.unsent = unsent;
+    if (unsent.length) c.fl.unsent = unsent.map((x) => x.kind);
     // This device keeps only what the summary shows (the last four digits of the bank account), and never the
     // invitation token: on a shared device the next person finds the summary, not the investor's details.
     if (i.payment && i.payment.bank) i.payment.bank = Object.assign({}, i.payment.bank, { account: '****' + U.last4(i.payment.bank.account), routing: '****' + U.last4(i.payment.bank.routing), holder: '' });
@@ -1550,6 +1632,16 @@
     c.it.status = 'completed';
     c.it.completedAt = new Date().toISOString();
     NS.app.save(true);
+  }
+  /** Server mode: can the investor sign the agreement again here? Its template, with the template's file, is still on this device. */
+  async function resignable(c) {
+    const env = envOf(c);
+    if (!c || !isRemote(c.ws) || !c.req || !c.off || !env || !NS.esign || !NS.esign.canResign) return false;
+    try {
+      return !!(await NS.esign.canResign(c.ws, env.id));
+    } catch (e) {
+      return false;
+    }
   }
   async function completeFlow(c) {
     if (!c) return;
@@ -1598,8 +1690,16 @@
       if (first && !isRemote(ws)) U.toast(c.it.existing ? 'Subscription submitted' : 'Account activated');
     } catch (e) {
       o.finishError = (e && e.message) || 'Something went wrong.';
-      // Retrying cannot help (sendCompletion: the signed agreement cannot be sent from this device): the Done page says who to contact.
-      o.finishContact = !!(e && e.contact);
+      // Retrying cannot help: the signed agreement cannot be sent from this device (sendCompletion), or the link no longer
+      // works (expired, cancelled or replaced: the server's message says which). The page says who to contact instead.
+      o.finishContact = !!(e && (e.contact || gone(e)));
+      o.canResign = false;
+      if (e && e.contact) {
+        // The firm hears it too: the console's invitation row shows this step instead of "Subscription agreement".
+        reportUnsent(c);
+        // A lost or damaged copy can be replaced by signing again, while the agreement's template is still on this device.
+        if (e.code !== 'size') o.canResign = await resignable(c);
+      }
     }
     o.finishing = false;
     NS.app.save(true);
@@ -1617,6 +1717,7 @@
       // An agreement for the investor alone is complete with their signature: nothing waits for the firm's countersignature.
       notify(c.ws, 'agreement_signed', `${c.inv.title} signed the subscription agreement`, complete ? `${env.title}: complete; this agreement needs no countersignature` : `${env.title}: waiting for your countersignature`, `console-envelope-${env.id}`);
       c.fl.at = 'done';
+      delete c.fl.resignAt;
       NS.app.save(true);
       setTimeout(() => completeFlow(fctx()), 0);
       return true;
@@ -1671,10 +1772,12 @@
       const steps = flowSteps(c);
       const key = currentKey(c, steps);
       const n = steps.indexOf(key);
+      // The step on screen: Continue and Back act on it only while it is still the current step (shownChanged).
+      o.shownKey = key;
       const head = `<header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${B.lockup(t)}</span><span class="ob-note">Account setup</span></div></header>`;
       const list = steps.map((s, i) => `<li class="${i < n || (key === 'done' && c.fl.completedAt) ? 'done' : i === n ? 'current' : ''}"${i === n ? ' aria-current="step"' : ''}><span class="ob-num">${i < n || (key === 'done' && c.fl.completedAt) ? icon('check') : i + 1}</span><span>${h(stepLabel(c, s))}</span></li>`).join('');
       const progress = `<div class="ivf-progress"><p class="ob-count">Step ${n + 1} of ${steps.length}<span class="ivf-count-label">: ${h(stepLabel(c, key))}</span></p><div class="ivf-bar" role="progressbar" aria-label="Account setup progress" aria-valuemin="1" aria-valuemax="${steps.length}" aria-valuenow="${n + 1}" aria-valuetext="Step ${n + 1} of ${steps.length}: ${h(stepLabel(c, key))}"><span style="width:${(((n + 1) / steps.length) * 100).toFixed(1)}%"></span></div></div>`;
-      const body = { welcome: fWelcome, login: fLogin, profile: fProfile, identity: fIdentity, accreditation: () => stepAccreditation(accVerifiedFor(c)).replace(/^\s*<h1>[^<]*<\/h1>/, ivfH1(h(stepLabel(c, 'accreditation')))), tax: fTax, payment: () => stepPayment().replace(/^\s*<h1>/, '<h1 tabindex="-1">'), subscribe: fSubscribe, agreement: fAgreement, done: fDone }[key](c);
+      const body = { welcome: fWelcome, login: fLogin, profile: fProfile, identity: fIdentity, accreditation: () => stepAccreditation(accVerifiedFor(c), { why: accWhy(c) }).replace(/^\s*<h1>[^<]*<\/h1>/, () => ivfH1(h(stepLabel(c, 'accreditation'))) + (c.fl.accLate ? `<p class="meta ivf-why">${lateNote(c)}</p>` : '')), tax: fTax, payment: () => stepPayment().replace(/^\s*<h1>/, '<h1 tabindex="-1">'), subscribe: fSubscribe, agreement: fAgreement, done: fDone }[key](c);
       const back = n > 0 && key !== 'done' && !(key === 'subscribe' && c.req && envOf(c) && signerOf(envOf(c), c.inv) && signerOf(envOf(c), c.inv).status === 'signed') ? '<button class="btn" type="button" data-action="ivf-back">Back</button>' : '';
       const submit = { welcome: 'Get started', subscribe: c.req ? 'Continue' : tplReady(c) ? 'Continue to the agreement' : 'Sign and submit subscription' }[key] || (steps[n + 1] === 'done' ? 'Finish' : 'Continue');
       const saved = key === 'welcome' ? '' : '<p class="ivf-saved">Your progress is saved. You can come back with your invitation link at any time.</p>';
@@ -1733,12 +1836,24 @@
     NS.app.render();
     window.scrollTo(0, 0);
   }
+  /**
+   * The step on screen is no longer the current one: flowSteps put the verification step ahead of it just now (the
+   * accreditation lapsed while the investor was on the subscription step). The page shows that step, without errors and
+   * with a note saying why, instead of checking the step the investor never saw or leaving it.
+   */
+  function shownChanged(c, key) {
+    const o = ob();
+    if (!o.shownKey || o.shownKey === key) return false;
+    moveTo(c, key);
+    return true;
+  }
   NS.forms['ivf-step'] = async () => {
     const c = fctx();
     const o = ob();
     if (!c || o.busy) return;
     const steps = flowSteps(c);
     const key = currentKey(c, steps);
+    if (shownChanged(c, key)) return;
     o.errors = validateFlow(c, key);
     if (Object.keys(o.errors).length) {
       NS.app.render();
@@ -1768,7 +1883,9 @@
     const c = fctx();
     if (!c) return;
     const steps = flowSteps(c);
-    const n = steps.indexOf(currentKey(c, steps));
+    const key = currentKey(c, steps);
+    if (shownChanged(c, key)) return;
+    const n = steps.indexOf(key);
     if (n > 0) moveTo(c, steps[n - 1]);
   };
   NS.actions['ivf-retry'] = () => {
@@ -1776,6 +1893,41 @@
     if (!o) return;
     o.finishError = '';
     completeFlow(fctx());
+  };
+  /**
+   * Sign again (server mode): the signed copy of the agreement is gone from this browser's storage, or damaged, so it cannot
+   * be sent. A new copy is made from the agreement's template, prefilled exactly as before, for the same subscription
+   * request; the investor signs it and everything is sent then. The first copy is voided on this device.
+   */
+  NS.actions['ivf-resign'] = async () => {
+    const c = fctx();
+    const o = ob();
+    if (!c || !o || o.finishing || o.resigning || !c.req || !c.off || c.fl.sentAt) return;
+    const old = envOf(c);
+    let env = null;
+    o.resigning = true;
+    try {
+      if (old && (await resignable(c))) env = NS.esign.resign(c.ws, old.id, c.inv, c.off, { cents: c.req.cents, cls: c.req.cls });
+    } catch (e) {
+      env = null;
+    }
+    o.resigning = false;
+    if (!env) {
+      o.canResign = false;
+      NS.app.render();
+      return U.toast(`The agreement could not be prepared again on this device. Contact ${c.ws.tenant.support.team || 'the firm that invited you'} for help.`);
+    }
+    c.req.envelopeId = env.id;
+    c.req.signedAt = '';
+    c.fl.envelopeId = env.id;
+    delete c.fl.signedAt;
+    c.fl.resignAt = nowIso();
+    c.fl.reported = '';
+    // This device's notice of the first signature names an envelope the firm never receives.
+    c.ws.notifications = (c.ws.notifications || []).filter((n) => n.route !== `console-envelope-${old.id}`);
+    if (NS.audit) NS.audit.log(c.ws, { action: 'Subscription agreement prepared again', record: c.req.id, fund: c.off.id, detail: `${c.inv.title}: the copy signed earlier could not be sent from the investor's device, so a new copy was prepared from the template with the same details and commitment, for the investor to sign`, actor: `${c.inv.title} (investor)` });
+    Object.assign(o, { finishError: '', finishContact: false, canResign: false, triedFinish: false });
+    moveTo(c, 'agreement');
   };
   NS.actions['ivf-reload'] = () => {
     const r = S().remote;

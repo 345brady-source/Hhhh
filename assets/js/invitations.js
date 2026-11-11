@@ -53,6 +53,8 @@
   const probe = (inv) => (inv && !inv.verify ? Object.assign({}, inv) : inv);
   /** "finished onboarding", or for an investor already on file invited to another offering, "finished their subscription". */
   const finishedWhat = (it) => (it && it.existing ? 'finished their subscription' : 'finished onboarding');
+  /** "started onboarding", or for an investor already on file, "started their subscription". */
+  const startedWhat = (it) => (it && it.existing ? 'started their subscription' : 'started onboarding');
 
   /* ---------- Records ---------- */
   const list = (ws) => (ws.invitations = ws.invitations || []);
@@ -265,7 +267,7 @@
       `Questions? Contact ${t.support.team}${isEmail(t.support.email) ? ` at ${t.support.email}` : ''}${t.support.phone ? ` or ${t.support.phone}` : ''}.`
     ];
     const text = [lines.join('\n\n'), `Start here: ${link}`, tail.join('\n'), t.legalName || t.name].join('\n\n');
-    return { subject, lines, tail, link, text, to: inv.email, toName: inv.contact, fromName: t.name, replyTo: isEmail(t.support.email) ? t.support.email : '', button: off ? 'Start your onboarding' : 'Set up your account' };
+    return { subject, lines, tail, link, text, to: inv.email, toName: inv.contact, fromName: t.name, replyTo: isEmail(t.support.email) ? t.support.email : '', button: off ? (it.existing ? 'Review and subscribe' : 'Start your onboarding') : 'Set up your account' };
   }
   /** mailto: with the subject and body; CRLF line breaks (RFC 6068). */
   function mailtoFor(ws, it) {
@@ -297,7 +299,7 @@
     // One progress notice per invitation, kept current (unread only when they start).
     const have = notes(ws).find((n) => n.kind === 'invite_progress' && n.invitationId === it.id);
     if (have) Object.assign(have, { detail, at: new Date().toISOString() });
-    else if (first) Object.assign(notify(ws, 'invite_progress', `${inv ? inv.title : 'An investor'} started onboarding`, detail, 'console-investors'), { invitationId: it.id });
+    else if (first) Object.assign(notify(ws, 'invite_progress', `${inv ? inv.title : 'An investor'} ${startedWhat(it)}`, detail, 'console-investors'), { invitationId: it.id });
     if (inv && inv.onboarding.status === 'invited') inv.onboarding = Object.assign({}, inv.onboarding, { status: 'in_progress' });
   }
   function requestFor(ws, it) {
@@ -314,6 +316,7 @@
     const st = inv && IV() && IV().active(ws) ? IV().status(ws, inv) : null;
     const parts = [];
     if (r && off) parts.push(`${money(off, r.cents)} subscription to ${off.name}`);
+    else if (off && it.requestDropped) parts.push(`${it.existing ? 'Their' : 'Account activated; their'} subscription to ${off.name} from their device was not imported (${it.requestDropped}); ask them to subscribe again`);
     else if (off && !it.existing) parts.push(`Account activated; no subscription to ${off.name}${off.status !== 'Raising' ? ', which stopped raising before they reached that step' : ''}`);
     else if (off) parts.push(`No subscription to ${off.name}${off.status !== 'Raising' ? ', which stopped raising before they reached that step' : ''}`);
     else parts.push('Account activated');
@@ -413,7 +416,12 @@
       if (ready && pdf) esign = { template: { id: tpl.id, title: tpl.title, fileName: tpl.fileName, docId: tpl.docId, message: tpl.message || '', roles: tpl.roles, fields: tpl.fields, pages: tpl.pages, pageSizes: tpl.pageSizes, sha256: tpl.sha256 }, pdf: await blobB64(pdf) };
     }
     const logo = t.logo && t.logo.type === 'image' && /^data:image\/(png|jpeg|gif|webp|svg\+xml);base64,/i.test(t.logo.image || '') && t.logo.image.length <= 600 * 1024 ? t.logo.image : '';
-    const c = IV().ensure(ws);
+    const I = IV();
+    const c = I.ensure(ws);
+    // Whether this invitation needs VERIFIED accreditation, answered here on the whole workspace: the investor's device holds
+    // only the invited offering, so its own reading of the firm's rules ("no offering names an exemption") can misfire.
+    // Read only (probe): nothing is written on the investor.
+    const accreditationRequired = !!(I && I.needsAccreditation && ((off && I.needsAccreditation(ws, probe(inv), off)) || I.needsAccreditation(ws, probe(inv))));
     return {
       workspace: t.id,
       sendEmail: true,
@@ -424,7 +432,7 @@
       investor: Object.assign({ id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email }, it.existing ? { existing: onFileSummary(ws, inv, it) } : {}),
       offering,
       invitation: Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}),
-      verification: { connections: clone(c.connections), use: clone(c.use), rules: clone(c.rules) },
+      verification: { connections: clone(c.connections), use: clone(c.use), rules: clone(c.rules), accreditationRequired },
       esign
     };
   }
@@ -435,7 +443,7 @@
    */
   function onFileSummary(ws, inv, it) {
     const I = IV();
-    const a = (inv.verify && inv.verify.accreditation) || {};
+    const a = (I && I.peek ? I.peek(inv).accreditation : inv.verify && inv.verify.accreditation) || {};
     // The link skips accreditation only for a current verification by a third party: a self-certification is enough for
     // Rule 506(b) only, so where the offering needs verified accreditation the investor is still asked to verify.
     // probe(): reading must not leave a blank verification record on a legacy investor (it would read as unverified).
@@ -458,8 +466,12 @@
     }
     const inv = invOf(ws, it.investorId);
     try {
-      const r = await api(ws, 'POST', '/v1/invitations', await snapshot(ws, it));
-      Object.assign(it, { serverId: String(r.id || ''), link: String(r.link || ''), token: '', emailStatus: r.emailStatus || 'sent', emailError: r.emailError || '', expiresAt: r.expiresAt || it.expiresAt, sentAt: new Date().toISOString() });
+      const snap = await snapshot(ws, it);
+      const r = await api(ws, 'POST', '/v1/invitations', snap);
+      // The agreement template the investor's device was given (or none): an envelope it sends back is checked against it on
+      // import, even after the template is replaced or deleted here (merge).
+      const tpl = snap.esign && snap.esign.template;
+      Object.assign(it, { serverId: String(r.id || ''), link: String(r.link || ''), token: '', emailStatus: r.emailStatus || 'sent', emailError: r.emailError || '', expiresAt: r.expiresAt || it.expiresAt, sentAt: new Date().toISOString(), esignTemplate: tpl ? { id: tpl.id, roles: (tpl.roles || []).slice(), docId: tpl.docId } : null });
       audit(ws, it.emailStatus === 'sent' ? 'Invitation emailed' : 'Invitation saved on the integration server', `${inv ? inv.title : it.investorId}: ${it.emailStatus === 'sent' ? `link emailed to ${inv ? inv.email : ''}` : it.emailStatus === 'outbox' ? 'kept in the server outbox (no SMTP settings)' : it.emailError || it.emailStatus}`, it.offeringId, it.investorId);
       NS.app.save(true);
       return it.emailError ? { emailStatus: it.emailStatus, error: it.emailError } : { emailStatus: it.emailStatus };
@@ -527,7 +539,13 @@
   }
 
   /* ---------- Server mode: statuses and importing finished onboardings ---------- */
-  const check = { at: '', error: '', busy: null };
+  const check = { at: '', error: '', busy: null, subscriptions: 0 };
+  /** "2 finished onboardings", "1 finished subscription", or both kinds: what the last import brought (check.subscriptions of n were investors on file). */
+  function importedText(n) {
+    const subs = Math.min(n, check.subscriptions || 0);
+    const what = subs === n ? 'subscription' : subs ? 'invitation' : 'onboarding';
+    return `${n} finished ${what}${n === 1 ? '' : 's'}`;
+  }
   /** Anything on the server still to hear about (an older integration server without invitations is never asked). */
   const awaiting = (ws) => list(ws).some((x) => x.serverId && (OPEN.indexOf(x.status) >= 0 || (x.status === 'completed' && !x.importedAt)));
   function applyRow(ws, it, row) {
@@ -548,7 +566,7 @@
     if (it.stepKey && it.stepKey !== wasStep && it.stepKey !== 'done') {
       const have = notes(ws).find((n) => n.kind === 'invite_progress' && n.invitationId === it.id);
       if (have) Object.assign(have, { detail: stepText(it), at: new Date().toISOString() });
-      else Object.assign(notify(ws, 'invite_progress', `${inv ? inv.title : 'An investor'} started onboarding`, stepText(it), 'console-investors'), { invitationId: it.id });
+      else Object.assign(notify(ws, 'invite_progress', `${inv ? inv.title : 'An investor'} ${startedWhat(it)}`, stepText(it), 'console-investors'), { invitationId: it.id });
     }
     if (inv && it.stepKey && inv.onboarding.status === 'invited') inv.onboarding = Object.assign({}, inv.onboarding, { status: 'in_progress' });
     return changed;
@@ -592,18 +610,33 @@
   function noteAccreditation(inv, a) {
     if (inv.accreditation && typeof inv.accreditation === 'object' && inv.accreditation.basis) inv.accreditation = Object.assign({}, inv.accreditation, { date: a.verifiedAt, expires: a.expiresAt });
   }
-  /**
-   * Approved before automated verification was connected (integrations.js legacy(): KYC cleared, no verification record).
-   * Earlier versions left a blank record on such an investor just by reading their accreditation (no check started, no
-   * decision made, KYC still cleared): that investor is a legacy investor too.
-   */
+  /** A verification record with no result in it (every check not started, no decision made): earlier versions left one just by reading. */
+  function blankOf(v) {
+    const blank = (x) => !x || !x.status || x.status === 'not_started';
+    return !!v && typeof v === 'object' && blank(v.identity) && blank(v.aml) && blank(v.accreditation) && (!v.decision || (v.decision.status === 'pending' && !v.decision.at));
+  }
+  /** No verification record of their own: none, or the blank one an earlier version left (integrations.js recorded()). */
+  const unrecorded = (inv) => !inv.verify || typeof inv.verify !== 'object' || blankOf(inv.verify);
+  /** Approved before automated verification was connected (integrations.js legacy(): KYC cleared, no record of their own). */
   function legacyOf(inv) {
     const I = IV();
     if (!I || !inv) return false;
-    if (I.legacy(inv)) return true;
-    const v = inv.verify;
-    const blank = (x) => !x || !x.status || x.status === 'not_started';
-    return !!(v && inv.kyc && inv.kyc.status === 'cleared' && blank(v.identity) && blank(v.aml) && blank(v.accreditation) && (!v.decision || (v.decision.status === 'pending' && !v.decision.at)));
+    return !!I.legacy(inv) || (unrecorded(inv) && !!inv.kyc && inv.kyc.status === 'cleared');
+  }
+  /**
+   * An investor on file without a record of their own: the record starts from their KYC on file (integrations.js seedFromKyc:
+   * identity verified, screening and the decision as the KYC record has them: an approval, a potential match under review, a
+   * decline), so a new result is judged against what they hold, never against blank checks.
+   */
+  function seedOnFile(inv, it) {
+    const I = IV();
+    if (!unrecorded(inv)) return;
+    if (typeof I.seedFromKyc === 'function') {
+      I.seedFromKyc(inv);
+      return;
+    }
+    // An integrations.js without seedFromKyc (normally the same release): legacy investors only, as before.
+    if (legacyOf(inv)) seedLegacy(inv, it);
   }
   /**
    * A legacy investor's verification record (legacyOf), from what they already hold: identity verified, screening clear,
@@ -627,6 +660,53 @@
       decision: { status: 'approved', at, by: '', reason: 'verified before automated verification was connected' }
     };
   }
+  /**
+   * The agreement template this invitation carried to the investor's device: recorded when it was sent (send(); null when it
+   * carried none) or, for an invitation sent before that was recorded, the offering's subscription agreement template now.
+   */
+  function carriedTemplate(ws, it) {
+    if (it.esignTemplate === null) return null;
+    if (it.esignTemplate && typeof it.esignTemplate === 'object' && it.esignTemplate.id) return it.esignTemplate;
+    const t = NS.esign && NS.esign.subscriptionTemplate ? NS.esign.subscriptionTemplate(ws, it.offeringId) : null;
+    return t ? { id: t.id, roles: (t.roles || []).slice(), docId: t.docId } : null;
+  }
+  /**
+   * An envelope from the investor's device: new to this console, made from the agreement template this invitation carried
+   * (the offering's subscription agreement), and signed as that template says: this investor, plus the firm's countersigner
+   * exactly when the template has a role besides the investor's. Anything else is not imported: an envelope naming another
+   * investor would appear in their portal, one from another template could leave out the firm's signature, and one pointing
+   * at another file here would show that file to this investor. Returns { firm } (the firm countersigns) or null.
+   */
+  function envelopeCheck(ws, it, inv, env) {
+    if (!/^[\w.-]{1,70}$/.test(String(env.id)) || ws.envelopes.some((x) => x.id === env.id)) return null;
+    const signers = Array.isArray(env.signers) ? env.signers : [];
+    if (!signers.every((s) => s && typeof s === 'object' && (s.investorId ? s.investorId === inv.id && s.role === 'investor' : s.role === 'countersigner'))) return null;
+    const counters = signers.filter((s) => s.role === 'countersigner').length;
+    if (signers.filter((s) => s.role === 'investor').length !== 1 || counters > 1) return null;
+    const tpls = ws.esignTemplates || [];
+    const given = carriedTemplate(ws, it);
+    let roles = null;
+    let docId = null;
+    if (it.esignTemplate !== undefined || tpls.some((t) => t.id === env.templateId)) {
+      // The template it carried: as recorded when it was sent (here, or deleted since), or else a template still here, which
+      // must be the offering's subscription agreement.
+      if (!given || String(env.templateId || '') !== given.id) return null;
+      const tpl = tpls.find((t) => t.id === given.id);
+      roles = tpl ? tpl.roles || [] : Array.isArray(given.roles) ? given.roles : null;
+      docId = tpl ? tpl.docId : given.docId || null;
+    } else if (!env.templateId) return null;
+    else {
+      // An invitation sent before the template was recorded, from a template deleted since: the envelope and its copies are
+      // kept, as an agreement the firm countersigns (nothing here says it is not). Its original points at that template's file
+      // only where another envelope from that template here already does.
+      docId = ws.envelopes.some((e) => e.templateId && e.templateId === env.templateId && e.docId === env.docId) ? env.docId : null;
+    }
+    const firm = !roles || roles.some((r) => !/^investor/i.test(String(r)));
+    if (firm !== counters > 0) return null;
+    // The original is the template's PDF (esign.js createFromTemplate), never a file the device names.
+    env.docId = docId;
+    return { firm };
+  }
   /** Same bytes: the file is already here from an earlier attempt at this same import (never a different file). */
   async function sameFile(a, b) {
     if (!a || !b || a.size !== b.size) return false;
@@ -636,23 +716,22 @@
     return true;
   }
   /**
-   * An envelope from the investor's device: new to this console and made from the firm's agreement template, signed by this
-   * investor and, at most, the firm's countersigner. Anything else is not imported: an envelope naming another investor would
-   * appear in their portal, and one pointing at another file here would show that file to this investor.
+   * Why the investor's subscription request cannot be imported ('' when it can): it is for this invitation's offering, for
+   * the commitment the sponsor set on the invitation or, when none was set, a whole number of cents at least the offering's
+   * minimum (the share class's when higher), and in a share class that is open on the offering (the one the invitation set,
+   * if it set one). The investor's form checks the same, and so does the integration server.
    */
-  async function envelopeOk(ws, inv, env) {
-    if (!/^[\w.-]{1,70}$/.test(String(env.id)) || ws.envelopes.some((x) => x.id === env.id)) return false;
-    const signers = Array.isArray(env.signers) ? env.signers : [];
-    if (!signers.some((s) => s && s.investorId === inv.id)) return false;
-    if (!signers.every((s) => s && typeof s === 'object' && (s.investorId ? s.investorId === inv.id && s.role === 'investor' : s.role === 'countersigner'))) return false;
-    // The original is the template's PDF (esign.js createFromTemplate). If the template has since been deleted, the envelope may
-    // still name its file when nothing else is stored under that id here, or the file is a template's or is shared by other
-    // envelopes from that template.
-    const tpls = ws.esignTemplates || [];
-    const tpl = tpls.find((t) => t.id === env.templateId);
-    if (tpl) env.docId = tpl.docId;
-    else if (env.docId && (await getFile(env.docId)) && !tpls.some((t) => t.docId === env.docId) && !ws.envelopes.some((e) => e.templateId && e.templateId === env.templateId && e.docId === env.docId)) return false;
-    return true;
+  function requestProblem(ws, it, r, off) {
+    if (!/^[\w.-]{1,80}$/.test(String(r.id || ''))) return 'it has no valid reference';
+    if (!off || r.offeringId !== off.id) return 'it is not for the offering on this invitation';
+    const cls = r.cls === undefined || r.cls === null || r.cls === '' ? String(it.cls || '') : String(r.cls);
+    if (it.cls && cls !== it.cls) return 'its share class is not the one set on the invitation';
+    if (cls && !openClasses(off).some((c) => c.id === cls)) return 'its share class is not open on this offering';
+    const cents = Number(r.cents);
+    if (!Number.isInteger(cents) || cents <= 0 || cents > 1e15) return 'the amount is not valid';
+    if (it.cents > 0) return cents === it.cents ? '' : `the amount is not the ${money(off, it.cents)} commitment set on the invitation`;
+    const min = minimumCents(off, cls);
+    return cents < min ? `the amount is below the ${money(off, min)} minimum` : '';
   }
   /** Merge a finished onboarding sent back by the investor's browser into this workspace. */
   async function merge(ws, it, sub) {
@@ -662,9 +741,8 @@
     let inv = invOf(ws, it.investorId);
     // An invitation to subscribe sent to an investor on file: their record here is the one that counts, whatever its status now.
     const onFile = !!it.existing && !!inv;
-    // Worked out before anything below touches their verification record (integrations.js reads a legacy investor as approved).
-    const legacyOnFile = onFile && legacyOf(inv);
     let taken = false;
+    let stamped = false;
     if (!inv) {
       inv = { id: it.investorId, contact: '', title: '', type: 'individual', email: '', onboarding: {}, payment: { method: 'check', bank: null }, positions: [] };
       ws.investors.push(inv);
@@ -674,13 +752,14 @@
     if (onFile) {
       const acc = src.verify && src.verify.accreditation;
       if (acc && typeof acc === 'object' && !acc.onFile && acc.status && acc.status !== 'not_started' && I) {
-        // A legacy investor keeps their approval: the new result joins what they already hold instead of blank checks.
-        if (legacyOnFile) seedLegacy(inv, it);
+        // The new result joins the record on file. Without a record of their own, it starts from their KYC on file (an
+        // approval, a potential match under review, a decline): never from blank checks, which read as not started.
+        seedOnFile(inv, it);
         I.vOf(inv).accreditation = clone(acc);
         taken = true;
         if (src.accreditation && typeof src.accreditation === 'object' && src.accreditation.basis) inv.accreditation = clone(src.accreditation);
-      } else if (legacyOnFile) {
-        // Nothing new to record: a blank record an earlier version left on a legacy investor goes, so they read as approved again.
+      } else if (inv.verify && unrecorded(inv)) {
+        // Nothing new to record: a blank record an earlier version left goes, so they read as their KYC on file again.
         delete inv.verify;
       }
       if (src.esignConsent && typeof src.esignConsent === 'object') inv.esignConsent = clone(src.esignConsent);
@@ -690,6 +769,13 @@
         if (BAD_KEYS.indexOf(k) < 0) inv[k] = clone(src[k]);
       });
       inv.onboarding = Object.assign({}, inv.onboarding, { source: 'invitation', invitationId: it.id, offeringId: it.offeringId });
+      // A new investor has no KYC from before automated verification: only a verification record says where they stand. One
+      // the device sent without a result gets a dated pending decision, so their KYC record alone never reads as approved
+      // (integrations.js reads an investor without a record of their own from their KYC on file).
+      if (I && unrecorded(inv)) {
+        inv.verify = { identity: { status: 'not_started' }, aml: { status: 'not_started' }, accreditation: { status: 'not_started' }, decision: { status: 'pending', at: nowIso() } };
+        stamped = true;
+      }
     }
     delete inv.onboarding.flow;
     if (!Array.isArray(inv.positions)) inv.positions = [];
@@ -713,30 +799,53 @@
       else delete x.fileId;
     });
 
-    // The investor's request always arrives pending: only the firm accepts it, for the offering this invitation is for.
+    // The investor's request always arrives pending: only the firm accepts it, for the offering this invitation is for, and only
+    // for an amount and share class that offering takes (requestProblem). A request that does not pass is not imported, nor is
+    // the agreement signed for it, and the change log and the import notification say why.
     const r = sub.request && typeof sub.request === 'object' ? clone(sub.request) : null;
     ws.requests = ws.requests || [];
-    const rIn = r && r.id && !ws.requests.some((x) => x.id === r.id) && it.offeringId && r.offeringId === it.offeringId && offOf(ws, r.offeringId) ? r : null;
+    const off = offOf(ws, it.offeringId);
+    // A request already here is this same import tried before (it stopped after storing the request): not added twice.
+    const again = !!(r && r.id && ws.requests.some((x) => x.id === r.id));
+    const dropped = r && !again ? requestProblem(ws, it, r, off) : '';
+    const rIn = r && !again && !dropped ? r : null;
     if (rIn) {
+      const cls = rIn.cls === undefined || rIn.cls === null || rIn.cls === '' ? String(it.cls || '') : String(rIn.cls);
       // Whether they already hold this offering is this console's to say: the device's copy of the record has no positions.
-      Object.assign(rIn, { type: 'subscription', investorId: inv.id, status: 'pending', additional: inv.positions.some((p) => p.offeringId === rIn.offeringId) });
+      Object.assign(rIn, { type: 'subscription', investorId: inv.id, offeringId: off.id, status: 'pending', cents: Number(rIn.cents), additional: inv.positions.some((p) => p.offeringId === off.id) });
+      if (cls) rIn.cls = cls;
+      else delete rIn.cls;
       ['decided', 'note', 'completed', 'paid', 'paidCents', 'waitingFor'].forEach((k) => delete rIn[k]);
     }
+    if (dropped) it.requestDropped = dropped;
+    else delete it.requestDropped;
     const env = sub.envelope && typeof sub.envelope === 'object' && sub.envelope.id ? clone(sub.envelope) : null;
     ws.envelopes = ws.envelopes || [];
-    const envIn = env && (await envelopeOk(ws, inv, env)) ? env : null;
+    // The agreement signed for a request that is not imported is kept as a record, voided (below): nobody is asked to sign it.
+    const tied = !!(dropped && env && r.envelopeId === env.id);
+    const chk = env ? envelopeCheck(ws, it, inv, env) : null;
+    const envIn = chk ? env : null;
     if (envIn) {
-      // Only the firm countersigns: a countersignature never arrives from the investor's device.
+      if (it.offeringId) envIn.offeringId = it.offeringId;
+      // Only the firm countersigns, as the firm (esign.js names its support team): a countersignature never arrives from the
+      // investor's device, and the countersigner is never someone the device named.
       let forged = false;
       envIn.signers.forEach((s) => {
-        if (s.role === 'countersigner' && s.status === 'signed') {
+        if (s.role !== 'countersigner') return;
+        Object.assign(s, { name: ws.tenant.support.team, email: ws.tenant.support.email, account: '' });
+        if (s.status === 'signed') {
           Object.assign(s, { status: 'waiting', signedAt: null, signature: null, initials: null });
           forged = true;
         }
       });
-      // An agreement with a countersigner is never complete before the firm signs; one for the investor alone can arrive
+      // An agreement the firm countersigns is never complete before the firm signs; one for the investor alone can arrive
       // complete, with the signed copy it produced (checked once the files are stored).
-      if (forged || (envIn.status === 'completed' && envIn.signers.some((s) => s.role === 'countersigner'))) Object.assign(envIn, { status: 'sent', completedAt: null });
+      if (forged || (envIn.status === 'completed' && chk.firm)) Object.assign(envIn, { status: 'sent', completedAt: null });
+      if (tied) {
+        const why = `the subscription could not be accepted as submitted (${dropped}). Contact ${ws.tenant.support.team} to subscribe again.`;
+        Object.assign(envIn, { status: 'voided', completedAt: null, voidedAt: nowIso(), voidReason: why });
+        envIn.events = (Array.isArray(envIn.events) ? envIn.events : []).concat([{ at: nowIso(), actor: 'Portal (automatic)', action: 'Voided', detail: why }]);
+      }
       // The envelope's copies keep esign.js's names: <envelope id>-work after a signature, <envelope id>-signed once everyone
       // has signed. Any other id would point at a file this envelope did not produce.
       if (envIn.workDocId !== `${envIn.id}-work`) envIn.workDocId = null;
@@ -789,6 +898,7 @@
       if (rIn.envelopeId && (!envIn || rIn.envelopeId !== envIn.id)) delete rIn.envelopeId;
       ws.requests.push(rIn);
     }
+    if (dropped) audit(ws, 'Subscription not imported', `${inv.title || inv.id}: the subscription request from the investor's device was not added to the portal: ${dropped}${tied && envIn ? '; the agreement signed for it is kept, voided' : ''}. Ask them to subscribe again.`, it.offeringId, inv.id);
     // The one document listing the device may add: the investor's signed copy of the agreement, which esign.js publishes when
     // everyone has signed. Built here from the envelope, for this investor alone.
     ws.docs = ws.docs || [];
@@ -797,9 +907,15 @@
     if (d && !ws.docs.some((x) => x.id === signedId)) {
       ws.docs.push({ id: signedId, title: String(d.title || envIn.title || 'Subscription agreement').slice(0, 200), fileName: String(d.fileName || 'Subscription_agreement_signed.pdf').slice(0, 160), type: 'application/pdf', size: kept[signedId], sha256: String(envIn.sha256Signed || ''), cat: 'Legal', offeringId: envIn.offeringId || it.offeringId || null, audience: 'investors', investors: [inv.id], date: isDay(d.date) && d.date <= today() ? d.date : today(), taxYear: '', publishedAt: new Date().toISOString(), publishedBy: 'E-sign', envelopeId: envIn.id });
     }
-    (Array.isArray(sub.audit) ? sub.audit : []).forEach((a) => {
-      if (!a || !a.action) return;
-      NS.audit.log(ws, { at: a.at || undefined, actor: a.actor || `${inv.title} (investor)`, action: String(a.action), detail: `${a.detail ? String(a.detail) + ' ' : ''}(from the investor's device)`, fund: a.fund || it.offeringId || '', record: a.record || inv.id });
+    // The device's own change-log entries: always this investor's, dated between the invitation's sending and now, for this
+    // offering and this investor, and marked as coming from their device (never a member of staff, never backdated).
+    const from = Date.parse(it.sentAt || '');
+    const until = Date.now();
+    (Array.isArray(sub.audit) ? sub.audit : []).slice(0, 500).forEach((a) => {
+      if (!a || typeof a !== 'object' || !a.action) return;
+      const t = Date.parse(a.at || '');
+      const at = Math.min(until, Math.max(isFinite(from) ? from : until, isFinite(t) ? t : until));
+      NS.audit.log(ws, { at: new Date(at).toISOString().replace(/\.\d{3}Z$/, 'Z'), actor: `${inv.title || inv.contact || inv.id} (investor)`, action: String(a.action).slice(0, 200), detail: `${a.detail ? String(a.detail).slice(0, 2000) + ' ' : ''}(from the investor's device)`, fund: it.offeringId || '', record: inv.id });
     });
     (Array.isArray(sub.notifications) ? sub.notifications : []).forEach((n) => {
       if (n && n.title) notes(ws).push({ id: uid('ntf'), at: n.at || new Date().toISOString(), kind: n.kind || 'invite_progress', title: String(n.title), detail: String(n.detail || ''), route: safeRoute(n.route), read: false });
@@ -811,6 +927,8 @@
       I.decide(ws, inv);
       I.syncKyc(ws, inv);
     }
+    // A new investor whose device sent no result: their KYC record says so too.
+    if (stamped && I.active(ws)) I.syncKyc(ws, inv);
   }
   /**
    * The integration server holds for review any result from the investor's browser that it has no record of.
@@ -876,6 +994,7 @@
     check.busy = (async () => {
       let n = 0;
       let changed = false;
+      check.subscriptions = 0;
       try {
         const rows = await api(ws, 'GET', `/v1/invitations?workspace=${encodeURIComponent(ws.tenant.id)}`);
         const all = Array.isArray(rows) ? rows : rows && Array.isArray(rows.invitations) ? rows.invitations : [];
@@ -895,6 +1014,7 @@
             else audit(ws, 'Onboarding imported', `${x.inv ? x.inv.title : it.investorId}: records from the investor's device added to the portal (${x.text}); the copy on the integration server is deleted`, it.offeringId, it.investorId);
             notify(ws, 'onboarding_completed', `${x.inv ? x.inv.title : 'An investor'} ${finishedWhat(it)}`, x.text, x.route);
             n++;
+            if (it.existing) check.subscriptions++;
             changed = true;
             NS.app.save(true);
           }
@@ -933,7 +1053,9 @@
       const st = IV().status(ws, inv);
       if (gate || st.key !== 'approved') {
         if (!r.waitingFor) {
-          r.waitingFor = st.key === 'review' ? 'verification held for review' : st.key === 'rejected' ? 'verification not approved' : gate && gate.action === 'accreditation' ? 'accreditation verification' : 'verification';
+          // An approved investor held at the gate is waiting on their accreditation (one to start, or one submitted and under
+          // review): integrations.js subscribeGate asks about the decision first.
+          r.waitingFor = st.key === 'review' ? 'verification held for review' : st.key === 'rejected' ? 'verification not approved' : st.key === 'approved' && gate ? 'accreditation verification' : 'verification';
           audit(ws, 'Automatic acceptance waiting', `${inv.title}: agreement countersigned; the subscription is accepted automatically once ${r.waitingFor === 'verification' ? 'verification is approved' : `the ${r.waitingFor} is resolved`}`, o.id, r.id);
           changed = true;
         }
@@ -1358,7 +1480,7 @@
     const w = W();
     const n = await importCompleted(w);
     NS.app.render();
-    U.toast(check.error ? `Could not check: ${check.error}` : n ? `${n} finished onboarding${n === 1 ? '' : 's'} added to the portal.` : 'Checked. Nothing new.');
+    U.toast(check.error ? `Could not check: ${check.error}` : n ? `${importedText(n)} added to the portal.` : 'Checked. Nothing new.');
   };
   NS.changes['inv8-rule'] = (el) => {
     const w = W();
@@ -1537,7 +1659,10 @@
     if (!E.diy) return '';
     const out = [];
     const finished = list(ws).filter((it) => it.status === 'completed').map((it) => Object.assign(outcome(ws, it), { it })).filter((x) => waitingCountersign(x.env));
-    if (finished.length) out.push(`<li><a href="#${finished.length === 1 ? `console-envelope-${h(finished[0].env.id)}` : 'console-esign'}">${finished.length === 1 ? `${h(finished[0].inv ? finished[0].inv.title : 'An investor')} ${finishedWhat(finished[0].it)}; their subscription agreement is` : `${finished.length} investors finished onboarding; their subscription agreements are`} waiting for your countersignature</a></li>`);
+    // Investors already on file finished a subscription, not onboarding: the plural says which, or both.
+    const subs = finished.filter((x) => x.it.existing).length;
+    const many = subs === finished.length ? 'finished their subscriptions' : subs ? 'finished onboarding or their subscriptions' : 'finished onboarding';
+    if (finished.length) out.push(`<li><a href="#${finished.length === 1 ? `console-envelope-${h(finished[0].env.id)}` : 'console-esign'}">${finished.length === 1 ? `${h(finished[0].inv ? finished[0].inv.title : 'An investor')} ${finishedWhat(finished[0].it)}; their subscription agreement is` : `${finished.length} investors ${many}; their subscription agreements are`} waiting for your countersignature</a></li>`);
     const waiting = (ws.requests || []).filter((r) => r.type === 'subscription' && r.status === 'pending' && r.waitingFor);
     if (waiting.length) out.push(`<li><a href="#console-kyc">${waiting.length} countersigned subscription${waiting.length === 1 ? ' is' : 's are'} waiting for verification before automatic acceptance</a></li>`);
     const manual = list(ws).filter((it) => it.emailStatus === 'manual' && OPEN.indexOf(it.status) >= 0 && !it.openedAt);
@@ -1561,7 +1686,7 @@
       const typing = document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
       const dlg = document.getElementById('dlg');
       if (before !== after && !typing && !(dlg && dlg.open) && ['console', 'console-investors', 'console-notifications'].indexOf(S().route) >= 0) NS.app.render();
-      if (n) U.toast(`${n} finished onboarding${n === 1 ? '' : 's'} added to the portal.`);
+      if (n) U.toast(`${importedText(n)} added to the portal.`);
     });
   }
   if (E.diy) {
