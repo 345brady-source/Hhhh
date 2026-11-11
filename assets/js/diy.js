@@ -37,6 +37,13 @@
   ];
 
   /* ---------- Sign-up ---------- */
+  /* Person names are asked as first and last name; the rest of the portal keeps the name as one string (name). */
+  const personName = (f) => [f.first, f.last].map((x) => String(x || '').trim()).filter(Boolean).join(' ');
+  /** '' when both parts are there (a full name typed into the first field also counts, for pasted names). */
+  const nameProblem = (f, who) => (!personName(f) ? `Enter ${who} first and last name.` : !String(f.last || '').trim() && !/\s/.test(personName(f)) ? `Enter ${who} last name.` : '');
+  /** First name and last name inputs bound to f.first and f.last (cls: the form's field class). */
+  const nameInputs = (cls, idp, bind, f, extra, errHtml) =>
+    `<label class="${cls}" for="${idp}-name"><span>First name</span><input id="${idp}-name" type="text" autocomplete="given-name" maxlength="60" data-bind="${bind}:first" value="${h(f.first || '')}"${extra || ''}></label><label class="${cls}" for="${idp}-last"><span>Last name</span><input id="${idp}-last" type="text" autocomplete="family-name" maxlength="60" data-bind="${bind}:last" value="${h(f.last || '')}"${extra || ''}>${errHtml || ''}</label>`;
   function signupState() {
     const u = S().ui;
     if (!u.signup) u.signup = { firm: '', name: '', email: '', password: '', focus: 'realestate', color: '#0F2742', logo: '', logoName: '', errors: {} };
@@ -63,7 +70,7 @@
             <form class="sd-card sd-form" data-form="diy-signup" novalidate>
               <h2>Create your portal</h2>
               <label class="field" for="sd-firm"><span>Firm name</span><input id="sd-firm" type="text" autocomplete="organization" data-bind="signup:firm" value="${h(f.firm)}"${inval('firm')}>${err('firm')}</label>
-              <label class="field" for="sd-name"><span>Your name</span><input id="sd-name" type="text" autocomplete="name" data-bind="signup:name" value="${h(f.name)}"${inval('name')}>${err('name')}</label>
+              ${nameInputs('field', 'sd', 'signup', f, inval('name'), err('name'))}
               <label class="field" for="sd-email"><span>Work email</span><input id="sd-email" type="email" autocomplete="email" data-bind="signup:email" value="${h(f.email)}"${inval('email')}>${err('email')}</label>
               <label class="field" for="sd-password"><span>Password</span><input id="sd-password" type="password" autocomplete="new-password" data-bind="signup:password" value="${h(f.password)}"${inval('password')}><span class="hint">At least 10 characters. You will add a second sign-in step after this.</span>${err('password')}</label>
               <fieldset class="field choice"><legend>What do you raise?</legend>${FOCUS.map(([v, l]) => `<label class="choice-row"><input type="radio" name="sd-focus" value="${v}" data-bind="signup:focus"${f.focus === v ? ' checked' : ''}><span>${h(l)}</span></label>`).join('')}</fieldset>
@@ -103,6 +110,10 @@
   NS.binders.signup = (path, v) => {
     const f = signupState();
     f[path] = v;
+    if (path === 'first' || path === 'last') {
+      f.name = personName(f);
+      path = 'name';
+    }
     if (f.errors[path]) {
       delete f.errors[path];
       const m = document.getElementById('sd-err-' + path);
@@ -126,7 +137,8 @@
     const f = signupState();
     const e = {};
     if (!String(f.firm).trim()) e.firm = 'Enter your firm’s name.';
-    if (!String(f.name).trim()) e.name = 'Enter your name.';
+    f.name = personName(f) || String(f.name || '').trim();
+    if (nameProblem(f, 'your')) e.name = nameProblem(f, 'your');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(f.email).trim())) e.email = 'Enter a valid email address.';
     if (String(f.password).length < 10) e.password = 'Use at least 10 characters.';
     f.errors = e;
@@ -216,7 +228,7 @@
             ${terms.length ? `<dl class="terms">${terms.map((r) => `<div><dt>${h(r.label)}</dt><dd>${h(r.value)}</dd></div>`).join('')}</dl>` : ''}
             <p class="meta">Create an account to see the offering documents and subscribe. ${h(t.shortName)} verifies the identity of every investor${needAcc ? ' and, because this is a Rule 506(c) offering, confirms that each investor is accredited' : ''}. One guided page takes you from your account to your subscription documents in about 10–15 minutes.</p>
             <form class="form-grid" data-form="join" novalidate>
-              <label class="field" for="jn-name"><span>Your name</span><input id="jn-name" type="text" autocomplete="name" data-bind="join:name" value="${h(f.name)}"${e.name ? ' aria-invalid="true"' : ''}>${err('name')}</label>
+              ${nameInputs('field', 'jn', 'join', f, e.name ? ' aria-invalid="true"' : '', err('name'))}
               <label class="field" for="jn-email"><span>Email</span><input id="jn-email" type="email" autocomplete="email" data-bind="join:email" value="${h(f.email)}"${e.email ? ' aria-invalid="true"' : ''}>${err('email')}</label>
               <fieldset class="field field-wide choice"><legend>Investing as</legend>${Object.keys(NS.ENTITY_TYPES).map((k) => `<label class="choice-row"><input type="radio" name="jn-type" value="${k}" data-bind="join:type"${f.type === k ? ' checked' : ''}><span>${h(NS.ENTITY_TYPES[k].label)}</span></label>`).join('')}</fieldset>
               <label class="check field-wide" for="jn-consent"><input id="jn-consent" type="checkbox" data-bind="join:consent"${f.consent ? ' checked' : ''}><span>I agree to receive account notices and documents from ${h(t.shortName)} electronically.</span></label>${err('consent')}
@@ -228,7 +240,9 @@
   };
   NS.binders.join = (path, v) => {
     const f = S().ui.join;
-    if (f) f[path] = v;
+    if (!f) return;
+    f[path] = v;
+    if (path === 'first' || path === 'last') f.name = personName(f);
   };
   NS.forms.join = () => {
     const ws = W();
@@ -236,7 +250,8 @@
     const o = ws.offerings.find((x) => x.id === f.oid);
     const e = {};
     const email = String(f.email).trim();
-    if (!String(f.name).trim()) e.name = 'Enter your name.';
+    f.name = personName(f) || String(f.name || '').trim();
+    if (nameProblem(f, 'your')) e.name = nameProblem(f, 'your');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) e.email = 'Enter a valid email address.';
     if (!f.consent) e.consent = 'Agree to electronic delivery to continue.';
     f.errors = e;
@@ -322,7 +337,7 @@
         ${K.panel(
           'Invite someone',
           `<form class="cs-grid cs-grid-3" data-form="team-invite" novalidate>
-            <label class="cs-field" for="tm-name"><span>Name</span><input id="tm-name" type="text" data-bind="team:name" value="${h(f.name)}"></label>
+            ${nameInputs('cs-field', 'tm', 'team', f, '', '')}
             <label class="cs-field" for="tm-email"><span>Email</span><input id="tm-email" type="email" data-bind="team:email" value="${h(f.email)}"></label>
             <label class="cs-field" for="tm-role"><span>Role</span><select id="tm-role" data-bind="team:role">${Object.keys(ROLE_INFO).map((r) => `<option value="${r}"${f.role === r ? ' selected' : ''}>${ROLE_INFO[r][0]}</option>`).join('')}</select></label>
             ${f.err ? `<p class="cs-error cs-wide">${h(f.err)}</p>` : ''}
@@ -335,13 +350,16 @@
     }
   };
   NS.binders.team = (path, v) => {
-    teamState()[path] = v;
+    const f = teamState();
+    f[path] = v;
+    if (path === 'first' || path === 'last') f.name = personName(f);
   };
   NS.forms['team-invite'] = () => {
     const f = teamState();
     const w = W();
     const email = String(f.email).trim();
-    f.err = !String(f.name).trim() ? 'Enter their name.' : !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) ? 'Enter a valid email address.' : team(w).some((m) => m.email.toLowerCase() === email.toLowerCase()) ? 'That person is already on the team.' : '';
+    f.name = personName(f) || String(f.name || '').trim();
+    f.err = nameProblem(f, 'their') ? nameProblem(f, 'their') : !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) ? 'Enter a valid email address.' : team(w).some((m) => m.email.toLowerCase() === email.toLowerCase()) ? 'That person is already on the team.' : '';
     if (f.err) return NS.app.render();
     const m = { id: uid('tm'), name: f.name.trim(), email, role: f.role === 'admin' ? 'admin' : 'team', status: 'invited', added: today() };
     team(w).push(m);

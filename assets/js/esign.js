@@ -876,7 +876,7 @@
         <label class="cs-field" for="es-off"><span>Offering <em>(optional)</em></span><select id="es-off" data-change="es-new" data-k="offeringId"><option value="">None</option>${w.offerings.map((o) => `<option value="${h(o.id)}"${o.id === n.offeringId ? ' selected' : ''}>${h(o.name)}</option>`).join('')}</select></label>
         <div class="cs-field cs-wide"><label for="es-q">Signers from the investor roster</label><input id="es-q" type="text" data-input="es-q" value="${h(n.q)}" placeholder="Search by name, account, email or investor ID" autocomplete="off"><div class="es-picklist" id="es-picklist">${pickListHTML(n)}</div></div>
         <label class="cs-check cs-wide" for="es-cs"><input id="es-cs" type="checkbox" data-change="es-new" data-k="cs"${n.cs ? ' checked' : ''}><span>Add a sponsor countersigner<span class="cs-hint">Signs after the investors when signing in order.</span></span></label>
-        ${n.cs ? `<label class="cs-field" for="es-csn"><span>Countersigner name</span><input id="es-csn" type="text" maxlength="80" data-input="es-new" data-k="csName" value="${h(n.csName)}" placeholder="Name of the signing officer" autocomplete="off"></label><label class="cs-field" for="es-cse"><span>Countersigner email</span><input id="es-cse" type="email" maxlength="120" data-input="es-new" data-k="csEmail" value="${h(n.csEmail)}" placeholder="name@company.com" autocomplete="off"></label>` : ''}
+        ${n.cs ? `<label class="cs-field" for="es-csn"><span>Countersigner first name</span><input id="es-csn" type="text" maxlength="60" data-input="es-new" data-k="csFirst" value="${h(n.csFirst || '')}" autocomplete="off"></label><label class="cs-field" for="es-csl"><span>Countersigner last name</span><input id="es-csl" type="text" maxlength="60" data-input="es-new" data-k="csLast" value="${h(n.csLast || '')}" autocomplete="off"></label><label class="cs-field" for="es-cse"><span>Countersigner email</span><input id="es-cse" type="email" maxlength="120" data-input="es-new" data-k="csEmail" value="${h(n.csEmail)}" placeholder="name@company.com" autocomplete="off"></label>` : ''}
         <fieldset class="cs-field cs-wide"><legend>Signing order</legend>${seg('sequential', [['true', 'In order'], ['false', 'Any order']], n.sequential)}</fieldset>
         <div class="cs-field cs-wide"><span>Recipients</span><div id="es-sel-list">${selectedHTML(n)}</div></div>
       </div>
@@ -963,6 +963,8 @@
     let v = el.type === 'checkbox' ? el.checked : el.value;
     if (k === 'sequential') v = v === 'true';
     n[k] = v;
+    // The countersigner's first and last name make up their name.
+    if (k === 'csFirst' || k === 'csLast') n.csName = [n.csFirst, n.csLast].map((x) => String(x || '').trim()).filter(Boolean).join(' ');
     if (k === 'templateId') {
       const t = tpls(W()).find((x) => x.id === v);
       if (t) {
@@ -1050,7 +1052,7 @@
     if (n.source === 'doc' && !pdoc) return fail('Choose a published PDF.');
     if (!String(n.title).trim()) return fail('Give the envelope a title.');
     if (!n.investors.length && !n.cs) return fail('Add at least one signer.');
-    if (n.cs && (!String(n.csName).trim() || !isEmail(n.csEmail))) return fail('Enter the countersigner’s name and a valid email address.');
+    if (n.cs && (!String(n.csFirst || '').trim() || !String(n.csLast || '').trim() || !isEmail(n.csEmail))) return fail('Enter the countersigner’s first and last name and a valid email address.');
     n.busy = true;
     n.error = '';
     NS.app.render();

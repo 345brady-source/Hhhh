@@ -218,6 +218,8 @@
    * the KYC on file (seedFromKyc), so recording one new result never un-approves an investor or drops a review on file. Paths
    * that only read use peek.
    */
+  /** A beneficial owner's name from the onboarding form's first and last name fields. */
+  const ownerFull = (form, n) => [form['owner' + n], form['owner' + n + 'Last']].map((x) => String(x || '').trim()).filter(Boolean).join(' ');
   function vOf(inv) {
     const v = seedFromKyc(inv);
     ['identity', 'aml', 'accreditation'].forEach((k) => (v[k] = v[k] || { status: 'not_started' }));
@@ -680,7 +682,7 @@
     const v = vOf(inv);
     const ent = ['entity', 'trust', 'ira'].indexOf(form.type) >= 0;
     inv.kyc = Object.assign({}, inv.kyc, {
-      owners: ent ? [{ name: String(form.owner1 || '').trim(), pct: Number(form.owner1pct) || 0 }].concat(String(form.owner2 || '').trim() ? [{ name: String(form.owner2).trim(), pct: Number(form.owner2pct) || 0 }] : []) : [{ name: inv.contact, pct: 100 }],
+      owners: ent ? [{ name: ownerFull(form, 1), pct: Number(form.owner1pct) || 0 }].concat(ownerFull(form, 2) ? [{ name: ownerFull(form, 2), pct: Number(form.owner2pct) || 0 }] : []) : [{ name: inv.contact, pct: 100 }],
       pep: form.pep === 'yes',
       risk: form.pep === 'yes' ? 'High' : ent ? 'Medium' : 'Low'
     });

@@ -663,7 +663,8 @@
     if (!w.offerings.length) return panel('Invite investors', '<p class="cs-muted">Add an offering first. Each investor is invited with the offering they invested in.</p><a class="cs-btn" href="#console-offerings">Go to offerings</a>');
     const offOpts = w.offerings.map((o) => `<option value="${h(o.id)}">${h(o.name)}</option>`).join('');
     const single = `<form class="cs-form cs-grid" data-form="invite-one" novalidate>
-      <label class="cs-field" for="iv-contact"><span>Contact name</span><input id="iv-contact" name="contact" maxlength="60" required></label>
+      <label class="cs-field" for="iv-contact"><span>First name</span><input id="iv-contact" name="contact" maxlength="60" autocomplete="off" required></label>
+      <label class="cs-field" for="iv-last-name"><span>Last name</span><input id="iv-last-name" name="last" maxlength="60" autocomplete="off" required></label>
       <label class="cs-field" for="iv-email"><span>Email</span><input id="iv-email" name="email" type="email" maxlength="80" required></label>
       <label class="cs-field" for="iv-type"><span>Investing as</span><select id="iv-type" name="type">${Object.keys(NS.ENTITY_TYPES).map((k) => `<option value="${k}">${NS.ENTITY_TYPES[k].label}</option>`).join('')}</select></label>
       <label class="cs-field" for="iv-title"><span>Name on the account <em>Optional</em></span><input id="iv-title" name="title" maxlength="80" placeholder="Defaults to the contact name"></label>
@@ -736,7 +737,7 @@
   };
   NS.forms['invite-one'] = (f) => {
     const errEl = document.getElementById('iv-error');
-    const r = { contact: f.contact.value.trim(), email: f.email.value.trim(), type: f.type.value, title: f.title.value.trim(), offering: f.offering.value, amount: Number(f.amount.value), date: f.date.value };
+    const r = { contact: [f.contact.value.trim(), f.last ? f.last.value.trim() : ''].filter(Boolean).join(' '), email: f.email.value.trim(), type: f.type.value, title: f.title.value.trim(), offering: f.offering.value, amount: Number(f.amount.value), date: f.date.value };
     const problems = [];
     if (!r.contact) problems.push('a contact name');
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r.email)) problems.push('a valid email');

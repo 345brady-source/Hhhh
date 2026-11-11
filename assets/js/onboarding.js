@@ -78,9 +78,11 @@
           idType: 'drivers',
           idFile: '',
           formation: '',
-          owner1: inv.contact,
+          owner1: splitName(inv.contact)[0],
+          owner1Last: splitName(inv.contact)[1],
           owner1pct: '100',
           owner2: '',
+          owner2Last: '',
           owner2pct: '',
           pep: ''
         },
@@ -130,6 +132,14 @@
       </div>
       <p class="meta">Each time you sign in from a new device you will also enter a 6-digit code from an authenticator app or a text message.</p>`;
   }
+  /** A beneficial owner's name from its first and last name fields (a full name typed in the first field also counts). */
+  const ownerName = (d, n) => [d['owner' + n], d['owner' + n + 'Last']].map((x) => String(x || '').trim()).filter(Boolean).join(' ');
+  const ownerProblem = (d) => (!ownerName(d, 1) ? 'Enter the first and last name of at least one beneficial owner or controlling person.' : !String(d.owner1Last || '').trim() && !/\s/.test(ownerName(d, 1)) ? 'Enter the beneficial owner’s last name.' : '');
+  /** Split a stored full name into first and last name fields (the last word is the last name). */
+  const splitName = (n) => {
+    const p = String(n || '').trim().split(/\s+/).filter(Boolean);
+    return p.length < 2 ? [p[0] || '', ''] : [p.slice(0, -1).join(' '), p[p.length - 1]];
+  };
   const TITLE_HINT = {
     individual: 'Your full legal name',
     joint: 'Both owners, for example "Robert and Ellen Marsh, JTWROS"',
@@ -169,8 +179,8 @@
             ? `${input('formation', d.type === 'trust' ? 'State where the trust was formed' : d.type === 'ira' ? 'Custodian' : 'State or country of formation', { wide: false })}
           <label class="field" for="ob-cp"><span>${d.type === 'trust' ? 'Trustee' : 'Controlling person'}</span><input id="ob-cp" type="text" value="${h(inv().contact)}" readonly></label>
           <p class="field-wide meta">List each person who owns 25% or more${d.type === 'trust' ? ' of the trust’s beneficial interest' : ''}.</p>
-          ${input('owner1', 'Beneficial owner', { auto: 'name' })}${input('owner1pct', 'Ownership (%)', { mode: 'numeric', max: 3, narrow: true })}
-          ${input('owner2', 'Second beneficial owner <em>Optional</em>', { auto: 'off' })}${input('owner2pct', 'Ownership (%)', { mode: 'numeric', max: 3, narrow: true })}
+          ${input('owner1', 'Beneficial owner: first name', { auto: 'off' })}${input('owner1Last', 'Last name', { auto: 'off' })}${input('owner1pct', 'Ownership (%)', { mode: 'numeric', max: 3, narrow: true })}
+          ${input('owner2', 'Second beneficial owner: first name <em>Optional</em>', { auto: 'off' })}${input('owner2Last', 'Last name', { auto: 'off' })}${input('owner2pct', 'Ownership (%)', { mode: 'numeric', max: 3, narrow: true })}
           <label class="field field-wide" for="ob-idFile"><span>${d.type === 'trust' ? 'Trust certificate' : d.type === 'ira' ? 'Custodian account statement' : 'Formation documents'} <em>Optional in this demo</em></span><input id="ob-idFile" type="file" accept="application/pdf,image/png,image/jpeg" data-change="ob-idfile"><span class="hint">${d.idFile ? `Attached: ${h(d.idFile)}` : 'PDF or photo'}</span></label>`
             : `${input('dob', 'Date of birth', { type: 'date', auto: 'bday' })}
           ${radios('citizen', 'Citizenship', [['us', 'United States'], ['other', 'Another country']])}
@@ -279,10 +289,10 @@
     if (step === 'identity') {
       if (ENTITY_KYC(d.type)) {
         if (!String(d.formation).trim()) e.formation = d.type === 'ira' ? 'Enter the custodian.' : 'Enter where it was formed.';
-        if (!String(d.owner1).trim()) e.owner1 = 'Enter at least one beneficial owner or controlling person.';
+        if (ownerProblem(d)) e.owner1 = ownerProblem(d);
         const p1 = Number(d.owner1pct);
         if (!(p1 >= 1 && p1 <= 100)) e.owner1pct = 'Enter a percentage from 1 to 100.';
-        if (String(d.owner2).trim()) {
+        if (ownerName(d, 2)) {
           const p2 = Number(d.owner2pct);
           if (!(p2 >= 1 && p2 <= 100) || p1 + p2 > 100) e.owner2pct = 'Ownership cannot total more than 100%.';
         }
@@ -356,7 +366,7 @@
     const ent = ENTITY_KYC(d.type);
     const pep = d.pep === 'yes';
     const risk = pep ? 'High' : ent ? 'Medium' : 'Low';
-    const owners = ent ? [{ name: d.owner1.trim(), pct: Number(d.owner1pct) || 0 }].concat(String(d.owner2).trim() ? [{ name: d.owner2.trim(), pct: Number(d.owner2pct) || 0 }] : []) : [{ name: i.contact, pct: 100 }];
+    const owners = ent ? [{ name: ownerName(d, 1), pct: Number(d.owner1pct) || 0 }].concat(ownerName(d, 2) ? [{ name: ownerName(d, 2), pct: Number(d.owner2pct) || 0 }] : []) : [{ name: i.contact, pct: 100 }];
     i.kyc = {
       status: pep ? 'review' : 'cleared',
       risk,
@@ -966,9 +976,11 @@
           citizen: i.citizenship || 'us',
           tin: '',
           formation: '',
-          owner1: i.contact,
+          owner1: splitName(i.contact)[0],
+          owner1Last: splitName(i.contact)[1],
           owner1pct: '100',
           owner2: '',
+          owner2Last: '',
           owner2pct: '',
           pep: '',
           accBasis: (i.accreditation && i.accreditation.basis) || '',
@@ -1095,8 +1107,8 @@
             ? `${input('formation', d.type === 'trust' ? 'State or country where the trust was formed' : d.type === 'ira' ? 'Custodian' : 'State or country of formation')}
           <label class="field" for="ob-cp"><span>${d.type === 'trust' ? 'Trustee' : 'Controlling person'}</span><input id="ob-cp" type="text" value="${h(c.inv.contact)}" readonly></label>
           <p class="field-wide meta ivf-owners">Beneficial owners: list each person who owns 25% or more${d.type === 'trust' ? ' of the trust’s beneficial interest' : ''}. If no one does, list the person who controls the account.</p>
-          ${input('owner1', 'Beneficial owner', { auto: 'off' })}${input('owner1pct', 'Ownership (%)', { mode: 'numeric', max: 3, narrow: true })}
-          ${input('owner2', 'Second beneficial owner <em>Optional</em>', { auto: 'off' })}${input('owner2pct', 'Ownership (%)', { mode: 'numeric', max: 3, narrow: true })}`
+          ${input('owner1', 'Beneficial owner: first name', { auto: 'off' })}${input('owner1Last', 'Last name', { auto: 'off' })}${input('owner1pct', 'Ownership (%)', { mode: 'numeric', max: 3, narrow: true })}
+          ${input('owner2', 'Second beneficial owner: first name <em>Optional</em>', { auto: 'off' })}${input('owner2Last', 'Last name', { auto: 'off' })}${input('owner2pct', 'Ownership (%)', { mode: 'numeric', max: 3, narrow: true })}`
             : `${input('dob', 'Date of birth', { type: 'date', auto: 'bday' })}
           ${radios('citizen', 'Citizenship', [['us', 'United States'], ['other', 'Another country']])}`
         }
@@ -1323,10 +1335,10 @@
       }
       if (ENTITY_KYC(d.type)) {
         if (!String(d.formation).trim()) e.formation = d.type === 'ira' ? 'Enter the custodian.' : 'Enter where it was formed.';
-        if (!String(d.owner1).trim()) e.owner1 = 'Enter at least one beneficial owner or controlling person.';
+        if (ownerProblem(d)) e.owner1 = ownerProblem(d);
         const p1 = Number(d.owner1pct);
         if (!(p1 >= 1 && p1 <= 100)) e.owner1pct = 'Enter a percentage from 1 to 100.';
-        if (String(d.owner2).trim()) {
+        if (ownerName(d, 2)) {
           const p2 = Number(d.owner2pct);
           if (!(p2 >= 1 && p2 <= 100) || p1 + p2 > 100) e.owner2pct = 'Ownership cannot total more than 100%.';
         }

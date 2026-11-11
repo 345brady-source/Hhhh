@@ -142,7 +142,8 @@
   function validate(ws, o) {
     const e = {};
     const email = String(o.email || '').trim();
-    if (!String(o.name || '').trim()) e.name = 'Enter the investor’s full name.';
+    if (!String(o.name || '').trim()) e.name = 'Enter the investor’s first and last name.';
+    else if (o.first !== undefined && !String(o.last || '').trim() && !/\s/.test(String(o.name).trim())) e.name = 'Enter the investor’s last name.';
     const off = offOf(ws, o.offeringId);
     if (!isEmail(email)) e.email = 'Enter a valid email address.';
     else {
@@ -1147,14 +1148,16 @@
     const u = S().ui;
     if (!u.inv8) {
       const r = raising(W());
-      u.inv8 = { name: '', email: '', type: 'individual', account: '', offeringId: r.length === 1 ? r[0].id : '', amount: '', cls: '', note: '', errors: {}, busy: false };
+      u.inv8 = { first: '', last: '', name: '', email: '', type: 'individual', account: '', offeringId: r.length === 1 ? r[0].id : '', amount: '', cls: '', note: '', errors: {}, busy: false };
     }
     return u.inv8;
   }
   NS.binders.inv8 = (path, v) => {
     const d = draft();
     d[path] = v;
-    const k = path === 'offeringId' ? 'offering' : path;
+    // First and last name make up the investor's name (one string everywhere else).
+    if (path === 'first' || path === 'last') d.name = [d.first, d.last].map((x) => String(x || '').trim()).filter(Boolean).join(' ');
+    const k = path === 'offeringId' ? 'offering' : path === 'first' || path === 'last' ? 'name' : path;
     if (d.errors[k]) delete d.errors[k];
     if (path === 'offeringId') {
       d.cls = '';
@@ -1173,7 +1176,8 @@
     const min = off ? minimumCents(off, d.cls || (classes[0] || {}).id) : 0;
     const cur = off ? curOf(off) : 'USD';
     const single = `<form class="cs-form cs-grid inv8-form" data-form="invite-one" novalidate>
-      <label class="cs-field" for="iv-contact"><span>Full name</span><input id="iv-contact" name="contact" maxlength="80" autocomplete="off" data-bind="inv8:name" value="${h(d.name)}"${inval(d, 'name')}>${fieldErr(d, 'name')}</label>
+      <label class="cs-field" for="iv-contact"><span>First name</span><input id="iv-contact" name="contact" maxlength="60" autocomplete="off" data-bind="inv8:first" value="${h(d.first || '')}"${inval(d, 'name')}></label>
+      <label class="cs-field" for="iv-last"><span>Last name</span><input id="iv-last" name="last" maxlength="60" autocomplete="off" data-bind="inv8:last" value="${h(d.last || '')}"${inval(d, 'name')}>${fieldErr(d, 'name')}</label>
       <label class="cs-field" for="iv-email"><span>Email</span><input id="iv-email" name="email" type="email" maxlength="120" autocomplete="off" data-bind="inv8:email" value="${h(d.email)}"${inval(d, 'email')}>${fieldErr(d, 'email')}</label>
       <label class="cs-field" for="iv-type"><span>Investing as</span><select id="iv-type" name="type" data-bind="inv8:type">${Object.keys(NS.ENTITY_TYPES).map((k) => `<option value="${k}"${d.type === k ? ' selected' : ''}>${h(NS.ENTITY_TYPES[k].label)}</option>`).join('')}</select></label>
       <label class="cs-field" for="iv-title"><span>Account name <em>Optional</em></span><input id="iv-title" name="title" maxlength="120" autocomplete="off" placeholder="Defaults to the full name" data-bind="inv8:account" value="${h(d.account)}"><span class="cs-hint">For a trust, company or IRA, its legal name. The investor can correct it.</span></label>
