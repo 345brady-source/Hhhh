@@ -152,7 +152,7 @@
             ['Plug in your verification providers', 'Connect the identity, sanctions screening and accredited investor services you use, one or several for each check. They run automatically when investors onboard.', !!(NS.integrations && NS.integrations.ready(w)), 'console-integrations', true],
             ['Set up ACH origination', 'The bank and company IDs used to pay distributions by ACH.', achReady(), 'console-ach'],
             ['Add your first offering', 'Upload the PPM or operating agreement and the portal sets the offering up for you to review.', w.offerings.length > 0, 'console-intake', true],
-            ['Prepare your subscription agreement', 'Place signature fields once; investors sign it online when they subscribe.', (w.esignTemplates || []).some((t) => t.subscription), 'console-esign'],
+            ['Prepare your subscription agreement', 'On the offering: upload it and check the signature fields once; every investor you invite signs it online during onboarding.', (w.esignTemplates || []).some((t) => t.subscription), (() => { const o = w.offerings.find((x) => x.status === 'Raising') || w.offerings[0]; return o ? `console-offering-${o.id}` : 'console-offerings'; })()],
             ['Invite your team', 'Admins manage everything; team members run day-to-day operations.', (w.team || []).length > 1, 'console-team', true],
             ['Invite your investors', 'Enter a name and email: each investor gets one link that walks them through their account, verification, tax form, bank details and subscription documents. You are notified when they finish.', w.investors.length > 0 || (w.invitations || []).length > 0, 'console-investors', false, 'inv8-open-invite'],
             ['Run the first distribution', 'Allocate a payment pro rata and generate the NACHA file for the bank.', w.runs.length > 0, 'console-distributions']
@@ -390,6 +390,7 @@
       <div class="cs-split">
         <div class="cs-split-main">
           ${panel('Basics', kv([['Short name', h(o.shortName)], ['Status', h(o.status)], ['Closing date', date(o.closeDate)], ['Minimum investment', usd(o.minimum || 0)], ['Description', h(o.summary || '')]]))}
+          ${NS.esign && NS.esign.agreementPanel ? NS.esign.agreementPanel(W(), o, false) : ''}
           ${panel('Exit timing', kv([[h(x.label), h(x.value)], ['How exit is defined', h((BASIS.find((b) => b[0] === (o.exit || {}).basis) || ['', ''])[1])], ['Note shown to investors', h((o.exit || {}).note || '')]]))}
           ${panel('Distributions', kv([['Frequency', h(d.frequency || '')], ['Payment day', periodMonths(d.frequency) && d.day ? NS.data.ordinal(Number(d.day)) + ' of the month' : ''], ['Next payment', nextOf(o) ? date(nextOf(o).date, 'wd') : ''], ['Payment type', h(d.type || '')], ['Target or rate', h(d.target || '')]]))}
           ${panel('Key terms shown to investors', terms.length ? kv(terms.map((r) => [h(r.label) + (r.show ? '' : ' <span class="cs-muted">(hidden)</span>'), h(r.value) || '—'])) : '<p class="cs-muted">No terms.</p>')}
@@ -467,6 +468,7 @@
               ${offField('Minimum investment ($)', 'minimum', { type: 'number' })}
               ${offField('Securities exemption', 'structure.exemption', { select: exemptionOptions(o), hint: E.diy ? 'Rule 506(c) offerings take verified accredited investors only: investors verify their status while they onboard, before they can subscribe.' : '' })}
             </div>`)}
+            ${NS.esign && NS.esign.agreementPanel ? NS.esign.agreementPanel(W(), o, true) : ''}
             ${panel('Exit timing', `<div class="cs-grid">
               ${offField('How exit is defined', 'exit.basis', { select: BASIS, wide: true })}
               ${exitFields}
@@ -2373,6 +2375,7 @@
     ].filter(Boolean);
     return shell(
       `${head(`${h(o.name)} is set up`, o.status === 'Raising' ? 'Investors can now review the terms and subscribe online; capital calls, statements and audit schedules use these terms.' : 'Capital accounts, statements and audit schedules now use these terms.', `<a class="cs-btn" href="#console-intake" data-action="ik-restart">Set up another</a><a class="cs-btn cs-btn-primary" href="#console-offering-${h(o.id)}">Open the offering</a>`)}
+      ${NS.esign && NS.esign.agreementPanel && !NS.esign.templateReady(W(), o.id) ? `<p class="cs-hint ik-next">Next: add the subscription agreement, so every investor you invite signs it during onboarding.</p>${NS.esign.agreementPanel(W(), o, true)}` : ''}
       ${panel('What was applied', `<ul class="cs-list">${items.map((x) => `<li>${x}</li>`).join('')}</ul><p class="cs-hint">Valuations and holdings come from the fund’s books once investors are in; until then the offering carries a placeholder portfolio line.</p>`)}`,
       'console-intake'
     );

@@ -891,7 +891,7 @@
       const w = W();
       const ui = esUi();
       if (!canOperate()) return K.shell(K.head('E-sign', 'Your role cannot send documents for signature.'), 'console-esign');
-      const list = envs(w).slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+      const list = envs(w).filter((e) => !e.agreementFor).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
       const tl = tpls(w).slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
       const out = list.filter((e) => e.status === 'sent').length;
       const tabs = `<div class="cs-tabs" role="group" aria-label="Show"><button type="button" class="cs-tab" data-action="es-tab" data-t="envelopes" aria-pressed="${ui.tab === 'envelopes'}">Envelopes <span class="cs-count">${list.length}</span></button><button type="button" class="cs-tab" data-action="es-tab" data-t="templates" aria-pressed="${ui.tab === 'templates'}">Templates <span class="cs-count">${tl.length}</span></button></div>`;
@@ -1190,14 +1190,19 @@
           ${sel.type === 'date' ? '<p class="cs-hint">Filled automatically with the date the signer signs.</p>' : `<label class="cs-check" for="es-fr"><input id="es-fr" type="checkbox" data-change="es-fprop" data-k="required"${isReq(sel) ? ' checked' : ''}><span>Required${(sel.type === 'signature' || sel.type === 'initials') && !isReq(sel) ? '<span class="cs-hint">Optional: the signer can finish without signing here.</span>' : sel.type === 'checkbox' ? '<span class="cs-hint">Required means the signer must tick it to finish.</span>' : ''}</span></label>`}
           <button class="cs-btn cs-btn-small cs-btn-danger" type="button" data-action="es-fdel">${icon('x')}Remove field</button></div>`
       : '';
-    const err = sendCheck(env);
+    const agr = env.agreementFor ? W().offerings.find((o) => o.id === env.agreementFor) : null;
+    const err = env.agreementFor ? agreementTodo(env) : sendCheck(env);
+    const headHTML = env.agreementFor
+      ? `${K.head(`Subscription agreement${agr ? ` · ${h(agr.name)}` : ''}`, `${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · place the fields once; each investor fills them in and signs during onboarding`, `<a class="cs-btn" href="#console-offering-${h(env.agreementFor)}">${icon('back')}Offering</a><button class="cs-btn" type="button" data-action="es-agreement-cancel" data-id="${h(env.id)}">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-save" data-id="${h(env.id)}">Save subscription agreement</button>`)}
+        <p class="cs-hint es-agr-note">${env.autoPlaced ? `${env.autoPlaced} field${env.autoPlaced === 1 ? ' was' : 's were'} placed from the signature lines in the PDF. Check them, move or resize as needed, and add any others. ` : ''}Fields for “Investor” are filled in by each investor; a text field labelled “Commitment amount”, “Investor name” or “Offering” is filled in for them and locked. Nothing is sent from here.</p>`
+      : `${K.head(h(env.title), `Draft · ${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'}`, `<a class="cs-btn" href="#console-esign">${icon('back')}E-sign</a><button class="cs-btn" type="button" data-action="es-delete" data-id="${h(env.id)}">Delete draft</button><button class="cs-btn" type="button" data-action="es-save-tpl" data-id="${h(env.id)}">Save as template</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-review" data-id="${h(env.id)}">Review and send</button>`)}`;
     return K.shell(
-      `${K.head(h(env.title), `Draft · ${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'}`, `<a class="cs-btn" href="#console-esign">${icon('back')}E-sign</a><button class="cs-btn" type="button" data-action="es-delete" data-id="${h(env.id)}">Delete draft</button><button class="cs-btn" type="button" data-action="es-save-tpl" data-id="${h(env.id)}">Save as template</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-review" data-id="${h(env.id)}">Review and send</button>`)}
+      `${headHTML}
       <div class="es-editor" data-env="${h(env.id)}">
         <aside class="es-side">
           ${K.panel('Signers', `<div class="es-signers" role="group" aria-label="New fields are for">${signers}</div><fieldset class="cs-field"><legend>Signing order</legend><div class="cs-seg">${[['true', 'In order'], ['false', 'Any order']].map(([v, l]) => `<label><input type="radio" name="es-seq" value="${v}" data-change="es-seq"${String(env.sequential) === v ? ' checked' : ''}><span>${l}</span></label>`).join('')}</div></fieldset>`)}
           ${K.panel('Fields', `<div class="es-palette" role="group" aria-label="Field to place">${palette}</div>${placer}${props}`)}
-          ${err ? `<p class="cs-hint es-todo">${h(err)}</p>` : `<p class="cs-hint es-ready">${icon('check')}Ready to send.</p>`}
+          ${err ? `<p class="cs-hint es-todo">${h(err)}</p>` : `<p class="cs-hint es-ready">${icon('check')}${env.agreementFor ? 'Ready to save.' : 'Ready to send.'}</p>`}
         </aside>
         <div class="es-doc${ui.tool ? ' is-placing' : ''}">${pagesHTML(env, (p) => env.fields.filter((f) => f.page === p).map((f) => editorFieldHTML(env, f, ui)).join(''))}</div>
       </div>`,
@@ -1472,8 +1477,18 @@
     const sub = !!form.subscription.checked;
     const offeringId = form.offeringId.value || null;
     if (sub && !offeringId) return U.toast('Choose the offering this subscription agreement is for.');
+    const tpl = templateFromEnv(env, title, sub, offeringId);
+    if (sub) tpls(w).forEach((t) => t.offeringId === offeringId && (t.subscription = false));
+    tpls(w).push(tpl);
+    CK().audit('E-sign template saved', `${title}: ${tpl.roles.join(', ')}, ${tpl.fields.length} fields${sub ? '; subscription agreement' : ''}`, offeringId || '', tpl.id);
+    NS.app.save(true);
+    U.closeDialog();
+    U.toast(`Template saved: ${title}`);
+  };
+  /** A template from a draft's PDF and fields, by role (Investor, Investor 2, …, Sponsor). */
+  function templateFromEnv(env, title, sub, offeringId) {
     const roles = rolesOf(env);
-    const tpl = {
+    return {
       id: uid('tpl'),
       title,
       fileName: env.fileName,
@@ -1494,13 +1509,7 @@
       offeringId,
       createdAt: nowIso()
     };
-    if (sub) tpls(w).forEach((t) => t.offeringId === offeringId && (t.subscription = false));
-    tpls(w).push(tpl);
-    CK().audit('E-sign template saved', `${title}: ${roles.join(', ')}, ${tpl.fields.length} fields${sub ? '; subscription agreement' : ''}`, offeringId || '', tpl.id);
-    NS.app.save(true);
-    U.closeDialog();
-    U.toast(`Template saved: ${title}`);
-  };
+  }
 
   /* ---------- Editor pointer and keyboard handling ---------- */
   let drag = null;
@@ -2584,5 +2593,327 @@
       });
   };
 
-  NS.esign = { pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, investorDocsHTML };
+  /* =====================================================================
+   * An offering's subscription agreement: the firm uploads it and places the fields once, with no investors.
+   * Every investor invited to the offering (or subscribing in the portal) then gets it filled in and signs it
+   * during onboarding: no envelope is prepared or sent by hand.
+   * ===================================================================== */
+  const AGR_INVESTOR = '__each_investor__'; // the placeholder signer: each subscriber fills this role
+  const clamp01 = (v, hi) => Math.max(0, Math.min(hi, v));
+  /** Text on each page with positions (fractions of the page, top-left origin), for placing fields at signature lines. */
+  async function pageText(docId) {
+    const blob = await files().get(docId);
+    if (!blob) return [];
+    const lib = await pdfjs();
+    const doc = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise;
+    const out = [];
+    try {
+      for (let i = 1; i <= doc.numPages; i++) {
+        const page = await doc.getPage(i);
+        const vp = page.getViewport({ scale: 1 });
+        const tc = await page.getTextContent();
+        out.push({
+          page: i,
+          w: vp.width,
+          h: vp.height,
+          items: tc.items
+            .filter((t) => t.str && t.str.trim())
+            .map((t) => ({ s: t.str.replace(/\s+/g, ' ').trim(), x: t.transform[4] / vp.width, y: 1 - t.transform[5] / vp.height, w: (t.width || 0) / vp.width, h: Math.max(6, Math.abs(t.transform[3] || 10)) / vp.height }))
+        });
+        page.cleanup();
+      }
+    } finally {
+      doc.destroy();
+    }
+    return out;
+  }
+  const SIG_RE = /^(authori[sz]ed\s+)?signature\b|^(subscriber|investor|purchaser)'?s?\s+signature\b|^signature\s+of\b|^by\s*:?\s*(_{2,})?$/i;
+  const NAME_RE = /^(print(ed)?\s+)?name(\s+of\s+(subscriber|investor|signatory|purchaser))?\s*:?\s*(_{2,})?$/i;
+  const DATE_RE = /^date(d)?\s*:?\s*(_{2,})?$/i;
+  const TITLE_RE = /^(its\s+)?title\s*:?\s*(_{2,})?$/i;
+  const AMOUNT_RE = /\b(subscription|commitment|capital\s+commitment|purchase)\s+amount\b|\bamount\s+of\s+(subscription|commitment)\b|^commitment\s*:|^amount\s*:?\s*\$?\s*(_{2,})?$/i;
+  const FIRM_RE = /accepted|agreed\s+(to\s+)?and\s+accepted|general\s+partner|managing\s+member|\bmanager\b|\bthe\s+(fund|company|issuer|partnership)\b|\bsponsor\b/i;
+  const INVESTOR_RE = /\b(subscriber|investor|purchaser|limited\s+partner|member)\b/i;
+  /**
+   * Places the fields each signer fills at the signature lines of the PDF's last signature page: a signature, the printed
+   * name, the date (and a title line for entities) next to each label, for the firm when the block sits under an acceptance
+   * heading; and the commitment amount next to its label. With no labels found, a standard block at the foot of the last page.
+   * Returns how many fields were placed.
+   */
+  async function autoFields(env) {
+    let pages = [];
+    try {
+      pages = await pageText(env.docId);
+    } catch (e) {
+      pages = [];
+    }
+    const inv = env.signers.find((s) => s.role === 'investor');
+    const cs = env.signers.find((s) => s.role === 'countersigner');
+    const add = (sg, type, page, x, y, extra) => {
+      const t = TYPES[type];
+      const ps = env.pageSizes[page - 1] || { w: 612, h: 792 };
+      const w = Math.min(0.9, t.w / ps.w);
+      const hh = Math.min(0.5, t.h / ps.h);
+      const fx = clamp01(x, 1 - w);
+      const fy = clamp01(y, 1 - hh);
+      if (env.fields.some((f) => f.page === page && f.type === type && f.signerId === sg.id && Math.abs(f.x - fx) < 0.03 && Math.abs(f.y - fy) < 0.02)) return;
+      env.fields.push(Object.assign({ id: uid('fd'), signerId: sg.id, type, page, x: fx, y: fy, w, h: hh, required: type === 'signature' || type === 'name' || type === 'date', label: '', value: '' }, extra || {}));
+    };
+    const sigPages = pages.filter((p) => p.items.some((t) => SIG_RE.test(t.s)));
+    const sp = sigPages[sigPages.length - 1];
+    if (sp) {
+      // Whose block a label belongs to: the nearest heading above it (an acceptance or firm heading means the firm countersigns).
+      const ownerOf = (it) => {
+        let best = null;
+        sp.items.forEach((o) => {
+          if (o === it || o.y >= it.y || it.y - o.y > 0.3) return;
+          const firm = FIRM_RE.test(o.s);
+          const investor = INVESTOR_RE.test(o.s) && !firm;
+          if ((firm || investor) && (!best || o.y > best.y)) best = { y: o.y, firm };
+        });
+        return cs && best && best.firm ? cs : inv;
+      };
+      sp.items.forEach((it) => {
+        const type = SIG_RE.test(it.s) ? 'signature' : NAME_RE.test(it.s) ? 'name' : DATE_RE.test(it.s) ? 'date' : TITLE_RE.test(it.s) ? 'text' : '';
+        if (!type) return;
+        const sg = ownerOf(it);
+        const t = TYPES[type];
+        const fw = t.w / sp.w;
+        const fh = t.h / sp.h;
+        // To the right of the label on its line (bottom of the field on the text's baseline), or under it when there is no room.
+        let x = it.x + it.w + 0.008;
+        let y = it.y - fh;
+        if (x + fw > 0.98) {
+          x = it.x;
+          y = it.y + 0.004;
+        }
+        add(sg, type, sp.page, x, y, type === 'text' ? { label: 'Title', required: false } : null);
+      });
+    }
+    // The commitment amount, filled in from the invitation and locked, next to its label (on any page).
+    for (const p of pages) {
+      const it = p.items.find((t) => AMOUNT_RE.test(t.s));
+      if (!it) continue;
+      const fw = TYPES.text.w / p.w;
+      let x = it.x + it.w + 0.008;
+      let y = it.y - TYPES.text.h / p.h;
+      if (x + fw > 0.98) {
+        x = it.x;
+        y = it.y + 0.004;
+      }
+      add(inv, 'text', p.page, x, y, { label: 'Commitment amount', required: false });
+      break;
+    }
+    // No signature lines found (a scanned PDF, say): a standard block at the foot of the last page for each signer.
+    const last = env.pages;
+    if (!env.fields.some((f) => f.signerId === inv.id && f.type === 'signature')) {
+      add(inv, 'signature', last, 0.1, 0.66);
+      add(inv, 'name', last, 0.1, 0.73);
+      add(inv, 'date', last, 0.62, 0.68);
+    }
+    if (cs && !env.fields.some((f) => f.signerId === cs.id && f.type === 'signature')) {
+      add(cs, 'signature', last, 0.1, 0.82);
+      add(cs, 'name', last, 0.1, 0.89);
+      add(cs, 'date', last, 0.62, 0.84);
+    }
+    return env.fields.length;
+  }
+  /** What still stops an offering's agreement from being saved ('' when it can be). */
+  function agreementTodo(env) {
+    const inv = env.signers.find((s) => s.role === 'investor');
+    const cs = env.signers.find((s) => s.role === 'countersigner');
+    const signs = (sg) => env.fields.some((f) => f.signerId === sg.id && (f.type === 'signature' || f.type === 'initials'));
+    if (!inv || !signs(inv)) return 'Place at least one signature field for the investor.';
+    if (cs && !signs(cs)) return 'Place a signature field for your firm’s countersignature.';
+    return '';
+  }
+  /**
+   * A draft of an offering's subscription agreement in the field editor: from an uploaded PDF, a PDF already on the offering,
+   * or the current agreement (to edit its fields). Signers are placeholders: each investor, and the firm when it countersigns.
+   */
+  async function agreementDraft(ws, offeringId, src) {
+    const o = ws.offerings.find((x) => x.id === offeringId);
+    if (!o) throw new Error('Choose the offering.');
+    const tpl = src.templateId ? tpls(ws).find((t) => t.id === src.templateId) : null;
+    const id = uid('env');
+    let docId;
+    let fileName;
+    let bytes = null;
+    let stored = null;
+    if (tpl) {
+      docId = tpl.docId;
+      fileName = tpl.fileName;
+      if (!(await files().get(docId))) throw new Error('The agreement’s file is stored in a different browser.');
+    } else {
+      const doc = src.docId ? (ws.docs || []).find((d) => d.id === src.docId) : null;
+      const blob = src.file || (doc ? await files().get(doc.id) : null);
+      if (!blob) throw new Error('That document’s file is stored in a different browser.');
+      if (blob.size > MAX_BYTES) throw new Error(`This file is over 25 MB (${(blob.size / 1048576).toFixed(1)} MB). Upload a smaller PDF.`);
+      fileName = src.file ? src.file.name : (doc && doc.fileName) || 'Subscription_Agreement.pdf';
+      bytes = new Uint8Array(await blob.arrayBuffer());
+      if (!isPdf(bytes)) throw new Error('Choose a PDF file.');
+      docId = id + '-orig';
+      await files().put(docId, new Blob([bytes], { type: 'application/pdf' }));
+      stored = docId;
+    }
+    try {
+      const pages = await loadPages(docId);
+      if (pageCache[docId] && pageCache[docId].encrypted)
+        throw new Error('This PDF is password-protected (it restricts changes), so signatures cannot be added to it. Remove the protection, for example by saving or printing it as a new PDF, and upload that copy.');
+      const env = makeEnvelope({ id, title: String(src.title || (tpl && tpl.title) || 'Subscription Agreement').trim() || 'Subscription Agreement', fileName, docId, pages: pages.length, pageSizes: pages.map((p) => ({ w: p.w, h: p.h })), sha256Original: tpl ? tpl.sha256 : NS.audit.sha256(bytes), offeringId, templateId: tpl ? tpl.id : null, sequential: true, message: tpl ? tpl.message || '' : '' });
+      env.agreementFor = offeringId;
+      env.replaceTemplateId = tpl ? tpl.id : null;
+      makeSigner(env, { investorId: AGR_INVESTOR, name: 'Investor (each subscriber)', email: '', account: '' });
+      const counter = tpl ? (tpl.roles || []).indexOf('Sponsor') >= 0 : src.countersign !== false;
+      if (counter) makeSigner(env, { name: `${T().shortName} (countersigns)`, email: T().support.email || '' });
+      if (tpl) applyTemplateFields(env, tpl);
+      else env.autoPlaced = await autoFields(env);
+      addEvent(env, staffActor(), 'Created', `Subscription agreement for ${o.name}`);
+      envs(ws).push(env);
+      NS.app.save(true);
+      return env;
+    } catch (e) {
+      if (stored) {
+        files().del(stored).catch(() => {});
+        delete pageCache[stored];
+      }
+      throw e;
+    }
+  }
+  const openAgreement = (env) => {
+    Object.assign(esUi(), { tab: 'envelopes', tool: null, sel: null, signer: env.signers[0].id, placePage: env.pages, signAs: null });
+    NS.app.go('console-envelope-' + env.id);
+  };
+  /** The offering page's panel: the agreement investors sign during onboarding, and the buttons to set it up. */
+  function agreementPanel(ws, o, canEdit) {
+    const tpl = subscriptionTemplate(ws, o.id);
+    const ready = !!tpl && templateReady(ws, o.id);
+    const draft = envs(ws).find((e) => e.agreementFor === o.id && e.status === 'draft');
+    // What the investor completes, and what is filled in for them from the invitation (prefill labels, locked).
+    const PRE = /^(commitment( amount)?|subscription amount|amount|capital commitment|investor( name)?|subscriber name|account name|offering|fund|share class|class)$/i;
+    const inv = tpl ? (tpl.fields || []).filter((f) => f.signerRole === 'Investor') : [];
+    const kinds = Array.from(new Set(inv.filter((f) => !(f.type === 'text' && PRE.test(f.label || ''))).map((f) => (f.label || TYPES[f.type].label).toLowerCase())));
+    const filled = Array.from(new Set(inv.filter((f) => f.type === 'text' && PRE.test(f.label || '')).map((f) => f.label.toLowerCase())));
+    const body = tpl
+      ? `<p><span class="cs-badge ${ready ? 'cs-badge-ok' : 'cs-badge-warn'}">${ready ? 'Ready' : 'Needs signature fields'}</span> <strong>${h(tpl.title)}</strong> · ${tpl.pages} page${tpl.pages === 1 ? '' : 's'}${kinds.length ? ` · the investor completes ${h(kinds.join(', '))}` : ''}${filled.length ? `; ${h(filled.join(', '))} filled in for them` : ''}${(tpl.roles || []).indexOf('Sponsor') >= 0 ? ' · countersigned by your firm' : ''}</p>
+        <p class="cs-hint">${ready ? `Every investor invited to ${h(o.name)} signs it online during onboarding, with their name and commitment filled in. Nothing to send by hand.` : 'Place a signature field for each signer, then save, so investors can sign it during onboarding.'}</p>`
+      : `<p>Upload the subscription agreement once and place the fields investors fill in and sign. Every investor you invite to ${h(o.name)} then signs it online during onboarding, with their name and commitment filled in. Nothing to send by hand.</p>`;
+    const btns = !canEdit
+      ? ''
+      : draft
+        ? `<div class="cs-row"><a class="cs-btn cs-btn-primary" href="#console-envelope-${h(draft.id)}">Continue placing fields</a><button class="cs-btn" type="button" data-action="es-agreement-cancel" data-id="${h(draft.id)}">Discard</button></div>`
+        : tpl
+          ? `<div class="cs-row"><button class="cs-btn${ready ? '' : ' cs-btn-primary'}" type="button" data-action="es-agreement-edit" data-offering="${h(o.id)}">Edit fields</button><button class="cs-btn" type="button" data-action="es-agreement-new" data-offering="${h(o.id)}">Replace the PDF</button><button class="cs-btn" type="button" data-action="es-agreement-remove" data-offering="${h(o.id)}">Remove</button></div>`
+          : `<div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-new" data-offering="${h(o.id)}">${icon('plus')}Add the subscription agreement</button></div>`;
+    return CK().panel('Subscription agreement', `<div class="es-agr-panel" id="agreement">${body}${btns}</div>`);
+  }
+  NS.actions['es-agreement-new'] = (el) => {
+    const w = W();
+    const oid = el.getAttribute('data-offering') || '';
+    const o = w.offerings.find((x) => x.id === oid) || null;
+    const pdfs = (w.docs || []).filter((d) => d && (!o || d.offeringId === o.id) && (/pdf/i.test(d.type || '') || /\.pdf$/i.test(d.fileName || '')));
+    const guess = pdfs.find((d) => /subscri/i.test(`${d.title || ''} ${d.fileName || ''}`));
+    U.dialog(
+      `<form class="es-dlg-form" data-form="es-agreement" data-offering="${h(oid)}"><div class="dlg-head"><div><h2>Subscription agreement</h2><p>${o ? `For ${h(o.name)}. ` : ''}Investors sign it during onboarding; you place the fields once.</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
+      <div class="dlg-body"><div class="cs-grid">
+        ${o ? '' : `<label class="cs-field cs-wide" for="es-agr-off"><span>Offering</span><select id="es-agr-off" name="offeringId" required><option value="">Choose an offering</option>${w.offerings.filter((x) => x.status === 'Raising').concat(w.offerings.filter((x) => x.status !== 'Raising')).map((x) => `<option value="${h(x.id)}">${h(x.name)}</option>`).join('')}</select></label>`}
+        <label class="cs-field cs-wide" for="es-agr-file"><span>Subscription agreement (PDF)</span><input id="es-agr-file" name="file" type="file" accept="application/pdf,.pdf"><span class="cs-hint">One PDF, up to 25 MB.</span></label>
+        ${pdfs.length ? `<label class="cs-field cs-wide" for="es-agr-doc"><span>Or use a document already on this offering</span><select id="es-agr-doc" name="docId"><option value="">None</option>${pdfs.map((d) => `<option value="${h(d.id)}"${guess && guess.id === d.id ? ' selected' : ''}>${h(d.title || d.fileName)} (${h(d.fileName || '')})</option>`).join('')}</select></label>` : ''}
+        <label class="cs-field cs-wide" for="es-agr-title"><span>Title</span><input id="es-agr-title" name="title" type="text" maxlength="120" value="Subscription Agreement"></label>
+        <label class="cs-check cs-wide" for="es-agr-cs"><input id="es-agr-cs" name="countersign" type="checkbox" checked><span>Your firm countersigns<span class="cs-hint">Someone at the firm signs after the investor. The subscription is accepted once it is countersigned and the investor is verified.</span></span></label>
+      </div>
+      <p class="cs-hint">The fields are placed for you at the signature lines in the PDF (signature, printed name, date and the commitment amount). You check and adjust them on the next screen.</p>
+      <div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog">Cancel</button><button class="cs-btn cs-btn-primary" type="submit">Continue to place fields</button></div></div></form>`,
+      'dlg-es'
+    );
+  };
+  NS.forms['es-agreement'] = async (form) => {
+    const w = W();
+    const oid = form.getAttribute('data-offering') || (form.offeringId ? form.offeringId.value : '');
+    const file = form.file && form.file.files && form.file.files[0];
+    const docId = form.docId ? form.docId.value : '';
+    if (!oid) return U.toast('Choose the offering.');
+    if (!file && !docId) return U.toast('Choose the subscription agreement PDF.');
+    const btn = form.querySelector('button[type=submit]');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Preparing…';
+    }
+    try {
+      const env = await agreementDraft(w, oid, { file: file || null, docId: file ? '' : docId, title: form.title.value, countersign: !!form.countersign.checked });
+      U.closeDialog();
+      openAgreement(env);
+      U.toast(`${env.autoPlaced} field${env.autoPlaced === 1 ? '' : 's'} placed. Check them, then save the subscription agreement.`);
+    } catch (e) {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Continue to place fields';
+      }
+      U.toast((e && e.message) || 'The PDF could not be prepared.');
+    }
+  };
+  NS.actions['es-agreement-edit'] = async (el) => {
+    const w = W();
+    const oid = el.getAttribute('data-offering');
+    const open = envs(w).find((e) => e.agreementFor === oid && e.status === 'draft');
+    if (open) return openAgreement(open);
+    const tpl = subscriptionTemplate(w, oid);
+    if (!tpl) return;
+    try {
+      openAgreement(await agreementDraft(w, oid, { templateId: tpl.id }));
+    } catch (e) {
+      U.toast((e && e.message) || 'The agreement could not be opened.');
+    }
+  };
+  NS.actions['es-agreement-save'] = (el) => {
+    const w = W();
+    const env = envById(w, el.getAttribute('data-id'));
+    if (!env || !env.agreementFor) return;
+    const todo = agreementTodo(env);
+    if (todo) return U.toast(todo);
+    const o = w.offerings.find((x) => x.id === env.agreementFor);
+    const tpl = templateFromEnv(env, env.title, true, env.agreementFor);
+    // One subscription agreement per offering: the edited one is replaced; any other stops being the offering's agreement.
+    if (env.replaceTemplateId) w.esignTemplates = tpls(w).filter((t) => t.id !== env.replaceTemplateId);
+    tpls(w).forEach((t) => t.offeringId === env.agreementFor && (t.subscription = false));
+    tpls(w).push(tpl);
+    w.envelopes = envs(w).filter((e) => e !== env);
+    CK().audit('Subscription agreement saved', `${o ? o.name : env.agreementFor}: ${tpl.title}, ${tpl.fields.length} fields (${tpl.roles.join(', ')}); investors sign it during onboarding`, env.agreementFor, tpl.id);
+    NS.app.save(true);
+    U.toast('Subscription agreement saved. Investors sign it during onboarding.');
+    NS.app.go('console-offering-' + env.agreementFor);
+  };
+  NS.actions['es-agreement-cancel'] = (el) => {
+    const w = W();
+    const env = envById(w, el.getAttribute('data-id'));
+    if (!env || !env.agreementFor || env.status !== 'draft') return;
+    const oid = env.agreementFor;
+    w.envelopes = envs(w).filter((e) => e !== env);
+    // A PDF uploaded for this draft and used by nothing else goes with it.
+    if (env.docId === env.id + '-orig' && !tpls(w).some((t) => t.docId === env.docId) && !envs(w).some((e) => e.docId === env.docId)) files().del(env.docId).catch(() => {});
+    NS.app.save(true);
+    NS.app.go('console-offering-' + oid);
+  };
+  NS.actions['es-agreement-remove'] = (el) => {
+    const oid = el.getAttribute('data-offering');
+    const tpl = subscriptionTemplate(W(), oid);
+    if (!tpl) return;
+    U.dialog(
+      `<div class="dlg-head"><div><h2>Remove the subscription agreement?</h2><p>${h(tpl.title)}. Investors invited after this sign a typed subscription form instead. Agreements already sent are not affected.</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
+      <div class="dlg-body"><div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog" autofocus>Keep it</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-remove-yes" data-offering="${h(oid)}">Remove</button></div></div>`,
+      'dlg-es'
+    );
+  };
+  NS.actions['es-agreement-remove-yes'] = (el) => {
+    const w = W();
+    const oid = el.getAttribute('data-offering');
+    const tpl = subscriptionTemplate(w, oid);
+    if (!tpl) return U.closeDialog();
+    tpl.subscription = false; // kept as an ordinary template on the E-sign page
+    CK().audit('Subscription agreement removed', `${tpl.title}: no longer signed during onboarding`, oid, tpl.id);
+    NS.app.save(true);
+    U.closeDialog();
+    NS.app.render();
+  };
+  NS.esign = { pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, investorDocsHTML, agreementPanel, agreementDraft, autoFields };
 })(window.CVPortal);
