@@ -197,6 +197,14 @@ function cleanSubmission(body, rec, snap) {
     if (!off) throw fail(400, 'This invitation has no offering to subscribe to');
     if (off.id && request.offeringId !== undefined && String(request.offeringId) !== off.id) throw fail(400, 'request.offeringId does not match the offering on this invitation');
     if (locked && request.cents !== undefined && Math.round(Number(request.cents)) !== snap.invitation.cents) throw fail(400, 'request.cents does not match the commitment set on this invitation');
+    // With no commitment set by the sponsor, the amount is the investor's: a positive whole number of cents, at least the
+    // offering's minimum when the snapshot names one (the console checks the share class minimum again on import).
+    if (!locked) {
+      const c = Number(request.cents);
+      if (!Number.isInteger(c) || c <= 0 || c > 1e15) throw fail(400, 'request.cents must be a positive whole number of cents');
+      const min = Math.round((Number(off.minimum) || 0) * 100);
+      if (min > 0 && c < min) throw fail(400, 'request.cents is below the offering minimum');
+    }
     out.request = Object.assign(cleanJson(request, 256 * KB, 'request'), { investorId: rec.investorId }, off.id ? { offeringId: off.id } : {}, locked ? { cents: snap.invitation.cents } : {});
   }
   const envelope = body.envelope === undefined || body.envelope === null ? null : obj(body.envelope);

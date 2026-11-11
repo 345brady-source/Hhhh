@@ -172,3 +172,18 @@ test('a finished onboarding the console never imported: the sponsor is reminded 
     assert.equal(out.reminders, 0);
   });
 });
+
+test('with no commitment set by the sponsor, the investor’s amount must be a positive whole number of cents, at least the minimum', () =>
+  start(async (base) => {
+    const r = await create(base, { offering: { id: 'hr-fund-iii', name: 'Harbor Ridge Fund III', exemption: 'Rule 506(b)', minimum: 25000, documents: [] }, invitation: { cents: 0 } });
+    const send = (cents) => complete(base, r.token, { investor: { id: 'HRC-0007', contact: 'Zelda Quixote' }, request: { id: 'req-c', offeringId: 'hr-fund-iii', cents } });
+    for (const bad of [-25000000, 0, 1234.5, 'lots', 2400000]) {
+      const x = await send(bad);
+      assert.equal(x.status, 400, `cents ${bad} is refused`);
+    }
+    assert.match((await send(2400000)).body.error, /below the offering minimum/);
+    const ok = await send(2500000);
+    assert.equal(ok.status, 200, JSON.stringify(ok.body));
+    const sub = (await j(base, 'GET', `/v1/invitations/${r.id}/submission`)).body;
+    assert.equal(sub.request.cents, 2500000);
+  }));
