@@ -1,5 +1,5 @@
 /*
- * E-sign (SignNow-style): envelopes and templates, a field editor in the
+ * E-sign: envelopes and templates, a field editor in the
  * sponsor console, and one signing experience for investors and the sponsor's
  * countersigner. pdf.js renders pages; pdf-lib stamps fields and appends a
  * certificate of completion. Files live in IndexedDB (NS.ops.files). Names or values outside

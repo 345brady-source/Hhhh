@@ -367,6 +367,8 @@
 @media (max-width: 640px) {
   /* The guide sits at the bottom of the screen, within reach of a thumb, and above the keyboard while a blank is typed. */
   .es-sign .sf-bar, .es-sign .sf-bar.es-bar-portal { order: 5; top: auto; bottom: calc(var(--sf-kb, 0px) + max(var(--space-xs), env(safe-area-inset-bottom, 0px))); grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "status zoom" "acts acts"; padding: var(--space-sm); }
+  /* A preview's role switcher is fixed at the bottom too: the guide sits above it. */
+  body:has(.demo-bar) .es-sign .sf-bar { bottom: calc(var(--sf-kb, 0px) + var(--space-2xl) + env(safe-area-inset-bottom, 0px)); }
   .es-sign .sf-bar.has-tray { grid-template-areas: "status zoom" "tray acts"; align-items: end; }
   .sf-bar.has-tray .sf-status, .sf-bar.has-tray .sf-zoom { align-self: center; }
   .sf-bar .sf-acts .btn, .sf-bar .sf-acts .cs-btn { flex: 1 1 auto; padding-left: var(--space-md); padding-right: var(--space-md); }

@@ -142,7 +142,8 @@
   function pointAt(doc, at) {
     let flag = doc.querySelector('.sf-flag');
     const page = at ? at.box.closest('.es-page') : null;
-    const room = page ? page.getBoundingClientRect().width * at.f.x : 0;
+    const wide = page ? page.getBoundingClientRect().width : 0;
+    const room = at ? wide * at.f.x : 0;
     if (!page || room < 32) {
       if (flag) flag.remove();
       return;
@@ -154,11 +155,12 @@
     }
     if (flag.parentNode !== page) page.appendChild(flag);
     flag.style.top = `${((at.f.y + at.f.h / 2) * 100).toFixed(3)}%`;
-    flag.textContent = room >= 80 ? FLAG[at.f.type] : '';
+    // A word needs a margin wide enough to hold it clear of the printed text: on a small page the pointer goes bare.
+    flag.textContent = wide >= 700 && room >= 80 ? FLAG[at.f.type] : '';
   }
   /**
    * After every render and every entry: each of the signer's fields shows whether it is required, done or filled in
-   * for them, the one they are on carries the tab, and the bar shows the count, where Next goes and whether Finish is open.
+   * for them, the one they are on is ringed and pointed out, and the bar shows the count, where Next goes and whether Finish is open.
    */
   function sync() {
     const c = ctxOf();
