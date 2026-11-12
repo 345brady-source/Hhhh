@@ -311,6 +311,8 @@
   .es-signed .tbl .td-meta { order: 2; }
   .es-signed .tbl .num { order: 3; margin-left: auto; }
   .es-signed .tbl .sub { overflow-wrap: anywhere; }
+}
+
 /* =====================================================================
  * Guided signing (signflow.js): the guide bar, the marks on the signer's own fields, zoom and the phone layout.
  * One block for the investor's signing step (onboarding and portal) and the firm's countersignature in the console.
