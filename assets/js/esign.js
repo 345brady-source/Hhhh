@@ -210,6 +210,8 @@
       return { regular: await pdf.embedFont(L.StandardFonts.Helvetica), bold: await pdf.embedFont(L.StandardFonts.HelveticaBold), uni: false, fallback: odd || '?' };
     }
   }
+  // The signed record (record.js) writes its certificate with the same PDF writer and fonts.
+  NS.esignKit = { writer: pdflib, fontsFor };
 
   /* ---------- Page images (rendered once per stored file, kept as object URLs) ---------- */
   const pageCache = {};
@@ -737,10 +739,11 @@
         next.sha256SignedPages = NS.audit.sha256(pagesOut);
         next.workDocId = next.id + '-work';
         const final = await L.PDFDocument.load(pagesOut);
-        await appendCertificate(L, final, next);
+        await (NS.record ? NS.record.certify(L, final, next) : appendCertificate(L, final, next));
         out = await final.save();
         next.signedDocId = next.id + '-signed';
         next.sha256Signed = NS.audit.sha256(out);
+        if (NS.record) await NS.record.seal(next, out, final.getPageCount());
         await files().put(next.workDocId, new Blob([pagesOut], { type: 'application/pdf' }));
         await files().put(next.signedDocId, new Blob([out], { type: 'application/pdf' }));
       } else {
@@ -1239,8 +1242,8 @@
       <div><dt>Sent</dt><dd>${h(stamp(env.sentAt)) || '—'}</dd></div>
       ${env.completedAt ? `<div><dt>Completed</dt><dd>${h(stamp(env.completedAt))}</dd></div>` : ''}
       ${env.voidReason ? `<div><dt>Voided</dt><dd>${h(stamp(env.voidedAt))}: ${h(env.voidReason)}</dd></div>` : ''}
-      <div><dt>Original SHA-256</dt><dd><code class="es-hash">${h(env.sha256Original)}</code></dd></div>
-      ${env.sha256Signed ? `<div><dt>Signed SHA-256</dt><dd><code class="es-hash">${h(env.sha256Signed)}</code></dd></div>` : ''}
+      ${NS.record && env.status === 'completed' ? '' : `<div><dt>Original SHA-256</dt><dd><code class="es-hash">${h(env.sha256Original)}</code></dd></div>`}
+      ${env.sha256Signed && !NS.record ? `<div><dt>Signed SHA-256</dt><dd><code class="es-hash">${h(env.sha256Signed)}</code></dd></div>` : ''}
       ${env.message ? `<div><dt>Message</dt><dd>${h(env.message)}</dd></div>` : ''}
     </dl>`;
     const preview = ui.preview === env.id;
@@ -1250,7 +1253,7 @@
       ${K.panel('Recipients', `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Order</th><th scope="col">Signer</th><th scope="col">Role</th><th scope="col">Status</th><th scope="col">Viewed</th><th scope="col">Signed</th></tr></thead><tbody>${rows}</tbody></table></div>`)}
       ${K.panel('Details', details)}
       ${K.panel('Document', preview ? `<div class="es-doc es-doc-ro">${pagesHTML(env, (p) => env.fields.filter((f) => f.page === p).map((f) => filledFieldHTML(env, f, null)).join(''))}</div>` : '<p class="cs-muted">Preview the pages with each signer’s fields and what has been filled so far.</p>', `<button class="cs-btn cs-btn-small" type="button" data-action="es-preview" data-id="${h(env.id)}" aria-expanded="${preview}">${preview ? 'Hide' : 'Show'} pages</button>`)}
-      ${K.panel(`History <span class="cs-count">${env.events.length} events</span>`, `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">When (UTC)</th><th scope="col">Who</th><th scope="col">What</th></tr></thead><tbody>${events}</tbody></table></div>`)}`,
+      ${NS.record ? NS.record.consoleHTML(env) : K.panel(`History <span class="cs-count">${env.events.length} events</span>`, `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">When (UTC)</th><th scope="col">Who</th><th scope="col">What</th></tr></thead><tbody>${events}</tbody></table></div>`)}`,
       'console-esign'
     );
   }
@@ -2299,8 +2302,8 @@
   /** Signed copies published to this investor (shown where the Documents page cannot list them). */
   const signedDocsFor = (ws, inv) => (ws.docs || []).filter((d) => d.envelopeId && !d.hidden && (d.investors || []).indexOf(inv.id) >= 0).sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
   function signedHTML(list) {
-    return `<section class="sec es-signed" aria-label="Signed documents">${PK().sec('Signed documents', `<span class="hint">${list.length} document${list.length === 1 ? '' : 's'}</span>`)}<div class="tbl-scroll"><table class="tbl tbl-mid"><thead><tr><th scope="col">Signed</th><th scope="col">Document</th></tr></thead><tbody>${list
-      .map((d) => `<tr><td class="nowrap td-meta">${date(d.date)}</td><td class="td-lead"><button class="link-btn doc-link" type="button" data-action="es-open-doc" data-id="${h(d.id)}">${h(d.title)}</button><span class="sub">${h(d.fileName)} · with certificate of completion</span></td></tr>`)
+    return `<section class="sec es-signed" aria-label="Signed documents">${PK().sec('Signed documents', `<span class="hint">${list.length} document${list.length === 1 ? '' : 's'}</span>`)}<div class="tbl-scroll"><table class="tbl tbl-mid"><thead><tr><th scope="col">Signed</th><th scope="col">Document</th><th scope="col"><span class="sr-only">Download</span></th></tr></thead><tbody>${list
+      .map((d) => `<tr><td class="nowrap td-meta">${date(d.date)}</td><td class="td-lead"><button class="link-btn doc-link" type="button" data-action="es-open-doc" data-id="${h(d.id)}">${h(d.title)}</button><span class="sub">${h(d.fileName)} · with certificate of completion</span></td><td class="num">${NS.record ? NS.record.downloadButton(d) : ''}</td></tr>`)
       .join('')}</tbody></table></div></section>`;
   }
   const hasPositions = (inv) => !!(inv && inv.positions && inv.positions.length);
@@ -2486,6 +2489,7 @@
     const env = envById(ws, envId);
     const s = flowSigner(env, investorId);
     if (!env || !s || s.consentAt || env.status !== 'sent') return false;
+    signAfter(env, s, 'portal'); // the investor has the agreement open: its first view comes before the consent recorded on it
     s.consentAt = nowIso();
     addEvent(env, actorFor(s), 'Consent given', `Agreed to use electronic records and signatures (ESIGN Act, UETA)${givenAt ? ` on ${stamp(givenAt)}` : ''}, when starting onboarding, with the disclosures shown on the consent screen`);
     NS.app.save(true);

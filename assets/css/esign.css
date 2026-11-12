@@ -278,3 +278,37 @@
 @media (prefers-reduced-motion: reduce) {
   .es-f-sig, .es-title-link, .es-signer, .es-tool, .es-back-link, .es-tab { transition: none; }
 }
+
+/* ---------- Signed record (record.js): the record of a completed agreement in the console, and its verify control ---------- */
+.rec-id { font-size: var(--text-sm); }
+.rec-verify { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-sm) var(--space-lg); align-items: center; padding-top: var(--space-md); border-top: 1px solid var(--es-line); }
+.rec-verify h3 { margin: 0 0 var(--space-3xs); font-family: var(--es-font); font-size: var(--text-sm); font-weight: 500; line-height: 1.4; color: var(--es-fg); }
+.rec-verify .cs-hint { margin: 0; }
+.rec-verify .cs-upload { align-self: center; }
+.rec-status { grid-column: 1 / -1; }
+.rec-status:empty { display: none; }
+.rec-result { display: flex; gap: var(--space-sm); align-items: flex-start; margin: 0; font-size: var(--text-sm); line-height: 1.45; color: var(--es-fg); }
+.rec-result .cs-badge { flex: none; margin-top: var(--space-3xs); }
+.rec-sha { display: block; margin-top: var(--space-3xs); font-size: var(--text-xs); color: var(--es-fg-3); }
+/* The investor's signed agreement entry: View and Download side by side. */
+.td-action .btn + .btn, .es-signed .num .btn + .btn { margin-left: var(--space-xs); }
+.td-action .btn, .es-signed .num .btn { vertical-align: middle; }
+.rec-result > span:last-child { min-width: 0; }
+@media (max-width: 640px) {
+  .rec-verify { grid-template-columns: minmax(0, 1fr); }
+  .rec-verify .cs-upload { justify-self: start; }
+  .rec-result { flex-direction: column; gap: var(--space-2xs); }
+  .rec-result .cs-badge { margin-top: 0; }
+  /* Stacked documents list: an entry with two controls gives them their own line, under the date and type. */
+  .tbl-docs tr:has([data-action="es-dl-signed"]) .td-lead { flex-basis: 100%; }
+  .tbl-docs .td-action:has([data-action="es-dl-signed"]) { order: 4; flex-basis: 100%; margin-left: 0; margin-top: var(--space-2xs); }
+  /* Signed documents (an investor with no investments yet): each entry is a block, so Download never sits off the screen. */
+  .es-signed .tbl thead { display: none; }
+  .es-signed .tbl tr { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs) var(--space-sm); padding: var(--space-sm) 0; }
+  .es-signed .tbl tbody tr + tr { border-top: 1px solid var(--line); }
+  .es-signed .tbl td { display: block; padding: 0; border: 0; white-space: normal; min-width: 0; text-align: left; }
+  .es-signed .tbl .td-lead { order: 1; flex: 1 1 100%; }
+  .es-signed .tbl .td-meta { order: 2; }
+  .es-signed .tbl .num { order: 3; margin-left: auto; }
+  .es-signed .tbl .sub { overflow-wrap: anywhere; }
+}

@@ -314,6 +314,7 @@ assets/js/reader.js        the built-in offering-document reader (sections, wate
 assets/js/intake.js        offering-document intake: PDF and Word reading, Claude or the built-in reader, apply
 assets/js/console.js       sponsor console
 assets/js/esign.js         e-signature: envelopes, field editor, signing, certificate of completion, templates
+assets/js/record.js        signed record: certificate page, audit trail, SHA-256 of the original and signed PDF, verify, download
 assets/js/integrations.js  DIY investor verification: connections, checks, decisions, Integrations page
 assets/js/diy.js           DIY sign-up, team and offering sign-up links
 assets/js/invitations.js   DIY turnkey invitations: invite form, progress, notifications, import, automatic acceptance
