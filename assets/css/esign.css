@@ -311,4 +311,120 @@
   .es-signed .tbl .td-meta { order: 2; }
   .es-signed .tbl .num { order: 3; margin-left: auto; }
   .es-signed .tbl .sub { overflow-wrap: anywhere; }
+/* =====================================================================
+ * Guided signing (signflow.js): the guide bar, the marks on the signer's own fields, zoom and the phone layout.
+ * One block for the investor's signing step (onboarding and portal) and the firm's countersignature in the console.
+ * Everything on the page itself uses the paper tokens; the bar uses the chrome around it (--es-*).
+ * ===================================================================== */
+/* The document's details, with declining as the one quiet action beside them. */
+.es-sign-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs) var(--space-md); }
+.es-sign-row .es-sign-meta { flex: 1 1 280px; min-width: 0; margin: 0; }
+.es-sign-head-flow { padding-bottom: 0; border-bottom: 0; }
+.es-decline { flex: none; border-color: transparent; background: transparent; box-shadow: none; color: var(--es-fg-2); }
+.es-decline:hover { border-color: transparent; background: var(--es-surface-2); color: var(--es-fg); }
+.es-decline:active { background: var(--es-page-bg); }
+.es-decline:focus-visible { outline: 2px solid var(--es-focus); outline-offset: 2px; }
+.es-decline:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* The guide: the one clear panel that stays in view while the document scrolls under it. */
+.es-sign .sf-bar { top: var(--space-xs); display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "status zoom acts"; align-items: center; gap: var(--space-sm) var(--space-md); padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-md); border-radius: var(--r-card); background: var(--es-surface); box-shadow: var(--edge-light), var(--shadow-card); }
+.es-sign .sf-bar.es-bar-portal { top: calc(var(--es-bar-top, 72px) + var(--space-xs)); }
+.sf-status { grid-area: status; display: flex; align-items: center; gap: var(--space-sm); min-width: 0; }
+.sf-ring { position: relative; flex: none; display: grid; place-items: center; width: 32px; height: 32px; color: var(--es-accent-text); }
+.sf-ring > svg:first-child { width: 100%; height: 100%; transform: rotate(-90deg); }
+.sf-ring-track { fill: none; stroke: var(--es-line); stroke-width: 3; }
+.sf-ring-fill { fill: none; stroke: var(--es-accent); stroke-width: 3; stroke-linecap: round; transition: stroke-dasharray var(--dur-short) var(--ease-out); }
+.sf-ring > .i { position: absolute; inset: 0; width: 14px; height: 14px; margin: auto; stroke-width: 2.75; opacity: 0; transition: opacity var(--dur-short) var(--ease-out); }
+.sf-bar.is-ready .sf-ring > .i { opacity: 1; }
+.sf-count { display: flex; flex-direction: column; gap: var(--space-3xs); min-width: 0; margin: 0; }
+.sf-count strong { font-size: var(--text-md); font-weight: 500; line-height: 1.25; color: var(--es-fg); }
+.sf-hint { font-size: var(--text-sm); font-weight: 400; line-height: 1.35; color: var(--es-fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* What a Finish pressed early still needs: said in the bar, in full. */
+.sf-hint.is-nudge { color: var(--es-bad); white-space: normal; }
+.sf-acts { grid-area: acts; display: flex; align-items: center; gap: var(--space-xs); }
+.sf-acts .sf-next[hidden], .sf-bar .sf-tray[hidden] { display: none; }
+/* Zoom: one small well of three controls. */
+.sf-zoom { grid-area: zoom; justify-self: end; display: inline-flex; align-items: center; height: var(--control-h-sm); border: 1px solid var(--es-line); border-radius: var(--r-pill); background: var(--es-surface); }
+.sf-zoom-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: var(--control-h-sm); height: 100%; padding: 0 var(--space-xs); border: 0; border-radius: var(--r-pill); background: transparent; color: var(--es-fg-2); font-family: var(--es-font); font-size: var(--text-xs); font-weight: 500; font-variant-numeric: tabular-nums; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+.sf-zoom-btn::after { content: ""; position: absolute; inset: -7px 0; }
+.sf-zoom-btn:hover { background: var(--es-surface-2); color: var(--es-fg); }
+.sf-zoom-btn:active { background: var(--es-page-bg); }
+.sf-zoom-btn:focus-visible { outline: 2px solid var(--es-focus); outline-offset: 2px; }
+.sf-zoom-btn:disabled { background: transparent; color: var(--es-fg-3); opacity: 0.55; cursor: not-allowed; }
+.sf-zoom-fit { min-width: 52px; }
+/* The phone's tray: the blank the signer is on, typed above the keyboard. */
+.sf-tray { grid-area: tray; display: flex; flex-direction: column; gap: var(--space-2xs); min-width: 0; }
+.sf-tray-label { font-size: var(--text-xs); font-weight: 500; color: var(--es-fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sf-tray-label b { margin-left: var(--space-3xs); color: var(--es-bad); font-weight: 500; }
+.sf-tray-in { box-sizing: border-box; width: 100%; min-width: 0; height: var(--control-h); padding: 0 var(--space-sm); border: 1px solid var(--es-line-strong); border-radius: var(--r-inner); background: var(--es-surface); color: var(--es-fg); font-family: var(--es-font); font-size: var(--text-md); }
+.sf-tray-in:hover { border-color: var(--es-fg-3); }
+.sf-tray-in:focus-visible { outline: 2px solid var(--es-focus); outline-offset: 2px; }
+.sf-tray-in:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* The page at the chosen zoom: it fits the width at 100% and scrolls sideways inside its tray beyond that. */
+.es-doc-sign .es-page-wrap { flex: none; width: calc(100% * var(--es-zoom, 1)); max-width: calc(860px * var(--es-zoom, 1)); margin-inline: auto; }
+.es-doc-sign.is-zoomed { align-items: flex-start; overflow-x: auto; overscroll-behavior-x: contain; }
+
+/* The signer's own fields. Required and still to do: a solid edge and a wash of the firm's color. Optional: a dashed edge.
+   Done: ink on the page inside a faint edge. Filled in for the signer: plain, with a lock. */
+.es-doc-sign .es-f-mine { overflow: visible; transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
+.es-doc-sign .es-f-mine.is-req:not(.is-filled) { border: 1.5px solid var(--sc); background: color-mix(in srgb, var(--sc) 14%, var(--es-paper)); }
+.es-doc-sign .es-f-mine.is-opt:not(.is-filled) { border: 1.5px dashed color-mix(in srgb, var(--sc) 55%, transparent); background: color-mix(in srgb, var(--sc) 5%, var(--es-paper)); }
+.es-doc-sign .es-f-mine.is-req:not(.is-filled):hover { background: color-mix(in srgb, var(--sc) 22%, var(--es-paper)); }
+.es-doc-sign .es-f-mine.is-opt:not(.is-filled):hover { background: color-mix(in srgb, var(--sc) 12%, var(--es-paper)); }
+.es-doc-sign .es-f-mine.is-filled { border: 1px solid color-mix(in srgb, var(--sc) 32%, transparent); background: color-mix(in srgb, var(--sc) 4%, transparent); }
+.es-doc-sign .es-f-mine.is-filled:hover { background: color-mix(in srgb, var(--sc) 9%, transparent); }
+.es-doc-sign .es-f-mine.is-given, .es-doc-sign .es-f-mine.is-given:hover { border: 0; background: color-mix(in srgb, var(--es-paper-soft) 70%, transparent); cursor: default; }
+.es-doc-sign .es-f-mine.is-over { border-color: var(--es-paper-bad); }
+/* The field the signer is on: a ring, and a pointer in the page's margin level with it. */
+.es-doc-sign .es-f-mine.is-current { outline: 2px solid var(--sc); outline-offset: 2px; z-index: 3; }
+.es-doc-sign .sf-flag { position: absolute; left: var(--space-2xs); z-index: 4; display: inline-flex; align-items: center; box-sizing: border-box; min-width: 20px; height: 24px; padding: 0 var(--space-md) 0 var(--space-xs); border-radius: var(--r-sm) 0 0 var(--r-sm); background: var(--paper-brand-fill); color: var(--paper-brand-ink); font-family: var(--font-body); font-size: var(--text-xs); font-weight: 500; line-height: 1; white-space: nowrap; transform: translateY(-50%); clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%); pointer-events: none; }
+.es-doc-sign .sf-flag:empty { min-width: 0; width: 16px; height: 16px; padding: 0; border-radius: 4px 0 0 4px; clip-path: polygon(0 0, 50% 0, 100% 50%, 50% 100%, 0 100%); }
+/* The mark on the corner: required, or done. A value filled in for the signer carries a small lock inside its box. */
+.es-doc-sign .sf-mark { position: absolute; top: -8px; right: -8px; z-index: 2; display: grid; place-items: center; width: 16px; height: 16px; border-radius: var(--r-pill); pointer-events: none; }
+.es-doc-sign .sf-mark .i { width: 10px; height: 10px; stroke-width: 3; }
+.es-doc-sign .sf-mark[data-k="req"] { background: var(--es-paper); color: var(--es-paper-bad); box-shadow: 0 0 0 1px color-mix(in srgb, var(--es-paper-bad) 50%, var(--es-paper)); }
+.es-doc-sign .sf-mark[data-k="done"] { background: var(--es-paper-ink); color: var(--es-paper); }
+.es-doc-sign .sf-mark[data-k="lock"] { top: 50%; right: var(--space-2xs); width: 12px; height: 12px; color: var(--es-paper-ink-2); opacity: 0.7; transform: translateY(-50%); }
+.es-doc-sign .sf-mark[data-k="lock"] .i { width: 12px; height: 12px; stroke-width: 2; }
+/* The guide names each field (the bar says which one the signer is on), so a checkbox's label does not cover the words printed beside it. */
+.es-doc-sign .es-f-tag { display: none; }
+/* A checkbox is the box itself: the tick is drawn in ink when it is checked. */
+.es-doc-sign .es-f-check.is-req:not(.is-filled) { border-color: var(--sc); }
+.es-doc-sign .es-f-check input { appearance: none; -webkit-appearance: none; width: 100%; height: 100%; margin: 0; border: 0; border-radius: 0; background: transparent; }
+.es-doc-sign .es-f-check.is-filled::before { content: ""; position: absolute; left: 50%; top: 46%; width: 28%; height: 56%; border: solid var(--es-paper-ink); border-width: 0 2px 2px 0; transform: translate(-50%, -50%) rotate(45deg); pointer-events: none; }
+/* The firm's signature lines on the investor's copy, and the investor's on the firm's: a quiet dashed outline. */
+.es-doc-sign .es-f-other { border: 1px dashed var(--es-paper-line); background: color-mix(in srgb, var(--es-paper-soft) 55%, transparent); }
+
+@media (max-width: 640px) {
+  /* The guide sits at the bottom of the screen, within reach of a thumb, and above the keyboard while a blank is typed. */
+  .es-sign .sf-bar, .es-sign .sf-bar.es-bar-portal { order: 5; top: auto; bottom: calc(var(--sf-kb, 0px) + max(var(--space-xs), env(safe-area-inset-bottom, 0px))); grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "status zoom" "acts acts"; padding: var(--space-sm); }
+  /* A preview's role switcher is fixed at the bottom too: the guide sits above it. */
+  body:has(.demo-bar) .es-sign .sf-bar { bottom: calc(var(--sf-kb, 0px) + var(--space-2xl) + env(safe-area-inset-bottom, 0px)); }
+  .es-sign .sf-bar.has-tray { grid-template-areas: "status zoom" "tray acts"; align-items: end; }
+  .sf-bar.has-tray .sf-status, .sf-bar.has-tray .sf-zoom { align-self: center; }
+  .sf-bar .sf-acts .btn, .sf-bar .sf-acts .cs-btn { flex: 1 1 auto; padding-left: var(--space-md); padding-right: var(--space-md); }
+  .sf-bar .sf-acts .sf-next { flex-grow: 3; }
+  .sf-bar.has-tray .sf-finish[aria-disabled="true"] { display: none; }
+  .sf-zoom-fit { display: none; }
+  .es-sign-row .es-decline { margin-left: calc(var(--space-md) * -1); }
+  /* Inside the wizard the tray runs to the panel's edges, so the page is as wide as the phone allows. */
+  .es-sign-flow .es-doc-sign { margin-inline: calc(var(--space-md) * -1); border-radius: 0; }
+  /* Fields keep their true place and size on the small page (with a floor that keeps them visible). Each takes a 44px touch
+     area around it (signflow.js lays these under the fields, so close neighbours never cover one another). */
+  .es-doc-sign .es-f-mine, .es-doc-sign .es-f-mine.es-f-text { --m: 16px; left: calc(var(--x) + var(--w) / 2 - max(var(--m), var(--w)) / 2); top: calc(var(--y) + var(--h) / 2 - max(var(--m), var(--h)) / 2); width: max(var(--m), var(--w)); height: max(var(--m), var(--h)); scroll-margin-top: calc(var(--es-bar-top, 0px) + 96px); }
+  .es-doc-sign .es-f-mine.es-f-text, .es-doc-sign .es-f-mine.es-f-auto { --m: 12px; }
+  .es-doc-sign .es-f-mine.es-f-check { --m: 14px; }
+  .es-doc-sign .sf-hit { position: absolute; left: calc(var(--x) + var(--w) / 2 - max(44px, var(--w)) / 2); top: calc(var(--y) + var(--h) / 2 - max(44px, var(--h)) / 2); width: max(44px, var(--w)); height: max(44px, var(--h)); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .es-doc-sign .es-f-input { font-size: clamp(6px, 64cqh, 15px); cursor: pointer; }
+  .es-doc-sign .sf-mark { top: -6px; right: -6px; width: 12px; height: 12px; }
+  .es-doc-sign .sf-mark .i { width: 8px; height: 8px; }
+  .es-doc-sign .sf-mark[data-k="lock"] { display: none; }
+  .es-doc-sign .sf-flag { left: var(--space-3xs); height: 20px; }
+}
+@media (max-width: 360px) {
+  .sf-ring { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sf-ring-fill, .sf-ring > .i, .sf-zoom-btn, .es-doc-sign .es-f-mine { transition: none; }
 }

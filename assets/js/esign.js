@@ -1,5 +1,5 @@
 /*
- * E-sign (SignNow-style): envelopes and templates, a field editor in the
+ * E-sign: envelopes and templates, a field editor in the
  * sponsor console, and one signing experience for investors and the sponsor's
  * countersigner. pdf.js renders pages; pdf-lib stamps fields and appends a
  * certificate of completion. Files live in IndexedDB (NS.ops.files). Names or values outside
@@ -211,7 +211,7 @@
     }
   }
   // The signed record (record.js) writes its certificate with the same PDF writer and fonts.
-  NS.esignKit = { writer: pdflib, fontsFor };
+  NS.esignKit = Object.assign(NS.esignKit || {}, { writer: pdflib, fontsFor });
 
   /* ---------- Page images (rendered once per stored file, kept as object URLs) ---------- */
   const pageCache = {};
@@ -1277,6 +1277,7 @@
       const ui = esUi();
       if (env && ui.signAs === env.id) signAfter(env, signerById(env, ui.signAsSigner), 'console');
       focusPending();
+      NS.signflow.sync();
     }
   };
   NS.actions['es-preview'] = (el) => {
@@ -1680,11 +1681,6 @@
     return fieldsOf(env, s).filter((f) => isReq(f) && !filledVal(f, st.vals[f.id]));
   }
   const overLong = (env, s, st) => fieldsOf(env, s).filter((f) => !f.locked && tooLong(env, f, st.vals[f.id]));
-  function progressText(env, s, st) {
-    const req = fieldsOf(env, s).filter(isReq);
-    const left = missingFields(env, s, st).length;
-    return left ? `${req.length - left} of ${req.length} required fields complete` : 'All required fields complete';
-  }
   /** A field as it appears once filled (others' fields, read-only previews). */
   function filledFieldHTML(env, f, me) {
     const owner = signerById(env, f.signerId) || { name: '', color: '#888888' };
@@ -1731,15 +1727,18 @@
     const st = signingState(env, s.id);
     const flow = opts.ctx === 'flow';
     const back = con ? `<button class="${btn()} es-back" type="button" data-action="es-sign-exit">${icon('back')}Back to envelope</button>` : flow ? '' : `<a class="es-back-link" href="#documents">${icon('back')}Documents</a>`;
+    // While the signer is at the document, declining is a quiet action beside the document's details (never in the guide).
+    const atDoc = !st.finished && s.status !== 'signed' && env.status === 'sent' && isTurn(env, s) && !!s.consentAt;
+    const meta = `<div class="es-sign-row"><p class="es-sign-meta">${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · signing as <strong>${h(s.name)}</strong> &lt;${h(s.email)}&gt;</p>${atDoc ? `<button class="${btn()} ${con ? 'cs-btn-small' : 'btn-small'} es-decline" type="button" data-action="es-decline" data-id="${h(env.id)}" data-sid="${h(s.id)}"${preview || st.busy ? ' disabled' : ''}>Decline to sign</button>` : ''}</div>`;
     // Inside the onboarding flow the step already names the document: only the file and the signer are shown.
     const head = flow
-      ? `<header class="es-sign-head es-sign-head-flow"><p class="es-sign-meta">${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · signing as <strong>${h(s.name)}</strong> &lt;${h(s.email)}&gt;</p></header>`
+      ? `<header class="es-sign-head es-sign-head-flow">${meta}</header>`
       : `<header class="es-sign-head">
       ${con ? `<div class="es-sign-brand">${NS.brand.lockup(t)}</div>` : ''}
-      <p class="es-eyebrow">${h(t.name)} sent you a document to sign</p>
+      <p class="es-eyebrow">${con ? `Countersign for ${h(t.name)}` : `${h(t.name)} sent you a document to sign`}</p>
       <h1>${h(env.title)}</h1>
-      ${env.message ? `<p class="es-sign-msg">${h(env.message)}</p>` : ''}
-      <p class="es-sign-meta">${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · signing as <strong>${h(s.name)}</strong> &lt;${h(s.email)}&gt;</p>
+      ${env.message && !con ? `<p class="es-sign-msg">${h(env.message)}</p>` : ''}
+      ${meta}
     </header>`;
     const wrap = (inner) => `<div class="es-sign${con ? ' es-sign-console' : ''}${flow ? ' es-sign-flow' : ''}">${back}${head}${inner}</div>`;
     if (st.finished || s.status === 'signed') {
@@ -1756,6 +1755,14 @@
     const note = preview ? `<p class="es-note">${icon('lock')}<span>Investor preview. Only ${h(s.name)} can consent and sign, after signing in to the portal.</span></p>` : '';
     if (!s.consentAt) {
       const sup = t.support || {};
+      // The firm's own countersigner agrees in one line: the notice for investors (paper copies, withdrawing) is not for them.
+      if (con)
+        return wrap(`<section class="es-card es-consent" aria-labelledby="es-consent-h">
+        <h2 id="es-consent-h">Countersign electronically</h2>
+        <p>You are signing for ${h(t.legalName || t.name)}. Your electronic signature has the same legal effect as a handwritten one, and the signed agreement records that you agreed to sign this way.</p>
+        <label class="cs-check" for="es-consent-box"><input id="es-consent-box" type="checkbox"><span>I agree to use electronic records and signatures.</span></label>
+        <div class="es-row"><button class="${btn(true)}" type="button" data-action="es-consent" data-id="${h(env.id)}" data-sid="${h(s.id)}">Continue</button><button class="${btn()}" type="button" data-action="es-decline" data-id="${h(env.id)}" data-sid="${h(s.id)}">Decline</button></div>
+      </section>`);
       return wrap(`${note}<section class="es-card es-consent" aria-labelledby="es-consent-h">
         <h2 id="es-consent-h">Consent to electronic records and signatures</h2>
         <p>${h(t.legalName || t.name)} asks to provide this document to you electronically and to have you sign it electronically, under the U.S. Electronic Signatures in Global and National Commerce Act (ESIGN) and the Uniform Electronic Transactions Act (UETA).</p>
@@ -1775,16 +1782,12 @@
         .sort(readingOrder)
         .map((f) => (f.signerId === s.id ? myFieldHTML(env, s, f, st, preview || st.busy) : filledFieldHTML(env, f, s)))
         .join('');
-    return wrap(`${note}<div class="es-bar${con ? '' : ' es-bar-portal'}" role="toolbar" aria-label="Signing">
-        <p class="es-progress" aria-live="polite">${h(progressText(env, s, st))}</p>
-        <div class="es-row">
-          <button class="${btn()}" type="button" data-action="es-next" data-id="${h(env.id)}" data-sid="${h(s.id)}"${preview ? ' disabled' : ''}>${icon('arrow')}Next field</button>
-          <button class="${btn(true)} es-finish" type="button" data-action="es-finish" data-id="${h(env.id)}" data-sid="${h(s.id)}"${preview || st.busy ? ' disabled' : ''}>${st.busy ? 'Finishing…' : 'Finish'}</button>
-          <button class="${btn()}" type="button" data-action="es-decline" data-id="${h(env.id)}" data-sid="${h(s.id)}"${preview || st.busy ? ' disabled' : ''}>Decline</button>
-        </div>
-      </div>
+    // The guide (Start, Next, what is left, Finish, zoom) is signflow.js; it also marks the fields once the page is drawn.
+    return wrap(`${note}${NS.signflow.barHTML(env, s, st, { ctx: opts.ctx, preview })}
       <div class="es-doc es-doc-sign">${pagesHTML(env, layer)}</div>`);
   }
+  /* What the signing guide (signflow.js) reads from this file. */
+  NS.esignKit = Object.assign(NS.esignKit || {}, { env: (id) => envById(W(), id), signer: signerById, state: signingState, fieldsOf, isReq, filled: filledVal, tooLong, missing: missingFields, label: (f) => f.label || TYPES[f.type].label });
   /** Record the first view (not in render: renders must not change data). */
   function signAfter(env, s, ctx) {
     if (!env || !s) return;
@@ -1822,8 +1825,8 @@
     s.consentAt = nowIso();
     addEvent(env, actorFor(s), 'Consent given', 'Agreed to use electronic records and signatures (ESIGN Act, UETA)');
     NS.app.save(true);
-    const first = fieldsOf(env, s).filter((f) => f.type !== 'date' && !f.locked)[0];
-    S().ui.esFocus = first ? `.es-doc-sign [data-fid="${first.id}"]` : '.es-finish';
+    // The document opens with the guide's Start (or Finish, when nothing is left to complete) in focus.
+    S().ui.esFocus = '.sf-next:not([hidden]), .es-finish';
     NS.app.render();
   };
   NS.changes['es-val'] = (el) => {
@@ -1849,8 +1852,7 @@
       if (over) el.setAttribute('aria-invalid', 'true');
       else el.removeAttribute('aria-invalid');
     }
-    const p = document.querySelector('.es-progress');
-    if (p) p.textContent = progressText(env, s, st);
+    NS.signflow.sync();
   };
   // Where the signer is: the last field (or Finish) that had focus. Next field continues from there.
   document.addEventListener('focusin', (e) => {
@@ -1863,12 +1865,6 @@
       if (fe) st.cursor = fe.getAttribute('data-fid');
     }
   });
-  function focusField(env, s, f) {
-    const el = document.querySelector(`.es-doc-sign [data-fid="${CSS.escape(f.id)}"]`);
-    if (!el) return;
-    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    el.focus({ preventScroll: true });
-  }
   /**
    * The next field to go to from `from` (a field id, 'finish' or null): the next incomplete required
    * field (wrapping round); when none is left, the next empty optional field after this one, then Finish
@@ -1883,37 +1879,18 @@
     const open = list.filter((f) => !filledVal(f, st.vals[f.id]));
     return later(open) || null;
   }
-  function focusFinish() {
-    const fin = document.querySelector('.es-finish');
-    if (!fin) return;
-    fin.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    fin.focus({ preventScroll: true });
-  }
-  NS.actions['es-next'] = (el) => {
-    const { env, s } = signerFromEl(el);
-    const st = env && s && signingState(env, s.id);
-    if (!st) return;
-    const f = nextField(env, s, st, st.cursor);
-    if (f) focusField(env, s, f);
-    else focusFinish();
-  };
+  // Start and Next: the guide takes the signer to their next required field.
+  NS.actions['es-next'] = () => NS.signflow.next();
   NS.actions['es-finish'] = (el) => {
     const { env, s } = signerFromEl(el);
     if (!mayAct(env, s)) return U.toast('Only the signer can finish signing.');
     const st = signingState(env, s.id);
     if (st.busy) return;
+    // Pressed early: the guide says what is still needed and goes to the first of it.
     const missing = missingFields(env, s, st);
-    if (missing.length) {
-      U.toast(`${missing.length} required field${missing.length === 1 ? ' is' : 's are'} not complete.`);
-      focusField(env, s, missing[0]);
-      return;
-    }
+    if (missing.length) return NS.signflow.explain(missing);
     const over = overLong(env, s, st);
-    if (over.length) {
-      U.toast(`The text in “${over[0].label || TYPES[over[0].type].label}” is too long for its box. Shorten it to finish.`);
-      focusField(env, s, over[0]);
-      return;
-    }
+    if (over.length) return NS.signflow.explain(over, `The text in “${over[0].label || TYPES[over[0].type].label}” is too long for its box. Shorten it to finish.`);
     finishSigning(env, s, st);
   };
   NS.actions['es-decline'] = (el) => {
@@ -1934,7 +1911,7 @@
     declineEnvelope(env, s, reason);
     U.closeDialog();
     NS.app.render();
-    U.toast(`Declined. ${T().name} has been notified (simulated email).`);
+    U.toast(`Declined. ${T().name} has been told.`);
   };
 
   /* ---------- Adopt-signature dialog: Type, Draw, Upload ---------- */
@@ -2287,9 +2264,12 @@
       const env = envById(W(), id);
       const inv = PK().viewer();
       const s = env && inv ? env.signers.find((x) => x.investorId === inv.id) : null;
+      // An investor who agreed to electronic records and signatures when they opened their account is not asked again.
+      if (s && S().role === 'investor' && inv.esignConsent && inv.esignConsent.at && isTurn(env, s) && recordConsent(W(), env.id, inv.id, inv.esignConsent.at)) return NS.app.render();
       stickBar();
       signAfter(env, s, 'portal');
       focusPending();
+      NS.signflow.sync();
     }
   };
 
@@ -2480,6 +2460,7 @@
     stickBar();
     signAfter(env, s, 'portal');
     focusPending();
+    NS.signflow.sync();
   }
   /**
    * The investor already agreed to electronic records and signatures (ESIGN Act, UETA) at the start of
