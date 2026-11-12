@@ -32,6 +32,7 @@ A sponsor uploads a subscription agreement once, the signature fields land in th
 <!-- Current scope: the e-signature rebuild. -->
 
 - [ ] Automatic field placement reads a subscription agreement and puts signature and related fields in the correct spot
+- [ ] The portal distinguishes what the client signs, what the client fills in, and what requires initials, and makes fill-in blanks fillable automatically (filled in for the client where onboarding already has the answer)
 - [ ] Where placement is uncertain, the portal places its best guess, flags those fields, and the sponsor must confirm them before the document can be used
 - [ ] A smooth manual field editor: fields drag cleanly within a page and across pages, with none of today's jank
 - [ ] The sponsor's field editor and the investor's signing screen look polished and well made, not cheap
@@ -93,4 +94,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-12 after initialization*
+*Last updated: 2026-11-12 after adding field-type detection and automatic fill-in fields*

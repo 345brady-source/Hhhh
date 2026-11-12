@@ -12,7 +12,7 @@ The portal's e-signature works but is not market ready. This roadmap rebuilds it
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Accurate Field Placement** - Fields land on the right line of a subscription agreement, and uncertain ones are flagged for the sponsor to confirm
+- [ ] **Phase 1: Accurate Field Placement** - The portal finds what the client signs, fills in and initials on a subscription agreement, places the right field on the right line, and flags uncertain ones for the sponsor to confirm
 - [ ] **Phase 2: Field Editor** - A smooth, polished editor where fields drag cleanly within and across pages
 - [ ] **Phase 3: Signatures** - Cursive and other signature styles, a natural drawn signature, upload, adopt once
 - [ ] **Phase 4: Signing Inside Onboarding** - A polished, guided signing step for investors and countersigning for sponsors, with no separate tool
@@ -21,13 +21,15 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: Accurate Field Placement
-**Goal**: The portal reads a subscription agreement and places each field correctly, and never passes off a guess as certain
+**Goal**: The portal reads a subscription agreement, works out what the client signs, what the client fills in and what needs initials, places each field correctly, and never passes off a guess as certain
 **Depends on**: Nothing (first phase)
-**Requirements**: PLACE-01, PLACE-02, PLACE-03, PLACE-04
+**Requirements**: PLACE-01, PLACE-02, PLACE-03, PLACE-04, PLACE-05, PLACE-06, PLACE-07
 **Success Criteria** (what must be TRUE):
   1. On a set of real-style subscription agreements, signature, date and name fields sit on their printed lines
   2. Investor fields and sponsor countersignature fields are assigned to the right signer
-  3. Fields the portal is unsure about are flagged, and the agreement cannot be used until the sponsor confirms or moves them
+  3. Signature lines become signature fields, initial lines become initials fields, and blanks to complete become fillable fields, all without the sponsor adding them
+  4. Fill-in fields the portal already has answers for from onboarding arrive filled in
+  5. Fields the portal is unsure about are flagged, and the agreement cannot be used until the sponsor confirms or moves them
 **Plans**: TBD
 
 ### Phase 2: Field Editor

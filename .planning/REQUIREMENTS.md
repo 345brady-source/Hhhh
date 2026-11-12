@@ -11,6 +11,9 @@
 - [ ] **PLACE-02**: Each automatically placed field carries a confidence level, and fields the portal is unsure about are visibly flagged
 - [ ] **PLACE-03**: The sponsor must confirm or move every flagged field before the agreement can be used for onboarding
 - [ ] **PLACE-04**: The portal tells investor fields apart from sponsor countersignature fields and assigns each to the right signer
+- [ ] **PLACE-05**: The portal tells apart what the client signs, what the client fills in, and what needs the client's initials, and creates the right kind of field for each
+- [ ] **PLACE-06**: Blanks the client must fill in (name, address, amount, date, checkboxes and similar) become fillable fields automatically, without the sponsor adding them by hand
+- [ ] **PLACE-07**: Fill-in fields whose answer the portal already has from onboarding (name, entity, address, commitment amount, date) are filled in automatically; the client only completes what is left
 
 ### Field Editor
 
@@ -77,6 +80,9 @@
 | PLACE-02 | Phase 1 | Pending |
 | PLACE-03 | Phase 1 | Pending |
 | PLACE-04 | Phase 1 | Pending |
+| PLACE-05 | Phase 1 | Pending |
+| PLACE-06 | Phase 1 | Pending |
+| PLACE-07 | Phase 1 | Pending |
 | EDIT-01 | Phase 2 | Pending |
 | EDIT-02 | Phase 2 | Pending |
 | EDIT-03 | Phase 2 | Pending |
@@ -101,10 +107,10 @@
 | REC-05 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 26 total
-- Mapped to phases: 26
+- v1 requirements: 29 total
+- Mapped to phases: 29
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-11-12*
-*Last updated: 2026-11-12 after initial definition*
+*Last updated: 2026-11-12 after adding field-type detection and automatic fill-in fields*
