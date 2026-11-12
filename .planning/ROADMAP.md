@@ -30,7 +30,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Signature lines become signature fields, initial lines become initials fields, and blanks to complete become fillable fields, all without the sponsor adding them
   4. Fill-in fields the portal already has answers for from onboarding arrive filled in
   5. Fields the portal is unsure about are flagged, and the agreement cannot be used until the sponsor confirms or moves them
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Read the agreement from its printed lines: signature-block fields on their lines, for the right signer, each with a confidence level
+- [ ] 01-02-PLAN.md — Initials, fill-in blanks and tick boxes become fields; unsure fields are marked and must be confirmed or moved before the agreement can be used
+- [ ] 01-03-PLAN.md — Fill in from onboarding what the portal already knows; each investor gets the block for their kind of account; closing accuracy measurement
 
 ### Phase 2: Field Editor
 **Goal**: A sponsor can adjust fields by hand quickly and without frustration, in an editor that looks professionally made
@@ -79,7 +84,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Accurate Field Placement | 0/TBD | Not started | - |
+| 1. Accurate Field Placement | 0/3 | Not started | - |
 | 2. Field Editor | 0/TBD | Not started | - |
 | 3. Signatures | 0/TBD | Not started | - |
 | 4. Signing Inside Onboarding | 0/TBD | Not started | - |
