@@ -47,7 +47,9 @@
     date: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/>',
     name: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.5 3.6-5.5 7-5.5s6.2 2 7 5.5"/>',
     text: '<path d="M5 6h14M12 6v13M9 19h6"/>',
-    checkbox: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="m8 12.5 3 3 5-6"/>'
+    checkbox: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="m8 12.5 3 3 5-6"/>',
+    // A tick box marked for review: it has no room for the word, so it shows this in place of its tick.
+    alert: '<path d="M12 3 2 20h20z"/><path d="M12 10v4.5M12 17.2v.3"/>'
   };
   const glyph = (type) => svg(GLYPH[type] || GLYPH.text);
 
@@ -737,6 +739,8 @@
     d.mark.style.setProperty('--sc', el.style.getPropertyValue('--sc'));
     el.parentNode.appendChild(d.mark);
     cur.root.querySelectorAll('.fe-tools').forEach((x) => x.remove());
+    // The carrying layer has no page to measure: the box keeps the corner it had on its page.
+    el.style.setProperty('--es-r', getComputedStyle(el).getPropertyValue('--es-r'));
     el.classList.add('is-carried');
     el.style.left = '0';
     el.style.top = '0';
@@ -942,6 +946,12 @@
     el.removeAttribute('data-fid');
     el.classList.remove('is-sel');
     el.classList.add('is-carried', 'is-ghost');
+    // The corner a box has on the first page (the carrying layer has no page to measure).
+    const pg = pageEl(1);
+    if (pg) {
+      pg.appendChild(el);
+      el.style.setProperty('--es-r', getComputedStyle(el).getPropertyValue('--es-r'));
+    }
     const pt = pagePt(1);
     const w = Math.min(0.9 * pt.w, t.w) * cur.st.scale;
     const hh = Math.min(0.5 * pt.h, t.h) * cur.st.scale;
