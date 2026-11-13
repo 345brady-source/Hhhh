@@ -1420,6 +1420,142 @@
   };
   /* ===================== end of PLACEMENT REVIEW ===================== */
   /* =====================================================================
+   * READ THE PDF AGAIN: an agreement's fields brought up to date with what the portal reads in its PDF today, kept in
+   * this one block. The reading itself is autoFields (run on a copy of the draft, so nothing changes until it is done).
+   *
+   *   untouched(env, f)       a field the portal placed is still as the reading wrote it (f.placed)
+   *   rereadAgreement(env)    reads again and merges; returns and keeps on the draft (env.reread) what happened
+   *   rereadNote(env)         that, as one plain sentence for the note above the editor ('' when there is nothing to say)
+   *   rereadRailHTML(env)     the button in the editor's left column (data-action="es-reread"); rereadInlineHTML(env)
+   *                           is the same button at the end of the read summary, for narrower screens
+   *
+   * What happens to each stored field:
+   *   placed by hand (no auto), or placed by the portal and since moved or changed    kept as it is
+   *   placed by the portal and not touched                                             replaced by the new reading
+   *   placed by the portal before it recorded what it wrote (auto, no placed), so nothing says what the sponsor touched:
+   *     its reason speaks of the last page (a position the earlier reading made up)   removed
+   *     it lies on a field of the new reading                                          replaced by that field
+   *     it lies on none and its own mark was never settled (nobody has touched it)     removed
+   *     any other                                                                      kept and marked for review
+   * A field of the new reading that would overlap a kept field is not added.
+   * ===================================================================== */
+  const REREAD_KEPT = 'This field was placed when the agreement was read earlier. Reading it again found nothing printed here to complete, and the portal cannot tell whether you put the field here yourself. Confirm it, move it or remove it.';
+  /** Who a field is for, in the reading's words. */
+  const readRole = (env, f) => ((signerById(env, f.signerId) || {}).role === 'countersigner' ? 'firm' : 'investor');
+  /** True while a field the portal placed has its own page, box, type, signer, label, required, kind of investor and source as the reading wrote them. */
+  function untouched(env, f) {
+    const p = f && f.auto ? f.placed : null;
+    if (!p) return false;
+    // The signer is compared by role: a saved agreement opened again has new signer ids, the same two roles.
+    return f.page === p.page && ['x', 'y', 'w', 'h'].every((k) => Math.abs((+f[k] || 0) - (+p[k] || 0)) < 1e-6) && f.type === p.type && (readRole(env, f) === 'firm') === (p.role === 'firm') && (f.label || '') === (p.label || '') && !!f.required === !!p.required && (f.forType || '') === (p.forType || '') && (f.prefill || '') === (p.prefill || '');
+  }
+  /** Two fields on the same page that share at least a tenth of the smaller one's box. */
+  function fieldsOverlap(a, b) {
+    if (a.page !== b.page) return false;
+    const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+    const oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+    return ox > 0 && oy > 0 && ox * oy >= 0.1 * Math.min(a.w * a.h, b.w * b.h);
+  }
+  /**
+   * Reads the agreement's PDF again and merges the new fields with the draft's (the rules are at the top of this block).
+   * Returns { ok, replaced, added, own, review, removed }, also kept as env.reread; when the text cannot be read, ok is
+   * false and no field is changed.
+   */
+  async function rereadAgreement(env) {
+    const fresh = Object.assign({}, env, { fields: [] });
+    delete fresh.read;
+    try {
+      await autoFields(fresh);
+    } catch (e) {
+      fresh.read = null;
+    }
+    if (!fresh.read || !fresh.read.ok) return (env.reread = { ok: false });
+    const next = fresh.fields;
+    const kept = [];
+    const gone = [];
+    const out = { ok: true, replaced: 0, added: 0, own: 0, review: 0, removed: 0 };
+    const own = (f) => (kept.push(f), out.own++);
+    env.fields.forEach((f) => {
+      if (!f.auto) return own(f);
+      if (f.placed) return untouched(env, f) ? gone.push(f) : own(f);
+      // Placed before the portal recorded what it wrote.
+      const why = String(f.reviewReason || '');
+      if (why === REREAD_KEPT) return f.review ? (kept.push(f), out.review++) : own(f); // kept by an earlier pass: settled since, or still waiting
+      if (/last page/i.test(why) || next.some((n) => fieldsOverlap(f, n)) || f.review) return gone.push(f);
+      kept.push(Object.assign({}, f, { review: true, reviewReason: REREAD_KEPT }));
+      out.review++;
+    });
+    const add = next.filter((n) => !kept.some((k) => fieldsOverlap(n, k)));
+    out.replaced = gone.filter((g) => add.some((n) => fieldsOverlap(g, n))).length;
+    out.added = add.filter((n) => !gone.some((g) => fieldsOverlap(g, n))).length;
+    out.removed = gone.length - out.replaced;
+    env.fields = kept.concat(add);
+    env.read = fresh.read;
+    // The ids let the note tell whether this is still what the fields show (the editor's undo takes it back).
+    return (env.reread = Object.assign({ ids: add.map((n) => n.id), gone: gone.map((g) => g.id) }, out));
+  }
+  /** What reading again did, in one plain sentence; '' when it has not been done, or has been undone. */
+  function rereadNote(env) {
+    const r = env && env.reread;
+    if (!r) return '';
+    if (!r.ok) return 'The text of this PDF could not be read this time, so every field was left as it was.';
+    const has = (ids) => (ids || []).some((id) => env.fields.some((f) => f.id === id));
+    if (has(r.gone) || ((r.ids || []).length && !has(r.ids))) return '';
+    const was = (k) => (k === 1 ? 'was' : 'were');
+    const parts = [`${r.replaced} field${r.replaced === 1 ? '' : 's'} ${was(r.replaced)} replaced by the new reading`, `${r.added} ${was(r.added)} added`, `${r.own} that you placed or changed ${was(r.own)} kept as you left ${r.own === 1 ? 'it' : 'them'}`];
+    if (r.removed) parts.push(`${r.removed} that the new reading no longer places ${was(r.removed)} removed`);
+    const marks = PL().reviewCount(env); // those kept for review and those the new reading itself was unsure about
+    return `The PDF was read again: ${parts.join(', ')} and ${r.review} ${was(r.review)} kept and marked for review.${marks ? ` In all, ${marks} field${marks === 1 ? ' is' : 's are'} marked Review now: confirm, move or remove ${marks === 1 ? 'it' : 'each one'} before you save.` : ''}`;
+  }
+  /** The note under the read summary, above the editor: it stays until the agreement is saved. */
+  function rereadNoteHTML(env) {
+    const text = rereadNote(env);
+    const warn = text && (!env.reread.ok || env.reread.review);
+    return text ? `<p class="es-note${warn ? ' es-note-warn' : ''} es-reread" role="status" tabindex="-1">${icon(warn ? 'alert' : 'check')}<span>${h(text)}</span></p>` : '';
+  }
+  /** After a step in the editor (an undo, say), the note on screen is brought in line with the fields. */
+  function rereadSync(env) {
+    const box = document.querySelector('.es-read');
+    if (!box || !env.reread) return;
+    const now = box.querySelector('.es-reread');
+    const html = rereadNoteHTML(env);
+    if (now && !html) now.remove();
+    else if (!now && html) box.insertAdjacentHTML('beforeend', html);
+    else if (now && now.textContent !== rereadNote(env)) now.outerHTML = html;
+  }
+  const rereadRailHTML = (env) =>
+    env.agreementFor && env.docId
+      ? `<div class="fe-sec fe-sec-read"><h2 class="fe-h">The PDF</h2><p class="cs-hint">If fields are missing or sit in the wrong place, the portal can read the PDF again. Fields you placed, moved or changed are kept.</p><button class="cs-btn cs-btn-small fe-signer-act" type="button" data-action="es-reread">Read the PDF again</button></div>`
+      : '';
+  /** The same button as words at the end of the read summary: shown where the left column lies across the top (narrower screens), so it takes no height from the document. */
+  const rereadInlineHTML = (env) => (env.agreementFor && env.docId ? ' <button class="es-read-again" type="button" data-action="es-reread">Read the PDF again</button>' : '');
+  NS.actions['es-reread'] = () => {
+    const env = editorEnv();
+    if (!env || !env.agreementFor) return;
+    U.dialog(
+      `<div class="dlg-head"><div><h2>Read the PDF again?</h2><p>The portal reads ${h(env.fileName)} again. Fields it placed that you have not changed are replaced by the new reading. Fields you placed yourself, moved or changed stay as they are. Undo in the editor takes this back.</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
+      <div class="dlg-body"><div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog" autofocus>Keep the fields as they are</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-reread-yes">Read the PDF again</button></div></div>`,
+      'dlg-es'
+    );
+  };
+  NS.actions['es-reread-yes'] = async (el) => {
+    const env = editorEnv();
+    if (!env || !env.agreementFor) return U.closeDialog();
+    if (el.disabled) return;
+    el.disabled = true;
+    el.textContent = 'Reading the PDF…';
+    await rereadAgreement(env);
+    U.closeDialog();
+    if (editorEnv() !== env) return NS.app.save(true);
+    if (!env.fields.some((f) => f.id === esUi().sel)) esUi().sel = null;
+    NS.app.save(true);
+    NS.app.render();
+    const note = document.querySelector('.es-reread');
+    if (note) note.focus();
+  };
+  NS.esignKit = Object.assign(NS.esignKit || {}, { untouched, rereadAgreement, rereadNote });
+  /* ===================== end of READ THE PDF AGAIN ===================== */
+  /* =====================================================================
    * Sponsor console: one envelope (field editor for drafts, tracking after)
    * ===================================================================== */
   /*
@@ -1432,7 +1568,7 @@
   /** At the top of the selected field's properties: the reason for the status and what to do about it. */
   const editorPropsStatusHTML = (env, sel) => placementStatusHTML(env, sel);
   /** In the editor's left column, between the field types and the ready line: a list of the fields to check, say. */
-  const editorRailExtraHTML = (env) => reviewPanelHTML(env);
+  const editorRailExtraHTML = (env) => reviewPanelHTML(env) + rereadRailHTML(env);
   /** One field on a page of the editor. fieldeditor.js draws it again after every change to it, and adds the handles when it is selected. */
   function editorFieldHTML(env, f, ui) {
     const s = signerById(env, f.signerId) || { name: 'Unassigned', color: '#888888' };
@@ -1499,7 +1635,7 @@
       makeField: (type, page, cx, cy) => newField(env, type, page, cx, cy),
       lines: (page) => editorLines(src, ready ? c.pages : null, page),
       setExtra: placementSetProp,
-      save
+      save: () => (save(), rereadSync(env))
     };
   }
   function editorHTML(env) {
@@ -1510,7 +1646,7 @@
     const marked = PL().reviewCount(env);
     const headHTML = env.agreementFor
       ? `${K.head(`Subscription agreement${agr ? ` · ${h(agr.name)}` : ''}`, `${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · place the fields once; each investor fills them in and signs during onboarding`, `<a class="cs-btn" href="#console-offering-${h(env.agreementFor)}">${icon('back')}Offering</a><button class="cs-btn" type="button" data-action="es-agreement-cancel" data-id="${h(env.id)}">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-save" data-id="${h(env.id)}">Save subscription agreement</button>`)}
-        <p class="cs-hint es-agr-note">${env.read ? `${h(readNote(env))} ${marked ? 'Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. ' : env.autoPlaced ? 'Check the fields, move or resize as needed, and add any others. ' : ''}` : ''}Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.</p>`
+        <div class="es-read"><p class="cs-hint es-agr-note">${env.read ? `${h(readNote(env))} ${marked ? 'Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. ' : env.autoPlaced ? 'Check the fields, move or resize as needed, and add any others. ' : ''}` : ''}Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.${rereadInlineHTML(env)}</p>${rereadNoteHTML(env)}</div>`
       : `${K.head(h(env.title), `Draft · ${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'}`, `<a class="cs-btn" href="#console-esign">${icon('back')}E-sign</a><button class="cs-btn" type="button" data-action="es-delete" data-id="${h(env.id)}">Delete draft</button><button class="cs-btn" type="button" data-action="es-save-tpl" data-id="${h(env.id)}">Save as template</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-review" data-id="${h(env.id)}">Review and send</button>`)}`;
     // The editor itself (the fields to add, the document, the selected field) is fieldeditor.js.
     return K.shell(`${headHTML}${NS.fieldEditor.html(editorCtx(env))}`, 'console-esign');

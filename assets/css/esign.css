@@ -898,3 +898,31 @@ input.fe-well { width: 44px; padding: 0 var(--space-2xs); text-align: center; }
   .fe-sec-review { display: none; }
 }
 /* ===================== end of PLACEMENT REVIEW ===================== */
+
+/* ---------- What the portal read, and what reading the PDF again did (console) ----------
+   The read summary above the editor (.es-agr-note) and the notices under it share one block (.es-read); the page's own
+   column spacing sets it apart from the editor. */
+.es-read { display: flex; flex-direction: column; gap: var(--space-xs); min-width: 0; }
+.es-read .es-agr-note, .es-read .cs-hint, .es-read .es-note { margin: 0; }
+.es-note-warn { background: color-mix(in oklab, var(--es-warn) 10%, var(--es-surface)); }
+.es-note-warn .i { color: var(--es-warn); }
+.es-note-bad .i { color: var(--es-bad); }
+.es-read .es-note, .es-agr-panel .es-note, .es-dlg-form .es-note { flex-wrap: wrap; align-items: flex-start; justify-content: flex-start; }
+.es-read .es-note > span, .es-agr-panel .es-note > span, .es-dlg-form .es-note > span { flex: 1 1 200px; min-width: 0; }
+.es-read .es-note > .cs-btn, .es-agr-panel .es-note > .cs-btn { flex: none; }
+.es-reread:focus-visible { outline: 2px solid var(--es-focus); outline-offset: 2px; }
+.es-agr-panel { display: flex; flex-direction: column; gap: var(--space-xs); }
+.fe-signer-act { align-self: flex-start; }
+/* The portal's dialog with a long sentence under its title: the close button stays at the top right (as the signature dialog already does). */
+.dlg-es .dlg-head { flex-wrap: nowrap; align-items: flex-start; }
+.dlg-es .dlg-head > div:first-child { min-width: 0; }
+.es-dlg-form .es-note { margin-top: var(--space-sm); }
+/* "Read the PDF again": a button under the left column's content; where that column lies across the top instead
+   (narrower screens) it is the last words of the read summary, so the document keeps its height. */
+.es-read-again { display: none; padding: 0; border: 0; background: none; color: var(--es-accent-text); font: inherit; font-weight: 500; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.es-read-again:hover { text-decoration-thickness: 2px; }
+.es-read-again:focus-visible { outline: 2px solid var(--es-focus); outline-offset: 2px; }
+@media (max-width: 1279px) {
+  .fe-rail > .fe-sec-read { display: none; }
+  .es-read-again { display: inline; }
+}
