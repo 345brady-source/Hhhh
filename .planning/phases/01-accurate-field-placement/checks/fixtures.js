@@ -14,7 +14,10 @@
  *
  * Fixture options: crop (a crop box applied after printing), countersign (false: the firm does not countersign),
  * from (reuse another fixture's pages), saves (true: must save at once; false: must be held for review),
- * clean (true: no field may be marked for review), css (extra styles), heldOut (not used to build the rules).
+ * clean (true: no field may be marked for review), css (extra styles), paper ([width, height] in inches),
+ * draw (a function returning a drawn PDF's spec instead of html), heldOut (true: written after the rules and never
+ * used to change them, so only a confident mistake fails it), first ({ right, blanks, mistakes, marks }: what a layout
+ * written after the rules measured on its first run, before it was used to fix them).
  */
 const CSS = `@page{size:8.5in 11in;margin:0} html,body{margin:0} body{font:12pt/1.4 "Times New Roman",serif}
 .pg{width:8.5in;height:11in;box-sizing:border-box;padding:1in;position:relative;page-break-after:always;overflow:hidden}
@@ -135,7 +138,8 @@ ${SIGNATURE_PAGE}
 };
 
 /*
- * The held-out layout: written after the rules, on purpose unlike the fixtures above, and never used to shape them.
+ * A layout written after the rules, on purpose unlike the fixtures above. Its first run (recorded in `first`) found
+ * two confident mistakes and two blanks without a field; the rules were then fixed, so it now counts with the others.
  * A4 pages in a sans-serif face at 10 pt; the investor is the "Purchaser" and the firm the "Managing Member"; the
  * information section is a two-column table whose rows are ruled along the bottom (label in the left cell, the blank
  * is the empty right cell); tick boxes for the kind of purchaser; an initials line at the foot of each page; the
@@ -148,7 +152,7 @@ const tick = (label) => `<span class="tk" data-k="box" data-x='${attr({ type: 'c
 const drawn = (x, caption) => `<div class="ln" data-k="rule" data-x='${attr(x)}'></div><div class="cp">${caption}</div>`;
 const footInitials = () => `<div class="ft">Purchaser’s initials <span class="rule" style="width:70pt" data-x='${attr({ type: 'initials', role: 'investor', fillIn: true, required: true })}'></span></div>`;
 FIXTURES.heldout = {
-  heldOut: true,
+  first: { right: 20, blanks: 22, mistakes: 2, marks: 7 },
   offering: 'Northgate Fund I, LP',
   paper: [8.27, 11.69],
   css: `@page{size:210mm 297mm;margin:0} body{font:10pt/1.45 Arial,Helvetica,sans-serif}
@@ -175,8 +179,9 @@ ${footInitials()}</div>`
 
 
 /*
- * A second held-out layout, written after every rule (the first one's measurement led to rule changes, so it no
- * longer measures how the rules do on a layout nobody tuned for). Unlike all the others it is not printed by the
+ * A second layout written after the rules. Its first run (recorded in `first`) found one confident mistake and two
+ * blanks with the wrong kind of field; the rule behind them was fixed, so it too now counts with the others. Unlike
+ * all the others it is not printed by the
  * browser but drawn with the PDF writing library: text in the standard PDF fonts, lines and squares as vector strokes.
  * An investor profile with captions under drawn lines (several to a row), "Yes [ ] No [ ]" and "[ ] a natural person"
  * boxes, the amount with no colon before it, initials asked for at the end of each statement; then a signature page
@@ -219,7 +224,7 @@ function drawing() {
   return { d, done: (pages) => ({ size: [612, 792], pages, ops, expect }) };
 }
 FIXTURES.heldout2 = {
-  heldOut: true,
+  first: { right: 24, blanks: 26, mistakes: 1, marks: 1 },
   offering: 'Northgate Fund I, LP',
   draw() {
     const { d, done } = drawing();

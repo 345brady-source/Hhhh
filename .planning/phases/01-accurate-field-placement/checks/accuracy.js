@@ -49,7 +49,7 @@ const pad = (s, n) => String(s).padEnd(n);
       const sig = j.blanks.filter((b) => !b.e.fillIn);
       const fill = j.blanks.filter((b) => b.e.fillIn);
       const missed = j.blanks.filter((b) => b.state !== 'right');
-      rows.push({ name, heldOut: !!fx.heldOut, blanks: expect.length, right: j.right, sig: sig.length, sigRight: sig.filter((b) => b.state === 'right').length, fill: fill.length, fillRight: fill.filter((b) => b.state === 'right').length, fields: out.fields.length, mistakes: j.mistakes.length, flagged: j.flagged, strays: j.strays.length, saved: out.saved });
+      rows.push({ name, heldOut: !!fx.heldOut, first: fx.first || null, blanks: expect.length, right: j.right, sig: sig.length, sigRight: sig.filter((b) => b.state === 'right').length, fill: fill.length, fillRight: fill.filter((b) => b.state === 'right').length, fields: out.fields.length, mistakes: j.mistakes.length, flagged: j.flagged, strays: j.strays.length, saved: out.saved });
       const fails = [];
       if (!BASELINE) {
         j.mistakes.forEach((f) => fails.push(`confident mistake: a ${f.type} field for the ${f.role} at high confidence is not right (page ${f.page}, ${box(f)}${f.label ? ', "' + f.label + '"' : ''})`));
@@ -78,7 +78,8 @@ const pad = (s, n) => String(s).padEnd(n);
   const line = (r) => `${pad(r.name, 16)}${pad(r.sigRight + '/' + r.sig, 12)}${pad(r.fillRight + '/' + r.fill, 12)}${pad(r.right + '/' + r.blanks, 10)}${pad(r.mistakes, 10)}${pad(r.flagged, 9)}${pad(r.blanks - r.right, 12)}${r.saved ? 'yes' : 'held'}`;
   console.log(`\n${pad('layout', 16)}${pad('sig block', 12)}${pad('fill-in', 12)}${pad('right', 10)}${pad('confident', 10)}${pad('review', 9)}${pad('not placed', 12)}saved`);
   console.log(`${pad('', 16)}${pad('blanks', 12)}${pad('blanks', 12)}${pad('', 10)}${pad('mistakes', 10)}${pad('marks', 9)}${pad('right', 12)}at once`);
-  rows.forEach((r) => console.log(line(r) + (r.heldOut ? '   (held out: not used to build the rules)' : '')));
+  const note = (r) => (r.heldOut ? '   (held out: written after the rules, never used to change them)' : r.first ? `   (written after the rules; first run ${r.first.right}/${r.first.blanks} right, ${r.first.mistakes} confident mistake${r.first.mistakes === 1 ? '' : 's'}, ${r.first.marks} mark${r.first.marks === 1 ? '' : 's'}; then used to fix them)` : '');
+  rows.forEach((r) => console.log(line(r) + note(r)));
   const built = rows.filter((r) => !r.heldOut);
   if (rows.length > 1) console.log(line({ name: 'TOTAL', sig: sum('sig', rows), sigRight: sum('sigRight', rows), fill: sum('fill', rows), fillRight: sum('fillRight', rows), blanks: sum('blanks', rows), right: sum('right', rows), mistakes: sum('mistakes', rows), flagged: sum('flagged', rows), saved: false }).replace(/held$/, ''));
   console.log(`\nBEFORE THIS PHASE (classic, caption, blank as they were then): ${BEFORE.right} of ${BEFORE.blanks} printed blanks had a field on them; ${BEFORE.savedUnseen} of ${BEFORE.of} agreements were saved with nobody looking.`);

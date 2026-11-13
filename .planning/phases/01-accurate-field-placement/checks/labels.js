@@ -215,6 +215,71 @@ const labelled = (x, y, label, len) => [['text', x, y, label], ['rule', x + widt
   check('labels are cut to 60 characters and carry no control characters', P.analyze([page([...labelled(72, 100, 'An \u0007extraordinarily long label for a blank that goes on and on:', 100)])], {}).every((p) => p.label.length <= 60 && !/[\u0000-\u001f]/.test(p.label)));
 })();
 
+// 17. A label that closes a line of running text is the label; the sentence before it is not part of it.
+(() => {
+  const s = '(b) The Investor has received the Operating Agreement.  Initials: ';
+  const f = read([['text', 72, 100, s + '________']]).concat(read([['text', 72, 100, s], ['rule', 72 + width(s) + 2, 72 + width(s) + 50, 101.5]]));
+  check('"...Agreement.  Initials: ____" is an initials field, not a text field named after the sentence', f.length === 2 && f.every((p) => p.type === 'initials' && p.label === ''), sum(f));
+  check('a sentence and a label together are not one label', P.labelOf('The Investor has received the Agreement. Initials:') === null && read([['text', 72, 100, 'See the note above. Other details:'], ['rule', 260, 400, 101.5]]).every((p) => p.label === 'Other details'));
+})();
+// 18. A blank after a currency sign is the commitment only when the sentence is about what the investor commits.
+(() => {
+  const s = 'The minimum subscription accepted by the Fund is $';
+  const f = read([['text', 72, 100, s], ['rule', 72 + width(s) + 2, 72 + width(s) + 90, 101.5]]);
+  check('"the minimum subscription is $____" is not filled in with the investor’s commitment', f.length === 1 && !f[0].prefill && f[0].conf !== 'high', sum(f));
+})();
+// 19. A label far to the left on the same printed line does not take a line that has a caption of its own.
+(() => {
+  const f = read([['text', 72, 100, 'SUBSCRIBER'], ['text', 72, 141, 'Date:'], ['rule', 300, 500, 142], ['text', 300, 154, 'Signature of Subscriber']]);
+  const onLine = f.filter((p) => Math.abs(p.x - 300) < 2);
+  check('the captioned line keeps its caption', onLine.length === 1 && onLine[0].type === 'signature' && onLine[0].conf === 'high', sum(f));
+  check('the label left without a line gets a field after it, marked low', f.length === 2 && f.some((p) => p.type === 'date' && p.conf === 'low' && p.x < 200), sum(f));
+})();
+// 20. Rows of a ruled table: the line of each row is empty from the end of its label on; the fields start together.
+(() => {
+  const pg = page([['text', 72, 100, 'Name of Purchaser'], ['text', 72, 130, 'Email'], ['text', 72, 160, 'Country of residence']]);
+  [[72 + width('Name of Purchaser') + 1, 105], [72 + width('Email') + 1, 135], [72 + width('Country of residence') + 1, 165]].forEach(([x0, y]) => pg.rules.push({ x0, x1: 540, y, t: 0.75, clear: 24, drop: 0, cut: true }));
+  const f = P.analyze([pg], ctx).filter((p) => p.why.indexOf('last page') < 0);
+  check('three ruled rows give three fields that start at the same place, after the longest label', f.length === 3 && f.every((p) => Math.abs(p.x - f[0].x) < 0.5) && f[0].x > 72 + width('Country of residence'), sum(f));
+  check('a row whose words are not a known label is still labelled with them, sure', f[2].label === 'Country of residence' && f[2].conf === 'high', sum(f));
+})();
+// 21. A square the size of a letter's bowl inside a run of words is a letter, not a tick box.
+(() => {
+  const pg = page([['text', 72, 100, 'Name of Purchaser'], ['rule', 200, 400, 101.5]]);
+  pg.boxes.push({ x: 100, y: 93, w: 5.5, h: 5 });
+  const f = P.analyze([pg], ctx).filter((p) => p.why.indexOf('last page') < 0);
+  check('no tick box inside a word, and the blank keeps its label', f.length === 1 && f[0].type === 'text' && f[0].label === 'Investor name', sum(f));
+})();
+// 22. scan: a drawn square is a tick box, a ring is not; a line with clear paper above is a blank, an underline is not.
+(() => {
+  const W = 400;
+  const H = 200;
+  const px = new Uint8ClampedArray(W * H * 4).fill(255);
+  const dot = (x, y) => {
+    const i = (y * W + x) * 4;
+    px[i] = px[i + 1] = px[i + 2] = 0;
+  };
+  const hline = (x0, x1, y) => {
+    for (let x = x0; x <= x1; x++) dot(x, y);
+  };
+  const vline = (x, y0, y1) => {
+    for (let y = y0; y <= y1; y++) dot(x, y);
+  };
+  // A 10 pt square at scale 2 (20 px), a ring of the same size, a 100 pt line, and a line with letter feet on it.
+  hline(20, 40, 20);
+  hline(20, 40, 40);
+  vline(20, 20, 40);
+  vline(40, 20, 40);
+  for (let a = 0; a < 720; a++) dot(Math.round(90 + 10 * Math.cos((a * Math.PI) / 360)), Math.round(30 + 10 * Math.sin((a * Math.PI) / 360)));
+  hline(20, 220, 100);
+  hline(20, 220, 160);
+  for (let x = 24; x < 220; x += 6) vline(x, 150, 158);
+  const m = P.scan(px, W, H, 2);
+  check('scan finds the drawn square and not the ring', m.boxes.length === 1 && Math.abs(m.boxes[0].x - 10) < 1 && Math.abs(m.boxes[0].w - 10.5) < 1, m.boxes);
+  const blanks = m.rules.filter((r) => r.clear >= 7);
+  check('scan finds the line with clear paper above it and not the underlined one', blanks.length === 1 && Math.abs(blanks[0].x0 - 10) < 1 && Math.abs(blanks[0].x1 - 110.5) < 1 && Math.abs(blanks[0].y - 50.25) < 0.5, m.rules);
+})();
+
 /* ---------- Review marks and filling in (pure helpers) ---------- */
 const old = { type: 'signature', page: 1, x: 0.1, y: 0.1 };
 const marked = { type: 'text', page: 1, x: 0.1, y: 0.2, auto: true, confidence: 'medium', review: true, reviewReason: 'x' };

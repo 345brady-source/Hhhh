@@ -407,6 +407,8 @@
     if (PHONE_RE.test(t)) return is('phone');
     if (t.length <= 70 && TAXID_RE.test(t) && !/\b(name|address|date)\b/.test(t)) return is('taxId');
     if (CURRENCY_TAIL.test(raw) && MONEY_WORDS.test(wordsOf(t).slice(-8).join(' ')) && !/\b(accept\w*|minimum|maximum|fees?|expenses?|per (unit|share|interest)|price per|each)\b/.test(t)) return is('amount');
+    // Words that end one sentence and begin something else are not one label ("...the Agreement. Initials:").
+    if (/[.;?!]["”)]?\s+[A-Z(]/.test(raw)) return null;
     if (info.colon && raw.length <= 64 && n <= 10) return is('other');
     if (raw.length <= 40 && n <= 5 && /^[A-Z0-9]/.test(raw) && !/[.;?!,]$/.test(raw)) return is('phrase');
     return null;
@@ -721,6 +723,13 @@
         if (left) {
           let seg = left.seg;
           let info = classify(seg.s);
+          // A label that closes a line of running text ("...as defined in Rule 501.  Initials: ____"): what follows the
+          // last full stop is the label.
+          if (!info) {
+            const tail = seg.s.match(/[.;?!]["”)]?\s+([^.;?!]{1,48})$/);
+            const t = tail ? classify(tail[1]) : null;
+            if (t && (FIELD(t.kind) || t.kind === 'skip' || t.kind === 'other')) info = t;
+          }
           const dist = same(seg, 'end') ? 0 : slot.x0 - seg.x1;
           // A currency sign standing alone before the blank: the label is the text before it.
           if (/^(u\.?s\.?\s*)?\$$/i.test(seg.s)) {
