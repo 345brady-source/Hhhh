@@ -515,11 +515,14 @@
     const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
     const changed = [];
     env.fields.forEach((f) => {
-      if (f.prefill && f.type === 'text' && signer && f.signerId === signer.id) {
+      // The amount the firm accepts is the commitment the portal holds: filled in for the firm too, and left open so
+      // that the firm can accept a different amount.
+      const accepted = f.prefill === 'amount' && env.signers.some((sg) => sg.id === f.signerId && sg.role === 'countersigner');
+      if (f.prefill && f.type === 'text' && ((signer && f.signerId === signer.id) || accepted)) {
         const v = has(values, f.prefill) ? unsigned(f, String(values[f.prefill])) : null;
         // An answer too long for its blank (a long address on a short line) is filled in but left open, so the
         // investor can shorten it: a locked value that cannot be printed would stop them from finishing.
-        const lock = v != null && !tooLong(env, f, v);
+        const lock = v != null && !accepted && !tooLong(env, f, v);
         if (v != null && (f.value !== v || !!f.locked !== lock)) {
           f.value = v;
           f.locked = lock;

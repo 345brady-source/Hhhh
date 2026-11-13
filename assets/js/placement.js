@@ -433,6 +433,14 @@
         }
         ln.els.push({ t: 'seg', seg: { s: p.s, x0: p.x0, x1: p.x1, y: p.y, h: p.h, line: ln, used: '', start: p.src, end: p.src } });
       });
+      ln.els.forEach((e, i) => {
+        if (e.t !== 'slot' || !e.slot.bracketed) return;
+        const before = ln.els[i - 1];
+        const after = ln.els[i + 1];
+        if (before && before.t === 'seg') before.seg.s = before.seg.s.replace(/\s*\[\s*$/, '');
+        if (after && after.t === 'seg') after.seg.s = after.seg.s.replace(/^\s*\]\s*/, '');
+      });
+      ln.els = ln.els.filter((e) => e.t !== 'seg' || e.seg.s);
       ln.els.forEach((e, i) => (e.i = i));
     });
     // A stroke in the body of a run of words (the bar of a letter, an equals sign) is part of the text, not a blank.
@@ -549,14 +557,15 @@
     };
     /** What the nearest instruction above a line asks for: 'initials', 'check' or ''; optional when it applies to some statements only. */
     const instruction = (ln) => {
-      const near = [ln].concat(lineAbove(ln, 10));
+      const near = [ln].concat(lineAbove(ln, 40));
       for (let i = 0; i < near.length; i++) {
         const t = near[i].text.toLowerCase();
         const some = /\b(that appl(y|ies)|as applicable|if applicable|one of|at least one|any of|each that|all that apply|which appl(y|ies))\b/.test(t);
         if (/\binitial/.test(t)) return { mode: 'initials', some };
         if (/\b(check|tick)\b|\bmark (an? )?["“']?x\b/.test(t)) return { mode: 'check', some };
       }
-      return { mode: '', some: false };
+      // A list that runs on from the page before follows what that page asked for.
+      return c.asked && c.asked.page === pg.page - 1 ? { mode: c.asked.mode, some: c.asked.some } : { mode: '', some: false };
     };
 
     /* 1. Tick boxes: every printed square and every box written as text, labelled with the words beside it. */
@@ -651,10 +660,10 @@
       weaken(m, WHY.sentence);
       return m;
     };
-    const generic = (slot, info, seg) => {
+    const generic = (slot, info, seg, plainLabel) => {
       const label = clean(info.text.replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ').replace(/\s*(u\.?s\.?\s*)?\$\s*$/i, '').replace(/\s*[:\uFF1A]\s*$/, '').replace(/\s*,\s*(if|where|when|as) [^:]*$/i, '')) || 'Text';
       const m = propose('other', slot, info, { seg, label, required: !info.optional && !/\b(fax|middle|suffix|apt|suite)\b/i.test(label) });
-      if (info.kind === 'phrase' && !slot.cut && !slot.cell) weaken(m, WHY.phrase);
+      if (info.kind === 'phrase' && !plainLabel && !slot.cut && !slot.cell) weaken(m, WHY.phrase);
       return m;
     };
     L.lines.forEach((ln) => {
@@ -761,7 +770,8 @@
             }
             if (info && dist <= 36) {
               seg.used = 'label';
-              return generic(slot, info, seg);
+              // A few words that open the line, or follow the blank before, with the blank right after them: its label.
+              return generic(slot, info, seg, dist <= 24 && (left.i === 0 || ln.els[left.i - 1].t !== 'seg'));
             }
             if (!info && dist <= 14) {
               // "Dated: ________, ____": the short blank after the comma is the year of the date before it.
@@ -948,6 +958,15 @@
       m.block = false;
     });
 
+    // A column of three or more short blanks, each opening a line before its statement, is a checklist: sure by convention.
+    const ticks = made.filter((m) => m.kind === 'checkbox' && m.slot && m.p.why === WHY.tick);
+    ticks.forEach((m) => {
+      if (ticks.filter((o) => Math.abs(o.slot.x0 - m.slot.x0) <= 3).length >= 3 && !m.slot.bracketed) Object.assign(m.p, { conf: 'high', why: '' });
+    });
+    const lastLine = L.lines[L.lines.length - 1];
+    const asked = lastLine ? instruction(lastLine) : null;
+    c.asked = asked && asked.mode ? { page: pg.page, mode: asked.mode, some: asked.some } : null;
+
     /* 5b. Every printed line still without a field gets one, optional and marked, named from the words under or over
        it. Left out are only rules that set off text: an empty cell with no label, a rule with running text right under
        it, a rule across the whole width of the text with no caption, the two rules of a paragraph ruled off above and below. */
@@ -974,8 +993,11 @@
         // Under words of signing with nothing else to say what it is, the line is where someone signs.
         const lead = L.segs.filter((g) => g.y < sl.y - 2 && sl.y - g.y <= 60 && overlap(g.x0, g.x1, sl.x0 - 40, sl.x1 + 40) > 0).sort((a, b) => b.y - a.y)[0];
         const signs = !words && !!lead && /\b(in witness whereof|accepted( and agreed)? by|agreed( and accepted)? by|signed by|sincerely|very truly yours)\b/i.test(lead.s);
-        const m = propose(signs ? 'signature' : 'other', sl, null, { seg: name, how: 'after', label: signs ? '' : words.replace(/^[([]\s*|\s*[)\]]$/g, '').replace(/\s*[:\uFF1A]\s*$/, '') || 'Text', required: signs });
-        Object.assign(m.p, { conf: 'low', why: WHY.unknown });
+        // Words that name the line plainly (a caption right under it and set where it starts, a label ending in a colon
+        // over it, a label on its own row beside it) leave no doubt; a line with no words of its own stays marked.
+        const clear = name ? Math.abs(name.x0 - sl.x0) <= 12 || /^[([].*[)\]]$/.test(name.s) : !!beside && Math.abs(beside.y - sl.y) <= 4 && sl.x0 - beside.x1 <= 240;
+        const m = propose(signs ? 'signature' : 'other', sl, null, { seg: name, how: 'after', label: signs ? '' : words.replace(/^[([]\s*|\s*[)\]]$/g, '').replace(/\s*[:\uFF1A]\s*$/, '') || 'Text', required: signs || (clear && !OPTIONAL_RE.test(words.toLowerCase())) });
+        if (!clear || signs) Object.assign(m.p, { conf: 'low', why: WHY.unknown });
       });
 
     /* 6. Whose field it is, and which kind of investor gets it. */
@@ -1105,8 +1127,9 @@
       }
       p.role = role;
       if (role === 'firm') {
+        // The firm's blanks are its own to complete, but the amount it accepts is the commitment the portal holds.
         delete p.forType;
-        delete p.prefill;
+        if (p.prefill !== 'amount') delete p.prefill;
       } else if (!p.forType) {
         // The kind of investor: the nearest heading above when it says so, otherwise a heading at the top of the page.
         let first = true;
