@@ -30,6 +30,13 @@
 - [ ] **READ-04**: Picture reading keeps every earlier rule: honest summary, nothing dropped silently, nothing guessed, normal PDFs untouched, works inside the hosted preview
 - [ ] **READ-05**: The owner's own form is read in full and the owner has checked it in the preview
 
+### The Owner's Documents
+
+- [ ] **SET-01**: Document A (the 21-page subscription document) is read 100% correctly: every place has its field, of the right kind, for the right person, and nothing else has one
+- [ ] **SET-02**: Document B (the 32-page partnership agreement) is read 100% correctly, including who signs it and who does not
+- [ ] **SET-03**: Document C (the Word subscription agreement with questionnaire) is read 100% correctly as a PDF, and a Word file offered as an agreement is answered plainly
+- [ ] **SET-04**: Every document the reader already reads correctly still is, and the owner has checked the documents in the preview
+
 ### Field Editor
 
 - [ ] **EDIT-01**: Sponsor can drag a field smoothly anywhere within a page, with the field following the pointer without lag or jumps
@@ -112,6 +119,10 @@
 | READ-03 | Phase 01.2 | Pending |
 | READ-04 | Phase 01.2 | Pending |
 | READ-05 | Phase 01.2 | Pending |
+| SET-01 | Phase 01.3 | Pending |
+| SET-02 | Phase 01.3 | Pending |
+| SET-03 | Phase 01.3 | Pending |
+| SET-04 | Phase 01.3 | Pending |
 | EDIT-01 | Phase 2 | Pending |
 | EDIT-02 | Phase 2 | Pending |
 | EDIT-03 | Phase 2 | Pending |
@@ -136,8 +147,8 @@
 | REC-05 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 42 total
-- Mapped to phases: 42
+- v1 requirements: 46 total
+- Mapped to phases: 46
 - Unmapped: 0 ✓
 
 ---

@@ -15,6 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 1: Accurate Field Placement** - The portal finds what the client signs, fills in and initials on a subscription agreement, places the right field on the right line, and flags uncertain ones for the sponsor to confirm
 - [ ] **Phase 01.1: Placement reads what the agreement has: fields only on its own blanks, boxes and signature lines**
 - [ ] **Phase 01.2: Agreements that are pictures: the reader reads the owner's form**
+- [ ] **Phase 01.3: The owner's text agreements are read 100 percent**
 - [ ] **Phase 2: Field Editor** - A smooth, polished editor where fields drag cleanly within and across pages
 - [ ] **Phase 3: Signatures** - Cursive and other signature styles, a natural drawn signature, upload, adopt once
 - [ ] **Phase 4: Signing Inside Onboarding** - A polished, guided signing step for investors and countersigning for sponsors, with no separate tool
@@ -70,6 +71,16 @@ Plans:
 
 Plans:
 - [ ] TBD (run /gsd-plan-phase 01.2 to break down)
+
+### Phase 01.3: The owner's text agreements are read 100 percent (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: SET-01, SET-02, SET-03, SET-04
+**Depends on:** Phase 01.1
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 01.3 to break down)
 
 ### Phase 2: Field Editor
 **Goal**: A sponsor can adjust fields by hand quickly and without frustration, in an editor that looks professionally made
