@@ -134,4 +134,43 @@ ${SIGNATURE_PAGE}
   blank: { saves: false, html: `<div class="pg"></div>` }
 };
 
+/*
+ * The held-out layout: written after the rules, on purpose unlike the fixtures above, and never used to shape them.
+ * A4 pages in a sans-serif face at 10 pt; the investor is the "Purchaser" and the firm the "Managing Member"; the
+ * information section is a two-column table whose rows are ruled along the bottom (label in the left cell, the blank
+ * is the empty right cell); tick boxes for the kind of purchaser; an initials line at the foot of each page; the
+ * amount as "Purchase Price: US$ ____"; a signature block set in the right half of the page with captions under drawn
+ * lines, followed by "Accepted and agreed to" for the firm.
+ */
+const cell = (x) => `<td data-k="cell" data-x='${attr(x)}'></td>`;
+const row = (label, x) => `<tr><td><span data-lab>${label}</span></td>${cell(x)}</tr>`;
+const tick = (label) => `<span class="tk" data-k="box" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false, label })}'></span>${label}`;
+const drawn = (x, caption) => `<div class="ln" data-k="rule" data-x='${attr(x)}'></div><div class="cp">${caption}</div>`;
+const footInitials = () => `<div class="ft">Purchaser’s initials <span class="rule" style="width:70pt" data-x='${attr({ type: 'initials', role: 'investor', fillIn: true, required: true })}'></span></div>`;
+FIXTURES.heldout = {
+  heldOut: true,
+  offering: 'Northgate Fund I, LP',
+  paper: [8.27, 11.69],
+  css: `@page{size:210mm 297mm;margin:0} body{font:10pt/1.45 Arial,Helvetica,sans-serif}
+.pg{width:210mm;height:297mm;padding:22mm 20mm}
+h1{font-size:13pt;margin:0 0 4pt} h2{font-size:10pt;margin:14pt 0 4pt;text-transform:uppercase;letter-spacing:.04em}
+table{border-collapse:collapse;width:100%} td{border-bottom:.75pt solid #222;padding:9pt 0 2pt;vertical-align:bottom} td:first-child{width:38%}
+.tk{display:inline-block;width:8pt;height:8pt;border:.75pt solid #222;margin:0 4pt 0 14pt;vertical-align:-1pt} .tk:first-of-type{margin-left:0}
+.ft{position:absolute;left:20mm;right:20mm;bottom:12mm;font-size:8pt;text-align:right}
+.sig{margin-left:52%} .ln{border-bottom:.75pt solid #222;height:26pt} .cp{font-size:8pt;margin-top:2pt}`,
+  html: `<div class="pg"><h1>Purchaser Questionnaire</h1><p>Northgate Fund I, LP (the “Company”). Please complete every section. The Managing Member relies on the information given here in deciding whether to accept a purchase of Units.</p>
+<h2>1. The Purchaser</h2>
+<table>${row('Name of Purchaser', fill('Investor name', 'investorName'))}${row('Address', fill('Address', 'street'))}${row('City, State, Zip', fill('City, state and ZIP', 'cityStateZip'))}${row('Country of residence', fill('Country of residence', ''))}${row('Email', fill('Email', 'email'))}${row('Telephone', fill('Phone', 'phone'))}${row('Taxpayer ID (SSN or EIN)', fill('Taxpayer ID', ''))}</table>
+<h2>2. Kind of Purchaser</h2>
+<p>The Purchaser is (tick one):</p><p>${['An individual', 'A company', 'A trust', 'A pension plan'].map(tick).join('')}</p>
+<h2>3. Purchase</h2>
+<p>Purchase Price: US$ ${blank(fill('Commitment amount', 'amount', { required: false }), U(20))}</p>
+<p>Number of Units: ${blank(fill('Number of Units', ''), U(12))}</p>
+${footInitials()}</div>
+<div class="pg"><h2>4. Signature</h2><p>The Purchaser has read the Operating Agreement of the Company and agrees to be bound by it as a member from the date the Managing Member accepts this purchase.</p>
+<div class="sig"><p><b>PURCHASER</b></p>${drawn(inv('signature'), 'Signature')}${drawn(inv('name'), 'Name (print)')}${drawn(inv('text', { label: 'Title', required: false }), 'Title, if signing for an entity')}${drawn(inv('date'), 'Date')}
+<p style="margin-top:22pt">Accepted and agreed to:</p><p><b>NORTHGATE CAPITAL</b>, as Managing Member</p>${drawn(firm('signature'), 'Authorized signatory')}${drawn(firm('name'), 'Name')}${drawn(firm('date'), 'Date')}</div>
+${footInitials()}</div>`
+};
+
 module.exports = { CSS, FIXTURES, blank, rule, box, noline, block, attr, U };

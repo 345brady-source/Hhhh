@@ -35,7 +35,7 @@
   const MAX_CLEAR = 60; // pt: how far up empty paper is measured
   const BLANK_CLEAR = 7; // pt of empty paper above a line that makes it a blank to write on
   const TIGHT_CLEAR = 4.5; // pt: enough when the text itself shows the blank (a run of underscores)
-  const BOX_MIN = 5.5; // pt: the side of the smallest printed tick box
+  const BOX_MIN = 6; // pt: the side of the smallest printed tick box
   const BOX_MAX = 19; // pt: and of the largest
 
   /**
@@ -119,6 +119,9 @@
           }
         }
         if (!all || dark / all >= 0.12) continue;
+        // A drawn square has ink in all four corners; the bowl of a letter (o, e, Q) is round there.
+        const corner = (x, y) => at(x, y) || at(x + 1, y) || at(x - 1, y) || at(x, y + 1) || at(x, y - 1);
+        if (!(corner(a.x0, a.y0) && corner(a.x1, a.y0) && corner(b.x0, b.y1) && corner(b.x1, b.y1))) continue;
         if (squares.some((s) => Math.abs(s.x0 - a.x0) <= 2 * k && Math.abs(s.y0 - a.y0) <= 2 * k)) continue;
         squares.push({ x0: Math.min(a.x0, b.x0), x1: Math.max(a.x1, b.x1), y0: a.y0, y1: b.y1 });
       }
@@ -153,21 +156,33 @@
     const emit = (r, x0, x1, clear, drop, cut) => out.rules.push({ x0: x0 / k, x1: (x1 + 1) / k, y: (r.y0 + r.y1 + 1) / 2 / k, t: (r.y1 - r.y0 + 1) / k, clear: clear / k, drop: drop / k, cut: !!cut });
     done.forEach((r) => {
       if (r.x1 - r.x0 + 1 < minLen || r.y1 - r.y0 + 1 > MAX_THICK * k || onSquare(r)) return;
+      // Rows that are mostly ink right above or below are the same stroke (a row of underscores whose glyphs do not
+      // quite touch in their first row), not something printed over the line.
+      const cover = (y) => {
+        if (y < 0 || y >= height) return 0;
+        let n = 0;
+        for (let x = r.x0; x <= r.x1; x++) n += ink[y * width + x];
+        return n / (r.x1 - r.x0 + 1);
+      };
+      while (r.y1 - r.y0 + 1 < MAX_THICK * k && cover(r.y0 - 1) >= 0.5) r.y0--;
+      while (r.y1 - r.y0 + 1 < MAX_THICK * k && cover(r.y1 + 1) >= 0.5) r.y1++;
       const drop = Math.min(hang(r.x0 + 1, r.y1), hang(r.x1 - 1, r.y1));
-      const clear = clearAbove(r.x0, r.x1, r.y0);
+      // The half point right above a stroke is its own soft edge (where glyphs of a run of underscores meet), not paper.
+      const top = r.y0 - Math.max(1, Math.round(0.5 * k));
+      const clear = clearAbove(r.x0, r.x1, top);
       if (clear >= need) return emit(r, r.x0, r.x1, clear, drop);
       // Ink sits above part of the line: keep the stretches that have empty paper above them.
-      const from = Math.max(0, r.y0 - need);
+      const from = Math.max(0, top - need);
       let parts = 0;
       let s = -1;
       for (let x = r.x0; x <= r.x1 + 1; x++) {
         let free = x <= r.x1;
-        for (let y = r.y0 - 1; free && y >= from; y--) if (ink[y * width + x]) free = false;
-        if (free && r.y0 - from < need) free = false;
+        for (let y = top - 1; free && y >= from; y--) if (ink[y * width + x]) free = false;
+        if (free && top - from < need) free = false;
         if (free && s < 0) s = x;
         if (!free && s >= 0) {
           if (x - s >= minLen) {
-            emit(r, s, x - 1, clearAbove(s, x - 1, r.y0), drop, s > r.x0 + 2 * k);
+            emit(r, s, x - 1, clearAbove(s, x - 1, top), drop, s > r.x0 + 2 * k);
             parts++;
           }
           s = -1;
@@ -270,6 +285,7 @@
     return tidy(text)
       .replace(/^(\(?(\d{1,2}|[a-z]|[ivx]{1,4})[.)]|[•·▪■○●*–-])\s+/i, '')
       .replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ')
+      .replace(/\s*,\s*(if|where|when|as) [^:]*/i, '')
       .replace(/[“”"]/g, '')
       .replace(/[‘’]/g, "'")
       .replace(/\s*(u\.?s\.?\s*)?\$\s*$/i, '')
@@ -360,7 +376,7 @@
     if (!t) return null;
     const low = raw.toLowerCase();
     const n = wordsOf(t).length;
-    const remarks = (low.match(/[([][^)\]]*[)\]]/g) || []).join(' ');
+    const remarks = (low.match(/[([][^)\]]*[)\]]|,\s*(if|where|when|as) [^:]*/g) || []).join(' ');
     const info = { kind: '', who: whoIn(t), forType: typeIn(remarks), optional: OPTIONAL_RE.test(low), colon: /[:：]\s*((u\.?s\.?\s*)?\$)?\s*$/i.test(raw), by: false, text: raw };
     const is = (kind) => {
       info.kind = kind;
@@ -438,7 +454,8 @@
   /** One page's text and scanned marks as printed lines whose elements are text segments, blanks and tick boxes. */
   function layout(pg) {
     const lines = linesOf(pg);
-    const boxes = (pg.boxes || []).filter((b) => b && b.w > 0 && b.h > 0).map((b) => ({ x0: b.x, x1: b.x + b.w, y0: b.y, y1: b.y + b.h, seen: true }));
+    const glyph = (b) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && Math.max(b.w, b.h) < 0.75 * p.h && b.x + b.w / 2 > p.x0 && b.x + b.w / 2 < p.x1 && b.y + b.h / 2 > p.y - 1.05 * p.h && b.y + b.h / 2 < p.y + 0.25 * p.h));
+    const boxes = (pg.boxes || []).filter((b) => b && b.w > 0 && b.h > 0 && !glyph(b)).map((b) => ({ x0: b.x, x1: b.x + b.w, y0: b.y, y1: b.y + b.h, seen: true }));
     // A rule that is the top or bottom edge of a tick box, or the top of a frame, is not a blank.
     const rules = (pg.rules || []).filter((r) => r && r.x1 - r.x0 >= MIN_RULE - 1 && r.clear >= TIGHT_CLEAR && !(r.drop >= 6) && !boxes.some((b) => r.x0 >= b.x0 - 1.5 && r.x1 <= b.x1 + 1.5 && r.y >= b.y0 - 1.5 && r.y <= b.y1 + 1.5));
     const slots = [];
@@ -661,7 +678,7 @@
     const generic = (slot, info, seg) => {
       const label = clean(info.text.replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ').replace(/\s*(u\.?s\.?\s*)?\$\s*$/i, '').replace(/\s*[:：]\s*$/, '')) || 'Text';
       const m = propose('other', slot, info, { seg, label, required: !info.optional && !/\b(fax|middle|suffix|apt|suite)\b/i.test(label) });
-      if (info.kind === 'phrase') weaken(m, WHY.phrase);
+      if (info.kind === 'phrase' && !slot.cut) weaken(m, WHY.phrase);
       return m;
     };
     L.lines.forEach((ln) => {
@@ -780,7 +797,7 @@
       let best = null;
       L.segs.forEach((g) => {
         const d = s.y - g.y;
-        if (d < 0.3 * g.h || d > Math.max(2.4 * g.h, 30)) return;
+        if (d < 0.3 * g.h || d > Math.max(2.2 * g.h, 16)) return;
         if (!(overlap(g.x0, g.x1, s.x0, s.x1) >= 0.5 * Math.min(g.x1 - g.x0, s.x1 - s.x0))) return;
         if (!best || g.y > best.y) best = g;
       });
