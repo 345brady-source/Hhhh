@@ -358,7 +358,7 @@
         // Underscores or a leader are a blank only where a printed line was read for them.
         const r = pair.get(p);
         if (!r || (r.clear < BLANK_CLEAR && p.t !== 'gap')) return;
-        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
         slot.line = ln;
         slot.fromText = true;
         slot.src = p.src;
@@ -369,7 +369,7 @@
         if (taken.has(r) || r.clear < BLANK_CLEAR) return;
         // A stroke inside a run of words (two underscores in a name, a dash) is part of the text, not a blank.
         if (ln.parts.some((p) => p.t === 'text' && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0))) return;
-        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
         slots.push(slot);
         els.push({ t: 'slot', key: r.x0, slot });
       });
@@ -401,7 +401,7 @@
     });
     // A stroke in the body of a run of words (the bar of a letter, an equals sign) is part of the text, not a blank.
     const inText = (r) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && r.y > p.y - 1.05 * p.h && r.y < p.y + 0.2 * p.h && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0)));
-    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, line: null, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table }));
+    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, line: null, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table }));
     // Rows of a ruled table: each row's line runs under its label too, so the empty stretch begins where that row's
     // label ends. Nothing printed marks the column, so rows that end together start together, after the longest label.
     const cut = slots.filter((s) => s.cut).sort((a, b) => a.y - b.y);
@@ -418,6 +418,7 @@
         o.col = col;
         if (o.x1 - start >= 36) o.x0 = start;
         else o.x0 = Math.min(o.x0 + 4, o.x1 - 16);
+        if (o.pad) o.pad = { l: 0, r: o.pad.r, d: o.pad.d };
       });
     });
     const segs = [];
@@ -425,10 +426,15 @@
     return { lines, slots, segs, boxes: boxes.filter((b) => b.line) };
   }
 
-  /** The field box for a blank: as wide as the printed line, resting on it, no taller than the empty paper above it. */
+  /**
+   * The field box for a blank. The printed line lies inside it: the box reaches about a point past each end of the line
+   * and about a point under it (less where something else is printed closer), and is no taller than the empty paper
+   * above the line.
+   */
   function boxOn(K, slot) {
-    const h = Math.min(K.top || 14, Math.max(6, slot.clear - 1));
-    return { x: slot.x0, y: slot.y - h, w: slot.x1 - slot.x0, h };
+    const pad = slot.pad || { l: 0, r: 0, d: 0 };
+    const up = Math.min(K.top || 14, Math.max(6, slot.clear - 1));
+    return { x: slot.x0 - pad.l, y: slot.y - up, w: slot.x1 - slot.x0 + pad.l + pad.r, h: up + pad.d };
   }
 
   /** Proposed fields for one page. */
@@ -463,11 +469,10 @@
       Object.assign(m.p, { second: true, conf: 'low', why: WHY.second });
       return m;
     };
-    // A short blank used as a place for a tick: a tick box of the blank's own size, resting on it.
+    // A short blank used as a place for a tick: a tick box over the blank, with its printed line inside it.
     const tick = (slot, words, seg, unsure) => {
-      const span = slot.x1 - slot.x0;
-      const side = Math.min(14, span, Math.max(6, slot.clear - 1));
-      const p = { type: 'checkbox', role: '', page: pg.page, x: slot.x0 + (span - side) / 2, y: slot.y - side, w: side, h: side, label: clean(String(words || '').replace(/[:;,.]\s*$/, '')), required: false, conf: 'high', why: '', kind: 'checkbox' };
+      const box = boxOn({ top: 14 }, slot);
+      const p = { type: 'checkbox', role: '', page: pg.page, x: box.x, y: box.y, w: box.w, h: box.h, label: clean(String(words || '').replace(/[:;,.]\s*$/, '')), required: false, conf: 'high', why: '', kind: 'checkbox' };
       const m = { p, slot, seg, info: null, kind: 'checkbox', block: false, who: '', x0: slot.x0, x1: seg ? Math.max(seg.x1, slot.x1) : slot.x1, y: slot.y };
       slot.made = m;
       made.push(m);
@@ -539,7 +544,7 @@
           seg = own.seg;
           words = seg.s.replace(/^\S\s+/, '');
         }
-        const p = { type: 'checkbox', role: '', page: pg.page, x: b.x0, y: b.y0, w: b.x1 - b.x0, h: b.y1 - b.y0, label: clean(words.replace(/[:;,.]\s*$/, '')), required: false, conf: 'high', why: '', kind: 'checkbox' };
+        const p = { type: 'checkbox', role: '', page: pg.page, x: b.x0 - 1, y: b.y0 - 1, w: b.x1 - b.x0 + 2, h: b.y1 - b.y0 + 2, label: clean(words.replace(/[:;,.]\s*$/, '')), required: false, conf: 'high', why: '', kind: 'checkbox' };
         const m = { p, slot: null, seg, info: null, kind: 'checkbox', block: false, who: '', x0: b.x0, x1: seg ? Math.max(seg.x1, b.x1) : b.x1, y: b.y1 };
         if (seg) seg.used = seg.used || 'box';
         made.push(m);

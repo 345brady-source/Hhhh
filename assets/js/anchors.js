@@ -10,7 +10,8 @@
  *   page(raw, size, forms)      what placement reads: { page, w, h, items, rules, boxes, forms, scan }
  *                               items  runs of text { s, x, y, w, h } (a run of underscores and a box character are
  *                                      runs of their own, so their extents are exact)
- *                               rules  printed lines that can be written on { x0, x1, y, clear, made, cut, cell, table }
+ *                               rules  printed lines that can be written on { x0, x1, y, clear, pad, made, cut, cell, table }
+ *                                      (pad: how far a field may reach past each end and under the line: { l, r, d })
  *                               boxes  printed tick boxes { x, y, w, h, made }
  *                               forms  the PDF's own form fields { x0, y0, x1, y1, type, label, check, readOnly }
  *                               scan   true when the page is a picture (nothing can be read from it)
@@ -370,8 +371,25 @@
     // Empty paper above a line ends at the next printed line above it, too.
     out.rules.forEach((r) => {
       out.rules.forEach((o) => {
-        if (o !== r && o.y < r.y - 2 && ov(o.x0, o.x1, r.x0, r.x1) > 0) r.clear = Math.min(r.clear, r.y - o.y - 1);
+        if (o !== r && o.y < r.y - 2 && ov(o.x0, o.x1, r.x0, r.x1) > 0) r.clear = Math.min(r.clear, r.y - o.y - 2.5);
       });
+    });
+    // How far a field may reach past each end of its line and under it, so that the line's own ink lies inside the
+    // field: about a point, less where something else is printed closer than that.
+    out.rules.forEach((r) => {
+      if (r.cell) return (r.pad = { l: 0, r: 0, d: 0 });
+      let l = 1;
+      let rt = 1;
+      let d = 1.5;
+      ink.forEach((g) => {
+        if (g.u === '_' && Math.abs(g.y + 0.12 * g.h - r.y) < 1 && g.x0 >= r.x0 - 0.5 && g.x1 <= r.x1 + 0.5) return; // the line's own characters
+        const top = g.y - 0.75 * g.h;
+        if (top < r.y + 0.5 && g.y + 0.25 * g.h > r.y - 2) {
+          if (g.x1 <= r.x0 + 0.5) l = Math.min(l, Math.max(0, r.x0 - g.x1 - 0.3));
+          else if (g.x0 >= r.x1 - 0.5) rt = Math.min(rt, Math.max(0, g.x0 - r.x1 - 0.3));
+        } else if (top >= r.y + 0.5 && ov(g.x0, g.x1, r.x0 - 1, r.x1 + 1) > 0) d = Math.min(d, Math.max(0, top - r.y - 0.3));
+      });
+      r.pad = { l, r: rt, d };
     });
 
     /* The PDF's own form fields: each is a place, and nothing else is read where one stands. */
