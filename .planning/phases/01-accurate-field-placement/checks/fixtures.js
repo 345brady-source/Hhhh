@@ -289,4 +289,49 @@ FIXTURES.heldout2 = {
     return done(2);
   }
 };
+
+/*
+ * The held-out layout: written after every rule above and never used to change one, so it measures how the rules do
+ * on an agreement nobody tuned for (only a confident mistake found here may lead to a fix, and then `first` records
+ * what the run before it measured). Set in Georgia at 11 pt: labels printed above drawn lines, blanks made of
+ * underlined spaces after their labels (two to a line), a blank made of a leader of dots, tick boxes that are a
+ * character of the text, the amount inside a sentence, an initials line with its caption at the foot of each page;
+ * then a signature page with an X before the signature line, captions in brackets, a line for a joint subscriber and
+ * one for a notary (neither gets a field), a dated line, and the firm's acceptance with its day and month blanks in
+ * a sentence and its three blanks on one printed line.
+ */
+const sp = (n, x) => `<u data-x='${attr(x)}'>${'&nbsp;'.repeat(n)}</u>`;
+const above = (label, x) => `<div class="lb">${label}</div><div class="ul" data-k="rule" data-x='${attr(x)}'></div>`;
+const under = (caption, x, width) => `<div class="ul" data-k="rule" style="width:${width || '3.2in'}" ${x ? `data-x='${attr(x)}'` : ''}></div><div class="cp">${caption}</div>`;
+const glyph = (label) => `<span data-k="bracket" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false, label })}'>&#9744;</span> ${label}`;
+const footIni = () => `<div class="ini"><div class="ul" data-k="rule" data-x='${attr({ type: 'initials', role: 'investor', fillIn: true, required: true })}'></div><div class="cp">Initials</div></div>`;
+FIXTURES.heldout3 = {
+  heldOut: true,
+  offering: 'Northgate Fund I, LP',
+  css: `body{font:11pt/1.35 Georgia,"Times New Roman",serif} .pg{padding:.9in 1in}
+h2.c,h3.c,p.c{text-align:center} h2{font-size:13pt;margin:0 0 2pt} h3{font-size:11pt;margin:16pt 0 6pt}
+.lb{margin-top:10pt} .ul{border-bottom:1px solid #000;height:17pt} .cp{font-size:8.5pt;margin-top:1pt}
+.ini{position:absolute;right:1in;bottom:.5in;width:62pt;text-align:center}`,
+  html: `<div class="pg"><h2 class="c">SUBSCRIPTION AGREEMENT AND INVESTOR QUESTIONNAIRE</h2><p class="c">Northgate Fund I, LP</p>
+<p>Instructions. Complete Sections 1 and 2, initial each page where indicated, and sign on the signature page. Return every page to the General Partner.</p>
+<h3>Section 1. Subscriber</h3>
+${above('Name of Subscriber', fill('Investor name', 'investorName', { flag: true }))}${above('Mailing address', fill('Address', 'street', { flag: true }))}${above('City, State and ZIP Code', fill('City, state and ZIP', 'cityStateZip', { flag: true }))}
+<p style="margin-top:14pt">E-mail: ${sp(38, fill('Email', 'email'))} &nbsp; Phone: ${sp(26, fill('Phone', 'phone'))}</p>
+<p>Tax I.D. or Social Security No.: ${sp(30, fill('Taxpayer ID', ''))}</p>
+<p>Occupation <span data-x='${attr(fill('Occupation', '', { flag: true }))}'>${'.'.repeat(60)}</span></p>
+<p>Form of ownership: &nbsp; ${['Individual', 'Joint tenants', 'Trust', 'Entity'].map(glyph).join(' &nbsp;&nbsp; ')}</p>
+<h3>Section 2. Subscription</h3>
+<p>The undersigned hereby subscribes for a limited partnership interest in the Fund in the amount of $${sp(22, fill('Commitment amount', 'amount', { required: false }))} (the “Subscription Amount”), payable as provided in the Partnership Agreement.</p>
+${footIni()}</div>
+<div class="pg"><h3 class="c" style="margin-top:0">SIGNATURE PAGE</h3><p>The undersigned has read this Agreement in full and executes it on the date written below.</p>
+<p><b>SUBSCRIBER</b></p>
+<div style="margin-top:8pt">X${under('(Signature)', inv('signature'))}</div>${under('(Print name)', inv('name'))}${under('(Signature of joint subscriber, if any)')}
+<p style="margin-top:12pt">Dated: ${sp(24, inv('date'))}, 20${'&nbsp;'.repeat(1)}<u>&nbsp;&nbsp;&nbsp;</u></p>
+<p style="margin-top:14pt">Subscribed and sworn to before me on the date above. &nbsp; Notary Public: <u>${'&nbsp;'.repeat(30)}</u></p>
+<h3 style="margin-top:26pt">ACCEPTANCE</h3>
+<p>Accepted this ${sp(8, firm('text', { flag: true }))} day of ${sp(22, firm('text', { flag: true }))}, 20<u>&nbsp;&nbsp;&nbsp;</u>.</p>
+<p>NORTHGATE CAPITAL GP, LLC, General Partner</p>
+<p style="margin-top:16pt">By: ${sp(26, firm('signature'))} &nbsp; Name: ${sp(22, firm('name'))} &nbsp; Title: ${sp(16, firm('text', { label: 'Title' }))}</p>
+${footIni()}</div>`
+};
 module.exports = { CSS, FIXTURES, blank, rule, box, noline, block, attr, U };
