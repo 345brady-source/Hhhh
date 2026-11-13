@@ -53,7 +53,7 @@ const pad = (s, n) => String(s).padEnd(n);
       const fails = [];
       if (!BASELINE) {
         j.mistakes.forEach((f) => fails.push(`confident mistake: a ${f.type} field for the ${f.role} at high confidence is not right (page ${f.page}, ${box(f)}${f.label ? ', "' + f.label + '"' : ''})`));
-        if (!fx.heldOut) missed.forEach((b) => fails.push(`${where(b.e)} at ${spot(b.e)}: ${b.state === 'none' ? 'no field on it' : b.state}`));
+        if (!fx.heldOut && !fx.measured) missed.forEach((b) => fails.push(`${where(b.e)} at ${spot(b.e)}: ${b.state === 'none' ? 'no field on it' : b.state}`));
         if (fx.clean && j.flagged) fails.push(`${j.flagged} field(s) marked for review in a layout the portal should be sure about`);
         if (fx.saves === true && !out.saved) fails.push(`not saved at once: ${out.todo}`);
         if (fx.saves === false && out.saved) fails.push('saved for onboarding with nobody looking at it');

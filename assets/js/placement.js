@@ -337,7 +337,7 @@
       .toLowerCase();
   }
   const INVESTOR_WORDS = /\b(subscribers?|investors?|purchasers?|limited partners?|undersigned|buyers?|shareholders?|unit ?holders?|noteholders?|lenders?|members?)\b/;
-  const FIRM_WORDS = /\baccept(ed|ance)\b|\bgeneral partner\b|\bmanaging (member|partner)\b|\bmanager\b|\bsponsor\b|\bissuer\b|\bcountersign/;
+  const FIRM_WORDS = /\baccept(ed|ance)\b|\bgeneral partner\b|\bmanaging (member|partner)\b|\bmanager\b|\bsponsor\b|\bissuer\b|\bcountersign|\bfor the (company|fund|partnership|issuer)\b/;
   const FIRM_ONLY = /^(the )?(fund|company|partnership|issuer|llc)$/;
   /** Whose words a piece of text uses: 'investor', 'firm' or ''. */
   function whoIn(t) {
@@ -358,12 +358,12 @@
   const SIGNING_WORDS = /\b(signature|sign|signed|signatory|by|initials?)\b/;
   const SIG_RE = /^(by|signed|sign|signature|sign here|please sign|x|(authori[sz]ed )?(signature|signatory|signer|representative|officer|person)|(authori[sz]ed )?signature of .{2,60}|signature by .{2,40}|.{2,34}'?s? signature|signature and title)$/;
   const SIG_NOT = /\b(pages?|blocks?|guarantee[ds]?|required|requirements?|instructions?|lines?|sections?|cards?|date|follows?|below|above|see|counterparts?)\b/;
-  const DATE_RE = /^(date|dated|date signed|date of (signature|signing|execution|this agreement|acceptance)|signature date|execution date|date executed|dated as of|acceptance date)$/;
+  const DATE_RE = /^(date|dated|date signed|date of (signature|signing|execution|this agreement|acceptance)|signature date|execution date|date executed|dated as of|acceptance date|date accepted)$/;
   const NAME_RE = /^((please )?print(ed)? |typed? (or printed )?|type or print )?name$|^name printed$|^(print(ed)? )?name of (the )?(authori[sz]ed )?(signatory|signer|person signing|representative|officer|individual signing)$|^(signatory|signer)'?s? name$/;
   const INVNAME_RE = /^((please )?print(ed)? )?((full|exact|legal) )*name of (the )?(subscriber|investor|purchaser|limited partner|member|entity|trust|undersigned|account|registered (owner|holder)|holder|company|corporation|partnership|organi[sz]ation|buyer|individual|subscribing entity)s?( or entity)?$|^(subscriber|investor|purchaser|entity|trust|account|registration|buyer|member|limited partner)('s|s')? (legal )?name$|^(subscriber|investor|purchaser|limited partner|buyer)$|^((exact|full|legal) )*name (in which|under which) .{4,70}$|^(full |exact )?legal name$/;
   const TITLE_RE = /^(title|its|capacity|title or capacity|title ?\/ ?capacity|title of (the )?(authori[sz]ed )?(signatory|signer|officer|person signing|representative)|(signatory|signer)'?s? title)$/;
   const NAMETITLE_RE = /^((please )?print(ed)? )?name (and|&|\/) title( of (the )?(authori[sz]ed )?(signatory|signer|officer|representative))?$/;
-  const INITIALS_RE = /^((the )?(subscriber|investor|purchaser|member|your|limited partner)('s|s')? )?initials?( here)?$|^(please )?initial( here)?$|^initial(l)?ed( by (the )?(subscriber|investor|purchaser))?$/;
+  const INITIALS_RE = /^initial (each|here|below|where indicated)( (statement|item|line|box|page))?$|^((the )?(subscriber|investor|purchaser|member|your|limited partner)('s|s')? )?initials?( here)?$|^(please )?initial( here)?$|^initial(l)?ed( by (the )?(subscriber|investor|purchaser))?$/;
   const AMOUNT_RE = /^(total |aggregate |dollar |the )?(amount of (the |your )?)?((capital |total )?commitment|subscription|investment|purchase|purchase price|capital contribution)( amount| price)?$|^amount (subscribed|invested|subscribed for|of capital commitment)$|^(subscribed|invested) amount$/;
   const ADDRESS_RE = /^((mailing|street|residence|residential|business|principal|home|legal|permanent|primary|registered|notice|current) )*(address|address line 1|address 1)( of (the )?(subscriber|investor|purchaser|principal office|principal place of business|residence))?( for notices)?$|^principal place of business$/;
   const ADDRESS2_RE = /^address (line )?2$|^(apt|apartment|suite|unit)\b.{0,20}$/;
@@ -601,7 +601,8 @@
         if (e.t !== 'text') return ln.els.push(e);
         const p = e.part;
         if (last && last.t === 'seg' && !p.brk && p.x0 - last.seg.x1 <= 0.9 * Math.max(p.h, last.seg.h)) {
-          last.seg.s = tidy(last.seg.s + ' ' + p.s);
+          // Pieces that touch are one word cut in two by the PDF ("(authorized o" + "fficer)"): no space between them.
+          last.seg.s = tidy(last.seg.s + (p.x0 - last.seg.x1 > 0.12 * p.h ? ' ' : '') + p.s);
           last.seg.x1 = Math.max(last.seg.x1, p.x1);
           last.seg.end = p.src;
           return;
@@ -621,7 +622,8 @@
       const col = [s];
       cut.forEach((o) => {
         const last = col[col.length - 1];
-        if (!o.col && o !== s && o.y - last.y > 4 && o.y - last.y <= 60 && Math.abs(o.x1 - s.x1) <= 3) col.push(o);
+        const between = lines.some((ln) => ln.y > last.y + 2 && ln.y < o.y - 16 && ln.parts.some((p) => p.t === 'text'));
+        if (!o.col && o !== s && o.y - last.y > 4 && o.y - last.y <= 60 && Math.abs(o.x1 - s.x1) <= 3 && !between) col.push(o);
       });
       const start = Math.max.apply(null, col.map((o) => o.x0)) + 4;
       col.forEach((o) => {
@@ -828,6 +830,11 @@
             slot.skip = true;
             return;
           }
+          // A single rule that runs on under some words is the rule of a heading, unless the words end in a colon.
+          if (slot.cut && slot.col && slot.col.length < 2 && !/[:\uFF1A]\s*((u\.?s\.?\s*)?\$)?\s*$/i.test(seg.s)) {
+            slot.skip = true;
+            return;
+          }
           const isLabel = info && info.kind !== 'phrase';
           const captioned = dist > 36 && [under(slot), over(slot)].some((g) => g && known(g));
           if (dist <= 36 || (isLabel && dist <= 240 && !captioned)) {
@@ -839,6 +846,12 @@
             if (info && FIELD(info.kind)) {
               seg.used = 'label';
               return propose(info.kind, slot, info, { seg });
+            }
+            const lead = after ? after.s.match(/^[([]\s*([^()[\]]{1,60}?)\s*[)\]]/) : null;
+            const named = lead ? classify(lead[1]) : null;
+            if (info && named && FIELD(named.kind) && dist <= 36) {
+              seg.used = 'label';
+              return propose(named.kind, slot, named, { seg, who: info.who || named.who });
             }
             if (info && dist <= 36) {
               seg.used = 'label';
@@ -901,6 +914,7 @@
         if (L.slots.some((o) => o !== slot && o.x0 >= near.x1 - 3 && o.x1 <= slot.x0 + 3 && o.y > top && o.y <= slot.y + 1)) return;
         const whole = cellText.map((g) => g.s).join(' ');
         if (slot.table && !slot.cell && !/[:\uFF1A]\s*$/.test(whole)) return (slot.skip = true);
+        if (slot.cut && !slot.table && slot.col && slot.col.length < 2 && !/[:\uFF1A]\s*$/.test(whole)) return (slot.skip = true);
         const info = classify(whole) || (/[:\uFF1A]\s*$/.test(whole) ? null : classify(whole + ':')) || classify(near.s);
         if (!info) return;
         cellText.forEach((g) => (g.used = 'label'));
@@ -1070,6 +1084,8 @@
         const next = ln.els[e.i + 1];
         const info = classify(raw);
         const isKnown = !!(info && (FIELD(info.kind) || info.kind === 'skip') && info.kind !== 'other');
+        const shout = raw.replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ').trim();
+        if (SKIP_HARD.test(t) && n <= 6 && (colon || (/[A-Z]{2}/.test(shout) && shout === shout.toUpperCase())) && !(next && next.t === 'slot')) return heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who: '', skip: true, seg });
         if (seg.used || (next && next.t === 'slot')) {
           // A label speaks for the lines under it only when it names a side outright or says whose line it is.
           // A bare "SUBSCRIBER: ____" heads its block like any heading; "Signature of Subscriber" speaks for its own lines only.
@@ -1115,6 +1131,10 @@
         for (let i = 0; i < heads.length; i++) {
           const hd = heads[i];
           if (!governs(hd, own)) continue;
+          if (hd.skip) {
+            m.drop = true; // the portal has one signer per investor
+            break;
+          }
           // Another line's label never says who signs a different signature line, and speaks only up to the next one.
           if (hd.label && (own.kind === 'signature' || sigBetween(hd.y, own.y, own))) continue;
           if (hd.who) {
@@ -1164,7 +1184,7 @@
       if (m.block && !sure) weaken(m, WHY.who);
       m.who = m.who || (sure ? role : '');
     });
-    made.forEach((m) => out.push(m.p));
+    made.forEach((m) => !m.drop && !(m.under && m.under.drop) && out.push(m.p));
   }
 
   /**

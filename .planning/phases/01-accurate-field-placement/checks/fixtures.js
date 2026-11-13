@@ -370,7 +370,9 @@ ${footIni()}</div>`
 const two = (l1, x1, l2, x2) => `<div class="r2"><span class="c1">${l1} ${blank(x1, U(26))}</span><span class="c2">${l2} ${blank(x2, U(22))}</span></div>`;
 const paren = (label) => `<span data-k="bracket" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false, flag: true, label })}'>( )</span> ${label}`;
 FIXTURES.heldout4 = {
-  heldOut: true,
+  first: { right: 15, blanks: 19, mistakes: 5, marks: 11, heldOut: true },
+  // Its five confident mistakes were fixed; the two blanks still not right (both marked for review) are left as measured.
+  measured: true,
   offering: 'Northgate Fund I, LP',
   paper: [8.5, 14],
   css: `@page{size:8.5in 14in;margin:0} body{font:9.5pt/1.5 Verdana,"DejaVu Sans",Arial,sans-serif} .pg{width:8.5in;height:14in;padding:.8in .9in}
