@@ -71,21 +71,22 @@ Plans:
   1. On the owner's form, through the real upload dialog and the offer, the independent scorer reports 241 of 241 printed places found, 0 stray fields, 0 overlaps, 0 kind differences and 0 owner differences, with the reading time; a field comes only from a box or line found on the picture, never from a recognised word
   2. Each field is the kind its place prints (tick box, initials, signature, date beside a signature, typed blank) and is named from the caption printed with its box as far as the print can be read; a box whose caption cannot be read still has its field, named by its shape and marked
   3. Each field is for the right person: the investor's are the investor's, a second investor's are signed by the co-investor, and a third party's are nobody's required field (optional, marked, named for that party, shown as for someone else, and handed to no signer); the read summary says whose signature lines were found and on which pages, and a third party's signature is never counted as the investor's
-  4. Nothing is placed on a page with no text until the sponsor presses "Read these pages from their picture"; every field placed that way is marked for checking; pages read from their picture are named as such; when the words cannot be read the boxes still get their fields and the summary says exactly that
+  4. Nothing is placed on a page with no text until the sponsor presses "Read these pages from their picture"; every field placed that way is marked for checking and is confirmed before the agreement is used, a page the sponsor has checked with one action and the few fields the portal could not name or whose owner it is unsure of one by one; pages read from their picture are named as such; when the words cannot be read the boxes still get their fields and the summary says exactly that
   5. The other picture documents hold: the scanned and the outlined copy of the example each give the 47 expected fields, the prose copies give none, and the scanned public binder and the completed booklet get no unclean field
   6. Normal PDFs are untouched: the owner's first agreement stays at exactly 47 fields with none marked and no recognition file loaded, prose stays at zero, and the proof run and the nine earlier check files pass
   7. A page is read from its picture in under 6 seconds with progress shown, and at the time limit the sponsor is told truthfully which pages' words were not read
   8. It works inside the hosted preview: the text reader starts from the portal's own files with no request under the preview's rules, every file is of a type the host serves, and where the host refuses the reader the boxes are still found and their fields named by shape
   9. One whole-page picture of each page of the owner's form from the portal's own editor has been looked at and shown to the owner, and the owner has checked their own form in the republished preview
-**Plans:** 6 plans
+**Plans:** 7 plans
 
 Plans:
 - [ ] 01.2-01-PLAN.md — The finder: boxes and lines from the picture's pixels alone, wired through the real upload dialog and proven alone at three ink levels on three documents
 - [ ] 01.2-02-PLAN.md — The text reader starts with no request from the portal's own files, proven in the preview's frame, with a probe page for the real host
 - [ ] 01.2-03-PLAN.md — Reading the caption bands: only the words round each found box and line, in seconds a page; one stated page shape for placement
-- [ ] 01.2-04-PLAN.md — Kind, owner and summary: one field a place, the right kind and person, the third-party owner nobody signs for, a truthful summary
-- [ ] 01.2-05-PLAN.md — The other picture documents (scanned and outlined copies, prose), seconds a page, progress and a truthful time limit
-- [ ] 01.2-06-PLAN.md — Proof and the owner's check: whole-page pictures, the public scans, everything in one run inside the frame as well, the files to publish, then the owner
+- [ ] 01.2-04-PLAN.md — Kind, owner and summary: one field a place, the right kind and person, a third party's places through the owner Phase 01.3's plan 01.3-03 builds (which must be merged first), a truthful summary
+- [ ] 01.2-05-PLAN.md — The other picture documents: the scanned and outlined copies, prose, the two public scans through the offer, and whole-page pictures
+- [ ] 01.2-06-PLAN.md — What the sponsor does: seconds a page, progress, a truthful time limit, and one action that confirms a page they have checked
+- [ ] 01.2-07-PLAN.md — Proof and the owner's check: everything in one run, inside the frame as well, the files to publish, then the owner
 
 ### Phase 01.3: The owner's text agreements are read 100 percent (INSERTED)
 
