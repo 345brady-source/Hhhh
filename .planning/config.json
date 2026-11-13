@@ -69,5 +69,8 @@
   "granularity": "standard",
   "planning": {
     "chunked_parallel": true
+  },
+  "planner": {
+    "stall_detection_enabled": false
   }
 }
