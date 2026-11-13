@@ -543,6 +543,19 @@
       });
     });
 
+    /* 1b. The PDF's own form fields: each is a place of its own. */
+    (pg.forms || []).forEach((f) => {
+      if (f.readOnly) return;
+      const info = f.label ? classify(f.label) : null;
+      const kind = f.type === 'Sig' ? 'signature' : f.check ? 'checkbox' : info && FIELD(info.kind) && info.kind !== 'signature' ? info.kind : 'other';
+      const K = KINDS[kind] || KINDS.other;
+      const p = { type: kind === 'checkbox' ? 'checkbox' : K.type, role: '', page: pg.page, x: f.x0, y: f.y0, w: f.x1 - f.x0, h: f.y1 - f.y0, label: clean(kind === 'checkbox' || kind === 'other' ? f.label : K.label), required: kind === 'checkbox' ? false : K.required, conf: 'high', why: '', kind };
+      if (K.prefill && kind !== 'checkbox') p.prefill = K.prefill;
+      const m = { p, slot: null, seg: null, info, kind, block: kind !== 'checkbox' && !!K.block, who: whoIn(plain(f.label || '')), x0: f.x0, x1: f.x1, y: f.y1 };
+      made.push(m);
+      if (kind === 'other' || f.radio) weaken(m, WHY.form);
+    });
+
     /* Captions: text of a known kind under a blank, or above it. */
     const known = (seg) => {
       if (seg.used) return null;
@@ -756,11 +769,23 @@
       if (st) st.push(s);
       else stacks.push([s]);
     });
+    // Any label on the line above a blank that starts where the label starts: taken whole when it wraps.
+    const labelOver = (s, g) => {
+      if (g.used || Math.abs(g.x0 - s.x0) > 12 || !g.line || g.line.els.some((e) => e.t !== 'seg')) return null;
+      const whole = tidy(wrapped(g.line, g).map((u) => u.text).concat(g.s).join(' '));
+      if (/[:\uFF1A]\s*$/.test(g.s)) {
+        const c = classify(whole);
+        if (c && (FIELD(c.kind) || c.kind === 'skip')) return c;
+        return { kind: 'other', who: whoIn(plain(whole).slice(-MAX_LABEL)), forType: '', optional: OPTIONAL_RE.test(whole.toLowerCase()), colon: true, by: false, text: whole, any: true };
+      }
+      const c = classify(g.s);
+      return c && c.kind === 'phrase' && g.line.els.length === 1 ? Object.assign(c, { any: true }) : null;
+    };
     stacks.forEach((st) => {
       const below = st.map((s) => under(s));
       const above = st.map((s) => over(s));
       const capInfo = below.map((g) => (g && !/[:\uFF1A]\s*$/.test(g.s) ? known(g) : null));
-      const topInfo = above.map((g) => (g ? known(g) : null));
+      const topInfo = above.map((g, i) => (g ? known(g) || labelOver(st[i], g) : null));
       const nCap = capInfo.filter(Boolean).length;
       const nTop = topInfo.filter(Boolean).length;
       if (!nCap && !nTop) return;
@@ -775,10 +800,12 @@
         // Any other text under a rule (a heading, a page number, a footnote) means the rule is not a blank.
         if (!info || !seg || seg.used) return;
         seg.used = caps ? 'caption' : 'above';
-        if (info.kind === 'skip') return (s.skip = true);
-        const m = propose(info.kind, s, info, { seg, how: caps ? 'after' : 'above' });
-        if (!caps) weaken(m, st.length > 1 && nCap === nTop ? WHY.between : WHY.above);
-        else if (!sure && (nTop > 0 || headed)) weaken(m, WHY.between);
+        if (info.kind === 'skip') return second(s, info, seg);
+        const m = info.any ? generic(s, info, seg) : propose(info.kind, s, info, { seg, how: caps ? 'after' : 'above' });
+        // A label that ends in a colon and starts where its blank starts, with no caption anywhere in the stack, is plain.
+        const plainAbove = !caps && !nCap && info.colon && Math.abs(seg.x0 - s.x0) <= 12;
+        if (!caps && !plainAbove) weaken(m, st.length > 1 && nCap === nTop ? WHY.between : WHY.above);
+        else if (caps && !sure && (nTop > 0 || headed)) weaken(m, WHY.between);
       });
     });
     // A line with no label of its own, with "Name:" or "Title:" printed right under it (labels that have no line of
@@ -900,8 +927,8 @@
     const sigBetween = (y0, y1, m) => sigs.some((s) => s !== m && s.y > y0 + 2 && s.y < y1 - 2 && overlap(s.x0, s.x1, m.x0, m.x1) > 0);
     made.forEach((m) => {
       const p = m.p;
-      const own = m.under || m; // a label under a signature line belongs to that line's block
-      let role = m.who || (m.under && m.under.who) || '';
+      const own = m;
+      let role = m.who || '';
       // Two labels on one printed line ("By: ____ Name: ____") are one block: the second follows the first.
       if (!role && m.block && m.kind !== 'signature' && m.slot && m.slot.line) {
         const mate = made.filter((o) => o !== m && o.block && o.who && o.kind !== m.kind && o.slot && o.slot.line === m.slot.line && o.x1 <= m.x0 + 3).sort((a, b) => b.x1 - a.x1)[0];
@@ -920,7 +947,13 @@
           const hd = heads[i];
           if (!governs(hd, own)) continue;
           if (hd.skip) {
-            m.drop = true; // the portal has one signer per investor
+            // Under a heading for a second signer, a witness or a notary: kept, optional, and marked.
+            if (!m.second) {
+              m.second = true;
+              Object.assign(p, { second: true, required: false, conf: 'low', why: WHY.second });
+            }
+            role = 'investor';
+            sure = true;
             break;
           }
           // Another line's label never says who signs a different signature line, and speaks only up to the next one.
@@ -972,35 +1005,83 @@
       if (m.block && !sure) weaken(m, WHY.who);
       m.who = m.who || (sure ? role : '');
     });
-    made.forEach((m) => !m.drop && !(m.under && m.under.drop) && out.push(m.p));
+    made.forEach((m) => out.push(m.p));
   }
 
+  /** The kind of answer a proposed field takes: signature, initials, date, amount, percentage, email, phone, taxId, address, text or checkbox. */
+  function kindOf(p) {
+    const k = p.kind;
+    if (k === 'signature' || k === 'initials' || k === 'date' || k === 'amount' || k === 'email' || k === 'phone' || k === 'taxId' || k === 'checkbox') return k;
+    if (['address', 'address2', 'city', 'state', 'zip', 'cityStateZip'].indexOf(k) >= 0) return 'address';
+    if (k !== 'other') return 'text';
+    const t = String(p.label || '').toLowerCase();
+    if (p.printed === '%' || /%|\bpercent/.test(t)) return 'percentage';
+    if (p.printed === '$' || /\b(amount|commitment|price|dollars?)\b/.test(t)) return 'amount';
+    if (/\b(date|dated|day of)\b/.test(t)) return 'date';
+    if (/\be-?mail\b/.test(t)) return 'email';
+    if (/\b(tele)?phone\b/.test(t)) return 'phone';
+    if (TAXID_RE.test(t)) return 'taxId';
+    if (/\b(address|city|state|zip|postal|country|residence)\b/.test(t)) return 'address';
+    return 'text';
+  }
   /**
-   * Proposed fields for an agreement.
-   * pages: [{ page, w, h, items: [{ s, x, y, w, h }], rules, boxes }] (x is an item's left edge, y its baseline);
-   * ctx: { countersign, firmNames: [], fundNames: [] }.
-   * Returns [{ type, role: 'investor' | 'firm', page, x, y, w, h, label, required, conf, why, forType, prefill }]:
-   * x, y, w, h is the field box; conf is 'high', 'medium' or 'low' and why says so in a sentence below high.
+   * What was read of an agreement, and the fields proposed for it.
+   * pages: what anchors.js read of each page: [{ page, w, h, items, rules, boxes, forms, scan, failed }];
+   * ctx: { firmNames: [], fundNames: [] }.
+   * Returns { fields, pages, scanned, failed, boxes, blanks, signatures, investorPages, firmPages }:
+   *   fields         [{ type, role: 'investor' | 'firm', page, x, y, w, h, label, required, conf, why, kind, forType,
+   *                  prefill, printed, second }]: x, y, w, h is the field box in points; conf is 'high', 'medium' or
+   *                  'low' and why says so in a sentence below high; kind is the kind of answer (see kindOf)
+   *   pages          how many pages were read; scanned and failed: the numbers of the pages that could not be
+   *                  (a picture of a page; a page the reader failed on)
+   *   boxes, blanks, signatures   how many tick boxes, blanks to complete and signature lines got a field
+   *   investorPages, firmPages    the pages with a signature line for the investor, and for the firm
    */
-  function analyze(pages, ctx) {
+  function read(pages, ctx) {
     const cx = ctx || {};
-    const c = { countersign: !!cx.countersign, names: [].concat(cx.firmNames || [], cx.fundNames || []).map(bare).filter((n) => n.length >= 4) };
-    const out = [];
+    const c = { names: [].concat(cx.firmNames || [], cx.fundNames || []).map(bare).filter((n) => n.length >= 4) };
+    const res = { fields: [], pages: 0, scanned: [], failed: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [] };
+    let out = [];
     (pages || []).forEach((pg) => {
-      if (!pg || !(pg.w > 0) || !(pg.h > 0)) return;
+      if (!pg) return;
+      if (pg.scan) return res.scanned.push(pg.page);
+      if (pg.failed || !(pg.w > 0) || !(pg.h > 0)) return res.failed.push(pg.page);
+      const mine = [];
       try {
-        pageFields(pg, c, out);
+        pageFields(pg, c, mine);
       } catch (e) {
-        /* a page that cannot be read gets no field; the fallback below still gives each signer a place to sign */
+        return res.failed.push(pg.page);
       }
+      res.pages++;
+      out = out.concat(mine);
     });
-    out.forEach((p) => {
+    const rank = { high: 0, medium: 1, low: 2 };
+    out.sort((a, b) => a.page - b.page || a.y - b.y || a.x - b.x);
+    // No two proposed fields overlap: where two would, the one the reading is surer of stays.
+    const keep = [];
+    out
+      .slice()
+      .sort((a, b) => rank[a.conf] - rank[b.conf])
+      .forEach((p) => {
+        if (!(p.w > 0) || !(p.h > 0)) return;
+        if (keep.some((o) => o.page === p.page && overlap(o.x, o.x + o.w, p.x, p.x + p.w) > 0.5 && overlap(o.y, o.y + o.h, p.y, p.y + p.h) > 0.5)) return;
+        keep.push(p);
+      });
+    res.fields = out.filter((p) => keep.indexOf(p) >= 0);
+    res.fields.forEach((p) => {
       p.label = clean(p.label);
       if (p.conf === 'high') p.why = '';
+      p.kind = kindOf(p);
+      if (p.type === 'checkbox') res.boxes++;
+      else if (p.type === 'signature' || p.type === 'initials') res.signatures++;
+      else res.blanks++;
+      const list = p.role === 'firm' ? res.firmPages : res.investorPages;
+      if (p.type === 'signature' && !p.second && list.indexOf(p.page) < 0) list.push(p.page);
     });
-    out.sort((a, b) => a.page - b.page || a.y - b.y || a.x - b.x);
-    return out;
+    return res;
   }
+  /** The proposed fields alone (see read). */
+  const analyze = (pages, ctx) => read(pages, ctx).fields;
 
   /* =====================================================================
    * Review marks (pure helpers for the field editor and the save gates)
@@ -1094,5 +1175,5 @@
     return v;
   }
 
-  NS.placement = { scan, analyze, labelOf, needsReview, reviewFields, reviewCount, confirm, statusOf, groupOf, fits, values, PREFILL, FOR_TYPES };
+  NS.placement = { read, analyze, labelOf, needsReview, reviewFields, reviewCount, confirm, statusOf, groupOf, fits, values, PREFILL, FOR_TYPES };
 })(typeof window !== 'undefined' ? window.CVPortal : globalThis.CVPortal);
