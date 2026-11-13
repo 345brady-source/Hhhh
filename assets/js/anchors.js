@@ -287,14 +287,14 @@
           run.x1 = g.x1;
           run.n++;
         } else {
-          run = { x0: g.x0, x1: g.x1, base: g.y, y: g.y + 0.12 * g.h, n: 1, made: 'underscores' };
+          run = { x0: g.x0, x1: g.x1, base: g.y, y: g.y + 0.12 * g.h, low: g.y + 0.25 * g.h, n: 1, made: 'underscores' };
           pieces.push(run);
         }
       } else run = null;
     });
     const hs = raw.segs.filter((s) => s.o === 'h' && s.a1 - s.a0 >= 6);
     const vs = raw.segs.filter((s) => s.o === 'v' && s.a1 - s.a0 >= 6);
-    hs.forEach((s) => pieces.push({ x0: s.a0, x1: s.a1, y: s.c, n: 0, made: 'rule', frame: !!s.frame }));
+    hs.forEach((s) => pieces.push({ x0: s.a0, x1: s.a1, y: s.c, low: s.c + s.t / 2, n: 0, made: 'rule', frame: !!s.frame }));
     pieces.sort((a, b) => a.y - b.y || a.x0 - b.x0);
     const lines = [];
     pieces.forEach((p) => {
@@ -304,9 +304,10 @@
         m.x0 = Math.min(m.x0, p.x0);
         m.x1 = Math.max(m.x1, p.x1);
         m.y = Math.max(m.y, p.y);
+        m.low = Math.max(m.low, p.low);
         if (m.made.indexOf(p.made) < 0) m.made += ' and ' + p.made;
         m.n += p.n;
-      } else lines.push({ x0: p.x0, x1: p.x1, y: p.y, made: p.made, n: p.n, frame: !!p.frame });
+      } else lines.push({ x0: p.x0, x1: p.x1, y: p.y, low: p.low, made: p.made, n: p.n, frame: !!p.frame });
     });
     const body = words.length ? words.map((g) => g.h).sort((a, b) => a - b)[Math.floor(words.length / 2)] : 10;
     const sameLine = (g, l) => Math.abs(g.y - (l.y - (l.made.indexOf('underscores') >= 0 ? 0.12 * g.h : 0))) < 0.45 * g.h + 2;
@@ -366,7 +367,7 @@
         // A rule right across the page near its head or foot: a running rule.
         if (w > 0.7 * size.w && (l.y > 0.9 * size.h || l.y < 0.08 * size.h)) return;
       }
-      out.rules.push({ x0, x1: l.x1, y: l.y, clear, made: l.made, cut, cell: false, table: walls.length > 0 });
+      out.rules.push({ x0, x1: l.x1, y: l.y, low: l.low, clear, made: l.made, cut, cell: false, table: walls.length > 0 });
     });
     // Empty paper above a line ends at the next printed line above it, too.
     out.rules.forEach((r) => {
@@ -380,7 +381,8 @@
       if (r.cell) return (r.pad = { l: 0, r: 0, d: 0 });
       let l = 1;
       let rt = 1;
-      let d = 1.5;
+      // Under the line: to just below the lowest its ink can reach (an underscore hangs lower in some fonts than in others).
+      let d = Math.max(1.5, (r.low || r.y) - r.y + 0.6);
       ink.forEach((g) => {
         if (g.u === '_' && Math.abs(g.y + 0.12 * g.h - r.y) < 1 && g.x0 >= r.x0 - 0.5 && g.x1 <= r.x1 + 0.5) return; // the line's own characters
         const top = g.y - 0.75 * g.h;
