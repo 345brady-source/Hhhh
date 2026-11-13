@@ -13,6 +13,14 @@
   /* Paper, the signing ink and the required mark stay the same in light and dark, like a printed page. */
   --es-paper: var(--paper-bg); --es-paper-ink: #0B1F44; --es-paper-ink-2: var(--paper-fg-2); --es-paper-line: var(--paper-line); --es-paper-soft: var(--paper-soft); --es-paper-bad: #B3261E;
   --es-paper-shadow: var(--paper-shadow);
+  /* A signer's own marks (signature.js): the two inks to sign in, and the six hands a typed signature is written in. */
+  --es-ink-blue: #15357E; --es-ink-black: #17191D;
+  --es-hand-formal: "Pinyon Script", "Snell Roundhand", "Edwardian Script ITC", cursive;
+  --es-hand-flowing: "Mrs Saint Delafield", "Snell Roundhand", "Segoe Script", cursive;
+  --es-hand-casual: "Caveat", "Segoe Script", "Brush Script MT", cursive;
+  --es-hand-quick: "Nothing You Could Do", "Bradley Hand", "Segoe Print", cursive;
+  --es-hand-neat: "Bad Script", "Noteworthy", "Segoe Print", cursive;
+  --es-hand-bold: "Mr Dafoe", "Brush Script MT", "Segoe Script", cursive;
   --es-fg: var(--fg); --es-fg-2: var(--fg-2); --es-fg-3: var(--fg-3); --es-line: var(--line); --es-line-strong: var(--line-strong); --es-surface: var(--surface); --es-surface-2: var(--surface-2);
   --es-accent: var(--brand); --es-accent-ink: var(--brand-ink); --es-accent-text: var(--brand-text); --es-focus: var(--focus); --es-good: var(--good); --es-warn: var(--warn); --es-bad: var(--bad);
   --es-page-bg: var(--surface-3); --es-font: var(--font-body); --es-mono: var(--font-mono);
@@ -429,4 +437,167 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .sf-ring-fill, .sf-ring > .i, .sf-zoom-btn, .es-doc-sign .es-f-mine { transition: none; }
+}
+
+/* ==================================================================================================================
+   Signatures (signature.js): the dialog where a signer sets their signature and their initials, once.
+   How to make them (Type, Draw, Upload) and the ink are two segmented controls. The signature and the initials sit
+   on a sheet of paper, one cell each with its line, in every tab: written in a style, drawn, or shown from an image.
+   Paper and ink keep their colors in dark, like the document they are placed on.
+   ================================================================================================================== */
+/* The dialog keeps its top edge where it is as the tabs change its height; on a phone it is a sheet from the bottom. */
+.sg-dlg { width: min(720px, calc(100% - var(--space-lg))); margin-block: max(20px, calc((100vh - 820px) / 2)) auto; }
+.sg-dlg .dlg-body { flex: 1 1 auto; min-height: 0; }
+.sg-dlg .dlg-head { flex-wrap: nowrap; align-items: flex-start; }
+.sg-dlg .dlg-head > div:first-child { min-width: 0; }
+.sg { --sg-ink: var(--es-ink-blue); }
+.sg[data-ink="black"] { --sg-ink: var(--es-ink-black); }
+.sg-label { font-size: var(--text-sm); font-weight: 500; line-height: 1.4; color: var(--es-fg-2); }
+.mode-console .sg-label { font-size: var(--text-xs); }
+
+/* The bar: the way to make it, and the ink. The current choice is the lit segment, ringed in the accent. */
+.sg-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs) var(--space-md); }
+.sg-switch, .sg-inkswitch { display: inline-flex; gap: var(--space-3xs); padding: var(--space-3xs); border: 1px solid var(--es-line); border-radius: var(--r-pill); background: color-mix(in oklab, var(--es-fg) 5%, transparent); }
+.sg-tabbtn { position: relative; min-width: 84px; min-height: 34px; padding: var(--space-2xs) var(--space-md); border: 0; border-radius: var(--r-pill); background: transparent; color: var(--es-fg-2); font-family: inherit; font-size: var(--text-sm); font-weight: 500; line-height: 1.2; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out); }
+.sg-tabbtn::after { content: ""; position: absolute; inset: -4px 0; }
+.sg-tabbtn:hover { color: var(--es-fg); }
+.sg-tabbtn:active { background: color-mix(in oklab, var(--es-fg) 8%, transparent); }
+.sg-tabbtn[aria-selected="true"] { background: var(--es-surface); color: var(--es-fg); box-shadow: var(--edge-light), inset 0 0 0 1px var(--es-accent); }
+.sg-tabbtn:focus-visible { outline: 2px solid var(--es-focus); outline-offset: 2px; }
+.sg-tabbtn:disabled { opacity: 0.55; cursor: not-allowed; }
+.sg-inks { display: flex; align-items: center; gap: var(--space-xs); }
+.sg-inkopt { position: relative; display: block; }
+.sg-inkopt input { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.sg-inkchip { display: flex; align-items: center; gap: var(--space-xs); min-height: 34px; padding: var(--space-2xs) var(--space-sm) var(--space-2xs) var(--space-xs); border-radius: var(--r-pill); color: var(--es-fg-2); font-size: var(--text-sm); font-weight: 500; line-height: 1.2; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out); }
+/* The dot is ink on a ring of paper, so black and blue read as themselves on a dark dialog too. */
+.sg-dot { flex: none; width: 16px; height: 16px; margin: var(--space-3xs); border-radius: 50%; background: var(--es-ink-blue); box-shadow: 0 0 0 2px var(--es-paper), 0 0 0 3px var(--es-paper-line); }
+.sg-dot[data-ink="black"] { background: var(--es-ink-black); }
+.sg-inkopt input:hover + .sg-inkchip { color: var(--es-fg); }
+.sg-inkopt input:active + .sg-inkchip { background: color-mix(in oklab, var(--es-fg) 8%, transparent); }
+.sg-inkopt input:checked + .sg-inkchip { background: var(--es-surface); color: var(--es-fg); box-shadow: var(--edge-light), inset 0 0 0 1px var(--es-accent); }
+.sg-inkopt input:focus-visible + .sg-inkchip { outline: 2px solid var(--es-focus); outline-offset: 2px; }
+
+/* The sheet: a cell for the signature and a narrower one for the initials. */
+.sg-pane { display: flex; flex-direction: column; gap: var(--space-md); min-width: 0; }
+.sg-sheet { display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr); gap: var(--space-sm); }
+.sg-cell { --sg-line: 24px; --sg-pad: 20px; position: relative; display: flex; flex-direction: column; min-width: 0; border-radius: var(--r-inner); background: var(--es-paper); color: var(--es-paper-ink-2); box-shadow: inset 0 0 0 1px var(--es-paper-line); color-scheme: light; transition: box-shadow var(--dur-micro) var(--ease-out); }
+.sg-stage { position: relative; flex: 1 1 auto; height: 124px; min-height: 0; }
+/* The line it is written on, and the mark that says where to begin. */
+.sg-stage::after { content: ""; position: absolute; left: var(--space-md); right: var(--space-md); bottom: var(--sg-line); border-bottom: 1px solid color-mix(in srgb, var(--es-paper-ink-2) 42%, var(--es-paper)); pointer-events: none; }
+.sg-cell-signature .sg-stage::before { content: "\00d7"; position: absolute; left: var(--space-md); bottom: calc(var(--sg-line) + var(--space-2xs)); font-size: var(--text-lg); line-height: 1; color: color-mix(in srgb, var(--es-paper-ink-2) 55%, var(--es-paper)); pointer-events: none; }
+/* Handwriting sits with its baseline on the line: a box with no height of its own ends exactly on the baseline of
+   the text inside it. signature.js sets the size so the ink fits the cell. */
+.sg-hand { position: absolute; left: var(--sg-pad); right: var(--sg-pad); bottom: calc(var(--sg-line) + 1px); font-size: 0; line-height: 0; white-space: nowrap; text-align: center; color: var(--sg-ink); pointer-events: none; user-select: none; -webkit-user-select: none; }
+.sg-hand-ink { font-size: 40px; line-height: 0; font-synthesis: none; font-variant-ligatures: normal; transition: opacity var(--dur-short) var(--ease-out); }
+/* Until the faces have arrived the handwriting waits, so it never shows in a stand-in face first. */
+.sg.is-loading .sg-hand-ink { opacity: 0; }
+.sg-cell-signature > .sg-stage > .sg-hand { left: 48px; text-align: left; }
+.sg-cap { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); min-height: 36px; padding: 0 var(--space-xs) var(--space-2xs) var(--space-md); font-size: var(--text-xs); line-height: 1.3; }
+.sg-acts { display: flex; gap: var(--space-3xs); }
+.sg-padbtn { position: relative; min-height: 28px; padding: 0 var(--space-xs); border: 0; border-radius: var(--r-pill); background: transparent; color: var(--es-paper-ink-2); font-family: inherit; font-size: var(--text-sm); font-weight: 500; line-height: 1.2; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+.sg-padbtn::after { content: ""; position: absolute; inset: -8px -1px; }
+.sg-padbtn:hover { background: var(--es-paper-soft); color: var(--es-paper-ink); }
+.sg-padbtn:active { background: color-mix(in srgb, var(--es-paper-ink) 12%, var(--es-paper)); color: var(--es-paper-ink); }
+.sg-padbtn:focus-visible { outline: 2px solid var(--es-paper-ink); outline-offset: 1px; }
+.sg-padbtn:disabled, .sg-padbtn[aria-disabled="true"] { background: transparent; color: var(--es-paper-ink-2); opacity: 0.4; cursor: not-allowed; }
+
+/* Type: the six hands, each a card of paper with the signer's own name in it. */
+.sg-styles { display: block; min-width: 0; margin: 0; padding: 0; border: 0; }
+.sg-styles > legend { margin-bottom: var(--space-xs); padding: 0; }
+.sg-style-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xs); }
+.sg-style { position: relative; display: block; min-width: 0; }
+.sg-style input { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.sg-style-box { --sg-line: 26px; --sg-pad: 12px; position: relative; display: block; height: 72px; border-radius: var(--r-inner); background: var(--es-paper); color: var(--es-paper-ink-2); box-shadow: inset 0 0 0 1px var(--es-paper-line); color-scheme: light; transition: box-shadow var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out); }
+/* The chosen hand is ringed in the accent and ticked on its corner, clear of the writing. */
+.sg-style-tick { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--es-accent); color: var(--es-accent-ink); box-shadow: 0 0 0 2px var(--surface-2); opacity: 0; transition: opacity var(--dur-micro) var(--ease-out); }
+.sg-style-tick .i { width: 12px; height: 12px; stroke-width: 2.5; }
+.sg-style input:hover + .sg-style-box { box-shadow: inset 0 0 0 1px var(--es-line-strong); }
+/* A hand that cannot write every letter of the name is set aside while that name stands. */
+.sg-style input:disabled { cursor: not-allowed; }
+.sg-style input:disabled + .sg-style-box { box-shadow: inset 0 0 0 1px var(--es-paper-line); opacity: 0.4; cursor: not-allowed; }
+.sg-style input:active + .sg-style-box { background: var(--es-paper-soft); }
+.sg-style input:checked + .sg-style-box { box-shadow: inset 0 0 0 2px var(--es-accent); }
+.sg-style input:checked + .sg-style-box .sg-style-tick { opacity: 1; }
+.sg-style input:focus-visible + .sg-style-box { outline: 2px solid var(--es-focus); outline-offset: 2px; }
+.sg-fields { display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr); gap: var(--space-sm); }
+
+/* Draw: each cell is a pad. The initials written for the signer stay, faint, until they draw their own. */
+.sg-pane-draw .sg-stage { height: 208px; }
+.sg-pad { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border-radius: var(--r-inner) var(--r-inner) 0 0; touch-action: none; cursor: crosshair; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.sg-prompt { position: absolute; left: var(--space-md); right: var(--space-md); bottom: calc(var(--sg-line) + var(--space-md)); text-align: center; font-size: var(--text-sm); line-height: 1.4; color: color-mix(in srgb, var(--es-paper-ink-2) 72%, var(--es-paper)); pointer-events: none; }
+.sg-pane-draw .sg-hand-default { opacity: 0.4; }
+.sg-cell.has-ink .sg-prompt, .sg-cell.has-ink .sg-hand-default { visibility: hidden; }
+.sg-hint { line-height: 1.5; }
+
+/* Upload: the cell takes a file (chosen or dropped) and shows the ink that was found in it, on the line. */
+.sg-pane-upload .sg-stage { height: 148px; }
+.sg-empty { position: absolute; inset: 0 var(--space-md) var(--sg-line); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-xs); font-size: var(--text-xs); line-height: 1.4; text-align: center; }
+.sg-cell.has-ink .sg-empty { display: none; }
+.sg-choosebtn { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: var(--control-h); padding: var(--space-xs) 20px; border: 1px solid color-mix(in srgb, var(--es-paper-ink-2) 45%, var(--es-paper)); border-radius: var(--r-pill); background: var(--es-paper); color: var(--es-paper-ink); font-family: inherit; font-size: var(--text-sm); font-weight: 500; line-height: 1.2; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out); }
+.sg-choosebtn::after { content: ""; position: absolute; inset: -2px 0; }
+.sg-choosebtn:hover { border-color: var(--es-paper-ink-2); background: var(--es-paper-soft); }
+.sg-choosebtn:active { background: color-mix(in srgb, var(--es-paper-ink) 10%, var(--es-paper)); transform: translateY(1px); }
+.sg-choosebtn:focus-visible { outline: 2px solid var(--es-paper-ink); outline-offset: 2px; }
+.sg-choosebtn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+.sg-img { position: absolute; left: 48px; bottom: calc(var(--sg-line) - 8px); max-width: calc(100% - 64px); max-height: calc(100% - var(--sg-line) - 12px); object-fit: contain; }
+.sg-cell-initials .sg-img { left: 50%; max-width: calc(100% - 32px); transform: translateX(-50%); }
+.sg-drop.is-over { box-shadow: inset 0 0 0 2px var(--es-accent); }
+
+/* The foot stays in view: what adopting means, anything still missing, and the action. */
+.sg-foot { display: flex; flex-direction: column; gap: var(--space-sm); padding: var(--space-md) 20px; border-top: 1px solid var(--line); background: var(--surface); }
+.sg-legal { font-size: var(--text-xs); line-height: 1.5; color: var(--es-fg-3); }
+.sg-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-xs); }
+.sg-remove { margin-right: auto; }
+.sg-actions [aria-busy="true"] { opacity: 0.7; cursor: progress; }
+
+@media (max-width: 640px) {
+  .sg-dlg { width: 100%; max-width: 100%; height: calc(100vh - 24px); height: calc(100dvh - 24px); max-height: none; margin: auto 0 0; border-radius: var(--r-card) var(--r-card) 0 0; }
+  .sg-dlg .dlg-body { padding: var(--space-md); }
+  /* Three tabs and two inks share one row: the inks are their dots alone. */
+  .sg-tabbtn { min-width: 72px; min-height: 40px; padding: var(--space-2xs) var(--space-sm); }
+  .sg-tabbtn::after { inset: -2px 0; }
+  .sg-inks > .sg-label, .sg-inkname { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .sg-inkchip { min-width: 40px; min-height: 40px; justify-content: center; padding: var(--space-2xs); }
+  .sg-inkopt::after { content: ""; position: absolute; inset: -2px; }
+  .sg-fields .field input, .sg-fields .cs-field input { min-height: 44px; }
+  .sg-stage { height: 108px; }
+  .sg-style-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sg-style-box { height: 64px; --sg-line: 22px; }
+  /* Drawing and uploading need the width: the two cells stack, and the pads take all the height the sheet has. */
+  .sg-sheet-stack { grid-template-columns: minmax(0, 1fr); }
+  .sg-pane-draw { flex: 1 1 auto; }
+  .sg-pane-draw .sg-sheet { flex: 1 1 auto; grid-template-rows: minmax(196px, 1.7fr) minmax(132px, 1fr); }
+  .sg-pane-draw .sg-stage { height: auto; }
+  .sg-pane-upload .sg-stage { height: 132px; }
+  .sg-pane-upload .sg-cell-initials .sg-stage { height: 96px; }
+  .sg-padbtn { min-height: 32px; padding: 0 var(--space-sm); }
+  .sg-padbtn::after { inset: -6px -1px; }
+  .sg-foot { padding: var(--space-sm) var(--space-md) max(var(--space-md), env(safe-area-inset-bottom)); }
+  .sg-actions .btn, .sg-actions .cs-btn { flex: 1 1 auto; }
+  .sg-actions .sg-remove { flex-basis: 100%; }
+}
+/* A short phone: the dialog says less, so both pads are in view without scrolling past them. */
+@media (max-width: 640px) and (max-height: 740px) {
+  .sg-dlg .dlg-head p, .sg-pane-draw .sg-hint { display: none; }
+  .sg-pane-draw .sg-sheet { grid-template-rows: minmax(148px, 1.7fr) minmax(104px, 1fr); }
+}
+/* A narrow phone: the tabs draw in so the inks stay beside them. */
+@media (max-width: 360px) {
+  .sg-tabbtn { min-width: 52px; padding: var(--space-2xs) var(--space-xs); }
+}
+/* A short window (a phone on its side): the dialog takes the height there is, says less, and its pads are lower. */
+@media (min-width: 641px) and (max-height: 620px) {
+  .sg-dlg { margin-block: var(--space-xs) auto; max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); }
+  .sg-dlg .dlg-head { padding-block: var(--space-xs); }
+  .sg-dlg .dlg-head p, .sg-hint { display: none; }
+  .sg-dlg .dlg-body { padding-block: var(--space-sm); }
+  .sg-stage { height: 96px; }
+  .sg-pane-draw .sg-stage { height: 128px; }
+  .sg-pane-upload .sg-stage { height: 120px; }
+  .sg-foot { flex-direction: row; flex-wrap: wrap; align-items: center; padding-block: var(--space-xs); }
+  .sg-legal { flex: 1 1 280px; }
+  .sg-foot .field-error { flex: 1 1 100%; order: -1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sg-tabbtn, .sg-inkchip, .sg-cell, .sg-hand-ink, .sg-padbtn, .sg-style-box, .sg-style-tick, .sg-choosebtn { transition: none; }
 }

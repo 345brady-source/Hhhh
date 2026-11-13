@@ -1914,7 +1914,7 @@
     U.toast(`Declined. ${T().name} has been told.`);
   };
 
-  /* ---------- Adopt-signature dialog: Type, Draw, Upload ---------- */
+  /* ---------- Adopting a signature and initials (the dialog itself is signature.js) ---------- */
   NS.actions['es-sig'] = (el) => {
     const st = S().ui.esSigning;
     if (!st) return;
@@ -1933,254 +1933,11 @@
     }
     openAdopt(env, s, f, st);
   };
+  /** The dialog is signature.js: the signer sets their signature and initials there, both at once. */
   function openAdopt(env, s, f, st) {
-    const kind = f.type;
-    const initial = kind === 'initials' ? initialsOf(s.name) : s.name;
-    const prev = st.adopted[kind];
-    S().ui.esAdopt = { envId: env.id, sid: s.id, fid: f.id, kind, tab: 'type', upload: null, drawn: false };
-    const tab = (k, l) => `<button type="button" class="es-tab" role="tab" id="es-tab-${k}" aria-controls="es-pane-${k}" aria-selected="${k === 'type'}" data-action="es-adopt-tab" data-t="${k}">${l}</button>`;
-    U.dialog(
-      `<div class="dlg-head"><div><h2>Adopt your ${kind === 'initials' ? 'initials' : 'signature'}</h2><p>Used for every ${kind === 'initials' ? 'initials' : 'signature'} field you sign in this document.</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
-      <div class="dlg-body es-adopt">
-        <div class="es-tabs" role="tablist" aria-label="How to create it">${tab('type', 'Type')}${tab('draw', 'Draw')}${tab('upload', 'Upload')}</div>
-        <div class="es-pane" id="es-pane-type" role="tabpanel" aria-labelledby="es-tab-type">
-          <label class="field" for="es-type-text"><span>${kind === 'initials' ? 'Your initials' : 'Your full name'}</span><input id="es-type-text" type="text" maxlength="${kind === 'initials' ? 6 : 60}" value="${h(prev && prev.kind === 'typed' ? prev.text : initial)}" data-input="es-type-text" autocomplete="off" autofocus></label>
-          <div class="es-type-preview es-paper" id="es-type-preview" aria-hidden="true">${h(prev && prev.kind === 'typed' ? prev.text : initial)}</div>
-        </div>
-        <div class="es-pane" id="es-pane-draw" role="tabpanel" aria-labelledby="es-tab-draw" hidden>
-          <p class="hint">Draw with your mouse, finger or stylus.</p>
-          <canvas class="es-pad es-paper" id="es-pad" aria-label="Drawing area for your ${kind === 'initials' ? 'initials' : 'signature'}"></canvas>
-          <div class="es-row"><button class="btn btn-small" type="button" data-action="es-pad-clear">Clear</button></div>
-        </div>
-        <div class="es-pane" id="es-pane-upload" role="tabpanel" aria-labelledby="es-tab-upload" hidden>
-          <label class="field" for="es-up"><span>Image of your ${kind === 'initials' ? 'initials' : 'signature'} (PNG or JPG)</span><input id="es-up" type="file" accept="image/png,image/jpeg" data-change="es-upload"></label>
-          <div class="es-up-preview es-paper" id="es-up-preview"><span class="hint">No image yet.</span></div>
-        </div>
-        <p class="hint es-adopt-legal">By selecting Adopt and sign, I agree that this ${kind === 'initials' ? 'mark is my electronic initials' : 'mark is my electronic signature'} and has the same effect as my handwritten ${kind === 'initials' ? 'initials' : 'signature'} on this document.</p>
-        <p class="field-error" id="es-adopt-err" role="alert"></p>
-        <div class="es-row es-row-end">${st.vals[f.id] ? '<button class="btn" type="button" data-action="es-sig-clear">Remove from this field</button>' : ''}<button class="btn" type="button" data-action="close-dialog">Cancel</button><button class="btn btn-primary" type="button" data-action="es-adopt">Adopt and sign</button></div>
-      </div>`,
-      'dlg-es dlg-es-adopt'
-    );
+    S().ui.esAdopt = { envId: env.id, sid: s.id, fid: f.id, kind: f.type };
+    NS.signature.open({ key: st.key, name: s.name, placed: !!st.vals[f.id], adopted: st.adopted });
   }
-  NS.changes['es-type-text'] = (el) => {
-    const p = document.getElementById('es-type-preview');
-    if (p) p.textContent = el.value;
-  };
-  NS.actions['es-adopt-tab'] = (el) => {
-    const a = S().ui.esAdopt;
-    if (!a) return;
-    a.tab = el.getAttribute('data-t');
-    ['type', 'draw', 'upload'].forEach((k) => {
-      const pane = document.getElementById('es-pane-' + k);
-      const tb = document.getElementById('es-tab-' + k);
-      if (pane) pane.hidden = k !== a.tab;
-      if (tb) tb.setAttribute('aria-selected', String(k === a.tab));
-    });
-    if (a.tab === 'draw') setupPad();
-  };
-  document.addEventListener('keydown', (e) => {
-    const tb = e.target.closest && e.target.closest('.es-tabs [role="tab"]');
-    if (!tb || (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft')) return;
-    const all = Array.from(tb.parentElement.querySelectorAll('[role="tab"]'));
-    const n = all[(all.indexOf(tb) + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length];
-    n.focus();
-    n.click();
-  });
-  function setupPad() {
-    const c = document.getElementById('es-pad');
-    if (!c || c.dataset.ready) return;
-    const r = c.getBoundingClientRect();
-    const dpr = Math.min(3, window.devicePixelRatio || 1);
-    c.width = Math.max(300, Math.round(r.width * dpr));
-    c.height = Math.max(120, Math.round(r.height * dpr));
-    c.dataset.ready = '1';
-    const ctx = c.getContext('2d');
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = INK;
-    ctx.lineWidth = 2.6 * dpr;
-    let last = null;
-    const pt = (e) => {
-      const b = c.getBoundingClientRect();
-      return { x: ((e.clientX - b.left) / b.width) * c.width, y: ((e.clientY - b.top) / b.height) * c.height };
-    };
-    c.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      try {
-        c.setPointerCapture(e.pointerId);
-      } catch (err) {
-        /* ignore */
-      }
-      last = pt(e);
-      ctx.beginPath();
-      ctx.arc(last.x, last.y, ctx.lineWidth / 2, 0, Math.PI * 2);
-      ctx.fillStyle = INK;
-      ctx.fill();
-      S().ui.esAdopt.drawn = true;
-    });
-    c.addEventListener('pointermove', (e) => {
-      if (!last) return;
-      const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
-      (evs.length ? evs : [e]).forEach((ev) => {
-        const p = pt(ev);
-        ctx.beginPath();
-        ctx.moveTo(last.x, last.y);
-        ctx.lineTo(p.x, p.y);
-        ctx.stroke();
-        last = p;
-      });
-    });
-    const up = () => (last = null);
-    c.addEventListener('pointerup', up);
-    c.addEventListener('pointercancel', up);
-  }
-  NS.actions['es-pad-clear'] = () => {
-    const c = document.getElementById('es-pad');
-    if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
-    if (S().ui.esAdopt) S().ui.esAdopt.drawn = false;
-  };
-  /** Crop a canvas to its ink and return a PNG data URL no larger than max. */
-  function trimPng(c, maxW, maxH) {
-    const ctx = c.getContext('2d');
-    const d = ctx.getImageData(0, 0, c.width, c.height).data;
-    let x0 = c.width;
-    let y0 = c.height;
-    let x1 = -1;
-    let y1 = -1;
-    for (let y = 0; y < c.height; y++)
-      for (let x = 0; x < c.width; x++)
-        if (d[(y * c.width + x) * 4 + 3] > 12) {
-          if (x < x0) x0 = x;
-          if (x > x1) x1 = x;
-          if (y < y0) y0 = y;
-          if (y > y1) y1 = y;
-        }
-    if (x1 < 0) return null;
-    const pad = 6;
-    x0 = Math.max(0, x0 - pad);
-    y0 = Math.max(0, y0 - pad);
-    x1 = Math.min(c.width - 1, x1 + pad);
-    y1 = Math.min(c.height - 1, y1 + pad);
-    const w = x1 - x0 + 1;
-    const hh = y1 - y0 + 1;
-    const s = Math.min(1, (maxW || 600) / w, (maxH || 200) / hh);
-    const o = document.createElement('canvas');
-    o.width = Math.max(1, Math.round(w * s));
-    o.height = Math.max(1, Math.round(hh * s));
-    o.getContext('2d').drawImage(c, x0, y0, w, hh, 0, 0, o.width, o.height);
-    return o.toDataURL('image/png');
-  }
-  async function typedPng(text) {
-    try {
-      await document.fonts.load('500 96px "Caveat"', text);
-    } catch (e) {
-      /* falls back to cursive */
-    }
-    const c = document.createElement('canvas');
-    c.width = 1200;
-    c.height = 260;
-    const ctx = c.getContext('2d');
-    let size = 120;
-    const font = (n) => `500 ${n}px "Caveat", "Segoe Script", "Brush Script MT", cursive`;
-    ctx.font = font(size);
-    while (ctx.measureText(text).width > 1140 && size > 30) ctx.font = font((size -= 6));
-    ctx.fillStyle = INK;
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, 24, 135);
-    return trimPng(c, 600, 160);
-  }
-  /**
-   * Make the paper transparent so only the ink is stamped. The paper's shade is read from the image's
-   * edges (white, cream or a grey photo of a page) and the ink's from its darkest pixels; pixels near
-   * the paper fade out, pixels near the ink stay. An image with too little contrast has no ink.
-   */
-  function knockOutPaper(ctx, w, hgt) {
-    const id = ctx.getImageData(0, 0, w, hgt);
-    const px = id.data;
-    const lum = (i) => 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
-    const edge = [];
-    const take = (x, y) => {
-      const i = (y * w + x) * 4;
-      if (px[i + 3] > 200) edge.push(lum(i));
-    };
-    const sx = Math.max(1, Math.floor(w / 200));
-    const sy = Math.max(1, Math.floor(hgt / 200));
-    for (let x = 0; x < w; x += sx) {
-      take(x, 0);
-      take(x, hgt - 1);
-    }
-    for (let y = 0; y < hgt; y += sy) {
-      take(0, y);
-      take(w - 1, y);
-    }
-    if (edge.length < 8) {
-      // Already transparent around the ink (a PNG cut-out): only clear near-white pixels.
-      for (let i = 0; i < px.length; i += 4) if (lum(i) > 235) px[i + 3] = 0;
-      ctx.putImageData(id, 0, 0);
-      return;
-    }
-    edge.sort((a, b) => a - b);
-    const paper = edge[Math.floor(edge.length / 2)];
-    const hist = new Array(256).fill(0);
-    let n = 0;
-    for (let i = 0; i < px.length; i += 4)
-      if (px[i + 3] > 200) {
-        hist[Math.max(0, Math.min(255, Math.round(lum(i))))]++;
-        n++;
-      }
-    let inkL = 0;
-    for (let k = 0, acc = 0; k < 256; k++) {
-      acc += hist[k];
-      if (acc >= n * 0.005) {
-        inkL = k;
-        break;
-      }
-    }
-    const span = paper - inkL;
-    const clear = paper - span * 0.25;
-    const solid = inkL + span * 0.45;
-    for (let i = 0; i < px.length; i += 4) {
-      if (span < 40) {
-        px[i + 3] = 0;
-        continue;
-      }
-      const L = lum(i);
-      const a = L >= clear ? 0 : L <= solid ? 1 : (clear - L) / (clear - solid);
-      px[i + 3] = Math.round(px[i + 3] * a);
-    }
-    ctx.putImageData(id, 0, 0);
-  }
-  NS.changes['es-upload'] = (el) => {
-    const a = S().ui.esAdopt;
-    const file = el.files && el.files[0];
-    const box = document.getElementById('es-up-preview');
-    const err = document.getElementById('es-adopt-err');
-    if (!a || !file) return;
-    if (!/^image\/(png|jpeg)$/.test(file.type)) {
-      if (err) err.textContent = 'Choose a PNG or JPG image.';
-      return;
-    }
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const s = Math.min(1, 1000 / img.width, 400 / img.height);
-      const c = document.createElement('canvas');
-      c.width = Math.max(1, Math.round(img.width * s));
-      c.height = Math.max(1, Math.round(img.height * s));
-      const ctx = c.getContext('2d');
-      ctx.drawImage(img, 0, 0, c.width, c.height);
-      knockOutPaper(ctx, c.width, c.height);
-      a.upload = trimPng(c, 600, 200);
-      URL.revokeObjectURL(url);
-      if (box) box.innerHTML = a.upload ? `<img src="${a.upload}" alt="Uploaded ${a.kind === 'initials' ? 'initials' : 'signature'}">` : '<span class="hint">No ink found in this image.</span>';
-      if (err) err.textContent = '';
-    };
-    img.onerror = () => {
-      if (err) err.textContent = 'This image could not be read.';
-    };
-    img.src = url;
-  };
   NS.actions['es-adopt'] = async () => {
     const a = S().ui.esAdopt;
     const st = S().ui.esSigning;
@@ -2188,36 +1945,12 @@
     const env = envById(W(), a.envId);
     const s = env && signerById(env, a.sid);
     if (!mayAct(env, s)) return;
-    const err = document.getElementById('es-adopt-err');
-    let sig = null;
-    if (a.tab === 'type') {
-      const text = String((document.getElementById('es-type-text') || {}).value || '').trim();
-      if (!text) {
-        if (err) err.textContent = 'Type your name.';
-        return;
-      }
-      sig = { kind: 'typed', text, png: await typedPng(text) };
-    } else if (a.tab === 'draw') {
-      const c = document.getElementById('es-pad');
-      const png = a.drawn && c ? trimPng(c, 600, 200) : null;
-      if (!png) {
-        if (err) err.textContent = 'Draw your signature first.';
-        return;
-      }
-      sig = { kind: 'drawn', text: '', png };
-    } else {
-      if (!a.upload) {
-        if (err) err.textContent = 'Choose an image first.';
-        return;
-      }
-      sig = { kind: 'uploaded', text: '', png: a.upload };
-    }
-    if (!sig.png) {
-      if (err) err.textContent = 'That signature could not be created. Try another way.';
-      return;
-    }
-    st.adopted[a.kind] = sig;
-    // A new signature replaces the one already shown in this signer's other fields of the same kind.
+    const made = await NS.signature.result();
+    if (!made || S().ui.esAdopt !== a || S().ui.esSigning !== st) return;
+    // Adopted once: with both set, each of this signer's signature and initials fields then takes a single tap, and a
+    // new signature replaces the one already shown in their other fields.
+    st.adopted.signature = made.signature;
+    st.adopted.initials = made.initials;
     st.vals[a.fid] = true;
     S().ui.esAdopt = null;
     U.closeDialog();
