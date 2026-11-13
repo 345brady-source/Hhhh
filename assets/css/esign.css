@@ -9,10 +9,16 @@
  * (--brand, --fg …) wherever an investor signs. The page boxes and the field overlays keep their geometry: only
  * their colors are tokens.
  */
+/* A field box's corner as a real length, so the box's face (a pseudo-element, which measures against its own field) can take it. */
+@property --es-r { syntax: "<length>"; inherits: true; initial-value: 0px; }
 :root {
   /* Paper, the signing ink and the required mark stay the same in light and dark, like a printed page. */
   --es-paper: var(--paper-bg); --es-paper-ink: #0B1F44; --es-paper-ink-2: var(--paper-fg-2); --es-paper-line: var(--paper-line); --es-paper-soft: var(--paper-soft); --es-paper-bad: #B3261E;
   --es-paper-shadow: var(--paper-shadow);
+  /* The edge of a well on paper and the review colour on paper: the same in light and dark, like the page. */
+  --es-paper-edge: color-mix(in srgb, var(--es-paper-ink-2) 60%, var(--es-paper)); --es-paper-warn: color-mix(in oklab, var(--paper-warn) 70%, var(--es-paper-ink));
+  /* One corner for every field box on a page, in step with the page's own width (the page is the size container); a tick box takes a smaller one. */
+  --es-r-cap: var(--r-sm); --es-r-box: clamp(var(--space-3xs), 0.55cqw, var(--es-r-cap)); --es-r-tick: clamp(var(--rule-hair), 0.3cqw, min(var(--space-2xs), var(--es-r-cap)));
   /* A signer's own marks (signature.js): the two inks to sign in, and the six hands a typed signature is written in. */
   --es-ink-blue: #15357E; --es-ink-black: #17191D;
   --es-hand-formal: "Pinyon Script", "Snell Roundhand", "Edwardian Script ITC", cursive;
@@ -29,13 +35,13 @@
 .cs, .mode-console .dlg-es {
   --es-fg: var(--cv-ink); --es-fg-2: var(--cv-ink-2); --es-fg-3: var(--cv-ink-3); --es-line: var(--cv-line); --es-line-strong: var(--cv-line-strong, var(--line-strong)); --es-surface: var(--cv-panel); --es-surface-2: var(--cv-panel-2);
   --es-accent: var(--cv-accent); --es-accent-ink: var(--cv-accent-ink); --es-accent-text: var(--cv-link); --es-focus: var(--cv-focus); --es-good: var(--cv-ok); --es-warn: var(--cv-warn); --es-bad: var(--cv-bad);
-  --es-page-bg: var(--cv-panel-2); --es-font: var(--cv-font, var(--font-body)); --es-mono: var(--cv-mono, var(--font-mono));
+  --es-page-bg: var(--cv-panel-2); --es-font: var(--cv-font, var(--font-body)); --es-mono: var(--cv-mono, var(--font-mono)); --es-r-cap: var(--cv-r-sm);
 }
 /* The investor portal, the invitation wizard and their dialogs: the firm's own theme, whatever surrounds them. */
 .pt, .mode-portal .dlg-es, .mode-standalone .dlg-es {
   --es-fg: var(--fg); --es-fg-2: var(--fg-2); --es-fg-3: var(--fg-3); --es-line: var(--line); --es-line-strong: var(--line-strong); --es-surface: var(--surface); --es-surface-2: var(--surface-2);
   --es-accent: var(--brand); --es-accent-ink: var(--brand-ink); --es-accent-text: var(--brand-text); --es-focus: var(--focus); --es-good: var(--good); --es-warn: var(--warn); --es-bad: var(--bad);
-  --es-page-bg: var(--surface-3); --es-font: var(--font-body); --es-mono: var(--font-mono);
+  --es-page-bg: var(--surface-3); --es-font: var(--font-body); --es-mono: var(--font-mono); --es-r-cap: var(--r-sm);
 }
 
 /* ---------- Shared ---------- */
@@ -54,19 +60,29 @@
 /* The tray is a well; the pages are paper lying in it. */
 .es-doc { display: flex; flex-direction: column; gap: var(--space-xs); align-items: center; min-width: 0; padding: var(--space-md); background: var(--es-page-bg); border-radius: var(--r-inner); }
 .es-page-wrap { width: 100%; max-width: 860px; }
-.es-page { position: relative; width: 100%; background: var(--es-paper); color-scheme: light; box-shadow: var(--es-paper-shadow); user-select: none; -webkit-user-select: none; }
+.es-page { position: relative; container-type: inline-size; width: 100%; background: var(--es-paper); color-scheme: light; box-shadow: var(--es-paper-shadow); user-select: none; -webkit-user-select: none; }
 .es-page > img { display: block; width: 100%; height: 100%; pointer-events: none; }
 .es-page-no { margin: var(--space-xs) 0 var(--space-sm); text-align: center; font-size: var(--text-xs); color: var(--es-fg-3); }
-.es-doc.is-placing .es-page { cursor: crosshair; outline: 2px dashed var(--es-focus); outline-offset: 2px; }
+.es-doc.is-placing .es-page { cursor: crosshair; outline: 2px solid var(--es-focus); outline-offset: 2px; }
+
+/* ---------- The field box: one recipe for every field drawn on a page ---------- */
+/* A box is two layers: a square of paper exactly the field's size, and on it a rounded face with one even edge. The
+   square covers the box's own printed blank, so no line end shows at a round corner; the face carries the state by the
+   colour of its edge (--bx-edge) and its wash (--bx-fill), and the ring of the active field (--bx-ring). Each box keeps
+   its layers to itself, so the face lies on its paper and under its own content. A box is never moved or grown. */
+.es-fld, .es-f-mine, .es-f-other { --es-r: var(--es-r-box); --bx-edge: transparent; --bx-fill: transparent; --bx-ring: var(--sc); isolation: isolate; border: var(--rule-hair) solid transparent; background: var(--es-paper); }
+.es-fld-checkbox, .es-f-check, .es-f-checkbox { --es-r: var(--es-r-tick); }
+.es-fld::before, .es-f-mine::before, .es-f-other::before { content: ""; position: absolute; inset: calc(var(--rule-hair) * -1); z-index: -1; box-sizing: border-box; border: var(--rule-hair) solid var(--bx-edge); border-radius: var(--es-r); background: var(--bx-fill); pointer-events: none; transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
 
 /* Editor fields */
-.es-fld { position: absolute; box-sizing: border-box; container-type: size; display: flex; align-items: center; padding: 0 3px; border: 1.5px solid var(--sc); border-radius: 2px; background: color-mix(in srgb, var(--sc) 16%, transparent); color: var(--es-paper-ink); cursor: move; touch-action: none; overflow: visible; }
-.es-fld:hover { background: color-mix(in srgb, var(--sc) 24%, transparent); }
-.es-fld:active { background: color-mix(in srgb, var(--sc) 30%, transparent); }
-.es-fld:focus { outline: none; }
-.es-fld:focus-visible { outline: 2px solid var(--sc); outline-offset: 2px; z-index: 2; }
-.es-fld.is-sel { box-shadow: 0 0 0 2px var(--es-paper), 0 0 0 4px var(--sc); z-index: 2; }
-.es-fld-label { min-width: 0; max-width: 100%; font-size: 12px; font-size: clamp(7px, 58cqh, 13px); font-weight: 500; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: color-mix(in srgb, var(--sc) 70%, var(--es-paper-ink)); font-family: var(--es-font); pointer-events: none; }
+.es-fld { --bx-edge: var(--sc); --bx-fill: color-mix(in srgb, var(--sc) 12%, var(--es-paper)); position: absolute; box-sizing: border-box; container-type: size; display: flex; align-items: center; padding: 0 3px; color: var(--es-paper-ink); cursor: move; touch-action: none; overflow: visible; }
+.es-fld:hover { --bx-fill: color-mix(in srgb, var(--sc) 17%, var(--es-paper)); }
+.es-fld:active { --bx-fill: color-mix(in srgb, var(--sc) 22%, var(--es-paper)); }
+.es-fld:focus, .es-fld:focus-visible { outline: none; }
+.es-fld:focus-visible { z-index: 2; }
+.es-fld:focus-visible::before { outline: 2px solid var(--bx-ring); outline-offset: 1px; }
+.es-fld.is-sel { z-index: 2; }
+.es-fld-label { min-width: 0; max-width: 100%; font-size: 12px; font-size: clamp(8px, 80cqh, 13px); font-weight: 500; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: color-mix(in srgb, var(--sc) 70%, var(--es-paper-ink)); font-family: var(--es-font); pointer-events: none; }
 .es-fld-label b { color: var(--es-paper-bad); margin-left: 1px; font-weight: 500; }
 /* The resize handle sits outside the corner, so even a tiny field (a checkbox on a phone) can be dragged from its middle. */
 .es-handle { position: absolute; right: -12px; bottom: -12px; width: 10px; height: 10px; border: 2px solid var(--es-paper); border-radius: 2px; background: var(--sc); cursor: nwse-resize; display: none; }
@@ -74,53 +90,41 @@
 .es-fld.is-sel .es-handle, .es-fld:hover .es-handle { display: block; }
 
 /* Signing fields */
-.es-f { position: absolute; box-sizing: border-box; container-type: size; display: flex; align-items: center; margin: 0; padding: 0 3px; border-radius: 2px; color: var(--es-paper-ink); font-family: var(--font-body); overflow: hidden; }
+.es-f { position: absolute; box-sizing: border-box; container-type: size; display: flex; align-items: center; margin: 0; padding: 0 3px; color: var(--es-paper-ink); font-family: var(--font-body); overflow: hidden; }
 .es-f img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; object-position: left center; }
-.es-f span:not(.sr-only) { font-size: 12px; font-size: clamp(6px, 64cqh, 15px); line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.es-f-other { border: 1px dashed color-mix(in srgb, var(--sc) 60%, transparent); background: color-mix(in srgb, var(--sc) 6%, transparent); }
+/* What is typed or filled in shows at the size it will print: 72% of the box's height, the edge counted in. */
+.es-f span:not(.sr-only) { font-size: 12px; font-size: min(calc(72cqh + var(--rule-hair) * 1.44), 15px); line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Someone else's field, not signed yet (the read-only preview): a soft band in that signer's colour, with an even, faint edge. */
+.es-f-other { --bx-edge: color-mix(in srgb, var(--sc) 42%, var(--es-paper)); --bx-fill: color-mix(in srgb, var(--sc) 6%, var(--es-paper)); overflow: visible; }
 .es-f-done { background: transparent; }
 .es-f-done .i { width: 100%; height: 100%; stroke-width: 3; color: var(--es-paper-ink); }
-/* The signer's own fields are centred on where they were placed and never smaller than a 24px target (WCAG 2.5.8). */
-.es-f-mine { left: calc(var(--x) + var(--w) / 2 - max(24px, var(--w)) / 2); top: calc(var(--y) + var(--h) / 2 - max(24px, var(--h)) / 2); width: max(24px, var(--w)); height: max(24px, var(--h)); border: 1.5px solid var(--sc); background: color-mix(in srgb, var(--sc) 18%, var(--es-paper)); scroll-margin-top: calc(var(--es-bar-top, 0px) + 120px); scroll-margin-bottom: 24px; }
-.es-f-mine.is-filled { background: color-mix(in srgb, var(--sc) 6%, var(--es-paper)); border-style: solid; border-color: color-mix(in srgb, var(--sc) 80%, transparent); }
-.es-f-mine:focus { outline: none; }
-.es-f-mine:focus-visible, .es-f-sig:focus, .es-f-check:focus-within { outline: 2px solid var(--sc); outline-offset: 2px; z-index: 2; }
-.es-f-sig { justify-content: flex-start; cursor: pointer; font: inherit; text-align: left; transition: background-color var(--dur-micro) var(--ease-out); }
-/* The field still to be signed is the brightest thing on the page; it holds still. */
-.es-f-sig:not(.is-filled) { background: color-mix(in srgb, var(--sc) 22%, var(--es-paper)); }
-.es-f-sig:not(.is-filled):hover { background: color-mix(in srgb, var(--sc) 30%, var(--es-paper)); }
-.es-f-sig.is-filled:hover { background: color-mix(in srgb, var(--sc) 12%, var(--es-paper)); }
-.es-f-sig:active { background: color-mix(in srgb, var(--sc) 36%, var(--es-paper)); }
+/* The signer's own fields: the box is the field's own rectangle, to the pixel. Where a tap or a click lands is a separate
+   layer under the fields (.sf-hit, laid by signflow.js), never a larger box. */
+.es-f-mine { --bx-edge: var(--es-paper-edge); --bx-fill: var(--es-paper); left: var(--x); top: var(--y); width: var(--w); height: var(--h); scroll-margin-top: calc(var(--es-bar-top, 0px) + 120px); scroll-margin-bottom: 24px; }
+.es-f-mine:focus, .es-f-mine:focus-visible, .es-f-sig:focus, .es-f-check:focus-within, .es-f-text:focus-within { outline: none; }
+.es-f-mine:focus-visible, .es-f-sig:focus, .es-f-check:focus-within, .es-f-text:focus-within { z-index: 2; }
+/* Active: one ring, close to the box, drawn by the face. */
+.es-f-mine:focus-visible::before, .es-f-sig:focus::before, .es-f-check:focus-within::before, .es-f-text:focus-within::before { outline: 2px solid var(--bx-ring); outline-offset: 1px; }
+.es-f-sig { justify-content: flex-start; cursor: pointer; font: inherit; text-align: left; }
 .es-f-sig:disabled { cursor: not-allowed; opacity: 0.55; }
 .es-f-sig.is-filled:disabled { cursor: not-allowed; opacity: 1; }
 .es-f-cue { font-weight: 500; color: color-mix(in srgb, var(--sc) 75%, var(--es-paper-ink)); }
-.es-f-auto { background: color-mix(in srgb, var(--sc) 6%, var(--es-paper)); border: 1px solid color-mix(in srgb, var(--sc) 40%, transparent); }
-/* The date (MM/DD/YYYY) also scales with the box's width, so it is not cut off when a small field is enlarged for touch. */
-.es-f-auto span:not(.sr-only) { font-size: clamp(6px, min(64cqh, 17cqw), 15px); font-variant-numeric: tabular-nums; }
+/* The date (MM/DD/YYYY) also scales with the box's width, so it is never cut off in a narrow blank. */
+.es-f-auto span:not(.sr-only) { font-size: min(calc(72cqh + var(--rule-hair) * 1.44), 17cqw, 15px); font-variant-numeric: tabular-nums; }
 /* Text and name: the box is the size container, so the typed text scales with the field. */
 .es-f-text { padding: 0; cursor: text; }
-/* The input inside the border is the tap target: at least 24px tall inside the 1.5px border (WCAG 2.5.8). */
-.es-f-mine.es-f-text { top: calc(var(--y) + var(--h) / 2 - max(27px, var(--h)) / 2); height: max(27px, var(--h)); }
-.es-f-input { display: block; box-sizing: border-box; width: 100%; height: 100%; min-width: 0; margin: 0; padding: 0 3px; border: 0; border-radius: 0; background: transparent; font-family: inherit; font-size: 12px; font-size: clamp(6px, 62cqh, 15px); line-height: 1; color: var(--es-paper-ink); appearance: none; -webkit-appearance: none; }
+.es-f-input { display: block; box-sizing: border-box; width: 100%; height: 100%; min-width: 0; margin: 0; padding: 0 3px; border: 0; border-radius: 0; background: transparent; font-family: inherit; font-size: 12px; font-size: min(calc(72cqh + var(--rule-hair) * 1.44), 15px); line-height: 1; color: var(--es-paper-ink); appearance: none; -webkit-appearance: none; }
 /* The box around the input carries the ring, so the input inside it does not draw a second one. */
 .es-f-input:focus, .es-f-input:focus-visible { outline: none; }
 .es-f-input:disabled { cursor: not-allowed; opacity: 0.55; }
 .es-f-input::placeholder { color: color-mix(in srgb, var(--sc) 55%, var(--es-paper-ink-2)); opacity: 1; }
-.es-f-text:hover { background: color-mix(in srgb, var(--sc) 24%, var(--es-paper)); }
-.es-f-text.is-filled:hover { background: color-mix(in srgb, var(--sc) 10%, var(--es-paper)); }
-.es-f-text:focus-within { outline: 2px solid var(--sc); outline-offset: 2px; z-index: 2; }
-.es-f-text.is-locked, .es-f-text.is-locked:hover { background: var(--es-paper-soft); border-style: dotted; cursor: default; }
-.es-f-text.is-over { border-color: var(--es-paper-bad); border-style: solid; box-shadow: 0 0 0 2px var(--es-paper), 0 0 0 3px var(--es-paper-bad); }
+.es-f-text.is-locked, .es-f-text.is-locked:hover { cursor: default; }
+/* Too long for its line: the edge and the ring in the paper's red, and a warning mark in place of the done tick. */
+.es-f-text.is-over { --bx-edge: var(--es-paper-bad); --bx-ring: var(--es-paper-bad); }
 .es-f-check { justify-content: center; padding: 0; cursor: pointer; overflow: visible; }
-.es-f-check:hover { background: color-mix(in srgb, var(--sc) 26%, var(--es-paper)); }
-.es-f-check input { flex: none; width: max(24px, 90%); height: max(24px, 90%); margin: 0; accent-color: var(--es-paper-ink); cursor: pointer; color-scheme: light; }
+.es-f-check input { flex: none; width: 100%; height: 100%; margin: 0; accent-color: var(--es-paper-ink); cursor: pointer; color-scheme: light; }
 .es-f-check input:focus-visible { outline: none; }
 .es-f-check input:disabled { cursor: not-allowed; opacity: 0.55; }
-.es-f-check.is-req:not(.is-filled) { border-color: var(--es-paper-bad); }
-/* The checkbox's label, shown beside it on the page (left of the box when it sits near the right edge). */
-.es-f span.es-f-tag { position: absolute; top: 50%; left: calc(100% + 5px); transform: translateY(-50%); max-width: min(240px, 46vw); padding: var(--space-3xs) var(--space-xs); border: 1px solid color-mix(in srgb, var(--sc) 50%, var(--es-paper)); border-radius: var(--r-pill); background: var(--es-paper); color: var(--es-paper-ink); font-size: 12px; font-weight: 500; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; z-index: 1; }
-.es-f span.es-f-tag.es-f-tag-l { left: auto; right: calc(100% + 5px); }
-.es-f-tag b { color: var(--es-paper-bad); margin-left: var(--space-3xs); font-weight: 500; }
 .es-f-blank { border: 0; background: transparent; }
 /* Where a document is signed, the signer's own fields take the firm's color as printed on paper and everyone
    else's the paper's second ink; the role colors stay in the console's field editor, where they tell signers
@@ -254,9 +258,12 @@
 .es-waiting { margin-bottom: 28px; }
 .es-waiting td .btn .i { width: 16px; height: 16px; }
 
-/* Phones (and touch screens): 16px text so iOS does not zoom into a field when it gets focus. */
-@media (max-width: 640px), (pointer: coarse) {
-  .es-f-input { font-size: 16px; }
+/* A phone types a blank in the tray above the keyboard. Touch screens wider than a phone type in the box itself: at 16px
+   while typing, where the box has the room, so the browser does not zoom in. */
+@media (pointer: coarse) and (min-width: 641px) {
+  @container (min-height: 16px) {
+    .es-doc-sign .es-f-mine .es-f-input:focus { font-size: 16px; }
+  }
 }
 /* Single-column console: short E-sign pages should not stretch the menu row to fill the screen. */
 @media (max-width: 900px) {
@@ -284,7 +291,7 @@
   .es-banner .btn { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .es-f-sig, .es-title-link, .es-signer, .es-tool, .es-back-link, .es-tab { transition: none; }
+  .es-fld::before, .es-f-mine::before, .es-f-other::before, .es-title-link, .es-signer, .es-tool, .es-back-link, .es-tab { transition: none; }
 }
 
 /* ---------- Signed record (record.js): the record of a completed agreement in the console, and its verify control ---------- */
@@ -375,36 +382,58 @@
 .es-doc-sign .es-page-wrap { flex: none; width: calc(100% * var(--es-zoom, 1)); max-width: calc(860px * var(--es-zoom, 1)); margin-inline: auto; }
 .es-doc-sign.is-zoomed { align-items: flex-start; overflow-x: auto; overscroll-behavior-x: contain; }
 
-/* The signer's own fields. Required and still to do: a solid edge and a wash of the firm's color. Optional: a dashed edge.
-   Done: ink on the page inside a faint edge. Filled in for the signer: plain, with a lock. */
-.es-doc-sign .es-f-mine { overflow: visible; transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
-.es-doc-sign .es-f-mine.is-req:not(.is-filled) { border: 1.5px solid var(--sc); background: color-mix(in srgb, var(--sc) 14%, var(--es-paper)); }
-.es-doc-sign .es-f-mine.is-opt:not(.is-filled) { border: 1.5px dashed color-mix(in srgb, var(--sc) 55%, transparent); background: color-mix(in srgb, var(--sc) 5%, var(--es-paper)); }
-.es-doc-sign .es-f-mine.is-req:not(.is-filled):hover { background: color-mix(in srgb, var(--sc) 22%, var(--es-paper)); }
-.es-doc-sign .es-f-mine.is-opt:not(.is-filled):hover { background: color-mix(in srgb, var(--sc) 12%, var(--es-paper)); }
-.es-doc-sign .es-f-mine.is-filled { border: 1px solid color-mix(in srgb, var(--sc) 32%, transparent); background: color-mix(in srgb, var(--sc) 4%, transparent); }
-.es-doc-sign .es-f-mine.is-filled:hover { background: color-mix(in srgb, var(--sc) 9%, transparent); }
-.es-doc-sign .es-f-mine.is-given, .es-doc-sign .es-f-mine.is-given:hover { border: 0; background: color-mix(in srgb, var(--es-paper-soft) 70%, transparent); cursor: default; }
-.es-doc-sign .es-f-mine.is-over { border-color: var(--es-paper-bad); }
-/* The field the signer is on: a ring, and a pointer in the page's margin level with it. */
-.es-doc-sign .es-f-mine.is-current { outline: 2px solid var(--sc); outline-offset: 2px; z-index: 3; }
+/* The signer's own fields. What is still to do is a well, like the portal's own inputs: required takes the firm's colour
+   on its edge and a quiet wash of it, optional a plain edge. What is done is ink on the page inside a faint edge.
+   Filled in for the signer: a soft band, with a lock. Every edge is one solid hairline; states differ by colour and wash. */
+.es-doc-sign .es-f-mine { overflow: visible; }
+.es-doc-sign .sf-hit { --es-hit: 24px; position: absolute; left: calc(var(--x) + var(--w) / 2 - max(var(--es-hit), var(--w)) / 2); top: calc(var(--y) + var(--h) / 2 - max(var(--es-hit), var(--h)) / 2); width: max(var(--es-hit), var(--w)); height: max(var(--es-hit), var(--h)); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.es-doc-sign .es-f-mine.is-req:not(.is-filled) { --bx-edge: var(--sc); --bx-fill: color-mix(in srgb, var(--sc) 9%, var(--es-paper)); }
+.es-doc-sign .es-f-mine.is-req:not(.is-filled):hover { --bx-fill: color-mix(in srgb, var(--sc) 15%, var(--es-paper)); }
+.es-doc-sign .es-f-mine.is-opt:not(.is-filled):hover { --bx-fill: color-mix(in srgb, var(--sc) 7%, var(--es-paper)); }
+/* A signature still to make is the brightest thing on the page; it holds still. */
+.es-doc-sign .es-f-sig.is-req:not(.is-filled) { --bx-fill: color-mix(in srgb, var(--sc) 14%, var(--es-paper)); }
+.es-doc-sign .es-f-sig.is-req:not(.is-filled):hover { --bx-fill: color-mix(in srgb, var(--sc) 21%, var(--es-paper)); }
+.es-doc-sign .es-f-sig:not(.is-filled):active { --bx-fill: color-mix(in srgb, var(--sc) 27%, var(--es-paper)); }
+.es-doc-sign .es-f-mine.is-filled { --bx-edge: color-mix(in srgb, var(--sc) 30%, var(--es-paper)); }
+.es-doc-sign .es-f-mine.is-filled:hover { --bx-fill: color-mix(in srgb, var(--sc) 5%, var(--es-paper)); }
+.es-doc-sign .es-f-mine.is-given, .es-doc-sign .es-f-mine.is-given:hover { --bx-edge: var(--es-paper-line); --bx-fill: var(--es-paper-soft); cursor: default; }
+.es-doc-sign .es-f-mine.is-over, .es-doc-sign .es-f-mine.is-over:hover { --bx-edge: var(--es-paper-bad); --bx-ring: var(--es-paper-bad); }
+/* The field the signer is on: the ring, and a pointer in the page's margin level with it where the margin is clear. */
+.es-doc-sign .es-f-mine.is-current { z-index: 3; }
+.es-doc-sign .es-f-mine.is-current::before { outline: 2px solid var(--bx-ring); outline-offset: 1px; }
 .es-doc-sign .sf-flag { position: absolute; left: var(--space-2xs); z-index: 4; display: inline-flex; align-items: center; box-sizing: border-box; min-width: 20px; height: 24px; padding: 0 var(--space-md) 0 var(--space-xs); border-radius: var(--r-sm) 0 0 var(--r-sm); background: var(--paper-brand-fill); color: var(--paper-brand-ink); font-family: var(--font-body); font-size: var(--text-xs); font-weight: 500; line-height: 1; white-space: nowrap; transform: translateY(-50%); clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%); pointer-events: none; }
 .es-doc-sign .sf-flag:empty { min-width: 0; width: 16px; height: 16px; padding: 0; border-radius: 4px 0 0 4px; clip-path: polygon(0 0, 50% 0, 100% 50%, 50% 100%, 0 100%); }
-/* The mark on the corner: required, or done. A value filled in for the signer carries a small lock inside its box. */
-.es-doc-sign .sf-mark { position: absolute; top: -8px; right: -8px; z-index: 2; display: grid; place-items: center; width: 16px; height: 16px; border-radius: var(--r-pill); pointer-events: none; }
-.es-doc-sign .sf-mark .i { width: 10px; height: 10px; stroke-width: 3; }
-.es-doc-sign .sf-mark[data-k="req"] { background: var(--es-paper); color: var(--es-paper-bad); box-shadow: 0 0 0 1px color-mix(in srgb, var(--es-paper-bad) 50%, var(--es-paper)); }
-.es-doc-sign .sf-mark[data-k="done"] { background: var(--es-paper-ink); color: var(--es-paper); }
-.es-doc-sign .sf-mark[data-k="lock"] { top: 50%; right: var(--space-2xs); width: 12px; height: 12px; color: var(--es-paper-ink-2); opacity: 0.7; transform: translateY(-50%); }
-.es-doc-sign .sf-mark[data-k="lock"] .i { width: 12px; height: 12px; stroke-width: 2; }
-/* The guide names each field (the bar says which one the signer is on), so a checkbox's label does not cover the words printed beside it. */
-.es-doc-sign .es-f-tag { display: none; }
-/* A checkbox is the box itself: the tick is drawn in ink when it is checked. */
-.es-doc-sign .es-f-check.is-req:not(.is-filled) { border-color: var(--sc); }
-.es-doc-sign .es-f-check input { appearance: none; -webkit-appearance: none; width: 100%; height: 100%; margin: 0; border: 0; border-radius: 0; background: transparent; }
-.es-doc-sign .es-f-check.is-filled::before { content: ""; position: absolute; left: 50%; top: 46%; width: 28%; height: 56%; border: solid var(--es-paper-ink); border-width: 0 2px 2px 0; transform: translate(-50%, -50%) rotate(45deg); pointer-events: none; }
-/* The firm's signature lines on the investor's copy, and the investor's on the firm's: a quiet dashed outline. */
-.es-doc-sign .es-f-other { border: 1px dashed var(--es-paper-line); background: color-mix(in srgb, var(--es-paper-soft) 55%, transparent); }
+/* The mark of a field's state sits inside its own box, at its right end: required, done, too long, or (a value filled in
+   for the signer) a lock. A box too small for one carries its state by its edge and wash alone. */
+.es-doc-sign .sf-mark { position: absolute; top: 50%; right: var(--space-2xs); z-index: 2; display: grid; place-items: center; width: 12px; height: 12px; transform: translateY(-50%); pointer-events: none; }
+.es-doc-sign .sf-mark .i { width: 12px; height: 12px; stroke-width: 2.5; }
+.es-doc-sign .sf-mark[data-k="req"], .es-doc-sign .sf-mark[data-k="over"] { color: var(--es-paper-bad); }
+.es-doc-sign .sf-mark[data-k="done"] { color: color-mix(in srgb, var(--sc) 70%, var(--es-paper-ink)); }
+.es-doc-sign .sf-mark[data-k="lock"] { color: var(--es-paper-ink-2); opacity: 0.7; }
+/* The entry keeps clear of the mark: the mark's 12px, its 4px from the edge, and 4px between them. */
+.es-doc-sign .es-f-mine .es-f-input { padding-right: calc(var(--space-md) + var(--space-2xs)); }
+.es-doc-sign .es-f-auto span:not(.sr-only) { margin-right: calc(var(--space-md) + var(--space-2xs)); }
+@container (max-height: 13px) {
+  .es-doc-sign .sf-mark { display: none; }
+  .es-doc-sign .es-f-mine .es-f-input { padding-right: 0; }
+  .es-doc-sign .es-f-auto span:not(.sr-only) { margin-right: 0; }
+}
+@container (max-width: 47px) {
+  .es-doc-sign .sf-mark { display: none; }
+  .es-doc-sign .es-f-mine .es-f-input { padding-right: 0; }
+}
+@container (max-width: 72px) {
+  .es-doc-sign .es-f-auto .sf-mark { display: none; }
+  .es-doc-sign .es-f-auto span:not(.sr-only) { margin-right: 0; }
+}
+/* A tick box is the box itself: the tick is drawn in ink on it when it is ticked. It carries no mark and no tag, so
+   nothing lies on the sentence printed beside it (the guide names each field). */
+.es-doc-sign .es-f-check input { appearance: none; -webkit-appearance: none; border: 0; border-radius: 0; background: transparent; }
+.es-doc-sign .es-f-check.is-filled { --bx-edge: var(--es-paper-edge); }
+.es-doc-sign .es-f-check.is-filled::after { content: ""; position: absolute; left: 50%; top: 46%; width: 28%; height: 56%; border: solid var(--es-paper-ink); border-width: 0 min(13cqh, 2px) min(13cqh, 2px) 0; transform: translate(-50%, -50%) rotate(45deg); pointer-events: none; }
+.es-doc-sign .es-f-check .sf-mark { display: none; }
+/* The firm's signature lines on the investor's copy, and the investor's on the firm's: a quiet band with an even, faint edge. */
+.es-doc-sign .es-f-other { --bx-edge: var(--es-paper-line); --bx-fill: color-mix(in srgb, var(--es-paper-soft) 60%, var(--es-paper)); }
 
 @media (max-width: 640px) {
   /* The guide sits at the bottom of the screen, within reach of a thumb, and above the keyboard while a blank is typed. */
@@ -420,23 +449,18 @@
   .es-sign-row .es-decline { margin-left: calc(var(--space-md) * -1); }
   /* Inside the wizard the tray runs to the panel's edges, so the page is as wide as the phone allows. */
   .es-sign-flow .es-doc-sign { margin-inline: calc(var(--space-md) * -1); border-radius: 0; }
-  /* Fields keep their true place and size on the small page (with a floor that keeps them visible). Each takes a 44px touch
-     area around it (signflow.js lays these under the fields, so close neighbours never cover one another). */
-  .es-doc-sign .es-f-mine, .es-doc-sign .es-f-mine.es-f-text { --m: 16px; left: calc(var(--x) + var(--w) / 2 - max(var(--m), var(--w)) / 2); top: calc(var(--y) + var(--h) / 2 - max(var(--m), var(--h)) / 2); width: max(var(--m), var(--w)); height: max(var(--m), var(--h)); scroll-margin-top: calc(var(--es-bar-top, 0px) + 96px); }
-  .es-doc-sign .es-f-mine.es-f-text, .es-doc-sign .es-f-mine.es-f-auto { --m: 12px; }
-  .es-doc-sign .es-f-mine.es-f-check { --m: 14px; }
-  .es-doc-sign .sf-hit { position: absolute; left: calc(var(--x) + var(--w) / 2 - max(44px, var(--w)) / 2); top: calc(var(--y) + var(--h) / 2 - max(44px, var(--h)) / 2); width: max(44px, var(--w)); height: max(44px, var(--h)); cursor: pointer; -webkit-tap-highlight-color: transparent; }
-  .es-doc-sign .es-f-input { font-size: clamp(6px, 64cqh, 15px); cursor: pointer; }
-  .es-doc-sign .sf-mark { top: -6px; right: -6px; width: 12px; height: 12px; }
-  .es-doc-sign .sf-mark .i { width: 8px; height: 8px; }
-  .es-doc-sign .sf-mark[data-k="lock"] { display: none; }
+  /* Fields keep their true place and size on the small page. Each takes a 44px touch area around it (signflow.js lays
+     these under the fields, so close neighbours never cover one another). */
+  .es-doc-sign .es-f-mine { scroll-margin-top: calc(var(--es-bar-top, 0px) + 96px); }
+  .es-doc-sign .sf-hit { --es-hit: 44px; }
+  .es-doc-sign .es-f-input { cursor: pointer; }
   .es-doc-sign .sf-flag { left: var(--space-3xs); height: 20px; }
 }
 @media (max-width: 360px) {
   .sf-ring { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .sf-ring-fill, .sf-ring > .i, .sf-zoom-btn, .es-doc-sign .es-f-mine { transition: none; }
+  .sf-ring-fill, .sf-ring > .i, .sf-zoom-btn { transition: none; }
 }
 
 /* ==================================================================================================================
@@ -662,32 +686,38 @@ input.fe-well { width: 44px; padding: 0 var(--space-2xs); text-align: center; }
 .fe .es-page { transition: box-shadow var(--dur-micro) var(--ease-out); }
 .fe .es-page.is-target { box-shadow: 0 0 0 2px var(--cv-focus), var(--es-paper-shadow); }
 
-/* A field on the page: a wash and an edge in its signer's color, the mark of its type, its label. Optional fields are dashed. */
-.fe .es-fld { gap: var(--space-2xs); padding: 0 var(--space-2xs); border: 1px solid color-mix(in srgb, var(--sc) 80%, transparent); border-radius: 3px; background: color-mix(in srgb, var(--sc) 13%, transparent); cursor: grab; transition: background-color var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out); }
-.fe .es-fld.is-opt { border-style: dashed; }
-.fe .es-fld:hover { background: color-mix(in srgb, var(--sc) 21%, transparent); }
-.fe .es-fld:active { background: color-mix(in srgb, var(--sc) 25%, transparent); }
-.fe .es-fld:focus-visible { outline: 2px solid var(--sc); outline-offset: 2px; z-index: 2; }
+/* A field on the page: a wash and an even edge in its signer's color, the mark of its type, its label. Required is the
+   stronger edge, wash and mark (and the asterisk after its name); optional and the date of signing are quieter. */
+.fe .es-fld { gap: var(--space-2xs); padding: 0 var(--space-2xs); cursor: grab; }
+.fe .es-fld.is-opt, .fe .es-fld.is-auto { --bx-edge: color-mix(in srgb, var(--sc) 80%, var(--es-paper)); --bx-fill: color-mix(in srgb, var(--sc) 6%, var(--es-paper)); }
+.fe .es-fld.is-opt:hover, .fe .es-fld.is-auto:hover { --bx-fill: color-mix(in srgb, var(--sc) 17%, var(--es-paper)); }
+.fe .es-fld.is-opt:active, .fe .es-fld.is-auto:active { --bx-fill: color-mix(in srgb, var(--sc) 22%, var(--es-paper)); }
 .fe .es-fld-glyph { display: grid; place-items: center; flex: none; height: min(14px, 70cqh); aspect-ratio: 1; color: color-mix(in srgb, var(--sc) 72%, var(--es-paper-ink)); pointer-events: none; }
 .fe .es-fld-glyph .i { width: 100%; height: 100%; stroke-width: 2; }
 .fe .es-fld-checkbox { justify-content: center; padding: 0; }
-.fe .es-fld-checkbox .es-fld-label, .fe .es-fld-checkbox .es-fld-glyph rect { display: none; }
+.fe .es-fld-checkbox .es-fld-label, .fe .es-fld-checkbox .es-fld-flag, .fe .es-fld-checkbox .es-fld-glyph rect { display: none; }
 .fe .es-fld-checkbox .es-fld-glyph { height: 84cqh; }
 .fe .es-fld-checkbox .es-fld-glyph .i { stroke-width: 3; }
+.fe .es-fld-checkbox.is-opt .es-fld-glyph { color: color-mix(in srgb, var(--sc) 80%, var(--es-paper)); }
 @container (max-width: 56px) {
   .fe .es-fld { justify-content: center; }
   .fe .es-fld-label { display: none; }
 }
-/* Selected: a firm frame in the signer's color, and a handle on every corner and side. */
-.fe .es-fld.is-sel { z-index: 3; border-color: var(--sc); background: color-mix(in srgb, var(--sc) 17%, transparent); box-shadow: 0 0 0 1px var(--sc), 0 0 0 4px color-mix(in srgb, var(--sc) 18%, transparent); }
-.fe .es-fld.is-sel:focus-visible { outline: none; }
+/* A box too low for words is a plain bar: its name is in the list, the properties and the pointer's hint. */
+@container (max-height: 8px) {
+  .fe .es-fld:not(.es-fld-checkbox) .es-fld-label, .fe .es-fld:not(.es-fld-checkbox) .es-fld-glyph { display: none; }
+}
+/* Selected: a firm frame in the signer's color with a soft band round it, and round handles on its edge. */
+.fe .es-fld.is-sel { --bx-edge: var(--sc); --bx-fill: color-mix(in srgb, var(--sc) 15%, var(--es-paper)); z-index: 3; }
+.fe .es-fld.is-sel::before { box-shadow: 0 0 0 1px var(--bx-ring), 0 0 0 3px color-mix(in srgb, var(--bx-ring) 18%, transparent); }
+.fe .es-fld.is-sel:focus-visible::before { outline: none; }
 /* A handle is its hit area, lying mostly outside the field so the field itself stays free to drag; the square is drawn on the edge. */
 .fe .es-fld { --out: 8px; --in-x: 3px; --in-y: 3px; }
 .fe .es-fld.is-thin { --in-y: 1px; }
 .fe .es-fld.is-narrow { --in-x: 1px; }
 .fe .es-handle { position: absolute; inset: auto; z-index: 3; display: block; width: auto; height: auto; border: 0; border-radius: 0; background: none; touch-action: none; }
 .fe .es-handle::after { content: none; }
-.fe .es-handle::before { content: ""; position: absolute; box-sizing: border-box; width: 9px; height: 9px; border: 1.5px solid var(--sc); border-radius: 2px; background: var(--es-paper); }
+.fe .es-handle::before { content: ""; position: absolute; box-sizing: border-box; width: 9px; height: 9px; border: var(--rule-hair) solid var(--sc); border-radius: var(--cv-r-pill); background: var(--es-paper); }
 .fe .es-handle[data-h="n"], .fe .es-handle[data-h="s"] { left: 0; right: 0; height: calc(var(--out) + var(--in-y)); cursor: ns-resize; }
 .fe .es-handle[data-h="w"], .fe .es-handle[data-h="e"] { top: 0; bottom: 0; width: calc(var(--out) + var(--in-x)); cursor: ew-resize; }
 .fe .es-handle[data-h="nw"], .fe .es-handle[data-h="ne"], .fe .es-handle[data-h="sw"], .fe .es-handle[data-h="se"] { z-index: 4; width: calc(var(--out) + var(--in-x)); height: calc(var(--out) + var(--in-y)); }
@@ -703,7 +733,9 @@ input.fe-well { width: 44px; padding: 0 var(--space-2xs); text-align: center; }
 .fe .es-handle[data-h="s"]::before, .fe .es-handle[data-h="sw"]::before, .fe .es-handle[data-h="se"]::before { bottom: calc(var(--out) - 6px); }
 .fe .es-handle[data-h="w"]::before, .fe .es-handle[data-h="nw"]::before, .fe .es-handle[data-h="sw"]::before { left: calc(var(--out) - 6px); }
 .fe .es-handle[data-h="e"]::before, .fe .es-handle[data-h="ne"]::before, .fe .es-handle[data-h="se"]::before { right: calc(var(--out) - 6px); }
-/* A low or narrow field shows the squares on its sides only (its corners still resize it); a very small one keeps one corner, drawn clear of it. */
+/* A low field shows its handles on its two ends only, clear of the boxes above and below, and a narrow one on its top and
+   bottom (every side and corner still resizes it); a very small one keeps one corner, drawn clear of it. */
+.fe .es-fld.is-thin .es-handle[data-h="n"]::before, .fe .es-fld.is-thin .es-handle[data-h="s"]::before,
 .fe .es-fld.is-thin .es-handle[data-h="nw"]::before, .fe .es-fld.is-thin .es-handle[data-h="ne"]::before, .fe .es-fld.is-thin .es-handle[data-h="sw"]::before, .fe .es-fld.is-thin .es-handle[data-h="se"]::before,
 .fe .es-fld.is-narrow .es-handle[data-h="nw"]::before, .fe .es-fld.is-narrow .es-handle[data-h="ne"]::before, .fe .es-fld.is-narrow .es-handle[data-h="sw"]::before, .fe .es-fld.is-narrow .es-handle[data-h="se"]::before { display: none; }
 .fe .es-fld.is-tiny .es-handle:not([data-h="se"]) { display: none; }
@@ -718,11 +750,15 @@ input.fe-well { width: 44px; padding: 0 var(--space-2xs); text-align: center; }
 
 /* While it is dragged a field is carried in a layer over the whole document, so no page can clip it. */
 .fe-carry { position: fixed; inset: 0; z-index: var(--z-sticky); overflow: hidden; pointer-events: none; }
-.fe-carry .es-fld { box-shadow: 0 0 0 1px var(--sc), var(--es-paper-shadow); pointer-events: none; transition: none; will-change: transform; }
+/* Carried, it is see-through, so the page under it can be seen while it is placed; it keeps the corner it had on its page
+   (fieldeditor.js sets --es-r on it when it lifts it, since the layer has no page to measure). */
+.fe-carry .es-fld { background: none; pointer-events: none; will-change: transform; }
+.fe-carry .es-fld::before { background: color-mix(in srgb, var(--sc) 14%, transparent); box-shadow: 0 0 0 1px var(--sc), var(--es-paper-shadow); transition: none; }
 .fe-carry .es-fld .es-handle { display: none; }
-.fe-carry .es-fld.is-ghost { border-style: dashed; box-shadow: none; opacity: 0.85; }
+.fe-carry .es-fld.is-ghost { opacity: 0.85; }
+.fe-carry .es-fld.is-ghost::before { box-shadow: var(--es-paper-shadow); }
 .fe-carry .es-fld.is-off { opacity: 0.5; }
-.fe-origin { position: absolute; box-sizing: border-box; border: 1px dashed color-mix(in srgb, var(--sc) 50%, transparent); border-radius: 3px; pointer-events: none; }
+.fe-origin { --es-r: var(--es-r-box); position: absolute; box-sizing: border-box; border: var(--rule-hair) solid color-mix(in srgb, var(--sc) 30%, var(--es-paper)); border-radius: var(--es-r); background: color-mix(in srgb, var(--sc) 4%, transparent); pointer-events: none; }
 /* Guide lines, shown while an edge or centre is snapped to a neighbour or to a line of text. */
 .fe-guides { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
 .fe-guide { position: absolute; background: var(--es-guide); }
@@ -809,20 +845,27 @@ input.fe-well { width: 44px; padding: 0 var(--space-2xs); text-align: center; }
   .fe-tools-props, .es-props-close { display: inline-flex; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .fe .es-fld, .fe .es-page, .fe-well { transition: none; }
+  .fe .es-page, .fe-well { transition: none; }
 }
 /* =====================================================================
  * PLACEMENT REVIEW (field editor): fields the portal placed but was unsure about, and the list that names them.
  * Everything for the review marks is in this block; it carries over to a rewritten editor as it stands.
- * The marks sit on the page image, which is white paper in both themes: their colours are the warning colour
- * mixed with the paper's own ink and ground, so they read the same in light and dark.
+ * The marks sit on the page image, which is white paper in both themes: their colour is the paper's own review colour
+ * (--es-paper-warn), so they read the same in light and dark. A marked field is the same box as any other, in that
+ * colour; the word "Review" sits inside the box at its right end where it fits, and is not drawn where it does not
+ * (a tick box shows a warning mark instead): nothing is drawn outside the box, over the agreement's words.
  * ===================================================================== */
-.es-fld.is-flag, .es-fld-flag { --es-paper-warn: color-mix(in oklab, var(--es-warn) 70%, var(--es-paper-ink)); --es-paper-warn-soft: color-mix(in oklab, var(--es-warn) 26%, var(--es-paper)); }
-.es-fld.is-flag { border-style: dashed; border-color: var(--es-paper-warn); background: color-mix(in oklab, var(--es-warn) 16%, transparent); }
-.es-fld.is-flag:hover { background: color-mix(in oklab, var(--es-warn) 24%, transparent); }
-.es-fld.is-flag.is-sel { box-shadow: 0 0 0 2px var(--es-paper), 0 0 0 4px var(--es-paper-warn); }
-.es-fld.is-flag:focus-visible { outline-color: var(--es-paper-warn); }
-.es-fld-flag { position: absolute; left: calc(var(--space-3xs) * -1); bottom: calc(100% + var(--space-3xs)); padding: 0 var(--space-xs); border: 1px solid var(--es-paper-warn); border-radius: var(--r-pill); background: var(--es-paper-warn-soft); color: var(--es-paper-ink); font-family: var(--es-font); font-size: var(--text-xs); font-weight: 500; line-height: 1.5; white-space: nowrap; pointer-events: none; }
+.fe .es-fld.is-flag, .fe .es-fld.is-flag.is-sel { --bx-edge: var(--es-paper-warn); --bx-fill: color-mix(in oklab, var(--paper-warn) 13%, var(--es-paper)); --bx-ring: var(--es-paper-warn); }
+.fe .es-fld.is-flag:hover { --bx-fill: color-mix(in oklab, var(--paper-warn) 20%, var(--es-paper)); }
+.fe .es-fld.is-flag:active { --bx-fill: color-mix(in oklab, var(--paper-warn) 26%, var(--es-paper)); }
+.fe .es-fld.is-flag .es-fld-glyph, .fe .es-fld.is-flag .es-fld-label { color: color-mix(in oklab, var(--es-paper-warn) 70%, var(--es-paper-ink)); }
+.es-fld-flag { flex: none; margin-left: auto; padding: 0 0.5em; border-radius: var(--cv-r-pill); background: var(--es-paper-warn); color: var(--es-paper); font-family: var(--es-font); font-size: clamp(8px, 70cqh, 12px); font-weight: 500; line-height: 1.25; white-space: nowrap; pointer-events: none; }
+@container (max-width: 88px) {
+  .es-fld-flag { display: none; }
+}
+@container (max-height: 11px) {
+  .es-fld-flag { display: none; }
+}
 .es-review { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
 .es-review li + li { border-top: 1px solid var(--cv-line-soft); }
 .es-review button { display: flex; flex-direction: column; gap: var(--space-3xs); width: 100%; min-height: 44px; padding: var(--space-xs) var(--space-2xs); border: 0; border-radius: var(--r-inner); background: transparent; color: var(--cv-ink); font-family: var(--cv-font); font-size: var(--text-sm); text-align: left; cursor: pointer; }

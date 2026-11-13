@@ -96,7 +96,7 @@
   }
   /** The control of one of the signer's fields on the page (a button, a text input or a checkbox). */
   const controlOf = (id) => document.querySelector(`.es-doc-sign [data-fid="${CSS.escape(id)}"]`);
-  const MARKS = { req: svg('<path d="M12 4.5v15M5.5 8.25l13 7.5M18.5 8.25l-13 7.5"/>'), done: icon('check'), lock: icon('lock') };
+  const MARKS = { req: svg('<path d="M12 4.5v15M5.5 8.25l13 7.5M18.5 8.25l-13 7.5"/>'), done: icon('check'), over: icon('alert'), lock: icon('lock') };
   function markField(box, kind) {
     let mark = box.querySelector(':scope > .sf-mark');
     if (!kind) {
@@ -115,8 +115,10 @@
     }
   }
   /**
-   * On a phone a field is a few pixels tall: each one the signer completes gets a 44px touch area around it. The areas
-   * lie under every field on the page, so where two fields are close a tap on a field itself always reaches that field.
+   * A field's box is never drawn larger than its place on the page, and that can be a few pixels: each field the signer
+   * completes gets an area around it where a click or a tap still reaches it (24px across at least, 44px on a phone;
+   * the stylesheet sizes it). The areas lie under every field on the page, so where two fields are close a tap on a
+   * field itself always reaches that field.
    */
   function touchArea(box, f, on) {
     const page = box.closest('.es-page');
@@ -136,15 +138,65 @@
     else ctl.click();
   };
   /**
-   * The pointer in the page's left margin, level with the field the signer is on and still has to complete. It carries a
-   * word (Sign, Initial, Fill in, Check) where the margin has room for one, and is a bare pointer on a small page.
+   * How far a page is clear of print from its left edge, read from the page's own picture: for each band of the page
+   * (2pt high, top to bottom) where the first printed mark begins, as a part of the page's width. Only the left fifth of
+   * the page is looked at (LOOK: clear as far as that). null while the picture is not there yet, or cannot be read.
+   */
+  const LOOK = 0.2;
+  const seen = new Map();
+  function marginOf(page) {
+    const img = page.querySelector(':scope > img');
+    if (!img || !img.getAttribute('src')) return null;
+    if (!img.complete) {
+      img.addEventListener('load', () => document.querySelector('.sf-bar') && sync(), { once: true });
+      return null;
+    }
+    if (!img.naturalWidth) return null;
+    const key = img.currentSrc || img.src;
+    if (seen.has(key)) return seen.get(key);
+    let first = null;
+    try {
+      // The picture's width and height attributes are the page's size in points; it is read at two dots to the point.
+      const w = Number(img.getAttribute('width')) || 612;
+      const tall = Number(img.getAttribute('height')) || 792;
+      const cv = document.createElement('canvas');
+      cv.width = Math.ceil(w * 2 * LOOK);
+      cv.height = Math.round(tall * 2);
+      const g = cv.getContext('2d', { willReadFrequently: true });
+      g.drawImage(img, 0, 0, w * 2, tall * 2);
+      const d = g.getImageData(0, 0, cv.width, cv.height).data;
+      first = [];
+      for (let top = 0; top < cv.height; top += 4) {
+        let x0 = cv.width;
+        for (let y = top; y < Math.min(cv.height, top + 4); y++)
+          for (let x = 0; x < x0; x++) {
+            const i = (y * cv.width + x) * 4;
+            if (d[i + 3] > 127 && 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2] < 235) {
+              x0 = x;
+              break;
+            }
+          }
+        first.push(x0 >= cv.width ? LOOK : x0 / (w * 2));
+      }
+    } catch (e) {
+      first = null;
+    }
+    if (seen.size > 60) seen.clear();
+    seen.set(key, first);
+    return first;
+  }
+  /**
+   * The pointer in the page's left margin, level with the field the signer is on and still has to complete. It is drawn
+   * only on empty paper: it must end 4px before anything printed beside it (measured on the page's own picture) and
+   * before its own field. It carries a word (Sign, Initial, Fill in, Check) on a page wide enough where the word fits,
+   * is a bare pointer where only that fits, and is not drawn at all where the margin is too narrow or cannot be read:
+   * the ring on the field marks it there.
    */
   function pointAt(doc, at) {
     let flag = doc.querySelector('.sf-flag');
     const page = at ? at.box.closest('.es-page') : null;
-    const wide = page ? page.getBoundingClientRect().width : 0;
-    const room = at ? wide * at.f.x : 0;
-    if (!page || room < 32) {
+    const first = page ? marginOf(page) : null;
+    if (!first) {
       if (flag) flag.remove();
       return;
     }
@@ -155,8 +207,20 @@
     }
     if (flag.parentNode !== page) page.appendChild(flag);
     flag.style.top = `${((at.f.y + at.f.h / 2) * 100).toFixed(3)}%`;
-    // A word needs a margin wide enough to hold it clear of the printed text: on a small page the pointer goes bare.
-    flag.textContent = wide >= 700 && room >= 80 ? FLAG[at.f.type] : '';
+    const pr = page.getBoundingClientRect();
+    const left = at.box.getBoundingClientRect().left - pr.left;
+    const fits = () => {
+      const r = flag.getBoundingClientRect();
+      const a = Math.max(0, Math.floor(((r.top - 2 - pr.top) / pr.height) * first.length));
+      const z = Math.min(first.length - 1, Math.floor(((r.bottom + 2 - pr.top) / pr.height) * first.length));
+      let clear = LOOK;
+      for (let i = a; i <= z; i++) clear = Math.min(clear, first[i]);
+      return r.right - pr.left + 4 <= Math.min(clear * pr.width, left);
+    };
+    flag.textContent = pr.width >= 700 ? FLAG[at.f.type] : '';
+    if (fits()) return;
+    flag.textContent = '';
+    if (!fits()) flag.remove();
   }
   /**
    * After every render and every entry: each of the signer's fields shows whether it is required, done or filled in
@@ -168,6 +232,7 @@
     const { bar, env, s, st } = c;
     const k = kit();
     const small = phone.matches;
+    applyZoom();
     const byId = {};
     k.fieldsOf(env, s).forEach((f) => (byId[f.id] = f));
     const doc = document.querySelector('.es-doc-sign');
@@ -185,7 +250,8 @@
         box.classList.toggle('is-req', req);
         box.classList.toggle('is-opt', !given && !req);
         box.classList.toggle('is-current', current);
-        markField(box, given ? 'lock' : done ? 'done' : req ? 'req' : '');
+        // A value too long for its line is not done: it carries the warning mark, never the done tick.
+        markField(box, given ? 'lock' : f && k.tooLong(env, f, st.vals[f.id]) ? 'over' : done ? 'done' : req ? 'req' : '');
         box.title = given ? 'Filled in for you' : `${k.label(f)}, ${req ? 'required' : 'optional'}`;
         if (!f) return;
         if (current) at = { box, f, done };
@@ -195,9 +261,8 @@
           if (small) ctl.setAttribute('inputmode', 'none');
           else ctl.removeAttribute('inputmode');
         }
-        touchArea(box, f, small && !given);
+        touchArea(box, f, !given);
       });
-    if (doc && !small) doc.querySelectorAll('.sf-hit').forEach((x) => x.remove());
     if (doc) pointAt(doc, at && !at.done ? at : null);
 
     const m = measure(env, s, st);
@@ -242,7 +307,6 @@
       }
       if (!on) tray.removeAttribute('data-fid');
     }
-    applyZoom();
   }
 
   /* ---------- Start, Next and a Finish pressed early ---------- */
@@ -310,7 +374,8 @@
     const page = pages.find((p) => p.getBoundingClientRect().bottom > cy) || pages[pages.length - 1];
     const r0 = page ? page.getBoundingClientRect() : null;
     S().ui.esZoom = z;
-    applyZoom();
+    // The page changes size: the pointer in its margin is measured again.
+    sync();
     if (r0 && r0.height) {
       const fx = Math.max(0, Math.min(1, (cx - r0.left) / r0.width));
       const fy = (cy - r0.top) / r0.height;
@@ -373,6 +438,12 @@
   };
   if (phone.addEventListener) phone.addEventListener('change', onPhone);
   else if (phone.addListener) phone.addListener(onPhone);
+  // The page follows the window's width, and the room in its margin with it.
+  let sized = 0;
+  window.addEventListener('resize', () => {
+    cancelAnimationFrame(sized);
+    sized = requestAnimationFrame(onPhone);
+  });
   // The bar sits at the bottom of a phone's screen: lift it above the on-screen keyboard while the tray is typed in.
   const vv = window.visualViewport;
   if (vv) {

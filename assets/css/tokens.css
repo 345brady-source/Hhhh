@@ -60,7 +60,7 @@
 
   /* Documents (statements, letters) stay paper in both modes, like a PDF. */
   --paper-bg: oklch(99.7% 0.004 95); --paper-fg: oklch(23% 0.035 245); --paper-fg-2: oklch(36% 0.035 245); --paper-line: oklch(89.5% 0.008 230); --paper-soft: oklch(96.4% 0.006 95);
-  --paper-brand: oklch(50% 0.12 234); --paper-brand-fill: oklch(50% 0.12 234); --paper-brand-ink: oklch(99% 0.003 95);
+  --paper-warn: oklch(54% 0.12 70); --paper-brand: oklch(50% 0.12 234); --paper-brand-fill: oklch(50% 0.12 234); --paper-brand-ink: oklch(99% 0.003 95);
   --paper-mark-p: oklch(50% 0.12 234); --paper-mark-a: oklch(74% 0.07 220); --paper-mark-ink: oklch(99% 0.003 95);
   --paper-shadow: 0 1px 3px oklch(40% 0.05 230 / 0.16), 0 8px 24px -8px oklch(40% 0.05 230 / 0.18);
   --plate: oklch(99.7% 0.004 95);
