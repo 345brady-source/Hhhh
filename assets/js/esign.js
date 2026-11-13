@@ -2668,7 +2668,7 @@
    * the whole document was used up) or 'fail'. opts: { step(page, pages) called before each such page is read;
    * kept: true to use the last reading of this file, or read without pictures (for snapping, where waiting is not worth it) }.
    */
-  const PICTURE_LIMIT_MS = 300000; // reading pages from their pictures stops after this long for one document
+  const PICTURE_LIMIT_MS = 150000; // reading pages from their pictures stops after this long for one document
   let layoutKept = null;
   async function pageLayout(docId, opts) {
     const op = opts || {};
@@ -2806,7 +2806,7 @@
       all('load').length ? `${on(all('load')).replace(/^p/, 'P')} ${were(all('load'))} not read from ${all('load').length === 1 ? 'its picture' : 'their pictures'}, because the portal could not load its text reader: nothing was placed there.` : '',
       all('time').length ? `Reading ${on(all('time'))} from ${all('time').length === 1 ? 'its picture' : 'their pictures'} took too long and was stopped: nothing was placed there.` : '',
       all('fail').length ? `Reading ${on(all('fail'))} from ${all('fail').length === 1 ? 'its picture' : 'their pictures'} failed: nothing was placed there.` : '',
-      all('limit').length ? `Reading pages from their pictures takes time, and the portal stopped after five minutes: ${on(all('limit'))} ${all('limit').length === 1 ? 'was' : 'were'} not read and nothing was placed there. Upload those pages as a shorter PDF to have them read.` : ''
+      all('limit').length ? `Reading pages from their pictures takes time, and the portal stopped after two and a half minutes: ${on(all('limit'))} ${all('limit').length === 1 ? 'was' : 'were'} not read and nothing was placed there. Upload those pages as a shorter PDF to have them read.` : ''
     ].filter(Boolean);
     if (lost.length) lost.push('A PDF made with a “print to PDF” printer can lose its text; saving the document as a PDF from the program it was written in, or with the browser’s “Save as PDF”, keeps it.');
     if (!r.ok) {

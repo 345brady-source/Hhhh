@@ -21,7 +21,7 @@
 (function (NS) {
   'use strict';
   const DIR = 'assets/vendor/textread/';
-  const DPI = 300; // the drawing resolution: small print (6 point) is read reliably from about this
+  const DPI = 220; // the drawing resolution: enough for small print, and a page still takes only some seconds
   const MAX_PIXELS = 9.5e6;
   const LOAD_MS = 60000;
   const PAGE_MS = 75000;
@@ -118,8 +118,8 @@
             if (!letters && conf < 30) return; // specks
             const box = { s: w.text, x0: w.bbox.x0 / scale, x1: w.bbox.x1 / scale, y0: w.bbox.y0 / scale, y1: w.bbox.y1 / scale, conf, letters, base, size };
             words.push(box);
-            const syms = (w.symbols || []).filter((s) => s && s.bbox && s.text);
-            const cells = syms.length ? syms.map((s) => ({ u: s.text, x0: s.bbox.x0 / scale, x1: s.bbox.x1 / scale })) : Array.from(w.text).map((u, i, all) => ({ u, x0: box.x0 + ((box.x1 - box.x0) * i) / all.length, x1: box.x0 + ((box.x1 - box.x0) * (i + 1)) / all.length }));
+            // The characters of a word share its width evenly: the recognition is sure of a word's extent, not of each letter's.
+            const cells = Array.from(w.text).map((u, i, all) => ({ u, x0: box.x0 + ((box.x1 - box.x0) * i) / all.length, x1: box.x0 + ((box.x1 - box.x0) * (i + 1)) / all.length }));
             cells.forEach((c, i) => {
               if (c.u === '_' || !c.u.trim()) return;
               if (i === 0 && last && c.x0 > last) glyphs.push({ u: ' ', sp: true, x0: last, x1: c.x0, y: base, h: size, font: '', hidden: false, conf, word: box });
@@ -140,8 +140,12 @@
    */
   function strokes(ctx, w, h, scale) {
     const px = ctx.getImageData(0, 0, w, h).data;
+    // 1: darker than paper (a pale printed line counts); 2: as dark as print (what is written or printed inside a box).
     const dark = new Uint8Array(w * h);
-    for (let i = 0, j = 0; i < dark.length; i++, j += 4) dark[i] = px[j] * 299 + px[j + 1] * 587 + px[j + 2] * 114 < 232000 ? 1 : 0;
+    for (let i = 0, j = 0; i < dark.length; i++, j += 4) {
+      const lum = px[j] * 299 + px[j + 1] * 587 + px[j + 2] * 114;
+      dark[i] = lum < 150000 ? 2 : lum < 232000 ? 1 : 0;
+    }
     const least = Math.round(5 * scale);
     const thick = Math.max(3, Math.round(2.6 * scale));
     const find = (level) => {
@@ -197,11 +201,11 @@
     };
     return { h: find(true), v: find(false), dark, w };
   }
-  /** The share of dark inside a rectangle of the picture (pixels). */
+  /** The share of print-dark inside a rectangle of the picture (pixels). */
   function inked(pic, x0, y0, x1, y1) {
     let n = 0;
     let all = 0;
-    for (let y = Math.ceil(y0); y < y1; y++) for (let x = Math.ceil(x0); x < x1; x++, all++) n += pic.dark[y * pic.w + x];
+    for (let y = Math.ceil(y0); y < y1; y++) for (let x = Math.ceil(x0); x < x1; x++, all++) n += pic.dark[y * pic.w + x] === 2 ? 1 : 0;
     return all ? n / all : 0;
   }
 
@@ -240,10 +244,10 @@
       // A small box in the middle of a word that was read with confidence is the shape of a letter, not a box.
       if (small && read.words.some((w) => w.letters && w.conf >= 60 && w.x0 < b.x0 - 3 && w.x1 > b.x1 + 3 && ov(w.y0, w.y1, b.y0, b.y1) > 0.5 * (b.y1 - b.y0))) return;
       const inside = (g) => (g.x0 + g.x1) / 2 > b.x0 - 1 && (g.x0 + g.x1) / 2 < b.x1 + 1 && g.y > b.y0 && g.y - 0.5 * g.h < b.y1 + 1;
-      const pad = r.t + 2;
+      const pad = r.t + 1.2 * scale;
       const ink = inked(pic, r.x0 + pad, r.y0 + pad, r.x1 - pad, r.y1 - pad);
       if (small) out.glyphs = out.glyphs.filter((g) => g.sp || !inside(g));
-      if (ink > (small ? 0.04 : 0.004) && !out.glyphs.some((g) => !g.sp && inside(g))) out.glyphs.push({ u: '•', sp: false, x0: (b.x0 + b.x1) / 2 - 1, x1: (b.x0 + b.x1) / 2 + 1, y: (b.y0 + b.y1) / 2 + 1, h: 4, font: '', hidden: false, conf: 0 });
+      if (ink > (small ? 0.03 : 0.003) && !out.glyphs.some((g) => !g.sp && inside(g))) out.glyphs.push({ u: '•', sp: false, x0: (b.x0 + b.x1) / 2 - 1, x1: (b.x0 + b.x1) / 2 + 1, y: (b.y0 + b.y1) / 2 + 1, h: 4, font: '', hidden: false, conf: 0 });
       out.rects.push(b);
       out.segs.push({ o: 'h', a0: b.x0, a1: b.x1, c: b.y0, t: b.t, frame: true }, { o: 'h', a0: b.x0, a1: b.x1, c: b.y1, t: b.t, frame: true }, { o: 'v', a0: b.y0, a1: b.y1, c: b.x0, t: b.t }, { o: 'v', a0: b.y0, a1: b.y1, c: b.x1, t: b.t });
     });
