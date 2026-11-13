@@ -64,23 +64,53 @@ Plans:
 
 ### Phase 01.2: Agreements that are pictures: the reader reads the owner's form (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
+**Goal:** A sponsor can have a subscription agreement whose pages are pictures read by the portal: when the sponsor asks with one click, the portal finds every printed box and line a person completes on each picture, puts one field on each and none anywhere else, gives each field the right kind and the right person from the words printed with it, marks every such field for checking, and says truthfully what it read and what it could not; the owner's own 8-page form is read in full, and the owner has checked it in the preview
 **Requirements**: READ-01, READ-02, READ-03, READ-04, READ-05
 **Depends on:** Phase 01.1
-**Plans:** 0 plans
+**Success Criteria** (what must be TRUE):
+  1. On the owner's form, through the real upload dialog and the offer, the independent scorer reports 241 of 241 printed places found, 0 stray fields, 0 overlaps, 0 kind differences and 0 owner differences, with the reading time; a field comes only from a box or line found on the picture, never from a recognised word
+  2. Each field is the kind its place prints (tick box, initials, signature, date beside a signature, typed blank) and is named from the caption printed with its box as far as the print can be read; a box whose caption cannot be read still has its field, named by its shape and marked
+  3. Each field is for the right person: the investor's are the investor's, a second investor's are signed by the co-investor, and a third party's are nobody's required field (optional, marked, named for that party, in no investor's envelope); the read summary says whose signature lines were found and on which pages, and a third party's signature is never counted as the investor's
+  4. Nothing is placed on a page with no text until the sponsor presses "Read these pages from their picture"; every field placed that way is marked for checking; pages read from their picture are named as such; when the words cannot be read the boxes still get their fields and the summary says exactly that
+  5. The other picture documents hold: the scanned and the outlined copy of the example each give the 47 expected fields, the prose copies give none, and the scanned public binder and the completed booklet get no unclean field
+  6. Normal PDFs are untouched: the owner's first agreement stays at exactly 47 fields with none marked and no recognition file loaded, prose stays at zero, and the proof run and the nine earlier check files pass
+  7. A page is read from its picture in under 6 seconds with progress shown, and at the time limit the sponsor is told truthfully which pages' words were not read
+  8. It works inside the hosted preview: the text reader starts from the portal's own files with no request under the preview's rules, every file is of a type the host serves, and where the host refuses the reader the boxes are still found and their fields named by shape
+  9. One whole-page picture of each page of the owner's form from the portal's own editor has been looked at and shown to the owner, and the owner has checked their own form in the republished preview
+**Plans:** 6 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 01.2 to break down)
+- [ ] 01.2-01-PLAN.md — The finder: boxes and lines from the picture's pixels alone, wired through the real upload dialog and proven alone at three ink levels on three documents
+- [ ] 01.2-02-PLAN.md — The text reader starts with no request from the portal's own files, proven in the preview's frame, with a probe page for the real host
+- [ ] 01.2-03-PLAN.md — Reading the caption bands: only the words round each found box and line, in seconds a page; one stated page shape for placement
+- [ ] 01.2-04-PLAN.md — Kind, owner and summary: one field a place, the right kind and person, the third-party owner nobody signs for, a truthful summary
+- [ ] 01.2-05-PLAN.md — The other picture documents (scanned and outlined copies, prose), seconds a page, progress and a truthful time limit
+- [ ] 01.2-06-PLAN.md — Proof and the owner's check: whole-page pictures, the public scans, everything in one run inside the frame as well, the files to publish, then the owner
 
 ### Phase 01.3: The owner's text agreements are read 100 percent (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
+**Goal:** The three text agreements the owner supplied (document A, the 21-page subscription document; document B, the 32-page partnership agreement; document C, the subscription agreement with questionnaire supplied as a Word file and read as its PDF) are each read exactly: every printed place has its field, of the right kind, for the right person, and nothing else has one; a place meant for somebody else is shown as theirs and asked of nobody; the read summary says truthfully who signs and who does not; a Word file offered as an agreement is answered in plain words; and every document the reader already read correctly still is
 **Requirements**: SET-01, SET-02, SET-03, SET-04
 **Depends on:** Phase 01.1
-**Plans:** 0 plans
+**Success Criteria** (what must be TRUE):
+  1. Through the real upload dialog, documents A, B and C each score 100% against an answer sheet made independently by looking at every page: every place found, no field anywhere else, no overlap, no field over printed words, kinds, owners, required and review marks right
+  2. A place for somebody else (a custodian, an adviser, the writer of a letter and the like) is shown as theirs: optional, never filled in from the investor's onboarding, never counted as the investor's or the firm's signature line, asked of nobody at signing, and unmarked where the reader is sure
+  3. The read summary counts printed places and says truthfully who signs: no place for the investor or the firm to sign (document A), only the firm signs (document B), an acceptance block in doubt (document C); a place left without a field is always said
+  4. A document only the firm signs can be signed by the firm, is never offered to investors as the agreement they sign, and the sponsor is never told to add an investor signature field to it
+  5. A Word file offered as an agreement is refused in plain, lasting words that say to save it as a PDF and upload that; nothing is stored
+  6. An individual, an entity (where the document provides for one) and the firm complete each document end to end, and the finished PDF shows every value on its own place
+  7. The owner's first agreement stays at exactly 47 fields with none marked, the seven public documents keep their pinned field counts (38, 0, 0, 64, 58, 0, 147) with zero unclean, the proof run and the nine check files stay green, and every rule is a convention class proved on a made-up page
+  8. After the verifier passes and the preview is republished, the owner has checked the three documents in it
+**Plans:** 7 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 01.3 to break down)
+- [ ] 01.3-01-PLAN.md — Pin what already works, tighten the three scorers, and add the class-page runner with the pages for the owner "somebody else" and for documents A and B (no reader change)
+- [ ] 01.3-02-PLAN.md — The made-up pages for document C's conventions, the ordinary-table guard, and the Word-file dialog check (no reader change)
+- [ ] 01.3-03-PLAN.md — The owner "somebody else" end to end (tracer), then every class document A needs: document A's places all right
+- [ ] 01.3-04-PLAN.md — Who completes a place on a form: captions that are not headings, a third party's section, the acceptance block in doubt, the two lists of initials, and the firm's block by its printed name (documents B and C)
+- [ ] 01.3-05-PLAN.md — An empty ruled cell is named by the caption over it, with the guard for ordinary tables, and the smaller place-finding classes: document C's places all right
+- [ ] 01.3-06-PLAN.md — The read summary counted from printed places, the plain answer to a Word file, and the way forward for a document only the firm signs: the three scorers pass in full
+- [ ] 01.3-07-PLAN.md — End-to-end walks on the three documents, the whole proof in one run, and the owner's check in the republished preview
 
 ### Phase 2: Field Editor
 **Goal**: A sponsor can adjust fields by hand quickly and without frustration, in an editor that looks professionally made
