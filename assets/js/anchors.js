@@ -10,7 +10,8 @@
  *   page(raw, size, forms)      what placement reads: { page, w, h, items, rules, boxes, forms, scan }
  *                               items  runs of text { s, x, y, w, h } (a run of underscores and a box character are
  *                                      runs of their own, so their extents are exact)
- *                               rules  printed lines that can be written on { x0, x1, y, clear, pad, made, cut, cell, table }
+ *                               rules  printed lines that can be written on { x0, x1, y, clear, pad, made, cut, cell, table,
+ *                                      bracketed (printed between square brackets as a blank or a box) }
  *                                      (pad: how far a field may reach past each end and under the line: { l, r, d })
  *                               boxes  printed tick boxes { x, y, w, h, made }
  *                               forms  the PDF's own form fields { x0, y0, x1, y1, type, label, check, readOnly }
@@ -30,6 +31,28 @@
   /** One page's drawing operators as plain data. page: a page of the PDF reader; vp: its viewport at scale 1; OPS: the reader's operator codes. */
   async function walk(page, vp, OPS) {
     const ol = await page.getOperatorList();
+    // A font is only known once the reader has finished loading it, which can be after the operator list is ready:
+    // wait for each (a font that never arrives is given up on after a moment, and its characters still count as text).
+    const ids = [];
+    for (let i = 0; i < ol.fnArray.length; i++) if (ol.fnArray[i] === OPS.setFont && ids.indexOf(ol.argsArray[i][0]) < 0) ids.push(ol.argsArray[i][0]);
+    await Promise.all(
+      ids.map(
+        (id) =>
+          new Promise((done) => {
+            const timer = setTimeout(done, 3000);
+            const ok = () => {
+              clearTimeout(timer);
+              done();
+            };
+            try {
+              if (page.commonObjs.has(id)) ok();
+              else page.commonObjs.get(id, ok);
+            } catch (e) {
+              ok();
+            }
+          })
+      )
+    );
     let st = { ctm: vp.transform.slice(), tm: [1, 0, 0, 1, 0, 0], x: 0, y: 0, lineX: 0, lineY: 0, size: 0, dir: 1, cs: 0, ws: 0, hs: 1, rise: 0, lead: 0, font: null, lw: 1, mode: 0, fill: 0, ink: 0 };
     const stack = [];
     const push = () => stack.push(Object.assign({}, st, { ctm: st.ctm.slice(), tm: st.tm.slice() }));
@@ -184,6 +207,9 @@
             }
             const w = s.x1 - s.x0;
             const hh = s.y1 - s.y0;
+            // A rectangle with no height or no width, stroked, is a line.
+            if (stroked && hh < 0.6 && w >= 3) return segs.push({ o: 'h', a0: s.x0, a1: s.x1, c: (s.y0 + s.y1) / 2, t: lw });
+            if (stroked && w < 0.6 && hh >= 3) return segs.push({ o: 'v', a0: s.y0, a1: s.y1, c: (s.x0 + s.x1) / 2, t: lw });
             if (filled && hh <= 3 && w >= 3 * hh) segs.push({ o: 'h', a0: s.x0, a1: s.x1, c: (s.y0 + s.y1) / 2, t: hh });
             else if (filled && w <= 3 && hh >= 3 * w) segs.push({ o: 'v', a0: s.y0, a1: s.y1, c: (s.x0 + s.x1) / 2, t: w });
             else if (stroked) {
@@ -197,7 +223,13 @@
       else if (fn === OPS.paintImageXObject || fn === OPS.paintJpegXObject || fn === OPS.paintImageMaskXObject || fn === OPS.paintInlineImageXObject) {
         const p1 = at(st.ctm, 0, 0);
         const p2 = at(st.ctm, 1, 1);
-        if (Math.abs(p2[0] - p1[0]) * Math.abs(p2[1] - p1[1]) > 0.6 * vp.width * vp.height) picture = true;
+        if (Math.abs(p2[0] - p1[0]) * Math.abs(p2[1] - p1[1]) > 0.6 * vp.width * vp.height) {
+          // A picture over the page covers whatever was drawn before it (the recognised text laid under a scan).
+          picture = true;
+          glyphs.forEach((g) => (g.hidden = true));
+          segs.length = 0;
+          rects.length = 0;
+        }
       }
     }
     return { glyphs, segs, rects, picture };
@@ -219,10 +251,13 @@
 
   /** What placement reads of one page. raw: from walk(); size: { page, w, h }; forms: the PDF's form fields on it (already in displayed points). */
   function page(raw, size, forms) {
-    const out = { page: size.page, w: size.w, h: size.h, items: [], rules: [], boxes: [], forms: [], scan: !!(raw && raw.picture) };
-    if (!raw || out.scan) return out;
+    const out = { page: size.page, w: size.w, h: size.h, items: [], rules: [], boxes: [], forms: [], scan: false };
+    if (!raw) return out;
     const shown = raw.glyphs.filter((g) => !g.hidden);
     const ink = shown.filter((g) => !g.sp);
+    // A picture of the page with no visible text on it is a scan (a page with real text over a background picture is not).
+    out.scan = !!raw.picture && !ink.length;
+    if (out.scan) return out;
     shown.forEach((g) => (g.box = !g.sp && boxChar(g)));
     const words = ink.filter((g) => g.u !== '_' && !g.box);
 
@@ -236,7 +271,7 @@
       const cat = g.box ? 'box' : g.u === '_' ? 'gap' : 'text';
       const gap = cur ? g.x0 - cur.x1 : 0;
       const spaces = cur ? cur.s.length - cur.s.replace(/ +$/, '').length : 0;
-      if (cur && cur.cat === cat && cat !== 'box' && Math.abs(g.y - cur.y) < 0.5 && gap > -0.3 * g.h && gap < (cat === 'gap' ? 0.8 : (1.2 + 0.6 * spaces) * g.h)) {
+      if (cur && cur.cat === cat && cat !== 'box' && Math.abs(g.y - cur.y) < 0.5 && gap > -0.3 * g.h && gap < (cat === 'gap' ? Math.max(0.8, 0.35 * g.h) : (1.2 + 0.6 * spaces) * g.h)) {
         if (cat === 'text' && !spaces && gap > 0.18 * g.h) cur.s += ' ';
         cur.s += g.u;
         cur.x1 = g.x1;
@@ -257,7 +292,17 @@
       const cx = (g.x0 + g.x1) / 2;
       out.boxes.push({ x: cx - side / 2, y: g.y - 0.84 * side, w: side, h: 0.9 * side, made: 'character' });
     });
-    raw.rects.forEach((r) => {
+    // A small square drawn as four separate strokes is a square all the same.
+    const drawn = raw.rects.slice();
+    const short = raw.segs.filter((sg) => sg.a1 - sg.a0 >= 5 && sg.a1 - sg.a0 <= 20);
+    short.forEach((top) => {
+      if (top.o !== 'h') return;
+      const bottom = short.find((b) => b.o === 'h' && b !== top && b.c - top.c >= 5 && Math.abs(b.c - top.c - (top.a1 - top.a0)) <= 0.25 * (top.a1 - top.a0) && Math.abs(b.a0 - top.a0) <= 1 && Math.abs(b.a1 - top.a1) <= 1);
+      if (!bottom) return;
+      const side = (x) => short.some((v) => v.o === 'v' && Math.abs(v.c - x) <= 1 && v.a0 <= top.c + 1 && v.a1 >= bottom.c - 1);
+      if (side(top.a0) && side(top.a1) && !drawn.some((r) => Math.abs(r.x0 - top.a0) <= 1 && Math.abs(r.y0 - top.c) <= 1)) drawn.push({ x0: top.a0, y0: top.c, x1: top.a1, y1: bottom.c });
+    });
+    drawn.forEach((r) => {
       const w = r.x1 - r.x0;
       const hh = r.y1 - r.y0;
       if (w < 5 || w > 20 || Math.abs(w - hh) > 0.25 * w) return;
@@ -275,6 +320,14 @@
       if (!end || end.u !== close || Math.abs(end.y - open.y) >= 0.5) continue;
       if (open.u === '(' && j === i + 1) continue;
       if (end.x1 - open.x0 < 5 || end.x1 - open.x0 > 3 * open.h) continue;
+      // "(   ) ________": the room for an area code before a blank, not a box.
+      if (open.u === '(') {
+        let k = j + 1;
+        while (k < shown.length && shown[k].sp) k++;
+        const next = shown[k];
+        if (next && next.u === '_' && Math.abs(next.y - open.y) < 0.5 && next.x0 - end.x1 < 40) continue;
+        if (raw.segs.some((sg) => sg.o === 'h' && Math.abs(sg.c - open.y) < 4 && sg.a0 >= end.x1 - 2 && sg.a0 - end.x1 < 40 && sg.a1 - sg.a0 >= 16)) continue;
+      }
       out.boxes.push({ x: open.x0, y: open.y - 0.75 * open.h, w: end.x1 - open.x0, h: 0.95 * open.h, made: 'brackets' });
     }
 
@@ -283,7 +336,7 @@
     let run = null;
     shown.forEach((g) => {
       if (g.u === '_' && !g.sp) {
-        if (run && Math.abs(g.y - run.base) < 0.5 && Math.abs(g.x0 - run.x1) < 0.8) {
+        if (run && Math.abs(g.y - run.base) < 0.5 && g.x0 - run.x1 > -0.8 && g.x0 - run.x1 < Math.max(0.8, 0.35 * g.h)) {
           run.x1 = g.x1;
           run.n++;
         } else {
@@ -309,6 +362,8 @@
         m.n += p.n;
       } else lines.push({ x0: p.x0, x1: p.x1, y: p.y, low: p.low, made: p.made, n: p.n, frame: !!p.frame });
     });
+    const drafting = /\[[^\]]*\b(insert|placeholder|to be (completed|inserted|provided|determined|confirmed)|tbd|drafting note|note to draft)\b/i.test(out.items.map((it) => it.s).join(' '));
+    const margin = words.length ? Math.min.apply(null, words.map((g) => g.x0)) : 0;
     const body = words.length ? words.map((g) => g.h).sort((a, b) => a - b)[Math.floor(words.length / 2)] : 10;
     const sameLine = (g, l) => Math.abs(g.y - (l.y - (l.made.indexOf('underscores') >= 0 ? 0.12 * g.h : 0))) < 0.45 * g.h + 2;
     const emptyAbove = (x0, x1, y) => {
@@ -324,11 +379,29 @@
       const w = l.x1 - l.x0;
       const typed = l.made.indexOf('underscores') >= 0;
       if (w < 9 || (l.made === 'underscores' && l.n < 3)) return;
-      // Between square brackets: the sponsor's own placeholder.
-      const beside = ink.filter((g) => g.u !== '_' && sameLine(g, l));
+      // Between square brackets. It is the sponsor's own placeholder, and no place, when the brackets also enclose
+      // words, when the line stands in running prose, or when the page carries a drafting note in brackets ("[insert
+      // ...]", "[Placeholder ...]"). Otherwise the brackets are the agreement's way of printing a blank or a box: kept, and marked.
+      const beside = ink.filter((g) => g.u !== '_' && sameLine(g, l)).sort((a, b) => a.x0 - b.x0);
       const left = beside.filter((g) => g.x1 <= l.x0 + 1).sort((a, b) => b.x1 - a.x1)[0];
       const right = beside.filter((g) => g.x0 >= l.x1 - 1).sort((a, b) => a.x0 - b.x0)[0];
-      if ((left && left.u === '[' && l.x0 - left.x1 < 12) || (right && right.u === ']' && right.x0 - l.x1 < 12)) return;
+      const open = left && left.u === '[' && l.x0 - left.x1 < 12;
+      const close = right && right.u === ']' && right.x0 - l.x1 < 12;
+      let bracketed = false;
+      if (open || close) {
+        if (drafting || open !== close) return;
+        const before = beside.filter((g) => g.x1 <= left.x0 + 0.5);
+        const after = beside.filter((g) => g.x0 >= right.x1 - 0.5);
+        const lastBefore = before[before.length - 1];
+        // Running prose: a dozen letters or more before it and words after it, on a line with no other bracketed blank
+        // (a row of them is a row of boxes).
+        const letters = (list) => list.filter((g) => /[A-Za-z]/.test(g.u)).length;
+        const row = before.some((g) => g.u === ']') || after.some((g) => g.u === '[');
+        if (!row && letters(before) >= 12 && letters(after) > 3 && lastBefore && !/[:$]/.test(lastBefore.u)) return;
+        // "[________] L.P./LLC": a name the sponsor completes (the fund's, a company's), never the investor's blank.
+        if (!row && /^[\],\s]*(l\.?\s?p|l\.?\s?l\.?\s?c|inc|ltd|corp)\.?(?![a-z])/i.test(after.slice(0, 12).map((g) => g.u).join(''))) return;
+        bracketed = true;
+      }
       // Walls: a rule with upright strokes meeting it is the edge of a table or a frame. Its empty cells are blanks.
       const walls = vs.filter((v) => v.c >= l.x0 - 1.5 && v.c <= l.x1 + 1.5 && v.a0 <= l.y + 1.5 && v.a1 >= l.y - 1.5);
       if (!typed && (l.frame || walls.length >= 2)) {
@@ -360,13 +433,14 @@
       }
       const clear = emptyAbove(x0, l.x1, l.y);
       if (l.made === 'rule') {
-        // Small print right under a short rule with empty paper above it: a footnote rule.
-        const under = words.filter((g) => g.y - l.y > 2 && g.y - l.y < 16 && ov(g.x0, g.x1, l.x0, l.x1) > 0);
-        if (w > 100 && w < 200 && under.length && under.every((g) => g.h < 0.93 * body) && clear > 10) return;
+        // A footnote rule: a short rule at the left margin in the lower part of the page, empty paper above it and small
+        // print under it that opens with a footnote mark. (A short rule with a small caption under it is a signature line.)
+        const under = words.filter((g) => g.y - l.y > 2 && g.y - l.y < 16 && ov(g.x0, g.x1, l.x0, l.x1) > 0).sort((a, b) => a.y - b.y || a.x0 - b.x0);
+        if (w > 100 && w < 200 && Math.abs(l.x0 - margin) <= 8 && l.y > 0.45 * size.h && under.length && under.every((g) => g.h < 0.93 * body) && /^[0-9*\u2020\u2021\u00A7(]/.test(under[0].u) && clear > 10) return;
         // A rule right across the page near its head or foot: a running rule.
         if (w > 0.7 * size.w && (l.y > 0.9 * size.h || l.y < 0.08 * size.h)) return;
       }
-      out.rules.push({ x0, x1: l.x1, y: l.y, low: l.low, clear, made: l.made, cut, cell: false, table: walls.length > 0 });
+      out.rules.push({ x0, x1: l.x1, y: l.y, low: l.low, clear, made: l.made, cut, cell: false, table: walls.length > 0, bracketed });
     });
     // Empty paper above a line ends at the next printed line above it, too.
     out.rules.forEach((r) => {

@@ -515,11 +515,14 @@
     const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
     const changed = [];
     env.fields.forEach((f) => {
-      if (f.prefill && f.type === 'text' && signer && f.signerId === signer.id) {
+      // The amount the firm accepts is the commitment the portal holds: filled in for the firm too, and left open so
+      // that the firm can accept a different amount.
+      const accepted = f.prefill === 'amount' && env.signers.some((sg) => sg.id === f.signerId && sg.role === 'countersigner');
+      if (f.prefill && f.type === 'text' && ((signer && f.signerId === signer.id) || accepted)) {
         const v = has(values, f.prefill) ? unsigned(f, String(values[f.prefill])) : null;
         // An answer too long for its blank (a long address on a short line) is filled in but left open, so the
         // investor can shorten it: a locked value that cannot be printed would stop them from finishing.
-        const lock = v != null && !tooLong(env, f, v);
+        const lock = v != null && !accepted && !tooLong(env, f, v);
         if (v != null && (f.value !== v || !!f.locked !== lock)) {
           f.value = v;
           f.locked = lock;
@@ -531,7 +534,7 @@
         }
         return;
       }
-      if (!f.label || !has(labels, f.label)) return;
+      if (f.auto || !f.label || !has(labels, f.label)) return;
       if (fresh ? f.type === 'text' || f.type === 'name' || f.type === 'checkbox' : f.locked && f.type !== 'checkbox') {
         const v = f.type === 'checkbox' ? !!labels[f.label] : unsigned(f, String(labels[f.label]));
         if (f.value !== v || !f.locked) changed.push(f);
@@ -1420,6 +1423,142 @@
   };
   /* ===================== end of PLACEMENT REVIEW ===================== */
   /* =====================================================================
+   * READ THE PDF AGAIN: an agreement's fields brought up to date with what the portal reads in its PDF today, kept in
+   * this one block. The reading itself is autoFields (run on a copy of the draft, so nothing changes until it is done).
+   *
+   *   untouched(env, f)       a field the portal placed is still as the reading wrote it (f.placed)
+   *   rereadAgreement(env)    reads again and merges; returns and keeps on the draft (env.reread) what happened
+   *   rereadNote(env)         that, as one plain sentence for the note above the editor ('' when there is nothing to say)
+   *   rereadRailHTML(env)     the button in the editor's left column (data-action="es-reread"); rereadInlineHTML(env)
+   *                           is the same button at the end of the read summary, for narrower screens
+   *
+   * What happens to each stored field:
+   *   placed by hand (no auto), or placed by the portal and since moved or changed    kept as it is
+   *   placed by the portal and not touched                                             replaced by the new reading
+   *   placed by the portal before it recorded what it wrote (auto, no placed), so nothing says what the sponsor touched:
+   *     its reason speaks of the last page (a position the earlier reading made up)   removed
+   *     it lies on a field of the new reading                                          replaced by that field
+   *     it lies on none and its own mark was never settled (nobody has touched it)     removed
+   *     any other                                                                      kept and marked for review
+   * A field of the new reading that would overlap a kept field is not added.
+   * ===================================================================== */
+  const REREAD_KEPT = 'This field was placed when the agreement was read earlier. Reading it again found nothing printed here to complete, and the portal cannot tell whether you put the field here yourself. Confirm it, move it or remove it.';
+  /** Who a field is for, in the reading's words. */
+  const readRole = (env, f) => ((signerById(env, f.signerId) || {}).role === 'countersigner' ? 'firm' : 'investor');
+  /** True while a field the portal placed has its own page, box, type, signer, label, required, kind of investor and source as the reading wrote them. */
+  function untouched(env, f) {
+    const p = f && f.auto ? f.placed : null;
+    if (!p) return false;
+    // The signer is compared by role: a saved agreement opened again has new signer ids, the same two roles.
+    return f.page === p.page && ['x', 'y', 'w', 'h'].every((k) => Math.abs((+f[k] || 0) - (+p[k] || 0)) < 1e-6) && f.type === p.type && (readRole(env, f) === 'firm') === (p.role === 'firm') && (f.label || '') === (p.label || '') && !!f.required === !!p.required && (f.forType || '') === (p.forType || '') && (f.prefill || '') === (p.prefill || '');
+  }
+  /** Two fields on the same page that share at least a tenth of the smaller one's box. */
+  function fieldsOverlap(a, b) {
+    if (a.page !== b.page) return false;
+    const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+    const oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+    return ox > 0 && oy > 0 && ox * oy >= 0.1 * Math.min(a.w * a.h, b.w * b.h);
+  }
+  /**
+   * Reads the agreement's PDF again and merges the new fields with the draft's (the rules are at the top of this block).
+   * Returns { ok, replaced, added, own, review, removed }, also kept as env.reread; when the text cannot be read, ok is
+   * false and no field is changed.
+   */
+  async function rereadAgreement(env) {
+    const fresh = Object.assign({}, env, { fields: [] });
+    delete fresh.read;
+    try {
+      await autoFields(fresh);
+    } catch (e) {
+      fresh.read = null;
+    }
+    if (!fresh.read || !fresh.read.ok) return (env.reread = { ok: false });
+    const next = fresh.fields;
+    const kept = [];
+    const gone = [];
+    const out = { ok: true, replaced: 0, added: 0, own: 0, review: 0, removed: 0 };
+    const own = (f) => (kept.push(f), out.own++);
+    env.fields.forEach((f) => {
+      if (!f.auto) return own(f);
+      if (f.placed) return untouched(env, f) ? gone.push(f) : own(f);
+      // Placed before the portal recorded what it wrote.
+      const why = String(f.reviewReason || '');
+      if (why === REREAD_KEPT) return f.review ? (kept.push(f), out.review++) : own(f); // kept by an earlier pass: settled since, or still waiting
+      if (/last page/i.test(why) || next.some((n) => fieldsOverlap(f, n)) || f.review) return gone.push(f);
+      kept.push(Object.assign({}, f, { review: true, reviewReason: REREAD_KEPT }));
+      out.review++;
+    });
+    const add = next.filter((n) => !kept.some((k) => fieldsOverlap(n, k)));
+    out.replaced = gone.filter((g) => add.some((n) => fieldsOverlap(g, n))).length;
+    out.added = add.filter((n) => !gone.some((g) => fieldsOverlap(g, n))).length;
+    out.removed = gone.length - out.replaced;
+    env.fields = kept.concat(add);
+    env.read = fresh.read;
+    // The ids let the note tell whether this is still what the fields show (the editor's undo takes it back).
+    return (env.reread = Object.assign({ ids: add.map((n) => n.id), gone: gone.map((g) => g.id) }, out));
+  }
+  /** What reading again did, in one plain sentence; '' when it has not been done, or has been undone. */
+  function rereadNote(env) {
+    const r = env && env.reread;
+    if (!r) return '';
+    if (!r.ok) return 'The text of this PDF could not be read this time, so every field was left as it was.';
+    const has = (ids) => (ids || []).some((id) => env.fields.some((f) => f.id === id));
+    if (has(r.gone) || ((r.ids || []).length && !has(r.ids))) return '';
+    const was = (k) => (k === 1 ? 'was' : 'were');
+    const parts = [`${r.replaced} field${r.replaced === 1 ? '' : 's'} ${was(r.replaced)} replaced by the new reading`, `${r.added} ${was(r.added)} added`, `${r.own} that you placed or changed ${was(r.own)} kept as you left ${r.own === 1 ? 'it' : 'them'}`];
+    if (r.removed) parts.push(`${r.removed} that the new reading no longer places ${was(r.removed)} removed`);
+    const marks = PL().reviewCount(env); // those kept for review and those the new reading itself was unsure about
+    return `The PDF was read again: ${parts.join(', ')} and ${r.review} ${was(r.review)} kept and marked for review.${marks ? ` In all, ${marks} field${marks === 1 ? ' is' : 's are'} marked Review now: confirm, move or remove ${marks === 1 ? 'it' : 'each one'} before you save.` : ''}`;
+  }
+  /** The note under the read summary, above the editor: it stays until the agreement is saved. */
+  function rereadNoteHTML(env) {
+    const text = rereadNote(env);
+    const warn = text && (!env.reread.ok || env.reread.review);
+    return text ? `<p class="es-note${warn ? ' es-note-warn' : ''} es-reread" role="status" tabindex="-1">${icon(warn ? 'alert' : 'check')}<span>${h(text)}</span></p>` : '';
+  }
+  /** After a step in the editor (an undo, say), the note on screen is brought in line with the fields. */
+  function rereadSync(env) {
+    const box = document.querySelector('.es-read');
+    if (!box || !env.reread) return;
+    const now = box.querySelector('.es-reread');
+    const html = rereadNoteHTML(env);
+    if (now && !html) now.remove();
+    else if (!now && html) box.insertAdjacentHTML('beforeend', html);
+    else if (now && now.textContent !== rereadNote(env)) now.outerHTML = html;
+  }
+  const rereadRailHTML = (env) =>
+    env.agreementFor && env.docId
+      ? `<div class="fe-sec fe-sec-read"><h2 class="fe-h">The PDF</h2><p class="cs-hint">If fields are missing or sit in the wrong place, the portal can read the PDF again. Fields you placed, moved or changed are kept.</p><button class="cs-btn cs-btn-small fe-signer-act" type="button" data-action="es-reread">Read the PDF again</button></div>`
+      : '';
+  /** The same button as words at the end of the read summary: shown where the left column lies across the top (narrower screens), so it takes no height from the document. */
+  const rereadInlineHTML = (env) => (env.agreementFor && env.docId ? ' <button class="es-read-again" type="button" data-action="es-reread">Read the PDF again</button>' : '');
+  NS.actions['es-reread'] = () => {
+    const env = editorEnv();
+    if (!env || !env.agreementFor) return;
+    U.dialog(
+      `<div class="dlg-head"><div><h2>Read the PDF again?</h2><p>The portal reads ${h(env.fileName)} again. Fields it placed that you have not changed are replaced by the new reading. Fields you placed yourself, moved or changed stay as they are. Undo in the editor takes this back.</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
+      <div class="dlg-body"><div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog" autofocus>Keep the fields as they are</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-reread-yes">Read the PDF again</button></div></div>`,
+      'dlg-es'
+    );
+  };
+  NS.actions['es-reread-yes'] = async (el) => {
+    const env = editorEnv();
+    if (!env || !env.agreementFor) return U.closeDialog();
+    if (el.disabled) return;
+    el.disabled = true;
+    el.textContent = 'Reading the PDF…';
+    await rereadAgreement(env);
+    U.closeDialog();
+    if (editorEnv() !== env) return NS.app.save(true);
+    if (!env.fields.some((f) => f.id === esUi().sel)) esUi().sel = null;
+    NS.app.save(true);
+    NS.app.render();
+    const note = document.querySelector('.es-reread');
+    if (note) note.focus();
+  };
+  NS.esignKit = Object.assign(NS.esignKit || {}, { untouched, rereadAgreement, rereadNote });
+  /* ===================== end of READ THE PDF AGAIN ===================== */
+  /* =====================================================================
    * Sponsor console: one envelope (field editor for drafts, tracking after)
    * ===================================================================== */
   /*
@@ -1432,7 +1571,7 @@
   /** At the top of the selected field's properties: the reason for the status and what to do about it. */
   const editorPropsStatusHTML = (env, sel) => placementStatusHTML(env, sel);
   /** In the editor's left column, between the field types and the ready line: a list of the fields to check, say. */
-  const editorRailExtraHTML = (env) => reviewPanelHTML(env);
+  const editorRailExtraHTML = (env) => reviewPanelHTML(env) + rereadRailHTML(env);
   /** One field on a page of the editor. fieldeditor.js draws it again after every change to it, and adds the handles when it is selected. */
   function editorFieldHTML(env, f, ui) {
     const s = signerById(env, f.signerId) || { name: 'Unassigned', color: '#888888' };
@@ -1499,7 +1638,7 @@
       makeField: (type, page, cx, cy) => newField(env, type, page, cx, cy),
       lines: (page) => editorLines(src, ready ? c.pages : null, page),
       setExtra: placementSetProp,
-      save
+      save: () => (save(), rereadSync(env))
     };
   }
   function editorHTML(env) {
@@ -1510,7 +1649,7 @@
     const marked = PL().reviewCount(env);
     const headHTML = env.agreementFor
       ? `${K.head(`Subscription agreement${agr ? ` · ${h(agr.name)}` : ''}`, `${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · place the fields once; each investor fills them in and signs during onboarding`, `<a class="cs-btn" href="#console-offering-${h(env.agreementFor)}">${icon('back')}Offering</a><button class="cs-btn" type="button" data-action="es-agreement-cancel" data-id="${h(env.id)}">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-save" data-id="${h(env.id)}">Save subscription agreement</button>`)}
-        <p class="cs-hint es-agr-note">${env.read ? `${h(readNote(env))} ${marked ? 'Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. ' : env.autoPlaced ? 'Check the fields, move or resize as needed, and add any others. ' : ''}` : ''}Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.</p>`
+        <div class="es-read"><p class="cs-hint es-agr-note">${env.read ? `${h(readNote(env))} ${marked ? 'Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. ' : env.autoPlaced ? 'Check the fields, move or resize as needed, and add any others. ' : ''}` : ''}Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.${rereadInlineHTML(env)}</p>${rereadNoteHTML(env)}</div>`
       : `${K.head(h(env.title), `Draft · ${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'}`, `<a class="cs-btn" href="#console-esign">${icon('back')}E-sign</a><button class="cs-btn" type="button" data-action="es-delete" data-id="${h(env.id)}">Delete draft</button><button class="cs-btn" type="button" data-action="es-save-tpl" data-id="${h(env.id)}">Save as template</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-review" data-id="${h(env.id)}">Review and send</button>`)}`;
     // The editor itself (the fields to add, the document, the selected field) is fieldeditor.js.
     return K.shell(`${headHTML}${NS.fieldEditor.html(editorCtx(env))}`, 'console-esign');
@@ -2545,7 +2684,8 @@
           out.push(NS.anchors.page(raw, size, forms));
           page.cleanup();
         } catch (e) {
-          out.push(Object.assign(size, { items: [], rules: [], boxes: [], forms: [], failed: true }));
+          console.error('Reading page ' + i + ' of the agreement failed:', e);
+          out.push(Object.assign(size, { items: [], rules: [], boxes: [], forms: [], failed: true, reason: String((e && e.message) || e) }));
         }
       }
     } finally {
@@ -2562,24 +2702,33 @@
    * damaged file) nothing is placed. Returns how many fields were placed.
    */
   async function autoFields(env) {
-    const read = (env.read = { ok: false, pages: 0, scanned: [], failed: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], firmLeft: 0 });
+    const read = (env.read = { ok: false, error: '', pages: 0, scanned: [], failed: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], firmLeft: 0, firmLeftPages: [] });
     let res = null;
     try {
       const t = T();
       const o = W().offerings.find((x) => x.id === (env.agreementFor || env.offeringId)) || {};
       res = NS.placement.read(await pageLayout(env.docId), { firmNames: [t.name, t.legalName, t.shortName], fundNames: [o.name, o.shortName] });
     } catch (e) {
+      // Not the PDF's fault unless the reader says so: the reason is kept and logged, and the message says only what is known.
+      console.error('Reading the agreement failed:', e);
+      read.error = String((e && e.message) || e);
       return 0;
     }
-    Object.assign(read, { ok: res.pages > 0, pages: res.pages, scanned: res.scanned, failed: res.failed, investorPages: res.investorPages, firmPages: res.firmPages });
+    res.errors.forEach((x) => console.error('Placing fields on page ' + x.page + ' failed:', x.reason));
+    Object.assign(read, { ok: res.pages > 0, pages: res.pages, scanned: res.scanned, failed: res.failed, places: res.places, left: res.left.slice(), investorPages: res.investorPages, firmPages: res.firmPages });
     const inv = env.signers.find((s) => s.role === 'investor');
     const cs = env.signers.find((s) => s.role === 'countersigner');
     res.fields.forEach((p) => {
       // The firm signs only where the agreement has a signature line for it: with none, its blanks get no field.
-      if (p.role === 'firm' && !res.firmPages.length) return read.firmLeft++;
+      const unplaced = () => read.left.indexOf(p.page) < 0 && read.left.push(p.page);
+      if (p.role === 'firm' && !res.firmPages.length) {
+        if (read.firmLeftPages.indexOf(p.page) < 0) read.firmLeftPages.push(p.page);
+        unplaced();
+        return read.firmLeft++;
+      }
       const sg = p.role === 'firm' ? cs : inv;
       const ps = env.pageSizes[p.page - 1];
-      if (!sg || !ps || !TYPES[p.type]) return;
+      if (!sg || !ps || !TYPES[p.type]) return unplaced();
       const w = Math.min(0.96, p.w / ps.w);
       const hh = Math.min(0.5, p.h / ps.h);
       const f = { id: uid('fd'), signerId: sg.id, type: p.type, page: p.page, x: clamp01(p.x / ps.w, 1 - w), y: clamp01(p.y / ps.h, 1 - hh), w, h: hh, required: !!p.required, label: p.label || '', value: '', auto: true, confidence: p.conf, kind: p.kind };
@@ -2600,13 +2749,31 @@
     const r = env && env.read;
     if (!r) return '';
     const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
-    const on = (list) => (list.length === 1 ? `page ${list[0]}` : `pages ${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`);
-    const skipped = r.scanned.concat(r.failed).sort((a, b) => a - b);
-    if (!r.ok) return `The text of this PDF could not be read${r.scanned.length ? ': its pages are pictures, as in a scan' : ''}. No field was placed. Upload the PDF the agreement was made from, or add each field by hand.`;
-    const out = [r.boxes + r.blanks + r.signatures ? `${n(r.pages, 'page', 'pages')} read: ${n(r.boxes, 'tick box', 'tick boxes')}, ${n(r.blanks, 'blank', 'blanks')} and ${n(r.signatures, 'signature line', 'signature lines')} found, each with its field and none placed anywhere else.` : `${n(r.pages, 'page', 'pages')} read: no line, blank or tick box to complete was found, so no field was placed.`];
-    if (skipped.length) out.push(`${skipped.length === 1 ? 'Page' : 'Pages'} ${on(skipped).replace(/^pages? /, '')} could not be read (${r.scanned.length ? 'a picture of the page, as in a scan' : 'the page is damaged'}): nothing was placed there.`);
+    // Page numbers as words: "page 4", "pages 2 and 5", "pages 1 to 10, 12 to 72" (runs of pages are given as ranges).
+    const on = (pages) => {
+      const runs = [];
+      pages.forEach((p) => {
+        const last = runs[runs.length - 1];
+        if (last && p === last[1] + 1) last[1] = p;
+        else runs.push([p, p]);
+      });
+      const list = runs.map((r) => (r[0] === r[1] ? `${r[0]}` : r[1] === r[0] + 1 ? `${r[0]}, ${r[1]}` : `${r[0]} to ${r[1]}`));
+      return pages.length === 1 ? `page ${list[0]}` : list.length === 1 ? `pages ${list[0].replace(', ', ' and ')}` : `pages ${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
+    };
+    if (!r.ok) {
+      if (r.scanned.length && !r.failed.length && !r.error) return 'The text of this PDF could not be read: its pages are pictures, as in a scan. No field was placed. Upload the PDF the agreement was made from, or add each field by hand.';
+      return 'The portal could not read this PDF, so no field was placed. Add each field by hand, or try uploading the PDF again.';
+    }
+    const made = r.boxes + r.blanks + r.signatures;
+    // Mostly pictures of pages: said first, as the thing the sponsor has to act on.
+    if (!made && r.scanned.length >= r.pages) return `Most of this PDF could not be read: ${r.scanned.length} of its ${r.scanned.length + r.pages + r.failed.length} pages are pictures, as in a scan. No field was placed. Upload the PDF the agreement was made from, or add each field by hand.`;
+    const out = [made ? `${n(r.pages, 'page', 'pages')} read. ${n(r.boxes, 'tick box', 'tick boxes')}, ${n(r.blanks, 'blank', 'blanks')} and ${n(r.signatures, 'signature line', 'signature lines')} got a field, each on a place the agreement prints.` : `${n(r.pages, 'page', 'pages')} read: no line, blank or tick box to complete was found, so no field was placed.`];
+    const left = (r.left || []).slice().sort((a, b) => a - b);
+    if (left.length) out.push(`Not every printed place got a field: check ${on(left)} and add what is missing by hand.`);
+    if (r.scanned.length) out.push(`${r.scanned.length === 1 ? 'Page' : 'Pages'} ${on(r.scanned.slice().sort((a, b) => a - b)).replace(/^pages? /, '')} ${r.scanned.length === 1 ? 'is a picture' : 'are pictures'}, as in a scan, and could not be read: nothing was placed there.`);
+    if (r.failed.length) out.push(`The portal could not read ${on(r.failed.slice().sort((a, b) => a - b))}: nothing was placed there.`);
     out.push(r.investorPages.length ? `The investor’s signature line was found on ${on(r.investorPages)}.` : 'No signature line for the investor was found: add a signature field for the investor where they sign before saving.');
-    out.push(r.firmPages.length ? `Your firm’s signature line was found on ${on(r.firmPages)}.` : `No signature line for your firm was found, so your firm does not sign this agreement${r.firmLeft ? ` and ${n(r.firmLeft, 'blank that reads as your firm’s', 'blanks that read as your firm’s')} got no field` : ''}. Add a signature field for your firm if it should.`);
+    out.push(r.firmPages.length ? `Your firm’s signature line was found on ${on(r.firmPages)}.` : `No signature line for your firm was found, so your firm does not sign this agreement${r.firmLeft ? ` and ${n(r.firmLeft, 'blank that reads as your firm’s', 'blanks that read as your firm’s')} on ${on(r.firmLeftPages || [])} got no field` : ''}. Add a signature field for your firm if it should.`);
     return out.join(' ');
   }
   /** What still stops an offering's agreement from being saved ('' when it can be). */
@@ -2616,7 +2783,7 @@
     // Where a signer signs: a signature or initials field that is theirs to complete (not an optional line for a second person).
     const signing = (sg) => env.fields.filter((f) => f.signerId === sg.id && (f.type === 'signature' || f.type === 'initials') && f.required !== false);
     if (!inv || !signing(inv).length) {
-      if (env.read && !env.read.ok) return 'The text of this PDF could not be read, so no field was placed. Add a signature field for the investor where they sign.';
+      if (env.read && (!env.read.ok || (!env.fields.length && env.read.scanned.length >= env.read.pages))) return 'This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign.';
       if (env.read && !env.read.investorPages.length) return 'No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.';
       return 'Place at least one signature field for the investor.';
     }
