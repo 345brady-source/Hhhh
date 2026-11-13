@@ -147,6 +147,29 @@ ${SIGNATURE_PAGE}
 <p style="margin-top:30pt"><b>ACCEPTED BY THE GENERAL PARTNER</b></p>
 <table class="grid"><tr><td>By</td>${gcell(firm('signature'))}</tr><tr><td>Name and title</td>${gcell(firm('text', { label: 'Name and title' }))}</tr><tr><td>Date</td>${gcell(firm('date'))}</tr></table></div>`
   },
+  // Two pages with nothing to sign or fill in: running text, headings in bold capitals at several sizes (round letters
+  // are not tick boxes), lists, a table full of words, underlined text, rules, a block that is already filled in.
+  // Nothing may be placed on them but the fallback block, which is marked for review.
+  prose: {
+    saves: false,
+    css: `.t{border-collapse:collapse;width:100%} .t td{border:1px solid #000;padding:4pt 6pt} .a{font-family:Arial,Helvetica,sans-serif} .m{font-family:"Courier New",monospace}`,
+    html: `<div class="pg"><h1 style="text-align:center;font-size:17pt">OFFERING OVERVIEW AND BOARD QUESTIONS</h1><h2 style="font-size:13pt">DO NOT SIGN THIS PAGE: QUALIFIED PURCHASERS ONLY</h2>
+<p>The Fund is offering limited partnership interests to qualified purchasers. Each Subscriber should read the offering documents, including the Partnership Agreement, before deciding to subscribe. The General Partner may accept or reject any subscription in whole or in part, and its decision is final. The signature of the Subscriber is required on the signature page, which follows the questionnaire. Board observers, officers and directors of the Manager are listed in Schedule B (pages 40 to 48) with 100% of their holdings.</p>
+<p><u>Use of proceeds and distribution policy</u></p>
+<ul><li>Acquisition of the properties described in the memorandum;</li><li>Reserves of $500,000 for capital expenditures and $80,000 for working capital;</li><li>Fees and expenses of the offering, including those of counsel.</li></ul>
+<ul style="list-style:circle"><li>Distributions are made quarterly, on or about the 30th day after quarter end;</li><li>Questions about distributions go to investors@example.com or first_last__ir@example.com.</li></ul>
+<table class="t"><tr><td>Name</td><td>Title</td><td>Date appointed</td></tr><tr><td>Priya Raman</td><td>Managing Partner</td><td>January 5, 2021</td></tr><tr><td>Owen Brooks</td><td>Chief Operating Officer</td><td>October 8, 2022</td></tr></table>
+<p>Signature pages follow. [Signature page follows.] See also https://example.com/offering_documents/q3_2026 for the documents referred to above.</p>
+<hr style="border:0;border-top:1px solid #000;margin:14pt 0"><p style="text-align:center;font-size:9pt">Page 1 of 2</p></div>
+<div class="pg a"><h1 style="font-size:24pt">BOARD OF DIRECTORS</h1><h2 style="font-size:18pt">QUALIFIED OPPORTUNITY ZONE DISCLOSURE</h2><h3 style="font-size:14pt">DO, OO, QQ, DD, BB AND 0088</h3><h4 style="font-size:11pt">BOOK-ENTRY ONLY · DOMESTIC OFFERING · OLD BRIDGE ROAD</h4>
+<p style="font-size:9pt"><b>NOTICE TO RESIDENTS OF OHIO, OREGON AND OKLAHOMA: DO NOT DUPLICATE. QUOTED YIELDS ARE BEFORE EXPENSES.</b></p>
+<p class="m">0O0O 8B8B DQDQ 0000 8888 OOOO DDDD QQQQ o0o0 d0d0 [X] [x] (1) (a)</p>
+<p>The agreement was executed as follows.</p>
+<p>NORTHGATE FUND I GP, LLC</p><p>By: Northgate Capital GP, LLC, its general partner</p><p>Name: Priya Raman</p><p>Title: Managing Partner</p><p>Date: January 5, 2026</p>
+<p>Wire instructions: Bank of Example, ABA 021000021, account 000123456789, reference “Northgate Fund I”.</p>
+<p style="font-family:Georgia,serif;font-size:15pt"><b>Good Operators Do Quality Deals: Our Outlook</b></p>
+<p style="font-family:Georgia,serif">Occupancy across the portfolio was 96% at quarter end; debt service coverage was 1.80x. No distributions were deferred. Questions? Call (512) 555-0100.</p></div>`
+  },
   // One page with no text at all: the stand-in for a scanned agreement.
   blank: { saves: false, html: `<div class="pg"></div>` }
 };

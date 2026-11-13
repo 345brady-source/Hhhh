@@ -306,6 +306,25 @@ const labelled = (x, y, label, len) => [['text', x, y, label], ['rule', x + widt
   check('each empty cell gets its row’s field; the joint subscriber’s row and the table’s top edge get none', f.length === 2 && f.every((p) => p.type === 'signature' && Math.abs(p.x - 270) < 1) && f[0].conf === 'high', sum(f));
 })();
 
+// 26. A line with no label, with "Name:" and "Title:" printed under it, is where that signer signs.
+(() => {
+  const f = read([['text', 72, 100, 'SUBSCRIBER:'], ['rule', 72, 300, 140], ['text', 72, 156, 'Name:'], ['text', 72, 172, 'Title:']]);
+  check('the unlabelled line over "Name:" and "Title:" is the signature line', f.length === 3 && f[0].type === 'signature' && f[0].role === 'investor' && f[0].conf === 'high' && f[1].type === 'name' && f[2].label === 'Title' && f[1].x > 72 + width('Name:'), sum(f));
+  const g = read([['text', 72, 100, 'SUBSCRIBER:'], ['rule', 72, 300, 140], ['text', 72, 156, 'Name:'], ['text', 110, 156, 'Priya Raman']]);
+  check('not when a name is already printed after "Name:"', g.length === 0, sum(g));
+})();
+// 27. Tick boxes set as a character of a symbol font count only where a square was seen.
+(() => {
+  const a = page([['text', 72, 100, ' Individual'], ['box', 72.5, 91]]);
+  const fa = P.analyze([a], ctx).filter((p) => p.why.indexOf('last page') < 0);
+  check('a symbol-font character with a square seen on it is a tick box with its words', fa.length === 1 && fa[0].type === 'checkbox' && fa[0].label === 'Individual' && fa[0].conf === 'high', sum(fa) + ' ' + (fa[0] || {}).label);
+  const fb = read([['text', 72, 100, ' See the note on page 4']]);
+  check('a symbol-font character with no square on it is not a tick box', fb.length === 0, sum(fb));
+  const c = page([['text', 72, 100, 'o Joint tenants'], ['box', 72.5, 91]]);
+  const fc = P.analyze([c], ctx).filter((p) => p.why.indexOf('last page') < 0);
+  check('a square that is the first letter of its own caption is labelled with the words after it', fc.length === 1 && fc[0].type === 'checkbox' && fc[0].label === 'Joint tenants', sum(fc) + ' ' + (fc[0] || {}).label);
+})();
+
 /* ---------- Review marks and filling in (pure helpers) ---------- */
 const old = { type: 'signature', page: 1, x: 0.1, y: 0.1 };
 const marked = { type: 'text', page: 1, x: 0.1, y: 0.2, auto: true, confidence: 'medium', review: true, reviewReason: 'x' };

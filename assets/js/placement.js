@@ -123,6 +123,20 @@
         // A drawn square has ink in all four corners; the bowl of a letter (o, e, Q) is round there.
         const corner = (x, y) => at(x, y) || at(x + 1, y) || at(x - 1, y) || at(x, y + 1) || at(x, y - 1);
         if (!(corner(a.x0, a.y0) && corner(a.x1, a.y0) && corner(b.x0, b.y1) && corner(b.x1, b.y1))) continue;
+        // and straight sides: a round letter bulges out past the ends of its top stroke, a square does not.
+        const bulge = (x) => {
+          let n = 0;
+          for (let y = a.y1 + 1; y < b.y0; y++) n += at(x, y);
+          return n > 0.1 * (b.y0 - a.y1 - 1);
+        };
+        if (bulge(a.x0 - 2) || bulge(a.x0 - 3) || bulge(a.x1 + 2) || bulge(a.x1 + 3)) continue;
+        // and thin sides: the frame of a tick box is a hairline next to its size, the stem of a bold letter is not.
+        const mid = Math.round((a.y1 + b.y0) / 2);
+        let left = 0;
+        for (let x = a.x0 - 1; x < a.x1 && (at(x, mid) || x <= a.x0 + 1); x++) left += at(x, mid);
+        let right = 0;
+        for (let x = a.x1 + 1; x > a.x0 && (at(x, mid) || x >= a.x1 - 1); x--) right += at(x, mid);
+        if (Math.max(left, right) > Math.max(2, Math.round(0.16 * len))) continue;
         if (squares.some((s) => Math.abs(s.x0 - a.x0) <= 2 * k && Math.abs(s.y0 - a.y0) <= 2 * k)) continue;
         squares.push({ x0: Math.min(a.x0, b.x0), x1: Math.max(a.x1, b.x1), y0: a.y0, y1: b.y1 });
       }
@@ -232,7 +246,7 @@
   const wordsOf = (s) => (s ? s.split(' ').filter(Boolean) : []);
   /** Rough relative width of a character, for estimating where a part of a text run sits. */
   function charW(ch) {
-    if (ch === ' ' || ch === ' ') return 0.5;
+    if (ch === ' ' || ch === '\u00A0') return 0.5;
     if ('ijlt.,:;\'|!()[]'.indexOf(ch) >= 0) return 0.55;
     if (ch === 'm' || ch === 'w') return 1.45;
     if (ch === 'M' || ch === 'W') return 1.7;
@@ -241,11 +255,12 @@
     return 1;
   }
   // Inside a text run: underscores, leaders of dots or dashes, a bracket pair with nothing in it, a box character, a wide space.
-  const PIECE_RE = /_{3,}|\.{6,}|(?:\. ){5,}\.?|-{6,}|[–—]{3,}|\[[  ]{0,6}\]|\([  ]{1,6}\)|[☐□▢◻❑❒]|[  ]{3,}|\t+/g;
+  const PIECE_RE = /_{3,}|\.{6,}|(?:\. ){5,}\.?|-{6,}|[\u2013\u2014]{3,}|\[[ \u00A0]{0,6}\]|\([ \u00A0]{1,6}\)|[\u2610\u25A1\u25A2\u25FB\u2751\u2752]|[\uF020-\uF0FF]|[ \u00A0]{3,}|\t+/g;
   /**
    * A text run cut into its words and its blanks, each with an estimated extent (characters placed in proportion
    * to the run's width). Returns [{ s, x0, x1, y, h, t, brk }]; t is 'text', 'gap' (underscores), 'lead' (a leader of
-   * dots or dashes) or 'box' (a tick box written as text); brk marks text that follows a wide space.
+   * dots or dashes), 'box' (a tick box written as text) or 'sym' (a character of a symbol font, which may be a tick
+   * box); brk marks text that follows a wide space.
    */
   function pieces(it) {
     const s = String(it.s == null ? '' : it.s);
@@ -273,8 +288,8 @@
     while ((m = PIECE_RE.exec(s))) {
       const c = m[0][0];
       add(at, m.index, 'text');
-      if (c === ' ' || c === ' ' || c === '\t') brk = true;
-      else add(m.index, m.index + m[0].length, c === '_' ? 'gap' : c === '[' || c === '(' || c > '─' ? 'box' : 'lead');
+      if (c === ' ' || c === '\u00A0' || c === '\t') brk = true;
+      else add(m.index, m.index + m[0].length, c === '_' ? 'gap' : c >= '\uF020' && c <= '\uF0FF' ? 'sym' : c === '[' || c === '(' || c > '\u2500' ? 'box' : 'lead');
       at = m.index + m[0].length;
     }
     add(at, s.length, 'text');
@@ -306,17 +321,17 @@
   /* =====================================================================
    * Labels
    * ===================================================================== */
-  const LIST_MARK = /^(\(?(\d{1,2}|[a-z]|[ivx]{1,4})[.)]|[•·▪■○●*–-])$/i;
+  const LIST_MARK = /^(\(?(\d{1,2}|[a-z]|[ivx]{1,4})[.)]|[•·▪■○●*\u2013-])$/i;
   /** Text as compared with the label patterns: one line, no list marker, bracketed remark, currency sign or closing colon, lower case. */
   function plain(text) {
     return tidy(text)
-      .replace(/^(\(?(\d{1,2}|[a-z]|[ivx]{1,4})[.)]|[•·▪■○●*–-])\s+/i, '')
+      .replace(/^(\(?(\d{1,2}|[a-z]|[ivx]{1,4})[.)]|[•·▪■○●*\u2013-])\s+/i, '')
       .replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ')
       .replace(/\s*,\s*(if|where|when|as) [^:]*/i, '')
       .replace(/[“”"]/g, '')
       .replace(/[‘’]/g, "'")
       .replace(/\s*(u\.?s\.?\s*)?\$\s*$/i, '')
-      .replace(/\s*[:：]\s*$/, '')
+      .replace(/\s*[:\uFF1A]\s*$/, '')
       .replace(/\s+/g, ' ')
       .trim()
       .toLowerCase();
@@ -404,7 +419,7 @@
     const low = raw.toLowerCase();
     const n = wordsOf(t).length;
     const remarks = (low.match(/[([][^)\]]*[)\]]|,\s*(if|where|when|as) [^:]*/g) || []).join(' ');
-    const info = { kind: '', who: whoIn(t), forType: typeIn(remarks), optional: OPTIONAL_RE.test(low), colon: /[:：]\s*((u\.?s\.?\s*)?\$)?\s*$/i.test(raw), by: false, text: raw };
+    const info = { kind: '', who: whoIn(t), forType: typeIn(remarks), optional: OPTIONAL_RE.test(low), colon: /[:\uFF1A]\s*((u\.?s\.?\s*)?\$)?\s*$/i.test(raw), by: false, text: raw };
     const is = (kind) => {
       info.kind = kind;
       return info;
@@ -483,7 +498,7 @@
   /** One page's text and scanned marks as printed lines whose elements are text segments, blanks and tick boxes. */
   function layout(pg) {
     const lines = linesOf(pg);
-    const glyph = (b) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && Math.max(b.w, b.h) < 0.75 * p.h && b.x + b.w / 2 > p.x0 && b.x + b.w / 2 < p.x1 && b.y + b.h / 2 > p.y - 1.05 * p.h && b.y + b.h / 2 < p.y + 0.25 * p.h));
+    const glyph = (b) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && Math.max(b.w, b.h) < 0.55 * p.h && b.x + b.w / 2 > p.x0 && b.x + b.w / 2 < p.x1 && b.y + b.h / 2 > p.y - 1.05 * p.h && b.y + b.h / 2 < p.y + 0.25 * p.h));
     const boxes = (pg.boxes || []).filter((b) => b && b.w > 0 && b.h > 0 && !glyph(b)).map((b) => ({ x0: b.x, x1: b.x + b.w, y0: b.y, y1: b.y + b.h, seen: true }));
     // A rule that is the top or bottom edge of a tick box, or the top edge of a frame or a table, is not a blank
     // (the bottom edge of a table cell, with the cell's sides standing on it, is one).
@@ -540,11 +555,13 @@
       });
       ln.parts.forEach((p, i) => {
         if (p.t === 'text') return els.push({ t: 'text', key: p.x0, part: p });
-        if (p.t === 'box') {
-          // A tick box written as text: the scanned square when one is there, otherwise an estimate from the text.
+        if (p.t === 'box' || p.t === 'sym') {
+          // A tick box written as text: the scanned square when one is there, otherwise an estimate from the text
+          // (a character of a symbol font can be anything, so it counts only where a square was seen).
           const side = Math.min(p.x1 - p.x0, p.h);
           const est = { x0: p.x0, x1: p.x0 + Math.max(side, 8), y0: p.y - Math.max(side, 8), y1: p.y, seen: false };
           const hit = boxes.find((b) => !b.line && overlap(b.x0, b.x1, p.x0 - 3, p.x1 + 3) > 0 && overlap(b.y0, b.y1, p.y - p.h, p.y + 0.3 * p.h) > 0);
+          if (!hit && p.t === 'sym') return;
           const box = hit || est;
           box.line = ln;
           return els.push({ t: 'box', key: p.x0, box });
@@ -553,7 +570,7 @@
         // A leader of dots or dashes is a blank only when nothing but white space follows it on the line.
         if (!r && p.t === 'lead' && ln.parts.slice(i + 1).some((q) => q.t === 'text')) return;
         if (r && r.clear < BLANK_CLEAR && p.t !== 'gap') return;
-        const slot = r ? { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, cut: !!r.cut, cell: !!r.cell } : { x0: p.x0, x1: p.x1, y: p.y + 1.6, clear: Math.max(BLANK_CLEAR, p.h), seen: false };
+        const slot = r ? { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, cut: !!r.cut, cell: !!r.cell, table: !!r.table } : { x0: p.x0, x1: p.x1, y: p.y + 1.6, clear: Math.max(BLANK_CLEAR, p.h), seen: false };
         slot.line = ln;
         slot.fromText = true;
         slot.src = p.src;
@@ -564,7 +581,7 @@
         if (taken.has(r) || r.clear < BLANK_CLEAR) return;
         // A stroke inside a run of words (two underscores in a name, a dash) is part of the text, not a blank.
         if (ln.parts.some((p) => p.t === 'text' && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0))) return;
-        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell };
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
         slots.push(slot);
         els.push({ t: 'slot', key: r.x0, slot });
       });
@@ -595,7 +612,7 @@
     });
     // A stroke in the body of a run of words (the bar of a letter, an equals sign) is part of the text, not a blank.
     const inText = (r) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && r.y > p.y - 1.05 * p.h && r.y < p.y + 0.2 * p.h && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0)));
-    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: null, fromText: false, cut: !!r.cut, cell: !!r.cell }));
+    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: null, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table }));
     // Rows of a ruled table: each row's line runs under its label too, so the empty stretch begins where that row's
     // label ends. Nothing printed marks the column, so rows that end together start together, after the longest label.
     const cut = slots.filter((s) => s.cut).sort((a, b) => a.y - b.y);
@@ -676,7 +693,7 @@
       // Words follow their box, unless the line begins with words and ends with a box ("Yes [ ]  No [ ]").
       const first = ln.els.find((e) => e.t !== 'slot');
       const lastEl = ln.els[ln.els.length - 1];
-      const before = first && first.t === 'seg' && !LIST_MARK.test(first.seg.s) && lastEl.t === 'box';
+      const before = first && first.t === 'seg' && !LIST_MARK.test(first.seg.s) && lastEl.t === 'box' && first.seg.x1 <= bs[0].box.x0 + 2;
       bs.forEach((e) => {
         if (comb(e)) return;
         const b = e.box;
@@ -684,8 +701,15 @@
         const cx = (b.x0 + b.x1) / 2;
         const cy = (b.y0 + b.y1) / 2;
         const near = ln.els[e.i + (before ? -1 : 1)];
-        const seg = near && near.t === 'seg' && (before ? b.x0 - near.seg.x1 : near.seg.x0 - b.x1) <= 40 ? near.seg : null;
-        const p = { type: 'checkbox', role: '', page: pg.page, x: cx - side / 2, y: cy - side / 2, w: side, h: side, label: seg ? clean(seg.s.replace(/[:;,.]\s*$/, '')) : '', required: false, conf: 'high', why: '', kind: 'checkbox' };
+        let seg = near && near.t === 'seg' && (before ? b.x0 - near.seg.x1 : near.seg.x0 - b.x1) <= 40 ? near.seg : null;
+        let words = seg ? seg.s : '';
+        // The box is a letter of its own caption in the text (a symbol font's "o Individual"): the words after that letter.
+        const own = ln.els[e.i - 1];
+        if (!before && own && own.t === 'seg' && own.seg.x0 <= b.x0 + 2 && own.seg.x1 > b.x1 + 2 && (!seg || seg.x0 - b.x1 > 12) && /^\S\s+\S/.test(own.seg.s)) {
+          seg = own.seg;
+          words = seg.s.replace(/^\S\s+/, '');
+        }
+        const p = { type: 'checkbox', role: '', page: pg.page, x: cx - side / 2, y: cy - side / 2, w: side, h: side, label: clean(words.replace(/[:;,.]\s*$/, '')), required: false, conf: 'high', why: '', kind: 'checkbox' };
         const m = { p, slot: null, seg, info: null, kind: 'checkbox', block: false, who: '', x0: b.x0, x1: seg ? Math.max(seg.x1, b.x1) : b.x1, y: b.y1 };
         if (seg) seg.used = seg.used || 'box';
         made.push(m);
@@ -744,7 +768,7 @@
       return m;
     };
     const generic = (slot, info, seg) => {
-      const label = clean(info.text.replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ').replace(/\s*(u\.?s\.?\s*)?\$\s*$/i, '').replace(/\s*[:：]\s*$/, '').replace(/\s*,\s*(if|where|when|as) [^:]*$/i, '')) || 'Text';
+      const label = clean(info.text.replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ').replace(/\s*(u\.?s\.?\s*)?\$\s*$/i, '').replace(/\s*[:\uFF1A]\s*$/, '').replace(/\s*,\s*(if|where|when|as) [^:]*$/i, '')) || 'Text';
       const m = propose('other', slot, info, { seg, label, required: !info.optional && !/\b(fax|middle|suffix|apt|suite)\b/i.test(label) });
       if (info.kind === 'phrase' && !slot.cut && !slot.cell) weaken(m, WHY.phrase);
       return m;
@@ -797,6 +821,12 @@
             const first = up && up.els.length === 1 && up.els[0].t === 'seg' ? up.els[0].seg : null;
             const joined = first && Math.abs(first.x0 - seg.x0) < 30 && ln.y - up.y < 2.2 * ln.h ? classify(first.s + ' ' + seg.s) : null;
             if (joined && joined.kind !== 'skip') info = joined;
+          }
+          // In a table with drawn cells, the room left in a cell after its words is a blank only when the words end
+          // in a colon ("Name:"): a table of names, titles and dates is not a form.
+          if (slot.table && !slot.cell && !/[:\uFF1A]\s*((u\.?s\.?\s*)?\$)?\s*$/i.test(seg.s)) {
+            slot.skip = true;
+            return;
           }
           const isLabel = info && info.kind !== 'phrase';
           const captioned = dist > 36 && [under(slot), over(slot)].some((g) => g && known(g));
@@ -870,12 +900,15 @@
         const cellText = inRow.filter((g) => Math.abs(g.x0 - near.x0) <= 3 || g === near).sort((a, b) => a.y - b.y);
         if (L.slots.some((o) => o !== slot && o.x0 >= near.x1 - 3 && o.x1 <= slot.x0 + 3 && o.y > top && o.y <= slot.y + 1)) return;
         const whole = cellText.map((g) => g.s).join(' ');
-        const info = classify(whole) || (/[:：]\s*$/.test(whole) ? null : classify(whole + ':')) || classify(near.s);
+        if (slot.table && !slot.cell && !/[:\uFF1A]\s*$/.test(whole)) return (slot.skip = true);
+        const info = classify(whole) || (/[:\uFF1A]\s*$/.test(whole) ? null : classify(whole + ':')) || classify(near.s);
         if (!info) return;
         cellText.forEach((g) => (g.used = 'label'));
         if (info.kind === 'skip') return (slot.skip = true);
         if (FIELD(info.kind)) return propose(info.kind, slot, info, { seg: near });
-        generic(slot, info, near);
+        const m = generic(slot, info, near);
+        // One empty cell in a table of words may just be an empty cell: sure only where a column of them stands.
+        if (slot.cell && !L.slots.some((o) => o !== slot && o.cell && Math.abs(o.x0 - slot.x0) <= 3 && Math.abs(o.x1 - slot.x1) <= 3)) weaken(m, WHY.phrase);
       });
     /* 3. Blanks with no label on their line: a caption under the line, or a label above it. */
     const lonely = L.slots.filter((s) => !s.made && !s.skip).sort((a, b) => a.y - b.y || a.x0 - b.x0);
@@ -892,7 +925,7 @@
     stacks.forEach((st) => {
       const below = st.map((s) => under(s));
       const above = st.map((s) => over(s));
-      const capInfo = below.map((g) => (g && !/[:：]\s*$/.test(g.s) ? known(g) : null));
+      const capInfo = below.map((g) => (g && !/[:\uFF1A]\s*$/.test(g.s) ? known(g) : null));
       const topInfo = above.map((g) => (g ? known(g) : null));
       const nCap = capInfo.filter(Boolean).length;
       const nTop = topInfo.filter(Boolean).length;
@@ -914,11 +947,25 @@
         else if (!sure && (nTop > 0 || headed)) weaken(m, WHY.between);
       });
     });
+    // A line with no label of its own, with "Name:" or "Title:" printed right under it (labels that have no line of
+    // their own): the line is where that signer signs.
+    L.slots
+      .filter((sl) => !sl.made && !sl.skip && sl.x1 - sl.x0 >= 72)
+      .forEach((sl) => {
+        const next = L.segs.filter((g) => !g.used && g.y - sl.y > 0.6 * g.h && g.y - sl.y <= 2.4 * g.h && Math.abs(g.x0 - sl.x0) <= 8).sort((a, b) => a.y - b.y)[0];
+        const info = next ? classify(next.s) : null;
+        if (!info || !info.colon || ['name', 'title', 'nameTitle'].indexOf(info.kind) < 0) return;
+        // Nothing may follow the label on its line (a name printed after "Name:" means the block is already filled in).
+        const e = next.line.els.find((x) => x.t === 'seg' && x.seg === next);
+        const after = e ? next.line.els[e.i + 1] : null;
+        if (after && (after.t === 'seg' ? after.seg.x0 : after.t === 'slot' ? after.slot.x0 : after.box.x0) < sl.x1) return;
+        propose('signature', sl, null, {});
+      });
     // A caption of a known kind under a blank that already has a label of another kind: the caption says what is written there.
     made.slice().forEach((m) => {
       if (!m.slot || !m.seg || m.kind === 'checkbox' || !m.info) return;
       const g = under(m.slot);
-      const cap = g && !g.used && !/[:：]\s*$/.test(g.s) ? classify(g.s) : null;
+      const cap = g && !g.used && !/[:\uFF1A]\s*$/.test(g.s) ? classify(g.s) : null;
       if (!cap || !FIELD(cap.kind) || cap.kind === m.kind) return;
       g.used = 'caption';
       const bareRole = /^(subscriber|investor|purchaser|limited partner|buyer)$/.test(plain(m.seg.s));
@@ -1009,7 +1056,7 @@
         const n = wordsOf(t).length;
         if (!t || n > 12) return;
         const caps = /[A-Z]{2}/.test(raw) && raw === raw.toUpperCase();
-        const colon = /[:：]\s*$/.test(raw);
+        const colon = /[:\uFF1A]\s*$/.test(raw);
         const stop = /[.;?!]$/.test(raw) && !/\b(l\.p|l\.l\.c|inc|ltd|llc|lp|corp|co)\.$/i.test(raw);
         if (stop && !caps && n > 5) return;
         const big = wordsOf(raw).filter((w) => w.length > 3);
