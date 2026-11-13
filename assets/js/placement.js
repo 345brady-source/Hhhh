@@ -394,7 +394,7 @@
         // Underscores or a leader are a blank only where a printed line was read for them.
         const r = pair.get(p);
         if (!r || (r.clear < BLANK_CLEAR && p.t !== 'gap')) return;
-        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, leader: /leader/.test(r.made || ''), cut: !!r.cut, cell: !!r.cell, table: !!r.table };
         slot.line = ln;
         slot.fromText = true;
         slot.src = p.src;
@@ -405,7 +405,7 @@
         if (taken.has(r) || r.clear < BLANK_CLEAR) return;
         // A stroke inside a run of words (two underscores in a name, a dash) is part of the text, not a blank.
         if (ln.parts.some((p) => p.t === 'text' && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0))) return;
-        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, leader: /leader/.test(r.made || ''), line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
         slots.push(slot);
         els.push({ t: 'slot', key: r.x0, slot });
       });
@@ -445,7 +445,7 @@
     });
     // A stroke in the body of a run of words (the bar of a letter, an equals sign) is part of the text, not a blank.
     const inText = (r) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && r.y > p.y - 0.8 * p.h && r.y < p.y + 0.2 * p.h && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0)));
-    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, line: null, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table }));
+    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, leader: /leader/.test(r.made || ''), line: null, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table }));
     // Rows of a ruled table: each row's line runs under its label too, so the empty stretch begins where that row's
     // label ends. Nothing printed marks the column, so rows that end together start together, after the longest label.
     const cut = slots.filter((s) => s.cut).sort((a, b) => a.y - b.y);
@@ -663,7 +663,9 @@
     const generic = (slot, info, seg, plainLabel) => {
       const label = clean(info.text.replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ').replace(/\s*(u\.?s\.?\s*)?\$\s*$/i, '').replace(/\s*[:\uFF1A]\s*$/, '').replace(/\s*,\s*(if|where|when|as) [^:]*$/i, '')) || 'Text';
       const m = propose('other', slot, info, { seg, label, required: !info.optional && !/\b(fax|middle|suffix|apt|suite)\b/i.test(label) });
-      if (info.kind === 'phrase' && !plainLabel && !slot.cut && !slot.cell) weaken(m, WHY.phrase);
+      // A leader of dots is weaker evidence of a blank than a printed line: with words before it that do not end in a
+      // colon it stays marked.
+      if (info.kind === 'phrase' && (!plainLabel || slot.leader) && !slot.cut && !slot.cell) weaken(m, WHY.phrase);
       return m;
     };
     L.lines.forEach((ln) => {
