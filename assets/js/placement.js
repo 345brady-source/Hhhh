@@ -680,7 +680,9 @@
         // A short blank that opens a line, with a statement after it on that line however far (a tab stop, a list mark
         // between): initials when the page asks for initials, otherwise a place for a tick.
         const opens = !ln.els.slice(0, e.i).some((o) => o.t !== 'seg' || !LIST_MARK.test(o.seg.s));
-        if (opens && span <= 60) {
+        // So does a short blank further along a line that already has a tick before it (a row of choices).
+        const rowTick = ln.els.slice(0, e.i).some((o) => o.t === 'slot' && o.slot.made && o.slot.made.kind === 'checkbox') && !(left && /^(yes|no|n\/?a)$/.test(plain(left.seg.s)));
+        if ((opens || rowTick) && span <= 60) {
           const stmt = ln.els.slice(e.i + 1).find((o) => o.t !== 'seg' || !LIST_MARK.test(o.seg.s));
           const lead0 = stmt && stmt.t === 'seg' ? stmt.seg.s.match(/^[([]\s*([^()[\]]{1,60}?)\s*[)\]]/) : null;
           const lab = stmt && stmt.t === 'seg' ? classify(lead0 ? lead0[1] : stmt.seg.s) : null;

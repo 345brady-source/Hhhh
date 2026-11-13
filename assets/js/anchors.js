@@ -207,6 +207,9 @@
             }
             const w = s.x1 - s.x0;
             const hh = s.y1 - s.y0;
+            // A rectangle with no height or no width, stroked, is a line.
+            if (stroked && hh < 0.6 && w >= 3) return segs.push({ o: 'h', a0: s.x0, a1: s.x1, c: (s.y0 + s.y1) / 2, t: lw });
+            if (stroked && w < 0.6 && hh >= 3) return segs.push({ o: 'v', a0: s.y0, a1: s.y1, c: (s.x0 + s.x1) / 2, t: lw });
             if (filled && hh <= 3 && w >= 3 * hh) segs.push({ o: 'h', a0: s.x0, a1: s.x1, c: (s.y0 + s.y1) / 2, t: hh });
             else if (filled && w <= 3 && hh >= 3 * w) segs.push({ o: 'v', a0: s.y0, a1: s.y1, c: (s.x0 + s.x1) / 2, t: w });
             else if (stroked) {
@@ -268,7 +271,7 @@
       const cat = g.box ? 'box' : g.u === '_' ? 'gap' : 'text';
       const gap = cur ? g.x0 - cur.x1 : 0;
       const spaces = cur ? cur.s.length - cur.s.replace(/ +$/, '').length : 0;
-      if (cur && cur.cat === cat && cat !== 'box' && Math.abs(g.y - cur.y) < 0.5 && gap > -0.3 * g.h && gap < (cat === 'gap' ? 0.8 : (1.2 + 0.6 * spaces) * g.h)) {
+      if (cur && cur.cat === cat && cat !== 'box' && Math.abs(g.y - cur.y) < 0.5 && gap > -0.3 * g.h && gap < (cat === 'gap' ? Math.max(0.8, 0.35 * g.h) : (1.2 + 0.6 * spaces) * g.h)) {
         if (cat === 'text' && !spaces && gap > 0.18 * g.h) cur.s += ' ';
         cur.s += g.u;
         cur.x1 = g.x1;
@@ -289,7 +292,17 @@
       const cx = (g.x0 + g.x1) / 2;
       out.boxes.push({ x: cx - side / 2, y: g.y - 0.84 * side, w: side, h: 0.9 * side, made: 'character' });
     });
-    raw.rects.forEach((r) => {
+    // A small square drawn as four separate strokes is a square all the same.
+    const drawn = raw.rects.slice();
+    const short = raw.segs.filter((sg) => sg.a1 - sg.a0 >= 5 && sg.a1 - sg.a0 <= 20);
+    short.forEach((top) => {
+      if (top.o !== 'h') return;
+      const bottom = short.find((b) => b.o === 'h' && b !== top && b.c - top.c >= 5 && Math.abs(b.c - top.c - (top.a1 - top.a0)) <= 0.25 * (top.a1 - top.a0) && Math.abs(b.a0 - top.a0) <= 1 && Math.abs(b.a1 - top.a1) <= 1);
+      if (!bottom) return;
+      const side = (x) => short.some((v) => v.o === 'v' && Math.abs(v.c - x) <= 1 && v.a0 <= top.c + 1 && v.a1 >= bottom.c - 1);
+      if (side(top.a0) && side(top.a1) && !drawn.some((r) => Math.abs(r.x0 - top.a0) <= 1 && Math.abs(r.y0 - top.c) <= 1)) drawn.push({ x0: top.a0, y0: top.c, x1: top.a1, y1: bottom.c });
+    });
+    drawn.forEach((r) => {
       const w = r.x1 - r.x0;
       const hh = r.y1 - r.y0;
       if (w < 5 || w > 20 || Math.abs(w - hh) > 0.25 * w) return;
@@ -323,7 +336,7 @@
     let run = null;
     shown.forEach((g) => {
       if (g.u === '_' && !g.sp) {
-        if (run && Math.abs(g.y - run.base) < 0.5 && Math.abs(g.x0 - run.x1) < 0.8) {
+        if (run && Math.abs(g.y - run.base) < 0.5 && g.x0 - run.x1 > -0.8 && g.x0 - run.x1 < Math.max(0.8, 0.35 * g.h)) {
           run.x1 = g.x1;
           run.n++;
         } else {
