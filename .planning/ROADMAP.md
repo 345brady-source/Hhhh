@@ -41,9 +41,10 @@ Plans:
 ### Phase 01.1: Placement reads what the agreement has: fields only on its own blanks, boxes and signature lines (INSERTED)
 
 **Goal:** [Urgent work - to be planned]
-**Requirements**: PLACE-08, PLACE-09, PLACE-10, PLACE-11, PLACE-12, PLACE-13, PLACE-14
+**Requirements**: PLACE-08, PLACE-09, PLACE-10, PLACE-11, PLACE-12, PLACE-13, PLACE-14, LOOK-03
 **Depends on:** Phase 1
 **Plans:** 0 plans
+**UI hint**: yes
 
 Plans:
 - [ ] TBD (run /gsd-plan-phase 01.1 to break down)

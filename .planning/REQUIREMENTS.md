@@ -58,6 +58,7 @@
 
 - [ ] **LOOK-01**: The sponsor's field editor follows the portal's design system and reads as a finished, professional tool
 - [ ] **LOOK-02**: The investor's signing screens carry only the sponsor firm's brand and follow the portal's design system
+- [ ] **LOOK-03**: Every field box shown on the agreement, for the sponsor, the investor and the firm, has rounded corners and a finished, professional look, and its name tag never covers the agreement's words
 
 ## v2 Requirements
 
@@ -97,6 +98,7 @@
 | PLACE-12 | Phase 01.1 | Pending |
 | PLACE-13 | Phase 01.1 | Pending |
 | PLACE-14 | Phase 01.1 | Pending |
+| LOOK-03 | Phase 01.1 | Pending |
 | EDIT-01 | Phase 2 | Pending |
 | EDIT-02 | Phase 2 | Pending |
 | EDIT-03 | Phase 2 | Pending |
@@ -121,10 +123,10 @@
 | REC-05 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 36 total
-- Mapped to phases: 36
+- v1 requirements: 37 total
+- Mapped to phases: 37
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-11-12*
-*Last updated: 2026-11-13 after the owner's report on a real agreement: PLACE-08 to PLACE-14 added for Phase 01.1*
+*Last updated: 2026-11-13 after the owner's report on a real agreement: PLACE-08 to PLACE-14 and LOOK-03 added for Phase 01.1*
