@@ -4,9 +4,16 @@
  * Run from the repository root:   node .planning/phases/01-accurate-field-placement/checks/accuracy.js
  *   --only a,b     run only these fixtures
  *   --baseline     report without failing (used once against the code as it was before this phase)
+ *   --quiet        the closing table only
  *
- * A field is on its blank when page, type and signer match, its left edge is within 6 pt of the blank's and its
- * bottom edge is between 2 pt above and 7 pt below the printed line. Exit code 1 when a rule fails.
+ * For every printed blank the report says whether the right kind of field rests on its line for the right signer
+ * (see sits and wrong in harness.js for the exact rule), and it counts confident mistakes: fields the portal placed
+ * at high confidence that are on no blank, or are the wrong kind, signer, label or prefill for theirs. A confident
+ * mistake anywhere fails the run. Anything the portal could not place correctly has to be marked for review instead.
+ *
+ * What fails the run besides that: a blank without its field in the fixtures the rules were built on (every fixture
+ * not marked heldOut); a review mark in a fixture marked clean; an agreement saved, or held back, against its fixture's
+ * `saves`; a field that should carry a review mark (flag) and does not. Exit code 1 on any failure.
  */
 const H = require('./harness');
 const { CSS, FIXTURES } = require('./fixtures');
@@ -15,36 +22,16 @@ const args = process.argv.slice(2);
 const flag = (name) => args.indexOf(name) >= 0;
 const value = (name) => (args.indexOf(name) >= 0 ? args[args.indexOf(name) + 1] || '' : '');
 const BASELINE = flag('--baseline');
+const QUIET = flag('--quiet');
 const ONLY = value('--only').split(',').map((s) => s.trim()).filter(Boolean);
+// The code as it was before this phase, measured with --baseline on the three fixtures that existed then (classic,
+// caption, blank): no blank had a field on it and every agreement was saved for onboarding with nobody looking.
+const BEFORE = { blanks: 15, right: 0, savedUnseen: 3, of: 3 };
 
-/** Whether a field rests on a printed blank (same page and kind, starting where the line starts, resting on it). */
-const sits = (f, e) => f.page === e.page && f.type === e.type && Math.abs(f.x0 - e.x0) <= 6 && f.bottom - e.line >= -2 && f.bottom - e.line <= 7;
-const on = (f, e) => sits(f, e) && f.role === e.role;
-const where = (e) => `p${e.page} ${e.type}/${e.role}`;
-
-/** The rules a fixture must meet; each returns the sentences that failed. */
-const RULES = {
-  classic(expect, out) {
-    const fails = [];
-    const sigs = expect.filter((e) => e.type === 'signature');
-    sigs.forEach((e) => {
-      const f = out.fields.find((x) => on(x, e));
-      if (!f) fails.push(`no signature field on the ${e.role}'s line on page ${e.page}`);
-      else if (f.conf !== 'high') fails.push(`the signature field on the ${e.role}'s line on page ${e.page} is ${f.conf || 'unmarked'}, not high`);
-    });
-    out.fields
-      .filter((f) => f.type === 'signature' && !sigs.some((e) => on(f, e)))
-      .forEach((f) => fails.push(`a signature field for the ${f.role} is not on a signature line (page ${f.page}, x ${f.x0.toFixed(0)}, y ${f.top.toFixed(0)}-${f.bottom.toFixed(0)})`));
-    return fails;
-  },
-  blank(expect, out) {
-    const fails = [];
-    out.fields.filter((f) => f.conf !== 'low').forEach((f) => fails.push(`a fallback ${f.type} field is ${f.conf || 'unmarked'}, not low`));
-    if (!out.fields.length) fails.push('no fallback fields were placed');
-    if (out.saved) fails.push('the agreement was saved for onboarding with nobody looking at it');
-    return fails;
-  }
-};
+const where = (e) => `p${e.page} ${e.type}/${e.role}${e.forType ? '/' + e.forType : ''}`;
+const spot = (e) => (e.box ? `box x ${e.box.x0.toFixed(0)}-${e.box.x1.toFixed(0)} y ${e.box.y0.toFixed(0)}-${e.box.y1.toFixed(0)}` : `x ${e.x0.toFixed(0)}-${e.x1.toFixed(0)}  line y ${e.line.toFixed(0)}`);
+const box = (f) => `x ${f.x0.toFixed(0)}-${f.x1.toFixed(0)}  y ${f.top.toFixed(0)}-${f.bottom.toFixed(0)}`;
+const pad = (s, n) => String(s).padEnd(n);
 
 (async () => {
   const names = Object.keys(FIXTURES).filter((n) => !ONLY.length || ONLY.indexOf(n) >= 0);
@@ -52,37 +39,50 @@ const RULES = {
   if (unknown.length) throw new Error('Unknown fixture: ' + unknown.join(', '));
   const h = await H.start();
   const failed = [];
-  const total = { blanks: 0, on: 0, fillIn: 0, fillInOn: 0, savedUnseen: 0 };
+  const rows = [];
   try {
     const page = await H.signUp(h, 'Northgate Capital');
     for (const name of names) {
       const fx = FIXTURES[name];
-      const made = await H.makePdf(h, CSS, fx.html);
-      const out = await H.upload(page, made.bytes, { countersign: fx.countersign, offering: fx.offering });
-      const block = made.expect.filter((e) => !e.fillIn);
-      const fill = made.expect.filter((e) => e.fillIn);
-      const hit = (e) => out.fields.find((f) => on(f, e));
-      const hits = block.filter(hit).length;
-      const marks = out.fields.filter((f) => f.conf === 'medium' || f.conf === 'low').length;
-      // A confident mistake: a field the portal is sure of that is not on any printed blank for that signer.
-      const mistakes = out.fields.filter((f) => f.conf === 'high' && !made.expect.some((e) => on(f, e))).length;
-      total.blanks += block.length;
-      total.on += hits;
-      total.fillIn += fill.length;
-      total.fillInOn += fill.filter(hit).length;
-      if (out.saved && !out.fields.some((f) => f.conf)) total.savedUnseen += 1;
-      console.log(`\n${name}: ${block.length} signature-block blanks, ${out.fields.length} fields placed, ${hits} on their blank, ${mistakes} confident mistakes, ${marks} marked for review, saved without review: ${out.saved}`);
-      made.expect.forEach((e) => console.log(`  blank  ${where(e)}  x ${e.x0.toFixed(0)}-${e.x1.toFixed(0)}  line y ${e.line.toFixed(0)}${e.fillIn ? '   (fill-in blank, not measured in this plan)' : hit(e) ? '' : '   <- no field on it'}`));
-      out.fields.forEach((f) => console.log(`  field  ${where(f)}  x ${f.x0.toFixed(0)}-${f.x1.toFixed(0)}  y ${f.top.toFixed(0)}-${f.bottom.toFixed(0)}${f.conf ? '  ' + f.conf : ''}${f.why ? '  (' + f.why + ')' : ''}`));
-      if (!out.saved && out.todo) console.log(`  not saved: ${out.todo}`);
-      const fails = RULES[name] && !BASELINE ? RULES[name](made.expect, out) : [];
-      fails.forEach((s) => console.log(`  FAIL  ${s}`));
+      const { expect, out } = await H.run(h, page, FIXTURES, CSS, name);
+      const j = H.judge(expect, out.fields);
+      const sig = j.blanks.filter((b) => !b.e.fillIn);
+      const fill = j.blanks.filter((b) => b.e.fillIn);
+      const missed = j.blanks.filter((b) => b.state !== 'right');
+      rows.push({ name, heldOut: !!fx.heldOut, blanks: expect.length, right: j.right, sig: sig.length, sigRight: sig.filter((b) => b.state === 'right').length, fill: fill.length, fillRight: fill.filter((b) => b.state === 'right').length, fields: out.fields.length, mistakes: j.mistakes.length, flagged: j.flagged, strays: j.strays.length, saved: out.saved });
+      const fails = [];
+      if (!BASELINE) {
+        j.mistakes.forEach((f) => fails.push(`confident mistake: a ${f.type} field for the ${f.role} at high confidence is not right (page ${f.page}, ${box(f)}${f.label ? ', "' + f.label + '"' : ''})`));
+        if (!fx.heldOut) missed.forEach((b) => fails.push(`${where(b.e)} at ${spot(b.e)}: ${b.state === 'none' ? 'no field on it' : b.state}`));
+        if (fx.clean && j.flagged) fails.push(`${j.flagged} field(s) marked for review in a layout the portal should be sure about`);
+        if (fx.saves === true && !out.saved) fails.push(`not saved at once: ${out.todo}`);
+        if (fx.saves === false && out.saved) fails.push('saved for onboarding with nobody looking at it');
+        j.blanks.filter((b) => b.e.flag && b.f && !b.f.review).forEach((b) => fails.push(`${where(b.e)} should carry a review mark and does not`));
+        if (name === 'blank' && out.fields.some((f) => f.conf !== 'low')) fails.push('a fallback field is not low confidence');
+        if (name === 'blank' && !out.fields.length) fails.push('no fallback fields were placed');
+        if (fx.countersign === false && out.fields.some((f) => f.role === 'firm')) fails.push('a field for the firm although it does not countersign');
+      }
+      if (!QUIET) {
+        console.log(`\n${name}: ${expect.length} printed blanks, ${out.fields.length} fields placed, ${j.right} right, ${j.mistakes.length} confident mistakes, ${j.flagged} marked for review, saved at once: ${out.saved}`);
+        j.blanks.forEach((b) => console.log(`  blank  ${pad(where(b.e), 28)} ${pad(spot(b.e), 34)} ${b.state === 'right' ? 'ok' + (b.f.review ? ' (marked for review)' : '') : b.state === 'none' ? '<- no field on it' : '<- ' + b.state}`));
+        out.fields.forEach((f) => console.log(`  field  ${pad(where(f), 28)} ${pad(box(f), 34)} ${f.conf || 'no confidence'}${f.label ? '  "' + f.label + '"' : ''}${f.prefill ? '  <' + f.prefill + '>' : ''}${f.type !== 'date' && !f.required ? '  optional' : ''}${f.why ? '  (' + f.why + ')' : ''}${j.strays.indexOf(f) >= 0 ? '   <- on no printed blank' : ''}`));
+        if (!out.saved && out.todo) console.log(`  not saved: ${out.todo}`);
+      }
+      fails.forEach((s) => console.log(`  FAIL  ${name}: ${s}`));
       if (fails.length) failed.push(name);
     }
   } finally {
     await h.stop();
   }
-  console.log(`\nTOTAL: ${total.on} of ${total.blanks} signature-block blanks have a field on them` + (total.fillIn ? `; ${total.fillInOn} of ${total.fillIn} fill-in blanks (not measured in this plan)` : '') + (BASELINE ? `; ${total.savedUnseen} agreements saved with no confidence recorded and nobody looking` : ''));
+  const sum = (k, list) => list.reduce((a, r) => a + r[k], 0);
+  const line = (r) => `${pad(r.name, 16)}${pad(r.sigRight + '/' + r.sig, 12)}${pad(r.fillRight + '/' + r.fill, 12)}${pad(r.right + '/' + r.blanks, 10)}${pad(r.mistakes, 10)}${pad(r.flagged, 9)}${pad(r.blanks - r.right, 12)}${r.saved ? 'yes' : 'held'}`;
+  console.log(`\n${pad('layout', 16)}${pad('sig block', 12)}${pad('fill-in', 12)}${pad('right', 10)}${pad('confident', 10)}${pad('review', 9)}${pad('not placed', 12)}saved`);
+  console.log(`${pad('', 16)}${pad('blanks', 12)}${pad('blanks', 12)}${pad('', 10)}${pad('mistakes', 10)}${pad('marks', 9)}${pad('right', 12)}at once`);
+  rows.forEach((r) => console.log(line(r) + (r.heldOut ? '   (held out: not used to build the rules)' : '')));
+  const built = rows.filter((r) => !r.heldOut);
+  if (rows.length > 1) console.log(line({ name: 'TOTAL', sig: sum('sig', rows), sigRight: sum('sigRight', rows), fill: sum('fill', rows), fillRight: sum('fillRight', rows), blanks: sum('blanks', rows), right: sum('right', rows), mistakes: sum('mistakes', rows), flagged: sum('flagged', rows), saved: false }).replace(/held$/, ''));
+  console.log(`\nBEFORE THIS PHASE (classic, caption, blank as they were then): ${BEFORE.right} of ${BEFORE.blanks} printed blanks had a field on them; ${BEFORE.savedUnseen} of ${BEFORE.of} agreements were saved with nobody looking.`);
+  console.log(`NOW: ${sum('right', rows)} of ${sum('blanks', rows)} printed blanks have the right field on them (${sum('right', built)} of ${sum('blanks', built)} in the layouts the rules were built on); ${sum('mistakes', rows)} confident mistakes.`);
   console.log(h.errors.length ? 'PAGE ERRORS ' + h.errors.join(' | ') : 'NO PAGE ERRORS');
   if (h.errors.length && !BASELINE) failed.push('page errors');
   if (failed.length) {

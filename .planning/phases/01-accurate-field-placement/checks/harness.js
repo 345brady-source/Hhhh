@@ -95,23 +95,61 @@ async function start() {
 /**
  * Print a fixture to PDF and read where each blank was printed. Returns { expect, bytes }: one expectation per
  * data-x element, with page, x0, x1 and line (the y of the printed line) in PDF points from the page's top-left.
+ * A tick box has box: { x0, x1, y0, y1 } instead of a line. A table cell (data-k="cell") is ruled along its bottom
+ * edge; from is where the row's label ends (the line is empty from there on, and nothing printed marks where the
+ * cell itself begins). A label with no line of its own (class nl) takes its place from the signature blank it names.
+ * opts: { paper: [width, height] in inches (default Letter) }.
  */
-async function makePdf(h, css, html) {
+async function makePdf(h, css, html, opts) {
+  const paper = (opts && opts.paper) || [8.5, 11];
   const g = await h.context.newPage();
-  await g.setViewportSize({ width: 816, height: 1056 });
+  await g.setViewportSize({ width: Math.round(paper[0] * 96), height: Math.round(paper[1] * 96) });
   await g.setContent(`<html><head><style>${css}</style></head><body>${html}</body></html>`);
   await g.emulateMedia({ media: 'print' });
   const expect = await g.evaluate(() => {
     const pages = Array.from(document.querySelectorAll('.pg'));
-    return Array.from(document.querySelectorAll('[data-x]')).map((el) => {
+    const pt = (v) => v * 0.75;
+    const where = (el) => {
       const o = el.closest('.pg').getBoundingClientRect();
       const r = el.getBoundingClientRect();
-      // A drawn rule is the element's bottom edge; a run of underscores is drawn about 3 pt above the bottom of its line box.
-      const line = (r.bottom - o.top) * 0.75 - (el.classList.contains('rule') ? 0.5 : 3.2);
-      return Object.assign(JSON.parse(el.getAttribute('data-x')), { page: pages.indexOf(el.closest('.pg')) + 1, x0: (r.left - o.left) * 0.75, x1: (r.right - o.left) * 0.75, line });
+      return { page: pages.indexOf(el.closest('.pg')) + 1, x0: pt(r.left - o.left), x1: pt(r.right - o.left), y0: pt(r.top - o.top), y1: pt(r.bottom - o.top), o };
+    };
+    // The baseline of the text inside an element: where a zero-size inline box put into it comes to rest.
+    const baseline = (el, o) => {
+      const probe = document.createElement('span');
+      probe.style.cssText = 'display:inline-block;width:0;height:0';
+      el.appendChild(probe);
+      const y = pt(probe.getBoundingClientRect().bottom - o.top);
+      el.removeChild(probe);
+      return y;
+    };
+    const out = [];
+    const byId = {};
+    Array.from(document.querySelectorAll('[data-x]')).forEach((el) => {
+      const x = JSON.parse(el.getAttribute('data-x'));
+      const w = where(el);
+      const k = el.getAttribute('data-k') || (el.classList.contains('rule') ? 'rule' : el.classList.contains('sq') ? 'box' : el.classList.contains('nl') ? 'noline' : 'text');
+      const e = Object.assign(x, { page: w.page, x0: w.x0, x1: w.x1, how: k });
+      const size = pt(parseFloat(getComputedStyle(el).fontSize));
+      if (k === 'box' || k === 'bracket') e.box = { x0: w.x0, x1: w.x1, y0: w.y0, y1: w.y1 };
+      else if (k === 'rule' || k === 'cell') e.line = w.y1 - 0.5;
+      // An underscore is drawn a little below the baseline (about an eighth of the font size).
+      else e.line = baseline(el, w.o) + 0.13 * size;
+      if (k === 'cell') {
+        const lab = el.parentElement.querySelector('[data-lab]');
+        if (lab) e.from = where(lab).x1;
+      }
+      if (el.getAttribute('data-id')) byId[el.getAttribute('data-id')] = e;
+      out.push(e);
     });
+    out.forEach((e) => {
+      if (e.how !== 'noline' || !byId[e.ref]) return;
+      e.x0 = Math.max(e.x0 + 4, byId[e.ref].x0);
+      e.x1 = byId[e.ref].x1;
+    });
+    return out;
   });
-  const bytes = await g.pdf({ width: '8.5in', height: '11in', printBackground: true, margin: { top: 0, right: 0, bottom: 0, left: 0 } });
+  const bytes = await g.pdf({ width: paper[0] + 'in', height: paper[1] + 'in', printBackground: true, margin: { top: 0, right: 0, bottom: 0, left: 0 } });
   await g.close();
   return { expect, bytes: Array.from(bytes) };
 }
@@ -206,4 +244,78 @@ async function upload(page, bytes, opts) {
   );
 }
 
-module.exports = { ROOT, start, makePdf, signUp, cropPdf, upload };
+/**
+ * One fixture end to end: printed, cropped when it asks for it, and put through the upload path. Returns
+ * { expect, out, bytes }: the printed blanks (in points of the page as displayed) and what the portal placed.
+ * A fixture that names another with `from` uses that one's pages with its own options.
+ */
+async function run(h, page, fixtures, css, name) {
+  const fx = fixtures[name];
+  const src = fx.from ? fixtures[fx.from] : fx;
+  const made = await makePdf(h, css + (src.css || ''), src.html, { paper: src.paper });
+  let bytes = made.bytes;
+  let expect = made.expect;
+  if (fx.crop) {
+    // A crop box [x, y, width, height] in PDF space (origin bottom-left): the displayed page starts at its top-left corner.
+    const top = (src.paper ? src.paper[1] : 11) * 72 - fx.crop[1] - fx.crop[3];
+    bytes = await cropPdf(page, bytes, fx.crop);
+    expect = expect.map((e) => Object.assign({}, e, { x0: e.x0 - fx.crop[0], x1: e.x1 - fx.crop[0], line: e.line - top }));
+  }
+  // With no countersignature the firm's blanks are expected to stay empty.
+  if (fx.countersign === false) expect = expect.filter((e) => e.role !== 'firm');
+  const out = await upload(page, bytes, { countersign: fx.countersign, offering: fx.offering || src.offering });
+  return { expect, out, bytes };
+}
+
+/* ---------- Judging a field against a printed blank ---------- */
+/**
+ * Whether a field rests on a printed blank of its kind. For a line: same page and type, left edge within 6 pt of
+ * the blank's start, bottom edge between 2 pt above and 7 pt below the printed line. For a ruled table row the
+ * field may start anywhere from the end of the row's label to 6 pt past the cell's left edge. For a tick box:
+ * the field covers at least 60% of the printed square (or, for a box written as brackets, its centre is on it).
+ */
+function sits(f, e) {
+  if (f.page !== e.page || f.type !== e.type) return false;
+  if (e.box) {
+    const b = e.box;
+    if (e.how === 'bracket') {
+      const cx = (f.x0 + f.x1) / 2;
+      const cy = (f.top + f.bottom) / 2;
+      return cx >= b.x0 - 3 && cx <= b.x1 + 3 && cy >= b.y0 - 3 && cy <= b.y1 + 3;
+    }
+    const ox = Math.min(f.x1, b.x1) - Math.max(f.x0, b.x0);
+    const oy = Math.min(f.bottom, b.y1) - Math.max(f.top, b.y0);
+    return ox > 0 && oy > 0 && (ox * oy) / ((b.x1 - b.x0) * (b.y1 - b.y0)) >= 0.6;
+  }
+  const left = e.from != null ? f.x0 >= e.from - 1 && f.x0 <= e.x0 + 6 : Math.abs(f.x0 - e.x0) <= 6;
+  return left && f.bottom - e.line >= -2 && f.bottom - e.line <= 7;
+}
+/** What is wrong with a field that sits on a blank ('' when it is right): signer, kind of investor, label, key, required. */
+function wrong(f, e) {
+  const bad = [];
+  if (f.role !== e.role) bad.push(`signer ${f.role}, not ${e.role}`);
+  if (e.forType != null && (f.forType || '') !== e.forType) bad.push(`for ${f.forType || 'everyone'}, not ${e.forType || 'everyone'}`);
+  if (e.label != null && f.label !== e.label) bad.push(`label "${f.label}", not "${e.label}"`);
+  if (e.key != null && (f.prefill || '') !== e.key) bad.push(`filled in from ${f.prefill || 'nothing'}, not ${e.key || 'nothing'}`);
+  if (e.required != null && f.type !== 'date' && !!f.required !== !!e.required) bad.push(`${f.required ? 'required' : 'optional'}, not ${e.required ? 'required' : 'optional'}`);
+  return bad.join('; ');
+}
+/**
+ * Every blank and every field of one run, judged. Returns { blanks: [{ e, f, state }], strays: [fields on no blank],
+ * right, flagged, mistakes: [high-confidence fields that are on no blank or wrong on theirs] }.
+ * state is 'right' (the right kind of field on the line for the right signer), 'wrong: ...' or 'none'.
+ */
+function judge(expect, fields) {
+  const used = new Set();
+  const blanks = expect.map((e) => {
+    const on = fields.filter((f) => !used.has(f) && sits(f, e));
+    const f = on.find((x) => !wrong(x, e)) || on[0] || null;
+    if (f) used.add(f);
+    return { e, f, state: !f ? 'none' : wrong(f, e) ? 'wrong: ' + wrong(f, e) : 'right' };
+  });
+  const strays = fields.filter((f) => !used.has(f));
+  const mistakes = strays.filter((f) => f.conf === 'high').concat(blanks.filter((b) => b.f && b.state !== 'right' && b.f.conf === 'high').map((b) => b.f));
+  return { blanks, strays, mistakes, right: blanks.filter((b) => b.state === 'right').length, flagged: fields.filter((f) => f.review).length };
+}
+
+module.exports = { ROOT, start, makePdf, signUp, cropPdf, upload, run, sits, wrong, judge };

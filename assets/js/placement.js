@@ -335,6 +335,16 @@
     taxId: { type: 'text', label: 'Taxpayer ID', required: true },
     other: { type: 'text', label: 'Text', required: true }
   };
+  /** A kind of blank the portal knows by its label (every key of KINDS but the catch-all). */
+  const FIELD = (kind) => kind !== 'other' && Object.prototype.hasOwnProperty.call(KINDS, kind);
+  // A heading speaks of a kind of investor only in words that are not also part of a firm's name.
+  const HEAD_ENTITY = /\b(entity|entities|trusts|corporations|partnerships|organi[sz]ations|companies|llcs|iras|non-?individuals?)\b|\b(if|for|is|are)\b.{0,30}\b(trust|corporation|partnership|company|llc|ira)\b/;
+  const HEAD_PERSON = /\bindividuals?\b|\bnatural persons?\b|\bjoint (tenants|accounts?|owners|subscribers)\b/;
+  function headType(t) {
+    const e = HEAD_ENTITY.test(t);
+    const p = HEAD_PERSON.test(t);
+    return e && !p ? 'entity' : p && !e ? 'person' : '';
+  }
   /**
    * What a short piece of text is, as a label. Returns { kind, who, forType, optional, colon, by, text } or null
    * for a sentence. kind is a key of KINDS, 'skip' (a line for someone the portal has no signer for), 'other'
@@ -391,7 +401,7 @@
    */
   function labelOf(text) {
     const c = classify(text);
-    return c && KINDS[c.kind] ? { kind: c.kind, who: c.who, forType: c.forType, optional: c.optional } : null;
+    return c && FIELD(c.kind) ? { kind: c.kind, who: c.who, forType: c.forType, optional: c.optional } : null;
   }
 
   /* =====================================================================
@@ -496,6 +506,8 @@
       });
       rs.forEach((r) => {
         if (taken.has(r) || r.clear < BLANK_CLEAR) return;
+        // A stroke inside a run of words (two underscores in a name, a dash) is part of the text, not a blank.
+        if (ln.parts.some((p) => p.t === 'text' && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0))) return;
         const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: ln, fromText: false };
         slots.push(slot);
         els.push({ t: 'slot', key: r.x0, slot });
@@ -525,7 +537,9 @@
       });
       ln.els.forEach((e, i) => (e.i = i));
     });
-    free.forEach((r) => r.clear >= BLANK_CLEAR && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: null, fromText: false }));
+    // A stroke in the body of a run of words (the bar of a letter, an equals sign) is part of the text, not a blank.
+    const inText = (r) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && r.y > p.y - 1.05 * p.h && r.y < p.y + 0.2 * p.h && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0)));
+    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: null, fromText: false }));
     const segs = [];
     lines.forEach((ln) => ln.els.forEach((e) => e.t === 'seg' && segs.push(e.seg)));
     return { lines, slots, segs, boxes: boxes.filter((b) => b.line) };
@@ -676,7 +690,7 @@
               seg.used = 'label';
               return;
             }
-            if (info && KINDS[info.kind]) {
+            if (info && FIELD(info.kind)) {
               seg.used = 'label';
               return propose(info.kind, slot, info, { seg });
             }
@@ -695,7 +709,7 @@
             slot.skip = true;
             return;
           }
-          if (info && KINDS[info.kind] && (lead || wordsOf(plain(after.s)).length <= 6)) {
+          if (info && FIELD(info.kind) && (lead || wordsOf(plain(after.s)).length <= 6)) {
             if (!lead || lead[0].length === after.s.length) after.used = 'label';
             return propose(info.kind, slot, info, { seg: after, how: 'after' });
           }
@@ -732,7 +746,7 @@
     const known = (seg) => {
       if (seg.used) return null;
       const info = classify(seg.s);
-      return info && (KINDS[info.kind] || info.kind === 'skip') ? info : null;
+      return info && (FIELD(info.kind) || info.kind === 'skip') ? info : null;
     };
     const under = (s) => {
       let best = null;
@@ -794,10 +808,10 @@
       if (!m.slot || !m.seg || m.kind === 'checkbox' || !m.info) return;
       const g = under(m.slot);
       const cap = g && !g.used && !/[:：]\s*$/.test(g.s) ? classify(g.s) : null;
-      if (!cap || !KINDS[cap.kind] || cap.kind === m.kind) return;
+      if (!cap || !FIELD(cap.kind) || cap.kind === m.kind) return;
       g.used = 'caption';
       const bareRole = /^(subscriber|investor|purchaser|limited partner|buyer)$/.test(plain(m.seg.s));
-      if (bareRole || m.kind === 'title' || !KINDS[m.info.kind]) {
+      if (bareRole || m.kind === 'title' || !FIELD(m.info.kind)) {
         const K = KINDS[cap.kind];
         Object.assign(m.p, { type: K.type, label: K.label, required: K.required, kind: cap.kind }, boxOn(K, m.slot));
         if (K.prefill) m.p.prefill = K.prefill;
@@ -848,7 +862,7 @@
       .filter((s) => !s.made && !s.skip)
       .sort((a, b) => a.y - b.y)
       .forEach((s) => {
-        const up = made.filter((m) => m.slot && (m.kind === 'address' || m.kind === 'address2') && s.y - m.slot.y > 4 && s.y - m.slot.y <= 34 && Math.abs(s.x0 - m.slot.x0) <= 6).sort((a, b) => b.slot.y - a.slot.y)[0];
+        const up = made.filter((m) => m.slot && (m.kind === 'address' || m.kind === 'address2') && s.y - m.slot.y > 4 && s.y - m.slot.y <= 34 && (Math.abs(s.x0 - m.slot.x0) <= 6 || Math.abs(s.x0 - m.x0) <= 6)).sort((a, b) => b.slot.y - a.slot.y)[0];
         if (!up || (up.kind === 'address2' && up.second)) return;
         const m = propose('address2', s, null, {});
         m.second = up.kind === 'address2';
@@ -893,20 +907,21 @@
         const byLine = /^by:?\s+\S/i.test(raw);
         const accepts = /^(accepted|agreed)\b/.test(t);
         const who = whoIn(t);
-        const forType = typeIn(t.replace(/\blimited partners?(hip)?\b|\bgeneral partner\b|\blimited liability\b/g, ' '));
+        const forType = headType(t.replace(/\blimited partners?(hip)?\b|\bgeneral partner\b|\blimited liability\b/g, ' '));
         const named = !who && !/\b(pages?|agreement|questionnaire|subscription|booklet|exhibit|appendix|schedule|memorandum)\b/.test(t) && c.names.some((nm) => bare(raw).indexOf(nm) >= 0);
         const next = ln.els[e.i + 1];
         const info = classify(raw);
-        const isKnown = !!(info && (KINDS[info.kind] || info.kind === 'skip') && info.kind !== 'other');
+        const isKnown = !!(info && (FIELD(info.kind) || info.kind === 'skip') && info.kind !== 'other');
         if (seg.used || (next && next.t === 'slot')) {
           // A label speaks for the lines under it only when it names a side outright or says whose line it is.
-          if (roleOnly || (who && isKnown)) heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who, label: true, seg });
+          // A bare "SUBSCRIBER: ____" heads its block like any heading; "Signature of Subscriber" speaks for its own lines only.
+          if (roleOnly || (who && isKnown)) heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who, label: !roleOnly, strong: true, seg });
           return;
         }
         if (!(caps || colon || titled || roleOnly || byLine || accepts)) return;
         // A line that merely mentions both sides is no heading.
         if (!caps && !roleOnly && !byLine && n > 6 && INVESTOR_WORDS.test(t) && FIRM_WORDS.test(t)) return;
-        const hd = { y: seg.y, x0: seg.x0, x1: seg.x1, who: byLine && !FIRM_WORDS.test(t) ? '' : who, named, forType, strong: caps || roleOnly || byLine || accepts, top: seg.y < 0.2 * pg.h, mid: seg.x0 < pg.w / 2 && seg.x1 > pg.w / 2, seg };
+        const hd = { y: seg.y, x0: seg.x0, x1: seg.x1, who: byLine && !FIRM_WORDS.test(t) ? '' : who || (forType ? 'investor' : ''), named, forType, strong: caps || roleOnly || byLine || accepts, top: seg.y < 0.2 * pg.h, mid: seg.x0 < pg.w / 2 && seg.x1 > pg.w / 2, seg };
         if (byLine && !hd.who && !hd.named) return;
         if (hd.who || hd.named || hd.forType) heads.push(hd);
         else if ((caps || colon) && !isKnown && !byLine && raw.length <= 60 && /[A-Za-z]{4}/.test(raw)) heads.push(Object.assign(hd, { blocker: true }));
@@ -925,6 +940,11 @@
       const p = m.p;
       const own = m.under || m; // a label under a signature line belongs to that line's block
       let role = m.who || (m.under && m.under.who) || '';
+      // Two labels on one printed line ("By: ____ Name: ____") are one block: the second follows the first.
+      if (!role && m.block && m.kind !== 'signature' && m.slot && m.slot.line) {
+        const mate = made.filter((o) => o !== m && o.block && o.who && o.kind !== m.kind && o.slot && o.slot.line === m.slot.line && o.x1 <= m.x0 + 3).sort((a, b) => b.x1 - a.x1)[0];
+        if (mate) role = mate.who;
+      }
       let sure = !!role;
       if (!role) {
         let named = null;

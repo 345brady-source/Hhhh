@@ -1,0 +1,234 @@
+/*
+ * The label table and the reading rules of assets/js/placement.js, checked in node with no browser.
+ * The module is loaded with a stand-in for window.CVPortal: it must not touch a document or any other part of the
+ * portal when it loads.
+ *
+ * Run from the repository root:   node .planning/phases/01-accurate-field-placement/checks/labels.js
+ */
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+const ROOT = path.resolve(__dirname, '..', '..', '..', '..');
+const sandbox = { window: { CVPortal: {} } };
+vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'assets/js/placement.js'), 'utf8'), sandbox, { filename: 'placement.js' });
+const P = sandbox.window.CVPortal.placement;
+
+let failed = 0;
+let passed = 0;
+const check = (name, ok, info) => {
+  if (ok) passed++;
+  else {
+    failed++;
+    console.log(`FAIL ${name}${info !== undefined ? ' :: ' + (typeof info === 'string' ? info : JSON.stringify(info)) : ''}`);
+  }
+};
+const kind = (s) => (P.labelOf(s) || {}).kind || '';
+
+/* ---------- What a label asks for ---------- */
+const TABLE = {
+  signature: ['By:', 'By', 'Signature of Subscriber', 'Signature', 'Signature:', 'Authorized Signature', 'Signature of Authorized Signatory', 'Subscriber’s Signature', 'Investor Signature', '(Signature of Purchaser)', 'Authorized Signatory', 'Sign here', 'X'],
+  name: ['Print Name', 'Name:', 'Name of Authorized Signatory', 'Printed Name', '(Print Name)', 'Name (please print)', 'Print Name of Signatory'],
+  investorName: ['Name of Subscriber', 'Subscriber:', 'Investor Name', 'Exact name in which the interest is to be held', 'Name of Entity', 'Name of Purchaser (please print)', 'Print Name of Subscriber', 'Full legal name of investor'],
+  date: ['Date', 'Dated:', 'Date of Signature', 'Date:', 'Date signed', 'Date of Execution'],
+  title: ['Title:', 'Its:', 'Capacity', 'Title (if applicable)', 'Title of Authorized Signatory'],
+  nameTitle: ['Name and Title:', 'Print Name and Title'],
+  initials: ['Initials', 'Initial here', 'Subscriber’s Initials', "Subscriber's Initials:", 'Investor Initials', '(Initials)', 'Initial:'],
+  amount: ['Subscription Amount', 'Capital Commitment', 'Amount of Investment', 'Subscription Amount: $', 'Commitment Amount:', 'Purchase Price: US$', 'Total Capital Commitment', 'Amount of Subscription'],
+  address: ['Address', 'Mailing Address', 'Address:', 'Street Address', 'Residence Address', 'Principal Place of Business'],
+  address2: ['Address line 2', 'Apt / Suite'],
+  city: ['City', 'City:'],
+  state: ['State', 'State:'],
+  zip: ['Zip Code', 'Zip', 'ZIP:', 'Postal Code'],
+  cityStateZip: ['City, State, Zip', 'City, State and Zip Code', 'City/State/Zip'],
+  email: ['Email', 'E-mail Address', 'Email address:'],
+  phone: ['Telephone', 'Phone', 'Telephone No.:', 'Daytime phone number', 'Tel.'],
+  taxId: ['Social Security Number', 'Taxpayer Identification No.', 'EIN', 'SSN / EIN', 'Tax ID Number', 'Social Security or Taxpayer Identification Number']
+};
+Object.keys(TABLE).forEach((k) => TABLE[k].forEach((s) => check(`"${s}" is ${k}`, kind(s) === k, kind(s) || 'nothing')));
+// Nothing: titles and sentences that merely use the word; lines for people the portal has no signer for; ordinary blanks.
+[
+  'Signature Page',
+  'Signature Page to Subscription Agreement',
+  'SIGNATURE PAGE FOLLOWS',
+  'The signature of the Subscriber below constitutes execution of the limited partnership agreement.',
+  'Signature guarantee required',
+  'Witness',
+  'Witness:',
+  'Signature of Witness',
+  'Notary Public',
+  'Spouse',
+  'Signature of Spouse (if applicable)',
+  'Co-Subscriber',
+  'Signature of Joint Subscriber, if any',
+  'Signature of Custodian',
+  'Date of birth',
+  'State of organization',
+  'State of organization (entities only):',
+  'Number of Units:',
+  'Name of Fund',
+  'Fax',
+  ''
+].forEach((s) => check(`"${s}" is nothing`, kind(s) === '', kind(s)));
+check('"Signature of Subscriber" says whose it is', (P.labelOf('Signature of Subscriber') || {}).who === 'investor');
+check('"Signature of General Partner" says whose it is', (P.labelOf('Signature of General Partner') || {}).who === 'firm');
+check('"By:" does not say whose it is', (P.labelOf('By:') || {}).who === '');
+check('"Title (if signing for an entity)" is for entities', (P.labelOf('Title (if signing for an entity):') || {}).forType === 'entity');
+check('"Title (if applicable)" is optional', (P.labelOf('Title (if applicable)') || {}).optional === true);
+check('a label longer than 90 characters is nothing', kind('Signature of ' + 'the Subscriber '.repeat(8)) === '');
+check('hostile input returns quickly', (() => {
+  const t = Date.now();
+  P.labelOf('name '.repeat(2000));
+  P.labelOf('a'.repeat(89) + '!');
+  P.analyze([{ page: 1, w: 612, h: 792, items: [{ s: ('Name of ' + 'x '.repeat(40)).repeat(50), x: 72, y: 100, w: 400, h: 12 }], rules: [], boxes: [] }], {});
+  return Date.now() - t < 500;
+})());
+
+/* ---------- Reading a page given as plain data ---------- */
+// A page from rows of text and rules: ['text', x, y, 'words'] with y the baseline, ['rule', x0, x1, y] with 24 pt of
+// empty paper above it. Text is set at 12 pt; its width comes from the same rough character widths the module uses.
+const width = (s) => Array.from(s).reduce((a, ch) => a + (ch === ' ' ? 3 : /[A-Z]/.test(ch) ? 7.8 : /[ijlt.,:;']/.test(ch) ? 3.3 : 5.4), 0);
+function page(rows, n) {
+  const pg = { page: n || 1, w: 612, h: 792, items: [], rules: [], boxes: [] };
+  rows.forEach((r) => {
+    if (r[0] === 'text') pg.items.push({ s: r[3], x: r[1], y: r[2], w: width(r[3]), h: 12 });
+    else if (r[0] === 'rule') pg.rules.push({ x0: r[1], x1: r[2], y: r[3], t: 0.75, clear: r[4] || 24, drop: 0 });
+    else if (r[0] === 'box') pg.boxes.push({ x: r[1], y: r[2], w: 10, h: 10 });
+  });
+  return pg;
+}
+const ctx = { countersign: true, firmNames: ['Northgate Capital', 'Northgate Capital Management, LLC'], fundNames: ['Northgate Fund I, LP'] };
+const read = (rows, c) => P.analyze([page(rows)], c || ctx).filter((p) => p.why.indexOf('last page') < 0);
+const at = (list, x, y) => list.find((p) => Math.abs(p.x - x) <= 6 && p.y + p.h >= y - 2 && p.y + p.h <= y + 7);
+const sum = (list) => list.map((p) => `${p.type}/${p.role}/${p.conf}@${Math.round(p.x)},${Math.round(p.y + p.h)}`).join(' ');
+// "Label: [rule]" on one printed line.
+const labelled = (x, y, label, len) => [['text', x, y, label], ['rule', x + width(label) + 4, x + width(label) + 4 + (len || 180), y + 1.5]];
+
+// 1. A second block under a heading that says nothing (a company name the portal does not know) is not the investor's for sure.
+(() => {
+  const f = read([['text', 72, 100, 'SUBSCRIBER:'], ...labelled(72, 130, 'By:'), ...labelled(72, 160, 'Name:'), ['text', 72, 230, 'NGC PARTNERS GP, LLC'], ...labelled(72, 260, 'By:'), ...labelled(72, 290, 'Name:')]);
+  const a = at(f, 72 + width('By:') + 4, 131.5);
+  const b = at(f, 72 + width('By:') + 4, 261.5);
+  check('first block under SUBSCRIBER is the investor’s, sure', a && a.type === 'signature' && a.role === 'investor' && a.conf === 'high', sum(f));
+  check('a second block under an unknown company name is not placed at high confidence', b && b.type === 'signature' && b.conf !== 'high', sum(f));
+})();
+// 2. The firm's own name over a block, with no word saying which side it is: the firm's, but not sure.
+(() => {
+  const f = read([['text', 72, 100, 'SUBSCRIBER:'], ...labelled(72, 130, 'By:'), ['text', 72, 230, 'NORTHGATE CAPITAL MANAGEMENT, LLC'], ...labelled(72, 260, 'By:')]);
+  const b = at(f, 72 + width('By:') + 4, 261.5);
+  check('a block headed only by the firm’s name is given to the firm, marked', b && b.role === 'firm' && b.conf === 'medium', sum(f));
+})();
+// 3. The firm's name with words that say it acts for the fund: sure.
+(() => {
+  const f = read([['text', 72, 100, 'NORTHGATE FUND I, LP'], ['text', 72, 120, 'By: Northgate Capital GP, LLC, its general partner'], ...labelled(72, 150, 'By:'), ['text', 72, 180, 'Name:'], ['text', 72, 200, 'Title:']]);
+  check('"its general partner" makes the block the firm’s for sure', f.length === 3 && f.every((p) => p.role === 'firm' && p.conf === 'high'), sum(f));
+  check('"By: <a name>" with no line gets no field', !f.some((p) => p.y + p.h < 140), sum(f));
+})();
+// 4. A page title naming the fund is not a heading for the firm.
+(() => {
+  const f = read([['text', 150, 60, 'NORTHGATE FUND I, LP SUBSCRIPTION AGREEMENT'], ['text', 72, 100, 'INVESTOR SIGNATURE PAGE'], ...labelled(72, 140, 'Signature:'), ...labelled(72, 170, 'Date:')]);
+  check('fund name in the page title does not make the page the firm’s', f.length === 2 && f.every((p) => p.role === 'investor' && p.conf === 'high'), sum(f));
+})();
+// 5. Labels above their lines, stacked: read together, never as captions of the line before; marked.
+(() => {
+  const f = read([['text', 72, 100, 'SUBSCRIBER'], ['text', 72, 130, 'Signature'], ['rule', 72, 260, 148], ['text', 72, 166, 'Print Name'], ['rule', 72, 260, 184], ['text', 72, 202, 'Date'], ['rule', 72, 200, 220]]);
+  const types = f.map((p) => p.type).join(',');
+  check('a stack of labels above their lines keeps each label with its own line', types === 'signature,name,date', sum(f));
+  check('and marks them for review', f.every((p) => p.conf === 'medium'), sum(f));
+})();
+// 6. Captions under their lines, stacked: sure.
+(() => {
+  const f = read([['text', 72, 100, 'SUBSCRIBER'], ['rule', 72, 260, 140], ['text', 72, 152, 'Signature'], ['rule', 72, 260, 190], ['text', 72, 202, 'Print Name'], ['rule', 72, 200, 240], ['text', 72, 252, 'Date']]);
+  check('a stack of captions under their lines is read as captions, sure', f.map((p) => p.type + '/' + p.conf).join(',') === 'signature/high,name/high,date/high', sum(f));
+})();
+// 7. An unknown label on top of a stack of labels above their lines: the first line gets nothing rather than the wrong caption.
+(() => {
+  const f = read([['text', 72, 100, 'SUBSCRIBER'], ['text', 72, 130, 'Authorized Person'], ['rule', 72, 260, 148], ['text', 72, 166, 'Print Name'], ['rule', 72, 260, 184], ['text', 72, 202, 'Date'], ['rule', 72, 200, 220]]);
+  check('no confident field when captions and labels above cannot be told apart', f.every((p) => p.conf !== 'high'), sum(f));
+  check('the name goes on the line under "Print Name"', !!f.find((p) => p.type === 'name' && Math.abs(p.y + p.h - 187) < 4), sum(f));
+})();
+// 8. Two columns with a heading over each: left is the investor's, right the firm's.
+(() => {
+  const f = read([['text', 72, 100, 'SUBSCRIBER:'], ['text', 330, 100, 'GENERAL PARTNER:'], ...labelled(72, 140, 'By:', 150), ...labelled(330, 140, 'By:', 150), ...labelled(72, 170, 'Name:', 140), ...labelled(330, 170, 'Name:', 140)]);
+  const left = f.filter((p) => p.x < 300);
+  const right = f.filter((p) => p.x >= 300);
+  check('left column is the investor’s', left.length === 2 && left.every((p) => p.role === 'investor' && p.conf === 'high'), sum(f));
+  check('right column is the firm’s', right.length === 2 && right.every((p) => p.role === 'firm' && p.conf === 'high'), sum(f));
+})();
+// 9. With no countersignature asked for, the firm's proposals are still labelled as the firm's (the caller drops them).
+(() => {
+  const f = read([['text', 72, 100, 'ACCEPTED AND AGREED:'], ...labelled(72, 140, 'By:')], { countersign: false });
+  check('a firm block stays the firm’s when it does not countersign', f.length === 1 && f[0].role === 'firm', sum(f));
+})();
+// 10. Lines for a witness or a spouse get no field; a body sentence gets no signature.
+(() => {
+  const f = read([['text', 72, 100, 'SUBSCRIBER:'], ...labelled(72, 130, 'Signature:'), ...labelled(72, 160, 'Witness:'), ...labelled(72, 190, 'Signature of Spouse:'), ['text', 72, 240, 'The signature of the Subscriber below constitutes execution of this Agreement.']]);
+  check('witness and spouse lines get nothing', f.length === 1 && f[0].type === 'signature', sum(f));
+})();
+// 11. A rule with other text under it (a footer, a heading) is not a blank; neither is the top edge of a frame.
+(() => {
+  const pg = page([['rule', 72, 540, 300], ['text', 290, 312, 'Page 2'], ['rule', 72, 540, 400], ['text', 72, 412, 'Additional terms'], ['text', 72, 500, 'Signature'], ['rule', 72, 260, 480, 24]]);
+  pg.rules.push({ x0: 72, x1: 300, y: 600, t: 0.75, clear: 30, drop: 12 });
+  pg.items.push({ s: 'Signature', x: 72, y: 612, w: 50, h: 12 });
+  const f = P.analyze([pg], { countersign: false }).filter((p) => p.why.indexOf('last page') < 0);
+  check('only the captioned line gets a field', f.length === 1 && f[0].type === 'signature' && Math.abs(f[0].y + f[0].h - 484) < 3, sum(f));
+})();
+// 12. Tick boxes: words after the box, or before it when the line reads "Yes [ ]  No [ ]".
+(() => {
+  const f = read([['box', 72, 91], ['text', 88, 100, 'Individual'], ['box', 200, 91], ['text', 216, 100, 'Trust']]);
+  check('words after their box', f.map((p) => p.type + ':' + p.label).join(',') === 'checkbox:Individual,checkbox:Trust', sum(f));
+  const g = read([['text', 72, 100, 'Yes'], ['box', 96, 91], ['text', 140, 100, 'No'], ['box', 160, 91]]);
+  check('words before their box', g.map((p) => p.label).join(',') === 'Yes,No', sum(g));
+  const comb = read([['text', 72, 100, 'SSN:'], ['box', 110, 91], ['box', 120.5, 91], ['box', 131, 91], ['box', 141.5, 91]]);
+  check('a comb of touching squares is not tick boxes', comb.length === 0, sum(comb));
+})();
+// 13. A short blank before a statement: initials when told so, a tick when told so, initials marked when nothing says.
+(() => {
+  const row = (y, t) => [['rule', 72, 108, y + 1.5], ['text', 114, y, t]];
+  const a = read([['text', 72, 100, 'Please initial each statement that applies:'], ...row(130, 'The Subscriber is an accredited investor under Rule 501.')]);
+  check('initials when the instruction says initial, optional when it says "that applies"', a.length === 1 && a[0].type === 'initials' && a[0].required === false && a[0].conf === 'high', sum(a));
+  const b = read([['text', 72, 100, 'The Subscriber is (check one):'], ...row(130, 'an individual'), ...row(150, 'a corporation')]);
+  check('a tick box when the instruction says check', b.length === 2 && b.every((p) => p.type === 'checkbox' && p.conf === 'high'), sum(b));
+  const c = read([['text', 72, 100, 'Representations'], ...row(130, 'The Subscriber has read the memorandum.')]);
+  check('initials assumed and marked when nothing says which', c.length === 1 && c[0].type === 'initials' && c[0].conf === 'medium', sum(c));
+})();
+// 14. A blank inside a sentence: the amount when a currency sign and a commitment word come before it, otherwise marked.
+(() => {
+  const s1 = 'The undersigned agrees to make a Capital Commitment of $';
+  const a = read([['text', 72, 100, s1], ['rule', 72 + width(s1) + 2, 72 + width(s1) + 90, 101.5]]);
+  check('the commitment amount inside a sentence', a.length === 1 && a[0].label === 'Commitment amount' && a[0].prefill === 'amount' && a[0].conf === 'high', sum(a));
+  const s2 = 'This Agreement is governed by the laws of the State of';
+  const b = read([['text', 72, 100, s2], ['rule', 72 + width(s2) + 2, 72 + width(s2) + 90, 101.5]]);
+  check('another blank inside a sentence is a marked text field', b.length === 1 && b[0].type === 'text' && b[0].conf === 'medium', sum(b));
+})();
+// 15. A table-of-contents leader gets nothing; a text-only blank (no line seen) is marked as estimated.
+(() => {
+  const a = read([['text', 72, 100, 'Section 4. Representations ' + '.'.repeat(40) + ' 12']]);
+  check('a leader of dots running to a page number is not a blank', a.length === 0, sum(a));
+  const b = read([['text', 72, 100, 'SUBSCRIBER:'], ['text', 72, 130, 'Signature: ______________________']]);
+  check('a blank known only from the text is marked as estimated', b.length === 1 && b[0].type === 'signature' && b[0].conf === 'medium' && /estimated/.test(b[0].why), sum(b));
+})();
+// 16. The fallback block when nothing can be read.
+(() => {
+  const f = P.analyze([{ page: 1, w: 612, h: 792, items: [], rules: [], boxes: [] }], { countersign: true });
+  check('six low-confidence fields on a page with nothing to read', f.length === 6 && f.every((p) => p.conf === 'low' && p.why), sum(f));
+  check('labels are cut to 60 characters and carry no control characters', P.analyze([page([...labelled(72, 100, 'An \u0007extraordinarily long label for a blank that goes on and on:', 100)])], {}).every((p) => p.label.length <= 60 && !/[\u0000-\u001f]/.test(p.label)));
+})();
+
+/* ---------- Review marks and filling in (pure helpers) ---------- */
+const old = { type: 'signature', page: 1, x: 0.1, y: 0.1 };
+const marked = { type: 'text', page: 1, x: 0.1, y: 0.2, auto: true, confidence: 'medium', review: true, reviewReason: 'x' };
+check('a field stored before placement existed never needs review', P.needsReview(old) === false && P.statusOf(old) === '');
+check('a marked field needs review', P.needsReview(marked) === true && P.reviewCount({ fields: [old, marked] }) === 1 && P.needsReview({ fields: [old, marked] }) === true);
+check('confirming clears the mark and keeps the confidence', P.confirm(marked) === true && !P.needsReview(marked) && marked.confidence === 'medium' && /confirmed/.test(P.statusOf(marked)));
+check('investor kinds', P.groupOf('individual') === 'person' && P.groupOf('joint') === 'person' && P.groupOf('trust') === 'entity' && P.groupOf('entity') === 'entity' && P.groupOf('ira') === 'entity');
+check('who gets a field', P.fits({ forType: 'person' }, 'joint') && !P.fits({ forType: 'person' }, 'trust') && P.fits({}, 'trust') && P.fits({ forType: 'entity' }, ''));
+const v = P.values({ title: 'Harbor Light Trust', contact: 'Ana Reyes', address: '12 Harbor Road, Mystic, CT 06355', email: 'ana@example.org', phone: '' }, { name: 'Northgate Fund I, LP' }, { amount: '$250,000' });
+check('values split a U.S. address', v.street === '12 Harbor Road' && v.city === 'Mystic' && v.state === 'CT' && v.zip === '06355' && v.cityStateZip === 'Mystic, CT 06355' && v.address === '12 Harbor Road, Mystic, CT 06355', v);
+check('values leave out what onboarding does not have, and never a taxpayer ID', !('phone' in v) && !('taxId' in v) && v.investorName === 'Harbor Light Trust' && v.signerName === 'Ana Reyes' && v.amount === '$250,000' && v.offering === 'Northgate Fund I, LP', v);
+const v2 = P.values({ title: 'A', contact: 'A', address: '4 Rue de la Paix, 75002 Paris, France' }, null, {});
+check('an address that is not in the U.S. form fills the one-line blank only', v2.address && !v2.street && !v2.city, v2);
+check('prefill keys offered to the editor all have values or are known gaps', P.PREFILL.every(([k]) => typeof k === 'string') && P.FOR_TYPES.length === 3);
+
+console.log(`\n${passed}/${passed + failed} passed`);
+process.exit(failed ? 1 : 0);
