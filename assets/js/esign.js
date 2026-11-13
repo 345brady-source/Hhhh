@@ -2665,7 +2665,8 @@
    * A page with no text (its letters are drawings, or it is a picture of a page) is read from its picture by
    * NS.textread and comes back with pictured set; when that cannot be done it comes back as a scan with unread saying
    * why: 'load' (the text reader could not be loaded), 'time' (the page took too long), 'limit' (the time allowed for
-   * the whole document was used up) or 'fail'. opts: { step(page, pages) called before each such page is read;
+   * the whole document was used up) or 'fail'. opts: { pictures: true to read such pages from their picture (the
+   * sponsor asked for it); step(page, pages) called before each such page is read;
    * kept: true to use the last reading of this file, or read without pictures (for snapping, where waiting is not worth it) }.
    */
   const PICTURE_LIMIT_MS = 150000; // reading pages from their pictures stops after this long for one document
@@ -2697,9 +2698,9 @@
             });
           let use = raw;
           let unread = '';
-          // Reading from pictures is switched on with NS.textread.on (see textread.js): while it is off, a page with no
-          // text is reported as a picture that could not be read, as before, and nothing is placed on it.
-          if (NS.textread && NS.textread.on && !op.kept && NS.anchors.textless(raw)) {
+          // A page with no text is read from its picture only when the sponsor asked for it (op.pictures): otherwise it
+          // is reported as a page that could not be read, and nothing is placed on it.
+          if (NS.textread && op.pictures && !op.kept && NS.anchors.textless(raw)) {
             if (noReader) unread = 'load';
             else if (spent > PICTURE_LIMIT_MS) unread = 'limit';
             else {
@@ -2725,7 +2726,7 @@
       }
     } finally {
       doc.destroy();
-      if (NS.textread && NS.textread.on && !op.kept) NS.textread.stop();
+      if (NS.textread && op.pictures && !op.kept) NS.textread.stop();
     }
     if (!op.kept) layoutKept = pictured ? { docId, pages: out } : null;
     return out;
@@ -2744,7 +2745,8 @@
     try {
       const t = T();
       const o = W().offerings.find((x) => x.id === (env.agreementFor || env.offeringId)) || {};
-      const layout = await pageLayout(env.docId, { step: opts && opts.step });
+      const layout = await pageLayout(env.docId, { step: opts && opts.step, pictures: !!(opts && opts.pictures) });
+      read.asked = !!(opts && opts.pictures);
       // Pages with no text that could not be read from their pictures either, by reason.
       layout.forEach((pg) => pg.unread && (read.unread[pg.unread] = read.unread[pg.unread] || []).push(pg.page));
       res = NS.placement.read(layout, { firmNames: [t.name, t.legalName, t.shortName], fundNames: [o.name, o.shortName] });
@@ -2893,7 +2895,7 @@
       makeSigner(env, { investorId: AGR_INVESTOR, name: 'Investor (each subscriber)', email: '', account: '' });
       makeSigner(env, { name: `${T().shortName} (countersigns)`, email: T().support.email || '' });
       if (tpl) applyTemplateFields(env, tpl);
-      else env.autoPlaced = await autoFields(env, { step: src.step });
+      else env.autoPlaced = await autoFields(env, { step: src.step, pictures: !!src.pictures });
       addEvent(env, staffActor(), 'Created', `Subscription agreement for ${o.name}`);
       envs(ws).push(env);
       NS.app.save(true);

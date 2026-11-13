@@ -65,6 +65,7 @@
     const frames = []; // squares drawn as a filled frame: one rectangle inside another { x0, y0, x1, y1, t }
     let cur = null;
     let picture = false;
+    let image = null; // the picture that covers the page: its own pixel size and where it lies { w, h, x0, y0, x1, y1 }
     const fontOf = (id) => {
       try {
         return page.commonObjs.get(id);
@@ -258,6 +259,7 @@
         if (Math.abs(p2[0] - p1[0]) * Math.abs(p2[1] - p1[1]) > 0.6 * vp.width * vp.height) {
           // A picture over the page covers whatever was drawn before it (the recognised text laid under a scan).
           picture = true;
+          image = fn === OPS.paintImageXObject && a && a[1] > 0 && a[2] > 0 && Math.abs(st.ctm[1]) < 1e-6 && Math.abs(st.ctm[2]) < 1e-6 ? { w: a[1], h: a[2], x0: Math.min(p1[0], p2[0]), y0: Math.min(p1[1], p2[1]), x1: Math.max(p1[0], p2[0]), y1: Math.max(p1[1], p2[1]) } : null;
           glyphs.forEach((g) => (g.hidden = true));
           segs.length = 0;
           rects.length = 0;
@@ -266,7 +268,7 @@
         }
       }
     }
-    return { glyphs, segs, rects, picture, blobs, frames };
+    return { glyphs, segs, rects, picture, blobs, frames, image };
   }
 
   /* Box characters. In a symbol font the code decides, whatever character the reader reports for it. */
@@ -342,7 +344,7 @@
     if (cur) cur.s = cur.s.replace(/ +$/, '');
     // A run of recognised text (NS.textread) carries how sure the recognition was of its weakest word.
     out.items = out.items.map((it) => Object.assign({ s: it.s, x: it.x, y: it.y, w: Math.max(0, it.x1 - it.x), h: Math.max(4, it.h) }, it.conf == null ? null : { conf: it.conf }));
-    if (raw.pictured) Object.assign(out, { pictured: raw.pictured, approx: !!raw.approx });
+    if (raw.pictured) Object.assign(out, { pictured: raw.pictured, approx: !!raw.approx, found: raw.found || [], words: raw.words || [] });
 
     /* Tick boxes: box characters, drawn squares with nothing in them, empty bracket pairs. */
     shown.forEach((g) => {

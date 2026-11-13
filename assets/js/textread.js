@@ -5,8 +5,9 @@
  * the characters of an ordinary PDF, each marked with how sure the recognition was. Nothing here places a field: the
  * printed places still come only from what is printed (NS.anchors.page) and the fields from NS.placement.
  *
- *   NS.textread.page(pdfPage, raw, opts)   raw: NS.anchors.walk of the page. Resolves to a raw page of the same form
- *                                          { glyphs, segs, rects, picture: false, pictured, approx }:
+ *   NS.textread.page(pdfPage, raw, opts)   raw: NS.anchors.walk of the page (opts, for checks: words: false finds lines
+ *                                          and boxes only; trace: true also returns the strokes). Resolves to a raw page of the same form
+ *                                          { glyphs, segs, rects, picture: false, pictured, approx, found, words }:
  *                                            pictured  'drawings' (letters drawn as shapes: lines and boxes keep their
  *                                                      exact drawn geometry) or 'picture' (lines and boxes are found on
  *                                                      the picture itself)
@@ -15,16 +16,13 @@
  *                                          be loaded), 'time' (a page took too long) or 'fail'.
  *   NS.textread.stop()                     frees the recognition engine
  *
- *   NS.textread.on                         false: the reading adapter does not use this yet (see the end of this file)
- *
  * The recognition engine and its English data are the portal's own files (assets/vendor/textread, licences beside
  * them); they are loaded only when a page without text is met.
  */
 (function (NS) {
   'use strict';
   const DIR = 'assets/vendor/textread/';
-  const DPI = 220; // the drawing resolution: enough for small print, and a page still takes only some seconds
-  const MAX_PIXELS = 9.5e6;
+    const MAX_PIXELS = 9.5e6;
   const LOAD_MS = 60000;
   const PAGE_MS = 75000;
   const here = (f) => new URL(DIR + f, document.baseURI).href;
@@ -76,11 +74,19 @@
     if (p) p.then((w) => w.terminate(), () => {});
   }
 
-  /** The page drawn on a canvas; scale is canvas pixels to a point. */
-  async function draw(pdfPage) {
+  /**
+   * The page drawn on a canvas: { canvas, ctx, scale, ox, oy } with canvas pixel = point * scale + (ox, oy). Where one
+   * picture covers the page it is drawn at its own pixels, one to one (its strokes stay as crisp as they are in the
+   * file); any other page at about 200 to the inch.
+   */
+  async function draw(pdfPage, raw) {
     const v1 = pdfPage.getViewport({ scale: 1 });
-    const scale = Math.min(DPI / 72, Math.sqrt(MAX_PIXELS / (v1.width * v1.height)));
-    const vp = pdfPage.getViewport({ scale });
+    const im = raw.image;
+    let scale = im ? im.w / (im.x1 - im.x0) : 200 / 72;
+    scale = Math.max(1, Math.min(scale, Math.sqrt(MAX_PIXELS / (v1.width * v1.height))));
+    const ox = im ? Math.round(im.x0 * scale) - im.x0 * scale : 0;
+    const oy = im ? Math.round(im.y0 * scale) - im.y0 * scale : 0;
+    const vp = pdfPage.getViewport({ scale, offsetX: ox, offsetY: oy });
     const canvas = document.createElement('canvas');
     canvas.width = Math.ceil(vp.width);
     canvas.height = Math.ceil(vp.height);
@@ -88,7 +94,24 @@
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     await pdfPage.render({ canvasContext: ctx, viewport: vp }).promise;
-    return { canvas, ctx, scale };
+    return { canvas, ctx, scale, ox, oy };
+  }
+  /**
+   * A smooth enlarged copy for recognition (small print wants about 300 to the inch), with the found lines and boxes
+   * painted out so that they are not read as letters. marks: [{ x0, y0, x1, y1 }] in pixels of the drawing.
+   */
+  function enlarged(pic, marks) {
+    const k = Math.max(1, Math.min(4, Math.round(300 / 72 / pic.scale), Math.floor(Math.sqrt((1.6 * MAX_PIXELS) / (pic.canvas.width * pic.canvas.height)))));
+    const canvas = document.createElement('canvas');
+    canvas.width = pic.canvas.width * k;
+    canvas.height = pic.canvas.height * k;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(pic.canvas, 0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#fff';
+    (marks || []).forEach((m) => ctx.fillRect((m.x0 - 1) * k, (m.y0 - 1) * k, (m.x1 - m.x0 + 2) * k, (m.y1 - m.y0 + 2) * k));
+    return { canvas, k };
   }
 
   /**
@@ -96,7 +119,7 @@
    * line's baseline; conf is how sure the recognition was of its word (0 to 100). Underscores are left out: a blank
    * is read from its drawn line, never from a recognised character.
    */
-  function characters(blocks, scale) {
+  function characters(blocks, scale, ox, oy) {
     const glyphs = [];
     const words = [];
     const slopes = [];
@@ -107,7 +130,7 @@
           if (!ws.length) return;
           const bl = l.baseline || { x0: l.bbox.x0, y0: l.bbox.y1, x1: l.bbox.x1, y1: l.bbox.y1 };
           if (bl.x1 - bl.x0 > 150 * scale) slopes.push(Math.abs((bl.y1 - bl.y0) / (bl.x1 - bl.x0)));
-          const base = (bl.y0 + bl.y1) / 2 / scale;
+          const base = ((bl.y0 + bl.y1) / 2 - oy) / scale;
           // The size of the type: the height of the line's tallest word is about seven tenths of it when the line has
           // capitals or tall letters, and the whole of it when it has letters that hang below as well.
           const tall = Math.max.apply(null, ws.map((w) => w.bbox.y1 - w.bbox.y0)) / scale;
@@ -118,7 +141,7 @@
             const conf = Math.round(+w.confidence || 0);
             const letters = /[A-Za-z0-9]/.test(w.text);
             if (!letters && conf < 30) return; // specks
-            const box = { s: w.text, x0: w.bbox.x0 / scale, x1: w.bbox.x1 / scale, y0: w.bbox.y0 / scale, y1: w.bbox.y1 / scale, conf, letters, base, size };
+            const box = { s: w.text, x0: (w.bbox.x0 - ox) / scale, x1: (w.bbox.x1 - ox) / scale, y0: (w.bbox.y0 - oy) / scale, y1: (w.bbox.y1 - oy) / scale, conf, letters, base, size };
             words.push(box);
             // The characters of a word share its width evenly: the recognition is sure of a word's extent, not of each letter's.
             const cells = Array.from(w.text).map((u, i, all) => ({ u, x0: box.x0 + ((box.x1 - box.x0) * i) / all.length, x1: box.x0 + ((box.x1 - box.x0) * (i + 1)) / all.length }));
@@ -137,8 +160,9 @@
   }
 
   /**
-   * Straight strokes on the picture of a page: every level and upright run of dark at least five points long and no
-   * thicker than a rule. Returns { h, v, dark, w } with each stroke { a0, a1 (along it), c (across it), t } in pixels.
+   * Straight strokes on the picture of a page: every level and upright run of dark at least five points long, no
+   * thicker than a rule, with paper on both sides of it (the edge of a dark block is not a line).
+   * Returns { h, v, dark, w, hgt } with each stroke { a0, a1 (along it), c (across it), t, c0, c1 } in pixels.
    */
   function strokes(ctx, w, h, scale) {
     const px = ctx.getImageData(0, 0, w, h).data;
@@ -146,10 +170,11 @@
     const dark = new Uint8Array(w * h);
     for (let i = 0, j = 0; i < dark.length; i++, j += 4) {
       const lum = px[j] * 299 + px[j + 1] * 587 + px[j + 2] * 114;
-      dark[i] = lum < 150000 ? 2 : lum < 232000 ? 1 : 0;
+      dark[i] = lum < 150000 ? 2 : lum < 228000 ? 1 : 0;
     }
-    const least = Math.round(5 * scale);
+    const least = Math.max(6, Math.round(4.6 * scale));
     const thick = Math.max(3, Math.round(2.6 * scale));
+    const bridge = scale > 2.5 ? 2 : 1;
     const find = (level) => {
       const lines = level ? h : w;
       const len = level ? w : h;
@@ -173,7 +198,7 @@
             if (dark[at + b * along]) {
               e = b;
               gap = 0;
-            } else if (++gap > 2) break;
+            } else if (++gap > bridge) break;
             b++;
           }
           if (e - a + 1 >= least) {
@@ -199,68 +224,88 @@
         }
         live = now.concat(live.filter((s) => s.c1 >= c - 1 && now.indexOf(s) < 0));
       }
-      return out.filter((s) => s.c1 - s.c0 + 1 <= thick).map((s) => ({ a0: s.a0, a1: s.a1 + 1, c: (s.c0 + s.c1 + 1) / 2, t: s.c1 - s.c0 + 1 }));
+      // Paper on both sides: the lines just outside the stroke are mostly not print-dark along it.
+      const side = (s, c) => {
+        if (c < 0 || c >= lines) return 0;
+        let n = 0;
+        for (let x = s.a0; x <= s.a1; x++) n += dark[c * across + x * along] === 2 ? 1 : 0;
+        return n / (s.a1 - s.a0 + 1);
+      };
+      return out.filter((s) => s.c1 - s.c0 + 1 <= thick && side(s, s.c0 - 2) < 0.4 && side(s, s.c1 + 2) < 0.4).map((s) => ({ a0: s.a0, a1: s.a1 + 1, c: (s.c0 + s.c1 + 1) / 2, t: s.c1 - s.c0 + 1 }));
     };
-    return { h: find(true), v: find(false), dark, w };
+    return { h: find(true), v: find(false), dark, w, hgt: h };
   }
   /** The share of print-dark inside a rectangle of the picture (pixels). */
   function inked(pic, x0, y0, x1, y1) {
     let n = 0;
     let all = 0;
-    for (let y = Math.ceil(y0); y < y1; y++) for (let x = Math.ceil(x0); x < x1; x++, all++) n += pic.dark[y * pic.w + x] === 2 ? 1 : 0;
+    for (let y = Math.max(0, Math.ceil(y0)); y < Math.min(pic.hgt, y1); y++) for (let x = Math.max(0, Math.ceil(x0)); x < Math.min(pic.w, x1); x++, all++) n += pic.dark[y * pic.w + x] === 2 ? 1 : 0;
     return all ? n / all : 0;
   }
-
   /**
-   * Lines and boxes found on the picture of a page, in points, in the form NS.anchors.walk gives them. A box is four
-   * straight strokes that meet at its corners (so the shape of a letter is never a box); a stroke that lies in a
-   * recognised word is part of a letter and is left out. Something printed inside a box that was not read as words is
-   * kept as a mark, so the box does not count as empty.
+   * Closed boxes on the picture: four straight strokes of like thickness that meet at the corners, level sides ending
+   * at the corners (uprights may run on where boxes are stacked). In pixels: [{ x0, y0, x1, y1, t, parts }].
    */
-  function shapes(pic, scale, read) {
-    const tol = 1.6 * scale;
-    const hs = pic.h;
-    const vs = pic.v;
+  function closed(pic, scale) {
+    const tol = Math.max(2, 1.4 * scale);
     const rects = [];
-    const used = new Set();
-    hs.forEach((top) => {
+    pic.h.forEach((top) => {
       let best = null;
-      hs.forEach((bot) => {
+      pic.h.forEach((bot) => {
         if (bot.c - top.c < 4 * scale || Math.abs(bot.a0 - top.a0) > tol || Math.abs(bot.a1 - top.a1) > tol) return;
         if (best && bot.c >= best.bot.c) return;
-        const side = (x) => vs.find((v) => Math.abs(v.c - x) <= tol && v.a0 <= top.c + tol && v.a1 >= bot.c - tol);
+        const side = (x) => pic.v.find((v) => Math.abs(v.c - x) <= tol && v.a0 <= top.c + tol && v.a1 >= bot.c - tol);
         const l = side(top.a0);
         const r = side(top.a1);
         if (l && r) best = { bot, l, r };
       });
       if (!best) return;
-      [top, best.bot, best.l, best.r].forEach((s) => used.add(s));
-      rects.push({ x0: best.l.c, y0: top.c, x1: best.r.c, y1: best.bot.c, t: Math.max(top.t, best.l.t) });
+      const ts = [top.t, best.bot.t, best.l.t, best.r.t];
+      if (Math.max.apply(null, ts) > 2 * Math.min.apply(null, ts) + 1) return;
+      rects.push({ x0: best.l.c, y0: top.c, x1: best.r.c, y1: best.bot.c, t: Math.max.apply(null, ts), parts: [top, best.bot, best.l, best.r] });
     });
-    const pt = (v) => v / scale;
-    const out = { glyphs: read.glyphs.slice(), segs: [], rects: [], picture: false };
+    // A box that holds other boxes is a frame around them, not a place.
+    return rects.filter((r) => !rects.some((o) => o !== r && o.x0 >= r.x0 - 1 && o.x1 <= r.x1 + 1 && o.y0 >= r.y0 - 1 && o.y1 <= r.y1 + 1 && (o.x1 - o.x0) * (o.y1 - o.y0) < 0.9 * (r.x1 - r.x0) * (r.y1 - r.y0)));
+  }
+
+  /**
+   * What was found on the picture of a page, in points, in the form NS.anchors.walk gives it, with found: the closed
+   * boxes [{ x0, y0, x1, y1, small, inside (the words printed in it) }]. A stroke that lies in a recognised word is
+   * part of a letter and is left out; a box filled with print, or lying in running text that was read with confidence,
+   * is no place.
+   */
+  function shapes(pic, boxes, at, read, size) {
+    const out = { glyphs: read.glyphs.slice(), segs: [], rects: [], picture: false, found: [], words: read.words };
+    const used = new Set();
     const inWord = (x0, x1, y0, y1) => read.words.some((w) => w.letters && ov(w.x0, w.x1, x0, x1) > 0.5 * (x1 - x0) && ov(w.y0 - 0.5, w.y1 + 0.5, y0, y1) > 0.5 * (y1 - y0));
-    rects.forEach((r) => {
-      const b = { x0: pt(r.x0), y0: pt(r.y0), x1: pt(r.x1), y1: pt(r.y1), t: Math.max(0.3, pt(r.t)) };
-      const small = b.x1 - b.x0 <= 20 && b.y1 - b.y0 <= 20;
+    boxes.forEach((r) => {
+      r.parts.forEach((s) => used.add(s));
+      const b = { x0: at.x(r.x0), y0: at.y(r.y0), x1: at.x(r.x1), y1: at.y(r.y1), t: Math.max(0.3, r.t / at.scale) };
+      const w = b.x1 - b.x0;
+      const hh = b.y1 - b.y0;
+      if (w < 5 || hh < 5 || (w > 0.6 * size.w && hh > 0.3 * size.h)) return;
+      const small = w <= 20 && hh <= 20;
+      const inside = read.words.filter((q) => q.letters && (q.x0 + q.x1) / 2 > b.x0 && (q.x0 + q.x1) / 2 < b.x1 && (q.y0 + q.y1) / 2 > b.y0 && (q.y0 + q.y1) / 2 < b.y1);
       // A small box in the middle of a word that was read with confidence is the shape of a letter, not a box.
-      if (small && read.words.some((w) => w.letters && w.conf >= 60 && w.x0 < b.x0 - 3 && w.x1 > b.x1 + 3 && ov(w.y0, w.y1, b.y0, b.y1) > 0.5 * (b.y1 - b.y0))) return;
-      const inside = (g) => (g.x0 + g.x1) / 2 > b.x0 - 1 && (g.x0 + g.x1) / 2 < b.x1 + 1 && g.y > b.y0 && g.y - 0.5 * g.h < b.y1 + 1;
-      const pad = r.t + 1.2 * scale;
+      if (small && read.words.some((q) => q.letters && q.conf >= 60 && q.x0 < b.x0 - 3 && q.x1 > b.x1 + 3 && ov(q.y0, q.y1, b.y0, b.y1) > 0.5 * hh)) return;
+      const pad = r.t + Math.max(1, 0.8 * at.scale);
       const ink = inked(pic, r.x0 + pad, r.y0 + pad, r.x1 - pad, r.y1 - pad);
-      if (small) out.glyphs = out.glyphs.filter((g) => g.sp || !inside(g));
-      if (ink > (small ? 0.03 : 0.003) && !out.glyphs.some((g) => !g.sp && inside(g))) out.glyphs.push({ u: '•', sp: false, x0: (b.x0 + b.x1) / 2 - 1, x1: (b.x0 + b.x1) / 2 + 1, y: (b.y0 + b.y1) / 2 + 1, h: 4, font: '', hidden: false, conf: 0 });
+      // Filled in, ticked or full of print: not an empty place (a short caption printed inside a roomy box is one).
+      const covered = inside.reduce((n, q) => n + (q.x1 - q.x0) * (q.y1 - q.y0), 0) / (w * hh);
+      if (small ? ink > 0.03 : ink > 0.12 || covered > 0.3 || inside.length > 6) return;
+      if (small) out.glyphs = out.glyphs.filter((g) => g.sp || !((g.x0 + g.x1) / 2 > b.x0 - 1 && (g.x0 + g.x1) / 2 < b.x1 + 1 && g.y > b.y0 && g.y - 0.5 * g.h < b.y1 + 1));
+      out.found.push({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, small, inside: inside.map((q) => q.s).join(' ') });
       out.rects.push(b);
       out.segs.push({ o: 'h', a0: b.x0, a1: b.x1, c: b.y0, t: b.t, frame: true }, { o: 'h', a0: b.x0, a1: b.x1, c: b.y1, t: b.t, frame: true }, { o: 'v', a0: b.y0, a1: b.y1, c: b.x0, t: b.t }, { o: 'v', a0: b.y0, a1: b.y1, c: b.x1, t: b.t });
     });
-    hs.forEach((s) => {
+    pic.h.forEach((s) => {
       if (used.has(s)) return;
-      const g = { o: 'h', a0: pt(s.a0), a1: pt(s.a1), c: pt(s.c), t: pt(s.t) };
+      const g = { o: 'h', a0: at.x(s.a0), a1: at.x(s.a1), c: at.y(s.c), t: s.t / at.scale };
       if (!inWord(g.a0, g.a1, g.c - g.t / 2, g.c + g.t / 2)) out.segs.push(g);
     });
-    vs.forEach((s) => {
+    pic.v.forEach((s) => {
       if (used.has(s)) return;
-      const g = { o: 'v', a0: pt(s.a0), a1: pt(s.a1), c: pt(s.c), t: pt(s.t) };
+      const g = { o: 'v', a0: at.y(s.a0), a1: at.y(s.a1), c: at.x(s.c), t: s.t / at.scale };
       if (!inWord(g.c - g.t / 2, g.c + g.t / 2, g.a0, g.a1)) out.segs.push(g);
     });
     return out;
@@ -291,18 +336,28 @@
     return out;
   }
 
-  async function page(pdfPage, raw) {
-    const worker = await start();
+  async function page(pdfPage, raw, opts) {
+    const worker = opts && opts.words === false ? null : await start();
     let pic = null;
+    let big = null;
     try {
-      pic = await timed(draw(pdfPage), PAGE_MS, 'time');
+      pic = await timed(draw(pdfPage, raw), PAGE_MS, 'time');
       await new Promise((r) => setTimeout(r, 0));
-      const res = await timed(worker.recognize(pic.canvas, {}, { blocks: true, text: false }), PAGE_MS, 'time');
-      const read = characters(res && res.data && res.data.blocks, pic.scale);
+      const v1 = pdfPage.getViewport({ scale: 1 });
+      const at = { scale: pic.scale, x: (v) => (v - pic.ox) / pic.scale, y: (v) => (v - pic.oy) / pic.scale };
+      // On a picture the lines and boxes are found first, and painted out of the copy the words are recognised from.
+      const found = raw.picture ? strokes(pic.ctx, pic.canvas.width, pic.canvas.height, pic.scale) : null;
+      const boxes = found ? closed(found, pic.scale) : [];
+      const marks = [];
+      boxes.forEach((r) => r.parts.forEach((s, i) => marks.push(i < 2 ? { x0: s.a0, x1: s.a1, y0: s.c - s.t / 2, y1: s.c + s.t / 2 } : { x0: s.c - s.t / 2, x1: s.c + s.t / 2, y0: Math.max(s.a0, r.y0 - 1), y1: Math.min(s.a1, r.y1 + 1) })));
+      big = enlarged(pic, marks);
+      const res = worker ? await timed(worker.recognize(big.canvas, {}, { blocks: true, text: false }), PAGE_MS, 'time') : null;
+      const read = characters(res && res.data && res.data.blocks, pic.scale * big.k, pic.ox * big.k, pic.oy * big.k);
       await new Promise((r) => setTimeout(r, 0));
-      const out = raw.picture ? shapes(strokes(pic.ctx, pic.canvas.width, pic.canvas.height, pic.scale), pic.scale, read) : drawn(raw, read);
+      const out = raw.picture ? shapes(found, boxes, at, read, { w: v1.width, h: v1.height }) : drawn(raw, read);
       out.pictured = raw.picture ? 'picture' : 'drawings';
       out.approx = !!raw.picture;
+      if (opts && opts.trace && found) out.trace = { h: found.h.map((s) => [at.x(s.a0), at.x(s.a1), at.y(s.c), s.t]), v: found.v.map((s) => [at.y(s.a0), at.y(s.a1), at.x(s.c), s.t]) };
       return out;
     } catch (e) {
       // A page that ran out of time leaves the engine busy: it is stopped, and started afresh for the next page.
@@ -310,13 +365,9 @@
       throw e && e.code ? e : fail('fail', e);
     } finally {
       if (pic) pic.canvas.width = pic.canvas.height = 0;
+      if (big) big.canvas.width = big.canvas.height = 0;
     }
   }
 
-  /*
-   * Off until the reading of pictures is proven on real scans: on a 72-page scanned binder the strokes found on the
-   * pictures gave fields that were not on printed places, so for now a page with no text is still reported as not
-   * readable and nothing is placed on it. Set on to true to read such pages.
-   */
-  NS.textread = { page, stop, on: false };
+  NS.textread = { page, stop };
 })(window.CVPortal);
