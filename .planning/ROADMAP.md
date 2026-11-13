@@ -40,9 +40,18 @@ Plans:
 
 ### Phase 01.1: Placement reads what the agreement has: fields only on its own blanks, boxes and signature lines (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
+**Goal:** The portal reads an uploaded subscription agreement and places a field only where the agreement itself has a place for one (a printed blank, a printed tick box, a printed signature line, or a form field the PDF already carries); every such place gets its field, of the right kind and for the right person; it recognises whether the agreement has an investor signature block and a countersignature block (both, one or neither) and sets up signing to match; it never invents a position, says what it read, and says so when it could not read
 **Requirements**: PLACE-08, PLACE-09, PLACE-10, PLACE-11, PLACE-12, PLACE-13, PLACE-14, LOOK-03
 **Depends on:** Phase 1
+**Success Criteria** (what must be TRUE):
+  1. On agreements made by several layout engines, on public real agreements and on the owner's held-out example, every printed tick box, blank and signature line has its field on it, and no automatic field is anywhere else, over printed words, inside the sponsor's bracketed text or overlapping another field, at any confidence
+  2. Each field carries the agreement's own complete label and the right kind, belongs to the right person (the investor, the right kind of investor, or the firm), and arrives filled in where onboarding already holds the answer
+  3. The portal recognises an investor signature block and a countersignature block separately (both, one or neither), tells the sponsor in a plain summary, sets up signers to match, and does not let an agreement with no investor signature field be used
+  4. When a PDF or some of its pages cannot be read the sponsor is told exactly that, nothing is placed by guesswork, and the sponsor can have the PDF read again without losing fields they placed, moved or changed
+  5. All of it works the same inside the published preview's sandbox, with storage and without, with no network request beyond the script loads; a 13-page agreement is read in seconds and a 60-page one shows progress
+  6. An individual, an entity and the firm can each complete the agreement end to end, and the finished PDF shows every value on its own line, never a "?" and never a repeated currency sign
+  7. Every field box shown on the agreement (sponsor's editor, investor's signing step, firm's countersigning) has rounded corners, an even edge and clear states, and no tag or mark covers the agreement's words, at desktop and phone widths, in light and dark, for each sample firm
+  8. The earlier checks of phases 1 to 5 pass without having been loosened, and the owner has checked their own document in the republished preview
 **Plans:** 0 plans
 **UI hint**: yes
 
