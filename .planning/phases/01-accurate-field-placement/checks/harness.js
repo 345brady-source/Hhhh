@@ -221,6 +221,8 @@ async function upload(page, bytes, opts) {
           type: f.type,
           kind: f.kind || '',
           second: !!f.second,
+          // The party a place for somebody else belongs to ('' when the field is the investor's or the firm's own).
+          other: typeof f.other === 'string' ? f.other : '',
           printed: f.printed || '',
           role: role(f.signerId),
           page: f.page,
@@ -256,7 +258,8 @@ async function upload(page, bytes, opts) {
       } catch (e) {
         /* the file store keeps it; nothing reads it again */
       }
-      return { fields, saved, todo, pages: env.pageSizes, read: env.read || null, note, settled, roles: tpl ? tpl.roles || [] : [] };
+      // otherPages: the pages the reading says hold a place for somebody else (none when the reading keeps no such record).
+      return { fields, saved, todo, pages: env.pageSizes, read: env.read || null, otherPages: ((env.read && env.read.otherPages) || []).slice(), note, settled, roles: tpl ? tpl.roles || [] : [] };
     },
     { arr: bytes, o: opts || {} }
   );
@@ -375,7 +378,14 @@ function covers(f, e) {
   const under = e.how === 'rule' ? f.bottom >= e.line - 0.5 : f.bottom >= e.line - 2;
   return f.x0 <= e.x0 + 0.5 && f.x0 >= e.x0 - 3 && f.x1 >= e.x1 - 0.5 && f.x1 <= e.x1 + 3 && under;
 }
-/** What is wrong with a field that rests on a blank ('' when it is right): kind of field, signer, kind of investor, label, key, required, second signer, cover. */
+/**
+ * What is wrong with a field that rests on a blank ('' when it is right): kind of field, signer, kind of investor, label,
+ * key, required, second signer, cover. Two more keys are compared only when the page gives them, so a page that does
+ * not give them is judged exactly as before:
+ *   other    a party's name: the field is for somebody else and names that party; true: for somebody else, whoever;
+ *            false (or left out on a place that is not a second signer's): the field is nobody else's
+ *   review   true: the field is marked for review; false: it is not
+ */
 function wrong(f, e) {
   const bad = [];
   if (f.type !== e.type) bad.push(`a ${f.type} field, not ${e.type}`);
@@ -385,6 +395,13 @@ function wrong(f, e) {
   if (e.key != null && (f.prefill || '') !== e.key) bad.push(`filled in from ${f.prefill || 'nothing'}, not ${e.key || 'nothing'}`);
   if (e.required != null && f.type !== 'date' && !!f.required !== !!e.required) bad.push(`${f.required ? 'required' : 'optional'}, not ${e.required ? 'required' : 'optional'}`);
   if (!!f.second !== !!e.second) bad.push(e.second ? 'not kept apart as a line for a second signer' : 'treated as a line for a second signer');
+  const whose = f.other || '';
+  if (typeof e.other === 'string') {
+    if (whose !== e.other) bad.push(`for ${whose ? '"' + whose + '"' : 'nobody else'}, not for "${e.other}"`);
+  } else if (e.other === true) {
+    if (!whose) bad.push('not given to somebody else');
+  } else if ((e.other === false || !e.second) && whose) bad.push(`given to somebody else ("${whose}")`);
+  if (e.review != null && !!f.review !== !!e.review) bad.push(e.review ? 'not marked for review' : 'marked for review');
   if (!covers(f, e)) bad.push(`does not cover its line (field x ${f.x0.toFixed(1)}-${f.x1.toFixed(1)} bottom ${f.bottom.toFixed(1)}; line x ${e.x0.toFixed(1)}-${e.x1.toFixed(1)} y ${e.line.toFixed(1)})`);
   return bad.join('; ');
 }
