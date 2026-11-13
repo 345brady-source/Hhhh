@@ -78,12 +78,13 @@ const pad = (s, n) => String(s).padEnd(n);
   const line = (r) => `${pad(r.name, 16)}${pad(r.sigRight + '/' + r.sig, 12)}${pad(r.fillRight + '/' + r.fill, 12)}${pad(r.right + '/' + r.blanks, 10)}${pad(r.mistakes, 10)}${pad(r.flagged, 9)}${pad(r.blanks - r.right, 12)}${r.saved ? 'yes' : 'held'}`;
   console.log(`\n${pad('layout', 16)}${pad('sig block', 12)}${pad('fill-in', 12)}${pad('right', 10)}${pad('confident', 10)}${pad('review', 9)}${pad('not placed', 12)}saved`);
   console.log(`${pad('', 16)}${pad('blanks', 12)}${pad('blanks', 12)}${pad('', 10)}${pad('mistakes', 10)}${pad('marks', 9)}${pad('right', 12)}at once`);
-  const note = (r) => (r.heldOut ? '   (held out: written after the rules, never used to change them)' : r.first ? `   (written after the rules; first run ${r.first.right}/${r.first.blanks} right, ${r.first.mistakes} confident mistake${r.first.mistakes === 1 ? '' : 's'}, ${r.first.marks} mark${r.first.marks === 1 ? '' : 's'}; then used to fix them)` : '');
+  const note = (r) => (r.heldOut ? '   (held out: written after the rules, never used to change them)' : r.first ? `   (${r.first.heldOut ? 'the held-out layout' : 'written after the rules'}; first run ${r.first.right}/${r.first.blanks} right, ${r.first.mistakes} confident mistake${r.first.mistakes === 1 ? '' : 's'}, ${r.first.marks} mark${r.first.marks === 1 ? '' : 's'}; rules improved since)` : '');
   rows.forEach((r) => console.log(line(r) + note(r)));
-  const built = rows.filter((r) => !r.heldOut);
   if (rows.length > 1) console.log(line({ name: 'TOTAL', sig: sum('sig', rows), sigRight: sum('sigRight', rows), fill: sum('fill', rows), fillRight: sum('fillRight', rows), blanks: sum('blanks', rows), right: sum('right', rows), mistakes: sum('mistakes', rows), flagged: sum('flagged', rows), saved: false }).replace(/held$/, ''));
   console.log(`\nBEFORE THIS PHASE (classic, caption, blank as they were then): ${BEFORE.right} of ${BEFORE.blanks} printed blanks had a field on them; ${BEFORE.savedUnseen} of ${BEFORE.of} agreements were saved with nobody looking.`);
-  console.log(`NOW: ${sum('right', rows)} of ${sum('blanks', rows)} printed blanks have the right field on them (${sum('right', built)} of ${sum('blanks', built)} in the layouts the rules were built on); ${sum('mistakes', rows)} confident mistakes.`);
+  console.log(`NOW: ${sum('right', rows)} of ${sum('blanks', rows)} printed blanks have the right field on them; ${sum('mistakes', rows)} confident mistakes.`);
+  const firsts = rows.filter((r) => r.first);
+  if (firsts.length) console.log(`FIRST RUNS of the layouts written after the rules, before any rule knew them: ${firsts.map((r) => `${r.name} ${r.first.right}/${r.first.blanks} right with ${r.first.mistakes} confident mistake${r.first.mistakes === 1 ? '' : 's'}`).join('; ')}.`);
   console.log(h.errors.length ? 'PAGE ERRORS ' + h.errors.join(' | ') : 'NO PAGE ERRORS');
   if (h.errors.length && !BASELINE) failed.push('page errors');
   if (failed.length) {

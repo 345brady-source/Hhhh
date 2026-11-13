@@ -730,11 +730,15 @@
       }
       return null;
     };
-    const sentence = (slot, text, seg) => {
-      const tail = tidy(text).slice(-160);
-      const ws = wordsOf(tail.replace(/[^A-Za-z0-9$' -]+/g, ' ').replace(/\s+/g, ' ').trim());
+    const sentence = (slot, text, seg, after) => {
+      const tail = tidy(text).slice(-240);
+      // The sentence the blank stands in (what follows the last full stop), at most its last 24 words.
+      const ws = wordsOf(tail.split(/[.;?!]["”)]?\s+/).pop().replace(/[^A-Za-z0-9$' -]+/g, ' ').replace(/\s+/g, ' ').trim());
       const last8 = ws.slice(-8).join(' ').toLowerCase();
-      if (CURRENCY_TAIL.test(tail) && MONEY_WORDS.test(last8) && !/\b(accept\w*|minimum|maximum|fees?|expenses?|per (unit|share|interest)|price per|each)\b/.test(last8)) return propose('amount', slot, null, { seg, how: 'sentence' });
+      const sent = ws.slice(-24).join(' ').toLowerCase();
+      // "$____ (the "Subscription Amount")": the words after the blank name it.
+      const named = !!after && /^\(?\s*(the |this |its )?[“"']?(subscription|commitment|capital commitment|investment|purchase)( amount| price)?[”"']?\s*\)/i.test(after.s);
+      if (CURRENCY_TAIL.test(tail) && (MONEY_WORDS.test(sent) || named) && !/\b(accept\w*|minimum|maximum|fees?|expenses?|per (unit|share|interest)|price per|each)\b/.test(sent)) return propose('amount', slot, null, { seg, how: 'sentence' });
       const m = propose('other', slot, null, { seg, how: 'sentence', label: ws.slice(-4).join(' ').replace(/\$$/, '').trim() || 'Text', who: whoIn(last8) });
       weaken(m, WHY.sentence);
       return m;
@@ -776,6 +780,11 @@
               before.seg.used = 'label';
               return propose('amount', slot, lab, { seg: before.seg });
             }
+            const up = left.i === 0 ? lineAbove(ln, 1)[0] : null;
+            if (up && dist <= 36 && ln.y - up.y < 2.2 * ln.h && up.text && !/[.:;?!]$/.test(up.text) && wordsOf(up.text).length > 5) {
+              seg.used = 'label';
+              return sentence(slot, up.text + ' $', seg, after);
+            }
             info = { kind: 'other', who: '', forType: '', optional: false, colon: false, by: false, text: 'Amount' };
             if (dist <= 36) {
               seg.used = 'label';
@@ -805,7 +814,7 @@
               seg.used = 'label';
               return generic(slot, info, seg);
             }
-            if (!info && dist <= 14) return sentence(slot, seg.s, seg);
+            if (!info && dist <= 14) return sentence(slot, seg.s, seg, after);
           }
         }
         // A label printed after its blank: "______ (Signature)", "____ Initials".
@@ -1045,6 +1054,11 @@
       // Two labels on one printed line ("By: ____ Name: ____") are one block: the second follows the first.
       if (!role && m.block && m.kind !== 'signature' && m.slot && m.slot.line) {
         const mate = made.filter((o) => o !== m && o.block && o.who && o.kind !== m.kind && o.slot && o.slot.line === m.slot.line && o.x1 <= m.x0 + 3).sort((a, b) => b.x1 - a.x1)[0];
+        if (mate) role = mate.who;
+      }
+      // So does a second blank in the same printed sentence ("Accepted this ____ day of ____").
+      if (!role && !m.block && m.kind === 'other' && m.slot && m.slot.line) {
+        const mate = made.filter((o) => o !== m && o.kind === 'other' && o.who && o.slot && o.slot.line === m.slot.line && o.x1 <= m.x0 + 3 && m.x0 - o.x1 <= 80).sort((a, b) => b.x1 - a.x1)[0];
         if (mate) role = mate.who;
       }
       let sure = !!role;

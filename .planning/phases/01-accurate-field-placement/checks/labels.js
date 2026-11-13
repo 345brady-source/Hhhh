@@ -280,6 +280,32 @@ const labelled = (x, y, label, len) => [['text', x, y, label], ['rule', x + widt
   check('scan finds the line with clear paper above it and not the underlined one', blanks.length === 1 && Math.abs(blanks[0].x0 - 10) < 1 && Math.abs(blanks[0].x1 - 110.5) < 1 && Math.abs(blanks[0].y - 50.25) < 0.5, m.rules);
 })();
 
+// 23. The amount when its currency sign opens a printed line, and when the words after the blank name it.
+(() => {
+  const up = 'The undersigned hereby subscribes for an interest in the Fund in the amount of';
+  const a = read([['text', 72, 100, up], ['text', 72, 116, '$'], ['rule', 80, 170, 117.5], ['text', 174, 116, '(the “Subscription Amount”), payable on demand.']]);
+  check('"...in the amount of / $____ (the Subscription Amount)" is the commitment amount', a.length === 1 && a[0].label === 'Commitment amount' && a[0].prefill === 'amount' && a[0].conf === 'high', sum(a));
+  const s = 'The Fund will return to the investor $';
+  const b = read([['text', 72, 100, s], ['rule', 72 + width(s) + 2, 72 + width(s) + 90, 101.5], ['text', 72 + width(s) + 94, 100, '(the “Purchase Price”) on request.']]);
+  check('the words after the blank can name it', b.length === 1 && b[0].prefill === 'amount', sum(b));
+})();
+// 24. A second blank in the same printed sentence is filled in by whoever fills in the first.
+(() => {
+  const f = read([['text', 72, 100, 'ACCEPTANCE'], ['text', 72, 130, 'Accepted this'], ['rule', 142, 170, 131.5], ['text', 174, 130, 'day of'], ['rule', 206, 280, 131.5]]);
+  check('"Accepted this ____ day of ____": both blanks are the firm’s, both marked', f.length === 2 && f.every((p) => p.role === 'firm' && p.type === 'text' && p.conf !== 'high'), sum(f));
+})();
+// 25. A table with every border drawn: the empty cell is the blank, the cell with words in it is not.
+(() => {
+  const pg = page([['text', 78, 112, 'Signature of Subscriber'], ['text', 78, 142, 'By'], ['text', 78, 172, 'Signature of Joint Subscriber']]);
+  [120, 150, 180].forEach((y) => {
+    pg.rules.push({ x0: 73, x1: 268, y, t: 1, clear: 7.5, drop: 12, rise: 12, cut: false, cell: true, table: true });
+    pg.rules.push({ x0: 270, x1: 539, y, t: 1, clear: 23, drop: y === 180 ? 0 : 12, rise: 12, cut: false, cell: true, table: true });
+  });
+  pg.rules.push({ x0: 72, x1: 540, y: 96, t: 1, clear: 30, drop: 12, rise: 0, cut: false, cell: false, table: false });
+  const f = P.analyze([pg], { countersign: false }).filter((p) => p.why.indexOf('last page') < 0);
+  check('each empty cell gets its row’s field; the joint subscriber’s row and the table’s top edge get none', f.length === 2 && f.every((p) => p.type === 'signature' && Math.abs(p.x - 270) < 1) && f[0].conf === 'high', sum(f));
+})();
+
 /* ---------- Review marks and filling in (pure helpers) ---------- */
 const old = { type: 'signature', page: 1, x: 0.1, y: 0.1 };
 const marked = { type: 'text', page: 1, x: 0.1, y: 0.2, auto: true, confidence: 'medium', review: true, reviewReason: 'x' };
