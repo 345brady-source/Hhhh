@@ -15,6 +15,8 @@
  *                                          be loaded), 'time' (a page took too long) or 'fail'.
  *   NS.textread.stop()                     frees the recognition engine
  *
+ *   NS.textread.on                         false: the reading adapter does not use this yet (see the end of this file)
+ *
  * The recognition engine and its English data are the portal's own files (assets/vendor/textread, licences beside
  * them); they are loaded only when a page without text is met.
  */
@@ -311,5 +313,10 @@
     }
   }
 
-  NS.textread = { page, stop };
+  /*
+   * Off until the reading of pictures is proven on real scans: on a 72-page scanned binder the strokes found on the
+   * pictures gave fields that were not on printed places, so for now a page with no text is still reported as not
+   * readable and nothing is placed on it. Set on to true to read such pages.
+   */
+  NS.textread = { page, stop, on: false };
 })(window.CVPortal);

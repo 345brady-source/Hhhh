@@ -2679,7 +2679,7 @@
     const doc = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()), isEvalSupported: false }).promise;
     const out = [];
     let spent = 0;
-    let noReader = !NS.textread;
+    let noReader = false;
     let pictured = false;
     try {
       for (let i = 1; i <= doc.numPages; i++) {
@@ -2697,8 +2697,10 @@
             });
           let use = raw;
           let unread = '';
-          if (NS.anchors.textless(raw)) {
-            if (op.kept || noReader) unread = 'load';
+          // Reading from pictures is switched on with NS.textread.on (see textread.js): while it is off, a page with no
+          // text is reported as a picture that could not be read, as before, and nothing is placed on it.
+          if (NS.textread && NS.textread.on && !op.kept && NS.anchors.textless(raw)) {
+            if (noReader) unread = 'load';
             else if (spent > PICTURE_LIMIT_MS) unread = 'limit';
             else {
               if (op.step) op.step(i, doc.numPages);
@@ -2723,7 +2725,7 @@
       }
     } finally {
       doc.destroy();
-      if (NS.textread && !op.kept) NS.textread.stop();
+      if (NS.textread && NS.textread.on && !op.kept) NS.textread.stop();
     }
     if (!op.kept) layoutKept = pictured ? { docId, pages: out } : null;
     return out;
