@@ -2610,12 +2610,24 @@
     const r = env && env.read;
     if (!r) return '';
     const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
-    const on = (list) => (list.length === 1 ? `page ${list[0]}` : `pages ${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`);
+    // Page numbers as words: "page 4", "pages 2 and 5", "pages 1 to 10, 12 to 72" (runs of pages are given as ranges).
+    const on = (pages) => {
+      const runs = [];
+      pages.forEach((p) => {
+        const last = runs[runs.length - 1];
+        if (last && p === last[1] + 1) last[1] = p;
+        else runs.push([p, p]);
+      });
+      const list = runs.map((r) => (r[0] === r[1] ? `${r[0]}` : r[1] === r[0] + 1 ? `${r[0]}, ${r[1]}` : `${r[0]} to ${r[1]}`));
+      return pages.length === 1 ? `page ${list[0]}` : list.length === 1 ? `pages ${list[0].replace(', ', ' and ')}` : `pages ${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
+    };
     if (!r.ok) {
       if (r.scanned.length && !r.failed.length && !r.error) return 'The text of this PDF could not be read: its pages are pictures, as in a scan. No field was placed. Upload the PDF the agreement was made from, or add each field by hand.';
       return 'The portal could not read this PDF, so no field was placed. Add each field by hand, or try uploading the PDF again.';
     }
     const made = r.boxes + r.blanks + r.signatures;
+    // Mostly pictures of pages: said first, as the thing the sponsor has to act on.
+    if (!made && r.scanned.length >= r.pages) return `Most of this PDF could not be read: ${r.scanned.length} of its ${r.scanned.length + r.pages + r.failed.length} pages are pictures, as in a scan. No field was placed. Upload the PDF the agreement was made from, or add each field by hand.`;
     const out = [made ? `${n(r.pages, 'page', 'pages')} read. ${n(r.boxes, 'tick box', 'tick boxes')}, ${n(r.blanks, 'blank', 'blanks')} and ${n(r.signatures, 'signature line', 'signature lines')} got a field, each on a place the agreement prints.` : `${n(r.pages, 'page', 'pages')} read: no line, blank or tick box to complete was found, so no field was placed.`];
     const left = (r.left || []).slice().sort((a, b) => a - b);
     if (left.length) out.push(`Not every printed place got a field: check ${on(left)} and add what is missing by hand.`);
@@ -2632,7 +2644,7 @@
     // Where a signer signs: a signature or initials field that is theirs to complete (not an optional line for a second person).
     const signing = (sg) => env.fields.filter((f) => f.signerId === sg.id && (f.type === 'signature' || f.type === 'initials') && f.required !== false);
     if (!inv || !signing(inv).length) {
-      if (env.read && !env.read.ok) return 'This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign.';
+      if (env.read && (!env.read.ok || (!env.fields.length && env.read.scanned.length >= env.read.pages))) return 'This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign.';
       if (env.read && !env.read.investorPages.length) return 'No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.';
       return 'Place at least one signature field for the investor.';
     }
