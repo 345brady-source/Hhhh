@@ -420,7 +420,8 @@
   /**
    * Fills an envelope's blanks with what the portal already knows. A text field of the investor that names an
    * onboarding answer (field.prefill, a key of `values`) gets that answer and is locked; with no answer on file it
-   * is left empty for the investor to type. Any other field is filled by its label from `labels`, as agreements
+   * is left empty for the investor to type (and an answer too long for its blank is filled in but not locked). Any
+   * other field is filled by its label from `labels`, as agreements
    * stored before placement existed are (fresh: at creation every match is filled and locked; afterwards only the
    * fields locked then follow a correction). Returns the fields whose value or lock changed.
    */
@@ -430,9 +431,12 @@
     env.fields.forEach((f) => {
       if (f.prefill && f.type === 'text' && signer && f.signerId === signer.id) {
         const v = has(values, f.prefill) ? String(values[f.prefill]) : null;
-        if (v != null && (f.value !== v || !f.locked)) {
+        // An answer too long for its blank (a long address on a short line) is filled in but left open, so the
+        // investor can shorten it: a locked value that cannot be printed would stop them from finishing.
+        const lock = v != null && !tooLong(env, f, v);
+        if (v != null && (f.value !== v || !!f.locked !== lock)) {
           f.value = v;
-          f.locked = true;
+          f.locked = lock;
           changed.push(f);
         } else if (v == null && f.locked) {
           f.value = '';

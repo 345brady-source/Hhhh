@@ -146,7 +146,9 @@ const C = { name: 'Cleo Marsh', email: 'cleo.marsh@example.com', type: 'individu
         { id: 'l1', signerRole: 'Investor', type: 'signature', page: 3, x: 0.2, y: 0.17, w: 0.3, h: 0.05, required: true, label: '', value: '' },
         { id: 'l2', signerRole: 'Investor', type: 'text', page: 1, x: 0.3, y: 0.52, w: 0.2, h: 0.025, required: false, label: 'Commitment amount', value: '' },
         { id: 'l3', signerRole: 'Investor', type: 'text', page: 1, x: 0.3, y: 0.15, w: 0.4, h: 0.025, required: false, label: 'Investor name', value: '' },
-        { id: 'l4', signerRole: 'Investor', type: 'text', page: 1, x: 0.3, y: 0.25, w: 0.4, h: 0.025, required: true, label: 'Mailing address', value: '' }
+        { id: 'l4', signerRole: 'Investor', type: 'text', page: 1, x: 0.3, y: 0.25, w: 0.4, h: 0.025, required: true, label: 'Mailing address', value: '' },
+        // A keyed blank far too small for its answer (added to this old agreement by hand in the editor).
+        { id: 'l5', signerRole: 'Investor', type: 'text', page: 1, x: 0.3, y: 0.35, w: 0.03, h: 0.012, required: false, label: 'Email', prefill: 'email', value: '' }
       ] });
       const r = NS.invitations.create(ws, { name: 'Dara Lowe', email: 'dara.lowe@example.org', type: 'trust', account: 'Lowe Trust', offeringId: o2.id, cents: 10000000, cls: '', note: '' });
       r.investor.address = '1 Main Street, Dover, DE 19901';
@@ -156,7 +158,8 @@ const C = { name: 'Cleo Marsh', email: 'cleo.marsh@example.com', type: 'individu
       return { ready, fields: env ? env.fields.map((f) => ({ label: f.label, value: f.value, locked: !!f.locked, type: f.type })) : null };
     }, made.bytes);
     const lf = (l) => (legacy.fields || []).find((f) => f.label === l) || {};
-    check('an agreement stored the old way is ready and gives every kind of investor its fields', legacy.ready && legacy.fields && legacy.fields.length === 4, legacy);
+    check('an agreement stored the old way is ready and gives every kind of investor its fields', legacy.ready && legacy.fields && legacy.fields.length === 5, legacy);
+    check('an answer too long for its blank is filled in but left open, so the investor can shorten it', lf('Email').value === 'dara.lowe@example.org' && lf('Email').locked === false, lf('Email'));
     check('and is still filled in by label and locked', lf('Commitment amount').value === '$100,000' && lf('Commitment amount').locked && lf('Investor name').value === 'Lowe Trust' && lf('Investor name').locked && lf('Mailing address').value === '' && !lf('Mailing address').locked, legacy.fields);
 
     /* ---- The editor: what is filled in, who gets a field ---- */
