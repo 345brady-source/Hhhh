@@ -1682,7 +1682,7 @@
     const env = envOf(c);
     const s = signerOf(env, c.inv);
     if (!c.req || !env || !s || s.status === 'signed' || env.status !== 'sent') return;
-    if (s.account === c.inv.title && s.name === c.inv.contact && s.email === c.inv.email) return;
+    // The agreement follows every detail it shows (name, account, address, email, phone, kind of account): esign.js says whether anything changed.
     if (NS.esign.refreshSubscription && NS.esign.refreshSubscription(c.ws, env.id, c.inv, c.off, { cents: c.req.cents, cls: c.req.cls })) {
       // The request is signed when its agreement is: until then it names the investor as now on file.
       if (!c.req.signedAt) c.req.signedBy = c.inv.contact;

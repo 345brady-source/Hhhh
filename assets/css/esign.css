@@ -430,3 +430,28 @@
 @media (prefers-reduced-motion: reduce) {
   .sf-ring-fill, .sf-ring > .i, .sf-zoom-btn, .es-doc-sign .es-f-mine { transition: none; }
 }
+
+/* =====================================================================
+ * PLACEMENT REVIEW (field editor): fields the portal placed but was unsure about, and the list that names them.
+ * Everything for the review marks is in this block; it carries over to a rewritten editor as it stands.
+ * The marks sit on the page image, which is white paper in both themes: their colours are the warning colour
+ * mixed with the paper's own ink and ground, so they read the same in light and dark.
+ * ===================================================================== */
+.es-fld.is-flag, .es-fld-flag { --es-paper-warn: color-mix(in oklab, var(--es-warn) 70%, var(--es-paper-ink)); --es-paper-warn-soft: color-mix(in oklab, var(--es-warn) 26%, var(--es-paper)); }
+.es-fld.is-flag { border-style: dashed; border-color: var(--es-paper-warn); background: color-mix(in oklab, var(--es-warn) 16%, transparent); }
+.es-fld.is-flag:hover { background: color-mix(in oklab, var(--es-warn) 24%, transparent); }
+.es-fld.is-flag.is-sel { box-shadow: 0 0 0 2px var(--es-paper), 0 0 0 4px var(--es-paper-warn); }
+.es-fld.is-flag:focus-visible { outline-color: var(--es-paper-warn); }
+.es-fld-flag { position: absolute; left: calc(var(--space-3xs) * -1); bottom: calc(100% + var(--space-3xs)); padding: 0 var(--space-xs); border: 1px solid var(--es-paper-warn); border-radius: var(--r-pill); background: var(--es-paper-warn-soft); color: var(--es-paper-ink); font-family: var(--es-font); font-size: var(--text-xs); font-weight: 500; line-height: 1.5; white-space: nowrap; pointer-events: none; }
+.es-review { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.es-review li + li { border-top: 1px solid var(--cv-line-soft); }
+.es-review button { display: flex; flex-direction: column; gap: var(--space-3xs); width: 100%; min-height: 44px; padding: var(--space-xs) var(--space-2xs); border: 0; border-radius: var(--r-inner); background: transparent; color: var(--cv-ink); font-family: var(--cv-font); font-size: var(--text-sm); text-align: left; cursor: pointer; }
+.es-review button:hover { background: var(--cv-panel-2); }
+.es-review button:active { background: var(--cv-warn-soft); }
+.es-review button:focus-visible { outline: 2px solid var(--cv-focus); outline-offset: 2px; }
+.es-review strong { font-weight: 500; overflow-wrap: anywhere; }
+.es-review .cs-hint { overflow-wrap: anywhere; }
+.es-flag-box { display: flex; flex-direction: column; gap: var(--space-xs); padding: var(--space-sm); border-radius: var(--r-inner); background: var(--cv-warn-soft); color: var(--cv-ink); font-size: var(--text-sm); }
+.es-flag-box p { margin: 0; }
+.es-placed { margin: 0; }
+/* ===================== end of PLACEMENT REVIEW ===================== */

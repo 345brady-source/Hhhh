@@ -417,6 +417,40 @@
     NS.app.save(true);
     U.toast('Envelope voided. Signers who had received it were notified (simulated).');
   }
+  /**
+   * Fills an envelope's blanks with what the portal already knows. A text field of the investor that names an
+   * onboarding answer (field.prefill, a key of `values`) gets that answer and is locked; with no answer on file it
+   * is left empty for the investor to type. Any other field is filled by its label from `labels`, as agreements
+   * stored before placement existed are (fresh: at creation every match is filled and locked; afterwards only the
+   * fields locked then follow a correction). Returns the fields whose value or lock changed.
+   */
+  function fillIn(env, signer, labels, values, fresh) {
+    const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+    const changed = [];
+    env.fields.forEach((f) => {
+      if (f.prefill && f.type === 'text' && signer && f.signerId === signer.id) {
+        const v = has(values, f.prefill) ? String(values[f.prefill]) : null;
+        if (v != null && (f.value !== v || !f.locked)) {
+          f.value = v;
+          f.locked = true;
+          changed.push(f);
+        } else if (v == null && f.locked) {
+          f.value = '';
+          f.locked = false;
+          changed.push(f);
+        }
+        return;
+      }
+      if (!f.label || !has(labels, f.label)) return;
+      if (fresh ? f.type === 'text' || f.type === 'name' || f.type === 'checkbox' : f.locked && f.type !== 'checkbox') {
+        const v = f.type === 'checkbox' ? !!labels[f.label] : String(labels[f.label]);
+        if (f.value !== v || !f.locked) changed.push(f);
+        f.value = v;
+        f.locked = true;
+      }
+    });
+    return changed;
+  }
   /** Create and send an envelope from a template (used by other modules, e.g. subscriptions). */
   function createFromTemplate(ws, templateId, opts) {
     opts = opts || {};
@@ -432,13 +466,13 @@
       }
     });
     applyTemplateFields(env, tpl);
-    const pre = opts.prefill || {};
-    env.fields.forEach((f) => {
-      if (f.label && Object.prototype.hasOwnProperty.call(pre, f.label) && (f.type === 'text' || f.type === 'name' || f.type === 'checkbox')) {
-        f.value = f.type === 'checkbox' ? !!pre[f.label] : String(pre[f.label]);
-        f.locked = true;
-      }
-    });
+    const mine = inv ? env.signers.find((s) => s.investorId === inv.id) : null;
+    if (mine) {
+      // Each investor gets the fields meant for their kind of account (individual and joint, or entity, trust and IRA).
+      env.investorGroup = NS.placement.groupOf(inv.type);
+      env.fields = env.fields.filter((f) => f.signerId !== mine.id || NS.placement.fits(f, inv.type));
+    }
+    fillIn(env, mine, opts.prefill || {}, opts.values || {}, true);
     addEvent(env, staffActor(), 'Created', `From template ${tpl.title}`);
     envs(ws).push(env);
     send(ws, env.id, { quiet: !!opts.quiet });
@@ -448,6 +482,7 @@
   function templateReady(ws, offeringId) {
     const tpl = subscriptionTemplate(ws, offeringId);
     if (!tpl || !tpl.docId || !(tpl.roles || []).length || (tpl.roles || []).indexOf('Investor') < 0) return false;
+    if (NS.placement.needsReview(tpl)) return false;
     return tpl.roles.every((r) => (tpl.fields || []).some((f) => f.signerRole === r && (f.type === 'signature' || f.type === 'initials')));
   }
   async function signedBlob(envId) {
@@ -1165,13 +1200,84 @@
   };
 
   /* =====================================================================
+   * PLACEMENT REVIEW: the editor's side of placement.js, kept in this one block so that it can be put onto a
+   * rewritten field editor as it stands. The logic lives in NS.placement (pure helpers); this block only shows it.
+   *
+   * What a field carries (set by autoFields, kept by templates and envelopes):
+   *   auto true · confidence 'high' | 'medium' | 'low' · review (truthy until the sponsor settles it) ·
+   *   reviewReason (one sentence) · forType 'person' | 'entity' | absent · prefill (a key of NS.placement.PREFILL) | absent
+   *
+   * What an editor has to call:
+   *   reviewMarkHTML(f)            inside a field's box: the "Review" tag (and the class is-flag on the box)
+   *   reviewAria(f)                appended to the field's aria-label
+   *   reviewPanelHTML(env)         the "To review" list (each row: data-action="es-flag-go" data-fid)
+   *   placementPropsHTML(env, f)   in the selected field's properties: status line, reason and "Confirm this field"
+   *                                (data-action="es-flag-ok"), "Filled in from onboarding" and "Who gets this field"
+   *                                (both write through NS.changes['es-fprop'], data-k="prefill" / "forType")
+   *   settleReview(f)              after the sponsor moves, resizes or reassigns a field: clears its mark
+   * The save gates need nothing from the editor: agreementTodo and templateReady ask NS.placement.needsReview.
+   * ===================================================================== */
+  const PL = () => NS.placement;
+  const reviewMarkHTML = (f) => (PL().needsReview(f) ? '<span class="es-fld-flag" aria-hidden="true">Review</span>' : '');
+  const reviewAria = (f) => `${f.prefill ? ', filled in from onboarding' : ''}${f.forType === 'person' ? ', for individuals and joint accounts' : f.forType === 'entity' ? ', for entities, trusts and IRAs' : ''}${PL().needsReview(f) ? `, marked for review: ${f.reviewReason || 'the portal was not sure about this field'}` : ''}`;
+  const settleReview = (f) => PL().confirm(f);
+  function reviewPanelHTML(env) {
+    const list = PL().reviewFields(env);
+    if (!list.length) return '';
+    return CK().panel(
+      'To review',
+      `<p class="cs-hint">The portal was not sure about ${list.length === 1 ? 'this field' : 'these fields'}. Confirm each one, or move it to the right place.</p>
+      <ul class="es-review" role="list">${list
+        .map((f) => `<li><button type="button" data-action="es-flag-go" data-fid="${h(f.id)}"><strong>${h(f.label || TYPES[f.type].label)}</strong><span class="cs-hint">Page ${f.page} · ${h(f.reviewReason || 'The portal was not sure about this field.')}</span></button></li>`)
+        .join('')}</ul>`
+    );
+  }
+  function placementPropsHTML(env, sel) {
+    const s = signerById(env, sel.signerId);
+    const mine = !!s && s.role === 'investor';
+    const status = PL().statusOf(sel);
+    const opt = (v, l, cur) => `<option value="${h(v)}"${v === (cur || '') ? ' selected' : ''}>${h(l)}</option>`;
+    return `${status ? `<p class="cs-hint es-placed">${h(status)}</p>` : ''}
+      ${PL().needsReview(sel) ? `<div class="es-flag-box"><p>${h(sel.reviewReason || 'The portal was not sure about this field.')}</p><button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="es-flag-ok">${icon('check')}Confirm this field</button></div>` : ''}
+      ${mine && sel.type === 'text' && env.agreementFor ? `<label class="cs-field" for="es-fp"><span>Filled in from onboarding</span><select id="es-fp" data-change="es-fprop" data-k="prefill">${opt('', 'No: the investor types it', sel.prefill)}${PL().PREFILL.map(([k, l]) => opt(k, l, sel.prefill)).join('')}</select></label>` : ''}
+      ${mine && env.agreementFor ? `<label class="cs-field" for="es-ft"><span>Who gets this field</span><select id="es-ft" data-change="es-fprop" data-k="forType">${PL().FOR_TYPES.map(([k, l]) => opt(k, l, sel.forType)).join('')}</select></label>` : ''}`;
+  }
+  NS.actions['es-flag-go'] = (el) => {
+    const env = editorEnv();
+    const f = env && env.fields.find((x) => x.id === el.getAttribute('data-fid'));
+    if (!f) return;
+    esUi().sel = f.id;
+    S().ui.esFocus = `.es-fld[data-fid="${f.id}"]`;
+    NS.app.render();
+    const box = document.querySelector(`.es-fld[data-fid="${CSS.escape(f.id)}"]`);
+    if (box) box.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  };
+  NS.actions['es-flag-ok'] = () => {
+    const env = editorEnv();
+    const ui = esUi();
+    const f = env && env.fields.find((x) => x.id === ui.sel);
+    if (!f || !settleReview(f)) return;
+    save();
+    // On to the next field that needs a look, if any.
+    const next = PL().reviewFields(env)[0];
+    if (next) {
+      ui.sel = next.id;
+      S().ui.esFocus = `.es-fld[data-fid="${next.id}"]`;
+    } else S().ui.esFocus = '[data-action="es-agreement-save"], [data-action="es-review"]';
+    NS.app.render();
+    const box = next && document.querySelector(`.es-fld[data-fid="${CSS.escape(next.id)}"]`);
+    if (box) box.scrollIntoView({ block: 'center' });
+  };
+  /* ===================== end of PLACEMENT REVIEW ===================== */
+  /* =====================================================================
    * Sponsor console: one envelope (field editor for drafts, tracking after)
    * ===================================================================== */
   function editorFieldHTML(env, f, ui) {
     const s = signerById(env, f.signerId) || { name: 'Unassigned', color: '#888888' };
     const sel = ui.sel === f.id;
     const t = TYPES[f.type];
-    return `<div class="es-fld es-fld-${f.type}${sel ? ' is-sel' : ''}" data-fid="${h(f.id)}" tabindex="0" role="button" aria-pressed="${sel}" aria-label="${h(f.label || t.label)} for ${h(s.name)}, page ${f.page}${isReq(f) ? ', required' : ''}. Arrow keys move, Delete removes." style="${boxStyle(f, s.color)}"><span class="es-fld-label">${f.type === 'checkbox' ? '' : h(f.label || t.label)}${isReq(f) ? '<b aria-hidden="true">*</b>' : ''}</span><span class="es-handle" aria-hidden="true"></span></div>`;
+    // PLACEMENT REVIEW: is-flag, reviewAria and reviewMarkHTML mark a field the portal was unsure about.
+    return `<div class="es-fld es-fld-${f.type}${sel ? ' is-sel' : ''}${PL().needsReview(f) ? ' is-flag' : ''}" data-fid="${h(f.id)}" tabindex="0" role="button" aria-pressed="${sel}" aria-label="${h(f.label || t.label)} for ${h(s.name)}, page ${f.page}${isReq(f) ? ', required' : ''}${h(reviewAria(f))}. Arrow keys move, Delete removes." style="${boxStyle(f, s.color)}"><span class="es-fld-label">${f.type === 'checkbox' ? '' : h(f.label || t.label)}${isReq(f) ? '<b aria-hidden="true">*</b>' : ''}</span>${reviewMarkHTML(f)}<span class="es-handle" aria-hidden="true"></span></div>`;
   }
   function editorHTML(env) {
     const K = CK();
@@ -1191,21 +1297,24 @@
     const props = sel
       ? `<div class="es-props"><h3>${h(TYPES[sel.type].label)} field <span class="cs-hint">page ${sel.page}</span></h3>
           <label class="cs-field" for="es-fs"><span>Signer</span><select id="es-fs" data-change="es-fprop" data-k="signerId">${env.signers.map((s) => `<option value="${h(s.id)}"${s.id === sel.signerId ? ' selected' : ''}>${h(s.name)}</option>`).join('')}</select></label>
-          <label class="cs-field" for="es-fl"><span>Label <em>(shown to the signer; matches prefill keys)</em></span><input id="es-fl" type="text" maxlength="60" data-input="es-fprop" data-k="label" value="${h(sel.label || '')}" placeholder="${h(TYPES[sel.type].label)}"></label>
+          <label class="cs-field" for="es-fl"><span>Label <em>(shown to the signer)</em></span><input id="es-fl" type="text" maxlength="60" data-input="es-fprop" data-k="label" value="${h(sel.label || '')}" placeholder="${h(TYPES[sel.type].label)}"></label>
           ${sel.type === 'date' ? '<p class="cs-hint">Filled automatically with the date the signer signs.</p>' : `<label class="cs-check" for="es-fr"><input id="es-fr" type="checkbox" data-change="es-fprop" data-k="required"${isReq(sel) ? ' checked' : ''}><span>Required${(sel.type === 'signature' || sel.type === 'initials') && !isReq(sel) ? '<span class="cs-hint">Optional: the signer can finish without signing here.</span>' : sel.type === 'checkbox' ? '<span class="cs-hint">Required means the signer must tick it to finish.</span>' : ''}</span></label>`}
+          ${placementPropsHTML(env, sel)}
           <button class="cs-btn cs-btn-small cs-btn-danger" type="button" data-action="es-fdel">${icon('x')}Remove field</button></div>`
       : '';
     const agr = env.agreementFor ? W().offerings.find((o) => o.id === env.agreementFor) : null;
     const err = env.agreementFor ? agreementTodo(env) : sendCheck(env);
+    const marked = PL().reviewCount(env);
     const headHTML = env.agreementFor
       ? `${K.head(`Subscription agreement${agr ? ` · ${h(agr.name)}` : ''}`, `${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · place the fields once; each investor fills them in and signs during onboarding`, `<a class="cs-btn" href="#console-offering-${h(env.agreementFor)}">${icon('back')}Offering</a><button class="cs-btn" type="button" data-action="es-agreement-cancel" data-id="${h(env.id)}">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-save" data-id="${h(env.id)}">Save subscription agreement</button>`)}
-        <p class="cs-hint es-agr-note">${env.autoPlaced ? `${env.autoPlaced} field${env.autoPlaced === 1 ? ' was' : 's were'} placed from the signature lines in the PDF. Check them, move or resize as needed, and add any others. ` : ''}Fields for “Investor” are filled in by each investor; a text field labelled “Commitment amount”, “Investor name” or “Offering” is filled in for them and locked. Nothing is sent from here.</p>`
+        <p class="cs-hint es-agr-note">${env.autoPlaced ? `${env.autoPlaced} field${env.autoPlaced === 1 ? ' was' : 's were'} placed for you from the blanks in the PDF. ${marked ? `${marked} ${marked === 1 ? 'is' : 'are'} marked Review: confirm each one or move it to the right place before saving. ` : 'Check them, move or resize as needed, and add any others. '}` : ''}Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked for each investor; the investor completes the rest. Nothing is sent from here.</p>`
       : `${K.head(h(env.title), `Draft · ${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'}`, `<a class="cs-btn" href="#console-esign">${icon('back')}E-sign</a><button class="cs-btn" type="button" data-action="es-delete" data-id="${h(env.id)}">Delete draft</button><button class="cs-btn" type="button" data-action="es-save-tpl" data-id="${h(env.id)}">Save as template</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-review" data-id="${h(env.id)}">Review and send</button>`)}`;
     return K.shell(
       `${headHTML}
       <div class="es-editor" data-env="${h(env.id)}">
         <aside class="es-side">
           ${K.panel('Signers', `<div class="es-signers" role="group" aria-label="New fields are for">${signers}</div><fieldset class="cs-field"><legend>Signing order</legend><div class="cs-seg">${[['true', 'In order'], ['false', 'Any order']].map(([v, l]) => `<label><input type="radio" name="es-seq" value="${v}" data-change="es-seq"${String(env.sequential) === v ? ' checked' : ''}><span>${l}</span></label>`).join('')}</div></fieldset>`)}
+          ${reviewPanelHTML(env)}
           ${K.panel('Fields', `<div class="es-palette" role="group" aria-label="Field to place">${palette}</div>${placer}${props}`)}
           ${err ? `<p class="cs-hint es-todo">${h(err)}</p>` : `<p class="cs-hint es-ready">${icon('check')}${env.agreementFor ? 'Ready to save.' : 'Ready to send.'}</p>`}
         </aside>
@@ -1372,6 +1481,9 @@
     if (!f) return;
     const k = el.getAttribute('data-k');
     f[k] = el.type === 'checkbox' ? el.checked : el.value;
+    if ((k === 'prefill' || k === 'forType') && !f[k]) delete f[k];
+    // PLACEMENT REVIEW: reassigning a marked field, or saying who gets it and what fills it, settles its mark.
+    if (k === 'signerId' || k === 'prefill' || k === 'forType') settleReview(f);
     save();
     if (k === 'label') {
       const lab = document.querySelector(`.es-fld[data-fid="${CSS.escape(f.id)}"] .es-fld-label`);
@@ -1560,7 +1672,10 @@
     if (!drag) return;
     const d = drag;
     drag = null;
-    if (d.moved) save();
+    if (d.moved) {
+      settleReview(d.f); // PLACEMENT REVIEW: moving or resizing a marked field settles its mark
+      save();
+    }
     S().ui.esFocus = `.es-fld[data-fid="${d.f.id}"]`;
     NS.app.render();
   };
@@ -1623,6 +1738,12 @@
     ui.sel = f.id;
     Object.assign(fe.style, { left: f.x * 100 + '%', top: f.y * 100 + '%', width: f.w * 100 + '%', height: f.h * 100 + '%' });
     fe.classList.add('is-sel');
+    // PLACEMENT REVIEW: nudging a marked field settles its mark (the page is drawn again so the mark goes).
+    if (settleReview(f)) {
+      save();
+      S().ui.esFocus = `.es-fld[data-fid="${f.id}"]`;
+      return NS.app.render();
+    }
     save();
   });
   function focusPending() {
@@ -2371,6 +2492,11 @@
     if (cls) Object.assign(p, { 'Share class': cls.name, Class: cls.name });
     return p;
   }
+  /** What onboarding knows about this investor and subscription, by prefill key (see NS.placement.values). */
+  function prefillValues(inv, o, opts) {
+    const cls = opts.cls && (o.classes || []).find((c) => c.id === opts.cls);
+    return NS.placement.values(inv, o, { amount: opts.cents > 0 ? money(opts.cents / 100) : '', date: usDate(NS.dates.today()), shareClass: cls ? cls.name : '' });
+  }
   const ops = NS.ops;
   if (ops && ops.submitSubscription) {
     const submit = ops.submitSubscription;
@@ -2385,7 +2511,7 @@
       const tpl = !opts.envelopeId && isNew ? subscriptionTemplate(ws, o.id) : null;
       if (tpl) {
         try {
-          env = createFromTemplate(ws, tpl.id, { investorId: inv.id, offeringId: o.id, title: `${tpl.title} - ${inv.title}`, prefill: subscriptionPrefill(inv, o, opts), quiet: !!opts.embedded });
+          env = createFromTemplate(ws, tpl.id, { investorId: inv.id, offeringId: o.id, title: `${tpl.title} - ${inv.title}`, prefill: subscriptionPrefill(inv, o, opts), values: prefillValues(inv, o, opts), quiet: !!opts.embedded });
         } catch (e) {
           env = null;
         }
@@ -2487,12 +2613,37 @@
     const s = flowSigner(env, inv.id);
     if (!env || !s || env.status !== 'sent' || s.status === 'signed' || !o) return false;
     const was = s.account;
-    Object.assign(s, { name: inv.contact, email: inv.email, account: inv.title });
-    const pre = subscriptionPrefill(inv, o, opts || {});
-    env.fields.forEach((f) => {
-      if (f.locked && f.label && Object.prototype.hasOwnProperty.call(pre, f.label) && f.type !== 'checkbox') f.value = String(pre[f.label]);
-    });
-    if (was && env.title.slice(-(was.length + 3)) === ` - ${was}`) env.title = `${env.title.slice(0, -(was.length + 3))} - ${inv.title}`;
+    const now = { name: inv.contact, email: inv.email, account: inv.title };
+    let changed = Object.keys(now).some((k) => s[k] !== now[k]);
+    Object.assign(s, now);
+    const labels = subscriptionPrefill(inv, o, opts || {});
+    const values = prefillValues(inv, o, opts || {});
+    const key = env.id + ':' + s.id;
+    const all = S().ui.esSigningAll || {};
+    const group = NS.placement.groupOf(inv.type);
+    const tpl = env.templateId ? tpls(ws).find((t) => t.id === env.templateId) : null;
+    if (env.investorGroup && env.investorGroup !== group && tpl) {
+      // The investor's kind of account changed (an individual became an entity, say): they get the other block's fields.
+      const role = rolesOf(env)[env.signers.indexOf(s)];
+      env.fields = env.fields.filter((f) => f.signerId !== s.id);
+      (tpl.fields || []).forEach((tf) => {
+        if (tf.signerRole !== role || !NS.placement.fits(tf, inv.type)) return;
+        const f = Object.assign({}, tf, { id: uid('fd'), signerId: s.id, value: tf.value == null ? '' : tf.value });
+        delete f.signerRole;
+        env.fields.push(f);
+      });
+      env.investorGroup = group;
+      fillIn(env, s, labels, values, true);
+      delete all[key]; // what was typed belonged to the other block
+      changed = true;
+    } else {
+      const moved = fillIn(env, s, labels, values, false);
+      // The signing page shows the session's entries: they follow.
+      moved.forEach((f) => all[key] && f.signerId === s.id && (all[key].vals[f.id] = f.value));
+      changed = changed || moved.length > 0;
+    }
+    if (was && was !== inv.title && env.title.slice(-(was.length + 3)) === ` - ${was}`) env.title = `${env.title.slice(0, -(was.length + 3))} - ${inv.title}`;
+    if (!changed) return false;
     addEvent(env, actorFor(s), 'Details updated', `The investor corrected their details before signing: ${inv.title}`);
     NS.app.save(true);
     return true;
@@ -2520,7 +2671,7 @@
     if (!old || !tpl || !inv || !o) return null;
     let env = null;
     try {
-      env = createFromTemplate(ws, tpl.id, { investorId: inv.id, offeringId: o.id, title: `${tpl.title} - ${inv.title}`, prefill: subscriptionPrefill(inv, o, opts || {}), quiet: true });
+      env = createFromTemplate(ws, tpl.id, { investorId: inv.id, offeringId: o.id, title: `${tpl.title} - ${inv.title}`, prefill: subscriptionPrefill(inv, o, opts || {}), values: prefillValues(inv, o, opts || {}), quiet: true });
     } catch (e) {
       env = null;
     }
@@ -2686,7 +2837,10 @@
     // Fields the portal placed but was unsure about: each one is confirmed, moved or removed before the agreement is used.
     const marked = NS.placement.reviewCount(env);
     if (marked) return `Confirm or move the ${marked === 1 ? 'field' : `${marked} fields`} marked for review.`;
-    return '';
+    // Fields can be for one kind of investor only: each kind still needs somewhere to sign.
+    const mine = env.fields.filter((f) => f.signerId === inv.id && (f.type === 'signature' || f.type === 'initials'));
+    const none = (group, words) => (mine.some((f) => !f.forType || f.forType === group) ? '' : `Investors who are ${words} have no signature field. Add one, or set a signature field to all investors.`);
+    return none('person', 'individuals') || none('entity', 'entities, trusts or IRAs');
   }
   /**
    * A draft of an offering's subscription agreement in the field editor: from an uploaded PDF, a PDF already on the offering,
@@ -2753,16 +2907,30 @@
     // What the investor completes, and what is filled in for them from the invitation (prefill labels, locked).
     const PRE = /^(commitment( amount)?|subscription amount|amount|capital commitment|investor( name)?|subscriber name|account name|offering|fund|share class|class)$/i;
     const inv = tpl ? (tpl.fields || []).filter((f) => f.signerRole === 'Investor') : [];
-    const kinds = Array.from(new Set(inv.filter((f) => !(f.type === 'text' && PRE.test(f.label || ''))).map((f) => (f.label || TYPES[f.type].label).toLowerCase())));
-    const filled = Array.from(new Set(inv.filter((f) => f.type === 'text' && PRE.test(f.label || '')).map((f) => f.label.toLowerCase())));
+    const isFilled = (f) => f.type === 'text' && (!!f.prefill || PRE.test(f.label || ''));
+    const words = (list, most) => {
+      const all = Array.from(new Set(list.map((f) => (f.label || TYPES[f.type].label).toLowerCase())));
+      return all.length > most ? all.slice(0, most - 1).concat(`${all.length - most + 1} more`) : all;
+    };
+    const open = inv.filter((f) => !isFilled(f));
+    // A long agreement is summed up by what the investor does; a short one names each field, as before.
+    const n = (type) => open.filter((f) => f.type === type).length;
+    const count = (k, one, many) => (k ? [`${k} ${k === 1 ? one : many}`] : []);
+    const kinds =
+      new Set(open.map((f) => (f.label || TYPES[f.type].label).toLowerCase())).size > 6
+        ? [n('signature') ? 'the signature' : ''].filter(Boolean).concat(count(n('initials'), 'set of initials', 'sets of initials'), count(n('text') + n('name'), 'blank', 'blanks'), count(n('checkbox'), 'tick box', 'tick boxes'))
+        : words(open, 6);
+    const filled = words(inv.filter(isFilled), 9);
+    const toReview = tpl ? NS.placement.reviewCount(tpl) : 0;
+    const draftReview = draft ? NS.placement.reviewCount(draft) : 0;
     const body = tpl
-      ? `<p><span class="cs-badge ${ready ? 'cs-badge-ok' : 'cs-badge-warn'}">${ready ? 'Ready' : 'Needs signature fields'}</span> <strong>${h(tpl.title)}</strong> · ${tpl.pages} page${tpl.pages === 1 ? '' : 's'}${kinds.length ? ` · the investor completes ${h(kinds.join(', '))}` : ''}${filled.length ? `; ${h(filled.join(', '))} filled in for them` : ''}${(tpl.roles || []).indexOf('Sponsor') >= 0 ? ' · countersigned by your firm' : ''}</p>
-        <p class="cs-hint">${ready ? `Every investor invited to ${h(o.name)} signs it online during onboarding, with their name and commitment filled in. Nothing to send by hand.` : 'Place a signature field for each signer, then save, so investors can sign it during onboarding.'}</p>`
+      ? `<p><span class="cs-badge ${ready ? 'cs-badge-ok' : 'cs-badge-warn'}">${ready ? 'Ready' : toReview ? 'Fields need review' : 'Needs signature fields'}</span> <strong>${h(tpl.title)}</strong> · ${tpl.pages} page${tpl.pages === 1 ? '' : 's'}${kinds.length ? ` · the investor completes ${h(kinds.join(', '))}` : ''}${filled.length ? `; ${h(filled.join(', '))} filled in for them` : ''}${(tpl.roles || []).indexOf('Sponsor') >= 0 ? ' · countersigned by your firm' : ''}</p>
+        <p class="cs-hint">${ready ? `Every investor invited to ${h(o.name)} signs it online during onboarding, with their name and commitment filled in. Nothing to send by hand.` : toReview ? `${toReview} field${toReview === 1 ? ' is' : 's are'} marked for review. Open the fields, confirm or move each one, then save, so investors can sign it during onboarding.` : 'Place a signature field for each signer, then save, so investors can sign it during onboarding.'}</p>`
       : `<p>Upload the subscription agreement once and place the fields investors fill in and sign. Every investor you invite to ${h(o.name)} then signs it online during onboarding, with their name and commitment filled in. Nothing to send by hand.</p>`;
     const btns = !canEdit
       ? ''
       : draft
-        ? `<div class="cs-row"><a class="cs-btn cs-btn-primary" href="#console-envelope-${h(draft.id)}">Continue placing fields</a><button class="cs-btn" type="button" data-action="es-agreement-cancel" data-id="${h(draft.id)}">Discard</button></div>`
+        ? `${draftReview ? `<p class="cs-hint es-todo">${draftReview} field${draftReview === 1 ? ' needs' : 's need'} your review before investors can sign.</p>` : ''}<div class="cs-row"><a class="cs-btn cs-btn-primary" href="#console-envelope-${h(draft.id)}">Continue placing fields</a><button class="cs-btn" type="button" data-action="es-agreement-cancel" data-id="${h(draft.id)}">Discard</button></div>`
         : tpl
           ? `<div class="cs-row"><button class="cs-btn${ready ? '' : ' cs-btn-primary'}" type="button" data-action="es-agreement-edit" data-offering="${h(o.id)}">Edit fields</button><button class="cs-btn" type="button" data-action="es-agreement-new" data-offering="${h(o.id)}">Replace the PDF</button><button class="cs-btn" type="button" data-action="es-agreement-remove" data-offering="${h(o.id)}">Remove</button></div>`
           : `<div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-new" data-offering="${h(o.id)}">${icon('plus')}Add the subscription agreement</button></div>`;
@@ -2783,7 +2951,7 @@
         <label class="cs-field cs-wide" for="es-agr-title"><span>Title</span><input id="es-agr-title" name="title" type="text" maxlength="120" value="Subscription Agreement"></label>
         <label class="cs-check cs-wide" for="es-agr-cs"><input id="es-agr-cs" name="countersign" type="checkbox" checked><span>Your firm countersigns<span class="cs-hint">Someone at the firm signs after the investor. The subscription is accepted once it is countersigned and the investor is verified.</span></span></label>
       </div>
-      <p class="cs-hint">The fields are placed for you at the signature lines in the PDF (signature, printed name, date and the commitment amount). You check and adjust them on the next screen.</p>
+      <p class="cs-hint">The portal reads the PDF and places the fields for you: where each signer signs and initials, and the blanks the investor fills in. Where it is not sure, it marks the field and asks you to confirm it.</p>
       <div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog">Cancel</button><button class="cs-btn cs-btn-primary" type="submit">Continue to place fields</button></div></div></form>`,
       'dlg-es'
     );
@@ -2808,7 +2976,11 @@
         NS.app.go('console-offering-' + oid);
         NS.app.render();
         U.toast(`Subscription agreement added with ${n} signing field${n === 1 ? '' : 's'}. Investors sign it during onboarding.`);
-      } else openAgreement(env);
+      } else {
+        openAgreement(env);
+        const marked = NS.placement.reviewCount(env);
+        if (marked) U.toast(`${marked} field${marked === 1 ? ' needs' : 's need'} your review before investors can sign.`);
+      }
     } catch (e) {
       if (btn) {
         btn.disabled = false;
@@ -2840,7 +3012,9 @@
     tpls(w).forEach((t) => t.offeringId === env.agreementFor && (t.subscription = false));
     tpls(w).push(tpl);
     w.envelopes = envs(w).filter((e) => e !== env);
-    CK().audit('Subscription agreement saved', `${o ? o.name : env.agreementFor}: ${tpl.title}, ${tpl.fields.length} fields (${tpl.roles.join(', ')}); investors sign it during onboarding`, env.agreementFor, tpl.id);
+    const placed = tpl.fields.filter((f) => f.auto).length;
+    const settled = tpl.fields.filter((f) => f.auto && !f.review && f.confidence && f.confidence !== 'high').length;
+    CK().audit('Subscription agreement saved', `${o ? o.name : env.agreementFor}: ${tpl.title}, ${tpl.fields.length} fields (${tpl.roles.join(', ')})${placed ? `; ${placed} placed by the portal${settled ? `, ${settled} of them confirmed or adjusted by the firm after review` : ''}` : ''}; investors sign it during onboarding`, env.agreementFor, tpl.id);
     NS.app.save(true);
     return tpl;
   }
@@ -2886,5 +3060,5 @@
     U.closeDialog();
     NS.app.render();
   };
-  NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, investorDocsHTML, agreementPanel, agreementDraft, autoFields };
+  NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout };
 })(window.CVPortal);
