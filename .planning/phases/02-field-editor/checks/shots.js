@@ -18,7 +18,7 @@ const THEMES = ['light', 'dark'];
       await p.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme);
       const id = await L.idsByTemplate(p);
       const tag = `${w}-${theme}`;
-      await p.evaluate(() => document.querySelector('.es-editor.fe').scrollIntoView({ block: phone ? 'start' : 'nearest' }), phone).catch(() => {});
+      // Where the page around the editor scrolls, bring the editor to the top of the screen.
       if (phone || w < 1280) await p.evaluate(() => window.scrollTo(0, document.querySelector('.es-editor.fe').getBoundingClientRect().top + window.scrollY - 12));
       await p.waitForTimeout(200);
 

@@ -760,6 +760,15 @@ const domKept = (p) => p.evaluate(() => Array.from(document.querySelectorAll('.c
         n++;
       }
       check('EDIT-05 touch: the Undo button walks every step back to the start', same(await L.fields(p), start) && n === 8, { n });
+      // A finger that lands just beside a small field selects it; a tap on empty paper clears the selection.
+      await L.scrollTo(p, 3, 0.75, 0.5);
+      const cs = await L.box(p, id['tf-cdate']);
+      await p.touchscreen.tap(cs.x + cs.w + 9, cs.cy);
+      const nearSel = await p.evaluate(() => window.CVPortal.state.ui.es.sel);
+      const pg3 = await L.pageBox(p, 3);
+      await p.touchscreen.tap(pg3.x + pg3.w * 0.85, cs.cy + 60);
+      const farSel = await p.evaluate(() => window.CVPortal.state.ui.es.sel);
+      check('EDIT-06 touch: a tap 9px beside a small field selects it; a tap on empty paper clears the selection', nearSel === id['tf-cdate'] && farSel === null && same(await L.fields(p), start), { nearSel, farSel });
       check('touch: no page or console errors', !A.errors.length, A.errors);
     } catch (e) {
       check('touch pass ran to the end', false, String(e && e.stack ? e.stack : e));
@@ -781,10 +790,39 @@ const domKept = (p) => p.evaluate(() => Array.from(document.querySelectorAll('.c
       check('an agreement stored before this change (two fields, the old properties only) loads in the editor', list.length === 2 && lay.n === 2 && list.every((f) => f.type === 'signature' && f.page === 3));
       check('LOOK-01 at 1024px the three parts are still there: fields to add across the top, the document, and the selected field beside it', lay.sw <= lay.vw + 1 && lay.rail.bottom <= lay.stage.top && lay.stage.right <= lay.props.left && lay.props.width >= 240 && lay.stage.width > 380, lay);
       await L.scrollTo(p, 3, 0.3, 0.5);
+      // A control another part of the portal draws on a field (a status mark with its own button) keeps its click.
+      const mark = await p.evaluate((fid) => {
+        const NS = window.CVPortal;
+        window.__marks = 0;
+        NS.actions['x-mark'] = () => window.__marks++;
+        const el = document.querySelector(`.es-fld[data-fid="${fid}"]`);
+        el.insertAdjacentHTML('beforeend', '<button type="button" data-action="x-mark" style="position:absolute;left:0;top:-22px;width:40px;height:18px">ok</button>');
+        const r = el.querySelector('[data-action="x-mark"]').getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      }, list[0].id);
+      await p.mouse.click(mark.x, mark.y);
+      const marked = await p.evaluate(() => ({ n: window.__marks, sel: window.CVPortal.state.ui.es.sel, carried: document.querySelectorAll('.fe-carry .es-fld').length }));
+      check('a button drawn on a field by another part of the portal takes its click (the editor does not treat it as a drag)', marked.n === 1 && marked.sel === null && marked.carried === 0 && same(await L.fields(p), list), marked);
       const b = await L.box(p, list[0].id);
       await drag(p, { x: b.cx, y: b.cy }, { x: b.cx + 50, y: b.cy + 40 }, { steps: 8 });
       const moved = await L.field(p, list[0].id);
       check('… and edits: the old field moves, and gains no properties it did not have', moved.x > list[0].x && moved.y > list[0].y && same(Object.keys(moved).sort(), Object.keys(list[0]).sort()), moved);
+      // Automatic placement's own rule for a field it was unsure of (a stand-in for it here): an edit by the sponsor confirms it.
+      await p.evaluate((fid) => {
+        const NS = window.CVPortal;
+        NS.placement = { needsReview: (f) => !!f.auto && f.conf !== 'high' && !f.confirmed };
+        const env = NS.state.ws.envelopes.find((e) => e.id === NS.state.param);
+        Object.assign(env.fields.find((f) => f.id === fid), { auto: true, conf: 'low', why: 'No signature line could be read' });
+        NS.app.render();
+      }, list[1].id);
+      await p.waitForSelector('.es-editor.fe .fe-doc .es-page img[src]');
+      await L.scrollTo(p, 3, 0.63, 0.5);
+      const b2 = await L.box(p, list[1].id);
+      await drag(p, { x: b2.cx, y: b2.cy }, { x: b2.cx + 30, y: b2.cy - 30 }, { steps: 6 });
+      const conf = await L.field(p, list[1].id);
+      await p.keyboard.press('Control+z');
+      const unconf = await L.field(p, list[1].id);
+      check('a field placement was unsure of is confirmed by being moved (and unconfirmed again by undo), keeping its confidence and reason', conf.confirmed === true && conf.conf === 'low' && conf.why === 'No signature line could be read' && !unconf.confirmed && unconf.auto === true, { conf, unconf });
       check('1024px: no page or console errors', !A.errors.length, A.errors);
     } catch (e) {
       check('legacy pass ran to the end', false, String(e && e.stack ? e.stack : e));
