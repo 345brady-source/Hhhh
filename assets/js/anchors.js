@@ -346,18 +346,17 @@
       }
       let x0 = l.x0;
       let cut = false;
-      if (!typed) {
-        // Characters standing on a drawn rule: an underlined word or heading. A rule that runs on after its words is a
-        // blank from where the words end.
-        const on = words.filter((g) => l.y - g.y > -1.5 && l.y - g.y < 0.35 * g.h + 1.5 && ov(g.x0, g.x1, l.x0, l.x1) > 0);
+      // Characters standing on the line (most of each over it). On a drawn rule they are an underlined word or heading,
+      // or a label whose rule runs on after it: then the blank starts where the words end. Anything else written on a
+      // line is an answer already given, and an answered blank gets no field.
+      const on = words.filter((g) => l.y - g.y > -1.5 && l.y - g.y < 0.35 * g.h + 1.5 && ov(g.x0, g.x1, l.x0, l.x1) > 0.5 * (g.x1 - g.x0));
+      if (on.length) {
         const covered = on.reduce((s, g) => s + Math.max(0, ov(g.x0, g.x1, l.x0, l.x1)), 0);
-        if (covered >= 0.45 * w) return;
-        if (on.length) {
-          const end = Math.max.apply(null, on.map((g) => g.x1));
-          if (l.x1 - end < 36) return;
-          x0 = end + 4;
-          cut = true;
-        }
+        const first = Math.min.apply(null, on.map((g) => g.x0));
+        const end = Math.max.apply(null, on.map((g) => g.x1));
+        if (typed || covered >= 0.45 * w || first > l.x0 + 6 || l.x1 - end < 36) return;
+        x0 = end + 4;
+        cut = true;
       }
       const clear = emptyAbove(x0, l.x1, l.y);
       if (l.made === 'rule') {
