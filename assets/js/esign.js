@@ -1167,11 +1167,16 @@
   /* =====================================================================
    * Sponsor console: one envelope (field editor for drafts, tracking after)
    * ===================================================================== */
-  /** Slot on a field for a status mark (for example, that the portal placed it and the sponsor has yet to check it). Empty for now. */
-  const editorFieldStatusHTML = () => '';
-  /** The same slot at the top of the selected field's properties: the reason for the mark and what to do about it. Empty for now. */
+  /*
+   * Three slots for a status on a field (for example, that the portal placed it and the sponsor has yet to check it).
+   * All three are empty for now; the editor draws them wherever they return something, and draws them again after every
+   * change to the field, so a status that an edit settles disappears by itself.
+   */
+  /** On the field itself: a class for its box, an element drawn on it (it may reach outside the box), and words for its spoken description. */
+  const editorFieldMark = () => ({ cls: '', html: '', say: '' });
+  /** At the top of the selected field's properties: the reason for the status and what to do about it. */
   const editorPropsStatusHTML = () => '';
-  /** Slot in the editor's left column, between the field types and the ready line (a list of fields to check, say). Empty for now. */
+  /** In the editor's left column, between the field types and the ready line: a list of the fields to check, say. */
   const editorRailExtraHTML = () => '';
   /** One field on a page of the editor. fieldeditor.js draws it again after every change to it, and adds the handles when it is selected. */
   function editorFieldHTML(env, f, ui) {
@@ -1179,7 +1184,8 @@
     const sel = ui.sel === f.id;
     const t = TYPES[f.type] || TYPES.text;
     const req = isReq(f);
-    return `<div class="es-fld es-fld-${h(f.type)}${sel ? ' is-sel' : ''}${req ? ' is-req' : f.type === 'date' ? ' is-auto' : ' is-opt'}" data-fid="${h(f.id)}" tabindex="0" role="button" aria-pressed="${sel}" aria-label="${h(f.label || t.label)} for ${h(s.name)}, page ${f.page}${req ? ', required' : ''}. Drag or use the arrow keys to move, Delete removes." style="${boxStyle(f, s.color)}"><span class="es-fld-glyph" aria-hidden="true">${NS.fieldEditor ? NS.fieldEditor.glyph(f.type) : ''}</span><span class="es-fld-label">${f.type === 'checkbox' ? '' : h(f.label || t.label)}${req ? '<b aria-hidden="true">*</b>' : ''}</span>${editorFieldStatusHTML(env, f)}</div>`;
+    const mark = editorFieldMark(env, f);
+    return `<div class="es-fld es-fld-${h(f.type)}${sel ? ' is-sel' : ''}${req ? ' is-req' : f.type === 'date' ? ' is-auto' : ' is-opt'}${mark.cls ? ' ' + h(mark.cls) : ''}" data-fid="${h(f.id)}" tabindex="0" role="button" aria-pressed="${sel}" aria-label="${h(f.label || t.label)} for ${h(s.name)}, page ${f.page}${req ? ', required' : ''}${mark.say ? ', ' + h(mark.say) : ''}. Drag or use the arrow keys to move, Delete removes." style="${boxStyle(f, s.color)}"><span class="es-fld-glyph" aria-hidden="true">${NS.fieldEditor ? NS.fieldEditor.glyph(f.type) : ''}</span><span class="es-fld-label">${f.type === 'checkbox' ? '' : h(f.label || t.label)}${req ? '<b aria-hidden="true">*</b>' : ''}</span>${mark.html}</div>`;
   }
   /** The selected field's properties: its type, who it is for, its label, whether it is required, and duplicate and remove. */
   function editorPropsHTML(env, sel) {

@@ -38,8 +38,7 @@
     next: '<path d="m6 9 6 6 6-6"/>',
     copy: '<rect x="8" y="8" width="12" height="12" rx="1"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
     trash: '<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/>',
-    sliders: '<path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.5"/><circle cx="8" cy="17" r="2.5"/>',
-    close: '<path d="M6 6l12 12M18 6 6 18"/>'
+    sliders: '<path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.5"/><circle cx="8" cy="17" r="2.5"/>'
   };
   // One small mark per field type, drawn like the rest of the portal's icons.
   const GLYPH = {
@@ -607,24 +606,28 @@
   }
   // An edge lines up with edges, a centre with centres, and only the bottom edge sits on a line of text (text under the field or a little way beside it).
   const fits = (c, an, lo, hi) => (c.k === 'b' ? !!an.base && c.a <= hi + 0.06 && c.b >= lo - 0.06 : c.k === an.k);
-  /** How far to shift so the nearest anchor meets its nearest candidate (0 when nothing is within reach). Fields win over text. */
+  /**
+   * How far to shift so the nearest anchor meets its nearest candidate (0 when nothing is within reach). Fields win over
+   * text, and a line of text pulls from half as far, so a field can still be set down freely between two lines.
+   */
   function pull(cands, anchors, reach, lo, hi) {
     let best = 0;
     let bd = Infinity;
     [false, true].forEach((text) => {
-      if (bd <= reach) return;
+      if (bd < Infinity) return;
+      const within = text ? reach / 2 : reach;
       anchors.forEach((an) =>
         cands.forEach((c) => {
           if ((c.k === 'b') !== text || !fits(c, an, lo, hi)) return;
           const d = c.v - an.v;
-          if (Math.abs(d) <= reach && Math.abs(d) < bd) {
+          if (Math.abs(d) <= within && Math.abs(d) < bd) {
             bd = Math.abs(d);
             best = d;
           }
         })
       );
     });
-    return bd <= reach ? best : 0;
+    return bd < Infinity ? best : 0;
   }
   const anchorsX = (b, which) => [which.W !== false && { v: b.x, k: 'e' }, which.E !== false && { v: b.x + b.w, k: 'e' }, which.C !== false && { v: b.x + b.w / 2, k: 'c' }].filter(Boolean);
   const anchorsY = (b, which) => [which.N !== false && { v: b.y, k: 'e' }, which.S !== false && { v: b.y + b.h, k: 'e', base: true }, which.M !== false && { v: b.y + b.h / 2, k: 'c' }].filter(Boolean);
@@ -697,7 +700,7 @@
     const pr = el.parentNode.getBoundingClientRect();
     drag = {
       kind: dir ? 'resize' : 'move', dir, id: e.pointerId, f, el, sx: e.clientX, sy: e.clientY, px: e.clientX, py: e.clientY, far: 0, alt: e.altKey,
-      ox: e.clientX - r.left, oy: e.clientY - r.top, w: r.width, h: r.height,
+      ox: e.clientX - r.left, oy: e.clientY - r.top, w: r.width, h: r.height, slop: e.pointerType === 'mouse' ? 3 : 6,
       // Resizing works from where on the page the press was, so the page may scroll under the pointer.
       gx: (e.clientX - pr.left) / pr.width, gy: (e.clientY - pr.top) / pr.height,
       from: { page: f.page, x: f.x, y: f.y, w: f.w, h: f.h }, cands: {}, lifted: false, box: null, tp: null
@@ -884,7 +887,8 @@
     }
     const o = d.from;
     let changed = false;
-    if (d.far >= 3 && d.box && (d.kind === 'resize' || d.tp)) {
+    // Less movement than this was a click or a tap, not a drag: the field goes back where it was.
+    if (d.far >= d.slop && d.box && (d.kind === 'resize' || d.tp)) {
       const b = d.box;
       const page = d.kind === 'move' ? d.tp.n : f.page;
       changed = page !== o.page || b.x !== o.x || b.y !== o.y || b.w !== o.w || b.h !== o.h;
@@ -964,11 +968,27 @@
     carryAt(ghost.el, clamp(e.clientX - ghost.w / 2, r.left, r.right - ghost.w), clamp(e.clientY - ghost.h / 2, r.top, r.bottom - ghost.h));
   }
 
+  /** The field on a page whose box is nearest a point, if one is within reach (in screen pixels). */
+  function nearestField(pg, x, y, reach) {
+    let best = null;
+    let bd = reach;
+    pg.querySelectorAll('.es-fld').forEach((el) => {
+      const r = el.getBoundingClientRect();
+      const d = Math.hypot(Math.max(r.left - x, 0, x - r.right), Math.max(r.top - y, 0, y - r.bottom));
+      if (d <= bd) {
+        bd = d;
+        best = el;
+      }
+    });
+    return best;
+  }
+
   /* ---------- Pointer, click and keyboard ---------- */
   document.addEventListener('pointerdown', (e) => {
     if (!live() || drag || !e.isPrimary || e.button > 0) return;
     const t = e.target;
-    if (!t.closest || !cur.root.contains(t) || t.closest('.fe-tools')) return;
+    // The field's toolbar, and any control drawn on a field (a status mark's own button, say), take their clicks as usual.
+    if (!t.closest || !cur.root.contains(t) || t.closest('.fe-tools, .es-fld button, .es-fld a, .es-fld [data-action]')) return;
     const el = t.closest('.es-fld');
     if (el && cur.doc.contains(el)) {
       const f = fieldById(el.getAttribute('data-fid'));
@@ -1023,6 +1043,15 @@
     if (!t.closest || !cur.scroll.contains(t) || t.closest('.es-fld, .fe-tools')) return;
     const ui = cur.ctx.ui;
     const pg = t.closest('.es-page');
+    // A finger that lands just beside a small field means the field.
+    if (pg && !ui.tool && e.pointerType && e.pointerType !== 'mouse') {
+      const hit = nearestField(pg, e.clientX, e.clientY, 16);
+      if (hit) {
+        select(hit.getAttribute('data-fid'));
+        hit.focus({ preventScroll: true });
+        return;
+      }
+    }
     if (pg && ui.tool) {
       const r = pg.getBoundingClientRect();
       add(ui.tool, Number(pg.getAttribute('data-page')), (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);

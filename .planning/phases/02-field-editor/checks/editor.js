@@ -252,12 +252,12 @@ const domKept = (p) => p.evaluate(() => Array.from(document.querySelectorAll('.c
         return { y: 1 - it.transform[5] / vp.height, x1: (it.transform[4] + it.width) / vp.width };
       });
       const tb2 = await L.box(p, title);
-      const goalB = { x: pg.x + (base.x1 + 0.03) * pg.w + tb2.w / 2, y: pg.y + base.y * pg.h - tb2.h / 2 - 3 };
+      const goalB = { x: pg.x + (base.x1 + 0.03) * pg.w + tb2.w / 2, y: pg.y + base.y * pg.h - tb2.h / 2 - 2 };
       await drag(p, { x: tb2.cx, y: tb2.cy }, goalB, { steps: 12, hold: true });
       const baseMid = await editorState(p);
       await p.mouse.up();
       const onLine = await L.field(p, title);
-      check('EDIT-04 a field let go 3px above a line of text sits on its baseline, with a guide line', near(onLine.y + onLine.h, base.y, 1e-9) && baseMid.guides >= 1, { bottom: onLine.y + onLine.h, base: base.y, guides: baseMid.guides });
+      check('EDIT-04 a field let go 2px above a line of text sits on its baseline, with a guide line', near(onLine.y + onLine.h, base.y, 1e-9) && baseMid.guides >= 1, { bottom: onLine.y + onLine.h, base: base.y, guides: baseMid.guides });
       await p.keyboard.press('Control+z');
       check('EDIT-05 the snapping trials are all undone', same(await L.fields(p), start));
 
