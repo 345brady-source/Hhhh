@@ -670,7 +670,7 @@
               whole = tidy(ups.map((u) => u.text).concat(seg.s).join(' '));
               const joined = classify(whole) || classify(wordsOf(whole).slice(-10).join(' ').slice(-MAX_LABEL));
               if (joined && (FIELD(joined.kind) || joined.kind === 'skip')) info = joined;
-              else if (/[:\uFF1A$]\s*$/.test(seg.s)) info = { kind: 'other', who: whoIn(plain(whole).slice(-MAX_LABEL)), forType: '', optional: OPTIONAL_RE.test(whole.toLowerCase()), colon: true, by: false, text: whole };
+              else if (/[:\uFF1A$]\s*$/.test(seg.s)) info = { kind: 'other', who: whoIn(plain(whole).slice(-MAX_LABEL)), forType: '', optional: OPTIONAL_RE.test(whole.toLowerCase()) || /^if\b/i.test(whole), colon: true, by: false, text: whole };
             }
           }
           // In a table with drawn cells, the room left in a cell after its words is a blank only when the words end
@@ -780,7 +780,7 @@
       if (/[:\uFF1A]\s*$/.test(g.s)) {
         const c = classify(whole);
         if (c && (FIELD(c.kind) || c.kind === 'skip')) return c;
-        return { kind: 'other', who: whoIn(plain(whole).slice(-MAX_LABEL)), forType: '', optional: OPTIONAL_RE.test(whole.toLowerCase()), colon: true, by: false, text: whole, any: true };
+        return { kind: 'other', who: whoIn(plain(whole).slice(-MAX_LABEL)), forType: '', optional: OPTIONAL_RE.test(whole.toLowerCase()) || /^if\b/i.test(whole), colon: true, by: false, text: whole, any: true };
       }
       const c = classify(g.s);
       return c && c.kind === 'phrase' && g.line.els.length === 1 ? Object.assign(c, { any: true }) : null;

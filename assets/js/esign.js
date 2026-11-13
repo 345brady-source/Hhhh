@@ -52,10 +52,10 @@
   /** The template marked as an offering's subscription agreement (sent to new subscribers). */
   const subscriptionTemplate = (ws, offeringId) => tpls(ws).find((t) => t.subscription && t.offeringId === offeringId) || null;
   const canOperate = () => NS.app.can('operate');
-  /** The name printed on the firm's name line: the team member who is signing, not the team the notice went to. */
-  const firmSignerName = (s) => {
+  /** The name printed on the firm's name line: the team member who is signing, never the team the notice went to ('' to be typed when unknown). */
+  const firmSignerName = () => {
     const me = ((W() && W().team) || []).find((m) => m && m.current && m.name);
-    return me ? me.name : s.name;
+    return me ? me.name : '';
   };
   const staffActor = () => (S().role === 'staff' ? 'Carrow & Vale staff' : S().role === 'investor' ? 'System' : `${T().shortName} staff`);
   const slug = (s) => String(s || 'document').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 60) || 'document';
@@ -1672,7 +1672,7 @@
       const vals = {};
       fieldsOf(env, s).forEach((f) => {
         if (f.type === 'date') vals[f.id] = usDate(NS.dates.today());
-        else if (f.type === 'name') vals[f.id] = f.value || (s.role === 'countersigner' ? firmSignerName(s) : s.name);
+        else if (f.type === 'name') vals[f.id] = f.value || (s.role === 'countersigner' ? firmSignerName() : s.name);
         else if (f.type === 'text') vals[f.id] = f.value || '';
         else if (f.type === 'checkbox') vals[f.id] = !!f.value;
         else vals[f.id] = false;
@@ -2615,17 +2615,12 @@
     try {
       const env = await agreementDraft(w, oid, { file: file || null, docId: file ? '' : docId, title: form.title.value });
       U.closeDialog();
-      const n = env.fields.length;
-      if (saveAgreement(w, env)) {
-        NS.app.go('console-offering-' + oid);
-        NS.app.render();
-        U.toast(`Subscription agreement added with ${n} field${n === 1 ? '' : 's'}, each on a place the agreement prints. ${env.read && env.read.firmPages.length ? 'Your firm signs after the investor.' : 'No signature line for your firm was found, so only the investor signs.'}`);
-      } else {
-        openAgreement(env);
-        const marked = NS.placement.reviewCount(env);
-        if (!env.read || !env.read.ok || !env.read.investorPages.length) U.toast(agreementTodo(env));
-        else if (marked) U.toast(`${marked} field${marked === 1 ? ' needs' : 's need'} your review before investors can sign.`);
-      }
+      // The editor always opens on a new agreement: the sponsor sees what was read and where each field sits, then saves.
+      openAgreement(env);
+      const marked = NS.placement.reviewCount(env);
+      if (!env.read || !env.read.ok || !env.read.investorPages.length) U.toast(agreementTodo(env));
+      else if (marked) U.toast(`${marked} field${marked === 1 ? ' needs' : 's need'} your review before investors can sign.`);
+      else U.toast(`${env.fields.length} field${env.fields.length === 1 ? ' was' : 's were'} placed, each on a place the agreement prints. Check them, then save.`);
     } catch (e) {
       if (btn) {
         btn.disabled = false;

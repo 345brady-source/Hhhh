@@ -212,6 +212,9 @@ async function upload(page, bytes, opts) {
         const ps = env.pageSizes[f.page - 1];
         return {
           type: f.type,
+          kind: f.kind || '',
+          second: !!f.second,
+          printed: f.printed || '',
           role: role(f.signerId),
           page: f.page,
           conf: f.confidence || '',
@@ -238,7 +241,8 @@ async function upload(page, bytes, opts) {
       } catch (e) {
         /* the file store keeps it; nothing reads it again */
       }
-      return { fields, saved, todo, pages: env.pageSizes };
+      const signers = saved ? [] : env.signers.map((sg) => sg.role);
+      return { fields, saved, todo, pages: env.pageSizes, read: env.read || null, note: NS.esignKit && NS.esignKit.readNote ? NS.esignKit.readNote(env) : '', signers };
     },
     { arr: bytes, o: opts || {} }
   );
