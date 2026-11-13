@@ -1,0 +1,389 @@
+/*
+ * Printed places: reads what a page of an agreement has printed on it, without drawing the page.
+ *
+ * This file works on plain data only and touches nothing when it loads, so it can also be loaded outside a browser.
+ * All coordinates are PDF points of the page as displayed (crop box and rotation applied), origin top-left, y downwards.
+ *
+ *   walk(page, viewport, OPS)   the drawing operators of one page of the PDF reader, as plain data:
+ *                               { glyphs, segs, rects, picture } (every character with its true extent, every straight
+ *                               stroke and thin filled bar, every drawn rectangle, and whether one picture covers the page)
+ *   page(raw, size, forms)      what placement reads: { page, w, h, items, rules, boxes, forms, scan }
+ *                               items  runs of text { s, x, y, w, h } (a run of underscores and a box character are
+ *                                      runs of their own, so their extents are exact)
+ *                               rules  printed lines that can be written on { x0, x1, y, clear, made, cut, cell, table }
+ *                               boxes  printed tick boxes { x, y, w, h, made }
+ *                               forms  the PDF's own form fields { x0, y0, x1, y1, type, label, check, readOnly }
+ *                               scan   true when the page is a picture (nothing can be read from it)
+ *
+ * A place is only ever something printed: a run of underscores, a drawn line, a box character, a drawn square, an
+ * empty bracket pair, an empty ruled cell, a form field. A line between square brackets is the sponsor's own
+ * placeholder and is left out, as are underlines of words, footnote and footer rules and the frames of tables.
+ */
+(function (NS) {
+  'use strict';
+
+  const mul = (a, b) => [a[0] * b[0] + a[2] * b[1], a[1] * b[0] + a[3] * b[1], a[0] * b[2] + a[2] * b[3], a[1] * b[2] + a[3] * b[3], a[0] * b[4] + a[2] * b[5] + a[4], a[1] * b[4] + a[3] * b[5] + a[5]];
+  const at = (m, x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
+  const ov = (a0, a1, b0, b1) => Math.min(a1, b1) - Math.max(a0, b0);
+
+  /** One page's drawing operators as plain data. page: a page of the PDF reader; vp: its viewport at scale 1; OPS: the reader's operator codes. */
+  async function walk(page, vp, OPS) {
+    const ol = await page.getOperatorList();
+    let st = { ctm: vp.transform.slice(), tm: [1, 0, 0, 1, 0, 0], x: 0, y: 0, lineX: 0, lineY: 0, size: 0, dir: 1, cs: 0, ws: 0, hs: 1, rise: 0, lead: 0, font: null, lw: 1, mode: 0, fill: 0, ink: 0 };
+    const stack = [];
+    const push = () => stack.push(Object.assign({}, st, { ctm: st.ctm.slice(), tm: st.tm.slice() }));
+    const pop = () => stack.length && (st = stack.pop());
+    const light = (a) => (a && a.length >= 3 && Math.min(a[0], a[1], a[2]) >= 245 ? 1 : 0);
+    const glyphs = [];
+    const segs = []; // { o: 'h' | 'v', a0, a1 (extent along it), c (its position across), t (thickness), frame }
+    const rects = [];
+    let cur = null;
+    let picture = false;
+    const fontOf = (id) => {
+      try {
+        return page.commonObjs.get(id);
+      } catch (e) {
+        try {
+          return page.objs.get(id);
+        } catch (e2) {
+          return null;
+        }
+      }
+    };
+    for (let i = 0; i < ol.fnArray.length; i++) {
+      const fn = ol.fnArray[i];
+      const a = ol.argsArray[i];
+      if (fn === OPS.save) push();
+      else if (fn === OPS.restore) pop();
+      else if (fn === OPS.transform) st.ctm = mul(st.ctm, a);
+      else if (fn === OPS.paintFormXObjectBegin) {
+        push();
+        if (a && a[0]) st.ctm = mul(st.ctm, a[0]);
+      } else if (fn === OPS.paintFormXObjectEnd) pop();
+      else if (fn === OPS.setLineWidth) st.lw = a[0];
+      else if (fn === OPS.setFillRGBColor) st.fill = light(a);
+      else if (fn === OPS.setStrokeRGBColor) st.ink = light(a);
+      else if (fn === OPS.beginText) {
+        st.tm = [1, 0, 0, 1, 0, 0];
+        st.x = st.y = st.lineX = st.lineY = 0;
+      } else if (fn === OPS.setTextMatrix) {
+        st.tm = [a[0], a[1], a[2], a[3], a[4], a[5]];
+        st.x = st.lineX = 0;
+        st.y = st.lineY = 0;
+      } else if (fn === OPS.moveText) {
+        st.x = st.lineX += a[0];
+        st.y = st.lineY += a[1];
+      } else if (fn === OPS.setLeadingMoveText) {
+        st.lead = a[1];
+        st.x = st.lineX += a[0];
+        st.y = st.lineY += a[1];
+      } else if (fn === OPS.setLeading) st.lead = -a[0];
+      else if (fn === OPS.nextLine) {
+        st.x = st.lineX;
+        st.y = st.lineY += st.lead;
+      } else if (fn === OPS.setFont) {
+        st.size = Math.abs(a[1]);
+        st.dir = a[1] < 0 ? -1 : 1;
+        st.font = fontOf(a[0]);
+      } else if (fn === OPS.setCharSpacing) st.cs = a[0];
+      else if (fn === OPS.setWordSpacing) st.ws = a[0];
+      else if (fn === OPS.setHScale) st.hs = a[0] / 100;
+      else if (fn === OPS.setTextRise) st.rise = a[0];
+      else if (fn === OPS.setTextRenderingMode) st.mode = a[0];
+      else if (fn === OPS.showText) {
+        const font = st.font || {};
+        const adv = st.size * (font.fontMatrix || [0.001])[0];
+        const M = mul(mul(st.ctm, st.tm), [1, 0, 0, 1, st.x, st.y + st.rise]);
+        const pt = (lx) => [M[0] * lx * st.hs + M[4], M[1] * lx * st.hs + M[5]];
+        const hgt = Math.hypot(M[2], M[3]) * st.size;
+        const level = M[0] > 0 && Math.abs(M[1]) <= 0.02 * Math.abs(M[0]); // horizontal as displayed
+        const name = String(font.name || '').replace(/^[A-Z]{6}\+/, '');
+        let x = 0;
+        (a[0] || []).forEach((g) => {
+          if (typeof g === 'number') {
+            x -= (g * st.size) / 1000;
+            return;
+          }
+          if (!g) return;
+          const p0 = pt(x);
+          const p1 = pt(x + g.width * adv);
+          const u = String(g.unicode == null ? '' : g.unicode);
+          if (level && hgt >= 3) glyphs.push({ u, sp: !!g.isSpace || !u.trim(), x0: p0[0], x1: p1[0], y: p0[1], h: hgt, font: name, hidden: st.mode === 3 || st.mode === 7 });
+          x += g.width * adv + ((g.isSpace ? st.ws : 0) + st.cs) * st.dir;
+        });
+        st.x += x * st.hs;
+      } else if (fn === OPS.constructPath) {
+        const ops = a[0];
+        const co = a[1];
+        const list = [];
+        let k = 0;
+        let px = 0;
+        let py = 0;
+        let sx = 0;
+        let sy = 0;
+        let curve = false;
+        const line = (x0, y0, x1, y1) => {
+          const p1 = at(st.ctm, x0, y0);
+          const p2 = at(st.ctm, x1, y1);
+          list.push({ t: 'l', x0: p1[0], y0: p1[1], x1: p2[0], y1: p2[1] });
+        };
+        for (let j = 0; j < ops.length; j++) {
+          const o = ops[j];
+          if (o === OPS.rectangle) {
+            const x = co[k++];
+            const y = co[k++];
+            const w = co[k++];
+            const hh = co[k++];
+            const p1 = at(st.ctm, x, y);
+            const p2 = at(st.ctm, x + w, y + hh);
+            list.push({ t: 'r', x0: Math.min(p1[0], p2[0]), y0: Math.min(p1[1], p2[1]), x1: Math.max(p1[0], p2[0]), y1: Math.max(p1[1], p2[1]) });
+          } else if (o === OPS.moveTo) {
+            px = sx = co[k++];
+            py = sy = co[k++];
+          } else if (o === OPS.lineTo) {
+            const x = co[k++];
+            const y = co[k++];
+            line(px, py, x, y);
+            px = x;
+            py = y;
+          } else if (o === OPS.curveTo) {
+            k += 6;
+            curve = true;
+          } else if (o === OPS.curveTo2 || o === OPS.curveTo3) {
+            k += 4;
+            curve = true;
+          } else if (o === OPS.closePath) {
+            if (px !== sx || py !== sy) line(px, py, sx, sy);
+            px = sx;
+            py = sy;
+          }
+        }
+        cur = { list, curve, scale: Math.sqrt(Math.abs(st.ctm[0] * st.ctm[3] - st.ctm[1] * st.ctm[2])) };
+      } else if (fn === OPS.stroke || fn === OPS.closeStroke || fn === OPS.fill || fn === OPS.eoFill || fn === OPS.fillStroke || fn === OPS.eoFillStroke || fn === OPS.closeFillStroke || fn === OPS.closeEOFillStroke) {
+        if (cur && !cur.curve) {
+          const stroked = fn !== OPS.fill && fn !== OPS.eoFill && !st.ink;
+          const filled = fn !== OPS.stroke && fn !== OPS.closeStroke && !st.fill;
+          const lw = Math.max(0.2, st.lw * cur.scale);
+          // A closed path of four straight sides at right angles is a rectangle whatever it was built from.
+          let list = cur.list;
+          const ls = list.filter((s) => s.t === 'l');
+          if (ls.length >= 4 && ls.length <= 5 && list.length === ls.length && ls.every((s) => Math.abs(s.x0 - s.x1) < 0.3 || Math.abs(s.y0 - s.y1) < 0.3) && Math.abs(ls[0].x0 - ls[ls.length - 1].x1) < 0.3 && Math.abs(ls[0].y0 - ls[ls.length - 1].y1) < 0.3) {
+            const xs = ls.reduce((o, s) => o.concat(s.x0, s.x1), []);
+            const ys = ls.reduce((o, s) => o.concat(s.y0, s.y1), []);
+            list = [{ t: 'r', x0: Math.min.apply(null, xs), y0: Math.min.apply(null, ys), x1: Math.max.apply(null, xs), y1: Math.max.apply(null, ys) }];
+          }
+          list.forEach((s) => {
+            if (s.t === 'l') {
+              if (!stroked) return;
+              if (Math.abs(s.y0 - s.y1) < 0.6) segs.push({ o: 'h', a0: Math.min(s.x0, s.x1), a1: Math.max(s.x0, s.x1), c: (s.y0 + s.y1) / 2, t: lw });
+              else if (Math.abs(s.x0 - s.x1) < 0.6) segs.push({ o: 'v', a0: Math.min(s.y0, s.y1), a1: Math.max(s.y0, s.y1), c: (s.x0 + s.x1) / 2, t: lw });
+              return;
+            }
+            const w = s.x1 - s.x0;
+            const hh = s.y1 - s.y0;
+            if (filled && hh <= 3 && w >= 3 * hh) segs.push({ o: 'h', a0: s.x0, a1: s.x1, c: (s.y0 + s.y1) / 2, t: hh });
+            else if (filled && w <= 3 && hh >= 3 * w) segs.push({ o: 'v', a0: s.y0, a1: s.y1, c: (s.x0 + s.x1) / 2, t: w });
+            else if (stroked) {
+              rects.push({ x0: s.x0, y0: s.y0, x1: s.x1, y1: s.y1, t: lw });
+              segs.push({ o: 'h', a0: s.x0, a1: s.x1, c: s.y0, t: lw, frame: true }, { o: 'h', a0: s.x0, a1: s.x1, c: s.y1, t: lw, frame: true }, { o: 'v', a0: s.y0, a1: s.y1, c: s.x0, t: lw }, { o: 'v', a0: s.y0, a1: s.y1, c: s.x1, t: lw });
+            }
+          });
+        }
+        cur = null;
+      } else if (fn === OPS.endPath) cur = null;
+      else if (fn === OPS.paintImageXObject || fn === OPS.paintJpegXObject || fn === OPS.paintImageMaskXObject || fn === OPS.paintInlineImageXObject) {
+        const p1 = at(st.ctm, 0, 0);
+        const p2 = at(st.ctm, 1, 1);
+        if (Math.abs(p2[0] - p1[0]) * Math.abs(p2[1] - p1[1]) > 0.6 * vp.width * vp.height) picture = true;
+      }
+    }
+    return { glyphs, segs, rects, picture };
+  }
+
+  /* Box characters. In a symbol font the code decides, whatever character the reader reports for it. */
+  const BOX_CHAR = /[☐□▢◻◽❑❒❏❐⬜]/;
+  const SYMBOL_FONT = /wingdings|webdings|dingbat/i;
+  const SYMBOL_BOX = { wingdings: [0x6f, 0x70, 0x71, 0x72, 0xa8], wingdings2: [0xa3, 0x2a], dingbat: [0x6f, 0x70, 0x71, 0x72] };
+  function boxChar(g) {
+    if (!g.u) return false;
+    if (BOX_CHAR.test(g.u)) return true;
+    if (!SYMBOL_FONT.test(g.font)) return false;
+    const code = g.u.codePointAt(0);
+    const low = code >= 0xf000 && code <= 0xf0ff ? code & 0xff : code;
+    const set = /wingdings.?2/i.test(g.font) ? SYMBOL_BOX.wingdings2 : /dingbat/i.test(g.font) ? SYMBOL_BOX.dingbat : /wingdings/i.test(g.font) ? SYMBOL_BOX.wingdings : [];
+    return set.indexOf(low) >= 0;
+  }
+
+  /** What placement reads of one page. raw: from walk(); size: { page, w, h }; forms: the PDF's form fields on it (already in displayed points). */
+  function page(raw, size, forms) {
+    const out = { page: size.page, w: size.w, h: size.h, items: [], rules: [], boxes: [], forms: [], scan: !!(raw && raw.picture) };
+    if (!raw || out.scan) return out;
+    const shown = raw.glyphs.filter((g) => !g.hidden);
+    const ink = shown.filter((g) => !g.sp);
+    shown.forEach((g) => (g.box = !g.sp && boxChar(g)));
+    const words = ink.filter((g) => g.u !== '_' && !g.box);
+
+    /* Runs of text. A run of underscores and a box character each stand alone, so their extents are the printed ones. */
+    let cur = null;
+    shown.forEach((g) => {
+      if (g.sp) {
+        if (cur && cur.cat === 'text' && Math.abs(g.y - cur.y) < 0.5 && g.x0 - cur.x1 > -0.3 * g.h && g.x0 - cur.x1 < 1.2 * g.h) cur.s += ' ';
+        return;
+      }
+      const cat = g.box ? 'box' : g.u === '_' ? 'gap' : 'text';
+      const gap = cur ? g.x0 - cur.x1 : 0;
+      const spaces = cur ? cur.s.length - cur.s.replace(/ +$/, '').length : 0;
+      if (cur && cur.cat === cat && cat !== 'box' && Math.abs(g.y - cur.y) < 0.5 && gap > -0.3 * g.h && gap < (cat === 'gap' ? 0.8 : (1.2 + 0.6 * spaces) * g.h)) {
+        if (cat === 'text' && !spaces && gap > 0.18 * g.h) cur.s += ' ';
+        cur.s += g.u;
+        cur.x1 = g.x1;
+        cur.n++;
+        return;
+      }
+      if (cur) cur.s = cur.s.replace(/ +$/, '');
+      cur = { cat, s: cat === 'box' ? '☐' : g.u, x: g.x0, x1: g.x1, y: g.y, h: g.h, n: 1 };
+      out.items.push(cur);
+    });
+    if (cur) cur.s = cur.s.replace(/ +$/, '');
+    out.items = out.items.map((it) => ({ s: it.s, x: it.x, y: it.y, w: Math.max(0, it.x1 - it.x), h: Math.max(4, it.h) }));
+
+    /* Tick boxes: box characters, drawn squares with nothing in them, empty bracket pairs. */
+    shown.forEach((g) => {
+      if (!g.box) return;
+      const side = Math.min(g.x1 - g.x0, 0.95 * g.h);
+      const cx = (g.x0 + g.x1) / 2;
+      out.boxes.push({ x: cx - side / 2, y: g.y - 0.84 * side, w: side, h: 0.9 * side, made: 'character' });
+    });
+    raw.rects.forEach((r) => {
+      const w = r.x1 - r.x0;
+      const hh = r.y1 - r.y0;
+      if (w < 5 || w > 20 || Math.abs(w - hh) > 0.25 * w) return;
+      if (ink.some((g) => (g.x0 + g.x1) / 2 > r.x0 && (g.x0 + g.x1) / 2 < r.x1 && g.y > r.y0 && g.y - 0.5 * g.h < r.y1)) return;
+      if (out.boxes.some((b) => ov(b.x, b.x + b.w, r.x0, r.x1) > 0.5 * w && ov(b.y, b.y + b.h, r.y0, r.y1) > 0.5 * hh)) return;
+      out.boxes.push({ x: r.x0, y: r.y0, w, h: hh, made: 'square' });
+    });
+    for (let i = 0; i < shown.length - 1; i++) {
+      const open = shown[i];
+      if (open.u !== '[' && open.u !== '(') continue;
+      const close = open.u === '[' ? ']' : ')';
+      let j = i + 1;
+      while (j < shown.length && shown[j].sp && j - i <= 6) j++;
+      const end = shown[j];
+      if (!end || end.u !== close || Math.abs(end.y - open.y) >= 0.5) continue;
+      if (open.u === '(' && j === i + 1) continue;
+      if (end.x1 - open.x0 < 5 || end.x1 - open.x0 > 3 * open.h) continue;
+      out.boxes.push({ x: open.x0, y: open.y - 0.75 * open.h, w: end.x1 - open.x0, h: 0.95 * open.h, made: 'brackets' });
+    }
+
+    /* Lines: runs of underscores and drawn rules; pieces that touch on one height are one line. */
+    const pieces = [];
+    let run = null;
+    shown.forEach((g) => {
+      if (g.u === '_' && !g.sp) {
+        if (run && Math.abs(g.y - run.base) < 0.5 && Math.abs(g.x0 - run.x1) < 0.8) {
+          run.x1 = g.x1;
+          run.n++;
+        } else {
+          run = { x0: g.x0, x1: g.x1, base: g.y, y: g.y + 0.12 * g.h, n: 1, made: 'underscores' };
+          pieces.push(run);
+        }
+      } else run = null;
+    });
+    const hs = raw.segs.filter((s) => s.o === 'h' && s.a1 - s.a0 >= 6);
+    const vs = raw.segs.filter((s) => s.o === 'v' && s.a1 - s.a0 >= 6);
+    hs.forEach((s) => pieces.push({ x0: s.a0, x1: s.a1, y: s.c, n: 0, made: 'rule', frame: !!s.frame }));
+    pieces.sort((a, b) => a.y - b.y || a.x0 - b.x0);
+    const lines = [];
+    pieces.forEach((p) => {
+      if (p.made === 'underscores' && p.n < 2) return;
+      const m = lines.find((l) => !l.frame && !p.frame && Math.abs(l.y - p.y) <= 2.2 && p.x0 - l.x1 <= 3.5 && p.x1 >= l.x0 - 3.5);
+      if (m) {
+        m.x0 = Math.min(m.x0, p.x0);
+        m.x1 = Math.max(m.x1, p.x1);
+        m.y = Math.max(m.y, p.y);
+        if (m.made.indexOf(p.made) < 0) m.made += ' and ' + p.made;
+        m.n += p.n;
+      } else lines.push({ x0: p.x0, x1: p.x1, y: p.y, made: p.made, n: p.n, frame: !!p.frame });
+    });
+    const body = words.length ? words.map((g) => g.h).sort((a, b) => a - b)[Math.floor(words.length / 2)] : 10;
+    const sameLine = (g, l) => Math.abs(g.y - (l.y - (l.made.indexOf('underscores') >= 0 ? 0.12 * g.h : 0))) < 0.45 * g.h + 2;
+    const emptyAbove = (x0, x1, y) => {
+      let clear = 60;
+      ink.forEach((g) => {
+        if (g.u === '_' || ov(g.x0, g.x1, x0, x1) <= 0) return;
+        const d = y - g.y;
+        if (d >= 0.35 * g.h + 1.5 && d - 0.25 * g.h < clear) clear = d - 0.25 * g.h;
+      });
+      return clear;
+    };
+    lines.forEach((l) => {
+      const w = l.x1 - l.x0;
+      const typed = l.made.indexOf('underscores') >= 0;
+      if (w < 9 || (l.made === 'underscores' && l.n < 3)) return;
+      // Between square brackets: the sponsor's own placeholder.
+      const beside = ink.filter((g) => g.u !== '_' && sameLine(g, l));
+      const left = beside.filter((g) => g.x1 <= l.x0 + 1).sort((a, b) => b.x1 - a.x1)[0];
+      const right = beside.filter((g) => g.x0 >= l.x1 - 1).sort((a, b) => a.x0 - b.x0)[0];
+      if ((left && left.u === '[' && l.x0 - left.x1 < 12) || (right && right.u === ']' && right.x0 - l.x1 < 12)) return;
+      // Walls: a rule with upright strokes meeting it is the edge of a table or a frame. Its empty cells are blanks.
+      const walls = vs.filter((v) => v.c >= l.x0 - 1.5 && v.c <= l.x1 + 1.5 && v.a0 <= l.y + 1.5 && v.a1 >= l.y - 1.5);
+      if (!typed && (l.frame || walls.length >= 2)) {
+        const up = walls.filter((v) => v.a0 < l.y - 5).map((v) => v.c).sort((a, b) => a - b).filter((c, i, all) => !i || c - all[i - 1] > 2);
+        for (let i = 0; i + 1 < up.length; i++) {
+          const a = up[i];
+          const b = up[i + 1];
+          if (b - a < 16) continue;
+          const roof = hs.filter((s) => s.c < l.y - 6 && s.c > l.y - 80 && ov(s.a0, s.a1, a, b) > 0.5 * (b - a)).sort((p, q) => q.c - p.c)[0];
+          const top = roof ? roof.c : l.y - 20;
+          if (ink.some((g) => (g.x0 + g.x1) / 2 > a && (g.x0 + g.x1) / 2 < b && g.y > top && g.y - 0.4 * g.h < l.y + 1)) continue;
+          out.rules.push({ x0: a + 2, x1: b - 2, y: l.y, clear: Math.max(0, l.y - top - 1), made: 'cell', cut: false, cell: true, table: true });
+        }
+        return;
+      }
+      let x0 = l.x0;
+      let cut = false;
+      if (!typed) {
+        // Characters standing on a drawn rule: an underlined word or heading. A rule that runs on after its words is a
+        // blank from where the words end.
+        const on = words.filter((g) => l.y - g.y > -1.5 && l.y - g.y < 0.35 * g.h + 1.5 && ov(g.x0, g.x1, l.x0, l.x1) > 0);
+        const covered = on.reduce((s, g) => s + Math.max(0, ov(g.x0, g.x1, l.x0, l.x1)), 0);
+        if (covered >= 0.45 * w) return;
+        if (on.length) {
+          const end = Math.max.apply(null, on.map((g) => g.x1));
+          if (l.x1 - end < 36) return;
+          x0 = end + 4;
+          cut = true;
+        }
+      }
+      const clear = emptyAbove(x0, l.x1, l.y);
+      if (l.made === 'rule') {
+        // Small print right under a short rule with empty paper above it: a footnote rule.
+        const under = words.filter((g) => g.y - l.y > 2 && g.y - l.y < 16 && ov(g.x0, g.x1, l.x0, l.x1) > 0);
+        if (w > 100 && w < 200 && under.length && under.every((g) => g.h < 0.93 * body) && clear > 10) return;
+        // A rule right across the page near its head or foot: a running rule.
+        if (w > 0.7 * size.w && (l.y > 0.9 * size.h || l.y < 0.08 * size.h)) return;
+      }
+      out.rules.push({ x0, x1: l.x1, y: l.y, clear, made: l.made, cut, cell: false, table: walls.length > 0 });
+    });
+    // Empty paper above a line ends at the next printed line above it, too.
+    out.rules.forEach((r) => {
+      out.rules.forEach((o) => {
+        if (o !== r && o.y < r.y - 2 && ov(o.x0, o.x1, r.x0, r.x1) > 0) r.clear = Math.min(r.clear, r.y - o.y - 1);
+      });
+    });
+
+    /* The PDF's own form fields: each is a place, and nothing else is read where one stands. */
+    (forms || []).forEach((f) => {
+      if (!f || !(f.x1 - f.x0 > 2) || !(f.y1 - f.y0 > 2)) return;
+      out.forms.push(f);
+    });
+    if (out.forms.length) {
+      const inForm = (x0, x1, y0, y1) => out.forms.some((f) => ov(f.x0 - 2, f.x1 + 2, x0, x1) > 0 && ov(f.y0 - 2, f.y1 + 2, y0, y1) > 0);
+      out.rules = out.rules.filter((r) => !inForm(r.x0, r.x1, r.y - 1, r.y + 1));
+      out.boxes = out.boxes.filter((b) => !inForm(b.x, b.x + b.w, b.y, b.y + b.h));
+    }
+    return out;
+  }
+
+  NS.anchors = { walk, page };
+})(typeof window !== 'undefined' ? window.CVPortal : globalThis.CVPortal);
