@@ -236,15 +236,15 @@
         for (let x = s.a0; x <= s.a1; x++) n += dark[c * across + x * along] === 2 ? 1 : 0;
         return n / (s.a1 - s.a0 + 1);
       };
-      return out.filter((s) => s.c1 - s.c0 + 1 <= thick && side(s, s.c0 - 2) < 0.4 && side(s, s.c1 + 2) < 0.4).map((s) => ({ a0: s.a0, a1: s.a1 + 1, c: (s.c0 + s.c1 + 1) / 2, t: s.c1 - s.c0 + 1 }));
+      return out.filter((s) => s.c1 - s.c0 + 1 <= thick && side(s, s.c0 - 2) < 0.7 && side(s, s.c1 + 2) < 0.7).map((s) => ({ a0: s.a0, a1: s.a1 + 1, c: (s.c0 + s.c1 + 1) / 2, t: s.c1 - s.c0 + 1 }));
     };
     return { h: find(true), v: find(false), dark, w, hgt: h };
   }
-  /** The share of print-dark inside a rectangle of the picture (pixels). */
-  function inked(pic, x0, y0, x1, y1) {
+  /** The share of print-dark (or, with least 1, of anything darker than paper) inside a rectangle of the picture (pixels). */
+  function inked(pic, x0, y0, x1, y1, least) {
     let n = 0;
     let all = 0;
-    for (let y = Math.max(0, Math.ceil(y0)); y < Math.min(pic.hgt, y1); y++) for (let x = Math.max(0, Math.ceil(x0)); x < Math.min(pic.w, x1); x++, all++) n += pic.dark[y * pic.w + x] === 2 ? 1 : 0;
+    for (let y = Math.max(0, Math.ceil(y0)); y < Math.min(pic.hgt, y1); y++) for (let x = Math.max(0, Math.ceil(x0)); x < Math.min(pic.w, x1); x++, all++) n += pic.dark[y * pic.w + x] >= (least || 2) ? 1 : 0;
     return all ? n / all : 0;
   }
   /**
@@ -253,21 +253,29 @@
    */
   function closed(pic, scale) {
     const tol = Math.max(2, 1.4 * scale);
+    const over = 3 * scale; // a level side may run on past a corner by this much (where it meets its neighbour's)
     const rects = [];
     pic.h.forEach((top) => {
       let best = null;
       pic.h.forEach((bot) => {
-        if (bot.c - top.c < 4 * scale || Math.abs(bot.a0 - top.a0) > tol || Math.abs(bot.a1 - top.a1) > tol) return;
+        if (bot.c - top.c < 4 * scale || Math.abs(bot.a0 - top.a0) > over || Math.abs(bot.a1 - top.a1) > over) return;
         if (best && bot.c >= best.bot.c) return;
+        // The corners: where the shorter of the two level sides ends, an upright runs from one to the other.
         const side = (x) => pic.v.find((v) => Math.abs(v.c - x) <= tol && v.a0 <= top.c + tol && v.a1 >= bot.c - tol);
-        const l = side(top.a0);
-        const r = side(top.a1);
-        if (l && r) best = { bot, l, r };
+        const l = side(Math.max(top.a0, bot.a0));
+        const r = side(Math.min(top.a1, bot.a1));
+        if (l && r && r.c - l.c >= 4 * scale) best = { bot, l, r };
       });
       if (!best) return;
       const ts = [top.t, best.bot.t, best.l.t, best.r.t];
-      if (Math.max.apply(null, ts) > 2 * Math.min.apply(null, ts) + 1) return;
-      rects.push({ x0: best.l.c, y0: top.c, x1: best.r.c, y1: best.bot.c, t: Math.max.apply(null, ts), parts: [top, best.bot, best.l, best.r] });
+      const box = { x0: best.l.c, y0: top.c, x1: best.r.c, y1: best.bot.c, t: Math.max.apply(null, ts), parts: [top, best.bot, best.l, best.r] };
+      if (rects.some((o) => Math.abs(o.x0 - box.x0) <= 2 && Math.abs(o.x1 - box.x1) <= 2 && Math.abs(o.y0 - box.y0) <= 2 && Math.abs(o.y1 - box.y1) <= 2)) return;
+      // A small box stands clear on one side at least: a letter inside a word has a neighbour right against it on both.
+      if (box.x1 - box.x0 <= 14 * scale && box.y1 - box.y0 <= 14 * scale) {
+        const beside = (x) => inked(pic, x, box.y0 + 1, x + 2, box.y1 - 1, 1);
+        if (beside(box.x0 - best.l.t / 2 - 3) > 0.3 && beside(box.x1 + best.r.t / 2 + 1) > 0.3) return;
+      }
+      rects.push(box);
     });
     // A box that holds other boxes is a frame around them, not a place.
     return rects.filter((r) => !rects.some((o) => o !== r && o.x0 >= r.x0 - 1 && o.x1 <= r.x1 + 1 && o.y0 >= r.y0 - 1 && o.y1 <= r.y1 + 1 && (o.x1 - o.x0) * (o.y1 - o.y0) < 0.9 * (r.x1 - r.x0) * (r.y1 - r.y0)));
@@ -291,10 +299,12 @@
       if (w < 5 || hh < 5 || (w > 0.6 * size.w && hh > 0.3 * size.h)) return;
       const small = w <= 20 && hh <= 20;
       const inside = read.words.filter((q) => q.letters && (q.x0 + q.x1) / 2 > b.x0 && (q.x0 + q.x1) / 2 < b.x1 && (q.y0 + q.y1) / 2 > b.y0 && (q.y0 + q.y1) / 2 < b.y1);
-      // A small box in the middle of a word that was read with confidence is the shape of a letter, not a box.
-      if (small && read.words.some((q) => q.letters && q.conf >= 60 && q.x0 < b.x0 - 3 && q.x1 > b.x1 + 3 && ov(q.y0, q.y1, b.y0, b.y1) > 0.5 * hh)) return;
+      // A small box that lies in a word read with confidence (the word goes on past it) is the shape of a letter.
+      if (small && read.words.some((q) => q.conf >= 60 && /[A-Za-z0-9]{3}/.test(q.s) && (q.x0 < b.x0 - 3 || q.x1 > b.x1 + 3) && q.x0 < (b.x0 + b.x1) / 2 && q.x1 > (b.x0 + b.x1) / 2 && ov(q.y0, q.y1, b.y0, b.y1) > 0.5 * hh)) return;
       const pad = r.t + Math.max(1, 0.8 * at.scale);
       const ink = inked(pic, r.x0 + pad, r.y0 + pad, r.x1 - pad, r.y1 - pad);
+      // Mostly paper inside: a shape that closes round words (rows of small print run together) is not a box.
+      if (inked(pic, r.x0 + pad, r.y0 + pad, r.x1 - pad, r.y1 - pad, 1) > (small ? 0.3 : 0.18)) return;
       // Filled in, ticked or full of print: not an empty place (a short caption printed inside a roomy box is one).
       const covered = inside.reduce((n, q) => n + (q.x1 - q.x0) * (q.y1 - q.y0), 0) / (w * hh);
       if (small ? ink > 0.03 : ink > 0.12 || covered > 0.3 || inside.length > 6) return;
@@ -350,11 +360,12 @@
       await new Promise((r) => setTimeout(r, 0));
       const v1 = pdfPage.getViewport({ scale: 1 });
       const at = { scale: pic.scale, x: (v) => (v - pic.ox) / pic.scale, y: (v) => (v - pic.oy) / pic.sy };
-      // On a picture the lines and boxes are found first, and painted out of the copy the words are recognised from.
+      // On a picture the lines and boxes are found first, and the boxes one writes in are painted out of the copy the
+      // words are recognised from (their frames are read as letters otherwise).
       const found = raw.picture ? strokes(pic.ctx, pic.canvas.width, pic.canvas.height, pic.scale) : null;
       const boxes = found ? closed(found, pic.scale) : [];
       const marks = [];
-      boxes.forEach((r) => r.parts.forEach((s, i) => marks.push(i < 2 ? { x0: s.a0, x1: s.a1, y0: s.c - s.t / 2, y1: s.c + s.t / 2 } : { x0: s.c - s.t / 2, x1: s.c + s.t / 2, y0: Math.max(s.a0, r.y0 - 1), y1: Math.min(s.a1, r.y1 + 1) })));
+      boxes.filter((r) => r.x1 - r.x0 > 14 * pic.scale).forEach((r) => r.parts.forEach((s, i) => marks.push(i < 2 ? { x0: s.a0, x1: s.a1, y0: s.c - s.t / 2, y1: s.c + s.t / 2 } : { x0: s.c - s.t / 2, x1: s.c + s.t / 2, y0: Math.max(s.a0, r.y0 - 1), y1: Math.min(s.a1, r.y1 + 1) })));
       big = enlarged(pic, marks);
       const res = worker ? await timed(worker.recognize(big.canvas, {}, { blocks: true, text: false }), PAGE_MS, 'time') : null;
       const read = characters(res && res.data && res.data.blocks, pic.scale * big.k, pic.ox * big.k, pic.oy * big.k, pic.sy * big.k);
