@@ -6,11 +6,14 @@
  * printed places still come only from what is printed (NS.anchors.page) and the fields from NS.placement.
  *
  *   NS.textread.page(pdfPage, raw, opts)   raw: NS.anchors.walk of the page (opts, for checks: words: false finds lines
- *                                          and boxes only; trace: true also returns the strokes). Resolves to a raw page of the same form
+ *                                          and boxes only, without starting the engine; ink: the finder's ink level;
+ *                                          trace: true also returns the picture's levels as the finder took them).
+ *                                          Resolves to a raw page of the same form
  *                                          { glyphs, segs, rects, picture: false, pictured, approx, found, words }:
  *                                            pictured  'drawings' (letters drawn as shapes: lines and boxes keep their
- *                                                      exact drawn geometry) or 'picture' (lines and boxes are found on
- *                                                      the picture itself)
+ *                                                      exact drawn geometry) or 'picture' (boxes and free rules are
+ *                                                      found on the picture itself, by NS.picturepage, from its
+ *                                                      pixels alone)
  *                                            approx    true for a picture: positions come from its pixels and are checked by a person
  *                                          Rejects with an Error whose code is 'load' (the recognition files could not
  *                                          be loaded), 'time' (a page took too long) or 'fail'.
@@ -22,7 +25,7 @@
 (function (NS) {
   'use strict';
   const DIR = 'assets/vendor/textread/';
-    const MAX_PIXELS = 9.5e6;
+  const MAX_PIXELS = 9.5e6;
   const LOAD_MS = 60000;
   const PAGE_MS = 75000;
   const here = (f) => new URL(DIR + f, document.baseURI).href;
@@ -108,7 +111,8 @@
   async function draw(pdfPage, raw) {
     const v1 = pdfPage.getViewport({ scale: 1 });
     const im = raw.image;
-    const most = Math.sqrt(MAX_PIXELS / (v1.width * v1.height));
+    // A little under the cap: the canvas is a pixel larger each way than the page drawn on it.
+    const most = 0.99 * Math.sqrt(MAX_PIXELS / (v1.width * v1.height));
     const own = !!im && im.w / (im.x1 - im.x0) <= most && im.w / (im.x1 - im.x0) >= 1;
     // One to one: a pixel of the picture is a pixel of the canvas, across and down, and starts on a whole pixel.
     const scale = own ? im.w / (im.x1 - im.x0) : Math.min(200 / 72, most);
@@ -189,166 +193,27 @@
   }
 
   /**
-   * Straight strokes on the picture of a page: every level and upright run of dark at least five points long, no
-   * thicker than a rule, with paper on both sides of it (the edge of a dark block is not a line).
-   * Returns { h, v, dark, w, hgt } with each stroke { a0, a1 (along it), c (across it), t, c0, c1 } in pixels.
+   * What the finder saw on the picture of a page (NS.picturepage.find), in points, in the form NS.anchors.walk gives
+   * it. found: every box the finder returned, [{ x0, y0, x1, y1, small, ink, place, why, inside (the words printed
+   * in it) }]; each free rule is one level stroke. A box exists by its pixels alone: the recognised words are attached
+   * to it, and no word adds a box or removes one. No loose stroke is passed on.
    */
-  function strokes(ctx, w, h, scale) {
-    const px = ctx.getImageData(0, 0, w, h).data;
-    // 1: darker than paper (a pale printed line counts); 2: as dark as print (what is written or printed inside a box).
-    const dark = new Uint8Array(w * h);
-    for (let i = 0, j = 0; i < dark.length; i++, j += 4) {
-      const lum = px[j] * 299 + px[j + 1] * 587 + px[j + 2] * 114;
-      dark[i] = lum < 150000 ? 2 : lum < 238000 ? 1 : 0;
-    }
-    const least = Math.max(6, Math.round(4.6 * scale));
-    const thick = Math.max(3, Math.round(2.6 * scale));
-    const bridge = scale > 2.5 ? 2 : 1;
-    const ends = Math.max(2, Math.round(scale));
-    const find = (level) => {
-      const lines = level ? h : w;
-      const len = level ? w : h;
-      const along = level ? 1 : w;
-      const across = level ? w : 1;
-      const out = [];
-      let live = [];
-      for (let c = 0; c < lines; c++) {
-        const at = c * across;
-        const now = [];
-        let a = 0;
-        while (a < len) {
-          if (!dark[at + a * along]) {
-            a++;
-            continue;
-          }
-          let e = a;
-          let b = a + 1;
-          let gap = 0;
-          while (b < len) {
-            if (dark[at + b * along]) {
-              e = b;
-              gap = 0;
-            } else if (++gap > bridge) break;
-            b++;
-          }
-          if (e - a + 1 >= least) {
-            let seg = null;
-            for (let k = 0; k < live.length; k++) {
-              const s = live[k];
-              // The rows of one stroke have the same ends (bold words just above a line have other ends, and stay apart).
-              if (Math.abs(s.a0 - a) <= ends && Math.abs(s.a1 - e) <= ends) {
-                seg = s;
-                break;
-              }
-            }
-            if (seg) {
-              seg.a0 = Math.min(seg.a0, a);
-              seg.a1 = Math.max(seg.a1, e);
-              seg.c1 = c;
-            } else {
-              seg = { a0: a, a1: e, c0: c, c1: c };
-              out.push(seg);
-            }
-            if (now.indexOf(seg) < 0) now.push(seg);
-          }
-          a = b;
-        }
-        live = now;
-      }
-      // Paper on both sides: the lines just outside the stroke are mostly not print-dark along it.
-      const side = (s, c) => {
-        if (c < 0 || c >= lines) return 0;
-        let n = 0;
-        for (let x = s.a0; x <= s.a1; x++) n += dark[c * across + x * along] === 2 ? 1 : 0;
-        return n / (s.a1 - s.a0 + 1);
-      };
-      return out.filter((s) => s.c1 - s.c0 + 1 <= thick && side(s, s.c0 - 2) < 0.7 && side(s, s.c1 + 2) < 0.7).map((s) => ({ a0: s.a0, a1: s.a1 + 1, c: (s.c0 + s.c1 + 1) / 2, t: s.c1 - s.c0 + 1 }));
-    };
-    return { h: find(true), v: find(false), dark, w, hgt: h };
-  }
-  /** The share of print-dark (or, with least 1, of anything darker than paper) inside a rectangle of the picture (pixels). */
-  function inked(pic, x0, y0, x1, y1, least) {
-    let n = 0;
-    let all = 0;
-    for (let y = Math.max(0, Math.ceil(y0)); y < Math.min(pic.hgt, y1); y++) for (let x = Math.max(0, Math.ceil(x0)); x < Math.min(pic.w, x1); x++, all++) n += pic.dark[y * pic.w + x] >= (least || 2) ? 1 : 0;
-    return all ? n / all : 0;
-  }
-  /**
-   * Closed boxes on the picture: four straight strokes of like thickness that meet at the corners, level sides ending
-   * at the corners (uprights may run on where boxes are stacked). In pixels: [{ x0, y0, x1, y1, t, parts }].
-   */
-  function closed(pic, scale) {
-    const tol = Math.max(2, 1.4 * scale);
-    const over = 3 * scale; // a level side may run on past a corner by this much (where it meets its neighbour's)
-    const rects = [];
-    pic.h.forEach((top) => {
-      let best = null;
-      pic.h.forEach((bot) => {
-        if (bot.c - top.c < 4 * scale || Math.abs(bot.a0 - top.a0) > over || Math.abs(bot.a1 - top.a1) > over) return;
-        if (best && bot.c >= best.bot.c) return;
-        // The corners: where the shorter of the two level sides ends, an upright runs from one to the other.
-        const side = (x) => pic.v.find((v) => Math.abs(v.c - x) <= tol && v.a0 <= top.c + tol && v.a1 >= bot.c - tol);
-        const l = side(Math.max(top.a0, bot.a0));
-        const r = side(Math.min(top.a1, bot.a1));
-        if (l && r && r.c - l.c >= 4 * scale) best = { bot, l, r };
-      });
-      if (!best) return;
-      const ts = [top.t, best.bot.t, best.l.t, best.r.t];
-      const box = { x0: best.l.c, y0: top.c, x1: best.r.c, y1: best.bot.c, t: Math.max.apply(null, ts), parts: [top, best.bot, best.l, best.r] };
-      if (rects.some((o) => Math.abs(o.x0 - box.x0) <= 2 && Math.abs(o.x1 - box.x1) <= 2 && Math.abs(o.y0 - box.y0) <= 2 && Math.abs(o.y1 - box.y1) <= 2)) return;
-      // A small box stands clear on one side at least: a letter inside a word has a neighbour right against it on both.
-      if (box.x1 - box.x0 <= 14 * scale && box.y1 - box.y0 <= 14 * scale) {
-        const beside = (x) => inked(pic, x, box.y0 + 1, x + 2, box.y1 - 1, 1);
-        if (beside(box.x0 - best.l.t / 2 - 3) > 0.3 && beside(box.x1 + best.r.t / 2 + 1) > 0.3) return;
-      }
-      rects.push(box);
-    });
-    // A box that holds other boxes is a frame around them, not a place.
-    return rects.filter((r) => !rects.some((o) => o !== r && o.x0 >= r.x0 - 1 && o.x1 <= r.x1 + 1 && o.y0 >= r.y0 - 1 && o.y1 <= r.y1 + 1 && (o.x1 - o.x0) * (o.y1 - o.y0) < 0.9 * (r.x1 - r.x0) * (r.y1 - r.y0)));
-  }
-
-  /**
-   * What was found on the picture of a page, in points, in the form NS.anchors.walk gives it, with found: the closed
-   * boxes [{ x0, y0, x1, y1, small, inside (the words printed in it) }]. A stroke that lies in a recognised word is
-   * part of a letter and is left out; a box filled with print, or lying in running text that was read with confidence,
-   * is no place.
-   */
-  function shapes(pic, boxes, at, read, size) {
+  function shapes(seen, at, read) {
     const out = { glyphs: read.glyphs.slice(), segs: [], rects: [], picture: false, found: [], words: read.words };
-    const used = new Set();
-    const inWord = (x0, x1, y0, y1) => read.words.some((w) => w.letters && ov(w.x0, w.x1, x0, x1) > 0.5 * (x1 - x0) && ov(w.y0 - 0.5, w.y1 + 0.5, y0, y1) > 0.5 * (y1 - y0));
-    boxes.forEach((r) => {
-      r.parts.forEach((s) => used.add(s));
-      const b = { x0: at.x(r.x0), y0: at.y(r.y0), x1: at.x(r.x1), y1: at.y(r.y1), t: Math.max(0.3, r.t / at.scale) };
-      const w = b.x1 - b.x0;
-      const hh = b.y1 - b.y0;
-      if (w < 5 || hh < 5 || (w > 0.6 * size.w && hh > 0.3 * size.h)) return;
-      const small = w <= 20 && hh <= 20;
+    const t = Math.max(0.3, 1 / at.scale);
+    seen.boxes.forEach((r) => {
+      // found carries the outer edge of the printed frame. The rectangle and its four strokes are written the way a
+      // drawn rectangle is given: along the middle of the frame's strokes, half a pixel inside that edge.
+      const b = { x0: at.x(r.x0), y0: at.y(r.y0), x1: at.x(r.x1), y1: at.y(r.y1) };
+      const m = { x0: at.x(r.x0 + 0.5), y0: at.y(r.y0 + 0.5), x1: at.x(r.x1 - 0.5), y1: at.y(r.y1 - 0.5), t };
       const inside = read.words.filter((q) => q.letters && (q.x0 + q.x1) / 2 > b.x0 && (q.x0 + q.x1) / 2 < b.x1 && (q.y0 + q.y1) / 2 > b.y0 && (q.y0 + q.y1) / 2 < b.y1);
-      // A small box that lies in a word read with confidence (the word goes on past it) is the shape of a letter.
-      if (small && read.words.some((q) => q.conf >= 60 && /[A-Za-z0-9]{3}/.test(q.s) && (q.x0 < b.x0 - 3 || q.x1 > b.x1 + 3) && q.x0 < (b.x0 + b.x1) / 2 && q.x1 > (b.x0 + b.x1) / 2 && ov(q.y0, q.y1, b.y0, b.y1) > 0.5 * hh)) return;
-      const pad = r.t + Math.max(1, 0.8 * at.scale);
-      const ink = inked(pic, r.x0 + pad, r.y0 + pad, r.x1 - pad, r.y1 - pad);
-      // Mostly paper inside: a shape that closes round words (rows of small print run together) is not a box.
-      if (inked(pic, r.x0 + pad, r.y0 + pad, r.x1 - pad, r.y1 - pad, 1) > (small ? 0.3 : 0.18)) return;
-      // Filled in, ticked or full of print: not an empty place (a short caption printed inside a roomy box is one).
-      const covered = inside.reduce((n, q) => n + (q.x1 - q.x0) * (q.y1 - q.y0), 0) / (w * hh);
-      if (small ? ink > 0.03 : ink > 0.12 || covered > 0.3 || inside.length > 6) return;
-      if (small) out.glyphs = out.glyphs.filter((g) => g.sp || !((g.x0 + g.x1) / 2 > b.x0 - 1 && (g.x0 + g.x1) / 2 < b.x1 + 1 && g.y > b.y0 && g.y - 0.5 * g.h < b.y1 + 1));
-      out.found.push({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, small, inside: inside.map((q) => q.s).join(' ') });
-      out.rects.push(b);
-      out.segs.push({ o: 'h', a0: b.x0, a1: b.x1, c: b.y0, t: b.t, frame: true }, { o: 'h', a0: b.x0, a1: b.x1, c: b.y1, t: b.t, frame: true }, { o: 'v', a0: b.y0, a1: b.y1, c: b.x0, t: b.t }, { o: 'v', a0: b.y0, a1: b.y1, c: b.x1, t: b.t });
+      // What recognition made of the frame of a small box is no letter.
+      if (r.small) out.glyphs = out.glyphs.filter((g) => g.sp || !((g.x0 + g.x1) / 2 > b.x0 - 1 && (g.x0 + g.x1) / 2 < b.x1 + 1 && g.y > b.y0 && g.y - 0.5 * g.h < b.y1 + 1));
+      out.found.push({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, small: r.small, ink: r.ink, place: r.place, why: r.why, inside: inside.map((q) => q.s).join(' ') });
+      out.rects.push(m);
+      out.segs.push({ o: 'h', a0: m.x0, a1: m.x1, c: m.y0, t, frame: true }, { o: 'h', a0: m.x0, a1: m.x1, c: m.y1, t, frame: true }, { o: 'v', a0: m.y0, a1: m.y1, c: m.x0, t }, { o: 'v', a0: m.y0, a1: m.y1, c: m.x1, t });
     });
-    pic.h.forEach((s) => {
-      if (used.has(s)) return;
-      const g = { o: 'h', a0: at.x(s.a0), a1: at.x(s.a1), c: at.y(s.c), t: s.t / at.scale };
-      if (!inWord(g.a0, g.a1, g.c - g.t / 2, g.c + g.t / 2)) out.segs.push(g);
-    });
-    pic.v.forEach((s) => {
-      if (used.has(s)) return;
-      const g = { o: 'v', a0: at.y(s.a0), a1: at.y(s.a1), c: at.x(s.c), t: s.t / at.scale };
-      if (!inWord(g.c - g.t / 2, g.c + g.t / 2, g.a0, g.a1)) out.segs.push(g);
-    });
+    seen.rules.forEach((r) => out.segs.push({ o: 'h', a0: at.x(r.x0), a1: at.x(r.x1), c: at.y((r.y0 + r.y1) / 2), t: r.t / at.sy }));
     return out;
   }
 
@@ -378,28 +243,39 @@
   }
 
   async function page(pdfPage, raw, opts) {
-    const worker = opts && opts.words === false ? null : await start();
+    const o = opts || {};
+    const worker = o.words === false ? null : await start();
     let pic = null;
     let big = null;
     try {
       pic = await timed(draw(pdfPage, raw), PAGE_MS, 'time');
       await new Promise((r) => setTimeout(r, 0));
-      const v1 = pdfPage.getViewport({ scale: 1 });
-      const at = { scale: pic.scale, x: (v) => (v - pic.ox) / pic.scale, y: (v) => (v - pic.oy) / pic.sy };
-      // On a picture the lines and boxes are found first, and the boxes one writes in are painted out of the copy the
-      // words are recognised from (their frames are read as letters otherwise).
-      const found = raw.picture ? strokes(pic.ctx, pic.canvas.width, pic.canvas.height, pic.scale) : null;
-      const boxes = found ? closed(found, pic.scale) : [];
+      const at = { scale: pic.scale, sy: pic.sy, x: (v) => (v - pic.ox) / pic.scale, y: (v) => (v - pic.oy) / pic.sy };
+      // On a picture the boxes and free rules are found first, from its pixels alone (NS.picturepage).
+      let seen = null;
+      if (raw.picture) {
+        const w = pic.canvas.width;
+        const h = pic.canvas.height;
+        try {
+          seen = NS.picturepage.find(NS.picturepage.toGrey(pic.ctx.getImageData(0, 0, w, h).data, w, h), w, h, pic.scale, { ink: o.ink });
+        } catch (e) {
+          throw fail('fail', e);
+        }
+      }
+      // The frames of the boxes one writes in are painted out of the copy the words are recognised from (they are
+      // read as letters otherwise): the pixel row or column of the stroke along each side, in pixels of the drawing
+      // (the copy paints one pixel more on either side of it).
       const marks = [];
-      boxes.filter((r) => r.x1 - r.x0 > 14 * pic.scale).forEach((r) => r.parts.forEach((s, i) => marks.push(i < 2 ? { x0: s.a0, x1: s.a1, y0: s.c - s.t / 2, y1: s.c + s.t / 2 } : { x0: s.c - s.t / 2, x1: s.c + s.t / 2, y0: Math.max(s.a0, r.y0 - 1), y1: Math.min(s.a1, r.y1 + 1) })));
-      big = enlarged(pic, marks);
+      (seen ? seen.boxes : []).filter((r) => r.x1 - r.x0 > 14 * pic.scale).forEach((r) => marks.push({ x0: r.x0, x1: r.x1, y0: r.y0, y1: r.y0 + 1 }, { x0: r.x0, x1: r.x1, y0: r.y1 - 1, y1: r.y1 }, { x0: r.x0, x1: r.x0 + 1, y0: r.y0, y1: r.y1 }, { x0: r.x1 - 1, x1: r.x1, y0: r.y0, y1: r.y1 }));
+      big = worker ? enlarged(pic, marks) : null;
       const res = worker ? await timed(worker.recognize(big.canvas, {}, { blocks: true, text: false }), PAGE_MS, 'time') : null;
-      const read = characters(res && res.data && res.data.blocks, pic.scale * big.k, pic.ox * big.k, pic.oy * big.k, pic.sy * big.k);
+      const k = big ? big.k : 1;
+      const read = characters(res && res.data && res.data.blocks, pic.scale * k, pic.ox * k, pic.oy * k, pic.sy * k);
       await new Promise((r) => setTimeout(r, 0));
-      const out = raw.picture ? shapes(found, boxes, at, read, { w: v1.width, h: v1.height }) : drawn(raw, read);
+      const out = raw.picture ? shapes(seen, at, read) : drawn(raw, read);
       out.pictured = raw.picture ? 'picture' : 'drawings';
       out.approx = !!raw.picture;
-      if (opts && opts.trace && found) out.trace = { h: found.h.map((s) => [at.x(s.a0), at.x(s.a1), at.y(s.c), s.t]), v: found.v.map((s) => [at.y(s.a0), at.y(s.a1), at.x(s.c), s.t]) };
+      if (o.trace && seen) out.trace = { paper: seen.paper, print: seen.print, range: seen.range, tau: seen.tau };
       return out;
     } catch (e) {
       // A page that ran out of time leaves the engine busy: it is stopped, and started afresh for the next page.
