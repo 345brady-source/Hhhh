@@ -151,6 +151,8 @@
   }
   // Lines for people the portal has no signer for: one signer per investor.
   const SKIP_HARD = /\b(witness(es|ed)?|notary|notari[sz]ed|spouse|spousal|co-? ?(subscriber|investor|purchaser|signer|signatory|owner|applicant|trustee|tenant)|joint (subscriber|investor|owner|purchaser|account holder|tenant|signature)|(second|additional|other) (subscriber|investor|purchaser|signatory|signer|owner|trustee|signature|director|officer|person|holder|applicant|party)|guarantor|attest(ed|ation)?)\b/;
+  // Of those, the lines for a second investor on the same account: the co-investor's own places (see coInvestor).
+  const CO_INVESTOR = /\b(co-? ?(subscriber|investor|purchaser|signer|signatory|owner|applicant)|joint (subscriber|investor|owner|purchaser|account holder|signature)|(second|additional|other) (subscriber|investor|purchaser|signatory|signer|owner|signature|person|holder|applicant|party))\b/;
   const SKIP_SOFT = /\b(custodian|broker|dealer|advis[eo]r|representative of|purchaser representative|registered representative|preparer|attorney|counsel|medallion)\b/;
   const SIGNING_WORDS = /\b(signature|sign|signed|signatory|by|initials?)\b/;
   const SIG_RE = /^(by|signed|sign|signature|sign here|please sign|x|(authori[sz]ed )?(signature|signatory|signer|representative|officer|person)|(authori[sz]ed )?signature of .{2,60}|signature by .{2,40}|.{2,34}'?s? signature|signature and title)$/;
@@ -272,6 +274,19 @@
   /* =====================================================================
    * Blanks to proposed fields
    * ===================================================================== */
+  /**
+   * A second investor's place is the co-investor's own field: named for them, theirs to complete as the investor's are
+   * (a signature, initials and their name are required), and no longer marked merely for being a second signer's. A witness's or a
+   * notary's line is not one of these and stays optional and marked.
+   */
+  const coInvestor = (p) => {
+    const t = clean(p.label).replace(new RegExp(CO_INVESTOR.source, 'gi'), ' ').replace(/[’']s\b/g, ' ').replace(/\b(of|the|for)\b/gi, ' ').replace(/[^A-Za-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+    const what = /\binitial/.test(t) ? 'initials' : p.type === 'signature' ? 'signature' : /\bdate/.test(t) ? 'date' : /\bname\b/.test(t) ? 'name' : '';
+    if (what === 'initials' && p.type === 'signature') p.type = 'initials';
+    if (p.type === 'text' && (what === 'name' || what === 'date')) p.type = what;
+    Object.assign(p, { role: 'co', label: `Co-investor ${what || t || 'field'}`, required: p.type === 'signature' || p.type === 'initials' || p.type === 'name' });
+    if (p.why === WHY.second) Object.assign(p, { conf: 'high', why: '' });
+  };
   const WHY = {
     who: 'Could not tell whether the investor or your firm fills this in.',
     above: 'This label sits above its line, which can also belong to the line before.',
@@ -510,7 +525,7 @@
     const second = (slot, info, seg) => {
       const t = plain(info.text);
       const m = propose(/\b(name|print|printed|date|dated|address|title|social|tax|e-?mail|phone)\b/.test(t) ? 'other' : 'signature', slot, null, { seg, label: info.text.replace(/\s*[:\uFF1A]\s*$/, ''), required: false });
-      Object.assign(m, { second: true, block: false });
+      Object.assign(m, { second: true, block: false, co: !!info.co || CO_INVESTOR.test(t) });
       Object.assign(m.p, { second: true, conf: 'low', why: WHY.second });
       return m;
     };
@@ -897,7 +912,7 @@
         seg.used = caps ? 'caption' : 'above';
         if (info.kind === 'skip') return second(s, info, seg);
         // The same caption a second time on one shared line (a second "Signature of Subscriber") is a second signer's.
-        if (caps && s.split && ['signature', 'name', 'date', 'taxId', 'investorName'].indexOf(info.kind) >= 0 && L.slots.some((o) => o !== s && o.split === s.split && o.x0 < s.x0 && o.made && o.made.kind === info.kind)) return second(s, Object.assign({}, info, { text: seg.s }), seg);
+        if (caps && s.split && ['signature', 'name', 'date', 'taxId', 'investorName'].indexOf(info.kind) >= 0 && L.slots.some((o) => o !== s && o.split === s.split && o.x0 < s.x0 && o.made && o.made.kind === info.kind)) return second(s, Object.assign({}, info, { text: seg.s, co: true }), seg);
         const m = info.any ? generic(s, info, seg) : propose(info.kind, s, info, { seg, how: caps ? 'after' : 'above' });
         // A label that ends in a colon and starts where its blank starts, with no caption anywhere in the stack, is plain.
         const plainAbove = !caps && !nCap && info.colon && Math.abs(seg.x0 - s.x0) <= 12;
@@ -1051,7 +1066,7 @@
         const info = classify(raw);
         const isKnown = !!(info && (FIELD(info.kind) || info.kind === 'skip') && info.kind !== 'other');
         const shout = raw.replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ').trim();
-        if (SKIP_HARD.test(t) && n <= 6 && (colon || (/[A-Z]{2}/.test(shout) && shout === shout.toUpperCase())) && !(next && next.t === 'slot')) return heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who: '', skip: true, seg });
+        if (SKIP_HARD.test(t) && n <= 6 && (colon || (/[A-Z]{2}/.test(shout) && shout === shout.toUpperCase())) && !(next && next.t === 'slot')) return heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who: '', skip: true, co: CO_INVESTOR.test(t), seg });
         if (seg.used || (next && next.t === 'slot')) {
           // A label speaks for the lines under it only when it names a side outright or says whose line it is.
           // A bare "SUBSCRIBER: ____" heads its block like any heading; "Signature of Subscriber" speaks for its own lines only.
@@ -1108,6 +1123,7 @@
             // Under a heading for a second signer, a witness or a notary: kept, optional, and marked.
             if (!m.second) {
               m.second = true;
+              m.co = !!hd.co;
               Object.assign(p, { second: true, required: false, conf: 'low', why: WHY.second });
             }
             role = 'investor';
@@ -1146,6 +1162,7 @@
         }
       }
       p.role = role;
+      if (m.co) coInvestor(p);
       if (role === 'firm') {
         // The firm's blanks are its own to complete, but the amount it accepts is the commitment the portal holds.
         delete p.forType;

@@ -332,6 +332,8 @@
     return (ws.requests || []).filter((r) => r.investorId === it.investorId && r.type === 'subscription' && (!it.offeringId || r.offeringId === it.offeringId)).pop() || null;
   }
   const envOf = (ws, r) => (r && r.envelopeId ? (ws.envelopes || []).find((e) => e.id === r.envelopeId) || null : null);
+  /** The investor has signed and the account's co-investor has not yet. */
+  const waitingCo = (env) => !!env && env.status === 'sent' && env.signers.some((s) => s.co && s.status !== 'signed') && env.signers.some((s) => s.investorId && !s.co && s.status === 'signed');
   const waitingCountersign = (env) => !!env && env.status === 'sent' && NS.esign && NS.esign.currentSigners(env).some((s) => s.role === 'countersigner');
   /** Who finished, for what, and where things stand: the completion notice and the list. */
   function outcome(ws, it) {
@@ -348,7 +350,7 @@
     else if (off) parts.push(`No subscription to ${off.name}${off.status !== 'Raising' ? ', which stopped raising before they reached that step' : ''}`);
     else parts.push('Account activated');
     if (st) parts.push(st.key === 'approved' ? 'verified' : st.key === 'review' ? 'verification held for your review' : st.key === 'rejected' ? 'verification not approved' : 'verification in progress');
-    if (env) parts.push(env.status === 'completed' ? 'agreement fully signed' : waitingCountersign(env) ? 'agreement signed, waiting for your countersignature' : 'agreement not signed yet');
+    if (env) parts.push(env.status === 'completed' ? 'agreement fully signed' : waitingCountersign(env) ? 'agreement signed, waiting for your countersignature' : waitingCo(env) ? 'agreement signed by the investor, waiting for the co-investor to sign' : 'agreement not signed yet');
     return { text: parts.join('; '), route: waitingCountersign(env) ? `console-envelope-${env.id}` : st && st.key === 'review' ? 'console-kyc' : 'console-investors', inv, off, r, env };
   }
   function complete(ws, it) {

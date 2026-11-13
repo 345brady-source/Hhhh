@@ -94,7 +94,7 @@ const domKept = (p) => p.evaluate(() => Array.from(document.querySelectorAll('.c
       check('LOOK-01 the editor fits what is left of the screen: the document scrolls inside it, not the page around it', parts.stage.t > 0 && parts.stage.b <= parts.vh - 24 && near(parts.rail.b, parts.stage.b, 1) && near(parts.props.b, parts.stage.b, 1) && parts.scroll.h > 400, { t: parts.stage.t, b: parts.stage.b, vh: parts.vh });
       const bar = await p.evaluate(() => ['fe-undo', 'fe-redo', 'fe-zoom-out', 'fe-zoom-in', 'fe-prev', 'fe-next'].map((a) => !!document.querySelector(`.fe-bar [data-action="${a}"]`)).concat([!!document.querySelector('.fe-bar #fe-zoom'), !!document.querySelector('.fe-bar #fe-page')]));
       check('LOOK-01 the toolbar has undo, redo, zoom and page controls', bar.every(Boolean), bar);
-      check('LOOK-01 the palette offers the six field types and both signers; the stored agreement loads with its 14 fields', parts.tools === 6 && parts.signers === 2 && parts.fields === 14 && start.length === 14, parts);
+      check('LOOK-01 the palette offers the six field types and the three signers (the investor, the co-investor, the firm); the stored agreement loads with its 14 fields', parts.tools === 6 && parts.signers === 3 && parts.fields === 14 && start.length === 14, parts);
       const look = await p.evaluate((fid) => {
         const el = document.querySelector(`.es-fld[data-fid="${fid}"]`);
         const cs = getComputedStyle(el);
@@ -406,7 +406,7 @@ const domKept = (p) => p.evaluate(() => Array.from(document.querySelectorAll('.c
       await p.selectOption('#es-fs', other);
       const sg = await L.field(p, title);
       const colors = await p.evaluate((ids) => ids.map((fid) => document.querySelector(`.es-fld[data-fid="${fid}"]`).style.getPropertyValue('--sc')), [title, id['tf-csig'], id['tf-sig']]);
-      check('EDIT-03 the signer can be changed: the field takes the other signer’s color and the counts follow', sg.signerId === other && colors[0] === colors[1] && colors[0] !== colors[2] && /4 fields/.test(await p.locator('.es-signers .es-signer >> nth=1').innerText()), { colors });
+      check('EDIT-03 the signer can be changed: the field takes the other signer’s color and the counts follow', sg.signerId === other && colors[0] === colors[1] && colors[0] !== colors[2] && /4 fields/.test(await p.locator('.es-signers .es-signer').last().innerText()), { colors });
       const wasReq = await p.isChecked('#es-fr');
       await p.click('#es-fr');
       const rq = await L.field(p, title);
@@ -711,6 +711,10 @@ const domKept = (p) => p.evaluate(() => Array.from(document.querySelectorAll('.c
       const nDup = (await L.fields(p)).length;
       await p.tap('.fe-tools [data-action="es-fdel"]');
       check('EDIT-06 touch: duplicate and remove work from the field’s toolbar', nDup === start.length + 1 && (await L.fields(p)).length === start.length);
+      // The field is brought to the middle of the screen first: the list of signers above the document is one row taller
+      // on a phone (the investor, the co-investor, the firm), so the page sits lower than it did with two.
+      await p.evaluate((fid) => document.querySelector(`.es-fld[data-fid="${fid}"]`).scrollIntoView({ block: 'center', inline: 'center' }), sig);
+      await p.waitForTimeout(150);
       const b3 = await L.box(p, sig);
       await p.touchscreen.tap(b3.cx, b3.cy);
       await p.tap('.fe-tools [data-action="fe-props"]');

@@ -412,7 +412,10 @@
     // The sign-up page offers the sample sponsors. Other standalone pages (an investor's invitation, a signing link) show no demo controls.
     if (standalone || !w) return E.diy && state.route === 'diy-start' ? `<div class="demo-bar">${sponsorPickHTML('')}</div>` : '';
     const inv = w.investors.find((x) => x.id === state.viewer);
-    const opt = (v, label) => `<option value="${v}"${state.role === v ? ' selected' : ''}>${label}</option>`;
+    // An account's co-investor signs in as themselves: offered beside the investor while the account has one.
+    const co = inv && inv.coInvestor && inv.coInvestor.email ? inv.coInvestor : null;
+    if (!co) state.co = false;
+    const opt = (v, label) => `<option value="${v}"${state.role === v && !(v === 'investor' && state.co) ? ' selected' : ''}>${label}</option>${v === 'investor' && co ? `<option value="co-investor"${state.role === 'investor' && state.co ? ' selected' : ''}>Co-investor · ${h(co.name)}</option>` : ''}`;
     const labels = E.diy
       ? { admin: `Admin · ${h(w.tenant.shortName)}`, team: `Team member · ${h(w.tenant.shortName)}`, investor: `Investor · ${inv ? h(inv.title) : 'none yet'}` }
       : { staff: 'Carrow &amp; Vale staff', sponsor: `Sponsor staff · ${h(w.tenant.shortName)}`, investor: `Investor · ${inv ? h(inv.title) : 'none yet'}` };
@@ -594,14 +597,22 @@
     setClient(el.value, 'console');
   };
   NS.changes['demo-role'] = (el) => {
-    state.role = el.value;
+    state.co = el.value === 'co-investor';
+    state.role = state.co ? 'investor' : el.value;
     NS.store.set('role', state.role);
     const inv = ws().investors.find((x) => x.id === state.viewer);
+    if (state.co) {
+      // The co-investor goes straight to what waits for their signature; with nothing waiting, to the account's documents.
+      const due = NS.esign ? NS.esign.pendingFor(ws(), inv.id) : [];
+      go(due.length ? 'sign-' + due[0].id : 'documents');
+      return NS.ui.toast(`Signed in as ${inv.coInvestor.name}`);
+    }
     if (state.role === 'investor' && inv && inv.onboarding.status !== 'complete') NS.startOnboarding(inv.id);
     else go(homeFor(state.role));
     NS.ui.toast(state.role === 'investor' ? `Signed in as ${inv ? inv.title : 'an investor'}` : state.role === 'staff' ? 'Signed in as Carrow & Vale staff' : `Signed in as ${E.roleLabel[state.role].toLowerCase()} of ${ws().tenant.shortName}`);
   };
   NS.changes.viewer = (el) => {
+    state.co = false;
     state.viewer = el.value;
     const inv = ws().investors.find((x) => x.id === el.value);
     if (inv && inv.onboarding.status !== 'complete') NS.startOnboarding(inv.id);
@@ -614,6 +625,7 @@
     const firm = w ? w.tenant.shortName : '';
     if (state.role === 'investor') {
       const inv = w && w.investors.find((i) => i.id === state.viewer);
+      if (inv && state.co && inv.coInvestor) return `${inv.coInvestor.name} (co-investor)`;
       return inv ? `${inv.title} (investor)` : 'Investor';
     }
     if (E.managed) return state.role === 'staff' ? 'Carrow & Vale staff' : `${firm || 'Sponsor'} staff`;

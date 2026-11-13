@@ -43,6 +43,16 @@
     checkbox: { label: 'Checkbox', w: 16, h: 16 }
   };
   const ROLE_LABEL = { investor: 'Investor', countersigner: 'Countersigner' };
+  /** The second investor on an account is the co-investor, on every screen and on the record. */
+  const roleLabel = (s) => (s && s.co ? 'Co-investor' : ROLE_LABEL[s.role]);
+  const AGR_CO = '__co_investor__'; // the placeholder signer for an account's co-investor on an offering's agreement
+  const CO_ROLE = 'Investor 2'; // the co-investor's role in a template (see rolesOf)
+  /** The co-investor on an investor's account, or null. */
+  const coOf = (inv) => (inv && inv.coInvestor && inv.coInvestor.email ? inv.coInvestor : null);
+  /** Signed in to the investor portal as the account's co-investor (the demo bar; in production, their own sign-in). */
+  const asCo = () => S().role === 'investor' && !!S().co;
+  /** The signer a person signed in to this investor's account is: the investor, or the co-investor. */
+  const mySigner = (env, investorId) => (env ? env.signers.find((x) => x.investorId === investorId && !!x.co === asCo()) || null : null);
 
   /* ---------- Small helpers ---------- */
   const nowIso = () => new Date().toISOString();
@@ -92,7 +102,7 @@
   function email(env, to, subject) {
     addEvent(env, 'System', 'Email sent', `To ${to.name} <${to.email}>: ${subject}`);
   }
-  const actorFor = (s) => `${s.name} (${s.role === 'investor' ? 'investor' : 'countersigner'})`;
+  const actorFor = (s) => `${s.name} (${s.co ? 'co-investor' : s.role === 'investor' ? 'investor' : 'countersigner'})`;
   const signerById = (env, id) => env.signers.find((s) => s.id === id) || null;
   const fieldsOf = (env, s) => env.fields.filter((f) => f.signerId === s.id).sort(readingOrder);
   const readingOrder = (a, b) => a.page - b.page || a.y - b.y || a.x - b.x;
@@ -121,7 +131,8 @@
     return env.status;
   }
   function pendingFor(ws, investorId) {
-    return envs(ws).filter((e) => e.signers.some((s) => s.investorId === investorId && isTurn(e, s)));
+    // In the investor portal each person is asked for their own signature only: the investor, or the co-investor.
+    return envs(ws).filter((e) => e.signers.some((s) => s.investorId === investorId && (S().role !== 'investor' || !!s.co === asCo()) && isTurn(e, s)));
   }
   const countersignDue = (ws) => envs(ws).filter((e) => currentSigners(e).some((s) => s.role === 'countersigner'));
 
@@ -422,8 +433,17 @@
       initials: null,
       userAgent: ''
     };
+    if (o.co) s.co = true;
     env.signers.push(s);
+    // An offering's agreement has a place for the co-investor of an account: after the investor, before the firm.
+    if (o.investorId === AGR_INVESTOR) makeSigner(env, { investorId: AGR_CO, co: true, name: 'Co-investor (if any)', email: '', account: '' });
     return s;
+  }
+  /** Take a signer and their fields off an envelope; the others keep their order. */
+  function dropSigner(env, s) {
+    env.fields = env.fields.filter((f) => f.signerId !== s.id);
+    env.signers = env.signers.filter((x) => x !== s);
+    env.signers.forEach((x, i) => (x.order = i + 1));
   }
   function investorSigner(env, inv) {
     return makeSigner(env, { investorId: inv.id, name: inv.contact, email: inv.email, account: inv.title });
@@ -553,12 +573,16 @@
     const env = makeEnvelope({ title: opts.title || tpl.title, message: opts.message || tpl.message || '', fileName: tpl.fileName, docId: tpl.docId, pages: tpl.pages, pageSizes: tpl.pageSizes, sha256Original: tpl.sha256, offeringId: opts.offeringId || tpl.offeringId, templateId: tpl.id, sequential: true });
     (tpl.roles || []).forEach((r) => {
       if (r === 'Investor' && inv) investorSigner(env, inv);
+      // The account's co-investor signs their own places. With no co-investor, those places are left out (no signer has the role).
+      if (r === CO_ROLE && inv && coOf(inv)) makeSigner(env, { investorId: inv.id, co: true, name: coOf(inv).name, email: coOf(inv).email, account: inv.title });
       if (r === 'Sponsor') {
         const cs = opts.countersign || { name: T().support.team, email: T().support.email };
         makeSigner(env, { name: cs.name, email: cs.email });
       }
     });
     applyTemplateFields(env, tpl);
+    const co = env.signers.find((s) => s.co);
+    if (co && !env.fields.some((f) => f.signerId === co.id && (f.type === 'signature' || f.type === 'initials'))) dropSigner(env, co);
     const mine = inv ? env.signers.find((s) => s.investorId === inv.id) : null;
     if (mine) {
       // Each investor gets the fields meant for their kind of account (individual and joint, or entity, trust and IRA).
@@ -570,6 +594,93 @@
     envs(ws).push(env);
     send(ws, env.id, { quiet: !!opts.quiet });
     return env;
+  }
+  /* ---------- The co-investor: a second investor on an account, who signs their own places ---------- */
+  /** True when an offering's agreement prints places for a co-investor. */
+  function coPlaces(ws, offeringId) {
+    const tpl = subscriptionTemplate(ws, offeringId);
+    return !!tpl && (tpl.roles || []).indexOf(CO_ROLE) >= 0 && (tpl.fields || []).some((f) => f.signerRole === CO_ROLE);
+  }
+  /**
+   * The reading puts a second investor's places on the investor (it knows the investor and the firm); they belong to the
+   * co-investor. Done once for each field, so a field the sponsor hands back to the investor stays there.
+   */
+  function coSync(env) {
+    if (!env || !env.agreementFor) return;
+    const inv = env.signers.find((s) => s.investorId === AGR_INVESTOR);
+    const co = env.signers.find((s) => s.co);
+    if (!inv || !co) return;
+    env.fields.forEach((f) => {
+      if (!f.auto || f.co || !f.placed || f.placed.role !== 'co' || f.signerId !== inv.id) return;
+      f.signerId = f.placed.signerId = co.id;
+      f.co = true;
+    });
+  }
+  /** What stops a co-investor from signing an agreement that has fields for them ('' when nothing does). */
+  function coTodo(env) {
+    const co = env && env.agreementFor ? env.signers.find((s) => s.co) : null;
+    const mine = co ? env.fields.filter((f) => f.signerId === co.id) : [];
+    return mine.length && !mine.some((f) => f.type === 'signature' && f.required !== false) ? 'The co-investor has fields to complete but nowhere to sign. Add a signature field for the co-investor, or remove their fields.' : '';
+  }
+  /** An investor's agreements that have, or can have, a co-investor: each with the investor's signer, the co-investor's and its template. */
+  const coEnvelopes = (ws, inv) =>
+    envs(ws)
+      .map((env) => ({ env, mine: env.signers.find((s) => s.investorId === inv.id && !s.co), co: env.signers.find((s) => s.investorId === inv.id && s.co), tpl: env.templateId ? tpls(ws).find((t) => t.id === env.templateId) : null }))
+      .filter((x) => x.mine && (x.co || (x.tpl && (x.tpl.roles || []).indexOf(CO_ROLE) >= 0)));
+  /**
+   * A co-investor was added to an investor's account. Each agreement of theirs that is still out for signature and has
+   * places for a co-investor gets them as a signer, after the investor and before the firm; an investor who has signed
+   * does not sign again. An agreement everyone has already signed is sealed with its certificate and is not changed.
+   * Returns { added: [envelope], sealed: [envelope] }.
+   */
+  function coAttach(ws, inv) {
+    const out = { added: [], sealed: [] };
+    const c = coOf(inv);
+    if (!c) return out;
+    coEnvelopes(ws, inv).forEach(({ env, mine, co, tpl }) => {
+      if (co || !tpl) return;
+      if (env.status === 'completed') return out.sealed.push(env);
+      const fields = (tpl.fields || []).filter((tf) => tf.signerRole === CO_ROLE);
+      if (env.status !== 'sent' || !fields.some((tf) => tf.type === 'signature' || tf.type === 'initials')) return;
+      const s = makeSigner(env, { investorId: inv.id, co: true, name: c.name, email: c.email, account: inv.title });
+      env.signers.splice(env.signers.indexOf(s), 1);
+      env.signers.splice(env.signers.indexOf(mine) + 1, 0, s);
+      env.signers.forEach((x, i) => (x.order = i + 1));
+      fields.forEach((tf) => {
+        const f = Object.assign({}, tf, { id: uid('fd'), signerId: s.id, value: '' });
+        delete f.signerRole;
+        env.fields.push(f);
+      });
+      addEvent(env, staffActor(), 'Signer added', `${c.name} <${c.email}> was added to the account as co-investor and signs their own places`);
+      notifyTurn(env);
+      logChange(ws, 'Envelope signer added', env, `${c.name} (co-investor)`);
+      out.added.push(env);
+    });
+    return out;
+  }
+  /** The agreements that wait for the co-investor alone: without them, nobody is left to sign and finish these. */
+  const coHolding = (ws, inv) => coEnvelopes(ws, inv).filter(({ env, co }) => co && env.status === 'sent' && co.status !== 'signed' && env.signers.every((s) => s === co || s.status === 'signed')).map((x) => x.env);
+  /** The co-investor was taken off the account: they come off each agreement they have not signed yet. Their signature on one they signed stands. */
+  function coDetach(ws, inv, was) {
+    coEnvelopes(ws, inv).forEach(({ env, co }) => {
+      if (!co || env.status !== 'sent' || co.status === 'signed') return;
+      dropSigner(env, co);
+      addEvent(env, staffActor(), 'Signer removed', `${(was && was.name) || co.name} is no longer the co-investor on the account; their places were taken off this agreement`);
+      notifyTurn(env);
+      logChange(ws, 'Envelope signer removed', env, `${co.name} (co-investor)`);
+    });
+  }
+  /** The co-investor's name or email changed: agreements they have not signed yet follow, and they are emailed at the new address. */
+  function coUpdate(ws, inv) {
+    const c = coOf(inv);
+    if (!c) return;
+    coEnvelopes(ws, inv).forEach(({ env, co }) => {
+      if (!co || env.status !== 'sent' || co.status === 'signed' || (co.name === c.name && co.email === c.email)) return;
+      const moved = co.email !== c.email;
+      Object.assign(co, { name: c.name, email: c.email });
+      addEvent(env, staffActor(), 'Details updated', `The co-investor is ${c.name} <${c.email}>`);
+      if (moved && co.status !== 'waiting') email(env, co, env.subject || `Please sign: ${env.title}`);
+    });
   }
   /** An offering's subscription agreement template that can be sent: every role it names has a signature or initials field. */
   function templateReady(ws, offeringId) {
@@ -842,7 +953,7 @@
       const top = y;
       text(s.name, M, 9.5, bold);
       y -= 11;
-      text(`${s.email} · ${ROLE_LABEL[s.role]}${s.account && s.account !== s.name ? ' · ' + s.account : ''} · signer ${s.order}`, M, 8, font, mute);
+      text(`${s.email} · ${roleLabel(s)}${s.account && s.account !== s.name ? ' · ' + s.account : ''} · signer ${s.order}`, M, 8, font, mute);
       if (s.signature && s.signature.png) {
         // Signature to the right of the name lines, above the rows.
         const img = await pdf.embedPng(s.signature.png);
@@ -945,9 +1056,9 @@
         notifyTurn(next);
       }
       Object.assign(env, next);
-      logChange(ws, 'Document signed', env, `${me.name} (${ROLE_LABEL[me.role].toLowerCase()})`, actor);
+      logChange(ws, 'Document signed', env, `${me.name} (${roleLabel(me).toLowerCase()})`, actor);
       if (complete) {
-        const ids = env.signers.filter((s) => s.investorId).map((s) => s.investorId);
+        const ids = Array.from(new Set(env.signers.filter((s) => s.investorId).map((s) => s.investorId)));
         ws.docs = ws.docs || [];
         // The portal listing shares the envelope's file; removing the listing keeps the file (see docs-remove below).
         if (ids.length && !ws.docs.some((d) => d.id === env.signedDocId))
@@ -1656,7 +1767,7 @@
       isReq,
       uid: () => uid('fd'),
       signer: (f) => signerById(env, f.signerId),
-      roleLabel: (s) => ROLE_LABEL[s.role],
+      roleLabel: (s) => roleLabel(s),
       fieldHTML: (f) => editorFieldHTML(env, f, esUi()),
       propsHTML: (f) => editorPropsHTML(env, f),
       railExtraHTML: () => editorRailExtraHTML(env),
@@ -1693,7 +1804,7 @@
     const rows = env.signers
       .slice()
       .sort((a, b) => a.order - b.order)
-      .map((s) => `<tr><td>${env.sequential ? s.order : '—'}</td><td>${dot(s.color)}<strong>${h(s.name)}</strong><span class="sub">${h(s.email)}${s.account && s.account !== s.name ? ' · ' + h(s.account) : ''}</span></td><td>${ROLE_LABEL[s.role]}</td><td>${signerBadge(env, s)}${s.declinedReason ? `<span class="sub">“${h(s.declinedReason)}”</span>` : ''}</td><td class="nowrap">${s.viewedAt ? h(stamp(s.viewedAt)) : '<span class="cs-hint">—</span>'}</td><td class="nowrap">${s.signedAt ? h(stamp(s.signedAt)) : '<span class="cs-hint">—</span>'}</td></tr>`)
+      .map((s) => `<tr><td>${env.sequential ? s.order : '—'}</td><td>${dot(s.color)}<strong>${h(s.name)}</strong><span class="sub">${h(s.email)}${s.account && s.account !== s.name ? ' · ' + h(s.account) : ''}</span></td><td>${roleLabel(s)}</td><td>${signerBadge(env, s)}${s.declinedReason ? `<span class="sub">“${h(s.declinedReason)}”</span>` : ''}</td><td class="nowrap">${s.viewedAt ? h(stamp(s.viewedAt)) : '<span class="cs-hint">—</span>'}</td><td class="nowrap">${s.signedAt ? h(stamp(s.signedAt)) : '<span class="cs-hint">—</span>'}</td></tr>`)
       .join('');
     const events = env.events
       .slice()
@@ -1855,7 +1966,7 @@
     const list = env.signers
       .slice()
       .sort((a, b) => a.order - b.order)
-      .map((s) => `<li>${dot(s.color)}<span>${env.sequential ? `${s.order}. ` : ''}<strong>${h(s.name)}</strong> &lt;${h(s.email)}&gt; · ${ROLE_LABEL[s.role]} · ${fieldsOf(env, s).length} field${fieldsOf(env, s).length === 1 ? '' : 's'}</span></li>`)
+      .map((s) => `<li>${dot(s.color)}<span>${env.sequential ? `${s.order}. ` : ''}<strong>${h(s.name)}</strong> &lt;${h(s.email)}&gt; · ${roleLabel(s)} · ${fieldsOf(env, s).length} field${fieldsOf(env, s).length === 1 ? '' : 's'}</span></li>`)
       .join('');
     U.dialog(
       `<form class="es-dlg-form" data-form="es-send" data-id="${h(env.id)}"><div class="dlg-head"><div><h2>Review and send</h2><p>${h(env.title)} · ${env.sequential ? 'signers are emailed in order' : 'all signers are emailed now'}</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
@@ -1929,6 +2040,9 @@
   };
   /** A template from a draft's PDF and fields, by role (Investor, Investor 2, …, Sponsor). */
   function templateFromEnv(env, title, sub, offeringId) {
+    coSync(env);
+    // The co-investor is a signer of an offering's agreement only when it has a field for them.
+    if (env.agreementFor) env.signers.filter((s) => s.co && !env.fields.some((f) => f.signerId === s.id)).forEach((s) => dropSigner(env, s));
     const roles = rolesOf(env);
     return {
       id: uid('tpl'),
@@ -2139,7 +2253,7 @@
     if (!env || !s || !isTurn(env, s)) return false;
     if (s.role === 'countersigner') return canOperate() && S().route === 'console-envelope';
     const inv = PK().viewer();
-    return S().role === 'investor' && inv && inv.id === s.investorId;
+    return S().role === 'investor' && inv && inv.id === s.investorId && !!s.co === asCo();
   }
   NS.actions['es-consent'] = (el) => {
     const { env, s } = signerFromEl(el);
@@ -2317,16 +2431,16 @@
       const P = PK();
       const env = envById(W(), id);
       const inv = P.viewer();
-      const s = env && inv ? env.signers.find((x) => x.investorId === inv.id) : null;
+      const s = env && inv ? mySigner(env, inv.id) : null;
       if (!env || !s) return P.shell(`${P.title('Document not found')}<p class="empty">This signing link is not for ${inv ? h(inv.title) : 'this account'}, or the document was removed. <a href="#documents">Go to Documents</a></p>`, 'documents');
       return P.shell(signHTML(env, s, { ctx: 'portal' }), 'documents');
     },
     after(id) {
       const env = envById(W(), id);
       const inv = PK().viewer();
-      const s = env && inv ? env.signers.find((x) => x.investorId === inv.id) : null;
+      const s = env && inv ? mySigner(env, inv.id) : null;
       // An investor who agreed to electronic records and signatures when they opened their account is not asked again.
-      if (s && S().role === 'investor' && inv.esignConsent && inv.esignConsent.at && isTurn(env, s) && recordConsent(W(), env.id, inv.id, inv.esignConsent.at)) return NS.app.render();
+      if (s && !s.co && S().role === 'investor' && inv.esignConsent && inv.esignConsent.at && isTurn(env, s) && recordConsent(W(), env.id, inv.id, inv.esignConsent.at)) return NS.app.render();
       stickBar();
       signAfter(env, s, 'portal');
       focusPending();
@@ -3097,6 +3211,19 @@
     U.closeDialog();
     NS.app.render();
   };
+  // After each reading, a second investor's places go to the co-investor (kept out of the reading itself: see coSync).
+  const readFields = autoFields;
+  autoFields = async function (env) {
+    const n = await readFields(env);
+    coSync(env);
+    return n;
+  };
+  // What stops an agreement from being saved includes the co-investor's rule: fields of theirs need a place to sign.
+  const baseTodo = agreementTodo;
+  agreementTodo = function (env) {
+    return baseTodo(env) || coTodo(env);
+  };
   NS.esignKit = Object.assign(NS.esignKit || {}, { pageLayout, readNote, agreementTodo });
+  NS.coSigning = { coOf, coPlaces, coAttach, coDetach, coUpdate, coHolding, coEnvelopes, mySigner };
   NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout };
 })(window.CVPortal);
