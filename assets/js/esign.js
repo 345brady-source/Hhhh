@@ -2588,6 +2588,8 @@
       if (p.prefill) f.prefill = p.prefill;
       if (p.printed) f.printed = p.printed;
       if (p.second) f.second = true;
+      // What the reading wrote, kept so that a later reading can tell a field the sponsor has not touched from one they have.
+      f.placed = { page: f.page, x: f.x, y: f.y, w: f.w, h: f.h, type: f.type, signerId: f.signerId, role: p.role, label: f.label, required: f.required, forType: f.forType || '', prefill: f.prefill || '' };
       env.fields.push(f);
       read[p.type === 'checkbox' ? 'boxes' : p.type === 'signature' || p.type === 'initials' ? 'signatures' : 'blanks']++;
     });
