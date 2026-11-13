@@ -250,25 +250,54 @@ async function investorAt(browser, opts) {
       await p.waitForTimeout(300);
       g = await guide(p);
       a = await active(p);
-      check('SIGN-04 the countersigner gets the same guide: what remains and Start', g.count === '1 of 2 left' && g.next === 'Start' && g.finishOff && /sf-next/.test(a.cls), { g, a });
-      await shot(p, 'countersign-1440');
       const cs = await fieldsOnScreen(p);
-      await p.click('.es-finish', { force: true });
-      await p.waitForTimeout(200);
-      g = await guide(p);
-      check('SIGN-04 Finish pressed early explains what is missing', /^Still needed: Signature \(page 3\)\.$/.test(g.hint), g);
+      // The firm's name line carries the name of the team member who is countersigning when the portal knows who that
+      // is, and is left for them to type when it does not. It is never filled with the support team's name.
+      const who = await p.evaluate((fid) => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const me = (ws.team || []).find((m) => m && m.current && m.name);
+        const el = document.querySelector(`.es-doc-sign [data-fid="${fid}"]`);
+        const input = el && (el.matches('input') ? el : el.querySelector('input'));
+        const t = ws.tenant || {};
+        return { member: me ? me.name : '', shown: input ? input.value : null, readOnly: input ? !!(input.readOnly || input.disabled) : null, team: [(t.support || {}).team, t.name, t.shortName, t.legalName].filter(Boolean) };
+      }, cs.fields.find((f) => f.type === 'name').id);
+      check('SIGN-04 the firm’s name line shows the countersigning team member’s name, or is left to type; never the support team’s name', who.shown === who.member && who.team.indexOf(who.shown) < 0 && (who.member !== '' || who.readOnly === false), who);
+      const toDo = who.member ? 1 : 2;
+      check('SIGN-04 the countersigner gets the same guide: what remains and Start', g.count === `${toDo} of 2 left` && g.next === 'Start' && g.finishOff && /sf-next/.test(a.cls), { g, a, who });
+      await shot(p, 'countersign-1440');
+      // Start first (the first thing left, in reading order, is the signature line), then Finish pressed early: with
+      // two things left the guide's Next would otherwise move on from the line an early Finish had already gone to.
       await p.click('.sf-next');
       a = await active(p);
       check('SIGN-04 Start takes the countersigner to the firm’s signature line', a.fid === cs.fields.find((f) => f.type === 'signature').id && a.inView, a);
       await shot(p, 'countersign-1440-start');
+      await p.click('.es-finish', { force: true });
+      await p.waitForTimeout(200);
+      g = await guide(p);
+      check('SIGN-04 Finish pressed early explains what is missing', (who.member ? /^Still needed: Signature \(page 3\)\.$/ : /^Still needed: Signature \(page 3\)(,| and) .*[Nn]ame.*\(page 3\)\.$/).test(g.hint), g);
+      a = await active(p);
+      check('SIGN-04 and stays on the first thing missing: the firm’s signature line', a.fid === cs.fields.find((f) => f.type === 'signature').id && a.inView, a);
       await p.keyboard.press('Enter');
       await adoptIfAsked(p);
       g = await guide(p);
-      check('SIGN-04 with the signature placed, Finish opens', g.count === 'Ready to finish' && !g.finishOff && g.finishMain, g);
+      if (!who.member) {
+        // The name is theirs to type: the guide takes them to the name line next, and Finish stays shut until it is typed.
+        check('SIGN-04 with the signature placed the name is still to do, and Finish stays shut', g.count === '1 of 2 left' && g.finishOff, g);
+        await p.click('.sf-next');
+        a = await active(p);
+        check('SIGN-04 Next takes the countersigner to the firm’s name line', a.fid === cs.fields.find((f) => f.type === 'name').id && a.inView, a);
+        await p.keyboard.type('Priya Raman');
+        await p.waitForTimeout(200);
+        g = await guide(p);
+      }
+      check('SIGN-04 with the signature placed (and the name there), Finish opens', g.count === 'Ready to finish' && !g.finishOff && g.finishMain, g);
       await p.click('.es-finish');
       await p.waitForFunction((id) => window.CVPortal.state.ws.envelopes.find((e) => e.id === id).status === 'completed', envId, { timeout: 30000 });
       await p.waitForTimeout(400);
       const fin = await p.evaluate(({ id, invId, offId }) => { const ws = window.CVPortal.state.ws; const e = ws.envelopes.find((x) => x.id === id); const i = ws.investors.find((x) => x.id === invId); const req = ws.requests.find((x) => x.investorId === invId); return { hash: location.hash, path: location.pathname, env: e.status, signed: !!e.signedDocId, req: req && req.status, pos: i.positions.filter((x) => x.offeringId === offId).length }; }, { id: envId, invId: inv.investorId, offId: off.offeringId });
+      const csName = await p.evaluate(({ id, fid }) => (window.CVPortal.state.ws.envelopes.find((e) => e.id === id).fields.find((f) => f.id === fid) || {}).value, { id: envId, fid: cs.fields.find((f) => f.type === 'name').id });
+      check('SIGN-04 the completed agreement carries the countersigner’s own name on the firm’s name line, not the support team’s', csName === (who.member || 'Priya Raman') && who.team.indexOf(csName) < 0, { csName, who });
       check('SIGN-04 the firm countersigned without leaving the console: the agreement is complete and the subscription accepted', fin.env === 'completed' && fin.signed && fin.hash === `#console-envelope-${envId}` && /diy\.html$/.test(fin.path) && /approved|accepted/.test(fin.req) && fin.pos === 1 && A.net.external.length === ext0, { fin, external: A.net.external.slice(ext0) });
       await shot(p, 'countersign-done-1440');
     } catch (e) {

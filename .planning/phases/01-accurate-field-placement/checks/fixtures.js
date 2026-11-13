@@ -9,12 +9,22 @@
  *   required  whether the signer has to complete it (compared when given)
  *   forType   'person' or 'entity' when only that kind of investor gets it ('' for everyone; compared when given)
  *   flag      true where a review mark is the right outcome (the portal cannot be sure from the page alone)
- *   ref       for a label with no line of its own: the data-id of the signature blank its field lines up with
+ *   second    true for a printed line meant for a second signer, a witness or a notary: it is a printed place, so it
+ *             gets a field, kept apart from the investor's own (optional, marked for review, never where they sign)
+ *   ref       for a label with no line of its own: the data-id of the signature blank beside it. Such a label is no
+ *             printed place: no field may be put after it (the harness marks it none)
  * The printed position of each blank is read from the page before printing, never from the code under test.
  *
- * Fixture options: crop (a crop box applied after printing), countersign (false: the firm does not countersign),
- * from (reuse another fixture's pages), saves (true: must save at once; false: must be held for review),
- * clean (true: no field may be marked for review), css (extra styles), paper ([width, height] in inches),
+ * The rule every fixture is judged by: a field is placed only on something the page prints (a line, a blank, a tick
+ * box). Any field anywhere else fails, at any confidence, and so do two fields lying over one another. Who signs is
+ * read from the agreement, not chosen at upload: the firm gets fields only when the agreement prints a signature
+ * line for it (otherwise its blanks stay empty), and an agreement with no signature line for the investor cannot be
+ * saved.
+ *
+ * Fixture options: crop (a crop box applied after printing),
+ * from (reuse another fixture's pages), saves (true: the agreement as read can be saved with nothing changed; false:
+ * it must be held), clean (true: no field may be marked for review), marks (exactly this many fields marked for
+ * review), todo (a pattern the sentence that stops the save must match), css (extra styles), paper ([width, height] in inches),
  * draw (a function returning a drawn PDF's spec instead of html), heldOut (true: written after the rules and never
  * used to change them, so only a confident mistake fails it), first ({ right, blanks, mistakes, marks }: what a layout
  * written after the rules measured on its first run, before it was used to fix them).
@@ -31,7 +41,7 @@ const attr = (x) => JSON.stringify(x).replace(/'/g, '&#39;');
 const blank = (x, text, id) => `<span class="b"${id ? ` data-id="${id}"` : ''} data-x='${attr(x)}'>${text}</span>`;
 const rule = (x, width) => `<span class="rule" style="width:${width}" data-x='${attr(x)}'></span>`;
 const box = (x) => `<span class="sq" data-x='${attr(Object.assign({ type: 'checkbox', role: 'investor', fillIn: true, required: false }, x))}'></span>`;
-// A label with no line of its own: its field starts after the label, or where the signature line it sits under starts.
+// A label with no line of its own. Nothing is printed to write on, so no field belongs after it.
 const noline = (x, ref) => `<span class="nl" data-x='${attr(Object.assign({ ref }, x))}'></span>`;
 const U = (n) => '_'.repeat(n);
 const U30 = U(30);
@@ -42,6 +52,8 @@ const fill = (label, key, more) => Object.assign({ type: 'text', role: 'investor
 const block = (role) => `<p>By: ${blank({ type: 'signature', role }, U30)}</p><p>Name: ${blank({ type: 'name', role }, U28)}</p><p>Title: ${blank({ type: 'text', role, label: 'Title', required: false }, U28)}</p><p>Date: ${blank({ type: 'date', role }, U28)}</p>`;
 // An empty table cell that is the blank: its bottom edge is the line.
 const gcell = (x) => `<td data-k="cell" data-x='${attr(x)}'></td>`;
+// A printed line for a second signer (a joint subscriber, a co-investor, a witness, a notary).
+const second = (type) => inv(type, { second: true, required: false, flag: true });
 const initialsFoot = () => `<div class="foot">Subscriber's Initials: ${blank({ type: 'initials', role: 'investor', fillIn: true, required: true }, U(10))}</div>`;
 
 /* The pages several fixtures share. */
@@ -59,7 +71,7 @@ const QUESTIONNAIRE = `<div class="pg"><h3>INVESTOR INFORMATION</h3>
 <p>State of organization (entities only): ${blank(fill('State of organization', '', { forType: 'entity' }), U(20))}</p>
 <p>Date of birth: ${blank(fill('Date of birth', ''), U(18))}</p>
 <p>Subscription Amount: $${blank(fill('Commitment amount', 'amount', { required: false }), U(18))}</p>
-<p><span data-k="bracket" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false, flag: true, label: 'I have read the offering documents' })}'>[ ]</span> I have read the offering documents</p>
+<p><span data-k="bracket" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false, label: 'I have read the offering documents' })}'>[ ]</span> I have read the offering documents</p>
 <p><span class="sq">X</span>The Subscriber received this questionnaire from the General Partner</p>
 <p>Section 4. Representations and warranties of the Subscriber ${'.'.repeat(40)} 12</p>
 <p><u>Additional information the General Partner may request</u></p>
@@ -79,20 +91,34 @@ const ENTITY_PAGES = `<div class="pg"><h3 style="text-align:center">SIGNATURE PA
 <div class="pg"><p>The foregoing subscription is hereby accepted.</p><p>NORTHGATE FUND I, LP</p><p>By: Northgate Capital GP, LLC, its general partner</p>
 <p>By: ${blank(firm('signature'), U30, 'acc')}</p><p>Name:${noline(firm('name'), 'acc')}</p><p>Title:${noline(firm('text', { label: 'Title' }), 'acc')}</p></div>`;
 
+const CLASSIC_PAGES = `<div class="pg"><h2 style="text-align:center">SUBSCRIPTION AGREEMENT</h2>
+<p>The undersigned (the "Subscriber") hereby subscribes for an interest in Northgate Fund I, LP (the "Fund") and agrees to make a Capital Commitment of $${blank(fill('Commitment amount', 'amount', { required: false }), U(14))} on the terms of this Agreement. The Manager may accept or reject this subscription.</p>
+<p>Signature pages follow. The signature of the Subscriber below constitutes execution of the limited partnership agreement of the Fund by each member of the Subscriber.</p></div>
+${SIGNATURE_PAGE}`;
 const FIXTURES = {
   // The investor signs on one page and the firm accepts on the next; every blank is a run of underscores after its label.
   // Distractors: an underlined title, a full-width rule between paragraphs, a footer rule over the page number.
   classic: {
     saves: true,
     clean: true,
-    html: `<div class="pg"><h2 style="text-align:center">SUBSCRIPTION AGREEMENT</h2>
-<p>The undersigned (the "Subscriber") hereby subscribes for an interest in Northgate Fund I, LP (the "Fund") and agrees to make a Capital Commitment of $${blank(fill('Commitment amount', 'amount', { required: false }), U(14))} on the terms of this Agreement. The Manager may accept or reject this subscription.</p>
-<p>Signature pages follow. The signature of the Subscriber below constitutes execution of the limited partnership agreement of the Fund by each member of the Subscriber.</p></div>
-${SIGNATURE_PAGE}
+    signs: ['Investor', 'Sponsor'],
+    html: `${CLASSIC_PAGES}
 <div class="pg"><p><b>ACCEPTED AND AGREED:</b></p><p>NORTHGATE FUND I GP, LLC, as General Partner</p>${block('firm')}</div>`
   },
-  // The same agreement when the firm does not countersign: its acceptance page gets no field at all.
-  classicSolo: { from: 'classic', countersign: false, saves: true, clean: true },
+  // The same agreement with no acceptance page: nothing is printed for the firm, so the investor signs alone. Who signs
+  // is read from the agreement (there is no longer a choice at upload).
+  classicSolo: { saves: true, clean: true, signs: ['Investor'], html: CLASSIC_PAGES },
+  // The same agreement with an acceptance page that prints the firm's name, title and date blanks but no line for it
+  // to sign on: the firm gets no field at all (a firm with blanks and nowhere to sign could never finish), the reading
+  // says how many of its blanks were left, and the investor signs alone.
+  firmBlanks: {
+    saves: true,
+    clean: true,
+    signs: ['Investor'],
+    firmLeft: 3,
+    html: `${CLASSIC_PAGES}
+<div class="pg"><p><b>ACCEPTED AND AGREED:</b></p><p>NORTHGATE FUND I GP, LLC, as General Partner</p><p>Name: ${blank({ type: 'name', role: 'firm' }, U28)}</p><p>Title: ${blank({ type: 'text', role: 'firm', label: 'Title', required: false }, U28)}</p><p>Date: ${blank({ type: 'date', role: 'firm' }, U28)}</p></div>`
+  },
   // One page, two columns (investor left, firm right); every blank is a drawn line with its caption underneath.
   caption: {
     saves: true,
@@ -104,7 +130,8 @@ ${SIGNATURE_PAGE}
 <p style="margin:24pt 0 0">${rule({ type: 'date', role }, '1.4in')}<br><span class="cap">Date</span></p></div>`)
       .join('')}</div></div>`
   },
-  // Two labels and two blanks on one printed line; then a block whose Name and Title have no line of their own.
+  // Two labels and two blanks on one printed line; then a block whose Name and Title have no line of their own:
+  // the firm signs on its line and nothing is put after the two bare labels.
   oneline: {
     saves: true,
     clean: true,
@@ -115,12 +142,14 @@ ${SIGNATURE_PAGE}
 <p>By: ${blank(firm('signature'), U30, 'gp')}</p><p>Name:${noline(firm('name'), 'gp')}</p><p>Title:${noline(firm('text', { label: 'Title' }), 'gp')}</p></div>`
   },
   // The signature page behind a crop box shifted in by half an inch on every side: fields follow the page as displayed.
-  cropped: { saves: true, clean: true, countersign: false, crop: [36, 36, 540, 720], html: SIGNATURE_PAGE },
+  cropped: { saves: true, clean: true, signs: ['Investor'], crop: [36, 36, 540, 720], html: SIGNATURE_PAGE },
   // A page for individuals, a page for entities, and an acceptance block headed only by the fund's and the firm's own names.
   entity: { offering: 'Northgate Fund I, LP', html: ENTITY_PAGES },
   // A lone signature line with no heading anywhere near: the investor's at best guess, held for review.
   unsure: {
     saves: false,
+    marks: 2,
+    todo: /Confirm or move the 2 fields marked for review/,
     html: `<div class="pg"><h2 style="text-align:center">Agreement</h2><p>The parties agree to the terms set out in the offering documents, which are incorporated here by reference, and to the allocation of interests described in them.</p>
 <p>This document may be executed in counterparts and delivered electronically.</p>
 <p>Signature: ${blank(inv('signature', { flag: true }), U30)}</p><p>Date: ${blank(inv('date', { flag: true }), U28)}</p></div>`
@@ -132,26 +161,31 @@ ${SIGNATURE_PAGE}
   // A label that is the text of an image tag with an error handler: it must only ever be shown as text.
   markup: {
     html: `<div class="pg"><p><b>SUBSCRIBER:</b></p><p>&lt;img src=x onerror="window.__pwn=1"&gt; code: ${blank(fill('<img src=x onerror="window.__pwn=1"> code', ''), U(20))}</p>
-<p>By: ${blank(inv('signature'), U30)}</p><p>Name: ${blank(inv('name'), U28)}</p></div>`,
-    countersign: false
+<p>By: ${blank(inv('signature'), U30)}</p><p>Name: ${blank(inv('name'), U28)}</p></div>`
   },
   // Signature blocks set as tables with every border drawn: the label in the left cell, standing in the middle of the
-  // row's height, the empty cell to its right. The row for a joint subscriber gets nothing.
+  // row's height, the empty cell to its right. The row for a joint subscriber is a printed place like the others: it
+  // gets a field kept apart for a second signer (optional, marked for review), which is the one mark on the page and
+  // holds the agreement until the sponsor has settled it.
   grid: {
-    saves: true,
-    clean: true,
+    saves: false,
+    marks: 1,
+    todo: /Confirm or move the field marked for review/,
     css: `.grid{border-collapse:collapse;width:100%} .grid td{border:1px solid #000;padding:5pt 6pt;height:24pt} .grid td:first-child{width:42%}`,
     html: `<div class="pg"><h3 style="text-align:center">SIGNATURE PAGE</h3><p>The Subscriber has executed this Subscription Agreement on the date written below.</p><p><b>SUBSCRIBER</b></p>
-<table class="grid"><tr><td>Signature of Subscriber</td>${gcell(inv('signature'))}</tr><tr><td>Signature of Joint Subscriber (if any)</td><td></td></tr><tr><td>Print name(s)</td>${gcell(inv('name'))}</tr>
+<table class="grid"><tr><td>Signature of Subscriber</td>${gcell(inv('signature'))}</tr><tr><td>Signature of Joint Subscriber (if any)</td>${gcell(second('signature'))}</tr><tr><td>Print name(s)</td>${gcell(inv('name'))}</tr>
 <tr><td>Title (entities only)</td>${gcell(inv('text', { label: 'Title', forType: 'entity' }))}</tr><tr><td>Name of beneficial owner, if different from the Subscriber</td>${gcell(inv('text', { label: 'Name of beneficial owner', required: false }))}</tr><tr><td>Date</td>${gcell(inv('date'))}</tr></table>
 <p style="margin-top:30pt"><b>ACCEPTED BY THE GENERAL PARTNER</b></p>
 <table class="grid"><tr><td>By</td>${gcell(firm('signature'))}</tr><tr><td>Name and title</td>${gcell(firm('text', { label: 'Name and title' }))}</tr><tr><td>Date</td>${gcell(firm('date'))}</tr></table></div>`
   },
   // Two pages with nothing to sign or fill in: running text, headings in bold capitals at several sizes (round letters
   // are not tick boxes), lists, a table full of words, underlined text, rules, a block that is already filled in.
-  // Nothing may be placed on them but the fallback block, which is marked for review.
+  // Nothing at all may be placed on them (no block is made up for a page that prints no place for one), and the
+  // agreement cannot be saved: it has no signature line for the investor, and the portal says so.
   prose: {
     saves: false,
+    nothing: true,
+    todo: /No signature line for the investor was found in this agreement/,
     css: `.t{border-collapse:collapse;width:100%} .t td{border:1px solid #000;padding:4pt 6pt} .a{font-family:Arial,Helvetica,sans-serif} .m{font-family:"Courier New",monospace}`,
     html: `<div class="pg"><h1 style="text-align:center;font-size:17pt">OFFERING OVERVIEW AND BOARD QUESTIONS</h1><h2 style="font-size:13pt">DO NOT SIGN THIS PAGE: QUALIFIED PURCHASERS ONLY</h2>
 <p>The Fund is offering limited partnership interests to qualified purchasers. Each Subscriber should read the offering documents, including the Partnership Agreement, before deciding to subscribe. The General Partner may accept or reject any subscription in whole or in part, and its decision is final. The signature of the Subscriber is required on the signature page, which follows the questionnaire. Board observers, officers and directors of the Manager are listed in Schedule B (pages 40 to 48) with 100% of their holdings.</p>
@@ -170,8 +204,8 @@ ${SIGNATURE_PAGE}
 <p style="font-family:Georgia,serif;font-size:15pt"><b>Good Operators Do Quality Deals: Our Outlook</b></p>
 <p style="font-family:Georgia,serif">Occupancy across the portfolio was 96% at quarter end; debt service coverage was 1.80x. No distributions were deferred. Questions? Call (512) 555-0100.</p></div>`
   },
-  // One page with no text at all: the stand-in for a scanned agreement.
-  blank: { saves: false, html: `<div class="pg"></div>` }
+  // One page with nothing printed on it: no field is made up for it, and it cannot be saved.
+  blank: { saves: false, nothing: true, todo: /No signature line for the investor was found in this agreement/, html: `<div class="pg"></div>` }
 };
 
 /*
@@ -322,7 +356,7 @@ FIXTURES.heldout2 = {
  * underlined spaces after their labels (two to a line), a blank made of a leader of dots, tick boxes that are a
  * character of the text, the amount inside a sentence, an initials line with its caption at the foot of each page;
  * then a signature page with an X before the signature line, captions in brackets, a line for a joint subscriber and
- * one for a notary (neither gets a field), a dated line, and the firm's acceptance with its day and month blanks in
+ * one for a notary (each a printed place: a field kept apart for a second signer, optional and marked), a dated line, and the firm's acceptance with its day and month blanks in
  * a sentence and its three blanks on one printed line.
  */
 const sp = (n, x) => `<u data-x='${attr(x)}'>${'&nbsp;'.repeat(n)}</u>`;
@@ -350,9 +384,9 @@ ${above('Name of Subscriber', fill('Investor name', 'investorName', { flag: true
 ${footIni()}</div>
 <div class="pg"><h3 class="c" style="margin-top:0">SIGNATURE PAGE</h3><p>The undersigned has read this Agreement in full and executes it on the date written below.</p>
 <p><b>SUBSCRIBER</b></p>
-<div style="margin-top:8pt">X${under('(Signature)', inv('signature'))}</div>${under('(Print name)', inv('name'))}${under('(Signature of joint subscriber, if any)')}
+<div style="margin-top:8pt">X${under('(Signature)', inv('signature'))}</div>${under('(Print name)', inv('name'))}${under('(Signature of joint subscriber, if any)', second('signature'))}
 <p style="margin-top:12pt">Dated: ${sp(24, inv('date'))}, 20${'&nbsp;'.repeat(1)}<u>&nbsp;&nbsp;&nbsp;</u></p>
-<p style="margin-top:14pt">Subscribed and sworn to before me on the date above. &nbsp; Notary Public: <u>${'&nbsp;'.repeat(30)}</u></p>
+<p style="margin-top:14pt">Subscribed and sworn to before me on the date above. &nbsp; Notary Public: ${sp(30, second('signature'))}</p>
 <h3 style="margin-top:26pt">ACCEPTANCE</h3>
 <p>Accepted this ${sp(8, firm('text', { flag: true }))} day of ${sp(22, firm('text', { flag: true }))}, 20<u>&nbsp;&nbsp;&nbsp;</u>.</p>
 <p>NORTHGATE CAPITAL GP, LLC, General Partner</p>
@@ -364,15 +398,16 @@ ${footIni()}</div>`
  * The last layout, written after every rule and after the three above had each led to changes, and committed before
  * its first run: a compact one-page data sheet and signature page on Legal paper in a sans-serif face at 9.5 pt.
  * Two labelled blanks to a line, tab-aligned; tick boxes written as "( )"; two initials blanks on one printed line;
- * the investor's block beside one for a co-investor (which gets no field); and the firm's line as
+ * the investor's block beside one for a co-investor (printed lines: fields kept apart for a second signer); and the firm's line as
  * "For the Company: ____ (authorized officer)" with "Date accepted: ____".
  */
 const two = (l1, x1, l2, x2) => `<div class="r2"><span class="c1">${l1} ${blank(x1, U(26))}</span><span class="c2">${l2} ${blank(x2, U(22))}</span></div>`;
-const paren = (label) => `<span data-k="bracket" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false, flag: true, label })}'>( )</span> ${label}`;
+const paren = (label) => `<span data-k="bracket" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false, label })}'>( )</span> ${label}`;
 FIXTURES.heldout4 = {
   first: { right: 15, blanks: 19, mistakes: 5, marks: 11, heldOut: true },
-  // Its five confident mistakes were fixed; the two blanks still not right (both marked for review) are left as measured.
-  measured: true,
+  // Its five confident mistakes were fixed; the two blanks still not right (both marked for review) are left as
+  // measured: two places without their right field is what this layout may have, and no more.
+  measured: 2,
   offering: 'Northgate Fund I, LP',
   paper: [8.5, 14],
   css: `@page{size:8.5in 14in;margin:0} body{font:9.5pt/1.5 Verdana,"DejaVu Sans",Arial,sans-serif} .pg{width:8.5in;height:14in;padding:.8in .9in}
@@ -391,7 +426,7 @@ ${two('Units subscribed:', fill('Units subscribed', ''), 'Total purchase price: 
 <p>Initial each: ${blank({ type: 'initials', role: 'investor', fillIn: true, required: true }, U(6))} I have received the Private Placement Memorandum. &nbsp; ${blank({ type: 'initials', role: 'investor', fillIn: true, required: true }, U(6))} I am an accredited investor.</p>
 <h2>E. SIGNATURES</h2>
 <div class="sigs"><div><b>INVESTOR</b><p>Signature ${blank(inv('signature'), U(28))}</p><p>Print name ${blank(inv('name'), U(27))}</p><p>Date ${blank(inv('date'), U(18))}</p></div>
-<div><b>CO-INVESTOR (if any)</b><p>Signature ${U(28)}</p><p>Print name ${U(27)}</p></div></div>
+<div><b>CO-INVESTOR (if any)</b><p>Signature ${blank(second('signature'), U(28))}</p><p>Print name ${blank(second('name'), U(27))}</p></div></div>
 <p style="margin-top:26pt">For the Company: ${blank(firm('signature'), U(30))} (authorized officer) &nbsp; Date accepted: ${blank(firm('date'), U(16))}</p>
 </div>`
 };

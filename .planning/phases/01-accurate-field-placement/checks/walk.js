@@ -1,6 +1,7 @@
 /*
  * The real flow, once, in the browser: a sponsor uploads a subscription agreement on an offering through the upload
- * dialog, the portal places the fields, the sponsor confirms the ones marked for review and saves; an investor is
+ * dialog, the portal places a field on every place the agreement prints and nowhere else, the editor opens with a
+ * plain summary of what was read, the sponsor confirms the fields marked for review and saves; an investor is
  * invited, goes through onboarding (login, investor information, checks, tax form, bank details, subscription) and
  * reaches the agreement with the blanks onboarding can answer already filled in and locked and the rest fillable;
  * the investor completes it with the guide and finishes.
@@ -103,23 +104,36 @@ const mine = (p) =>
       const NS = window.CVPortal;
       const env = NS.state.ws.envelopes.find((e) => e.id === NS.state.param);
       const role = (id) => env.signers.find((s) => s.id === id).role;
-      return { fields: env.fields.length, investor: env.fields.filter((f) => role(f.signerId) === 'investor').length, firm: env.fields.filter((f) => role(f.signerId) === 'countersigner').length, marks: NS.placement.reviewCount(env), kinds: env.fields.reduce((a, f) => ((a[f.type] = (a[f.type] || 0) + 1), a), {}), high: env.fields.filter((f) => f.confidence === 'high').length, note: document.querySelector('.es-agr-note').textContent };
+      const pts = env.fields.map((f) => {
+        const ps = env.pageSizes[f.page - 1];
+        return { type: f.type, role: role(f.signerId) === 'countersigner' ? 'firm' : 'investor', page: f.page, x0: f.x * ps.w, x1: (f.x + f.w) * ps.w, top: f.y * ps.h, bottom: (f.y + f.h) * ps.h, conf: f.confidence || '', review: !!f.review, why: f.reviewReason || '', second: !!f.second, auto: !!f.auto, kindOk: !!f.kind, placedOk: !!f.placed, label: f.label || '', required: !!f.required, prefill: f.prefill || '', forType: f.forType || '' };
+      });
+      return { fields: env.fields.length, investor: env.fields.filter((f) => role(f.signerId) === 'investor').length, firm: env.fields.filter((f) => role(f.signerId) === 'countersigner').length, marks: NS.placement.reviewCount(env), kinds: env.fields.reduce((a, f) => ((a[f.type] = (a[f.type] || 0) + 1), a), {}), high: env.fields.filter((f) => f.confidence === 'high').length, note: document.querySelector('.es-agr-note').textContent, pts, saved: !!NS.esign.subscriptionTemplate(NS.state.ws, env.agreementFor), toasts: Array.from(document.querySelectorAll('#toasts .toast')).map((n) => n.textContent) };
     });
     console.log(`  (reading the 5-page agreement and placing ${ed.fields} fields took ${took} ms)`);
-    check('the portal placed every field of the agreement: 36, for the investor and the firm', ed.fields === 36 && ed.investor === 33 && ed.firm === 3, ed);
-    check('each kind of field: signatures, initials, names, dates, blanks and tick boxes', ed.kinds.signature === 3 && ed.kinds.initials === 6 && ed.kinds.checkbox === 7 && ed.kinds.name === 3 && ed.kinds.date === 2 && ed.kinds.text === 15, ed.kinds);
-    check('two fields are marked for review and the editor says so', ed.marks === 2 && ed.high === 34 && /36 fields were placed for you from the blanks in the PDF\. Those marked Review are listed on the left/.test(ed.note), ed);
+    // What the agreement prints, read from the page before it was printed: every place takes a field, a label with
+    // no line ("Name:" and "Title:" under the firm's signature line) takes none.
+    const places = made.expect.filter((e) => !e.none);
+    const n = (t, role) => places.filter((e) => (!t || e.type === t) && (!role || e.role === role)).length;
+    const j = H.judge(made.expect, ed.pts);
+    check(`the portal placed a field on every printed place of the agreement and nowhere else: ${places.length}, for the investor and the firm`, places.length === 34 && ed.fields === places.length && ed.investor === n('', 'investor') && ed.firm === n('', 'firm') && ed.firm === 1 && j.strays.length === 0 && j.overlaps.length === 0 && j.bare.length === 0 && j.empties.every((x) => !x.f), { fields: ed.fields, investor: ed.investor, firm: ed.firm, strays: j.strays, overlaps: j.overlaps.length, bare: j.bare.length, empties: j.empties.filter((x) => x.f).length });
+    check('each kind of field: signatures, initials, names, dates, blanks and tick boxes', ['signature', 'initials', 'checkbox', 'name', 'date', 'text'].every((t) => ed.kinds[t] === n(t)) && ed.kinds.signature === 3 && ed.kinds.initials === 6 && ed.kinds.checkbox === 7 && ed.kinds.name === 2 && ed.kinds.date === 2 && ed.kinds.text === 14, ed.kinds);
+    check('every field is the right one for its place', j.right === places.length, j.blanks.filter((b) => b.state !== 'right').map((b) => `p${b.e.page} ${b.e.type} "${b.e.label || ''}": ${b.state}`));
+    const flags = places.filter((e) => e.flag).length;
+    check('only the field the page leaves unsure (the unlabelled second address line) is marked for review', ed.marks === flags && flags === 1 && ed.high === places.length - flags, { marks: ed.marks, high: ed.high, marked: ed.pts.filter((f) => f.review).map((f) => `${f.type} "${f.label}": ${f.why}`) });
+    check('nothing is saved by the upload: the editor opens with a plain summary of what was read', !ed.saved && new RegExp(`5 pages read\\. ${n('checkbox')} tick boxes, ${n('text') + n('name') + n('date')} blanks and ${n('signature') + n('initials')} signature lines got a field, each on a place the agreement prints\\.`).test(ed.note) && /The investor’s signature line was found on pages 3 and 4\./.test(ed.note) && /Your firm’s signature line was found on page 5\./.test(ed.note) && /Fields marked Review are listed on the left/.test(ed.note) && !/placed for you from the blanks/.test(ed.note), ed.note);
+    check('the toast says how many fields need review', ed.toasts.some((t) => new RegExp(`^${ed.marks} fields? needs? your review before investors can sign\\.`).test(t)), ed.toasts);
     await page.screenshot({ path: path.join(OUT, '2-editor-review.png') });
 
     /* ---- The sponsor confirms each marked field, then saves ---- */
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < ed.marks; i++) {
       await page.click('.es-review button >> nth=0');
       await page.waitForSelector('[data-action="es-flag-ok"]');
       if (i === 0) await page.screenshot({ path: path.join(OUT, '3-editor-confirm.png') });
       await page.click('[data-action="es-flag-ok"]');
       await page.waitForTimeout(150);
     }
-    check('with both confirmed the editor is ready to save', (await page.locator('.es-ready').count()) === 1 && (await page.locator('.es-review').count()) === 0);
+    check('with every mark confirmed the editor is ready to save', (await page.locator('.es-ready').count()) === 1 && (await page.locator('.es-review').count()) === 0);
     await page.click('[data-action="es-agreement-save"]');
     await page.waitForFunction(() => /^#console-offering-/.test(location.hash));
     await page.waitForSelector('.es-agr-panel');
@@ -138,10 +152,10 @@ const mine = (p) =>
     const m = await mine(p);
     const by = (label) => m.fields.find((f) => f.label === label) || {};
     const given = (label, value) => by(label).value === value && by(label).locked && by(label).shown === value && by(label).readOnly === true;
-    check('filled in and locked from onboarding: name, street, city, state, ZIP, email, phone, commitment', given('Investor name', 'Morgan Blake') && given('Address', '12 Elm Street') && given('City', 'Austin') && given('State', 'TX') && given('ZIP code', '78701') && given('Email', INV.email) && given('Phone', '+1 512 555 0101') && given('Commitment amount', '$75,000'), m.fields.filter((f) => f.type === 'text'));
+    check('filled in and locked from onboarding: name, street, city, state, ZIP, email, phone, commitment', given('Investor name', 'Morgan Blake') && given('Address', '12 Elm Street') && given('City', 'Austin') && given('State', 'TX') && given('ZIP code', '78701') && given('Email', INV.email) && given('Phone', '+1 512 555 0101') && given('Commitment amount', '75,000'), m.fields.filter((f) => f.type === 'text'));
     const open = ['Taxpayer ID', 'Date of birth', 'Address line 2'];
     check('left for the investor: taxpayer ID, date of birth, second address line, all fillable', open.every((l) => by(l).onPage && by(l).value === '' && !by(l).locked && by(l).readOnly === false), open.map(by));
-    check('the investor is an individual: the block for individuals, none of the block for entities', m.group === 'person' && m.fields.some((f) => f.type === 'signature' && f.forType === 'person') && !m.fields.some((f) => f.forType === 'entity') && m.firm === 3, m.fields.map((f) => f.type + ':' + f.forType + ':p' + f.page));
+    check('the investor is an individual: the block for individuals, none of the block for entities', m.group === 'person' && m.fields.some((f) => f.type === 'signature' && f.forType === 'person') && !m.fields.some((f) => f.forType === 'entity') && m.firm === 1, m.fields.map((f) => f.type + ':' + f.forType + ':p' + f.page));
     check('tick boxes and initials are left for the investor', m.fields.filter((f) => f.type === 'checkbox').length === 7 && m.fields.filter((f) => f.type === 'initials').length === 6 && m.fields.filter((f) => f.type === 'checkbox' || f.type === 'initials').every((f) => !f.value && !f.locked));
     const g0 = await guide(p);
     check('the guide counts only what is left to do', g0 && g0.left > 0 && g0.left === m.fields.filter((f) => f.req && !f.locked && f.type !== 'date' && !(f.type === 'name')).length, { g0, req: m.fields.filter((f) => f.req).map((f) => f.type + ':' + f.label + ':' + f.locked) });
@@ -195,7 +209,7 @@ const mine = (p) =>
         return NS.esign.currentSigners(e).map((x) => x.role).join(',');
       }
     }, m.envId);
-    check('the investor’s signing is recorded with what was filled in for them and what they typed', done.signer === 'signed' && done.tin === '123-45-6789' && done.dob === '04/02/1980' && done.name === 'Morgan Blake' && done.amount === '$75,000' && done.street === '12 Elm Street' && done.sig.length === 1 && done.sig[0] === true, done);
+    check('the investor’s signing is recorded with what was filled in for them and what they typed', done.signer === 'signed' && done.tin === '123-45-6789' && done.dob === '04/02/1980' && done.name === 'Morgan Blake' && done.amount === '75,000' && done.street === '12 Elm Street' && done.sig.length === 1 && done.sig[0] === true, done);
     check('the agreement now waits for the firm’s countersignature', done.status === 'sent' && done.next === 'countersigner', done);
     await p.waitForTimeout(500);
     await p.screenshot({ path: path.join(OUT, '7-after-signing.png') });
