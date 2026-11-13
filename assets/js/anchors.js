@@ -61,6 +61,8 @@
     const glyphs = [];
     const segs = []; // { o: 'h' | 'v', a0, a1 (extent along it), c (its position across), t (thickness), frame }
     const rects = [];
+    const blobs = []; // the extent of every filled shape that is not a plain rectangle (the letters of a page whose text is drawn)
+    const frames = []; // squares drawn as a filled frame: one rectangle inside another { x0, y0, x1, y1, t }
     let cur = null;
     let picture = false;
     const fontOf = (id) => {
@@ -148,10 +150,19 @@
         let sx = 0;
         let sy = 0;
         let curve = false;
+        let sub = 0;
+        const box = [Infinity, Infinity, -Infinity, -Infinity];
+        const grow = (x, y) => {
+          const p = at(st.ctm, x, y);
+          if (p[0] < box[0]) box[0] = p[0];
+          if (p[1] < box[1]) box[1] = p[1];
+          if (p[0] > box[2]) box[2] = p[0];
+          if (p[1] > box[3]) box[3] = p[1];
+        };
         const line = (x0, y0, x1, y1) => {
           const p1 = at(st.ctm, x0, y0);
           const p2 = at(st.ctm, x1, y1);
-          list.push({ t: 'l', x0: p1[0], y0: p1[1], x1: p2[0], y1: p2[1] });
+          list.push({ t: 'l', x0: p1[0], y0: p1[1], x1: p2[0], y1: p2[1], sub });
         };
         for (let j = 0; j < ops.length; j++) {
           const o = ops[j];
@@ -162,21 +173,28 @@
             const hh = co[k++];
             const p1 = at(st.ctm, x, y);
             const p2 = at(st.ctm, x + w, y + hh);
+            grow(x, y);
+            grow(x + w, y + hh);
             list.push({ t: 'r', x0: Math.min(p1[0], p2[0]), y0: Math.min(p1[1], p2[1]), x1: Math.max(p1[0], p2[0]), y1: Math.max(p1[1], p2[1]) });
           } else if (o === OPS.moveTo) {
             px = sx = co[k++];
             py = sy = co[k++];
+            sub++;
+            grow(px, py);
           } else if (o === OPS.lineTo) {
             const x = co[k++];
             const y = co[k++];
             line(px, py, x, y);
+            grow(x, y);
             px = x;
             py = y;
           } else if (o === OPS.curveTo) {
             k += 6;
+            grow(co[k - 2], co[k - 1]);
             curve = true;
           } else if (o === OPS.curveTo2 || o === OPS.curveTo3) {
             k += 4;
+            grow(co[k - 2], co[k - 1]);
             curve = true;
           } else if (o === OPS.closePath) {
             if (px !== sx || py !== sy) line(px, py, sx, sy);
@@ -184,8 +202,22 @@
             py = sy;
           }
         }
-        cur = { list, curve, scale: Math.sqrt(Math.abs(st.ctm[0] * st.ctm[3] - st.ctm[1] * st.ctm[2])) };
+        cur = { list, curve, box, scale: Math.sqrt(Math.abs(st.ctm[0] * st.ctm[3] - st.ctm[1] * st.ctm[2])) };
       } else if (fn === OPS.stroke || fn === OPS.closeStroke || fn === OPS.fill || fn === OPS.eoFill || fn === OPS.fillStroke || fn === OPS.eoFillStroke || fn === OPS.closeFillStroke || fn === OPS.closeEOFillStroke) {
+        if (cur && !st.fill && fn !== OPS.stroke && fn !== OPS.closeStroke && cur.box[2] > cur.box[0]) {
+          // What a page whose text is drawn is read from (NS.textread): the extent of each filled shape, and a square
+          // drawn as a filled frame (two rectangles, one inside the other).
+          const subs = [];
+          cur.list.forEach((s) => s.t === 'l' && (subs[s.sub] = subs[s.sub] || []).push(s));
+          const sq = cur.curve || cur.list.some((s) => s.t !== 'l') ? [] : subs.filter(Boolean).map((ls) => (ls.length >= 4 && ls.length <= 5 && ls.every((s) => Math.abs(s.x0 - s.x1) < 0.3 || Math.abs(s.y0 - s.y1) < 0.3) ? { x0: Math.min.apply(null, ls.map((s) => Math.min(s.x0, s.x1))), y0: Math.min.apply(null, ls.map((s) => Math.min(s.y0, s.y1))), x1: Math.max.apply(null, ls.map((s) => Math.max(s.x0, s.x1))), y1: Math.max.apply(null, ls.map((s) => Math.max(s.y0, s.y1))) } : null));
+          if (sq.length === 2 && sq[0] && sq[1]) {
+            const o = sq[0].x1 - sq[0].x0 >= sq[1].x1 - sq[1].x0 ? sq[0] : sq[1];
+            const n = o === sq[0] ? sq[1] : sq[0];
+            const t = (o.x1 - o.x0 - (n.x1 - n.x0)) / 2;
+            if (n.x0 > o.x0 && n.x1 < o.x1 && n.y0 > o.y0 && n.y1 < o.y1 && t < 0.2 * (o.x1 - o.x0)) frames.push({ x0: o.x0 + t / 2, y0: o.y0 + t / 2, x1: o.x1 - t / 2, y1: o.y1 - t / 2, t });
+            else blobs.push({ x0: cur.box[0], y0: cur.box[1], x1: cur.box[2], y1: cur.box[3] });
+          } else if (cur.curve || sq.length !== 1 || !sq[0]) blobs.push({ x0: cur.box[0], y0: cur.box[1], x1: cur.box[2], y1: cur.box[3] });
+        }
         if (cur && !cur.curve) {
           const stroked = fn !== OPS.fill && fn !== OPS.eoFill && !st.ink;
           const filled = fn !== OPS.stroke && fn !== OPS.closeStroke && !st.fill;
@@ -229,10 +261,12 @@
           glyphs.forEach((g) => (g.hidden = true));
           segs.length = 0;
           rects.length = 0;
+          blobs.length = 0;
+          frames.length = 0;
         }
       }
     }
-    return { glyphs, segs, rects, picture };
+    return { glyphs, segs, rects, picture, blobs, frames };
   }
 
   /* Box characters. In a symbol font the code decides, whatever character the reader reports for it. */
@@ -247,6 +281,15 @@
     const low = code >= 0xf000 && code <= 0xf0ff ? code & 0xff : code;
     const set = /wingdings.?2/i.test(g.font) ? SYMBOL_BOX.wingdings2 : /dingbat/i.test(g.font) ? SYMBOL_BOX.dingbat : /wingdings/i.test(g.font) ? SYMBOL_BOX.wingdings : [];
     return set.indexOf(low) >= 0;
+  }
+
+  /**
+   * A page with no text to read: 'picture' (a picture of a page, as in a scan), 'drawings' (its letters are drawn as
+   * shapes, as some "print to PDF" printers make them) or '' (it has text, or it is empty).
+   */
+  function textless(raw) {
+    if (!raw || raw.glyphs.some((g) => !g.hidden && !g.sp)) return '';
+    return raw.picture ? 'picture' : (raw.blobs || []).length >= 40 ? 'drawings' : '';
   }
 
   /** What placement reads of one page. raw: from walk(); size: { page, w, h }; forms: the PDF's form fields on it (already in displayed points). */
@@ -289,14 +332,17 @@
         cur.s += g.u;
         cur.x1 = g.x1;
         cur.n++;
+        if (g.conf < cur.conf) cur.conf = g.conf;
         return;
       }
       if (cur) cur.s = cur.s.replace(/ +$/, '');
-      cur = { cat, s: cat === 'box' ? '☐' : g.u, x: g.x0, x1: g.x1, y: g.y, h: g.h, n: 1 };
+      cur = { cat, s: cat === 'box' ? '☐' : g.u, x: g.x0, x1: g.x1, y: g.y, h: g.h, n: 1, conf: g.conf };
       out.items.push(cur);
     });
     if (cur) cur.s = cur.s.replace(/ +$/, '');
-    out.items = out.items.map((it) => ({ s: it.s, x: it.x, y: it.y, w: Math.max(0, it.x1 - it.x), h: Math.max(4, it.h) }));
+    // A run of recognised text (NS.textread) carries how sure the recognition was of its weakest word.
+    out.items = out.items.map((it) => Object.assign({ s: it.s, x: it.x, y: it.y, w: Math.max(0, it.x1 - it.x), h: Math.max(4, it.h) }, it.conf == null ? null : { conf: it.conf }));
+    if (raw.pictured) Object.assign(out, { pictured: raw.pictured, approx: !!raw.approx });
 
     /* Tick boxes: box characters, drawn squares with nothing in them, empty bracket pairs. */
     shown.forEach((g) => {
@@ -505,5 +551,5 @@
     return out;
   }
 
-  NS.anchors = { walk, page };
+  NS.anchors = { walk, page, textless };
 })(typeof window !== 'undefined' ? window.CVPortal : globalThis.CVPortal);

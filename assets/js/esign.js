@@ -1465,11 +1465,11 @@
    * Returns { ok, replaced, added, own, review, removed }, also kept as env.reread; when the text cannot be read, ok is
    * false and no field is changed.
    */
-  async function rereadAgreement(env) {
+  async function rereadAgreement(env, opts) {
     const fresh = Object.assign({}, env, { fields: [] });
     delete fresh.read;
     try {
-      await autoFields(fresh);
+      await autoFields(fresh, opts);
     } catch (e) {
       fresh.read = null;
     }
@@ -1548,7 +1548,7 @@
     if (el.disabled) return;
     el.disabled = true;
     el.textContent = 'Reading the PDF…';
-    await rereadAgreement(env);
+    await rereadAgreement(env, { step: (i, all) => (el.textContent = `Reading page ${i} of ${all} from its picture…`) });
     U.closeDialog();
     if (editorEnv() !== env) return NS.app.save(true);
     if (!env.fields.some((f) => f.id === esUi().sel)) esUi().sel = null;
@@ -1612,7 +1612,7 @@
     if (!c) {
       c = lineCache[docId] = {};
       // The text as placement reads it (pageLayout): baselines and extents as fractions of the displayed page.
-      pageLayout(docId).then((pp) => pp.forEach((p) => (c[p.page] = p.items.map((t) => ({ y: t.y / p.h, x0: t.x / p.w, x1: (t.x + t.w) / p.w })))), () => {});
+      pageLayout(docId, { kept: true }).then((pp) => pp.forEach((p) => (c[p.page] = p.items.map((t) => ({ y: t.y / p.h, x0: t.x / p.w, x1: (t.x + t.w) / p.w })))), () => {});
     }
     return c[page] || [];
   }
@@ -2661,13 +2661,26 @@
    * applied), origin top-left: [{ page, w, h, items: [{ s, x, y, w, h }], rules, boxes, forms, scan, failed }].
    * A page that is a picture comes back with scan set, a page the reader fails on with failed set and nothing on it.
    * Throws when the file itself cannot be opened.
+   *
+   * A page with no text (its letters are drawings, or it is a picture of a page) is read from its picture by
+   * NS.textread and comes back with pictured set; when that cannot be done it comes back as a scan with unread saying
+   * why: 'load' (the text reader could not be loaded), 'time' (the page took too long), 'limit' (the time allowed for
+   * the whole document was used up) or 'fail'. opts: { step(page, pages) called before each such page is read;
+   * kept: true to use the last reading of this file, or read without pictures (for snapping, where waiting is not worth it) }.
    */
-  async function pageLayout(docId) {
+  const PICTURE_LIMIT_MS = 300000; // reading pages from their pictures stops after this long for one document
+  let layoutKept = null;
+  async function pageLayout(docId, opts) {
+    const op = opts || {};
+    if (op.kept && layoutKept && layoutKept.docId === docId) return layoutKept.pages;
     const blob = await files().get(docId);
     if (!blob) throw new Error('This document is stored in a different browser.');
     const lib = await pdfjs();
     const doc = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()), isEvalSupported: false }).promise;
     const out = [];
+    let spent = 0;
+    let noReader = !NS.textread;
+    let pictured = false;
     try {
       for (let i = 1; i <= doc.numPages; i++) {
         const size = { page: i, w: 0, h: 0 };
@@ -2682,7 +2695,26 @@
               const r = lib.Util.normalizeRect(vp.convertToViewportRectangle(a.rect));
               return { x0: r[0], y0: r[1], x1: r[2], y1: r[3], type: a.fieldType || '', label: a.alternativeText || a.fieldName || '', check: !!(a.checkBox || a.radioButton), radio: !!a.radioButton, readOnly: !!a.readOnly };
             });
-          out.push(NS.anchors.page(raw, size, forms));
+          let use = raw;
+          let unread = '';
+          if (NS.anchors.textless(raw)) {
+            if (op.kept || noReader) unread = 'load';
+            else if (spent > PICTURE_LIMIT_MS) unread = 'limit';
+            else {
+              if (op.step) op.step(i, doc.numPages);
+              const t0 = Date.now();
+              try {
+                use = await NS.textread.page(page, raw);
+                pictured = true;
+              } catch (e) {
+                console.error('Reading page ' + i + ' of the agreement from its picture failed:', e);
+                unread = (e && e.code) || 'fail';
+                if (unread === 'load') noReader = true;
+              }
+              spent += Date.now() - t0;
+            }
+          }
+          out.push(unread ? Object.assign(NS.anchors.page(null, size, []), { scan: true, unread }) : NS.anchors.page(use, size, forms));
           page.cleanup();
         } catch (e) {
           console.error('Reading page ' + i + ' of the agreement failed:', e);
@@ -2691,7 +2723,9 @@
       }
     } finally {
       doc.destroy();
+      if (NS.textread && !op.kept) NS.textread.stop();
     }
+    if (!op.kept) layoutKept = pictured ? { docId, pages: out } : null;
     return out;
   }
   /**
@@ -2702,13 +2736,16 @@
    * reason. What was read is kept on the draft as env.read (see readNote). When the text cannot be read (a scan, a
    * damaged file) nothing is placed. Returns how many fields were placed.
    */
-  async function autoFields(env) {
-    const read = (env.read = { ok: false, error: '', pages: 0, scanned: [], failed: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], firmLeft: 0, firmLeftPages: [] });
+  async function autoFields(env, opts) {
+    const read = (env.read = { ok: false, error: '', pages: 0, scanned: [], failed: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], firmLeft: 0, firmLeftPages: [], pictured: [], unread: {} });
     let res = null;
     try {
       const t = T();
       const o = W().offerings.find((x) => x.id === (env.agreementFor || env.offeringId)) || {};
-      res = NS.placement.read(await pageLayout(env.docId), { firmNames: [t.name, t.legalName, t.shortName], fundNames: [o.name, o.shortName] });
+      const layout = await pageLayout(env.docId, { step: opts && opts.step });
+      // Pages with no text that could not be read from their pictures either, by reason.
+      layout.forEach((pg) => pg.unread && (read.unread[pg.unread] = read.unread[pg.unread] || []).push(pg.page));
+      res = NS.placement.read(layout, { firmNames: [t.name, t.legalName, t.shortName], fundNames: [o.name, o.shortName] });
     } catch (e) {
       // Not the PDF's fault unless the reader says so: the reason is kept and logged, and the message says only what is known.
       console.error('Reading the agreement failed:', e);
@@ -2716,7 +2753,7 @@
       return 0;
     }
     res.errors.forEach((x) => console.error('Placing fields on page ' + x.page + ' failed:', x.reason));
-    Object.assign(read, { ok: res.pages > 0, pages: res.pages, scanned: res.scanned, failed: res.failed, places: res.places, left: res.left.slice(), investorPages: res.investorPages, firmPages: res.firmPages });
+    Object.assign(read, { ok: res.pages > 0, pages: res.pages, scanned: res.scanned, failed: res.failed, places: res.places, left: res.left.slice(), investorPages: res.investorPages, firmPages: res.firmPages, pictured: res.pictured || [] });
     const inv = env.signers.find((s) => s.role === 'investor');
     const cs = env.signers.find((s) => s.role === 'countersigner');
     res.fields.forEach((p) => {
@@ -2761,17 +2798,32 @@
       const list = runs.map((r) => (r[0] === r[1] ? `${r[0]}` : r[1] === r[0] + 1 ? `${r[0]}, ${r[1]}` : `${r[0]} to ${r[1]}`));
       return pages.length === 1 ? `page ${list[0]}` : list.length === 1 ? `pages ${list[0].replace(', ', ' and ')}` : `pages ${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
     };
+    // Pages with no text that could not be read from their pictures: exactly why, and what keeps the text in a PDF.
+    const u = r.unread || {};
+    const all = (k) => (u[k] || []).slice().sort((a, b) => a - b);
+    const were = (pages) => (pages.length === 1 ? 'has no text and was' : 'have no text and were');
+    const lost = [
+      all('load').length ? `${on(all('load')).replace(/^p/, 'P')} ${were(all('load'))} not read from ${all('load').length === 1 ? 'its picture' : 'their pictures'}, because the portal could not load its text reader: nothing was placed there.` : '',
+      all('time').length ? `Reading ${on(all('time'))} from ${all('time').length === 1 ? 'its picture' : 'their pictures'} took too long and was stopped: nothing was placed there.` : '',
+      all('fail').length ? `Reading ${on(all('fail'))} from ${all('fail').length === 1 ? 'its picture' : 'their pictures'} failed: nothing was placed there.` : '',
+      all('limit').length ? `Reading pages from their pictures takes time, and the portal stopped after five minutes: ${on(all('limit'))} ${all('limit').length === 1 ? 'was' : 'were'} not read and nothing was placed there. Upload those pages as a shorter PDF to have them read.` : ''
+    ].filter(Boolean);
+    if (lost.length) lost.push('A PDF made with a “print to PDF” printer can lose its text; saving the document as a PDF from the program it was written in, or with the browser’s “Save as PDF”, keeps it.');
     if (!r.ok) {
+      if (lost.length && !r.failed.length && !r.error) return `This PDF has no text, only pictures of its pages. ${lost.join(' ')} No field was placed: add each field by hand, or upload a PDF that has its text.`;
       if (r.scanned.length && !r.failed.length && !r.error) return 'The text of this PDF could not be read: its pages are pictures, as in a scan. No field was placed. Upload the PDF the agreement was made from, or add each field by hand.';
       return 'The portal could not read this PDF, so no field was placed. Add each field by hand, or try uploading the PDF again.';
     }
     const made = r.boxes + r.blanks + r.signatures;
     // Mostly pictures of pages: said first, as the thing the sponsor has to act on.
-    if (!made && r.scanned.length >= r.pages) return `Most of this PDF could not be read: ${r.scanned.length} of its ${r.scanned.length + r.pages + r.failed.length} pages are pictures, as in a scan. No field was placed. Upload the PDF the agreement was made from, or add each field by hand.`;
+    if (!made && r.scanned.length >= r.pages) return `Most of this PDF could not be read: ${r.scanned.length} of its ${r.scanned.length + r.pages + r.failed.length} pages are pictures, as in a scan. No field was placed. ${lost.length ? lost.join(' ') + ' Or' : 'Upload the PDF the agreement was made from, or'} add each field by hand.`;
     const out = [made ? `${n(r.pages, 'page', 'pages')} read. ${n(r.boxes, 'tick box', 'tick boxes')}, ${n(r.blanks, 'blank', 'blanks')} and ${n(r.signatures, 'signature line', 'signature lines')} got a field, each on a place the agreement prints.` : `${n(r.pages, 'page', 'pages')} read: no line, blank or tick box to complete was found, so no field was placed.`];
     const left = (r.left || []).slice().sort((a, b) => a - b);
     if (left.length) out.push(`Not every printed place got a field: check ${on(left)} and add what is missing by hand.`);
-    if (r.scanned.length) out.push(`${r.scanned.length === 1 ? 'Page' : 'Pages'} ${on(r.scanned.slice().sort((a, b) => a - b)).replace(/^pages? /, '')} ${r.scanned.length === 1 ? 'is a picture' : 'are pictures'}, as in a scan, and could not be read: nothing was placed there.`);
+    const seen = (r.pictured || []).length;
+    if (seen) out.push(`${n(seen, 'page', 'pages')} had no text, so the portal read ${seen === 1 ? 'it from the picture of the page' : 'them from the picture of each page'}. Check the fields on ${seen === 1 ? 'that page' : 'those pages'}.`);
+    if (lost.length) out.push(lost.join(' '));
+    else if (r.scanned.length) out.push(`${r.scanned.length === 1 ? 'Page' : 'Pages'} ${on(r.scanned.slice().sort((a, b) => a - b)).replace(/^pages? /, '')} ${r.scanned.length === 1 ? 'is a picture' : 'are pictures'}, as in a scan, and could not be read: nothing was placed there.`);
     if (r.failed.length) out.push(`The portal could not read ${on(r.failed.slice().sort((a, b) => a - b))}: nothing was placed there.`);
     out.push(r.investorPages.length ? `The investor’s signature line was found on ${on(r.investorPages)}.` : 'No signature line for the investor was found: add a signature field for the investor where they sign before saving.');
     out.push(r.firmPages.length ? `Your firm’s signature line was found on ${on(r.firmPages)}.` : `No signature line for your firm was found, so your firm does not sign this agreement${r.firmLeft ? ` and ${n(r.firmLeft, 'blank that reads as your firm’s', 'blanks that read as your firm’s')} on ${on(r.firmLeftPages || [])} got no field` : ''}. Add a signature field for your firm if it should.`);
@@ -2839,7 +2891,7 @@
       makeSigner(env, { investorId: AGR_INVESTOR, name: 'Investor (each subscriber)', email: '', account: '' });
       makeSigner(env, { name: `${T().shortName} (countersigns)`, email: T().support.email || '' });
       if (tpl) applyTemplateFields(env, tpl);
-      else env.autoPlaced = await autoFields(env);
+      else env.autoPlaced = await autoFields(env, { step: src.step });
       addEvent(env, staffActor(), 'Created', `Subscription agreement for ${o.name}`);
       envs(ws).push(env);
       NS.app.save(true);
@@ -2925,7 +2977,9 @@
       btn.textContent = 'Reading the PDF…';
     }
     try {
-      const env = await agreementDraft(w, oid, { file: file || null, docId: file ? '' : docId, title: form.title.value });
+      // A page with no text is read from its picture, which takes a few seconds a page: the button says which page.
+      const step = (i, all) => btn && (btn.textContent = `Reading page ${i} of ${all} from its picture…`);
+      const env = await agreementDraft(w, oid, { file: file || null, docId: file ? '' : docId, title: form.title.value, step });
       U.closeDialog();
       // The editor always opens on a new agreement: the sponsor sees what was read and where each field sits, then saves.
       openAgreement(env);

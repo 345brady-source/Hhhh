@@ -1200,10 +1200,26 @@
    *   boxes, blanks, signatures   how many tick boxes, blanks to complete and signature lines got a field
    *   investorPages, firmPages    the pages with a signature line for the investor, and for the firm
    */
+  /**
+   * A page with no text, read from its picture (pg.pictured, see NS.textread): the words are recognised, so a field
+   * whose meaning rests on words that were hard to read is marked for review; and when the whole page is a picture
+   * (pg.approx, a scan) its lines and boxes were found on the picture too, so every field on the page is marked.
+   */
+  const WHY_SLANT = 'This page is a picture, so the portal found this place on the picture and read the words by it from the picture. Check that the field sits on its printed place and is what the agreement asks for.';
+  const WHY_WORDS = 'This page has no text, so the portal read it from its picture, and the words by this place were hard to read. Check what this field is for.';
+  function fromPicture(pg, mine) {
+    const hard = pg.items.filter((it) => it.conf != null && it.conf < 50 && /[A-Za-z0-9]{2}/.test(it.s));
+    mine.forEach((p) => {
+      const by = hard.some((it) => it.y - it.h < p.y + p.h + 12 && it.y > p.y - 12 && it.x < p.x + p.w + 90 && it.x + it.w > p.x - 150);
+      if (!pg.approx && !by) return;
+      if (p.conf === 'high') p.conf = 'medium';
+      if (!p.why) p.why = pg.approx ? WHY_SLANT : WHY_WORDS;
+    });
+  }
   function read(pages, ctx) {
     const cx = ctx || {};
     const c = { names: [].concat(cx.firmNames || [], cx.fundNames || []).map(bare).filter((n) => n.length >= 4) };
-    const res = { fields: [], pages: 0, scanned: [], failed: [], errors: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [] };
+    const res = { fields: [], pages: 0, scanned: [], failed: [], errors: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], pictured: [] };
     let out = [];
     (pages || []).forEach((pg) => {
       if (!pg) return;
@@ -1217,6 +1233,10 @@
         return res.failed.push(pg.page);
       }
       res.pages++;
+      if (pg.pictured) {
+        res.pictured.push(pg.page);
+        fromPicture(pg, mine);
+      }
       out = out.concat(mine);
     });
     const rank = { high: 0, medium: 1, low: 2 };
