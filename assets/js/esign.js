@@ -531,7 +531,7 @@
         }
         return;
       }
-      if (!f.label || !has(labels, f.label)) return;
+      if (f.auto || !f.label || !has(labels, f.label)) return;
       if (fresh ? f.type === 'text' || f.type === 'name' || f.type === 'checkbox' : f.locked && f.type !== 'checkbox') {
         const v = f.type === 'checkbox' ? !!labels[f.label] : unsigned(f, String(labels[f.label]));
         if (f.value !== v || !f.locked) changed.push(f);
@@ -2545,7 +2545,8 @@
           out.push(NS.anchors.page(raw, size, forms));
           page.cleanup();
         } catch (e) {
-          out.push(Object.assign(size, { items: [], rules: [], boxes: [], forms: [], failed: true }));
+          console.error('Reading page ' + i + ' of the agreement failed:', e);
+          out.push(Object.assign(size, { items: [], rules: [], boxes: [], forms: [], failed: true, reason: String((e && e.message) || e) }));
         }
       }
     } finally {
@@ -2562,24 +2563,33 @@
    * damaged file) nothing is placed. Returns how many fields were placed.
    */
   async function autoFields(env) {
-    const read = (env.read = { ok: false, pages: 0, scanned: [], failed: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], firmLeft: 0 });
+    const read = (env.read = { ok: false, error: '', pages: 0, scanned: [], failed: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], firmLeft: 0, firmLeftPages: [] });
     let res = null;
     try {
       const t = T();
       const o = W().offerings.find((x) => x.id === (env.agreementFor || env.offeringId)) || {};
       res = NS.placement.read(await pageLayout(env.docId), { firmNames: [t.name, t.legalName, t.shortName], fundNames: [o.name, o.shortName] });
     } catch (e) {
+      // Not the PDF's fault unless the reader says so: the reason is kept and logged, and the message says only what is known.
+      console.error('Reading the agreement failed:', e);
+      read.error = String((e && e.message) || e);
       return 0;
     }
-    Object.assign(read, { ok: res.pages > 0, pages: res.pages, scanned: res.scanned, failed: res.failed, investorPages: res.investorPages, firmPages: res.firmPages });
+    res.errors.forEach((x) => console.error('Placing fields on page ' + x.page + ' failed:', x.reason));
+    Object.assign(read, { ok: res.pages > 0, pages: res.pages, scanned: res.scanned, failed: res.failed, places: res.places, left: res.left.slice(), investorPages: res.investorPages, firmPages: res.firmPages });
     const inv = env.signers.find((s) => s.role === 'investor');
     const cs = env.signers.find((s) => s.role === 'countersigner');
     res.fields.forEach((p) => {
       // The firm signs only where the agreement has a signature line for it: with none, its blanks get no field.
-      if (p.role === 'firm' && !res.firmPages.length) return read.firmLeft++;
+      const unplaced = () => read.left.indexOf(p.page) < 0 && read.left.push(p.page);
+      if (p.role === 'firm' && !res.firmPages.length) {
+        if (read.firmLeftPages.indexOf(p.page) < 0) read.firmLeftPages.push(p.page);
+        unplaced();
+        return read.firmLeft++;
+      }
       const sg = p.role === 'firm' ? cs : inv;
       const ps = env.pageSizes[p.page - 1];
-      if (!sg || !ps || !TYPES[p.type]) return;
+      if (!sg || !ps || !TYPES[p.type]) return unplaced();
       const w = Math.min(0.96, p.w / ps.w);
       const hh = Math.min(0.5, p.h / ps.h);
       const f = { id: uid('fd'), signerId: sg.id, type: p.type, page: p.page, x: clamp01(p.x / ps.w, 1 - w), y: clamp01(p.y / ps.h, 1 - hh), w, h: hh, required: !!p.required, label: p.label || '', value: '', auto: true, confidence: p.conf, kind: p.kind };
@@ -2601,12 +2611,18 @@
     if (!r) return '';
     const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
     const on = (list) => (list.length === 1 ? `page ${list[0]}` : `pages ${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`);
-    const skipped = r.scanned.concat(r.failed).sort((a, b) => a - b);
-    if (!r.ok) return `The text of this PDF could not be read${r.scanned.length ? ': its pages are pictures, as in a scan' : ''}. No field was placed. Upload the PDF the agreement was made from, or add each field by hand.`;
-    const out = [r.boxes + r.blanks + r.signatures ? `${n(r.pages, 'page', 'pages')} read: ${n(r.boxes, 'tick box', 'tick boxes')}, ${n(r.blanks, 'blank', 'blanks')} and ${n(r.signatures, 'signature line', 'signature lines')} found, each with its field and none placed anywhere else.` : `${n(r.pages, 'page', 'pages')} read: no line, blank or tick box to complete was found, so no field was placed.`];
-    if (skipped.length) out.push(`${skipped.length === 1 ? 'Page' : 'Pages'} ${on(skipped).replace(/^pages? /, '')} could not be read (${r.scanned.length ? 'a picture of the page, as in a scan' : 'the page is damaged'}): nothing was placed there.`);
+    if (!r.ok) {
+      if (r.scanned.length && !r.failed.length && !r.error) return 'The text of this PDF could not be read: its pages are pictures, as in a scan. No field was placed. Upload the PDF the agreement was made from, or add each field by hand.';
+      return 'The portal could not read this PDF, so no field was placed. Add each field by hand, or try uploading the PDF again.';
+    }
+    const made = r.boxes + r.blanks + r.signatures;
+    const out = [made ? `${n(r.pages, 'page', 'pages')} read. ${n(r.boxes, 'tick box', 'tick boxes')}, ${n(r.blanks, 'blank', 'blanks')} and ${n(r.signatures, 'signature line', 'signature lines')} got a field, each on a place the agreement prints.` : `${n(r.pages, 'page', 'pages')} read: no line, blank or tick box to complete was found, so no field was placed.`];
+    const left = (r.left || []).slice().sort((a, b) => a - b);
+    if (left.length) out.push(`Not every printed place got a field: check ${on(left)} and add what is missing by hand.`);
+    if (r.scanned.length) out.push(`${r.scanned.length === 1 ? 'Page' : 'Pages'} ${on(r.scanned.slice().sort((a, b) => a - b)).replace(/^pages? /, '')} ${r.scanned.length === 1 ? 'is a picture' : 'are pictures'}, as in a scan, and could not be read: nothing was placed there.`);
+    if (r.failed.length) out.push(`The portal could not read ${on(r.failed.slice().sort((a, b) => a - b))}: nothing was placed there.`);
     out.push(r.investorPages.length ? `The investor’s signature line was found on ${on(r.investorPages)}.` : 'No signature line for the investor was found: add a signature field for the investor where they sign before saving.');
-    out.push(r.firmPages.length ? `Your firm’s signature line was found on ${on(r.firmPages)}.` : `No signature line for your firm was found, so your firm does not sign this agreement${r.firmLeft ? ` and ${n(r.firmLeft, 'blank that reads as your firm’s', 'blanks that read as your firm’s')} got no field` : ''}. Add a signature field for your firm if it should.`);
+    out.push(r.firmPages.length ? `Your firm’s signature line was found on ${on(r.firmPages)}.` : `No signature line for your firm was found, so your firm does not sign this agreement${r.firmLeft ? ` and ${n(r.firmLeft, 'blank that reads as your firm’s', 'blanks that read as your firm’s')} on ${on(r.firmLeftPages || [])} got no field` : ''}. Add a signature field for your firm if it should.`);
     return out.join(' ');
   }
   /** What still stops an offering's agreement from being saved ('' when it can be). */
@@ -2616,7 +2632,7 @@
     // Where a signer signs: a signature or initials field that is theirs to complete (not an optional line for a second person).
     const signing = (sg) => env.fields.filter((f) => f.signerId === sg.id && (f.type === 'signature' || f.type === 'initials') && f.required !== false);
     if (!inv || !signing(inv).length) {
-      if (env.read && !env.read.ok) return 'The text of this PDF could not be read, so no field was placed. Add a signature field for the investor where they sign.';
+      if (env.read && !env.read.ok) return 'This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign.';
       if (env.read && !env.read.investorPages.length) return 'No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.';
       return 'Place at least one signature field for the investor.';
     }
