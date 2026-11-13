@@ -1,7 +1,7 @@
 {
   "model_profile": "inherit",
   "commit_docs": true,
-  "parallelization": false,
+  "parallelization": true,
   "search_gitignored": false,
   "brave_search": false,
   "firecrawl": false,
@@ -48,7 +48,8 @@
     "post_planning_gaps": true,
     "security_enforcement": true,
     "security_asvs_level": 1,
-    "security_block_on": "high"
+    "security_block_on": "high",
+    "plan_chunked": true
   },
   "ship": {
     "pr_body_sections": []
@@ -65,5 +66,8 @@
     "source_grounding_authority": "grep"
   },
   "mode": "interactive",
-  "granularity": "standard"
+  "granularity": "standard",
+  "planning": {
+    "chunked_parallel": true
+  }
 }
