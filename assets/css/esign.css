@@ -600,6 +600,8 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .sg-tabbtn, .sg-inkchip, .sg-cell, .sg-hand-ink, .sg-padbtn, .sg-style-box, .sg-style-tick, .sg-choosebtn { transition: none; }
+}
+
 /* =====================================================================
  * Field editor (fieldeditor.js): where the sponsor places the fields on a draft's pages. Three parts side by side:
  * the fields to add, the document, the selected field. The tool around the page uses the console's tokens (--cv-*);
