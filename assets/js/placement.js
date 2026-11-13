@@ -1290,7 +1290,8 @@
     }
     if (w < 14 || hh < 6) return null; // too narrow or too low to write in, and not a square: the shape of a letter or an ornament
     const left = [];
-    row.filter((q) => q.x1 <= b.x0 + 1).sort((p, q) => q.x1 - p.x1).every((q) => ((left.length ? left[left.length - 1].x0 : b.x0) - q.x1 < 9 ? left.push(q) : false));
+    const margin = Math.min.apply(null, all.map((o) => o.x0)) - 2; // words left of every box are the margin's headings, not captions
+    row.filter((q) => q.x1 <= b.x0 + 1 && q.x1 >= margin).sort((p, q) => q.x1 - p.x1).every((q) => ((left.length ? left[left.length - 1].x0 : b.x0) - q.x1 < 9 ? left.push(q) : false));
     const over = words.filter((q) => q.y1 <= b.y0 + 1 && b.y0 - q.y1 < 9 && (q.x0 + q.x1) / 2 > b.x0 - 2 && (q.x0 + q.x1) / 2 < b.x1);
     // A caption of two lines: the line just over the first one belongs to it.
     const top = over.length ? Math.min.apply(null, over.map((q) => q.y0)) : 0;
@@ -1328,20 +1329,20 @@
       const p = boxField(pg, b, found);
       if (p) made.push(p);
     });
-    // A column of boxes most of which are captioned for initials is a column of initials.
-    made.forEach((p) => {
-      if (p.type !== 'text') return;
-      const col = made.filter((o) => Math.abs(o.x - p.x) <= 3 && Math.abs(o.w - p.w) <= 3);
-      if (col.length >= 3 && col.filter((o) => o.kind === 'initials').length >= 0.5 * col.length) Object.assign(p, { type: 'initials', kind: 'initials', label: /^box$/i.test(p.label) ? 'Initials' : p.label });
-    });
     // Who completes each box: its own caption or column heading, else the lettered heading it stands under, else the
     // numbered section in the margin, else the investor. A second investor's are the co-investor's own; a third
     // party's are nobody's the portal asks: optional, named for that party, and never where the investor signs.
     const heads = formHeads(pg, found);
     const under = (list, y, from) => list.filter((g) => g.y <= y + 2 && g.y >= from).pop();
     const boxed = mine.filter((p) => onBox(p)).concat(made);
+    boxed.forEach((p) => p.type === 'text' && /\binitials?\b/i.test(p.label) && Object.assign(p, { type: 'initials', kind: 'initials' }));
+    // A column of boxes most of which are captioned for initials is a column of initials.
     boxed.forEach((p) => {
-      if (p.type === 'text' && /\binitials?\b/i.test(p.label)) Object.assign(p, { type: 'initials', kind: 'initials' });
+      if (p.type !== 'text') return;
+      const col = boxed.filter((o) => Math.abs(o.x - p.x) <= 3 && Math.abs(o.w - p.w) <= 3);
+      if (col.length >= 3 && col.filter((o) => o.type === 'initials').length >= 0.5 * col.length) Object.assign(p, { type: 'initials', kind: 'initials', label: /^box$/i.test(p.label) ? 'Initials' : p.label });
+    });
+    boxed.forEach((p) => {
       const sec = under(heads.sections, p.y, 0);
       const sub = under(heads.subs, p.y, sec ? sec.y : 0);
       const own = partyOf(p.whose || p.label);
@@ -1357,9 +1358,9 @@
       }
     });
     // One column of boxes is one person's: where any box in it is the co-investor's, all of its kind are.
-    made.forEach((p) => {
+    boxed.forEach((p) => {
       if (p.role === 'co' || p.other || p.type === 'checkbox') return;
-      if (made.some((o) => o.role === 'co' && o.type === p.type && Math.abs(o.x - p.x) <= 3 && Math.abs(o.w - p.w) <= 3)) {
+      if (boxed.some((o) => o.role === 'co' && o.type === p.type && Math.abs(o.x - p.x) <= 3 && Math.abs(o.w - p.w) <= 3)) {
         p.label = `Co-investor ${p.label}`;
         coInvestor(p);
       }
