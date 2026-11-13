@@ -495,6 +495,7 @@
     if (k === 'type') {
       if (!cur.ctx.types[v] || v === f.type) return;
       retype(f, v);
+      settle(f); // the sponsor said what kind of field this is: it no longer waits for review
     } else if (k === 'signerId') {
       if (!cur.env.signers.some((s) => s.id === v)) return;
       f.signerId = v;

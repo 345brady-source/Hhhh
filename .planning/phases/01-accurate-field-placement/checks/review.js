@@ -125,6 +125,24 @@ const check = (name, ok, info) => {
     await page.waitForTimeout(150);
     s = await state();
     check('removing a marked field leaves nothing to review', s.marks === 0 && s.flagged === 0 && s.list.length === 0 && s.ready && s.fields === 4, s);
+    // Undo brings the field back with its mark; saying what kind of field it is settles the mark too.
+    await page.keyboard.press('Control+z');
+    await page.waitForTimeout(150);
+    s = await state();
+    check('undo brings the removed field back with its mark', s.marks === 1 && s.flagged === 1 && s.fields === 5 && s.list.length === 1, s);
+    await ev((id) => document.querySelector(`.es-fld[data-fid="${id}"]`).scrollIntoView({ block: 'center' }), fifth);
+    await page.click(`.es-fld[data-fid="${fifth}"]`);
+    await page.waitForSelector('#es-ft');
+    const before = await page.inputValue('#es-ft');
+    await page.selectOption('#es-ft', before === 'text' ? 'name' : 'text');
+    await page.waitForTimeout(150);
+    s = await state();
+    check('changing a marked field’s type clears its mark', s.marks === 0 && s.flagged === 0 && s.list.length === 0, s);
+    await page.focus(`.es-fld[data-fid="${fifth}"]`);
+    await page.keyboard.press('Delete');
+    await page.waitForTimeout(150);
+    s = await state();
+    check('and the field can be removed again', s.fields === 4 && s.ready, s);
 
     /* ---- 4. With no marks left the agreement saves and is ready ---- */
     await page.click('[data-action="es-agreement-save"]');

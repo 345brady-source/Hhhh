@@ -359,4 +359,38 @@ ${footIni()}</div>
 <p style="margin-top:16pt">By: ${sp(26, firm('signature'))} &nbsp; Name: ${sp(22, firm('name'))} &nbsp; Title: ${sp(16, firm('text', { label: 'Title' }))}</p>
 ${footIni()}</div>`
 };
+
+/*
+ * The last layout, written after every rule and after the three above had each led to changes, and committed before
+ * its first run: a compact one-page data sheet and signature page on Legal paper in a sans-serif face at 9.5 pt.
+ * Two labelled blanks to a line, tab-aligned; tick boxes written as "( )"; two initials blanks on one printed line;
+ * the investor's block beside one for a co-investor (which gets no field); and the firm's line as
+ * "For the Company: ____ (authorized officer)" with "Date accepted: ____".
+ */
+const two = (l1, x1, l2, x2) => `<div class="r2"><span class="c1">${l1} ${blank(x1, U(26))}</span><span class="c2">${l2} ${blank(x2, U(22))}</span></div>`;
+const paren = (label) => `<span data-k="bracket" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false, flag: true, label })}'>( )</span> ${label}`;
+FIXTURES.heldout4 = {
+  heldOut: true,
+  offering: 'Northgate Fund I, LP',
+  paper: [8.5, 14],
+  css: `@page{size:8.5in 14in;margin:0} body{font:9.5pt/1.5 Verdana,"DejaVu Sans",Arial,sans-serif} .pg{width:8.5in;height:14in;padding:.8in .9in}
+h1{font-size:12pt;margin:0;text-align:center} h2{font-size:9.5pt;margin:16pt 0 6pt;border-bottom:1.5pt solid #000;padding-bottom:2pt}
+.r2{display:flex;margin:9pt 0} .c1{flex:0 0 54%} .c2{flex:1} .sigs{display:flex;gap:.5in;margin-top:8pt} .sigs>div{flex:1} .sigs p{margin:14pt 0 0}`,
+  html: `<div class="pg"><h1>NORTHGATE FUND I, LP</h1><p style="text-align:center;margin:2pt 0 0">Subscription Agreement: Investor Data Sheet and Signature Page</p>
+<h2>A. INVESTOR DATA</h2>
+${two('Investor name:', fill('Investor name', 'investorName'), 'Tax ID:', fill('Taxpayer ID', ''))}
+${two('Address:', fill('Address', 'street'), 'Phone:', fill('Phone', 'phone'))}
+${two('City/State/Zip:', fill('City, state and ZIP', 'cityStateZip'), 'Email:', fill('Email', 'email'))}
+<h2>B. INVESTMENT</h2>
+${two('Units subscribed:', fill('Units subscribed', ''), 'Total purchase price: $', fill('Commitment amount', 'amount', { required: false }))}
+<h2>C. TYPE OF OWNERSHIP (CHECK ONE)</h2>
+<p>${['Individual', 'Joint tenants with right of survivorship', 'Trust', 'LLC or corporation'].map(paren).join(' &nbsp;&nbsp; ')}</p>
+<h2>D. ACKNOWLEDGEMENTS</h2>
+<p>Initial each: ${blank({ type: 'initials', role: 'investor', fillIn: true, required: true }, U(6))} I have received the Private Placement Memorandum. &nbsp; ${blank({ type: 'initials', role: 'investor', fillIn: true, required: true }, U(6))} I am an accredited investor.</p>
+<h2>E. SIGNATURES</h2>
+<div class="sigs"><div><b>INVESTOR</b><p>Signature ${blank(inv('signature'), U(28))}</p><p>Print name ${blank(inv('name'), U(27))}</p><p>Date ${blank(inv('date'), U(18))}</p></div>
+<div><b>CO-INVESTOR (if any)</b><p>Signature ${U(28)}</p><p>Print name ${U(27)}</p></div></div>
+<p style="margin-top:26pt">For the Company: ${blank(firm('signature'), U(30))} (authorized officer) &nbsp; Date accepted: ${blank(firm('date'), U(16))}</p>
+</div>`
+};
 module.exports = { CSS, FIXTURES, blank, rule, box, noline, block, attr, U };
