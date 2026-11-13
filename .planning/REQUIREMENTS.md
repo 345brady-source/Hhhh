@@ -14,6 +14,13 @@
 - [ ] **PLACE-05**: The portal tells apart what the client signs, what the client fills in, and what needs the client's initials, and creates the right kind of field for each
 - [ ] **PLACE-06**: Blanks the client must fill in (name, address, amount, date, checkboxes and similar) become fillable fields automatically, without the sponsor adding them by hand
 - [ ] **PLACE-07**: Fill-in fields whose answer the portal already has from onboarding (name, entity, address, commitment amount, date) are filled in automatically; the client only completes what is left
+- [ ] **PLACE-08**: The portal adds a field only where the agreement itself has a blank, a tick box or a signature line; it never places a field anywhere else and never over the agreement's text
+- [ ] **PLACE-09**: Every tick box printed on the agreement becomes a box the client can tick
+- [ ] **PLACE-10**: Every blank printed on the agreement becomes a field the client can fill in, whether the blank is beside its label, under it, at the end of a label that runs over several lines, inside a sentence or in a table cell
+- [ ] **PLACE-11**: Every signature line printed on the agreement becomes a field that can be signed by the person the line is for
+- [ ] **PLACE-12**: The portal recognises whether the agreement has an investor signature block and whether it has a countersignature block (both, one or neither), tells the sponsor what it found, and sets up signing to match
+- [ ] **PLACE-13**: When the portal cannot read an agreement it says so and places nothing by guesswork; the sponsor can always see what was read and have the document read again
+- [ ] **PLACE-14**: The reading works on subscription agreements in general and in the published preview exactly as it does locally, proven on real documents and under the preview's own rules
 
 ### Field Editor
 
@@ -83,6 +90,13 @@
 | PLACE-05 | Phase 1 | Pending |
 | PLACE-06 | Phase 1 | Pending |
 | PLACE-07 | Phase 1 | Pending |
+| PLACE-08 | Phase 01.1 | Pending |
+| PLACE-09 | Phase 01.1 | Pending |
+| PLACE-10 | Phase 01.1 | Pending |
+| PLACE-11 | Phase 01.1 | Pending |
+| PLACE-12 | Phase 01.1 | Pending |
+| PLACE-13 | Phase 01.1 | Pending |
+| PLACE-14 | Phase 01.1 | Pending |
 | EDIT-01 | Phase 2 | Pending |
 | EDIT-02 | Phase 2 | Pending |
 | EDIT-03 | Phase 2 | Pending |
@@ -107,10 +121,10 @@
 | REC-05 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 29 total
-- Mapped to phases: 29
+- v1 requirements: 36 total
+- Mapped to phases: 36
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-11-12*
-*Last updated: 2026-11-12 after adding field-type detection and automatic fill-in fields*
+*Last updated: 2026-11-13 after the owner's report on a real agreement: PLACE-08 to PLACE-14 added for Phase 01.1*

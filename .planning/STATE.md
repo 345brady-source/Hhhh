@@ -1,13 +1,21 @@
 ---
-gsd_state_version: '1.0'
+gsd_state_version: "1.0"
+current_phase: 1
+current_phase_name: Accurate Field Placement
 status: planning
+stopped_at: Project initialized; roadmap created
+last_updated: "2026-11-13T15:37:50.715Z"
+last_activity: 2026-11-12
+last_activity_desc: Project initialized
+state_head: cba7a41b452fffd4dc8c418c59f3c79cdce4446e
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 3
+  completed_plans: 3
   percent: 0
 ---
+
 <!-- STATE-MD-SCHEMA:END:frontmatter -->
 
 # Project State
@@ -61,6 +69,10 @@ None yet.
 ### Blockers/Concerns
 
 - The working branch is `claude/refract-reskin`, which also carries the unmerged visual reskin.
+
+### Roadmap Evolution
+
+- Phase 1.1 inserted after Phase 1: Placement reads what the agreement has: fields only on its own blanks, boxes and signature lines (URGENT)
 
 ## Session Continuity
 
