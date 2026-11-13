@@ -1533,12 +1533,37 @@
       : '';
   /** The same button as words at the end of the read summary: shown where the left column lies across the top (narrower screens), so it takes no height from the document. */
   const rereadInlineHTML = (env) => (env.agreementFor && env.docId ? ' <button class="es-read-again" type="button" data-action="es-reread">Read the PDF again</button>' : '');
+  /**
+   * The offer under the read summary while pages with no text were left unread: the portal reads them from their
+   * picture only when the sponsor asks, because every field placed that way has to be checked.
+   */
+  const unreadPages = (env) => (env.agreementFor && env.docId && env.read && !env.read.asked ? (env.read.scanned || []).length : 0);
+  const picturesOfferHTML = (env) =>
+    unreadPages(env)
+      ? `<p class="es-note es-offer">${icon('alert')}<span>${unreadPages(env) === 1 ? 'One page has' : `${unreadPages(env)} pages have`} no text, only a picture of the page, so nothing was placed there. The portal can try to read ${unreadPages(env) === 1 ? 'that page from its picture' : 'those pages from their picture'}. It takes a few seconds a page, and every field it places that way must be checked.</span><button class="cs-btn cs-btn-small" type="button" data-action="es-read-pictures">Read these pages from their picture</button></p>`
+      : '';
+  async function readPictures(env, el) {
+    if (el.disabled) return;
+    el.disabled = true;
+    el.textContent = 'Reading the PDF…';
+    await rereadAgreement(env, { pictures: true, step: (i, all) => (el.textContent = `Reading page ${i} of ${all} from its picture…`) });
+    if (editorEnv() !== env) return NS.app.save(true);
+    if (!env.fields.some((f) => f.id === esUi().sel)) esUi().sel = null;
+    NS.app.save(true);
+    NS.app.render();
+    const note = document.querySelector('.es-reread');
+    if (note) note.focus();
+  }
+  NS.actions['es-read-pictures'] = (el) => {
+    const env = editorEnv();
+    if (env && env.agreementFor) readPictures(env, el);
+  };
   NS.actions['es-reread'] = () => {
     const env = editorEnv();
     if (!env || !env.agreementFor) return;
     U.dialog(
       `<div class="dlg-head"><div><h2>Read the PDF again?</h2><p>The portal reads ${h(env.fileName)} again. Fields it placed that you have not changed are replaced by the new reading. Fields you placed yourself, moved or changed stay as they are. Undo in the editor takes this back.</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
-      <div class="dlg-body"><div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog" autofocus>Keep the fields as they are</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-reread-yes">Read the PDF again</button></div></div>`,
+      <div class="dlg-body"><div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog" autofocus>Keep the fields as they are</button>${unreadPages(env) || (env.read && env.read.asked) ? '<button class="cs-btn" type="button" data-action="es-reread-yes" data-pictures="1">Read these pages from their picture</button>' : ''}<button class="cs-btn cs-btn-primary" type="button" data-action="es-reread-yes">Read the PDF again</button></div></div>`,
       'dlg-es'
     );
   };
@@ -1548,7 +1573,7 @@
     if (el.disabled) return;
     el.disabled = true;
     el.textContent = 'Reading the PDF…';
-    await rereadAgreement(env, { step: (i, all) => (el.textContent = `Reading page ${i} of ${all} from its picture…`) });
+    await rereadAgreement(env, { pictures: el.getAttribute('data-pictures') === '1', step: (i, all) => (el.textContent = `Reading page ${i} of ${all} from its picture…`) });
     U.closeDialog();
     if (editorEnv() !== env) return NS.app.save(true);
     if (!env.fields.some((f) => f.id === esUi().sel)) esUi().sel = null;
@@ -1650,7 +1675,7 @@
     const marked = PL().reviewCount(env);
     const headHTML = env.agreementFor
       ? `${K.head(`Subscription agreement${agr ? ` · ${h(agr.name)}` : ''}`, `${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · place the fields once; each investor fills them in and signs during onboarding`, `<a class="cs-btn" href="#console-offering-${h(env.agreementFor)}">${icon('back')}Offering</a><button class="cs-btn" type="button" data-action="es-agreement-cancel" data-id="${h(env.id)}">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-save" data-id="${h(env.id)}">Save subscription agreement</button>`)}
-        <div class="es-read"><p class="cs-hint es-agr-note">${env.read ? `${h(readNote(env))} ${marked ? 'Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. ' : env.autoPlaced ? 'Check the fields, move or resize as needed, and add any others. ' : ''}` : ''}Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.${rereadInlineHTML(env)}</p>${rereadNoteHTML(env)}</div>`
+        <div class="es-read"><p class="cs-hint es-agr-note">${env.read ? `${h(readNote(env))} ${marked ? 'Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. ' : env.autoPlaced ? 'Check the fields, move or resize as needed, and add any others. ' : ''}` : ''}Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.${rereadInlineHTML(env)}</p>${picturesOfferHTML(env)}${rereadNoteHTML(env)}</div>`
       : `${K.head(h(env.title), `Draft · ${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'}`, `<a class="cs-btn" href="#console-esign">${icon('back')}E-sign</a><button class="cs-btn" type="button" data-action="es-delete" data-id="${h(env.id)}">Delete draft</button><button class="cs-btn" type="button" data-action="es-save-tpl" data-id="${h(env.id)}">Save as template</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-review" data-id="${h(env.id)}">Review and send</button>`)}`;
     // The editor itself (the fields to add, the document, the selected field) is fieldeditor.js.
     return K.shell(`${headHTML}${NS.fieldEditor.html(editorCtx(env))}`, 'console-esign');

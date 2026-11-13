@@ -75,26 +75,29 @@
   }
 
   /**
-   * The page drawn on a canvas: { canvas, ctx, scale, ox, oy } with canvas pixel = point * scale + (ox, oy). Where one
+   * The page drawn on a canvas: { canvas, ctx, scale, sy, ox, oy } with canvas pixel = point * (scale, sy) + (ox, oy). Where one
    * picture covers the page it is drawn at its own pixels, one to one (its strokes stay as crisp as they are in the
    * file); any other page at about 200 to the inch.
    */
   async function draw(pdfPage, raw) {
     const v1 = pdfPage.getViewport({ scale: 1 });
     const im = raw.image;
-    let scale = im ? im.w / (im.x1 - im.x0) : 200 / 72;
-    scale = Math.max(1, Math.min(scale, Math.sqrt(MAX_PIXELS / (v1.width * v1.height))));
-    const ox = im ? Math.round(im.x0 * scale) - im.x0 * scale : 0;
-    const oy = im ? Math.round(im.y0 * scale) - im.y0 * scale : 0;
-    const vp = pdfPage.getViewport({ scale, offsetX: ox, offsetY: oy });
+    const most = Math.sqrt(MAX_PIXELS / (v1.width * v1.height));
+    const own = !!im && im.w / (im.x1 - im.x0) <= most && im.w / (im.x1 - im.x0) >= 1;
+    // One to one: a pixel of the picture is a pixel of the canvas, across and down, and starts on a whole pixel.
+    const scale = own ? im.w / (im.x1 - im.x0) : Math.min(200 / 72, most);
+    const sy = own ? im.h / (im.y1 - im.y0) : scale;
+    const ox = own ? Math.round(im.x0 * scale) - im.x0 * scale : 0;
+    const oy = own ? Math.round(im.y0 * sy) - im.y0 * sy : 0;
+    const vp = pdfPage.getViewport({ scale });
     const canvas = document.createElement('canvas');
-    canvas.width = Math.ceil(vp.width);
-    canvas.height = Math.ceil(vp.height);
+    canvas.width = Math.ceil(vp.width) + 1;
+    canvas.height = Math.ceil(v1.height * sy) + 1;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    await pdfPage.render({ canvasContext: ctx, viewport: vp }).promise;
-    return { canvas, ctx, scale, ox, oy };
+    await pdfPage.render({ canvasContext: ctx, viewport: vp, transform: [1, 0, 0, sy / scale, ox, oy] }).promise;
+    return { canvas, ctx, scale, sy, ox, oy };
   }
   /**
    * A smooth enlarged copy for recognition (small print wants about 300 to the inch), with the found lines and boxes
@@ -119,7 +122,7 @@
    * line's baseline; conf is how sure the recognition was of its word (0 to 100). Underscores are left out: a blank
    * is read from its drawn line, never from a recognised character.
    */
-  function characters(blocks, scale, ox, oy) {
+  function characters(blocks, scale, ox, oy, sy) {
     const glyphs = [];
     const words = [];
     const slopes = [];
@@ -130,10 +133,10 @@
           if (!ws.length) return;
           const bl = l.baseline || { x0: l.bbox.x0, y0: l.bbox.y1, x1: l.bbox.x1, y1: l.bbox.y1 };
           if (bl.x1 - bl.x0 > 150 * scale) slopes.push(Math.abs((bl.y1 - bl.y0) / (bl.x1 - bl.x0)));
-          const base = ((bl.y0 + bl.y1) / 2 - oy) / scale;
+          const base = ((bl.y0 + bl.y1) / 2 - oy) / sy;
           // The size of the type: the height of the line's tallest word is about seven tenths of it when the line has
           // capitals or tall letters, and the whole of it when it has letters that hang below as well.
-          const tall = Math.max.apply(null, ws.map((w) => w.bbox.y1 - w.bbox.y0)) / scale;
+          const tall = Math.max.apply(null, ws.map((w) => w.bbox.y1 - w.bbox.y0)) / sy;
           const text = ws.map((w) => w.text).join('');
           const size = Math.max(4, Math.min(40, /[gjpqy,;()[\]]/.test(text) ? tall / 0.95 : tall / 0.72));
           let last = null;
@@ -141,7 +144,7 @@
             const conf = Math.round(+w.confidence || 0);
             const letters = /[A-Za-z0-9]/.test(w.text);
             if (!letters && conf < 30) return; // specks
-            const box = { s: w.text, x0: (w.bbox.x0 - ox) / scale, x1: (w.bbox.x1 - ox) / scale, y0: (w.bbox.y0 - oy) / scale, y1: (w.bbox.y1 - oy) / scale, conf, letters, base, size };
+            const box = { s: w.text, x0: (w.bbox.x0 - ox) / scale, x1: (w.bbox.x1 - ox) / scale, y0: (w.bbox.y0 - oy) / sy, y1: (w.bbox.y1 - oy) / sy, conf, letters, base, size };
             words.push(box);
             // The characters of a word share its width evenly: the recognition is sure of a word's extent, not of each letter's.
             const cells = Array.from(w.text).map((u, i, all) => ({ u, x0: box.x0 + ((box.x1 - box.x0) * i) / all.length, x1: box.x0 + ((box.x1 - box.x0) * (i + 1)) / all.length }));
@@ -224,7 +227,7 @@
           }
           a = b;
         }
-        live = now.concat(live.filter((s) => s.c1 >= c - 1 && now.indexOf(s) < 0));
+        live = now;
       }
       // Paper on both sides: the lines just outside the stroke are mostly not print-dark along it.
       const side = (s, c) => {
@@ -346,7 +349,7 @@
       pic = await timed(draw(pdfPage, raw), PAGE_MS, 'time');
       await new Promise((r) => setTimeout(r, 0));
       const v1 = pdfPage.getViewport({ scale: 1 });
-      const at = { scale: pic.scale, x: (v) => (v - pic.ox) / pic.scale, y: (v) => (v - pic.oy) / pic.scale };
+      const at = { scale: pic.scale, x: (v) => (v - pic.ox) / pic.scale, y: (v) => (v - pic.oy) / pic.sy };
       // On a picture the lines and boxes are found first, and painted out of the copy the words are recognised from.
       const found = raw.picture ? strokes(pic.ctx, pic.canvas.width, pic.canvas.height, pic.scale) : null;
       const boxes = found ? closed(found, pic.scale) : [];
@@ -354,7 +357,7 @@
       boxes.forEach((r) => r.parts.forEach((s, i) => marks.push(i < 2 ? { x0: s.a0, x1: s.a1, y0: s.c - s.t / 2, y1: s.c + s.t / 2 } : { x0: s.c - s.t / 2, x1: s.c + s.t / 2, y0: Math.max(s.a0, r.y0 - 1), y1: Math.min(s.a1, r.y1 + 1) })));
       big = enlarged(pic, marks);
       const res = worker ? await timed(worker.recognize(big.canvas, {}, { blocks: true, text: false }), PAGE_MS, 'time') : null;
-      const read = characters(res && res.data && res.data.blocks, pic.scale * big.k, pic.ox * big.k, pic.oy * big.k);
+      const read = characters(res && res.data && res.data.blocks, pic.scale * big.k, pic.ox * big.k, pic.oy * big.k, pic.sy * big.k);
       await new Promise((r) => setTimeout(r, 0));
       const out = raw.picture ? shapes(found, boxes, at, read, { w: v1.width, h: v1.height }) : drawn(raw, read);
       out.pictured = raw.picture ? 'picture' : 'drawings';
