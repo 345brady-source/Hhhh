@@ -220,7 +220,13 @@
       else if (fn === OPS.paintImageXObject || fn === OPS.paintJpegXObject || fn === OPS.paintImageMaskXObject || fn === OPS.paintInlineImageXObject) {
         const p1 = at(st.ctm, 0, 0);
         const p2 = at(st.ctm, 1, 1);
-        if (Math.abs(p2[0] - p1[0]) * Math.abs(p2[1] - p1[1]) > 0.6 * vp.width * vp.height) picture = true;
+        if (Math.abs(p2[0] - p1[0]) * Math.abs(p2[1] - p1[1]) > 0.6 * vp.width * vp.height) {
+          // A picture over the page covers whatever was drawn before it (the recognised text laid under a scan).
+          picture = true;
+          glyphs.forEach((g) => (g.hidden = true));
+          segs.length = 0;
+          rects.length = 0;
+        }
       }
     }
     return { glyphs, segs, rects, picture };
@@ -375,6 +381,8 @@
         const after = beside.filter((g) => g.x0 >= right.x1 - 0.5);
         const lastBefore = before[before.length - 1];
         if (after.length > 3 && before.length > 3 && lastBefore && !/[:$]/.test(lastBefore.u)) return;
+        // "[________] L.P./LLC": a name the sponsor completes (the fund's, a company's), never the investor's blank.
+        if (/^\][\s,]*(l\.?\s?p\b|l\.?\s?l\.?\s?c\b|inc\b|ltd\b|corp|fund\b|limited\b)/i.test(after.slice(0, 12).map((g) => g.u).join(''))) return;
         bracketed = true;
       }
       // Walls: a rule with upright strokes meeting it is the edge of a table or a frame. Its empty cells are blanks.

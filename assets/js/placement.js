@@ -221,7 +221,7 @@
       info.kind = kind;
       return info;
     };
-    if (SKIP_HARD.test(t) || (SKIP_SOFT.test(t) && SIGNING_WORDS.test(t))) return is('skip');
+    if (SKIP_HARD.test(t) || (SKIP_SOFT.test(t) && SIGNING_WORDS.test(t) && !/\bauthori[sz]ed\b/.test(t))) return is('skip');
     // "Accepted by," over a line: where the firm signs.
     if (/^(accepted|agreed)( and (accepted|agreed))? by,?$/.test(t)) {
       info.who = 'firm';
@@ -501,7 +501,7 @@
     // A line for a second signer, a witness or a notary: placed, optional, and marked (the portal has one signer per investor).
     const second = (slot, info, seg) => {
       const t = plain(info.text);
-      const m = propose(/\b(name|print|printed|date|dated|address|title|social|tax|e-?mail|phone)\b/.test(t) ? 'other' : 'signature', slot, null, { seg, label: info.text.replace(/\s*[:\uFF1A]\s*$/, ''), required: false, who: 'investor' });
+      const m = propose(/\b(name|print|printed|date|dated|address|title|social|tax|e-?mail|phone)\b/.test(t) ? 'other' : 'signature', slot, null, { seg, label: info.text.replace(/\s*[:\uFF1A]\s*$/, ''), required: false });
       Object.assign(m, { second: true, block: false });
       Object.assign(m.p, { second: true, conf: 'low', why: WHY.second });
       return m;
@@ -952,7 +952,8 @@
        it. Left out are only rules that set off text: an empty cell with no label, a rule with running text right under
        it, a rule across the whole width of the text with no caption, the two rules of a paragraph ruled off above and below. */
     const leftEdge = L.segs.reduce((x, g) => Math.min(x, g.x0), Infinity);
-    const captionLike = (g) => !!g && !g.used && g.s.length <= 70 && !/[.;!?]$/.test(g.s);
+    const shouted = (g) => /[A-Z]{2}/.test(g.s) && g.s === g.s.toUpperCase();
+    const captionLike = (g) => !!g && !g.used && g.s.length <= 70 && !/[.;!?]$/.test(g.s) && !shouted(g);
     L.slots
       .filter((sl) => !sl.made && !sl.skip)
       .sort((a, b) => a.y - b.y || a.x0 - b.x0)
@@ -961,6 +962,7 @@
         const top = over(sl);
         const between = (o) => L.segs.some((g) => g.y > Math.min(o.y, sl.y) + 2 && g.y < Math.max(o.y, sl.y) - 2 && overlap(g.x0, g.x1, sl.x0, sl.x1) > 0 && g.s.length > 70);
         const ruledOff = L.slots.some((o) => o !== sl && !o.made && Math.abs(o.x0 - sl.x0) <= 2 && Math.abs(o.x1 - sl.x1) <= 2 && Math.abs(o.y - sl.y) > 12 && Math.abs(o.y - sl.y) <= 260 && between(o));
+        // Running text or a heading in capitals right under a rule: the rule sets it off.
         const prose = !!cap && !cap.used && !captionLike(cap);
         if (sl.cell || sl.table || prose || ruledOff || (!captionLike(cap) && sl.x1 - sl.x0 >= 0.85 * (rightEdge - leftEdge))) return (sl.skip = true);
         const name = captionLike(cap) ? cap : captionLike(top) && /[:\uFF1A]\s*$/.test(top.s) ? top : null;
