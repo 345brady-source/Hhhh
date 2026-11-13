@@ -450,6 +450,9 @@
     // A whole copy, so everything on the field comes with it; only its identity and its place are new.
     const c = JSON.parse(JSON.stringify(f));
     c.id = cur.ctx.uid();
+    // The copy is the sponsor's own field, not one the portal placed: a later reading of the PDF leaves it alone.
+    delete c.auto;
+    delete c.placed;
     const pt = pagePt(f.page);
     const dx = OFFSET / pt.w;
     const dy = OFFSET / pt.h;
