@@ -150,7 +150,7 @@
     return e && !p ? 'entity' : p && !e ? 'person' : '';
   }
   // Lines for people the portal has no signer for: one signer per investor.
-  const SKIP_HARD = /\b(witness(es|ed)?|notary|notari[sz]ed|spouse|spousal|co-? ?(subscriber|investor|purchaser|signer|signatory|owner|applicant|trustee|tenant)|joint (subscriber|investor|owner|purchaser|account holder|tenant|signature)|(second|additional|other) (subscriber|investor|purchaser|signatory|owner|trustee|signature)|guarantor|attest(ed|ation)?)\b/;
+  const SKIP_HARD = /\b(witness(es|ed)?|notary|notari[sz]ed|spouse|spousal|co-? ?(subscriber|investor|purchaser|signer|signatory|owner|applicant|trustee|tenant)|joint (subscriber|investor|owner|purchaser|account holder|tenant|signature)|(second|additional|other) (subscriber|investor|purchaser|signatory|signer|owner|trustee|signature|director|officer|person|holder|applicant|party)|guarantor|attest(ed|ation)?)\b/;
   const SKIP_SOFT = /\b(custodian|broker|dealer|advis[eo]r|representative of|purchaser representative|registered representative|preparer|attorney|counsel|medallion)\b/;
   const SIGNING_WORDS = /\b(signature|sign|signed|signatory|by|initials?)\b/;
   const SIG_RE = /^(by|signed|sign|signature|sign here|please sign|x|(authori[sz]ed )?(signature|signatory|signer|representative|officer|person)|(authori[sz]ed )?signature of .{2,60}|signature by .{2,40}|.{2,34}'?s? signature|signature and title)$/;
@@ -222,6 +222,11 @@
       return info;
     };
     if (SKIP_HARD.test(t) || (SKIP_SOFT.test(t) && SIGNING_WORDS.test(t))) return is('skip');
+    // "Accepted by," over a line: where the firm signs.
+    if (/^(accepted|agreed)( and (accepted|agreed))? by,?$/.test(t)) {
+      info.who = 'firm';
+      return is('signature');
+    }
     if (DATE_RE.test(t)) return is('date');
     if (n <= 8 && !SIG_NOT.test(t) && !/[.;]\s|[.;?!]$/.test(t) && SIG_RE.test(t)) {
       info.by = t === 'by';
@@ -234,6 +239,8 @@
       if (!info.forType && /\b(entity|trust|company|corporation|partnership|organi[sz]ation)\b/.test(t) && !/\b(subscriber|investor|purchaser)\b/.test(t)) info.forType = 'entity';
       return is('investorName');
     }
+    // "Print name of first director", "Typed name of officer": the printed name of whoever signs the line above.
+    if (n <= 8 && /^((please )?print(ed)? |typed? )name( of .{2,40})?$/.test(t)) return is('name');
     if (TITLE_RE.test(t)) return is('title');
     if (AMOUNT_RE.test(t)) return is('amount');
     if (ADDRESS_RE.test(t)) return is('address');
@@ -299,6 +306,32 @@
     // is no blank either: the row's blank is the empty cell.
     const filled = (r) => r.table && r.clear < 12 && lines.some((ln) => ln.parts.some((p) => p.t === 'text' && p.y < r.y - 2 && p.y > r.y - r.clear - p.h && overlap(p.x0, p.x1, r.x0, r.x1) > 0));
     const rules = (pg.rules || []).filter((r) => r && r.x1 - r.x0 >= MIN_RULE - 1 && r.clear >= TIGHT_CLEAR && !filled(r) && !boxes.some((b) => r.x0 >= b.x0 - 1.5 && r.x1 <= b.x1 + 1.5 && r.y >= b.y0 - 1.5 && r.y <= b.y1 + 1.5));
+    // One line shared by several captions printed under it ("Name of Subscriber ... Social Security Number", two
+    // signatures on one rule): the line is cut at its captions, one blank for each.
+    for (let i = rules.length - 1; i >= 0; i--) {
+      const r = rules[i];
+      if (r.cell || r.table || r.cut || r.x1 - r.x0 < 150) continue;
+      const cap = lines.filter((ln) => ln.y - r.y >= 0.6 * ln.h && ln.y - r.y <= 2.2 * ln.h).sort((a, b) => a.y - b.y)[0];
+      if (!cap || lines.some((ln) => Math.abs(ln.y - r.y) < 0.6 * ln.h && ln.parts.some((p) => p.t === 'text' && p.x1 <= r.x0 + 2 && r.x0 - p.x1 < 40))) continue;
+      const groups = [];
+      cap.parts.forEach((p) => {
+        if (p.t !== 'text' || p.x0 < r.x0 - 6 || p.x1 > r.x1 + 6) return;
+        const g = groups[groups.length - 1];
+        if (g && p.x0 - g.x1 <= 12) {
+          g.x1 = p.x1;
+          g.s += ' ' + p.s;
+        } else groups.push({ x0: p.x0, x1: p.x1, s: p.s });
+      });
+      if (groups.length < 2 || cap.parts.some((p) => p.t !== 'text') || groups.some((g) => g.s.length > 60 || /[.;!?]$/.test(g.s))) continue;
+      const pad = r.pad || { l: 0, r: 0, d: 0 };
+      const cutUp = groups.map((g, k) => {
+        const x0 = k ? g.x0 : r.x0;
+        const x1 = k + 1 < groups.length ? groups[k + 1].x0 - 8 : r.x1;
+        return Object.assign({}, r, { x0, x1, split: r, pad: { l: k ? 0 : pad.l, r: k + 1 < groups.length ? 0 : pad.r, d: pad.d } });
+      });
+      if (cutUp.some((c) => c.x1 - c.x0 < MIN_RULE)) continue;
+      rules.splice.apply(rules, [i, 1].concat(cutUp));
+    }
     // A table row whose label does not fill its cell: the stretch after the label is the blank only when the cell
     // beside it is not an empty one (then that cell is).
     const all = rules.slice();
@@ -358,7 +391,7 @@
         // Underscores or a leader are a blank only where a printed line was read for them.
         const r = pair.get(p);
         if (!r || (r.clear < BLANK_CLEAR && p.t !== 'gap')) return;
-        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
         slot.line = ln;
         slot.fromText = true;
         slot.src = p.src;
@@ -369,7 +402,7 @@
         if (taken.has(r) || r.clear < BLANK_CLEAR) return;
         // A stroke inside a run of words (two underscores in a name, a dash) is part of the text, not a blank.
         if (ln.parts.some((p) => p.t === 'text' && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0))) return;
-        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
         slots.push(slot);
         els.push({ t: 'slot', key: r.x0, slot });
       });
@@ -400,8 +433,8 @@
       ln.els.forEach((e, i) => (e.i = i));
     });
     // A stroke in the body of a run of words (the bar of a letter, an equals sign) is part of the text, not a blank.
-    const inText = (r) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && r.y > p.y - 1.05 * p.h && r.y < p.y + 0.2 * p.h && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0)));
-    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, line: null, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table }));
+    const inText = (r) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && r.y > p.y - 0.8 * p.h && r.y < p.y + 0.2 * p.h && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0)));
+    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, line: null, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table }));
     // Rows of a ruled table: each row's line runs under its label too, so the empty stretch begins where that row's
     // label ends. Nothing printed marks the column, so rows that end together start together, after the longest label.
     const cut = slots.filter((s) => s.cut).sort((a, b) => a.y - b.y);
@@ -710,7 +743,17 @@
               seg.used = 'label';
               return generic(slot, info, seg);
             }
-            if (!info && dist <= 14) return sentence(slot, whole || seg.s, seg, after);
+            if (!info && dist <= 14) {
+              // "Dated: ________, ____": the short blank after the comma is the year of the date before it.
+              const before = ln.els[left.i - 1];
+              const date = /^[,.]$/.test(seg.s) && before && before.t === 'slot' && before.slot.made ? before.slot.made : null;
+              if (date && (date.kind === 'date' || /\b(date|dated|day of|as of)\b/i.test(date.p.label))) {
+                const m = propose('other', slot, null, { seg, label: 'Year', required: false, who: date.who });
+                m.yearOf = date;
+                return m;
+              }
+              return sentence(slot, whole || seg.s, seg, after);
+            }
           }
         }
         // A label printed after its blank: "______ (Signature)", "____ Initials".
@@ -794,22 +837,33 @@
       const below = st.map((s) => under(s));
       const above = st.map((s) => over(s));
       const capInfo = below.map((g) => (g && !/[:\uFF1A]\s*$/.test(g.s) ? known(g) : null));
-      const topInfo = above.map((g, i) => (g ? known(g) || labelOver(st[i], g) : null));
+      const topKnown = above.map((g) => (g ? known(g) : null));
+      const topInfo = above.map((g, i) => topKnown[i] || (g ? labelOver(st[i], g) : null));
       const nCap = capInfo.filter(Boolean).length;
-      const nTop = topInfo.filter(Boolean).length;
-      if (!nCap && !nTop) return;
+      const nTop = topKnown.filter(Boolean).length;
+      // Whether captions or labels above are meant is decided by the labels the portal knows; any other label then follows.
+      if (!nCap && !topInfo.some(Boolean) && !st.some((s) => s.split)) return;
+      // Any short words under a line are its caption where the line shares its rule with other captions, or stands in a
+      // stack whose other lines have captions the portal knows.
+      const capAny = (s, g) => {
+        if (!g || g.used || !(s.split || nCap) || g.s.length > 70 || wordsOf(g.s).length > 10 || /[.;!?]$/.test(g.s) || !g.line || g.line.els.some((e) => e.t !== 'seg')) return null;
+        return { kind: 'other', who: whoIn(plain(g.s)), forType: '', optional: OPTIONAL_RE.test(g.s.toLowerCase()), colon: true, by: false, text: g.s, any: true };
+      };
+      const splitCaps = st.some((s) => s.split);
       // Text of any kind right above the first line speaks for labels above; text right under the last line for captions.
       const headed = !!above[0];
       const footed = !!below[st.length - 1];
-      const caps = nCap > nTop || (nCap === nTop && !(headed && !footed));
+      const caps = (nCap > 0 || splitCaps) && (nCap > nTop || (nCap === nTop && !(headed && !footed)) || (splitCaps && nCap >= nTop));
       const sure = caps ? nCap > nTop && nCap === st.length : false;
       st.forEach((s, i) => {
-        const info = caps ? capInfo[i] : topInfo[i];
+        const info = caps ? capInfo[i] || capAny(s, below[i]) : topInfo[i];
         const seg = caps ? below[i] : above[i];
         // Any other text under a rule (a heading, a page number, a footnote) means the rule is not a blank.
         if (!info || !seg || seg.used) return;
         seg.used = caps ? 'caption' : 'above';
         if (info.kind === 'skip') return second(s, info, seg);
+        // The same caption a second time on one shared line (a second "Signature of Subscriber") is a second signer's.
+        if (caps && s.split && ['signature', 'name', 'date', 'taxId', 'investorName'].indexOf(info.kind) >= 0 && L.slots.some((o) => o !== s && o.split === s.split && o.x0 < s.x0 && o.made && o.made.kind === info.kind)) return second(s, Object.assign({}, info, { text: seg.s }), seg);
         const m = info.any ? generic(s, info, seg) : propose(info.kind, s, info, { seg, how: caps ? 'after' : 'above' });
         // A label that ends in a colon and starts where its blank starts, with no caption anywhere in the stack, is plain.
         const plainAbove = !caps && !nCap && info.colon && Math.abs(seg.x0 - s.x0) <= 12;
@@ -902,8 +956,10 @@
         const roleOnly = /^(the )?(subscribers?|investors?|purchasers?|limited partners?|members?|general partner|managing member|manager|sponsor|issuer|company|fund|partnership)$/.test(t);
         const byLine = /^by:?\s+\S/i.test(raw);
         const accepts = /^(accepted|agreed)\b/.test(t);
-        const who = whoIn(t);
-        const forType = headType(t.replace(/\blimited partners?(hip)?\b|\bgeneral partner\b|\blimited liability\b/g, ' '));
+        // "By: [General Partner]": a remark in brackets on a "By" line names the side as well as plain words do.
+        const who = whoIn(t) || (byLine ? whoIn(raw.toLowerCase().replace(/[^a-z ]+/g, ' ')) : '');
+        // "Not applicable for subscriptions by entities" says who the page is not for: it names no kind of investor.
+        const forType = /\bnot (applicable|for|required|to be)\b/.test(t) ? '' : headType(t.replace(/\blimited partners?(hip)?\b|\bgeneral partner\b|\blimited liability\b/g, ' '));
         const named = !who && !/\b(pages?|agreement|questionnaire|subscription|booklet|exhibit|appendix|schedule|memorandum)\b/.test(t) && c.names.some((nm) => bare(raw).indexOf(nm) >= 0);
         const next = ln.els[e.i + 1];
         const info = classify(raw);
@@ -913,7 +969,8 @@
         if (seg.used || (next && next.t === 'slot')) {
           // A label speaks for the lines under it only when it names a side outright or says whose line it is.
           // A bare "SUBSCRIBER: ____" heads its block like any heading; "Signature of Subscriber" speaks for its own lines only.
-          if (roleOnly || (who && isKnown)) heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who, label: !roleOnly, strong: true, seg });
+          // Words of acceptance with a blank in them ("Accepted as of ____") open the firm's block like a heading.
+          if (roleOnly || accepts || (who && isKnown)) heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who: who || (accepts ? 'firm' : ''), label: !roleOnly && !accepts, strong: true, seg });
           return;
         }
         if (!(caps || colon || titled || roleOnly || byLine || accepts)) return;
@@ -925,6 +982,10 @@
         else if ((caps || colon) && !isKnown && !byLine && raw.length <= 60 && /[A-Za-z]{4}/.test(raw)) heads.push(Object.assign(hd, { blocker: true }));
       });
     });
+    // A heading that closed the page before, with nothing under it there, governs this page from its top.
+    if (c.carry && c.carry.page === pg.page - 1) heads.push(Object.assign({}, c.carry.head, { y: -1, x0: 0, x1: pg.w, top: true, mid: true, seg: {} }));
+    const closing = heads.filter((hd) => !hd.label && !hd.skip && !hd.blocker && (hd.who || hd.forType) && hd.y > 0.6 * pg.h && !made.some((m) => m.y > hd.y) && !L.slots.some((sl) => sl.y > hd.y)).sort((a, b) => b.y - a.y)[0];
+    c.carry = closing ? { page: pg.page, head: closing } : null;
     heads.sort((a, b) => b.y - a.y);
     const things = L.segs.map((g) => ({ x0: g.x0, x1: g.x1, y: g.y })).concat(L.slots.map((s) => ({ x0: s.x0, x1: s.x1, y: s.y })));
     const governs = (hd, m) => {
