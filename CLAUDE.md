@@ -7,5 +7,5 @@ You are working on my life's work.
 - Do not say "you're right".
 - Do not ever cut corners.
 - Always deliver a product that is ready for market.
-- Always use GSD for all work on this project, start to finish, no matter what, until I tell you to stop. Never skip or shorten any step of its process (planning, plan check, verification, owner checks), even when asked to go faster.
-- Use all possible resources. Have absolutely no regard for usage. Maximize speed: run as many agents at once as helps (50 at a time is fine). Never sacrifice quality for it.
+- GSD is optional: use it or not, whichever gets the work done well with less usage. Whatever the process, test on real documents, show the owner the real result, and never call something done before the owner has checked it.
+- Do not run out of usage. Work economically: few agents, no waste. Meet the deadline the owner sets.
