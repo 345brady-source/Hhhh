@@ -1228,7 +1228,7 @@
     const row = words.filter((w) => mid(w) > b.y0 - 1 && mid(w) < b.y1 + 1);
     const w = b.x1 - b.x0;
     const hh = b.y1 - b.y0;
-    if (b.small && Math.abs(w - hh) <= 0.3 * Math.max(w, hh)) {
+    if (b.small && Math.abs(w - hh) <= 0.2 * Math.max(w, hh)) {
       // The words beside a tick box: after it up to the next box or a wide gap, else before it.
       const next = all.filter((o) => o !== b && o.x0 > b.x1 && overlap(o.y0, o.y1, b.y0, b.y1) > 0).sort((p, q) => p.x0 - q.x0)[0];
       const after = [];
