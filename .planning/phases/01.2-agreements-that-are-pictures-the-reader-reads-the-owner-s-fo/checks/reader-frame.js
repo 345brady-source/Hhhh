@@ -2,7 +2,7 @@
 /*
  * The text reader's engine inside the reproduced preview frame.
  *
- *   node reader-frame.js [--strict-only] [--opaque]
+ *   node reader-frame.js [--probe] [--strict-only] [--opaque] [--shots <folder outside the repository>]
  *
  * The frame is the proof runner's: a host page on one origin, the portal in a sandboxed frame on another, the framed
  * page served with the preview's content policy, every request to another host aborted and listed. Here every request
@@ -17,11 +17,21 @@
  *           worker, within 20 seconds; nothing thrown at the page; no request to another host. The proof runner
  *           decides the frame's sandbox when it is loaded, so this pass runs as a child process with --opaque.
  *
+ * In pass 1 a blank strip is also read (no word), the worker is counted (one while started, none after stop), and
+ * each of the reader's own two small files is answered 404 once (code load, why file).
+ *
+ * --probe runs the same three states on reader-probe.html instead: the page is opened in the same frame, answered
+ * with the framed portal page's policy, and must show the sentence for the state within 25 seconds (it works; it could
+ * not start, with the fixed sentence for compile; it could not start, with the fixed sentence for worker). Its
+ * visible text may hold only the fixed sentences and the seconds: what the engine itself said is on the console only.
+ * --shots saves a picture of the probe page in each state.
+ *
  * --strict-only runs pass 2 alone, --opaque pass 3 alone; with neither, all three run, one browser at a time.
  * The test line is made up and comes from no document. Last line: "READER FRAME: PASS" or "READER FRAME: FAIL - ...";
  * exit 0 or 1. When the proof runner or the browser driver is missing: "NOT RUN: ..." and exit 2.
  */
 const fs = require('fs');
+const http = require('http');
 const os = require('os');
 const path = require('path');
 const { spawnSync, execFileSync } = require('child_process');
@@ -31,7 +41,23 @@ const SCRATCH = process.env.PICTURE_SCRATCH || path.join(os.tmpdir(), 'claude-0/
 const PROOF = path.join(process.env.PROOF_DIR || path.join(SCRATCH, 'build/proof'), 'proof.js');
 const OPAQUE = process.argv.includes('--opaque');
 const STRICT_ONLY = process.argv.includes('--strict-only');
+const PROBE = process.argv.includes('--probe');
+const SHOTS = process.argv.includes('--shots') ? path.resolve(process.argv[process.argv.indexOf('--shots') + 1] || '') : '';
 const LINE = 'Reader test line 123 INITIALS';
+const TITLE = 'Text reader check';
+const SAYS = {
+  works: 'The text reader works here.',
+  cannot: 'The text reader could not start here. Boxes are still found on a picture page; the words by them are not read.',
+  unread: 'The text reader started but did not read the test line.'
+};
+const WHY = {
+  worker: 'This page is not allowed to start the reader’s background worker.',
+  compile: 'This host does not allow the reader’s code to be prepared for running.',
+  file: 'One of the reader’s own files could not be loaded.',
+  time: 'The reader did not answer within 20 seconds.'
+};
+const SECONDS = /^The (start|attempt) took (under 0\.1|\d+\.\d) seconds\.$/;
+const PROBE_MS = 25000;
 const LOAD_MS = 20000;
 const WORKER_FILES = ['textread-boot.js', 'language-data.js', 'textread-worker.min.js', 'textread-core.wasm.js'];
 
@@ -74,8 +100,9 @@ async function frame(opts, body) {
     C.context.on('response', (r) => {
       const u = r.url().split('?')[0];
       if (/\/diy-portal\.html$/.test(u)) policy = r.headers()['content-security-policy'] || policy;
-      if (/\/assets\/vendor\/textread\//.test(u)) seen.push(`${r.status()} ${u.split('/').pop()}`);
+      if (/\/assets\/vendor\/textread\/|\/assets\/js\/textengine\.js$|\/reader-probe\.html$/.test(u) || (opts.probe && /\/assets\/css\/tokens\.css$/.test(u))) seen.push(`${r.status()} ${u.split('/').pop()}`);
     });
+    C.context.on('requestfailed', (q) => seen.push(`FAILED ${q.url().split('?')[0].split('/').pop()} (${(q.failure() || {}).errorText || 'no reason given'})`));
     await C.context.route(/\.gz(\.txt)?(\?.*)?$/, (route) => route.fulfill({ status: 404, contentType: 'text/plain', body: 'not served' }));
     if (opts.strict)
       await C.context.route(/\/assets\/vendor\/textread\/[^/?]+\.js(\?.*)?$/, (route) => {
@@ -86,6 +113,7 @@ async function frame(opts, body) {
     const S = await P.openPortal(C, srv, true, '');
     await S.P.waitForFunction(() => window.CVPortal && document.readyState === 'complete', null, { timeout: 30000 });
     need(!!policy, 'the framed page carried no content policy');
+    if (opts.probe) return await body({ S, C, seen, srv, policy: () => policy });
     await within(
       S.P.evaluate(
         () =>
@@ -290,9 +318,105 @@ async function opaque() {
   });
 }
 
+/**
+ * A server of this checkout's files for the probe page, on a port of its own: reader-probe.html carries the framed
+ * portal page's policy as its header, every other file is served plainly (as the reproduced preview serves them).
+ */
+function probeServer(policy) {
+  const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript', '.css': 'text/css' };
+  const handler = (req, res) => {
+    const url = decodeURIComponent(req.url.split('?')[0]);
+    const p = path.join(ROOT, url);
+    if (!p.startsWith(ROOT + path.sep) || !fs.existsSync(p) || fs.statSync(p).isDirectory()) return res.writeHead(404), res.end();
+    const head = { 'Content-Type': MIME[path.extname(p)] || 'application/octet-stream', 'Cache-Control': 'no-store' };
+    if (url === '/reader-probe.html') head['Content-Security-Policy'] = policy;
+    res.writeHead(200, head);
+    fs.createReadStream(p).pipe(res);
+  };
+  return new Promise((resolve, reject) => {
+    let port = 8791;
+    const next = () => {
+      if (port > 8799) return reject(new Error('no free port in 8791-8799 for the probe page'));
+      const s = http.createServer(handler);
+      s.once('error', () => (port++, next()));
+      s.listen(port, () => resolve(s));
+    };
+    next();
+  });
+}
+
+/**
+ * The probe page in one state: opened in the frame the portal was in, answered with the framed portal page's policy.
+ * want.say: the sentence it must show; want.why: the fixed detail sentence it must show with it (or none).
+ */
+async function probe(state, head, opts, want) {
+  console.log(head);
+  await frame(Object.assign({ probe: true }, opts), async ({ S, C, seen, srv, policy }) => {
+    const notes = [];
+    S.page.on('console', (m) => /^Text reader check: /.test(m.text()) && notes.push(m.text()));
+    const own = await probeServer(policy());
+    const before = S.errors.length;
+    const t0 = Date.now();
+    let answered = false;
+    try {
+      await S.P.goto(`http://127.0.0.1:${own.address().port}/reader-probe.html`);
+      answered = await S.P.waitForFunction(() => document.getElementById('say') && document.getElementById('say').textContent !== 'Checking the text reader…', null, { timeout: PROBE_MS }).then(
+        () => true,
+        () => false
+      );
+    } finally {
+      own.close();
+      own.closeAllConnections && own.closeAllConnections();
+    }
+    const ms = Date.now() - t0;
+    const r = await S.P.evaluate(() => ({
+      say: document.getElementById('say').textContent,
+      role: document.getElementById('say').getAttribute('role'),
+      title: document.title,
+      origin: window.origin,
+      lines: document.body.innerText.split('\n').map((s) => s.trim()).filter(Boolean),
+      csp: (window.__csp || []).slice()
+    }));
+    const fixed = [TITLE].concat(Object.values(SAYS), Object.values(WHY));
+    const other = r.lines.filter((l) => !fixed.includes(l) && !SECONDS.test(l));
+    // what the engine or the browser itself said: the last part of the page's console line
+    const raw = notes.map((n) => n.split(' / ').slice(3).join(' / ')).filter(Boolean).join(' ');
+    const vocabulary = new Set(fixed.join(' ').toLowerCase().match(/[a-z]{4,}/g));
+    const leaked = Array.from(new Set(raw.toLowerCase().match(/[a-z]{4,}/g) || [])).filter((w) => !vocabulary.has(w) && r.lines.join(' ').toLowerCase().includes(w));
+    const thrown = S.errors.slice(before).filter((e) => /^pageerror/.test(e));
+    console.log(`  the framed page's origin: ${r.origin}; title "${r.title}"; the sentence came after ${ms} ms`);
+    r.lines.forEach((l) => console.log('  shown: ' + l));
+    console.log('  on the console only: ' + (notes.length ? notes.join(' | ').slice(0, 420) : '(nothing)'));
+    console.log('  files answered: ' + seen.join(' | '));
+    console.log('  requests to other hosts aborted: ' + C.net.aborted.length + (C.net.aborted.length ? ' ' + JSON.stringify(C.net.aborted.slice(0, 4)) : ''));
+    console.log('  policy refusals at the page: ' + JSON.stringify(r.csp));
+    if (SHOTS) {
+      fs.mkdirSync(SHOTS, { recursive: true });
+      await S.page.screenshot({ path: path.join(SHOTS, `probe-${state}.png`) });
+      await S.page.emulateMedia({ colorScheme: 'dark' });
+      await S.page.screenshot({ path: path.join(SHOTS, `probe-${state}-dark.png`) });
+      console.log(`  pictures: ${path.join(SHOTS, `probe-${state}.png`)} and probe-${state}-dark.png`);
+    }
+    need(answered, `probe (${state}): no sentence within ${PROBE_MS / 1000} seconds`);
+    need(r.say === want.say, `probe (${state}): the page said "${r.say}"`);
+    need(r.role === 'status' && r.title === TITLE, `probe (${state}): the sentence's role is ${r.role}, the title "${r.title}"`);
+    need(r.lines.filter((l) => Object.values(SAYS).includes(l)).length === 1, `probe (${state}): the page does not show exactly one of the three sentences`);
+    need(want.why ? r.lines.includes(want.why) : !r.lines.some((l) => Object.values(WHY).includes(l)), `probe (${state}): the detail sentence is not the one for this state`);
+    need(r.lines.filter((l) => Object.values(WHY).includes(l)).length <= 1, `probe (${state}): more than one detail sentence is shown`);
+    need(r.lines.some((l) => SECONDS.test(l)), `probe (${state}): the seconds are not shown`);
+    need(other.length === 0, `probe (${state}): the page shows text that is neither a fixed sentence nor the seconds: ${JSON.stringify(other).slice(0, 200)}`);
+    if (want.why) {
+      need(raw.length > 0, `probe (${state}): what the engine said was not written to the console`);
+      need(leaked.length === 0, `probe (${state}): words of the engine's own message are on the page: ${leaked.join(', ')}`);
+    } else need(r.csp.length === 0, `probe (${state}): ${r.csp.length} policy refusals at the page`);
+    need(thrown.length === 0, `probe (${state}): an error was thrown at the page`);
+    need(C.net.aborted.length === 0, `probe (${state}): ${C.net.aborted.length} requests to other hosts`);
+  });
+}
+
 /** Pass 3 as a child process of this file: the runner fixes the frame's sandbox when it is loaded. */
 function opaqueChild() {
-  const r = spawnSync(process.execPath, [__filename, '--opaque'], { encoding: 'utf8', env: process.env, maxBuffer: 1 << 24 });
+  const r = spawnSync(process.execPath, [__filename, '--opaque'].concat(PROBE ? ['--probe'] : [], SHOTS ? ['--shots', SHOTS] : []), { encoding: 'utf8', env: process.env, maxBuffer: 1 << 24 });
   const lines = String(r.stdout || '').split('\n').filter(Boolean);
   lines.filter((l) => !/^READER FRAME: /.test(l)).forEach((l) => console.log(l));
   if (r.stderr && r.stderr.trim()) console.log(r.stderr.trim().split('\n').map((l) => '  ' + l).join('\n'));
@@ -300,12 +424,16 @@ function opaqueChild() {
   if (r.status !== 0 || last !== 'READER FRAME: PASS') fails.push(/^READER FRAME: FAIL - /.test(last) ? last.replace('READER FRAME: FAIL - ', '') : `pass 3 ended with status ${r.status}`);
 }
 
+const probePlain = () => probe('plain', 'PROBE 1: reader-probe.html in the frame, worker files served plainly', {}, { say: SAYS.works });
+const probeStrict = () => probe('strict', "PROBE 2: reader-probe.html in the frame, worker files answered with the page's policy as their own header", { strict: true }, { say: SAYS.cannot, why: WHY.compile });
+const probeOpaque = () => probe('opaque', 'PROBE 3: reader-probe.html in the frame without allow-same-origin', {}, { say: SAYS.cannot, why: WHY.worker });
+
 (async () => {
-  if (OPAQUE) await opaque();
-  else if (STRICT_ONLY) await strict();
+  if (OPAQUE) await (PROBE ? probeOpaque() : opaque());
+  else if (STRICT_ONLY) await (PROBE ? probeStrict() : strict());
   else {
-    await plain();
-    await strict();
+    await (PROBE ? probePlain() : plain());
+    await (PROBE ? probeStrict() : strict());
     opaqueChild();
   }
   console.log(fails.length ? 'READER FRAME: FAIL - ' + fails.join('; ') : 'READER FRAME: PASS');
