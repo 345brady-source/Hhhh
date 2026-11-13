@@ -576,7 +576,8 @@
     const tpl = subscriptionTemplate(ws, offeringId);
     if (!tpl || !tpl.docId || !(tpl.roles || []).length || (tpl.roles || []).indexOf('Investor') < 0) return false;
     if (NS.placement.needsReview(tpl)) return false;
-    return tpl.roles.every((r) => (tpl.fields || []).some((f) => f.signerRole === r && (f.type === 'signature' || f.type === 'initials')));
+    // Where a signer signs is a signature field. Initials are not a signature.
+    return tpl.roles.every((r) => (tpl.fields || []).some((f) => f.signerRole === r && f.type === 'signature'));
   }
   async function signedBlob(envId) {
     const env = envById(W(), envId);

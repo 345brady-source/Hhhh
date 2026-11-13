@@ -211,9 +211,9 @@ const C = { name: 'Cleo Marsh', email: 'cleo.marsh@example.com', type: 'individu
     check('a signature field of the investor has "Who gets this field" only', (await page.locator('#es-fw').count()) === 1 && (await page.locator('#es-fp').count()) === 0);
     await select(sigs.firm[0]);
     check('a field of the firm has neither control', (await page.locator('#es-fw').count()) === 0 && (await page.locator('#es-fp').count()) === 0);
-    // Every investor signature and initials field to individuals only: entities are left with nowhere to sign.
-    await ev(() => { const NS = window.CVPortal; const env = NS.state.ws.envelopes.find((e) => e.id === NS.state.param); const inv = env.signers.find((s) => s.role === 'investor'); env.fields.filter((f) => f.signerId === inv.id && (f.type === 'signature' || f.type === 'initials') && f.forType !== 'person').slice(1).forEach((f) => (f.forType = 'person')); });
-    const lastOne = await ev(() => { const NS = window.CVPortal; const env = NS.state.ws.envelopes.find((e) => e.id === NS.state.param); const inv = env.signers.find((s) => s.role === 'investor'); return env.fields.find((f) => f.signerId === inv.id && (f.type === 'signature' || f.type === 'initials') && f.forType !== 'person').id; });
+    // Every investor signature field to individuals only (only a signature counts as where a signer signs): entities are left with nowhere to sign.
+    await ev(() => { const NS = window.CVPortal; const env = NS.state.ws.envelopes.find((e) => e.id === NS.state.param); const inv = env.signers.find((s) => s.role === 'investor'); env.fields.filter((f) => f.signerId === inv.id && f.type === 'signature' && f.forType !== 'person').slice(1).forEach((f) => (f.forType = 'person')); });
+    const lastOne = await ev(() => { const NS = window.CVPortal; const env = NS.state.ws.envelopes.find((e) => e.id === NS.state.param); const inv = env.signers.find((s) => s.role === 'investor'); return env.fields.find((f) => f.signerId === inv.id && f.type === 'signature' && f.forType !== 'person').id; });
     await select(lastOne);
     await page.selectOption('#es-fw', 'person');
     await page.waitForTimeout(100);
