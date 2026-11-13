@@ -437,6 +437,19 @@
     </div>`;
   }
 
+  /**
+   * Storage refused is never silent: when this browser will not keep the portal's records or files, the firm's people
+   * are told once, at the top of the page, for as long as that is so. The work itself goes on in memory.
+   */
+  function storageNote() {
+    const el = document.getElementById('notes');
+    if (!el) return;
+    const lost = NS.workspace.saveFailed() || NS.store.refused() || !!(NS.ops && NS.ops.files.refused());
+    const html = lost && state.role !== 'investor' && !state.remote ? `<div class="pvbar pvbar-note" role="alert">${icon('alert')}<span><span class="pvbar-label">This browser is not letting the portal save.</span> Your work will be lost when you close this page.</span></div>` : '';
+    // Written only when it appears or goes, so a screen reader announces it once and not at every redraw.
+    if (!!el.firstChild !== !!html) el.innerHTML = html;
+  }
+
   /* ---------- Render ---------- */
   function render() {
     const w = ws();
@@ -464,6 +477,7 @@
     // Carrow & Vale staff get the operator bar; a sponsor's own people get a plain preview bar in the investor view.
     document.getElementById('opbar').innerHTML = !w || standalone ? '' : E.managed && state.role === 'staff' ? opbarHTML() : state.role !== 'investor' && mode === 'portal' ? previewBarHTML() : '';
     document.getElementById('demo').innerHTML = state.remote ? '' : demoHTML(standalone);
+    storageNote();
     const el = document.getElementById('view');
     el.innerHTML = view.render(state.param);
     if (view.after) view.after(state.param);
@@ -506,7 +520,7 @@
   /* ---------- Events ---------- */
   function boot() {
     const app = document.getElementById('app');
-    app.innerHTML = `<div id="opbar"></div><div id="view"></div><dialog id="dlg" class="dlg"></dialog><div id="toasts" class="toasts" role="status" aria-live="polite"></div><div id="demo"></div>`;
+    app.innerHTML = `<div id="notes"></div><div id="opbar"></div><div id="view"></div><dialog id="dlg" class="dlg"></dialog><div id="toasts" class="toasts" role="status" aria-live="polite"></div><div id="demo"></div>`;
     document.addEventListener('click', (e) => {
       const a = e.target.closest('[data-action]');
       if (a && NS.actions[a.getAttribute('data-action')]) NS.actions[a.getAttribute('data-action')](a, e);
@@ -617,7 +631,7 @@
     setClient(null, 'diy-start');
   };
 
-  NS.app = { state, config, allowed, can, actor, render, go, setClient, useWorkspace, publishedServer, save, applyTenant, applyAppearance, setAppearance, setPath, getPath, ws, modeOf };
+  NS.app = { state, config, allowed, can, actor, render, go, setClient, useWorkspace, publishedServer, save, applyTenant, applyAppearance, setAppearance, setPath, getPath, ws, modeOf, storageNote };
 
   // Views register after this file loads, so boot once every script has run.
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

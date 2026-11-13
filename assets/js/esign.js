@@ -1,10 +1,10 @@
 /*
  * E-sign: envelopes and templates, a field editor in the
  * sponsor console, and one signing experience for investors and the sponsor's
- * countersigner. pdf.js renders pages; pdf-lib stamps fields and appends a
- * certificate of completion. Files live in IndexedDB (NS.ops.files). Names or values outside
- * the standard PDF fonts' character set (Łukasz, Dvořák, Nguyễn) are written with DejaVu Sans,
- * embedded through @pdf-lib/fontkit (both loaded from jsDelivr only when needed).
+ * countersigner. A PDF reader renders pages; a PDF writer stamps fields and appends a
+ * certificate of completion. Files live in the browser's file store (NS.ops.files). Names or values outside
+ * the standard PDF fonts' character set (Łukasz, Dvořák, Nguyễn) are written with an embedded font that has
+ * those characters, loaded only when needed; where that font cannot be loaded, the value is drawn as a picture.
  *
  * Production needs beyond this demo:
  * - Signer authentication: portal login, or a one-time email link plus an SMS code.
@@ -25,7 +25,8 @@
   const PDFLIB_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
   const PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
   const PDFJS_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  // Loaded only when a name or value has characters the standard PDF fonts cannot print (Ł, ř, ễ …).
+  // Loaded only when a name or value has characters the standard PDF fonts cannot print (Ł, ř, ễ …): the
+  // library that embeds a font file, and a font with a wide character set in two weights.
   const FONTKIT_URL = 'https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js';
   const UNICODE_FONT = { regular: 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf', bold: 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf' };
   const MAX_BYTES = 25 * 1024 * 1024;
@@ -195,28 +196,106 @@
     return true;
   };
   /**
-   * Fonts for one pass of writing. Helvetica when every string fits WinAnsi; otherwise a Unicode
-   * font (DejaVu Sans) embedded with fontkit, so names such as Łukasz or Dvořák print exactly.
+   * Fonts for one pass of writing. The standard font when every string fits WinAnsi; otherwise a font with a
+   * wide character set, embedded from its file, so names such as Łukasz or Dvořák print exactly. Where that file
+   * cannot be loaded (offline, or a page that is not allowed to fetch it), the standard font is used and any
+   * line it cannot print is drawn as a picture (drawText and drawPictures below).
    */
   async function fontsFor(L, pdf, texts) {
-    if (texts.every((s) => winAnsi(pdfText(s)))) return { regular: await pdf.embedFont(L.StandardFonts.Helvetica), bold: await pdf.embedFont(L.StandardFonts.HelveticaBold), uni: false };
+    const standard = async () => ({ regular: await pdf.embedFont(L.StandardFonts.Helvetica), bold: await pdf.embedFont(L.StandardFonts.HelveticaBold), uni: false });
+    let fonts;
+    if (texts.every((s) => winAnsi(pdfText(s)))) fonts = await standard();
+    else {
+      try {
+        await loadOnce(FONTKIT_URL, () => !!window.fontkit);
+        const [r, b] = await Promise.all([fetchFont(UNICODE_FONT.regular), fetchFont(UNICODE_FONT.bold)]);
+        pdf.registerFontkit(window.fontkit);
+        const regular = await pdf.embedFont(r, { subset: true });
+        const bold = await pdf.embedFont(b, { subset: true });
+        const cs = new Set(regular.getCharacterSet());
+        fonts = { regular, bold, uni: true, has: (ch) => cs.has(ch.codePointAt(0)) };
+      } catch (e) {
+        fonts = await standard();
+      }
+    }
+    fonts.pictures = [];
     try {
-      await loadOnce(FONTKIT_URL, () => !!window.fontkit);
-      const [r, b] = await Promise.all([fetchFont(UNICODE_FONT.regular), fetchFont(UNICODE_FONT.bold)]);
-      pdf.registerFontkit(window.fontkit);
-      const regular = await pdf.embedFont(r, { subset: true });
-      const bold = await pdf.embedFont(b, { subset: true });
-      const cs = new Set(regular.getCharacterSet());
-      return { regular, bold, uni: true, has: (ch) => cs.has(ch.codePointAt(0)) };
+      picMeasure('A', false);
     } catch (e) {
-      // The Unicode font could not load (offline, or a page that blocks font downloads). Sign anyway with the
-      // standard font; characters it cannot draw print as "?", and the envelope history records it.
-      const odd = Array.from(texts.join('')).filter((ch) => !winAnsi(ch)).slice(0, 3).join(' ');
-      return { regular: await pdf.embedFont(L.StandardFonts.Helvetica), bold: await pdf.embedFont(L.StandardFonts.HelveticaBold), uni: false, fallback: odd || '?' };
+      // Nothing to draw a picture on. No browser that can adopt a signature is like this; the last resort is "?" for those characters.
+      fonts.noPicture = true;
+    }
+    return fonts;
+  }
+
+  /* ---------- Text the embedded fonts cannot print, drawn as a picture ---------- */
+  /** Whether this pass's fonts have every character of s. */
+  const printable = (fonts, s) => (fonts.uni ? Array.from(s).every((ch) => fonts.has(ch)) : winAnsi(s));
+  /** The text as it will be printed: unchanged, except where no picture can be made, and then "?" for each character the fonts lack. */
+  function printed(fonts, s) {
+    if (!fonts.noPicture || printable(fonts, s)) return s;
+    fonts.replaced = true;
+    return Array.from(s).map((ch) => (printable(fonts, ch) ? ch : '?')).join('');
+  }
+  // A picture is drawn this many pixels tall and scaled to the text's size on the page, so it prints sharp at any size.
+  const PIC_PX = 64;
+  const PIC_FACE = 'Helvetica, Arial, sans-serif';
+  let picCtx = null;
+  function picMeasure(s, bold) {
+    if (!picCtx) picCtx = document.createElement('canvas').getContext('2d');
+    picCtx.font = `${bold ? 'bold ' : ''}${PIC_PX}px ${PIC_FACE}`;
+    return picCtx.measureText(s);
+  }
+  /** Width of a line in points at this size, whichever way it will be drawn. */
+  function textWidth(fonts, font, s, size) {
+    s = printed(fonts, s);
+    return printable(fonts, s) ? font.widthOfTextAtSize(s, size) : (picMeasure(s, font === fonts.bold).width * size) / PIC_PX;
+  }
+  /**
+   * Draw one line. o is what page.drawText takes: x and y of the start of its baseline, size, font, color, rotate.
+   * A line the font cannot print (or any line with o.picture) is kept for drawPictures, which must run before the PDF is saved.
+   */
+  function drawText(page, fonts, s, o) {
+    s = printed(fonts, s);
+    if (!s) return;
+    if (printable(fonts, s) && !o.picture) page.drawText(s, { x: o.x, y: o.y, size: o.size, font: o.font, color: o.color, rotate: o.rotate });
+    else fonts.pictures.push({ page, s, o });
+  }
+  /** Draw the kept lines: each with the browser's own text on a canvas, embedded as an image where the text would have been. */
+  async function drawPictures(pdf, fonts) {
+    const made = {};
+    for (const job of fonts.pictures.splice(0)) {
+      const o = job.o;
+      const bold = o.font === fonts.bold;
+      const c = o.color || { red: 0, green: 0, blue: 0 };
+      const css = `rgb(${[c.red, c.green, c.blue].map((v) => Math.round((v || 0) * 255)).join(', ')})`;
+      const key = `${bold ? 'b' : 'r'} ${css} ${job.s}`;
+      let pic = made[key];
+      if (!pic) {
+        const m = picMeasure(job.s, bold);
+        const left = Math.ceil(Math.max(0, m.actualBoundingBoxLeft || 0)) + 2;
+        const up = Math.ceil(Math.max(m.actualBoundingBoxAscent || 0, m.fontBoundingBoxAscent || PIC_PX * 0.9)) + 2;
+        const down = Math.ceil(Math.max(m.actualBoundingBoxDescent || 0, m.fontBoundingBoxDescent || PIC_PX * 0.3)) + 2;
+        const cv = document.createElement('canvas');
+        cv.width = left + Math.ceil(Math.max(m.width, m.actualBoundingBoxRight || 0)) + 2;
+        cv.height = up + down;
+        const ctx = cv.getContext('2d');
+        ctx.font = picCtx.font;
+        ctx.fillStyle = css;
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(job.s, left, up);
+        pic = made[key] = { img: await pdf.embedPng(cv.toDataURL('image/png')), left, down };
+      }
+      // The image's bottom-left corner, from the start of the baseline, turned with the text.
+      const k = o.size / PIC_PX;
+      const a = o.rotate ? (o.rotate.angle * Math.PI) / 180 : 0;
+      const dx = -pic.left * k;
+      const dy = -pic.down * k;
+      job.page.drawImage(pic.img, { x: o.x + dx * Math.cos(a) - dy * Math.sin(a), y: o.y + dx * Math.sin(a) + dy * Math.cos(a), width: pic.img.width * k, height: pic.img.height * k, rotate: o.rotate });
     }
   }
   // The signed record (record.js) writes its certificate with the same PDF writer and fonts.
-  NS.esignKit = Object.assign(NS.esignKit || {}, { writer: pdflib, fontsFor });
+  NS.esignKit = Object.assign(NS.esignKit || {}, { writer: pdflib, fontsFor, printable, printed, textWidth, drawText, drawPictures });
 
   /* ---------- Page images (rendered once per stored file, kept as object URLs) ---------- */
   const pageCache = {};
@@ -615,17 +694,76 @@
         page.drawLine({ start: p(0.16, 0.48), end: p(0.42, 0.22), thickness: t, color: ink });
         page.drawLine({ start: p(0.42, 0.22), end: p(0.86, 0.8), thickness: t, color: ink });
       } else {
-        const text = drawable(fonts, fieldText(f));
+        const text = printed(fonts, pdfText(fieldText(f)));
         if (!text) continue;
-        const fit = fitText(text, (s, z) => font.widthOfTextAtSize(s, z), w, hh);
+        const fit = fitText(text, (s, z) => textWidth(fonts, font, s, z), w, hh);
         if (!fit) throw new Error(`The text in “${f.label || TYPES[f.type].label}” is too long for its box. Shorten it and try again.`);
         const pad = (hh - fit.lines.length * fit.lead) / 2;
+        // A value with a character the font cannot print is drawn whole as a picture, so all its lines look alike.
+        const picture = !printable(fonts, text);
         fit.lines.forEach((ln, i) => {
           const ly = hh - pad - (i + 1) * fit.lead + (fit.lead - fit.size) / 2 + fit.size * 0.22;
-          page.drawText(ln, Object.assign(P(1.5, ly), { size: fit.size, font, color: ink, rotate }));
+          drawText(page, fonts, ln, Object.assign(P(1.5, ly), { size: fit.size, font, color: ink, rotate, picture }));
         });
       }
     }
+    await drawPictures(pdf, fonts);
+  }
+  /**
+   * A fillable PDF's own form fields are made read-only, so nothing can be typed into a signed agreement. The fields
+   * are kept, not flattened (flattening damages some files); a PDF with no form of its own is left exactly as it is.
+   * Returns how many fields and field boxes were locked.
+   */
+  function lockOwnFields(L, pdf) {
+    const N = (k) => L.PDFName.of(k);
+    const seen = new Set();
+    const maybe = (fn) => {
+      try {
+        return fn();
+      } catch (e) {
+        return undefined; // an entry that is not what the format says it should be is skipped
+      }
+    };
+    const each = (arr, fn) => {
+      for (let i = 0; arr && i < arr.size(); i++) {
+        const d = maybe(() => arr.lookupMaybe(i, L.PDFDict));
+        if (d) fn(d);
+      }
+    };
+    // The flags a field has: its own, or those handed down from the field it belongs to.
+    const flags = (d) => {
+      for (let x = d, i = 0; x && i < 32; i++) {
+        const v = maybe(() => x.lookupMaybe(N('Ff'), L.PDFNumber));
+        if (v) return v.asNumber();
+        x = maybe(() => x.lookupMaybe(N('Parent'), L.PDFDict));
+      }
+      return 0;
+    };
+    const lock = (d) => {
+      for (let i = 0; d && i < 32 && !seen.has(d); i++) {
+        seen.add(d);
+        d.set(N('Ff'), L.PDFNumber.of(flags(d) | 1));
+        each(maybe(() => d.lookupMaybe(N('Kids'), L.PDFArray)), lock);
+        d = maybe(() => d.lookupMaybe(N('Parent'), L.PDFDict));
+      }
+    };
+    try {
+      const form = maybe(() => pdf.catalog.lookupMaybe(N('AcroForm'), L.PDFDict));
+      if (form) {
+        each(maybe(() => form.lookupMaybe(N('Fields'), L.PDFArray)), lock);
+        // A second description of the same form, which some readers show instead and would still let a person type into.
+        form.delete(N('XFA'));
+      }
+      // Field boxes on the pages that the form's own list leaves out.
+      pdf.getPages().forEach((page) =>
+        each(maybe(() => page.node.Annots()), (d) => {
+          if (maybe(() => d.lookupMaybe(N('Subtype'), L.PDFName)) === N('Widget')) lock(d);
+        })
+      );
+    } catch (e) {
+      if (window.console) console.warn(e);
+    }
+    return seen.size;
   }
   /** Every string the certificate prints (to choose its fonts). */
   function certificateTexts(env) {
@@ -651,7 +789,8 @@
     const rule = L.rgb(0.82, 0.82, 0.82);
     let page;
     let y;
-    const text = (s, x, size, f, color) => page.drawText(drawable(fonts, s), { x, y, size, font: f || font, color: color || ink });
+    const text = (s, x, size, f, color) => drawText(page, fonts, pdfText(s), { x, y, size, font: f || font, color: color || ink });
+    const wrapText = (s, f, size, maxW) => wrapWith(pdfText(s), (t, z) => textWidth(fonts, f, t, z), size, maxW);
     const newPage = (cont) => {
       page = pdf.addPage([PW, PH]);
       y = PH - M - 14;
@@ -667,7 +806,7 @@
     };
     const kv = (label, value, size) => {
       size = size || 8;
-      const lines = wrapText(drawable(fonts, value), font, size, PW - M * 2 - 116);
+      const lines = wrapText(value, font, size, PW - M * 2 - 116);
       need(lines.length * (size + 2.5));
       text(label, M, size, bold, mute);
       lines.forEach((ln, i) => {
@@ -720,10 +859,10 @@
     }
     heading('Event history (UTC)');
     env.events.forEach((e) => {
-      const lines = wrapText(drawable(fonts, `${e.action}${e.detail ? ': ' + e.detail : ''}`), font, 7, PW - M * 2 - 236);
+      const lines = wrapText(`${e.action}${e.detail ? ': ' + e.detail : ''}`, font, 7, PW - M * 2 - 236);
       need(lines.length * 9 + 2);
       text(stamp(e.at).replace(' UTC', ''), M, 7, font, mute);
-      text(wrapText(drawable(fonts, e.actor), font, 7, 108)[0], M + 112, 7);
+      text(wrapText(e.actor, font, 7, 108)[0], M + 112, 7);
       lines.forEach((ln, i) => {
         text(ln, M + 236, 7);
         if (i < lines.length - 1) y -= 8.5;
@@ -739,6 +878,7 @@
       y -= 9;
     }
     text(opts.standalone ? 'This certificate was generated separately from the completed file, whose SHA-256 is listed above.' : 'The SHA-256 of this completed file (signed pages plus this certificate) is recorded with the envelope and in the sponsor\'s change log.', M, 7, font, mute);
+    await drawPictures(pdf, fonts);
   }
   /* ---------- Finishing a signature ---------- */
   const signedHooks = [];
@@ -771,8 +911,10 @@
       // pdf-lib cannot write an encrypted file: saving would produce a PDF no reader can open.
       if (pdf.isEncrypted) throw new Error(`This PDF is password-protected, so signatures cannot be added to it. ${T().name} needs to send an unprotected copy.`);
       const fonts = await fontsFor(L, pdf, fieldsOf(next, me).map(fieldText));
-      if (fonts.fallback) addEvent(next, 'System', 'Characters replaced', `The font for ${fonts.fallback} could not be loaded, so those characters print as "?" in the stamped fields`, at);
       await stampFields(L, pdf, next, me, fonts);
+      if (fonts.replaced) addEvent(next, 'System', 'Characters replaced', 'This browser could not draw some characters, so they print as "?" in the stamped fields', at);
+      // Once signed, the PDF's own form fields (a fillable PDF) can no longer be typed into.
+      lockOwnFields(L, pdf);
       const complete = next.signers.every((s) => s.status === 'signed');
       let out;
       if (complete) {
