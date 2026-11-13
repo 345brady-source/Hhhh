@@ -170,11 +170,12 @@
     const dark = new Uint8Array(w * h);
     for (let i = 0, j = 0; i < dark.length; i++, j += 4) {
       const lum = px[j] * 299 + px[j + 1] * 587 + px[j + 2] * 114;
-      dark[i] = lum < 150000 ? 2 : lum < 228000 ? 1 : 0;
+      dark[i] = lum < 150000 ? 2 : lum < 238000 ? 1 : 0;
     }
     const least = Math.max(6, Math.round(4.6 * scale));
     const thick = Math.max(3, Math.round(2.6 * scale));
     const bridge = scale > 2.5 ? 2 : 1;
+    const ends = Math.max(2, Math.round(scale));
     const find = (level) => {
       const lines = level ? h : w;
       const len = level ? w : h;
@@ -205,7 +206,8 @@
             let seg = null;
             for (let k = 0; k < live.length; k++) {
               const s = live[k];
-              if (Math.min(s.a1, e) - Math.max(s.a0, a) >= 0.6 * Math.min(s.a1 - s.a0, e - a)) {
+              // The rows of one stroke have the same ends (bold words just above a line have other ends, and stay apart).
+              if (Math.abs(s.a0 - a) <= ends && Math.abs(s.a1 - e) <= ends) {
                 seg = s;
                 break;
               }
