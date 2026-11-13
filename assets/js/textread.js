@@ -48,12 +48,34 @@
       document.head.appendChild(s);
     });
   }
+  /**
+   * The English data of the recognition engine, as bytes. A host that serves only common file types refuses the
+   * compressed file, so the same bytes are also kept as text (base 64) beside it: that file is read when the first
+   * request fails or does not answer with the compressed data.
+   */
+  async function language() {
+    const zipped = (b) => b.length > 1000 && b[0] === 31 && b[1] === 139;
+    try {
+      const r = await fetch(here('eng.traineddata.gz'));
+      const b = r.ok ? new Uint8Array(await r.arrayBuffer()) : null;
+      if (b && zipped(b)) return b;
+    } catch (e) {
+      /* the text copy below */
+    }
+    const r = await fetch(here('eng.traineddata.gz.txt'));
+    if (!r.ok) throw new Error('language data: ' + r.status);
+    const text = atob((await r.text()).replace(/\s+/g, ''));
+    const b = new Uint8Array(text.length);
+    for (let i = 0; i < text.length; i++) b[i] = text.charCodeAt(i);
+    if (!zipped(b)) throw new Error('language data: not the expected file');
+    return b;
+  }
   /** The recognition engine, started once (its files come from the portal's own folder). */
   function start() {
     if (!engine) {
       const p = timed(
-        script(here('textread.min.js')).then(() =>
-          window.Tesseract.createWorker('eng', 1, { workerPath: here('textread-worker.min.js'), corePath: here('textread-core.wasm.js'), langPath: here('').replace(/\/$/, ''), cacheMethod: 'none', gzip: true, errorHandler: () => {} })
+        Promise.all([script(here('textread.min.js')), language()]).then((got) =>
+          window.Tesseract.createWorker([{ code: 'eng', data: got[1] }], 1, { workerPath: here('textread-worker.min.js'), corePath: here('textread-core.wasm.js'), cacheMethod: 'none', gzip: true, errorHandler: () => {} })
         ),
         LOAD_MS,
         'load'

@@ -1236,8 +1236,42 @@
    *                                       optional
    * A box whose caption could not be read still gets its field, named "Box".
    */
-  const SECOND_RE = /\bco[\s-]?(investor|subscriber|owner|applicant|signer|trustee)|\bjoint\b|\bsecond\b|\bspouse\b/i;
-  const OTHERS_RE = /\bcustodian|\bbroker|\bdealer\b|\bregistered rep|\brepresentative|\badvis[eo]r|\bmanager\b|\bria\b/i;
+  const OTHERS_RE = /\bcustodian|\bbroker|\bdealer\b|\bregistered rep|\brepresentative|\badvis[eo]r|\bmanager\b|\bria\b|\btransfer agent|\bnotary|\bwitness/i;
+  const WHY_OTHERS = 'This place is for someone else to complete (a custodian, a broker, a representative or the like), and the portal has no signer for them. It is optional and nobody is asked to complete it: keep it for your records, or remove it.';
+  /** Who a heading or a caption says completes what is under it: 'co' (a second investor), 'other' (a third party), 'investor' or ''. */
+  const partyOf = (t) => (CO_INVESTOR.test(t) ? 'co' : OTHERS_RE.test(t) ? 'other' : /\b(investor|subscriber|purchaser|shareholder|applicant)s?\b/i.test(t) ? 'investor' : '');
+  const partyName = (t) => (/custodian/i.test(t) ? 'Custodian' : /broker|dealer/i.test(t) ? 'Broker-dealer' : /manager/i.test(t) ? 'Manager' : /registered rep|representative/i.test(t) ? 'Representative' : /advis|\bria\b/i.test(t) ? 'Adviser' : /transfer agent/i.test(t) ? 'Transfer agent' : /notary/i.test(t) ? 'Notary' : /witness/i.test(t) ? 'Witness' : 'Third party');
+  /**
+   * The headings of a form read from its picture: { sections, subs }. A section is headed in the margin beside the
+   * boxes by a number ("(3) Investor information") and runs to the next one; within it a lettered line ("B. Co-investor
+   * name") heads what follows to the next lettered line. Each: { y, s }.
+   */
+  function formHeads(pg, found) {
+    const words = (pg.words || []).filter((w) => w.letters).slice().sort((a, b) => (a.y0 + a.y1) / 2 - (b.y0 + b.y1) / 2);
+    const rows = [];
+    words.forEach((w) => {
+      const m = (w.y0 + w.y1) / 2;
+      const r = rows.find((o) => Math.abs(o.m - m) < 2.5);
+      if (r) r.ws.push(w);
+      else rows.push({ m, ws: [w] });
+    });
+    const segs = [];
+    rows.forEach((r) => {
+      let cur = null;
+      r.ws.sort((a, b) => a.x0 - b.x0).forEach((w) => {
+        if (cur && w.x0 - cur.x1 < 14) Object.assign(cur, { x1: w.x1, s: cur.s + ' ' + w.s });
+        else segs.push((cur = { x0: w.x0, x1: w.x1, y: r.m, s: w.s }));
+      });
+    });
+    const left = found.length ? Math.min.apply(null, found.map((b) => b.x0)) : 0;
+    const sections = [];
+    segs.filter((g) => g.x1 < left - 2).sort((a, b) => a.y - b.y).forEach((g) => {
+      if (!sections.length || /^[([{]?\d{1,2}[)\]}.]?(\s|$)/.test(g.s)) sections.push({ y: g.y, s: g.s });
+      else sections[sections.length - 1].s += ' ' + g.s;
+    });
+    const subs = segs.filter((g) => g.x0 >= left - 6 && g.x0 < left + 14 && /^[A-Z][.)]\s+\S/.test(g.s)).map((g) => ({ y: g.y, s: g.s })).sort((a, b) => a.y - b.y);
+    return { sections, subs };
+  }
   function boxField(pg, b, all) {
     const words = (pg.words || []).filter((w) => w.letters);
     const text = (list) => clean(list.sort((p, q) => p.x0 - q.x0).map((w) => w.s).join(' ').replace(/[|_]+/g, ' '));
@@ -1254,7 +1288,7 @@
       const label = text(after) || text(before);
       return { type: 'checkbox', role: 'investor', page: pg.page, x: b.x0 - 0.5, y: b.y0 - 0.5, w: w + 1, h: hh + 1, label: label || 'Box', required: false, conf: 'medium', why: WHY_SLANT, kind: 'checkbox' };
     }
-    if (w < 14) return null; // too narrow to write in, and not a square: the shape of a letter or an ornament
+    if (w < 14 || hh < 6) return null; // too narrow or too low to write in, and not a square: the shape of a letter or an ornament
     const left = [];
     row.filter((q) => q.x1 <= b.x0 + 1).sort((p, q) => q.x1 - p.x1).every((q) => ((left.length ? left[left.length - 1].x0 : b.x0) - q.x1 < 9 ? left.push(q) : false));
     const over = words.filter((q) => q.y1 <= b.y0 + 1 && b.y0 - q.y1 < 9 && (q.x0 + q.x1) / 2 > b.x0 - 2 && (q.x0 + q.x1) / 2 < b.x1);
@@ -1269,8 +1303,7 @@
     const whose = `${caption} ${head}`;
     const kind = /\binitial/i.test(`${whose} ${text(under)}`) ? 'initials' : /\bsignature\b|\bsign here\b/i.test(caption) ? 'signature' : /^\W*date\W*$/i.test(caption) ? 'date' : 'other';
     const p = { type: kind === 'initials' ? 'initials' : kind === 'signature' ? 'signature' : kind === 'date' ? 'date' : 'text', role: 'investor', page: pg.page, x: b.x0 + 0.5, y: b.y0 + 0.5, w: w - 1, h: hh - 1, label: caption || (kind === 'initials' ? 'Initials' : 'Box'), required: kind === 'signature', conf: 'medium', why: WHY_SLANT, kind };
-    if (SECOND_RE.test(whose)) Object.assign(p, { second: true, required: false, conf: 'low', why: WHY.second });
-    else if (OTHERS_RE.test(whose)) p.required = false;
+    p.whose = whose;
     return p;
   }
   function fromPicture(pg, mine) {
@@ -1286,7 +1319,7 @@
     const made = [];
     // On a picture a field comes only from a found box or line: a tick box read from recognised brackets is dropped,
     // and so is a line that turns out to lie under recognised words (an underline), which is no place.
-    const onBox = (p) => found.some((b) => overlap(p.x, p.x + p.w, b.x0, b.x1) > 0.5 * Math.min(p.w, b.x1 - b.x0) && overlap(p.y, p.y + p.h, b.y0 - 2, b.y1 + 2) > 0.3 * Math.min(p.h, b.y1 - b.y0 + 4));
+    const onBox = (p) => found.some((b) => (p.type !== 'checkbox' || b.small) && overlap(p.x, p.x + p.w, b.x0, b.x1) > 0.5 * Math.min(p.w, b.x1 - b.x0) && overlap(p.y, p.y + p.h, b.y0 - 2, b.y1 + 2) > 0.3 * Math.min(p.h, b.y1 - b.y0 + 4));
     const sure = (pg.words || []).filter((q) => q.letters && q.conf >= 50);
     const worded = (p) => sure.reduce((n, q) => n + Math.max(0, overlap(q.x0, q.x1, p.x, p.x + p.w)) * Math.max(0, overlap(q.y0, q.y1, p.y, p.y + p.h)), 0) > 0.3 * p.w * p.h;
     for (let i = mine.length - 1; i >= 0; i--) if (pg.approx && !onBox(mine[i]) && (mine[i].type === 'checkbox' || worded(mine[i]))) mine.splice(i, 1);
@@ -1301,16 +1334,50 @@
       const col = made.filter((o) => Math.abs(o.x - p.x) <= 3 && Math.abs(o.w - p.w) <= 3);
       if (col.length >= 3 && col.filter((o) => o.kind === 'initials').length >= 0.5 * col.length) Object.assign(p, { type: 'initials', kind: 'initials', label: /^box$/i.test(p.label) ? 'Initials' : p.label });
     });
+    // Who completes each box: its own caption or column heading, else the lettered heading it stands under, else the
+    // numbered section in the margin, else the investor. A second investor's are the co-investor's own; a third
+    // party's are nobody's the portal asks: optional, named for that party, and never where the investor signs.
+    const heads = formHeads(pg, found);
+    const under = (list, y, from) => list.filter((g) => g.y <= y + 2 && g.y >= from).pop();
+    const boxed = mine.filter((p) => onBox(p)).concat(made);
+    boxed.forEach((p) => {
+      if (p.type === 'text' && /\binitials?\b/i.test(p.label)) Object.assign(p, { type: 'initials', kind: 'initials' });
+      const sec = under(heads.sections, p.y, 0);
+      const sub = under(heads.subs, p.y, sec ? sec.y : 0);
+      const own = partyOf(p.whose || p.label);
+      const who = own || (sub && partyOf(sub.s)) || (sec && partyOf(sec.s)) || 'investor';
+      const said = own ? p.whose || p.label : sub && partyOf(sub.s) ? sub.s : sec ? sec.s : '';
+      delete p.whose;
+      if (who === 'co' && p.role !== 'co') {
+        if (!CO_INVESTOR.test(p.label)) p.label = `Co-investor ${p.label}`;
+        coInvestor(p);
+      } else if (who === 'other') {
+        const name = partyName(said);
+        Object.assign(p, { role: 'investor', other: name, second: true, required: false, conf: 'low', why: WHY_OTHERS, label: OTHERS_RE.test(p.label) ? p.label : `${name}: ${p.label}` });
+      }
+    });
+    // One column of boxes is one person's: where any box in it is the co-investor's, all of its kind are.
+    made.forEach((p) => {
+      if (p.role === 'co' || p.other || p.type === 'checkbox') return;
+      if (made.some((o) => o.role === 'co' && o.type === p.type && Math.abs(o.x - p.x) <= 3 && Math.abs(o.w - p.w) <= 3)) {
+        p.label = `Co-investor ${p.label}`;
+        coInvestor(p);
+      }
+    });
     // Two boxes to initial or sign side by side on a row: the second is a second signer's, as on any agreement.
     made.forEach((p) => {
-      if (p.kind !== 'initials' && p.kind !== 'signature') return;
+      if ((p.kind !== 'initials' && p.kind !== 'signature') || p.role === 'co' || p.other) return;
       if (made.some((o) => o !== p && o.kind === p.kind && o.x + o.w <= p.x + 1 && p.x - (o.x + o.w) < 60 && overlap(o.y, o.y + o.h, p.y, p.y + p.h) > 0.5 * p.h)) Object.assign(p, { second: true, required: false, conf: 'low', why: WHY.second });
     });
     // A date beside a second signer's signature is the second signer's too.
     made.forEach((p) => {
       if (p.kind !== 'date') return;
       const sig = made.filter((o) => o.kind === 'signature' && o.x + o.w <= p.x + 1 && overlap(o.y, o.y + o.h, p.y, p.y + p.h) > 0).sort((q, r) => r.x - q.x)[0];
-      if (sig && sig.second) Object.assign(p, { second: true, required: false, conf: 'low', why: WHY.second });
+      if (sig && sig.role === 'co' && p.role !== 'co') {
+        p.label = 'Co-investor date';
+        coInvestor(p);
+      } else if (sig && sig.other) Object.assign(p, { other: sig.other, second: true, required: false, conf: 'low', why: WHY_OTHERS, label: `${sig.other}: date` });
+      else if (sig && sig.second && !p.other) Object.assign(p, { second: true, required: false, conf: 'low', why: WHY.second });
     });
     made.forEach((p) => mine.push(p));
   }

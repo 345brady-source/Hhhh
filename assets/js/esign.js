@@ -3213,8 +3213,8 @@
   };
   // After each reading, a second investor's places go to the co-investor (kept out of the reading itself: see coSync).
   const readFields = autoFields;
-  autoFields = async function (env) {
-    const n = await readFields(env);
+  autoFields = async function (env, opts) {
+    const n = await readFields(env, opts);
     coSync(env);
     return n;
   };
