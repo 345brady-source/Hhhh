@@ -89,7 +89,7 @@ Plans:
 
 ### Phase 01.3: The owner's text agreements are read 100 percent (INSERTED)
 
-**Goal:** The three text agreements the owner supplied (document A, the 21-page subscription document; document B, the 32-page partnership agreement; document C, the subscription agreement with questionnaire supplied as a Word file and read as its PDF) are each read exactly: every printed place has its field, of the right kind, for the right person, and nothing else has one; a place meant for somebody else is shown as theirs and asked of nobody; the read summary says truthfully who signs and who does not; a Word file offered as an agreement is answered in plain words; and every document the reader already read correctly still is
+**Goal:** The three text agreements the owner supplied (document A, the 21-page subscription document; document B, the 32-page partnership agreement; document C, the subscription agreement with questionnaire supplied as a word-processing file and read as its PDF) are each read exactly: every printed place has its field, of the right kind, for the right person, under the document's own label, and nothing else has one; a place meant for somebody else is shown as theirs and asked of nobody; the read summary says truthfully who signs and who does not; a file that is not a PDF offered as an agreement is answered in plain words; and every document the reader already read correctly still is
 **Requirements**: SET-01, SET-02, SET-03, SET-04
 **Depends on:** Phase 01.1
 **Success Criteria** (what must be TRUE):
@@ -97,20 +97,22 @@ Plans:
   2. A place for somebody else (a custodian, an adviser, the writer of a letter and the like) is shown as theirs: optional, never filled in from the investor's onboarding, never counted as the investor's or the firm's signature line, asked of nobody at signing, and unmarked where the reader is sure
   3. The read summary counts printed places and says truthfully who signs: no place for the investor or the firm to sign (document A), only the firm signs (document B), an acceptance block in doubt (document C); a place left without a field is always said
   4. A document only the firm signs can be signed by the firm, is never offered to investors as the agreement they sign, and the sponsor is never told to add an investor signature field to it
-  5. A Word file offered as an agreement is refused in plain, lasting words that say to save it as a PDF and upload that; nothing is stored
+  5. A word-processing file offered as an agreement is refused in plain, lasting words that name no product and say to save it as a PDF and upload that; nothing is stored
   6. An individual, an entity (where the document provides for one) and the firm complete each document end to end, and the finished PDF shows every value on its own place
-  7. The owner's first agreement stays at exactly 47 fields with none marked, the seven public documents keep their pinned field counts (38, 0, 0, 64, 58, 0, 147) with zero unclean, the proof run and the nine check files stay green, and every rule is a convention class proved on a made-up page
+  7. The owner's first agreement stays at exactly 47 fields with none marked and with every label unchanged, the seven public documents keep their pinned field counts (38, 0, 0, 64, 58, 0, 147) with zero unclean, the proof run and the nine check files stay green, and every rule is a convention class proved on a made-up page
   8. After the verifier passes and the preview is republished, the owner has checked the three documents in it
-**Plans:** 7 plans
+**Plans:** 9 plans
 
 Plans:
-- [ ] 01.3-01-PLAN.md — Pin what already works, tighten the three scorers, and add the class-page runner with the pages for the owner "somebody else" and for documents A and B (no reader change)
-- [ ] 01.3-02-PLAN.md — The made-up pages for document C's conventions, the ordinary-table guard, and the Word-file dialog check (no reader change)
-- [ ] 01.3-03-PLAN.md — The owner "somebody else" end to end (tracer), then every class document A needs: document A's places all right
-- [ ] 01.3-04-PLAN.md — Who completes a place on a form: captions that are not headings, a third party's section, the acceptance block in doubt, the two lists of initials, and the firm's block by its printed name (documents B and C)
-- [ ] 01.3-05-PLAN.md — An empty ruled cell is named by the caption over it, with the guard for ordinary tables, and the smaller place-finding classes: document C's places all right
-- [ ] 01.3-06-PLAN.md — The read summary counted from printed places, the plain answer to a Word file, and the way forward for a document only the firm signs: the three scorers pass in full
-- [ ] 01.3-07-PLAN.md — End-to-end walks on the three documents, the whole proof in one run, and the owner's check in the republished preview
+- [ ] 01.3-01-PLAN.md — Pin what already works, tighten and hash the three scorers, and add the class-page runner with the pages for the owner "somebody else" and for documents A and B (no reader change)
+- [ ] 01.3-02-PLAN.md — The made-up pages for document C's conventions, for labels and for a signature page that is not printed, the ordinary-table guard, and the dialog check for a file that is not a PDF (no reader change)
+- [ ] 01.3-03-PLAN.md — The owner "somebody else" end to end on one convention: the tracer, and the shared contract Phase 01.2 waits for
+- [ ] 01.3-04-PLAN.md — Every class document A needs and the label rule: document A's places all right
+- [ ] 01.3-05-PLAN.md — Who completes a place on a form: captions that are not headings, a third party's section, the acceptance block in doubt, the two lists of initials, and the firm's block by its printed name (documents B and C)
+- [ ] 01.3-06-PLAN.md — An empty ruled cell is named by the caption over it, with the guard for ordinary tables, and the smaller place-finding classes: document C's places all right
+- [ ] 01.3-07-PLAN.md — The read summary counted from printed places, and the plain answer to a file that is not a PDF: documents A and C pass in full
+- [ ] 01.3-08-PLAN.md — The way forward for a document only the firm signs: document B passes in full
+- [ ] 01.3-09-PLAN.md — End-to-end walks on the three documents, the whole proof in one run, and the owner's check in the republished preview
 
 ### Phase 2: Field Editor
 **Goal**: A sponsor can adjust fields by hand quickly and without frustration, in an editor that looks professionally made
