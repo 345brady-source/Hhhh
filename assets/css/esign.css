@@ -876,6 +876,12 @@ input.fe-well { width: 44px; padding: 0 var(--space-2xs); text-align: center; }
 .es-review .cs-hint { overflow-wrap: anywhere; }
 .es-flag-box { display: flex; flex-direction: column; gap: var(--space-xs); padding: var(--space-sm); border-radius: var(--r-inner); background: var(--cv-warn-soft); color: var(--cv-ink); font-size: var(--text-sm); }
 .es-flag-box p { margin: 0; }
+/* The co-investor notice (coinvestor.js): the agreement has places for a second investor and the account has none. */
+.co-note { display: flex; flex-direction: column; gap: var(--space-xs); margin: var(--space-sm) 0; padding: var(--space-sm); border-radius: var(--r-inner); background: var(--cv-warn-soft); color: var(--cv-ink); font-size: var(--text-sm); }
+.co-note p { margin: 0; }
+.co-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3xs) var(--space-xs); margin-top: var(--space-3xs); }
+.co-record .cs-kv dd .sub { display: block; }
+.co-record strong { font-weight: 500; }
 .es-placed { margin: 0; }
 /* Where the editor's left column lies across the top instead (narrower screens), the list is one row of names that
    scrolls sideways; the reason for each mark shows with the field once it is chosen. */

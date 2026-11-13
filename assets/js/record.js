@@ -145,9 +145,10 @@
   /** The kinds the certificate prints, in the words it uses. */
   const PRINTED = ['sent', 'viewed', 'consented', 'signed', 'countersigned', 'completed'];
   function signerOf(env, actor) {
-    const m = /^(.*) \((investor|countersigner)\)$/.exec(String(actor || ''));
+    const m = /^(.*) \((investor|co-investor|countersigner)\)$/.exec(String(actor || ''));
     if (!m) return null;
-    const same = env.signers.filter((s) => s.role === m[2]);
+    // The co-investor is an investor signer of their own: their events are theirs, not the investor's.
+    const same = env.signers.filter((s) => (m[2] === 'co-investor' ? !!s.co : s.role === m[2] && !s.co));
     return same.find((s) => s.name === m[1]) || (same.length === 1 ? same[0] : null);
   }
   /**
@@ -412,7 +413,7 @@
       const top = y;
       text(tx(s.name), M, y, 11.5);
       y -= 13;
-      const who = `${s.role === 'countersigner' ? `Countersigner for ${firm}` : ROLE[s.role] || 'Signer'}${s.account && s.account !== s.name ? `, signing for ${s.account}` : ''} · ${s.email || 'no email on record'}`;
+      const who = `${s.role === 'countersigner' ? `Countersigner for ${firm}` : (s.co ? 'Co-investor' : ROLE[s.role]) || 'Signer'}${s.account && s.account !== s.name ? `, signing for ${s.account}` : ''} · ${s.email || 'no email on record'}`;
       text(wrap(tx(who), font, 8.5, CW - 170)[0], M, y, 8.5, fg2);
       const img = sigs[s.id];
       if (img) {

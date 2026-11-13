@@ -654,12 +654,12 @@
           const done = i.onboarding.status === 'complete';
           // The committed line shows only while some of the commitment is still to be called (compared in cents).
           return `<tr>
-            <th scope="row"><span class="strong">${h(i.title)}</span><span class="sub">${h(i.contact)} · ${h(i.email)}</span></th>
+            <th scope="row"><span class="strong">${h(i.title)}</span><span class="sub">${h(i.contact)} · ${h(i.email)}</span>${NS.coInvestor ? NS.coInvestor.statusHTML(w, i) : ''}</th>
             <td>${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</td>
             <td class="num">${usd(invested)}<span class="sub">${committed > Math.round(invested * 100) ? `${usd(committed / 100)} committed · ` : ''}${i.positions.length} investment${i.positions.length === 1 ? '' : 's'}</span></td>
             <td>${activation(i)}</td>
             <td>${payLabel(i)}</td>
-            <td class="cs-row-actions">${
+            <td class="cs-row-actions">${NS.coInvestor ? NS.coInvestor.recordButton(i) : ''}${
               done
                 ? `<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(i.id)}">View portal</button>`
                 : `<button class="cs-btn cs-btn-small" type="button" data-action="invite-preview" data-id="${h(i.id)}">Invitation</button><button class="cs-btn cs-btn-small" type="button" data-action="remind" data-id="${h(i.id)}">Send reminder</button>`
@@ -865,6 +865,7 @@
     U.toast(`Reminder prepared for ${inv.email}. No email is sent in this demo.`);
   };
   NS.actions['view-as'] = (el) => {
+    S().co = false;
     S().viewer = el.getAttribute('data-id');
     NS.app.go('overview');
   };

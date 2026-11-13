@@ -61,6 +61,8 @@
   function shell(inner, active, opts) {
     const t = T();
     const inv = viewer();
+    // The person signed in: the investor, or the account's co-investor under their own name.
+    const me = inv ? (S().co && inv.coInvestor ? inv.coInvestor.name : inv.contact) : '';
     const banner = (opts && opts.banner) || '';
     const links = NAV.map(([k, label]) => `<a href="#${k}"${active === k ? ' aria-current="page"' : ''}>${label}</a>`).join('');
     return `<div class="pt${S().navOpen ? ' nav-open' : ''}">
@@ -68,7 +70,7 @@
         <div class="pt-head-in">
           <a class="pt-logo" href="#overview" aria-label="${h(t.name)} ${h(t.portalName)}">${B.lockup(t)}</a>
           <nav class="pt-nav" id="pt-nav" aria-label="${h(t.portalName)}">${links}<a class="pt-nav-out" href="#sign-in">Sign out</a></nav>
-          <div class="pt-user">${inv ? `<span class="pt-user-id"><span class="pt-user-name">${h(inv.contact)}</span>${inv.title && inv.title !== inv.contact ? `<span class="pt-user-acct">${h(inv.title)}</span>` : ''}</span>` : ''}<a class="pt-signout" href="#sign-in">Sign out</a></div>
+          <div class="pt-user">${inv ? `<span class="pt-user-id"><span class="pt-user-name">${h(me)}</span>${inv.title && inv.title !== me ? `<span class="pt-user-acct">${h(inv.title)}</span>` : ''}</span>` : ''}<a class="pt-signout" href="#sign-in">Sign out</a></div>
           <button class="pt-menu" type="button" data-action="nav-toggle" aria-controls="pt-nav" aria-expanded="${S().navOpen}">${icon('menu')}<span>Menu</span></button>
         </div>
       </header>

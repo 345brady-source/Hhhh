@@ -16,13 +16,20 @@ const H = require('./harness');
 const { CSS, FIXTURES, blank, U } = require('./fixtures');
 
 // Five printed lines the portal cannot be sure about: four with no heading anywhere near (whose are they?) and one for
-// a joint subscriber. Every field sits on a printed line; nothing else is placed.
+// a witness. Every field sits on a printed line; nothing else is placed. (A line for a second investor, such as a
+// joint subscriber's, is no longer one of these: it is the co-investor's own field, required and not marked. See coLine.)
 const inv = (type, more) => Object.assign({ type, role: 'investor', flag: true }, more || {});
 FIXTURES.unsure5 = {
   html: `<div class="pg"><h2 style="text-align:center">Agreement</h2><p>The parties agree to the terms set out in the offering documents, which are incorporated here by reference, and to the allocation of interests described in them.</p>
 <p>This document may be executed in counterparts and delivered electronically.</p>
 <p>Signature: ${blank(inv('signature'), U(30))}</p><p>Date: ${blank(inv('date'), U(28))}</p><p>Name: ${blank(inv('name'), U(28))}</p><p>Title: ${blank(inv('text', { label: 'Title' }), U(28))}</p>
-<p>Signature of Joint Subscriber (if any): ${blank(inv('signature', { second: true, required: false }), U(24))}</p></div>`
+<p>Signature of Witness (if any): ${blank(inv('signature', { second: true, required: false }), U(24))}</p></div>`
+};
+// The new rule for a second investor's line: the co-investor's own signature field, required, not marked for review.
+FIXTURES.coLine = {
+  html: `<div class="pg"><h2 style="text-align:center">SUBSCRIBER</h2>
+<p>Signature: ${blank({ type: 'signature', role: 'investor' }, U(30))}</p>
+<p>Signature of Joint Subscriber (if any): ${blank({ type: 'signature', role: 'investor', second: true, required: true }, U(24))}</p></div>`
 };
 
 let failed = 0;
@@ -145,7 +152,8 @@ const check = (name, ok, info) => {
     await page.click(`.es-fld[data-fid="${fourth}"]`);
     await page.waitForSelector('#es-fs');
     const mineWas = await page.inputValue('#es-fs');
-    const other = await ev(() => Array.from(document.querySelectorAll('#es-fs option')).find((o) => !o.selected).value);
+    // The signers offered are the investor, the co-investor and the firm, in that order: the firm is the last.
+    const other = await ev(() => Array.from(document.querySelectorAll('#es-fs option')).filter((o) => !o.selected).pop().value);
     await page.selectOption('#es-fs', other);
     await page.waitForTimeout(150);
     s = await state();
@@ -296,6 +304,12 @@ const check = (name, ok, info) => {
     s = await state();
     check('Save is refused and nothing is stored for the offering', /^#console-envelope-/.test(s.hash) && !(await tplFor(ids[5])) && s.toasts.some((t) => /No signature line for the investor was found/.test(t)), s);
     check('the upload dialog never offered a "Your firm countersigns" box', boxes === 0, boxes);
+
+    /* ---- 10. A line for a second investor is the co-investor's own field (it used to be optional and marked for review) ---- */
+    const up = await H.upload(page, (await H.makePdf(h, CSS, FIXTURES.coLine.html)).bytes);
+    const coF = up.fields.filter((f) => f.second);
+    check('a joint subscriber’s line is the co-investor’s signature field: required, named for the co-investor, not marked for review', up.fields.length === 2 && coF.length === 1 && coF[0].type === 'signature' && coF[0].required && !coF[0].review && coF[0].label === 'Co-investor signature', up.fields);
+    check('and the agreement saves with the co-investor as a signer of their own (Investor 2)', up.saved && up.roles.join(',') === 'Investor,Investor 2', { saved: up.saved, todo: up.todo, roles: up.roles });
 
     check('no page errors', h.errors.length === 0, h.errors);
   } finally {

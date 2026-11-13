@@ -1928,7 +1928,7 @@
       if (!c || !c.req || c.req.envelopeId !== env.id || !signer || signer.investorId !== c.inv.id) return false;
       c.fl.signedAt = signer.signedAt;
       // An agreement for the investor alone is complete with their signature: nothing waits for the firm's countersignature.
-      notify(c.ws, 'agreement_signed', `${c.inv.title} signed the subscription agreement`, complete ? `${env.title}: complete; this agreement needs no countersignature` : `${env.title}: waiting for your countersignature`, `console-envelope-${env.id}`);
+      notify(c.ws, 'agreement_signed', `${c.inv.title} signed the subscription agreement`, complete ? `${env.title}: complete; this agreement needs no countersignature` : env.signers.some((s) => s.co && s.status !== 'signed') ? `${env.title}: waiting for the co-investor to sign` : `${env.title}: waiting for your countersignature`, `console-envelope-${env.id}`);
       c.fl.at = 'done';
       delete c.fl.resignAt;
       NS.app.save(true);
