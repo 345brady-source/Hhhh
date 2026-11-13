@@ -107,8 +107,10 @@
           if (!g) return;
           const p0 = pt(x);
           const p1 = pt(x + g.width * adv);
+          // What the character is comes from its own code point; the reader's space flag only says the byte was 32,
+          // which a subset font may give to any letter (it still decides where word spacing applies).
           const u = String(g.unicode == null ? '' : g.unicode);
-          if (level && hgt >= 3) glyphs.push({ u, sp: !!g.isSpace || !u.trim(), x0: p0[0], x1: p1[0], y: p0[1], h: hgt, font: name, hidden: st.mode === 3 || st.mode === 7 });
+          if (level && hgt >= 3) glyphs.push({ u, sp: !u.trim(), x0: p0[0], x1: p1[0], y: p0[1], h: hgt, font: name, hidden: st.mode === 3 || st.mode === 7 });
           x += g.width * adv + ((g.isSpace ? st.ws : 0) + st.cs) * st.dir;
         });
         st.x += x * st.hs;

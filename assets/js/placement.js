@@ -292,7 +292,7 @@
   function layout(pg) {
     const lines = linesOf(pg);
     const glyph = (b) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && Math.max(b.w, b.h) < 0.55 * p.h && b.x + b.w / 2 > p.x0 && b.x + b.w / 2 < p.x1 && b.y + b.h / 2 > p.y - 1.05 * p.h && b.y + b.h / 2 < p.y + 0.25 * p.h));
-    const boxes = (pg.boxes || []).filter((b) => b && b.w > 0 && b.h > 0 && !glyph(b)).map((b) => ({ x0: b.x, x1: b.x + b.w, y0: b.y, y1: b.y + b.h, seen: true }));
+    const boxes = (pg.boxes || []).filter((b) => b && b.w > 0 && b.h > 0 && !glyph(b)).map((b) => ({ x0: b.x, x1: b.x + b.w, y0: b.y, y1: b.y + b.h }));
     // A rule that is the top or bottom edge of a tick box, or the top edge of a frame or a table, is not a blank
     // (the bottom edge of a table cell, with the cell's sides standing on it, is one).
     // In a table, the edge under a cell that has words in it (a label standing a little above its cell's bottom edge)
@@ -358,7 +358,7 @@
         // Underscores or a leader are a blank only where a printed line was read for them.
         const r = pair.get(p);
         if (!r || (r.clear < BLANK_CLEAR && p.t !== 'gap')) return;
-        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
         slot.line = ln;
         slot.fromText = true;
         slot.src = p.src;
@@ -369,7 +369,7 @@
         if (taken.has(r) || r.clear < BLANK_CLEAR) return;
         // A stroke inside a run of words (two underscores in a name, a dash) is part of the text, not a blank.
         if (ln.parts.some((p) => p.t === 'text' && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0))) return;
-        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
         slots.push(slot);
         els.push({ t: 'slot', key: r.x0, slot });
       });
@@ -401,7 +401,7 @@
     });
     // A stroke in the body of a run of words (the bar of a letter, an equals sign) is part of the text, not a blank.
     const inText = (r) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && r.y > p.y - 1.05 * p.h && r.y < p.y + 0.2 * p.h && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0)));
-    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: null, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table }));
+    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, line: null, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table }));
     // Rows of a ruled table: each row's line runs under its label too, so the empty stretch begins where that row's
     // label ends. Nothing printed marks the column, so rows that end together start together, after the longest label.
     const cut = slots.filter((s) => s.cut).sort((a, b) => a.y - b.y);
@@ -474,6 +474,7 @@
       if (unsure) weaken(m, WHY.tick);
       return m;
     };
+    const rightEdge = L.segs.reduce((x, g) => Math.max(x, g.x1), 0);
     // The printed lines a label began on, when it wraps: the lines right above, back to where its paragraph starts.
     const wrapped = (ln, seg) => {
       const ups = [];
@@ -485,6 +486,9 @@
         const first = up.els[0].seg;
         const lastSeg = up.els[up.els.length - 1].seg;
         if (!up.text || /[.:;?!]["”)]?$/.test(up.text) || Math.abs(first.x0 - seg.x0) > 60 || lastSeg.x1 < edge - 40) break;
+        // A line that stops short of the right-hand edge of the text, or is set in another size, is a heading or
+        // the end of another paragraph, not the start of this label.
+        if (lastSeg.x1 < rightEdge - 72 || Math.abs(up.h - cur.h) > 0.6) break;
         if (/[A-Z]{2}/.test(up.text) && up.text === up.text.toUpperCase()) break;
         ups.unshift(up);
         edge = lastSeg.x1;
