@@ -40,11 +40,12 @@
 
   /**
    * Printed horizontal lines and empty squares in a page image. rgba is the page's pixels (4 bytes each), scale is
-   * pixels per point. Returns { rules: [{ x0, x1, y, t, clear, drop }], boxes: [{ x, y, w, h }] } in points.
+   * pixels per point. Returns { rules: [{ x0, x1, y, t, clear, drop, cut }], boxes: [{ x, y, w, h }] } in points.
    * For a rule, y is the centre of the stroke, t its thickness, clear the height of empty paper directly above it
    * and drop how far ink hangs down from both of its ends (the top edge of a frame has sides below it; a blank
    * does not). Underlines and letter feet have ink right above them (clear near zero). Where only part of a line
-   * has ink above it, the clear stretches are returned as separate lines. A box that is already ticked is left out.
+   * has ink above it, the clear stretches are returned as separate lines; cut marks one that begins where the ink
+   * above the line ends (a ruled table row after its label). A box that is already ticked is left out.
    */
   function scan(rgba, width, height, scale) {
     const out = { rules: [], boxes: [] };
@@ -149,7 +150,7 @@
       return n;
     };
     const need = Math.ceil(BLANK_CLEAR * k);
-    const emit = (r, x0, x1, clear, drop) => out.rules.push({ x0: x0 / k, x1: (x1 + 1) / k, y: (r.y0 + r.y1 + 1) / 2 / k, t: (r.y1 - r.y0 + 1) / k, clear: clear / k, drop: drop / k });
+    const emit = (r, x0, x1, clear, drop, cut) => out.rules.push({ x0: x0 / k, x1: (x1 + 1) / k, y: (r.y0 + r.y1 + 1) / 2 / k, t: (r.y1 - r.y0 + 1) / k, clear: clear / k, drop: drop / k, cut: !!cut });
     done.forEach((r) => {
       if (r.x1 - r.x0 + 1 < minLen || r.y1 - r.y0 + 1 > MAX_THICK * k || onSquare(r)) return;
       const drop = Math.min(hang(r.x0 + 1, r.y1), hang(r.x1 - 1, r.y1));
@@ -166,7 +167,7 @@
         if (free && s < 0) s = x;
         if (!free && s >= 0) {
           if (x - s >= minLen) {
-            emit(r, s, x - 1, clearAbove(s, x - 1, r.y0), drop);
+            emit(r, s, x - 1, clearAbove(s, x - 1, r.y0), drop, s > r.x0 + 2 * k);
             parts++;
           }
           s = -1;
@@ -497,7 +498,7 @@
         // A leader of dots or dashes is a blank only when nothing but white space follows it on the line.
         if (!r && p.t === 'lead' && ln.parts.slice(i + 1).some((q) => q.t === 'text')) return;
         if (r && r.clear < BLANK_CLEAR && p.t !== 'gap') return;
-        const slot = r ? { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true } : { x0: p.x0, x1: p.x1, y: p.y + 1.6, clear: Math.max(BLANK_CLEAR, p.h), seen: false };
+        const slot = r ? { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, cut: !!r.cut } : { x0: p.x0, x1: p.x1, y: p.y + 1.6, clear: Math.max(BLANK_CLEAR, p.h), seen: false };
         slot.line = ln;
         slot.fromText = true;
         slot.src = p.src;
@@ -508,7 +509,7 @@
         if (taken.has(r) || r.clear < BLANK_CLEAR) return;
         // A stroke inside a run of words (two underscores in a name, a dash) is part of the text, not a blank.
         if (ln.parts.some((p) => p.t === 'text' && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0))) return;
-        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: ln, fromText: false };
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: ln, fromText: false, cut: !!r.cut };
         slots.push(slot);
         els.push({ t: 'slot', key: r.x0, slot });
       });
@@ -540,6 +541,23 @@
     // A stroke in the body of a run of words (the bar of a letter, an equals sign) is part of the text, not a blank.
     const inText = (r) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && r.y > p.y - 1.05 * p.h && r.y < p.y + 0.2 * p.h && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0)));
     free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: null, fromText: false }));
+    // Rows of a ruled table: each row's line runs under its label too, so the empty stretch begins where that row's
+    // label ends. Nothing printed marks the column, so rows that end together start together, after the longest label.
+    const cut = slots.filter((s) => s.cut).sort((a, b) => a.y - b.y);
+    cut.forEach((s) => {
+      if (s.col) return;
+      const col = [s];
+      cut.forEach((o) => {
+        const last = col[col.length - 1];
+        if (!o.col && o !== s && o.y - last.y > 4 && o.y - last.y <= 60 && Math.abs(o.x1 - s.x1) <= 3) col.push(o);
+      });
+      const start = Math.max.apply(null, col.map((o) => o.x0)) + 4;
+      col.forEach((o) => {
+        o.col = col;
+        if (o.x1 - start >= 36) o.x0 = start;
+        else o.x0 = Math.min(o.x0 + 4, o.x1 - 16);
+      });
+    });
     const segs = [];
     lines.forEach((ln) => ln.els.forEach((e) => e.t === 'seg' && segs.push(e.seg)));
     return { lines, slots, segs, boxes: boxes.filter((b) => b.line) };
