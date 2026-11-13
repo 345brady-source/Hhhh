@@ -74,9 +74,13 @@
   function start() {
     if (!engine) {
       const p = timed(
-        Promise.all([script(here('textread.min.js')), language()]).then((got) =>
-          window.Tesseract.createWorker([{ code: 'eng', data: got[1] }], 1, { workerPath: here('textread-worker.min.js'), corePath: here('textread-core.wasm.js'), cacheMethod: 'none', gzip: true, errorHandler: () => {} })
-        ),
+        Promise.all([script(here('textread.min.js')), language()]).then((got) => {
+          // The engine asks for its language data by address: inside its worker that request is answered with the
+          // bytes the page already holds, so it does not matter which of the two files the host served.
+          const data = URL.createObjectURL(new Blob([got[1]]));
+          const boot = URL.createObjectURL(new Blob([`const ask=self.fetch;self.fetch=(u,o)=>ask(/eng\\.traineddata/.test(String(u))?${JSON.stringify(data)}:u,o);importScripts(${JSON.stringify(here('textread-worker.min.js'))});`], { type: 'application/javascript' }));
+          return window.Tesseract.createWorker('eng', 1, { workerPath: boot, workerBlobURL: false, corePath: here('textread-core.wasm.js'), langPath: here('').replace(/\/$/, ''), cacheMethod: 'none', gzip: true, errorHandler: () => {} });
+        }),
         LOAD_MS,
         'load'
       ).then(
