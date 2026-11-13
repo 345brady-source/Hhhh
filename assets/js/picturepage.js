@@ -13,8 +13,13 @@
  *     returns { paper, print, range, tau, boxes, rules }, boxes and rules in reading order (top edge, then left edge):
  *       boxes   [{ x0, y0, x1, y1 (pixels, the outer edge of the frame), w, h (the paper inside, pixels),
  *                  ink (the share of the inside that is as dark as print), small (both sides at most 14 pt),
- *                  shared, place, why }]
- *       rules   [{ x0, y0, x1, y1 (pixels), t (thickness in pixels) }]   level strokes that are no side of a box
+ *                  shared (a stroke of it is also a side of a neighbouring patch: the cell of a ruled table),
+ *                  place (an empty place a person completes), why ('' for a place; else 'filled': print inside,
+ *                  'table': a cell that is not empty, 'narrow': too small to write in and not a square) }]
+ *               Every box is reported, whether a place or not: a box exists by its pixels, and what is printed in
+ *               it only says whether it is still empty.
+ *       rules   [{ x0, y0, x1, y1 (pixels), t (thickness in pixels) }]   level strokes that are no side of a box;
+ *               a rule that climbs or falls a pixel now and then (a page scanned a little turned) is one rule
  *     throws an Error with code 'size' for a picture of no size or of more than MAX_PIXELS pixels
  *   picturepage.toGrey(rgba, w, h)   the grey levels of RGBA bytes
  */
@@ -24,6 +29,14 @@
   const MAX_PIXELS = 9.5e6;
   const MIN_PT = 4.5; // the shortest stroke and the smallest inside of a box, in points
   const SMALL_PT = 14;
+  // Shares of the inside of a box that are as dark as print: an empty tick box holds at most EMPTY_TICK, a roomy box
+  // with a short caption in it at most EMPTY_ROOMY, an empty cell of a ruled table less than EMPTY_CELL.
+  const EMPTY_TICK = 0.01;
+  const EMPTY_ROOMY = 0.12;
+  const EMPTY_CELL = 0.002;
+  const SQUARE = 0.2; // the sides of a square are within this share of each other
+  const NARROW_W_PT = 14;
+  const NARROW_H_PT = 6;
 
   function toGrey(rgba, w, h) {
     const n = w * h;
@@ -194,18 +207,22 @@
       // Print inside is reported; it never decides whether the patch is a box.
       const print = bw > 2 && bh > 2 ? share(x0 + 1, y0 + 1, x1 - 1, y1 - 1, isPrint) : 0;
       // The rectangle reported is the core grown by the stroke round it.
-      return { x0: x0 - 1, y0: y0 - 1, x1: x1 + 2, y1: y1 + 2, w: bw, h: bh, ink: print, small: bw <= SMALL_PT * s && bh <= SMALL_PT * s, shared: false, place: true, why: '' };
+      return { x0: x0 - 1, y0: y0 - 1, x1: x1 + 2, y1: y1 + 2, w: bw, h: bh, ink: print, small: false, shared: false, place: true, why: '' };
     };
 
     // Every patch of free pixels, filled with a stack of its own (a page is far too deep for recursion).
+    // Each patch has a number (patch[i], 0 on a stroke); roomy[number] says whether it is large enough to be the
+    // inside of a box (a sliver of paper between two frames is not).
     let boxes = [];
-    const seen = new Uint8Array(n);
+    const patch = new Int32Array(n);
+    const roomy = [false];
     const stack = new Int32Array(n);
     for (let start = 0; start < n; start++) {
-      if (!free[start] || seen[start]) continue;
+      if (!free[start] || patch[start]) continue;
+      const id = roomy.length;
       let top = 0;
       stack[top++] = start;
-      seen[start] = 1;
+      patch[start] = id;
       let x0 = start % w;
       let x1 = x0;
       let y0 = (start - x0) / w;
@@ -220,17 +237,66 @@
         if (x > x1) x1 = x;
         if (y < y0) y0 = y;
         if (y > y1) y1 = y;
-        if (y > 0 && free[i - w] && !seen[i - w]) (seen[i - w] = 1), (stack[top++] = i - w);
-        if (y < h - 1 && free[i + w] && !seen[i + w]) (seen[i + w] = 1), (stack[top++] = i + w);
-        if (x > 0 && free[i - 1] && !seen[i - 1]) (seen[i - 1] = 1), (stack[top++] = i - 1);
-        if (x < w - 1 && free[i + 1] && !seen[i + 1]) (seen[i + 1] = 1), (stack[top++] = i + 1);
+        if (y > 0 && free[i - w] && !patch[i - w]) (patch[i - w] = id), (stack[top++] = i - w);
+        if (y < h - 1 && free[i + w] && !patch[i + w]) (patch[i + w] = id), (stack[top++] = i + w);
+        if (x > 0 && free[i - 1] && !patch[i - 1]) (patch[i - 1] = id), (stack[top++] = i - 1);
+        if (x < w - 1 && free[i + 1] && !patch[i + 1]) (patch[i + 1] = id), (stack[top++] = i + 1);
       }
+      roomy.push(x1 - x0 + 1 >= inside && y1 - y0 + 1 >= inside);
       const box = boxOf(x0, y0, x1, y1, cnt);
-      if (box) boxes.push(box);
+      if (box) boxes.push(Object.assign(box, { id }));
     }
     // A box that holds another box is a frame round it, not a place.
     const holds = (r, o) => o !== r && o.x0 >= r.x0 - 1 && o.x1 <= r.x1 + 1 && o.y0 >= r.y0 - 1 && o.y1 <= r.y1 + 1;
     boxes = boxes.filter((r) => !boxes.some((o) => holds(r, o)));
+
+    /* Whether each box is an empty place a person completes: decided from its pixels and its shape, never from a word. */
+    // Shared: the stroke along one of its sides is also the side of a neighbouring patch (the cells of a ruled table).
+    // A box with its own four strokes has the same paper past all of them: the patches past its sides are one patch.
+    // The patch past a side is the one most of that side looks out on, across the stroke.
+    const reach = Math.max(3, Math.round(2.6 * s)) + 2;
+    const past = (b, from, to, at) => {
+      const seen = new Map();
+      for (let c = from; c <= to; c++) for (let k = 1; k <= reach; k++) {
+        const i = at(c, k);
+        if (i < 0) break;
+        const id = patch[i];
+        if (!id) continue;
+        if (id !== b.id && roomy[id]) seen.set(id, (seen.get(id) || 0) + 1);
+        break;
+      }
+      let best = 0;
+      seen.forEach((count, id) => {
+        if (count >= 0.5 * (to - from + 1) && count > (seen.get(best) || 0)) best = id;
+      });
+      return best;
+    };
+    boxes.forEach((b) => {
+      // The paper inside is x0+1..x1-2 across and y0+1..y1-2 down.
+      const cx0 = b.x0 + 1;
+      const cx1 = b.x1 - 2;
+      const cy0 = b.y0 + 1;
+      const cy1 = b.y1 - 2;
+      const round = [
+        past(b, cx0, cx1, (x, k) => (cy0 - k >= 0 ? (cy0 - k) * w + x : -1)),
+        past(b, cx0, cx1, (x, k) => (cy1 + k < h ? (cy1 + k) * w + x : -1)),
+        past(b, cy0, cy1, (y, k) => (cx0 - k >= 0 ? y * w + cx0 - k : -1)),
+        past(b, cy0, cy1, (y, k) => (cx1 + k < w ? y * w + cx1 + k : -1))
+      ].filter((id) => id);
+      b.shared = round.some((id) => id !== round[0]);
+      delete b.id;
+    });
+    boxes.forEach((b) => {
+      const bw = (b.x1 - b.x0) / s;
+      const bh = (b.y1 - b.y0) / s;
+      const square = Math.abs(bw - bh) <= SQUARE * Math.max(bw, bh);
+      b.small = bw <= SMALL_PT && bh <= SMALL_PT;
+      if (b.shared) b.why = b.ink < EMPTY_CELL ? '' : 'table'; // a cell of a ruled table: a place only when it is empty
+      else if (b.small && square) b.why = b.ink <= EMPTY_TICK ? '' : 'filled'; // a tick box: empty, or ticked or a letter
+      else if (bw < NARROW_W_PT || bh < NARROW_H_PT) b.why = 'narrow'; // too small to write in, and not a square
+      else b.why = b.ink <= EMPTY_ROOMY ? '' : 'filled'; // a short caption printed inside a roomy box leaves it a place
+      b.place = !b.why;
+    });
 
     /* Free rules: level strokes that are no side of a box, thin, evenly dark, with paper on both sides and clear paper above. */
     const lines = [];
@@ -258,21 +324,61 @@
         live.push(ln);
       }
     });
+    // On a page scanned a little turned, a long line climbs or falls one pixel every so often, and each stretch of it
+    // lies on its own row. Strokes that continue each other one row down, each shifted the same way along, are one stroke.
+    const chains = [];
+    let open = [];
+    lines.forEach((b) => {
+      open = open.filter((c) => b.y0 - c.last.y1 <= 1);
+      let best = null;
+      let most = -Infinity;
+      open.forEach((c) => {
+        const a = c.last;
+        if (a.y1 + 1 !== b.y0 || b.a0 > a.a1 + 2 || a.a0 > b.a1 + 2) return;
+        const dir = b.a0 >= a.a0 - 2 && b.a1 >= a.a1 - 2 ? 1 : b.a0 <= a.a0 + 2 && b.a1 <= a.a1 + 2 ? -1 : 0;
+        if (!dir || (c.dir && c.dir !== dir)) return;
+        const shared = Math.min(a.a1, b.a1) - Math.max(a.a0, b.a0);
+        if (shared > most) (most = shared), (best = { c, dir });
+      });
+      if (best) {
+        best.c.parts.push(b);
+        best.c.last = b;
+        best.c.dir = best.dir;
+      } else {
+        const c = { parts: [b], last: b, dir: 0 };
+        chains.push(c);
+        open.push(c);
+      }
+    });
     const rules = [];
-    lines.forEach((ln) => {
-      const t = ln.y1 - ln.y0 + 1;
-      const long = ln.a1 - ln.a0;
-      if (t > Math.max(2, Math.floor(1.5 * s))) return;
+    const room = Math.round(5 * s);
+    chains.forEach((c) => {
+      const a0 = Math.min.apply(null, c.parts.map((p) => p.a0));
+      const a1 = Math.max.apply(null, c.parts.map((p) => p.a1));
+      const long = a1 - a0;
       if (long + 1 < 10 * s) return;
+      // The rows the stroke lies on, column by column.
+      const top = new Int32Array(long + 1).fill(h);
+      const bot = new Int32Array(long + 1).fill(-1);
+      c.parts.forEach((p) => {
+        for (let x = p.a0; x <= p.a1; x++) {
+          if (p.y0 < top[x - a0]) top[x - a0] = p.y0;
+          if (p.y1 > bot[x - a0]) bot[x - a0] = p.y1;
+        }
+      });
+      let t = 0;
+      for (let i = 0; i <= long; i++) {
+        if (bot[i] < 0) (top[i] = top[i - 1]), (bot[i] = bot[i - 1]); // the one pixel a stroke may skip
+        if (bot[i] - top[i] + 1 > t) t = bot[i] - top[i] + 1;
+      }
+      if (t > Math.max(2, Math.floor(1.5 * s))) return;
       // Evenly dark along its length: a row of letters is not.
-      const ya = Math.max(ln.y0 - 1, 0);
-      const yb = Math.min(ln.y1 + 1, h - 1);
       let sum = 0;
       let squares = 0;
       let cols = 0;
-      for (let x = ln.a0 + 1; x < ln.a1; x++, cols++) {
+      for (let i = 1; i < long; i++, cols++) {
         let col = 0;
-        for (let y = ya; y <= yb; y++) col += dark[y * w + x];
+        for (let y = Math.max(top[i] - 1, 0); y <= Math.min(bot[i] + 1, h - 1); y++) col += dark[y * w + a0 + i];
         sum += col;
         squares += col * col;
       }
@@ -282,21 +388,27 @@
       // Not the top or the bottom of a box.
       let cov = 0;
       boxes.forEach((b) => {
-        if (Math.abs(ln.y0 - b.y0) <= 3 || Math.abs(ln.y1 - b.y1) <= 3) cov += Math.max(0, Math.min(ln.a1, b.x1) - Math.max(ln.a0, b.x0));
+        const from = Math.max(a0, b.x0);
+        const to = Math.min(a1, b.x1);
+        for (let x = from; x < to; x++) if (Math.abs(top[x - a0] - b.y0) <= 3 || Math.abs(bot[x - a0] - b.y1) <= 3) cov++;
       });
       if (cov > 0.5 * long) return;
-      // Paper on both sides of it.
-      const over = Math.max(ln.y0 - 2, 0);
-      const under = Math.min(ln.y1 + 2, h - 1);
-      if (share(ln.a0, over, ln.a1, over, isPaper) < 0.8 || share(ln.a0, under, ln.a1, under, isPaper) < 0.8) return;
-      // Clear paper above its middle four fifths: room to write.
-      const room = Math.round(5 * s);
+      // Paper on both sides of it, and clear paper above its middle four fifths: room to write.
       const trim = Math.max(2, Math.floor(0.1 * long));
-      const r0 = Math.max(ln.y0 - room, 0);
-      const r1 = Math.max(ln.y0 - 1, 0) - 1;
-      if (r1 < r0 || ln.a1 - trim < ln.a0 + trim) return;
-      if (share(ln.a0 + trim, r0, ln.a1 - trim, r1, isPaper) < 0.97) return;
-      rules.push({ x0: ln.a0, y0: ln.y0, x1: ln.a1 + 1, y1: ln.y1 + 1, t });
+      let over = 0;
+      let under = 0;
+      let clear = 0;
+      let seen = 0;
+      for (let i = 0; i <= long; i++) {
+        const x = a0 + i;
+        if (dark[Math.max(top[i] - 2, 0) * w + x] < tau) over++;
+        if (dark[Math.min(bot[i] + 2, h - 1) * w + x] < tau) under++;
+        if (i < trim || i > long - trim) continue;
+        for (let y = Math.max(top[i] - room, 0); y <= top[i] - 2; y++, seen++) if (dark[y * w + x] < tau) clear++;
+      }
+      if (over < 0.8 * (long + 1) || under < 0.8 * (long + 1)) return;
+      if (!seen || clear < 0.97 * seen) return;
+      rules.push({ x0: a0, y0: Math.min.apply(null, c.parts.map((p) => p.y0)), x1: a1 + 1, y1: Math.max.apply(null, c.parts.map((p) => p.y1)) + 1, t });
     });
 
     const order = (a, b) => a.y0 - b.y0 || a.x0 - b.x0 || a.x1 - b.x1 || a.y1 - b.y1;
