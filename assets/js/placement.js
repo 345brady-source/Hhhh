@@ -1241,13 +1241,16 @@
     const left = [];
     row.filter((q) => q.x1 <= b.x0 + 1).sort((p, q) => q.x1 - p.x1).every((q) => ((left.length ? left[left.length - 1].x0 : b.x0) - q.x1 < 9 ? left.push(q) : false));
     const over = words.filter((q) => q.y1 <= b.y0 + 1 && b.y0 - q.y1 < 9 && (q.x0 + q.x1) / 2 > b.x0 - 2 && (q.x0 + q.x1) / 2 < b.x1);
+    // A caption of two lines: the line just over the first one belongs to it.
+    const top = over.length ? Math.min.apply(null, over.map((q) => q.y0)) : 0;
+    const upper = over.length ? words.filter((q) => over.indexOf(q) < 0 && q.y1 <= top + 1 && top - q.y1 < 5 && (q.x0 + q.x1) / 2 > b.x0 - 2 && (q.x0 + q.x1) / 2 < b.x1) : [];
     const under = words.filter((q) => q.y0 >= b.y1 - 1 && q.y0 - b.y1 < 8 && (q.x0 + q.x1) / 2 > b.x0 && (q.x0 + q.x1) / 2 < b.x1);
-    const caption = (left.length && !all.some((o) => o !== b && o.x1 <= b.x0 && b.x0 - o.x1 < 9 && overlap(o.y0, o.y1, b.y0, b.y1) > 0) ? text(left) : '') || text(over) || clean(b.inside || '') || text(under);
+    const caption = (left.length && !all.some((o) => o !== b && o.x1 <= b.x0 && b.x0 - o.x1 < 9 && overlap(o.y0, o.y1, b.y0, b.y1) > 0) ? text(left) : '') || clean(`${text(upper)} ${text(over)}`) || clean(b.inside || '') || text(under);
     // Who completes it: the caption, or the heading over its column of boxes.
     const column = all.filter((o) => Math.abs(o.x0 - b.x0) <= 3 && Math.abs(o.x1 - b.x1) <= 3).sort((p, q) => p.y0 - q.y0)[0] || b;
     const head = text(words.filter((q) => q.y1 <= column.y0 + 1 && column.y0 - q.y1 < 12 && (q.x0 + q.x1) / 2 > b.x0 - 4 && (q.x0 + q.x1) / 2 < b.x1 + 4));
-    const whose = `${caption} ${text(under)} ${head}`;
-    const kind = /\binitial/i.test(whose) ? 'initials' : /\bsignature\b|\bsign here\b/i.test(caption) ? 'signature' : /^\W*date\W*$/i.test(caption) ? 'date' : 'other';
+    const whose = `${caption} ${head}`;
+    const kind = /\binitial/i.test(`${whose} ${text(under)}`) ? 'initials' : /\bsignature\b|\bsign here\b/i.test(caption) ? 'signature' : /^\W*date\W*$/i.test(caption) ? 'date' : 'other';
     const p = { type: kind === 'initials' ? 'initials' : kind === 'signature' ? 'signature' : kind === 'date' ? 'date' : 'text', role: 'investor', page: pg.page, x: b.x0 + 0.5, y: b.y0 + 0.5, w: w - 1, h: hh - 1, label: caption || (kind === 'initials' ? 'Initials' : 'Box'), required: kind === 'signature', conf: 'medium', why: WHY_SLANT, kind };
     if (SECOND_RE.test(whose)) Object.assign(p, { second: true, required: false, conf: 'low', why: WHY.second });
     else if (OTHERS_RE.test(whose)) p.required = false;
@@ -1264,10 +1267,27 @@
     // Every closed box found on the picture has its field: one the rules above gave none gets it here.
     const found = pg.found || [];
     const made = [];
+    // On a picture a field comes only from a found box or line: a tick box read from recognised brackets is dropped,
+    // and so is a line that turns out to lie under recognised words (an underline), which is no place.
+    const onBox = (p) => found.some((b) => overlap(p.x, p.x + p.w, b.x0, b.x1) > 0.5 * Math.min(p.w, b.x1 - b.x0) && overlap(p.y, p.y + p.h, b.y0 - 2, b.y1 + 2) > 0.3 * Math.min(p.h, b.y1 - b.y0 + 4));
+    const sure = (pg.words || []).filter((q) => q.letters && q.conf >= 50);
+    const worded = (p) => sure.reduce((n, q) => n + Math.max(0, overlap(q.x0, q.x1, p.x, p.x + p.w)) * Math.max(0, overlap(q.y0, q.y1, p.y, p.y + p.h)), 0) > 0.3 * p.w * p.h;
+    for (let i = mine.length - 1; i >= 0; i--) if (pg.approx && !onBox(mine[i]) && (mine[i].type === 'checkbox' || worded(mine[i]))) mine.splice(i, 1);
     found.forEach((b) => {
       if (mine.some((p) => overlap(p.x, p.x + p.w, b.x0, b.x1) > 0.5 * Math.min(p.w, b.x1 - b.x0) && overlap(p.y, p.y + p.h, b.y0 - 2, b.y1 + 2) > 0.3 * Math.min(p.h, b.y1 - b.y0 + 4))) return;
       const p = boxField(pg, b, found);
       if (p) made.push(p);
+    });
+    // A column of boxes most of which are captioned for initials is a column of initials.
+    made.forEach((p) => {
+      if (p.type !== 'text') return;
+      const col = made.filter((o) => Math.abs(o.x - p.x) <= 3 && Math.abs(o.w - p.w) <= 3);
+      if (col.length >= 3 && col.filter((o) => o.kind === 'initials').length >= 0.5 * col.length) Object.assign(p, { type: 'initials', kind: 'initials', label: /^box$/i.test(p.label) ? 'Initials' : p.label });
+    });
+    // Two boxes to initial or sign side by side on a row: the second is a second signer's, as on any agreement.
+    made.forEach((p) => {
+      if (p.kind !== 'initials' && p.kind !== 'signature') return;
+      if (made.some((o) => o !== p && o.kind === p.kind && o.x + o.w <= p.x + 1 && p.x - (o.x + o.w) < 60 && overlap(o.y, o.y + o.h, p.y, p.y + p.h) > 0.5 * p.h)) Object.assign(p, { second: true, required: false, conf: 'low', why: WHY.second });
     });
     // A date beside a second signer's signature is the second signer's too.
     made.forEach((p) => {
