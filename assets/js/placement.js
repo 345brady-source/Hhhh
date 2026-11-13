@@ -40,12 +40,13 @@
 
   /**
    * Printed horizontal lines and empty squares in a page image. rgba is the page's pixels (4 bytes each), scale is
-   * pixels per point. Returns { rules: [{ x0, x1, y, t, clear, drop, cut }], boxes: [{ x, y, w, h }] } in points.
-   * For a rule, y is the centre of the stroke, t its thickness, clear the height of empty paper directly above it
-   * and drop how far ink hangs down from both of its ends (the top edge of a frame has sides below it; a blank
-   * does not). Underlines and letter feet have ink right above them (clear near zero). Where only part of a line
+   * pixels per point. Returns { rules: [{ x0, x1, y, t, clear, drop, rise, cut }], boxes: [{ x, y, w, h }] } in points.
+   * For a rule, y is the centre of the stroke, t its thickness, clear the height of empty paper directly above it,
+   * drop how far ink hangs down from both of its ends and rise how far it stands up from them (the top edge of a
+   * frame has sides below it only; the bottom edge of a table cell has sides above it). Underlines and letter feet have ink right above them (clear near zero). Where only part of a line
    * has ink above it, the clear stretches are returned as separate lines; cut marks one that begins where the ink
-   * above the line ends (a ruled table row after its label). A box that is already ticked is left out.
+   * above the line ends (a ruled table row after its label), cell one that runs from one wall standing on the line to
+   * the next (an empty table cell) and table any stretch of a line that has such walls. A ticked box is left out.
    */
   function scan(rgba, width, height, scale) {
     const out = { rules: [], boxes: [] };
@@ -152,8 +153,18 @@
       }
       return n;
     };
+    /** How far ink rises straight up from a point on a stroke's upper edge (up to 12 pt). */
+    const rise = (x, top) => {
+      let n = 0;
+      for (let y = top - 1; y >= 0 && n < 12 * k; y--) {
+        if (!(at(x - 1, y) || at(x, y) || at(x + 1, y))) break;
+        n++;
+      }
+      return n;
+    };
     const need = Math.ceil(BLANK_CLEAR * k);
-    const emit = (r, x0, x1, clear, drop, cut) => out.rules.push({ x0: x0 / k, x1: (x1 + 1) / k, y: (r.y0 + r.y1 + 1) / 2 / k, t: (r.y1 - r.y0 + 1) / k, clear: clear / k, drop: drop / k, cut: !!cut });
+    const wallUp = Math.round(6 * k);
+    const emit = (r, x0, x1, clear, drop, o) => out.rules.push({ x0: x0 / k, x1: (x1 + 1) / k, y: (r.y0 + r.y1 + 1) / 2 / k, t: (r.y1 - r.y0 + 1) / k, clear: clear / k, drop: drop / k, rise: r.rise / k, cut: !!(o && o.cut), cell: !!(o && o.cell), table: !!(o && o.table) });
     done.forEach((r) => {
       if (r.x1 - r.x0 + 1 < minLen || r.y1 - r.y0 + 1 > MAX_THICK * k || onSquare(r)) return;
       // Rows that are mostly ink right above or below are the same stroke (a row of underscores whose glyphs do not
@@ -167,28 +178,44 @@
       while (r.y1 - r.y0 + 1 < MAX_THICK * k && cover(r.y0 - 1) >= 0.5) r.y0--;
       while (r.y1 - r.y0 + 1 < MAX_THICK * k && cover(r.y1 + 1) >= 0.5) r.y1++;
       const drop = Math.min(hang(r.x0 + 1, r.y1), hang(r.x1 - 1, r.y1));
+      r.rise = Math.min(rise(r.x0 + 1, r.y0), rise(r.x1 - 1, r.y0));
       // The half point right above a stroke is its own soft edge (where glyphs of a run of underscores meet), not paper.
       const top = r.y0 - Math.max(1, Math.round(0.5 * k));
-      const clear = clearAbove(r.x0, r.x1, top);
-      if (clear >= need) return emit(r, r.x0, r.x1, clear, drop);
-      // Ink sits above part of the line: keep the stretches that have empty paper above them.
       const from = Math.max(0, top - need);
+      // Column by column: 0 when the paper right above the stroke is empty, 1 when something is printed there,
+      // 2 when a wall stands on the stroke (the side of a table cell: ink straight up from it for 6 pt).
+      const n = r.x1 - r.x0 + 1;
+      const above = new Uint8Array(n);
+      let walls = 0;
+      for (let x = r.x0; x <= r.x1; x++) {
+        let hit = top - from < need;
+        for (let y = top - 1; !hit && y >= from; y--) if (ink[y * width + x]) hit = true;
+        if (!hit) continue;
+        let up = 0;
+        for (let y = r.y0 - 1; y >= 0 && up < wallUp && ink[y * width + x]; y--) up++;
+        above[x - r.x0] = up >= wallUp ? 2 : 1;
+        if (up >= wallUp) walls++;
+      }
+      const clear = clearAbove(r.x0, r.x1, top);
+      // No wall, and nothing above but a speck or two: one line.
+      if (!walls && clear >= need) return emit(r, r.x0, r.x1, clear, drop);
+      // Otherwise the stretches with empty paper above them, each a cell of its own where walls bound it.
       let parts = 0;
       let s = -1;
-      for (let x = r.x0; x <= r.x1 + 1; x++) {
-        let free = x <= r.x1;
-        for (let y = top - 1; free && y >= from; y--) if (ink[y * width + x]) free = false;
-        if (free && top - from < need) free = false;
-        if (free && s < 0) s = x;
+      for (let i = 0; i <= n; i++) {
+        const free = i < n && !above[i];
+        if (free && s < 0) s = i;
         if (!free && s >= 0) {
-          if (x - s >= minLen) {
-            emit(r, s, x - 1, clearAbove(s, x - 1, top), drop, s > r.x0 + 2 * k);
+          if (i - s >= minLen) {
+            const left = s > 0 ? above[s - 1] : 0;
+            const right = i < n ? above[i] : 0;
+            emit(r, r.x0 + s, r.x0 + i - 1, clearAbove(r.x0 + s, r.x0 + i - 1, top), drop, { cut: left === 1 && s > 2 * k, cell: left === 2 && right === 2, table: walls > 0 });
             parts++;
           }
           s = -1;
         }
       }
-      if (!parts) emit(r, r.x0, r.x1, clear, drop);
+      if (!parts) emit(r, r.x0, r.x1, walls ? 0 : clear, drop, { table: walls > 0 });
     });
     out.rules.sort((a, b) => a.y - b.y || a.x0 - b.x0);
     out.boxes.sort((a, b) => a.y - b.y || a.x - b.x);
@@ -458,8 +485,17 @@
     const lines = linesOf(pg);
     const glyph = (b) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && Math.max(b.w, b.h) < 0.75 * p.h && b.x + b.w / 2 > p.x0 && b.x + b.w / 2 < p.x1 && b.y + b.h / 2 > p.y - 1.05 * p.h && b.y + b.h / 2 < p.y + 0.25 * p.h));
     const boxes = (pg.boxes || []).filter((b) => b && b.w > 0 && b.h > 0 && !glyph(b)).map((b) => ({ x0: b.x, x1: b.x + b.w, y0: b.y, y1: b.y + b.h, seen: true }));
-    // A rule that is the top or bottom edge of a tick box, or the top of a frame, is not a blank.
-    const rules = (pg.rules || []).filter((r) => r && r.x1 - r.x0 >= MIN_RULE - 1 && r.clear >= TIGHT_CLEAR && !(r.drop >= 6) && !boxes.some((b) => r.x0 >= b.x0 - 1.5 && r.x1 <= b.x1 + 1.5 && r.y >= b.y0 - 1.5 && r.y <= b.y1 + 1.5));
+    // A rule that is the top or bottom edge of a tick box, or the top edge of a frame or a table, is not a blank
+    // (the bottom edge of a table cell, with the cell's sides standing on it, is one).
+    // In a table, the edge under a cell that has words in it (a label standing a little above its cell's bottom edge)
+    // is no blank either: the row's blank is the empty cell.
+    const filled = (r) => r.table && r.clear < 12 && lines.some((ln) => ln.parts.some((p) => p.t === 'text' && p.y < r.y - 2 && p.y > r.y - r.clear - p.h && overlap(p.x0, p.x1, r.x0, r.x1) > 0));
+    const rules = (pg.rules || []).filter((r) => r && r.x1 - r.x0 >= MIN_RULE - 1 && r.clear >= TIGHT_CLEAR && !(r.drop >= 6 && !(r.rise >= 6)) && !filled(r) && !boxes.some((b) => r.x0 >= b.x0 - 1.5 && r.x1 <= b.x1 + 1.5 && r.y >= b.y0 - 1.5 && r.y <= b.y1 + 1.5));
+    // A table row whose label does not fill its cell: the stretch after the label is the blank only when the cell
+    // beside it is not an empty one (then that cell is).
+    const all = rules.slice();
+    const spare = (r) => r.table && !r.cell && all.some((o) => o.cell && Math.abs(o.y - r.y) <= 1 && o.x0 >= r.x1 - 0.5 && o.x0 - r.x1 <= 4);
+    for (let i = rules.length - 1; i >= 0; i--) if (spare(rules[i])) rules.splice(i, 1);
     const slots = [];
     const free = [];
     // Each rule goes to the printed line it sits on (from 0.3 of the font height above the baseline to 0.9 below it).
@@ -517,7 +553,7 @@
         // A leader of dots or dashes is a blank only when nothing but white space follows it on the line.
         if (!r && p.t === 'lead' && ln.parts.slice(i + 1).some((q) => q.t === 'text')) return;
         if (r && r.clear < BLANK_CLEAR && p.t !== 'gap') return;
-        const slot = r ? { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, cut: !!r.cut } : { x0: p.x0, x1: p.x1, y: p.y + 1.6, clear: Math.max(BLANK_CLEAR, p.h), seen: false };
+        const slot = r ? { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, cut: !!r.cut, cell: !!r.cell } : { x0: p.x0, x1: p.x1, y: p.y + 1.6, clear: Math.max(BLANK_CLEAR, p.h), seen: false };
         slot.line = ln;
         slot.fromText = true;
         slot.src = p.src;
@@ -528,7 +564,7 @@
         if (taken.has(r) || r.clear < BLANK_CLEAR) return;
         // A stroke inside a run of words (two underscores in a name, a dash) is part of the text, not a blank.
         if (ln.parts.some((p) => p.t === 'text' && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0))) return;
-        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: ln, fromText: false, cut: !!r.cut };
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell };
         slots.push(slot);
         els.push({ t: 'slot', key: r.x0, slot });
       });
@@ -559,7 +595,7 @@
     });
     // A stroke in the body of a run of words (the bar of a letter, an equals sign) is part of the text, not a blank.
     const inText = (r) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && r.y > p.y - 1.05 * p.h && r.y < p.y + 0.2 * p.h && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0)));
-    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: null, fromText: false }));
+    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, line: null, fromText: false, cut: !!r.cut, cell: !!r.cell }));
     // Rows of a ruled table: each row's line runs under its label too, so the empty stretch begins where that row's
     // label ends. Nothing printed marks the column, so rows that end together start together, after the longest label.
     const cut = slots.filter((s) => s.cut).sort((a, b) => a.y - b.y);
@@ -704,9 +740,9 @@
       return m;
     };
     const generic = (slot, info, seg) => {
-      const label = clean(info.text.replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ').replace(/\s*(u\.?s\.?\s*)?\$\s*$/i, '').replace(/\s*[:：]\s*$/, '')) || 'Text';
+      const label = clean(info.text.replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ').replace(/\s*(u\.?s\.?\s*)?\$\s*$/i, '').replace(/\s*[:：]\s*$/, '').replace(/\s*,\s*(if|where|when|as) [^:]*$/i, '')) || 'Text';
       const m = propose('other', slot, info, { seg, label, required: !info.optional && !/\b(fax|middle|suffix|apt|suite)\b/i.test(label) });
-      if (info.kind === 'phrase' && !slot.cut) weaken(m, WHY.phrase);
+      if (info.kind === 'phrase' && !slot.cut && !slot.cell) weaken(m, WHY.phrase);
       return m;
     };
     L.lines.forEach((ln) => {
@@ -812,6 +848,26 @@
       });
     });
 
+    /* 2b. Rows of a table: the words in the cell to the left of an empty, ruled cell are its label, wherever in the
+       height of the row they stand (a label set in the middle of a tall cell is far above the cell's bottom edge). */
+    L.slots
+      .filter((s) => (s.cut || s.cell) && !s.made && !s.skip)
+      .forEach((slot) => {
+        const top = slot.y - Math.min(slot.clear + 2, 54);
+        const inRow = L.segs.filter((g) => !g.used && g.y > top && g.y <= slot.y + 1 && g.x1 <= slot.x0 + 3);
+        if (!inRow.length) return;
+        // The nearest cell to the left: its last printed line, and the lines above it that start at the same place.
+        const near = inRow.reduce((a, b) => (b.x1 > a.x1 ? b : a));
+        const cellText = inRow.filter((g) => Math.abs(g.x0 - near.x0) <= 3 || g === near).sort((a, b) => a.y - b.y);
+        if (L.slots.some((o) => o !== slot && o.x0 >= near.x1 - 3 && o.x1 <= slot.x0 + 3 && o.y > top && o.y <= slot.y + 1)) return;
+        const whole = cellText.map((g) => g.s).join(' ');
+        const info = classify(whole) || (/[:：]\s*$/.test(whole) ? null : classify(whole + ':')) || classify(near.s);
+        if (!info) return;
+        cellText.forEach((g) => (g.used = 'label'));
+        if (info.kind === 'skip') return (slot.skip = true);
+        if (FIELD(info.kind)) return propose(info.kind, slot, info, { seg: near });
+        generic(slot, info, near);
+      });
     /* 3. Blanks with no label on their line: a caption under the line, or a label above it. */
     const lonely = L.slots.filter((s) => !s.made && !s.skip).sort((a, b) => a.y - b.y || a.x0 - b.x0);
     // Stacks of such blanks in one column are read together: either every label is a caption, or every label is above.

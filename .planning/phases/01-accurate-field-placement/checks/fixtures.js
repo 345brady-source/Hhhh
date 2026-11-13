@@ -40,6 +40,8 @@ const inv = (type, more) => Object.assign({ type, role: 'investor' }, more || {}
 const firm = (type, more) => Object.assign({ type, role: 'firm' }, more || {});
 const fill = (label, key, more) => Object.assign({ type: 'text', role: 'investor', fillIn: true, label, key: key || '' }, more || {});
 const block = (role) => `<p>By: ${blank({ type: 'signature', role }, U30)}</p><p>Name: ${blank({ type: 'name', role }, U28)}</p><p>Title: ${blank({ type: 'text', role, label: 'Title', required: false }, U28)}</p><p>Date: ${blank({ type: 'date', role }, U28)}</p>`;
+// An empty table cell that is the blank: its bottom edge is the line.
+const gcell = (x) => `<td data-k="cell" data-x='${attr(x)}'></td>`;
 const initialsFoot = () => `<div class="foot">Subscriber's Initials: ${blank({ type: 'initials', role: 'investor', fillIn: true, required: true }, U(10))}</div>`;
 
 /* The pages several fixtures share. */
@@ -132,6 +134,18 @@ ${SIGNATURE_PAGE}
     html: `<div class="pg"><p><b>SUBSCRIBER:</b></p><p>&lt;img src=x onerror="window.__pwn=1"&gt; code: ${blank(fill('<img src=x onerror="window.__pwn=1"> code', ''), U(20))}</p>
 <p>By: ${blank(inv('signature'), U30)}</p><p>Name: ${blank(inv('name'), U28)}</p></div>`,
     countersign: false
+  },
+  // Signature blocks set as tables with every border drawn: the label in the left cell, standing in the middle of the
+  // row's height, the empty cell to its right. The row for a joint subscriber gets nothing.
+  grid: {
+    saves: true,
+    clean: true,
+    css: `.grid{border-collapse:collapse;width:100%} .grid td{border:1px solid #000;padding:5pt 6pt;height:24pt} .grid td:first-child{width:42%}`,
+    html: `<div class="pg"><h3 style="text-align:center">SIGNATURE PAGE</h3><p>The Subscriber has executed this Subscription Agreement on the date written below.</p><p><b>SUBSCRIBER</b></p>
+<table class="grid"><tr><td>Signature of Subscriber</td>${gcell(inv('signature'))}</tr><tr><td>Signature of Joint Subscriber (if any)</td><td></td></tr><tr><td>Print name(s)</td>${gcell(inv('name'))}</tr>
+<tr><td>Title (entities only)</td>${gcell(inv('text', { label: 'Title', forType: 'entity' }))}</tr><tr><td>Name of beneficial owner, if different from the Subscriber</td>${gcell(inv('text', { label: 'Name of beneficial owner', required: false }))}</tr><tr><td>Date</td>${gcell(inv('date'))}</tr></table>
+<p style="margin-top:30pt"><b>ACCEPTED BY THE GENERAL PARTNER</b></p>
+<table class="grid"><tr><td>By</td>${gcell(firm('signature'))}</tr><tr><td>Name and title</td>${gcell(firm('text', { label: 'Name and title' }))}</tr><tr><td>Date</td>${gcell(firm('date'))}</tr></table></div>`
   },
   // One page with no text at all: the stand-in for a scanned agreement.
   blank: { saves: false, html: `<div class="pg"></div>` }
