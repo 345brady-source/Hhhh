@@ -9,30 +9,46 @@
   const PREFIX = NS.EDITION ? NS.EDITION.storagePrefix : 'cvp2:';
   const { clone, merge } = NS.util;
 
+  // Records this browser would not keep (private browsing, a full disk, or the portal shown inside another page) are
+  // held here for as long as the page is open, so the portal keeps working; the person is told (app.js storageNote).
+  const held = {};
+  let refused = false;
   const store = {
     get(k, d) {
       try {
+        if (Object.prototype.hasOwnProperty.call(held, k)) return JSON.parse(held[k]);
         const v = localStorage.getItem(PREFIX + k);
         return v == null ? d : JSON.parse(v);
       } catch (e) {
         return d;
       }
     },
+    /** Keep a value. Returns false when the browser would not keep it (it is then held until the page is closed). */
     set(k, v) {
+      const json = JSON.stringify(v);
       try {
-        localStorage.setItem(PREFIX + k, JSON.stringify(v));
+        localStorage.setItem(PREFIX + k, json);
+        delete held[k];
         return true;
       } catch (e) {
+        if (json !== undefined) held[k] = json;
+        if (!refused) {
+          refused = true;
+          if (NS.app && NS.app.storageNote) NS.app.storageNote();
+        }
         return false;
       }
     },
     del(k) {
+      delete held[k];
       try {
         localStorage.removeItem(PREFIX + k);
       } catch (e) {
         /* ignore */
       }
-    }
+    },
+    /** True once a value could not be kept by the browser in this session. */
+    refused: () => refused
   };
   NS.store = store;
 
@@ -100,7 +116,9 @@
     NS.clearCaches();
     clearTimeout(timer);
     const run = () => {
+      const was = failed;
       failed = !store.set('ws:' + ws.tenant.id, ws);
+      if (failed !== was && NS.app && NS.app.storageNote) NS.app.storageNote();
     };
     if (now) run();
     else timer = setTimeout(run, 300);

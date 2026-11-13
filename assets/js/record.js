@@ -220,7 +220,10 @@
   }
   // What the standard PDF fonts print besides ASCII and Latin-1.
   const WIN_EXTRA = '€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ';
-  /** One line the font can print: no control or zero-width characters, and "?" for a character it has no glyph for. */
+  /**
+   * One line as it will be printed: no control or zero-width characters. A character the font has no glyph for stays as
+   * typed, because that line is drawn as a picture (esign.js); only where no picture can be made does it become "?".
+   */
   function clean(fonts, s) {
     const t = String(s == null ? '' : s)
       .replace(/[​-‍﻿]/g, '')
@@ -228,6 +231,7 @@
       .replace(/[\u0000-\u001F\u007F]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
+    if (fonts.pictures && kit().printed) return kit().printed(fonts, t);
     return Array.from(t)
       .map((ch) => {
         const c = ch.codePointAt(0);
@@ -236,9 +240,8 @@
       })
       .join('');
   }
-  /** Lines no wider than maxW (a word longer than the line is broken). */
-  function wrap(text, font, size, maxW) {
-    const wide = (s) => font.widthOfTextAtSize(s, size);
+  /** Lines no wider than maxW (a word longer than the line is broken). wide(s) is the width of s as it will be drawn. */
+  function wrapLines(text, wide, maxW) {
     const out = [];
     let cur = '';
     String(text).split(' ').forEach((word) => {
@@ -294,6 +297,10 @@
     const font = fonts.regular;
     const mono = await pdf.embedFont(L.StandardFonts.Courier);
     const tx = (s) => clean(fonts, s);
+    // A line the font cannot print is measured and drawn as a picture, so a name prints exactly as it was typed.
+    const pics = !!(fonts.pictures && kit().drawText && kit().textWidth && kit().drawPictures);
+    const wide = (f, s, size) => (pics ? kit().textWidth(fonts, f, s, size) : f.widthOfTextAtSize(s, size));
+    const wrap = (s, f, size, maxW) => wrapLines(s, (t) => wide(f, t, size), maxW);
     const mark = await brandMark(tok);
     const markImg = mark ? await pdf.embedPng(mark.png) : null;
     const sigs = {};
@@ -320,8 +327,12 @@
     const made = [];
     let page;
     let y;
-    const text = (s, x, yy, size, color, f) => page.drawText(s, { x, y: yy, size, font: f || font, color: color || fg });
-    const right = (s, xr, yy, size, color, f) => text(s, xr - (f || font).widthOfTextAtSize(s, size), yy, size, color, f);
+    const text = (s, x, yy, size, color, f) => {
+      const o = { x, y: yy, size, font: f || font, color: color || fg };
+      if (pics) kit().drawText(page, fonts, s, o);
+      else page.drawText(s, o);
+    };
+    const right = (s, xr, yy, size, color, f) => text(s, xr - wide(f || font, s, size), yy, size, color, f);
     const rule = (yy, color, thickness) => page.drawLine({ start: { x: M, y: yy }, end: { x: PW - M, y: yy }, thickness: thickness || 0.6, color: color || hair });
     const open = (cont) => {
       page = pdf.addPage([PW, PH]);
@@ -467,6 +478,7 @@
       text(tx(`${legal} · Record ${rec.id}`), M, M + 2, 7.5, fg2);
       right(`Page ${total - made.length + i + 1} of ${total}`, PW - M, M + 2, 7.5, fg2);
     });
+    if (pics) await kit().drawPictures(pdf, fonts);
     // The file names the firm and the agreement, nothing else.
     pdf.setTitle(tx(opts.standalone ? `${env.title}: certificate of completion` : env.title));
     pdf.setAuthor(tx(legal));

@@ -73,6 +73,9 @@ body.mode-console { background: var(--cv-bg); }
 /* Investor preview bar (sponsor staff) and demo role control: no Carrow & Vale branding */
 .pvbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-md); min-height: 48px; padding: var(--space-2xs) max(20px, env(safe-area-inset-right, 0px)) var(--space-2xs) max(20px, env(safe-area-inset-left, 0px)); background: var(--cv-panel-2); color: var(--cv-ink-2); border-bottom: 1px solid var(--cv-line); font-family: var(--cv-font); font-size: var(--text-sm); line-height: 1.4; }
 .pvbar-label { font-weight: 500; color: var(--cv-ink); }
+.pvbar-note { flex-wrap: nowrap; }
+.pvbar-note > span { min-width: 0; }
+.pvbar-note .i { color: var(--cv-warn); }
 .pvbar .op-viewer { margin-left: 0; }
 .pvbar-back { position: relative; margin-left: auto; font-weight: 500; color: var(--cv-ink); text-decoration-color: color-mix(in oklab, currentColor 40%, transparent); transition: color var(--dur-micro) var(--ease-out); }
 .pvbar-back::after { content: ""; position: absolute; inset: -12px 0; }
