@@ -1,6 +1,8 @@
 /*
  * Filling in from onboarding, from the uploaded agreement to each investor's envelope: blanks the portal has the
- * answer for arrive filled in and locked, the rest stay empty and fillable; an individual gets the block for
+ * answer for arrive filled in and locked (a blank after a printed currency sign gets the figure alone, so the sign
+ * is not printed twice), the rest stay empty and fillable; the firm has a field only on the signature line the
+ * agreement prints for it (nothing after its bare "Name:" and "Title:" labels); an individual gets the block for
  * individuals and an entity the block for entities; a correction made in onboarding reaches the agreement once;
  * nothing crosses from one investor to another; agreements that fill in by label still do. Then the two editor
  * controls ("Filled in from onboarding", "Who gets this field") and the rule that every kind of investor needs
@@ -35,14 +37,23 @@ const C = { name: 'Cleo Marsh', email: 'cleo.marsh@example.com', type: 'individu
       const ws = NS.state.ws;
       const o = ws.offerings[0];
       Object.assign(o, { name: 'Northgate Fund I, LP', shortName: 'Northgate Fund I' });
-      const env = await NS.esign.agreementDraft(ws, o.id, { file: new File([new Uint8Array(arr)], 'full.pdf', { type: 'application/pdf' }), title: 'Subscription Agreement', countersign: true });
+      const env = await NS.esign.agreementDraft(ws, o.id, { file: new File([new Uint8Array(arr)], 'full.pdf', { type: 'application/pdf' }), title: 'Subscription Agreement' });
       const before = NS.placement.reviewCount(env);
+      const role = (f) => env.signers.find((s) => s.id === f.signerId).role;
+      const firm = env.fields.filter((f) => role(f) === 'countersigner').map((f) => f.type + ':p' + f.page);
+      const amount = env.fields.find((f) => f.prefill === 'amount') || {};
+      const bare = env.fields.filter((f) => !(f.auto && f.kind && f.placed)).length;
       const refused = NS.esign.saveAgreement(ws, env) === null;
       env.fields.forEach((f) => NS.placement.confirm(f));
       const tpl = NS.esign.saveAgreement(ws, env);
-      return { oid: o.id, before, refused, saved: !!tpl, ready: NS.esign.templateReady(ws, o.id), fields: tpl ? tpl.fields.length : 0 };
+      return { oid: o.id, before, refused, saved: !!tpl, ready: NS.esign.templateReady(ws, o.id), fields: tpl ? tpl.fields.length : 0, firm, printed: amount.printed || '', bare, roles: tpl ? tpl.roles : [], read: env.read };
     }, made.bytes);
     check('the agreement is held while marks remain and saves once they are settled', setup.before > 0 && setup.refused && setup.saved && setup.ready, setup);
+    // One field for every printed place of the fixture, and none for a label with no line.
+    const places = made.expect.filter((e) => !e.none);
+    check('one field on each of the agreement’s printed places and none anywhere else; each carries its kind and the reading’s record', setup.fields === places.length && setup.bare === 0, { fields: setup.fields, places: places.length, bare: setup.bare });
+    check('the firm signs because its signature line was read, and has that one field: nothing after its bare "Name:" and "Title:" labels', setup.firm.join() === 'signature:p5' && setup.roles.join() === 'Investor,Sponsor' && setup.read.firmPages.join() === '5', { firm: setup.firm, roles: setup.roles, firmPages: setup.read.firmPages });
+    check('the amount blank knows the currency sign printed before it', setup.printed === '$', setup.printed);
 
     /* ---- Investors, each subscribing as onboarding does ---- */
     const subscribe = (p) =>
@@ -84,12 +95,12 @@ const C = { name: 'Cleo Marsh', email: 'cleo.marsh@example.com', type: 'individu
     check('each subscription made an envelope from the agreement', !!(ea && eb && ec) && ea.status === 'sent', { a, b, c });
 
     const filled = (e, label, value) => by(e, label).value === value && by(e, label).locked === true;
-    check('individual: name, street, city, state, ZIP, email, phone and commitment arrive filled in and locked', filled(ea, 'Investor name', 'Ana Reyes') && filled(ea, 'Address', '12 Harbor Road') && filled(ea, 'City', 'Mystic') && filled(ea, 'State', 'CT') && filled(ea, 'ZIP code', '06355') && filled(ea, 'Email', A.email) && filled(ea, 'Phone', A.phone) && filled(ea, 'Commitment amount', '$250,000'), ea.mine.filter((f) => f.type === 'text'));
+    check('individual: name, street, city, state, ZIP, email, phone and commitment arrive filled in and locked', filled(ea, 'Investor name', 'Ana Reyes') && filled(ea, 'Address', '12 Harbor Road') && filled(ea, 'City', 'Mystic') && filled(ea, 'State', 'CT') && filled(ea, 'ZIP code', '06355') && filled(ea, 'Email', A.email) && filled(ea, 'Phone', A.phone) && filled(ea, 'Commitment amount', '250,000'), ea.mine.filter((f) => f.type === 'text'));
     check('individual: the taxpayer ID, the date of birth and the second address line are empty and can be typed into', ['Taxpayer ID', 'Date of birth', 'Address line 2'].every((l) => by(ea, l).value === '' && by(ea, l).locked === false), ea.mine.filter((f) => f.type === 'text'));
     check('individual: gets the block for individuals and none of the block for entities', ea.group === 'person' && ea.mine.some((f) => f.forType === 'person' && f.type === 'signature') && !ea.mine.some((f) => f.forType === 'entity'), ea.mine.map((f) => f.type + ':' + f.forType));
     check('entity: gets the block for entities and none of the block for individuals', eb.group === 'entity' && eb.mine.some((f) => f.forType === 'entity' && f.type === 'signature') && !eb.mine.some((f) => f.forType === 'person') && !!by(eb, 'State of organization').id && !by(ea, 'State of organization').id, eb.mine.map((f) => f.type + ':' + f.forType));
     check('entity: the account name fills both name blanks; the title is left to type', eb.mine.filter((f) => f.label === 'Investor name').length === 2 && eb.mine.filter((f) => f.label === 'Investor name').every((f) => f.value === 'Harbor Light Holdings LLC' && f.locked) && by(eb, 'Title').value === '' && by(eb, 'Title').locked === false, eb.mine.filter((f) => f.type === 'text'));
-    check('both get the fields meant for everyone, and the firm keeps its own', ['Email', 'Phone', 'Commitment amount'].every((l) => by(ea, l).id && by(eb, l).id) && ea.firm === 3 && eb.firm === 3, { a: ea.firm, b: eb.firm });
+    check('both get the fields meant for everyone, and the firm keeps its own', ['Email', 'Phone', 'Commitment amount'].every((l) => by(ea, l).id && by(eb, l).id) && ea.firm === 1 && eb.firm === 1, { a: ea.firm, b: eb.firm });
     check('tick boxes are left for the investor', ea.mine.filter((f) => f.type === 'checkbox').length === 7 && ea.mine.filter((f) => f.type === 'checkbox').every((f) => !f.value && !f.locked));
     check('no phone on file: the Phone blank is empty and unlocked', by(ec, 'Phone').value === '' && by(ec, 'Phone').locked === false, by(ec, 'Phone'));
     check('an address that is not in the U.S. form fills nothing it cannot split', by(ec, 'Address').locked === false && by(ec, 'City').locked === false && filled(ec, 'Email', C.email), ec.mine.filter((f) => f.type === 'text'));
@@ -132,7 +143,7 @@ const C = { name: 'Cleo Marsh', email: 'cleo.marsh@example.com', type: 'individu
       { id: a.investorId, envId: a.envelopeId, oid: setup.oid }
     );
     const ea3 = await read(a.envelopeId);
-    check('an individual who turns out to be an entity gets the entity block instead', swap === true && ea3.group === 'entity' && ea3.mine.some((f) => f.forType === 'entity' && f.type === 'signature') && !ea3.mine.some((f) => f.forType === 'person') && ea3.mine.filter((f) => f.label === 'Investor name').every((f) => f.value === 'Reyes Family Trust' && f.locked) && ea3.firm === 3, ea3.mine.map((f) => f.type + ':' + f.forType + ':' + f.value));
+    check('an individual who turns out to be an entity gets the entity block instead', swap === true && ea3.group === 'entity' && ea3.mine.some((f) => f.forType === 'entity' && f.type === 'signature') && !ea3.mine.some((f) => f.forType === 'person') && ea3.mine.filter((f) => f.label === 'Investor name').every((f) => f.value === 'Reyes Family Trust' && f.locked) && ea3.firm === 1, ea3.mine.map((f) => f.type + ':' + f.forType + ':' + f.value));
 
     /* ---- An agreement stored the old way still fills in by label ---- */
     const legacy = await ev(async (arr) => {

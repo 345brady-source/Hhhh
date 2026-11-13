@@ -1,7 +1,12 @@
 /*
- * The label table and the reading rules of assets/js/placement.js, checked in node with no browser.
- * The module is loaded with a stand-in for window.CVPortal: it must not touch a document or any other part of the
- * portal when it loads.
+ * The label table and the reading rules of assets/js/placement.js, and what assets/js/anchors.js makes of a page for
+ * it, checked in node with no browser. Both modules are loaded with a stand-in for window.CVPortal: they must not
+ * touch a document or any other part of the portal when they load.
+ *
+ * The rule the reading cases state: a field is proposed only for something the page prints (a line, a run of
+ * underscores, a tick box, an empty ruled cell). No block is made up for a page with no place to sign, and no field
+ * is put after a label with no line. A printed line for a second signer, a witness or a notary is a printed place:
+ * it gets a field kept apart from the investor's own (optional, marked low).
  *
  * Run from the repository root:   node .planning/phases/01-accurate-field-placement/checks/labels.js
  */
@@ -11,8 +16,10 @@ const vm = require('vm');
 
 const ROOT = path.resolve(__dirname, '..', '..', '..', '..');
 const sandbox = { window: { CVPortal: {} } };
-vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'assets/js/placement.js'), 'utf8'), sandbox, { filename: 'placement.js' });
+vm.createContext(sandbox);
+['anchors.js', 'placement.js'].forEach((f) => vm.runInContext(fs.readFileSync(path.join(ROOT, 'assets/js', f), 'utf8'), sandbox, { filename: f }));
 const P = sandbox.window.CVPortal.placement;
+const A = sandbox.window.CVPortal.anchors;
 
 let failed = 0;
 let passed = 0;
@@ -80,29 +87,69 @@ check('hostile input returns quickly', (() => {
   const t = Date.now();
   P.labelOf('name '.repeat(2000));
   P.labelOf('a'.repeat(89) + '!');
-  P.analyze([{ page: 1, w: 612, h: 792, items: [{ s: ('Name of ' + 'x '.repeat(40)).repeat(50), x: 72, y: 100, w: 400, h: 12 }], rules: [], boxes: [] }], {});
+  P.analyze([{ page: 1, w: 612, h: 792, items: [{ s: ('Name of ' + 'x '.repeat(40)).repeat(50), x: 72, y: 100, w: 400, h: 12 }], rules: [], boxes: [], forms: [] }], {});
   return Date.now() - t < 500;
 })());
 
-/* ---------- Reading a page given as plain data ---------- */
-// A page from rows of text and rules: ['text', x, y, 'words'] with y the baseline, ['rule', x0, x1, y] with 24 pt of
-// empty paper above it. Text is set at 12 pt; its width comes from the same rough character widths the module uses.
-const width = (s) => Array.from(s).reduce((a, ch) => a + (ch === ' ' ? 3 : /[A-Z]/.test(ch) ? 7.8 : /[ijlt.,:;']/.test(ch) ? 3.3 : 5.4), 0);
-function page(rows, n) {
-  const pg = { page: n || 1, w: 612, h: 792, items: [], rules: [], boxes: [] };
+/* ---------- Reading a page given as what the PDF draws ---------- */
+// A page is built the way the reading gets it: the characters, strokes and rectangles the PDF draws (what
+// NS.anchors.walk returns), turned into runs of text, lines and tick boxes by NS.anchors.page, then read by
+// NS.placement. Nothing is handed to placement that anchors.js did not make from what is printed.
+//   ['text', x, y, 'words', font]   characters set at 12 pt on the baseline y (font only matters for a symbol font);
+//                                   a run of underscores in the words is a printed line, as in a real PDF
+//   ['rule', x0, x1, y]             a drawn line
+//   ['box', x, y]                   a drawn square of 10 pt with its top-left corner at x, y
+//   ['frame', x0, y0, x1, y1]       a drawn rectangle (a table cell, a frame)
+// A character's width comes from the same rough widths the check has always used.
+const cw = (ch) => (ch === ' ' ? 3 : /[A-Z]/.test(ch) ? 7.8 : /[ijlt.,:;']/.test(ch) ? 3.3 : 5.4);
+const width = (s) => Array.from(s).reduce((a, ch) => a + cw(ch), 0);
+function raw(rows) {
+  const out = { glyphs: [], segs: [], rects: [], picture: false };
+  const rect = (x0, y0, x1, y1) => {
+    out.rects.push({ x0, y0, x1, y1, t: 0.75 });
+    out.segs.push({ o: 'h', a0: x0, a1: x1, c: y0, t: 0.75, frame: true }, { o: 'h', a0: x0, a1: x1, c: y1, t: 0.75, frame: true }, { o: 'v', a0: y0, a1: y1, c: x0, t: 0.75 }, { o: 'v', a0: y0, a1: y1, c: x1, t: 0.75 });
+  };
   rows.forEach((r) => {
-    if (r[0] === 'text') pg.items.push({ s: r[3], x: r[1], y: r[2], w: width(r[3]), h: 12 });
-    else if (r[0] === 'rule') pg.rules.push({ x0: r[1], x1: r[2], y: r[3], t: 0.75, clear: r[4] || 24, drop: 0 });
-    else if (r[0] === 'box') pg.boxes.push({ x: r[1], y: r[2], w: 10, h: 10 });
+    if (r[0] === 'text') {
+      let x = r[1];
+      Array.from(r[3]).forEach((ch) => {
+        out.glyphs.push({ u: ch, sp: !ch.trim(), x0: x, x1: x + cw(ch), y: r[2], h: 12, font: r[4] || 'TimesNewRoman', hidden: false });
+        x += cw(ch);
+      });
+    } else if (r[0] === 'rule') out.segs.push({ o: 'h', a0: r[1], a1: r[2], c: r[3], t: 0.75 });
+    else if (r[0] === 'box') rect(r[1], r[2], r[1] + 10, r[2] + 10);
+    else if (r[0] === 'frame') rect(r[1], r[2], r[3], r[4]);
   });
-  return pg;
+  return out;
 }
-const ctx = { countersign: true, firmNames: ['Northgate Capital', 'Northgate Capital Management, LLC'], fundNames: ['Northgate Fund I, LP'] };
-const read = (rows, c) => P.analyze([page(rows)], c || ctx).filter((p) => p.why.indexOf('last page') < 0);
+const page = (rows, n) => A.page(raw(rows), { page: n || 1, w: 612, h: 792 }, []);
+const ctx = { firmNames: ['Northgate Capital', 'Northgate Capital Management, LLC'], fundNames: ['Northgate Fund I, LP'] };
+const whole = (rows, c) => P.read([page(rows)], c || ctx);
+const read = (rows, c) => whole(rows, c).fields;
 const at = (list, x, y) => list.find((p) => Math.abs(p.x - x) <= 6 && p.y + p.h >= y - 2 && p.y + p.h <= y + 7);
-const sum = (list) => list.map((p) => `${p.type}/${p.role}/${p.conf}@${Math.round(p.x)},${Math.round(p.y + p.h)}`).join(' ');
+const sum = (list) => list.map((p) => `${p.type}/${p.role}/${p.conf}${p.second ? '/second' : ''}@${Math.round(p.x)},${Math.round(p.y + p.h)}`).join(' ') || 'no field';
 // "Label: [rule]" on one printed line.
 const labelled = (x, y, label, len) => [['text', x, y, label], ['rule', x + width(label) + 4, x + width(label) + 4 + (len || 180), y + 1.5]];
+
+// 0. The reading's own format: what anchors.js makes of a page, and that nothing draws or scans it.
+(() => {
+  check('the pixel scan is gone: placement has read and analyze and no scan', typeof P.read === 'function' && typeof P.analyze === 'function' && P.scan === undefined, Object.keys(P));
+  const pg = page([['text', 72, 100, 'Signature: ____________________'], ['rule', 72, 260, 160], ['box', 72, 191], ['text', 88, 200, 'Trust']]);
+  const us = pg.rules.find((r) => /underscores/.test(r.made));
+  const dr = pg.rules.find((r) => r.made === 'rule');
+  check('a run of underscores is read as a printed line with its exact extent', us && Math.abs(us.x0 - (72 + width('Signature: '))) < 0.01 && Math.abs(us.x1 - (72 + width('Signature: ____________________'))) < 0.01 && Math.abs(us.y - 101.44) < 0.01, pg.rules);
+  check('a drawn line is read with the empty paper above it and how far a field may reach past it', dr && dr.x0 === 72 && dr.x1 === 260 && dr.y === 160 && dr.clear >= 7 && dr.pad && dr.pad.l > 0 && dr.pad.l <= 1 && dr.pad.r <= 1 && dr.pad.d >= 1 && dr.pad.d <= 2, pg.rules);
+  check('a drawn square is read as a tick box of its size', pg.boxes.length === 1 && pg.boxes[0].made === 'square' && pg.boxes[0].x === 72 && pg.boxes[0].y === 191 && pg.boxes[0].w === 10, pg.boxes);
+  check('the text keeps its words; the underscores are a run of their own', pg.items.some((it) => it.s === 'Signature:') && pg.items.some((it) => /^_+$/.test(it.s)) && pg.items.some((it) => it.s === 'Trust'), pg.items.map((it) => it.s));
+  const f = P.read([pg], ctx).fields;
+  const a = f.find((p) => p.type === 'signature');
+  check('a field covers the ink of its line: about a point past each end and a point and a half under it', a && us.x0 - a.x > 0 && us.x0 - a.x <= 1.01 && a.x + a.w - us.x1 > 0 && a.x + a.w - us.x1 <= 1.01 && a.y + a.h - us.y >= 1 && a.y + a.h - us.y <= 2.5, a);
+  check('every proposed field says what kind of answer it takes', f.length === 2 && f.every((p) => typeof p.kind === 'string' && p.kind) && a.kind === 'signature' && f.find((p) => p.type === 'checkbox').kind === 'checkbox', f.map((p) => p.type + ':' + p.kind));
+  check('a page that is a picture is not read, and a page the reader failed on is counted as such', (() => {
+    const r = P.read([{ page: 1, w: 612, h: 792, items: [], rules: [], boxes: [], forms: [], scan: true }, { page: 2, w: 612, h: 792, items: [], rules: [], boxes: [], forms: [], failed: true }], ctx);
+    return r.fields.length === 0 && r.pages === 0 && r.scanned.join() === '1' && r.failed.join() === '2';
+  })());
+})();
 
 // 1. A second block under a heading that says nothing (a company name the portal does not know) is not the investor's for sure.
 (() => {
@@ -118,10 +165,11 @@ const labelled = (x, y, label, len) => [['text', x, y, label], ['rule', x + widt
   const b = at(f, 72 + width('By:') + 4, 261.5);
   check('a block headed only by the firm’s name is given to the firm, marked', b && b.role === 'firm' && b.conf === 'medium', sum(f));
 })();
-// 3. The firm's name with words that say it acts for the fund: sure.
+// 3. The firm's name with words that say it acts for the fund: sure. Labels with no line get nothing.
 (() => {
   const f = read([['text', 72, 100, 'NORTHGATE FUND I, LP'], ['text', 72, 120, 'By: Northgate Capital GP, LLC, its general partner'], ...labelled(72, 150, 'By:'), ['text', 72, 180, 'Name:'], ['text', 72, 200, 'Title:']]);
-  check('"its general partner" makes the block the firm’s for sure', f.length === 3 && f.every((p) => p.role === 'firm' && p.conf === 'high'), sum(f));
+  check('"its general partner" makes the block the firm’s for sure', f.length >= 1 && f.every((p) => p.role === 'firm' && p.conf === 'high') && !!at(f, 72 + width('By:') + 4, 151.5), sum(f));
+  check('"Name:" and "Title:" with no line get no field: only the printed line does', f.length === 1 && f[0].type === 'signature', sum(f));
   check('"By: <a name>" with no line gets no field', !f.some((p) => p.y + p.h < 140), sum(f));
 })();
 // 4. A page title naming the fund is not a heading for the firm.
@@ -141,7 +189,7 @@ const labelled = (x, y, label, len) => [['text', x, y, label], ['rule', x + widt
   const f = read([['text', 72, 100, 'SUBSCRIBER'], ['rule', 72, 260, 140], ['text', 72, 152, 'Signature'], ['rule', 72, 260, 190], ['text', 72, 202, 'Print Name'], ['rule', 72, 200, 240], ['text', 72, 252, 'Date']]);
   check('a stack of captions under their lines is read as captions, sure', f.map((p) => p.type + '/' + p.conf).join(',') === 'signature/high,name/high,date/high', sum(f));
 })();
-// 7. An unknown label on top of a stack of labels above their lines: the first line gets nothing rather than the wrong caption.
+// 7. An unknown label on top of a stack of labels above their lines: the first line gets nothing confident rather than the wrong caption.
 (() => {
   const f = read([['text', 72, 100, 'SUBSCRIBER'], ['text', 72, 130, 'Authorized Person'], ['rule', 72, 260, 148], ['text', 72, 166, 'Print Name'], ['rule', 72, 260, 184], ['text', 72, 202, 'Date'], ['rule', 72, 200, 220]]);
   check('no confident field when captions and labels above cannot be told apart', f.every((p) => p.conf !== 'high'), sum(f));
@@ -155,22 +203,28 @@ const labelled = (x, y, label, len) => [['text', x, y, label], ['rule', x + widt
   check('left column is the investor’s', left.length === 2 && left.every((p) => p.role === 'investor' && p.conf === 'high'), sum(f));
   check('right column is the firm’s', right.length === 2 && right.every((p) => p.role === 'firm' && p.conf === 'high'), sum(f));
 })();
-// 9. With no countersignature asked for, the firm's proposals are still labelled as the firm's (the caller drops them).
+// 9. Who signs is read, not chosen: a firm block is the firm's and its page is named when it has a signature line;
+// a blank of the firm with no signature line for it is still labelled the firm's, and no page is named for the firm
+// (the upload then leaves that blank without a field).
 (() => {
-  const f = read([['text', 72, 100, 'ACCEPTED AND AGREED:'], ...labelled(72, 140, 'By:')], { countersign: false });
-  check('a firm block stays the firm’s when it does not countersign', f.length === 1 && f[0].role === 'firm', sum(f));
+  const r = whole([['text', 72, 100, 'ACCEPTED AND AGREED:'], ...labelled(72, 140, 'By:')]);
+  check('a firm block is the firm’s, and the page of its signature line is named', r.fields.length === 1 && r.fields[0].role === 'firm' && r.fields[0].type === 'signature' && r.firmPages.join() === '1' && r.investorPages.length === 0, sum(r.fields));
+  const q = whole([['text', 72, 100, 'ACCEPTED AND AGREED:'], ...labelled(72, 140, 'Name:')]);
+  check('a firm blank with no signature line stays the firm’s, and no page is named for the firm to sign on', q.fields.length === 1 && q.fields[0].role === 'firm' && q.firmPages.length === 0, sum(q.fields));
+  const s = whole([['text', 72, 100, 'SUBSCRIBER:'], ...labelled(72, 140, 'Signature:')]);
+  check('the investor’s signature line names its page', s.investorPages.join() === '1' && s.firmPages.length === 0 && s.signatures === 1 && s.blanks === 0 && s.boxes === 0, s);
 })();
-// 10. Lines for a witness or a spouse get no field; a body sentence gets no signature.
+// 10. Lines for a witness or a spouse are printed lines: each gets a field kept apart for a second signer (optional,
+// marked low), never the investor's own signature; a body sentence gets nothing.
 (() => {
-  const f = read([['text', 72, 100, 'SUBSCRIBER:'], ...labelled(72, 130, 'Signature:'), ...labelled(72, 160, 'Witness:'), ...labelled(72, 190, 'Signature of Spouse:'), ['text', 72, 240, 'The signature of the Subscriber below constitutes execution of this Agreement.']]);
-  check('witness and spouse lines get nothing', f.length === 1 && f[0].type === 'signature', sum(f));
+  const r = whole([['text', 72, 100, 'SUBSCRIBER:'], ...labelled(72, 130, 'Signature:'), ...labelled(72, 160, 'Witness:'), ...labelled(72, 190, 'Signature of Spouse:'), ['text', 72, 240, 'The signature of the Subscriber below constitutes execution of this Agreement.']]);
+  const f = r.fields;
+  check('the investor’s own line is the one sure signature', f.filter((p) => p.type === 'signature' && !p.second).length === 1 && f[0].type === 'signature' && !f[0].second && f[0].conf === 'high' && f[0].required === true, sum(f));
+  check('witness and spouse lines each get a second signer’s field: optional, marked low, and not where the investor signs', f.length === 3 && f.slice(1).every((p) => p.second === true && p.conf === 'low' && p.required === false && /second signer, a witness or a notary/.test(p.why)) && r.investorPages.join() === '1', sum(f));
 })();
 // 11. A rule with other text under it (a footer, a heading) is not a blank; neither is the top edge of a frame.
 (() => {
-  const pg = page([['rule', 72, 540, 300], ['text', 290, 312, 'Page 2'], ['rule', 72, 540, 400], ['text', 72, 412, 'Additional terms'], ['text', 72, 500, 'Signature'], ['rule', 72, 260, 480, 24]]);
-  pg.rules.push({ x0: 72, x1: 300, y: 600, t: 0.75, clear: 30, drop: 12 });
-  pg.items.push({ s: 'Signature', x: 72, y: 612, w: 50, h: 12 });
-  const f = P.analyze([pg], { countersign: false }).filter((p) => p.why.indexOf('last page') < 0);
+  const f = read([['rule', 72, 540, 300], ['text', 290, 312, 'Page 2'], ['rule', 72, 540, 400], ['text', 72, 412, 'Additional terms'], ['text', 72, 500, 'Signature'], ['rule', 72, 260, 480], ['frame', 72, 600, 300, 640], ['text', 76, 612, 'Signature']]);
   check('only the captioned line gets a field', f.length === 1 && f[0].type === 'signature' && Math.abs(f[0].y + f[0].h - 484) < 3, sum(f));
 })();
 // 12. Tick boxes: words after the box, or before it when the line reads "Yes [ ]  No [ ]".
@@ -181,6 +235,9 @@ const labelled = (x, y, label, len) => [['text', x, y, label], ['rule', x + widt
   check('words before their box', g.map((p) => p.label).join(',') === 'Yes,No', sum(g));
   const comb = read([['text', 72, 100, 'SSN:'], ['box', 110, 91], ['box', 120.5, 91], ['box', 131, 91], ['box', 141.5, 91]]);
   check('a comb of touching squares is not tick boxes', comb.length === 0, sum(comb));
+  // A box written as brackets is read from its own characters: its place is exact, so it is sure.
+  const br = read([['text', 72, 100, '[ ] I have read the offering documents']]);
+  check('a box written as an empty bracket pair is a tick box with its words, sure', br.length === 1 && br[0].type === 'checkbox' && br[0].label === 'I have read the offering documents' && br[0].conf === 'high' && Math.abs(br[0].x + br[0].w / 2 - (72 + width('[ ]') / 2)) < 3, sum(br) + ' ' + (br[0] || {}).label);
 })();
 // 13. A short blank before a statement: initials when told so, a tick when told so, initials marked when nothing says.
 (() => {
@@ -201,18 +258,24 @@ const labelled = (x, y, label, len) => [['text', x, y, label], ['rule', x + widt
   const b = read([['text', 72, 100, s2], ['rule', 72 + width(s2) + 2, 72 + width(s2) + 90, 101.5]]);
   check('another blank inside a sentence is a marked text field', b.length === 1 && b[0].type === 'text' && b[0].conf === 'medium', sum(b));
 })();
-// 15. A table-of-contents leader gets nothing; a text-only blank (no line seen) is marked as estimated.
+// 15. A table-of-contents leader gets nothing; a run of underscores in the text is a printed line read exactly, so it is sure.
 (() => {
   const a = read([['text', 72, 100, 'Section 4. Representations ' + '.'.repeat(40) + ' 12']]);
   check('a leader of dots running to a page number is not a blank', a.length === 0, sum(a));
   const b = read([['text', 72, 100, 'SUBSCRIBER:'], ['text', 72, 130, 'Signature: ______________________']]);
-  check('a blank known only from the text is marked as estimated', b.length === 1 && b[0].type === 'signature' && b[0].conf === 'medium' && /estimated/.test(b[0].why), sum(b));
+  check('a blank made of underscores is read from its own characters: sure, with no "estimated" reason, on the underscores', b.length === 1 && b[0].type === 'signature' && b[0].conf === 'high' && !b[0].why && Math.abs(b[0].x - (72 + width('Signature: '))) <= 1.01 && Math.abs(b[0].x + b[0].w - (72 + width('Signature: ______________________'))) <= 1.01, sum(b));
 })();
-// 16. The fallback block when nothing can be read.
+// 16. Nothing is made up: a page with nothing printed on it gets no field at all, and neither does the last page of
+// an agreement with no place to sign.
 (() => {
-  const f = P.analyze([{ page: 1, w: 612, h: 792, items: [], rules: [], boxes: [] }], { countersign: true });
-  check('six low-confidence fields on a page with nothing to read', f.length === 6 && f.every((p) => p.conf === 'low' && p.why), sum(f));
-  check('labels are cut to 60 characters and carry no control characters', P.analyze([page([...labelled(72, 100, 'An \u0007extraordinarily long label for a blank that goes on and on:', 100)])], {}).every((p) => p.label.length <= 60 && !/[\u0000-\u001f]/.test(p.label)));
+  const r = P.read([{ page: 1, w: 612, h: 792, items: [], rules: [], boxes: [], forms: [] }], ctx);
+  check('no field on a page with nothing to read (no block is invented), and no page named for anyone to sign on', r.fields.length === 0 && r.pages === 1 && r.investorPages.length === 0 && r.firmPages.length === 0 && r.signatures + r.blanks + r.boxes === 0, sum(r.fields));
+  const t = P.read([page([['text', 72, 100, 'The parties agree to the terms of the offering documents.']]), page([['text', 72, 100, 'This document may be executed in counterparts.']], 2)], ctx);
+  check('no field on pages of running text, the last page included', t.fields.length === 0 && t.pages === 2, sum(t.fields));
+  check('labels are cut to 60 characters and carry no control characters', (() => {
+    const f = P.analyze([page([...labelled(72, 100, 'An \u0007extraordinarily long label for a blank that goes on and on:', 100)])], {});
+    return f.length === 1 && f.every((p) => p.label.length <= 60 && !/[\u0000-\u001f]/.test(p.label));
+  })());
 })();
 
 // 17. A label that closes a line of running text is the label; the sentence before it is not part of it.
@@ -228,56 +291,33 @@ const labelled = (x, y, label, len) => [['text', x, y, label], ['rule', x + widt
   const f = read([['text', 72, 100, s], ['rule', 72 + width(s) + 2, 72 + width(s) + 90, 101.5]]);
   check('"the minimum subscription is $____" is not filled in with the investor’s commitment', f.length === 1 && !f[0].prefill && f[0].conf !== 'high', sum(f));
 })();
-// 19. A label far to the left on the same printed line does not take a line that has a caption of its own.
+// 19. A label far to the left on the same printed line does not take a line that has a caption of its own, and a
+// label left without a line gets no field.
 (() => {
   const f = read([['text', 72, 100, 'SUBSCRIBER'], ['text', 72, 141, 'Date:'], ['rule', 300, 500, 142], ['text', 300, 154, 'Signature of Subscriber']]);
   const onLine = f.filter((p) => Math.abs(p.x - 300) < 2);
   check('the captioned line keeps its caption', onLine.length === 1 && onLine[0].type === 'signature' && onLine[0].conf === 'high', sum(f));
-  check('the label left without a line gets a field after it, marked low', f.length === 2 && f.some((p) => p.type === 'date' && p.conf === 'low' && p.x < 200), sum(f));
+  check('the label left without a line gets no field: nothing is placed where nothing is printed', f.length === 1 && !f.some((p) => p.type === 'date' || p.x < 200), sum(f));
 })();
 // 20. Rows of a ruled table: the line of each row is empty from the end of its label on; the fields start together.
 (() => {
-  const pg = page([['text', 72, 100, 'Name of Purchaser'], ['text', 72, 130, 'Email'], ['text', 72, 160, 'Country of residence']]);
-  [[72 + width('Name of Purchaser') + 1, 105], [72 + width('Email') + 1, 135], [72 + width('Country of residence') + 1, 165]].forEach(([x0, y]) => pg.rules.push({ x0, x1: 540, y, t: 0.75, clear: 24, drop: 0, cut: true }));
-  const f = P.analyze([pg], ctx).filter((p) => p.why.indexOf('last page') < 0);
+  const f = read([['text', 72, 100, 'Name of Purchaser'], ['rule', 72, 540, 105], ['text', 72, 130, 'Email'], ['rule', 72, 540, 135], ['text', 72, 160, 'Country of residence'], ['rule', 72, 540, 165]]);
   check('three ruled rows give three fields that start at the same place, after the longest label', f.length === 3 && f.every((p) => Math.abs(p.x - f[0].x) < 0.5) && f[0].x > 72 + width('Country of residence'), sum(f));
-  check('a row whose words are not a known label is still labelled with them, sure', f[2].label === 'Country of residence' && f[2].conf === 'high', sum(f));
+  check('a row whose words are not a known label is still labelled with them, sure', f.length === 3 && f[2].label === 'Country of residence' && f[2].conf === 'high', sum(f));
 })();
-// 21. A square the size of a letter's bowl inside a run of words is a letter, not a tick box.
+// 21. A square drawn round a letter inside a run of words is not a tick box: a box with something in it is not empty.
 (() => {
-  const pg = page([['text', 72, 100, 'Name of Purchaser'], ['rule', 200, 400, 101.5]]);
-  pg.boxes.push({ x: 100, y: 93, w: 5.5, h: 5 });
-  const f = P.analyze([pg], ctx).filter((p) => p.why.indexOf('last page') < 0);
+  const f = read([['text', 72, 100, 'Name of Purchaser'], ['rule', 200, 400, 101.5], ['frame', 72 + width('Name ') - 0.5, 91, 72 + width('Name o') + 0.5, 101]]);
   check('no tick box inside a word, and the blank keeps its label', f.length === 1 && f[0].type === 'text' && f[0].label === 'Investor name', sum(f));
 })();
-// 22. scan: a drawn square is a tick box, a ring is not; a line with clear paper above is a blank, an underline is not.
+// 22. What the pixel scan used to tell apart is told apart from the drawing itself: a drawn square is a tick box, a
+// square with a mark already in it is not; a line with clear paper above is a blank, an underline under words is not.
+// (A ring is a curve: the reading takes no curve for a box. The prose fixture of accuracy.js prints ring bullets and round letters.)
 (() => {
-  const W = 400;
-  const H = 200;
-  const px = new Uint8ClampedArray(W * H * 4).fill(255);
-  const dot = (x, y) => {
-    const i = (y * W + x) * 4;
-    px[i] = px[i + 1] = px[i + 2] = 0;
-  };
-  const hline = (x0, x1, y) => {
-    for (let x = x0; x <= x1; x++) dot(x, y);
-  };
-  const vline = (x, y0, y1) => {
-    for (let y = y0; y <= y1; y++) dot(x, y);
-  };
-  // A 10 pt square at scale 2 (20 px), a ring of the same size, a 100 pt line, and a line with letter feet on it.
-  hline(20, 40, 20);
-  hline(20, 40, 40);
-  vline(20, 20, 40);
-  vline(40, 20, 40);
-  for (let a = 0; a < 720; a++) dot(Math.round(90 + 10 * Math.cos((a * Math.PI) / 360)), Math.round(30 + 10 * Math.sin((a * Math.PI) / 360)));
-  hline(20, 220, 100);
-  hline(20, 220, 160);
-  for (let x = 24; x < 220; x += 6) vline(x, 150, 158);
-  const m = P.scan(px, W, H, 2);
-  check('scan finds the drawn square and not the ring', m.boxes.length === 1 && Math.abs(m.boxes[0].x - 10) < 1 && Math.abs(m.boxes[0].w - 10.5) < 1, m.boxes);
-  const blanks = m.rules.filter((r) => r.clear >= 7);
-  check('scan finds the line with clear paper above it and not the underlined one', blanks.length === 1 && Math.abs(blanks[0].x0 - 10) < 1 && Math.abs(blanks[0].x1 - 110.5) < 1 && Math.abs(blanks[0].y - 50.25) < 0.5, m.rules);
+  const pg = page([['box', 10, 10], ['box', 40, 10], ['text', 42, 19, 'X'], ['rule', 10, 110, 50], ['text', 10, 79, 'Additional information'], ['rule', 10, 10 + width('Additional information'), 80.5]]);
+  check('the empty drawn square is a tick box and the ticked one is not', pg.boxes.length === 1 && pg.boxes[0].x === 10 && pg.boxes[0].w === 10, pg.boxes);
+  const blanks = pg.rules.filter((r) => r.clear >= 7);
+  check('the line with clear paper above it is a blank to write on and the underline of the words is not', pg.rules.length === 1 && blanks.length === 1 && blanks[0].x0 === 10 && blanks[0].x1 === 110 && blanks[0].y === 50, pg.rules);
 })();
 
 // 23. The amount when its currency sign opens a printed line, and when the words after the blank name it.
@@ -294,35 +334,35 @@ const labelled = (x, y, label, len) => [['text', x, y, label], ['rule', x + widt
   const f = read([['text', 72, 100, 'ACCEPTANCE'], ['text', 72, 130, 'Accepted this'], ['rule', 142, 170, 131.5], ['text', 174, 130, 'day of'], ['rule', 206, 280, 131.5]]);
   check('"Accepted this ____ day of ____": both blanks are the firm’s, both marked', f.length === 2 && f.every((p) => p.role === 'firm' && p.type === 'text' && p.conf !== 'high'), sum(f));
 })();
-// 25. A table with every border drawn: the empty cell is the blank, the cell with words in it is not.
+// 25. A table with every border drawn: the empty cell is the blank, the cell with words in it is not. The joint
+// subscriber's row is a printed place too: it gets a second signer's field, kept apart from the investor's own.
 (() => {
-  const pg = page([['text', 78, 112, 'Signature of Subscriber'], ['text', 78, 142, 'By'], ['text', 78, 172, 'Signature of Joint Subscriber']]);
-  [120, 150, 180].forEach((y) => {
-    pg.rules.push({ x0: 73, x1: 268, y, t: 1, clear: 7.5, drop: 12, rise: 12, cut: false, cell: true, table: true });
-    pg.rules.push({ x0: 270, x1: 539, y, t: 1, clear: 23, drop: y === 180 ? 0 : 12, rise: 12, cut: false, cell: true, table: true });
-  });
-  pg.rules.push({ x0: 72, x1: 540, y: 96, t: 1, clear: 30, drop: 12, rise: 0, cut: false, cell: false, table: false });
-  const f = P.analyze([pg], { countersign: false }).filter((p) => p.why.indexOf('last page') < 0);
-  check('each empty cell gets its row’s field; the joint subscriber’s row and the table’s top edge get none', f.length === 2 && f.every((p) => p.type === 'signature' && Math.abs(p.x - 270) < 1) && f[0].conf === 'high', sum(f));
+  const rows = [['text', 78, 112, 'Signature of Subscriber'], ['text', 78, 142, 'By'], ['text', 78, 172, 'Signature of Joint Subscriber']];
+  [[96, 120], [120, 150], [150, 180]].forEach(([y0, y1]) => rows.push(['frame', 72, y0, 269, y1], ['frame', 269, y0, 540, y1]));
+  const f = read(rows);
+  check('each empty cell gets its row’s field, inside the cell; the cells with words and the table’s top edge get none', f.length === 3 && f.every((p) => p.type === 'signature' && p.x >= 269 && p.x + p.w <= 540) && f[0].conf === 'high' && !f[0].second && !f[1].second, sum(f));
+  check('the joint subscriber’s row gets a second signer’s field: optional and marked low', f.length === 3 && f[2].second === true && f[2].conf === 'low' && f[2].required === false, sum(f));
 })();
 
-// 26. A line with no label, with "Name:" and "Title:" printed under it, is where that signer signs.
+// 26. A line with no label, with "Name:" and "Title:" printed under it, is where that signer signs. The two labels
+// print no line of their own, so nothing is placed after them.
 (() => {
   const f = read([['text', 72, 100, 'SUBSCRIBER:'], ['rule', 72, 300, 140], ['text', 72, 156, 'Name:'], ['text', 72, 172, 'Title:']]);
-  check('the unlabelled line over "Name:" and "Title:" is the signature line', f.length === 3 && f[0].type === 'signature' && f[0].role === 'investor' && f[0].conf === 'high' && f[1].type === 'name' && f[2].label === 'Title' && f[1].x > 72 + width('Name:'), sum(f));
+  check('the unlabelled line over "Name:" and "Title:" is the signature line', f.length >= 1 && f[0].type === 'signature' && f[0].role === 'investor' && f[0].conf === 'high' && Math.abs(f[0].y + f[0].h - 141.5) < 2, sum(f));
+  check('and "Name:" and "Title:" with no line get no field', f.length === 1, sum(f));
   const g = read([['text', 72, 100, 'SUBSCRIBER:'], ['rule', 72, 300, 140], ['text', 72, 156, 'Name:'], ['text', 110, 156, 'Priya Raman']]);
   check('not when a name is already printed after "Name:"', g.length === 0, sum(g));
 })();
-// 27. Tick boxes set as a character of a symbol font count only where a square was seen.
+// 27. Tick boxes set as a character of a symbol font: the character's code decides, whatever letter the reader reports.
 (() => {
-  const a = page([['text', 72, 100, ' Individual'], ['box', 72.5, 91]]);
-  const fa = P.analyze([a], ctx).filter((p) => p.why.indexOf('last page') < 0);
-  check('a symbol-font character with a square seen on it is a tick box with its words', fa.length === 1 && fa[0].type === 'checkbox' && fa[0].label === 'Individual' && fa[0].conf === 'high', sum(fa) + ' ' + (fa[0] || {}).label);
-  const fb = read([['text', 72, 100, ' See the note on page 4']]);
-  check('a symbol-font character with no square on it is not a tick box', fb.length === 0, sum(fb));
-  const c = page([['text', 72, 100, 'o Joint tenants'], ['box', 72.5, 91]]);
-  const fc = P.analyze([c], ctx).filter((p) => p.why.indexOf('last page') < 0);
-  check('a square that is the first letter of its own caption is labelled with the words after it', fc.length === 1 && fc[0].type === 'checkbox' && fc[0].label === 'Joint tenants', sum(fc) + ' ' + (fc[0] || {}).label);
+  const fa = read([['text', 72, 100, '', 'ABCDEF+Wingdings-Regular'], ['text', 72 + cw('o') + 4, 100, 'Individual']]);
+  check('a box character of a symbol font is a tick box with its words', fa.length === 1 && fa[0].type === 'checkbox' && fa[0].label === 'Individual' && fa[0].conf === 'high', sum(fa) + ' ' + (fa[0] || {}).label);
+  const fb = read([['text', 72, 100, '', 'Wingdings-Regular'], ['text', 72 + cw('o') + 4, 100, 'See the note on page 4']]);
+  check('a symbol-font character that is not a box is not a tick box', fb.length === 0, sum(fb));
+  const fc = read([['text', 72, 100, 'o', 'Wingdings-Regular'], ['text', 72 + cw('o') + 3, 100, 'Joint tenants']]);
+  check('a box the reader reports as the letter "o" is still a box, labelled with the words after it', fc.length === 1 && fc[0].type === 'checkbox' && fc[0].label === 'Joint tenants', sum(fc) + ' ' + (fc[0] || {}).label);
+  const fd = read([['text', 72, 100, 'o Joint tenants']]);
+  check('the same letter in an ordinary font is a letter', fd.length === 0, sum(fd));
 })();
 
 /* ---------- Review marks and filling in (pure helpers) ---------- */
