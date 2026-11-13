@@ -6,8 +6,12 @@
  *
  * All coordinates are PDF points of the page as displayed, origin top-left, y downwards.
  *
- *   scan(rgba, width, height, scale)   printed lines and tick-box squares found in a page's pixels
- *   analyze(pages, ctx)                proposed fields: where each signer signs and initials, and the blanks to complete
+ *   read(pages, ctx)                   what was read and the proposed fields: { fields, pages, scanned, failed, boxes,
+ *                                      blanks, signatures, investorPages, firmPages }
+ *   analyze(pages, ctx)                the proposed fields alone: where each signer signs and initials, and the blanks to complete
+ *
+ * A field is proposed only for a printed place read by anchors.js (a line, a tick box, an empty ruled cell, a form
+ * field of the PDF). Where the agreement prints no place, nothing is proposed.
  *   labelOf(text)                      what a short piece of text asks for, or null
  *
  * What a field placed here carries, besides the usual properties (the field editor keeps and shows these):
@@ -168,12 +172,12 @@
   const MONEY_WORDS = /\b(commitment|subscription|subscribes?|subscribed|purchase|investment|invest)\b/;
   // What becomes of each kind of blank. block: part of a signature block, where the signer has to be known.
   const KINDS = {
-    signature: { type: 'signature', label: '', required: true, block: true, cap: 220, floor: 16, top: 42, drop: 4 },
+    signature: { type: 'signature', label: '', required: true, block: true, top: 42 },
     name: { type: 'name', label: '', required: true, block: true },
-    date: { type: 'date', label: '', required: true, block: true, cap: 120 },
+    date: { type: 'date', label: '', required: true, block: true },
     title: { type: 'text', label: 'Title', required: false, block: true },
     nameTitle: { type: 'text', label: 'Name and title', required: true, block: true },
-    initials: { type: 'initials', label: '', required: true, cap: 90, floor: 14, top: 36 },
+    initials: { type: 'initials', label: '', required: true, top: 30 },
     investorName: { type: 'text', label: 'Investor name', required: true, prefill: 'investorName' },
     amount: { type: 'text', label: 'Commitment amount', required: false, prefill: 'amount' },
     address: { type: 'text', label: 'Address', required: true, prefill: 'address' },
@@ -262,22 +266,18 @@
    * Blanks to proposed fields
    * ===================================================================== */
   const WHY = {
-    noLine: 'No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs.',
-    noFirmLine: 'No line for your firm’s countersignature could be read in this PDF, so this was placed on the last page. Move it to where it belongs.',
     who: 'Could not tell whether the investor or your firm fills this in.',
-    estimated: 'The line for this was estimated from the text, not seen on the page.',
     above: 'This label sits above its line, which can also belong to the line before.',
     between: 'Could not tell whether this label belongs to the line above it or the line below it.',
     two: 'Two labels could belong to this line.',
-    noLabelLine: 'No printed line was found next to this label, so the field was placed after it.',
-    shortBlank: 'A short blank before a statement: initials assumed. Replace it with a checkbox if a tick is meant.',
+    tick: 'A short blank read as a place for a tick. Replace it with an initials or a text field if that is what is meant.',
+    second: 'This line looks meant for a second signer, a witness or a notary. It is optional for the investor: check who fills it in, or remove it.',
+    form: 'This is a form field of the PDF itself: check what goes here and who fills it in.',
     address2: 'This blank has no label; it was read as a second address line.',
     sentence: 'A blank inside a sentence: check what goes here and who fills it in.',
     phrase: 'The words before this blank may not be its label: check what goes here.',
-    boxText: 'The box for this was estimated from the text, not seen on the page.',
     boxBare: 'This box has no words beside it: check what it is for.'
   };
-  const SIZES = { signature: { w: 180, h: 42 }, date: { w: 110, h: 20 }, name: { w: 170, h: 20 }, text: { w: 170, h: 20 } };
   const overlap = (a0, a1, b0, b1) => Math.min(a1, b1) - Math.max(a0, b0);
   /** A name as compared with headings: lower case, no punctuation, no company suffix. */
   const bare = (s) =>
@@ -288,7 +288,7 @@
       .replace(/\s+/g, ' ')
       .trim();
 
-  /** One page's text and scanned marks as printed lines whose elements are text segments, blanks and tick boxes. */
+  /** One page's text and printed places as printed lines whose elements are text segments, blanks and tick boxes. */
   function layout(pg) {
     const lines = linesOf(pg);
     const glyph = (b) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && Math.max(b.w, b.h) < 0.55 * p.h && b.x + b.w / 2 > p.x0 && b.x + b.w / 2 < p.x1 && b.y + b.h / 2 > p.y - 1.05 * p.h && b.y + b.h / 2 < p.y + 0.25 * p.h));
@@ -298,7 +298,7 @@
     // In a table, the edge under a cell that has words in it (a label standing a little above its cell's bottom edge)
     // is no blank either: the row's blank is the empty cell.
     const filled = (r) => r.table && r.clear < 12 && lines.some((ln) => ln.parts.some((p) => p.t === 'text' && p.y < r.y - 2 && p.y > r.y - r.clear - p.h && overlap(p.x0, p.x1, r.x0, r.x1) > 0));
-    const rules = (pg.rules || []).filter((r) => r && r.x1 - r.x0 >= MIN_RULE - 1 && r.clear >= TIGHT_CLEAR && !(r.drop >= 6 && !(r.rise >= 6)) && !filled(r) && !boxes.some((b) => r.x0 >= b.x0 - 1.5 && r.x1 <= b.x1 + 1.5 && r.y >= b.y0 - 1.5 && r.y <= b.y1 + 1.5));
+    const rules = (pg.rules || []).filter((r) => r && r.x1 - r.x0 >= MIN_RULE - 1 && r.clear >= TIGHT_CLEAR && !filled(r) && !boxes.some((b) => r.x0 >= b.x0 - 1.5 && r.x1 <= b.x1 + 1.5 && r.y >= b.y0 - 1.5 && r.y <= b.y1 + 1.5));
     // A table row whose label does not fill its cell: the stretch after the label is the blank only when the cell
     // beside it is not an empty one (then that cell is).
     const all = rules.slice();
@@ -349,21 +349,16 @@
       ln.parts.forEach((p, i) => {
         if (p.t === 'text') return els.push({ t: 'text', key: p.x0, part: p });
         if (p.t === 'box' || p.t === 'sym') {
-          // A tick box written as text: the scanned square when one is there, otherwise an estimate from the text
-          // (a character of a symbol font can be anything, so it counts only where a square was seen).
-          const side = Math.min(p.x1 - p.x0, p.h);
-          const est = { x0: p.x0, x1: p.x0 + Math.max(side, 8), y0: p.y - Math.max(side, 8), y1: p.y, seen: false };
+          // A tick box written as text counts where a printed box was read there (a character of a symbol font can be anything).
           const hit = boxes.find((b) => !b.line && overlap(b.x0, b.x1, p.x0 - 3, p.x1 + 3) > 0 && overlap(b.y0, b.y1, p.y - p.h, p.y + 0.3 * p.h) > 0);
-          if (!hit && p.t === 'sym') return;
-          const box = hit || est;
-          box.line = ln;
-          return els.push({ t: 'box', key: p.x0, box });
+          if (!hit) return;
+          hit.line = ln;
+          return els.push({ t: 'box', key: p.x0, box: hit });
         }
+        // Underscores or a leader are a blank only where a printed line was read for them.
         const r = pair.get(p);
-        // A leader of dots or dashes is a blank only when nothing but white space follows it on the line.
-        if (!r && p.t === 'lead' && ln.parts.slice(i + 1).some((q) => q.t === 'text')) return;
-        if (r && r.clear < BLANK_CLEAR && p.t !== 'gap') return;
-        const slot = r ? { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, cut: !!r.cut, cell: !!r.cell, table: !!r.table } : { x0: p.x0, x1: p.x1, y: p.y + 1.6, clear: Math.max(BLANK_CLEAR, p.h), seen: false };
+        if (!r || (r.clear < BLANK_CLEAR && p.t !== 'gap')) return;
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, seen: true, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
         slot.line = ln;
         slot.fromText = true;
         slot.src = p.src;
@@ -378,7 +373,7 @@
         slots.push(slot);
         els.push({ t: 'slot', key: r.x0, slot });
       });
-      // Scanned squares that stand on this line.
+      // Drawn squares that stand on this line.
       boxes.forEach((b) => {
         if (b.line) return;
         const mid = (b.y0 + b.y1) / 2;
@@ -430,13 +425,10 @@
     return { lines, slots, segs, boxes: boxes.filter((b) => b.line) };
   }
 
-  /** The field box for a blank: starting where the line starts, resting on it, no taller than the empty paper above. */
+  /** The field box for a blank: as wide as the printed line, resting on it, no taller than the empty paper above it. */
   function boxOn(K, slot) {
-    const span = slot.x1 - slot.x0;
-    const w = Math.max(Math.min(span, K.cap || span), Math.min(K.block ? 36 : 14, span));
-    const drop = K.drop || 3;
-    const h = Math.max(K.floor || 10, Math.min(K.top || 20, slot.clear + drop));
-    return { x: slot.x0, y: slot.y + drop - h, w, h };
+    const h = Math.min(K.top || 14, Math.max(6, slot.clear - 1));
+    return { x: slot.x0, y: slot.y - h, w: slot.x1 - slot.x0, h };
   }
 
   /** Proposed fields for one page. */
@@ -453,10 +445,52 @@
       if (info && info.optional && p.type !== 'signature') p.required = false;
       if (info && info.forType) p.forType = info.forType;
       const m = { p, slot, seg: o.seg || null, info: info || null, kind, block: !!K.block, who: o.who || (info && info.who) || '', x0: o.seg && o.how !== 'after' ? Math.min(o.seg.x0, slot.x0) : slot.x0, x1: slot.x1, y: slot.y };
+      // A currency or percent sign printed beside the blank is not written again in it.
+      const el = slot.line ? slot.line.els.find((e) => e.t === 'slot' && e.slot === slot) : null;
+      const prev = el ? slot.line.els[el.i - 1] : null;
+      const nxt = el ? slot.line.els[el.i + 1] : null;
+      if (prev && prev.t === 'seg' && /\$\s*$/.test(prev.seg.s)) p.printed = '$';
+      else if (nxt && nxt.t === 'seg' && /^\s*%/.test(nxt.seg.s)) p.printed = '%';
       slot.made = m;
       made.push(m);
-      if (!slot.seen) weaken(m, WHY.estimated);
       return m;
+    };
+    // A line for a second signer, a witness or a notary: placed, optional, and marked (the portal has one signer per investor).
+    const second = (slot, info, seg) => {
+      const t = plain(info.text);
+      const m = propose(/\b(name|print|printed|date|dated|address|title|social|tax|e-?mail|phone)\b/.test(t) ? 'other' : 'signature', slot, null, { seg, label: info.text.replace(/\s*[:\uFF1A]\s*$/, ''), required: false, who: 'investor' });
+      Object.assign(m, { second: true, block: false });
+      Object.assign(m.p, { second: true, conf: 'low', why: WHY.second });
+      return m;
+    };
+    // A short blank used as a place for a tick: a tick box of the blank's own size, resting on it.
+    const tick = (slot, words, seg, unsure) => {
+      const span = slot.x1 - slot.x0;
+      const side = Math.min(14, span, Math.max(6, slot.clear - 1));
+      const p = { type: 'checkbox', role: '', page: pg.page, x: slot.x0 + (span - side) / 2, y: slot.y - side, w: side, h: side, label: clean(String(words || '').replace(/[:;,.]\s*$/, '')), required: false, conf: 'high', why: '', kind: 'checkbox' };
+      const m = { p, slot, seg, info: null, kind: 'checkbox', block: false, who: '', x0: slot.x0, x1: seg ? Math.max(seg.x1, slot.x1) : slot.x1, y: slot.y };
+      slot.made = m;
+      made.push(m);
+      if (unsure) weaken(m, WHY.tick);
+      return m;
+    };
+    // The printed lines a label began on, when it wraps: the lines right above, back to where its paragraph starts.
+    const wrapped = (ln, seg) => {
+      const ups = [];
+      let cur = ln;
+      let edge = seg.x1;
+      for (let k = 0; k < 5; k++) {
+        const up = L.lines[cur.i - 1];
+        if (!up || cur.y - up.y > 1.9 * Math.max(cur.h, up.h) || !up.els.length || up.els.some((e) => e.t !== 'seg' || e.seg.used)) break;
+        const first = up.els[0].seg;
+        const lastSeg = up.els[up.els.length - 1].seg;
+        if (!up.text || /[.:;?!]["”)]?$/.test(up.text) || Math.abs(first.x0 - seg.x0) > 60 || lastSeg.x1 < edge - 40) break;
+        if (/[A-Z]{2}/.test(up.text) && up.text === up.text.toUpperCase()) break;
+        ups.unshift(up);
+        edge = lastSeg.x1;
+        cur = up;
+      }
+      return ups;
     };
     const weaken = (m, why) => {
       m.p.conf = m.p.conf === 'high' ? 'medium' : 'low';
@@ -492,9 +526,6 @@
       bs.forEach((e) => {
         if (comb(e)) return;
         const b = e.box;
-        const side = Math.max(10, Math.max(b.x1 - b.x0, b.y1 - b.y0) + 1);
-        const cx = (b.x0 + b.x1) / 2;
-        const cy = (b.y0 + b.y1) / 2;
         const near = ln.els[e.i + (before ? -1 : 1)];
         let seg = near && near.t === 'seg' && (before ? b.x0 - near.seg.x1 : near.seg.x0 - b.x1) <= 40 ? near.seg : null;
         let words = seg ? seg.s : '';
@@ -504,11 +535,10 @@
           seg = own.seg;
           words = seg.s.replace(/^\S\s+/, '');
         }
-        const p = { type: 'checkbox', role: '', page: pg.page, x: cx - side / 2, y: cy - side / 2, w: side, h: side, label: clean(words.replace(/[:;,.]\s*$/, '')), required: false, conf: 'high', why: '', kind: 'checkbox' };
+        const p = { type: 'checkbox', role: '', page: pg.page, x: b.x0, y: b.y0, w: b.x1 - b.x0, h: b.y1 - b.y0, label: clean(words.replace(/[:;,.]\s*$/, '')), required: false, conf: 'high', why: '', kind: 'checkbox' };
         const m = { p, slot: null, seg, info: null, kind: 'checkbox', block: false, who: '', x0: b.x0, x1: seg ? Math.max(seg.x1, b.x1) : b.x1, y: b.y1 };
         if (seg) seg.used = seg.used || 'box';
         made.push(m);
-        if (!b.seen) weaken(m, WHY.boxText);
         if (!seg) weaken(m, WHY.boxBare);
       });
     });
@@ -610,12 +640,21 @@
               return weaken(generic(slot, info, seg), WHY.phrase);
             }
           }
-          // A label wrapped over two printed lines: read with the line before when this piece starts in lower case.
-          if (info && (info.kind === 'other' || info.kind === 'phrase') && /^[a-z]/.test(seg.s) && left.i === 0) {
-            const up = lineAbove(ln, 1)[0];
-            const first = up && up.els.length === 1 && up.els[0].t === 'seg' ? up.els[0].seg : null;
-            const joined = first && Math.abs(first.x0 - seg.x0) < 30 && ln.y - up.y < 2.2 * ln.h ? classify(first.s + ' ' + seg.s) : null;
-            if (joined && joined.kind !== 'skip') info = joined;
+          // A short blank after "Yes" or "No" is a place for a tick.
+          if (span <= 48 && dist <= 24 && /^(yes|no|n\/?a)$/.test(plain(seg.s))) {
+            seg.used = 'label';
+            return tick(slot, seg.s, seg, true);
+          }
+          // A label wrapped over several printed lines is read whole, from where it starts.
+          let whole = '';
+          if ((!info || info.kind === 'other' || info.kind === 'phrase') && left.i === 0 && dist <= 36) {
+            const ups = wrapped(ln, seg);
+            if (ups.length) {
+              whole = tidy(ups.map((u) => u.text).concat(seg.s).join(' '));
+              const joined = classify(whole) || classify(wordsOf(whole).slice(-10).join(' ').slice(-MAX_LABEL));
+              if (joined && (FIELD(joined.kind) || joined.kind === 'skip')) info = joined;
+              else if (/[:\uFF1A$]\s*$/.test(seg.s)) info = { kind: 'other', who: whoIn(plain(whole).slice(-MAX_LABEL)), forType: '', optional: OPTIONAL_RE.test(whole.toLowerCase()), colon: true, by: false, text: whole };
+            }
           }
           // In a table with drawn cells, the room left in a cell after its words is a blank only when the words end
           // in a colon ("Name:"): a table of names, titles and dates is not a form.
@@ -632,9 +671,8 @@
           const captioned = dist > 36 && [under(slot), over(slot)].some((g) => g && known(g));
           if (dist <= 36 || (isLabel && dist <= 240 && !captioned)) {
             if (info && info.kind === 'skip') {
-              slot.skip = true;
               seg.used = 'label';
-              return;
+              return second(slot, info, seg);
             }
             if (info && FIELD(info.kind)) {
               seg.used = 'label';
@@ -650,38 +688,27 @@
               seg.used = 'label';
               return generic(slot, info, seg);
             }
-            if (!info && dist <= 14) return sentence(slot, seg.s, seg, after);
+            if (!info && dist <= 14) return sentence(slot, whole || seg.s, seg, after);
           }
         }
         // A label printed after its blank: "______ (Signature)", "____ Initials".
         if (after) {
           const lead = after.s.match(/^[([]\s*([^()[\]]{1,60}?)\s*[)\]]/);
           const info = classify(lead ? lead[1] : after.s);
-          if (info && info.kind === 'skip') {
-            slot.skip = true;
-            return;
-          }
+          if (info && info.kind === 'skip') return second(slot, info, after);
           if (info && FIELD(info.kind) && (lead || wordsOf(plain(after.s)).length <= 6)) {
             if (!lead || lead[0].length === after.s.length) after.used = 'label';
             return propose(info.kind, slot, info, { seg: after, how: 'after' });
           }
-          // A short blank at the start of a line with a statement after it: initials, or a tick when the instruction asks for one.
+          // A short blank at the start of a line with a statement after it: initials when the page asks for initials,
+          // otherwise a place for a tick (marked unless the page asks for a tick).
           const starts = !ln.els.slice(0, e.i).some((o) => o.t !== 'seg' || !LIST_MARK.test(o.seg.s));
           if (starts && span <= 60) {
             const ins = instruction(ln);
             const says = /^[([]?\s*initial/i.test(after.s);
-            if (ins.mode === 'check' && !says) {
-              const side = Math.max(10, Math.min(14, span));
-              const p = { type: 'checkbox', role: '', page: pg.page, x: slot.x0 + (span - side) / 2, y: slot.y + 1 - side, w: side, h: side, label: clean(after.s.replace(/[:;,.]\s*$/, '')), required: false, conf: 'high', why: '', kind: 'checkbox' };
-              const m = { p, slot, seg: after, info: null, kind: 'checkbox', block: false, who: '', x0: slot.x0, x1: after.x1, y: slot.y };
-              slot.made = m;
-              made.push(m);
-              if (!slot.seen) weaken(m, WHY.estimated);
-              return m;
-            }
+            if (ins.mode !== 'initials' && !says) return tick(slot, after.s, after, ins.mode !== 'check');
             const m = propose('initials', slot, null, { seg: after, how: 'after', required: !(ins.some && !says) });
             m.x1 = after.x1;
-            if (!ins.mode && !says) weaken(m, WHY.shortBlank);
             return m;
           }
         }
@@ -711,7 +738,7 @@
         const info = classify(whole) || (/[:\uFF1A]\s*$/.test(whole) ? null : classify(whole + ':')) || classify(near.s);
         if (!info) return;
         cellText.forEach((g) => (g.used = 'label'));
-        if (info.kind === 'skip') return (slot.skip = true);
+        if (info.kind === 'skip') return second(slot, info, near);
         if (FIELD(info.kind)) return propose(info.kind, slot, info, { seg: near });
         const m = generic(slot, info, near);
         // One empty cell in a table of words may just be an empty cell: sure only where a column of them stands.
