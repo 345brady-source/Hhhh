@@ -2780,8 +2780,9 @@
   function agreementTodo(env) {
     const inv = env.signers.find((s) => s.role === 'investor');
     const cs = env.signers.find((s) => s.role === 'countersigner');
-    // Where a signer signs: a signature or initials field that is theirs to complete (not an optional line for a second person).
-    const signing = (sg) => env.fields.filter((f) => f.signerId === sg.id && (f.type === 'signature' || f.type === 'initials') && f.required !== false);
+    // Where a signer signs: a signature field that is theirs to complete. Initials are not a signature, and an optional
+    // line for a second person is not where this signer signs.
+    const signing = (sg) => env.fields.filter((f) => f.signerId === sg.id && f.type === 'signature' && f.required !== false);
     if (!inv || !signing(inv).length) {
       if (env.read && (!env.read.ok || (!env.fields.length && env.read.scanned.length >= env.read.pages))) return 'This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign.';
       if (env.read && !env.read.investorPages.length) return 'No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.';

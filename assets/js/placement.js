@@ -577,7 +577,7 @@
       // Words follow their box, unless the line begins with words and ends with a box ("Yes [ ]  No [ ]").
       const first = ln.els.find((e) => e.t !== 'slot');
       const lastEl = ln.els[ln.els.length - 1];
-      const before = first && first.t === 'seg' && !LIST_MARK.test(first.seg.s) && lastEl.t === 'box' && first.seg.x1 <= bs[0].box.x0 + 2;
+      const before = first && first.t === 'seg' && !LIST_MARK.test(first.seg.s) && !/[:\uFF1A]\s*$/.test(first.seg.s) && lastEl.t === 'box' && first.seg.x1 <= bs[0].box.x0 + 2;
       bs.forEach((e) => {
         if (comb(e)) return;
         const b = e.box;
@@ -681,7 +681,13 @@
         // between): initials when the page asks for initials, otherwise a place for a tick.
         const opens = !ln.els.slice(0, e.i).some((o) => o.t !== 'seg' || !LIST_MARK.test(o.seg.s));
         // So does a short blank further along a line that already has a tick before it (a row of choices).
-        const rowTick = ln.els.slice(0, e.i).some((o) => o.t === 'slot' && o.slot.made && o.slot.made.kind === 'checkbox') && !(left && /^(yes|no|n\/?a)$/.test(plain(left.seg.s)));
+        const mate = ln.els.slice(0, e.i).filter((o) => o.t === 'slot' && o.slot.made && (o.slot.made.kind === 'checkbox' || o.slot.made.kind === 'initials') && o.slot.x1 - o.slot.x0 <= 60).pop();
+        const rowTick = !!mate && !(left && /^(yes|no|n\/?a)$/.test(plain(left.seg.s)));
+        if (rowTick && mate.slot.made.kind === 'initials' && span <= 60) {
+          const stmt = ln.els.slice(e.i + 1).find((o) => o.t !== 'seg' || !LIST_MARK.test(o.seg.s));
+          const m = propose('initials', slot, null, { seg: stmt && stmt.t === 'seg' ? stmt.seg : null, how: 'after', required: mate.slot.made.p.required });
+          return m;
+        }
         if ((opens || rowTick) && span <= 60) {
           const stmt = ln.els.slice(e.i + 1).find((o) => o.t !== 'seg' || !LIST_MARK.test(o.seg.s));
           const lead0 = stmt && stmt.t === 'seg' ? stmt.seg.s.match(/^[([]\s*([^()[\]]{1,60}?)\s*[)\]]/) : null;
@@ -697,7 +703,8 @@
         }
         if (left) {
           let seg = left.seg;
-          let info = classify(seg.s);
+          const prior = ln.els[left.i - 1];
+          let info = classify(prior && prior.t === 'slot' ? seg.s.replace(/^[([][^)\]]{1,60}[)\]]\s*/, '') || seg.s : seg.s);
           // A label that closes a line of running text ("...as defined in Rule 501.  Initials: ____"): what follows the
           // last full stop is the label.
           if (!info) {
@@ -773,7 +780,7 @@
             if (info && dist <= 36) {
               seg.used = 'label';
               // A few words that open the line, or follow the blank before, with the blank right after them: its label.
-              return generic(slot, info, seg, dist <= 24 && (left.i === 0 || ln.els[left.i - 1].t !== 'seg'));
+              return generic(slot, info, seg, dist <= 24 && !after && (left.i === 0 || ln.els[left.i - 1].t !== 'seg'));
             }
             if (!info && dist <= 14) {
               // "Dated: ________, ____": the short blank after the comma is the year of the date before it.
@@ -973,6 +980,8 @@
        it. Left out are only rules that set off text: an empty cell with no label, a rule with running text right under
        it, a rule across the whole width of the text with no caption, the two rules of a paragraph ruled off above and below. */
     const leftEdge = L.segs.reduce((x, g) => Math.min(x, g.x0), Infinity);
+    const heights = L.segs.map((g) => g.h).sort((a, b) => a - b);
+    const bodyH = heights.length ? heights[Math.floor(heights.length / 2)] : 10;
     const shouted = (g) => /[A-Z]{2}/.test(g.s) && g.s === g.s.toUpperCase();
     const captionLike = (g) => !!g && !g.used && g.s.length <= 70 && !/[.;!?]$/.test(g.s) && !shouted(g);
     L.slots
@@ -981,11 +990,16 @@
       .forEach((sl) => {
         const cap = under(sl);
         const top = over(sl);
+        sl.line0 = bodyH;
         const between = (o) => L.segs.some((g) => g.y > Math.min(o.y, sl.y) + 2 && g.y < Math.max(o.y, sl.y) - 2 && overlap(g.x0, g.x1, sl.x0, sl.x1) > 0 && g.s.length > 70);
         const ruledOff = L.slots.some((o) => o !== sl && !o.made && Math.abs(o.x0 - sl.x0) <= 2 && Math.abs(o.x1 - sl.x1) <= 2 && Math.abs(o.y - sl.y) > 12 && Math.abs(o.y - sl.y) <= 260 && between(o));
         // Running text or a heading in capitals right under a rule: the rule sets it off.
         const prose = !!cap && !cap.used && !captionLike(cap);
-        if (sl.cell || sl.table || prose || ruledOff || (!captionLike(cap) && sl.x1 - sl.x0 >= 0.85 * (rightEdge - leftEdge))) return (sl.skip = true);
+        // A page number under a rule, a rule right across the text, a rule over a block that is already filled in
+        // ("Name: Priya Raman"): none is a blank.
+        const pageNo = !!cap && /^(-\s*)?(page\s+)?\d+(\s+of\s+\d+)?(\s*-)?$/i.test(cap.s);
+        const filledIn = !!cap && /^(by|name|title|its|date)\s*[:\uFF1A]\s*\S/i.test(cap.s);
+        if (sl.cell || sl.table || prose || pageNo || filledIn || ruledOff || sl.x1 - sl.x0 >= 0.85 * (rightEdge - leftEdge)) return (sl.skip = true);
         const name = captionLike(cap) ? cap : captionLike(top) && /[:\uFF1A]\s*$/.test(top.s) ? top : null;
         if (name) name.used = name.used || 'caption';
         // With no caption: the words printed to the left of the line in its own row (a label set in a column beside it).
@@ -997,7 +1011,7 @@
         const signs = !words && !!lead && /\b(in witness whereof|accepted( and agreed)? by|agreed( and accepted)? by|signed by|sincerely|very truly yours)\b/i.test(lead.s);
         // Words that name the line plainly (a caption right under it and set where it starts, a label ending in a colon
         // over it, a label on its own row beside it) leave no doubt; a line with no words of its own stays marked.
-        const clear = name ? Math.abs(name.x0 - sl.x0) <= 12 || /^[([].*[)\]]$/.test(name.s) : !!beside && Math.abs(beside.y - sl.y) <= 4 && sl.x0 - beside.x1 <= 240;
+        const clear = name ? /^[([].*[)\]]$/.test(name.s) || (Math.abs(name.x0 - sl.x0) <= 12 && name.h < 0.93 * sl.line0) : !!beside && Math.abs(beside.y - sl.y) <= 4 && sl.x0 - beside.x1 <= 240;
         const m = propose(signs ? 'signature' : 'other', sl, null, { seg: name, how: 'after', label: signs ? '' : words.replace(/^[([]\s*|\s*[)\]]$/g, '').replace(/\s*[:\uFF1A]\s*$/, '') || 'Text', required: signs || (clear && !OPTIONAL_RE.test(words.toLowerCase())) });
         if (!clear || signs) Object.assign(m.p, { conf: 'low', why: WHY.unknown });
       });
@@ -1079,6 +1093,8 @@
         const mate = made.filter((o) => o !== m && o.kind === 'other' && o.who && o.slot && o.slot.line === m.slot.line && o.x1 <= m.x0 + 3 && m.x0 - o.x1 <= 80).sort((a, b) => b.x1 - a.x1)[0];
         if (mate) role = mate.who;
       }
+      // Every blank inside words of acceptance ("Accepted this ____ day of ____") is the firm's.
+      if (!role && m.slot && m.slot.line && /^\W*(accepted|agreed (to )?and accepted)\b/i.test(m.slot.line.text)) role = 'firm';
       let sure = !!role;
       if (!role) {
         let named = null;
@@ -1112,7 +1128,7 @@
             } else {
               role = hd.who;
               // A heading with another block's signature line between it and this line may not be this block's heading.
-              const others = sigs.filter((sg) => sg !== own && sg.y > hd.y + 2 && sg.y < own.y - 2 && overlap(sg.x0, sg.x1, own.x0, own.x1) > 0).length;
+              const others = sigs.filter((sg) => sg !== own && !sg.second && sg.y > hd.y + 2 && sg.y < own.y - 2 && overlap(sg.x0, sg.x1, own.x0, own.x1) > 0).length;
               sure = others < (own.kind === 'signature' ? 1 : 2);
               if (!sure) m.aboveSig = true;
             }

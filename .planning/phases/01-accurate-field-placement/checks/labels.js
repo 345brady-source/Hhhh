@@ -247,7 +247,7 @@ const labelled = (x, y, label, len) => [['text', x, y, label], ['rule', x + widt
   const b = read([['text', 72, 100, 'The Subscriber is (check one):'], ...row(130, 'an individual'), ...row(150, 'a corporation')]);
   check('a tick box when the instruction says check', b.length === 2 && b.every((p) => p.type === 'checkbox' && p.conf === 'high'), sum(b));
   const c = read([['text', 72, 100, 'Representations'], ...row(130, 'The Subscriber has read the memorandum.')]);
-  check('initials assumed and marked when nothing says which', c.length === 1 && c[0].type === 'initials' && c[0].conf === 'medium', sum(c));
+  check('a tick box, marked for review, when nothing says which', c.length === 1 && c[0].type === 'checkbox' && c[0].conf === 'medium', sum(c));
 })();
 // 14. A blank inside a sentence: the amount when a currency sign and a commitment word come before it, otherwise marked.
 (() => {

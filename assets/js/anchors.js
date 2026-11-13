@@ -261,7 +261,19 @@
     shown.forEach((g) => (g.box = !g.sp && boxChar(g)));
     const words = ink.filter((g) => g.u !== '_' && !g.box);
 
-    /* Runs of text. A run of underscores and a box character each stand alone, so their extents are the printed ones. */
+    // A small square drawn as four separate strokes is a square all the same.
+    const drawn = raw.rects.slice();
+    const short = raw.segs.filter((sg) => sg.a1 - sg.a0 >= 5 && sg.a1 - sg.a0 <= 20);
+    short.forEach((top) => {
+      if (top.o !== 'h') return;
+      const bottom = short.find((b) => b.o === 'h' && b !== top && b.c - top.c >= 5 && Math.abs(b.c - top.c - (top.a1 - top.a0)) <= 0.25 * (top.a1 - top.a0) && Math.abs(b.a0 - top.a0) <= 1 && Math.abs(b.a1 - top.a1) <= 1);
+      if (!bottom) return;
+      const side = (x) => short.some((v) => v.o === 'v' && Math.abs(v.c - x) <= 1 && v.a0 <= top.c + 1 && v.a1 >= bottom.c - 1);
+      if (side(top.a0) && side(top.a1) && !drawn.some((r) => Math.abs(r.x0 - top.a0) <= 1 && Math.abs(r.y0 - top.c) <= 1)) drawn.push({ x0: top.a0, y0: top.c, x1: top.a1, y1: bottom.c });
+    });
+    const squares = drawn.filter((r) => r.x1 - r.x0 >= 5 && r.x1 - r.x0 <= 20 && Math.abs(r.x1 - r.x0 - (r.y1 - r.y0)) <= 0.25 * (r.x1 - r.x0));
+    /* Runs of text. A run of underscores and a box character each stand alone, so their extents are the printed ones.
+       A run never carries on across a drawn square: the words before a box and the words after it are two runs. */
     let cur = null;
     shown.forEach((g) => {
       if (g.sp) {
@@ -271,7 +283,8 @@
       const cat = g.box ? 'box' : g.u === '_' ? 'gap' : 'text';
       const gap = cur ? g.x0 - cur.x1 : 0;
       const spaces = cur ? cur.s.length - cur.s.replace(/ +$/, '').length : 0;
-      if (cur && cur.cat === cat && cat !== 'box' && Math.abs(g.y - cur.y) < 0.5 && gap > -0.3 * g.h && gap < (cat === 'gap' ? Math.max(0.8, 0.35 * g.h) : (1.2 + 0.6 * spaces) * g.h)) {
+      const boxBetween = cur && squares.some((r) => r.x0 >= cur.x1 - 2 && r.x1 <= g.x0 + 2 && r.y0 < g.y + 2 && r.y1 > g.y - g.h);
+      if (cur && !boxBetween && cur.cat === cat && cat !== 'box' && Math.abs(g.y - cur.y) < 0.5 && gap > -0.3 * g.h && gap < (cat === 'gap' ? Math.max(0.8, 0.35 * g.h) : (1.2 + 0.6 * spaces) * g.h)) {
         if (cat === 'text' && !spaces && gap > 0.18 * g.h) cur.s += ' ';
         cur.s += g.u;
         cur.x1 = g.x1;
@@ -291,16 +304,6 @@
       const side = Math.min(g.x1 - g.x0, 0.95 * g.h);
       const cx = (g.x0 + g.x1) / 2;
       out.boxes.push({ x: cx - side / 2, y: g.y - 0.84 * side, w: side, h: 0.9 * side, made: 'character' });
-    });
-    // A small square drawn as four separate strokes is a square all the same.
-    const drawn = raw.rects.slice();
-    const short = raw.segs.filter((sg) => sg.a1 - sg.a0 >= 5 && sg.a1 - sg.a0 <= 20);
-    short.forEach((top) => {
-      if (top.o !== 'h') return;
-      const bottom = short.find((b) => b.o === 'h' && b !== top && b.c - top.c >= 5 && Math.abs(b.c - top.c - (top.a1 - top.a0)) <= 0.25 * (top.a1 - top.a0) && Math.abs(b.a0 - top.a0) <= 1 && Math.abs(b.a1 - top.a1) <= 1);
-      if (!bottom) return;
-      const side = (x) => short.some((v) => v.o === 'v' && Math.abs(v.c - x) <= 1 && v.a0 <= top.c + 1 && v.a1 >= bottom.c - 1);
-      if (side(top.a0) && side(top.a1) && !drawn.some((r) => Math.abs(r.x0 - top.a0) <= 1 && Math.abs(r.y0 - top.c) <= 1)) drawn.push({ x0: top.a0, y0: top.c, x1: top.a1, y1: bottom.c });
     });
     drawn.forEach((r) => {
       const w = r.x1 - r.x0;
@@ -345,6 +348,27 @@
         }
       } else run = null;
     });
+    // A leader of dots or dashes is a blank when it follows a label on its line and nothing follows it (a leader that
+    // ends in a page number or other words is a line of a table of contents).
+    let lead = null;
+    const leaders = [];
+    shown.forEach((g) => {
+      const mark = !g.sp && /^[.\-\u2013\u2014\u2017]$/.test(g.u);
+      if (mark && lead && lead.u === g.u && Math.abs(g.y - lead.base) < 0.5 && g.x0 - lead.x1 > -0.8 && g.x0 - lead.x1 < 0.6 * g.h) {
+        lead.x1 = g.x1;
+        lead.n++;
+      } else if (mark) {
+        lead = { u: g.u, x0: g.x0, x1: g.x1, base: g.y, h: g.h, n: 1 };
+        leaders.push(lead);
+      } else if (!g.sp) lead = null;
+    });
+    leaders.forEach((ld) => {
+      if (ld.n < (ld.u === '.' ? 8 : 6) || ld.x1 - ld.x0 < 36) return;
+      const same = ink.filter((g) => Math.abs(g.y - ld.base) < 0.45 * ld.h);
+      if (same.some((g) => g.x0 >= ld.x1 - 0.5)) return;
+      if (!same.some((g) => g.x1 <= ld.x0 + 0.5 && ld.x0 - g.x1 < 30 && /[A-Za-z:)]/.test(g.u))) return;
+      pieces.push({ x0: ld.x0, x1: ld.x1, base: ld.base, y: ld.base, low: ld.base + 0.5, n: 3, made: 'leader' });
+    });
     const hs = raw.segs.filter((s) => s.o === 'h' && s.a1 - s.a0 >= 6);
     const vs = raw.segs.filter((s) => s.o === 'v' && s.a1 - s.a0 >= 6);
     hs.forEach((s) => pieces.push({ x0: s.a0, x1: s.a1, y: s.c, low: s.c + s.t / 2, n: 0, made: 'rule', frame: !!s.frame }));
@@ -377,7 +401,7 @@
     };
     lines.forEach((l) => {
       const w = l.x1 - l.x0;
-      const typed = l.made.indexOf('underscores') >= 0;
+      const typed = l.made.indexOf('underscores') >= 0 || l.made.indexOf('leader') >= 0;
       if (w < 9 || (l.made === 'underscores' && l.n < 3)) return;
       // Between square brackets. It is the sponsor's own placeholder, and no place, when the brackets also enclose
       // words, when the line stands in running prose, or when the page carries a drafting note in brackets ("[insert
@@ -422,7 +446,8 @@
       // Characters standing on the line (most of each over it). On a drawn rule they are an underlined word or heading,
       // or a label whose rule runs on after it: then the blank starts where the words end. Anything else written on a
       // line is an answer already given, and an answered blank gets no field.
-      const on = words.filter((g) => l.y - g.y > -1.5 && l.y - g.y < 0.35 * g.h + 1.5 && ov(g.x0, g.x1, l.x0, l.x1) > 0.5 * (g.x1 - g.x0));
+      const dotted = l.made.indexOf('leader') >= 0;
+      const on = words.filter((g) => !(dotted && /^[.\-\u2013\u2014\u2017]$/.test(g.u)) && l.y - g.y > -1.5 && l.y - g.y < 0.35 * g.h + 1.5 && ov(g.x0, g.x1, l.x0, l.x1) > 0.5 * (g.x1 - g.x0));
       if (on.length) {
         const covered = on.reduce((s, g) => s + Math.max(0, ov(g.x0, g.x1, l.x0, l.x1)), 0);
         const first = Math.min.apply(null, on.map((g) => g.x0));
