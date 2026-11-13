@@ -2589,122 +2589,91 @@
    * ===================================================================== */
   const AGR_INVESTOR = '__each_investor__'; // the placeholder signer: each subscriber fills this role
   const clamp01 = (v, hi) => Math.max(0, Math.min(hi, v));
-  /** Text on each page with positions (fractions of the page, top-left origin), for placing fields at signature lines. */
-  async function pageText(docId) {
+  /**
+   * What is printed on each page, for placing fields: its text with positions, and the lines and squares drawn on it
+   * (read from the rendered page by NS.placement.scan). Everything is in points of the page as displayed (crop box
+   * and rotation applied), origin top-left: { page, w, h, items: [{ s, x, y, w, h }], rules, boxes }.
+   */
+  async function pageLayout(docId) {
     const blob = await files().get(docId);
     if (!blob) return [];
     const lib = await pdfjs();
     const doc = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise;
     const out = [];
+    const cv = document.createElement('canvas'); // one canvas for every page
     try {
       for (let i = 1; i <= doc.numPages; i++) {
         const page = await doc.getPage(i);
         const vp = page.getViewport({ scale: 1 });
         const tc = await page.getTextContent();
-        out.push({
-          page: i,
-          w: vp.width,
-          h: vp.height,
-          items: tc.items
-            .filter((t) => t.str && t.str.trim())
-            .map((t) => ({ s: t.str.replace(/\s+/g, ' ').trim(), x: t.transform[4] / vp.width, y: 1 - t.transform[5] / vp.height, w: (t.width || 0) / vp.width, h: Math.max(6, Math.abs(t.transform[3] || 10)) / vp.height }))
+        const items = [];
+        tc.items.forEach((t) => {
+          if (!t.str || !t.str.trim()) return;
+          // The item's matrix in displayed points: x and the baseline's y from the top-left, the font height from its vertical vector.
+          const m = lib.Util.transform(vp.transform, t.transform);
+          if (!(m[0] > 0) || Math.abs(m[1]) > 0.02 * Math.abs(m[0])) return; // not horizontal as displayed
+          items.push({ s: t.str, x: m[4], y: m[5], w: t.width || 0, h: Math.max(4, Math.hypot(m[2], m[3])) });
         });
+        let marks = { rules: [], boxes: [] };
+        try {
+          const k = Math.min(2, 1600 / vp.width);
+          const big = page.getViewport({ scale: k });
+          cv.width = Math.ceil(big.width);
+          cv.height = Math.ceil(big.height);
+          const ctx = cv.getContext('2d', { willReadFrequently: true });
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, cv.width, cv.height);
+          await page.render({ canvasContext: ctx, viewport: big }).promise;
+          marks = NS.placement.scan(ctx.getImageData(0, 0, cv.width, cv.height).data, cv.width, cv.height, k);
+        } catch (e) {
+          /* a page that cannot be drawn is read from its text alone */
+        }
+        out.push({ page: i, w: vp.width, h: vp.height, items, rules: marks.rules, boxes: marks.boxes });
         page.cleanup();
       }
     } finally {
       doc.destroy();
+      cv.width = cv.height = 0;
     }
     return out;
   }
-  const SIG_RE = /^(authori[sz]ed\s+)?signature\b|^(subscriber|investor|purchaser)'?s?\s+signature\b|^signature\s+of\b|^by\s*:?\s*(_{2,})?$/i;
-  const NAME_RE = /^(print(ed)?\s+)?name(\s+of\s+(subscriber|investor|signatory|purchaser))?\s*:?\s*(_{2,})?$/i;
-  const DATE_RE = /^date(d)?\s*:?\s*(_{2,})?$/i;
-  const TITLE_RE = /^(its\s+)?title\s*:?\s*(_{2,})?$/i;
-  const AMOUNT_RE = /\b(subscription|commitment|capital\s+commitment|purchase)\s+amount\b|\bamount\s+of\s+(subscription|commitment)\b|^commitment\s*:|^amount\s*:?\s*\$?\s*(_{2,})?$/i;
-  const FIRM_RE = /accepted|agreed\s+(to\s+)?and\s+accepted|general\s+partner|managing\s+member|\bmanager\b|\bthe\s+(fund|company|issuer|partnership)\b|\bsponsor\b/i;
-  const INVESTOR_RE = /\b(subscriber|investor|purchaser|limited\s+partner|member)\b/i;
   /**
-   * Places the fields each signer fills at the signature lines of the PDF's last signature page: a signature, the printed
-   * name, the date (and a title line for entities) next to each label, for the firm when the block sits under an acceptance
-   * heading; and the commitment amount next to its label. With no labels found, a standard block at the foot of the last page.
-   * Returns how many fields were placed.
+   * Places the fields an agreement needs, read from the PDF by NS.placement (placement.js): where each signer signs and
+   * initials, the printed name, date and title of each signature block, and the blanks and tick boxes the investor
+   * completes. Each field carries how sure the portal is (confidence); one it was unsure about is marked for review
+   * with the reason, and the agreement cannot be saved until the sponsor has settled it. With no signature line found
+   * (a scanned PDF, say), a standard block on the last page, marked for review. Returns how many fields were placed.
    */
   async function autoFields(env) {
     let pages = [];
     try {
-      pages = await pageText(env.docId);
+      pages = await pageLayout(env.docId);
     } catch (e) {
       pages = [];
     }
+    // Nothing could be read: the page sizes alone still give each signer a place to sign.
+    if (!pages.length) pages = (env.pageSizes || []).map((ps, i) => ({ page: i + 1, w: ps.w, h: ps.h, items: [], rules: [], boxes: [] }));
     const inv = env.signers.find((s) => s.role === 'investor');
     const cs = env.signers.find((s) => s.role === 'countersigner');
-    const add = (sg, type, page, x, y, extra) => {
-      const t = TYPES[type];
-      const ps = env.pageSizes[page - 1] || { w: 612, h: 792 };
-      const w = Math.min(0.9, t.w / ps.w);
-      const hh = Math.min(0.5, t.h / ps.h);
-      const fx = clamp01(x, 1 - w);
-      const fy = clamp01(y, 1 - hh);
-      if (env.fields.some((f) => f.page === page && f.type === type && f.signerId === sg.id && Math.abs(f.x - fx) < 0.03 && Math.abs(f.y - fy) < 0.02)) return;
-      env.fields.push(Object.assign({ id: uid('fd'), signerId: sg.id, type, page, x: fx, y: fy, w, h: hh, required: type === 'signature' || type === 'name' || type === 'date', label: '', value: '' }, extra || {}));
-    };
-    const sigPages = pages.filter((p) => p.items.some((t) => SIG_RE.test(t.s)));
-    const sp = sigPages[sigPages.length - 1];
-    if (sp) {
-      // Whose block a label belongs to: the nearest heading above it (an acceptance or firm heading means the firm countersigns).
-      const ownerOf = (it) => {
-        let best = null;
-        sp.items.forEach((o) => {
-          if (o === it || o.y >= it.y || it.y - o.y > 0.3) return;
-          const firm = FIRM_RE.test(o.s);
-          const investor = INVESTOR_RE.test(o.s) && !firm;
-          if ((firm || investor) && (!best || o.y > best.y)) best = { y: o.y, firm };
-        });
-        return cs && best && best.firm ? cs : inv;
-      };
-      sp.items.forEach((it) => {
-        const type = SIG_RE.test(it.s) ? 'signature' : NAME_RE.test(it.s) ? 'name' : DATE_RE.test(it.s) ? 'date' : TITLE_RE.test(it.s) ? 'text' : '';
-        if (!type) return;
-        const sg = ownerOf(it);
-        const t = TYPES[type];
-        const fw = t.w / sp.w;
-        const fh = t.h / sp.h;
-        // To the right of the label on its line (bottom of the field on the text's baseline), or under it when there is no room.
-        let x = it.x + it.w + 0.008;
-        let y = it.y - fh;
-        if (x + fw > 0.98) {
-          x = it.x;
-          y = it.y + 0.004;
-        }
-        add(sg, type, sp.page, x, y, type === 'text' ? { label: 'Title', required: false } : null);
-      });
-    }
-    // The commitment amount, filled in from the invitation and locked, next to its label (on any page).
-    for (const p of pages) {
-      const it = p.items.find((t) => AMOUNT_RE.test(t.s));
-      if (!it) continue;
-      const fw = TYPES.text.w / p.w;
-      let x = it.x + it.w + 0.008;
-      let y = it.y - TYPES.text.h / p.h;
-      if (x + fw > 0.98) {
-        x = it.x;
-        y = it.y + 0.004;
-      }
-      add(inv, 'text', p.page, x, y, { label: 'Commitment amount', required: false });
-      break;
-    }
-    // No signature lines found (a scanned PDF, say): a standard block at the foot of the last page for each signer.
-    const last = env.pages;
-    if (!env.fields.some((f) => f.signerId === inv.id && f.type === 'signature')) {
-      add(inv, 'signature', last, 0.1, 0.66);
-      add(inv, 'name', last, 0.1, 0.73);
-      add(inv, 'date', last, 0.62, 0.68);
-    }
-    if (cs && !env.fields.some((f) => f.signerId === cs.id && f.type === 'signature')) {
-      add(cs, 'signature', last, 0.1, 0.82);
-      add(cs, 'name', last, 0.1, 0.89);
-      add(cs, 'date', last, 0.62, 0.84);
-    }
+    const t = T();
+    const o = W().offerings.find((x) => x.id === (env.agreementFor || env.offeringId)) || {};
+    const proposals = NS.placement.analyze(pages, { countersign: !!cs, firmNames: [t.name, t.legalName, t.shortName], fundNames: [o.name, o.shortName] });
+    proposals.forEach((p) => {
+      // A blank for the firm gets no field when the firm does not countersign.
+      const sg = p.role === 'firm' ? cs : inv;
+      const ps = env.pageSizes[p.page - 1];
+      if (!sg || !ps || !TYPES[p.type]) return;
+      const w = Math.max(0.01, Math.min(0.96, p.w / ps.w));
+      const hh = Math.max(0.008, Math.min(0.5, p.h / ps.h));
+      const fx = clamp01(p.x / ps.w, 1 - w);
+      const fy = clamp01(p.y / ps.h, 1 - hh);
+      if (env.fields.some((f) => f.page === p.page && f.type === p.type && f.signerId === sg.id && Math.abs(f.x - fx) < 0.01 && Math.abs(f.y - fy) < 0.006)) return;
+      const f = { id: uid('fd'), signerId: sg.id, type: p.type, page: p.page, x: fx, y: fy, w, h: hh, required: !!p.required, label: p.label || '', value: '', auto: true, confidence: p.conf };
+      if (p.conf !== 'high') Object.assign(f, { review: true, reviewReason: p.why || 'The portal was not sure about this field.' });
+      if (p.forType) f.forType = p.forType;
+      if (p.prefill) f.prefill = p.prefill;
+      env.fields.push(f);
+    });
     return env.fields.length;
   }
   /** What still stops an offering's agreement from being saved ('' when it can be). */
@@ -2714,6 +2683,9 @@
     const signs = (sg) => env.fields.some((f) => f.signerId === sg.id && (f.type === 'signature' || f.type === 'initials'));
     if (!inv || !signs(inv)) return 'Place at least one signature field for the investor.';
     if (cs && !signs(cs)) return 'Place a signature field for your firm’s countersignature.';
+    // Fields the portal placed but was unsure about: each one is confirmed, moved or removed before the agreement is used.
+    const marked = NS.placement.reviewCount(env);
+    if (marked) return `Confirm or move the ${marked === 1 ? 'field' : `${marked} fields`} marked for review.`;
     return '';
   }
   /**

@@ -20,7 +20,11 @@ const path = require('path');
 const http = require('http');
 
 const ROOT = path.resolve(__dirname, '..', '..', '..', '..');
-const VENDOR = process.env.PLACE_VENDOR || path.join(os.tmpdir(), 'place-vendor');
+// Where the two PDF libraries are kept: PLACE_VENDOR, or VENDOR_DIR as the other phases' checks call it, or the first
+// of the usual scratch folders that already holds them, or a folder under the system temp folder to fetch them into.
+const HAS = (dir) => fs.existsSync(path.join(dir, 'pdfjs/package/build/pdf.min.js')) && fs.existsSync(path.join(dir, 'pdflib/package/dist/pdf-lib.min.js'));
+const SCRATCH = path.join(os.tmpdir(), 'claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad');
+const VENDOR = process.env.PLACE_VENDOR || process.env.VENDOR_DIR || [path.join(os.tmpdir(), 'place-vendor'), path.join(SCRATCH, 'vendor'), path.join(SCRATCH, 'place-vendor')].find(HAS) || path.join(os.tmpdir(), 'place-vendor');
 const CDN = 'https://cdnjs.cloudflare.com/ajax/libs/';
 const WRITER = 'pdf-lib/1.17.1/pdf-lib.min.js';
 const LOCAL = {
@@ -172,8 +176,10 @@ async function upload(page, bytes, opts) {
           type: f.type,
           role: role(f.signerId),
           page: f.page,
-          conf: f.conf || '',
-          why: f.why || '',
+          conf: f.confidence || '',
+          why: f.reviewReason || '',
+          review: !!f.review,
+          prefill: f.prefill || '',
           forType: f.forType || '',
           label: f.label || '',
           required: !!f.required,
