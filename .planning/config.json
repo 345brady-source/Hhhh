@@ -40,7 +40,7 @@
     "code_review": true,
     "code_review_depth": "standard",
     "code_review_command": null,
-    "pattern_mapper": true,
+    "pattern_mapper": false,
     "plan_bounce": false,
     "plan_bounce_script": null,
     "plan_bounce_passes": 2,
@@ -49,7 +49,7 @@
     "security_enforcement": true,
     "security_asvs_level": 1,
     "security_block_on": "high",
-    "plan_chunked": true
+    "plan_chunked": false
   },
   "ship": {
     "pr_body_sections": []

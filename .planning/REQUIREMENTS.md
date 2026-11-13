@@ -22,6 +22,14 @@
 - [ ] **PLACE-13**: When the portal cannot read an agreement it says so and places nothing by guesswork; the sponsor can always see what was read and have the document read again
 - [ ] **PLACE-14**: The reading works on subscription agreements in general and in the published preview exactly as it does locally, proven on real documents and under the preview's own rules
 
+### Reading Picture Agreements
+
+- [ ] **READ-01**: An agreement whose pages are pictures (no text) can be read: every printed box and line a person completes gets a field on it, and no field is placed anywhere else
+- [ ] **READ-02**: Each field read from a picture is the right kind and is named from the caption printed with its box, as well as the print can be read
+- [ ] **READ-03**: Each field read from a picture is for the right person, decided from the section and column headings: investor, co-investor, or a third party who is nobody's required signer
+- [ ] **READ-04**: Picture reading keeps every earlier rule: honest summary, nothing dropped silently, nothing guessed, normal PDFs untouched, works inside the hosted preview
+- [ ] **READ-05**: The owner's own form is read in full and the owner has checked it in the preview
+
 ### Field Editor
 
 - [ ] **EDIT-01**: Sponsor can drag a field smoothly anywhere within a page, with the field following the pointer without lag or jumps
@@ -99,6 +107,11 @@
 | PLACE-13 | Phase 01.1 | Pending |
 | PLACE-14 | Phase 01.1 | Pending |
 | LOOK-03 | Phase 01.1 | Pending |
+| READ-01 | Phase 01.2 | Pending |
+| READ-02 | Phase 01.2 | Pending |
+| READ-03 | Phase 01.2 | Pending |
+| READ-04 | Phase 01.2 | Pending |
+| READ-05 | Phase 01.2 | Pending |
 | EDIT-01 | Phase 2 | Pending |
 | EDIT-02 | Phase 2 | Pending |
 | EDIT-03 | Phase 2 | Pending |
@@ -123,8 +136,8 @@
 | REC-05 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 37 total
-- Mapped to phases: 37
+- v1 requirements: 42 total
+- Mapped to phases: 42
 - Unmapped: 0 ✓
 
 ---

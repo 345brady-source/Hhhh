@@ -14,6 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Accurate Field Placement** - The portal finds what the client signs, fills in and initials on a subscription agreement, places the right field on the right line, and flags uncertain ones for the sponsor to confirm
 - [ ] **Phase 01.1: Placement reads what the agreement has: fields only on its own blanks, boxes and signature lines**
+- [ ] **Phase 01.2: Agreements that are pictures: the reader reads the owner's form**
 - [ ] **Phase 2: Field Editor** - A smooth, polished editor where fields drag cleanly within and across pages
 - [ ] **Phase 3: Signatures** - Cursive and other signature styles, a natural drawn signature, upload, adopt once
 - [ ] **Phase 4: Signing Inside Onboarding** - A polished, guided signing step for investors and countersigning for sponsors, with no separate tool
@@ -40,6 +41,8 @@ Plans:
 
 ### Phase 01.1: Placement reads what the agreement has: fields only on its own blanks, boxes and signature lines (INSERTED)
 
+**Built outside GSD planning (2026-11-13):** after the owner made GSD optional, this phase was built directly from its research, criteria and design contract (reader, field look, read again, co-investor), proven by an independent proof run and reviewer. No PLAN or SUMMARY files exist for it and GSD's verifier has not run on it.
+
 **Goal:** The portal reads an uploaded subscription agreement and places a field only where the agreement itself has a place for one (a printed blank, a printed tick box, a printed signature line, or a form field the PDF already carries); every such place gets its field, of the right kind and for the right person; it recognises whether the agreement has an investor signature block and a countersignature block (both, one or neither) and sets up signing to match; it never invents a position, says what it read, and says so when it could not read
 **Requirements**: PLACE-08, PLACE-09, PLACE-10, PLACE-11, PLACE-12, PLACE-13, PLACE-14, LOOK-03
 **Depends on:** Phase 1
@@ -57,6 +60,16 @@ Plans:
 
 Plans:
 - [ ] TBD (run /gsd-plan-phase 01.1 to break down)
+
+### Phase 01.2: Agreements that are pictures: the reader reads the owner's form (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: READ-01, READ-02, READ-03, READ-04, READ-05
+**Depends on:** Phase 01.1
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 01.2 to break down)
 
 ### Phase 2: Field Editor
 **Goal**: A sponsor can adjust fields by hand quickly and without frustration, in an editor that looks professionally made
