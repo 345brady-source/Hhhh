@@ -1204,128 +1204,167 @@
   };
 
   /* =====================================================================
-   * PLACEMENT REVIEW: the editor's side of placement.js, kept in this one block so that it can be put onto a
-   * rewritten field editor as it stands. The logic lives in NS.placement (pure helpers); this block only shows it.
+   * PLACEMENT REVIEW: the editor's side of placement.js, kept in this one block. The logic lives in NS.placement
+   * (pure helpers); this block only shows it, through the field editor's three status slots and one pass-through:
+   *
+   *   editorFieldMark(env, f)        on a field: the class is-flag, the "Review" tag, and the words for its spoken name
+   *   editorPropsStatusHTML(env, f)  top of the selected field's properties: how it came to be there, the reason for a
+   *                                  mark and "Confirm this field" (data-action="es-flag-ok")
+   *   editorRailExtraHTML(env)       left column: the "To review" list (each row: data-action="es-flag-go" data-fid)
+   *   placementControlsHTML(env, f)  in the properties, after "Required": "Filled in from onboarding" and "Who gets
+   *                                  this field" (data-change="es-fprop", data-k="prefill" / "forType")
+   *   placementSetProp(f, k, v)      the editor's setExtra: writes prefill, forType and the confirmation of a mark, so
+   *                                  each is a step in the editor's history and the field is drawn again
    *
    * What a field carries (set by autoFields, kept by templates and envelopes):
    *   auto true · confidence 'high' | 'medium' | 'low' · review (truthy until the sponsor settles it) ·
    *   reviewReason (one sentence) · forType 'person' | 'entity' | absent · prefill (a key of NS.placement.PREFILL) | absent
-   *
-   * What an editor has to call:
-   *   reviewMarkHTML(f)            inside a field's box: the "Review" tag (and the class is-flag on the box)
-   *   reviewAria(f)                appended to the field's aria-label
-   *   reviewPanelHTML(env)         the "To review" list (each row: data-action="es-flag-go" data-fid)
-   *   placementPropsHTML(env, f)   in the selected field's properties: status line, reason and "Confirm this field"
-   *                                (data-action="es-flag-ok"), "Filled in from onboarding" and "Who gets this field"
-   *                                (both write through NS.changes['es-fprop'], data-k="prefill" / "forType")
-   *   settleReview(f)              after the sponsor moves, resizes or reassigns a field: clears its mark
-   * The save gates need nothing from the editor: agreementTodo and templateReady ask NS.placement.needsReview.
+   * A mark is settled by confirming it here, or by moving, resizing or reassigning the field (fieldeditor.js settle),
+   * or by removing it. The save gates need nothing from the editor: agreementTodo and templateReady ask NS.placement.
    * ===================================================================== */
   const PL = () => NS.placement;
+  const UNSURE = 'The portal was not sure about this field.';
   const reviewMarkHTML = (f) => (PL().needsReview(f) ? '<span class="es-fld-flag" aria-hidden="true">Review</span>' : '');
-  const reviewAria = (f) => `${f.prefill ? ', filled in from onboarding' : ''}${f.forType === 'person' ? ', for individuals and joint accounts' : f.forType === 'entity' ? ', for entities, trusts and IRAs' : ''}${PL().needsReview(f) ? `, marked for review: ${f.reviewReason || 'the portal was not sure about this field'}` : ''}`;
-  const settleReview = (f) => PL().confirm(f);
+  /** Words for a field's spoken name: what fills it in, who gets it, and why it is marked. */
+  const reviewSay = (f) => [f.prefill ? 'filled in from onboarding' : '', f.forType === 'person' ? 'for individuals and joint accounts' : f.forType === 'entity' ? 'for entities, trusts and IRAs' : '', PL().needsReview(f) ? `marked for review: ${f.reviewReason || UNSURE}` : ''].filter(Boolean).join(', ');
   function reviewPanelHTML(env) {
     const list = PL().reviewFields(env);
     if (!list.length) return '';
-    return CK().panel(
-      'To review',
-      `<p class="cs-hint">The portal was not sure about ${list.length === 1 ? 'this field' : 'these fields'}. Confirm each one, or move it to the right place.</p>
+    return `<div class="fe-sec fe-sec-review"><h2 class="fe-h">To review</h2><p class="cs-hint">The portal was not sure about ${list.length === 1 ? 'this field' : 'these fields'}. Confirm each one, or move it to the right place.</p>
       <ul class="es-review" role="list">${list
-        .map((f) => `<li><button type="button" data-action="es-flag-go" data-fid="${h(f.id)}"><strong>${h(f.label || TYPES[f.type].label)}</strong><span class="cs-hint">Page ${f.page} · ${h(f.reviewReason || 'The portal was not sure about this field.')}</span></button></li>`)
-        .join('')}</ul>`
-    );
+        .map((f) => `<li><button type="button" data-action="es-flag-go" data-fid="${h(f.id)}"><strong>${h(f.label || (TYPES[f.type] || TYPES.text).label)}</strong><span class="cs-hint">Page ${f.page} · ${h(f.reviewReason || UNSURE)}</span></button></li>`)
+        .join('')}</ul></div>`;
   }
-  function placementPropsHTML(env, sel) {
-    const s = signerById(env, sel.signerId);
-    const mine = !!s && s.role === 'investor';
+  function placementStatusHTML(env, sel) {
     const status = PL().statusOf(sel);
+    return `${status ? `<p class="cs-hint es-placed">${h(status)}</p>` : ''}${PL().needsReview(sel) ? `<div class="es-flag-box"><p>${h(sel.reviewReason || UNSURE)}</p><button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="es-flag-ok">${icon('check')}Confirm this field</button></div>` : ''}`;
+  }
+  function placementControlsHTML(env, sel) {
+    const s = signerById(env, sel.signerId);
+    if (!env.agreementFor || !s || s.role !== 'investor') return '';
     const opt = (v, l, cur) => `<option value="${h(v)}"${v === (cur || '') ? ' selected' : ''}>${h(l)}</option>`;
-    return `${status ? `<p class="cs-hint es-placed">${h(status)}</p>` : ''}
-      ${PL().needsReview(sel) ? `<div class="es-flag-box"><p>${h(sel.reviewReason || 'The portal was not sure about this field.')}</p><button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="es-flag-ok">${icon('check')}Confirm this field</button></div>` : ''}
-      ${mine && sel.type === 'text' && env.agreementFor ? `<label class="cs-field" for="es-fp"><span>Filled in from onboarding</span><select id="es-fp" data-change="es-fprop" data-k="prefill">${opt('', 'No: the investor types it', sel.prefill)}${PL().PREFILL.map(([k, l]) => opt(k, l, sel.prefill)).join('')}</select></label>` : ''}
-      ${mine && env.agreementFor ? `<label class="cs-field" for="es-ft"><span>Who gets this field</span><select id="es-ft" data-change="es-fprop" data-k="forType">${PL().FOR_TYPES.map(([k, l]) => opt(k, l, sel.forType)).join('')}</select></label>` : ''}`;
+    return `${sel.type === 'text' ? `<label class="cs-field" for="es-fp"><span>Filled in from onboarding</span><select id="es-fp" data-change="es-fprop" data-k="prefill">${opt('', 'No: the investor types it', sel.prefill)}${PL().PREFILL.map(([k, l]) => opt(k, l, sel.prefill)).join('')}</select></label>` : ''}
+      <label class="cs-field" for="es-fw"><span>Who gets this field</span><select id="es-fw" data-change="es-fprop" data-k="forType">${PL().FOR_TYPES.map(([k, l]) => opt(k, l, sel.forType)).join('')}</select></label>`;
+  }
+  /** Properties the field editor does not know itself. Returns whether the field changed. */
+  function placementSetProp(f, k, v) {
+    if (k === 'review') return PL().confirm(f);
+    if (k !== 'prefill' && k !== 'forType') return false;
+    if ((f[k] || '') === (v || '')) return false;
+    if (v) f[k] = String(v);
+    else delete f[k];
+    PL().confirm(f); // saying who gets a marked field, or what fills it in, settles its mark
+    return true;
   }
   NS.actions['es-flag-go'] = (el) => {
-    const env = editorEnv();
-    const f = env && env.fields.find((x) => x.id === el.getAttribute('data-fid'));
-    if (!f) return;
-    esUi().sel = f.id;
-    S().ui.esFocus = `.es-fld[data-fid="${f.id}"]`;
-    NS.app.render();
-    const box = document.querySelector(`.es-fld[data-fid="${CSS.escape(f.id)}"]`);
-    if (box) box.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    if (editorEnv()) NS.fieldEditor.show(el.getAttribute('data-fid'));
   };
   NS.actions['es-flag-ok'] = () => {
     const env = editorEnv();
-    const ui = esUi();
-    const f = env && env.fields.find((x) => x.id === ui.sel);
-    if (!f || !settleReview(f)) return;
-    save();
-    // On to the next field that needs a look, if any.
+    if (!env) return;
+    NS.fieldEditor.setProp('review', false);
+    // On to the next field that needs a look, if any; otherwise to the button that saves.
     const next = PL().reviewFields(env)[0];
-    if (next) {
-      ui.sel = next.id;
-      S().ui.esFocus = `.es-fld[data-fid="${next.id}"]`;
-    } else S().ui.esFocus = '[data-action="es-agreement-save"], [data-action="es-review"]';
-    NS.app.render();
-    const box = next && document.querySelector(`.es-fld[data-fid="${CSS.escape(next.id)}"]`);
-    if (box) box.scrollIntoView({ block: 'center' });
+    if (next) return NS.fieldEditor.show(next.id);
+    const go = document.querySelector('[data-action="es-agreement-save"], [data-action="es-review"]');
+    if (go) go.focus({ preventScroll: true });
   };
   /* ===================== end of PLACEMENT REVIEW ===================== */
   /* =====================================================================
    * Sponsor console: one envelope (field editor for drafts, tracking after)
    * ===================================================================== */
+  /*
+   * Three slots for a status on a field: that the portal placed it and the sponsor has yet to check it (PLACEMENT
+   * REVIEW above fills them). The editor draws them wherever they return something, and draws them again after every
+   * change to the field, so a status that an edit settles disappears by itself.
+   */
+  /** On the field itself: a class for its box, an element drawn on it (it may reach outside the box), and words for its spoken description. */
+  const editorFieldMark = (env, f) => ({ cls: PL().needsReview(f) ? 'is-flag' : '', html: reviewMarkHTML(f), say: reviewSay(f) });
+  /** At the top of the selected field's properties: the reason for the status and what to do about it. */
+  const editorPropsStatusHTML = (env, sel) => placementStatusHTML(env, sel);
+  /** In the editor's left column, between the field types and the ready line: a list of the fields to check, say. */
+  const editorRailExtraHTML = (env) => reviewPanelHTML(env);
+  /** One field on a page of the editor. fieldeditor.js draws it again after every change to it, and adds the handles when it is selected. */
   function editorFieldHTML(env, f, ui) {
     const s = signerById(env, f.signerId) || { name: 'Unassigned', color: '#888888' };
     const sel = ui.sel === f.id;
-    const t = TYPES[f.type];
-    // PLACEMENT REVIEW: is-flag, reviewAria and reviewMarkHTML mark a field the portal was unsure about.
-    return `<div class="es-fld es-fld-${f.type}${sel ? ' is-sel' : ''}${PL().needsReview(f) ? ' is-flag' : ''}" data-fid="${h(f.id)}" tabindex="0" role="button" aria-pressed="${sel}" aria-label="${h(f.label || t.label)} for ${h(s.name)}, page ${f.page}${isReq(f) ? ', required' : ''}${h(reviewAria(f))}. Arrow keys move, Delete removes." style="${boxStyle(f, s.color)}"><span class="es-fld-label">${f.type === 'checkbox' ? '' : h(f.label || t.label)}${isReq(f) ? '<b aria-hidden="true">*</b>' : ''}</span>${reviewMarkHTML(f)}<span class="es-handle" aria-hidden="true"></span></div>`;
+    const t = TYPES[f.type] || TYPES.text;
+    const req = isReq(f);
+    const mark = editorFieldMark(env, f);
+    return `<div class="es-fld es-fld-${h(f.type)}${sel ? ' is-sel' : ''}${req ? ' is-req' : f.type === 'date' ? ' is-auto' : ' is-opt'}${mark.cls ? ' ' + h(mark.cls) : ''}" data-fid="${h(f.id)}" tabindex="0" role="button" aria-pressed="${sel}" aria-label="${h(f.label || t.label)} for ${h(s.name)}, page ${f.page}${req ? ', required' : ''}${mark.say ? ', ' + h(mark.say) : ''}. Drag or use the arrow keys to move, Delete removes." style="${boxStyle(f, s.color)}"><span class="es-fld-glyph" aria-hidden="true">${NS.fieldEditor ? NS.fieldEditor.glyph(f.type) : ''}</span><span class="es-fld-label">${f.type === 'checkbox' ? '' : h(f.label || t.label)}${req ? '<b aria-hidden="true">*</b>' : ''}</span>${mark.html}</div>`;
+  }
+  /** The selected field's properties: its type, who it is for, its label, whether it is required, and duplicate and remove. */
+  function editorPropsHTML(env, sel) {
+    const t = TYPES[sel.type] || TYPES.text;
+    const req = isReq(sel);
+    return `<div class="es-props" data-fid="${h(sel.id)}">
+      <div class="es-props-head"><h2>${h(t.label)} field</h2><span class="cs-hint">Page ${sel.page} of ${env.pages}</span><button class="cs-icon es-props-close" type="button" data-action="fe-props-close" aria-label="Close">${icon('close')}</button></div>
+      ${editorPropsStatusHTML(env, sel)}
+      <label class="cs-field" for="es-ft"><span>Type</span><select id="es-ft" data-change="es-fprop" data-k="type">${Object.keys(TYPES).map((k) => `<option value="${k}"${k === sel.type ? ' selected' : ''}>${h(TYPES[k].label)}</option>`).join('')}</select></label>
+      <label class="cs-field" for="es-fs"><span>Signer</span><select id="es-fs" data-change="es-fprop" data-k="signerId">${env.signers.map((s) => `<option value="${h(s.id)}"${s.id === sel.signerId ? ' selected' : ''}>${h(s.name)}</option>`).join('')}</select></label>
+      <label class="cs-field" for="es-fl"><span>Label <em>(shown to the signer)</em></span><input id="es-fl" type="text" maxlength="60" data-input="es-fprop" data-k="label" value="${h(sel.label || '')}" placeholder="${h(t.label)}"></label>
+      ${sel.type === 'date' ? '<p class="cs-hint">Filled automatically with the date the signer signs.</p>' : `<label class="cs-check" for="es-fr"><input id="es-fr" type="checkbox" data-change="es-fprop" data-k="required"${req ? ' checked' : ''}><span>Required${(sel.type === 'signature' || sel.type === 'initials') && !req ? '<span class="cs-hint">Optional: the signer can finish without signing here.</span>' : sel.type === 'checkbox' ? '<span class="cs-hint">Required means the signer must tick it to finish.</span>' : ''}</span></label>`}
+      ${placementControlsHTML(env, sel)}
+      <div class="es-props-acts"><button class="cs-btn cs-btn-small" type="button" data-action="fe-dup">${icon('copy')}Duplicate</button><button class="cs-btn cs-btn-small cs-btn-danger" type="button" data-action="es-fdel">${icon('x')}Remove</button></div>
+    </div>`;
+  }
+  /** Whether the draft can go out yet, as the line at the foot of the editor's left column. */
+  function editorStatusHTML(env) {
+    const err = env.agreementFor ? agreementTodo(env) : sendCheck(env);
+    return err ? `<p class="cs-hint es-todo">${h(err)}</p>` : `<p class="cs-hint es-ready">${icon('check')}${env.agreementFor ? 'Ready to save.' : 'Ready to send.'}</p>`;
+  }
+  // Lines of text the editor snaps a field's bottom edge to. A page's own data is used when it carries them
+  // (pages[i].lines as fractions of the page: { y, x0, x1 }); otherwise the text's baselines are read from the PDF, once per file.
+  const lineCache = {};
+  function editorLines(docId, pages, page) {
+    const own = pages && pages[page - 1] && pages[page - 1].lines;
+    if (own) return own;
+    let c = lineCache[docId];
+    if (!c) {
+      c = lineCache[docId] = {};
+      // The text as placement reads it (pageLayout, text only): baselines and extents as fractions of the displayed page.
+      pageLayout(docId, true).then((pp) => pp.forEach((p) => (c[p.page] = p.items.map((t) => ({ y: t.y / p.h, x0: t.x / p.w, x1: (t.x + t.w) / p.w })))), () => {});
+    }
+    return c[page] || [];
+  }
+  /** What the field editor (fieldeditor.js) works with: the draft, its page images, and the pieces of markup and rules kept here. */
+  function editorCtx(env) {
+    const src = env.docId || env.workDocId || env.signedDocId || '';
+    const c = pagesOf(src);
+    const ready = c.status === 'ready';
+    return {
+      env,
+      ui: esUi(),
+      types: TYPES,
+      agreement: !!env.agreementFor,
+      pages: ready ? c.pages : null,
+      pendingHTML: ready ? '' : pagesHTML(env, () => ''),
+      isReq,
+      uid: () => uid('fd'),
+      signer: (f) => signerById(env, f.signerId),
+      roleLabel: (s) => ROLE_LABEL[s.role],
+      fieldHTML: (f) => editorFieldHTML(env, f, esUi()),
+      propsHTML: (f) => editorPropsHTML(env, f),
+      railExtraHTML: () => editorRailExtraHTML(env),
+      statusHTML: () => editorStatusHTML(env),
+      makeField: (type, page, cx, cy) => newField(env, type, page, cx, cy),
+      lines: (page) => editorLines(src, ready ? c.pages : null, page),
+      setExtra: placementSetProp,
+      save
+    };
   }
   function editorHTML(env) {
     const K = CK();
     const ui = esUi();
     if (!signerById(env, ui.signer)) ui.signer = env.signers[0] ? env.signers[0].id : null;
-    const sel = env.fields.find((f) => f.id === ui.sel) || null;
-    const count = (s) => env.fields.filter((f) => f.signerId === s.id).length;
-    const signers = env.signers
-      .map((s) => `<button type="button" class="es-signer${ui.signer === s.id ? ' is-on' : ''}" data-action="es-signer" data-id="${h(s.id)}" aria-pressed="${ui.signer === s.id}" style="--sc:${h(s.color)}">${dot(s.color)}<span><strong>${env.sequential ? `${s.order}. ` : ''}${h(s.name)}</strong><span class="cs-hint">${ROLE_LABEL[s.role]} · ${count(s)} field${count(s) === 1 ? '' : 's'}</span></span></button>`)
-      .join('');
-    const palette = Object.keys(TYPES)
-      .map((k) => `<button type="button" class="es-tool${ui.tool === k ? ' is-on' : ''}" data-action="es-tool" data-t="${k}" aria-pressed="${ui.tool === k}">${h(TYPES[k].label)}</button>`)
-      .join('');
-    const placer = ui.tool
-      ? `<div class="es-placer"><p class="cs-hint">Click on a page to place the ${h(TYPES[ui.tool].label.toLowerCase())} field, or add it here.</p><div class="cs-row"><label class="sr-only" for="es-pp">Page</label><select id="es-pp" data-change="es-pp">${Array.from({ length: env.pages }, (_, i) => `<option value="${i + 1}"${ui.placePage === i + 1 ? ' selected' : ''}>Page ${i + 1}</option>`).join('')}</select><button class="cs-btn cs-btn-small" type="button" data-action="es-place-kb">Add to page</button></div></div>`
-      : '<p class="cs-hint">Choose a field, then click on the page where it goes. Drag to move; drag the corner to resize.</p>';
-    const props = sel
-      ? `<div class="es-props"><h3>${h(TYPES[sel.type].label)} field <span class="cs-hint">page ${sel.page}</span></h3>
-          <label class="cs-field" for="es-fs"><span>Signer</span><select id="es-fs" data-change="es-fprop" data-k="signerId">${env.signers.map((s) => `<option value="${h(s.id)}"${s.id === sel.signerId ? ' selected' : ''}>${h(s.name)}</option>`).join('')}</select></label>
-          <label class="cs-field" for="es-fl"><span>Label <em>(shown to the signer)</em></span><input id="es-fl" type="text" maxlength="60" data-input="es-fprop" data-k="label" value="${h(sel.label || '')}" placeholder="${h(TYPES[sel.type].label)}"></label>
-          ${sel.type === 'date' ? '<p class="cs-hint">Filled automatically with the date the signer signs.</p>' : `<label class="cs-check" for="es-fr"><input id="es-fr" type="checkbox" data-change="es-fprop" data-k="required"${isReq(sel) ? ' checked' : ''}><span>Required${(sel.type === 'signature' || sel.type === 'initials') && !isReq(sel) ? '<span class="cs-hint">Optional: the signer can finish without signing here.</span>' : sel.type === 'checkbox' ? '<span class="cs-hint">Required means the signer must tick it to finish.</span>' : ''}</span></label>`}
-          ${placementPropsHTML(env, sel)}
-          <button class="cs-btn cs-btn-small cs-btn-danger" type="button" data-action="es-fdel">${icon('x')}Remove field</button></div>`
-      : '';
     const agr = env.agreementFor ? W().offerings.find((o) => o.id === env.agreementFor) : null;
-    const err = env.agreementFor ? agreementTodo(env) : sendCheck(env);
     const marked = PL().reviewCount(env);
     const headHTML = env.agreementFor
       ? `${K.head(`Subscription agreement${agr ? ` · ${h(agr.name)}` : ''}`, `${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · place the fields once; each investor fills them in and signs during onboarding`, `<a class="cs-btn" href="#console-offering-${h(env.agreementFor)}">${icon('back')}Offering</a><button class="cs-btn" type="button" data-action="es-agreement-cancel" data-id="${h(env.id)}">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-save" data-id="${h(env.id)}">Save subscription agreement</button>`)}
-        <p class="cs-hint es-agr-note">${env.autoPlaced ? `${env.autoPlaced} field${env.autoPlaced === 1 ? ' was' : 's were'} placed for you from the blanks in the PDF. ${marked ? `${marked} ${marked === 1 ? 'is' : 'are'} marked Review: confirm each one or move it to the right place before saving. ` : 'Check them, move or resize as needed, and add any others. '}` : ''}Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked for each investor; the investor completes the rest. Nothing is sent from here.</p>`
+        <p class="cs-hint es-agr-note">${env.autoPlaced ? `${env.autoPlaced} field${env.autoPlaced === 1 ? ' was' : 's were'} placed for you from the blanks in the PDF. ${marked ? 'Those marked Review are listed on the left: confirm each one or move it to the right place before saving. ' : 'Check them, move or resize as needed, and add any others. '}` : ''}Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.</p>`
       : `${K.head(h(env.title), `Draft · ${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'}`, `<a class="cs-btn" href="#console-esign">${icon('back')}E-sign</a><button class="cs-btn" type="button" data-action="es-delete" data-id="${h(env.id)}">Delete draft</button><button class="cs-btn" type="button" data-action="es-save-tpl" data-id="${h(env.id)}">Save as template</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-review" data-id="${h(env.id)}">Review and send</button>`)}`;
-    return K.shell(
-      `${headHTML}
-      <div class="es-editor" data-env="${h(env.id)}">
-        <aside class="es-side">
-          ${K.panel('Signers', `<div class="es-signers" role="group" aria-label="New fields are for">${signers}</div><fieldset class="cs-field"><legend>Signing order</legend><div class="cs-seg">${[['true', 'In order'], ['false', 'Any order']].map(([v, l]) => `<label><input type="radio" name="es-seq" value="${v}" data-change="es-seq"${String(env.sequential) === v ? ' checked' : ''}><span>${l}</span></label>`).join('')}</div></fieldset>`)}
-          ${reviewPanelHTML(env)}
-          ${K.panel('Fields', `<div class="es-palette" role="group" aria-label="Field to place">${palette}</div>${placer}${props}`)}
-          ${err ? `<p class="cs-hint es-todo">${h(err)}</p>` : `<p class="cs-hint es-ready">${icon('check')}${env.agreementFor ? 'Ready to save.' : 'Ready to send.'}</p>`}
-        </aside>
-        <div class="es-doc${ui.tool ? ' is-placing' : ''}">${pagesHTML(env, (p) => env.fields.filter((f) => f.page === p).map((f) => editorFieldHTML(env, f, ui)).join(''))}</div>
-      </div>`,
-      'console-esign'
-    );
+    // The editor itself (the fields to add, the document, the selected field) is fieldeditor.js.
+    return K.shell(`${headHTML}${NS.fieldEditor.html(editorCtx(env))}`, 'console-esign');
   }
   function trackHTML(env) {
     const K = CK();
@@ -1389,6 +1428,7 @@
       const env = envById(W(), id);
       const ui = esUi();
       if (env && ui.signAs === env.id) signAfter(env, signerById(env, ui.signAsSigner), 'console');
+      NS.fieldEditor.mount(env && env.status === 'draft' && ui.signAs !== env.id && canOperate() ? editorCtx(env) : null);
       focusPending();
       NS.signflow.sync();
     }
@@ -1424,18 +1464,10 @@
   };
   const save = () => NS.app.save();
   NS.actions['es-signer'] = (el) => {
-    esUi().signer = el.getAttribute('data-id');
-    NS.app.render();
+    if (editorEnv()) NS.fieldEditor.setSigner(el.getAttribute('data-id'));
   };
   NS.actions['es-tool'] = (el) => {
-    const ui = esUi();
-    const t = el.getAttribute('data-t');
-    ui.tool = ui.tool === t ? null : t;
-    S().ui.esFocus = `[data-action="es-tool"][data-t="${t}"]`;
-    NS.app.render();
-  };
-  NS.changes['es-pp'] = (el) => {
-    esUi().placePage = Number(el.value) || 1;
+    if (editorEnv()) NS.fieldEditor.setTool(el.getAttribute('data-t'));
   };
   NS.changes['es-seq'] = (el) => {
     const env = editorEnv();
@@ -1445,15 +1477,15 @@
     S().ui.esFocus = `[data-change="es-seq"][value="${el.value}"]`;
     NS.app.render();
   };
-  function addField(env, type, page, cx, cy) {
-    const ui = esUi();
+  /** A new field of a type for the signer chosen in the editor, centred on a point of a page. Not on the draft yet. */
+  function newField(env, type, page, cx, cy) {
     const t = TYPES[type];
     const ps = env.pageSizes[page - 1] || { w: 612, h: 792 };
     const w = Math.min(0.9, t.w / ps.w);
     const hh = Math.min(0.5, t.h / ps.h);
-    const f = {
+    return {
       id: uid('fd'),
-      signerId: ui.signer,
+      signerId: esUi().signer,
       type,
       page,
       x: Math.max(0, Math.min(1 - w, cx - w / 2)),
@@ -1464,46 +1496,20 @@
       label: type === 'text' ? 'Text' : '',
       value: ''
     };
-    env.fields.push(f);
-    ui.sel = f.id;
-    ui.tool = null;
-    S().ui.esFocus = `.es-fld[data-fid="${f.id}"]`;
-    save();
-    NS.app.render();
-    return f;
+  }
+  // Adding, changing and removing go through the field editor, so each is a step that can be undone.
+  function addField(env, type, page, cx, cy) {
+    return NS.fieldEditor.add(type, page, cx, cy);
+  }
+  function removeField(env, id) {
+    NS.fieldEditor.remove(id);
   }
   NS.actions['es-place-kb'] = () => {
-    const env = editorEnv();
-    const ui = esUi();
-    if (!env || !ui.tool) return;
-    addField(env, ui.tool, ui.placePage || 1, 0.3, 0.12 + 0.02 * (env.fields.length % 10));
+    if (editorEnv()) NS.fieldEditor.addHere();
   };
   NS.changes['es-fprop'] = (el) => {
-    const env = editorEnv();
-    const ui = esUi();
-    const f = env && env.fields.find((x) => x.id === ui.sel);
-    if (!f) return;
-    const k = el.getAttribute('data-k');
-    f[k] = el.type === 'checkbox' ? el.checked : el.value;
-    if ((k === 'prefill' || k === 'forType') && !f[k]) delete f[k];
-    // PLACEMENT REVIEW: reassigning a marked field, or saying who gets it and what fills it, settles its mark.
-    if (k === 'signerId' || k === 'prefill' || k === 'forType') settleReview(f);
-    save();
-    if (k === 'label') {
-      const lab = document.querySelector(`.es-fld[data-fid="${CSS.escape(f.id)}"] .es-fld-label`);
-      if (lab && f.type !== 'checkbox') lab.innerHTML = h(f.label || TYPES[f.type].label) + (isReq(f) ? '<b aria-hidden="true">*</b>' : '');
-      return;
-    }
-    S().ui.esFocus = `[data-k="${k}"]`;
-    NS.app.render();
+    if (editorEnv()) NS.fieldEditor.setProp(el.getAttribute('data-k'), el.type === 'checkbox' ? el.checked : el.value);
   };
-  function removeField(env, id) {
-    const ui = esUi();
-    env.fields = env.fields.filter((f) => f.id !== id);
-    if (ui.sel === id) ui.sel = null;
-    save();
-    NS.app.render();
-  }
   NS.actions['es-fdel'] = () => {
     const env = editorEnv();
     if (env && esUi().sel) removeField(env, esUi().sel);
@@ -1633,123 +1639,7 @@
     };
   }
 
-  /* ---------- Editor pointer and keyboard handling ---------- */
-  let drag = null;
-  document.addEventListener('pointerdown', (e) => {
-    const fe = e.target.closest && e.target.closest('.es-editor .es-fld');
-    if (!fe || e.button > 0) return;
-    const env = editorEnv();
-    const f = env && env.fields.find((x) => x.id === fe.getAttribute('data-fid'));
-    if (!f) return;
-    const page = fe.closest('.es-page').getBoundingClientRect();
-    const ui = esUi();
-    if (ui.sel !== f.id) {
-      document.querySelectorAll('.es-fld.is-sel').forEach((x) => x.classList.remove('is-sel'));
-      fe.classList.add('is-sel');
-      ui.sel = f.id;
-    }
-    drag = { fe, f, env, mode: e.target.closest('.es-handle') ? 'resize' : 'move', sx: e.clientX, sy: e.clientY, pw: page.width, ph: page.height, x: f.x, y: f.y, w: f.w, h: f.h, moved: false };
-    try {
-      fe.setPointerCapture(e.pointerId);
-    } catch (err) {
-      /* ignore */
-    }
-    e.preventDefault();
-  });
-  document.addEventListener('pointermove', (e) => {
-    if (!drag) return;
-    const dx = (e.clientX - drag.sx) / drag.pw;
-    const dy = (e.clientY - drag.sy) / drag.ph;
-    if (!drag.moved && Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) < 3) return;
-    drag.moved = true;
-    const f = drag.f;
-    if (drag.mode === 'move') {
-      f.x = Math.max(0, Math.min(1 - f.w, drag.x + dx));
-      f.y = Math.max(0, Math.min(1 - f.h, drag.y + dy));
-    } else {
-      f.w = Math.max(0.015, Math.min(1 - f.x, drag.w + dx));
-      f.h = Math.max(0.01, Math.min(1 - f.y, drag.h + dy));
-    }
-    Object.assign(drag.fe.style, { left: f.x * 100 + '%', top: f.y * 100 + '%', width: f.w * 100 + '%', height: f.h * 100 + '%' });
-  });
-  const endDrag = () => {
-    if (!drag) return;
-    const d = drag;
-    drag = null;
-    if (d.moved) {
-      settleReview(d.f); // PLACEMENT REVIEW: moving or resizing a marked field settles its mark
-      save();
-    }
-    S().ui.esFocus = `.es-fld[data-fid="${d.f.id}"]`;
-    NS.app.render();
-  };
-  document.addEventListener('pointerup', endDrag);
-  document.addEventListener('pointercancel', endDrag);
-  document.addEventListener('click', (e) => {
-    const pg = e.target.closest && e.target.closest('.es-editor .es-page');
-    if (!pg || e.target.closest('.es-fld')) return;
-    const env = editorEnv();
-    if (!env) return;
-    const ui = esUi();
-    if (ui.tool) {
-      const r = pg.getBoundingClientRect();
-      addField(env, ui.tool, Number(pg.getAttribute('data-page')), (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
-    } else if (ui.sel) {
-      ui.sel = null;
-      NS.app.render();
-    }
-  });
-  document.addEventListener('keydown', (e) => {
-    const env = editorEnv();
-    if (!env) return;
-    const ui = esUi();
-    const tag = (e.target.tagName || '').toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-    if (document.getElementById('dlg') && document.getElementById('dlg').open) return;
-    if (e.key === 'Escape' && (ui.tool || ui.sel)) {
-      ui.tool = null;
-      ui.sel = null;
-      NS.app.render();
-      return;
-    }
-    const fe = e.target.closest && e.target.closest('.es-fld');
-    if (!fe) return;
-    const f = env.fields.find((x) => x.id === fe.getAttribute('data-fid'));
-    if (!f) return;
-    if (e.key === 'Delete' || e.key === 'Backspace') {
-      e.preventDefault();
-      removeField(env, f.id);
-      return;
-    }
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      ui.sel = f.id;
-      S().ui.esFocus = `.es-fld[data-fid="${f.id}"]`;
-      NS.app.render();
-      return;
-    }
-    const step = e.shiftKey ? 0.02 : 0.004;
-    const mv = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
-    if (!mv) return;
-    e.preventDefault();
-    if (e.altKey) {
-      f.w = Math.max(0.015, Math.min(1 - f.x, f.w + mv[0]));
-      f.h = Math.max(0.01, Math.min(1 - f.y, f.h + mv[1]));
-    } else {
-      f.x = Math.max(0, Math.min(1 - f.w, f.x + mv[0]));
-      f.y = Math.max(0, Math.min(1 - f.h, f.y + mv[1]));
-    }
-    ui.sel = f.id;
-    Object.assign(fe.style, { left: f.x * 100 + '%', top: f.y * 100 + '%', width: f.w * 100 + '%', height: f.h * 100 + '%' });
-    fe.classList.add('is-sel');
-    // PLACEMENT REVIEW: nudging a marked field settles its mark (the page is drawn again so the mark goes).
-    if (settleReview(f)) {
-      save();
-      S().ui.esFocus = `.es-fld[data-fid="${f.id}"]`;
-      return NS.app.render();
-    }
-    save();
-  });
+  /* ---------- Editor pointer and keyboard handling: fieldeditor.js (dragging, resizing, snapping, keys, undo) ---------- */
   function focusPending() {
     const sel = S().ui.esFocus;
     if (!sel) return;
@@ -2039,7 +1929,7 @@
     U.toast(`Declined. ${T().name} has been told.`);
   };
 
-  /* ---------- Adopt-signature dialog: Type, Draw, Upload ---------- */
+  /* ---------- Adopting a signature and initials (the dialog itself is signature.js) ---------- */
   NS.actions['es-sig'] = (el) => {
     const st = S().ui.esSigning;
     if (!st) return;
@@ -2058,254 +1948,11 @@
     }
     openAdopt(env, s, f, st);
   };
+  /** The dialog is signature.js: the signer sets their signature and initials there, both at once. */
   function openAdopt(env, s, f, st) {
-    const kind = f.type;
-    const initial = kind === 'initials' ? initialsOf(s.name) : s.name;
-    const prev = st.adopted[kind];
-    S().ui.esAdopt = { envId: env.id, sid: s.id, fid: f.id, kind, tab: 'type', upload: null, drawn: false };
-    const tab = (k, l) => `<button type="button" class="es-tab" role="tab" id="es-tab-${k}" aria-controls="es-pane-${k}" aria-selected="${k === 'type'}" data-action="es-adopt-tab" data-t="${k}">${l}</button>`;
-    U.dialog(
-      `<div class="dlg-head"><div><h2>Adopt your ${kind === 'initials' ? 'initials' : 'signature'}</h2><p>Used for every ${kind === 'initials' ? 'initials' : 'signature'} field you sign in this document.</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
-      <div class="dlg-body es-adopt">
-        <div class="es-tabs" role="tablist" aria-label="How to create it">${tab('type', 'Type')}${tab('draw', 'Draw')}${tab('upload', 'Upload')}</div>
-        <div class="es-pane" id="es-pane-type" role="tabpanel" aria-labelledby="es-tab-type">
-          <label class="field" for="es-type-text"><span>${kind === 'initials' ? 'Your initials' : 'Your full name'}</span><input id="es-type-text" type="text" maxlength="${kind === 'initials' ? 6 : 60}" value="${h(prev && prev.kind === 'typed' ? prev.text : initial)}" data-input="es-type-text" autocomplete="off" autofocus></label>
-          <div class="es-type-preview es-paper" id="es-type-preview" aria-hidden="true">${h(prev && prev.kind === 'typed' ? prev.text : initial)}</div>
-        </div>
-        <div class="es-pane" id="es-pane-draw" role="tabpanel" aria-labelledby="es-tab-draw" hidden>
-          <p class="hint">Draw with your mouse, finger or stylus.</p>
-          <canvas class="es-pad es-paper" id="es-pad" aria-label="Drawing area for your ${kind === 'initials' ? 'initials' : 'signature'}"></canvas>
-          <div class="es-row"><button class="btn btn-small" type="button" data-action="es-pad-clear">Clear</button></div>
-        </div>
-        <div class="es-pane" id="es-pane-upload" role="tabpanel" aria-labelledby="es-tab-upload" hidden>
-          <label class="field" for="es-up"><span>Image of your ${kind === 'initials' ? 'initials' : 'signature'} (PNG or JPG)</span><input id="es-up" type="file" accept="image/png,image/jpeg" data-change="es-upload"></label>
-          <div class="es-up-preview es-paper" id="es-up-preview"><span class="hint">No image yet.</span></div>
-        </div>
-        <p class="hint es-adopt-legal">By selecting Adopt and sign, I agree that this ${kind === 'initials' ? 'mark is my electronic initials' : 'mark is my electronic signature'} and has the same effect as my handwritten ${kind === 'initials' ? 'initials' : 'signature'} on this document.</p>
-        <p class="field-error" id="es-adopt-err" role="alert"></p>
-        <div class="es-row es-row-end">${st.vals[f.id] ? '<button class="btn" type="button" data-action="es-sig-clear">Remove from this field</button>' : ''}<button class="btn" type="button" data-action="close-dialog">Cancel</button><button class="btn btn-primary" type="button" data-action="es-adopt">Adopt and sign</button></div>
-      </div>`,
-      'dlg-es dlg-es-adopt'
-    );
+    S().ui.esAdopt = { envId: env.id, sid: s.id, fid: f.id, kind: f.type };
+    NS.signature.open({ key: st.key, name: s.name, placed: !!st.vals[f.id], adopted: st.adopted });
   }
-  NS.changes['es-type-text'] = (el) => {
-    const p = document.getElementById('es-type-preview');
-    if (p) p.textContent = el.value;
-  };
-  NS.actions['es-adopt-tab'] = (el) => {
-    const a = S().ui.esAdopt;
-    if (!a) return;
-    a.tab = el.getAttribute('data-t');
-    ['type', 'draw', 'upload'].forEach((k) => {
-      const pane = document.getElementById('es-pane-' + k);
-      const tb = document.getElementById('es-tab-' + k);
-      if (pane) pane.hidden = k !== a.tab;
-      if (tb) tb.setAttribute('aria-selected', String(k === a.tab));
-    });
-    if (a.tab === 'draw') setupPad();
-  };
-  document.addEventListener('keydown', (e) => {
-    const tb = e.target.closest && e.target.closest('.es-tabs [role="tab"]');
-    if (!tb || (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft')) return;
-    const all = Array.from(tb.parentElement.querySelectorAll('[role="tab"]'));
-    const n = all[(all.indexOf(tb) + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length];
-    n.focus();
-    n.click();
-  });
-  function setupPad() {
-    const c = document.getElementById('es-pad');
-    if (!c || c.dataset.ready) return;
-    const r = c.getBoundingClientRect();
-    const dpr = Math.min(3, window.devicePixelRatio || 1);
-    c.width = Math.max(300, Math.round(r.width * dpr));
-    c.height = Math.max(120, Math.round(r.height * dpr));
-    c.dataset.ready = '1';
-    const ctx = c.getContext('2d');
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = INK;
-    ctx.lineWidth = 2.6 * dpr;
-    let last = null;
-    const pt = (e) => {
-      const b = c.getBoundingClientRect();
-      return { x: ((e.clientX - b.left) / b.width) * c.width, y: ((e.clientY - b.top) / b.height) * c.height };
-    };
-    c.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      try {
-        c.setPointerCapture(e.pointerId);
-      } catch (err) {
-        /* ignore */
-      }
-      last = pt(e);
-      ctx.beginPath();
-      ctx.arc(last.x, last.y, ctx.lineWidth / 2, 0, Math.PI * 2);
-      ctx.fillStyle = INK;
-      ctx.fill();
-      S().ui.esAdopt.drawn = true;
-    });
-    c.addEventListener('pointermove', (e) => {
-      if (!last) return;
-      const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
-      (evs.length ? evs : [e]).forEach((ev) => {
-        const p = pt(ev);
-        ctx.beginPath();
-        ctx.moveTo(last.x, last.y);
-        ctx.lineTo(p.x, p.y);
-        ctx.stroke();
-        last = p;
-      });
-    });
-    const up = () => (last = null);
-    c.addEventListener('pointerup', up);
-    c.addEventListener('pointercancel', up);
-  }
-  NS.actions['es-pad-clear'] = () => {
-    const c = document.getElementById('es-pad');
-    if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
-    if (S().ui.esAdopt) S().ui.esAdopt.drawn = false;
-  };
-  /** Crop a canvas to its ink and return a PNG data URL no larger than max. */
-  function trimPng(c, maxW, maxH) {
-    const ctx = c.getContext('2d');
-    const d = ctx.getImageData(0, 0, c.width, c.height).data;
-    let x0 = c.width;
-    let y0 = c.height;
-    let x1 = -1;
-    let y1 = -1;
-    for (let y = 0; y < c.height; y++)
-      for (let x = 0; x < c.width; x++)
-        if (d[(y * c.width + x) * 4 + 3] > 12) {
-          if (x < x0) x0 = x;
-          if (x > x1) x1 = x;
-          if (y < y0) y0 = y;
-          if (y > y1) y1 = y;
-        }
-    if (x1 < 0) return null;
-    const pad = 6;
-    x0 = Math.max(0, x0 - pad);
-    y0 = Math.max(0, y0 - pad);
-    x1 = Math.min(c.width - 1, x1 + pad);
-    y1 = Math.min(c.height - 1, y1 + pad);
-    const w = x1 - x0 + 1;
-    const hh = y1 - y0 + 1;
-    const s = Math.min(1, (maxW || 600) / w, (maxH || 200) / hh);
-    const o = document.createElement('canvas');
-    o.width = Math.max(1, Math.round(w * s));
-    o.height = Math.max(1, Math.round(hh * s));
-    o.getContext('2d').drawImage(c, x0, y0, w, hh, 0, 0, o.width, o.height);
-    return o.toDataURL('image/png');
-  }
-  async function typedPng(text) {
-    try {
-      await document.fonts.load('500 96px "Caveat"', text);
-    } catch (e) {
-      /* falls back to cursive */
-    }
-    const c = document.createElement('canvas');
-    c.width = 1200;
-    c.height = 260;
-    const ctx = c.getContext('2d');
-    let size = 120;
-    const font = (n) => `500 ${n}px "Caveat", "Segoe Script", "Brush Script MT", cursive`;
-    ctx.font = font(size);
-    while (ctx.measureText(text).width > 1140 && size > 30) ctx.font = font((size -= 6));
-    ctx.fillStyle = INK;
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, 24, 135);
-    return trimPng(c, 600, 160);
-  }
-  /**
-   * Make the paper transparent so only the ink is stamped. The paper's shade is read from the image's
-   * edges (white, cream or a grey photo of a page) and the ink's from its darkest pixels; pixels near
-   * the paper fade out, pixels near the ink stay. An image with too little contrast has no ink.
-   */
-  function knockOutPaper(ctx, w, hgt) {
-    const id = ctx.getImageData(0, 0, w, hgt);
-    const px = id.data;
-    const lum = (i) => 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
-    const edge = [];
-    const take = (x, y) => {
-      const i = (y * w + x) * 4;
-      if (px[i + 3] > 200) edge.push(lum(i));
-    };
-    const sx = Math.max(1, Math.floor(w / 200));
-    const sy = Math.max(1, Math.floor(hgt / 200));
-    for (let x = 0; x < w; x += sx) {
-      take(x, 0);
-      take(x, hgt - 1);
-    }
-    for (let y = 0; y < hgt; y += sy) {
-      take(0, y);
-      take(w - 1, y);
-    }
-    if (edge.length < 8) {
-      // Already transparent around the ink (a PNG cut-out): only clear near-white pixels.
-      for (let i = 0; i < px.length; i += 4) if (lum(i) > 235) px[i + 3] = 0;
-      ctx.putImageData(id, 0, 0);
-      return;
-    }
-    edge.sort((a, b) => a - b);
-    const paper = edge[Math.floor(edge.length / 2)];
-    const hist = new Array(256).fill(0);
-    let n = 0;
-    for (let i = 0; i < px.length; i += 4)
-      if (px[i + 3] > 200) {
-        hist[Math.max(0, Math.min(255, Math.round(lum(i))))]++;
-        n++;
-      }
-    let inkL = 0;
-    for (let k = 0, acc = 0; k < 256; k++) {
-      acc += hist[k];
-      if (acc >= n * 0.005) {
-        inkL = k;
-        break;
-      }
-    }
-    const span = paper - inkL;
-    const clear = paper - span * 0.25;
-    const solid = inkL + span * 0.45;
-    for (let i = 0; i < px.length; i += 4) {
-      if (span < 40) {
-        px[i + 3] = 0;
-        continue;
-      }
-      const L = lum(i);
-      const a = L >= clear ? 0 : L <= solid ? 1 : (clear - L) / (clear - solid);
-      px[i + 3] = Math.round(px[i + 3] * a);
-    }
-    ctx.putImageData(id, 0, 0);
-  }
-  NS.changes['es-upload'] = (el) => {
-    const a = S().ui.esAdopt;
-    const file = el.files && el.files[0];
-    const box = document.getElementById('es-up-preview');
-    const err = document.getElementById('es-adopt-err');
-    if (!a || !file) return;
-    if (!/^image\/(png|jpeg)$/.test(file.type)) {
-      if (err) err.textContent = 'Choose a PNG or JPG image.';
-      return;
-    }
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const s = Math.min(1, 1000 / img.width, 400 / img.height);
-      const c = document.createElement('canvas');
-      c.width = Math.max(1, Math.round(img.width * s));
-      c.height = Math.max(1, Math.round(img.height * s));
-      const ctx = c.getContext('2d');
-      ctx.drawImage(img, 0, 0, c.width, c.height);
-      knockOutPaper(ctx, c.width, c.height);
-      a.upload = trimPng(c, 600, 200);
-      URL.revokeObjectURL(url);
-      if (box) box.innerHTML = a.upload ? `<img src="${a.upload}" alt="Uploaded ${a.kind === 'initials' ? 'initials' : 'signature'}">` : '<span class="hint">No ink found in this image.</span>';
-      if (err) err.textContent = '';
-    };
-    img.onerror = () => {
-      if (err) err.textContent = 'This image could not be read.';
-    };
-    img.src = url;
-  };
   NS.actions['es-adopt'] = async () => {
     const a = S().ui.esAdopt;
     const st = S().ui.esSigning;
@@ -2313,36 +1960,12 @@
     const env = envById(W(), a.envId);
     const s = env && signerById(env, a.sid);
     if (!mayAct(env, s)) return;
-    const err = document.getElementById('es-adopt-err');
-    let sig = null;
-    if (a.tab === 'type') {
-      const text = String((document.getElementById('es-type-text') || {}).value || '').trim();
-      if (!text) {
-        if (err) err.textContent = 'Type your name.';
-        return;
-      }
-      sig = { kind: 'typed', text, png: await typedPng(text) };
-    } else if (a.tab === 'draw') {
-      const c = document.getElementById('es-pad');
-      const png = a.drawn && c ? trimPng(c, 600, 200) : null;
-      if (!png) {
-        if (err) err.textContent = 'Draw your signature first.';
-        return;
-      }
-      sig = { kind: 'drawn', text: '', png };
-    } else {
-      if (!a.upload) {
-        if (err) err.textContent = 'Choose an image first.';
-        return;
-      }
-      sig = { kind: 'uploaded', text: '', png: a.upload };
-    }
-    if (!sig.png) {
-      if (err) err.textContent = 'That signature could not be created. Try another way.';
-      return;
-    }
-    st.adopted[a.kind] = sig;
-    // A new signature replaces the one already shown in this signer's other fields of the same kind.
+    const made = await NS.signature.result();
+    if (!made || S().ui.esAdopt !== a || S().ui.esSigning !== st) return;
+    // Adopted once: with both set, each of this signer's signature and initials fields then takes a single tap, and a
+    // new signature replaces the one already shown in their other fields.
+    st.adopted.signature = made.signature;
+    st.adopted.initials = made.initials;
     st.vals[a.fid] = true;
     S().ui.esAdopt = null;
     U.closeDialog();
@@ -2748,8 +2371,9 @@
    * What is printed on each page, for placing fields: its text with positions, and the lines and squares drawn on it
    * (read from the rendered page by NS.placement.scan). Everything is in points of the page as displayed (crop box
    * and rotation applied), origin top-left: { page, w, h, items: [{ s, x, y, w, h }], rules, boxes }.
+   * textOnly: the text alone, without drawing the pages (the field editor snaps fields to its baselines).
    */
-  async function pageLayout(docId) {
+  async function pageLayout(docId, textOnly) {
     const blob = await files().get(docId);
     if (!blob) return [];
     const lib = await pdfjs();
@@ -2771,15 +2395,17 @@
         });
         let marks = { rules: [], boxes: [] };
         try {
-          const k = Math.min(2, 1600 / vp.width);
-          const big = page.getViewport({ scale: k });
-          cv.width = Math.ceil(big.width);
-          cv.height = Math.ceil(big.height);
-          const ctx = cv.getContext('2d', { willReadFrequently: true });
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillRect(0, 0, cv.width, cv.height);
-          await page.render({ canvasContext: ctx, viewport: big }).promise;
-          marks = NS.placement.scan(ctx.getImageData(0, 0, cv.width, cv.height).data, cv.width, cv.height, k);
+          if (!textOnly) {
+            const k = Math.min(2, 1600 / vp.width);
+            const big = page.getViewport({ scale: k });
+            cv.width = Math.ceil(big.width);
+            cv.height = Math.ceil(big.height);
+            const ctx = cv.getContext('2d', { willReadFrequently: true });
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, cv.width, cv.height);
+            await page.render({ canvasContext: ctx, viewport: big }).promise;
+            marks = NS.placement.scan(ctx.getImageData(0, 0, cv.width, cv.height).data, cv.width, cv.height, k);
+          }
         } catch (e) {
           /* a page that cannot be drawn is read from its text alone */
         }

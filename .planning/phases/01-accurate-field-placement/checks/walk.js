@@ -108,7 +108,7 @@ const mine = (p) =>
     console.log(`  (reading the 5-page agreement and placing ${ed.fields} fields took ${took} ms)`);
     check('the portal placed every field of the agreement: 36, for the investor and the firm', ed.fields === 36 && ed.investor === 33 && ed.firm === 3, ed);
     check('each kind of field: signatures, initials, names, dates, blanks and tick boxes', ed.kinds.signature === 3 && ed.kinds.initials === 6 && ed.kinds.checkbox === 7 && ed.kinds.name === 3 && ed.kinds.date === 2 && ed.kinds.text === 15, ed.kinds);
-    check('two fields are marked for review and the editor says so', ed.marks === 2 && ed.high === 34 && /36 fields were placed for you from the blanks in the PDF\. 2 are marked Review/.test(ed.note), ed);
+    check('two fields are marked for review and the editor says so', ed.marks === 2 && ed.high === 34 && /36 fields were placed for you from the blanks in the PDF\. Those marked Review are listed on the left/.test(ed.note), ed);
     await page.screenshot({ path: path.join(OUT, '2-editor-review.png') });
 
     /* ---- The sponsor confirms each marked field, then saves ---- */

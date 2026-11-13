@@ -13,6 +13,14 @@
   /* Paper, the signing ink and the required mark stay the same in light and dark, like a printed page. */
   --es-paper: var(--paper-bg); --es-paper-ink: #0B1F44; --es-paper-ink-2: var(--paper-fg-2); --es-paper-line: var(--paper-line); --es-paper-soft: var(--paper-soft); --es-paper-bad: #B3261E;
   --es-paper-shadow: var(--paper-shadow);
+  /* A signer's own marks (signature.js): the two inks to sign in, and the six hands a typed signature is written in. */
+  --es-ink-blue: #15357E; --es-ink-black: #17191D;
+  --es-hand-formal: "Pinyon Script", "Snell Roundhand", "Edwardian Script ITC", cursive;
+  --es-hand-flowing: "Mrs Saint Delafield", "Snell Roundhand", "Segoe Script", cursive;
+  --es-hand-casual: "Caveat", "Segoe Script", "Brush Script MT", cursive;
+  --es-hand-quick: "Nothing You Could Do", "Bradley Hand", "Segoe Print", cursive;
+  --es-hand-neat: "Bad Script", "Noteworthy", "Segoe Print", cursive;
+  --es-hand-bold: "Mr Dafoe", "Brush Script MT", "Segoe Script", cursive;
   --es-fg: var(--fg); --es-fg-2: var(--fg-2); --es-fg-3: var(--fg-3); --es-line: var(--line); --es-line-strong: var(--line-strong); --es-surface: var(--surface); --es-surface-2: var(--surface-2);
   --es-accent: var(--brand); --es-accent-ink: var(--brand-ink); --es-accent-text: var(--brand-text); --es-focus: var(--focus); --es-good: var(--good); --es-warn: var(--warn); --es-bad: var(--bad);
   --es-page-bg: var(--surface-3); --es-font: var(--font-body); --es-mono: var(--font-mono);
@@ -431,6 +439,378 @@
   .sf-ring-fill, .sf-ring > .i, .sf-zoom-btn, .es-doc-sign .es-f-mine { transition: none; }
 }
 
+/* ==================================================================================================================
+   Signatures (signature.js): the dialog where a signer sets their signature and their initials, once.
+   How to make them (Type, Draw, Upload) and the ink are two segmented controls. The signature and the initials sit
+   on a sheet of paper, one cell each with its line, in every tab: written in a style, drawn, or shown from an image.
+   Paper and ink keep their colors in dark, like the document they are placed on.
+   ================================================================================================================== */
+/* The dialog keeps its top edge where it is as the tabs change its height; on a phone it is a sheet from the bottom. */
+.sg-dlg { width: min(720px, calc(100% - var(--space-lg))); margin-block: max(20px, calc((100vh - 820px) / 2)) auto; }
+.sg-dlg .dlg-body { flex: 1 1 auto; min-height: 0; }
+.sg-dlg .dlg-head { flex-wrap: nowrap; align-items: flex-start; }
+.sg-dlg .dlg-head > div:first-child { min-width: 0; }
+.sg { --sg-ink: var(--es-ink-blue); }
+.sg[data-ink="black"] { --sg-ink: var(--es-ink-black); }
+.sg-label { font-size: var(--text-sm); font-weight: 500; line-height: 1.4; color: var(--es-fg-2); }
+.mode-console .sg-label { font-size: var(--text-xs); }
+
+/* The bar: the way to make it, and the ink. The current choice is the lit segment, ringed in the accent. */
+.sg-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs) var(--space-md); }
+.sg-switch, .sg-inkswitch { display: inline-flex; gap: var(--space-3xs); padding: var(--space-3xs); border: 1px solid var(--es-line); border-radius: var(--r-pill); background: color-mix(in oklab, var(--es-fg) 5%, transparent); }
+.sg-tabbtn { position: relative; min-width: 84px; min-height: 34px; padding: var(--space-2xs) var(--space-md); border: 0; border-radius: var(--r-pill); background: transparent; color: var(--es-fg-2); font-family: inherit; font-size: var(--text-sm); font-weight: 500; line-height: 1.2; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out); }
+.sg-tabbtn::after { content: ""; position: absolute; inset: -4px 0; }
+.sg-tabbtn:hover { color: var(--es-fg); }
+.sg-tabbtn:active { background: color-mix(in oklab, var(--es-fg) 8%, transparent); }
+.sg-tabbtn[aria-selected="true"] { background: var(--es-surface); color: var(--es-fg); box-shadow: var(--edge-light), inset 0 0 0 1px var(--es-accent); }
+.sg-tabbtn:focus-visible { outline: 2px solid var(--es-focus); outline-offset: 2px; }
+.sg-tabbtn:disabled { opacity: 0.55; cursor: not-allowed; }
+.sg-inks { display: flex; align-items: center; gap: var(--space-xs); }
+.sg-inkopt { position: relative; display: block; }
+.sg-inkopt input { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.sg-inkchip { display: flex; align-items: center; gap: var(--space-xs); min-height: 34px; padding: var(--space-2xs) var(--space-sm) var(--space-2xs) var(--space-xs); border-radius: var(--r-pill); color: var(--es-fg-2); font-size: var(--text-sm); font-weight: 500; line-height: 1.2; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out); }
+/* The dot is ink on a ring of paper, so black and blue read as themselves on a dark dialog too. */
+.sg-dot { flex: none; width: 16px; height: 16px; margin: var(--space-3xs); border-radius: 50%; background: var(--es-ink-blue); box-shadow: 0 0 0 2px var(--es-paper), 0 0 0 3px var(--es-paper-line); }
+.sg-dot[data-ink="black"] { background: var(--es-ink-black); }
+.sg-inkopt input:hover + .sg-inkchip { color: var(--es-fg); }
+.sg-inkopt input:active + .sg-inkchip { background: color-mix(in oklab, var(--es-fg) 8%, transparent); }
+.sg-inkopt input:checked + .sg-inkchip { background: var(--es-surface); color: var(--es-fg); box-shadow: var(--edge-light), inset 0 0 0 1px var(--es-accent); }
+.sg-inkopt input:focus-visible + .sg-inkchip { outline: 2px solid var(--es-focus); outline-offset: 2px; }
+
+/* The sheet: a cell for the signature and a narrower one for the initials. */
+.sg-pane { display: flex; flex-direction: column; gap: var(--space-md); min-width: 0; }
+.sg-sheet { display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr); gap: var(--space-sm); }
+.sg-cell { --sg-line: 24px; --sg-pad: 20px; position: relative; display: flex; flex-direction: column; min-width: 0; border-radius: var(--r-inner); background: var(--es-paper); color: var(--es-paper-ink-2); box-shadow: inset 0 0 0 1px var(--es-paper-line); color-scheme: light; transition: box-shadow var(--dur-micro) var(--ease-out); }
+.sg-stage { position: relative; flex: 1 1 auto; height: 124px; min-height: 0; }
+/* The line it is written on, and the mark that says where to begin. */
+.sg-stage::after { content: ""; position: absolute; left: var(--space-md); right: var(--space-md); bottom: var(--sg-line); border-bottom: 1px solid color-mix(in srgb, var(--es-paper-ink-2) 42%, var(--es-paper)); pointer-events: none; }
+.sg-cell-signature .sg-stage::before { content: "\00d7"; position: absolute; left: var(--space-md); bottom: calc(var(--sg-line) + var(--space-2xs)); font-size: var(--text-lg); line-height: 1; color: color-mix(in srgb, var(--es-paper-ink-2) 55%, var(--es-paper)); pointer-events: none; }
+/* Handwriting sits with its baseline on the line: a box with no height of its own ends exactly on the baseline of
+   the text inside it. signature.js sets the size so the ink fits the cell. */
+.sg-hand { position: absolute; left: var(--sg-pad); right: var(--sg-pad); bottom: calc(var(--sg-line) + 1px); font-size: 0; line-height: 0; white-space: nowrap; text-align: center; color: var(--sg-ink); pointer-events: none; user-select: none; -webkit-user-select: none; }
+.sg-hand-ink { font-size: 40px; line-height: 0; font-synthesis: none; font-variant-ligatures: normal; transition: opacity var(--dur-short) var(--ease-out); }
+/* Until the faces have arrived the handwriting waits, so it never shows in a stand-in face first. */
+.sg.is-loading .sg-hand-ink { opacity: 0; }
+.sg-cell-signature > .sg-stage > .sg-hand { left: 48px; text-align: left; }
+.sg-cap { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); min-height: 36px; padding: 0 var(--space-xs) var(--space-2xs) var(--space-md); font-size: var(--text-xs); line-height: 1.3; }
+.sg-acts { display: flex; gap: var(--space-3xs); }
+.sg-padbtn { position: relative; min-height: 28px; padding: 0 var(--space-xs); border: 0; border-radius: var(--r-pill); background: transparent; color: var(--es-paper-ink-2); font-family: inherit; font-size: var(--text-sm); font-weight: 500; line-height: 1.2; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+.sg-padbtn::after { content: ""; position: absolute; inset: -8px -1px; }
+.sg-padbtn:hover { background: var(--es-paper-soft); color: var(--es-paper-ink); }
+.sg-padbtn:active { background: color-mix(in srgb, var(--es-paper-ink) 12%, var(--es-paper)); color: var(--es-paper-ink); }
+.sg-padbtn:focus-visible { outline: 2px solid var(--es-paper-ink); outline-offset: 1px; }
+.sg-padbtn:disabled, .sg-padbtn[aria-disabled="true"] { background: transparent; color: var(--es-paper-ink-2); opacity: 0.4; cursor: not-allowed; }
+
+/* Type: the six hands, each a card of paper with the signer's own name in it. */
+.sg-styles { display: block; min-width: 0; margin: 0; padding: 0; border: 0; }
+.sg-styles > legend { margin-bottom: var(--space-xs); padding: 0; }
+.sg-style-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xs); }
+.sg-style { position: relative; display: block; min-width: 0; }
+.sg-style input { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.sg-style-box { --sg-line: 26px; --sg-pad: 12px; position: relative; display: block; height: 72px; border-radius: var(--r-inner); background: var(--es-paper); color: var(--es-paper-ink-2); box-shadow: inset 0 0 0 1px var(--es-paper-line); color-scheme: light; transition: box-shadow var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out); }
+/* The chosen hand is ringed in the accent and ticked on its corner, clear of the writing. */
+.sg-style-tick { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--es-accent); color: var(--es-accent-ink); box-shadow: 0 0 0 2px var(--surface-2); opacity: 0; transition: opacity var(--dur-micro) var(--ease-out); }
+.sg-style-tick .i { width: 12px; height: 12px; stroke-width: 2.5; }
+.sg-style input:hover + .sg-style-box { box-shadow: inset 0 0 0 1px var(--es-line-strong); }
+/* A hand that cannot write every letter of the name is set aside while that name stands. */
+.sg-style input:disabled { cursor: not-allowed; }
+.sg-style input:disabled + .sg-style-box { box-shadow: inset 0 0 0 1px var(--es-paper-line); opacity: 0.4; cursor: not-allowed; }
+.sg-style input:active + .sg-style-box { background: var(--es-paper-soft); }
+.sg-style input:checked + .sg-style-box { box-shadow: inset 0 0 0 2px var(--es-accent); }
+.sg-style input:checked + .sg-style-box .sg-style-tick { opacity: 1; }
+.sg-style input:focus-visible + .sg-style-box { outline: 2px solid var(--es-focus); outline-offset: 2px; }
+.sg-fields { display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr); gap: var(--space-sm); }
+
+/* Draw: each cell is a pad. The initials written for the signer stay, faint, until they draw their own. */
+.sg-pane-draw .sg-stage { height: 208px; }
+.sg-pad { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border-radius: var(--r-inner) var(--r-inner) 0 0; touch-action: none; cursor: crosshair; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.sg-prompt { position: absolute; left: var(--space-md); right: var(--space-md); bottom: calc(var(--sg-line) + var(--space-md)); text-align: center; font-size: var(--text-sm); line-height: 1.4; color: color-mix(in srgb, var(--es-paper-ink-2) 72%, var(--es-paper)); pointer-events: none; }
+.sg-pane-draw .sg-hand-default { opacity: 0.4; }
+.sg-cell.has-ink .sg-prompt, .sg-cell.has-ink .sg-hand-default { visibility: hidden; }
+.sg-hint { line-height: 1.5; }
+
+/* Upload: the cell takes a file (chosen or dropped) and shows the ink that was found in it, on the line. */
+.sg-pane-upload .sg-stage { height: 148px; }
+.sg-empty { position: absolute; inset: 0 var(--space-md) var(--sg-line); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-xs); font-size: var(--text-xs); line-height: 1.4; text-align: center; }
+.sg-cell.has-ink .sg-empty { display: none; }
+.sg-choosebtn { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: var(--control-h); padding: var(--space-xs) 20px; border: 1px solid color-mix(in srgb, var(--es-paper-ink-2) 45%, var(--es-paper)); border-radius: var(--r-pill); background: var(--es-paper); color: var(--es-paper-ink); font-family: inherit; font-size: var(--text-sm); font-weight: 500; line-height: 1.2; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out); }
+.sg-choosebtn::after { content: ""; position: absolute; inset: -2px 0; }
+.sg-choosebtn:hover { border-color: var(--es-paper-ink-2); background: var(--es-paper-soft); }
+.sg-choosebtn:active { background: color-mix(in srgb, var(--es-paper-ink) 10%, var(--es-paper)); transform: translateY(1px); }
+.sg-choosebtn:focus-visible { outline: 2px solid var(--es-paper-ink); outline-offset: 2px; }
+.sg-choosebtn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+.sg-img { position: absolute; left: 48px; bottom: calc(var(--sg-line) - 8px); max-width: calc(100% - 64px); max-height: calc(100% - var(--sg-line) - 12px); object-fit: contain; }
+.sg-cell-initials .sg-img { left: 50%; max-width: calc(100% - 32px); transform: translateX(-50%); }
+.sg-drop.is-over { box-shadow: inset 0 0 0 2px var(--es-accent); }
+
+/* The foot stays in view: what adopting means, anything still missing, and the action. */
+.sg-foot { display: flex; flex-direction: column; gap: var(--space-sm); padding: var(--space-md) 20px; border-top: 1px solid var(--line); background: var(--surface); }
+.sg-legal { font-size: var(--text-xs); line-height: 1.5; color: var(--es-fg-3); }
+.sg-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-xs); }
+.sg-remove { margin-right: auto; }
+.sg-actions [aria-busy="true"] { opacity: 0.7; cursor: progress; }
+
+@media (max-width: 640px) {
+  .sg-dlg { width: 100%; max-width: 100%; height: calc(100vh - 24px); height: calc(100dvh - 24px); max-height: none; margin: auto 0 0; border-radius: var(--r-card) var(--r-card) 0 0; }
+  .sg-dlg .dlg-body { padding: var(--space-md); }
+  /* Three tabs and two inks share one row: the inks are their dots alone. */
+  .sg-tabbtn { min-width: 72px; min-height: 40px; padding: var(--space-2xs) var(--space-sm); }
+  .sg-tabbtn::after { inset: -2px 0; }
+  .sg-inks > .sg-label, .sg-inkname { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .sg-inkchip { min-width: 40px; min-height: 40px; justify-content: center; padding: var(--space-2xs); }
+  .sg-inkopt::after { content: ""; position: absolute; inset: -2px; }
+  .sg-fields .field input, .sg-fields .cs-field input { min-height: 44px; }
+  .sg-stage { height: 108px; }
+  .sg-style-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sg-style-box { height: 64px; --sg-line: 22px; }
+  /* Drawing and uploading need the width: the two cells stack, and the pads take all the height the sheet has. */
+  .sg-sheet-stack { grid-template-columns: minmax(0, 1fr); }
+  .sg-pane-draw { flex: 1 1 auto; }
+  .sg-pane-draw .sg-sheet { flex: 1 1 auto; grid-template-rows: minmax(196px, 1.7fr) minmax(132px, 1fr); }
+  .sg-pane-draw .sg-stage { height: auto; }
+  .sg-pane-upload .sg-stage { height: 132px; }
+  .sg-pane-upload .sg-cell-initials .sg-stage { height: 96px; }
+  .sg-padbtn { min-height: 32px; padding: 0 var(--space-sm); }
+  .sg-padbtn::after { inset: -6px -1px; }
+  .sg-foot { padding: var(--space-sm) var(--space-md) max(var(--space-md), env(safe-area-inset-bottom)); }
+  .sg-actions .btn, .sg-actions .cs-btn { flex: 1 1 auto; }
+  .sg-actions .sg-remove { flex-basis: 100%; }
+}
+/* A short phone: the dialog says less, so both pads are in view without scrolling past them. */
+@media (max-width: 640px) and (max-height: 740px) {
+  .sg-dlg .dlg-head p, .sg-pane-draw .sg-hint { display: none; }
+  .sg-pane-draw .sg-sheet { grid-template-rows: minmax(148px, 1.7fr) minmax(104px, 1fr); }
+}
+/* A narrow phone: the tabs draw in so the inks stay beside them. */
+@media (max-width: 360px) {
+  .sg-tabbtn { min-width: 52px; padding: var(--space-2xs) var(--space-xs); }
+}
+/* A short window (a phone on its side): the dialog takes the height there is, says less, and its pads are lower. */
+@media (min-width: 641px) and (max-height: 620px) {
+  .sg-dlg { margin-block: var(--space-xs) auto; max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); }
+  .sg-dlg .dlg-head { padding-block: var(--space-xs); }
+  .sg-dlg .dlg-head p, .sg-hint { display: none; }
+  .sg-dlg .dlg-body { padding-block: var(--space-sm); }
+  .sg-stage { height: 96px; }
+  .sg-pane-draw .sg-stage { height: 128px; }
+  .sg-pane-upload .sg-stage { height: 120px; }
+  .sg-foot { flex-direction: row; flex-wrap: wrap; align-items: center; padding-block: var(--space-xs); }
+  .sg-legal { flex: 1 1 280px; }
+  .sg-foot .field-error { flex: 1 1 100%; order: -1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sg-tabbtn, .sg-inkchip, .sg-cell, .sg-hand-ink, .sg-padbtn, .sg-style-box, .sg-style-tick, .sg-choosebtn { transition: none; }
+}
+
+/* =====================================================================
+ * Field editor (fieldeditor.js): where the sponsor places the fields on a draft's pages. Three parts side by side:
+ * the fields to add, the document, the selected field. The tool around the page uses the console's tokens (--cv-*);
+ * everything drawn on the page itself uses the paper tokens, so the page stays white paper in light and in dark.
+ * ===================================================================== */
+:root { --es-guide: var(--es-paper-bad); }
+/* The editor fills what is left of the screen (fieldeditor.js measures --fe-h), so the document scrolls inside it. */
+.cs-main:has(> .es-editor.fe) { max-width: 1600px; padding-bottom: var(--space-lg); }
+body.has-demo .cs-main:has(> .es-editor.fe) { padding-bottom: 72px; }
+.es-editor.fe { position: relative; grid-template-columns: 232px minmax(0, 1fr) 272px; grid-template-areas: "rail stage props"; gap: var(--space-md); align-items: stretch; height: var(--fe-h, 640px); min-height: 440px; }
+.fe-rail, .fe-stage, .fe-props { min-width: 0; min-height: 0; border-radius: var(--cv-r-card); background: var(--cv-panel); box-shadow: var(--cv-edge-light), var(--cv-shadow-card); color: var(--cv-ink); }
+
+/* Left: who the next field is for, and the field types. */
+.fe-rail { grid-area: rail; display: flex; flex-direction: column; gap: var(--space-lg); padding: var(--space-md); overflow-y: auto; }
+.fe-sec { display: flex; flex-direction: column; gap: var(--space-xs); min-width: 0; }
+.fe-h { font-family: var(--cv-font); font-size: var(--text-xs); font-weight: 500; line-height: 1.4; color: var(--cv-ink-3); }
+.fe .es-signers { gap: var(--space-3xs); }
+.fe .es-signer { gap: var(--space-xs); border-color: transparent; border-radius: var(--cv-r-inner); background: transparent; }
+.fe .es-signer .es-dot { width: 12px; height: 12px; margin-right: var(--space-2xs); }
+.fe .es-signer:hover { background: var(--cv-panel-2); }
+.fe .es-signer:active { background: var(--cv-panel-3); }
+.fe .es-signer.is-on { border-color: transparent; background: color-mix(in srgb, var(--sc) 13%, var(--cv-panel)); }
+.fe-order { margin-top: var(--space-xs); }
+/* A field type is a row to click or to drag onto the page; its mark carries the color of the signer it will be for. */
+.fe .es-palette { grid-template-columns: minmax(0, 1fr); gap: var(--space-3xs); user-select: none; -webkit-user-select: none; }
+.fe .es-tool { display: flex; align-items: center; gap: var(--space-sm); width: 100%; padding: var(--space-2xs) var(--space-sm) var(--space-2xs) var(--space-2xs); border-color: transparent; background: transparent; box-shadow: none; text-align: left; cursor: grab; touch-action: none; }
+.fe .es-tool:hover { background: var(--cv-panel-2); }
+.fe .es-tool:active { background: var(--cv-panel-3); transform: none; cursor: grabbing; }
+.fe .es-tool.is-on, .fe .es-tool.is-on:hover { border-color: var(--cv-accent); background: var(--cv-select); color: var(--cv-ink); }
+.es-tool-glyph { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: color-mix(in srgb, var(--sc) 14%, var(--cv-panel)); color: color-mix(in srgb, var(--sc) 76%, var(--cv-ink)); }
+.es-tool-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fe .es-placer { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-xs); margin-top: var(--space-2xs); }
+.fe-how { margin-top: var(--space-2xs); }
+.fe-status { margin-top: auto; padding-top: var(--space-sm); border-top: 1px solid var(--cv-line-soft); }
+
+/* Middle: the toolbar, and the well the pages lie in. */
+.fe-stage { grid-area: stage; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: var(--space-xs); padding: var(--space-xs); }
+.fe-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2xs) var(--space-sm); min-height: var(--control-h); padding: 0 var(--space-2xs); }
+.fe-bar-group { display: inline-flex; align-items: center; gap: var(--space-2xs); }
+.fe-well { box-sizing: border-box; height: var(--control-h-sm); border: 1px solid var(--cv-line-strong); border-radius: var(--cv-r-inner); background: var(--cv-panel); color: var(--cv-ink); font-family: var(--cv-font); font-size: var(--text-sm); font-weight: 500; font-variant-numeric: tabular-nums; transition: border-color var(--dur-micro) var(--ease-out); }
+select.fe-well { min-width: 76px; padding: 0 var(--space-xs); cursor: pointer; }
+input.fe-well { width: 44px; padding: 0 var(--space-2xs); text-align: center; }
+.fe-well:hover { border-color: var(--cv-ink-3); }
+.fe-well:active { border-color: var(--cv-ink-2); }
+.fe-well:focus-visible { outline: 2px solid var(--cv-focus); outline-offset: 2px; }
+.fe-well:disabled { opacity: 0.55; cursor: not-allowed; }
+.fe-pager-of { display: inline-flex; align-items: center; gap: var(--space-xs); font-size: var(--text-sm); font-weight: 500; color: var(--cv-ink-2); white-space: nowrap; }
+.fe-scroll { position: relative; overflow: auto; scrollbar-gutter: stable; overscroll-behavior: contain; border-radius: var(--cv-r-inner); background: var(--es-page-bg); }
+.fe-scroll:focus { outline: none; }
+.fe-scroll:focus-visible { outline: 2px solid var(--cv-focus); outline-offset: -2px; }
+.fe-doc { box-sizing: border-box; width: max-content; min-width: 100%; gap: 0; padding: var(--space-lg) var(--space-md) var(--space-xl); border-radius: 0; background: none; }
+.fe-doc-wait { width: auto; }
+/* A page is as wide as its paper at the chosen zoom: its width in points times the scale. */
+.fe-doc .es-page-wrap { flex: none; width: calc(var(--pw) * var(--fe-scale, 1) * 1px); max-width: none; margin-inline: auto; }
+.fe-doc .es-page > img:not([src]) { visibility: hidden; }
+.fe-doc .es-page-no { margin: var(--space-xs) 0 var(--space-md); }
+.fe.is-placing .es-page { cursor: crosshair; }
+.fe .es-page { transition: box-shadow var(--dur-micro) var(--ease-out); }
+.fe .es-page.is-target { box-shadow: 0 0 0 2px var(--cv-focus), var(--es-paper-shadow); }
+
+/* A field on the page: a wash and an edge in its signer's color, the mark of its type, its label. Optional fields are dashed. */
+.fe .es-fld { gap: var(--space-2xs); padding: 0 var(--space-2xs); border: 1px solid color-mix(in srgb, var(--sc) 80%, transparent); border-radius: 3px; background: color-mix(in srgb, var(--sc) 13%, transparent); cursor: grab; transition: background-color var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out); }
+.fe .es-fld.is-opt { border-style: dashed; }
+.fe .es-fld:hover { background: color-mix(in srgb, var(--sc) 21%, transparent); }
+.fe .es-fld:active { background: color-mix(in srgb, var(--sc) 25%, transparent); }
+.fe .es-fld:focus-visible { outline: 2px solid var(--sc); outline-offset: 2px; z-index: 2; }
+.fe .es-fld-glyph { display: grid; place-items: center; flex: none; height: min(14px, 70cqh); aspect-ratio: 1; color: color-mix(in srgb, var(--sc) 72%, var(--es-paper-ink)); pointer-events: none; }
+.fe .es-fld-glyph .i { width: 100%; height: 100%; stroke-width: 2; }
+.fe .es-fld-checkbox { justify-content: center; padding: 0; }
+.fe .es-fld-checkbox .es-fld-label, .fe .es-fld-checkbox .es-fld-glyph rect { display: none; }
+.fe .es-fld-checkbox .es-fld-glyph { height: 84cqh; }
+.fe .es-fld-checkbox .es-fld-glyph .i { stroke-width: 3; }
+@container (max-width: 56px) {
+  .fe .es-fld { justify-content: center; }
+  .fe .es-fld-label { display: none; }
+}
+/* Selected: a firm frame in the signer's color, and a handle on every corner and side. */
+.fe .es-fld.is-sel { z-index: 3; border-color: var(--sc); background: color-mix(in srgb, var(--sc) 17%, transparent); box-shadow: 0 0 0 1px var(--sc), 0 0 0 4px color-mix(in srgb, var(--sc) 18%, transparent); }
+.fe .es-fld.is-sel:focus-visible { outline: none; }
+/* A handle is its hit area, lying mostly outside the field so the field itself stays free to drag; the square is drawn on the edge. */
+.fe .es-fld { --out: 8px; --in-x: 3px; --in-y: 3px; }
+.fe .es-fld.is-thin { --in-y: 1px; }
+.fe .es-fld.is-narrow { --in-x: 1px; }
+.fe .es-handle { position: absolute; inset: auto; z-index: 3; display: block; width: auto; height: auto; border: 0; border-radius: 0; background: none; touch-action: none; }
+.fe .es-handle::after { content: none; }
+.fe .es-handle::before { content: ""; position: absolute; box-sizing: border-box; width: 9px; height: 9px; border: 1.5px solid var(--sc); border-radius: 2px; background: var(--es-paper); }
+.fe .es-handle[data-h="n"], .fe .es-handle[data-h="s"] { left: 0; right: 0; height: calc(var(--out) + var(--in-y)); cursor: ns-resize; }
+.fe .es-handle[data-h="w"], .fe .es-handle[data-h="e"] { top: 0; bottom: 0; width: calc(var(--out) + var(--in-x)); cursor: ew-resize; }
+.fe .es-handle[data-h="nw"], .fe .es-handle[data-h="ne"], .fe .es-handle[data-h="sw"], .fe .es-handle[data-h="se"] { z-index: 4; width: calc(var(--out) + var(--in-x)); height: calc(var(--out) + var(--in-y)); }
+.fe .es-handle[data-h="nw"], .fe .es-handle[data-h="se"] { cursor: nwse-resize; }
+.fe .es-handle[data-h="ne"], .fe .es-handle[data-h="sw"] { cursor: nesw-resize; }
+.fe .es-handle[data-h="n"], .fe .es-handle[data-h="nw"], .fe .es-handle[data-h="ne"] { top: calc(-1px - var(--out)); }
+.fe .es-handle[data-h="s"], .fe .es-handle[data-h="sw"], .fe .es-handle[data-h="se"] { bottom: calc(-1px - var(--out)); }
+.fe .es-handle[data-h="w"], .fe .es-handle[data-h="nw"], .fe .es-handle[data-h="sw"] { left: calc(-1px - var(--out)); }
+.fe .es-handle[data-h="e"], .fe .es-handle[data-h="ne"], .fe .es-handle[data-h="se"] { right: calc(-1px - var(--out)); }
+.fe .es-handle[data-h="n"]::before, .fe .es-handle[data-h="s"]::before { left: calc(50% - 4.5px); }
+.fe .es-handle[data-h="w"]::before, .fe .es-handle[data-h="e"]::before { top: calc(50% - 4.5px); }
+.fe .es-handle[data-h="n"]::before, .fe .es-handle[data-h="nw"]::before, .fe .es-handle[data-h="ne"]::before { top: calc(var(--out) - 6px); }
+.fe .es-handle[data-h="s"]::before, .fe .es-handle[data-h="sw"]::before, .fe .es-handle[data-h="se"]::before { bottom: calc(var(--out) - 6px); }
+.fe .es-handle[data-h="w"]::before, .fe .es-handle[data-h="nw"]::before, .fe .es-handle[data-h="sw"]::before { left: calc(var(--out) - 6px); }
+.fe .es-handle[data-h="e"]::before, .fe .es-handle[data-h="ne"]::before, .fe .es-handle[data-h="se"]::before { right: calc(var(--out) - 6px); }
+/* A low or narrow field shows the squares on its sides only (its corners still resize it); a very small one keeps one corner, drawn clear of it. */
+.fe .es-fld.is-thin .es-handle[data-h="nw"]::before, .fe .es-fld.is-thin .es-handle[data-h="ne"]::before, .fe .es-fld.is-thin .es-handle[data-h="sw"]::before, .fe .es-fld.is-thin .es-handle[data-h="se"]::before,
+.fe .es-fld.is-narrow .es-handle[data-h="nw"]::before, .fe .es-fld.is-narrow .es-handle[data-h="ne"]::before, .fe .es-fld.is-narrow .es-handle[data-h="sw"]::before, .fe .es-fld.is-narrow .es-handle[data-h="se"]::before { display: none; }
+.fe .es-fld.is-tiny .es-handle:not([data-h="se"]) { display: none; }
+.fe .es-fld.is-tiny .es-handle[data-h="se"]::before { right: calc(var(--out) - 10px); bottom: calc(var(--out) - 10px); display: block; }
+.fe .es-tool, .fe .es-fld, .fe-tools .cs-icon { -webkit-tap-highlight-color: transparent; }
+.fe.is-moving, .fe.is-moving .es-fld { cursor: grabbing; }
+.fe.is-resizing[data-dir="n"], .fe.is-resizing[data-dir="s"] { cursor: ns-resize; }
+.fe.is-resizing[data-dir="w"], .fe.is-resizing[data-dir="e"] { cursor: ew-resize; }
+.fe.is-resizing[data-dir="nw"], .fe.is-resizing[data-dir="se"] { cursor: nwse-resize; }
+.fe.is-resizing[data-dir="ne"], .fe.is-resizing[data-dir="sw"] { cursor: nesw-resize; }
+.fe.is-moving, .fe.is-resizing { user-select: none; -webkit-user-select: none; }
+
+/* While it is dragged a field is carried in a layer over the whole document, so no page can clip it. */
+.fe-carry { position: fixed; inset: 0; z-index: var(--z-sticky); overflow: hidden; pointer-events: none; }
+.fe-carry .es-fld { box-shadow: 0 0 0 1px var(--sc), var(--es-paper-shadow); pointer-events: none; transition: none; will-change: transform; }
+.fe-carry .es-fld .es-handle { display: none; }
+.fe-carry .es-fld.is-ghost { border-style: dashed; box-shadow: none; opacity: 0.85; }
+.fe-carry .es-fld.is-off { opacity: 0.5; }
+.fe-origin { position: absolute; box-sizing: border-box; border: 1px dashed color-mix(in srgb, var(--sc) 50%, transparent); border-radius: 3px; pointer-events: none; }
+/* Guide lines, shown while an edge or centre is snapped to a neighbour or to a line of text. */
+.fe-guides { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.fe-guide { position: absolute; background: var(--es-guide); }
+.fe-guide-x { width: 1px; }
+.fe-guide-y { height: 1px; }
+/* The selected field's own toolbar: duplicate and remove (and, on a phone, its properties) without a hover or a keyboard. */
+.fe-tools { position: absolute; z-index: 6; display: inline-flex; align-items: center; gap: var(--space-3xs); padding: var(--space-2xs); border-radius: var(--cv-r-pill); background: var(--cv-panel); box-shadow: var(--cv-edge-light), var(--cv-shadow-float); color: var(--cv-ink); font-family: var(--cv-font); white-space: nowrap; cursor: default; }
+.fe-tools-props { display: none; }
+.fe.is-moving .fe-tools, .fe.is-resizing .fe-tools { visibility: hidden; }
+
+/* Right: the selected field. */
+.fe-props { grid-area: props; padding: var(--space-md); overflow-y: auto; }
+.fe .es-props { gap: var(--space-md); padding-top: 0; border-top: 0; }
+.es-props-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3xs) var(--space-xs); }
+.es-props-head h2 { margin-right: auto; font-family: var(--cv-font-display); font-size: var(--text-lg); font-weight: 400; letter-spacing: var(--cv-tracking); line-height: 1.2; color: var(--cv-ink); }
+.es-props-close { display: none; align-self: center; }
+.es-props-acts { display: flex; flex-wrap: wrap; gap: var(--space-xs); padding-top: var(--space-md); border-top: 1px solid var(--cv-line-soft); }
+.fe .es-props .es-props-acts .cs-btn { align-self: auto; }
+.fe-none { display: flex; flex-direction: column; gap: var(--space-xs); }
+.fe-keys { display: grid; gap: var(--space-xs); margin: var(--space-xs) 0 0; padding-top: var(--space-md); border-top: 1px solid var(--cv-line-soft); }
+.fe-keys > div { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2xs) var(--space-sm); font-size: var(--text-xs); line-height: 1.5; color: var(--cv-ink-3); }
+.fe-keys dd { display: inline-flex; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; gap: var(--space-2xs); margin: 0; }
+.fe-keys kbd { padding: var(--space-3xs) var(--space-xs); border-radius: var(--cv-r-sm); background: var(--cv-panel-2); color: var(--cv-ink-2); font-family: var(--cv-font); font-size: var(--text-xs); font-weight: 500; white-space: nowrap; }
+@media (hover: none) {
+  .fe-keys { display: none; }
+}
+
+/* Touch: every handle is a 44px target lying outside the field, and the selected field itself can be dragged from a 44px area. */
+@media (pointer: coarse) {
+  .fe .es-fld { --out: 36px; --in-x: 8px; --in-y: 8px; }
+  .fe .es-fld.is-thin { --in-y: 0px; }
+  .fe .es-fld.is-narrow { --in-x: 0px; }
+  .fe .es-fld.is-sel::after { content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%); }
+  .fe .es-fld.is-thin .es-handle[data-h="n"], .fe .es-fld.is-thin .es-handle[data-h="s"], .fe .es-fld.is-narrow .es-handle[data-h="w"], .fe .es-fld.is-narrow .es-handle[data-h="e"] { display: none; }
+}
+@media (max-width: 640px), (pointer: coarse) {
+  .fe-well { font-size: 16px; }
+}
+
+/* Narrower screens: the fields to add become two rows across the top; the document and the selected field share the rest. */
+@media (max-width: 1279px) {
+  .es-editor.fe { grid-template-columns: minmax(0, 1fr) 256px; grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "rail rail" "stage props"; }
+  .fe-rail { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-xs) var(--space-md); padding: var(--space-sm) var(--space-md); overflow: visible; }
+  .fe-rail > * { grid-column: 1 / -1; }
+  .fe-rail > .fe-sec-signers { grid-column: 1; grid-row: 1; }
+  .fe-sec { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-sm); }
+  /* The two rows speak for themselves here; their headings stay for screen readers. */
+  .fe-h { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .fe .es-signers { flex-direction: row; flex-wrap: wrap; gap: var(--space-2xs); min-width: 0; }
+  .fe .es-signer { width: auto; max-width: 260px; min-height: var(--control-h); padding: var(--space-2xs) var(--space-md) var(--space-2xs) var(--space-sm); border-radius: var(--cv-r-pill); }
+  .fe .es-signer strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fe .es-signer .cs-hint { display: none; }
+  .fe-order { flex-direction: row; align-items: center; gap: var(--space-xs); margin: 0 0 0 var(--space-xs); }
+  .fe-order legend { float: left; padding: 0 var(--space-xs) 0 0; }
+  .fe .es-palette { display: flex; flex-wrap: wrap; gap: var(--space-2xs); min-width: 0; }
+  .fe .es-tool { gap: var(--space-xs); width: auto; padding-right: var(--space-sm); }
+  .fe-how, .fe .es-placer .cs-hint { display: none; }
+  .fe .es-placer { margin: 0; }
+  .fe-rail > .fe-status { grid-column: 2; grid-row: 1; max-width: 280px; margin: 0; padding: 0; border: 0; text-align: right; }
+}
+@media (max-width: 900px) {
+  /* The page scrolls here, so reaching the end of the document hands the scroll on to it. */
+  .fe-scroll { overscroll-behavior: auto; }
+}
+/* Phones: the document takes the width; the selected field's properties open as a sheet from its toolbar. */
+@media (max-width: 640px) {
+  .es-editor.fe { grid-template-columns: minmax(0, 1fr); grid-template-areas: "rail" "stage"; gap: var(--space-xs); }
+  .fe-rail { padding: var(--space-sm); }
+  .fe-rail { grid-template-columns: minmax(0, 1fr); }
+  .fe-sec { gap: var(--space-2xs) var(--space-xs); }
+  .fe-h { position: static; width: 100%; height: auto; overflow: visible; clip-path: none; }
+  .fe .es-signer { max-width: 100%; }
+  .fe .es-palette { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+  .fe .es-tool { gap: var(--space-xs); width: 100%; padding-right: var(--space-xs); font-size: var(--text-xs); }
+  .es-tool-glyph { width: 28px; height: 28px; }
+  .es-tool-name { line-height: 1.15; white-space: normal; }
+  .fe-rail > .fe-sec-signers, .fe-rail > .fe-status { grid-column: 1; grid-row: auto; max-width: none; text-align: left; }
+  .fe-stage { padding: var(--space-2xs); border-radius: var(--cv-r-inner); }
+  .fe-bar { gap: var(--space-2xs); padding: 0; }
+  .fe-zoom-step, .fe-pager-of > span:first-child { display: none; }
+  .fe-doc { padding: var(--space-sm) var(--space-xs) var(--space-lg); }
+  .fe-props { display: none; }
+  .fe.show-props .fe-props { position: absolute; inset: auto 0 0 0; z-index: 8; grid-area: auto; display: block; max-height: 72%; border-radius: var(--cv-r-card) var(--cv-r-card) var(--cv-r-inner) var(--cv-r-inner); box-shadow: var(--cv-edge-light), var(--cv-shadow-pop); }
+  .fe-tools-props, .es-props-close { display: inline-flex; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fe .es-fld, .fe .es-page, .fe-well { transition: none; }
+}
 /* =====================================================================
  * PLACEMENT REVIEW (field editor): fields the portal placed but was unsure about, and the list that names them.
  * Everything for the review marks is in this block; it carries over to a rewritten editor as it stands.
@@ -454,4 +834,24 @@
 .es-flag-box { display: flex; flex-direction: column; gap: var(--space-xs); padding: var(--space-sm); border-radius: var(--r-inner); background: var(--cv-warn-soft); color: var(--cv-ink); font-size: var(--text-sm); }
 .es-flag-box p { margin: 0; }
 .es-placed { margin: 0; }
+/* Where the editor's left column lies across the top instead (narrower screens), the list is one row of names that
+   scrolls sideways; the reason for each mark shows with the field once it is chosen. */
+@media (max-width: 1279px) {
+  .fe-sec-review { flex-wrap: nowrap; }
+  .fe-sec-review > .cs-hint { display: none; }
+  .fe-sec-review > .fe-h { position: static; flex: none; width: auto; height: auto; overflow: visible; clip-path: none; color: var(--cv-warn); }
+  .es-review { flex-direction: row; gap: var(--space-2xs); min-width: 0; padding: var(--space-3xs); overflow-x: auto; }
+  .es-review li { flex: none; }
+  .es-review li + li { border-top: 0; }
+  .es-review button { flex-direction: row; align-items: center; width: auto; min-height: var(--control-h-sm); padding: var(--space-3xs) var(--space-sm); border: 1px solid var(--cv-line); border-radius: var(--r-pill); white-space: nowrap; }
+  .es-review button .cs-hint { display: none; }
+}
+@media (max-width: 1279px) and (pointer: coarse) {
+  .es-review button { min-height: 44px; }
+}
+/* Phones: the page keeps the height. The marks are on the fields themselves, the line under the field types says how
+   many are left, and confirming one moves on to the next. */
+@media (max-width: 640px) {
+  .fe-sec-review { display: none; }
+}
 /* ===================== end of PLACEMENT REVIEW ===================== */
