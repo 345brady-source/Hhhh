@@ -382,7 +382,7 @@
         const lastBefore = before[before.length - 1];
         if (after.length > 3 && before.length > 3 && lastBefore && !/[:$]/.test(lastBefore.u)) return;
         // "[________] L.P./LLC": a name the sponsor completes (the fund's, a company's), never the investor's blank.
-        if (/^\][\s,]*(l\.?\s?p\b|l\.?\s?l\.?\s?c\b|inc\b|ltd\b|corp|fund\b|limited\b)/i.test(after.slice(0, 12).map((g) => g.u).join(''))) return;
+        if (/^[\],\s]*(l\.?\s?p\b|l\.?\s?l\.?\s?c\b|inc\b|ltd\b|corp|fund\b|limited\b)/i.test(after.slice(0, 12).map((g) => g.u).join(''))) return;
         bracketed = true;
       }
       // Walls: a rule with upright strokes meeting it is the edge of a table or a frame. Its empty cells are blanks.
