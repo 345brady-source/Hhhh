@@ -1167,52 +1167,95 @@
   /* =====================================================================
    * Sponsor console: one envelope (field editor for drafts, tracking after)
    * ===================================================================== */
+  /*
+   * Three slots for a status on a field (for example, that the portal placed it and the sponsor has yet to check it).
+   * All three are empty for now; the editor draws them wherever they return something, and draws them again after every
+   * change to the field, so a status that an edit settles disappears by itself.
+   */
+  /** On the field itself: a class for its box, an element drawn on it (it may reach outside the box), and words for its spoken description. */
+  const editorFieldMark = () => ({ cls: '', html: '', say: '' });
+  /** At the top of the selected field's properties: the reason for the status and what to do about it. */
+  const editorPropsStatusHTML = () => '';
+  /** In the editor's left column, between the field types and the ready line: a list of the fields to check, say. */
+  const editorRailExtraHTML = () => '';
+  /** One field on a page of the editor. fieldeditor.js draws it again after every change to it, and adds the handles when it is selected. */
   function editorFieldHTML(env, f, ui) {
     const s = signerById(env, f.signerId) || { name: 'Unassigned', color: '#888888' };
     const sel = ui.sel === f.id;
-    const t = TYPES[f.type];
-    return `<div class="es-fld es-fld-${f.type}${sel ? ' is-sel' : ''}" data-fid="${h(f.id)}" tabindex="0" role="button" aria-pressed="${sel}" aria-label="${h(f.label || t.label)} for ${h(s.name)}, page ${f.page}${isReq(f) ? ', required' : ''}. Arrow keys move, Delete removes." style="${boxStyle(f, s.color)}"><span class="es-fld-label">${f.type === 'checkbox' ? '' : h(f.label || t.label)}${isReq(f) ? '<b aria-hidden="true">*</b>' : ''}</span><span class="es-handle" aria-hidden="true"></span></div>`;
+    const t = TYPES[f.type] || TYPES.text;
+    const req = isReq(f);
+    const mark = editorFieldMark(env, f);
+    return `<div class="es-fld es-fld-${h(f.type)}${sel ? ' is-sel' : ''}${req ? ' is-req' : f.type === 'date' ? ' is-auto' : ' is-opt'}${mark.cls ? ' ' + h(mark.cls) : ''}" data-fid="${h(f.id)}" tabindex="0" role="button" aria-pressed="${sel}" aria-label="${h(f.label || t.label)} for ${h(s.name)}, page ${f.page}${req ? ', required' : ''}${mark.say ? ', ' + h(mark.say) : ''}. Drag or use the arrow keys to move, Delete removes." style="${boxStyle(f, s.color)}"><span class="es-fld-glyph" aria-hidden="true">${NS.fieldEditor ? NS.fieldEditor.glyph(f.type) : ''}</span><span class="es-fld-label">${f.type === 'checkbox' ? '' : h(f.label || t.label)}${req ? '<b aria-hidden="true">*</b>' : ''}</span>${mark.html}</div>`;
+  }
+  /** The selected field's properties: its type, who it is for, its label, whether it is required, and duplicate and remove. */
+  function editorPropsHTML(env, sel) {
+    const t = TYPES[sel.type] || TYPES.text;
+    const req = isReq(sel);
+    return `<div class="es-props" data-fid="${h(sel.id)}">
+      <div class="es-props-head"><h2>${h(t.label)} field</h2><span class="cs-hint">Page ${sel.page} of ${env.pages}</span><button class="cs-icon es-props-close" type="button" data-action="fe-props-close" aria-label="Close">${icon('close')}</button></div>
+      ${editorPropsStatusHTML(env, sel)}
+      <label class="cs-field" for="es-ft"><span>Type</span><select id="es-ft" data-change="es-fprop" data-k="type">${Object.keys(TYPES).map((k) => `<option value="${k}"${k === sel.type ? ' selected' : ''}>${h(TYPES[k].label)}</option>`).join('')}</select></label>
+      <label class="cs-field" for="es-fs"><span>Signer</span><select id="es-fs" data-change="es-fprop" data-k="signerId">${env.signers.map((s) => `<option value="${h(s.id)}"${s.id === sel.signerId ? ' selected' : ''}>${h(s.name)}</option>`).join('')}</select></label>
+      <label class="cs-field" for="es-fl"><span>Label <em>(shown to the signer; matches prefill keys)</em></span><input id="es-fl" type="text" maxlength="60" data-input="es-fprop" data-k="label" value="${h(sel.label || '')}" placeholder="${h(t.label)}"></label>
+      ${sel.type === 'date' ? '<p class="cs-hint">Filled automatically with the date the signer signs.</p>' : `<label class="cs-check" for="es-fr"><input id="es-fr" type="checkbox" data-change="es-fprop" data-k="required"${req ? ' checked' : ''}><span>Required${(sel.type === 'signature' || sel.type === 'initials') && !req ? '<span class="cs-hint">Optional: the signer can finish without signing here.</span>' : sel.type === 'checkbox' ? '<span class="cs-hint">Required means the signer must tick it to finish.</span>' : ''}</span></label>`}
+      <div class="es-props-acts"><button class="cs-btn cs-btn-small" type="button" data-action="fe-dup">${icon('copy')}Duplicate</button><button class="cs-btn cs-btn-small cs-btn-danger" type="button" data-action="es-fdel">${icon('x')}Remove</button></div>
+    </div>`;
+  }
+  /** Whether the draft can go out yet, as the line at the foot of the editor's left column. */
+  function editorStatusHTML(env) {
+    const err = env.agreementFor ? agreementTodo(env) : sendCheck(env);
+    return err ? `<p class="cs-hint es-todo">${h(err)}</p>` : `<p class="cs-hint es-ready">${icon('check')}${env.agreementFor ? 'Ready to save.' : 'Ready to send.'}</p>`;
+  }
+  // Lines of text the editor snaps a field's bottom edge to. A page's own data is used when it carries them
+  // (pages[i].lines as fractions of the page: { y, x0, x1 }); otherwise the text's baselines are read from the PDF, once per file.
+  const lineCache = {};
+  function editorLines(docId, pages, page) {
+    const own = pages && pages[page - 1] && pages[page - 1].lines;
+    if (own) return own;
+    let c = lineCache[docId];
+    if (!c) {
+      c = lineCache[docId] = {};
+      const read = typeof pageText === 'function' ? pageText : null;
+      if (read) read(docId).then((pp) => pp.forEach((p) => (c[p.page] = p.items.map((t) => ({ y: t.y, x0: t.x, x1: t.x + t.w })))), () => {});
+    }
+    return c[page] || [];
+  }
+  /** What the field editor (fieldeditor.js) works with: the draft, its page images, and the pieces of markup and rules kept here. */
+  function editorCtx(env) {
+    const src = env.docId || env.workDocId || env.signedDocId || '';
+    const c = pagesOf(src);
+    const ready = c.status === 'ready';
+    return {
+      env,
+      ui: esUi(),
+      types: TYPES,
+      agreement: !!env.agreementFor,
+      pages: ready ? c.pages : null,
+      pendingHTML: ready ? '' : pagesHTML(env, () => ''),
+      isReq,
+      uid: () => uid('fd'),
+      signer: (f) => signerById(env, f.signerId),
+      roleLabel: (s) => ROLE_LABEL[s.role],
+      fieldHTML: (f) => editorFieldHTML(env, f, esUi()),
+      propsHTML: (f) => editorPropsHTML(env, f),
+      railExtraHTML: () => editorRailExtraHTML(env),
+      statusHTML: () => editorStatusHTML(env),
+      makeField: (type, page, cx, cy) => newField(env, type, page, cx, cy),
+      lines: (page) => editorLines(src, ready ? c.pages : null, page),
+      save
+    };
   }
   function editorHTML(env) {
     const K = CK();
     const ui = esUi();
     if (!signerById(env, ui.signer)) ui.signer = env.signers[0] ? env.signers[0].id : null;
-    const sel = env.fields.find((f) => f.id === ui.sel) || null;
-    const count = (s) => env.fields.filter((f) => f.signerId === s.id).length;
-    const signers = env.signers
-      .map((s) => `<button type="button" class="es-signer${ui.signer === s.id ? ' is-on' : ''}" data-action="es-signer" data-id="${h(s.id)}" aria-pressed="${ui.signer === s.id}" style="--sc:${h(s.color)}">${dot(s.color)}<span><strong>${env.sequential ? `${s.order}. ` : ''}${h(s.name)}</strong><span class="cs-hint">${ROLE_LABEL[s.role]} · ${count(s)} field${count(s) === 1 ? '' : 's'}</span></span></button>`)
-      .join('');
-    const palette = Object.keys(TYPES)
-      .map((k) => `<button type="button" class="es-tool${ui.tool === k ? ' is-on' : ''}" data-action="es-tool" data-t="${k}" aria-pressed="${ui.tool === k}">${h(TYPES[k].label)}</button>`)
-      .join('');
-    const placer = ui.tool
-      ? `<div class="es-placer"><p class="cs-hint">Click on a page to place the ${h(TYPES[ui.tool].label.toLowerCase())} field, or add it here.</p><div class="cs-row"><label class="sr-only" for="es-pp">Page</label><select id="es-pp" data-change="es-pp">${Array.from({ length: env.pages }, (_, i) => `<option value="${i + 1}"${ui.placePage === i + 1 ? ' selected' : ''}>Page ${i + 1}</option>`).join('')}</select><button class="cs-btn cs-btn-small" type="button" data-action="es-place-kb">Add to page</button></div></div>`
-      : '<p class="cs-hint">Choose a field, then click on the page where it goes. Drag to move; drag the corner to resize.</p>';
-    const props = sel
-      ? `<div class="es-props"><h3>${h(TYPES[sel.type].label)} field <span class="cs-hint">page ${sel.page}</span></h3>
-          <label class="cs-field" for="es-fs"><span>Signer</span><select id="es-fs" data-change="es-fprop" data-k="signerId">${env.signers.map((s) => `<option value="${h(s.id)}"${s.id === sel.signerId ? ' selected' : ''}>${h(s.name)}</option>`).join('')}</select></label>
-          <label class="cs-field" for="es-fl"><span>Label <em>(shown to the signer; matches prefill keys)</em></span><input id="es-fl" type="text" maxlength="60" data-input="es-fprop" data-k="label" value="${h(sel.label || '')}" placeholder="${h(TYPES[sel.type].label)}"></label>
-          ${sel.type === 'date' ? '<p class="cs-hint">Filled automatically with the date the signer signs.</p>' : `<label class="cs-check" for="es-fr"><input id="es-fr" type="checkbox" data-change="es-fprop" data-k="required"${isReq(sel) ? ' checked' : ''}><span>Required${(sel.type === 'signature' || sel.type === 'initials') && !isReq(sel) ? '<span class="cs-hint">Optional: the signer can finish without signing here.</span>' : sel.type === 'checkbox' ? '<span class="cs-hint">Required means the signer must tick it to finish.</span>' : ''}</span></label>`}
-          <button class="cs-btn cs-btn-small cs-btn-danger" type="button" data-action="es-fdel">${icon('x')}Remove field</button></div>`
-      : '';
     const agr = env.agreementFor ? W().offerings.find((o) => o.id === env.agreementFor) : null;
-    const err = env.agreementFor ? agreementTodo(env) : sendCheck(env);
     const headHTML = env.agreementFor
       ? `${K.head(`Subscription agreement${agr ? ` · ${h(agr.name)}` : ''}`, `${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · place the fields once; each investor fills them in and signs during onboarding`, `<a class="cs-btn" href="#console-offering-${h(env.agreementFor)}">${icon('back')}Offering</a><button class="cs-btn" type="button" data-action="es-agreement-cancel" data-id="${h(env.id)}">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-save" data-id="${h(env.id)}">Save subscription agreement</button>`)}
         <p class="cs-hint es-agr-note">${env.autoPlaced ? `${env.autoPlaced} field${env.autoPlaced === 1 ? ' was' : 's were'} placed from the signature lines in the PDF. Check them, move or resize as needed, and add any others. ` : ''}Fields for “Investor” are filled in by each investor; a text field labelled “Commitment amount”, “Investor name” or “Offering” is filled in for them and locked. Nothing is sent from here.</p>`
       : `${K.head(h(env.title), `Draft · ${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'}`, `<a class="cs-btn" href="#console-esign">${icon('back')}E-sign</a><button class="cs-btn" type="button" data-action="es-delete" data-id="${h(env.id)}">Delete draft</button><button class="cs-btn" type="button" data-action="es-save-tpl" data-id="${h(env.id)}">Save as template</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-review" data-id="${h(env.id)}">Review and send</button>`)}`;
-    return K.shell(
-      `${headHTML}
-      <div class="es-editor" data-env="${h(env.id)}">
-        <aside class="es-side">
-          ${K.panel('Signers', `<div class="es-signers" role="group" aria-label="New fields are for">${signers}</div><fieldset class="cs-field"><legend>Signing order</legend><div class="cs-seg">${[['true', 'In order'], ['false', 'Any order']].map(([v, l]) => `<label><input type="radio" name="es-seq" value="${v}" data-change="es-seq"${String(env.sequential) === v ? ' checked' : ''}><span>${l}</span></label>`).join('')}</div></fieldset>`)}
-          ${K.panel('Fields', `<div class="es-palette" role="group" aria-label="Field to place">${palette}</div>${placer}${props}`)}
-          ${err ? `<p class="cs-hint es-todo">${h(err)}</p>` : `<p class="cs-hint es-ready">${icon('check')}${env.agreementFor ? 'Ready to save.' : 'Ready to send.'}</p>`}
-        </aside>
-        <div class="es-doc${ui.tool ? ' is-placing' : ''}">${pagesHTML(env, (p) => env.fields.filter((f) => f.page === p).map((f) => editorFieldHTML(env, f, ui)).join(''))}</div>
-      </div>`,
-      'console-esign'
-    );
+    // The editor itself (the fields to add, the document, the selected field) is fieldeditor.js.
+    return K.shell(`${headHTML}${NS.fieldEditor.html(editorCtx(env))}`, 'console-esign');
   }
   function trackHTML(env) {
     const K = CK();
@@ -1276,6 +1319,7 @@
       const env = envById(W(), id);
       const ui = esUi();
       if (env && ui.signAs === env.id) signAfter(env, signerById(env, ui.signAsSigner), 'console');
+      NS.fieldEditor.mount(env && env.status === 'draft' && ui.signAs !== env.id && canOperate() ? editorCtx(env) : null);
       focusPending();
       NS.signflow.sync();
     }
@@ -1311,18 +1355,10 @@
   };
   const save = () => NS.app.save();
   NS.actions['es-signer'] = (el) => {
-    esUi().signer = el.getAttribute('data-id');
-    NS.app.render();
+    if (editorEnv()) NS.fieldEditor.setSigner(el.getAttribute('data-id'));
   };
   NS.actions['es-tool'] = (el) => {
-    const ui = esUi();
-    const t = el.getAttribute('data-t');
-    ui.tool = ui.tool === t ? null : t;
-    S().ui.esFocus = `[data-action="es-tool"][data-t="${t}"]`;
-    NS.app.render();
-  };
-  NS.changes['es-pp'] = (el) => {
-    esUi().placePage = Number(el.value) || 1;
+    if (editorEnv()) NS.fieldEditor.setTool(el.getAttribute('data-t'));
   };
   NS.changes['es-seq'] = (el) => {
     const env = editorEnv();
@@ -1332,15 +1368,15 @@
     S().ui.esFocus = `[data-change="es-seq"][value="${el.value}"]`;
     NS.app.render();
   };
-  function addField(env, type, page, cx, cy) {
-    const ui = esUi();
+  /** A new field of a type for the signer chosen in the editor, centred on a point of a page. Not on the draft yet. */
+  function newField(env, type, page, cx, cy) {
     const t = TYPES[type];
     const ps = env.pageSizes[page - 1] || { w: 612, h: 792 };
     const w = Math.min(0.9, t.w / ps.w);
     const hh = Math.min(0.5, t.h / ps.h);
-    const f = {
+    return {
       id: uid('fd'),
-      signerId: ui.signer,
+      signerId: esUi().signer,
       type,
       page,
       x: Math.max(0, Math.min(1 - w, cx - w / 2)),
@@ -1351,43 +1387,20 @@
       label: type === 'text' ? 'Text' : '',
       value: ''
     };
-    env.fields.push(f);
-    ui.sel = f.id;
-    ui.tool = null;
-    S().ui.esFocus = `.es-fld[data-fid="${f.id}"]`;
-    save();
-    NS.app.render();
-    return f;
+  }
+  // Adding, changing and removing go through the field editor, so each is a step that can be undone.
+  function addField(env, type, page, cx, cy) {
+    return NS.fieldEditor.add(type, page, cx, cy);
+  }
+  function removeField(env, id) {
+    NS.fieldEditor.remove(id);
   }
   NS.actions['es-place-kb'] = () => {
-    const env = editorEnv();
-    const ui = esUi();
-    if (!env || !ui.tool) return;
-    addField(env, ui.tool, ui.placePage || 1, 0.3, 0.12 + 0.02 * (env.fields.length % 10));
+    if (editorEnv()) NS.fieldEditor.addHere();
   };
   NS.changes['es-fprop'] = (el) => {
-    const env = editorEnv();
-    const ui = esUi();
-    const f = env && env.fields.find((x) => x.id === ui.sel);
-    if (!f) return;
-    const k = el.getAttribute('data-k');
-    f[k] = el.type === 'checkbox' ? el.checked : el.value;
-    save();
-    if (k === 'label') {
-      const lab = document.querySelector(`.es-fld[data-fid="${CSS.escape(f.id)}"] .es-fld-label`);
-      if (lab && f.type !== 'checkbox') lab.innerHTML = h(f.label || TYPES[f.type].label) + (isReq(f) ? '<b aria-hidden="true">*</b>' : '');
-      return;
-    }
-    S().ui.esFocus = `[data-k="${k}"]`;
-    NS.app.render();
+    if (editorEnv()) NS.fieldEditor.setProp(el.getAttribute('data-k'), el.type === 'checkbox' ? el.checked : el.value);
   };
-  function removeField(env, id) {
-    const ui = esUi();
-    env.fields = env.fields.filter((f) => f.id !== id);
-    if (ui.sel === id) ui.sel = null;
-    save();
-    NS.app.render();
-  }
   NS.actions['es-fdel'] = () => {
     const env = editorEnv();
     if (env && esUi().sel) removeField(env, esUi().sel);
@@ -1517,114 +1530,7 @@
     };
   }
 
-  /* ---------- Editor pointer and keyboard handling ---------- */
-  let drag = null;
-  document.addEventListener('pointerdown', (e) => {
-    const fe = e.target.closest && e.target.closest('.es-editor .es-fld');
-    if (!fe || e.button > 0) return;
-    const env = editorEnv();
-    const f = env && env.fields.find((x) => x.id === fe.getAttribute('data-fid'));
-    if (!f) return;
-    const page = fe.closest('.es-page').getBoundingClientRect();
-    const ui = esUi();
-    if (ui.sel !== f.id) {
-      document.querySelectorAll('.es-fld.is-sel').forEach((x) => x.classList.remove('is-sel'));
-      fe.classList.add('is-sel');
-      ui.sel = f.id;
-    }
-    drag = { fe, f, env, mode: e.target.closest('.es-handle') ? 'resize' : 'move', sx: e.clientX, sy: e.clientY, pw: page.width, ph: page.height, x: f.x, y: f.y, w: f.w, h: f.h, moved: false };
-    try {
-      fe.setPointerCapture(e.pointerId);
-    } catch (err) {
-      /* ignore */
-    }
-    e.preventDefault();
-  });
-  document.addEventListener('pointermove', (e) => {
-    if (!drag) return;
-    const dx = (e.clientX - drag.sx) / drag.pw;
-    const dy = (e.clientY - drag.sy) / drag.ph;
-    if (!drag.moved && Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) < 3) return;
-    drag.moved = true;
-    const f = drag.f;
-    if (drag.mode === 'move') {
-      f.x = Math.max(0, Math.min(1 - f.w, drag.x + dx));
-      f.y = Math.max(0, Math.min(1 - f.h, drag.y + dy));
-    } else {
-      f.w = Math.max(0.015, Math.min(1 - f.x, drag.w + dx));
-      f.h = Math.max(0.01, Math.min(1 - f.y, drag.h + dy));
-    }
-    Object.assign(drag.fe.style, { left: f.x * 100 + '%', top: f.y * 100 + '%', width: f.w * 100 + '%', height: f.h * 100 + '%' });
-  });
-  const endDrag = () => {
-    if (!drag) return;
-    const d = drag;
-    drag = null;
-    if (d.moved) save();
-    S().ui.esFocus = `.es-fld[data-fid="${d.f.id}"]`;
-    NS.app.render();
-  };
-  document.addEventListener('pointerup', endDrag);
-  document.addEventListener('pointercancel', endDrag);
-  document.addEventListener('click', (e) => {
-    const pg = e.target.closest && e.target.closest('.es-editor .es-page');
-    if (!pg || e.target.closest('.es-fld')) return;
-    const env = editorEnv();
-    if (!env) return;
-    const ui = esUi();
-    if (ui.tool) {
-      const r = pg.getBoundingClientRect();
-      addField(env, ui.tool, Number(pg.getAttribute('data-page')), (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
-    } else if (ui.sel) {
-      ui.sel = null;
-      NS.app.render();
-    }
-  });
-  document.addEventListener('keydown', (e) => {
-    const env = editorEnv();
-    if (!env) return;
-    const ui = esUi();
-    const tag = (e.target.tagName || '').toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-    if (document.getElementById('dlg') && document.getElementById('dlg').open) return;
-    if (e.key === 'Escape' && (ui.tool || ui.sel)) {
-      ui.tool = null;
-      ui.sel = null;
-      NS.app.render();
-      return;
-    }
-    const fe = e.target.closest && e.target.closest('.es-fld');
-    if (!fe) return;
-    const f = env.fields.find((x) => x.id === fe.getAttribute('data-fid'));
-    if (!f) return;
-    if (e.key === 'Delete' || e.key === 'Backspace') {
-      e.preventDefault();
-      removeField(env, f.id);
-      return;
-    }
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      ui.sel = f.id;
-      S().ui.esFocus = `.es-fld[data-fid="${f.id}"]`;
-      NS.app.render();
-      return;
-    }
-    const step = e.shiftKey ? 0.02 : 0.004;
-    const mv = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
-    if (!mv) return;
-    e.preventDefault();
-    if (e.altKey) {
-      f.w = Math.max(0.015, Math.min(1 - f.x, f.w + mv[0]));
-      f.h = Math.max(0.01, Math.min(1 - f.y, f.h + mv[1]));
-    } else {
-      f.x = Math.max(0, Math.min(1 - f.w, f.x + mv[0]));
-      f.y = Math.max(0, Math.min(1 - f.h, f.y + mv[1]));
-    }
-    ui.sel = f.id;
-    Object.assign(fe.style, { left: f.x * 100 + '%', top: f.y * 100 + '%', width: f.w * 100 + '%', height: f.h * 100 + '%' });
-    fe.classList.add('is-sel');
-    save();
-  });
+  /* ---------- Editor pointer and keyboard handling: fieldeditor.js (dragging, resizing, snapping, keys, undo) ---------- */
   function focusPending() {
     const sel = S().ui.esFocus;
     if (!sel) return;
