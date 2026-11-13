@@ -245,16 +245,62 @@ async function upload(page, bytes, opts) {
 }
 
 /**
- * One fixture end to end: printed, cropped when it asks for it, and put through the upload path. Returns
+ * A PDF drawn directly with the PDF writing library (a different producer from the browser's print-to-PDF: text set
+ * in the standard PDF fonts, lines and squares as vector strokes). spec: { size: [w, h], pages, ops } where an op is
+ *   ['text', page, x, baseline, size, font, string]
+ *   ['utext', page, x, baseline, size, font, before, underscores, after, id]   text with a run of underscores in it
+ *   ['line', page, x0, x1, y, thickness]      ['rect', page, x, top, width, height, thickness]
+ * with y measured from the top of the page and font one of H, HB, T, TB, TI, C. Returns { bytes, found }: found[id]
+ * is where the underscores of a 'utext' came out ({ x0, x1, line }), measured with the font's own widths.
+ */
+async function drawPdf(page, spec) {
+  if (!(await page.evaluate(() => !!window.PDFLib))) await page.addScriptTag({ url: CDN + WRITER });
+  return page.evaluate(async (spec) => {
+    const L = window.PDFLib;
+    const pdf = await L.PDFDocument.create();
+    const F = L.StandardFonts;
+    const fonts = { H: await pdf.embedFont(F.Helvetica), HB: await pdf.embedFont(F.HelveticaBold), T: await pdf.embedFont(F.TimesRoman), TB: await pdf.embedFont(F.TimesRomanBold), TI: await pdf.embedFont(F.TimesRomanItalic), C: await pdf.embedFont(F.Courier) };
+    const [W, Ht] = spec.size;
+    const pages = Array.from({ length: spec.pages }, () => pdf.addPage([W, Ht]));
+    const black = L.rgb(0, 0, 0);
+    const found = {};
+    spec.ops.forEach((op) => {
+      const pg = pages[op[1] - 1];
+      if (op[0] === 'text') pg.drawText(op[6], { x: op[2], y: Ht - op[3], size: op[4], font: fonts[op[5]], color: black });
+      else if (op[0] === 'utext') {
+        const f = fonts[op[5]];
+        const us = '_'.repeat(op[7]);
+        pg.drawText(op[6] + us + (op[8] || ''), { x: op[2], y: Ht - op[3], size: op[4], font: f, color: black });
+        const x0 = op[2] + f.widthOfTextAtSize(op[6], op[4]);
+        // The underscore of the standard fonts is drawn a tenth of the font size below the baseline.
+        found[op[9]] = { x0, x1: x0 + f.widthOfTextAtSize(us, op[4]), line: op[3] + 0.1 * op[4] };
+      } else if (op[0] === 'line') pg.drawLine({ start: { x: op[2], y: Ht - op[4] }, end: { x: op[3], y: Ht - op[4] }, thickness: op[5] || 0.75, color: black });
+      else if (op[0] === 'rect') pg.drawRectangle({ x: op[2], y: Ht - op[3] - op[5], width: op[4], height: op[5], borderWidth: op[6] || 0.75, borderColor: black });
+    });
+    return { bytes: Array.from(await pdf.save()), found };
+  }, spec);
+}
+
+/**
+ * One fixture end to end: printed (or drawn), cropped when it asks for it, and put through the upload path. Returns
  * { expect, out, bytes }: the printed blanks (in points of the page as displayed) and what the portal placed.
  * A fixture that names another with `from` uses that one's pages with its own options.
  */
 async function run(h, page, fixtures, css, name) {
   const fx = fixtures[name];
   const src = fx.from ? fixtures[fx.from] : fx;
-  const made = await makePdf(h, css + (src.css || ''), src.html, { paper: src.paper });
-  let bytes = made.bytes;
-  let expect = made.expect;
+  let bytes;
+  let expect;
+  if (src.draw) {
+    const spec = src.draw();
+    const made = await drawPdf(page, spec);
+    bytes = made.bytes;
+    expect = spec.expect.map((e) => (e.id && made.found[e.id] ? Object.assign({}, e, made.found[e.id]) : e));
+  } else {
+    const made = await makePdf(h, css + (src.css || ''), src.html, { paper: src.paper });
+    bytes = made.bytes;
+    expect = made.expect;
+  }
   if (fx.crop) {
     // A crop box [x, y, width, height] in PDF space (origin bottom-left): the displayed page starts at its top-left corner.
     const top = (src.paper ? src.paper[1] : 11) * 72 - fx.crop[1] - fx.crop[3];
@@ -318,4 +364,4 @@ function judge(expect, fields) {
   return { blanks, strays, mistakes, right: blanks.filter((b) => b.state === 'right').length, flagged: fields.filter((f) => f.review).length };
 }
 
-module.exports = { ROOT, start, makePdf, signUp, cropPdf, upload, run, sits, wrong, judge };
+module.exports = { ROOT, start, makePdf, drawPdf, signUp, cropPdf, upload, run, sits, wrong, judge };

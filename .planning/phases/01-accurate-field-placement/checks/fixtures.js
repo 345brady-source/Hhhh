@@ -173,4 +173,101 @@ ${footInitials()}</div>
 ${footInitials()}</div>`
 };
 
+
+/*
+ * A second held-out layout, written after every rule (the first one's measurement led to rule changes, so it no
+ * longer measures how the rules do on a layout nobody tuned for). Unlike all the others it is not printed by the
+ * browser but drawn with the PDF writing library: text in the standard PDF fonts, lines and squares as vector strokes.
+ * An investor profile with captions under drawn lines (several to a row), "Yes [ ] No [ ]" and "[ ] a natural person"
+ * boxes, the amount with no colon before it, initials asked for at the end of each statement; then a signature page
+ * with the individual's and the entity's blocks side by side, labels left of tab-aligned lines, and the firm's
+ * acceptance below. The fund's name runs along the top of each page.
+ */
+function drawing() {
+  const ops = [];
+  const expect = [];
+  let pg = 1;
+  const d = {
+    page: (n) => (pg = n),
+    text: (x, y, s, size, font) => ops.push(['text', pg, x, y, size || 11, font || 'H', s]),
+    // A drawn line with what belongs on it.
+    line: (x0, x1, y, x) => {
+      ops.push(['line', pg, x0, x1, y, 0.75]);
+      if (x) expect.push(Object.assign({ page: pg, x0, x1, line: y, how: 'rule' }, x));
+    },
+    // A line with its caption underneath.
+    captioned: (x0, x1, y, caption, x) => {
+      d.line(x0, x1, y, x);
+      d.text(x0, y + 10, caption, 8);
+    },
+    // A label and, tab-aligned to its right, the line it names.
+    labelled: (x, y, label, x0, x1, e) => {
+      d.text(x, y, label);
+      d.line(x0, x1, y + 1.5, e);
+    },
+    square: (x, y, e) => {
+      ops.push(['rect', pg, x, y - 8.5, 9, 9, 0.75]);
+      expect.push(Object.assign({ type: 'checkbox', role: 'investor', fillIn: true, required: false, page: pg, how: 'box', box: { x0: x, x1: x + 9, y0: y - 8.5, y1: y + 0.5 } }, e));
+    },
+    // Text with a run of underscores in it; where the run comes out is measured when the PDF is drawn.
+    blank: (x, y, before, n, e, size) => {
+      const id = 'u' + expect.length;
+      ops.push(['utext', pg, x, y, size || 11, 'H', before, n, '', id]);
+      expect.push(Object.assign({ page: pg, id, how: 'text' }, e));
+    }
+  };
+  return { d, done: (pages) => ({ size: [612, 792], pages, ops, expect }) };
+}
+FIXTURES.heldout2 = {
+  heldOut: true,
+  offering: 'Northgate Fund I, LP',
+  draw() {
+    const { d, done } = drawing();
+    d.text(72, 50, 'Northgate Fund I, LP', 9);
+    d.text(72, 82, 'SUBSCRIPTION BOOKLET', 14, 'HB');
+    d.text(72, 112, 'PART A. INVESTOR PROFILE', 12, 'HB');
+    d.captioned(72, 400, 150, 'Name of Investor (print or type)', fill('Investor name', 'investorName'));
+    d.captioned(72, 330, 190, 'Street address', fill('Address', 'street'));
+    d.captioned(345, 420, 190, 'Apt / Suite', fill('Address line 2', '', { required: false }));
+    d.captioned(72, 250, 230, 'City', fill('City', 'city'));
+    d.captioned(265, 330, 230, 'State', fill('State', 'state'));
+    d.captioned(345, 420, 230, 'ZIP', fill('ZIP code', 'zip'));
+    d.captioned(72, 300, 270, 'E-mail address', fill('Email', 'email'));
+    d.captioned(320, 500, 270, 'Daytime telephone', fill('Phone', 'phone'));
+    d.captioned(72, 300, 310, 'Social Security No. or Tax ID No.', fill('Taxpayer ID', ''));
+    d.text(72, 350, 'Is the Investor a registered broker-dealer?');
+    d.text(330, 350, 'Yes');
+    d.square(352, 350, { label: 'Yes' });
+    d.text(380, 350, 'No');
+    d.square(398, 350, { label: 'No' });
+    d.text(72, 380, 'The Investor is:');
+    d.square(160, 380, { label: 'a natural person' });
+    d.text(174, 380, 'a natural person');
+    d.square(280, 380, { label: 'an entity' });
+    d.text(294, 380, 'an entity');
+    d.blank(72, 420, 'Amount of Investment $ ', 16, fill('Commitment amount', 'amount', { required: false }));
+    d.text(72, 452, 'PART B. REPRESENTATIONS', 12, 'HB');
+    d.text(72, 472, 'Each statement below must be initialed by the Investor.', 10);
+    d.blank(72, 494, '(a) The Investor is an accredited investor as defined in Rule 501.  Initials: ', 8, { type: 'initials', role: 'investor', fillIn: true, required: true }, 10);
+    d.blank(72, 516, '(b) The Investor has received the Operating Agreement.  Initials: ', 8, { type: 'initials', role: 'investor', fillIn: true, required: true }, 10);
+    d.page(2);
+    d.text(72, 50, 'Northgate Fund I, LP', 9);
+    d.text(72, 112, 'SIGNATURE PAGE', 12, 'HB');
+    d.text(72, 142, 'INDIVIDUAL INVESTOR', 10, 'HB');
+    d.labelled(72, 180, 'Signature:', 140, 290, inv('signature', { forType: 'person' }));
+    d.labelled(72, 215, 'Print name:', 140, 290, inv('name', { forType: 'person' }));
+    d.labelled(72, 250, 'Date:', 140, 290, inv('date', { forType: 'person' }));
+    d.text(320, 142, 'ENTITY INVESTOR', 10, 'HB');
+    d.labelled(320, 180, 'Name of entity:', 400, 545, inv('text', { forType: 'entity', label: 'Investor name', key: 'investorName' }));
+    d.labelled(320, 215, 'By:', 400, 545, inv('signature', { forType: 'entity' }));
+    d.labelled(320, 250, 'Title:', 400, 545, inv('text', { forType: 'entity', label: 'Title' }));
+    d.labelled(320, 285, 'Date:', 400, 545, inv('date', { forType: 'entity' }));
+    d.text(72, 362, 'AGREED TO AND ACCEPTED', 11, 'HB');
+    d.text(72, 380, 'Northgate Capital, Manager');
+    d.labelled(72, 415, 'By:', 140, 330, firm('signature'));
+    d.labelled(72, 450, 'Its:', 140, 330, firm('text', { label: 'Title' }));
+    d.labelled(72, 485, 'Dated:', 140, 330, firm('date'));
+    return done(2);
+  }
+};
 module.exports = { CSS, FIXTURES, blank, rule, box, noline, block, attr, U };

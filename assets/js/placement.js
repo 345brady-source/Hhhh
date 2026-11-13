@@ -322,7 +322,7 @@
   const TITLE_RE = /^(title|its|capacity|title or capacity|title ?\/ ?capacity|title of (the )?(authori[sz]ed )?(signatory|signer|officer|person signing|representative)|(signatory|signer)'?s? title)$/;
   const NAMETITLE_RE = /^((please )?print(ed)? )?name (and|&|\/) title( of (the )?(authori[sz]ed )?(signatory|signer|officer|representative))?$/;
   const INITIALS_RE = /^((the )?(subscriber|investor|purchaser|member|your|limited partner)('s|s')? )?initials?( here)?$|^(please )?initial( here)?$|^initial(l)?ed( by (the )?(subscriber|investor|purchaser))?$/;
-  const AMOUNT_RE = /^(total |aggregate |dollar |the )?(amount of (the |your )?)?((capital |total )?commitment|subscription|investment|purchase|purchase price|capital contribution)( amount| price)?$|^amount (subscribed|invested|subscribed for)$|^(subscribed|invested) amount$/;
+  const AMOUNT_RE = /^(total |aggregate |dollar |the )?(amount of (the |your )?)?((capital |total )?commitment|subscription|investment|purchase|purchase price|capital contribution)( amount| price)?$|^amount (subscribed|invested|subscribed for|of capital commitment)$|^(subscribed|invested) amount$/;
   const ADDRESS_RE = /^((mailing|street|residence|residential|business|principal|home|legal|permanent|primary|registered|notice|current) )*(address|address line 1|address 1)( of (the )?(subscriber|investor|purchaser|principal office|principal place of business|residence))?( for notices)?$|^principal place of business$/;
   const ADDRESS2_RE = /^address (line )?2$|^(apt|apartment|suite|unit)\b.{0,20}$/;
   const CSZ_RE = /^city,? ?\/? ?state,? ?(and |& |\/ ?)?(zip|postal)( code)?$/;
@@ -406,7 +406,7 @@
     if (/^e-?mail( address)?$/.test(t)) return is('email');
     if (PHONE_RE.test(t)) return is('phone');
     if (t.length <= 70 && TAXID_RE.test(t) && !/\b(name|address|date)\b/.test(t)) return is('taxId');
-    if (CURRENCY_TAIL.test(raw) && MONEY_WORDS.test(wordsOf(t).slice(-8).join(' '))) return is('amount');
+    if (CURRENCY_TAIL.test(raw) && MONEY_WORDS.test(wordsOf(t).slice(-8).join(' ')) && !/\b(accept\w*|minimum|maximum|fees?|expenses?|per (unit|share|interest)|price per|each)\b/.test(t)) return is('amount');
     if (info.colon && raw.length <= 64 && n <= 10) return is('other');
     if (raw.length <= 40 && n <= 5 && /^[A-Z0-9]/.test(raw) && !/[.;?!,]$/.test(raw)) return is('phrase');
     return null;
@@ -656,6 +656,32 @@
       });
     });
 
+    /* Captions: text of a known kind under a blank, or above it. */
+    const known = (seg) => {
+      if (seg.used) return null;
+      const info = classify(seg.s);
+      return info && (FIELD(info.kind) || info.kind === 'skip') ? info : null;
+    };
+    const under = (s) => {
+      let best = null;
+      L.segs.forEach((g) => {
+        const d = g.y - s.y;
+        if (d < 0.6 * g.h || d > 2.2 * g.h) return;
+        if (!(overlap(g.x0, g.x1, s.x0, s.x1) >= 0.5 * Math.min(g.x1 - g.x0, s.x1 - s.x0))) return;
+        if (!best || g.y < best.y) best = g;
+      });
+      return best;
+    };
+    const over = (s) => {
+      let best = null;
+      L.segs.forEach((g) => {
+        const d = s.y - g.y;
+        if (d < 0.3 * g.h || d > Math.max(2.2 * g.h, 16)) return;
+        if (!(overlap(g.x0, g.x1, s.x0, s.x1) >= 0.5 * Math.min(g.x1 - g.x0, s.x1 - s.x0))) return;
+        if (!best || g.y > best.y) best = g;
+      });
+      return best;
+    };
     /* 2. Blanks with their label on the same printed line. */
     const leftOf = (ln, e) => {
       for (let i = e.i - 1; i >= 0; i--) {
@@ -670,7 +696,7 @@
       const tail = tidy(text).slice(-160);
       const ws = wordsOf(tail.replace(/[^A-Za-z0-9$' -]+/g, ' ').replace(/\s+/g, ' ').trim());
       const last8 = ws.slice(-8).join(' ').toLowerCase();
-      if (CURRENCY_TAIL.test(tail) && MONEY_WORDS.test(last8) && !/\baccept/.test(last8)) return propose('amount', slot, null, { seg, how: 'sentence' });
+      if (CURRENCY_TAIL.test(tail) && MONEY_WORDS.test(last8) && !/\b(accept\w*|minimum|maximum|fees?|expenses?|per (unit|share|interest)|price per|each)\b/.test(last8)) return propose('amount', slot, null, { seg, how: 'sentence' });
       const m = propose('other', slot, null, { seg, how: 'sentence', label: ws.slice(-4).join(' ').replace(/\$$/, '').trim() || 'Text', who: whoIn(last8) });
       weaken(m, WHY.sentence);
       return m;
@@ -719,7 +745,8 @@
             if (joined && joined.kind !== 'skip') info = joined;
           }
           const isLabel = info && info.kind !== 'phrase';
-          if (dist <= 36 || (isLabel && dist <= 240)) {
+          const captioned = dist > 36 && [under(slot), over(slot)].some((g) => g && known(g));
+          if (dist <= 36 || (isLabel && dist <= 240 && !captioned)) {
             if (info && info.kind === 'skip') {
               slot.skip = true;
               seg.used = 'label';
@@ -778,31 +805,6 @@
 
     /* 3. Blanks with no label on their line: a caption under the line, or a label above it. */
     const lonely = L.slots.filter((s) => !s.made && !s.skip).sort((a, b) => a.y - b.y || a.x0 - b.x0);
-    const known = (seg) => {
-      if (seg.used) return null;
-      const info = classify(seg.s);
-      return info && (FIELD(info.kind) || info.kind === 'skip') ? info : null;
-    };
-    const under = (s) => {
-      let best = null;
-      L.segs.forEach((g) => {
-        const d = g.y - s.y;
-        if (d < 0.6 * g.h || d > 2.2 * g.h) return;
-        if (!(overlap(g.x0, g.x1, s.x0, s.x1) >= 0.5 * Math.min(g.x1 - g.x0, s.x1 - s.x0))) return;
-        if (!best || g.y < best.y) best = g;
-      });
-      return best;
-    };
-    const over = (s) => {
-      let best = null;
-      L.segs.forEach((g) => {
-        const d = s.y - g.y;
-        if (d < 0.3 * g.h || d > Math.max(2.2 * g.h, 16)) return;
-        if (!(overlap(g.x0, g.x1, s.x0, s.x1) >= 0.5 * Math.min(g.x1 - g.x0, s.x1 - s.x0))) return;
-        if (!best || g.y > best.y) best = g;
-      });
-      return best;
-    };
     // Stacks of such blanks in one column are read together: either every label is a caption, or every label is above.
     const stacks = [];
     lonely.forEach((s) => {
