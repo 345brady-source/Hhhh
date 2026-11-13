@@ -96,7 +96,7 @@ const pad = (s, n) => String(s).padEnd(n);
         }
         if (fx.signs && JSON.stringify(out.roles) !== JSON.stringify(fx.signs)) fails.push(`the saved agreement is signed by [${out.roles}], not [${fx.signs}]`);
         if (out.saved && (out.roles.indexOf('Sponsor') >= 0) !== firmFields > 0) fails.push(`the saved agreement ${out.roles.indexOf('Sponsor') >= 0 ? 'has the firm sign with no field for it' : 'leaves the firm out although it has fields'}`);
-        if (fx.firmLeft != null && (read.firmLeft !== fx.firmLeft || !new RegExp(`your firm does not sign this agreement and ${fx.firmLeft} blanks? that reads? as your firm’s got no field`).test(out.note))) fails.push(`the reading should say ${fx.firmLeft} of the firm’s blanks got no field: firmLeft ${read.firmLeft}, note "${out.note}"`);
+        if (fx.firmLeft != null && (read.firmLeft !== fx.firmLeft || !new RegExp(`your firm does not sign this agreement and ${fx.firmLeft} blanks? that reads? as your firm’s on page \\d+ got no field`).test(out.note))) fails.push(`the reading should say ${fx.firmLeft} of the firm’s blanks got no field: firmLeft ${read.firmLeft}, note "${out.note}"`);
         // An agreement with no signature line for the investor cannot be used, and says so.
         if (!sigPages('investor').length && !(read.investorPages || []).length) {
           if (out.saved) fails.push('saved although it has no signature line for the investor');
