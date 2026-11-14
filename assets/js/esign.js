@@ -1898,9 +1898,13 @@
     if (!signerById(env, ui.signer)) ui.signer = env.signers[0] ? env.signers[0].id : null;
     const agr = env.agreementFor ? W().offerings.find((o) => o.id === env.agreementFor) : null;
     const marked = PL().reviewCount(env);
+    // A document only the firm signs: said in the head line, and the firm signs it from here (it is never saved as the
+    // agreement investors sign, so that button is not drawn).
+    const alone = firmOnly(env);
+    const before = alone ? 'before your firm signs' : 'before saving';
     const headHTML = env.agreementFor
-      ? `${K.head(`Subscription agreement${agr ? ` · ${h(agr.name)}` : ''}`, `${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · place the fields once; each investor fills them in and signs during onboarding`, `<a class="cs-btn" href="#console-offering-${h(env.agreementFor)}">${icon('back')}Offering</a><button class="cs-btn" type="button" data-action="es-agreement-cancel" data-id="${h(env.id)}">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-save" data-id="${h(env.id)}">Save subscription agreement</button>`)}
-        <div class="es-read"><p class="cs-hint es-agr-note">${env.read ? `${h(readNote(env))} ${marked ? (PL().reviewFields(env).some((f) => f.checkBy) ? 'Fields marked Review must be confirmed or moved to the right place before saving: on a page read from its picture, check every field and choose “I have checked this page”; a field the portal could not name, or whose owner it is unsure of, is confirmed by itself. ' : 'Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. ') : env.autoPlaced ? 'Check the fields, move or resize as needed, and add any others. ' : ''}` : ''}Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.${rereadInlineHTML(env)}</p>${picturesOfferHTML(env)}${rereadNoteHTML(env)}</div>`
+      ? `${K.head(`${alone ? 'Agreement' : 'Subscription agreement'}${agr ? ` · ${h(agr.name)}` : ''}`, `${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · ${alone ? 'signed only by your firm; investors do not sign it' : 'place the fields once; each investor fills them in and signs during onboarding'}`, `<a class="cs-btn" href="#console-offering-${h(env.agreementFor)}">${icon('back')}Offering</a><button class="cs-btn" type="button" data-action="es-agreement-cancel" data-id="${h(env.id)}">Cancel</button>${alone ? `<button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-firm-sign" data-id="${h(env.id)}">${PEN}Sign it for your firm</button>` : `<button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-save" data-id="${h(env.id)}">Save subscription agreement</button>`}`)}
+        <div class="es-read"><p class="cs-hint es-agr-note">${env.read ? `${h(readNote(env))} ${marked ? (PL().reviewFields(env).some((f) => f.checkBy) ? `Fields marked Review must be confirmed or moved to the right place ${before}: on a page read from its picture, check every field and choose “I have checked this page”; a field the portal could not name, or whose owner it is unsure of, is confirmed by itself. ` : `Fields marked Review are listed on the left: confirm each one or move it to the right place ${before}. `) : env.autoPlaced ? 'Check the fields, move or resize as needed, and add any others. ' : ''}` : ''}${alone ? '' : 'Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.'}${rereadInlineHTML(env)}</p>${picturesOfferHTML(env)}${rereadNoteHTML(env)}</div>`
       : `${K.head(h(env.title), `Draft · ${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'}`, `<a class="cs-btn" href="#console-esign">${icon('back')}E-sign</a><button class="cs-btn" type="button" data-action="es-delete" data-id="${h(env.id)}">Delete draft</button><button class="cs-btn" type="button" data-action="es-save-tpl" data-id="${h(env.id)}">Save as template</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-review" data-id="${h(env.id)}">Review and send</button>`)}`;
     // The editor itself (the fields to add, the document, the selected field) is fieldeditor.js.
     return K.shell(`${headHTML}${NS.fieldEditor.html(editorCtx(env))}`, 'console-esign');
@@ -3108,9 +3112,14 @@
     // Places printed for the co-investor, of any kind.
     const cos = (r.coPages || []).slice().sort((a, b) => a - b);
     if (r.cos && cos.length) out.push(r.cos === 1 ? `1 place on ${on(cos)} is for a co-investor.` : `${r.cos} places on ${on(cos)} are for a co-investor.`);
-    out.push(r.investorPages.length ? `The investor’s signature line was found on ${on(r.investorPages)}.` : 'No signature line for the investor was found: add a signature field for the investor where they sign before saving.');
+    // A document only the firm signs is said to be one: it never asks for the investor's signature field.
+    const firmAlone = firmOnly(env);
+    if (firmAlone) {
+      const lines = firmSigning(env).length;
+      out.push(`No signature line for the investor was found: this document is signed only by your firm, and no investor signs it. ${lines > 1 ? `Your firm’s ${lines} signature lines are on ${on(r.firmPages)}.` : `Your firm’s signature line is on ${on(r.firmPages)}.`} The agreement investors sign during onboarding is a separate upload.`);
+    } else out.push(r.investorPages.length ? `The investor’s signature line was found on ${on(r.investorPages)}.` : 'No signature line for the investor was found: add a signature field for the investor where they sign before saving.');
     // The agreement speaks of a signature page, and none with the investor's signature line is in this PDF.
-    if (!r.investorPages.length && r.signaturePageMentioned) out.push('The agreement refers to a signature page that this PDF does not contain: add the investor’s signature field by hand, or upload the complete document.');
+    if (!firmAlone && !r.investorPages.length && r.signaturePageMentioned) out.push('The agreement refers to a signature page that this PDF does not contain: add the investor’s signature field by hand, or upload the complete document.');
     // Signature lines that are not the investor's: the co-investor's, and those of other people, whom nobody asks to sign.
     const coSigned = (r.coSignaturePages || []).slice().sort((a, b) => a - b);
     if (coSigned.length) out.push(`The co-investor’s signature line was found on ${on(coSigned)}.`);
@@ -3119,13 +3128,35 @@
     // An acceptance block that names another party: in doubt whether your firm signs there, so it is marked.
     const doubt = (r.firmDoubtPages || []).slice().sort((a, b) => a - b);
     const firmLeft = r.firmLeft ? ` and ${n(r.firmLeft, 'blank that reads as your firm’s', 'blanks that read as your firm’s')} on ${on(r.firmLeftPages || [])} got no field` : '';
-    if (r.firmPages.length) out.push(`Your firm’s signature line was found on ${on(r.firmPages)}.`);
+    if (firmAlone) {
+      // said above, with the firm's lines
+    } else if (r.firmPages.length) out.push(`Your firm’s signature line was found on ${on(r.firmPages)}.`);
     else if (doubt.length) out.push(`No signature line that is clearly your firm’s was found${firmLeft}. ${doubt.length === 1 ? `A signature place on ${on(doubt)} carries words of acceptance but names another party, so it is marked Review: set it to your firm if your firm signs there.` : `Signature places on ${on(doubt)} carry words of acceptance but name another party, so they are marked Review: set them to your firm if your firm signs there.`}`);
     else out.push(`No signature line for your firm was found, so your firm does not sign this agreement${firmLeft}. Add a signature field for your firm if it should.`);
     return out.join(' ');
   }
+  /**
+   * A document only the firm signs: an offering's draft whose reading is good, found at least one signature line of the
+   * firm and none of the investor, and in which no field is the investor's or the co-investor's (a place for somebody
+   * else does not count). Decided from the reading's own counts and the fields' signers, never from words of a document.
+   */
+  function firmOnly(env) {
+    const r = env && env.read;
+    if (!env || !env.agreementFor || env.status !== 'draft' || !r || !r.ok) return false;
+    if (!(r.firmPages || []).length || (r.investorPages || []).length) return false;
+    const cs = env.signers.find((s) => s.role === 'countersigner');
+    return !!cs && !env.fields.some((f) => f.signerId !== cs.id && !isOther(f));
+  }
+  /** The firm's own signature fields (somebody else's places left out). */
+  function firmSigning(env) {
+    const cs = env.signers.find((s) => s.role === 'countersigner');
+    return cs ? env.fields.filter((f) => f.signerId === cs.id && f.type === 'signature' && !isOther(f)) : [];
+  }
+  const FIRM_ONLY_TODO = 'No signature line for the investor was found in this agreement: it is signed only by your firm, so it cannot be the agreement investors sign during onboarding. Use “Sign it for your firm”.';
   /** What still stops an offering's agreement from being saved ('' when it can be). */
   function agreementTodo(env) {
+    // A document only the firm signs is never saved as the agreement investors sign: the firm signs it instead.
+    if (firmOnly(env)) return FIRM_ONLY_TODO;
     const inv = env.signers.find((s) => s.role === 'investor');
     const cs = env.signers.find((s) => s.role === 'countersigner');
     // Where a signer signs: a signature field that is theirs to complete. Initials are not a signature, and an optional
@@ -3372,6 +3403,41 @@
     U.toast('Subscription agreement saved. Investors sign it during onboarding.');
     NS.app.go('console-offering-' + env.agreementFor);
   };
+  /**
+   * A document only the firm signs, signed by the firm: the draft becomes an ordinary envelope whose only signer is the
+   * firm (it stops being an offering's agreement and is never offered to investors), it is sent, and the firm's signing
+   * screen opens on it. The completed envelope is on the E-sign page with its signed PDF.
+   */
+  NS.actions['es-agreement-firm-sign'] = (el) => {
+    if (!canOperate()) return;
+    const w = W();
+    const env = envById(w, el.getAttribute('data-id'));
+    if (!env || !env.agreementFor || env.status !== 'draft') return;
+    // Asked again at the time of the click: the sponsor may have given a field to the investor since the screen was drawn.
+    if (!firmOnly(env)) return U.toast(agreementTodo(env) || 'This agreement has places for the investor: save it as the subscription agreement.');
+    const marked = NS.placement.reviewCount(env);
+    if (marked) return U.toast(`Confirm or move the ${marked === 1 ? 'field' : `${marked} fields`} marked for review.`);
+    const own = firmSigning(env).length;
+    if (!own) return U.toast('Your firm has no signature field. Add one where your firm signs.');
+    const cs = env.signers.find((s) => s.role === 'countersigner');
+    const oid = env.agreementFor;
+    const o = w.offerings.find((x) => x.id === oid);
+    // A place for somebody else stays nobody's: it moves to the firm's signer unchanged, and fieldsOf leaves it out.
+    env.fields.forEach((f) => isOther(f) && (f.signerId = cs.id));
+    env.fields = env.fields.filter((f) => f.signerId === cs.id);
+    env.signers = [cs];
+    cs.order = 1;
+    delete env.agreementFor;
+    delete env.replaceTemplateId;
+    env.offeringId = oid;
+    addEvent(env, staffActor(), 'Made a document your firm signs', 'Signed only by your firm; not the agreement investors sign during onboarding');
+    CK().audit('Document signed only by the firm', `${o ? o.name : oid}: ${env.title}, ${own} signature field${own === 1 ? '' : 's'} for your firm; not saved as the subscription agreement and not sent to investors`, oid, env.id);
+    const r = send(w, env.id, { quiet: true });
+    if (!r.ok) return U.toast(r.error);
+    Object.assign(esUi(), { signAs: env.id, signAsSigner: cs.id, sel: null, tool: null });
+    NS.app.render();
+    window.scrollTo(0, 0);
+  };
   NS.actions['es-agreement-cancel'] = (el) => {
     const w = W();
     const env = envById(w, el.getAttribute('data-id'));
@@ -3416,7 +3482,7 @@
   agreementTodo = function (env) {
     return baseTodo(env) || coTodo(env);
   };
-  NS.esignKit = Object.assign(NS.esignKit || {}, { pageLayout, readNote, agreementTodo, fileRefusal });
+  NS.esignKit = Object.assign(NS.esignKit || {}, { pageLayout, readNote, agreementTodo, fileRefusal, firmOnly });
   NS.coSigning = { coOf, coPlaces, coAttach, coDetach, coUpdate, coHolding, coEnvelopes, mySigner };
   NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
 })(window.CVPortal);

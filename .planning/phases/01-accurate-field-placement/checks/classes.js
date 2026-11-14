@@ -288,6 +288,15 @@ async function walking(name) {
       stage("the firm's own signing", signedFirm === true, signedFirm);
       if (signedFirm !== true) throw new Error('stop');
       await finishedPdf(page, ed.envId, made, others, stage, check, OUT, 'firm');
+      // It is never the agreement investors sign: no subscription agreement on the offering, no investor among its
+      // signers, and its signed copy is not published to any investor.
+      const kept = await page.evaluate(({ eid, oid }) => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const env = ws.envelopes.find((e) => e.id === eid);
+        return { agreement: !!(env && env.agreementFor), signers: env ? env.signers.map((s) => s.role) : [], ready: NS.esign.templateReady(ws, oid), sub: (ws.esignTemplates || []).some((t) => t.offeringId === oid && t.subscription), published: (ws.docs || []).some((d) => d.envelopeId === eid) };
+      }, { eid: ed.envId, oid: off.id });
+      check('it is not saved as the offering\'s subscription agreement and no investor is asked to sign it', !kept.agreement && !kept.ready && !kept.sub && !kept.published && kept.signers.length > 0 && kept.signers.every((r) => r === 'countersigner'), kept);
       throw new Error('done');
     }
 
@@ -417,9 +426,12 @@ async function walking(name) {
 
 /** The firm signs in the console's signing screen: every place of its own, then Finish. Rejects with what stopped it. */
 async function firmSigning(page, envId) {
-  await page.waitForSelector('[data-action=es-sign-as]', { timeout: 20000 });
-  await page.click('[data-action=es-sign-as]');
-  await page.waitForTimeout(300);
+  // The envelope's page offers "Sign as sponsor"; "Sign it for your firm" opens the signing screen itself.
+  await page.waitForSelector('[data-action=es-sign-as], #es-consent-box, .es-doc-sign', { timeout: 20000 });
+  if (await page.locator('[data-action=es-sign-as]').count()) {
+    await page.click('[data-action=es-sign-as]');
+    await page.waitForTimeout(300);
+  }
   if (await page.locator('#es-consent-box').count()) {
     await page.check('#es-consent-box');
     await page.click('[data-action="es-consent"]');
@@ -481,7 +493,7 @@ async function finishedPdf(page, envId, made, others, stage, check, OUT, who) {
   }, envId);
   const boxes = given.map((f) => ({ kind: 'given', what: `${f.type} on page ${f.page}`, page: f.page, x0: f.x0, x1: f.x1, y0: f.top, y1: f.bottom }))
     .concat(others.map((e) => ({ kind: 'other', what: where(e), page: e.page, x0: e.x0, x1: e.x1, y0: e.line - 16, y1: e.line + 2 })));
-  const diffs = await page.evaluate(async ({ a, b, boxes }) => {
+  const diffs = await page.evaluate(async ({ a, b, boxes, whole }) => {
     const lib = window.pdfjsLib;
     const S = 2;
     const open = (arr) => lib.getDocument({ data: new Uint8Array(arr), isEvalSupported: false }).promise;
@@ -512,8 +524,26 @@ async function finishedPdf(page, envId, made, others, stage, check, OUT, who) {
       for (let i = 0; i < p1.length; i += 4) if (Math.abs(p1[i] + p1[i + 1] + p1[i + 2] - p2[i] - p2[i + 1] - p2[i + 2]) > 150) n++;
       out.push(n);
     }
-    return { diffs: out, pages: [d1.numPages, d2.numPages] };
-  }, { a: Array.from(made.bytes), b: Array.from(bytes), boxes });
+    // Points changed outside every place a value was given, on each page as uploaded (asked for the firm's walk only).
+    let outside = -1;
+    if (whole) {
+      outside = 0;
+      const given = boxes.filter((bx) => bx.kind === 'given');
+      for (let n = 1; n <= Math.min(d1.numPages, d2.numPages); n++) {
+        cache[n] = cache[n] || [await draw(d1, n), await draw(d2, n)];
+        const W = cache[n][0].canvas.width, Hh = cache[n][0].canvas.height;
+        const p1 = cache[n][0].getImageData(0, 0, W, Hh).data;
+        const p2 = cache[n][1].getImageData(0, 0, W, Hh).data;
+        const mine = given.filter((bx) => bx.page === n);
+        for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) {
+          const i = (y * W + x) * 4;
+          if (Math.abs(p1[i] + p1[i + 1] + p1[i + 2] - p2[i] - p2[i + 1] - p2[i + 2]) <= 150) continue;
+          if (!mine.some((bx) => x >= bx.x0 * S - 2 && x <= bx.x1 * S + 2 && y >= bx.y0 * S - 2 && y <= bx.y1 * S + 2)) outside++;
+        }
+      }
+    }
+    return { diffs: out, pages: [d1.numPages, d2.numPages], outside };
+  }, { a: Array.from(made.bytes), b: Array.from(bytes), boxes, whole: who === 'firm' });
   const withDiff = boxes.map((bx, i) => Object.assign({ n: diffs.diffs[i] }, bx));
   const missing = withDiff.filter((bx) => bx.kind === 'given' && bx.n < 12);
   check(`in the finished PDF each value the ${who === 'firm' ? 'firm' : 'signers'} gave is on its own place (${given.length} values)`, given.length > 0 && missing.length === 0, given.length ? missing.map((bx) => `${bx.what}: nothing written there`).join(' | ') : 'no value was given');
@@ -521,6 +551,7 @@ async function finishedPdf(page, envId, made, others, stage, check, OUT, who) {
     const written = withDiff.filter((bx) => bx.kind === 'other' && bx.n > 6);
     check('in the finished PDF nothing is written inside a place for somebody else', written.length === 0, written.map((bx) => `${bx.what}: something is written there`).join(' | '));
   }
+  if (who === 'firm') check(`in the finished PDF nothing else is written on the pages as uploaded (${diffs.outside} points changed outside the firm's places)`, diffs.outside >= 0 && diffs.outside <= 6, `${diffs.outside} points changed outside the firm's places`);
 }
 
 (WALK ? walking(WALK) : reading()).catch((e) => {
