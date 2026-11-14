@@ -386,6 +386,60 @@
     return -1;
   }
 
+  /**
+   * Writing joined to a rule, read from the picture: the strokes that touch the rule from above or from under it (dark
+   * on the row next to the rule's own rows) and, followed through the dark pixels joined to them on that side, reach at
+   * least 2.5 pt away from it while staying narrower than 60 % of the rule, more than 3 pt in from its ends, and not a
+   * straight upright stroke (narrower than 1.5 pt and 8 pt long or more: a wall). Printed captions stand clear of their
+   * rule; a hand that writes on a line or just under it touches it. Returns how many such strokes there are.
+   */
+  function joined(grey, w, h, r, s, dark) {
+    const far = Math.round(15 * s);
+    const xa = Math.max(0, r.x0 - Math.round(10 * s));
+    const xb = Math.min(w - 1, r.x1 + Math.round(10 * s));
+    const seen = new Set();
+    let n = 0;
+    // one side: d = 1 under the rule (from the second row under it), d = -1 above it
+    const side = (row, d) => {
+      if (row < 0 || row >= h) return;
+      for (let x = Math.max(0, r.x0); x < Math.min(w, r.x1); x++) {
+        const k0 = row * w + x;
+        if (grey[k0] > dark || seen.has(k0)) continue;
+        // the stroke's dark pixels joined to it on this side of the rule, within 15 pt of it
+        const todo = [k0];
+        seen.add(k0);
+        let reach = 0;
+        let lo = x;
+        let hi = x;
+        while (todo.length) {
+          const k = todo.pop();
+          const y = (k / w) | 0;
+          const xx = k - y * w;
+          reach = Math.max(reach, (y - row) * d);
+          lo = Math.min(lo, xx);
+          hi = Math.max(hi, xx);
+          for (let dy = -1; dy <= 1; dy++)
+            for (let dx = -1; dx <= 1; dx++) {
+              const yy = y + dy;
+              const x2 = xx + dx;
+              if ((yy - row) * d < 0 || (yy - row) * d > far || x2 < xa || x2 > xb) continue;
+              const k2 = yy * w + x2;
+              if (grey[k2] <= dark && !seen.has(k2)) {
+                seen.add(k2);
+                todo.push(k2);
+              }
+            }
+        }
+        // (a straight upright stroke is a wall or a side, not writing: textread's hangs and the cells read those)
+        const wall = hi - lo < 1.5 * s && reach >= 8 * s;
+        if (reach >= 2.5 * s && hi - lo < 0.6 * (r.x1 - r.x0) && !wall && x > r.x0 + 3 * s && x < r.x1 - 3 * s) n++;
+      }
+    };
+    side(r.y1 + 1, 1);
+    side(r.y0 - 2, -1);
+    return n;
+  }
+
   /** Words in reading order (by line, then left to right) as one text, with the confidence of the least sure. */
   function said(words) {
     if (!words.length) return { s: '', conf: 0 };
@@ -435,6 +489,7 @@
       // (on a picture: a rule something hangs from is the top edge of a frame or of cells; see hangs)
       if (raw.picture && dark >= 0) seen.rules.forEach((r) => (r.hang = hangs(grey, w, h, r, pic.scale, dark, seen.paper - 0.25 * seen.range) >= 0));
       if (raw.picture && dark >= 0) seen.rules.forEach((r) => (r.under = printUnder(grey, w, h, r, pic.scale, dark)));
+      if (raw.picture && dark >= 0) seen.rules.forEach((r) => (r.joined = joined(grey, w, h, r, pic.scale, dark)));
       if (raw.picture && dark >= 0) seen.boxes.forEach((b) => b.place !== false && !b.small && (b.row = standsOn(grey, w, h, b, pic.scale, dark) >= 0));
       grey = null;
       ms.find = Date.now() - t;
@@ -542,6 +597,7 @@
         if (r.bracket) ln.bracket = true;
         if (r.hang) ln.hang = true;
         if (r.under >= 0) ln.under = at.x(r.under);
+        if (r.joined) ln.joined = r.joined;
         out.lines.push(ln);
         out.segs.push(Object.assign({ o: 'h', a0: ln.x0, a1: ln.x1, c: ln.y, t: ln.t }, r.bracket ? { bracket: true } : null));
       });
@@ -584,5 +640,5 @@
     }
   }
 
-  NS.textread = { page, stop, hangs, printUnder, standsOn, ENLARGE, STRIP_PIXELS, WORDS_MS };
+  NS.textread = { page, stop, hangs, printUnder, standsOn, joined, ENLARGE, STRIP_PIXELS, WORDS_MS };
 })(window.CVPortal);

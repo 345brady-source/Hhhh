@@ -2344,7 +2344,10 @@
       const before = (l.bands && l.bands.before && l.bands.before.s) || '';
       return typeof l.under === 'number' && len < 0.45 * pg.w && l.y > 0.45 * pg.h && l.x0 < 0.25 * pg.w && !/[\p{L}\p{N}]/u.test(before) && l.under - l.x1 > Math.max(100, len);
     };
-    for (let i = mine.length - 1; i >= 0; i--) if (edge(ruleOf(mine[i])) || footRule(ruleOf(mine[i]) || {})) mine.splice(i, 1);
+    // A line already answered by hand: two strokes of writing or more are joined to it (textread's joined), as typed
+    // characters standing on a line answer it on a page with text.
+    const answered = (l) => !!l && (l.joined || 0) >= 2;
+    for (let i = mine.length - 1; i >= 0; i--) if (edge(ruleOf(mine[i])) || footRule(ruleOf(mine[i]) || {}) || answered(ruleOf(mine[i]))) mine.splice(i, 1);
     // One line read in pieces: a piece named by no word (the line rules' own 'Text', or two letters or fewer: a speck
     // read on the line) that goes on from a field on the same rule within 9 pt is part of that field, which runs on over it.
     const letters = (t) => String(t || '').replace(/[^\p{L}]/gu, '').length;

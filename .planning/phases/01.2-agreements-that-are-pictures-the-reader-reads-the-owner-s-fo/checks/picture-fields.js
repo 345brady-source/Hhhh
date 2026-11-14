@@ -467,6 +467,48 @@ async function shapes(page) {
     res.read0 = read([box()]);
     return res;
   });
+  // A line answered by hand: strokes of writing joined to it (NS.textread.joined), beside a caption standing clear of
+  // it, a cell's sides standing on it and a wall crossing it.
+  const hand = await page.evaluate(() => {
+    const T = window.CVPortal.textread;
+    const P = window.CVPortal.placement;
+    const w = 600;
+    const h = 300;
+    const s = 2;
+    const pic = (paint) => {
+      const g = new Uint8Array(w * h).fill(240);
+      const ink = (x0, y0, x1, y1) => {
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g[y * w + x] = 20;
+      };
+      // a slanted stroke of a hand, from the line's foot 12 px down, drifting 8 px
+      const stroke = (x, y) => {
+        for (let k = 0; k <= 12; k++) ink(x + Math.round((2 * k) / 3), y + k, x + Math.round((2 * k) / 3) + 2, y + k);
+      };
+      paint(ink, stroke);
+      return g;
+    };
+    const r = { x0: 100, x1: 501, y0: 100, y1: 102, t: 2 };
+    const n = (g) => T.joined(g, w, h, r, s, 130);
+    const res = {
+      // a date written just under the line, two of its strokes touching it
+      written: n(pic((ink, stroke) => (ink(100, 100, 500, 101), stroke(200, 102), stroke(240, 102), stroke(280, 106)))),
+      // a caption 2 pt under the line
+      caption: n(pic((ink) => (ink(100, 100, 500, 101), ink(110, 106, 113, 118), ink(118, 106, 128, 108), ink(118, 112, 128, 114)))),
+      // the sides of a cell standing on its bottom edge
+      sides: n(pic((ink) => (ink(100, 100, 500, 101), ink(100, 40, 101, 101), ink(499, 40, 500, 101)))),
+      // a wall crossing the line in its middle
+      wall: n(pic((ink) => (ink(100, 100, 500, 101), ink(300, 40, 301, 200))))
+    };
+    const band = (t) => ({ s: t || '', conf: t ? 90 : 0 });
+    const bands = (o) => ({ over: band(o && o.over), under: band(o && o.under), before: band(o && o.before), after: band(o && o.after), inside: band(o && o.inside) });
+    const rl = (x0, x1, y) => ({ x0, x1, y, clear: 14, made: 'rule', cut: false, cell: false, table: false });
+    const pg = (more) => P.read([{ page: 1, w: 612, h: 792, items: [{ s: 'Date', x: 300, y: 300, w: 20, h: 7 }], rules: [rl(325, 400, 300)], boxes: [], forms: [], pictured: 'picture', approx: true, found: [], words: [], lines: [Object.assign({ x0: 325, x1: 400, y: 300, t: 1, bands: bands({ before: 'Date' }) }, more)], heads: [], reader: 'ok' }], {}).fields.length;
+    res.read = pg({ joined: 2 });
+    res.read0 = pg({});
+    return res;
+  });
+  line(hand.written >= 2 && hand.caption === 0 && hand.sides === 0 && hand.wall === 0, `shapes nobody: strokes of a hand joined to a line are counted (${hand.written}); a caption clear of it ${hand.caption}, a cell's sides standing on it ${hand.sides}, a wall crossing it ${hand.wall}`);
+  line(hand.read === 0 && hand.read0 === 1, `shapes nobody: a line answered by hand gets no field (${hand.read}); the same line unanswered gets one (${hand.read0})`);
   line(row.row && !row.panel && !row.stacked && !row.crossing, `shapes nobody: a wall standing on the middle of a box's top edge makes it a row of a table (${row.row}); a lone panel ${row.panel}, a box under a box of its width ${row.stacked}, a stroke crossing into the box ${row.crossing}`);
   line(row.read === 0 && row.readSaid === 1 && row.read0 === 1, `shapes nobody: an empty row of a table with no word by it gets no field (${row.read}); with its own caption it does (${row.readSaid}); the same box as a lone panel does (${row.read0})`);
   line(foot.read === 0 && foot.readCaption === 1 && foot.readLabel === 1 && foot.readHigh === 1, `shapes nobody: a footnote rule gets no field (${foot.read}); a signature line with its caption (${foot.readCaption}), a blank after its label (${foot.readLabel}) and the same rule high on the page (${foot.readHigh}) each get one`);
