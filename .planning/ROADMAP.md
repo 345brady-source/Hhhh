@@ -16,6 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 01.1: Placement reads what the agreement has: fields only on its own blanks, boxes and signature lines**
 - [ ] **Phase 01.2: Agreements that are pictures: the reader reads the owner's form**
 - [ ] **Phase 01.3: The owner's text agreements are read 100 percent**
+- [ ] **Phase 01.4: Every subscription agreement: the reader is trained and measured on a large set of real EDGAR subscription agreements**
 - [ ] **Phase 2: Field Editor** - A smooth, polished editor where fields drag cleanly within and across pages
 - [ ] **Phase 3: Signatures** - Cursive and other signature styles, a natural drawn signature, upload, adopt once
 - [ ] **Phase 4: Signing Inside Onboarding** - A polished, guided signing step for investors and countersigning for sponsors, with no separate tool
@@ -114,6 +115,16 @@ Plans:
 - [ ] 01.3-07-PLAN.md — The read summary counted from printed places, and the plain answer to a file that is not a PDF: documents A and C pass in full
 - [ ] 01.3-08-PLAN.md — The way forward for a document only the firm signs: document B passes in full
 - [ ] 01.3-09-PLAN.md — End-to-end walks on the three documents, the whole proof in one run, and the owner's check in the republished preview
+
+### Phase 01.4: Every subscription agreement: the reader is trained and measured on a large set of real EDGAR subscription agreements (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 1
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 01.4 to break down)
 
 ### Phase 2: Field Editor
 **Goal**: A sponsor can adjust fields by hand quickly and without frustration, in an editor that looks professionally made
