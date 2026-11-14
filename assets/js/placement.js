@@ -731,7 +731,9 @@
       const near = [ln].concat(lineAbove(ln, 40));
       for (let i = 0; i < near.length; i++) {
         const t = near[i].text.toLowerCase();
-        const some = /\b(that appl(y|ies)|as applicable|if applicable|one of|at least one|any of|each that|all that apply|which appl(y|ies))\b/.test(t);
+        // Every wording of "the ones that apply": applicable, appropriate or relevant after as, if, where or when, or
+        // after "that is" / "which are"; whichever apply, as apply. The default stays required (every item, every page).
+        const some = /\b(that appl(y|ies)|which appl(y|ies)|whichever appl(y|ies)|as appl(y|ies)|(as|if|where|when) (applicable|appropriate|relevant)|(that|which) (is|are) (applicable|appropriate|relevant)|one of|at least one|any of|each that|all that apply)\b/.test(t);
         if (/\binitial/.test(t)) return { mode: 'initials', some };
         if (/\b(check|tick)\b|\bmark (an? )?["“']?x\b/.test(t)) return { mode: 'check', some };
       }
@@ -939,7 +941,10 @@
             const ins = instruction(ln);
             const says = /^[([]?\s*initial/i.test(stmt.seg.s);
             if (ins.mode !== 'initials' && !says) return tick(slot, stmt.seg.s, stmt.seg, ins.mode !== 'check');
-            const m = propose('initials', slot, null, { seg: stmt.seg, how: 'after', required: !(ins.some && !says) });
+            // Labelled by the item's own printed mark, as printed ("(a)", "b)"), where the item has one.
+            const mark = ln.els.slice(0, e.i).filter((o) => o.t === 'seg' && LIST_MARK.test(o.seg.s)).pop();
+            const m = propose('initials', slot, null, { seg: stmt.seg, how: 'after', required: !(ins.some && !says), label: mark ? tidy(mark.seg.s) : undefined });
+            if (mark) m.mark = mark.seg;
             m.x1 = stmt.seg.x1;
             return m;
           }
@@ -1302,6 +1307,67 @@
           m.p.closing = true;
         }
       });
+
+    /* 5c. Lists of initials. */
+    // A blank that opens a list item after a mark printed without its bracket or stop ("c ____"): one of the list's
+    // initials blanks when it has the width (within 2 pt) of three or more of them and stands where they stand (the
+    // same left edge, or its mark at the same left edge as theirs), whatever mark is printed before it.
+    const iniMade = made.filter((m) => m.kind === 'initials' && m.slot);
+    made.slice().forEach((m) => {
+      if (m.kind !== 'other' || !m.slot || !m.slot.line || m.co || m.p.second) return;
+      const ln = m.slot.line;
+      const el = ln.els.find((x) => x.t === 'slot' && x.slot === m.slot);
+      if (!el || el.i !== 1 || ln.els[0].t !== 'seg' || !/^\(?([a-z]|\d{1,2}|[ivx]{1,4})[.)]?$/i.test(ln.els[0].seg.s)) return;
+      const tok = ln.els[0].seg;
+      const w = m.slot.x1 - m.slot.x0;
+      const like = iniMade.filter((o) => Math.abs(o.slot.x1 - o.slot.x0 - w) <= 2 && Math.abs(o.slot.y - m.slot.y) <= 160 && (Math.abs(o.slot.x0 - m.slot.x0) <= 2 || (o.mark && Math.abs(o.mark.x0 - tok.x0) <= 4)));
+      if (like.length < 3) return;
+      made.splice(made.indexOf(m), 1);
+      m.slot.made = null;
+      const stmt = ln.els.slice(el.i + 1).find((o) => o.t === 'seg');
+      const n = propose('initials', m.slot, null, { seg: stmt ? stmt.seg : null, how: 'after', required: like.every((o) => o.p.required), label: tidy(tok.s) });
+      n.mark = tok;
+      if (stmt) n.x1 = stmt.seg.x1;
+    });
+    // A lead-in for one kind of investor: a sentence ending in a colon, with no blank of its own, that says after "if",
+    // "for" or "where" which kind of investor the list it opens is for ("If the Subscriber is a natural person, ... :",
+    // "If other than a natural person, ... :"). The places of its list's items are for that kind of investor only, and
+    // optional item by item. The list runs over its item lines (a blank first, after its mark) and the lines that go on
+    // from them further in, and ends at the first other line set no further in than the lead-in (the next lead-in, the
+    // next numbered paragraph). A rule of its own beside the headings: it has no limit of words.
+    const leadType = (text) => {
+      const t = tidy(text).toLowerCase().replace(/[“”"]/g, '');
+      const at = t.search(/\b(if|for|where)\b/);
+      if (at < 0) return '';
+      const rest = t.slice(at);
+      if (/\b(other than|not) (an? )?(natural persons?|individuals?)\b|\bnon-?individuals?\b/.test(rest)) return 'entity';
+      return headType(rest.replace(/\blimited partners?(hip)?\b|\bgeneral partner\b|\blimited liability\b/g, ' '));
+    };
+    const itemLine = (ln) => {
+      const first = ln.els.find((x) => !(x.t === 'seg' && LIST_MARK.test(x.seg.s)) && !(x.t === 'seg' && ln.els.indexOf(x) === 0 && /^\(?([a-z]|\d{1,2}|[ivx]{1,4})[.)]?$/i.test(x.seg.s)));
+      return !!first && first.t === 'slot' && !!first.slot.made;
+    };
+    L.lines.forEach((ln) => {
+      if (!ln.text || !/[:\uFF1A]\s*$/.test(ln.text) || !ln.els.length || ln.els.some((x) => x.t !== 'seg')) return;
+      const ups = wrapped(ln, ln.els[0].seg);
+      const type = leadType(ups.map((u) => u.text).concat(ln.text).join(' '));
+      // (A line of footnote marks set small and higher than the item it belongs to is passed over.)
+      const next = L.lines.slice(ln.i + 1).find((o) => o.els.some((x) => x.t !== 'seg' || x.seg.h >= 0.75 * ln.h));
+      if (!type || !next || next.y - ln.y > 3 * ln.h || !itemLine(next)) return;
+      const x0 = Math.min.apply(null, [ln].concat(ups).map((u) => u.els[0].seg.x0));
+      for (let i = ln.i + 1; i < L.lines.length; i++) {
+        const cur = L.lines[i];
+        const item = itemLine(cur);
+        const startX = cur.els.length ? (cur.els[0].t === 'seg' ? cur.els[0].seg.x0 : cur.els[0].t === 'slot' ? cur.els[0].slot.x0 : cur.els[0].box.x0) : Infinity;
+        if (!item && startX <= x0 + 3) break;
+        made.forEach((m) => {
+          if (!m.slot || m.slot.line !== cur || m.co || m.p.second) return;
+          m.p.forType = type;
+          m.p.required = false;
+          m.leadIn = true;
+        });
+      }
+    });
 
     /* 6. Whose field it is, and which kind of investor gets it. */
     // Headings: short lines in capitals, ending in a colon or set as a title, that name a side, the firm or a kind of investor.
