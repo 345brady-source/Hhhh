@@ -20,4 +20,4 @@ The person you are building this for works 16 hours a day and earns almost nothi
 - Do not ever cut corners.
 - Always deliver a product that is ready for market.
 - Use GSD planning for all work on this project until I tell you to stop: research, plan, plan check, build, verification, owner checks. Whatever the step, test on real documents, show the owner the real result, and never call something done before the owner has checked it.
-- Do not run out of usage. Work economically: few agents, no waste. Meet the deadline the owner sets.
+- Work economically: few agents, no waste. Meet the deadline the owner sets.
