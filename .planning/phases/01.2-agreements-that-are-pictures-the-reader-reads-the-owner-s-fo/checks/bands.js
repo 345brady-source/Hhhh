@@ -544,16 +544,18 @@ async function browser() {
         nos.map((no) => {
           const pg = pages.find((p) => p.page === no);
           const hs = pg ? pg.heads.filter((q) => q.kind === kind) : [];
-          return { no, n: hs.length, ok: hs.some((q) => holds(pp, q.s, targets)) };
+          // A heading over boxes that stand in no column of two is the over band of each such box (its own caption).
+          const lone = kind === 'column' && pg ? pg.found.filter((b) => b.place !== false && b.col < 0 && holds(pp, b.bands.over.s, targets)).length : 0;
+          return { no, n: hs.length, ok: hs.some((q) => holds(pp, q.s, targets)) || lone > 0, lone };
         });
       [
-        ['column', [4, 5, 7, 8], SECOND, 'a word for a second investor'],
+        ['column', [4, 5, 7, 8], SECOND, 'a word for a second investor (or, over a box in no column, its own over band)'],
         ['letter', [2], SECOND, 'a word for a second investor'],
         ['margin', [5, 6], THIRD, 'a word for a third party']
       ].forEach(([kind, nos, targets, what]) => {
         const got = headOn(nos, kind, targets);
         const bad = got.filter((g) => !g.ok);
-        console.log(`${bad.length ? 'FAIL' : 'PASS'}  heads of kind ${kind} holding ${what}: ${got.map((g) => `page ${g.no} ${g.ok ? 'yes' : 'no'} (${g.n} heads)`).join(', ')}`);
+        console.log(`${bad.length ? 'FAIL' : 'PASS'}  heads of kind ${kind} holding ${what}: ${got.map((g) => `page ${g.no} ${g.ok ? 'yes' : 'no'} (${g.n} heads${g.lone ? `, ${g.lone} boxes in no column` : ''})`).join(', ')}`);
         if (bad.length) fail(`no ${kind} head with ${what} on page ${bad.map((g) => g.no).join(', ')}`);
       });
       // The same page read twice gives the same texts.

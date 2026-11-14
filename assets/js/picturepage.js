@@ -461,6 +461,7 @@
     ruleUnder: 12,
     ruleOverNear: 5,
     ruleOverFar: 15,
+    longRule: 200, // a free rule longer than this is no short line with a caption under it
     word: 4.5, // the widest gap between the words of one text line
     rowGap: 24, // bands of one row merge across at most this much (a box or a rule between them)
     grow: 2, // paper round every strip
@@ -471,7 +472,8 @@
     zoneLeft: 6, // a lettered line begins within this left ...
     zoneRight: 14, // ... and this right of the left edge of the leftmost place
     zoneHigh: 14, // and is at most this high
-    zoneRead: 100, // of a lettered line this much is read: the words that decide come first
+    zoneRead: 70, // of a lettered line this much is read: its letter and the words that decide come first
+    blockRead: 60, // of a block of the margin column this much is read: a numbered heading decides in its first lines
     word1: 10, // a zone narrower than this ...
     word2: 3 // ... or lower than this holds no word (a rule across the page is lower)
   };
@@ -644,14 +646,13 @@
       for (let x = x0; x < x1; x++) if (ink(x, 0, x + 1, h)) return x;
       return x0;
     };
-    // (1) a long upright stroke (at least 30% of the height of the page's print) left of the leftmost box that is a
-    // place, with print left of it. (A free rule may start inside the margin column: a rule across the page, or a
-    // line to write on at the page's left edge.)
-    let printTop = 0;
-    let printEnd = h;
-    while (printTop < h && !ink(0, printTop, w, printTop + 1)) printTop++;
-    while (printEnd > printTop && !ink(0, printEnd - 1, w, printEnd)) printEnd--;
-    const tall = Math.max(0.3 * (printEnd - printTop), 0.1 * h); // and never shorter than a tenth of the picture
+    // (1) a long upright stroke left of the leftmost box that is a place, with print left of it: the margin rule runs
+    // beside the places it sets off, at least 30% of the height they span, and never shorter than a tenth of the
+    // picture. (A free rule may start inside the margin column: a rule across the page, or a line to write on at the
+    // page's left edge.)
+    const spanTop = Math.min.apply(null, places.map((i) => boxes[i].y0).concat(rules.map((r) => r.y0)));
+    const spanEnd = Math.max.apply(null, places.map((i) => boxes[i].y1).concat(rules.map((r) => r.y1)));
+    const tall = Math.max(0.3 * (spanEnd - spanTop), 0.1 * h);
     const boxLeft = places.length ? Math.min.apply(null, places.map((i) => boxes[i].x0)) : leftmost;
     const strokeCols = [];
     for (let x = 1; x < Math.min(boxLeft, w - 1); x++) {
@@ -715,6 +716,9 @@
         if (!t) continue;
         const ln = lineOf(t.y0, t.y1, t.x0, t.x1);
         if (ln.x1 - ln.x0 > 2 * (own.x1 - own.x0)) break;
+        // under a free rule longer than REACH.longRule, a text line nearly as wide as the rule is the next line of the
+        // page (a heading or running text), not a caption of the rule
+        if (own.kind === 'rule' && dir === 'down' && own.x1 - own.x0 > pt(REACH.longRule) && ln.x1 - ln.x0 >= 0.8 * (own.x1 - own.x0)) break;
         kept.push(t);
       }
       if (!kept.length) return null;
@@ -870,7 +874,7 @@
       }
       runs.forEach((rn) => {
         if (rn[1] - rn[0] < pt(REACH.word2)) return; // a rule across the page, not a heading
-        const t = trim({ x0: margin.x0, y0: rn[0], x1: margin.x1, y1: rn[1] });
+        const t = trim({ x0: margin.x0, y0: rn[0], x1: margin.x1, y1: Math.min(rn[1], rn[0] + pt(REACH.blockRead)) });
         if (t) zones.push(Object.assign({ kind: 'margin' }, t));
       });
     }
@@ -927,7 +931,7 @@
           if (colHas(x, y0, y1)) (first = x + 1), (clear = 0);
           else if (++clear >= space) break;
         }
-        if (first - x0 > 1.1 * hi || first >= x1) return;
+        if (first - x0 > 1.4 * hi || first >= x1) return; // (a capital and its stop are wider than a line of capitals is high)
         if (x1 - x0 < pt(REACH.word1) || hi < pt(REACH.word2)) return; // too small to hold a word
         // and it is set off from what is above it by more than the spacing of the lines of running text
         const end = Math.min(x1, x0 + pt(REACH.zoneRead));
