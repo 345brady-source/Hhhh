@@ -16,8 +16,15 @@
  *   places     part a: 241 of 241 places found, no stray, no overlap
  *   kinds      places, and no kind differs from the answer sheet
  *   owners     kinds, and no owner differs, and every field is marked for review
- *   full       owners; "safe by default" passed; no failed row at all; the read summary says truthfully whose
+ *   full       owners; names; "safe by default" passed; no failed row at all; the read summary says truthfully whose
  *              signature lines were found and on which pages (computed from the answer sheet)
+ *   names      part a: every field's name (its party's prefix taken off) is its own place's caption, or the plain word
+ *              of its kind, or a shape name ("Box", "Tick box") carried with its own mark (the reason that its words
+ *              could not be read or its owner is in doubt, which page confirmation never takes away). The name is
+ *              compared word by word with the answer sheet's labels of every place on its page, each word within the
+ *              band reader's tolerance (NS.picturepage.near): a name that matches another place's label better than
+ *              its own, in at least half its words, is another place's caption and fails. A name that matches no
+ *              label (its own caption misread beyond the tolerance) is counted and shown, not failed
  *   rows       no row of the parts run is marked FAIL
  *   speed      a document is read within its pages x 6 s + 3 s (the form, the scanned example) or its pages x 2 s + 3 s
  *              (the scan of running text), and progress was seen while the form was read
@@ -60,8 +67,8 @@ const NEEDS = {
   e: [process.env.EXAMPLE_PDF || path.join(SCRATCH, 'real-agreement/agreement.pdf')]
 };
 // The part a gate reads; a gate named without its part cannot be judged.
-const GATE_PART = { baseline: 'a', places: 'a', kinds: 'a', owners: 'a', full: 'a', pictures: 'a' };
-const KNOWN = ['baseline', 'places', 'kinds', 'owners', 'full', 'rows', 'speed', 'pictures'];
+const GATE_PART = { baseline: 'a', places: 'a', kinds: 'a', owners: 'a', full: 'a', pictures: 'a', names: 'a' };
+const KNOWN = ['baseline', 'places', 'kinds', 'owners', 'full', 'rows', 'speed', 'pictures', 'names'];
 
 /* ---------- the scorer's own self-test ---------- */
 if (process.argv.includes('--self-test')) {
@@ -169,6 +176,59 @@ const pagesText = (pages) => {
   const parts = [].concat.apply([], runs.map((r) => (r[0] === r[1] ? [`${r[0]}`] : r[1] === r[0] + 1 ? [`${r[0]}`, `${r[1]}`] : [`${r[0]} to ${r[1]}`])));
   return pages.length === 1 ? `page ${parts[0]}` : parts.length === 1 ? `pages ${parts[0]}` : `pages ${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
 };
+// names: each field of the form against the labels of the answer sheet's places on its page.
+const nameCheck = () => {
+  const fields = read('printed/fields.json');
+  if (!Array.isArray(fields) || !fields.length) return need(false, 'part a wrote no fields (printed/fields.json): names cannot be judged');
+  let pp = null;
+  try {
+    pp = require(path.join(ROOT, 'assets/js/picturepage.js'));
+  } catch (e) {
+    pp = null;
+  }
+  if (!pp || typeof pp.near !== 'function') return need(false, 'the band reader\'s tolerance (picturepage near) could not be loaded');
+  // (each word once; the small words that join a caption decide nothing)
+  const SMALL = ['of', 'the', 'and', 'or', 'for', 'to', 'in', 'if', 'any', 'an', 'by', 'on', 'as', 'at'];
+  const wordsOf = (s) => Array.from(new Set(String(s || '').normalize('NFKC').toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.replace(/[^\p{L}]/gu, '').length >= 2 && SMALL.indexOf(w) < 0)));
+  // the share of the name's words found among a label's words, each within the tolerance
+  const share = (ws, label) => {
+    const lw = wordsOf(label);
+    return ws.filter((w) => lw.some((x) => pp.near(w, x) >= 0)).length / ws.length;
+  };
+  const SHAPE = /^(box|tick box)$/;
+  const KIND_WORD = { initials: 'initials', signature: 'signature', date: 'date' };
+  const OWN_MARK = /could not read the words by (it|this box)|could not tell from the words/;
+  const c = { own: 0, kindWord: 0, shapeMarked: 0, cut: 0, none: 0, short: 0, other: [], unmarked: [] };
+  sheet.fields.forEach((pl) => {
+    const cx = (pl.x0 + pl.x1) / 2;
+    const cy = (pl.y0 + pl.y1) / 2;
+    const f = fields.find((x) => x.page === pl.page && cx >= x.x0 - 2 && cx <= x.x1 + 2 && cy >= x.top - 2 && cy <= x.bottom + 2);
+    if (!f) return;
+    // the party's prefix: "Co-investor: ..." for a second investor, "<Party>: ..." for somebody else
+    const party = /\(([^)]+)\)\s*$/.exec(String(f.signerName || ''));
+    let name = String(f.label || '').trim();
+    if (/^co-investor: /i.test(name)) name = name.slice(13);
+    else if (party && name.toLowerCase().indexOf(party[1].toLowerCase() + ': ') === 0) name = name.slice(party[1].length + 2);
+    const low = name.toLowerCase().trim();
+    const where = `p${pl.page}/${pl.kind}`;
+    // (the scorer keeps the first 300 characters of a field's spoken name: past a third party's note the reason may be
+    // cut off; picture-fields.js confirm proves on the page itself that every shape name keeps its own mark)
+    const aria = String(f.aria || '');
+    if (SHAPE.test(low)) return OWN_MARK.test(aria) ? c.shapeMarked++ : aria.length >= 300 && /for someone else to complete/.test(aria) ? c.cut++ : c.unmarked.push(where);
+    if (KIND_WORD[f.kind] && low === KIND_WORD[f.kind]) return c.kindWord++;
+    const ws = wordsOf(name);
+    if (!ws.length) return c.short++;
+    const mine = share(ws, pl.label);
+    const best = Math.max(0, ...sheet.fields.filter((q) => q !== pl && q.page === pl.page).map((q) => share(ws, q.label)));
+    if (mine >= 0.5 && mine >= best) c.own++;
+    else if (best >= 0.5 && best > mine) c.other.push(where);
+    else c.none++;
+  });
+  const by = (list) => Object.entries(list.reduce((m, k) => ((m[k] = (m[k] || 0) + 1), m), {})).map(([k, n]) => `${k} ${n}`).join(', ');
+  console.log(`names: own caption ${c.own}, kind's word ${c.kindWord}, shape name with its own mark ${c.shapeMarked} (and ${c.cut} somebody else's, the reason cut off by the scorer), own caption misread past the tolerance ${c.none}, too short to compare ${c.short}, another place's caption ${c.other.length}${c.other.length ? ' (' + by(c.other) + ')' : ''}, shape name without its own mark ${c.unmarked.length}${c.unmarked.length ? ' (' + by(c.unmarked) + ')' : ''}`);
+  need(!c.other.length, `${c.other.length} field${c.other.length === 1 ? ' is' : 's are'} named with another place's caption (${by(c.other)})`);
+  need(!c.unmarked.length, `${c.unmarked.length} field${c.unmarked.length === 1 ? ' is' : 's are'} named by shape without its own mark (${by(c.unmarked)})`);
+};
 const signedOn = (whose) => Array.from(new Set(sheet.fields.filter((f) => f.kind === 'signature' && f.whose === whose).map((f) => f.page))).sort((a, b) => a - b);
 
 if (total) {
@@ -181,6 +241,7 @@ if (total) {
   if (has('places')) places();
   if (has('kinds')) kindsOk();
   if (has('owners')) owners();
+  if (has('names') || has('full')) nameCheck();
   if (has('full')) {
     owners();
     const safe = rows.find((r) => r.part === 'a' && /safe by default/.test(r.name));

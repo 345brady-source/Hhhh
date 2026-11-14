@@ -2253,6 +2253,8 @@
   // What a box field was decided by, kept beside it (never on the field): its box, whether any word by it was read,
   // whether a word decided its kind, and the signature a date stands beside.
   const BOXED = new WeakMap();
+  // A box's over band (15 pt) and the under band of the box above it (9 pt) meet when the boxes are this close.
+  const MEET = 24;
   /** The field of one found box (K1 to K6); its owner is decided afterwards (fromPicture). */
   function boxField(pg, b, found) {
     const raw = (k) => {
@@ -2260,7 +2262,18 @@
       const s = tidy(v ? v.s : '');
       return s && !prose(s) ? s : '';
     };
-    const band = (k) => (heading(raw(k)) ? '' : raw(k));
+    // A caption belongs to the one box it is attached to: what is read under this box that is also read as the over
+    // band of a found box below it (the two bands meet in the paper between them) is that box's caption, never this
+    // one's (NS.picturepage.attach gives such print to the nearer box; this holds when it was read twice).
+    const below = found.filter((o) => o !== b && o.y0 >= b.y1 - 0.5 && o.y0 - b.y1 <= MEET && overlap(o.x0, o.x1, b.x0, b.x1) > 0);
+    const theirs = (s) => {
+      const mine = lettersOf(s);
+      return mine.length >= 3 && below.some((o) => {
+        const t = lettersOf(o.bands && o.bands.over ? o.bands.over.s : '');
+        return t.length >= 3 && (t.indexOf(mine) >= 0 || mine.indexOf(t) >= 0);
+      });
+    };
+    const band = (k) => (heading(raw(k)) || (k === 'under' && theirs(raw(k))) ? '' : raw(k));
     const w = b.x1 - b.x0;
     const hh = b.y1 - b.y0;
     // The field covers the printed box, its ink included: the outer edge of the frame's ink (NS.textread found outer,

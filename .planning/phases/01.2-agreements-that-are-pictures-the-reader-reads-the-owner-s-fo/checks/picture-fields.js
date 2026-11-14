@@ -233,6 +233,24 @@ CASES.push(
     { type: 'initials' }
   ],
   ['checkBy a box with no caption read', pageOf([bx(100, 100, 250, 110, {})]), [want1(0, 'investor', 'Box', false, W_UNREAD, 'field')], { type: 'text' }],
+  [
+    'names a caption over a box is that box\'s, never the under caption of the box above it (read for both)',
+    pageOf([bx(150, 100, 300, 110, { under: 'Lower words' }), bx(150, 124, 300, 134, { over: 'Lower words' })]),
+    [want1(0, 'investor', 'Box', false, W_UNREAD, 'field'), want1(1, 'investor', 'Lower words', false, W_SLANT, 'page')],
+    { type: 'text' }
+  ],
+  [
+    'names control: a caption under a box with no box close under it stays its own',
+    pageOf([bx(150, 100, 300, 110, { under: 'Upper words' }), bx(150, 150, 300, 160, { over: 'Lower words' })]),
+    [want1(0, 'investor', 'Upper words', false, W_SLANT, 'page'), want1(1, 'investor', 'Lower words', false, W_SLANT, 'page')],
+    { type: 'text' }
+  ],
+  [
+    'names control: a box close under another keeps its own different caption under it',
+    pageOf([bx(150, 100, 300, 110, { under: 'Upper words' }), bx(150, 124, 300, 134, { over: 'Lower words' })]),
+    [want1(0, 'investor', 'Upper words', false, W_SLANT, 'page'), want1(1, 'investor', 'Lower words', false, W_SLANT, 'page')],
+    { type: 'text' }
+  ],
   ['checkBy a box with a read caption and no heading', pageOf([bx(130, 120, 290, 130, { over: 'MAILING ADDRESS' })]), [want1(0, 'investor', 'MAILING ADDRESS', false, W_SLANT, 'page')], { type: 'text' }]
 );
 const LIST_CASES = true;
@@ -340,6 +358,52 @@ async function shapes(page) {
   line(!!touch, `shapes two boxes sharing a wall: neither outer edge reaches into the other box, each still reaches its own outside ink (${show(ink.left)}; ${show(ink.right)})`);
   const wantF = ['99.3,99.3,180.7,112.7', '100,140,180,152', '299.3,99.3,308.7,108.7'];
   line(wantF.every((s) => ink.fields.includes(s)) && ink.fields.length === 3, `shapes a box's field covers its outer ink edge (a blank and a tick box), and the frame's edge when none is given (${ink.fields.join('; ')})`);
+  // Whose caption the print between two boxes is (NS.picturepage.attach), on made-up words in points: each block of
+  // lines goes to the nearer box, a tie to the lower one, whichever band the reading first gave it to.
+  const near = await page.evaluate(() => {
+    const pp = window.CVPortal.picturepage;
+    if (!pp || typeof pp.attach !== 'function') return null;
+    const boxes = [{ x0: 100, y0: 100, x1: 300, y1: 110 }, { x0: 100, y0: 124, x1: 300, y1: 134 }];
+    const run = (inU, inO) => {
+      const u = { of: 0, side: 'under', x0: 100, y0: 110.5, x1: 300, y1: 123.5 };
+      const o = { of: 1, side: 'over', x0: 100, y0: 110.5, x1: 300, y1: 123.5 };
+      const heard = new Map([[u, inU], [o, inO]]);
+      pp.attach([u, o], heard, boxes);
+      return [heard.get(u).map((q) => q.s).join(' '), heard.get(o).map((q) => q.s).join(' ')];
+    };
+    const lower = { x0: 100, x1: 140, y0: 119, y1: 122.5, s: 'Lower' };
+    const upper = { x0: 100, x1: 140, y0: 111, y1: 114.5, s: 'Upper' };
+    const middle = { x0: 100, x1: 140, y0: 115.25, y1: 118.75, s: 'Middle' };
+    return { stolen: run([lower], []), both: run([upper, lower], []), twice: run([upper], [Object.assign({}, upper)]), tie: run([middle], []) };
+  });
+  const said = (r) => (r ? `under "${r[0]}", over "${r[1]}"` : 'no attach');
+  line(!!near && near.stolen.join('|') === '|Lower' && near.both.join('|') === 'Upper|Lower' && near.twice.join('|') === 'Upper|' && near.tie.join('|') === '|Middle', `shapes print between two boxes goes to the nearer box: the caption over the lower box given to the upper box's under band (${said(near && near.stolen)}); one caption each (${said(near && near.both)}); a caption under the upper box read twice (${said(near && near.twice)}); midway (${said(near && near.tie)})`);
+  // A line of print under a box most of which stands beside the box (a heading that runs in under it) is no caption
+  // of the box; a caption under the box is (NS.picturepage.bands on a made-up picture, one point a pixel).
+  const under = await page.evaluate(() => {
+    const pp = window.CVPortal.picturepage;
+    const W = 600;
+    const H = 200;
+    const g = new Uint8Array(W * H).fill(255);
+    const fill = (x0, y0, x1, y1) => {
+      for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) g[y * W + x] = 0;
+    };
+    const frame = (x0, y0, x1, y1) => (fill(x0, y0, x1, y0 + 1), fill(x0, y1 - 1, x1, y1), fill(x0, y0, x0 + 1, y1), fill(x1 - 1, y0, x1, y1));
+    // letters: 3 pixels wide, 5 high, 1 apart, words 3 apart
+    const text = (x0, x1, y) => {
+      for (let x = x0; x + 3 <= x1; x += 4) if ((x - x0) % 24 < 20) fill(x, y, x + 3, y + 5);
+    };
+    frame(300, 40, 460, 64); // a box with a heading line under it that begins far left of it
+    text(120, 380, 66);
+    frame(300, 120, 460, 144); // a box with its own caption under it
+    text(304, 380, 146);
+    const seen = pp.find(g, W, H, 1, {});
+    const got = pp.bands(Object.assign({ grey: g, w: W, h: H, pxPerPt: 1 }, seen));
+    const idx = (y) => seen.boxes.findIndex((b) => b.place !== false && b.y0 <= y && b.y1 > y);
+    const hasUnder = (i) => got.strips.some((st) => st.parts.some((q) => q.kind === 'box' && q.of === i && q.side === 'under'));
+    return { heading: idx(50) >= 0 ? hasUnder(idx(50)) : null, caption: idx(130) >= 0 ? hasUnder(idx(130)) : null };
+  });
+  line(under.heading === false && under.caption === true, `shapes a line under a box that mostly stands beside it is no caption of the box (under band: ${under.heading}), a caption under the box is (${under.caption})`);
   line(edge.blind === 6 && edge.blindOk, `shapes words not read: every box keeps its field, named Tick box or Box, marked, the investor's (${edge.blind} of 6)`);
   // A page with text: its proposals carry no checkBy (the page's action is never offered for it).
   const text = await page.evaluate(() => {

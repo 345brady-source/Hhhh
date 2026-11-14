@@ -852,6 +852,9 @@
         // (a free rule's bands are its own width, and the line rules read them: the words standing over a rule and the
         // mark that opens the print under a footnote rule; running text is cut only from the bands of a box)
         if (own.kind === 'box' && ln.x1 - ln.x0 > 2 * (own.x1 - own.x0)) break;
+        // under a box, a line of print most of which stands beside the box (a heading or a caption of the next column
+        // that runs in under it) is no caption of the box: a caption under a box is attached to it
+        if (own.kind === 'box' && dir === 'down' && Math.min(ln.x1, own.x1) - Math.max(ln.x0, own.x0) < 0.5 * (ln.x1 - ln.x0)) break;
         // under a free rule longer than REACH.longRule, a text line nearly as wide as the rule is the next line of the
         // page (a heading or running text), not a caption of the rule: only that first line is read (the line rules
         // look at what stands right under a rule: a note in the sponsor's brackets opens there), nothing under it
@@ -1170,7 +1173,74 @@
     return out;
   }
 
-  const api = { find, toGrey, bands, near, INK, MAX_PIXELS, MIN_PT };
+  /**
+   * Whose caption the print between two boxes is, one box over the other. The under band of the upper box and the over
+   * band of the lower one both reach into the paper between them, so a line printed there is read for both (or, when
+   * both bands are one strip, given to whichever band came first). A caption belongs to the one box it is nearest to and
+   * attached to: each block of lines printed where both bands reach goes to the box whose edge is nearer (on a tie the
+   * lower box, whose caption stands over it), and is taken out of the other box's band. A box whose own caption stands
+   * over it therefore never takes the caption over the next row's box for its own.
+   *   parts   [{ of (index in boxes), side 'over' | 'under' | ..., x0, y0, x1, y1 }]   the bands of the boxes
+   *   heard   Map part -> [words { x0, y0, x1, y1 }]                                  the words each band was given
+   *   boxes   [{ x0, y0, x1, y1 }]                                                    all in one unit (points)
+   * Changes heard in place; returns how many blocks of lines were given back to their nearer box.
+   */
+  function attach(parts, heard, boxes) {
+    const centreIn = (q, r) => {
+      const cx = (q.x0 + q.x1) / 2;
+      const cy = (q.y0 + q.y1) / 2;
+      return cx > r.x0 - 0.5 && cx < r.x1 + 0.5 && cy > r.y0 - 0.5 && cy < r.y1 + 0.5;
+    };
+    // (the same word read twice, once in each strip: their rectangles cover most of each other)
+    const same = (a, b) => Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0) > 0.5 * Math.min(a.x1 - a.x0, b.x1 - b.x0) && Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0) > 0.5 * Math.min(a.y1 - a.y0, b.y1 - b.y0);
+    const unders = parts.filter((q) => q.side === 'under');
+    const overs = parts.filter((q) => q.side === 'over');
+    let moved = 0;
+    unders.forEach((u) => {
+      const up = boxes[u.of];
+      overs.forEach((o) => {
+        const lo = boxes[o.of];
+        if (o.of === u.of || !up || !lo || lo.y0 < up.y1) return;
+        const common = { x0: Math.max(u.x0, o.x0), y0: Math.max(u.y0, o.y0), x1: Math.min(u.x1, o.x1), y1: Math.min(u.y1, o.y1) };
+        if (common.x1 <= common.x0 || common.y1 <= common.y0) return;
+        const U = heard.get(u) || [];
+        const O = heard.get(o) || [];
+        const ws = U.concat(O.filter((q) => !U.some((p) => same(p, q)))).filter((q) => centreIn(q, common));
+        if (!ws.length) return;
+        // Lines (words whose heights overlap by half), then blocks (lines parted by less than half a line of paper).
+        ws.sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0);
+        const lines = [];
+        ws.forEach((q) => {
+          const ln = lines.find((l) => Math.min(l.y1, q.y1) - Math.max(l.y0, q.y0) > 0.5 * Math.min(l.y1 - l.y0, q.y1 - q.y0));
+          if (ln) ln.ws.push(q), (ln.y0 = Math.min(ln.y0, q.y0)), (ln.y1 = Math.max(ln.y1, q.y1));
+          else lines.push({ y0: q.y0, y1: q.y1, ws: [q] });
+        });
+        lines.sort((a, b) => a.y0 - b.y0);
+        const blocks = [];
+        lines.forEach((l) => {
+          const last = blocks[blocks.length - 1];
+          if (last && l.y0 - last.y1 < 0.5 * Math.min(l.y1 - l.y0, last.h)) last.ws.push(...l.ws), (last.y1 = Math.max(last.y1, l.y1));
+          else blocks.push({ y0: l.y0, y1: l.y1, h: l.y1 - l.y0, ws: l.ws.slice() });
+        });
+        blocks.forEach((bk) => {
+          const lower = lo.y0 - bk.y1 <= bk.y0 - up.y1;
+          const [from, to, key] = lower ? [U, O, o] : [O, U, u];
+          let changed = false;
+          bk.ws.forEach((q) => {
+            for (let k = from.length - 1; k >= 0; k--) if (from[k] === q || same(from[k], q)) from.splice(k, 1), (changed = true);
+            if (!to.some((p) => p === q || same(p, q))) to.push(q), (changed = true);
+          });
+          if (!heard.has(key)) heard.set(key, to);
+          if (changed) moved++;
+        });
+        heard.set(u, U);
+        heard.set(o, O);
+      });
+    });
+    return moved;
+  }
+
+  const api = { find, toGrey, bands, near, attach, INK, MAX_PIXELS, MIN_PT };
   if (typeof window !== 'undefined' && window.CVPortal) window.CVPortal.picturepage = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })();
