@@ -12,7 +12,9 @@
  * passed and at least one page ran. A page passes when every printed place has its right field (the judge of
  * harness.js, with the keys other and review where the page gives them), no field stands anywhere else, no two
  * fields overlap, and the page's own options hold: read (the reading's record of who signs where and of the pages
- * with places for somebody else), summary, saves, todo, marks, apart, and the reason on a field that gives why.
+ * with places for somebody else), summary, notSaid, saves, todo, marks, apart, the reason on a field that gives why,
+ * the kind on a field that gives kinds, a field that fills its drawn box where the place gives fill, and, on a page
+ * marked inert, the editor opened through the upload dialog with nothing printed on the page made into an element.
  *
  * Walk mode. The sponsor uploads the page through the upload dialog, the editor opens, the agreement is saved, an
  * investor is invited, goes through onboarding, signs; the firm countersigns where the page has a block of the
@@ -55,6 +57,11 @@ function pageFails(fx, expect, out, j) {
   j.blanks.filter((b) => b.e.flag && b.f && !b.f.review).forEach((b) => fails.push(`${where(b.e)} should carry a review mark and does not`));
   j.blanks.filter((b) => b.e.why && b.f && !new RegExp(b.e.why, 'i').test(b.f.why || '')).forEach((b) => fails.push(`${where(b.e)}: the reason shown is "${b.f.why || ''}", not the one about "${b.e.why}"`));
   j.blanks.filter((b) => b.e.kinds && b.f && b.e.kinds.indexOf(b.f.kind) < 0).forEach((b) => fails.push(`${where(b.e)}: read as the kind "${b.f.kind}", not ${b.e.kinds.join(' or ')}`));
+  j.blanks.filter((b) => b.e.fill != null && b.e.box && b.f).forEach((b) => {
+    const bx = b.e.box;
+    const off = Math.max(Math.abs(b.f.x0 - bx.x0), Math.abs(b.f.x1 - bx.x1), Math.abs(b.f.top - bx.y0), Math.abs(b.f.bottom - bx.y1));
+    if (off > b.e.fill) fails.push(`${where(b.e)} does not fill its box: an edge of the field is ${off.toFixed(1)} pt from the box's (field ${box(b.f)}; box x ${bx.x0.toFixed(0)}-${bx.x1.toFixed(0)} y ${bx.y0.toFixed(0)}-${bx.y1.toFixed(0)})`);
+  });
   const read = out.read || {};
   const r = fx.read || {};
   if (r.investorPages && !same(read.investorPages, r.investorPages)) fails.push(`the investor's signature line was read on page(s) [${sorted(read.investorPages)}], not [${sorted(r.investorPages)}]`);
@@ -62,6 +69,7 @@ function pageFails(fx, expect, out, j) {
   if (r.otherPages && !same(out.otherPages, r.otherPages)) fails.push(`places for somebody else were read on page(s) [${sorted(out.otherPages)}], not [${sorted(r.otherPages)}]`);
   if (r.left && !same(read.left, r.left)) fails.push(`pages named as left without a field: [${sorted(read.left)}], not [${sorted(r.left)}]`);
   (fx.summary || []).forEach((p) => { if (!p.test(out.note || '')) fails.push(`the read summary does not say ${p}: "${out.note || ''}"`); });
+  (fx.notSaid || []).forEach((p) => { if (p.test(out.note || '')) fails.push(`the read summary says ${p}, which it must not: "${out.note || ''}"`); });
   if (fx.saves === true && !out.saved) fails.push(`cannot be saved as read: ${out.todo}`);
   if (fx.saves === false && out.saved) fails.push('saved although something should hold it');
   if (fx.todo && !out.saved && !fx.todo.test(out.todo || '')) fails.push(`held, but not for the reason expected: "${out.todo}"`);
@@ -73,6 +81,45 @@ function pageFails(fx, expect, out, j) {
       if (gap < fx.apart) fails.push(`two fields are ${gap.toFixed(1)} pt apart on page ${a.page}, less than ${fx.apart}: ${a.type} at ${box(a)} and ${b.type} at ${box(b)}`);
     }));
   }
+  return fails;
+}
+
+/**
+ * A page marked inert, opened in the editor the way a sponsor opens it: the offering's agreement dialog, the PDF
+ * chosen, Continue. Nothing printed on the page may become an element or run, and each label the page expects is
+ * shown in the editor as characters (on the field and in its accessible name). The draft is removed afterwards.
+ * Returns what is not right ([] when it is green).
+ */
+async function editorInert(page, bytes, labels) {
+  const fails = [];
+  const offId = await page.evaluate(() => { const ws = window.CVPortal.state.ws; return ws.offerings[ws.offerings.length - 1].id; });
+  await page.evaluate((id) => (location.hash = 'console-offering-' + id), offId);
+  await page.waitForSelector(`[data-action="es-agreement-new"][data-offering="${offId}"]`);
+  await page.click(`[data-action="es-agreement-new"][data-offering="${offId}"]`);
+  await page.waitForSelector('#dlg[open] #es-agr-file');
+  await page.setInputFiles('#es-agr-file', { name: 'Agreement.pdf', mimeType: 'application/pdf', buffer: Buffer.from(bytes) });
+  await page.click('#dlg[open] form[data-form="es-agreement"] button[type=submit]');
+  const opened = await page.waitForFunction(() => /^#console-envelope-/.test(location.hash), null, { timeout: 60000 }).then(() => true, () => false);
+  if (!opened) return ['the upload dialog did not lead to the editor'];
+  await page.waitForSelector('.es-editor .es-page img', { timeout: 30000 }).catch(() => {});
+  await page.waitForTimeout(400);
+  const seen = await page.evaluate(() => ({
+    ran: window.__pwn,
+    made: document.querySelectorAll('img[src="x"], [onerror*="__pwn"]').length,
+    shown: Array.from(document.querySelectorAll('.es-editor .es-fld')).map((n) => `${n.textContent} | ${n.getAttribute('aria-label') || ''}`)
+  }));
+  if (seen.ran !== undefined) fails.push('in the editor, a handler printed on the page ran');
+  if (seen.made) fails.push(`in the editor, ${seen.made} element(s) were made from words printed on the page`);
+  labels.forEach((l) => {
+    const both = seen.shown.filter((s) => s.split(' | ')[0].indexOf(l) >= 0 && s.split(' | ')[1].indexOf(l) >= 0);
+    if (!both.length) fails.push(`in the editor, no field shows "${l}" as characters on the field and in its accessible name`);
+  });
+  await page.evaluate(() => {
+    const NS = window.CVPortal;
+    NS.state.ws.envelopes = (NS.state.ws.envelopes || []).filter((e) => e.id !== NS.state.param);
+    location.hash = 'console-offerings';
+  });
+  await page.waitForTimeout(200);
   return fails;
 }
 
@@ -97,6 +144,7 @@ async function reading() {
         const { expect, out, bytes } = await H.run(h, page, CLASS_PAGES, CLASS_CSS, name);
         const j = H.judge(expect, out.fields);
         fails = pageFails(fx, expect, out, j);
+        if (fx.inert) fails = fails.concat(await editorInert(page, bytes, expect.filter((e) => !e.none && e.label).map((e) => e.label)));
         if (h.errors.length > before) fails.push('page errors: ' + h.errors.slice(before).join(' | ').slice(0, 300));
         detail = `${expect.filter((e) => !e.none).length} printed places, ${out.fields.length} fields, ${j.right} right, ${j.flagged} marked`;
         if (SHOTS) (await H.picture(page, bytes, expect, j, out.fields, SHOTS, name)).forEach((f) => console.log(`  picture  ${f}`));
