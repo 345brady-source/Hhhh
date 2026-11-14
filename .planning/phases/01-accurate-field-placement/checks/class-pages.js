@@ -39,6 +39,8 @@ const { CSS, blank, rule, box, U, attr } = require('./fixtures');
 
 const CLASS_CSS = `${CSS}
 .cap{font-size:9pt} .hd{margin-top:22pt} .gap{margin-top:34pt} .ind{margin-left:.35in} .small{font-size:10.5pt}
+.grid{border-collapse:collapse;width:100%;margin:6pt 0} .grid td{border:1px solid #000;padding:5pt 6pt;height:22pt;font-size:10pt} .grid td:first-child{width:42%}
+.secrule{border:0;border-top:1px solid #000;margin:16pt 0 6pt} .run{font-size:9pt;margin:0 0 14pt}
 .t{border-collapse:collapse;width:100%;margin:8pt 0 14pt} .t td{border:.75pt solid #000;padding:3pt 5pt;height:16pt;font-size:10pt;vertical-align:top}
 .t ul{margin:0;padding-left:12pt}`;
 
@@ -78,6 +80,21 @@ const capCell = (x, top, w, h, caption, size, exp, more) => at(x + 1.5, capTop(t
 const sectionRule = (top) => stroke(72, top, 468, 1);
 /** A text field named by a caption: optional unless the caption says required, never filled in from onboarding. */
 const capText = (label, more) => inv('text', Object.assign({ fillIn: true, label, key: '', required: false, other: false, review: false }, more || {}));
+/** An empty cell of a ruled grid row, named by the words in the cell to its left. */
+const gcell = (x) => `<td data-k="cell" data-x='${attr(x)}'></td>`;
+/** A second investor's place: the co-investor's own field (kept apart as a second signer's, nobody else's). */
+const co = (type, more) => inv(type, Object.assign({ second: true, other: false }, more || {}));
+/** An initials blank opening an item of a lettered list. */
+const ini = (label, forType, more) => ({ type: 'initials', role: 'investor', fillIn: true, label, forType, key: '', required: false, review: false, other: false, ...(more || {}) });
+/** Two pages of prose that speak of a signature page and a signature block attached to the agreement. */
+const SIG_PAGE_PROSE = [
+  `<h3 style="text-align:center">SUBSCRIPTION TERMS</h3><p>1. The Subscriber offers to buy units of the Fund on the terms of this Agreement. The offer is made when the Subscriber signs the signature page attached to this Agreement and delivers it to the Fund with the payment for the units.</p>
+<p>2. The Fund may accept the offer in whole or in part, or decline it, at any time before the closing. Units are issued only when the Fund has accepted the offer and received the payment in full.</p>
+<p>3. The signature block attached hereto forms part of this Agreement. A copy of the signed signature page delivered by e-mail has the same effect as the original.</p>`,
+  `<p>4. The Subscriber has had the chance to ask questions of the Fund and has received answers it finds complete. It relies on no statement that is not in the offering documents.</p>
+<p>5. This Agreement is governed by the law named in the offering documents. If one of its terms cannot be enforced, the others stay in force.</p>
+<p>6. The Subscriber confirms the statements above by signing the signature page that follows this Agreement.</p>`
+];
 /** A tick box drawn as a box character, with its own words after it. */
 const glyph = (label, more) => `<span data-k="bracket" data-x='${attr(Object.assign({ type: 'checkbox', role: 'investor', fillIn: true, required: false, label, review: false }, more || {}))}'>&#9744;</span> `;
 
@@ -297,8 +314,8 @@ ${capCell(72, 222, 228, 18, 'Telephone', 7.5, capText('Telephone', { key: 'phone
 ${capCell(306, 222, 234, 18, 'Email', 7.5, capText('Email', { key: 'email', kinds: ['email'] }))}
 ${capCell(72, 264, 228, 18, 'Date of birth', 7.5, capText('Date of birth'))}
 ${capCell(306, 264, 234, 18, 'Tax identification number', 7.5, capText('Tax identification number', { kinds: ['taxId'] }))}
-${capCell(72, 306, 228, 18, 'Employer, if applicable', 7.5, capText('Employer, if applicable', { kinds: ['other', 'text'] }))}
-${capCell(306, 306, 234, 18, 'Country of citizenship (required)', 7.5, capText('Country of citizenship (required)', { required: true, kinds: ['other', 'text'] }))}`)
+${capCell(72, 306, 228, 18, 'Employer, if applicable', 7.5, capText('Employer', { kinds: ['other', 'text'] }))}
+${capCell(306, 306, 234, 18, 'Country of citizenship (required)', 7.5, capText('Country of citizenship', { required: true, kinds: ['other', 'text'] }))}`)
   },
   // A cell under a caption of two lines, a cell under a caption of three lines, one caption centred over two cells of
   // a row, and a section heading in a larger bold size directly above a caption. Each label is all the caption's lines
@@ -380,7 +397,7 @@ ${at(72, 250, 11, `Bank reference: <u>${blank(inv('text', { fillIn: true, label:
     html: pg(`<h3>SECTION 8. CONFIRMATIONS</h3>
 ${at(72, 150, 11, 'I confirm that I have read the section on risks in the<br>memorandum and kept a copy of it for my records.<br>I initial the box to the right to say so.', 'white-space:normal;width:360pt')}
 ${at(471.5, capTop(150, 7.5, 1), 7.5, 'Initials')}<div data-k="box" data-x='${attr({ type: 'initials', role: 'investor', fillIn: true, label: 'Initials', required: true, other: false, fill: 1.5 })}' style="position:absolute;left:470pt;top:150pt;width:36pt;height:36pt;border:.75pt solid #000;box-sizing:border-box"></div>
-${at(73.5, capTop(262, 7.5, 1), 7.5, 'Seal of the Subscriber, if any')}<div data-k="box" data-x='${attr({ type: 'text', role: 'investor', fillIn: true, label: 'Seal of the Subscriber, if any', key: '', required: false, other: false, fill: 1.5 })}' style="position:absolute;left:72pt;top:262pt;width:160pt;height:58pt;border:.75pt solid #000;box-sizing:border-box"></div>`)
+${at(73.5, capTop(262, 7.5, 1), 7.5, 'Seal of the Subscriber, if any')}<div data-k="box" data-x='${attr({ type: 'text', role: 'investor', fillIn: true, label: 'Seal of the Subscriber', key: '', required: false, other: false, fill: 1.5 })}' style="position:absolute;left:72pt;top:262pt;width:160pt;height:58pt;border:.75pt solid #000;box-sizing:border-box"></div>`)
   },
   // A row of three captioned cells and a fourth cell of the same row with no caption. Three fields, none on the fourth
   // cell; the reading names the page as one with a printed place left without a field, and the summary says so.
@@ -423,11 +440,124 @@ ${['Real estate', 'Investments'].map((l, i) => at(400, 170 + i * 16, 10, `${glyp
   // with the required caption included; the cell of the second section is required.
   requiredInSection: {
     html: pg(`${sectionRule(110)}${at(72, 118, 11, '<b>SECTION 13. ONLY FOR ACCOUNTS HELD IN A FOREIGN CURRENCY</b>')}
-${capCell(72, 160, 150, 18, 'Currency of the account (required)', 7.5, capText('Currency of the account (required)'))}
+${capCell(72, 160, 150, 18, 'Currency of the account (required)', 7.5, capText('Currency of the account'))}
 ${capCell(228, 160, 150, 18, 'Exchange rate source', 7.5, capText('Exchange rate source'))}
 ${capCell(384, 160, 156, 18, 'Settlement instructions', 7.5, capText('Settlement instructions'))}
 ${sectionRule(200)}${at(72, 208, 11, '<b>SECTION 14. EVERY INVESTOR</b>')}
-${capCell(72, 250, 300, 18, 'Primary purpose of the investment (required)', 7.5, capText('Primary purpose of the investment (required)', { required: true }))}`)
+${capCell(72, 250, 300, 18, 'Primary purpose of the investment (required)', 7.5, capText('Primary purpose of the investment', { required: true }))}`)
+  },
+
+  /* ---------- who completes a place ---------- */
+  // A cell whose caption, in capitals, names a second investor; 40 pt below it a tick box and a labelled blank; a
+  // second investor's tax-number cell and date-of-birth cell; a cell whose caption contains a term for entities; a tick
+  // box and a blank after that. The captioned cells are the co-investor's (the tax number a text field of the
+  // tax-number kind and never a signature, the date of birth a text field and never a signing date); the tick boxes
+  // and blanks that follow are the investor's, for every kind of investor. (The captions stand in the cell to the
+  // left of their own cell, so the cells are read before plan 06; what is measured is that a caption which names its
+  // own place is not a heading.)
+  captionNotHeading: {
+    html: pg(`<h3>SECTION 2. ACCOUNT HOLDERS</h3><p>Complete one row for each holder of the account.</p>
+<table class="grid"><tr><td>JOINT INVESTOR'S OCCUPATION</td>${gcell(co('text', { label: "JOINT INVESTOR'S OCCUPATION", key: '', required: false }))}</tr></table>
+<p style="margin-top:40pt">${box({ label: 'Send statements by post', forType: '', review: false })}Send statements by post</p>
+<p>Preferred language: ${blank(inv('text', { fillIn: true, label: 'Preferred language', key: '', required: true, forType: '', other: false }), U(24))}</p>
+<table class="grid"><tr><td>JOINT INVESTOR TAX ID NUMBER</td>${gcell(co('text', { label: 'JOINT INVESTOR TAX ID NUMBER', key: '', required: false, kinds: ['taxId'] }))}</tr>
+<tr><td>JOINT INVESTOR DATE OF BIRTH</td>${gcell(co('text', { label: 'JOINT INVESTOR DATE OF BIRTH', key: '', required: false }))}</tr>
+<tr><td>Registration number of the company or other entity, if any</td>${gcell(inv('text', { label: 'Registration number of the company or other entity', key: '', required: false, other: false }))}</tr></table>
+<p style="margin-top:14pt">${box({ label: 'Paper copies requested', forType: '', review: false })}Paper copies requested</p>
+<p>Number of copies: ${blank(inv('text', { fillIn: true, label: 'Number of copies', key: '', required: true, forType: '', other: false }), U(12))}</p>`)
+  },
+  // Three sections divided by full-width rules: the investor's, then one whose heading says an adviser completes it
+  // (cells for a firm name, a phone, an email, a city; a signature cell with a date cell on the same row), then the
+  // investor's again. The adviser's section continues at the top of page 2 under the same running heading before a new
+  // section begins. Every place of the adviser's section, on both pages, is somebody else's (Adviser), optional,
+  // unmarked, not filled in from onboarding, with its own words; the investor's sections are unchanged.
+  otherSection: {
+    read: { investorPages: [2], otherPages: [1, 2] },
+    html: `${pg(`<h3>SECTION 1. THE SUBSCRIBER</h3><p>Occupation: ${blank(inv('text', { fillIn: true, label: 'Occupation', key: '', required: true, other: false }), U(40))}</p>
+<hr class="secrule"><p><b>SECTION 2. TO BE COMPLETED BY THE FINANCIAL ADVISER</b></p><p>The adviser who introduced the Subscriber completes this section.</p>
+<table class="grid"><tr><td>Firm name</td>${gcell(else_('text', 'Adviser', { label: 'Firm name' }))}</tr><tr><td>Telephone</td>${gcell(else_('text', 'Adviser', { label: 'Telephone' }))}</tr>
+<tr><td>Email</td>${gcell(else_('text', 'Adviser', { label: 'Email' }))}</tr><tr><td>City</td>${gcell(else_('text', 'Adviser', { label: 'City' }))}</tr></table>`)}
+${pg(`<p class="run"><b>SECTION 2. TO BE COMPLETED BY THE FINANCIAL ADVISER (continued)</b></p>
+<table class="grid"><tr><td style="width:24%">Signature of adviser</td>${gcell(else_('signature', 'Adviser', { label: 'Signature of adviser' }))}<td style="width:12%">Date</td>${gcell(else_('date', 'Adviser', { label: 'Date' }))}</tr></table>
+<hr class="secrule"><p><b>SECTION 3. CONFIRMATION BY THE SUBSCRIBER</b></p><p>Country of residence: ${blank(inv('text', { fillIn: true, label: 'Country of residence', key: '', required: true, other: false }), U(30))}</p>
+${WITNESS}${investorBlock({ review: false, other: false })}`)}`
+  },
+  // Two lettered lists of short initials blanks, the first under a lead-in sentence of more than twelve words ending in
+  // a colon that says it is for individuals, the second under one for entities; above both an instruction to initial
+  // the ones that apply, phrased with a synonym of "applicable"; one item's letter printed without its bracket. Every
+  // blank is an initials field, optional, labelled by its item's own printed mark; the first list for individuals
+  // only, the second for entities only; the item with the misprinted letter is an initials field like its neighbours.
+  initialsLists: {
+    html: pg(`<h3>SECTION 4. QUALIFYING STATUS</h3><p>Please initial each statement below that is appropriate to the Subscriber.</p>
+<p>If the Subscriber is a natural person, it qualifies to invest in the Fund for the reason or reasons initialled here:</p>
+<p class="ind">(a) ${blank(ini('(a)', 'person'), U(7))} its own assets, less what it owes, are well above the level the offering sets.</p>
+<p class="ind">(b) ${blank(ini('(b)', 'person'), U(7))} its yearly earnings have been above the level the offering sets for two years.</p>
+<p class="ind">c ${blank(ini('c', 'person'), U(7))} it holds a professional licence the offering accepts.</p>
+<p class="ind">(d) ${blank(ini('(d)', 'person'), U(7))} it is a member of the investment committee of the Fund.</p>
+<p>If the Subscriber is a company, partnership or other entity, it qualifies to invest in the Fund for the reason or reasons initialled here:</p>
+<p class="ind">(a) ${blank(ini('(a)', 'entity'), U(7))} every one of its owners would qualify on their own.</p>
+<p class="ind">(b) ${blank(ini('(b)', 'entity'), U(7))} its assets are well above the level the offering sets.</p>
+<p class="ind">(c) ${blank(ini('(c)', 'entity'), U(7))} it is a bank, an insurer or a registered fund.</p>`)
+  },
+  // Guard: a list whose instruction asks for initials on every item, and a page foot asking for initials on every page.
+  // Required, for every investor, as the unchanged reader gives them.
+  initialsRequired: {
+    guard: true,
+    html: pg(`<h3>SECTION 5. ACKNOWLEDGEMENTS</h3><p>Initial each statement below.</p>
+<p>${blank(ini('', '', { required: true }), U(7))} I have read the memorandum and its risk factors.</p>
+<p>${blank(ini('', '', { required: true }), U(7))} I understand that the units cannot be sold freely.</p>
+<p>${blank(ini('', '', { required: true }), U(7))} I can bear the loss of the whole investment.</p>
+<div class="foot">Subscriber's Initials (every page): ${blank(ini('', '', { required: true }), U(10))}</div>`)
+  },
+  // An investor signature block, then a last row with a signature cell and a date cell under a caption that carries
+  // terms of acceptance and names a dealer. Both places are somebody else's and marked for review, optional; the
+  // reading records no signature line of the firm and the investor's on page 1.
+  acceptanceOtherParty: {
+    read: { investorPages: [1], firmPages: [] },
+    html: pg(`<h3 style="text-align:center">SIGNATURE PAGE</h3>${WITNESS}${investorBlock({ review: false, other: false })}
+<p class="hd"><b>ACCEPTED ON BEHALF OF THE FUND BY ITS PLACEMENT DEALER:</b></p>
+<table class="grid"><tr><td style="width:18%">Signature</td>${gcell(else_('signature', true, { label: 'Signature', review: true }))}<td style="width:12%">Date</td>${gcell(else_('date', true, { label: 'Date', review: true }))}</tr></table>`)
+  },
+
+  /* ---------- labels ---------- */
+  // An investor's information page of labelled blanks. Plain labels for the investor, written as the pinned check
+  // pages write them, keep the portal's standard label for their kind and their filling in from onboarding. Labels
+  // that say more (which phone, which address, an alternate email, another person) carry their own printed text,
+  // colon removed, keep their kind in kind, and are never filled in from onboarding. Every label on these pages is the
+  // printed words as the pinned pages already read them: a remark in brackets or after ", if" is not part of a label
+  // (the page grid pins "Name of beneficial owner" for "Name of beneficial owner, if different from the Subscriber").
+  qualifiedLabels: {
+    html: pg(`<h3>INVESTOR INFORMATION</h3>
+<p>Name of Subscriber: ${blank(inv('text', { fillIn: true, label: 'Investor name', key: 'investorName', required: true, other: false }), U(40))}</p>
+<p>Address: ${blank(inv('text', { fillIn: true, label: 'Address', key: 'street', required: true, other: false }), U(46))}</p>
+<p>City: ${blank(inv('text', { fillIn: true, label: 'City', key: 'city', required: true, other: false }), U(18))} State: ${blank(inv('text', { fillIn: true, label: 'State', key: 'state', required: true, other: false }), U(8))} Zip: ${blank(inv('text', { fillIn: true, label: 'ZIP code', key: 'zip', required: true, other: false }), U(10))}</p>
+<p>Email: ${blank(inv('text', { fillIn: true, label: 'Email', key: 'email', required: true, other: false }), U(36))}</p>
+<p>Telephone: ${blank(inv('text', { fillIn: true, label: 'Phone', key: 'phone', required: true, other: false }), U(30))}</p>
+<p>Taxpayer Identification No.: ${blank(inv('text', { fillIn: true, label: 'Taxpayer ID', key: '', required: true, other: false }), U(24))}</p>
+<p>Business telephone: ${blank(inv('text', { fillIn: true, label: 'Business telephone', key: '', other: false, kinds: ['phone'] }), U(26))}</p>
+<p>Mailing address (if different): ${blank(inv('text', { fillIn: true, label: 'Mailing address', key: '', other: false, kinds: ['address'] }), U(30))}</p>
+<p>Alternate email: ${blank(inv('text', { fillIn: true, label: 'Alternate email', key: '', other: false, kinds: ['email'] }), U(32))}</p>
+<p>Name of the account's trading contact: ${blank(inv('text', { fillIn: true, label: "Name of the account's trading contact", key: '', other: false }), U(30))}</p>
+<p>Previous address: ${blank(inv('text', { fillIn: true, label: 'Previous address', key: '', other: false, kinds: ['address'] }), U(36))}</p>`)
+  },
+
+  /* ---------- a signature page the PDF does not contain ---------- */
+  // Two pages of prose that speak of a signature page and of a signature block attached to the agreement, with no place
+  // of any kind printed. No field, and no investor signature line read. (The summary's sentence for this case is fixed
+  // in a later plan, which adds its pattern here.)
+  signaturePageMention: {
+    read: { investorPages: [] },
+    html: `${pg(SIG_PAGE_PROSE[0])}${pg(SIG_PAGE_PROSE[1])}`
+  },
+  // Guard: the same prose followed by an investor signature block on the last page. The block's fields as the
+  // unchanged reader gives them; the investor's signature line is read on that page, and the summary never says that
+  // the agreement refers to a signature page the PDF does not contain.
+  signaturePageWithBlock: {
+    guard: true,
+    read: { investorPages: [2], firmPages: [] },
+    marks: 0,
+    notSaid: [/signature page[^.]*\b(not|no)\b[^.]*(contain|includ|print|in (this|the) PDF)/i, /(does not|doesn't) (contain|include|print)[^.]*signature page/i],
+    html: `${pg(SIG_PAGE_PROSE[0])}${pg(`${SIG_PAGE_PROSE[1]}${investorBlock({ review: false, other: false })}`)}`
   }
 };
 
