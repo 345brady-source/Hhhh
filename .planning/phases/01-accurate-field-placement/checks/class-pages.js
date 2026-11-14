@@ -304,13 +304,14 @@ ${capCell(464, 190, 76, 11, 'SOURCE OF FUNDS', 7, capText('SOURCE OF FUNDS', { k
   },
   // Cells captioned with known kinds, and two whose captions are of no known kind: one says it applies only in some
   // cases, one prints the word for required. Every field carries its caption's own words (label rule 1), with its kind
-  // in kind; optional unless the caption says required; filled in from onboarding only where the caption is the
+  // in kind (the portal's kind word: every part of an address is of the kind address, told apart by what it is filled
+  // in with); optional unless the caption says required; filled in from onboarding only where the caption is the
   // kind's plain word for the investor (label rule 3).
   cellCaptionKinds: {
     html: pg(`<h3>SECTION 1. THE SUBSCRIBER</h3><p>Complete every box that applies to the Subscriber.</p>
-${capCell(72, 180, 180, 18, 'City', 7.5, capText('City', { key: 'city', kinds: ['city'] }))}
-${capCell(258, 180, 120, 18, 'State', 7.5, capText('State', { key: 'state', kinds: ['state'] }))}
-${capCell(384, 180, 156, 18, 'Postal code', 7.5, capText('Postal code', { key: 'zip', kinds: ['zip'] }))}
+${capCell(72, 180, 180, 18, 'City', 7.5, capText('City', { key: 'city', kinds: ['address'] }))}
+${capCell(258, 180, 120, 18, 'State', 7.5, capText('State', { key: 'state', kinds: ['address'] }))}
+${capCell(384, 180, 156, 18, 'Postal code', 7.5, capText('Postal code', { key: 'zip', kinds: ['address'] }))}
 ${capCell(72, 222, 228, 18, 'Telephone', 7.5, capText('Telephone', { key: 'phone', kinds: ['phone'] }))}
 ${capCell(306, 222, 234, 18, 'Email', 7.5, capText('Email', { key: 'email', kinds: ['email'] }))}
 ${capCell(72, 264, 228, 18, 'Date of birth', 7.5, capText('Date of birth'))}
@@ -381,8 +382,8 @@ ${cellAt(72, 180.1, 468, 30, capText('Instructions for mailing statements'))}
 ${at(72, 250, 11, `Bank reference: <u>${blank(inv('text', { fillIn: true, label: 'Bank reference', key: '', required: true, other: false }), U(20))}</u>`)}`)
   },
   // Guard: an ordinary table of figures with empty cells among cells with words, an empty cell under a price range, an
-  // empty cell under a bulleted list, and a grid with a header row. No field anywhere on the page, and no page is named
-  // as left without a field.
+  // empty cell under a bulleted list, a grid with a header row, and a column of empty cells each to the right of a
+  // figure (an amount, a count). No field anywhere on the page, and no page is named as left without a field.
   tableGuard: {
     guard: true,
     read: { left: [] },
@@ -390,7 +391,8 @@ ${at(72, 250, 11, `Bank reference: <u>${blank(inv('text', { fillIn: true, label:
 <table class="t"><tr><td>Year</td><td>Units issued</td><td>Price per unit</td><td>Notes</td></tr><tr><td>2023</td><td>1,200</td><td>$10.00</td><td>First close</td></tr><tr><td>2024</td><td></td><td>$10.50</td><td>Second close</td></tr><tr><td></td><td>2,450</td><td>$11.00</td><td>Final close</td></tr><tr><td>2026</td><td>Not yet set</td><td></td><td>To be decided</td></tr></table>
 <table class="t"><tr><td>$0 to $99,999</td><td>$100,000 to $499,999</td><td>$500,000 and above</td></tr><tr><td></td><td></td><td></td></tr></table>
 <table class="t"><tr><td><ul><li>Quarterly reports</li><li>Annual audited statements</li></ul></td><td>Sent by e-mail</td></tr><tr><td></td><td></td></tr></table>
-<table class="t"><tr><td>Date</td><td>Description</td><td>Amount</td></tr><tr><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td></tr></table>`)
+<table class="t"><tr><td>Date</td><td>Description</td><td>Amount</td></tr><tr><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td></tr></table>
+<table class="t"><tr><td>Class A</td><td>$10.00</td><td></td></tr><tr><td>Class B</td><td>1,200</td><td></td></tr><tr><td>Class C</td><td>$12.50</td><td></td></tr></table>`)
   },
   // A drawn square 36 pt high for initials beside a paragraph, and a box 58 pt high captioned for a seal. Each field
   // fills its box to within 1.5 pt on every side.
@@ -523,12 +525,13 @@ ${WITNESS}${investorBlock({ review: false, other: false })}`)}`
   // Two shallow ruled cells side by side, each with its caption in small capitals just above it: one names a second
   // investor, one a term for entities. Under them, in the left column, a tick box and a labelled blank. A caption that
   // stands right over the cell it names speaks for that cell only, so the tick box and the blank are the investor's,
-  // for every kind of investor. (The cells themselves get no field until the cells under their captions are read; the
-  // plan that reads them gives each cell here its expectation.)
+  // for every kind of investor. Each cell is named by its caption (label rule 1): the second investor's tax number is
+  // the co-investor's, a text field of the tax-number kind; the entity's registration number is the investor's, for
+  // every kind of investor, optional.
   captionOverCell: {
     html: pg(`<h3>SECTION 2. ACCOUNT HOLDERS</h3><p>Write one answer to a box.</p>
-${at(73.5, capTop(200, 7, 1), 7, 'JOINT INVESTOR TAX ID NUMBER')}${cellAt(72, 200, 228, 10.5)}
-${at(307.5, capTop(200, 7, 1), 7, 'ENTITY REGISTRATION NUMBER')}${cellAt(306, 200, 234, 10.5)}
+${at(73.5, capTop(200, 7, 1), 7, 'JOINT INVESTOR TAX ID NUMBER')}${cellAt(72, 200, 228, 10.5, co('text', { fillIn: true, label: 'JOINT INVESTOR TAX ID NUMBER', key: '', required: false, review: false, kinds: ['taxId'] }))}
+${at(307.5, capTop(200, 7, 1), 7, 'ENTITY REGISTRATION NUMBER')}${cellAt(306, 200, 234, 10.5, capText('ENTITY REGISTRATION NUMBER', { forType: '' }))}
 ${at(72, 244, 10, `${glyph('Send statements by post', { forType: '' })}Send statements by post`)}
 ${at(72, 272, 10, `Preferred language: ${blank(inv('text', { fillIn: true, label: 'Preferred language', key: '', required: true, forType: '', other: false, review: false }), U(24))}`)}`)
   },

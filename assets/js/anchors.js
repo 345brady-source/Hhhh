@@ -7,7 +7,7 @@
  *   walk(page, viewport, OPS)   the drawing operators of one page of the PDF reader, as plain data:
  *                               { glyphs, segs, rects, picture } (every character with its true extent, every straight
  *                               stroke and thin filled bar, every drawn rectangle, and whether one picture covers the page)
- *   page(raw, size, forms)      what placement reads: { page, w, h, items, rules, boxes, forms, scan }
+ *   page(raw, size, forms)      what placement reads: { page, w, h, items, rules, boxes, forms, filled, scan }
  *                               items  runs of text { s, x, y, w, h } (a run of underscores and a box character are
  *                                      runs of their own, so their extents are exact)
  *                               rules  printed lines that can be written on { x0, x1, y, clear, pad, made, cut, cell, table,
@@ -15,6 +15,8 @@
  *                                      (pad: how far a field may reach past each end and under the line: { l, r, d })
  *                               boxes  printed tick boxes { x, y, w, h, made }
  *                               forms  the PDF's own form fields { x0, y0, x1, y1, type, label, check, readOnly }
+ *                               filled the ruled cells of a grid that have words in them { x0, x1, y0, y1 } (what
+ *                                      is printed there is the table's content, never the caption of a place)
  *                               scan   true when the page is a picture (nothing can be read from it)
  *
  * A place is only ever something printed: a run of underscores, a drawn line, a box character, a drawn square, an
@@ -296,7 +298,7 @@
 
   /** What placement reads of one page. raw: from walk(); size: { page, w, h }; forms: the PDF's form fields on it (already in displayed points). */
   function page(raw, size, forms) {
-    const out = { page: size.page, w: size.w, h: size.h, items: [], rules: [], boxes: [], forms: [], scan: false };
+    const out = { page: size.page, w: size.w, h: size.h, items: [], rules: [], boxes: [], forms: [], filled: [], scan: false };
     if (!raw) return out;
     const shown = raw.glyphs.filter((g) => !g.hidden);
     const ink = shown.filter((g) => !g.sp);
@@ -487,7 +489,10 @@
           if (b - a < 16) continue;
           const roof = hs.filter((s) => s.c < l.y - 6 && s.c > l.y - 80 && ov(s.a0, s.a1, a, b) > 0.5 * (b - a)).sort((p, q) => q.c - p.c)[0];
           const top = roof ? roof.c : l.y - 20;
-          if (ink.some((g) => (g.x0 + g.x1) / 2 > a && (g.x0 + g.x1) / 2 < b && g.y > top && g.y - 0.4 * g.h < l.y + 1)) continue;
+          if (ink.some((g) => (g.x0 + g.x1) / 2 > a && (g.x0 + g.x1) / 2 < b && g.y > top && g.y - 0.4 * g.h < l.y + 1)) {
+            out.filled.push({ x0: a, x1: b, y0: top, y1: l.y });
+            continue;
+          }
           out.rules.push({ x0: a + 2, x1: b - 2, y: l.y, clear: Math.max(0, l.y - top - 1), made: 'cell', cut: false, cell: true, table: true });
         }
         return;
