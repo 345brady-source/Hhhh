@@ -332,6 +332,30 @@
     return -1;
   }
 
+  /**
+   * The print under a rule, read from the picture: the first line of print beneath it (from 2 to 12 pt under it) that
+   * begins within 8 pt of the rule's left end, followed to the right while its gaps are no wider than 12 pt (a column
+   * counts as print where at least two of its pixels are dark, so specks of a scan do not join two columns of print).
+   * Returns the right end of that run in pixels, or -1 when no print begins there.
+   */
+  function printUnder(grey, w, h, r, s, dark) {
+    const y0 = Math.min(h - 1, r.y1 + Math.round(2 * s));
+    const y1 = Math.min(h - 1, r.y1 + Math.round(12 * s));
+    const inked = (x) => {
+      let n = 0;
+      for (let y = y0; y <= y1; y++) if (grey[y * w + x] <= dark && ++n >= 2) return true;
+      return false;
+    };
+    let x = Math.max(0, r.x0 - Math.round(8 * s));
+    const first = Math.min(w - 1, r.x0 + Math.round(8 * s));
+    while (x <= first && !inked(x)) x++;
+    if (x > first) return -1;
+    const gap = Math.round(12 * s);
+    let end = x;
+    for (let miss = 0; x < w && miss <= gap; x++) (inked(x) ? ((end = x), (miss = 0)) : miss++);
+    return end;
+  }
+
   /** Words in reading order (by line, then left to right) as one text, with the confidence of the least sure. */
   function said(words) {
     if (!words.length) return { s: '', conf: 0 };
@@ -380,6 +404,7 @@
       if (dark >= 0) seen.rules.forEach((r) => (r.bracket = inBrackets(grey, w, h, r, pic.scale, dark)));
       // (on a picture: a rule something hangs from is the top edge of a frame or of cells; see hangs)
       if (raw.picture && dark >= 0) seen.rules.forEach((r) => (r.hang = hangs(grey, w, h, r, pic.scale, dark, seen.paper - 0.25 * seen.range) >= 0));
+      if (raw.picture && dark >= 0) seen.rules.forEach((r) => (r.under = printUnder(grey, w, h, r, pic.scale, dark)));
       grey = null;
       ms.find = Date.now() - t;
       await new Promise((r) => setTimeout(r, 0));
@@ -485,6 +510,7 @@
         const ln = { x0: at.x(r.x0), x1: at.x(r.x1), y: at.y((r.y0 + r.y1) / 2), t: r.t / pic.sy, bands: bandsOf('rule', i, RULE_SIDES) };
         if (r.bracket) ln.bracket = true;
         if (r.hang) ln.hang = true;
+        if (r.under >= 0) ln.under = at.x(r.under);
         out.lines.push(ln);
         out.segs.push(Object.assign({ o: 'h', a0: ln.x0, a1: ln.x1, c: ln.y, t: ln.t }, r.bracket ? { bracket: true } : null));
       });
@@ -527,5 +553,5 @@
     }
   }
 
-  NS.textread = { page, stop, hangs, ENLARGE, STRIP_PIXELS, WORDS_MS };
+  NS.textread = { page, stop, hangs, printUnder, ENLARGE, STRIP_PIXELS, WORDS_MS };
 })(window.CVPortal);

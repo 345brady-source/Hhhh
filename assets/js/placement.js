@@ -2335,7 +2335,16 @@
     // So is a rule the picture shows a stroke hanging from (textread's hang: the top edge of a frame, a table or a row
     // of cells, the top of a ticked box the finder did not take for a box).
     const edge = (l) => !!l && (!!l.hang || found.some((b) => (Math.abs(l.y - b.y0) <= 1.5 || Math.abs(l.y - b.y1) <= 1.5) && overlap(l.x0, l.x1, b.x0, b.x1) >= 0.8 * (l.x1 - l.x0)));
-    for (let i = mine.length - 1; i >= 0; i--) if (edge(ruleOf(mine[i]))) mine.splice(i, 1);
+    // A footnote rule, as the text rule knows it, given from the picture: a short rule (under 45 % of the page's width)
+    // in the lower part of the page, in the left quarter with nothing read before it on its row, whose first line of
+    // print beneath begins at its left end and runs on unbroken (textread's under) past its right end by more than its
+    // own length and at least 100 pt: a paragraph of small print under it, where a signature line has a short caption.
+    const footRule = (l) => {
+      const len = l.x1 - l.x0;
+      const before = (l.bands && l.bands.before && l.bands.before.s) || '';
+      return typeof l.under === 'number' && len < 0.45 * pg.w && l.y > 0.45 * pg.h && l.x0 < 0.25 * pg.w && !/[\p{L}\p{N}]/u.test(before) && l.under - l.x1 > Math.max(100, len);
+    };
+    for (let i = mine.length - 1; i >= 0; i--) if (edge(ruleOf(mine[i])) || footRule(ruleOf(mine[i]) || {})) mine.splice(i, 1);
     // One line read in pieces: a piece named by no word (the line rules' own 'Text', or two letters or fewer: a speck
     // read on the line) that goes on from a field on the same rule within 9 pt is part of that field, which runs on over it.
     const letters = (t) => String(t || '').replace(/[^\p{L}]/gu, '').length;

@@ -380,6 +380,56 @@ async function shapes(page) {
   });
   line(hang.frame && hang.middle && hang.tick && hang.faint && !hang.alone && !hang.stands && !hang.crosses && !hang.letter && !hang.faint0, `shapes nobody: a rule something hangs from is the top edge of a frame (frame ${hang.frame}, from its middle ${hang.middle}, a ticked box ${hang.tick}, a faint rule followed to its sides ${hang.faint}); a line alone ${hang.alone}, a cell's bottom edge ${hang.stands}, a row border ${hang.crosses}, a letter touching it ${hang.letter}, a piece with paper beside it ${hang.faint0}`);
   line(hang.read === 0 && hang.read0 === 1, `shapes nobody: a rule marked as a frame's top edge gets no field (${hang.read}); the same rule unmarked gets one (${hang.read0})`);
+  // A footnote rule, from the picture (NS.textread.printUnder gives the print under a rule; placement decides), beside
+  // a signature line with its caption, a blank after a label, and the same rule high on the page.
+  const foot = await page.evaluate(() => {
+    const T = window.CVPortal.textread;
+    const P = window.CVPortal.placement;
+    const w = 1224;
+    const h = 1584;
+    const s = 2;
+    const pic = (paint) => {
+      const g = new Uint8Array(w * h).fill(240);
+      const ink = (x0, y0, x1, y1) => {
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g[y * w + x] = 20;
+      };
+      paint(ink);
+      return g;
+    };
+    // words of print: 5 pt high letters 4 pt wide with 1 pt between, words with 3 pt between
+    const words = (ink, x0, x1, y) => {
+      for (let x = x0; x + 8 <= x1; x += 10) if ((x / 10) % 6 !== 5) ink(x, y, x + 7, y + 9);
+    };
+    const r = { x0: 168, x1: 448, y0: 1400, y1: 1402, t: 2 }; // 84 to 224 pt, at 700 pt
+    const under = (g) => T.printUnder(g, w, h, r, s, 130);
+    const res = {
+      // a paragraph of small print under the rule, from its left end to the right margin
+      para: under(pic((ink) => (ink(168, 1400, 447, 1401), words(ink, 170, 1060, 1410)))) / s,
+      // a short caption under the line, and a second column of print 60 pt to the right of it
+      caption: under(pic((ink) => (ink(168, 1400, 447, 1401), words(ink, 170, 300, 1410), words(ink, 420, 700, 1410)))) / s,
+      // the caption alone, with specks of the scan (one pixel each, every 6 pt) on to the right margin
+      specks: under(pic((ink) => {
+        ink(168, 1400, 447, 1401);
+        words(ink, 170, 300, 1410);
+        for (let x = 310; x < 1060; x += 12) ink(x, 1414, x, 1414);
+      })) / s,
+      // nothing under it
+      bare: under(pic((ink) => ink(168, 1400, 447, 1401)))
+    };
+    const band = (t) => ({ s: t || '', conf: t ? 90 : 0 });
+    const bands = (o) => ({ over: band(o && o.over), under: band(o && o.under), before: band(o && o.before), after: band(o && o.after), inside: band(o && o.inside) });
+    const rl = (x0, x1, y) => ({ x0, x1, y, clear: 30, made: 'rule', cut: false, cell: false, table: false });
+    const ln = (x0, x1, y, more) => Object.assign({ x0, x1, y, t: 1, bands: bands() }, more || {});
+    const pg = (items, x0, x1, y, more) => P.read([{ page: 1, w: 612, h: 792, items, rules: [rl(x0, x1, y)], boxes: [], forms: [], pictured: 'picture', approx: true, found: [], words: [], lines: [ln(x0, x1, y, more)], heads: [], reader: 'ok' }], {}).fields.length;
+    const sig = [{ s: 'Signature', x: 85, y: 710, w: 40, h: 7 }];
+    res.read = pg(sig, 84, 224, 700, { under: 534, bands: bands({ under: 'Signature' }) });
+    res.readCaption = pg(sig, 84, 224, 700, { under: 126, bands: bands({ under: 'Signature' }) });
+    res.readLabel = pg([{ s: 'E-mail Address:', x: 84, y: 700, w: 60, h: 7 }], 150, 290, 700, { under: 534, bands: bands({ before: 'E-mail Address:' }) });
+    res.readHigh = pg([{ s: 'Signature', x: 85, y: 210, w: 40, h: 7 }], 84, 224, 200, { under: 534, bands: bands({ under: 'Signature' }) });
+    return res;
+  });
+  line(foot.para > 500 && foot.caption > 140 && foot.caption < 160 && foot.specks > 140 && foot.specks < 160 && foot.bare < 0, `shapes nobody: the print under a rule runs unbroken to the margin under a paragraph (to ${foot.para.toFixed(0)} pt), ends with a short caption beside a second column (${foot.caption.toFixed(0)} pt) or specks of a scan (${foot.specks.toFixed(0)} pt), and is none under a bare rule (${foot.bare})`);
+  line(foot.read === 0 && foot.readCaption === 1 && foot.readLabel === 1 && foot.readHigh === 1, `shapes nobody: a footnote rule gets no field (${foot.read}); a signature line with its caption (${foot.readCaption}), a blank after its label (${foot.readLabel}) and the same rule high on the page (${foot.readHigh}) each get one`);
 }
 
 /* ---------------- the owner's form ---------------- */
