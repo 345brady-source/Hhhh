@@ -432,7 +432,7 @@
     });
     const hs = raw.segs.filter((s) => s.o === 'h' && s.a1 - s.a0 >= 6);
     const vs = raw.segs.filter((s) => s.o === 'v' && s.a1 - s.a0 >= 6);
-    hs.forEach((s) => pieces.push({ x0: s.a0, x1: s.a1, y: s.c, low: s.c + s.t / 2, n: 0, made: 'rule', frame: !!s.frame }));
+    hs.forEach((s) => pieces.push(Object.assign({ x0: s.a0, x1: s.a1, y: s.c, low: s.c + s.t / 2, n: 0, made: 'rule', frame: !!s.frame }, s.bracket ? { bracket: true } : null)));
     pieces.sort((a, b) => a.y - b.y || a.x0 - b.x0);
     const lines = [];
     pieces.forEach((p) => {
@@ -445,7 +445,8 @@
         m.low = Math.max(m.low, p.low);
         if (m.made.indexOf(p.made) < 0) m.made += ' and ' + p.made;
         m.n += p.n;
-      } else lines.push({ x0: p.x0, x1: p.x1, y: p.y, low: p.low, made: p.made, n: p.n, frame: !!p.frame });
+        if (p.bracket) m.bracket = true;
+      } else lines.push({ x0: p.x0, x1: p.x1, y: p.y, low: p.low, made: p.made, n: p.n, frame: !!p.frame, bracket: !!p.bracket });
     });
     const drafting = /\[[^\]]*\b(insert|placeholder|to be (completed|inserted|provided|determined|confirmed)|tbd|drafting note|note to draft)\b/i.test(out.items.map((it) => it.s).join(' '));
     const margin = words.length ? Math.min.apply(null, words.map((g) => g.x0)) : 0;
@@ -470,13 +471,14 @@
       const beside = ink.filter((g) => g.u !== '_' && sameLine(g, l)).sort((a, b) => a.x0 - b.x0);
       const left = beside.filter((g) => g.x1 <= l.x0 + 1).sort((a, b) => b.x1 - a.x1)[0];
       const right = beside.filter((g) => g.x0 >= l.x1 - 1).sort((a, b) => a.x0 - b.x0)[0];
-      const open = left && left.u === '[' && l.x0 - left.x1 < 12;
-      const close = right && right.u === ']' && right.x0 - l.x1 < 12;
+      // (a line read from a picture says itself that it stands in brackets: NS.textread finds them from the pixels)
+      const open = l.bracket || (left && left.u === '[' && l.x0 - left.x1 < 12);
+      const close = l.bracket || (right && right.u === ']' && right.x0 - l.x1 < 12);
       let bracketed = false;
       if (open || close) {
         if (drafting || open !== close) return;
-        const before = beside.filter((g) => g.x1 <= left.x0 + 0.5);
-        const after = beside.filter((g) => g.x0 >= right.x1 - 0.5);
+        const before = beside.filter((g) => g.x1 <= (left ? left.x0 : l.x0) + 0.5);
+        const after = beside.filter((g) => g.x0 >= (right ? right.x1 : l.x1) - 0.5);
         const lastBefore = before[before.length - 1];
         // Running prose: a dozen letters or more before it and words after it, on a line with no other bracketed blank
         // (a row of them is a row of boxes).
@@ -498,6 +500,8 @@
           const roof = hs.filter((s) => s.c < l.y - 6 && s.c > l.y - 80 && ov(s.a0, s.a1, a, b) > 0.5 * (b - a)).sort((p, q) => q.c - p.c)[0];
           const top = roof ? roof.c : l.y - 20;
           if (ink.some((g) => (g.x0 + g.x1) / 2 > a && (g.x0 + g.x1) / 2 < b && g.y > top && g.y - 0.4 * g.h < l.y + 1)) continue;
+          // On a page read from its picture a line printed in the cell is print in it too (its characters are a stroke there).
+          if (raw.pictured && lines.some((o) => o !== l && !o.frame && o.y > top + 1 && o.y < l.y - 1 && o.x0 >= a - 1 && o.x1 <= b + 1)) continue;
           out.rules.push({ x0: a + 2, x1: b - 2, y: l.y, clear: Math.max(0, l.y - top - 1), made: 'cell', cut: false, cell: true, table: true });
         }
         return;

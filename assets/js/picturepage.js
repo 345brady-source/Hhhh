@@ -479,7 +479,15 @@
     zoneRead: 70, // of a lettered line this much is read: its letter and the words that decide come first
     blockRead: 60, // of a block of the margin column this much is read: a numbered heading is named in its first lines
     word1: 10, // a zone narrower than this ...
-    word2: 3 // ... or lower than this holds no word (a rule across the page is lower)
+    word2: 3, // ... or lower than this holds no word (a rule across the page is lower)
+    labelLeft: 12, // a label over a free rule starts within this of the rule's left end (and may run on past its right end)
+    stackGap: 30, // free rules one under another this close, overlapping across, are one stack (a block of By / Name / Title)
+    stackLeast: 3, // a stack of at least this many free rules has a block heading over it ...
+    blockAbove: 48, // ... read from this far above its first rule's row ...
+    blockLines: 3, // ... at most this many lines of print, from the bottom up ...
+    blockGap: 14, // ... while the clear paper between two of them is at most this
+    paraLines: 3, // the lines of a paragraph read over a blank that ends it
+    spread: 16 // the widest gap between the words of a label or a paragraph line read whole (a justified line spreads them)
   };
   const MERGE = 1.5; // bands are merged while a strip's area stays within this many times the sum of its bands
   const ROW_MERGE = 3; // ... and bands of one row while it stays within this many times
@@ -494,7 +502,8 @@
    *              paint: [the parts of boxes and rules inside the strip, to be painted white before it is read] }]
    *   columns [{ boxes: [indices, top to bottom], x0, y0, x1, y1 }]   two or more places with the same left and right edges
    *   margin  { x0, x1, main } the margin column (x0 to x1) and where the page's main area begins, or null
-   *   zones   [{ kind 'margin' or 'letter', x0, y0, x1, y1, line }]   heading candidates; their text decides later
+   *   zones   [{ kind 'margin', 'letter' or 'block', x0, y0, x1, y1, line }]   heading candidates; their text decides later
+   *           ('block': the lines of print over a stack of free rules, where a signature block names whose it is)
    * Every box gets col (its column's index, or -1). Only places get bands; a band with no print is dropped.
    */
   function bands(page, opts) {
@@ -575,7 +584,7 @@
      * How far the text line in rows [y0, y1) that holds print at columns [x0, x1) runs, left and right: words follow
      * each other with less than REACH.word of clear paper between them; a box or a rule ends the line.
      */
-    const lineOf = (y0, y1, x0, x1) => {
+    const lineOf = (y0, y1, x0, x1, gapPt) => {
       let lo = 0;
       let hi = w;
       keep.forEach((k) => {
@@ -583,7 +592,7 @@
         if (k.x1 <= x0 && k.x1 > lo) lo = k.x1;
         if (k.x0 >= x1 && k.x0 < hi) hi = k.x0;
       });
-      const most = pt(REACH.word);
+      const most = pt(gapPt || REACH.word);
       let a = x0;
       for (let x = x0 - 1, clear = 0; x >= lo && clear <= most; x--) {
         if (ink(x, y0, x + 1, y1)) (a = x), (clear = 0);
@@ -607,6 +616,8 @@
         let changed = false;
         keep.forEach((k) => {
           if ((k.kind === own.kind && k.of === own.of) || empty(r) || !meets(r, k)) return;
+          // the box a place stands inside (a table's cell round a short line) is no obstacle to its own bands
+          if (k.x0 <= own.x0 && k.x1 >= own.x1 && k.y0 <= own.y0 && k.y1 >= own.y1) return;
           changed = true;
           const kx = (k.x0 + k.x1) / 2;
           const ky = (k.y0 + k.y1) / 2;
@@ -724,6 +735,37 @@
       const runs = rowRuns(look).filter(([a, b]) => a < own.y1 - q && b > own.y0 + q && !cutAt(look, a, b));
       return runs.length ? { x0: r.x0, y0: runs[0][0], x1: r.x1, y1: runs[runs.length - 1][1] } : null;
     };
+    // a band beside a free rule whose own rows hold no whole line: the whole text line (looked for a little above and
+    // below) whose print comes down to within 3 pt of the rule, as a label stands on the line it names; a line of print
+    // larger than the band's rows (a bold label with its descenders) is taken whole, at most REACH.line * 1.5 high
+    const ruleRow = (r, own) => {
+      if (empty(r)) return null;
+      const look = { x0: r.x0, y0: Math.max(0, r.y0 - pt(6)), x1: r.x1, y1: Math.min(h, r.y1 + pt(6)) };
+      const runs = rowRuns(look).filter(([a, b]) => a < own.y1 + pt(REACH.ruleDown) && b > own.y0 - pt(3) && b - a <= pt(1.5 * REACH.line) && !cutAt(look, a, b));
+      return runs.length ? trim({ x0: r.x0, y0: runs[0][0], x1: r.x1, y1: runs[runs.length - 1][1] }) : null;
+    };
+    // A free rule with words before it on its row, under a line of print that runs on past both its ends, is a blank at
+    // the end of a paragraph, and its label is the paragraph: over it the paragraph's lines are read whole, across the
+    // text, from the bottom up (at most REACH.paraLines, each parted from the next by less than half a line of paper).
+    const paragraph = (over, lead, own) => {
+      const ln = lineOf(over.y0, over.y1, Math.min(over.x0, lead.x0), over.x1, REACH.spread);
+      if (ln.x0 > lead.x0 + pt(REACH.word) || ln.x1 < own.x1 + pt(REACH.word)) return null;
+      const r = { x0: ln.x0, y0: Math.max(0, over.y0 - pt(REACH.blockAbove)), x1: ln.x1, y1: over.y1 };
+      clip(r, 'up', own);
+      if (empty(r)) return null;
+      // (the band's own line ends the paragraph at the foot: only a line cut at the top is left out)
+      const runs = rowRuns(r).filter(([a, b]) => !(a === r.y0 && a > 0 && ink(r.x0, a - 1, r.x1, a) > 0) && b - a <= pt(1.5 * REACH.line));
+      if (!runs.length) return null;
+      let k = runs.length - 1;
+      let top = runs[k][0];
+      for (let n = 1; k > 0 && n < REACH.paraLines; n++) {
+        const lineH = runs[k][1] - runs[k][0];
+        if (runs[k][0] - runs[k - 1][1] >= 0.5 * lineH) break;
+        k--;
+        top = runs[k][0];
+      }
+      return trim({ x0: r.x0, y0: top, x1: r.x1, y1: runs[runs.length - 1][1] });
+    };
     const parts = [];
     const add = (kind, of, side, r) => r && parts.push({ of, kind, side, x0: r.x0, y0: r.y0, x1: r.x1, y1: r.y1 });
     // over or under: cut at a text line wider than its owner by more than the owner's own width (running prose)
@@ -734,7 +776,13 @@
       if (dir === 'up') runs.reverse();
       const kept = [];
       for (let i = 0; i < runs.length; i++) {
-        if (cutAt(r, runs[i][0], runs[i][1])) {
+        const long = own.kind === 'rule' && own.x1 - own.x0 > pt(REACH.longRule);
+        if (cutAt(r, runs[i][0], runs[i][1]) && own.kind === 'rule' && dir === 'down' && long && !kept.length && runs[i][1] === r.y1) {
+          // the first line under a long free rule, cut by the band's far edge: taken whole (see below)
+          let b = runs[i][1];
+          while (b < h && b < r.y1 + pt(8) && ink(r.x0, b, r.x1, b + 1) > 0) b++;
+          runs[i] = [runs[i][0], b];
+        } else if (cutAt(r, runs[i][0], runs[i][1])) {
           // a line the band's far edge cuts through: left out of a box's band; over a free rule taken whole, since the
           // line rules look for print up to REACH.ruleOverFar above a rule
           if (own.kind !== 'rule' || dir !== 'up') continue;
@@ -749,8 +797,12 @@
         // mark that opens the print under a footnote rule; running text is cut only from the bands of a box)
         if (own.kind === 'box' && ln.x1 - ln.x0 > 2 * (own.x1 - own.x0)) break;
         // under a free rule longer than REACH.longRule, a text line nearly as wide as the rule is the next line of the
-        // page (a heading or running text), not a caption of the rule
-        if (own.kind === 'rule' && dir === 'down' && own.x1 - own.x0 > pt(REACH.longRule) && ln.x1 - ln.x0 >= 0.8 * (own.x1 - own.x0)) break;
+        // page (a heading or running text), not a caption of the rule: only that first line is read (the line rules
+        // look at what stands right under a rule: a note in the sponsor's brackets opens there), nothing under it
+        if (own.kind === 'rule' && dir === 'down' && own.x1 - own.x0 > pt(REACH.longRule) && ln.x1 - ln.x0 >= 0.8 * (own.x1 - own.x0)) {
+          if (!kept.length) kept.push(t);
+          break;
+        }
         kept.push(t);
       }
       if (!kept.length) return null;
@@ -761,14 +813,21 @@
         const walls = boxes.reduce((n, b) => (b.y0 - tol <= own.y1 && b.y1 + tol >= own.y0 ? n + (b.x0 >= own.x0 - tol && b.x0 <= own.x1 + tol) + (b.x1 >= own.x0 - tol && b.x1 <= own.x1 + tol) : n), 0);
         if (walls < 2) kept.length = 1;
       }
-      return trim({ x0: r.x0, y0: Math.min.apply(null, kept.map((t) => t.y0)), x1: r.x1, y1: Math.max.apply(null, kept.map((t) => t.y1)) });
+      const t = trim({ x0: r.x0, y0: Math.min.apply(null, kept.map((t) => t.y0)), x1: r.x1, y1: Math.max.apply(null, kept.map((t) => t.y1)) });
+      // A label over a free rule that starts where the rule starts is read whole: it may run on past the rule's right
+      // end (its closing words and colon decide that it is a label), up to the rule's own width again.
+      if (t && own.kind === 'rule' && dir === 'up' && t.x0 - own.x0 <= pt(REACH.labelLeft)) {
+        const ln = lineOf(t.y0, t.y1, t.x0, t.x1, REACH.spread);
+        if (ln.x1 > t.x1) t.x1 = Math.min(w, ln.x1, own.x1 + (own.x1 - own.x0));
+      }
+      return t;
     };
     // before on its row: cut at the margin; a text line that runs on past the band's reach is running prose
     const before = (r, own, prose) => {
       if (margin && own.x0 >= margin.main && r.x0 < margin.main) (r.x0 = margin.main), (own.edge = true);
       const reach = r.x0;
       clip(r, 'left', own);
-      let t = own.kind === 'box' ? rowOf(r, own) : whole(r);
+      let t = own.kind === 'box' ? rowOf(r, own) : whole(r) || ruleRow(r, own);
       if (t && own.kind === 'box') {
         Object.assign(r, { y0: t.y0, y1: t.y1 });
         clip(r, 'left', own);
@@ -816,8 +875,11 @@
       add('rule', i, 'before', before({ x0: ru.x0 - pt(REACH.ruleBefore), y0, x1: ru.x0 - 1, y1 }, Object.assign({}, own), false));
       const after = { x0: ru.x1 + 1, y0, x1: ru.x1 + pt(REACH.ruleAfter), y1 };
       clip(after, 'right', own);
-      add('rule', i, 'after', whole(after));
-      add('rule', i, 'over', upDown({ x0: ru.x0, y0: ru.y0 - pt(REACH.ruleOverFar), x1: ru.x1, y1: ru.y0 - Math.max(1, pt(REACH.ruleOverNear)) }, 'up', own));
+      add('rule', i, 'after', whole(after) || ruleRow(after, own));
+      let over = upDown({ x0: ru.x0, y0: ru.y0 - pt(REACH.ruleOverFar), x1: ru.x1, y1: ru.y0 - Math.max(1, pt(REACH.ruleOverNear)) }, 'up', own);
+      const lead = parts.find((q) => q.kind === 'rule' && q.of === i && q.side === 'before');
+      if (over && lead) over = paragraph(over, lead, own) || over;
+      add('rule', i, 'over', over);
       add('rule', i, 'under', upDown({ x0: ru.x0, y0: ru.y1 + 1, x1: ru.x1, y1: ru.y1 + pt(REACH.ruleUnder) }, 'down', own));
     });
 
@@ -1008,6 +1070,43 @@
         zones.push({ kind: 'letter', x0, y0, x1: end, y1 });
       });
     }
+    // A block heading over a stack of free rules: the stack's rules stand one under another (each within
+    // REACH.stackGap of the one above, overlapping it across by half the shorter); over the first, the lines of print
+    // from the bottom up (whole lines, at most REACH.blockLines, parted by at most REACH.blockGap) up to REACH.blockAbove
+    // above its row, from the left end of the stack's labels to the stack's right end.
+    const stacks = [];
+    rules
+      .map((ru, i) => ({ ru, i }))
+      .sort((a, b) => a.ru.y0 - b.ru.y0 || a.ru.x0 - b.ru.x0)
+      .forEach((e) => {
+        const st = stacks.find((k) => {
+          const last = k[k.length - 1].ru;
+          return e.ru.y0 - last.y1 > 0 && e.ru.y0 - last.y1 <= pt(REACH.stackGap) && Math.min(e.ru.x1, last.x1) - Math.max(e.ru.x0, last.x0) >= 0.5 * Math.min(e.ru.x1 - e.ru.x0, last.x1 - last.x0);
+        });
+        if (st) st.push(e);
+        else stacks.push([e]);
+      });
+    stacks.forEach((st) => {
+      if (st.length < REACH.stackLeast) return;
+      const first = st[0];
+      const mine = parts.filter((q) => q.kind === 'rule' && st.some((e) => e.i === q.of));
+      const left = Math.min.apply(null, mine.filter((q) => q.side === 'before').map((q) => q.x0).concat(st.map((e) => e.ru.x0)));
+      const right = Math.max.apply(null, st.map((e) => e.ru.x1));
+      const roof = Math.min.apply(null, mine.filter((q) => q.of === first.i).map((q) => q.y0).concat(first.ru.y0 - pt(REACH.ruleUp)));
+      const r = { x0: left, y0: Math.max(0, roof - pt(REACH.blockAbove)), x1: right, y1: roof - 1 };
+      clip(r, 'up', { x0: first.ru.x0, y0: first.ru.y0, x1: first.ru.x1, y1: first.ru.y1, kind: 'rule', of: first.i });
+      if (empty(r)) return;
+      const runs = rowRuns(r).filter(([a, b]) => !cutAt(r, a, b) && b - a <= pt(1.5 * REACH.line));
+      const kept = [];
+      for (let k = runs.length - 1; k >= 0 && kept.length < REACH.blockLines; k--) {
+        if (kept.length && kept[kept.length - 1][0] - runs[k][1] > pt(REACH.blockGap)) break;
+        if (!kept.length && roof - runs[k][1] > pt(REACH.blockGap)) break;
+        kept.push(runs[k]);
+      }
+      if (!kept.length) return;
+      const t = trim({ x0: r.x0, y0: kept[kept.length - 1][0], x1: r.x1, y1: kept[0][1] });
+      if (t && t.x1 - t.x0 >= pt(REACH.word1)) zones.push(Object.assign({ kind: 'block' }, t));
+    });
     zones.forEach((z) => (z.line = oneLine(z)));
     zones.sort(order);
     zones.forEach((z) => grow(z, out.strips.concat(zones)));

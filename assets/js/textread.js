@@ -265,6 +265,29 @@
     return { boxes: boxes.sort(order), rules: rules.sort(order) };
   }
 
+  /**
+   * A short free rule set in brackets ("[____]"), read from the picture: at each end an upright stroke as high as a line
+   * of print stands on the rule's row (from 5 to 15 pt above it, ending within 2 pt under it), within 4 pt outside the
+   * end. Brackets are print the engine seldom reads alone; the line rules ask whether a line stands in brackets.
+   */
+  function inBrackets(grey, w, h, r, s, dark) {
+    if ((r.x1 - r.x0) / s > 72) return false;
+    const row = Math.max(0, Math.round(r.y0 - s));
+    const end = (xa, xb) => {
+      for (let x = Math.max(0, xa); x < Math.min(w, xb); x++) {
+        if (grey[row * w + x] > dark) continue;
+        let top = row;
+        while (top > 0 && grey[(top - 1) * w + x] <= dark) top--;
+        let foot = row;
+        while (foot < h - 1 && grey[(foot + 1) * w + x] <= dark) foot++;
+        const up = (r.y0 - top) / s;
+        if (up >= 5 && up <= 15 && (foot - r.y1) / s <= 2) return true;
+      }
+      return false;
+    };
+    return end(Math.round(r.x0 - 4 * s), Math.round(r.x0 + s)) && end(Math.round(r.x1 - s), Math.round(r.x1 + 4 * s));
+  }
+
   /** Words in reading order (by line, then left to right) as one text, with the confidence of the least sure. */
   function said(words) {
     if (!words.length) return { s: '', conf: 0 };
@@ -308,6 +331,9 @@
         return trace(0);
       }
       where = NS.picturepage.bands(Object.assign({ grey, w, h, pxPerPt: pic.scale }, seen));
+      // (a page of drawings is drawn black on white: half way is the print's edge)
+      const dark = raw.picture ? (seen.paper > 0 && seen.range > 0 ? seen.paper - 0.5 * seen.range : -1) : 128;
+      if (dark >= 0) seen.rules.forEach((r) => (r.bracket = inBrackets(grey, w, h, r, pic.scale, dark)));
       grey = null;
       ms.find = Date.now() - t;
       await new Promise((r) => setTimeout(r, 0));
@@ -358,10 +384,14 @@
           }
         };
         await Promise.all([lane(), lane()]);
+        // Print a zone shares with a strip is read twice: the page keeps the strip's reading of it (the zone's words
+        // still name its heading).
+        const stripsPt = where.strips.map(toPt);
+        const twice = (cx, cy) => stripsPt.some((r) => cx > r.x0 && cx < r.x1 && cy > r.y0 && cy < r.y1);
         todo.forEach((job, i) => {
           if (!got[i]) return;
-          got[i].glyphs.forEach((g) => read.glyphs.push(g));
-          got[i].words.forEach((q) => read.words.push(q));
+          got[i].glyphs.forEach((g) => (!job.zone || !twice((g.x0 + g.x1) / 2, g.y - 0.3 * g.h)) && read.glyphs.push(g));
+          got[i].words.forEach((q) => (!job.zone || !twice((q.x0 + q.x1) / 2, (q.y0 + q.y1) / 2)) && read.words.push(q));
           // Each word goes to the part of its strip whose rectangle holds its centre (or the nearest, within the
           // paper the strip was grown by); a word in no part of its strip belongs to another strip and is dropped.
           const owners = job.zone ? [{ key: job.zone, r: toPt(job.zone) }] : job.parts.map((q) => ({ key: q, r: toPt(q) }));
@@ -400,13 +430,16 @@
         const m = { x0: at.x(r.x0 + 0.5), y0: at.y(r.y0 + 0.5), x1: at.x(r.x1 - 0.5), y1: at.y(r.y1 - 0.5), t: t0 };
         const inside = read.words.filter((q) => q.letters && (q.x0 + q.x1) / 2 > b.x0 && (q.x0 + q.x1) / 2 < b.x1 && (q.y0 + q.y1) / 2 > b.y0 && (q.y0 + q.y1) / 2 < b.y1);
         out.found.push({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, small: r.small, ink: r.ink, shared: r.shared, place: r.place, why: r.why, col: r.col, inside: inside.map((q) => q.s).join(' '), bands: bandsOf('box', i, SIDES) });
+        // A box full of print (a letter or a mark the finder took for a frame) is print to the line rules, not a frame.
+        if (r.why === 'filled') return;
         out.rects.push(m);
         out.segs.push({ o: 'h', a0: m.x0, a1: m.x1, c: m.y0, t: t0, frame: true }, { o: 'h', a0: m.x0, a1: m.x1, c: m.y1, t: t0, frame: true }, { o: 'v', a0: m.y0, a1: m.y1, c: m.x0, t: t0 }, { o: 'v', a0: m.y0, a1: m.y1, c: m.x1, t: t0 });
       });
       seen.rules.forEach((r, i) => {
         const ln = { x0: at.x(r.x0), x1: at.x(r.x1), y: at.y((r.y0 + r.y1) / 2), t: r.t / pic.sy, bands: bandsOf('rule', i, RULE_SIDES) };
+        if (r.bracket) ln.bracket = true;
         out.lines.push(ln);
-        out.segs.push({ o: 'h', a0: ln.x0, a1: ln.x1, c: ln.y, t: ln.t });
+        out.segs.push(Object.assign({ o: 'h', a0: ln.x0, a1: ln.x1, c: ln.y, t: ln.t }, r.bracket ? { bracket: true } : null));
       });
       where.columns.forEach((c, k) => {
         const topBox = c.boxes[0];
@@ -417,6 +450,8 @@
       where.zones.forEach((z) => {
         const t = said(heard.get(z) || []);
         const r = toPt(z);
+        // A block heading over a stack of free rules is read for its words alone (they decide whose block it is).
+        if (z.kind === 'block') return;
         if (z.kind === 'letter') {
           // one list mark (a capital, or the digit the engine may read a capital as: B as 8, at most two such), its stop or bracket, a word;
           // this decides that the line is a heading and never changes the text kept
@@ -433,6 +468,8 @@
       else {
         // A page of drawings keeps its drawn geometry and the three rules of drawn().
         const d = drawn(raw, read);
+        // a drawn line found standing in brackets says so, as on a picture
+        out.lines.forEach((l) => l.bracket && d.segs.forEach((sg) => sg.o === 'h' && !sg.frame && Math.abs(sg.c - l.y) < 1.5 && sg.a0 < l.x1 && sg.a1 > l.x0 && (sg.bracket = true)));
         Object.assign(out, { glyphs: d.glyphs, segs: d.segs, rects: d.rects });
       }
       return trace(todo.length);
