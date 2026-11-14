@@ -1280,6 +1280,10 @@
    *   investorPages, firmPages    the pages with a signature line for the investor, and for the firm
    *   otherPages, others          the pages with a place for somebody else (isOther, any kind), and how many such places
    *   otherSignaturePages         of those, the pages with a signature line of somebody else's
+   *   coSignaturePages            the pages with a signature line of the co-investor's (role co); investorPages holds
+   *                               only the investor's own
+   *   notEmpty                    on pages read from their picture, the boxes that got no field because they already
+   *                               hold print or writing
    */
   /**
    * A page with no text, read from its picture (pg.pictured, see NS.textread): the words are recognised, so a field
@@ -1329,7 +1333,7 @@
   // "initial" counts as the verb (initial here, initial each, please initial to ...), never as the adjective before a noun.
   const INITIAL_NEXT = ['', 'here', 'each', 'below', 'where', 'to', 'box', 'line', 'page'];
   // A read word spelt exactly as another word is never a near match of a known word.
-  const NOT_NEAR = ['signatory', 'signatories'];
+  const NOT_NEAR = ['signatory', 'signatories', 'advisory', 'prepared', 'broken'];
   const lettersOf = (s) => String(s == null ? '' : s).normalize('NFKC').toLowerCase().replace(/[^\p{L}]/gu, '');
   const near = (a, b) => (NS.picturepage && NS.picturepage.near ? NS.picturepage.near(a, b) : lettersOf(a) && lettersOf(a) === lettersOf(b) ? 0 : -1);
   /**
@@ -1358,24 +1362,101 @@
     const sig = says(text, KIND_WORDS.signature);
     return sig ? { kind: 'signature', changes: sig.changes } : null;
   }
+  /*
+   * Who a caption or a heading says completes a place, from one list of deciding words derived from the reader's own:
+   * a third party is a word OTHER_PARTY holds (OTHER_LIST spelt out), a second investor "co" joined to a noun the
+   * pattern CO_INVESTOR names after it (CO_INVESTOR stays the exact test), the investor one of four nouns.
+   */
+  const CO_NOUNS = ['subscriber', 'investor', 'purchaser', 'signer', 'signatory', 'owner', 'applicant'];
+  const INVESTOR_NOUNS = ['investor', 'subscriber', 'purchaser', 'applicant'];
+  /** The plain spellings of a word of OTHER_LIST: advis[eo]r is adviser and advisor, registered rep(resentative)? both forms. */
+  const spell = (w) => {
+    const set = w.match(/^(.*?)\[(\w+)\](.*)$/);
+    if (set) return set[2].split('').reduce((all, c) => all.concat(spell(set[1] + c + set[3])), []);
+    const opt = w.match(/^(.*?)\((\w+)\)\?(.*)$/);
+    return opt ? spell(opt[1] + opt[3]).concat(spell(opt[1] + opt[2] + opt[3])) : [w];
+  };
+  const PARTY_WORDS = {
+    co: CO_NOUNS.map((n) => `co${n}`),
+    other: OTHER_LIST.reduce((all, w) => all.concat(spell(w)), []),
+    investor: INVESTOR_NOUNS.reduce((all, n) => all.concat([n, `${n}s`]), []),
+    // Counted in a heading only, never in a box's own caption (a kind of account, more information, an address's second line).
+    bareCo: ['joint', 'second', 'additional'],
+    bareOther: ['manager', 'representative']
+  };
+  // A caption names a third party as the one who completes its place only when it says what they do there; otherwise
+  // it asks the person completing the section for something about them (their name, their account number).
+  const ACTS = ['signature', 'sign', 'signed', 'initials', 'stamp', 'seal', 'completed'];
+  // The deciding lists, for the checks that hold them against the exact patterns (read only).
+  NS.pictureWords = Object.freeze({ PARTY_WORDS, KIND_WORDS, CO_INVESTOR, OTHER_PARTY });
+  /**
+   * Who a text says completes a place: { who: 'co' | 'other' | 'investor' | '', party (for 'other', a name partyName
+   * gives), changes (letters changed in the deciding word: above 0 a near match) }. where: 'caption' (a box's own
+   * bands), 'column' (the heading over a column) or 'heading' (a lettered line, a margin heading). A second investor
+   * is tested before a third party, and both before the investor.
+   */
+  function partyOf(text, where) {
+    // A remark in brackets in a box's own caption qualifies it (if applicable, required, not the same person as ...);
+    // it never names who completes the box. A heading's remark does ("to be completed by ...").
+    const t = tidy(where === 'caption' ? String(text || '').replace(/[([][^)\]]*([)\]]|$)/g, ' ') : text);
+    const none = { who: '', party: '', changes: 0 };
+    if (!t) return none;
+    const low = t.toLowerCase().replace(/[‐-―]/g, '-');
+    const ws = t.split(/[\s/]+/).filter((x) => lettersOf(x));
+    const best = (d, prev) => (d >= 0 && (prev < 0 || d < prev) ? d : prev);
+    // A second investor: the exact pattern, else "co" and a noun read with a few letters changed; in a heading also the
+    // bare words, as they stand over a column and with an investor noun after them elsewhere.
+    let co = CO_INVESTOR.test(low) ? 0 : -1;
+    ws.forEach((x, i) => {
+      const L = lettersOf(x);
+      if (L.length >= 6 && L.slice(0, 2) === 'co') PARTY_WORDS.co.forEach((k) => (co = best(near(L, k), co)));
+      if (where === 'caption' || PARTY_WORDS.bareCo.indexOf(L) < 0) return;
+      if (where === 'column') co = best(0, co);
+      else if (ws[i + 1]) PARTY_WORDS.investor.forEach((k) => (co = best(near(ws[i + 1], k), co)));
+    });
+    if (co >= 0) return { who: 'co', party: '', changes: co };
+    // A third party: otherParty's exact test, else a word of the list read with a few letters changed (never among
+    // words of the firm or of anyone authorised); in a heading also the bare words. In a caption only with an act.
+    let party = otherParty(t.replace(/[()[\]{}]/g, ' '));
+    let oc = party ? 0 : -1;
+    if (!party && !FIRM_WORDS.test(low) && !/\bauthori[sz]ed\b/.test(low)) {
+      const m = says(t, PARTY_WORDS.other);
+      if (m) (party = partyName(m.word)), (oc = m.changes);
+    }
+    if (!party && where !== 'caption') {
+      const m = says(t, PARTY_WORDS.bareOther);
+      if (m) (party = partyName(m.word)), (oc = m.changes);
+    }
+    if (party && (where !== 'caption' || says(t, ACTS))) return { who: 'other', party, changes: oc };
+    let inv = -1;
+    ws.forEach((x) => PARTY_WORDS.investor.forEach((k) => (inv = best(near(x, k), inv))));
+    return inv >= 0 ? { who: 'investor', party: '', changes: inv } : none;
+  }
   // A band that reads as running text (a sentence of six words or more) is no caption.
   const prose = (s) => s.split(' ').filter(Boolean).length >= 6 && /[.!?][”"’')]?$/.test(s);
+  // A band of one or two words that only name a person is the heading over a column of boxes, not a box's caption.
+  const heading = (s) => s.split(' ').length <= 2 && s.split(' ').every((x) => partyOf(x, 'column').who);
   // What a box field was decided by, kept beside it (never on the field): its box, whether any word by it was read,
   // whether a word decided its kind, and the signature a date stands beside.
   const BOXED = new WeakMap();
   /** The field of one found box (K1 to K6); its owner is decided afterwards (fromPicture). */
   function boxField(pg, b, found) {
-    const band = (k) => {
+    const raw = (k) => {
       const v = b.bands && b.bands[k];
       const s = tidy(v ? v.s : '');
       return s && !prose(s) ? s : '';
     };
+    const band = (k) => (heading(raw(k)) ? '' : raw(k));
     const w = b.x1 - b.x0;
     const hh = b.y1 - b.y0;
-    const info = { b, read: false, word: false, sig: null, date: false };
+    // Its own words, read for who completes it (O1): every band, a heading over its column included.
+    const own = ['over', 'under', 'before', 'after', 'inside'].map(raw).filter(Boolean);
+    const info = { b, read: false, word: false, sig: null, date: false, own };
     // K1: a small square is a tick box, its own rectangle, named by the words after it, else before it.
     if (b.small && Math.abs(w - hh) <= 0.2 * Math.max(w, hh)) {
-      const cap = band('after') || band('before');
+      // A tick box's words are often a whole sentence: they are its name all the same.
+      const words = (k) => tidy(b.bands && b.bands[k] ? b.bands[k].s : '');
+      const cap = words('after') || words('before');
       info.read = !!cap;
       const p = { type: 'checkbox', kind: 'checkbox', role: 'investor', page: pg.page, x: b.x0, y: b.y0, w, h: hh, label: clean(cap) || 'Tick box', required: false, conf: 'medium', why: cap ? WHY_SLANT : WHY_UNREAD, boxed: true };
       BOXED.set(p, info);
@@ -1424,9 +1505,11 @@
       // A page whose letters are drawings: the line rules' proposals stand, each marked; a found box that no proposal
       // covers gets its field.
       mine.forEach((p) => mark(p, WHY_WORDS));
-      found.forEach((b) => {
-        if (b.place === false || mine.some((p) => overlap(p.x, p.x + p.w, b.x0, b.x1) > 0.5 * Math.min(p.w, b.x1 - b.x0) && overlap(p.y, p.y + p.h, b.y0 - 2, b.y1 + 2) > 0.3 * Math.min(p.h, b.y1 - b.y0 + 4))) return;
-        mine.push(boxField(pg, b, found));
+      const drawn = found.filter((b) => b.place !== false && !mine.some((p) => overlap(p.x, p.x + p.w, b.x0, b.x1) > 0.5 * Math.min(p.w, b.x1 - b.x0) && overlap(p.y, p.y + p.h, b.y0 - 2, b.y1 + 2) > 0.3 * Math.min(p.h, b.y1 - b.y0 + 4))).map((b) => boxField(pg, b, found));
+      owners(pg, drawn);
+      drawn.forEach((p) => {
+        mark(p, WHY_WORDS);
+        mine.push(p);
       });
       return 0;
     }
@@ -1475,15 +1558,86 @@
       info.word = true;
       info.sig = sig;
     });
+    owners(pg, made);
     made.forEach((p) => mark(p, WHY_SLANT));
     mine.forEach((p) => mark(p, WHY_SLANT));
     made.forEach((p) => mine.push(p));
     return notEmpty;
   }
+  /**
+   * Who completes each box field of a picture page (O1 to O7), in this fixed order: its own caption; the heading of its
+   * column (a box in no column that stands beside a column over the same rows is part of it); the nearest lettered line
+   * above it, down to the next lettered line or margin heading; the nearest margin heading above it; else the investor.
+   * One column of boxes is one person's; a date beside a signature takes the signature's owner. A second investor's
+   * field is the co-investor's (coInvestor), a third party's is nobody's (asOther).
+   */
+  function owners(pg, made) {
+    const heads = pg.heads || [];
+    const above = (kind, b) => heads.filter((hd) => hd.kind === kind && hd.y0 <= b.y0 + 2).sort((p, q) => q.y0 - p.y0)[0];
+    const colHead = (c) => heads.find((hd) => hd.kind === 'column' && hd.col === c);
+    const cols = {};
+    (pg.found || []).forEach((b) => b.place !== false && b.col >= 0 && (cols[b.col] = cols[b.col] || []).push(b));
+    const sideOf = (b) =>
+      Object.keys(cols).find((c) => {
+        const col = cols[c];
+        const top = Math.min.apply(null, col.map((o) => o.y0));
+        const end = Math.max.apply(null, col.map((o) => o.y1));
+        const x0 = Math.min.apply(null, col.map((o) => o.x0));
+        const x1 = Math.max.apply(null, col.map((o) => o.x1));
+        if (Math.abs(b.y0 - top) > 6 || Math.abs(b.y1 - end) > 6 || (b.x0 < x1 && b.x1 > x0)) return false;
+        const gap = b.x0 >= x1 ? [x1, b.x0] : [b.x1, x0];
+        return !(pg.found || []).some((o) => o !== b && o.place !== false && o.x0 >= gap[0] - 0.5 && o.x1 <= gap[1] + 0.5 && overlap(o.y0, o.y1, b.y0, b.y1) > 0);
+      });
+    const firstOf = (list) => list.filter((r) => r.who).sort((p, q) => ({ co: 0, other: 1, investor: 2 })[p.who] - ({ co: 0, other: 1, investor: 2 })[q.who] || p.changes - q.changes)[0];
+    const whose = new Map();
+    made.forEach((p) => {
+      const info = BOXED.get(p);
+      const b = info.b;
+      let r = firstOf(info.own.map((s) => partyOf(s, 'caption')));
+      if (r) r.own = true;
+      const c = b.col >= 0 ? b.col : +sideOf(b);
+      if (!r && c >= 0 && colHead(c)) r = firstOf([partyOf(colHead(c).s, 'column')]);
+      const letter = above('letter', b);
+      const margin = above('margin', b);
+      if (!r && letter && !(margin && margin.y0 > letter.y0)) r = firstOf([partyOf(letter.s, 'heading')]);
+      if (!r && margin) r = firstOf([partyOf(margin.s, 'heading')]);
+      whose.set(p, r || { who: 'investor', party: '', changes: 0 });
+    });
+    // One column of boxes is one person's: where a box is a second investor's by its own caption, so are the others of its kind.
+    made.forEach((p) => {
+      const b = BOXED.get(p).b;
+      if (b.col < 0 || whose.get(p).who === 'co') return;
+      const by = made.find((o) => o.type === p.type && BOXED.get(o).b.col === b.col && whose.get(o).who === 'co' && whose.get(o).own);
+      if (by) whose.set(p, Object.assign({}, whose.get(by), { own: false }));
+    });
+    // O6: a date beside a signature follows the signature's owner.
+    made.forEach((p) => {
+      const sig = BOXED.get(p).sig;
+      if (p.type === 'date' && sig && whose.has(sig)) whose.set(p, whose.get(sig));
+    });
+    made.forEach((p) => {
+      const r = whose.get(p);
+      const near = r.changes > 0;
+      if (r.who === 'co') {
+        // The co-investor's own field (role co, then the co-investor's signer); the caption as read is kept in its name.
+        const type = p.type;
+        const label = p.label;
+        coInvestor(p);
+        Object.assign(p, { type, label: `Co-investor: ${label}`, required: type === 'signature' || type === 'initials' });
+        if (near) p.why = `${p.why || WHY_SLANT} ${WHY_NEAR('Co-investor')}`;
+      } else if (r.who === 'other') {
+        const said = p.why && p.why !== WHY_SLANT && p.why !== WHY_UNREAD ? ` ${p.why}` : '';
+        asOther(p, r.party, false, OTHER_NOTE);
+        const named = partyOf(p.label, 'heading');
+        if (!(named.who === 'other' && named.party === r.party)) p.label = `${r.party}: ${p.label}`;
+        p.why = `${OTHER_NOTE}${said}${near ? ` ${WHY_NEAR(`someone else (${r.party})`)}` : ''}`;
+      }
+    });
+  }
   function read(pages, ctx) {
     const cx = ctx || {};
     const c = { names: [].concat(cx.firmNames || [], cx.fundNames || []).map(bare).filter((n) => n.length >= 4) };
-    const res = { fields: [], pages: 0, scanned: [], failed: [], errors: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], pictured: [], otherPages: [], others: 0, otherSignaturePages: [], notEmpty: 0 };
+    const res = { fields: [], pages: 0, scanned: [], failed: [], errors: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], pictured: [], otherPages: [], others: 0, otherSignaturePages: [], coSignaturePages: [], notEmpty: 0 };
     let out = [];
     (pages || []).forEach((pg) => {
       if (!pg) return;
@@ -1539,7 +1693,7 @@
       if (p.type === 'checkbox') res.boxes++;
       else if (p.type === 'signature' || p.type === 'initials') res.signatures++;
       else res.blanks++;
-      const list = p.role === 'firm' ? res.firmPages : res.investorPages;
+      const list = p.role === 'firm' ? res.firmPages : p.role === 'co' ? res.coSignaturePages : res.investorPages;
       if (p.type === 'signature' && !p.second && list.indexOf(p.page) < 0) list.push(p.page);
       // Places for somebody else: how many, the pages they are on, and the pages with a signature line of theirs.
       if (isOther(p)) {
