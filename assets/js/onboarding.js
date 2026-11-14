@@ -1422,7 +1422,7 @@
     const s = signerOf(env, c.inv);
     const declined = env && (env.status === 'declined' || (s && s.status === 'declined'));
     return `${ivfH1(FL.agreement)}
-      <p class="lede">${declined ? `You declined to sign. ${h(c.ws.tenant.support.team)} has been told and will contact you; you can also reach them at ${h(c.ws.tenant.support.email)}.` : `Review ${h(c.ws.tenant.shortName)}’s subscription agreement. Your commitment and details are filled in. Sign each highlighted field, then select Finish.`}</p>
+      <p class="lede">${declined ? `You declined to sign. ${h(c.ws.tenant.support.team)} has been told and will contact you; you can also reach them at ${h(c.ws.tenant.support.email)}.` : `Review ${h(c.ws.tenant.shortName)}’s subscription agreement. Your commitment and details are filled in. Select Start to go to each field that needs you, then Finish.`}</p>
       ${c.fl.resignAt && !declined ? '<p class="meta ivf-why">The copy you signed earlier could not be sent from this device, so this is a new copy to sign. Your details and commitment are the same.</p>' : ''}
       ${env ? NS.esign.embed(env.id, c.inv.id) : ''}`;
   }
@@ -1682,7 +1682,7 @@
     const env = envOf(c);
     const s = signerOf(env, c.inv);
     if (!c.req || !env || !s || s.status === 'signed' || env.status !== 'sent') return;
-    if (s.account === c.inv.title && s.name === c.inv.contact && s.email === c.inv.email) return;
+    // The agreement follows every detail it shows (name, account, address, email, phone, kind of account): esign.js says whether anything changed.
     if (NS.esign.refreshSubscription && NS.esign.refreshSubscription(c.ws, env.id, c.inv, c.off, { cents: c.req.cents, cls: c.req.cls })) {
       // The request is signed when its agreement is: until then it names the investor as now on file.
       if (!c.req.signedAt) c.req.signedBy = c.inv.contact;
@@ -1928,7 +1928,7 @@
       if (!c || !c.req || c.req.envelopeId !== env.id || !signer || signer.investorId !== c.inv.id) return false;
       c.fl.signedAt = signer.signedAt;
       // An agreement for the investor alone is complete with their signature: nothing waits for the firm's countersignature.
-      notify(c.ws, 'agreement_signed', `${c.inv.title} signed the subscription agreement`, complete ? `${env.title}: complete; this agreement needs no countersignature` : `${env.title}: waiting for your countersignature`, `console-envelope-${env.id}`);
+      notify(c.ws, 'agreement_signed', `${c.inv.title} signed the subscription agreement`, complete ? `${env.title}: complete; this agreement needs no countersignature` : env.signers.some((s) => s.co && s.status !== 'signed') ? `${env.title}: waiting for the co-investor to sign` : `${env.title}: waiting for your countersignature`, `console-envelope-${env.id}`);
       c.fl.at = 'done';
       delete c.fl.resignAt;
       NS.app.save(true);

@@ -352,33 +352,63 @@
     return true;
   }
 
-  /* ---------- Published documents (files kept in this browser's IndexedDB in the demo) ---------- */
+  /* ---------- Published documents (files kept in this browser's file store in the demo) ---------- */
   const files = (() => {
     let dbp = null;
+    // Files this browser would not keep (private browsing, a full disk, or the portal shown inside another page) are
+    // held here for as long as the page is open, so an upload and a signing still work; the person is told (app.js).
+    const held = new Map();
+    let refused = false;
+    const refuse = () => {
+      if (refused) return;
+      refused = true;
+      if (NS.app && NS.app.storageNote) NS.app.storageNote();
+    };
+    /** The browser's file store, or null when the browser will not open it. */
     function db() {
       if (dbp) return dbp;
-      dbp = new Promise((res, rej) => {
+      dbp = new Promise((res) => {
+        const no = () => {
+          refuse();
+          res(null);
+        };
         try {
           const r = indexedDB.open('cvp-documents', 1);
           r.onupgradeneeded = () => r.result.createObjectStore('files');
           r.onsuccess = () => res(r.result);
-          r.onerror = () => rej(r.error);
+          r.onerror = no;
         } catch (e) {
-          rej(e);
+          no();
         }
       });
       return dbp;
     }
-    const tx = (mode, fn) => db().then((d) => new Promise((res, rej) => {
+    const tx = (mode, fn) => db().then((d) => d && new Promise((res, rej) => {
       const t = d.transaction('files', mode);
       const req = fn(t.objectStore('files'));
       t.oncomplete = () => res(req && req.result);
       t.onerror = () => rej(t.error);
+      t.onabort = () => rej(t.error);
     }));
     return {
-      put: (id, blob) => tx('readwrite', (s) => s.put(blob, id)),
-      get: (id) => tx('readonly', (s) => s.get(id)),
-      del: (id) => tx('readwrite', (s) => s.delete(id))
+      /** Keep a file. One the browser will not keep is held in memory instead, so this never fails for that reason. */
+      put: (id, blob) => {
+        const hold = () => {
+          refuse();
+          held.set(id, blob);
+        };
+        return tx('readwrite', (s) => s.put(blob, id)).then((ok) => {
+          if (ok == null) hold();
+          else held.delete(id);
+        }, hold);
+      },
+      get: (id) => (held.has(id) ? Promise.resolve(held.get(id)) : tx('readonly', (s) => s.get(id)).then((b) => b || undefined)),
+      del: (id) => {
+        held.delete(id);
+        return tx('readwrite', (s) => s.delete(id)).then(() => undefined);
+      },
+      /** True once a file could not be kept by the browser in this session. */
+      refused: () => refused
     };
   })();
   function docsFor(ws, inv) {

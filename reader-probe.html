@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Text reader check</title>
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <style>
+    html { background: var(--bg); }
+    body { margin: 0; padding: var(--space-xl) var(--space-lg); background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: var(--text-md); line-height: 1.5; }
+    main { max-width: calc(var(--container) / 2); margin: 0 auto; padding: var(--space-lg); background: var(--surface); border: var(--rule-hair) solid var(--line); border-radius: var(--r-card); }
+    h1 { margin: 0 0 var(--space-md); font-family: var(--font-display); font-size: var(--text-display); font-weight: var(--display-weight); letter-spacing: var(--tracking-display); line-height: 1.2; }
+    .answer { display: flex; align-items: baseline; gap: var(--space-sm); }
+    .answer::before { content: ""; flex: none; width: var(--space-xs); height: var(--space-xs); border-radius: var(--r-pill); background: var(--fg-3); }
+    main[data-state="works"] .answer::before { background: var(--good); }
+    main[data-state="cannot"] .answer::before { background: var(--bad); }
+    main[data-state="unread"] .answer::before { background: var(--warn); }
+    #say { margin: 0; font-size: var(--text-lg); }
+    .detail { margin: var(--space-xs) 0 0; padding-left: calc(var(--space-xs) + var(--space-sm)); color: var(--fg-2); font-size: var(--text-sm); }
+    .detail[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <main data-state="checking">
+    <h1>Text reader check</h1>
+    <div class="answer"><p id="say" role="status">Checking the text reader…</p></div>
+    <p class="detail" id="took" hidden></p>
+    <p class="detail" id="why" hidden></p>
+    <noscript><p class="detail">This page needs JavaScript to run.</p></noscript>
+  </main>
+  <script>window.CVPortal = window.CVPortal || {};</script>
+  <script src="assets/js/textengine.js"></script>
+  <script>
+    /*
+     * Says in one sentence whether the text reader starts where this page is opened. It starts the reader, draws a
+     * made-up line on a canvas that is never shown, reads it, and shows one of three sentences. When the reader cannot
+     * start, one fixed sentence says which kind of refusal it was; what the browser itself said goes to the console only.
+     */
+    (function () {
+      'use strict';
+      var LINE = 'Reader test line 123 INITIALS';
+      var SAYS = {
+        works: 'The text reader works here.',
+        cannot: 'The text reader could not start here. Boxes are still found on a picture page; the words by them are not read.',
+        unread: 'The text reader started but did not read the test line.'
+      };
+      var WHY = {
+        worker: 'This page is not allowed to start the reader’s background worker.',
+        compile: 'This host does not allow the reader’s code to be prepared for running.',
+        file: 'One of the reader’s own files could not be loaded.',
+        time: 'The reader did not answer within 20 seconds.'
+      };
+      var E = window.CVPortal.textengine;
+      var t0 = performance.now();
+      var el = function (id) { return document.getElementById(id); };
+      var line = function (id, text) { el(id).textContent = text || ''; el(id).hidden = !text; };
+      var seconds = function () { var s = (performance.now() - t0) / 1000; return s < 0.1 ? 'under 0.1' : s.toFixed(1); };
+      var note = function (what, e) { console.warn('Text reader check: ' + what + (e ? ' / ' + (e.code || '') + ' / ' + (e.why || '') + ' / ' + (e.detail || e.message || e) : '')); };
+      function show(state, took, why) {
+        document.querySelector('main').setAttribute('data-state', state);
+        el('say').textContent = SAYS[state];
+        line('took', took);
+        line('why', why);
+      }
+      /** The test line as a picture: black letters on white paper, the same strip the portal's own check draws. */
+      function strip() {
+        var c = document.createElement('canvas');
+        c.width = 900;
+        c.height = 160;
+        var x = c.getContext('2d');
+        x.fillStyle = 'white';
+        x.fillRect(0, 0, 900, 160);
+        x.fillStyle = 'black';
+        x.font = '34px Arial, Helvetica, sans-serif';
+        x.fillText(LINE, 20, 90);
+        return c;
+      }
+      function said(blocks) {
+        var out = [];
+        (blocks || []).forEach(function (b) { (b.paragraphs || []).forEach(function (p) { (p.lines || []).forEach(function (l) { (l.words || []).forEach(function (w) { out.push(String(w.text || '')); }); }); }); });
+        return out.join(' ').replace(/\s+/g, ' ').trim();
+      }
+      if (!E) {
+        note('the reader’s own module was not loaded');
+        return show('cannot', '', WHY.file);
+      }
+      E.start().then(
+        function () {
+          var took = 'The start took ' + seconds() + ' seconds.';
+          return E.read(strip(), 'line').then(
+            function (blocks) {
+              var got = said(blocks);
+              E.stop();
+              if (got === LINE) return show('works', took);
+              note('the test line was read as "' + got + '"');
+              show('unread', took);
+            },
+            function (e) {
+              E.stop();
+              note('the test line could not be read', e);
+              show('unread', took);
+            }
+          );
+        },
+        function (e) {
+          note('the reader could not start', e);
+          if (e && e.code === 'load') show('cannot', 'The attempt took ' + seconds() + ' seconds.', WHY[e.why]);
+          else show('unread', '');
+        }
+      );
+    })();
+  </script>
+</body>
+</html>

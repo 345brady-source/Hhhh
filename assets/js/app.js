@@ -285,11 +285,12 @@
 
   /* ---------- Appearance ---------- */
   const rootEl = document.documentElement;
-  const hostTheme = rootEl.getAttribute('data-theme');
-  /** The viewer's own choice (Settings) wins; otherwise the client's default; otherwise the device. */
+  // What a host frame asked for before the app loaded (the preview). The page's own static light default is not a host's choice.
+  const hostTheme = rootEl.hasAttribute('data-theme-static') ? null : rootEl.hasAttribute('data-host-theme') ? rootEl.getAttribute('data-host-theme') || null : rootEl.getAttribute('data-theme');
+  /** The viewer's own choice (Settings) wins; otherwise the client's default; otherwise light, the standard look. */
   function applyAppearance() {
     const mine = NS.store.get('appearance', null);
-    const pref = mine || (ws() ? ws().tenant.appearance : 'system');
+    const pref = mine || (ws() && ws().tenant.appearance) || 'light';
     if (pref === 'light' || pref === 'dark') rootEl.setAttribute('data-theme', pref);
     else if (!mine && hostTheme) rootEl.setAttribute('data-theme', hostTheme);
     else rootEl.removeAttribute('data-theme');
@@ -411,7 +412,10 @@
     // The sign-up page offers the sample sponsors. Other standalone pages (an investor's invitation, a signing link) show no demo controls.
     if (standalone || !w) return E.diy && state.route === 'diy-start' ? `<div class="demo-bar">${sponsorPickHTML('')}</div>` : '';
     const inv = w.investors.find((x) => x.id === state.viewer);
-    const opt = (v, label) => `<option value="${v}"${state.role === v ? ' selected' : ''}>${label}</option>`;
+    // An account's co-investor signs in as themselves: offered beside the investor while the account has one.
+    const co = inv && inv.coInvestor && inv.coInvestor.email ? inv.coInvestor : null;
+    if (!co) state.co = false;
+    const opt = (v, label) => `<option value="${v}"${state.role === v && !(v === 'investor' && state.co) ? ' selected' : ''}>${label}</option>${v === 'investor' && co ? `<option value="co-investor"${state.role === 'investor' && state.co ? ' selected' : ''}>Co-investor · ${h(co.name)}</option>` : ''}`;
     const labels = E.diy
       ? { admin: `Admin · ${h(w.tenant.shortName)}`, team: `Team member · ${h(w.tenant.shortName)}`, investor: `Investor · ${inv ? h(inv.title) : 'none yet'}` }
       : { staff: 'Carrow &amp; Vale staff', sponsor: `Sponsor staff · ${h(w.tenant.shortName)}`, investor: `Investor · ${inv ? h(inv.title) : 'none yet'}` };
@@ -434,6 +438,19 @@
       </nav>
       ${viewer}
     </div>`;
+  }
+
+  /**
+   * Storage refused is never silent: when this browser will not keep the portal's records or files, the firm's people
+   * are told once, at the top of the page, for as long as that is so. The work itself goes on in memory.
+   */
+  function storageNote() {
+    const el = document.getElementById('notes');
+    if (!el) return;
+    const lost = NS.workspace.saveFailed() || NS.store.refused() || !!(NS.ops && NS.ops.files.refused());
+    const html = lost && state.role !== 'investor' && !state.remote ? `<div class="pvbar pvbar-note" role="alert">${icon('alert')}<span><span class="pvbar-label">This browser is not letting the portal save.</span> Your work will be lost when you close this page.</span></div>` : '';
+    // Written only when it appears or goes, so a screen reader announces it once and not at every redraw.
+    if (!!el.firstChild !== !!html) el.innerHTML = html;
   }
 
   /* ---------- Render ---------- */
@@ -463,6 +480,7 @@
     // Carrow & Vale staff get the operator bar; a sponsor's own people get a plain preview bar in the investor view.
     document.getElementById('opbar').innerHTML = !w || standalone ? '' : E.managed && state.role === 'staff' ? opbarHTML() : state.role !== 'investor' && mode === 'portal' ? previewBarHTML() : '';
     document.getElementById('demo').innerHTML = state.remote ? '' : demoHTML(standalone);
+    storageNote();
     const el = document.getElementById('view');
     el.innerHTML = view.render(state.param);
     if (view.after) view.after(state.param);
@@ -505,7 +523,7 @@
   /* ---------- Events ---------- */
   function boot() {
     const app = document.getElementById('app');
-    app.innerHTML = `<div id="opbar"></div><div id="view"></div><dialog id="dlg" class="dlg"></dialog><div id="toasts" class="toasts" role="status" aria-live="polite"></div><div id="demo"></div>`;
+    app.innerHTML = `<div id="notes"></div><div id="opbar"></div><div id="view"></div><dialog id="dlg" class="dlg"></dialog><div id="toasts" class="toasts" role="status" aria-live="polite"></div><div id="demo"></div>`;
     document.addEventListener('click', (e) => {
       const a = e.target.closest('[data-action]');
       if (a && NS.actions[a.getAttribute('data-action')]) NS.actions[a.getAttribute('data-action')](a, e);
@@ -579,14 +597,22 @@
     setClient(el.value, 'console');
   };
   NS.changes['demo-role'] = (el) => {
-    state.role = el.value;
+    state.co = el.value === 'co-investor';
+    state.role = state.co ? 'investor' : el.value;
     NS.store.set('role', state.role);
     const inv = ws().investors.find((x) => x.id === state.viewer);
+    if (state.co) {
+      // The co-investor goes straight to what waits for their signature; with nothing waiting, to the account's documents.
+      const due = NS.esign ? NS.esign.pendingFor(ws(), inv.id) : [];
+      go(due.length ? 'sign-' + due[0].id : 'documents');
+      return NS.ui.toast(`Signed in as ${inv.coInvestor.name}`);
+    }
     if (state.role === 'investor' && inv && inv.onboarding.status !== 'complete') NS.startOnboarding(inv.id);
     else go(homeFor(state.role));
     NS.ui.toast(state.role === 'investor' ? `Signed in as ${inv ? inv.title : 'an investor'}` : state.role === 'staff' ? 'Signed in as Carrow & Vale staff' : `Signed in as ${E.roleLabel[state.role].toLowerCase()} of ${ws().tenant.shortName}`);
   };
   NS.changes.viewer = (el) => {
+    state.co = false;
     state.viewer = el.value;
     const inv = ws().investors.find((x) => x.id === el.value);
     if (inv && inv.onboarding.status !== 'complete') NS.startOnboarding(inv.id);
@@ -599,6 +625,7 @@
     const firm = w ? w.tenant.shortName : '';
     if (state.role === 'investor') {
       const inv = w && w.investors.find((i) => i.id === state.viewer);
+      if (inv && state.co && inv.coInvestor) return `${inv.coInvestor.name} (co-investor)`;
       return inv ? `${inv.title} (investor)` : 'Investor';
     }
     if (E.managed) return state.role === 'staff' ? 'Carrow & Vale staff' : `${firm || 'Sponsor'} staff`;
@@ -616,7 +643,7 @@
     setClient(null, 'diy-start');
   };
 
-  NS.app = { state, config, allowed, can, actor, render, go, setClient, useWorkspace, publishedServer, save, applyTenant, applyAppearance, setAppearance, setPath, getPath, ws, modeOf };
+  NS.app = { state, config, allowed, can, actor, render, go, setClient, useWorkspace, publishedServer, save, applyTenant, applyAppearance, setAppearance, setPath, getPath, ws, modeOf, storageNote };
 
   // Views register after this file loads, so boot once every script has run.
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

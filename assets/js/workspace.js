@@ -9,30 +9,46 @@
   const PREFIX = NS.EDITION ? NS.EDITION.storagePrefix : 'cvp2:';
   const { clone, merge } = NS.util;
 
+  // Records this browser would not keep (private browsing, a full disk, or the portal shown inside another page) are
+  // held here for as long as the page is open, so the portal keeps working; the person is told (app.js storageNote).
+  const held = {};
+  let refused = false;
   const store = {
     get(k, d) {
       try {
+        if (Object.prototype.hasOwnProperty.call(held, k)) return JSON.parse(held[k]);
         const v = localStorage.getItem(PREFIX + k);
         return v == null ? d : JSON.parse(v);
       } catch (e) {
         return d;
       }
     },
+    /** Keep a value. Returns false when the browser would not keep it (it is then held until the page is closed). */
     set(k, v) {
+      const json = JSON.stringify(v);
       try {
-        localStorage.setItem(PREFIX + k, JSON.stringify(v));
+        localStorage.setItem(PREFIX + k, json);
+        delete held[k];
         return true;
       } catch (e) {
+        if (json !== undefined) held[k] = json;
+        if (!refused) {
+          refused = true;
+          if (NS.app && NS.app.storageNote) NS.app.storageNote();
+        }
         return false;
       }
     },
     del(k) {
+      delete held[k];
       try {
         localStorage.removeItem(PREFIX + k);
       } catch (e) {
         /* ignore */
       }
-    }
+    },
+    /** True once a value could not be kept by the browser in this session. */
+    refused: () => refused
   };
   NS.store = store;
 
@@ -53,7 +69,25 @@
     if (seed && seed.home) ws.tenant.home = merge(ws.tenant.home, seed.home);
     // The standard typeface changed; a portal still on the old standard moves to the new one once (Manrope stays a choice).
     if (look < 3 && ws.tenant.font === 'manrope') ws.tenant.font = 'hanken';
-    ws.tenant.look = 3;
+    // The portal moved to the Refract theme. A portal still on the previous standard colors or typeface, or a sample
+    // firm still as it was seeded, takes the new standard once; a firm's own choices are left alone.
+    if (look < 4) {
+      const c = ws.tenant.colors || {};
+      const is = (x, y) => String(x || '').toUpperCase() === y;
+      const seedNow = NS.TENANTS.find((t) => t.id === ws.tenant.id);
+      const was = { 'kestrel-bay': ['#14304F', '#B4873F', 'serif'], pellbrook: ['#33305E', '#3E8E8C', 'hanken'] }[ws.tenant.id];
+      if (seedNow && was && is(c.primary, was[0]) && is(c.accent, was[1]) && ws.tenant.font === was[2]) {
+        ws.tenant.colors = clone(seedNow.colors);
+        ws.tenant.font = seedNow.font;
+      } else {
+        if (is(c.primary, '#0F2742') && is(c.accent, '#1F7A8C')) ws.tenant.colors = clone(NS.TENANT_TEMPLATE.colors);
+        if (ws.tenant.font === 'hanken') ws.tenant.font = 'funnel';
+      }
+    }
+    // Light is the standard look. A portal still on "Follow device", the previous standard, opens in light once;
+    // Follow device and Dark can be chosen again under Portal and brand, and each investor keeps their own choice.
+    if (look < 5 && (!ws.tenant.appearance || ws.tenant.appearance === 'system')) ws.tenant.appearance = 'light';
+    ws.tenant.look = 5;
     delete ws.tenant.offerings;
     delete ws.tenant.roster;
     ws.offerings = ws.offerings || [];
@@ -82,7 +116,9 @@
     NS.clearCaches();
     clearTimeout(timer);
     const run = () => {
+      const was = failed;
       failed = !store.set('ws:' + ws.tenant.id, ws);
+      if (failed !== was && NS.app && NS.app.storageNote) NS.app.storageNote();
     };
     if (now) run();
     else timer = setTimeout(run, 300);

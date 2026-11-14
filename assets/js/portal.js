@@ -61,6 +61,8 @@
   function shell(inner, active, opts) {
     const t = T();
     const inv = viewer();
+    // The person signed in: the investor, or the account's co-investor under their own name.
+    const me = inv ? (S().co && inv.coInvestor ? inv.coInvestor.name : inv.contact) : '';
     const banner = (opts && opts.banner) || '';
     const links = NAV.map(([k, label]) => `<a href="#${k}"${active === k ? ' aria-current="page"' : ''}>${label}</a>`).join('');
     return `<div class="pt${S().navOpen ? ' nav-open' : ''}">
@@ -68,7 +70,7 @@
         <div class="pt-head-in">
           <a class="pt-logo" href="#overview" aria-label="${h(t.name)} ${h(t.portalName)}">${B.lockup(t)}</a>
           <nav class="pt-nav" id="pt-nav" aria-label="${h(t.portalName)}">${links}<a class="pt-nav-out" href="#sign-in">Sign out</a></nav>
-          <div class="pt-user">${inv ? `<span class="pt-user-id"><span class="pt-user-name">${h(inv.contact)}</span>${inv.title && inv.title !== inv.contact ? `<span class="pt-user-acct">${h(inv.title)}</span>` : ''}</span>` : ''}<a class="pt-signout" href="#sign-in">Sign out</a></div>
+          <div class="pt-user">${inv ? `<span class="pt-user-id"><span class="pt-user-name">${h(me)}</span>${inv.title && inv.title !== me ? `<span class="pt-user-acct">${h(inv.title)}</span>` : ''}</span>` : ''}<a class="pt-signout" href="#sign-in">Sign out</a></div>
           <button class="pt-menu" type="button" data-action="nav-toggle" aria-controls="pt-nav" aria-expanded="${S().navOpen}">${icon('menu')}<span>Menu</span></button>
         </div>
       </header>
@@ -119,7 +121,7 @@
         const o = n.audience === 'all' ? null : W().offerings.find((x) => x.id === n.audience);
         const subj = NS.mergeNotice(n.subject, inv, t, n, NS.noticeInvestment(W(), inv, n));
         return `<div class="notice">
-          <div class="notice-text"><span class="notice-date">${date(n.date)}</span><strong>${h(subj)}</strong></div>
+          <div class="notice-text"><time class="notice-date" datetime="${h(n.date)}">${date(n.date)}</time><strong>${h(subj)}</strong></div>
           <div class="notice-actions">${/^call/.test(n.kind || '') && o ? `<button class="link-btn" type="button" data-action="notice-call" data-id="${h(n.id)}" data-off="${h(o.id)}">View capital call</button>` : `<button class="link-btn" type="button" data-action="notice-open" data-id="${h(n.id)}" data-off="${o ? h(o.id) : 'all'}">View documents</button>`}<button class="link-btn notice-dismiss" type="button" data-action="notice-dismiss" data-id="${h(n.id)}">Dismiss</button></div>
         </div>`;
       })
@@ -656,10 +658,10 @@
             ? `<section class="sec feed" aria-label="Updates">${posts
                 .map(
                   (x) => `<article class="post">
-                    <span class="post-date">${x.date ? date(x.date, 'long') : 'Latest'}</span>
+                    ${x.date ? `<time class="post-date" datetime="${h(x.date)}">${date(x.date, 'long')}</time>` : '<span class="post-date">Latest</span>'}
                     <div class="post-body">
-                      <span class="post-topic">${h(x.topic)}${x.about ? ` · ${h(x.about)}` : ''}</span>
                       <h2>${h(x.title)}</h2>
+                      <span class="post-topic">${h(x.topic)}${x.about ? ` · ${h(x.about)}` : ''}</span>
                       ${x.body ? `<p>${h(x.body)}</p>` : ''}
                       <div class="post-foot">${
                         x.notice
@@ -975,7 +977,7 @@
       <thead><tr><th scope="col">Date</th><th scope="col">Document</th>${showOffering ? '<th scope="col">Investment</th>' : ''}<th scope="col">Type</th><th scope="col"><span class="sr-only">Open</span></th></tr></thead>
       <tbody>${docs
         .map(
-          (d) => `<tr><td class="nowrap td-meta">${date(d.date)}</td><td class="td-lead"><button class="link-btn doc-link" type="button" data-action="open-doc" data-id="${h(d.id)}">${h(d.title)}</button></td>${showOffering ? `<td class="td-meta td-sep">${h(name(d.offeringId))}</td>` : ''}<td class="td-meta td-sep">${h(d.cat)}</td><td class="num td-action"><button class="btn btn-small" type="button" data-action="open-doc" data-id="${h(d.id)}">View</button></td></tr>`
+          (d) => `<tr><td class="nowrap td-meta">${date(d.date)}</td><td class="td-lead"><button class="link-btn doc-link" type="button" data-action="open-doc" data-id="${h(d.id)}">${h(d.title)}</button></td>${showOffering ? `<td class="td-meta td-sep">${h(name(d.offeringId))}</td>` : ''}<td class="td-meta td-sep">${h(d.cat)}</td><td class="num td-action"><button class="btn btn-small" type="button" data-action="open-doc" data-id="${h(d.id)}">View</button>${d.uploaded && NS.record ? NS.record.downloadButton(d) : ''}</td></tr>`
         )
         .join('')}</tbody>
     </table></div>`;
@@ -1163,7 +1165,7 @@
     ['system', 'Match this device', 'Switches automatically with your device’s light or dark setting']
   ];
   function appearanceHTML() {
-    const current = NS.store.get('appearance', null) || T().appearance || 'system';
+    const current = NS.store.get('appearance', null) || T().appearance || 'light';
     return `<section class="sec settings-sec">
           ${sec('Appearance')}
           <fieldset class="choice settings-choice">
@@ -1198,7 +1200,7 @@
       const art = B.safeImage((t.home || {}).hero);
       return `<div class="pt pt-auth">
         <header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${B.lockup(t)}</span></div></header>
-        <main class="pt-main" id="main" tabindex="-1"><div class="auth${art ? ' has-art' : ''}">
+        <main class="pt-main" id="main" tabindex="-1"><div class="auth has-art">
           <div class="auth-card">
           <form class="auth-form" data-form="sign-in" novalidate>
             <h1>${h(t.signin.headline || t.portalName)}</h1>
@@ -1213,10 +1215,15 @@
           </form>
           <aside class="auth-help"><h2>Need help signing in?</h2><p>${h(t.support.team)}</p><p>${h(t.support.phone)}</p><p>${h(t.support.email)}</p><p>${h(t.support.hours)}</p></aside>
           </div>
-          ${art ? `<div class="auth-art" aria-hidden="true"><img src="${art}" alt=""></div>` : ''}
+          <div class="auth-art" aria-hidden="true">${art ? `<img src="${art}" alt="">` : '<canvas class="auth-engrave" aria-hidden="true"></canvas>'}</div>
         </div></main>
         ${footer()}
       </div>`;
+    },
+    after() {
+      // Decoration only: the engraved ground is drawn once the page is in place (engrave.js).
+      const c = document.querySelector('.auth-engrave');
+      if (c && NS.engrave) NS.engrave(c, T().id || T().name);
     }
   };
   NS.forms['sign-in'] = (f) => {

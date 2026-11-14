@@ -118,7 +118,17 @@
 
   /* ---------- Type pairs and corner styles a client can choose ---------- */
 
+  // `weight` and `tracking` are how each display face is set in headings (the Refract theme sets its own light and tight).
   const FONTS = {
+    funnel: {
+      label: 'Funnel',
+      note: 'Light, calm',
+      display: "'Funnel Display', ui-sans-serif, system-ui, sans-serif",
+      body: "'Funnel Sans', ui-sans-serif, system-ui, sans-serif",
+      href: 'https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300;400;500&family=Funnel+Sans:wght@400;500&display=swap',
+      weight: 400,
+      tracking: '-0.032em'
+    },
     hanken: {
       label: 'Hanken Grotesk',
       note: 'Clean, neutral',
@@ -157,60 +167,94 @@
     }
   };
   const RADII = {
-    sharp: { sm: 2, md: 3, lg: 4, card: 4, pill: '3px', label: 'Sharp' },
-    soft: { sm: 4, md: 6, lg: 8, card: 10, pill: '999px', label: 'Soft' },
-    round: { sm: 6, md: 10, lg: 14, card: 16, pill: '999px', label: 'Round' }
+    sharp: { sm: 2, md: 3, lg: 4, card: 4, inner: 3, pill: '3px', label: 'Sharp' },
+    // Refract: 22px on panels, 12px inside them, pills for controls.
+    soft: { sm: 8, md: 12, lg: 12, card: 22, inner: 12, pill: '999px', label: 'Soft' },
+    round: { sm: 8, md: 12, lg: 12, card: 22, inner: 12, pill: '999px', label: 'Round' }
   };
 
   /* ---------- Token derivation ---------- */
+  /*
+   * The portal is set in the Refract theme: sunlit white paper, deep pool-blue ink, clear surfaces whose shadows carry
+   * a tint of the light. These are the theme's own values, as [lightness, chroma, hue] in OKLCH. A firm's two brand
+   * colors sit in the theme's two colored roles: its primary is the accent (the main action, the current tab, focus),
+   * and its second color is the shade (the second data tone, and the tint of every shadow). A firm on the standard
+   * colors gets the theme's exact palette.
+   */
+  const RF = {
+    paper: [0.982, 0.006, 95], paper2: [0.964, 0.006, 95], paper3: [0.936, 0.008, 95], light: [0.997, 0.004, 95],
+    ink: [0.23, 0.035, 245], ink2: [0.36, 0.035, 245], muted: [0.5, 0.025, 240],
+    rule: [0.895, 0.008, 230], rule2: [0.935, 0.006, 230],
+    accent: [0.5, 0.12, 234], accentHi: [0.44, 0.12, 236], accentInk: [0.99, 0.003, 95], accentSoft: [0.94, 0.025, 220], focus: [0.56, 0.14, 234],
+    shade: [0.86, 0.05, 212], shade2: [0.74, 0.07, 220]
+  };
+  const rf = (k) => oklch(RF[k][0], RF[k][1], RF[k][2]);
+  const STANDARD = { primary: rf('accent'), accent: rf('shade2') };
+  const same = (x, y) => String(x).toUpperCase() === String(y).toUpperCase();
 
   function derive(t) {
-    const P = normHex(t.colors && t.colors.primary) || '#0F2742';
-    const A = normHex(t.colors && t.colors.accent) || '#1F7A8C';
+    const P = normHex(t.colors && t.colors.primary) || STANDARD.primary;
+    const A = normHex(t.colors && t.colors.accent) || STANDARD.accent;
+    const ownP = !same(P, STANDARD.primary);
+    const ownA = !same(A, STANDARD.accent);
     const brandNav = t.nav === 'brand';
     const p = toOklch(P);
-    const WHITE = '#FFFFFF';
-
-    // Neutrals lean very slightly toward the brand's hue, so greys read as chosen for this firm rather than default.
-    const nc = Math.min(p.c, 0.03) * 0.3;
-    const N = (l, k) => oklch(l, nc * (k == null ? 1 : k), p.h);
+    const a = toOklch(A);
+    const PAPER = rf('paper');
+    const LIGHT = rf('light');
+    const INK = rf('ink');
 
     const L = {};
-    L.bg = WHITE;
-    L.surface = WHITE;
-    L['surface-2'] = N(0.975);
-    L['surface-3'] = N(0.95);
-    L.line = N(0.915);
-    L['line-strong'] = N(0.85);
-    L.fg = N(0.21, 2);
-    L['fg-2'] = N(0.4, 1.6);
-    L['fg-3'] = ensureContrast(N(0.54, 1.4), WHITE, 4.5);
+    L.bg = PAPER;
+    L.page = PAPER;
+    L.surface = LIGHT;
+    L['surface-2'] = rf('paper2');
+    L['surface-3'] = rf('paper3');
+    L.line = rf('rule');
+    L['line-2'] = rf('rule2');
+    // A field's edge has to be seen: 3:1 against its ground, and the darkest ground a field stands on is the tinted
+    // well of a dialog or a request form (surface-2).
+    L['line-strong'] = ensureContrast(rf('rule'), L['surface-2'], 3.05);
+    L.fg = INK;
+    L['fg-2'] = rf('ink2');
+    L['fg-3'] = rf('muted');
 
+    // The accent: the firm's primary, or the theme's pool blue.
+    const onP = contrast(rf('accentInk'), P) >= 4.5 || contrast(rf('accentInk'), P) >= contrast(INK, P) ? rf('accentInk') : INK;
     L.brand = P;
-    L['brand-ink'] = onColor(P);
-    L['brand-hover'] = shiftL(P, p.l > 0.45 ? -0.06 : 0.05);
-    L['brand-soft'] = mix(P, WHITE, 0.9);
-    L['brand-text'] = ensureContrast(P, WHITE, 4.5);
-    L.accent = A;
-    L['accent-ink'] = onColor(A);
-    L['accent-soft'] = mix(A, WHITE, 0.88);
-    L['accent-text'] = ensureContrast(A, WHITE, 4.5);
-    L.focus = ensureContrast(A, WHITE, 3);
+    L['brand-ink'] = onP;
+    L['brand-hover'] = ownP ? oklch(Math.max(0, p.l + (p.l > 0.3 ? -0.06 : 0.07)), p.c, p.h + 2) : rf('accentHi');
+    L['brand-soft'] = ownP ? oklch(0.94, Math.min(p.c, 0.025), p.h) : rf('accentSoft');
+    L['brand-text'] = ensureContrast(P, LIGHT, 4.5);
+    L.focus = ensureContrast(ownP ? oklch(Math.min(0.62, p.l + 0.06), p.c + 0.02, p.h) : rf('focus'), PAPER, 3);
 
-    L['chart-1'] = ensureContrast(P, WHITE, 3);
-    L['chart-muted'] = N(0.65);
-    // Investor portal: a page tinted very lightly with the brand hue, and pale steps of both brand colors for bars.
-    L.page = N(0.972, 0.7);
-    L['tint-1'] = mix(L['chart-1'], WHITE, 0.82);
-    L['tint-2'] = mix(A, WHITE, 0.76);
+    // The shade: the firm's second color, or the theme's water tones.
+    L.accent = A;
+    L['accent-ink'] = contrast(INK, A) >= contrast(rf('accentInk'), A) ? INK : rf('accentInk');
+    L['accent-soft'] = ownA ? oklch(0.86, Math.min(a.c, 0.05), a.h) : rf('shade');
+    L['accent-text'] = ensureContrast(A, LIGHT, 4.5);
+
+    L['chart-1'] = ensureContrast(P, LIGHT, 3);
+    L['chart-muted'] = rf('muted');
+    L['tint-1'] = L['brand-soft'];
+    L['tint-2'] = L['accent-soft'];
     L['seg-1'] = L['chart-1'];
     L['seg-2'] = A;
-    L['seg-3'] = N(0.82);
-    ['seg-1', 'seg-2', 'seg-3'].forEach((k) => (L[k + '-ink'] = onColor(L[k])));
+    L['seg-3'] = rf('paper3');
+    ['seg-1', 'seg-2', 'seg-3'].forEach((k) => (L[k + '-ink'] = contrast(INK, L[k]) >= contrast(rf('accentInk'), L[k]) ? INK : rf('accentInk')));
 
-    // Navigation surface: either a light rail or a solid brand-color rail.
+    // Every shadow falls down and right from one sun and carries the shade's hue; none is grey.
+    const sh = Math.round(a.h);
+    L['edge-light'] = 'inset 0 1px 0 oklch(100% 0 0 / 0.9), inset 0 0 0 1px oklch(100% 0 0 / 0.55)';
+    L['shadow-card'] = `18px 28px 48px -26px oklch(52% 0.09 ${sh} / 0.38), 2px 3px 6px -2px oklch(40% 0.05 ${sh + 10} / 0.12)`;
+    L['shadow-cast'] = `28px 40px 70px -30px oklch(60% 0.11 ${sh - 8} / 0.45)`;
+    L['shadow-lift'] = `22px 34px 56px -26px oklch(52% 0.09 ${sh} / 0.42), 2px 4px 8px -2px oklch(40% 0.05 ${sh + 10} / 0.14)`;
+    L.shadow = `0 24px 64px -24px oklch(30% 0.06 ${sh + 10} / 0.45), 0 2px 6px -2px oklch(30% 0.05 ${sh + 10} / 0.18)`;
+    L.scrim = `oklch(23% 0.035 245 / 0.5)`;
+
+    // The top bar: clear over the paper, or a solid bar in the firm's color.
     if (brandNav) {
-      const ink = onColor(P);
+      const ink = onP;
       L['nav-bg'] = P;
       L['nav-fg-strong'] = ink;
       L['nav-fg'] = ensureContrast(mix(P, ink, 0.8), P, 4.5);
@@ -224,114 +268,126 @@
       L['nav-mark-a'] = contrast(A, P) >= 2.2 ? A : mix(ink, P, 0.45);
       L['nav-mark-ink'] = P;
     } else {
-      L['nav-bg'] = WHITE;
-      L['nav-fg-strong'] = L.fg;
-      L['nav-fg'] = L['fg-2'];
-      L['nav-muted'] = L['fg-3'];
-      L['nav-line'] = L.line;
-      L['nav-hover'] = L['surface-2'];
+      L['nav-bg'] = LIGHT;
+      L['nav-fg-strong'] = INK;
+      L['nav-fg'] = rf('ink2');
+      L['nav-muted'] = rf('muted');
+      L['nav-line'] = rf('rule');
+      L['nav-hover'] = rf('paper2');
       L['nav-active-bg'] = L['brand-soft'];
-      L['nav-active-fg'] = ensureContrast(P, L['brand-soft'], 4.5);
-      L['nav-marker'] = ensureContrast(P, L['brand-soft'], 3);
+      L['nav-active-fg'] = INK;
+      L['nav-marker'] = ensureContrast(P, LIGHT, 3);
       L['nav-mark-p'] = P;
       L['nav-mark-a'] = A;
-      L['nav-mark-ink'] = onColor(P);
+      L['nav-mark-ink'] = onP;
     }
 
-    // Sign-in hero panel.
-    const heroInk = onColor(P);
     L['hero-bg'] = P;
-    L['hero-fg'] = heroInk;
-    L['hero-fg-2'] = ensureContrast(mix(P, heroInk, 0.76), P, 4.5);
-    L['hero-line'] = mix(P, heroInk, 0.22);
-    L['hero-mark-p'] = heroInk;
-    L['hero-mark-a'] = contrast(A, P) >= 2.2 ? A : mix(heroInk, P, 0.45);
+    L['hero-fg'] = onP;
+    L['hero-fg-2'] = ensureContrast(mix(P, onP, 0.76), P, 4.5);
+    L['hero-line'] = mix(P, onP, 0.22);
+    L['hero-mark-p'] = onP;
+    L['hero-mark-a'] = contrast(A, P) >= 2.2 ? A : mix(onP, P, 0.45);
     L['hero-mark-ink'] = P;
     L['mark-p'] = P;
     L['mark-a'] = A;
-    L['mark-ink'] = onColor(P);
+    L['mark-ink'] = onP;
 
-    /* Dark mode: charcoal with the same slight lean toward the brand's hue; brand colors are lifted until they read. */
-    const ND = (l) => oklch(l, nc * 0.8, p.h);
+    /*
+     * Dark: the same system re-derived, never inverted. The paper goes deep in the ink's own hue, each surface a step
+     * lighter than the one under it; ink and rules are re-spaced; the accent gives up some chroma and gains lightness;
+     * shadows are off, and a surface is edged with an inset hairline instead.
+     */
+    const dk = (l, c, h) => oklch(l, c, h == null ? 245 : h);
     const D = {};
-    D.bg = ND(0.17);
-    D.surface = ND(0.2);
-    D['surface-2'] = ND(0.235);
-    D['surface-3'] = ND(0.27);
-    D.line = ND(0.3);
-    D['line-strong'] = ND(0.39);
-    D.fg = ND(0.95);
-    D['fg-2'] = ND(0.8);
-    D['fg-3'] = ensureContrast(ND(0.68), D.surface, 4.5);
+    D.bg = dk(0.155, 0.014);
+    D.page = D.bg;
+    D.surface = dk(0.19, 0.014);
+    D['surface-2'] = dk(0.22, 0.014);
+    D['surface-3'] = dk(0.25, 0.014);
+    D.line = dk(0.3, 0.014, 235);
+    D['line-2'] = dk(0.26, 0.012, 235);
+    D['line-strong'] = ensureContrast(dk(0.42, 0.014, 235), D['surface-2'], 3.05);
+    D.fg = dk(0.94, 0.012, 240);
+    D['fg-2'] = dk(0.84, 0.014, 240);
+    D['fg-3'] = ensureContrast(dk(0.7, 0.016, 240), D['surface-2'], 4.5);
 
-    const pb = ensureContrast(P, D.surface, 3.2);
-    D.brand = pb;
-    D['brand-ink'] = onColor(pb);
-    D['brand-hover'] = shiftL(pb, 0.05);
-    D['brand-soft'] = mix(D.surface, pb, 0.2);
-    D['brand-text'] = ensureContrast(P, D.surface, 4.8);
-    D.accent = ensureContrast(A, D.surface, 3.2);
-    D['accent-ink'] = onColor(D.accent);
-    D['accent-soft'] = mix(D.surface, D.accent, 0.2);
-    D['accent-text'] = ensureContrast(A, D.surface, 4.8);
-    D.focus = ensureContrast(A, D.surface, 3.5);
-    D['chart-1'] = ensureContrast(P, D.surface, 4);
-    D['chart-muted'] = ND(0.58);
-    D.page = ND(0.155);
-    D['tint-1'] = mix(D.surface, D['chart-1'], 0.32);
-    D['tint-2'] = mix(D.surface, D.accent, 0.32);
-    D['seg-1'] = D['chart-1'];
-    D['seg-2'] = D.accent;
-    D['seg-3'] = ND(0.46);
-    ['seg-1', 'seg-2', 'seg-3'].forEach((k) => (D[k + '-ink'] = onColor(D[k])));
+    const pd = ensureContrast(oklch(Math.max(0.62, Math.min(0.74, p.l + 0.16)), Math.max(0.02, p.c - 0.03), p.h), D.surface, 4.5);
+    const onPd = contrast(D.bg, pd) >= contrast(D.fg, pd) ? D.bg : D.fg;
+    D.brand = pd;
+    D['brand-ink'] = onPd;
+    D['brand-hover'] = shiftL(pd, 0.05);
+    D['brand-soft'] = mix(D.surface, pd, 0.2);
+    D['brand-text'] = ensureContrast(pd, D['surface-2'], 4.6);
+    D.focus = ensureContrast(shiftL(pd, 0.04), D.bg, 3.2);
+    const ad = ensureContrast(oklch(Math.max(0.6, Math.min(0.76, a.l)), Math.max(0.02, a.c - 0.02), a.h), D.surface, 3.2);
+    D.accent = ad;
+    D['accent-ink'] = contrast(D.bg, ad) >= contrast(D.fg, ad) ? D.bg : D.fg;
+    D['accent-soft'] = mix(D.surface, ad, 0.3);
+    D['accent-text'] = ensureContrast(ad, D['surface-2'], 4.6);
+    D['chart-1'] = pd;
+    D['chart-muted'] = dk(0.6, 0.014, 240);
+    D['tint-1'] = mix(D.surface, pd, 0.3);
+    D['tint-2'] = mix(D.surface, ad, 0.3);
+    D['seg-1'] = pd;
+    D['seg-2'] = ad;
+    D['seg-3'] = dk(0.42, 0.014, 240);
+    ['seg-1', 'seg-2', 'seg-3'].forEach((k) => (D[k + '-ink'] = contrast(D.bg, D[k]) >= contrast(D.fg, D[k]) ? D.bg : D.fg));
+    D['edge-light'] = `inset 0 0 0 1px ${D.line}`;
+    D['shadow-card'] = 'none';
+    D['shadow-cast'] = 'none';
+    D['shadow-lift'] = 'none';
+    D.shadow = `0 24px 64px -24px oklch(8% 0.02 245 / 0.8)`;
+    D.scrim = 'oklch(8% 0.02 245 / 0.66)';
 
-    // A brand-colored header stays in the brand hue, darkened; a white header becomes charcoal.
-    const navDark = brandNav ? oklch(0.24, Math.min(p.c, 0.07), p.h) : ND(0.19);
+    // A solid header stays in the firm's hue, deepened; a clear one sits a step above the paper.
+    const navDark = brandNav ? oklch(0.25, Math.min(p.c, 0.07), p.h) : D.surface;
     D['nav-bg'] = navDark;
-    D['nav-fg-strong'] = '#FFFFFF';
-    D['nav-fg'] = ensureContrast(mix(navDark, '#FFFFFF', 0.76), navDark, 4.5);
-    D['nav-muted'] = ensureContrast(mix(navDark, '#FFFFFF', 0.6), navDark, 4.5);
-    D['nav-line'] = mix(navDark, '#FFFFFF', 0.1);
-    D['nav-hover'] = mix(navDark, '#FFFFFF', 0.06);
-    D['nav-active-bg'] = mix(navDark, pb, 0.32);
-    D['nav-active-fg'] = '#FFFFFF';
-    D['nav-marker'] = ensureContrast(A, navDark, 3);
+    D['nav-fg-strong'] = D.fg;
+    D['nav-fg'] = ensureContrast(mix(navDark, D.fg, 0.78), navDark, 4.5);
+    D['nav-muted'] = ensureContrast(mix(navDark, D.fg, 0.62), navDark, 4.5);
+    D['nav-line'] = brandNav ? mix(navDark, D.fg, 0.12) : D.line;
+    D['nav-hover'] = mix(navDark, D.fg, 0.06);
+    D['nav-active-bg'] = mix(navDark, pd, 0.3);
+    D['nav-active-fg'] = D.fg;
+    D['nav-marker'] = ensureContrast(pd, navDark, 3);
     D['nav-mark-p'] = D['brand-text'];
-    D['nav-mark-a'] = D['nav-marker'];
+    D['nav-mark-a'] = ensureContrast(ad, navDark, 3);
     D['nav-mark-ink'] = navDark;
 
-    const heroDark = ND(0.22);
+    const heroDark = D['surface-2'];
     D['hero-bg'] = heroDark;
-    D['hero-fg'] = '#FFFFFF';
-    D['hero-fg-2'] = ensureContrast(mix(heroDark, '#FFFFFF', 0.74), heroDark, 4.5);
-    D['hero-line'] = mix(heroDark, '#FFFFFF', 0.16);
-    D['hero-mark-p'] = '#FFFFFF';
-    D['hero-mark-a'] = ensureContrast(A, heroDark, 2.5);
+    D['hero-fg'] = D.fg;
+    D['hero-fg-2'] = ensureContrast(mix(heroDark, D.fg, 0.74), heroDark, 4.5);
+    D['hero-line'] = mix(heroDark, D.fg, 0.16);
+    D['hero-mark-p'] = D.fg;
+    D['hero-mark-a'] = ensureContrast(ad, heroDark, 2.5);
     D['hero-mark-ink'] = heroDark;
     D['mark-p'] = D['brand-text'];
-    D['mark-a'] = D.accent;
+    D['mark-a'] = ad;
     D['mark-ink'] = D.surface;
 
-    // Paper (document previews) stays white in both themes, like a PDF.
+    // Paper (statements and other documents) stays white in both modes, like a PDF, in the firm's own colors.
+    const WHITE = '#FFFFFF';
     const paper = {
       'paper-bg': WHITE,
-      'paper-fg': L.fg,
-      'paper-fg-2': L['fg-2'],
-      'paper-line': L.line,
-      'paper-soft': L['surface-2'],
-      'paper-brand': L['brand-text'],
+      'paper-fg': INK,
+      'paper-fg-2': rf('ink2'),
+      'paper-line': rf('rule'),
+      'paper-soft': rf('paper2'),
+      'paper-brand': ensureContrast(P, WHITE, 4.5),
       'paper-brand-fill': P,
-      'paper-brand-ink': onColor(P),
+      'paper-brand-ink': onP,
       'paper-mark-p': P,
       'paper-mark-a': A,
-      'paper-mark-ink': onColor(P)
+      'paper-mark-ink': onP
     };
 
     // What the Brand Studio reports back to the operator.
     const report = [
       { key: 'button', label: 'Button text on primary', ratio: contrast(L['brand-ink'], P), target: 4.5 },
-      { key: 'link', label: 'Primary as text on white', ratio: contrast(L['brand-text'], WHITE), target: 4.5, adjusted: L['brand-text'] !== P, original: contrast(P, WHITE) },
-      { key: 'accent', label: 'Accent as text on white', ratio: contrast(L['accent-text'], WHITE), target: 4.5, adjusted: L['accent-text'] !== A, original: contrast(A, WHITE) },
+      { key: 'link', label: 'Primary as text on white', ratio: contrast(L['brand-text'], LIGHT), target: 4.5, adjusted: L['brand-text'] !== P, original: contrast(P, LIGHT) },
+      { key: 'accent', label: 'Accent as text on white', ratio: contrast(L['accent-text'], LIGHT), target: 4.5, adjusted: L['accent-text'] !== A, original: contrast(A, LIGHT) },
       { key: 'nav', label: 'Header text', ratio: contrast(L['nav-fg'], L['nav-bg']), target: 4.5 },
       { key: 'dark', label: 'Primary in dark mode', ratio: contrast(D['brand-text'], D.surface), target: 4.5, adjusted: D['brand-text'] !== P, original: contrast(P, D.surface) },
       { key: 'chart', label: 'Chart colors apart', delta: deltaE(L['seg-1'], L['seg-2']), target: 15 }
@@ -429,7 +485,7 @@
 
   function apply(t) {
     const tk = derive(t);
-    const f = FONTS[t.font] || FONTS.hanken;
+    const f = FONTS[t.font] || FONTS.funnel;
     const r = RADII[t.radius] || RADII.soft;
     let el = document.getElementById('cv-brand-tokens');
     if (!el) {
@@ -438,7 +494,7 @@
       el.id = 'cv-brand-tokens';
       document.body.appendChild(el);
     }
-    const base = `--font-display:${f.display};--font-body:${f.body};--r-sm:${r.sm}px;--r-md:${r.md}px;--r-lg:${r.lg}px;--r-card:${r.card}px;--r-pill:${r.pill};`;
+    const base = `--font-display:${f.display};--font-body:${f.body};--r-sm:${r.sm}px;--r-md:${r.md}px;--r-lg:${r.lg}px;--r-card:${r.card}px;--r-inner:${r.inner}px;--r-pill:${r.pill};--display-weight:${f.weight || 500};--tracking-display:${f.tracking || '-0.02em'};`;
     el.textContent =
       `:root{${block(tk.light)}${block(tk.paper)}${base}}\n` +
       `@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${block(tk.dark)}color-scheme:dark}}\n` +
@@ -454,6 +510,6 @@
 
   NS.brand = {
     normHex, contrast, ensureContrast, mix, onColor, deltaE, toOklch, oklch,
-    FONTS, RADII, MARKS, derive, apply, markSVG, markBody, lockup, safeImage, esc
+    FONTS, RADII, MARKS, STANDARD, derive, apply, markSVG, markBody, lockup, safeImage, esc
   };
 })(window);

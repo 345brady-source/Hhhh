@@ -316,7 +316,7 @@
             <td class="num">${holdersCount(o.id)}</td>
             <td>${h((o.distribution || {}).frequency || '')}${nextOf(o) ? `<span class="sub">Next ${date(nextOf(o).date)}</span>` : ''}</td>
             <td>${h(x.value)}<span class="sub">${h(x.label)}</span></td>
-            <td>${h(o.status)}</td>
+            <td>${badge('adj', o.status)}</td>
           </tr>`;
         })
         .join('');
@@ -654,12 +654,12 @@
           const done = i.onboarding.status === 'complete';
           // The committed line shows only while some of the commitment is still to be called (compared in cents).
           return `<tr>
-            <th scope="row"><span class="strong">${h(i.title)}</span><span class="sub">${h(i.contact)} · ${h(i.email)}</span></th>
+            <th scope="row"><span class="strong">${h(i.title)}</span><span class="sub">${h(i.contact)} · ${h(i.email)}</span>${NS.coInvestor ? NS.coInvestor.statusHTML(w, i) : ''}</th>
             <td>${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</td>
             <td class="num">${usd(invested)}<span class="sub">${committed > Math.round(invested * 100) ? `${usd(committed / 100)} committed · ` : ''}${i.positions.length} investment${i.positions.length === 1 ? '' : 's'}</span></td>
             <td>${activation(i)}</td>
             <td>${payLabel(i)}</td>
-            <td class="cs-row-actions">${
+            <td class="cs-row-actions">${NS.coInvestor ? NS.coInvestor.recordButton(i) : ''}${
               done
                 ? `<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(i.id)}">View portal</button>`
                 : `<button class="cs-btn cs-btn-small" type="button" data-action="invite-preview" data-id="${h(i.id)}">Invitation</button><button class="cs-btn cs-btn-small" type="button" data-action="remind" data-id="${h(i.id)}">Send reminder</button>`
@@ -865,6 +865,7 @@
     U.toast(`Reminder prepared for ${inv.email}. No email is sent in this demo.`);
   };
   NS.actions['view-as'] = (el) => {
+    S().co = false;
     S().viewer = el.getAttribute('data-id');
     NS.app.go('overview');
   };
@@ -875,7 +876,7 @@
     return `<div class="tbl-scroll"><table class="cs-tbl"><thead><tr><th scope="col">Payment date</th><th scope="col">Offering</th><th scope="col">Type</th><th scope="col" class="num">Amount</th><th scope="col" class="num">Investors</th><th scope="col">Status</th>${withFile ? '<th scope="col"><span class="sr-only">ACH file</span></th>' : ''}</tr></thead><tbody>${runs
       .map((r) => {
         const n = NS.data.allocate(W(), r).filter((a) => a.cents > 0).length;
-        return `<tr><td class="nowrap">${date(r.date)}</td><td>${h(name(r.offeringId))}</td><td>${h(r.type)}</td><td class="num">${usdc(r.total)}</td><td class="num">${n}</td><td>${r.status === 'scheduled' ? 'Scheduled' : 'Paid'}</td>${
+        return `<tr><td class="nowrap">${date(r.date)}</td><td>${h(name(r.offeringId))}</td><td>${h(r.type)}</td><td class="num">${usdc(r.total)}</td><td class="num">${n}</td><td>${r.status === 'scheduled' ? badge('warn', 'Scheduled') : badge('adj', 'Paid')}</td>${
           withFile ? `<td class="num"><button class="cs-btn cs-btn-small" type="button" data-action="dist-load" data-id="${h(r.id)}">ACH file</button></td>` : ''
         }</tr>`;
       })
@@ -2832,6 +2833,7 @@
 
   /* ---------- Portal and brand ---------- */
   const PRESETS = [
+    ['#006C95', '#77B6CA', 'Pool blue and water (standard)'],
     ['#0F2742', '#1F7A8C', 'Navy and teal'],
     ['#14304F', '#B4873F', 'Navy and brass'],
     ['#7A2E3A', '#B38B59', 'Burgundy and sand'],

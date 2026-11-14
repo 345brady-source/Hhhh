@@ -1,0 +1,38 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": null,
+  "phases": [
+    {
+      "number": "1",
+      "name": "Accurate Field Placement",
+      "status": "pending"
+    },
+    {
+      "number": "2",
+      "name": "Field Editor",
+      "status": "pending"
+    },
+    {
+      "number": "3",
+      "name": "Signatures",
+      "status": "pending"
+    },
+    {
+      "number": "4",
+      "name": "Signing Inside Onboarding",
+      "status": "pending"
+    },
+    {
+      "number": "5",
+      "name": "Signed Record",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd-progress --next",
+    "label": "Advance to the next step",
+    "reason": "Phase 3 of 9 · 0% · executing"
+  },
+  "updated_at": "2026-11-14T18:16:22.857Z"
+}
