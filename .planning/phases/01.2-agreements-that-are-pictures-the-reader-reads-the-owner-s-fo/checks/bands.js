@@ -308,6 +308,24 @@ function cases(pp) {
     });
     return bad.join('; ');
   });
+  add('a band never ends inside a line of print: a tick label is taken by whole lines, and a line cut by the far edge of an over band is left out', () => {
+    const p = paper(400, 220);
+    const tick = p.frame(40, 40, 55, 55);
+    const first = p.text(62, 44, [5, 6, 4]); // the label's first line, on the box's row
+    p.text(62, 57, [6, 5]); // its second line, starting a pixel under the box's row (1 pt band reach)
+    const box = p.frame(150, 150, 300, 170);
+    p.text(160, 114, [7, 6]); // a line whose lower half lies inside the 15 pt reach over the box
+    const cap = p.text(160, 136, [5, 4]); // the caption over the box
+    const r = read(p);
+    const bad = [];
+    const after = r.of(tick, 'after')[0];
+    if (!after) bad.push('the tick box has no after band');
+    else if (!within(first, after, 0) || after.y1 > first.y1 + 1) bad.push(`the after band runs from row ${after.y0} to ${after.y1}, not the first line (${first.y0} to ${first.y1}) alone`);
+    const over = r.of(box, 'over')[0];
+    if (!over) bad.push('the box has no over band');
+    else if (!within(cap, over, 0) || over.y0 < cap.y0 - 1) bad.push(`the over band runs from row ${over.y0}, into the line its far edge cuts (the caption starts at ${cap.y0})`);
+    return bad.join('; ');
+  });
   add('running text beside a box on its row is no caption before it', () => {
     const p = paper(640, 200);
     // a paragraph whose lines end 6 pixels (3 pt) before the box at the end of them

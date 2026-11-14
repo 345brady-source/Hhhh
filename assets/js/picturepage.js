@@ -701,7 +701,25 @@
     }
     const margin = out.margin;
 
-    /* The bands of every place and every free rule. */
+    /* The bands of every place and every free rule. A band never ends inside a line of print: read as one line, a
+       strip with the cut-off tops of the next line under it comes back with no word at all. */
+    // a run of rows that an edge of r cuts through: print goes on past that edge
+    const cutAt = (r, a, b) => (a === r.y0 && a > 0 && ink(r.x0, a - 1, r.x1, a) > 0) || (b === r.y1 && b < h && ink(r.x0, b, r.x1, b + 1) > 0);
+    // r limited to its whole lines (null when it has none)
+    const whole = (r) => {
+      if (empty(r)) return null;
+      const runs = rowRuns(r).filter(([a, b]) => !cutAt(r, a, b));
+      return runs.length ? trim({ x0: r.x0, y0: runs[0][0], x1: r.x1, y1: runs[runs.length - 1][1] }) : null;
+    };
+    // a band on its box's row: the whole text lines (looked for a little above and below) that cross the middle half of
+    // the box's height
+    const rowOf = (r, own) => {
+      if (empty(r)) return null;
+      const look = { x0: r.x0, y0: Math.max(0, own.y0 - pt(6)), x1: r.x1, y1: Math.min(h, own.y1 + pt(6)) };
+      const q = (own.y1 - own.y0) / 4;
+      const runs = rowRuns(look).filter(([a, b]) => a < own.y1 - q && b > own.y0 + q && !cutAt(look, a, b));
+      return runs.length ? { x0: r.x0, y0: runs[0][0], x1: r.x1, y1: runs[runs.length - 1][1] } : null;
+    };
     const parts = [];
     const add = (kind, of, side, r) => r && parts.push({ of, kind, side, x0: r.x0, y0: r.y0, x1: r.x1, y1: r.y1 });
     // over or under: cut at a text line wider than its owner by more than the owner's own width (running prose)
@@ -712,10 +730,13 @@
       if (dir === 'up') runs.reverse();
       const kept = [];
       for (let i = 0; i < runs.length; i++) {
+        if (cutAt(r, runs[i][0], runs[i][1])) continue; // a line the band's far edge cuts through
         const t = trim({ x0: r.x0, y0: runs[i][0], x1: r.x1, y1: runs[i][1] });
         if (!t) continue;
         const ln = lineOf(t.y0, t.y1, t.x0, t.x1);
-        if (ln.x1 - ln.x0 > 2 * (own.x1 - own.x0)) break;
+        // (a free rule's bands are its own width, and the line rules read them: the words standing over a rule and the
+        // mark that opens the print under a footnote rule; running text is cut only from the bands of a box)
+        if (own.kind === 'box' && ln.x1 - ln.x0 > 2 * (own.x1 - own.x0)) break;
         // under a free rule longer than REACH.longRule, a text line nearly as wide as the rule is the next line of the
         // page (a heading or running text), not a caption of the rule
         if (own.kind === 'rule' && dir === 'down' && own.x1 - own.x0 > pt(REACH.longRule) && ln.x1 - ln.x0 >= 0.8 * (own.x1 - own.x0)) break;
@@ -729,7 +750,12 @@
       if (margin && own.x0 >= margin.main && r.x0 < margin.main) (r.x0 = margin.main), (own.edge = true);
       const reach = r.x0;
       clip(r, 'left', own);
-      const t = trim(r);
+      let t = own.kind === 'box' ? rowOf(r, own) : whole(r);
+      if (t && own.kind === 'box') {
+        Object.assign(r, { y0: t.y0, y1: t.y1 });
+        clip(r, 'left', own);
+        t = trim(r);
+      }
       if (!t) return null;
       if (prose && r.x0 === reach && reach > 0 && !own.edge && lineOf(t.y0, t.y1, t.x0, t.x1).x0 < r.x0) return null;
       return t;
@@ -751,7 +777,11 @@
             if (ink(x, r.y0, x + 1, r.y1)) last = x;
             else if (last >= 0 && x - last > pt(REACH.tickGap)) break;
           }
-          if (last >= 0) add('box', i, 'after', trim({ x0: r.x0, y0: r.y0, x1: last + 1, y1: r.y1 }));
+          const line = last >= 0 ? rowOf({ x0: r.x0, y0: r.y0, x1: last + 1, y1: r.y1 }, own) : null;
+          if (line) {
+            clip(line, 'right', own);
+            add('box', i, 'after', trim(line));
+          }
         }
         add('box', i, 'before', before({ x0: b.x0 - pt(REACH.tickBefore), y0, x1: b.x0 - g, y1 }, Object.assign({}, own), true));
         return;
@@ -768,7 +798,7 @@
       add('rule', i, 'before', before({ x0: ru.x0 - pt(REACH.ruleBefore), y0, x1: ru.x0 - 1, y1 }, Object.assign({}, own), false));
       const after = { x0: ru.x1 + 1, y0, x1: ru.x1 + pt(REACH.ruleAfter), y1 };
       clip(after, 'right', own);
-      add('rule', i, 'after', trim(after));
+      add('rule', i, 'after', whole(after));
       add('rule', i, 'over', upDown({ x0: ru.x0, y0: ru.y0 - pt(REACH.ruleOverFar), x1: ru.x1, y1: ru.y0 - pt(REACH.ruleOverNear) }, 'up', own));
       add('rule', i, 'under', upDown({ x0: ru.x0, y0: ru.y1 + 1, x1: ru.x1, y1: ru.y1 + pt(REACH.ruleUnder) }, 'down', own));
     });
