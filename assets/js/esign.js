@@ -2051,7 +2051,17 @@
     if (editorEnv()) NS.fieldEditor.addHere();
   };
   NS.changes['es-fprop'] = (el) => {
-    if (editorEnv()) NS.fieldEditor.setProp(el.getAttribute('data-k'), el.type === 'checkbox' ? el.checked : el.value);
+    const env = editorEnv();
+    if (!env) return;
+    const k = el.getAttribute('data-k');
+    const v = el.type === 'checkbox' ? el.checked : el.value;
+    // A place for somebody else given to a signer becomes that signer's ordinary field (the editor drops its party).
+    // Its signature or initials is then where that signer signs, required as every such field is until the sponsor
+    // says otherwise: left optional, an acceptance line set to the firm would leave the firm nowhere to sign.
+    // Changed with the signer in the same step, so one undo puts both back.
+    const f = k === 'signerId' ? env.fields.find((x) => x.id === esUi().sel) : null;
+    if (f && isOther(f) && (f.type === 'signature' || f.type === 'initials') && signerById(env, v)) delete f.required;
+    NS.fieldEditor.setProp(k, v);
   };
   NS.actions['es-fdel'] = () => {
     const env = editorEnv();
