@@ -7,14 +7,17 @@
  *   walk(page, viewport, OPS)   the drawing operators of one page of the PDF reader, as plain data:
  *                               { glyphs, segs, rects, picture } (every character with its true extent, every straight
  *                               stroke and thin filled bar, every drawn rectangle, and whether one picture covers the page)
- *   page(raw, size, forms)      what placement reads: { page, w, h, items, rules, boxes, forms, scan }
+ *   page(raw, size, forms)      what placement reads: { page, w, h, items, rules, boxes, forms, filled, scan }
  *                               items  runs of text { s, x, y, w, h } (a run of underscores and a box character are
  *                                      runs of their own, so their extents are exact)
  *                               rules  printed lines that can be written on { x0, x1, y, clear, pad, made, cut, cell, table,
- *                                      bracketed (printed between square brackets as a blank or a box) }
+ *                                      bracketed (printed between square brackets as a blank or a box), and on an empty
+ *                                      cell with a small sign-here mark at its left edge, mark: { s, x0, x1, y, h } }
  *                                      (pad: how far a field may reach past each end and under the line: { l, r, d })
  *                               boxes  printed tick boxes { x, y, w, h, made }
  *                               forms  the PDF's own form fields { x0, y0, x1, y1, type, label, check, readOnly }
+ *                               filled the ruled cells of a grid that have words in them { x0, x1, y0, y1 } (what
+ *                                      is printed there is the table's content, never the caption of a place)
  *                               scan   true when the page is a picture (nothing can be read from it)
  *
  * A place is only ever something printed: a run of underscores, a drawn line, a box character, a drawn square, an
@@ -304,7 +307,7 @@
 
   /** What placement reads of one page. raw: from walk(); size: { page, w, h }; forms: the PDF's form fields on it (already in displayed points). */
   function page(raw, size, forms) {
-    const out = { page: size.page, w: size.w, h: size.h, items: [], rules: [], boxes: [], forms: [], scan: false };
+    const out = { page: size.page, w: size.w, h: size.h, items: [], rules: [], boxes: [], forms: [], filled: [], scan: false };
     if (!raw) return out;
     const shown = raw.glyphs.filter((g) => !g.hidden);
     const ink = shown.filter((g) => !g.sp);
@@ -437,7 +440,13 @@
     const lines = [];
     pieces.forEach((p) => {
       if (p.made === 'underscores' && p.n < 2) return;
-      const m = lines.find((l) => !l.frame && !p.frame && Math.abs(l.y - p.y) <= 2.2 && p.x0 - l.x1 <= 3.5 && p.x1 >= l.x0 - 3.5);
+      // A run of underscores joins a drawn rule that is the edge of a ruled table (upright strokes stand on it) only
+      // where the rule is the run's own underline (the two share most of the longer one's extent): a run that ends a
+      // row just over the top edge of a wide cell below it stays a blank of its own.
+      const typedP = p.made === 'underscores' || p.made === 'leader';
+      const walled = (q) => vs.filter((v) => v.c >= q.x0 - 1.5 && v.c <= q.x1 + 1.5 && v.a0 <= q.y + 1.5 && v.a1 >= q.y - 1.5).length >= 2;
+      const kin = (l) => (l.made.indexOf('underscores') < 0 && l.made.indexOf('leader') < 0) === !typedP || !walled(typedP ? l : p) || ov(l.x0, l.x1, p.x0, p.x1) >= 0.75 * Math.max(l.x1 - l.x0, p.x1 - p.x0);
+      const m = lines.find((l) => !l.frame && !p.frame && kin(l) && Math.abs(l.y - p.y) <= 2.2 && p.x0 - l.x1 <= 3.5 && p.x1 >= l.x0 - 3.5);
       if (m) {
         m.x0 = Math.min(m.x0, p.x0);
         m.x1 = Math.max(m.x1, p.x1);
@@ -499,10 +508,22 @@
           if (b - a < 16) continue;
           const roof = hs.filter((s) => s.c < l.y - 6 && s.c > l.y - 80 && ov(s.a0, s.a1, a, b) > 0.5 * (b - a)).sort((p, q) => q.c - p.c)[0];
           const top = roof ? roof.c : l.y - 20;
-          if (ink.some((g) => (g.x0 + g.x1) / 2 > a && (g.x0 + g.x1) / 2 < b && g.y > top && g.y - 0.4 * g.h < l.y + 1)) continue;
+          // Ink in a cell is an answer already given, except one small mark at its left edge, printed to say where to
+          // sign ("X", an arrow): the cell is still empty, and the mark is reported as its own.
+          const inCell = ink.filter((g) => (g.x0 + g.x1) / 2 > a && (g.x0 + g.x1) / 2 < b && g.y > top && g.y - 0.4 * g.h < l.y + 1);
+          const mark = inCell.length === 1 && /^[xX\u00D7\u2715\u2716\u2717\u2718\u2192\u27A4\u25B6\u25BA]$/.test(inCell[0].u) && inCell[0].x0 - a < 12 && inCell[0].h < 0.8 * (l.y - top) ? inCell[0] : null;
+          if (inCell.length && !mark) {
+            out.filled.push({ x0: a, x1: b, y0: top, y1: l.y });
+            continue;
+          }
           // On a page read from its picture a line printed in the cell is print in it too (its characters are a stroke there).
-          if (raw.pictured && lines.some((o) => o !== l && !o.frame && o.y > top + 1 && o.y < l.y - 1 && o.x0 >= a - 1 && o.x1 <= b + 1)) continue;
-          out.rules.push({ x0: a + 2, x1: b - 2, y: l.y, clear: Math.max(0, l.y - top - 1), made: 'cell', cut: false, cell: true, table: true });
+          if (raw.pictured && lines.some((o) => o !== l && !o.frame && o.y > top + 1 && o.y < l.y - 1 && o.x0 >= a - 1 && o.x1 <= b + 1)) {
+            out.filled.push({ x0: a, x1: b, y0: top, y1: l.y });
+            continue;
+          }
+          const cell = { x0: a + 2, x1: b - 2, y: l.y, clear: Math.max(0, l.y - top - 1), made: 'cell', cut: false, cell: true, table: true };
+          if (mark) cell.mark = { s: mark.u, x0: mark.x0, x1: mark.x1, y: mark.y, h: mark.h };
+          out.rules.push(cell);
         }
         return;
       }
@@ -535,7 +556,8 @@
         // A rule right across the page near its head or foot: a running rule.
         if (w > 0.7 * size.w && (l.y > 0.9 * size.h || l.y < 0.08 * size.h)) return;
       }
-      out.rules.push({ x0, x1: l.x1, y: l.y, low: l.low, clear, made: l.made, cut, cell: false, table: walls.length > 0, bracketed });
+      // (A typed blank is in a table only where two walls cross it, not where the corner of a cell beside it touches it.)
+      out.rules.push({ x0, x1: l.x1, y: l.y, low: l.low, clear, made: l.made, cut, cell: false, table: typed ? walls.length >= 2 : walls.length > 0, bracketed });
     });
     // Empty paper above a line ends at the next printed line above it, too.
     out.rules.forEach((r) => {

@@ -39,6 +39,7 @@
 
   const MIN_RULE = 16; // pt: a shorter line is not a blank to write on
   const BLANK_CLEAR = 7; // pt of empty paper above a line that makes it a blank to write on
+  const CELL_INSET = 0.75; // pt: a field on a drawn cell stays this far inside the middle of its strokes
   const TIGHT_CLEAR = 4.5; // pt: enough when the text itself shows the blank (a run of underscores)
 
   /* =====================================================================
@@ -189,6 +190,8 @@
   const OPTIONAL_RE = /\b(if any|if applicable|optional|if different|if other|where applicable)\b/;
   const CURRENCY_TAIL = /(u\.?s\.?\s*)?\$\s*$/i;
   const MONEY_WORDS = /\b(commitment|subscription|subscribes?|subscribed|purchase|investment|invest)\b/;
+  // Words after a blank that name the amount written in it ("$____ total purchase amount", "$____ subscription amount").
+  const AMOUNT_AFTER = /^\(?\s*(the |this |its |your )?[“"']?(total |aggregate )?(subscription |commitment |capital commitment |investment |purchase )?(amount|price)\b/i;
   // What becomes of each kind of blank. block: part of a signature block, where the signer has to be known.
   const KINDS = {
     signature: { type: 'signature', label: '', required: true, block: true, top: 42 },
@@ -453,8 +456,9 @@
     // A rule that is the top or bottom edge of a tick box, or the top edge of a frame or a table, is not a blank
     // (the bottom edge of a table cell, with the cell's sides standing on it, is one).
     // In a table, the edge under a cell that has words in it (a label standing a little above its cell's bottom edge)
-    // is no blank either: the row's blank is the empty cell.
-    const filled = (r) => r.table && r.clear < 12 && lines.some((ln) => ln.parts.some((p) => p.t === 'text' && p.y < r.y - 2 && p.y > r.y - r.clear - p.h && overlap(p.x0, p.x1, r.x0, r.x1) > 0));
+    // is no blank either: the row's blank is the empty cell. (A drawn cell was already found empty where it is read:
+    // the caption printed just over a shallow cell is not in it.)
+    const filled = (r) => !r.cell && r.table && r.clear < 12 && lines.some((ln) => ln.parts.some((p) => p.t === 'text' && p.y < r.y - 2 && p.y > r.y - r.clear - p.h && overlap(p.x0, p.x1, r.x0, r.x1) > 0));
     const rules = (pg.rules || []).filter((r) => r && r.x1 - r.x0 >= MIN_RULE - 1 && r.clear >= TIGHT_CLEAR && !filled(r) && !boxes.some((b) => r.x0 >= b.x0 - 1.5 && r.x1 <= b.x1 + 1.5 && r.y >= b.y0 - 1.5 && r.y <= b.y1 + 1.5));
     // One line shared by several captions printed under it ("Name of Subscriber ... Social Security Number", two
     // signatures on one rule): the line is cut at its captions, one blank for each.
@@ -489,6 +493,23 @@
     for (let i = rules.length - 1; i >= 0; i--) if (spare(rules[i])) rules.splice(i, 1);
     const slots = [];
     const free = [];
+    // A box character belongs to the printed line of its own glyph: every one is bound first, in one pass, so that a
+    // line in another column set a little higher never takes it (tick boxes in columns whose rows do not line up).
+    lines.forEach((ln) =>
+      ln.parts.forEach((p) => {
+        if (p.t !== 'box' && p.t !== 'sym') return;
+        const hit = boxes.find((b) => !b.line && overlap(b.x0, b.x1, p.x0 - 3, p.x1 + 3) > 0 && overlap(b.y0, b.y1, p.y - p.h, p.y + 0.3 * p.h) > 0);
+        if (hit) Object.assign(hit, { line: ln, part: p });
+      })
+    );
+    // A drawn square goes to the line whose words begin just to its right, among the lines it stands on.
+    boxes.forEach((b) => {
+      if (b.line) return;
+      const mid = (b.y0 + b.y1) / 2;
+      const on = lines.filter((ln) => mid <= ln.y + 0.35 * ln.h && mid >= ln.y - 1.1 * ln.h);
+      const next = on.find((ln) => ln.parts.some((p) => p.t === 'text' && p.x0 >= b.x1 - 1 && p.x0 - b.x1 <= 14));
+      if (next && next !== on[0]) b.line = next;
+    });
     // Each rule goes to the printed line it sits on (from 0.3 of the font height above the baseline to 0.9 below it).
     lines.forEach((ln) => (ln.rules = []));
     rules.forEach((r) => {
@@ -533,9 +554,8 @@
         if (p.t === 'text') return els.push({ t: 'text', key: p.x0, part: p });
         if (p.t === 'box' || p.t === 'sym') {
           // A tick box written as text counts where a printed box was read there (a character of a symbol font can be anything).
-          const hit = boxes.find((b) => !b.line && overlap(b.x0, b.x1, p.x0 - 3, p.x1 + 3) > 0 && overlap(b.y0, b.y1, p.y - p.h, p.y + 0.3 * p.h) > 0);
+          const hit = boxes.find((b) => b.part === p);
           if (!hit) return;
-          hit.line = ln;
           return els.push({ t: 'box', key: p.x0, box: hit });
         }
         // Underscores or a leader are a blank only where a printed line was read for them.
@@ -552,12 +572,13 @@
         if (taken.has(r) || r.clear < BLANK_CLEAR) return;
         // A stroke inside a run of words (two underscores in a name, a dash) is part of the text, not a blank.
         if (ln.parts.some((p) => p.t === 'text' && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0))) return;
-        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, leader: /leader/.test(r.made || ''), line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, leader: /leader/.test(r.made || ''), line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table, mark: r.mark || null };
         slots.push(slot);
         els.push({ t: 'slot', key: r.x0, slot });
       });
       // Drawn squares that stand on this line.
       boxes.forEach((b) => {
+        if (b.line === ln && !b.part) return els.push({ t: 'box', key: b.x0, box: b });
         if (b.line) return;
         const mid = (b.y0 + b.y1) / 2;
         if (mid > ln.y + 0.35 * ln.h || mid < ln.y - 1.1 * ln.h) return;
@@ -592,7 +613,7 @@
     });
     // A stroke in the body of a run of words (the bar of a letter, an equals sign) is part of the text, not a blank.
     const inText = (r) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && r.y > p.y - 0.8 * p.h && r.y < p.y + 0.2 * p.h && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0)));
-    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, leader: /leader/.test(r.made || ''), line: null, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table }));
+    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, leader: /leader/.test(r.made || ''), line: null, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table, mark: r.mark || null }));
     // Rows of a ruled table: each row's line runs under its label too, so the empty stretch begins where that row's
     // label ends. Nothing printed marks the column, so rows that end together start together, after the longest label.
     const cut = slots.filter((s) => s.cut).sort((a, b) => a.y - b.y);
@@ -623,6 +644,8 @@
    * above the line.
    */
   function boxOn(K, slot) {
+    // A drawn cell or box: the field is the box itself, inset by about its stroke, however tall it is.
+    if (slot.cell) return { x: slot.x0 - 2 + CELL_INSET, y: slot.y - slot.clear - 1 + CELL_INSET, w: slot.x1 - slot.x0 + 4 - 2 * CELL_INSET, h: slot.clear + 1 - 2 * CELL_INSET };
     const pad = slot.pad || { l: 0, r: 0, d: 0 };
     const up = Math.min(K.top || 14, Math.max(6, slot.clear - 1));
     return { x: slot.x0 - pad.l, y: slot.y - up, w: slot.x1 - slot.x0 + pad.l + pad.r, h: up + pad.d };
@@ -631,6 +654,8 @@
   /** Proposed fields for one page. */
   function pageFields(pg, c, out) {
     const L = layout(pg);
+    // A sign-here mark printed in a cell ("X") speaks for that cell only: it is never the label of the cell beside it.
+    L.slots.forEach((s) => s.mark && L.segs.forEach((g) => g.x0 >= s.mark.x0 - 1 && g.x1 <= s.mark.x1 + 1 && Math.abs(g.y - s.mark.y) < 1 && (g.used = 'mark')));
     const made = []; // { p (the proposal), slot, seg, info, target }
     const propose = (kind, slot, info, opts) => {
       const K = KINDS[kind] || KINDS.other;
@@ -741,6 +766,19 @@
       return c.asked && c.asked.page === pg.page - 1 ? { mode: c.asked.mode, some: c.asked.some } : { mode: '', some: false };
     };
 
+    // A statement that the investor may elect ("if you choose this option", "optional"): its paragraph, from the line a
+    // place opens down to the end of the paragraph, and the line right above it.
+    const elective = (ln) => {
+      const para = [ln];
+      for (let i = ln.i + 1; i < L.lines.length && para.length < 16; i++) {
+        const prev = para[para.length - 1];
+        if (L.lines[i].y - prev.y > 1.7 * Math.max(prev.h, L.lines[i].h)) break;
+        para.push(L.lines[i]);
+      }
+      const up = L.lines[ln.i - 1];
+      if (up && ln.y - up.y <= 2.6 * ln.h) para.push(up);
+      return para.some((x) => /\bif you (choose|elect|wish|prefer|want)\b|\b(this|that) option\b|\boptional\b|\bif (the )?(subscriber|investor) (so )?(chooses|elects|wishes)\b/i.test(x.text));
+    };
     /* 1. Tick boxes: every printed square and every box written as text, labelled with the words beside it. */
     L.lines.forEach((ln) => {
       const bs = ln.els.filter((e) => e.t === 'box');
@@ -799,6 +837,19 @@
         if (!best || g.y < best.y) best = g;
       });
       return best;
+    };
+    // The caption centred under a short line with nothing else printed under it: words of a caption (short, no
+    // sentence, not in capitals, opening with a letter), set smaller than the body of the page, or, beside words set
+    // apart in a column to the left of the line, no larger than those words (refH).
+    const segH = L.segs.map((g) => g.h).sort((a, b) => a - b)[Math.floor(L.segs.length / 2)] || 10;
+    const loneCaption = (s, refH) => {
+      const g = under(s);
+      const span = s.x1 - s.x0;
+      const ext = (e) => (e.t === 'slot' ? [e.slot.x0, e.slot.x1] : e.t === 'box' ? [e.box.x0, e.box.x1] : [e.seg.x0, e.seg.x1]);
+      if (!g || g.used || g.s.length > 70 || !/^[A-Za-z]/.test(g.s) || (refH ? g.h > refH + 0.3 : g.h >= 0.93 * segH) || /[.;!?]$/.test(g.s) || (/[A-Z]{2}/.test(g.s) && g.s === g.s.toUpperCase()) || !g.line || g.line.els.some((e) => e.t !== 'seg' && overlap(ext(e)[0], ext(e)[1], s.x0 - 12, s.x1 + 12) > 0)) return null;
+      if (Math.abs((g.x0 + g.x1) / 2 - (s.x0 + s.x1) / 2) > 0.2 * span || g.x1 - g.x0 > span + 12) return null;
+      if (L.segs.some((o) => o !== g && o.y > s.y + 0.5 && o.y <= g.y + 0.5 * g.h && overlap(o.x0, o.x1, s.x0, s.x1) > 0)) return null;
+      return g;
     };
     const over = (s) => {
       let best = null;
@@ -880,7 +931,8 @@
     const leftOf = (ln, e) => {
       for (let i = e.i - 1; i >= 0; i--) {
         const o = ln.els[i];
-        if (o.t !== 'seg') return null;
+        // (A sign-here mark belongs to its own cell: it is no label, and nothing before it is this blank's.)
+        if (o.t !== 'seg' || o.seg.used === 'mark') return null;
         if (!e.slot.fromText && o.seg.x1 > e.slot.x0 + 3) continue;
         return o;
       }
@@ -893,7 +945,7 @@
       const last8 = ws.slice(-8).join(' ').toLowerCase();
       const sent = ws.slice(-24).join(' ').toLowerCase();
       // "$____ (the "Subscription Amount")": the words after the blank name it.
-      const named = !!after && /^\(?\s*(the |this |its )?[“"']?(subscription|commitment|capital commitment|investment|purchase)( amount| price)?[”"']?\s*\)/i.test(after.s);
+      const named = !!after && (/^\(?\s*(the |this |its )?[“"']?(subscription|commitment|capital commitment|investment|purchase)( amount| price)?[”"']?\s*\)/i.test(after.s) || AMOUNT_AFTER.test(after.s));
       if (CURRENCY_TAIL.test(tail) && (MONEY_WORDS.test(sent) || named) && !/\b(accept\w*|minimum|maximum|fees?|expenses?|per (unit|share|interest)|price per|each)\b/.test(sent)) return propose('amount', slot, null, { seg, how: 'sentence' });
       const m = propose('other', slot, null, { seg, how: 'sentence', label: ws.slice(-4).join(' ').replace(/\$$/, '').trim() || 'Text', who: whoIn(last8) });
       // "... under the laws of the state of ____", "licensed in the state of ____": the blank names a jurisdiction, a
@@ -943,15 +995,31 @@
             if (ins.mode !== 'initials' && !says) return tick(slot, stmt.seg.s, stmt.seg, ins.mode !== 'check');
             // Labelled by the item's own printed mark, as printed ("(a)", "b)"), where the item has one.
             const mark = ln.els.slice(0, e.i).filter((o) => o.t === 'seg' && LIST_MARK.test(o.seg.s)).pop();
-            const m = propose('initials', slot, null, { seg: stmt.seg, how: 'after', required: !(ins.some && !says), label: mark ? tidy(mark.seg.s) : undefined });
+            const m = propose('initials', slot, null, { seg: stmt.seg, how: 'after', required: !((ins.some || elective(ln)) && !says), label: mark ? tidy(mark.seg.s) : undefined });
             if (mark) m.mark = mark.seg;
             m.x1 = stmt.seg.x1;
             return m;
           }
         }
+        // The blank after such a blank, ending the line with it, takes the same label.
+        const before = ln.els[e.i - 1];
+        if (!left && before && before.t === 'slot' && before.slot.made && before.slot.made.colonEnd && !ln.els.slice(e.i + 1).some((o) => o.t !== 'slot')) {
+          const m = propose('other', slot, null, { seg: before.slot.made.seg, how: 'after', label: before.slot.made.p.label, required: before.slot.made.p.required, who: before.slot.made.who });
+          m.colonEnd = true;
+          return m;
+        }
         if (left) {
           let seg = left.seg;
           const prior = ln.els[left.i - 1];
+          // A short rule with a small caption centred under it, and nothing else under it: the caption names it, before
+          // any words beside it that are not a label ending in a colon.
+          const capU = !slot.cell && span <= 216 && slot.x0 - seg.x1 > 12 && !/[:\uFF1A]\s*$/.test(seg.s) ? loneCaption(slot, seg.h) : null;
+          if (capU) {
+            capU.used = 'caption';
+            const ci = classify(capU.s);
+            if (ci && FIELD(ci.kind)) return propose(ci.kind, slot, ci, { seg: capU, how: 'after' });
+            return generic(slot, { kind: 'other', who: whoIn(plain(capU.s)), forType: '', optional: OPTIONAL_RE.test(capU.s.toLowerCase()), colon: true, by: false, text: capU.s, any: true }, capU);
+          }
           let info = classify(prior && prior.t === 'slot' ? seg.s.replace(/^[([][^)\]]{1,60}[)\]]\s*/, '') || seg.s : seg.s);
           // A label that closes a line of running text ("...as defined in Rule 501.  Initials: ____"): what follows the
           // last full stop is the label.
@@ -961,6 +1029,15 @@
             if (t && (FIELD(t.kind) || t.kind === 'skip' || t.kind === 'other')) info = t;
           }
           const dist = same(seg, 'end') ? 0 : slot.x0 - seg.x1;
+          // "$ ____ total purchase amount ...", "will pay $____ subscription amount": after a currency sign, the words
+          // after the blank name it. A lead-in ending in a colon right over the line that prints the word for required
+          // ("YOUR INVESTMENT (REQUIRED):") makes it required.
+          if (CURRENCY_TAIL.test(seg.s) && after && dist <= 36 && AMOUNT_AFTER.test(after.s)) {
+            seg.used = 'label';
+            const lead = lineAbove(ln, 1)[0];
+            const must = !!lead && ln.y - lead.y <= 3 * ln.h && /[:\uFF1A]\s*$/.test(lead.text) && /\brequired\b/i.test(lead.text);
+            return propose('amount', slot, null, { seg: after, how: 'after', required: must || undefined });
+          }
           // A currency sign standing alone before the blank: the label is the text before it.
           if (/^(u\.?s\.?\s*)?\$$/i.test(seg.s)) {
             const before = ln.els[left.i - 1];
@@ -1039,6 +1116,24 @@
                 m.yearOf = date;
                 return m;
               }
+              // The words of a tick box right before the blank ("[ ] Non-resident - Country of origin ____"): the blank
+              // says which, named by those words (after a dash, the part after it), part of the box's choice.
+              const box = ln.els[left.i - 1];
+              if (box && box.t === 'box' && wordsOf(seg.s).length <= 10) {
+                seg.used = 'label';
+                const name = tidy(seg.s.split(/\s+[-–—]\s+/).pop().replace(/[:\uFF1A]\s*$/, ''));
+                return propose('other', slot, null, { seg, label: name || seg.s, required: false, who: whoIn(plain(seg.s)) });
+              }
+              // A colon right before a blank that ends its line: the words before the colon are its label however long
+              // the line, named by their last clause ("If the account holds two classes, give the units in each: ____").
+              const clause = tidy(seg.s.replace(/[:\uFF1A]\s*$/, '').split(/[.;?!]["”)]?\s+|,\s+/).pop());
+              if (/[:\uFF1A]\s*$/.test(seg.s) && !ln.els.slice(e.i + 1).some((o) => o.t !== 'slot') && clause && wordsOf(clause).length <= 14 && !/[([]$/.test(clause)) {
+                seg.used = 'label';
+                const cond = /^\W*if\b/i.test(seg.s) || OPTIONAL_RE.test(seg.s.toLowerCase());
+                const m = propose('other', slot, null, { seg, label: clause, required: !cond, who: whoIn(plain(clause)) });
+                m.colonEnd = true;
+                return m;
+              }
               return sentence(slot, whole || seg.s, seg, after);
             }
           }
@@ -1061,6 +1156,16 @@
       });
     });
 
+    // Words printed inside a ruled cell of a grid are the table's content (a header, a figure), never a caption.
+    const openPaper = (seg) => {
+      const mid = (seg.x0 + seg.x1) / 2;
+      return !(pg.filled || []).some((q) => mid > q.x0 && mid < q.x1 && seg.y > q.y0 && seg.y <= q.y1 + 1);
+    };
+    // A caption looks like a label: a few words, no list bullet, no sentence, not a figure, an amount or a range of them.
+    const labelLike = (text) => {
+      const t = tidy(text);
+      return !!t && t.length <= MAX_LABEL && wordsOf(t).length <= 16 && /[A-Za-z]{2}/.test(t) && !/^[•·▪■○●*–-]\s/.test(t) && !/[.;!?]["”)]?$/.test(t) && !/[$€£]\s*\d|\d\s*%|^[\d.,\s$€£%()–-]+$/.test(t);
+    };
     /* 2b. Rows of a table: the words in the cell to the left of an empty, ruled cell are its label, wherever in the
        height of the row they stand (a label set in the middle of a tall cell is far above the cell's bottom edge). */
     L.slots
@@ -1074,13 +1179,16 @@
         const cellText = inRow.filter((g) => Math.abs(g.x0 - near.x0) <= 3 || g === near).sort((a, b) => a.y - b.y);
         if (L.slots.some((o) => o !== slot && o.x0 >= near.x1 - 3 && o.x1 <= slot.x0 + 3 && o.y > top && o.y <= slot.y + 1)) return;
         const whole = cellText.map((g) => g.s).join(' ');
+        // A figure, an amount or a range of them is the table's content, never the label of the cell beside it.
+        if (slot.cell && !labelLike(whole)) return (slot.rowSkip = true);
         if (slot.table && !slot.cell && !/[:\uFF1A]\s*$/.test(whole)) return (slot.skip = true);
         if (slot.cut && !slot.table && slot.col && slot.col.length < 2 && !/[:\uFF1A]\s*$/.test(whole)) return (slot.skip = true);
         const info = classify(whole) || (/[:\uFF1A]\s*$/.test(whole) ? null : classify(whole + ':')) || classify(near.s);
         // An empty cell of an ordinary table is no blank: only one whose label ends in a colon or is of a kind the portal
         // knows, or one of a column of empty cells beside a column of labels.
         const column = L.slots.some((o) => o !== slot && o.cell && Math.abs(o.x0 - slot.x0) <= 3 && Math.abs(o.x1 - slot.x1) <= 3);
-        if (slot.cell && !column && !/[:\uFF1A]\s*$/.test(whole) && !(info && FIELD(info.kind))) return (slot.skip = true);
+        // (It may still be named by a caption printed over it: see cellCaptions.)
+        if (slot.cell && !column && !/[:\uFF1A]\s*$/.test(whole) && !(info && FIELD(info.kind))) return (slot.rowSkip = true);
         if (!info) return;
         cellText.forEach((g) => (g.used = 'label'));
         if (info.kind === 'skip') return second(slot, info, near);
@@ -1089,6 +1197,144 @@
         // One empty cell in a table of words may just be an empty cell: sure only where a column of them stands.
         if (slot.cell && !L.slots.some((o) => o !== slot && o.cell && Math.abs(o.x0 - slot.x0) <= 3 && Math.abs(o.x1 - slot.x1) <= 3)) weaken(m, WHY.phrase);
       });
+    /* 2c. An empty ruled cell is named by the caption printed over it (run at the start of step 3, see cellCaptions). */
+    // A section, between rules that divide sections, that says it applies only in some cases ("ONLY FOR ACCOUNTS ...",
+    // "if applicable"), or that is one of the alternatives a line above asks the investor to choose between ("Choose
+    // Account Type A or Account Type B", then a section headed "Account Type B"): every place in it is optional.
+    const SOME_CASES = /\bonly (for|if|when|where|applies|applicable)\b|\b(if|where|when) applicable\b|\bif any\b|\bapplies only\b/;
+    const someCases = (slot, capTop) => {
+      const from = (pg.rules || []).filter((r) => sectionRule(r) && r.y < capTop - 2).reduce((y, r) => Math.max(y, r.y), -1);
+      const heads = L.lines.filter((ln) => ln.y > from + 2 && ln.y < capTop - 2 && ln.els.length && ln.els.every((e) => e.t === 'seg' && e.seg.used !== 'box' && !captionCell(e.seg)));
+      if (heads.some((ln) => SOME_CASES.test(ln.text.toLowerCase()))) return true;
+      if (from < 0 || !heads.length) return false;
+      // The section's own heading: its first line, up to a dash that begins a remark.
+      const name = tidy(heads[0].text.split(/\s+[-–—]\s+/)[0]).toLowerCase();
+      if (!name || wordsOf(name).length > 5 || !/[a-z]{3}/.test(name)) return false;
+      const esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const alt = new RegExp(`\\b(choose|select|check|complete)\\b.{0,40}(\\b${esc}\\b.{0,30}\\bor\\b|\\bor\\b.{0,30}(^|[^-\\w])${esc}\\b)`);
+      return L.lines.some((ln) => ln.y < from && alt.test(tidy(ln.text).toLowerCase()));
+    };
+    function cellCaptions() {
+      // (An empty cell beside words that are no label of it, rowSkip, is still named by a caption printed over it.)
+      const cells = L.slots.filter((s) => s.cell && !s.made && !s.skip).sort((a, b) => a.y - b.y || a.x0 - b.x0);
+      const rowOf = (s) => L.slots.filter((o) => o.cell && Math.abs(o.y - s.y) <= 1.5 && Math.abs(o.clear - s.clear) <= 2);
+      const topOf = (s) => s.y - s.clear - 1;
+      // Nothing printed (a blank, a rule, a box) in a stretch of the page's width between two heights.
+      const clearBetween = (x0, x1, yTop, yBottom, skip) =>
+        !L.slots.some((o) => !(skip || []).includes(o) && o.y > yTop + 1 && o.y < yBottom - 1 && overlap(o.x0, o.x1, x0, x1) > 0) &&
+        !(pg.rules || []).some((r) => r.y > yTop + 1 && r.y < yBottom - 1 && overlap(r.x0, r.x1, x0, x1) > 0) &&
+        !L.boxes.some((b) => b.y1 > yTop + 1 && b.y0 < yBottom - 1 && overlap(b.x0, b.x1, x0, x1) > 0);
+      const usable = (g) => !g.used && openPaper(g);
+      const remark = (row) => row.every((g) => /^[([].*[)\]]$/.test(g.s));
+      // A caption, from its lowest printed line up: the lines above join while they are in the same size (a remark in
+      // brackets under them may be smaller), within 1.45 line heights and over the same stretch of the width; three
+      // lines at most. A line in another size is a heading and no part of the caption.
+      const chain = (g0) => {
+        const rows = [[g0]];
+        for (let k = 0; k < 2; k++) {
+          const cur = rows[0];
+          const h = cur[0].h;
+          const x0 = Math.min.apply(null, cur.map((g) => g.x0));
+          const x1 = Math.max.apply(null, cur.map((g) => g.x1));
+          const y = cur[0].y;
+          const tol = remark(cur) ? 1.5 : 0.3;
+          const up = L.segs.filter((g) => usable(g) && g.y < y - 1 && y - g.y <= 1.45 * Math.max(g.h, h) && Math.abs(g.h - h) <= tol && overlap(g.x0, g.x1, x0 - 4, x1 + 4) > 0);
+          if (!up.length) break;
+          const uy = Math.max.apply(null, up.map((g) => g.y));
+          const row = up.filter((g) => Math.abs(g.y - uy) < 1);
+          const ext = (e) => (e.t === 'slot' ? [e.slot.x0, e.slot.x1] : e.t === 'box' ? [e.box.x0, e.box.x1] : null);
+          if (row.some((g) => g.line && g.line.els.some((e) => ext(e) && overlap(ext(e)[0], ext(e)[1], x0 - 4, x1 + 4) > 0))) break;
+          rows.unshift(row);
+        }
+        const segs = [].concat.apply([], rows.map((r) => r.slice().sort((a, b) => a.x0 - b.x0)));
+        return { segs, whole: tidy(segs.map((g) => g.s).join(' ')), near: g0, x0: Math.min.apply(null, segs.map((g) => g.x0)), x1: Math.max.apply(null, segs.map((g) => g.x1)) };
+      };
+      const named = (c) => !!c && labelLike(c.whole) && !!ownWords(c.whole);
+      // The caption over a cell: of the captions whose lowest line ends within about a line over its top edge, with
+      // nothing printed between, the one set at the cell's left edge (a note further along the cell is not its name).
+      const over = (s, take) => {
+        const top = topOf(s);
+        const feet = L.segs.filter((g) => usable(g) && take(g) && g.y <= top + 1.5 && top - g.y <= 1.6 * g.h + 2 && clearBetween(g.x0, g.x1, g.y, top, rowOf(s)));
+        const caps = feet.map(chain).filter(named);
+        return caps.sort((a, b) => Math.abs(a.x0 - s.x0) - Math.abs(b.x0 - s.x0) || b.near.y - a.near.y)[0] || null;
+      };
+      const found = new Map();
+      cells.forEach((s) => {
+        // Directly over the cell: the caption's middle lies over it.
+        const own = over(s, (g) => (g.x0 + g.x1) / 2 >= s.x0 - 2 && (g.x0 + g.x1) / 2 <= s.x1 + 2);
+        if (own) return found.set(s, Object.assign(own, { how: 'over' }));
+        // In the left column: the caption stands up to 46 pt higher at the cell's left edge, with nothing printed under
+        // it in its own stretch of the width down to the cell (tick boxes may fill the column beside it).
+        const top = topOf(s);
+        const left = L.segs
+          .filter((g) => usable(g) && Math.abs(g.x0 - (s.x0 - 2)) <= 6 && g.y < top && top - g.y <= 46 && g.y > 0.08 * pg.h)
+          .filter((g) => clearBetween(g.x0, g.x1, g.y, top, [s]) && !L.segs.some((o) => o !== g && o.y > g.y + 1 && o.y < top && overlap(o.x0, o.x1, g.x0, g.x1) > 0))
+          .sort((a, b) => b.y - a.y)[0];
+        const c = left ? chain(left) : null;
+        if (named(c)) found.set(s, Object.assign(c, { how: 'left' }));
+      });
+      // One caption centred over two cells of a row (it reaches well into both): it names each that has none of its own.
+      const reaches = (c, o) => c.segs.some((g) => overlap(g.x0, g.x1, o.x0, o.x1) >= 0.25 * (g.x1 - g.x0));
+      cells.forEach((s) => {
+        if (found.has(s)) return;
+        const mate = rowOf(s).find((o) => o !== s && found.has(o) && found.get(o).how === 'over' && reaches(found.get(o), s));
+        if (mate) return found.set(s, Object.assign({}, found.get(mate), { shared: true }));
+        // (or it stands over the wall between them, under the middle of neither)
+        const c = over(s, (g) => overlap(g.x0, g.x1, s.x0, s.x1) >= 0.25 * (g.x1 - g.x0) && rowOf(s).some((o) => o !== s && !found.has(o) && overlap(g.x0, g.x1, o.x0, o.x1) >= 0.25 * (g.x1 - g.x0)));
+        if (c) rowOf(s).forEach((o) => !found.has(o) && reaches(c, o) && found.set(o, Object.assign({}, c, { how: 'over', shared: true })));
+      });
+      // A cell that opens the page with nothing over it but the running header, under a label that closed the page before.
+      const first = cells.filter((s) => !found.has(s))[0];
+      if (first && c.cap && c.cap.page === pg.page - 1 && !L.slots.some((o) => o !== first && o.y < first.y - 2) && !L.boxes.some((b) => b.y1 < first.y - 2) && !L.segs.some((g) => g.y < topOf(first) && g.y > 0.08 * pg.h)) {
+        const words = c.cap.text;
+        found.set(first, { segs: [], whole: words, near: null, x0: first.x0, x1: first.x1, how: 'carried' });
+      }
+      cells.forEach((s) => {
+        const c = found.get(s);
+        if (!c || s.made) return;
+        c.segs.forEach((g) => (g.used = g.used || 'caption'));
+        const info0 = classify(c.whole) || classify(ownWords(c.whole));
+        const low = c.whole.toLowerCase();
+        // A box for a stamp or a seal (a signature guarantee) is a place to stamp, not a signature line.
+        const stamp = /\b(signature guarantee|medallion|seal|stamp)\b/.test(low);
+        const info = Object.assign({ who: whoIn(plain(c.whole)), forType: '', optional: OPTIONAL_RE.test(low), colon: false, by: false }, info0 || {}, { text: c.whole, cell: true });
+        if (!info0 || stamp || !(FIELD(info.kind) || info.kind === 'skip')) info.kind = 'other';
+        // Words of acceptance over a cell are where the acceptance is signed (whose, step 6 decides: see acceptParty).
+        if (acceptParty(c.whole)) Object.assign(info, { kind: 'signature', who: 'firm' });
+        // Required: the section's condition first, then the kind (a signature as every signature of that person), then
+        // the caption's own word for required.
+        const cond = c.segs.length ? someCases(s, Math.min.apply(null, c.segs.map((g) => g.y - g.h))) : false;
+        const says = /\brequired\b/.test(low) && !/\b(if|not|where|when|unless) required\b/.test(low);
+        const sig = info.kind === 'signature' || info.kind === 'initials';
+        const K = KINDS[info.kind] || KINDS.other;
+        const required = cond ? false : sig ? (says || !info.optional) && K.required : says && !info.optional;
+        const label = cleanFull(ownWords(c.whole)) || K.label;
+        const m = info.kind === 'skip' ? second(s, info, c.near) : propose(info.kind, s, info, { seg: c.near, how: 'above', required });
+        // (Any other caption makes a plain text field, unless it names an address, an e-mail or a telephone in so many
+        // words: "Alternate mailing address", which is of the kind address.)
+        if (info.kind === 'other' && !/\b(address|e-?mail|(tele)?phone)\b/i.test(label)) m.p.kind = 'text';
+        Object.assign(m, { said: c.whole, cellCap: c, capLabel: label, capRequired: required, someCases: cond });
+        m.p.label = label;
+        if (label.length > 60) m.p.longLabel = true;
+        if (m.p.prefill && !isPlainLabel(info.kind, c.whole, 'investor')) delete m.p.prefill;
+      });
+      // The details under a cell whose caption names another party (its address, telephone, e-mail) are that party's
+      // details, even where the investor writes them: never filled in from the investor's onboarding.
+      const above = (m) => made.filter((o) => o.cellCap && o !== m && m.y - o.y > 4 && m.y - o.y <= 40 && overlap(o.x0, o.x1, m.x0, m.x1) > 0).sort((a, b) => b.y - a.y)[0];
+      made.forEach((m) => {
+        if (!m.cellCap || !m.p.prefill) return;
+        for (let o = above(m), k = 0; o && k < 4; o = above(o), k++) if (otherParty(o.said)) return delete m.p.prefill;
+      });
+      // The parts of an address (city, state, postal code) are completed as the address over them is: required when it
+      // is, filled in from onboarding only when it is.
+      made.forEach((m) => {
+        if (!m.cellCap || ['city', 'state', 'zip', 'cityStateZip'].indexOf(m.kind) < 0) return;
+        const up = made.filter((o) => o.slot && (o.kind === 'address' || (o.kind === 'other' && /\baddress\b/i.test(o.p.label))) && m.y - o.y > 4 && m.y - o.y <= 40 && overlap(o.x0, o.x1, m.x0, m.x1) > 0).sort((a, b) => b.y - a.y)[0];
+        if (!up) return;
+        if (!m.someCases) m.p.required = m.capRequired = !!up.p.required;
+        if (!up.p.prefill) delete m.p.prefill;
+      });
+    }
     /* 3. Blanks with no label on their line: a caption under the line, or a label above it. */
     // A drawn rule right across the text with a section heading right under it (in capitals, at least the size of the
     // body text, four words or more, not a label of a kind the portal knows) divides two sections: it is no blank.
@@ -1106,6 +1352,8 @@
       if (k && (FIELD(k.kind) || (k.kind === 'skip' && SKIP_HARD.test(plain(g.s))))) return;
       sl.skip = true;
     });
+    cellCaptions();
+    L.slots.forEach((s) => s.rowSkip && !s.made && (s.skip = true));
     const lonely = L.slots.filter((s) => !s.made && !s.skip).sort((a, b) => a.y - b.y || a.x0 - b.x0);
     // Stacks of such blanks in one column are read together: either every label is a caption, or every label is above.
     const stacks = [];
@@ -1138,18 +1386,19 @@
       const nCap = capInfo.filter(Boolean).length;
       const nTop = topKnown.filter(Boolean).length;
       // Whether captions or labels above are meant is decided by the labels the portal knows; any other label then follows.
-      if (!nCap && !topInfo.some(Boolean) && !st.some((s) => s.split)) return;
+      const loneCap = st.length === 1 && !above[0] && st[0].x1 - st[0].x0 <= 216 && !st[0].cell && !!loneCaption(st[0]);
+      if (!nCap && !topInfo.some(Boolean) && !st.some((s) => s.split) && !loneCap) return;
       // Any short words under a line are its caption where the line shares its rule with other captions, or stands in a
       // stack whose other lines have captions the portal knows.
       const capAny = (s, g) => {
-        if (!g || g.used || !(s.split || nCap) || g.s.length > 70 || wordsOf(g.s).length > 10 || /[.;!?]$/.test(g.s) || !g.line || g.line.els.some((e) => e.t !== 'seg')) return null;
+        if (!g || g.used || !(s.split || nCap || loneCap) || g.s.length > 70 || wordsOf(g.s).length > 10 || /[.;!?]$/.test(g.s) || !g.line || g.line.els.some((e) => e.t !== 'seg')) return null;
         return { kind: 'other', who: whoIn(plain(g.s)), forType: '', optional: OPTIONAL_RE.test(g.s.toLowerCase()), colon: true, by: false, text: g.s, any: true };
       };
       const splitCaps = st.some((s) => s.split);
       // Text of any kind right above the first line speaks for labels above; text right under the last line for captions.
       const headed = !!above[0];
       const footed = !!below[st.length - 1];
-      const caps = (nCap > 0 || splitCaps) && (nCap > nTop || (nCap === nTop && !(headed && !footed)) || (splitCaps && nCap >= nTop));
+      const caps = loneCap || ((nCap > 0 || splitCaps) && (nCap > nTop || (nCap === nTop && !(headed && !footed)) || (splitCaps && nCap >= nTop)));
       const sure = caps ? nCap > nTop && nCap === st.length : false;
       let ownFirst = false; // the text over the first line is that line's own label, not a heading over the column
       st.forEach((s, i) => {
@@ -1236,7 +1485,7 @@
     made.forEach((m) => {
       if (m.kind !== 'address' || !m.slot) return;
       const more = made.some((o) => ['city', 'state', 'zip', 'cityStateZip'].indexOf(o.kind) >= 0 && o.y - m.y > -2 && o.y - m.y <= 3.6 * 16 + 6);
-      if (more) m.p.prefill = 'street';
+      if (more && m.p.prefill) m.p.prefill = 'street';
     });
     // A bare "Name" blank that opens a list of contact details, away from any signature line, is the investor's name.
     made.forEach((m) => {
@@ -1369,6 +1618,34 @@
       }
     });
 
+    // A blank that belongs to a tick box's choice ("[ ] Other: ____", the indented lines of a box's statement that end
+    // in a blank) is completed only when the box is ticked: optional, as the box is.
+    const ticks2 = made.filter((m) => m.kind === 'checkbox' && !m.slot && m.p.w < 20);
+    made.forEach((m) => {
+      if (!m.slot || m.slot.cell || m.kind === 'checkbox' || m.p.type === 'signature' || !m.slot.line || !m.p.required) return;
+      const ln = m.slot.line;
+      const own = ticks2.filter((t) => t.seg && t.seg.line === ln && t.p.x + t.p.w <= m.slot.x0 + 1).sort((a, b) => b.p.x - a.p.x)[0];
+      const between = own ? ln.els.filter((e) => (e.t === 'box' || e.t === 'slot') && e.key > own.p.x + own.p.w && e.key < m.slot.x0 - 1) : [];
+      let item = own && !between.length ? own : null;
+      if (!item) {
+        // (or the box stands on a printed line above, in the same paragraph, with the blank's line indented to its words)
+        const up = ticks2.filter((t) => t.seg && t.seg.line && t.seg.line.y < ln.y - 2 && ln.y - t.seg.line.y <= 60 && m.slot.x0 >= t.p.x + t.p.w - 1).sort((a, b) => b.seg.line.y - a.seg.line.y)[0];
+        if (up) {
+          const lines = L.lines.filter((x) => x.y > up.seg.line.y + 1 && x.y <= ln.y + 1);
+          let prev = up.seg.line;
+          const tight = lines.every((x) => {
+            const ok = x.y - prev.y <= 1.7 * Math.max(x.h, prev.h) && !ticks2.some((t) => t !== up && t.seg && t.seg.line === x && t.p.x >= up.p.x - 30 && t.p.x <= up.p.x + 4);
+            prev = x;
+            return ok;
+          });
+          // (in a page of several columns, only what stands just left of the box's column would start a new paragraph)
+          const x0Of = (e) => (e.t === 'seg' ? e.seg.x0 : e.t === 'slot' ? e.slot.x0 : e.box.x0);
+          const x1Of = (e) => (e.t === 'seg' ? e.seg.x1 : e.t === 'slot' ? e.slot.x1 : e.box.x1);
+          if (tight && lines.every((x) => !x.els.some((e) => x0Of(e) < up.p.x - 1 && x1Of(e) > up.p.x - 8))) item = up;
+        }
+      }
+      if (item) m.p.required = false;
+    });
     /* 6. Whose field it is, and which kind of investor gets it. */
     // Headings: short lines in capitals, ending in a colon or set as a title, that name a side, the firm or a kind of investor.
     const heads = [];
@@ -1423,7 +1700,10 @@
         const shout = raw.replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ').trim();
         // A caption is not a heading: a line taken as the label of a place, or standing right over the empty cell it
         // names, speaks for that place only. A heading is a free-standing line.
-        const capOf = !seg.used && !(next && next.t === 'slot') ? captionCell(seg) : null;
+        // (A line that says who completes what follows, "TO BE COMPLETED BY THE CUSTODIAN", heads it however close it
+        // stands over the captions of the first row.)
+        const completes = /\b(to be )?(completed|filled (in|out))( only)? by\b/i.test(raw);
+        const capOf = !seg.used && !(next && next.t === 'slot') && !completes ? captionCell(seg) : null;
         if (capOf) return;
         if (SKIP_HARD.test(t) && n <= 6 && !seg.used && (colon || (/[A-Z]{2}/.test(shout) && shout === shout.toUpperCase())) && !(next && next.t === 'slot')) return heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who: '', skip: true, co: CO_INVESTOR.test(t), seg });
         // A heading that names another party ("CUSTODIAN DETAILS:"): set as a heading, short, with no blank on its own
@@ -1433,9 +1713,8 @@
         // A heading that says the party completes the section ("SECTION 4. TO BE COMPLETED BY THE ADVISER") may run to
         // 12 words. Either form opens a section: it governs every place down to the next section rule or heading (see
         // governsOther), across the page's width, and on the next page while that page goes on with the section.
-        const completes = /\b(to be )?(completed|filled (in|out))( only)? by\b/i.test(raw);
         const party = !seg.used && (n <= 8 || (n <= 12 && ((caps && colon) || completes))) && (caps || colon || titled) && !ln.els.some((x) => x.t === 'slot') && !/^[a-z]/.test(raw) && !runOn(ln) ? otherParty(raw) : '';
-        if (party) return heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who: '', skip: true, other: party, section: true, seg });
+        if (party) return heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who: '', skip: true, other: party, section: true, completes, seg });
         if (seg.used || (next && next.t === 'slot')) {
           // A label speaks for the lines under it only when it names a side outright or says whose line it is.
           // A bare "SUBSCRIBER: ____" heads its block like any heading; "Signature of Subscriber" speaks for its own lines only.
@@ -1476,6 +1755,12 @@
     c.lastLines = { page: pg.page, lines: L.lines.map((ln) => ({ y: ln.y, t: ln.text.replace(/\d+/g, '#') })) };
     const closing = heads.filter((hd) => !hd.label && !hd.skip && !hd.blocker && (hd.who || hd.forType || hd.named) && hd.y > 0 && (made.some((m) => m.block && m.y > hd.y) || (hd.y > 0.6 * pg.h && !made.some((m) => m.y > hd.y)))).sort((a, b) => b.y - a.y)[0];
     c.carry = closing ? { page: pg.page, head: closing } : null;
+    // A label that closes the page (its last body line ends in a colon, with no blank after it and no place under it):
+    // the first place of the next page may be its (see cellCaptions).
+    const body = L.lines.filter((ln) => ln.y < 0.97 * pg.h && !/^(-\s*)?(page\s+)?\d+(\s+(of|\/)\s+\d+)?(\s*-)?$/i.test(tidy(ln.text)));
+    const lastBody = body[body.length - 1];
+    const capSeg = lastBody && lastBody.els.length === 1 && lastBody.els[0].t === 'seg' ? lastBody.els[0].seg : null;
+    c.cap = capSeg && !capSeg.used && /[:\uFF1A]\s*$/.test(capSeg.s) && !made.some((m) => m.y > lastBody.y - 2) && labelLike(ownWords(capSeg.s)) ? { page: pg.page, text: capSeg.s } : null;
     heads.sort((a, b) => b.y - a.y);
     const things = L.segs.map((g) => ({ x0: g.x0, x1: g.x1, y: g.y })).concat(L.slots.map((s) => ({ x0: s.x0, x1: s.x1, y: s.y })));
     const governs = (hd, m) => {
@@ -1544,6 +1829,7 @@
             role = 'investor';
             sure = true;
             m.headed = true;
+            m.otherHeaded = true;
             break;
           }
           if (hd.skip) {
@@ -1610,6 +1896,14 @@
       }
       p.role = role;
       if (m.co) coInvestor(p, m.said);
+      // A second investor's cell named by its caption carries the caption's own words and its word for required.
+      if (m.co && m.cellCap) Object.assign(p, { label: m.capLabel, required: m.capRequired });
+      // A form that marks off what a party completes ("TO BE COMPLETED BY THE CUSTODIAN") leaves every other place on
+      // the page to the investor: a caption outside that section that names the party asks the investor who it is.
+      if (m.other && !m.otherHeaded && heads.some((hd) => hd.completes && hd.other === m.other && hd.y > 0)) {
+        m.other = '';
+        m.otherUnsure = false;
+      }
       if (role === 'firm') {
         // The firm's blanks are its own to complete, but the amount it accepts is the commitment the portal holds.
         delete p.forType;
@@ -1695,10 +1989,24 @@
     // A date or a blank on the same printed row as somebody else's signature, nearest to it of the row's signatures, is
     // that party's (the row rule, beside the column rule above); one beside an acceptance block in doubt is in the
     // same doubt. A place whose own label says whose it is keeps it.
+    // (A ruled row of cells is one person's to complete: a cell in the same ruled row as somebody else's signature cell
+    // is theirs, even where its caption speaks of the investor, "the investor's state of residence".)
+    const sameRow = (a, b) => a.slot && b.slot && a.slot.cell && b.slot.cell && Math.abs(a.slot.y - b.slot.y) <= 1.5 && Math.abs(a.slot.clear - b.slot.clear) <= 2;
     made.forEach((m) => {
-      if (!m.slot || m.other || m.co || m.p.second || m.labelWho || ['checkbox', 'signature', 'initials'].indexOf(m.kind) >= 0) return;
+      if (!m.slot || m.other || m.co || m.p.second || ['checkbox', 'signature', 'initials'].indexOf(m.kind) >= 0) return;
+      if (m.labelWho && !made.some((o) => o.other && o.kind === 'signature' && sameRow(o, m))) return;
       const row = made.filter((o) => o !== m && o.kind === 'signature' && o.slot && Math.abs(o.y - m.y) <= 3);
       const sig = row.sort((a, b) => Math.min(Math.abs(a.x1 - m.x0), Math.abs(m.x1 - a.x0)) - Math.min(Math.abs(b.x1 - m.x0), Math.abs(m.x1 - b.x0)))[0];
+      // (A date beside a second investor's signature is the second investor's.)
+      if (sig && !sig.other && sig.p.role === 'co' && m.kind === 'date' && m.p.role === 'investor') {
+        Object.assign(m, { co: true, second: true });
+        m.p.second = true;
+        coInvestor(m.p, m.said);
+        if (m.cellCap) Object.assign(m.p, { label: m.capLabel, required: m.capRequired });
+        // (whose it is is no longer in doubt)
+        if (m.p.why === WHY.who) Object.assign(m.p, { conf: 'high', why: '' });
+        return;
+      }
       if (!sig || !sig.other) return;
       if (!sig.firmDoubt) return toOther(m, sig.other);
       Object.assign(m, { other: sig.other, second: true, firmDoubt: true });

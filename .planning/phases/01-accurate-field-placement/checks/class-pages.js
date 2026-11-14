@@ -304,13 +304,14 @@ ${capCell(464, 190, 76, 11, 'SOURCE OF FUNDS', 7, capText('SOURCE OF FUNDS', { k
   },
   // Cells captioned with known kinds, and two whose captions are of no known kind: one says it applies only in some
   // cases, one prints the word for required. Every field carries its caption's own words (label rule 1), with its kind
-  // in kind; optional unless the caption says required; filled in from onboarding only where the caption is the
+  // in kind (the portal's kind word: every part of an address is of the kind address, told apart by what it is filled
+  // in with); optional unless the caption says required; filled in from onboarding only where the caption is the
   // kind's plain word for the investor (label rule 3).
   cellCaptionKinds: {
     html: pg(`<h3>SECTION 1. THE SUBSCRIBER</h3><p>Complete every box that applies to the Subscriber.</p>
-${capCell(72, 180, 180, 18, 'City', 7.5, capText('City', { key: 'city', kinds: ['city'] }))}
-${capCell(258, 180, 120, 18, 'State', 7.5, capText('State', { key: 'state', kinds: ['state'] }))}
-${capCell(384, 180, 156, 18, 'Postal code', 7.5, capText('Postal code', { key: 'zip', kinds: ['zip'] }))}
+${capCell(72, 180, 180, 18, 'City', 7.5, capText('City', { key: 'city', kinds: ['address'] }))}
+${capCell(258, 180, 120, 18, 'State', 7.5, capText('State', { key: 'state', kinds: ['address'] }))}
+${capCell(384, 180, 156, 18, 'Postal code', 7.5, capText('Postal code', { key: 'zip', kinds: ['address'] }))}
 ${capCell(72, 222, 228, 18, 'Telephone', 7.5, capText('Telephone', { key: 'phone', kinds: ['phone'] }))}
 ${capCell(306, 222, 234, 18, 'Email', 7.5, capText('Email', { key: 'email', kinds: ['email'] }))}
 ${capCell(72, 264, 228, 18, 'Date of birth', 7.5, capText('Date of birth'))}
@@ -381,8 +382,8 @@ ${cellAt(72, 180.1, 468, 30, capText('Instructions for mailing statements'))}
 ${at(72, 250, 11, `Bank reference: <u>${blank(inv('text', { fillIn: true, label: 'Bank reference', key: '', required: true, other: false }), U(20))}</u>`)}`)
   },
   // Guard: an ordinary table of figures with empty cells among cells with words, an empty cell under a price range, an
-  // empty cell under a bulleted list, and a grid with a header row. No field anywhere on the page, and no page is named
-  // as left without a field.
+  // empty cell under a bulleted list, a grid with a header row, and a column of empty cells each to the right of a
+  // figure (an amount, a count). No field anywhere on the page, and no page is named as left without a field.
   tableGuard: {
     guard: true,
     read: { left: [] },
@@ -390,7 +391,8 @@ ${at(72, 250, 11, `Bank reference: <u>${blank(inv('text', { fillIn: true, label:
 <table class="t"><tr><td>Year</td><td>Units issued</td><td>Price per unit</td><td>Notes</td></tr><tr><td>2023</td><td>1,200</td><td>$10.00</td><td>First close</td></tr><tr><td>2024</td><td></td><td>$10.50</td><td>Second close</td></tr><tr><td></td><td>2,450</td><td>$11.00</td><td>Final close</td></tr><tr><td>2026</td><td>Not yet set</td><td></td><td>To be decided</td></tr></table>
 <table class="t"><tr><td>$0 to $99,999</td><td>$100,000 to $499,999</td><td>$500,000 and above</td></tr><tr><td></td><td></td><td></td></tr></table>
 <table class="t"><tr><td><ul><li>Quarterly reports</li><li>Annual audited statements</li></ul></td><td>Sent by e-mail</td></tr><tr><td></td><td></td></tr></table>
-<table class="t"><tr><td>Date</td><td>Description</td><td>Amount</td></tr><tr><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td></tr></table>`)
+<table class="t"><tr><td>Date</td><td>Description</td><td>Amount</td></tr><tr><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td></tr></table>
+<table class="t"><tr><td>Class A</td><td>$10.00</td><td></td></tr><tr><td>Class B</td><td>1,200</td><td></td></tr><tr><td>Class C</td><td>$12.50</td><td></td></tr></table>`)
   },
   // A drawn square 36 pt high for initials beside a paragraph, and a box 58 pt high captioned for a seal. Each field
   // fills its box to within 1.5 pt on every side.
@@ -432,7 +434,7 @@ ${['Real estate', 'Investments'].map((l, i) => at(400, 170 + i * 16, 10, `${glyp
     marks: 0,
     html: pg(`<h3>SECTION 12. THE SUBSCRIPTION</h3>
 <p>The Subscriber will pay $${blank(inv('text', { fillIn: true, label: 'Commitment amount', key: 'amount', required: false, other: false, review: false }), U(16))} subscription amount by wire within five business days of acceptance.</p>
-<p class="ind">If the account holds two classes, give the units in each: ${blank(capText('give the units in each'), U(8))} ${blank(capText('give the units in each'), U(8))}</p>
+<p class="ind">If the account holds two classes, give the units in each: ${blank(capText('give the units in each'), U(8))}&nbsp;&nbsp;&nbsp;${blank(capText('give the units in each'), U(8))}</p>
 <div style="margin-top:40pt;width:1.8in;text-align:center">${rule(capText('Country of tax residence', { required: true }), '1.8in')}<br><span class="cap">Country of tax residence</span></div>`)
   },
   // Two sections divided by full-width rules: the first is headed as applying only in some cases and holds three
@@ -523,12 +525,13 @@ ${WITNESS}${investorBlock({ review: false, other: false })}`)}`
   // Two shallow ruled cells side by side, each with its caption in small capitals just above it: one names a second
   // investor, one a term for entities. Under them, in the left column, a tick box and a labelled blank. A caption that
   // stands right over the cell it names speaks for that cell only, so the tick box and the blank are the investor's,
-  // for every kind of investor. (The cells themselves get no field until the cells under their captions are read; the
-  // plan that reads them gives each cell here its expectation.)
+  // for every kind of investor. Each cell is named by its caption (label rule 1): the second investor's tax number is
+  // the co-investor's, a text field of the tax-number kind; the entity's registration number is the investor's, for
+  // every kind of investor, optional.
   captionOverCell: {
     html: pg(`<h3>SECTION 2. ACCOUNT HOLDERS</h3><p>Write one answer to a box.</p>
-${at(73.5, capTop(200, 7, 1), 7, 'JOINT INVESTOR TAX ID NUMBER')}${cellAt(72, 200, 228, 10.5)}
-${at(307.5, capTop(200, 7, 1), 7, 'ENTITY REGISTRATION NUMBER')}${cellAt(306, 200, 234, 10.5)}
+${at(73.5, capTop(200, 7, 1), 7, 'JOINT INVESTOR TAX ID NUMBER')}${cellAt(72, 200, 228, 10.5, co('text', { fillIn: true, label: 'JOINT INVESTOR TAX ID NUMBER', key: '', required: false, review: false, kinds: ['taxId'] }))}
+${at(307.5, capTop(200, 7, 1), 7, 'ENTITY REGISTRATION NUMBER')}${cellAt(306, 200, 234, 10.5, capText('ENTITY REGISTRATION NUMBER', { forType: '' }))}
 ${at(72, 244, 10, `${glyph('Send statements by post', { forType: '' })}Send statements by post`)}
 ${at(72, 272, 10, `Preferred language: ${blank(inv('text', { fillIn: true, label: 'Preferred language', key: '', required: true, forType: '', other: false, review: false }), U(24))}`)}`)
   },
@@ -574,6 +577,47 @@ ${WITNESS}${investorBlock({ review: false, other: false })}
   // Two pages of prose that speak of a signature page and of a signature block attached to the agreement, with no place
   // of any kind printed. No field, and no investor signature line read. (The summary's sentence for this case is fixed
   // in a later plan, which adds its pattern here.)
+  // Blocks of captioned cells. A street address that prints the word for required, with city, state and postal code
+  // cells under it: the parts are required and filled in from onboarding as the street is. An alternate address under
+  // it, if applicable, with its own parts: all optional, none filled in. A cell captioned for the custodian's name and
+  // the mailing address under it, above a section headed as completed by the custodian: the two cells are the
+  // investor's (the form marks off what the custodian completes), the address is not filled in from the investor's
+  // onboarding; the cell in the custodian's section is the custodian's. A ruled row of a second investor's signature
+  // and a date: both the co-investor's. A ruled row of a representative's signature, a cell for the investor's state
+  // of residence and a date: all the representative's. A ruled row of words of acceptance that name a placement dealer
+  // and a date: both in doubt, marked.
+  cellBlocks: {
+    html: pg(`${at(72, 70, 11, '<b>SECTION 1. THE SUBSCRIBER</b>')}
+${capCell(72, 110, 468, 14, 'Street address (required)', 7.5, capText('Street address', { key: 'street', required: true, kinds: ['address'] }))}
+${capCell(72, 140, 228, 14, 'City', 7.5, capText('City', { key: 'city', required: true, kinds: ['address'] }))}${capCell(306, 140, 110, 14, 'State', 7.5, capText('State', { key: 'state', required: true, kinds: ['address'] }))}${capCell(422, 140, 118, 14, 'Postal code', 7.5, capText('Postal code', { key: 'zip', required: true, kinds: ['address'] }))}
+${capCell(72, 180, 468, 14, 'Alternate mailing address, if applicable', 7.5, capText('Alternate mailing address', { kinds: ['address'] }))}
+${capCell(72, 210, 228, 14, 'City', 7.5, capText('City', { kinds: ['address'] }))}${capCell(306, 210, 110, 14, 'State', 7.5, capText('State', { kinds: ['address'] }))}${capCell(422, 210, 118, 14, 'Postal code', 7.5, capText('Postal code', { kinds: ['address'] }))}
+${capCell(72, 255, 468, 14, 'NAME OF CUSTODIAN', 7.5, capText('NAME OF CUSTODIAN'))}
+${capCell(72, 285, 468, 14, 'MAILING ADDRESS', 7.5, capText('MAILING ADDRESS', { kinds: ['address'] }))}
+${at(72, 318, 8, '<b>TO BE COMPLETED BY THE CUSTODIAN</b>')}
+${capCell(72, 342, 228, 14, 'CUSTODIAN ACCOUNT NUMBER', 7.5, else_('text', 'Custodian', { label: 'CUSTODIAN ACCOUNT NUMBER' }))}
+${capCell(72, 400, 300, 14, 'Signature of joint investor (required)', 7.5, co('signature', { label: 'Signature of joint investor', required: true, review: false }))}${capCell(378, 400, 162, 14, 'Date (required)', 7.5, co('date', { label: 'Date', review: false }))}
+${capCell(72, 450, 200, 14, 'Signature of registered representative', 7.5, else_('signature', 'Representative', { label: 'Signature of registered representative' }))}${capCell(278, 450, 150, 14, 'Investor state of residence', 7.5, else_('text', 'Representative', { label: 'Investor state of residence' }))}${capCell(434, 450, 106, 14, 'Date', 7.5, else_('date', 'Representative', { label: 'Date' }))}
+${capCell(72, 510, 360, 14, 'ACCEPTANCE BY THE PLACEMENT DEALER', 7.5, else_('signature', 'Broker-dealer', { label: 'ACCEPTANCE BY THE PLACEMENT DEALER', review: true }))}${capCell(438, 510, 102, 14, 'DATE', 7.5, else_('date', 'Broker-dealer', { label: 'DATE', review: true }))}`)
+  },
+  // A blank that belongs to a tick box's choice: "Other: ____" after the last box of a row, and a blank closing the
+  // indented line under a box's statement. Both optional (completed only when the box is ticked), unmarked. Initials
+  // opening a statement the investor may elect ("if I choose this option") are optional; initials under an instruction
+  // to initial every statement stay required. A section that is one of the alternatives a line above asks the investor
+  // to choose between: its cell is optional although its caption prints the word for required.
+  choiceBlanks: {
+    html: pg(`${at(72, 80, 10, 'Form of account (choose one):')}
+${at(72, 96, 10, `${glyph('Individual')}Individual&nbsp;&nbsp;&nbsp;${glyph('Company')}Company&nbsp;&nbsp;&nbsp;${glyph('Other')}Other: ${blank(inv('text', { fillIn: true, label: 'Other', key: '', required: false, other: false, review: false }), U(20))}`)}
+${at(72, 126, 10, `${glyph('Family account of an employee of the manager')}Family account of an employee of the manager`)}
+${at(96, 139, 10, `Name of the relative: ${blank(inv('text', { fillIn: true, label: 'Name of the relative', key: '', required: false, other: false, review: false }), U(24))}`)}
+${at(72, 180, 10, '<b>ELECTRONIC STATEMENTS (insert your initials on the line)</b>')}
+${at(72, 196, 10, `${blank(inv('initials', { fillIn: true, required: false, review: false, other: false }), U(6))}&nbsp;&nbsp;I ask for statements by e-mail instead of by post, if I choose this option.`)}
+${at(72, 236, 10, '<b>CONFIRMATIONS (initial each statement)</b>')}
+${at(72, 252, 10, `${blank(inv('initials', { fillIn: true, required: true, review: false, other: false }), U(6))}&nbsp;&nbsp;I have read the section on risks in the memorandum.`)}
+${at(72, 296, 10, '<b>ACCOUNT TYPE (choose Account Type A or Account Type B):</b>')}
+${sectionRule(314)}${at(72, 322, 10, 'Account Type B - for accounts held through a trust')}
+${capCell(72, 360, 300, 14, 'Trust registration number (required)', 7.5, capText('Trust registration number'))}`)
+  },
   signaturePageMention: {
     read: { investorPages: [] },
     html: `${pg(SIG_PAGE_PROSE[0])}${pg(SIG_PAGE_PROSE[1])}`
