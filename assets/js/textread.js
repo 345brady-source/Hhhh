@@ -570,6 +570,16 @@
       }
       ms.read = Date.now() - t;
 
+      /* A caption printed between two boxes, one over the other, is the nearer box's (NS.picturepage.attach): the print
+         over a box is never the under caption of the box above it. */
+      if (heard.size && NS.picturepage.attach) {
+        const boxParts = [];
+        where.strips.forEach((st) => st.parts.forEach((q) => q.kind === 'box' && (q.side === 'over' || q.side === 'under') && boxParts.push(Object.assign({ key: q, of: q.of, side: q.side }, toPt(q)))));
+        const byKey = new Map(boxParts.map((q) => [q, heard.get(q.key)]).filter(([, ws]) => !!ws));
+        NS.picturepage.attach(boxParts, byKey, seen.boxes.map(toPt));
+        boxParts.forEach((q) => byKey.has(q) && heard.set(q.key, byKey.get(q)));
+      }
+
       /* The page: every box and free rule with the words of its bands, and the headings. */
       const bandsOf = (kind, of, sides) => {
         const b = {};
