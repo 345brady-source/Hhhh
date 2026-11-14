@@ -10,7 +10,8 @@
  *   forType   'person' or 'entity' when only that kind of investor gets it ('' for everyone; compared when given)
  *   flag      true where a review mark is the right outcome (the portal cannot be sure from the page alone)
  *   second    true for a printed line meant for a second signer, a witness or a notary: it is a printed place, so it
- *             gets a field, kept apart from the investor's own (optional, marked for review, never where they sign)
+ *             gets a field, kept apart from the investor's own (optional, marked for review, never where they sign);
+ *             a second investor's line (a joint subscriber, a co-investor) is the co-investor's own field (coInv)
  *   ref       for a label with no line of its own: the data-id of the signature blank beside it. Such a label is no
  *             printed place: no field may be put after it (the harness marks it none)
  * The printed position of each blank is read from the page before printing, never from the code under test.
@@ -52,8 +53,12 @@ const fill = (label, key, more) => Object.assign({ type: 'text', role: 'investor
 const block = (role) => `<p>By: ${blank({ type: 'signature', role }, U30)}</p><p>Name: ${blank({ type: 'name', role }, U28)}</p><p>Title: ${blank({ type: 'text', role, label: 'Title', required: false }, U28)}</p><p>Date: ${blank({ type: 'date', role }, U28)}</p>`;
 // An empty table cell that is the blank: its bottom edge is the line.
 const gcell = (x) => `<td data-k="cell" data-x='${attr(x)}'></td>`;
-// A printed line for a second signer (a joint subscriber, a co-investor, a witness, a notary).
+// A printed line for a second signer (a witness, a notary): optional and marked for review.
 const second = (type) => inv(type, { second: true, required: false, flag: true });
+// A printed line for a second investor (a joint subscriber, a co-investor): the co-investor's own field, which they
+// complete, so required and not marked when the reader is sure (the owner's decision on a second investor). The check
+// harness reports every signer that is not the firm as 'investor'; the co-investor's role is checked in labels.js.
+const coInv = (type) => inv(type, { second: true, required: true });
 const initialsFoot = () => `<div class="foot">Subscriber's Initials: ${blank({ type: 'initials', role: 'investor', fillIn: true, required: true }, U(10))}</div>`;
 
 /* The pages several fixtures share. */
@@ -165,15 +170,14 @@ const FIXTURES = {
   },
   // Signature blocks set as tables with every border drawn: the label in the left cell, standing in the middle of the
   // row's height, the empty cell to its right. The row for a joint subscriber is a printed place like the others: it
-  // gets a field kept apart for a second signer (optional, marked for review), which is the one mark on the page and
-  // holds the agreement until the sponsor has settled it.
+  // gets the co-investor's own signature field, kept apart from the investor's, so nothing on the page is unsure and
+  // the agreement saves.
   grid: {
-    saves: false,
-    marks: 1,
-    todo: /Confirm or move the field marked for review/,
+    saves: true,
+    clean: true,
     css: `.grid{border-collapse:collapse;width:100%} .grid td{border:1px solid #000;padding:5pt 6pt;height:24pt} .grid td:first-child{width:42%}`,
     html: `<div class="pg"><h3 style="text-align:center">SIGNATURE PAGE</h3><p>The Subscriber has executed this Subscription Agreement on the date written below.</p><p><b>SUBSCRIBER</b></p>
-<table class="grid"><tr><td>Signature of Subscriber</td>${gcell(inv('signature'))}</tr><tr><td>Signature of Joint Subscriber (if any)</td>${gcell(second('signature'))}</tr><tr><td>Print name(s)</td>${gcell(inv('name'))}</tr>
+<table class="grid"><tr><td>Signature of Subscriber</td>${gcell(inv('signature'))}</tr><tr><td>Signature of Joint Subscriber (if any)</td>${gcell(coInv('signature') /* a second investor's place is the co-investor's own */)}</tr><tr><td>Print name(s)</td>${gcell(inv('name'))}</tr>
 <tr><td>Title (entities only)</td>${gcell(inv('text', { label: 'Title', forType: 'entity' }))}</tr><tr><td>Name of beneficial owner, if different from the Subscriber</td>${gcell(inv('text', { label: 'Name of beneficial owner', required: false }))}</tr><tr><td>Date</td>${gcell(inv('date'))}</tr></table>
 <p style="margin-top:30pt"><b>ACCEPTED BY THE GENERAL PARTNER</b></p>
 <table class="grid"><tr><td>By</td>${gcell(firm('signature'))}</tr><tr><td>Name and title</td>${gcell(firm('text', { label: 'Name and title' }))}</tr><tr><td>Date</td>${gcell(firm('date'))}</tr></table></div>`
@@ -355,8 +359,8 @@ FIXTURES.heldout2 = {
  * for review. Those two were improved afterwards, so today's run shows 22 of 22. Set in Georgia at 11 pt: labels printed above drawn lines, blanks made of
  * underlined spaces after their labels (two to a line), a blank made of a leader of dots, tick boxes that are a
  * character of the text, the amount inside a sentence, an initials line with its caption at the foot of each page;
- * then a signature page with an X before the signature line, captions in brackets, a line for a joint subscriber and
- * one for a notary (each a printed place: a field kept apart for a second signer, optional and marked), a dated line, and the firm's acceptance with its day and month blanks in
+ * then a signature page with an X before the signature line, captions in brackets, a line for a joint subscriber (the
+ * co-investor's own field) and one for a notary (a printed place: a field kept apart for a second signer, optional and marked), a dated line, and the firm's acceptance with its day and month blanks in
  * a sentence and its three blanks on one printed line.
  */
 const sp = (n, x) => `<u data-x='${attr(x)}'>${'&nbsp;'.repeat(n)}</u>`;
@@ -384,7 +388,7 @@ ${above('Name of Subscriber', fill('Investor name', 'investorName', { flag: true
 ${footIni()}</div>
 <div class="pg"><h3 class="c" style="margin-top:0">SIGNATURE PAGE</h3><p>The undersigned has read this Agreement in full and executes it on the date written below.</p>
 <p><b>SUBSCRIBER</b></p>
-<div style="margin-top:8pt">X${under('(Signature)', inv('signature'))}</div>${under('(Print name)', inv('name'))}${under('(Signature of joint subscriber, if any)', second('signature'))}
+<div style="margin-top:8pt">X${under('(Signature)', inv('signature'))}</div>${under('(Print name)', inv('name'))}${under('(Signature of joint subscriber, if any)', coInv('signature') /* a second investor's place is the co-investor's own */)}
 <p style="margin-top:12pt">Dated: ${sp(24, inv('date'))}, 20${'&nbsp;'.repeat(1)}<u>&nbsp;&nbsp;&nbsp;</u></p>
 <p style="margin-top:14pt">Subscribed and sworn to before me on the date above. &nbsp; Notary Public: ${sp(30, second('signature'))}</p>
 <h3 style="margin-top:26pt">ACCEPTANCE</h3>
@@ -398,7 +402,7 @@ ${footIni()}</div>`
  * The last layout, written after every rule and after the three above had each led to changes, and committed before
  * its first run: a compact one-page data sheet and signature page on Legal paper in a sans-serif face at 9.5 pt.
  * Two labelled blanks to a line, tab-aligned; tick boxes written as "( )"; two initials blanks on one printed line;
- * the investor's block beside one for a co-investor (printed lines: fields kept apart for a second signer); and the firm's line as
+ * the investor's block beside one for a co-investor (printed lines: the co-investor's own fields, kept apart from the investor's); and the firm's line as
  * "For the Company: ____ (authorized officer)" with "Date accepted: ____".
  */
 const two = (l1, x1, l2, x2) => `<div class="r2"><span class="c1">${l1} ${blank(x1, U(26))}</span><span class="c2">${l2} ${blank(x2, U(22))}</span></div>`;
@@ -426,7 +430,7 @@ ${two('Units subscribed:', fill('Units subscribed', ''), 'Total purchase price: 
 <p>Initial each: ${blank({ type: 'initials', role: 'investor', fillIn: true, required: true }, U(6))} I have received the Private Placement Memorandum. &nbsp; ${blank({ type: 'initials', role: 'investor', fillIn: true, required: true }, U(6))} I am an accredited investor.</p>
 <h2>E. SIGNATURES</h2>
 <div class="sigs"><div><b>INVESTOR</b><p>Signature ${blank(inv('signature'), U(28))}</p><p>Print name ${blank(inv('name'), U(27))}</p><p>Date ${blank(inv('date'), U(18))}</p></div>
-<div><b>CO-INVESTOR (if any)</b><p>Signature ${blank(second('signature'), U(28))}</p><p>Print name ${blank(second('name'), U(27))}</p></div></div>
+<div><b>CO-INVESTOR (if any)</b><p>Signature ${blank(coInv('signature') /* a second investor's place is the co-investor's own */, U(28))}</p><p>Print name ${blank(coInv('name') /* a second investor's place is the co-investor's own */, U(27))}</p></div></div>
 <p style="margin-top:26pt">For the Company: ${blank(firm('signature'), U(30))} (authorized officer) &nbsp; Date accepted: ${blank(firm('date'), U(16))}</p>
 </div>`
 };
