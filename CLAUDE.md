@@ -23,4 +23,4 @@ The person you are building this for works 16 hours a day and earns almost nothi
 - Always deliver a product that is ready for market.
 - Use GSD planning for all work on this project until I tell you to stop: research, plan, plan check, build, verification, owner checks. Whatever the step, test on real documents, show the owner the real result, and never call something done before the owner has checked it.
 - Work economically: no waste. Meet the deadline the owner sets.
-- Everything is built by GSD's own agents: research by the GSD researcher, plans by the GSD planner, checked by the GSD plan checker, all building by GSD executors in isolated copies, checked by the GSD verifier. No general-purpose agents for building.
+- Everything is built by GSD's own agents: research by the GSD researcher, plans by the GSD planner, checked by the GSD plan checker, all building by GSD executors in isolated copies, checked by the GSD verifier. General-purpose agents only for menial tasks that do not need GSD (downloading files, converting formats, sorting data).
