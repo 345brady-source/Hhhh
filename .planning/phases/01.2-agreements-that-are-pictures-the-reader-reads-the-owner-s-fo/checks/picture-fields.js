@@ -2,7 +2,7 @@
 /*
  * The fields of a page read from its picture, checked in the portal's own page.
  *
- *   node picture-fields.js [--only shapes,owners,signing,twice,summary,refused,limit | all]
+ *   node picture-fields.js [--only shapes,owners,signing,twice,summary,refused,limit,confirm | all]
  *
  *   shapes    (needs no document) made-up picture pages, given as plain data to NS.placement.read in the shape
  *             NS.textread gives (found with bands and col, lines, heads, reader) with invented captions: one case for
@@ -24,6 +24,13 @@
  *             progress is called once for each page in page order; page 1 has its words, later pages only their boxes
  *             (reader 'limit'); every found empty box still has a field; on those pages each field is named by its
  *             shape and marked; the summary names exactly those pages with the limit's sentence; no page is unread
+ *   confirm   through the screen, 1440 wide: the form's draft opened in the editor and the offer's button pressed; each
+ *             page's "I have checked this page" in the "To review" list takes away exactly that page's marks whose only
+ *             reason is the picture (checkBy 'page'); the marks left are the fields whose caption was not read or whose
+ *             owner is in doubt, each confirmed by its own buttons, and the agreement then saves, ready for investors.
+ *             One page confirmation and one undo bring every mark of the page back; at 390 wide the button in the
+ *             selected field's properties confirms its page; the normal example (a document with text) has no such
+ *             control and no field with checkBy
  *
  * The owner's documents live outside the repository (PICTURE_SCRATCH, or the session's folder under the system temp
  * folder). A part that needs a document it cannot find prints "NOT RUN: (what)" and the exit status is 2. Output holds
@@ -39,7 +46,7 @@ const SCRATCH = process.env.PICTURE_SCRATCH || path.join(os.tmpdir(), 'claude-0/
 const PDF = process.env.PRINTED_PDF || path.join(SCRATCH, 'xx/printed-no-text.pdf');
 const SHEET = path.join(SCRATCH, 'build/ocr-truth/truth-printed.json');
 const HARNESS = path.join(ROOT, '.planning/phases/01-accurate-field-placement/checks/harness.js');
-const ALL = ['shapes', 'owners', 'signing', 'twice', 'summary', 'refused', 'limit'];
+const ALL = ['shapes', 'owners', 'signing', 'twice', 'summary', 'refused', 'limit', 'confirm'];
 const i = process.argv.indexOf('--only');
 const want = i > 0 && process.argv[i + 1] ? process.argv[i + 1].split(',').map((s) => s.trim()) : ['all'];
 const PARTS = want.includes('all') ? ALL : want;
@@ -71,6 +78,8 @@ const W_UNREAD = 'could not read the words by it, so it is named by its shape';
 const W_NEAR = (m) => `took them to mean “${m}”`;
 const W_OTHER = 'This place is for someone else to complete';
 const W_SIZE = 'The boxes of the same size on this agreement are for';
+const W_COLUMN = 'The other boxes of its column are for initials';
+const W_DOUBT = 'could not tell from the words on the page who completes this place';
 /** A found box in points: bands { over, under, before, after, inside } as text. */
 const bx = (x0, y0, x1, y1, bands, col) => {
   const b = {};
@@ -83,7 +92,7 @@ const tick = (x, y, after, col) => bx(x, y, x + 7.4, y + 7.4, { after }, col);
 const head = (kind, s, x0, y0, x1, y1, col) => ({ kind, col: col == null ? -1 : col, x0, y0, x1, y1, s, conf: 90 });
 const pageOf = (found, more) => Object.assign({ page: 1, w: 612, h: 792, items: [], rules: [], boxes: [], forms: [], pictured: 'picture', approx: true, found, words: [], lines: [], heads: [], reader: 'ok' }, more || {});
 // Each case: a page, and what the field on each listed box must be (by the box's index in found; 'rule' for a rule's field).
-const want1 = (k, owner, label, req, why) => ({ k, owner, label, req, why });
+const want1 = (k, owner, label, req, why, cb) => ({ k, owner, label, req, why, cb });
 const CASES = [
   ['K1 a tick box named by the words after it', pageOf([tick(100, 100, 'Accredited by net worth')]), [want1(0, 'investor', 'Accredited by net worth', false, W_SLANT)], { type: 'checkbox' }],
   ['K1 a tick box with nothing read beside it', pageOf([tick(100, 100, '')]), [want1(0, 'investor', 'Tick box', false, W_UNREAD)], { type: 'checkbox' }],
@@ -109,7 +118,7 @@ const CASES = [
   [
     'K3 a column of three where two are read',
     pageOf([bx(400, 100, 443, 108, { under: 'INITIALS' }, 0), bx(400, 130, 443, 138, {}, 0), bx(400, 160, 443, 168, { under: 'INITIALS' }, 0)]),
-    [want1(0, 'investor', 'INITIALS', true, W_SLANT), want1(1, 'investor', 'Initials', true, W_SLANT), want1(2, 'investor', 'INITIALS', true, W_SLANT)],
+    [want1(0, 'investor', 'INITIALS', true, W_SLANT, 'page'), want1(1, 'investor', 'Initials', true, W_COLUMN, 'field'), want1(2, 'investor', 'INITIALS', true, W_SLANT, 'page')],
     { type: 'initials' }
   ],
   ['K4 a signature by its caption', pageOf([bx(130, 300, 290, 310, { over: 'SIGNATURE OF SUBSCRIBER' })]), [want1(0, 'investor', 'SIGNATURE OF SUBSCRIBER', true, W_SLANT)], { type: 'signature' }],
@@ -136,7 +145,7 @@ const CASES = [
   [
     'O2 a box beside a column over the same rows is part of it',
     pageOf([bx(200, 100, 300, 110, { before: 'Name' }, 3), bx(200, 115, 300, 125, { before: 'Phone' }, 3), bx(320, 99, 480, 124, {})], { heads: [head('column', '(To be completed by the custodian)', 200, 90, 300, 97, 3)] }),
-    [want1(0, 'other:Custodian', 'Custodian: Name', false, W_OTHER), want1(1, 'other:Custodian', 'Custodian: Phone', false, W_OTHER), want1(2, 'other:Custodian', 'Custodian: Box', false, W_OTHER)],
+    [want1(0, 'other:Custodian', 'Custodian: Name', false, W_OTHER, 'page'), want1(1, 'other:Custodian', 'Custodian: Phone', false, W_OTHER, 'page'), want1(2, 'other:Custodian', 'Custodian: Box', false, W_UNREAD, 'field')],
     { type: 'text' }
   ],
   [
@@ -205,6 +214,24 @@ const CASES = [
     { rules: 1 }
   ]
 ];
+// Whose a mark is (checkBy): 'page' when its only reason is the picture, 'field' when the caption was not read or the owner is in doubt.
+CASES.push(
+  [
+    'checkBy two columns side by side, one headed for a second investor, the other\'s head not read',
+    pageOf([bx(300, 100, 343, 108, { under: 'INITIALS' }, 0), bx(300, 130, 343, 138, { under: 'INITIALS' }, 0), bx(400, 100, 443, 108, { under: 'INITIALS' }, 1), bx(400, 130, 443, 138, { under: 'INITIALS' }, 1)], { heads: [head('column', 'CO-INVESTOR', 300, 90, 343, 97, 0), head('column', '', 400, 90, 443, 97, 1)] }),
+    [want1(0, 'co', 'Co-investor: INITIALS', true, W_SLANT, 'page'), want1(1, 'co', 'Co-investor: INITIALS', true, W_SLANT, 'page'), want1(2, 'investor', 'INITIALS', true, W_DOUBT, 'field'), want1(3, 'investor', 'INITIALS', true, W_DOUBT, 'field')],
+    { type: 'initials' }
+  ],
+  ['checkBy a caption naming a second investor and a third party', pageOf([bx(130, 100, 290, 110, { over: 'SIGNATURE OF CO-INVESTOR OR CUSTODIAN' })]), [want1(0, 'co', 'Co-investor: SIGNATURE OF CO-INVESTOR OR CUSTODIAN', true, W_DOUBT, 'field')], { type: 'signature' }],
+  [
+    'checkBy a column head one letter off a word for a second investor',
+    pageOf([bx(400, 100, 443, 108, { under: 'INITIALS' }, 0), bx(400, 130, 443, 138, { under: 'INITIALS' }, 0)], { heads: [head('column', 'CO-INVESTR', 400, 90, 443, 97, 0)] }),
+    [want1(0, 'co', 'Co-investor: INITIALS', true, W_NEAR('Co-investor'), 'page'), want1(1, 'co', 'Co-investor: INITIALS', true, W_NEAR('Co-investor'), 'page')],
+    { type: 'initials' }
+  ],
+  ['checkBy a box with no caption read', pageOf([bx(100, 100, 250, 110, {})]), [want1(0, 'investor', 'Box', false, W_UNREAD, 'field')], { type: 'text' }],
+  ['checkBy a box with a read caption and no heading', pageOf([bx(130, 120, 290, 130, { over: 'MAILING ADDRESS' })]), [want1(0, 'investor', 'MAILING ADDRESS', false, W_SLANT, 'page')], { type: 'text' }]
+);
 const LIST_CASES = true;
 
 async function shapes(page) {
@@ -215,7 +242,7 @@ async function shapes(page) {
       const r = P.read([pg], {});
       return {
         name,
-        fields: r.fields.map((f) => ({ type: f.type, owner: P.isOther(f) ? 'other:' + f.other : f.role === 'co' ? 'co' : f.role, label: f.label, req: !!f.required, why: f.why || '', conf: f.conf, x: f.x, y: f.y, w: f.w, h: f.h, boxed: !!f.boxed }))
+        fields: r.fields.map((f) => ({ type: f.type, owner: P.isOther(f) ? 'other:' + f.other : f.role === 'co' ? 'co' : f.role, label: f.label, req: !!f.required, why: f.why || '', conf: f.conf, x: f.x, y: f.y, w: f.w, h: f.h, boxed: !!f.boxed, checkBy: f.checkBy || '' }))
       };
     });
     const L = NS.pictureWords;
@@ -241,6 +268,7 @@ async function shapes(page) {
       if (f.req !== w.req) errs.push(`box ${w.k}: required ${f.req}`);
       if (f.why.indexOf(w.why) < 0) errs.push(`box ${w.k}: reason "${f.why.slice(0, 70)}"`);
       if (f.conf === 'high') errs.push(`box ${w.k}: not marked`);
+      if (w.cb && f.checkBy !== w.cb) errs.push(`box ${w.k}: checkBy '${f.checkBy}', not '${w.cb}'`);
     });
     if (more.rules != null && res.fields.filter((f) => !f.boxed).length !== more.rules) errs.push(`${res.fields.filter((f) => !f.boxed).length} fields on rules, not ${more.rules}`);
     if (res.fields.length !== pg.found.length + (more.rules || 0)) errs.push(`${res.fields.length} fields for ${pg.found.length} boxes`);
@@ -268,6 +296,14 @@ async function shapes(page) {
   line(edge.n === 6 && edge.shared === 0, `shapes two boxes that touch and two one pixel apart each have their own field (${edge.n} fields for 6 boxes, ${edge.shared} pairs sharing more than 0.5 pt)`);
   line(edge.sorted, 'shapes the fields are listed by page, then top edge, then left edge');
   line(edge.blind === 6 && edge.blindOk, `shapes words not read: every box keeps its field, named Tick box or Box, marked, the investor's (${edge.blind} of 6)`);
+  // A page with text: its proposals carry no checkBy (the page's action is never offered for it).
+  const text = await page.evaluate(() => {
+    const P = window.CVPortal.placement;
+    const pg = { page: 1, w: 612, h: 792, items: [{ s: 'Percentage', x: 300, y: 200, w: 40, h: 7 }], rules: [{ x0: 345, x1: 400, y: 200, clear: 14, made: 'rule', cut: false, cell: false, table: false }], boxes: [], forms: [] };
+    const r = P.read([pg], {});
+    return { n: r.fields.length, cb: r.fields.filter((f) => 'checkBy' in f).length };
+  });
+  line(text.n === 1 && text.cb === 0, `shapes checkBy a proposal of a text page carries none (${text.n} field, ${text.cb} with checkBy)`);
 }
 
 /* ---------------- the owner's form ---------------- */
@@ -500,6 +536,156 @@ async function limit(h) {
   line(!unread && !((r.read && r.read.scanned) || []).length && !/two and a half minutes|nothing was placed there/.test(r.note), `limit no page is reported unread (${unread} unread, ${((r.read && r.read.scanned) || []).length} scanned) and no sentence says nothing was placed`);
 }
 
+/* ---------------- confirm: "I have checked this page", through the screen ---------------- */
+const EXAMPLE = process.env.EXAMPLE_PDF || path.join(SCRATCH, 'real-agreement/agreement.pdf');
+const UNREAD_RE = /could not read the words by/;
+const DOUBT_RE = /could not tell from the words on the page who completes this place/;
+/** A draft made from a file as the upload form makes it, opened in the editor. */
+async function openDraft(page, file) {
+  const id = await page.evaluate(
+    async ({ arr }) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const off = ws.offerings[ws.offerings.length - 1];
+      const env = await NS.esign.agreementDraft(ws, off.id, { file: new File([new Uint8Array(arr)], 'Agreement.pdf', { type: 'application/pdf' }), title: 'Subscription Agreement' });
+      NS.app.save(true);
+      return { envId: env.id, offId: off.id };
+    },
+    { arr: Array.from(fs.readFileSync(file)) }
+  );
+  await page.evaluate((x) => (location.hash = 'console-envelope-' + x), id.envId);
+  await page.waitForSelector('.es-editor', { timeout: 30000 });
+  return id;
+}
+const marksOf = (page, envId) =>
+  page.evaluate((id) => {
+    const e = window.CVPortal.state.ws.envelopes.find((x) => x.id === id);
+    return e ? e.fields.map((f) => ({ id: f.id, page: f.page, review: !!f.review, checkBy: f.checkBy || '', why: f.reviewReason || '', label: f.label || '' })) : [];
+  }, envId);
+const classOf = (f) => (f.checkBy !== 'field' ? '' : UNREAD_RE.test(f.why) || !f.label ? 'unread' : DOUBT_RE.test(f.why) ? 'doubt' : 'none');
+/** The ids whose mark changed between two looks. */
+const changedMarks = (a, b) =>
+  a
+    .filter((f) => {
+      const g = b.find((x) => x.id === f.id);
+      return !g || g.review !== f.review;
+    })
+    .map((f) => f.id);
+const sameIds = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.slice().sort());
+async function confirmPart(h) {
+  const page = await H.signUp(h);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  const { envId, offId } = await openDraft(page, PDF);
+  await page.waitForSelector('[data-action="es-read-pictures"]', { timeout: 30000 });
+  await page.click('[data-action="es-read-pictures"]');
+  await page.waitForFunction(
+    (id) => {
+      const e = window.CVPortal.state.ws.envelopes.find((x) => x.id === id);
+      return !!(e && e.read && e.read.asked && !document.querySelector('[data-action="es-read-pictures"]') && document.querySelectorAll('.es-editor .es-fld').length);
+    },
+    envId,
+    { timeout: 240000 }
+  );
+  await page.waitForTimeout(300);
+  const s0 = await marksOf(page, envId);
+  const marks = s0.filter((f) => f.review);
+  const own = marks.filter((f) => f.checkBy === 'field');
+  const A = own.filter((f) => classOf(f) === 'unread').length;
+  const B = own.filter((f) => classOf(f) === 'doubt').length;
+  const stray = own.filter((f) => classOf(f) === 'none');
+  line(s0.length > 0 && marks.length === s0.length && s0.every((f) => f.checkBy === 'page' || f.checkBy === 'field') && !stray.length, `confirm every field read from the picture is marked and says whose its mark is (${marks.length} of ${s0.length} marked; checkBy page ${marks.length - own.length}, field ${own.length}: caption not read ${A}, owner in doubt ${B}${stray.length ? `, neither ${stray.length}: ${stray.map((f) => `page ${f.page} "${f.why.slice(0, 90)}"`).join("; ")}` : ''})`);
+  const pageBtn = (n, where) => page.$(`${where || '.fe-sec-review'} [data-action="es-page-ok"][data-page="${n}"]`);
+  // One page confirmation and one undo bring every mark of the page back.
+  {
+    const b = await pageBtn(1);
+    const want = s0.filter((f) => f.review && f.page === 1 && f.checkBy === 'page').map((f) => f.id);
+    if (b) await b.click();
+    const s1 = await marksOf(page, envId);
+    await page.click('[data-action="fe-undo"]');
+    const s2 = await marksOf(page, envId);
+    const ok = !!b && want.length > 0 && sameIds(changedMarks(s0, s1), want) && !changedMarks(s0, s2).length;
+    line(ok, `confirm undo restores the page: ${ok ? 'yes' : 'no'} (page 1: ${changedMarks(s0, s1).length} of ${want.length} marks confirmed in one step, ${changedMarks(s0, s2).length} differ after one undo)`);
+  }
+  // 390 wide: the selected field's properties hold the page's action.
+  {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(300);
+    const f = s0.find((x) => x.review && x.checkBy === 'page');
+    const want = s0.filter((x) => x.review && x.page === f.page && x.checkBy === 'page').map((x) => x.id);
+    await page.evaluate((id) => window.CVPortal.fieldEditor.show(id), f.id);
+    await page.waitForTimeout(200);
+    let b = await pageBtn(f.page, '.fe-props');
+    if (b && !(await b.isVisible())) {
+      const open = await page.$('.fe-tools [data-action="fe-props"]');
+      if (open && (await open.isVisible())) await open.click();
+      await page.waitForTimeout(200);
+      b = await pageBtn(f.page, '.fe-props');
+    }
+    const visible = !!b && (await b.isVisible());
+    if (visible) await b.click();
+    const s1 = await marksOf(page, envId);
+    const ok = visible && sameIds(changedMarks(s0, s1), want);
+    line(ok, `confirm 390 wide: the button in the properties confirms the page: ${ok ? 'yes' : 'no'} (page ${f.page}: ${changedMarks(s0, s1).length} marks confirmed of ${want.length}${visible ? '' : '; the button was not visible'})`);
+    await page.keyboard.press('Escape').catch(() => {});
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.waitForTimeout(300);
+    if (changedMarks(s0, s1).length) await page.click('[data-action="fe-undo"]');
+    const s2 = await marksOf(page, envId);
+    line(!changedMarks(s0, s2).length, `confirm back at 1440 wide after one undo every mark is as read (${changedMarks(s0, s2).length} differ)`);
+  }
+  // A page confirmation for each page in the "To review" list: each takes away exactly that page's marks with checkBy 'page'.
+  let before = await marksOf(page, envId);
+  const all = Math.max.apply(null, s0.map((f) => f.page));
+  for (let n = 1; n <= all; n++) {
+    const want = before.filter((f) => f.review && f.page === n && f.checkBy === 'page').map((f) => f.id);
+    const b = await pageBtn(n);
+    if (b) await b.click();
+    const after = await marksOf(page, envId);
+    const got = changedMarks(before, after);
+    const ok = (want.length ? !!b : !b) && sameIds(got, want);
+    line(ok, `confirm page ${n} confirmed: ${got.length} marks${ok ? '' : ` (wanted ${want.length}; button ${b ? 'shown' : 'not shown'})`}`);
+    before = after;
+  }
+  const left = before.filter((f) => f.review);
+  const a = left.filter((f) => classOf(f) === 'unread').length;
+  const bb = left.filter((f) => classOf(f) === 'doubt').length;
+  line(left.length === own.length && left.every((f) => f.checkBy === 'field') && a + bb === left.length, `confirm marks left after ${all} page confirmations: ${left.length} (caption not read: ${a}, owner in doubt: ${bb})`);
+  // Those confirmed one by one through their own buttons.
+  let one = 0;
+  for (let k = 0; k < left.length + 5; k++) {
+    const go = await page.$('.fe-sec-review [data-action="es-flag-go"]');
+    if (!go) break;
+    await go.click();
+    const ok = await page.$('.fe-props [data-action="es-flag-ok"]');
+    if (!ok) break;
+    await ok.click();
+    one++;
+  }
+  const end = await marksOf(page, envId);
+  line(one === left.length && !end.some((f) => f.review), `confirm confirmed one by one: ${one} (marks still left ${end.filter((f) => f.review).length})`);
+  await page.click('[data-action="es-agreement-save"]');
+  await page.waitForTimeout(500);
+  const saved = await page.evaluate(
+    ({ envId, offId }) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const tpl = NS.esign.subscriptionTemplate(ws, offId);
+      return { gone: !ws.envelopes.some((e) => e.id === envId), ready: NS.esign.templateReady(ws, offId), fields: tpl ? tpl.fields.length : 0, checkBy: tpl ? tpl.fields.filter((f) => f.checkBy).length : 0 };
+    },
+    { envId, offId }
+  );
+  line(saved.gone && saved.ready && saved.fields === s0.length, `confirm agreement saved: ${saved.gone && saved.ready ? 'yes' : 'no'} (ready for investors ${saved.ready}; ${saved.fields} fields, ${saved.checkBy} keep checkBy)`);
+  // A document with text: no control for a page, no field with checkBy.
+  const t = await openDraft(page, EXAMPLE);
+  await page.waitForSelector('.es-editor .es-fld', { timeout: 30000 });
+  const text = await page.evaluate((id) => {
+    const e = window.CVPortal.state.ws.envelopes.find((x) => x.id === id);
+    return { controls: document.querySelectorAll('[data-action="es-page-ok"]').length, checkBy: e.fields.filter((f) => f.checkBy).length, fields: e.fields.length, words: /I have checked this page|read from its picture/.test(document.body.innerText) };
+  }, t.envId);
+  line(!text.controls && !text.checkBy && !text.words && text.fields > 0, `confirm text document: controls for a page: ${text.controls} (${text.fields} fields, ${text.checkBy} with checkBy, page words shown: ${text.words ? 'yes' : 'no'})`);
+  await page.close();
+}
+
 (async () => {
   const h = await H.start();
   try {
@@ -528,6 +714,18 @@ async function limit(h) {
     line(false, `run: ${String((e && e.message) || e).slice(0, 300)}`);
   } finally {
     await h.stop();
+  }
+  // "I have checked this page" through the screen: a browser of its own (a fresh workspace).
+  if (PARTS.includes('confirm')) {
+    const h4 = await H.start();
+    try {
+      if (!fs.existsSync(EXAMPLE)) notRun('the normal example is missing (' + EXAMPLE + ')');
+      await confirmPart(h4);
+    } catch (e) {
+      line(false, `confirm run: ${String((e && e.message) || e).slice(0, 300)}`);
+    } finally {
+      await h4.stop();
+    }
   }
   // The time for words forced down: a browser of its own (a fresh workspace).
   if (PARTS.includes('limit')) {

@@ -868,9 +868,9 @@ input.fe-well { width: 44px; padding: 0 var(--space-2xs); text-align: center; }
 }
 .es-review { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
 .es-review li + li { border-top: 1px solid var(--cv-line-soft); }
-.es-review button { display: flex; flex-direction: column; gap: var(--space-3xs); width: 100%; min-height: 44px; padding: var(--space-xs) var(--space-2xs); border: 0; border-radius: var(--r-inner); background: transparent; color: var(--cv-ink); font-family: var(--cv-font); font-size: var(--text-sm); text-align: left; cursor: pointer; }
-.es-review button:hover { background: var(--cv-panel-2); }
-.es-review button:active { background: var(--cv-warn-soft); }
+.es-review button:not(.cs-btn) { display: flex; flex-direction: column; gap: var(--space-3xs); width: 100%; min-height: 44px; padding: var(--space-xs) var(--space-2xs); border: 0; border-radius: var(--r-inner); background: transparent; color: var(--cv-ink); font-family: var(--cv-font); font-size: var(--text-sm); text-align: left; cursor: pointer; }
+.es-review button:not(.cs-btn):hover { background: var(--cv-panel-2); }
+.es-review button:not(.cs-btn):active { background: var(--cv-warn-soft); }
 .es-review button:focus-visible { outline: 2px solid var(--cv-focus); outline-offset: 2px; }
 .es-review strong { font-weight: 500; overflow-wrap: anywhere; }
 .es-review .cs-hint { overflow-wrap: anywhere; }
@@ -902,11 +902,11 @@ input.fe-well { width: 44px; padding: 0 var(--space-2xs); text-align: center; }
   .es-review { flex-direction: row; gap: var(--space-2xs); min-width: 0; padding: var(--space-3xs); overflow-x: auto; }
   .es-review li { flex: none; }
   .es-review li + li { border-top: 0; }
-  .es-review button { flex-direction: row; align-items: center; width: auto; min-height: var(--control-h-sm); padding: var(--space-3xs) var(--space-sm); border: 1px solid var(--cv-line); border-radius: var(--r-pill); white-space: nowrap; }
+  .es-review button:not(.cs-btn) { flex-direction: row; align-items: center; width: auto; min-height: var(--control-h-sm); padding: var(--space-3xs) var(--space-sm); border: 1px solid var(--cv-line); border-radius: var(--r-pill); white-space: nowrap; }
   .es-review button .cs-hint { display: none; }
 }
 @media (max-width: 1279px) and (pointer: coarse) {
-  .es-review button { min-height: 44px; }
+  .es-review button:not(.cs-btn) { min-height: 44px; }
 }
 /* Phones: the page keeps the height. The marks are on the fields themselves, the line under the field types says how
    many are left, and confirming one moves on to the next. */

@@ -1791,6 +1791,9 @@
   const KIND_SAID = { initials: 'Initials', signature: 'Signature', date: 'Date' };
   const KIND_FOR = { initials: 'initials', signature: 'a signature', date: 'a date' };
   /** The reason on a box whose words were not read and whose kind came from the boxes of its size (see read). */
+  // The owner is in doubt (see owners): the field keeps its own mark, with this reason added.
+  const WHY_DOUBT = 'The portal could not tell from the words on the page who completes this place. Say who it is for, or confirm it.';
+  const WHY_COLUMN = 'The portal could not read the words by this box. The other boxes of its column are for initials, so it was taken to be one. Check that this is what the field is for.';
   const WHY_SIZE = (kind) => `The portal could not read the words by this box. The boxes of the same size on this agreement are for ${KIND_FOR[kind]}, so it was taken to be one. Check that this is what the field is for.`;
   // "initial" counts as the verb (initial here, initial each, please initial to ...), never as the adjective before a noun.
   const INITIAL_NEXT = ['', 'here', 'each', 'below', 'where', 'to', 'box', 'line', 'page'];
@@ -1877,8 +1880,18 @@
       else if (ws[i + 1]) PARTY_WORDS.investor.forEach((k) => (co = best(near(ws[i + 1], k), co)));
     });
     if (co >= 0) return { who: 'co', party: '', changes: co };
-    // A third party: otherParty's exact test, else a word of the list read with a few letters changed (never among
-    // words of the firm or of anyone authorised); in a heading also the bare words. In a caption only with an act.
+    const { party, changes: oc } = thirdIn(t, low, where);
+    if (party) return { who: 'other', party, changes: oc };
+    let inv = -1;
+    ws.forEach((x) => PARTY_WORDS.investor.forEach((k) => (inv = best(near(x, k), inv))));
+    return inv >= 0 ? { who: 'investor', party: '', changes: inv } : none;
+  }
+  /**
+   * A third party a text names as the one who completes a place: { party, changes } (party '' for none). otherParty's
+   * exact test, else a word of the list read with a few letters changed (never among words of the firm or of anyone
+   * authorised); in a heading also the bare words. In a caption only with an act.
+   */
+  function thirdIn(t, low, where) {
     let party = otherParty(t.replace(/[()[\]{}]/g, ' '));
     let oc = party ? 0 : -1;
     if (!party && !FIRM_WORDS.test(low) && !/\bauthori[sz]ed\b/.test(low)) {
@@ -1889,10 +1902,27 @@
       const m = says(t, PARTY_WORDS.bareOther);
       if (m) (party = partyName(m.word)), (oc = m.changes);
     }
-    if (party && (where !== 'caption' || says(t, ACTS))) return { who: 'other', party, changes: oc };
-    let inv = -1;
-    ws.forEach((x) => PARTY_WORDS.investor.forEach((k) => (inv = best(near(x, k), inv))));
-    return inv >= 0 ? { who: 'investor', party: '', changes: inv } : none;
+    return party && (where !== 'caption' || says(t, ACTS)) ? { party, changes: oc } : { party: '', changes: -1 };
+  }
+  /**
+   * How many different roles a text names (a second investor, a third party, the investor), each found as partyOf
+   * finds it: the owner is in doubt when the words that decided name two. An investor noun that is part of a second
+   * investor's word ("co" or a bare word for a second investor before it) is not the investor.
+   */
+  function rolesIn(text, where) {
+    const t = tidy(where === 'caption' ? String(text || '').replace(/[([][^)\]]*([)\]]|$)/g, ' ') : text);
+    if (!t) return 0;
+    const low = t.toLowerCase().replace(/[‐-―]/g, '-');
+    const ws = t.split(/[\s/]+/).filter((x) => lettersOf(x));
+    const co = partyOf(t, where).who === 'co';
+    const other = !!thirdIn(t, low, where).party;
+    const inv = ws.some((x, i) => {
+      const L = lettersOf(x);
+      const before = lettersOf(ws[i - 1] || '');
+      if ((L.length >= 6 && L.slice(0, 2) === 'co') || before === 'co' || PARTY_WORDS.bareCo.indexOf(before) >= 0) return false;
+      return PARTY_WORDS.investor.some((k) => near(x, k) >= 0);
+    });
+    return (co ? 1 : 0) + (other ? 1 : 0) + (inv ? 1 : 0);
   }
   // A band that reads as running text (a sentence of six words or more) is no caption.
   const prose = (s) => s.split(' ').filter(Boolean).length >= 6 && /[.!?][”"’')]?$/.test(s);
@@ -1955,10 +1985,18 @@
    * The fields of a page with no text, read from its picture (pg.pictured). On a picture (pg.approx) a field comes from
    * a found box or a free rule and from nothing else: of what pageFields proposed only a proposal on a free rule stays,
    * and every found box that is an empty place gets exactly one field. Every field on such a page is marked for
-   * review. Returns how many boxes got no field because they already hold print or writing.
+   * review, and says whose the mark is (checkBy): 'field' for a box whose caption could not be read or whose owner is
+   * in doubt (the sponsor confirms it by itself), 'page' for every other (its only reason is that the page was read
+   * from its picture: the sponsor may confirm it with the page). Returns how many boxes got no field because they
+   * already hold print or writing.
    */
   function fromPicture(pg, mine) {
     const found = pg.found || [];
+    const checkBy = (p) => {
+      const info = BOXED.get(p);
+      // (a line rule's proposal is named by the words the line rules read; with none it is named by nothing)
+      p.checkBy = info ? (!info.read || info.doubt ? 'field' : 'page') : tidy(p.label) ? 'page' : 'field';
+    };
     const mark = (p, why) => {
       if (p.conf === 'high') p.conf = 'medium';
       if (!p.why) p.why = why;
@@ -1969,8 +2007,10 @@
       mine.forEach((p) => mark(p, WHY_WORDS));
       const drawn = found.filter((b) => b.place !== false && !mine.some((p) => overlap(p.x, p.x + p.w, b.x0, b.x1) > 0.5 * Math.min(p.w, b.x1 - b.x0) && overlap(p.y, p.y + p.h, b.y0 - 2, b.y1 + 2) > 0.3 * Math.min(p.h, b.y1 - b.y0 + 4))).map((b) => boxField(pg, b, found));
       owners(pg, drawn);
+      mine.forEach(checkBy);
       drawn.forEach((p) => {
         mark(p, WHY_WORDS);
+        checkBy(p);
         mine.push(p);
       });
       return 0;
@@ -2006,7 +2046,7 @@
         if (p.type !== 'text') return;
         Object.assign(p, { type: 'initials', kind: 'initials', required: true });
         if (p.label === 'Box') p.label = 'Initials';
-        if (p.why === WHY_UNREAD) p.why = WHY_SLANT;
+        if (p.why === WHY_UNREAD) p.why = WHY_COLUMN;
       });
     });
     // K5: the single word "date" on the row of a signature box is that signature's date.
@@ -2023,6 +2063,8 @@
     owners(pg, made);
     made.forEach((p) => mark(p, WHY_SLANT));
     mine.forEach((p) => mark(p, WHY_SLANT));
+    mine.forEach(checkBy);
+    made.forEach(checkBy);
     made.forEach((p) => mine.push(p));
     return notEmpty;
   }
@@ -2051,19 +2093,42 @@
         return !(pg.found || []).some((o) => o !== b && o.place !== false && o.x0 >= gap[0] - 0.5 && o.x1 <= gap[1] + 0.5 && overlap(o.y0, o.y1, b.y0, b.y1) > 0);
       });
     const firstOf = (list) => list.filter((r) => r.who).sort((p, q) => ({ co: 0, other: 1, investor: 2 })[p.who] - ({ co: 0, other: 1, investor: 2 })[q.who] || p.changes - q.changes)[0];
+    // partyOf with the words it read and where they stood, so that the words that decided can be tested again.
+    const heard = (s, where) => Object.assign(partyOf(s, where), { src: s, where });
+    const colOf = (o) => {
+      const b = BOXED.get(o).b;
+      const side = b.col >= 0 ? null : sideOf(b);
+      return b.col >= 0 ? b.col : side == null ? -1 : +side;
+    };
     const whose = new Map();
     made.forEach((p) => {
       const info = BOXED.get(p);
       const b = info.b;
-      let r = firstOf(info.own.map((s) => partyOf(s, 'caption')));
+      let r = firstOf(info.own.map((s) => heard(s, 'caption')));
       if (r) r.own = true;
-      const c = b.col >= 0 ? b.col : +sideOf(b);
-      if (!r && c >= 0 && colHead(c)) r = firstOf([partyOf(colHead(c).s, 'column')]);
+      const c = colOf(p);
+      const named = c >= 0 && colHead(c) ? partyOf(colHead(c).s, 'column').who : '';
+      if (!r && named) r = firstOf([heard(colHead(c).s, 'column')]);
       const letter = above('letter', b);
       const margin = above('margin', b);
-      if (!r && letter && !(margin && margin.y0 > letter.y0)) r = firstOf([partyOf(letter.s, 'heading')]);
-      if (!r && margin) r = firstOf([partyOf(margin.s, 'heading')]);
-      whose.set(p, r || { who: 'investor', party: '', changes: 0 });
+      const rules = letter && !(margin && margin.y0 > letter.y0) ? letter : margin;
+      if (!r && letter && !(margin && margin.y0 > letter.y0)) r = firstOf([heard(letter.s, 'heading')]);
+      if (!r && margin) r = firstOf([heard(margin.s, 'heading')]);
+      // The owner is in doubt, unless the box's own caption decided: (one) the layout shows that a heading should name
+      // somebody and none was read: a column of boxes of the same kind stands beside this box's column on the same
+      // rows under a heading that names somebody while its own column's heading names nobody, or the heading that
+      // governs it holds print that was not read at all; (two) the words that decided name two different roles.
+      const beside =
+        c >= 0 &&
+        !named &&
+        made.some((o) => {
+          const k = colOf(o);
+          return o !== p && k >= 0 && k !== c && o.type === p.type && colHead(k) && partyOf(colHead(k).s, 'column').who && overlap(o.y, o.y + o.h, p.y, p.y + p.h) > 0.5 * Math.min(o.h, p.h);
+        });
+      const unread = !!rules && !tidy(rules.s);
+      const doubt = !(r && r.own) && (beside || (!r && unread));
+      const two = !!r && rolesIn(r.src, r.where) >= 2;
+      whose.set(p, Object.assign({}, r || { who: 'investor', party: '', changes: 0 }, { doubt: doubt || two }));
     });
     // One column of boxes is one person's: where a box is a second investor's by its own caption, so are the others of its kind.
     made.forEach((p) => {
@@ -2088,11 +2153,17 @@
         Object.assign(p, { type, label: `Co-investor: ${label}`, required: type === 'signature' || type === 'initials' });
         if (near) p.why = `${p.why || WHY_SLANT} ${WHY_NEAR('Co-investor')}`;
       } else if (r.who === 'other') {
-        const said = p.why && p.why !== WHY_SLANT && p.why !== WHY_UNREAD ? ` ${p.why}` : '';
+        // (a caption that was not read is said: the field keeps its own mark for it)
+        const said = p.why && p.why !== WHY_SLANT ? ` ${p.why}` : '';
         asOther(p, r.party, false, OTHER_NOTE);
         const named = partyOf(p.label, 'heading');
         if (!(named.who === 'other' && named.party === r.party)) p.label = `${r.party}: ${p.label}`;
         p.why = `${OTHER_NOTE}${said}${near ? ` ${WHY_NEAR(`someone else (${r.party})`)}` : ''}`;
+      }
+      // An owner in doubt: the field keeps its own mark (checkBy, fromPicture), with the reason.
+      if (r.doubt) {
+        p.why = `${p.why || WHY_SLANT} ${WHY_DOUBT}`;
+        BOXED.get(p).doubt = true;
       }
     });
   }

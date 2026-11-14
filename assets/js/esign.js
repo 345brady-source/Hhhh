@@ -1488,7 +1488,10 @@
    *
    * What a field carries (set by autoFields, kept by templates and envelopes):
    *   auto true · confidence 'high' | 'medium' | 'low' · review (truthy until the sponsor settles it) ·
-   *   reviewReason (one sentence) · forType 'person' | 'entity' | absent · prefill (a key of NS.placement.PREFILL) | absent
+   *   reviewReason (one sentence) · forType 'person' | 'entity' | absent · prefill (a key of NS.placement.PREFILL) | absent ·
+   *   checkBy 'page' | 'field' | absent (a field read from a picture: 'page' when its only reason is that its page was
+   *   read from its picture, so "I have checked this page" (data-action="es-page-ok" data-page) confirms it with its page;
+   *   'field' when its caption could not be read or its owner is in doubt, so only "Confirm this field" does)
    * A mark is settled by confirming it here, or by moving, resizing or reassigning the field (fieldeditor.js settle),
    * or by removing it. The save gates need nothing from the editor: agreementTodo and templateReady ask NS.placement.
    * ===================================================================== */
@@ -1497,17 +1500,29 @@
   const reviewMarkHTML = (f) => (PL().needsReview(f) ? '<span class="es-fld-flag" aria-hidden="true">Review</span>' : '');
   /** Words for a field's spoken name: what fills it in, who gets it, and why it is marked. */
   const reviewSay = (f) => [f.prefill ? 'filled in from onboarding' : '', f.forType === 'person' ? 'for individuals and joint accounts' : f.forType === 'entity' ? 'for entities, trusts and IRAs' : '', PL().needsReview(f) ? `marked for review: ${f.reviewReason || UNSURE}` : ''].filter(Boolean).join(', ');
+  /** The marked fields of one page that "I have checked this page" confirms: read from its picture, the page's mark. */
+  const pageMarks = (env, page) => PL().reviewFields(env).filter((f) => f.page === page && f.checkBy === 'page');
+  /** The button that confirms a page read from its picture, with the page and the number in its spoken name. */
+  const pageOkHTML = (page, n) => `<button class="cs-btn cs-btn-small" type="button" data-action="es-page-ok" data-page="${page}" aria-label="${h(`I have checked page ${page}: confirm ${n === 1 ? 'its 1 field' : `its ${n} fields`} read from the picture`)}">I have checked this page</button>`;
   function reviewPanelHTML(env) {
     const list = PL().reviewFields(env);
     if (!list.length) return '';
+    // A page read from its picture is one line with its action; its fields with a mark of their own are listed by name.
+    const rows = [];
+    list.forEach((f) => {
+      if (f.checkBy !== 'page') return rows.push(`<li><button type="button" data-action="es-flag-go" data-fid="${h(f.id)}"><strong>${h(f.label || (TYPES[f.type] || TYPES.text).label)}</strong><span class="cs-hint">Page ${f.page} · ${h(f.reviewReason || UNSURE)}</span></button></li>`);
+      const marks = pageMarks(env, f.page);
+      if (marks[0] !== f) return;
+      rows.push(`<li><button type="button" data-action="es-flag-go" data-fid="${h(f.id)}"><strong>Page ${f.page} was read from its picture: ${marks.length === 1 ? '1 field' : `${marks.length} fields`} to check.</strong></button>${pageOkHTML(f.page, marks.length)}</li>`);
+    });
     return `<div class="fe-sec fe-sec-review"><h2 class="fe-h">To review</h2><p class="cs-hint">The portal was not sure about ${list.length === 1 ? 'this field' : 'these fields'}. Confirm each one, or move it to the right place.</p>
-      <ul class="es-review" role="list">${list
-        .map((f) => `<li><button type="button" data-action="es-flag-go" data-fid="${h(f.id)}"><strong>${h(f.label || (TYPES[f.type] || TYPES.text).label)}</strong><span class="cs-hint">Page ${f.page} · ${h(f.reviewReason || UNSURE)}</span></button></li>`)
-        .join('')}</ul></div>`;
+      <ul class="es-review" role="list">${rows.join('')}</ul></div>`;
   }
   function placementStatusHTML(env, sel) {
     const status = PL().statusOf(sel);
-    return `${status ? `<p class="cs-hint es-placed">${h(status)}</p>` : ''}${isOther(sel) && !(PL().needsReview(sel) && sel.reviewReason === PL().OTHER_NOTE) ? `<p class="cs-hint es-else-note">${h(PL().OTHER_NOTE)}</p>` : ''}${PL().needsReview(sel) ? `<div class="es-flag-box"><p>${h(sel.reviewReason || UNSURE)}</p><button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="es-flag-ok">${icon('check')}Confirm this field</button></div>` : ''}`;
+    // Where the list is not shown (a narrow screen), the page's action stands here too.
+    const page = PL().needsReview(sel) && sel.checkBy === 'page' ? pageOkHTML(sel.page, pageMarks(env, sel.page).length) : '';
+    return `${status ? `<p class="cs-hint es-placed">${h(status)}</p>` : ''}${isOther(sel) && !(PL().needsReview(sel) && sel.reviewReason === PL().OTHER_NOTE) ? `<p class="cs-hint es-else-note">${h(PL().OTHER_NOTE)}</p>` : ''}${PL().needsReview(sel) ? `<div class="es-flag-box"><p>${h(sel.reviewReason || UNSURE)}</p><button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="es-flag-ok">${icon('check')}Confirm this field</button>${page}</div>` : ''}`;
   }
   function placementControlsHTML(env, sel) {
     const s = signerById(env, sel.signerId);
@@ -1539,6 +1554,24 @@
     if (next) return NS.fieldEditor.show(next.id);
     const go = document.querySelector('[data-action="es-agreement-save"], [data-action="es-review"]');
     if (go) go.focus({ preventScroll: true });
+  };
+  // "I have checked this page": every mark of that page whose only reason is that the page was read from its picture is
+  // confirmed, as one step of the editor's history. A field with a mark of its own, another page and a page with text
+  // (whose fields carry no checkBy) are not touched.
+  NS.actions['es-page-ok'] = (el) => {
+    const env = editorEnv();
+    const page = +el.getAttribute('data-page');
+    if (!env || !env.agreementFor || !(page > 0)) return;
+    NS.fieldEditor.setMany(pageMarks(env, page).map((f) => f.id), 'review', false);
+    // On to the next page's action, else the first mark left, else the button that saves.
+    const shown = (b) => !!(b && b.offsetParent);
+    const pages = Array.from(document.querySelectorAll('.fe-sec-review [data-action="es-page-ok"]')).filter(shown);
+    const go = pages.find((b) => +b.getAttribute('data-page') > page) || pages[0];
+    if (go) return go.focus({ preventScroll: false });
+    const next = PL().reviewFields(env)[0];
+    if (next) return NS.fieldEditor.show(next.id);
+    const save = document.querySelector('[data-action="es-agreement-save"], [data-action="es-review"]');
+    if (save) save.focus({ preventScroll: true });
   };
   /* ===================== end of PLACEMENT REVIEW ===================== */
   /* =====================================================================
@@ -1803,7 +1836,7 @@
     const marked = PL().reviewCount(env);
     const headHTML = env.agreementFor
       ? `${K.head(`Subscription agreement${agr ? ` · ${h(agr.name)}` : ''}`, `${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · place the fields once; each investor fills them in and signs during onboarding`, `<a class="cs-btn" href="#console-offering-${h(env.agreementFor)}">${icon('back')}Offering</a><button class="cs-btn" type="button" data-action="es-agreement-cancel" data-id="${h(env.id)}">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-save" data-id="${h(env.id)}">Save subscription agreement</button>`)}
-        <div class="es-read"><p class="cs-hint es-agr-note">${env.read ? `${h(readNote(env))} ${marked ? 'Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. ' : env.autoPlaced ? 'Check the fields, move or resize as needed, and add any others. ' : ''}` : ''}Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.${rereadInlineHTML(env)}</p>${picturesOfferHTML(env)}${rereadNoteHTML(env)}</div>`
+        <div class="es-read"><p class="cs-hint es-agr-note">${env.read ? `${h(readNote(env))} ${marked ? (PL().reviewFields(env).some((f) => f.checkBy) ? 'Fields marked Review must be confirmed or moved to the right place before saving: on a page read from its picture, check every field and choose “I have checked this page”; a field the portal could not name, or whose owner it is unsure of, is confirmed by itself. ' : 'Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. ') : env.autoPlaced ? 'Check the fields, move or resize as needed, and add any others. ' : ''}` : ''}Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.${rereadInlineHTML(env)}</p>${picturesOfferHTML(env)}${rereadNoteHTML(env)}</div>`
       : `${K.head(h(env.title), `Draft · ${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'}`, `<a class="cs-btn" href="#console-esign">${icon('back')}E-sign</a><button class="cs-btn" type="button" data-action="es-delete" data-id="${h(env.id)}">Delete draft</button><button class="cs-btn" type="button" data-action="es-save-tpl" data-id="${h(env.id)}">Save as template</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-review" data-id="${h(env.id)}">Review and send</button>`)}`;
     // The editor itself (the fields to add, the document, the selected field) is fieldeditor.js.
     return K.shell(`${headHTML}${NS.fieldEditor.html(editorCtx(env))}`, 'console-esign');
@@ -2935,6 +2968,8 @@
       if (p.conf !== 'high') Object.assign(f, { review: true, reviewReason: p.why || 'The portal was not sure about this field.' });
       if (p.forType) f.forType = p.forType;
       if (p.prefill) f.prefill = p.prefill;
+      // On a page read from its picture: whose the mark is ('page': the page's action may confirm it; 'field': only itself).
+      if (p.checkBy) f.checkBy = p.checkBy;
       if (p.printed) f.printed = p.printed;
       if (p.second) f.second = true;
       // A place for somebody else names its party (one of the reader's fixed names, never words from the PDF).
