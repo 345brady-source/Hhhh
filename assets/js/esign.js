@@ -1496,7 +1496,7 @@
   const UNSURE = 'The portal was not sure about this field.';
   const reviewMarkHTML = (f) => (PL().needsReview(f) ? '<span class="es-fld-flag" aria-hidden="true">Review</span>' : '');
   /** Words for a field's spoken name: what fills it in, who gets it, and why it is marked. */
-  const reviewSay = (f) => [isOther(f) ? `for someone else (${f.other})` : '', f.prefill ? 'filled in from onboarding' : '', f.forType === 'person' ? 'for individuals and joint accounts' : f.forType === 'entity' ? 'for entities, trusts and IRAs' : '', PL().needsReview(f) ? `marked for review: ${f.reviewReason || UNSURE}` : ''].filter(Boolean).join(', ');
+  const reviewSay = (f) => [f.prefill ? 'filled in from onboarding' : '', f.forType === 'person' ? 'for individuals and joint accounts' : f.forType === 'entity' ? 'for entities, trusts and IRAs' : '', PL().needsReview(f) ? `marked for review: ${f.reviewReason || UNSURE}` : ''].filter(Boolean).join(', ');
   function reviewPanelHTML(env) {
     const list = PL().reviewFields(env);
     if (!list.length) return '';
@@ -1724,10 +1724,12 @@
     const req = isReq(f);
     const mark = editorFieldMark(env, f);
     // A place for somebody else: the optional look in the paper's second ink, no tag of its own; its hint, its spoken
-    // name and its properties say whose it is.
+    // name ("... for someone else (Custodian), page 3, optional", where another field names its signer) and its
+    // properties say whose it is.
     const other = isOther(f);
     const name = f.label || t.label;
-    return `<div class="es-fld es-fld-${h(f.type)}${sel ? ' is-sel' : ''}${req ? ' is-req' : f.type === 'date' ? ' is-auto' : ' is-opt'}${other ? ' is-else' : ''}${mark.cls ? ' ' + h(mark.cls) : ''}" data-fid="${h(f.id)}" tabindex="0" role="button" aria-pressed="${sel}" title="${h(other ? `${name}, for someone else (${f.other}), optional` : name)}" aria-label="${h(name)}${other ? '' : ` for ${h(s.name)}`}, page ${f.page}${req ? ', required' : other ? ', optional' : ''}${mark.say ? ', ' + h(mark.say) : ''}. Drag or use the arrow keys to move, Delete removes." style="${boxStyle(f, other ? 'var(--es-paper-ink-2)' : s.color)}"><span class="es-fld-glyph" aria-hidden="true">${NS.fieldEditor ? NS.fieldEditor.glyph(f.type === 'checkbox' && mark.cls ? 'alert' : f.type) : ''}</span><span class="es-fld-label">${f.type === 'checkbox' ? '' : h(f.label || t.label)}${req ? '<b aria-hidden="true">*</b>' : ''}</span>${mark.html}</div>`;
+    const whom = other ? `someone else (${f.other})` : s.name;
+    return `<div class="es-fld es-fld-${h(f.type)}${sel ? ' is-sel' : ''}${req ? ' is-req' : f.type === 'date' ? ' is-auto' : ' is-opt'}${other ? ' is-else' : ''}${mark.cls ? ' ' + h(mark.cls) : ''}" data-fid="${h(f.id)}" tabindex="0" role="button" aria-pressed="${sel}" title="${h(other ? `${name}, for ${whom}, optional` : name)}" aria-label="${h(name)} for ${h(whom)}, page ${f.page}${req ? ', required' : other ? ', optional' : ''}${mark.say ? ', ' + h(mark.say) : ''}. Drag or use the arrow keys to move, Delete removes." style="${boxStyle(f, other ? 'var(--es-paper-ink-2)' : s.color)}"><span class="es-fld-glyph" aria-hidden="true">${NS.fieldEditor ? NS.fieldEditor.glyph(f.type === 'checkbox' && mark.cls ? 'alert' : f.type) : ''}</span><span class="es-fld-label">${f.type === 'checkbox' ? '' : h(f.label || t.label)}${req ? '<b aria-hidden="true">*</b>' : ''}</span>${mark.html}</div>`;
   }
   /** The selected field's properties: its type, who it is for, its label, whether it is required, and duplicate and remove. */
   function editorPropsHTML(env, sel) {
