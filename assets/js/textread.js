@@ -356,6 +356,36 @@
     return end;
   }
 
+  /**
+   * A box that is a row of a table, read from the picture: an upright stroke stands on the middle of its top edge (it
+   * rises at least 10 pt from the edge, more than 6 pt in from either corner, and goes on into the box at most 2 pt):
+   * the wall between two cells of the row above. A lone panel or an entry box has nothing standing on its top edge
+   * away from its corners. Returns the stroke's x (pixels) or -1.
+   */
+  function standsOn(grey, w, h, b, s, dark) {
+    const top = Math.max(0, b.y0 - 1);
+    const foot = Math.min(h - 1, b.y0 + Math.max(1, Math.round(1.5 * s)));
+    const dk = (x, y) => grey[y * w + x] <= dark || (x > 0 && grey[y * w + x - 1] <= dark) || (x < w - 1 && grey[y * w + x + 1] <= dark);
+    const run = (x, y, d) => {
+      let n = 0;
+      let miss = 0;
+      for (let yy = y; yy >= 0 && yy < h && miss <= 1; yy += d) {
+        if (dk(x, yy)) {
+          n += 1 + miss;
+          miss = 0;
+        } else miss++;
+      }
+      return n;
+    };
+    const inset = Math.round(6 * s);
+    for (let x = b.x0 + inset; x <= b.x1 - 1 - inset; x++) {
+      let on = false;
+      for (let y = top; y <= foot && !on; y++) on = grey[y * w + x] <= dark;
+      if (on && run(x, top - 1, -1) >= 10 * s && run(x, foot + 1, 1) <= 2 * s) return x;
+    }
+    return -1;
+  }
+
   /** Words in reading order (by line, then left to right) as one text, with the confidence of the least sure. */
   function said(words) {
     if (!words.length) return { s: '', conf: 0 };
@@ -405,6 +435,7 @@
       // (on a picture: a rule something hangs from is the top edge of a frame or of cells; see hangs)
       if (raw.picture && dark >= 0) seen.rules.forEach((r) => (r.hang = hangs(grey, w, h, r, pic.scale, dark, seen.paper - 0.25 * seen.range) >= 0));
       if (raw.picture && dark >= 0) seen.rules.forEach((r) => (r.under = printUnder(grey, w, h, r, pic.scale, dark)));
+      if (raw.picture && dark >= 0) seen.boxes.forEach((b) => b.place !== false && !b.small && (b.row = standsOn(grey, w, h, b, pic.scale, dark) >= 0));
       grey = null;
       ms.find = Date.now() - t;
       await new Promise((r) => setTimeout(r, 0));
@@ -500,7 +531,7 @@
         const b = toPt(r);
         const m = { x0: at.x(r.x0 + 0.5), y0: at.y(r.y0 + 0.5), x1: at.x(r.x1 - 0.5), y1: at.y(r.y1 - 0.5), t: t0 };
         const inside = read.words.filter((q) => q.letters && (q.x0 + q.x1) / 2 > b.x0 && (q.x0 + q.x1) / 2 < b.x1 && (q.y0 + q.y1) / 2 > b.y0 && (q.y0 + q.y1) / 2 < b.y1);
-        out.found.push({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, small: r.small, ink: r.ink, shared: r.shared, place: r.place, why: r.why, col: r.col, inside: inside.map((q) => q.s).join(' '), bands: bandsOf('box', i, SIDES) });
+        out.found.push(Object.assign({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, small: r.small, ink: r.ink, shared: r.shared, place: r.place, why: r.why, col: r.col, inside: inside.map((q) => q.s).join(' '), bands: bandsOf('box', i, SIDES) }, r.row ? { row: true } : null));
         // A box full of print (a letter or a mark the finder took for a frame) is print to the line rules, not a frame.
         if (r.why === 'filled') return;
         out.rects.push(m);
@@ -553,5 +584,5 @@
     }
   }
 
-  NS.textread = { page, stop, hangs, printUnder, ENLARGE, STRIP_PIXELS, WORDS_MS };
+  NS.textread = { page, stop, hangs, printUnder, standsOn, ENLARGE, STRIP_PIXELS, WORDS_MS };
 })(window.CVPortal);

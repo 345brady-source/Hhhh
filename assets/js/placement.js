@@ -2363,7 +2363,9 @@
     const shares = (b, o) =>
       ((Math.abs(b.y0 - o.y1) <= 2 || Math.abs(b.y1 - o.y0) <= 2) && overlap(b.x0, b.x1, o.x0, o.x1) >= 0.5 * Math.min(b.x1 - b.x0, o.x1 - o.x0)) ||
       ((Math.abs(b.x0 - o.x1) <= 2 || Math.abs(b.x1 - o.x0) <= 2) && overlap(b.y0, b.y1, o.y0, o.y1) >= 0.5 * Math.min(b.y1 - b.y0, o.y1 - o.y0));
-    const emptyCell = (b) => !b.small && !said(b) && found.some((o) => o !== b && o.place === false && (o.why === 'filled' || o.why === 'table') && shares(b, o));
+    // (So is one the picture shows a wall standing on the middle of its top edge, textread's row: a row of a table under
+    // cells the finder did not find.)
+    const emptyCell = (b) => !b.small && !said(b) && (!!b.row || found.some((o) => o !== b && o.place === false && (o.why === 'filled' || o.why === 'table') && shares(b, o)));
     const made = [];
     let notEmpty = 0;
     found.forEach((b) => {

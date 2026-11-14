@@ -429,6 +429,46 @@ async function shapes(page) {
     return res;
   });
   line(foot.para > 500 && foot.caption > 140 && foot.caption < 160 && foot.specks > 140 && foot.specks < 160 && foot.bare < 0, `shapes nobody: the print under a rule runs unbroken to the margin under a paragraph (to ${foot.para.toFixed(0)} pt), ends with a short caption beside a second column (${foot.caption.toFixed(0)} pt) or specks of a scan (${foot.specks.toFixed(0)} pt), and is none under a bare rule (${foot.bare})`);
+  // A box that is a row of a table: a wall stands on the middle of its top edge (NS.textread.standsOn), beside a lone
+  // panel, a box under another box (walls at its corners only) and a box with a stroke crossing its top edge.
+  const row = await page.evaluate(() => {
+    const T = window.CVPortal.textread;
+    const P = window.CVPortal.placement;
+    const w = 600;
+    const h = 500;
+    const s = 2;
+    const pic = (paint) => {
+      const g = new Uint8Array(w * h).fill(240);
+      const ink = (x0, y0, x1, y1) => {
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g[y * w + x] = 20;
+      };
+      const frame = (x0, y0, x1, y1) => (ink(x0, y0, x1, y0 + 1), ink(x0, y1 - 1, x1, y1), ink(x0, y0, x0 + 1, y1), ink(x1 - 1, y0, x1, y1));
+      paint(ink, frame);
+      return g;
+    };
+    const b = { x0: 100, y0: 300, x1: 501, y1: 441 };
+    const on = (g) => T.standsOn(g, w, h, b, s, 130) >= 0;
+    const res = {
+      // the row under two cells: their walls stand on its top edge, one in its middle
+      row: on(pic((ink, frame) => (frame(100, 300, 500, 440), frame(100, 100, 300, 301), frame(299, 100, 500, 301)))),
+      // a lone panel
+      panel: on(pic((ink, frame) => frame(100, 300, 500, 440))),
+      // a box under another box of its width: walls at its corners only
+      stacked: on(pic((ink, frame) => (frame(100, 300, 500, 440), frame(100, 100, 500, 301)))),
+      // a stroke that crosses the top edge on into the box (the box is not one box)
+      crossing: on(pic((ink, frame) => (frame(100, 300, 500, 440), ink(300, 200, 301, 420))))
+    };
+    const band = (t) => ({ s: t || '', conf: t ? 90 : 0 });
+    const bands = (o) => ({ over: band(o && o.over), under: band(o && o.under), before: band(o && o.before), after: band(o && o.after), inside: band(o && o.inside) });
+    const box = (more) => Object.assign({ x0: 50, y0: 150, x1: 250, y1: 220, small: false, ink: 0, shared: false, place: true, why: '', col: -1, inside: '', bands: bands() }, more || {});
+    const read = (found) => P.read([{ page: 1, w: 612, h: 792, items: [], rules: [], boxes: [], forms: [], pictured: 'picture', approx: true, found, words: [], lines: [], heads: [], reader: 'ok' }], {}).fields.length;
+    res.read = read([box({ row: true })]);
+    res.readSaid = read([box({ row: true, bands: bands({ over: 'Stamp here' }) })]);
+    res.read0 = read([box()]);
+    return res;
+  });
+  line(row.row && !row.panel && !row.stacked && !row.crossing, `shapes nobody: a wall standing on the middle of a box's top edge makes it a row of a table (${row.row}); a lone panel ${row.panel}, a box under a box of its width ${row.stacked}, a stroke crossing into the box ${row.crossing}`);
+  line(row.read === 0 && row.readSaid === 1 && row.read0 === 1, `shapes nobody: an empty row of a table with no word by it gets no field (${row.read}); with its own caption it does (${row.readSaid}); the same box as a lone panel does (${row.read0})`);
   line(foot.read === 0 && foot.readCaption === 1 && foot.readLabel === 1 && foot.readHigh === 1, `shapes nobody: a footnote rule gets no field (${foot.read}); a signature line with its caption (${foot.readCaption}), a blank after its label (${foot.readLabel}) and the same rule high on the page (${foot.readHigh}) each get one`);
 }
 
