@@ -104,7 +104,13 @@
   }
   const actorFor = (s) => `${s.name} (${s.co ? 'co-investor' : s.role === 'investor' ? 'investor' : 'countersigner'})`;
   const signerById = (env, id) => env.signers.find((s) => s.id === id) || null;
-  const fieldsOf = (env, s) => env.fields.filter((f) => f.signerId === s.id).sort(readingOrder);
+  /** A place printed for somebody else (a custodian, an adviser): kept on the investor's signer, but nobody's to complete. */
+  const isOther = (f) => !!(NS.placement && NS.placement.isOther && NS.placement.isOther(f));
+  /**
+   * A signer's own fields, in reading order: the one place every signing step, the guide, the required check, the
+   * stamping and the record of what was completed read them from. A place for somebody else is never among them.
+   */
+  const fieldsOf = (env, s) => env.fields.filter((f) => f.signerId === s.id && !isOther(f)).sort(readingOrder);
   const readingOrder = (a, b) => a.page - b.page || a.y - b.y || a.x - b.x;
 
   /* ---------- Status ---------- */
@@ -1490,7 +1496,7 @@
   const UNSURE = 'The portal was not sure about this field.';
   const reviewMarkHTML = (f) => (PL().needsReview(f) ? '<span class="es-fld-flag" aria-hidden="true">Review</span>' : '');
   /** Words for a field's spoken name: what fills it in, who gets it, and why it is marked. */
-  const reviewSay = (f) => [f.prefill ? 'filled in from onboarding' : '', f.forType === 'person' ? 'for individuals and joint accounts' : f.forType === 'entity' ? 'for entities, trusts and IRAs' : '', PL().needsReview(f) ? `marked for review: ${f.reviewReason || UNSURE}` : ''].filter(Boolean).join(', ');
+  const reviewSay = (f) => [isOther(f) ? `for someone else (${f.other})` : '', f.prefill ? 'filled in from onboarding' : '', f.forType === 'person' ? 'for individuals and joint accounts' : f.forType === 'entity' ? 'for entities, trusts and IRAs' : '', PL().needsReview(f) ? `marked for review: ${f.reviewReason || UNSURE}` : ''].filter(Boolean).join(', ');
   function reviewPanelHTML(env) {
     const list = PL().reviewFields(env);
     if (!list.length) return '';
@@ -1501,11 +1507,12 @@
   }
   function placementStatusHTML(env, sel) {
     const status = PL().statusOf(sel);
-    return `${status ? `<p class="cs-hint es-placed">${h(status)}</p>` : ''}${PL().needsReview(sel) ? `<div class="es-flag-box"><p>${h(sel.reviewReason || UNSURE)}</p><button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="es-flag-ok">${icon('check')}Confirm this field</button></div>` : ''}`;
+    return `${status ? `<p class="cs-hint es-placed">${h(status)}</p>` : ''}${isOther(sel) && !(PL().needsReview(sel) && sel.reviewReason === PL().OTHER_NOTE) ? `<p class="cs-hint es-else-note">${h(PL().OTHER_NOTE)}</p>` : ''}${PL().needsReview(sel) ? `<div class="es-flag-box"><p>${h(sel.reviewReason || UNSURE)}</p><button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="es-flag-ok">${icon('check')}Confirm this field</button></div>` : ''}`;
   }
   function placementControlsHTML(env, sel) {
     const s = signerById(env, sel.signerId);
-    if (!env.agreementFor || !s || s.role !== 'investor') return '';
+    // Somebody else's place is never filled in from the investor's onboarding, and is no kind of investor's.
+    if (!env.agreementFor || !s || s.role !== 'investor' || isOther(sel)) return '';
     const opt = (v, l, cur) => `<option value="${h(v)}"${v === (cur || '') ? ' selected' : ''}>${h(l)}</option>`;
     return `${sel.type === 'text' ? `<label class="cs-field" for="es-fp"><span>Filled in from onboarding</span><select id="es-fp" data-change="es-fprop" data-k="prefill">${opt('', 'No: the investor types it', sel.prefill)}${PL().PREFILL.map(([k, l]) => opt(k, l, sel.prefill)).join('')}</select></label>` : ''}
       <label class="cs-field" for="es-fw"><span>Who gets this field</span><select id="es-fw" data-change="es-fprop" data-k="forType">${PL().FOR_TYPES.map(([k, l]) => opt(k, l, sel.forType)).join('')}</select></label>`;
@@ -1562,7 +1569,7 @@
     const p = f && f.auto ? f.placed : null;
     if (!p) return false;
     // The signer is compared by role: a saved agreement opened again has new signer ids, the same two roles.
-    return f.page === p.page && ['x', 'y', 'w', 'h'].every((k) => Math.abs((+f[k] || 0) - (+p[k] || 0)) < 1e-6) && f.type === p.type && (readRole(env, f) === 'firm') === (p.role === 'firm') && (f.label || '') === (p.label || '') && !!f.required === !!p.required && (f.forType || '') === (p.forType || '') && (f.prefill || '') === (p.prefill || '');
+    return f.page === p.page && ['x', 'y', 'w', 'h'].every((k) => Math.abs((+f[k] || 0) - (+p[k] || 0)) < 1e-6) && f.type === p.type && (readRole(env, f) === 'firm') === (p.role === 'firm') && (f.label || '') === (p.label || '') && !!f.required === !!p.required && (f.forType || '') === (p.forType || '') && (f.prefill || '') === (p.prefill || '') && (f.other || '') === (p.other || '');
   }
   /** Two fields on the same page that share at least a tenth of the smaller one's box. */
   function fieldsOverlap(a, b) {
@@ -1716,7 +1723,11 @@
     const t = TYPES[f.type] || TYPES.text;
     const req = isReq(f);
     const mark = editorFieldMark(env, f);
-    return `<div class="es-fld es-fld-${h(f.type)}${sel ? ' is-sel' : ''}${req ? ' is-req' : f.type === 'date' ? ' is-auto' : ' is-opt'}${mark.cls ? ' ' + h(mark.cls) : ''}" data-fid="${h(f.id)}" tabindex="0" role="button" aria-pressed="${sel}" title="${h(f.label || t.label)}" aria-label="${h(f.label || t.label)} for ${h(s.name)}, page ${f.page}${req ? ', required' : ''}${mark.say ? ', ' + h(mark.say) : ''}. Drag or use the arrow keys to move, Delete removes." style="${boxStyle(f, s.color)}"><span class="es-fld-glyph" aria-hidden="true">${NS.fieldEditor ? NS.fieldEditor.glyph(f.type === 'checkbox' && mark.cls ? 'alert' : f.type) : ''}</span><span class="es-fld-label">${f.type === 'checkbox' ? '' : h(f.label || t.label)}${req ? '<b aria-hidden="true">*</b>' : ''}</span>${mark.html}</div>`;
+    // A place for somebody else: the optional look in the paper's second ink, no tag of its own; its hint, its spoken
+    // name and its properties say whose it is.
+    const other = isOther(f);
+    const name = f.label || t.label;
+    return `<div class="es-fld es-fld-${h(f.type)}${sel ? ' is-sel' : ''}${req ? ' is-req' : f.type === 'date' ? ' is-auto' : ' is-opt'}${other ? ' is-else' : ''}${mark.cls ? ' ' + h(mark.cls) : ''}" data-fid="${h(f.id)}" tabindex="0" role="button" aria-pressed="${sel}" title="${h(other ? `${name}, for someone else (${f.other}), optional` : name)}" aria-label="${h(name)}${other ? '' : ` for ${h(s.name)}`}, page ${f.page}${req ? ', required' : other ? ', optional' : ''}${mark.say ? ', ' + h(mark.say) : ''}. Drag or use the arrow keys to move, Delete removes." style="${boxStyle(f, other ? 'var(--es-paper-ink-2)' : s.color)}"><span class="es-fld-glyph" aria-hidden="true">${NS.fieldEditor ? NS.fieldEditor.glyph(f.type === 'checkbox' && mark.cls ? 'alert' : f.type) : ''}</span><span class="es-fld-label">${f.type === 'checkbox' ? '' : h(f.label || t.label)}${req ? '<b aria-hidden="true">*</b>' : ''}</span>${mark.html}</div>`;
   }
   /** The selected field's properties: its type, who it is for, its label, whether it is required, and duplicate and remove. */
   function editorPropsHTML(env, sel) {
@@ -1726,7 +1737,7 @@
       <div class="es-props-head"><h2>${h(t.label)} field</h2><span class="cs-hint">Page ${sel.page} of ${env.pages}</span><button class="cs-icon es-props-close" type="button" data-action="fe-props-close" aria-label="Close">${icon('close')}</button></div>
       ${editorPropsStatusHTML(env, sel)}
       <label class="cs-field" for="es-ft"><span>Type</span><select id="es-ft" data-change="es-fprop" data-k="type">${Object.keys(TYPES).map((k) => `<option value="${k}"${k === sel.type ? ' selected' : ''}>${h(TYPES[k].label)}</option>`).join('')}</select></label>
-      <label class="cs-field" for="es-fs"><span>Signer</span><select id="es-fs" data-change="es-fprop" data-k="signerId">${env.signers.map((s) => `<option value="${h(s.id)}"${s.id === sel.signerId ? ' selected' : ''}>${h(s.name)}</option>`).join('')}</select></label>
+      <label class="cs-field" for="es-fs"><span>Signer</span><select id="es-fs" data-change="es-fprop" data-k="signerId">${isOther(sel) ? `<option value="" selected>Someone else (${h(sel.other)})</option>` : ''}${env.signers.map((s) => `<option value="${h(s.id)}"${s.id === sel.signerId && !isOther(sel) ? ' selected' : ''}>${h(s.name)}</option>`).join('')}</select></label>
       <label class="cs-field" for="es-fl"><span>Label <em>(shown to the signer)</em></span><input id="es-fl" type="text" maxlength="60" data-input="es-fprop" data-k="label" value="${h(sel.label || '')}" placeholder="${h(t.label)}"></label>
       ${sel.type === 'date' ? '<p class="cs-hint">Filled automatically with the date the signer signs.</p>' : `<label class="cs-check" for="es-fr"><input id="es-fr" type="checkbox" data-change="es-fprop" data-k="required"${req ? ' checked' : ''}><span>Required${(sel.type === 'signature' || sel.type === 'initials') && !req ? '<span class="cs-hint">Optional: the signer can finish without signing here.</span>' : sel.type === 'checkbox' ? '<span class="cs-hint">Required means the signer must tick it to finish.</span>' : ''}</span></label>`}
       ${placementControlsHTML(env, sel)}
@@ -1765,6 +1776,7 @@
       pages: ready ? c.pages : null,
       pendingHTML: ready ? '' : pagesHTML(env, () => ''),
       isReq,
+      isOther,
       uid: () => uid('fd'),
       signer: (f) => signerById(env, f.signerId),
       roleLabel: (s) => roleLabel(s),
@@ -1829,7 +1841,7 @@
       ${cs ? `<p class="es-note">${PEN}<span>It is the sponsor’s turn: ${h(cs.name)} countersigns next.</span></p>` : ''}
       ${K.panel('Recipients', `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">Order</th><th scope="col">Signer</th><th scope="col">Role</th><th scope="col">Status</th><th scope="col">Viewed</th><th scope="col">Signed</th></tr></thead><tbody>${rows}</tbody></table></div>`)}
       ${K.panel('Details', details)}
-      ${K.panel('Document', preview ? `<div class="es-doc es-doc-ro">${pagesHTML(env, (p) => env.fields.filter((f) => f.page === p).map((f) => filledFieldHTML(env, f, null)).join(''))}</div>` : '<p class="cs-muted">Preview the pages with each signer’s fields and what has been filled so far.</p>', `<button class="cs-btn cs-btn-small" type="button" data-action="es-preview" data-id="${h(env.id)}" aria-expanded="${preview}">${preview ? 'Hide' : 'Show'} pages</button>`)}
+      ${K.panel('Document', preview ? `<div class="es-doc es-doc-ro">${pagesHTML(env, (p) => env.fields.filter((f) => f.page === p && !isOther(f)).map((f) => filledFieldHTML(env, f, null)).join(''))}</div>` : '<p class="cs-muted">Preview the pages with each signer’s fields and what has been filled so far.</p>', `<button class="cs-btn cs-btn-small" type="button" data-action="es-preview" data-id="${h(env.id)}" aria-expanded="${preview}">${preview ? 'Hide' : 'Show'} pages</button>`)}
       ${NS.record ? NS.record.consoleHTML(env) : K.panel(`History <span class="cs-count">${env.events.length} events</span>`, `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact"><thead><tr><th scope="col">When (UTC)</th><th scope="col">Who</th><th scope="col">What</th></tr></thead><tbody>${events}</tbody></table></div>`)}`,
       'console-esign'
     );
@@ -2218,9 +2230,10 @@
         <div class="es-row"><button class="${btn(true)}" type="button" data-action="es-consent" data-id="${h(env.id)}" data-sid="${h(s.id)}"${preview ? ' disabled' : ''}>Continue</button><button class="${btn()}" type="button" data-action="es-decline" data-id="${h(env.id)}" data-sid="${h(s.id)}"${preview ? ' disabled' : ''}>Decline</button></div>
       </section>`);
     }
+    // A place for somebody else gets nothing drawn on it: the printed place stays as printed.
     const layer = (p) =>
       env.fields
-        .filter((f) => f.page === p)
+        .filter((f) => f.page === p && !isOther(f))
         .sort(readingOrder)
         .map((f) => (f.signerId === s.id ? myFieldHTML(env, s, f, st, preview || st.busy) : filledFieldHTML(env, f, s)))
         .join('');
@@ -2879,7 +2892,7 @@
    * damaged file) nothing is placed. Returns how many fields were placed.
    */
   async function autoFields(env, opts) {
-    const read = (env.read = { ok: false, error: '', pages: 0, scanned: [], failed: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], firmLeft: 0, firmLeftPages: [], pictured: [], unread: {} });
+    const read = (env.read = { ok: false, error: '', pages: 0, scanned: [], failed: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], firmLeft: 0, firmLeftPages: [], pictured: [], unread: {}, otherPages: [], others: 0, otherSignaturePages: [] });
     let res = null;
     try {
       const t = T();
@@ -2896,7 +2909,7 @@
       return 0;
     }
     res.errors.forEach((x) => console.error('Placing fields on page ' + x.page + ' failed:', x.reason));
-    Object.assign(read, { ok: res.pages > 0, pages: res.pages, scanned: res.scanned, failed: res.failed, places: res.places, left: res.left.slice(), investorPages: res.investorPages, firmPages: res.firmPages, pictured: res.pictured || [] });
+    Object.assign(read, { ok: res.pages > 0, pages: res.pages, scanned: res.scanned, failed: res.failed, places: res.places, left: res.left.slice(), investorPages: res.investorPages, firmPages: res.firmPages, pictured: res.pictured || [], otherPages: (res.otherPages || []).slice(), others: res.others || 0, otherSignaturePages: (res.otherSignaturePages || []).slice() });
     const inv = env.signers.find((s) => s.role === 'investor');
     const cs = env.signers.find((s) => s.role === 'countersigner');
     res.fields.forEach((p) => {
@@ -2918,8 +2931,11 @@
       if (p.prefill) f.prefill = p.prefill;
       if (p.printed) f.printed = p.printed;
       if (p.second) f.second = true;
+      // A place for somebody else names its party (one of the reader's fixed names, never words from the PDF).
+      if (p.second && p.other) f.other = String(p.other);
       // What the reading wrote, kept so that a later reading can tell a field the sponsor has not touched from one they have.
       f.placed = { page: f.page, x: f.x, y: f.y, w: f.w, h: f.h, type: f.type, signerId: f.signerId, role: p.role, label: f.label, required: f.required, forType: f.forType || '', prefill: f.prefill || '' };
+      if (f.other) f.placed.other = f.other;
       env.fields.push(f);
       read[p.type === 'checkbox' ? 'boxes' : p.type === 'signature' || p.type === 'initials' ? 'signatures' : 'blanks']++;
     });
@@ -2968,6 +2984,9 @@
     if (lost.length) out.push(lost.join(' '));
     else if (r.scanned.length) out.push(`${r.scanned.length === 1 ? 'Page' : 'Pages'} ${on(r.scanned.slice().sort((a, b) => a - b)).replace(/^pages? /, '')} ${r.scanned.length === 1 ? 'is a picture' : 'are pictures'}, as in a scan, and could not be read: nothing was placed there.`);
     if (r.failed.length) out.push(`The portal could not read ${on(r.failed.slice().sort((a, b) => a - b))}: nothing was placed there.`);
+    // Places printed for somebody else (a custodian, an adviser): optional, and no signer is asked to complete them.
+    const others = (r.otherPages || []).slice().sort((a, b) => a - b);
+    if (r.others && others.length) out.push(r.others === 1 ? `1 place on ${on(others)} is for someone else to complete, such as a custodian or an adviser: it is optional, and nobody is asked to complete it.` : `${r.others} places on ${on(others)} are for someone else to complete, such as a custodian or an adviser: they are optional, and nobody is asked to complete them.`);
     out.push(r.investorPages.length ? `The investor’s signature line was found on ${on(r.investorPages)}.` : 'No signature line for the investor was found: add a signature field for the investor where they sign before saving.');
     out.push(r.firmPages.length ? `Your firm’s signature line was found on ${on(r.firmPages)}.` : `No signature line for your firm was found, so your firm does not sign this agreement${r.firmLeft ? ` and ${n(r.firmLeft, 'blank that reads as your firm’s', 'blanks that read as your firm’s')} on ${on(r.firmLeftPages || [])} got no field` : ''}. Add a signature field for your firm if it should.`);
     return out.join(' ');

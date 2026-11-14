@@ -105,6 +105,7 @@ const CLASS_PAGES = {
   otherHeading: {
     walk: true,
     read: { investorPages: [1], otherPages: [1] },
+    summary: [/6 places on page 1 are for someone else to complete, such as a custodian or an adviser: they are optional, and nobody is asked to complete them\./],
     html: pg(`<h3 style="text-align:center">SIGNATURE PAGE</h3>${WITNESS}${investorBlock()}
 <p class="hd"><b>CUSTODIAN DETAILS (ONLY FOR ACCOUNTS HELD THROUGH A CUSTODIAN):</b></p>
 <p>Name of custodian: ${blank(else_('text', 'Custodian', { label: 'Name of custodian' }), U(34))}</p>

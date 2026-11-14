@@ -87,7 +87,10 @@
     const ui = ctx.ui;
     const st = stateOf(env);
     const on = env.signers.find((s) => s.id === ui.signer) || env.signers[0] || null;
-    const count = (s) => env.fields.filter((f) => f.signerId === s.id).length;
+    // Places printed for somebody else are nobody's: counted apart, under the signers, never as a signer's fields.
+    const elsewhere = (f) => !!(ctx.isOther && ctx.isOther(f));
+    const count = (s) => env.fields.filter((f) => f.signerId === s.id && !elsewhere(f)).length;
+    const others = env.fields.filter(elsewhere).length;
     const signers = env.signers
       .map(
         (s) =>
@@ -103,7 +106,8 @@
     const placer = ui.tool
       ? `<div class="es-placer"><p class="cs-hint">Click the page where the ${h(ctx.types[ui.tool].label.toLowerCase())} field goes.</p><button class="cs-btn cs-btn-small" type="button" data-action="es-place-kb">Add to page ${st.page}</button></div>`
       : '<p class="cs-hint fe-how">Choose a field, then click the page where it goes, or drag it onto the page.</p>';
-    return `<div class="fe-sec fe-sec-signers"><h2 class="fe-h">Fields for</h2><div class="es-signers" role="group" aria-label="New fields are for">${signers}</div>${order}</div>
+    const elseLine = others ? `<p class="cs-hint fe-else-count">For someone else: ${plural(others, 'place')}</p>` : '';
+    return `<div class="fe-sec fe-sec-signers"><h2 class="fe-h">Fields for</h2><div class="es-signers" role="group" aria-label="New fields are for">${signers}</div>${elseLine}${order}</div>
       <div class="fe-sec fe-sec-tools"><h2 class="fe-h">Add a field</h2><div class="es-palette" role="group" aria-label="Field to place" style="--sc:${h(on ? on.color : 'currentColor')}">${tools}</div>${placer}</div>
       ${ctx.railExtraHTML ? ctx.railExtraHTML() : ''}
       <div class="fe-sec fe-status" role="status">${ctx.statusHTML()}</div>`;
@@ -504,6 +508,11 @@
     } else if (k === 'signerId') {
       if (!cur.env.signers.some((s) => s.id === v)) return;
       f.signerId = v;
+      // A place for somebody else given to a signer (the investor included) becomes that signer's ordinary field.
+      if (cur.ctx.isOther && cur.ctx.isOther(f)) {
+        delete f.second;
+        delete f.other;
+      }
       settle(f);
     } else if (k === 'required') f.required = !!v;
     else if (k === 'label') f.label = String(v);
