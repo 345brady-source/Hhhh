@@ -31,6 +31,8 @@
  *   groupOf(investorType)  fits(field, investorType)  values(investor, offering, opts)  PREFILL  FOR_TYPES
  * Places for somebody else, shared by the reader for normal PDFs and the picture reader:
  *   asOther(proposal, party, sure, why)  isOther(field)  otherParty(text)  OTHER_NOTE
+ * The label rule (a printed label that is only its kind's plain word keeps the standard word and its filling in):
+ *   isPlainLabel(kind, text, person)
  */
 (function (NS) {
   'use strict';
@@ -210,6 +212,58 @@
   };
   /** A kind of blank the portal knows by its label (every key of KINDS but the catch-all). */
   const FIELD = (kind) => kind !== 'other' && Object.prototype.hasOwnProperty.call(KINDS, kind);
+  /*
+   * The label rule (D-06). A printed label that is only its kind's plain word keeps the portal's standard word for the
+   * kind and its filling in from onboarding; a label that says more (which address, which phone, a second or another
+   * one, another person) is the document's own words and is never filled in. PLAIN_WORDS: for each known kind, the
+   * closed list of words a plain label of that kind is made of. Each list is its kind's own recognition pattern above
+   * with the qualifiers taken out, and holds every wording the pinned check pages map to the standard word: "daytime"
+   * for a phone, "mailing" and "street" for an address, "apt" and "suite" for an address's second line.
+   */
+  const PLAIN_WORDS = {
+    signature: ['sign here', 'please sign', 'signature', 'sign', 'signed', 'by', 'x', 'authorized', 'authorised', 'signatory', 'signer', 'representative', 'officer', 'person', 'title'],
+    initials: ['initials', 'initial', 'initialed', 'initialled', 'here', 'each', 'below', 'where indicated', 'statement', 'item', 'line', 'box', 'page', 'your'],
+    date: ['date', 'dated', 'signed', 'signature', 'signing', 'execution', 'executed', 'as', 'this', 'agreement'],
+    name: ['name', 'names', 'print', 'printed', 'type', 'typed', 'full', 'authorized', 'authorised', 'signatory', 'signer', 'person signing', 'individual signing', 'representative', 'officer'],
+    title: ['title', 'its', 'capacity', 'authorized', 'authorised', 'signatory', 'signer', 'officer', 'person signing', 'representative'],
+    nameTitle: ['name', 'title', 'print', 'printed', 'authorized', 'authorised', 'signatory', 'signer', 'officer', 'representative'],
+    investorName: ['name', 'names', 'full', 'exact', 'legal', 'print', 'printed', 'entity', 'trust', 'account', 'registration', 'registered owner', 'registered holder', 'holder', 'company', 'corporation', 'partnership', 'organization', 'organisation', 'individual', 'subscribing entity'],
+    amount: ['amount', 'total', 'aggregate', 'dollar', 'dollars', 'capital', 'commitment', 'subscription', 'subscribed', 'investment', 'invested', 'purchase', 'price', 'contribution', 'your', 'us'],
+    address: ['address', 'street', 'mailing', 'home', 'residence', 'residential', 'permanent', 'legal', 'primary', 'principal place of business', 'principal office', 'line 1', '1'],
+    address2: ['address', 'line', '2', 'apt', 'apartment', 'suite', 'unit', 'floor'],
+    city: ['city', 'town'],
+    state: ['state', 'province'],
+    zip: ['zip', 'postal', 'code'],
+    cityStateZip: ['city', 'state', 'zip', 'postal', 'code', 'province', 'town'],
+    email: ['email', 'address', 'electronic mail'],
+    phone: ['phone', 'telephone', 'tel', 'daytime'],
+    taxId: ['social security', 'ssn', 'taxpayer', 'tax', 'id', 'identification', 'employer', 'ein', 'tin', 'itin', 'us']
+  };
+  // Words that say nothing about which one is meant, and the words for the person whose place it is.
+  const FILLER_WORDS = ['of', 'the', 'no', 'number', 'num', 'nr', 'a', 'an', 'or', 'and', 'please', 's', 'is', 'are'];
+  const PERSON_LABEL_WORDS = {
+    investor: ['prospective', 'subscribers', 'subscriber', 'investors', 'investor', 'purchasers', 'purchaser', 'undersigned', 'limited partner', 'applicant', 'buyer', 'my', 'our'],
+    firm: ['general partner', 'managing member', 'manager', 'company', 'fund', 'partnership', 'issuer', 'sponsor', 'accepted', 'agreed', 'acceptance', 'for']
+  };
+  /**
+   * True when a printed label is, for the person whose place it is ('investor' or 'firm'), the plain word of its kind:
+   * with its colon, list mark, remark in brackets, filler words and that person's words taken out, nothing but words of
+   * PLAIN_WORDS[kind] is left. A label that says the place is for a different one ("if different", "other than") is
+   * never plain; nor is a kind the portal does not know.
+   */
+  function isPlainLabel(kind, text, person) {
+    const list = PLAIN_WORDS[kind];
+    if (!list) return false;
+    const raw = tidy(text).toLowerCase();
+    if (/\bif (different|other)\b|\bother than\b|\b(alternate|alternative|previous|former|prior|second|additional)\b/.test(raw)) return false;
+    if (kind === 'investorName' && /^((exact|full|legal) )*name (in which|under which)\b/.test(plain(text))) return true;
+    let t = ` ${plain(text).replace(/\be-mail\b/g, 'email').replace(/\bi\.\s?d\./g, 'id').replace(/\bu\.\s?s\./g, 'us').replace(/[’']s\b/g, '').replace(/[^a-z0-9]+/g, ' ')} `;
+    const drop = (words) => words.slice().sort((a, b) => b.length - a.length).forEach((w) => (t = t.split(` ${w} `).join(' ').split(` ${w} `).join(' ')));
+    drop(PERSON_LABEL_WORDS[person] || []);
+    drop(list);
+    drop(FILLER_WORDS);
+    return !t.trim();
+  }
   // A heading speaks of a kind of investor only in words that are not also part of a firm's name.
   const HEAD_ENTITY = /\b(entity|entities|trusts|corporations|partnerships|organi[sz]ations|companies|llcs|iras|non-?individuals?)\b|\b(if|for|is|are)\b.{0,30}\b(trust|corporation|partnership|company|llc|ira)\b/;
   const HEAD_PERSON = /\bindividuals?\b|\bnatural persons?\b|\bjoint (tenants|accounts?|owners|subscribers)\b/;
@@ -269,7 +323,8 @@
     if (/^e-?mail( address)?$/.test(t)) return is('email');
     if (PHONE_RE.test(t)) return is('phone');
     if (t.length <= 70 && TAXID_RE.test(t) && !/\b(name|address|date)\b/.test(t)) return is('taxId');
-    if (CURRENCY_TAIL.test(raw) && MONEY_WORDS.test(wordsOf(t).slice(-8).join(' ')) && !/\b(accept\w*|minimum|maximum|fees?|expenses?|per (unit|share|interest)|price per|each)\b/.test(t)) return is('amount');
+    // (Words of money before a currency sign: the end of a sentence as often as a label, so never a label's own words.)
+    if (CURRENCY_TAIL.test(raw) && MONEY_WORDS.test(wordsOf(t).slice(-8).join(' ')) && !/\b(accept\w*|minimum|maximum|fees?|expenses?|per (unit|share|interest)|price per|each)\b/.test(t)) return Object.assign(is('amount'), { sentence: true });
     // Words that end one sentence and begin something else are not one label ("...the Agreement. Initials:").
     if (/[.;?!]["”)]?\s+[A-Z(]/.test(raw)) return null;
     if (info.colon && raw.length <= 64 && n <= 10) return is('other');
@@ -343,6 +398,7 @@
       .replace(/\s*,\s*(if|where|when|as) [^:]*/i, '')
       .replace(/\s*(u\.?s\.?\s*)?\$\s*$/i, '')
       .replace(/\s*[:：]\s*$/, '')
+      .replace(/\s+[-–]\s*\d{1,3}\s*[-–]$/, '') // a page number printed on the same line ("-13-")
       .replace(/\s+/g, ' ')
       .trim();
   const overlap = (a0, a1, b0, b1) => Math.min(a1, b1) - Math.max(a0, b0);
@@ -553,14 +609,12 @@
       if (info && info.forType) p.forType = info.forType;
       const m = { p, slot, seg: o.seg || null, info: info || null, kind, block: !!K.block, who: o.who || (info && info.who) || '', x0: o.seg && o.how !== 'after' ? Math.min(o.seg.x0, slot.x0) : slot.x0, x1: slot.x1, y: slot.y };
       // The printed label the field is named from (see the label rule in step 6).
-      m.said = info && info.text ? info.text : '';
-      // A caption of two lines names its field in full.
-      if (info && info.whole && FIELD(kind)) Object.assign(p, { label: cleanFull(ownWords(info.text)), longLabel: true });
+      m.said = info && info.text && !info.sentence ? info.text : '';
       // A label that itself names another party ("Name of dealer firm:", a custodian's account number) makes its own
       // blank that party's, with no word of signing needed. A sentence never gets here (it has no label).
       // One that names the investor's side as well ("Name of Trustee or Custodian", "the Subscriber's adviser") may be
       // the investor's to complete: it is marked for the sponsor to confirm.
-      const party = info && info.kind !== 'skip' ? otherParty(info.text) : '';
+      const party = info && info.kind !== 'skip' && !info.sentence ? otherParty(info.text) : '';
       if (party) {
         m.other = party;
         m.otherUnsure = /\b(trustees?|grantors?|signator(y|ies)|officers?|authori[sz]ed)\b/.test(plain(info.text)) || whoIn(plain(info.text)) === 'investor';
@@ -1386,7 +1440,17 @@
         // Label rule 1: a place with a printed label of its own is named in the document's own words, whatever its
         // kind (the kind stays in kind): a custodian's telephone is not the investor's "Phone".
         ownLabel(m);
-      } else if (m.block && !sure) weaken(m, m.aboveSig ? WHY.aboveSig : WHY.who);
+      } else {
+        if (m.block && !sure) weaken(m, m.aboveSig ? WHY.aboveSig : WHY.who);
+        // Label rules 2 and 3: a field of a known kind keeps the portal's standard word, and its filling in from
+        // onboarding, only where its printed label is that kind's plain word for the person whose place it is. A label
+        // that says more (a business phone, a mailing address if different, the trustee's signature) is the document's
+        // own words, and is never filled in (the amount the firm accepts stays the commitment the portal holds).
+        if (m.said && FIELD(m.kind) && !m.co && p.role !== 'co' && !isPlainLabel(m.kind, m.said, role === 'firm' ? 'firm' : 'investor')) {
+          ownLabel(m);
+          if (role !== 'firm') delete p.prefill;
+        }
+      }
       // A place of somebody else's lends no side to the blanks beside it: each finds its own heading.
       if (!m.other) m.who = m.who || (sure ? role : '');
     });
@@ -1806,5 +1870,5 @@
     return v;
   }
 
-  NS.placement = { read, analyze, labelOf, needsReview, reviewFields, reviewCount, confirm, statusOf, groupOf, fits, values, PREFILL, FOR_TYPES, asOther, isOther, otherParty, OTHER_NOTE };
+  NS.placement = { read, analyze, labelOf, needsReview, reviewFields, reviewCount, confirm, statusOf, groupOf, fits, values, PREFILL, FOR_TYPES, asOther, isOther, otherParty, OTHER_NOTE, isPlainLabel };
 })(typeof window !== 'undefined' ? window.CVPortal : globalThis.CVPortal);
