@@ -1572,9 +1572,18 @@
               // Blanks to complete in the body are the investor's unless a heading for the firm stands close above them.
               role = hd.who === 'firm' && hd.strong && own.y - hd.y <= 200 ? 'firm' : 'investor';
               sure = true;
-            } else if (named && hd.who !== 'firm') {
-              // The firm's or the fund's own name stands between this blank and a heading for the investor.
+            } else if (named && (hd.who !== 'firm' || (blocked && named.y > blocked.y))) {
+              // The firm's or the fund's own name, or a company's name printed in full, stands between this line and a
+              // heading for the investor, or between this line and its block's own heading (one the portal does not
+              // know): a printed name over a line is the firm's (an investor's own name is never printed). A name above
+              // the block's own heading belongs to the block before, so the rule below keeps an investor's block that
+              // follows the firm's the investor's.
               role = 'firm';
+              // Sure when the name is this block's own: nearer to the line than any other heading, within 90 pt of it,
+              // and under the block's own heading (the nearest heading above it) with no other signature line between
+              // that heading and this line. A name with no heading of its own over it stays marked.
+              const ownHead = blocked && blocked.y > hd.y ? blocked : hd;
+              sure = (!blocked || named.y > blocked.y) && named.y > hd.y && own.y - named.y <= 90 && !sigBetween(ownHead.y, own.y, own);
             } else if (blocked && sigBetween(hd.y, blocked.y, own)) {
               // Another heading starts a new block after that side's signature line: probably the other side.
               role = hd.who === 'investor' ? 'firm' : 'investor';
