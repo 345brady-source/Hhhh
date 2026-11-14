@@ -507,6 +507,34 @@ async function shapes(page) {
     res.read0 = pg({});
     return res;
   });
+  // The caption under a signature line whose letters reach down past the band (the g of "Signature") is read in the
+  // rule's under band (NS.picturepage.bands), beside a rule shorter than an inch and a line of print 9 pt under it.
+  const cap = await page.evaluate(() => {
+    const pp = window.CVPortal.picturepage;
+    const s = 2;
+    const w = 700;
+    const h = 400;
+    const draw = (ruleLen, capTop) => {
+      const g = new Uint8Array(w * h).fill(255);
+      const ink = (x0, y0, x1, y1) => {
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g[y * w + x] = 40;
+      };
+      ink(100, 200, 100 + ruleLen, 201);
+      // a caption of nine letters 8 px high, its sixth letter reaching 7 px lower (a g)
+      for (let i = 0; i < 9; i++) ink(102 + 5 * i, capTop, 104 + 5 * i, capTop + (i === 5 ? 15 : 8));
+      return g;
+    };
+    const under = (ruleLen, capTop) => {
+      const g = draw(ruleLen, capTop);
+      const found = pp.find(g, w, h, s);
+      const got = pp.bands(Object.assign({ grey: g, w, h, pxPerPt: s }, found));
+      const k = found.rules.findIndex((r) => Math.abs(r.y0 - 200) <= 2 && r.x1 - r.x0 > 0.8 * ruleLen);
+      const part = got.strips.reduce((f, st) => f || st.parts.find((q) => q.kind === 'rule' && q.of === k && q.side === 'under'), null);
+      return { rule: k >= 0, part: !!part, foot: part ? part.y1 : -1 };
+    };
+    return { sig: under(300, 213), short: under(40, 213), low: under(300, 222) }; // (a 150 pt rule: under the long rule's 200 pt)
+  });
+  line(cap.sig.rule && cap.sig.part && cap.sig.foot >= 228 && cap.short.rule && !cap.short.part && cap.low.rule && !cap.low.part, `shapes caption under a signature line, its g reaching past the band, is read whole (${cap.sig.part ? 'to ' + cap.sig.foot + ' px' : 'not read'}); under a rule shorter than an inch it is not (${cap.short.part ? 'read' : 'not read'}), nor a line of print starting 10 pt under the rule and cut by the band (${cap.low.part ? 'read' : 'not read'})`);
   line(hand.written >= 2 && hand.caption === 0 && hand.sides === 0 && hand.wall === 0, `shapes nobody: strokes of a hand joined to a line are counted (${hand.written}); a caption clear of it ${hand.caption}, a cell's sides standing on it ${hand.sides}, a wall crossing it ${hand.wall}`);
   line(hand.read === 0 && hand.read0 === 1, `shapes nobody: a line answered by hand gets no field (${hand.read}); the same line unanswered gets one (${hand.read0})`);
   line(row.row && !row.panel && !row.stacked && !row.crossing, `shapes nobody: a wall standing on the middle of a box's top edge makes it a row of a table (${row.row}); a lone panel ${row.panel}, a box under a box of its width ${row.stacked}, a stroke crossing into the box ${row.crossing}`);

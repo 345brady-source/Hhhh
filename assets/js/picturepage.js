@@ -777,7 +777,9 @@
       const kept = [];
       for (let i = 0; i < runs.length; i++) {
         const long = own.kind === 'rule' && own.x1 - own.x0 > pt(REACH.longRule);
-        if (cutAt(r, runs[i][0], runs[i][1]) && own.kind === 'rule' && dir === 'down' && long && !kept.length && runs[i][1] === r.y1) {
+        // (under a shorter rule too, at least an inch long, when that line begins within 6 pt of the rule: a caption
+        // whose letters reach down past the band, such as the g of "Signature", is the rule's caption, not a line cut off)
+        if (cutAt(r, runs[i][0], runs[i][1]) && own.kind === 'rule' && dir === 'down' && (long || (own.x1 - own.x0 >= pt(72) && runs[i][0] - r.y0 <= pt(6))) && !kept.length && runs[i][1] === r.y1) {
           // the first line under a long free rule, cut by the band's far edge: taken whole (see below)
           let b = runs[i][1];
           while (b < h && b < r.y1 + pt(8) && ink(r.x0, b, r.x1, b + 1) > 0) b++;
