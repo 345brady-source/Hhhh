@@ -419,7 +419,9 @@ function summary(d) {
   const eq = (a, b) => JSON.stringify((a || []).slice().sort()) === JSON.stringify(b.slice().sort());
   line(eq(r.investorPages, sigPages('investor')) && eq(r.coSignaturePages, sigPages('co-investor')) && eq(r.otherSignaturePages, sigPages('third party')), `summary the reading gives the same pages (investor ${JSON.stringify(r.investorPages)}, co-investor ${JSON.stringify(r.coSignaturePages)}, other people ${JSON.stringify(r.otherSignaturePages)})`);
   // No word of the form: the summary is built from fixed words and page numbers only.
-  const labels = new Set(d.fields.map((f) => f.label.toLowerCase()).filter((s) => s.length > 6));
+  // (a name's words as read, without the portal's own prefix and its names by shape or kind)
+  const own = /^(tick box|box|initials|signature|date)$/;
+  const labels = new Set(d.fields.map((f) => f.label.replace(/^[^:]{1,20}: /, '').toLowerCase()).filter((s) => s.length > 6 && !own.test(s)));
   const leaked = Array.from(labels).filter((s) => d.note.toLowerCase().indexOf(s) >= 0);
   line(!leaked.length, `summary holds no word of the form (${leaked.length} names found in it)`);
 }

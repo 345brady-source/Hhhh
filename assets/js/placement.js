@@ -1284,6 +1284,8 @@
    *                               only the investor's own
    *   notEmpty                    on pages read from their picture, the boxes that got no field because they already
    *                               hold print or writing
+   *   wordless                    { load, time, fail, off: [pages] }: pages read from their picture whose words could not
+   *                               be read, by the reader's state (see NS.textread.page)
    */
   /**
    * A page with no text, read from its picture (pg.pictured, see NS.textread): the words are recognised, so a field
@@ -1637,7 +1639,7 @@
   function read(pages, ctx) {
     const cx = ctx || {};
     const c = { names: [].concat(cx.firmNames || [], cx.fundNames || []).map(bare).filter((n) => n.length >= 4) };
-    const res = { fields: [], pages: 0, scanned: [], failed: [], errors: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], pictured: [], otherPages: [], others: 0, otherSignaturePages: [], coSignaturePages: [], notEmpty: 0 };
+    const res = { fields: [], pages: 0, scanned: [], failed: [], errors: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], pictured: [], otherPages: [], others: 0, otherSignaturePages: [], coSignaturePages: [], notEmpty: 0, wordless: {} };
     let out = [];
     (pages || []).forEach((pg) => {
       if (!pg) return;
@@ -1653,6 +1655,8 @@
       res.pages++;
       if (pg.pictured) {
         res.pictured.push(pg.page);
+        // A page whose words could not be read is still a page read from its picture: its boxes have their fields.
+        if (pg.reader && pg.reader !== 'ok') (res.wordless[pg.reader] = res.wordless[pg.reader] || []).push(pg.page);
         res.notEmpty += fromPicture(pg, mine);
       }
       out = out.concat(mine);
