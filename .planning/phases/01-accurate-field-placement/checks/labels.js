@@ -6,7 +6,8 @@
  * The rule the reading cases state: a field is proposed only for something the page prints (a line, a run of
  * underscores, a tick box, an empty ruled cell). No block is made up for a page with no place to sign, and no field
  * is put after a label with no line. A printed line for a second signer, a witness or a notary is a printed place:
- * it gets a field kept apart from the investor's own (optional, marked low).
+ * it gets a field kept apart from the investor's own (optional, marked low); a second investor's line (a joint
+ * subscriber, a co-investor) is the co-investor's own field (role co, required, not marked).
  *
  * Run from the repository root:   node .planning/phases/01-accurate-field-placement/checks/labels.js
  */
@@ -335,13 +336,14 @@ const labelled = (x, y, label, len) => [['text', x, y, label], ['rule', x + widt
   check('"Accepted this ____ day of ____": both blanks are the firm’s, both marked', f.length === 2 && f.every((p) => p.role === 'firm' && p.type === 'text' && p.conf !== 'high'), sum(f));
 })();
 // 25. A table with every border drawn: the empty cell is the blank, the cell with words in it is not. The joint
-// subscriber's row is a printed place too: it gets a second signer's field, kept apart from the investor's own.
+// subscriber's row is a printed place too: it gets the co-investor's own field, kept apart from the investor's own.
 (() => {
   const rows = [['text', 78, 112, 'Signature of Subscriber'], ['text', 78, 142, 'By'], ['text', 78, 172, 'Signature of Joint Subscriber']];
   [[96, 120], [120, 150], [150, 180]].forEach(([y0, y1]) => rows.push(['frame', 72, y0, 269, y1], ['frame', 269, y0, 540, y1]));
   const f = read(rows);
   check('each empty cell gets its row’s field, inside the cell; the cells with words and the table’s top edge get none', f.length === 3 && f.every((p) => p.type === 'signature' && p.x >= 269 && p.x + p.w <= 540) && f[0].conf === 'high' && !f[0].second && !f[1].second, sum(f));
-  check('the joint subscriber’s row gets a second signer’s field: optional and marked low', f.length === 3 && f[2].second === true && f[2].conf === 'low' && f[2].required === false, sum(f));
+  // A second investor's place is the co-investor's own: their signature field, required, read at high confidence.
+  check('the joint subscriber’s row gets the co-investor’s own field: role co, kept apart, required, not marked', f.length === 3 && f[2].second === true && f[2].role === 'co' && f[2].type === 'signature' && f[2].conf === 'high' && f[2].required === true, sum(f));
 })();
 
 // 26. A line with no label, with "Name:" and "Title:" printed under it, is where that signer signs. The two labels

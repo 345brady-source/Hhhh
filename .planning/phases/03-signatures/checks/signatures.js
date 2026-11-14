@@ -219,6 +219,12 @@ const SCRIPT = [[0.1, 0.7], [0.15, 0.35], [0.2, 0.7], [0.25, 0.45], [0.3, 0.7], 
       check('SIG-01 one tap picks a style; a changed name shows at once in every style, and the initials follow it', live.checked === 'bold' && live.cards.every((t) => t === 'Morgan A. Blake') && live.sig === 'Morgan A. Blake' && live.ini === 'MAB' && live.box === 'MAB' && /Dafoe|cursive/.test(live.fam), live);
       // A name with letters some faces do not have: a style that would borrow them from another face is set aside.
       await p.fill('#es-type-text', 'Łukasz Żółć');
+      // The new letters need parts of the faces not fetched before; the portal judges a face once those parts are in.
+      // Wait for them rather than a fixed time: with an empty font cache each part is fetched while the check waits,
+      // which can take longer than any fixed wait (the result then depended on the cache, not on the portal).
+      await p.waitForTimeout(100);
+      await p.waitForFunction(() => document.fonts.status === 'loaded', null, { timeout: 30000 });
+      await p.evaluate(() => document.fonts.ready);
       await p.waitForTimeout(500);
       const ext = await p.evaluate(() => {
         const c = document.createElement('canvas').getContext('2d');
