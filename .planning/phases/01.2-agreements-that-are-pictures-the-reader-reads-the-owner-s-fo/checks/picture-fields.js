@@ -413,6 +413,63 @@ async function shapes(page) {
     return { n: r.fields.length, cb: r.fields.filter((f) => 'checkBy' in f).length };
   });
   line(text.n === 1 && text.cb === 0, `shapes checkBy a proposal of a text page carries none (${text.n} field, ${text.cb} with checkBy)`);
+  // A block under a heading that reserves it for the firm's use is nobody's who signs in the portal (optional, never the
+  // investor's), on a page with text and on a picture, each beside a control (an ordinary heading over the same blanks:
+  // the investor's), and the heading zone that lets a picture see such a heading far above its block.
+  const firm = await page.evaluate(() => {
+    const P = window.CVPortal.placement;
+    const who = (f) => (P.isOther(f) ? 'other:' + f.other : f.role === 'co' ? 'co' : f.role);
+    const sum = (r) => r.fields.map((f) => `${who(f)}${f.required ? ' required' : ''}${f.prefill ? ' prefilled' : ''}`).join(', ');
+    const rule = (x0, x1, y) => ({ x0, x1, y, clear: 14, made: 'rule', cut: false, cell: false, table: false });
+    const textPage = (head) => ({
+      page: 1, w: 612, h: 792, boxes: [], forms: [],
+      items: [{ s: 'Your details', x: 72, y: 60, w: 70, h: 9 }, { s: 'Name of investor', x: 72, y: 80, w: 80, h: 8 }, { s: head, x: 240, y: 300, w: 132, h: 9 }, { s: 'Pursuant to the agreement the subscription is accepted as of the date below.', x: 72, y: 330, w: 400, h: 8 }, { s: 'Admitted Investor:', x: 72, y: 400, w: 90, h: 8 }, { s: 'Capital commitment', x: 72, y: 430, w: 90, h: 8 }],
+      rules: [rule(160, 400, 80), rule(170, 450, 400), rule(170, 450, 430)]
+    });
+    const band = (t) => ({ s: t || '', conf: t ? 90 : 0 });
+    const box = (x0, y0, x1, y1, over) => ({ x0, y0, x1, y1, small: false, ink: 0, shared: false, place: true, why: '', col: -1, inside: '', bands: { over: band(over), under: band(''), before: band(''), after: band(''), inside: band('') } });
+    const picPage = (head) => ({ page: 1, w: 612, h: 792, items: [], rules: [], boxes: [], forms: [], pictured: 'picture', approx: true, words: [], lines: [], reader: 'ok', found: [box(150, 60, 300, 72, 'Name'), box(150, 200, 300, 212, 'Date'), box(150, 240, 300, 252, 'Admitted Investor')], heads: [{ kind: 'use', col: -1, x0: 240, y0: 120, x1: 372, y1: 130, s: head, conf: 90 }] });
+    return {
+      text: sum(P.read([textPage('For Partnership Use Only')], {})),
+      textControl: sum(P.read([textPage('Investor Information')], {})),
+      textBelow: sum(P.read([textPage('Do not write below this point')], {})),
+      pic: sum(P.read([picPage('For Office Use Only')], {})),
+      picControl: sum(P.read([picPage('Investor Information')], {}))
+    };
+  });
+  line(firm.text === 'investor required, other:Firm use, other:Firm use' || /^investor[^,]*, other:Firm use, other:Firm use$/.test(firm.text), `shapes a page with text: blanks under a heading for the firm's use are nobody's who signs, optional, not filled in (${firm.text}); under "do not write below this point" too (${firm.textBelow})`);
+  line(/^investor[^,]*, other:Firm use, other:Firm use$/.test(firm.textBelow), `shapes a page with text: "do not write below this point" reserves what follows (${firm.textBelow})`);
+  line(!/other/.test(firm.textControl) && firm.textControl.split(', ').length === 3, `shapes control, a page with text: the same blanks under an ordinary heading stay the investor's (${firm.textControl})`);
+  line(firm.pic === 'investor, other:Firm use, other:Firm use', `shapes a picture: boxes under a heading for the firm's use are nobody's who signs, optional (${firm.pic}); the box above the heading stays the investor's`);
+  line(firm.picControl === 'investor, investor, investor', `shapes control, a picture: the same boxes under an ordinary heading stay the investor's (${firm.picControl})`);
+  // The heading zone (NS.picturepage.bands on a made-up picture, one point a pixel): a short line set apart far above a
+  // block of places is read once for the block; running text across the page is not.
+  const zone = await page.evaluate(() => {
+    const pp = window.CVPortal.picturepage;
+    const make = (heading) => {
+      const W = 600;
+      const H = 400;
+      const g = new Uint8Array(W * H).fill(255);
+      const fill = (x0, y0, x1, y1) => {
+        for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) g[y * W + x] = 0;
+      };
+      const frame = (x0, y0, x1, y1) => (fill(x0, y0, x1, y0 + 1), fill(x0, y1 - 1, x1, y1), fill(x0, y0, x0 + 1, y1), fill(x1 - 1, y0, x1, y1));
+      const text = (x0, x1, y) => {
+        for (let x = x0; x + 3 <= x1; x += 4) if ((x - x0) % 24 < 20) fill(x, y, x + 3, y + 6);
+      };
+      fill(40, 20, 560, 21); // a rule across the top of the page
+      if (heading) text(250, 370, 190);
+      text(60, 540, 215); // running text, two lines
+      text(60, 540, 223);
+      frame(100, 290, 300, 305); // the first blank of the block
+      frame(100, 312, 300, 327); // the second, close under it
+      const seen = pp.find(g, W, H, 1, {});
+      const got = pp.bands(Object.assign({ grey: g, w: W, h: H, pxPerPt: 1 }, seen));
+      return got.zones.filter((z) => z.kind === 'use').map((z) => `${z.y0}-${z.y1}`);
+    };
+    return { heading: make(true), prose: make(false) };
+  });
+  line(zone.heading.length === 1 && /^1[89]\d-19\d$/.test(zone.heading[0]) && !zone.prose.length, `shapes heading zone: a short line set apart over a block of two places is read once (${zone.heading.join('; ') || 'none'}); running text across the page is not (${zone.prose.length})`);
   // Places nobody completes (the scan set's classes), each beside its control.
   const nobody = await page.evaluate(() => {
     const P = window.CVPortal.placement;

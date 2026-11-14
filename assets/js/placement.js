@@ -147,6 +147,14 @@
   const INVESTOR_WORDS = /\b(subscribers?|investors?|purchasers?|limited partners?|undersigned|buyers?|shareholders?|unit ?holders?|noteholders?|lenders?|members?|applicants?|holders?|participants?|clients?|grantors?)\b/;
   const FIRM_WORDS = /\baccept(ed|ance)\b|\bgeneral partner\b|\bmanaging (member|partner)\b|\bmanager\b|\bsponsor\b|\bissuer\b|\bcountersign|\bfor the (company|fund|partnership|issuer)\b/;
   const FIRM_ONLY = /^(the )?(fund|company|partnership|issuer|llc)$/;
+  /*
+   * A heading that reserves the places under it for the firm or the partnership (the one list, for pages with text and
+   * pages read from their picture): "for partnership use only", "for office use only", "do not write below this
+   * point", "office use", "to be completed by the general partner". Its places belong to nobody who signs in the
+   * portal: optional, never the investor's, never filled in from onboarding (asOther, the party FIRM_USE_PARTY).
+   */
+  const FIRM_USE = /\bfor (\w+ ){0,3}use only\b|\bdo not write (below|beneath|under|in this)\b|\boffice use\b|\bto be completed by (the )?(general partner|manag(er|ing member)|fund|partnership|company|issuer|sponsor)\b/;
+  const FIRM_USE_PARTY = 'Firm use';
   /** Whose words a piece of text uses: 'investor', 'firm' or ''. */
   function whoIn(t) {
     if (FIRM_WORDS.test(t) || FIRM_ONLY.test(t)) return 'firm';
@@ -1655,6 +1663,7 @@
     /* 6. Whose field it is, and which kind of investor gets it. */
     // Headings: short lines in capitals, ending in a colon or set as a title, that name a side, the firm or a kind of investor.
     const heads = [];
+    const firmUses = [];
     // The same words at the same place as on the page before (a running header or footer, its page number aside).
     const sameAs = (ln) => !!c.lastLines && c.lastLines.page === pg.page - 1 && c.lastLines.lines.some((o) => Math.abs(o.y - ln.y) <= 2 && o.t === ln.text.replace(/\d+/g, '#'));
     // A printed line that goes on with the paragraph above it: that line is close above, ends with no stop and runs
@@ -1682,6 +1691,8 @@
         const t = plain(raw);
         const n = wordsOf(t).length;
         if (!t || n > 12) return;
+        // A line of its own that reserves what follows for the firm's use (FIRM_USE): see the role loop.
+        if (!seg.used && !ln.els.some((x) => x.t === 'slot') && !/^[a-z]/.test(raw) && !runOn(ln) && FIRM_USE.test(t)) firmUses.push({ y: seg.y, x0: seg.x0, x1: seg.x1, seg });
         const caps = /[A-Z]{2}/.test(raw) && raw === raw.toUpperCase();
         const colon = /[:\uFF1A]\s*$/.test(raw);
         const stop = /[.;?!]$/.test(raw) && !/\b(l\.p|l\.l\.c|inc|ltd|llc|lp|corp|co)\.$/i.test(raw);
@@ -1793,6 +1804,12 @@
       if (governs(hd, m)) return true;
       return !!(m.slot && m.slot.line) && made.some((o) => o !== m && o.slot && o.slot.line === m.slot.line && o.x1 <= m.x0 + 3 && governs(hd, o));
     };
+    const usedBy = (u, m) => {
+      if (u.y >= m.y - 2 || u.seg === m.seg) return false;
+      if (overlap(u.x0, u.x1, m.x0, m.x1) <= 0 && !(u.x0 < pg.w / 2 && u.x1 > pg.w / 2)) return false;
+      if (sectionRules.some((r) => r.y > u.y + 2 && r.y < m.y - 2)) return false;
+      return !heads.some((o) => !o.label && !o.carried && o.y > u.y + 2 && o.y < m.y - 2 && !footer(o) && !firmUses.some((v) => v.seg === o.seg));
+    };
     made.forEach((m) => {
       const p = m.p;
       const own = m;
@@ -1901,12 +1918,16 @@
         }
       }
       p.role = role;
+      // A place under a heading that reserves its block for the firm's use (FIRM_USE), down to the next heading of any
+      // kind (a label aside) or rule that divides sections, under the heading or across the page from a heading set in
+      // its middle: nobody who signs in the portal completes it. The firm's own places stay the firm's.
+      if (role !== 'firm' && firmUses.some((u) => usedBy(u, own))) Object.assign(m, { other: FIRM_USE_PARTY, otherUnsure: false, otherWhy: undefined, co: false, firmUse: true });
       if (m.co) coInvestor(p, m.said);
       // A second investor's cell named by its caption carries the caption's own words and its word for required.
       if (m.co && m.cellCap) Object.assign(p, { label: m.capLabel, required: m.capRequired });
       // A form that marks off what a party completes ("TO BE COMPLETED BY THE CUSTODIAN") leaves every other place on
       // the page to the investor: a caption outside that section that names the party asks the investor who it is.
-      if (m.other && !m.otherHeaded && heads.some((hd) => hd.completes && hd.other === m.other && hd.y > 0)) {
+      if (m.other && !m.otherHeaded && !m.firmUse && heads.some((hd) => hd.completes && hd.other === m.other && hd.y > 0)) {
         m.other = '';
         m.otherUnsure = false;
       }
@@ -2441,12 +2462,34 @@
       info.sig = sig;
     });
     owners(pg, made);
+    firmUse(pg, made);
     made.forEach((p) => mark(p, WHY_SLANT));
     mine.forEach((p) => mark(p, WHY_SLANT));
     mine.forEach(checkBy);
     made.forEach(checkBy);
     made.forEach((p) => mine.push(p));
     return notEmpty;
+  }
+  /**
+   * A box under a heading that reserves its block for the firm's use (a heading zone of the picture, NS.textread heads
+   * kind 'use', whose words FIRM_USE holds): nobody who signs in the portal completes it (asOther, FIRM_USE_PARTY), down
+   * to the next heading of any kind, under the heading or across the page from a heading set in its middle.
+   */
+  function firmUse(pg, made) {
+    const heads = pg.heads || [];
+    const uses = heads.filter((hd) => hd.kind === 'use' && FIRM_USE.test(plain(hd.s)));
+    if (!uses.length) return;
+    made.forEach((p) => {
+      const b = BOXED.get(p).b;
+      const u = uses.find((hd) => hd.y1 <= b.y0 + 1 && (overlap(hd.x0, hd.x1, b.x0, b.x1) > 0 || (hd.x0 < pg.w / 2 && hd.x1 > pg.w / 2)) && !heads.some((o) => o !== hd && o.kind !== 'column' && !uses.includes(o) && o.y0 > hd.y1 && o.y1 <= b.y0 + 1));
+      if (!u || p.role === 'firm') return;
+      const said = p.why && p.why !== WHY_SLANT && p.why !== OTHER_NOTE ? ` ${p.why}` : '';
+      // (the caption as read, without the prefix a second investor's or another party's field was given)
+      const was = isOther(p) ? `${p.other}: ` : 'Co-investor: ';
+      const label = String(p.label || '').indexOf(was) === 0 ? String(p.label).slice(was.length) : String(p.label || '');
+      asOther(p, FIRM_USE_PARTY, false, OTHER_NOTE);
+      Object.assign(p, { label: `${FIRM_USE_PARTY}: ${label}`, why: `${OTHER_NOTE}${said}` });
+    });
   }
   /**
    * Who completes each box field of a picture page (O1 to O7), in this fixed order: its own caption; the heading of its

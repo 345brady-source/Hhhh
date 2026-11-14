@@ -28,7 +28,7 @@
  *                                                      col, inside (its words as plain text), bands { over, under,
  *                                                      before, after, inside: each { s, conf } } }
  *                                            lines     every free rule: { x0, x1, y, t, bands { over, under, before, after } }
- *                                            heads     [{ kind 'column' | 'letter' | 'margin', col, x0, y0, x1, y1, s, conf }]
+ *                                            heads     [{ kind 'column' | 'letter' | 'margin' | 'use', col, x0, y0, x1, y1, s, conf }]
  *                                            reader    'ok' read; 'load' the engine could not start; 'time' the words of
  *                                                      the page ran out of time; 'fail' a strip could not be read; 'off'
  *                                                      or what opts.reader says when words is false
@@ -623,6 +623,11 @@
         const r = toPt(z);
         // A block heading over a stack of free rules is read for its words alone (they decide whose block it is).
         if (z.kind === 'block') return;
+        // A heading over a block of places, read for whether it reserves the block (NS.placement firm's use).
+        if (z.kind === 'use') {
+          if (t.s) out.heads.push(Object.assign({ kind: 'use', col: -1 }, r, t));
+          return;
+        }
         if (z.kind === 'letter') {
           // one list mark (a capital, or the digit the engine may read a capital as: B as 8, at most two such), its stop or bracket, a word;
           // this decides that the line is a heading and never changes the text kept
