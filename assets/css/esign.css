@@ -51,6 +51,8 @@
 .es-note { display: flex; gap: var(--space-sm); align-items: flex-start; padding: var(--space-sm) var(--space-md); background: var(--es-surface-2); color: var(--es-fg); font-size: var(--text-sm); line-height: 1.45; border-radius: var(--r-inner); }
 .es-note .i { flex: none; margin-top: var(--space-3xs); color: var(--es-fg-3); }
 .es-note-bad { background: color-mix(in oklab, var(--es-bad) 9%, var(--es-surface)); color: var(--es-bad); flex-wrap: wrap; align-items: center; justify-content: space-between; }
+/* A notice inside a dialog (a file that is not a PDF): the sentence beside its mark, above the buttons. */
+.dlg-body > .es-note-bad { justify-content: flex-start; flex-wrap: nowrap; margin-block: var(--space-sm); }
 .es-loading { padding: var(--space-xl) 0; text-align: center; color: var(--es-fg-3); }
 .es-hash { font-family: var(--es-mono); font-size: var(--text-xs); overflow-wrap: anywhere; word-break: break-all; }
 /* Emphasis is the body face at 500: no heavier weight is loaded. */
