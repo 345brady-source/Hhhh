@@ -2892,7 +2892,7 @@
    * damaged file) nothing is placed. Returns how many fields were placed.
    */
   async function autoFields(env, opts) {
-    const read = (env.read = { ok: false, error: '', pages: 0, scanned: [], failed: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], firmLeft: 0, firmLeftPages: [], pictured: [], unread: {}, otherPages: [], others: 0, otherSignaturePages: [], coSignaturePages: [], notEmpty: 0, wordless: {} });
+    const read = (env.read = { ok: false, error: '', pages: 0, scanned: [], failed: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, initials: 0, investorPages: [], firmPages: [], firmLeft: 0, firmLeftPages: [], pictured: [], unread: {}, otherPages: [], others: 0, otherSignaturePages: [], coPages: [], cos: 0, coSignaturePages: [], firmDoubtPages: [], signaturePageMentioned: false, notEmpty: 0, wordless: {} });
     let res = null;
     try {
       const t = T();
@@ -2909,7 +2909,7 @@
       return 0;
     }
     res.errors.forEach((x) => console.error('Placing fields on page ' + x.page + ' failed:', x.reason));
-    Object.assign(read, { ok: res.pages > 0, pages: res.pages, scanned: res.scanned, failed: res.failed, places: res.places, left: res.left.slice(), investorPages: res.investorPages, firmPages: res.firmPages, pictured: res.pictured || [], otherPages: (res.otherPages || []).slice(), others: res.others || 0, otherSignaturePages: (res.otherSignaturePages || []).slice(), coSignaturePages: (res.coSignaturePages || []).slice(), notEmpty: res.notEmpty || 0, wordless: Object.assign({}, res.wordless || {}) });
+    Object.assign(read, { ok: res.pages > 0, pages: res.pages, scanned: res.scanned, failed: res.failed, places: res.places, left: res.left.slice(), investorPages: res.investorPages, firmPages: res.firmPages, pictured: res.pictured || [], otherPages: (res.otherPages || []).slice(), others: res.others || 0, otherSignaturePages: (res.otherSignaturePages || []).slice(), coPages: (res.coPages || []).slice(), cos: res.cos || 0, coSignaturePages: (res.coSignaturePages || []).slice(), firmDoubtPages: (res.firmDoubtPages || []).slice(), signaturePageMentioned: !!res.signaturePageMentioned, notEmpty: res.notEmpty || 0, wordless: Object.assign({}, res.wordless || {}) });
     const inv = env.signers.find((s) => s.role === 'investor');
     const cs = env.signers.find((s) => s.role === 'countersigner');
     res.fields.forEach((p) => {
@@ -2938,6 +2938,7 @@
       if (f.other) f.placed.other = f.other;
       env.fields.push(f);
       read[p.type === 'checkbox' ? 'boxes' : p.type === 'signature' || p.type === 'initials' ? 'signatures' : 'blanks']++;
+      if (p.type === 'initials') read.initials++;
     });
     return env.fields.length;
   }
@@ -2946,7 +2947,8 @@
     const r = env && env.read;
     if (!r) return '';
     const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
-    // Page numbers as words: "page 4", "pages 2 and 5", "pages 1 to 10, 12 to 72" (runs of pages are given as ranges).
+    // Page numbers as words: "page 4", "pages 2 and 5", "pages 1, 5 and 6", "pages 1 to 10 and 12 to 72" (runs of three
+    // pages or more are given as ranges).
     const on = (pages) => {
       const runs = [];
       pages.forEach((p) => {
@@ -2954,8 +2956,8 @@
         if (last && p === last[1] + 1) last[1] = p;
         else runs.push([p, p]);
       });
-      const list = runs.map((r) => (r[0] === r[1] ? `${r[0]}` : r[1] === r[0] + 1 ? `${r[0]}, ${r[1]}` : `${r[0]} to ${r[1]}`));
-      return pages.length === 1 ? `page ${list[0]}` : list.length === 1 ? `pages ${list[0].replace(', ', ' and ')}` : `pages ${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
+      const list = [].concat.apply([], runs.map((r) => (r[0] === r[1] ? [`${r[0]}`] : r[1] === r[0] + 1 ? [`${r[0]}`, `${r[1]}`] : [`${r[0]} to ${r[1]}`])));
+      return pages.length === 1 ? `page ${list[0]}` : list.length === 1 ? `pages ${list[0]}` : `pages ${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
     };
     // Pages with no text that could not be read from their pictures: exactly why, and what keeps the text in a PDF.
     const u = r.unread || {};
@@ -2976,7 +2978,11 @@
     const made = r.boxes + r.blanks + r.signatures;
     // Mostly pictures of pages: said first, as the thing the sponsor has to act on.
     if (!made && r.scanned.length >= r.pages) return `Most of this PDF could not be read: ${r.scanned.length} of its ${r.scanned.length + r.pages + r.failed.length} pages are pictures, as in a scan. No field was placed. ${lost.length ? lost.join(' ') + ' Or' : 'Upload the PDF the agreement was made from, or'} add each field by hand.`;
-    const out = [made ? `${n(r.pages, 'page', 'pages')} read. ${n(r.boxes, 'tick box', 'tick boxes')}, ${n(r.blanks, 'blank', 'blanks')} and ${n(r.signatures, 'signature line', 'signature lines')} got a field, each on a place the agreement prints.` : `${n(r.pages, 'page', 'pages')} read: no line, blank or tick box to complete was found, so no field was placed.`];
+    // Places for initials are counted apart from signature lines (signatures holds both); a draft read before they were
+    // has no count of them and reads as before.
+    const ini = r.initials > 0 ? r.initials : 0;
+    const counts = ini ? `${n(r.boxes, 'tick box', 'tick boxes')}, ${n(r.blanks, 'blank', 'blanks')}, ${n(r.signatures - ini, 'signature line', 'signature lines')} and ${n(ini, 'place for initials', 'places for initials')}` : `${n(r.boxes, 'tick box', 'tick boxes')}, ${n(r.blanks, 'blank', 'blanks')} and ${n(r.signatures, 'signature line', 'signature lines')}`;
+    const out = [made ? `${n(r.pages, 'page', 'pages')} read. ${counts} got a field, each on a place the agreement prints.` : `${n(r.pages, 'page', 'pages')} read: no line, blank or tick box to complete was found, so no field was placed.`];
     const left = (r.left || []).slice().sort((a, b) => a - b);
     if (left.length) out.push(`Not every printed place got a field: check ${on(left)} and add what is missing by hand.`);
     const seen = (r.pictured || []).length;
@@ -2994,13 +3000,23 @@
     // Places printed for somebody else (a custodian, an adviser): optional, and no signer is asked to complete them.
     const others = (r.otherPages || []).slice().sort((a, b) => a - b);
     if (r.others && others.length) out.push(r.others === 1 ? `1 place on ${on(others)} is for someone else to complete, such as a custodian or an adviser: it is optional, and nobody is asked to complete it.` : `${r.others} places on ${on(others)} are for someone else to complete, such as a custodian or an adviser: they are optional, and nobody is asked to complete them.`);
+    // Places printed for the co-investor, of any kind.
+    const cos = (r.coPages || []).slice().sort((a, b) => a - b);
+    if (r.cos && cos.length) out.push(r.cos === 1 ? `1 place on ${on(cos)} is for a co-investor.` : `${r.cos} places on ${on(cos)} are for a co-investor.`);
     out.push(r.investorPages.length ? `The investor’s signature line was found on ${on(r.investorPages)}.` : 'No signature line for the investor was found: add a signature field for the investor where they sign before saving.');
+    // The agreement speaks of a signature page, and none with the investor's signature line is in this PDF.
+    if (!r.investorPages.length && r.signaturePageMentioned) out.push('The agreement refers to a signature page that this PDF does not contain: add the investor’s signature field by hand, or upload the complete document.');
     // Signature lines that are not the investor's: the co-investor's, and those of other people, whom nobody asks to sign.
     const coSigned = (r.coSignaturePages || []).slice().sort((a, b) => a - b);
     if (coSigned.length) out.push(`The co-investor’s signature line was found on ${on(coSigned)}.`);
     const othersSigned = (r.otherSignaturePages || []).slice().sort((a, b) => a - b);
     if (othersSigned.length) out.push(`Signature lines for other people (a custodian, a broker, a representative or the like) were found on ${on(othersSigned)}. Nobody is asked to sign them.`);
-    out.push(r.firmPages.length ? `Your firm’s signature line was found on ${on(r.firmPages)}.` : `No signature line for your firm was found, so your firm does not sign this agreement${r.firmLeft ? ` and ${n(r.firmLeft, 'blank that reads as your firm’s', 'blanks that read as your firm’s')} on ${on(r.firmLeftPages || [])} got no field` : ''}. Add a signature field for your firm if it should.`);
+    // An acceptance block that names another party: in doubt whether your firm signs there, so it is marked.
+    const doubt = (r.firmDoubtPages || []).slice().sort((a, b) => a - b);
+    const firmLeft = r.firmLeft ? ` and ${n(r.firmLeft, 'blank that reads as your firm’s', 'blanks that read as your firm’s')} on ${on(r.firmLeftPages || [])} got no field` : '';
+    if (r.firmPages.length) out.push(`Your firm’s signature line was found on ${on(r.firmPages)}.`);
+    else if (doubt.length) out.push(`No signature line that is clearly your firm’s was found${firmLeft}. ${doubt.length === 1 ? `A signature place on ${on(doubt)} carries words of acceptance but names another party, so it is marked Review: set it to your firm if your firm signs there.` : `Signature places on ${on(doubt)} carry words of acceptance but name another party, so they are marked Review: set them to your firm if your firm signs there.`}`);
+    else out.push(`No signature line for your firm was found, so your firm does not sign this agreement${firmLeft}. Add a signature field for your firm if it should.`);
     return out.join(' ');
   }
   /** What still stops an offering's agreement from being saved ('' when it can be). */
