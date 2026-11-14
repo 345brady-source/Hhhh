@@ -2980,7 +2980,7 @@
     const left = (r.left || []).slice().sort((a, b) => a - b);
     if (left.length) out.push(`Not every printed place got a field: check ${on(left)} and add what is missing by hand.`);
     const seen = (r.pictured || []).length;
-    if (seen) out.push(`${n(seen, 'page', 'pages')} had no text, so the portal read ${seen === 1 ? 'it from the picture of the page' : 'them from the picture of each page'}. Check the fields on ${seen === 1 ? 'that page' : 'those pages'}.`);
+    if (seen) out.push(`${on(r.pictured.slice().sort((a, b) => a - b)).replace(/^p/, 'P')} had no text, so the portal read ${seen === 1 ? 'it from the picture of the page' : 'them from the picture of each page'}. Check the fields on ${seen === 1 ? 'that page' : 'those pages'}.`);
     // What a page read from its picture left without a field, and the pages whose words could not be read there (their
     // boxes still have fields, named by their shape).
     if (r.notEmpty > 0) out.push(r.notEmpty === 1 ? '1 box that already holds print or writing got no field.' : `${r.notEmpty} boxes that already hold print or writing got no field.`);

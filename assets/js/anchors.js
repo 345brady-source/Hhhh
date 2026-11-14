@@ -518,10 +518,15 @@
         const first = Math.min.apply(null, on.map((g) => g.x0));
         const end = Math.max.apply(null, on.map((g) => g.x1));
         if (typed || covered >= 0.45 * w || first > l.x0 + 6 || l.x1 - end < 36) return;
+        // On a page read from its picture, words at the start of a line whose label already stands before it are an
+        // answer written on the line (a date, a name filled in), not a label: the blank is answered.
+        if (raw.pictured && left && l.x0 - left.x1 < 24 && /[A-Za-z:]/.test(left.u)) return;
         x0 = end + 4;
         cut = true;
       }
-      const clear = emptyAbove(x0, l.x1, l.y);
+      // (on a page read from its picture the paper above a line ends at the page's own top edge: a stroke at the edge
+      // of a scanned sheet has no room above it to write in)
+      const clear = raw.pictured ? Math.min(emptyAbove(x0, l.x1, l.y), Math.max(0, l.y)) : emptyAbove(x0, l.x1, l.y);
       if (l.made === 'rule') {
         // A footnote rule: a short rule at the left margin in the lower part of the page, empty paper above it and small
         // print under it that opens with a footnote mark. (A short rule with a small caption under it is a signature line.)
