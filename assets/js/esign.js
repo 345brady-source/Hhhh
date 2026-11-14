@@ -2817,9 +2817,10 @@
    * Throws when the file itself cannot be opened.
    *
    * A page with no text (its letters are drawings, or it is a picture of a page) is read from its picture by
-   * NS.textread and comes back with pictured set; when that cannot be done it comes back as a scan with unread saying
-   * why: 'load' (the text reader could not be loaded), 'time' (the page took too long), 'limit' (the time allowed for
-   * the whole document was used up) or 'fail'. opts: { pictures: true to read such pages from their picture (the
+   * NS.textread and comes back with pictured set, and with reader saying whether its words could be read (a page whose
+   * words could not be read is still read from its picture: its boxes are found without them); when the page cannot be
+   * drawn or searched it comes back as a scan with unread saying why: 'time' (the page took too long), 'limit' (the time
+   * allowed for the whole document was used up) or 'fail'. opts: { pictures: true to read such pages from their picture (the
    * sponsor asked for it); step(page, pages) called before each such page is read;
    * kept: true to use the last reading of this file, or read without pictures (for snapping, where waiting is not worth it) }.
    */
@@ -2834,7 +2835,6 @@
     const doc = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()), isEvalSupported: false }).promise;
     const out = [];
     let spent = 0;
-    let noReader = false;
     let pictured = false;
     try {
       for (let i = 1; i <= doc.numPages; i++) {
@@ -2855,8 +2855,7 @@
           // A page with no text is read from its picture only when the sponsor asked for it (op.pictures): otherwise it
           // is reported as a page that could not be read, and nothing is placed on it.
           if (NS.textread && op.pictures && !op.kept && NS.anchors.textless(raw)) {
-            if (noReader) unread = 'load';
-            else if (spent > PICTURE_LIMIT_MS) unread = 'limit';
+            if (spent > PICTURE_LIMIT_MS) unread = 'limit';
             else {
               if (op.step) op.step(i, doc.numPages);
               const t0 = Date.now();
@@ -2866,7 +2865,6 @@
               } catch (e) {
                 console.error('Reading page ' + i + ' of the agreement from its picture failed:', e);
                 unread = (e && e.code) || 'fail';
-                if (unread === 'load') noReader = true;
               }
               spent += Date.now() - t0;
             }
@@ -2894,7 +2892,7 @@
    * damaged file) nothing is placed. Returns how many fields were placed.
    */
   async function autoFields(env, opts) {
-    const read = (env.read = { ok: false, error: '', pages: 0, scanned: [], failed: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], firmLeft: 0, firmLeftPages: [], pictured: [], unread: {}, otherPages: [], others: 0, otherSignaturePages: [] });
+    const read = (env.read = { ok: false, error: '', pages: 0, scanned: [], failed: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], firmLeft: 0, firmLeftPages: [], pictured: [], unread: {}, otherPages: [], others: 0, otherSignaturePages: [], coSignaturePages: [], notEmpty: 0, wordless: {} });
     let res = null;
     try {
       const t = T();
@@ -2911,7 +2909,7 @@
       return 0;
     }
     res.errors.forEach((x) => console.error('Placing fields on page ' + x.page + ' failed:', x.reason));
-    Object.assign(read, { ok: res.pages > 0, pages: res.pages, scanned: res.scanned, failed: res.failed, places: res.places, left: res.left.slice(), investorPages: res.investorPages, firmPages: res.firmPages, pictured: res.pictured || [], otherPages: (res.otherPages || []).slice(), others: res.others || 0, otherSignaturePages: (res.otherSignaturePages || []).slice() });
+    Object.assign(read, { ok: res.pages > 0, pages: res.pages, scanned: res.scanned, failed: res.failed, places: res.places, left: res.left.slice(), investorPages: res.investorPages, firmPages: res.firmPages, pictured: res.pictured || [], otherPages: (res.otherPages || []).slice(), others: res.others || 0, otherSignaturePages: (res.otherSignaturePages || []).slice(), coSignaturePages: (res.coSignaturePages || []).slice(), notEmpty: res.notEmpty || 0, wordless: Object.assign({}, res.wordless || {}) });
     const inv = env.signers.find((s) => s.role === 'investor');
     const cs = env.signers.find((s) => s.role === 'countersigner');
     res.fields.forEach((p) => {
@@ -2983,6 +2981,13 @@
     if (left.length) out.push(`Not every printed place got a field: check ${on(left)} and add what is missing by hand.`);
     const seen = (r.pictured || []).length;
     if (seen) out.push(`${n(seen, 'page', 'pages')} had no text, so the portal read ${seen === 1 ? 'it from the picture of the page' : 'them from the picture of each page'}. Check the fields on ${seen === 1 ? 'that page' : 'those pages'}.`);
+    // What a page read from its picture left without a field, and the pages whose words could not be read there (their
+    // boxes still have fields, named by their shape).
+    if (r.notEmpty > 0) out.push(r.notEmpty === 1 ? '1 box that already holds print or writing got no field.' : `${r.notEmpty} boxes that already hold print or writing got no field.`);
+    const wordless = (k) => ((r.wordless || {})[k] || []).slice().sort((a, b) => a - b);
+    if (wordless('load').length) out.push(`The portal could not start its text reader here, so the words on ${on(wordless('load'))} were not read. The boxes there were found on the picture: each has a field named by its shape and marked. Say what each one is for, or remove it.`);
+    if (wordless('time').length) out.push(`Reading the words on ${on(wordless('time'))} took too long and was stopped part way. Where the words by a box were not read, its field is named by its shape and marked.`);
+    if (wordless('fail').length) out.push(`The words on ${on(wordless('fail'))} could not be read. The boxes there were found on the picture: each has a field named by its shape and marked. Say what each one is for, or remove it.`);
     if (lost.length) out.push(lost.join(' '));
     else if (r.scanned.length) out.push(`${r.scanned.length === 1 ? 'Page' : 'Pages'} ${on(r.scanned.slice().sort((a, b) => a - b)).replace(/^pages? /, '')} ${r.scanned.length === 1 ? 'is a picture' : 'are pictures'}, as in a scan, and could not be read: nothing was placed there.`);
     if (r.failed.length) out.push(`The portal could not read ${on(r.failed.slice().sort((a, b) => a - b))}: nothing was placed there.`);
@@ -2990,6 +2995,11 @@
     const others = (r.otherPages || []).slice().sort((a, b) => a - b);
     if (r.others && others.length) out.push(r.others === 1 ? `1 place on ${on(others)} is for someone else to complete, such as a custodian or an adviser: it is optional, and nobody is asked to complete it.` : `${r.others} places on ${on(others)} are for someone else to complete, such as a custodian or an adviser: they are optional, and nobody is asked to complete them.`);
     out.push(r.investorPages.length ? `The investor’s signature line was found on ${on(r.investorPages)}.` : 'No signature line for the investor was found: add a signature field for the investor where they sign before saving.');
+    // Signature lines that are not the investor's: the co-investor's, and those of other people, whom nobody asks to sign.
+    const coSigned = (r.coSignaturePages || []).slice().sort((a, b) => a - b);
+    if (coSigned.length) out.push(`The co-investor’s signature line was found on ${on(coSigned)}.`);
+    const othersSigned = (r.otherSignaturePages || []).slice().sort((a, b) => a - b);
+    if (othersSigned.length) out.push(`Signature lines for other people (a custodian, a broker, a representative or the like) were found on ${on(othersSigned)}. Nobody is asked to sign them.`);
     out.push(r.firmPages.length ? `Your firm’s signature line was found on ${on(r.firmPages)}.` : `No signature line for your firm was found, so your firm does not sign this agreement${r.firmLeft ? ` and ${n(r.firmLeft, 'blank that reads as your firm’s', 'blanks that read as your firm’s')} on ${on(r.firmLeftPages || [])} got no field` : ''}. Add a signature field for your firm if it should.`);
     return out.join(' ');
   }
@@ -3246,5 +3256,5 @@
   };
   NS.esignKit = Object.assign(NS.esignKit || {}, { pageLayout, readNote, agreementTodo });
   NS.coSigning = { coOf, coPlaces, coAttach, coDetach, coUpdate, coHolding, coEnvelopes, mySigner };
-  NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout };
+  NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
 })(window.CVPortal);
