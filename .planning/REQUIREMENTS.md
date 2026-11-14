@@ -37,6 +37,15 @@
 - [ ] **SET-03**: Document C (the Word subscription agreement with questionnaire) is read 100% correctly as a PDF, and a Word file offered as an agreement is answered plainly
 - [ ] **SET-04**: Every document the reader already reads correctly still is, and the owner has checked the documents in the preview
 
+### Any subscription agreement (Phase 01.4)
+
+- [ ] **ANY-01**: On any subscription agreement a sponsor uploads, every printed place a person completes gets a field exactly on it, and no field is placed where nothing is to be completed
+- [ ] **ANY-02**: Each field is the right kind, for the right person (investor, co-investor, entity-only, the firm, or someone else) and carries the right label
+- [ ] **ANY-03**: The sponsor only uploads: reading is automatic in the portal's page (no button, no confirmation), review marks are a last resort, and the agreement is ready to send; the editor stays for optional changes
+- [ ] **ANY-04**: Every format is read: typed, printed from a browser in portrait or landscape, filed PDFs, picture forms, tinted forms, scans
+- [ ] **ANY-05**: Measured on a large set of real EDGAR subscription agreements and on frozen held-out sets with exact answer sheets, meeting the agreed targets; nothing that works today regresses
+- [ ] **ANY-06**: The owner has checked the result on agreements the reader has never seen
+
 ### Field Editor
 
 - [ ] **EDIT-01**: Sponsor can drag a field smoothly anywhere within a page, with the field following the pointer without lag or jumps
@@ -123,6 +132,12 @@
 | SET-02 | Phase 01.3 | Pending |
 | SET-03 | Phase 01.3 | Pending |
 | SET-04 | Phase 01.3 | Pending |
+| ANY-01 | Phase 01.4 | Pending |
+| ANY-02 | Phase 01.4 | Pending |
+| ANY-03 | Phase 01.4 | Pending |
+| ANY-04 | Phase 01.4 | Pending |
+| ANY-05 | Phase 01.4 | Pending |
+| ANY-06 | Phase 01.4 | Pending |
 | EDIT-01 | Phase 2 | Pending |
 | EDIT-02 | Phase 2 | Pending |
 | EDIT-03 | Phase 2 | Pending |
