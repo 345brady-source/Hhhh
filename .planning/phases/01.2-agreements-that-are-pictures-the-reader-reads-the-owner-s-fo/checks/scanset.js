@@ -318,7 +318,10 @@ async function runDoc(srv, name, pdf) {
     const pictured = said(note, PAGES + ' had no text, so the portal read');
     const limited = said(note, 'stopped after [^:]*: ' + PAGES + ' (?:was|were) not read');
     const lost = [].concat(said(note, PAGES + ' (?:has|have) no text and (?:was|were) not read'), said(note, 'Reading ' + PAGES + ' from (?:its|their) pictures? (?:took too long|failed)'));
-    console.log(`  the summary: read from the picture ${pictured.length} pages; left at the time limit ${limited.length}; not read for another reason ${lost.length}`);
+    // The time for words used up: those pages are still read from their picture (boxes found, words not read).
+    const wordsLeft = said(note, 'stopped after three minutes\\. On ' + PAGES + ' the boxes were found');
+    console.log(`  the summary: read from the picture ${pictured.length} pages; words not read after the three minutes ${wordsLeft.length ? `${wordsLeft.length} (pages ${wordsLeft.join(', ')})` : 0}; left at the time limit ${limited.length}; not read for another reason ${lost.length}`);
+    if (wordsLeft.some((p) => pictured.indexOf(p) < 0)) fail('the summary names pages whose words were not read that it does not name as read from their picture');
     const named = pictured.concat(limited, lost).sort((a, b) => a - b);
     const missingName = textless.filter((p) => named.indexOf(p) < 0);
     const wrongName = named.filter((p) => !isTextless(p));
@@ -366,7 +369,7 @@ async function runDoc(srv, name, pdf) {
     const made = await photograph(C, S, shots, dir);
     console.log(`  pictures: ${made.length} of ${shots.length} pages that got fields, in ${dir}`);
     if (made.length !== shots.length) fail(`${shots.length - made.length} pages that got fields could not be photographed`);
-    fs.writeFileSync(path.join(dir, 'result.json'), JSON.stringify({ pages: sizes.length, kinds, textless, offer, before: { fields: before.fields.length, onTextless: early.length }, after: { fields: after.fields.length, onText }, summary: { pictured, limited, lost }, byPage: Object.fromEntries(Object.entries(byPage).map(([p, l]) => [p, l.length])), fails }, null, 1));
+    fs.writeFileSync(path.join(dir, 'result.json'), JSON.stringify({ pages: sizes.length, kinds, textless, offer, before: { fields: before.fields.length, onTextless: early.length }, after: { fields: after.fields.length, onText }, summary: { pictured, wordsLeft, limited, lost }, byPage: Object.fromEntries(Object.entries(byPage).map(([p, l]) => [p, l.length])), fails }, null, 1));
   } catch (e) {
     fail('the run stopped: ' + String((e && e.message) || e).slice(0, 300));
   } finally {
