@@ -118,13 +118,68 @@ Plans:
 
 ### Phase 01.4: Every subscription agreement: the reader is trained and measured on a large set of real EDGAR subscription agreements (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** A sponsor uploads any subscription agreement, in any format (typed, filed PDF, browser print in portrait or landscape, picture form, tinted form, scan), and it is ready to send with nothing else to do: every place a person completes is found, every field sits on its printed place and nowhere else, with the right kind, person and label; the portal reads it automatically inside its own page with its own rules and small models trained on real EDGAR agreements, white-label, with no document leaving the sponsor's computer; the editor stays for optional changes
+**Requirements**: ANY-01, ANY-02, ANY-03, ANY-04, ANY-05, ANY-06
 **Depends on:** Phase 1
-**Plans:** 0 plans
+**Success Criteria** (what must be TRUE):
+  1. Held-out A (39 real agreements with exact answer sheets, frozen before any work): 39 of 39 ready to send by the exact scorer: every place found, no stray field, no kind, person or label difference, no review mark
+  2. Held-out B (63 agreements collected and frozen before work on them, scans, picture prints and broker-dealer forms included, never seen by any builder): at least 95 percent ready to send and at least 99.5 percent of places right first time, scored once at the end
+  3. The whole set of real EDGAR agreements (several hundred): at least 95 percent ready to send; no picture offer, no document with zero fields, unreadable or timed out, no missing signature field; review marks and strays each at most 0.5 percent of fields; at most 60 seconds a document at the 95th percentile with no console error
+  4. The sponsor only uploads: no button, confirmation, install or page to check; everything runs in the portal's page; no document leaves it; no vendor or library name is visible anywhere
+  5. Nothing that works today regresses: the owner's documents A 29 of 29, B 2 of 2 places, C 138 of 138, the picture form 241 of 241, the first agreement's 47 fields with none marked, the public documents' pins, the nine check files, the class pages and the walks
+  6. The owner has checked agreements the reader has never seen in the republished preview
+**Plans:** 49 plans
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 01.4 to break down)
+- [ ] 01.4-01-PLAN.md — The measure sees what it was blind to (fallback glyph boxes, letter boxes, dates in parts, shared lines, illustrations), calibrated against the answer sheets
+- [ ] 01.4-02-PLAN.md — One gate for the phase: exact scoring of any sheeted set with a ratchet, every done-target in one command, quick and whole runs, the held-out guard
+- [ ] 01.4-03-PLAN.md — Answer-sheet tools (pre-fill, edit, overlays, validator, hashes), the train manifest with folds and batches, proven on two train documents
+- [ ] 01.4-04-PLAN.md — Training environment outside the repository after a human checks every package
+- [ ] 01.4-05-PLAN.md — The in-page model runtime, human-checked and vendored as scripts, proven inside the preview frame
+- [ ] 01.4-06-PLAN.md — At least 300 more EDGAR agreements by kind; held-out B frozen from metadata before anyone sees it
+- [ ] 01.4-07-PLAN.md — Picture pages read automatically on upload: no button, nothing to press
+- [ ] 01.4-08-PLAN.md — Tracer: a place model trained here runs in the page and turns snapped places into fields, end to end
+- [ ] 01.4-09-PLAN.md — Fallback-glyph tick boxes, missed squares and short-rule choices as class rules
+- [ ] 01.4-10-PLAN.md — Dates in parts and letter-box rows as one field each, through editor, signing step and finished PDF
+- [ ] 01.4-11-PLAN.md — Answer sheets for train documents, batches T01, T02, T03
+- [ ] 01.4-12-PLAN.md — Answer sheets for train documents, batches T04, T05, T06
+- [ ] 01.4-13-PLAN.md — Answer sheets for train documents, batches T07, T08, T09
+- [ ] 01.4-14-PLAN.md — Answer sheets for train documents, batches T10, T11, T12
+- [ ] 01.4-15-PLAN.md — Answer sheets for train documents, batches T13, T14, T15
+- [ ] 01.4-16-PLAN.md — Answer sheets for train documents, batches T16, T17, T18
+- [ ] 01.4-17-PLAN.md — Answer sheets for train documents, batches T19, T20, T21
+- [ ] 01.4-18-PLAN.md — Answer sheets for train documents, batches T22, T23, T24
+- [ ] 01.4-19-PLAN.md — Answer sheets for train documents, batches T25, T26
+- [ ] 01.4-20-PLAN.md — Answer sheets for held-out B by an agent who builds nothing, batches B01, B02, B03
+- [ ] 01.4-21-PLAN.md — Answer sheets for held-out B by an agent who builds nothing, batches B04, B05, B06
+- [ ] 01.4-22-PLAN.md — Answer sheets for held-out B by an agent who builds nothing, batches B07, B08, B09
+- [ ] 01.4-23-PLAN.md — Answer sheets for added train documents, batches S01, S02, S03
+- [ ] 01.4-24-PLAN.md — Answer sheets for added train documents, batches S04, S05, S06
+- [ ] 01.4-25-PLAN.md — Answer sheets for added train documents, batches S07, S08, S09
+- [ ] 01.4-26-PLAN.md — Answer sheets for added train documents, batches S10, S11, S12
+- [ ] 01.4-27-PLAN.md — Answer sheets for added train documents, batches S13, S14, S15
+- [ ] 01.4-28-PLAN.md — Answer sheets for added train documents, batches S16, S17, S18
+- [ ] 01.4-29-PLAN.md — Answer sheets for added train documents, batches S19, S20, S21
+- [ ] 01.4-30-PLAN.md — Answer sheets for added train documents, batches S22, S23, S24
+- [ ] 01.4-31-PLAN.md — Answer sheets for added train documents, batches S25, S26, S27
+- [ ] 01.4-32-PLAN.md — Answer sheets for added train documents, batches S28, S29, S30
+- [ ] 01.4-33-PLAN.md — Answer sheets for added train documents, batches S31, S32, S33
+- [ ] 01.4-34-PLAN.md — Lines shared by captions, missed single lines and typed hyphen blanks as class rules
+- [ ] 01.4-35-PLAN.md — Every picture read wherever it is (under a text layer, inside a text page, cut by a page break), tinted and coloured boxes
+- [ ] 01.4-36-PLAN.md — Generated variants with carried labels; the place model trained and thresholded on dev folds
+- [ ] 01.4-37-PLAN.md — Dates in parts, letter-box rows, fill-in table cells and signature blocks read as printed
+- [ ] 01.4-38-PLAN.md — Rings, letter boxes on pictures, scans and illustrations
+- [ ] 01.4-39-PLAN.md — The meaning layer's blocks, features and evaluator in the page; training rows from the page's own features
+- [ ] 01.4-40-PLAN.md — The trained place model ships and judges every unsure place on every page, inside the time target
+- [ ] 01.4-41-PLAN.md — The meaning models trained, calibrated and exported, identical in the page
+- [ ] 01.4-42-PLAN.md — Kind, person and label decided by the models with the rules as guard, person per block
+- [ ] 01.4-43-PLAN.md — Review marks as a last resort, no page confirmation, the checks moved to the owner's decision
+- [ ] 01.4-44-PLAN.md — Train sheets re-checked against the documents; both models retrained and shipped as v2
+- [ ] 01.4-45-PLAN.md — Residual classes closed toward the targets (held-out A at least 30 of 39)
+- [ ] 01.4-46-PLAN.md — Held-out A sheets audited by an agent who builds nothing
+- [ ] 01.4-47-PLAN.md — Every remaining class closed: held-out A 39 of 39 and the whole-set targets
+- [ ] 01.4-48-PLAN.md — Every document within the time target with the same fields; the complete reading proven inside the preview frame
+- [ ] 01.4-49-PLAN.md — Held-out B scored once, everything in one final run, and the owner's check on agreements the reader has never seen
 
 ### Phase 2: Field Editor
 **Goal**: A sponsor can adjust fields by hand quickly and without frustration, in an editor that looks professionally made
