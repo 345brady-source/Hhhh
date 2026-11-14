@@ -46,6 +46,8 @@
   const tidy = (s) => String(s == null ? '' : s).replace(/[\u0000-\u001F\u007F-\u009F]+/g, ' ').replace(/\s+/g, ' ').trim();
   /** A label as stored on a field: one line, no control characters, at most 60 characters. */
   const clean = (s) => tidy(s).replace(/\s*\[$/, '').replace(/^\]\s*/, '').slice(0, 60).trim();
+  /** The same for a label in the document's own words (label rules 1 and 2): a caption of two lines is kept whole. */
+  const cleanFull = (s) => tidy(s).replace(/\s*\[$/, '').replace(/^\]\s*/, '').slice(0, MAX_LABEL).trim();
   const wordsOf = (s) => (s ? s.split(' ').filter(Boolean) : []);
   /** Rough relative width of a character, for estimating where a part of a text run sits. */
   function charW(ch) {
@@ -552,6 +554,8 @@
       const m = { p, slot, seg: o.seg || null, info: info || null, kind, block: !!K.block, who: o.who || (info && info.who) || '', x0: o.seg && o.how !== 'after' ? Math.min(o.seg.x0, slot.x0) : slot.x0, x1: slot.x1, y: slot.y };
       // The printed label the field is named from (see the label rule in step 6).
       m.said = info && info.text ? info.text : '';
+      // A caption of two lines names its field in full.
+      if (info && info.whole && FIELD(kind)) Object.assign(p, { label: cleanFull(ownWords(info.text)), longLabel: true });
       // A label that itself names another party ("Name of dealer firm:", a custodian's account number) makes its own
       // blank that party's, with no word of signing needed. A sentence never gets here (it has no label).
       // One that names the investor's side as well ("Name of Trustee or Custodian", "the Subscriber's adviser") may be
@@ -582,6 +586,8 @@
       // required field, unmarked (step 6). A witness's, a notary's, a spouse's or a second signer's line stays as it is.
       const party = !SKIP_HARD.test(t) ? otherParty(info.text) : '';
       if (party) m.other = party;
+      // A caption of two lines is its label whole.
+      if (info.whole) Object.assign(m.p, { label: cleanFull(info.text.replace(/\s*[:：]\s*$/, '')), longLabel: true });
       return m;
     };
     // A short blank used as a place for a tick: a tick box over the blank, with its printed line inside it.
@@ -707,6 +713,47 @@
       });
       return best;
     };
+    // A label alone on its printed line and ending in a colon may stand one empty line higher than over() reaches, when
+    // nothing at all is printed between it and its line ("E-mail address for notices:", an empty line, then the line
+    // to write on). One empty line is measured on the page's own spacing: about 3.3 font heights, or two of the steps
+    // between the label and the printed line above it (paragraphs set apart by a space). Used for the lines of a
+    // column of captions only (step 3), where a heading over the column is read first.
+    const overFar = (s) => {
+      let best = null;
+      L.segs.forEach((g) => {
+        const d = s.y - g.y;
+        if (!/[:\uFF1A]\s*$/.test(g.s) || !g.line || g.line.els.length !== 1 || d <= Math.max(2.2 * g.h, 16)) return;
+        const up = L.lines[g.line.i - 1];
+        const step = up ? Math.min(g.y - up.y, 3 * g.h) : 0;
+        if (d > Math.max(3.3 * g.h, 2.25 * step, 16)) return;
+        if (!(overlap(g.x0, g.x1, s.x0, s.x1) >= 0.5 * Math.min(g.x1 - g.x0, s.x1 - s.x0))) return;
+        if (L.segs.some((o) => o !== g && o.y > g.y + 2 && o.y < s.y - 2 && overlap(o.x0, o.x1, s.x0, s.x1) > 0) || L.slots.some((o) => o !== s && o.y > g.y + 2 && o.y < s.y - 2 && overlap(o.x0, o.x1, s.x0, s.x1) > 0)) return;
+        if (!best || g.y > best.y) best = g;
+      });
+      return best;
+    };
+    // A caption of two lines: the printed line right under a caption, set at the same left edge in the same size, with
+    // no line of its own and no label of its own, goes on with it ("Signature of the trustee or other authorized
+    // person" / "signing for the Subscriber named above"). The caption keeps its first line in s, for what it is; the
+    // whole caption is in full, for its label.
+    L.slots.forEach((sl) => {
+      const g = under(sl);
+      if (!g || g.more || g.used || /[.;:!?：]$/.test(g.s)) return;
+      const g2 = L.segs.find((o) => o !== g && !o.used && Math.abs(o.x0 - g.x0) <= 2 && Math.abs(o.h - g.h) <= 0.3 && o.y - g.y >= 0.8 * g.h && o.y - g.y <= 1.6 * g.h && o.line && o.line.els.length === 1);
+      if (!g2) return;
+      const c2 = classify(g2.s);
+      const full = tidy(`${g.s} ${g2.s}`);
+      if ((c2 && (FIELD(c2.kind) || c2.kind === 'skip')) || full.length > MAX_LABEL) return;
+      g.more = g2;
+      g.full = full;
+    });
+    /** What a caption says, read whole when it runs on to a second line: the info for its first line, or for both. */
+    const wholeCaption = (seg, info) => {
+      if (!seg || !seg.more || !info) return info;
+      seg.more.used = seg.used || 'caption';
+      const both = classify(seg.full);
+      return Object.assign(both && !info.any && (FIELD(both.kind) || both.kind === 'skip') ? both : Object.assign({}, info, { text: seg.full }), { whole: true });
+    };
     /* 2. Blanks with their label on the same printed line. */
     const leftOf = (ln, e) => {
       for (let i = e.i - 1; i >= 0; i--) {
@@ -727,12 +774,16 @@
       const named = !!after && /^\(?\s*(the |this |its )?[“"']?(subscription|commitment|capital commitment|investment|purchase)( amount| price)?[”"']?\s*\)/i.test(after.s);
       if (CURRENCY_TAIL.test(tail) && (MONEY_WORDS.test(sent) || named) && !/\b(accept\w*|minimum|maximum|fees?|expenses?|per (unit|share|interest)|price per|each)\b/.test(sent)) return propose('amount', slot, null, { seg, how: 'sentence' });
       const m = propose('other', slot, null, { seg, how: 'sentence', label: ws.slice(-4).join(' ').replace(/\$$/, '').trim() || 'Text', who: whoIn(last8) });
+      // "... under the laws of the state of ____", "licensed in the state of ____": the blank names a jurisdiction, a
+      // plain text, not a part of an address (a label that is the word for a state is read by classify, not here).
+      if (/\b(state|commonwealth|province|country|jurisdiction|laws)\s+of$/.test(last8)) m.p.kind = 'text';
       weaken(m, WHY.sentence);
       return m;
     };
     const generic = (slot, info, seg, plainLabel) => {
       const label = clean(info.text.replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ').replace(/\s*(u\.?s\.?\s*)?\$\s*$/i, '').replace(/\s*[:\uFF1A]\s*$/, '').replace(/\s*,\s*(if|where|when|as) [^:]*$/i, '')) || 'Text';
       const m = propose('other', slot, info, { seg, label, required: !info.optional && !/\b(fax|middle|suffix|apt|suite)\b/i.test(label) });
+      if (info.whole) Object.assign(m.p, { label: cleanFull(info.text.replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ').replace(/\s*[:：]\s*$/, '')) || label, longLabel: true });
       // A leader of dots is weaker evidence of a blank than a printed line: with words before it that do not end in a
       // colon it stays marked.
       if (info.kind === 'phrase' && (!plainLabel || slot.leader) && !slot.cut && !slot.cell) weaken(m, WHY.phrase);
@@ -959,20 +1010,37 @@
       const footed = !!below[st.length - 1];
       const caps = (nCap > 0 || splitCaps) && (nCap > nTop || (nCap === nTop && !(headed && !footed)) || (splitCaps && nCap >= nTop));
       const sure = caps ? nCap > nTop && nCap === st.length : false;
+      let ownFirst = false; // the text over the first line is that line's own label, not a heading over the column
       st.forEach((s, i) => {
-        const info = caps ? capInfo[i] || capAny(s, below[i]) : topInfo[i];
-        const seg = caps ? below[i] : above[i];
+        let info = caps ? capInfo[i] || capAny(s, below[i]) : topInfo[i];
+        let seg = caps ? below[i] : above[i];
+        // In a column read as captions, a line with nothing under it whose label, ending in a colon, stands alone right
+        // above it and starts where it starts is labelled from above: "E-mail address for notices:" over the line to
+        // write on, with captioned signature lines further down the same column.
+        let own = false;
+        if (caps && !info && !below[i]) {
+          const g = above[i] || overFar(s);
+          const gi = g === above[i] ? topInfo[i] : g ? known(g) || labelOver(s, g) : null;
+          if (gi && gi.colon && !g.used && Math.abs(g.x0 - s.x0) <= 12 && g.line && g.line.els.length === 1) {
+            info = gi;
+            seg = g;
+            own = true;
+            if (!i && g === above[i]) ownFirst = true;
+          }
+        }
         // Any other text under a rule (a heading, a page number, a footnote) means the rule is not a blank.
         if (!info || !seg || seg.used) return;
-        seg.used = caps ? 'caption' : 'above';
+        seg.used = caps && !own ? 'caption' : 'above';
+        info = wholeCaption(seg, info);
         if (info.kind === 'skip') return second(s, info, seg);
         // The same caption a second time on one shared line (a second "Signature of Subscriber") is a second signer's.
         if (caps && s.split && ['signature', 'name', 'date', 'taxId', 'investorName'].indexOf(info.kind) >= 0 && L.slots.some((o) => o !== s && o.split === s.split && o.x0 < s.x0 && o.made && o.made.kind === info.kind)) return second(s, Object.assign({}, info, { text: seg.s, co: true }), seg);
-        const m = info.any ? generic(s, info, seg) : propose(info.kind, s, info, { seg, how: caps ? 'after' : 'above' });
+        const m = info.any ? generic(s, info, seg) : propose(info.kind, s, info, { seg, how: caps && !own ? 'after' : 'above' });
+        if (own) return;
         // A label that ends in a colon and starts where its blank starts, with no caption anywhere in the stack, is plain.
         const plainAbove = !caps && !nCap && info.colon && Math.abs(seg.x0 - s.x0) <= 12;
         if (!caps && !plainAbove) weaken(m, st.length > 1 && nCap === nTop ? WHY.between : WHY.above);
-        else if (caps && !sure && (nTop > 0 || headed)) weaken(m, WHY.between);
+        else if (caps && !sure && (nTop > 0 || (headed && !ownFirst))) weaken(m, WHY.between);
       });
     });
     // A line with no label of its own, with "Name:" or "Title:" printed right under it (labels that have no line of
@@ -1075,10 +1143,11 @@
         if (sl.cell || sl.table || prose || pageNo || filledIn || ruledOff || sl.x1 - sl.x0 >= 0.85 * (rightEdge - leftEdge)) return (sl.skip = true);
         const name = captionLike(cap) ? cap : captionLike(top) && /[:\uFF1A]\s*$/.test(top.s) ? top : null;
         if (name) name.used = name.used || 'caption';
+        if (name && name === cap && name.more) name.more.used = name.used;
         // With no caption: the words printed to the left of the line in its own row (a label set in a column beside it).
         const row = name ? [] : L.segs.filter((g) => !g.used && g.x1 <= sl.x0 + 3 && g.y > sl.y - Math.min(sl.clear + 4, 40) && g.y <= sl.y + 2 && g.s.length <= 70);
         const beside = row.length ? row.reduce((a, b) => (b.x1 > a.x1 ? b : a)) : null;
-        const words = name ? name.s : beside ? row.filter((g) => Math.abs(g.x0 - beside.x0) <= 3).sort((a, b) => a.y - b.y).map((g) => g.s).join(' ') : '';
+        const words = name ? (name === cap && name.full) || name.s : beside ? row.filter((g) => Math.abs(g.x0 - beside.x0) <= 3).sort((a, b) => a.y - b.y).map((g) => g.s).join(' ') : '';
         // Under words of signing with nothing else to say what it is, the line is where someone signs: words of execution
         // in an agreement, or the closing word of a letter ("Sincerely,"). A letter's line is not taken for the investor's
         // signature line: it is optional, as the reason says, and step 6 gives it to the letter's writer where the page
@@ -1196,7 +1265,8 @@
     /** Label rule 1: a place named from a printed label of its own carries the document's own words, its kind in kind. */
     const ownLabel = (m) => {
       if (!m.said || !FIELD(m.kind) || !ownWords(m.said)) return;
-      m.p.label = clean(ownWords(m.said));
+      m.p.label = cleanFull(ownWords(m.said));
+      if (m.p.label.length > 60) m.p.longLabel = true;
     };
     const sigBetween = (y0, y1, m) => sigs.some((s) => s !== m && s.y > y0 + 2 && s.y < y1 - 2 && overlap(s.x0, s.x1, m.x0, m.x1) > 0);
     // A heading for another party governs a whole printed row: when it governs the first place on a row, it governs
@@ -1621,7 +1691,8 @@
     res.places = out.length;
     out.forEach((p) => keep.indexOf(p) < 0 && res.left.indexOf(p.page) < 0 && res.left.push(p.page));
     res.fields.forEach((p) => {
-      p.label = clean(p.label);
+      p.label = p.longLabel ? cleanFull(p.label) : clean(p.label);
+      delete p.longLabel;
       if (p.conf === 'high') p.why = '';
       p.kind = kindOf(p);
       if (p.type === 'checkbox') res.boxes++;
