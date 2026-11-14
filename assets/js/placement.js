@@ -2332,7 +2332,9 @@
     // A free rule that is the top or foot edge of a found box (a box holding print, such as a ticked box, included) is
     // that box's frame, never a line to write on.
     const ruleOf = (p) => (pg.lines || []).find((l) => !inMargin(l) && Math.abs(l.y - (p.y + p.h)) <= 3 && overlap(l.x0, l.x1, p.x, p.x + p.w) >= 0.5 * p.w);
-    const edge = (l) => !!l && found.some((b) => (Math.abs(l.y - b.y0) <= 1.5 || Math.abs(l.y - b.y1) <= 1.5) && overlap(l.x0, l.x1, b.x0, b.x1) >= 0.8 * (l.x1 - l.x0));
+    // So is a rule the picture shows a stroke hanging from (textread's hang: the top edge of a frame, a table or a row
+    // of cells, the top of a ticked box the finder did not take for a box).
+    const edge = (l) => !!l && (!!l.hang || found.some((b) => (Math.abs(l.y - b.y0) <= 1.5 || Math.abs(l.y - b.y1) <= 1.5) && overlap(l.x0, l.x1, b.x0, b.x1) >= 0.8 * (l.x1 - l.x0)));
     for (let i = mine.length - 1; i >= 0; i--) if (edge(ruleOf(mine[i]))) mine.splice(i, 1);
     // One line read in pieces: a piece named by no word (the line rules' own 'Text', or two letters or fewer: a speck
     // read on the line) that goes on from a field on the same rule within 9 pt is part of that field, which runs on over it.

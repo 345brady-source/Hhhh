@@ -288,6 +288,50 @@
     return end(Math.round(r.x0 - 4 * s), Math.round(r.x0 + s)) && end(Math.round(r.x1 - s), Math.round(r.x1 + 4 * s));
   }
 
+  /**
+   * The top edge of a frame or of a row of cells, read from the picture: an upright stroke hangs from the rule (it goes
+   * down from the rule at least 10 pt and rises above it at most 2 pt), at either end of the rule or anywhere along it.
+   * A rule drawn faintly in part is first followed along its row past the piece that was found (over gaps of up to
+   * 2 pt) to where it really ends. A line to write on has nothing hanging from it; the bottom edge of a cell has the
+   * cell's sides standing on it, and a row border between two rows of cells has them crossing it. Returns the hanging
+   * stroke's x (pixels) or -1.
+   */
+  function hangs(grey, w, h, r, s, dark, pale) {
+    const top = Math.max(0, r.y0 - 1);
+    const foot = Math.min(h - 1, r.y1);
+    const on = (x, lim) => {
+      for (let y = top; y <= foot; y++) if (grey[y * w + x] <= lim) return true;
+      return false;
+    };
+    // (the rule followed along its row, a faint stretch and a gap of up to 2 pt included)
+    const gap = Math.max(2, Math.round(2 * s));
+    let x0 = r.x0;
+    for (let x = r.x0 - 1, miss = 0; x >= 0 && miss <= gap; x--) (on(x, pale) ? ((x0 = x), (miss = 0)) : miss++);
+    let x1 = r.x1 - 1;
+    for (let x = r.x1, miss = 0; x < w && miss <= gap; x++) (on(x, pale) ? ((x1 = x), (miss = 0)) : miss++);
+    const dk = (x, y) => grey[y * w + x] <= dark || (x > 0 && grey[y * w + x - 1] <= dark) || (x < w - 1 && grey[y * w + x + 1] <= dark);
+    // a run of dark rows from y in the direction d (one pale row inside it is allowed), in pixels
+    const run = (x, y, d) => {
+      let n = 0;
+      let miss = 0;
+      for (let yy = y; yy >= 0 && yy < h && miss <= 1; yy += d) {
+        if (dk(x, yy)) {
+          n += 1 + miss;
+          miss = 0;
+        } else miss++;
+      }
+      return n;
+    };
+    const down = 10 * s;
+    const up = 2 * s;
+    const reach = Math.round(3 * s);
+    for (let x = Math.max(0, x0 - reach); x <= Math.min(w - 1, x1 + reach); x++) {
+      if (!on(x, dark)) continue;
+      if (run(x, foot + 1, 1) >= down && run(x, top - 1, -1) <= up) return x;
+    }
+    return -1;
+  }
+
   /** Words in reading order (by line, then left to right) as one text, with the confidence of the least sure. */
   function said(words) {
     if (!words.length) return { s: '', conf: 0 };
@@ -334,6 +378,8 @@
       // (a page of drawings is drawn black on white: half way is the print's edge)
       const dark = raw.picture ? (seen.paper > 0 && seen.range > 0 ? seen.paper - 0.5 * seen.range : -1) : 128;
       if (dark >= 0) seen.rules.forEach((r) => (r.bracket = inBrackets(grey, w, h, r, pic.scale, dark)));
+      // (on a picture: a rule something hangs from is the top edge of a frame or of cells; see hangs)
+      if (raw.picture && dark >= 0) seen.rules.forEach((r) => (r.hang = hangs(grey, w, h, r, pic.scale, dark, seen.paper - 0.25 * seen.range) >= 0));
       grey = null;
       ms.find = Date.now() - t;
       await new Promise((r) => setTimeout(r, 0));
@@ -438,6 +484,7 @@
       seen.rules.forEach((r, i) => {
         const ln = { x0: at.x(r.x0), x1: at.x(r.x1), y: at.y((r.y0 + r.y1) / 2), t: r.t / pic.sy, bands: bandsOf('rule', i, RULE_SIDES) };
         if (r.bracket) ln.bracket = true;
+        if (r.hang) ln.hang = true;
         out.lines.push(ln);
         out.segs.push(Object.assign({ o: 'h', a0: ln.x0, a1: ln.x1, c: ln.y, t: ln.t }, r.bracket ? { bracket: true } : null));
       });
@@ -480,5 +527,5 @@
     }
   }
 
-  NS.textread = { page, stop, ENLARGE, STRIP_PIXELS, WORDS_MS };
+  NS.textread = { page, stop, hangs, ENLARGE, STRIP_PIXELS, WORDS_MS };
 })(window.CVPortal);

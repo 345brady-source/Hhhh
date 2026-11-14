@@ -331,6 +331,55 @@ async function shapes(page) {
   line(!at(nobody.edge, 99.5, 200) && nobody.edge.length === 1 && at(nobody.edge0, 99.5, 200) && nobody.edge0.length === 2, `shapes nobody: the top edge of a ticked box is no line to write on (${nobody.edge.length} field; without the box ${nobody.edge0.length})`);
   line(nobody.piece.length === 1 && Math.abs(nobody.piece[0].x1 - 300) < 0.5 && nobody.piece0.length === 2, `shapes nobody: a line read in two pieces with a speck between is one field over the whole line (${nobody.piece.length} field, to ${nobody.piece.length ? nobody.piece[0].x1.toFixed(1) : '-'} pt); a blank after a printed word stays its own (${nobody.piece0.length})`);
   line(!nobody.cell.length && nobody.cellSaid.length === 1 && nobody.panel.length === 1 && nobody.panel[0].label === 'Box', `shapes nobody: an empty cell beside a table cell holding print gets no field (${nobody.cell.length}); with its own caption it does (${nobody.cellSaid.length}); a lone empty panel does, named by its shape (${nobody.panel.length})`);
+  // The top edge of a frame or of cells, from the picture's pixels (NS.textread.hangs), on made-up pictures beside
+  // their controls; then a rule so marked gets no field while the same rule unmarked does.
+  const hang = await page.evaluate(() => {
+    const T = window.CVPortal.textread;
+    const P = window.CVPortal.placement;
+    const w = 600;
+    const h = 400;
+    const s = 2; // pixels a point
+    const pic = (paint) => {
+      const g = new Uint8Array(w * h).fill(240);
+      const ink = (x0, y0, x1, y1, v) => {
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g[y * w + x] = v === undefined ? 20 : v;
+      };
+      paint(ink);
+      return g;
+    };
+    const at = (g, r) => T.hangs(g, w, h, Object.assign({ y0: 100, y1: 102, t: 2 }, r), s, 130, 180) >= 0;
+    const rule = { x0: 100, x1: 501 };
+    const res = {
+      // a table's top edge: its sides hang from both ends
+      frame: at(pic((ink) => (ink(100, 100, 500, 101), ink(100, 100, 101, 200), ink(499, 100, 500, 200))), rule),
+      // a line to write on, alone
+      alone: at(pic((ink) => ink(100, 100, 500, 101)), rule),
+      // the bottom edge of a cell: its sides stand on it
+      stands: at(pic((ink) => (ink(100, 100, 500, 101), ink(100, 0, 101, 101), ink(499, 0, 500, 101))), rule),
+      // a border between two rows of cells: the sides cross it
+      crosses: at(pic((ink) => (ink(100, 100, 500, 101), ink(100, 20, 101, 200), ink(499, 20, 500, 200))), rule),
+      // a stroke hangs from the middle of a rule (a column of cells begins under it)
+      middle: at(pic((ink) => (ink(100, 100, 500, 101), ink(300, 100, 301, 200))), rule),
+      // a caption's letter touching the line from under it (8 pt): no frame
+      letter: at(pic((ink) => (ink(100, 100, 500, 101), ink(150, 100, 151, 116))), rule),
+      // the top of a ticked box (16 pt high) read as a short rule
+      tick: at(pic((ink) => (ink(100, 100, 130, 101), ink(100, 100, 101, 132), ink(129, 100, 130, 132))), { x0: 100, x1: 131 }),
+      // a piece of a faint rule found in its middle: the faint rule runs on to sides that hang from it
+      faint: at(pic((ink) => (ink(100, 100, 500, 101, 170), ink(200, 100, 260, 101), ink(100, 100, 101, 200), ink(499, 100, 500, 200))), { x0: 200, x1: 261 }),
+      // the same piece with paper beside it
+      faint0: at(pic((ink) => (ink(200, 100, 260, 101), ink(100, 100, 101, 200), ink(499, 100, 500, 200))), { x0: 200, x1: 261 })
+    };
+    const band = (t) => ({ s: t || '', conf: t ? 90 : 0 });
+    const bands = (o) => ({ over: band(o && o.over), under: band(o && o.under), before: band(o && o.before), after: band(o && o.after), inside: band(o && o.inside) });
+    const rl = (x0, x1, y) => ({ x0, x1, y, clear: 14, made: 'rule', cut: false, cell: false, table: false });
+    const ln = (x0, x1, y, more) => Object.assign({ x0, x1, y, t: 1, bands: bands() }, more || {});
+    const pg = (lines) => ({ page: 1, w: 612, h: 792, items: [{ s: 'Percentage', x: 300, y: 300, w: 40, h: 7 }], rules: [rl(345, 400, 300)], boxes: [], forms: [], pictured: 'picture', approx: true, found: [], words: [], lines, heads: [], reader: 'ok' });
+    res.read = P.read([pg([ln(345, 400, 300, { hang: true, bands: bands({ before: 'Percentage' }) })])], {}).fields.length;
+    res.read0 = P.read([pg([ln(345, 400, 300, { bands: bands({ before: 'Percentage' }) })])], {}).fields.length;
+    return res;
+  });
+  line(hang.frame && hang.middle && hang.tick && hang.faint && !hang.alone && !hang.stands && !hang.crosses && !hang.letter && !hang.faint0, `shapes nobody: a rule something hangs from is the top edge of a frame (frame ${hang.frame}, from its middle ${hang.middle}, a ticked box ${hang.tick}, a faint rule followed to its sides ${hang.faint}); a line alone ${hang.alone}, a cell's bottom edge ${hang.stands}, a row border ${hang.crosses}, a letter touching it ${hang.letter}, a piece with paper beside it ${hang.faint0}`);
+  line(hang.read === 0 && hang.read0 === 1, `shapes nobody: a rule marked as a frame's top edge gets no field (${hang.read}); the same rule unmarked gets one (${hang.read0})`);
 }
 
 /* ---------------- the owner's form ---------------- */
