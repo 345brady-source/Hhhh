@@ -72,6 +72,53 @@
   const slug = (s) => String(s || 'document').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 60) || 'document';
   const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '').trim());
   const isPdf = (bytes) => bytes.length > 4 && bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
+  /* A file offered as an agreement that is not a PDF: told by its first bytes, never by its name or the type the browser
+     reports. A word-processing document is known by its contents in one of two ways (each pattern is a list of byte
+     values): a zip package one of whose entries lies in the folder of the package's main part, or a compound file that
+     holds the name of an older word-processing file's main stream. */
+  // The zip header (a local entry), the header of an entry in the zip's central list, and the folder of a
+  // word-processing package's main part (an entry name beginning with these bytes).
+  const ZIP_ENTRY = [0x50, 0x4b, 0x03, 0x04];
+  const ZIP_LISTED = [0x50, 0x4b, 0x01, 0x02];
+  const MAIN_FOLDER = [0x77, 0x6f, 0x72, 0x64, 0x2f];
+  // The compound-file header, and the main stream of an older word-processing file: its name as it is stored (two bytes
+  // a letter).
+  const COMPOUND = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1];
+  const OLD_MAIN = [0x57, 0x00, 0x6f, 0x00, 0x72, 0x00, 0x64, 0x00, 0x44, 0x00, 0x6f, 0x00, 0x63, 0x00, 0x75, 0x00, 0x6d, 0x00, 0x65, 0x00, 0x6e, 0x00, 0x74, 0x00];
+  const bytesAt = (b, pat, at) => at >= 0 && at + pat.length <= b.length && pat.every((v, i) => b[at + i] === v);
+  // Where a pattern stands in a stretch of the bytes (every place, in order).
+  const placesOf = (b, pat, from, to) => {
+    const out = [];
+    for (let i = Math.max(0, from); i <= Math.min(to, b.length) - pat.length; i++) if (b[i] === pat[0] && bytesAt(b, pat, i)) out.push(i);
+    return out;
+  };
+  const SPAN = 64 * 1024;
+  const wordDoc = (b) => {
+    if (bytesAt(b, ZIP_ENTRY, 0)) {
+      // An entry's name follows its header: 30 bytes on for a local entry, 46 for one in the central list (at the end).
+      if (placesOf(b, ZIP_ENTRY, 0, SPAN).some((i) => bytesAt(b, MAIN_FOLDER, i + 30))) return true;
+      return placesOf(b, ZIP_LISTED, b.length - SPAN, b.length).some((i) => bytesAt(b, MAIN_FOLDER, i + 46));
+    }
+    return bytesAt(b, COMPOUND, 0) && placesOf(b, OLD_MAIN, 0, b.length).length > 0;
+  };
+  const WP_ENDING = /\.(docx|docm|dotx|doc|dot|rtf|odt)$/;
+  /**
+   * The sentence that refuses a file offered as an agreement ('' for a PDF). name: the file's name; bytes: its contents
+   * (a Uint8Array, the whole file). The sentence never repeats the file's name: only one of the listed endings is put in
+   * the brackets.
+   */
+  function fileRefusal(name, bytes) {
+    const b = bytes || new Uint8Array(0);
+    if (isPdf(b)) return '';
+    const n = String(name || '').toLowerCase().trim();
+    const wp = wordDoc(b);
+    if (wp && /\.pdf$/.test(n)) return 'This file is named .pdf, but inside it is a word-processing document, not a PDF. Open it in the program it was written in, save it as a PDF, and upload that PDF.';
+    const end = (n.match(WP_ENDING) || [''])[0];
+    if (end || wp) return `This is a word-processing document (${end || '.docx'}), not a PDF. Open it in the program it was written in, save it as a PDF, and upload that PDF.`;
+    return 'This file is not a PDF. Save the agreement as a PDF from the program it was written in, and upload that PDF.';
+  }
+  /** The bytes a refusal is decided on: the whole file up to the upload limit (a larger file is refused for its size). */
+  const offeredBytes = async (f) => new Uint8Array(await (f.size > MAX_BYTES ? f.slice(0, SPAN) : f).arrayBuffer());
   const usDate = (iso) => {
     const [y, m, d] = String(iso).split('-');
     return `${m}/${d}/${y}`;
@@ -1299,12 +1346,27 @@
     S().ui.esFocus = `[data-k="${k}"]${el.type === 'radio' ? `[value="${el.value}"]` : ''}`;
     NS.app.render();
   };
-  NS.changes['es-new-file'] = (el) => {
+  NS.changes['es-new-file'] = async (el) => {
     const n = S().ui.esNew;
     const f = el.files && el.files[0];
     if (!n || !f) return;
+    n.picking = f;
+    // A file that is not a PDF is refused by its first bytes, with a sentence that stays until another file is chosen:
+    // nothing of it is kept, and the input is emptied.
+    const refused = f.size > MAX_BYTES ? '' : fileRefusal(f.name, await offeredBytes(f).catch(() => new Uint8Array(0)));
+    if (S().ui.esNew !== n || n.picking !== f) return;
+    n.picking = null;
+    if (refused) {
+      n.file = null;
+      n.refused = refused;
+      n.error = refused;
+      el.value = '';
+      S().ui.esFocus = '#es-file';
+      return NS.app.render();
+    }
     n.file = f;
-    n.error = f.size > 25 * 1024 * 1024 ? 'This file is over 25 MB.' : /\.pdf$/i.test(f.name) || /pdf/i.test(f.type) ? '' : 'Choose a PDF file.';
+    n.refused = '';
+    n.error = f.size > MAX_BYTES ? 'This file is over 25 MB.' : '';
     if (!n.title) n.title = f.name.replace(/\.pdf$/i, '').replace(/[_-]+/g, ' ').trim();
     S().ui.esFocus = '#es-title';
     NS.app.render();
@@ -1357,9 +1419,9 @@
     };
     const tpl = n.source === 'template' ? tpls(w).find((t) => t.id === n.templateId) : null;
     const pdoc = n.source === 'doc' ? (w.docs || []).find((d) => d.id === n.docId) : null;
-    if (n.source === 'upload' && !n.file) return fail('Choose a PDF to upload.');
+    // (A file refused when it was chosen stays refused, in its own words, until another is chosen.)
+    if (n.source === 'upload' && !n.file) return fail(n.refused || 'Choose a PDF to upload.');
     if (n.source === 'upload' && n.file.size > MAX_BYTES) return fail(`This file is over 25 MB (${(n.file.size / 1048576).toFixed(1)} MB). Upload a smaller PDF.`);
-    if (n.source === 'upload' && !(/\.pdf$/i.test(n.file.name) || /pdf/i.test(n.file.type))) return fail('Choose a PDF file.');
     if (n.source === 'template' && !tpl) return fail('Choose a template.');
     if (n.source === 'doc' && !pdoc) return fail('Choose a published PDF.');
     if (!String(n.title).trim()) return fail('Give the envelope a title.');
@@ -1384,7 +1446,9 @@
         if (!blob) throw new Error('That document’s file is stored in a different browser.');
         fileName = n.source === 'upload' ? n.file.name : pdoc.fileName;
         bytes = new Uint8Array(await blob.arrayBuffer());
-        if (!isPdf(bytes)) throw new Error('This file is not a PDF.');
+        // Told by the first bytes before anything is stored: a file that is not a PDF is never kept.
+        const refused = fileRefusal(fileName, bytes);
+        if (refused) throw new Error(refused);
         docId = id + '-orig';
         await files().put(docId, new Blob([bytes], { type: 'application/pdf' }));
         stored = docId;
@@ -2931,7 +2995,7 @@
    * damaged file) nothing is placed. Returns how many fields were placed.
    */
   async function autoFields(env, opts) {
-    const read = (env.read = { ok: false, error: '', pages: 0, scanned: [], failed: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], firmLeft: 0, firmLeftPages: [], pictured: [], unread: {}, otherPages: [], others: 0, otherSignaturePages: [], coSignaturePages: [], notEmpty: 0, wordless: {} });
+    const read = (env.read = { ok: false, error: '', pages: 0, scanned: [], failed: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, initials: 0, investorPages: [], firmPages: [], firmLeft: 0, firmLeftPages: [], pictured: [], unread: {}, otherPages: [], others: 0, otherSignaturePages: [], coPages: [], cos: 0, coSignaturePages: [], firmDoubtPages: [], signaturePageMentioned: false, notEmpty: 0, wordless: {} });
     let res = null;
     try {
       const t = T();
@@ -2948,7 +3012,7 @@
       return 0;
     }
     res.errors.forEach((x) => console.error('Placing fields on page ' + x.page + ' failed:', x.reason));
-    Object.assign(read, { ok: res.pages > 0, pages: res.pages, scanned: res.scanned, failed: res.failed, places: res.places, left: res.left.slice(), investorPages: res.investorPages, firmPages: res.firmPages, pictured: res.pictured || [], otherPages: (res.otherPages || []).slice(), others: res.others || 0, otherSignaturePages: (res.otherSignaturePages || []).slice(), coSignaturePages: (res.coSignaturePages || []).slice(), notEmpty: res.notEmpty || 0, wordless: Object.assign({}, res.wordless || {}) });
+    Object.assign(read, { ok: res.pages > 0, pages: res.pages, scanned: res.scanned, failed: res.failed, places: res.places, left: res.left.slice(), investorPages: res.investorPages, firmPages: res.firmPages, pictured: res.pictured || [], otherPages: (res.otherPages || []).slice(), others: res.others || 0, otherSignaturePages: (res.otherSignaturePages || []).slice(), coPages: (res.coPages || []).slice(), cos: res.cos || 0, coSignaturePages: (res.coSignaturePages || []).slice(), firmDoubtPages: (res.firmDoubtPages || []).slice(), signaturePageMentioned: !!res.signaturePageMentioned, notEmpty: res.notEmpty || 0, wordless: Object.assign({}, res.wordless || {}) });
     const inv = env.signers.find((s) => s.role === 'investor');
     const cs = env.signers.find((s) => s.role === 'countersigner');
     res.fields.forEach((p) => {
@@ -2979,6 +3043,7 @@
       if (f.other) f.placed.other = f.other;
       env.fields.push(f);
       read[p.type === 'checkbox' ? 'boxes' : p.type === 'signature' || p.type === 'initials' ? 'signatures' : 'blanks']++;
+      if (p.type === 'initials') read.initials++;
     });
     return env.fields.length;
   }
@@ -2987,7 +3052,8 @@
     const r = env && env.read;
     if (!r) return '';
     const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
-    // Page numbers as words: "page 4", "pages 2 and 5", "pages 1 to 10, 12 to 72" (runs of pages are given as ranges).
+    // Page numbers as words: "page 4", "pages 2 and 5", "pages 1, 5 and 6", "pages 1 to 10 and 12 to 72" (runs of three
+    // pages or more are given as ranges).
     const on = (pages) => {
       const runs = [];
       pages.forEach((p) => {
@@ -2995,8 +3061,8 @@
         if (last && p === last[1] + 1) last[1] = p;
         else runs.push([p, p]);
       });
-      const list = runs.map((r) => (r[0] === r[1] ? `${r[0]}` : r[1] === r[0] + 1 ? `${r[0]}, ${r[1]}` : `${r[0]} to ${r[1]}`));
-      return pages.length === 1 ? `page ${list[0]}` : list.length === 1 ? `pages ${list[0].replace(', ', ' and ')}` : `pages ${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
+      const list = [].concat.apply([], runs.map((r) => (r[0] === r[1] ? [`${r[0]}`] : r[1] === r[0] + 1 ? [`${r[0]}`, `${r[1]}`] : [`${r[0]} to ${r[1]}`])));
+      return pages.length === 1 ? `page ${list[0]}` : list.length === 1 ? `pages ${list[0]}` : `pages ${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
     };
     // Pages with no text that could not be read from their pictures: exactly why, and what keeps the text in a PDF.
     const u = r.unread || {};
@@ -3016,7 +3082,11 @@
     const made = r.boxes + r.blanks + r.signatures;
     // Mostly pictures of pages: said first, as the thing the sponsor has to act on.
     if (!made && r.scanned.length >= r.pages) return `Most of this PDF could not be read: ${r.scanned.length} of its ${r.scanned.length + r.pages + r.failed.length} pages are pictures, as in a scan. No field was placed. ${lost.length ? lost.join(' ') + ' Or' : 'Upload the PDF the agreement was made from, or'} add each field by hand.`;
-    const out = [made ? `${n(r.pages, 'page', 'pages')} read. ${n(r.boxes, 'tick box', 'tick boxes')}, ${n(r.blanks, 'blank', 'blanks')} and ${n(r.signatures, 'signature line', 'signature lines')} got a field, each on a place the agreement prints.` : `${n(r.pages, 'page', 'pages')} read: no line, blank or tick box to complete was found, so no field was placed.`];
+    // Places for initials are counted apart from signature lines (signatures holds both); a draft read before they were
+    // has no count of them and reads as before.
+    const ini = r.initials > 0 ? r.initials : 0;
+    const counts = ini ? `${n(r.boxes, 'tick box', 'tick boxes')}, ${n(r.blanks, 'blank', 'blanks')}, ${n(r.signatures - ini, 'signature line', 'signature lines')} and ${n(ini, 'place for initials', 'places for initials')}` : `${n(r.boxes, 'tick box', 'tick boxes')}, ${n(r.blanks, 'blank', 'blanks')} and ${n(r.signatures, 'signature line', 'signature lines')}`;
+    const out = [made ? `${n(r.pages, 'page', 'pages')} read. ${counts} got a field, each on a place the agreement prints.` : `${n(r.pages, 'page', 'pages')} read: no line, blank or tick box to complete was found, so no field was placed.`];
     const left = (r.left || []).slice().sort((a, b) => a - b);
     if (left.length) out.push(`Not every printed place got a field: check ${on(left)} and add what is missing by hand.`);
     const seen = (r.pictured || []).length;
@@ -3035,13 +3105,23 @@
     // Places printed for somebody else (a custodian, an adviser): optional, and no signer is asked to complete them.
     const others = (r.otherPages || []).slice().sort((a, b) => a - b);
     if (r.others && others.length) out.push(r.others === 1 ? `1 place on ${on(others)} is for someone else to complete, such as a custodian or an adviser: it is optional, and nobody is asked to complete it.` : `${r.others} places on ${on(others)} are for someone else to complete, such as a custodian or an adviser: they are optional, and nobody is asked to complete them.`);
+    // Places printed for the co-investor, of any kind.
+    const cos = (r.coPages || []).slice().sort((a, b) => a - b);
+    if (r.cos && cos.length) out.push(r.cos === 1 ? `1 place on ${on(cos)} is for a co-investor.` : `${r.cos} places on ${on(cos)} are for a co-investor.`);
     out.push(r.investorPages.length ? `The investor’s signature line was found on ${on(r.investorPages)}.` : 'No signature line for the investor was found: add a signature field for the investor where they sign before saving.');
+    // The agreement speaks of a signature page, and none with the investor's signature line is in this PDF.
+    if (!r.investorPages.length && r.signaturePageMentioned) out.push('The agreement refers to a signature page that this PDF does not contain: add the investor’s signature field by hand, or upload the complete document.');
     // Signature lines that are not the investor's: the co-investor's, and those of other people, whom nobody asks to sign.
     const coSigned = (r.coSignaturePages || []).slice().sort((a, b) => a - b);
     if (coSigned.length) out.push(`The co-investor’s signature line was found on ${on(coSigned)}.`);
     const othersSigned = (r.otherSignaturePages || []).slice().sort((a, b) => a - b);
     if (othersSigned.length) out.push(`Signature lines for other people (a custodian, a broker, a representative or the like) were found on ${on(othersSigned)}. Nobody is asked to sign them.`);
-    out.push(r.firmPages.length ? `Your firm’s signature line was found on ${on(r.firmPages)}.` : `No signature line for your firm was found, so your firm does not sign this agreement${r.firmLeft ? ` and ${n(r.firmLeft, 'blank that reads as your firm’s', 'blanks that read as your firm’s')} on ${on(r.firmLeftPages || [])} got no field` : ''}. Add a signature field for your firm if it should.`);
+    // An acceptance block that names another party: in doubt whether your firm signs there, so it is marked.
+    const doubt = (r.firmDoubtPages || []).slice().sort((a, b) => a - b);
+    const firmLeft = r.firmLeft ? ` and ${n(r.firmLeft, 'blank that reads as your firm’s', 'blanks that read as your firm’s')} on ${on(r.firmLeftPages || [])} got no field` : '';
+    if (r.firmPages.length) out.push(`Your firm’s signature line was found on ${on(r.firmPages)}.`);
+    else if (doubt.length) out.push(`No signature line that is clearly your firm’s was found${firmLeft}. ${doubt.length === 1 ? `A signature place on ${on(doubt)} carries words of acceptance but names another party, so it is marked Review: set it to your firm if your firm signs there.` : `Signature places on ${on(doubt)} carry words of acceptance but name another party, so they are marked Review: set them to your firm if your firm signs there.`}`);
+    else out.push(`No signature line for your firm was found, so your firm does not sign this agreement${firmLeft}. Add a signature field for your firm if it should.`);
     return out.join(' ');
   }
   /** What still stops an offering's agreement from being saved ('' when it can be). */
@@ -3091,7 +3171,9 @@
       if (blob.size > MAX_BYTES) throw new Error(`This file is over 25 MB (${(blob.size / 1048576).toFixed(1)} MB). Upload a smaller PDF.`);
       fileName = src.file ? src.file.name : (doc && doc.fileName) || 'Subscription_Agreement.pdf';
       bytes = new Uint8Array(await blob.arrayBuffer());
-      if (!isPdf(bytes)) throw new Error('Choose a PDF file.');
+      // Told by the first bytes before anything is stored: a file that is not a PDF is never kept, and no draft is made.
+      const refused = fileRefusal(fileName, bytes);
+      if (refused) throw Object.assign(new Error(refused), { refused: true });
       docId = id + '-orig';
       await files().put(docId, new Blob([bytes], { type: 'application/pdf' }));
       stored = docId;
@@ -3170,8 +3252,8 @@
       `<form class="es-dlg-form" data-form="es-agreement" data-offering="${h(oid)}"><div class="dlg-head"><div><h2>Subscription agreement</h2><p>${o ? `For ${h(o.name)}. ` : ''}Investors sign it during onboarding; you place the fields once.</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
       <div class="dlg-body"><div class="cs-grid">
         ${o ? '' : `<label class="cs-field cs-wide" for="es-agr-off"><span>Offering</span><select id="es-agr-off" name="offeringId" required><option value="">Choose an offering</option>${w.offerings.filter((x) => x.status === 'Raising').concat(w.offerings.filter((x) => x.status !== 'Raising')).map((x) => `<option value="${h(x.id)}">${h(x.name)}</option>`).join('')}</select></label>`}
-        <label class="cs-field cs-wide" for="es-agr-file"><span>Subscription agreement (PDF)</span><input id="es-agr-file" name="file" type="file" accept="application/pdf,.pdf"><span class="cs-hint">One PDF, up to 25 MB.</span></label>
-        ${pdfs.length ? `<label class="cs-field cs-wide" for="es-agr-doc"><span>Or use a document already on this offering</span><select id="es-agr-doc" name="docId"><option value="">None</option>${pdfs.map((d) => `<option value="${h(d.id)}"${guess && guess.id === d.id ? ' selected' : ''}>${h(d.title || d.fileName)} (${h(d.fileName || '')})</option>`).join('')}</select></label>` : ''}
+        <label class="cs-field cs-wide" for="es-agr-file"><span>Subscription agreement (PDF)</span><input id="es-agr-file" name="file" type="file" accept="application/pdf,.pdf" data-change="es-agr-file"><span class="cs-hint">One PDF, up to 25 MB. A word-processing document has to be saved as a PDF first.</span></label>
+        ${pdfs.length ? `<label class="cs-field cs-wide" for="es-agr-doc"><span>Or use a document already on this offering</span><select id="es-agr-doc" name="docId" data-change="es-agr-doc"><option value="">None</option>${pdfs.map((d) => `<option value="${h(d.id)}"${guess && guess.id === d.id ? ' selected' : ''}>${h(d.title || d.fileName)} (${h(d.fileName || '')})</option>`).join('')}</select></label>` : ''}
         <label class="cs-field cs-wide" for="es-agr-title"><span>Title</span><input id="es-agr-title" name="title" type="text" maxlength="120" value="Subscription Agreement"></label>
       </div>
       <p class="cs-hint">The portal reads the PDF and places a field on each line, blank and tick box the agreement prints, and nowhere else. Your firm signs only if the agreement has a signature line for it. You are told what was found; where the portal is not sure, it marks the field and asks you to confirm it.</p>
@@ -3179,11 +3261,45 @@
       'dlg-es'
     );
   };
+  /**
+   * The agreement dialog's notice for a file that is not a PDF: shown inside the dialog above its buttons, with
+   * role="alert", until another file is chosen (msg '' removes it).
+   */
+  const agrRefusal = (form, msg) => {
+    const old = form && form.querySelector('#es-agr-refusal');
+    if (old) old.remove();
+    if (!form || !msg) return;
+    const row = form.querySelector('.cs-row.cs-row-end');
+    const note = document.createElement('div');
+    note.id = 'es-agr-refusal';
+    note.className = 'es-note es-note-bad';
+    note.setAttribute('role', 'alert');
+    note.innerHTML = `${icon('alert')}<span>${h(msg)}</span>`;
+    if (row) row.parentNode.insertBefore(note, row);
+    else form.appendChild(note);
+  };
+  NS.changes['es-agr-file'] = async (el) => {
+    const form = el.closest('form');
+    const f = el.files && el.files[0];
+    if (!form) return;
+    form.picking = f || null;
+    if (!f) return agrRefusal(form, '');
+    const refused = f.size > MAX_BYTES ? '' : fileRefusal(f.name, await offeredBytes(f).catch(() => new Uint8Array(0)));
+    if (form.picking !== f) return;
+    form.picking = null;
+    agrRefusal(form, refused);
+    // Nothing of a refused file is kept: the input is emptied, and the button stays usable for the next file.
+    if (refused) el.value = '';
+  };
+  // Choosing a document already on the offering instead: the notice about a refused file goes.
+  NS.changes['es-agr-doc'] = (el) => agrRefusal(el.closest('form'), '');
   NS.forms['es-agreement'] = async (form) => {
     const w = W();
     const oid = form.getAttribute('data-offering') || (form.offeringId ? form.offeringId.value : '');
     const file = form.file && form.file.files && form.file.files[0];
     const docId = form.docId ? form.docId.value : '';
+    // A file was refused and no other chosen: the notice stays and nothing is read.
+    if (!file && form.querySelector('#es-agr-refusal')) return form.file && form.file.focus();
     if (!oid) return U.toast('Choose the offering.');
     if (!file && !docId) return U.toast('Choose the subscription agreement PDF.');
     const btn = form.querySelector('button[type=submit]');
@@ -3206,6 +3322,11 @@
       if (btn) {
         btn.disabled = false;
         btn.textContent = 'Continue to place fields';
+      }
+      // A file that is not a PDF: said in the dialog too, where it stays, and the input is emptied.
+      if (e && e.refused) {
+        agrRefusal(form, e.message);
+        if (form.file) form.file.value = '';
       }
       U.toast((e && e.message) || 'The PDF could not be prepared.');
     }
@@ -3295,7 +3416,7 @@
   agreementTodo = function (env) {
     return baseTodo(env) || coTodo(env);
   };
-  NS.esignKit = Object.assign(NS.esignKit || {}, { pageLayout, readNote, agreementTodo });
+  NS.esignKit = Object.assign(NS.esignKit || {}, { pageLayout, readNote, agreementTodo, fileRefusal });
   NS.coSigning = { coOf, coPlaces, coAttach, coDetach, coUpdate, coHolding, coEnvelopes, mySigner };
   NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
 })(window.CVPortal);

@@ -158,7 +158,7 @@ const owners = () => {
   const fields = total.found + total.strays.length;
   need(total.marked === fields, `${total.marked} of ${fields} fields are marked for review, not all`);
 };
-// Page numbers as the read summary writes them: "page 5", "pages 5 and 6", "pages 1 to 3, 5 and 7".
+// Page numbers as the read summary writes them: "page 5", "pages 5 and 6", "pages 1, 5 and 6", "pages 1 to 3, 5 and 7".
 const pagesText = (pages) => {
   const runs = [];
   pages.forEach((p) => {
@@ -166,8 +166,8 @@ const pagesText = (pages) => {
     if (last && p === last[1] + 1) last[1] = p;
     else runs.push([p, p]);
   });
-  const parts = runs.map((r) => (r[0] === r[1] ? `${r[0]}` : r[1] === r[0] + 1 ? `${r[0]}, ${r[1]}` : `${r[0]} to ${r[1]}`));
-  return pages.length === 1 ? `page ${parts[0]}` : parts.length === 1 ? `pages ${parts[0].replace(', ', ' and ')}` : `pages ${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+  const parts = [].concat.apply([], runs.map((r) => (r[0] === r[1] ? [`${r[0]}`] : r[1] === r[0] + 1 ? [`${r[0]}`, `${r[1]}`] : [`${r[0]} to ${r[1]}`])));
+  return pages.length === 1 ? `page ${parts[0]}` : parts.length === 1 ? `pages ${parts[0]}` : `pages ${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
 };
 const signedOn = (whose) => Array.from(new Set(sheet.fields.filter((f) => f.kind === 'signature' && f.whose === whose).map((f) => f.page))).sort((a, b) => a - b);
 

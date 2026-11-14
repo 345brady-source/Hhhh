@@ -160,6 +160,8 @@ ${under(else_('text', 'Representative', { label: 'Telephone' }), 'Telephone', '2
   // name, date and phone lines. All six are the letter writer's; the state blank is a plain text field.
   letterClosing: {
     read: { investorPages: [], otherPages: [1] },
+    summary: [/No signature line for the investor was found/],
+    notSaid: [/The investor’s signature line was found/],
     html: pg(`<p>To the General Partner of Halden Ridge Opportunity Fund, LP</p><p>Re: Confirmation of the Subscriber's status</p>
 <p>I am a certified public accountant in good standing. I hold licence number ${blank(else_('text', 'Third party'), U(14))} issued by the state of ${blank(else_('text', 'Third party'), U(16))}. I have looked at the Subscriber's tax filings for the two most recent years, and I confirm that in each of them the Subscriber's income was above the amount the rules set for an accredited investor.</p>
 <p>The Subscriber is my client and asked me to write this letter. I have no interest in the Fund.</p>
@@ -289,6 +291,8 @@ ${firmBlock('CLASS B PARTNER:', 'HARROWGATE MILL CARRY VEHICLE, LLC', 'Odette Va
     saves: true,
     marks: 0,
     read: { investorPages: [1], firmPages: [] },
+    summary: [/\b0 tick boxes, 2 blanks and 1 signature line got a field, each on a place the agreement prints\./],
+    notSaid: [/places? for initials/],
     html: pg(`<h3 style="text-align:center">SIGNATURE PAGE</h3>${WITNESS}${investorBlock({ review: false, other: false })}`)
   },
 
@@ -459,6 +463,7 @@ ${capCell(72, 250, 300, 18, 'Primary purpose of the investment (required)', 7.5,
   // left of their own cell, so the cells are read before plan 06; what is measured is that a caption which names its
   // own place is not a heading.)
   captionNotHeading: {
+    summary: [/\bplaces? on page 1 (is|are) for a co-investor\./],
     html: pg(`<h3>SECTION 2. ACCOUNT HOLDERS</h3><p>Complete one row for each holder of the account.</p>
 <table class="grid"><tr><td>JOINT INVESTOR'S OCCUPATION</td>${gcell(co('text', { label: "JOINT INVESTOR'S OCCUPATION", key: '', required: false }))}</tr></table>
 <p style="margin-top:40pt">${box({ label: 'Send statements by post', forType: '', review: false })}Send statements by post</p>
@@ -491,6 +496,7 @@ ${WITNESS}${investorBlock({ review: false, other: false })}`)}`
   // blank is an initials field, optional, labelled by its item's own printed mark; the first list for individuals
   // only, the second for entities only; the item with the misprinted letter is an initials field like its neighbours.
   initialsLists: {
+    summary: [/\b0 tick boxes, 0 blanks, 0 signature lines and 7 places for initials got a field, each on a place the agreement prints\./],
     html: pg(`<h3>SECTION 4. QUALIFYING STATUS</h3><p>Please initial each statement below that is appropriate to the Subscriber.</p>
 <p>If the Subscriber is a natural person, it qualifies to invest in the Fund for the reason or reasons initialled here:</p>
 <p class="ind">(a) ${blank(ini('(a)', 'person'), U(7))} its own assets, less what it owes, are well above the level the offering sets.</p>
@@ -517,6 +523,8 @@ ${WITNESS}${investorBlock({ review: false, other: false })}`)}`
   // reading records no signature line of the firm and the investor's on page 1.
   acceptanceOtherParty: {
     read: { investorPages: [1], firmPages: [] },
+    summary: [/A signature place on page 1 carries words of acceptance but names another party, so it is marked Review/],
+    notSaid: [/Your firm’s signature line was found/],
     html: pg(`<h3 style="text-align:center">SIGNATURE PAGE</h3>${WITNESS}${investorBlock({ review: false, other: false })}
 <p class="hd"><b>ACCEPTED ON BEHALF OF THE FUND BY ITS PLACEMENT DEALER:</b></p>
 <table class="grid"><tr><td style="width:18%">Signature</td>${gcell(else_('signature', true, { label: 'Signature', review: true }))}<td style="width:12%">Date</td>${gcell(else_('date', true, { label: 'Date', review: true }))}</tr></table>`)
@@ -620,6 +628,7 @@ ${capCell(72, 360, 300, 14, 'Trust registration number (required)', 7.5, capText
   },
   signaturePageMention: {
     read: { investorPages: [] },
+    summary: [/No signature line for the investor was found/, /The agreement refers to a signature page that this PDF does not contain/],
     html: `${pg(SIG_PAGE_PROSE[0])}${pg(SIG_PAGE_PROSE[1])}`
   },
   // Guard: the same prose followed by an investor signature block on the last page. The block's fields as the
@@ -629,6 +638,7 @@ ${capCell(72, 360, 300, 14, 'Trust registration number (required)', 7.5, capText
     guard: true,
     read: { investorPages: [2], firmPages: [] },
     marks: 0,
+    summary: [/The investor’s signature line was found on page 2\./],
     notSaid: [/signature page[^.]*\b(not|no)\b[^.]*(contain|includ|print|in (this|the) PDF)/i, /(does not|doesn't) (contain|include|print)[^.]*signature page/i],
     html: `${pg(SIG_PAGE_PROSE[0])}${pg(`${SIG_PAGE_PROSE[1]}${investorBlock({ review: false, other: false })}`)}`
   }

@@ -1273,6 +1273,12 @@
         const c = left ? chain(left) : null;
         if (named(c)) found.set(s, Object.assign(c, { how: 'left' }));
       });
+      // An empty cell with no caption in a row whose other cells are captioned form cells is a printed place the reading
+      // cannot name: it gets no field, and the summary names its page (see read: left).
+      cells.forEach((s) => {
+        const row = rowOf(s).filter((o) => o !== s);
+        if (!found.has(s) && row.length >= 2 && row.every((o) => found.has(o) || o.made)) s.unnamed = true;
+      });
       // One caption centred over two cells of a row (it reaches well into both): it names each that has none of its own.
       const reaches = (c, o) => c.segs.some((g) => overlap(g.x0, g.x1, o.x0, o.x1) >= 0.25 * (g.x1 - g.x0));
       cells.forEach((s) => {
@@ -2014,6 +2020,8 @@
       m.p.firmDoubt = true;
       ownLabel(m);
     });
+    // Printed places the reading recognised and could not name (see read: left).
+    L.slots.forEach((s) => s.unnamed && !s.made && (c.unplaced = c.unplaced || []).push({ page: pg.page, x0: s.x0, x1: s.x1, y0: s.y - s.clear, y1: s.y }));
     made.forEach((m) => out.push(m.p));
   }
 
@@ -2038,18 +2046,24 @@
    * pages: what anchors.js read of each page: [{ page, w, h, items, rules, boxes, forms, scan, failed }];
    * ctx: { firmNames: [], fundNames: [] }.
    * Returns { fields, pages, scanned, failed, errors, places, left, boxes, blanks, signatures, investorPages, firmPages }:
-   *   places         how many printed places were read; left: the pages where a place read got no field
+   *   places         how many printed places were read (one for each proposal, and one for each place recognised that
+   *                  got none); left: the pages where a place read got no field. fields plus places left is places
    *   fields         [{ type, role: 'investor' | 'firm', page, x, y, w, h, label, required, conf, why, kind, forType,
    *                  prefill, printed, second }]: x, y, w, h is the field box in points; conf is 'high', 'medium' or
    *                  'low' and why says so in a sentence below high; kind is the kind of answer (see kindOf)
    *   pages          how many pages were read; scanned and failed: the numbers of the pages that could not be
    *                  (a picture of a page; a page the reader failed on)
-   *   boxes, blanks, signatures   how many tick boxes, blanks to complete and signature lines got a field
+   *   boxes, blanks, signatures   how many tick boxes, blanks to complete and signature lines got a field (signatures
+   *                               counts initials too); initials: how many of those are places for initials
    *   investorPages, firmPages    the pages with a signature line for the investor, and for the firm
    *   otherPages, others          the pages with a place for somebody else (isOther, any kind), and how many such places
    *   otherSignaturePages         of those, the pages with a signature line of somebody else's
+   *   coPages, cos                the pages with a place for the co-investor (role co, any kind), and how many
    *   coSignaturePages            the pages with a signature line of the co-investor's (role co); investorPages holds
    *                               only the investor's own
+   *   firmDoubtPages              the pages with an acceptance block that names another party (marked, not the firm's)
+   *   signaturePageMentioned      no investor signature line was found and the text speaks of a signature page (or a
+   *                               signature block attached, below or hereto)
    *   notEmpty                    on pages read from their picture, the boxes that got no field because they already
    *                               hold print or writing
    *   wordless                    { load, time, fail, off: [pages] }: pages read from their picture whose words could not
@@ -2499,10 +2513,11 @@
       }
     });
   }
+  const SIG_PAGE_SAID = /\bsignature pages?\b|\bsignature blocks?\b[^.]{0,60}\b(attached|below|hereto|follows|following)\b|\b(attached|below|hereto)\b[^.]{0,30}\bsignature blocks?\b/;
   function read(pages, ctx) {
     const cx = ctx || {};
     const c = { names: [].concat(cx.firmNames || [], cx.fundNames || []).map(bare).filter((n) => n.length >= 4) };
-    const res = { fields: [], pages: 0, scanned: [], failed: [], errors: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], pictured: [], otherPages: [], others: 0, otherSignaturePages: [], coSignaturePages: [], firmDoubtPages: [], notEmpty: 0, wordless: {} };
+    const res = { fields: [], pages: 0, scanned: [], failed: [], errors: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, initials: 0, investorPages: [], firmPages: [], pictured: [], otherPages: [], others: 0, otherSignaturePages: [], coPages: [], cos: 0, coSignaturePages: [], firmDoubtPages: [], signaturePageMentioned: false, notEmpty: 0, wordless: {} };
     let out = [];
     (pages || []).forEach((pg) => {
       if (!pg) return;
@@ -2550,9 +2565,14 @@
         keep.push(p);
       });
     res.fields = out.filter((p) => keep.indexOf(p) >= 0);
-    // Every proposal stands for one printed place: a place whose proposal was dropped is left without a field, and said so.
-    res.places = out.length;
+    // The printed places read: one for every proposal, and one for every place recognised that got none (an empty cell
+    // with no caption in a row of captioned cells). A place whose proposal was dropped, or that got none, is left
+    // without a field, and said so: the fields and the places left add up to the places read.
+    // (A recognised place that a field covers after all, one found on the picture of the page, is that field's place.)
+    const unplaced = (c.unplaced || []).filter((u) => !res.fields.some((p) => p.page === u.page && overlap(p.x, p.x + p.w, u.x0, u.x1) > 0.5 * (u.x1 - u.x0) && overlap(p.y, p.y + p.h, u.y0 - 2, u.y1 + 2) > 0));
+    res.places = out.length + unplaced.length;
     out.forEach((p) => keep.indexOf(p) < 0 && res.left.indexOf(p.page) < 0 && res.left.push(p.page));
+    unplaced.forEach((u) => res.left.indexOf(u.page) < 0 && res.left.push(u.page));
     res.fields.forEach((p) => {
       p.label = p.longLabel ? cleanFull(p.label) : clean(p.label);
       delete p.longLabel;
@@ -2561,9 +2581,16 @@
       if (p.type === 'checkbox') res.boxes++;
       else if (p.type === 'signature' || p.type === 'initials') res.signatures++;
       else res.blanks++;
+      if (p.type === 'initials') res.initials++;
       const list = p.role === 'firm' ? res.firmPages : p.role === 'co' ? res.coSignaturePages : res.investorPages;
-      // A bare line under a letter's closing word is never taken for the investor's signature line.
-      if (p.type === 'signature' && !p.second && !p.closing && list.indexOf(p.page) < 0) list.push(p.page);
+      // A bare line under a letter's closing word is never taken for the investor's signature line. (The co-investor's
+      // signature line is a second signer's line: it counts as theirs all the same.)
+      if (p.type === 'signature' && (!p.second || p.role === 'co') && !p.closing && list.indexOf(p.page) < 0) list.push(p.page);
+      // Places for the co-investor, of any kind: how many, and the pages they are on.
+      if (p.role === 'co' && !isOther(p)) {
+        res.cos++;
+        if (res.coPages.indexOf(p.page) < 0) res.coPages.push(p.page);
+      }
       delete p.closing;
       // Pages with an acceptance block that names another party (in doubt: not counted as the firm's signature line).
       if (p.firmDoubt && res.firmDoubtPages.indexOf(p.page) < 0) res.firmDoubtPages.push(p.page);
@@ -2575,6 +2602,9 @@
         if (p.type === 'signature' && res.otherSignaturePages.indexOf(p.page) < 0) res.otherSignaturePages.push(p.page);
       }
     });
+    // No signature line for the investor, and the text speaks of a signature page (or of a signature block attached,
+    // below or hereto): the agreement refers to a page this PDF does not contain.
+    if (!res.investorPages.length) res.signaturePageMentioned = (pages || []).some((pg) => !!pg && !pg.scan && !pg.failed && SIG_PAGE_SAID.test(linesOf(pg).map((ln) => ln.text).join(' ').toLowerCase()));
     return res;
   }
   /** The proposed fields alone (see read). */
