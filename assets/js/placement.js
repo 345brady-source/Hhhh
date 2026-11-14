@@ -2346,8 +2346,22 @@
     // A free rule that is the top or foot edge of a found box (a box holding print, such as a ticked box, included) is
     // that box's frame, never a line to write on.
     const ruleOf = (p) => (pg.lines || []).find((l) => !inMargin(l) && Math.abs(l.y - (p.y + p.h)) <= 3 && overlap(l.x0, l.x1, p.x, p.x + p.w) >= 0.5 * p.w);
-    const edge = (l) => !!l && found.some((b) => (Math.abs(l.y - b.y0) <= 1.5 || Math.abs(l.y - b.y1) <= 1.5) && overlap(l.x0, l.x1, b.x0, b.x1) >= 0.8 * (l.x1 - l.x0));
-    for (let i = mine.length - 1; i >= 0; i--) if (edge(ruleOf(mine[i]))) mine.splice(i, 1);
+    // So is a rule the picture shows a stroke hanging from (textread's hang: the top edge of a frame, a table or a row
+    // of cells, the top of a ticked box the finder did not take for a box).
+    const edge = (l) => !!l && (!!l.hang || found.some((b) => (Math.abs(l.y - b.y0) <= 1.5 || Math.abs(l.y - b.y1) <= 1.5) && overlap(l.x0, l.x1, b.x0, b.x1) >= 0.8 * (l.x1 - l.x0)));
+    // A footnote rule, as the text rule knows it, given from the picture: a short rule (under 45 % of the page's width)
+    // in the lower part of the page, in the left quarter with nothing read before it on its row, whose first line of
+    // print beneath begins at its left end and runs on unbroken (textread's under) past its right end by more than its
+    // own length and at least 100 pt: a paragraph of small print under it, where a signature line has a short caption.
+    const footRule = (l) => {
+      const len = l.x1 - l.x0;
+      const before = (l.bands && l.bands.before && l.bands.before.s) || '';
+      return typeof l.under === 'number' && len < 0.45 * pg.w && l.y > 0.45 * pg.h && l.x0 < 0.25 * pg.w && !/[\p{L}\p{N}]/u.test(before) && l.under - l.x1 > Math.max(100, len);
+    };
+    // A line already answered by hand: two strokes of writing or more are joined to it (textread's joined), as typed
+    // characters standing on a line answer it on a page with text.
+    const answered = (l) => !!l && (l.joined || 0) >= 2;
+    for (let i = mine.length - 1; i >= 0; i--) if (edge(ruleOf(mine[i])) || footRule(ruleOf(mine[i]) || {}) || answered(ruleOf(mine[i]))) mine.splice(i, 1);
     // One line read in pieces: a piece named by no word (the line rules' own 'Text', or two letters or fewer: a speck
     // read on the line) that goes on from a field on the same rule within 9 pt is part of that field, which runs on over it.
     const letters = (t) => String(t || '').replace(/[^\p{L}]/gu, '').length;
@@ -2366,7 +2380,9 @@
     const shares = (b, o) =>
       ((Math.abs(b.y0 - o.y1) <= 2 || Math.abs(b.y1 - o.y0) <= 2) && overlap(b.x0, b.x1, o.x0, o.x1) >= 0.5 * Math.min(b.x1 - b.x0, o.x1 - o.x0)) ||
       ((Math.abs(b.x0 - o.x1) <= 2 || Math.abs(b.x1 - o.x0) <= 2) && overlap(b.y0, b.y1, o.y0, o.y1) >= 0.5 * Math.min(b.y1 - b.y0, o.y1 - o.y0));
-    const emptyCell = (b) => !b.small && !said(b) && found.some((o) => o !== b && o.place === false && (o.why === 'filled' || o.why === 'table') && shares(b, o));
+    // (So is one the picture shows a wall standing on the middle of its top edge, textread's row: a row of a table under
+    // cells the finder did not find.)
+    const emptyCell = (b) => !b.small && !said(b) && (!!b.row || found.some((o) => o !== b && o.place === false && (o.why === 'filled' || o.why === 'table') && shares(b, o)));
     const made = [];
     let notEmpty = 0;
     found.forEach((b) => {

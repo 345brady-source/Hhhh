@@ -288,6 +288,158 @@
     return end(Math.round(r.x0 - 4 * s), Math.round(r.x0 + s)) && end(Math.round(r.x1 - s), Math.round(r.x1 + 4 * s));
   }
 
+  /**
+   * The top edge of a frame or of a row of cells, read from the picture: an upright stroke hangs from the rule (it goes
+   * down from the rule at least 10 pt and rises above it at most 2 pt), at either end of the rule or anywhere along it.
+   * A rule drawn faintly in part is first followed along its row past the piece that was found (over gaps of up to
+   * 2 pt) to where it really ends. A line to write on has nothing hanging from it; the bottom edge of a cell has the
+   * cell's sides standing on it, and a row border between two rows of cells has them crossing it. Returns the hanging
+   * stroke's x (pixels) or -1.
+   */
+  function hangs(grey, w, h, r, s, dark, pale) {
+    const top = Math.max(0, r.y0 - 1);
+    const foot = Math.min(h - 1, r.y1);
+    const on = (x, lim) => {
+      for (let y = top; y <= foot; y++) if (grey[y * w + x] <= lim) return true;
+      return false;
+    };
+    // (the rule followed along its row, a faint stretch and a gap of up to 2 pt included)
+    const gap = Math.max(2, Math.round(2 * s));
+    let x0 = r.x0;
+    for (let x = r.x0 - 1, miss = 0; x >= 0 && miss <= gap; x--) (on(x, pale) ? ((x0 = x), (miss = 0)) : miss++);
+    let x1 = r.x1 - 1;
+    for (let x = r.x1, miss = 0; x < w && miss <= gap; x++) (on(x, pale) ? ((x1 = x), (miss = 0)) : miss++);
+    const dk = (x, y) => grey[y * w + x] <= dark || (x > 0 && grey[y * w + x - 1] <= dark) || (x < w - 1 && grey[y * w + x + 1] <= dark);
+    // a run of dark rows from y in the direction d (one pale row inside it is allowed), in pixels
+    const run = (x, y, d) => {
+      let n = 0;
+      let miss = 0;
+      for (let yy = y; yy >= 0 && yy < h && miss <= 1; yy += d) {
+        if (dk(x, yy)) {
+          n += 1 + miss;
+          miss = 0;
+        } else miss++;
+      }
+      return n;
+    };
+    const down = 10 * s;
+    const up = 2 * s;
+    const reach = Math.round(3 * s);
+    for (let x = Math.max(0, x0 - reach); x <= Math.min(w - 1, x1 + reach); x++) {
+      if (!on(x, dark)) continue;
+      if (run(x, foot + 1, 1) >= down && run(x, top - 1, -1) <= up) return x;
+    }
+    return -1;
+  }
+
+  /**
+   * The print under a rule, read from the picture: the first line of print beneath it (from 2 to 12 pt under it) that
+   * begins within 8 pt of the rule's left end, followed to the right while its gaps are no wider than 12 pt (a column
+   * counts as print where at least two of its pixels are dark, so specks of a scan do not join two columns of print).
+   * Returns the right end of that run in pixels, or -1 when no print begins there.
+   */
+  function printUnder(grey, w, h, r, s, dark) {
+    const y0 = Math.min(h - 1, r.y1 + Math.round(2 * s));
+    const y1 = Math.min(h - 1, r.y1 + Math.round(12 * s));
+    const inked = (x) => {
+      let n = 0;
+      for (let y = y0; y <= y1; y++) if (grey[y * w + x] <= dark && ++n >= 2) return true;
+      return false;
+    };
+    let x = Math.max(0, r.x0 - Math.round(8 * s));
+    const first = Math.min(w - 1, r.x0 + Math.round(8 * s));
+    while (x <= first && !inked(x)) x++;
+    if (x > first) return -1;
+    const gap = Math.round(12 * s);
+    let end = x;
+    for (let miss = 0; x < w && miss <= gap; x++) (inked(x) ? ((end = x), (miss = 0)) : miss++);
+    return end;
+  }
+
+  /**
+   * A box that is a row of a table, read from the picture: an upright stroke stands on the middle of its top edge (it
+   * rises at least 10 pt from the edge, more than 6 pt in from either corner, and goes on into the box at most 2 pt):
+   * the wall between two cells of the row above. A lone panel or an entry box has nothing standing on its top edge
+   * away from its corners. Returns the stroke's x (pixels) or -1.
+   */
+  function standsOn(grey, w, h, b, s, dark) {
+    const top = Math.max(0, b.y0 - 1);
+    const foot = Math.min(h - 1, b.y0 + Math.max(1, Math.round(1.5 * s)));
+    const dk = (x, y) => grey[y * w + x] <= dark || (x > 0 && grey[y * w + x - 1] <= dark) || (x < w - 1 && grey[y * w + x + 1] <= dark);
+    const run = (x, y, d) => {
+      let n = 0;
+      let miss = 0;
+      for (let yy = y; yy >= 0 && yy < h && miss <= 1; yy += d) {
+        if (dk(x, yy)) {
+          n += 1 + miss;
+          miss = 0;
+        } else miss++;
+      }
+      return n;
+    };
+    const inset = Math.round(6 * s);
+    for (let x = b.x0 + inset; x <= b.x1 - 1 - inset; x++) {
+      let on = false;
+      for (let y = top; y <= foot && !on; y++) on = grey[y * w + x] <= dark;
+      if (on && run(x, top - 1, -1) >= 10 * s && run(x, foot + 1, 1) <= 2 * s) return x;
+    }
+    return -1;
+  }
+
+  /**
+   * Writing joined to a rule, read from the picture: the strokes that touch the rule from above or from under it (dark
+   * on the row next to the rule's own rows) and, followed through the dark pixels joined to them on that side, reach at
+   * least 2.5 pt away from it while staying narrower than 60 % of the rule, more than 3 pt in from its ends, and not a
+   * straight upright stroke (narrower than 1.5 pt and 8 pt long or more: a wall). Printed captions stand clear of their
+   * rule; a hand that writes on a line or just under it touches it. Returns how many such strokes there are.
+   */
+  function joined(grey, w, h, r, s, dark) {
+    const far = Math.round(15 * s);
+    const xa = Math.max(0, r.x0 - Math.round(10 * s));
+    const xb = Math.min(w - 1, r.x1 + Math.round(10 * s));
+    const seen = new Set();
+    let n = 0;
+    // one side: d = 1 under the rule (from the second row under it), d = -1 above it
+    const side = (row, d) => {
+      if (row < 0 || row >= h) return;
+      for (let x = Math.max(0, r.x0); x < Math.min(w, r.x1); x++) {
+        const k0 = row * w + x;
+        if (grey[k0] > dark || seen.has(k0)) continue;
+        // the stroke's dark pixels joined to it on this side of the rule, within 15 pt of it
+        const todo = [k0];
+        seen.add(k0);
+        let reach = 0;
+        let lo = x;
+        let hi = x;
+        while (todo.length) {
+          const k = todo.pop();
+          const y = (k / w) | 0;
+          const xx = k - y * w;
+          reach = Math.max(reach, (y - row) * d);
+          lo = Math.min(lo, xx);
+          hi = Math.max(hi, xx);
+          for (let dy = -1; dy <= 1; dy++)
+            for (let dx = -1; dx <= 1; dx++) {
+              const yy = y + dy;
+              const x2 = xx + dx;
+              if ((yy - row) * d < 0 || (yy - row) * d > far || x2 < xa || x2 > xb) continue;
+              const k2 = yy * w + x2;
+              if (grey[k2] <= dark && !seen.has(k2)) {
+                seen.add(k2);
+                todo.push(k2);
+              }
+            }
+        }
+        // (a straight upright stroke is a wall or a side, not writing: textread's hangs and the cells read those)
+        const wall = hi - lo < 1.5 * s && reach >= 8 * s;
+        if (reach >= 2.5 * s && hi - lo < 0.6 * (r.x1 - r.x0) && !wall && x > r.x0 + 3 * s && x < r.x1 - 3 * s) n++;
+      }
+    };
+    side(r.y1 + 1, 1);
+    side(r.y0 - 2, -1);
+    return n;
+  }
+
   /** Words in reading order (by line, then left to right) as one text, with the confidence of the least sure. */
   function said(words) {
     if (!words.length) return { s: '', conf: 0 };
@@ -334,6 +486,11 @@
       // (a page of drawings is drawn black on white: half way is the print's edge)
       const dark = raw.picture ? (seen.paper > 0 && seen.range > 0 ? seen.paper - 0.5 * seen.range : -1) : 128;
       if (dark >= 0) seen.rules.forEach((r) => (r.bracket = inBrackets(grey, w, h, r, pic.scale, dark)));
+      // (on a picture: a rule something hangs from is the top edge of a frame or of cells; see hangs)
+      if (raw.picture && dark >= 0) seen.rules.forEach((r) => (r.hang = hangs(grey, w, h, r, pic.scale, dark, seen.paper - 0.25 * seen.range) >= 0));
+      if (raw.picture && dark >= 0) seen.rules.forEach((r) => (r.under = printUnder(grey, w, h, r, pic.scale, dark)));
+      if (raw.picture && dark >= 0) seen.rules.forEach((r) => (r.joined = joined(grey, w, h, r, pic.scale, dark)));
+      if (raw.picture && dark >= 0) seen.boxes.forEach((b) => b.place !== false && !b.small && (b.row = standsOn(grey, w, h, b, pic.scale, dark) >= 0));
       grey = null;
       ms.find = Date.now() - t;
       await new Promise((r) => setTimeout(r, 0));
@@ -429,7 +586,7 @@
         const b = toPt(r);
         const m = { x0: at.x(r.x0 + 0.5), y0: at.y(r.y0 + 0.5), x1: at.x(r.x1 - 0.5), y1: at.y(r.y1 - 0.5), t: t0 };
         const inside = read.words.filter((q) => q.letters && (q.x0 + q.x1) / 2 > b.x0 && (q.x0 + q.x1) / 2 < b.x1 && (q.y0 + q.y1) / 2 > b.y0 && (q.y0 + q.y1) / 2 < b.y1);
-        out.found.push({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, small: r.small, ink: r.ink, shared: r.shared, place: r.place, why: r.why, col: r.col, inside: inside.map((q) => q.s).join(' '), bands: bandsOf('box', i, SIDES) });
+        out.found.push(Object.assign({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, small: r.small, ink: r.ink, shared: r.shared, place: r.place, why: r.why, col: r.col, inside: inside.map((q) => q.s).join(' '), bands: bandsOf('box', i, SIDES) }, r.row ? { row: true } : null));
         // A box full of print (a letter or a mark the finder took for a frame) is print to the line rules, not a frame.
         if (r.why === 'filled') return;
         out.rects.push(m);
@@ -438,6 +595,9 @@
       seen.rules.forEach((r, i) => {
         const ln = { x0: at.x(r.x0), x1: at.x(r.x1), y: at.y((r.y0 + r.y1) / 2), t: r.t / pic.sy, bands: bandsOf('rule', i, RULE_SIDES) };
         if (r.bracket) ln.bracket = true;
+        if (r.hang) ln.hang = true;
+        if (r.under >= 0) ln.under = at.x(r.under);
+        if (r.joined) ln.joined = r.joined;
         out.lines.push(ln);
         out.segs.push(Object.assign({ o: 'h', a0: ln.x0, a1: ln.x1, c: ln.y, t: ln.t }, r.bracket ? { bracket: true } : null));
       });
@@ -480,5 +640,5 @@
     }
   }
 
-  NS.textread = { page, stop, ENLARGE, STRIP_PIXELS, WORDS_MS };
+  NS.textread = { page, stop, hangs, printUnder, standsOn, joined, ENLARGE, STRIP_PIXELS, WORDS_MS };
 })(window.CVPortal);

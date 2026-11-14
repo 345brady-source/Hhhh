@@ -331,6 +331,215 @@ async function shapes(page) {
   line(!at(nobody.edge, 99.5, 200) && nobody.edge.length === 1 && at(nobody.edge0, 99.5, 200) && nobody.edge0.length === 2, `shapes nobody: the top edge of a ticked box is no line to write on (${nobody.edge.length} field; without the box ${nobody.edge0.length})`);
   line(nobody.piece.length === 1 && Math.abs(nobody.piece[0].x1 - 300) < 0.5 && nobody.piece0.length === 2, `shapes nobody: a line read in two pieces with a speck between is one field over the whole line (${nobody.piece.length} field, to ${nobody.piece.length ? nobody.piece[0].x1.toFixed(1) : '-'} pt); a blank after a printed word stays its own (${nobody.piece0.length})`);
   line(!nobody.cell.length && nobody.cellSaid.length === 1 && nobody.panel.length === 1 && nobody.panel[0].label === 'Box', `shapes nobody: an empty cell beside a table cell holding print gets no field (${nobody.cell.length}); with its own caption it does (${nobody.cellSaid.length}); a lone empty panel does, named by its shape (${nobody.panel.length})`);
+  // The top edge of a frame or of cells, from the picture's pixels (NS.textread.hangs), on made-up pictures beside
+  // their controls; then a rule so marked gets no field while the same rule unmarked does.
+  const hang = await page.evaluate(() => {
+    const T = window.CVPortal.textread;
+    const P = window.CVPortal.placement;
+    const w = 600;
+    const h = 400;
+    const s = 2; // pixels a point
+    const pic = (paint) => {
+      const g = new Uint8Array(w * h).fill(240);
+      const ink = (x0, y0, x1, y1, v) => {
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g[y * w + x] = v === undefined ? 20 : v;
+      };
+      paint(ink);
+      return g;
+    };
+    const at = (g, r) => T.hangs(g, w, h, Object.assign({ y0: 100, y1: 102, t: 2 }, r), s, 130, 180) >= 0;
+    const rule = { x0: 100, x1: 501 };
+    const res = {
+      // a table's top edge: its sides hang from both ends
+      frame: at(pic((ink) => (ink(100, 100, 500, 101), ink(100, 100, 101, 200), ink(499, 100, 500, 200))), rule),
+      // a line to write on, alone
+      alone: at(pic((ink) => ink(100, 100, 500, 101)), rule),
+      // the bottom edge of a cell: its sides stand on it
+      stands: at(pic((ink) => (ink(100, 100, 500, 101), ink(100, 0, 101, 101), ink(499, 0, 500, 101))), rule),
+      // a border between two rows of cells: the sides cross it
+      crosses: at(pic((ink) => (ink(100, 100, 500, 101), ink(100, 20, 101, 200), ink(499, 20, 500, 200))), rule),
+      // a stroke hangs from the middle of a rule (a column of cells begins under it)
+      middle: at(pic((ink) => (ink(100, 100, 500, 101), ink(300, 100, 301, 200))), rule),
+      // a caption's letter touching the line from under it (8 pt): no frame
+      letter: at(pic((ink) => (ink(100, 100, 500, 101), ink(150, 100, 151, 116))), rule),
+      // the top of a ticked box (16 pt high) read as a short rule
+      tick: at(pic((ink) => (ink(100, 100, 130, 101), ink(100, 100, 101, 132), ink(129, 100, 130, 132))), { x0: 100, x1: 131 }),
+      // a piece of a faint rule found in its middle: the faint rule runs on to sides that hang from it
+      faint: at(pic((ink) => (ink(100, 100, 500, 101, 170), ink(200, 100, 260, 101), ink(100, 100, 101, 200), ink(499, 100, 500, 200))), { x0: 200, x1: 261 }),
+      // the same piece with paper beside it
+      faint0: at(pic((ink) => (ink(200, 100, 260, 101), ink(100, 100, 101, 200), ink(499, 100, 500, 200))), { x0: 200, x1: 261 })
+    };
+    const band = (t) => ({ s: t || '', conf: t ? 90 : 0 });
+    const bands = (o) => ({ over: band(o && o.over), under: band(o && o.under), before: band(o && o.before), after: band(o && o.after), inside: band(o && o.inside) });
+    const rl = (x0, x1, y) => ({ x0, x1, y, clear: 14, made: 'rule', cut: false, cell: false, table: false });
+    const ln = (x0, x1, y, more) => Object.assign({ x0, x1, y, t: 1, bands: bands() }, more || {});
+    const pg = (lines) => ({ page: 1, w: 612, h: 792, items: [{ s: 'Percentage', x: 300, y: 300, w: 40, h: 7 }], rules: [rl(345, 400, 300)], boxes: [], forms: [], pictured: 'picture', approx: true, found: [], words: [], lines, heads: [], reader: 'ok' });
+    res.read = P.read([pg([ln(345, 400, 300, { hang: true, bands: bands({ before: 'Percentage' }) })])], {}).fields.length;
+    res.read0 = P.read([pg([ln(345, 400, 300, { bands: bands({ before: 'Percentage' }) })])], {}).fields.length;
+    return res;
+  });
+  line(hang.frame && hang.middle && hang.tick && hang.faint && !hang.alone && !hang.stands && !hang.crosses && !hang.letter && !hang.faint0, `shapes nobody: a rule something hangs from is the top edge of a frame (frame ${hang.frame}, from its middle ${hang.middle}, a ticked box ${hang.tick}, a faint rule followed to its sides ${hang.faint}); a line alone ${hang.alone}, a cell's bottom edge ${hang.stands}, a row border ${hang.crosses}, a letter touching it ${hang.letter}, a piece with paper beside it ${hang.faint0}`);
+  line(hang.read === 0 && hang.read0 === 1, `shapes nobody: a rule marked as a frame's top edge gets no field (${hang.read}); the same rule unmarked gets one (${hang.read0})`);
+  // A footnote rule, from the picture (NS.textread.printUnder gives the print under a rule; placement decides), beside
+  // a signature line with its caption, a blank after a label, and the same rule high on the page.
+  const foot = await page.evaluate(() => {
+    const T = window.CVPortal.textread;
+    const P = window.CVPortal.placement;
+    const w = 1224;
+    const h = 1584;
+    const s = 2;
+    const pic = (paint) => {
+      const g = new Uint8Array(w * h).fill(240);
+      const ink = (x0, y0, x1, y1) => {
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g[y * w + x] = 20;
+      };
+      paint(ink);
+      return g;
+    };
+    // words of print: 5 pt high letters 4 pt wide with 1 pt between, words with 3 pt between
+    const words = (ink, x0, x1, y) => {
+      for (let x = x0; x + 8 <= x1; x += 10) if ((x / 10) % 6 !== 5) ink(x, y, x + 7, y + 9);
+    };
+    const r = { x0: 168, x1: 448, y0: 1400, y1: 1402, t: 2 }; // 84 to 224 pt, at 700 pt
+    const under = (g) => T.printUnder(g, w, h, r, s, 130);
+    const res = {
+      // a paragraph of small print under the rule, from its left end to the right margin
+      para: under(pic((ink) => (ink(168, 1400, 447, 1401), words(ink, 170, 1060, 1410)))) / s,
+      // a short caption under the line, and a second column of print 60 pt to the right of it
+      caption: under(pic((ink) => (ink(168, 1400, 447, 1401), words(ink, 170, 300, 1410), words(ink, 420, 700, 1410)))) / s,
+      // the caption alone, with specks of the scan (one pixel each, every 6 pt) on to the right margin
+      specks: under(pic((ink) => {
+        ink(168, 1400, 447, 1401);
+        words(ink, 170, 300, 1410);
+        for (let x = 310; x < 1060; x += 12) ink(x, 1414, x, 1414);
+      })) / s,
+      // nothing under it
+      bare: under(pic((ink) => ink(168, 1400, 447, 1401)))
+    };
+    const band = (t) => ({ s: t || '', conf: t ? 90 : 0 });
+    const bands = (o) => ({ over: band(o && o.over), under: band(o && o.under), before: band(o && o.before), after: band(o && o.after), inside: band(o && o.inside) });
+    const rl = (x0, x1, y) => ({ x0, x1, y, clear: 30, made: 'rule', cut: false, cell: false, table: false });
+    const ln = (x0, x1, y, more) => Object.assign({ x0, x1, y, t: 1, bands: bands() }, more || {});
+    const pg = (items, x0, x1, y, more) => P.read([{ page: 1, w: 612, h: 792, items, rules: [rl(x0, x1, y)], boxes: [], forms: [], pictured: 'picture', approx: true, found: [], words: [], lines: [ln(x0, x1, y, more)], heads: [], reader: 'ok' }], {}).fields.length;
+    const sig = [{ s: 'Signature', x: 85, y: 710, w: 40, h: 7 }];
+    res.read = pg(sig, 84, 224, 700, { under: 534, bands: bands({ under: 'Signature' }) });
+    res.readCaption = pg(sig, 84, 224, 700, { under: 126, bands: bands({ under: 'Signature' }) });
+    res.readLabel = pg([{ s: 'E-mail Address:', x: 84, y: 700, w: 60, h: 7 }], 150, 290, 700, { under: 534, bands: bands({ before: 'E-mail Address:' }) });
+    res.readHigh = pg([{ s: 'Signature', x: 85, y: 210, w: 40, h: 7 }], 84, 224, 200, { under: 534, bands: bands({ under: 'Signature' }) });
+    return res;
+  });
+  line(foot.para > 500 && foot.caption > 140 && foot.caption < 160 && foot.specks > 140 && foot.specks < 160 && foot.bare < 0, `shapes nobody: the print under a rule runs unbroken to the margin under a paragraph (to ${foot.para.toFixed(0)} pt), ends with a short caption beside a second column (${foot.caption.toFixed(0)} pt) or specks of a scan (${foot.specks.toFixed(0)} pt), and is none under a bare rule (${foot.bare})`);
+  // A box that is a row of a table: a wall stands on the middle of its top edge (NS.textread.standsOn), beside a lone
+  // panel, a box under another box (walls at its corners only) and a box with a stroke crossing its top edge.
+  const row = await page.evaluate(() => {
+    const T = window.CVPortal.textread;
+    const P = window.CVPortal.placement;
+    const w = 600;
+    const h = 500;
+    const s = 2;
+    const pic = (paint) => {
+      const g = new Uint8Array(w * h).fill(240);
+      const ink = (x0, y0, x1, y1) => {
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g[y * w + x] = 20;
+      };
+      const frame = (x0, y0, x1, y1) => (ink(x0, y0, x1, y0 + 1), ink(x0, y1 - 1, x1, y1), ink(x0, y0, x0 + 1, y1), ink(x1 - 1, y0, x1, y1));
+      paint(ink, frame);
+      return g;
+    };
+    const b = { x0: 100, y0: 300, x1: 501, y1: 441 };
+    const on = (g) => T.standsOn(g, w, h, b, s, 130) >= 0;
+    const res = {
+      // the row under two cells: their walls stand on its top edge, one in its middle
+      row: on(pic((ink, frame) => (frame(100, 300, 500, 440), frame(100, 100, 300, 301), frame(299, 100, 500, 301)))),
+      // a lone panel
+      panel: on(pic((ink, frame) => frame(100, 300, 500, 440))),
+      // a box under another box of its width: walls at its corners only
+      stacked: on(pic((ink, frame) => (frame(100, 300, 500, 440), frame(100, 100, 500, 301)))),
+      // a stroke that crosses the top edge on into the box (the box is not one box)
+      crossing: on(pic((ink, frame) => (frame(100, 300, 500, 440), ink(300, 200, 301, 420))))
+    };
+    const band = (t) => ({ s: t || '', conf: t ? 90 : 0 });
+    const bands = (o) => ({ over: band(o && o.over), under: band(o && o.under), before: band(o && o.before), after: band(o && o.after), inside: band(o && o.inside) });
+    const box = (more) => Object.assign({ x0: 50, y0: 150, x1: 250, y1: 220, small: false, ink: 0, shared: false, place: true, why: '', col: -1, inside: '', bands: bands() }, more || {});
+    const read = (found) => P.read([{ page: 1, w: 612, h: 792, items: [], rules: [], boxes: [], forms: [], pictured: 'picture', approx: true, found, words: [], lines: [], heads: [], reader: 'ok' }], {}).fields.length;
+    res.read = read([box({ row: true })]);
+    res.readSaid = read([box({ row: true, bands: bands({ over: 'Stamp here' }) })]);
+    res.read0 = read([box()]);
+    return res;
+  });
+  // A line answered by hand: strokes of writing joined to it (NS.textread.joined), beside a caption standing clear of
+  // it, a cell's sides standing on it and a wall crossing it.
+  const hand = await page.evaluate(() => {
+    const T = window.CVPortal.textread;
+    const P = window.CVPortal.placement;
+    const w = 600;
+    const h = 300;
+    const s = 2;
+    const pic = (paint) => {
+      const g = new Uint8Array(w * h).fill(240);
+      const ink = (x0, y0, x1, y1) => {
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g[y * w + x] = 20;
+      };
+      // a slanted stroke of a hand, from the line's foot 12 px down, drifting 8 px
+      const stroke = (x, y) => {
+        for (let k = 0; k <= 12; k++) ink(x + Math.round((2 * k) / 3), y + k, x + Math.round((2 * k) / 3) + 2, y + k);
+      };
+      paint(ink, stroke);
+      return g;
+    };
+    const r = { x0: 100, x1: 501, y0: 100, y1: 102, t: 2 };
+    const n = (g) => T.joined(g, w, h, r, s, 130);
+    const res = {
+      // a date written just under the line, two of its strokes touching it
+      written: n(pic((ink, stroke) => (ink(100, 100, 500, 101), stroke(200, 102), stroke(240, 102), stroke(280, 106)))),
+      // a caption 2 pt under the line
+      caption: n(pic((ink) => (ink(100, 100, 500, 101), ink(110, 106, 113, 118), ink(118, 106, 128, 108), ink(118, 112, 128, 114)))),
+      // the sides of a cell standing on its bottom edge
+      sides: n(pic((ink) => (ink(100, 100, 500, 101), ink(100, 40, 101, 101), ink(499, 40, 500, 101)))),
+      // a wall crossing the line in its middle
+      wall: n(pic((ink) => (ink(100, 100, 500, 101), ink(300, 40, 301, 200))))
+    };
+    const band = (t) => ({ s: t || '', conf: t ? 90 : 0 });
+    const bands = (o) => ({ over: band(o && o.over), under: band(o && o.under), before: band(o && o.before), after: band(o && o.after), inside: band(o && o.inside) });
+    const rl = (x0, x1, y) => ({ x0, x1, y, clear: 14, made: 'rule', cut: false, cell: false, table: false });
+    const pg = (more) => P.read([{ page: 1, w: 612, h: 792, items: [{ s: 'Date', x: 300, y: 300, w: 20, h: 7 }], rules: [rl(325, 400, 300)], boxes: [], forms: [], pictured: 'picture', approx: true, found: [], words: [], lines: [Object.assign({ x0: 325, x1: 400, y: 300, t: 1, bands: bands({ before: 'Date' }) }, more)], heads: [], reader: 'ok' }], {}).fields.length;
+    res.read = pg({ joined: 2 });
+    res.read0 = pg({});
+    return res;
+  });
+  // The caption under a signature line whose letters reach down past the band (the g of "Signature") is read in the
+  // rule's under band (NS.picturepage.bands), beside a rule shorter than an inch and a line of print 9 pt under it.
+  const cap = await page.evaluate(() => {
+    const pp = window.CVPortal.picturepage;
+    const s = 2;
+    const w = 700;
+    const h = 400;
+    const draw = (ruleLen, capTop) => {
+      const g = new Uint8Array(w * h).fill(255);
+      const ink = (x0, y0, x1, y1) => {
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g[y * w + x] = 40;
+      };
+      ink(100, 200, 100 + ruleLen, 201);
+      // a caption of nine letters 8 px high, its sixth letter reaching 7 px lower (a g)
+      for (let i = 0; i < 9; i++) ink(102 + 5 * i, capTop, 104 + 5 * i, capTop + (i === 5 ? 15 : 8));
+      return g;
+    };
+    const under = (ruleLen, capTop) => {
+      const g = draw(ruleLen, capTop);
+      const found = pp.find(g, w, h, s);
+      const got = pp.bands(Object.assign({ grey: g, w, h, pxPerPt: s }, found));
+      const k = found.rules.findIndex((r) => Math.abs(r.y0 - 200) <= 2 && r.x1 - r.x0 > 0.8 * ruleLen);
+      const part = got.strips.reduce((f, st) => f || st.parts.find((q) => q.kind === 'rule' && q.of === k && q.side === 'under'), null);
+      return { rule: k >= 0, part: !!part, foot: part ? part.y1 : -1 };
+    };
+    return { sig: under(300, 213), short: under(40, 213), low: under(300, 222) }; // (a 150 pt rule: under the long rule's 200 pt)
+  });
+  line(cap.sig.rule && cap.sig.part && cap.sig.foot >= 228 && cap.short.rule && !cap.short.part && cap.low.rule && !cap.low.part, `shapes caption under a signature line, its g reaching past the band, is read whole (${cap.sig.part ? 'to ' + cap.sig.foot + ' px' : 'not read'}); under a rule shorter than an inch it is not (${cap.short.part ? 'read' : 'not read'}), nor a line of print starting 10 pt under the rule and cut by the band (${cap.low.part ? 'read' : 'not read'})`);
+  line(hand.written >= 2 && hand.caption === 0 && hand.sides === 0 && hand.wall === 0, `shapes nobody: strokes of a hand joined to a line are counted (${hand.written}); a caption clear of it ${hand.caption}, a cell's sides standing on it ${hand.sides}, a wall crossing it ${hand.wall}`);
+  line(hand.read === 0 && hand.read0 === 1, `shapes nobody: a line answered by hand gets no field (${hand.read}); the same line unanswered gets one (${hand.read0})`);
+  line(row.row && !row.panel && !row.stacked && !row.crossing, `shapes nobody: a wall standing on the middle of a box's top edge makes it a row of a table (${row.row}); a lone panel ${row.panel}, a box under a box of its width ${row.stacked}, a stroke crossing into the box ${row.crossing}`);
+  line(row.read === 0 && row.readSaid === 1 && row.read0 === 1, `shapes nobody: an empty row of a table with no word by it gets no field (${row.read}); with its own caption it does (${row.readSaid}); the same box as a lone panel does (${row.read0})`);
+  line(foot.read === 0 && foot.readCaption === 1 && foot.readLabel === 1 && foot.readHigh === 1, `shapes nobody: a footnote rule gets no field (${foot.read}); a signature line with its caption (${foot.readCaption}), a blank after its label (${foot.readLabel}) and the same rule high on the page (${foot.readHigh}) each get one`);
 }
 
 /* ---------------- the owner's form ---------------- */
