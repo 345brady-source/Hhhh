@@ -1289,25 +1289,23 @@
   const WHY_SLANT = 'This page is a picture, so the portal found this place on the picture and read the words by it from the picture. Check that the field sits on its printed place and is what the agreement asks for.';
   const WHY_WORDS = 'This page has no text, so the portal read it from its picture, and the words by this place were hard to read. Check what this field is for.';
   /**
-   * A closed box found on the picture of a page that no other rule gave a field: a form's way of printing a place.
-   *   a small square                      a tick box, named by the words beside it
-   *   any other box                       a blank named by its caption: the words just before it on its row, or over
-   *                                       it, or printed in it, or under it
-   *   captioned "initials"                initials; "signature"  a signature; "date" beside a signature  a date
-   *   in a column of boxes under a heading that names a second investor (co-investor, joint, second), or captioned
-   *   so                                  a second signer's: optional, as on any agreement
-   *   captioned for someone else (a custodian, a broker or dealer, a representative, an adviser, a manager)
-   *                                       optional
-   * A box whose caption could not be read still gets its field, named "Box".
+   * Every printed place on the picture of a page gets one field (boxField, fromPicture), decided by convention classes
+   * on the words read round it (pg.found[].bands, pg.heads; see NS.textread):
+   *   K1  a small square is a tick box, named by the words after it on its row, else before it
+   *   K2  any other box is a typed blank named by its caption: before it on its row, else over it, else printed in
+   *       it, else under it; a box wider than a tick box is never one
+   *   K3  captioned for initials, or in a column at least half of which is: initials
+   *   K4  captioned signature or sign here: a signature
+   *   K5  captioned with the single word date on a signature's row: that signature's date
+   *   K6  no caption read: the field stays, named by its shape and marked
+   * Who completes it, in this order: O1 its own caption, O2 the heading of its column, O3 the lettered line above it,
+   * O4 the margin heading above it, O5 the investor; one column of boxes is one person's; O6 a date takes its
+   * signature's owner; O7 a third party's place is nobody's (asOther). Every word is matched tolerantly (says, partyOf),
+   * and a field decided by a word that was hard to read says so in the portal's own words.
    */
-  // The one list of third parties (OTHER_PARTY), widened for a page read from its picture as that reader has always
-  // read it: the bare words for a representative and a manager, and a witness's and a notary's boxes.
-  const OTHERS_RE = new RegExp(`${OTHER_PARTY.source}|\\b(custodian|broker|registered rep|representative|advis[eo]r|transfer agent|notary|witness)|\\bmanager\\b`, 'i');
   const WHY_OTHERS = 'This place is for someone else to complete (a custodian, a broker, a representative or the like), and the portal has no signer for them. It is optional and nobody is asked to complete it: keep it for your records, or remove it.';
   /** The standing sentence shown with a place for somebody else (in the editor's properties, and as a picture page's reason). */
   const OTHER_NOTE = WHY_OTHERS;
-  /** Who a heading or a caption says completes what is under it: 'co' (a second investor), 'other' (a third party), 'investor' or ''. */
-  const partyOf = (t) => (CO_INVESTOR.test(t) ? 'co' : OTHERS_RE.test(t) ? 'other' : /\b(investor|subscriber|purchaser|shareholder|applicant)s?\b/i.test(t) ? 'investor' : '');
   const partyName = (t) => (/custodian/i.test(t) ? 'Custodian' : /broker|dealer/i.test(t) ? 'Broker-dealer' : /manager/i.test(t) ? 'Manager' : /registered rep|representative/i.test(t) ? 'Representative' : /advis|\bria\b/i.test(t) ? 'Adviser' : /transfer agent/i.test(t) ? 'Transfer agent' : /notary/i.test(t) ? 'Notary' : /witness/i.test(t) ? 'Witness' : 'Third party');
   /**
    * The party a piece of text names as completing a place ('Custodian', 'Broker-dealer', 'Representative', 'Adviser',
@@ -1319,155 +1317,173 @@
     if (!t || !OTHER_PARTY.test(t) || FIRM_WORDS.test(t) || /\bauthori[sz]ed\b/.test(t)) return '';
     return partyName(t);
   }
+  /* The words that decide on a picture page, matched tolerantly. */
+  const WHY_UNREAD = 'The portal found this box on the picture but could not read the words by it, so it is named by its shape. Say what it is for, or remove it.';
+  /** The reason on a field decided by words that were hard to read; meaning is the kind or the role in the portal's own words. */
+  const WHY_NEAR = (meaning) => `The words by this place were hard to read and the portal took them to mean “${meaning}”. Check that this is what the field is for.`;
+  const KIND_WORDS = { initials: ['initials', 'initial'], signature: ['signature', 'sign here'], date: ['date'] };
+  const KIND_SAID = { initials: 'Initials', signature: 'Signature', date: 'Date' };
+  const KIND_FOR = { initials: 'initials', signature: 'a signature', date: 'a date' };
+  /** The reason on a box whose words were not read and whose kind came from the boxes of its size (see read). */
+  const WHY_SIZE = (kind) => `The portal could not read the words by this box. The boxes of the same size on this agreement are for ${KIND_FOR[kind]}, so it was taken to be one. Check that this is what the field is for.`;
+  // "initial" counts as the verb (initial here, initial each, please initial to ...), never as the adjective before a noun.
+  const INITIAL_NEXT = ['', 'here', 'each', 'below', 'where', 'to', 'box', 'line', 'page'];
+  // A read word spelt exactly as another word is never a near match of a known word.
+  const NOT_NEAR = ['signatory', 'signatories'];
+  const lettersOf = (s) => String(s == null ? '' : s).normalize('NFKC').toLowerCase().replace(/[^\p{L}]/gu, '');
+  const near = (a, b) => (NS.picturepage && NS.picturepage.near ? NS.picturepage.near(a, b) : lettersOf(a) && lettersOf(a) === lettersOf(b) ? 0 : -1);
   /**
-   * The headings of a form read from its picture: { sections, subs }. A section is headed in the margin beside the
-   * boxes by a number ("(3) Investor information") and runs to the next one; within it a lettered line ("B. Co-investor
-   * name") heads what follows to the next lettered line. Each: { y, s }.
+   * The best match in a text of a known word or phrase of list: { word, changes, at, next } or null. Every word of the
+   * text is compared with each known word (a phrase with as many following words joined), letters only, by
+   * NS.picturepage.near: changes above 0 is a near match. next is the letters of the word after the match.
    */
-  function formHeads(pg, found) {
-    const words = (pg.words || []).filter((w) => w.letters).slice().sort((a, b) => (a.y0 + a.y1) / 2 - (b.y0 + b.y1) / 2);
-    const rows = [];
-    words.forEach((w) => {
-      const m = (w.y0 + w.y1) / 2;
-      const r = rows.find((o) => Math.abs(o.m - m) < 2.5);
-      if (r) r.ws.push(w);
-      else rows.push({ m, ws: [w] });
+  function says(text, list) {
+    const ws = String(text || '').split(/[\s/]+/).filter((x) => lettersOf(x));
+    let best = null;
+    list.forEach((known) => {
+      const n = known.split(' ').length;
+      for (let i = 0; i + n <= ws.length; i++) {
+        const got = ws.slice(i, i + n).join(' ');
+        const d = near(got, known);
+        if (d < 0 || (d > 0 && NOT_NEAR.indexOf(lettersOf(got)) >= 0)) continue;
+        if (!best || d < best.changes) best = { word: known, changes: d, at: i, next: lettersOf(ws[i + n] || '') };
+      }
     });
-    const segs = [];
-    rows.forEach((r) => {
-      let cur = null;
-      r.ws.sort((a, b) => a.x0 - b.x0).forEach((w) => {
-        if (cur && w.x0 - cur.x1 < 14) Object.assign(cur, { x1: w.x1, s: cur.s + ' ' + w.s });
-        else segs.push((cur = { x0: w.x0, x1: w.x1, y: r.m, s: w.s }));
-      });
-    });
-    const left = found.length ? Math.min.apply(null, found.map((b) => b.x0)) : 0;
-    const sections = [];
-    segs.filter((g) => g.x1 < left - 2).sort((a, b) => a.y - b.y).forEach((g) => {
-      if (!sections.length || /^[([{]?\d{1,2}[)\]}.]?(\s|$)/.test(g.s)) sections.push({ y: g.y, s: g.s });
-      else sections[sections.length - 1].s += ' ' + g.s;
-    });
-    const subs = segs.filter((g) => g.x0 >= left - 6 && g.x0 < left + 14 && /^[A-Z][.)]\s+\S/.test(g.s)).map((g) => ({ y: g.y, s: g.s })).sort((a, b) => a.y - b.y);
-    return { sections, subs };
+    return best;
   }
-  function boxField(pg, b, all) {
-    const words = (pg.words || []).filter((w) => w.letters);
-    const text = (list) => clean(list.sort((p, q) => p.x0 - q.x0).map((w) => w.s).join(' ').replace(/[|_]+/g, ' '));
-    const mid = (w) => (w.y0 + w.y1) / 2;
-    const row = words.filter((w) => mid(w) > b.y0 - 1 && mid(w) < b.y1 + 1);
+  /** The kind a caption asks for by its words (K3 initials, K4 signature): { kind, changes } or null. */
+  function kindIn(text) {
+    const ini = says(text, KIND_WORDS.initials);
+    if (ini && (ini.word === 'initials' || INITIAL_NEXT.indexOf(ini.next) >= 0)) return { kind: 'initials', changes: ini.changes };
+    const sig = says(text, KIND_WORDS.signature);
+    return sig ? { kind: 'signature', changes: sig.changes } : null;
+  }
+  // A band that reads as running text (a sentence of six words or more) is no caption.
+  const prose = (s) => s.split(' ').filter(Boolean).length >= 6 && /[.!?][”"’')]?$/.test(s);
+  // What a box field was decided by, kept beside it (never on the field): its box, whether any word by it was read,
+  // whether a word decided its kind, and the signature a date stands beside.
+  const BOXED = new WeakMap();
+  /** The field of one found box (K1 to K6); its owner is decided afterwards (fromPicture). */
+  function boxField(pg, b, found) {
+    const band = (k) => {
+      const v = b.bands && b.bands[k];
+      const s = tidy(v ? v.s : '');
+      return s && !prose(s) ? s : '';
+    };
     const w = b.x1 - b.x0;
     const hh = b.y1 - b.y0;
+    const info = { b, read: false, word: false, sig: null, date: false };
+    // K1: a small square is a tick box, its own rectangle, named by the words after it, else before it.
     if (b.small && Math.abs(w - hh) <= 0.2 * Math.max(w, hh)) {
-      // The words beside a tick box: after it up to the next box or a wide gap, else before it.
-      const next = all.filter((o) => o !== b && o.x0 > b.x1 && overlap(o.y0, o.y1, b.y0, b.y1) > 0).sort((p, q) => p.x0 - q.x0)[0];
-      const after = [];
-      row.filter((q) => q.x0 >= b.x1 - 1 && (!next || q.x1 <= next.x0 + 1)).sort((p, q) => p.x0 - q.x0).every((q) => (q.x0 - (after.length ? after[after.length - 1].x1 : b.x1) < 14 ? after.push(q) : false));
-      const before = row.filter((q) => q.x1 <= b.x0 + 1 && b.x0 - q.x1 < 60);
-      const label = text(after) || text(before);
-      return { type: 'checkbox', role: 'investor', page: pg.page, x: b.x0 - 0.5, y: b.y0 - 0.5, w: w + 1, h: hh + 1, label: label || 'Box', required: false, conf: 'medium', why: WHY_SLANT, kind: 'checkbox' };
+      const cap = band('after') || band('before');
+      info.read = !!cap;
+      const p = { type: 'checkbox', kind: 'checkbox', role: 'investor', page: pg.page, x: b.x0, y: b.y0, w, h: hh, label: clean(cap) || 'Tick box', required: false, conf: 'medium', why: cap ? WHY_SLANT : WHY_UNREAD, boxed: true };
+      BOXED.set(p, info);
+      return p;
     }
-    if (w < 14 || hh < 6) return null; // too narrow or too low to write in, and not a square: the shape of a letter or an ornament
-    const left = [];
-    const margin = Math.min.apply(null, all.map((o) => o.x0)) - 2; // words left of every box are the margin's headings, not captions
-    row.filter((q) => q.x1 <= b.x0 + 1 && q.x1 >= margin).sort((p, q) => q.x1 - p.x1).every((q) => ((left.length ? left[left.length - 1].x0 : b.x0) - q.x1 < 9 ? left.push(q) : false));
-    const over = words.filter((q) => q.y1 <= b.y0 + 1 && b.y0 - q.y1 < 9 && (q.x0 + q.x1) / 2 > b.x0 - 2 && (q.x0 + q.x1) / 2 < b.x1);
-    // A caption of two lines: the line just over the first one belongs to it.
-    const top = over.length ? Math.min.apply(null, over.map((q) => q.y0)) : 0;
-    const upper = over.length ? words.filter((q) => over.indexOf(q) < 0 && q.y1 <= top + 1 && top - q.y1 < 5 && (q.x0 + q.x1) / 2 > b.x0 - 2 && (q.x0 + q.x1) / 2 < b.x1) : [];
-    const under = words.filter((q) => q.y0 >= b.y1 - 1 && q.y0 - b.y1 < 8 && (q.x0 + q.x1) / 2 > b.x0 && (q.x0 + q.x1) / 2 < b.x1);
-    const caption = (left.length && !all.some((o) => o !== b && o.x1 <= b.x0 && b.x0 - o.x1 < 9 && overlap(o.y0, o.y1, b.y0, b.y1) > 0) ? text(left) : '') || clean(`${text(upper)} ${text(over)}`) || clean(b.inside || '') || text(under);
-    // Who completes it: the caption, or the heading over its column of boxes.
-    const column = all.filter((o) => Math.abs(o.x0 - b.x0) <= 3 && Math.abs(o.x1 - b.x1) <= 3).sort((p, q) => p.y0 - q.y0)[0] || b;
-    const head = text(words.filter((q) => q.y1 <= column.y0 + 1 && column.y0 - q.y1 < 12 && (q.x0 + q.x1) / 2 > b.x0 - 4 && (q.x0 + q.x1) / 2 < b.x1 + 4));
-    const whose = `${caption} ${head}`;
-    const kind = /\binitial/i.test(`${whose} ${text(under)}`) ? 'initials' : /\bsignature\b|\bsign here\b/i.test(caption) ? 'signature' : /^\W*date\W*$/i.test(caption) ? 'date' : 'other';
-    const p = { type: kind === 'initials' ? 'initials' : kind === 'signature' ? 'signature' : kind === 'date' ? 'date' : 'text', role: 'investor', page: pg.page, x: b.x0 + 0.5, y: b.y0 + 0.5, w: w - 1, h: hh - 1, label: caption || (kind === 'initials' ? 'Initials' : 'Box'), required: kind === 'signature', conf: 'medium', why: WHY_SLANT, kind };
-    p.whose = whose;
+    // K2: any other box is a typed blank named by its caption: before it on its row (when no box stands just before
+    // it), else over it, else printed in it, else under it.
+    const beside = found.some((o) => o !== b && o.x1 <= b.x0 + 0.5 && b.x0 - o.x1 < 9 && overlap(o.y0, o.y1, b.y0, b.y1) > 0);
+    const caption = (!beside && band('before')) || band('over') || band('inside') || band('under');
+    info.read = ['before', 'over', 'inside', 'under'].some((k) => band(k));
+    let type = 'text';
+    let hit = null;
+    // K3: any band of the box asks for initials. K4: its caption asks for a signature. K5 (a single word "date") is
+    // settled once the signatures of the page are known.
+    ['over', 'under', 'before', 'inside'].forEach((k) => {
+      const m = kindIn(band(k));
+      if (m && m.kind === 'initials' && (!hit || m.changes < hit.changes)) hit = Object.assign({ band: band(k) }, m);
+    });
+    if (!hit && caption) {
+      const m = kindIn(caption);
+      if (m && m.kind === 'signature') hit = Object.assign({ band: caption }, m);
+    }
+    if (hit) (type = hit.kind), (info.word = true);
+    else if (caption && caption.split(' ').length === 1 && near(caption, 'date') === 0) info.date = true;
+    // The name is the caption as read; a caption that is only the misread word of the kind is named by the kind.
+    const misread = hit && hit.changes > 0 && hit.band === caption && caption.split(' ').length === 1;
+    const label = misread ? KIND_SAID[type] : caption ? clean(caption) : type === 'initials' ? 'Initials' : 'Box';
+    const why = hit && hit.changes > 0 ? WHY_NEAR(KIND_SAID[type]) : info.read ? WHY_SLANT : WHY_UNREAD;
+    const p = { type, kind: type === 'text' ? 'other' : type, role: 'investor', page: pg.page, x: b.x0 + 0.5, y: b.y0 + 0.5, w: w - 1, h: hh - 1, label, required: type === 'signature' || type === 'initials', conf: 'medium', why, boxed: true };
+    BOXED.set(p, info);
     return p;
   }
+  /**
+   * The fields of a page with no text, read from its picture (pg.pictured). On a picture (pg.approx) a field comes from
+   * a found box or a free rule and from nothing else: of what pageFields proposed only a proposal on a free rule stays,
+   * and every found box that is an empty place gets exactly one field. Every field on such a page is marked for
+   * review. Returns how many boxes got no field because they already hold print or writing.
+   */
   function fromPicture(pg, mine) {
-    const hard = pg.items.filter((it) => it.conf != null && it.conf < 50 && /[A-Za-z0-9]{2}/.test(it.s));
-    mine.forEach((p) => {
-      const by = hard.some((it) => it.y - it.h < p.y + p.h + 12 && it.y > p.y - 12 && it.x < p.x + p.w + 90 && it.x + it.w > p.x - 150);
-      if (!pg.approx && !by) return;
-      if (p.conf === 'high') p.conf = 'medium';
-      if (!p.why) p.why = pg.approx ? WHY_SLANT : WHY_WORDS;
-    });
-    // Every closed box found on the picture has its field: one the rules above gave none gets it here.
     const found = pg.found || [];
+    const mark = (p, why) => {
+      if (p.conf === 'high') p.conf = 'medium';
+      if (!p.why) p.why = why;
+    };
+    if (!pg.approx) {
+      // A page whose letters are drawings: the line rules' proposals stand, each marked; a found box that no proposal
+      // covers gets its field.
+      mine.forEach((p) => mark(p, WHY_WORDS));
+      found.forEach((b) => {
+        if (b.place === false || mine.some((p) => overlap(p.x, p.x + p.w, b.x0, b.x1) > 0.5 * Math.min(p.w, b.x1 - b.x0) && overlap(p.y, p.y + p.h, b.y0 - 2, b.y1 + 2) > 0.3 * Math.min(p.h, b.y1 - b.y0 + 4))) return;
+        mine.push(boxField(pg, b, found));
+      });
+      return 0;
+    }
+    // A free rule that begins inside the margin column is the margin's (a footnote rule, a rule under a heading),
+    // never a line to write on.
+    const margins = (pg.heads || []).filter((hd) => hd.kind === 'margin');
+    const inMargin = (l) => margins.some((hd) => l.y >= hd.y0 && l.y <= hd.y1 && l.x0 < hd.x1 - 2);
+    const onRule = (p) => (pg.lines || []).some((l) => !inMargin(l) && Math.abs(l.y - (p.y + p.h)) <= 3 && overlap(l.x0, l.x1, p.x, p.x + p.w) >= 0.5 * p.w);
+    for (let i = mine.length - 1; i >= 0; i--) if (!onRule(mine[i])) mine.splice(i, 1);
     const made = [];
-    // On a picture a field comes only from a found box or line: a tick box read from recognised brackets is dropped,
-    // and so is a line that turns out to lie under recognised words (an underline), which is no place.
-    const onBox = (p) => found.some((b) => (p.type !== 'checkbox' || b.small) && overlap(p.x, p.x + p.w, b.x0, b.x1) > 0.5 * Math.min(p.w, b.x1 - b.x0) && overlap(p.y, p.y + p.h, b.y0 - 2, b.y1 + 2) > 0.3 * Math.min(p.h, b.y1 - b.y0 + 4));
-    const sure = (pg.words || []).filter((q) => q.letters && q.conf >= 50);
-    const worded = (p) => sure.reduce((n, q) => n + Math.max(0, overlap(q.x0, q.x1, p.x, p.x + p.w)) * Math.max(0, overlap(q.y0, q.y1, p.y, p.y + p.h)), 0) > 0.3 * p.w * p.h;
-    for (let i = mine.length - 1; i >= 0; i--) if (pg.approx && !onBox(mine[i]) && (mine[i].type === 'checkbox' || worded(mine[i]))) mine.splice(i, 1);
+    let notEmpty = 0;
     found.forEach((b) => {
-      if (mine.some((p) => overlap(p.x, p.x + p.w, b.x0, b.x1) > 0.5 * Math.min(p.w, b.x1 - b.x0) && overlap(p.y, p.y + p.h, b.y0 - 2, b.y1 + 2) > 0.3 * Math.min(p.h, b.y1 - b.y0 + 4))) return;
-      const p = boxField(pg, b, found);
-      if (p) made.push(p);
+      if (b.place !== false) made.push(boxField(pg, b, found));
+      else if (b.why === 'filled' || b.why === 'table') notEmpty++;
     });
-    // Who completes each box: its own caption or column heading, else the lettered heading it stands under, else the
-    // numbered section in the margin, else the investor. A second investor's are the co-investor's own; a third
-    // party's are nobody's the portal asks: optional, named for that party, and never where the investor signs.
-    const heads = formHeads(pg, found);
-    const under = (list, y, from) => list.filter((g) => g.y <= y + 2 && g.y >= from).pop();
-    const boxed = mine.filter((p) => onBox(p)).concat(made);
-    boxed.forEach((p) => p.type === 'text' && /\binitials?\b/i.test(p.label) && Object.assign(p, { type: 'initials', kind: 'initials' }));
-    // A column of boxes most of which are captioned for initials is a column of initials.
-    boxed.forEach((p) => {
-      if (p.type !== 'text') return;
-      const col = boxed.filter((o) => Math.abs(o.x - p.x) <= 3 && Math.abs(o.w - p.w) <= 3);
-      if (col.length >= 3 && col.filter((o) => o.type === 'initials').length >= 0.5 * col.length) Object.assign(p, { type: 'initials', kind: 'initials', label: /^box$/i.test(p.label) ? 'Initials' : p.label });
-    });
-    boxed.forEach((p) => {
-      const sec = under(heads.sections, p.y, 0);
-      const sub = under(heads.subs, p.y, sec ? sec.y : 0);
-      const own = partyOf(p.whose || p.label);
-      const who = own || (sub && partyOf(sub.s)) || (sec && partyOf(sec.s)) || 'investor';
-      const said = own ? p.whose || p.label : sub && partyOf(sub.s) ? sub.s : sec ? sec.s : '';
-      delete p.whose;
-      if (who === 'co' && p.role !== 'co') {
-        if (!CO_INVESTOR.test(p.label)) p.label = `Co-investor ${p.label}`;
-        coInvestor(p);
-      } else if (who === 'other') {
-        const name = partyName(said);
-        asOther(p, name, false, WHY_OTHERS);
-        if (!OTHERS_RE.test(p.label)) p.label = `${name}: ${p.label}`;
-      }
-    });
-    // One column of boxes is one person's: where any box in it is the co-investor's, all of its kind are.
-    boxed.forEach((p) => {
-      if (p.role === 'co' || p.other || p.type === 'checkbox') return;
-      if (boxed.some((o) => o.role === 'co' && o.type === p.type && Math.abs(o.x - p.x) <= 3 && Math.abs(o.w - p.w) <= 3)) {
-        p.label = `Co-investor ${p.label}`;
-        coInvestor(p);
-      }
-    });
-    // Two boxes to initial or sign side by side on a row: the second is a second signer's, as on any agreement.
+    // A rule's proposal that overlaps a box's field is dropped: the box stands.
+    for (let i = mine.length - 1; i >= 0; i--) {
+      const p = mine[i];
+      if (made.some((f) => overlap(f.x, f.x + f.w, p.x, p.x + p.w) > 0 && overlap(f.y, f.y + f.h, p.y, p.y + p.h) > 0)) mine.splice(i, 1);
+    }
+    // K3, one column one answer: in a column of two or more boxes at least half of which are initials, every typed
+    // blank is initials too.
+    const cols = {};
     made.forEach((p) => {
-      if ((p.kind !== 'initials' && p.kind !== 'signature') || p.role === 'co' || p.other) return;
-      if (made.some((o) => o !== p && o.kind === p.kind && o.x + o.w <= p.x + 1 && p.x - (o.x + o.w) < 60 && overlap(o.y, o.y + o.h, p.y, p.y + p.h) > 0.5 * p.h)) Object.assign(p, { second: true, required: false, conf: 'low', why: WHY.second });
+      const c = BOXED.get(p).b.col;
+      if (c >= 0) (cols[c] = cols[c] || []).push(p);
     });
-    // A date beside a second signer's signature is the second signer's too.
+    Object.keys(cols).forEach((c) => {
+      const col = cols[c];
+      if (col.length < 2 || col.filter((p) => p.type === 'initials').length < 0.5 * col.length) return;
+      col.forEach((p) => {
+        if (p.type !== 'text') return;
+        Object.assign(p, { type: 'initials', kind: 'initials', required: true });
+        if (p.label === 'Box') p.label = 'Initials';
+        if (p.why === WHY_UNREAD) p.why = WHY_SLANT;
+      });
+    });
+    // K5: the single word "date" on the row of a signature box is that signature's date.
     made.forEach((p) => {
-      if (p.kind !== 'date') return;
-      const sig = made.filter((o) => o.kind === 'signature' && o.x + o.w <= p.x + 1 && overlap(o.y, o.y + o.h, p.y, p.y + p.h) > 0).sort((q, r) => r.x - q.x)[0];
-      if (sig && sig.role === 'co' && p.role !== 'co') {
-        p.label = 'Co-investor date';
-        coInvestor(p);
-      } else if (sig && sig.other) {
-        asOther(p, sig.other, false, WHY_OTHERS);
-        p.label = `${sig.other}: date`;
-      }
-      else if (sig && sig.second && !p.other) Object.assign(p, { second: true, required: false, conf: 'low', why: WHY.second });
+      const info = BOXED.get(p);
+      if (!info.date) return;
+      const row = made.filter((o) => o.type === 'signature' && overlap(o.y, o.y + o.h, p.y, p.y + p.h) > 0.5 * Math.min(o.h, p.h));
+      const sig = row.filter((o) => o.x < p.x).sort((a, b) => b.x - a.x)[0] || row[0];
+      if (!sig) return;
+      Object.assign(p, { type: 'date', kind: 'date' });
+      info.word = true;
+      info.sig = sig;
     });
+    made.forEach((p) => mark(p, WHY_SLANT));
+    mine.forEach((p) => mark(p, WHY_SLANT));
     made.forEach((p) => mine.push(p));
+    return notEmpty;
   }
   function read(pages, ctx) {
     const cx = ctx || {};
     const c = { names: [].concat(cx.firmNames || [], cx.fundNames || []).map(bare).filter((n) => n.length >= 4) };
-    const res = { fields: [], pages: 0, scanned: [], failed: [], errors: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], pictured: [], otherPages: [], others: 0, otherSignaturePages: [] };
+    const res = { fields: [], pages: 0, scanned: [], failed: [], errors: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], pictured: [], otherPages: [], others: 0, otherSignaturePages: [], notEmpty: 0 };
     let out = [];
     (pages || []).forEach((pg) => {
       if (!pg) return;
@@ -1483,17 +1499,30 @@
       res.pages++;
       if (pg.pictured) {
         res.pictured.push(pg.page);
-        fromPicture(pg, mine);
+        res.notEmpty += fromPicture(pg, mine);
       }
       out = out.concat(mine);
     });
+    // A box whose words were not read takes the kind of the boxes of its printed size (within 1 pt both ways) whose
+    // kind a word decided, anywhere on the agreement, when they all agree: it stays marked, named by that kind.
+    const sized = out.filter((p) => BOXED.has(p));
+    sized.forEach((p) => {
+      const i = BOXED.get(p);
+      if (i.read || p.type !== 'text') return;
+      const size = (o) => o.b.x1 - o.b.x0;
+      const tall = (o) => o.b.y1 - o.b.y0;
+      const like = sized.filter((o) => o !== p && BOXED.get(o).word && o.type !== 'checkbox' && Math.abs(size(BOXED.get(o)) - size(i)) <= 1 && Math.abs(tall(BOXED.get(o)) - tall(i)) <= 1);
+      const kinds = like.map((o) => o.type).filter((k, n, all) => all.indexOf(k) === n);
+      if (like.length && kinds.length === 1) Object.assign(p, { type: kinds[0], kind: kinds[0], label: KIND_SAID[kinds[0]], required: kinds[0] !== 'date', why: WHY_SIZE(kinds[0]) });
+    });
     const rank = { high: 0, medium: 1, low: 2 };
     out.sort((a, b) => a.page - b.page || a.y - b.y || a.x - b.x);
-    // No two proposed fields overlap: where two would, the one the reading is surer of stays.
+    // No two proposed fields overlap: where two would, the one the reading is surer of stays. A box found on a picture
+    // is a printed place by its pixels: its field is taken first.
     const keep = [];
     out
       .slice()
-      .sort((a, b) => rank[a.conf] - rank[b.conf])
+      .sort((a, b) => (b.boxed ? 1 : 0) - (a.boxed ? 1 : 0) || rank[a.conf] - rank[b.conf])
       .forEach((p) => {
         if (!(p.w > 0) || !(p.h > 0)) return;
         if (keep.some((o) => o.page === p.page && overlap(o.x, o.x + o.w, p.x, p.x + p.w) > 0.5 && overlap(o.y, o.y + o.h, p.y, p.y + p.h) > 0.5)) return;
