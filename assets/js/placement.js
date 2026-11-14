@@ -554,7 +554,7 @@
         if (taken.has(r) || r.clear < BLANK_CLEAR) return;
         // A stroke inside a run of words (two underscores in a name, a dash) is part of the text, not a blank.
         if (ln.parts.some((p) => p.t === 'text' && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0))) return;
-        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, leader: /leader/.test(r.made || ''), line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table };
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, leader: /leader/.test(r.made || ''), line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table, mark: r.mark || null };
         slots.push(slot);
         els.push({ t: 'slot', key: r.x0, slot });
       });
@@ -594,7 +594,7 @@
     });
     // A stroke in the body of a run of words (the bar of a letter, an equals sign) is part of the text, not a blank.
     const inText = (r) => lines.some((ln) => ln.parts.some((p) => p.t === 'text' && r.y > p.y - 0.8 * p.h && r.y < p.y + 0.2 * p.h && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0)));
-    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, leader: /leader/.test(r.made || ''), line: null, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table }));
+    free.forEach((r) => r.clear >= BLANK_CLEAR && !inText(r) && slots.push({ x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, leader: /leader/.test(r.made || ''), line: null, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table, mark: r.mark || null }));
     // Rows of a ruled table: each row's line runs under its label too, so the empty stretch begins where that row's
     // label ends. Nothing printed marks the column, so rows that end together start together, after the longest label.
     const cut = slots.filter((s) => s.cut).sort((a, b) => a.y - b.y);
@@ -635,6 +635,8 @@
   /** Proposed fields for one page. */
   function pageFields(pg, c, out) {
     const L = layout(pg);
+    // A sign-here mark printed in a cell ("X") speaks for that cell only: it is never the label of the cell beside it.
+    L.slots.forEach((s) => s.mark && L.segs.forEach((g) => g.x0 >= s.mark.x0 - 1 && g.x1 <= s.mark.x1 + 1 && Math.abs(g.y - s.mark.y) < 1 && (g.used = 'mark')));
     const made = []; // { p (the proposal), slot, seg, info, target }
     const propose = (kind, slot, info, opts) => {
       const K = KINDS[kind] || KINDS.other;
@@ -884,7 +886,8 @@
     const leftOf = (ln, e) => {
       for (let i = e.i - 1; i >= 0; i--) {
         const o = ln.els[i];
-        if (o.t !== 'seg') return null;
+        // (A sign-here mark belongs to its own cell: it is no label, and nothing before it is this blank's.)
+        if (o.t !== 'seg' || o.seg.used === 'mark') return null;
         if (!e.slot.fromText && o.seg.x1 > e.slot.x0 + 3) continue;
         return o;
       }
@@ -1208,6 +1211,8 @@
         const stamp = /\b(signature guarantee|medallion|seal|stamp)\b/.test(low);
         const info = Object.assign({ who: whoIn(plain(c.whole)), forType: '', optional: OPTIONAL_RE.test(low), colon: false, by: false }, info0 || {}, { text: c.whole, cell: true });
         if (!info0 || stamp || !(FIELD(info.kind) || info.kind === 'skip')) info.kind = 'other';
+        // Words of acceptance over a cell are where the acceptance is signed (whose, step 6 decides: see acceptParty).
+        if (acceptParty(c.whole)) Object.assign(info, { kind: 'signature', who: 'firm' });
         // Required: the section's condition first, then the kind (a signature as every signature of that person), then
         // the caption's own word for required.
         const cond = c.segs.length ? someCases(s, Math.min.apply(null, c.segs.map((g) => g.y - g.h))) : false;
@@ -1865,8 +1870,12 @@
     // A date or a blank on the same printed row as somebody else's signature, nearest to it of the row's signatures, is
     // that party's (the row rule, beside the column rule above); one beside an acceptance block in doubt is in the
     // same doubt. A place whose own label says whose it is keeps it.
+    // (A ruled row of cells is one person's to complete: a cell in the same ruled row as somebody else's signature cell
+    // is theirs, even where its caption speaks of the investor, "the investor's state of residence".)
+    const sameRow = (a, b) => a.slot && b.slot && a.slot.cell && b.slot.cell && Math.abs(a.slot.y - b.slot.y) <= 1.5 && Math.abs(a.slot.clear - b.slot.clear) <= 2;
     made.forEach((m) => {
-      if (!m.slot || m.other || m.co || m.p.second || m.labelWho || ['checkbox', 'signature', 'initials'].indexOf(m.kind) >= 0) return;
+      if (!m.slot || m.other || m.co || m.p.second || ['checkbox', 'signature', 'initials'].indexOf(m.kind) >= 0) return;
+      if (m.labelWho && !made.some((o) => o.other && o.kind === 'signature' && sameRow(o, m))) return;
       const row = made.filter((o) => o !== m && o.kind === 'signature' && o.slot && Math.abs(o.y - m.y) <= 3);
       const sig = row.sort((a, b) => Math.min(Math.abs(a.x1 - m.x0), Math.abs(m.x1 - a.x0)) - Math.min(Math.abs(b.x1 - m.x0), Math.abs(m.x1 - b.x0)))[0];
       // (A date beside a second investor's signature is the second investor's.)
