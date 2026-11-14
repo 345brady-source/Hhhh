@@ -166,6 +166,8 @@
   const OTHER_LIST = ['custodian', 'broker', 'dealer', 'advis[eo]r', 'ria', 'registered rep(resentative)?', 'purchaser representative', 'representative of', 'branch manager', 'transfer agent', 'preparer', 'attorney', 'counsel', 'medallion'];
   const OTHER_PARTY = new RegExp(`\\b(${OTHER_LIST.join('|')})\\b`, 'i');
   const SIGNING_WORDS = /\b(signature|sign|signed|signatory|by|initials?)\b/;
+  // The closing word of a letter, over the line its writer signs on.
+  const CLOSING_RE = /\b(sincerely( yours)?|(very )?truly yours|yours (truly|sincerely|faithfully)|respectfully( yours| submitted)?)\b/i;
   const SIG_RE = /^(by|signed|sign|signature|sign here|please sign|x|(authori[sz]ed )?(signature|signatory|signer|representative|officer|person)|(authori[sz]ed )?signature of .{2,60}|signature by .{2,40}|.{2,34}'?s? signature|signature and title)$/;
   const SIG_NOT = /\b(pages?|blocks?|guarantee[ds]?|required|requirements?|instructions?|lines?|sections?|cards?|date|follows?|below|above|see|counterparts?)\b/;
   const DATE_RE = /^(date|dated|date signed|date of (signature|signing|execution|this agreement|acceptance)|signature date|execution date|date executed|dated as of|acceptance date|date accepted)$/;
@@ -548,6 +550,17 @@
       if (info && info.optional && p.type !== 'signature') p.required = false;
       if (info && info.forType) p.forType = info.forType;
       const m = { p, slot, seg: o.seg || null, info: info || null, kind, block: !!K.block, who: o.who || (info && info.who) || '', x0: o.seg && o.how !== 'after' ? Math.min(o.seg.x0, slot.x0) : slot.x0, x1: slot.x1, y: slot.y };
+      // The printed label the field is named from (see the label rule in step 6).
+      m.said = info && info.text ? info.text : '';
+      // A label that itself names another party ("Name of dealer firm:", a custodian's account number) makes its own
+      // blank that party's, with no word of signing needed. A sentence never gets here (it has no label).
+      // One that names the investor's side as well ("Name of Trustee or Custodian", "the Subscriber's adviser") may be
+      // the investor's to complete: it is marked for the sponsor to confirm.
+      const party = info && info.kind !== 'skip' ? otherParty(info.text) : '';
+      if (party) {
+        m.other = party;
+        m.otherUnsure = /\b(trustees?|grantors?|signator(y|ies)|officers?|authori[sz]ed)\b/.test(plain(info.text)) || whoIn(plain(info.text)) === 'investor';
+      }
       // A currency or percent sign printed beside the blank is not written again in it.
       const el = slot.line ? slot.line.els.find((e) => e.t === 'slot' && e.slot === slot) : null;
       const prev = el ? slot.line.els[el.i - 1] : null;
@@ -565,6 +578,10 @@
       const m = propose(/\b(name|print|printed|date|dated|address|title|social|tax|e-?mail|phone)\b/.test(t) ? 'other' : 'signature', slot, null, { seg, label: info.text.replace(/\s*[:\uFF1A]\s*$/, ''), required: false });
       Object.assign(m, { second: true, block: false, co: !!info.co || CO_INVESTOR.test(t) });
       Object.assign(m.p, { second: true, conf: 'low', why: WHY.second });
+      // A line whose own label names a third party ("Signature of registered representative") is that party's: nobody's
+      // required field, unmarked (step 6). A witness's, a notary's, a spouse's or a second signer's line stays as it is.
+      const party = !SKIP_HARD.test(t) ? otherParty(info.text) : '';
+      if (party) m.other = party;
       return m;
     };
     // A short blank used as a place for a tick: a tick box over the blank, with its printed line inside it.
@@ -986,6 +1003,7 @@
         if (K.prefill) m.p.prefill = K.prefill;
         else delete m.p.prefill;
         m.kind = cap.kind;
+        m.said = cap.text;
         m.block = !!K.block;
         m.who = m.who || cap.who || (bareRole ? 'investor' : '');
       }
@@ -1061,19 +1079,46 @@
         const row = name ? [] : L.segs.filter((g) => !g.used && g.x1 <= sl.x0 + 3 && g.y > sl.y - Math.min(sl.clear + 4, 40) && g.y <= sl.y + 2 && g.s.length <= 70);
         const beside = row.length ? row.reduce((a, b) => (b.x1 > a.x1 ? b : a)) : null;
         const words = name ? name.s : beside ? row.filter((g) => Math.abs(g.x0 - beside.x0) <= 3).sort((a, b) => a.y - b.y).map((g) => g.s).join(' ') : '';
-        // Under words of signing with nothing else to say what it is, the line is where someone signs.
+        // Under words of signing with nothing else to say what it is, the line is where someone signs: words of execution
+        // in an agreement, or the closing word of a letter ("Sincerely,"). A letter's line is not taken for the investor's
+        // signature line: it is optional, as the reason says, and step 6 gives it to the letter's writer where the page
+        // shows who that is.
         const lead = L.segs.filter((g) => g.y < sl.y - 2 && sl.y - g.y <= 60 && overlap(g.x0, g.x1, sl.x0 - 40, sl.x1 + 40) > 0).sort((a, b) => b.y - a.y)[0];
-        const signs = !words && !!lead && /\b(in witness whereof|accepted( and agreed)? by|agreed( and accepted)? by|signed by|sincerely|very truly yours)\b/i.test(lead.s);
+        const executes = !words && !!lead && /\b(in witness whereof|accepted( and agreed)? by|agreed( and accepted)? by|signed by)\b/i.test(lead.s);
+        const closes = !words && !!lead && !executes && CLOSING_RE.test(lead.s);
+        const signs = executes || closes;
         // Words that name the line plainly (a caption right under it and set where it starts, a label ending in a colon
         // over it, a label on its own row beside it) leave no doubt; a line with no words of its own stays marked.
         const clear = name ? /^[([].*[)\]]$/.test(name.s) || (Math.abs(name.x0 - sl.x0) <= 12 && name.h < 0.93 * sl.line0) : !!beside && Math.abs(beside.y - sl.y) <= 4 && sl.x0 - beside.x1 <= 240;
-        const m = propose(signs ? 'signature' : 'other', sl, null, { seg: name, how: 'after', label: signs ? '' : words.replace(/^[([]\s*|\s*[)\]]$/g, '').replace(/\s*[:\uFF1A]\s*$/, '') || 'Text', required: signs || (clear && !OPTIONAL_RE.test(words.toLowerCase())) });
+        const m = propose(signs ? 'signature' : 'other', sl, null, { seg: name, how: 'after', label: signs ? '' : words.replace(/^[([]\s*|\s*[)\]]$/g, '').replace(/\s*[:\uFF1A]\s*$/, '') || 'Text', required: executes || (!signs && clear && !OPTIONAL_RE.test(words.toLowerCase())) });
         if (!clear || signs) Object.assign(m.p, { conf: 'low', why: WHY.unknown });
+        if (closes) {
+          m.closing = true;
+          m.p.closing = true;
+        }
       });
 
     /* 6. Whose field it is, and which kind of investor gets it. */
     // Headings: short lines in capitals, ending in a colon or set as a title, that name a side, the firm or a kind of investor.
     const heads = [];
+    // The same words at the same place as on the page before (a running header or footer, its page number aside).
+    const sameAs = (ln) => !!c.lastLines && c.lastLines.page === pg.page - 1 && c.lastLines.lines.some((o) => Math.abs(o.y - ln.y) <= 2 && o.t === ln.text.replace(/\d+/g, '#'));
+    // A printed line that goes on with the paragraph above it: that line is close above, ends with no stop and runs
+    // on to the right-hand edge of the text ("... a registered representative or a" / "Principal of a dealer firm").
+    const runOn = (ln) => {
+      const up = L.lines[ln.i - 1];
+      if (!up || !up.text || !up.els.length || ln.y - up.y > 1.9 * Math.max(ln.h, up.h) || /[.:;?!]["”)]?$/.test(up.text)) return false;
+      const last = up.els[up.els.length - 1];
+      return last.t === 'seg' && last.seg.x1 >= rightEdge - 72;
+    };
+    /** A printed line set as a heading of any kind: words only, short, in capitals, ending in a colon or set as a title. */
+    const headingLine = (ln) => {
+      if (!ln.text || ln.text.length > 80 || !ln.els.length || ln.els.some((e) => e.t !== 'seg' || e.seg.used) || sameAs(ln) || runOn(ln)) return false;
+      const n = wordsOf(plain(ln.text)).length;
+      if (!n || n > 12 || /^[a-z]/.test(ln.text)) return false;
+      const big = wordsOf(ln.text).filter((w) => w.length > 3);
+      return (/[A-Z]{2}/.test(ln.text) && ln.text === ln.text.toUpperCase()) || /[:：]\s*$/.test(ln.text) || (n <= 9 && big.length > 0 && big.filter((w) => /^[A-Z(“"]/.test(w)).length >= 0.6 * big.length);
+    };
     L.lines.forEach((ln) => {
       ln.els.forEach((e) => {
         if (e.t !== 'seg' || e.seg.used === 'box') return;
@@ -1099,7 +1144,8 @@
         const named = !who && !/\b(pages?|agreement|questionnaire|subscription|booklet|exhibit|appendix|schedule|memorandum)\b/.test(t) && c.names.some((nm) => bare(raw).indexOf(nm) >= 0);
         // A printed company name over a block ("... GP, LLC" then By / Name / Title) is the firm's: an investor's own
         // name is never printed in the agreement.
-        const company = !who && n <= 9 && /\b(l\.?l\.?c|l\.?p|l\.?l\.?p|inc|ltd|corp|corporation|gp|limited|plc)\.?,?$/i.test(raw) && /[A-Z]/.test(raw[0]) && !/[:\uFF1A]/.test(raw);
+        // (The last printed line of a paragraph that happens to end in a company's name is no such heading.)
+        const company = !who && n <= 9 && /\b(l\.?l\.?c|l\.?p|l\.?l\.?p|inc|ltd|corp|corporation|gp|limited|plc)\.?,?$/i.test(raw) && /[A-Z]/.test(raw[0]) && !/[:\uFF1A]/.test(raw) && !runOn(ln);
         const next = ln.els[e.i + 1];
         const info = classify(raw);
         const isKnown = !!(info && (FIELD(info.kind) || info.kind === 'skip') && info.kind !== 'other');
@@ -1107,7 +1153,9 @@
         if (SKIP_HARD.test(t) && n <= 6 && (colon || (/[A-Z]{2}/.test(shout) && shout === shout.toUpperCase())) && !(next && next.t === 'slot')) return heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who: '', skip: true, co: CO_INVESTOR.test(t), seg });
         // A heading that names another party ("CUSTODIAN DETAILS:"): set as a heading, short, with no blank on its own
         // printed line and not a label already. The places under it are that party's (see the role loop).
-        const party = !seg.used && n <= 8 && (caps || colon || titled) && !ln.els.some((x) => x.t === 'slot') ? otherParty(raw) : '';
+        // ("TO BE COMPLETED BY THE INTRODUCING DEALER FIRM:", in capitals and ending in a colon, may run to 12 words.)
+        // It never opens with a small letter and never goes on with the paragraph above it.
+        const party = !seg.used && (n <= 8 || (n <= 12 && caps && colon)) && (caps || colon || titled) && !ln.els.some((x) => x.t === 'slot') && !/^[a-z]/.test(raw) && !runOn(ln) ? otherParty(raw) : '';
         if (party) return heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who: '', skip: true, other: party, seg });
         if (seg.used || (next && next.t === 'slot')) {
           // A label speaks for the lines under it only when it names a side outright or says whose line it is.
@@ -1127,6 +1175,14 @@
     });
     // A heading that closed the page before, with nothing under it there, governs this page from its top.
     if (c.carry && c.carry.page === pg.page - 1) heads.push(Object.assign({}, c.carry.head, { y: -1, x0: 0, x1: pg.w, top: true, mid: true, seg: {} }));
+    // So does the last heading for another party on the page before, when no place and no other heading follows it
+    // there, however much running text does (an attachment explained on one page, its form on the next). It governs
+    // this page down to the first heading of any kind.
+    if (c.carryOther && c.carryOther.page === pg.page - 1) heads.push(Object.assign({}, c.carryOther.head, { y: -1, x0: 0, x1: pg.w, top: true, mid: true, seg: {}, carried: true }));
+    const lastOther = heads.filter((hd) => hd.skip && hd.other && hd.y > 0).sort((a, b) => b.y - a.y)[0];
+    const headLines = L.lines.filter(headingLine);
+    c.carryOther = lastOther && !made.some((m) => m.y > lastOther.y) && !heads.some((hd) => hd !== lastOther && hd.y > lastOther.y && !(hd.seg && hd.seg.line && runOn(hd.seg.line))) && !headLines.some((ln) => ln.y > lastOther.y + 2) ? { page: pg.page, head: lastOther } : null;
+    c.lastLines = { page: pg.page, lines: L.lines.map((ln) => ({ y: ln.y, t: ln.text.replace(/\d+/g, '#') })) };
     const closing = heads.filter((hd) => !hd.label && !hd.skip && !hd.blocker && (hd.who || hd.forType || hd.named) && hd.y > 0 && (made.some((m) => m.block && m.y > hd.y) || (hd.y > 0.6 * pg.h && !made.some((m) => m.y > hd.y)))).sort((a, b) => b.y - a.y)[0];
     c.carry = closing ? { page: pg.page, head: closing } : null;
     heads.sort((a, b) => b.y - a.y);
@@ -1137,7 +1193,20 @@
       // A heading beside the blank's column governs it only when nothing of its own stands under it.
       return !things.some((g) => g.y > hd.y + 2 && g.y <= m.y + 4 && overlap(g.x0, g.x1, hd.x0, hd.x1) > 0 && overlap(g.x0, g.x1, m.x0, m.x1) <= 0);
     };
+    /** Label rule 1: a place named from a printed label of its own carries the document's own words, its kind in kind. */
+    const ownLabel = (m) => {
+      if (!m.said || !FIELD(m.kind) || !ownWords(m.said)) return;
+      m.p.label = clean(ownWords(m.said));
+    };
     const sigBetween = (y0, y1, m) => sigs.some((s) => s !== m && s.y > y0 + 2 && s.y < y1 - 2 && overlap(s.x0, s.x1, m.x0, m.x1) > 0);
+    // A heading for another party governs a whole printed row: when it governs the first place on a row, it governs
+    // the places after it on that row too ("NAME OF CUSTODIAN: ____   TAX ID: ____"). A heading carried from the page
+    // before stops at the first heading of any kind on this page.
+    const governsOther = (hd, m) => {
+      if (hd.carried && (heads.some((o) => !o.carried && o.y > 0 && o.y < m.y - 2) || headLines.some((ln) => ln.y < m.y - 2))) return false;
+      if (governs(hd, m)) return true;
+      return !!(m.slot && m.slot.line) && made.some((o) => o !== m && o.slot && o.slot.line === m.slot.line && o.x1 <= m.x0 + 3 && governs(hd, o));
+    };
     made.forEach((m) => {
       const p = m.p;
       const own = m;
@@ -1161,16 +1230,18 @@
         let bound = false; // a heading of another kind stands between this place and any heading further up
         for (let i = 0; i < heads.length; i++) {
           const hd = heads[i];
-          if (!governs(hd, own)) continue;
+          if (!(hd.skip && hd.other ? governsOther(hd, own) : governs(hd, own))) continue;
           if (hd.skip && hd.other) {
             // Under a heading that names another party, down to the next heading of any kind: that party's place.
             // A line of its own for a second signer, a witness or a notary stays theirs; one whose label names a
-            // third party (or none) is the heading's party's.
+            // third party (or none) is the heading's party's, or the party its own label names.
             if (bound) continue;
             // (p.second, not m.second: on an address's continuation lines m.second only says "the line after the second".)
-            if (!m.co && (!p.second || otherParty(m.info ? m.info.text : p.label))) m.other = hd.other;
+            if (!m.co && (!p.second || otherParty(m.info ? m.info.text : p.label))) m.other = m.other || hd.other;
+            m.otherUnsure = false; // the heading settles whose it is
             role = 'investor';
             sure = true;
+            m.headed = true;
             break;
           }
           if (hd.skip) {
@@ -1182,6 +1253,7 @@
             }
             role = 'investor';
             sure = true;
+            m.headed = true;
             break;
           }
           // Another line's label never says who signs a different signature line, and speaks only up to the next one.
@@ -1204,6 +1276,7 @@
               sure = others < (own.kind === 'signature' ? 1 : 2);
               if (!sure) m.aboveSig = true;
             }
+            m.headed = true;
             break;
           }
           if (m.block && hd.named && hd.y > 0.1 * pg.h) named = named || hd;
@@ -1214,6 +1287,7 @@
         if (!role) {
           role = 'investor';
           sure = !m.block;
+          m.free = true; // nothing on the page said whose it is (see the lines that follow a signature, below)
         }
       }
       p.role = role;
@@ -1237,15 +1311,58 @@
         }
       }
       if (m.other) {
-        asOther(p, m.other, true);
+        asOther(p, m.other, !m.otherUnsure);
         m.second = true;
         // Label rule 1: a place with a printed label of its own is named in the document's own words, whatever its
         // kind (the kind stays in kind): a custodian's telephone is not the investor's "Phone".
-        if (m.info && m.seg && FIELD(m.kind) && ownWords(m.info.text)) p.label = clean(ownWords(m.info.text));
+        ownLabel(m);
       } else if (m.block && !sure) weaken(m, m.aboveSig ? WHY.aboveSig : WHY.who);
       // A place of somebody else's lends no side to the blanks beside it: each finds its own heading.
       if (!m.other) m.who = m.who || (sure ? role : '');
     });
+    /* 6b. Somebody else's lines that nothing above says are theirs. */
+    const toOther = (m, party) => {
+      m.other = party;
+      m.second = true;
+      asOther(m.p, party, true);
+      ownLabel(m);
+    };
+    // A letter that speaks of the investor in the third person and of its writer in the first person singular, signed
+    // on a bare line under its closing word: the line is the writer's, and so is every other place on the page that no
+    // heading gives to someone (the blanks in its sentences, the name, date and phone under the signature).
+    const pageWords = L.lines.map((ln) => ln.text).join(' ');
+    const letter = /\bI\b/.test(pageWords) && /\b(my|me)\b/i.test(pageWords) && /\b(the|such|said)\s+[“"'‘]?(subscribers?|investors?|purchasers?|applicants?|clients?|limited partners?)\b/i.test(pageWords);
+    // (A line that mentions the investor over such a letter, "Re: the Subscriber's status", speaks of the investor in
+    // the third person too: only a heading for the firm, or for a third party, keeps its places.)
+    if (letter && made.some((m) => m.closing && m.p.role !== 'firm')) made.forEach((m) => m.kind !== 'checkbox' && !m.co && m.p.role !== 'firm' && !m.other && !m.p.second && toOther(m, 'Third party'));
+    // The printed name, date, title and phone lines in the same column right under a signature line, with no heading
+    // between, follow that signature: somebody else's under somebody else's signature (never asked whether the
+    // investor or the firm fills them in), a second signer's under a second signer's, as on a page read from its picture.
+    const FOLLOWS = ['name', 'date', 'title', 'nameTitle', 'phone'];
+    const sigAbove = (m) => {
+      let cur = m;
+      for (let k = 0; k < 6; k++) {
+        const up = made.filter((o) => o !== cur && o.slot && o.y < cur.y - 2 && cur.y - o.y <= 72 && overlap(o.x0, o.x1, cur.x0, cur.x1) > 0).sort((a, b) => b.y - a.y)[0];
+        if (!up || heads.some((hd) => !hd.carried && hd.y > up.y + 2 && hd.y < cur.y - 2 && overlap(hd.x0, hd.x1, cur.x0, cur.x1) > 0)) return null;
+        if (up.kind === 'signature') return up;
+        if (FOLLOWS.indexOf(up.kind) < 0) return null;
+        cur = up;
+      }
+      return null;
+    };
+    made
+      .filter((m) => m.free && m.slot && !m.other && !m.co && !m.p.second && FOLLOWS.indexOf(m.kind) >= 0)
+      .sort((a, b) => a.y - b.y)
+      .forEach((m) => {
+        const sig = sigAbove(m);
+        if (!sig) return;
+        if (sig.other) return toOther(m, sig.other);
+        if (sig.p.second && !sig.co && sig.p.role !== 'co') {
+          m.second = true;
+          delete m.p.prefill;
+          Object.assign(m.p, { second: true, required: false, conf: 'low', why: WHY.second });
+        }
+      });
     made.forEach((m) => out.push(m.p));
   }
 
@@ -1511,7 +1628,9 @@
       else if (p.type === 'signature' || p.type === 'initials') res.signatures++;
       else res.blanks++;
       const list = p.role === 'firm' ? res.firmPages : res.investorPages;
-      if (p.type === 'signature' && !p.second && list.indexOf(p.page) < 0) list.push(p.page);
+      // A bare line under a letter's closing word is never taken for the investor's signature line.
+      if (p.type === 'signature' && !p.second && !p.closing && list.indexOf(p.page) < 0) list.push(p.page);
+      delete p.closing;
       // Places for somebody else: how many, the pages they are on, and the pages with a signature line of theirs.
       if (isOther(p)) {
         res.others++;
