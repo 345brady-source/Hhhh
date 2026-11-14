@@ -23,7 +23,8 @@
  *                                            pictured  'picture' or 'drawings'
  *                                            approx    true for a picture: positions come from its pixels
  *                                            words     the read words, in points, each with conf (0 to 100)
- *                                            found     every box: { x0, y0, x1, y1, small, ink, shared, place, why,
+ *                                            found     every box: { x0, y0, x1, y1, outer (the outer edge of its
+ *                                                      ink, NS.picturepage.find), small, ink, shared, place, why,
  *                                                      col, inside (its words as plain text), bands { over, under,
  *                                                      before, after, inside: each { s, conf } } }
  *                                            lines     every free rule: { x0, x1, y, t, bands { over, under, before, after } }
@@ -586,7 +587,7 @@
         const b = toPt(r);
         const m = { x0: at.x(r.x0 + 0.5), y0: at.y(r.y0 + 0.5), x1: at.x(r.x1 - 0.5), y1: at.y(r.y1 - 0.5), t: t0 };
         const inside = read.words.filter((q) => q.letters && (q.x0 + q.x1) / 2 > b.x0 && (q.x0 + q.x1) / 2 < b.x1 && (q.y0 + q.y1) / 2 > b.y0 && (q.y0 + q.y1) / 2 < b.y1);
-        out.found.push(Object.assign({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, small: r.small, ink: r.ink, shared: r.shared, place: r.place, why: r.why, col: r.col, inside: inside.map((q) => q.s).join(' '), bands: bandsOf('box', i, SIDES) }, r.row ? { row: true } : null));
+        out.found.push(Object.assign({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, outer: toPt(r.outer || r), small: r.small, ink: r.ink, shared: r.shared, place: r.place, why: r.why, col: r.col, inside: inside.map((q) => q.s).join(' '), bands: bandsOf('box', i, SIDES) }, r.row ? { row: true } : null));
         // A box full of print (a letter or a mark the finder took for a frame) is print to the line rules, not a frame.
         if (r.why === 'filled') return;
         out.rects.push(m);

@@ -11,7 +11,9 @@
  *       pxPerPt   how many pixels of the picture make one point of the page
  *       opts      { ink } the share of the picture's range from paper to print at which a pixel counts as a stroke
  *     returns { paper, print, range, tau, boxes, rules }, boxes and rules in reading order (top edge, then left edge):
- *       boxes   [{ x0, y0, x1, y1 (pixels, the outer edge of the frame), w, h (the paper inside, pixels),
+ *       boxes   [{ x0, y0, x1, y1 (pixels, the outer edge of the frame), outer { x0, y0, x1, y1 } (pixels, the
+ *                  outer edge of the frame's ink: past x0..y1 where a stroke is wider than a pixel or falls between
+ *                  two, by at most 1.5 pt; what a field on the box covers), w, h (the paper inside, pixels),
  *                  ink (the share of the inside that is as dark as print), small (both sides at most 14 pt),
  *                  shared (a stroke of it is also a side of a neighbouring patch: the cell of a ruled table),
  *                  place (an empty place a person completes), why ('' for a place; else 'filled': print inside,
@@ -211,7 +213,41 @@
       // Print inside is reported; it never decides whether the patch is a box.
       const print = bw > 2 && bh > 2 ? share(x0 + 1, y0 + 1, x1 - 1, y1 - 1, isPrint) : 0;
       // The rectangle reported is the core grown by the stroke round it.
-      return { x0: x0 - 1, y0: y0 - 1, x1: x1 + 2, y1: y1 + 2, w: bw, h: bh, ink: print, small: false, shared: false, place: true, why: '' };
+      const fx0 = x0 - 1;
+      const fy0 = y0 - 1;
+      const fx1 = x1 + 2;
+      const fy1 = y1 + 2;
+      // Its outer ink edge (outer): a stroke wider than a pixel, or one that falls between two pixels, leaves ink past
+      // that rectangle. Each side goes out a pixel at a time while the next row or column along the side is still ink
+      // (its mean as dark as half the stroke level), past the first pixel only while it is no darker than the one
+      // before it (a stroke fades outward; a neighbour's stroke does not), and never more than 1.5 pt. (A side that
+      // would reach into another box is taken back once every box is known: see find.)
+      const meanCol = (x) => {
+        let sum = 0;
+        for (let y = y0; y <= y1; y++) sum += dark[y * w + x];
+        return sum / bh;
+      };
+      const meanRow = (y) => {
+        let sum = 0;
+        for (let i = y * w + x0, e = y * w + x1; i <= e; i++) sum += dark[i];
+        return sum / bw;
+      };
+      const reach = Math.floor(1.5 * s);
+      const out = (from, step, mean, limit) => {
+        let at = from;
+        let last = mean(from);
+        for (let k = 0; k < reach; k++) {
+          const next = at + step;
+          if (next < 0 || next >= limit) break;
+          const v = mean(next);
+          if (v < 0.5 * tau || (k > 0 && v > last)) break;
+          at = next;
+          last = v;
+        }
+        return at;
+      };
+      const outer = { x0: out(fx0, -1, meanCol, w), y0: out(fy0, -1, meanRow, h), x1: out(fx1 - 1, 1, meanCol, w) + 1, y1: out(fy1 - 1, 1, meanRow, h) + 1 };
+      return { x0: fx0, y0: fy0, x1: fx1, y1: fy1, outer, w: bw, h: bh, ink: print, small: false, shared: false, place: true, why: '' };
     };
 
     // Every patch of free pixels, filled with a stack of its own (a page is far too deep for recursion).
@@ -253,6 +289,24 @@
     // A box that holds another box is a frame round it, not a place.
     const holds = (r, o) => o !== r && o.x0 >= r.x0 - 1 && o.x1 <= r.x1 + 1 && o.y0 >= r.y0 - 1 && o.y1 <= r.y1 + 1;
     boxes = boxes.filter((r) => !boxes.some((o) => holds(r, o)));
+    // A side of a box's outer ink edge that reaches into another box (its frame or the ink past it: two boxes that
+    // touch or stand a pixel apart) goes back to the frame's edge, so that two boxes never come to share more than
+    // their frames do. Decided first against the other boxes' frames, then against their outer edges as they then
+    // stand; each time on every box first, then applied.
+    const takeBack = (of) => {
+      const hits = (x0, y0, x1, y1, me) => x1 > x0 && y1 > y0 && boxes.some((o) => o !== me && Math.min(x1, of(o).x1) > Math.max(x0, of(o).x0) && Math.min(y1, of(o).y1) > Math.max(y0, of(o).y0));
+      boxes
+        .map((b) => {
+          const e = b.outer;
+          return [hits(e.x0, b.y0, b.x0, b.y1, b), hits(b.x0, e.y0, b.x1, b.y0, b), hits(b.x1, b.y0, e.x1, b.y1, b), hits(b.x0, b.y1, b.x1, e.y1, b)];
+        })
+        .forEach((back, k) => {
+          const b = boxes[k];
+          b.outer = { x0: back[0] ? b.x0 : b.outer.x0, y0: back[1] ? b.y0 : b.outer.y0, x1: back[2] ? b.x1 : b.outer.x1, y1: back[3] ? b.y1 : b.outer.y1 };
+        });
+    };
+    takeBack((o) => o);
+    takeBack((o) => o.outer);
 
     /* Whether each box is an empty place a person completes: decided from its pixels and its shape, never from a word. */
     // Shared: the stroke along one of its sides is also the side of a neighbouring patch (the cells of a ruled table).
