@@ -304,6 +304,33 @@ async function shapes(page) {
     return { n: r.fields.length, cb: r.fields.filter((f) => 'checkBy' in f).length };
   });
   line(text.n === 1 && text.cb === 0, `shapes checkBy a proposal of a text page carries none (${text.n} field, ${text.cb} with checkBy)`);
+  // Places nobody completes (the scan set's classes), each beside its control.
+  const nobody = await page.evaluate(() => {
+    const P = window.CVPortal.placement;
+    const band = (s) => ({ s: s || '', conf: s ? 90 : 0 });
+    const bands = (o) => ({ over: band(o && o.over), under: band(o && o.under), before: band(o && o.before), after: band(o && o.after), inside: band(o && o.inside) });
+    const box = (x0, y0, x1, y1, more) => Object.assign({ x0, y0, x1, y1, small: x1 - x0 <= 14 && y1 - y0 <= 14, ink: 0, shared: false, place: true, why: '', col: -1, inside: '', bands: bands() }, more || {});
+    const rule = (x0, x1, y) => ({ x0, x1, y, clear: 14, made: 'rule', cut: false, cell: false, table: false });
+    const line = (x0, x1, y, b) => ({ x0, x1, y, t: 1, bands: bands(b) });
+    const pg = (found, items, rules, lines) => ({ page: 1, w: 612, h: 792, items, rules, boxes: [], forms: [], pictured: 'picture', approx: true, found, words: [], lines, heads: [], reader: 'ok' });
+    const got = (r) => r.fields.map((f) => ({ x0: f.x, x1: f.x + f.w, y: f.y, label: f.label, boxed: !!f.boxed }));
+    const pct = [{ s: 'Percentage', x: 300, y: 300, w: 40, h: 7 }];
+    const pctRule = rule(345, 400, 300);
+    const pctLine = line(345, 400, 300, { before: 'Percentage' });
+    return {
+      edge: got(P.read([pg([box(100, 200, 115.6, 215.6, { place: false, why: 'filled' })], pct, [rule(99.5, 117, 200), pctRule], [line(99.5, 117, 200), pctLine])], {})),
+      edge0: got(P.read([pg([], pct, [rule(99.5, 117, 200), pctRule], [line(99.5, 117, 200), pctLine])], {})),
+      piece: got(P.read([pg([], [{ s: 'Name', x: 70, y: 400, w: 25, h: 7 }, { s: '|', x: 190, y: 400, w: 3, h: 7 }], [rule(100, 188.8, 400), rule(196.8, 300, 400)], [line(100, 300, 400)])], {})),
+      piece0: got(P.read([pg([], [{ s: 'Name', x: 70, y: 400, w: 25, h: 7 }, { s: 'ST', x: 190, y: 400, w: 12, h: 7 }], [rule(100, 186, 400), rule(206, 300, 400)], [line(100, 300, 400)])], {})),
+      cell: got(P.read([pg([box(100, 100, 400, 200, { place: false, why: 'filled' }), box(100, 200.5, 400, 300)], [], [], [])], {})),
+      cellSaid: got(P.read([pg([box(100, 100, 400, 200, { place: false, why: 'filled' }), box(100, 200.5, 400, 300, { bands: bands({ under: 'Stamp here' }) })], [], [], [])], {})),
+      panel: got(P.read([pg([box(100, 200.5, 400, 300)], [], [], [])], {}))
+    };
+  });
+  const at = (list, x0, y) => list.some((f) => Math.abs(f.x0 - x0) < 1 && Math.abs(f.y + 13 - y) < 2);
+  line(!at(nobody.edge, 99.5, 200) && nobody.edge.length === 1 && at(nobody.edge0, 99.5, 200) && nobody.edge0.length === 2, `shapes nobody: the top edge of a ticked box is no line to write on (${nobody.edge.length} field; without the box ${nobody.edge0.length})`);
+  line(nobody.piece.length === 1 && Math.abs(nobody.piece[0].x1 - 300) < 0.5 && nobody.piece0.length === 2, `shapes nobody: a line read in two pieces with a speck between is one field over the whole line (${nobody.piece.length} field, to ${nobody.piece.length ? nobody.piece[0].x1.toFixed(1) : '-'} pt); a blank after a printed word stays its own (${nobody.piece0.length})`);
+  line(!nobody.cell.length && nobody.cellSaid.length === 1 && nobody.panel.length === 1 && nobody.panel[0].label === 'Box', `shapes nobody: an empty cell beside a table cell holding print gets no field (${nobody.cell.length}); with its own caption it does (${nobody.cellSaid.length}); a lone empty panel does, named by its shape (${nobody.panel.length})`);
 }
 
 /* ---------------- the owner's form ---------------- */

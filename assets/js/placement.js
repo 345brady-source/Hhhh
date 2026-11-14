@@ -2021,10 +2021,34 @@
     const inMargin = (l) => margins.some((hd) => l.y >= hd.y0 && l.y <= hd.y1 && l.x0 < hd.x1 - 2);
     const onRule = (p) => (pg.lines || []).some((l) => !inMargin(l) && Math.abs(l.y - (p.y + p.h)) <= 3 && overlap(l.x0, l.x1, p.x, p.x + p.w) >= 0.5 * p.w);
     for (let i = mine.length - 1; i >= 0; i--) if (!onRule(mine[i])) mine.splice(i, 1);
+    // A free rule that is the top or foot edge of a found box (a box holding print, such as a ticked box, included) is
+    // that box's frame, never a line to write on.
+    const ruleOf = (p) => (pg.lines || []).find((l) => !inMargin(l) && Math.abs(l.y - (p.y + p.h)) <= 3 && overlap(l.x0, l.x1, p.x, p.x + p.w) >= 0.5 * p.w);
+    const edge = (l) => !!l && found.some((b) => (Math.abs(l.y - b.y0) <= 1.5 || Math.abs(l.y - b.y1) <= 1.5) && overlap(l.x0, l.x1, b.x0, b.x1) >= 0.8 * (l.x1 - l.x0));
+    for (let i = mine.length - 1; i >= 0; i--) if (edge(ruleOf(mine[i]))) mine.splice(i, 1);
+    // One line read in pieces: a piece named by no word (the line rules' own 'Text', or two letters or fewer: a speck
+    // read on the line) that goes on from a field on the same rule within 9 pt is part of that field, which runs on over it.
+    const letters = (t) => String(t || '').replace(/[^\p{L}]/gu, '').length;
+    mine.sort((a, b) => a.y - b.y || a.x - b.x);
+    for (let i = mine.length - 1; i > 0; i--) {
+      const p = mine[i];
+      const q = mine.slice(0, i).reverse().find((o) => !!ruleOf(p) && ruleOf(o) === ruleOf(p) && o.x + o.w <= p.x + 0.5);
+      if (!q || p.x - (q.x + q.w) > 9 || (letters(p.label) > 2 && p.label !== 'Text')) continue;
+      q.w = p.x + p.w - q.x;
+      mine.splice(i, 1);
+    }
+    // A box with no word read by it that shares an edge with a cell of a ruled table (a cell holding print, or one the
+    // finder knows for a table's) is a cell of that table, not one place to write: its places are the lines and boxes
+    // found inside it.
+    const said = (b) => ['over', 'under', 'before', 'after', 'inside'].some((k) => /[\p{L}\p{N}]/u.test((b.bands && b.bands[k] && b.bands[k].s) || ''));
+    const shares = (b, o) =>
+      ((Math.abs(b.y0 - o.y1) <= 2 || Math.abs(b.y1 - o.y0) <= 2) && overlap(b.x0, b.x1, o.x0, o.x1) >= 0.5 * Math.min(b.x1 - b.x0, o.x1 - o.x0)) ||
+      ((Math.abs(b.x0 - o.x1) <= 2 || Math.abs(b.x1 - o.x0) <= 2) && overlap(b.y0, b.y1, o.y0, o.y1) >= 0.5 * Math.min(b.y1 - b.y0, o.y1 - o.y0));
+    const emptyCell = (b) => !b.small && !said(b) && found.some((o) => o !== b && o.place === false && (o.why === 'filled' || o.why === 'table') && shares(b, o));
     const made = [];
     let notEmpty = 0;
     found.forEach((b) => {
-      if (b.place !== false) made.push(boxField(pg, b, found));
+      if (b.place !== false && !emptyCell(b)) made.push(boxField(pg, b, found));
       else if (b.why === 'filled' || b.why === 'table') notEmpty++;
     });
     // A rule's proposal that overlaps a box's field is dropped: the box stands.
