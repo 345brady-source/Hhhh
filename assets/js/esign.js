@@ -1660,11 +1660,14 @@
     unreadPages(env)
       ? `<p class="es-note es-offer">${icon('alert')}<span>${unreadPages(env) === 1 ? 'One page has' : `${unreadPages(env)} pages have`} no text, only a picture of the page, so nothing was placed there. The portal can try to read ${unreadPages(env) === 1 ? 'that page from its picture' : 'those pages from their picture'}. It takes a few seconds a page, and every field it places that way must be checked.</span><button class="cs-btn cs-btn-small" type="button" data-action="es-read-pictures">Read these pages from their picture</button></p>`
       : '';
+  // The progress while pages are read from their picture: the page whose words are read, or, after the time for words is
+  // used up, the page whose boxes are found.
+  const pictureStep = (i, all, boxes) => (boxes ? `Finding the boxes on page ${i} of ${all}…` : `Reading page ${i} of ${all} from its picture…`);
   async function readPictures(env, el) {
     if (el.disabled) return;
     el.disabled = true;
     el.textContent = 'Reading the PDF…';
-    await rereadAgreement(env, { pictures: true, step: (i, all) => (el.textContent = `Reading page ${i} of ${all} from its picture…`) });
+    await rereadAgreement(env, { pictures: true, step: (i, all, boxes) => (el.textContent = pictureStep(i, all, boxes)) });
     if (editorEnv() !== env) return NS.app.save(true);
     if (!env.fields.some((f) => f.id === esUi().sel)) esUi().sel = null;
     NS.app.save(true);
@@ -1691,7 +1694,7 @@
     if (el.disabled) return;
     el.disabled = true;
     el.textContent = 'Reading the PDF…';
-    await rereadAgreement(env, { pictures: el.getAttribute('data-pictures') === '1', step: (i, all) => (el.textContent = `Reading page ${i} of ${all} from its picture…`) });
+    await rereadAgreement(env, { pictures: el.getAttribute('data-pictures') === '1', step: (i, all, boxes) => (el.textContent = pictureStep(i, all, boxes)) });
     U.closeDialog();
     if (editorEnv() !== env) return NS.app.save(true);
     if (!env.fields.some((f) => f.id === esUi().sel)) esUi().sel = null;
@@ -2819,12 +2822,15 @@
    * A page with no text (its letters are drawings, or it is a picture of a page) is read from its picture by
    * NS.textread and comes back with pictured set, and with reader saying whether its words could be read (a page whose
    * words could not be read is still read from its picture: its boxes are found without them); when the page cannot be
-   * drawn or searched it comes back as a scan with unread saying why: 'time' (the page took too long), 'limit' (the time
-   * allowed for the whole document was used up) or 'fail'. opts: { pictures: true to read such pages from their picture (the
-   * sponsor asked for it); step(page, pages) called before each such page is read;
+   * drawn or searched it comes back as a scan with unread saying why: 'time' (the page took too long) or 'fail'. Words are
+   * read for at most limitMs for one document (the time spent in NS.textread.page): after that each remaining such page
+   * is still drawn and searched without its words (reader 'limit'), so its boxes get fields named by their shape and
+   * marked, and nothing already placed is taken away. opts: { pictures: true to read such pages from their picture (the
+   * sponsor asked for it); step(page, pages, boxes) called before each such page is read (boxes true when only its boxes
+   * are found); limitMs (PICTURE_LIMIT_MS when not given);
    * kept: true to use the last reading of this file, or read without pictures (for snapping, where waiting is not worth it) }.
    */
-  const PICTURE_LIMIT_MS = 150000; // reading pages from their pictures stops after this long for one document
+  const PICTURE_LIMIT_MS = 180000; // words on pages read from their pictures are read for at most this long for one document
   let layoutKept = null;
   async function pageLayout(docId, opts) {
     const op = opts || {};
@@ -2836,6 +2842,7 @@
     const out = [];
     let spent = 0;
     let pictured = false;
+    const limitMs = op.limitMs > 0 ? op.limitMs : PICTURE_LIMIT_MS;
     try {
       for (let i = 1; i <= doc.numPages; i++) {
         const size = { page: i, w: 0, h: 0 };
@@ -2855,19 +2862,18 @@
           // A page with no text is read from its picture only when the sponsor asked for it (op.pictures): otherwise it
           // is reported as a page that could not be read, and nothing is placed on it.
           if (NS.textread && op.pictures && !op.kept && NS.anchors.textless(raw)) {
-            if (spent > PICTURE_LIMIT_MS) unread = 'limit';
-            else {
-              if (op.step) op.step(i, doc.numPages);
-              const t0 = Date.now();
-              try {
-                use = await NS.textread.page(page, raw);
-                pictured = true;
-              } catch (e) {
-                console.error('Reading page ' + i + ' of the agreement from its picture failed:', e);
-                unread = (e && e.code) || 'fail';
-              }
-              spent += Date.now() - t0;
+            // Past the time for words, the page is still drawn and searched: its boxes are found, their words not read.
+            const late = spent > limitMs;
+            if (op.step) op.step(i, doc.numPages, late);
+            const t0 = Date.now();
+            try {
+              use = await NS.textread.page(page, raw, late ? { words: false, reader: 'limit' } : undefined);
+              pictured = true;
+            } catch (e) {
+              console.error('Reading page ' + i + ' of the agreement from its picture failed:', e);
+              unread = (e && e.code) || 'fail';
             }
+            spent += Date.now() - t0;
           }
           out.push(unread ? Object.assign(NS.anchors.page(null, size, []), { scan: true, unread }) : NS.anchors.page(use, size, forms));
           page.cleanup();
@@ -2897,7 +2903,7 @@
     try {
       const t = T();
       const o = W().offerings.find((x) => x.id === (env.agreementFor || env.offeringId)) || {};
-      const layout = await pageLayout(env.docId, { step: opts && opts.step, pictures: !!(opts && opts.pictures) });
+      const layout = await pageLayout(env.docId, { step: opts && opts.step, pictures: !!(opts && opts.pictures), limitMs: opts && opts.limitMs });
       read.asked = !!(opts && opts.pictures);
       // Pages with no text that could not be read from their pictures either, by reason.
       layout.forEach((pg) => pg.unread && (read.unread[pg.unread] = read.unread[pg.unread] || []).push(pg.page));
@@ -2964,8 +2970,7 @@
     const lost = [
       all('load').length ? `${on(all('load')).replace(/^p/, 'P')} ${were(all('load'))} not read from ${all('load').length === 1 ? 'its picture' : 'their pictures'}, because the portal could not load its text reader: nothing was placed there.` : '',
       all('time').length ? `Reading ${on(all('time'))} from ${all('time').length === 1 ? 'its picture' : 'their pictures'} took too long and was stopped: nothing was placed there.` : '',
-      all('fail').length ? `Reading ${on(all('fail'))} from ${all('fail').length === 1 ? 'its picture' : 'their pictures'} failed: nothing was placed there.` : '',
-      all('limit').length ? `Reading pages from their pictures takes time, and the portal stopped after two and a half minutes: ${on(all('limit'))} ${all('limit').length === 1 ? 'was' : 'were'} not read and nothing was placed there. Upload those pages as a shorter PDF to have them read.` : ''
+      all('fail').length ? `Reading ${on(all('fail'))} from ${all('fail').length === 1 ? 'its picture' : 'their pictures'} failed: nothing was placed there.` : ''
     ].filter(Boolean);
     if (lost.length) lost.push('A PDF made with a “print to PDF” printer can lose its text; saving the document as a PDF from the program it was written in, or with the browser’s “Save as PDF”, keeps it.');
     if (!r.ok) {
@@ -2988,6 +2993,7 @@
     if (wordless('load').length) out.push(`The portal could not start its text reader here, so the words on ${on(wordless('load'))} were not read. The boxes there were found on the picture: each has a field named by its shape and marked. Say what each one is for, or remove it.`);
     if (wordless('time').length) out.push(`Reading the words on ${on(wordless('time'))} took too long and was stopped part way. Where the words by a box were not read, its field is named by its shape and marked.`);
     if (wordless('fail').length) out.push(`The words on ${on(wordless('fail'))} could not be read. The boxes there were found on the picture: each has a field named by its shape and marked. Say what each one is for, or remove it.`);
+    if (wordless('limit').length) out.push(`Reading words from pictures takes time, and the portal stopped after three minutes. On ${on(wordless('limit'))} the boxes were found on the picture but the words by them were not read: each field there is named by its shape and marked. Upload those pages as a shorter PDF to have their words read.`);
     if (lost.length) out.push(lost.join(' '));
     else if (r.scanned.length) out.push(`${r.scanned.length === 1 ? 'Page' : 'Pages'} ${on(r.scanned.slice().sort((a, b) => a - b)).replace(/^pages? /, '')} ${r.scanned.length === 1 ? 'is a picture' : 'are pictures'}, as in a scan, and could not be read: nothing was placed there.`);
     if (r.failed.length) out.push(`The portal could not read ${on(r.failed.slice().sort((a, b) => a - b))}: nothing was placed there.`);
@@ -3152,7 +3158,7 @@
     }
     try {
       // A page with no text is read from its picture, which takes a few seconds a page: the button says which page.
-      const step = (i, all) => btn && (btn.textContent = `Reading page ${i} of ${all} from its picture…`);
+      const step = (i, all, boxes) => btn && (btn.textContent = pictureStep(i, all, boxes));
       const env = await agreementDraft(w, oid, { file: file || null, docId: file ? '' : docId, title: form.title.value, step });
       U.closeDialog();
       // The editor always opens on a new agreement: the sponsor sees what was read and where each field sits, then saves.

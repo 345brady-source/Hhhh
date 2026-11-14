@@ -2,7 +2,7 @@
 /*
  * The fields of a page read from its picture, checked in the portal's own page.
  *
- *   node picture-fields.js [--only shapes,owners,signing,twice,summary,refused | all]
+ *   node picture-fields.js [--only shapes,owners,signing,twice,summary,refused,limit | all]
  *
  *   shapes    (needs no document) made-up picture pages, given as plain data to NS.placement.read in the shape
  *             NS.textread gives (found with bands and col, lines, heads, reader) with invented captions: one case for
@@ -20,6 +20,10 @@
  *   summary   NS.esign.readNote of the form's draft names each owner's signature pages from the answer sheet, in order
  *   refused   the text engine's file answered 404: every box still has a field named by its shape, marked, the
  *             investor's; no page is unread; the summary says the words could not be read
+ *   limit     the form's pages read through NS.esign.autoFields with the time for words forced down to 2 seconds: the
+ *             progress is called once for each page in page order; page 1 has its words, later pages only their boxes
+ *             (reader 'limit'); every found empty box still has a field; on those pages each field is named by its
+ *             shape and marked; the summary names exactly those pages with the limit's sentence; no page is unread
  *
  * The owner's documents live outside the repository (PICTURE_SCRATCH, or the session's folder under the system temp
  * folder). A part that needs a document it cannot find prints "NOT RUN: (what)" and the exit status is 2. Output holds
@@ -35,7 +39,7 @@ const SCRATCH = process.env.PICTURE_SCRATCH || path.join(os.tmpdir(), 'claude-0/
 const PDF = process.env.PRINTED_PDF || path.join(SCRATCH, 'xx/printed-no-text.pdf');
 const SHEET = path.join(SCRATCH, 'build/ocr-truth/truth-printed.json');
 const HARNESS = path.join(ROOT, '.planning/phases/01-accurate-field-placement/checks/harness.js');
-const ALL = ['shapes', 'owners', 'signing', 'twice', 'summary', 'refused'];
+const ALL = ['shapes', 'owners', 'signing', 'twice', 'summary', 'refused', 'limit'];
 const i = process.argv.indexOf('--only');
 const want = i > 0 && process.argv[i + 1] ? process.argv[i + 1].split(',').map((s) => s.trim()) : ['all'];
 const PARTS = want.includes('all') ? ALL : want;
@@ -437,6 +441,65 @@ function refused(d) {
   line(d.note.indexOf(want) >= 0 && d.note.indexOf('No signature line for the investor was found') >= 0, `refused the summary says the words on pages 1 to 8 could not be read and that no signature line for the investor was found`);
 }
 
+/* ---------------- limit: the time for words used up ---------------- */
+const LIMIT_SAYS = (pages) => `Reading words from pictures takes time, and the portal stopped after three minutes. On ${pages} the boxes were found on the picture but the words by them were not read: each field there is named by its shape and marked. Upload those pages as a shorter PDF to have their words read.`;
+/** Page numbers as the summary writes them ("page 4", "pages 2 and 5", "pages 2 to 8", "pages 1, 2 and 5 to 8"). */
+function onPages(pages) {
+  const runs = [];
+  pages.forEach((p) => {
+    const last = runs[runs.length - 1];
+    if (last && p === last[1] + 1) last[1] = p;
+    else runs.push([p, p]);
+  });
+  const list = runs.map((r) => (r[0] === r[1] ? `${r[0]}` : r[1] === r[0] + 1 ? `${r[0]}, ${r[1]}` : `${r[0]} to ${r[1]}`));
+  return pages.length === 1 ? `page ${list[0]}` : list.length === 1 ? `pages ${list[0].replace(', ', ' and ')}` : `pages ${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
+}
+async function limit(h) {
+  const page = await H.signUp(h);
+  const bytes = fs.readFileSync(PDF);
+  const r = await page.evaluate(
+    async ({ arr }) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const off = ws.offerings[ws.offerings.length - 1];
+      const file = new File([new Uint8Array(arr)], 'Agreement.pdf', { type: 'application/pdf' });
+      const env = await NS.esign.agreementDraft(ws, off.id, { file, title: 'Subscription Agreement' });
+      const fresh = Object.assign({}, env, { fields: [] });
+      delete fresh.read;
+      const steps = [];
+      const t0 = Date.now();
+      await NS.esign.autoFields(fresh, { pictures: true, limitMs: 2000, step: (i, all, boxes) => steps.push({ i, all, boxes: !!boxes, at: Date.now() - t0 }) });
+      const layout = await NS.esign.pageLayout(env.docId, { kept: true });
+      const fields = fresh.fields.map((f) => {
+        const ps = fresh.pageSizes[f.page - 1];
+        return { page: f.page, x0: f.x * ps.w, x1: (f.x + f.w) * ps.w, y0: f.y * ps.h, y1: (f.y + f.h) * ps.h, label: f.label || '', review: !!f.review };
+      });
+      const pages = layout.map((pg) => ({ page: pg.page, reader: pg.reader || '', pictured: !!pg.pictured, boxes: (pg.found || []).filter((b) => b.place !== false).map((b) => ({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 })) }));
+      return { steps, fields, pages, read: fresh.read, note: NS.esign.readNote(fresh), ms: Date.now() - t0 };
+    },
+    { arr: Array.from(bytes) }
+  );
+  await page.close();
+  const n = r.pages.length;
+  const inOrder = r.steps.length === n && r.steps.every((s, k) => s.i === k + 1 && s.all === n);
+  line(inOrder, `limit the progress was called once for each of the ${n} pages, in page order (${r.steps.map((s) => s.i + (s.boxes ? 'b' : 'w')).join(' ')}; w words read, b boxes only; ${(r.ms / 1000).toFixed(1)} s)`);
+  const late = r.pages.filter((pg) => pg.reader === 'limit').map((pg) => pg.page);
+  line(r.pages[0] && r.pages[0].reader === 'ok' && late.length > 0 && late.every((p) => p > 1) && r.steps.every((s) => s.boxes === late.includes(s.i)), `limit page 1 had its words read (reader ${r.pages[0] ? r.pages[0].reader : 'none'}); pages with only their boxes found: ${late.join(', ') || 'none'}; the progress said which`);
+  const inside = (f, b) => (f.x0 + f.x1) / 2 > b.x0 - 1 && (f.x0 + f.x1) / 2 < b.x1 + 1 && (f.y0 + f.y1) / 2 > b.y0 - 1 && (f.y0 + f.y1) / 2 < b.y1 + 1;
+  let boxes = 0;
+  let held = 0;
+  r.pages.forEach((pg) => pg.boxes.forEach((b) => (boxes++, r.fields.some((f) => f.page === pg.page && inside(f, b)) && held++)));
+  line(boxes === 237 && held === boxes, `limit every found box that is an empty place has a field (${held} of ${boxes}; 237 on boxes in all)`);
+  const onLate = r.fields.filter((f) => late.includes(f.page));
+  const badLate = onLate.filter((f) => !/^(Tick box|Box)$/.test(f.label) || !f.review);
+  line(onLate.length > 0 && !badLate.length, `limit on the pages whose words were not read every field is named Tick box or Box and is marked (${onLate.length - badLate.length} of ${onLate.length})`);
+  const wl = ((r.read && r.read.wordless) || {}).limit || [];
+  const said = late.length ? LIMIT_SAYS(onPages(late)) : '';
+  line(JSON.stringify(wl.slice().sort((a, b) => a - b)) === JSON.stringify(late) && !!said && r.note.indexOf(said) >= 0 && r.note.split('stopped after three minutes').length === 2, `limit the summary holds the limit's sentence naming exactly those pages (${late.length ? onPages(late) : 'none'}; wordless.limit ${JSON.stringify(wl)})`);
+  const unread = Object.keys((r.read && r.read.unread) || {}).reduce((m, k) => m + r.read.unread[k].length, 0);
+  line(!unread && !((r.read && r.read.scanned) || []).length && !/two and a half minutes|nothing was placed there/.test(r.note), `limit no page is reported unread (${unread} unread, ${((r.read && r.read.scanned) || []).length} scanned) and no sentence says nothing was placed`);
+}
+
 (async () => {
   const h = await H.start();
   try {
@@ -465,6 +528,17 @@ function refused(d) {
     line(false, `run: ${String((e && e.message) || e).slice(0, 300)}`);
   } finally {
     await h.stop();
+  }
+  // The time for words forced down: a browser of its own (a fresh workspace).
+  if (PARTS.includes('limit')) {
+    const h3 = await H.start();
+    try {
+      await limit(h3);
+    } catch (e) {
+      line(false, `limit run: ${String((e && e.message) || e).slice(0, 300)}`);
+    } finally {
+      await h3.stop();
+    }
   }
   // The engine refused: a browser of its own, so that no engine is already loaded.
   if (PARTS.includes('refused')) {
