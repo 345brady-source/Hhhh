@@ -459,8 +459,8 @@
     ruleUp: 8, // the rows before and after a free rule: from this far above it ...
     ruleDown: 2, // ... to this far below it
     ruleUnder: 12,
-    ruleOverNear: 5,
-    ruleOverFar: 15,
+    ruleOverNear: 0, // over a free rule: from just above it ...
+    ruleOverFar: 20, // ... to this far above (the line rules look this far up for print over a rule: a table's cells)
     longRule: 200, // a free rule longer than this is no short line with a caption under it
     word: 4.5, // the widest gap between the words of one text line
     rowGap: 24, // bands of one row merge across at most this much (a box or a rule between them)
@@ -730,7 +730,14 @@
       if (dir === 'up') runs.reverse();
       const kept = [];
       for (let i = 0; i < runs.length; i++) {
-        if (cutAt(r, runs[i][0], runs[i][1])) continue; // a line the band's far edge cuts through
+        if (cutAt(r, runs[i][0], runs[i][1])) {
+          // a line the band's far edge cuts through: left out of a box's band; over a free rule taken whole, since the
+          // line rules look for print up to REACH.ruleOverFar above a rule
+          if (own.kind !== 'rule' || dir !== 'up') continue;
+          let a = runs[i][0];
+          while (a > 0 && a > r.y0 - pt(8) && ink(r.x0, a - 1, r.x1, a) > 0) a--;
+          runs[i] = [a, runs[i][1]];
+        }
         const t = trim({ x0: r.x0, y0: runs[i][0], x1: r.x1, y1: runs[i][1] });
         if (!t) continue;
         const ln = lineOf(t.y0, t.y1, t.x0, t.x1);
@@ -799,7 +806,7 @@
       const after = { x0: ru.x1 + 1, y0, x1: ru.x1 + pt(REACH.ruleAfter), y1 };
       clip(after, 'right', own);
       add('rule', i, 'after', whole(after));
-      add('rule', i, 'over', upDown({ x0: ru.x0, y0: ru.y0 - pt(REACH.ruleOverFar), x1: ru.x1, y1: ru.y0 - pt(REACH.ruleOverNear) }, 'up', own));
+      add('rule', i, 'over', upDown({ x0: ru.x0, y0: ru.y0 - pt(REACH.ruleOverFar), x1: ru.x1, y1: ru.y0 - Math.max(1, pt(REACH.ruleOverNear)) }, 'up', own));
       add('rule', i, 'under', upDown({ x0: ru.x0, y0: ru.y1 + 1, x1: ru.x1, y1: ru.y1 + pt(REACH.ruleUnder) }, 'down', own));
     });
 
