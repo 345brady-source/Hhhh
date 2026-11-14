@@ -1310,8 +1310,9 @@
         const required = cond ? false : sig ? (says || !info.optional) && K.required : says && !info.optional;
         const label = cleanFull(ownWords(c.whole)) || K.label;
         const m = info.kind === 'skip' ? second(s, info, c.near) : propose(info.kind, s, info, { seg: c.near, how: 'above', required });
-        // (Any other caption makes a plain text field, whatever its words.)
-        if (info.kind === 'other') m.p.kind = 'text';
+        // (Any other caption makes a plain text field, unless it names an address, an e-mail or a telephone in so many
+        // words: "Alternate mailing address", which is of the kind address.)
+        if (info.kind === 'other' && !/\b(address|e-?mail|(tele)?phone)\b/i.test(label)) m.p.kind = 'text';
         Object.assign(m, { said: c.whole, cellCap: c, capLabel: label, capRequired: required, someCases: cond });
         m.p.label = label;
         if (label.length > 60) m.p.longLabel = true;
@@ -1828,6 +1829,7 @@
             role = 'investor';
             sure = true;
             m.headed = true;
+            m.otherHeaded = true;
             break;
           }
           if (hd.skip) {
@@ -1898,7 +1900,7 @@
       if (m.co && m.cellCap) Object.assign(p, { label: m.capLabel, required: m.capRequired });
       // A form that marks off what a party completes ("TO BE COMPLETED BY THE CUSTODIAN") leaves every other place on
       // the page to the investor: a caption outside that section that names the party asks the investor who it is.
-      if (m.other && !m.headed && heads.some((hd) => hd.completes && hd.other === m.other && hd.y > 0)) {
+      if (m.other && !m.otherHeaded && heads.some((hd) => hd.completes && hd.other === m.other && hd.y > 0)) {
         m.other = '';
         m.otherUnsure = false;
       }
@@ -2001,6 +2003,8 @@
         m.p.second = true;
         coInvestor(m.p, m.said);
         if (m.cellCap) Object.assign(m.p, { label: m.capLabel, required: m.capRequired });
+        // (whose it is is no longer in doubt)
+        if (m.p.why === WHY.who) Object.assign(m.p, { conf: 'high', why: '' });
         return;
       }
       if (!sig || !sig.other) return;

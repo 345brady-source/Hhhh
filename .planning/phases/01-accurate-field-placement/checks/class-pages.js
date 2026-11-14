@@ -577,6 +577,47 @@ ${WITNESS}${investorBlock({ review: false, other: false })}
   // Two pages of prose that speak of a signature page and of a signature block attached to the agreement, with no place
   // of any kind printed. No field, and no investor signature line read. (The summary's sentence for this case is fixed
   // in a later plan, which adds its pattern here.)
+  // Blocks of captioned cells. A street address that prints the word for required, with city, state and postal code
+  // cells under it: the parts are required and filled in from onboarding as the street is. An alternate address under
+  // it, if applicable, with its own parts: all optional, none filled in. A cell captioned for the custodian's name and
+  // the mailing address under it, above a section headed as completed by the custodian: the two cells are the
+  // investor's (the form marks off what the custodian completes), the address is not filled in from the investor's
+  // onboarding; the cell in the custodian's section is the custodian's. A ruled row of a second investor's signature
+  // and a date: both the co-investor's. A ruled row of a representative's signature, a cell for the investor's state
+  // of residence and a date: all the representative's. A ruled row of words of acceptance that name a placement dealer
+  // and a date: both in doubt, marked.
+  cellBlocks: {
+    html: pg(`${at(72, 70, 11, '<b>SECTION 1. THE SUBSCRIBER</b>')}
+${capCell(72, 110, 468, 14, 'Street address (required)', 7.5, capText('Street address', { key: 'street', required: true, kinds: ['address'] }))}
+${capCell(72, 140, 228, 14, 'City', 7.5, capText('City', { key: 'city', required: true, kinds: ['address'] }))}${capCell(306, 140, 110, 14, 'State', 7.5, capText('State', { key: 'state', required: true, kinds: ['address'] }))}${capCell(422, 140, 118, 14, 'Postal code', 7.5, capText('Postal code', { key: 'zip', required: true, kinds: ['address'] }))}
+${capCell(72, 180, 468, 14, 'Alternate mailing address, if applicable', 7.5, capText('Alternate mailing address', { kinds: ['address'] }))}
+${capCell(72, 210, 228, 14, 'City', 7.5, capText('City', { kinds: ['address'] }))}${capCell(306, 210, 110, 14, 'State', 7.5, capText('State', { kinds: ['address'] }))}${capCell(422, 210, 118, 14, 'Postal code', 7.5, capText('Postal code', { kinds: ['address'] }))}
+${capCell(72, 255, 468, 14, 'NAME OF CUSTODIAN', 7.5, capText('NAME OF CUSTODIAN'))}
+${capCell(72, 285, 468, 14, 'MAILING ADDRESS', 7.5, capText('MAILING ADDRESS', { kinds: ['address'] }))}
+${at(72, 318, 8, '<b>TO BE COMPLETED BY THE CUSTODIAN</b>')}
+${capCell(72, 342, 228, 14, 'CUSTODIAN ACCOUNT NUMBER', 7.5, else_('text', 'Custodian', { label: 'CUSTODIAN ACCOUNT NUMBER' }))}
+${capCell(72, 400, 300, 14, 'Signature of joint investor (required)', 7.5, co('signature', { label: 'Signature of joint investor', required: true, review: false }))}${capCell(378, 400, 162, 14, 'Date (required)', 7.5, co('date', { label: 'Date', review: false }))}
+${capCell(72, 450, 200, 14, 'Signature of registered representative', 7.5, else_('signature', 'Representative', { label: 'Signature of registered representative' }))}${capCell(278, 450, 150, 14, 'Investor state of residence', 7.5, else_('text', 'Representative', { label: 'Investor state of residence' }))}${capCell(434, 450, 106, 14, 'Date', 7.5, else_('date', 'Representative', { label: 'Date' }))}
+${capCell(72, 510, 360, 14, 'ACCEPTANCE BY THE PLACEMENT DEALER', 7.5, else_('signature', 'Broker-dealer', { label: 'ACCEPTANCE BY THE PLACEMENT DEALER', review: true }))}${capCell(438, 510, 102, 14, 'DATE', 7.5, else_('date', 'Broker-dealer', { label: 'DATE', review: true }))}`)
+  },
+  // A blank that belongs to a tick box's choice: "Other: ____" after the last box of a row, and a blank closing the
+  // indented line under a box's statement. Both optional (completed only when the box is ticked), unmarked. Initials
+  // opening a statement the investor may elect ("if I choose this option") are optional; initials under an instruction
+  // to initial every statement stay required. A section that is one of the alternatives a line above asks the investor
+  // to choose between: its cell is optional although its caption prints the word for required.
+  choiceBlanks: {
+    html: pg(`${at(72, 80, 10, 'Form of account (choose one):')}
+${at(72, 96, 10, `${glyph('Individual')}Individual&nbsp;&nbsp;&nbsp;${glyph('Company')}Company&nbsp;&nbsp;&nbsp;${glyph('Other')}Other: ${blank(inv('text', { fillIn: true, label: 'Other', key: '', required: false, other: false, review: false }), U(20))}`)}
+${at(72, 126, 10, `${glyph('Family account of an employee of the manager')}Family account of an employee of the manager`)}
+${at(96, 139, 10, `Name of the relative: ${blank(inv('text', { fillIn: true, label: 'Name of the relative', key: '', required: false, other: false, review: false }), U(24))}`)}
+${at(72, 180, 10, '<b>ELECTRONIC STATEMENTS (insert your initials on the line)</b>')}
+${at(72, 196, 10, `${blank(inv('initials', { fillIn: true, required: false, review: false, other: false }), U(6))}&nbsp;&nbsp;I ask for statements by e-mail instead of by post, if I choose this option.`)}
+${at(72, 236, 10, '<b>CONFIRMATIONS (initial each statement)</b>')}
+${at(72, 252, 10, `${blank(inv('initials', { fillIn: true, required: true, review: false, other: false }), U(6))}&nbsp;&nbsp;I have read the section on risks in the memorandum.`)}
+${at(72, 296, 10, '<b>ACCOUNT TYPE (choose Account Type A or Account Type B):</b>')}
+${sectionRule(314)}${at(72, 322, 10, 'Account Type B - for accounts held through a trust')}
+${capCell(72, 360, 300, 14, 'Trust registration number (required)', 7.5, capText('Trust registration number'))}`)
+  },
   signaturePageMention: {
     read: { investorPages: [] },
     html: `${pg(SIG_PAGE_PROSE[0])}${pg(SIG_PAGE_PROSE[1])}`
