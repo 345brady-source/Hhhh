@@ -541,7 +541,11 @@
     blockLines: 3, // ... at most this many lines of print, from the bottom up ...
     blockGap: 14, // ... while the clear paper between two of them is at most this
     paraLines: 3, // the lines of a paragraph read over a blank that ends it
-    spread: 16 // the widest gap between the words of a label or a paragraph line read whole (a justified line spreads them)
+    spread: 16, // the widest gap between the words of a label or a paragraph line read whole (a justified line spreads them)
+    useNear: 30, // a block of places with no found box or rule this close over its first place ...
+    useAbove: 120, // ... has the lines of print up to this far above it looked at for a heading that reserves the block,
+    useLines: 3, // ... at most this many, nearest first,
+    useWide: 0.6 // ... each a line set apart and at most this share of the width it stands in (a heading's shape)
   };
   const MERGE = 1.5; // bands are merged while a strip's area stays within this many times the sum of its bands
   const ROW_MERGE = 3; // ... and bands of one row while it stays within this many times
@@ -556,7 +560,7 @@
    *              paint: [the parts of boxes and rules inside the strip, to be painted white before it is read] }]
    *   columns [{ boxes: [indices, top to bottom], x0, y0, x1, y1 }]   two or more places with the same left and right edges
    *   margin  { x0, x1, main } the margin column (x0 to x1) and where the page's main area begins, or null
-   *   zones   [{ kind 'margin', 'letter' or 'block', x0, y0, x1, y1, line }]   heading candidates; their text decides later
+   *   zones   [{ kind 'margin', 'letter', 'block' or 'use', x0, y0, x1, y1, line }]   heading candidates; their text decides later
    *           ('block': the lines of print over a stack of free rules, where a signature block names whose it is)
    * Every box gets col (its column's index, or -1). Only places get bands; a band with no print is dropped.
    */
@@ -1165,6 +1169,69 @@
       if (!kept.length) return;
       const t = trim({ x0: r.x0, y0: kept[kept.length - 1][0], x1: r.x1, y1: kept[0][1] });
       if (t && t.x1 - t.x0 >= pt(REACH.word1)) zones.push(Object.assign({ kind: 'block' }, t));
+    });
+    /*
+     * A heading that reserves a block of places (for the firm's use only, do not write below this point) may stand well
+     * above the block, past every band. Over each place with clear paper above it (no found box or rule within
+     * REACH.useNear over it), up to REACH.useAbove above it and never past the nearest found box or rule over it, the
+     * short lines of print set apart (a heading's shape: paper above and below, at most REACH.useWide of the width
+     * they stand in) are read, at most REACH.useLines of them, nearest first: once for the block (the places whose
+     * zones share their rows read one zone). A line a strip already reads is not read again.
+     */
+    const useZones = [];
+    places
+      .map((i) => ({ r: boxes[i], self: (k) => k.kind === 'box' && k.of === i }))
+      .concat(rules.map((ru, i) => ({ r: ru, self: (k) => k.kind === 'rule' && k.of === i })))
+      .forEach(({ r: q, self }) => {
+        const over = keep.filter((k) => !self(k) && k.y1 <= q.y0 + 1 && k.x0 < q.x1 && k.x1 > q.x0);
+        const roof = Math.max(0, q.y0 - pt(REACH.useAbove), ...over.map((k) => k.y1));
+        if (q.y0 - roof < pt(REACH.useNear)) return;
+        const z = { x0: margin && q.x0 >= margin.main ? margin.main : 0, y0: Math.ceil(roof), x1: w, y1: Math.floor(q.y0 - 1) };
+        keep.forEach((k) => {
+          if (self(k) || k.y1 <= z.y0 || k.y0 >= z.y1) return;
+          if (k.x1 <= q.x0) z.x0 = Math.max(z.x0, Math.ceil(k.x1));
+          else if (k.x0 >= q.x1) z.x1 = Math.min(z.x1, Math.floor(k.x0));
+        });
+        if (empty(z)) return;
+        const same = useZones.find((o) => Math.min(o.y1, z.y1) - Math.max(o.y0, z.y0) > 0.5 * Math.min(o.y1 - o.y0, z.y1 - z.y0) && Math.min(o.x1, z.x1) - Math.max(o.x0, z.x0) > 0);
+        if (same) Object.assign(same, { x0: Math.max(same.x0, z.x0), x1: Math.min(same.x1, z.x1), y0: Math.max(same.y0, z.y0), y1: Math.max(same.y1, z.y1) });
+        else useZones.push(z);
+      });
+    // The widest run of print across rows [a, b) of z whose pieces part by at most REACH.word (a line of words; the
+    // specks of a scan beside it are no part of it), or null when no such run is REACH.word1 wide.
+    const lineIn = (z, a, b) => {
+      let best = null;
+      let x0 = -1;
+      let last = -1;
+      const most = pt(REACH.word);
+      const close = () => x0 >= 0 && (!best || last + 1 - x0 > best.x1 - best.x0) && (best = { x0, x1: last + 1 });
+      for (let x = z.x0; x < z.x1; x++) {
+        if (!ink(x, a, x + 1, b)) continue;
+        if (x0 >= 0 && x - last - 1 > most) close(), (x0 = -1);
+        if (x0 < 0) x0 = x;
+        last = x;
+      }
+      close();
+      return best && best.x1 - best.x0 >= pt(REACH.word1) ? trim({ x0: best.x0, y0: a, x1: best.x1, y1: b }) : null;
+    };
+    useZones.forEach((z) => {
+      if (empty(z)) return;
+      // the rows of print that hold a line of words (a speck is none)
+      const runs = rowRuns(z)
+        .map(([a, b]) => ({ a, b, t: lineIn(z, a, b) }))
+        .filter((r) => r.t);
+      let n = 0;
+      for (let k = runs.length - 1; k >= 0 && n < REACH.useLines; k--) {
+        const { a, b, t } = runs[k];
+        const hgt = b - a;
+        if (hgt > pt(1.5 * REACH.line) || hgt < pt(REACH.word2)) continue;
+        // set apart: clear paper above and below of half the line's height
+        if ((k > 0 && a - runs[k - 1].b < 0.5 * hgt) || (k < runs.length - 1 && runs[k + 1].a - b < 0.5 * hgt)) continue;
+        if (t.x1 - t.x0 > REACH.useWide * (z.x1 - z.x0)) continue;
+        if (out.strips.some((st) => meets(st, t)) || zones.some((o) => meets(o, t))) continue;
+        zones.push(Object.assign({ kind: 'use' }, t));
+        n++;
+      }
     });
     zones.forEach((z) => (z.line = oneLine(z)));
     zones.sort(order);

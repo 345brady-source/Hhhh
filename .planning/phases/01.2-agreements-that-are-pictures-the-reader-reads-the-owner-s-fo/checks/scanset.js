@@ -23,6 +23,12 @@
  * region marked 'whole' counts only a field that also covers half of it. The counts are printed on every run; with
  * --nobody each must be 0 for the run to pass.
  *
+ * Places for the firm's own use: <scratch>/public-agreements/scanset-firmuse.json (or SCANSET_FIRMUSE) holds, by
+ * document and page, the rectangles (points) of places under a heading that reserves them for the firm or the
+ * partnership ("for ... use only", "do not write below this point"). The field on each (its centre inside the place
+ * grown by 2 pt) must be nobody's who signs as the investor and not required; a place with no field is counted too.
+ * The counts are printed on every run; with --nobody each must be 0 for the run to pass.
+ *
  * The documents and the proof runner are outside the repository and nothing of them is copied in. The documents are
  * found through the environment (SCANSET_BINDER, SCANSET_BOOKLET) or the list <scratch>/public-agreements/scanset.json
  * ({ "binder": path, "booklet": path }). PICTURE_SCRATCH overrides the scratch folder, PROOF_DIR the proof runner's.
@@ -75,6 +81,15 @@ try {
   listed = JSON.parse(fs.readFileSync(path.join(SCRATCH, 'public-agreements', 'scanset.json'), 'utf8'));
 } catch (e) {
   listed = {};
+}
+let FIRMUSE = {};
+try {
+  FIRMUSE = JSON.parse(fs.readFileSync(process.env.SCANSET_FIRMUSE || path.join(SCRATCH, 'public-agreements', 'scanset-firmuse.json'), 'utf8'));
+} catch (e) {
+  if (NOBODY_GATE) {
+    console.log('NOT RUN: the places for the firm\'s own use are not recorded (' + (process.env.SCANSET_FIRMUSE || path.join(SCRATCH, 'public-agreements', 'scanset-firmuse.json')) + ')');
+    process.exit(2);
+  }
 }
 const DOCS = { binder: process.env.SCANSET_BINDER || listed.binder, booklet: process.env.SCANSET_BOOKLET || listed.booklet };
 names.forEach((n) => (DOCS[n] && fs.existsSync(DOCS[n])) || notRun(`the ${n} is not there (SCANSET_${n.toUpperCase()} or ${path.join(SCRATCH, 'public-agreements', 'scanset.json')})`));
@@ -389,6 +404,26 @@ async function runDoc(srv, name, pdf) {
         if (n && NOBODY_GATE) fail(`page ${p}: ${n} fields on places nobody completes (${Object.entries(hits).map(([k, v]) => `${v} ${k}`).join(', ')})`);
       });
     if (Object.keys(nobody).length) console.log(`  fields on places nobody completes: ${onNobody} on ${Object.keys(nobody).length} recorded pages`);
+    // Places for the firm's own use: the field on each is not the investor's and not required.
+    const firm = FIRMUSE[name] || {};
+    Object.keys(firm)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .forEach((p) => {
+        let investor = 0;
+        let required = 0;
+        let none = 0;
+        firm[p].forEach((q) => {
+          const f = (byPage[p] || []).find((x) => (x.x0 + x.x1) / 2 >= q[0] - 2 && (x.x0 + x.x1) / 2 <= q[2] + 2 && (x.top + x.bottom) / 2 >= q[1] - 2 && (x.top + x.bottom) / 2 <= q[3] + 2);
+          if (!f) none++;
+          else {
+            if (f.signer === 'investor') investor++;
+            if (f.required) required++;
+          }
+        });
+        console.log(`  page ${p}: places for the firm's own use ${firm[p].length}: the investor's ${investor}, required ${required}, with no field ${none}`);
+        if (NOBODY_GATE && (investor || required || none)) fail(`page ${p}: of ${firm[p].length} places for the firm's own use ${investor} are the investor's, ${required} required, ${none} with no field`);
+      });
     const onText = after.fields.filter((f) => !isTextless(f.page)).length;
     console.log(`  fields on text-less pages after the offer: ${after.fields.length - onText}; on pages with text: ${onText}`);
 
