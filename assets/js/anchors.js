@@ -344,7 +344,10 @@
     if (cur) cur.s = cur.s.replace(/ +$/, '');
     // A run of recognised text (NS.textread) carries how sure the recognition was of its weakest word.
     out.items = out.items.map((it) => Object.assign({ s: it.s, x: it.x, y: it.y, w: Math.max(0, it.x1 - it.x), h: Math.max(4, it.h) }, it.conf == null ? null : { conf: it.conf }));
-    if (raw.pictured) Object.assign(out, { pictured: raw.pictured, approx: !!raw.approx, found: raw.found || [], words: raw.words || [] });
+    // A page read from its picture (NS.textread) also carries what placement decides it by: found (every box, with
+    // its bands and column), lines (every free rule, with its bands), heads (the headings read) and reader (whether
+    // the words could be read: 'ok', or why not).
+    if (raw.pictured) Object.assign(out, { pictured: raw.pictured, approx: !!raw.approx, found: raw.found || [], words: raw.words || [], lines: raw.lines || [], heads: raw.heads || [], reader: raw.reader || 'ok' });
 
     /* Tick boxes: box characters, drawn squares with nothing in them, empty bracket pairs. */
     shown.forEach((g) => {

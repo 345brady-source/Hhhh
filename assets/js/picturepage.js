@@ -22,6 +22,10 @@
  *               a rule that climbs or falls a pixel now and then (a page scanned a little turned) is one rule
  *     throws an Error with code 'size' for a picture of no size or of more than MAX_PIXELS pixels
  *   picturepage.toGrey(rgba, w, h)   the grey levels of RGBA bytes
+ *   picturepage.bands(page, opts)    where the words that decide something are printed: the caption strips round every
+ *                                    place and free rule, the columns of places, the margin column and the heading
+ *                                    zones (see the function itself)
+ *   picturepage.near(word, target)   the letter changes between a read word and a known word, or -1 beyond its allowance
  */
 (function () {
   'use strict';
@@ -417,7 +421,601 @@
     return { paper: P, print: lv.print, range: R, tau, boxes, rules };
   }
 
-  const api = { find, toGrey, INK, MAX_PIXELS, MIN_PT };
+  /* ---------- How a read word is compared with a known word ---------- */
+
+  /** The letters of a text: NFKC (full-width and tied letters as their plain spelling), case ignored, letters only. */
+  function letters(s) {
+    return Array.from(String(s == null ? '' : s).normalize('NFKC').toLowerCase()).filter((c) => /\p{L}/u.test(c));
+  }
+  /**
+   * The number of letter changes (one letter put in, taken out or replaced) between a read word and a known word, when
+   * it is within the known word's allowance (2 for 7 letters or more, 1 for 5 or 6, none for shorter); else -1.
+   */
+  function near(word, target) {
+    const a = letters(word);
+    const b = letters(target);
+    if (!a.length || !b.length) return -1;
+    const allow = b.length >= 7 ? 2 : b.length >= 5 ? 1 : 0;
+    if (Math.abs(a.length - b.length) > allow) return -1;
+    let prev = [];
+    for (let j = 0; j <= b.length; j++) prev[j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i];
+      for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = cur;
+    }
+    return prev[b.length] <= allow ? prev[b.length] : -1;
+  }
+
+  /* ---------- Where the words of a searched picture are read ---------- */
+
+  // Every reach in points, relative to its own box or rule (turned into pixels by the picture's pixels per point).
+  const REACH = {
+    over: 15, // over a box, its own width
+    under: 9, // under a box, its own width
+    before: 120, // before a box on its row
+    row: 1, // a row reaches this far above and below its box
+    tickAfter: 260, // after a tick box on its row
+    tickBefore: 60, // before a tick box on its row
+    tickGap: 14, // clear paper after a tick box's words that ends them
+    ruleBefore: 200,
+    ruleAfter: 60,
+    ruleUp: 8, // the rows before and after a free rule: from this far above it ...
+    ruleDown: 2, // ... to this far below it
+    ruleUnder: 12,
+    ruleOverNear: 0, // over a free rule: from just above it ...
+    ruleOverFar: 20, // ... to this far above (the line rules look this far up for print over a rule: a table's cells)
+    longRule: 200, // a free rule longer than this is no short line with a caption under it
+    word: 4.5, // the widest gap between the words of one text line
+    rowGap: 24, // bands of one row merge across at most this much (a box or a rule between them)
+    grow: 2, // paper round every strip
+    line: 12, // a strip at most this high, with one row of print, is read as one line
+    column: 3, // the edges of the boxes of one column agree within this
+    marginGap: 8, // the least width of the clear gap that sets off a margin column
+    block: 6, // rows of print closer than this are one block
+    zoneLeft: 6, // a lettered line begins within this left ...
+    zoneRight: 14, // ... and this right of the left edge of the leftmost place
+    zoneHigh: 14, // and is at most this high
+    zoneRead: 70, // of a lettered line this much is read: its letter and the words that decide come first
+    blockRead: 60, // of a block of the margin column this much is read: a numbered heading is named in its first lines
+    word1: 10, // a zone narrower than this ...
+    word2: 3 // ... or lower than this holds no word (a rule across the page is lower)
+  };
+  const MERGE = 1.5; // bands are merged while a strip's area stays within this many times the sum of its bands
+  const ROW_MERGE = 3; // ... and bands of one row while it stays within this many times
+  const SIDE_ORDER = ['over', 'under', 'before', 'after', 'inside'];
+
+  /**
+   * The caption strips and heading zones of a searched picture: where the words that decide something are printed.
+   *   page   { grey, w, h, pxPerPt, boxes, rules, paper, range } (the finder's result with its picture)
+   *   opts   { merge, row } the merge allowances (MERGE and ROW_MERGE when not given; row 1 merges no row across a box)
+   * Returns { strips, columns, margin, zones }, all in pixels of the picture, strips and zones in reading order:
+   *   strips  [{ x0, y0, x1, y1, line, parts: [{ of (index in boxes or rules), kind 'box' or 'rule', side, x0, y0, x1, y1 }],
+   *              paint: [the parts of boxes and rules inside the strip, to be painted white before it is read] }]
+   *   columns [{ boxes: [indices, top to bottom], x0, y0, x1, y1 }]   two or more places with the same left and right edges
+   *   margin  { x0, x1, main } the margin column (x0 to x1) and where the page's main area begins, or null
+   *   zones   [{ kind 'margin' or 'letter', x0, y0, x1, y1, line }]   heading candidates; their text decides later
+   * Every box gets col (its column's index, or -1). Only places get bands; a band with no print is dropped.
+   */
+  function bands(page, opts) {
+    const grey = page.grey;
+    const w = page.w;
+    const h = page.h;
+    const s = page.pxPerPt > 0 ? page.pxPerPt : 1;
+    const boxes = page.boxes || [];
+    const rules = page.rules || [];
+    const allowance = opts && opts.merge > 0 ? +opts.merge : MERGE;
+    const pt = (v) => Math.round(v * s);
+    boxes.forEach((b) => (b.col = -1));
+    const out = { strips: [], columns: [], margin: null, zones: [] };
+    const places = [];
+    boxes.forEach((b, i) => b.place !== false && places.push(i));
+    if (!places.length && !rules.length) return out;
+    let P = page.paper;
+    let R = page.range;
+    if (!(P > 0) || !(R > 0)) {
+      const lv = levels(grey, w * h);
+      P = lv.paper;
+      R = lv.range;
+    }
+    // Print: a pixel as dark as half the picture's range. Counted over any rectangle from one table of sums.
+    const dark = P - 0.5 * R;
+    const W1 = w + 1;
+    const sum = new Int32Array(W1 * (h + 1));
+    for (let y = 0; y < h; y++) {
+      let run = 0;
+      const r = y * w;
+      const o = (y + 1) * W1;
+      const p = y * W1;
+      for (let x = 0; x < w; x++) {
+        if (grey[r + x] <= dark) run++;
+        sum[o + x + 1] = sum[p + x + 1] + run;
+      }
+    }
+    const ink = (x0, y0, x1, y1) => {
+      x0 = Math.max(0, x0);
+      y0 = Math.max(0, y0);
+      x1 = Math.min(w, x1);
+      y1 = Math.min(h, y1);
+      return x1 <= x0 || y1 <= y0 ? 0 : sum[y1 * W1 + x1] - sum[y0 * W1 + x1] - sum[y1 * W1 + x0] + sum[y0 * W1 + x0];
+    };
+    const meets = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+    const empty = (r) => r.x1 <= r.x0 || r.y1 <= r.y0;
+    const g = Math.max(2, pt(0.75)); // a band keeps this far from every frame (a blurred stroke is wider than its core)
+    const gap = Math.max(1, pt(0.5)); // rows of one text line may part by this much
+    // What no band may enter: every box (place or not) and every free rule, each with its owner.
+    const keep = boxes.map((b, i) => ({ x0: b.x0 - g, y0: b.y0 - g, x1: b.x1 + g, y1: b.y1 + g, kind: 'box', of: i })).concat(rules.map((r, i) => ({ x0: r.x0 - 1, y0: r.y0 - 1, x1: r.x1 + 1, y1: r.y1 + 1, kind: 'rule', of: i })));
+
+    /** Rows [a, b) of a rectangle that hold print, as runs of rows (a run bridges a gap of `gap` rows). */
+    const rowRuns = (r) => {
+      const runs = [];
+      let a = -1;
+      let last = -1;
+      for (let y = r.y0; y < r.y1; y++) {
+        if (ink(r.x0, y, r.x1, y + 1) > 0) {
+          if (a >= 0 && y - last - 1 > gap) runs.push([a, last + 1]), (a = -1);
+          if (a < 0) a = y;
+          last = y;
+        }
+      }
+      if (a >= 0) runs.push([a, last + 1]);
+      return runs;
+    };
+    /** The rectangle trimmed to the print in it, or null when it holds none. */
+    const trim = (r) => {
+      if (empty(r) || ink(r.x0, r.y0, r.x1, r.y1) < 2) return null;
+      let { x0, y0, x1, y1 } = r;
+      while (x0 < x1 && !ink(x0, y0, x0 + 1, y1)) x0++;
+      while (x1 > x0 && !ink(x1 - 1, y0, x1, y1)) x1--;
+      while (y0 < y1 && !ink(x0, y0, x1, y0 + 1)) y0++;
+      while (y1 > y0 && !ink(x0, y1 - 1, x1, y1)) y1--;
+      return { x0, y0, x1, y1 };
+    };
+    /**
+     * How far the text line in rows [y0, y1) that holds print at columns [x0, x1) runs, left and right: words follow
+     * each other with less than REACH.word of clear paper between them; a box or a rule ends the line.
+     */
+    const lineOf = (y0, y1, x0, x1) => {
+      let lo = 0;
+      let hi = w;
+      keep.forEach((k) => {
+        if (k.y0 >= y1 || k.y1 <= y0) return;
+        if (k.x1 <= x0 && k.x1 > lo) lo = k.x1;
+        if (k.x0 >= x1 && k.x0 < hi) hi = k.x0;
+      });
+      const most = pt(REACH.word);
+      let a = x0;
+      for (let x = x0 - 1, clear = 0; x >= lo && clear <= most; x--) {
+        if (ink(x, y0, x + 1, y1)) (a = x), (clear = 0);
+        else clear++;
+      }
+      let b = x1;
+      for (let x = x1, clear = 0; x < hi && clear <= most; x++) {
+        if (ink(x, y0, x + 1, y1)) (b = x + 1), (clear = 0);
+        else clear++;
+      }
+      return { x0: a, x1: b };
+    };
+    /**
+     * A band reaching away from its own box or rule (dir 'up', 'down', 'left', 'right'), cut at every other box and
+     * rule it meets: one that lies ahead is cut across, one beside it is cut along. Returns which ends were cut.
+     */
+    const clip = (r, dir, own) => {
+      const cut = {};
+      const oc = { x: (own.x0 + own.x1) / 2, y: (own.y0 + own.y1) / 2 };
+      for (let pass = 0; pass < 4; pass++) {
+        let changed = false;
+        keep.forEach((k) => {
+          if ((k.kind === own.kind && k.of === own.of) || empty(r) || !meets(r, k)) return;
+          changed = true;
+          const kx = (k.x0 + k.x1) / 2;
+          const ky = (k.y0 + k.y1) / 2;
+          const across = dir === 'up' ? ky < own.y0 : dir === 'down' ? ky > own.y1 : dir === 'left' ? kx < own.x0 : kx > own.x1;
+          if (across) {
+            if (dir === 'up') (r.y0 = Math.max(r.y0, k.y1)), (cut.y0 = true);
+            else if (dir === 'down') (r.y1 = Math.min(r.y1, k.y0)), (cut.y1 = true);
+            else if (dir === 'left') (r.x0 = Math.max(r.x0, k.x1)), (cut.x0 = true);
+            else (r.x1 = Math.min(r.x1, k.x0)), (cut.x1 = true);
+          } else if (dir === 'up' || dir === 'down') {
+            if (kx < oc.x) r.x0 = Math.max(r.x0, k.x1);
+            else r.x1 = Math.min(r.x1, k.x0);
+          } else if (ky < oc.y) r.y0 = Math.max(r.y0, k.y1);
+          else r.y1 = Math.min(r.y1, k.y0);
+        });
+        if (!changed) break;
+      }
+      r.x0 = Math.max(0, r.x0);
+      r.y0 = Math.max(0, r.y0);
+      r.x1 = Math.min(w, r.x1);
+      r.y1 = Math.min(h, r.y1);
+      return cut;
+    };
+
+    /* The margin column, found from the picture and never from the boxes. */
+    const lefts = places.map((i) => boxes[i].x0).concat(rules.map((r) => r.x0));
+    const leftmost = Math.min.apply(null, lefts);
+    const letter = Math.max(4, Math.round(4 * s * s)); // about the print of one small letter
+    // A column of print beside the rows of the boxes right of it is their captions, not a margin.
+    const captions = (x1, main) => {
+      let n = 0;
+      let m = 0;
+      for (let y = 0; y < h; y++) {
+        if (!ink(0, y, x1, y + 1)) continue;
+        n++;
+        if (places.some((i) => boxes[i].x0 >= main && y >= boxes[i].y0 - pt(REACH.row) && y < boxes[i].y1 + pt(REACH.row))) m++;
+      }
+      return n > 0 && m > 0.5 * n;
+    };
+    const firstInk = (x0, x1) => {
+      for (let x = x0; x < x1; x++) if (ink(x, 0, x + 1, h)) return x;
+      return x0;
+    };
+    // (1) a long upright stroke left of the leftmost box that is a place, with print left of it: the margin rule runs
+    // beside the places it sets off, at least 30% of the height they span, and never shorter than a tenth of the
+    // picture. (A free rule may start inside the margin column: a rule across the page, or a line to write on at the
+    // page's left edge.)
+    const spanTop = Math.min.apply(null, places.map((i) => boxes[i].y0).concat(rules.map((r) => r.y0)));
+    const spanEnd = Math.max.apply(null, places.map((i) => boxes[i].y1).concat(rules.map((r) => r.y1)));
+    const tall = Math.max(0.3 * (spanEnd - spanTop), 0.1 * h);
+    const boxLeft = places.length ? Math.min.apply(null, places.map((i) => boxes[i].x0)) : leftmost;
+    const strokeCols = [];
+    for (let x = 1; x < Math.min(boxLeft, w - 1); x++) {
+      if (ink(x - 1, 0, x + 2, h) < tall) continue;
+      let best = 0;
+      let run = 0;
+      let miss = 0;
+      for (let y = 0; y < h; y++) {
+        const r = y * w + x;
+        if (grey[r - 1] <= dark || grey[r] <= dark || grey[r + 1] <= dark) {
+          run += miss + 1;
+          miss = 0;
+          if (run > best) best = run;
+        } else if (run && miss < 1) miss++;
+        else (run = 0), (miss = 0);
+      }
+      if (best >= tall) strokeCols.push(x);
+    }
+    for (let k = strokeCols.length - 1; k >= 0 && !out.margin; ) {
+      let a = k;
+      while (a > 0 && strokeCols[a - 1] === strokeCols[a] - 1) a--;
+      const xa = strokeCols[a];
+      const xb = strokeCols[k];
+      if (ink(0, 0, xa - 1, h) >= letter && !captions(xa - 1, xb + 1)) out.margin = { x0: firstInk(0, xa - 1), x1: xa - 1, main: xb + 2 };
+      k = a - 1;
+    }
+    // (2) else the widest upright gap of clear paper, at least 8 pt wide, in the left two fifths, with print on both sides
+    if (!out.margin) {
+      const most = 0.02 * h;
+      let best = null;
+      for (let x = 0; x < w; ) {
+        if (ink(x, 0, x + 1, h) > most) {
+          x++;
+          continue;
+        }
+        const ga = x;
+        while (x < w && ink(x, 0, x + 1, h) <= most) x++;
+        const gb = x;
+        if (gb - ga < pt(REACH.marginGap) || ga === 0 || gb > 0.4 * w) continue;
+        if (ink(0, 0, ga, h) < letter || ink(gb, 0, w, h) < letter) continue;
+        if (best && gb - ga <= best.gb - best.ga) continue;
+        if (captions(ga, gb)) continue;
+        best = { ga, gb };
+      }
+      if (best) out.margin = { x0: firstInk(0, best.ga), x1: best.ga, main: best.gb };
+    }
+    const margin = out.margin;
+
+    /* The bands of every place and every free rule. A band never ends inside a line of print: read as one line, a
+       strip with the cut-off tops of the next line under it comes back with no word at all. */
+    // a run of rows that an edge of r cuts through: print goes on past that edge
+    const cutAt = (r, a, b) => (a === r.y0 && a > 0 && ink(r.x0, a - 1, r.x1, a) > 0) || (b === r.y1 && b < h && ink(r.x0, b, r.x1, b + 1) > 0);
+    // r limited to its whole lines (null when it has none)
+    const whole = (r) => {
+      if (empty(r)) return null;
+      const runs = rowRuns(r).filter(([a, b]) => !cutAt(r, a, b));
+      return runs.length ? trim({ x0: r.x0, y0: runs[0][0], x1: r.x1, y1: runs[runs.length - 1][1] }) : null;
+    };
+    // a band on its box's row: the whole text lines (looked for a little above and below) that cross the middle half of
+    // the box's height
+    const rowOf = (r, own) => {
+      if (empty(r)) return null;
+      const look = { x0: r.x0, y0: Math.max(0, own.y0 - pt(6)), x1: r.x1, y1: Math.min(h, own.y1 + pt(6)) };
+      const q = (own.y1 - own.y0) / 4;
+      const runs = rowRuns(look).filter(([a, b]) => a < own.y1 - q && b > own.y0 + q && !cutAt(look, a, b));
+      return runs.length ? { x0: r.x0, y0: runs[0][0], x1: r.x1, y1: runs[runs.length - 1][1] } : null;
+    };
+    const parts = [];
+    const add = (kind, of, side, r) => r && parts.push({ of, kind, side, x0: r.x0, y0: r.y0, x1: r.x1, y1: r.y1 });
+    // over or under: cut at a text line wider than its owner by more than the owner's own width (running prose)
+    const upDown = (r, dir, own) => {
+      clip(r, dir, own);
+      if (empty(r)) return null;
+      const runs = rowRuns(r);
+      if (dir === 'up') runs.reverse();
+      const kept = [];
+      for (let i = 0; i < runs.length; i++) {
+        if (cutAt(r, runs[i][0], runs[i][1])) {
+          // a line the band's far edge cuts through: left out of a box's band; over a free rule taken whole, since the
+          // line rules look for print up to REACH.ruleOverFar above a rule
+          if (own.kind !== 'rule' || dir !== 'up') continue;
+          let a = runs[i][0];
+          while (a > 0 && a > r.y0 - pt(8) && ink(r.x0, a - 1, r.x1, a) > 0) a--;
+          runs[i] = [a, runs[i][1]];
+        }
+        const t = trim({ x0: r.x0, y0: runs[i][0], x1: r.x1, y1: runs[i][1] });
+        if (!t) continue;
+        const ln = lineOf(t.y0, t.y1, t.x0, t.x1);
+        // (a free rule's bands are its own width, and the line rules read them: the words standing over a rule and the
+        // mark that opens the print under a footnote rule; running text is cut only from the bands of a box)
+        if (own.kind === 'box' && ln.x1 - ln.x0 > 2 * (own.x1 - own.x0)) break;
+        // under a free rule longer than REACH.longRule, a text line nearly as wide as the rule is the next line of the
+        // page (a heading or running text), not a caption of the rule
+        if (own.kind === 'rule' && dir === 'down' && own.x1 - own.x0 > pt(REACH.longRule) && ln.x1 - ln.x0 >= 0.8 * (own.x1 - own.x0)) break;
+        kept.push(t);
+      }
+      if (!kept.length) return null;
+      // Over a free rule the line rules look for the nearest print, and only where two or more upright strokes meet
+      // the rule (the edge of a table) for print over each stretch between them: the nearest line is enough elsewhere.
+      if (own.kind === 'rule' && dir === 'up') {
+        const tol = pt(1.5);
+        const walls = boxes.reduce((n, b) => (b.y0 - tol <= own.y1 && b.y1 + tol >= own.y0 ? n + (b.x0 >= own.x0 - tol && b.x0 <= own.x1 + tol) + (b.x1 >= own.x0 - tol && b.x1 <= own.x1 + tol) : n), 0);
+        if (walls < 2) kept.length = 1;
+      }
+      return trim({ x0: r.x0, y0: Math.min.apply(null, kept.map((t) => t.y0)), x1: r.x1, y1: Math.max.apply(null, kept.map((t) => t.y1)) });
+    };
+    // before on its row: cut at the margin; a text line that runs on past the band's reach is running prose
+    const before = (r, own, prose) => {
+      if (margin && own.x0 >= margin.main && r.x0 < margin.main) (r.x0 = margin.main), (own.edge = true);
+      const reach = r.x0;
+      clip(r, 'left', own);
+      let t = own.kind === 'box' ? rowOf(r, own) : whole(r);
+      if (t && own.kind === 'box') {
+        Object.assign(r, { y0: t.y0, y1: t.y1 });
+        clip(r, 'left', own);
+        t = trim(r);
+      }
+      if (!t) return null;
+      if (prose && r.x0 === reach && reach > 0 && !own.edge && lineOf(t.y0, t.y1, t.x0, t.x1).x0 < r.x0) return null;
+      return t;
+    };
+    places.forEach((i) => {
+      const b = boxes[i];
+      const own = { x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, kind: 'box', of: i };
+      const bw = (b.x1 - b.x0) / s;
+      const bh = (b.y1 - b.y0) / s;
+      const y0 = b.y0 - pt(REACH.row);
+      const y1 = b.y1 + pt(REACH.row);
+      if (b.small && Math.abs(bw - bh) <= SQUARE * Math.max(bw, bh)) {
+        // a tick box: the words after it on its row, up to the next box or a wide gap once its words have begun
+        const r = { x0: b.x1 + g, y0, x1: b.x1 + pt(REACH.tickAfter), y1 };
+        clip(r, 'right', own);
+        if (!empty(r)) {
+          let last = -1;
+          for (let x = r.x0; x < r.x1; x++) {
+            if (ink(x, r.y0, x + 1, r.y1)) last = x;
+            else if (last >= 0 && x - last > pt(REACH.tickGap)) break;
+          }
+          const line = last >= 0 ? rowOf({ x0: r.x0, y0: r.y0, x1: last + 1, y1: r.y1 }, own) : null;
+          if (line) {
+            clip(line, 'right', own);
+            add('box', i, 'after', trim(line));
+          }
+        }
+        add('box', i, 'before', before({ x0: b.x0 - pt(REACH.tickBefore), y0, x1: b.x0 - g, y1 }, Object.assign({}, own), true));
+        return;
+      }
+      add('box', i, 'over', upDown({ x0: b.x0, y0: b.y0 - pt(REACH.over), x1: b.x1, y1: b.y0 - g }, 'up', own));
+      add('box', i, 'under', upDown({ x0: b.x0, y0: b.y1 + g, x1: b.x1, y1: b.y1 + pt(REACH.under) }, 'down', own));
+      add('box', i, 'before', before({ x0: b.x0 - pt(REACH.before), y0, x1: b.x0 - g, y1 }, Object.assign({}, own), true));
+      if (b.ink > 0) add('box', i, 'inside', trim({ x0: b.x0 + g, y0: b.y0 + g, x1: b.x1 - g, y1: b.y1 - g }));
+    });
+    rules.forEach((ru, i) => {
+      const own = { x0: ru.x0, y0: ru.y0, x1: ru.x1, y1: ru.y1, kind: 'rule', of: i };
+      const y0 = ru.y0 - pt(REACH.ruleUp);
+      const y1 = ru.y1 + pt(REACH.ruleDown);
+      add('rule', i, 'before', before({ x0: ru.x0 - pt(REACH.ruleBefore), y0, x1: ru.x0 - 1, y1 }, Object.assign({}, own), false));
+      const after = { x0: ru.x1 + 1, y0, x1: ru.x1 + pt(REACH.ruleAfter), y1 };
+      clip(after, 'right', own);
+      add('rule', i, 'after', whole(after));
+      add('rule', i, 'over', upDown({ x0: ru.x0, y0: ru.y0 - pt(REACH.ruleOverFar), x1: ru.x1, y1: ru.y0 - Math.max(1, pt(REACH.ruleOverNear)) }, 'up', own));
+      add('rule', i, 'under', upDown({ x0: ru.x0, y0: ru.y1 + 1, x1: ru.x1, y1: ru.y1 + pt(REACH.ruleUnder) }, 'down', own));
+    });
+
+    /*
+     * Bands that touch or overlap are one strip, while its area stays within the allowance and it meets no box or rule.
+     * Bands of one row (their rows overlap by more than half) are one strip while its area stays within ROW_MERGE times
+     * theirs, even with a box or a rule between them, when nothing else is printed between them: the boxes and rules
+     * inside such a strip are painted white before it is read (strip.paint), so one reading takes the whole row.
+     */
+    const area = (r) => (r.x1 - r.x0) * (r.y1 - r.y0);
+    const touch = (a, b) => a.x0 <= b.x1 && b.x0 <= a.x1 && a.y0 <= b.y1 && b.y0 <= a.y1;
+    const rowAllowance = opts && opts.row > 0 ? +opts.row : ROW_MERGE;
+    const oneRow = (a, b) => {
+      const common = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+      if (common <= 0.5 * Math.min(a.y1 - a.y0, b.y1 - b.y0)) return false;
+      const l = a.x1 <= b.x0 ? a : b;
+      const r = l === a ? b : a;
+      if (r.x0 - l.x1 > pt(REACH.rowGap)) return false;
+      // nothing printed between them but boxes and rules
+      const between = { x0: l.x1, y0: Math.max(a.y0, b.y0), x1: r.x0, y1: Math.min(a.y1, b.y1) };
+      if (empty(between)) return true;
+      let left = ink(between.x0, between.y0, between.x1, between.y1);
+      keep.forEach((k) => meets(between, k) && (left -= ink(Math.max(between.x0, k.x0), Math.max(between.y0, k.y0), Math.min(between.x1, k.x1), Math.min(between.y1, k.y1))));
+      return left <= 0;
+    };
+    let list = parts.map((q) => ({ x0: q.x0, y0: q.y0, x1: q.x1, y1: q.y1, parts: [q], area: area(q) }));
+    for (let changed = true; changed; ) {
+      changed = false;
+      for (let i = 0; i < list.length && !changed; i++) {
+        for (let j = i + 1; j < list.length; j++) {
+          const a = list[i];
+          const b = list[j];
+          const u = { x0: Math.min(a.x0, b.x0), y0: Math.min(a.y0, b.y0), x1: Math.max(a.x1, b.x1), y1: Math.max(a.y1, b.y1) };
+          const plain = touch(a, b) && area(u) <= allowance * (a.area + b.area) && !keep.some((k) => meets(u, k));
+          if (!plain && !(rowAllowance > allowance && area(u) <= rowAllowance * (a.area + b.area) && oneRow(a, b))) continue;
+          list[i] = Object.assign(u, { parts: a.parts.concat(b.parts), area: a.area + b.area });
+          list.splice(j, 1);
+          changed = true;
+          break;
+        }
+      }
+    }
+    // One row of print at most REACH.line high is read as a line.
+    const oneLine = (r) => r.y1 - r.y0 <= pt(REACH.line) && rowRuns(r).length <= 1;
+    // Grown by paper: a row or column is added while it holds no print and meets no box, rule or other strip.
+    const grow = (r, others) => {
+      const most = pt(REACH.grow);
+      const free = (q) => q.x0 >= 0 && q.y0 >= 0 && q.x1 <= w && q.y1 <= h && !ink(q.x0, q.y0, q.x1, q.y1) && !keep.some((k) => meets(q, k)) && !others.some((o) => o !== r && meets(q, o));
+      for (let k = 0; k < most && free({ x0: r.x0, y0: r.y0 - 1, x1: r.x1, y1: r.y0 }); k++) r.y0--;
+      for (let k = 0; k < most && free({ x0: r.x0, y0: r.y1, x1: r.x1, y1: r.y1 + 1 }); k++) r.y1++;
+      for (let k = 0; k < most && free({ x0: r.x0 - 1, y0: r.y0, x1: r.x0, y1: r.y1 }); k++) r.x0--;
+      for (let k = 0; k < most && free({ x0: r.x1, y0: r.y0, x1: r.x1 + 1, y1: r.y1 }); k++) r.x1++;
+      return r;
+    };
+    const order = (a, b) => a.y0 - b.y0 || a.x0 - b.x0 || a.y1 - b.y1 || a.x1 - b.x1;
+    const sideOrder = (a, b) => SIDE_ORDER.indexOf(a.side) - SIDE_ORDER.indexOf(b.side) || order(a, b);
+    list = list.map((st) => ({ x0: st.x0, y0: st.y0, x1: st.x1, y1: st.y1, line: oneLine(st), parts: st.parts.slice().sort((a, b) => (a.kind === b.kind ? a.of - b.of : a.kind === 'box' ? -1 : 1) || sideOrder(a, b)) }));
+    list.sort(order);
+    list.forEach((st) => grow(st, list));
+    // the boxes and rules a strip of one row spans, to be painted white before it is read
+    list.forEach((st) => {
+      st.paint = keep.filter((k) => meets(st, k)).map((k) => ({ x0: Math.max(st.x0, k.x0), y0: Math.max(st.y0, k.y0), x1: Math.min(st.x1, k.x1), y1: Math.min(st.y1, k.y1) }));
+    });
+    out.strips = list;
+
+    /* Columns: places whose left and right edges agree, top to bottom. */
+    const tol = REACH.column * s;
+    const root = places.map((_, k) => k);
+    const top = (k) => (root[k] === k ? k : (root[k] = top(root[k])));
+    for (let a = 0; a < places.length; a++)
+      for (let c = a + 1; c < places.length; c++) {
+        const p = boxes[places[a]];
+        const q = boxes[places[c]];
+        if (Math.abs(p.x0 - q.x0) <= tol && Math.abs(p.x1 - q.x1) <= tol) root[top(a)] = top(c);
+      }
+    const groups = new Map();
+    places.forEach((i, k) => {
+      const t = top(k);
+      if (!groups.has(t)) groups.set(t, []);
+      groups.get(t).push(i);
+    });
+    const columns = [];
+    groups.forEach((ids) => {
+      if (ids.length < 2) return;
+      ids.sort((a, c) => boxes[a].y0 - boxes[c].y0 || boxes[a].x0 - boxes[c].x0);
+      const bs = ids.map((i) => boxes[i]);
+      columns.push({ boxes: ids, x0: Math.min.apply(null, bs.map((b) => b.x0)), y0: bs[0].y0, x1: Math.max.apply(null, bs.map((b) => b.x1)), y1: Math.max.apply(null, bs.map((b) => b.y1)) });
+    });
+    columns.sort(order);
+    columns.forEach((c, k) => c.boxes.forEach((i) => (boxes[i].col = k)));
+    out.columns = columns;
+
+    /* Heading zones: blocks of print in the margin column, and lettered lines at the left edge of the places. */
+    const zones = [];
+    if (margin) {
+      const runs = [];
+      for (let y = 0; y < h; y++) {
+        if (!ink(margin.x0, y, margin.x1, y + 1)) continue;
+        const last = runs[runs.length - 1];
+        if (last && y - last[1] < pt(REACH.block)) last[1] = y + 1;
+        else runs.push([y, y + 1]);
+      }
+      runs.forEach((rn) => {
+        if (rn[1] - rn[0] < pt(REACH.word2)) return; // a rule across the page, not a heading
+        const t = trim({ x0: margin.x0, y0: rn[0], x1: margin.x1, y1: Math.min(rn[1], rn[0] + pt(REACH.blockRead)) });
+        if (t) zones.push(Object.assign({ kind: 'margin' }, t));
+      });
+    }
+    const from = margin ? margin.main : 0;
+    const inMain = lefts.filter((x) => x >= from);
+    if (inMain.length) {
+      const L = Math.min.apply(null, inMain);
+      const wa = Math.max(from, L - pt(REACH.zoneLeft));
+      const wb = Math.min(w, L + pt(REACH.zoneRight));
+      // print that lies in no box, no rule and no caption strip
+      const off = keep.concat(out.strips);
+      const mask = new Uint8Array(w * h);
+      for (let y = 0; y < h; y++) for (let x = 0, r = y * w; x < w; x++) mask[r + x] = grey[r + x] <= dark ? 1 : 0;
+      off.forEach((k) => {
+        for (let y = Math.max(0, k.y0); y < Math.min(h, k.y1); y++) mask.fill(0, y * w + Math.max(0, k.x0), y * w + Math.max(0, Math.min(w, k.x1)));
+      });
+      const rowHas = (y, x0, x1) => {
+        for (let x = x0, r = y * w; x < x1; x++) if (mask[r + x]) return true;
+        return false;
+      };
+      const colHas = (x, y0, y1) => {
+        for (let y = y0; y < y1; y++) if (mask[y * w + x]) return true;
+        return false;
+      };
+      const runs = [];
+      let a = -1;
+      let last = -1;
+      for (let y = 0; y <= h; y++) {
+        if (y < h && rowHas(y, wa, wb)) {
+          if (a >= 0 && y - last - 1 > gap) runs.push([a, last + 1]), (a = -1);
+          if (a < 0) a = y;
+          last = y;
+        }
+      }
+      if (a >= 0) runs.push([a, last + 1]);
+      runs.forEach(([y0, y1]) => {
+        if (y1 - y0 > pt(REACH.zoneHigh)) return;
+        let x0 = -1;
+        for (let x = from; x < wb && x0 < 0; x++) if (colHas(x, y0, y1)) x0 = x;
+        if (x0 < wa) return; // the row begins further left: it is no line set at the edge of the places
+        let stop = w;
+        off.forEach((k) => k.y0 < y1 && k.y1 > y0 && k.x0 >= x0 && k.x0 < stop && (stop = k.x0));
+        let x1 = x0 + 1;
+        for (let x = x0, clear = 0; x < stop && clear <= pt(REACH.zoneRight); x++) {
+          if (colHas(x, y0, y1)) (x1 = x + 1), (clear = 0);
+          else clear++;
+        }
+        // A lettered line opens with one short mark (a letter and its stop, or a bracketed letter) and then a space;
+        // running text at the same edge opens with a word.
+        const hi = y1 - y0;
+        const space = Math.max(2, Math.ceil(0.3 * hi));
+        let first = x0 + 1;
+        for (let x = x0, clear = 0; x < x1; x++) {
+          if (colHas(x, y0, y1)) (first = x + 1), (clear = 0);
+          else if (++clear >= space) break;
+        }
+        if (first - x0 > 1.4 * hi || first >= x1) return; // (a capital and its stop are wider than a line of capitals is high)
+        // the mark ends in a full stop (a small dot low in the line) or a closing bracket (reaching below the capital)
+        const k = Math.max(1, Math.round(0.25 * hi));
+        const rows = (c0, c1) => {
+          let t = -1;
+          let b = -1;
+          for (let y = y0; y < y1; y++) {
+            for (let x = Math.max(x0, c0); x < c1; x++) {
+              if (mask[y * w + x]) {
+                if (t < 0) t = y;
+                b = y;
+                break;
+              }
+            }
+          }
+          return { t, b };
+        };
+        const head = rows(x0, x0 + k);
+        const tail = rows(first - k, first);
+        const dot = tail.t >= y0 + 0.55 * hi;
+        const bracket = tail.b >= head.b + Math.max(1, 0.1 * hi) && tail.b - tail.t >= 0.8 * hi;
+        if (!dot && !bracket) return;
+        if (x1 - x0 < pt(REACH.word1) || hi < pt(REACH.word2)) return; // too small to hold a word
+        // and it is set off from what is above it by more than the spacing of the lines of running text
+        const end = Math.min(x1, x0 + pt(REACH.zoneRead));
+        for (let y = Math.max(0, y0 - Math.ceil(0.6 * hi)); y < y0; y++) if (rowHas(y, x0, end)) return;
+        zones.push({ kind: 'letter', x0, y0, x1: end, y1 });
+      });
+    }
+    zones.forEach((z) => (z.line = oneLine(z)));
+    zones.sort(order);
+    zones.forEach((z) => grow(z, out.strips.concat(zones)));
+    out.zones = zones;
+    return out;
+  }
+
+  const api = { find, toGrey, bands, near, INK, MAX_PIXELS, MIN_PT };
   if (typeof window !== 'undefined' && window.CVPortal) window.CVPortal.picturepage = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })();

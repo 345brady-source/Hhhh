@@ -19,7 +19,9 @@
  *                                          engine is not asked. Rejects with code 'time' after ms (8 seconds when not given), and the
  *                                          engine is stopped so that the next read starts it afresh; with code 'fail'
  *                                          for any other failure; with code 'load' when the engine cannot start.
- *   NS.textengine.stop()                   ends the worker if there is one
+ *                                          A strip asked for while the first worker is still reading goes to a second
+ *                                          worker, started the first time this happens; one strip at a time never starts it.
+ *   NS.textengine.stop()                   ends the workers there are
  *
  * Nothing here places a field or decides anything about a page; it only reads what it is handed.
  */
@@ -35,9 +37,12 @@
   const words = (e) => String((e && e.message) || e || '').slice(0, 500);
   const fail = (code, detail, more) => Object.assign(new Error(SAID[code]), { code, detail: words(detail) }, more || {});
 
-  let engine = null; // the promise of the started engine, or null
-  let paged = null; // the page mode the engine was last set to
-  let turn = Promise.resolve(); // reads run one after another
+  // Two workers at most. The first is started by start(); the second only when a strip is asked for while the first
+  // is still reading one (a caller that reads one strip at a time never starts it). Each takes its reads one after
+  // another; a read goes to the worker with fewer reads waiting.
+  const WORKERS = 2;
+  const slots = [];
+  for (let i = 0; i < WORKERS; i++) slots.push({ engine: null, paged: null, turn: Promise.resolve(), pending: 0, ready: false });
 
   function script(src) {
     return new Promise((ok, no) => {
@@ -83,7 +88,10 @@
 
   /** The engine, started once (every file comes from the portal's own folder; no request is made). */
   function start() {
-    if (engine) return engine;
+    return startSlot(slots[0]);
+  }
+  function startSlot(slot) {
+    if (slot.engine) return slot.engine;
     const run = { born: null, spoke: false, said: '', over: false, refused: false };
     // the browser says on the page, not on the worker, that its policy refused to let a worker start
     const policy = (e) => {
@@ -133,18 +141,19 @@
       (w) => {
         run.over = true;
         document.removeEventListener('securitypolicyviolation', policy);
+        if (slot.engine === p) slot.ready = true;
         return w;
       },
       (e) => {
         run.over = true;
         document.removeEventListener('securitypolicyviolation', policy);
-        if (engine === p) engine = null;
+        if (slot.engine === p) (slot.engine = null), (slot.ready = false);
         if (run.born) end(run.born);
         throw fail('load', e.detail, { why: e.why });
       }
     );
-    engine = p;
-    paged = null;
+    slot.engine = p;
+    slot.paged = null;
     return p;
   }
 
@@ -156,11 +165,15 @@
     }
   }
 
-  function stop() {
-    const p = engine;
-    engine = null;
-    paged = null;
+  function stopSlot(slot) {
+    const p = slot.engine;
+    slot.engine = null;
+    slot.paged = null;
+    slot.ready = false;
     if (p) p.then(end, () => {});
+  }
+  function stop() {
+    slots.forEach(stopSlot);
   }
 
   /**
@@ -186,17 +199,19 @@
     }
   }
 
-  function once(canvas, mode, ms) {
+  function once(slot, canvas, mode, ms) {
     const psm = MODES[mode] || MODES.line;
     if (blank(canvas)) return Promise.resolve([]);
-    return start().then((w) => {
-      const mine = engine;
-      const job = (psm === paged ? Promise.resolve() : w.setParameters({ tessedit_pageseg_mode: psm }).then(() => void (paged = psm))).then(() =>
+    return startSlot(slot).then((w) => {
+      const mine = slot.engine;
+      // A strip is dark print on light paper (its contrast is stretched so): the engine's second try of every unsure
+      // word as white on black is never needed, and it costs as much again as the first.
+      const job = (psm === slot.paged ? Promise.resolve() : w.setParameters({ tessedit_pageseg_mode: psm, tessedit_do_invert: '0' }).then(() => void (slot.paged = psm))).then(() =>
         w.recognize(canvas, {}, { blocks: true, text: false })
       );
       return new Promise((ok, no) => {
         const clock = setTimeout(() => {
-          if (engine === mine) stop();
+          if (slot.engine === mine) stopSlot(slot);
           no(fail('time', 'no answer within ' + (ms || STRIP_MS) + ' ms'));
         }, ms || STRIP_MS);
         job.then(
@@ -207,13 +222,21 @@
     });
   }
 
-  /** One strip read as a line or as a block; reads are taken one at a time, in the order they were asked for. */
+  /**
+   * One strip read as a line or as a block. Each worker takes its reads in the order they were asked for; a strip asked
+   * for while the first worker is busy goes to the second once it has started (and starts it, the first time).
+   */
   function read(canvas, mode, ms) {
-    const mine = turn.then(() => once(canvas, mode, ms));
-    turn = mine.then(
-      () => {},
-      () => {}
-    );
+    let slot = slots[0];
+    if (slot.pending > 0 && slots[0].ready) {
+      const other = slots.slice(1).find((q) => q.ready && q.pending < slot.pending);
+      if (other) slot = other;
+      else slots.slice(1).forEach((q) => q.engine || startSlot(q).catch(() => {}));
+    }
+    slot.pending++;
+    const mine = slot.turn.then(() => once(slot, canvas, mode, ms));
+    const done = () => void slot.pending--;
+    slot.turn = mine.then(done, done);
     return mine;
   }
 
