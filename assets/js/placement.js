@@ -2021,7 +2021,7 @@
       ownLabel(m);
     });
     // Printed places the reading recognised and could not name (see read: left).
-    L.slots.forEach((s) => s.unnamed && !s.made && (c.unplaced = c.unplaced || []).push(pg.page));
+    L.slots.forEach((s) => s.unnamed && !s.made && (c.unplaced = c.unplaced || []).push({ page: pg.page, x0: s.x0, x1: s.x1, y0: s.y - s.clear, y1: s.y }));
     made.forEach((m) => out.push(m.p));
   }
 
@@ -2473,10 +2473,11 @@
     // The printed places read: one for every proposal, and one for every place recognised that got none (an empty cell
     // with no caption in a row of captioned cells). A place whose proposal was dropped, or that got none, is left
     // without a field, and said so: the fields and the places left add up to the places read.
-    const unplaced = c.unplaced || [];
+    // (A recognised place that a field covers after all, one found on the picture of the page, is that field's place.)
+    const unplaced = (c.unplaced || []).filter((u) => !res.fields.some((p) => p.page === u.page && overlap(p.x, p.x + p.w, u.x0, u.x1) > 0.5 * (u.x1 - u.x0) && overlap(p.y, p.y + p.h, u.y0 - 2, u.y1 + 2) > 0));
     res.places = out.length + unplaced.length;
     out.forEach((p) => keep.indexOf(p) < 0 && res.left.indexOf(p.page) < 0 && res.left.push(p.page));
-    unplaced.forEach((n) => res.left.indexOf(n) < 0 && res.left.push(n));
+    unplaced.forEach((u) => res.left.indexOf(u.page) < 0 && res.left.push(u.page));
     res.fields.forEach((p) => {
       p.label = p.longLabel ? cleanFull(p.label) : clean(p.label);
       delete p.longLabel;
