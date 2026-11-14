@@ -462,6 +462,7 @@
     ruleOverNear: 5,
     ruleOverFar: 15,
     word: 4.5, // the widest gap between the words of one text line
+    rowGap: 24, // bands of one row merge across at most this much (a box or a rule between them)
     grow: 2, // paper round every strip
     line: 12, // a strip at most this high, with one row of print, is read as one line
     column: 3, // the edges of the boxes of one column agree within this
@@ -469,17 +470,22 @@
     block: 6, // rows of print closer than this are one block
     zoneLeft: 6, // a lettered line begins within this left ...
     zoneRight: 14, // ... and this right of the left edge of the leftmost place
-    zoneHigh: 14 // and is at most this high
+    zoneHigh: 14, // and is at most this high
+    zoneRead: 100, // of a lettered line this much is read: the words that decide come first
+    word1: 10, // a zone narrower than this ...
+    word2: 3 // ... or lower than this holds no word (a rule across the page is lower)
   };
   const MERGE = 1.5; // bands are merged while a strip's area stays within this many times the sum of its bands
+  const ROW_MERGE = 3; // ... and bands of one row while it stays within this many times
   const SIDE_ORDER = ['over', 'under', 'before', 'after', 'inside'];
 
   /**
    * The caption strips and heading zones of a searched picture: where the words that decide something are printed.
    *   page   { grey, w, h, pxPerPt, boxes, rules, paper, range } (the finder's result with its picture)
-   *   opts   { merge } the merge allowance (MERGE when not given)
+   *   opts   { merge, row } the merge allowances (MERGE and ROW_MERGE when not given; row 1 merges no row across a box)
    * Returns { strips, columns, margin, zones }, all in pixels of the picture, strips and zones in reading order:
-   *   strips  [{ x0, y0, x1, y1, line, parts: [{ of (index in boxes or rules), kind 'box' or 'rule', side, x0, y0, x1, y1 }] }]
+   *   strips  [{ x0, y0, x1, y1, line, parts: [{ of (index in boxes or rules), kind 'box' or 'rule', side, x0, y0, x1, y1 }],
+   *              paint: [the parts of boxes and rules inside the strip, to be painted white before it is read] }]
    *   columns [{ boxes: [indices, top to bottom], x0, y0, x1, y1 }]   two or more places with the same left and right edges
    *   margin  { x0, x1, main } the margin column (x0 to x1) and where the page's main area begins, or null
    *   zones   [{ kind 'margin' or 'letter', x0, y0, x1, y1, line }]   heading candidates; their text decides later
@@ -638,10 +644,17 @@
       for (let x = x0; x < x1; x++) if (ink(x, 0, x + 1, h)) return x;
       return x0;
     };
-    // (1) a long upright stroke (at least 30% of the picture's height) left of the leftmost place, with print left of it
-    const tall = 0.3 * h;
+    // (1) a long upright stroke (at least 30% of the height of the page's print) left of the leftmost box that is a
+    // place, with print left of it. (A free rule may start inside the margin column: a rule across the page, or a
+    // line to write on at the page's left edge.)
+    let printTop = 0;
+    let printEnd = h;
+    while (printTop < h && !ink(0, printTop, w, printTop + 1)) printTop++;
+    while (printEnd > printTop && !ink(0, printEnd - 1, w, printEnd)) printEnd--;
+    const tall = Math.max(0.3 * (printEnd - printTop), 0.1 * h); // and never shorter than a tenth of the picture
+    const boxLeft = places.length ? Math.min.apply(null, places.map((i) => boxes[i].x0)) : leftmost;
     const strokeCols = [];
-    for (let x = 1; x < Math.min(leftmost, w - 1); x++) {
+    for (let x = 1; x < Math.min(boxLeft, w - 1); x++) {
       if (ink(x - 1, 0, x + 2, h) < tall) continue;
       let best = 0;
       let run = 0;
@@ -756,9 +769,28 @@
       add('rule', i, 'under', upDown({ x0: ru.x0, y0: ru.y1 + 1, x1: ru.x1, y1: ru.y1 + pt(REACH.ruleUnder) }, 'down', own));
     });
 
-    /* Bands that touch or overlap are one strip, while its area stays within the allowance and it meets no box or rule. */
+    /*
+     * Bands that touch or overlap are one strip, while its area stays within the allowance and it meets no box or rule.
+     * Bands of one row (their rows overlap by more than half) are one strip while its area stays within ROW_MERGE times
+     * theirs, even with a box or a rule between them, when nothing else is printed between them: the boxes and rules
+     * inside such a strip are painted white before it is read (strip.paint), so one reading takes the whole row.
+     */
     const area = (r) => (r.x1 - r.x0) * (r.y1 - r.y0);
     const touch = (a, b) => a.x0 <= b.x1 && b.x0 <= a.x1 && a.y0 <= b.y1 && b.y0 <= a.y1;
+    const rowAllowance = opts && opts.row > 0 ? +opts.row : ROW_MERGE;
+    const oneRow = (a, b) => {
+      const common = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+      if (common <= 0.5 * Math.min(a.y1 - a.y0, b.y1 - b.y0)) return false;
+      const l = a.x1 <= b.x0 ? a : b;
+      const r = l === a ? b : a;
+      if (r.x0 - l.x1 > pt(REACH.rowGap)) return false;
+      // nothing printed between them but boxes and rules
+      const between = { x0: l.x1, y0: Math.max(a.y0, b.y0), x1: r.x0, y1: Math.min(a.y1, b.y1) };
+      if (empty(between)) return true;
+      let left = ink(between.x0, between.y0, between.x1, between.y1);
+      keep.forEach((k) => meets(between, k) && (left -= ink(Math.max(between.x0, k.x0), Math.max(between.y0, k.y0), Math.min(between.x1, k.x1), Math.min(between.y1, k.y1))));
+      return left <= 0;
+    };
     let list = parts.map((q) => ({ x0: q.x0, y0: q.y0, x1: q.x1, y1: q.y1, parts: [q], area: area(q) }));
     for (let changed = true; changed; ) {
       changed = false;
@@ -766,9 +798,9 @@
         for (let j = i + 1; j < list.length; j++) {
           const a = list[i];
           const b = list[j];
-          if (!touch(a, b)) continue;
           const u = { x0: Math.min(a.x0, b.x0), y0: Math.min(a.y0, b.y0), x1: Math.max(a.x1, b.x1), y1: Math.max(a.y1, b.y1) };
-          if (area(u) > allowance * (a.area + b.area) || keep.some((k) => meets(u, k))) continue;
+          const plain = touch(a, b) && area(u) <= allowance * (a.area + b.area) && !keep.some((k) => meets(u, k));
+          if (!plain && !(rowAllowance > allowance && area(u) <= rowAllowance * (a.area + b.area) && oneRow(a, b))) continue;
           list[i] = Object.assign(u, { parts: a.parts.concat(b.parts), area: a.area + b.area });
           list.splice(j, 1);
           changed = true;
@@ -793,6 +825,10 @@
     list = list.map((st) => ({ x0: st.x0, y0: st.y0, x1: st.x1, y1: st.y1, line: oneLine(st), parts: st.parts.slice().sort((a, b) => (a.kind === b.kind ? a.of - b.of : a.kind === 'box' ? -1 : 1) || sideOrder(a, b)) }));
     list.sort(order);
     list.forEach((st) => grow(st, list));
+    // the boxes and rules a strip of one row spans, to be painted white before it is read
+    list.forEach((st) => {
+      st.paint = keep.filter((k) => meets(st, k)).map((k) => ({ x0: Math.max(st.x0, k.x0), y0: Math.max(st.y0, k.y0), x1: Math.min(st.x1, k.x1), y1: Math.min(st.y1, k.y1) }));
+    });
     out.strips = list;
 
     /* Columns: places whose left and right edges agree, top to bottom. */
@@ -833,7 +869,7 @@
         else runs.push([y, y + 1]);
       }
       runs.forEach((rn) => {
-        if (rn[1] - rn[0] < pt(2)) return; // a rule across the page, not a heading
+        if (rn[1] - rn[0] < pt(REACH.word2)) return; // a rule across the page, not a heading
         const t = trim({ x0: margin.x0, y0: rn[0], x1: margin.x1, y1: rn[1] });
         if (t) zones.push(Object.assign({ kind: 'margin' }, t));
       });
@@ -859,9 +895,6 @@
         for (let y = y0; y < y1; y++) if (mask[y * w + x]) return true;
         return false;
       };
-      let right = 0;
-      for (let x = w - 1; x >= 0 && !right; x--) if (ink(x, 0, x + 1, h)) right = x + 1;
-      const half = L + 0.5 * (right - L);
       const runs = [];
       let a = -1;
       let last = -1;
@@ -885,8 +918,21 @@
           if (colHas(x, y0, y1)) (x1 = x + 1), (clear = 0);
           else clear++;
         }
-        if (x1 > half) return; // a line that runs across the page is running text, not a lettered heading
-        zones.push({ kind: 'letter', x0, y0, x1, y1 });
+        // A lettered line opens with one short mark (a letter and its stop, or a bracketed letter) and then a space;
+        // running text at the same edge opens with a word.
+        const hi = y1 - y0;
+        const space = Math.max(2, Math.ceil(0.3 * hi));
+        let first = x0 + 1;
+        for (let x = x0, clear = 0; x < x1; x++) {
+          if (colHas(x, y0, y1)) (first = x + 1), (clear = 0);
+          else if (++clear >= space) break;
+        }
+        if (first - x0 > 1.1 * hi || first >= x1) return;
+        if (x1 - x0 < pt(REACH.word1) || hi < pt(REACH.word2)) return; // too small to hold a word
+        // and it is set off from what is above it by more than the spacing of the lines of running text
+        const end = Math.min(x1, x0 + pt(REACH.zoneRead));
+        for (let y = Math.max(0, y0 - Math.ceil(0.6 * hi)); y < y0; y++) if (rowHas(y, x0, end)) return;
+        zones.push({ kind: 'letter', x0, y0, x1: end, y1 });
       });
     }
     zones.forEach((z) => (z.line = oneLine(z)));

@@ -132,6 +132,11 @@
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(pic.canvas, r.x0, r.y0, sw, sh, 0, 0, canvas.width, canvas.height);
+    // the boxes and rules a strip of one row spans are paper to the reader
+    const kx = canvas.width / sw;
+    const ky = canvas.height / sh;
+    ctx.fillStyle = '#fff';
+    (r.paint || []).forEach((p) => ctx.fillRect(Math.floor((p.x0 - r.x0) * kx), Math.floor((p.y0 - r.y0) * ky), Math.ceil((p.x1 - p.x0) * kx) + 1, Math.ceil((p.y1 - p.y0) * ky) + 1));
     const im = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const d = im.data;
     let lo = 255;
@@ -267,9 +272,10 @@
       } catch (e) {
         throw fail('fail', e);
       }
+      let where = null;
       const out = { glyphs: [], segs: [], rects: [], picture: false, pictured: raw.picture ? 'picture' : 'drawings', approx: !!raw.picture, words: [], found: [], lines: [], heads: [], reader: 'ok' };
       const trace = (strips) => {
-        if (o.trace) out.trace = { paper: seen.paper, print: seen.print, range: seen.range, tau: seen.tau, ms, strips: strips || 0 };
+        if (o.trace) out.trace = { paper: seen.paper, print: seen.print, range: seen.range, tau: seen.tau, ms, strips: strips || 0, margin: where ? where.margin : null, zones: where ? where.zones.map((z) => z.kind) : [] };
         return out;
       };
       // Nothing found: no strip, no engine, no field.
@@ -278,7 +284,7 @@
         if (!raw.picture) Object.assign(out, drawn(raw, { glyphs: [], words: [] }));
         return trace(0);
       }
-      const where = NS.picturepage.bands(Object.assign({ grey, w, h, pxPerPt: pic.scale }, seen));
+      where = NS.picturepage.bands(Object.assign({ grey, w, h, pxPerPt: pic.scale }, seen));
       grey = null;
       ms.find = Date.now() - t;
       await new Promise((r) => setTimeout(r, 0));
@@ -299,32 +305,44 @@
           out.reader = 'load';
         }
         const end = Date.now() + WORDS_MS;
-        for (let i = 0; eng && i < todo.length; i++) {
-          const left = end - Date.now();
-          if (left <= 0) {
-            out.reader = 'time';
-            break;
+        const got = new Array(todo.length);
+        let next = 0;
+        let over = !eng;
+        // Two lanes: NS.textengine hands a strip asked for while another is being read to its second worker. The words
+        // are attached afterwards in the order of the strips, so the page reads the same however the lanes ran.
+        const lane = async () => {
+          while (!over && next < todo.length) {
+            if (end - Date.now() <= 0) {
+              over = true;
+              out.reader = 'time';
+              break;
+            }
+            const i = next++;
+            const job = todo[i];
+            const cut = strip(pic, job.r);
+            try {
+              const blocks = await eng.read(cut.canvas, job.r.line ? 'line' : 'block', Math.min(STRIP_MS, Math.max(1, end - Date.now())));
+              got[i] = characters(blocks, pic.scale * cut.k, (pic.ox - job.r.x0) * cut.k, (pic.oy - job.r.y0) * cut.k, pic.sy * cut.k);
+            } catch (e) {
+              if (!over) {
+                out.reader = e && e.code === 'time' ? 'time' : e && e.code === 'load' ? 'load' : 'fail';
+                if (out.reader === 'load') refused = Object.assign(fail('load', e), { why: e.why || 'file' });
+              }
+              over = true;
+            } finally {
+              cut.canvas.width = cut.canvas.height = 0;
+            }
           }
-          const job = todo[i];
-          const cut = strip(pic, job.r);
-          let blocks;
-          try {
-            blocks = await eng.read(cut.canvas, job.r.line ? 'line' : 'block', Math.min(STRIP_MS, left));
-          } catch (e) {
-            out.reader = e && e.code === 'time' ? 'time' : e && e.code === 'load' ? 'load' : 'fail';
-            if (out.reader === 'load') refused = Object.assign(fail('load', e), { why: e.why || 'file' });
-            break;
-          } finally {
-            cut.canvas.width = cut.canvas.height = 0;
-          }
-          // the strip's pixels back to points: canvas pixel = strip pixel / k + the strip's corner
-          const got = characters(blocks, pic.scale * cut.k, (pic.ox - job.r.x0) * cut.k, (pic.oy - job.r.y0) * cut.k, pic.sy * cut.k);
-          got.glyphs.forEach((g) => read.glyphs.push(g));
-          got.words.forEach((q) => read.words.push(q));
+        };
+        await Promise.all([lane(), lane()]);
+        todo.forEach((job, i) => {
+          if (!got[i]) return;
+          got[i].glyphs.forEach((g) => read.glyphs.push(g));
+          got[i].words.forEach((q) => read.words.push(q));
           // Each word goes to the part of its strip whose rectangle holds its centre (or the nearest, within the
           // paper the strip was grown by); a word in no part of its strip belongs to another strip and is dropped.
           const owners = job.zone ? [{ key: job.zone, r: toPt(job.zone) }] : job.parts.map((q) => ({ key: q, r: toPt(q) }));
-          got.words.forEach((q) => {
+          got[i].words.forEach((q) => {
             const cx = (q.x0 + q.x1) / 2;
             const cy = (q.y0 + q.y1) / 2;
             let best = null;
@@ -337,8 +355,7 @@
             if (!heard.has(best.key)) heard.set(best.key, []);
             heard.get(best.key).push(q);
           });
-          await new Promise((r) => setTimeout(r, 0));
-        }
+        });
       }
       ms.read = Date.now() - t;
 

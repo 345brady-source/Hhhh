@@ -326,6 +326,8 @@ const DOCS = { form: path.join(SCRATCH, 'xx/printed-no-text.pdf'), prose: path.j
 const SHEET = path.join(SCRATCH, 'build/ocr-truth/truth-printed.json');
 const KEEP = process.argv.includes('--keep');
 const FORM_ORDER = [2, 1, 3, 4, 5, 6, 7, 8];
+// --pages 2,3: for looking only; reads those pages, prints their seconds and strips, and never passes
+const PAGES = arg('--pages', '').split(',').filter(Boolean).map(Number);
 const PAGE_S = 6; // a page of the form, read from its picture
 const PROSE_S = 2; // a page of running text
 const REFUSED_FIRST_S = 21;
@@ -402,12 +404,20 @@ async function openPortal(h, refuse) {
       const te = window.CVPortal.textengine;
       const read = te.read;
       te.read = (canvas, mode, ms) => {
+        const kept = { mode, w: canvas.width, h: canvas.height, ms: 0, words: 0 };
         try {
-          window.__strips.push({ mode, url: canvas.toDataURL('image/png') });
+          kept.url = canvas.toDataURL('image/png');
         } catch (e) {
           /* not kept */
         }
-        return read(canvas, mode, ms);
+        window.__strips.push(kept);
+        const t0 = performance.now();
+        const p = read(canvas, mode, ms);
+        p.then((blocks) => {
+          kept.ms = performance.now() - t0;
+          (blocks || []).forEach((b) => (b.paragraphs || []).forEach((q) => (q.lines || []).forEach((l) => (kept.words += (l.words || []).length))));
+        }, () => {});
+        return p;
       };
     });
   }
@@ -440,9 +450,12 @@ async function browser() {
       const sheet = JSON.parse(fs.readFileSync(SHEET, 'utf8'));
       const b64 = fs.readFileSync(DOCS.form).toString('base64');
       const { page } = await openPortal(h, false);
-      const pages = await readDoc(page, b64, FORM_ORDER, keepDir);
+      const pages = await readDoc(page, b64, PAGES.length ? PAGES : FORM_ORDER, keepDir);
       keepStrips(keepDir, 'form', pages);
-      if (keepDir) fs.writeFileSync(path.join(keepDir, 'form-shape.json'), JSON.stringify(pages.map((p) => Object.assign({}, p, { strips: p.strips.length })), null, 1));
+      if (keepDir) {
+        fs.writeFileSync(path.join(keepDir, 'form-shape.json'), JSON.stringify(pages.map((p) => Object.assign({}, p, { strips: p.strips.length })), null, 1));
+        fs.writeFileSync(path.join(keepDir, 'form-times.json'), JSON.stringify(pages.map((p) => ({ page: p.page, strips: p.strips.map((st) => ({ mode: st.mode, w: st.w, h: st.h, ms: Math.round(st.ms), words: st.words })) }))));
+      }
       console.log('the form, read from its pictures by the portal\'s own page');
       pages.forEach((pg) => {
         const t = pg.trace || { ms: {} };
@@ -452,6 +465,10 @@ async function browser() {
         if (s >= PAGE_S) fail(`page ${pg.page}: ${s.toFixed(1)} s, not under ${PAGE_S}`);
         if (pg.reader !== 'ok') fail(`page ${pg.page}: reader ${pg.reader}`);
       });
+      if (PAGES.length) {
+        fail('a run of chosen pages (--pages) is for looking only');
+        return fails;
+      }
       // Each place of the answer sheet to the found box that lies on it (as the finder check matches).
       const near = (p, c) => {
         const cx = (c.x0 + c.x1) / 2;
