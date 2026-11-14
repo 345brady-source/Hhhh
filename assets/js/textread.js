@@ -203,6 +203,27 @@
   }
 
   /**
+   * A run of strokes on one height whose ends touch is one stroke: a blank printed as underscores, once its letters are
+   * drawn as shapes, is a row of short bars, as a run of underscore characters is one line on a page with text. Only
+   * level strokes that are not the side of a frame are joined, when their heights and thicknesses agree within 0.3 pt
+   * and the gap between them is at most 0.8 pt (the gap allowed between two underscore characters of one run).
+   */
+  function joinRuns(segs) {
+    const out = segs.filter((s) => s.o !== 'h' || s.frame);
+    const hs = segs.filter((s) => s.o === 'h' && !s.frame).sort((a, b) => a.c - b.c || a.a0 - b.a0);
+    const open = [];
+    hs.forEach((s) => {
+      const t = s.t || 0;
+      const m = open.find((q) => Math.abs(q.c - s.c) <= 0.3 && Math.abs((q.t || 0) - t) <= 0.3 && s.a0 - q.a1 <= 0.8 && s.a1 >= q.a0 - 0.8);
+      if (m) {
+        m.a0 = Math.min(m.a0, s.a0);
+        m.a1 = Math.max(m.a1, s.a1);
+      } else open.push(Object.assign({}, s));
+    });
+    return out.concat(open);
+  }
+
+  /**
    * A page whose letters are drawings: its lines and boxes are the drawn ones, exactly. A thin bar that lies in a
    * recognised word is a letter or a dash; a square drawn as a filled frame is a box; a drawing inside a box that was
    * not read as a word is kept as a mark, so the box does not count as empty.
@@ -268,6 +289,8 @@
       let seen;
       try {
         grey = NS.picturepage.toGrey(pic.ctx.getImageData(0, 0, w, h).data, w, h);
+        // On a page of drawings the strokes of one run are joined first (joinRuns): what is read is the joined page.
+        if (!raw.picture) raw = Object.assign({}, raw, { segs: joinRuns(raw.segs) });
         seen = raw.picture ? NS.picturepage.find(grey, w, h, pic.scale, { ink: o.ink }) : Object.assign({}, drawnShapes(raw, pic));
       } catch (e) {
         throw fail('fail', e);

@@ -286,12 +286,20 @@
   }
 
   /**
+   * The least number of letter-like drawn shapes (filled, not a plain rectangle, no taller than 40 pt) that makes a
+   * page with no visible character a page of drawings. A page of the outlined copies that holds anything printed has
+   * well over this many (the fewest measured: 259); an empty page or a page with only a mark or a logo has fewer.
+   */
+  const LETTER_SHAPES = 40;
+  /**
    * A page with no text to read: 'picture' (a picture of a page, as in a scan), 'drawings' (its letters are drawn as
-   * shapes, as some "print to PDF" printers make them) or '' (it has text, or it is empty).
+   * shapes, as some "print to PDF" printers make them) or '' (it has text, or it is empty). A page with any visible
+   * character is a text page, whatever lies behind it.
    */
   function textless(raw) {
     if (!raw || raw.glyphs.some((g) => !g.hidden && !g.sp)) return '';
-    return raw.picture ? 'picture' : (raw.blobs || []).length >= 40 ? 'drawings' : '';
+    if (raw.picture) return 'picture';
+    return (raw.blobs || []).filter((b) => b.y1 - b.y0 <= 40).length >= LETTER_SHAPES ? 'drawings' : '';
   }
 
   /** What placement reads of one page. raw: from walk(); size: { page, w, h }; forms: the PDF's form fields on it (already in displayed points). */
@@ -300,8 +308,10 @@
     if (!raw) return out;
     const shown = raw.glyphs.filter((g) => !g.hidden);
     const ink = shown.filter((g) => !g.sp);
-    // A picture of the page with no visible text on it is a scan (a page with real text over a background picture is not).
-    out.scan = !!raw.picture && !ink.length;
+    // A page with no text to read is not read by the rules for text (a page with real text over a background picture
+    // is a text page): a picture of the page with no visible text on it (a scan), or a page whose letters are drawn
+    // as shapes. Both are read from their picture only when the sponsor asks for it.
+    out.scan = !ink.length && !!textless(raw);
     if (out.scan) return out;
     shown.forEach((g) => (g.box = !g.sp && boxChar(g)));
     const words = ink.filter((g) => g.u !== '_' && !g.box);
