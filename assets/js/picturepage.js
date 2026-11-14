@@ -750,6 +750,13 @@
         kept.push(t);
       }
       if (!kept.length) return null;
+      // Over a free rule the line rules look for the nearest print, and only where two or more upright strokes meet
+      // the rule (the edge of a table) for print over each stretch between them: the nearest line is enough elsewhere.
+      if (own.kind === 'rule' && dir === 'up') {
+        const tol = pt(1.5);
+        const walls = boxes.reduce((n, b) => (b.y0 - tol <= own.y1 && b.y1 + tol >= own.y0 ? n + (b.x0 >= own.x0 - tol && b.x0 <= own.x1 + tol) + (b.x1 >= own.x0 - tol && b.x1 <= own.x1 + tol) : n), 0);
+        if (walls < 2) kept.length = 1;
+      }
       return trim({ x0: r.x0, y0: Math.min.apply(null, kept.map((t) => t.y0)), x1: r.x1, y1: Math.max.apply(null, kept.map((t) => t.y1)) });
     };
     // before on its row: cut at the margin; a text line that runs on past the band's reach is running prose
@@ -969,6 +976,27 @@
           else if (++clear >= space) break;
         }
         if (first - x0 > 1.4 * hi || first >= x1) return; // (a capital and its stop are wider than a line of capitals is high)
+        // the mark ends in a full stop (a small dot low in the line) or a closing bracket (reaching below the capital)
+        const k = Math.max(1, Math.round(0.25 * hi));
+        const rows = (c0, c1) => {
+          let t = -1;
+          let b = -1;
+          for (let y = y0; y < y1; y++) {
+            for (let x = Math.max(x0, c0); x < c1; x++) {
+              if (mask[y * w + x]) {
+                if (t < 0) t = y;
+                b = y;
+                break;
+              }
+            }
+          }
+          return { t, b };
+        };
+        const head = rows(x0, x0 + k);
+        const tail = rows(first - k, first);
+        const dot = tail.t >= y0 + 0.55 * hi;
+        const bracket = tail.b >= head.b + Math.max(1, 0.1 * hi) && tail.b - tail.t >= 0.8 * hi;
+        if (!dot && !bracket) return;
         if (x1 - x0 < pt(REACH.word1) || hi < pt(REACH.word2)) return; // too small to hold a word
         // and it is set off from what is above it by more than the spacing of the lines of running text
         const end = Math.min(x1, x0 + pt(REACH.zoneRead));

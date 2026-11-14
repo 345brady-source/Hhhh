@@ -201,7 +201,10 @@ function cases(pp) {
     p.text(20, 74, [6, 4]);
     p.text(20, 300, [3]); // and a second one further down
     p.text(20, 314, [5]);
-    const mark = p.text(150, 180, [2, 5, 4]); // a lettered line at the left edge of the boxes: a short mark, then words
+    // a lettered line at the left edge of the boxes: a mark (a letter and a stop: a small dot on the baseline), then words
+    p.text(150, 180, [1]);
+    for (let y = 186; y < 188; y++) for (let x = 155; x < 157; x++) p.grey[y * p.w + x] = 40;
+    const mark = Object.assign(p.text(163, 180, [5, 4]), { x0: 150 });
     const prose = p.text(150, 400, [6, 4, 5, 3, 6, 5, 4, 6, 5, 3, 6, 4, 5, 6, 3, 5, 4, 6, 5, 4, 3, 6, 5, 4, 6, 5, 3, 4, 6, 5, 4, 3, 6, 5, 4, 6, 3, 5, 4, 6, 5, 4, 3, 6, 5, 4, 6, 3, 5, 4, 6].slice(0, 16)); // running text at the same edge
     const capA = p.text(154, 220, [5, 4]);
     const a = p.frame(150, 232, 290, 256);
