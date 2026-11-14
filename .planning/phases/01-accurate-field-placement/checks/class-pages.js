@@ -274,11 +274,17 @@ ${partnerLines(inv('text', { label: 'Investor name', key: 'investorName', requir
   },
   // Two signature rules of the firm, laid out as in firmBlockByName, and no place of any kind for an investor. The
   // titles under the rules are a word the reader knows for the firm, so that this page measures only what a document
-  // signed by the firm alone is told and offered. Its summary and what stops its saving are fixed by a later plan.
+  // signed by the firm alone is told and offered.
   firmOnly: {
     walk: true,
     read: { investorPages: [], firmPages: [1] },
     marks: 0,
+    // Said to be signed only by the firm, never asked for the investor's signature field, and never saved as the
+    // agreement investors sign: the firm signs it from the editor (the walk follows that to the finished PDF).
+    saves: false,
+    summary: [/No signature line for the investor was found: this document is signed only by your firm, and no investor signs it\./, /Your firm’s 2 signature lines are on page 1\./, /The agreement investors sign during onboarding is a separate upload\./],
+    notSaid: [/add a signature field for the investor/i, /Your firm’s signature line was found/],
+    todo: /^No signature line for the investor was found in this agreement: it is signed only by your firm, so it cannot be the agreement investors sign during onboarding\. Use “Sign it for your firm”\.$/,
     html: pg(`<h3 style="text-align:center">SIGNATURE PAGE</h3>${EXECUTED}
 ${firmBlock('GENERAL PARTNER:', 'HARROWGATE MILL PARTNERS GP, LLC', 'Odette Varga', 'Manager', firmSig())}
 ${firmBlock('CLASS B PARTNER:', 'HARROWGATE MILL CARRY VEHICLE, LLC', 'Odette Varga', 'Manager', firmSig())}`)
