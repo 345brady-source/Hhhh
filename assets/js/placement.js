@@ -190,6 +190,8 @@
   const OPTIONAL_RE = /\b(if any|if applicable|optional|if different|if other|where applicable)\b/;
   const CURRENCY_TAIL = /(u\.?s\.?\s*)?\$\s*$/i;
   const MONEY_WORDS = /\b(commitment|subscription|subscribes?|subscribed|purchase|investment|invest)\b/;
+  // Words after a blank that name the amount written in it ("$____ total purchase amount", "$____ subscription amount").
+  const AMOUNT_AFTER = /^\(?\s*(the |this |its |your )?[“"']?(total |aggregate )?(subscription |commitment |capital commitment |investment |purchase )?(amount|price)\b/i;
   // What becomes of each kind of blank. block: part of a signature block, where the signer has to be known.
   const KINDS = {
     signature: { type: 'signature', label: '', required: true, block: true, top: 42 },
@@ -491,6 +493,23 @@
     for (let i = rules.length - 1; i >= 0; i--) if (spare(rules[i])) rules.splice(i, 1);
     const slots = [];
     const free = [];
+    // A box character belongs to the printed line of its own glyph: every one is bound first, in one pass, so that a
+    // line in another column set a little higher never takes it (tick boxes in columns whose rows do not line up).
+    lines.forEach((ln) =>
+      ln.parts.forEach((p) => {
+        if (p.t !== 'box' && p.t !== 'sym') return;
+        const hit = boxes.find((b) => !b.line && overlap(b.x0, b.x1, p.x0 - 3, p.x1 + 3) > 0 && overlap(b.y0, b.y1, p.y - p.h, p.y + 0.3 * p.h) > 0);
+        if (hit) Object.assign(hit, { line: ln, part: p });
+      })
+    );
+    // A drawn square goes to the line whose words begin just to its right, among the lines it stands on.
+    boxes.forEach((b) => {
+      if (b.line) return;
+      const mid = (b.y0 + b.y1) / 2;
+      const on = lines.filter((ln) => mid <= ln.y + 0.35 * ln.h && mid >= ln.y - 1.1 * ln.h);
+      const next = on.find((ln) => ln.parts.some((p) => p.t === 'text' && p.x0 >= b.x1 - 1 && p.x0 - b.x1 <= 14));
+      if (next && next !== on[0]) b.line = next;
+    });
     // Each rule goes to the printed line it sits on (from 0.3 of the font height above the baseline to 0.9 below it).
     lines.forEach((ln) => (ln.rules = []));
     rules.forEach((r) => {
@@ -535,9 +554,8 @@
         if (p.t === 'text') return els.push({ t: 'text', key: p.x0, part: p });
         if (p.t === 'box' || p.t === 'sym') {
           // A tick box written as text counts where a printed box was read there (a character of a symbol font can be anything).
-          const hit = boxes.find((b) => !b.line && overlap(b.x0, b.x1, p.x0 - 3, p.x1 + 3) > 0 && overlap(b.y0, b.y1, p.y - p.h, p.y + 0.3 * p.h) > 0);
+          const hit = boxes.find((b) => b.part === p);
           if (!hit) return;
-          hit.line = ln;
           return els.push({ t: 'box', key: p.x0, box: hit });
         }
         // Underscores or a leader are a blank only where a printed line was read for them.
@@ -560,6 +578,7 @@
       });
       // Drawn squares that stand on this line.
       boxes.forEach((b) => {
+        if (b.line === ln && !b.part) return els.push({ t: 'box', key: b.x0, box: b });
         if (b.line) return;
         const mid = (b.y0 + b.y1) / 2;
         if (mid > ln.y + 0.35 * ln.h || mid < ln.y - 1.1 * ln.h) return;
@@ -747,6 +766,19 @@
       return c.asked && c.asked.page === pg.page - 1 ? { mode: c.asked.mode, some: c.asked.some } : { mode: '', some: false };
     };
 
+    // A statement that the investor may elect ("if you choose this option", "optional"): its paragraph, from the line a
+    // place opens down to the end of the paragraph, and the line right above it.
+    const elective = (ln) => {
+      const para = [ln];
+      for (let i = ln.i + 1; i < L.lines.length && para.length < 16; i++) {
+        const prev = para[para.length - 1];
+        if (L.lines[i].y - prev.y > 1.7 * Math.max(prev.h, L.lines[i].h)) break;
+        para.push(L.lines[i]);
+      }
+      const up = L.lines[ln.i - 1];
+      if (up && ln.y - up.y <= 2.6 * ln.h) para.push(up);
+      return para.some((x) => /\bif you (choose|elect|wish|prefer|want)\b|\b(this|that) option\b|\boptional\b|\bif (the )?(subscriber|investor) (so )?(chooses|elects|wishes)\b/i.test(x.text));
+    };
     /* 1. Tick boxes: every printed square and every box written as text, labelled with the words beside it. */
     L.lines.forEach((ln) => {
       const bs = ln.els.filter((e) => e.t === 'box');
@@ -805,6 +837,19 @@
         if (!best || g.y < best.y) best = g;
       });
       return best;
+    };
+    // The caption centred under a short line with nothing else printed under it: words of a caption (short, no
+    // sentence, not in capitals, opening with a letter), set smaller than the body of the page, or, beside words set
+    // apart in a column to the left of the line, no larger than those words (refH).
+    const segH = L.segs.map((g) => g.h).sort((a, b) => a - b)[Math.floor(L.segs.length / 2)] || 10;
+    const loneCaption = (s, refH) => {
+      const g = under(s);
+      const span = s.x1 - s.x0;
+      const ext = (e) => (e.t === 'slot' ? [e.slot.x0, e.slot.x1] : e.t === 'box' ? [e.box.x0, e.box.x1] : [e.seg.x0, e.seg.x1]);
+      if (!g || g.used || g.s.length > 70 || !/^[A-Za-z]/.test(g.s) || (refH ? g.h > refH + 0.3 : g.h >= 0.93 * segH) || /[.;!?]$/.test(g.s) || (/[A-Z]{2}/.test(g.s) && g.s === g.s.toUpperCase()) || !g.line || g.line.els.some((e) => e.t !== 'seg' && overlap(ext(e)[0], ext(e)[1], s.x0 - 12, s.x1 + 12) > 0)) return null;
+      if (Math.abs((g.x0 + g.x1) / 2 - (s.x0 + s.x1) / 2) > 0.2 * span || g.x1 - g.x0 > span + 12) return null;
+      if (L.segs.some((o) => o !== g && o.y > s.y + 0.5 && o.y <= g.y + 0.5 * g.h && overlap(o.x0, o.x1, s.x0, s.x1) > 0)) return null;
+      return g;
     };
     const over = (s) => {
       let best = null;
@@ -900,7 +945,7 @@
       const last8 = ws.slice(-8).join(' ').toLowerCase();
       const sent = ws.slice(-24).join(' ').toLowerCase();
       // "$____ (the "Subscription Amount")": the words after the blank name it.
-      const named = !!after && /^\(?\s*(the |this |its )?[“"']?(subscription|commitment|capital commitment|investment|purchase)( amount| price)?[”"']?\s*\)/i.test(after.s);
+      const named = !!after && (/^\(?\s*(the |this |its )?[“"']?(subscription|commitment|capital commitment|investment|purchase)( amount| price)?[”"']?\s*\)/i.test(after.s) || AMOUNT_AFTER.test(after.s));
       if (CURRENCY_TAIL.test(tail) && (MONEY_WORDS.test(sent) || named) && !/\b(accept\w*|minimum|maximum|fees?|expenses?|per (unit|share|interest)|price per|each)\b/.test(sent)) return propose('amount', slot, null, { seg, how: 'sentence' });
       const m = propose('other', slot, null, { seg, how: 'sentence', label: ws.slice(-4).join(' ').replace(/\$$/, '').trim() || 'Text', who: whoIn(last8) });
       // "... under the laws of the state of ____", "licensed in the state of ____": the blank names a jurisdiction, a
@@ -950,15 +995,31 @@
             if (ins.mode !== 'initials' && !says) return tick(slot, stmt.seg.s, stmt.seg, ins.mode !== 'check');
             // Labelled by the item's own printed mark, as printed ("(a)", "b)"), where the item has one.
             const mark = ln.els.slice(0, e.i).filter((o) => o.t === 'seg' && LIST_MARK.test(o.seg.s)).pop();
-            const m = propose('initials', slot, null, { seg: stmt.seg, how: 'after', required: !(ins.some && !says), label: mark ? tidy(mark.seg.s) : undefined });
+            const m = propose('initials', slot, null, { seg: stmt.seg, how: 'after', required: !((ins.some || elective(ln)) && !says), label: mark ? tidy(mark.seg.s) : undefined });
             if (mark) m.mark = mark.seg;
             m.x1 = stmt.seg.x1;
             return m;
           }
         }
+        // The blank after such a blank, ending the line with it, takes the same label.
+        const before = ln.els[e.i - 1];
+        if (!left && before && before.t === 'slot' && before.slot.made && before.slot.made.colonEnd && !ln.els.slice(e.i + 1).some((o) => o.t !== 'slot')) {
+          const m = propose('other', slot, null, { seg: before.slot.made.seg, how: 'after', label: before.slot.made.p.label, required: before.slot.made.p.required, who: before.slot.made.who });
+          m.colonEnd = true;
+          return m;
+        }
         if (left) {
           let seg = left.seg;
           const prior = ln.els[left.i - 1];
+          // A short rule with a small caption centred under it, and nothing else under it: the caption names it, before
+          // any words beside it that are not a label ending in a colon.
+          const capU = !slot.cell && span <= 216 && slot.x0 - seg.x1 > 12 && !/[:\uFF1A]\s*$/.test(seg.s) ? loneCaption(slot, seg.h) : null;
+          if (capU) {
+            capU.used = 'caption';
+            const ci = classify(capU.s);
+            if (ci && FIELD(ci.kind)) return propose(ci.kind, slot, ci, { seg: capU, how: 'after' });
+            return generic(slot, { kind: 'other', who: whoIn(plain(capU.s)), forType: '', optional: OPTIONAL_RE.test(capU.s.toLowerCase()), colon: true, by: false, text: capU.s, any: true }, capU);
+          }
           let info = classify(prior && prior.t === 'slot' ? seg.s.replace(/^[([][^)\]]{1,60}[)\]]\s*/, '') || seg.s : seg.s);
           // A label that closes a line of running text ("...as defined in Rule 501.  Initials: ____"): what follows the
           // last full stop is the label.
@@ -968,6 +1029,15 @@
             if (t && (FIELD(t.kind) || t.kind === 'skip' || t.kind === 'other')) info = t;
           }
           const dist = same(seg, 'end') ? 0 : slot.x0 - seg.x1;
+          // "$ ____ total purchase amount ...", "will pay $____ subscription amount": after a currency sign, the words
+          // after the blank name it. A lead-in ending in a colon right over the line that prints the word for required
+          // ("YOUR INVESTMENT (REQUIRED):") makes it required.
+          if (CURRENCY_TAIL.test(seg.s) && after && dist <= 36 && AMOUNT_AFTER.test(after.s)) {
+            seg.used = 'label';
+            const lead = lineAbove(ln, 1)[0];
+            const must = !!lead && ln.y - lead.y <= 3 * ln.h && /[:\uFF1A]\s*$/.test(lead.text) && /\brequired\b/i.test(lead.text);
+            return propose('amount', slot, null, { seg: after, how: 'after', required: must || undefined });
+          }
           // A currency sign standing alone before the blank: the label is the text before it.
           if (/^(u\.?s\.?\s*)?\$$/i.test(seg.s)) {
             const before = ln.els[left.i - 1];
@@ -1044,6 +1114,24 @@
               if (date && (date.kind === 'date' || /\b(date|dated|day of|as of)\b/i.test(date.p.label))) {
                 const m = propose('other', slot, null, { seg, label: 'Year', required: false, who: date.who });
                 m.yearOf = date;
+                return m;
+              }
+              // The words of a tick box right before the blank ("[ ] Non-resident - Country of origin ____"): the blank
+              // says which, named by those words (after a dash, the part after it), part of the box's choice.
+              const box = ln.els[left.i - 1];
+              if (box && box.t === 'box' && wordsOf(seg.s).length <= 10) {
+                seg.used = 'label';
+                const name = tidy(seg.s.split(/\s+[-–—]\s+/).pop().replace(/[:\uFF1A]\s*$/, ''));
+                return propose('other', slot, null, { seg, label: name || seg.s, required: false, who: whoIn(plain(seg.s)) });
+              }
+              // A colon right before a blank that ends its line: the words before the colon are its label however long
+              // the line, named by their last clause ("If the account holds two classes, give the units in each: ____").
+              const clause = tidy(seg.s.replace(/[:\uFF1A]\s*$/, '').split(/[.;?!]["”)]?\s+|,\s+/).pop());
+              if (/[:\uFF1A]\s*$/.test(seg.s) && !ln.els.slice(e.i + 1).some((o) => o.t !== 'slot') && clause && wordsOf(clause).length <= 14 && !/[([]$/.test(clause)) {
+                seg.used = 'label';
+                const cond = /^\W*if\b/i.test(seg.s) || OPTIONAL_RE.test(seg.s.toLowerCase());
+                const m = propose('other', slot, null, { seg, label: clause, required: !cond, who: whoIn(plain(clause)) });
+                m.colonEnd = true;
                 return m;
               }
               return sentence(slot, whole || seg.s, seg, after);
@@ -1297,18 +1385,19 @@
       const nCap = capInfo.filter(Boolean).length;
       const nTop = topKnown.filter(Boolean).length;
       // Whether captions or labels above are meant is decided by the labels the portal knows; any other label then follows.
-      if (!nCap && !topInfo.some(Boolean) && !st.some((s) => s.split)) return;
+      const loneCap = st.length === 1 && !above[0] && st[0].x1 - st[0].x0 <= 216 && !st[0].cell && !!loneCaption(st[0]);
+      if (!nCap && !topInfo.some(Boolean) && !st.some((s) => s.split) && !loneCap) return;
       // Any short words under a line are its caption where the line shares its rule with other captions, or stands in a
       // stack whose other lines have captions the portal knows.
       const capAny = (s, g) => {
-        if (!g || g.used || !(s.split || nCap) || g.s.length > 70 || wordsOf(g.s).length > 10 || /[.;!?]$/.test(g.s) || !g.line || g.line.els.some((e) => e.t !== 'seg')) return null;
+        if (!g || g.used || !(s.split || nCap || loneCap) || g.s.length > 70 || wordsOf(g.s).length > 10 || /[.;!?]$/.test(g.s) || !g.line || g.line.els.some((e) => e.t !== 'seg')) return null;
         return { kind: 'other', who: whoIn(plain(g.s)), forType: '', optional: OPTIONAL_RE.test(g.s.toLowerCase()), colon: true, by: false, text: g.s, any: true };
       };
       const splitCaps = st.some((s) => s.split);
       // Text of any kind right above the first line speaks for labels above; text right under the last line for captions.
       const headed = !!above[0];
       const footed = !!below[st.length - 1];
-      const caps = (nCap > 0 || splitCaps) && (nCap > nTop || (nCap === nTop && !(headed && !footed)) || (splitCaps && nCap >= nTop));
+      const caps = loneCap || ((nCap > 0 || splitCaps) && (nCap > nTop || (nCap === nTop && !(headed && !footed)) || (splitCaps && nCap >= nTop)));
       const sure = caps ? nCap > nTop && nCap === st.length : false;
       let ownFirst = false; // the text over the first line is that line's own label, not a heading over the column
       st.forEach((s, i) => {
@@ -1528,6 +1617,34 @@
       }
     });
 
+    // A blank that belongs to a tick box's choice ("[ ] Other: ____", the indented lines of a box's statement that end
+    // in a blank) is completed only when the box is ticked: optional, as the box is.
+    const ticks2 = made.filter((m) => m.kind === 'checkbox' && !m.slot && m.p.w < 20);
+    made.forEach((m) => {
+      if (!m.slot || m.slot.cell || m.kind === 'checkbox' || m.p.type === 'signature' || !m.slot.line || !m.p.required) return;
+      const ln = m.slot.line;
+      const own = ticks2.filter((t) => t.seg && t.seg.line === ln && t.p.x + t.p.w <= m.slot.x0 + 1).sort((a, b) => b.p.x - a.p.x)[0];
+      const between = own ? ln.els.filter((e) => (e.t === 'box' || e.t === 'slot') && e.key > own.p.x + own.p.w && e.key < m.slot.x0 - 1) : [];
+      let item = own && !between.length ? own : null;
+      if (!item) {
+        // (or the box stands on a printed line above, in the same paragraph, with the blank's line indented to its words)
+        const up = ticks2.filter((t) => t.seg && t.seg.line && t.seg.line.y < ln.y - 2 && ln.y - t.seg.line.y <= 60 && m.slot.x0 >= t.p.x + t.p.w - 1).sort((a, b) => b.seg.line.y - a.seg.line.y)[0];
+        if (up) {
+          const lines = L.lines.filter((x) => x.y > up.seg.line.y + 1 && x.y <= ln.y + 1);
+          let prev = up.seg.line;
+          const tight = lines.every((x) => {
+            const ok = x.y - prev.y <= 1.7 * Math.max(x.h, prev.h) && !ticks2.some((t) => t !== up && t.seg && t.seg.line === x && t.p.x >= up.p.x - 30 && t.p.x <= up.p.x + 4);
+            prev = x;
+            return ok;
+          });
+          // (in a page of several columns, only what stands just left of the box's column would start a new paragraph)
+          const x0Of = (e) => (e.t === 'seg' ? e.seg.x0 : e.t === 'slot' ? e.slot.x0 : e.box.x0);
+          const x1Of = (e) => (e.t === 'seg' ? e.seg.x1 : e.t === 'slot' ? e.slot.x1 : e.box.x1);
+          if (tight && lines.every((x) => !x.els.some((e) => x0Of(e) < up.p.x - 1 && x1Of(e) > up.p.x - 8))) item = up;
+        }
+      }
+      if (item) m.p.required = false;
+    });
     /* 6. Whose field it is, and which kind of investor gets it. */
     // Headings: short lines in capitals, ending in a colon or set as a title, that name a side, the firm or a kind of investor.
     const heads = [];

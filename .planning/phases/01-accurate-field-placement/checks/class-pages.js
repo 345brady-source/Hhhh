@@ -434,7 +434,7 @@ ${['Real estate', 'Investments'].map((l, i) => at(400, 170 + i * 16, 10, `${glyp
     marks: 0,
     html: pg(`<h3>SECTION 12. THE SUBSCRIPTION</h3>
 <p>The Subscriber will pay $${blank(inv('text', { fillIn: true, label: 'Commitment amount', key: 'amount', required: false, other: false, review: false }), U(16))} subscription amount by wire within five business days of acceptance.</p>
-<p class="ind">If the account holds two classes, give the units in each: ${blank(capText('give the units in each'), U(8))} ${blank(capText('give the units in each'), U(8))}</p>
+<p class="ind">If the account holds two classes, give the units in each: ${blank(capText('give the units in each'), U(8))}&nbsp;&nbsp;&nbsp;${blank(capText('give the units in each'), U(8))}</p>
 <div style="margin-top:40pt;width:1.8in;text-align:center">${rule(capText('Country of tax residence', { required: true }), '1.8in')}<br><span class="cap">Country of tax residence</span></div>`)
   },
   // Two sections divided by full-width rules: the first is headed as applying only in some cases and holds three
