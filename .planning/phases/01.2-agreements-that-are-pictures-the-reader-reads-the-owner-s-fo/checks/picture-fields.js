@@ -2,7 +2,7 @@
 /*
  * The fields of a page read from its picture, checked in the portal's own page.
  *
- *   node picture-fields.js [--only shapes,owners,signing,twice,summary,refused,limit,confirm | all]
+ *   node picture-fields.js [--only shapes,owners,edges,signing,twice,summary,refused,limit,confirm | all]
  *
  *   shapes    (needs no document) made-up picture pages, given as plain data to NS.placement.read in the shape
  *             NS.textread gives (found with bands and col, lines, heads, reader) with invented captions: one case for
@@ -14,6 +14,9 @@
  *             party, drawn with the class is-else and "for someone else" in its spoken name; a second investor's
  *             name begins "Co-investor: "; no reason holds a letters-only list word; nothing the portal says calls a
  *             second investor anything but Co-investor
+ *   edges     the owner's form read as for owners, and its pages searched again by the finder alone (words off): every
+ *             field standing on a found box, tick boxes apart, covers the box's outer ink edge on all four sides (inset
+ *             at most 0, never more than 1.5 pt outside), and no two fields of a page overlap by more than 0.5 pt
  *   signing   every marked field confirmed, the agreement saved, and the agreement the portal makes for a sample
  *             investor with a co-investor and for one without: what NS.esign.fieldsOf hands each signer
  *   twice     the pages read a second time give the same fields in the same order; the list is sorted
@@ -46,7 +49,7 @@ const SCRATCH = process.env.PICTURE_SCRATCH || path.join(os.tmpdir(), 'claude-0/
 const PDF = process.env.PRINTED_PDF || path.join(SCRATCH, 'xx/printed-no-text.pdf');
 const SHEET = path.join(SCRATCH, 'build/ocr-truth/truth-printed.json');
 const HARNESS = path.join(ROOT, '.planning/phases/01-accurate-field-placement/checks/harness.js');
-const ALL = ['shapes', 'owners', 'signing', 'twice', 'summary', 'refused', 'limit', 'confirm'];
+const ALL = ['shapes', 'owners', 'edges', 'signing', 'twice', 'summary', 'refused', 'limit', 'confirm'];
 const i = process.argv.indexOf('--only');
 const want = i > 0 && process.argv[i + 1] ? process.argv[i + 1].split(',').map((s) => s.trim()) : ['all'];
 const PARTS = want.includes('all') ? ALL : want;
@@ -683,6 +686,69 @@ const pagesWord = (list) => {
   const l = list.slice().sort((a, b) => a - b);
   return l.length === 1 ? `page ${l[0]}` : `pages ${l.slice(0, -1).join(', ')} and ${l[l.length - 1]}`;
 };
+/* ---------------- edges: a boxed field covers its printed box, ink included ---------------- */
+/** The finder's own boxes of every page of the form, in points (outer edge of the printed frame), words off. */
+async function finderBoxes(page) {
+  if (!(await page.evaluate(() => !!window.pdfjsLib))) await page.addScriptTag({ url: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js' });
+  return page.evaluate(async (b64) => {
+    const NS = window.CVPortal;
+    const lib = window.pdfjsLib;
+    if (!lib.GlobalWorkerOptions.workerSrc) lib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const bin = atob(b64);
+    const data = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) data[i] = bin.charCodeAt(i);
+    const doc = await lib.getDocument({ data, isEvalSupported: false }).promise;
+    const out = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const pg = await doc.getPage(i);
+      const raw = await NS.anchors.walk(pg, pg.getViewport({ scale: 1 }), lib.OPS);
+      const got = await NS.textread.page(pg, raw, { words: false });
+      got.found.forEach((b) => b.place !== false && out.push({ page: i, x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, small: !!b.small }));
+      pg.cleanup();
+    }
+    doc.destroy();
+    return out;
+  }, fs.readFileSync(PDF).toString('base64'));
+}
+/**
+ * Every field that stands on a found box (the box it overlaps most covers at least half of the field and the field at
+ * least half of the box), tick boxes apart: on all four sides its edge is at or outside the box's outer ink edge
+ * (inset at most 0, to 0.01 pt for the page fraction) and never more than 1.5 pt outside it. No two fields of a page
+ * overlap by more than 0.5 pt both ways (touching boxes stay two fields).
+ */
+function edges(d, boxes) {
+  const area = (r) => Math.max(0, r.x1 - r.x0) * Math.max(0, r.y1 - r.y0);
+  const cut = (a, b) => area({ x0: Math.max(a.x0, b.x0), y0: Math.max(a.y0, b.y0), x1: Math.min(a.x1, b.x1), y1: Math.min(a.y1, b.y1) });
+  const SIDES = ['left', 'top', 'right', 'bottom'];
+  const pairs = [];
+  d.fields.forEach((f) => {
+    if (f.type === 'checkbox') return;
+    const b = boxes.filter((o) => o.page === f.page).map((o) => ({ o, c: cut(o, f) })).sort((p, q) => q.c - p.c)[0];
+    if (!b || b.c < 0.5 * area(f) || b.c < 0.5 * area(b.o)) return;
+    const o = b.o;
+    pairs.push({ f, inset: [f.x0 - o.x0, f.y0 - o.y0, o.x1 - f.x1, o.y1 - f.y1] });
+  });
+  const bad = pairs.filter((p) => p.inset.some((v) => v > 0.01 || v < -1.5));
+  const kinds = {};
+  pairs.forEach((p) => (kinds[p.f.type] = (kinds[p.f.type] || 0) + 1));
+  const mean = (k) => (pairs.length ? pairs.reduce((s, p) => s + p.inset[k], 0) / pairs.length : 0).toFixed(2);
+  const worst = (k) => (pairs.length ? Math.max.apply(null, pairs.map((p) => p.inset[k])) : 0).toFixed(2);
+  line(
+    pairs.length > 0 && !bad.length,
+    `edges every boxed field covers its printed box's outer ink edge (${pairs.length - bad.length} of ${pairs.length}: ${Object.keys(kinds).sort().map((k) => `${k} ${kinds[k]}`).join(', ')}; mean inset ${SIDES.map((s, k) => `${s} ${mean(k)}`).join(', ')} pt; largest ${SIDES.map((s, k) => `${s} ${worst(k)}`).join(', ')} pt${bad.length ? '; inside or too far out: ' + bad.slice(0, 8).map((p) => `page ${p.f.page} ${p.f.type} ${p.inset.map((v) => v.toFixed(2)).join('/')}`).join(', ') : ''})`
+  );
+  const over = [];
+  d.fields.forEach((a, i) =>
+    d.fields.slice(i + 1).forEach((b) => {
+      if (a.page !== b.page) return;
+      const ox = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0);
+      const oy = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+      if (ox > 0.5 && oy > 0.5) over.push(`page ${a.page} ${a.type}/${b.type} ${ox.toFixed(2)}x${oy.toFixed(2)}`);
+    })
+  );
+  line(!over.length, `edges no two fields overlap by more than 0.5 pt (${over.length}${over.length ? ': ' + over.slice(0, 8).join(', ') : ''})`);
+}
+
 function summary(d) {
   const places = sheet();
   const sigPages = (o) => Array.from(new Set(places.filter((p) => p.kind === 'signature' && WHOSE[p.whose] === o).map((p) => p.page)));
@@ -932,12 +998,13 @@ async function confirmPart(h) {
       await shapes(page);
       await page.close();
     }
-    const doc = ['owners', 'signing', 'twice', 'summary'].filter((p) => PARTS.includes(p));
+    const doc = ['owners', 'edges', 'signing', 'twice', 'summary'].filter((p) => PARTS.includes(p));
     if (doc.length) {
       const one = await openForm(h);
       line(one.asked, 'the form\'s pages have no text and nothing is placed before the offer is taken');
       const d = await draftFields(one.page, one.envId);
       if (PARTS.includes('owners')) owners(d);
+      if (PARTS.includes('edges')) edges(d, await finderBoxes(one.page));
       if (PARTS.includes('summary')) summary(d);
       if (PARTS.includes('twice')) {
         const two = await openForm(h, { page: one.page });
