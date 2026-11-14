@@ -286,12 +286,20 @@
   }
 
   /**
+   * The least number of letter-like drawn shapes (filled, not a plain rectangle, no taller than 40 pt) that makes a
+   * page with no visible character a page of drawings. A page of the outlined copies that holds anything printed has
+   * well over this many (the fewest measured: 259); an empty page or a page with only a mark or a logo has fewer.
+   */
+  const LETTER_SHAPES = 40;
+  /**
    * A page with no text to read: 'picture' (a picture of a page, as in a scan), 'drawings' (its letters are drawn as
-   * shapes, as some "print to PDF" printers make them) or '' (it has text, or it is empty).
+   * shapes, as some "print to PDF" printers make them) or '' (it has text, or it is empty). A page with any visible
+   * character is a text page, whatever lies behind it.
    */
   function textless(raw) {
     if (!raw || raw.glyphs.some((g) => !g.hidden && !g.sp)) return '';
-    return raw.picture ? 'picture' : (raw.blobs || []).length >= 40 ? 'drawings' : '';
+    if (raw.picture) return 'picture';
+    return (raw.blobs || []).filter((b) => b.y1 - b.y0 <= 40).length >= LETTER_SHAPES ? 'drawings' : '';
   }
 
   /** What placement reads of one page. raw: from walk(); size: { page, w, h }; forms: the PDF's form fields on it (already in displayed points). */
@@ -300,8 +308,10 @@
     if (!raw) return out;
     const shown = raw.glyphs.filter((g) => !g.hidden);
     const ink = shown.filter((g) => !g.sp);
-    // A picture of the page with no visible text on it is a scan (a page with real text over a background picture is not).
-    out.scan = !!raw.picture && !ink.length;
+    // A page with no text to read is not read by the rules for text (a page with real text over a background picture
+    // is a text page): a picture of the page with no visible text on it (a scan), or a page whose letters are drawn
+    // as shapes. Both are read from their picture only when the sponsor asks for it.
+    out.scan = !ink.length && !!textless(raw);
     if (out.scan) return out;
     shown.forEach((g) => (g.box = !g.sp && boxChar(g)));
     const words = ink.filter((g) => g.u !== '_' && !g.box);
@@ -422,7 +432,7 @@
     });
     const hs = raw.segs.filter((s) => s.o === 'h' && s.a1 - s.a0 >= 6);
     const vs = raw.segs.filter((s) => s.o === 'v' && s.a1 - s.a0 >= 6);
-    hs.forEach((s) => pieces.push({ x0: s.a0, x1: s.a1, y: s.c, low: s.c + s.t / 2, n: 0, made: 'rule', frame: !!s.frame }));
+    hs.forEach((s) => pieces.push(Object.assign({ x0: s.a0, x1: s.a1, y: s.c, low: s.c + s.t / 2, n: 0, made: 'rule', frame: !!s.frame }, s.bracket ? { bracket: true } : null)));
     pieces.sort((a, b) => a.y - b.y || a.x0 - b.x0);
     const lines = [];
     pieces.forEach((p) => {
@@ -435,7 +445,8 @@
         m.low = Math.max(m.low, p.low);
         if (m.made.indexOf(p.made) < 0) m.made += ' and ' + p.made;
         m.n += p.n;
-      } else lines.push({ x0: p.x0, x1: p.x1, y: p.y, low: p.low, made: p.made, n: p.n, frame: !!p.frame });
+        if (p.bracket) m.bracket = true;
+      } else lines.push({ x0: p.x0, x1: p.x1, y: p.y, low: p.low, made: p.made, n: p.n, frame: !!p.frame, bracket: !!p.bracket });
     });
     const drafting = /\[[^\]]*\b(insert|placeholder|to be (completed|inserted|provided|determined|confirmed)|tbd|drafting note|note to draft)\b/i.test(out.items.map((it) => it.s).join(' '));
     const margin = words.length ? Math.min.apply(null, words.map((g) => g.x0)) : 0;
@@ -460,13 +471,14 @@
       const beside = ink.filter((g) => g.u !== '_' && sameLine(g, l)).sort((a, b) => a.x0 - b.x0);
       const left = beside.filter((g) => g.x1 <= l.x0 + 1).sort((a, b) => b.x1 - a.x1)[0];
       const right = beside.filter((g) => g.x0 >= l.x1 - 1).sort((a, b) => a.x0 - b.x0)[0];
-      const open = left && left.u === '[' && l.x0 - left.x1 < 12;
-      const close = right && right.u === ']' && right.x0 - l.x1 < 12;
+      // (a line read from a picture says itself that it stands in brackets: NS.textread finds them from the pixels)
+      const open = l.bracket || (left && left.u === '[' && l.x0 - left.x1 < 12);
+      const close = l.bracket || (right && right.u === ']' && right.x0 - l.x1 < 12);
       let bracketed = false;
       if (open || close) {
         if (drafting || open !== close) return;
-        const before = beside.filter((g) => g.x1 <= left.x0 + 0.5);
-        const after = beside.filter((g) => g.x0 >= right.x1 - 0.5);
+        const before = beside.filter((g) => g.x1 <= (left ? left.x0 : l.x0) + 0.5);
+        const after = beside.filter((g) => g.x0 >= (right ? right.x1 : l.x1) - 0.5);
         const lastBefore = before[before.length - 1];
         // Running prose: a dozen letters or more before it and words after it, on a line with no other bracketed blank
         // (a row of them is a row of boxes).
@@ -488,6 +500,8 @@
           const roof = hs.filter((s) => s.c < l.y - 6 && s.c > l.y - 80 && ov(s.a0, s.a1, a, b) > 0.5 * (b - a)).sort((p, q) => q.c - p.c)[0];
           const top = roof ? roof.c : l.y - 20;
           if (ink.some((g) => (g.x0 + g.x1) / 2 > a && (g.x0 + g.x1) / 2 < b && g.y > top && g.y - 0.4 * g.h < l.y + 1)) continue;
+          // On a page read from its picture a line printed in the cell is print in it too (its characters are a stroke there).
+          if (raw.pictured && lines.some((o) => o !== l && !o.frame && o.y > top + 1 && o.y < l.y - 1 && o.x0 >= a - 1 && o.x1 <= b + 1)) continue;
           out.rules.push({ x0: a + 2, x1: b - 2, y: l.y, clear: Math.max(0, l.y - top - 1), made: 'cell', cut: false, cell: true, table: true });
         }
         return;
@@ -504,10 +518,15 @@
         const first = Math.min.apply(null, on.map((g) => g.x0));
         const end = Math.max.apply(null, on.map((g) => g.x1));
         if (typed || covered >= 0.45 * w || first > l.x0 + 6 || l.x1 - end < 36) return;
+        // On a page read from its picture, words at the start of a line whose label already stands before it are an
+        // answer written on the line (a date, a name filled in), not a label: the blank is answered.
+        if (raw.pictured && left && l.x0 - left.x1 < 24 && /[A-Za-z:]/.test(left.u)) return;
         x0 = end + 4;
         cut = true;
       }
-      const clear = emptyAbove(x0, l.x1, l.y);
+      // (on a page read from its picture the paper above a line ends at the page's own top edge: a stroke at the edge
+      // of a scanned sheet has no room above it to write in)
+      const clear = raw.pictured ? Math.min(emptyAbove(x0, l.x1, l.y), Math.max(0, l.y)) : emptyAbove(x0, l.x1, l.y);
       if (l.made === 'rule') {
         // A footnote rule: a short rule at the left margin in the lower part of the page, empty paper above it and small
         // print under it that opens with a footnote mark. (A short rule with a small caption under it is a signature line.)

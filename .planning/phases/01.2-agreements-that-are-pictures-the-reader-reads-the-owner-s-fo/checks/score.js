@@ -3,6 +3,7 @@
  * The independent scorer, run against the checkout this file lives in, and a named gate applied to what it wrote.
  *
  *   node score.js --only a,e --gate baseline [--out <folder outside the repository>]
+ *   node score.js --self-test     the scorer's own self-test (no browser): passes only when the scorer exits 0
  *
  * The scorer and the documents it reads are outside the repository (PICTURE_SCRATCH, or the session's folder under
  * the system temp folder; PROOF_DIR overrides the scorer's own folder). Nothing is copied and nothing is written
@@ -20,6 +21,9 @@
  *   rows       no row of the parts run is marked FAIL
  *   speed      a document is read within its pages x 6 s + 3 s (the form, the scanned example) or its pages x 2 s + 3 s
  *              (the scan of running text), and progress was seen while the form was read
+ *   pictures   part a: editor-p01.png to editor-p08.png and compare-p01.png to compare-p08.png are in printed/, each
+ *              1440 pixels wide and 1440 x the page's height over its width high within 4 pixels (the page sizes from
+ *              the PDF, the picture's size from its own header), and the scorer's row about the editor pictures passed
  * The last line is "GATE <names>: PASS" or "GATE <names>: FAIL - <each failed condition with its numbers>";
  * exit status 0 or 1. A reading that had not finished in the time the scorer allows is not a result: run it again.
  */
@@ -56,8 +60,25 @@ const NEEDS = {
   e: [process.env.EXAMPLE_PDF || path.join(SCRATCH, 'real-agreement/agreement.pdf')]
 };
 // The part a gate reads; a gate named without its part cannot be judged.
-const GATE_PART = { baseline: 'a', places: 'a', kinds: 'a', owners: 'a', full: 'a' };
-const KNOWN = ['baseline', 'places', 'kinds', 'owners', 'full', 'rows', 'speed'];
+const GATE_PART = { baseline: 'a', places: 'a', kinds: 'a', owners: 'a', full: 'a', pictures: 'a' };
+const KNOWN = ['baseline', 'places', 'kinds', 'owners', 'full', 'rows', 'speed', 'pictures'];
+
+/* ---------- the scorer's own self-test ---------- */
+if (process.argv.includes('--self-test')) {
+  if (!fs.existsSync(path.join(PROOF, 'score-notext.js'))) notRun('the scorer is not at ' + path.join(PROOF, 'score-notext.js'));
+  if (!fs.existsSync(SHEET)) notRun('the answer sheet is not at ' + SHEET);
+  let mods = '';
+  try {
+    mods = execFileSync('npm', ['root', '-g'], { encoding: 'utf8' }).trim();
+  } catch (e) {
+    notRun('"npm root -g" did not answer, so the browser library cannot be found');
+  }
+  const st = spawnSync('node', [path.join(PROOF, 'score-notext.js'), '--self-test'], { env: Object.assign({}, process.env, { NODE_PATH: mods }), encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const lines = String(st.stdout || '').split('\n').filter((l) => /^(PASS|FAIL) /.test(l) || /passed, \d+ failed/.test(l));
+  lines.forEach((l) => console.log(l));
+  console.log(st.status === 0 ? 'SELF-TEST: PASS' : `SELF-TEST: FAIL - the scorer's self-test exited ${st.status}${st.stderr ? ': ' + String(st.stderr).trim().split('\n').slice(-2).join(' | ').slice(0, 300) : ''}`);
+  process.exit(st.status === 0 ? 0 : 1);
+}
 
 /* ---------- what must be there ---------- */
 if (!ONLY.length || ONLY.some((p) => !NEEDS[p])) notRun(`--only ${arg('--only', '')} names a part that does not exist (a, b, c, d, e)`);
@@ -177,6 +198,44 @@ if (total) {
   }
 }
 if (has('rows')) failed().forEach((r) => need(false, 'failed: ' + short(r)));
+if (has('pictures') && total) {
+  // The size of a PNG from its own header (width and height, big-endian, at bytes 16 to 23).
+  const pngSize = (f) => {
+    const b = Buffer.alloc(24);
+    const fd = fs.openSync(f, 'r');
+    fs.readSync(fd, b, 0, 24, 0);
+    fs.closeSync(fd);
+    return b.toString('ascii', 12, 16) === 'IHDR' ? { w: b.readUInt32BE(16), h: b.readUInt32BE(20) } : null;
+  };
+  let sizes = [];
+  try {
+    const pdf = NEEDS.a[0];
+    const info = execFileSync('pdfinfo', ['-f', '1', '-l', '8', pdf], { encoding: 'utf8' });
+    for (const m of info.matchAll(/Page\s+(\d+) size:\s+([\d.]+) x ([\d.]+) pts/g)) sizes[+m[1] - 1] = { w: +m[2], h: +m[3] };
+    for (const m of info.matchAll(/Page\s+(\d+) rot:\s+(\d+)/g)) if (+m[2] % 180 === 90 && sizes[+m[1] - 1]) sizes[+m[1] - 1] = { w: sizes[+m[1] - 1].h, h: sizes[+m[1] - 1].w };
+  } catch (e) {
+    need(false, 'the page sizes of the form could not be read with pdfinfo');
+  }
+  const printed = path.join(OUT, 'printed');
+  for (let i = 1; i <= 8; i++) {
+    const nn = String(i).padStart(2, '0');
+    ['editor', 'compare'].forEach((kind) => {
+      const f = path.join(printed, `${kind}-p${nn}.png`);
+      if (!fs.existsSync(f)) return need(false, `${kind}-p${nn}.png is missing`);
+      const sz = pngSize(f);
+      if (!sz) return need(false, `${kind}-p${nn}.png is not a PNG`);
+      need(sz.w === 1440, `${kind}-p${nn}.png is ${sz.w} pixels wide, not 1440`);
+      const pg = sizes[i - 1];
+      if (pg) {
+        const want = (1440 * pg.h) / pg.w;
+        need(Math.abs(sz.h - want) <= 4, `${kind}-p${nn}.png is ${sz.h} pixels high, not ${want.toFixed(1)} (within 4) for its page of ${pg.w} x ${pg.h} pt`);
+      } else need(false, `the size of page ${i} is not known`);
+    });
+  }
+  const row = rows.find((r) => r.part === 'a' && /editor pictures, one per page/.test(r.name));
+  need(!!row && row.mark === 'PASS', 'the scorer\'s row about the editor pictures is not marked PASS');
+  console.log(`pictures: ${printed}`);
+}
 if (has('speed')) {
   const pagesOf = (file) => {
     const m = new RegExp(`PART \\w\\s+${file.replace('.', '\\.')} \\((\\d+) pages\\)`).exec(run.stdout || '');
