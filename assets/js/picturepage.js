@@ -22,6 +22,10 @@
  *               a rule that climbs or falls a pixel now and then (a page scanned a little turned) is one rule
  *     throws an Error with code 'size' for a picture of no size or of more than MAX_PIXELS pixels
  *   picturepage.toGrey(rgba, w, h)   the grey levels of RGBA bytes
+ *   picturepage.bands(page, opts)    where the words that decide something are printed: the caption strips round every
+ *                                    place and free rule, the columns of places, the margin column and the heading
+ *                                    zones (see the function itself)
+ *   picturepage.near(word, target)   the letter changes between a read word and a known word, or -1 beyond its allowance
  */
 (function () {
   'use strict';
