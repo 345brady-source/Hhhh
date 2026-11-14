@@ -520,6 +520,34 @@ ${WITNESS}${investorBlock({ review: false, other: false })}`)}`
 <table class="grid"><tr><td style="width:18%">Signature</td>${gcell(else_('signature', true, { label: 'Signature', review: true }))}<td style="width:12%">Date</td>${gcell(else_('date', true, { label: 'Date', review: true }))}</tr></table>`)
   },
 
+  // Two shallow ruled cells side by side, each with its caption in small capitals just above it: one names a second
+  // investor, one a term for entities. Under them, in the left column, a tick box and a labelled blank. A caption that
+  // stands right over the cell it names speaks for that cell only, so the tick box and the blank are the investor's,
+  // for every kind of investor. (The cells themselves get no field until the cells under their captions are read; the
+  // plan that reads them gives each cell here its expectation.)
+  captionOverCell: {
+    html: pg(`<h3>SECTION 2. ACCOUNT HOLDERS</h3><p>Write one answer to a box.</p>
+${at(73.5, capTop(200, 7, 1), 7, 'JOINT INVESTOR TAX ID NUMBER')}${cellAt(72, 200, 228, 10.5)}
+${at(307.5, capTop(200, 7, 1), 7, 'ENTITY REGISTRATION NUMBER')}${cellAt(306, 200, 234, 10.5)}
+${at(72, 244, 10, `${glyph('Send statements by post', { forType: '' })}Send statements by post`)}
+${at(72, 272, 10, `Preferred language: ${blank(inv('text', { fillIn: true, label: 'Preferred language', key: '', required: true, forType: '', other: false, review: false }), U(24))}`)}`)
+  },
+  // A section a custodian completes runs to the foot of page 1 and goes on at the top of page 2 with no heading of its
+  // own there, down to the investor's heading; at the end of page 2, on one printed row, a signature line whose label
+  // names the custodian and a date. The places of the section on both pages, and the date on the custodian's row, are
+  // somebody else's (Custodian); the investor's places are unchanged.
+  otherRowCarried: {
+    read: { investorPages: [2], otherPages: [1, 2] },
+    html: `${pg(`<h3>SECTION 5. THE SUBSCRIBER</h3><p>Occupation: ${blank(inv('text', { fillIn: true, label: 'Occupation', key: '', required: true, other: false }), U(40))}</p>
+<p class="hd"><b>SECTION 6. TO BE COMPLETED BY THE CUSTODIAN</b></p><p>The custodian that holds the account for the Subscriber completes this section and the top of the next page.</p>
+<p>Name of firm: ${blank(else_('text', 'Custodian', { label: 'Name of firm' }), U(36))}</p>
+<p>Branch office: ${blank(else_('text', 'Custodian', { label: 'Branch office' }), U(36))}</p>`)}
+${pg(`<p>Account number: ${blank(else_('text', 'Custodian', { label: 'Account number' }), U(30))}</p>
+<p>Branch telephone: ${blank(else_('text', 'Custodian', { label: 'Branch telephone' }), U(26))}</p>
+${WITNESS}${investorBlock({ review: false, other: false })}
+<p class="gap">Signature of custodian: ${blank(else_('signature', 'Custodian', { label: 'Signature of custodian' }), U(26))} Date: ${blank(else_('date', 'Custodian', { label: 'Date' }), U(16))}</p>`)}`
+  },
+
   /* ---------- labels ---------- */
   // An investor's information page of labelled blanks. Plain labels for the investor, written as the pinned check
   // pages write them, keep the portal's standard label for their kind and their filling in from onboarding. Labels

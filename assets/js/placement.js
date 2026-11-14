@@ -8,7 +8,7 @@
  *
  *   read(pages, ctx)                   what was read and the proposed fields: { fields, pages, scanned, failed, boxes,
  *                                      blanks, signatures, investorPages, firmPages, otherPages, others,
- *                                      otherSignaturePages }
+ *                                      otherSignaturePages, firmDoubtPages }
  *   analyze(pages, ctx)                the proposed fields alone: where each signer signs and initials, and the blanks to complete
  *
  * A field is proposed only for a printed place read by anchors.js (a line, a tick box, an empty ruled cell, a form
@@ -349,14 +349,38 @@
    * (a signature, initials and their name are required), and no longer marked merely for being a second signer's. A witness's or a
    * notary's line is not one of these and stays optional and marked.
    */
-  const coInvestor = (p) => {
-    const t = clean(p.label).replace(new RegExp(CO_INVESTOR.source, 'gi'), ' ').replace(/[’']s\b/g, ' ').replace(/\b(of|the|for)\b/gi, ' ').replace(/[^A-Za-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
-    const what = /\binitial/.test(t) ? 'initials' : p.type === 'signature' ? 'signature' : /\bdate/.test(t) ? 'date' : /\bname\b/.test(t) ? 'name' : '';
+  const coInvestor = (p, said) => {
+    const t = coRest(said || p.label);
+    // The kind comes from the label's own words: a tax number stays a tax number and a date of birth is a blank to type;
+    // only words of signing make a signature, and only a date of signing makes a date.
+    const k = t ? classify(t) : null;
+    const kind = k && FIELD(k.kind) ? k.kind : '';
+    const what = /\binitial/.test(t) ? 'initials' : p.type === 'signature' ? 'signature' : kind === 'date' ? 'date' : /\bname\b/.test(t) ? 'name' : '';
     if (what === 'initials' && p.type === 'signature') p.type = 'initials';
     if (p.type === 'text' && (what === 'name' || what === 'date')) p.type = what;
-    Object.assign(p, { role: 'co', label: `Co-investor ${what || t || 'field'}`, required: p.type === 'signature' || p.type === 'initials' || p.type === 'name' });
+    Object.assign(p, { role: 'co', required: p.type === 'signature' || p.type === 'initials' || p.type === 'name' });
+    // The plain places of a signer keep the portal's word with Co-investor before it; any other place is named in the
+    // document's own words, which already say whose it is (label rule 1), with its kind in kind.
+    if (what || !ownWords(said || p.label)) p.label = `Co-investor ${what || t || 'field'}`;
+    else {
+      p.label = cleanFull(ownWords(said || p.label));
+      if (p.label.length > 60) p.longLabel = true;
+      if (p.type === 'text' && kind && ['name', 'date', 'signature', 'initials'].indexOf(kind) < 0) p.kind = kind;
+      delete p.prefill;
+    }
     if (p.why === WHY.second) Object.assign(p, { conf: 'high', why: '' });
   };
+  /** A second signer's label without the words that say whose it is: lower case, letters and figures only. */
+  const coRest = (text) =>
+    clean(text)
+      .replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ')
+      .replace(new RegExp(CO_INVESTOR.source, 'gi'), ' ')
+      .replace(/[’']s\b/g, ' ')
+      .replace(/[^A-Za-z0-9 ]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase()
+      .replace(/^((of|the|for|and|or|by) )+|( (of|the|for|and|or|by))+$/g, '');
   const WHY = {
     who: 'Could not tell whether the investor or your firm fills this in.',
     above: 'This label sits above its line, which can also belong to the line before.',
@@ -372,7 +396,17 @@
     sentence: 'A blank inside a sentence: check what goes here and who fills it in.',
     phrase: 'The words before this blank may not be its label: check what goes here.',
     boxBare: 'This box has no words beside it: check what it is for.',
-    otherUnsure: 'This place may be for someone else to complete (a custodian, an adviser or the like). Confirm that it is theirs, or set it to the investor.'
+    otherUnsure: 'This place may be for someone else to complete (a custodian, an adviser or the like). Confirm that it is theirs, or set it to the investor.',
+    acceptOther: 'This place carries words of acceptance and also names another party. Confirm whether your firm signs here: if it does, set the field to your firm.'
+  };
+  /**
+   * The party named by words of acceptance that also name someone other than the firm ("Accepted by the placement
+   * dealer"), or '': such a block may be the firm's or that party's (real doubt). An attorney-in-fact or anyone
+   * "authorised" signs for the firm.
+   */
+  const acceptParty = (text) => {
+    const t = plain(String(text || ''));
+    return t && FIRM_WORDS.test(t) && OTHER_PARTY.test(t) && !/\battorney[- ]in[- ]fact\b|\bauthori[sz]ed\b/.test(t) ? partyName(t) : '';
   };
   /**
    * A place for somebody else: nobody's required field. It stays on the investor's signer (the portal has one signer
@@ -633,8 +667,15 @@
     // A line for a second signer, a witness or a notary: placed, optional, and marked (the portal has one signer per investor).
     const second = (slot, info, seg) => {
       const t = plain(info.text);
-      const m = propose(/\b(name|print|printed|date|dated|address|title|social|tax|e-?mail|phone)\b/.test(t) ? 'other' : 'signature', slot, null, { seg, label: info.text.replace(/\s*[:\uFF1A]\s*$/, ''), required: false });
-      Object.assign(m, { second: true, block: false, co: !!info.co || CO_INVESTOR.test(t) });
+      const co = !!info.co || CO_INVESTOR.test(t);
+      // A second investor's line is a signature only where its words, those for the second investor taken out, say
+      // signing or say nothing more ("Joint subscriber"); any other words name a blank to type ("occupation").
+      const rest = co ? coRest(info.text) : '';
+      const sayRest = rest ? classify(rest) : null;
+      const typed = /\b(name|print|printed|date|dated|address|title|social|tax|e-?mail|phone)\b/.test(t) || (!!rest && !(sayRest && (sayRest.kind === 'signature' || sayRest.kind === 'initials')));
+      const m = propose(typed ? 'other' : 'signature', slot, null, { seg, label: info.text.replace(/\s*[:\uFF1A]\s*$/, ''), required: false });
+      if (co) m.said = info.text;
+      Object.assign(m, { second: true, block: false, co });
       Object.assign(m.p, { second: true, conf: 'low', why: WHY.second });
       // A line whose own label names a third party ("Signature of registered representative") is that party's: nobody's
       // required field, unmarked (step 6). A witness's, a notary's, a spouse's or a second signer's line stays as it is.
@@ -801,6 +842,31 @@
       g.more = g2;
       g.full = full;
     });
+    /**
+     * The empty ruled cell a printed line stands directly over, or null: the cell's top edge lies within about one line
+     * height under the line, the line's middle is over the cell, and nothing else is printed between them. A caption
+     * of two or three lines counts as one: a line that the next line of the same size goes on from (set at the same
+     * left edge, about the same middle, or within its width) stands over the cell that next line stands over. A line
+     * that also stands over printed words in that cell's row heads a table instead. The cells are those the page's rules
+     * make, read as blanks or not.
+     */
+    const cellRules = (pg.rules || []).filter((r) => r && r.cell && r.x1 > r.x0);
+    const captionCell = (seg, depth) => {
+      if (!seg || !(seg.h > 0) || !cellRules.length) return null;
+      const mid = (seg.x0 + seg.x1) / 2;
+      const cell = cellRules
+        .filter((r) => mid >= r.x0 - 2 && mid <= r.x1 + 2)
+        .map((r) => ({ r, top: r.y - r.clear - 1 }))
+        .filter((o) => o.top - seg.y >= -1 && o.top - seg.y <= 1.6 * seg.h + 2)
+        .sort((a, b) => a.top - b.top)[0];
+      // (A line that also stands over printed words in the cell's own row is a heading over a table, not a caption.)
+      if (cell && !L.segs.some((g) => g !== seg && g.y > seg.y + 1 && g.y <= cell.r.y + 1 && overlap(g.x0, g.x1, seg.x0, seg.x1) > 0)) return cell.r;
+      if ((depth || 0) >= 2) return null;
+      const next = L.segs
+        .filter((g) => g !== seg && g.y - seg.y >= 0.6 * seg.h && g.y - seg.y <= 1.7 * seg.h && Math.abs(g.h - seg.h) <= 1.2 && (Math.abs(g.x0 - seg.x0) <= 4 || Math.abs((g.x0 + g.x1) / 2 - mid) <= 6 || (g.x0 >= seg.x0 - 4 && g.x1 <= seg.x1 + 4)))
+        .sort((a, b) => a.y - b.y)[0];
+      return next && !(next.line && next.line.els.some((e) => e.t === 'slot' && overlap(e.slot.x0, e.slot.x1, seg.x0, seg.x1) > 0)) ? captionCell(next, (depth || 0) + 1) : null;
+    };
     /** What a caption says, read whole when it runs on to a second line: the info for its first line, or for both. */
     const wholeCaption = (seg, info) => {
       if (!seg || !seg.more || !info) return info;
@@ -1019,6 +1085,22 @@
         if (slot.cell && !L.slots.some((o) => o !== slot && o.cell && Math.abs(o.x0 - slot.x0) <= 3 && Math.abs(o.x1 - slot.x1) <= 3)) weaken(m, WHY.phrase);
       });
     /* 3. Blanks with no label on their line: a caption under the line, or a label above it. */
+    // A drawn rule right across the text with a section heading right under it (in capitals, at least the size of the
+    // body text, four words or more, not a label of a kind the portal knows) divides two sections: it is no blank.
+    const textLeft = L.segs.reduce((x, g) => Math.min(x, g.x0), Infinity);
+    const bodySize = (() => {
+      const hs = L.segs.map((g) => g.h).sort((a, b) => a - b);
+      return hs.length ? hs[Math.floor(hs.length / 2)] : 10;
+    })();
+    const sectionRule = (r) => !!r && !r.cell && !r.table && !r.fromText && r.made !== 'underscores' && r.made !== 'leader' && r.x1 - r.x0 >= Math.max(0.85 * (rightEdge - textLeft), 0.6 * pg.w) && !L.segs.some((g) => Math.abs(g.y - r.y) < 0.6 * g.h && overlap(g.x0, g.x1, r.x0, r.x1) > 0);
+    L.slots.forEach((sl) => {
+      if (sl.made || sl.skip || sl.fromText || !sectionRule(sl)) return;
+      const g = under(sl);
+      if (!g || g.used || !g.line || g.line.els.some((e) => e.t !== 'seg') || g.h < 0.93 * bodySize || wordsOf(plain(g.s)).length < 4 || !(/[A-Z]{2}/.test(g.s) && g.s === g.s.toUpperCase())) return;
+      const k = classify(g.s);
+      if (k && (FIELD(k.kind) || (k.kind === 'skip' && SKIP_HARD.test(plain(g.s))))) return;
+      sl.skip = true;
+    });
     const lonely = L.slots.filter((s) => !s.made && !s.skip).sort((a, b) => a.y - b.y || a.x0 - b.x0);
     // Stacks of such blanks in one column are read together: either every label is a caption, or every label is above.
     const stacks = [];
@@ -1273,13 +1355,21 @@
         const info = classify(raw);
         const isKnown = !!(info && (FIELD(info.kind) || info.kind === 'skip') && info.kind !== 'other');
         const shout = raw.replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ').trim();
-        if (SKIP_HARD.test(t) && n <= 6 && (colon || (/[A-Z]{2}/.test(shout) && shout === shout.toUpperCase())) && !(next && next.t === 'slot')) return heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who: '', skip: true, co: CO_INVESTOR.test(t), seg });
+        // A caption is not a heading: a line taken as the label of a place, or standing right over the empty cell it
+        // names, speaks for that place only. A heading is a free-standing line.
+        const capOf = !seg.used && !(next && next.t === 'slot') ? captionCell(seg) : null;
+        if (capOf) return;
+        if (SKIP_HARD.test(t) && n <= 6 && !seg.used && (colon || (/[A-Z]{2}/.test(shout) && shout === shout.toUpperCase())) && !(next && next.t === 'slot')) return heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who: '', skip: true, co: CO_INVESTOR.test(t), seg });
         // A heading that names another party ("CUSTODIAN DETAILS:"): set as a heading, short, with no blank on its own
         // printed line and not a label already. The places under it are that party's (see the role loop).
         // ("TO BE COMPLETED BY THE INTRODUCING DEALER FIRM:", in capitals and ending in a colon, may run to 12 words.)
         // It never opens with a small letter and never goes on with the paragraph above it.
-        const party = !seg.used && (n <= 8 || (n <= 12 && caps && colon)) && (caps || colon || titled) && !ln.els.some((x) => x.t === 'slot') && !/^[a-z]/.test(raw) && !runOn(ln) ? otherParty(raw) : '';
-        if (party) return heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who: '', skip: true, other: party, seg });
+        // A heading that says the party completes the section ("SECTION 4. TO BE COMPLETED BY THE ADVISER") may run to
+        // 12 words. Either form opens a section: it governs every place down to the next section rule or heading (see
+        // governsOther), across the page's width, and on the next page while that page goes on with the section.
+        const completes = /\b(to be )?(completed|filled (in|out))( only)? by\b/i.test(raw);
+        const party = !seg.used && (n <= 8 || (n <= 12 && ((caps && colon) || completes))) && (caps || colon || titled) && !ln.els.some((x) => x.t === 'slot') && !/^[a-z]/.test(raw) && !runOn(ln) ? otherParty(raw) : '';
+        if (party) return heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who: '', skip: true, other: party, section: true, seg });
         if (seg.used || (next && next.t === 'slot')) {
           // A label speaks for the lines under it only when it names a side outright or says whose line it is.
           // A bare "SUBSCRIBER: ____" heads its block like any heading; "Signature of Subscriber" speaks for its own lines only.
@@ -1302,6 +1392,18 @@
     // there, however much running text does (an attachment explained on one page, its form on the next). It governs
     // this page down to the first heading of any kind.
     if (c.carryOther && c.carryOther.page === pg.page - 1) heads.push(Object.assign({}, c.carryOther.head, { y: -1, x0: 0, x1: pg.w, top: true, mid: true, seg: {}, carried: true }));
+    // A section for another party that ran to the foot of the page before goes on at the top of this one, down to the
+    // first heading of any kind or section rule.
+    else if (c.carrySection && c.carrySection.page === pg.page - 1) heads.push(Object.assign({}, c.carrySection.head, { y: -1, x0: 0, x1: pg.w, top: true, mid: true, seg: {}, carried: true }));
+    // Words of acceptance that also name another party: the block may be the firm's or that party's (see acceptParty).
+    heads.forEach((hd) => hd.who === 'firm' && hd.seg && hd.seg.s && (hd.acceptOther = acceptParty(hd.seg.s)));
+    // Rules that divide sections, and what ends a section: the next heading of any kind (a page number, a running
+    // header or footer aside) or the next such rule.
+    const sectionRules = (pg.rules || []).filter((r) => sectionRule(r) && !made.some((m) => m.slot && Math.abs(m.slot.y - r.y) < 1 && overlap(m.slot.x0, m.slot.x1, r.x0, r.x1) > 0));
+    const footer = (hd) => hd.y > 0.92 * pg.h || /^(-\s*)?(page\s+)?\d+(\s+of\s+\d+)?(\s*-)?$/i.test(tidy(hd.seg && hd.seg.s)) || !!(hd.seg && hd.seg.line && sameAs(hd.seg.line));
+    const sectionEnds = (hd, y) => heads.some((o) => o !== hd && !o.carried && o.y > hd.y + 2 && o.y < y - 2 && !footer(o)) || sectionRules.some((r) => r.y > hd.y + 2 && r.y < y - 2);
+    const lastSection = heads.filter((hd) => hd.section).sort((a, b) => b.y - a.y)[0];
+    c.carrySection = lastSection && !sectionEnds(lastSection, pg.h + 10) ? { page: pg.page, head: lastSection } : null;
     const lastOther = heads.filter((hd) => hd.skip && hd.other && hd.y > 0).sort((a, b) => b.y - a.y)[0];
     const headLines = L.lines.filter(headingLine);
     c.carryOther = lastOther && !made.some((m) => m.y > lastOther.y) && !heads.some((hd) => hd !== lastOther && hd.y > lastOther.y && !(hd.seg && hd.seg.line && runOn(hd.seg.line))) && !headLines.some((ln) => ln.y > lastOther.y + 2) ? { page: pg.page, head: lastOther } : null;
@@ -1312,6 +1414,8 @@
     const things = L.segs.map((g) => ({ x0: g.x0, x1: g.x1, y: g.y })).concat(L.slots.map((s) => ({ x0: s.x0, x1: s.x1, y: s.y })));
     const governs = (hd, m) => {
       if (hd.y >= m.y - 2 || hd.seg === m.seg) return false;
+      // A heading speaks no further than the next rule that divides sections.
+      if (sectionRules.some((r) => r.y > hd.y + 2 && r.y < m.y - 2)) return false;
       if (overlap(hd.x0, hd.x1, m.x0, m.x1) > 0 || (hd.top && hd.mid)) return true;
       // A heading beside the blank's column governs it only when nothing of its own stands under it.
       return !things.some((g) => g.y > hd.y + 2 && g.y <= m.y + 4 && overlap(g.x0, g.x1, hd.x0, hd.x1) > 0 && overlap(g.x0, g.x1, m.x0, m.x1) <= 0);
@@ -1327,7 +1431,8 @@
     // the places after it on that row too ("NAME OF CUSTODIAN: ____   TAX ID: ____"). A heading carried from the page
     // before stops at the first heading of any kind on this page.
     const governsOther = (hd, m) => {
-      if (hd.carried && (heads.some((o) => !o.carried && o.y > 0 && o.y < m.y - 2) || headLines.some((ln) => ln.y < m.y - 2))) return false;
+      if (hd.carried && (heads.some((o) => !o.carried && o.y > 0 && o.y < m.y - 2 && !footer(o)) || headLines.some((ln) => ln.y < m.y - 2 && !sameAs(ln)))) return false;
+      if (hd.section) return hd.y < m.y - 2 && hd.seg !== m.seg && !sectionEnds(hd, m.y);
       if (governs(hd, m)) return true;
       return !!(m.slot && m.slot.line) && made.some((o) => o !== m && o.slot && o.slot.line === m.slot.line && o.x1 <= m.x0 + 3 && governs(hd, o));
     };
@@ -1335,6 +1440,13 @@
       const p = m.p;
       const own = m;
       let role = m.who || '';
+      m.labelWho = role;
+      // A signature place whose own label, or the words of acceptance its line opens with, also names another party.
+      const accept = (role === 'firm' && m.kind === 'signature' && m.said ? acceptParty(m.said) : '') || (!role && m.slot && m.slot.line && /^\W*(accepted|agreed (to )?and accepted)\b/i.test(m.slot.line.text) ? acceptParty(m.slot.line.text) : '');
+      if (accept) {
+        Object.assign(m, { other: accept, otherUnsure: true, otherWhy: WHY.acceptOther, firmDoubt: true });
+        role = 'investor';
+      }
       // Two labels on one printed line ("By: ____ Name: ____") are one block: the second follows the first.
       if (!role && m.block && m.kind !== 'signature' && m.slot && m.slot.line) {
         const mate = made.filter((o) => o !== m && o.block && o.who && o.kind !== m.kind && o.slot && o.slot.line === m.slot.line && o.x1 <= m.x0 + 3).sort((a, b) => b.x1 - a.x1)[0];
@@ -1383,6 +1495,13 @@
           // Another line's label never says who signs a different signature line, and speaks only up to the next one.
           if (hd.label && (own.kind === 'signature' || sigBetween(hd.y, own.y, own))) continue;
           if (hd.who) {
+            if (hd.acceptOther) {
+              // Under words of acceptance that also name another party: in doubt, marked, nobody's required field.
+              Object.assign(m, { other: m.other || hd.acceptOther, otherUnsure: true, otherWhy: WHY.acceptOther, firmDoubt: true, headed: true });
+              role = 'investor';
+              sure = true;
+              break;
+            }
             if (!m.block) {
               // Blanks to complete in the body are the investor's unless a heading for the firm stands close above them.
               role = hd.who === 'firm' && hd.strong && own.y - hd.y <= 200 ? 'firm' : 'investor';
@@ -1415,7 +1534,7 @@
         }
       }
       p.role = role;
-      if (m.co) coInvestor(p);
+      if (m.co) coInvestor(p, m.said);
       if (role === 'firm') {
         // The firm's blanks are its own to complete, but the amount it accepts is the commitment the portal holds.
         delete p.forType;
@@ -1435,7 +1554,8 @@
         }
       }
       if (m.other) {
-        asOther(p, m.other, !m.otherUnsure);
+        asOther(p, m.other, !m.otherUnsure, m.otherWhy);
+        if (m.firmDoubt) p.firmDoubt = true;
         m.second = true;
         // Label rule 1: a place with a printed label of its own is named in the document's own words, whatever its
         // kind (the kind stays in kind): a custodian's telephone is not the investor's "Phone".
@@ -1497,6 +1617,20 @@
           Object.assign(m.p, { second: true, required: false, conf: 'low', why: WHY.second });
         }
       });
+    // A date or a blank on the same printed row as somebody else's signature, nearest to it of the row's signatures, is
+    // that party's (the row rule, beside the column rule above); one beside an acceptance block in doubt is in the
+    // same doubt. A place whose own label says whose it is keeps it.
+    made.forEach((m) => {
+      if (!m.slot || m.other || m.co || m.p.second || m.labelWho || ['checkbox', 'signature', 'initials'].indexOf(m.kind) >= 0) return;
+      const row = made.filter((o) => o !== m && o.kind === 'signature' && o.slot && Math.abs(o.y - m.y) <= 3);
+      const sig = row.sort((a, b) => Math.min(Math.abs(a.x1 - m.x0), Math.abs(m.x1 - a.x0)) - Math.min(Math.abs(b.x1 - m.x0), Math.abs(m.x1 - b.x0)))[0];
+      if (!sig || !sig.other) return;
+      if (!sig.firmDoubt) return toOther(m, sig.other);
+      Object.assign(m, { other: sig.other, second: true, firmDoubt: true });
+      asOther(m.p, sig.other, false, WHY.acceptOther);
+      m.p.firmDoubt = true;
+      ownLabel(m);
+    });
     made.forEach((m) => out.push(m.p));
   }
 
@@ -1890,7 +2024,7 @@
   function read(pages, ctx) {
     const cx = ctx || {};
     const c = { names: [].concat(cx.firmNames || [], cx.fundNames || []).map(bare).filter((n) => n.length >= 4) };
-    const res = { fields: [], pages: 0, scanned: [], failed: [], errors: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], pictured: [], otherPages: [], others: 0, otherSignaturePages: [], coSignaturePages: [], notEmpty: 0, wordless: {} };
+    const res = { fields: [], pages: 0, scanned: [], failed: [], errors: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], pictured: [], otherPages: [], others: 0, otherSignaturePages: [], coSignaturePages: [], firmDoubtPages: [], notEmpty: 0, wordless: {} };
     let out = [];
     (pages || []).forEach((pg) => {
       if (!pg) return;
@@ -1953,6 +2087,9 @@
       // A bare line under a letter's closing word is never taken for the investor's signature line.
       if (p.type === 'signature' && !p.second && !p.closing && list.indexOf(p.page) < 0) list.push(p.page);
       delete p.closing;
+      // Pages with an acceptance block that names another party (in doubt: not counted as the firm's signature line).
+      if (p.firmDoubt && res.firmDoubtPages.indexOf(p.page) < 0) res.firmDoubtPages.push(p.page);
+      delete p.firmDoubt;
       // Places for somebody else: how many, the pages they are on, and the pages with a signature line of theirs.
       if (isOther(p)) {
         res.others++;
