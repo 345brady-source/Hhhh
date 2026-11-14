@@ -2263,6 +2263,11 @@
     const band = (k) => (heading(raw(k)) ? '' : raw(k));
     const w = b.x1 - b.x0;
     const hh = b.y1 - b.y0;
+    // The field covers the printed box, its ink included: the outer edge of the frame's ink (NS.textread found outer,
+    // past the frame's edge where a stroke is wider than a pixel), else the frame's outer edge. Its kind is decided on
+    // the frame (b, w, hh).
+    const e = b.outer && b.outer.x1 > b.outer.x0 && b.outer.y1 > b.outer.y0 ? b.outer : b;
+    const at = { x: e.x0, y: e.y0, w: e.x1 - e.x0, h: e.y1 - e.y0 };
     // Its own words, read for who completes it (O1): every band, a heading over its column included.
     const own = ['over', 'under', 'before', 'after', 'inside'].map(raw).filter(Boolean);
     const info = { b, read: false, word: false, sig: null, date: false, own };
@@ -2272,7 +2277,7 @@
       const words = (k) => tidy(b.bands && b.bands[k] ? b.bands[k].s : '');
       const cap = words('after') || words('before');
       info.read = !!cap;
-      const p = { type: 'checkbox', kind: 'checkbox', role: 'investor', page: pg.page, x: b.x0, y: b.y0, w, h: hh, label: clean(cap) || 'Tick box', required: false, conf: 'medium', why: cap ? WHY_SLANT : WHY_UNREAD, boxed: true };
+      const p = { type: 'checkbox', kind: 'checkbox', role: 'investor', page: pg.page, x: at.x, y: at.y, w: at.w, h: at.h, label: clean(cap) || 'Tick box', required: false, conf: 'medium', why: cap ? WHY_SLANT : WHY_UNREAD, boxed: true };
       BOXED.set(p, info);
       return p;
     }
@@ -2299,7 +2304,7 @@
     const misread = hit && hit.changes > 0 && hit.band === caption && caption.split(' ').length === 1;
     const label = misread ? KIND_SAID[type] : caption ? clean(caption) : type === 'initials' ? 'Initials' : 'Box';
     const why = hit && hit.changes > 0 ? WHY_NEAR(KIND_SAID[type]) : info.read ? WHY_SLANT : WHY_UNREAD;
-    const p = { type, kind: type === 'text' ? 'other' : type, role: 'investor', page: pg.page, x: b.x0 + 0.5, y: b.y0 + 0.5, w: w - 1, h: hh - 1, label, required: type === 'signature' || type === 'initials', conf: 'medium', why, boxed: true };
+    const p = { type, kind: type === 'text' ? 'other' : type, role: 'investor', page: pg.page, x: at.x, y: at.y, w: at.w, h: at.h, label, required: type === 'signature' || type === 'initials', conf: 'medium', why, boxed: true };
     BOXED.set(p, info);
     return p;
   }
