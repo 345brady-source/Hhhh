@@ -473,7 +473,7 @@
     zoneRight: 14, // ... and this right of the left edge of the leftmost place
     zoneHigh: 14, // and is at most this high
     zoneRead: 70, // of a lettered line this much is read: its letter and the words that decide come first
-    blockRead: 60, // of a block of the margin column this much is read: a numbered heading decides in its first lines
+    blockRead: 60, // of a block of the margin column this much is read: a numbered heading is named in its first lines
     word1: 10, // a zone narrower than this ...
     word2: 3 // ... or lower than this holds no word (a rule across the page is lower)
   };

@@ -395,9 +395,9 @@
         const t = said(heard.get(z) || []);
         const r = toPt(z);
         if (z.kind === 'letter') {
-          // one list mark (a capital, or the digit the engine may read a capital as: B as 8), its stop or bracket, a word;
+          // one list mark (a capital, or the digit the engine may read a capital as: B as 8, at most two such), its stop or bracket, a word;
           // this decides that the line is a heading and never changes the text kept
-          if (/^[A-Z0-9][.)]\s*\p{L}/u.test(t.s)) out.heads.push(Object.assign({ kind: 'letter', col: -1 }, r, t));
+          if (/^[A-Z0-9]{1,2}[.)]\s*\p{L}/u.test(t.s)) out.heads.push(Object.assign({ kind: 'letter', col: -1 }, r, t));
           return;
         }
         // A block of the margin that does not begin with a number (bare or in brackets) goes on the heading above it.

@@ -204,7 +204,9 @@
     if (blank(canvas)) return Promise.resolve([]);
     return startSlot(slot).then((w) => {
       const mine = slot.engine;
-      const job = (psm === slot.paged ? Promise.resolve() : w.setParameters({ tessedit_pageseg_mode: psm }).then(() => void (slot.paged = psm))).then(() =>
+      // A strip is dark print on light paper (its contrast is stretched so): the engine's second try of every unsure
+      // word as white on black is never needed, and it costs as much again as the first.
+      const job = (psm === slot.paged ? Promise.resolve() : w.setParameters({ tessedit_pageseg_mode: psm, tessedit_do_invert: '0' }).then(() => void (slot.paged = psm))).then(() =>
         w.recognize(canvas, {}, { blocks: true, text: false })
       );
       return new Promise((ok, no) => {
