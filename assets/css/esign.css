@@ -883,6 +883,16 @@ input.fe-well { width: 44px; padding: 0 var(--space-2xs); text-align: center; }
 .co-record .cs-kv dd .sub { display: block; }
 .co-record strong { font-weight: 500; }
 .es-placed { margin: 0; }
+/* A place printed for somebody else (a custodian, an adviser): nobody's field. It takes the optional look in the
+   paper's second ink (esign.js passes that ink as the field's colour) and carries no tag: its hint, its spoken name and
+   its properties say whose it is. The count under "Fields for" and the note in the properties are plain hints. */
+.fe .es-fld.is-else { --sc: var(--es-paper-ink-2); }
+.fe .es-fld.is-else:not(.is-flag):not(.is-sel) { --bx-edge: color-mix(in srgb, var(--sc) 80%, var(--es-paper)); --bx-fill: color-mix(in srgb, var(--sc) 6%, var(--es-paper)); }
+.fe .es-fld.is-else:not(.is-flag):not(.is-sel):hover { --bx-fill: color-mix(in srgb, var(--sc) 17%, var(--es-paper)); }
+.fe .es-fld.is-else:not(.is-flag):not(.is-sel):active { --bx-fill: color-mix(in srgb, var(--sc) 22%, var(--es-paper)); }
+.fe .es-fld.is-else:not(.is-flag) .es-fld-label { color: var(--es-paper-ink-2); }
+.fe-else-count { margin: var(--space-2xs) 0 0; }
+.es-else-note { margin: 0; }
 /* Where the editor's left column lies across the top instead (narrower screens), the list is one row of names that
    scrolls sideways; the reason for each mark shows with the field once it is chosen. */
 @media (max-width: 1279px) {

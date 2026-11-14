@@ -7,7 +7,8 @@
  * All coordinates are PDF points of the page as displayed, origin top-left, y downwards.
  *
  *   read(pages, ctx)                   what was read and the proposed fields: { fields, pages, scanned, failed, boxes,
- *                                      blanks, signatures, investorPages, firmPages }
+ *                                      blanks, signatures, investorPages, firmPages, otherPages, others,
+ *                                      otherSignaturePages }
  *   analyze(pages, ctx)                the proposed fields alone: where each signer signs and initials, and the blanks to complete
  *
  * A field is proposed only for a printed place read by anchors.js (a line, a tick box, an empty ruled cell, a form
@@ -21,10 +22,15 @@
  *   reviewReason  one plain sentence saying why it is marked
  *   forType       'person' | 'entity' when only investors of that kind get the field; absent for everyone
  *   prefill       a key from PREFILL when onboarding already has the answer; absent when the investor types it
+ *   second        true: a line for somebody other than the investor and the firm (kept on the investor's signer, optional)
+ *   other         with second: the party who completes it (Custodian, Broker-dealer, Representative, Adviser, Manager,
+ *                 Transfer agent, Third party): nobody's required field, left out of every signing step (see isOther)
  *
  * Helpers for the editor and the save gates (all pure):
  *   needsReview(fieldOrAgreement)  reviewCount(agreement)  reviewFields(agreement)  confirm(field)  statusOf(field)
  *   groupOf(investorType)  fits(field, investorType)  values(investor, offering, opts)  PREFILL  FOR_TYPES
+ * Places for somebody else, shared by the reader for normal PDFs and the picture reader:
+ *   asOther(proposal, party, sure, why)  isOther(field)  otherParty(text)  OTHER_NOTE
  */
 (function (NS) {
   'use strict';
@@ -153,7 +159,12 @@
   const SKIP_HARD = /\b(witness(es|ed)?|notary|notari[sz]ed|spouse|spousal|co-? ?(subscriber|investor|purchaser|signer|signatory|owner|applicant|trustee|tenant)|joint (subscriber|investor|owner|purchaser|account holder|tenant|signature)|(second|additional|other) (subscriber|investor|purchaser|signatory|signer|owner|trustee|signature|director|officer|person|holder|applicant|party)|guarantor|attest(ed|ation)?)\b/;
   // Of those, the lines for a second investor on the same account: the co-investor's own places (see coInvestor).
   const CO_INVESTOR = /\b(co-? ?(subscriber|investor|purchaser|signer|signatory|owner|applicant)|joint (subscriber|investor|owner|purchaser|account holder|signature)|(second|additional|other) (subscriber|investor|purchaser|signatory|signer|owner|signature|person|holder|applicant|party))\b/;
-  const SKIP_SOFT = /\b(custodian|broker|dealer|advis[eo]r|representative of|purchaser representative|registered representative|preparer|attorney|counsel|medallion)\b/;
+  // People who complete a place but are neither the investor nor the firm: the one list of third parties, for both
+  // readers (OTHERS_RE below widens it for a page read from its picture). The bare words for a manager and a
+  // representative are also the firm's and an entity's signatory's words, so here they count only in their narrower
+  // forms; a witness and a notary are SKIP_HARD's. See otherParty for where the list never applies.
+  const OTHER_LIST = ['custodian', 'broker', 'dealer', 'advis[eo]r', 'ria', 'registered rep(resentative)?', 'purchaser representative', 'representative of', 'branch manager', 'transfer agent', 'preparer', 'attorney', 'counsel', 'medallion'];
+  const OTHER_PARTY = new RegExp(`\\b(${OTHER_LIST.join('|')})\\b`, 'i');
   const SIGNING_WORDS = /\b(signature|sign|signed|signatory|by|initials?)\b/;
   const SIG_RE = /^(by|signed|sign|signature|sign here|please sign|x|(authori[sz]ed )?(signature|signatory|signer|representative|officer|person)|(authori[sz]ed )?signature of .{2,60}|signature by .{2,40}|.{2,34}'?s? signature|signature and title)$/;
   const SIG_NOT = /\b(pages?|blocks?|guarantee[ds]?|required|requirements?|instructions?|lines?|sections?|cards?|date|follows?|below|above|see|counterparts?)\b/;
@@ -223,7 +234,7 @@
       info.kind = kind;
       return info;
     };
-    if (SKIP_HARD.test(t) || (SKIP_SOFT.test(t) && SIGNING_WORDS.test(t) && !/\bauthori[sz]ed\b/.test(t))) return is('skip');
+    if (SKIP_HARD.test(t) || (OTHER_PARTY.test(t) && SIGNING_WORDS.test(t) && !/\bauthori[sz]ed\b/.test(t))) return is('skip');
     // "Accepted by," over a line: where the firm signs.
     if (/^(accepted|agreed)( and (accepted|agreed))? by,?$/.test(t)) {
       info.who = 'firm';
@@ -301,8 +312,35 @@
     address2: 'This blank has no label; it was read as a second address line.',
     sentence: 'A blank inside a sentence: check what goes here and who fills it in.',
     phrase: 'The words before this blank may not be its label: check what goes here.',
-    boxBare: 'This box has no words beside it: check what it is for.'
+    boxBare: 'This box has no words beside it: check what it is for.',
+    otherUnsure: 'This place may be for someone else to complete (a custodian, an adviser or the like). Confirm that it is theirs, or set it to the investor.'
   };
+  /**
+   * A place for somebody else: nobody's required field. It stays on the investor's signer (the portal has one signer
+   * per investor and no signer for a third party) and carries second and other (the party's name, one of partyName's);
+   * it is optional, never filled in from onboarding and never for one kind of investor only. sure: the reading has no
+   * doubt whose it is (no review mark); otherwise it is marked with why, or WHY.otherUnsure. Returns the proposal.
+   */
+  function asOther(p, party, sure, why) {
+    Object.assign(p, { second: true, other: String(party || 'Third party'), required: false, role: 'investor' });
+    delete p.prefill;
+    delete p.forType;
+    if (sure) Object.assign(p, { conf: 'high', why: '' });
+    else Object.assign(p, { conf: 'low', why: why || WHY.otherUnsure });
+    return p;
+  }
+  /** True for a field or proposal that is somebody else's to complete (see asOther). */
+  const isOther = (f) => !!(f && f.second && typeof f.other === 'string' && f.other.trim());
+  /** A label's own words as printed: one line, no list marker, bracketed remark, trailing condition, currency sign or colon. */
+  const ownWords = (text) =>
+    tidy(text)
+      .replace(/^(\(?(\d{1,2}|[a-z]|[ivx]{1,4})[.)]|[•·▪■○●*–-])\s+/i, '')
+      .replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ')
+      .replace(/\s*,\s*(if|where|when|as) [^:]*/i, '')
+      .replace(/\s*(u\.?s\.?\s*)?\$\s*$/i, '')
+      .replace(/\s*[:：]\s*$/, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   const overlap = (a0, a1, b0, b1) => Math.min(a1, b1) - Math.max(a0, b0);
   /** A name as compared with headings: lower case, no punctuation, no company suffix. */
   const bare = (s) =>
@@ -1067,6 +1105,10 @@
         const isKnown = !!(info && (FIELD(info.kind) || info.kind === 'skip') && info.kind !== 'other');
         const shout = raw.replace(/\s*[([][^)\]]*[)\]]\s*/g, ' ').trim();
         if (SKIP_HARD.test(t) && n <= 6 && (colon || (/[A-Z]{2}/.test(shout) && shout === shout.toUpperCase())) && !(next && next.t === 'slot')) return heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who: '', skip: true, co: CO_INVESTOR.test(t), seg });
+        // A heading that names another party ("CUSTODIAN DETAILS:"): set as a heading, short, with no blank on its own
+        // printed line and not a label already. The places under it are that party's (see the role loop).
+        const party = !seg.used && n <= 8 && (caps || colon || titled) && !ln.els.some((x) => x.t === 'slot') ? otherParty(raw) : '';
+        if (party) return heads.push({ y: seg.y, x0: seg.x0, x1: seg.x1, who: '', skip: true, other: party, seg });
         if (seg.used || (next && next.t === 'slot')) {
           // A label speaks for the lines under it only when it names a side outright or says whose line it is.
           // A bare "SUBSCRIBER: ____" heads its block like any heading; "Signature of Subscriber" speaks for its own lines only.
@@ -1116,9 +1158,21 @@
       if (!role) {
         let named = null;
         let blocked = null;
+        let bound = false; // a heading of another kind stands between this place and any heading further up
         for (let i = 0; i < heads.length; i++) {
           const hd = heads[i];
           if (!governs(hd, own)) continue;
+          if (hd.skip && hd.other) {
+            // Under a heading that names another party, down to the next heading of any kind: that party's place.
+            // A line of its own for a second signer, a witness or a notary stays theirs; one whose label names a
+            // third party (or none) is the heading's party's.
+            if (bound) continue;
+            // (p.second, not m.second: on an address's continuation lines m.second only says "the line after the second".)
+            if (!m.co && (!p.second || otherParty(m.info ? m.info.text : p.label))) m.other = hd.other;
+            role = 'investor';
+            sure = true;
+            break;
+          }
           if (hd.skip) {
             // Under a heading for a second signer, a witness or a notary: kept, optional, and marked.
             if (!m.second) {
@@ -1154,6 +1208,7 @@
           }
           if (m.block && hd.named && hd.y > 0.1 * pg.h) named = named || hd;
           else if (m.block && hd.blocker) blocked = blocked || hd;
+          if (!hd.label) bound = true;
         }
         if (!role && m.block && named) role = 'firm';
         if (!role) {
@@ -1181,8 +1236,15 @@
           first = false;
         }
       }
-      if (m.block && !sure) weaken(m, m.aboveSig ? WHY.aboveSig : WHY.who);
-      m.who = m.who || (sure ? role : '');
+      if (m.other) {
+        asOther(p, m.other, true);
+        m.second = true;
+        // Label rule 1: a place with a printed label of its own is named in the document's own words, whatever its
+        // kind (the kind stays in kind): a custodian's telephone is not the investor's "Phone".
+        if (m.info && m.seg && FIELD(m.kind) && ownWords(m.info.text)) p.label = clean(ownWords(m.info.text));
+      } else if (m.block && !sure) weaken(m, m.aboveSig ? WHY.aboveSig : WHY.who);
+      // A place of somebody else's lends no side to the blanks beside it: each finds its own heading.
+      if (!m.other) m.who = m.who || (sure ? role : '');
     });
     made.forEach((m) => out.push(m.p));
   }
@@ -1216,6 +1278,8 @@
    *                  (a picture of a page; a page the reader failed on)
    *   boxes, blanks, signatures   how many tick boxes, blanks to complete and signature lines got a field
    *   investorPages, firmPages    the pages with a signature line for the investor, and for the firm
+   *   otherPages, others          the pages with a place for somebody else (isOther, any kind), and how many such places
+   *   otherSignaturePages         of those, the pages with a signature line of somebody else's
    */
   /**
    * A page with no text, read from its picture (pg.pictured, see NS.textread): the words are recognised, so a field
@@ -1236,11 +1300,25 @@
    *                                       optional
    * A box whose caption could not be read still gets its field, named "Box".
    */
-  const OTHERS_RE = /\bcustodian|\bbroker|\bdealer\b|\bregistered rep|\brepresentative|\badvis[eo]r|\bmanager\b|\bria\b|\btransfer agent|\bnotary|\bwitness/i;
+  // The one list of third parties (OTHER_PARTY), widened for a page read from its picture as that reader has always
+  // read it: the bare words for a representative and a manager, and a witness's and a notary's boxes.
+  const OTHERS_RE = new RegExp(`${OTHER_PARTY.source}|\\b(custodian|broker|registered rep|representative|advis[eo]r|transfer agent|notary|witness)|\\bmanager\\b`, 'i');
   const WHY_OTHERS = 'This place is for someone else to complete (a custodian, a broker, a representative or the like), and the portal has no signer for them. It is optional and nobody is asked to complete it: keep it for your records, or remove it.';
+  /** The standing sentence shown with a place for somebody else (in the editor's properties, and as a picture page's reason). */
+  const OTHER_NOTE = WHY_OTHERS;
   /** Who a heading or a caption says completes what is under it: 'co' (a second investor), 'other' (a third party), 'investor' or ''. */
   const partyOf = (t) => (CO_INVESTOR.test(t) ? 'co' : OTHERS_RE.test(t) ? 'other' : /\b(investor|subscriber|purchaser|shareholder|applicant)s?\b/i.test(t) ? 'investor' : '');
   const partyName = (t) => (/custodian/i.test(t) ? 'Custodian' : /broker|dealer/i.test(t) ? 'Broker-dealer' : /manager/i.test(t) ? 'Manager' : /registered rep|representative/i.test(t) ? 'Representative' : /advis|\bria\b/i.test(t) ? 'Adviser' : /transfer agent/i.test(t) ? 'Transfer agent' : /notary/i.test(t) ? 'Notary' : /witness/i.test(t) ? 'Witness' : 'Third party');
+  /**
+   * The party a piece of text names as completing a place ('Custodian', 'Broker-dealer', 'Representative', 'Adviser',
+   * 'Transfer agent' or 'Third party'), or '' when it names none. The list never applies to words of the firm (a
+   * general partner, a manager, acceptance) or to anyone "authorised", who signs for the investor or the firm.
+   */
+  function otherParty(text) {
+    const t = plain(String(text || ''));
+    if (!t || !OTHER_PARTY.test(t) || FIRM_WORDS.test(t) || /\bauthori[sz]ed\b/.test(t)) return '';
+    return partyName(t);
+  }
   /**
    * The headings of a form read from its picture: { sections, subs }. A section is headed in the margin beside the
    * boxes by a number ("(3) Investor information") and runs to the next one; within it a lettered line ("B. Co-investor
@@ -1354,7 +1432,8 @@
         coInvestor(p);
       } else if (who === 'other') {
         const name = partyName(said);
-        Object.assign(p, { role: 'investor', other: name, second: true, required: false, conf: 'low', why: WHY_OTHERS, label: OTHERS_RE.test(p.label) ? p.label : `${name}: ${p.label}` });
+        asOther(p, name, false, WHY_OTHERS);
+        if (!OTHERS_RE.test(p.label)) p.label = `${name}: ${p.label}`;
       }
     });
     // One column of boxes is one person's: where any box in it is the co-investor's, all of its kind are.
@@ -1377,7 +1456,10 @@
       if (sig && sig.role === 'co' && p.role !== 'co') {
         p.label = 'Co-investor date';
         coInvestor(p);
-      } else if (sig && sig.other) Object.assign(p, { other: sig.other, second: true, required: false, conf: 'low', why: WHY_OTHERS, label: `${sig.other}: date` });
+      } else if (sig && sig.other) {
+        asOther(p, sig.other, false, WHY_OTHERS);
+        p.label = `${sig.other}: date`;
+      }
       else if (sig && sig.second && !p.other) Object.assign(p, { second: true, required: false, conf: 'low', why: WHY.second });
     });
     made.forEach((p) => mine.push(p));
@@ -1385,7 +1467,7 @@
   function read(pages, ctx) {
     const cx = ctx || {};
     const c = { names: [].concat(cx.firmNames || [], cx.fundNames || []).map(bare).filter((n) => n.length >= 4) };
-    const res = { fields: [], pages: 0, scanned: [], failed: [], errors: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], pictured: [] };
+    const res = { fields: [], pages: 0, scanned: [], failed: [], errors: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, investorPages: [], firmPages: [], pictured: [], otherPages: [], others: 0, otherSignaturePages: [] };
     let out = [];
     (pages || []).forEach((pg) => {
       if (!pg) return;
@@ -1430,6 +1512,12 @@
       else res.blanks++;
       const list = p.role === 'firm' ? res.firmPages : res.investorPages;
       if (p.type === 'signature' && !p.second && list.indexOf(p.page) < 0) list.push(p.page);
+      // Places for somebody else: how many, the pages they are on, and the pages with a signature line of theirs.
+      if (isOther(p)) {
+        res.others++;
+        if (res.otherPages.indexOf(p.page) < 0) res.otherPages.push(p.page);
+        if (p.type === 'signature' && res.otherSignaturePages.indexOf(p.page) < 0) res.otherSignaturePages.push(p.page);
+      }
     });
     return res;
   }
@@ -1528,5 +1616,5 @@
     return v;
   }
 
-  NS.placement = { read, analyze, labelOf, needsReview, reviewFields, reviewCount, confirm, statusOf, groupOf, fits, values, PREFILL, FOR_TYPES };
+  NS.placement = { read, analyze, labelOf, needsReview, reviewFields, reviewCount, confirm, statusOf, groupOf, fits, values, PREFILL, FOR_TYPES, asOther, isOther, otherParty, OTHER_NOTE };
 })(typeof window !== 'undefined' ? window.CVPortal : globalThis.CVPortal);
