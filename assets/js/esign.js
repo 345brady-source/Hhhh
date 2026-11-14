@@ -1488,7 +1488,10 @@
    *
    * What a field carries (set by autoFields, kept by templates and envelopes):
    *   auto true · confidence 'high' | 'medium' | 'low' · review (truthy until the sponsor settles it) ·
-   *   reviewReason (one sentence) · forType 'person' | 'entity' | absent · prefill (a key of NS.placement.PREFILL) | absent
+   *   reviewReason (one sentence) · forType 'person' | 'entity' | absent · prefill (a key of NS.placement.PREFILL) | absent ·
+   *   checkBy 'page' | 'field' | absent (a field read from a picture: 'page' when its only reason is that its page was
+   *   read from its picture, so "I have checked this page" (data-action="es-page-ok" data-page) confirms it with its page;
+   *   'field' when its caption could not be read or its owner is in doubt, so only "Confirm this field" does)
    * A mark is settled by confirming it here, or by moving, resizing or reassigning the field (fieldeditor.js settle),
    * or by removing it. The save gates need nothing from the editor: agreementTodo and templateReady ask NS.placement.
    * ===================================================================== */
@@ -1497,17 +1500,29 @@
   const reviewMarkHTML = (f) => (PL().needsReview(f) ? '<span class="es-fld-flag" aria-hidden="true">Review</span>' : '');
   /** Words for a field's spoken name: what fills it in, who gets it, and why it is marked. */
   const reviewSay = (f) => [f.prefill ? 'filled in from onboarding' : '', f.forType === 'person' ? 'for individuals and joint accounts' : f.forType === 'entity' ? 'for entities, trusts and IRAs' : '', PL().needsReview(f) ? `marked for review: ${f.reviewReason || UNSURE}` : ''].filter(Boolean).join(', ');
+  /** The marked fields of one page that "I have checked this page" confirms: read from its picture, the page's mark. */
+  const pageMarks = (env, page) => PL().reviewFields(env).filter((f) => f.page === page && f.checkBy === 'page');
+  /** The button that confirms a page read from its picture, with the page and the number in its spoken name. */
+  const pageOkHTML = (page, n) => `<button class="cs-btn cs-btn-small" type="button" data-action="es-page-ok" data-page="${page}" aria-label="${h(`I have checked page ${page}: confirm ${n === 1 ? 'its 1 field' : `its ${n} fields`} read from the picture`)}">I have checked this page</button>`;
   function reviewPanelHTML(env) {
     const list = PL().reviewFields(env);
     if (!list.length) return '';
+    // A page read from its picture is one line with its action; its fields with a mark of their own are listed by name.
+    const rows = [];
+    list.forEach((f) => {
+      if (f.checkBy !== 'page') return rows.push(`<li><button type="button" data-action="es-flag-go" data-fid="${h(f.id)}"><strong>${h(f.label || (TYPES[f.type] || TYPES.text).label)}</strong><span class="cs-hint">Page ${f.page} · ${h(f.reviewReason || UNSURE)}</span></button></li>`);
+      const marks = pageMarks(env, f.page);
+      if (marks[0] !== f) return;
+      rows.push(`<li><button type="button" data-action="es-flag-go" data-fid="${h(f.id)}"><strong>Page ${f.page} was read from its picture: ${marks.length === 1 ? '1 field' : `${marks.length} fields`} to check.</strong></button>${pageOkHTML(f.page, marks.length)}</li>`);
+    });
     return `<div class="fe-sec fe-sec-review"><h2 class="fe-h">To review</h2><p class="cs-hint">The portal was not sure about ${list.length === 1 ? 'this field' : 'these fields'}. Confirm each one, or move it to the right place.</p>
-      <ul class="es-review" role="list">${list
-        .map((f) => `<li><button type="button" data-action="es-flag-go" data-fid="${h(f.id)}"><strong>${h(f.label || (TYPES[f.type] || TYPES.text).label)}</strong><span class="cs-hint">Page ${f.page} · ${h(f.reviewReason || UNSURE)}</span></button></li>`)
-        .join('')}</ul></div>`;
+      <ul class="es-review" role="list">${rows.join('')}</ul></div>`;
   }
   function placementStatusHTML(env, sel) {
     const status = PL().statusOf(sel);
-    return `${status ? `<p class="cs-hint es-placed">${h(status)}</p>` : ''}${isOther(sel) && !(PL().needsReview(sel) && sel.reviewReason === PL().OTHER_NOTE) ? `<p class="cs-hint es-else-note">${h(PL().OTHER_NOTE)}</p>` : ''}${PL().needsReview(sel) ? `<div class="es-flag-box"><p>${h(sel.reviewReason || UNSURE)}</p><button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="es-flag-ok">${icon('check')}Confirm this field</button></div>` : ''}`;
+    // Where the list is not shown (a narrow screen), the page's action stands here too.
+    const page = PL().needsReview(sel) && sel.checkBy === 'page' ? pageOkHTML(sel.page, pageMarks(env, sel.page).length) : '';
+    return `${status ? `<p class="cs-hint es-placed">${h(status)}</p>` : ''}${isOther(sel) && !(PL().needsReview(sel) && sel.reviewReason === PL().OTHER_NOTE) ? `<p class="cs-hint es-else-note">${h(PL().OTHER_NOTE)}</p>` : ''}${PL().needsReview(sel) ? `<div class="es-flag-box"><p>${h(sel.reviewReason || UNSURE)}</p><button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="es-flag-ok">${icon('check')}Confirm this field</button>${page}</div>` : ''}`;
   }
   function placementControlsHTML(env, sel) {
     const s = signerById(env, sel.signerId);
@@ -1539,6 +1554,24 @@
     if (next) return NS.fieldEditor.show(next.id);
     const go = document.querySelector('[data-action="es-agreement-save"], [data-action="es-review"]');
     if (go) go.focus({ preventScroll: true });
+  };
+  // "I have checked this page": every mark of that page whose only reason is that the page was read from its picture is
+  // confirmed, as one step of the editor's history. A field with a mark of its own, another page and a page with text
+  // (whose fields carry no checkBy) are not touched.
+  NS.actions['es-page-ok'] = (el) => {
+    const env = editorEnv();
+    const page = +el.getAttribute('data-page');
+    if (!env || !env.agreementFor || !(page > 0)) return;
+    NS.fieldEditor.setMany(pageMarks(env, page).map((f) => f.id), 'review', false);
+    // On to the next page's action, else the first mark left, else the button that saves.
+    const shown = (b) => !!(b && b.offsetParent);
+    const pages = Array.from(document.querySelectorAll('.fe-sec-review [data-action="es-page-ok"]')).filter(shown);
+    const go = pages.find((b) => +b.getAttribute('data-page') > page) || pages[0];
+    if (go) return go.focus({ preventScroll: false });
+    const next = PL().reviewFields(env)[0];
+    if (next) return NS.fieldEditor.show(next.id);
+    const save = document.querySelector('[data-action="es-agreement-save"], [data-action="es-review"]');
+    if (save) save.focus({ preventScroll: true });
   };
   /* ===================== end of PLACEMENT REVIEW ===================== */
   /* =====================================================================
@@ -1660,11 +1693,14 @@
     unreadPages(env)
       ? `<p class="es-note es-offer">${icon('alert')}<span>${unreadPages(env) === 1 ? 'One page has' : `${unreadPages(env)} pages have`} no text, only a picture of the page, so nothing was placed there. The portal can try to read ${unreadPages(env) === 1 ? 'that page from its picture' : 'those pages from their picture'}. It takes a few seconds a page, and every field it places that way must be checked.</span><button class="cs-btn cs-btn-small" type="button" data-action="es-read-pictures">Read these pages from their picture</button></p>`
       : '';
+  // The progress while pages are read from their picture: the page whose words are read, or, after the time for words is
+  // used up, the page whose boxes are found.
+  const pictureStep = (i, all, boxes) => (boxes ? `Finding the boxes on page ${i} of ${all}…` : `Reading page ${i} of ${all} from its picture…`);
   async function readPictures(env, el) {
     if (el.disabled) return;
     el.disabled = true;
     el.textContent = 'Reading the PDF…';
-    await rereadAgreement(env, { pictures: true, step: (i, all) => (el.textContent = `Reading page ${i} of ${all} from its picture…`) });
+    await rereadAgreement(env, { pictures: true, step: (i, all, boxes) => (el.textContent = pictureStep(i, all, boxes)) });
     if (editorEnv() !== env) return NS.app.save(true);
     if (!env.fields.some((f) => f.id === esUi().sel)) esUi().sel = null;
     NS.app.save(true);
@@ -1691,7 +1727,7 @@
     if (el.disabled) return;
     el.disabled = true;
     el.textContent = 'Reading the PDF…';
-    await rereadAgreement(env, { pictures: el.getAttribute('data-pictures') === '1', step: (i, all) => (el.textContent = `Reading page ${i} of ${all} from its picture…`) });
+    await rereadAgreement(env, { pictures: el.getAttribute('data-pictures') === '1', step: (i, all, boxes) => (el.textContent = pictureStep(i, all, boxes)) });
     U.closeDialog();
     if (editorEnv() !== env) return NS.app.save(true);
     if (!env.fields.some((f) => f.id === esUi().sel)) esUi().sel = null;
@@ -1800,7 +1836,7 @@
     const marked = PL().reviewCount(env);
     const headHTML = env.agreementFor
       ? `${K.head(`Subscription agreement${agr ? ` · ${h(agr.name)}` : ''}`, `${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · place the fields once; each investor fills them in and signs during onboarding`, `<a class="cs-btn" href="#console-offering-${h(env.agreementFor)}">${icon('back')}Offering</a><button class="cs-btn" type="button" data-action="es-agreement-cancel" data-id="${h(env.id)}">Cancel</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-save" data-id="${h(env.id)}">Save subscription agreement</button>`)}
-        <div class="es-read"><p class="cs-hint es-agr-note">${env.read ? `${h(readNote(env))} ${marked ? 'Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. ' : env.autoPlaced ? 'Check the fields, move or resize as needed, and add any others. ' : ''}` : ''}Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.${rereadInlineHTML(env)}</p>${picturesOfferHTML(env)}${rereadNoteHTML(env)}</div>`
+        <div class="es-read"><p class="cs-hint es-agr-note">${env.read ? `${h(readNote(env))} ${marked ? (PL().reviewFields(env).some((f) => f.checkBy) ? 'Fields marked Review must be confirmed or moved to the right place before saving: on a page read from its picture, check every field and choose “I have checked this page”; a field the portal could not name, or whose owner it is unsure of, is confirmed by itself. ' : 'Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. ') : env.autoPlaced ? 'Check the fields, move or resize as needed, and add any others. ' : ''}` : ''}Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.${rereadInlineHTML(env)}</p>${picturesOfferHTML(env)}${rereadNoteHTML(env)}</div>`
       : `${K.head(h(env.title), `Draft · ${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'}`, `<a class="cs-btn" href="#console-esign">${icon('back')}E-sign</a><button class="cs-btn" type="button" data-action="es-delete" data-id="${h(env.id)}">Delete draft</button><button class="cs-btn" type="button" data-action="es-save-tpl" data-id="${h(env.id)}">Save as template</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-review" data-id="${h(env.id)}">Review and send</button>`)}`;
     // The editor itself (the fields to add, the document, the selected field) is fieldeditor.js.
     return K.shell(`${headHTML}${NS.fieldEditor.html(editorCtx(env))}`, 'console-esign');
@@ -2819,12 +2855,15 @@
    * A page with no text (its letters are drawings, or it is a picture of a page) is read from its picture by
    * NS.textread and comes back with pictured set, and with reader saying whether its words could be read (a page whose
    * words could not be read is still read from its picture: its boxes are found without them); when the page cannot be
-   * drawn or searched it comes back as a scan with unread saying why: 'time' (the page took too long), 'limit' (the time
-   * allowed for the whole document was used up) or 'fail'. opts: { pictures: true to read such pages from their picture (the
-   * sponsor asked for it); step(page, pages) called before each such page is read;
+   * drawn or searched it comes back as a scan with unread saying why: 'time' (the page took too long) or 'fail'. Words are
+   * read for at most limitMs for one document (the time spent in NS.textread.page): after that each remaining such page
+   * is still drawn and searched without its words (reader 'limit'), so its boxes get fields named by their shape and
+   * marked, and nothing already placed is taken away. opts: { pictures: true to read such pages from their picture (the
+   * sponsor asked for it); step(page, pages, boxes) called before each such page is read (boxes true when only its boxes
+   * are found); limitMs (PICTURE_LIMIT_MS when not given);
    * kept: true to use the last reading of this file, or read without pictures (for snapping, where waiting is not worth it) }.
    */
-  const PICTURE_LIMIT_MS = 150000; // reading pages from their pictures stops after this long for one document
+  const PICTURE_LIMIT_MS = 180000; // words on pages read from their pictures are read for at most this long for one document
   let layoutKept = null;
   async function pageLayout(docId, opts) {
     const op = opts || {};
@@ -2836,6 +2875,7 @@
     const out = [];
     let spent = 0;
     let pictured = false;
+    const limitMs = op.limitMs > 0 ? op.limitMs : PICTURE_LIMIT_MS;
     try {
       for (let i = 1; i <= doc.numPages; i++) {
         const size = { page: i, w: 0, h: 0 };
@@ -2855,19 +2895,18 @@
           // A page with no text is read from its picture only when the sponsor asked for it (op.pictures): otherwise it
           // is reported as a page that could not be read, and nothing is placed on it.
           if (NS.textread && op.pictures && !op.kept && NS.anchors.textless(raw)) {
-            if (spent > PICTURE_LIMIT_MS) unread = 'limit';
-            else {
-              if (op.step) op.step(i, doc.numPages);
-              const t0 = Date.now();
-              try {
-                use = await NS.textread.page(page, raw);
-                pictured = true;
-              } catch (e) {
-                console.error('Reading page ' + i + ' of the agreement from its picture failed:', e);
-                unread = (e && e.code) || 'fail';
-              }
-              spent += Date.now() - t0;
+            // Past the time for words, the page is still drawn and searched: its boxes are found, their words not read.
+            const late = spent > limitMs;
+            if (op.step) op.step(i, doc.numPages, late);
+            const t0 = Date.now();
+            try {
+              use = await NS.textread.page(page, raw, late ? { words: false, reader: 'limit' } : undefined);
+              pictured = true;
+            } catch (e) {
+              console.error('Reading page ' + i + ' of the agreement from its picture failed:', e);
+              unread = (e && e.code) || 'fail';
             }
+            spent += Date.now() - t0;
           }
           out.push(unread ? Object.assign(NS.anchors.page(null, size, []), { scan: true, unread }) : NS.anchors.page(use, size, forms));
           page.cleanup();
@@ -2897,7 +2936,7 @@
     try {
       const t = T();
       const o = W().offerings.find((x) => x.id === (env.agreementFor || env.offeringId)) || {};
-      const layout = await pageLayout(env.docId, { step: opts && opts.step, pictures: !!(opts && opts.pictures) });
+      const layout = await pageLayout(env.docId, { step: opts && opts.step, pictures: !!(opts && opts.pictures), limitMs: opts && opts.limitMs });
       read.asked = !!(opts && opts.pictures);
       // Pages with no text that could not be read from their pictures either, by reason.
       layout.forEach((pg) => pg.unread && (read.unread[pg.unread] = read.unread[pg.unread] || []).push(pg.page));
@@ -2929,6 +2968,8 @@
       if (p.conf !== 'high') Object.assign(f, { review: true, reviewReason: p.why || 'The portal was not sure about this field.' });
       if (p.forType) f.forType = p.forType;
       if (p.prefill) f.prefill = p.prefill;
+      // On a page read from its picture: whose the mark is ('page': the page's action may confirm it; 'field': only itself).
+      if (p.checkBy) f.checkBy = p.checkBy;
       if (p.printed) f.printed = p.printed;
       if (p.second) f.second = true;
       // A place for somebody else names its party (one of the reader's fixed names, never words from the PDF).
@@ -2964,8 +3005,7 @@
     const lost = [
       all('load').length ? `${on(all('load')).replace(/^p/, 'P')} ${were(all('load'))} not read from ${all('load').length === 1 ? 'its picture' : 'their pictures'}, because the portal could not load its text reader: nothing was placed there.` : '',
       all('time').length ? `Reading ${on(all('time'))} from ${all('time').length === 1 ? 'its picture' : 'their pictures'} took too long and was stopped: nothing was placed there.` : '',
-      all('fail').length ? `Reading ${on(all('fail'))} from ${all('fail').length === 1 ? 'its picture' : 'their pictures'} failed: nothing was placed there.` : '',
-      all('limit').length ? `Reading pages from their pictures takes time, and the portal stopped after two and a half minutes: ${on(all('limit'))} ${all('limit').length === 1 ? 'was' : 'were'} not read and nothing was placed there. Upload those pages as a shorter PDF to have them read.` : ''
+      all('fail').length ? `Reading ${on(all('fail'))} from ${all('fail').length === 1 ? 'its picture' : 'their pictures'} failed: nothing was placed there.` : ''
     ].filter(Boolean);
     if (lost.length) lost.push('A PDF made with a “print to PDF” printer can lose its text; saving the document as a PDF from the program it was written in, or with the browser’s “Save as PDF”, keeps it.');
     if (!r.ok) {
@@ -2988,6 +3028,7 @@
     if (wordless('load').length) out.push(`The portal could not start its text reader here, so the words on ${on(wordless('load'))} were not read. The boxes there were found on the picture: each has a field named by its shape and marked. Say what each one is for, or remove it.`);
     if (wordless('time').length) out.push(`Reading the words on ${on(wordless('time'))} took too long and was stopped part way. Where the words by a box were not read, its field is named by its shape and marked.`);
     if (wordless('fail').length) out.push(`The words on ${on(wordless('fail'))} could not be read. The boxes there were found on the picture: each has a field named by its shape and marked. Say what each one is for, or remove it.`);
+    if (wordless('limit').length) out.push(`Reading words from pictures takes time, and the portal stopped after three minutes. On ${on(wordless('limit'))} the boxes were found on the picture but the words by them were not read: each field there is named by its shape and marked. Upload those pages as a shorter PDF to have their words read.`);
     if (lost.length) out.push(lost.join(' '));
     else if (r.scanned.length) out.push(`${r.scanned.length === 1 ? 'Page' : 'Pages'} ${on(r.scanned.slice().sort((a, b) => a - b)).replace(/^pages? /, '')} ${r.scanned.length === 1 ? 'is a picture' : 'are pictures'}, as in a scan, and could not be read: nothing was placed there.`);
     if (r.failed.length) out.push(`The portal could not read ${on(r.failed.slice().sort((a, b) => a - b))}: nothing was placed there.`);
@@ -3152,7 +3193,7 @@
     }
     try {
       // A page with no text is read from its picture, which takes a few seconds a page: the button says which page.
-      const step = (i, all) => btn && (btn.textContent = `Reading page ${i} of ${all} from its picture…`);
+      const step = (i, all, boxes) => btn && (btn.textContent = pictureStep(i, all, boxes));
       const env = await agreementDraft(w, oid, { file: file || null, docId: file ? '' : docId, title: form.title.value, step });
       U.closeDialog();
       // The editor always opens on a new agreement: the sponsor sees what was read and where each field sits, then saves.

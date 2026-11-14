@@ -4,7 +4,7 @@
  * booklet, some pages with text and some pictures), taken through the portal's real upload dialog and the offer to
  * read pages from their picture, as a sponsor does.
  *
- *   node scanset.js [--doc binder|booklet|all] [--root <checkout>] [--out <folder outside the repository>]
+ *   node scanset.js [--doc binder|booklet|all] [--root <checkout>] [--out <folder outside the repository>] [--nobody]
  *
  * Required for each document:
  *   before the offer   no field on any text-less page, and a plain sentence on the screen that pages have no text;
@@ -15,6 +15,13 @@
  *                      (or that could not be read), and together they are exactly the text-less pages;
  *                      on a page with text the fields are those the upload placed (the offer changes nothing there).
  * Every page that got a field from its picture is photographed whole, 1440 pixels wide, into <out>/<doc>/.
+ *
+ * Places nobody completes: <scratch>/public-agreements/scanset-nobody.json (or SCANSET_NOBODY) holds, by document and
+ * page, the rectangles (points) of places nobody completes that were seen on the pictures (a table's edge, a footnote
+ * rule, the edge of a ticked box, a table cell taken for one box, a piece at a line's end, a date line already
+ * answered), each with its kind. A field lying mostly (80 % of its area) inside one is counted, by page and kind; a
+ * region marked 'whole' counts only a field that also covers half of it. The counts are printed on every run; with
+ * --nobody each must be 0 for the run to pass.
  *
  * The documents and the proof runner are outside the repository and nothing of them is copied in. The documents are
  * found through the environment (SCANSET_BINDER, SCANSET_BOOKLET) or the list <scratch>/public-agreements/scanset.json
@@ -41,6 +48,16 @@ const OFFER_RE = /read (these|the|those)? ?pages? from (their|its|the) pictures?
 const BUSY_RE = /Reading page \d+ of \d+|Reading [^.]{0,60}(…|\.\.\.)/;
 const NO_TEXT_RE = /\b(no|without( any)?) text\b|pages? (is|are) (a |only )?pictures?|only pictures? of/i;
 const SHARE = 0.5; // pt: two fields of a page may share at most this much both ways
+const NOBODY_GATE = process.argv.includes('--nobody');
+let NOBODY = {};
+try {
+  NOBODY = JSON.parse(fs.readFileSync(process.env.SCANSET_NOBODY || path.join(SCRATCH, 'public-agreements', 'scanset-nobody.json'), 'utf8'));
+} catch (e) {
+  if (NOBODY_GATE) {
+    console.log('NOT RUN: the places nobody completes are not recorded (' + (process.env.SCANSET_NOBODY || path.join(SCRATCH, 'public-agreements', 'scanset-nobody.json')) + ')');
+    process.exit(2);
+  }
+}
 
 const notRun = (what) => {
   console.log('NOT RUN: ' + what);
@@ -318,7 +335,10 @@ async function runDoc(srv, name, pdf) {
     const pictured = said(note, PAGES + ' had no text, so the portal read');
     const limited = said(note, 'stopped after [^:]*: ' + PAGES + ' (?:was|were) not read');
     const lost = [].concat(said(note, PAGES + ' (?:has|have) no text and (?:was|were) not read'), said(note, 'Reading ' + PAGES + ' from (?:its|their) pictures? (?:took too long|failed)'));
-    console.log(`  the summary: read from the picture ${pictured.length} pages; left at the time limit ${limited.length}; not read for another reason ${lost.length}`);
+    // The time for words used up: those pages are still read from their picture (boxes found, words not read).
+    const wordsLeft = said(note, 'stopped after three minutes\\. On ' + PAGES + ' the boxes were found');
+    console.log(`  the summary: read from the picture ${pictured.length} pages; words not read after the three minutes ${wordsLeft.length ? `${wordsLeft.length} (pages ${wordsLeft.join(', ')})` : 0}; left at the time limit ${limited.length}; not read for another reason ${lost.length}`);
+    if (wordsLeft.some((p) => pictured.indexOf(p) < 0)) fail('the summary names pages whose words were not read that it does not name as read from their picture');
     const named = pictured.concat(limited, lost).sort((a, b) => a - b);
     const missingName = textless.filter((p) => named.indexOf(p) < 0);
     const wrongName = named.filter((p) => !isTextless(p));
@@ -349,6 +369,26 @@ async function runDoc(srv, name, pdf) {
       console.log(`  page ${p}: ${fs_.length} fields (${Object.entries(k).map(([kk, v]) => `${v} ${kk}`).join(', ')}); on a found place ${fs_.length - off_.length}; marked ${fs_.length - unmarked.length}`);
       shots.push(p);
     });
+    // Places nobody completes, as recorded from the pictures: no field may lie mostly inside one.
+    const nobody = NOBODY[name] || {};
+    let onNobody = 0;
+    Object.keys(nobody)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .forEach((p) => {
+        const hits = {};
+        (byPage[p] || []).forEach((f) => {
+          const area = (f.x1 - f.x0) * (f.bottom - f.top);
+          // (a region marked 'whole' is a fault only for a field over most of it: the places inside it are places)
+          const r = nobody[p].find((q) => area > 0 && Math.max(0, ov(f.x0, f.x1, q[0] - 2, q[2] + 2)) * Math.max(0, ov(f.top, f.bottom, q[1] - 2, q[3] + 2)) >= 0.8 * area && (q[5] !== 'whole' || area >= 0.5 * (q[2] - q[0]) * (q[3] - q[1])));
+          if (r) hits[r[4]] = (hits[r[4]] || 0) + 1;
+        });
+        const n = Object.values(hits).reduce((a, b) => a + b, 0);
+        onNobody += n;
+        console.log(`  page ${p}: ${n} fields on places nobody completes (${nobody[p].length} recorded${n ? ': ' + Object.entries(hits).map(([k, v]) => `${v} on a ${k}`).join(', ') : ''})`);
+        if (n && NOBODY_GATE) fail(`page ${p}: ${n} fields on places nobody completes (${Object.entries(hits).map(([k, v]) => `${v} ${k}`).join(', ')})`);
+      });
+    if (Object.keys(nobody).length) console.log(`  fields on places nobody completes: ${onNobody} on ${Object.keys(nobody).length} recorded pages`);
     const onText = after.fields.filter((f) => !isTextless(f.page)).length;
     console.log(`  fields on text-less pages after the offer: ${after.fields.length - onText}; on pages with text: ${onText}`);
 
@@ -366,7 +406,7 @@ async function runDoc(srv, name, pdf) {
     const made = await photograph(C, S, shots, dir);
     console.log(`  pictures: ${made.length} of ${shots.length} pages that got fields, in ${dir}`);
     if (made.length !== shots.length) fail(`${shots.length - made.length} pages that got fields could not be photographed`);
-    fs.writeFileSync(path.join(dir, 'result.json'), JSON.stringify({ pages: sizes.length, kinds, textless, offer, before: { fields: before.fields.length, onTextless: early.length }, after: { fields: after.fields.length, onText }, summary: { pictured, limited, lost }, byPage: Object.fromEntries(Object.entries(byPage).map(([p, l]) => [p, l.length])), fails }, null, 1));
+    fs.writeFileSync(path.join(dir, 'result.json'), JSON.stringify({ pages: sizes.length, kinds, textless, offer, before: { fields: before.fields.length, onTextless: early.length }, after: { fields: after.fields.length, onText }, summary: { pictured, wordsLeft, limited, lost }, byPage: Object.fromEntries(Object.entries(byPage).map(([p, l]) => [p, l.length])), onNobody, fields: Object.fromEntries(Object.entries(byPage).map(([p, l]) => [p, l.map((f) => [f.kind, +f.x0.toFixed(1), +f.top.toFixed(1), +f.x1.toFixed(1), +f.bottom.toFixed(1)])])), fails }, null, 1));
   } catch (e) {
     fail('the run stopped: ' + String((e && e.message) || e).slice(0, 300));
   } finally {

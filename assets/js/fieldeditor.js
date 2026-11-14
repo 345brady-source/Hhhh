@@ -529,6 +529,22 @@
     }
     refreshRail();
   }
+  /**
+   * One property set on several fields as one step of the history (confirming every mark of a page, say): each field
+   * goes by the path setProp takes for one (ctx.setExtra), the change is committed once and the fields are drawn
+   * again. Returns how many fields changed.
+   */
+  function setMany(ids, k, v) {
+    if (!live() || !cur.ctx.setExtra) return 0;
+    const changed = (ids || []).map(fieldById).filter((f) => f && cur.ctx.setExtra(f, k, v));
+    if (!changed.length) return 0;
+    commit('');
+    changed.forEach((f) => renderField(f));
+    decorate();
+    refreshProps();
+    refreshRail();
+    return changed.length;
+  }
   function setTool(t) {
     if (!live()) return;
     const ui = cur.ctx.ui;
@@ -1358,5 +1374,5 @@
     el.focus({ preventScroll: true });
   }
 
-  NS.fieldEditor = { html, mount, glyph, add, addHere, remove, duplicate, setProp, setTool, setSigner, undo, redo, setZoom, goPage, show, active: live };
+  NS.fieldEditor = { html, mount, glyph, add, addHere, remove, duplicate, setProp, setMany, setTool, setSigner, undo, redo, setZoom, goPage, show, active: live };
 })(window.CVPortal);
