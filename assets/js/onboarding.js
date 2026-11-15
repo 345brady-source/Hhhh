@@ -1742,13 +1742,14 @@
       else if (IV()) IV().decide(ws, i);
     }
     if (key === 'status') {
+      let gone = '';
       if (d.stAcc === 'yes' && d.stBasis) {
         i.accreditation = Object.assign({}, i.accreditation, { basis: d.stBasis, date: NS.dates.today() });
         if (IV() && !c.it.existing) await IV().finishOnboarding(ws, i, Object.assign({}, d, { accBasis: d.stBasis }));
         else if (IV()) IV().decide(ws, i);
-      }
+      } else if (d.stAcc === 'no') gone = withdrawGround(c);
       const said = d.stAcc === 'yes' ? `accredited investor${d.stBasis ? ` (${d.stBasis})` : ', ground not given'}` : d.stAcc === 'no' ? 'not an accredited investor' : 'not answered';
-      log('Investor status answered', said);
+      log('Investor status answered', `${said}${gone ? `; the self-certified ground on the record (${gone}) no longer applies` : ''}`);
       // Corrected after subscribing: a request still pending carries the new answers; a decided one keeps what it was decided on.
       if (c.req && c.req.status === 'pending') {
         c.req.qual = qualFrom(c, d);
@@ -1787,6 +1788,30 @@
     }
     fl.d = persistable(d);
     NS.app.save(true);
+  }
+
+  /**
+   * The investor answered that they are not accredited (on the status step, also as a correction of an earlier yes): a ground
+   * self-certified before no longer stands. The record then holds no ground, as for an investor who never gave one (every
+   * reader of i.accreditation takes its basis as the accredited status: the portal's own subscribe form, the activity log,
+   * the investor's profile), and keeps the withdrawn ground as superseded, with when it was given and when it was withdrawn.
+   * A self-certification record made from it, or the record on file seeded from it, is withdrawn the same way. A ground
+   * another connection verified (verifiedBy) is the firm's record and stays. Returns the ground withdrawn, or ''.
+   */
+  function withdrawGround(c) {
+    const i = c.inv;
+    const a = i.accreditation;
+    if (!a || typeof a !== 'object' || !a.basis || a.verifiedBy) return '';
+    const today = NS.dates.today();
+    i.accreditation = Object.assign({}, a, { basis: '', date: '', superseded: { basis: a.basis, date: a.date || '', at: today } });
+    const I = NS.integrations;
+    if (I && I.recorded && I.recorded(i)) {
+      const v = i.verify.accreditation;
+      const fromIt = v && (I.selfCertified(v) || (v.legacy && v.method === a.basis));
+      if (fromIt && v.status !== 'not_started') i.verify.accreditation = { status: 'not_started', superseded: { method: String(v.method || ''), verifiedAt: v.verifiedAt || '', at: nowIso() } };
+      if (IV()) IV().decide(c.ws, i);
+    }
+    return a.basis;
   }
 
   /**
