@@ -3,8 +3,8 @@
  * dialog, the portal places a field on every place the agreement prints and nowhere else, the editor opens with a
  * plain summary of what was read, the sponsor confirms the fields marked for review and saves; an investor is
  * invited, goes through onboarding (login, investor information, checks, tax form, bank details, subscription) and
- * reaches the agreement with the blanks onboarding can answer already filled in and locked and the rest fillable;
- * the investor completes it with the guide and finishes.
+ * reaches the agreement with the blanks onboarding can answer already filled in (editable, D-30) and the rest fillable;
+ * nothing of theirs is required (D-30); the investor completes it with the guide and finishes.
  *
  * Uses the sample firm of the self-serve edition and the onboarding walk of the Phase 4 checks.
  * Run from the repository root:   node .planning/phases/01-accurate-field-placement/checks/walk.js
@@ -35,7 +35,8 @@ const guide = (p) =>
     if (!b) return null;
     const count = b.querySelector('.sf-count strong').textContent;
     const m = count.match(/^(\d+) of (\d+) left$/);
-    return { count, left: m ? Number(m[1]) : count === 'Ready to finish' ? 0 : -1, total: m ? Number(m[2]) : 0, hint: b.querySelector('.sf-hint').textContent };
+    const nx = b.querySelector('.sf-next');
+    return { count, left: m ? Number(m[1]) : count === 'Ready to finish' ? 0 : -1, total: m ? Number(m[2]) : 0, hint: b.querySelector('.sf-hint').textContent, next: nx && !nx.hidden ? nx.textContent.trim() : '' };
   });
 const mine = (p) =>
   p.evaluate(() => {
@@ -50,7 +51,7 @@ const mine = (p) =>
       fields: NS.esignKit.fieldsOf(env, s).map((f) => {
         const el = document.querySelector(`.es-doc-sign [data-fid="${f.id}"]`);
         const input = el && (el.matches('input') ? el : el.querySelector('input'));
-        return { id: f.id, type: f.type, page: f.page, label: f.label || '', key: f.prefill || '', forType: f.forType || '', value: f.value, locked: !!f.locked, req: NS.esignKit.isReq(f), onPage: !!el, shown: input ? input.value : '', readOnly: input ? input.readOnly || input.disabled : null };
+        return { id: f.id, type: f.type, page: f.page, label: f.label || '', key: f.prefill || '', forType: f.forType || '', value: f.value, locked: !!f.locked, req: NS.esignKit.isReq(f, env), onPage: !!el, shown: input ? input.value : '', readOnly: input ? input.readOnly || input.disabled : null };
       })
     };
   });
@@ -151,27 +152,43 @@ const mine = (p) =>
     await p.waitForTimeout(600);
     const m = await mine(p);
     const by = (label) => m.fields.find((f) => f.label === label) || {};
-    const given = (label, value) => by(label).value === value && by(label).locked && by(label).shown === value && by(label).readOnly === true;
-    check('filled in and locked from onboarding: name, street, city, state, ZIP, email, phone, commitment', given('Investor name', 'Morgan Blake') && given('Address', '12 Elm Street') && given('City', 'Austin') && given('State', 'TX') && given('ZIP code', '78701') && given('Email', INV.email) && given('Phone', '+1 512 555 0101') && given('Commitment amount', '75,000'), m.fields.filter((f) => f.type === 'text'));
+    // D-30 (the owner, Phase 01.4 plan 63): what onboarding answers is filled in and stays editable.
+    const given = (label, value) => by(label).value === value && !by(label).locked && by(label).shown === value && by(label).readOnly === false;
+    check('filled in from onboarding and editable (D-30): name, street, city, state, ZIP, email, phone, commitment', given('Investor name', 'Morgan Blake') && given('Address', '12 Elm Street') && given('City', 'Austin') && given('State', 'TX') && given('ZIP code', '78701') && given('Email', INV.email) && given('Phone', '+1 512 555 0101') && given('Commitment amount', '75,000'), m.fields.filter((f) => f.type === 'text'));
     const open = ['Taxpayer ID', 'Date of birth', 'Address line 2'];
     check('left for the investor: taxpayer ID, date of birth, second address line, all fillable', open.every((l) => by(l).onPage && by(l).value === '' && !by(l).locked && by(l).readOnly === false), open.map(by));
     check('the investor is an individual: the block for individuals, none of the block for entities', m.group === 'person' && m.fields.some((f) => f.type === 'signature' && f.forType === 'person') && !m.fields.some((f) => f.forType === 'entity') && m.firm === 1, m.fields.map((f) => f.type + ':' + f.forType + ':p' + f.page));
     check('tick boxes and initials are left for the investor', m.fields.filter((f) => f.type === 'checkbox').length === 7 && m.fields.filter((f) => f.type === 'initials').length === 6 && m.fields.filter((f) => f.type === 'checkbox' || f.type === 'initials').every((f) => !f.value && !f.locked));
     const g0 = await guide(p);
-    check('the guide counts only what is left to do', g0 && g0.left > 0 && g0.left === m.fields.filter((f) => f.req && !f.locked && f.type !== 'date' && !(f.type === 'name')).length, { g0, req: m.fields.filter((f) => f.req).map((f) => f.type + ':' + f.label + ':' + f.locked) });
+    check('the guide asks for nothing (D-30: no field of the investor is required) and still offers Start', g0 && g0.left === 0 && g0.count === 'Ready to finish' && g0.next === 'Start' && m.fields.every((f) => !f.req), { g0, req: m.fields.filter((f) => f.req).map((f) => f.type + ':' + f.label) });
     await p.screenshot({ path: path.join(OUT, '5-signing-step.png') });
-    // A locked value cannot be changed; an open blank can be typed into.
-    await p.locator(`.es-doc-sign [data-fid="${by('Email').id}"]`).focus();
-    await p.keyboard.type('zzz');
-    check('a locked value cannot be changed', (await p.locator(`.es-doc-sign [data-fid="${by('Email').id}"]`).inputValue()) === INV.email);
+    // A filled-in value takes the investor's change (D-30), and is put back for the rest of the walk.
+    await p.locator(`.es-doc-sign [data-fid="${by('Email').id}"]`).fill('other@example.org');
+    check('a filled-in value can be changed (D-30)', (await p.locator(`.es-doc-sign [data-fid="${by('Email').id}"]`).inputValue()) === 'other@example.org');
+    await p.locator(`.es-doc-sign [data-fid="${by('Email').id}"]`).fill(INV.email);
 
     /* ---- The investor completes the rest with the guide and finishes ---- */
     const values = { 'Taxpayer ID': '123-45-6789', 'Date of birth': '04/02/1980' };
+    // D-30: nothing is required, so the guide is followed while it offers Next (empty fields remain); a field the guide
+    // has already moved to by itself (after a signature) is completed before Next is pressed again.
+    const onEmpty = () =>
+      p.evaluate(() => {
+        const NS = window.CVPortal;
+        const el = document.activeElement;
+        const fid = el && el.getAttribute('data-fid');
+        const bar = document.querySelector('.sf-bar');
+        const env = NS.esignKit.env(bar.getAttribute('data-id'));
+        const s = NS.esignKit.signer(env, bar.getAttribute('data-sid'));
+        const f = NS.esignKit.fieldsOf(env, s).find((x) => x.id === fid);
+        return !!f && f.type !== 'date' && !NS.esignKit.filled(f, NS.esignKit.state(env, s.id).vals[f.id]);
+      });
     for (let i = 0; i < 40; i++) {
       const g = await guide(p);
-      if (!g || g.left <= 0) break;
-      await p.click('.sf-next');
-      await p.waitForTimeout(200);
+      if (!g || !g.next) break;
+      if (!(await onEmpty())) {
+        await p.click('.sf-next');
+        await p.waitForTimeout(200);
+      }
       const a = await p.evaluate(() => {
         const NS = window.CVPortal;
         const el = document.activeElement;
@@ -195,7 +212,7 @@ const mine = (p) =>
       }
     }
     const g1 = await guide(p);
-    check('everything required is complete and the guide says so', g1 && g1.left === 0, g1);
+    check('every field the guide offered is completed and the guide says so', g1 && g1.left === 0 && !g1.next && g1.count === 'Ready to finish', g1);
     await p.screenshot({ path: path.join(OUT, '6-signing-ready.png') });
     await p.click('.es-finish');
     await p.waitForFunction((id) => { const NS = window.CVPortal; const e = NS.esignKit.env(id); return e && e.signers.some((s) => s.investorId && s.status === 'signed'); }, m.envId, { timeout: 30000 });

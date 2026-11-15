@@ -29,7 +29,9 @@
     const k = kit();
     const missing = k.missing(env, s, st);
     const total = k.fieldsOf(env, s).filter((f) => k.isReq(f, env) && (!f.locked || missing.indexOf(f) >= 0)).length;
-    return { total, left: missing.length, missing };
+    // With nothing required (an investor's fields are all optional, D-30), the empty fields the guide can still go through.
+    const open = total ? 0 : own(env, s).filter((f) => !k.filled(f, st.vals[f.id])).length;
+    return { total, left: missing.length, missing, open };
   }
   /**
    * Where Next goes from `from` (a field id, 'finish' or null): the next required field still to complete, wrapping
@@ -58,7 +60,7 @@
   function countHTML(env, s, st, m) {
     if (st.nudge) return `<strong>${m.left ? `${m.left} of ${m.total} left` : 'One thing to fix'}</strong><span class="sf-hint is-nudge">${h(st.nudge)}</span>`;
     const now = st.started ? openField(env, s, st) : null;
-    if (!m.left && !now) return `<strong>Ready to finish</strong><span class="sf-hint">${m.total ? 'Every required field is complete.' : 'Review the document, then select Finish.'}</span>`;
+    if (!m.left && !now) return `<strong>Ready to finish</strong><span class="sf-hint">${m.total ? 'Every required field is complete.' : m.open ? 'Nothing is required. Start goes to each empty field.' : 'Review the document, then select Finish.'}</span>`;
     const head = m.left ? `${m.left} of ${m.total} left` : 'Ready to finish';
     if (now) return `<strong>${head}</strong><span class="sf-hint">Now: ${h(where(now))}${kit().isReq(now, env) ? '' : ' (optional)'}</span>`;
     const nx = target(env, s, st, st.cursor);
@@ -84,7 +86,7 @@
           <button class="sf-zoom-btn" type="button" data-action="sf-zoom" data-d="1" aria-label="Zoom in"${z === ZOOMS[ZOOMS.length - 1] ? ' disabled' : ''}>${PLUS}</button>
         </div>
         <div class="sf-acts">
-          <button class="${cls(m.left > 0, 'sf-next')}" type="button" data-action="es-next"${o.preview || st.busy ? ' disabled' : ''}${m.left ? '' : ' hidden'}><span>${st.started ? 'Next' : 'Start'}</span>${icon('arrow')}</button>
+          <button class="${cls(m.left > 0, 'sf-next')}" type="button" data-action="es-next"${o.preview || st.busy ? ' disabled' : ''}${m.left || m.open ? '' : ' hidden'}><span>${st.started ? 'Next' : 'Start'}</span>${icon('arrow')}</button>
           <button class="${cls(!m.left, 'es-finish sf-finish')}" type="button" data-action="es-finish" ${ids}${o.preview || st.busy ? ' disabled' : ''}${m.left ? ' aria-disabled="true"' : ''}>${st.busy ? 'Finishing…' : 'Finish'}</button>
         </div>
       </div>`;
@@ -282,9 +284,10 @@
     const nextBtn = bar.querySelector('.sf-next');
     const fin = bar.querySelector('.sf-finish');
     if (nextBtn) {
-      // Next leaves the bar once nothing is left: focus it had moves to Finish, the one action that remains.
-      const had = !m.left && document.activeElement === nextBtn;
-      nextBtn.hidden = !m.left;
+      // Next leaves the bar once nothing is left (nothing required, and with nothing required no empty field either):
+      // focus it had moves to Finish, the one action that remains.
+      const had = !m.left && !m.open && document.activeElement === nextBtn;
+      nextBtn.hidden = !m.left && !m.open;
       nextBtn.classList.toggle(primary, m.left > 0);
       nextBtn.firstElementChild.textContent = st.started ? 'Next' : 'Start';
       if (had && fin) fin.focus({ preventScroll: true });
