@@ -4,7 +4,7 @@
 // one investor with the signature and date at the form's own places, the investor signs it in the portal, and the stored
 // signed PDF is read back: Documents category Tax for that investor alone, zero form fields, each value inside its own
 // field, the signature ink inside the sign place, the "Signed electronically" caption, the date, the certificate page.
-//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type]
+//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy]
 // The last line is "FORMS FLOW: PASS (cases run: N)" or "FORMS FLOW: FAIL (cases run: N) - <failed cases>". Exits 2
 // (NOT RUN) when the bundled forms do not match assets/forms/SHA256SUMS.
 const path = require('path');
@@ -617,6 +617,194 @@ async function investorType({ check, S }) {
   await A.context.close();
 }
 
+/* ---------- Plan 06-17: the unsigned state everywhere, and a legacy record ---------- */
+
+/**
+ * The readers of an investor's tax form, read from the page: the investor's Account page row, the console row, and the
+ * audit package (the tax-forms check and the register's Tax form column) with the record placed on an investor holding
+ * capital in a fund (the audit reads only investors with capital). rec: { taxForm, taxCert }, or null for this investor's own.
+ */
+async function taxReaders(page, invId, rec) {
+  await page.evaluate((id) => {
+    window.CVPortal.state.viewer = id;
+    location.hash = 'account';
+  }, invId);
+  await page.waitForFunction(() => Array.from(document.querySelectorAll('dl.terms dt')).some((x) => x.innerText.trim() === 'Tax form'), null, { timeout: 20000 });
+  const account = await page.evaluate(() => {
+    const dt = Array.from(document.querySelectorAll('dl.terms dt')).find((x) => x.innerText.trim() === 'Tax form');
+    return dt ? dt.nextElementSibling.innerText.trim() : '';
+  });
+  await page.evaluate(() => {
+    window.CVPortal.state.role = 'sponsor';
+  });
+  await Lib.consoleRoute(page, 'console-investors', '.cs-tbl');
+  const email = await page.evaluate((id) => window.CVPortal.state.ws.investors.find((x) => x.id === id).email, invId);
+  const row = page.locator('table.cs-tbl:has(th:text-is("Paid by")) tbody tr', { hasText: email }).first();
+  const consoleRow = (await row.innerText().catch(() => '')).replace(/\s+/g, ' ');
+  const consoleDownload = await row.locator('[data-action="kyc-iv-file"]').count();
+  const audit = await page.evaluate(
+    ({ id, rec }) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const me = ws.investors.find((x) => x.id === id);
+      const liveOf = (B) => B.P.inv.filter((a) => a.end > 0 || a.contrib > 0 || a.dist > 0);
+      // the offering with the most investors holding capital, over its whole life
+      const pick = ws.offerings
+        .map((o) => {
+          const pre = NS.audit.presets(ws, o).find((x) => x.id === 'itd');
+          return { o, pre, n: liveOf(NS.audit.build(ws, o, pre.from, pre.to)).length };
+        })
+        .sort((a, b) => b.n - a.n)[0];
+      if (!pick || !pick.n) return { error: 'no offering with investors holding capital', items: [] };
+      const B0 = NS.audit.build(ws, pick.o, pick.pre.from, pick.pre.to);
+      // the first holder with a form on file before (a sample record), so the count can only move by the record under test
+      const holder = liveOf(B0).map((a) => a.investor).filter((i) => i.taxForm && !i.taxCert)[0] || liveOf(B0)[0].investor;
+      const before = B0.chk.find((c) => c.id === 'tax').detail;
+      const src = rec || { taxForm: me.taxForm, taxCert: me.taxCert };
+      holder.taxForm = src.taxForm;
+      if (src.taxCert) holder.taxCert = JSON.parse(JSON.stringify(src.taxCert));
+      else delete holder.taxCert;
+      const B = NS.audit.build(ws, pick.o, pick.pre.from, pick.pre.to);
+      const chk = B.chk.find((c) => c.id === 'tax');
+      const reg = B.list.find((s) => s.id === 'register');
+      const col = reg.cols.findIndex((c) => c.h === 'Tax form');
+      const r = reg.rows.find((x) => x[0] === holder.id);
+      return { holder: { id: holder.id, title: holder.title }, status: chk.status, before, detail: chk.detail, items: chk.items, cell: r ? r[col] : '(no register row)' };
+    },
+    { id: invId, rec }
+  );
+  return { account, consoleRow, consoleDownload, audit };
+}
+
+/** Render a page of a PDF and count new ink against another inside a rectangle (points, y from the top). */
+function inkBetween(fileA, fileB, r, dpi) {
+  const k = dpi / 72;
+  const a = gray(fileA, 1, dpi);
+  const b = gray(fileB, 1, dpi);
+  let n = 0;
+  for (let y = Math.floor(r.top * k); y < Math.ceil((r.top + r.h) * k); y++) for (let x = Math.floor(r.x * k); x < Math.ceil((r.x + r.w) * k); x++) if (a.px[y * a.w + x] - b.px[y * b.w + x] > 80) n++;
+  return n;
+}
+
+/** Base64 of a stored file, read in the page. */
+const B64_IN_PAGE = `async (blob) => {
+  if (!blob) return '';
+  const u8 = new Uint8Array(await blob.arrayBuffer());
+  let s = '';
+  for (let k = 0; k < u8.length; k += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(k, k + 0x8000));
+  return btoa(s);
+}`;
+
+/**
+ * D-30 and research Pitfall 1: an investor finishes the official W-9 without signing it. The flow goes on, the record says
+ * not signed, the PDF carries no signature and no caption, and every reader says "W-9 not signed"; the audit's tax-forms
+ * check counts the investor as missing (the planner's choice: the sponsor sees it in the same list as no form).
+ */
+async function unsignedCase({ check, S }) {
+  const A = await Lib.open(S);
+  const page = A.page;
+  const dir = path.join(OUT, 'unsigned');
+  fs.mkdirSync(dir, { recursive: true });
+  const portal = await Lib.setupPortal(S, A);
+  const name = 'Marisol Okafor-Brandt';
+  const email = 'marisol.okafor@example.com';
+  const inv = await Lib.createInvitation(page, { name, email, type: 'individual', offeringId: portal.offeringId });
+  await page.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
+  const w = await Lib.walk(page, { name, acc: 'yes', basis: 0, until: /Tax certification/ });
+  check('the invited investor reaches the tax step', w.reached && w.at === 'Tax certification', w.seen);
+  await Lib.submit(page);
+  await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 });
+  await Lib.finishTaxForm(page);
+  const next = await Lib.heading(page);
+  check('finishing the form without a signature moves on to the next step (D-30)', next === 'Distribution payments', next);
+  const got = await page.evaluate(
+    async ({ invId, b64src }) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const b64 = eval(b64src);
+      const i = ws.investors.find((x) => x.id === invId);
+      const env = (ws.envelopes || []).find((e) => i.taxCert && e.id === i.taxCert.envelopeId);
+      const docs = env ? (ws.docs || []).filter((d) => d.envelopeId === env.id) : [];
+      return {
+        taxForm: i.taxForm,
+        taxCert: JSON.parse(JSON.stringify(i.taxCert || null)),
+        overlays: NS.taxmaps['W-9 2024-03'].overlays,
+        blank: NS.taxmaps['W-9 2024-03'].file,
+        ndocs: docs.length,
+        pdf: await b64(docs[0] ? await NS.ops.files.get(docs[0].id) : null),
+        filled: await b64(env ? await NS.ops.files.get(env.docId) : null),
+        log: (ws.audit || []).filter((e) => e.record === invId).map((e) => `${e.action} :: ${e.detail}`)
+      };
+    },
+    { invId: inv.investorId, b64src: B64_IN_PAGE }
+  );
+  const tc = got.taxCert || {};
+  check('the record says W-9, not signed, no signer (taxCert.signed false)', got.taxForm === 'W-9' && tc.form === 'W-9' && tc.signed === false && tc.signedBy === '', { taxForm: got.taxForm, taxCert: tc });
+  check('the change log says the form was completed without a signature', got.log.some((l) => /^Tax form completed without a signature :: /.test(l)), got.log.slice(-4));
+  check('the finished form is kept in Documents (one entry)', got.ndocs === 1 && !!got.pdf, got.ndocs);
+  if (got.pdf && got.filled) {
+    const finFile = path.join(dir, 'finished.pdf');
+    const filledFile = path.join(dir, 'filled.pdf');
+    fs.writeFileSync(finFile, Buffer.from(got.pdf, 'base64'));
+    fs.writeFileSync(filledFile, Buffer.from(got.filled, 'base64'));
+    const R = await rects(got.blank);
+    const capAt = wordsIn(words(finFile, 1), pts(got.overlays.caption, R.pw, R.ph), 1.5);
+    check('no "Signed electronically" caption on the form', capAt === '' && !/Signed electronically/.test(text(finFile, 1, 1)), capAt);
+    const ink = inkBetween(filledFile, finFile, pts(got.overlays.sign, R.pw, R.ph), 100);
+    check('no signature ink in the sign place', ink === 0, ink);
+  }
+  const w2 = await Lib.walk(page, { name, acc: 'yes', basis: 0 });
+  check('the rest of the onboarding goes on to the agreement', w2.reached, w2.seen);
+  const done = await Lib.finishAgreement(page);
+  check('the done screen does not say the W-9 is on file or signed', !/W-9 (on file|signed)/.test(done), done.slice(0, 400));
+  await page.screenshot({ path: path.join(dir, 'unsigned-done.png'), fullPage: true });
+  const R = await taxReaders(page, inv.investorId, null);
+  await page.screenshot({ path: path.join(dir, 'unsigned-console.png'), fullPage: false });
+  check('the investor’s Account page reads "W-9 not signed"', R.account === 'W-9 not signed', R.account);
+  check('the console row reads "W-9 not signed", with no download', /W-9 not signed/.test(R.consoleRow) && !/W-9 signed/.test(R.consoleRow) && R.consoleDownload === 0, R.consoleRow.slice(0, 300));
+  const au = R.audit;
+  check('the audit register’s Tax form column reads "W-9 not signed"', au.cell === 'W-9 not signed', au);
+  check('the audit’s tax-forms check lists the investor as missing: "W-9 not signed"', au.status === 'exception' && au.items.some((x) => x.indexOf(`${au.holder.title} (${au.holder.id}): W-9 not signed.`) === 0), au);
+  const cnt = (t) => Number((/^W-9 or W-8 on file for (\d+) of \d+ investors\.$/.exec(t || '') || [])[1]);
+  check('the check’s on-file count drops by one when the unsigned form replaces a form on file', cnt(au.detail) === cnt(au.before) - 1, { before: au.before, after: au.detail });
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
+}
+
+/** A legacy record (taxForm set, taxCert without a signed flag: the typed substitute certification) still reads as on file. */
+async function legacyCase({ check, S }) {
+  const A = await Lib.open(S);
+  const page = A.page;
+  await Lib.setupPortal(S, A);
+  const id = await page.evaluate(() => {
+    const ws = window.CVPortal.state.ws;
+    const i = ws.investors.find((x) => x.onboarding.status === 'complete' && x.positions.length);
+    return i ? i.id : '';
+  });
+  check('a sample investor holding a position', !!id, id);
+  const rec = { taxForm: 'W-9', taxCert: { form: 'W-9', at: '2025-03-02T15:04:05.000Z', signedBy: 'Legacy Signer', tinLast4: '4321', backupWithholding: false } };
+  await page.evaluate(
+    ({ id, rec }) => {
+      const NS = window.CVPortal;
+      const i = NS.state.ws.investors.find((x) => x.id === id);
+      i.taxForm = rec.taxForm;
+      i.taxCert = rec.taxCert;
+      NS.app.save(true);
+    },
+    { id, rec }
+  );
+  const R = await taxReaders(page, id, rec);
+  check('the Account page reads "W-9 on file"', R.account === 'W-9 on file', R.account);
+  check('the console row does not say not signed', !/not signed/.test(R.consoleRow), R.consoleRow.slice(0, 300));
+  check('the audit register reads "W-9 on file"', R.audit.cell === 'W-9 on file', R.audit);
+  check('the audit’s tax-forms check does not list the investor', !R.audit.items.some((x) => x.indexOf(`(${R.audit.holder.id})`) >= 0), R.audit.items);
+  check('the check’s on-file count is unchanged', !!R.audit.detail && R.audit.detail === R.audit.before, { before: R.audit.before, after: R.audit.detail });
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
+}
+
 const mmddyyyy = (iso) => {
   const [y, m, d] = String(iso).split('-');
   return `${m}-${d}-${y}`;
@@ -674,7 +862,9 @@ const cases = {
     signField: W8 + 'f_20[0]'
   }),
   'us-individual': usIndividual,
-  'investor-type': investorType
+  'investor-type': investorType,
+  unsigned: unsignedCase,
+  legacy: legacyCase
 };
 
 // The bundled forms must match their pins before anything runs.
