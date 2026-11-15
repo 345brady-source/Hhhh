@@ -1,0 +1,1327 @@
+{
+ "id": "a038",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:15Z",
+ "how_made": "filed-pdf",
+ "made_group": "filed PDF",
+ "broker_dealer": false,
+ "pages": 11,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text"
+ },
+ "run": "out-18/set-a/a038/result.json",
+ "candidates": "4aa6fcc0ecb2a30f-f01586d5.json",
+ "counts": {
+  "fields": 27,
+  "counted_candidates": 26,
+  "pairs": 25,
+  "auto": 25,
+  "reader_only": 2,
+  "measure_only": 1,
+  "kind_clash": 0,
+  "person": 13,
+  "items": 16
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "investors of up to",
+   "printed_label": "and issuance to certain investors of up to",
+   "must": true,
+   "x0": 460.4,
+   "y0": 227.2,
+   "x1": 509.9,
+   "y1": 242.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "investors of up to"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "committee thereof, for a purchase price of $",
+   "must": false,
+   "x0": 456.0,
+   "y0": 252.4,
+   "x1": 488.9,
+   "y1": 267.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-002",
+   "block": "B01"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of Shares",
+   "printed_label": "Number of Shares",
+   "must": true,
+   "x0": 140.6,
+   "y0": 85.9,
+   "x1": 345.5,
+   "y1": 101.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Number of Shares"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p04-001",
+   "block": "B04"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Purchase Price Per Share",
+   "printed_label": "Purchase Price Per Share: $",
+   "must": true,
+   "x0": 179.2,
+   "y0": 104.5,
+   "x1": 345.5,
+   "y1": 120.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Purchase Price Per Share"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p04-002",
+   "block": "B04"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "Aggregate Purchase Price: $",
+   "must": false,
+   "x0": 182.5,
+   "y0": 123.1,
+   "x1": 345.5,
+   "y1": 138.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p04-003",
+   "block": "B04"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor name",
+   "printed_label": "INVESTOR",
+   "must": true,
+   "x0": 309.6,
+   "y0": 248.4,
+   "x1": 525.5,
+   "y1": 263.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Investor name"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p04-004",
+   "block": "B06"
+  },
+  {
+   "page": 4,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 325.6,
+   "y0": 279.6,
+   "x1": 525.5,
+   "y1": 295.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p04-005",
+   "block": "B07"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "Print Name",
+   "must": true,
+   "x0": 363.0,
+   "y0": 295.3,
+   "x1": 525.5,
+   "y1": 310.8,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p04-006",
+   "block": "B07"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 333.4,
+   "y0": 310.9,
+   "x1": 525.5,
+   "y1": 326.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p04-007",
+   "block": "B07"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "Address",
+   "must": true,
+   "x0": 350.1,
+   "y0": 326.6,
+   "x1": 525.5,
+   "y1": 342.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p04-008",
+   "block": "B07"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 2",
+   "printed_label": "",
+   "must": false,
+   "x0": 350.1,
+   "y0": 342.2,
+   "x1": 525.5,
+   "y1": 357.8,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Address line 2"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p04-009",
+   "block": "B07"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 2",
+   "printed_label": "",
+   "must": false,
+   "x0": 350.1,
+   "y0": 357.9,
+   "x1": 525.5,
+   "y1": 373.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Address line 2"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p04-010",
+   "block": "B07"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "this",
+   "printed_label": "this",
+   "must": true,
+   "x0": 76.3,
+   "y0": 425.1,
+   "x1": 92.8,
+   "y1": 440.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "this"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p04-011",
+   "block": "B08"
+  },
+  {
+   "page": 4,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 73.6,
+   "y0": 505.4,
+   "x1": 273.5,
+   "y1": 520.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p04-012",
+   "block": "B09"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Name",
+   "printed_label": "Name",
+   "must": true,
+   "x0": 86.9,
+   "y0": 518.0,
+   "x1": 273.5,
+   "y1": 533.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p04-013",
+   "block": "B09"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 81.4,
+   "y0": 530.6,
+   "x1": 273.5,
+   "y1": 546.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p04-014",
+   "block": "B09"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "dated as of March",
+   "printed_label": "of March",
+   "must": true,
+   "x0": 103.5,
+   "y0": 316.2,
+   "x1": 120.0,
+   "y1": 331.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "dated as of March"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p06-001",
+   "block": "B10"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "You may use a nominee name if appropriate",
+   "printed_label": "You may use a nominee name if appropriate",
+   "must": true,
+   "x0": 363.2,
+   "y0": 200.2,
+   "x1": 507.1,
+   "y1": 215.7,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "You may use a nominee name if appropriate"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p11-001",
+   "block": "B11"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "registered holder listed in response to item 1 above",
+   "printed_label": "holder listed in response to item 1 above",
+   "must": true,
+   "x0": 363.2,
+   "y0": 237.5,
+   "x1": 507.1,
+   "y1": 253.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "registered holder listed in response to item 1 above"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p11-002",
+   "block": "B11"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "The mailing address of the registered holder listed in respo",
+   "printed_label": "",
+   "must": false,
+   "x0": 363.2,
+   "y0": 274.8,
+   "x1": 507.1,
+   "y1": 290.3,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "The mailing address of the registered holder listed in respo"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p11-003",
+   "block": "B11"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "The Social Security Number or Tax Identification Number of t",
+   "printed_label": "",
+   "must": false,
+   "x0": 363.2,
+   "y0": 324.7,
+   "x1": 507.1,
+   "y1": 340.2,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "The Social Security Number or Tax Identification Number of t"
+   },
+   "cand": "rule",
+   "what": "tax number",
+   "id": "p11-004",
+   "block": "B12"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name of DTC Participant (broker-dealer at which the account",
+   "printed_label": "",
+   "must": false,
+   "x0": 363.2,
+   "y0": 374.7,
+   "x1": 507.1,
+   "y1": 390.2,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Name of DTC Participant (broker-dealer at which the account"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p11-005",
+   "block": "B13"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Shares are maintained) DTC Participant Number",
+   "printed_label": "",
+   "must": true,
+   "x0": 363.2,
+   "y0": 399.3,
+   "x1": 507.1,
+   "y1": 414.8,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Shares are maintained) DTC Participant Number"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p11-006",
+   "block": "B13"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "DTC Participant Number Name of Account at DTC Participant be",
+   "printed_label": "",
+   "must": false,
+   "x0": 363.2,
+   "y0": 436.6,
+   "x1": 507.1,
+   "y1": 452.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "DTC Participant Number Name of Account at DTC Participant be"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p11-007",
+   "block": "B13"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "with the Shares Account Number at DTC Participant being cred",
+   "printed_label": "",
+   "must": false,
+   "x0": 363.2,
+   "y0": 474.0,
+   "x1": 507.1,
+   "y1": 489.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "with the Shares Account Number at DTC Participant being cred"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p11-008",
+   "block": "B13"
+  }
+ ],
+ "items": [
+  {
+   "type": "reader-only",
+   "page": 1,
+   "box": [
+    61.2,
+    504.6,
+    83.2,
+    520.6
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "A. Delivery by electronic book-entry at The Depository Trust"
+   },
+   "caption": "[",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B02"
+  },
+  {
+   "type": "reader-only",
+   "page": 2,
+   "box": [
+    61.2,
+    301.3,
+    83.2,
+    317.3
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "B. Delivery versus payment (\u201cDVP\u201d) through DTC (i.e., the Co"
+   },
+   "caption": "[",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    399.8,
+    205.3,
+    410.8,
+    220.8
+   ],
+   "caption": "Dated as of: March",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "date"
+   },
+   "item": "i003",
+   "block": "B05"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 1,
+   "box": [
+    456.0,
+    227.2,
+    509.9,
+    267.9
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 1,
+   "box": [
+    61.2,
+    504.6,
+    83.2,
+    520.6
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 2,
+   "box": [
+    61.2,
+    301.3,
+    83.2,
+    317.3
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 4,
+   "box": [
+    140.6,
+    85.9,
+    345.5,
+    138.6
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 4,
+   "box": [
+    399.8,
+    205.3,
+    410.8,
+    220.8
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 4,
+   "box": [
+    309.6,
+    248.4,
+    525.5,
+    263.9
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 4,
+   "box": [
+    325.6,
+    279.6,
+    525.5,
+    373.4
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "INVESTOR"
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 4,
+   "box": [
+    76.3,
+    425.1,
+    92.8,
+    440.6
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 4,
+   "box": [
+    73.6,
+    505.4,
+    273.5,
+    546.1
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 6,
+   "box": [
+    103.5,
+    316.2,
+    120.0,
+    331.7
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 11,
+   "box": [
+    363.2,
+    200.2,
+    507.1,
+    290.3
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "INVESTOR QUESTIONNAIRE"
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 11,
+   "box": [
+    363.2,
+    324.7,
+    507.1,
+    340.2
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i016",
+   "type": "person",
+   "page": 11,
+   "box": [
+    363.2,
+    374.7,
+    507.1,
+    489.5
+   ],
+   "block": "B13",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    456.0,
+    227.2,
+    509.9,
+    267.9
+   ],
+   "heading": "",
+   "context": [
+    "Santa Clara, CA 95054",
+    "The undersigned (the \u201cInvestor\u201d) hereby confirms its agreement with you as follows:",
+    "1. This Subscription Agreement (this \u201cAgreement\u201d) is made as of the date set forth below between 8x8,",
+    "Inc., a Delaware corporation (the \u201cCompany\u201d), and the Investor."
+   ],
+   "places": [
+    "p01-001",
+    "p01-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    61.2,
+    504.6,
+    83.2,
+    520.6
+   ],
+   "heading": "",
+   "context": [
+    "for Purchase of Shares attached hereto as Annex I and incorporated herein by this reference as if fully set forth",
+    "herein.",
+    "5. The manner of settlement of the Shares purchased by the Investor shall be determined by such Investor",
+    "as follows (check one):"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B03",
+   "box": [
+    61.2,
+    301.3,
+    83.2,
+    317.3
+   ],
+   "heading": "",
+   "context": [
+    "ABA Routing #321-171-184",
+    "International Wires:",
+    "Swift Number - CITIUS33",
+    "\u2013 OR \u2013"
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B04",
+   "box": [
+    140.6,
+    85.9,
+    345.5,
+    138.6
+   ],
+   "heading": "",
+   "context": [],
+   "places": [
+    "p04-001",
+    "p04-002",
+    "p04-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B05",
+   "box": [
+    399.8,
+    205.3,
+    410.8,
+    220.8
+   ],
+   "heading": "",
+   "context": [
+    "Purchase Price Per Share: $",
+    "Aggregate Purchase Price: $",
+    "Please confirm that the foregoing correctly sets forth the agreement between us by signing in the space",
+    "provided below for that purpose."
+   ],
+   "places": [],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B06",
+   "box": [
+    309.6,
+    248.4,
+    525.5,
+    263.9
+   ],
+   "heading": "",
+   "context": [
+    "Aggregate Purchase Price: $",
+    "Please confirm that the foregoing correctly sets forth the agreement between us by signing in the space",
+    "provided below for that purpose.",
+    "Dated as of: March , 2005"
+   ],
+   "places": [
+    "p04-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B07",
+   "box": [
+    325.6,
+    279.6,
+    525.5,
+    373.4
+   ],
+   "heading": "INVESTOR",
+   "context": [
+    "Please confirm that the foregoing correctly sets forth the agreement between us by signing in the space",
+    "provided below for that purpose.",
+    "Dated as of: March , 2005",
+    "INVESTOR"
+   ],
+   "places": [
+    "p04-005",
+    "p04-006",
+    "p04-007",
+    "p04-008",
+    "p04-009",
+    "p04-010"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B08",
+   "box": [
+    76.3,
+    425.1,
+    92.8,
+    440.6
+   ],
+   "heading": "",
+   "context": [
+    "By:",
+    "Print Name:",
+    "Title:",
+    "Address:"
+   ],
+   "places": [
+    "p04-011"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B09",
+   "box": [
+    73.6,
+    505.4,
+    273.5,
+    546.1
+   ],
+   "heading": "",
+   "context": [
+    "Agreed and Accepted",
+    "this day of March, 2005:",
+    "8X8, INC."
+   ],
+   "places": [
+    "p04-012",
+    "p04-013",
+    "p04-014"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B10",
+   "box": [
+    103.5,
+    316.2,
+    120.0,
+    331.7
+   ],
+   "heading": "",
+   "context": [
+    "Investor elects to settle the Shares purchased by such Investor through delivery by electronic book-entry at",
+    "DTC, no later than one (1) business day after the execution of this Agreement by the Investor and the",
+    "Company, the Investor shall remit by wire transfer the amount of funds equal to the aggregate purchase price",
+    "for the Shares being purchased by the Investor to the following account designated by the Company and the"
+   ],
+   "places": [
+    "p06-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 11,
+   "block": "B11",
+   "box": [
+    363.2,
+    200.2,
+    507.1,
+    290.3
+   ],
+   "heading": "INVESTOR QUESTIONNAIRE",
+   "context": [
+    "8X8, INC.",
+    "INVESTOR QUESTIONNAIRE",
+    "Pursuant to Section 3 of Annex I to this Agreement, please provide us with the following",
+    "information:"
+   ],
+   "places": [
+    "p11-001",
+    "p11-002",
+    "p11-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 11,
+   "block": "B12",
+   "box": [
+    363.2,
+    324.7,
+    507.1,
+    340.2
+   ],
+   "heading": "",
+   "context": [
+    "registered holder listed in response to item 1 above:",
+    "3. The mailing address of the registered holder listed",
+    "in response to item 1 above:",
+    "4. The Social Security Number or Tax Identification"
+   ],
+   "places": [
+    "p11-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 11,
+   "block": "B13",
+   "box": [
+    363.2,
+    374.7,
+    507.1,
+    489.5
+   ],
+   "heading": "",
+   "context": [
+    "4. The Social Security Number or Tax Identification",
+    "Number of the registered holder listed in response",
+    "to item 1 above:",
+    "5. Name of DTC Participant (broker-dealer at which"
+   ],
+   "places": [
+    "p11-005",
+    "p11-006",
+    "p11-007",
+    "p11-008"
+   ],
+   "items": []
+  }
+ ]
+}

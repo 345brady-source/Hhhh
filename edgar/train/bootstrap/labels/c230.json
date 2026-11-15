@@ -1,0 +1,709 @@
+{
+ "id": "c230",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 9,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text"
+ },
+ "run": "out-18/set-c/c230/result.json",
+ "candidates": "582c5be6e9751302-f01586d5.json",
+ "counts": {
+  "fields": 14,
+  "counted_candidates": 15,
+  "pairs": 14,
+  "auto": 14,
+  "reader_only": 0,
+  "measure_only": 1,
+  "kind_clash": 0,
+  "person": 6,
+  "items": 7
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "made as of this",
+   "printed_label": "AGREEMENT (the \"Agreement\") is made as of this",
+   "must": true,
+   "x0": 485.7,
+   "y0": 158.5,
+   "x1": 503.4,
+   "y1": 174.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "made as of this"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 227.5,
+   "y0": 326.4,
+   "x1": 503.4,
+   "y1": 341.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p09-001",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "By",
+   "printed_label": "",
+   "must": false,
+   "x0": 256.8,
+   "y0": 360.1,
+   "x1": 503.4,
+   "y1": 375.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "By"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p09-002",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name and title",
+   "printed_label": "Print Name and Title",
+   "must": true,
+   "x0": 227.5,
+   "y0": 382.6,
+   "x1": 503.4,
+   "y1": 398.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name and title"
+   },
+   "cand": "underscore",
+   "what": "title",
+   "id": "p09-003",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 227.5,
+   "y0": 416.4,
+   "x1": 503.4,
+   "y1": 431.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p09-004",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 227.5,
+   "y0": 438.9,
+   "x1": 503.4,
+   "y1": 454.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p09-005",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Principal Residence or Executive Office",
+   "printed_label": "Principal Residence or Executive Office",
+   "must": true,
+   "x0": 227.5,
+   "y0": 461.4,
+   "x1": 503.4,
+   "y1": 476.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Principal Residence or Executive Office"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p09-006",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "IRS Tax Identification No.",
+   "printed_label": "IRS Tax Identification No",
+   "must": true,
+   "x0": 227.5,
+   "y0": 495.1,
+   "x1": 503.4,
+   "y1": 510.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "IRS Tax Identification No."
+   },
+   "cand": "underscore",
+   "what": "tax number",
+   "id": "p09-007",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Phone",
+   "printed_label": "Telephone Number",
+   "must": true,
+   "x0": 227.5,
+   "y0": 528.9,
+   "x1": 503.4,
+   "y1": 544.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Phone"
+   },
+   "cand": "underscore",
+   "what": "phone",
+   "id": "p09-008",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Fax Number",
+   "printed_label": "Fax Number",
+   "must": false,
+   "x0": 227.5,
+   "y0": 562.6,
+   "x1": 503.4,
+   "y1": 578.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Fax Number"
+   },
+   "cand": "underscore",
+   "what": "phone",
+   "id": "p09-009",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Email",
+   "printed_label": "E-mail Address",
+   "must": true,
+   "x0": 227.5,
+   "y0": 596.4,
+   "x1": 503.4,
+   "y1": 611.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Email"
+   },
+   "cand": "underscore",
+   "what": "email",
+   "id": "p09-010",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of Shares",
+   "printed_label": "Number of Shares",
+   "must": false,
+   "x0": 33.7,
+   "y0": 643.8,
+   "x1": 127.7,
+   "y1": 659.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Number of Shares"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p09-011",
+   "block": "B04"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "Purchase Price",
+   "must": false,
+   "x0": 374.2,
+   "y0": 643.8,
+   "x1": 456.4,
+   "y1": 659.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p09-012",
+   "block": "B06"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Price per Share",
+   "printed_label": "Price per Share",
+   "must": true,
+   "x0": 192.2,
+   "y0": 652.6,
+   "x1": 303.8,
+   "y1": 668.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Price per Share"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p09-013",
+   "block": "B05"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 9,
+   "box": [
+    256.8,
+    258.9,
+    503.4,
+    274.4
+   ],
+   "caption": "Patrick Chow",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of hyphens typed as a blank"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B02"
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 1,
+   "box": [
+    485.7,
+    158.5,
+    503.4,
+    174.0
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 9,
+   "box": [
+    256.8,
+    258.9,
+    503.4,
+    274.4
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "[SIGNATURE ON FOLLOWING PAGE]"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 9,
+   "box": [
+    227.5,
+    326.4,
+    503.4,
+    611.9
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "INVESTOR"
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 9,
+   "box": [
+    33.7,
+    643.8,
+    127.7,
+    659.3
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 9,
+   "box": [
+    192.2,
+    652.6,
+    303.8,
+    668.1
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 9,
+   "box": [
+    374.2,
+    643.8,
+    456.4,
+    659.3
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    485.7,
+    158.5,
+    503.4,
+    174.0
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT",
+   "context": [
+    "<DESCRIPTION>EX-99.2 FORM OF SUBSCRIPTION AGREEMENT",
+    "<TEXT>",
+    "EXHIBIT 99.2",
+    "SUBSCRIPTION AGREEMENT"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 9,
+   "block": "B02",
+   "box": [
+    256.8,
+    258.9,
+    503.4,
+    274.4
+   ],
+   "heading": "[SIGNATURE ON FOLLOWING PAGE]",
+   "context": [
+    "<PAGE>",
+    "IN WITNESS WHEREOF, the parties hereto have executed this Agreement as",
+    "of the date first written above.",
+    "TARRANT APPAREL GROUP, a California corporation"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 9,
+   "block": "B03",
+   "box": [
+    227.5,
+    326.4,
+    503.4,
+    611.9
+   ],
+   "heading": "INVESTOR",
+   "context": [
+    "------------------------------------------",
+    "Name: Patrick Chow",
+    "Its: Chief Financial Officer",
+    "INVESTOR"
+   ],
+   "places": [
+    "p09-001",
+    "p09-002",
+    "p09-003",
+    "p09-004",
+    "p09-005",
+    "p09-006",
+    "p09-007",
+    "p09-008",
+    "p09-009",
+    "p09-010"
+   ],
+   "items": []
+  },
+  {
+   "page": 9,
+   "block": "B04",
+   "box": [
+    33.7,
+    643.8,
+    127.7,
+    659.3
+   ],
+   "heading": "",
+   "context": [
+    "-----------------------------------------------",
+    "Fax Number",
+    "-----------------------------------------------",
+    "E-mail Address"
+   ],
+   "places": [
+    "p09-011"
+   ],
+   "items": []
+  },
+  {
+   "page": 9,
+   "block": "B05",
+   "box": [
+    192.2,
+    652.6,
+    303.8,
+    668.1
+   ],
+   "heading": "",
+   "context": [
+    "-----------------------------------------------",
+    "Fax Number",
+    "-----------------------------------------------",
+    "E-mail Address"
+   ],
+   "places": [
+    "p09-013"
+   ],
+   "items": []
+  },
+  {
+   "page": 9,
+   "block": "B06",
+   "box": [
+    374.2,
+    643.8,
+    456.4,
+    659.3
+   ],
+   "heading": "",
+   "context": [
+    "-----------------------------------------------",
+    "Fax Number",
+    "-----------------------------------------------",
+    "E-mail Address"
+   ],
+   "places": [
+    "p09-012"
+   ],
+   "items": []
+  }
+ ]
+}

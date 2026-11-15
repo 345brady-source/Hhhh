@@ -1,0 +1,413 @@
+{
+ "id": "b039",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:05Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": true,
+ "pages": 7,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text"
+ },
+ "run": "out-18/set-b/b039/result.json",
+ "candidates": "468fbb8bc4d58081-f01586d5.json",
+ "counts": {
+  "fields": 6,
+  "counted_candidates": 5,
+  "pairs": 5,
+  "auto": 4,
+  "reader_only": 1,
+  "measure_only": 0,
+  "kind_clash": 1,
+  "person": 5,
+  "items": 7
+ },
+ "places": [
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": ", 2018",
+   "must": true,
+   "x0": 197.7,
+   "y0": 89.1,
+   "x1": 263.7,
+   "y1": 104.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p05-001",
+   "block": "B03"
+  },
+  {
+   "page": 5,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 60.3,
+   "y0": 90.4,
+   "x1": 137.2,
+   "y1": 105.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Date signed"
+   },
+   "cand": "underscore",
+   "id": "p05-002",
+   "block": "B02"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "day of",
+   "printed_label": "Accepted as of",
+   "must": true,
+   "x0": 104.3,
+   "y0": 183.4,
+   "x1": 204.7,
+   "y1": 198.9,
+   "printed_as": "measure candidate: dateparts",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "day of"
+   },
+   "cand": "dateparts",
+   "what": "date",
+   "id": "p05-003",
+   "block": "B04"
+  },
+  {
+   "page": 5,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 276.6,
+   "y0": 258.6,
+   "x1": 331.6,
+   "y1": 274.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p05-004",
+   "block": "B05"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    264.8,
+    200.1,
+    319.7,
+    215.6
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": ", 2018"
+   },
+   "caption": "[",
+   "cand": {
+    "kind": "rule",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a rule candidate the measure reads as line",
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "reader-only",
+   "page": 5,
+   "box": [
+    103.3,
+    182.3,
+    121.7,
+    198.4
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Accepted as of"
+   },
+   "caption": "Accepted as of",
+   "proposed": {
+    "kind": "blank",
+    "owner": "firm",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B04"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 1,
+   "box": [
+    264.8,
+    200.1,
+    319.7,
+    215.6
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FORM OF SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 5,
+   "box": [
+    60.3,
+    90.4,
+    137.2,
+    105.9
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 5,
+   "box": [
+    197.7,
+    89.1,
+    263.7,
+    104.6
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 5,
+   "box": [
+    103.3,
+    182.3,
+    204.7,
+    198.9
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 5,
+   "box": [
+    276.6,
+    258.6,
+    331.6,
+    274.1
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "OFS CREDIT COMPANY, INC."
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    264.8,
+    200.1,
+    319.7,
+    215.6
+   ],
+   "heading": "FORM OF SUBSCRIPTION AGREEMENT",
+   "context": [
+    "Board of Directors",
+    "OFS Credit Company, Inc.",
+    "10 S. Wacker Drive, Suite 2500",
+    "Chicago, IL 60606"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B02",
+   "box": [
+    60.3,
+    90.4,
+    137.2,
+    105.9
+   ],
+   "heading": "",
+   "context": [
+    "11/14/26, 10:12 AM p-formofsubscriptionagreem.htm",
+    "Very truly yours,"
+   ],
+   "places": [
+    "p05-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B03",
+   "box": [
+    197.7,
+    89.1,
+    263.7,
+    104.6
+   ],
+   "heading": "",
+   "context": [
+    "11/14/26, 10:12 AM p-formofsubscriptionagreem.htm",
+    "Very truly yours,"
+   ],
+   "places": [
+    "p05-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B04",
+   "box": [
+    103.3,
+    182.3,
+    204.7,
+    198.9
+   ],
+   "heading": "",
+   "context": [
+    "Very truly yours,",
+    "Date: , 2018",
+    "Name"
+   ],
+   "places": [
+    "p05-003"
+   ],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B05",
+   "box": [
+    276.6,
+    258.6,
+    331.6,
+    274.1
+   ],
+   "heading": "OFS CREDIT COMPANY, INC.",
+   "context": [
+    "Name",
+    "Accepted as of day of , 2018:",
+    "OFS CREDIT COMPANY, INC."
+   ],
+   "places": [
+    "p05-004"
+   ],
+   "items": []
+  }
+ ]
+}

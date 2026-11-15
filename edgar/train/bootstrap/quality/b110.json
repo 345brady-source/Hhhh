@@ -1,0 +1,4048 @@
+{
+ "id": "b110",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:16Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": true,
+ "pages": 9,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "picture",
+  "2": "picture",
+  "3": "picture",
+  "4": "picture",
+  "5": "picture",
+  "6": "picture",
+  "7": "picture",
+  "8": "picture",
+  "9": "picture"
+ },
+ "run": "out-18/set-b/b110/result.json",
+ "candidates": "80a4779cfdbecdf1-f01586d5.json",
+ "counts": {
+  "fields": 0,
+  "counted_candidates": 121,
+  "pairs": 0,
+  "auto": 0,
+  "reader_only": 0,
+  "measure_only": 121,
+  "kind_clash": 0,
+  "person": 34,
+  "items": 155
+ },
+ "places": [],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    84.2,
+    152.0,
+    528.5,
+    167.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    468.0,
+    221.8,
+    528.5,
+    237.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    84.2,
+    241.9,
+    93.6,
+    251.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i003",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    468.0,
+    247.4,
+    528.5,
+    262.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i004",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    84.2,
+    254.2,
+    93.6,
+    263.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i005",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    84.2,
+    265.0,
+    93.6,
+    274.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i006",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    283.7,
+    314.0,
+    326.9,
+    329.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i007",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    84.2,
+    321.8,
+    93.6,
+    331.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i008",
+   "block": "B04"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    226.1,
+    321.8,
+    235.4,
+    331.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i009",
+   "block": "B05"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    338.4,
+    321.8,
+    347.8,
+    331.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i010",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    470.9,
+    321.8,
+    480.2,
+    331.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i011",
+   "block": "B07"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    284.4,
+    325.1,
+    326.2,
+    340.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i012",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    84.2,
+    331.9,
+    93.6,
+    341.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i013",
+   "block": "B04"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    338.4,
+    331.9,
+    347.8,
+    341.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i014",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    470.9,
+    331.9,
+    480.2,
+    341.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i015",
+   "block": "B07"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    228.2,
+    334.1,
+    233.3,
+    339.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i016",
+   "block": "B05"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    84.2,
+    343.4,
+    93.6,
+    352.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i017",
+   "block": "B04"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    226.1,
+    343.4,
+    235.4,
+    352.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i018",
+   "block": "B05"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    338.4,
+    343.4,
+    348.5,
+    352.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i019",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    407.5,
+    347.8,
+    528.5,
+    363.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i020",
+   "block": "B07"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    84.2,
+    353.5,
+    93.6,
+    362.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i021",
+   "block": "B04"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    470.9,
+    365.0,
+    480.2,
+    374.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i022",
+   "block": "B07"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    85.7,
+    367.2,
+    91.4,
+    372.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i023",
+   "block": "B04"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    228.2,
+    367.2,
+    234.0,
+    372.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i024",
+   "block": "B05"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    285.1,
+    369.0,
+    326.9,
+    384.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i025",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    340.6,
+    367.2,
+    346.3,
+    372.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i026",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    85.7,
+    378.0,
+    91.4,
+    383.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i027",
+   "block": "B04"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    228.2,
+    378.0,
+    233.3,
+    383.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i028",
+   "block": "B05"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    340.6,
+    378.0,
+    346.3,
+    383.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i029",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    85.0,
+    456.9,
+    528.5,
+    472.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i030",
+   "block": "B08"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    84.2,
+    497.2,
+    528.5,
+    512.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i031",
+   "block": "B09"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    85.0,
+    531.8,
+    528.5,
+    547.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i032",
+   "block": "B09"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    84.2,
+    567.4,
+    93.6,
+    576.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i033",
+   "block": "B09"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    244.8,
+    568.1,
+    254.2,
+    578.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i034",
+   "block": "B09"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    167.0,
+    575.7,
+    300.2,
+    591.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i035",
+   "block": "B09"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    84.2,
+    581.0,
+    93.6,
+    590.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i036",
+   "block": "B09"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    315.4,
+    581.0,
+    324.7,
+    590.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i037",
+   "block": "B09"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    85.0,
+    636.9,
+    528.5,
+    652.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i038",
+   "block": "B10"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    85.0,
+    78.9,
+    528.5,
+    94.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i039",
+   "block": "B11"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    85.0,
+    90.0,
+    529.2,
+    105.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i040",
+   "block": "B11"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    85.0,
+    101.6,
+    529.2,
+    117.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i041",
+   "block": "B11"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    85.0,
+    135.8,
+    528.5,
+    151.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i042",
+   "block": "B11"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    481.0,
+    266.1,
+    529.2,
+    281.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i043",
+   "block": "B12"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    84.2,
+    271.4,
+    93.6,
+    280.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i044",
+   "block": "B12"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    84.2,
+    282.2,
+    93.6,
+    291.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i045",
+   "block": "B12"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    85.7,
+    295.9,
+    91.4,
+    301.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i046",
+   "block": "B12"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    84.2,
+    313.2,
+    528.5,
+    328.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i047",
+   "block": "B12"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    85.0,
+    356.4,
+    94.3,
+    366.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i048",
+   "block": "B13"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    85.7,
+    395.7,
+    529.2,
+    411.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i049",
+   "block": "B14"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    479.5,
+    401.0,
+    485.3,
+    406.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i050",
+   "block": "B14"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    478.1,
+    411.1,
+    487.4,
+    420.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i051",
+   "block": "B14"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    84.2,
+    443.9,
+    528.5,
+    459.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i052",
+   "block": "B14"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    84.2,
+    456.2,
+    528.5,
+    471.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i053",
+   "block": "B14"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    84.2,
+    468.0,
+    528.5,
+    483.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i054",
+   "block": "B14"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    84.2,
+    479.6,
+    528.5,
+    495.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i055",
+   "block": "B14"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    85.7,
+    514.5,
+    529.2,
+    530.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i056",
+   "block": "B14"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    84.2,
+    550.1,
+    93.6,
+    559.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i057",
+   "block": "B14"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    342.0,
+    555.8,
+    351.4,
+    565.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i058",
+   "block": "B14"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    84.2,
+    562.3,
+    93.6,
+    571.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i059",
+   "block": "B14"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    85.0,
+    611.7,
+    528.5,
+    627.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i060",
+   "block": "B15"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    162.0,
+    201.3,
+    528.5,
+    216.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i061",
+   "block": "B16"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    162.0,
+    212.8,
+    528.5,
+    228.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i062",
+   "block": "B16"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    162.0,
+    224.0,
+    528.5,
+    239.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i063",
+   "block": "B16"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    84.2,
+    290.2,
+    100.1,
+    306.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i064",
+   "block": "B17"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    126.0,
+    290.2,
+    142.6,
+    306.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i065",
+   "block": "B17"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    84.2,
+    317.5,
+    100.1,
+    334.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i066",
+   "block": "B17"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    128.2,
+    319.7,
+    141.1,
+    331.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i067",
+   "block": "B17"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    84.2,
+    385.2,
+    100.1,
+    401.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i068",
+   "block": "B18"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    128.2,
+    387.4,
+    141.1,
+    399.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i069",
+   "block": "B18"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    84.2,
+    412.6,
+    100.1,
+    428.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i070",
+   "block": "B18"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    126.0,
+    412.6,
+    142.6,
+    428.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i071",
+   "block": "B18"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    84.2,
+    431.3,
+    100.1,
+    447.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i072",
+   "block": "B18"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    126.0,
+    431.3,
+    142.6,
+    447.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i073",
+   "block": "B18"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    84.2,
+    479.5,
+    100.1,
+    495.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i074",
+   "block": "B19"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    126.0,
+    479.5,
+    142.6,
+    496.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i075",
+   "block": "B19"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    84.2,
+    508.3,
+    100.1,
+    524.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i076",
+   "block": "B19"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    126.0,
+    508.3,
+    142.6,
+    524.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i077",
+   "block": "B19"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    84.2,
+    593.3,
+    100.1,
+    609.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i078",
+   "block": "B20"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    128.2,
+    595.4,
+    141.1,
+    607.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i079",
+   "block": "B20"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    84.2,
+    88.6,
+    100.1,
+    105.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i080",
+   "block": "B21"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    129.6,
+    90.7,
+    141.8,
+    103.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i081",
+   "block": "B21"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    84.2,
+    116.6,
+    100.1,
+    132.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i082",
+   "block": "B21"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    127.4,
+    116.6,
+    144.0,
+    132.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i083",
+   "block": "B21"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    84.2,
+    145.4,
+    100.1,
+    162.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i084",
+   "block": "B21"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    129.6,
+    147.6,
+    141.8,
+    159.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i085",
+   "block": "B21"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    211.0,
+    213.8,
+    217.4,
+    220.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i086",
+   "block": "B22"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    312.5,
+    213.8,
+    320.4,
+    220.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i087",
+   "block": "B23"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    85.0,
+    272.6,
+    528.5,
+    288.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i088",
+   "block": "B24"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    85.0,
+    298.5,
+    528.5,
+    314.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i089",
+   "block": "B24"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    84.2,
+    367.2,
+    100.1,
+    383.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i090",
+   "block": "B25"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    129.6,
+    369.4,
+    141.8,
+    381.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i091",
+   "block": "B25"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    84.2,
+    395.3,
+    100.1,
+    411.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i092",
+   "block": "B25"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    127.4,
+    395.3,
+    144.0,
+    411.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i093",
+   "block": "B25"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    84.2,
+    461.5,
+    100.1,
+    478.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i094",
+   "block": "B26"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    127.4,
+    460.8,
+    144.0,
+    477.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i095",
+   "block": "B26"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    84.2,
+    491.0,
+    100.1,
+    507.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i096",
+   "block": "B26"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    127.4,
+    491.0,
+    144.0,
+    507.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i097",
+   "block": "B26"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    84.2,
+    509.8,
+    100.1,
+    526.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i098",
+   "block": "B26"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    127.4,
+    509.8,
+    144.0,
+    526.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i099",
+   "block": "B26"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    84.2,
+    556.6,
+    100.1,
+    573.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i100",
+   "block": "B27"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    127.4,
+    556.6,
+    144.0,
+    573.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i101",
+   "block": "B27"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    84.2,
+    584.6,
+    100.1,
+    600.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i102",
+   "block": "B27"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    127.4,
+    584.6,
+    144.0,
+    600.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i103",
+   "block": "B27"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    84.2,
+    89.3,
+    100.1,
+    105.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i104",
+   "block": "B28"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    129.6,
+    91.4,
+    141.8,
+    103.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i105",
+   "block": "B28"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    84.2,
+    136.8,
+    100.1,
+    152.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i106",
+   "block": "B29"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    127.4,
+    136.8,
+    144.0,
+    152.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i107",
+   "block": "B29"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    84.2,
+    164.9,
+    100.1,
+    181.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i108",
+   "block": "B29"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    127.4,
+    164.9,
+    144.0,
+    181.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i109",
+   "block": "B29"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    84.2,
+    221.8,
+    100.1,
+    237.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i110",
+   "block": "B30"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    127.4,
+    221.8,
+    144.0,
+    237.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i111",
+   "block": "B30"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    84.2,
+    268.6,
+    100.1,
+    285.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i112",
+   "block": "B31"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    129.6,
+    270.7,
+    141.8,
+    283.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "light rectangle on a tinted ground"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i113",
+   "block": "B31"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    84.2,
+    297.4,
+    100.1,
+    313.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i114",
+   "block": "B31"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    127.4,
+    297.4,
+    144.0,
+    313.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i115",
+   "block": "B31"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    288.7,
+    328.3,
+    295.2,
+    334.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i116",
+   "block": "B31"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    447.1,
+    328.3,
+    453.6,
+    334.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "tick",
+    "family": "tick",
+    "why": "enclosed light rectangle"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i117",
+   "block": "B31"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    84.2,
+    401.4,
+    528.5,
+    416.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i118",
+   "block": "B32"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    84.2,
+    427.7,
+    528.5,
+    443.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i119",
+   "block": "B32"
+  },
+  {
+   "type": "measure-only",
+   "page": 7,
+   "box": [
+    85.0,
+    140.4,
+    527.8,
+    155.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i120",
+   "block": "B33"
+  },
+  {
+   "type": "measure-only",
+   "page": 7,
+   "box": [
+    175.0,
+    244.1,
+    208.8,
+    259.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "dark stroke"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i121",
+   "block": "B34"
+  },
+  {
+   "item": "i122",
+   "type": "person",
+   "page": 1,
+   "box": [
+    84.2,
+    152.0,
+    528.5,
+    167.5
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i123",
+   "type": "person",
+   "page": 1,
+   "box": [
+    84.2,
+    241.9,
+    93.6,
+    274.3
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i124",
+   "type": "person",
+   "page": 1,
+   "box": [
+    468.0,
+    221.8,
+    528.5,
+    262.9
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i125",
+   "type": "person",
+   "page": 1,
+   "box": [
+    84.2,
+    321.8,
+    93.6,
+    383.8
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i126",
+   "type": "person",
+   "page": 1,
+   "box": [
+    226.1,
+    321.8,
+    235.4,
+    383.8
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i127",
+   "type": "person",
+   "page": 1,
+   "box": [
+    283.7,
+    314.0,
+    348.5,
+    384.5
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i128",
+   "type": "person",
+   "page": 1,
+   "box": [
+    407.5,
+    321.8,
+    528.5,
+    374.4
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i129",
+   "type": "person",
+   "page": 1,
+   "box": [
+    85.0,
+    456.9,
+    528.5,
+    472.4
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i130",
+   "type": "person",
+   "page": 1,
+   "box": [
+    84.2,
+    497.2,
+    528.5,
+    591.2
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i131",
+   "type": "person",
+   "page": 1,
+   "box": [
+    85.0,
+    636.9,
+    528.5,
+    652.4
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i132",
+   "type": "person",
+   "page": 2,
+   "box": [
+    85.0,
+    78.9,
+    529.2,
+    151.3
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i133",
+   "type": "person",
+   "page": 2,
+   "box": [
+    84.2,
+    266.1,
+    529.2,
+    328.7
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i134",
+   "type": "person",
+   "page": 2,
+   "box": [
+    85.0,
+    356.4,
+    94.3,
+    366.5
+   ],
+   "block": "B13",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i135",
+   "type": "person",
+   "page": 2,
+   "box": [
+    84.2,
+    395.7,
+    529.2,
+    571.7
+   ],
+   "block": "B14",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i136",
+   "type": "person",
+   "page": 2,
+   "box": [
+    85.0,
+    611.7,
+    528.5,
+    627.2
+   ],
+   "block": "B15",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i137",
+   "type": "person",
+   "page": 3,
+   "box": [
+    162.0,
+    201.3,
+    528.5,
+    239.5
+   ],
+   "block": "B16",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i138",
+   "type": "person",
+   "page": 3,
+   "box": [
+    84.2,
+    290.2,
+    142.6,
+    334.1
+   ],
+   "block": "B17",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i139",
+   "type": "person",
+   "page": 3,
+   "box": [
+    84.2,
+    385.2,
+    142.6,
+    447.8
+   ],
+   "block": "B18",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i140",
+   "type": "person",
+   "page": 3,
+   "box": [
+    84.2,
+    479.5,
+    142.6,
+    524.9
+   ],
+   "block": "B19",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i141",
+   "type": "person",
+   "page": 3,
+   "box": [
+    84.2,
+    593.3,
+    141.1,
+    609.8
+   ],
+   "block": "B20",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i142",
+   "type": "person",
+   "page": 4,
+   "box": [
+    84.2,
+    88.6,
+    144.0,
+    162.0
+   ],
+   "block": "B21",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i143",
+   "type": "person",
+   "page": 4,
+   "box": [
+    211.0,
+    213.8,
+    217.4,
+    220.3
+   ],
+   "block": "B22",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i144",
+   "type": "person",
+   "page": 4,
+   "box": [
+    312.5,
+    213.8,
+    320.4,
+    220.3
+   ],
+   "block": "B23",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i145",
+   "type": "person",
+   "page": 4,
+   "box": [
+    85.0,
+    272.6,
+    528.5,
+    314.0
+   ],
+   "block": "B24",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i146",
+   "type": "person",
+   "page": 4,
+   "box": [
+    84.2,
+    367.2,
+    144.0,
+    411.1
+   ],
+   "block": "B25",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i147",
+   "type": "person",
+   "page": 4,
+   "box": [
+    84.2,
+    460.8,
+    144.0,
+    526.3
+   ],
+   "block": "B26",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i148",
+   "type": "person",
+   "page": 4,
+   "box": [
+    84.2,
+    556.6,
+    144.0,
+    600.5
+   ],
+   "block": "B27",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i149",
+   "type": "person",
+   "page": 5,
+   "box": [
+    84.2,
+    89.3,
+    141.8,
+    105.8
+   ],
+   "block": "B28",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i150",
+   "type": "person",
+   "page": 5,
+   "box": [
+    84.2,
+    136.8,
+    144.0,
+    181.4
+   ],
+   "block": "B29",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i151",
+   "type": "person",
+   "page": 5,
+   "box": [
+    84.2,
+    221.8,
+    144.0,
+    237.6
+   ],
+   "block": "B30",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i152",
+   "type": "person",
+   "page": 5,
+   "box": [
+    84.2,
+    268.6,
+    453.6,
+    334.8
+   ],
+   "block": "B31",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i153",
+   "type": "person",
+   "page": 5,
+   "box": [
+    84.2,
+    401.4,
+    528.5,
+    443.2
+   ],
+   "block": "B32",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i154",
+   "type": "person",
+   "page": 7,
+   "box": [
+    85.0,
+    140.4,
+    527.8,
+    155.9
+   ],
+   "block": "B33",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i155",
+   "type": "person",
+   "page": 7,
+   "box": [
+    175.0,
+    244.1,
+    208.8,
+    259.6
+   ],
+   "block": "B34",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    84.2,
+    152.0,
+    528.5,
+    167.5
+   ],
+   "heading": "",
+   "context": [
+    "11/14/26, 10:12 AM dex43.htm",
+    "EX-4.3 2 dex43.htm MULTI SUBSCRIPTION AGREEMENT",
+    "Exhibit 4.3"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    84.2,
+    241.9,
+    93.6,
+    274.3
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i003",
+    "i005",
+    "i006"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B03",
+   "box": [
+    468.0,
+    221.8,
+    528.5,
+    262.9
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i002",
+    "i004"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B04",
+   "box": [
+    84.2,
+    321.8,
+    93.6,
+    383.8
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i008",
+    "i013",
+    "i017",
+    "i021",
+    "i023",
+    "i027"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B05",
+   "box": [
+    226.1,
+    321.8,
+    235.4,
+    383.8
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i009",
+    "i016",
+    "i018",
+    "i024",
+    "i028"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B06",
+   "box": [
+    283.7,
+    314.0,
+    348.5,
+    384.5
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i007",
+    "i010",
+    "i012",
+    "i014",
+    "i019",
+    "i025",
+    "i026",
+    "i029"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B07",
+   "box": [
+    407.5,
+    321.8,
+    528.5,
+    374.4
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i011",
+    "i015",
+    "i020",
+    "i022"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B08",
+   "box": [
+    85.0,
+    456.9,
+    528.5,
+    472.4
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i030"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B09",
+   "box": [
+    84.2,
+    497.2,
+    528.5,
+    591.2
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i031",
+    "i032",
+    "i033",
+    "i034",
+    "i035",
+    "i036",
+    "i037"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B10",
+   "box": [
+    85.0,
+    636.9,
+    528.5,
+    652.4
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i038"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B11",
+   "box": [
+    85.0,
+    78.9,
+    529.2,
+    151.3
+   ],
+   "heading": "",
+   "context": [
+    "11/14/26, 10:12 AM dex43.htm"
+   ],
+   "places": [],
+   "items": [
+    "i039",
+    "i040",
+    "i041",
+    "i042"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B12",
+   "box": [
+    84.2,
+    266.1,
+    529.2,
+    328.7
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i043",
+    "i044",
+    "i045",
+    "i046",
+    "i047"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B13",
+   "box": [
+    85.0,
+    356.4,
+    94.3,
+    366.5
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i048"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B14",
+   "box": [
+    84.2,
+    395.7,
+    529.2,
+    571.7
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i049",
+    "i050",
+    "i051",
+    "i052",
+    "i053",
+    "i054",
+    "i055",
+    "i056",
+    "i057",
+    "i058",
+    "i059"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B15",
+   "box": [
+    85.0,
+    611.7,
+    528.5,
+    627.2
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i060"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B16",
+   "box": [
+    162.0,
+    201.3,
+    528.5,
+    239.5
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i061",
+    "i062",
+    "i063"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B17",
+   "box": [
+    84.2,
+    290.2,
+    142.6,
+    334.1
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i064",
+    "i065",
+    "i066",
+    "i067"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B18",
+   "box": [
+    84.2,
+    385.2,
+    142.6,
+    447.8
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i068",
+    "i069",
+    "i070",
+    "i071",
+    "i072",
+    "i073"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B19",
+   "box": [
+    84.2,
+    479.5,
+    142.6,
+    524.9
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i074",
+    "i075",
+    "i076",
+    "i077"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B20",
+   "box": [
+    84.2,
+    593.3,
+    141.1,
+    609.8
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i078",
+    "i079"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B21",
+   "box": [
+    84.2,
+    88.6,
+    144.0,
+    162.0
+   ],
+   "heading": "",
+   "context": [
+    "11/14/26, 10:12 AM dex43.htm"
+   ],
+   "places": [],
+   "items": [
+    "i080",
+    "i081",
+    "i082",
+    "i083",
+    "i084",
+    "i085"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B22",
+   "box": [
+    211.0,
+    213.8,
+    217.4,
+    220.3
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i086"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B23",
+   "box": [
+    312.5,
+    213.8,
+    320.4,
+    220.3
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i087"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B24",
+   "box": [
+    85.0,
+    272.6,
+    528.5,
+    314.0
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i088",
+    "i089"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B25",
+   "box": [
+    84.2,
+    367.2,
+    144.0,
+    411.1
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i090",
+    "i091",
+    "i092",
+    "i093"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B26",
+   "box": [
+    84.2,
+    460.8,
+    144.0,
+    526.3
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i094",
+    "i095",
+    "i096",
+    "i097",
+    "i098",
+    "i099"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B27",
+   "box": [
+    84.2,
+    556.6,
+    144.0,
+    600.5
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i100",
+    "i101",
+    "i102",
+    "i103"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B28",
+   "box": [
+    84.2,
+    89.3,
+    141.8,
+    105.8
+   ],
+   "heading": "",
+   "context": [
+    "11/14/26, 10:12 AM dex43.htm"
+   ],
+   "places": [],
+   "items": [
+    "i104",
+    "i105"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B29",
+   "box": [
+    84.2,
+    136.8,
+    144.0,
+    181.4
+   ],
+   "heading": "",
+   "context": [
+    "11/14/26, 10:12 AM dex43.htm"
+   ],
+   "places": [],
+   "items": [
+    "i106",
+    "i107",
+    "i108",
+    "i109"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B30",
+   "box": [
+    84.2,
+    221.8,
+    144.0,
+    237.6
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i110",
+    "i111"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B31",
+   "box": [
+    84.2,
+    268.6,
+    453.6,
+    334.8
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i112",
+    "i113",
+    "i114",
+    "i115",
+    "i116",
+    "i117"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B32",
+   "box": [
+    84.2,
+    401.4,
+    528.5,
+    443.2
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i118",
+    "i119"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B33",
+   "box": [
+    85.0,
+    140.4,
+    527.8,
+    155.9
+   ],
+   "heading": "",
+   "context": [
+    "11/14/26, 10:12 AM dex43.htm"
+   ],
+   "places": [],
+   "items": [
+    "i120"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B34",
+   "box": [
+    175.0,
+    244.1,
+    208.8,
+    259.6
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i121"
+   ]
+  }
+ ]
+}

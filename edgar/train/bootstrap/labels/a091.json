@@ -1,0 +1,767 @@
+{
+ "id": "a091",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:04Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 7,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text"
+ },
+ "run": "out-18/set-a/a091/result.json",
+ "candidates": "b694eec6d56cee16-f01586d5.json",
+ "counts": {
+  "fields": 13,
+  "counted_candidates": 13,
+  "pairs": 13,
+  "auto": 9,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 4,
+  "person": 9,
+  "items": 13
+ },
+ "places": [
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "and agrees to purchase",
+   "printed_label": "(\"Subscriber\") hereby subscribes to and agrees to purchase",
+   "must": true,
+   "x0": 454.4,
+   "y0": 672.6,
+   "x1": 526.4,
+   "y1": 688.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "and agrees to purchase"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-001",
+   "block": "B01"
+  },
+  {
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "A natural person who has a net worth (together with my spous",
+   "printed_label": "",
+   "must": false,
+   "x0": 63.7,
+   "y0": 181.1,
+   "x1": 74.7,
+   "y1": 193.1,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "A natural person who has a net worth (together with my spous"
+   },
+   "cand": "tick",
+   "id": "p03-001",
+   "block": "B02"
+  },
+  {
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "A natural person who had income in excess of $200,000 ($300,",
+   "printed_label": "the",
+   "must": false,
+   "x0": 63.7,
+   "y0": 206.6,
+   "x1": 74.7,
+   "y1": 218.6,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "A natural person who had income in excess of $200,000 ($300,"
+   },
+   "cand": "tick",
+   "id": "p03-002",
+   "block": "B02"
+  },
+  {
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "As otherwise specified in SEC Rule 501(a)",
+   "printed_label": "",
+   "must": false,
+   "x0": 63.7,
+   "y0": 245.6,
+   "x1": 74.7,
+   "y1": 257.6,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "As otherwise specified in SEC Rule 501(a)"
+   },
+   "cand": "tick",
+   "id": "p03-003",
+   "block": "B03"
+  },
+  {
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Subscriber does not meet the requirements as an accredited i",
+   "printed_label": "",
+   "must": false,
+   "x0": 63.7,
+   "y0": 296.6,
+   "x1": 74.7,
+   "y1": 308.6,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Subscriber does not meet the requirements as an accredited i"
+   },
+   "cand": "tick",
+   "id": "p03-004",
+   "block": "B04"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "executed by Subscriber effective",
+   "printed_label": "Agreement has been executed by Subscriber effective",
+   "must": true,
+   "x0": 381.8,
+   "y0": 264.6,
+   "x1": 465.8,
+   "y1": 280.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "person",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "executed by Subscriber effective"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p06-001",
+   "block": "B06"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "Purchase Price @ $",
+   "must": false,
+   "x0": 127.8,
+   "y0": 329.1,
+   "x1": 169.8,
+   "y1": 344.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p06-002",
+   "block": "B07"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Agreed and accepted, effective",
+   "printed_label": "Agreed and accepted, effective",
+   "must": true,
+   "x0": 185.1,
+   "y0": 305.1,
+   "x1": 287.1,
+   "y1": 320.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Agreed and accepted, effective"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p07-001",
+   "block": "B09"
+  },
+  {
+   "page": 7,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 54.1,
+   "y0": 330.6,
+   "x1": 300.1,
+   "y1": 346.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p07-002",
+   "block": "B09"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 5,
+   "box": [
+    452.2,
+    470.1,
+    578.2,
+    485.6
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Initial if Florida Resident"
+   },
+   "caption": "Initial if Florida Resident",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i001",
+   "block": "B05"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    33.7,
+    203.1,
+    69.7,
+    218.6
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "JT TEN: As joint tenants with right of survivorship and not"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i002",
+   "block": "B08"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    33.7,
+    228.6,
+    69.7,
+    244.1
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "TEN COM: As tenants in common"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i003",
+   "block": "B08"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    33.7,
+    254.1,
+    69.7,
+    269.6
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "TEN ENT: As tenants by the entireties"
+   },
+   "caption": "M Street",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "address"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i004",
+   "block": "B08"
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 2,
+   "box": [
+    454.4,
+    672.6,
+    526.4,
+    688.1
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ISSUER"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 3,
+   "box": [
+    63.7,
+    181.1,
+    74.7,
+    218.6
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 3,
+   "box": [
+    63.7,
+    245.6,
+    74.7,
+    257.6
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 3,
+   "box": [
+    63.7,
+    296.6,
+    74.7,
+    308.6
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 5,
+   "box": [
+    452.2,
+    470.1,
+    578.2,
+    485.6
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "IS COMMUNICATED TO SUCH PURCHASER, WHICHEVER OCCURS LATER."
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 6,
+   "box": [
+    381.8,
+    264.6,
+    465.8,
+    280.1
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor-individual"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT SIGNATURE PAGE FOR INDIVIDUALS"
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 6,
+   "box": [
+    127.8,
+    329.1,
+    169.8,
+    344.6
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT SIGNATURE PAGE FOR INDIVIDUALS"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 7,
+   "box": [
+    33.7,
+    203.1,
+    69.7,
+    269.6
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 7,
+   "box": [
+    54.1,
+    305.1,
+    300.1,
+    346.1
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 2,
+   "block": "B01",
+   "box": [
+    454.4,
+    672.6,
+    526.4,
+    688.1
+   ],
+   "heading": "ISSUER",
+   "context": [
+    "M Street Gallery, Inc.",
+    "815 W Boynton Beach Blvd. Unit 4-101",
+    "Boynton Beach, Florida 33426",
+    "Telephone (561) 200-7721"
+   ],
+   "places": [
+    "p02-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B02",
+   "box": [
+    63.7,
+    181.1,
+    74.7,
+    218.6
+   ],
+   "heading": "",
+   "context": [
+    "market values, none of which may be realized.",
+    "2. Status of Investor (Check all that apply)",
+    "Accredited Investor",
+    "Subscriber is an \"accredited investor\" as defined by SEC rule 501(a), by reason of being (circle one):"
+   ],
+   "places": [
+    "p03-001",
+    "p03-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B03",
+   "box": [
+    63.7,
+    245.6,
+    74.7,
+    257.6
+   ],
+   "heading": "",
+   "context": [
+    "Subscriber is an \"accredited investor\" as defined by SEC rule 501(a), by reason of being (circle one):",
+    "[ ] A natural person who has a net worth (together with my spouse) of more than $200,000; or",
+    "[ ] A natural person who had income in excess of $200,000 ($300,000 jointly with my spouse) in each of",
+    "the last two (2) years and a reasonable expectation of earning the same income level this year; or"
+   ],
+   "places": [
+    "p03-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B04",
+   "box": [
+    63.7,
+    296.6,
+    74.7,
+    308.6
+   ],
+   "heading": "",
+   "context": [
+    "[ ] A natural person who had income in excess of $200,000 ($300,000 jointly with my spouse) in each of",
+    "the last two (2) years and a reasonable expectation of earning the same income level this year; or",
+    "[ ] As otherwise specified in SEC Rule 501(a).",
+    "Non-Accredited Investor"
+   ],
+   "places": [
+    "p03-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B05",
+   "box": [
+    452.2,
+    470.1,
+    578.2,
+    485.6
+   ],
+   "heading": "IS COMMUNICATED TO SUCH PURCHASER, WHICHEVER OCCURS LATER.",
+   "context": [
+    "FLORIDA PURCHASER EITHER WITHIN THREE DAYS AFTER THE FIRST TENDER OF",
+    "CONSIDERATION IS MADE BY THE PURCHASER TO THE ISSUER, AN AGENT OF THE ISSUER, OR",
+    "AN ESCROW AGENT, OR WITHIN THREE (3) DAYS AFTER THE AVAILABILITY OF THAT PRIVILEGE",
+    "IS COMMUNICATED TO SUCH PURCHASER, WHICHEVER OCCURS LATER."
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 6,
+   "block": "B06",
+   "box": [
+    381.8,
+    264.6,
+    465.8,
+    280.1
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT SIGNATURE PAGE FOR INDIVIDUALS",
+   "context": [
+    "SUBSCRIPTION AGREEMENT SIGNATURE PAGE FOR INDIVIDUALS"
+   ],
+   "places": [
+    "p06-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B07",
+   "box": [
+    127.8,
+    329.1,
+    169.8,
+    344.6
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT SIGNATURE PAGE FOR INDIVIDUALS",
+   "context": [
+    "SUBSCRIPTION AGREEMENT SIGNATURE PAGE FOR INDIVIDUALS",
+    "This Subscription Agreement has been executed by Subscriber effective , 2011. Please make",
+    "check payable to: M Street Gallery, Inc.",
+    "Number of Shares Subscribed for:"
+   ],
+   "places": [
+    "p06-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 7,
+   "block": "B08",
+   "box": [
+    33.7,
+    203.1,
+    69.7,
+    269.6
+   ],
+   "heading": "",
+   "context": [
+    "(Social Security Number) (Social Security Number)",
+    "(Date) (Date)",
+    "Note: If two purchasers are signing, please check the manner in which the ownership is to be legally held (the",
+    "indicated manner shall be construed as if written out in full accordance with applicable laws or regulations):"
+   ],
+   "places": [],
+   "items": [
+    "i002",
+    "i003",
+    "i004"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B09",
+   "box": [
+    54.1,
+    305.1,
+    300.1,
+    346.1
+   ],
+   "heading": "",
+   "context": [
+    "JT TEN: As joint tenants with right of survivorship and not as tenants in common.",
+    "TEN COM: As tenants in common.",
+    "TEN ENT: As tenants by the entireties.",
+    "M Street Gallery, Inc."
+   ],
+   "places": [
+    "p07-001",
+    "p07-002"
+   ],
+   "items": []
+  }
+ ]
+}

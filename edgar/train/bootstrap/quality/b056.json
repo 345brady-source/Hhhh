@@ -1,0 +1,181 @@
+{
+ "id": "b056",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:16Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": true,
+ "pages": 5,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text"
+ },
+ "run": "out-18/set-b/b056/result.json",
+ "candidates": "190901c6e12bb9ff-f01586d5.json",
+ "counts": {
+  "fields": 1,
+  "counted_candidates": 2,
+  "pairs": 1,
+  "auto": 1,
+  "reader_only": 0,
+  "measure_only": 1,
+  "kind_clash": 0,
+  "person": 2,
+  "items": 3
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "I hereby agree to purchase",
+   "printed_label": "I hereby agree to purchase",
+   "must": true,
+   "x0": 227.5,
+   "y0": 124.8,
+   "x1": 262.7,
+   "y1": 140.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "I hereby agree to purchase"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-001",
+   "block": "B01"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    57.2,
+    181.0,
+    104.2,
+    196.5
+   ],
+   "caption": "of $",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "amount"
+   },
+   "item": "i001",
+   "block": "B02"
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 1,
+   "box": [
+    227.5,
+    124.8,
+    262.7,
+    140.3
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 1,
+   "box": [
+    57.2,
+    181.0,
+    104.2,
+    196.5
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    227.5,
+    124.8,
+    262.7,
+    140.3
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT",
+   "context": [
+    "SUBSCRIPTION AGREEMENT",
+    "PDC 2001- Limited Partnership",
+    "[PDC 2002- Limited Partnership]",
+    "[PDC 2003- Limited Partnership]"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    57.2,
+    181.0,
+    104.2,
+    196.5
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT",
+   "context": [
+    "I hereby agree to purchase Unit(s) in the PDC 2001- Limited",
+    "Partnership [PDC 2002- Limited Partnership; PDC 2003- Limited Partnership]",
+    "(the",
+    "\"Partnership\") at $20,000 per Unit. Enclosed please find my check in the"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  }
+ ]
+}

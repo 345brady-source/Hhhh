@@ -1,0 +1,327 @@
+{
+ "id": "c303",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 3,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text"
+ },
+ "run": "out-18/set-c/c303/result.json",
+ "candidates": "01cad529b74724d6-f01586d5.json",
+ "counts": {
+  "fields": 5,
+  "counted_candidates": 2,
+  "pairs": 2,
+  "auto": 2,
+  "reader_only": 3,
+  "measure_only": 0,
+  "kind_clash": 0,
+  "person": 4,
+  "items": 7
+ },
+ "places": [
+  {
+   "page": 3,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 381.7,
+   "y0": 148.0,
+   "x1": 576.7,
+   "y1": 163.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p03-001",
+   "block": "B03"
+  },
+  {
+   "page": 3,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 381.7,
+   "y0": 230.5,
+   "x1": 576.7,
+   "y1": 246.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p03-002",
+   "block": "B04"
+  }
+ ],
+ "items": [
+  {
+   "type": "reader-only",
+   "page": 1,
+   "box": [
+    330.6,
+    96.8,
+    354.4,
+    108.3
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "th day of December, 2025, between 21Shares Dogecoin"
+   },
+   "caption": "SUBSCRIPTION AGREEMENT is entered into as of the",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "reader-only",
+   "page": 1,
+   "box": [
+    426.8,
+    216.5,
+    450.6,
+    228
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "for an aggregate purchase price"
+   },
+   "caption": "(the \u201cShares\u201d), at a price per Share of",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "reader-only",
+   "page": 1,
+   "box": [
+    48.6,
+    228.5,
+    72.2,
+    240
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "(the \u201cPurchase Price\u201d) (such Shares, the \u201cSeed Creation Bask"
+   },
+   "caption": "of",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i003",
+   "block": "B02"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 1,
+   "box": [
+    330.6,
+    96.8,
+    354.4,
+    108.3
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 1,
+   "box": [
+    48.6,
+    216.5,
+    450.6,
+    240
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "I. PURCHASE AND SALE OF THE SHARES"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 3,
+   "box": [
+    381.7,
+    148.0,
+    576.7,
+    163.5
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 3,
+   "box": [
+    381.7,
+    230.5,
+    576.7,
+    246.0
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    330.6,
+    96.8,
+    354.4,
+    108.3
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT",
+   "context": [
+    "EX-10.12 16 ea026780601ex10-12 21shares.htm INITIAL SEED CREATION SUBSCRIPTION AGREEMENT",
+    "Exhibit 10.12",
+    "SUBSCRIPTION AGREEMENT"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    48.6,
+    216.5,
+    450.6,
+    240
+   ],
+   "heading": "I. PURCHASE AND SALE OF THE SHARES",
+   "context": [
+    "THE PARTIES HEREBY AGREE AS FOLLOWS:",
+    "I. PURCHASE AND SALE OF THE SHARES",
+    "(1) SALE AND ISSUANCE OF SHARES. Subject to the terms and conditions of this Agreement, the Trust agrees to sell to",
+    "the Purchaser, and the Purchaser agrees to purchase from the Trust, [ ] shares of beneficial interest, representing frac"
+   ],
+   "places": [],
+   "items": [
+    "i002",
+    "i003"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B03",
+   "box": [
+    381.7,
+    148.0,
+    576.7,
+    163.5
+   ],
+   "heading": "",
+   "context": [
+    "IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first above written.",
+    "21Shares Dogecoin ETF*",
+    "21Shares US LLC, as Sponsor of the Trust"
+   ],
+   "places": [
+    "p03-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B04",
+   "box": [
+    381.7,
+    230.5,
+    576.7,
+    246.0
+   ],
+   "heading": "",
+   "context": [
+    "By:",
+    "Name:",
+    "Title:",
+    "21Shares US LLC"
+   ],
+   "places": [
+    "p03-002"
+   ],
+   "items": []
+  }
+ ]
+}

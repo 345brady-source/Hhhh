@@ -1,0 +1,473 @@
+{
+ "id": "a040",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:04Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 12,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text"
+ },
+ "run": "out-18/set-a/a040/result.json",
+ "candidates": "2761025411e2bac0-f01586d5.json",
+ "counts": {
+  "fields": 7,
+  "counted_candidates": 7,
+  "pairs": 7,
+  "auto": 6,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 1,
+  "person": 5,
+  "items": 6
+ },
+ "places": [
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Co-investor name",
+   "printed_label": "Name of Joint Subscriber (if any) (Print)",
+   "must": true,
+   "x0": 33.7,
+   "y0": 607.0,
+   "x1": 204.0,
+   "y1": 622.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "co-investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Co-investor name"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p10-001",
+   "block": "B01"
+  },
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Act of State of",
+   "printed_label": "Uniform Gifts to Minors Act of State of",
+   "must": true,
+   "x0": 479.9,
+   "y0": 629.5,
+   "x1": 503.3,
+   "y1": 645.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Act of State of"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p10-002",
+   "block": "B01"
+  },
+  {
+   "page": 10,
+   "kind": "signature",
+   "owner": "co-investor",
+   "label": "Co-investor signature",
+   "printed_label": "Signature of Joint Subscriber (if any)",
+   "must": true,
+   "x0": 33.7,
+   "y0": 708.3,
+   "x1": 204.0,
+   "y1": 723.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "co-investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Co-investor signature"
+   },
+   "cand": "underscore",
+   "id": "p10-003",
+   "block": "B02"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Taxpayer ID",
+   "printed_label": "Social Security or Taxpayer Identification Numbe",
+   "must": true,
+   "x0": 33.7,
+   "y0": 89.5,
+   "x1": 204.0,
+   "y1": 105.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Taxpayer ID"
+   },
+   "cand": "underscore",
+   "what": "tax number",
+   "id": "p11-001",
+   "block": "B03"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Phone",
+   "printed_label": "Telephone ( )",
+   "must": true,
+   "x0": 121.8,
+   "y0": 269.5,
+   "x1": 274.4,
+   "y1": 285.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Phone"
+   },
+   "cand": "underscore",
+   "what": "phone",
+   "id": "p11-002",
+   "block": "B04"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Glenn A. Little, Chief Executive Officer",
+   "printed_label": "Glenn A. Little, Chief Executive Officer",
+   "must": false,
+   "x0": 268.6,
+   "y0": 615.9,
+   "x1": 503.4,
+   "y1": 631.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Glenn A. Little, Chief Executive Officer"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p11-003",
+   "block": "B05"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 10,
+   "box": [
+    280.3,
+    663.3,
+    503.3,
+    678.8
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "someone else",
+    "forType": "",
+    "other": "Third party",
+    "required": false,
+    "review": false,
+    "label": "Halter Chairman Other"
+   },
+   "caption": "/s/ Timothy P. Halter, Chairman [ ] Other",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "third-party",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 10,
+   "box": [
+    33.7,
+    607.0,
+    503.3,
+    678.8
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "co-investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 10,
+   "box": [
+    33.7,
+    708.3,
+    204.0,
+    723.8
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "co-investor"
+   },
+   "heading": "Signature of Subscriber"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 11,
+   "box": [
+    33.7,
+    89.5,
+    204.0,
+    105.0
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 11,
+   "box": [
+    121.8,
+    269.5,
+    274.4,
+    285.0
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 11,
+   "box": [
+    268.6,
+    615.9,
+    503.4,
+    631.4
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "LAS VEGAS RESORTS CORPORATION"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 10,
+   "block": "B01",
+   "box": [
+    33.7,
+    607.0,
+    503.3,
+    678.8
+   ],
+   "heading": "",
+   "context": [
+    "per Common Share, is $267,500 (the \"Purchase Price\").",
+    "Halter Financial Investments, L.P.",
+    "Name of Subscriber (Print) If other than Individual check one and indicate",
+    "capacity of signatory under the signature:"
+   ],
+   "places": [
+    "p10-001",
+    "p10-002"
+   ],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 10,
+   "block": "B02",
+   "box": [
+    33.7,
+    708.3,
+    204.0,
+    723.8
+   ],
+   "heading": "Signature of Subscriber",
+   "context": [
+    "[ ] Attorney-in-fact",
+    "[ ] Corporation",
+    "/s/ Timothy P. Halter, Chairman [ ] Other",
+    "Signature of Subscriber"
+   ],
+   "places": [
+    "p10-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 11,
+   "block": "B03",
+   "box": [
+    33.7,
+    89.5,
+    204.0,
+    105.0
+   ],
+   "heading": "",
+   "context": [
+    "11/14/26, 10:12 AM lvrc8kex101110405.txt",
+    "Chairman [ ] Tenants by Entirety",
+    "Capacity of Signatory [ ] Community Property",
+    "(if applicable)"
+   ],
+   "places": [
+    "p11-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 11,
+   "block": "B04",
+   "box": [
+    121.8,
+    269.5,
+    274.4,
+    285.0
+   ],
+   "heading": "",
+   "context": [
+    "Argyle TX 76226",
+    "City State Zip Code [ ] nonresident alien, foreign corporation,",
+    "foreign partnership, foreign trust or",
+    "foreign estate."
+   ],
+   "places": [
+    "p11-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 11,
+   "block": "B05",
+   "box": [
+    268.6,
+    615.9,
+    503.4,
+    631.4
+   ],
+   "heading": "LAS VEGAS RESORTS CORPORATION",
+   "context": [
+    "<PAGE>",
+    "THE SUBSCRIPTION FOR 1,070,000 COMMON SHARES OF LAS VEGAS RESORTS",
+    "CORPORATION BY THE ABOVE NAMED SUBSCRIBER(S) IS ACCEPTED AS OF November 4, 2005.",
+    "LAS VEGAS RESORTS CORPORATION"
+   ],
+   "places": [
+    "p11-003"
+   ],
+   "items": []
+  }
+ ]
+}

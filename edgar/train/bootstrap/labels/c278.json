@@ -1,0 +1,338 @@
+{
+ "id": "c278",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 2,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text"
+ },
+ "run": "out-18/set-c/c278/result.json",
+ "candidates": "82932fc217943508-f01586d5.json",
+ "counts": {
+  "fields": 7,
+  "counted_candidates": 7,
+  "pairs": 7,
+  "auto": 7,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 0,
+  "person": 3,
+  "items": 3
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": ", 2018 by and between Tortoise Tax-Advantaged Social",
+   "printed_label": "Subscription Agreement (this \u201cAgreement\u201d) is entered into",
+   "must": false,
+   "x0": 327.0,
+   "y0": 108.6,
+   "x1": 339.2,
+   "y1": 118.4,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": ", 2018 by and between Tortoise Tax-Advantaged Social"
+   },
+   "cand": "tick",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 2,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 315.7,
+   "y0": 406.4,
+   "x1": 578.2,
+   "y1": 421.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p02-001",
+   "block": "B02"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Checkbox",
+   "printed_label": "Name",
+   "must": false,
+   "x0": 327.9,
+   "y0": 422.9,
+   "x1": 336.8,
+   "y1": 432.6,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Checkbox"
+   },
+   "cand": "tick",
+   "id": "p02-002",
+   "block": "B02"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Checkbox",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 322.7,
+   "y0": 436.4,
+   "x1": 331.6,
+   "y1": 446.1,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Checkbox"
+   },
+   "cand": "tick",
+   "id": "p02-003",
+   "block": "B02"
+  },
+  {
+   "page": 2,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 315.7,
+   "y0": 533.1,
+   "x1": 578.2,
+   "y1": 548.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p02-004",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Checkbox",
+   "printed_label": "Name",
+   "must": false,
+   "x0": 327.9,
+   "y0": 549.6,
+   "x1": 336.8,
+   "y1": 559.4,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Checkbox"
+   },
+   "cand": "tick",
+   "id": "p02-005",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Checkbox",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 322.7,
+   "y0": 563.1,
+   "x1": 331.6,
+   "y1": 572.9,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Checkbox"
+   },
+   "cand": "tick",
+   "id": "p02-006",
+   "block": "B03"
+  }
+ ],
+ "items": [
+  {
+   "item": "i001",
+   "type": "person",
+   "page": 1,
+   "box": [
+    327.0,
+    108.6,
+    339.2,
+    118.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 2,
+   "box": [
+    315.7,
+    406.4,
+    578.2,
+    446.1
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "INFRASTRUCTURE FUND, INC."
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 2,
+   "box": [
+    315.7,
+    533.1,
+    578.2,
+    572.9
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIBER"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    327.0,
+    108.6,
+    339.2,
+    118.4
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT",
+   "context": [
+    "EX-99.P 15 tortoise3393741-ex99p.htm FORM OF SUBSCRIPTION AGREEMENT",
+    "TORTOISE TAX-ADVANTAGED SOCIAL INFRASTRUCTURE FUND, INC.",
+    "SUBSCRIPTION AGREEMENT"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B02",
+   "box": [
+    315.7,
+    406.4,
+    578.2,
+    446.1
+   ],
+   "heading": "INFRASTRUCTURE FUND, INC.",
+   "context": [
+    "IN WITNESS WHEREOF, this Subscription Agreement has been executed by the parties hereto as of the day and date first abo",
+    "written.",
+    "TORTOISE TAX-ADVANTAGED SOCIAL",
+    "INFRASTRUCTURE FUND, INC."
+   ],
+   "places": [
+    "p02-001",
+    "p02-002",
+    "p02-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B03",
+   "box": [
+    315.7,
+    533.1,
+    578.2,
+    572.9
+   ],
+   "heading": "SUBSCRIBER",
+   "context": [
+    "By:",
+    "Name: [ ]",
+    "Title: [ ]",
+    "SUBSCRIBER"
+   ],
+   "places": [
+    "p02-004",
+    "p02-005",
+    "p02-006"
+   ],
+   "items": []
+  }
+ ]
+}

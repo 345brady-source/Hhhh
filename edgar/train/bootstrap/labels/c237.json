@@ -1,0 +1,887 @@
+{
+ "id": "c237",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 12,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text"
+ },
+ "run": "out-18/set-c/c237/result.json",
+ "candidates": "dfab70b1418cbe5c-f01586d5.json",
+ "counts": {
+  "fields": 14,
+  "counted_candidates": 17,
+  "pairs": 14,
+  "auto": 11,
+  "reader_only": 0,
+  "measure_only": 3,
+  "kind_clash": 3,
+  "person": 9,
+  "items": 15
+ },
+ "places": [
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "day of",
+   "printed_label": "and Subscription Agreement as of this day of",
+   "must": true,
+   "x0": 541.7,
+   "y0": 281.4,
+   "x1": 556.7,
+   "y1": 296.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "day of"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p10-001",
+   "block": "B03"
+  },
+  {
+   "page": 10,
+   "kind": "signature",
+   "owner": "investor-individual",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 33.7,
+   "y0": 354.6,
+   "x1": 279.0,
+   "y1": 370.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "person",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p10-002",
+   "block": "B04"
+  },
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "For Investors other than Individuals",
+   "printed_label": "(Please Type or Print Full Legal Name of",
+   "must": true,
+   "x0": 306.0,
+   "y0": 354.6,
+   "x1": 578.2,
+   "y1": 370.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "For Investors other than Individuals"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p10-003",
+   "block": "B04"
+  },
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Text",
+   "printed_label": "(Please Type or Print Name)",
+   "must": true,
+   "x0": 33.7,
+   "y0": 404.1,
+   "x1": 279.0,
+   "y1": 419.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "person",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p10-004",
+   "block": "B05"
+  },
+  {
+   "page": 10,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 322.5,
+   "y0": 404.1,
+   "x1": 578.2,
+   "y1": 419.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p10-005",
+   "block": "B05"
+  },
+  {
+   "page": 10,
+   "kind": "signature",
+   "owner": "third-party",
+   "label": "Signature of Spouse, if joint investment",
+   "printed_label": "Signature of Spouse, if joint investment",
+   "must": false,
+   "x0": 33.7,
+   "y0": 429.6,
+   "x1": 279.0,
+   "y1": 445.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "someone else",
+    "forType": "person",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Signature of Spouse, if joint investment"
+   },
+   "cand": "rule",
+   "id": "p10-006",
+   "block": "B05"
+  },
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Please type Name of Spouse, if joint investment",
+   "printed_label": "(Please type Name of Spouse, if joint investment)",
+   "must": false,
+   "x0": 33.7,
+   "y0": 455.1,
+   "x1": 279.0,
+   "y1": 470.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "someone else",
+    "forType": "person",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Please type Name of Spouse, if joint investment"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p10-007",
+   "block": "B05"
+  },
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 327.7,
+   "y0": 468.6,
+   "x1": 578.2,
+   "y1": 484.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p10-008",
+   "block": "B05"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "of this day of",
+   "printed_label": "Agreed and Accepted as of this day of",
+   "must": true,
+   "x0": 201.1,
+   "y0": 69.9,
+   "x1": 251.1,
+   "y1": 85.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "of this day of"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p11-001",
+   "block": "B06"
+  },
+  {
+   "page": 11,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 57.0,
+   "y0": 149.1,
+   "x1": 274.5,
+   "y1": 164.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p11-002",
+   "block": "B07"
+  },
+  {
+   "page": 11,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 57.0,
+   "y0": 222.6,
+   "x1": 274.5,
+   "y1": 238.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p11-003",
+   "block": "B08"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 2,
+   "box": [
+    33.7,
+    185.4,
+    73.7,
+    200.9
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": ", 2005"
+   },
+   "caption": "Ladies and",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "kind-clash",
+   "page": 2,
+   "box": [
+    33.7,
+    233.4,
+    63.7,
+    248.9
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": ", 2005 (the \u201cConfidential Offering Memorandum\u201d) relating to"
+   },
+   "caption": "interests",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    66.2,
+    233.4,
+    81.2,
+    248.9
+   ],
+   "caption": "interests (the",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i003",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 10,
+   "box": [
+    466.5,
+    281.4,
+    539.2,
+    296.9
+   ],
+   "caption": "Irrevocable Exchange and Subscription Agreement as of this",
+   "cand": {
+    "kind": "dateparts",
+    "family": "line",
+    "why": "a date printed in 2 parts"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i004",
+   "block": "B03"
+  },
+  {
+   "type": "kind-clash",
+   "page": 10,
+   "box": [
+    306.0,
+    429.6,
+    578.2,
+    445.1
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "caption": "(Please Type or Print Name of Signatory)",
+   "cand": {
+    "kind": "rule",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "firm",
+    "what": "name"
+   },
+   "question": "reader signature (sign) on a rule candidate the measure reads as line",
+   "item": "i005",
+   "block": "B05"
+  },
+  {
+   "type": "measure-only",
+   "page": 12,
+   "box": [
+    33.7,
+    239.9,
+    239.2,
+    255.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i006",
+   "block": "B09"
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    185.4,
+    73.7,
+    200.9
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "IRREVOCABLE EXCHANGE AND SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    233.4,
+    81.2,
+    248.9
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "IRREVOCABLE EXCHANGE AND SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 10,
+   "box": [
+    466.5,
+    281.4,
+    556.7,
+    296.9
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 10,
+   "box": [
+    33.7,
+    354.6,
+    578.2,
+    370.1
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor-individual"
+   },
+   "heading": "EXCHANGING MEMBER:"
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 10,
+   "box": [
+    33.7,
+    404.1,
+    578.2,
+    484.1
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "EXCHANGING MEMBER:"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 11,
+   "box": [
+    201.1,
+    69.9,
+    251.1,
+    85.4
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 11,
+   "box": [
+    57.0,
+    149.1,
+    274.5,
+    164.6
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "COGDELL SPENCER LP,"
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 11,
+   "box": [
+    57.0,
+    222.6,
+    274.5,
+    238.1
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "COGDELL SPENCER INC."
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 12,
+   "box": [
+    33.7,
+    239.9,
+    239.2,
+    255.4
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "[NAME OF EXISTING ENTITY]"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 2,
+   "block": "B01",
+   "box": [
+    33.7,
+    185.4,
+    73.7,
+    200.9
+   ],
+   "heading": "IRREVOCABLE EXCHANGE AND SUBSCRIPTION AGREEMENT",
+   "context": [
+    "Cogdell Spencer Inc.",
+    "4401 Barclay Downs Drive",
+    "Suite 300",
+    "Charlotte, North Carolina 28209-4670"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B02",
+   "box": [
+    33.7,
+    233.4,
+    81.2,
+    248.9
+   ],
+   "heading": "IRREVOCABLE EXCHANGE AND SUBSCRIPTION AGREEMENT",
+   "context": [
+    "Suite 300",
+    "Charlotte, North Carolina 28209-4670",
+    ", 2005",
+    "Ladies and Gentlemen:"
+   ],
+   "places": [],
+   "items": [
+    "i002",
+    "i003"
+   ]
+  },
+  {
+   "page": 10,
+   "block": "B03",
+   "box": [
+    466.5,
+    281.4,
+    556.7,
+    296.9
+   ],
+   "heading": "",
+   "context": [
+    "Interest is registered. When the Exchanging Member\u2019s Entire Interest is held by two or more joint holders, all such hold",
+    "When signing as attorney-in-fact, executor, administrator, trustee or guardian, please give full title as such. If a cor",
+    "in full corporate name by the President or other authorized officer. If a partnership or limited liability company, plea",
+    "partnership or limited liability company name by an authorized person."
+   ],
+   "places": [
+    "p10-001"
+   ],
+   "items": [
+    "i004"
+   ]
+  },
+  {
+   "page": 10,
+   "block": "B04",
+   "box": [
+    33.7,
+    354.6,
+    578.2,
+    370.1
+   ],
+   "heading": "EXCHANGING MEMBER:",
+   "context": [
+    "The Exchanging Member has executed this Irrevocable Exchange and Subscription Agreement as of this day of ,",
+    "2005.",
+    "EXCHANGING MEMBER:",
+    "For Individual Investors: For Investors other than Individuals:"
+   ],
+   "places": [
+    "p10-002",
+    "p10-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 10,
+   "block": "B05",
+   "box": [
+    33.7,
+    404.1,
+    578.2,
+    484.1
+   ],
+   "heading": "EXCHANGING MEMBER:",
+   "context": [
+    "EXCHANGING MEMBER:",
+    "For Individual Investors: For Investors other than Individuals:",
+    "Signature (Please Type or Print Full Legal Name of Investor \u2013 Do not use",
+    "abbreviations or all caps unless included in legal name)"
+   ],
+   "places": [
+    "p10-004",
+    "p10-005",
+    "p10-006",
+    "p10-007",
+    "p10-008"
+   ],
+   "items": [
+    "i005"
+   ]
+  },
+  {
+   "page": 11,
+   "block": "B06",
+   "box": [
+    201.1,
+    69.9,
+    251.1,
+    85.4
+   ],
+   "heading": "",
+   "context": [],
+   "places": [
+    "p11-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 11,
+   "block": "B07",
+   "box": [
+    57.0,
+    149.1,
+    274.5,
+    164.6
+   ],
+   "heading": "COGDELL SPENCER LP,",
+   "context": [
+    "Agreed and Accepted as of this day of , 2005.",
+    "COGDELL SPENCER LP,",
+    "a Delaware limited partnership",
+    "By: , Its General Partner"
+   ],
+   "places": [
+    "p11-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 11,
+   "block": "B08",
+   "box": [
+    57.0,
+    222.6,
+    274.5,
+    238.1
+   ],
+   "heading": "COGDELL SPENCER INC.",
+   "context": [
+    "By:",
+    "Nam e :",
+    "Title:",
+    "COGDELL SPENCER INC."
+   ],
+   "places": [
+    "p11-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 12,
+   "block": "B09",
+   "box": [
+    33.7,
+    239.9,
+    239.2,
+    255.4
+   ],
+   "heading": "[NAME OF EXISTING ENTITY]",
+   "context": [
+    "[Address]",
+    "[Telephone number]",
+    "Cogdell Advisors Inc.",
+    "(704) 940-2900"
+   ],
+   "places": [],
+   "items": [
+    "i006"
+   ]
+  }
+ ]
+}

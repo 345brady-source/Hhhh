@@ -1,0 +1,1304 @@
+{
+ "id": "c224",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:09Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 3,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text"
+ },
+ "run": "out-18/set-c/c224/result.json",
+ "candidates": "809ccdb3e81dac98-f01586d5.json",
+ "counts": {
+  "fields": 21,
+  "counted_candidates": 24,
+  "pairs": 20,
+  "auto": 20,
+  "reader_only": 1,
+  "measure_only": 4,
+  "kind_clash": 0,
+  "person": 16,
+  "items": 21
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 139.4,
+   "y0": 335.5,
+   "x1": 157.0,
+   "y1": 351.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Shares specified below: Number of Shares to be purchased",
+   "printed_label": "",
+   "must": true,
+   "x0": 350.7,
+   "y0": 403.0,
+   "x1": 391.8,
+   "y1": 418.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Shares specified below: Number of Shares to be purchased"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-002",
+   "block": "B02"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "$",
+   "must": false,
+   "x0": 350.7,
+   "y0": 459.3,
+   "x1": 421.2,
+   "y1": 474.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-003",
+   "block": "B03"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Amount",
+   "printed_label": "$",
+   "must": true,
+   "x0": 350.7,
+   "y0": 515.5,
+   "x1": 421.2,
+   "y1": 531.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-004",
+   "block": "B04"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name as it should appear",
+   "printed_label": "(Name as",
+   "must": false,
+   "x0": 391.8,
+   "y0": 693.1,
+   "x1": 503.4,
+   "y1": 708.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Name as it should appear"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p01-005",
+   "block": "B05"
+  },
+  {
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Individual ownership",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 711.0,
+   "x1": 57.2,
+   "y1": 720.8,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Individual ownership"
+   },
+   "cand": "tick",
+   "id": "p01-006",
+   "block": "B05"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Joint tenants with right of survivorship",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 105.0,
+   "x1": 51.4,
+   "y1": 114.8,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Joint tenants with right of survivorship"
+   },
+   "cand": "tick",
+   "id": "p02-001",
+   "block": "B06"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Other-specify",
+   "printed_label": "[ ] Other-specify",
+   "must": false,
+   "x0": 145.3,
+   "y0": 123.3,
+   "x1": 227.5,
+   "y1": 138.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Other-specify"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-002",
+   "block": "B07"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Other-specify",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 127.5,
+   "x1": 51.4,
+   "y1": 137.3,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Other-specify"
+   },
+   "cand": "tick",
+   "id": "p02-003",
+   "block": "B06"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "(Residence Address)",
+   "must": false,
+   "x0": 391.8,
+   "y0": 132.1,
+   "x1": 503.4,
+   "y1": 147.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p02-004",
+   "block": "B08"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Home Phone",
+   "printed_label": "(Home Phone)",
+   "must": true,
+   "x0": 391.8,
+   "y0": 168.3,
+   "x1": 503.3,
+   "y1": 183.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Home Phone"
+   },
+   "cand": "underscore",
+   "what": "phone",
+   "id": "p02-005",
+   "block": "B08"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Business Phone",
+   "printed_label": "(Business Phone)",
+   "must": true,
+   "x0": 391.8,
+   "y0": 199.6,
+   "x1": 503.4,
+   "y1": 215.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Business Phone"
+   },
+   "cand": "underscore",
+   "what": "phone",
+   "id": "p02-006",
+   "block": "B08"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Phone",
+   "printed_label": "Phone Number",
+   "must": true,
+   "x0": 33.7,
+   "y0": 289.6,
+   "x1": 198.1,
+   "y1": 305.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Phone"
+   },
+   "cand": "underscore",
+   "what": "phone",
+   "id": "p02-007",
+   "block": "B09"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Contact Name",
+   "printed_label": "Contact Name",
+   "must": true,
+   "x0": 297.9,
+   "y0": 289.6,
+   "x1": 456.4,
+   "y1": 305.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Contact Name"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p02-008",
+   "block": "B09"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Name of Cleaning Broker",
+   "printed_label": "Name of Cleaning Broker",
+   "must": false,
+   "x0": 33.7,
+   "y0": 323.4,
+   "x1": 368.3,
+   "y1": 338.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "someone else",
+    "forType": "",
+    "other": "Broker-dealer",
+    "required": false,
+    "review": false,
+    "label": "Name of Cleaning Broker"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p02-009",
+   "block": "B09"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Escrow Agreement dated",
+   "printed_label": "Escrow Agreement dated",
+   "must": true,
+   "x0": 168.8,
+   "y0": 382.0,
+   "x1": 215.7,
+   "y1": 397.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Escrow Agreement dated"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p02-010",
+   "block": "B10"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "day of",
+   "printed_label": "Agreement on this",
+   "must": true,
+   "x0": 139.4,
+   "y0": 190.8,
+   "x1": 362.5,
+   "y1": 206.3,
+   "printed_as": "measure candidate: dateparts",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "day of"
+   },
+   "cand": "dateparts",
+   "what": "date",
+   "id": "p03-001",
+   "block": "B11"
+  },
+  {
+   "page": 3,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 286.2,
+   "y0": 233.4,
+   "x1": 468.1,
+   "y1": 248.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p03-002",
+   "block": "B12"
+  },
+  {
+   "page": 3,
+   "kind": "signature",
+   "owner": "investor-individual",
+   "label": "Signature",
+   "printed_label": "Signature (Second signature",
+   "must": true,
+   "x0": 286.2,
+   "y0": 289.6,
+   "x1": 468.1,
+   "y1": 305.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "person",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p03-003",
+   "block": "B13"
+  },
+  {
+   "page": 3,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 303.8,
+   "y0": 472.0,
+   "x1": 474.0,
+   "y1": 487.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p03-004",
+   "block": "B16"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    33.7,
+    335.5,
+    133.5,
+    351.0
+   ],
+   "caption": "the Common Stock",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    221.6,
+    382.0,
+    233.3,
+    397.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B10"
+  },
+  {
+   "type": "reader-only",
+   "page": 3,
+   "box": [
+    138.4,
+    194.7,
+    163.9,
+    205.5
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Agreement on this"
+   },
+   "caption": "Agreement on this",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i003",
+   "block": "B11"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    115.9,
+    382.0,
+    162.9,
+    397.5
+   ],
+   "caption": "Agreement for",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i004",
+   "block": "B14"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    250.9,
+    382.0,
+    297.9,
+    397.5
+   ],
+   "caption": "Shares, with $",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "amount"
+   },
+   "item": "i005",
+   "block": "B15"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 1,
+   "box": [
+    33.7,
+    335.5,
+    157.0,
+    351.0
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 1,
+   "box": [
+    350.7,
+    403.0,
+    391.8,
+    418.5
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 1,
+   "box": [
+    350.7,
+    459.3,
+    421.2,
+    474.8
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 1,
+   "box": [
+    350.7,
+    515.5,
+    421.2,
+    531.0
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 1,
+   "box": [
+    33.7,
+    693.1,
+    503.4,
+    720.8
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    105.0,
+    51.4,
+    137.3
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "joint owners -"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 2,
+   "box": [
+    145.3,
+    123.3,
+    227.5,
+    138.8
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "joint owners -"
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 2,
+   "box": [
+    391.8,
+    132.1,
+    503.4,
+    215.1
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "joint owners -"
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    289.6,
+    456.4,
+    338.9
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 2,
+   "box": [
+    168.8,
+    382.0,
+    233.3,
+    397.5
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i016",
+   "type": "person",
+   "page": 3,
+   "box": [
+    138.4,
+    190.8,
+    362.5,
+    206.3
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i017",
+   "type": "person",
+   "page": 3,
+   "box": [
+    286.2,
+    233.4,
+    468.1,
+    248.9
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i018",
+   "type": "person",
+   "page": 3,
+   "box": [
+    286.2,
+    289.6,
+    468.1,
+    305.1
+   ],
+   "block": "B13",
+   "proposed": {
+    "owner": "investor-individual"
+   },
+   "heading": "Signature"
+  },
+  {
+   "item": "i019",
+   "type": "person",
+   "page": 3,
+   "box": [
+    115.9,
+    382.0,
+    162.9,
+    397.5
+   ],
+   "block": "B14",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ACCEPTANCE OF SUBSCRIPTION:"
+  },
+  {
+   "item": "i020",
+   "type": "person",
+   "page": 3,
+   "box": [
+    250.9,
+    382.0,
+    297.9,
+    397.5
+   ],
+   "block": "B15",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ACCEPTANCE OF SUBSCRIPTION:"
+  },
+  {
+   "item": "i021",
+   "type": "person",
+   "page": 3,
+   "box": [
+    303.8,
+    472.0,
+    474.0,
+    487.5
+   ],
+   "block": "B16",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "99 CENT STUFF, INC."
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    33.7,
+    335.5,
+    157.0,
+    351.0
+   ],
+   "heading": "",
+   "context": [
+    "\"Shares\") of the common stock, par value $.01 per share (the \"Common Stock\"), of",
+    "99 Cent Stuff, Inc., a Florida corporation (the \"Company\"), on the terms and",
+    "conditions of this Agreement.",
+    "2. Receipt of Prospectus. The undersigned hereby acknowledges that the"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    350.7,
+    403.0,
+    391.8,
+    418.5
+   ],
+   "heading": "",
+   "context": [
+    ", 2002 (the \"Prospectus\"), with respect to the offering of",
+    "the Common Stock.",
+    "3. Purchase of Shares. The undersigned hereby subscribes for the number of",
+    "Shares specified below:"
+   ],
+   "places": [
+    "p01-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B03",
+   "box": [
+    350.7,
+    459.3,
+    421.2,
+    474.8
+   ],
+   "heading": "",
+   "context": [
+    "Shares specified below:",
+    "Number of Shares to be purchased: Shares",
+    "(minimum of 100 Shares)",
+    "Price per Share: x $5.00"
+   ],
+   "places": [
+    "p01-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B04",
+   "box": [
+    350.7,
+    515.5,
+    421.2,
+    531.0
+   ],
+   "heading": "",
+   "context": [
+    "(minimum of 100 Shares)",
+    "Price per Share: x $5.00",
+    "Total purchase price: $",
+    "Amount of enclosed check:"
+   ],
+   "places": [
+    "p01-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B05",
+   "box": [
+    33.7,
+    693.1,
+    503.4,
+    720.8
+   ],
+   "heading": "",
+   "context": [
+    "payment for the number of Shares listed in Section 3.",
+    "<PAGE>",
+    "5. Title to Shares. The undersigned hereby requests that the Shares be issued as",
+    "follows:"
+   ],
+   "places": [
+    "p01-005",
+    "p01-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B06",
+   "box": [
+    33.7,
+    105.0,
+    51.4,
+    137.3
+   ],
+   "heading": "joint owners -",
+   "context": [
+    "two names for",
+    "joint owners -",
+    "please print or",
+    "type)"
+   ],
+   "places": [
+    "p02-001",
+    "p02-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B07",
+   "box": [
+    145.3,
+    123.3,
+    227.5,
+    138.8
+   ],
+   "heading": "joint owners -",
+   "context": [
+    "joint owners -",
+    "please print or",
+    "type)",
+    "[ ] Joint tenants with right of survivorship"
+   ],
+   "places": [
+    "p02-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B08",
+   "box": [
+    391.8,
+    132.1,
+    503.4,
+    215.1
+   ],
+   "heading": "joint owners -",
+   "context": [
+    "joint owners -",
+    "please print or",
+    "type)",
+    "[ ] Joint tenants with right of survivorship"
+   ],
+   "places": [
+    "p02-004",
+    "p02-005",
+    "p02-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B09",
+   "box": [
+    33.7,
+    289.6,
+    456.4,
+    338.9
+   ],
+   "heading": "",
+   "context": [
+    "If you would like to have the shares delivered to your broker account,",
+    "please have the broker fill in this section. [Once the subscription closes, we",
+    "will contact the name and phone number below, to have the deposit initiated on",
+    "the DWAC system at DTC.]"
+   ],
+   "places": [
+    "p02-007",
+    "p02-008",
+    "p02-009"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B10",
+   "box": [
+    168.8,
+    382.0,
+    233.3,
+    397.5
+   ],
+   "heading": "",
+   "context": [
+    "Phone Number Contact Name",
+    "---------------------------------------------------------",
+    "Name of Cleaning Broker",
+    "6. Escrow Agreement. The undersigned acknowledges and agrees that the"
+   ],
+   "places": [
+    "p02-010"
+   ],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B11",
+   "box": [
+    138.4,
+    190.8,
+    362.5,
+    206.3
+   ],
+   "heading": "",
+   "context": [
+    "the undersigned. Any purported transfer or assignment by the undersigned",
+    "shall be null and void.",
+    "(d) Applicable Law. This Agreement shall be governed by and construed",
+    "in accordance with the laws of Florida."
+   ],
+   "places": [
+    "p03-001"
+   ],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B12",
+   "box": [
+    286.2,
+    233.4,
+    468.1,
+    248.9
+   ],
+   "heading": "",
+   "context": [
+    "(d) Applicable Law. This Agreement shall be governed by and construed",
+    "in accordance with the laws of Florida.",
+    "IN WITNESS WHEREOF, the undersigned has executed this Subscription",
+    "Agreement on this day of , 200 ."
+   ],
+   "places": [
+    "p03-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B13",
+   "box": [
+    286.2,
+    289.6,
+    468.1,
+    305.1
+   ],
+   "heading": "Signature",
+   "context": [
+    "IN WITNESS WHEREOF, the undersigned has executed this Subscription",
+    "Agreement on this day of , 200 .",
+    "-------------------------------",
+    "Signature"
+   ],
+   "places": [
+    "p03-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B14",
+   "box": [
+    115.9,
+    382.0,
+    162.9,
+    397.5
+   ],
+   "heading": "ACCEPTANCE OF SUBSCRIPTION:",
+   "context": [
+    "-------------------------------",
+    "Signature (Second signature",
+    "required for joint ownership)",
+    "ACCEPTANCE OF SUBSCRIPTION:"
+   ],
+   "places": [],
+   "items": [
+    "i004"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B15",
+   "box": [
+    250.9,
+    382.0,
+    297.9,
+    397.5
+   ],
+   "heading": "ACCEPTANCE OF SUBSCRIPTION:",
+   "context": [
+    "-------------------------------",
+    "Signature (Second signature",
+    "required for joint ownership)",
+    "ACCEPTANCE OF SUBSCRIPTION:"
+   ],
+   "places": [],
+   "items": [
+    "i005"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B16",
+   "box": [
+    303.8,
+    472.0,
+    474.0,
+    487.5
+   ],
+   "heading": "99 CENT STUFF, INC.",
+   "context": [
+    "99 Cent Stuff, Inc. hereby accepts the subscription offer set forth in this",
+    "Agreement for Shares, with $ of proceeds to be deposited in the",
+    "escrow account.",
+    "99 CENT STUFF, INC."
+   ],
+   "places": [
+    "p03-004"
+   ],
+   "items": []
+  }
+ ]
+}

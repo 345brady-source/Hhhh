@@ -1,0 +1,949 @@
+{
+ "id": "a079",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:04Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 2,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text"
+ },
+ "run": "out-18/set-a/a079/result.json",
+ "candidates": "d5db97e756e0caa0-f01586d5.json",
+ "counts": {
+  "fields": 17,
+  "counted_candidates": 18,
+  "pairs": 17,
+  "auto": 13,
+  "reader_only": 0,
+  "measure_only": 1,
+  "kind_clash": 4,
+  "person": 11,
+  "items": 16
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "herein an aggregate of",
+   "printed_label": "the purchase price",
+   "must": true,
+   "x0": 33.7,
+   "y0": 215.8,
+   "x1": 123.7,
+   "y1": 231.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "herein an aggregate of"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "price in the gross aggregate amount of $",
+   "must": false,
+   "x0": 290.0,
+   "y0": 229.3,
+   "x1": 392.0,
+   "y1": 244.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-002",
+   "block": "B02"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "or",
+   "printed_label": "or $",
+   "must": true,
+   "x0": 414.0,
+   "y0": 229.3,
+   "x1": 522.0,
+   "y1": 244.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "or"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-003",
+   "block": "B02"
+  },
+  {
+   "page": 1,
+   "kind": "signature",
+   "owner": "third-party",
+   "label": "IN WITNESS WHEREOF, the undersigned has executed this Subscr",
+   "printed_label": "undersigned has executed this Subscription Agreement this",
+   "must": false,
+   "x0": 470.9,
+   "y0": 584.8,
+   "x1": 500.9,
+   "y1": 600.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "someone else",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "IN WITNESS WHEREOF, the undersigned has executed this Subscr"
+   },
+   "cand": "underscore",
+   "id": "p01-004",
+   "block": "B04"
+  },
+  {
+   "page": 1,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 33.7,
+   "y0": 674.8,
+   "x1": 201.7,
+   "y1": 690.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p01-005",
+   "block": "B05"
+  },
+  {
+   "page": 1,
+   "kind": "signature",
+   "owner": "co-investor",
+   "label": "Co-investor signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 204.7,
+   "y0": 674.8,
+   "x1": 390.7,
+   "y1": 690.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "co-investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Co-investor signature"
+   },
+   "cand": "underscore",
+   "id": "p01-006",
+   "block": "B05"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 204.7,
+   "y0": 725.8,
+   "x1": 390.7,
+   "y1": 741.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-007",
+   "block": "B06"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "Street Address",
+   "must": true,
+   "x0": 33.7,
+   "y0": 52.3,
+   "x1": 201.7,
+   "y1": 67.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p02-001",
+   "block": "B07"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "#9; Street Address",
+   "printed_label": "#9; Street Address",
+   "must": true,
+   "x0": 204.7,
+   "y0": 52.3,
+   "x1": 390.7,
+   "y1": 67.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "#9; Street Address"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p02-002",
+   "block": "B07"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "City, state and ZIP",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 103.3,
+   "x1": 201.7,
+   "y1": 118.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "City, state and ZIP"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p02-003",
+   "block": "B08"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "#9; City, State, Zip Code",
+   "printed_label": "",
+   "must": true,
+   "x0": 204.7,
+   "y0": 103.3,
+   "x1": 390.7,
+   "y1": 118.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "#9; City, State, Zip Code"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p02-004",
+   "block": "B08"
+  },
+  {
+   "page": 2,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 33.7,
+   "y0": 358.3,
+   "x1": 195.7,
+   "y1": 373.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p02-005",
+   "block": "B10"
+  },
+  {
+   "page": 2,
+   "kind": "date",
+   "owner": "firm",
+   "label": "Date signed",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 33.7,
+   "y0": 409.3,
+   "x1": 105.7,
+   "y1": 424.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date signed"
+   },
+   "cand": "underscore",
+   "id": "p02-006",
+   "block": "B11"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    33.7,
+    598.3,
+    93.7,
+    613.8
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": ", 2004"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i001",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    33.7,
+    725.8,
+    201.7,
+    741.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B06"
+  },
+  {
+   "type": "kind-clash",
+   "page": 2,
+   "box": [
+    33.7,
+    179.8,
+    75.7,
+    195.3
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Husband and Wife, as Community Property"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i003",
+   "block": "B09"
+  },
+  {
+   "type": "kind-clash",
+   "page": 2,
+   "box": [
+    33.7,
+    205.3,
+    75.7,
+    220.8
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Joint Tenants with Rights of Survivorship"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i004",
+   "block": "B09"
+  },
+  {
+   "type": "kind-clash",
+   "page": 2,
+   "box": [
+    33.7,
+    230.8,
+    75.7,
+    246.3
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Tenants-in-Common"
+   },
+   "caption": "Note: The",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i005",
+   "block": "B09"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 1,
+   "box": [
+    33.7,
+    215.8,
+    123.7,
+    231.3
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "LUTCAM, INC."
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 1,
+   "box": [
+    290.0,
+    229.3,
+    522.0,
+    244.8
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "LUTCAM, INC."
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 1,
+   "box": [
+    33.7,
+    598.3,
+    93.7,
+    613.8
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 1,
+   "box": [
+    470.9,
+    584.8,
+    500.9,
+    600.3
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "third-party"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 1,
+   "box": [
+    33.7,
+    674.8,
+    390.7,
+    690.3
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature(s) for Investors"
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 1,
+   "box": [
+    33.7,
+    725.8,
+    390.7,
+    741.3
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature Signature"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    52.3,
+    390.7,
+    67.8
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    103.3,
+    390.7,
+    118.8
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    179.8,
+    75.7,
+    246.3
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "IF JOINT OWNERSHIP, CHECK ONE:"
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    358.3,
+    195.7,
+    373.8
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "LUTCAM, INC."
+  },
+  {
+   "item": "i016",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    409.3,
+    105.7,
+    424.8
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "LUTCAM, INC."
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    33.7,
+    215.8,
+    123.7,
+    231.3
+   ],
+   "heading": "LUTCAM, INC.",
+   "context": [
+    "(519) 331-1103",
+    "Gentlemen:",
+    "The undersigned subscriber (the \"Purchaser\") hereby agrees to purchase from LUTCAM, INC., (the \"Company\")",
+    "and the Company agrees to sell to the Purchaser, upon the terms and conditions set forth herein, an aggregate of"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    290.0,
+    229.3,
+    522.0,
+    244.8
+   ],
+   "heading": "LUTCAM, INC.",
+   "context": [
+    "Gentlemen:",
+    "The undersigned subscriber (the \"Purchaser\") hereby agrees to purchase from LUTCAM, INC., (the \"Company\")",
+    "and the Company agrees to sell to the Purchaser, upon the terms and conditions set forth herein, an aggregate of",
+    "shares (the \"Shares\") of LUTCAM, INC., common stock, no par value, on the date hereof, for"
+   ],
+   "places": [
+    "p01-002",
+    "p01-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B03",
+   "box": [
+    33.7,
+    598.3,
+    93.7,
+    613.8
+   ],
+   "heading": "",
+   "context": [
+    "regardless of principles of conflicts of law.;",
+    "This subscription is subject to final acceptance by the Company, to be evidenced by the signature of an officer of",
+    "the Company as set forth on the Subscription Agreement Signature Page.",
+    "IN WITNESS WHEREOF, the undersigned has executed this Subscription Agreement this day of"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B04",
+   "box": [
+    470.9,
+    584.8,
+    500.9,
+    600.3
+   ],
+   "heading": "",
+   "context": [
+    "Subscription Agreement shall be governed by and construed in accordance with the laws of the State of Nevada,",
+    "regardless of principles of conflicts of law.;",
+    "This subscription is subject to final acceptance by the Company, to be evidenced by the signature of an officer of",
+    "the Company as set forth on the Subscription Agreement Signature Page."
+   ],
+   "places": [
+    "p01-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B05",
+   "box": [
+    33.7,
+    674.8,
+    390.7,
+    690.3
+   ],
+   "heading": "Signature(s) for Investors",
+   "context": [
+    "the Company as set forth on the Subscription Agreement Signature Page.",
+    "IN WITNESS WHEREOF, the undersigned has executed this Subscription Agreement this day of",
+    ", 2004.",
+    "Signature(s) for Investors"
+   ],
+   "places": [
+    "p01-005",
+    "p01-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B06",
+   "box": [
+    33.7,
+    725.8,
+    390.7,
+    741.3
+   ],
+   "heading": "Signature Signature",
+   "context": [
+    "IN WITNESS WHEREOF, the undersigned has executed this Subscription Agreement this day of",
+    ", 2004.",
+    "Signature(s) for Investors",
+    "Signature Signature"
+   ],
+   "places": [
+    "p01-007"
+   ],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B07",
+   "box": [
+    33.7,
+    52.3,
+    390.7,
+    67.8
+   ],
+   "heading": "",
+   "context": [
+    "Print Name #9; Print Name"
+   ],
+   "places": [
+    "p02-001",
+    "p02-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B08",
+   "box": [
+    33.7,
+    103.3,
+    390.7,
+    118.8
+   ],
+   "heading": "",
+   "context": [
+    "Print Name #9; Print Name",
+    "Street Address #9; Street Address"
+   ],
+   "places": [
+    "p02-003",
+    "p02-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B09",
+   "box": [
+    33.7,
+    179.8,
+    75.7,
+    246.3
+   ],
+   "heading": "IF JOINT OWNERSHIP, CHECK ONE:",
+   "context": [
+    "Print Name #9; Print Name",
+    "Street Address #9; Street Address",
+    "City, State, Zip Code #9; City, State, Zip Code",
+    "IF JOINT OWNERSHIP, CHECK ONE:"
+   ],
+   "places": [],
+   "items": [
+    "i003",
+    "i004",
+    "i005"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B10",
+   "box": [
+    33.7,
+    358.3,
+    195.7,
+    373.8
+   ],
+   "heading": "LUTCAM, INC.",
+   "context": [
+    "Note: The address given above must be the residence address of the Investor.",
+    "Post Office and other addresses will not be accepted.",
+    "Accepted:",
+    "LUTCAM, INC."
+   ],
+   "places": [
+    "p02-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B11",
+   "box": [
+    33.7,
+    409.3,
+    105.7,
+    424.8
+   ],
+   "heading": "LUTCAM, INC.",
+   "context": [
+    "Post Office and other addresses will not be accepted.",
+    "Accepted:",
+    "LUTCAM, INC.",
+    "By"
+   ],
+   "places": [
+    "p02-006"
+   ],
+   "items": []
+  }
+ ]
+}

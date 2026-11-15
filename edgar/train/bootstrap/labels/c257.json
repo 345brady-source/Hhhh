@@ -1,0 +1,234 @@
+{
+ "id": "c257",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 3,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text"
+ },
+ "run": "out-18/set-c/c257/result.json",
+ "candidates": "14a5f7e59ec9e4de-f01586d5.json",
+ "counts": {
+  "fields": 3,
+  "counted_candidates": 3,
+  "pairs": 3,
+  "auto": 3,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 0,
+  "person": 3,
+  "items": 3
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "of the day of",
+   "printed_label": "SUBSCRIPTION AGREEMENT is entered into as of the",
+   "must": true,
+   "x0": 407.5,
+   "y0": 66.5,
+   "x1": 491.6,
+   "y1": 82.0,
+   "printed_as": "measure candidate: dateparts",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "of the day of"
+   },
+   "cand": "dateparts",
+   "what": "date",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 3,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 50.0,
+   "y0": 129.3,
+   "x1": 187.6,
+   "y1": 144.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p03-001",
+   "block": "B02"
+  },
+  {
+   "page": 3,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 50.0,
+   "y0": 252.0,
+   "x1": 187.6,
+   "y1": 267.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p03-002",
+   "block": "B03"
+  }
+ ],
+ "items": [
+  {
+   "item": "i001",
+   "type": "person",
+   "page": 1,
+   "box": [
+    407.5,
+    66.5,
+    491.6,
+    82.0
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 3,
+   "box": [
+    50.0,
+    129.3,
+    187.6,
+    144.8
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "BLACKROCK PREFERRED PARTNERS LLC"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 3,
+   "box": [
+    50.0,
+    252.0,
+    187.6,
+    267.5
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "BLACKROCK HOLDCO 2, INC."
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    407.5,
+    66.5,
+    491.6,
+    82.0
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT",
+   "context": [
+    "EX-99.2P STOCK LTR 14 ex-p.htm EXHIBIT (P) - FORM OF SUBSCRIPTION AGREEMENT",
+    "SUBSCRIPTION AGREEMENT"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B02",
+   "box": [
+    50.0,
+    129.3,
+    187.6,
+    144.8
+   ],
+   "heading": "BLACKROCK PREFERRED PARTNERS LLC",
+   "context": [
+    "IN WITNESS WHEREOF, the parties have executed this Agreement as of the date first above",
+    "written.",
+    "BLACKROCK PREFERRED PARTNERS LLC"
+   ],
+   "places": [
+    "p03-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B03",
+   "box": [
+    50.0,
+    252.0,
+    187.6,
+    267.5
+   ],
+   "heading": "BLACKROCK HOLDCO 2, INC.",
+   "context": [
+    "By:",
+    "Name:",
+    "Title:",
+    "BLACKROCK HOLDCO 2, INC."
+   ],
+   "places": [
+    "p03-002"
+   ],
+   "items": []
+  }
+ ]
+}

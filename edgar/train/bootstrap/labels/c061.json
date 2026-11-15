@@ -1,0 +1,364 @@
+{
+ "id": "c061",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:07Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": true,
+ "pages": 2,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text"
+ },
+ "run": "out-18/set-c/c061/result.json",
+ "candidates": "d1625799314fbbef-f01586d5.json",
+ "counts": {
+  "fields": 5,
+  "counted_candidates": 4,
+  "pairs": 3,
+  "auto": 0,
+  "reader_only": 2,
+  "measure_only": 1,
+  "kind_clash": 3,
+  "person": 4,
+  "items": 10
+ },
+ "places": [],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    98.3,
+    212.4,
+    438.8,
+    227.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of hyphens typed as a blank"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    45.5,
+    631.0,
+    233.3,
+    646.5
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "person",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "caption": "X",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor-individual",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a underscore candidate the measure reads as line",
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    250.9,
+    664.8,
+    503.3,
+    680.3
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "entity",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "caption": "X",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor-entity",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a underscore candidate the measure reads as line",
+   "item": "i003",
+   "block": "B03"
+  },
+  {
+   "type": "reader-only",
+   "page": 1,
+   "box": [
+    262.7,
+    691.3,
+    504.3,
+    711.8
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "entity",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "caption": "Print Full Name of Person Signing for Entity",
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor-entity",
+    "what": "name"
+   },
+   "item": "i004",
+   "block": "B03"
+  },
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    45.5,
+    698.5,
+    233.3,
+    714.0
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "person",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "caption": "X",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor-individual",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a underscore candidate the measure reads as line",
+   "item": "i005",
+   "block": "B03"
+  },
+  {
+   "type": "reader-only",
+   "page": 2,
+   "box": [
+    250.9,
+    310.2,
+    504.3,
+    330.8
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "person",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "caption": "X",
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor-individual",
+    "what": "text"
+   },
+   "item": "i006",
+   "block": "B04"
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 1,
+   "box": [
+    98.3,
+    212.4,
+    438.8,
+    227.9
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SPECIMEN"
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 1,
+   "box": [
+    45.5,
+    631.0,
+    233.3,
+    646.5
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor-individual"
+   },
+   "heading": "INDIVIDUAL SUBSCRIBERS IF SUBSCRIBER IS AN ENTITY"
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 1,
+   "box": [
+    45.5,
+    664.8,
+    504.3,
+    714.0
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor-entity"
+   },
+   "heading": "Signature of Subscriber Print Full Name of Entity"
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 2,
+   "box": [
+    250.9,
+    310.2,
+    504.3,
+    330.8
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor-individual"
+   },
+   "heading": "Subscriber meets the applicable suitability standards under \"State"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    98.3,
+    212.4,
+    438.8,
+    227.9
+   ],
+   "heading": "SPECIMEN",
+   "context": [
+    "Morgan Stanley Spectrum Series",
+    "Units of Limited Partnership Interest",
+    "C Additional Subscription Agreement Update Form",
+    "April 2, 2007"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    45.5,
+    631.0,
+    233.3,
+    646.5
+   ],
+   "heading": "INDIVIDUAL SUBSCRIBERS IF SUBSCRIBER IS AN ENTITY",
+   "context": [
+    "Agreement(s).",
+    "I understand that I will need to execute a new Subscription Agreement Update",
+    "Form when a new Prospectus or Prospectus Supplement is issued.",
+    "INDIVIDUAL SUBSCRIBERS IF SUBSCRIBER IS AN ENTITY"
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B03",
+   "box": [
+    45.5,
+    664.8,
+    504.3,
+    714.0
+   ],
+   "heading": "Signature of Subscriber Print Full Name of Entity",
+   "context": [
+    "Form when a new Prospectus or Prospectus Supplement is issued.",
+    "INDIVIDUAL SUBSCRIBERS IF SUBSCRIBER IS AN ENTITY",
+    "X ............................................",
+    "Signature of Subscriber Print Full Name of Entity"
+   ],
+   "places": [],
+   "items": [
+    "i003",
+    "i004",
+    "i005"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B04",
+   "box": [
+    250.9,
+    310.2,
+    504.3,
+    330.8
+   ],
+   "heading": "Subscriber meets the applicable suitability standards under \"State",
+   "context": [
+    "o We hereby confirm that at the time of any purchase of additional Units, the",
+    "Subscriber meets the applicable suitability standards under \"State",
+    "Suitability Requirements\" on page 4 of the Subscription Agreement and any",
+    "applicable supplement to the Prospectus."
+   ],
+   "places": [],
+   "items": [
+    "i006"
+   ]
+  }
+ ]
+}

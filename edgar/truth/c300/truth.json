@@ -1,0 +1,118 @@
+{
+ "file": "set-c/c300/doc.pdf",
+ "id": "c300",
+ "pages": 4,
+ "page_size_pt": [
+  612.0,
+  792.0
+ ],
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward (boxes from the measure's candidates or the reader's fields, as reviewed).",
+ "signing": {
+  "investor_pages": [],
+  "firm_pages": [
+   4
+  ],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": "from the reviewed signature blocks"
+ },
+ "counts_per_page": {
+  "4": {
+   "total": 2,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 0,
+   "signature": 1,
+   "date": 1
+  }
+ },
+ "counts_total": {
+  "total": 2,
+  "tickbox": 0,
+  "initials": 0,
+  "blank": 0,
+  "signature": 1,
+  "date": 1
+ },
+ "counts_by_owner": {
+  "firm": 2
+ },
+ "sure_per_page": {
+  "1": "bootstrap, reviewed disagreements",
+  "2": "bootstrap, reviewed disagreements",
+  "3": "bootstrap, reviewed disagreements",
+  "4": "bootstrap, reviewed disagreements"
+ },
+ "not_fields": {},
+ "places": [
+  {
+   "page": 4,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 144.1,
+   "y0": 248.8,
+   "x1": 306.1,
+   "y1": 264.3,
+   "printed_as": "measure candidate: underscore",
+   "origin": "auto",
+   "id": "p04-001"
+  },
+  {
+   "page": 4,
+   "kind": "date",
+   "owner": "firm",
+   "label": "Date signed",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 152.7,
+   "y0": 319.3,
+   "x1": 314.7,
+   "y1": 334.8,
+   "printed_as": "measure candidate: underscore",
+   "origin": "auto",
+   "id": "p04-002"
+  }
+ ],
+ "may_fill": [],
+ "source": "bootstrap",
+ "done": "2026-11-15T04:48:42Z",
+ "bootstrap": {
+  "labels": "labels/c300.json",
+  "run": "out-18/set-c/c300/result.json",
+  "auto": 2,
+  "confirmed_no": 0,
+  "items": 3,
+  "kept": 0,
+  "blocks": 5,
+  "dropped_by_block": 0,
+  "dropped_overlap": [],
+  "tokens": 2047
+ }
+}

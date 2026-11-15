@@ -1,0 +1,515 @@
+{
+ "id": "c146",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:08Z",
+ "how_made": "filed-pdf",
+ "made_group": "filed PDF",
+ "broker_dealer": false,
+ "pages": 6,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text"
+ },
+ "run": "out-18/set-c/c146/result.json",
+ "candidates": "e69b1a7e487c8e7f-f01586d5.json",
+ "counts": {
+  "fields": 7,
+  "counted_candidates": 8,
+  "pairs": 7,
+  "auto": 3,
+  "reader_only": 0,
+  "measure_only": 1,
+  "kind_clash": 4,
+  "person": 6,
+  "items": 11
+ },
+ "places": [
+  {
+   "page": 6,
+   "kind": "signature",
+   "owner": "investor-entity",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 30.1,
+   "y0": 215.2,
+   "x1": 55.3,
+   "y1": 230.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "entity",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p06-001",
+   "block": "B02"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "State/Country of Domicile or Formation",
+   "printed_label": "State/Country of Domicile or Formation",
+   "must": true,
+   "x0": 184.3,
+   "y0": 278.7,
+   "x1": 374.0,
+   "y1": 294.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "State/Country of Domicile or Formation"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p06-002",
+   "block": "B04"
+  },
+  {
+   "page": 6,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 30.1,
+   "y0": 364.6,
+   "x1": 50.2,
+   "y1": 380.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p06-003",
+   "block": "B05"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 6,
+   "box": [
+    191.1,
+    98.4,
+    291.2,
+    113.9
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "By_%%SUBSCRIBER_SIGNATURE%%"
+   },
+   "caption": "By %%SUBSCRIBER SIGNATURE%%",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "percentage"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "measure-only",
+   "page": 6,
+   "box": [
+    18.5,
+    192.1,
+    28.5,
+    207.6
+   ],
+   "caption": "Legal By",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "kind-clash",
+   "page": 6,
+   "box": [
+    184.5,
+    192.1,
+    289.5,
+    207.6
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "SUBSCRIBER SIGNATURE"
+   },
+   "caption": "%%SUBSCRIBER SIGNATURE%%",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "percentage"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i003",
+   "block": "B03"
+  },
+  {
+   "type": "kind-clash",
+   "page": 6,
+   "box": [
+    204.8,
+    215.2,
+    285.0,
+    230.7
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "entity",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "INVESTOR SIGNATURES"
+   },
+   "caption": "By %%INVESTOR SIGNATURES%%",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor-entity",
+    "what": "percentage"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i004",
+   "block": "B03"
+  },
+  {
+   "type": "kind-clash",
+   "page": 6,
+   "box": [
+    179.2,
+    364.6,
+    264.3,
+    380.1
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "ISSUER SIGNATURE"
+   },
+   "caption": "By %%ISSUER SIGNATURE%%",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "firm",
+    "what": "percentage"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i005",
+   "block": "B06"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 6,
+   "box": [
+    191.1,
+    98.4,
+    291.2,
+    113.9
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "PURCHASER (if an individual):"
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 6,
+   "box": [
+    18.5,
+    192.1,
+    55.3,
+    230.7
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor-entity"
+   },
+   "heading": "PURCHASER (if an entity):"
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 6,
+   "box": [
+    184.5,
+    192.1,
+    289.5,
+    230.7
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "PURCHASER (if an entity):"
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 6,
+   "box": [
+    184.3,
+    278.7,
+    374.0,
+    294.2
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "%%VESTING AS EMAIL%%"
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 6,
+   "box": [
+    30.1,
+    364.6,
+    50.2,
+    380.1
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "%%NAME OF ISSUER%%"
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 6,
+   "box": [
+    179.2,
+    364.6,
+    264.3,
+    380.1
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "%%NAME OF ISSUER%%"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 6,
+   "block": "B01",
+   "box": [
+    191.1,
+    98.4,
+    291.2,
+    113.9
+   ],
+   "heading": "PURCHASER (if an individual):",
+   "context": [
+    "IN WITNESS WHEREOF, Subscriber has executed this Subscription Agreement this %%NOW%%.",
+    "PURCHASER (if an individual):"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 6,
+   "block": "B02",
+   "box": [
+    18.5,
+    192.1,
+    55.3,
+    230.7
+   ],
+   "heading": "PURCHASER (if an entity):",
+   "context": [
+    "Name:%%VESTING AS%%",
+    "%%VESTING AS EMAIL%%",
+    "%%SUBSCRIBER SIGNATURE%%",
+    "PURCHASER (if an entity):"
+   ],
+   "places": [
+    "p06-001"
+   ],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 6,
+   "block": "B03",
+   "box": [
+    184.5,
+    192.1,
+    289.5,
+    230.7
+   ],
+   "heading": "PURCHASER (if an entity):",
+   "context": [
+    "Name:%%VESTING AS%%",
+    "%%VESTING AS EMAIL%%",
+    "%%SUBSCRIBER SIGNATURE%%",
+    "PURCHASER (if an entity):"
+   ],
+   "places": [],
+   "items": [
+    "i003",
+    "i004"
+   ]
+  },
+  {
+   "page": 6,
+   "block": "B04",
+   "box": [
+    184.3,
+    278.7,
+    374.0,
+    294.2
+   ],
+   "heading": "%%VESTING AS EMAIL%%",
+   "context": [
+    "By %%INVESTOR SIGNATURES%%",
+    "Name: %%VESTING AS%%",
+    "%%VESTING AS EMAIL%%",
+    "Title:%%INVESTOR TITLE%%"
+   ],
+   "places": [
+    "p06-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B05",
+   "box": [
+    30.1,
+    364.6,
+    50.2,
+    380.1
+   ],
+   "heading": "%%NAME OF ISSUER%%",
+   "context": [
+    "State/Country of Domicile or Formation:",
+    "The offer to purchase Securities as set forth above is confirmed and accepted by the Company as to %%EQUITY SHARE COUNT%",
+    "Securities for $%%VESTING AMOUNT%%.",
+    "%%NAME OF ISSUER%%"
+   ],
+   "places": [
+    "p06-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B06",
+   "box": [
+    179.2,
+    364.6,
+    264.3,
+    380.1
+   ],
+   "heading": "%%NAME OF ISSUER%%",
+   "context": [
+    "State/Country of Domicile or Formation:",
+    "The offer to purchase Securities as set forth above is confirmed and accepted by the Company as to %%EQUITY SHARE COUNT%",
+    "Securities for $%%VESTING AMOUNT%%.",
+    "%%NAME OF ISSUER%%"
+   ],
+   "places": [],
+   "items": [
+    "i005"
+   ]
+  }
+ ]
+}

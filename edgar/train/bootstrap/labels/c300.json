@@ -1,0 +1,370 @@
+{
+ "id": "c300",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 4,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text"
+ },
+ "run": "out-18/set-c/c300/result.json",
+ "candidates": "5e29167de9e5afb6-f01586d5.json",
+ "counts": {
+  "fields": 5,
+  "counted_candidates": 2,
+  "pairs": 2,
+  "auto": 2,
+  "reader_only": 3,
+  "measure_only": 0,
+  "kind_clash": 0,
+  "person": 5,
+  "items": 8
+ },
+ "places": [
+  {
+   "page": 4,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 144.1,
+   "y0": 248.8,
+   "x1": 306.1,
+   "y1": 264.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p04-001",
+   "block": "B04"
+  },
+  {
+   "page": 4,
+   "kind": "date",
+   "owner": "firm",
+   "label": "Date signed",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 152.7,
+   "y0": 319.3,
+   "x1": 314.7,
+   "y1": 334.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date signed"
+   },
+   "cand": "underscore",
+   "id": "p04-002",
+   "block": "B05"
+  }
+ ],
+ "items": [
+  {
+   "type": "reader-only",
+   "page": 1,
+   "box": [
+    122.7,
+    625.1,
+    556.7,
+    641.2
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "caption": "",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "reader-only",
+   "page": 2,
+   "box": [
+    122.7,
+    590.6,
+    556.7,
+    602.9
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "caption": "",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "reader-only",
+   "page": 3,
+   "box": [
+    122.7,
+    509.6,
+    556.7,
+    521.9
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "caption": "",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i003",
+   "block": "B03"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 1,
+   "box": [
+    122.7,
+    625.1,
+    556.7,
+    641.2
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 2,
+   "box": [
+    122.7,
+    590.6,
+    556.7,
+    602.9
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 3,
+   "box": [
+    122.7,
+    509.6,
+    556.7,
+    521.9
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 4,
+   "box": [
+    144.1,
+    248.8,
+    306.1,
+    264.3
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "Accepted by Financial Agency Group:"
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 4,
+   "box": [
+    152.7,
+    319.3,
+    314.7,
+    334.8
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "Accepted by Financial Agency Group:"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    122.7,
+    625.1,
+    556.7,
+    641.2
+   ],
+   "heading": "",
+   "context": [
+    "Subscriber nor any of its affiliates is subject to any disqualification provisions",
+    "under Rule 262 of Regulation A under the Securities Act.",
+    "2.3 Receipt of Offering Materials. The Subscriber acknowledges that it has received",
+    "and carefully reviewed the Company\u2019s current offering circular filed with the SEC"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B02",
+   "box": [
+    122.7,
+    590.6,
+    556.7,
+    602.9
+   ],
+   "heading": "",
+   "context": [
+    "4. Conditions to Subscription",
+    "4.1 Payment of Purchase Price. The Subscriber shall deliver the Purchase Price by",
+    "electronic payment, check, or wire transfer in immediately available funds to the",
+    "account designated by the Company."
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B03",
+   "box": [
+    122.7,
+    509.6,
+    556.7,
+    521.9
+   ],
+   "heading": "",
+   "context": [
+    "the parties hereto and their permitted successors and assigns.",
+    "6.5 Counterparts. This Agreement may be executed in counterparts, including",
+    "electronically, each of which shall be deemed an original, and all of which together",
+    "shall constitute one and the same instrument."
+   ],
+   "places": [],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B04",
+   "box": [
+    144.1,
+    248.8,
+    306.1,
+    264.3
+   ],
+   "heading": "Accepted by Financial Agency Group:",
+   "context": [
+    "Total Subscription Amount: [to be completed at execution]",
+    "Signature: [to be completed at execution]",
+    "Date: [to be completed at execution]",
+    "Accepted by Financial Agency Group:"
+   ],
+   "places": [
+    "p04-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B05",
+   "box": [
+    152.7,
+    319.3,
+    314.7,
+    334.8
+   ],
+   "heading": "Accepted by Financial Agency Group:",
+   "context": [
+    "Accepted by Financial Agency Group:",
+    "By:",
+    "Name: Rahul Malhotra",
+    "Title: Chief Executive Officer"
+   ],
+   "places": [
+    "p04-002"
+   ],
+   "items": []
+  }
+ ]
+}

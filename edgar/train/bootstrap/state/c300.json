@@ -1,0 +1,89 @@
+{
+ "id": "c300",
+ "answers": {
+  "i001": {
+   "do": "drop"
+  },
+  "i002": {
+   "do": "drop"
+  },
+  "i003": {
+   "do": "drop"
+  }
+ },
+ "blocks": {
+  "B01": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ],
+  "B02": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ],
+  "B03": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ],
+  "B04": [
+   {
+    "owner": "firm",
+    "cond": ""
+   }
+  ],
+  "B05": [
+   {
+    "owner": "firm",
+    "cond": ""
+   }
+  ]
+ },
+ "confirms": {
+  "k001": "yes",
+  "k002": "yes"
+ },
+ "confirm_items": [
+  {
+   "item": "k001",
+   "type": "confirm",
+   "place": "p04-001",
+   "page": 4,
+   "box": [
+    144.1,
+    248.8,
+    306.1,
+    264.3
+   ],
+   "kind": "signature",
+   "owner": "firm",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k002",
+   "type": "confirm",
+   "place": "p04-002",
+   "page": 4,
+   "box": [
+    152.7,
+    319.3,
+    314.7,
+    334.8
+   ],
+   "kind": "date",
+   "owner": "firm",
+   "why": "seeded sample 20261115"
+  }
+ ],
+ "cost": {
+  "pixels": 773376,
+  "chars": 2146,
+  "commands": 4,
+  "sheets": 1
+ },
+ "done": "2026-11-15T04:48:42Z"
+}

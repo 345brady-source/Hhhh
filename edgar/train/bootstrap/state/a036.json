@@ -1,0 +1,70 @@
+{
+ "id": "a036",
+ "answers": {
+  "i001": {
+   "do": "drop"
+  },
+  "i002": {
+   "do": "drop"
+  },
+  "i003": {
+   "do": "drop"
+  },
+  "i004": {
+   "do": "drop"
+  }
+ },
+ "blocks": {
+  "B01": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ],
+  "B02": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ],
+  "B03": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ],
+  "B04": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ]
+ },
+ "confirms": {
+  "k001": "no"
+ },
+ "confirm_items": [
+  {
+   "item": "k001",
+   "type": "confirm",
+   "place": "p01-001",
+   "page": 1,
+   "box": [
+    350.7,
+    361.0,
+    427.0,
+    376.5
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  }
+ ],
+ "cost": {
+  "pixels": 773376,
+  "chars": 2088,
+  "commands": 4,
+  "sheets": 1
+ },
+ "done": "2026-11-15T04:52:46Z"
+}

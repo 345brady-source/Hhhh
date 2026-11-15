@@ -1,0 +1,904 @@
+{
+ "id": "a094",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:04Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 2,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text"
+ },
+ "run": "out-18/set-a/a094/result.json",
+ "candidates": "c6d403907649a43e-f01586d5.json",
+ "counts": {
+  "fields": 22,
+  "counted_candidates": 21,
+  "pairs": 21,
+  "auto": 21,
+  "reader_only": 1,
+  "measure_only": 0,
+  "kind_clash": 0,
+  "person": 7,
+  "items": 8
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "shares of common stock",
+   "printed_label": "share (the \u201cCommon Stock\u201d) and warrants to purchase",
+   "must": false,
+   "x0": 467.5,
+   "y0": 178.9,
+   "x1": 477.1,
+   "y1": 188.9,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "shares of common stock"
+   },
+   "cand": "tick",
+   "id": "p01-001",
+   "block": "B02"
+  },
+  {
+   "page": 2,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 348.0,
+   "y0": 126.2,
+   "x1": 527.9,
+   "y1": 141.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p02-001",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of Shares",
+   "printed_label": "Number of Shares",
+   "must": true,
+   "x0": 114.5,
+   "y0": 162.2,
+   "x1": 254.4,
+   "y1": 177.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Number of Shares"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p02-002",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Purchase Price per Share",
+   "printed_label": "Purchase Price per Share: $",
+   "must": true,
+   "x0": 152.6,
+   "y0": 174.2,
+   "x1": 252.5,
+   "y1": 189.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Purchase Price per Share"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p02-003",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "Aggregate Purchase Price: $",
+   "must": false,
+   "x0": 154.7,
+   "y0": 186.2,
+   "x1": 254.6,
+   "y1": 201.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p02-004",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of Warrants",
+   "printed_label": "Number of Warrants",
+   "must": true,
+   "x0": 126.7,
+   "y0": 198.2,
+   "x1": 266.6,
+   "y1": 213.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Number of Warrants"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-005",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Purchase Price per Warrant",
+   "printed_label": "Purchase Price per Warrant: $",
+   "must": true,
+   "x0": 164.8,
+   "y0": 210.2,
+   "x1": 264.7,
+   "y1": 225.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Purchase Price per Warrant"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p02-006",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "Aggregate Purchase Price: $",
+   "must": false,
+   "x0": 154.7,
+   "y0": 222.2,
+   "x1": 254.6,
+   "y1": 237.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p02-007",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor name",
+   "printed_label": "INVESTOR",
+   "must": true,
+   "x0": 91.6,
+   "y0": 258.2,
+   "x1": 251.6,
+   "y1": 273.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Investor name"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-008",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 53.2,
+   "y0": 281.4,
+   "x1": 253.1,
+   "y1": 296.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p02-009",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "DWAC DELIVERY",
+   "printed_label": "DWAC",
+   "must": false,
+   "x0": 33.7,
+   "y0": 356.9,
+   "x1": 42.7,
+   "y1": 366.9,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "DWAC DELIVERY"
+   },
+   "cand": "tick",
+   "id": "p02-010",
+   "block": "B04"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "DWAC Instructions: to be credited with the Shares are mainta",
+   "printed_label": "",
+   "must": true,
+   "x0": 345.5,
+   "y0": 399.9,
+   "x1": 530.4,
+   "y1": 415.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "DWAC Instructions: to be credited with the Shares are mainta"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-011",
+   "block": "B05"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "to be credited with the Shares are maintained): DTC Particip",
+   "printed_label": "",
+   "must": false,
+   "x0": 345.5,
+   "y0": 423.2,
+   "x1": 530.4,
+   "y1": 438.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "to be credited with the Shares are maintained): DTC Particip"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-012",
+   "block": "B05"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "DTC Participant Number: Name of Account at DTC Participant b",
+   "printed_label": "",
+   "must": false,
+   "x0": 345.5,
+   "y0": 459.2,
+   "x1": 530.4,
+   "y1": 474.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "DTC Participant Number: Name of Account at DTC Participant b"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p02-013",
+   "block": "B05"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "credited with the Shares: Account Number at DTC Participant",
+   "printed_label": "",
+   "must": false,
+   "x0": 345.5,
+   "y0": 494.4,
+   "x1": 530.4,
+   "y1": 509.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "credited with the Shares: Account Number at DTC Participant"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-014",
+   "block": "B05"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "c o",
+   "printed_label": "c/o",
+   "must": true,
+   "x0": 362.7,
+   "y0": 565.7,
+   "x1": 517.6,
+   "y1": 581.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "c o"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-015",
+   "block": "B07"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 577.7,
+   "x1": 228.7,
+   "y1": 593.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-016",
+   "block": "B06"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Street",
+   "printed_label": "Street",
+   "must": true,
+   "x0": 379.1,
+   "y0": 577.7,
+   "x1": 519.0,
+   "y1": 593.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Street"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p02-017",
+   "block": "B07"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "City, state and ZIP",
+   "printed_label": "City/State/Zip",
+   "must": true,
+   "x0": 407.4,
+   "y0": 589.7,
+   "x1": 517.3,
+   "y1": 605.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "City, state and ZIP"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p02-018",
+   "block": "B07"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Attention",
+   "printed_label": "Attention",
+   "must": true,
+   "x0": 388.5,
+   "y0": 601.7,
+   "x1": 518.5,
+   "y1": 617.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Attention"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-019",
+   "block": "B07"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Phone",
+   "printed_label": "Telephone No",
+   "must": true,
+   "x0": 409.4,
+   "y0": 613.7,
+   "x1": 514.4,
+   "y1": 629.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Phone"
+   },
+   "cand": "underscore",
+   "what": "phone",
+   "id": "p02-020",
+   "block": "B07"
+  }
+ ],
+ "items": [
+  {
+   "type": "reader-only",
+   "page": 1,
+   "box": [
+    302.3,
+    94.3,
+    323.5,
+    105.8
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": ", 2015, by and between the investor identified on the signat"
+   },
+   "caption": "This subscription (this \u201cSubscription\u201d) is dated February",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "date"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 1,
+   "box": [
+    302.3,
+    94.3,
+    323.5,
+    105.8
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 1,
+   "box": [
+    467.5,
+    178.9,
+    477.1,
+    188.9
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 2,
+   "box": [
+    53.2,
+    126.2,
+    527.9,
+    296.9
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SILVERSUN TECHNOLOGIES, INC."
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    356.9,
+    42.7,
+    366.9
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "INVESTOR:"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 2,
+   "box": [
+    345.5,
+    399.9,
+    530.4,
+    509.9
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "DWAC DELIVERY"
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    577.7,
+    228.7,
+    593.2
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "o PHYSICAL DELIVERY OF CERTIFICATES"
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 2,
+   "box": [
+    362.7,
+    565.7,
+    519.0,
+    629.2
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "o PHYSICAL DELIVERY OF CERTIFICATES"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    302.3,
+    94.3,
+    323.5,
+    105.8
+   ],
+   "heading": "",
+   "context": [
+    "EX-10.6 5 fs12015a3ex10vi silversun.htm FORM OF SUBSCRIPTION AGREEMENT",
+    "Exhibit 10.6",
+    "Form of Subscription Agreement"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    467.5,
+    178.9,
+    477.1,
+    188.9
+   ],
+   "heading": "",
+   "context": [
+    "page hereto (the \u201cInvestor\u201d) and SilverSun Technologies, Inc, a Delaware corporation (the \u201cCompany\u201d), whereby the partie",
+    "follows:",
+    "1. Subscription.",
+    "Investor agrees to buy and the Company agrees to sell and issue to Investor such number shares (the \u201cShares\u201d) of the"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B03",
+   "box": [
+    53.2,
+    126.2,
+    527.9,
+    296.9
+   ],
+   "heading": "SILVERSUN TECHNOLOGIES, INC.",
+   "context": [
+    "If the foregoing correctly sets forth our agreement, please confirm this by signing and returning to us the duplicate co",
+    "Subscription.",
+    "SILVERSUN TECHNOLOGIES, INC."
+   ],
+   "places": [
+    "p02-001",
+    "p02-002",
+    "p02-003",
+    "p02-004",
+    "p02-005",
+    "p02-006",
+    "p02-007",
+    "p02-008",
+    "p02-009"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B04",
+   "box": [
+    33.7,
+    356.9,
+    42.7,
+    366.9
+   ],
+   "heading": "INVESTOR:",
+   "context": [
+    "By:",
+    "Name:",
+    "Title:",
+    "Select method of delivery of Shares:"
+   ],
+   "places": [
+    "p02-010"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B05",
+   "box": [
+    345.5,
+    399.9,
+    530.4,
+    509.9
+   ],
+   "heading": "DWAC DELIVERY",
+   "context": [
+    "Title:",
+    "Select method of delivery of Shares:",
+    "DWAC DELIVERY",
+    "DWAC Instructions:"
+   ],
+   "places": [
+    "p02-011",
+    "p02-012",
+    "p02-013",
+    "p02-014"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B06",
+   "box": [
+    33.7,
+    577.7,
+    228.7,
+    593.2
+   ],
+   "heading": "o PHYSICAL DELIVERY OF CERTIFICATES",
+   "context": [
+    "with the Shares:",
+    "o PHYSICAL DELIVERY OF CERTIFICATES",
+    "Delivery Instructions:",
+    "Name in which Shares should be issued: Address for delivery:"
+   ],
+   "places": [
+    "p02-016"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B07",
+   "box": [
+    362.7,
+    565.7,
+    519.0,
+    629.2
+   ],
+   "heading": "o PHYSICAL DELIVERY OF CERTIFICATES",
+   "context": [
+    "Account Number at DTC Participant being credited",
+    "with the Shares:",
+    "o PHYSICAL DELIVERY OF CERTIFICATES",
+    "Delivery Instructions:"
+   ],
+   "places": [
+    "p02-015",
+    "p02-017",
+    "p02-018",
+    "p02-019",
+    "p02-020"
+   ],
+   "items": []
+  }
+ ]
+}

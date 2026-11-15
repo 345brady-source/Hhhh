@@ -1,0 +1,497 @@
+{
+ "confirmed": 51,
+ "box_ok": 49,
+ "both_ok": 46,
+ "unexplained": 0,
+ "gold_before": {
+  "n": 193,
+  "strays": 36,
+  "found": 157,
+  "places": 341,
+  "kindDiff": 18,
+  "ownerDiff": 45
+ },
+ "gold_after": {
+  "n": 213,
+  "strays": 25,
+  "found": 188,
+  "places": 341,
+  "kindDiff": 20,
+  "ownerDiff": 10
+ },
+ "rows": {
+  "a038": {
+   "before": {
+    "n": 25,
+    "strays": 3,
+    "found": 22,
+    "places": 26,
+    "kindDiff": 1,
+    "ownerDiff": 0
+   },
+   "after": {
+    "n": 27,
+    "strays": 2,
+    "found": 25,
+    "places": 26,
+    "kindDiff": 2,
+    "ownerDiff": 0
+   },
+   "made": "filed PDF"
+  },
+  "a001": {
+   "before": {
+    "n": 15,
+    "strays": 0,
+    "found": 15,
+    "places": 18,
+    "kindDiff": 0,
+    "ownerDiff": 0
+   },
+   "after": {
+    "n": 15,
+    "strays": 0,
+    "found": 15,
+    "places": 18,
+    "kindDiff": 0,
+    "ownerDiff": 0
+   },
+   "made": "browser portrait"
+  },
+  "c181": {
+   "before": {
+    "n": 60,
+    "strays": 0,
+    "found": 60,
+    "places": 105,
+    "kindDiff": 8,
+    "ownerDiff": 28
+   },
+   "after": {
+    "n": 75,
+    "strays": 0,
+    "found": 75,
+    "places": 105,
+    "kindDiff": 8,
+    "ownerDiff": 6
+   },
+   "made": "browser landscape"
+  },
+  "b056": {
+   "before": {
+    "n": 1,
+    "strays": 0,
+    "found": 1,
+    "places": 47,
+    "kindDiff": 0,
+    "ownerDiff": 0
+   },
+   "after": {
+    "n": 2,
+    "strays": 0,
+    "found": 2,
+    "places": 47,
+    "kindDiff": 0,
+    "ownerDiff": 0
+   },
+   "made": "browser portrait"
+  },
+  "b065": {
+   "before": {
+    "n": 57,
+    "strays": 25,
+    "found": 32,
+    "places": 109,
+    "kindDiff": 6,
+    "ownerDiff": 10
+   },
+   "after": {
+    "n": 60,
+    "strays": 22,
+    "found": 38,
+    "places": 109,
+    "kindDiff": 7,
+    "ownerDiff": 3
+   },
+   "made": "browser portrait"
+  },
+  "a099": {
+   "before": {
+    "n": 35,
+    "strays": 8,
+    "found": 27,
+    "places": 36,
+    "kindDiff": 3,
+    "ownerDiff": 7
+   },
+   "after": {
+    "n": 34,
+    "strays": 1,
+    "found": 33,
+    "places": 36,
+    "kindDiff": 3,
+    "ownerDiff": 1
+   },
+   "made": "browser portrait"
+  }
+ },
+ "confirms": [
+  {
+   "id": "c165",
+   "item": "k001",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "c165",
+   "item": "k002",
+   "kind": "signature",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "c165",
+   "item": "k003",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "c165",
+   "item": "k004",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "c165",
+   "item": "k005",
+   "kind": "tickbox",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "c165",
+   "item": "k006",
+   "kind": "tickbox",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "c165",
+   "item": "k007",
+   "kind": "tickbox",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "c165",
+   "item": "k008",
+   "kind": "tickbox",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "c165",
+   "item": "k009",
+   "kind": "tickbox",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "c165",
+   "item": "k010",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "c165",
+   "item": "k011",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "c165",
+   "item": "k012",
+   "kind": "tickbox",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "c300",
+   "item": "k001",
+   "kind": "signature",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "c300",
+   "item": "k002",
+   "kind": "date",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b040",
+   "item": "k001",
+   "kind": "tickbox",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b040",
+   "item": "k002",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b040",
+   "item": "k003",
+   "kind": "tickbox",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b040",
+   "item": "k004",
+   "kind": "tickbox",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b040",
+   "item": "k005",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b040",
+   "item": "k006",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b040",
+   "item": "k007",
+   "kind": "tickbox",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b040",
+   "item": "k008",
+   "kind": "tickbox",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b040",
+   "item": "k009",
+   "kind": "tickbox",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b040",
+   "item": "k010",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b040",
+   "item": "k011",
+   "kind": "tickbox",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b040",
+   "item": "k012",
+   "kind": "tickbox",
+   "answer": "no",
+   "why": "box"
+  },
+  {
+   "id": "a075",
+   "item": "k001",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "a075",
+   "item": "k002",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "a075",
+   "item": "k003",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "a075",
+   "item": "k004",
+   "kind": "blank",
+   "answer": "no",
+   "why": "kind"
+  },
+  {
+   "id": "a075",
+   "item": "k005",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "a075",
+   "item": "k006",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "a075",
+   "item": "k007",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "a075",
+   "item": "k008",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "a075",
+   "item": "k009",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "a075",
+   "item": "k010",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "a075",
+   "item": "k011",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "a075",
+   "item": "k012",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "a036",
+   "item": "k001",
+   "kind": "blank",
+   "answer": "no",
+   "why": "box"
+  },
+  {
+   "id": "b075",
+   "item": "k001",
+   "kind": "initials",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b075",
+   "item": "k002",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b075",
+   "item": "k003",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b075",
+   "item": "k004",
+   "kind": "initials",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b075",
+   "item": "k005",
+   "kind": "initials",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b075",
+   "item": "k006",
+   "kind": "blank",
+   "answer": "no",
+   "why": "kind"
+  },
+  {
+   "id": "b075",
+   "item": "k007",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b075",
+   "item": "k008",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b075",
+   "item": "k009",
+   "kind": "tickbox",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b075",
+   "item": "k010",
+   "kind": "blank",
+   "answer": "yes",
+   "why": null
+  },
+  {
+   "id": "b075",
+   "item": "k011",
+   "kind": "blank",
+   "answer": "no",
+   "why": "kind"
+  },
+  {
+   "id": "b075",
+   "item": "k012",
+   "kind": "initials",
+   "answer": "yes",
+   "why": null
+  }
+ ]
+}

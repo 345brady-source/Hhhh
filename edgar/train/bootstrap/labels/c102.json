@@ -1,0 +1,3721 @@
+{
+ "id": "c102",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:07Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": true,
+ "pages": 30,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ],
+  "15": [
+   612.0,
+   792.0
+  ],
+  "16": [
+   612.0,
+   792.0
+  ],
+  "17": [
+   612.0,
+   792.0
+  ],
+  "18": [
+   612.0,
+   792.0
+  ],
+  "19": [
+   612.0,
+   792.0
+  ],
+  "20": [
+   612.0,
+   792.0
+  ],
+  "21": [
+   612.0,
+   792.0
+  ],
+  "22": [
+   612.0,
+   792.0
+  ],
+  "23": [
+   612.0,
+   792.0
+  ],
+  "24": [
+   612.0,
+   792.0
+  ],
+  "25": [
+   612.0,
+   792.0
+  ],
+  "26": [
+   612.0,
+   792.0
+  ],
+  "27": [
+   612.0,
+   792.0
+  ],
+  "28": [
+   612.0,
+   792.0
+  ],
+  "29": [
+   612.0,
+   792.0
+  ],
+  "30": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text",
+  "17": "text",
+  "18": "text",
+  "19": "text",
+  "20": "text",
+  "21": "text",
+  "22": "text",
+  "23": "text",
+  "24": "text",
+  "25": "text",
+  "26": "text",
+  "27": "text",
+  "28": "text",
+  "29": "text",
+  "30": "empty"
+ },
+ "run": "out-18/set-c/c102/result.json",
+ "candidates": "66b9e42d7d9b32c8-f01586d5.json",
+ "counts": {
+  "fields": 13,
+  "counted_candidates": 65,
+  "pairs": 13,
+  "auto": 12,
+  "reader_only": 0,
+  "measure_only": 52,
+  "kind_clash": 1,
+  "person": 54,
+  "items": 107
+ },
+ "places": [
+  {
+   "page": 15,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "By",
+   "printed_label": "",
+   "must": false,
+   "x0": 127.5,
+   "y0": 172.4,
+   "x1": 307.5,
+   "y1": 187.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "By"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p15-001",
+   "block": "B01"
+  },
+  {
+   "page": 15,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "",
+   "must": false,
+   "x0": 127.5,
+   "y0": 228.6,
+   "x1": 307.5,
+   "y1": 244.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p15-002",
+   "block": "B02"
+  },
+  {
+   "page": 15,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Title",
+   "printed_label": "",
+   "must": false,
+   "x0": 127.5,
+   "y0": 292.4,
+   "x1": 307.5,
+   "y1": 307.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p15-003",
+   "block": "B03"
+  },
+  {
+   "page": 15,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": ", 2020",
+   "must": true,
+   "x0": 315.0,
+   "y0": 380.1,
+   "x1": 525.0,
+   "y1": 395.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Date signed"
+   },
+   "cand": "rule",
+   "id": "p15-004",
+   "block": "B04"
+  },
+  {
+   "page": 15,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Attn",
+   "printed_label": "",
+   "must": true,
+   "x0": 88.5,
+   "y0": 562.4,
+   "x1": 298.5,
+   "y1": 577.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Attn"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p15-005",
+   "block": "B05"
+  },
+  {
+   "page": 15,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Attn",
+   "printed_label": "",
+   "must": true,
+   "x0": 315.0,
+   "y0": 562.4,
+   "x1": 525.0,
+   "y1": 577.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Attn"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p15-006",
+   "block": "B05"
+  },
+  {
+   "page": 17,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "",
+   "must": true,
+   "x0": 338.2,
+   "y0": 121.4,
+   "x1": 525.0,
+   "y1": 136.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p17-001",
+   "block": "B06"
+  },
+  {
+   "page": 17,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Title",
+   "printed_label": "",
+   "must": false,
+   "x0": 338.2,
+   "y0": 145.4,
+   "x1": 525.0,
+   "y1": 160.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p17-002",
+   "block": "B06"
+  },
+  {
+   "page": 26,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "(a) a Canadian financial institution or a Schedule III bank",
+   "printed_label": "",
+   "must": false,
+   "x0": 90.3,
+   "y0": 596.9,
+   "x1": 100.0,
+   "y1": 606.6,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "(a) a Canadian financial institution or a Schedule III bank"
+   },
+   "cand": "glyphbox",
+   "id": "p26-001",
+   "block": "B37"
+  },
+  {
+   "page": 26,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "(b) the Business Development Bank of Canada incorporated und",
+   "printed_label": "",
+   "must": false,
+   "x0": 90.3,
+   "y0": 623.9,
+   "x1": 100.0,
+   "y1": 633.6,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "(b) the Business Development Bank of Canada incorporated und"
+   },
+   "cand": "glyphbox",
+   "id": "p26-002",
+   "block": "B37"
+  },
+  {
+   "page": 26,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "(c) a subsidiary of any person or company referred to in par",
+   "printed_label": "",
+   "must": false,
+   "x0": 90.3,
+   "y0": 664.4,
+   "x1": 100.0,
+   "y1": 674.1,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "(c) a subsidiary of any person or company referred to in par"
+   },
+   "cand": "glyphbox",
+   "id": "p26-003",
+   "block": "B38"
+  },
+  {
+   "page": 26,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "(d) a person or company registered under the securities legi",
+   "printed_label": "",
+   "must": false,
+   "x0": 90.3,
+   "y0": 718.4,
+   "x1": 100.0,
+   "y1": 728.1,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "(d) a person or company registered under the securities legi"
+   },
+   "cand": "glyphbox",
+   "id": "p26-004",
+   "block": "B39"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 17,
+   "box": [
+    338.2,
+    97.4,
+    525.0,
+    112.9
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a rule candidate the measure reads as line",
+   "item": "i001",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 17,
+   "box": [
+    88.5,
+    169.4,
+    301.5,
+    184.9
+   ],
+   "caption": ", 2020",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    91.3,
+    140.9,
+    101.1,
+    150.6
+   ],
+   "caption": "1",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i003",
+   "block": "B07"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    91.3,
+    212.9,
+    101.1,
+    222.6
+   ],
+   "caption": "1",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i004",
+   "block": "B08"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    121.3,
+    253.4,
+    131.1,
+    263.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i005",
+   "block": "B09"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    121.3,
+    310.4,
+    131.1,
+    320.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i006",
+   "block": "B10"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    121.3,
+    339.6,
+    131.1,
+    349.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i007",
+   "block": "B10"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    121.3,
+    368.9,
+    131.1,
+    378.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i008",
+   "block": "B10"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    121.3,
+    412.4,
+    131.1,
+    422.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i009",
+   "block": "B11"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    121.3,
+    455.1,
+    131.1,
+    464.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i010",
+   "block": "B12"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    121.3,
+    511.4,
+    131.1,
+    521.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i011",
+   "block": "B13"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    121.3,
+    581.9,
+    131.1,
+    591.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i012",
+   "block": "B14"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    121.3,
+    624.6,
+    131.1,
+    634.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i013",
+   "block": "B15"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    121.3,
+    680.9,
+    131.1,
+    690.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i014",
+   "block": "B16"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    121.3,
+    737.9,
+    131.1,
+    747.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i015",
+   "block": "B17"
+  },
+  {
+   "type": "measure-only",
+   "page": 20,
+   "box": [
+    61.3,
+    121.4,
+    71.1,
+    131.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i016",
+   "block": "B18"
+  },
+  {
+   "type": "measure-only",
+   "page": 20,
+   "box": [
+    61.3,
+    151.4,
+    71.1,
+    161.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i017",
+   "block": "B18"
+  },
+  {
+   "type": "measure-only",
+   "page": 24,
+   "box": [
+    90.3,
+    122.9,
+    100.0,
+    132.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i018",
+   "block": "B19"
+  },
+  {
+   "type": "measure-only",
+   "page": 24,
+   "box": [
+    90.3,
+    149.9,
+    100.0,
+    159.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i019",
+   "block": "B19"
+  },
+  {
+   "type": "measure-only",
+   "page": 24,
+   "box": [
+    90.3,
+    190.4,
+    100.0,
+    200.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i020",
+   "block": "B20"
+  },
+  {
+   "type": "measure-only",
+   "page": 24,
+   "box": [
+    90.3,
+    244.4,
+    100.0,
+    254.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i021",
+   "block": "B21"
+  },
+  {
+   "type": "measure-only",
+   "page": 24,
+   "box": [
+    90.3,
+    338.9,
+    100.0,
+    348.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i022",
+   "block": "B22"
+  },
+  {
+   "type": "measure-only",
+   "page": 24,
+   "box": [
+    90.3,
+    392.9,
+    100.0,
+    402.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i023",
+   "block": "B23"
+  },
+  {
+   "type": "measure-only",
+   "page": 24,
+   "box": [
+    90.3,
+    446.9,
+    100.0,
+    456.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i024",
+   "block": "B24"
+  },
+  {
+   "type": "measure-only",
+   "page": 24,
+   "box": [
+    90.3,
+    487.4,
+    100.0,
+    497.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i025",
+   "block": "B25"
+  },
+  {
+   "type": "measure-only",
+   "page": 24,
+   "box": [
+    90.3,
+    568.4,
+    100.0,
+    578.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i026",
+   "block": "B26"
+  },
+  {
+   "type": "measure-only",
+   "page": 24,
+   "box": [
+    90.3,
+    662.9,
+    100.0,
+    672.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i027",
+   "block": "B27"
+  },
+  {
+   "type": "measure-only",
+   "page": 24,
+   "box": [
+    90.3,
+    703.4,
+    100.0,
+    713.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i028",
+   "block": "B28"
+  },
+  {
+   "type": "measure-only",
+   "page": 26,
+   "box": [
+    90.3,
+    42.6,
+    100.0,
+    52.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i029",
+   "block": "B29"
+  },
+  {
+   "type": "measure-only",
+   "page": 26,
+   "box": [
+    90.3,
+    96.6,
+    100.0,
+    106.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i030",
+   "block": "B30"
+  },
+  {
+   "type": "measure-only",
+   "page": 26,
+   "box": [
+    90.3,
+    164.1,
+    100.0,
+    173.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i031",
+   "block": "B31"
+  },
+  {
+   "type": "measure-only",
+   "page": 26,
+   "box": [
+    90.3,
+    218.9,
+    100.0,
+    228.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i032",
+   "block": "B32"
+  },
+  {
+   "type": "measure-only",
+   "page": 26,
+   "box": [
+    90.3,
+    286.4,
+    100.0,
+    296.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i033",
+   "block": "B33"
+  },
+  {
+   "type": "measure-only",
+   "page": 26,
+   "box": [
+    90.3,
+    326.9,
+    100.0,
+    336.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i034",
+   "block": "B34"
+  },
+  {
+   "type": "measure-only",
+   "page": 26,
+   "box": [
+    90.3,
+    380.9,
+    100.0,
+    390.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i035",
+   "block": "B35"
+  },
+  {
+   "type": "measure-only",
+   "page": 26,
+   "box": [
+    90.3,
+    421.4,
+    100.0,
+    431.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i036",
+   "block": "B36"
+  },
+  {
+   "type": "measure-only",
+   "page": 26,
+   "box": [
+    90.3,
+    448.4,
+    100.0,
+    458.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i037",
+   "block": "B36"
+  },
+  {
+   "type": "measure-only",
+   "page": 26,
+   "box": [
+    88.5,
+    734.9,
+    203.2,
+    750.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i038",
+   "block": "B39"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    90.3,
+    42.6,
+    100.0,
+    52.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i039",
+   "block": "B40"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    90.3,
+    96.6,
+    100.0,
+    106.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i040",
+   "block": "B41"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    90.3,
+    137.1,
+    100.0,
+    146.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i041",
+   "block": "B42"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    90.3,
+    177.6,
+    100.0,
+    187.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i042",
+   "block": "B43"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    90.3,
+    218.1,
+    100.0,
+    227.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i043",
+   "block": "B44"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    90.3,
+    272.1,
+    100.0,
+    281.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i044",
+   "block": "B45"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    90.3,
+    339.6,
+    100.0,
+    349.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i045",
+   "block": "B46"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    90.3,
+    393.6,
+    100.0,
+    403.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i046",
+   "block": "B47"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    90.3,
+    501.6,
+    100.0,
+    511.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i047",
+   "block": "B48"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    90.3,
+    555.6,
+    100.0,
+    565.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i048",
+   "block": "B49"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    90.3,
+    609.6,
+    100.0,
+    619.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i049",
+   "block": "B50"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    90.3,
+    663.6,
+    100.0,
+    673.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i050",
+   "block": "B51"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    90.3,
+    704.1,
+    100.0,
+    713.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i051",
+   "block": "B52"
+  },
+  {
+   "type": "measure-only",
+   "page": 29,
+   "box": [
+    90.3,
+    71.1,
+    100.0,
+    80.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i052",
+   "block": "B53"
+  },
+  {
+   "type": "measure-only",
+   "page": 29,
+   "box": [
+    90.3,
+    111.6,
+    100.0,
+    121.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i053",
+   "block": "B54"
+  },
+  {
+   "item": "i054",
+   "type": "person",
+   "page": 15,
+   "box": [
+    127.5,
+    172.4,
+    307.5,
+    187.9
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i055",
+   "type": "person",
+   "page": 15,
+   "box": [
+    127.5,
+    228.6,
+    307.5,
+    244.1
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i056",
+   "type": "person",
+   "page": 15,
+   "box": [
+    127.5,
+    292.4,
+    307.5,
+    307.9
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i057",
+   "type": "person",
+   "page": 15,
+   "box": [
+    315.0,
+    380.1,
+    525.0,
+    395.6
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i058",
+   "type": "person",
+   "page": 15,
+   "box": [
+    88.5,
+    562.4,
+    525.0,
+    577.9
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Investor's EIN:"
+  },
+  {
+   "item": "i059",
+   "type": "person",
+   "page": 17,
+   "box": [
+    88.5,
+    97.4,
+    525.0,
+    184.9
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "VECTOIQ ACQUISITION CORP."
+  },
+  {
+   "item": "i060",
+   "type": "person",
+   "page": 18,
+   "box": [
+    91.3,
+    140.9,
+    101.1,
+    150.6
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "QUALIFIED INSTITUTIONAL BUYER STATUS"
+  },
+  {
+   "item": "i061",
+   "type": "person",
+   "page": 18,
+   "box": [
+    91.3,
+    212.9,
+    101.1,
+    222.6
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "INSTITUTIONAL ACCREDITED INVESTOR STATUS"
+  },
+  {
+   "item": "i062",
+   "type": "person",
+   "page": 18,
+   "box": [
+    121.3,
+    253.4,
+    131.1,
+    263.1
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "INSTITUTIONAL ACCREDITED INVESTOR STATUS"
+  },
+  {
+   "item": "i063",
+   "type": "person",
+   "page": 18,
+   "box": [
+    121.3,
+    310.4,
+    131.1,
+    378.6
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "INSTITUTIONAL ACCREDITED INVESTOR STATUS"
+  },
+  {
+   "item": "i064",
+   "type": "person",
+   "page": 18,
+   "box": [
+    121.3,
+    412.4,
+    131.1,
+    422.1
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i065",
+   "type": "person",
+   "page": 18,
+   "box": [
+    121.3,
+    455.1,
+    131.1,
+    464.9
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i066",
+   "type": "person",
+   "page": 18,
+   "box": [
+    121.3,
+    511.4,
+    131.1,
+    521.1
+   ],
+   "block": "B13",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i067",
+   "type": "person",
+   "page": 18,
+   "box": [
+    121.3,
+    581.9,
+    131.1,
+    591.6
+   ],
+   "block": "B14",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i068",
+   "type": "person",
+   "page": 18,
+   "box": [
+    121.3,
+    624.6,
+    131.1,
+    634.4
+   ],
+   "block": "B15",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i069",
+   "type": "person",
+   "page": 18,
+   "box": [
+    121.3,
+    680.9,
+    131.1,
+    690.6
+   ],
+   "block": "B16",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i070",
+   "type": "person",
+   "page": 18,
+   "box": [
+    121.3,
+    737.9,
+    131.1,
+    747.6
+   ],
+   "block": "B17",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i071",
+   "type": "person",
+   "page": 20,
+   "box": [
+    61.3,
+    121.4,
+    71.1,
+    161.1
+   ],
+   "block": "B18",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "THE INVESTOR:"
+  },
+  {
+   "item": "i072",
+   "type": "person",
+   "page": 24,
+   "box": [
+    90.3,
+    122.9,
+    100.0,
+    159.6
+   ],
+   "block": "B19",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i073",
+   "type": "person",
+   "page": 24,
+   "box": [
+    90.3,
+    190.4,
+    100.0,
+    200.1
+   ],
+   "block": "B20",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i074",
+   "type": "person",
+   "page": 24,
+   "box": [
+    90.3,
+    244.4,
+    100.0,
+    254.1
+   ],
+   "block": "B21",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i075",
+   "type": "person",
+   "page": 24,
+   "box": [
+    90.3,
+    338.9,
+    100.0,
+    348.6
+   ],
+   "block": "B22",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i076",
+   "type": "person",
+   "page": 24,
+   "box": [
+    90.3,
+    392.9,
+    100.0,
+    402.6
+   ],
+   "block": "B23",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i077",
+   "type": "person",
+   "page": 24,
+   "box": [
+    90.3,
+    446.9,
+    100.0,
+    456.6
+   ],
+   "block": "B24",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i078",
+   "type": "person",
+   "page": 24,
+   "box": [
+    90.3,
+    487.4,
+    100.0,
+    497.1
+   ],
+   "block": "B25",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i079",
+   "type": "person",
+   "page": 24,
+   "box": [
+    90.3,
+    568.4,
+    100.0,
+    578.1
+   ],
+   "block": "B26",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i080",
+   "type": "person",
+   "page": 24,
+   "box": [
+    90.3,
+    662.9,
+    100.0,
+    672.6
+   ],
+   "block": "B27",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i081",
+   "type": "person",
+   "page": 24,
+   "box": [
+    90.3,
+    703.4,
+    100.0,
+    713.1
+   ],
+   "block": "B28",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i082",
+   "type": "person",
+   "page": 26,
+   "box": [
+    90.3,
+    42.6,
+    100.0,
+    52.4
+   ],
+   "block": "B29",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i083",
+   "type": "person",
+   "page": 26,
+   "box": [
+    90.3,
+    96.6,
+    100.0,
+    106.4
+   ],
+   "block": "B30",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i084",
+   "type": "person",
+   "page": 26,
+   "box": [
+    90.3,
+    164.1,
+    100.0,
+    173.9
+   ],
+   "block": "B31",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i085",
+   "type": "person",
+   "page": 26,
+   "box": [
+    90.3,
+    218.9,
+    100.0,
+    228.6
+   ],
+   "block": "B32",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i086",
+   "type": "person",
+   "page": 26,
+   "box": [
+    90.3,
+    286.4,
+    100.0,
+    296.1
+   ],
+   "block": "B33",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i087",
+   "type": "person",
+   "page": 26,
+   "box": [
+    90.3,
+    326.9,
+    100.0,
+    336.6
+   ],
+   "block": "B34",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i088",
+   "type": "person",
+   "page": 26,
+   "box": [
+    90.3,
+    380.9,
+    100.0,
+    390.6
+   ],
+   "block": "B35",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "investors,"
+  },
+  {
+   "item": "i089",
+   "type": "person",
+   "page": 26,
+   "box": [
+    90.3,
+    421.4,
+    100.0,
+    458.1
+   ],
+   "block": "B36",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "investors,"
+  },
+  {
+   "item": "i090",
+   "type": "person",
+   "page": 26,
+   "box": [
+    90.3,
+    596.9,
+    100.0,
+    633.6
+   ],
+   "block": "B37",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i091",
+   "type": "person",
+   "page": 26,
+   "box": [
+    90.3,
+    664.4,
+    100.0,
+    674.1
+   ],
+   "block": "B38",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i092",
+   "type": "person",
+   "page": 26,
+   "box": [
+    88.5,
+    718.4,
+    203.2,
+    750.4
+   ],
+   "block": "B39",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i093",
+   "type": "person",
+   "page": 28,
+   "box": [
+    90.3,
+    42.6,
+    100.0,
+    52.4
+   ],
+   "block": "B40",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i094",
+   "type": "person",
+   "page": 28,
+   "box": [
+    90.3,
+    96.6,
+    100.0,
+    106.4
+   ],
+   "block": "B41",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i095",
+   "type": "person",
+   "page": 28,
+   "box": [
+    90.3,
+    137.1,
+    100.0,
+    146.9
+   ],
+   "block": "B42",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i096",
+   "type": "person",
+   "page": 28,
+   "box": [
+    90.3,
+    177.6,
+    100.0,
+    187.4
+   ],
+   "block": "B43",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i097",
+   "type": "person",
+   "page": 28,
+   "box": [
+    90.3,
+    218.1,
+    100.0,
+    227.9
+   ],
+   "block": "B44",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i098",
+   "type": "person",
+   "page": 28,
+   "box": [
+    90.3,
+    272.1,
+    100.0,
+    281.9
+   ],
+   "block": "B45",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i099",
+   "type": "person",
+   "page": 28,
+   "box": [
+    90.3,
+    339.6,
+    100.0,
+    349.4
+   ],
+   "block": "B46",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i100",
+   "type": "person",
+   "page": 28,
+   "box": [
+    90.3,
+    393.6,
+    100.0,
+    403.4
+   ],
+   "block": "B47",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i101",
+   "type": "person",
+   "page": 28,
+   "box": [
+    90.3,
+    501.6,
+    100.0,
+    511.4
+   ],
+   "block": "B48",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i102",
+   "type": "person",
+   "page": 28,
+   "box": [
+    90.3,
+    555.6,
+    100.0,
+    565.4
+   ],
+   "block": "B49",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i103",
+   "type": "person",
+   "page": 28,
+   "box": [
+    90.3,
+    609.6,
+    100.0,
+    619.4
+   ],
+   "block": "B50",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i104",
+   "type": "person",
+   "page": 28,
+   "box": [
+    90.3,
+    663.6,
+    100.0,
+    673.4
+   ],
+   "block": "B51",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i105",
+   "type": "person",
+   "page": 28,
+   "box": [
+    90.3,
+    704.1,
+    100.0,
+    713.9
+   ],
+   "block": "B52",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i106",
+   "type": "person",
+   "page": 29,
+   "box": [
+    90.3,
+    71.1,
+    100.0,
+    80.9
+   ],
+   "block": "B53",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i107",
+   "type": "person",
+   "page": 29,
+   "box": [
+    90.3,
+    111.6,
+    100.0,
+    121.4
+   ],
+   "block": "B54",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 15,
+   "block": "B01",
+   "box": [
+    127.5,
+    172.4,
+    307.5,
+    187.9
+   ],
+   "heading": "",
+   "context": [
+    "IN WITNESS WHEREOF, the undersigned has executed or caused this Subscription Agreement to be executed by its duly",
+    "authorized representative as of the date set forth below.",
+    "Name of Investor:",
+    "State/Country of Formation or Domicile:"
+   ],
+   "places": [
+    "p15-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 15,
+   "block": "B02",
+   "box": [
+    127.5,
+    228.6,
+    307.5,
+    244.1
+   ],
+   "heading": "",
+   "context": [
+    "Name of Investor:",
+    "State/Country of Formation or Domicile:",
+    "By:",
+    "Name:"
+   ],
+   "places": [
+    "p15-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 15,
+   "block": "B03",
+   "box": [
+    127.5,
+    292.4,
+    307.5,
+    307.9
+   ],
+   "heading": "",
+   "context": [
+    "By:",
+    "Name:",
+    "Title:"
+   ],
+   "places": [
+    "p15-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 15,
+   "block": "B04",
+   "box": [
+    315.0,
+    380.1,
+    525.0,
+    395.6
+   ],
+   "heading": "",
+   "context": [
+    "Title:",
+    "Date:"
+   ],
+   "places": [
+    "p15-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 15,
+   "block": "B05",
+   "box": [
+    88.5,
+    562.4,
+    525.0,
+    577.9
+   ],
+   "heading": "Investor's EIN:",
+   "context": [
+    "Investor's EIN:",
+    "Business Address-Street: Mailing Address-Street (if different):",
+    "City, State, Zip: City, State, Zip:",
+    "Attn: Attn:"
+   ],
+   "places": [
+    "p15-005",
+    "p15-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 17,
+   "block": "B06",
+   "box": [
+    88.5,
+    97.4,
+    525.0,
+    184.9
+   ],
+   "heading": "VECTOIQ ACQUISITION CORP.",
+   "context": [
+    "IN WITNESS WHEREOF, VectoIQ Acquisition Corp. has accepted this Subscription Agreement as of the date set forth below.",
+    "VECTOIQ ACQUISITION CORP."
+   ],
+   "places": [
+    "p17-001",
+    "p17-002"
+   ],
+   "items": [
+    "i001",
+    "i002"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B07",
+   "box": [
+    91.3,
+    140.9,
+    101.1,
+    150.6
+   ],
+   "heading": "QUALIFIED INSTITUTIONAL BUYER STATUS",
+   "context": [
+    "ELIGIBILITY REPRESENTATIONS OF THE INVESTOR",
+    "A.",
+    "QUALIFIED INSTITUTIONAL BUYER STATUS",
+    "(Please check the applicable subparagraphs):"
+   ],
+   "places": [],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B08",
+   "box": [
+    91.3,
+    212.9,
+    101.1,
+    222.6
+   ],
+   "heading": "INSTITUTIONAL ACCREDITED INVESTOR STATUS",
+   "context": [
+    "o We are a \"qualified institutional buyer\" (as defined in Rule 144A under the Securities Act).",
+    "B.",
+    "INSTITUTIONAL ACCREDITED INVESTOR STATUS",
+    "(Please check the applicable subparagraphs):"
+   ],
+   "places": [],
+   "items": [
+    "i004"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B09",
+   "box": [
+    121.3,
+    253.4,
+    131.1,
+    263.1
+   ],
+   "heading": "INSTITUTIONAL ACCREDITED INVESTOR STATUS",
+   "context": [
+    "(Please check the applicable subparagraphs):",
+    "1.",
+    "o We are an \"accredited investor\" (within the meaning of Rule 501(a) under the Securities Act. for one or more of the",
+    "following reasons (Please check the applicable subparagraphs):"
+   ],
+   "places": [],
+   "items": [
+    "i005"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B10",
+   "box": [
+    121.3,
+    310.4,
+    131.1,
+    378.6
+   ],
+   "heading": "INSTITUTIONAL ACCREDITED INVESTOR STATUS",
+   "context": [
+    "o",
+    "We are a bank, as defined in Section 3(a)(2) of the Securities Act or any savings and loan association or",
+    "other institution as defined in Section 3(a)(5)(A) of the Securities Act, whether acting in an individual or a",
+    "fiduciary capacity."
+   ],
+   "places": [],
+   "items": [
+    "i006",
+    "i007",
+    "i008"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B11",
+   "box": [
+    121.3,
+    412.4,
+    131.1,
+    422.1
+   ],
+   "heading": "",
+   "context": [
+    "We are an insurance company, as defined in Section 2(13) of the Securities Act.",
+    "o",
+    "We are an investment company registered under the Investment Company Act of 1940 or a business",
+    "development company, as defined in Section 2(a)(48) of that act."
+   ],
+   "places": [],
+   "items": [
+    "i009"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B12",
+   "box": [
+    121.3,
+    455.1,
+    131.1,
+    464.9
+   ],
+   "heading": "",
+   "context": [
+    "development company, as defined in Section 2(a)(48) of that act.",
+    "o",
+    "We are a Small Business Investment Company licensed by the U.S. Small Business Administration under",
+    "Section 301(c) or (d) of the Small Business Investment Act of 1958."
+   ],
+   "places": [],
+   "items": [
+    "i010"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B13",
+   "box": [
+    121.3,
+    511.4,
+    131.1,
+    521.1
+   ],
+   "heading": "",
+   "context": [
+    "o",
+    "We are a plan established and maintained by a state, its political subdivisions or any agency or",
+    "instrumentality of a state or its political subdivisions for the benefit of its employees, if the plan has total",
+    "assets in excess of $5 million."
+   ],
+   "places": [],
+   "items": [
+    "i011"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B14",
+   "box": [
+    121.3,
+    581.9,
+    131.1,
+    591.6
+   ],
+   "heading": "",
+   "context": [
+    "We are an employee benefit plan within the meaning of Title I of the Employee Retirement Income Security",
+    "Act of 1974, if the investment decision is being made by a plan fiduciary, as defined in Section 3(21) of such",
+    "act, and the plan fiduciary is either a bank, an insurance company, or a registered investment adviser, or if",
+    "the employee benefit plan has total assets in excess of $5 million."
+   ],
+   "places": [],
+   "items": [
+    "i012"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B15",
+   "box": [
+    121.3,
+    624.6,
+    131.1,
+    634.4
+   ],
+   "heading": "",
+   "context": [
+    "the employee benefit plan has total assets in excess of $5 million.",
+    "o",
+    "We are a private business development company, as defined in Section 202(a)(22) of the Investment",
+    "Advisers Act of 1940."
+   ],
+   "places": [],
+   "items": [
+    "i013"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B16",
+   "box": [
+    121.3,
+    680.9,
+    131.1,
+    690.6
+   ],
+   "heading": "",
+   "context": [
+    "o",
+    "We are a corporation, Massachusetts or similar business trust, or partnership, or an organization described in",
+    "Section 501(c)(3) of the Internal Revenue Code of 1986, as amended, that was not formed for the specific",
+    "purpose of acquiring the Securities, and that has total assets in excess of $5 million."
+   ],
+   "places": [],
+   "items": [
+    "i014"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B17",
+   "box": [
+    121.3,
+    737.9,
+    131.1,
+    747.6
+   ],
+   "heading": "",
+   "context": [
+    "o",
+    "We are a trust with total assets in excess of $5 million not formed for the specific purpose of acquiring the",
+    "Securities, whose purchase is directed by a sophisticated person as described in Rule 506(b)(2)(ii) under the",
+    "Securities Act."
+   ],
+   "places": [],
+   "items": [
+    "i015"
+   ]
+  },
+  {
+   "page": 20,
+   "block": "B18",
+   "box": [
+    61.3,
+    121.4,
+    71.1,
+    161.1
+   ],
+   "heading": "THE INVESTOR:",
+   "context": [
+    "C.",
+    "AFFILIATE STATUS",
+    "(Please check the applicable box)",
+    "THE INVESTOR:"
+   ],
+   "places": [],
+   "items": [
+    "i016",
+    "i017"
+   ]
+  },
+  {
+   "page": 24,
+   "block": "B19",
+   "box": [
+    90.3,
+    122.9,
+    100.0,
+    159.6
+   ],
+   "heading": "",
+   "context": [
+    "We hereby represent, warrant, covenant and certify that we are, or any party on whose behalf we are acting is, an \"accre",
+    "investor\" as defined in NI 45-106 or section 73.3(1) of the Securities Act (Ontario) by virtue of satisfying the indicat",
+    "below:",
+    "Please check the category that applies:"
+   ],
+   "places": [],
+   "items": [
+    "i018",
+    "i019"
+   ]
+  },
+  {
+   "page": 24,
+   "block": "B20",
+   "box": [
+    90.3,
+    190.4,
+    100.0,
+    200.1
+   ],
+   "heading": "",
+   "context": [
+    "Please check the category that applies:",
+    "o a Canadian financial institution or a Schedule III bank of the Bank Act (Canada),",
+    "o the Business Development Bank of Canada incorporated under the Business Development",
+    "Bank of Canada Act (Canada),"
+   ],
+   "places": [],
+   "items": [
+    "i020"
+   ]
+  },
+  {
+   "page": 24,
+   "block": "B21",
+   "box": [
+    90.3,
+    244.4,
+    100.0,
+    254.1
+   ],
+   "heading": "",
+   "context": [
+    "Bank of Canada Act (Canada),",
+    "o a subsidiary of any person or company referred to in paragraphs (a) or (b) if the person or",
+    "company owns all of the voting securities of the subsidiary, except the voting securities",
+    "required by law to be owned by directors of that subsidiary,"
+   ],
+   "places": [],
+   "items": [
+    "i021"
+   ]
+  },
+  {
+   "page": 24,
+   "block": "B22",
+   "box": [
+    90.3,
+    338.9,
+    100.0,
+    348.6
+   ],
+   "heading": "",
+   "context": [
+    "o a person or company registered under the securities legislation of a province or territory of",
+    "Canada as an adviser or dealer, except as otherwise prescribed by the regulations,",
+    "[omitted]",
+    "(e.1) [omitted]"
+   ],
+   "places": [],
+   "items": [
+    "i022"
+   ]
+  },
+  {
+   "page": 24,
+   "block": "B23",
+   "box": [
+    90.3,
+    392.9,
+    100.0,
+    402.6
+   ],
+   "heading": "",
+   "context": [
+    "(e.1) [omitted]",
+    "o the Government of Canada, the government of a province or territory of Canada, or any",
+    "Crown corporation, agency or wholly owned entity of the Government of Canada or of the",
+    "government of a province or territory of Canada,"
+   ],
+   "places": [],
+   "items": [
+    "i023"
+   ]
+  },
+  {
+   "page": 24,
+   "block": "B24",
+   "box": [
+    90.3,
+    446.9,
+    100.0,
+    456.6
+   ],
+   "heading": "",
+   "context": [
+    "government of a province or territory of Canada,",
+    "o a municipality, public board or commission in Canada and a metropolitan community, school",
+    "board, the Comit\u00e9 de gestion de la taxe scolaire de l'\u00eele de Montr\u00e9al or an intermunicipal",
+    "management board in Qu\u00e9bec,"
+   ],
+   "places": [],
+   "items": [
+    "i024"
+   ]
+  },
+  {
+   "page": 24,
+   "block": "B25",
+   "box": [
+    90.3,
+    487.4,
+    100.0,
+    497.1
+   ],
+   "heading": "",
+   "context": [
+    "board, the Comit\u00e9 de gestion de la taxe scolaire de l'\u00eele de Montr\u00e9al or an intermunicipal",
+    "management board in Qu\u00e9bec,",
+    "o any national, federal, state, provincial, territorial or municipal government of or in any foreign",
+    "jurisdiction, or any agency of that government,"
+   ],
+   "places": [],
+   "items": [
+    "i025"
+   ]
+  },
+  {
+   "page": 24,
+   "block": "B26",
+   "box": [
+    90.3,
+    568.4,
+    100.0,
+    578.1
+   ],
+   "heading": "",
+   "context": [
+    "o (i) a pension fund that is regulated by either the Office of the Superintendent of Financial",
+    "Institutions (Canada) or a pension commission or similar regulatory authority of a province or",
+    "territory of Canada,",
+    "[omitted]"
+   ],
+   "places": [],
+   "items": [
+    "i026"
+   ]
+  },
+  {
+   "page": 24,
+   "block": "B27",
+   "box": [
+    90.3,
+    662.9,
+    100.0,
+    672.6
+   ],
+   "heading": "",
+   "context": [
+    "o (j.1) an individual who beneficially owns financial assets having an aggregate realizable value that",
+    "before taxes, but net of any related liabilities, exceeds CAD$5,000,000,",
+    "[omitted]",
+    "[omitted]"
+   ],
+   "places": [],
+   "items": [
+    "i027"
+   ]
+  },
+  {
+   "page": 24,
+   "block": "B28",
+   "box": [
+    90.3,
+    703.4,
+    100.0,
+    713.1
+   ],
+   "heading": "",
+   "context": [
+    "[omitted]",
+    "[omitted]",
+    "o a person, other than an individual or investment fund, that has net assets of at least $5,000,000",
+    "as shown on its most recently prepared financial statements,"
+   ],
+   "places": [],
+   "items": [
+    "i028"
+   ]
+  },
+  {
+   "page": 26,
+   "block": "B29",
+   "box": [
+    90.3,
+    42.6,
+    100.0,
+    52.4
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i029"
+   ]
+  },
+  {
+   "page": 26,
+   "block": "B30",
+   "box": [
+    90.3,
+    96.6,
+    100.0,
+    106.4
+   ],
+   "heading": "",
+   "context": [
+    "o an investment fund that distributes or has distributed securities under a prospectus in a",
+    "jurisdiction of Canada for which the regulator or, in Qu\u00e9bec, the securities regulatory",
+    "authority, has issued a receipt,"
+   ],
+   "places": [],
+   "items": [
+    "i030"
+   ]
+  },
+  {
+   "page": 26,
+   "block": "B31",
+   "box": [
+    90.3,
+    164.1,
+    100.0,
+    173.9
+   ],
+   "heading": "",
+   "context": [
+    "o a trust company or trust corporation registered or authorized to carry on business under the",
+    "Trust and Loan Companies Act (Canada) or under comparable legislation in a jurisdiction of",
+    "Canada or a foreign jurisdiction, acting on behalf of a fully managed account managed by the",
+    "trust company or trust corporation, as the case may be,"
+   ],
+   "places": [],
+   "items": [
+    "i031"
+   ]
+  },
+  {
+   "page": 26,
+   "block": "B32",
+   "box": [
+    90.3,
+    218.9,
+    100.0,
+    228.6
+   ],
+   "heading": "",
+   "context": [
+    "o account(1)",
+    "a person acting on behalf of a fully managed managed by that person, if that person",
+    "is registered or authorized to carry on business as an adviser or the equivalent under the",
+    "securities legislation of a jurisdiction of Canada or a foreign jurisdiction,"
+   ],
+   "places": [],
+   "items": [
+    "i032"
+   ]
+  },
+  {
+   "page": 26,
+   "block": "B33",
+   "box": [
+    90.3,
+    286.4,
+    100.0,
+    296.1
+   ],
+   "heading": "",
+   "context": [
+    "o a registered charity under the Income Tax Act (Canada) that, in regard to the trade, has",
+    "obtained advice from an eligibility adviser or an adviser registered under the securities",
+    "legislation of the jurisdiction of the registered charity to give advice on the securities being",
+    "traded,"
+   ],
+   "places": [],
+   "items": [
+    "i033"
+   ]
+  },
+  {
+   "page": 26,
+   "block": "B34",
+   "box": [
+    90.3,
+    326.9,
+    100.0,
+    336.6
+   ],
+   "heading": "",
+   "context": [
+    "legislation of the jurisdiction of the registered charity to give advice on the securities being",
+    "traded,",
+    "o an entity organized in a foreign jurisdiction that is analogous to any of the entities referred to",
+    "in paragraphs (a) through (d) or paragraph (i) in form and function,"
+   ],
+   "places": [],
+   "items": [
+    "i034"
+   ]
+  },
+  {
+   "page": 26,
+   "block": "B35",
+   "box": [
+    90.3,
+    380.9,
+    100.0,
+    390.6
+   ],
+   "heading": "investors,",
+   "context": [
+    "in paragraphs (a) through (d) or paragraph (i) in form and function,",
+    "o a person in respect of which all of the owners of interests, direct, indirect or beneficial, except",
+    "the voting securities required by law to be owned by directors, are persons that are accredited",
+    "investors,"
+   ],
+   "places": [],
+   "items": [
+    "i035"
+   ]
+  },
+  {
+   "page": 26,
+   "block": "B36",
+   "box": [
+    90.3,
+    421.4,
+    100.0,
+    458.1
+   ],
+   "heading": "investors,",
+   "context": [
+    "the voting securities required by law to be owned by directors, are persons that are accredited",
+    "investors,",
+    "o an investment fund that is advised by a person registered as an adviser or a person that is",
+    "exempt from registration as an adviser,"
+   ],
+   "places": [],
+   "items": [
+    "i036",
+    "i037"
+   ]
+  },
+  {
+   "page": 26,
+   "block": "B37",
+   "box": [
+    90.3,
+    596.9,
+    100.0,
+    633.6
+   ],
+   "heading": "",
+   "context": [
+    "accredited investor's spouse or of that accredited investor's former spouse.",
+    "12. We hereby represent, warrant, covenant and certify that we are, or any party on whose behalf we are",
+    "acting is, a \"permitted client\" by virtue of the criterion indicated below,",
+    "Please check the category that applies:"
+   ],
+   "places": [
+    "p26-001",
+    "p26-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 26,
+   "block": "B38",
+   "box": [
+    90.3,
+    664.4,
+    100.0,
+    674.1
+   ],
+   "heading": "",
+   "context": [
+    "Please check the category that applies:",
+    "o (a) a Canadian financial institution or a Schedule III bank;",
+    "o (b) the Business Development Bank of Canada incorporated under the Business Development",
+    "Bank of Canada Act (Canada);"
+   ],
+   "places": [
+    "p26-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 26,
+   "block": "B39",
+   "box": [
+    88.5,
+    718.4,
+    203.2,
+    750.4
+   ],
+   "heading": "",
+   "context": [
+    "Bank of Canada Act (Canada);",
+    "o (c) a subsidiary of any person or company referred to in paragraph (a) or (b), if the person or",
+    "company owns all of the voting securities of the subsidiary, except the voting securities",
+    "required by law to be owned by directors of the subsidiary;"
+   ],
+   "places": [
+    "p26-004"
+   ],
+   "items": [
+    "i038"
+   ]
+  },
+  {
+   "page": 28,
+   "block": "B40",
+   "box": [
+    90.3,
+    42.6,
+    100.0,
+    52.4
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i039"
+   ]
+  },
+  {
+   "page": 28,
+   "block": "B41",
+   "box": [
+    90.3,
+    96.6,
+    100.0,
+    106.4
+   ],
+   "heading": "",
+   "context": [
+    "o (e) a pension fund that is regulated by either the Office of the Superintendent of Financial",
+    "Institutions or a pension commission or similar regulatory authority of a jurisdiction of",
+    "Canada or a wholly-owned subsidiary of such a pension fund;"
+   ],
+   "places": [],
+   "items": [
+    "i040"
+   ]
+  },
+  {
+   "page": 28,
+   "block": "B42",
+   "box": [
+    90.3,
+    137.1,
+    100.0,
+    146.9
+   ],
+   "heading": "",
+   "context": [
+    "Institutions or a pension commission or similar regulatory authority of a jurisdiction of",
+    "Canada or a wholly-owned subsidiary of such a pension fund;",
+    "o (f) an entity organized in a foreign jurisdiction that is analogous to any of the entities referred to",
+    "in paragraphs (a) through (e);"
+   ],
+   "places": [],
+   "items": [
+    "i041"
+   ]
+  },
+  {
+   "page": 28,
+   "block": "B43",
+   "box": [
+    90.3,
+    177.6,
+    100.0,
+    187.4
+   ],
+   "heading": "",
+   "context": [
+    "o (f) an entity organized in a foreign jurisdiction that is analogous to any of the entities referred to",
+    "in paragraphs (a) through (e);",
+    "o (g) the Government of Canada or a jurisdiction of Canada, or any Crown corporation, agency or",
+    "wholly-owned entity of the Government of Canada or a jurisdiction of Canada;"
+   ],
+   "places": [],
+   "items": [
+    "i042"
+   ]
+  },
+  {
+   "page": 28,
+   "block": "B44",
+   "box": [
+    90.3,
+    218.1,
+    100.0,
+    227.9
+   ],
+   "heading": "",
+   "context": [
+    "o (g) the Government of Canada or a jurisdiction of Canada, or any Crown corporation, agency or",
+    "wholly-owned entity of the Government of Canada or a jurisdiction of Canada;",
+    "o (h) any national, federal, state, provincial, territorial or municipal government of or in any foreign",
+    "jurisdiction, or any agency of that government;"
+   ],
+   "places": [],
+   "items": [
+    "i043"
+   ]
+  },
+  {
+   "page": 28,
+   "block": "B45",
+   "box": [
+    90.3,
+    272.1,
+    100.0,
+    281.9
+   ],
+   "heading": "",
+   "context": [
+    "jurisdiction, or any agency of that government;",
+    "o (i) a municipality, public board or commission in Canada and a metropolitan community, school",
+    "board, the Comit\u00e9 de gestion de la taxe scolaire de l'\u00eele de Montr\u00e9al or an intermunicipal",
+    "management board in Quebec;"
+   ],
+   "places": [],
+   "items": [
+    "i044"
+   ]
+  },
+  {
+   "page": 28,
+   "block": "B46",
+   "box": [
+    90.3,
+    339.6,
+    100.0,
+    349.4
+   ],
+   "heading": "",
+   "context": [
+    "o (j) a trust company or trust corporation registered or authorized to carry on business under the",
+    "Trust and Loan Companies Act (Canada) or under comparable legislation in a jurisdiction of",
+    "Canada or a foreign jurisdiction, acting on behalf of a managed account managed by the trust",
+    "company or trust corporation, as the case may be;"
+   ],
+   "places": [],
+   "items": [
+    "i045"
+   ]
+  },
+  {
+   "page": 28,
+   "block": "B47",
+   "box": [
+    90.3,
+    393.6,
+    100.0,
+    403.4
+   ],
+   "heading": "",
+   "context": [
+    "company or trust corporation, as the case may be;",
+    "o (k) a person or company acting on behalf of a managed account managed by person or company,",
+    "if the person or company is registered or authorized to carry on business as an adviser or the",
+    "equivalent under the securities legislation of a jurisdiction of Canada or a foreign jurisdiction;"
+   ],
+   "places": [],
+   "items": [
+    "i046"
+   ]
+  },
+  {
+   "page": 28,
+   "block": "B48",
+   "box": [
+    90.3,
+    501.6,
+    100.0,
+    511.4
+   ],
+   "heading": "",
+   "context": [
+    "(i) the fund is managed by a person or company registered as an investment fund manager",
+    "under the securities legislation of a jurisdiction of Canada;",
+    "(ii) the fund is advised by a person or company authorized to act as an adviser under the",
+    "securities legislation of a jurisdiction of Canada;"
+   ],
+   "places": [],
+   "items": [
+    "i047"
+   ]
+  },
+  {
+   "page": 28,
+   "block": "B49",
+   "box": [
+    90.3,
+    555.6,
+    100.0,
+    565.4
+   ],
+   "heading": "",
+   "context": [
+    "securities legislation of a jurisdiction of Canada;",
+    "o (m) in respect of a dealer, a registered charity under the Income Tax Act (Canada) that obtains",
+    "advice on the securities to be traded from an eligibility adviser or an adviser registered under",
+    "the securities legislation of the jurisdiction of the registered charity;"
+   ],
+   "places": [],
+   "items": [
+    "i048"
+   ]
+  },
+  {
+   "page": 28,
+   "block": "B50",
+   "box": [
+    90.3,
+    609.6,
+    100.0,
+    619.4
+   ],
+   "heading": "",
+   "context": [
+    "the securities legislation of the jurisdiction of the registered charity;",
+    "o (n) in respect of an adviser, a registered charity under the Income Tax Act (Canada) that is",
+    "advised by an eligibility adviser or an adviser registered under the securities legislation of the",
+    "jurisdiction of the registered charity;"
+   ],
+   "places": [],
+   "items": [
+    "i049"
+   ]
+  },
+  {
+   "page": 28,
+   "block": "B51",
+   "box": [
+    90.3,
+    663.6,
+    100.0,
+    673.4
+   ],
+   "heading": "",
+   "context": [
+    "jurisdiction of the registered charity;",
+    "o (o) a registered charity under the Income Tax Act (Canada) that obtains advice on the securities to",
+    "be traded from an eligibility adviser or an adviser registered under the securities legislation of",
+    "the jurisdiction of the registered charity;"
+   ],
+   "places": [],
+   "items": [
+    "i050"
+   ]
+  },
+  {
+   "page": 28,
+   "block": "B52",
+   "box": [
+    90.3,
+    704.1,
+    100.0,
+    713.9
+   ],
+   "heading": "",
+   "context": [
+    "be traded from an eligibility adviser or an adviser registered under the securities legislation of",
+    "the jurisdiction of the registered charity;",
+    "o (p) an individual who beneficially owns financial assets having an aggregate realizable value that,",
+    "before taxes but net of any related liabilities, exceeds $5 million;"
+   ],
+   "places": [],
+   "items": [
+    "i051"
+   ]
+  },
+  {
+   "page": 29,
+   "block": "B53",
+   "box": [
+    90.3,
+    71.1,
+    100.0,
+    80.9
+   ],
+   "heading": "",
+   "context": [
+    "authorized to carry on business under the Trust and Loan Companies Act (Canada) or under",
+    "comparable legislation in a jurisdiction of Canada or a foreign jurisdiction;"
+   ],
+   "places": [],
+   "items": [
+    "i052"
+   ]
+  },
+  {
+   "page": 29,
+   "block": "B54",
+   "box": [
+    90.3,
+    111.6,
+    100.0,
+    121.4
+   ],
+   "heading": "",
+   "context": [
+    "authorized to carry on business under the Trust and Loan Companies Act (Canada) or under",
+    "comparable legislation in a jurisdiction of Canada or a foreign jurisdiction;",
+    "o (r) a person or company, other than an individual or an investment fund, that has net assets of at",
+    "least C$25,000,000 as shown on its most recently prepared financial statements; or"
+   ],
+   "places": [],
+   "items": [
+    "i053"
+   ]
+  }
+ ]
+}

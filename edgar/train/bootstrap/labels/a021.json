@@ -1,0 +1,1699 @@
+{
+ "id": "a021",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:03Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 22,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ],
+  "15": [
+   612.0,
+   792.0
+  ],
+  "16": [
+   612.0,
+   792.0
+  ],
+  "17": [
+   612.0,
+   792.0
+  ],
+  "18": [
+   612.0,
+   792.0
+  ],
+  "19": [
+   612.0,
+   792.0
+  ],
+  "20": [
+   612.0,
+   792.0
+  ],
+  "21": [
+   612.0,
+   792.0
+  ],
+  "22": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text",
+  "17": "text",
+  "18": "text",
+  "19": "text",
+  "20": "text",
+  "21": "text",
+  "22": "text"
+ },
+ "run": "out-18/set-a/a021/result.json",
+ "candidates": "68818252356148ca-f01586d5.json",
+ "counts": {
+  "fields": 28,
+  "counted_candidates": 29,
+  "pairs": 28,
+  "auto": 24,
+  "reader_only": 0,
+  "measure_only": 1,
+  "kind_clash": 4,
+  "person": 21,
+  "items": 26
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "I represent and warrant that the Subscriber is a United Stat",
+   "printed_label": "",
+   "must": false,
+   "x0": 69.7,
+   "y0": 286.3,
+   "x1": 78.7,
+   "y1": 296.2,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "I represent and warrant that the Subscriber is a United Stat"
+   },
+   "cand": "tick",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "I represent and warrant that the International Subscriber is",
+   "printed_label": "[",
+   "must": false,
+   "x0": 73.1,
+   "y0": 322.3,
+   "x1": 82.1,
+   "y1": 332.2,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "I represent and warrant that the International Subscriber is"
+   },
+   "cand": "tick",
+   "id": "p01-002",
+   "block": "B02"
+  },
+  {
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Accredited Investor Status. I represent and warrant that the",
+   "printed_label": "[",
+   "must": false,
+   "x0": 73.1,
+   "y0": 425.8,
+   "x1": 82.1,
+   "y1": 435.7,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Accredited Investor Status. I represent and warrant that the"
+   },
+   "cand": "tick",
+   "id": "p01-003",
+   "block": "B03"
+  },
+  {
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Qualified Purchaser Status. I represent and warrant that the",
+   "printed_label": "[",
+   "must": false,
+   "x0": 73.1,
+   "y0": 473.8,
+   "x1": 82.1,
+   "y1": 483.7,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Qualified Purchaser Status. I represent and warrant that the"
+   },
+   "cand": "tick",
+   "id": "p01-004",
+   "block": "B04"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "An employee benefit plan (within the meaning of Section 3(3)",
+   "printed_label": "(\u201cERISA\u201d)),",
+   "must": false,
+   "x0": 33.7,
+   "y0": 180.5,
+   "x1": 42.7,
+   "y1": 190.5,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "An employee benefit plan (within the meaning of Section 3(3)"
+   },
+   "cand": "tick",
+   "id": "p02-001",
+   "block": "B05"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "An entity 25% or more of the value of any class of equity of",
+   "printed_label": "provided",
+   "must": false,
+   "x0": 33.7,
+   "y0": 251.0,
+   "x1": 42.7,
+   "y1": 261.0,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "An entity 25% or more of the value of any class of equity of"
+   },
+   "cand": "tick",
+   "id": "p02-002",
+   "block": "B06"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "A \u201cbenefit plan investor\u201d based on the immediately preceding",
+   "printed_label": "Code",
+   "must": false,
+   "x0": 33.7,
+   "y0": 308.8,
+   "x1": 42.7,
+   "y1": 318.7,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "A \u201cbenefit plan investor\u201d based on the immediately preceding"
+   },
+   "cand": "tick",
+   "id": "p02-003",
+   "block": "B07"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "The Subscriber acknowledges that the Subscription Informatio",
+   "printed_label": "Subscriber\u2019s",
+   "must": false,
+   "x0": 33.7,
+   "y0": 398.8,
+   "x1": 42.7,
+   "y1": 408.7,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "The Subscriber acknowledges that the Subscription Informatio"
+   },
+   "cand": "tick",
+   "id": "p02-004",
+   "block": "B08"
+  },
+  {
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "The Subscriber agrees that at any time in the future at whic",
+   "printed_label": "be",
+   "must": false,
+   "x0": 33.7,
+   "y0": 26.8,
+   "x1": 42.7,
+   "y1": 36.7,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "The Subscriber agrees that at any time in the future at whic"
+   },
+   "cand": "tick",
+   "id": "p03-001",
+   "block": "B09"
+  },
+  {
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "The Subscriber agrees on behalf of the Subscriber and the Su",
+   "printed_label": "consideration,",
+   "must": false,
+   "x0": 33.7,
+   "y0": 84.5,
+   "x1": 42.7,
+   "y1": 94.5,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "The Subscriber agrees on behalf of the Subscriber and the Su"
+   },
+   "cand": "tick",
+   "id": "p03-002",
+   "block": "B10"
+  },
+  {
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "The Subscriber acknowledges and agrees that the Subscriber h",
+   "printed_label": "following",
+   "must": false,
+   "x0": 33.7,
+   "y0": 176.8,
+   "x1": 42.7,
+   "y1": 186.7,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "The Subscriber acknowledges and agrees that the Subscriber h"
+   },
+   "cand": "tick",
+   "id": "p03-003",
+   "block": "B11"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "of use",
+   "printed_label": "c. The terms of use for the",
+   "must": true,
+   "x0": 204.0,
+   "y0": 256.7,
+   "x1": 239.0,
+   "y1": 272.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "of use"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p03-004",
+   "block": "B12"
+  },
+  {
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor-entity",
+   "label": "I represent and warrant to the Company that the answers prov",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 26.8,
+   "x1": 42.7,
+   "y1": 36.7,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "entity",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "I represent and warrant to the Company that the answers prov"
+   },
+   "cand": "tick",
+   "id": "p04-001",
+   "block": "B13"
+  },
+  {
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor-entity",
+   "label": "I agree to be bound (or, if I am an authorized representativ",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 98.8,
+   "x1": 42.7,
+   "y1": 108.7,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "entity",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "I agree to be bound (or, if I am an authorized representativ"
+   },
+   "cand": "tick",
+   "id": "p04-002",
+   "block": "B14"
+  },
+  {
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor-entity",
+   "label": "I represent and warrant to the Company that all questions an",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 230.8,
+   "x1": 42.7,
+   "y1": 240.7,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "entity",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "I represent and warrant to the Company that all questions an"
+   },
+   "cand": "tick",
+   "id": "p04-003",
+   "block": "B15"
+  },
+  {
+   "page": 21,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "By checking this box and clicking the \u201cI Agree\u201d button, I ag",
+   "printed_label": "Agreement",
+   "must": false,
+   "x0": 33.7,
+   "y0": 48.5,
+   "x1": 42.7,
+   "y1": 58.5,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "By checking this box and clicking the \u201cI Agree\u201d button, I ag"
+   },
+   "cand": "tick",
+   "id": "p21-001",
+   "block": "B16"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "/s/",
+   "printed_label": "[SIGNATORY NAME]",
+   "must": true,
+   "x0": 231.0,
+   "y0": 120.2,
+   "x1": 578.2,
+   "y1": 135.7,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "/s/"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p21-002",
+   "block": "B18"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "[SIGNATORY TITLE]",
+   "must": true,
+   "x0": 231.0,
+   "y0": 133.7,
+   "x1": 578.2,
+   "y1": 149.2,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p21-003",
+   "block": "B18"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "INVESTMENT SIGN DATE",
+   "printed_label": "$[PURCHASE AMOUNT]",
+   "must": true,
+   "x0": 231.0,
+   "y0": 160.7,
+   "x1": 578.2,
+   "y1": 176.2,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "INVESTMENT SIGN DATE"
+   },
+   "cand": "rule",
+   "what": "date",
+   "id": "p21-004",
+   "block": "B18"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "$",
+   "printed_label": "",
+   "must": true,
+   "x0": 231.0,
+   "y0": 174.2,
+   "x1": 578.2,
+   "y1": 189.7,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "$"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p21-005",
+   "block": "B18"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Effective Date",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 283.7,
+   "x1": 68.7,
+   "y1": 299.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Effective Date"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p21-006",
+   "block": "B20"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 295.7,
+   "x1": 68.7,
+   "y1": 311.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p21-007",
+   "block": "B20"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 307.7,
+   "x1": 68.7,
+   "y1": 323.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p21-008",
+   "block": "B20"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 319.7,
+   "x1": 68.7,
+   "y1": 335.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p21-009",
+   "block": "B20"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 21,
+   "box": [
+    231.0,
+    106.7,
+    578.2,
+    122.2
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "entity",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Investor name"
+   },
+   "caption": "/s/ [SIGNATORY NAME]",
+   "cand": {
+    "kind": "rule",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor-entity",
+    "what": "name"
+   },
+   "question": "reader text (line) on a rule candidate the measure reads as sign",
+   "item": "i001",
+   "block": "B18"
+  },
+  {
+   "type": "kind-clash",
+   "page": 21,
+   "box": [
+    231.0,
+    147.2,
+    578.2,
+    162.7
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Title"
+   },
+   "caption": "[INVESTMENT SIGN DATE]",
+   "cand": {
+    "kind": "rule",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "date"
+   },
+   "question": "reader text (line) on a rule candidate the measure reads as sign",
+   "item": "i002",
+   "block": "B18"
+  },
+  {
+   "type": "kind-clash",
+   "page": 21,
+   "box": [
+    133.7,
+    186.2,
+    168.7,
+    201.7
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "caption": "Number of General Sale",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "firm",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a underscore candidate the measure reads as line",
+   "item": "i003",
+   "block": "B17"
+  },
+  {
+   "type": "kind-clash",
+   "page": 21,
+   "box": [
+    33.7,
+    222.2,
+    68.7,
+    237.7
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "THE COMPANY"
+   },
+   "caption": "By",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "firm",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i004",
+   "block": "B19"
+  },
+  {
+   "type": "measure-only",
+   "page": 21,
+   "box": [
+    231.0,
+    271.7,
+    578.2,
+    287.2
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i005",
+   "block": "B21"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 1,
+   "box": [
+    69.7,
+    286.3,
+    78.7,
+    296.2
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 1,
+   "box": [
+    73.1,
+    322.3,
+    82.1,
+    332.2
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 1,
+   "box": [
+    73.1,
+    425.8,
+    82.1,
+    435.7
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 1,
+   "box": [
+    73.1,
+    473.8,
+    82.1,
+    483.7
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    180.5,
+    42.7,
+    190.5
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    251.0,
+    42.7,
+    261.0
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    308.8,
+    42.7,
+    318.7
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    398.8,
+    42.7,
+    408.7
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "BY PURCHASING THE SECURITIES, THE SUBSCRIBER EXPRESSLY ACKNOWLEDGES AND ASSUMES THESE"
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 3,
+   "box": [
+    33.7,
+    26.8,
+    42.7,
+    36.7
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 3,
+   "box": [
+    33.7,
+    84.5,
+    42.7,
+    94.5
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i016",
+   "type": "person",
+   "page": 3,
+   "box": [
+    33.7,
+    176.8,
+    42.7,
+    186.7
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i017",
+   "type": "person",
+   "page": 3,
+   "box": [
+    204.0,
+    256.7,
+    239.0,
+    272.2
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i018",
+   "type": "person",
+   "page": 4,
+   "box": [
+    33.7,
+    26.8,
+    42.7,
+    36.7
+   ],
+   "block": "B13",
+   "proposed": {
+    "owner": "investor-entity"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i019",
+   "type": "person",
+   "page": 4,
+   "box": [
+    33.7,
+    98.8,
+    42.7,
+    108.7
+   ],
+   "block": "B14",
+   "proposed": {
+    "owner": "investor-entity"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i020",
+   "type": "person",
+   "page": 4,
+   "box": [
+    33.7,
+    230.8,
+    42.7,
+    240.7
+   ],
+   "block": "B15",
+   "proposed": {
+    "owner": "investor-entity"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i021",
+   "type": "person",
+   "page": 21,
+   "box": [
+    33.7,
+    48.5,
+    42.7,
+    58.5
+   ],
+   "block": "B16",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "E-SIGNATURE PAGE"
+  },
+  {
+   "item": "i022",
+   "type": "person",
+   "page": 21,
+   "box": [
+    133.7,
+    186.2,
+    168.7,
+    201.7
+   ],
+   "block": "B17",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "Entity Name: [ENTITY NAME]"
+  },
+  {
+   "item": "i023",
+   "type": "person",
+   "page": 21,
+   "box": [
+    231.0,
+    106.7,
+    578.2,
+    189.7
+   ],
+   "block": "B18",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "E-SIGNATURE PAGE"
+  },
+  {
+   "item": "i024",
+   "type": "person",
+   "page": 21,
+   "box": [
+    33.7,
+    222.2,
+    68.7,
+    237.7
+   ],
+   "block": "B19",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "AGREED AND ACCEPTED BY"
+  },
+  {
+   "item": "i025",
+   "type": "person",
+   "page": 21,
+   "box": [
+    33.7,
+    283.7,
+    68.7,
+    335.2
+   ],
+   "block": "B20",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "THE COMPANY:"
+  },
+  {
+   "item": "i026",
+   "type": "person",
+   "page": 21,
+   "box": [
+    231.0,
+    271.7,
+    578.2,
+    287.2
+   ],
+   "block": "B21",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "THE COMPANY:"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    69.7,
+    286.3,
+    78.7,
+    296.2
+   ],
+   "heading": "",
+   "context": [
+    "Subscriber Questionnaire indicates that any Subscriber\u2019s response to a question requires further information, the Subscr",
+    "should contact the Company as soon as possible. Subscribers must complete and return all other additional required",
+    "documentation, including an IRS Form W-9.",
+    "1. U.S. Person or Entity Status."
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    73.1,
+    322.3,
+    82.1,
+    332.2
+   ],
+   "heading": "",
+   "context": [
+    "documentation, including an IRS Form W-9.",
+    "1. U.S. Person or Entity Status.",
+    "I represent and warrant that the Subscriber is a United States citizen or resident or a corporation, partnership, limite",
+    "liability company, trust, or equivalent legal entity organized under the laws of any state of the United States."
+   ],
+   "places": [
+    "p01-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B03",
+   "box": [
+    73.1,
+    425.8,
+    82.1,
+    435.7
+   ],
+   "heading": "",
+   "context": [
+    "United States.]1",
+    "2. Accredited Investor or Qualified Purchaser Status.",
+    "To invest in this offering, the Subscriber must either be an \u201caccredited investor,\u201d within the meaning of Rule 501(a) un",
+    "Act, or the Subscriber must be a \u201cqualified purchaser,\u201d within the meaning of Regulation A under the Securities Act."
+   ],
+   "places": [
+    "p01-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B04",
+   "box": [
+    73.1,
+    473.8,
+    82.1,
+    483.7
+   ],
+   "heading": "",
+   "context": [
+    "Act, or the Subscriber must be a \u201cqualified purchaser,\u201d within the meaning of Regulation A under the Securities Act.",
+    "[ Accredited Investor Status. I represent and warrant that the Subscriber is an \u201caccredited investor,\u201d within the",
+    "meaning of Rule 501(a) under the Securities Act, [and the Subscriber has been authenticated and verified by the",
+    "Company\u2019s accreditation service as an accredited investor.]2"
+   ],
+   "places": [
+    "p01-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B05",
+   "box": [
+    33.7,
+    180.5,
+    42.7,
+    190.5
+   ],
+   "heading": "",
+   "context": [
+    "(a) 10% of the Subscriber\u2019s revenue; or",
+    "(b) 10% of the Subscriber\u2019s net assets.]5",
+    "3. ERISA. Benefit Plan Investor Status. I represent and warrant that the Subscriber is not, and neither I nor the Subscr",
+    "acting (directly or indirectly) on behalf of, any of the following:"
+   ],
+   "places": [
+    "p02-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B06",
+   "box": [
+    33.7,
+    251.0,
+    42.7,
+    261.0
+   ],
+   "heading": "",
+   "context": [
+    "(\u201cERISA\u201d)), whether or not the plan is subject to Title I of ERISA; a plan, individual retirement account or other arran",
+    "subject to Section 4975 of the Internal Revenue Code (\u201cCode\u201d); a \u201cbenefit plan investor\u201d within the meaning of 29 C.F.R.",
+    "Section 2510.3-101; a \u201cgovernmental plan\u201d within the meaning of Section 3(32) of ERISA; or a person that is deemed to ho",
+    "assets\u201d under the ERISA plan assets regulations, and consequently subject to regulation under ERISA."
+   ],
+   "places": [
+    "p02-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B07",
+   "box": [
+    33.7,
+    308.8,
+    42.7,
+    318.7
+   ],
+   "heading": "",
+   "context": [
+    "An entity 25% or more of the value of any class of equity of which is held by entities described in the paragraph above;",
+    "provided that for purposes of making the determination, the value of any equity interest held by a person (other than an",
+    "in the beginning of this item) who has discretionary authority or control with respect to the assets of the entity or a ",
+    "investment advice for a fee (direct or indirect) with respect to those assets, or any affiliate of that person, will be "
+   ],
+   "places": [
+    "p02-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B08",
+   "box": [
+    33.7,
+    398.8,
+    42.7,
+    408.7
+   ],
+   "heading": "BY PURCHASING THE SECURITIES, THE SUBSCRIBER EXPRESSLY ACKNOWLEDGES AND ASSUMES THESE",
+   "context": [
+    "Code.",
+    "4. Additional Information.",
+    "BY PURCHASING THE SECURITIES, THE SUBSCRIBER EXPRESSLY ACKNOWLEDGES AND ASSUMES THESE",
+    "RISKS."
+   ],
+   "places": [
+    "p02-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B09",
+   "box": [
+    33.7,
+    26.8,
+    42.7,
+    36.7
+   ],
+   "heading": "",
+   "context": [],
+   "places": [
+    "p03-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B10",
+   "box": [
+    33.7,
+    84.5,
+    42.7,
+    94.5
+   ],
+   "heading": "",
+   "context": [
+    "The Subscriber agrees that at any time in the future at which the Subscriber may acquire the Securities, the Subscriber ",
+    "be deemed to have reaffirmed, as of the date of acquisition of the Securities, each and every representation and warrant",
+    "Subscriber in this Agreement or any other instrument provided by the Subscriber to the Company in connection with that a",
+    "except to the extent modified in writing by the Subscriber and consented to by the Company."
+   ],
+   "places": [
+    "p03-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B11",
+   "box": [
+    33.7,
+    176.8,
+    42.7,
+    186.7
+   ],
+   "heading": "",
+   "context": [
+    "to take any other actions as the Company may determine to be necessary or appropriate to comply with applicable law and ",
+    "and carry out the purposes of this Agreement. The Subscriber further agrees that the Company may, in its sole discretion",
+    "me a Security if, among other things, the Subscriber refuses to comply with this provision.",
+    "5. Review of Subscription Information."
+   ],
+   "places": [
+    "p03-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B12",
+   "box": [
+    204.0,
+    256.7,
+    239.0,
+    272.2
+   ],
+   "heading": "",
+   "context": [
+    "The Subscriber acknowledges and agrees that the Subscriber has received, and should read and carefully review, the",
+    "following documents (collectively, the \u201cSubscription Information\u201d) in connection with submitting this Subscriber Questio",
+    "a. The Offering Circular;",
+    "[b. The International Supplement which accompanies the US Offering Circular (the \u201cInternational Supplement\u201d)]6"
+   ],
+   "places": [
+    "p03-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B13",
+   "box": [
+    33.7,
+    26.8,
+    42.7,
+    36.7
+   ],
+   "heading": "",
+   "context": [],
+   "places": [
+    "p04-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B14",
+   "box": [
+    33.7,
+    98.8,
+    42.7,
+    108.7
+   ],
+   "heading": "",
+   "context": [
+    "and complete and may be relied upon by the Company and its respective affiliates in evaluating my eligibility, or the el",
+    "of the entity that I represent, as a Subscriber and determining whether to accept this Agreement. I will notify the Comp",
+    "any change to the information provided in this Subscriber Questionnaire promptly, but in any event within fifteen days o",
+    "change."
+   ],
+   "places": [
+    "p04-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B15",
+   "box": [
+    33.7,
+    230.8,
+    42.7,
+    240.7
+   ],
+   "heading": "",
+   "context": [
+    "and will be the legal equivalent of my handwritten signature on an agreement that is printed on paper. I agree that the",
+    "Company and any of their affiliates will send me electronic copies of any and all communications associated with my",
+    "subscription to the Securities, as provided in Section 6 of this Subscriber Questionnaire and Section 11 below of the",
+    "Subscription Agreement."
+   ],
+   "places": [
+    "p04-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 21,
+   "block": "B16",
+   "box": [
+    33.7,
+    48.5,
+    42.7,
+    58.5
+   ],
+   "heading": "E-SIGNATURE PAGE",
+   "context": [
+    "E-SIGNATURE PAGE"
+   ],
+   "places": [
+    "p21-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 21,
+   "block": "B17",
+   "box": [
+    133.7,
+    186.2,
+    168.7,
+    201.7
+   ],
+   "heading": "Entity Name: [ENTITY NAME]",
+   "context": [
+    "Name: [SIGNATORY NAME]",
+    "Title: [SIGNATORY TITLE]",
+    "Submission Date: [INVESTMENT SIGN DATE]",
+    "Total Purchase Amount: $[PURCHASE AMOUNT]"
+   ],
+   "places": [],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 21,
+   "block": "B18",
+   "box": [
+    231.0,
+    106.7,
+    578.2,
+    189.7
+   ],
+   "heading": "E-SIGNATURE PAGE",
+   "context": [
+    "By checking this box and clicking the \u201cI Agree\u201d button, I agree to comply with and be bound by all terms of this",
+    "Agreement. I acknowledge and accept that all purchases of the Securities under this Agreement are final, and there are n",
+    "cancellations except as may be required by this Agreement, applicable law or regulation. I further acknowledge and accep",
+    "Company reserves the right to refuse, cancel or accept or, subject to Section 16, cancel this Agreement at any time in i"
+   ],
+   "places": [
+    "p21-002",
+    "p21-003",
+    "p21-004",
+    "p21-005"
+   ],
+   "items": [
+    "i001",
+    "i002"
+   ]
+  },
+  {
+   "page": 21,
+   "block": "B19",
+   "box": [
+    33.7,
+    222.2,
+    68.7,
+    237.7
+   ],
+   "heading": "AGREED AND ACCEPTED BY",
+   "context": [
+    "Submission Date: [INVESTMENT SIGN DATE]",
+    "Total Purchase Amount: $[PURCHASE AMOUNT]",
+    "Number of General Sale :",
+    "AGREED AND ACCEPTED BY"
+   ],
+   "places": [],
+   "items": [
+    "i004"
+   ]
+  },
+  {
+   "page": 21,
+   "block": "B20",
+   "box": [
+    33.7,
+    283.7,
+    68.7,
+    335.2
+   ],
+   "heading": "THE COMPANY:",
+   "context": [
+    "By:",
+    "Name:",
+    "Title:",
+    "Effective Date: [EFFECTIVE DATE]"
+   ],
+   "places": [
+    "p21-006",
+    "p21-007",
+    "p21-008",
+    "p21-009"
+   ],
+   "items": []
+  },
+  {
+   "page": 21,
+   "block": "B21",
+   "box": [
+    231.0,
+    271.7,
+    578.2,
+    287.2
+   ],
+   "heading": "THE COMPANY:",
+   "context": [
+    "THE COMPANY:",
+    "By:",
+    "Name:",
+    "Title:"
+   ],
+   "places": [],
+   "items": [
+    "i005"
+   ]
+  }
+ ]
+}

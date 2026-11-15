@@ -1,0 +1,727 @@
+{
+ "id": "c186",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:09Z",
+ "how_made": "browser-landscape",
+ "made_group": "browser landscape",
+ "broker_dealer": false,
+ "pages": 23,
+ "page_sizes": {
+  "1": [
+   792.0,
+   612.0
+  ],
+  "2": [
+   792.0,
+   612.0
+  ],
+  "3": [
+   792.0,
+   612.0
+  ],
+  "4": [
+   792.0,
+   612.0
+  ],
+  "5": [
+   792.0,
+   612.0
+  ],
+  "6": [
+   792.0,
+   612.0
+  ],
+  "7": [
+   792.0,
+   612.0
+  ],
+  "8": [
+   792.0,
+   612.0
+  ],
+  "9": [
+   792.0,
+   612.0
+  ],
+  "10": [
+   792.0,
+   612.0
+  ],
+  "11": [
+   792.0,
+   612.0
+  ],
+  "12": [
+   792.0,
+   612.0
+  ],
+  "13": [
+   792.0,
+   612.0
+  ],
+  "14": [
+   792.0,
+   612.0
+  ],
+  "15": [
+   792.0,
+   612.0
+  ],
+  "16": [
+   792.0,
+   612.0
+  ],
+  "17": [
+   792.0,
+   612.0
+  ],
+  "18": [
+   792.0,
+   612.0
+  ],
+  "19": [
+   792.0,
+   612.0
+  ],
+  "20": [
+   792.0,
+   612.0
+  ],
+  "21": [
+   792.0,
+   612.0
+  ],
+  "22": [
+   792.0,
+   612.0
+  ],
+  "23": [
+   792.0,
+   612.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text",
+  "17": "text",
+  "18": "text",
+  "19": "text",
+  "20": "text",
+  "21": "text",
+  "22": "text",
+  "23": "text"
+ },
+ "run": "out-18/set-c/c186/result.json",
+ "candidates": "828b60eb9905908a-f01586d5.json",
+ "counts": {
+  "fields": 9,
+  "counted_candidates": 11,
+  "pairs": 9,
+  "auto": 9,
+  "reader_only": 0,
+  "measure_only": 2,
+  "kind_clash": 0,
+  "person": 8,
+  "items": 10
+ },
+ "places": [
+  {
+   "page": 14,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 492.0,
+   "y0": 117.6,
+   "x1": 758.2,
+   "y1": 133.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p14-001",
+   "block": "B01"
+  },
+  {
+   "page": 14,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 492.0,
+   "y0": 239.1,
+   "x1": 758.2,
+   "y1": 254.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p14-002",
+   "block": "B02"
+  },
+  {
+   "page": 14,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 492.0,
+   "y0": 336.6,
+   "x1": 758.2,
+   "y1": 352.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p14-003",
+   "block": "B03"
+  },
+  {
+   "page": 14,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 492.0,
+   "y0": 434.1,
+   "x1": 758.2,
+   "y1": 449.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p14-004",
+   "block": "B04"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 468.7,
+   "y0": 507.6,
+   "x1": 758.2,
+   "y1": 523.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p14-005",
+   "block": "B05"
+  },
+  {
+   "page": 20,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 534.7,
+   "y0": 111.6,
+   "x1": 758.2,
+   "y1": 127.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p20-001",
+   "block": "B07"
+  },
+  {
+   "page": 20,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "Print Name",
+   "must": true,
+   "x0": 534.7,
+   "y0": 123.6,
+   "x1": 758.2,
+   "y1": 139.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p20-002",
+   "block": "B07"
+  },
+  {
+   "page": 23,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 458.4,
+   "y0": 392.1,
+   "x1": 558.3,
+   "y1": 407.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p23-001",
+   "block": "B08"
+  },
+  {
+   "page": 23,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "Print Name",
+   "must": true,
+   "x0": 465.7,
+   "y0": 413.1,
+   "x1": 558.3,
+   "y1": 428.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p23-002",
+   "block": "B08"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 15,
+   "box": [
+    662.2,
+    114.6,
+    758.2,
+    130.1
+   ],
+   "caption": "$ 20,000,000",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "amount"
+   },
+   "item": "i001",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 15,
+   "box": [
+    662.2,
+    128.9,
+    758.2,
+    144.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B06"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 14,
+   "box": [
+    492.0,
+    117.6,
+    758.2,
+    133.1
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "\u201cCOMPANY\u201d"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 14,
+   "box": [
+    492.0,
+    239.1,
+    758.2,
+    254.6
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "FARALLON CAPITAL PARTNERS, L.P."
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 14,
+   "box": [
+    492.0,
+    336.6,
+    758.2,
+    352.1
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "FARALLON CAPITAL INSTITUTIONAL PARTNERS, L.P."
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 14,
+   "box": [
+    492.0,
+    434.1,
+    758.2,
+    449.6
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "FARALLON CAPITAL INSTITUTIONAL PARTNERS III, L.P."
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 14,
+   "box": [
+    468.7,
+    507.6,
+    758.2,
+    523.1
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "VICTOR J. COLEMAN"
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 15,
+   "box": [
+    662.2,
+    114.6,
+    758.2,
+    144.4
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Investor Committed Purchase Amount"
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 20,
+   "box": [
+    534.7,
+    111.6,
+    758.2,
+    139.1
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 23,
+   "box": [
+    458.4,
+    392.1,
+    558.3,
+    428.6
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 14,
+   "block": "B01",
+   "box": [
+    492.0,
+    117.6,
+    758.2,
+    133.1
+   ],
+   "heading": "\u201cCOMPANY\u201d",
+   "context": [
+    "IN WITNESS WHEREOF, the parties have executed this Subscription Agreement as of the date first written above.",
+    "\u201cCOMPANY\u201d",
+    "Hudson Pacific Properties, Inc."
+   ],
+   "places": [
+    "p14-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B02",
+   "box": [
+    492.0,
+    239.1,
+    758.2,
+    254.6
+   ],
+   "heading": "FARALLON CAPITAL PARTNERS, L.P.",
+   "context": [
+    "Title:",
+    "\u201cINVESTORS\u201d",
+    "FARALLON CAPITAL PARTNERS, L.P.",
+    "By: Farallon Partners, L.L.C., its General Partner"
+   ],
+   "places": [
+    "p14-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B03",
+   "box": [
+    492.0,
+    336.6,
+    758.2,
+    352.1
+   ],
+   "heading": "FARALLON CAPITAL INSTITUTIONAL PARTNERS, L.P.",
+   "context": [
+    "Name:",
+    "Managing Member",
+    "FARALLON CAPITAL INSTITUTIONAL PARTNERS, L.P.",
+    "By: Farallon Partners, L.L.C., its General Partner"
+   ],
+   "places": [
+    "p14-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B04",
+   "box": [
+    492.0,
+    434.1,
+    758.2,
+    449.6
+   ],
+   "heading": "FARALLON CAPITAL INSTITUTIONAL PARTNERS III, L.P.",
+   "context": [
+    "Name:",
+    "Managing Member",
+    "FARALLON CAPITAL INSTITUTIONAL PARTNERS III, L.P.",
+    "By: Farallon Partners, L.L.C., its General Partner"
+   ],
+   "places": [
+    "p14-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B05",
+   "box": [
+    468.7,
+    507.6,
+    758.2,
+    523.1
+   ],
+   "heading": "VICTOR J. COLEMAN",
+   "context": [
+    "By:",
+    "Name:",
+    "Managing Member",
+    "VICTOR J. COLEMAN"
+   ],
+   "places": [
+    "p14-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 15,
+   "block": "B06",
+   "box": [
+    662.2,
+    114.6,
+    758.2,
+    144.4
+   ],
+   "heading": "Investor Committed Purchase Amount",
+   "context": [
+    "Investor Committed Purchase Amount",
+    "Farallon Capital Partners, L.P. $",
+    "Farallon Capital Institutional Partners, L.P.",
+    "Farallon Capital Institutional Partners III, L.P."
+   ],
+   "places": [],
+   "items": [
+    "i001",
+    "i002"
+   ]
+  },
+  {
+   "page": 20,
+   "block": "B07",
+   "box": [
+    534.7,
+    111.6,
+    758.2,
+    139.1
+   ],
+   "heading": "",
+   "context": [
+    "The undersigned also agrees and consents to the entry of stop transfer instructions with the Company\u2019s transfer agent an",
+    "except in compliance with the foregoing restrictions.",
+    "Very truly yours,"
+   ],
+   "places": [
+    "p20-001",
+    "p20-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 23,
+   "block": "B08",
+   "box": [
+    458.4,
+    392.1,
+    558.3,
+    428.6
+   ],
+   "heading": "",
+   "context": [
+    "(as such may have been extended pursuant to the previous paragraph) has expired.",
+    "The undersigned also agrees and consents to the entry of stop transfer instructions with the Company\u2019s transfer agent an",
+    "except in compliance with the foregoing restrictions.",
+    "Very truly yours,"
+   ],
+   "places": [
+    "p23-001",
+    "p23-002"
+   ],
+   "items": []
+  }
+ ]
+}

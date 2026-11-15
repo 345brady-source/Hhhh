@@ -1,0 +1,228 @@
+{
+ "id": "c295",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 2,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text"
+ },
+ "run": "out-18/set-c/c295/result.json",
+ "candidates": "80138e9e377c0557-f01586d5.json",
+ "counts": {
+  "fields": 3,
+  "counted_candidates": 3,
+  "pairs": 3,
+  "auto": 3,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 0,
+  "person": 3,
+  "items": 3
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": ", 2023 by and between CENAQ",
+   "printed_label": "(this \u201cAgreement\u201d) is entered into as of February",
+   "must": false,
+   "x0": 439.3,
+   "y0": 94.9,
+   "x1": 451.0,
+   "y1": 104.9,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": ", 2023 by and between CENAQ"
+   },
+   "cand": "tick",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 2,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 63.0,
+   "y0": 140.5,
+   "x1": 252.7,
+   "y1": 156.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p02-001",
+   "block": "B02"
+  },
+  {
+   "page": 2,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 388.5,
+   "y0": 140.5,
+   "x1": 578.2,
+   "y1": 156.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p02-002",
+   "block": "B03"
+  }
+ ],
+ "items": [
+  {
+   "item": "i001",
+   "type": "person",
+   "page": 1,
+   "box": [
+    439.3,
+    94.9,
+    451.0,
+    104.9
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FORM OF SUBSCRIPTION TERMINATION AGREEMENT"
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 2,
+   "box": [
+    63.0,
+    140.5,
+    252.7,
+    156.0
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 2,
+   "box": [
+    388.5,
+    140.5,
+    578.2,
+    156.0
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    439.3,
+    94.9,
+    451.0,
+    104.9
+   ],
+   "heading": "FORM OF SUBSCRIPTION TERMINATION AGREEMENT",
+   "context": [
+    "EX-10.2 3 ea173567ex10-2 cenaq.htm FORM OF SUBSCRIPTION TERMINATION AGREEMENT",
+    "Exhibit 10.2",
+    "FORM OF SUBSCRIPTION TERMINATION AGREEMENT"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B02",
+   "box": [
+    63.0,
+    140.5,
+    252.7,
+    156.0
+   ],
+   "heading": "",
+   "context": [
+    "In witness whereof, the parties execute this Agreement effective for all purposes as of the date set forth above.",
+    "Issuer Subscriber",
+    "CENAQ Energy Corp."
+   ],
+   "places": [
+    "p02-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B03",
+   "box": [
+    388.5,
+    140.5,
+    578.2,
+    156.0
+   ],
+   "heading": "",
+   "context": [
+    "In witness whereof, the parties execute this Agreement effective for all purposes as of the date set forth above.",
+    "Issuer Subscriber",
+    "CENAQ Energy Corp."
+   ],
+   "places": [
+    "p02-002"
+   ],
+   "items": []
+  }
+ ]
+}

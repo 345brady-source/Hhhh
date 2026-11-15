@@ -1,0 +1,1210 @@
+{
+ "id": "a020",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:03Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 20,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ],
+  "15": [
+   612.0,
+   792.0
+  ],
+  "16": [
+   612.0,
+   792.0
+  ],
+  "17": [
+   612.0,
+   792.0
+  ],
+  "18": [
+   612.0,
+   792.0
+  ],
+  "19": [
+   612.0,
+   792.0
+  ],
+  "20": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text",
+  "17": "text",
+  "18": "text",
+  "19": "text",
+  "20": "text"
+ },
+ "run": "out-18/set-a/a020/result.json",
+ "candidates": "7d28809fc4d1308a-f01586d5.json",
+ "counts": {
+  "fields": 22,
+  "counted_candidates": 22,
+  "pairs": 21,
+  "auto": 19,
+  "reader_only": 1,
+  "measure_only": 1,
+  "kind_clash": 2,
+  "person": 12,
+  "items": 16
+ },
+ "places": [
+  {
+   "page": 18,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 327.7,
+   "y0": 280.4,
+   "x1": 578.2,
+   "y1": 295.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p18-001",
+   "block": "B02"
+  },
+  {
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Agreement dated as of",
+   "printed_label": "S Preferred Stock Purchase Agreement, dated as of",
+   "must": true,
+   "x0": 494.9,
+   "y0": 399.9,
+   "x1": 559.9,
+   "y1": 415.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Agreement dated as of"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p18-002",
+   "block": "B03"
+  },
+  {
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Shares (",
+   "printed_label": "Shares ($",
+   "must": true,
+   "x0": 450.7,
+   "y0": 507.9,
+   "x1": 485.7,
+   "y1": 523.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Shares ("
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p18-003",
+   "block": "B05"
+  },
+  {
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Investor name",
+   "printed_label": "",
+   "must": true,
+   "x0": 311.2,
+   "y0": 569.1,
+   "x1": 578.2,
+   "y1": 584.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "entity",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Investor name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p18-004",
+   "block": "B06"
+  },
+  {
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "Print Name",
+   "must": true,
+   "x0": 33.7,
+   "y0": 617.9,
+   "x1": 300.7,
+   "y1": 633.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p18-005",
+   "block": "B07"
+  },
+  {
+   "page": 18,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 311.2,
+   "y0": 617.9,
+   "x1": 578.2,
+   "y1": 633.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p18-006",
+   "block": "B07"
+  },
+  {
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 666.6,
+   "x1": 300.7,
+   "y1": 682.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p18-007",
+   "block": "B08"
+  },
+  {
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "Print Name",
+   "must": true,
+   "x0": 366.0,
+   "y0": 666.6,
+   "x1": 578.2,
+   "y1": 682.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p18-008",
+   "block": "B09"
+  },
+  {
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 366.0,
+   "y0": 691.4,
+   "x1": 578.2,
+   "y1": 706.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p18-009",
+   "block": "B09"
+  },
+  {
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 100.4,
+   "x1": 300.7,
+   "y1": 115.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p19-001",
+   "block": "B10"
+  },
+  {
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address of Principal Residence",
+   "printed_label": "",
+   "must": false,
+   "x0": 311.2,
+   "y0": 100.4,
+   "x1": 578.2,
+   "y1": 115.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Address of Principal Residence"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p19-002",
+   "block": "B10"
+  },
+  {
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Social Security Number",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 125.1,
+   "x1": 300.7,
+   "y1": 140.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Social Security Number"
+   },
+   "cand": "rule",
+   "what": "tax number",
+   "id": "p19-003",
+   "block": "B10"
+  },
+  {
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "IRS Tax Identification Number",
+   "printed_label": "",
+   "must": true,
+   "x0": 311.2,
+   "y0": 125.1,
+   "x1": 578.2,
+   "y1": 140.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "IRS Tax Identification Number"
+   },
+   "cand": "rule",
+   "what": "tax number",
+   "id": "p19-004",
+   "block": "B10"
+  },
+  {
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Phone",
+   "printed_label": "Telephone",
+   "must": true,
+   "x0": 33.7,
+   "y0": 173.9,
+   "x1": 300.7,
+   "y1": 189.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Phone"
+   },
+   "cand": "rule",
+   "what": "phone",
+   "id": "p19-005",
+   "block": "B11"
+  },
+  {
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Phone",
+   "printed_label": "Telephone",
+   "must": true,
+   "x0": 311.2,
+   "y0": 173.9,
+   "x1": 578.2,
+   "y1": 189.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Phone"
+   },
+   "cand": "rule",
+   "what": "phone",
+   "id": "p19-006",
+   "block": "B11"
+  },
+  {
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number",
+   "printed_label": "Number",
+   "must": true,
+   "x0": 88.5,
+   "y0": 210.6,
+   "x1": 300.7,
+   "y1": 226.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Number"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p19-007",
+   "block": "B11"
+  },
+  {
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number",
+   "printed_label": "Number",
+   "must": true,
+   "x0": 366.0,
+   "y0": 210.6,
+   "x1": 578.2,
+   "y1": 226.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Number"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p19-008",
+   "block": "B11"
+  },
+  {
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Email",
+   "printed_label": "Email",
+   "must": true,
+   "x0": 88.5,
+   "y0": 235.4,
+   "x1": 300.7,
+   "y1": 250.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Email"
+   },
+   "cand": "rule",
+   "what": "email",
+   "id": "p19-009",
+   "block": "B11"
+  },
+  {
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Email",
+   "printed_label": "Email",
+   "must": true,
+   "x0": 366.0,
+   "y0": 235.4,
+   "x1": 578.2,
+   "y1": 250.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Email"
+   },
+   "cand": "rule",
+   "what": "email",
+   "id": "p19-010",
+   "block": "B11"
+  }
+ ],
+ "items": [
+  {
+   "type": "reader-only",
+   "page": 2,
+   "box": [
+    539.9,
+    558.6,
+    574.9,
+    570.2
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "the Securities Act dated"
+   },
+   "caption": "1933, as amended (the \u201cSecurities Act\u201d), dated [",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "date"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "kind-clash",
+   "page": 18,
+   "box": [
+    312.6,
+    507.9,
+    397.5,
+    523.4
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "hereby elects to purchase"
+   },
+   "caption": "The undersigned Subscriber hereby elects to purchase",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i002",
+   "block": "B04"
+  },
+  {
+   "type": "kind-clash",
+   "page": 18,
+   "box": [
+    33.7,
+    569.1,
+    300.7,
+    584.6
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a rule candidate the measure reads as line",
+   "item": "i003",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 20,
+   "box": [
+    33.7,
+    233.1,
+    285.0,
+    248.6
+   ],
+   "caption": "Class B Common Stock Warrants",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i004",
+   "block": "B12"
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 2,
+   "box": [
+    539.9,
+    558.6,
+    574.9,
+    570.2
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "AUTHORIZATION, SALE AND ISSUANCE"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 18,
+   "box": [
+    327.7,
+    280.4,
+    578.2,
+    295.9
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "KNIGHTSCOPE, INC."
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 18,
+   "box": [
+    494.9,
+    399.9,
+    559.9,
+    415.4
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "KNIGHTSCOPE, INC. SERIES S PREFERRED STOCK PURCHASE AGREEMENT"
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 18,
+   "box": [
+    312.6,
+    507.9,
+    397.5,
+    523.4
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "KNIGHTSCOPE, INC. SERIES S PREFERRED STOCK PURCHASE AGREEMENT"
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 18,
+   "box": [
+    450.7,
+    507.9,
+    485.7,
+    523.4
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "KNIGHTSCOPE, INC. SERIES S PREFERRED STOCK PURCHASE AGREEMENT"
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 18,
+   "box": [
+    33.7,
+    569.1,
+    578.2,
+    584.6
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor-entity"
+   },
+   "heading": "SUBSCRIBER (individual) SUBSCRIBER (entity)"
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 18,
+   "box": [
+    33.7,
+    617.9,
+    578.2,
+    633.4
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature Name of Entity"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 18,
+   "box": [
+    33.7,
+    666.6,
+    300.7,
+    682.1
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature Name of Entity"
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 18,
+   "box": [
+    366.0,
+    666.6,
+    578.2,
+    706.9
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature Name of Entity"
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 19,
+   "box": [
+    33.7,
+    100.4,
+    578.2,
+    140.6
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 19,
+   "box": [
+    33.7,
+    173.9,
+    578.2,
+    250.9
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i016",
+   "type": "person",
+   "page": 20,
+   "box": [
+    33.7,
+    233.1,
+    285.0,
+    248.6
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 2,
+   "block": "B01",
+   "box": [
+    539.9,
+    558.6,
+    574.9,
+    570.2
+   ],
+   "heading": "AUTHORIZATION, SALE AND ISSUANCE",
+   "context": [
+    "page hereto, and is between Knightscope, Inc., a Delaware corporation (the \u201cCompany\u201d), and the subscriber (\u201cSubscriber\u201d)",
+    "SECTION 1.",
+    "AUTHORIZATION, SALE AND ISSUANCE",
+    "1.1 Offering Circular. The Company has filed with the Securities and Exchange Commission (the \u201cSEC\u201d) an Offering"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B02",
+   "box": [
+    327.7,
+    280.4,
+    578.2,
+    295.9
+   ],
+   "heading": "KNIGHTSCOPE, INC.",
+   "context": [
+    "(Signature Pages Follow)",
+    "The parties are signing this Agreement as of the date first stated in the introductory clause.",
+    "KNIGHTSCOPE, INC.",
+    "a Delaware corporation"
+   ],
+   "places": [
+    "p18-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 18,
+   "block": "B03",
+   "box": [
+    494.9,
+    399.9,
+    559.9,
+    415.4
+   ],
+   "heading": "KNIGHTSCOPE, INC. SERIES S PREFERRED STOCK PURCHASE AGREEMENT",
+   "context": [
+    "Chief Executive Officer",
+    "(Signature Page to Purchase Agreement)",
+    "SUBSCRIBER SIGNATURE PAGE TO",
+    "KNIGHTSCOPE, INC. SERIES S PREFERRED STOCK PURCHASE AGREEMENT"
+   ],
+   "places": [
+    "p18-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 18,
+   "block": "B04",
+   "box": [
+    312.6,
+    507.9,
+    397.5,
+    523.4
+   ],
+   "heading": "KNIGHTSCOPE, INC. SERIES S PREFERRED STOCK PURCHASE AGREEMENT",
+   "context": [
+    "Purchase Agreement as a party thereto, with all the rights and privileges appertaining thereto, and to be bound in all r",
+    "terms and conditions thereof. The undersigned specifically acknowledges having read the representations section in the P",
+    "Agreement entitled \u201cRepresentations and Warranties of the Subscribers,\u201d and hereby represents that the statements contai",
+    "complete and accurate with respect to the undersigned as a Subscriber."
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B05",
+   "box": [
+    450.7,
+    507.9,
+    485.7,
+    523.4
+   ],
+   "heading": "KNIGHTSCOPE, INC. SERIES S PREFERRED STOCK PURCHASE AGREEMENT",
+   "context": [
+    "Purchase Agreement as a party thereto, with all the rights and privileges appertaining thereto, and to be bound in all r",
+    "terms and conditions thereof. The undersigned specifically acknowledges having read the representations section in the P",
+    "Agreement entitled \u201cRepresentations and Warranties of the Subscribers,\u201d and hereby represents that the statements contai",
+    "complete and accurate with respect to the undersigned as a Subscriber."
+   ],
+   "places": [
+    "p18-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 18,
+   "block": "B06",
+   "box": [
+    33.7,
+    569.1,
+    578.2,
+    584.6
+   ],
+   "heading": "SUBSCRIBER (individual) SUBSCRIBER (entity)",
+   "context": [
+    "complete and accurate with respect to the undersigned as a Subscriber.",
+    "The undersigned Subscriber hereby elects to purchase Shares ($ ) under the Purchase",
+    "Agreement.",
+    "SUBSCRIBER (individual) SUBSCRIBER (entity)"
+   ],
+   "places": [
+    "p18-004"
+   ],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B07",
+   "box": [
+    33.7,
+    617.9,
+    578.2,
+    633.4
+   ],
+   "heading": "Signature Name of Entity",
+   "context": [
+    "The undersigned Subscriber hereby elects to purchase Shares ($ ) under the Purchase",
+    "Agreement.",
+    "SUBSCRIBER (individual) SUBSCRIBER (entity)",
+    "Signature Name of Entity"
+   ],
+   "places": [
+    "p18-005",
+    "p18-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 18,
+   "block": "B08",
+   "box": [
+    33.7,
+    666.6,
+    300.7,
+    682.1
+   ],
+   "heading": "Signature Name of Entity",
+   "context": [
+    "Agreement.",
+    "SUBSCRIBER (individual) SUBSCRIBER (entity)",
+    "Signature Name of Entity",
+    "Print Name Signature"
+   ],
+   "places": [
+    "p18-007"
+   ],
+   "items": []
+  },
+  {
+   "page": 18,
+   "block": "B09",
+   "box": [
+    366.0,
+    666.6,
+    578.2,
+    706.9
+   ],
+   "heading": "Signature Name of Entity",
+   "context": [
+    "Agreement.",
+    "SUBSCRIBER (individual) SUBSCRIBER (entity)",
+    "Signature Name of Entity",
+    "Print Name Signature"
+   ],
+   "places": [
+    "p18-008",
+    "p18-009"
+   ],
+   "items": []
+  },
+  {
+   "page": 19,
+   "block": "B10",
+   "box": [
+    33.7,
+    100.4,
+    578.2,
+    140.6
+   ],
+   "heading": "",
+   "context": [
+    "11/14/26, 10:12 AM tv524325 ex4-2.htm",
+    "Address of Principal Residence: Address of Executive Offices:"
+   ],
+   "places": [
+    "p19-001",
+    "p19-002",
+    "p19-003",
+    "p19-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 19,
+   "block": "B11",
+   "box": [
+    33.7,
+    173.9,
+    578.2,
+    250.9
+   ],
+   "heading": "",
+   "context": [
+    "11/14/26, 10:12 AM tv524325 ex4-2.htm",
+    "Address of Principal Residence: Address of Executive Offices:",
+    "Social Security Number(s): IRS Tax Identification Number:"
+   ],
+   "places": [
+    "p19-005",
+    "p19-006",
+    "p19-007",
+    "p19-008",
+    "p19-009",
+    "p19-010"
+   ],
+   "items": []
+  },
+  {
+   "page": 20,
+   "block": "B12",
+   "box": [
+    33.7,
+    233.1,
+    285.0,
+    248.6
+   ],
+   "heading": "",
+   "context": [
+    "have been authorized (20% warrant coverage) (the \u201cConvertible Note Financing\u201d); under which convertible notes in the agg",
+    "principal amount of $1,009,000 have been issued as of the date hereof, and warrants to purchase up to 201,800 shares of ",
+    "Preferred Stock has been issued as of the date hereof.",
+    "The Company has warrants to purchase shares of the Company outstanding, as follows:"
+   ],
+   "places": [],
+   "items": [
+    "i004"
+   ]
+  }
+ ]
+}

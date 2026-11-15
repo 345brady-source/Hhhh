@@ -1,0 +1,1185 @@
+{
+ "id": "a043",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:04Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 40,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ],
+  "15": [
+   612.0,
+   792.0
+  ],
+  "16": [
+   612.0,
+   792.0
+  ],
+  "17": [
+   612.0,
+   792.0
+  ],
+  "18": [
+   612.0,
+   792.0
+  ],
+  "19": [
+   612.0,
+   792.0
+  ],
+  "20": [
+   612.0,
+   792.0
+  ],
+  "21": [
+   612.0,
+   792.0
+  ],
+  "22": [
+   612.0,
+   792.0
+  ],
+  "23": [
+   612.0,
+   792.0
+  ],
+  "24": [
+   612.0,
+   792.0
+  ],
+  "25": [
+   612.0,
+   792.0
+  ],
+  "26": [
+   612.0,
+   792.0
+  ],
+  "27": [
+   612.0,
+   792.0
+  ],
+  "28": [
+   612.0,
+   792.0
+  ],
+  "29": [
+   612.0,
+   792.0
+  ],
+  "30": [
+   612.0,
+   792.0
+  ],
+  "31": [
+   612.0,
+   792.0
+  ],
+  "32": [
+   612.0,
+   792.0
+  ],
+  "33": [
+   612.0,
+   792.0
+  ],
+  "34": [
+   612.0,
+   792.0
+  ],
+  "35": [
+   612.0,
+   792.0
+  ],
+  "36": [
+   612.0,
+   792.0
+  ],
+  "37": [
+   612.0,
+   792.0
+  ],
+  "38": [
+   612.0,
+   792.0
+  ],
+  "39": [
+   612.0,
+   792.0
+  ],
+  "40": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text",
+  "17": "text",
+  "18": "text",
+  "19": "text",
+  "20": "text",
+  "21": "text",
+  "22": "text",
+  "23": "text",
+  "24": "text",
+  "25": "text",
+  "26": "text",
+  "27": "text",
+  "28": "text",
+  "29": "text",
+  "30": "text",
+  "31": "text",
+  "32": "text",
+  "33": "text",
+  "34": "text",
+  "35": "text",
+  "36": "text",
+  "37": "text",
+  "38": "text",
+  "39": "text",
+  "40": "text"
+ },
+ "run": "out-18/set-a/a043/result.json",
+ "candidates": "0d295597616cfb2b-f01586d5.json",
+ "counts": {
+  "fields": 19,
+  "counted_candidates": 18,
+  "pairs": 18,
+  "auto": 17,
+  "reader_only": 1,
+  "measure_only": 0,
+  "kind_clash": 1,
+  "person": 12,
+  "items": 14
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "a price of",
+   "printed_label": "$",
+   "must": true,
+   "x0": 38.6,
+   "y0": 321.9,
+   "x1": 92.2,
+   "y1": 337.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "a price of"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Price shall be",
+   "printed_label": "The per Unit Purchase Price shall be $",
+   "must": true,
+   "x0": 197.1,
+   "y0": 345.9,
+   "x1": 236.1,
+   "y1": 361.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Price shall be"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-002",
+   "block": "B01"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "2. Warrants. Promptly after the Closing Date the Company wil",
+   "printed_label": "The per Warrant exercise price shall be $",
+   "must": true,
+   "x0": 352.2,
+   "y0": 170.4,
+   "x1": 386.3,
+   "y1": 185.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "2. Warrants. Promptly after the Closing Date the Company wil"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p02-001",
+   "block": "B02"
+  },
+  {
+   "page": 14,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 53.2,
+   "y0": 134.4,
+   "x1": 258.0,
+   "y1": 149.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p14-001",
+   "block": "B03"
+  },
+  {
+   "page": 15,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor name",
+   "printed_label": "Name of Purchaser",
+   "must": true,
+   "x0": 113.6,
+   "y0": 122.4,
+   "x1": 406.1,
+   "y1": 137.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Investor name"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p15-001",
+   "block": "B04"
+  },
+  {
+   "page": 15,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature of Authorized Signatory of Purchaser",
+   "must": true,
+   "x0": 224.4,
+   "y0": 146.4,
+   "x1": 409.6,
+   "y1": 161.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p15-002",
+   "block": "B04"
+  },
+  {
+   "page": 15,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "Name of Authorized Signatory",
+   "must": true,
+   "x0": 158.8,
+   "y0": 170.4,
+   "x1": 407.5,
+   "y1": 185.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p15-003",
+   "block": "B04"
+  },
+  {
+   "page": 15,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Title",
+   "printed_label": "Title of Authorized Signatory",
+   "must": false,
+   "x0": 153.6,
+   "y0": 194.4,
+   "x1": 407.1,
+   "y1": 209.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Title"
+   },
+   "cand": "underscore",
+   "what": "title",
+   "id": "p15-004",
+   "block": "B04"
+  },
+  {
+   "page": 15,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Email Address of Purchaser",
+   "printed_label": "Email Address of Purchaser",
+   "must": true,
+   "x0": 147.5,
+   "y0": 218.4,
+   "x1": 405.8,
+   "y1": 233.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Email Address of Purchaser"
+   },
+   "cand": "underscore",
+   "what": "email",
+   "id": "p15-005",
+   "block": "B04"
+  },
+  {
+   "page": 15,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Facsimile Number of Purchaser",
+   "printed_label": "Facsimile Number of Purchaser",
+   "must": true,
+   "x0": 162.6,
+   "y0": 242.4,
+   "x1": 411.3,
+   "y1": 257.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Facsimile Number of Purchaser"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p15-006",
+   "block": "B04"
+  },
+  {
+   "page": 15,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "Subscription Amount: $",
+   "must": false,
+   "x0": 126.9,
+   "y0": 434.4,
+   "x1": 200.0,
+   "y1": 449.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p15-007",
+   "block": "B05"
+  },
+  {
+   "page": 16,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "shares of Preferred Stock of the",
+   "printed_label": "adopted the following resolution creating a series of",
+   "must": false,
+   "x0": 359.3,
+   "y0": 306.6,
+   "x1": 369.3,
+   "y1": 316.4,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "shares of Preferred Stock of the"
+   },
+   "cand": "tick",
+   "id": "p16-001",
+   "block": "B06"
+  },
+  {
+   "page": 16,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": ". Each share of G Preferred Stock shall have a stated",
+   "printed_label": "Preferred Stock authorized by this resolution shall be",
+   "must": false,
+   "x0": 283.1,
+   "y0": 510.6,
+   "x1": 292.5,
+   "y1": 520.4,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": ". Each share of G Preferred Stock shall have a stated"
+   },
+   "cand": "tick",
+   "id": "p16-002",
+   "block": "B07"
+  },
+  {
+   "page": 23,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "day of",
+   "printed_label": "of JESUP & LAMONT, INC. as of this",
+   "must": false,
+   "x0": 244.7,
+   "y0": 78.6,
+   "x1": 253.6,
+   "y1": 88.4,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "day of"
+   },
+   "cand": "tick",
+   "id": "p23-001",
+   "block": "B08"
+  },
+  {
+   "page": 23,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": ", 2008",
+   "printed_label": "INC. as of this [ ] day of",
+   "must": false,
+   "x0": 283.2,
+   "y0": 78.6,
+   "x1": 292.1,
+   "y1": 88.4,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": ", 2008"
+   },
+   "cand": "tick",
+   "id": "p23-002",
+   "block": "B08"
+  },
+  {
+   "page": 23,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 168.7,
+   "y0": 134.4,
+   "x1": 300.4,
+   "y1": 149.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p23-003",
+   "block": "B09"
+  },
+  {
+   "page": 30,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 223.5,
+   "y0": 410.4,
+   "x1": 345.4,
+   "y1": 425.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p30-001",
+   "block": "B11"
+  }
+ ],
+ "items": [
+  {
+   "type": "reader-only",
+   "page": 24,
+   "box": [
+    465.3,
+    186,
+    493.2,
+    197.2
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Checkbox"
+   },
+   "caption": "For the Purchase of",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B10"
+  },
+  {
+   "type": "kind-clash",
+   "page": 31,
+   "box": [
+    266.0,
+    170.4,
+    305.0,
+    185.9
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "hereby elects to purchase"
+   },
+   "caption": "1. The undersigned hereby elects to purchase",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i002",
+   "block": "B12"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 1,
+   "box": [
+    38.6,
+    321.9,
+    236.1,
+    361.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 2,
+   "box": [
+    352.2,
+    170.4,
+    386.3,
+    185.9
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 14,
+   "box": [
+    53.2,
+    134.4,
+    258.0,
+    149.9
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 15,
+   "box": [
+    113.6,
+    122.4,
+    411.3,
+    257.9
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "PURCHASER SIGNATURE PAGES TO JLI SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 15,
+   "box": [
+    126.9,
+    434.4,
+    200.0,
+    449.9
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 16,
+   "box": [
+    359.3,
+    306.6,
+    369.3,
+    316.4
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "CERTIFY:"
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 16,
+   "box": [
+    283.1,
+    510.6,
+    292.5,
+    520.4
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 23,
+   "box": [
+    244.7,
+    78.6,
+    292.1,
+    88.4
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 23,
+   "box": [
+    168.7,
+    134.4,
+    300.4,
+    149.9
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "JESUP & LAMONT, INC."
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 24,
+   "box": [
+    465.3,
+    186,
+    493.2,
+    197.2
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "APPLICABLE STATE SECURITIES LAWS."
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 30,
+   "box": [
+    223.5,
+    410.4,
+    345.4,
+    425.9
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "JESUP & LAMONT, INC."
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 31,
+   "box": [
+    266.0,
+    170.4,
+    305.0,
+    185.9
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "NOTICE OF EXERCISE"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    38.6,
+    321.9,
+    236.1,
+    361.4
+   ],
+   "heading": "",
+   "context": [
+    "attached hereto as Exhibit B (the \u201cWarrants\u201d), to purchase one share of the Company\u2019s Common Stock, par value $0.01",
+    "per share (\u201cCommon Stock) for each share of common stock into which the Preferred Stock is convertible; provided,",
+    "however, that to the extent that the total number of shares of Preferred Stock for which each Subscriber has subscribed",
+    "is not convertible into a whole number of shares of Common Stock, the number of warrants to be issued to such"
+   ],
+   "places": [
+    "p01-001",
+    "p01-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B02",
+   "box": [
+    352.2,
+    170.4,
+    386.3,
+    185.9
+   ],
+   "heading": "",
+   "context": [
+    "American Stock Exchange, and the Warrant Shares will not be issued until they have been approved for listing by the",
+    "American Stock Exchange. The Company will not issue fractional Units but will refund amounts in excess of the price",
+    "of the nearest full number of Units which can be purchased with the purchase price tendered hereunder. The Closing",
+    "will occur after the Company has received the Minimum Amount of subscriptions."
+   ],
+   "places": [
+    "p02-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B03",
+   "box": [
+    53.2,
+    134.4,
+    258.0,
+    149.9
+   ],
+   "heading": "",
+   "context": [
+    "IN WITNESS WHEREOF, the parties hereto have caused this Subscription Agreement to be duly executed",
+    "by their respective authorized signatories as of the date first indicated above.",
+    "JESUP & LAMONT, INC. Address for Notice:"
+   ],
+   "places": [
+    "p14-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 15,
+   "block": "B04",
+   "box": [
+    113.6,
+    122.4,
+    411.3,
+    257.9
+   ],
+   "heading": "PURCHASER SIGNATURE PAGES TO JLI SUBSCRIPTION AGREEMENT",
+   "context": [
+    "PURCHASER SIGNATURE PAGES TO JLI SUBSCRIPTION AGREEMENT",
+    "IN WITNESS WHEREOF, the undersigned have caused this Subscription Agreement to be duly executed by",
+    "their respective authorized signatories as of the date first indicated above."
+   ],
+   "places": [
+    "p15-001",
+    "p15-002",
+    "p15-003",
+    "p15-004",
+    "p15-005",
+    "p15-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 15,
+   "block": "B05",
+   "box": [
+    126.9,
+    434.4,
+    200.0,
+    449.9
+   ],
+   "heading": "",
+   "context": [
+    "Address for Notice of Purchaser:",
+    "Address for Delivery of Securities for Purchaser (if not same as address for notice):"
+   ],
+   "places": [
+    "p15-007"
+   ],
+   "items": []
+  },
+  {
+   "page": 16,
+   "block": "B06",
+   "box": [
+    359.3,
+    306.6,
+    369.3,
+    316.4
+   ],
+   "heading": "CERTIFY:",
+   "context": [
+    "March , 2008 in the manner prescribed by Section 607.1002 of the Florida Business Company Act. Shareholder action",
+    "was not required.",
+    "SECOND: That pursuant to the authority vested in the Board of Directors in accordance with the",
+    "provisions of the Articles of Incorporation of the Company (the \u201cArticles of Incorporation\u201d), the said Board of"
+   ],
+   "places": [
+    "p16-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 16,
+   "block": "B07",
+   "box": [
+    283.1,
+    510.6,
+    292.5,
+    520.4
+   ],
+   "heading": "",
+   "context": [
+    "Series G Cumulative Convertible Preferred Stock",
+    "1. Designation, Amount and Par Value.",
+    "The designation of the series of preferred stock, $.01 par value per share, of the Company authorized by this",
+    "resolution shall be \u201cSeries G Convertible Preferred Stock\u201d (the \u201cG Preferred Stock\u201d). The maximum number of shares"
+   ],
+   "places": [
+    "p16-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 23,
+   "block": "B08",
+   "box": [
+    244.7,
+    78.6,
+    292.1,
+    88.4
+   ],
+   "heading": "",
+   "context": [
+    "IN WITNESS WHEREOF, the undersigned has executed these Articles of Amendment to the Articles of"
+   ],
+   "places": [
+    "p23-001",
+    "p23-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 23,
+   "block": "B09",
+   "box": [
+    168.7,
+    134.4,
+    300.4,
+    149.9
+   ],
+   "heading": "JESUP & LAMONT, INC.",
+   "context": [
+    "IN WITNESS WHEREOF, the undersigned has executed these Articles of Amendment to the Articles of",
+    "Incorporation of JESUP & LAMONT, INC. as of this [ ] day of [ ], 2008.",
+    "JESUP & LAMONT, INC."
+   ],
+   "places": [
+    "p23-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 24,
+   "block": "B10",
+   "box": [
+    465.3,
+    186,
+    493.2,
+    197.2
+   ],
+   "heading": "APPLICABLE STATE SECURITIES LAWS.",
+   "context": [
+    "ASSIGNED OR OTHERWISE DISPOSED OF EXCEPT PURSUANT TO AN EFFECTIVE REGISTRATION",
+    "STATEMENT UNDER THE ACT AND IN COMPLIANCE WITH ANY APPLICABLE STATE SECURITIES LAW,",
+    "OR IN A TRANSACTION WHICH IS EXEMPT FROM REGISTRATION UNDER THE ACT AND ANY",
+    "APPLICABLE STATE SECURITIES LAWS."
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 30,
+   "block": "B11",
+   "box": [
+    223.5,
+    410.4,
+    345.4,
+    425.9
+   ],
+   "heading": "JESUP & LAMONT, INC.",
+   "context": [
+    "or to such other address as any of them, by notice to the other may designate from time to time. Time shall be counted",
+    "to, or from, as the case may be, the delivery in person or by mailing.",
+    "Dated: [insert date]",
+    "JESUP & LAMONT, INC."
+   ],
+   "places": [
+    "p30-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 31,
+   "block": "B12",
+   "box": [
+    266.0,
+    170.4,
+    305.0,
+    185.9
+   ],
+   "heading": "NOTICE OF EXERCISE",
+   "context": [
+    "2170 West State Road 434",
+    "Suite 100",
+    "Longwood, Florida 32779",
+    "Attention: Chief Financial Officer"
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  }
+ ]
+}

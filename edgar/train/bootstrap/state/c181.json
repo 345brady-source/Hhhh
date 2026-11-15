@@ -1,0 +1,200 @@
+{
+ "id": "c181",
+ "answers": {
+  "i001": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "date",
+   "owner": "investor"
+  },
+  "i002": {
+   "do": "keep",
+   "kind": "tickbox"
+  },
+  "i003": {
+   "do": "keep",
+   "kind": "tickbox"
+  },
+  "i004": {
+   "do": "keep",
+   "kind": "tickbox"
+  },
+  "i005": {
+   "do": "keep",
+   "kind": "tickbox"
+  },
+  "i006": {
+   "do": "keep",
+   "kind": "tickbox"
+  },
+  "i007": {
+   "do": "keep",
+   "kind": "tickbox"
+  },
+  "i008": {
+   "do": "keep",
+   "kind": "tickbox"
+  },
+  "i009": {
+   "do": "keep",
+   "kind": "tickbox"
+  },
+  "i010": {
+   "do": "keep",
+   "kind": "tickbox"
+  },
+  "i011": {
+   "do": "keep",
+   "kind": "tickbox"
+  },
+  "i012": {
+   "do": "keep",
+   "kind": "tickbox"
+  },
+  "i013": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "name"
+  },
+  "i014": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "name"
+  },
+  "i015": {
+   "do": "keep",
+   "kind": "signature"
+  },
+  "i016": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "date",
+   "owner": "firm"
+  },
+  "i017": {
+   "do": "keep",
+   "kind": "signature"
+  }
+ },
+ "blocks": {
+  "B01": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B02": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B03": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B04": [
+   {
+    "owner": "investor-individual",
+    "cond": ""
+   },
+   {
+    "owner": "co-investor",
+    "cond": "x>396"
+   },
+   {
+    "owner": "firm",
+    "cond": "y>440"
+   }
+  ],
+  "B05": [
+   {
+    "owner": "investor-entity",
+    "cond": ""
+   }
+  ],
+  "B06": [
+   {
+    "owner": "investor-entity",
+    "cond": ""
+   }
+  ],
+  "B07": [
+   {
+    "owner": "investor-entity",
+    "cond": ""
+   },
+   {
+    "owner": "firm",
+    "cond": "y>480"
+   }
+  ],
+  "B08": [
+   {
+    "owner": "investor-entity",
+    "cond": ""
+   },
+   {
+    "owner": "firm",
+    "cond": "y>500"
+   }
+  ],
+  "B09": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B10": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B11": [
+   {
+    "owner": "co-investor",
+    "cond": ""
+   }
+  ],
+  "B12": [
+   {
+    "owner": "investor-entity",
+    "cond": ""
+   }
+  ],
+  "B13": [
+   {
+    "owner": "third-party",
+    "cond": ""
+   },
+   {
+    "owner": "investor",
+    "cond": "y<215"
+   }
+  ],
+  "B14": [
+   {
+    "owner": "third-party",
+    "cond": ""
+   }
+  ],
+  "B15": [
+   {
+    "owner": "third-party",
+    "cond": ""
+   }
+  ]
+ },
+ "confirms": {},
+ "confirm_items": [],
+ "cost": {
+  "pixels": 3289536,
+  "chars": 8591,
+  "commands": 10,
+  "sheets": 5
+ },
+ "done": "2026-11-15T04:45:36Z"
+}

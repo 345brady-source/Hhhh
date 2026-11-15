@@ -1,0 +1,722 @@
+{
+ "id": "c235",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 5,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text"
+ },
+ "run": "out-18/set-c/c235/result.json",
+ "candidates": "84f96abc38c2fa86-f01586d5.json",
+ "counts": {
+  "fields": 15,
+  "counted_candidates": 15,
+  "pairs": 15,
+  "auto": 14,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 1,
+  "person": 7,
+  "items": 8
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "(date)",
+   "must": true,
+   "x0": 33.7,
+   "y0": 127.7,
+   "x1": 103.7,
+   "y1": 143.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Date signed"
+   },
+   "cand": "underscore",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Capital or the Company",
+   "printed_label": "Garuda Capital Corp. (\"Garuda Capital\" or the \u201cCompany\u201d)",
+   "must": true,
+   "x0": 493.2,
+   "y0": 231.9,
+   "x1": 533.2,
+   "y1": 247.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Capital or the Company"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-002",
+   "block": "B03"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "purchase price of",
+   "printed_label": "Unit, for a total purchase price of $",
+   "must": true,
+   "x0": 278.2,
+   "y0": 243.9,
+   "x1": 323.2,
+   "y1": 259.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "purchase price of"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-003",
+   "block": "B02"
+  },
+  {
+   "page": 4,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 306.0,
+   "y0": 26.1,
+   "x1": 578.2,
+   "y1": 41.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p04-001",
+   "block": "B04"
+  },
+  {
+   "page": 4,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "",
+   "must": true,
+   "x0": 387.7,
+   "y0": 87.6,
+   "x1": 578.2,
+   "y1": 103.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Date signed"
+   },
+   "cand": "rule",
+   "id": "p04-002",
+   "block": "B05"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "[Address]",
+   "must": true,
+   "x0": 306.0,
+   "y0": 112.4,
+   "x1": 578.2,
+   "y1": 127.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p04-003",
+   "block": "B05"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 2",
+   "printed_label": "",
+   "must": false,
+   "x0": 306.0,
+   "y0": 137.1,
+   "x1": 578.2,
+   "y1": 152.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Address line 2"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p04-004",
+   "block": "B05"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "[Country]",
+   "must": true,
+   "x0": 306.0,
+   "y0": 161.9,
+   "x1": 578.2,
+   "y1": 177.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p04-005",
+   "block": "B05"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Email",
+   "printed_label": "E-mail address",
+   "must": true,
+   "x0": 387.7,
+   "y0": 198.6,
+   "x1": 578.2,
+   "y1": 214.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Email"
+   },
+   "cand": "rule",
+   "what": "email",
+   "id": "p04-006",
+   "block": "B05"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Fax Number",
+   "printed_label": "Fax Number",
+   "must": false,
+   "x0": 387.7,
+   "y0": 223.4,
+   "x1": 578.2,
+   "y1": 238.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Fax Number"
+   },
+   "cand": "rule",
+   "what": "phone",
+   "id": "p04-007",
+   "block": "B05"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Phone",
+   "printed_label": "Telephone Number",
+   "must": true,
+   "x0": 387.7,
+   "y0": 248.1,
+   "x1": 578.2,
+   "y1": 263.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Phone"
+   },
+   "cand": "rule",
+   "what": "phone",
+   "id": "p04-008",
+   "block": "B05"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Amount",
+   "printed_label": "US$",
+   "must": true,
+   "x0": 197.2,
+   "y0": 296.9,
+   "x1": 414.7,
+   "y1": 312.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Amount"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p04-009",
+   "block": "B06"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number",
+   "printed_label": "",
+   "must": false,
+   "x0": 197.2,
+   "y0": 320.9,
+   "x1": 414.7,
+   "y1": 336.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Number"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p04-010",
+   "block": "B06"
+  },
+  {
+   "page": 4,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 33.7,
+   "y0": 397.7,
+   "x1": 213.7,
+   "y1": 413.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p04-011",
+   "block": "B07"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 4,
+   "box": [
+    306.0,
+    50.9,
+    578.2,
+    66.4
+   ],
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Name"
+   },
+   "caption": "Print Name (Undersigned)",
+   "cand": {
+    "kind": "rule",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "name"
+   },
+   "question": "reader name (line) on a rule candidate the measure reads as sign",
+   "item": "i001",
+   "block": "B05"
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 1,
+   "box": [
+    33.7,
+    127.7,
+    103.7,
+    143.2
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION FOR THE PURCHASE OF UNITS OF GARUDA CAPITAL CORP."
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 1,
+   "box": [
+    278.2,
+    243.9,
+    323.2,
+    259.4
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION FOR THE PURCHASE OF UNITS OF GARUDA CAPITAL CORP."
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 1,
+   "box": [
+    493.2,
+    231.9,
+    533.2,
+    247.4
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION FOR THE PURCHASE OF UNITS OF GARUDA CAPITAL CORP."
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 4,
+   "box": [
+    306.0,
+    26.1,
+    578.2,
+    41.6
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 4,
+   "box": [
+    306.0,
+    50.9,
+    578.2,
+    263.6
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature"
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 4,
+   "box": [
+    197.2,
+    296.9,
+    414.7,
+    336.4
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 4,
+   "box": [
+    33.7,
+    397.7,
+    213.7,
+    413.2
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "GARUDA CAPITAL CORP."
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    33.7,
+    127.7,
+    103.7,
+    143.2
+   ],
+   "heading": "SUBSCRIPTION FOR THE PURCHASE OF UNITS OF GARUDA CAPITAL CORP.",
+   "context": [
+    "EX-10.1 2 exhibit10-1.htm FORM OF SUBSCRIPTION AGREEMENTS DATED AS OF JUNE 30, 2005",
+    "Exhibit 10.1 Form of Subscription Agreement dated June 30, 2005",
+    "SUBSCRIPTION FOR THE PURCHASE OF UNITS OF GARUDA CAPITAL CORP."
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    278.2,
+    243.9,
+    323.2,
+    259.4
+   ],
+   "heading": "SUBSCRIPTION FOR THE PURCHASE OF UNITS OF GARUDA CAPITAL CORP.",
+   "context": [
+    "502 - 1978 Vine Street",
+    "Vancouver, BC",
+    "Canada",
+    "V6K 4S1"
+   ],
+   "places": [
+    "p01-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B03",
+   "box": [
+    493.2,
+    231.9,
+    533.2,
+    247.4
+   ],
+   "heading": "SUBSCRIPTION FOR THE PURCHASE OF UNITS OF GARUDA CAPITAL CORP.",
+   "context": [
+    "502 - 1978 Vine Street",
+    "Vancouver, BC",
+    "Canada",
+    "V6K 4S1"
+   ],
+   "places": [
+    "p01-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B04",
+   "box": [
+    306.0,
+    26.1,
+    578.2,
+    41.6
+   ],
+   "heading": "",
+   "context": [],
+   "places": [
+    "p04-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B05",
+   "box": [
+    306.0,
+    50.9,
+    578.2,
+    263.6
+   ],
+   "heading": "Signature",
+   "context": [
+    "Signature"
+   ],
+   "places": [
+    "p04-002",
+    "p04-003",
+    "p04-004",
+    "p04-005",
+    "p04-006",
+    "p04-007",
+    "p04-008"
+   ],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B06",
+   "box": [
+    197.2,
+    296.9,
+    414.7,
+    336.4
+   ],
+   "heading": "",
+   "context": [
+    "E-mail address:",
+    "Fax Number:",
+    "Telephone Number:",
+    "Subscription Amount:"
+   ],
+   "places": [
+    "p04-009",
+    "p04-010"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B07",
+   "box": [
+    33.7,
+    397.7,
+    213.7,
+    413.2
+   ],
+   "heading": "GARUDA CAPITAL CORP.",
+   "context": [
+    "Number",
+    "of Units:",
+    "This Subscription has been executed by Garuda Capital in acceptance of the Undersigned\u2019s subscription application.",
+    "GARUDA CAPITAL CORP."
+   ],
+   "places": [
+    "p04-011"
+   ],
+   "items": []
+  }
+ ]
+}

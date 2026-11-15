@@ -1,0 +1,1581 @@
+{
+ "id": "a027",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:03Z",
+ "how_made": "printed-landscape",
+ "made_group": "browser landscape",
+ "broker_dealer": false,
+ "pages": 7,
+ "page_sizes": {
+  "1": [
+   792.0,
+   612.0
+  ],
+  "2": [
+   792.0,
+   612.0
+  ],
+  "3": [
+   792.0,
+   612.0
+  ],
+  "4": [
+   792.0,
+   612.0
+  ],
+  "5": [
+   792.0,
+   612.0
+  ],
+  "6": [
+   792.0,
+   612.0
+  ],
+  "7": [
+   792.0,
+   612.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text"
+ },
+ "run": "out-18/set-a/a027/result.json",
+ "candidates": "d996f6829840dfb6-f01586d5.json",
+ "counts": {
+  "fields": 33,
+  "counted_candidates": 34,
+  "pairs": 32,
+  "auto": 24,
+  "reader_only": 1,
+  "measure_only": 2,
+  "kind_clash": 8,
+  "person": 14,
+  "items": 25
+ },
+ "places": [
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "WHEREAS, the Company is offering",
+   "printed_label": "(the \u201cOffering\u201d) at a fixed price of $",
+   "must": true,
+   "x0": 366.0,
+   "y0": 126.2,
+   "x1": 386.0,
+   "y1": 141.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "WHEREAS, the Company is offering"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p02-001",
+   "block": "B01"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "CHECK ONE",
+   "printed_label": "",
+   "must": false,
+   "x0": 229.5,
+   "y0": 413.9,
+   "x1": 265.5,
+   "y1": 429.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "CHECK ONE"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p02-002",
+   "block": "B02"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Individual Investor",
+   "printed_label": "Corporation",
+   "must": false,
+   "x0": 403.5,
+   "y0": 413.9,
+   "x1": 439.5,
+   "y1": 429.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Individual Investor"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p02-003",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Custodian Entity",
+   "printed_label": "",
+   "must": false,
+   "x0": 562.5,
+   "y0": 413.9,
+   "x1": 598.5,
+   "y1": 429.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Custodian Entity"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p02-004",
+   "block": "B04"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "the Offering Circular dated",
+   "printed_label": "being offered pursuant to the Offering Circular dated",
+   "must": true,
+   "x0": 544.3,
+   "y0": 561.2,
+   "x1": 584.3,
+   "y1": 576.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "the Offering Circular dated"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p02-005",
+   "block": "B05"
+  },
+  {
+   "page": 6,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "Dated",
+   "must": true,
+   "x0": 98.9,
+   "y0": 267.9,
+   "x1": 213.8,
+   "y1": 283.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Date signed"
+   },
+   "cand": "underscore",
+   "id": "p06-001",
+   "block": "B06"
+  },
+  {
+   "page": 6,
+   "kind": "signature",
+   "owner": "investor-individual",
+   "label": "Signature",
+   "printed_label": "(Signature)",
+   "must": true,
+   "x0": 77.2,
+   "y0": 323.1,
+   "x1": 345.0,
+   "y1": 338.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "person",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p06-002",
+   "block": "B07"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Commitment amount",
+   "printed_label": "(Subscription Amount)",
+   "must": false,
+   "x0": 396.0,
+   "y0": 323.1,
+   "x1": 627.7,
+   "y1": 338.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "person",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p06-003",
+   "block": "B08"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Name",
+   "printed_label": "(Printed Name)",
+   "must": true,
+   "x0": 77.2,
+   "y0": 360.6,
+   "x1": 345.0,
+   "y1": 376.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "person",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p06-004",
+   "block": "B07"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Text",
+   "printed_label": "(Number of Offered Shares Subscribed)",
+   "must": true,
+   "x0": 396.0,
+   "y0": 360.6,
+   "x1": 627.7,
+   "y1": 376.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "person",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Text"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p06-005",
+   "block": "B08"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "(Name of Corporation/LLC/Trust)",
+   "must": true,
+   "x0": 84.7,
+   "y0": 425.1,
+   "x1": 381.7,
+   "y1": 440.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Text"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p06-006",
+   "block": "B09"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "(Subscription Amount)",
+   "must": false,
+   "x0": 447.0,
+   "y0": 425.1,
+   "x1": 707.2,
+   "y1": 440.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p06-007",
+   "block": "B09"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "(Printed Name)",
+   "must": true,
+   "x0": 77.2,
+   "y0": 500.1,
+   "x1": 345.0,
+   "y1": 515.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p06-008",
+   "block": "B09"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Title",
+   "printed_label": "(Title)",
+   "must": false,
+   "x0": 77.2,
+   "y0": 537.6,
+   "x1": 345.0,
+   "y1": 553.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p06-009",
+   "block": "B09"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Investor name",
+   "printed_label": "(Name of Partnership)",
+   "must": true,
+   "x0": 77.2,
+   "y0": 59.9,
+   "x1": 345.0,
+   "y1": 75.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "entity",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Investor name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p07-001",
+   "block": "B10"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "(Subscription Amount)",
+   "must": false,
+   "x0": 396.0,
+   "y0": 59.9,
+   "x1": 627.7,
+   "y1": 75.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Commitment amount"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p07-002",
+   "block": "B11"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "(Printed Name)",
+   "must": true,
+   "x0": 77.2,
+   "y0": 134.9,
+   "x1": 345.0,
+   "y1": 150.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p07-003",
+   "block": "B10"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Title",
+   "printed_label": "(Title)",
+   "must": false,
+   "x0": 77.2,
+   "y0": 172.4,
+   "x1": 345.0,
+   "y1": 187.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p07-004",
+   "block": "B10"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "The foregoing subscription",
+   "printed_label": "The foregoing subscription for",
+   "must": true,
+   "x0": 194.7,
+   "y0": 240.9,
+   "x1": 234.7,
+   "y1": 256.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "The foregoing subscription"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p07-005",
+   "block": "B12"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Commitment amount",
+   "printed_label": "Offered Shares, a Subscription Amount of $",
+   "must": false,
+   "x0": 412.7,
+   "y0": 240.9,
+   "x1": 457.7,
+   "y1": 256.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p07-006",
+   "block": "B13"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "day of",
+   "printed_label": "International, Inc., a Florida corporation, this",
+   "must": true,
+   "x0": 252.4,
+   "y0": 249.9,
+   "x1": 347.6,
+   "y1": 265.4,
+   "printed_as": "measure candidate: dateparts",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "day of"
+   },
+   "cand": "dateparts",
+   "what": "date",
+   "id": "p07-007",
+   "block": "B12"
+  },
+  {
+   "page": 7,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 266.7,
+   "y0": 295.7,
+   "x1": 381.7,
+   "y1": 311.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p07-008",
+   "block": "B14"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Name",
+   "printed_label": "Name",
+   "must": true,
+   "x0": 278.9,
+   "y0": 307.7,
+   "x1": 383.9,
+   "y1": 323.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p07-009",
+   "block": "B14"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 273.5,
+   "y0": 319.7,
+   "x1": 383.5,
+   "y1": 335.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Title"
+   },
+   "cand": "underscore",
+   "what": "title",
+   "id": "p07-010",
+   "block": "B14"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 2,
+   "box": [
+    229.5,
+    432.6,
+    265.5,
+    448.1
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Community Property"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a rule candidate the measure reads as line",
+   "item": "i001",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    403.5,
+    432.6,
+    439.5,
+    448.1
+   ],
+   "caption": "Partnership",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B03"
+  },
+  {
+   "type": "kind-clash",
+   "page": 2,
+   "box": [
+    562.5,
+    432.6,
+    598.5,
+    448.1
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Joint Tenants"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a rule candidate the measure reads as line",
+   "item": "i003",
+   "block": "B04"
+  },
+  {
+   "type": "kind-clash",
+   "page": 2,
+   "box": [
+    229.5,
+    452.1,
+    265.5,
+    467.6
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "LLC"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "firm",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a rule candidate the measure reads as line",
+   "item": "i004",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    403.5,
+    452.1,
+    439.5,
+    467.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i005",
+   "block": "B03"
+  },
+  {
+   "type": "kind-clash",
+   "page": 2,
+   "box": [
+    562.5,
+    452.1,
+    598.5,
+    467.6
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Trust"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "firm",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a rule candidate the measure reads as line",
+   "item": "i006",
+   "block": "B04"
+  },
+  {
+   "type": "kind-clash",
+   "page": 6,
+   "box": [
+    77.2,
+    462.6,
+    345.0,
+    478.1
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "caption": "(Signature)",
+   "cand": {
+    "kind": "rule",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a rule candidate the measure reads as sign",
+   "item": "i007",
+   "block": "B09"
+  },
+  {
+   "type": "kind-clash",
+   "page": 6,
+   "box": [
+    396.0,
+    481.4,
+    627.7,
+    496.9
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "caption": "(Number of Offered Shares Subscribed)",
+   "cand": {
+    "kind": "rule",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a rule candidate the measure reads as line",
+   "item": "i008",
+   "block": "B09"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    77.2,
+    97.4,
+    345.0,
+    112.9
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "caption": "(Signature)",
+   "cand": {
+    "kind": "rule",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a rule candidate the measure reads as sign",
+   "item": "i009",
+   "block": "B10"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    396.0,
+    116.1,
+    627.7,
+    131.6
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "caption": "(Number of Offered Shares Subscribed)",
+   "cand": {
+    "kind": "rule",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a rule candidate the measure reads as line",
+   "item": "i010",
+   "block": "B11"
+  },
+  {
+   "type": "reader-only",
+   "page": 7,
+   "box": [
+    251.4,
+    256.3,
+    278.4,
+    264.8
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "a Florida corporation this"
+   },
+   "caption": "International, Inc., a Florida corporation, this",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i011",
+   "block": "B12"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 2,
+   "box": [
+    366.0,
+    126.2,
+    386.0,
+    141.7
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "RECITALS"
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 2,
+   "box": [
+    229.5,
+    413.9,
+    265.5,
+    467.6
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 2,
+   "box": [
+    403.5,
+    413.9,
+    439.5,
+    467.6
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 2,
+   "box": [
+    562.5,
+    413.9,
+    598.5,
+    467.6
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i016",
+   "type": "person",
+   "page": 2,
+   "box": [
+    544.3,
+    561.2,
+    584.3,
+    576.7
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i017",
+   "type": "person",
+   "page": 6,
+   "box": [
+    98.9,
+    267.9,
+    213.8,
+    283.4
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "[ SIGNATURE PAGE FOLLOWS ]"
+  },
+  {
+   "item": "i018",
+   "type": "person",
+   "page": 6,
+   "box": [
+    77.2,
+    323.1,
+    345.0,
+    376.1
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor-individual"
+   },
+   "heading": "INDIVIDUAL INVESTOR"
+  },
+  {
+   "item": "i019",
+   "type": "person",
+   "page": 6,
+   "box": [
+    396.0,
+    323.1,
+    627.7,
+    376.1
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor-individual"
+   },
+   "heading": "INDIVIDUAL INVESTOR"
+  },
+  {
+   "item": "i020",
+   "type": "person",
+   "page": 6,
+   "box": [
+    77.2,
+    425.1,
+    707.2,
+    553.1
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "CORPORATION/LLC/TRUST INVESTOR"
+  },
+  {
+   "item": "i021",
+   "type": "person",
+   "page": 7,
+   "box": [
+    77.2,
+    59.9,
+    345.0,
+    187.9
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "PARTNERSHIP INVESTOR"
+  },
+  {
+   "item": "i022",
+   "type": "person",
+   "page": 7,
+   "box": [
+    396.0,
+    59.9,
+    627.7,
+    131.6
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "PARTNERSHIP INVESTOR"
+  },
+  {
+   "item": "i023",
+   "type": "person",
+   "page": 7,
+   "box": [
+    194.7,
+    240.9,
+    347.6,
+    265.4
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "COMPANY ACCEPTANCE"
+  },
+  {
+   "item": "i024",
+   "type": "person",
+   "page": 7,
+   "box": [
+    412.7,
+    240.9,
+    457.7,
+    256.4
+   ],
+   "block": "B13",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "COMPANY ACCEPTANCE"
+  },
+  {
+   "item": "i025",
+   "type": "person",
+   "page": 7,
+   "box": [
+    266.7,
+    295.7,
+    383.9,
+    335.2
+   ],
+   "block": "B14",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "WATER TECHNOLOGIES INTERNATIONAL, INC."
+  }
+ ],
+ "blocks": [
+  {
+   "page": 2,
+   "block": "B01",
+   "box": [
+    366.0,
+    126.2,
+    386.0,
+    141.7
+   ],
+   "heading": "RECITALS",
+   "context": [
+    "This subscription agreement (the \u201cSubscription Agreement\u201d or the \u201cAgreement\u201d) is entered into by and between Water Techn",
+    "corporation (the Company), and the undersigned investor (\u201cInvestor\u201d), as of the date set forth on the signature page her",
+    "meaning set forth in the Offering Circular (defined below).",
+    "RECITALS"
+   ],
+   "places": [
+    "p02-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B02",
+   "box": [
+    229.5,
+    413.9,
+    265.5,
+    467.6
+   ],
+   "heading": "",
+   "context": [
+    "Phone E-mail State/Nation of Residency",
+    "Name and Title of Authorized Representative, if investor is an entity or custodial account",
+    "Type of Entity or Custodial Account (IRA, Keogh, corporation, partnership, trust, limited liability company, etc.)",
+    "Jurisdiction of Organization Date of Organization Account Number"
+   ],
+   "places": [
+    "p02-002"
+   ],
+   "items": [
+    "i001",
+    "i004"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B03",
+   "box": [
+    403.5,
+    413.9,
+    439.5,
+    467.6
+   ],
+   "heading": "",
+   "context": [
+    "Phone E-mail State/Nation of Residency",
+    "Name and Title of Authorized Representative, if investor is an entity or custodial account",
+    "Type of Entity or Custodial Account (IRA, Keogh, corporation, partnership, trust, limited liability company, etc.)",
+    "Jurisdiction of Organization Date of Organization Account Number"
+   ],
+   "places": [
+    "p02-003"
+   ],
+   "items": [
+    "i002",
+    "i005"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B04",
+   "box": [
+    562.5,
+    413.9,
+    598.5,
+    467.6
+   ],
+   "heading": "",
+   "context": [
+    "Phone E-mail State/Nation of Residency",
+    "Name and Title of Authorized Representative, if investor is an entity or custodial account",
+    "Type of Entity or Custodial Account (IRA, Keogh, corporation, partnership, trust, limited liability company, etc.)",
+    "Jurisdiction of Organization Date of Organization Account Number"
+   ],
+   "places": [
+    "p02-004"
+   ],
+   "items": [
+    "i003",
+    "i006"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B05",
+   "box": [
+    544.3,
+    561.2,
+    584.3,
+    576.7
+   ],
+   "heading": "",
+   "context": [
+    "1. Subscription.",
+    "(a) Investor hereby irrevocably subscribes for, and agrees to purchase, the Subject Offered Shares set forth on the sign",
+    "Price, upon the terms and conditions set forth herein. The aggregate purchase price for the Subject Offered Shares subsc",
+    "Company in the manner provided in Section 2(a)."
+   ],
+   "places": [
+    "p02-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B06",
+   "box": [
+    98.9,
+    267.9,
+    213.8,
+    283.4
+   ],
+   "heading": "[ SIGNATURE PAGE FOLLOWS ]",
+   "context": [
+    "as of their date. Neither the delivery nor the purchase of the Offered Shares shall, under any circumstances, create any",
+    "affairs of the Company since that date.",
+    "[ SIGNATURE PAGE FOLLOWS ]",
+    "IN WITNESS WHEREOF, the undersigned has executed this Subscription Agreement on the date set forth below."
+   ],
+   "places": [
+    "p06-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B07",
+   "box": [
+    77.2,
+    323.1,
+    345.0,
+    376.1
+   ],
+   "heading": "INDIVIDUAL INVESTOR",
+   "context": [
+    "[ SIGNATURE PAGE FOLLOWS ]",
+    "IN WITNESS WHEREOF, the undersigned has executed this Subscription Agreement on the date set forth below.",
+    "Dated: .",
+    "INDIVIDUAL INVESTOR"
+   ],
+   "places": [
+    "p06-002",
+    "p06-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B08",
+   "box": [
+    396.0,
+    323.1,
+    627.7,
+    376.1
+   ],
+   "heading": "INDIVIDUAL INVESTOR",
+   "context": [
+    "[ SIGNATURE PAGE FOLLOWS ]",
+    "IN WITNESS WHEREOF, the undersigned has executed this Subscription Agreement on the date set forth below.",
+    "Dated: .",
+    "INDIVIDUAL INVESTOR"
+   ],
+   "places": [
+    "p06-003",
+    "p06-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B09",
+   "box": [
+    77.2,
+    425.1,
+    707.2,
+    553.1
+   ],
+   "heading": "CORPORATION/LLC/TRUST INVESTOR",
+   "context": [
+    "INDIVIDUAL INVESTOR",
+    "(Signature) (Subscription Amount)",
+    "(Printed Name) (Number of Offered Shares Subscribed)",
+    "CORPORATION/LLC/TRUST INVESTOR"
+   ],
+   "places": [
+    "p06-006",
+    "p06-007",
+    "p06-008",
+    "p06-009"
+   ],
+   "items": [
+    "i007",
+    "i008"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B10",
+   "box": [
+    77.2,
+    59.9,
+    345.0,
+    187.9
+   ],
+   "heading": "PARTNERSHIP INVESTOR",
+   "context": [
+    "PARTNERSHIP INVESTOR"
+   ],
+   "places": [
+    "p07-001",
+    "p07-003",
+    "p07-004"
+   ],
+   "items": [
+    "i009"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B11",
+   "box": [
+    396.0,
+    59.9,
+    627.7,
+    131.6
+   ],
+   "heading": "PARTNERSHIP INVESTOR",
+   "context": [
+    "PARTNERSHIP INVESTOR"
+   ],
+   "places": [
+    "p07-002"
+   ],
+   "items": [
+    "i010"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B12",
+   "box": [
+    194.7,
+    240.9,
+    347.6,
+    265.4
+   ],
+   "heading": "COMPANY ACCEPTANCE",
+   "context": [
+    "(Number of Offered Shares Subscribed)",
+    "(Printed Name)",
+    "(Title)",
+    "COMPANY ACCEPTANCE"
+   ],
+   "places": [
+    "p07-005",
+    "p07-007"
+   ],
+   "items": [
+    "i011"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B13",
+   "box": [
+    412.7,
+    240.9,
+    457.7,
+    256.4
+   ],
+   "heading": "COMPANY ACCEPTANCE",
+   "context": [
+    "(Number of Offered Shares Subscribed)",
+    "(Printed Name)",
+    "(Title)",
+    "COMPANY ACCEPTANCE"
+   ],
+   "places": [
+    "p07-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 7,
+   "block": "B14",
+   "box": [
+    266.7,
+    295.7,
+    383.9,
+    335.2
+   ],
+   "heading": "WATER TECHNOLOGIES INTERNATIONAL, INC.",
+   "context": [
+    "COMPANY ACCEPTANCE",
+    "The foregoing subscription for Offered Shares, a Subscription Amount of $ , is hereby accepted on behalf of Water Techno",
+    "International, Inc., a Florida corporation, this day of , 202 .",
+    "WATER TECHNOLOGIES INTERNATIONAL, INC."
+   ],
+   "places": [
+    "p07-008",
+    "p07-009",
+    "p07-010"
+   ],
+   "items": []
+  }
+ ]
+}

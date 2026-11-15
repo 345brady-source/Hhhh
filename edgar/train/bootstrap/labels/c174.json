@@ -1,0 +1,764 @@
+{
+ "id": "c174",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:09Z",
+ "how_made": "browser-landscape",
+ "made_group": "browser landscape",
+ "broker_dealer": false,
+ "pages": 17,
+ "page_sizes": {
+  "1": [
+   792.0,
+   612.0
+  ],
+  "2": [
+   792.0,
+   612.0
+  ],
+  "3": [
+   792.0,
+   612.0
+  ],
+  "4": [
+   792.0,
+   612.0
+  ],
+  "5": [
+   792.0,
+   612.0
+  ],
+  "6": [
+   792.0,
+   612.0
+  ],
+  "7": [
+   792.0,
+   612.0
+  ],
+  "8": [
+   792.0,
+   612.0
+  ],
+  "9": [
+   792.0,
+   612.0
+  ],
+  "10": [
+   792.0,
+   612.0
+  ],
+  "11": [
+   792.0,
+   612.0
+  ],
+  "12": [
+   792.0,
+   612.0
+  ],
+  "13": [
+   792.0,
+   612.0
+  ],
+  "14": [
+   792.0,
+   612.0
+  ],
+  "15": [
+   792.0,
+   612.0
+  ],
+  "16": [
+   792.0,
+   612.0
+  ],
+  "17": [
+   792.0,
+   612.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text",
+  "17": "text"
+ },
+ "run": "out-18/set-c/c174/result.json",
+ "candidates": "fcdf1d0a814c7e54-f01586d5.json",
+ "counts": {
+  "fields": 17,
+  "counted_candidates": 17,
+  "pairs": 17,
+  "auto": 17,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 0,
+  "person": 5,
+  "items": 5
+ },
+ "places": [
+  {
+   "page": 13,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 503.2,
+   "y0": 116.9,
+   "x1": 758.2,
+   "y1": 132.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p13-001",
+   "block": "B01"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Commitment amount",
+   "printed_label": "Total Investment Amount:$",
+   "must": false,
+   "x0": 527.3,
+   "y0": 85.6,
+   "x1": 615.0,
+   "y1": 101.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p14-001",
+   "block": "B03"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor name",
+   "printed_label": "Name of Purchaser (Print)",
+   "must": true,
+   "x0": 33.7,
+   "y0": 89.1,
+   "x1": 327.0,
+   "y1": 104.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Investor name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p14-002",
+   "block": "B02"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Total Number of Shares",
+   "printed_label": "Total Number of Shares",
+   "must": true,
+   "x0": 516.1,
+   "y0": 106.6,
+   "x1": 613.6,
+   "y1": 122.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Total Number of Shares"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p14-003",
+   "block": "B03"
+  },
+  {
+   "page": 14,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 57.0,
+   "y0": 130.4,
+   "x1": 323.2,
+   "y1": 145.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p14-004",
+   "block": "B02"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Name",
+   "printed_label": "Name",
+   "must": true,
+   "x0": 97.5,
+   "y0": 157.4,
+   "x1": 323.2,
+   "y1": 172.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p14-005",
+   "block": "B02"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 97.5,
+   "y0": 184.4,
+   "x1": 323.2,
+   "y1": 199.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p14-006",
+   "block": "B02"
+  },
+  {
+   "page": 14,
+   "kind": "date",
+   "owner": "firm",
+   "label": "Date signed",
+   "printed_label": "",
+   "must": true,
+   "x0": 97.5,
+   "y0": 213.6,
+   "x1": 323.2,
+   "y1": 229.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date signed"
+   },
+   "cand": "rule",
+   "id": "p14-007",
+   "block": "B02"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Address",
+   "printed_label": "Address",
+   "must": true,
+   "x0": 97.5,
+   "y0": 246.6,
+   "x1": 323.2,
+   "y1": 262.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p14-008",
+   "block": "B02"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 2",
+   "printed_label": "",
+   "must": false,
+   "x0": 97.5,
+   "y0": 279.6,
+   "x1": 323.2,
+   "y1": 295.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Address line 2"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p14-009",
+   "block": "B02"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 2",
+   "printed_label": "",
+   "must": false,
+   "x0": 97.5,
+   "y0": 312.6,
+   "x1": 323.2,
+   "y1": 328.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Address line 2"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p14-010",
+   "block": "B02"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Phone",
+   "printed_label": "Telephone",
+   "must": true,
+   "x0": 97.5,
+   "y0": 345.6,
+   "x1": 323.2,
+   "y1": 361.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Phone"
+   },
+   "cand": "rule",
+   "what": "phone",
+   "id": "p14-011",
+   "block": "B02"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Facsimile",
+   "printed_label": "Facsimile",
+   "must": true,
+   "x0": 97.5,
+   "y0": 378.6,
+   "x1": 323.2,
+   "y1": 394.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Facsimile"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p14-012",
+   "block": "B02"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "Name",
+   "must": true,
+   "x0": 74.2,
+   "y0": 436.4,
+   "x1": 323.2,
+   "y1": 451.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p14-013",
+   "block": "B04"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 74.2,
+   "y0": 463.4,
+   "x1": 323.2,
+   "y1": 478.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p14-014",
+   "block": "B04"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 74.2,
+   "y0": 490.4,
+   "x1": 323.2,
+   "y1": 505.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p14-015",
+   "block": "B04"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Tax I.D. Number of Person in whose name the Shares are to be",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 531.9,
+   "x1": 277.5,
+   "y1": 547.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Tax I.D. Number of Person in whose name the Shares are to be"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p14-016",
+   "block": "B05"
+  }
+ ],
+ "items": [
+  {
+   "item": "i001",
+   "type": "person",
+   "page": 13,
+   "box": [
+    503.2,
+    116.9,
+    758.2,
+    132.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "SERACARE LIFE SCIENCES, INC."
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 14,
+   "box": [
+    33.7,
+    89.1,
+    327.0,
+    394.1
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Accepted and Agreed:"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 14,
+   "box": [
+    516.1,
+    85.6,
+    615.0,
+    122.1
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "Accepted and Agreed:"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 14,
+   "box": [
+    74.2,
+    436.4,
+    323.2,
+    505.9
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 14,
+   "box": [
+    33.7,
+    531.9,
+    277.5,
+    547.4
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 13,
+   "block": "B01",
+   "box": [
+    503.2,
+    116.9,
+    758.2,
+    132.4
+   ],
+   "heading": "SERACARE LIFE SCIENCES, INC.",
+   "context": [
+    "If the foregoing correctly sets forth our understanding, please indicate your acceptance thereof by signing the counterp",
+    "Very truly yours,",
+    "SERACARE LIFE SCIENCES, INC."
+   ],
+   "places": [
+    "p13-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B02",
+   "box": [
+    33.7,
+    89.1,
+    327.0,
+    394.1
+   ],
+   "heading": "Accepted and Agreed:",
+   "context": [
+    "SUBSCRIPTION AGREEMENT SIGNATURE PAGE",
+    "Accepted and Agreed:"
+   ],
+   "places": [
+    "p14-002",
+    "p14-004",
+    "p14-005",
+    "p14-006",
+    "p14-007",
+    "p14-008",
+    "p14-009",
+    "p14-010",
+    "p14-011",
+    "p14-012"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B03",
+   "box": [
+    516.1,
+    85.6,
+    615.0,
+    122.1
+   ],
+   "heading": "Accepted and Agreed:",
+   "context": [
+    "SUBSCRIPTION AGREEMENT SIGNATURE PAGE",
+    "Accepted and Agreed:"
+   ],
+   "places": [
+    "p14-001",
+    "p14-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B04",
+   "box": [
+    74.2,
+    436.4,
+    323.2,
+    505.9
+   ],
+   "heading": "",
+   "context": [
+    "Telephone:",
+    "Facsimile:",
+    "Please register Shares as follows:"
+   ],
+   "places": [
+    "p14-013",
+    "p14-014",
+    "p14-015"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B05",
+   "box": [
+    33.7,
+    531.9,
+    277.5,
+    547.4
+   ],
+   "heading": "",
+   "context": [
+    "Facsimile:",
+    "Please register Shares as follows:",
+    "Name:",
+    "Tax I.D. Number of Person in whose name the Shares are to be registered:"
+   ],
+   "places": [
+    "p14-016"
+   ],
+   "items": []
+  }
+ ]
+}

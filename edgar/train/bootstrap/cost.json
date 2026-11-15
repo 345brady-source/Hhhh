@@ -1,0 +1,131 @@
+{
+ "tokens_per_item": 210.2,
+ "tokens_per_doc_overhead": 1358,
+ "mean_tokens_per_doc": 7614,
+ "tokens_per_item_average": 231.3,
+ "docs": {
+  "a038": {
+   "items": 16,
+   "boxed": 3,
+   "confirms": 0,
+   "blocks": 13,
+   "sheets": 3,
+   "commands": 7,
+   "tokens_logged_120": 4058,
+   "tokens": 5318
+  },
+  "a001": {
+   "items": 9,
+   "boxed": 0,
+   "confirms": 0,
+   "blocks": 9,
+   "sheets": 0,
+   "commands": 2,
+   "tokens_logged_120": 998,
+   "tokens": 1358
+  },
+  "c181": {
+   "items": 32,
+   "boxed": 17,
+   "confirms": 0,
+   "blocks": 15,
+   "sheets": 5,
+   "commands": 10,
+   "tokens_logged_120": 7734,
+   "tokens": 9534
+  },
+  "b056": {
+   "items": 3,
+   "boxed": 1,
+   "confirms": 0,
+   "blocks": 2,
+   "sheets": 1,
+   "commands": 4,
+   "tokens_logged_120": 902,
+   "tokens": 1622
+  },
+  "b065": {
+   "items": 35,
+   "boxed": 10,
+   "confirms": 0,
+   "blocks": 25,
+   "sheets": 3,
+   "commands": 7,
+   "tokens_logged_120": 5318,
+   "tokens": 6578
+  },
+  "a099": {
+   "items": 34,
+   "boxed": 15,
+   "confirms": 0,
+   "blocks": 19,
+   "sheets": 3,
+   "commands": 8,
+   "tokens_logged_120": 5798,
+   "tokens": 7238
+  },
+  "c165": {
+   "items": 22,
+   "boxed": 2,
+   "confirms": 12,
+   "blocks": 8,
+   "sheets": 4,
+   "commands": 9,
+   "tokens_logged_120": 5295,
+   "tokens": 6915
+  },
+  "c300": {
+   "items": 10,
+   "boxed": 3,
+   "confirms": 2,
+   "blocks": 5,
+   "sheets": 1,
+   "commands": 4,
+   "tokens_logged_120": 2048,
+   "tokens": 2768
+  },
+  "b040": {
+   "items": 121,
+   "boxed": 66,
+   "confirms": 12,
+   "blocks": 43,
+   "sheets": 13,
+   "commands": 28,
+   "tokens_logged_120": 23323,
+   "tokens": 28363
+  },
+  "a075": {
+   "items": 36,
+   "boxed": 11,
+   "confirms": 12,
+   "blocks": 13,
+   "sheets": 4,
+   "commands": 10,
+   "tokens_logged_120": 7017,
+   "tokens": 8817
+  },
+  "a036": {
+   "items": 9,
+   "boxed": 4,
+   "confirms": 1,
+   "blocks": 4,
+   "sheets": 1,
+   "commands": 4,
+   "tokens_logged_120": 2033,
+   "tokens": 2753
+  },
+  "b075": {
+   "items": 68,
+   "boxed": 1,
+   "confirms": 12,
+   "blocks": 55,
+   "sheets": 4,
+   "commands": 9,
+   "tokens_logged_120": 8487,
+   "tokens": 10107
+  }
+ },
+ "per_cmd_allowance": 300,
+ "formula": "tokens = picture pixels / 750 + characters printed or typed / 4 + 300 per command; fitted tokens = overhead + per_item x items (least squares over the 12 documents, overhead floored at the smallest document)",
+ "confirm_all": true
+}

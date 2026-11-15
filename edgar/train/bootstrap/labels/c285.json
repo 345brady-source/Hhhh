@@ -1,0 +1,301 @@
+{
+ "id": "c285",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 4,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text"
+ },
+ "run": "out-18/set-c/c285/result.json",
+ "candidates": "7219876725aca975-f01586d5.json",
+ "counts": {
+  "fields": 6,
+  "counted_candidates": 6,
+  "pairs": 6,
+  "auto": 4,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 2,
+  "person": 2,
+  "items": 4
+ },
+ "places": [
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "The undersigned hereby signs this Subscription Agreement as",
+   "printed_label": "Print Name Above",
+   "must": false,
+   "x0": 360.7,
+   "y0": 128.5,
+   "x1": 578.2,
+   "y1": 144.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "The undersigned hereby signs this Subscription Agreement as"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p04-001",
+   "block": "B01"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "Name",
+   "must": true,
+   "x0": 387.7,
+   "y0": 227.5,
+   "x1": 578.2,
+   "y1": 243.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p04-002",
+   "block": "B02"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 387.7,
+   "y0": 253.0,
+   "x1": 578.2,
+   "y1": 268.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p04-003",
+   "block": "B02"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "is the total amount of your investment) $",
+   "must": false,
+   "x0": 309.6,
+   "y0": 276.9,
+   "x1": 534.5,
+   "y1": 292.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p04-004",
+   "block": "B02"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 4,
+   "box": [
+    293.9,
+    114.9,
+    393.8,
+    130.4
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Subscription Agreement as of"
+   },
+   "caption": "undersigned hereby signs this Subscription Agreement as of",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "kind-clash",
+   "page": 4,
+   "box": [
+    360.7,
+    154.0,
+    578.2,
+    169.5
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Print Name Above"
+   },
+   "caption": "Sign Above",
+   "cand": {
+    "kind": "rule",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a rule candidate the measure reads as sign",
+   "item": "i002",
+   "block": "B01"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 4,
+   "box": [
+    293.9,
+    114.9,
+    578.2,
+    169.5
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SIGNATURE PAGE TO SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 4,
+   "box": [
+    309.6,
+    227.5,
+    578.2,
+    292.4
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SIGNATURE PAGE TO SUBSCRIPTION AGREEMENT"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 4,
+   "block": "B01",
+   "box": [
+    293.9,
+    114.9,
+    578.2,
+    169.5
+   ],
+   "heading": "SIGNATURE PAGE TO SUBSCRIPTION AGREEMENT",
+   "context": [
+    "SIGNATURE PAGE TO SUBSCRIPTION AGREEMENT",
+    "(To be completed and signed only by those who are not submitting this subscription agreement electronically.)"
+   ],
+   "places": [
+    "p04-001"
+   ],
+   "items": [
+    "i001",
+    "i002"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B02",
+   "box": [
+    309.6,
+    227.5,
+    578.2,
+    292.4
+   ],
+   "heading": "SIGNATURE PAGE TO SUBSCRIPTION AGREEMENT",
+   "context": [
+    "Print Name Above",
+    "Sign Above",
+    "IF subscriber is an entity, specify name and title",
+    "below:"
+   ],
+   "places": [
+    "p04-002",
+    "p04-003",
+    "p04-004"
+   ],
+   "items": []
+  }
+ ]
+}

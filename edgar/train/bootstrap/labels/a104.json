@@ -1,0 +1,566 @@
+{
+ "id": "a104",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:04Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 3,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text"
+ },
+ "run": "out-18/set-a/a104/result.json",
+ "candidates": "97af279625120d9c-f01586d5.json",
+ "counts": {
+  "fields": 11,
+  "counted_candidates": 11,
+  "pairs": 11,
+  "auto": 11,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 0,
+  "person": 6,
+  "items": 6
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Statement deemed effective on",
+   "printed_label": "S-1 Registration Statement deemed effective on",
+   "must": true,
+   "x0": 236.4,
+   "y0": 444.9,
+   "x1": 326.4,
+   "y1": 460.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Statement deemed effective on"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of Shares",
+   "printed_label": "Number of Shares",
+   "must": true,
+   "x0": 124.1,
+   "y0": 173.8,
+   "x1": 412.1,
+   "y1": 189.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Number of Shares"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p03-001",
+   "block": "B02"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "Total Amount of Subscription",
+   "must": false,
+   "x0": 182.9,
+   "y0": 214.3,
+   "x1": 410.9,
+   "y1": 229.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p03-002",
+   "block": "B03"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor name",
+   "printed_label": "Exact name(s) of Subscriber(s)",
+   "must": true,
+   "x0": 186.0,
+   "y0": 253.3,
+   "x1": 414.0,
+   "y1": 268.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Investor name"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p03-003",
+   "block": "B03"
+  },
+  {
+   "page": 3,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature of Subscriber(s)",
+   "must": true,
+   "x0": 166.1,
+   "y0": 292.3,
+   "x1": 412.1,
+   "y1": 307.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p03-004",
+   "block": "B03"
+  },
+  {
+   "page": 3,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 62.7,
+   "y0": 359.8,
+   "x1": 410.7,
+   "y1": 375.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date signed"
+   },
+   "cand": "underscore",
+   "id": "p03-005",
+   "block": "B04"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 413.8,
+   "x1": 321.7,
+   "y1": 429.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p03-006",
+   "block": "B05"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 440.8,
+   "x1": 321.7,
+   "y1": 456.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p03-007",
+   "block": "B05"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "Social Security, Taxpayer, or other type Identification Number(s)",
+   "must": false,
+   "x0": 33.7,
+   "y0": 467.8,
+   "x1": 321.7,
+   "y1": 483.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "tax number",
+   "id": "p03-008",
+   "block": "B05"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Social Security, Taxpayer, or other type Identification Number",
+   "printed_label": "Security, Taxpayer, or other type Identification Number(s)",
+   "must": true,
+   "x0": 352.0,
+   "y0": 493.3,
+   "x1": 526.0,
+   "y1": 508.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Social Security, Taxpayer, or other type Identification Number"
+   },
+   "cand": "underscore",
+   "what": "tax number",
+   "id": "p03-009",
+   "block": "B05"
+  },
+  {
+   "page": 3,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 47.8,
+   "y0": 580.3,
+   "x1": 317.8,
+   "y1": 595.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p03-010",
+   "block": "B06"
+  }
+ ],
+ "items": [
+  {
+   "item": "i001",
+   "type": "person",
+   "page": 1,
+   "box": [
+    236.4,
+    444.9,
+    326.4,
+    460.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 3,
+   "box": [
+    124.1,
+    173.8,
+    412.1,
+    189.3
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "(PLEASE PRINT OR TYPE)"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 3,
+   "box": [
+    166.1,
+    214.3,
+    414.0,
+    307.8
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "(PLEASE PRINT OR TYPE)"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 3,
+   "box": [
+    62.7,
+    359.8,
+    410.7,
+    375.3
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature of Subscriber(s):"
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 3,
+   "box": [
+    33.7,
+    413.8,
+    526.0,
+    508.8
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature of Subscriber(s):"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 3,
+   "box": [
+    47.8,
+    580.3,
+    317.8,
+    595.8
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "ACCEPTED BY: Bymax Corp., a Nevada Corporation"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    236.4,
+    444.9,
+    326.4,
+    460.4
+   ],
+   "heading": "",
+   "context": [
+    "CORP. to the Company\u2019s bank account.",
+    "3. Representations of Subscriber. By executing this Agreement, the Subscriber makes the following representations,",
+    "declarations and warranties to the Company, with the intent and understanding that the Company will rely thereon:",
+    "3.1. Such Subscriber acknowledges the public availability of the Company\u2019s current prospectus which can be viewed on the"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B02",
+   "box": [
+    124.1,
+    173.8,
+    412.1,
+    189.3
+   ],
+   "heading": "(PLEASE PRINT OR TYPE)",
+   "context": [
+    "conditions contained therein.",
+    "IN WITNESS WHEREOF, the undersigned has hereby executed this Subscription Agreement as of",
+    "the date set forth below.",
+    "(PLEASE PRINT OR TYPE)"
+   ],
+   "places": [
+    "p03-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B03",
+   "box": [
+    166.1,
+    214.3,
+    414.0,
+    307.8
+   ],
+   "heading": "(PLEASE PRINT OR TYPE)",
+   "context": [
+    "the date set forth below.",
+    "(PLEASE PRINT OR TYPE)",
+    "Number of Shares",
+    "x $0.03 Per Share"
+   ],
+   "places": [
+    "p03-002",
+    "p03-003",
+    "p03-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B04",
+   "box": [
+    62.7,
+    359.8,
+    410.7,
+    375.3
+   ],
+   "heading": "Signature of Subscriber(s):",
+   "context": [
+    "Total Amount of Subscription:",
+    "Exact name(s) of Subscriber(s):",
+    "Signature of Subscriber(s):",
+    "(Signature)"
+   ],
+   "places": [
+    "p03-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B05",
+   "box": [
+    33.7,
+    413.8,
+    526.0,
+    508.8
+   ],
+   "heading": "Signature of Subscriber(s):",
+   "context": [
+    "Signature of Subscriber(s):",
+    "(Signature)",
+    "Date:",
+    "Residence or Physical Mailing Address:"
+   ],
+   "places": [
+    "p03-006",
+    "p03-007",
+    "p03-008",
+    "p03-009"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B06",
+   "box": [
+    47.8,
+    580.3,
+    317.8,
+    595.8
+   ],
+   "heading": "ACCEPTED BY: Bymax Corp., a Nevada Corporation",
+   "context": [
+    "Social Security, Taxpayer, or other type Identification Number(s):",
+    "ACCEPTED BY: Bymax Corp., a Nevada Corporation"
+   ],
+   "places": [
+    "p03-010"
+   ],
+   "items": []
+  }
+ ]
+}

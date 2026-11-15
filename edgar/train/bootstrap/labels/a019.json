@@ -1,0 +1,690 @@
+{
+ "id": "a019",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:03Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 16,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ],
+  "15": [
+   612.0,
+   792.0
+  ],
+  "16": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text"
+ },
+ "run": "out-18/set-a/a019/result.json",
+ "candidates": "06ff4e6dc80232c9-f01586d5.json",
+ "counts": {
+  "fields": 10,
+  "counted_candidates": 10,
+  "pairs": 10,
+  "auto": 7,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 3,
+  "person": 8,
+  "items": 11
+ },
+ "places": [
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "an Offering Circular dated",
+   "printed_label": "Subscription Agreement, Subscriber acknowledges",
+   "must": true,
+   "x0": 66.7,
+   "y0": 288.9,
+   "x1": 221.6,
+   "y1": 304.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "an Offering Circular dated"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p03-001",
+   "block": "B01"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "may accept subscriptions until",
+   "printed_label": "of Shares\u201d). The Company may accept subscriptions until",
+   "must": true,
+   "x0": 397.9,
+   "y0": 456.9,
+   "x1": 542.8,
+   "y1": 472.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "may accept subscriptions until"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p03-002",
+   "block": "B02"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "understands and acknowledges that",
+   "printed_label": "Relationship. Each Subscriber understands and acknowledges that",
+   "must": true,
+   "x0": 407.3,
+   "y0": 384.9,
+   "x1": 467.3,
+   "y1": 400.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "understands and acknowledges that"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p07-001",
+   "block": "B03"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "understands and acknowledges that",
+   "printed_label": "Subscriber further understands and acknowledges that",
+   "must": true,
+   "x0": 288.9,
+   "y0": 420.9,
+   "x1": 408.9,
+   "y1": 436.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "understands and acknowledges that"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p07-002",
+   "block": "B03"
+  },
+  {
+   "page": 12,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 66.7,
+   "y0": 240.9,
+   "x1": 136.7,
+   "y1": 256.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p12-001",
+   "block": "B05"
+  },
+  {
+   "page": 12,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "print name of owner or joint owners",
+   "printed_label": "(print name of owner or joint owners)",
+   "must": true,
+   "x0": 66.7,
+   "y0": 384.9,
+   "x1": 281.6,
+   "y1": 400.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "print name of owner or joint owners"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p12-002",
+   "block": "B07"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "on",
+   "printed_label": "Subscription is accepted by Elegance Spirits, Inc. on",
+   "must": true,
+   "x0": 299.6,
+   "y0": 60.9,
+   "x1": 364.6,
+   "y1": 76.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "on"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p14-001",
+   "block": "B08"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 12,
+   "box": [
+    459.3,
+    132.9,
+    529.3,
+    148.4
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "irrevocably subscribes"
+   },
+   "caption": "Stock the undersigned hereby irrevocably subscribes for is",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i001",
+   "block": "B04"
+  },
+  {
+   "type": "kind-clash",
+   "page": 12,
+   "box": [
+    475.9,
+    168.9,
+    540.9,
+    184.4
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "caption": "the undersigned hereby irrevocably subscribes for is: $",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "amount"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i002",
+   "block": "B04"
+  },
+  {
+   "type": "kind-clash",
+   "page": 12,
+   "box": [
+    66.7,
+    324.9,
+    121.7,
+    340.4
+   ],
+   "field": {
+    "kind": "initials",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Initials"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "initials",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader initials (sign) on a underscore candidate the measure reads as line",
+   "item": "i003",
+   "block": "B06"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 3,
+   "box": [
+    66.7,
+    288.9,
+    221.6,
+    304.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 3,
+   "box": [
+    397.9,
+    456.9,
+    542.8,
+    472.4
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 7,
+   "box": [
+    288.9,
+    384.9,
+    467.3,
+    436.4
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 12,
+   "box": [
+    459.3,
+    132.9,
+    540.9,
+    184.4
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT SIGNATURE PAGE"
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 12,
+   "box": [
+    66.7,
+    240.9,
+    136.7,
+    256.4
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 12,
+   "box": [
+    66.7,
+    324.9,
+    121.7,
+    340.4
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 12,
+   "box": [
+    66.7,
+    384.9,
+    281.6,
+    400.4
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 14,
+   "box": [
+    299.6,
+    60.9,
+    364.6,
+    76.4
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 3,
+   "block": "B01",
+   "box": [
+    66.7,
+    288.9,
+    221.6,
+    304.4
+   ],
+   "heading": "",
+   "context": [
+    "purchase of 25 shares or $250.00 or higher subject to the discretionary of the manager (\u201cMinimum Purchase,\u201d) upon",
+    "the terms and conditions set forth herein. The rights of the Common Stock are as set forth in the Certificate of",
+    "Incorporation, as amended, included in the Exhibits to the Offering Circular of the Company filed with the SEC (the",
+    "\u201cOffering Circular\u201d)."
+   ],
+   "places": [
+    "p03-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B02",
+   "box": [
+    397.9,
+    456.9,
+    542.8,
+    472.4
+   ],
+   "heading": "",
+   "context": [
+    "notify Subscriber whether this subscription is accepted (whether in whole or in part) or rejected. If Subscriber\u2019s",
+    "subscription is rejected, Subscriber\u2019s payment (or portion thereof if partially rejected) will be returned to Subscriber",
+    "without interest and all of Subscriber\u2019s obligations hereunder relating to the rejected portion of the subscription shal",
+    "terminate."
+   ],
+   "places": [
+    "p03-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 7,
+   "block": "B03",
+   "box": [
+    288.9,
+    384.9,
+    467.3,
+    436.4
+   ],
+   "heading": "",
+   "context": [
+    "offerings of Securities may be made at lower valuations, with the result that the Subscriber\u2019s investment will bear a",
+    "lower valuation.",
+    "(h) Domicile. Subscriber maintains Subscriber\u2019s domicile (and is not a transient or temporary resident) at the address",
+    "shown on the signature page."
+   ],
+   "places": [
+    "p07-001",
+    "p07-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 12,
+   "block": "B04",
+   "box": [
+    459.3,
+    132.9,
+    540.9,
+    184.4
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT SIGNATURE PAGE",
+   "context": [
+    "Elegance Spirits, Inc.",
+    "SUBSCRIPTION AGREEMENT SIGNATURE PAGE",
+    "The undersigned, desiring to purchase Common Stock of Elegance Spirits, Inc., by executing this signature page,",
+    "hereby executes, adopts and agrees to all terms, conditions and representations of the Subscription Agreement."
+   ],
+   "places": [],
+   "items": [
+    "i001",
+    "i002"
+   ]
+  },
+  {
+   "page": 12,
+   "block": "B05",
+   "box": [
+    66.7,
+    240.9,
+    136.7,
+    256.4
+   ],
+   "heading": "",
+   "context": [
+    "(b) The aggregate purchase price for the shares the undersigned hereby irrevocably subscribes for is: $",
+    "(print aggregate purchase price)",
+    "(c) EITHER (i) The undersigned is an accredited investor (as that term is defined in Regulation D under the Securities",
+    "Act because the undersigned meets the criteria set forth in the following paragraph(s) of Appendix A attached hereto:"
+   ],
+   "places": [
+    "p12-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 12,
+   "block": "B06",
+   "box": [
+    66.7,
+    324.9,
+    121.7,
+    340.4
+   ],
+   "heading": "",
+   "context": [
+    "(initial if applicable)",
+    "OR (ii) The amount set forth in paragraph (b) above (together with any previous investments in the Securities pursuant",
+    "to this offering) does not exceed 10% of the greater of the undersigned\u2019s net worth or annual income.",
+    "(print applicable number from Appendix A)"
+   ],
+   "places": [],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 12,
+   "block": "B07",
+   "box": [
+    66.7,
+    384.9,
+    281.6,
+    400.4
+   ],
+   "heading": "",
+   "context": [
+    "(print applicable number from Appendix A)",
+    "(initial if applicable)",
+    "(d) The Securities being subscribed for will be owned by, and should be recorded on the Company\u2019s books as held in",
+    "the name of:"
+   ],
+   "places": [
+    "p12-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B08",
+   "box": [
+    299.6,
+    60.9,
+    364.6,
+    76.4
+   ],
+   "heading": "",
+   "context": [],
+   "places": [
+    "p14-001"
+   ],
+   "items": []
+  }
+ ]
+}

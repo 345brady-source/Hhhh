@@ -1,0 +1,69 @@
+{
+ "id": "a001",
+ "answers": {},
+ "blocks": {
+  "B01": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B02": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B03": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B04": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B05": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B06": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B07": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B08": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B09": [
+   {
+    "owner": "firm",
+    "cond": ""
+   }
+  ]
+ },
+ "confirms": {},
+ "confirm_items": [],
+ "cost": {
+  "pixels": 0,
+  "chars": 3033,
+  "commands": 2,
+  "sheets": 0
+ },
+ "done": "2026-11-15T04:44:10Z"
+}

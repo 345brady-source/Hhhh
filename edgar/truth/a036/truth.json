@@ -1,0 +1,74 @@
+{
+ "file": "set-a/a036/doc.pdf",
+ "id": "a036",
+ "pages": 4,
+ "page_size_pt": [
+  612.0,
+  792.0
+ ],
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward (boxes from the measure's candidates or the reader's fields, as reviewed).",
+ "signing": {
+  "investor_pages": [],
+  "firm_pages": [],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": "from the reviewed signature blocks"
+ },
+ "counts_per_page": {},
+ "counts_total": {
+  "total": 0,
+  "tickbox": 0,
+  "initials": 0,
+  "blank": 0,
+  "signature": 0,
+  "date": 0
+ },
+ "counts_by_owner": {},
+ "sure_per_page": {
+  "1": "bootstrap, reviewed disagreements",
+  "2": "bootstrap, reviewed disagreements",
+  "3": "bootstrap, reviewed disagreements",
+  "4": "bootstrap, reviewed disagreements"
+ },
+ "not_fields": {},
+ "places": [],
+ "may_fill": [],
+ "source": "bootstrap",
+ "done": "2026-11-15T04:52:46Z",
+ "bootstrap": {
+  "labels": "labels/a036.json",
+  "run": "out-18/set-a/a036/result.json",
+  "auto": 1,
+  "confirmed_no": 1,
+  "items": 4,
+  "kept": 0,
+  "blocks": 4,
+  "dropped_by_block": 0,
+  "dropped_overlap": [],
+  "tokens": 2033
+ }
+}

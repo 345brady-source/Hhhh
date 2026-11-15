@@ -1,0 +1,886 @@
+{
+ "id": "c277",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 5,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text"
+ },
+ "run": "out-18/set-c/c277/result.json",
+ "candidates": "4990096f986d763f-f01586d5.json",
+ "counts": {
+  "fields": 15,
+  "counted_candidates": 16,
+  "pairs": 14,
+  "auto": 13,
+  "reader_only": 1,
+  "measure_only": 2,
+  "kind_clash": 1,
+  "person": 10,
+  "items": 14
+ },
+ "places": [
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 321.7,
+   "y0": 175.3,
+   "x1": 573.7,
+   "y1": 190.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p04-001",
+   "block": "B01"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 321.7,
+   "y0": 202.3,
+   "x1": 573.7,
+   "y1": 217.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p04-002",
+   "block": "B01"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Home Tel. No.",
+   "printed_label": "Home Tel. No",
+   "must": true,
+   "x0": 395.7,
+   "y0": 229.3,
+   "x1": 569.7,
+   "y1": 244.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Home Tel. No."
+   },
+   "cand": "underscore",
+   "what": "phone",
+   "id": "p04-003",
+   "block": "B01"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Work Tel. No.",
+   "printed_label": "Work Tel. No",
+   "must": true,
+   "x0": 392.7,
+   "y0": 256.3,
+   "x1": 566.7,
+   "y1": 271.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Work Tel. No."
+   },
+   "cand": "underscore",
+   "what": "phone",
+   "id": "p04-004",
+   "block": "B01"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of Shares Purchased",
+   "printed_label": "Number of Shares Purchased",
+   "must": true,
+   "x0": 285.7,
+   "y0": 377.8,
+   "x1": 459.7,
+   "y1": 393.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Number of Shares Purchased"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p04-005",
+   "block": "B03"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Subscription Price to be Paid",
+   "printed_label": "Subscription Price to be Paid",
+   "must": true,
+   "x0": 285.7,
+   "y0": 404.8,
+   "x1": 459.7,
+   "y1": 420.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Subscription Price to be Paid"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p04-006",
+   "block": "B03"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "in purchasing up to",
+   "printed_label": "(we) am (are) interested in purchasing up to",
+   "must": true,
+   "x0": 487.9,
+   "y0": 539.8,
+   "x1": 511.9,
+   "y1": 555.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "in purchasing up to"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p04-007",
+   "block": "B04"
+  },
+  {
+   "page": 4,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "Dated",
+   "must": true,
+   "x0": 140.7,
+   "y0": 607.3,
+   "x1": 218.7,
+   "y1": 622.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date signed"
+   },
+   "cand": "underscore",
+   "id": "p04-008",
+   "block": "B05"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": ", 2017",
+   "printed_label": "",
+   "must": true,
+   "x0": 321.7,
+   "y0": 607.3,
+   "x1": 573.7,
+   "y1": 622.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": ", 2017"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p04-009",
+   "block": "B06"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Accepted as to",
+   "printed_label": "Accepted as to",
+   "must": true,
+   "x0": 215.4,
+   "y0": 688.3,
+   "x1": 263.4,
+   "y1": 703.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Accepted as to"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p04-010",
+   "block": "B07"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "day of",
+   "printed_label": "shares this",
+   "must": true,
+   "x0": 319.7,
+   "y0": 688.3,
+   "x1": 458.0,
+   "y1": 703.8,
+   "printed_as": "measure candidate: dateparts",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "day of"
+   },
+   "cand": "dateparts",
+   "what": "date",
+   "id": "p04-011",
+   "block": "B08"
+  },
+  {
+   "page": 4,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 342.1,
+   "y0": 742.3,
+   "x1": 546.1,
+   "y1": 757.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p04-012",
+   "block": "B09"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 350.3,
+   "y0": 40.3,
+   "x1": 548.3,
+   "y1": 55.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Title"
+   },
+   "cand": "underscore",
+   "what": "title",
+   "id": "p05-001",
+   "block": "B10"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 4,
+   "box": [
+    321.7,
+    148.3,
+    573.7,
+    163.8
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "The residence address of the undersigned is"
+   },
+   "caption": "The residence address of the undersigned is",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "address"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    105.7,
+    296.8,
+    291.7,
+    312.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    321.7,
+    634.3,
+    573.7,
+    649.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i003",
+   "block": "B06"
+  },
+  {
+   "type": "reader-only",
+   "page": 4,
+   "box": [
+    318.7,
+    687.3,
+    344.7,
+    703.4
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "shares this"
+   },
+   "caption": "shares this",
+   "proposed": {
+    "kind": "blank",
+    "owner": "firm",
+    "what": "text"
+   },
+   "item": "i004",
+   "block": "B08"
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 4,
+   "box": [
+    321.7,
+    148.3,
+    573.7,
+    271.8
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIBER SIGNATURE PAGE"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 4,
+   "box": [
+    105.7,
+    296.8,
+    291.7,
+    312.3
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 4,
+   "box": [
+    285.7,
+    377.8,
+    459.7,
+    420.3
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 4,
+   "box": [
+    487.9,
+    539.8,
+    511.9,
+    555.3
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 4,
+   "box": [
+    140.7,
+    607.3,
+    218.7,
+    622.8
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 4,
+   "box": [
+    321.7,
+    607.3,
+    573.7,
+    649.8
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 4,
+   "box": [
+    215.4,
+    688.3,
+    263.4,
+    703.8
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "ACCEPTANCE"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 4,
+   "box": [
+    318.7,
+    687.3,
+    458.0,
+    703.8
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "ACCEPTANCE"
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 4,
+   "box": [
+    342.1,
+    742.3,
+    546.1,
+    757.8
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "STONE BANCSHARES, INC."
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 5,
+   "box": [
+    350.3,
+    40.3,
+    548.3,
+    55.8
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 4,
+   "block": "B01",
+   "box": [
+    321.7,
+    148.3,
+    573.7,
+    271.8
+   ],
+   "heading": "SUBSCRIBER SIGNATURE PAGE",
+   "context": [
+    "SUBSCRIPTION AGREEMENT",
+    "SUBSCRIBER SIGNATURE PAGE",
+    "The undersigned agrees to be bound by the terms and conditions of the Subscription",
+    "Agreement to which this Subscriber Signature Page is attached."
+   ],
+   "places": [
+    "p04-001",
+    "p04-002",
+    "p04-003",
+    "p04-004"
+   ],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B02",
+   "box": [
+    105.7,
+    296.8,
+    291.7,
+    312.3
+   ],
+   "heading": "",
+   "context": [
+    "The residence address of the undersigned is:",
+    "Home Tel. No.",
+    "Work Tel. No.",
+    "Tax I.D. No."
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B03",
+   "box": [
+    285.7,
+    377.8,
+    459.7,
+    420.3
+   ],
+   "heading": "",
+   "context": [
+    "Tax I.D. No.",
+    "The undersigned agrees to purchase the following shares of the Company\u2019s Common",
+    "Stock for and in consideration of the payment to Stone Bancshares, Inc. of the following",
+    "subscription price:"
+   ],
+   "places": [
+    "p04-005",
+    "p04-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B04",
+   "box": [
+    487.9,
+    539.8,
+    511.9,
+    555.3
+   ],
+   "heading": "",
+   "context": [
+    "Subscription Price to be Paid: ($14.00/share)",
+    "Minimum Purchase: 100 shares",
+    "The undersigned directs the Company to issue the subject shares in the following name:",
+    "(Specify the exact manner in which shares will be titled.)"
+   ],
+   "places": [
+    "p04-007"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B05",
+   "box": [
+    140.7,
+    607.3,
+    218.7,
+    622.8
+   ],
+   "heading": "",
+   "context": [
+    "(Specify the exact manner in which shares will be titled.)",
+    "If additional shares are available, I (we) am (are) interested in purchasing up to additional",
+    "shares.",
+    "Shareholder Signature(s):"
+   ],
+   "places": [
+    "p04-008"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B06",
+   "box": [
+    321.7,
+    607.3,
+    573.7,
+    649.8
+   ],
+   "heading": "",
+   "context": [
+    "(Specify the exact manner in which shares will be titled.)",
+    "If additional shares are available, I (we) am (are) interested in purchasing up to additional",
+    "shares.",
+    "Shareholder Signature(s):"
+   ],
+   "places": [
+    "p04-009"
+   ],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B07",
+   "box": [
+    215.4,
+    688.3,
+    263.4,
+    703.8
+   ],
+   "heading": "ACCEPTANCE",
+   "context": [
+    "shares.",
+    "Shareholder Signature(s):",
+    "Dated: , 2017",
+    "ACCEPTANCE"
+   ],
+   "places": [
+    "p04-010"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B08",
+   "box": [
+    318.7,
+    687.3,
+    458.0,
+    703.8
+   ],
+   "heading": "ACCEPTANCE",
+   "context": [
+    "shares.",
+    "Shareholder Signature(s):",
+    "Dated: , 2017",
+    "ACCEPTANCE"
+   ],
+   "places": [
+    "p04-011"
+   ],
+   "items": [
+    "i004"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B09",
+   "box": [
+    342.1,
+    742.3,
+    546.1,
+    757.8
+   ],
+   "heading": "STONE BANCSHARES, INC.",
+   "context": [
+    "Dated: , 2017",
+    "ACCEPTANCE",
+    "Accepted as to shares this day of , 2017.",
+    "STONE BANCSHARES, INC."
+   ],
+   "places": [
+    "p04-012"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B10",
+   "box": [
+    350.3,
+    40.3,
+    548.3,
+    55.8
+   ],
+   "heading": "",
+   "context": [],
+   "places": [
+    "p05-001"
+   ],
+   "items": []
+  }
+ ]
+}

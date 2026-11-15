@@ -1,0 +1,508 @@
+{
+ "id": "c138",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:08Z",
+ "how_made": "filed-pdf",
+ "made_group": "filed PDF",
+ "broker_dealer": false,
+ "pages": 3,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text"
+ },
+ "run": "out-18/set-c/c138/result.json",
+ "candidates": "6693e71fdb32fc0b-f01586d5.json",
+ "counts": {
+  "fields": 8,
+  "counted_candidates": 9,
+  "pairs": 8,
+  "auto": 8,
+  "reader_only": 0,
+  "measure_only": 1,
+  "kind_clash": 0,
+  "person": 6,
+  "items": 7
+ },
+ "places": [
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of Shares of Common Stock Owned",
+   "printed_label": "",
+   "must": false,
+   "x0": 275.9,
+   "y0": 175.2,
+   "x1": 506.3,
+   "y1": 190.8,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Number of Shares of Common Stock Owned"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p03-001",
+   "block": "B02"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Amount",
+   "printed_label": "$",
+   "must": true,
+   "x0": 329.5,
+   "y0": 249.3,
+   "x1": 445.1,
+   "y1": 264.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p03-002",
+   "block": "B03"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 180.0,
+   "y0": 321.4,
+   "x1": 328.6,
+   "y1": 336.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p03-003",
+   "block": "B04"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 180.0,
+   "y0": 344.8,
+   "x1": 328.6,
+   "y1": 360.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p03-004",
+   "block": "B04"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 180.0,
+   "y0": 368.3,
+   "x1": 328.6,
+   "y1": 383.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p03-005",
+   "block": "B04"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Shareholder",
+   "printed_label": "Shareholder",
+   "must": true,
+   "x0": 346.7,
+   "y0": 407.3,
+   "x1": 445.3,
+   "y1": 422.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Shareholder"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p03-006",
+   "block": "B04"
+  },
+  {
+   "page": 3,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 306.5,
+   "y0": 459.5,
+   "x1": 443.5,
+   "y1": 475.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p03-007",
+   "block": "B05"
+  },
+  {
+   "page": 3,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 84.8,
+   "y0": 571.7,
+   "x1": 315.8,
+   "y1": 587.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p03-008",
+   "block": "B06"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    72.0,
+    326.4,
+    277.3,
+    341.9
+   ],
+   "caption": "Robert Choiniere, Chief Financial Officer",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 2,
+   "box": [
+    72.0,
+    326.4,
+    277.3,
+    341.9
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "US A PROXY."
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 3,
+   "box": [
+    275.9,
+    175.2,
+    506.3,
+    190.8
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "TENDER NOTICE"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 3,
+   "box": [
+    329.5,
+    249.3,
+    445.1,
+    264.8
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 3,
+   "box": [
+    180.0,
+    321.4,
+    445.3,
+    422.8
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 3,
+   "box": [
+    306.5,
+    459.5,
+    443.5,
+    475.0
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 3,
+   "box": [
+    84.8,
+    571.7,
+    315.8,
+    587.2
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "Accepted by:"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 2,
+   "block": "B01",
+   "box": [
+    72.0,
+    326.4,
+    277.3,
+    341.9
+   ],
+   "heading": "US A PROXY.",
+   "context": [
+    "US A PROXY.",
+    "This notice shall expire on April 6, 2022 at 5:00pm Eastern Standard Time, at which time the",
+    "opportunity shall be deemed closed and expired without further notice.",
+    "Sincerely,"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B02",
+   "box": [
+    275.9,
+    175.2,
+    506.3,
+    190.8
+   ],
+   "heading": "TENDER NOTICE",
+   "context": [
+    "TENDER NOTICE",
+    "In accordance with and pursuant to the buy-back program implemented by the Company, the",
+    "undersigned hereby elects to tender the number of shares of common stock indicated below.",
+    "Date of Tender:"
+   ],
+   "places": [
+    "p03-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B03",
+   "box": [
+    329.5,
+    249.3,
+    445.1,
+    264.8
+   ],
+   "heading": "",
+   "context": [
+    "undersigned hereby elects to tender the number of shares of common stock indicated below.",
+    "Date of Tender:",
+    "Number of Shares of Common Stock Owned:",
+    "Number of Shares of Common Stock Tendered:"
+   ],
+   "places": [
+    "p03-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B04",
+   "box": [
+    180.0,
+    321.4,
+    445.3,
+    422.8
+   ],
+   "heading": "",
+   "context": [
+    "Number of Shares of Common Stock Tendered:",
+    "Tender Price per Share:",
+    "Amount Due to Shareholder: $",
+    "Please direct payment pursuant to the following instructions:"
+   ],
+   "places": [
+    "p03-003",
+    "p03-004",
+    "p03-005",
+    "p03-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B05",
+   "box": [
+    306.5,
+    459.5,
+    443.5,
+    475.0
+   ],
+   "heading": "",
+   "context": [
+    "Please direct payment pursuant to the following instructions:",
+    "Authorization:",
+    "Shareholder:"
+   ],
+   "places": [
+    "p03-007"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B06",
+   "box": [
+    84.8,
+    571.7,
+    315.8,
+    587.2
+   ],
+   "heading": "Accepted by:",
+   "context": [
+    "Name:",
+    "Title:",
+    "Accepted by:",
+    "Ameri Metro Inc."
+   ],
+   "places": [
+    "p03-008"
+   ],
+   "items": []
+  }
+ ]
+}

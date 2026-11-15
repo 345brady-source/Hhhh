@@ -1,0 +1,186 @@
+{
+ "id": "b023",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:05Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 7,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text"
+ },
+ "run": "out-18/set-b/b023/result.json",
+ "candidates": "bf9bb47b580eda5b-f01586d5.json",
+ "counts": {
+  "fields": 0,
+  "counted_candidates": 2,
+  "pairs": 0,
+  "auto": 0,
+  "reader_only": 0,
+  "measure_only": 2,
+  "kind_clash": 0,
+  "person": 2,
+  "items": 4
+ },
+ "places": [],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 7,
+   "box": [
+    268.6,
+    213.9,
+    503.4,
+    229.4
+   ],
+   "caption": "Name: Randal A. Nardone",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of hyphens typed as a blank"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "name"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "measure-only",
+   "page": 7,
+   "box": [
+    268.6,
+    360.1,
+    503.4,
+    375.6
+   ],
+   "caption": "Name: Randal A. Nardone",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of hyphens typed as a blank"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "name"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 7,
+   "box": [
+    268.6,
+    213.9,
+    503.4,
+    229.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "By: RIC COINVESTMENT FUND GP LLC"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 7,
+   "box": [
+    268.6,
+    360.1,
+    503.4,
+    375.6
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "By: FIG ADVISORS LLC"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 7,
+   "block": "B01",
+   "box": [
+    268.6,
+    213.9,
+    503.4,
+    229.4
+   ],
+   "heading": "By: RIC COINVESTMENT FUND GP LLC",
+   "context": [
+    "Agreement as of the date first written above.",
+    "RIC COINVESTMENT FUND LP",
+    "By: RIC COINVESTMENT FUND GP LLC",
+    "General Partner"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B02",
+   "box": [
+    268.6,
+    360.1,
+    503.4,
+    375.6
+   ],
+   "heading": "By: FIG ADVISORS LLC",
+   "context": [
+    "Title: Chief Operating Officer and Secretary",
+    "[ ]",
+    "By: FIG ADVISORS LLC",
+    "General Partner"
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  }
+ ]
+}

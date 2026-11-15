@@ -1,0 +1,2378 @@
+{
+ "id": "c226",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 10,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text"
+ },
+ "run": "out-18/set-c/c226/result.json",
+ "candidates": "72eb91fdb46aef00-f01586d5.json",
+ "counts": {
+  "fields": 48,
+  "counted_candidates": 50,
+  "pairs": 48,
+  "auto": 39,
+  "reader_only": 0,
+  "measure_only": 2,
+  "kind_clash": 9,
+  "person": 24,
+  "items": 35
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "units at",
+   "printed_label": "units at $",
+   "must": true,
+   "x0": 456.4,
+   "y0": 338.5,
+   "x1": 485.7,
+   "y1": 354.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "units at"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-001",
+   "block": "B02"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Company and one 1",
+   "printed_label": "corporation (the \"Company\") and one (1)",
+   "must": true,
+   "x0": 268.5,
+   "y0": 372.3,
+   "x1": 309.6,
+   "y1": 387.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Company and one 1"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-002",
+   "block": "B01"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "for a",
+   "printed_label": "for a",
+   "must": true,
+   "x0": 409.4,
+   "y0": 439.8,
+   "x1": 450.5,
+   "y1": 455.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "for a"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-003",
+   "block": "B03"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "period commencing three months after its issuance. The under",
+   "printed_label": "herewith $",
+   "must": true,
+   "x0": 92.4,
+   "y0": 462.3,
+   "x1": 168.8,
+   "y1": 477.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "period commencing three months after its issuance. The under"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-004",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "of acquiring the Shares",
+   "printed_label": "acquiring the Shares?",
+   "must": true,
+   "x0": 162.9,
+   "y0": 171.3,
+   "x1": 192.2,
+   "y1": 186.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "of acquiring the Shares"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-001",
+   "block": "B05"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "partnership or entity have",
+   "printed_label": "corporation partnership or entity have?",
+   "must": true,
+   "x0": 268.5,
+   "y0": 205.0,
+   "x1": 297.9,
+   "y1": 220.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "partnership or entity have"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-002",
+   "block": "B05"
+  },
+  {
+   "page": 4,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "(Signature)",
+   "must": true,
+   "x0": 268.6,
+   "y0": 283.8,
+   "x1": 503.4,
+   "y1": 299.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p04-001",
+   "block": "B06"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name & Address",
+   "printed_label": "",
+   "must": true,
+   "x0": 268.6,
+   "y0": 396.3,
+   "x1": 503.4,
+   "y1": 411.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name & Address"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p04-002",
+   "block": "B07"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 268.6,
+   "y0": 418.8,
+   "x1": 503.4,
+   "y1": 434.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p04-003",
+   "block": "B07"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Taxpayer ID",
+   "printed_label": "Social Security Number or",
+   "must": true,
+   "x0": 268.6,
+   "y0": 441.3,
+   "x1": 503.4,
+   "y1": 456.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Taxpayer ID"
+   },
+   "cand": "underscore",
+   "what": "tax number",
+   "id": "p04-004",
+   "block": "B07"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Phone",
+   "printed_label": "(H)",
+   "must": true,
+   "x0": 292.0,
+   "y0": 497.5,
+   "x1": 386.0,
+   "y1": 513.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Phone"
+   },
+   "cand": "underscore",
+   "what": "phone",
+   "id": "p04-005",
+   "block": "B08"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "W",
+   "printed_label": "(W)",
+   "must": true,
+   "x0": 409.4,
+   "y0": 497.5,
+   "x1": 479.9,
+   "y1": 513.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "W"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p04-006",
+   "block": "B08"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "ALFACELL CORPORATION",
+   "printed_label": "",
+   "must": false,
+   "x0": 268.6,
+   "y0": 655.0,
+   "x1": 503.4,
+   "y1": 670.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "ALFACELL CORPORATION"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p04-007",
+   "block": "B09"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 268.5,
+   "y0": 677.5,
+   "x1": 503.3,
+   "y1": 693.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p04-008",
+   "block": "B09"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "",
+   "must": false,
+   "x0": 151.2,
+   "y0": 711.3,
+   "x1": 386.0,
+   "y1": 726.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Name"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p04-009",
+   "block": "B09"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "WARRANT TO PURCHASE",
+   "printed_label": "WARRANT TO PURCHASE",
+   "must": true,
+   "x0": 186.4,
+   "y0": 70.0,
+   "x1": 250.9,
+   "y1": 85.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "WARRANT TO PURCHASE"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p05-001",
+   "block": "B10"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "NEW JERSEY TIME ON",
+   "printed_label": "p.m. NEW JERSEY TIME, ON",
+   "must": true,
+   "x0": 180.5,
+   "y0": 81.3,
+   "x1": 274.4,
+   "y1": 96.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "NEW JERSEY TIME ON"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p05-002",
+   "block": "B10"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "NO",
+   "printed_label": "NO",
+   "must": true,
+   "x0": 57.2,
+   "y0": 193.8,
+   "x1": 92.4,
+   "y1": 209.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "NO"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p05-003",
+   "block": "B11"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "NO.",
+   "printed_label": "",
+   "must": false,
+   "x0": 427.0,
+   "y0": 193.8,
+   "x1": 462.3,
+   "y1": 209.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "NO."
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p05-004",
+   "block": "B12"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "that",
+   "printed_label": "This certifies that, for value received,",
+   "must": true,
+   "x0": 309.6,
+   "y0": 238.8,
+   "x1": 468.1,
+   "y1": 254.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "that"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p05-005",
+   "block": "B13"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "time on and after",
+   "printed_label": "any time on and after",
+   "must": true,
+   "x0": 162.9,
+   "y0": 272.5,
+   "x1": 274.4,
+   "y1": 288.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "time on and after"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p05-006",
+   "block": "B13"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "time on",
+   "printed_label": "time, on",
+   "must": true,
+   "x0": 86.6,
+   "y0": 283.8,
+   "x1": 174.6,
+   "y1": 299.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "time on"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p05-007",
+   "block": "B13"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "$",
+   "must": false,
+   "x0": 39.6,
+   "y0": 295.0,
+   "x1": 80.7,
+   "y1": 310.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p05-008",
+   "block": "B13"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "A. Exercise Price. The shares of Warrant Stock shall be purc",
+   "printed_label": "of this Warrant, at a price of $",
+   "must": true,
+   "x0": 297.9,
+   "y0": 250.0,
+   "x1": 321.4,
+   "y1": 265.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "A. Exercise Price. The shares of Warrant Stock shall be purc"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p07-001",
+   "block": "B14"
+  },
+  {
+   "page": 9,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 57.2,
+   "y0": 351.3,
+   "x1": 239.2,
+   "y1": 366.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p09-001",
+   "block": "B15"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Stock, par value $.001 per share, of Alfacell Corporation, a",
+   "printed_label": "payment of $",
+   "must": true,
+   "x0": 104.2,
+   "y0": 643.8,
+   "x1": 145.3,
+   "y1": 659.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Stock, par value $.001 per share, of Alfacell Corporation, a"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p09-002",
+   "block": "B17"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor name",
+   "printed_label": "Name",
+   "must": true,
+   "x0": 69.0,
+   "y0": 677.5,
+   "x1": 427.0,
+   "y1": 693.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Investor name"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p09-003",
+   "block": "B17"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "Address",
+   "must": true,
+   "x0": 86.6,
+   "y0": 711.3,
+   "x1": 427.0,
+   "y1": 726.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p09-004",
+   "block": "B17"
+  },
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Taxpayer ID",
+   "printed_label": "Taxpayer Identification Number",
+   "must": true,
+   "x0": 221.6,
+   "y0": 25.0,
+   "x1": 427.0,
+   "y1": 40.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Taxpayer ID"
+   },
+   "cand": "underscore",
+   "what": "tax number",
+   "id": "p10-001",
+   "block": "B18"
+  },
+  {
+   "page": 10,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 92.4,
+   "y0": 47.5,
+   "x1": 427.0,
+   "y1": 63.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p10-002",
+   "block": "B18"
+  },
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "FOR VALUED RECEIVED",
+   "printed_label": "FOR VALUED RECEIVED,",
+   "must": true,
+   "x0": 157.0,
+   "y0": 137.5,
+   "x1": 327.2,
+   "y1": 153.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "FOR VALUED RECEIVED"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p10-003",
+   "block": "B19"
+  },
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "transfers unto",
+   "printed_label": "transfers unto",
+   "must": true,
+   "x0": 121.8,
+   "y0": 148.8,
+   "x1": 344.9,
+   "y1": 164.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "transfers unto"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p10-004",
+   "block": "B19"
+  },
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "Address",
+   "must": true,
+   "x0": 74.8,
+   "y0": 182.5,
+   "x1": 415.3,
+   "y1": 198.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p10-005",
+   "block": "B19"
+  },
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "irrevocably constitute and appoint",
+   "printed_label": "constitute and appoint",
+   "must": true,
+   "x0": 168.8,
+   "y0": 227.5,
+   "x1": 297.9,
+   "y1": 243.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "irrevocably constitute and appoint"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p10-006",
+   "block": "B19"
+  },
+  {
+   "page": 10,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 33.7,
+   "y0": 272.5,
+   "x1": 239.2,
+   "y1": 288.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p10-007",
+   "block": "B20"
+  },
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 441.3,
+   "x1": 239.2,
+   "y1": 456.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p10-008",
+   "block": "B21"
+  },
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "# of Units Price Term Exercise Price Number",
+   "printed_label": "Term Exercise Price Number",
+   "must": false,
+   "x0": 327.3,
+   "y0": 573.9,
+   "x1": 503.4,
+   "y1": 589.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "# of Units Price Term Exercise Price Number"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p10-009",
+   "block": "B24"
+  },
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "----- -----",
+   "printed_label": "",
+   "must": true,
+   "x0": 368.3,
+   "y0": 596.4,
+   "x1": 450.5,
+   "y1": 611.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "----- -----"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p10-010",
+   "block": "B24"
+  },
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "----- -----",
+   "printed_label": "",
+   "must": true,
+   "x0": 462.3,
+   "y0": 596.4,
+   "x1": 503.3,
+   "y1": 611.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "----- -----"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p10-011",
+   "block": "B24"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    339.0,
+    338.5,
+    391.8,
+    354.0
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "hereby subscribes to purchase"
+   },
+   "caption": "The undersigned hereby subscribes to purchase",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    327.2,
+    439.8,
+    368.3,
+    455.3
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "The Warrants are exercisable into one Share . The Shares, th"
+   },
+   "caption": "undersigned. The Warrants will be exercisable at $",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "amount"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i002",
+   "block": "B03"
+  },
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    33.7,
+    473.5,
+    98.3,
+    489.0
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "purchase price"
+   },
+   "caption": "on the signature",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "amount"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i003",
+   "block": "B03"
+  },
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    256.8,
+    721.0,
+    309.6,
+    736.5
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "applicable to the undersigned"
+   },
+   "caption": "2(i) is applicable to the undersigned",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i004",
+   "block": "B04"
+  },
+  {
+   "type": "kind-clash",
+   "page": 2,
+   "box": [
+    215.7,
+    171.3,
+    245.1,
+    186.8
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Yes"
+   },
+   "caption": "acquiring the Shares? Yes",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i005",
+   "block": "B05"
+  },
+  {
+   "type": "kind-clash",
+   "page": 4,
+   "box": [
+    33.7,
+    677.5,
+    239.2,
+    693.0
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "caption": "Name",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "firm",
+    "what": "name"
+   },
+   "question": "reader signature (sign) on a underscore candidate the measure reads as line",
+   "item": "i006",
+   "block": "B09"
+  },
+  {
+   "type": "kind-clash",
+   "page": 9,
+   "box": [
+    33.7,
+    452.5,
+    239.2,
+    468.0
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "caption": "Name",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "firm",
+    "what": "name"
+   },
+   "question": "reader signature (sign) on a underscore candidate the measure reads as line",
+   "item": "i007",
+   "block": "B16"
+  },
+  {
+   "type": "kind-clash",
+   "page": 9,
+   "box": [
+    368.3,
+    621.3,
+    397.7,
+    636.8
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "to the extent of"
+   },
+   "caption": "by this Warrant Certificate to the extent of",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i008",
+   "block": "B17"
+  },
+  {
+   "type": "kind-clash",
+   "page": 10,
+   "box": [
+    444.6,
+    205.0,
+    503.3,
+    220.5
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "to the extent of"
+   },
+   "caption": "by this Warrant Certificate to the extent of",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i009",
+   "block": "B19"
+  },
+  {
+   "type": "measure-only",
+   "page": 10,
+   "box": [
+    121.8,
+    596.4,
+    168.8,
+    611.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of hyphens typed as a blank"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i010",
+   "block": "B22"
+  },
+  {
+   "type": "measure-only",
+   "page": 10,
+   "box": [
+    215.7,
+    596.4,
+    274.4,
+    611.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of hyphens typed as a blank"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i011",
+   "block": "B23"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 1,
+   "box": [
+    268.5,
+    338.5,
+    391.8,
+    387.8
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 1,
+   "box": [
+    456.4,
+    338.5,
+    485.7,
+    354.0
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 1,
+   "box": [
+    33.7,
+    439.8,
+    450.5,
+    489.0
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 1,
+   "box": [
+    256.8,
+    721.0,
+    309.6,
+    736.5
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i016",
+   "type": "person",
+   "page": 2,
+   "box": [
+    162.9,
+    171.3,
+    297.9,
+    220.5
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i017",
+   "type": "person",
+   "page": 4,
+   "box": [
+    268.6,
+    283.8,
+    503.4,
+    299.3
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i018",
+   "type": "person",
+   "page": 4,
+   "box": [
+    268.6,
+    396.3,
+    503.4,
+    456.8
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i019",
+   "type": "person",
+   "page": 4,
+   "box": [
+    292.0,
+    497.5,
+    479.9,
+    513.0
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i020",
+   "type": "person",
+   "page": 4,
+   "box": [
+    33.7,
+    655.0,
+    503.4,
+    726.8
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ACCEPTED AND AGREED: Deliver to Address: (if"
+  },
+  {
+   "item": "i021",
+   "type": "person",
+   "page": 5,
+   "box": [
+    180.5,
+    70.0,
+    274.4,
+    96.8
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i022",
+   "type": "person",
+   "page": 5,
+   "box": [
+    57.2,
+    193.8,
+    92.4,
+    209.3
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "COUNSEL ACCEPTABLE TO THE COMPANY THAT SUCH REGISTRATION IS NOT REQUIRED."
+  },
+  {
+   "item": "i023",
+   "type": "person",
+   "page": 5,
+   "box": [
+    427.0,
+    193.8,
+    462.3,
+    209.3
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "COUNSEL ACCEPTABLE TO THE COMPANY THAT SUCH REGISTRATION IS NOT REQUIRED."
+  },
+  {
+   "item": "i024",
+   "type": "person",
+   "page": 5,
+   "box": [
+    39.6,
+    238.8,
+    468.1,
+    310.5
+   ],
+   "block": "B13",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ALFACELL CORPORATION"
+  },
+  {
+   "item": "i025",
+   "type": "person",
+   "page": 7,
+   "box": [
+    297.9,
+    250.0,
+    321.4,
+    265.5
+   ],
+   "block": "B14",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SECTION VII. EXERCISE PRICE; ANTI-DILUTION PROVISIONS."
+  },
+  {
+   "item": "i026",
+   "type": "person",
+   "page": 9,
+   "box": [
+    57.2,
+    351.3,
+    239.2,
+    366.8
+   ],
+   "block": "B15",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "ALFACELL CORPORATION"
+  },
+  {
+   "item": "i027",
+   "type": "person",
+   "page": 9,
+   "box": [
+    33.7,
+    452.5,
+    239.2,
+    468.0
+   ],
+   "block": "B16",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "WARRANTHOLDER"
+  },
+  {
+   "item": "i028",
+   "type": "person",
+   "page": 9,
+   "box": [
+    69.0,
+    621.3,
+    427.0,
+    726.8
+   ],
+   "block": "B17",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "PURCHASE FORM"
+  },
+  {
+   "item": "i029",
+   "type": "person",
+   "page": 10,
+   "box": [
+    92.4,
+    25.0,
+    427.0,
+    63.0
+   ],
+   "block": "B18",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i030",
+   "type": "person",
+   "page": 10,
+   "box": [
+    74.8,
+    137.5,
+    503.3,
+    243.0
+   ],
+   "block": "B19",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ASSIGNMENT FORM"
+  },
+  {
+   "item": "i031",
+   "type": "person",
+   "page": 10,
+   "box": [
+    33.7,
+    272.5,
+    239.2,
+    288.0
+   ],
+   "block": "B20",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ASSIGNMENT FORM"
+  },
+  {
+   "item": "i032",
+   "type": "person",
+   "page": 10,
+   "box": [
+    33.7,
+    441.3,
+    239.2,
+    456.8
+   ],
+   "block": "B21",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SIGNATURE GUARANTEED:"
+  },
+  {
+   "item": "i033",
+   "type": "person",
+   "page": 10,
+   "box": [
+    121.8,
+    596.4,
+    168.8,
+    611.9
+   ],
+   "block": "B22",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SCHEDULE"
+  },
+  {
+   "item": "i034",
+   "type": "person",
+   "page": 10,
+   "box": [
+    215.7,
+    596.4,
+    274.4,
+    611.9
+   ],
+   "block": "B23",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SCHEDULE"
+  },
+  {
+   "item": "i035",
+   "type": "person",
+   "page": 10,
+   "box": [
+    327.3,
+    573.9,
+    503.4,
+    611.9
+   ],
+   "block": "B24",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SCHEDULE"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    268.5,
+    338.5,
+    391.8,
+    387.8
+   ],
+   "heading": "",
+   "context": [
+    "for the closing of this Offering, the Company may close only on the",
+    "undersigned's investment and such investment may be inadequate to meet the",
+    "Company's cash requirements. The Company intends to utilize the proceeds of this",
+    "Offering for research and development and general corporate purposes."
+   ],
+   "places": [
+    "p01-002"
+   ],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    456.4,
+    338.5,
+    485.7,
+    354.0
+   ],
+   "heading": "",
+   "context": [
+    "for the closing of this Offering, the Company may close only on the",
+    "undersigned's investment and such investment may be inadequate to meet the",
+    "Company's cash requirements. The Company intends to utilize the proceeds of this",
+    "Offering for research and development and general corporate purposes."
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B03",
+   "box": [
+    33.7,
+    439.8,
+    450.5,
+    489.0
+   ],
+   "heading": "",
+   "context": [
+    "The Warrants are exercisable into one (1) Share (the \"Warrant Shares\"). The",
+    "Shares, the Warrants and the Warrant Shares are being sold in a transaction",
+    "exempt from registration under the Securities Act of 1933, as amended (the",
+    "\"Act\"). The Warrants will be issued pursuant to a Warrant Agreement in the form"
+   ],
+   "places": [
+    "p01-003",
+    "p01-004"
+   ],
+   "items": [
+    "i002",
+    "i003"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B04",
+   "box": [
+    256.8,
+    721.0,
+    309.6,
+    736.5
+   ],
+   "heading": "",
+   "context": [
+    "distribution. The undersigned will not sell, hypothecate, transfer or otherwise",
+    "dispose of the Securities unless such transaction has been registered under the",
+    "Act or, in the opinion of counsel for the Company, an exemption from",
+    "registration is available."
+   ],
+   "places": [],
+   "items": [
+    "i004"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B05",
+   "box": [
+    162.9,
+    171.3,
+    297.9,
+    220.5
+   ],
+   "heading": "",
+   "context": [
+    "2002; or (B) if a corporation, partnership, or other entity, the foregoing",
+    "representation applies to all of the equity owners of the corporation,",
+    "partnership, or entity.",
+    "(ii) If a corporation, partnership, or other entity, was such a"
+   ],
+   "places": [
+    "p02-001",
+    "p02-002"
+   ],
+   "items": [
+    "i005"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B06",
+   "box": [
+    268.6,
+    283.8,
+    503.4,
+    299.3
+   ],
+   "heading": "",
+   "context": [
+    "By its acceptance hereof, the Company hereby acknowledges that the",
+    "foregoing accurately reflects its understanding concerning the transaction",
+    "contemplated hereby.",
+    "Very truly yours,"
+   ],
+   "places": [
+    "p04-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B07",
+   "box": [
+    268.6,
+    396.3,
+    503.4,
+    456.8
+   ],
+   "heading": "",
+   "context": [
+    "Please type or print name",
+    "(and title if applicable)",
+    "Name & Address (as it should appear on",
+    "certificates):"
+   ],
+   "places": [
+    "p04-002",
+    "p04-003",
+    "p04-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B08",
+   "box": [
+    292.0,
+    497.5,
+    479.9,
+    513.0
+   ],
+   "heading": "",
+   "context": [
+    "Name & Address (as it should appear on",
+    "certificates):",
+    "Social Security Number or",
+    "Taxpayer Identification Number"
+   ],
+   "places": [
+    "p04-005",
+    "p04-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B09",
+   "box": [
+    33.7,
+    655.0,
+    503.4,
+    726.8
+   ],
+   "heading": "ACCEPTED AND AGREED: Deliver to Address: (if",
+   "context": [
+    "Amount of Subscription",
+    "(U.S. Dollars)",
+    "ACCEPTED AND AGREED: Deliver to Address: (if",
+    "ALFACELL CORPORATION different from above)"
+   ],
+   "places": [
+    "p04-007",
+    "p04-008",
+    "p04-009"
+   ],
+   "items": [
+    "i006"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B10",
+   "box": [
+    180.5,
+    70.0,
+    274.4,
+    96.8
+   ],
+   "heading": "",
+   "context": [
+    "<PAGE>",
+    "Exhibit A"
+   ],
+   "places": [
+    "p05-001",
+    "p05-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B11",
+   "box": [
+    57.2,
+    193.8,
+    92.4,
+    209.3
+   ],
+   "heading": "COUNSEL ACCEPTABLE TO THE COMPANY THAT SUCH REGISTRATION IS NOT REQUIRED.",
+   "context": [
+    "WARRANT AND SUCH SHARES MAY NOT BE SOLD, TRANSFERRED, PLEDGED, HYPOTHECATED OR",
+    "OTHERWISE DISPOSED OF, IN WHOLE OR IN PART, IN THE ABSENCE OF AN EFFECTIVE",
+    "REGISTRATION STATEMENT UNDER THE ACT AND APPLICABLE STATE LAW, OR AN OPINION OF",
+    "COUNSEL ACCEPTABLE TO THE COMPANY THAT SUCH REGISTRATION IS NOT REQUIRED."
+   ],
+   "places": [
+    "p05-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B12",
+   "box": [
+    427.0,
+    193.8,
+    462.3,
+    209.3
+   ],
+   "heading": "COUNSEL ACCEPTABLE TO THE COMPANY THAT SUCH REGISTRATION IS NOT REQUIRED.",
+   "context": [
+    "WARRANT AND SUCH SHARES MAY NOT BE SOLD, TRANSFERRED, PLEDGED, HYPOTHECATED OR",
+    "OTHERWISE DISPOSED OF, IN WHOLE OR IN PART, IN THE ABSENCE OF AN EFFECTIVE",
+    "REGISTRATION STATEMENT UNDER THE ACT AND APPLICABLE STATE LAW, OR AN OPINION OF",
+    "COUNSEL ACCEPTABLE TO THE COMPANY THAT SUCH REGISTRATION IS NOT REQUIRED."
+   ],
+   "places": [
+    "p05-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B13",
+   "box": [
+    39.6,
+    238.8,
+    468.1,
+    310.5
+   ],
+   "heading": "ALFACELL CORPORATION",
+   "context": [
+    "REGISTRATION STATEMENT UNDER THE ACT AND APPLICABLE STATE LAW, OR AN OPINION OF",
+    "COUNSEL ACCEPTABLE TO THE COMPANY THAT SUCH REGISTRATION IS NOT REQUIRED.",
+    "NO. SHARES",
+    "ALFACELL CORPORATION"
+   ],
+   "places": [
+    "p05-005",
+    "p05-006",
+    "p05-007",
+    "p05-008"
+   ],
+   "items": []
+  },
+  {
+   "page": 7,
+   "block": "B14",
+   "box": [
+    297.9,
+    250.0,
+    321.4,
+    265.5
+   ],
+   "heading": "SECTION VII. EXERCISE PRICE; ANTI-DILUTION PROVISIONS.",
+   "context": [
+    "business judgment.",
+    "7",
+    "<PAGE>",
+    "SECTION VII. EXERCISE PRICE; ANTI-DILUTION PROVISIONS."
+   ],
+   "places": [
+    "p07-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 9,
+   "block": "B15",
+   "box": [
+    57.2,
+    351.3,
+    239.2,
+    366.8
+   ],
+   "heading": "ALFACELL CORPORATION",
+   "context": [
+    "IN WITNESS WHEREOF, the parties hereto have executed this Warrant",
+    "Certificate or caused this Warrant Certificate to be duly executed as of the day",
+    "and year first above written.",
+    "ALFACELL CORPORATION"
+   ],
+   "places": [
+    "p09-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 9,
+   "block": "B16",
+   "box": [
+    33.7,
+    452.5,
+    239.2,
+    468.0
+   ],
+   "heading": "WARRANTHOLDER",
+   "context": [
+    "Name: Kuslima Shogen",
+    "Title: Chairman and Chief",
+    "Executive Officer",
+    "WARRANTHOLDER"
+   ],
+   "places": [],
+   "items": [
+    "i007"
+   ]
+  },
+  {
+   "page": 9,
+   "block": "B17",
+   "box": [
+    69.0,
+    621.3,
+    427.0,
+    726.8
+   ],
+   "heading": "PURCHASE FORM",
+   "context": [
+    "Taxpayer Identification Number",
+    "10",
+    "<PAGE>",
+    "PURCHASE FORM"
+   ],
+   "places": [
+    "p09-002",
+    "p09-003",
+    "p09-004"
+   ],
+   "items": [
+    "i008"
+   ]
+  },
+  {
+   "page": 10,
+   "block": "B18",
+   "box": [
+    92.4,
+    25.0,
+    427.0,
+    63.0
+   ],
+   "heading": "",
+   "context": [],
+   "places": [
+    "p10-001",
+    "p10-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 10,
+   "block": "B19",
+   "box": [
+    74.8,
+    137.5,
+    503.3,
+    243.0
+   ],
+   "heading": "ASSIGNMENT FORM",
+   "context": [
+    "Signature:",
+    "11",
+    "<PAGE>",
+    "ASSIGNMENT FORM"
+   ],
+   "places": [
+    "p10-003",
+    "p10-004",
+    "p10-005",
+    "p10-006"
+   ],
+   "items": [
+    "i009"
+   ]
+  },
+  {
+   "page": 10,
+   "block": "B20",
+   "box": [
+    33.7,
+    272.5,
+    239.2,
+    288.0
+   ],
+   "heading": "ASSIGNMENT FORM",
+   "context": [
+    "Corporation, represented by this Warrant Certificate to the extent of",
+    "shares as to which such right is exercisable and does hereby irrevocably",
+    "constitute and appoint , to transfer the same on the books",
+    "of the Company with full power of substitution in the premises."
+   ],
+   "places": [
+    "p10-007"
+   ],
+   "items": []
+  },
+  {
+   "page": 10,
+   "block": "B21",
+   "box": [
+    33.7,
+    441.3,
+    239.2,
+    456.8
+   ],
+   "heading": "SIGNATURE GUARANTEED:",
+   "context": [
+    "Certificate in every particular, without",
+    "alteration or enlargement or any change",
+    "whatever.",
+    "SIGNATURE GUARANTEED:"
+   ],
+   "places": [
+    "p10-008"
+   ],
+   "items": []
+  },
+  {
+   "page": 10,
+   "block": "B22",
+   "box": [
+    121.8,
+    596.4,
+    168.8,
+    611.9
+   ],
+   "heading": "SCHEDULE",
+   "context": [
+    "The following Purchase Agreement was issued to the following individuals, upon",
+    "the following terms:",
+    "Warrants Issued",
+    "------------------------------"
+   ],
+   "places": [],
+   "items": [
+    "i010"
+   ]
+  },
+  {
+   "page": 10,
+   "block": "B23",
+   "box": [
+    215.7,
+    596.4,
+    274.4,
+    611.9
+   ],
+   "heading": "SCHEDULE",
+   "context": [
+    "The following Purchase Agreement was issued to the following individuals, upon",
+    "the following terms:",
+    "Warrants Issued",
+    "------------------------------"
+   ],
+   "places": [],
+   "items": [
+    "i011"
+   ]
+  },
+  {
+   "page": 10,
+   "block": "B24",
+   "box": [
+    327.3,
+    573.9,
+    503.4,
+    611.9
+   ],
+   "heading": "SCHEDULE",
+   "context": [
+    "<PAGE>",
+    "SCHEDULE",
+    "The following Purchase Agreement was issued to the following individuals, upon",
+    "the following terms:"
+   ],
+   "places": [
+    "p10-009",
+    "p10-010",
+    "p10-011"
+   ],
+   "items": []
+  }
+ ]
+}

@@ -1,0 +1,177 @@
+{
+ "id": "a002",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:03Z",
+ "how_made": "filed-pdf",
+ "made_group": "filed PDF",
+ "broker_dealer": false,
+ "pages": 4,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text"
+ },
+ "run": "out-18/set-a/a002/result.json",
+ "candidates": "d624bada8c0a730b-f01586d5.json",
+ "counts": {
+  "fields": 2,
+  "counted_candidates": 2,
+  "pairs": 2,
+  "auto": 2,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 0,
+  "person": 2,
+  "items": 2
+ },
+ "places": [
+  {
+   "page": 4,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 94.0,
+   "y0": 160.4,
+   "x1": 282.3,
+   "y1": 175.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p04-001",
+   "block": "B01"
+  },
+  {
+   "page": 4,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 94.0,
+   "y0": 277.1,
+   "x1": 282.3,
+   "y1": 292.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p04-002",
+   "block": "B02"
+  }
+ ],
+ "items": [
+  {
+   "item": "i001",
+   "type": "person",
+   "page": 4,
+   "box": [
+    94.0,
+    160.4,
+    282.3,
+    175.9
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 4,
+   "box": [
+    94.0,
+    277.1,
+    282.3,
+    292.6
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "Signature of Subscriber"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 4,
+   "block": "B01",
+   "box": [
+    94.0,
+    160.4,
+    282.3,
+    175.9
+   ],
+   "heading": "",
+   "context": [
+    "IN WITNESS WHEREOF, the parties have caused this Subscription Agreement dated",
+    "June 01, 2015 between ralliBox, Inc. and Netherin Enterprises, LLC to be executed as of",
+    "June 01, 2015"
+   ],
+   "places": [
+    "p04-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B02",
+   "box": [
+    94.0,
+    277.1,
+    282.3,
+    292.6
+   ],
+   "heading": "Signature of Subscriber",
+   "context": [
+    "By:",
+    "Signature of Subscriber",
+    "David Kneusel, Managing Member",
+    "Netherin Enterprises, LLC"
+   ],
+   "places": [
+    "p04-002"
+   ],
+   "items": []
+  }
+ ]
+}

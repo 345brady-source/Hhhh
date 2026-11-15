@@ -1,0 +1,124 @@
+{
+ "file": "set-b/b056/doc.pdf",
+ "id": "b056",
+ "pages": 5,
+ "page_size_pt": [
+  612.0,
+  792.0
+ ],
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward (boxes from the measure's candidates or the reader's fields, as reviewed).",
+ "signing": {
+  "investor_pages": [],
+  "firm_pages": [],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": "from the reviewed signature blocks"
+ },
+ "counts_per_page": {
+  "1": {
+   "total": 2,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 2,
+   "signature": 0,
+   "date": 0
+  }
+ },
+ "counts_total": {
+  "total": 2,
+  "tickbox": 0,
+  "initials": 0,
+  "blank": 2,
+  "signature": 0,
+  "date": 0
+ },
+ "counts_by_owner": {
+  "investor": 2
+ },
+ "sure_per_page": {
+  "1": "bootstrap, reviewed disagreements",
+  "2": "bootstrap, reviewed disagreements",
+  "3": "bootstrap, reviewed disagreements",
+  "4": "bootstrap, reviewed disagreements",
+  "5": "bootstrap, reviewed disagreements"
+ },
+ "not_fields": {},
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "I hereby agree to purchase",
+   "printed_label": "I hereby agree to purchase",
+   "must": true,
+   "x0": 227.5,
+   "y0": 124.8,
+   "x1": 262.7,
+   "y1": 140.3,
+   "printed_as": "measure candidate: underscore",
+   "what": "text",
+   "origin": "auto",
+   "id": "p01-001"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "of $",
+   "printed_label": "of $",
+   "must": false,
+   "x0": 57.2,
+   "y0": 181.0,
+   "x1": 104.2,
+   "y1": 196.5,
+   "printed_as": "item i001 (measure-only), kept on review",
+   "origin": "measure-only",
+   "what": "amount",
+   "id": "p01-002"
+  }
+ ],
+ "may_fill": [],
+ "source": "bootstrap",
+ "done": "2026-11-15T04:45:49Z",
+ "bootstrap": {
+  "labels": "quality/b056.json",
+  "run": "out-18/set-b/b056/result.json",
+  "auto": 1,
+  "confirmed_no": 0,
+  "items": 1,
+  "kept": 1,
+  "blocks": 2,
+  "dropped_by_block": 0,
+  "dropped_overlap": [],
+  "tokens": 902
+ }
+}

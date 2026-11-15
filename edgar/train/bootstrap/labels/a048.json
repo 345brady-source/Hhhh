@@ -1,0 +1,459 @@
+{
+ "id": "a048",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:04Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 5,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text"
+ },
+ "run": "out-18/set-a/a048/result.json",
+ "candidates": "1ef306d466aa2aa0-f01586d5.json",
+ "counts": {
+  "fields": 7,
+  "counted_candidates": 7,
+  "pairs": 7,
+  "auto": 7,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 0,
+  "person": 6,
+  "items": 6
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "and unconditionally subscribes",
+   "printed_label": "(the \u201cCommon Stock\u201d),",
+   "must": true,
+   "x0": 454.3,
+   "y0": 333.6,
+   "x1": 522.2,
+   "y1": 349.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "and unconditionally subscribes"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "an aggregate consideration of",
+   "printed_label": "later than four",
+   "must": true,
+   "x0": 499.7,
+   "y0": 360.6,
+   "x1": 559.6,
+   "y1": 376.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "an aggregate consideration of"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-002",
+   "block": "B01"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "the Company to purchase",
+   "printed_label": "",
+   "must": true,
+   "x0": 226.9,
+   "y0": 455.1,
+   "x1": 278.8,
+   "y1": 470.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "the Company to purchase"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-003",
+   "block": "B02"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Executed this",
+   "printed_label": "Executed this",
+   "must": true,
+   "x0": 137.7,
+   "y0": 71.1,
+   "x1": 167.7,
+   "y1": 86.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Executed this"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p05-001",
+   "block": "B03"
+  },
+  {
+   "page": 5,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 304.6,
+   "y0": 150.6,
+   "x1": 556.6,
+   "y1": 166.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p05-002",
+   "block": "B04"
+  },
+  {
+   "page": 5,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 77.3,
+   "y0": 285.6,
+   "x1": 299.3,
+   "y1": 301.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p05-003",
+   "block": "B05"
+  },
+  {
+   "page": 5,
+   "kind": "date",
+   "owner": "firm",
+   "label": "Date signed",
+   "printed_label": "DATE",
+   "must": true,
+   "x0": 77.3,
+   "y0": 339.6,
+   "x1": 257.3,
+   "y1": 355.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date signed"
+   },
+   "cand": "underscore",
+   "id": "p05-004",
+   "block": "B06"
+  }
+ ],
+ "items": [
+  {
+   "item": "i001",
+   "type": "person",
+   "page": 1,
+   "box": [
+    454.3,
+    333.6,
+    559.6,
+    376.1
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 1,
+   "box": [
+    226.9,
+    455.1,
+    278.8,
+    470.6
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 5,
+   "box": [
+    137.7,
+    71.1,
+    167.7,
+    86.6
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 5,
+   "box": [
+    304.6,
+    150.6,
+    556.6,
+    166.1
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 5,
+   "box": [
+    77.3,
+    285.6,
+    299.3,
+    301.1
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "GUIDED THERAPEUTICS, INC."
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 5,
+   "box": [
+    77.3,
+    339.6,
+    257.3,
+    355.1
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "GUIDED THERAPEUTICS, INC."
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    454.3,
+    333.6,
+    559.6,
+    376.1
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT",
+   "context": [
+    "PRIVATE SALE OF COMMON STOCK AND STOCK WARRANT",
+    "SUBSCRIPTION AGREEMENT",
+    "To Guided Therapeutics, Inc., a corporation organized and incorporated under the laws of the State of Delaware",
+    "(the \u201cCompany\u201d):"
+   ],
+   "places": [
+    "p01-001",
+    "p01-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    226.9,
+    455.1,
+    278.8,
+    470.6
+   ],
+   "heading": "",
+   "context": [
+    "\u201cAggregate Consideration\u201d), to be issued on a Business Day selected by the Company, no later than four (4)",
+    "Business Days succeeding the Acceptance Date (as defined in Section 4 below) (such date of issuance, the",
+    "\u201cClosing\u201d). As used herein, \u201cBusiness Day\u201d has the meaning ascribed to same in the form of Warrant referenced",
+    "below."
+   ],
+   "places": [
+    "p01-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B03",
+   "box": [
+    137.7,
+    71.1,
+    167.7,
+    86.6
+   ],
+   "heading": "",
+   "context": [],
+   "places": [
+    "p05-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B04",
+   "box": [
+    304.6,
+    150.6,
+    556.6,
+    166.1
+   ],
+   "heading": "",
+   "context": [
+    "Executed this day of November, 2011.",
+    "Yours very truly,"
+   ],
+   "places": [
+    "p05-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B05",
+   "box": [
+    77.3,
+    285.6,
+    299.3,
+    301.1
+   ],
+   "heading": "GUIDED THERAPEUTICS, INC.",
+   "context": [
+    "Name:",
+    "Title:",
+    "ACCEPTED:",
+    "GUIDED THERAPEUTICS, INC."
+   ],
+   "places": [
+    "p05-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B06",
+   "box": [
+    77.3,
+    339.6,
+    257.3,
+    355.1
+   ],
+   "heading": "GUIDED THERAPEUTICS, INC.",
+   "context": [
+    "GUIDED THERAPEUTICS, INC.",
+    "By:",
+    "Name: Mark L. Faupel",
+    "Title: Chief Executive Officer"
+   ],
+   "places": [
+    "p05-004"
+   ],
+   "items": []
+  }
+ ]
+}

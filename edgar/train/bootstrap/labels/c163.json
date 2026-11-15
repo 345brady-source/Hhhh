@@ -1,0 +1,395 @@
+{
+ "id": "c163",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:08Z",
+ "how_made": "filed-pdf",
+ "made_group": "filed PDF",
+ "broker_dealer": false,
+ "pages": 5,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text"
+ },
+ "run": "out-18/set-c/c163/result.json",
+ "candidates": "2605006a318dd7b4-f01586d5.json",
+ "counts": {
+  "fields": 7,
+  "counted_candidates": 8,
+  "pairs": 7,
+  "auto": 5,
+  "reader_only": 0,
+  "measure_only": 1,
+  "kind_clash": 2,
+  "person": 3,
+  "items": 6
+ },
+ "places": [
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Margarete",
+   "printed_label": "Margarete",
+   "must": true,
+   "x0": 295.9,
+   "y0": 180.7,
+   "x1": 374.0,
+   "y1": 196.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Margarete"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p05-001",
+   "block": "B01"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "5/23/2025",
+   "must": true,
+   "x0": 243.7,
+   "y0": 232.3,
+   "x1": 363.6,
+   "y1": 247.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p05-002",
+   "block": "B01"
+  },
+  {
+   "page": 5,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "906 Rosemary st.Denver,",
+   "must": true,
+   "x0": 243.7,
+   "y0": 260.0,
+   "x1": 363.6,
+   "y1": 275.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date signed"
+   },
+   "cand": "underscore",
+   "id": "p05-003",
+   "block": "B01"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "",
+   "must": true,
+   "x0": 243.7,
+   "y0": 285.8,
+   "x1": 363.6,
+   "y1": 301.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p05-004",
+   "block": "B01"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Phone",
+   "printed_label": "",
+   "must": true,
+   "x0": 243.7,
+   "y0": 343.4,
+   "x1": 363.6,
+   "y1": 358.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Phone"
+   },
+   "cand": "underscore",
+   "what": "phone",
+   "id": "p05-005",
+   "block": "B02"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 5,
+   "box": [
+    243.7,
+    212.5,
+    363.6,
+    228.0
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "caption": "Margarete Ralston",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a underscore candidate the measure reads as line",
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    243.7,
+    375.2,
+    363.6,
+    390.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "kind-clash",
+   "page": 5,
+   "box": [
+    243.7,
+    546.2,
+    315.6,
+    561.7
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "caption": "Gabriel Bar",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "firm",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a underscore candidate the measure reads as line",
+   "item": "i003",
+   "block": "B03"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 5,
+   "box": [
+    243.7,
+    180.7,
+    374.0,
+    301.3
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIBER:"
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 5,
+   "box": [
+    243.7,
+    343.4,
+    363.6,
+    390.7
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature:"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 5,
+   "box": [
+    243.7,
+    546.2,
+    315.6,
+    561.7
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 5,
+   "block": "B01",
+   "box": [
+    243.7,
+    180.7,
+    374.0,
+    301.3
+   ],
+   "heading": "SUBSCRIBER:",
+   "context": [
+    "BE BELONG GROUP CORP",
+    "SUBSCRIPTION AGREEMENT",
+    "SIGNATURE PAGE",
+    "SUBSCRIBER:"
+   ],
+   "places": [
+    "p05-001",
+    "p05-002",
+    "p05-003",
+    "p05-004"
+   ],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B02",
+   "box": [
+    243.7,
+    343.4,
+    363.6,
+    390.7
+   ],
+   "heading": "Signature:",
+   "context": [
+    "5/23/2025",
+    "Date:",
+    "906 Rosemary st.Denver, CO 80230",
+    "Mailing Address:"
+   ],
+   "places": [
+    "p05-005"
+   ],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B03",
+   "box": [
+    243.7,
+    546.2,
+    315.6,
+    561.7
+   ],
+   "heading": "",
+   "context": [
+    "Number of Subscribed Shares: 1,286,170 shares of common stock",
+    "Purchase Price: $0.00001 per share of common stock",
+    "Be Belong Group Corp"
+   ],
+   "places": [],
+   "items": [
+    "i003"
+   ]
+  }
+ ]
+}

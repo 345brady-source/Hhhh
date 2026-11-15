@@ -1,0 +1,558 @@
+{
+ "id": "c225",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:09Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 21,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ],
+  "15": [
+   612.0,
+   792.0
+  ],
+  "16": [
+   612.0,
+   792.0
+  ],
+  "17": [
+   612.0,
+   792.0
+  ],
+  "18": [
+   612.0,
+   792.0
+  ],
+  "19": [
+   612.0,
+   792.0
+  ],
+  "20": [
+   612.0,
+   792.0
+  ],
+  "21": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text",
+  "17": "text",
+  "18": "text",
+  "19": "text",
+  "20": "text",
+  "21": "text"
+ },
+ "run": "out-18/set-c/c225/result.json",
+ "candidates": "a2ade686e2cdf223-f01586d5.json",
+ "counts": {
+  "fields": 6,
+  "counted_candidates": 9,
+  "pairs": 6,
+  "auto": 6,
+  "reader_only": 0,
+  "measure_only": 3,
+  "kind_clash": 0,
+  "person": 5,
+  "items": 8
+ },
+ "places": [
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Printed Name: Diego J. Veitia",
+   "printed_label": "Printed Name: Diego J. Veitia",
+   "must": false,
+   "x0": 250.9,
+   "y0": 202.6,
+   "x1": 485.7,
+   "y1": 218.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Printed Name: Diego J. Veitia"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p14-001",
+   "block": "B01"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "Address",
+   "must": false,
+   "x0": 274.4,
+   "y0": 247.6,
+   "x1": 485.7,
+   "y1": 263.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p14-002",
+   "block": "B01"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "",
+   "must": true,
+   "x0": 233.3,
+   "y0": 272.5,
+   "x1": 485.7,
+   "y1": 288.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p14-003",
+   "block": "B01"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "",
+   "must": false,
+   "x0": 280.3,
+   "y0": 407.5,
+   "x1": 485.8,
+   "y1": 423.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Address"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p14-004",
+   "block": "B03"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 233.3,
+   "y0": 430.0,
+   "x1": 485.7,
+   "y1": 445.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p14-005",
+   "block": "B03"
+  },
+  {
+   "page": 20,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 292.0,
+   "y0": 742.6,
+   "x1": 503.4,
+   "y1": 758.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p20-001",
+   "block": "B05"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 14,
+   "box": [
+    309.6,
+    225.1,
+    485.7,
+    240.6
+   ],
+   "caption": "Chairman of the Board",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of hyphens typed as a blank"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "measure-only",
+   "page": 14,
+   "box": [
+    233.3,
+    371.4,
+    485.7,
+    386.9
+   ],
+   "caption": "SEAN M. O'CONNOR",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of hyphens typed as a blank"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 16,
+   "box": [
+    333.1,
+    733.8,
+    344.9,
+    749.3
+   ],
+   "caption": "convertible security outstanding as of October",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i003",
+   "block": "B04"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 14,
+   "box": [
+    233.3,
+    202.6,
+    485.7,
+    288.0
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "CORPORATION"
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 14,
+   "box": [
+    233.3,
+    371.4,
+    485.7,
+    386.9
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "INVESTOR:"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 14,
+   "box": [
+    233.3,
+    407.5,
+    485.8,
+    445.5
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SEAN M. O'CONNOR"
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 16,
+   "box": [
+    333.1,
+    733.8,
+    344.9,
+    749.3
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 20,
+   "box": [
+    292.0,
+    742.6,
+    503.4,
+    758.1
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "CORPORATION"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 14,
+   "block": "B01",
+   "box": [
+    233.3,
+    202.6,
+    485.7,
+    288.0
+   ],
+   "heading": "CORPORATION",
+   "context": [
+    "executed by their authorized official, this Agreement, effective as of the date",
+    "first above written.",
+    "INTERNATIONAL ASSETS HOLDING",
+    "CORPORATION"
+   ],
+   "places": [
+    "p14-001",
+    "p14-002",
+    "p14-003"
+   ],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 14,
+   "block": "B02",
+   "box": [
+    233.3,
+    371.4,
+    485.7,
+    386.9
+   ],
+   "heading": "INVESTOR:",
+   "context": [
+    "Title: Chairman of the Board",
+    "------------------------------------",
+    "Address:",
+    "INVESTOR:"
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 14,
+   "block": "B03",
+   "box": [
+    233.3,
+    407.5,
+    485.8,
+    445.5
+   ],
+   "heading": "SEAN M. O'CONNOR",
+   "context": [
+    "INVESTOR:",
+    "/s/ Sean M. O'Connor",
+    "-------------------------------------------",
+    "SEAN M. O'CONNOR"
+   ],
+   "places": [
+    "p14-004",
+    "p14-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 16,
+   "block": "B04",
+   "box": [
+    333.1,
+    733.8,
+    344.9,
+    749.3
+   ],
+   "heading": "",
+   "context": [
+    "conversion) in the authorized number of shares of Series A Preferred; or",
+    "(iii) Any issuance of any stock or any other securities",
+    "convertible into equity securities of the Company, other than the issuance of",
+    "common stock, par value $.01 per share (the \"Common Stock\"), upon the conversion"
+   ],
+   "places": [],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 20,
+   "block": "B05",
+   "box": [
+    292.0,
+    742.6,
+    503.4,
+    758.1
+   ],
+   "heading": "CORPORATION",
+   "context": [
+    "this Certificate of Designation be signed by its Chairman of the Board, on this",
+    "22 day of October, 2002.",
+    "INTERNATIONAL ASSETS HOLDING",
+    "CORPORATION"
+   ],
+   "places": [
+    "p20-001"
+   ],
+   "items": []
+  }
+ ]
+}

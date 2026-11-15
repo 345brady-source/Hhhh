@@ -1,0 +1,364 @@
+{
+ "id": "c268",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:17Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 7,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text"
+ },
+ "run": "out-18/set-c/c268/result.json",
+ "candidates": "4213bf4edfde3586-f01586d5.json",
+ "counts": {
+  "fields": 2,
+  "counted_candidates": 6,
+  "pairs": 2,
+  "auto": 2,
+  "reader_only": 0,
+  "measure_only": 4,
+  "kind_clash": 0,
+  "person": 4,
+  "items": 8
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Email",
+   "printed_label": "",
+   "must": true,
+   "x0": 312.7,
+   "y0": 486.6,
+   "x1": 567.7,
+   "y1": 502.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Email"
+   },
+   "cand": "rule",
+   "what": "email",
+   "id": "p01-001",
+   "block": "B03"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 714.2,
+   "x1": 178.7,
+   "y1": 729.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-002",
+   "block": "B04"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    34.1,
+    194.9,
+    280.9,
+    210.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    312.7,
+    269.9,
+    567.7,
+    285.4
+   ],
+   "caption": "Deliver the Units as set forth below (if",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    34.1,
+    486.6,
+    280.9,
+    502.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i003",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    34.1,
+    499.4,
+    280.9,
+    514.9
+   ],
+   "caption": "Register the Units as set forth below",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i004",
+   "block": "B03"
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 1,
+   "box": [
+    34.1,
+    194.9,
+    280.9,
+    210.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT FOR UNITS"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 1,
+   "box": [
+    312.7,
+    269.9,
+    567.7,
+    285.4
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 1,
+   "box": [
+    34.1,
+    486.6,
+    567.7,
+    514.9
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 1,
+   "box": [
+    33.7,
+    714.2,
+    178.7,
+    729.7
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    34.1,
+    194.9,
+    280.9,
+    210.4
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT FOR UNITS",
+   "context": [
+    "The undersigned (hereinafter referred to as the \u201cSubscriber\u201d) hereby irrevocably subscribes for and agrees to",
+    "purchase the number of units (the \u201cUnits\u201d) set forth below for the aggregate subscription price set forth below (the",
+    "\u201cAggregate Subscription Price\u201d), representing a subscription price of U.S.$0.08 per Unit, upon and subject to the",
+    "terms and conditions set forth in \u201cTerms and Conditions of Subscription for Units\u201d attached hereto as Schedule \u201cA\u201d"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    312.7,
+    269.9,
+    567.7,
+    285.4
+   ],
+   "heading": "",
+   "context": [
+    "terms and conditions set forth in \u201cTerms and Conditions of Subscription for Units\u201d attached hereto as Schedule \u201cA\u201d",
+    "(together with this page the \u201cSubscription Agreement\u201d).",
+    "Number of Units:",
+    "(Name of Subscriber - please print)"
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B03",
+   "box": [
+    34.1,
+    486.6,
+    567.7,
+    514.9
+   ],
+   "heading": "",
+   "context": [
+    "(Account reference, if applicable)",
+    "(Subscriber's Residential Address)",
+    "(Contact Name)",
+    "(Address)"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": [
+    "i003",
+    "i004"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B04",
+   "box": [
+    33.7,
+    714.2,
+    178.7,
+    729.7
+   ],
+   "heading": "",
+   "context": [
+    "(Account reference, if applicable)",
+    "(Address)",
+    "ACCEPTANCE: The Company hereby accepts the subscription as set forth above on the terms and conditions",
+    "contained in this Subscription Agreement."
+   ],
+   "places": [
+    "p01-002"
+   ],
+   "items": []
+  }
+ ]
+}

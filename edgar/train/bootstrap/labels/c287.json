@@ -1,0 +1,299 @@
+{
+ "id": "c287",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 4,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text"
+ },
+ "run": "out-18/set-c/c287/result.json",
+ "candidates": "a2ae5f0f950a64fb-f01586d5.json",
+ "counts": {
+  "fields": 3,
+  "counted_candidates": 4,
+  "pairs": 3,
+  "auto": 3,
+  "reader_only": 0,
+  "measure_only": 1,
+  "kind_clash": 0,
+  "person": 4,
+  "items": 5
+ },
+ "places": [
+  {
+   "page": 4,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 228.2,
+   "y0": 144.9,
+   "x1": 368.1,
+   "y1": 160.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p04-001",
+   "block": "B02"
+  },
+  {
+   "page": 4,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 50.7,
+   "y0": 270.9,
+   "x1": 185.6,
+   "y1": 286.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p04-002",
+   "block": "B03"
+  },
+  {
+   "page": 4,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 50.7,
+   "y0": 348.9,
+   "x1": 185.6,
+   "y1": 364.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p04-003",
+   "block": "B04"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    476.4,
+    150.9,
+    516.4,
+    166.4
+   ],
+   "caption": "managed accounts managed by or affiliated with [",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 1,
+   "box": [
+    476.4,
+    150.9,
+    516.4,
+    166.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ANCHOR INVESTORS"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 4,
+   "box": [
+    228.2,
+    144.9,
+    368.1,
+    160.4
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "[SUBSCRIBER]"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 4,
+   "box": [
+    50.7,
+    270.9,
+    185.6,
+    286.4
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "BULL HORN HOLDINGS SPONSOR LLC"
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 4,
+   "box": [
+    50.7,
+    348.9,
+    185.6,
+    364.4
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "BULL HORN HOLDINGS SPONSOR LLC"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    476.4,
+    150.9,
+    516.4,
+    166.4
+   ],
+   "heading": "ANCHOR INVESTORS",
+   "context": [
+    "ANCHOR INVESTORS",
+    "Exhibit 10.9",
+    "October [ ], 2020",
+    "Dear Bull Horn Holdings Sponsor LLC,"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B02",
+   "box": [
+    228.2,
+    144.9,
+    368.1,
+    160.4
+   ],
+   "heading": "[SUBSCRIBER]",
+   "context": [
+    "Very truly yours,",
+    "[SUBSCRIBER]"
+   ],
+   "places": [
+    "p04-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B03",
+   "box": [
+    50.7,
+    270.9,
+    185.6,
+    286.4
+   ],
+   "heading": "BULL HORN HOLDINGS SPONSOR LLC",
+   "context": [
+    "Name:",
+    "Title:",
+    "Accepted and Agreed:",
+    "BULL HORN HOLDINGS SPONSOR LLC"
+   ],
+   "places": [
+    "p04-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B04",
+   "box": [
+    50.7,
+    348.9,
+    185.6,
+    364.4
+   ],
+   "heading": "BULL HORN HOLDINGS SPONSOR LLC",
+   "context": [
+    "BULL HORN HOLDINGS SPONSOR LLC",
+    "By:",
+    "Name: Christopher Calise",
+    "Title: Managing Member"
+   ],
+   "places": [
+    "p04-003"
+   ],
+   "items": []
+  }
+ ]
+}

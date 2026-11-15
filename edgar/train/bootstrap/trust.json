@@ -1,0 +1,77 @@
+{
+ "plan": "01.4-22",
+ "written": "2026-11-15",
+ "run": "out-18",
+ "rule": {
+  "text": "Pre-registered (plan 22 must_haves, written before any training reads it): geometry trusted when auto-place precision is at least 98 percent on the gold documents and on the review sample, with no how-made kind below 95 percent; kind trusted at 98 percent kind precision; person trusted at 98 percent person precision; an untrusted part of the auto labels is not used (that target is learned only from hand and reviewed sheets); background full when proposal recall on gold is at least 97 percent, else masked (training loss on auto-labelled pages ignores everything within 24 pt of a proposal or a printed line or box that is not an accepted place); if geometry is not trusted, auto labels are not used at all. Weight 0.5 for trusted auto places.",
+  "geometry_gold": 98.0,
+  "geometry_sample": 98.0,
+  "geometry_min_how_made": 95.0,
+  "kind": 98.0,
+  "person": 98.0,
+  "background_full_recall": 97.0,
+  "mask_pt": 24,
+  "weight_trusted": 0.5
+ },
+ "geometry": {
+  "trusted": false,
+  "gold_auto_precision": 88.03,
+  "gold_auto_places": 2640,
+  "sample_auto_precision": 96.08,
+  "sample_confirmed": 51,
+  "per_how_made": {
+   "browser portrait": 88.87,
+   "filed PDF": 97.71,
+   "browser landscape": 79.95,
+   "broker-dealer form": 89.39
+  },
+  "lowest_how_made": "browser landscape"
+ },
+ "kind": {
+  "trusted": false,
+  "gold_kind_precision": 93.46,
+  "note": "not used: geometry is not trusted"
+ },
+ "person": {
+  "trusted": false,
+  "gold_person_precision": 71.04,
+  "note": "not used: geometry is not trusted"
+ },
+ "background": {
+  "mode": "masked",
+  "gold_proposal_recall": 81.48,
+  "mask_pt": 24,
+  "note": "applies to any page whose labels are not a complete hand sheet"
+ },
+ "weight": {
+  "auto_places": 0.0,
+  "why": "auto labels are not used at all (geometry not trusted)"
+ },
+ "use_auto_labels": false,
+ "reviewed_disagreements_only": {
+  "trusted": false,
+  "documents": 6,
+  "gold_precision": 88.26,
+  "gold_kind_precision": 89.36,
+  "gold_person_precision": 94.68,
+  "gold_recall": 55.13,
+  "note": "Sheets reviewed on disagreements only (auto places kept unreviewed) measured below the same 98 percent bar on 6 blind gold documents. The pre-registered rule does not name them, so the same bar is applied: they are not used as complete sheets. Later adjudication (plans 24 to 29) confirms every auto place (confirm-all) because geometry is not trusted."
+ },
+ "measured": {
+  "gold_documents": 43,
+  "gold_auto_precision": 88.03,
+  "gold_kind_precision": 93.46,
+  "gold_person_precision": 71.04,
+  "gold_auto_recall": 61.3,
+  "gold_proposal_recall": 81.48,
+  "sample_auto_precision": 96.08,
+  "sample_place_and_kind_precision": 90.2,
+  "per_how_made_auto_precision": {
+   "browser portrait": 88.87,
+   "filed PDF": 97.71,
+   "browser landscape": 79.95,
+   "broker-dealer form": 89.39
+  },
+  "d28_gold_left_out": 8
+ }
+}

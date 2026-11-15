@@ -1,0 +1,288 @@
+{
+ "id": "c165",
+ "answers": {
+  "i001": {
+   "do": "drop"
+  },
+  "i002": {
+   "do": "drop"
+  }
+ },
+ "blocks": {
+  "B01": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B02": [
+   {
+    "owner": "investor",
+    "cond": ""
+   },
+   {
+    "owner": "co-investor",
+    "cond": "y>238"
+   },
+   {
+    "owner": "investor",
+    "cond": "x>300"
+   }
+  ],
+  "B03": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B04": [
+   {
+    "owner": "co-investor",
+    "cond": ""
+   },
+   {
+    "owner": "investor",
+    "cond": "x>300"
+   },
+   {
+    "owner": "investor",
+    "cond": "y>340"
+   }
+  ],
+  "B05": [
+   {
+    "owner": "investor",
+    "cond": ""
+   },
+   {
+    "owner": "co-investor",
+    "cond": "y<392"
+   },
+   {
+    "owner": "investor",
+    "cond": "x>300"
+   }
+  ],
+  "B06": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B07": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B08": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ]
+ },
+ "confirms": {
+  "k001": "yes",
+  "k002": "yes",
+  "k003": "yes",
+  "k004": "yes",
+  "k005": "yes",
+  "k006": "yes",
+  "k007": "yes",
+  "k008": "yes",
+  "k009": "yes",
+  "k010": "yes",
+  "k011": "yes",
+  "k012": "yes"
+ },
+ "confirm_items": [
+  {
+   "item": "k001",
+   "type": "confirm",
+   "place": "p09-007",
+   "page": 9,
+   "box": [
+    504.8,
+    204.0,
+    543.7,
+    219.5
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k002",
+   "type": "confirm",
+   "place": "p09-023",
+   "page": 9,
+   "box": [
+    40.8,
+    373.7,
+    292.9,
+    389.2
+   ],
+   "kind": "signature",
+   "owner": "co-investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k003",
+   "type": "confirm",
+   "place": "p09-002",
+   "page": 9,
+   "box": [
+    473.0,
+    90.2,
+    566.9,
+    105.7
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k004",
+   "type": "confirm",
+   "place": "p09-026",
+   "page": 9,
+   "box": [
+    40.8,
+    449.5,
+    292.9,
+    465.0
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k005",
+   "type": "confirm",
+   "place": "p09-008",
+   "page": 9,
+   "box": [
+    42.2,
+    206.7,
+    48.0,
+    214.6
+   ],
+   "kind": "tickbox",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k006",
+   "type": "confirm",
+   "place": "p09-009",
+   "page": 9,
+   "box": [
+    309.9,
+    210.1,
+    315.6,
+    218.0
+   ],
+   "kind": "tickbox",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k007",
+   "type": "confirm",
+   "place": "p09-024",
+   "page": 9,
+   "box": [
+    309.9,
+    387.2,
+    315.6,
+    395.1
+   ],
+   "kind": "tickbox",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k008",
+   "type": "confirm",
+   "place": "p09-013",
+   "page": 9,
+   "box": [
+    309.9,
+    235.5,
+    315.6,
+    243.4
+   ],
+   "kind": "tickbox",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k009",
+   "type": "confirm",
+   "place": "p09-006",
+   "page": 9,
+   "box": [
+    309.9,
+    197.9,
+    315.6,
+    205.4
+   ],
+   "kind": "tickbox",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k010",
+   "type": "confirm",
+   "place": "p09-029",
+   "page": 9,
+   "box": [
+    40.8,
+    538.1,
+    104.6,
+    553.6
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k011",
+   "type": "confirm",
+   "place": "p09-003",
+   "page": 9,
+   "box": [
+    297.1,
+    115.7,
+    468.1,
+    131.2
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k012",
+   "type": "confirm",
+   "place": "p09-021",
+   "page": 9,
+   "box": [
+    309.9,
+    324.1,
+    315.6,
+    332.0
+   ],
+   "kind": "tickbox",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  }
+ ],
+ "cost": {
+  "pixels": 2289248,
+  "chars": 4649,
+  "commands": 9,
+  "sheets": 4
+ },
+ "done": "2026-11-15T04:48:27Z"
+}

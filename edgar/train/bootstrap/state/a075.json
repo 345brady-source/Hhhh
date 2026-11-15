@@ -1,0 +1,335 @@
+{
+ "id": "a075",
+ "answers": {
+  "i001": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "amount"
+  },
+  "i002": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "amount"
+  },
+  "i003": {
+   "do": "drop"
+  },
+  "i004": {
+   "do": "keep",
+   "kind": "blank",
+   "owner": "third-party"
+  },
+  "i005": {
+   "do": "keep",
+   "kind": "blank",
+   "owner": "third-party"
+  },
+  "i006": {
+   "do": "drop"
+  },
+  "i007": {
+   "do": "drop"
+  },
+  "i008": {
+   "do": "keep",
+   "kind": "tickbox"
+  },
+  "i009": {
+   "do": "keep",
+   "kind": "blank"
+  },
+  "i010": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "amount"
+  },
+  "i011": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "date"
+  }
+ },
+ "blocks": {
+  "B01": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B02": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B03": [
+   {
+    "owner": "third-party",
+    "cond": ""
+   }
+  ],
+  "B04": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B05": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ],
+  "B06": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ],
+  "B07": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B08": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B09": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B10": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B11": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B12": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B13": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ]
+ },
+ "confirms": {
+  "k001": "yes",
+  "k002": "yes",
+  "k003": "yes",
+  "k004": "no",
+  "k005": "yes",
+  "k006": "yes",
+  "k007": "yes",
+  "k008": "yes",
+  "k009": "yes",
+  "k010": "yes",
+  "k011": "yes",
+  "k012": "yes"
+ },
+ "confirm_items": [
+  {
+   "item": "k001",
+   "type": "confirm",
+   "place": "p06-004",
+   "page": 6,
+   "box": [
+    86.6,
+    418.8,
+    162.9,
+    434.3
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k002",
+   "type": "confirm",
+   "place": "p07-002",
+   "page": 7,
+   "box": [
+    162.9,
+    146.4,
+    274.4,
+    161.9
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k003",
+   "type": "confirm",
+   "place": "p06-009",
+   "page": 6,
+   "box": [
+    385.9,
+    463.8,
+    491.6,
+    479.3
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k004",
+   "type": "confirm",
+   "place": "p06-016",
+   "page": 6,
+   "box": [
+    315.5,
+    733.8,
+    397.7,
+    749.3
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k005",
+   "type": "confirm",
+   "place": "p07-001",
+   "page": 7,
+   "box": [
+    80.7,
+    103.8,
+    239.2,
+    119.3
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k006",
+   "type": "confirm",
+   "place": "p06-001",
+   "page": 6,
+   "box": [
+    115.9,
+    373.8,
+    180.5,
+    389.3
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k007",
+   "type": "confirm",
+   "place": "p06-003",
+   "page": 6,
+   "box": [
+    86.6,
+    396.3,
+    468.1,
+    411.8
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k008",
+   "type": "confirm",
+   "place": "p06-008",
+   "page": 6,
+   "box": [
+    250.9,
+    463.8,
+    362.5,
+    479.3
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k009",
+   "type": "confirm",
+   "place": "p06-005",
+   "page": 6,
+   "box": [
+    245.1,
+    418.8,
+    292.0,
+    434.3
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k010",
+   "type": "confirm",
+   "place": "p06-012",
+   "page": 6,
+   "box": [
+    86.6,
+    700.0,
+    180.5,
+    715.5
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k011",
+   "type": "confirm",
+   "place": "p06-011",
+   "page": 6,
+   "box": [
+    245.1,
+    610.0,
+    368.3,
+    625.5
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k012",
+   "type": "confirm",
+   "place": "p05-002",
+   "page": 5,
+   "box": [
+    168.8,
+    373.8,
+    503.3,
+    389.3
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  }
+ ],
+ "cost": {
+  "pixels": 3093504,
+  "chars": 6770,
+  "commands": 10,
+  "sheets": 4
+ },
+ "done": "2026-11-15T04:52:28Z"
+}

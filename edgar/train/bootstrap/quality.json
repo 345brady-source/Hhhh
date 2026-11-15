@@ -1,0 +1,799 @@
+{
+ "run": "out-18",
+ "docs": {
+  "a001": {
+   "auto": 15,
+   "strays": 0,
+   "found": 15,
+   "places": 18,
+   "kindDiff": 0,
+   "ownerDiff": 0,
+   "proposals": 15,
+   "propFound": 15,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 0,
+    "kind-clash": 0,
+    "person": 9
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "a004": {
+   "auto": 10,
+   "strays": 1,
+   "found": 9,
+   "places": 12,
+   "kindDiff": 1,
+   "ownerDiff": 0,
+   "proposals": 17,
+   "propFound": 12,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 7,
+    "kind-clash": 0,
+    "person": 6
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "a007": {
+   "auto": 35,
+   "strays": 3,
+   "found": 32,
+   "places": 81,
+   "kindDiff": 1,
+   "ownerDiff": 4,
+   "proposals": 48,
+   "propFound": 35,
+   "items": {
+    "reader-only": 6,
+    "measure-only": 4,
+    "kind-clash": 3,
+    "person": 13
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "a011": {
+   "auto": 32,
+   "strays": 1,
+   "found": 31,
+   "places": 37,
+   "kindDiff": 0,
+   "ownerDiff": 8,
+   "proposals": 38,
+   "propFound": 35,
+   "items": {
+    "reader-only": 2,
+    "measure-only": 2,
+    "kind-clash": 2,
+    "person": 11
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "a038": {
+   "auto": 25,
+   "strays": 3,
+   "found": 22,
+   "places": 26,
+   "kindDiff": 1,
+   "ownerDiff": 0,
+   "proposals": 28,
+   "propFound": 25,
+   "items": {
+    "reader-only": 2,
+    "measure-only": 1,
+    "kind-clash": 0,
+    "person": 13
+   },
+   "made": "filed PDF",
+   "bd": false
+  },
+  "a046": {
+   "auto": 50,
+   "strays": 34,
+   "found": 16,
+   "places": 19,
+   "kindDiff": 0,
+   "ownerDiff": 1,
+   "proposals": 95,
+   "propFound": 16,
+   "items": {
+    "reader-only": 6,
+    "measure-only": 34,
+    "kind-clash": 5,
+    "person": 42
+   },
+   "made": "browser landscape",
+   "bd": false
+  },
+  "a049": {
+   "auto": 52,
+   "strays": 8,
+   "found": 44,
+   "places": 82,
+   "kindDiff": 1,
+   "ownerDiff": 3,
+   "proposals": 92,
+   "propFound": 78,
+   "items": {
+    "reader-only": 4,
+    "measure-only": 24,
+    "kind-clash": 12,
+    "person": 58
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "a050": {
+   "auto": 27,
+   "strays": 27,
+   "found": 0,
+   "places": 0,
+   "kindDiff": 0,
+   "ownerDiff": 0,
+   "proposals": 30,
+   "propFound": 0,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 0,
+    "kind-clash": 3,
+    "person": 11
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "a051": {
+   "auto": 38,
+   "strays": 0,
+   "found": 38,
+   "places": 47,
+   "kindDiff": 0,
+   "ownerDiff": 23,
+   "proposals": 44,
+   "propFound": 44,
+   "items": {
+    "reader-only": 3,
+    "measure-only": 0,
+    "kind-clash": 3,
+    "person": 4
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "a058": {
+   "auto": 80,
+   "strays": 3,
+   "found": 77,
+   "places": 86,
+   "kindDiff": 2,
+   "ownerDiff": 29,
+   "proposals": 87,
+   "propFound": 84,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 2,
+    "kind-clash": 5,
+    "person": 19
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "a081": {
+   "auto": 50,
+   "strays": 1,
+   "found": 49,
+   "places": 63,
+   "kindDiff": 1,
+   "ownerDiff": 22,
+   "proposals": 63,
+   "propFound": 62,
+   "items": {
+    "reader-only": 2,
+    "measure-only": 2,
+    "kind-clash": 9,
+    "person": 20
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "a088": {
+   "auto": 18,
+   "strays": 0,
+   "found": 18,
+   "places": 20,
+   "kindDiff": 0,
+   "ownerDiff": 5,
+   "proposals": 27,
+   "propFound": 20,
+   "items": {
+    "reader-only": 1,
+    "measure-only": 7,
+    "kind-clash": 1,
+    "person": 13
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "a098": {
+   "auto": 21,
+   "strays": 2,
+   "found": 19,
+   "places": 24,
+   "kindDiff": 4,
+   "ownerDiff": 1,
+   "proposals": 21,
+   "propFound": 19,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 0,
+    "kind-clash": 0,
+    "person": 8
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "a099": {
+   "auto": 35,
+   "strays": 8,
+   "found": 27,
+   "places": 36,
+   "kindDiff": 3,
+   "ownerDiff": 7,
+   "proposals": 50,
+   "propFound": 34,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 15,
+    "kind-clash": 0,
+    "person": 19
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "a103": {
+   "auto": 11,
+   "strays": 2,
+   "found": 9,
+   "places": 13,
+   "kindDiff": 0,
+   "ownerDiff": 0,
+   "proposals": 16,
+   "propFound": 13,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 3,
+    "kind-clash": 2,
+    "person": 6
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "a106": {
+   "auto": 28,
+   "strays": 1,
+   "found": 27,
+   "places": 34,
+   "kindDiff": 0,
+   "ownerDiff": 4,
+   "proposals": 30,
+   "propFound": 29,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 2,
+    "kind-clash": 0,
+    "person": 8
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "a109": {
+   "auto": 51,
+   "strays": 0,
+   "found": 51,
+   "places": 113,
+   "kindDiff": 1,
+   "ownerDiff": 6,
+   "proposals": 99,
+   "propFound": 91,
+   "items": {
+    "reader-only": 4,
+    "measure-only": 20,
+    "kind-clash": 24,
+    "person": 56
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "b005": {
+   "auto": 250,
+   "strays": 44,
+   "found": 206,
+   "places": 237,
+   "kindDiff": 6,
+   "ownerDiff": 79,
+   "proposals": 304,
+   "propFound": 230,
+   "items": {
+    "reader-only": 18,
+    "measure-only": 33,
+    "kind-clash": 3,
+    "person": 78
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "b016": {
+   "auto": 82,
+   "strays": 0,
+   "found": 82,
+   "places": 92,
+   "kindDiff": 29,
+   "ownerDiff": 31,
+   "proposals": 92,
+   "propFound": 92,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 2,
+    "kind-clash": 8,
+    "person": 25
+   },
+   "made": "browser landscape",
+   "bd": true
+  },
+  "b020": {
+   "auto": 54,
+   "strays": 4,
+   "found": 50,
+   "places": 82,
+   "kindDiff": 12,
+   "ownerDiff": 14,
+   "proposals": 82,
+   "propFound": 75,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 3,
+    "kind-clash": 25,
+    "person": 51
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "b022": {
+   "auto": 20,
+   "strays": 2,
+   "found": 18,
+   "places": 27,
+   "kindDiff": 1,
+   "ownerDiff": 4,
+   "proposals": 23,
+   "propFound": 19,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 2,
+    "kind-clash": 1,
+    "person": 11
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "b029": {
+   "auto": 64,
+   "strays": 2,
+   "found": 62,
+   "places": 64,
+   "kindDiff": 2,
+   "ownerDiff": 14,
+   "proposals": 70,
+   "propFound": 63,
+   "items": {
+    "reader-only": 1,
+    "measure-only": 5,
+    "kind-clash": 0,
+    "person": 22
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "b042": {
+   "auto": 199,
+   "strays": 4,
+   "found": 195,
+   "places": 327,
+   "kindDiff": 6,
+   "ownerDiff": 92,
+   "proposals": 433,
+   "propFound": 320,
+   "items": {
+    "reader-only": 109,
+    "measure-only": 107,
+    "kind-clash": 18,
+    "person": 117
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "b046": {
+   "auto": 108,
+   "strays": 2,
+   "found": 106,
+   "places": 112,
+   "kindDiff": 3,
+   "ownerDiff": 43,
+   "proposals": 113,
+   "propFound": 108,
+   "items": {
+    "reader-only": 1,
+    "measure-only": 3,
+    "kind-clash": 1,
+    "person": 61
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "b051": {
+   "auto": 5,
+   "strays": 5,
+   "found": 0,
+   "places": 4,
+   "kindDiff": 0,
+   "ownerDiff": 0,
+   "proposals": 11,
+   "propFound": 2,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 5,
+    "kind-clash": 1,
+    "person": 10
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "b056": {
+   "auto": 1,
+   "strays": 0,
+   "found": 1,
+   "places": 47,
+   "kindDiff": 0,
+   "ownerDiff": 0,
+   "proposals": 2,
+   "propFound": 2,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 1,
+    "kind-clash": 0,
+    "person": 2
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "b063": {
+   "auto": 190,
+   "strays": 73,
+   "found": 117,
+   "places": 134,
+   "kindDiff": 24,
+   "ownerDiff": 21,
+   "proposals": 203,
+   "propFound": 130,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 12,
+    "kind-clash": 1,
+    "person": 47
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "b065": {
+   "auto": 57,
+   "strays": 25,
+   "found": 32,
+   "places": 109,
+   "kindDiff": 6,
+   "ownerDiff": 10,
+   "proposals": 67,
+   "propFound": 39,
+   "items": {
+    "reader-only": 1,
+    "measure-only": 3,
+    "kind-clash": 6,
+    "person": 25
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "b066": {
+   "auto": 83,
+   "strays": 3,
+   "found": 80,
+   "places": 93,
+   "kindDiff": 0,
+   "ownerDiff": 20,
+   "proposals": 98,
+   "propFound": 93,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 11,
+    "kind-clash": 4,
+    "person": 35
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "b082": {
+   "auto": 50,
+   "strays": 14,
+   "found": 36,
+   "places": 171,
+   "kindDiff": 0,
+   "ownerDiff": 13,
+   "proposals": 97,
+   "propFound": 68,
+   "items": {
+    "reader-only": 14,
+    "measure-only": 33,
+    "kind-clash": 0,
+    "person": 27
+   },
+   "made": "browser landscape",
+   "bd": true
+  },
+  "b090": {
+   "auto": 19,
+   "strays": 0,
+   "found": 19,
+   "places": 44,
+   "kindDiff": 1,
+   "ownerDiff": 5,
+   "proposals": 44,
+   "propFound": 41,
+   "items": {
+    "reader-only": 16,
+    "measure-only": 7,
+    "kind-clash": 2,
+    "person": 16
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "b093": {
+   "auto": 100,
+   "strays": 2,
+   "found": 98,
+   "places": 212,
+   "kindDiff": 1,
+   "ownerDiff": 24,
+   "proposals": 205,
+   "propFound": 171,
+   "items": {
+    "reader-only": 70,
+    "measure-only": 7,
+    "kind-clash": 28,
+    "person": 31
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "b104": {
+   "auto": 106,
+   "strays": 0,
+   "found": 106,
+   "places": 150,
+   "kindDiff": 28,
+   "ownerDiff": 58,
+   "proposals": 149,
+   "propFound": 149,
+   "items": {
+    "reader-only": 33,
+    "measure-only": 9,
+    "kind-clash": 1,
+    "person": 33
+   },
+   "made": "filed PDF",
+   "bd": true
+  },
+  "b110": {
+   "auto": 0,
+   "strays": 0,
+   "found": 0,
+   "places": 166,
+   "kindDiff": 0,
+   "ownerDiff": 0,
+   "proposals": 121,
+   "propFound": 114,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 121,
+    "kind-clash": 0,
+    "person": 34
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "c058": {
+   "auto": 84,
+   "strays": 0,
+   "found": 84,
+   "places": 105,
+   "kindDiff": 5,
+   "ownerDiff": 33,
+   "proposals": 101,
+   "propFound": 98,
+   "items": {
+    "reader-only": 13,
+    "measure-only": 3,
+    "kind-clash": 1,
+    "person": 27
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "c062": {
+   "auto": 1,
+   "strays": 0,
+   "found": 1,
+   "places": 14,
+   "kindDiff": 0,
+   "ownerDiff": 0,
+   "proposals": 6,
+   "propFound": 5,
+   "items": {
+    "reader-only": 2,
+    "measure-only": 1,
+    "kind-clash": 2,
+    "person": 4
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "c089": {
+   "auto": 119,
+   "strays": 4,
+   "found": 115,
+   "places": 163,
+   "kindDiff": 1,
+   "ownerDiff": 26,
+   "proposals": 137,
+   "propFound": 130,
+   "items": {
+    "reader-only": 10,
+    "measure-only": 8,
+    "kind-clash": 0,
+    "person": 33
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "c093": {
+   "auto": 43,
+   "strays": 3,
+   "found": 40,
+   "places": 92,
+   "kindDiff": 1,
+   "ownerDiff": 12,
+   "proposals": 90,
+   "propFound": 81,
+   "items": {
+    "reader-only": 23,
+    "measure-only": 20,
+    "kind-clash": 4,
+    "person": 15
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "c096": {
+   "auto": 101,
+   "strays": 0,
+   "found": 101,
+   "places": 171,
+   "kindDiff": 0,
+   "ownerDiff": 5,
+   "proposals": 141,
+   "propFound": 123,
+   "items": {
+    "reader-only": 24,
+    "measure-only": 14,
+    "kind-clash": 2,
+    "person": 49
+   },
+   "made": "browser portrait",
+   "bd": true
+  },
+  "c172": {
+   "auto": 137,
+   "strays": 28,
+   "found": 109,
+   "places": 198,
+   "kindDiff": 2,
+   "ownerDiff": 11,
+   "proposals": 169,
+   "propFound": 115,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 29,
+    "kind-clash": 3,
+    "person": 64
+   },
+   "made": "browser landscape",
+   "bd": false
+  },
+  "c181": {
+   "auto": 60,
+   "strays": 0,
+   "found": 60,
+   "places": 105,
+   "kindDiff": 8,
+   "ownerDiff": 28,
+   "proposals": 77,
+   "propFound": 75,
+   "items": {
+    "reader-only": 4,
+    "measure-only": 8,
+    "kind-clash": 5,
+    "person": 15
+   },
+   "made": "browser landscape",
+   "bd": false
+  },
+  "c243": {
+   "auto": 127,
+   "strays": 6,
+   "found": 121,
+   "places": 142,
+   "kindDiff": 0,
+   "ownerDiff": 16,
+   "proposals": 154,
+   "propFound": 133,
+   "items": {
+    "reader-only": 4,
+    "measure-only": 16,
+    "kind-clash": 7,
+    "person": 57
+   },
+   "made": "browser portrait",
+   "bd": false
+  },
+  "c268": {
+   "auto": 2,
+   "strays": 1,
+   "found": 1,
+   "places": 19,
+   "kindDiff": 1,
+   "ownerDiff": 1,
+   "proposals": 6,
+   "propFound": 1,
+   "items": {
+    "reader-only": 0,
+    "measure-only": 4,
+    "kind-clash": 0,
+    "person": 4
+   },
+   "made": "browser portrait",
+   "bd": false
+  }
+ },
+ "totals": {
+  "auto": 2640,
+  "strays": 316,
+  "found": 2324,
+  "places": 3791,
+  "kindDiff": 152,
+  "ownerDiff": 673,
+  "proposals": 3795,
+  "propFound": 3089
+ },
+ "skipped_d28": [
+  "a006",
+  "b108",
+  "c011",
+  "c018",
+  "c025",
+  "c032",
+  "c038",
+  "c040"
+ ]
+}

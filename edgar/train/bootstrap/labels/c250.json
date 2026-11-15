@@ -1,0 +1,682 @@
+{
+ "id": "c250",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 2,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text"
+ },
+ "run": "out-18/set-c/c250/result.json",
+ "candidates": "ed8d778f42345267-f01586d5.json",
+ "counts": {
+  "fields": 15,
+  "counted_candidates": 14,
+  "pairs": 14,
+  "auto": 13,
+  "reader_only": 1,
+  "measure_only": 0,
+  "kind_clash": 1,
+  "person": 6,
+  "items": 8
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "day of",
+   "printed_label": "Executed this",
+   "must": true,
+   "x0": 131.7,
+   "y0": 310.3,
+   "x1": 312.1,
+   "y1": 325.8,
+   "printed_as": "measure candidate: dateparts",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "day of"
+   },
+   "cand": "dateparts",
+   "what": "date",
+   "id": "p01-001",
+   "block": "B02"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 27.7,
+   "y0": 337.3,
+   "x1": 255.7,
+   "y1": 352.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-002",
+   "block": "B02"
+  },
+  {
+   "page": 1,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature of Purchaser",
+   "must": true,
+   "x0": 332.1,
+   "y0": 337.3,
+   "x1": 554.1,
+   "y1": 352.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p01-003",
+   "block": "B02"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "",
+   "must": true,
+   "x0": 27.7,
+   "y0": 350.8,
+   "x1": 255.7,
+   "y1": 366.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p01-004",
+   "block": "B02"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 2",
+   "printed_label": "Address of Purchaser",
+   "must": false,
+   "x0": 27.7,
+   "y0": 364.3,
+   "x1": 255.7,
+   "y1": 379.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Address line 2"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p01-005",
+   "block": "B02"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor name",
+   "printed_label": "Printed Name of Purchaser",
+   "must": true,
+   "x0": 27.7,
+   "y0": 415.3,
+   "x1": 255.7,
+   "y1": 430.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Investor name"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p01-006",
+   "block": "B03"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of Shares Purchased",
+   "printed_label": "Number of Shares Purchased",
+   "must": true,
+   "x0": 51.9,
+   "y0": 455.8,
+   "x1": 207.9,
+   "y1": 471.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Number of Shares Purchased"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-007",
+   "block": "B04"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "= US$",
+   "must": false,
+   "x0": 439.1,
+   "y0": 455.8,
+   "x1": 505.1,
+   "y1": 471.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-008",
+   "block": "B05"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Cash",
+   "printed_label": "Form of Payment: Cash",
+   "must": true,
+   "x0": 177.5,
+   "y0": 482.8,
+   "x1": 249.5,
+   "y1": 498.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Cash"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-009",
+   "block": "B04"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Check #",
+   "printed_label": "Check #",
+   "must": true,
+   "x0": 332.2,
+   "y0": 482.8,
+   "x1": 404.2,
+   "y1": 498.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Check #"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-010",
+   "block": "B05"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Other",
+   "printed_label": "Other",
+   "must": true,
+   "x0": 451.4,
+   "y0": 482.8,
+   "x1": 541.4,
+   "y1": 498.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Other"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-011",
+   "block": "B05"
+  },
+  {
+   "page": 1,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 48.1,
+   "y0": 548.8,
+   "x1": 288.1,
+   "y1": 564.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p01-012",
+   "block": "B06"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 56.3,
+   "y0": 574.3,
+   "x1": 284.3,
+   "y1": 589.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Title"
+   },
+   "cand": "underscore",
+   "what": "title",
+   "id": "p01-013",
+   "block": "B06"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    483.3,
+    188.8,
+    579.3,
+    204.3
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "the Purchaser is purchasing"
+   },
+   "caption": "Agreement, the undersigned (the \u201cPurchaser\u201d) is purchasing",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "reader-only",
+   "page": 1,
+   "box": [
+    130.7,
+    309.2,
+    162.7,
+    325.4
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Executed this"
+   },
+   "caption": "Executed this",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 1,
+   "box": [
+    483.3,
+    188.8,
+    579.3,
+    204.3
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 1,
+   "box": [
+    27.7,
+    309.2,
+    554.1,
+    379.8
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "MAKE CHECK PAYABLE TO: RAPHAEL INDUSTRIES LTD."
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 1,
+   "box": [
+    27.7,
+    415.3,
+    255.7,
+    430.8
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "MAKE CHECK PAYABLE TO: RAPHAEL INDUSTRIES LTD."
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 1,
+   "box": [
+    51.9,
+    455.8,
+    249.5,
+    498.3
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 1,
+   "box": [
+    332.2,
+    455.8,
+    541.4,
+    498.3
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 1,
+   "box": [
+    48.1,
+    548.8,
+    288.1,
+    589.8
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "RAPHAEL INDUSTRIES LTD."
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    483.3,
+    188.8,
+    579.3,
+    204.3
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT",
+   "context": [
+    "5190 Neil Road,",
+    "Suite 430",
+    "Reno, NV 89502",
+    "Dear Sirs:"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    27.7,
+    309.2,
+    554.1,
+    379.8
+   ],
+   "heading": "MAKE CHECK PAYABLE TO: RAPHAEL INDUSTRIES LTD.",
+   "context": [
+    "\u201cSubscription Price\u201d).",
+    "Purchaser hereby confirms the subscription for and purchase of said number of Shares and hereby agrees to pay",
+    "herewith the Subscription Price for such Shares.",
+    "MAKE CHECK PAYABLE TO: RAPHAEL INDUSTRIES LTD."
+   ],
+   "places": [
+    "p01-001",
+    "p01-002",
+    "p01-003",
+    "p01-004",
+    "p01-005"
+   ],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B03",
+   "box": [
+    27.7,
+    415.3,
+    255.7,
+    430.8
+   ],
+   "heading": "MAKE CHECK PAYABLE TO: RAPHAEL INDUSTRIES LTD.",
+   "context": [
+    ")",
+    ") Signature of Purchaser",
+    ")",
+    "Address of Purchaser"
+   ],
+   "places": [
+    "p01-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B04",
+   "box": [
+    51.9,
+    455.8,
+    249.5,
+    498.3
+   ],
+   "heading": "",
+   "context": [
+    ") Signature of Purchaser",
+    ")",
+    "Address of Purchaser",
+    "Printed Name of Purchaser"
+   ],
+   "places": [
+    "p01-007",
+    "p01-009"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B05",
+   "box": [
+    332.2,
+    455.8,
+    541.4,
+    498.3
+   ],
+   "heading": "",
+   "context": [
+    ") Signature of Purchaser",
+    ")",
+    "Address of Purchaser",
+    "Printed Name of Purchaser"
+   ],
+   "places": [
+    "p01-008",
+    "p01-010",
+    "p01-011"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B06",
+   "box": [
+    48.1,
+    548.8,
+    288.1,
+    589.8
+   ],
+   "heading": "RAPHAEL INDUSTRIES LTD.",
+   "context": [
+    "X $0.10 = US$",
+    "Number of Shares Purchased Total Subscription Price",
+    "Form of Payment: Cash: Check #: Other:",
+    "RAPHAEL INDUSTRIES LTD."
+   ],
+   "places": [
+    "p01-012",
+    "p01-013"
+   ],
+   "items": []
+  }
+ ]
+}

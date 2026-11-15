@@ -1,0 +1,518 @@
+{
+ "id": "c213",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:09Z",
+ "how_made": "browser-landscape",
+ "made_group": "browser landscape",
+ "broker_dealer": false,
+ "pages": 30,
+ "page_sizes": {
+  "1": [
+   792.0,
+   612.0
+  ],
+  "2": [
+   792.0,
+   612.0
+  ],
+  "3": [
+   792.0,
+   612.0
+  ],
+  "4": [
+   792.0,
+   612.0
+  ],
+  "5": [
+   792.0,
+   612.0
+  ],
+  "6": [
+   792.0,
+   612.0
+  ],
+  "7": [
+   792.0,
+   612.0
+  ],
+  "8": [
+   792.0,
+   612.0
+  ],
+  "9": [
+   792.0,
+   612.0
+  ],
+  "10": [
+   792.0,
+   612.0
+  ],
+  "11": [
+   792.0,
+   612.0
+  ],
+  "12": [
+   792.0,
+   612.0
+  ],
+  "13": [
+   792.0,
+   612.0
+  ],
+  "14": [
+   792.0,
+   612.0
+  ],
+  "15": [
+   792.0,
+   612.0
+  ],
+  "16": [
+   792.0,
+   612.0
+  ],
+  "17": [
+   792.0,
+   612.0
+  ],
+  "18": [
+   792.0,
+   612.0
+  ],
+  "19": [
+   792.0,
+   612.0
+  ],
+  "20": [
+   792.0,
+   612.0
+  ],
+  "21": [
+   792.0,
+   612.0
+  ],
+  "22": [
+   792.0,
+   612.0
+  ],
+  "23": [
+   792.0,
+   612.0
+  ],
+  "24": [
+   792.0,
+   612.0
+  ],
+  "25": [
+   792.0,
+   612.0
+  ],
+  "26": [
+   792.0,
+   612.0
+  ],
+  "27": [
+   792.0,
+   612.0
+  ],
+  "28": [
+   792.0,
+   612.0
+  ],
+  "29": [
+   792.0,
+   612.0
+  ],
+  "30": [
+   792.0,
+   612.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text",
+  "17": "text",
+  "18": "text",
+  "19": "text",
+  "20": "text",
+  "21": "text",
+  "22": "text",
+  "23": "text",
+  "24": "text",
+  "25": "text",
+  "26": "text",
+  "27": "text",
+  "28": "text",
+  "29": "text",
+  "30": "text"
+ },
+ "run": "out-18/set-c/c213/result.json",
+ "candidates": "9a05ecf5e41765cc-f01586d5.json",
+ "counts": {
+  "fields": 5,
+  "counted_candidates": 6,
+  "pairs": 5,
+  "auto": 5,
+  "reader_only": 0,
+  "measure_only": 1,
+  "kind_clash": 0,
+  "person": 5,
+  "items": 6
+ },
+ "places": [
+  {
+   "page": 25,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 497.2,
+   "y0": 110.5,
+   "x1": 758.2,
+   "y1": 126.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p25-001",
+   "block": "B01"
+  },
+  {
+   "page": 26,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 497.2,
+   "y0": 110.5,
+   "x1": 758.2,
+   "y1": 126.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p26-001",
+   "block": "B02"
+  },
+  {
+   "page": 26,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Amount",
+   "printed_label": "$",
+   "must": true,
+   "x0": 483.0,
+   "y0": 317.5,
+   "x1": 758.2,
+   "y1": 333.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Amount"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p26-002",
+   "block": "B04"
+  },
+  {
+   "page": 27,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "is",
+   "printed_label": "",
+   "must": false,
+   "x0": 69.7,
+   "y0": 161.1,
+   "x1": 78.7,
+   "y1": 171.1,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "is"
+   },
+   "cand": "tick",
+   "id": "p27-001",
+   "block": "B05"
+  },
+  {
+   "page": 27,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "is not",
+   "printed_label": "",
+   "must": false,
+   "x0": 69.7,
+   "y0": 185.1,
+   "x1": 78.7,
+   "y1": 195.1,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "is not"
+   },
+   "cand": "tick",
+   "id": "p27-002",
+   "block": "B05"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 26,
+   "box": [
+    468.7,
+    268.0,
+    758.2,
+    283.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B03"
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 25,
+   "box": [
+    497.2,
+    110.5,
+    758.2,
+    126.0
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 26,
+   "box": [
+    497.2,
+    110.5,
+    758.2,
+    126.0
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Subscriber:"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 26,
+   "box": [
+    468.7,
+    268.0,
+    758.2,
+    283.5
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 26,
+   "box": [
+    483.0,
+    317.5,
+    758.2,
+    333.0
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 27,
+   "box": [
+    69.7,
+    161.1,
+    78.7,
+    195.1
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIBER:"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 25,
+   "block": "B01",
+   "box": [
+    497.2,
+    110.5,
+    758.2,
+    126.0
+   ],
+   "heading": "",
+   "context": [
+    "IN WITNESS WHEREOF, the parties have executed this Subscription Agreement on the day and year first above written.",
+    "Capitol Investment Corp. V"
+   ],
+   "places": [
+    "p25-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 26,
+   "block": "B02",
+   "box": [
+    497.2,
+    110.5,
+    758.2,
+    126.0
+   ],
+   "heading": "Subscriber:",
+   "context": [
+    "Subscriber:",
+    "[\u25cf]"
+   ],
+   "places": [
+    "p26-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 26,
+   "block": "B03",
+   "box": [
+    468.7,
+    268.0,
+    758.2,
+    283.5
+   ],
+   "heading": "",
+   "context": [
+    "[\u25cf]",
+    "Attention: [\u25cf]",
+    "Email: [\u25cf]",
+    "Number of Shares subscribed for:"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 26,
+   "block": "B04",
+   "box": [
+    483.0,
+    317.5,
+    758.2,
+    333.0
+   ],
+   "heading": "",
+   "context": [
+    "Attention: [\u25cf]",
+    "Email: [\u25cf]",
+    "Number of Shares subscribed for:",
+    "Aggregate Purchase Price:"
+   ],
+   "places": [
+    "p26-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 27,
+   "block": "B05",
+   "box": [
+    69.7,
+    161.1,
+    78.7,
+    195.1
+   ],
+   "heading": "SUBSCRIBER:",
+   "context": [
+    "SCHEDULE A",
+    "ELIGIBILITY REPRESENTATIONS OF THE SUBSCRIBER",
+    "A. AFFILIATE STATUS (Please check the applicable box):",
+    "SUBSCRIBER:"
+   ],
+   "places": [
+    "p27-001",
+    "p27-002"
+   ],
+   "items": []
+  }
+ ]
+}

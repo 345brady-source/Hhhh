@@ -1,0 +1,8198 @@
+{
+ "id": "c298",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 72,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ],
+  "15": [
+   612.0,
+   792.0
+  ],
+  "16": [
+   612.0,
+   792.0
+  ],
+  "17": [
+   612.0,
+   792.0
+  ],
+  "18": [
+   612.0,
+   792.0
+  ],
+  "19": [
+   612.0,
+   792.0
+  ],
+  "20": [
+   612.0,
+   792.0
+  ],
+  "21": [
+   612.0,
+   792.0
+  ],
+  "22": [
+   612.0,
+   792.0
+  ],
+  "23": [
+   612.0,
+   792.0
+  ],
+  "24": [
+   612.0,
+   792.0
+  ],
+  "25": [
+   612.0,
+   792.0
+  ],
+  "26": [
+   612.0,
+   792.0
+  ],
+  "27": [
+   612.0,
+   792.0
+  ],
+  "28": [
+   612.0,
+   792.0
+  ],
+  "29": [
+   612.0,
+   792.0
+  ],
+  "30": [
+   612.0,
+   792.0
+  ],
+  "31": [
+   612.0,
+   792.0
+  ],
+  "32": [
+   612.0,
+   792.0
+  ],
+  "33": [
+   612.0,
+   792.0
+  ],
+  "34": [
+   612.0,
+   792.0
+  ],
+  "35": [
+   612.0,
+   792.0
+  ],
+  "36": [
+   612.0,
+   792.0
+  ],
+  "37": [
+   612.0,
+   792.0
+  ],
+  "38": [
+   612.0,
+   792.0
+  ],
+  "39": [
+   612.0,
+   792.0
+  ],
+  "40": [
+   612.0,
+   792.0
+  ],
+  "41": [
+   612.0,
+   792.0
+  ],
+  "42": [
+   612.0,
+   792.0
+  ],
+  "43": [
+   612.0,
+   792.0
+  ],
+  "44": [
+   612.0,
+   792.0
+  ],
+  "45": [
+   612.0,
+   792.0
+  ],
+  "46": [
+   612.0,
+   792.0
+  ],
+  "47": [
+   612.0,
+   792.0
+  ],
+  "48": [
+   612.0,
+   792.0
+  ],
+  "49": [
+   612.0,
+   792.0
+  ],
+  "50": [
+   612.0,
+   792.0
+  ],
+  "51": [
+   612.0,
+   792.0
+  ],
+  "52": [
+   612.0,
+   792.0
+  ],
+  "53": [
+   612.0,
+   792.0
+  ],
+  "54": [
+   612.0,
+   792.0
+  ],
+  "55": [
+   612.0,
+   792.0
+  ],
+  "56": [
+   612.0,
+   792.0
+  ],
+  "57": [
+   612.0,
+   792.0
+  ],
+  "58": [
+   612.0,
+   792.0
+  ],
+  "59": [
+   612.0,
+   792.0
+  ],
+  "60": [
+   612.0,
+   792.0
+  ],
+  "61": [
+   612.0,
+   792.0
+  ],
+  "62": [
+   612.0,
+   792.0
+  ],
+  "63": [
+   612.0,
+   792.0
+  ],
+  "64": [
+   612.0,
+   792.0
+  ],
+  "65": [
+   612.0,
+   792.0
+  ],
+  "66": [
+   612.0,
+   792.0
+  ],
+  "67": [
+   612.0,
+   792.0
+  ],
+  "68": [
+   612.0,
+   792.0
+  ],
+  "69": [
+   612.0,
+   792.0
+  ],
+  "70": [
+   612.0,
+   792.0
+  ],
+  "71": [
+   612.0,
+   792.0
+  ],
+  "72": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text",
+  "17": "text",
+  "18": "text",
+  "19": "text",
+  "20": "text",
+  "21": "text",
+  "22": "text",
+  "23": "text",
+  "24": "text",
+  "25": "text",
+  "26": "text",
+  "27": "text",
+  "28": "text",
+  "29": "text",
+  "30": "text",
+  "31": "text",
+  "32": "text",
+  "33": "text",
+  "34": "text",
+  "35": "text",
+  "36": "text",
+  "37": "text",
+  "38": "text",
+  "39": "text",
+  "40": "text",
+  "41": "text",
+  "42": "text",
+  "43": "text",
+  "44": "text",
+  "45": "text",
+  "46": "text",
+  "47": "text",
+  "48": "text",
+  "49": "text",
+  "50": "text",
+  "51": "text",
+  "52": "text",
+  "53": "text",
+  "54": "text",
+  "55": "text",
+  "56": "text",
+  "57": "text",
+  "58": "text",
+  "59": "text",
+  "60": "text",
+  "61": "text",
+  "62": "text",
+  "63": "text",
+  "64": "text",
+  "65": "text",
+  "66": "text",
+  "67": "text",
+  "68": "text",
+  "69": "text",
+  "70": "text",
+  "71": "text",
+  "72": "text"
+ },
+ "run": "out-18/set-c/c298/result.json",
+ "candidates": "f63e5172a4ac5690-f01586d5.json",
+ "counts": {
+  "fields": 57,
+  "counted_candidates": 190,
+  "pairs": 56,
+  "auto": 55,
+  "reader_only": 1,
+  "measure_only": 134,
+  "kind_clash": 1,
+  "person": 85,
+  "items": 221
+ },
+ "places": [
+  {
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "PO Box 309, Ugland House, Grand",
+   "must": true,
+   "x0": 33.7,
+   "y0": 178.0,
+   "x1": 251.2,
+   "y1": 193.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p10-001",
+   "block": "B03"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "FS LT HOLDINGS LP",
+   "must": true,
+   "x0": 33.7,
+   "y0": 166.0,
+   "x1": 251.2,
+   "y1": 181.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p11-001",
+   "block": "B06"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name in which securities are to be registered",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 265.0,
+   "x1": 251.2,
+   "y1": 280.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Name in which securities are to be registered"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p11-002",
+   "block": "B08"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Elizabeth.Chow@fidelity.ca",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 229.0,
+   "x1": 251.2,
+   "y1": 244.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Elizabeth.Chow@fidelity.ca"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p13-001",
+   "block": "B14"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "5 Place Ville Marie",
+   "printed_label": "Suite 100",
+   "must": true,
+   "x0": 33.7,
+   "y0": 215.5,
+   "x1": 251.2,
+   "y1": 231.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "5 Place Ville Marie"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p14-001",
+   "block": "B18"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Suite 100",
+   "printed_label": "Montreal, Quebec H3B 2G2",
+   "must": false,
+   "x0": 33.7,
+   "y0": 229.0,
+   "x1": 251.2,
+   "y1": 244.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Suite 100"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p14-002",
+   "block": "B18"
+  },
+  {
+   "page": 15,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Email",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 344.5,
+   "x1": 251.2,
+   "y1": 360.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Email"
+   },
+   "cand": "rule",
+   "what": "email",
+   "id": "p15-001",
+   "block": "B22"
+  },
+  {
+   "page": 16,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Email",
+   "printed_label": "avis-conventionsjuridiques@desjardins.com",
+   "must": true,
+   "x0": 33.7,
+   "y0": 344.5,
+   "x1": 251.2,
+   "y1": 360.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Email"
+   },
+   "cand": "rule",
+   "what": "email",
+   "id": "p16-001",
+   "block": "B25"
+  },
+  {
+   "page": 16,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name in which securities are to be registered",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 383.5,
+   "x1": 251.2,
+   "y1": 399.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Name in which securities are to be registered"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p16-002",
+   "block": "B25"
+  },
+  {
+   "page": 17,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "Derek Kenneth Aberle",
+   "must": true,
+   "x0": 33.7,
+   "y0": 142.0,
+   "x1": 251.2,
+   "y1": 157.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p17-001",
+   "block": "B27"
+  },
+  {
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "2673A Letourneux, Montr\u00e9al,",
+   "must": true,
+   "x0": 33.7,
+   "y0": 142.0,
+   "x1": 251.2,
+   "y1": 157.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p18-001",
+   "block": "B30"
+  },
+  {
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "2170 Cambridge road, Mont-Royal,",
+   "must": true,
+   "x0": 33.7,
+   "y0": 142.0,
+   "x1": 251.2,
+   "y1": 157.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p19-001",
+   "block": "B32"
+  },
+  {
+   "page": 20,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "538 Port St-Malo, L\u2019Ile-Bizard,",
+   "must": true,
+   "x0": 33.7,
+   "y0": 142.0,
+   "x1": 251.2,
+   "y1": 157.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p20-001",
+   "block": "B34"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "1432 Fran\u00e7ois P. Bruneau, St-Bruno,",
+   "must": true,
+   "x0": 33.7,
+   "y0": 142.0,
+   "x1": 251.2,
+   "y1": 157.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p21-001",
+   "block": "B36"
+  },
+  {
+   "page": 22,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "701-1440 du maire Beaulieu av.,",
+   "must": true,
+   "x0": 33.7,
+   "y0": 142.0,
+   "x1": 251.2,
+   "y1": 157.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p22-001",
+   "block": "B38"
+  },
+  {
+   "page": 23,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "2830 Ste-Foy road, App. 310",
+   "must": true,
+   "x0": 33.7,
+   "y0": 142.0,
+   "x1": 251.2,
+   "y1": 157.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p23-001",
+   "block": "B39"
+  },
+  {
+   "page": 24,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "120 les \u00c9rables street, Laval, Quebec,",
+   "must": true,
+   "x0": 33.7,
+   "y0": 142.0,
+   "x1": 251.2,
+   "y1": 157.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p24-001",
+   "block": "B41"
+  },
+  {
+   "page": 25,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "19 Mac Mahon Av., 75017, Paris,",
+   "must": true,
+   "x0": 33.7,
+   "y0": 154.0,
+   "x1": 251.2,
+   "y1": 169.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p25-001",
+   "block": "B43"
+  },
+  {
+   "page": 26,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "605. Ren\u00e9-L\u00e9vesque West blvd., app",
+   "must": true,
+   "x0": 33.7,
+   "y0": 142.0,
+   "x1": 251.2,
+   "y1": 157.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p26-001",
+   "block": "B45"
+  },
+  {
+   "page": 27,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "6816 Claudel Street, Brossard,",
+   "must": true,
+   "x0": 33.7,
+   "y0": 142.0,
+   "x1": 251.2,
+   "y1": 157.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p27-001",
+   "block": "B47"
+  },
+  {
+   "page": 28,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "10091 Kress road, Pinckney MI",
+   "must": true,
+   "x0": 33.7,
+   "y0": 142.0,
+   "x1": 251.2,
+   "y1": 157.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p28-001",
+   "block": "B49"
+  },
+  {
+   "page": 29,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "1133 Rue des Pinsons, Beloeil, QC,",
+   "must": true,
+   "x0": 33.7,
+   "y0": 142.0,
+   "x1": 251.2,
+   "y1": 157.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p29-001",
+   "block": "B51"
+  },
+  {
+   "page": 30,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "4505 Carre du Claux, Quebec,",
+   "must": true,
+   "x0": 33.7,
+   "y0": 142.0,
+   "x1": 251.2,
+   "y1": 157.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p30-001",
+   "block": "B53"
+  },
+  {
+   "page": 31,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "Appt 70, 3 rue des bl\u00e9s d\u00b4Or 78",
+   "must": true,
+   "x0": 33.7,
+   "y0": 167.5,
+   "x1": 251.2,
+   "y1": 183.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p31-001",
+   "block": "B55"
+  },
+  {
+   "page": 32,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "304-3805 rue de Verdun, Verdun, QC,",
+   "must": true,
+   "x0": 33.7,
+   "y0": 143.5,
+   "x1": 251.2,
+   "y1": 159.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p32-001",
+   "block": "B57"
+  },
+  {
+   "page": 33,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "134 Hypolite-Rougi\u00e9, Saint-Jean-sur",
+   "must": true,
+   "x0": 33.7,
+   "y0": 143.5,
+   "x1": 251.2,
+   "y1": 159.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p33-001",
+   "block": "B59"
+  },
+  {
+   "page": 34,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "4801 rue du Courlis, St-Augustin-de",
+   "must": true,
+   "x0": 33.7,
+   "y0": 143.5,
+   "x1": 251.2,
+   "y1": 159.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p34-001",
+   "block": "B61"
+  },
+  {
+   "page": 35,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "1869 rue des Bassins apt. 206, H3J",
+   "must": true,
+   "x0": 33.7,
+   "y0": 143.5,
+   "x1": 251.2,
+   "y1": 159.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p35-001",
+   "block": "B63"
+  },
+  {
+   "page": 36,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "2560 Dandurand, Montr\u00e9al, Qc, H1Y",
+   "must": true,
+   "x0": 33.7,
+   "y0": 143.5,
+   "x1": 251.2,
+   "y1": 159.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p36-001",
+   "block": "B65"
+  },
+  {
+   "page": 37,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "35 Emek Hefer Street, Apt 18,",
+   "must": true,
+   "x0": 33.7,
+   "y0": 143.5,
+   "x1": 251.2,
+   "y1": 159.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p37-001",
+   "block": "B67"
+  },
+  {
+   "page": 38,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "Unit 20B, Block 1, Granville Garden,",
+   "must": true,
+   "x0": 33.7,
+   "y0": 143.5,
+   "x1": 251.2,
+   "y1": 159.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p38-001",
+   "block": "B69"
+  },
+  {
+   "page": 39,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "Room 101, building 55, Lane 1288,",
+   "must": true,
+   "x0": 33.7,
+   "y0": 143.5,
+   "x1": 251.2,
+   "y1": 159.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p39-001",
+   "block": "B71"
+  },
+  {
+   "page": 58,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 387.7,
+   "y0": 116.5,
+   "x1": 578.2,
+   "y1": 132.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p58-001",
+   "block": "B74"
+  },
+  {
+   "page": 58,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 60.7,
+   "y0": 238.0,
+   "x1": 251.2,
+   "y1": 253.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p58-002",
+   "block": "B75"
+  },
+  {
+   "page": 58,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "Address",
+   "must": true,
+   "x0": 77.2,
+   "y0": 287.5,
+   "x1": 251.2,
+   "y1": 303.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p58-003",
+   "block": "B76"
+  },
+  {
+   "page": 58,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 2",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 301.0,
+   "x1": 251.2,
+   "y1": 316.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Address line 2"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p58-004",
+   "block": "B76"
+  },
+  {
+   "page": 58,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 2",
+   "printed_label": "Email",
+   "must": false,
+   "x0": 33.7,
+   "y0": 314.5,
+   "x1": 251.2,
+   "y1": 330.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Address line 2"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p58-005",
+   "block": "B76"
+  },
+  {
+   "page": 58,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Email",
+   "printed_label": "Email",
+   "must": true,
+   "x0": 77.2,
+   "y0": 328.0,
+   "x1": 251.2,
+   "y1": 343.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Email"
+   },
+   "cand": "rule",
+   "what": "email",
+   "id": "p58-006",
+   "block": "B76"
+  },
+  {
+   "page": 60,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "Dated",
+   "must": true,
+   "x0": 66.7,
+   "y0": 344.5,
+   "x1": 251.2,
+   "y1": 360.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Date signed"
+   },
+   "cand": "rule",
+   "id": "p60-001",
+   "block": "B77"
+  },
+  {
+   "page": 60,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 360.7,
+   "y0": 344.5,
+   "x1": 578.2,
+   "y1": 360.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p60-002",
+   "block": "B78"
+  },
+  {
+   "page": 60,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature(s)",
+   "must": true,
+   "x0": 360.7,
+   "y0": 358.0,
+   "x1": 578.2,
+   "y1": 373.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p60-003",
+   "block": "B78"
+  },
+  {
+   "page": 61,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "(Name)",
+   "must": true,
+   "x0": 33.7,
+   "y0": 225.2,
+   "x1": 193.7,
+   "y1": 240.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Name"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p61-001",
+   "block": "B80"
+  },
+  {
+   "page": 61,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "(Street Address)",
+   "must": true,
+   "x0": 33.7,
+   "y0": 249.2,
+   "x1": 193.7,
+   "y1": 264.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Address"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p61-002",
+   "block": "B80"
+  },
+  {
+   "page": 61,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 2",
+   "printed_label": "(City, State and Zip Code) Please print name",
+   "must": false,
+   "x0": 33.7,
+   "y0": 273.2,
+   "x1": 193.7,
+   "y1": 288.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Address line 2"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p61-003",
+   "block": "B80"
+  },
+  {
+   "page": 61,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Amount",
+   "printed_label": "$",
+   "must": true,
+   "x0": 318.9,
+   "y0": 308.1,
+   "x1": 353.9,
+   "y1": 323.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Amount"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p61-004",
+   "block": "B80"
+  },
+  {
+   "page": 61,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Social Security or Other Taxpayer Identification Number",
+   "printed_label": "Social Security or Other Taxpayer",
+   "must": true,
+   "x0": 311.4,
+   "y0": 369.2,
+   "x1": 491.4,
+   "y1": 384.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Social Security or Other Taxpayer Identification Number"
+   },
+   "cand": "underscore",
+   "what": "tax number",
+   "id": "p61-005",
+   "block": "B81"
+  },
+  {
+   "page": 69,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Per",
+   "printed_label": "Per",
+   "must": true,
+   "x0": 388.5,
+   "y0": 128.5,
+   "x1": 578.2,
+   "y1": 144.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Per"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p69-001",
+   "block": "B82"
+  },
+  {
+   "page": 70,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 387.7,
+   "y0": 116.5,
+   "x1": 578.2,
+   "y1": 132.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p70-001",
+   "block": "B83"
+  },
+  {
+   "page": 71,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "subscribes",
+   "printed_label": "(a) subscribes for",
+   "must": true,
+   "x0": 164.0,
+   "y0": 138.9,
+   "x1": 214.0,
+   "y1": 154.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "subscribes"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p71-001",
+   "block": "B84"
+  },
+  {
+   "page": 71,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "day of",
+   "printed_label": "DATED this",
+   "must": true,
+   "x0": 87.4,
+   "y0": 358.7,
+   "x1": 292.6,
+   "y1": 374.2,
+   "printed_as": "measure candidate: dateparts",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "day of"
+   },
+   "cand": "dateparts",
+   "what": "date",
+   "id": "p71-002",
+   "block": "B85"
+  },
+  {
+   "page": 71,
+   "kind": "blank",
+   "owner": "investor",
+   "label": ", 20__.",
+   "printed_label": "(Authorized Signatory of Subscriber)",
+   "must": false,
+   "x0": 360.7,
+   "y0": 384.2,
+   "x1": 578.2,
+   "y1": 399.7,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": ", 20__."
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p71-003",
+   "block": "B85"
+  },
+  {
+   "page": 71,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Authorized Signatory of Subscriber",
+   "printed_label": "(Print Name of Subscriber)",
+   "must": true,
+   "x0": 360.7,
+   "y0": 409.7,
+   "x1": 578.2,
+   "y1": 425.2,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Authorized Signatory of Subscriber"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p71-004",
+   "block": "B85"
+  },
+  {
+   "page": 71,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor name",
+   "printed_label": "(Address of Subscriber in full)",
+   "must": true,
+   "x0": 360.7,
+   "y0": 435.2,
+   "x1": 578.2,
+   "y1": 450.7,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Investor name"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p71-005",
+   "block": "B85"
+  },
+  {
+   "page": 71,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address of Subscriber in full",
+   "printed_label": "",
+   "must": true,
+   "x0": 360.7,
+   "y0": 460.7,
+   "x1": 578.2,
+   "y1": 476.2,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Address of Subscriber in full"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p71-006",
+   "block": "B85"
+  },
+  {
+   "page": 71,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 360.7,
+   "y0": 474.2,
+   "x1": 578.2,
+   "y1": 489.7,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p71-007",
+   "block": "B85"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 9,
+   "box": [
+    60.7,
+    152.5,
+    251.2,
+    168.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "measure-only",
+   "page": 10,
+   "box": [
+    62.2,
+    116.5,
+    252.0,
+    132.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 10,
+   "box": [
+    33.7,
+    215.5,
+    251.2,
+    231.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i003",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 10,
+   "box": [
+    33.7,
+    265.0,
+    251.2,
+    280.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i004",
+   "block": "B04"
+  },
+  {
+   "type": "measure-only",
+   "page": 10,
+   "box": [
+    33.7,
+    302.5,
+    251.2,
+    318.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i005",
+   "block": "B04"
+  },
+  {
+   "type": "measure-only",
+   "page": 11,
+   "box": [
+    60.7,
+    104.5,
+    251.2,
+    120.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i006",
+   "block": "B05"
+  },
+  {
+   "type": "measure-only",
+   "page": 11,
+   "box": [
+    33.7,
+    215.5,
+    251.2,
+    231.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i007",
+   "block": "B07"
+  },
+  {
+   "type": "measure-only",
+   "page": 11,
+   "box": [
+    33.7,
+    302.5,
+    251.2,
+    318.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i008",
+   "block": "B08"
+  },
+  {
+   "type": "measure-only",
+   "page": 12,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i009",
+   "block": "B09"
+  },
+  {
+   "type": "measure-only",
+   "page": 12,
+   "box": [
+    60.7,
+    142.0,
+    251.2,
+    157.5
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i010",
+   "block": "B10"
+  },
+  {
+   "type": "measure-only",
+   "page": 12,
+   "box": [
+    33.7,
+    431.5,
+    251.2,
+    447.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i011",
+   "block": "B11"
+  },
+  {
+   "type": "measure-only",
+   "page": 13,
+   "box": [
+    60.7,
+    104.5,
+    251.2,
+    120.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i012",
+   "block": "B12"
+  },
+  {
+   "type": "measure-only",
+   "page": 13,
+   "box": [
+    33.7,
+    166.0,
+    251.2,
+    181.5
+   ],
+   "caption": "483 Bay Street, North Tower, Suite 300",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "address"
+   },
+   "item": "i013",
+   "block": "B13"
+  },
+  {
+   "type": "measure-only",
+   "page": 13,
+   "box": [
+    33.7,
+    278.5,
+    251.2,
+    294.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i014",
+   "block": "B15"
+  },
+  {
+   "type": "measure-only",
+   "page": 14,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i015",
+   "block": "B16"
+  },
+  {
+   "type": "measure-only",
+   "page": 14,
+   "box": [
+    60.7,
+    142.0,
+    251.2,
+    157.5
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i016",
+   "block": "B17"
+  },
+  {
+   "type": "measure-only",
+   "page": 14,
+   "box": [
+    33.7,
+    242.5,
+    251.2,
+    258.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i017",
+   "block": "B18"
+  },
+  {
+   "type": "measure-only",
+   "page": 14,
+   "box": [
+    33.7,
+    292.0,
+    251.2,
+    307.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i018",
+   "block": "B19"
+  },
+  {
+   "type": "measure-only",
+   "page": 14,
+   "box": [
+    33.7,
+    329.5,
+    251.2,
+    345.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i019",
+   "block": "B19"
+  },
+  {
+   "type": "measure-only",
+   "page": 15,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i020",
+   "block": "B20"
+  },
+  {
+   "type": "measure-only",
+   "page": 15,
+   "box": [
+    60.7,
+    142.0,
+    251.2,
+    157.5
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i021",
+   "block": "B21"
+  },
+  {
+   "type": "measure-only",
+   "page": 15,
+   "box": [
+    33.7,
+    215.5,
+    251.2,
+    231.0
+   ],
+   "caption": "2, Complexe Desjardins, Tour est",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i022",
+   "block": "B22"
+  },
+  {
+   "type": "measure-only",
+   "page": 15,
+   "box": [
+    33.7,
+    229.0,
+    251.2,
+    244.5
+   ],
+   "caption": "Bureau 1717, C.P. 760, Succursale",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i023",
+   "block": "B22"
+  },
+  {
+   "type": "measure-only",
+   "page": 15,
+   "box": [
+    33.7,
+    254.5,
+    251.2,
+    270.0
+   ],
+   "caption": "Montr\u00e9al, Qu\u00e9bec H5B 1B8",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i024",
+   "block": "B22"
+  },
+  {
+   "type": "measure-only",
+   "page": 15,
+   "box": [
+    33.7,
+    268.0,
+    251.2,
+    283.5
+   ],
+   "caption": "Attention of: Affaires juridiques de",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i025",
+   "block": "B22"
+  },
+  {
+   "type": "measure-only",
+   "page": 15,
+   "box": [
+    33.7,
+    293.5,
+    251.2,
+    309.0
+   ],
+   "caption": "Facsimile No.: 514-281-7808",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i026",
+   "block": "B22"
+  },
+  {
+   "type": "measure-only",
+   "page": 15,
+   "box": [
+    33.7,
+    307.0,
+    251.2,
+    322.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i027",
+   "block": "B22"
+  },
+  {
+   "type": "measure-only",
+   "page": 15,
+   "box": [
+    33.7,
+    382.0,
+    251.2,
+    397.5
+   ],
+   "caption": "Name in which securities are to be registered",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "name"
+   },
+   "item": "i028",
+   "block": "B22"
+  },
+  {
+   "type": "measure-only",
+   "page": 16,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i029",
+   "block": "B23"
+  },
+  {
+   "type": "measure-only",
+   "page": 16,
+   "box": [
+    60.7,
+    142.0,
+    251.2,
+    157.5
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i030",
+   "block": "B24"
+  },
+  {
+   "type": "measure-only",
+   "page": 16,
+   "box": [
+    33.7,
+    215.5,
+    251.2,
+    231.0
+   ],
+   "caption": "2, Complexe Desjardins, Tour est",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i031",
+   "block": "B25"
+  },
+  {
+   "type": "measure-only",
+   "page": 16,
+   "box": [
+    33.7,
+    229.0,
+    251.2,
+    244.5
+   ],
+   "caption": "Bureau 1717, C.P. 760, Succursale",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i032",
+   "block": "B25"
+  },
+  {
+   "type": "measure-only",
+   "page": 16,
+   "box": [
+    33.7,
+    254.5,
+    251.2,
+    270.0
+   ],
+   "caption": "Montr\u00e9al, Qu\u00e9bec H5B 1B8",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i033",
+   "block": "B25"
+  },
+  {
+   "type": "measure-only",
+   "page": 16,
+   "box": [
+    33.7,
+    268.0,
+    251.2,
+    283.5
+   ],
+   "caption": "Attention of: Affaires juridiques de",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i034",
+   "block": "B25"
+  },
+  {
+   "type": "measure-only",
+   "page": 16,
+   "box": [
+    33.7,
+    293.5,
+    251.2,
+    309.0
+   ],
+   "caption": "Facsimile No.: 514-281-7808",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i035",
+   "block": "B25"
+  },
+  {
+   "type": "measure-only",
+   "page": 16,
+   "box": [
+    33.7,
+    307.0,
+    251.2,
+    322.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i036",
+   "block": "B25"
+  },
+  {
+   "type": "measure-only",
+   "page": 16,
+   "box": [
+    33.7,
+    370.0,
+    251.2,
+    385.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i037",
+   "block": "B25"
+  },
+  {
+   "type": "measure-only",
+   "page": 16,
+   "box": [
+    33.7,
+    421.0,
+    251.2,
+    436.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i038",
+   "block": "B25"
+  },
+  {
+   "type": "measure-only",
+   "page": 17,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i039",
+   "block": "B26"
+  },
+  {
+   "type": "measure-only",
+   "page": 17,
+   "box": [
+    33.7,
+    179.5,
+    251.2,
+    195.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i040",
+   "block": "B27"
+  },
+  {
+   "type": "measure-only",
+   "page": 17,
+   "box": [
+    33.7,
+    229.0,
+    251.2,
+    244.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i041",
+   "block": "B28"
+  },
+  {
+   "type": "measure-only",
+   "page": 17,
+   "box": [
+    33.7,
+    266.5,
+    251.2,
+    282.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i042",
+   "block": "B28"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i043",
+   "block": "B29"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    33.7,
+    167.5,
+    251.2,
+    183.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i044",
+   "block": "B30"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    33.7,
+    205.0,
+    251.2,
+    220.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i045",
+   "block": "B30"
+  },
+  {
+   "type": "measure-only",
+   "page": 18,
+   "box": [
+    33.7,
+    242.5,
+    251.2,
+    258.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i046",
+   "block": "B30"
+  },
+  {
+   "type": "measure-only",
+   "page": 19,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i047",
+   "block": "B31"
+  },
+  {
+   "type": "measure-only",
+   "page": 19,
+   "box": [
+    33.7,
+    167.5,
+    251.2,
+    183.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i048",
+   "block": "B32"
+  },
+  {
+   "type": "measure-only",
+   "page": 19,
+   "box": [
+    33.7,
+    205.0,
+    251.2,
+    220.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i049",
+   "block": "B32"
+  },
+  {
+   "type": "measure-only",
+   "page": 19,
+   "box": [
+    33.7,
+    242.5,
+    251.2,
+    258.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i050",
+   "block": "B32"
+  },
+  {
+   "type": "measure-only",
+   "page": 20,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i051",
+   "block": "B33"
+  },
+  {
+   "type": "measure-only",
+   "page": 20,
+   "box": [
+    33.7,
+    167.5,
+    251.2,
+    183.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i052",
+   "block": "B34"
+  },
+  {
+   "type": "measure-only",
+   "page": 20,
+   "box": [
+    33.7,
+    205.0,
+    251.2,
+    220.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i053",
+   "block": "B34"
+  },
+  {
+   "type": "measure-only",
+   "page": 20,
+   "box": [
+    33.7,
+    242.5,
+    251.2,
+    258.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i054",
+   "block": "B34"
+  },
+  {
+   "type": "measure-only",
+   "page": 21,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i055",
+   "block": "B35"
+  },
+  {
+   "type": "measure-only",
+   "page": 21,
+   "box": [
+    33.7,
+    167.5,
+    251.2,
+    183.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i056",
+   "block": "B36"
+  },
+  {
+   "type": "measure-only",
+   "page": 21,
+   "box": [
+    33.7,
+    205.0,
+    251.2,
+    220.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i057",
+   "block": "B36"
+  },
+  {
+   "type": "measure-only",
+   "page": 21,
+   "box": [
+    33.7,
+    242.5,
+    251.2,
+    258.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i058",
+   "block": "B36"
+  },
+  {
+   "type": "measure-only",
+   "page": 22,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i059",
+   "block": "B37"
+  },
+  {
+   "type": "measure-only",
+   "page": 22,
+   "box": [
+    33.7,
+    167.5,
+    251.2,
+    183.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i060",
+   "block": "B38"
+  },
+  {
+   "type": "measure-only",
+   "page": 22,
+   "box": [
+    33.7,
+    205.0,
+    251.2,
+    220.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i061",
+   "block": "B38"
+  },
+  {
+   "type": "measure-only",
+   "page": 22,
+   "box": [
+    33.7,
+    242.5,
+    251.2,
+    258.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i062",
+   "block": "B38"
+  },
+  {
+   "type": "measure-only",
+   "page": 23,
+   "box": [
+    33.7,
+    167.5,
+    251.2,
+    183.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i063",
+   "block": "B39"
+  },
+  {
+   "type": "measure-only",
+   "page": 23,
+   "box": [
+    33.7,
+    205.0,
+    251.2,
+    220.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i064",
+   "block": "B39"
+  },
+  {
+   "type": "measure-only",
+   "page": 23,
+   "box": [
+    33.7,
+    242.5,
+    251.2,
+    258.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i065",
+   "block": "B39"
+  },
+  {
+   "type": "measure-only",
+   "page": 24,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i066",
+   "block": "B40"
+  },
+  {
+   "type": "measure-only",
+   "page": 24,
+   "box": [
+    33.7,
+    167.5,
+    251.2,
+    183.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i067",
+   "block": "B41"
+  },
+  {
+   "type": "measure-only",
+   "page": 24,
+   "box": [
+    33.7,
+    205.0,
+    251.2,
+    220.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i068",
+   "block": "B41"
+  },
+  {
+   "type": "measure-only",
+   "page": 24,
+   "box": [
+    33.7,
+    242.5,
+    251.2,
+    258.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i069",
+   "block": "B41"
+  },
+  {
+   "type": "measure-only",
+   "page": 25,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i070",
+   "block": "B42"
+  },
+  {
+   "type": "measure-only",
+   "page": 25,
+   "box": [
+    33.7,
+    179.5,
+    251.2,
+    195.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i071",
+   "block": "B43"
+  },
+  {
+   "type": "measure-only",
+   "page": 25,
+   "box": [
+    33.7,
+    217.0,
+    251.2,
+    232.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i072",
+   "block": "B43"
+  },
+  {
+   "type": "measure-only",
+   "page": 25,
+   "box": [
+    33.7,
+    254.5,
+    251.2,
+    270.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i073",
+   "block": "B43"
+  },
+  {
+   "type": "measure-only",
+   "page": 26,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i074",
+   "block": "B44"
+  },
+  {
+   "type": "measure-only",
+   "page": 26,
+   "box": [
+    33.7,
+    167.5,
+    251.2,
+    183.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i075",
+   "block": "B45"
+  },
+  {
+   "type": "measure-only",
+   "page": 26,
+   "box": [
+    33.7,
+    205.0,
+    251.2,
+    220.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i076",
+   "block": "B45"
+  },
+  {
+   "type": "measure-only",
+   "page": 26,
+   "box": [
+    33.7,
+    242.5,
+    251.2,
+    258.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i077",
+   "block": "B45"
+  },
+  {
+   "type": "measure-only",
+   "page": 27,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i078",
+   "block": "B46"
+  },
+  {
+   "type": "measure-only",
+   "page": 27,
+   "box": [
+    33.7,
+    167.5,
+    251.2,
+    183.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i079",
+   "block": "B47"
+  },
+  {
+   "type": "measure-only",
+   "page": 27,
+   "box": [
+    33.7,
+    205.0,
+    251.2,
+    220.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i080",
+   "block": "B47"
+  },
+  {
+   "type": "measure-only",
+   "page": 27,
+   "box": [
+    33.7,
+    242.5,
+    251.2,
+    258.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i081",
+   "block": "B47"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i082",
+   "block": "B48"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    33.7,
+    167.5,
+    251.2,
+    183.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i083",
+   "block": "B49"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    33.7,
+    205.0,
+    251.2,
+    220.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i084",
+   "block": "B49"
+  },
+  {
+   "type": "measure-only",
+   "page": 28,
+   "box": [
+    33.7,
+    242.5,
+    251.2,
+    258.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i085",
+   "block": "B49"
+  },
+  {
+   "type": "measure-only",
+   "page": 29,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i086",
+   "block": "B50"
+  },
+  {
+   "type": "measure-only",
+   "page": 29,
+   "box": [
+    33.7,
+    167.5,
+    251.2,
+    183.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i087",
+   "block": "B51"
+  },
+  {
+   "type": "measure-only",
+   "page": 29,
+   "box": [
+    33.7,
+    205.0,
+    251.2,
+    220.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i088",
+   "block": "B51"
+  },
+  {
+   "type": "measure-only",
+   "page": 29,
+   "box": [
+    33.7,
+    242.5,
+    251.2,
+    258.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i089",
+   "block": "B51"
+  },
+  {
+   "type": "measure-only",
+   "page": 30,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i090",
+   "block": "B52"
+  },
+  {
+   "type": "measure-only",
+   "page": 30,
+   "box": [
+    33.7,
+    167.5,
+    251.2,
+    183.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i091",
+   "block": "B53"
+  },
+  {
+   "type": "measure-only",
+   "page": 30,
+   "box": [
+    33.7,
+    205.0,
+    251.2,
+    220.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i092",
+   "block": "B53"
+  },
+  {
+   "type": "measure-only",
+   "page": 30,
+   "box": [
+    33.7,
+    242.5,
+    251.2,
+    258.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i093",
+   "block": "B53"
+  },
+  {
+   "type": "measure-only",
+   "page": 31,
+   "box": [
+    63.0,
+    117.2,
+    252.7,
+    132.7
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i094",
+   "block": "B54"
+  },
+  {
+   "type": "measure-only",
+   "page": 31,
+   "box": [
+    33.7,
+    193.0,
+    251.2,
+    208.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i095",
+   "block": "B55"
+  },
+  {
+   "type": "measure-only",
+   "page": 31,
+   "box": [
+    33.7,
+    231.2,
+    251.2,
+    246.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i096",
+   "block": "B55"
+  },
+  {
+   "type": "measure-only",
+   "page": 31,
+   "box": [
+    33.7,
+    269.5,
+    251.2,
+    285.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i097",
+   "block": "B55"
+  },
+  {
+   "type": "measure-only",
+   "page": 32,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i098",
+   "block": "B56"
+  },
+  {
+   "type": "measure-only",
+   "page": 32,
+   "box": [
+    33.7,
+    169.0,
+    251.2,
+    184.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i099",
+   "block": "B57"
+  },
+  {
+   "type": "measure-only",
+   "page": 32,
+   "box": [
+    33.7,
+    207.2,
+    251.2,
+    222.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i100",
+   "block": "B57"
+  },
+  {
+   "type": "measure-only",
+   "page": 32,
+   "box": [
+    33.7,
+    245.5,
+    251.2,
+    261.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i101",
+   "block": "B57"
+  },
+  {
+   "type": "measure-only",
+   "page": 33,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i102",
+   "block": "B58"
+  },
+  {
+   "type": "measure-only",
+   "page": 33,
+   "box": [
+    33.7,
+    169.0,
+    251.2,
+    184.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i103",
+   "block": "B59"
+  },
+  {
+   "type": "measure-only",
+   "page": 33,
+   "box": [
+    33.7,
+    207.2,
+    251.2,
+    222.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i104",
+   "block": "B59"
+  },
+  {
+   "type": "measure-only",
+   "page": 33,
+   "box": [
+    33.7,
+    245.5,
+    251.2,
+    261.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i105",
+   "block": "B59"
+  },
+  {
+   "type": "measure-only",
+   "page": 34,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i106",
+   "block": "B60"
+  },
+  {
+   "type": "measure-only",
+   "page": 34,
+   "box": [
+    33.7,
+    169.0,
+    251.2,
+    184.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i107",
+   "block": "B61"
+  },
+  {
+   "type": "measure-only",
+   "page": 34,
+   "box": [
+    33.7,
+    207.2,
+    251.2,
+    222.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i108",
+   "block": "B61"
+  },
+  {
+   "type": "measure-only",
+   "page": 34,
+   "box": [
+    33.7,
+    245.5,
+    251.2,
+    261.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i109",
+   "block": "B61"
+  },
+  {
+   "type": "measure-only",
+   "page": 35,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i110",
+   "block": "B62"
+  },
+  {
+   "type": "measure-only",
+   "page": 35,
+   "box": [
+    33.7,
+    169.0,
+    251.2,
+    184.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i111",
+   "block": "B63"
+  },
+  {
+   "type": "measure-only",
+   "page": 35,
+   "box": [
+    33.7,
+    207.2,
+    251.2,
+    222.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i112",
+   "block": "B63"
+  },
+  {
+   "type": "measure-only",
+   "page": 35,
+   "box": [
+    33.7,
+    245.5,
+    251.2,
+    261.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i113",
+   "block": "B63"
+  },
+  {
+   "type": "measure-only",
+   "page": 36,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i114",
+   "block": "B64"
+  },
+  {
+   "type": "measure-only",
+   "page": 36,
+   "box": [
+    33.7,
+    169.0,
+    251.2,
+    184.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i115",
+   "block": "B65"
+  },
+  {
+   "type": "measure-only",
+   "page": 36,
+   "box": [
+    33.7,
+    207.2,
+    251.2,
+    222.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i116",
+   "block": "B65"
+  },
+  {
+   "type": "measure-only",
+   "page": 36,
+   "box": [
+    33.7,
+    245.5,
+    251.2,
+    261.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i117",
+   "block": "B65"
+  },
+  {
+   "type": "measure-only",
+   "page": 37,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i118",
+   "block": "B66"
+  },
+  {
+   "type": "measure-only",
+   "page": 37,
+   "box": [
+    33.7,
+    169.0,
+    251.2,
+    184.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i119",
+   "block": "B67"
+  },
+  {
+   "type": "measure-only",
+   "page": 37,
+   "box": [
+    33.7,
+    207.2,
+    251.2,
+    222.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i120",
+   "block": "B67"
+  },
+  {
+   "type": "measure-only",
+   "page": 37,
+   "box": [
+    33.7,
+    245.5,
+    251.2,
+    261.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i121",
+   "block": "B67"
+  },
+  {
+   "type": "measure-only",
+   "page": 38,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i122",
+   "block": "B68"
+  },
+  {
+   "type": "measure-only",
+   "page": 38,
+   "box": [
+    33.7,
+    169.0,
+    251.2,
+    184.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i123",
+   "block": "B69"
+  },
+  {
+   "type": "measure-only",
+   "page": 38,
+   "box": [
+    33.7,
+    207.2,
+    251.2,
+    222.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i124",
+   "block": "B69"
+  },
+  {
+   "type": "measure-only",
+   "page": 38,
+   "box": [
+    33.7,
+    245.5,
+    251.2,
+    261.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i125",
+   "block": "B69"
+  },
+  {
+   "type": "measure-only",
+   "page": 39,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i126",
+   "block": "B70"
+  },
+  {
+   "type": "measure-only",
+   "page": 39,
+   "box": [
+    33.7,
+    181.0,
+    251.2,
+    196.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i127",
+   "block": "B71"
+  },
+  {
+   "type": "measure-only",
+   "page": 39,
+   "box": [
+    33.7,
+    219.2,
+    251.2,
+    234.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i128",
+   "block": "B71"
+  },
+  {
+   "type": "measure-only",
+   "page": 39,
+   "box": [
+    33.7,
+    257.5,
+    251.2,
+    273.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i129",
+   "block": "B71"
+  },
+  {
+   "type": "measure-only",
+   "page": 40,
+   "box": [
+    33.7,
+    128.5,
+    427.5,
+    144.0
+   ],
+   "caption": "Investissement Qu\u00e9bec",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i130",
+   "block": "B72"
+  },
+  {
+   "type": "measure-only",
+   "page": 40,
+   "box": [
+    432.7,
+    128.5,
+    508.5,
+    144.0
+   ],
+   "caption": "1,385,041.55",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i131",
+   "block": "B72"
+  },
+  {
+   "type": "measure-only",
+   "page": 40,
+   "box": [
+    432.7,
+    382.7,
+    508.5,
+    398.2
+   ],
+   "caption": "US$4,053,988.48",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "amount"
+   },
+   "item": "i132",
+   "block": "B73"
+  },
+  {
+   "type": "measure-only",
+   "page": 40,
+   "box": [
+    519.0,
+    382.7,
+    573.0,
+    398.2
+   ],
+   "caption": "500,00",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i133",
+   "block": "B73"
+  },
+  {
+   "type": "measure-only",
+   "page": 40,
+   "box": [
+    519.0,
+    397.7,
+    573.0,
+    413.2
+   ],
+   "caption": "US$4,053,988.48",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "amount"
+   },
+   "item": "i134",
+   "block": "B73"
+  },
+  {
+   "type": "kind-clash",
+   "page": 61,
+   "box": [
+    33.7,
+    68.5,
+    170.2,
+    84.0
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Signature Guarantee"
+   },
+   "caption": "Signature Guarantee",
+   "cand": {
+    "kind": "rule",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a rule candidate the measure reads as sign",
+   "item": "i135",
+   "block": "B79"
+  },
+  {
+   "type": "reader-only",
+   "page": 71,
+   "box": [
+    86.4,
+    357.7,
+    128.4,
+    373.6
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "DATED this"
+   },
+   "caption": "DATED this",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "date"
+   },
+   "item": "i136",
+   "block": "B85"
+  },
+  {
+   "item": "i137",
+   "type": "person",
+   "page": 9,
+   "box": [
+    60.7,
+    152.5,
+    251.2,
+    168.0
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "LEDDARTECH INC."
+  },
+  {
+   "item": "i138",
+   "type": "person",
+   "page": 10,
+   "box": [
+    62.2,
+    116.5,
+    252.0,
+    132.0
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "PROSPECTOR SPONSOR LLC"
+  },
+  {
+   "item": "i139",
+   "type": "person",
+   "page": 10,
+   "box": [
+    33.7,
+    178.0,
+    251.2,
+    231.0
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "PROSPECTOR SPONSOR LLC"
+  },
+  {
+   "item": "i140",
+   "type": "person",
+   "page": 10,
+   "box": [
+    33.7,
+    265.0,
+    251.2,
+    318.0
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i141",
+   "type": "person",
+   "page": 11,
+   "box": [
+    60.7,
+    104.5,
+    251.2,
+    120.0
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i142",
+   "type": "person",
+   "page": 11,
+   "box": [
+    33.7,
+    166.0,
+    251.2,
+    181.5
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i143",
+   "type": "person",
+   "page": 11,
+   "box": [
+    33.7,
+    215.5,
+    251.2,
+    231.0
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FS LT HOLDINGS LP"
+  },
+  {
+   "item": "i144",
+   "type": "person",
+   "page": 11,
+   "box": [
+    33.7,
+    265.0,
+    251.2,
+    318.0
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FS LT HOLDINGS LP"
+  },
+  {
+   "item": "i145",
+   "type": "person",
+   "page": 12,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "INVESTISSEMENT QU\u00c9BEC"
+  },
+  {
+   "item": "i146",
+   "type": "person",
+   "page": 12,
+   "box": [
+    60.7,
+    142.0,
+    251.2,
+    157.5
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "INVESTISSEMENT QU\u00c9BEC"
+  },
+  {
+   "item": "i147",
+   "type": "person",
+   "page": 12,
+   "box": [
+    33.7,
+    431.5,
+    251.2,
+    447.0
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i148",
+   "type": "person",
+   "page": 13,
+   "box": [
+    60.7,
+    104.5,
+    251.2,
+    120.0
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FIDELITY TRUE NORTH FUND"
+  },
+  {
+   "item": "i149",
+   "type": "person",
+   "page": 13,
+   "box": [
+    33.7,
+    166.0,
+    251.2,
+    181.5
+   ],
+   "block": "B13",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FIDELITY TRUE NORTH FUND"
+  },
+  {
+   "item": "i150",
+   "type": "person",
+   "page": 13,
+   "box": [
+    33.7,
+    229.0,
+    251.2,
+    244.5
+   ],
+   "block": "B14",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "FIDELITY TRUE NORTH FUND"
+  },
+  {
+   "item": "i151",
+   "type": "person",
+   "page": 13,
+   "box": [
+    33.7,
+    278.5,
+    251.2,
+    294.0
+   ],
+   "block": "B15",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i152",
+   "type": "person",
+   "page": 14,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B16",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "BDC CAPITAL INC."
+  },
+  {
+   "item": "i153",
+   "type": "person",
+   "page": 14,
+   "box": [
+    60.7,
+    142.0,
+    251.2,
+    157.5
+   ],
+   "block": "B17",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "BDC CAPITAL INC."
+  },
+  {
+   "item": "i154",
+   "type": "person",
+   "page": 14,
+   "box": [
+    33.7,
+    215.5,
+    251.2,
+    258.0
+   ],
+   "block": "B18",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "BDC CAPITAL INC."
+  },
+  {
+   "item": "i155",
+   "type": "person",
+   "page": 14,
+   "box": [
+    33.7,
+    292.0,
+    251.2,
+    345.0
+   ],
+   "block": "B19",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i156",
+   "type": "person",
+   "page": 15,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B20",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "CAPITAL R\u00c9GIONAL ET COOP\u00c9RATIF DESJARDINS"
+  },
+  {
+   "item": "i157",
+   "type": "person",
+   "page": 15,
+   "box": [
+    60.7,
+    142.0,
+    251.2,
+    157.5
+   ],
+   "block": "B21",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "CAPITAL R\u00c9GIONAL ET COOP\u00c9RATIF DESJARDINS"
+  },
+  {
+   "item": "i158",
+   "type": "person",
+   "page": 15,
+   "box": [
+    33.7,
+    215.5,
+    251.2,
+    397.5
+   ],
+   "block": "B22",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "CAPITAL R\u00c9GIONAL ET COOP\u00c9RATIF DESJARDINS"
+  },
+  {
+   "item": "i159",
+   "type": "person",
+   "page": 16,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B23",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i160",
+   "type": "person",
+   "page": 16,
+   "box": [
+    60.7,
+    142.0,
+    251.2,
+    157.5
+   ],
+   "block": "B24",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i161",
+   "type": "person",
+   "page": 16,
+   "box": [
+    33.7,
+    215.5,
+    251.2,
+    436.5
+   ],
+   "block": "B25",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i162",
+   "type": "person",
+   "page": 17,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B26",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "DEREK KENNETH ABERLE"
+  },
+  {
+   "item": "i163",
+   "type": "person",
+   "page": 17,
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    195.0
+   ],
+   "block": "B27",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "DEREK KENNETH ABERLE"
+  },
+  {
+   "item": "i164",
+   "type": "person",
+   "page": 17,
+   "box": [
+    33.7,
+    229.0,
+    251.2,
+    282.0
+   ],
+   "block": "B28",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "DEREK KENNETH ABERLE"
+  },
+  {
+   "item": "i165",
+   "type": "person",
+   "page": 18,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B29",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "CAMILLE GOURDE-CABOT"
+  },
+  {
+   "item": "i166",
+   "type": "person",
+   "page": 18,
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "block": "B30",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "CAMILLE GOURDE-CABOT"
+  },
+  {
+   "item": "i167",
+   "type": "person",
+   "page": 19,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B31",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "DAVID TORRALBO"
+  },
+  {
+   "item": "i168",
+   "type": "person",
+   "page": 19,
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "block": "B32",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "DAVID TORRALBO"
+  },
+  {
+   "item": "i169",
+   "type": "person",
+   "page": 20,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B33",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ST\u00c9PHANE BONENFANT"
+  },
+  {
+   "item": "i170",
+   "type": "person",
+   "page": 20,
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "block": "B34",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ST\u00c9PHANE BONENFANT"
+  },
+  {
+   "item": "i171",
+   "type": "person",
+   "page": 21,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B35",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "MICHEL BR\u00dbL\u00c9"
+  },
+  {
+   "item": "i172",
+   "type": "person",
+   "page": 21,
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "block": "B36",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "MICHEL BR\u00dbL\u00c9"
+  },
+  {
+   "item": "i173",
+   "type": "person",
+   "page": 22,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B37",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "CHARLES BOULANGER"
+  },
+  {
+   "item": "i174",
+   "type": "person",
+   "page": 22,
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "block": "B38",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "CHARLES BOULANGER"
+  },
+  {
+   "item": "i175",
+   "type": "person",
+   "page": 23,
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "block": "B39",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FR\u00c9D\u00c9RIC BOISMENU-QUENNEVILLE"
+  },
+  {
+   "item": "i176",
+   "type": "person",
+   "page": 24,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B40",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FRANTZ SAINTELLEMY"
+  },
+  {
+   "item": "i177",
+   "type": "person",
+   "page": 24,
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "block": "B41",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FRANTZ SAINTELLEMY"
+  },
+  {
+   "item": "i178",
+   "type": "person",
+   "page": 25,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B42",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "MM CONSULTING S.A.S."
+  },
+  {
+   "item": "i179",
+   "type": "person",
+   "page": 25,
+   "box": [
+    33.7,
+    154.0,
+    251.2,
+    270.0
+   ],
+   "block": "B43",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "MM CONSULTING S.A.S."
+  },
+  {
+   "item": "i180",
+   "type": "person",
+   "page": 26,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B44",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "\u00c9TIENNE DESHAIES SAMSON"
+  },
+  {
+   "item": "i181",
+   "type": "person",
+   "page": 26,
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "block": "B45",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "\u00c9TIENNE DESHAIES SAMSON"
+  },
+  {
+   "item": "i182",
+   "type": "person",
+   "page": 27,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B46",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FR\u00c9D\u00c9RIC CHASS\u00c9"
+  },
+  {
+   "item": "i183",
+   "type": "person",
+   "page": 27,
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "block": "B47",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FR\u00c9D\u00c9RIC CHASS\u00c9"
+  },
+  {
+   "item": "i184",
+   "type": "person",
+   "page": 28,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B48",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "HANNAH OSBORN"
+  },
+  {
+   "item": "i185",
+   "type": "person",
+   "page": 28,
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "block": "B49",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "HANNAH OSBORN"
+  },
+  {
+   "item": "i186",
+   "type": "person",
+   "page": 29,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B50",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SAMUEL TREMBLAY"
+  },
+  {
+   "item": "i187",
+   "type": "person",
+   "page": 29,
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "block": "B51",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SAMUEL TREMBLAY"
+  },
+  {
+   "item": "i188",
+   "type": "person",
+   "page": 30,
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "block": "B52",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "PIERRE MERRIAUX"
+  },
+  {
+   "item": "i189",
+   "type": "person",
+   "page": 30,
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "block": "B53",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "PIERRE MERRIAUX"
+  },
+  {
+   "item": "i190",
+   "type": "person",
+   "page": 31,
+   "box": [
+    63.0,
+    117.2,
+    252.7,
+    132.7
+   ],
+   "block": "B54",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "CHRISTELLE PUAGNOL"
+  },
+  {
+   "item": "i191",
+   "type": "person",
+   "page": 31,
+   "box": [
+    33.7,
+    167.5,
+    251.2,
+    285.0
+   ],
+   "block": "B55",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "CHRISTELLE PUAGNOL"
+  },
+  {
+   "item": "i192",
+   "type": "person",
+   "page": 32,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "block": "B56",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SANTIAGO MOYA"
+  },
+  {
+   "item": "i193",
+   "type": "person",
+   "page": 32,
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    261.0
+   ],
+   "block": "B57",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SANTIAGO MOYA"
+  },
+  {
+   "item": "i194",
+   "type": "person",
+   "page": 33,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "block": "B58",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "NORMAND LECLERC"
+  },
+  {
+   "item": "i195",
+   "type": "person",
+   "page": 33,
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    261.0
+   ],
+   "block": "B59",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "NORMAND LECLERC"
+  },
+  {
+   "item": "i196",
+   "type": "person",
+   "page": 34,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "block": "B60",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ST\u00c9PHANE DUQUET"
+  },
+  {
+   "item": "i197",
+   "type": "person",
+   "page": 34,
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    261.0
+   ],
+   "block": "B61",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ST\u00c9PHANE DUQUET"
+  },
+  {
+   "item": "i198",
+   "type": "person",
+   "page": 35,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "block": "B62",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "PIER-LUC TANGUAY"
+  },
+  {
+   "item": "i199",
+   "type": "person",
+   "page": 35,
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    261.0
+   ],
+   "block": "B63",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "PIER-LUC TANGUAY"
+  },
+  {
+   "item": "i200",
+   "type": "person",
+   "page": 36,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "block": "B64",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "DAVID KHOUYA"
+  },
+  {
+   "item": "i201",
+   "type": "person",
+   "page": 36,
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    261.0
+   ],
+   "block": "B65",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "DAVID KHOUYA"
+  },
+  {
+   "item": "i202",
+   "type": "person",
+   "page": 37,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "block": "B66",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "TAL ALBER"
+  },
+  {
+   "item": "i203",
+   "type": "person",
+   "page": 37,
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    261.0
+   ],
+   "block": "B67",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "TAL ALBER"
+  },
+  {
+   "item": "i204",
+   "type": "person",
+   "page": 38,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "block": "B68",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SZETO CHI HANG CLIVE"
+  },
+  {
+   "item": "i205",
+   "type": "person",
+   "page": 38,
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    261.0
+   ],
+   "block": "B69",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SZETO CHI HANG CLIVE"
+  },
+  {
+   "item": "i206",
+   "type": "person",
+   "page": 39,
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "block": "B70",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "JK WANG"
+  },
+  {
+   "item": "i207",
+   "type": "person",
+   "page": 39,
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    273.0
+   ],
+   "block": "B71",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "JK WANG"
+  },
+  {
+   "item": "i208",
+   "type": "person",
+   "page": 40,
+   "box": [
+    33.7,
+    128.5,
+    508.5,
+    144.0
+   ],
+   "block": "B72",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SCHEDULE A"
+  },
+  {
+   "item": "i209",
+   "type": "person",
+   "page": 40,
+   "box": [
+    432.7,
+    382.7,
+    573.0,
+    413.2
+   ],
+   "block": "B73",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i210",
+   "type": "person",
+   "page": 58,
+   "box": [
+    387.7,
+    116.5,
+    578.2,
+    132.0
+   ],
+   "block": "B74",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "LEDDARTECH INC."
+  },
+  {
+   "item": "i211",
+   "type": "person",
+   "page": 58,
+   "box": [
+    60.7,
+    238.0,
+    251.2,
+    253.5
+   ],
+   "block": "B75",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "HOLDER:"
+  },
+  {
+   "item": "i212",
+   "type": "person",
+   "page": 58,
+   "box": [
+    33.7,
+    287.5,
+    251.2,
+    343.5
+   ],
+   "block": "B76",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "HOLDER:"
+  },
+  {
+   "item": "i213",
+   "type": "person",
+   "page": 60,
+   "box": [
+    66.7,
+    344.5,
+    251.2,
+    360.0
+   ],
+   "block": "B77",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i214",
+   "type": "person",
+   "page": 60,
+   "box": [
+    360.7,
+    344.5,
+    578.2,
+    373.5
+   ],
+   "block": "B78",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i215",
+   "type": "person",
+   "page": 61,
+   "box": [
+    33.7,
+    68.5,
+    170.2,
+    84.0
+   ],
+   "block": "B79",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i216",
+   "type": "person",
+   "page": 61,
+   "box": [
+    33.7,
+    225.2,
+    353.9,
+    323.6
+   ],
+   "block": "B80",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature(s) must be guaranteed by an eligible Guarantor"
+  },
+  {
+   "item": "i217",
+   "type": "person",
+   "page": 61,
+   "box": [
+    311.4,
+    369.2,
+    491.4,
+    384.7
+   ],
+   "block": "B81",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i218",
+   "type": "person",
+   "page": 69,
+   "box": [
+    388.5,
+    128.5,
+    578.2,
+    144.0
+   ],
+   "block": "B82",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "LEDDARTECH INC."
+  },
+  {
+   "item": "i219",
+   "type": "person",
+   "page": 70,
+   "box": [
+    387.7,
+    116.5,
+    578.2,
+    132.0
+   ],
+   "block": "B83",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i220",
+   "type": "person",
+   "page": 71,
+   "box": [
+    164.0,
+    138.9,
+    214.0,
+    154.4
+   ],
+   "block": "B84",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "TO: LEDDARTECH INC."
+  },
+  {
+   "item": "i221",
+   "type": "person",
+   "page": 71,
+   "box": [
+    86.4,
+    357.7,
+    578.2,
+    489.7
+   ],
+   "block": "B85",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 9,
+   "block": "B01",
+   "box": [
+    60.7,
+    152.5,
+    251.2,
+    168.0
+   ],
+   "heading": "LEDDARTECH INC.",
+   "context": [
+    "IN WITNESS WHEREOF, the parties hereto have executed or caused this Amendment as of the date first written above.",
+    "THE COMPANY:",
+    "LEDDARTECH INC."
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 10,
+   "block": "B02",
+   "box": [
+    62.2,
+    116.5,
+    252.0,
+    132.0
+   ],
+   "heading": "PROSPECTOR SPONSOR LLC",
+   "context": [
+    "ACCELERATING INVESTORS",
+    "PROSPECTOR SPONSOR LLC"
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 10,
+   "block": "B03",
+   "box": [
+    33.7,
+    178.0,
+    251.2,
+    231.0
+   ],
+   "heading": "PROSPECTOR SPONSOR LLC",
+   "context": [
+    "By: /s/ Derek Kenneth Aberle",
+    "Name:Derek Kenneth Aberle",
+    "Title: Managing Member",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p10-001"
+   ],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 10,
+   "block": "B04",
+   "box": [
+    33.7,
+    265.0,
+    251.2,
+    318.0
+   ],
+   "heading": "",
+   "context": [
+    "Cayman, KY1-1104, Cayman Islands",
+    "Attention: Nick Stone",
+    "Email for Notices:",
+    "nick@fsinvestors.com"
+   ],
+   "places": [],
+   "items": [
+    "i004",
+    "i005"
+   ]
+  },
+  {
+   "page": 11,
+   "block": "B05",
+   "box": [
+    60.7,
+    104.5,
+    251.2,
+    120.0
+   ],
+   "heading": "",
+   "context": [
+    "FS LT HOLDINGS LP, by its general partner FS INVESTMENT, L.P., by its general partner NICK STONE MANAGEMENT II,",
+    "LLC"
+   ],
+   "places": [],
+   "items": [
+    "i006"
+   ]
+  },
+  {
+   "page": 11,
+   "block": "B06",
+   "box": [
+    33.7,
+    166.0,
+    251.2,
+    181.5
+   ],
+   "heading": "",
+   "context": [
+    "By: /s/ Nick Stone",
+    "Name:Nick Stone",
+    "Title: Manager",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p11-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 11,
+   "block": "B07",
+   "box": [
+    33.7,
+    215.5,
+    251.2,
+    231.0
+   ],
+   "heading": "FS LT HOLDINGS LP",
+   "context": [
+    "Address for Notices:",
+    "FS LT HOLDINGS LP",
+    "1250 Prospect St, Suite 200",
+    "La Jolla, CA 92037"
+   ],
+   "places": [],
+   "items": [
+    "i007"
+   ]
+  },
+  {
+   "page": 11,
+   "block": "B08",
+   "box": [
+    33.7,
+    265.0,
+    251.2,
+    318.0
+   ],
+   "heading": "FS LT HOLDINGS LP",
+   "context": [
+    "La Jolla, CA 92037",
+    "Attention of: Nick Stone",
+    "Email for Notices:",
+    "nick@fsinvestors.com"
+   ],
+   "places": [
+    "p11-002"
+   ],
+   "items": [
+    "i008"
+   ]
+  },
+  {
+   "page": 12,
+   "block": "B09",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "INVESTISSEMENT QU\u00c9BEC",
+   "context": [
+    "INVESTISSEMENT QU\u00c9BEC"
+   ],
+   "places": [],
+   "items": [
+    "i009"
+   ]
+  },
+  {
+   "page": 12,
+   "block": "B10",
+   "box": [
+    60.7,
+    142.0,
+    251.2,
+    157.5
+   ],
+   "heading": "INVESTISSEMENT QU\u00c9BEC",
+   "context": [
+    "INVESTISSEMENT QU\u00c9BEC",
+    "By: /s/ S\u00e9bastien Plante",
+    "Name:S\u00e9bastien Plante",
+    "Title: Directrice d\u2019investissement sp\u00e9cialis\u00e9"
+   ],
+   "places": [],
+   "items": [
+    "i010"
+   ]
+  },
+  {
+   "page": 12,
+   "block": "B11",
+   "box": [
+    33.7,
+    431.5,
+    251.2,
+    447.0
+   ],
+   "heading": "",
+   "context": [
+    "Qu\u00e9bec, Qu\u00e9bec G1K 8N1",
+    "Attention: Anne-Marie Naud",
+    "E-mail: anaud@fasken.com",
+    "Name in which securities are to be registered:"
+   ],
+   "places": [],
+   "items": [
+    "i011"
+   ]
+  },
+  {
+   "page": 13,
+   "block": "B12",
+   "box": [
+    60.7,
+    104.5,
+    251.2,
+    120.0
+   ],
+   "heading": "FIDELITY TRUE NORTH FUND",
+   "context": [
+    "FIDELITY TRUE NORTH FUND",
+    "by its manager FIDELITY INVESTMENTS CANADA ULC"
+   ],
+   "places": [],
+   "items": [
+    "i012"
+   ]
+  },
+  {
+   "page": 13,
+   "block": "B13",
+   "box": [
+    33.7,
+    166.0,
+    251.2,
+    181.5
+   ],
+   "heading": "FIDELITY TRUE NORTH FUND",
+   "context": [
+    "By: /s/ Amanda Thomas",
+    "Name:Amanda Thomas",
+    "Title: VP and Fund Treasurer",
+    "Address for Notices:"
+   ],
+   "places": [],
+   "items": [
+    "i013"
+   ]
+  },
+  {
+   "page": 13,
+   "block": "B14",
+   "box": [
+    33.7,
+    229.0,
+    251.2,
+    244.5
+   ],
+   "heading": "FIDELITY TRUE NORTH FUND",
+   "context": [
+    "483 Bay Street, North Tower, Suite 300",
+    "Toronto, ON M5G 2N7",
+    "Email for Notices:",
+    "Elizabeth.Chow@fidelity.ca"
+   ],
+   "places": [
+    "p13-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 13,
+   "block": "B15",
+   "box": [
+    33.7,
+    278.5,
+    251.2,
+    294.0
+   ],
+   "heading": "",
+   "context": [
+    "Email for Notices:",
+    "Elizabeth.Chow@fidelity.ca",
+    "Name in which securities are to be registered:",
+    "Roytor & Co., for the benefit of"
+   ],
+   "places": [],
+   "items": [
+    "i014"
+   ]
+  },
+  {
+   "page": 14,
+   "block": "B16",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "BDC CAPITAL INC.",
+   "context": [
+    "BDC CAPITAL INC."
+   ],
+   "places": [],
+   "items": [
+    "i015"
+   ]
+  },
+  {
+   "page": 14,
+   "block": "B17",
+   "box": [
+    60.7,
+    142.0,
+    251.2,
+    157.5
+   ],
+   "heading": "BDC CAPITAL INC.",
+   "context": [
+    "BDC CAPITAL INC.",
+    "By: /s/ Dominique B\u00e9langer",
+    "Name:Dominique B\u00e9langer",
+    "Title: Managing Partner, GVCF, BDC Capital"
+   ],
+   "places": [],
+   "items": [
+    "i016"
+   ]
+  },
+  {
+   "page": 14,
+   "block": "B18",
+   "box": [
+    33.7,
+    215.5,
+    251.2,
+    258.0
+   ],
+   "heading": "BDC CAPITAL INC.",
+   "context": [
+    "By: /s/ Phil Anzarut",
+    "Name:Phil Anzarut",
+    "Title: Partner, GVCF, BDC Capital",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p14-001",
+    "p14-002"
+   ],
+   "items": [
+    "i017"
+   ]
+  },
+  {
+   "page": 14,
+   "block": "B19",
+   "box": [
+    33.7,
+    292.0,
+    251.2,
+    345.0
+   ],
+   "heading": "",
+   "context": [
+    "5 Place Ville Marie",
+    "Suite 100",
+    "Montreal, Quebec H3B 2G2",
+    "Email for Notices:"
+   ],
+   "places": [],
+   "items": [
+    "i018",
+    "i019"
+   ]
+  },
+  {
+   "page": 15,
+   "block": "B20",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "CAPITAL R\u00c9GIONAL ET COOP\u00c9RATIF DESJARDINS",
+   "context": [
+    "CAPITAL R\u00c9GIONAL ET COOP\u00c9RATIF DESJARDINS"
+   ],
+   "places": [],
+   "items": [
+    "i020"
+   ]
+  },
+  {
+   "page": 15,
+   "block": "B21",
+   "box": [
+    60.7,
+    142.0,
+    251.2,
+    157.5
+   ],
+   "heading": "CAPITAL R\u00c9GIONAL ET COOP\u00c9RATIF DESJARDINS",
+   "context": [
+    "CAPITAL R\u00c9GIONAL ET COOP\u00c9RATIF DESJARDINS",
+    "By: /s/ \u00c9ric Bolduc",
+    "Name:\u00c9ric Bolduc",
+    "Title: Investment Manager"
+   ],
+   "places": [],
+   "items": [
+    "i021"
+   ]
+  },
+  {
+   "page": 15,
+   "block": "B22",
+   "box": [
+    33.7,
+    215.5,
+    251.2,
+    397.5
+   ],
+   "heading": "CAPITAL R\u00c9GIONAL ET COOP\u00c9RATIF DESJARDINS",
+   "context": [
+    "By: /s/ Roland L\u00e9ger",
+    "Name:Roland L\u00e9ger",
+    "Title: Associate Vice-President",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p15-001"
+   ],
+   "items": [
+    "i022",
+    "i023",
+    "i024",
+    "i025",
+    "i026",
+    "i027",
+    "i028"
+   ]
+  },
+  {
+   "page": 16,
+   "block": "B23",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "",
+   "context": [
+    "DESJARDINS-INNOVATECH, S.E.C., acting by its general partner, Gestion Desjardins Capital Inc."
+   ],
+   "places": [],
+   "items": [
+    "i029"
+   ]
+  },
+  {
+   "page": 16,
+   "block": "B24",
+   "box": [
+    60.7,
+    142.0,
+    251.2,
+    157.5
+   ],
+   "heading": "",
+   "context": [
+    "DESJARDINS-INNOVATECH, S.E.C., acting by its general partner, Gestion Desjardins Capital Inc.",
+    "By: /s/ \u00c9ric Bolduc",
+    "Name:\u00c9ric Bolduc",
+    "Title: Investment Manager"
+   ],
+   "places": [],
+   "items": [
+    "i030"
+   ]
+  },
+  {
+   "page": 16,
+   "block": "B25",
+   "box": [
+    33.7,
+    215.5,
+    251.2,
+    436.5
+   ],
+   "heading": "",
+   "context": [
+    "By: /s/ Roland L\u00e9ger",
+    "Name:Roland L\u00e9ger",
+    "Title: Associate Vice-President",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p16-001",
+    "p16-002"
+   ],
+   "items": [
+    "i031",
+    "i032",
+    "i033",
+    "i034",
+    "i035",
+    "i036",
+    "i037",
+    "i038"
+   ]
+  },
+  {
+   "page": 17,
+   "block": "B26",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "DEREK KENNETH ABERLE",
+   "context": [
+    "DEREK KENNETH ABERLE"
+   ],
+   "places": [],
+   "items": [
+    "i039"
+   ]
+  },
+  {
+   "page": 17,
+   "block": "B27",
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    195.0
+   ],
+   "heading": "DEREK KENNETH ABERLE",
+   "context": [
+    "DEREK KENNETH ABERLE",
+    "By: /s/ Derek Kenneth Aberle",
+    "Name:Derek Kenneth Aberle",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p17-001"
+   ],
+   "items": [
+    "i040"
+   ]
+  },
+  {
+   "page": 17,
+   "block": "B28",
+   "box": [
+    33.7,
+    229.0,
+    251.2,
+    282.0
+   ],
+   "heading": "DEREK KENNETH ABERLE",
+   "context": [
+    "12774 Toyon Mesa Ct",
+    "San Diego, CA 92130",
+    "Email for Notices:",
+    "daberle18@gmail.com"
+   ],
+   "places": [],
+   "items": [
+    "i041",
+    "i042"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B29",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "CAMILLE GOURDE-CABOT",
+   "context": [
+    "CAMILLE GOURDE-CABOT"
+   ],
+   "places": [],
+   "items": [
+    "i043"
+   ]
+  },
+  {
+   "page": 18,
+   "block": "B30",
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "heading": "CAMILLE GOURDE-CABOT",
+   "context": [
+    "CAMILLE GOURDE-CABOT",
+    "By: /s/ Camille Gourde-Cabot",
+    "Name:Camille Gourde-Cabot",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p18-001"
+   ],
+   "items": [
+    "i044",
+    "i045",
+    "i046"
+   ]
+  },
+  {
+   "page": 19,
+   "block": "B31",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "DAVID TORRALBO",
+   "context": [
+    "DAVID TORRALBO"
+   ],
+   "places": [],
+   "items": [
+    "i047"
+   ]
+  },
+  {
+   "page": 19,
+   "block": "B32",
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "heading": "DAVID TORRALBO",
+   "context": [
+    "DAVID TORRALBO",
+    "By: /s/ David Torralbo",
+    "Name:David Torralbo",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p19-001"
+   ],
+   "items": [
+    "i048",
+    "i049",
+    "i050"
+   ]
+  },
+  {
+   "page": 20,
+   "block": "B33",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "ST\u00c9PHANE BONENFANT",
+   "context": [
+    "ST\u00c9PHANE BONENFANT"
+   ],
+   "places": [],
+   "items": [
+    "i051"
+   ]
+  },
+  {
+   "page": 20,
+   "block": "B34",
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "heading": "ST\u00c9PHANE BONENFANT",
+   "context": [
+    "ST\u00c9PHANE BONENFANT",
+    "By: /s/ St\u00e9phane Bonenfant",
+    "Name:St\u00e9phane Bonenfant",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p20-001"
+   ],
+   "items": [
+    "i052",
+    "i053",
+    "i054"
+   ]
+  },
+  {
+   "page": 21,
+   "block": "B35",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "MICHEL BR\u00dbL\u00c9",
+   "context": [
+    "MICHEL BR\u00dbL\u00c9"
+   ],
+   "places": [],
+   "items": [
+    "i055"
+   ]
+  },
+  {
+   "page": 21,
+   "block": "B36",
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "heading": "MICHEL BR\u00dbL\u00c9",
+   "context": [
+    "MICHEL BR\u00dbL\u00c9",
+    "By: /s/ Michel Br\u00fbl\u00e9",
+    "Name:Michel Br\u00fbl\u00e9",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p21-001"
+   ],
+   "items": [
+    "i056",
+    "i057",
+    "i058"
+   ]
+  },
+  {
+   "page": 22,
+   "block": "B37",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "CHARLES BOULANGER",
+   "context": [
+    "CHARLES BOULANGER"
+   ],
+   "places": [],
+   "items": [
+    "i059"
+   ]
+  },
+  {
+   "page": 22,
+   "block": "B38",
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "heading": "CHARLES BOULANGER",
+   "context": [
+    "CHARLES BOULANGER",
+    "By: /s/ Charles Boulanger",
+    "Name:Charles Boulanger",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p22-001"
+   ],
+   "items": [
+    "i060",
+    "i061",
+    "i062"
+   ]
+  },
+  {
+   "page": 23,
+   "block": "B39",
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "heading": "FR\u00c9D\u00c9RIC BOISMENU-QUENNEVILLE",
+   "context": [
+    "FR\u00c9D\u00c9RIC BOISMENU-QUENNEVILLE",
+    "By: /s/ Fr\u00e9d\u00e9ric Boismenu-Quenneville",
+    "Name:Fr\u00e9d\u00e9ric Boismenu-Quenneville",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p23-001"
+   ],
+   "items": [
+    "i063",
+    "i064",
+    "i065"
+   ]
+  },
+  {
+   "page": 24,
+   "block": "B40",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "FRANTZ SAINTELLEMY",
+   "context": [
+    "FRANTZ SAINTELLEMY"
+   ],
+   "places": [],
+   "items": [
+    "i066"
+   ]
+  },
+  {
+   "page": 24,
+   "block": "B41",
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "heading": "FRANTZ SAINTELLEMY",
+   "context": [
+    "FRANTZ SAINTELLEMY",
+    "By: /s/ Frantz Saintellemy",
+    "Name:Frantz Saintellemy",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p24-001"
+   ],
+   "items": [
+    "i067",
+    "i068",
+    "i069"
+   ]
+  },
+  {
+   "page": 25,
+   "block": "B42",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "MM CONSULTING S.A.S.",
+   "context": [
+    "MM CONSULTING S.A.S."
+   ],
+   "places": [],
+   "items": [
+    "i070"
+   ]
+  },
+  {
+   "page": 25,
+   "block": "B43",
+   "box": [
+    33.7,
+    154.0,
+    251.2,
+    270.0
+   ],
+   "heading": "MM CONSULTING S.A.S.",
+   "context": [
+    "By: /s/ MM Consulting SAS",
+    "Name:MM Consulting SAS",
+    "Title: President",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p25-001"
+   ],
+   "items": [
+    "i071",
+    "i072",
+    "i073"
+   ]
+  },
+  {
+   "page": 26,
+   "block": "B44",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "\u00c9TIENNE DESHAIES SAMSON",
+   "context": [
+    "\u00c9TIENNE DESHAIES SAMSON"
+   ],
+   "places": [],
+   "items": [
+    "i074"
+   ]
+  },
+  {
+   "page": 26,
+   "block": "B45",
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "heading": "\u00c9TIENNE DESHAIES SAMSON",
+   "context": [
+    "\u00c9TIENNE DESHAIES SAMSON",
+    "By: /s/ \u00c9tienne Deshaies Samson",
+    "Name:\u00c9tienne Deshaies Samson",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p26-001"
+   ],
+   "items": [
+    "i075",
+    "i076",
+    "i077"
+   ]
+  },
+  {
+   "page": 27,
+   "block": "B46",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "FR\u00c9D\u00c9RIC CHASS\u00c9",
+   "context": [
+    "FR\u00c9D\u00c9RIC CHASS\u00c9"
+   ],
+   "places": [],
+   "items": [
+    "i078"
+   ]
+  },
+  {
+   "page": 27,
+   "block": "B47",
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "heading": "FR\u00c9D\u00c9RIC CHASS\u00c9",
+   "context": [
+    "FR\u00c9D\u00c9RIC CHASS\u00c9",
+    "By: /s/ Fr\u00e9d\u00e9ric Chass\u00e9",
+    "Name:Fr\u00e9d\u00e9ric Chass\u00e9",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p27-001"
+   ],
+   "items": [
+    "i079",
+    "i080",
+    "i081"
+   ]
+  },
+  {
+   "page": 28,
+   "block": "B48",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "HANNAH OSBORN",
+   "context": [
+    "HANNAH OSBORN"
+   ],
+   "places": [],
+   "items": [
+    "i082"
+   ]
+  },
+  {
+   "page": 28,
+   "block": "B49",
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "heading": "HANNAH OSBORN",
+   "context": [
+    "HANNAH OSBORN",
+    "By: /s/ Hannah Osborn",
+    "Name:Hannah Osborn",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p28-001"
+   ],
+   "items": [
+    "i083",
+    "i084",
+    "i085"
+   ]
+  },
+  {
+   "page": 29,
+   "block": "B50",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "SAMUEL TREMBLAY",
+   "context": [
+    "SAMUEL TREMBLAY"
+   ],
+   "places": [],
+   "items": [
+    "i086"
+   ]
+  },
+  {
+   "page": 29,
+   "block": "B51",
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "heading": "SAMUEL TREMBLAY",
+   "context": [
+    "SAMUEL TREMBLAY",
+    "By: /s/ Samuel Tremblay",
+    "Name:Samuel Tremblay",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p29-001"
+   ],
+   "items": [
+    "i087",
+    "i088",
+    "i089"
+   ]
+  },
+  {
+   "page": 30,
+   "block": "B52",
+   "box": [
+    60.7,
+    92.5,
+    251.2,
+    108.0
+   ],
+   "heading": "PIERRE MERRIAUX",
+   "context": [
+    "PIERRE MERRIAUX"
+   ],
+   "places": [],
+   "items": [
+    "i090"
+   ]
+  },
+  {
+   "page": 30,
+   "block": "B53",
+   "box": [
+    33.7,
+    142.0,
+    251.2,
+    258.0
+   ],
+   "heading": "PIERRE MERRIAUX",
+   "context": [
+    "PIERRE MERRIAUX",
+    "By: /s/ Pierre Merriaux",
+    "Name:Pierre Merriaux",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p30-001"
+   ],
+   "items": [
+    "i091",
+    "i092",
+    "i093"
+   ]
+  },
+  {
+   "page": 31,
+   "block": "B54",
+   "box": [
+    63.0,
+    117.2,
+    252.7,
+    132.7
+   ],
+   "heading": "CHRISTELLE PUAGNOL",
+   "context": [
+    "OTHER INVESTORS",
+    "CHRISTELLE PUAGNOL"
+   ],
+   "places": [],
+   "items": [
+    "i094"
+   ]
+  },
+  {
+   "page": 31,
+   "block": "B55",
+   "box": [
+    33.7,
+    167.5,
+    251.2,
+    285.0
+   ],
+   "heading": "CHRISTELLE PUAGNOL",
+   "context": [
+    "CHRISTELLE PUAGNOL",
+    "By: /s/ Christelle Puagnol",
+    "Name: Christelle Puagnol",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p31-001"
+   ],
+   "items": [
+    "i095",
+    "i096",
+    "i097"
+   ]
+  },
+  {
+   "page": 32,
+   "block": "B56",
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "heading": "SANTIAGO MOYA",
+   "context": [
+    "SANTIAGO MOYA"
+   ],
+   "places": [],
+   "items": [
+    "i098"
+   ]
+  },
+  {
+   "page": 32,
+   "block": "B57",
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    261.0
+   ],
+   "heading": "SANTIAGO MOYA",
+   "context": [
+    "SANTIAGO MOYA",
+    "By: /s/ Santiago Moya",
+    "Name: Santiago Moya",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p32-001"
+   ],
+   "items": [
+    "i099",
+    "i100",
+    "i101"
+   ]
+  },
+  {
+   "page": 33,
+   "block": "B58",
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "heading": "NORMAND LECLERC",
+   "context": [
+    "NORMAND LECLERC"
+   ],
+   "places": [],
+   "items": [
+    "i102"
+   ]
+  },
+  {
+   "page": 33,
+   "block": "B59",
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    261.0
+   ],
+   "heading": "NORMAND LECLERC",
+   "context": [
+    "NORMAND LECLERC",
+    "By: /s/ Normand Leclerc",
+    "Name: Normand Leclerc",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p33-001"
+   ],
+   "items": [
+    "i103",
+    "i104",
+    "i105"
+   ]
+  },
+  {
+   "page": 34,
+   "block": "B60",
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "heading": "ST\u00c9PHANE DUQUET",
+   "context": [
+    "ST\u00c9PHANE DUQUET"
+   ],
+   "places": [],
+   "items": [
+    "i106"
+   ]
+  },
+  {
+   "page": 34,
+   "block": "B61",
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    261.0
+   ],
+   "heading": "ST\u00c9PHANE DUQUET",
+   "context": [
+    "ST\u00c9PHANE DUQUET",
+    "By: /s/ St\u00e9phane Duquet",
+    "Name: St\u00e9phane Duquet",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p34-001"
+   ],
+   "items": [
+    "i107",
+    "i108",
+    "i109"
+   ]
+  },
+  {
+   "page": 35,
+   "block": "B62",
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "heading": "PIER-LUC TANGUAY",
+   "context": [
+    "PIER-LUC TANGUAY"
+   ],
+   "places": [],
+   "items": [
+    "i110"
+   ]
+  },
+  {
+   "page": 35,
+   "block": "B63",
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    261.0
+   ],
+   "heading": "PIER-LUC TANGUAY",
+   "context": [
+    "PIER-LUC TANGUAY",
+    "By: /s/ Pier-Luc Tanguat",
+    "Name: Pier-Luc Tanguay",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p35-001"
+   ],
+   "items": [
+    "i111",
+    "i112",
+    "i113"
+   ]
+  },
+  {
+   "page": 36,
+   "block": "B64",
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "heading": "DAVID KHOUYA",
+   "context": [
+    "DAVID KHOUYA"
+   ],
+   "places": [],
+   "items": [
+    "i114"
+   ]
+  },
+  {
+   "page": 36,
+   "block": "B65",
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    261.0
+   ],
+   "heading": "DAVID KHOUYA",
+   "context": [
+    "DAVID KHOUYA",
+    "By: /s/ David Khouya",
+    "Name: David Khouya",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p36-001"
+   ],
+   "items": [
+    "i115",
+    "i116",
+    "i117"
+   ]
+  },
+  {
+   "page": 37,
+   "block": "B66",
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "heading": "TAL ALBER",
+   "context": [
+    "TAL ALBER"
+   ],
+   "places": [],
+   "items": [
+    "i118"
+   ]
+  },
+  {
+   "page": 37,
+   "block": "B67",
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    261.0
+   ],
+   "heading": "TAL ALBER",
+   "context": [
+    "TAL ALBER",
+    "By: /s/ Tal Alber",
+    "Name: Tal Alber",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p37-001"
+   ],
+   "items": [
+    "i119",
+    "i120",
+    "i121"
+   ]
+  },
+  {
+   "page": 38,
+   "block": "B68",
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "heading": "SZETO CHI HANG CLIVE",
+   "context": [
+    "SZETO CHI HANG CLIVE"
+   ],
+   "places": [],
+   "items": [
+    "i122"
+   ]
+  },
+  {
+   "page": 38,
+   "block": "B69",
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    261.0
+   ],
+   "heading": "SZETO CHI HANG CLIVE",
+   "context": [
+    "SZETO CHI HANG CLIVE",
+    "By: /s/ Szeto Chi Hang Clive",
+    "Name: Szeto Chi Hang Clive",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p38-001"
+   ],
+   "items": [
+    "i123",
+    "i124",
+    "i125"
+   ]
+  },
+  {
+   "page": 39,
+   "block": "B70",
+   "box": [
+    63.0,
+    93.2,
+    252.7,
+    108.7
+   ],
+   "heading": "JK WANG",
+   "context": [
+    "JK WANG"
+   ],
+   "places": [],
+   "items": [
+    "i126"
+   ]
+  },
+  {
+   "page": 39,
+   "block": "B71",
+   "box": [
+    33.7,
+    143.5,
+    251.2,
+    273.0
+   ],
+   "heading": "JK WANG",
+   "context": [
+    "JK WANG",
+    "By: /s/ JK Wang",
+    "Name: JK Wang",
+    "Address for Notices:"
+   ],
+   "places": [
+    "p39-001"
+   ],
+   "items": [
+    "i127",
+    "i128",
+    "i129"
+   ]
+  },
+  {
+   "page": 40,
+   "block": "B72",
+   "box": [
+    33.7,
+    128.5,
+    508.5,
+    144.0
+   ],
+   "heading": "SCHEDULE A",
+   "context": [
+    "SCHEDULE A",
+    "Pre-Close Number of",
+    "Tranche B Additional",
+    "Notes Warrant"
+   ],
+   "places": [],
+   "items": [
+    "i130",
+    "i131"
+   ]
+  },
+  {
+   "page": 40,
+   "block": "B73",
+   "box": [
+    432.7,
+    382.7,
+    573.0,
+    413.2
+   ],
+   "heading": "",
+   "context": [
+    "Samuel Tremblay 667.00 4",
+    "Fr\u00e9d\u00e9ric Boismenu-Quenneville 500.00 3",
+    "\u00c9tienne Deshaies Samson 500.00 3",
+    "Fr\u00e9d\u00e9ric Chass\u00e9 500.00 3"
+   ],
+   "places": [],
+   "items": [
+    "i132",
+    "i133",
+    "i134"
+   ]
+  },
+  {
+   "page": 58,
+   "block": "B74",
+   "box": [
+    387.7,
+    116.5,
+    578.2,
+    132.0
+   ],
+   "heading": "LEDDARTECH INC.",
+   "context": [
+    "The Company has signed this Secured Convertible Note as of the Issue Date set forth above.",
+    "LEDDARTECH INC."
+   ],
+   "places": [
+    "p58-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 58,
+   "block": "B75",
+   "box": [
+    60.7,
+    238.0,
+    251.2,
+    253.5
+   ],
+   "heading": "HOLDER:",
+   "context": [
+    "Title: \u25cf",
+    "AGREED TO AND ACCEPTED:",
+    "HOLDER:",
+    "\u25cf"
+   ],
+   "places": [
+    "p58-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 58,
+   "block": "B76",
+   "box": [
+    33.7,
+    287.5,
+    251.2,
+    343.5
+   ],
+   "heading": "HOLDER:",
+   "context": [
+    "\u25cf",
+    "By:",
+    "Name:\u25cf",
+    "Title: \u25cf"
+   ],
+   "places": [
+    "p58-003",
+    "p58-004",
+    "p58-005",
+    "p58-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 60,
+   "block": "B77",
+   "box": [
+    66.7,
+    344.5,
+    251.2,
+    360.0
+   ],
+   "heading": "",
+   "context": [
+    "pursuant to either an effective registration statement or an exemption from registration under the Act. The Undersigned ",
+    "represents and warrants to the Company that, as of the date hereof, the representations and warranties contained in the ",
+    "Agreement applicable to a [US][Canadian] Investor are true and correct in all material respects as of the date hereof as",
+    "this date. Capitalized terms used herein but not defined shall have the meanings ascribed to such terms in the Note."
+   ],
+   "places": [
+    "p60-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 60,
+   "block": "B78",
+   "box": [
+    360.7,
+    344.5,
+    578.2,
+    373.5
+   ],
+   "heading": "",
+   "context": [
+    "pursuant to either an effective registration statement or an exemption from registration under the Act. The Undersigned ",
+    "represents and warrants to the Company that, as of the date hereof, the representations and warranties contained in the ",
+    "Agreement applicable to a [US][Canadian] Investor are true and correct in all material respects as of the date hereof as",
+    "this date. Capitalized terms used herein but not defined shall have the meanings ascribed to such terms in the Note."
+   ],
+   "places": [
+    "p60-002",
+    "p60-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 61,
+   "block": "B79",
+   "box": [
+    33.7,
+    68.5,
+    170.2,
+    84.0
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i135"
+   ]
+  },
+  {
+   "page": 61,
+   "block": "B80",
+   "box": [
+    33.7,
+    225.2,
+    353.9,
+    323.6
+   ],
+   "heading": "Signature(s) must be guaranteed by an eligible Guarantor",
+   "context": [
+    "Notes are to be delivered, other than to and in the name of the",
+    "registered holder. Fill in for registration of shares if to be issued,",
+    "and Notes if to be delivered, other than to and in the name of the",
+    "registered holder:"
+   ],
+   "places": [
+    "p61-001",
+    "p61-002",
+    "p61-003",
+    "p61-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 61,
+   "block": "B81",
+   "box": [
+    311.4,
+    369.2,
+    491.4,
+    384.7
+   ],
+   "heading": "",
+   "context": [
+    "$ ,000",
+    "NOTICE: The above signature(s) of the holder(s) hereof must",
+    "correspond with the name as written upon the face of the Note in",
+    "every particular without alteration or enlargement or any change"
+   ],
+   "places": [
+    "p61-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 69,
+   "block": "B82",
+   "box": [
+    388.5,
+    128.5,
+    578.2,
+    144.0
+   ],
+   "heading": "LEDDARTECH INC.",
+   "context": [
+    "IN WITNESS WHEREOF this Additional Warrant Certificate has been executed on behalf of the Company as of the first",
+    "date written above.",
+    "LEDDARTECH INC."
+   ],
+   "places": [
+    "p69-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 70,
+   "block": "B83",
+   "box": [
+    387.7,
+    116.5,
+    578.2,
+    132.0
+   ],
+   "heading": "",
+   "context": [
+    "Acknowledged and agreed to by:",
+    "\u25cf"
+   ],
+   "places": [
+    "p70-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 71,
+   "block": "B84",
+   "box": [
+    164.0,
+    138.9,
+    214.0,
+    154.4
+   ],
+   "heading": "TO: LEDDARTECH INC.",
+   "context": [
+    "EXERCISE NOTICE",
+    "TO: LEDDARTECH INC.",
+    "The undersigned registered holder of the within Additional Warrant Certificate, hereby:"
+   ],
+   "places": [
+    "p71-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 71,
+   "block": "B85",
+   "box": [
+    86.4,
+    357.7,
+    578.2,
+    489.7
+   ],
+   "heading": "",
+   "context": [
+    "above-mentioned number of Shares.",
+    "The undersigned hereby directs that the said Shares be registered as follows:",
+    "Address(es) Number(s) of",
+    "Name(s) in full (including Postal Code) Shares"
+   ],
+   "places": [
+    "p71-002",
+    "p71-003",
+    "p71-004",
+    "p71-005",
+    "p71-006",
+    "p71-007"
+   ],
+   "items": [
+    "i136"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,444 @@
+{
+ "id": "a037",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:04Z",
+ "how_made": "printed-landscape",
+ "made_group": "browser landscape",
+ "broker_dealer": false,
+ "pages": 11,
+ "page_sizes": {
+  "1": [
+   792.0,
+   612.0
+  ],
+  "2": [
+   792.0,
+   612.0
+  ],
+  "3": [
+   792.0,
+   612.0
+  ],
+  "4": [
+   792.0,
+   612.0
+  ],
+  "5": [
+   792.0,
+   612.0
+  ],
+  "6": [
+   792.0,
+   612.0
+  ],
+  "7": [
+   792.0,
+   612.0
+  ],
+  "8": [
+   792.0,
+   612.0
+  ],
+  "9": [
+   792.0,
+   612.0
+  ],
+  "10": [
+   792.0,
+   612.0
+  ],
+  "11": [
+   792.0,
+   612.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text"
+ },
+ "run": "out-18/set-a/a037/result.json",
+ "candidates": "c8cee75968e0e964-f01586d5.json",
+ "counts": {
+  "fields": 9,
+  "counted_candidates": 9,
+  "pairs": 9,
+  "auto": 9,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 0,
+  "person": 3,
+  "items": 3
+ },
+ "places": [
+  {
+   "page": 11,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 434.8,
+   "y0": 92.9,
+   "x1": 573.8,
+   "y1": 108.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p11-001",
+   "block": "B01"
+  },
+  {
+   "page": 11,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 434.8,
+   "y0": 157.4,
+   "x1": 573.8,
+   "y1": 172.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p11-002",
+   "block": "B02"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Subscriber\u2019s Address",
+   "printed_label": "",
+   "must": true,
+   "x0": 418.3,
+   "y0": 222.9,
+   "x1": 549.9,
+   "y1": 238.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Subscriber\u2019s Address"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p11-003",
+   "block": "B03"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 418.3,
+   "y0": 243.1,
+   "x1": 549.9,
+   "y1": 258.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p11-004",
+   "block": "B03"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "Facsimile #",
+   "must": false,
+   "x0": 418.3,
+   "y0": 263.4,
+   "x1": 549.9,
+   "y1": 278.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p11-005",
+   "block": "B03"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Facsimile #",
+   "printed_label": "Facsimile #",
+   "must": true,
+   "x0": 468.7,
+   "y0": 274.4,
+   "x1": 566.2,
+   "y1": 289.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Facsimile #"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p11-006",
+   "block": "B03"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "To Be Purchased",
+   "printed_label": "To Be Purchased",
+   "must": true,
+   "x0": 489.4,
+   "y0": 306.6,
+   "x1": 538.1,
+   "y1": 322.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "To Be Purchased"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p11-007",
+   "block": "B03"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Warrants to Purchase",
+   "printed_label": "Warrants to Purchase",
+   "must": true,
+   "x0": 503.4,
+   "y0": 318.6,
+   "x1": 537.5,
+   "y1": 334.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Warrants to Purchase"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p11-008",
+   "block": "B03"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "Purchase Price: $",
+   "must": false,
+   "x0": 486.0,
+   "y0": 350.9,
+   "x1": 539.6,
+   "y1": 366.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p11-009",
+   "block": "B03"
+  }
+ ],
+ "items": [
+  {
+   "item": "i001",
+   "type": "person",
+   "page": 11,
+   "box": [
+    434.8,
+    92.9,
+    573.8,
+    108.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "GENOME THERAPEUTICS CORP."
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 11,
+   "box": [
+    434.8,
+    157.4,
+    573.8,
+    172.9
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "GENOME THERAPEUTICS CORP."
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 11,
+   "box": [
+    418.3,
+    222.9,
+    566.2,
+    366.4
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Subscriber\u2019s Address:"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 11,
+   "block": "B01",
+   "box": [
+    434.8,
+    92.9,
+    573.8,
+    108.4
+   ],
+   "heading": "GENOME THERAPEUTICS CORP.",
+   "context": [
+    "11/14/26, 10:12 AM FORM OF SUBSCRIPTION AGREEMENT",
+    "IN WITNESS WHEREOF, the Company and the Subscriber have caused this Agreement to be duly executed as of the date first a",
+    "GENOME THERAPEUTICS CORP."
+   ],
+   "places": [
+    "p11-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 11,
+   "block": "B02",
+   "box": [
+    434.8,
+    157.4,
+    573.8,
+    172.9
+   ],
+   "heading": "GENOME THERAPEUTICS CORP.",
+   "context": [
+    "By:",
+    "Name:",
+    "Title:",
+    "[Subscriber]"
+   ],
+   "places": [
+    "p11-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 11,
+   "block": "B03",
+   "box": [
+    418.3,
+    222.9,
+    566.2,
+    366.4
+   ],
+   "heading": "Subscriber\u2019s Address:",
+   "context": [
+    "By:",
+    "Name:",
+    "Title:",
+    "Subscriber\u2019s Address:"
+   ],
+   "places": [
+    "p11-003",
+    "p11-004",
+    "p11-005",
+    "p11-006",
+    "p11-007",
+    "p11-008",
+    "p11-009"
+   ],
+   "items": []
+  }
+ ]
+}

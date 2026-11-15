@@ -1,0 +1,523 @@
+{
+ "id": "c269",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 9,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text"
+ },
+ "run": "out-18/set-c/c269/result.json",
+ "candidates": "c2ec7a56c240a912-f01586d5.json",
+ "counts": {
+  "fields": 12,
+  "counted_candidates": 12,
+  "pairs": 12,
+  "auto": 11,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 1,
+  "person": 3,
+  "items": 4
+ },
+ "places": [
+  {
+   "page": 9,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 322.9,
+   "y0": 153.2,
+   "x1": 472.9,
+   "y1": 168.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p09-001",
+   "block": "B01"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Facsimile No.",
+   "printed_label": "Facsimile No",
+   "must": true,
+   "x0": 367.4,
+   "y0": 249.2,
+   "x1": 482.3,
+   "y1": 264.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Facsimile No."
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p09-002",
+   "block": "B02"
+  },
+  {
+   "page": 9,
+   "kind": "date",
+   "owner": "firm",
+   "label": "Date signed",
+   "printed_label": "Dated",
+   "must": true,
+   "x0": 335.1,
+   "y0": 273.2,
+   "x1": 400.1,
+   "y1": 288.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Date signed"
+   },
+   "cand": "underscore",
+   "id": "p09-003",
+   "block": "B02"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor name",
+   "printed_label": "Address",
+   "must": true,
+   "x0": 27.7,
+   "y0": 333.2,
+   "x1": 202.7,
+   "y1": 348.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Investor name"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p09-004",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "",
+   "must": true,
+   "x0": 27.7,
+   "y0": 357.2,
+   "x1": 202.7,
+   "y1": 372.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Address"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p09-005",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 2",
+   "printed_label": "Fax No",
+   "must": false,
+   "x0": 27.7,
+   "y0": 369.2,
+   "x1": 202.7,
+   "y1": 384.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Address line 2"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p09-006",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Fax No.",
+   "printed_label": "Fax No",
+   "must": false,
+   "x0": 65.2,
+   "y0": 381.2,
+   "x1": 205.2,
+   "y1": 396.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Fax No."
+   },
+   "cand": "underscore",
+   "what": "phone",
+   "id": "p09-007",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Taxpayer ID",
+   "printed_label": "Taxpayer ID# (if applicable)",
+   "must": false,
+   "x0": 146.9,
+   "y0": 393.2,
+   "x1": 211.9,
+   "y1": 408.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Taxpayer ID"
+   },
+   "cand": "underscore",
+   "what": "tax number",
+   "id": "p09-008",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 44.7,
+   "y0": 429.2,
+   "x1": 204.6,
+   "y1": 444.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p09-009",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "Dated",
+   "must": true,
+   "x0": 56.9,
+   "y0": 441.2,
+   "x1": 121.9,
+   "y1": 456.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date signed"
+   },
+   "cand": "underscore",
+   "id": "p09-010",
+   "block": "B03"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "Aggregate Purchase Price",
+   "must": false,
+   "x0": 138.8,
+   "y0": 453.2,
+   "x1": 208.7,
+   "y1": 468.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p09-011",
+   "block": "B03"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 9,
+   "box": [
+    27.7,
+    405.2,
+    202.7,
+    420.7
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "caption": "(Signature)",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i001",
+   "block": "B03"
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 9,
+   "box": [
+    322.9,
+    153.2,
+    472.9,
+    168.7
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "MERIDIAN WASTE SOLUTIONS, INC"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 9,
+   "box": [
+    335.1,
+    249.2,
+    482.3,
+    288.7
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "MERIDIAN WASTE SOLUTIONS, INC"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 9,
+   "box": [
+    27.7,
+    333.2,
+    211.9,
+    468.7
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIBER"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 9,
+   "block": "B01",
+   "box": [
+    322.9,
+    153.2,
+    472.9,
+    168.7
+   ],
+   "heading": "MERIDIAN WASTE SOLUTIONS, INC",
+   "context": [
+    "Please acknowledge your acceptance of the foregoing Subscription Agreement by signing and returning a copy to the unders",
+    "whereupon it shall become a binding agreement between us.",
+    "MERIDIAN WASTE SOLUTIONS, INC",
+    "a New York corporation"
+   ],
+   "places": [
+    "p09-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 9,
+   "block": "B02",
+   "box": [
+    335.1,
+    249.2,
+    482.3,
+    288.7
+   ],
+   "heading": "MERIDIAN WASTE SOLUTIONS, INC",
+   "context": [
+    "By:",
+    "Name: Jeffrey Cosman",
+    "Title: Chief Executive Officer",
+    "Address:"
+   ],
+   "places": [
+    "p09-002",
+    "p09-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 9,
+   "block": "B03",
+   "box": [
+    27.7,
+    333.2,
+    211.9,
+    468.7
+   ],
+   "heading": "SUBSCRIBER",
+   "context": [
+    "Address:",
+    "Facsimile No.:",
+    "Dated: , 2016",
+    "SUBSCRIBER"
+   ],
+   "places": [
+    "p09-004",
+    "p09-005",
+    "p09-006",
+    "p09-007",
+    "p09-008",
+    "p09-009",
+    "p09-010",
+    "p09-011"
+   ],
+   "items": [
+    "i001"
+   ]
+  }
+ ]
+}

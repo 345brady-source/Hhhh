@@ -1,0 +1,269 @@
+{
+ "id": "a105",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:04Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 3,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text"
+ },
+ "run": "out-18/set-a/a105/result.json",
+ "candidates": "0afa5c779a85c0d9-f01586d5.json",
+ "counts": {
+  "fields": 1,
+  "counted_candidates": 5,
+  "pairs": 1,
+  "auto": 1,
+  "reader_only": 0,
+  "measure_only": 4,
+  "kind_clash": 0,
+  "person": 3,
+  "items": 7
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Statement deemed effective on",
+   "printed_label": "Registration Statement deemed effective on",
+   "must": true,
+   "x0": 261.6,
+   "y0": 474.9,
+   "x1": 301.6,
+   "y1": 490.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Statement deemed effective on"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-001",
+   "block": "B01"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    77.9,
+    36.9,
+    92.9,
+    52.4
+   ],
+   "caption": "Business: (",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    96.2,
+    36.9,
+    161.2,
+    52.4
+   ],
+   "caption": "Business: ( )",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    329.2,
+    36.9,
+    344.2,
+    52.4
+   ],
+   "caption": "Home: (",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i003",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    347.5,
+    36.9,
+    412.5,
+    52.4
+   ],
+   "caption": "Home: ( )",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i004",
+   "block": "B03"
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 1,
+   "box": [
+    261.6,
+    474.9,
+    301.6,
+    490.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 3,
+   "box": [
+    77.9,
+    36.9,
+    161.2,
+    52.4
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 3,
+   "box": [
+    329.2,
+    36.9,
+    412.5,
+    52.4
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    261.6,
+    474.9,
+    301.6,
+    490.4
+   ],
+   "heading": "",
+   "context": [
+    "transfer are also accepted.",
+    "3. Representations of Subscriber. By executing this Agreement, the Subscriber makes the following representations,",
+    "declarations and warranties to the Company, with the intent and understanding that the Company will rely thereon:",
+    "3.1 Such Subscriber acknowledges the public availability of the Company\u2019s current prospectus which can be viewed on the "
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B02",
+   "box": [
+    77.9,
+    36.9,
+    161.2,
+    52.4
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i001",
+    "i002"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B03",
+   "box": [
+    329.2,
+    36.9,
+    412.5,
+    52.4
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i003",
+    "i004"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,650 @@
+{
+ "id": "c215",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:09Z",
+ "how_made": "browser-landscape",
+ "made_group": "browser landscape",
+ "broker_dealer": false,
+ "pages": 13,
+ "page_sizes": {
+  "1": [
+   792.0,
+   612.0
+  ],
+  "2": [
+   792.0,
+   612.0
+  ],
+  "3": [
+   792.0,
+   612.0
+  ],
+  "4": [
+   792.0,
+   612.0
+  ],
+  "5": [
+   792.0,
+   612.0
+  ],
+  "6": [
+   792.0,
+   612.0
+  ],
+  "7": [
+   792.0,
+   612.0
+  ],
+  "8": [
+   792.0,
+   612.0
+  ],
+  "9": [
+   792.0,
+   612.0
+  ],
+  "10": [
+   792.0,
+   612.0
+  ],
+  "11": [
+   792.0,
+   612.0
+  ],
+  "12": [
+   792.0,
+   612.0
+  ],
+  "13": [
+   792.0,
+   612.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text"
+ },
+ "run": "out-18/set-c/c215/result.json",
+ "candidates": "a5f1f751aa7bb613-f01586d5.json",
+ "counts": {
+  "fields": 13,
+  "counted_candidates": 13,
+  "pairs": 13,
+  "auto": 11,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 2,
+  "person": 5,
+  "items": 7
+ },
+ "places": [
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "an offering statement dated",
+   "printed_label": "being offered pursuant to an offering statement dated",
+   "must": true,
+   "x0": 559.4,
+   "y0": 225.2,
+   "x1": 619.4,
+   "y1": 240.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "an offering statement dated"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p03-001",
+   "block": "B01"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "may accept subscriptions until",
+   "printed_label": "Shares\u201d). The Company may accept subscriptions until",
+   "must": true,
+   "x0": 313.2,
+   "y0": 369.2,
+   "x1": 368.1,
+   "y1": 384.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "may accept subscriptions until"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p03-002",
+   "block": "B02"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Amount",
+   "printed_label": "$",
+   "must": true,
+   "x0": 109.6,
+   "y0": 189.2,
+   "x1": 194.6,
+   "y1": 204.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p13-001",
+   "block": "B04"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "print name of owner or joint owners",
+   "printed_label": "",
+   "must": true,
+   "x0": 104.6,
+   "y0": 225.2,
+   "x1": 319.6,
+   "y1": 240.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "print name of owner or joint owners"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p13-002",
+   "block": "B04"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor name",
+   "printed_label": "Investor name",
+   "must": true,
+   "x0": 141.5,
+   "y0": 273.2,
+   "x1": 461.4,
+   "y1": 288.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Investor name"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p13-003",
+   "block": "B04"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor details",
+   "printed_label": "Investor details",
+   "must": true,
+   "x0": 145.9,
+   "y0": 297.2,
+   "x1": 460.8,
+   "y1": 312.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Investor details"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p13-004",
+   "block": "B04"
+  },
+  {
+   "page": 13,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 103.4,
+   "y0": 321.2,
+   "x1": 238.4,
+   "y1": 336.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date signed"
+   },
+   "cand": "underscore",
+   "id": "p13-005",
+   "block": "B04"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "on",
+   "printed_label": "on",
+   "must": true,
+   "x0": 91.8,
+   "y0": 369.2,
+   "x1": 186.8,
+   "y1": 384.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "entity",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "on"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p13-006",
+   "block": "B05"
+  },
+  {
+   "page": 13,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 93.7,
+   "y0": 393.2,
+   "x1": 253.7,
+   "y1": 408.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p13-007",
+   "block": "B05"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Name",
+   "printed_label": "Name",
+   "must": true,
+   "x0": 108.4,
+   "y0": 417.2,
+   "x1": 248.4,
+   "y1": 432.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p13-008",
+   "block": "B05"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 103.1,
+   "y0": 441.2,
+   "x1": 253.0,
+   "y1": 456.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Title"
+   },
+   "cand": "underscore",
+   "what": "title",
+   "id": "p13-009",
+   "block": "B05"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 13,
+   "box": [
+    559.9,
+    141.2,
+    639.9,
+    156.7
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "irrevocably subscribes"
+   },
+   "caption": "Interest the undersigned hereby irrevocably subscribes for is",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i001",
+   "block": "B03"
+  },
+  {
+   "type": "kind-clash",
+   "page": 13,
+   "box": [
+    160.4,
+    249.2,
+    465.2,
+    264.7
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Investor signatures"
+   },
+   "caption": "Investor signatures",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i002",
+   "block": "B04"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 3,
+   "box": [
+    559.4,
+    225.2,
+    619.4,
+    240.7
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "1. SUBSCRIPTION."
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 3,
+   "box": [
+    313.2,
+    369.2,
+    368.1,
+    384.7
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 13,
+   "box": [
+    559.9,
+    141.2,
+    639.9,
+    156.7
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT - SIGNATURE PAGE"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 13,
+   "box": [
+    103.4,
+    189.2,
+    465.2,
+    336.7
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT - SIGNATURE PAGE"
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 13,
+   "box": [
+    91.8,
+    369.2,
+    253.7,
+    456.7
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "Investor details:"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 3,
+   "block": "B01",
+   "box": [
+    559.4,
+    225.2,
+    619.4,
+    240.7
+   ],
+   "heading": "1. SUBSCRIPTION.",
+   "context": [
+    "company (the \u201cCompany\u201d), at a purchase price of $4.00 per share (the \u201cPer Share Price\u201d), with a minimum purchase of $400",
+    "Purchase\u201d), subject to the discretion of the Company and upon the terms and conditions set forth herein. The rights of t",
+    "set forth in the Certificate of Formation and Operating Agreement of the Company, each included in the Exhibits to the o",
+    "with the SEC (the \u201cOffering Circular\u201d)."
+   ],
+   "places": [
+    "p03-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B02",
+   "box": [
+    313.2,
+    369.2,
+    368.1,
+    384.7
+   ],
+   "heading": "",
+   "context": [
+    "Company, in its sole discretion. In addition, the Company, in its sole discretion, may allocate to Subscriber only a por",
+    "which the Subscriber has subscribed. The Company will notify Subscriber whether this subscription is accepted (whether i",
+    "Subscriber\u2019s subscription is rejected, Subscriber\u2019s payment (or portion thereof if partially rejected) will be returned ",
+    "Subscriber\u2019s obligations hereunder relating to the rejected portion of the subscription shall terminate."
+   ],
+   "places": [
+    "p03-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 13,
+   "block": "B03",
+   "box": [
+    559.9,
+    141.2,
+    639.9,
+    156.7
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT - SIGNATURE PAGE",
+   "context": [
+    "SUBSCRIPTION AGREEMENT - SIGNATURE PAGE",
+    "The undersigned, desiring to purchase shares of Class A Membership Interest in AMAZON GOLD, LLC, by executing this Signa",
+    "executes, adopts, and agrees to all the terms, conditions, and representations set forth in the undersigned\u2019s Subscripti",
+    "documents of the Company."
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 13,
+   "block": "B04",
+   "box": [
+    103.4,
+    189.2,
+    465.2,
+    336.7
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT - SIGNATURE PAGE",
+   "context": [
+    "executes, adopts, and agrees to all the terms, conditions, and representations set forth in the undersigned\u2019s Subscripti",
+    "documents of the Company.",
+    "(a) The number of shares of Class A Membership Interest the undersigned hereby irrevocably subscribes for is: (print num",
+    "Securities)"
+   ],
+   "places": [
+    "p13-001",
+    "p13-002",
+    "p13-003",
+    "p13-004",
+    "p13-005"
+   ],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 13,
+   "block": "B05",
+   "box": [
+    91.8,
+    369.2,
+    253.7,
+    456.7
+   ],
+   "heading": "Investor details:",
+   "context": [
+    "Investor name:",
+    "Investor details:",
+    "Date:",
+    "This Subscription is accepted by Amazon Gold, LLC"
+   ],
+   "places": [
+    "p13-006",
+    "p13-007",
+    "p13-008",
+    "p13-009"
+   ],
+   "items": []
+  }
+ ]
+}

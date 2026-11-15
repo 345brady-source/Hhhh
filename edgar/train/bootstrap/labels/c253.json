@@ -1,0 +1,386 @@
+{
+ "id": "c253",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 9,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "empty"
+ },
+ "run": "out-18/set-c/c253/result.json",
+ "candidates": "6ce7f387e16b50f0-f01586d5.json",
+ "counts": {
+  "fields": 6,
+  "counted_candidates": 6,
+  "pairs": 6,
+  "auto": 6,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 0,
+  "person": 4,
+  "items": 4
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "is dated as of",
+   "printed_label": "This ESCROW AGREEMENT (\u201cAgreement\u201d) is dated as of",
+   "must": true,
+   "x0": 308.8,
+   "y0": 96.9,
+   "x1": 373.8,
+   "y1": 112.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "is dated as of"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "s sweep charge of",
+   "printed_label": "to the Escrow Agent\u2019s sweep charge of",
+   "must": true,
+   "x0": 429.1,
+   "y0": 105.2,
+   "x1": 449.1,
+   "y1": 120.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "s sweep charge of"
+   },
+   "cand": "underscore",
+   "what": "percentage",
+   "id": "p02-001",
+   "block": "B02"
+  },
+  {
+   "page": 7,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 300.2,
+   "y0": 189.2,
+   "x1": 440.1,
+   "y1": 204.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p07-001",
+   "block": "B03"
+  },
+  {
+   "page": 7,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 275.7,
+   "y0": 321.2,
+   "x1": 455.6,
+   "y1": 336.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p07-002",
+   "block": "B04"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Name",
+   "printed_label": "Name",
+   "must": true,
+   "x0": 275.4,
+   "y0": 345.2,
+   "x1": 455.3,
+   "y1": 360.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p07-003",
+   "block": "B04"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 275.0,
+   "y0": 369.2,
+   "x1": 455.0,
+   "y1": 384.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Title"
+   },
+   "cand": "underscore",
+   "what": "title",
+   "id": "p07-004",
+   "block": "B04"
+  }
+ ],
+ "items": [
+  {
+   "item": "i001",
+   "type": "person",
+   "page": 1,
+   "box": [
+    308.8,
+    96.9,
+    373.8,
+    112.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ESCROW AGREEMENT"
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 2,
+   "box": [
+    429.1,
+    105.2,
+    449.1,
+    120.7
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 7,
+   "box": [
+    300.2,
+    189.2,
+    440.1,
+    204.7
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "By: 2309 HOLDINGS, LLC,"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 7,
+   "box": [
+    275.0,
+    321.2,
+    455.6,
+    384.7
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "UMB BANK, N.A."
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    308.8,
+    96.9,
+    373.8,
+    112.4
+   ],
+   "heading": "ESCROW AGREEMENT",
+   "context": [
+    "EX-10.1 10 exhibit101 030911.htm ESCROW AGREEMENT (SUBSCRIPTION PROCEEDS)/UMB",
+    "Exhibit \u201c10.1\u201d (Escrow Agreement (Subscription Proceeds) with UMB Bank, N.A.)",
+    "ESCROW AGREEMENT",
+    "(Subscription Proceeds)"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B02",
+   "box": [
+    429.1,
+    105.2,
+    449.1,
+    120.7
+   ],
+   "heading": "",
+   "context": [
+    "Identification Number and Certification of each investor, as provided in Section 3. All subscription proceeds received b",
+    "Escrow Agent shall be deposited into the Subscription Proceeds Escrow.",
+    "(c) The subscription proceeds held in the Subscription Proceeds Escrow shall be invested in liquid Government"
+   ],
+   "places": [
+    "p02-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 7,
+   "block": "B03",
+   "box": [
+    300.2,
+    189.2,
+    440.1,
+    204.7
+   ],
+   "heading": "By: 2309 HOLDINGS, LLC,",
+   "context": [
+    "a Missouri limited liability company",
+    "By: 2309 HOLDINGS, LLC,",
+    "a Missouri limited liability company,",
+    "Sole Member and Manager"
+   ],
+   "places": [
+    "p07-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 7,
+   "block": "B04",
+   "box": [
+    275.0,
+    321.2,
+    455.6,
+    384.7
+   ],
+   "heading": "UMB BANK, N.A.",
+   "context": [
+    "Charles Christian Kirley,",
+    "Sole Member and Manager",
+    "ESCROW AGENT:",
+    "UMB BANK, N.A."
+   ],
+   "places": [
+    "p07-002",
+    "p07-003",
+    "p07-004"
+   ],
+   "items": []
+  }
+ ]
+}

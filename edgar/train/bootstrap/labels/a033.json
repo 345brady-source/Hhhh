@@ -1,0 +1,2444 @@
+{
+ "id": "a033",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:03Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 8,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text"
+ },
+ "run": "out-18/set-a/a033/result.json",
+ "candidates": "07f4b719faa49c4e-f01586d5.json",
+ "counts": {
+  "fields": 48,
+  "counted_candidates": 47,
+  "pairs": 47,
+  "auto": 39,
+  "reader_only": 1,
+  "measure_only": 0,
+  "kind_clash": 8,
+  "person": 28,
+  "items": 37
+ },
+ "places": [
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Bank Name",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 213.6,
+   "x1": 294.7,
+   "y1": 229.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Bank Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p02-001",
+   "block": "B01"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Bank Address",
+   "printed_label": "",
+   "must": true,
+   "x0": 317.2,
+   "y0": 213.6,
+   "x1": 578.2,
+   "y1": 229.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Bank Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p02-002",
+   "block": "B01"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "ABA / Routing Number",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 256.4,
+   "x1": 294.7,
+   "y1": 271.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "ABA / Routing Number"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p02-003",
+   "block": "B02"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "SWIFT Code",
+   "printed_label": "",
+   "must": true,
+   "x0": 317.2,
+   "y0": 256.4,
+   "x1": 578.2,
+   "y1": 271.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "SWIFT Code"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p02-004",
+   "block": "B02"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Account Number",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 298.4,
+   "x1": 294.7,
+   "y1": 313.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Account Number"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p02-005",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 432.6,
+   "x1": 294.7,
+   "y1": 448.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p02-006",
+   "block": "B04"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "City, state and ZIP",
+   "printed_label": "",
+   "must": true,
+   "x0": 317.2,
+   "y0": 432.6,
+   "x1": 578.2,
+   "y1": 448.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "City, state and ZIP"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p02-007",
+   "block": "B04"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Email",
+   "printed_label": "Email",
+   "must": true,
+   "x0": 65.1,
+   "y0": 459.2,
+   "x1": 95.1,
+   "y1": 474.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Email"
+   },
+   "cand": "underscore",
+   "what": "email",
+   "id": "p02-008",
+   "block": "B04"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Phone",
+   "printed_label": "",
+   "must": true,
+   "x0": 317.2,
+   "y0": 475.4,
+   "x1": 578.2,
+   "y1": 490.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Phone"
+   },
+   "cand": "rule",
+   "what": "phone",
+   "id": "p02-009",
+   "block": "B04"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of Shares Subscribed For",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 485.9,
+   "x1": 294.7,
+   "y1": 501.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Number of Shares Subscribed For"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p05-001",
+   "block": "B05"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Purchase Price per Share",
+   "printed_label": "",
+   "must": true,
+   "x0": 317.2,
+   "y0": 485.9,
+   "x1": 578.2,
+   "y1": 501.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Purchase Price per Share"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p05-002",
+   "block": "B05"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 527.9,
+   "x1": 294.7,
+   "y1": 543.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p05-003",
+   "block": "B06"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Form of Payment",
+   "printed_label": "",
+   "must": true,
+   "x0": 317.2,
+   "y0": 527.9,
+   "x1": 578.2,
+   "y1": 543.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Form of Payment"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p05-004",
+   "block": "B06"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Type of Ownership",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 89.9,
+   "x1": 294.7,
+   "y1": 105.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Type of Ownership"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p06-001",
+   "block": "B07"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Taxpayer ID",
+   "printed_label": "",
+   "must": true,
+   "x0": 317.2,
+   "y0": 89.9,
+   "x1": 578.2,
+   "y1": 105.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Taxpayer ID"
+   },
+   "cand": "rule",
+   "what": "tax number",
+   "id": "p06-002",
+   "block": "B07"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor name",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 131.9,
+   "x1": 294.7,
+   "y1": 147.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Investor name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p06-003",
+   "block": "B08"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Co-investor name",
+   "printed_label": "",
+   "must": true,
+   "x0": 317.2,
+   "y0": 131.9,
+   "x1": 578.2,
+   "y1": 147.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "co-investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Co-investor name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p06-004",
+   "block": "B08"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Permanent Residential / Principal Place of Business Address",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 174.6,
+   "x1": 294.7,
+   "y1": 190.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Permanent Residential / Principal Place of Business Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p06-005",
+   "block": "B09"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "City, State, ZIP, Country",
+   "printed_label": "",
+   "must": true,
+   "x0": 317.2,
+   "y0": 174.6,
+   "x1": 578.2,
+   "y1": 190.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "City, State, ZIP, Country"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p06-006",
+   "block": "B09"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Mailing Address",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 216.6,
+   "x1": 294.7,
+   "y1": 232.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Mailing Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p06-007",
+   "block": "B10"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Phone",
+   "printed_label": "",
+   "must": true,
+   "x0": 317.2,
+   "y0": 216.6,
+   "x1": 578.2,
+   "y1": 232.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Phone"
+   },
+   "cand": "rule",
+   "what": "phone",
+   "id": "p06-008",
+   "block": "B10"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Email",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 259.4,
+   "x1": 294.7,
+   "y1": 274.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Email"
+   },
+   "cand": "rule",
+   "what": "email",
+   "id": "p06-009",
+   "block": "B11"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Date of Birth / Date of Formation",
+   "printed_label": "",
+   "must": true,
+   "x0": 317.2,
+   "y0": 259.4,
+   "x1": 578.2,
+   "y1": 274.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date of Birth / Date of Formation"
+   },
+   "cand": "rule",
+   "what": "date",
+   "id": "p06-010",
+   "block": "B11"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "State of Citizenship / State of Formation",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 301.4,
+   "x1": 294.7,
+   "y1": 316.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "State of Citizenship / State of Formation"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p06-011",
+   "block": "B12"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Occupation / Nature of Business",
+   "printed_label": "",
+   "must": true,
+   "x0": 317.2,
+   "y0": 301.4,
+   "x1": 578.2,
+   "y1": 316.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Occupation / Nature of Business"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p06-012",
+   "block": "B12"
+  },
+  {
+   "page": 6,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 336.7,
+   "y0": 328.4,
+   "x1": 469.5,
+   "y1": 343.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date signed"
+   },
+   "cand": "rule",
+   "id": "p06-013",
+   "block": "B12"
+  },
+  {
+   "page": 6,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature of Joint Subscriber (if any)",
+   "must": true,
+   "x0": 33.7,
+   "y0": 353.1,
+   "x1": 288.7,
+   "y1": 368.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p06-014",
+   "block": "B13"
+  },
+  {
+   "page": 6,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 336.7,
+   "y0": 353.1,
+   "x1": 469.5,
+   "y1": 368.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date signed"
+   },
+   "cand": "rule",
+   "id": "p06-015",
+   "block": "B14"
+  },
+  {
+   "page": 6,
+   "kind": "signature",
+   "owner": "co-investor",
+   "label": "Co-investor signature",
+   "printed_label": "If Subscriber is an entity: Signature of Authorized",
+   "must": true,
+   "x0": 33.7,
+   "y0": 377.9,
+   "x1": 288.7,
+   "y1": 393.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "co-investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Co-investor signature"
+   },
+   "cand": "rule",
+   "id": "p06-016",
+   "block": "B15"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 336.7,
+   "y0": 377.9,
+   "x1": 469.5,
+   "y1": 393.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p06-017",
+   "block": "B16"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "in part as to",
+   "printed_label": "accepted, in whole / in part as to",
+   "must": true,
+   "x0": 315.2,
+   "y0": 437.4,
+   "x1": 355.2,
+   "y1": 452.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "in part as to"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p06-018",
+   "block": "B17"
+  },
+  {
+   "page": 6,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 50.2,
+   "y0": 486.6,
+   "x1": 292.5,
+   "y1": 502.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p06-019",
+   "block": "B18"
+  },
+  {
+   "page": 6,
+   "kind": "date",
+   "owner": "firm",
+   "label": "Date signed",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 337.5,
+   "y0": 486.6,
+   "x1": 469.5,
+   "y1": 502.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date signed"
+   },
+   "cand": "rule",
+   "id": "p06-020",
+   "block": "B19"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Annual Income",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 653.9,
+   "x1": 294.7,
+   "y1": 669.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Annual Income"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p07-001",
+   "block": "B25"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Net Worth",
+   "printed_label": "",
+   "must": true,
+   "x0": 317.2,
+   "y0": 653.9,
+   "x1": 578.2,
+   "y1": 669.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Net Worth"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p07-002",
+   "block": "B25"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Annual Revenue",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 695.9,
+   "x1": 294.7,
+   "y1": 711.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Annual Revenue"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p07-003",
+   "block": "B26"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Net Assets at FYE",
+   "printed_label": "",
+   "must": true,
+   "x0": 317.2,
+   "y0": 695.9,
+   "x1": 578.2,
+   "y1": 711.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Net Assets at FYE"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p07-004",
+   "block": "B26"
+  },
+  {
+   "page": 8,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature of Subscriber (or Authorized Signatory)",
+   "must": true,
+   "x0": 33.7,
+   "y0": 38.1,
+   "x1": 290.2,
+   "y1": 53.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p08-001",
+   "block": "B27"
+  },
+  {
+   "page": 8,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 336.0,
+   "y0": 38.1,
+   "x1": 469.5,
+   "y1": 53.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date signed"
+   },
+   "cand": "rule",
+   "id": "p08-002",
+   "block": "B28"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 6,
+   "box": [
+    33.7,
+    328.4,
+    288.7,
+    343.9
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "caption": "Signature of Subscriber",
+   "cand": {
+    "kind": "rule",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a rule candidate the measure reads as sign",
+   "item": "i001",
+   "block": "B12"
+  },
+  {
+   "type": "reader-only",
+   "page": 6,
+   "box": [
+    32.7,
+    529.8,
+    579.2,
+    545.3
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Title"
+   },
+   "caption": "",
+   "proposed": {
+    "kind": "blank",
+    "owner": "firm",
+    "what": "title"
+   },
+   "item": "i002",
+   "block": "B20"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    33.8,
+    216.9,
+    58.8,
+    232.4
+   ],
+   "field": {
+    "kind": "initials",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Initials"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "initials",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader initials (sign) on a underscore candidate the measure reads as line",
+   "item": "i003",
+   "block": "B21"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    33.8,
+    264.9,
+    58.8,
+    280.4
+   ],
+   "field": {
+    "kind": "initials",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Initials"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "initials",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader initials (sign) on a underscore candidate the measure reads as line",
+   "item": "i004",
+   "block": "B22"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    33.8,
+    312.9,
+    58.8,
+    328.4
+   ],
+   "field": {
+    "kind": "initials",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Initials"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "initials",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader initials (sign) on a underscore candidate the measure reads as line",
+   "item": "i005",
+   "block": "B23"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    33.8,
+    360.9,
+    58.8,
+    376.4
+   ],
+   "field": {
+    "kind": "initials",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Initials"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "initials",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader initials (sign) on a underscore candidate the measure reads as line",
+   "item": "i006",
+   "block": "B24"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    33.8,
+    396.9,
+    58.8,
+    412.4
+   ],
+   "field": {
+    "kind": "initials",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Initials"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "initials",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader initials (sign) on a underscore candidate the measure reads as line",
+   "item": "i007",
+   "block": "B24"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    33.8,
+    420.9,
+    58.8,
+    436.4
+   ],
+   "field": {
+    "kind": "initials",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Initials"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "initials",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader initials (sign) on a underscore candidate the measure reads as line",
+   "item": "i008",
+   "block": "B24"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    33.8,
+    444.9,
+    58.8,
+    460.4
+   ],
+   "field": {
+    "kind": "initials",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Initials"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "initials",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader initials (sign) on a underscore candidate the measure reads as line",
+   "item": "i009",
+   "block": "B24"
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    213.6,
+    578.2,
+    229.1
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    256.4,
+    578.2,
+    271.9
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    298.4,
+    294.7,
+    313.9
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    432.6,
+    578.2,
+    490.9
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 5,
+   "box": [
+    33.7,
+    485.9,
+    578.2,
+    501.4
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIBER SIGNATURE PAGE"
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 5,
+   "box": [
+    33.7,
+    527.9,
+    578.2,
+    543.4
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIBER SIGNATURE PAGE"
+  },
+  {
+   "item": "i016",
+   "type": "person",
+   "page": 6,
+   "box": [
+    33.7,
+    89.9,
+    578.2,
+    105.4
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Subscriber Information"
+  },
+  {
+   "item": "i017",
+   "type": "person",
+   "page": 6,
+   "box": [
+    33.7,
+    131.9,
+    578.2,
+    147.4
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Subscriber Information"
+  },
+  {
+   "item": "i018",
+   "type": "person",
+   "page": 6,
+   "box": [
+    33.7,
+    174.6,
+    578.2,
+    190.1
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Subscriber Information"
+  },
+  {
+   "item": "i019",
+   "type": "person",
+   "page": 6,
+   "box": [
+    33.7,
+    216.6,
+    578.2,
+    232.1
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i020",
+   "type": "person",
+   "page": 6,
+   "box": [
+    33.7,
+    259.4,
+    578.2,
+    274.9
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i021",
+   "type": "person",
+   "page": 6,
+   "box": [
+    33.7,
+    301.4,
+    578.2,
+    343.9
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i022",
+   "type": "person",
+   "page": 6,
+   "box": [
+    33.7,
+    353.1,
+    288.7,
+    368.6
+   ],
+   "block": "B13",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature of Subscriber"
+  },
+  {
+   "item": "i023",
+   "type": "person",
+   "page": 6,
+   "box": [
+    336.7,
+    353.1,
+    469.5,
+    368.6
+   ],
+   "block": "B14",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature of Subscriber"
+  },
+  {
+   "item": "i024",
+   "type": "person",
+   "page": 6,
+   "box": [
+    33.7,
+    377.9,
+    288.7,
+    393.4
+   ],
+   "block": "B15",
+   "proposed": {
+    "owner": "co-investor"
+   },
+   "heading": "Signature of Joint Subscriber (if any)"
+  },
+  {
+   "item": "i025",
+   "type": "person",
+   "page": 6,
+   "box": [
+    336.7,
+    377.9,
+    469.5,
+    393.4
+   ],
+   "block": "B16",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature of Joint Subscriber (if any)"
+  },
+  {
+   "item": "i026",
+   "type": "person",
+   "page": 6,
+   "box": [
+    315.2,
+    437.4,
+    355.2,
+    452.9
+   ],
+   "block": "B17",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "ACCEPTANCE BY THE COMPANY"
+  },
+  {
+   "item": "i027",
+   "type": "person",
+   "page": 6,
+   "box": [
+    50.2,
+    486.6,
+    292.5,
+    502.1
+   ],
+   "block": "B18",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "RECREATIVES INDUSTRIES, INC."
+  },
+  {
+   "item": "i028",
+   "type": "person",
+   "page": 6,
+   "box": [
+    337.5,
+    486.6,
+    469.5,
+    502.1
+   ],
+   "block": "B19",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "RECREATIVES INDUSTRIES, INC."
+  },
+  {
+   "item": "i029",
+   "type": "person",
+   "page": 6,
+   "box": [
+    32.7,
+    529.8,
+    579.2,
+    545.3
+   ],
+   "block": "B20",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "RECREATIVES INDUSTRIES, INC."
+  },
+  {
+   "item": "i030",
+   "type": "person",
+   "page": 7,
+   "box": [
+    33.8,
+    216.9,
+    58.8,
+    232.4
+   ],
+   "block": "B21",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "INVESTOR SUITABILITY QUESTIONNAIRE"
+  },
+  {
+   "item": "i031",
+   "type": "person",
+   "page": 7,
+   "box": [
+    33.8,
+    264.9,
+    58.8,
+    280.4
+   ],
+   "block": "B22",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i032",
+   "type": "person",
+   "page": 7,
+   "box": [
+    33.8,
+    312.9,
+    58.8,
+    328.4
+   ],
+   "block": "B23",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i033",
+   "type": "person",
+   "page": 7,
+   "box": [
+    33.8,
+    360.9,
+    58.8,
+    460.4
+   ],
+   "block": "B24",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i034",
+   "type": "person",
+   "page": 7,
+   "box": [
+    33.7,
+    653.9,
+    578.2,
+    669.4
+   ],
+   "block": "B25",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i035",
+   "type": "person",
+   "page": 7,
+   "box": [
+    33.7,
+    695.9,
+    578.2,
+    711.4
+   ],
+   "block": "B26",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i036",
+   "type": "person",
+   "page": 8,
+   "box": [
+    33.7,
+    38.1,
+    290.2,
+    53.6
+   ],
+   "block": "B27",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i037",
+   "type": "person",
+   "page": 8,
+   "box": [
+    336.0,
+    38.1,
+    469.5,
+    53.6
+   ],
+   "block": "B28",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 2,
+   "block": "B01",
+   "box": [
+    33.7,
+    213.6,
+    578.2,
+    229.1
+   ],
+   "heading": "",
+   "context": [
+    "Wire / ACH / Check Payment Instructions:",
+    "Beneficiary / Account Name: Recreatives Industries, Inc. Beneficiary Address: 1936 59th Terrace East, Bradenton, FL",
+    "34203",
+    "Bank Name: Bank Address:"
+   ],
+   "places": [
+    "p02-001",
+    "p02-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B02",
+   "box": [
+    33.7,
+    256.4,
+    578.2,
+    271.9
+   ],
+   "heading": "",
+   "context": [
+    "Beneficiary / Account Name: Recreatives Industries, Inc. Beneficiary Address: 1936 59th Terrace East, Bradenton, FL",
+    "34203",
+    "Bank Name: Bank Address:",
+    "ABA / Routing Number: SWIFT Code (if international):"
+   ],
+   "places": [
+    "p02-003",
+    "p02-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B03",
+   "box": [
+    33.7,
+    298.4,
+    294.7,
+    313.9
+   ],
+   "heading": "",
+   "context": [
+    "34203",
+    "Bank Name: Bank Address:",
+    "ABA / Routing Number: SWIFT Code (if international):",
+    "Account Number: Reference: RECX Reg A Subscription \u2013 [Subscriber Name]"
+   ],
+   "places": [
+    "p02-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B04",
+   "box": [
+    33.7,
+    432.6,
+    578.2,
+    490.9
+   ],
+   "heading": "",
+   "context": [
+    "All executed subscription documents and copies of wire confirmations or check payments shall be returned to:",
+    "Attention: Subscription Administrator \u2013 RECX Regulation A c/o: Quantum Edge Group",
+    "Offering",
+    "Mailing Address: City, State, ZIP:"
+   ],
+   "places": [
+    "p02-006",
+    "p02-007",
+    "p02-008",
+    "p02-009"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B05",
+   "box": [
+    33.7,
+    485.9,
+    578.2,
+    501.4
+   ],
+   "heading": "SUBSCRIBER SIGNATURE PAGE",
+   "context": [
+    "all of the terms and conditions hereof, and confirms the truth and accuracy of the representations and warranties made h",
+    "Investor Suitability Questionnaire attached as Schedule A.",
+    "Subscription Details",
+    "Number of Shares Subscribed For: Purchase Price per Share ($0.01):"
+   ],
+   "places": [
+    "p05-001",
+    "p05-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B06",
+   "box": [
+    33.7,
+    527.9,
+    578.2,
+    543.4
+   ],
+   "heading": "SUBSCRIBER SIGNATURE PAGE",
+   "context": [
+    "Investor Suitability Questionnaire attached as Schedule A.",
+    "Subscription Details",
+    "Number of Shares Subscribed For: Purchase Price per Share ($0.01):",
+    "Aggregate Subscription Amount (USD) (minimum $2,500): Form of Payment (wire / ACH / check):"
+   ],
+   "places": [
+    "p05-003",
+    "p05-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B07",
+   "box": [
+    33.7,
+    89.9,
+    578.2,
+    105.4
+   ],
+   "heading": "Subscriber Information",
+   "context": [
+    "Subscriber Information",
+    "Type of Ownership (Individual / Joint / Entity / IRA / Trust): Tax ID / SSN:"
+   ],
+   "places": [
+    "p06-001",
+    "p06-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B08",
+   "box": [
+    33.7,
+    131.9,
+    578.2,
+    147.4
+   ],
+   "heading": "Subscriber Information",
+   "context": [
+    "Subscriber Information",
+    "Type of Ownership (Individual / Joint / Entity / IRA / Trust): Tax ID / SSN:",
+    "Full Legal Name of Subscriber: Full Legal Name of Joint Subscriber (if any):"
+   ],
+   "places": [
+    "p06-003",
+    "p06-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B09",
+   "box": [
+    33.7,
+    174.6,
+    578.2,
+    190.1
+   ],
+   "heading": "Subscriber Information",
+   "context": [
+    "Subscriber Information",
+    "Type of Ownership (Individual / Joint / Entity / IRA / Trust): Tax ID / SSN:",
+    "Full Legal Name of Subscriber: Full Legal Name of Joint Subscriber (if any):",
+    "Permanent Residential / Principal Place of Business Address: City, State, ZIP, Country:"
+   ],
+   "places": [
+    "p06-005",
+    "p06-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B10",
+   "box": [
+    33.7,
+    216.6,
+    578.2,
+    232.1
+   ],
+   "heading": "",
+   "context": [
+    "Type of Ownership (Individual / Joint / Entity / IRA / Trust): Tax ID / SSN:",
+    "Full Legal Name of Subscriber: Full Legal Name of Joint Subscriber (if any):",
+    "Permanent Residential / Principal Place of Business Address: City, State, ZIP, Country:",
+    "Mailing Address (if different): Telephone:"
+   ],
+   "places": [
+    "p06-007",
+    "p06-008"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B11",
+   "box": [
+    33.7,
+    259.4,
+    578.2,
+    274.9
+   ],
+   "heading": "",
+   "context": [
+    "Full Legal Name of Subscriber: Full Legal Name of Joint Subscriber (if any):",
+    "Permanent Residential / Principal Place of Business Address: City, State, ZIP, Country:",
+    "Mailing Address (if different): Telephone:",
+    "Email Address: Date of Birth / Date of Formation:"
+   ],
+   "places": [
+    "p06-009",
+    "p06-010"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B12",
+   "box": [
+    33.7,
+    301.4,
+    578.2,
+    343.9
+   ],
+   "heading": "",
+   "context": [
+    "Permanent Residential / Principal Place of Business Address: City, State, ZIP, Country:",
+    "Mailing Address (if different): Telephone:",
+    "Email Address: Date of Birth / Date of Formation:",
+    "State of Citizenship / State of Formation: Occupation / Nature of Business:"
+   ],
+   "places": [
+    "p06-011",
+    "p06-012",
+    "p06-013"
+   ],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 6,
+   "block": "B13",
+   "box": [
+    33.7,
+    353.1,
+    288.7,
+    368.6
+   ],
+   "heading": "Signature of Subscriber",
+   "context": [
+    "Email Address: Date of Birth / Date of Formation:",
+    "State of Citizenship / State of Formation: Occupation / Nature of Business:",
+    "Date:",
+    "Signature of Subscriber"
+   ],
+   "places": [
+    "p06-014"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B14",
+   "box": [
+    336.7,
+    353.1,
+    469.5,
+    368.6
+   ],
+   "heading": "Signature of Subscriber",
+   "context": [
+    "Email Address: Date of Birth / Date of Formation:",
+    "State of Citizenship / State of Formation: Occupation / Nature of Business:",
+    "Date:",
+    "Signature of Subscriber"
+   ],
+   "places": [
+    "p06-015"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B15",
+   "box": [
+    33.7,
+    377.9,
+    288.7,
+    393.4
+   ],
+   "heading": "Signature of Joint Subscriber (if any)",
+   "context": [
+    "Date:",
+    "Signature of Subscriber",
+    "Date:",
+    "Signature of Joint Subscriber (if any)"
+   ],
+   "places": [
+    "p06-016"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B16",
+   "box": [
+    336.7,
+    377.9,
+    469.5,
+    393.4
+   ],
+   "heading": "Signature of Joint Subscriber (if any)",
+   "context": [
+    "Date:",
+    "Signature of Subscriber",
+    "Date:",
+    "Signature of Joint Subscriber (if any)"
+   ],
+   "places": [
+    "p06-017"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B17",
+   "box": [
+    315.2,
+    437.4,
+    355.2,
+    452.9
+   ],
+   "heading": "ACCEPTANCE BY THE COMPANY",
+   "context": [
+    "Signature of Joint Subscriber (if any)",
+    "Title:",
+    "If Subscriber is an entity: Signature of Authorized Signatory",
+    "ACCEPTANCE BY THE COMPANY"
+   ],
+   "places": [
+    "p06-018"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B18",
+   "box": [
+    50.2,
+    486.6,
+    292.5,
+    502.1
+   ],
+   "heading": "RECREATIVES INDUSTRIES, INC.",
+   "context": [
+    "If Subscriber is an entity: Signature of Authorized Signatory",
+    "ACCEPTANCE BY THE COMPANY",
+    "The foregoing subscription is hereby accepted, in whole / in part as to Shares, on behalf of Recreatives Industries, Inc",
+    "RECREATIVES INDUSTRIES, INC."
+   ],
+   "places": [
+    "p06-019"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B19",
+   "box": [
+    337.5,
+    486.6,
+    469.5,
+    502.1
+   ],
+   "heading": "RECREATIVES INDUSTRIES, INC.",
+   "context": [
+    "If Subscriber is an entity: Signature of Authorized Signatory",
+    "ACCEPTANCE BY THE COMPANY",
+    "The foregoing subscription is hereby accepted, in whole / in part as to Shares, on behalf of Recreatives Industries, Inc",
+    "RECREATIVES INDUSTRIES, INC."
+   ],
+   "places": [
+    "p06-020"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B20",
+   "box": [
+    32.7,
+    529.8,
+    579.2,
+    545.3
+   ],
+   "heading": "RECREATIVES INDUSTRIES, INC.",
+   "context": [
+    "RECREATIVES INDUSTRIES, INC.",
+    "By: Date:",
+    "Name:",
+    "Title:"
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B21",
+   "box": [
+    33.8,
+    216.9,
+    58.8,
+    232.4
+   ],
+   "heading": "INVESTOR SUITABILITY QUESTIONNAIRE",
+   "context": [
+    "natural persons). Subscriber must complete Part I or Part II below. Initial each applicable item.",
+    "Part I \u2014 Accredited Investor Certification",
+    "If Subscriber is an accredited investor under Rule 501(a) of Regulation D, please initial each applicable category. Subs",
+    "qualify under at least one category to be treated as an accredited investor."
+   ],
+   "places": [],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B22",
+   "box": [
+    33.8,
+    264.9,
+    58.8,
+    280.4
+   ],
+   "heading": "",
+   "context": [
+    "qualify under at least one category to be treated as an accredited investor.",
+    "Income. Subscriber is a natural person who had individual income in excess of $200,000, or joint income with Subscriber\u2019",
+    "spouse or spousal equivalent in excess of $300,000, in each of the two most recent calendar years and has a reasonable",
+    "expectation of reaching the same level in the current year."
+   ],
+   "places": [],
+   "items": [
+    "i004"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B23",
+   "box": [
+    33.8,
+    312.9,
+    58.8,
+    328.4
+   ],
+   "heading": "",
+   "context": [
+    "expectation of reaching the same level in the current year.",
+    "Net Worth. Subscriber is a natural person whose individual net worth, or joint net worth with Subscriber\u2019s spouse or spo",
+    "equivalent, exceeds $1,000,000, excluding the value of Subscriber\u2019s primary residence (calculated in accordance with Rul",
+    "501(a)(5))."
+   ],
+   "places": [],
+   "items": [
+    "i005"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B24",
+   "box": [
+    33.8,
+    360.9,
+    58.8,
+    460.4
+   ],
+   "heading": "",
+   "context": [
+    "501(a)(5)).",
+    "Professional Certifications. Subscriber is a natural person holding in good standing one or more of the professional",
+    "certifications, designations or credentials designated by the Commission as qualifying for accredited investor status",
+    "(currently, Series 7, Series 65, or Series 82)."
+   ],
+   "places": [],
+   "items": [
+    "i006",
+    "i007",
+    "i008",
+    "i009"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B25",
+   "box": [
+    33.7,
+    653.9,
+    578.2,
+    669.4
+   ],
+   "heading": "",
+   "context": [
+    "has truthfully completed the Investor Suitability Questionnaire attached hereto as Schedule A and, if Subscriber is not ",
+    "investor, has accurately stated Subscriber\u2019s applicable income, net worth, revenue or net assets, and the Subscription A",
+    "purposes of demonstrating compliance with this 10% investment limitation.",
+    "Annual Income (USD): Net Worth (excluding primary residence) (USD):"
+   ],
+   "places": [
+    "p07-001",
+    "p07-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 7,
+   "block": "B26",
+   "box": [
+    33.7,
+    695.9,
+    578.2,
+    711.4
+   ],
+   "heading": "",
+   "context": [
+    "investor, has accurately stated Subscriber\u2019s applicable income, net worth, revenue or net assets, and the Subscription A",
+    "purposes of demonstrating compliance with this 10% investment limitation.",
+    "Annual Income (USD): Net Worth (excluding primary residence) (USD):",
+    "Annual Revenue (entities, USD): Net Assets at FYE (entities, USD):"
+   ],
+   "places": [
+    "p07-003",
+    "p07-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 8,
+   "block": "B27",
+   "box": [
+    33.7,
+    38.1,
+    290.2,
+    53.6
+   ],
+   "heading": "",
+   "context": [],
+   "places": [
+    "p08-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 8,
+   "block": "B28",
+   "box": [
+    336.0,
+    38.1,
+    469.5,
+    53.6
+   ],
+   "heading": "",
+   "context": [],
+   "places": [
+    "p08-002"
+   ],
+   "items": []
+  }
+ ]
+}

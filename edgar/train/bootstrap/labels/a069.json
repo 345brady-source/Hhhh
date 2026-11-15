@@ -1,0 +1,1061 @@
+{
+ "id": "a069",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:04Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 14,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text"
+ },
+ "run": "out-18/set-a/a069/result.json",
+ "candidates": "faeb77f515180644-f01586d5.json",
+ "counts": {
+  "fields": 18,
+  "counted_candidates": 19,
+  "pairs": 18,
+  "auto": 17,
+  "reader_only": 0,
+  "measure_only": 1,
+  "kind_clash": 1,
+  "person": 12,
+  "items": 14
+ },
+ "places": [
+  {
+   "page": 12,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 330.7,
+   "y0": 133.4,
+   "x1": 498.0,
+   "y1": 148.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p12-001",
+   "block": "B01"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "to exercise the Warrant to purchase",
+   "printed_label": "to exercise the Warrant to purchase",
+   "must": false,
+   "x0": 249.6,
+   "y0": 204.9,
+   "x1": 299.6,
+   "y1": 220.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "to exercise the Warrant to purchase"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p13-001",
+   "block": "B03"
+  },
+  {
+   "page": 13,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "to exercise the Warrant to purchase",
+   "printed_label": "",
+   "must": false,
+   "x0": 85.8,
+   "y0": 209.1,
+   "x1": 94.8,
+   "y1": 219.1,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "to exercise the Warrant to purchase"
+   },
+   "cand": "tick",
+   "id": "p13-002",
+   "block": "B02"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Warrant with respect to",
+   "printed_label": "to exercise the Warrant with respect to",
+   "must": true,
+   "x0": 264.9,
+   "y0": 288.9,
+   "x1": 324.9,
+   "y1": 304.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Warrant with respect to"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p13-003",
+   "block": "B05"
+  },
+  {
+   "page": 13,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Checkbox",
+   "printed_label": "",
+   "must": false,
+   "x0": 85.8,
+   "y0": 299.1,
+   "x1": 94.8,
+   "y1": 309.1,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Checkbox"
+   },
+   "cand": "tick",
+   "id": "p13-004",
+   "block": "B04"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor name",
+   "printed_label": "Name",
+   "must": true,
+   "x0": 143.2,
+   "y0": 446.1,
+   "x1": 258.0,
+   "y1": 461.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Investor name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p13-005",
+   "block": "B06"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "Address",
+   "must": true,
+   "x0": 143.2,
+   "y0": 470.9,
+   "x1": 258.0,
+   "y1": 486.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p13-006",
+   "block": "B06"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 2",
+   "printed_label": "",
+   "must": false,
+   "x0": 143.2,
+   "y0": 495.6,
+   "x1": 258.0,
+   "y1": 511.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Address line 2"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p13-007",
+   "block": "B06"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 2",
+   "printed_label": "",
+   "must": false,
+   "x0": 143.2,
+   "y0": 520.4,
+   "x1": 258.0,
+   "y1": 535.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Address line 2"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p13-008",
+   "block": "B06"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Taxpayer ID",
+   "printed_label": "TIN",
+   "must": true,
+   "x0": 143.2,
+   "y0": 545.1,
+   "x1": 258.0,
+   "y1": 560.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Taxpayer ID"
+   },
+   "cand": "rule",
+   "what": "tax number",
+   "id": "p13-009",
+   "block": "B06"
+  },
+  {
+   "page": 13,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "Dated",
+   "must": true,
+   "x0": 449.2,
+   "y0": 569.9,
+   "x1": 545.2,
+   "y1": 585.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Date signed"
+   },
+   "cand": "rule",
+   "id": "p13-010",
+   "block": "B07"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Warrant to purchase shares",
+   "printed_label": "represented by the within Warrant to purchase shares",
+   "must": true,
+   "x0": 286.2,
+   "y0": 120.9,
+   "x1": 336.2,
+   "y1": 136.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Warrant to purchase shares"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p14-001",
+   "block": "B08"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Warrant relates and appoints",
+   "printed_label": "to which the within Warrant relates, and appoints",
+   "must": true,
+   "x0": 410.6,
+   "y0": 132.9,
+   "x1": 495.5,
+   "y1": 148.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Warrant relates and appoints"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p14-002",
+   "block": "B09"
+  },
+  {
+   "page": 14,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "Dated",
+   "must": true,
+   "x0": 95.8,
+   "y0": 192.9,
+   "x1": 145.8,
+   "y1": 208.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Date signed"
+   },
+   "cand": "underscore",
+   "id": "p14-003",
+   "block": "B10"
+  },
+  {
+   "page": 14,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 330.0,
+   "y0": 193.4,
+   "x1": 497.2,
+   "y1": 208.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p14-004",
+   "block": "B11"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 330.0,
+   "y0": 217.4,
+   "x1": 497.2,
+   "y1": 232.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p14-005",
+   "block": "B11"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 66.7,
+   "y0": 290.1,
+   "x1": 186.0,
+   "y1": 305.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p14-006",
+   "block": "B12"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 13,
+   "box": [
+    66.7,
+    569.9,
+    387.0,
+    585.4
+   ],
+   "caption": "(Signature must conform exactly to name of Holder",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i001",
+   "block": "B06"
+  },
+  {
+   "type": "kind-clash",
+   "page": 14,
+   "box": [
+    425.7,
+    108.9,
+    505.7,
+    124.4
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "assigns and transfers unto"
+   },
+   "caption": "the undersigned hereby sells, assigns, and transfers unto",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i002",
+   "block": "B09"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 12,
+   "box": [
+    330.7,
+    133.4,
+    498.0,
+    148.9
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "GENERAL ENTERPRISE VENTURES,"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 13,
+   "box": [
+    85.8,
+    209.1,
+    94.8,
+    219.1
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FORM OF SUBSCRIPTION"
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 13,
+   "box": [
+    249.6,
+    204.9,
+    299.6,
+    220.4
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FORM OF SUBSCRIPTION"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 13,
+   "box": [
+    85.8,
+    299.1,
+    94.8,
+    309.1
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 13,
+   "box": [
+    264.9,
+    288.9,
+    324.9,
+    304.4
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 13,
+   "box": [
+    66.7,
+    446.1,
+    387.0,
+    585.4
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 13,
+   "box": [
+    449.2,
+    569.9,
+    545.2,
+    585.4
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 14,
+   "box": [
+    286.2,
+    120.9,
+    336.2,
+    136.4
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FORM OF ASSIGNMENT"
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 14,
+   "box": [
+    410.6,
+    108.9,
+    505.7,
+    148.4
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FORM OF ASSIGNMENT"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 14,
+   "box": [
+    95.8,
+    192.9,
+    145.8,
+    208.4
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FORM OF ASSIGNMENT"
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 14,
+   "box": [
+    330.0,
+    193.4,
+    497.2,
+    232.9
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FORM OF ASSIGNMENT"
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 14,
+   "box": [
+    66.7,
+    290.1,
+    186.0,
+    305.6
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 12,
+   "block": "B01",
+   "box": [
+    330.7,
+    133.4,
+    498.0,
+    148.9
+   ],
+   "heading": "GENERAL ENTERPRISE VENTURES,",
+   "context": [
+    "IN WITNESS WHEREOF, the Company has caused this Warrant to be executed by its duly authorized officer.",
+    "Dated as of October [\u2022], 2025",
+    "GENERAL ENTERPRISE VENTURES,",
+    "INC."
+   ],
+   "places": [
+    "p12-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 13,
+   "block": "B02",
+   "box": [
+    85.8,
+    209.1,
+    94.8,
+    219.1
+   ],
+   "heading": "FORM OF SUBSCRIPTION",
+   "context": [
+    "TO: General Enterprise Ventures, Inc.",
+    "1. The undersigned Holder of the attached Warrant hereby elects to exercise its purchase right under such",
+    "Warrant to purchase shares of Common Stock of General Enterprise Ventures, Inc., a Wyoming corporation (the",
+    "\u201cCompany\u201d), as follows (check one or more, as applicable):"
+   ],
+   "places": [
+    "p13-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 13,
+   "block": "B03",
+   "box": [
+    249.6,
+    204.9,
+    299.6,
+    220.4
+   ],
+   "heading": "FORM OF SUBSCRIPTION",
+   "context": [
+    "TO: General Enterprise Ventures, Inc.",
+    "1. The undersigned Holder of the attached Warrant hereby elects to exercise its purchase right under such",
+    "Warrant to purchase shares of Common Stock of General Enterprise Ventures, Inc., a Wyoming corporation (the",
+    "\u201cCompany\u201d), as follows (check one or more, as applicable):"
+   ],
+   "places": [
+    "p13-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 13,
+   "block": "B04",
+   "box": [
+    85.8,
+    299.1,
+    94.8,
+    309.1
+   ],
+   "heading": "",
+   "context": [
+    "Price therefor by wire transfer of United States funds to the account of the Company, which transfer has been",
+    "made prior to or as of the date of delivery of this Form of Subscription pursuant to the instructions of the",
+    "Company;",
+    "and/or"
+   ],
+   "places": [
+    "p13-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 13,
+   "block": "B05",
+   "box": [
+    264.9,
+    288.9,
+    324.9,
+    304.4
+   ],
+   "heading": "",
+   "context": [
+    "Price therefor by wire transfer of United States funds to the account of the Company, which transfer has been",
+    "made prior to or as of the date of delivery of this Form of Subscription pursuant to the instructions of the",
+    "Company;",
+    "and/or"
+   ],
+   "places": [
+    "p13-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 13,
+   "block": "B06",
+   "box": [
+    66.7,
+    446.1,
+    387.0,
+    585.4
+   ],
+   "heading": "",
+   "context": [
+    "The undersigned hereby further confirms and acknowledges that it is an \u201caccredited investor\u201d, as that term is defined",
+    "under the Securities Act.",
+    "3. Please issue a stock certificate or certificates representing the appropriate number of shares of Common",
+    "Stock in the name of the undersigned or in such other name(s) as is specified below:"
+   ],
+   "places": [
+    "p13-005",
+    "p13-006",
+    "p13-007",
+    "p13-008",
+    "p13-009"
+   ],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 13,
+   "block": "B07",
+   "box": [
+    449.2,
+    569.9,
+    545.2,
+    585.4
+   ],
+   "heading": "",
+   "context": [
+    "Stock in the name of the undersigned or in such other name(s) as is specified below:",
+    "Name:",
+    "Address:",
+    "TIN:"
+   ],
+   "places": [
+    "p13-010"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B08",
+   "box": [
+    286.2,
+    120.9,
+    336.2,
+    136.4
+   ],
+   "heading": "FORM OF ASSIGNMENT",
+   "context": [
+    "EXECUTION COPY",
+    "FORM OF ASSIGNMENT",
+    "(To be signed only on transfer of Warrant)"
+   ],
+   "places": [
+    "p14-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B09",
+   "box": [
+    410.6,
+    108.9,
+    505.7,
+    148.4
+   ],
+   "heading": "FORM OF ASSIGNMENT",
+   "context": [
+    "EXECUTION COPY",
+    "FORM OF ASSIGNMENT",
+    "(To be signed only on transfer of Warrant)"
+   ],
+   "places": [
+    "p14-002"
+   ],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 14,
+   "block": "B10",
+   "box": [
+    95.8,
+    192.9,
+    145.8,
+    208.4
+   ],
+   "heading": "FORM OF ASSIGNMENT",
+   "context": [
+    "represented by the within Warrant to purchase shares of Common Stock of General Enterprise Ventures,",
+    "Inc., a Wyoming corporation, to which the within Warrant relates, and appoints attorney to",
+    "transfer such right on the books of General Enterprise Ventures, Inc., with full power of substitution in the premises.",
+    "[insert name of Holder]"
+   ],
+   "places": [
+    "p14-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B11",
+   "box": [
+    330.0,
+    193.4,
+    497.2,
+    232.9
+   ],
+   "heading": "FORM OF ASSIGNMENT",
+   "context": [
+    "represented by the within Warrant to purchase shares of Common Stock of General Enterprise Ventures,",
+    "Inc., a Wyoming corporation, to which the within Warrant relates, and appoints attorney to",
+    "transfer such right on the books of General Enterprise Ventures, Inc., with full power of substitution in the premises.",
+    "[insert name of Holder]"
+   ],
+   "places": [
+    "p14-004",
+    "p14-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B12",
+   "box": [
+    66.7,
+    290.1,
+    186.0,
+    305.6
+   ],
+   "heading": "",
+   "context": [
+    "Dated: By:",
+    "Title:",
+    "[insert address of Holder]",
+    "Signed in the presence of:"
+   ],
+   "places": [
+    "p14-006"
+   ],
+   "items": []
+  }
+ ]
+}

@@ -1,0 +1,1963 @@
+{
+ "id": "c075",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:07Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": true,
+ "pages": 27,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ],
+  "15": [
+   612.0,
+   792.0
+  ],
+  "16": [
+   612.0,
+   792.0
+  ],
+  "17": [
+   612.0,
+   792.0
+  ],
+  "18": [
+   612.0,
+   792.0
+  ],
+  "19": [
+   612.0,
+   792.0
+  ],
+  "20": [
+   612.0,
+   792.0
+  ],
+  "21": [
+   612.0,
+   792.0
+  ],
+  "22": [
+   612.0,
+   792.0
+  ],
+  "23": [
+   612.0,
+   792.0
+  ],
+  "24": [
+   612.0,
+   792.0
+  ],
+  "25": [
+   612.0,
+   792.0
+  ],
+  "26": [
+   612.0,
+   792.0
+  ],
+  "27": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text",
+  "17": "text",
+  "18": "text",
+  "19": "text",
+  "20": "text",
+  "21": "text",
+  "22": "text",
+  "23": "empty",
+  "24": "text",
+  "25": "text",
+  "26": "text",
+  "27": "text"
+ },
+ "run": "out-18/set-c/c075/result.json",
+ "candidates": "0a90f0e2c25fb53b-f01586d5.json",
+ "counts": {
+  "fields": 34,
+  "counted_candidates": 32,
+  "pairs": 25,
+  "auto": 12,
+  "reader_only": 9,
+  "measure_only": 7,
+  "kind_clash": 13,
+  "person": 17,
+  "items": 46
+ },
+ "places": [
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Custodial Ownership",
+   "printed_label": "(new IRA accounts will require an additional application)",
+   "must": true,
+   "x0": 312.7,
+   "y0": 293.1,
+   "x1": 582.7,
+   "y1": 308.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Custodial Ownership"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p05-001",
+   "block": "B03"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "of the State of",
+   "printed_label": "Under the UGMA/UTMA of the State of",
+   "must": false,
+   "x0": 185.2,
+   "y0": 417.5,
+   "x1": 245.2,
+   "y1": 433.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "someone else",
+    "forType": "",
+    "other": "Custodian",
+    "required": false,
+    "review": false,
+    "label": "of the State of"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p05-002",
+   "block": "B04"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Other",
+   "printed_label": "Other",
+   "must": false,
+   "x0": 80.9,
+   "y0": 491.7,
+   "x1": 172.8,
+   "y1": 507.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "someone else",
+    "forType": "",
+    "other": "Custodian",
+    "required": false,
+    "review": false,
+    "label": "Other"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p05-003",
+   "block": "B04"
+  },
+  {
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "US Driver\u2019s License",
+   "printed_label": "o",
+   "must": false,
+   "x0": 41.5,
+   "y0": 374.0,
+   "x1": 49.5,
+   "y1": 382.0,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "US Driver\u2019s License"
+   },
+   "cand": "glyphbox",
+   "id": "p07-001",
+   "block": "B09"
+  },
+  {
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Passport without U.S. Visa",
+   "printed_label": "o",
+   "must": false,
+   "x0": 41.5,
+   "y0": 389.7,
+   "x1": 49.5,
+   "y1": 397.7,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Passport without U.S. Visa"
+   },
+   "cand": "glyphbox",
+   "id": "p07-002",
+   "block": "B09"
+  },
+  {
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Foreign national identity documents",
+   "printed_label": "Number",
+   "must": false,
+   "x0": 41.5,
+   "y0": 405.5,
+   "x1": 49.5,
+   "y1": 413.5,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Foreign national identity documents"
+   },
+   "cand": "glyphbox",
+   "id": "p07-003",
+   "block": "B09"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "For this type of account",
+   "printed_label": "1. An individual\u2019s account",
+   "must": true,
+   "x0": 40.5,
+   "y0": 165.6,
+   "x1": 346.5,
+   "y1": 181.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "For this type of account"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p14-001",
+   "block": "B14"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Give the SSN of",
+   "printed_label": "The individual",
+   "must": true,
+   "x0": 348.7,
+   "y0": 165.6,
+   "x1": 582.7,
+   "y1": 181.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Give the SSN of"
+   },
+   "cand": "rule",
+   "what": "tax number",
+   "id": "p14-002",
+   "block": "B14"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "For this type of account",
+   "printed_label": "6. Sole proprietorship or single-owner LLC",
+   "must": true,
+   "x0": 40.5,
+   "y0": 381.6,
+   "x1": 346.5,
+   "y1": 397.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "For this type of account"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p14-003",
+   "block": "B15"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Give the EIN of",
+   "printed_label": "The",
+   "must": true,
+   "x0": 348.7,
+   "y0": 381.6,
+   "x1": 582.7,
+   "y1": 397.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Give the EIN of"
+   },
+   "cand": "rule",
+   "what": "tax number",
+   "id": "p14-004",
+   "block": "B15"
+  },
+  {
+   "page": 22,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Common stock, $0.001 par value per share",
+   "printed_label": "Common stock, $0.001 par value per share",
+   "must": false,
+   "x0": 40.5,
+   "y0": 494.1,
+   "x1": 433.5,
+   "y1": 509.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Common stock, $0.001 par value per share"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p22-001",
+   "block": "B16"
+  },
+  {
+   "page": 27,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "/s/ Nicholas S. Schorsch",
+   "must": true,
+   "x0": 40.5,
+   "y0": 365.9,
+   "x1": 156.0,
+   "y1": 381.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p27-001",
+   "block": "B17"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    56.0,
+    231.4,
+    66.0,
+    241.4
+   ],
+   "caption": "IMMEDIATE",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    56.0,
+    273.4,
+    66.0,
+    283.4
+   ],
+   "caption": "FORM",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "kind-clash",
+   "page": 5,
+   "box": [
+    40.5,
+    302.0,
+    56.5,
+    317.5
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Individual"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i003",
+   "block": "B02"
+  },
+  {
+   "type": "kind-clash",
+   "page": 5,
+   "box": [
+    40.5,
+    318.5,
+    56.5,
+    334.0
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "someone else",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Joint Tenant (Joint accounts will be registered as joint ten"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "third-party",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a underscore candidate the measure reads as line",
+   "item": "i004",
+   "block": "B02"
+  },
+  {
+   "type": "reader-only",
+   "page": 5,
+   "box": [
+    311.5,
+    326.4,
+    317.5,
+    332
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "IRA"
+   },
+   "caption": "be registered as joint tenants with rights of",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i005",
+   "block": "B03"
+  },
+  {
+   "type": "reader-only",
+   "page": 5,
+   "box": [
+    336.1,
+    326.4,
+    342.1,
+    332
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "ROTH/IRA"
+   },
+   "caption": "as joint tenants with rights of o IRA",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i006",
+   "block": "B03"
+  },
+  {
+   "type": "reader-only",
+   "page": 5,
+   "box": [
+    386.5,
+    326.4,
+    392.5,
+    332
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "SEP/IRA"
+   },
+   "caption": "tenants with rights of o IRA o ROTH/IRA",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i007",
+   "block": "B03"
+  },
+  {
+   "type": "reader-only",
+   "page": 5,
+   "box": [
+    428.1,
+    326.4,
+    434.1,
+    332
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "SIMPLE"
+   },
+   "caption": "rights of o IRA o ROTH/IRA o SEP/IRA",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i008",
+   "block": "B03"
+  },
+  {
+   "type": "reader-only",
+   "page": 5,
+   "box": [
+    470.7,
+    326.4,
+    476.7,
+    332
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "OTHER"
+   },
+   "caption": "o IRA o ROTH/IRA o SEP/IRA o SIMPLE",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i009",
+   "block": "B03"
+  },
+  {
+   "type": "kind-clash",
+   "page": 5,
+   "box": [
+    40.5,
+    343.2,
+    56.5,
+    358.7
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "someone else",
+    "forType": "",
+    "other": "Custodian",
+    "required": false,
+    "review": false,
+    "label": "Tenants in Common"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "third-party",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i010",
+   "block": "B02"
+  },
+  {
+   "type": "kind-clash",
+   "page": 5,
+   "box": [
+    40.5,
+    359.7,
+    56.5,
+    375.2
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "someone else",
+    "forType": "",
+    "other": "Custodian",
+    "required": false,
+    "review": false,
+    "label": "TOD \u2013 Optional designation of beneficiaries"
+   },
+   "caption": "Death",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "third-party",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i011",
+   "block": "B02"
+  },
+  {
+   "type": "kind-clash",
+   "page": 5,
+   "box": [
+    40.5,
+    401.0,
+    56.5,
+    416.5
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "someone else",
+    "forType": "",
+    "other": "Custodian",
+    "required": false,
+    "review": false,
+    "label": "Uniform Gift/Transfer to Minors (UGMA/UTMA)"
+   },
+   "caption": "Under",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "third-party",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i012",
+   "block": "B04"
+  },
+  {
+   "type": "kind-clash",
+   "page": 5,
+   "box": [
+    40.5,
+    434.0,
+    56.5,
+    449.5
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "someone else",
+    "forType": "",
+    "other": "Custodian",
+    "required": false,
+    "review": false,
+    "label": "Pension Plan (Include Plan Documents)"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "third-party",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i013",
+   "block": "B04"
+  },
+  {
+   "type": "kind-clash",
+   "page": 5,
+   "box": [
+    40.5,
+    450.5,
+    56.5,
+    466.0
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "someone else",
+    "forType": "",
+    "other": "Custodian",
+    "required": false,
+    "review": false,
+    "label": "Trust (Include title and signature pages of Trust Documents)"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "third-party",
+    "what": "title"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i014",
+   "block": "B04"
+  },
+  {
+   "type": "kind-clash",
+   "page": 5,
+   "box": [
+    40.5,
+    467.0,
+    56.5,
+    482.5
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "someone else",
+    "forType": "",
+    "other": "Custodian",
+    "required": false,
+    "review": false,
+    "label": "Corporation or Partnership (Include Corporate Resolution or"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "third-party",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i015",
+   "block": "B04"
+  },
+  {
+   "type": "kind-clash",
+   "page": 5,
+   "box": [
+    40.5,
+    491.7,
+    56.5,
+    507.2
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "someone else",
+    "forType": "",
+    "other": "Custodian",
+    "required": false,
+    "review": false,
+    "label": "Other"
+   },
+   "caption": "3. INVESTOR",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "third-party",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i016",
+   "block": "B04"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    145.0,
+    593.0,
+    213.3,
+    608.5
+   ],
+   "caption": "Date of Birth: (mm/dd/yyyy)",
+   "cand": {
+    "kind": "dateparts",
+    "family": "line",
+    "why": "a date printed in 3 parts"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "date"
+   },
+   "item": "i017",
+   "block": "B05"
+  },
+  {
+   "type": "measure-only",
+   "page": 7,
+   "box": [
+    145.0,
+    147.5,
+    213.3,
+    163.0
+   ],
+   "caption": "Date of Birth: (mm/dd/yyyy)",
+   "cand": {
+    "kind": "dateparts",
+    "family": "line",
+    "why": "a date printed in 3 parts"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "date"
+   },
+   "item": "i018",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 7,
+   "box": [
+    481.7,
+    242.4,
+    567.2,
+    257.9
+   ],
+   "caption": "in sections 3A and 3B) Date of Trust",
+   "cand": {
+    "kind": "dateparts",
+    "family": "line",
+    "why": "a date printed in 3 parts"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "date"
+   },
+   "item": "i019",
+   "block": "B07"
+  },
+  {
+   "type": "reader-only",
+   "page": 7,
+   "box": [
+    173.7,
+    343.7,
+    179.7,
+    349.3
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Non-permanent resident o"
+   },
+   "caption": "Immigration Status: Permanent resident",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i020",
+   "block": "B08"
+  },
+  {
+   "type": "reader-only",
+   "page": 7,
+   "box": [
+    118,
+    375.9,
+    124,
+    381.5
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "INS Permanent resident alien card"
+   },
+   "caption": "o US Driver\u2019s License",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i021",
+   "block": "B10"
+  },
+  {
+   "type": "reader-only",
+   "page": 7,
+   "box": [
+    237.7,
+    375.9,
+    243.7,
+    381.5
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Passport with U.S. Visa"
+   },
+   "caption": "Driver\u2019s License o INS Permanent resident alien card",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i022",
+   "block": "B11"
+  },
+  {
+   "type": "reader-only",
+   "page": 7,
+   "box": [
+    323.2,
+    375.9,
+    329.2,
+    381.5
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Employment Authorization Document"
+   },
+   "caption": "resident alien card o Passport with U.S. Visa",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i023",
+   "block": "B12"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    56.2,
+    546.2,
+    76.2,
+    561.7
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Reinvest/Distribution Reinvestment Plan (see the final prosp"
+   },
+   "caption": "A",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i024",
+   "block": "B13"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    56.2,
+    564.2,
+    76.2,
+    579.7
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Mail Check to the address of record"
+   },
+   "caption": "B",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i025",
+   "block": "B13"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    56.2,
+    582.2,
+    76.2,
+    597.7
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Credit Distributions to my IRA or Other Custodian Account"
+   },
+   "caption": "C",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i026",
+   "block": "B13"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    56.2,
+    600.2,
+    76.2,
+    615.7
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Cash/Direct Deposit (Please attach a pre-printed voided chec"
+   },
+   "caption": "D",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i027",
+   "block": "B13"
+  },
+  {
+   "type": "measure-only",
+   "page": 27,
+   "box": [
+    165.0,
+    365.9,
+    396.0,
+    381.4
+   ],
+   "caption": "Chief Executive Officer and Chairman of the Board",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i028",
+   "block": "B17"
+  },
+  {
+   "type": "measure-only",
+   "page": 27,
+   "box": [
+    405.0,
+    365.9,
+    496.5,
+    381.4
+   ],
+   "caption": "January 14, 2011",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i029",
+   "block": "B17"
+  },
+  {
+   "item": "i030",
+   "type": "person",
+   "page": 5,
+   "box": [
+    56.0,
+    231.4,
+    66.0,
+    241.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i031",
+   "type": "person",
+   "page": 5,
+   "box": [
+    40.5,
+    273.4,
+    66.0,
+    375.2
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "third-party"
+   },
+   "heading": "PAID FOR THIS PURCHASE, BUT I/WE WILL RECEIVE ADDITIONAL SHARES OR FRACTIONS THEREOF."
+  },
+  {
+   "item": "i032",
+   "type": "person",
+   "page": 5,
+   "box": [
+    311.5,
+    293.1,
+    582.7,
+    332
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "o CHECK HERE IF ADDITIONAL PURCHASE AND COMPLETE NUMBER 3 BELOW."
+  },
+  {
+   "item": "i033",
+   "type": "person",
+   "page": 5,
+   "box": [
+    40.5,
+    401.0,
+    245.2,
+    507.2
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "third-party"
+   },
+   "heading": "Individual Third Party Administered Custodial Plan"
+  },
+  {
+   "item": "i034",
+   "type": "person",
+   "page": 5,
+   "box": [
+    145.0,
+    593.0,
+    213.3,
+    608.5
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i035",
+   "type": "person",
+   "page": 7,
+   "box": [
+    145.0,
+    147.5,
+    213.3,
+    163.0
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "TABLE OF CONTENTS"
+  },
+  {
+   "item": "i036",
+   "type": "person",
+   "page": 7,
+   "box": [
+    481.7,
+    242.4,
+    567.2,
+    257.9
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i037",
+   "type": "person",
+   "page": 7,
+   "box": [
+    173.7,
+    343.7,
+    179.7,
+    349.3
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Entity Name/Title of Trust: Tax ID Number:"
+  },
+  {
+   "item": "i038",
+   "type": "person",
+   "page": 7,
+   "box": [
+    41.5,
+    374.0,
+    49.5,
+    413.5
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Entity Name/Title of Trust: Tax ID Number:"
+  },
+  {
+   "item": "i039",
+   "type": "person",
+   "page": 7,
+   "box": [
+    118,
+    375.9,
+    124,
+    381.5
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Entity Name/Title of Trust: Tax ID Number:"
+  },
+  {
+   "item": "i040",
+   "type": "person",
+   "page": 7,
+   "box": [
+    237.7,
+    375.9,
+    243.7,
+    381.5
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Entity Name/Title of Trust: Tax ID Number:"
+  },
+  {
+   "item": "i041",
+   "type": "person",
+   "page": 7,
+   "box": [
+    323.2,
+    375.9,
+    329.2,
+    381.5
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Entity Name/Title of Trust: Tax ID Number:"
+  },
+  {
+   "item": "i042",
+   "type": "person",
+   "page": 7,
+   "box": [
+    56.2,
+    546.2,
+    76.2,
+    615.7
+   ],
+   "block": "B13",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i043",
+   "type": "person",
+   "page": 14,
+   "box": [
+    40.5,
+    165.6,
+    582.7,
+    181.1
+   ],
+   "block": "B14",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "NUMBER ON SUBSTITUTE FORM W-9"
+  },
+  {
+   "item": "i044",
+   "type": "person",
+   "page": 14,
+   "box": [
+    40.5,
+    381.6,
+    582.7,
+    397.1
+   ],
+   "block": "B15",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i045",
+   "type": "person",
+   "page": 22,
+   "box": [
+    40.5,
+    494.1,
+    433.5,
+    509.6
+   ],
+   "block": "B16",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i046",
+   "type": "person",
+   "page": 27,
+   "box": [
+    40.5,
+    365.9,
+    496.5,
+    381.4
+   ],
+   "block": "B17",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 5,
+   "block": "B01",
+   "box": [
+    56.0,
+    231.4,
+    66.0,
+    241.4
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT",
+   "context": [
+    "Make all checks payable as described in the Instruction Page.",
+    "Investment Amount $ Brokerage Account Number",
+    "The minimum initial investment is 100 shares ($1,000) (If applicable)",
+    "Cash, cashier\u2019s checks/official bank checks in bearer form, foreign checks, money orders, third party checks, or travele"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B02",
+   "box": [
+    40.5,
+    273.4,
+    66.0,
+    375.2
+   ],
+   "heading": "PAID FOR THIS PURCHASE, BUT I/WE WILL RECEIVE ADDITIONAL SHARES OR FRACTIONS THEREOF.",
+   "context": [
+    "Cash, cashier\u2019s checks/official bank checks in bearer form, foreign checks, money orders, third party checks, or travele",
+    "o I/WE AM/ARE EMPLOYEE(S) OF REALTY CAPITAL SECURITIES, LLC, AN AFFILIATE, BROKER AND/OR AN",
+    "IMMEDIATE FAMILY MEMBER OF ONE OF THE ABOVE. I/WE ACKNOWLEDGE THAT NO COMMISSION WILL BE",
+    "PAID FOR THIS PURCHASE, BUT I/WE WILL RECEIVE ADDITIONAL SHARES OR FRACTIONS THEREOF."
+   ],
+   "places": [],
+   "items": [
+    "i002",
+    "i003",
+    "i004",
+    "i010",
+    "i011"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B03",
+   "box": [
+    311.5,
+    293.1,
+    582.7,
+    332
+   ],
+   "heading": "o CHECK HERE IF ADDITIONAL PURCHASE AND COMPLETE NUMBER 3 BELOW.",
+   "context": [
+    "o I/WE AM/ARE EMPLOYEE(S) OF REALTY CAPITAL SECURITIES, LLC, AN AFFILIATE, BROKER AND/OR AN",
+    "IMMEDIATE FAMILY MEMBER OF ONE OF THE ABOVE. I/WE ACKNOWLEDGE THAT NO COMMISSION WILL BE",
+    "PAID FOR THIS PURCHASE, BUT I/WE WILL RECEIVE ADDITIONAL SHARES OR FRACTIONS THEREOF.",
+    "o CHECK HERE IF ADDITIONAL PURCHASE AND COMPLETE NUMBER 3 BELOW."
+   ],
+   "places": [
+    "p05-001"
+   ],
+   "items": [
+    "i005",
+    "i006",
+    "i007",
+    "i008",
+    "i009"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B04",
+   "box": [
+    40.5,
+    401.0,
+    245.2,
+    507.2
+   ],
+   "heading": "Individual Third Party Administered Custodial Plan",
+   "context": [
+    "TOD \u2013 Optional designation of beneficiaries for individual joint owners with",
+    "rights of survivorship or tenants by the entireties.(Please complete Transfer on City, State Zip",
+    "Death Registration Form. You may download the form at",
+    "www.americanrealtycap.com/materials/) Custodian Information (To be completed by Custodian above)"
+   ],
+   "places": [
+    "p05-002",
+    "p05-003"
+   ],
+   "items": [
+    "i012",
+    "i013",
+    "i014",
+    "i015",
+    "i016"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B05",
+   "box": [
+    145.0,
+    593.0,
+    213.3,
+    608.5
+   ],
+   "heading": "",
+   "context": [
+    "A. Individual/Trust/Beneficial Owner",
+    "First Name: Middle Name:",
+    "Last Name: Tax ID or SS#:",
+    "Street Address: City: State: Zip:"
+   ],
+   "places": [],
+   "items": [
+    "i017"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B06",
+   "box": [
+    145.0,
+    147.5,
+    213.3,
+    163.0
+   ],
+   "heading": "TABLE OF CONTENTS",
+   "context": [
+    "B. Joint Owner/Co-Trustee/Minor",
+    "First Name: Middle Name:",
+    "Last Name: Tax ID or SS#:",
+    "Street Address: City: State: Zip:"
+   ],
+   "places": [],
+   "items": [
+    "i018"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B07",
+   "box": [
+    481.7,
+    242.4,
+    567.2,
+    257.9
+   ],
+   "heading": "",
+   "context": [
+    "Daytime Phone #:",
+    "C. Residential Street Address (This section must be completed for verification purposes if mailing address in section 3A",
+    "Street Address:",
+    "City: State: Zip:"
+   ],
+   "places": [],
+   "items": [
+    "i019"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B08",
+   "box": [
+    173.7,
+    343.7,
+    179.7,
+    349.3
+   ],
+   "heading": "Entity Name/Title of Trust: Tax ID Number:",
+   "context": [
+    "Entity Name/Title of Trust: Tax ID Number:",
+    "E. Government ID (Foreign Citizens only) Identification documents must have a reference number and photo. Please attach ",
+    "Place of Birth:",
+    "City State/Providence Country"
+   ],
+   "places": [],
+   "items": [
+    "i020"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B09",
+   "box": [
+    41.5,
+    374.0,
+    49.5,
+    413.5
+   ],
+   "heading": "Entity Name/Title of Trust: Tax ID Number:",
+   "context": [
+    "Place of Birth:",
+    "City State/Providence Country",
+    "Immigration Status: Permanent resident o Non-permanent resident o Non-resident o",
+    "Check which type of document you are providing:"
+   ],
+   "places": [
+    "p07-001",
+    "p07-002",
+    "p07-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 7,
+   "block": "B10",
+   "box": [
+    118,
+    375.9,
+    124,
+    381.5
+   ],
+   "heading": "Entity Name/Title of Trust: Tax ID Number:",
+   "context": [
+    "Place of Birth:",
+    "City State/Providence Country",
+    "Immigration Status: Permanent resident o Non-permanent resident o Non-resident o",
+    "Check which type of document you are providing:"
+   ],
+   "places": [],
+   "items": [
+    "i021"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B11",
+   "box": [
+    237.7,
+    375.9,
+    243.7,
+    381.5
+   ],
+   "heading": "Entity Name/Title of Trust: Tax ID Number:",
+   "context": [
+    "Place of Birth:",
+    "City State/Providence Country",
+    "Immigration Status: Permanent resident o Non-permanent resident o Non-resident o",
+    "Check which type of document you are providing:"
+   ],
+   "places": [],
+   "items": [
+    "i022"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B12",
+   "box": [
+    323.2,
+    375.9,
+    329.2,
+    381.5
+   ],
+   "heading": "Entity Name/Title of Trust: Tax ID Number:",
+   "context": [
+    "Place of Birth:",
+    "City State/Providence Country",
+    "Immigration Status: Permanent resident o Non-permanent resident o Non-resident o",
+    "Check which type of document you are providing:"
+   ],
+   "places": [],
+   "items": [
+    "i023"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B13",
+   "box": [
+    56.2,
+    546.2,
+    76.2,
+    615.7
+   ],
+   "heading": "",
+   "context": [
+    "Complete this section to enroll in the Distribution Reinvestment Plan or to elect how you wish to receive your dividend",
+    "distributions.",
+    "IRA accounts may not direct distributions without the custodian\u2019s approval.",
+    "I hereby subscribe for Shares of Business Development Corporation of America and elect the distribution option indicated"
+   ],
+   "places": [],
+   "items": [
+    "i024",
+    "i025",
+    "i026",
+    "i027"
+   ]
+  },
+  {
+   "page": 14,
+   "block": "B14",
+   "box": [
+    40.5,
+    165.6,
+    582.7,
+    181.1
+   ],
+   "heading": "NUMBER ON SUBSTITUTE FORM W-9",
+   "context": [
+    "NUMBER ON SUBSTITUTE FORM W-9",
+    "What Number to Give the Requester. \u2013 Social Security numbers (\u201cSSN\u201d) have nine digits separated by two hyphens: i.e., 00",
+    "00-0000. Employer identification numbers (\u201cEIN\u201d) have nine digits separated by only one hyphen: i.e., 00-0000000. The ta",
+    "below will help determine the number to give the payer. All \u201cSection\u201d references are to the Internal Revenue Code of 198"
+   ],
+   "places": [
+    "p14-001",
+    "p14-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B15",
+   "box": [
+    40.5,
+    381.6,
+    582.7,
+    397.1
+   ],
+   "heading": "",
+   "context": [
+    "law",
+    "owner(3)",
+    "The",
+    "5. Sole proprietorship or single-owner LLC"
+   ],
+   "places": [
+    "p14-003",
+    "p14-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 22,
+   "block": "B16",
+   "box": [
+    40.5,
+    494.1,
+    433.5,
+    509.6
+   ],
+   "heading": "",
+   "context": [
+    "in the prospectus contained herein.",
+    "Item 29. Number of Holders of Securities",
+    "The following table sets forth the number of record holders of the Registrant\u2019s capital stock at J anuary 13, 2011.",
+    "Title of Class Number of"
+   ],
+   "places": [
+    "p22-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 27,
+   "block": "B17",
+   "box": [
+    40.5,
+    365.9,
+    496.5,
+    381.4
+   ],
+   "heading": "",
+   "context": [
+    "and necessary to be done in and about the premises, as fully to all intents and purposes as he or she might or could do ",
+    "hereby ratifying and confirming all that said attorneys-in-fact and agents, or their substitute or substitutes, may lawf",
+    "to be done by virtue hereof.",
+    "Pursuant to the requirements of the Securities Act of 1933, as amended, this Registration Statement has been signed belo"
+   ],
+   "places": [
+    "p27-001"
+   ],
+   "items": [
+    "i028",
+    "i029"
+   ]
+  }
+ ]
+}

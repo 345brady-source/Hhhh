@@ -1,0 +1,1220 @@
+{
+ "id": "a045",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:04Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 14,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text"
+ },
+ "run": "out-18/set-a/a045/result.json",
+ "candidates": "f131929f8297b1f9-f01586d5.json",
+ "counts": {
+  "fields": 15,
+  "counted_candidates": 20,
+  "pairs": 13,
+  "auto": 13,
+  "reader_only": 2,
+  "measure_only": 7,
+  "kind_clash": 0,
+  "person": 15,
+  "items": 24
+ },
+ "places": [
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of Units",
+   "printed_label": "Number of Units",
+   "must": true,
+   "x0": 103.3,
+   "y0": 45.2,
+   "x1": 148.2,
+   "y1": 60.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Number of Units"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p05-001",
+   "block": "B03"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "comprised of",
+   "printed_label": ", comprised of",
+   "must": true,
+   "x0": 208.2,
+   "y0": 45.2,
+   "x1": 253.2,
+   "y1": 60.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "comprised of"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p05-002",
+   "block": "B03"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "and warrants to purchase",
+   "printed_label": "shares and warrants to purchase",
+   "must": true,
+   "x0": 385.3,
+   "y0": 45.2,
+   "x1": 415.3,
+   "y1": 60.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "and warrants to purchase"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p05-003",
+   "block": "B04"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "Aggregate Purchase Price: $",
+   "must": false,
+   "x0": 141.3,
+   "y0": 69.2,
+   "x1": 186.3,
+   "y1": 84.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p05-004",
+   "block": "B03"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "Aggregate Purchase Price: $",
+   "must": false,
+   "x0": 141.3,
+   "y0": 117.2,
+   "x1": 186.3,
+   "y1": 132.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p05-005",
+   "block": "B05"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 63.7,
+   "y0": 261.2,
+   "x1": 323.6,
+   "y1": 276.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p13-001",
+   "block": "B13"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 63.7,
+   "y0": 273.2,
+   "x1": 323.6,
+   "y1": 288.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p13-002",
+   "block": "B13"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 63.7,
+   "y0": 285.2,
+   "x1": 323.6,
+   "y1": 300.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p13-003",
+   "block": "B13"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "Fax",
+   "must": false,
+   "x0": 63.7,
+   "y0": 297.2,
+   "x1": 323.6,
+   "y1": 312.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "phone",
+   "id": "p13-004",
+   "block": "B13"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Fax",
+   "printed_label": "Fax",
+   "must": false,
+   "x0": 84.0,
+   "y0": 309.2,
+   "x1": 323.9,
+   "y1": 324.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Fax"
+   },
+   "cand": "underscore",
+   "what": "phone",
+   "id": "p13-005",
+   "block": "B13"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 27.7,
+   "y0": 345.1,
+   "x1": 232.7,
+   "y1": 360.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p13-006",
+   "block": "B13"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "DTC Participant Number",
+   "printed_label": "6. DTC Participant Number",
+   "must": true,
+   "x0": 205.1,
+   "y0": 393.1,
+   "x1": 410.0,
+   "y1": 408.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "DTC Participant Number"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p13-007",
+   "block": "B14"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 63.7,
+   "y0": 441.1,
+   "x1": 373.6,
+   "y1": 456.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p13-008",
+   "block": "B15"
+  }
+ ],
+ "items": [
+  {
+   "type": "reader-only",
+   "page": 2,
+   "box": [
+    62.7,
+    240.5,
+    84.5,
+    252
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "A"
+   },
+   "caption": "hereto)",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "reader-only",
+   "page": 3,
+   "box": [
+    62.7,
+    144.5,
+    85.3,
+    156
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "B"
+   },
+   "caption": "and the",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 6,
+   "box": [
+    345.0,
+    190.7,
+    540.0,
+    206.2
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i003",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 6,
+   "box": [
+    345.0,
+    264.2,
+    540.0,
+    279.7
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i004",
+   "block": "B07"
+  },
+  {
+   "type": "measure-only",
+   "page": 6,
+   "box": [
+    345.0,
+    337.7,
+    540.0,
+    353.2
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i005",
+   "block": "B08"
+  },
+  {
+   "type": "measure-only",
+   "page": 6,
+   "box": [
+    345.0,
+    411.2,
+    540.0,
+    426.7
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i006",
+   "block": "B09"
+  },
+  {
+   "type": "measure-only",
+   "page": 6,
+   "box": [
+    322.5,
+    484.7,
+    540.0,
+    500.2
+   ],
+   "caption": "David Gordon",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i007",
+   "block": "B10"
+  },
+  {
+   "type": "measure-only",
+   "page": 13,
+   "box": [
+    63.7,
+    165.2,
+    408.6,
+    180.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i008",
+   "block": "B11"
+  },
+  {
+   "type": "measure-only",
+   "page": 13,
+   "box": [
+    63.7,
+    213.2,
+    408.6,
+    228.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i009",
+   "block": "B12"
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 2,
+   "box": [
+    62.7,
+    240.5,
+    84.5,
+    252
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 3,
+   "box": [
+    62.7,
+    144.5,
+    85.3,
+    156
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FOLLOWING ACCOUNT:"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 5,
+   "box": [
+    103.3,
+    45.2,
+    253.2,
+    84.7
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 5,
+   "box": [
+    385.3,
+    45.2,
+    415.3,
+    60.7
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 5,
+   "box": [
+    141.3,
+    117.2,
+    186.3,
+    132.7
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 6,
+   "box": [
+    345.0,
+    190.7,
+    540.0,
+    206.2
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "AUTHORIZED AGENT"
+  },
+  {
+   "item": "i016",
+   "type": "person",
+   "page": 6,
+   "box": [
+    345.0,
+    264.2,
+    540.0,
+    279.7
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "IROQUOIS MASTER FUND LTD."
+  },
+  {
+   "item": "i017",
+   "type": "person",
+   "page": 6,
+   "box": [
+    345.0,
+    337.7,
+    540.0,
+    353.2
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "COFFEE HOLDING CO., INC."
+  },
+  {
+   "item": "i018",
+   "type": "person",
+   "page": 6,
+   "box": [
+    345.0,
+    411.2,
+    540.0,
+    426.7
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "A GORDON FAMILY VENTURES LLC"
+  },
+  {
+   "item": "i019",
+   "type": "person",
+   "page": 6,
+   "box": [
+    322.5,
+    484.7,
+    540.0,
+    500.2
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "A GORDON FAMILY VENTURES LLC"
+  },
+  {
+   "item": "i020",
+   "type": "person",
+   "page": 13,
+   "box": [
+    63.7,
+    165.2,
+    408.6,
+    180.7
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "INVESTOR QUESTIONNAIRE"
+  },
+  {
+   "item": "i021",
+   "type": "person",
+   "page": 13,
+   "box": [
+    63.7,
+    213.2,
+    408.6,
+    228.7
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "INVESTOR QUESTIONNAIRE"
+  },
+  {
+   "item": "i022",
+   "type": "person",
+   "page": 13,
+   "box": [
+    27.7,
+    261.2,
+    323.9,
+    360.6
+   ],
+   "block": "B13",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i023",
+   "type": "person",
+   "page": 13,
+   "box": [
+    205.1,
+    393.1,
+    410.0,
+    408.6
+   ],
+   "block": "B14",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i024",
+   "type": "person",
+   "page": 13,
+   "box": [
+    63.7,
+    441.1,
+    373.6,
+    456.6
+   ],
+   "block": "B15",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 2,
+   "block": "B01",
+   "box": [
+    62.7,
+    240.5,
+    84.5,
+    252
+   ],
+   "heading": "",
+   "context": [
+    "(c) The Investor acknowledges that the Offering is not being underwritten by Roth Capital Partners, LLC and",
+    "Maxim Group LLC, the placement agents for the Offering (the \u201cPlacement Agents\u201d), and that there is no minimum offering a",
+    "5. The manner of settlement of the Shares purchased by the Investor shall be determined by such Investor as follows (che",
+    "one):"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B02",
+   "box": [
+    62.7,
+    144.5,
+    85.3,
+    156
+   ],
+   "heading": "FOLLOWING ACCOUNT:",
+   "context": [
+    "FOR THE UNITS AND THE SELLING STOCKHOLDER SHARES BEING PURCHASED BY THE INVESTOR TO THE",
+    "FOLLOWING ACCOUNT:",
+    "[Account information to be provided under separate cover]",
+    "-- OR --"
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B03",
+   "box": [
+    103.3,
+    45.2,
+    253.2,
+    84.7
+   ],
+   "heading": "",
+   "context": [],
+   "places": [
+    "p05-001",
+    "p05-002",
+    "p05-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B04",
+   "box": [
+    385.3,
+    45.2,
+    415.3,
+    60.7
+   ],
+   "heading": "",
+   "context": [],
+   "places": [
+    "p05-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B05",
+   "box": [
+    141.3,
+    117.2,
+    186.3,
+    132.7
+   ],
+   "heading": "",
+   "context": [
+    "Number of Units: , comprised of shares and warrants to purchase shares",
+    "Purchase Price Per Unit: $10.40",
+    "Aggregate Purchase Price: $",
+    "Number of Selling Stockholder Shares:"
+   ],
+   "places": [
+    "p05-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B06",
+   "box": [
+    345.0,
+    190.7,
+    540.0,
+    206.2
+   ],
+   "heading": "AUTHORIZED AGENT",
+   "context": [
+    "INVESTOR:",
+    "CAPITAL VENTURES INTERNATIONAL BY",
+    "HEIGHTS CAPITAL MANAGEMENT, ITS",
+    "AUTHORIZED AGENT"
+   ],
+   "places": [],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 6,
+   "block": "B07",
+   "box": [
+    345.0,
+    264.2,
+    540.0,
+    279.7
+   ],
+   "heading": "IROQUOIS MASTER FUND LTD.",
+   "context": [
+    "By: /s/ Martin Kobinger",
+    "Name: Martin Kobinger",
+    "Title: Investment Manager",
+    "IROQUOIS MASTER FUND LTD."
+   ],
+   "places": [],
+   "items": [
+    "i004"
+   ]
+  },
+  {
+   "page": 6,
+   "block": "B08",
+   "box": [
+    345.0,
+    337.7,
+    540.0,
+    353.2
+   ],
+   "heading": "COFFEE HOLDING CO., INC.",
+   "context": [
+    "By: /s/ Joshua Silverman",
+    "Name: Joshua Silverman",
+    "Title: Authorized Signatory",
+    "COFFEE HOLDING CO., INC."
+   ],
+   "places": [],
+   "items": [
+    "i005"
+   ]
+  },
+  {
+   "page": 6,
+   "block": "B09",
+   "box": [
+    345.0,
+    411.2,
+    540.0,
+    426.7
+   ],
+   "heading": "A GORDON FAMILY VENTURES LLC",
+   "context": [
+    "By: /s/ Andrew Gordon",
+    "Name: Andrew Gordon",
+    "Title: President and Chief Executive Officer",
+    "A GORDON FAMILY VENTURES LLC"
+   ],
+   "places": [],
+   "items": [
+    "i006"
+   ]
+  },
+  {
+   "page": 6,
+   "block": "B10",
+   "box": [
+    322.5,
+    484.7,
+    540.0,
+    500.2
+   ],
+   "heading": "A GORDON FAMILY VENTURES LLC",
+   "context": [
+    "By: /s/ Andrew Gordon",
+    "Name: Andrew Gordon",
+    "Title: Trustee",
+    "100,000 Shares"
+   ],
+   "places": [],
+   "items": [
+    "i007"
+   ]
+  },
+  {
+   "page": 13,
+   "block": "B11",
+   "box": [
+    63.7,
+    165.2,
+    408.6,
+    180.7
+   ],
+   "heading": "INVESTOR QUESTIONNAIRE",
+   "context": [
+    "COFFEE HOLDING CO., INC.",
+    "INVESTOR QUESTIONNAIRE",
+    "Pursuant to Section 3 of Annex I to the Agreement, please provide us with the following information:",
+    "1. The exact name that your Shares and Warrants are to be registered in. You may use a nominee name if appropriate:"
+   ],
+   "places": [],
+   "items": [
+    "i008"
+   ]
+  },
+  {
+   "page": 13,
+   "block": "B12",
+   "box": [
+    63.7,
+    213.2,
+    408.6,
+    228.7
+   ],
+   "heading": "INVESTOR QUESTIONNAIRE",
+   "context": [
+    "INVESTOR QUESTIONNAIRE",
+    "Pursuant to Section 3 of Annex I to the Agreement, please provide us with the following information:",
+    "1. The exact name that your Shares and Warrants are to be registered in. You may use a nominee name if appropriate:",
+    "2. The relationship between the Investor and the registered holder listed in response to item 1 above:"
+   ],
+   "places": [],
+   "items": [
+    "i009"
+   ]
+  },
+  {
+   "page": 13,
+   "block": "B13",
+   "box": [
+    27.7,
+    261.2,
+    323.9,
+    360.6
+   ],
+   "heading": "",
+   "context": [
+    "Pursuant to Section 3 of Annex I to the Agreement, please provide us with the following information:",
+    "1. The exact name that your Shares and Warrants are to be registered in. You may use a nominee name if appropriate:",
+    "2. The relationship between the Investor and the registered holder listed in response to item 1 above:",
+    "3. The mailing address of the registered holder listed in response to item 1 above:"
+   ],
+   "places": [
+    "p13-001",
+    "p13-002",
+    "p13-003",
+    "p13-004",
+    "p13-005",
+    "p13-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 13,
+   "block": "B14",
+   "box": [
+    205.1,
+    393.1,
+    410.0,
+    408.6
+   ],
+   "heading": "",
+   "context": [
+    "3. The mailing address of the registered holder listed in response to item 1 above:",
+    "Fax:",
+    "4. The Social Security Number or Tax Identification Number of the registered holder listed in the response to item 1 abo",
+    "5. Name of DTC Participant (broker-dealer at which the account or accounts to be credited with the Shares are maintained"
+   ],
+   "places": [
+    "p13-007"
+   ],
+   "items": []
+  },
+  {
+   "page": 13,
+   "block": "B15",
+   "box": [
+    63.7,
+    441.1,
+    373.6,
+    456.6
+   ],
+   "heading": "",
+   "context": [
+    "4. The Social Security Number or Tax Identification Number of the registered holder listed in the response to item 1 abo",
+    "5. Name of DTC Participant (broker-dealer at which the account or accounts to be credited with the Shares are maintained",
+    "6. DTC Participant Number:",
+    "7. Name of Account at DTC Participant being credited with the Shares:"
+   ],
+   "places": [
+    "p13-008"
+   ],
+   "items": []
+  }
+ ]
+}

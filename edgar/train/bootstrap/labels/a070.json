@@ -1,0 +1,692 @@
+{
+ "id": "a070",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:04Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 2,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text"
+ },
+ "run": "out-18/set-a/a070/result.json",
+ "candidates": "6fe52bfd7c26967d-f01586d5.json",
+ "counts": {
+  "fields": 11,
+  "counted_candidates": 15,
+  "pairs": 11,
+  "auto": 4,
+  "reader_only": 0,
+  "measure_only": 4,
+  "kind_clash": 7,
+  "person": 6,
+  "items": 17
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "I hereby subscribe to",
+   "printed_label": "I hereby subscribe to",
+   "must": true,
+   "x0": 192.2,
+   "y0": 169.8,
+   "x1": 245.1,
+   "y1": 185.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "I hereby subscribe to"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "Share for a Total Purchase Price of $",
+   "must": false,
+   "x0": 274.4,
+   "y0": 181.0,
+   "x1": 309.6,
+   "y1": 196.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-002",
+   "block": "B01"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Other",
+   "printed_label": "Other (Specify)",
+   "must": true,
+   "x0": 303.8,
+   "y0": 484.8,
+   "x1": 397.7,
+   "y1": 500.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Other"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-003",
+   "block": "B04"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "-",
+   "printed_label": "",
+   "must": true,
+   "x0": 45.5,
+   "y0": 33.9,
+   "x1": 145.3,
+   "y1": 49.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "-"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-001",
+   "block": "B06"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    33.7,
+    428.5,
+    51.4,
+    444.0
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Individual"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i001",
+   "block": "B02"
+  },
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    192.2,
+    428.5,
+    209.8,
+    444.0
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Tenants in Common"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i002",
+   "block": "B03"
+  },
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    33.7,
+    439.8,
+    51.4,
+    455.3
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Community Property"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i003",
+   "block": "B02"
+  },
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    192.2,
+    439.8,
+    209.8,
+    455.3
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Corporation"
+   },
+   "caption": "Community Property",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i004",
+   "block": "B03"
+  },
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    33.7,
+    451.0,
+    51.4,
+    466.5
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Partnership"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i005",
+   "block": "B02"
+  },
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    192.2,
+    451.0,
+    209.8,
+    466.5
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Pension or Profit Sharing Plan"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i006",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    33.7,
+    462.3,
+    51.4,
+    477.8
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i007",
+   "block": "B02"
+  },
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    192.2,
+    462.3,
+    209.8,
+    477.8
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Custodian under Uniform Gift to"
+   },
+   "caption": "Joint Tenants with",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i008",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    192.2,
+    484.8,
+    209.9,
+    500.3
+   ],
+   "caption": "NUMBER,",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i009",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    45.5,
+    639.9,
+    242.2,
+    655.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "captionsplit",
+    "family": "line",
+    "why": "one of 2 places on one line (captions under the line)"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i010",
+   "block": "B05"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    242.2,
+    639.9,
+    509.2,
+    655.4
+   ],
+   "caption": "Signature of Co-Subscriber",
+   "cand": {
+    "kind": "captionsplit",
+    "family": "sign",
+    "why": "one of 2 places on one line (captions under the line)"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i011",
+   "block": "B05"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 1,
+   "box": [
+    192.2,
+    169.8,
+    309.6,
+    196.5
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 1,
+   "box": [
+    33.7,
+    428.5,
+    51.4,
+    477.8
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 1,
+   "box": [
+    192.2,
+    428.5,
+    209.9,
+    500.3
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 1,
+   "box": [
+    303.8,
+    484.8,
+    397.7,
+    500.3
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Joint Tenants with Custodian under Uniform Gift to"
+  },
+  {
+   "item": "i016",
+   "type": "person",
+   "page": 1,
+   "box": [
+    45.5,
+    639.9,
+    509.2,
+    655.4
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature:"
+  },
+  {
+   "item": "i017",
+   "type": "person",
+   "page": 2,
+   "box": [
+    45.5,
+    33.9,
+    145.3,
+    49.4
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    192.2,
+    169.8,
+    309.6,
+    196.5
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT",
+   "context": [
+    "<PAGE> 1",
+    "EXHIBIT 3.7",
+    "HEALTHTRONICS, INC.",
+    "SUBSCRIPTION AGREEMENT"
+   ],
+   "places": [
+    "p01-001",
+    "p01-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    33.7,
+    428.5,
+    51.4,
+    477.8
+   ],
+   "heading": "",
+   "context": [
+    "Name(s) in which Shares are to be registered:",
+    "Street Address:",
+    "City, State, Zip Code and Telephone Number:",
+    "Ownership Form (check one only):"
+   ],
+   "places": [],
+   "items": [
+    "i001",
+    "i003",
+    "i005",
+    "i007"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B03",
+   "box": [
+    192.2,
+    428.5,
+    209.9,
+    500.3
+   ],
+   "heading": "",
+   "context": [
+    "Name(s) in which Shares are to be registered:",
+    "Street Address:",
+    "City, State, Zip Code and Telephone Number:",
+    "Ownership Form (check one only):"
+   ],
+   "places": [],
+   "items": [
+    "i002",
+    "i004",
+    "i006",
+    "i008",
+    "i009"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B04",
+   "box": [
+    303.8,
+    484.8,
+    397.7,
+    500.3
+   ],
+   "heading": "Joint Tenants with Custodian under Uniform Gift to",
+   "context": [
+    "Individual Tenants in Common",
+    "Community Property Corporation",
+    "Partnership Pension or Profit Sharing Plan",
+    "Joint Tenants with Custodian under Uniform Gift to"
+   ],
+   "places": [
+    "p01-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B05",
+   "box": [
+    45.5,
+    639.9,
+    509.2,
+    655.4
+   ],
+   "heading": "Signature:",
+   "context": [
+    "<PAGE> 2",
+    "Certification: I certify that I have received a copy of the Prospectus with",
+    "respect to the Shares and have reviewed it.",
+    "Signature:"
+   ],
+   "places": [],
+   "items": [
+    "i010",
+    "i011"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B06",
+   "box": [
+    45.5,
+    33.9,
+    145.3,
+    49.4
+   ],
+   "heading": "",
+   "context": [],
+   "places": [
+    "p02-001"
+   ],
+   "items": []
+  }
+ ]
+}

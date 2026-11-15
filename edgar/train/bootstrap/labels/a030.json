@@ -1,0 +1,647 @@
+{
+ "id": "a030",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:03Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 9,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text"
+ },
+ "run": "out-18/set-a/a030/result.json",
+ "candidates": "ac8b7259aa3ea51a-f01586d5.json",
+ "counts": {
+  "fields": 2,
+  "counted_candidates": 9,
+  "pairs": 1,
+  "auto": 1,
+  "reader_only": 1,
+  "measure_only": 8,
+  "kind_clash": 0,
+  "person": 9,
+  "items": 18
+ },
+ "places": [
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Aggregate Subscription Price: $l",
+   "printed_label": "",
+   "must": false,
+   "x0": 312.0,
+   "y0": 117.6,
+   "x1": 578.2,
+   "y1": 133.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Aggregate Subscription Price: $l"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p02-001",
+   "block": "B04"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    33.7,
+    721.4,
+    273.7,
+    736.9
+   ],
+   "caption": "Subscriber Information",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    312.0,
+    721.4,
+    578.2,
+    736.9
+   ],
+   "caption": "Shares to be Purchased",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "reader-only",
+   "page": 2,
+   "box": [
+    39.5,
+    38.8,
+    59,
+    47.6
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Number of Shares: l"
+   },
+   "caption": "",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "amount"
+   },
+   "item": "i003",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    311.2,
+    133.4,
+    578.2,
+    148.9
+   ],
+   "caption": "principal (beneficial purchaser) (a \u201cDisclosed Principal\u201d)",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i004",
+   "block": "B04"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    33.7,
+    298.4,
+    273.7,
+    313.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i005",
+   "block": "B05"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    312.0,
+    298.4,
+    578.2,
+    313.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i006",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    33.7,
+    416.1,
+    502.5,
+    431.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i007",
+   "block": "B07"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    512.2,
+    507.2,
+    542.2,
+    522.7
+   ],
+   "caption": "Conditions and Exhibits attached hereto) as of the",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i008",
+   "block": "B09"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    51.1,
+    519.2,
+    151.0,
+    534.7
+   ],
+   "caption": "of",
+   "cand": {
+    "kind": "dateparts",
+    "family": "line",
+    "why": "a date printed in 2 parts"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i009",
+   "block": "B08"
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 1,
+   "box": [
+    33.7,
+    721.4,
+    273.7,
+    736.9
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 1,
+   "box": [
+    312.0,
+    721.4,
+    578.2,
+    736.9
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 2,
+   "box": [
+    39.5,
+    38.8,
+    59,
+    47.6
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 2,
+   "box": [
+    311.2,
+    117.6,
+    578.2,
+    148.9
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    298.4,
+    273.7,
+    313.9
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Subscriber)"
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 2,
+   "box": [
+    312.0,
+    298.4,
+    578.2,
+    313.9
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Subscriber)"
+  },
+  {
+   "item": "i016",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    416.1,
+    502.5,
+    431.6
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i017",
+   "type": "person",
+   "page": 2,
+   "box": [
+    51.1,
+    519.2,
+    151.0,
+    534.7
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ACCEPTANCE"
+  },
+  {
+   "item": "i018",
+   "type": "person",
+   "page": 2,
+   "box": [
+    512.2,
+    507.2,
+    542.2,
+    522.7
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ACCEPTANCE"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    33.7,
+    721.4,
+    273.7,
+    736.9
+   ],
+   "heading": "",
+   "context": [
+    "The undersigned (the \u201cSubscriber\u201d) hereby irrevocably subscribes for and agrees to purchase from SciMar Ltd. (the \u201cIssue",
+    "number of Class A Voting Common Shares of the Issuer (the \u201cShares\u201d) set out below at a price of (U.S.) $5.50 per Share (",
+    "\u201cOffering\u201d). The Subscriber must invest a minimum of (U.S.) $99.00; however, the Issuer reserves the right to waive this",
+    "its sole discretion. The Subscriber agrees to be bound by the terms and conditions set forth in the attached \u201cTerms and "
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    312.0,
+    721.4,
+    578.2,
+    736.9
+   ],
+   "heading": "",
+   "context": [
+    "The undersigned (the \u201cSubscriber\u201d) hereby irrevocably subscribes for and agrees to purchase from SciMar Ltd. (the \u201cIssue",
+    "number of Class A Voting Common Shares of the Issuer (the \u201cShares\u201d) set out below at a price of (U.S.) $5.50 per Share (",
+    "\u201cOffering\u201d). The Subscriber must invest a minimum of (U.S.) $99.00; however, the Issuer reserves the right to waive this",
+    "its sole discretion. The Subscriber agrees to be bound by the terms and conditions set forth in the attached \u201cTerms and "
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B03",
+   "box": [
+    39.5,
+    38.8,
+    59,
+    47.6
+   ],
+   "heading": "",
+   "context": [
+    "l"
+   ],
+   "places": [],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B04",
+   "box": [
+    311.2,
+    117.6,
+    578.2,
+    148.9
+   ],
+   "heading": "",
+   "context": [
+    "Account Reference (if applicable):",
+    "Aggregate Subscription Price: $l",
+    "(the \u201cSubscription Amount\u201d, plus",
+    "wire fees if applicable)"
+   ],
+   "places": [
+    "p02-001"
+   ],
+   "items": [
+    "i004"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B05",
+   "box": [
+    33.7,
+    298.4,
+    273.7,
+    313.9
+   ],
+   "heading": "Subscriber)",
+   "context": [
+    "(SSN, or other Tax Identification Number of Disclosed",
+    "Principal)",
+    "(Subscriber\u2019s Address, including city and Zip/Postal",
+    "Code)"
+   ],
+   "places": [],
+   "items": [
+    "i005"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B06",
+   "box": [
+    312.0,
+    298.4,
+    578.2,
+    313.9
+   ],
+   "heading": "Subscriber)",
+   "context": [
+    "(SSN, or other Tax Identification Number of Disclosed",
+    "Principal)",
+    "(Subscriber\u2019s Address, including city and Zip/Postal",
+    "Code)"
+   ],
+   "places": [],
+   "items": [
+    "i006"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B07",
+   "box": [
+    33.7,
+    416.1,
+    502.5,
+    431.6
+   ],
+   "heading": "",
+   "context": [
+    "(Telephone Number) (Email Address)",
+    "Register the Shares as set forth below:",
+    "(Name to Appear on Share Certificate)",
+    "(Account Reference, if applicable)"
+   ],
+   "places": [],
+   "items": [
+    "i007"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B08",
+   "box": [
+    51.1,
+    519.2,
+    151.0,
+    534.7
+   ],
+   "heading": "ACCEPTANCE",
+   "context": [
+    "(Account Reference, if applicable)",
+    "(Address, including Zip/Postal Code)",
+    "ACCEPTANCE",
+    "The Issuer hereby accepts the subscription as set forth above on the terms and conditions contained in this Private Plac"
+   ],
+   "places": [],
+   "items": [
+    "i009"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B09",
+   "box": [
+    512.2,
+    507.2,
+    542.2,
+    522.7
+   ],
+   "heading": "ACCEPTANCE",
+   "context": [
+    "(Name to Appear on Share Certificate)",
+    "(Account Reference, if applicable)",
+    "(Address, including Zip/Postal Code)",
+    "ACCEPTANCE"
+   ],
+   "places": [],
+   "items": [
+    "i008"
+   ]
+  }
+ ]
+}

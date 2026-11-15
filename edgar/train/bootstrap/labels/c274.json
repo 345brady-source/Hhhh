@@ -1,0 +1,1053 @@
+{
+ "id": "c274",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 3,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text"
+ },
+ "run": "out-18/set-c/c274/result.json",
+ "candidates": "cf807b211fd51c0f-f01586d5.json",
+ "counts": {
+  "fields": 10,
+  "counted_candidates": 18,
+  "pairs": 10,
+  "auto": 9,
+  "reader_only": 0,
+  "measure_only": 8,
+  "kind_clash": 1,
+  "person": 15,
+  "items": 24
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "and agrees to purchase",
+   "printed_label": "Purchaser hereby subscribes for, and agrees to purchase,",
+   "must": true,
+   "x0": 449.3,
+   "y0": 168.9,
+   "x1": 504.3,
+   "y1": 184.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "and agrees to purchase"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "He is a natural person whose individual net worth, or joint",
+   "printed_label": "",
+   "must": false,
+   "x0": 64.2,
+   "y0": 352.9,
+   "x1": 74.2,
+   "y1": 362.9,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "He is a natural person whose individual net worth, or joint"
+   },
+   "cand": "glyphbox",
+   "id": "p01-002",
+   "block": "B02"
+  },
+  {
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "He is a natural person who had individual income in excess o",
+   "printed_label": "",
+   "must": false,
+   "x0": 64.2,
+   "y0": 400.9,
+   "x1": 74.2,
+   "y1": 410.9,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "He is a natural person who had individual income in excess o"
+   },
+   "cand": "glyphbox",
+   "id": "p01-003",
+   "block": "B03"
+  },
+  {
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "It is an organization described in section 501 (c)(3) of the",
+   "printed_label": "",
+   "must": false,
+   "x0": 64.2,
+   "y0": 460.9,
+   "x1": 74.2,
+   "y1": 470.9,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "It is an organization described in section 501 (c)(3) of the"
+   },
+   "cand": "glyphbox",
+   "id": "p01-004",
+   "block": "B04"
+  },
+  {
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "It is a trust, with total assets in excess of $5,000,000, no",
+   "printed_label": "",
+   "must": false,
+   "x0": 64.2,
+   "y0": 508.9,
+   "x1": 74.2,
+   "y1": 518.9,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "It is a trust, with total assets in excess of $5,000,000, no"
+   },
+   "cand": "glyphbox",
+   "id": "p01-005",
+   "block": "B05"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "He is a director, executive officer or general partner of th",
+   "printed_label": "",
+   "must": false,
+   "x0": 64.2,
+   "y0": 338.7,
+   "x1": 74.2,
+   "y1": 348.7,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "He is a director, executive officer or general partner of th"
+   },
+   "cand": "glyphbox",
+   "id": "p02-001",
+   "block": "B11"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "4. Registration of Shares. The Purchaser acknowledges that t",
+   "printed_label": "Purchaser shall be required to provide his social",
+   "must": true,
+   "x0": 66.7,
+   "y0": 120.9,
+   "x1": 326.6,
+   "y1": 136.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "4. Registration of Shares. The Purchaser acknowledges that t"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p03-001",
+   "block": "B12"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Jeremy Roberts, President",
+   "printed_label": "Jeremy Roberts, President",
+   "must": true,
+   "x0": 66.7,
+   "y0": 482.1,
+   "x1": 234.0,
+   "y1": 497.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Jeremy Roberts, President"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p03-002",
+   "block": "B14"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Purchaser Name and Address",
+   "printed_label": "Purchaser Name and Address",
+   "must": true,
+   "x0": 66.7,
+   "y0": 530.9,
+   "x1": 234.0,
+   "y1": 546.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Purchaser Name and Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p03-003",
+   "block": "B15"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    64.2,
+    74.7,
+    74.2,
+    84.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i001",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    64.2,
+    110.7,
+    74.2,
+    120.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i002",
+   "block": "B07"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    64.2,
+    134.7,
+    74.2,
+    144.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i003",
+   "block": "B07"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    64.2,
+    158.7,
+    74.2,
+    168.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i004",
+   "block": "B07"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    64.2,
+    194.7,
+    74.2,
+    204.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i005",
+   "block": "B08"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    64.2,
+    230.7,
+    74.2,
+    240.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i006",
+   "block": "B09"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    64.2,
+    266.7,
+    74.2,
+    276.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i007",
+   "block": "B10"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    64.2,
+    362.7,
+    74.2,
+    372.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i008",
+   "block": "B11"
+  },
+  {
+   "type": "kind-clash",
+   "page": 3,
+   "box": [
+    399.6,
+    432.9,
+    434.6,
+    448.4
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "someone else",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "IN WITNESS WHEREOF, the parties have executed this Agreement"
+   },
+   "caption": "the parties have executed this Agreement as of",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "third-party",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a underscore candidate the measure reads as line",
+   "item": "i009",
+   "block": "B13"
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 1,
+   "box": [
+    449.3,
+    168.9,
+    504.3,
+    184.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "MEDICAL CANNABIS PAYMENT SOLUTIONS"
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 1,
+   "box": [
+    64.2,
+    352.9,
+    74.2,
+    362.9
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 1,
+   "box": [
+    64.2,
+    400.9,
+    74.2,
+    410.9
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 1,
+   "box": [
+    64.2,
+    460.9,
+    74.2,
+    470.9
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 1,
+   "box": [
+    64.2,
+    508.9,
+    74.2,
+    518.9
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 2,
+   "box": [
+    64.2,
+    74.7,
+    74.2,
+    84.7
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i016",
+   "type": "person",
+   "page": 2,
+   "box": [
+    64.2,
+    110.7,
+    74.2,
+    168.7
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i017",
+   "type": "person",
+   "page": 2,
+   "box": [
+    64.2,
+    194.7,
+    74.2,
+    204.7
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i018",
+   "type": "person",
+   "page": 2,
+   "box": [
+    64.2,
+    230.7,
+    74.2,
+    240.7
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i019",
+   "type": "person",
+   "page": 2,
+   "box": [
+    64.2,
+    266.7,
+    74.2,
+    276.7
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i020",
+   "type": "person",
+   "page": 2,
+   "box": [
+    64.2,
+    338.7,
+    74.2,
+    372.7
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i021",
+   "type": "person",
+   "page": 3,
+   "box": [
+    66.7,
+    120.9,
+    326.6,
+    136.4
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i022",
+   "type": "person",
+   "page": 3,
+   "box": [
+    399.6,
+    432.9,
+    434.6,
+    448.4
+   ],
+   "block": "B13",
+   "proposed": {
+    "owner": "third-party"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i023",
+   "type": "person",
+   "page": 3,
+   "box": [
+    66.7,
+    482.1,
+    234.0,
+    497.6
+   ],
+   "block": "B14",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SOLUTIONS"
+  },
+  {
+   "item": "i024",
+   "type": "person",
+   "page": 3,
+   "box": [
+    66.7,
+    530.9,
+    234.0,
+    546.4
+   ],
+   "block": "B15",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SOLUTIONS"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    449.3,
+    168.9,
+    504.3,
+    184.4
+   ],
+   "heading": "MEDICAL CANNABIS PAYMENT SOLUTIONS",
+   "context": [
+    "MEDICAL CANNABIS PAYMENT SOLUTIONS",
+    "Medical Cannabis Payment Solutions",
+    "109 E. 17th Street, Suite 4634",
+    "Cheyenne Wyoming 82001"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    64.2,
+    352.9,
+    74.2,
+    362.9
+   ],
+   "heading": "",
+   "context": [
+    "to the undersigned, and such other information and documents otherwise provided to him in writing by the Company,",
+    "access to which has been provided by an authorized representative of the Company, and he has relied on no other",
+    "representations, written or oral;",
+    "(b) He is an Accredited Investor, as defined below: PLEASE CHECK AS MANY BOXES THAT APPLY:"
+   ],
+   "places": [
+    "p01-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B03",
+   "box": [
+    64.2,
+    400.9,
+    74.2,
+    410.9
+   ],
+   "heading": "",
+   "context": [
+    "(b) He is an Accredited Investor, as defined below: PLEASE CHECK AS MANY BOXES THAT APPLY:",
+    "o He is a natural person whose individual net worth, or joint net worth with his spouse, exceeds $1,000,000",
+    "(excluding the value of his primary residence), and either he is able to bear the economic risk of investment in the",
+    "Shares or this investment does not exceed 10% of his net worth or joint net worth with his spouse;"
+   ],
+   "places": [
+    "p01-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B04",
+   "box": [
+    64.2,
+    460.9,
+    74.2,
+    470.9
+   ],
+   "heading": "",
+   "context": [
+    "o He is a natural person who had individual income in excess of $200,000 in each of the two most recent years, or",
+    "joint income with that person's spouse in excess of $300,000 in each of those years and reasonably expects to",
+    "reach the same income level in the current year, and either he is able to bear the economic risk of investment in the",
+    "Shares or this investment does not exceed 10% of his net worth or joint net worth with his spouse; or"
+   ],
+   "places": [
+    "p01-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B05",
+   "box": [
+    64.2,
+    508.9,
+    74.2,
+    518.9
+   ],
+   "heading": "",
+   "context": [
+    "Shares or this investment does not exceed 10% of his net worth or joint net worth with his spouse; or",
+    "o It is an organization described in section 501 (c)(3) of the Internal Revenue Code of 1986 as amended, (i.e., tax",
+    "exempt entities), corporation, Massachusetts or similar business trust, or partnership, not formed for the specific",
+    "purpose of acquiring Shares, with total assets in excess of $5,000,000;"
+   ],
+   "places": [
+    "p01-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B06",
+   "box": [
+    64.2,
+    74.7,
+    74.2,
+    84.7
+   ],
+   "heading": "",
+   "context": [],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B07",
+   "box": [
+    64.2,
+    110.7,
+    74.2,
+    168.7
+   ],
+   "heading": "",
+   "context": [
+    "o It is a bank as defined in section 3(a)(2) of the Securities Act, or a savings and loan association or other instituti",
+    "as defined in section 3(a)(5)(A) of the Securities Act whether acting in its individual or fiduciary capacity;"
+   ],
+   "places": [],
+   "items": [
+    "i002",
+    "i003",
+    "i004"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B08",
+   "box": [
+    64.2,
+    194.7,
+    74.2,
+    204.7
+   ],
+   "heading": "",
+   "context": [
+    "o It is a broker or dealer registered pursuant to section 15 of the Securities Exchange Act of 1934;",
+    "o It is an insurance company as defined in section 2(13) of the Securities Act;",
+    "o It is an investment company registered under the Investment Company Act of 1940 or a business development",
+    "company as defined in section 2(a)(48) of that Act;"
+   ],
+   "places": [],
+   "items": [
+    "i005"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B09",
+   "box": [
+    64.2,
+    230.7,
+    74.2,
+    240.7
+   ],
+   "heading": "",
+   "context": [
+    "o It is an investment company registered under the Investment Company Act of 1940 or a business development",
+    "company as defined in section 2(a)(48) of that Act;",
+    "o It is a Small Business Investment Company licensed by the U.S. Small Business Administration under section 301",
+    "(c) or (d) of the Small Business Investment Act of 1958;"
+   ],
+   "places": [],
+   "items": [
+    "i006"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B10",
+   "box": [
+    64.2,
+    266.7,
+    74.2,
+    276.7
+   ],
+   "heading": "",
+   "context": [
+    "o It is a Small Business Investment Company licensed by the U.S. Small Business Administration under section 301",
+    "(c) or (d) of the Small Business Investment Act of 1958;",
+    "o It is a private business development company as defined in section 202(a)(22) of the Investment Advisers Act of",
+    "1940;"
+   ],
+   "places": [],
+   "items": [
+    "i007"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B11",
+   "box": [
+    64.2,
+    338.7,
+    74.2,
+    372.7
+   ],
+   "heading": "",
+   "context": [
+    "1974, if the investment decision is made by a plan fiduciary, as defined in section 3(21) of such Act, which is",
+    "either a bank, savings and loan association, insurance company, or registered investment adviser, or if the",
+    "employee benefit plan has total assets in excess of $5,000,000 or, if a self\u2010directed plan, with investment decisions",
+    "made solely by persons that are accredited investors as described above;"
+   ],
+   "places": [
+    "p02-001"
+   ],
+   "items": [
+    "i008"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B12",
+   "box": [
+    66.7,
+    120.9,
+    326.6,
+    136.4
+   ],
+   "heading": "",
+   "context": [
+    "4. Registration of Shares. The Purchaser acknowledges that the Shares have not been registered under the Securities",
+    "Act of 1933, as amended (the \u201cAct\u201d), and are being sold pursuant to an exemption from registration provided by",
+    "Regulation A under the Act, and pursuant to registration or exemption under the state law of the jurisdiction of",
+    "residence of the undersigned. The certificates for the Shares shall not bear a restrictive legend and can be freely sold"
+   ],
+   "places": [
+    "p03-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B13",
+   "box": [
+    399.6,
+    432.9,
+    434.6,
+    448.4
+   ],
+   "heading": "",
+   "context": [
+    "of this Agree-ment. The interpretation of this Agreement shall be governed by the local law of the State of Nevada, and",
+    "the parties hereby consent to the exclusive jurisdiction of the state and Federal courts in Clark County, Nevada. This",
+    "Agreement contains the entire agree-ment between the parties hereto with respect to the subject matter thereof. This",
+    "Agree-ment shall inure to the benefit of the parties and their successors and assigns."
+   ],
+   "places": [],
+   "items": [
+    "i009"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B14",
+   "box": [
+    66.7,
+    482.1,
+    234.0,
+    497.6
+   ],
+   "heading": "SOLUTIONS",
+   "context": [
+    "Agree-ment shall inure to the benefit of the parties and their successors and assigns.",
+    "IN WITNESS WHEREOF, the parties have executed this Agreement as of , 2017.",
+    "MEDICAL CANNABIS PAYMENT",
+    "SOLUTIONS"
+   ],
+   "places": [
+    "p03-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B15",
+   "box": [
+    66.7,
+    530.9,
+    234.0,
+    546.4
+   ],
+   "heading": "SOLUTIONS",
+   "context": [
+    "MEDICAL CANNABIS PAYMENT",
+    "SOLUTIONS",
+    "Jeremy Roberts, President",
+    "Title"
+   ],
+   "places": [
+    "p03-003"
+   ],
+   "items": []
+  }
+ ]
+}

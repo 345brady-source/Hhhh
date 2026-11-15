@@ -1,0 +1,861 @@
+{
+ "id": "a035",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:04Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 22,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ],
+  "15": [
+   612.0,
+   792.0
+  ],
+  "16": [
+   612.0,
+   792.0
+  ],
+  "17": [
+   612.0,
+   792.0
+  ],
+  "18": [
+   612.0,
+   792.0
+  ],
+  "19": [
+   612.0,
+   792.0
+  ],
+  "20": [
+   612.0,
+   792.0
+  ],
+  "21": [
+   612.0,
+   792.0
+  ],
+  "22": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text",
+  "17": "text",
+  "18": "text",
+  "19": "text",
+  "20": "text",
+  "21": "text",
+  "22": "text"
+ },
+ "run": "out-18/set-a/a035/result.json",
+ "candidates": "b00a33851ef8af7f-f01586d5.json",
+ "counts": {
+  "fields": 10,
+  "counted_candidates": 12,
+  "pairs": 10,
+  "auto": 10,
+  "reader_only": 0,
+  "measure_only": 2,
+  "kind_clash": 0,
+  "person": 11,
+  "items": 13
+ },
+ "places": [
+  {
+   "page": 21,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 51.4,
+   "y0": 143.4,
+   "x1": 292.0,
+   "y1": 158.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p21-001",
+   "block": "B02"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Name and title",
+   "printed_label": "Name and Title [please print]",
+   "must": true,
+   "x0": 33.7,
+   "y0": 188.4,
+   "x1": 292.0,
+   "y1": 203.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Name and title"
+   },
+   "cand": "underscore",
+   "what": "title",
+   "id": "p21-002",
+   "block": "B03"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "Address of Subscriber",
+   "must": true,
+   "x0": 33.7,
+   "y0": 233.4,
+   "x1": 292.0,
+   "y1": 248.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "underscore",
+   "what": "address",
+   "id": "p21-003",
+   "block": "B04"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Taxpayer ID",
+   "printed_label": "Taxpayer Identification Number of Subscriber",
+   "must": true,
+   "x0": 33.7,
+   "y0": 278.4,
+   "x1": 292.0,
+   "y1": 293.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Taxpayer ID"
+   },
+   "cand": "underscore",
+   "what": "tax number",
+   "id": "p21-004",
+   "block": "B05"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name of Holder(s) as it should appear on the security certif",
+   "printed_label": "Name of Holder(s) as it should appear on",
+   "must": false,
+   "x0": 33.7,
+   "y0": 323.4,
+   "x1": 427.0,
+   "y1": 338.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Name of Holder(s) as it should appear on the security certif"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p21-005",
+   "block": "B06"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "LRX-",
+   "printed_label": "Subscriber's Account Number at",
+   "must": true,
+   "x0": 33.7,
+   "y0": 503.4,
+   "x1": 286.2,
+   "y1": 518.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "LRX-"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p21-006",
+   "block": "B07"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 615.9,
+   "x1": 286.2,
+   "y1": 631.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p21-007",
+   "block": "B09"
+  },
+  {
+   "page": 21,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Amount of Subscription Accepted",
+   "printed_label": "Amount of Subscription Accepted",
+   "must": false,
+   "x0": 321.4,
+   "y0": 638.4,
+   "x1": 491.6,
+   "y1": 653.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Amount of Subscription Accepted"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p21-008",
+   "block": "B09"
+  },
+  {
+   "page": 22,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name of NASD Member",
+   "printed_label": "Name of NASD Member",
+   "must": false,
+   "x0": 315.5,
+   "y0": 42.1,
+   "x1": 503.4,
+   "y1": 57.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Name of NASD Member"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p22-001",
+   "block": "B10"
+  },
+  {
+   "page": 22,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Authorized Officer Accepted",
+   "printed_label": "Authorized Officer Accepted",
+   "must": false,
+   "x0": 327.3,
+   "y0": 87.1,
+   "x1": 503.4,
+   "y1": 102.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Authorized Officer Accepted"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p22-002",
+   "block": "B11"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    198.1,
+    178.0,
+    209.8,
+    193.5
+   ],
+   "caption": "Agreement\") made as of this",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "measure-only",
+   "page": 21,
+   "box": [
+    327.2,
+    559.6,
+    503.3,
+    575.1
+   ],
+   "caption": "Name: Nickolas A. Branica",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of hyphens typed as a blank"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "name"
+   },
+   "item": "i002",
+   "block": "B08"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 1,
+   "box": [
+    198.1,
+    178.0,
+    209.8,
+    193.5
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "COMDIAL CORPORATION"
+  },
+  {
+   "item": "i004",
+   "type": "person",
+   "page": 21,
+   "box": [
+    51.4,
+    143.4,
+    292.0,
+    158.9
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "WINFIELD CAPITAL CORP."
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 21,
+   "box": [
+    33.7,
+    188.4,
+    292.0,
+    203.9
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "Signature"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 21,
+   "box": [
+    33.7,
+    233.4,
+    292.0,
+    248.9
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature"
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 21,
+   "box": [
+    33.7,
+    278.4,
+    292.0,
+    293.9
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature"
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 21,
+   "box": [
+    33.7,
+    323.4,
+    427.0,
+    338.9
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 21,
+   "box": [
+    33.7,
+    503.4,
+    286.2,
+    518.9
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 21,
+   "box": [
+    327.2,
+    559.6,
+    503.3,
+    575.1
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Subscriber's Account Number at Comdial Corporation"
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 21,
+   "box": [
+    33.7,
+    615.9,
+    491.6,
+    653.9
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Subscriber's Account Number at Comdial Corporation"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 22,
+   "box": [
+    315.5,
+    42.1,
+    503.4,
+    57.6
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 22,
+   "box": [
+    327.3,
+    87.1,
+    503.4,
+    102.6
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    198.1,
+    178.0,
+    209.8,
+    193.5
+   ],
+   "heading": "COMDIAL CORPORATION",
+   "context": [
+    "<DESCRIPTION>FORM OF WINFIELD SUBSCRIPTION AGT",
+    "<TEXT>",
+    "EXHIBIT 4.6",
+    "COMDIAL CORPORATION"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 21,
+   "block": "B02",
+   "box": [
+    51.4,
+    143.4,
+    292.0,
+    158.9
+   ],
+   "heading": "WINFIELD CAPITAL CORP.",
+   "context": [
+    "<PAGE>",
+    "IN WITNESS WHEREOF, the parties have executed this Subscription",
+    "Agreement as of the day and year first written above.",
+    "WINFIELD CAPITAL CORP."
+   ],
+   "places": [
+    "p21-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 21,
+   "block": "B03",
+   "box": [
+    33.7,
+    188.4,
+    292.0,
+    203.9
+   ],
+   "heading": "Signature",
+   "context": [
+    "WINFIELD CAPITAL CORP.",
+    "By:",
+    "-----------------------------------------",
+    "Signature"
+   ],
+   "places": [
+    "p21-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 21,
+   "block": "B04",
+   "box": [
+    33.7,
+    233.4,
+    292.0,
+    248.9
+   ],
+   "heading": "Signature",
+   "context": [
+    "-----------------------------------------",
+    "Signature",
+    "--------------------------------------------",
+    "Name and Title [please print]"
+   ],
+   "places": [
+    "p21-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 21,
+   "block": "B05",
+   "box": [
+    33.7,
+    278.4,
+    292.0,
+    293.9
+   ],
+   "heading": "Signature",
+   "context": [
+    "--------------------------------------------",
+    "Name and Title [please print]",
+    "--------------------------------------------",
+    "Address of Subscriber"
+   ],
+   "places": [
+    "p21-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 21,
+   "block": "B06",
+   "box": [
+    33.7,
+    323.4,
+    427.0,
+    338.9
+   ],
+   "heading": "",
+   "context": [
+    "--------------------------------------------",
+    "Address of Subscriber",
+    "--------------------------------------------",
+    "Taxpayer Identification Number of Subscriber"
+   ],
+   "places": [
+    "p21-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 21,
+   "block": "B07",
+   "box": [
+    33.7,
+    503.4,
+    286.2,
+    518.9
+   ],
+   "heading": "",
+   "context": [
+    "\"&,\" \"Co.,\" \"Inc.,\" \"etc.,\" \"LLC,\" \"LP,\" etc.",
+    "(4) For Trusts, print trust name (please contact your trustee for the exact name",
+    "that should appear on the certificates). (5) For IRA account maintained at",
+    "Commonwealth, print \"Wexford Clearing Corp. as C/F FBO [client name].\""
+   ],
+   "places": [
+    "p21-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 21,
+   "block": "B08",
+   "box": [
+    327.2,
+    559.6,
+    503.3,
+    575.1
+   ],
+   "heading": "Subscriber's Account Number at Comdial Corporation",
+   "context": [
+    "LRX-",
+    "------------------------------------------- Subscription Accepted:",
+    "Subscriber's Account Number at Comdial Corporation",
+    "Commonwealth Associates, if applicable"
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 21,
+   "block": "B09",
+   "box": [
+    33.7,
+    615.9,
+    491.6,
+    653.9
+   ],
+   "heading": "Subscriber's Account Number at Comdial Corporation",
+   "context": [
+    "Dollar Amount of Senior Notes Subscribed By:",
+    "For: ------------------------------",
+    "Name: Nickolas A. Branica",
+    "Title: Chief Executive Officer"
+   ],
+   "places": [
+    "p21-007",
+    "p21-008"
+   ],
+   "items": []
+  },
+  {
+   "page": 22,
+   "block": "B10",
+   "box": [
+    315.5,
+    42.1,
+    503.4,
+    57.6
+   ],
+   "heading": "",
+   "context": [
+    "11/14/26, 10:12 AM e842228.txt"
+   ],
+   "places": [
+    "p22-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 22,
+   "block": "B11",
+   "box": [
+    327.3,
+    87.1,
+    503.4,
+    102.6
+   ],
+   "heading": "",
+   "context": [
+    "11/14/26, 10:12 AM e842228.txt",
+    "--------------------------------",
+    "Name of NASD Member"
+   ],
+   "places": [
+    "p22-002"
+   ],
+   "items": []
+  }
+ ]
+}

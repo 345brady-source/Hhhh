@@ -1,0 +1,570 @@
+{
+ "id": "c168",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:09Z",
+ "how_made": "filed-pdf",
+ "made_group": "filed PDF",
+ "broker_dealer": false,
+ "pages": 14,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text"
+ },
+ "run": "out-18/set-c/c168/result.json",
+ "candidates": "a3543865b51f70f3-f01586d5.json",
+ "counts": {
+  "fields": 13,
+  "counted_candidates": 13,
+  "pairs": 13,
+  "auto": 13,
+  "reader_only": 0,
+  "measure_only": 0,
+  "kind_clash": 0,
+  "person": 3,
+  "items": 3
+ },
+ "places": [
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor name",
+   "printed_label": "Full Legal Name of Subscriber",
+   "must": true,
+   "x0": 215.7,
+   "y0": 154.7,
+   "x1": 484.1,
+   "y1": 170.2,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Investor name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p14-001",
+   "block": "B01"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of Securities",
+   "printed_label": "",
+   "must": true,
+   "x0": 215.7,
+   "y0": 176.3,
+   "x1": 484.1,
+   "y1": 191.8,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Number of Securities"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p14-002",
+   "block": "B01"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "Aggregate Subscription Price",
+   "must": false,
+   "x0": 215.7,
+   "y0": 198.0,
+   "x1": 484.1,
+   "y1": 213.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p14-003",
+   "block": "B01"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "",
+   "must": true,
+   "x0": 215.7,
+   "y0": 219.6,
+   "x1": 484.1,
+   "y1": 235.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p14-004",
+   "block": "B01"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 2",
+   "printed_label": "",
+   "must": false,
+   "x0": 215.7,
+   "y0": 241.3,
+   "x1": 484.1,
+   "y1": 256.8,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Address line 2"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p14-005",
+   "block": "B01"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Email",
+   "printed_label": "",
+   "must": true,
+   "x0": 215.7,
+   "y0": 262.9,
+   "x1": 484.1,
+   "y1": 278.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Email"
+   },
+   "cand": "rule",
+   "what": "email",
+   "id": "p14-006",
+   "block": "B01"
+  },
+  {
+   "page": 14,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 108.2,
+   "y0": 349.0,
+   "x1": 249.7,
+   "y1": 364.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p14-007",
+   "block": "B02"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "Name",
+   "must": true,
+   "x0": 108.2,
+   "y0": 370.7,
+   "x1": 249.7,
+   "y1": 386.2,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p14-008",
+   "block": "B02"
+  },
+  {
+   "page": 14,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 108.2,
+   "y0": 392.3,
+   "x1": 249.7,
+   "y1": 407.8,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date signed"
+   },
+   "cand": "rule",
+   "id": "p14-009",
+   "block": "B02"
+  },
+  {
+   "page": 14,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 108.2,
+   "y0": 556.5,
+   "x1": 249.7,
+   "y1": 572.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p14-010",
+   "block": "B03"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Name",
+   "printed_label": "Name",
+   "must": true,
+   "x0": 108.2,
+   "y0": 578.2,
+   "x1": 249.7,
+   "y1": 593.7,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p14-011",
+   "block": "B03"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 108.2,
+   "y0": 599.8,
+   "x1": 249.7,
+   "y1": 615.3,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p14-012",
+   "block": "B03"
+  },
+  {
+   "page": 14,
+   "kind": "date",
+   "owner": "firm",
+   "label": "Date signed",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 108.2,
+   "y0": 621.5,
+   "x1": 249.7,
+   "y1": 637.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Date signed"
+   },
+   "cand": "rule",
+   "id": "p14-013",
+   "block": "B03"
+  }
+ ],
+ "items": [
+  {
+   "item": "i001",
+   "type": "person",
+   "page": 14,
+   "box": [
+    215.7,
+    154.7,
+    484.1,
+    278.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 14,
+   "box": [
+    108.2,
+    349.0,
+    249.7,
+    407.8
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIBER:"
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 14,
+   "box": [
+    108.2,
+    556.5,
+    249.7,
+    637.0
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "CROWDFUNDING VEHICLE"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 14,
+   "block": "B01",
+   "box": [
+    215.7,
+    154.7,
+    484.1,
+    278.4
+   ],
+   "heading": "",
+   "context": [
+    "IN WITNESS WHEREOF, the undersigned Subscriber hereby submits this signature page, which",
+    "constitutes the signature page for (i) this Agreement; and (ii) the Limited Liability Company Agreement of",
+    "the Crowdfunding Vehicle and desires to purchase Securities of the Crowdfunding Vehicle and become a",
+    "Member of the Crowdfunding Vehicle."
+   ],
+   "places": [
+    "p14-001",
+    "p14-002",
+    "p14-003",
+    "p14-004",
+    "p14-005",
+    "p14-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B02",
+   "box": [
+    108.2,
+    349.0,
+    249.7,
+    407.8
+   ],
+   "heading": "SUBSCRIBER:",
+   "context": [
+    "Aggregate Subscription Price:",
+    "Mailing Address:",
+    "Email Address:",
+    "SUBSCRIBER:"
+   ],
+   "places": [
+    "p14-007",
+    "p14-008",
+    "p14-009"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B03",
+   "box": [
+    108.2,
+    556.5,
+    249.7,
+    637.0
+   ],
+   "heading": "CROWDFUNDING VEHICLE",
+   "context": [
+    "ACCEPTED BY",
+    "CROWDFUNDING VEHICLE",
+    "Fundify Keepers US Inc I, a series of Fundify Master Series, LLC",
+    "By: Fundify Services, its Manager"
+   ],
+   "places": [
+    "p14-010",
+    "p14-011",
+    "p14-012",
+    "p14-013"
+   ],
+   "items": []
+  }
+ ]
+}

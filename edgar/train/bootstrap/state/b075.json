@@ -1,0 +1,567 @@
+{
+ "id": "b075",
+ "answers": {
+  "i001": {
+   "do": "drop"
+  }
+ },
+ "blocks": {
+  "B01": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B02": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B03": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B04": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B05": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B06": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B07": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B08": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B09": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B10": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B11": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B12": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B13": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B14": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B15": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B16": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B17": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B18": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B19": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B20": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B21": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B22": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B23": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B24": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B25": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B26": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B27": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B28": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B29": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B30": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B31": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B32": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B33": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B34": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B35": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B36": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B37": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B38": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B39": [
+   {
+    "owner": "investor",
+    "cond": ""
+   },
+   {
+    "owner": "co-investor",
+    "cond": "x>545"
+   }
+  ],
+  "B40": [
+   {
+    "owner": "investor",
+    "cond": ""
+   },
+   {
+    "owner": "co-investor",
+    "cond": "x>545"
+   }
+  ],
+  "B41": [
+   {
+    "owner": "investor",
+    "cond": ""
+   },
+   {
+    "owner": "co-investor",
+    "cond": "x>545"
+   }
+  ],
+  "B42": [
+   {
+    "owner": "investor",
+    "cond": ""
+   },
+   {
+    "owner": "co-investor",
+    "cond": "x>545"
+   }
+  ],
+  "B43": [
+   {
+    "owner": "investor",
+    "cond": ""
+   },
+   {
+    "owner": "co-investor",
+    "cond": "x>545"
+   }
+  ],
+  "B44": [
+   {
+    "owner": "investor",
+    "cond": ""
+   },
+   {
+    "owner": "co-investor",
+    "cond": "x>545"
+   }
+  ],
+  "B45": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B46": [
+   {
+    "owner": "co-investor",
+    "cond": ""
+   }
+  ],
+  "B47": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B48": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B49": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B50": [
+   {
+    "owner": "third-party",
+    "cond": ""
+   }
+  ],
+  "B51": [
+   {
+    "owner": "third-party",
+    "cond": ""
+   }
+  ],
+  "B52": [
+   {
+    "owner": "third-party",
+    "cond": ""
+   }
+  ],
+  "B53": [
+   {
+    "owner": "third-party",
+    "cond": ""
+   }
+  ],
+  "B54": [
+   {
+    "owner": "third-party",
+    "cond": ""
+   }
+  ],
+  "B55": [
+   {
+    "owner": "third-party",
+    "cond": ""
+   }
+  ]
+ },
+ "confirms": {
+  "k001": "yes",
+  "k002": "yes",
+  "k003": "yes",
+  "k004": "yes",
+  "k005": "yes",
+  "k006": "no",
+  "k007": "yes",
+  "k008": "yes",
+  "k009": "yes",
+  "k010": "yes",
+  "k011": "no",
+  "k012": "yes"
+ },
+ "confirm_items": [
+  {
+   "item": "k001",
+   "type": "confirm",
+   "place": "p09-007",
+   "page": 9,
+   "box": [
+    512.6,
+    414.6,
+    535.1,
+    430.1
+   ],
+   "kind": "initials",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k002",
+   "type": "confirm",
+   "place": "p10-008",
+   "page": 10,
+   "box": [
+    315.1,
+    151.4,
+    365.8,
+    166.9
+   ],
+   "kind": "blank",
+   "owner": "investor-entity",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k003",
+   "type": "confirm",
+   "place": "p10-019",
+   "page": 10,
+   "box": [
+    124.8,
+    436.4,
+    280.4,
+    451.9
+   ],
+   "kind": "blank",
+   "owner": "third-party",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k004",
+   "type": "confirm",
+   "place": "p09-012",
+   "page": 9,
+   "box": [
+    550.7,
+    584.1,
+    573.2,
+    599.6
+   ],
+   "kind": "initials",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k005",
+   "type": "confirm",
+   "place": "p09-006",
+   "page": 9,
+   "box": [
+    550.7,
+    309.6,
+    573.2,
+    325.1
+   ],
+   "kind": "initials",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k006",
+   "type": "confirm",
+   "place": "p10-023",
+   "page": 10,
+   "box": [
+    314.9,
+    512.9,
+    563.5,
+    528.4
+   ],
+   "kind": "blank",
+   "owner": "third-party",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k007",
+   "type": "confirm",
+   "place": "p07-020",
+   "page": 7,
+   "box": [
+    302.0,
+    710.9,
+    401.3,
+    726.4
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k008",
+   "type": "confirm",
+   "place": "p08-013",
+   "page": 8,
+   "box": [
+    506.7,
+    271.4,
+    559.2,
+    286.9
+   ],
+   "kind": "blank",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k009",
+   "type": "confirm",
+   "place": "p07-011",
+   "page": 7,
+   "box": [
+    221.8,
+    478.6,
+    229.3,
+    486.1
+   ],
+   "kind": "tickbox",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k010",
+   "type": "confirm",
+   "place": "p10-010",
+   "page": 10,
+   "box": [
+    495.0,
+    151.4,
+    549.3,
+    166.9
+   ],
+   "kind": "blank",
+   "owner": "investor-entity",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k011",
+   "type": "confirm",
+   "place": "p10-022",
+   "page": 10,
+   "box": [
+    33.7,
+    512.1,
+    299.4,
+    527.6
+   ],
+   "kind": "blank",
+   "owner": "third-party",
+   "why": "seeded sample 20261115"
+  },
+  {
+   "item": "k012",
+   "type": "confirm",
+   "place": "p09-003",
+   "page": 9,
+   "box": [
+    512.6,
+    218.1,
+    535.1,
+    233.6
+   ],
+   "kind": "initials",
+   "owner": "investor",
+   "why": "seeded sample 20261115"
+  }
+ ],
+ "cost": {
+  "pixels": 2160352,
+  "chars": 18107,
+  "commands": 9,
+  "sheets": 4
+ },
+ "done": "2026-11-15T04:53:38Z"
+}

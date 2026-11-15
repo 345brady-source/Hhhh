@@ -1,0 +1,93 @@
+{
+ "seed": 20261115,
+ "gold": [
+  "a038",
+  "a001",
+  "c181",
+  "b056",
+  "b065",
+  "a099"
+ ],
+ "non_gold": [
+  "c165",
+  "c300",
+  "b040",
+  "a075",
+  "a036",
+  "b075"
+ ],
+ "detail": {
+  "a038": {
+   "boxed": 3,
+   "blocks": 13,
+   "auto": 25,
+   "made": "filed PDF"
+  },
+  "a001": {
+   "boxed": 0,
+   "blocks": 9,
+   "auto": 15,
+   "made": "browser portrait"
+  },
+  "c181": {
+   "boxed": 17,
+   "blocks": 15,
+   "auto": 60,
+   "made": "browser landscape"
+  },
+  "b056": {
+   "boxed": 1,
+   "blocks": 2,
+   "auto": 1,
+   "made": "browser portrait"
+  },
+  "b065": {
+   "boxed": 10,
+   "blocks": 25,
+   "auto": 57,
+   "made": "browser portrait"
+  },
+  "a099": {
+   "boxed": 15,
+   "blocks": 19,
+   "auto": 35,
+   "made": "browser portrait"
+  },
+  "c165": {
+   "boxed": 2,
+   "blocks": 8,
+   "auto": 33,
+   "made": "filed PDF"
+  },
+  "c300": {
+   "boxed": 3,
+   "blocks": 5,
+   "auto": 2,
+   "made": "browser portrait"
+  },
+  "b040": {
+   "boxed": 66,
+   "blocks": 43,
+   "auto": 94,
+   "made": "browser portrait"
+  },
+  "a075": {
+   "boxed": 11,
+   "blocks": 13,
+   "auto": 24,
+   "made": "browser portrait"
+  },
+  "a036": {
+   "boxed": 4,
+   "blocks": 4,
+   "auto": 1,
+   "made": "browser portrait"
+  },
+  "b075": {
+   "boxed": 1,
+   "blocks": 55,
+   "auto": 80,
+   "made": "browser portrait"
+  }
+ }
+}

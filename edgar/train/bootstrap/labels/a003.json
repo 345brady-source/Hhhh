@@ -1,0 +1,1379 @@
+{
+ "id": "a003",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:03Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 8,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text"
+ },
+ "run": "out-18/set-a/a003/result.json",
+ "candidates": "478246d18e48e8ca-f01586d5.json",
+ "counts": {
+  "fields": 16,
+  "counted_candidates": 24,
+  "pairs": 15,
+  "auto": 15,
+  "reader_only": 1,
+  "measure_only": 9,
+  "kind_clash": 0,
+  "person": 18,
+  "items": 28
+ },
+ "places": [
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "s Offering Circular dated",
+   "printed_label": "as described in the Company\u2019s Offering Circular dated",
+   "must": true,
+   "x0": 308.9,
+   "y0": 89.2,
+   "x1": 368.7,
+   "y1": 104.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "s Offering Circular dated"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p02-001",
+   "block": "B01"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "check made payable to",
+   "printed_label": "Shares by check made payable to \u201c",
+   "must": true,
+   "x0": 239.1,
+   "y0": 280.7,
+   "x1": 293.9,
+   "y1": 296.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "check made payable to"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-002",
+   "block": "B02"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "enter number of Shares",
+   "printed_label": "(enter number of",
+   "must": false,
+   "x0": 499.0,
+   "y0": 126.7,
+   "x1": 584.3,
+   "y1": 142.2,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "enter number of Shares"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p06-001",
+   "block": "B03"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Amount",
+   "printed_label": "(enter total",
+   "must": true,
+   "x0": 499.0,
+   "y0": 176.1,
+   "x1": 584.3,
+   "y1": 191.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Amount"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p06-002",
+   "block": "B04"
+  },
+  {
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "The undersigned is an accredited investor (as that term is d",
+   "printed_label": "",
+   "must": false,
+   "x0": 30.7,
+   "y0": 239.8,
+   "x1": 38.0,
+   "y1": 251.8,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "The undersigned is an accredited investor (as that term is d"
+   },
+   "cand": "tick",
+   "id": "p06-003",
+   "block": "B05"
+  },
+  {
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "The amount set forth in paragraph (b) above (together with a",
+   "printed_label": "",
+   "must": false,
+   "x0": 30.3,
+   "y0": 287.7,
+   "x1": 37.5,
+   "y1": 299.6,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "The amount set forth in paragraph (b) above (together with a"
+   },
+   "cand": "tick",
+   "id": "p06-004",
+   "block": "B06"
+  },
+  {
+   "page": 6,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 27.7,
+   "y0": 395.2,
+   "x1": 291.8,
+   "y1": 410.7,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p06-005",
+   "block": "B08"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "Name (Please Print)",
+   "must": true,
+   "x0": 27.7,
+   "y0": 432.6,
+   "x1": 291.8,
+   "y1": 448.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p06-006",
+   "block": "B09"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Email",
+   "printed_label": "Email address",
+   "must": true,
+   "x0": 27.7,
+   "y0": 470.0,
+   "x1": 291.8,
+   "y1": 485.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Email"
+   },
+   "cand": "rule",
+   "what": "email",
+   "id": "p06-007",
+   "block": "B09"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "Address",
+   "must": true,
+   "x0": 27.7,
+   "y0": 507.4,
+   "x1": 291.8,
+   "y1": 522.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p06-008",
+   "block": "B09"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Phone",
+   "printed_label": "Telephone Number",
+   "must": true,
+   "x0": 27.7,
+   "y0": 544.8,
+   "x1": 291.8,
+   "y1": 560.3,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Phone"
+   },
+   "cand": "rule",
+   "what": "phone",
+   "id": "p06-009",
+   "block": "B09"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Taxpayer ID",
+   "printed_label": "Social Security Number/EIN",
+   "must": true,
+   "x0": 27.7,
+   "y0": 582.2,
+   "x1": 291.8,
+   "y1": 597.7,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Taxpayer ID"
+   },
+   "cand": "rule",
+   "what": "tax number",
+   "id": "p06-010",
+   "block": "B09"
+  },
+  {
+   "page": 6,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date signed",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 27.7,
+   "y0": 619.6,
+   "x1": 291.8,
+   "y1": 635.1,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "date",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Date signed"
+   },
+   "cand": "rule",
+   "id": "p06-011",
+   "block": "B09"
+  },
+  {
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "on",
+   "printed_label": "on",
+   "must": true,
+   "x0": 40.2,
+   "y0": 680.9,
+   "x1": 105.0,
+   "y1": 696.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "on"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p06-012",
+   "block": "B10"
+  },
+  {
+   "page": 6,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 334.4,
+   "y0": 682.5,
+   "x1": 584.3,
+   "y1": 698.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p06-013",
+   "block": "B11"
+  }
+ ],
+ "items": [
+  {
+   "type": "reader-only",
+   "page": 6,
+   "box": [
+    26.7,
+    335,
+    585.2,
+    348.7
+   ],
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "print name of owner or joint owners"
+   },
+   "caption": "(print name of owner or joint owners)",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "name"
+   },
+   "item": "i001",
+   "block": "B07"
+  },
+  {
+   "type": "measure-only",
+   "page": 6,
+   "box": [
+    27.7,
+    633.1,
+    291.8,
+    648.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B09"
+  },
+  {
+   "type": "measure-only",
+   "page": 8,
+   "box": [
+    25.3,
+    129.2,
+    35.2,
+    139.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i003",
+   "block": "B12"
+  },
+  {
+   "type": "measure-only",
+   "page": 8,
+   "box": [
+    25.3,
+    272.8,
+    35.2,
+    282.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i004",
+   "block": "B13"
+  },
+  {
+   "type": "measure-only",
+   "page": 8,
+   "box": [
+    25.3,
+    296.7,
+    35.2,
+    306.7
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i005",
+   "block": "B13"
+  },
+  {
+   "type": "measure-only",
+   "page": 8,
+   "box": [
+    25.3,
+    332.6,
+    35.2,
+    342.6
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i006",
+   "block": "B14"
+  },
+  {
+   "type": "measure-only",
+   "page": 8,
+   "box": [
+    25.3,
+    404.4,
+    35.2,
+    414.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i007",
+   "block": "B15"
+  },
+  {
+   "type": "measure-only",
+   "page": 8,
+   "box": [
+    25.3,
+    452.3,
+    35.2,
+    462.3
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i008",
+   "block": "B16"
+  },
+  {
+   "type": "measure-only",
+   "page": 8,
+   "box": [
+    25.3,
+    500.2,
+    35.2,
+    510.1
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i009",
+   "block": "B17"
+  },
+  {
+   "type": "measure-only",
+   "page": 8,
+   "box": [
+    25.3,
+    536.1,
+    35.2,
+    546.0
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i010",
+   "block": "B18"
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 2,
+   "box": [
+    308.9,
+    89.2,
+    368.7,
+    104.7
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 2,
+   "box": [
+    239.1,
+    280.7,
+    293.9,
+    296.2
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION"
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 6,
+   "box": [
+    499.0,
+    126.7,
+    584.3,
+    142.2
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT SIGNATURE PAGE"
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 6,
+   "box": [
+    499.0,
+    176.1,
+    584.3,
+    191.6
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT SIGNATURE PAGE"
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 6,
+   "box": [
+    30.7,
+    239.8,
+    38.0,
+    251.8
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i016",
+   "type": "person",
+   "page": 6,
+   "box": [
+    30.3,
+    287.7,
+    37.5,
+    299.6
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i017",
+   "type": "person",
+   "page": 6,
+   "box": [
+    26.7,
+    335,
+    585.2,
+    348.7
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i018",
+   "type": "person",
+   "page": 6,
+   "box": [
+    27.7,
+    395.2,
+    291.8,
+    410.7
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i019",
+   "type": "person",
+   "page": 6,
+   "box": [
+    27.7,
+    432.6,
+    291.8,
+    648.6
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature Signature"
+  },
+  {
+   "item": "i020",
+   "type": "person",
+   "page": 6,
+   "box": [
+    40.2,
+    680.9,
+    105.0,
+    696.4
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i021",
+   "type": "person",
+   "page": 6,
+   "box": [
+    334.4,
+    682.5,
+    584.3,
+    698.0
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i022",
+   "type": "person",
+   "page": 8,
+   "box": [
+    25.3,
+    129.2,
+    35.2,
+    139.1
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "CERTIFICATE OF ACCREDITED INVESTOR STATUS"
+  },
+  {
+   "item": "i023",
+   "type": "person",
+   "page": 8,
+   "box": [
+    25.3,
+    272.8,
+    35.2,
+    306.7
+   ],
+   "block": "B13",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i024",
+   "type": "person",
+   "page": 8,
+   "box": [
+    25.3,
+    332.6,
+    35.2,
+    342.6
+   ],
+   "block": "B14",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i025",
+   "type": "person",
+   "page": 8,
+   "box": [
+    25.3,
+    404.4,
+    35.2,
+    414.4
+   ],
+   "block": "B15",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i026",
+   "type": "person",
+   "page": 8,
+   "box": [
+    25.3,
+    452.3,
+    35.2,
+    462.3
+   ],
+   "block": "B16",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i027",
+   "type": "person",
+   "page": 8,
+   "box": [
+    25.3,
+    500.2,
+    35.2,
+    510.1
+   ],
+   "block": "B17",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i028",
+   "type": "person",
+   "page": 8,
+   "box": [
+    25.3,
+    536.1,
+    35.2,
+    546.0
+   ],
+   "block": "B18",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 2,
+   "block": "B01",
+   "box": [
+    308.9,
+    89.2,
+    368.7,
+    104.7
+   ],
+   "heading": "",
+   "context": [
+    "11/14/26, 10:12 AM Unassociated Document",
+    "This agreement (\u201cAgreement\u201d) is made as of the date set forth below by and between the undersigned (\u201cSubscriber\u201d) and EL",
+    "MOTORS, INC., an Arizona corporation (the \u201cCompany\u201d), and is intended to set forth certain representations, covenants an"
+   ],
+   "places": [
+    "p02-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B02",
+   "box": [
+    239.1,
+    280.7,
+    293.9,
+    296.2
+   ],
+   "heading": "SUBSCRIPTION",
+   "context": [
+    "Signature Page (the \u201cPurchase Price\u201d), subject to the Company\u2019s right to sell to Subscriber such lesser number of Shares",
+    "Company may, in its sole discretion, deem necessary or desirable.",
+    "1.02 Delivery of Subscription Amount; Acceptance of Subscription; Delivery of Securities. Subscriber understands and agr",
+    "that this subscription is made subject to the following terms and conditions:"
+   ],
+   "places": [
+    "p02-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B03",
+   "box": [
+    499.0,
+    126.7,
+    584.3,
+    142.2
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT SIGNATURE PAGE",
+   "context": [
+    "ELIO MOTORS, INC.",
+    "SUBSCRIPTION AGREEMENT SIGNATURE PAGE",
+    "The undersigned, desiring to purchase shares of common stock of Elio Motors, Inc., by executing this signature page, her",
+    "adopts and agrees to all terms, conditions and representations of the Subscription Agreement."
+   ],
+   "places": [
+    "p06-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B04",
+   "box": [
+    499.0,
+    176.1,
+    584.3,
+    191.6
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT SIGNATURE PAGE",
+   "context": [
+    "(a) The number of Shares the undersigned hereby irrevocably subscribes for is:",
+    "(enter number of",
+    "Shares)",
+    "(b) The aggregate Purchase Price (based on a price of $12.00 per Share) for the Shares the undersigned"
+   ],
+   "places": [
+    "p06-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B05",
+   "box": [
+    30.7,
+    239.8,
+    38.0,
+    251.8
+   ],
+   "heading": "",
+   "context": [
+    "hereby irrevocably subscribes for is: $",
+    "(enter total",
+    "Purchase Price)",
+    "(c) Check the applicable box:"
+   ],
+   "places": [
+    "p06-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B06",
+   "box": [
+    30.3,
+    287.7,
+    37.5,
+    299.6
+   ],
+   "heading": "",
+   "context": [
+    "(c) Check the applicable box:",
+    "The undersigned is an accredited investor (as that term is defined in Regulation D under the Securities Act). The unders",
+    "checked the appropriate box on the attached Certificate of Accredited Investor Status indicating the basis of such accre",
+    "status."
+   ],
+   "places": [
+    "p06-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B07",
+   "box": [
+    26.7,
+    335,
+    585.2,
+    348.7
+   ],
+   "heading": "",
+   "context": [
+    "status.",
+    "The amount set forth in paragraph (b) above (together with any previous investments in the Securities pursuant to this o",
+    "does not exceed 10% of the greater of the undersigned\u2019s net worth or annual income.",
+    "(d) The Securities being subscribed for will be owned by, and should be recorded on the Company\u2019s books as held in the n"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 6,
+   "block": "B08",
+   "box": [
+    27.7,
+    395.2,
+    291.8,
+    410.7
+   ],
+   "heading": "",
+   "context": [
+    "(d) The Securities being subscribed for will be owned by, and should be recorded on the Company\u2019s books as held in the n",
+    "(print name of owner or joint owners)",
+    "If the Securities are to be purchased in joint names, both Subscribers",
+    "must sign:"
+   ],
+   "places": [
+    "p06-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B09",
+   "box": [
+    27.7,
+    432.6,
+    291.8,
+    648.6
+   ],
+   "heading": "Signature Signature",
+   "context": [
+    "(print name of owner or joint owners)",
+    "If the Securities are to be purchased in joint names, both Subscribers",
+    "must sign:",
+    "Signature Signature"
+   ],
+   "places": [
+    "p06-006",
+    "p06-007",
+    "p06-008",
+    "p06-009",
+    "p06-010",
+    "p06-011"
+   ],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 6,
+   "block": "B10",
+   "box": [
+    40.2,
+    680.9,
+    105.0,
+    696.4
+   ],
+   "heading": "",
+   "context": [
+    "Telephone Number Telephone Number",
+    "Social Security Number/EIN Social Security Number",
+    "Date Date",
+    "This Subscription is accepted Elio Motors, Inc."
+   ],
+   "places": [
+    "p06-012"
+   ],
+   "items": []
+  },
+  {
+   "page": 6,
+   "block": "B11",
+   "box": [
+    334.4,
+    682.5,
+    584.3,
+    698.0
+   ],
+   "heading": "",
+   "context": [
+    "Telephone Number Telephone Number",
+    "Social Security Number/EIN Social Security Number",
+    "Date Date",
+    "This Subscription is accepted Elio Motors, Inc."
+   ],
+   "places": [
+    "p06-013"
+   ],
+   "items": []
+  },
+  {
+   "page": 8,
+   "block": "B12",
+   "box": [
+    25.3,
+    129.2,
+    35.2,
+    139.1
+   ],
+   "heading": "CERTIFICATE OF ACCREDITED INVESTOR STATUS",
+   "context": [
+    "CERTIFICATE OF ACCREDITED INVESTOR STATUS",
+    "The undersigned is an individual \u201caccredited investor,\u201d as that term is defined in Regulation D under the Securities Act",
+    "amended (the \u201cAct\u201d). The undersigned has checked the box below indicating the basis on which it is representing its stat",
+    "\u201caccredited investor\u201d:"
+   ],
+   "places": [],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 8,
+   "block": "B13",
+   "box": [
+    25.3,
+    272.8,
+    35.2,
+    306.7
+   ],
+   "heading": "",
+   "context": [
+    "$5,000,000; an employee benefit plan within the meaning of the Employee Retirement Income Security Act of 1974, if the",
+    "investment decision is made by a plan fiduciary, as defined in Section 3(21) of such act, which is either a bank, saving",
+    "association, insurance company, or registered investment adviser, or if the employee benefit plan has total assets in ex",
+    "$5,000,000 or, if a self-directed plan, with investment decisions made solely by persons that are \u201caccredited investors\u201d"
+   ],
+   "places": [],
+   "items": [
+    "i004",
+    "i005"
+   ]
+  },
+  {
+   "page": 8,
+   "block": "B14",
+   "box": [
+    25.3,
+    332.6,
+    35.2,
+    342.6
+   ],
+   "heading": "",
+   "context": [
+    "$5,000,000 or, if a self-directed plan, with investment decisions made solely by persons that are \u201caccredited investors\u201d",
+    "o a private business development company as defined in Section 202(a)(22) of the Investment Advisers Act of 1940;",
+    "o an organization described in Section 501(c)(3) of the Internal Revenue Code, corporation, Massachusetts or similar bus",
+    "or partnership, not formed for the specific purpose of acquiring the securities offered, with total assets in excess of "
+   ],
+   "places": [],
+   "items": [
+    "i006"
+   ]
+  },
+  {
+   "page": 8,
+   "block": "B15",
+   "box": [
+    25.3,
+    404.4,
+    35.2,
+    414.4
+   ],
+   "heading": "",
+   "context": [
+    "her primary residence, at the time of this purchase exceeds $1,000,000 and having no reason to believe that net worth wi",
+    "remain in excess of $1,000,000 for the foreseeable future, with \u201cnet value\u201d for such purposes being the fair value of th",
+    "less any mortgage indebtedness or other obligation secured by the residence, but subtracting such indebtedness or obliga",
+    "if it is a liability already considered in calculating net worth;"
+   ],
+   "places": [],
+   "items": [
+    "i007"
+   ]
+  },
+  {
+   "page": 8,
+   "block": "B16",
+   "box": [
+    25.3,
+    452.3,
+    35.2,
+    462.3
+   ],
+   "heading": "",
+   "context": [
+    "if it is a liability already considered in calculating net worth;",
+    "o a natural person who had an individual income in excess of $200,000 in each of the two most recent years or joint inco",
+    "the undersigned\u2019s spouse in excess of $300,000 in each of those years and has a reasonable expectation of reaching the s",
+    "income level in the current year;"
+   ],
+   "places": [],
+   "items": [
+    "i008"
+   ]
+  },
+  {
+   "page": 8,
+   "block": "B17",
+   "box": [
+    25.3,
+    500.2,
+    35.2,
+    510.1
+   ],
+   "heading": "",
+   "context": [
+    "income level in the current year;",
+    "o a trust with total assets in excess of $5,000,000, not formed for the specific purpose of acquiring the securities off",
+    "purchase is directed by a person who has such knowledge and experience in financial and business matters that he is capa",
+    "evaluating the merits and risks of the prospective investment; or"
+   ],
+   "places": [],
+   "items": [
+    "i009"
+   ]
+  },
+  {
+   "page": 8,
+   "block": "B18",
+   "box": [
+    25.3,
+    536.1,
+    35.2,
+    546.0
+   ],
+   "heading": "",
+   "context": [
+    "purchase is directed by a person who has such knowledge and experience in financial and business matters that he is capa",
+    "evaluating the merits and risks of the prospective investment; or",
+    "o an entity in which all of the equity holders are \u201caccredited investors\u201d by virtue of their meeting one or more of the ",
+    "standards."
+   ],
+   "places": [],
+   "items": [
+    "i010"
+   ]
+  }
+ ]
+}

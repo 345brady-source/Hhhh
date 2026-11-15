@@ -1,0 +1,196 @@
+{
+ "id": "a099",
+ "answers": {
+  "i001": {
+   "do": "drop"
+  },
+  "i002": {
+   "do": "drop"
+  },
+  "i003": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "phone"
+  },
+  "i004": {
+   "do": "drop"
+  },
+  "i005": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "phone"
+  },
+  "i006": {
+   "do": "drop"
+  },
+  "i007": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "phone"
+  },
+  "i008": {
+   "do": "drop"
+  },
+  "i009": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "phone"
+  },
+  "i010": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "tax number"
+  },
+  "i011": {
+   "do": "drop"
+  },
+  "i012": {
+   "do": "drop"
+  },
+  "i013": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "tax number",
+   "owner": "co-investor"
+  },
+  "i014": {
+   "do": "drop"
+  },
+  "i015": {
+   "do": "drop"
+  }
+ },
+ "blocks": {
+  "B01": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B02": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ],
+  "B03": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B04": [
+   {
+    "owner": "firm",
+    "cond": ""
+   }
+  ],
+  "B05": [
+   {
+    "owner": "investor",
+    "cond": ""
+   },
+   {
+    "owner": "co-investor",
+    "cond": "y>400"
+   }
+  ],
+  "B06": [
+   {
+    "owner": "firm",
+    "cond": ""
+   }
+  ],
+  "B07": [
+   {
+    "owner": "investor",
+    "cond": ""
+   },
+   {
+    "owner": "co-investor",
+    "cond": "y>460"
+   }
+  ],
+  "B08": [
+   {
+    "owner": "investor-entity",
+    "cond": ""
+   }
+  ],
+  "B09": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B10": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B11": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B12": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B13": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B14": [
+   {
+    "owner": "co-investor",
+    "cond": ""
+   }
+  ],
+  "B15": [
+   {
+    "owner": "co-investor",
+    "cond": ""
+   }
+  ],
+  "B16": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B17": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B18": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B19": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ]
+ },
+ "confirms": {},
+ "confirm_items": [],
+ "cost": {
+  "pixels": 2062336,
+  "chars": 8354,
+  "commands": 8,
+  "sheets": 3
+ },
+ "done": "2026-11-15T04:47:33Z"
+}

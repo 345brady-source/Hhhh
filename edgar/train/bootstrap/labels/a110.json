@@ -1,0 +1,1099 @@
+{
+ "id": "a110",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:05Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 3,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text"
+ },
+ "run": "out-18/set-a/a110/result.json",
+ "candidates": "3f1acb9947741603-f01586d5.json",
+ "counts": {
+  "fields": 24,
+  "counted_candidates": 26,
+  "pairs": 23,
+  "auto": 23,
+  "reader_only": 1,
+  "measure_only": 3,
+  "kind_clash": 0,
+  "person": 9,
+  "items": 13
+ },
+ "places": [
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "b 3 and dated",
+   "printed_label": "filed on Form 424(b)(3) and dated",
+   "must": true,
+   "x0": 228.5,
+   "y0": 96.9,
+   "x1": 253.5,
+   "y1": 112.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "b 3 and dated"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p02-001",
+   "block": "B01"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Form S-1 filed on",
+   "printed_label": "Company\u2019s Registration Statement on Form S-1 filed on",
+   "must": true,
+   "x0": 294.9,
+   "y0": 252.9,
+   "x1": 324.9,
+   "y1": 268.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Form S-1 filed on"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-002",
+   "block": "B02"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Total Number of Shares to be Acquired",
+   "printed_label": "Total Number of Shares to be Acquired",
+   "must": true,
+   "x0": 229.0,
+   "y0": 360.9,
+   "x1": 368.9,
+   "y1": 376.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Total Number of Shares to be Acquired"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p02-003",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Amount to be paid",
+   "printed_label": "to be paid (price of $0.03 per Share)",
+   "must": true,
+   "x0": 252.1,
+   "y0": 384.9,
+   "x1": 392.1,
+   "y1": 400.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Amount to be paid"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p02-004",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "signature",
+   "owner": "third-party",
+   "label": "IN WITNESS WHEREOF, the undersigned has executed this Subscr",
+   "printed_label": "the undersigned has executed this Subscription Agreement this",
+   "must": false,
+   "x0": 485.2,
+   "y0": 408.9,
+   "x1": 515.2,
+   "y1": 424.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "someone else",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "IN WITNESS WHEREOF, the undersigned has executed this Subscr"
+   },
+   "cand": "underscore",
+   "id": "p02-005",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Agreement this day of",
+   "printed_label": "",
+   "must": true,
+   "x0": 66.7,
+   "y0": 420.9,
+   "x1": 141.7,
+   "y1": 436.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Agreement this day of"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p02-006",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 66.7,
+   "y0": 468.9,
+   "x1": 331.6,
+   "y1": 484.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-007",
+   "block": "B04"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "",
+   "must": true,
+   "x0": 66.7,
+   "y0": 503.9,
+   "x1": 331.6,
+   "y1": 519.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p02-008",
+   "block": "B04"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Joint Tenants with Right of Survivorship",
+   "printed_label": "[ ]",
+   "must": false,
+   "x0": 66.7,
+   "y0": 556.9,
+   "x1": 78.4,
+   "y1": 566.9,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Joint Tenants with Right of Survivorship"
+   },
+   "cand": "tick",
+   "id": "p02-009",
+   "block": "B05"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Tenants in Common",
+   "printed_label": "[ ]",
+   "must": false,
+   "x0": 66.7,
+   "y0": 568.9,
+   "x1": 78.4,
+   "y1": 578.9,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Tenants in Common"
+   },
+   "cand": "tick",
+   "id": "p02-010",
+   "block": "B05"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Community Property",
+   "printed_label": "",
+   "must": false,
+   "x0": 66.7,
+   "y0": 580.9,
+   "x1": 78.4,
+   "y1": 590.9,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Community Property"
+   },
+   "cand": "tick",
+   "id": "p02-011",
+   "block": "B05"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Trust",
+   "printed_label": "[ ]",
+   "must": false,
+   "x0": 66.7,
+   "y0": 628.9,
+   "x1": 78.4,
+   "y1": 638.9,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Trust"
+   },
+   "cand": "tick",
+   "id": "p02-012",
+   "block": "B06"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Estate",
+   "printed_label": "[ ]",
+   "must": false,
+   "x0": 66.7,
+   "y0": 640.9,
+   "x1": 78.4,
+   "y1": 650.9,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Estate"
+   },
+   "cand": "tick",
+   "id": "p02-013",
+   "block": "B06"
+  },
+  {
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Power of Attorney",
+   "printed_label": "",
+   "must": false,
+   "x0": 66.7,
+   "y0": 652.9,
+   "x1": 78.4,
+   "y1": 662.9,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Power of Attorney"
+   },
+   "cand": "tick",
+   "id": "p02-014",
+   "block": "B06"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name and Type of Business Organization",
+   "printed_label": "Name and Type of Business Organization",
+   "must": true,
+   "x0": 238.3,
+   "y0": 672.9,
+   "x1": 488.2,
+   "y1": 688.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name and Type of Business Organization"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p02-015",
+   "block": "B06"
+  },
+  {
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Government ID# -",
+   "printed_label": "",
+   "must": false,
+   "x0": 66.7,
+   "y0": 100.9,
+   "x1": 78.4,
+   "y1": 110.9,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Government ID# -"
+   },
+   "cand": "tick",
+   "id": "p03-001",
+   "block": "B07"
+  },
+  {
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Social Security# -",
+   "printed_label": "[ ] Government ID#",
+   "must": false,
+   "x0": 157.2,
+   "y0": 100.9,
+   "x1": 168.9,
+   "y1": 110.9,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Social Security# -"
+   },
+   "cand": "tick",
+   "id": "p03-002",
+   "block": "B07"
+  },
+  {
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Passport# -",
+   "printed_label": "Government ID# - [ ] Social Security#",
+   "must": false,
+   "x0": 245.5,
+   "y0": 100.9,
+   "x1": 257.1,
+   "y1": 110.9,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Passport# -"
+   },
+   "cand": "tick",
+   "id": "p03-003",
+   "block": "B07"
+  },
+  {
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Drivers License# -",
+   "printed_label": "] Social Security# - [ ] Passport#",
+   "must": false,
+   "x0": 306.8,
+   "y0": 100.9,
+   "x1": 318.5,
+   "y1": 110.9,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Drivers License# -"
+   },
+   "cand": "tick",
+   "id": "p03-004",
+   "block": "B07"
+  },
+  {
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Tax ID# - Other",
+   "printed_label": "] Passport# - [ ] Drivers License#",
+   "must": false,
+   "x0": 397.9,
+   "y0": 100.9,
+   "x1": 409.5,
+   "y1": 110.9,
+   "printed_as": "measure candidate: tick",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Tax ID# - Other"
+   },
+   "cand": "tick",
+   "id": "p03-005",
+   "block": "B08"
+  },
+  {
+   "page": 3,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "SIGNATURE",
+   "must": true,
+   "x0": 127.5,
+   "y0": 144.9,
+   "x1": 342.4,
+   "y1": 160.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p03-006",
+   "block": "B07"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "day of",
+   "printed_label": "this",
+   "must": true,
+   "x0": 83.6,
+   "y0": 204.9,
+   "x1": 243.9,
+   "y1": 220.4,
+   "printed_as": "measure candidate: dateparts",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "day of"
+   },
+   "cand": "dateparts",
+   "what": "date",
+   "id": "p03-007",
+   "block": "B09"
+  },
+  {
+   "page": 3,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 83.6,
+   "y0": 228.9,
+   "x1": 228.6,
+   "y1": 244.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p03-008",
+   "block": "B09"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    206.1,
+    96.9,
+    226.1,
+    112.4
+   ],
+   "caption": "filed on Form 424(b)(3) and dated",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "date"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    327.4,
+    252.9,
+    352.4,
+    268.4
+   ],
+   "caption": "Company\u2019s Registration Statement on Form S-1 filed on",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    66.7,
+    119.9,
+    347.2,
+    135.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i003",
+   "block": "B07"
+  },
+  {
+   "type": "reader-only",
+   "page": 3,
+   "box": [
+    82.6,
+    208.3,
+    114.6,
+    219.9
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "this"
+   },
+   "caption": "this",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i004",
+   "block": "B09"
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 2,
+   "box": [
+    206.1,
+    96.9,
+    253.5,
+    112.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT SIGNATURE PAGE"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 2,
+   "box": [
+    294.9,
+    252.9,
+    352.4,
+    268.4
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 2,
+   "box": [
+    66.7,
+    360.9,
+    515.2,
+    436.4
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 2,
+   "box": [
+    66.7,
+    468.9,
+    331.6,
+    519.4
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 2,
+   "box": [
+    66.7,
+    556.9,
+    78.4,
+    590.9
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ADDRESS:"
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 2,
+   "box": [
+    66.7,
+    628.9,
+    488.2,
+    688.4
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ADDRESS:"
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 3,
+   "box": [
+    66.7,
+    100.9,
+    347.2,
+    160.4
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "IDENTIFICATION AUTHENTICATION REQUIRED [ATTACH PHOTOCOPY OF ID]"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 3,
+   "box": [
+    397.9,
+    100.9,
+    409.5,
+    110.9
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "IDENTIFICATION AUTHENTICATION REQUIRED [ATTACH PHOTOCOPY OF ID]"
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 3,
+   "box": [
+    82.6,
+    204.9,
+    243.9,
+    244.4
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ACCEPTANCE OF SUBSCRIPTION"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 2,
+   "block": "B01",
+   "box": [
+    206.1,
+    96.9,
+    253.5,
+    112.4
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT SIGNATURE PAGE",
+   "context": [
+    "SUBSCRIPTION AGREEMENT SIGNATURE PAGE",
+    "The undersigned (the \u201cSubscriber\u201d) hereby subscribes for that number of shares (the \u201cShares\u201d) of the"
+   ],
+   "places": [
+    "p02-001"
+   ],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B02",
+   "box": [
+    294.9,
+    252.9,
+    352.4,
+    268.4
+   ],
+   "heading": "",
+   "context": [
+    "1. no person has made to the Subscriber any written or oral representations:",
+    "(a) that any person will resell or repurchase the Shares,",
+    "(b) that any person will refund the purchase price of the Shares, or",
+    "(c) as to the future price or value of the Shares;"
+   ],
+   "places": [
+    "p02-002"
+   ],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B03",
+   "box": [
+    66.7,
+    360.9,
+    515.2,
+    436.4
+   ],
+   "heading": "",
+   "context": [
+    "survive the closing of this Agreement.",
+    "The Subscriber acknowledges that the Subscriber has a two-day cancellation right and can cancel this Subscription",
+    "Agreement by sending notice to the Company by midnight on the 2nd business day after the Subscriber signs this",
+    "Subscription Agreement."
+   ],
+   "places": [
+    "p02-003",
+    "p02-004",
+    "p02-005",
+    "p02-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B04",
+   "box": [
+    66.7,
+    468.9,
+    331.6,
+    519.4
+   ],
+   "heading": "",
+   "context": [
+    "Amount to be paid (price of $0.03 per Share):",
+    "IN WITNESS WHEREOF, the undersigned has executed this Subscription Agreement this day of",
+    ", 202 .",
+    "NAME: (PRINT) as it should appear on the Certificate:"
+   ],
+   "places": [
+    "p02-007",
+    "p02-008"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B05",
+   "box": [
+    66.7,
+    556.9,
+    78.4,
+    590.9
+   ],
+   "heading": "ADDRESS:",
+   "context": [
+    ", 202 .",
+    "NAME: (PRINT) as it should appear on the Certificate:",
+    "ADDRESS:",
+    "If Joint Ownership, check one (all parties must sign above):"
+   ],
+   "places": [
+    "p02-009",
+    "p02-010",
+    "p02-011"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B06",
+   "box": [
+    66.7,
+    628.9,
+    488.2,
+    688.4
+   ],
+   "heading": "ADDRESS:",
+   "context": [
+    "[ ] Joint Tenants with Right of Survivorship",
+    "[ ] Tenants in Common",
+    "[ ] Community Property",
+    "If Fiduciary or a Business or an Organization, check one:"
+   ],
+   "places": [
+    "p02-012",
+    "p02-013",
+    "p02-014",
+    "p02-015"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B07",
+   "box": [
+    66.7,
+    100.9,
+    347.2,
+    160.4
+   ],
+   "heading": "IDENTIFICATION AUTHENTICATION REQUIRED [ATTACH PHOTOCOPY OF ID]",
+   "context": [
+    "IDENTIFICATION AUTHENTICATION REQUIRED [ATTACH PHOTOCOPY OF ID]",
+    "Below is my (check one)"
+   ],
+   "places": [
+    "p03-001",
+    "p03-002",
+    "p03-003",
+    "p03-004",
+    "p03-006"
+   ],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B08",
+   "box": [
+    397.9,
+    100.9,
+    409.5,
+    110.9
+   ],
+   "heading": "IDENTIFICATION AUTHENTICATION REQUIRED [ATTACH PHOTOCOPY OF ID]",
+   "context": [
+    "IDENTIFICATION AUTHENTICATION REQUIRED [ATTACH PHOTOCOPY OF ID]",
+    "Below is my (check one)"
+   ],
+   "places": [
+    "p03-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B09",
+   "box": [
+    82.6,
+    204.9,
+    243.9,
+    244.4
+   ],
+   "heading": "ACCEPTANCE OF SUBSCRIPTION",
+   "context": [
+    "[ ] Government ID# - [ ] Social Security# - [ ] Passport# - [ ] Drivers License# - [ ] Tax ID# - Other",
+    "ID#",
+    "SIGNATURE:",
+    "ACCEPTANCE OF SUBSCRIPTION"
+   ],
+   "places": [
+    "p03-007",
+    "p03-008"
+   ],
+   "items": [
+    "i004"
+   ]
+  }
+ ]
+}

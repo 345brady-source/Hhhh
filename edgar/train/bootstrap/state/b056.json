@@ -1,0 +1,33 @@
+{
+ "id": "b056",
+ "answers": {
+  "i001": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "amount"
+  }
+ },
+ "blocks": {
+  "B01": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B02": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ]
+ },
+ "confirms": {},
+ "confirm_items": [],
+ "cost": {
+  "pixels": 128896,
+  "chars": 1002,
+  "commands": 4,
+  "sheets": 1
+ },
+ "done": "2026-11-15T04:45:49Z"
+}

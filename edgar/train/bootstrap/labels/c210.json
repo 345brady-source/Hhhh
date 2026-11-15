@@ -1,0 +1,592 @@
+{
+ "id": "c210",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:09Z",
+ "how_made": "browser-landscape",
+ "made_group": "browser landscape",
+ "broker_dealer": false,
+ "pages": 71,
+ "page_sizes": {
+  "1": [
+   792.0,
+   612.0
+  ],
+  "2": [
+   792.0,
+   612.0
+  ],
+  "3": [
+   792.0,
+   612.0
+  ],
+  "4": [
+   792.0,
+   612.0
+  ],
+  "5": [
+   792.0,
+   612.0
+  ],
+  "6": [
+   792.0,
+   612.0
+  ],
+  "7": [
+   792.0,
+   612.0
+  ],
+  "8": [
+   792.0,
+   612.0
+  ],
+  "9": [
+   792.0,
+   612.0
+  ],
+  "10": [
+   792.0,
+   612.0
+  ],
+  "11": [
+   792.0,
+   612.0
+  ],
+  "12": [
+   792.0,
+   612.0
+  ],
+  "13": [
+   792.0,
+   612.0
+  ],
+  "14": [
+   792.0,
+   612.0
+  ],
+  "15": [
+   792.0,
+   612.0
+  ],
+  "16": [
+   792.0,
+   612.0
+  ],
+  "17": [
+   792.0,
+   612.0
+  ],
+  "18": [
+   792.0,
+   612.0
+  ],
+  "19": [
+   792.0,
+   612.0
+  ],
+  "20": [
+   792.0,
+   612.0
+  ],
+  "21": [
+   792.0,
+   612.0
+  ],
+  "22": [
+   792.0,
+   612.0
+  ],
+  "23": [
+   792.0,
+   612.0
+  ],
+  "24": [
+   792.0,
+   612.0
+  ],
+  "25": [
+   792.0,
+   612.0
+  ],
+  "26": [
+   792.0,
+   612.0
+  ],
+  "27": [
+   792.0,
+   612.0
+  ],
+  "28": [
+   792.0,
+   612.0
+  ],
+  "29": [
+   792.0,
+   612.0
+  ],
+  "30": [
+   792.0,
+   612.0
+  ],
+  "31": [
+   792.0,
+   612.0
+  ],
+  "32": [
+   792.0,
+   612.0
+  ],
+  "33": [
+   792.0,
+   612.0
+  ],
+  "34": [
+   792.0,
+   612.0
+  ],
+  "35": [
+   792.0,
+   612.0
+  ],
+  "36": [
+   792.0,
+   612.0
+  ],
+  "37": [
+   792.0,
+   612.0
+  ],
+  "38": [
+   792.0,
+   612.0
+  ],
+  "39": [
+   792.0,
+   612.0
+  ],
+  "40": [
+   792.0,
+   612.0
+  ],
+  "41": [
+   792.0,
+   612.0
+  ],
+  "42": [
+   792.0,
+   612.0
+  ],
+  "43": [
+   792.0,
+   612.0
+  ],
+  "44": [
+   792.0,
+   612.0
+  ],
+  "45": [
+   792.0,
+   612.0
+  ],
+  "46": [
+   792.0,
+   612.0
+  ],
+  "47": [
+   792.0,
+   612.0
+  ],
+  "48": [
+   792.0,
+   612.0
+  ],
+  "49": [
+   792.0,
+   612.0
+  ],
+  "50": [
+   792.0,
+   612.0
+  ],
+  "51": [
+   792.0,
+   612.0
+  ],
+  "52": [
+   792.0,
+   612.0
+  ],
+  "53": [
+   792.0,
+   612.0
+  ],
+  "54": [
+   792.0,
+   612.0
+  ],
+  "55": [
+   792.0,
+   612.0
+  ],
+  "56": [
+   792.0,
+   612.0
+  ],
+  "57": [
+   792.0,
+   612.0
+  ],
+  "58": [
+   792.0,
+   612.0
+  ],
+  "59": [
+   792.0,
+   612.0
+  ],
+  "60": [
+   792.0,
+   612.0
+  ],
+  "61": [
+   792.0,
+   612.0
+  ],
+  "62": [
+   792.0,
+   612.0
+  ],
+  "63": [
+   792.0,
+   612.0
+  ],
+  "64": [
+   792.0,
+   612.0
+  ],
+  "65": [
+   792.0,
+   612.0
+  ],
+  "66": [
+   792.0,
+   612.0
+  ],
+  "67": [
+   792.0,
+   612.0
+  ],
+  "68": [
+   792.0,
+   612.0
+  ],
+  "69": [
+   792.0,
+   612.0
+  ],
+  "70": [
+   792.0,
+   612.0
+  ],
+  "71": [
+   792.0,
+   612.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text",
+  "17": "text",
+  "18": "text",
+  "19": "text",
+  "20": "text",
+  "21": "text",
+  "22": "text",
+  "23": "text",
+  "24": "text",
+  "25": "text",
+  "26": "text",
+  "27": "text",
+  "28": "text",
+  "29": "text",
+  "30": "text",
+  "31": "text",
+  "32": "text",
+  "33": "text",
+  "34": "text",
+  "35": "text",
+  "36": "text",
+  "37": "text",
+  "38": "text",
+  "39": "text",
+  "40": "text",
+  "41": "text",
+  "42": "text",
+  "43": "text",
+  "44": "text",
+  "45": "text",
+  "46": "text",
+  "47": "text",
+  "48": "text",
+  "49": "text",
+  "50": "text",
+  "51": "text",
+  "52": "text",
+  "53": "text",
+  "54": "text",
+  "55": "text",
+  "56": "text",
+  "57": "text",
+  "58": "text",
+  "59": "text",
+  "60": "text",
+  "61": "text",
+  "62": "text",
+  "63": "text",
+  "64": "text",
+  "65": "text",
+  "66": "text",
+  "67": "text",
+  "68": "text",
+  "69": "text",
+  "70": "text",
+  "71": "text"
+ },
+ "run": "out-18/set-c/c210/result.json",
+ "candidates": "6c7152ee5364e133-f01586d5.json",
+ "counts": {
+  "fields": 4,
+  "counted_candidates": 5,
+  "pairs": 4,
+  "auto": 4,
+  "reader_only": 0,
+  "measure_only": 1,
+  "kind_clash": 0,
+  "person": 2,
+  "items": 3
+ },
+ "places": [
+  {
+   "page": 48,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "every year, audited financial statements of the SPV within 1",
+   "printed_label": "",
+   "must": false,
+   "x0": 101.3,
+   "y0": 388.9,
+   "x1": 111.3,
+   "y1": 398.9,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "every year, audited financial statements of the SPV within 1"
+   },
+   "cand": "glyphbox",
+   "id": "p48-001",
+   "block": "B01"
+  },
+  {
+   "page": 48,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "quarterly operational report with the operating performance",
+   "printed_label": "",
+   "must": false,
+   "x0": 101.3,
+   "y0": 424.9,
+   "x1": 111.3,
+   "y1": 434.9,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "quarterly operational report with the operating performance"
+   },
+   "cand": "glyphbox",
+   "id": "p48-002",
+   "block": "B02"
+  },
+  {
+   "page": 48,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "half yearly report with",
+   "printed_label": "",
+   "must": false,
+   "x0": 101.3,
+   "y0": 448.9,
+   "x1": 111.3,
+   "y1": 458.9,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "half yearly report with"
+   },
+   "cand": "glyphbox",
+   "id": "p48-003",
+   "block": "B02"
+  },
+  {
+   "page": 48,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "the economic and financial performances of the Project",
+   "printed_label": "",
+   "must": false,
+   "x0": 127.5,
+   "y0": 496.9,
+   "x1": 137.5,
+   "y1": 506.9,
+   "printed_as": "measure candidate: glyphbox",
+   "auto": true,
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "the economic and financial performances of the Project"
+   },
+   "cand": "glyphbox",
+   "id": "p48-004",
+   "block": "B02"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 48,
+   "box": [
+    127.5,
+    472.9,
+    137.5,
+    482.9
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "glyphbox",
+    "family": "tick",
+    "why": "tick box printed as its fallback glyph \"o\" in a choice column"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i001",
+   "block": "B02"
+  },
+  {
+   "item": "i002",
+   "type": "person",
+   "page": 48,
+   "box": [
+    101.3,
+    388.9,
+    111.3,
+    398.9
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i003",
+   "type": "person",
+   "page": 48,
+   "box": [
+    101.3,
+    424.9,
+    137.5,
+    506.9
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 48,
+   "block": "B01",
+   "box": [
+    101.3,
+    388.9,
+    111.3,
+    398.9
+   ],
+   "heading": "",
+   "context": [
+    "The Issuer shall notify the Bondholder of the occurrence of any Event of Default (and the steps, if any, being taken to ",
+    "becoming aware of such occurrence.",
+    "11.4 Information related to the Project",
+    "The Issuer shall supply the Bondholder with:"
+   ],
+   "places": [
+    "p48-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 48,
+   "block": "B02",
+   "box": [
+    101.3,
+    424.9,
+    137.5,
+    506.9
+   ],
+   "heading": "",
+   "context": [
+    "11.4 Information related to the Project",
+    "The Issuer shall supply the Bondholder with:",
+    "\u00a8 every year, audited financial statements of the SPV within 120 days after the end of each Financial Year, and together",
+    "reports"
+   ],
+   "places": [
+    "p48-002",
+    "p48-003",
+    "p48-004"
+   ],
+   "items": [
+    "i001"
+   ]
+  }
+ ]
+}

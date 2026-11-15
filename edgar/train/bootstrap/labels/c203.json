@@ -1,0 +1,635 @@
+{
+ "id": "c203",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:09Z",
+ "how_made": "browser-landscape",
+ "made_group": "browser landscape",
+ "broker_dealer": false,
+ "pages": 3,
+ "page_sizes": {
+  "1": [
+   792.0,
+   612.0
+  ],
+  "2": [
+   792.0,
+   612.0
+  ],
+  "3": [
+   792.0,
+   612.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text"
+ },
+ "run": "out-18/set-c/c203/result.json",
+ "candidates": "9996dc2b79f19c3d-f01586d5.json",
+ "counts": {
+  "fields": 10,
+  "counted_candidates": 14,
+  "pairs": 10,
+  "auto": 10,
+  "reader_only": 0,
+  "measure_only": 4,
+  "kind_clash": 0,
+  "person": 6,
+  "items": 10
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Statement deemed effective on",
+   "printed_label": "most recent S-1 Registration Statement deemed effective on",
+   "must": true,
+   "x0": 646.4,
+   "y0": 378.2,
+   "x1": 681.4,
+   "y1": 393.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Statement deemed effective on"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "PLEASE PRINT OR TYPE) Number of Shares",
+   "printed_label": "",
+   "must": false,
+   "x0": 537.7,
+   "y0": 322.0,
+   "x1": 749.2,
+   "y1": 337.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "PLEASE PRINT OR TYPE) Number of Shares"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p02-001",
+   "block": "B02"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "x $0.30 Total Amount of Subscription",
+   "printed_label": "",
+   "must": false,
+   "x0": 537.7,
+   "y0": 359.5,
+   "x1": 749.2,
+   "y1": 375.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "x $0.30 Total Amount of Subscription"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p02-002",
+   "block": "B02"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Exact name(s) of Subscriber(s)",
+   "printed_label": "",
+   "must": false,
+   "x0": 537.7,
+   "y0": 385.0,
+   "x1": 749.2,
+   "y1": 400.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Exact name(s) of Subscriber(s)"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p02-003",
+   "block": "B02"
+  },
+  {
+   "page": 2,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "(Signature)",
+   "must": true,
+   "x0": 537.7,
+   "y0": 410.5,
+   "x1": 749.2,
+   "y1": 426.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p02-004",
+   "block": "B02"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Date",
+   "printed_label": "",
+   "must": false,
+   "x0": 537.7,
+   "y0": 460.0,
+   "x1": 749.2,
+   "y1": 475.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Date"
+   },
+   "cand": "rule",
+   "what": "date",
+   "id": "p02-005",
+   "block": "B03"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 507.9,
+   "x1": 203.7,
+   "y1": 523.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-006",
+   "block": "B04"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 531.9,
+   "x1": 203.7,
+   "y1": 547.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-007",
+   "block": "B04"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 555.9,
+   "x1": 203.7,
+   "y1": 571.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p02-008",
+   "block": "B04"
+  },
+  {
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Identification Number",
+   "printed_label": "Identification Number(s)",
+   "must": true,
+   "x0": 143.7,
+   "y0": 105.2,
+   "x1": 218.6,
+   "y1": 120.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Identification Number"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p03-001",
+   "block": "B05"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    77.9,
+    81.2,
+    92.9,
+    96.7
+   ],
+   "caption": "Business: (",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B05"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    96.2,
+    81.2,
+    161.2,
+    96.7
+   ],
+   "caption": "Business: ( )",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B05"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    329.2,
+    81.2,
+    344.2,
+    96.7
+   ],
+   "caption": "Home: (",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i003",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 3,
+   "box": [
+    347.5,
+    81.2,
+    427.5,
+    96.7
+   ],
+   "caption": "Home: ( )",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i004",
+   "block": "B06"
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 1,
+   "box": [
+    646.4,
+    378.2,
+    681.4,
+    393.7
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 2,
+   "box": [
+    537.7,
+    322.0,
+    749.2,
+    426.0
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "(PLEASE PRINT OR TYPE)"
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 2,
+   "box": [
+    537.7,
+    460.0,
+    749.2,
+    475.5
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature of Subscriber(s):"
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    507.9,
+    203.7,
+    571.4
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature of Subscriber(s):"
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 3,
+   "box": [
+    77.9,
+    81.2,
+    218.6,
+    120.7
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 3,
+   "box": [
+    329.2,
+    81.2,
+    427.5,
+    96.7
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    646.4,
+    378.2,
+    681.4,
+    393.7
+   ],
+   "heading": "",
+   "context": [
+    "2.1 One (1) executed counterpart of the Signature Page attached to this Agreement together with appropriate notarization",
+    "2.2 A check, trade draft or media due bill in the amount set forth on the Signature Page attached to this Agreement, rep",
+    "to be purchased hereunder, made payable to the order of GLOBAL BRIDGE CAPITAL, INC.",
+    "3. Acknowledgements of Subscriber. By executing this Agreement, the Subscriber acknowledges the following:"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B02",
+   "box": [
+    537.7,
+    322.0,
+    749.2,
+    426.0
+   ],
+   "heading": "(PLEASE PRINT OR TYPE)",
+   "context": [
+    "The undersigned, desiring to subscribe for the number of Shares of Global Bridge Capital, Inc., (the \u201cCompany\u201d) as is se",
+    "understands the terms and conditions of the Subscription Agreement attached hereto and that he/she does hereby agree to ",
+    "IN WITNESS WHEREOF, the undersigned has hereby executed this Subscription Agreement as of the date set forth below.",
+    "(PLEASE PRINT OR TYPE)"
+   ],
+   "places": [
+    "p02-001",
+    "p02-002",
+    "p02-003",
+    "p02-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B03",
+   "box": [
+    537.7,
+    460.0,
+    749.2,
+    475.5
+   ],
+   "heading": "Signature of Subscriber(s):",
+   "context": [
+    "Total Amount of Subscription:",
+    "Exact name(s) of Subscriber(s):",
+    "Signature of Subscriber(s):",
+    "(Signature)"
+   ],
+   "places": [
+    "p02-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B04",
+   "box": [
+    33.7,
+    507.9,
+    203.7,
+    571.4
+   ],
+   "heading": "Signature of Subscriber(s):",
+   "context": [
+    "Signature of Subscriber(s):",
+    "(Signature)",
+    "Date:",
+    "Residence or Physical Mailing Address (cannot be a P.O. Box):"
+   ],
+   "places": [
+    "p02-006",
+    "p02-007",
+    "p02-008"
+   ],
+   "items": []
+  },
+  {
+   "page": 3,
+   "block": "B05",
+   "box": [
+    77.9,
+    81.2,
+    218.6,
+    120.7
+   ],
+   "heading": "",
+   "context": [
+    "11/15/26, 9:40 AM subscription sample.htm",
+    "Telephone Numbers (include Area Code):"
+   ],
+   "places": [
+    "p03-001"
+   ],
+   "items": [
+    "i001",
+    "i002"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B06",
+   "box": [
+    329.2,
+    81.2,
+    427.5,
+    96.7
+   ],
+   "heading": "",
+   "context": [
+    "11/15/26, 9:40 AM subscription sample.htm",
+    "Telephone Numbers (include Area Code):"
+   ],
+   "places": [],
+   "items": [
+    "i003",
+    "i004"
+   ]
+  }
+ ]
+}

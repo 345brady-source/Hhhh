@@ -1,0 +1,824 @@
+{
+ "id": "c193",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:09Z",
+ "how_made": "browser-landscape",
+ "made_group": "browser landscape",
+ "broker_dealer": false,
+ "pages": 3,
+ "page_sizes": {
+  "1": [
+   792.0,
+   612.0
+  ],
+  "2": [
+   792.0,
+   612.0
+  ],
+  "3": [
+   792.0,
+   612.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text"
+ },
+ "run": "out-18/set-c/c193/result.json",
+ "candidates": "83d7d54cedcb1b31-f01586d5.json",
+ "counts": {
+  "fields": 15,
+  "counted_candidates": 14,
+  "pairs": 13,
+  "auto": 11,
+  "reader_only": 2,
+  "measure_only": 1,
+  "kind_clash": 2,
+  "person": 9,
+  "items": 14
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "(",
+   "must": true,
+   "x0": 698.9,
+   "y0": 163.7,
+   "x1": 748.9,
+   "y1": 179.2,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "day of",
+   "printed_label": "Executed this",
+   "must": true,
+   "x0": 120.4,
+   "y0": 280.7,
+   "x1": 310.6,
+   "y1": 296.2,
+   "printed_as": "measure candidate: dateparts",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "day of"
+   },
+   "cand": "dateparts",
+   "what": "date",
+   "id": "p01-002",
+   "block": "B02"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 27.7,
+   "y0": 305.5,
+   "x1": 372.0,
+   "y1": 321.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p01-003",
+   "block": "B02"
+  },
+  {
+   "page": 1,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature of Purchaser",
+   "must": true,
+   "x0": 429.7,
+   "y0": 305.5,
+   "x1": 764.2,
+   "y1": 321.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p01-004",
+   "block": "B03"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 27.7,
+   "y0": 331.0,
+   "x1": 372.0,
+   "y1": 346.5,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p01-005",
+   "block": "B04"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address",
+   "printed_label": "Address of Purchaser",
+   "must": true,
+   "x0": 27.7,
+   "y0": 355.7,
+   "x1": 372.0,
+   "y1": 371.2,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Address"
+   },
+   "cand": "rule",
+   "what": "address",
+   "id": "p01-006",
+   "block": "B04"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Printed Name of Purchaser ID Number",
+   "printed_label": "Printed Name of Purchaser",
+   "must": true,
+   "x0": 27.7,
+   "y0": 381.2,
+   "x1": 372.0,
+   "y1": 396.7,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Printed Name of Purchaser ID Number"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p01-007",
+   "block": "B04"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Cash",
+   "printed_label": "Cash",
+   "must": true,
+   "x0": 206.5,
+   "y0": 489.2,
+   "x1": 261.5,
+   "y1": 504.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Cash"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-008",
+   "block": "B05"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Check #",
+   "printed_label": "Check #",
+   "must": true,
+   "x0": 378.0,
+   "y0": 489.2,
+   "x1": 452.9,
+   "y1": 504.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Check #"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-009",
+   "block": "B06"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Other",
+   "printed_label": "Other",
+   "must": true,
+   "x0": 575.6,
+   "y0": 489.2,
+   "x1": 660.6,
+   "y1": 504.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Other"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-010",
+   "block": "B07"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Title",
+   "printed_label": "",
+   "must": false,
+   "x0": 101.2,
+   "y0": 34.7,
+   "x1": 396.0,
+   "y1": 50.2,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p02-001",
+   "block": "B09"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    443.2,
+    163.7,
+    693.1,
+    179.2
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "the Purchaser is purchasing"
+   },
+   "caption": "this Agreement, the undersigned (the \u201cPurchaser\u201d) is purchasing",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "reader-only",
+   "page": 1,
+   "box": [
+    119.4,
+    279.7,
+    146.3,
+    295.6
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Executed this"
+   },
+   "caption": "Executed this",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "reader-only",
+   "page": 1,
+   "box": [
+    274.6,
+    279.7,
+    310.6,
+    295.6
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Year"
+   },
+   "caption": ",",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i003",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    27.7,
+    394.7,
+    372.0,
+    410.2
+   ],
+   "caption": "ID Number",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i004",
+   "block": "B04"
+  },
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    101.2,
+    538.0,
+    396.0,
+    553.5
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "firm",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a rule candidate the measure reads as line",
+   "item": "i005",
+   "block": "B08"
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 1,
+   "box": [
+    443.2,
+    163.7,
+    748.9,
+    179.2
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 1,
+   "box": [
+    27.7,
+    279.7,
+    372.0,
+    321.0
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "MAKE CHECK PAYABLE TO: GULFSTREAM CAPITAL CORPORATION"
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 1,
+   "box": [
+    429.7,
+    305.5,
+    764.2,
+    321.0
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "MAKE CHECK PAYABLE TO: GULFSTREAM CAPITAL CORPORATION"
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 1,
+   "box": [
+    27.7,
+    331.0,
+    372.0,
+    410.2
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Signature of Purchaser"
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 1,
+   "box": [
+    206.5,
+    489.2,
+    261.5,
+    504.7
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "PLEASE ENSURE FUNDS ARE IN US DOLLARS"
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 1,
+   "box": [
+    378.0,
+    489.2,
+    452.9,
+    504.7
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "PLEASE ENSURE FUNDS ARE IN US DOLLARS"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 1,
+   "box": [
+    575.6,
+    489.2,
+    660.6,
+    504.7
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "PLEASE ENSURE FUNDS ARE IN US DOLLARS"
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 1,
+   "box": [
+    101.2,
+    538.0,
+    396.0,
+    553.5
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "GULFSTREAM CAPITAL CORPORATION"
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 2,
+   "box": [
+    101.2,
+    34.7,
+    396.0,
+    50.2
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    443.2,
+    163.7,
+    748.9,
+    179.2
+   ],
+   "heading": "SUBSCRIPTION AGREEMENT",
+   "context": [
+    "Wildunger Strasse 1B, Suite 61",
+    "Frankfurt, Germany 60487",
+    "+ 496957801945",
+    "Dear Sirs:"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    27.7,
+    279.7,
+    372.0,
+    321.0
+   ],
+   "heading": "MAKE CHECK PAYABLE TO: GULFSTREAM CAPITAL CORPORATION",
+   "context": [
+    "Purchaser hereby confirms the subscription for and purchase of said number of shares and hereby agrees to pay herewith t",
+    "Purchaser further confirms that Mr. Harry Hohenstein and/or Liliia Berezhna solicited him/her/it to purchase the shares ",
+    "person participated in such solicitation other than Mr. Hohenstein or Ms. Berezhna.",
+    "MAKE CHECK PAYABLE TO: GULFSTREAM CAPITAL CORPORATION"
+   ],
+   "places": [
+    "p01-002",
+    "p01-003"
+   ],
+   "items": [
+    "i002",
+    "i003"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B03",
+   "box": [
+    429.7,
+    305.5,
+    764.2,
+    321.0
+   ],
+   "heading": "MAKE CHECK PAYABLE TO: GULFSTREAM CAPITAL CORPORATION",
+   "context": [
+    "Purchaser further confirms that Mr. Harry Hohenstein and/or Liliia Berezhna solicited him/her/it to purchase the shares ",
+    "person participated in such solicitation other than Mr. Hohenstein or Ms. Berezhna.",
+    "MAKE CHECK PAYABLE TO: GULFSTREAM CAPITAL CORPORATION",
+    "Executed this day of , ."
+   ],
+   "places": [
+    "p01-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B04",
+   "box": [
+    27.7,
+    331.0,
+    372.0,
+    410.2
+   ],
+   "heading": "Signature of Purchaser",
+   "context": [
+    "person participated in such solicitation other than Mr. Hohenstein or Ms. Berezhna.",
+    "MAKE CHECK PAYABLE TO: GULFSTREAM CAPITAL CORPORATION",
+    "Executed this day of , .",
+    "Signature of Purchaser"
+   ],
+   "places": [
+    "p01-005",
+    "p01-006",
+    "p01-007"
+   ],
+   "items": [
+    "i004"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B05",
+   "box": [
+    206.5,
+    489.2,
+    261.5,
+    504.7
+   ],
+   "heading": "PLEASE ENSURE FUNDS ARE IN US DOLLARS",
+   "context": [
+    "ID Number:",
+    "PLEASE ENSURE FUNDS ARE IN US DOLLARS",
+    "X $0.04 = US$",
+    "Number of Shares Purchased Total Subscription Price"
+   ],
+   "places": [
+    "p01-008"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B06",
+   "box": [
+    378.0,
+    489.2,
+    452.9,
+    504.7
+   ],
+   "heading": "PLEASE ENSURE FUNDS ARE IN US DOLLARS",
+   "context": [
+    "ID Number:",
+    "PLEASE ENSURE FUNDS ARE IN US DOLLARS",
+    "X $0.04 = US$",
+    "Number of Shares Purchased Total Subscription Price"
+   ],
+   "places": [
+    "p01-009"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B07",
+   "box": [
+    575.6,
+    489.2,
+    660.6,
+    504.7
+   ],
+   "heading": "PLEASE ENSURE FUNDS ARE IN US DOLLARS",
+   "context": [
+    "ID Number:",
+    "PLEASE ENSURE FUNDS ARE IN US DOLLARS",
+    "X $0.04 = US$",
+    "Number of Shares Purchased Total Subscription Price"
+   ],
+   "places": [
+    "p01-010"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B08",
+   "box": [
+    101.2,
+    538.0,
+    396.0,
+    553.5
+   ],
+   "heading": "GULFSTREAM CAPITAL CORPORATION",
+   "context": [
+    "X $0.04 = US$",
+    "Number of Shares Purchased Total Subscription Price",
+    "Form of Payment: Cash: Check #: Other:",
+    "GULFSTREAM CAPITAL CORPORATION"
+   ],
+   "places": [],
+   "items": [
+    "i005"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B09",
+   "box": [
+    101.2,
+    34.7,
+    396.0,
+    50.2
+   ],
+   "heading": "",
+   "context": [
+    "11/15/26, 9:40 AM Unassociated Document"
+   ],
+   "places": [
+    "p02-001"
+   ],
+   "items": []
+  }
+ ]
+}

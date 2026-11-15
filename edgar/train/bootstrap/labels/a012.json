@@ -1,0 +1,3251 @@
+{
+ "id": "a012",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:03Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 15,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ],
+  "15": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text"
+ },
+ "run": "out-18/set-a/a012/result.json",
+ "candidates": "68384c13f233dcf4-f01586d5.json",
+ "counts": {
+  "fields": 41,
+  "counted_candidates": 46,
+  "pairs": 25,
+  "auto": 21,
+  "reader_only": 16,
+  "measure_only": 21,
+  "kind_clash": 4,
+  "person": 41,
+  "items": 82
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Leaf's offering circular dated",
+   "printed_label": "as described in True Leaf's offering circular dated",
+   "must": true,
+   "x0": 250.4,
+   "y0": 584.9,
+   "x1": 304.2,
+   "y1": 600.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Leaf's offering circular dated"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p01-001",
+   "block": "B01"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Section 2 - subscriber Information",
+   "printed_label": "subscriber Information (\u221a one)",
+   "must": false,
+   "x0": 92.6,
+   "y0": 371.5,
+   "x1": 295.4,
+   "y1": 387.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Section 2 - subscriber Information"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p04-001",
+   "block": "B02"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of common shares Purchased",
+   "printed_label": "",
+   "must": false,
+   "x0": 324.4,
+   "y0": 371.5,
+   "x1": 632.8,
+   "y1": 387.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Number of common shares Purchased"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p04-002",
+   "block": "B02"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name of Contact Person (if subscriber is not an individual)",
+   "printed_label": "",
+   "must": true,
+   "x0": 355.5,
+   "y0": 539.1,
+   "x1": 632.8,
+   "y1": 554.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name of Contact Person (if subscriber is not an individual)"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p04-003",
+   "block": "B04"
+  },
+  {
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Other",
+   "printed_label": "Other",
+   "must": true,
+   "x0": 400.3,
+   "y0": 696.4,
+   "x1": 632.8,
+   "y1": 711.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Other"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p04-004",
+   "block": "B06"
+  },
+  {
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Per: Darcy Bomford, CEO & President Effective Acceptance Dat",
+   "printed_label": "",
+   "must": false,
+   "x0": 253.4,
+   "y0": 421.8,
+   "x1": 364.4,
+   "y1": 437.3,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Per: Darcy Bomford, CEO & President Effective Acceptance Dat"
+   },
+   "cand": "rule",
+   "what": "text",
+   "id": "p05-001",
+   "block": "B09"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "I am investing",
+   "printed_label": "I am investing $",
+   "must": true,
+   "x0": 99.2,
+   "y0": 193.0,
+   "x1": 144.0,
+   "y1": 208.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "I am investing"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p07-001",
+   "block": "B13"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "will pay",
+   "printed_label": "Leaf Medicine International Ltd. will pay $",
+   "must": true,
+   "x0": 196.8,
+   "y0": 204.0,
+   "x1": 246.2,
+   "y1": 219.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "will pay"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p07-002",
+   "block": "B14"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "commission of this to",
+   "printed_label": "[amount of fee or commission] of this to",
+   "must": true,
+   "x0": 395.9,
+   "y0": 204.0,
+   "x1": 463.1,
+   "y1": 219.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "commission of this to"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p07-003",
+   "block": "B15"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "Date",
+   "must": false,
+   "x0": 38.9,
+   "y0": 259.2,
+   "x1": 160.0,
+   "y1": 274.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p07-004",
+   "block": "B16"
+  },
+  {
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Date",
+   "printed_label": "Print name of Purchaser",
+   "must": false,
+   "x0": 249.7,
+   "y0": 303.4,
+   "x1": 393.2,
+   "y1": 318.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Date"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p07-005",
+   "block": "B18"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "a family member of",
+   "printed_label": "Associates You are a family member of",
+   "must": true,
+   "x0": 201.2,
+   "y0": 518.0,
+   "x1": 362.6,
+   "y1": 533.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "a family member of"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p09-001",
+   "block": "B24"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "You are the",
+   "printed_label": "You are the",
+   "must": true,
+   "x0": 141.1,
+   "y0": 562.1,
+   "x1": 266.7,
+   "y1": 577.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "You are the"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p09-002",
+   "block": "B24"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "close personal friend of",
+   "printed_label": "You are a close personal friend of",
+   "must": true,
+   "x0": 220.8,
+   "y0": 616.6,
+   "x1": 359.9,
+   "y1": 632.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "close personal friend of"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p09-003",
+   "block": "B24"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "known that person",
+   "printed_label": "You have known that person for",
+   "must": true,
+   "x0": 215.1,
+   "y0": 660.8,
+   "x1": 237.6,
+   "y1": 676.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "known that person"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p09-004",
+   "block": "B24"
+  },
+  {
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "close business associate of",
+   "printed_label": "You are a close business associate of",
+   "must": true,
+   "x0": 231.8,
+   "y0": 679.4,
+   "x1": 357.4,
+   "y1": 694.9,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "close business associate of"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p09-005",
+   "block": "B24"
+  },
+  {
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "after taking into account your investment of $",
+   "must": false,
+   "x0": 335.9,
+   "y0": 257.2,
+   "x1": 380.7,
+   "y1": 272.7,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p11-001",
+   "block": "B30"
+  },
+  {
+   "page": 12,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "after taking into account your investment of $",
+   "must": false,
+   "x0": 341.1,
+   "y0": 271.0,
+   "x1": 385.9,
+   "y1": 286.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p12-001",
+   "block": "B32"
+  },
+  {
+   "page": 12,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "after taking into account your investment of $",
+   "must": false,
+   "x0": 341.1,
+   "y0": 344.1,
+   "x1": 385.9,
+   "y1": 359.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p12-002",
+   "block": "B33"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "after taking into account your investment of $",
+   "must": false,
+   "x0": 335.8,
+   "y0": 357.9,
+   "x1": 380.7,
+   "y1": 373.4,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p13-001",
+   "block": "B37"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "This investment is risky. Initial that you understand that",
+   "printed_label": "You could lose your entire investment of $",
+   "must": false,
+   "x0": 250.4,
+   "y0": 55.5,
+   "x1": 272.8,
+   "y1": 71.0,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "This investment is risky. Initial that you understand that"
+   },
+   "cand": "rule",
+   "what": "amount",
+   "id": "p14-001",
+   "block": "B38"
+  }
+ ],
+ "items": [
+  {
+   "type": "reader-only",
+   "page": 4,
+   "box": [
+    54.3,
+    449.5,
+    397.3,
+    464.9
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Full Name and Title of Authorized Signatory"
+   },
+   "caption": "Full Name and Title of Authorized Signatory",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "title"
+   },
+   "item": "i001",
+   "block": "B03"
+  },
+  {
+   "type": "reader-only",
+   "page": 4,
+   "box": [
+    383.4,
+    449.5,
+    612,
+    464.9
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Email"
+   },
+   "caption": "Email Address",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "email"
+   },
+   "item": "i002",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    92.6,
+    462.6,
+    400.3,
+    478.1
+   ],
+   "caption": "Full",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i003",
+   "block": "B03"
+  },
+  {
+   "type": "reader-only",
+   "page": 4,
+   "box": [
+    32.5,
+    606.1,
+    612,
+    621.6
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Address"
+   },
+   "caption": "Address",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "address"
+   },
+   "item": "i004",
+   "block": "B05"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    55.3,
+    644.0,
+    89.8,
+    659.5
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i005",
+   "block": "B05"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    56.7,
+    268.7,
+    336.2,
+    284.2
+   ],
+   "caption": "Joint subscriber Signature (if applicable)",
+   "cand": {
+    "kind": "rule",
+    "family": "sign",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i006",
+   "block": "B07"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    56.7,
+    303.9,
+    336.2,
+    319.4
+   ],
+   "caption": "Section 7 - Acceptance by True Leaf Medicine",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i007",
+   "block": "B08"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    56.7,
+    386.0,
+    336.2,
+    401.5
+   ],
+   "caption": "Per: Darcy Bomford, CEO & President",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i008",
+   "block": "B09"
+  },
+  {
+   "type": "measure-only",
+   "page": 6,
+   "box": [
+    519.3,
+    210.9,
+    577.3,
+    229.6
+   ],
+   "caption": "202(a)(22) of the Investment Advisers Act of 1940",
+   "cand": {
+    "kind": "cell",
+    "family": "line",
+    "why": "ruled cell"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i009",
+   "block": "B10"
+  },
+  {
+   "type": "measure-only",
+   "page": 6,
+   "box": [
+    519.3,
+    384.1,
+    577.3,
+    413.1
+   ],
+   "caption": "of their meeting one or more of the",
+   "cand": {
+    "kind": "cell",
+    "family": "line",
+    "why": "ruled cell"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i010",
+   "block": "B12"
+  },
+  {
+   "type": "reader-only",
+   "page": 6,
+   "box": [
+    34.4,
+    412.5,
+    86.7,
+    431
+   ],
+   "field": {
+    "kind": "initials",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Initials"
+   },
+   "caption": "4. Your name",
+   "proposed": {
+    "kind": "initials",
+    "owner": "investor",
+    "what": "name"
+   },
+   "item": "i011",
+   "block": "B11"
+  },
+  {
+   "type": "kind-clash",
+   "page": 6,
+   "box": [
+    519.3,
+    413.1,
+    577.3,
+    431.7
+   ],
+   "field": {
+    "kind": "initials",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Initials"
+   },
+   "caption": "",
+   "cand": {
+    "kind": "cell",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "initials",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader initials (sign) on a cell candidate the measure reads as line",
+   "item": "i012",
+   "block": "B12"
+  },
+  {
+   "type": "kind-clash",
+   "page": 7,
+   "box": [
+    209.3,
+    259.2,
+    352.8,
+    274.7
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Text"
+   },
+   "caption": "Signature of Purchaser",
+   "cand": {
+    "kind": "underscore",
+    "family": "sign"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader text (line) on a underscore candidate the measure reads as sign",
+   "item": "i013",
+   "block": "B17"
+  },
+  {
+   "type": "measure-only",
+   "page": 8,
+   "box": [
+    33.3,
+    181.8,
+    578.3,
+    197.3
+   ],
+   "caption": "Department of Justice, Northwest Yukon Registrar of securities",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i014",
+   "block": "B19"
+  },
+  {
+   "type": "measure-only",
+   "page": 8,
+   "box": [
+    33.3,
+    288.0,
+    578.3,
+    303.5
+   ],
+   "caption": "9",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i015",
+   "block": "B20"
+  },
+  {
+   "type": "measure-only",
+   "page": 8,
+   "box": [
+    520.0,
+    593.2,
+    577.3,
+    627.0
+   ],
+   "caption": "your (Your net property.) assets are your total",
+   "cand": {
+    "kind": "cell",
+    "family": "line",
+    "why": "ruled cell"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i016",
+   "block": "B21"
+  },
+  {
+   "type": "measure-only",
+   "page": 9,
+   "box": [
+    519.3,
+    138.5,
+    577.3,
+    167.5
+   ],
+   "caption": "in cash and securities, after subtracting any debt",
+   "cand": {
+    "kind": "cell",
+    "family": "line",
+    "why": "ruled cell"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i017",
+   "block": "B23"
+  },
+  {
+   "type": "kind-clash",
+   "page": 9,
+   "box": [
+    519.3,
+    167.5,
+    577.3,
+    197.1
+   ],
+   "field": {
+    "kind": "initials",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Initials"
+   },
+   "caption": "$5 million. (Your net assets are your total",
+   "cand": {
+    "kind": "cell",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "initials",
+    "owner": "investor",
+    "what": "amount"
+   },
+   "question": "reader initials (sign) on a cell candidate the measure reads as line",
+   "item": "i018",
+   "block": "B23"
+  },
+  {
+   "type": "reader-only",
+   "page": 9,
+   "box": [
+    33.7,
+    177.9,
+    90.1,
+    196.4
+   ],
+   "field": {
+    "kind": "initials",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Initials"
+   },
+   "caption": "",
+   "proposed": {
+    "kind": "initials",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i019",
+   "block": "B22"
+  },
+  {
+   "type": "measure-only",
+   "page": 9,
+   "box": [
+    220.1,
+    540.0,
+    359.1,
+    555.5
+   ],
+   "caption": "issuer or an affiliate of the issuer",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i020",
+   "block": "B24"
+  },
+  {
+   "type": "reader-only",
+   "page": 9,
+   "box": [
+    520.1,
+    597.4,
+    576.5,
+    615.9
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "someone else",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "child or grandchild of that person or that person's spouse.]"
+   },
+   "caption": "",
+   "proposed": {
+    "kind": "signature",
+    "owner": "third-party",
+    "what": "text"
+   },
+   "item": "i021",
+   "block": "B25"
+  },
+  {
+   "type": "reader-only",
+   "page": 9,
+   "box": [
+    520.1,
+    618.9,
+    576.5,
+    678.7
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "[Instruction: Insert the name of your close"
+   },
+   "caption": "[Instruction: issuer: Insert the name of your close",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "name"
+   },
+   "item": "i022",
+   "block": "B25"
+  },
+  {
+   "type": "measure-only",
+   "page": 9,
+   "box": [
+    98.0,
+    638.7,
+    237.0,
+    654.2
+   ],
+   "caption": "You have known that person for",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i023",
+   "block": "B24"
+  },
+  {
+   "type": "reader-only",
+   "page": 9,
+   "box": [
+    520.1,
+    681.8,
+    576.5,
+    741.5
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "[Instruction: Insert the name of your close"
+   },
+   "caption": "the Insert issuer: the name of your close",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "name"
+   },
+   "item": "i024",
+   "block": "B25"
+  },
+  {
+   "type": "measure-only",
+   "page": 9,
+   "box": [
+    98.0,
+    701.5,
+    223.5,
+    717.0
+   ],
+   "caption": "You have known that person for",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i025",
+   "block": "B24"
+  },
+  {
+   "type": "reader-only",
+   "page": 9,
+   "box": [
+    33.7,
+    723,
+    93.6,
+    741.5
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "You have known that person"
+   },
+   "caption": "",
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i026",
+   "block": "B24"
+  },
+  {
+   "type": "kind-clash",
+   "page": 9,
+   "box": [
+    215.1,
+    723.6,
+    237.6,
+    739.1
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "years"
+   },
+   "caption": "You have known that person for",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i027",
+   "block": "B24"
+  },
+  {
+   "type": "reader-only",
+   "page": 10,
+   "box": [
+    35.1,
+    193.1,
+    92.2,
+    211.6
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Your name and signature"
+   },
+   "caption": "E. Your name",
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": "name"
+   },
+   "item": "i028",
+   "block": "B26"
+  },
+  {
+   "type": "measure-only",
+   "page": 10,
+   "box": [
+    519.3,
+    574.5,
+    577.3,
+    608.7
+   ],
+   "caption": "your (Your net property.) assets are your total",
+   "cand": {
+    "kind": "cell",
+    "family": "line",
+    "why": "ruled cell"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i029",
+   "block": "B28"
+  },
+  {
+   "type": "reader-only",
+   "page": 10,
+   "box": [
+    33.7,
+    589.8,
+    107.4,
+    608.3
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Eligible Investor"
+   },
+   "caption": "B. You are an eligible",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i030",
+   "block": "B27"
+  },
+  {
+   "type": "reader-only",
+   "page": 11,
+   "box": [
+    33.7,
+    99.2,
+    101.8,
+    117.7
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Family, Friends and Business Associates"
+   },
+   "caption": "",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i031",
+   "block": "B29"
+  },
+  {
+   "type": "measure-only",
+   "page": 12,
+   "box": [
+    519.3,
+    76.4,
+    577.3,
+    105.4
+   ],
+   "caption": "spouse, in the case of an individual, exceeds",
+   "cand": {
+    "kind": "cell",
+    "family": "line",
+    "why": "ruled cell"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i032",
+   "block": "B31"
+  },
+  {
+   "type": "measure-only",
+   "page": 12,
+   "box": [
+    519.3,
+    105.4,
+    577.3,
+    135.0
+   ],
+   "caption": "calendar the year, two most recent calendar years",
+   "cand": {
+    "kind": "cell",
+    "family": "line",
+    "why": "ruled cell"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i033",
+   "block": "B31"
+  },
+  {
+   "type": "reader-only",
+   "page": 12,
+   "box": [
+    33.7,
+    365.6,
+    107.4,
+    384.1
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "in the previous 12"
+   },
+   "caption": "",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i034",
+   "block": "B33"
+  },
+  {
+   "type": "measure-only",
+   "page": 12,
+   "box": [
+    519.3,
+    560.0,
+    577.3,
+    589.0
+   ],
+   "caption": "million in cash and securities, after subtracting any",
+   "cand": {
+    "kind": "cell",
+    "family": "line",
+    "why": "ruled cell"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i035",
+   "block": "B35"
+  },
+  {
+   "type": "measure-only",
+   "page": 12,
+   "box": [
+    519.3,
+    589.0,
+    577.3,
+    619.0
+   ],
+   "caption": "$5 million. (Your net assets are your total",
+   "cand": {
+    "kind": "cell",
+    "family": "line",
+    "why": "ruled cell"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "amount"
+   },
+   "item": "i036",
+   "block": "B35"
+  },
+  {
+   "type": "reader-only",
+   "page": 12,
+   "box": [
+    33.7,
+    600.2,
+    107.4,
+    618.7
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "assets are your total"
+   },
+   "caption": "C. You are an eligible",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i037",
+   "block": "B34"
+  },
+  {
+   "type": "reader-only",
+   "page": 12,
+   "box": [
+    33.7,
+    721,
+    101.8,
+    739.5
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Family, Friends and Business Associates"
+   },
+   "caption": "",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i038",
+   "block": "B36"
+  },
+  {
+   "type": "reader-only",
+   "page": 14,
+   "box": [
+    503.5,
+    60.6,
+    577.2,
+    90.1
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": ". [Instruction: Insert the total dollar amount of the"
+   },
+   "caption": "",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "amount"
+   },
+   "item": "i039",
+   "block": "B39"
+  },
+  {
+   "type": "measure-only",
+   "page": 14,
+   "box": [
+    502.8,
+    355.1,
+    578.0,
+    387.6
+   ],
+   "caption": "in cash and securities, after subtracting any debt",
+   "cand": {
+    "kind": "cell",
+    "family": "line",
+    "why": "ruled cell"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i040",
+   "block": "B40"
+  },
+  {
+   "type": "measure-only",
+   "page": 15,
+   "box": [
+    33.3,
+    136.2,
+    578.3,
+    151.7
+   ],
+   "caption": "Form",
+   "cand": {
+    "kind": "rule",
+    "family": "line",
+    "why": "drawn rule"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i041",
+   "block": "B41"
+  },
+  {
+   "item": "i042",
+   "type": "person",
+   "page": 1,
+   "box": [
+    250.4,
+    584.9,
+    304.2,
+    600.4
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i043",
+   "type": "person",
+   "page": 4,
+   "box": [
+    92.6,
+    371.5,
+    632.8,
+    387.0
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i044",
+   "type": "person",
+   "page": 4,
+   "box": [
+    54.3,
+    449.5,
+    612,
+    478.1
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Individual Joint Corporation/Trust/Other"
+  },
+  {
+   "item": "i045",
+   "type": "person",
+   "page": 4,
+   "box": [
+    355.5,
+    539.1,
+    632.8,
+    554.6
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Individual Joint Corporation/Trust/Other"
+  },
+  {
+   "item": "i046",
+   "type": "person",
+   "page": 4,
+   "box": [
+    32.5,
+    606.1,
+    612,
+    659.5
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i047",
+   "type": "person",
+   "page": 4,
+   "box": [
+    400.3,
+    696.4,
+    632.8,
+    711.9
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i048",
+   "type": "person",
+   "page": 5,
+   "box": [
+    56.7,
+    268.7,
+    336.2,
+    284.2
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Subscriber Signature"
+  },
+  {
+   "item": "i049",
+   "type": "person",
+   "page": 5,
+   "box": [
+    56.7,
+    303.9,
+    336.2,
+    319.4
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Joint subscriber Signature (if applicable)"
+  },
+  {
+   "item": "i050",
+   "type": "person",
+   "page": 5,
+   "box": [
+    56.7,
+    386.0,
+    364.4,
+    437.3
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Joint subscriber Signature (if applicable)"
+  },
+  {
+   "item": "i051",
+   "type": "person",
+   "page": 6,
+   "box": [
+    519.3,
+    210.9,
+    577.3,
+    229.6
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "investors\";"
+  },
+  {
+   "item": "i052",
+   "type": "person",
+   "page": 6,
+   "box": [
+    34.4,
+    412.5,
+    86.7,
+    431
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "investor"
+  },
+  {
+   "item": "i053",
+   "type": "person",
+   "page": 6,
+   "box": [
+    519.3,
+    384.1,
+    577.3,
+    431.7
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "investor"
+  },
+  {
+   "item": "i054",
+   "type": "person",
+   "page": 7,
+   "box": [
+    99.2,
+    193.0,
+    144.0,
+    208.5
+   ],
+   "block": "B13",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i055",
+   "type": "person",
+   "page": 7,
+   "box": [
+    196.8,
+    204.0,
+    246.2,
+    219.5
+   ],
+   "block": "B14",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i056",
+   "type": "person",
+   "page": 7,
+   "box": [
+    395.9,
+    204.0,
+    463.1,
+    219.5
+   ],
+   "block": "B15",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i057",
+   "type": "person",
+   "page": 7,
+   "box": [
+    38.9,
+    259.2,
+    160.0,
+    274.7
+   ],
+   "block": "B16",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i058",
+   "type": "person",
+   "page": 7,
+   "box": [
+    209.3,
+    259.2,
+    352.8,
+    274.7
+   ],
+   "block": "B17",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i059",
+   "type": "person",
+   "page": 7,
+   "box": [
+    249.7,
+    303.4,
+    393.2,
+    318.9
+   ],
+   "block": "B18",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i060",
+   "type": "person",
+   "page": 8,
+   "box": [
+    33.3,
+    181.8,
+    578.3,
+    197.3
+   ],
+   "block": "B19",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i061",
+   "type": "person",
+   "page": 8,
+   "box": [
+    33.3,
+    288.0,
+    578.3,
+    303.5
+   ],
+   "block": "B20",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i062",
+   "type": "person",
+   "page": 8,
+   "box": [
+    520.0,
+    593.2,
+    577.3,
+    627.0
+   ],
+   "block": "B21",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Investor"
+  },
+  {
+   "item": "i063",
+   "type": "person",
+   "page": 9,
+   "box": [
+    33.7,
+    177.9,
+    90.1,
+    196.4
+   ],
+   "block": "B22",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Investor"
+  },
+  {
+   "item": "i064",
+   "type": "person",
+   "page": 9,
+   "box": [
+    519.3,
+    138.5,
+    577.3,
+    197.1
+   ],
+   "block": "B23",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Investor"
+  },
+  {
+   "item": "i065",
+   "type": "person",
+   "page": 9,
+   "box": [
+    33.7,
+    518.0,
+    362.6,
+    741.5
+   ],
+   "block": "B24",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i066",
+   "type": "person",
+   "page": 9,
+   "box": [
+    520.1,
+    597.4,
+    576.5,
+    741.5
+   ],
+   "block": "B25",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i067",
+   "type": "person",
+   "page": 10,
+   "box": [
+    35.1,
+    193.1,
+    92.2,
+    211.6
+   ],
+   "block": "B26",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Investor"
+  },
+  {
+   "item": "i068",
+   "type": "person",
+   "page": 10,
+   "box": [
+    33.7,
+    589.8,
+    107.4,
+    608.3
+   ],
+   "block": "B27",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i069",
+   "type": "person",
+   "page": 10,
+   "box": [
+    519.3,
+    574.5,
+    577.3,
+    608.7
+   ],
+   "block": "B28",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i070",
+   "type": "person",
+   "page": 11,
+   "box": [
+    33.7,
+    99.2,
+    101.8,
+    117.7
+   ],
+   "block": "B29",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i071",
+   "type": "person",
+   "page": 11,
+   "box": [
+    335.9,
+    257.2,
+    380.7,
+    272.7
+   ],
+   "block": "B30",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i072",
+   "type": "person",
+   "page": 12,
+   "box": [
+    519.3,
+    76.4,
+    577.3,
+    135.0
+   ],
+   "block": "B31",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i073",
+   "type": "person",
+   "page": 12,
+   "box": [
+    341.1,
+    271.0,
+    385.9,
+    286.5
+   ],
+   "block": "B32",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i074",
+   "type": "person",
+   "page": 12,
+   "box": [
+    33.7,
+    344.1,
+    385.9,
+    384.1
+   ],
+   "block": "B33",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i075",
+   "type": "person",
+   "page": 12,
+   "box": [
+    33.7,
+    600.2,
+    107.4,
+    618.7
+   ],
+   "block": "B34",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Investor"
+  },
+  {
+   "item": "i076",
+   "type": "person",
+   "page": 12,
+   "box": [
+    519.3,
+    560.0,
+    577.3,
+    619.0
+   ],
+   "block": "B35",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "Investor"
+  },
+  {
+   "item": "i077",
+   "type": "person",
+   "page": 12,
+   "box": [
+    33.7,
+    721,
+    101.8,
+    739.5
+   ],
+   "block": "B36",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i078",
+   "type": "person",
+   "page": 13,
+   "box": [
+    335.8,
+    357.9,
+    380.7,
+    373.4
+   ],
+   "block": "B37",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i079",
+   "type": "person",
+   "page": 14,
+   "box": [
+    250.4,
+    55.5,
+    272.8,
+    71.0
+   ],
+   "block": "B38",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i080",
+   "type": "person",
+   "page": 14,
+   "box": [
+    503.5,
+    60.6,
+    577.2,
+    90.1
+   ],
+   "block": "B39",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i081",
+   "type": "person",
+   "page": 14,
+   "box": [
+    502.8,
+    355.1,
+    578.0,
+    387.6
+   ],
+   "block": "B40",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i082",
+   "type": "person",
+   "page": 15,
+   "box": [
+    33.3,
+    136.2,
+    578.3,
+    151.7
+   ],
+   "block": "B41",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    250.4,
+    584.9,
+    304.2,
+    600.4
+   ],
+   "heading": "",
+   "context": [
+    "Except as otherwise indicated, the offering materials speak as of their date. Neither the delivery nor the purchase of t",
+    "circumstances, create any implication that there has been no change in the affairs of True Leaf since that date.",
+    "This agreement (agreement\") is made as of the date set forth below by and between the undersigned (\"subscriber\") and Tru",
+    "International Ltd., an British Columbia corporation (\"True Leaf\" or the \"issuer\"), and is intended to set forth certain "
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B02",
+   "box": [
+    92.6,
+    371.5,
+    632.8,
+    387.0
+   ],
+   "heading": "",
+   "context": [
+    "The undersigned, desiring to purchase shares of common shares of True Leaf Medicine International Ltd., by executing thi",
+    "executes, adopts and agrees to all terms, conditions and representations of the Subscription agreement.",
+    "Section 1 - Purchase Amount",
+    "Number of common shares Purchased Total Deemed Purchase Price ($o.25 per share)"
+   ],
+   "places": [
+    "p04-001",
+    "p04-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B03",
+   "box": [
+    54.3,
+    449.5,
+    612,
+    478.1
+   ],
+   "heading": "Individual Joint Corporation/Trust/Other",
+   "context": [
+    "Section 2 - subscriber Information",
+    "subscriber Type (\u221a one):",
+    "Individual Joint Corporation/Trust/Other",
+    "Full Name of subscriber (or joint subscribers or entity, if applicable) Main Telephone # SIN or Business #"
+   ],
+   "places": [],
+   "items": [
+    "i001",
+    "i002",
+    "i003"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B04",
+   "box": [
+    355.5,
+    539.1,
+    632.8,
+    554.6
+   ],
+   "heading": "Individual Joint Corporation/Trust/Other",
+   "context": [
+    "Full Name of subscriber (or joint subscribers or entity, if applicable) Main Telephone # SIN or Business #",
+    "Full Name and Title of Authorized Signatory (if applicable) Email Address",
+    "Address For Mailing Purposes (street, city, province and postal code)",
+    "."
+   ],
+   "places": [
+    "p04-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 4,
+   "block": "B05",
+   "box": [
+    32.5,
+    606.1,
+    612,
+    659.5
+   ],
+   "heading": "",
+   "context": [
+    "Name of Contact Person (if subscriber is not an individual):",
+    "Section 3 - Registration Instructions",
+    "Same as Above Different than Section 2 (as below)",
+    "Name and Account (if applicable) Email Address/Contact Name"
+   ],
+   "places": [],
+   "items": [
+    "i004",
+    "i005"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B06",
+   "box": [
+    400.3,
+    696.4,
+    632.8,
+    711.9
+   ],
+   "heading": "",
+   "context": [
+    "Name and Account (if applicable) Email Address/Contact Name",
+    "Address (street, city, province and postal code)",
+    "Section 4 - Registered Plan (\u221a check one)",
+    "For a subscriber acquiring through a registered plan, specify the type of account:"
+   ],
+   "places": [
+    "p04-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 5,
+   "block": "B07",
+   "box": [
+    56.7,
+    268.7,
+    336.2,
+    284.2
+   ],
+   "heading": "Subscriber Signature",
+   "context": [
+    "Section 6 - subscriber's Signature and Consent (\u221a check consent and sign)",
+    "By executing this Subscription agreement, the subscriber is consenting (on his/her own behalf and, if applicable, on beh",
+    "purchaser for whom you are contracting), to the collection, use and disclosure of personal information.",
+    "Subscriber Signature"
+   ],
+   "places": [],
+   "items": [
+    "i006"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B08",
+   "box": [
+    56.7,
+    303.9,
+    336.2,
+    319.4
+   ],
+   "heading": "Joint subscriber Signature (if applicable)",
+   "context": [
+    "purchaser for whom you are contracting), to the collection, use and disclosure of personal information.",
+    "Subscriber Signature",
+    "X",
+    "Joint subscriber Signature (if applicable)"
+   ],
+   "places": [],
+   "items": [
+    "i007"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B09",
+   "box": [
+    56.7,
+    386.0,
+    364.4,
+    437.3
+   ],
+   "heading": "Joint subscriber Signature (if applicable)",
+   "context": [
+    "X",
+    "Section 7 - Acceptance by True Leaf Medicine International Ltd.",
+    "This subscription is accepted by:",
+    "True Leaf Medicine International Ltd."
+   ],
+   "places": [
+    "p05-001"
+   ],
+   "items": [
+    "i008"
+   ]
+  },
+  {
+   "page": 6,
+   "block": "B10",
+   "box": [
+    519.3,
+    210.9,
+    577.3,
+    229.6
+   ],
+   "heading": "investors\";",
+   "context": [
+    "is made by a plan fiduciary, as defined in Section 3(21) of such act, which is either a bank, savings and loan",
+    "association, insurance company, or registered investment adviser, or if the employee benefit plan has total assets in",
+    "excess of $5,000,000 or, if a self-directed plan, with investment decisions made solely by persons that are \"accredited",
+    "investors\";"
+   ],
+   "places": [],
+   "items": [
+    "i009"
+   ]
+  },
+  {
+   "page": 6,
+   "block": "B11",
+   "box": [
+    34.4,
+    412.5,
+    86.7,
+    431
+   ],
+   "heading": "investor",
+   "context": [
+    "income with the undersigned's spouse in excess of $300,000 in each of those years and has a reasonable expectation",
+    "of reaching the same income level in the current year.",
+    "An entity in which all of the equity holders are \"accredited investors\" by virtue of their meeting one or more of the",
+    "above standards."
+   ],
+   "places": [],
+   "items": [
+    "i011"
+   ]
+  },
+  {
+   "page": 6,
+   "block": "B12",
+   "box": [
+    519.3,
+    384.1,
+    577.3,
+    431.7
+   ],
+   "heading": "investor",
+   "context": [
+    "worth",
+    "Anatural person who had an individual income in excess of $200,000 in each of the two most recent years or joint",
+    "income with the undersigned's spouse in excess of $300,000 in each of those years and has a reasonable expectation",
+    "of reaching the same income level in the current year."
+   ],
+   "places": [],
+   "items": [
+    "i010",
+    "i012"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B13",
+   "box": [
+    99.2,
+    193.0,
+    144.0,
+    208.5
+   ],
+   "heading": "",
+   "context": [
+    "has no duty to tell me whether this investment is suitable for me.",
+    "I will not be able to sell these securities except in very limited circumstances. I may never be able to sell",
+    "these securities.",
+    "I could lose all the money I invest."
+   ],
+   "places": [
+    "p07-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 7,
+   "block": "B14",
+   "box": [
+    196.8,
+    204.0,
+    246.2,
+    219.5
+   ],
+   "heading": "",
+   "context": [
+    "has no duty to tell me whether this investment is suitable for me.",
+    "I will not be able to sell these securities except in very limited circumstances. I may never be able to sell",
+    "these securities.",
+    "I could lose all the money I invest."
+   ],
+   "places": [
+    "p07-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 7,
+   "block": "B15",
+   "box": [
+    395.9,
+    204.0,
+    463.1,
+    219.5
+   ],
+   "heading": "",
+   "context": [
+    "has no duty to tell me whether this investment is suitable for me.",
+    "I will not be able to sell these securities except in very limited circumstances. I may never be able to sell",
+    "these securities.",
+    "I could lose all the money I invest."
+   ],
+   "places": [
+    "p07-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 7,
+   "block": "B16",
+   "box": [
+    38.9,
+    259.2,
+    160.0,
+    274.7
+   ],
+   "heading": "",
+   "context": [
+    "I am investing $ [total consideration] in total; this includes any amount I am obliged to pay in future. True",
+    "Leaf Medicine International Ltd. will pay $ [amount of fee or commission] of this to",
+    "[name of person selling the securities] as a fee or commission.",
+    "I acknowledge that this is a risky investment and that I could lose all the money I invest."
+   ],
+   "places": [
+    "p07-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 7,
+   "block": "B17",
+   "box": [
+    209.3,
+    259.2,
+    352.8,
+    274.7
+   ],
+   "heading": "",
+   "context": [
+    "I am investing $ [total consideration] in total; this includes any amount I am obliged to pay in future. True",
+    "Leaf Medicine International Ltd. will pay $ [amount of fee or commission] of this to",
+    "[name of person selling the securities] as a fee or commission.",
+    "I acknowledge that this is a risky investment and that I could lose all the money I invest."
+   ],
+   "places": [],
+   "items": [
+    "i013"
+   ]
+  },
+  {
+   "page": 7,
+   "block": "B18",
+   "box": [
+    249.7,
+    303.4,
+    393.2,
+    318.9
+   ],
+   "heading": "",
+   "context": [
+    "Leaf Medicine International Ltd. will pay $ [amount of fee or commission] of this to",
+    "[name of person selling the securities] as a fee or commission.",
+    "I acknowledge that this is a risky investment and that I could lose all the money I invest.",
+    "Date Signature of Purchaser"
+   ],
+   "places": [
+    "p07-005"
+   ],
+   "items": []
+  },
+  {
+   "page": 8,
+   "block": "B19",
+   "box": [
+    33.3,
+    181.8,
+    578.3,
+    197.3
+   ],
+   "heading": "",
+   "context": [
+    "www.msc.gov.mb.ca www.osc.gov.on.ca www.gov.ns.ca",
+    "Saskatchewan Financial Services Securities Commission of Newfoundland Prince Edward Island securities Office",
+    "Commission, securities Division and Labrador Phone: 902 368-4550",
+    "Phone: 306 787-5645 Phone: 709 873-7490 Fax: 902 368-5283"
+   ],
+   "places": [],
+   "items": [
+    "i014"
+   ]
+  },
+  {
+   "page": 8,
+   "block": "B20",
+   "box": [
+    33.3,
+    288.0,
+    578.3,
+    303.5
+   ],
+   "heading": "",
+   "context": [
+    "Fax: 867 873-0243 www.gov.yk.ca Fax: 867 975-6194",
+    "www.justice.gov.nt.ca www.gov.nu.ca",
+    "Authorite Des Marches Financiers",
+    "Phone: 418 525-0337"
+   ],
+   "places": [],
+   "items": [
+    "i015"
+   ]
+  },
+  {
+   "page": 8,
+   "block": "B21",
+   "box": [
+    520.0,
+    593.2,
+    577.3,
+    627.0
+   ],
+   "heading": "Investor",
+   "context": [
+    "Eligible",
+    "calendar years, and you expect your combined net income to be more than $125,000 in this calendar year. (You can",
+    "Investor",
+    "find your net income before taxes on your personal income tax return.)"
+   ],
+   "places": [],
+   "items": [
+    "i016"
+   ]
+  },
+  {
+   "page": 9,
+   "block": "B22",
+   "box": [
+    33.7,
+    177.9,
+    90.1,
+    196.4
+   ],
+   "heading": "Investor",
+   "context": [
+    "calendar year.",
+    "Investor",
+    "Either alone or with your spouse, you own more than $1 million in cash and securities, after subtracting any debt",
+    "related to the cash and securities."
+   ],
+   "places": [],
+   "items": [
+    "i019"
+   ]
+  },
+  {
+   "page": 9,
+   "block": "B23",
+   "box": [
+    519.3,
+    138.5,
+    577.3,
+    197.1
+   ],
+   "heading": "Investor",
+   "context": [
+    "calendar years, and you expect your combined net income before taxes to be more than $300,000 in the current",
+    "Accredited",
+    "calendar year.",
+    "Investor"
+   ],
+   "places": [],
+   "items": [
+    "i017",
+    "i018"
+   ]
+  },
+  {
+   "page": 9,
+   "block": "B24",
+   "box": [
+    33.7,
+    518.0,
+    362.6,
+    741.5
+   ],
+   "heading": "",
+   "context": [
+    "a trust or estate of which all of the beneficiaries or a majority of the",
+    "trustees or executors are (i) individuals listed in (1) above and/or (ii) family",
+    "Family, members, close personal friends or close business associates of individuals listed",
+    "Friends and in (1) above"
+   ],
+   "places": [
+    "p09-001",
+    "p09-002",
+    "p09-003",
+    "p09-004",
+    "p09-005"
+   ],
+   "items": [
+    "i020",
+    "i023",
+    "i025",
+    "i026",
+    "i027"
+   ]
+  },
+  {
+   "page": 9,
+   "block": "B25",
+   "box": [
+    520.1,
+    597.4,
+    576.5,
+    741.5
+   ],
+   "heading": "",
+   "context": [
+    "issuer or an affiliate of the issuer: .",
+    "You are the of that person or that person's spouse. [Instruction: To qualify for this",
+    "investment, you must be (a) the spouse of the person listed above or (b) the parent, grandparent, brother, sister,",
+    "child or grandchild of that person or that person's spouse.]"
+   ],
+   "places": [],
+   "items": [
+    "i021",
+    "i022",
+    "i024"
+   ]
+  },
+  {
+   "page": 10,
+   "block": "B26",
+   "box": [
+    35.1,
+    193.1,
+    92.2,
+    211.6
+   ],
+   "heading": "Investor",
+   "context": [
+    "D. You are not an eligible investor. Your initials",
+    "Not an You acknowledge that you are not an eligible investor.",
+    "Eligible",
+    "Investor"
+   ],
+   "places": [],
+   "items": [
+    "i028"
+   ]
+  },
+  {
+   "page": 10,
+   "block": "B27",
+   "box": [
+    33.7,
+    589.8,
+    107.4,
+    608.3
+   ],
+   "heading": "",
+   "context": [
+    "Your net income before taxes combined with your spouse's was more than $125,000 in each of the 2 most recent",
+    "Eligible Investor calendar years, and you expect your combined net income to be more than $125,000 in this calendar year",
+    "can find your net income before taxes on your personal income tax return.)",
+    "Either alone or with your spouse, you have net assets worth more than $400,000. (Your net assets are your total"
+   ],
+   "places": [],
+   "items": [
+    "i030"
+   ]
+  },
+  {
+   "page": 10,
+   "block": "B28",
+   "box": [
+    519.3,
+    574.5,
+    577.3,
+    608.7
+   ],
+   "heading": "",
+   "context": [
+    "personal income tax return.)",
+    "Your net income before taxes combined with your spouse's was more than $125,000 in each of the 2 most recent",
+    "Eligible Investor calendar years, and you expect your combined net income to be more than $125,000 in this calendar year",
+    "can find your net income before taxes on your personal income tax return.)"
+   ],
+   "places": [],
+   "items": [
+    "i029"
+   ]
+  },
+  {
+   "page": 11,
+   "block": "B29",
+   "box": [
+    33.7,
+    99.2,
+    101.8,
+    117.7
+   ],
+   "heading": "",
+   "context": [
+    "and business associates], you are not subject to investment limits.",
+    "Family, Friends",
+    "and Business",
+    "Associates"
+   ],
+   "places": [],
+   "items": [
+    "i031"
+   ]
+  },
+  {
+   "page": 11,
+   "block": "B30",
+   "box": [
+    335.9,
+    257.2,
+    380.7,
+    272.7
+   ],
+   "heading": "",
+   "context": [
+    "D. You are not an eligible investor.",
+    "initials",
+    "You acknowledge that you cannot invest more than $10,000 in all offering memorandum exemption investments",
+    "made in the previous 12 months."
+   ],
+   "places": [
+    "p11-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 12,
+   "block": "B31",
+   "box": [
+    519.3,
+    76.4,
+    577.3,
+    135.0
+   ],
+   "heading": "",
+   "context": [
+    "Initial the statement under A, B, C or D containing the criteria that applies to you. (You may initial more than one sta",
+    "statement under B or C, you are not required to complete A.",
+    "A. You are an eligible investor. Your initials"
+   ],
+   "places": [],
+   "items": [
+    "i032",
+    "i033"
+   ]
+  },
+  {
+   "page": 12,
+   "block": "B32",
+   "box": [
+    341.1,
+    271.0,
+    385.9,
+    286.5
+   ],
+   "heading": "",
+   "context": [
+    "You confirm you are a General Partner in which all of the partners are Eligible Investors.",
+    "Eligible Investor You confirm you are a limited partnership in which the majority of the General Partner are Eligible In",
+    "You confirm you are a trust or estate in which all of the beneficiaries or a majority of the trustees or executors",
+    "are Eligible Investors."
+   ],
+   "places": [
+    "p12-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 12,
+   "block": "B33",
+   "box": [
+    33.7,
+    344.1,
+    385.9,
+    384.1
+   ],
+   "heading": "",
+   "context": [
+    "exceeded your investment limit of $30,000 in all offering memorandum exemption investments made in the",
+    "previous 12 months.",
+    "You confirm that you received advice from a portfolio manager, investment dealer or exempt market dealer, as",
+    "identified in section 2 of this schedule that the following investment is suitable."
+   ],
+   "places": [
+    "p12-002"
+   ],
+   "items": [
+    "i034"
+   ]
+  },
+  {
+   "page": 12,
+   "block": "B34",
+   "box": [
+    33.7,
+    600.2,
+    107.4,
+    618.7
+   ],
+   "heading": "Investor",
+   "context": [
+    "calendar year.",
+    "Investor",
+    "Either alone or with your spouse, you own more than $1 million in cash and securities, after subtracting any",
+    "debt related to the cash and securities."
+   ],
+   "places": [],
+   "items": [
+    "i037"
+   ]
+  },
+  {
+   "page": 12,
+   "block": "B35",
+   "box": [
+    519.3,
+    560.0,
+    577.3,
+    619.0
+   ],
+   "heading": "Investor",
+   "context": [
+    "calendar years, and you expect your combined net income before taxes to be more than $300,000 in the current",
+    "Accredited",
+    "calendar year.",
+    "Investor"
+   ],
+   "places": [],
+   "items": [
+    "i035",
+    "i036"
+   ]
+  },
+  {
+   "page": 12,
+   "block": "B36",
+   "box": [
+    33.7,
+    721,
+    101.8,
+    739.5
+   ],
+   "heading": "",
+   "context": [
+    "and business associates], you are not subject to investment limits.",
+    "Family, Friends",
+    "and Business",
+    "Associates"
+   ],
+   "places": [],
+   "items": [
+    "i038"
+   ]
+  },
+  {
+   "page": 13,
+   "block": "B37",
+   "box": [
+    335.8,
+    357.9,
+    380.7,
+    373.4
+   ],
+   "heading": "",
+   "context": [
+    "E. You are not an eligible investor.",
+    "initials",
+    "You acknowledge that you cannot invest more than $10,000 in all offering memorandum exemption investments",
+    "made in the previous 12 months."
+   ],
+   "places": [
+    "p13-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B38",
+   "box": [
+    250.4,
+    55.5,
+    272.8,
+    71.0
+   ],
+   "heading": "",
+   "context": [
+    "This investment is risky. Initial that you understand that: Your initials"
+   ],
+   "places": [
+    "p14-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B39",
+   "box": [
+    503.5,
+    60.6,
+    577.2,
+    90.1
+   ],
+   "heading": "",
+   "context": [
+    "This investment is risky. Initial that you understand that: Your initials"
+   ],
+   "places": [],
+   "items": [
+    "i039"
+   ]
+  },
+  {
+   "page": 14,
+   "block": "B40",
+   "box": [
+    502.8,
+    355.1,
+    578.0,
+    387.6
+   ],
+   "heading": "",
+   "context": [
+    "income tax return.)",
+    "Your net income before taxes combined with your spouse's was more than $300,000 in each of the 2 most recent",
+    "calendar years, and you expect your combined net income before taxes to be more than $300,000 in the current calendar",
+    "year."
+   ],
+   "places": [],
+   "items": [
+    "i040"
+   ]
+  },
+  {
+   "page": 15,
+   "block": "B41",
+   "box": [
+    33.3,
+    136.2,
+    578.3,
+    151.7
+   ],
+   "heading": "",
+   "context": [
+    "Contact: Darcy Bomford, CEO & President",
+    "P. 778-389-9933",
+    "E.admin@trueleaf.com",
+    "For more information about prospectus exemptions, contact your local securities regulator. You can find contact informat"
+   ],
+   "places": [],
+   "items": [
+    "i041"
+   ]
+  }
+ ]
+}

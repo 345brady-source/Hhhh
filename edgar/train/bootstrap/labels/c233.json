@@ -1,0 +1,654 @@
+{
+ "id": "c233",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 2,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text"
+ },
+ "run": "out-18/set-c/c233/result.json",
+ "candidates": "eb0676879c92481a-f01586d5.json",
+ "counts": {
+  "fields": 9,
+  "counted_candidates": 13,
+  "pairs": 7,
+  "auto": 7,
+  "reader_only": 2,
+  "measure_only": 6,
+  "kind_clash": 0,
+  "person": 6,
+  "items": 14
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "the Prospectus dated March",
+   "printed_label": "conditions set forth in the Prospectus dated March",
+   "must": true,
+   "x0": 333.1,
+   "y0": 338.5,
+   "x1": 362.5,
+   "y1": 354.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "the Prospectus dated March"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p01-001",
+   "block": "B02"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "accompanied this Subscription Agreement",
+   "printed_label": "accompanied this Subscription Agreement,",
+   "must": true,
+   "x0": 274.4,
+   "y0": 349.8,
+   "x1": 333.1,
+   "y1": 365.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "accompanied this Subscription Agreement"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-002",
+   "block": "B02"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "common stock $.001 par value per share, at a price per Share",
+   "printed_label": "or $",
+   "must": true,
+   "x0": 57.2,
+   "y0": 372.3,
+   "x1": 127.7,
+   "y1": 387.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "common stock $.001 par value per share, at a price per Share"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p01-003",
+   "block": "B02"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "DAY OF",
+   "printed_label": "ON THIS",
+   "must": true,
+   "x0": 80.7,
+   "y0": 475.0,
+   "x1": 274.4,
+   "y1": 490.5,
+   "printed_as": "measure candidate: dateparts",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "entity",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "DAY OF"
+   },
+   "cand": "dateparts",
+   "what": "date",
+   "id": "p02-001",
+   "block": "B04"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Name",
+   "printed_label": "Name",
+   "must": true,
+   "x0": 63.1,
+   "y0": 565.0,
+   "x1": 280.3,
+   "y1": 580.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "investor",
+    "forType": "person",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Name"
+   },
+   "cand": "underscore",
+   "what": "name",
+   "id": "p02-002",
+   "block": "B06"
+  },
+  {
+   "page": 2,
+   "kind": "signature",
+   "owner": "investor-individual",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 57.2,
+   "y0": 587.5,
+   "x1": 268.5,
+   "y1": 603.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "person",
+    "other": "",
+    "required": true,
+    "review": false,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p02-003",
+   "block": "B06"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 69.0,
+   "y0": 610.0,
+   "x1": 292.0,
+   "y1": 625.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "person",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Title"
+   },
+   "cand": "underscore",
+   "what": "title",
+   "id": "p02-004",
+   "block": "B06"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    86.6,
+    214.8,
+    98.3,
+    230.3
+   ],
+   "caption": "DECEMBER",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    63.1,
+    516.1,
+    224.6,
+    531.6
+   ],
+   "caption": "Full Name (type or print)",
+   "cand": {
+    "kind": "captionsplit",
+    "family": "line",
+    "why": "one of 2 places on one line (captions under the line)"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "name"
+   },
+   "item": "i002",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    224.6,
+    516.1,
+    497.5,
+    531.6
+   ],
+   "caption": "Social Security Number",
+   "cand": {
+    "kind": "captionsplit",
+    "family": "line",
+    "why": "one of 2 places on one line (captions under the line)"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "tax number"
+   },
+   "item": "i003",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    63.1,
+    549.9,
+    306.8,
+    565.4
+   ],
+   "caption": "Address, City, State, Zip",
+   "cand": {
+    "kind": "captionsplit",
+    "family": "line",
+    "why": "one of 2 places on one line (captions under the line)"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "address"
+   },
+   "item": "i004",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    306.8,
+    549.9,
+    497.5,
+    565.4
+   ],
+   "caption": "Telephone",
+   "cand": {
+    "kind": "captionsplit",
+    "family": "line",
+    "why": "one of 2 places on one line (captions under the line)"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "phone"
+   },
+   "item": "i005",
+   "block": "B03"
+  },
+  {
+   "type": "reader-only",
+   "page": 2,
+   "box": [
+    79.7,
+    479,
+    116.9,
+    489.8
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "entity",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Investor name"
+   },
+   "caption": "ON THIS",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor-entity",
+    "what": "text"
+   },
+   "item": "i006",
+   "block": "B04"
+  },
+  {
+   "type": "reader-only",
+   "page": 2,
+   "box": [
+    244.1,
+    479,
+    274.4,
+    489.8
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "entity",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Year"
+   },
+   "caption": ",",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor-entity",
+    "what": "text"
+   },
+   "item": "i007",
+   "block": "B04"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    115.9,
+    520.0,
+    274.4,
+    535.5
+   ],
+   "caption": "Accepted this",
+   "cand": {
+    "kind": "dateparts",
+    "family": "line",
+    "why": "a date printed in 3 parts"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i008",
+   "block": "B05"
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 1,
+   "box": [
+    86.6,
+    214.8,
+    98.3,
+    230.3
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "IN ORDER TO PURCHASE SHARES OF COMMON STOCK, $.001 PAR VALUE PER SHARE, OF"
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 1,
+   "box": [
+    57.2,
+    338.5,
+    362.5,
+    387.8
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "NOT OTHERWISE DEFINED SHALL HAVE THE MEANING ASCRIBED THERETO IN THE PROSPECTUS."
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 1,
+   "box": [
+    63.1,
+    516.1,
+    497.5,
+    565.4
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 2,
+   "box": [
+    79.7,
+    475.0,
+    274.4,
+    490.5
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor-entity"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 2,
+   "box": [
+    115.9,
+    520.0,
+    274.4,
+    535.5
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ON THIS DAY OF , ."
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 2,
+   "box": [
+    57.2,
+    565.0,
+    292.0,
+    625.5
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor-individual"
+   },
+   "heading": "ON THIS DAY OF , ."
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    86.6,
+    214.8,
+    98.3,
+    230.3
+   ],
+   "heading": "IN ORDER TO PURCHASE SHARES OF COMMON STOCK, $.001 PAR VALUE PER SHARE, OF",
+   "context": [
+    "Commercial Evaluations, INC.",
+    "2320 Paseo Del Prado, Building B, Suite 1",
+    "Las Vegas, Nevada 89129",
+    "IN ORDER TO PURCHASE SHARES OF COMMON STOCK, $.001 PAR VALUE PER SHARE, OF"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    57.2,
+    338.5,
+    362.5,
+    387.8
+   ],
+   "heading": "NOT OTHERWISE DEFINED SHALL HAVE THE MEANING ASCRIBED THERETO IN THE PROSPECTUS.",
+   "context": [
+    "BUILDING B, SUITE 1, LAS VEGAS, NEVADA 89129. CAPITALIZED TERMS USED HEREIN AND",
+    "NOT OTHERWISE DEFINED SHALL HAVE THE MEANING ASCRIBED THERETO IN THE PROSPECTUS.",
+    "1. Subscription",
+    "The undersigned (the Subscriber) hereby subscribes for and agrees to purchase"
+   ],
+   "places": [
+    "p01-001",
+    "p01-002",
+    "p01-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B03",
+   "box": [
+    63.1,
+    516.1,
+    497.5,
+    565.4
+   ],
+   "heading": "",
+   "context": [
+    "The Subscription Price must accompany this Subscription and shall be paid by",
+    "check payable to Thomas C. Cook and Associates, Ltd., Client Trust Account.",
+    "3. Subscription Information",
+    "If an Individual:"
+   ],
+   "places": [],
+   "items": [
+    "i002",
+    "i003",
+    "i004",
+    "i005"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B04",
+   "box": [
+    79.7,
+    475.0,
+    274.4,
+    490.5
+   ],
+   "heading": "",
+   "context": [
+    "(f) This Subscription Agreement does not constitute an offer to sell or a",
+    "solicitation of any offer to buy any securities offered hereby by anyone in any",
+    "jurisdiction in which such offer or solicitation is not qualified to do so or to",
+    "anyone to whom it is unlawful to make such offer or solicitation."
+   ],
+   "places": [
+    "p02-001"
+   ],
+   "items": [
+    "i006",
+    "i007"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B05",
+   "box": [
+    115.9,
+    520.0,
+    274.4,
+    535.5
+   ],
+   "heading": "ON THIS DAY OF , .",
+   "context": [
+    "anyone to whom it is unlawful to make such offer or solicitation.",
+    "IN WITNESS WHEREOF, THE SUBSCRIBER HAS EXECUTED THIS SUBSCRIPTION AGREEMENT",
+    "ON THIS DAY OF , .",
+    "Name of Subscriber (Please type or Print)"
+   ],
+   "places": [],
+   "items": [
+    "i008"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B06",
+   "box": [
+    57.2,
+    565.0,
+    292.0,
+    625.5
+   ],
+   "heading": "ON THIS DAY OF , .",
+   "context": [
+    "Name of Subscriber (Please type or Print)",
+    "Accepted this day of , [Signature of Subscriber or of duly",
+    "authorized signatory of a corporation, partnership or other subscriber that is",
+    "not a natural person] COMMERCIAL EVALUATIONS, INC."
+   ],
+   "places": [
+    "p02-002",
+    "p02-003",
+    "p02-004"
+   ],
+   "items": []
+  }
+ ]
+}

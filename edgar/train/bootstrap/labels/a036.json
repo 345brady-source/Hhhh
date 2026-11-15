@@ -1,0 +1,339 @@
+{
+ "id": "a036",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:04Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 4,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text"
+ },
+ "run": "out-18/set-a/a036/result.json",
+ "candidates": "1fb366dec8f5f5ff-f01586d5.json",
+ "counts": {
+  "fields": 3,
+  "counted_candidates": 5,
+  "pairs": 3,
+  "auto": 1,
+  "reader_only": 0,
+  "measure_only": 2,
+  "kind_clash": 2,
+  "person": 4,
+  "items": 8
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "subscription of one Unit",
+   "printed_label": "Stock, with a minimum subscription of one Unit",
+   "must": true,
+   "x0": 350.7,
+   "y0": 361.0,
+   "x1": 427.0,
+   "y1": 376.5,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "subscription of one Unit"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-001",
+   "block": "B02"
+  }
+ ],
+ "items": [
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    63.1,
+    349.8,
+    110.1,
+    365.3
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "per Unit, each Unit consisting of"
+   },
+   "caption": "Stock, with minimum",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "kind-clash",
+   "page": 1,
+   "box": [
+    339.0,
+    349.8,
+    391.8,
+    365.3
+   ],
+   "field": {
+    "kind": "checkbox",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": ", shares of Common"
+   },
+   "caption": "per Unit, each Unit consisting of",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "tickbox",
+    "owner": "investor",
+    "what": "text"
+   },
+   "question": "reader checkbox (tick) on a underscore candidate the measure reads as line",
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    33.7,
+    348.9,
+    468.1,
+    364.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of hyphens typed as a blank"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i003",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 4,
+   "box": [
+    33.7,
+    483.9,
+    474.0,
+    499.4
+   ],
+   "caption": "",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of hyphens typed as a blank"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i004",
+   "block": "B04"
+  },
+  {
+   "item": "i005",
+   "type": "person",
+   "page": 1,
+   "box": [
+    63.1,
+    349.8,
+    110.1,
+    365.3
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SECURITIES LAWS."
+  },
+  {
+   "item": "i006",
+   "type": "person",
+   "page": 1,
+   "box": [
+    339.0,
+    349.8,
+    427.0,
+    376.5
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SECURITIES LAWS."
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 4,
+   "box": [
+    33.7,
+    348.9,
+    468.1,
+    364.4
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "[ ] CORPORATION OR OTHER ENTITY"
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 4,
+   "box": [
+    33.7,
+    483.9,
+    474.0,
+    499.4
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "[ ] CORPORATION OR OTHER ENTITY"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    63.1,
+    349.8,
+    110.1,
+    365.3
+   ],
+   "heading": "SECURITIES LAWS.",
+   "context": [
+    "This Subscription Agreement by the undersigned (\"Subscriber\") is for Units",
+    "(\"Units\") of Common Stock of Aura Systems, Inc. (\"Aura\" or the \"Company\"), a",
+    "Delaware corporation.",
+    "1. Subscription. Subject to the terms and conditions hereof, the Subscriber"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    339.0,
+    349.8,
+    427.0,
+    376.5
+   ],
+   "heading": "SECURITIES LAWS.",
+   "context": [
+    "This Subscription Agreement by the undersigned (\"Subscriber\") is for Units",
+    "(\"Units\") of Common Stock of Aura Systems, Inc. (\"Aura\" or the \"Company\"), a",
+    "Delaware corporation.",
+    "1. Subscription. Subject to the terms and conditions hereof, the Subscriber"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B03",
+   "box": [
+    33.7,
+    348.9,
+    468.1,
+    364.4
+   ],
+   "heading": "[ ] CORPORATION OR OTHER ENTITY",
+   "context": [
+    "-----------------------------------------------------------------------------",
+    "[ ] PARTNERSHIP",
+    "(Authorized Partner(s) must sign)",
+    "[ ] CORPORATION OR OTHER ENTITY"
+   ],
+   "places": [],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 4,
+   "block": "B04",
+   "box": [
+    33.7,
+    483.9,
+    474.0,
+    499.4
+   ],
+   "heading": "[ ] CORPORATION OR OTHER ENTITY",
+   "context": [
+    "----------------------------------------------------------------------------",
+    "----------------------------------------------------------------------------",
+    "[ ] TRUST",
+    "(Authorized Trustee(s) must sign)"
+   ],
+   "places": [],
+   "items": [
+    "i004"
+   ]
+  }
+ ]
+}

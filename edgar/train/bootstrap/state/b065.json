@@ -1,0 +1,206 @@
+{
+ "id": "b065",
+ "answers": {
+  "i001": {
+   "do": "drop"
+  },
+  "i002": {
+   "do": "keep",
+   "kind": "initials"
+  },
+  "i003": {
+   "do": "keep",
+   "kind": "initials"
+  },
+  "i004": {
+   "do": "keep",
+   "kind": "initials"
+  },
+  "i005": {
+   "do": "keep",
+   "kind": "initials"
+  },
+  "i006": {
+   "do": "keep",
+   "kind": "initials"
+  },
+  "i007": {
+   "do": "drop"
+  },
+  "i008": {
+   "do": "keep",
+   "kind": "blank",
+   "what": "name",
+   "owner": "third-party"
+  },
+  "i009": {
+   "do": "keep",
+   "kind": "signature",
+   "owner": "third-party"
+  },
+  "i010": {
+   "do": "drop"
+  }
+ },
+ "blocks": {
+  "B01": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ],
+  "B02": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B03": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B04": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B05": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B06": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B07": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B08": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B09": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B10": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B11": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B12": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B13": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B14": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B15": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B16": [
+   {
+    "owner": "third-party",
+    "cond": ""
+   }
+  ],
+  "B17": [
+   {
+    "owner": "investor",
+    "cond": ""
+   }
+  ],
+  "B18": [
+   {
+    "owner": "third-party",
+    "cond": ""
+   }
+  ],
+  "B19": [
+   {
+    "owner": "third-party",
+    "cond": ""
+   }
+  ],
+  "B20": [
+   {
+    "owner": "third-party",
+    "cond": ""
+   }
+  ],
+  "B21": [
+   {
+    "owner": "third-party",
+    "cond": ""
+   }
+  ],
+  "B22": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ],
+  "B23": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ],
+  "B24": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ],
+  "B25": [
+   {
+    "owner": "none",
+    "cond": ""
+   }
+  ]
+ },
+ "confirms": {},
+ "confirm_items": [],
+ "cost": {
+  "pixels": 1773664,
+  "chars": 8451,
+  "commands": 7,
+  "sheets": 3
+ },
+ "done": "2026-11-15T04:46:42Z"
+}

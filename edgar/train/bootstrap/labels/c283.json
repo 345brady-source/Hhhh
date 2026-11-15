@@ -1,0 +1,1561 @@
+{
+ "id": "c283",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:10Z",
+ "how_made": "browser-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 14,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text"
+ },
+ "run": "out-18/set-c/c283/result.json",
+ "candidates": "8d3f2338aa832f9b-f01586d5.json",
+ "counts": {
+  "fields": 23,
+  "counted_candidates": 24,
+  "pairs": 20,
+  "auto": 17,
+  "reader_only": 3,
+  "measure_only": 4,
+  "kind_clash": 3,
+  "person": 20,
+  "items": 30
+ },
+ "places": [
+  {
+   "page": 10,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 357.3,
+   "y0": 283.3,
+   "x1": 543.3,
+   "y1": 298.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p10-001",
+   "block": "B07"
+  },
+  {
+   "page": 10,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 357.3,
+   "y0": 329.8,
+   "x1": 543.3,
+   "y1": 345.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p10-002",
+   "block": "B08"
+  },
+  {
+   "page": 10,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 357.3,
+   "y0": 389.8,
+   "x1": 543.3,
+   "y1": 405.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p10-003",
+   "block": "B09"
+  },
+  {
+   "page": 10,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 357.3,
+   "y0": 436.3,
+   "x1": 543.3,
+   "y1": 451.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p10-004",
+   "block": "B10"
+  },
+  {
+   "page": 11,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 357.3,
+   "y0": 215.8,
+   "x1": 543.3,
+   "y1": 231.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p11-001",
+   "block": "B11"
+  },
+  {
+   "page": 11,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 357.3,
+   "y0": 262.3,
+   "x1": 543.3,
+   "y1": 277.8,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p11-002",
+   "block": "B12"
+  },
+  {
+   "page": 11,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 357.3,
+   "y0": 308.8,
+   "x1": 543.3,
+   "y1": 324.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p11-003",
+   "block": "B13"
+  },
+  {
+   "page": 11,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 357.3,
+   "y0": 375.6,
+   "x1": 543.3,
+   "y1": 391.1,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "underscore",
+   "id": "p11-004",
+   "block": "B14"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Agent that the",
+   "printed_label": "Agent that the",
+   "must": true,
+   "x0": 104.7,
+   "y0": 299.1,
+   "x1": 152.7,
+   "y1": 314.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Agent that the"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p13-001",
+   "block": "B16"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "will be held on",
+   "printed_label": "closing will be held on",
+   "must": true,
+   "x0": 268.0,
+   "y0": 299.1,
+   "x1": 334.0,
+   "y1": 314.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "will be held on"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p13-002",
+   "block": "B17"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "gross proceeds of",
+   "printed_label": "for gross proceeds of $",
+   "must": true,
+   "x0": 447.0,
+   "y0": 299.1,
+   "x1": 501.0,
+   "y1": 314.6,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "gross proceeds of"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p13-003",
+   "block": "B18"
+  },
+  {
+   "page": 13,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 297.1,
+   "y0": 592.4,
+   "x1": 369.1,
+   "y1": 607.9,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "cand": "rule",
+   "id": "p13-004",
+   "block": "B19"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Name",
+   "printed_label": "Name",
+   "must": true,
+   "x0": 311.7,
+   "y0": 608.1,
+   "x1": 383.7,
+   "y1": 623.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p13-005",
+   "block": "B19"
+  },
+  {
+   "page": 13,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 305.3,
+   "y0": 623.1,
+   "x1": 377.3,
+   "y1": 638.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": true,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p13-006",
+   "block": "B19"
+  },
+  {
+   "page": 14,
+   "kind": "signature",
+   "owner": "third-party",
+   "label": "By",
+   "printed_label": "By",
+   "must": false,
+   "x0": 297.1,
+   "y0": 95.9,
+   "x1": 369.1,
+   "y1": 111.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "signature",
+    "owner": "someone else",
+    "forType": "",
+    "other": "Broker-dealer",
+    "required": false,
+    "review": true,
+    "label": "By"
+   },
+   "cand": "rule",
+   "id": "p14-001",
+   "block": "B20"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Name",
+   "printed_label": "Name",
+   "must": false,
+   "x0": 311.7,
+   "y0": 110.9,
+   "x1": 383.7,
+   "y1": 126.4,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "name",
+    "owner": "someone else",
+    "forType": "",
+    "other": "Broker-dealer",
+    "required": false,
+    "review": true,
+    "label": "Name"
+   },
+   "cand": "rule",
+   "what": "name",
+   "id": "p14-002",
+   "block": "B20"
+  },
+  {
+   "page": 14,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 329.3,
+   "y0": 125.1,
+   "x1": 401.3,
+   "y1": 140.6,
+   "printed_as": "measure candidate: rule",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "someone else",
+    "forType": "",
+    "other": "Broker-dealer",
+    "required": false,
+    "review": true,
+    "label": "Title"
+   },
+   "cand": "rule",
+   "what": "title",
+   "id": "p14-003",
+   "block": "B20"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    499.6,
+    110.1,
+    511.6,
+    125.6
+   ],
+   "caption": "SUBSCRIPTION ESCROW AGREEMENT dated as of September",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "date"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "reader-only",
+   "page": 3,
+   "box": [
+    96.4,
+    199,
+    162.4,
+    212.9
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "close of business on"
+   },
+   "caption": "business on [",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "reader-only",
+   "page": 3,
+   "box": [
+    219.4,
+    199,
+    303.4,
+    212.9
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "2021 or"
+   },
+   "caption": "], 2021, or [",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i003",
+   "block": "B03"
+  },
+  {
+   "type": "measure-only",
+   "page": 9,
+   "box": [
+    75.0,
+    164.1,
+    123.4,
+    179.6
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "captionsplit",
+    "family": "sign",
+    "why": "one of 2 places on one line (captions under the line)"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i004",
+   "block": "B04"
+  },
+  {
+   "type": "kind-clash",
+   "page": 9,
+   "box": [
+    123.4,
+    164.1,
+    451.5,
+    179.6
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "caption": "Jeffrey R. Sprain",
+   "cand": {
+    "kind": "captionsplit",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "firm",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a captionsplit candidate the measure reads as line",
+   "item": "i005",
+   "block": "B04"
+  },
+  {
+   "type": "measure-only",
+   "page": 9,
+   "box": [
+    64.5,
+    308.1,
+    107.5,
+    323.6
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "captionsplit",
+    "family": "sign",
+    "why": "one of 2 places on one line (captions under the line)"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i006",
+   "block": "B05"
+  },
+  {
+   "type": "kind-clash",
+   "page": 9,
+   "box": [
+    107.5,
+    308.1,
+    294.0,
+    323.6
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "caption": "Brian Cho",
+   "cand": {
+    "kind": "captionsplit",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "firm",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a captionsplit candidate the measure reads as line",
+   "item": "i007",
+   "block": "B05"
+  },
+  {
+   "type": "measure-only",
+   "page": 9,
+   "box": [
+    63.0,
+    467.9,
+    108.7,
+    483.4
+   ],
+   "caption": "By",
+   "cand": {
+    "kind": "captionsplit",
+    "family": "sign",
+    "why": "one of 2 places on one line (captions under the line)"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "investor",
+    "what": null
+   },
+   "item": "i008",
+   "block": "B06"
+  },
+  {
+   "type": "kind-clash",
+   "page": 9,
+   "box": [
+    108.7,
+    467.9,
+    247.5,
+    483.4
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "caption": "Lara L. Stevens",
+   "cand": {
+    "kind": "captionsplit",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "firm",
+    "what": "text"
+   },
+   "question": "reader signature (sign) on a captionsplit candidate the measure reads as line",
+   "item": "i009",
+   "block": "B06"
+  },
+  {
+   "type": "reader-only",
+   "page": 12,
+   "box": [
+    275.7,
+    124.7,
+    311.7,
+    140.9
+   ],
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Amount"
+   },
+   "caption": "$[",
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "amount"
+   },
+   "item": "i010",
+   "block": "B15"
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 1,
+   "box": [
+    499.6,
+    110.1,
+    511.6,
+    125.6
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FORM OF SUBSCRIPTION ESCROW AGREEMENT"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 3,
+   "box": [
+    96.4,
+    199,
+    162.4,
+    212.9
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 3,
+   "box": [
+    219.4,
+    199,
+    303.4,
+    212.9
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 9,
+   "box": [
+    75.0,
+    164.1,
+    451.5,
+    179.6
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "PREFERRED APARTMENT COMMUNITIES, INC."
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 9,
+   "box": [
+    64.5,
+    308.1,
+    294.0,
+    323.6
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "PREFERRED CAPITAL SECURITIES, LLC"
+  },
+  {
+   "item": "i016",
+   "type": "person",
+   "page": 9,
+   "box": [
+    63.0,
+    467.9,
+    247.5,
+    483.4
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "UMB BANK, NATIONAL"
+  },
+  {
+   "item": "i017",
+   "type": "person",
+   "page": 10,
+   "box": [
+    357.3,
+    283.3,
+    543.3,
+    298.8
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i018",
+   "type": "person",
+   "page": 10,
+   "box": [
+    357.3,
+    329.8,
+    543.3,
+    345.3
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i019",
+   "type": "person",
+   "page": 10,
+   "box": [
+    357.3,
+    389.8,
+    543.3,
+    405.3
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i020",
+   "type": "person",
+   "page": 10,
+   "box": [
+    357.3,
+    436.3,
+    543.3,
+    451.8
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i021",
+   "type": "person",
+   "page": 11,
+   "box": [
+    357.3,
+    215.8,
+    543.3,
+    231.3
+   ],
+   "block": "B11",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "CERTIFICATE AS TO AUTHORIZED SIGNATURES"
+  },
+  {
+   "item": "i022",
+   "type": "person",
+   "page": 11,
+   "box": [
+    357.3,
+    262.3,
+    543.3,
+    277.8
+   ],
+   "block": "B12",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i023",
+   "type": "person",
+   "page": 11,
+   "box": [
+    357.3,
+    308.8,
+    543.3,
+    324.3
+   ],
+   "block": "B13",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i024",
+   "type": "person",
+   "page": 11,
+   "box": [
+    357.3,
+    375.6,
+    543.3,
+    391.1
+   ],
+   "block": "B14",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i025",
+   "type": "person",
+   "page": 12,
+   "box": [
+    275.7,
+    124.7,
+    311.7,
+    140.9
+   ],
+   "block": "B15",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "ESCROW FEES AND EXPENSES"
+  },
+  {
+   "item": "i026",
+   "type": "person",
+   "page": 13,
+   "box": [
+    104.7,
+    299.1,
+    152.7,
+    314.6
+   ],
+   "block": "B16",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i027",
+   "type": "person",
+   "page": 13,
+   "box": [
+    268.0,
+    299.1,
+    334.0,
+    314.6
+   ],
+   "block": "B17",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i028",
+   "type": "person",
+   "page": 13,
+   "box": [
+    447.0,
+    299.1,
+    501.0,
+    314.6
+   ],
+   "block": "B18",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i029",
+   "type": "person",
+   "page": 13,
+   "box": [
+    297.1,
+    592.4,
+    383.7,
+    638.6
+   ],
+   "block": "B19",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "PREFERRED APARTMENT COMMUNITIES, INC.,"
+  },
+  {
+   "item": "i030",
+   "type": "person",
+   "page": 14,
+   "box": [
+    297.1,
+    95.9,
+    401.3,
+    140.6
+   ],
+   "block": "B20",
+   "proposed": {
+    "owner": "third-party"
+   },
+   "heading": "PREFERRED CAPITAL SECURITIES, LLC,"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    499.6,
+    110.1,
+    511.6,
+    125.6
+   ],
+   "heading": "FORM OF SUBSCRIPTION ESCROW AGREEMENT",
+   "context": [
+    "EX-10.1 3 pac-19638xv2xsubscription .htm EXHIBIT 10.1 - FORM OF ESCROW AGREEMENT",
+    "FORM OF SUBSCRIPTION ESCROW AGREEMENT"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B02",
+   "box": [
+    96.4,
+    199,
+    162.4,
+    212.9
+   ],
+   "heading": "",
+   "context": [
+    "least 20 days, the Escrow Agent shall return Investor Funds to Investors. The Company and Dealer Manager",
+    "shall provide any necessary documentation to the Escrow Agent, upon which it may rely, to enable the Escrow",
+    "Agent to return amounts to Investors.",
+    "4. Term of Escrow. Unless otherwise extended, the \u201cTermination Date\u201d shall be the earliest of: (a) the close of"
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 3,
+   "block": "B03",
+   "box": [
+    219.4,
+    199,
+    303.4,
+    212.9
+   ],
+   "heading": "",
+   "context": [
+    "least 20 days, the Escrow Agent shall return Investor Funds to Investors. The Company and Dealer Manager",
+    "shall provide any necessary documentation to the Escrow Agent, upon which it may rely, to enable the Escrow",
+    "Agent to return amounts to Investors.",
+    "4. Term of Escrow. Unless otherwise extended, the \u201cTermination Date\u201d shall be the earliest of: (a) the close of"
+   ],
+   "places": [],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 9,
+   "block": "B04",
+   "box": [
+    75.0,
+    164.1,
+    451.5,
+    179.6
+   ],
+   "heading": "PREFERRED APARTMENT COMMUNITIES, INC.",
+   "context": [
+    "IN WITNESS WHEREOF, the parties hereto have caused this Agreement to be executed the date and",
+    "year first set forth above.",
+    "PREFERRED APARTMENT COMMUNITIES, INC."
+   ],
+   "places": [],
+   "items": [
+    "i004",
+    "i005"
+   ]
+  },
+  {
+   "page": 9,
+   "block": "B05",
+   "box": [
+    64.5,
+    308.1,
+    294.0,
+    323.6
+   ],
+   "heading": "PREFERRED CAPITAL SECURITIES, LLC",
+   "context": [
+    "Name: Jeffrey R. Sprain",
+    "Title: Executive Vice President- Legal, General Counsel & Corporate",
+    "Secretary",
+    "PREFERRED CAPITAL SECURITIES, LLC"
+   ],
+   "places": [],
+   "items": [
+    "i006",
+    "i007"
+   ]
+  },
+  {
+   "page": 9,
+   "block": "B06",
+   "box": [
+    63.0,
+    467.9,
+    247.5,
+    483.4
+   ],
+   "heading": "UMB BANK, NATIONAL",
+   "context": [
+    "Name: Brian Cho",
+    "Title: Chief Compliance Officer",
+    "UMB BANK, NATIONAL",
+    "ASSOCIATION, as Escrow Agent"
+   ],
+   "places": [],
+   "items": [
+    "i008",
+    "i009"
+   ]
+  },
+  {
+   "page": 10,
+   "block": "B07",
+   "box": [
+    357.3,
+    283.3,
+    543.3,
+    298.8
+   ],
+   "heading": "",
+   "context": [
+    "as Authorized Representatives of Preferred Apartment Communities, Inc. and are authorized to initiate and",
+    "approve transactions of all types for the above-mentioned account on behalf of Preferred Apartment",
+    "Communities, Inc.",
+    "Name/Title Specimen Signature"
+   ],
+   "places": [
+    "p10-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 10,
+   "block": "B08",
+   "box": [
+    357.3,
+    329.8,
+    543.3,
+    345.3
+   ],
+   "heading": "",
+   "context": [
+    "Communities, Inc.",
+    "Name/Title Specimen Signature",
+    "Daniel M. DuPree",
+    "Chief Executive Officer Signature"
+   ],
+   "places": [
+    "p10-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 10,
+   "block": "B09",
+   "box": [
+    357.3,
+    389.8,
+    543.3,
+    405.3
+   ],
+   "heading": "",
+   "context": [
+    "Chief Executive Officer Signature",
+    "Leonard A. Silverstein",
+    "President and Chief Operating Officer Signature",
+    "Michael J. Cronin"
+   ],
+   "places": [
+    "p10-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 10,
+   "block": "B10",
+   "box": [
+    357.3,
+    436.3,
+    543.3,
+    451.8
+   ],
+   "heading": "",
+   "context": [
+    "President and Chief Operating Officer Signature",
+    "Michael J. Cronin",
+    "Executive Vice President, Chief Accounting Officer and",
+    "Treasurer Signature"
+   ],
+   "places": [
+    "p10-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 11,
+   "block": "B11",
+   "box": [
+    357.3,
+    215.8,
+    543.3,
+    231.3
+   ],
+   "heading": "CERTIFICATE AS TO AUTHORIZED SIGNATURES",
+   "context": [
+    "The specimen signatures shown below are the specimen signatures of the individuals who have been designated",
+    "as Authorized Representatives of Preferred Capital Securities, LLC and are authorized to initiate and approve",
+    "transactions of all types for the above-mentioned account on behalf of Preferred Capital Securities, LLC.",
+    "Name/Title Specimen Signature"
+   ],
+   "places": [
+    "p11-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 11,
+   "block": "B12",
+   "box": [
+    357.3,
+    262.3,
+    543.3,
+    277.8
+   ],
+   "heading": "",
+   "context": [
+    "transactions of all types for the above-mentioned account on behalf of Preferred Capital Securities, LLC.",
+    "Name/Title Specimen Signature",
+    "Jeff Smith",
+    "Chief Executive Officer Signature"
+   ],
+   "places": [
+    "p11-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 11,
+   "block": "B13",
+   "box": [
+    357.3,
+    308.8,
+    543.3,
+    324.3
+   ],
+   "heading": "",
+   "context": [
+    "Jeff Smith",
+    "Chief Executive Officer Signature",
+    "Brian Cho",
+    "Chief Compliance Officer Signature"
+   ],
+   "places": [
+    "p11-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 11,
+   "block": "B14",
+   "box": [
+    357.3,
+    375.6,
+    543.3,
+    391.1
+   ],
+   "heading": "",
+   "context": [
+    "Brian Cho",
+    "Chief Compliance Officer Signature",
+    "Greg Mausz",
+    "Executive Vice President \u2013 Operations & Due Diligence Signature"
+   ],
+   "places": [
+    "p11-004"
+   ],
+   "items": []
+  },
+  {
+   "page": 12,
+   "block": "B15",
+   "box": [
+    275.7,
+    124.7,
+    311.7,
+    140.9
+   ],
+   "heading": "ESCROW FEES AND EXPENSES",
+   "context": [
+    "Exhibit B",
+    "ESCROW FEES AND EXPENSES",
+    "Annual Fee"
+   ],
+   "places": [],
+   "items": [
+    "i010"
+   ]
+  },
+  {
+   "page": 13,
+   "block": "B16",
+   "box": [
+    104.7,
+    299.1,
+    152.7,
+    314.6
+   ],
+   "heading": "",
+   "context": [
+    "In accordance with the terms of Section 3 of the Subscription Escrow Agreement dated as of February 14, 2017",
+    "(as the same may be amended from time to time, the \u201cEscrow Agreement\u201d), among Preferred Apartment",
+    "Communities, Inc. (the \u201cCompany\u201d), Preferred Capital Securities, LLC (the \u201cDealer Manager\u201d) and UMB Bank,",
+    "National Association (the \u201cEscrow Agent\u201d), the Company and the Dealer Manager hereby notify the Escrow"
+   ],
+   "places": [
+    "p13-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 13,
+   "block": "B17",
+   "box": [
+    268.0,
+    299.1,
+    334.0,
+    314.6
+   ],
+   "heading": "",
+   "context": [
+    "In accordance with the terms of Section 3 of the Subscription Escrow Agreement dated as of February 14, 2017",
+    "(as the same may be amended from time to time, the \u201cEscrow Agreement\u201d), among Preferred Apartment",
+    "Communities, Inc. (the \u201cCompany\u201d), Preferred Capital Securities, LLC (the \u201cDealer Manager\u201d) and UMB Bank,",
+    "National Association (the \u201cEscrow Agent\u201d), the Company and the Dealer Manager hereby notify the Escrow"
+   ],
+   "places": [
+    "p13-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 13,
+   "block": "B18",
+   "box": [
+    447.0,
+    299.1,
+    501.0,
+    314.6
+   ],
+   "heading": "",
+   "context": [
+    "In accordance with the terms of Section 3 of the Subscription Escrow Agreement dated as of February 14, 2017",
+    "(as the same may be amended from time to time, the \u201cEscrow Agreement\u201d), among Preferred Apartment",
+    "Communities, Inc. (the \u201cCompany\u201d), Preferred Capital Securities, LLC (the \u201cDealer Manager\u201d) and UMB Bank,",
+    "National Association (the \u201cEscrow Agent\u201d), the Company and the Dealer Manager hereby notify the Escrow"
+   ],
+   "places": [
+    "p13-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 13,
+   "block": "B19",
+   "box": [
+    297.1,
+    592.4,
+    383.7,
+    638.6
+   ],
+   "heading": "PREFERRED APARTMENT COMMUNITIES, INC.,",
+   "context": [
+    "$",
+    "Very truly yours,",
+    "PREFERRED APARTMENT COMMUNITIES, INC.,",
+    "as the Company"
+   ],
+   "places": [
+    "p13-004",
+    "p13-005",
+    "p13-006"
+   ],
+   "items": []
+  },
+  {
+   "page": 14,
+   "block": "B20",
+   "box": [
+    297.1,
+    95.9,
+    401.3,
+    140.6
+   ],
+   "heading": "PREFERRED CAPITAL SECURITIES, LLC,",
+   "context": [
+    "PREFERRED CAPITAL SECURITIES, LLC,",
+    "as the Dealer Manager"
+   ],
+   "places": [
+    "p14-001",
+    "p14-002",
+    "p14-003"
+   ],
+   "items": []
+  }
+ ]
+}

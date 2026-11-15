@@ -1,0 +1,709 @@
+{
+ "id": "b051",
+ "source": "bootstrap",
+ "made": "2026-11-15T04:39:16Z",
+ "how_made": "printed-portrait",
+ "made_group": "browser portrait",
+ "broker_dealer": false,
+ "pages": 5,
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text"
+ },
+ "run": "out-18/set-b/b051/result.json",
+ "candidates": "12b590c09c84c63a-f01586d5.json",
+ "counts": {
+  "fields": 6,
+  "counted_candidates": 11,
+  "pairs": 6,
+  "auto": 5,
+  "reader_only": 0,
+  "measure_only": 5,
+  "kind_clash": 1,
+  "person": 10,
+  "items": 16
+ },
+ "places": [
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "to issue and sell",
+   "printed_label": "WHEREAS, the Company intends to issue and sell",
+   "must": true,
+   "x0": 344.9,
+   "y0": 383.5,
+   "x1": 415.3,
+   "y1": 399.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "to issue and sell"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-001",
+   "block": "B03"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Company intend to sell",
+   "printed_label": "of the Company intend to sell",
+   "must": true,
+   "x0": 209.8,
+   "y0": 428.5,
+   "x1": 250.9,
+   "y1": 444.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Company intend to sell"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-002",
+   "block": "B04"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "and sell to Kojaian",
+   "printed_label": "desires to issue and sell to Kojaian,",
+   "must": true,
+   "x0": 256.8,
+   "y0": 518.5,
+   "x1": 321.4,
+   "y1": 534.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "and sell to Kojaian"
+   },
+   "cand": "underscore",
+   "what": "text",
+   "id": "p01-003",
+   "block": "B05"
+  },
+  {
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Closing Date, an aggregate of",
+   "printed_label": "Closing Date, an aggregate of",
+   "must": true,
+   "x0": 209.8,
+   "y0": 698.5,
+   "x1": 274.4,
+   "y1": 714.0,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Closing Date, an aggregate of"
+   },
+   "cand": "underscore",
+   "what": "date",
+   "id": "p01-004",
+   "block": "B06"
+  },
+  {
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Commitment amount",
+   "printed_label": "$",
+   "must": false,
+   "x0": 39.6,
+   "y0": 58.8,
+   "x1": 104.2,
+   "y1": 74.3,
+   "printed_as": "measure candidate: underscore",
+   "auto": true,
+   "field": {
+    "kind": "text",
+    "owner": "investor",
+    "forType": "",
+    "other": "",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount"
+   },
+   "cand": "underscore",
+   "what": "amount",
+   "id": "p02-001",
+   "block": "B07"
+  }
+ ],
+ "items": [
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    297.9,
+    181.0,
+    309.6,
+    196.5
+   ],
+   "caption": "DATED AS OF APRIL",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "date"
+   },
+   "item": "i001",
+   "block": "B01"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    415.3,
+    316.0,
+    427.0,
+    331.5
+   ],
+   "caption": "AGREEMENT (this \"Agreement\") made as of April",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i002",
+   "block": "B02"
+  },
+  {
+   "type": "measure-only",
+   "page": 1,
+   "box": [
+    233.3,
+    709.8,
+    245.1,
+    725.3
+   ],
+   "caption": "Shares\"), at a purchase price of $",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "amount"
+   },
+   "item": "i003",
+   "block": "B06"
+  },
+  {
+   "type": "measure-only",
+   "page": 2,
+   "box": [
+    33.7,
+    115.0,
+    45.5,
+    130.5
+   ],
+   "caption": "agree, and",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of underscores"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "text"
+   },
+   "item": "i004",
+   "block": "B08"
+  },
+  {
+   "type": "kind-clash",
+   "page": 5,
+   "box": [
+    268.6,
+    472.6,
+    497.5,
+    488.1
+   ],
+   "field": {
+    "kind": "signature",
+    "owner": "firm",
+    "forType": "",
+    "other": "",
+    "required": true,
+    "review": true,
+    "label": "Signature"
+   },
+   "caption": "Name",
+   "cand": {
+    "kind": "underscore",
+    "family": "line"
+   },
+   "proposed": {
+    "kind": "signature",
+    "owner": "firm",
+    "what": "name"
+   },
+   "question": "reader signature (sign) on a underscore candidate the measure reads as line",
+   "item": "i005",
+   "block": "B09"
+  },
+  {
+   "type": "measure-only",
+   "page": 5,
+   "box": [
+    268.6,
+    618.9,
+    497.5,
+    634.4
+   ],
+   "caption": "Name: C. Michael Kojaian",
+   "cand": {
+    "kind": "underscore",
+    "family": "line",
+    "why": "run of hyphens typed as a blank"
+   },
+   "proposed": {
+    "kind": "blank",
+    "owner": "investor",
+    "what": "name"
+   },
+   "item": "i006",
+   "block": "B10"
+  },
+  {
+   "item": "i007",
+   "type": "person",
+   "page": 1,
+   "box": [
+    297.9,
+    181.0,
+    309.6,
+    196.5
+   ],
+   "block": "B01",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FORM OF SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i008",
+   "type": "person",
+   "page": 1,
+   "box": [
+    415.3,
+    316.0,
+    427.0,
+    331.5
+   ],
+   "block": "B02",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "FORM OF SUBSCRIPTION AGREEMENT"
+  },
+  {
+   "item": "i009",
+   "type": "person",
+   "page": 1,
+   "box": [
+    344.9,
+    383.5,
+    415.3,
+    399.0
+   ],
+   "block": "B03",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "RECITALS:"
+  },
+  {
+   "item": "i010",
+   "type": "person",
+   "page": 1,
+   "box": [
+    209.8,
+    428.5,
+    250.9,
+    444.0
+   ],
+   "block": "B04",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "RECITALS:"
+  },
+  {
+   "item": "i011",
+   "type": "person",
+   "page": 1,
+   "box": [
+    256.8,
+    518.5,
+    321.4,
+    534.0
+   ],
+   "block": "B05",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "RECITALS:"
+  },
+  {
+   "item": "i012",
+   "type": "person",
+   "page": 1,
+   "box": [
+    209.8,
+    698.5,
+    274.4,
+    725.3
+   ],
+   "block": "B06",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "SALE OF COMMON STOCK"
+  },
+  {
+   "item": "i013",
+   "type": "person",
+   "page": 2,
+   "box": [
+    39.6,
+    58.8,
+    104.2,
+    74.3
+   ],
+   "block": "B07",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i014",
+   "type": "person",
+   "page": 2,
+   "box": [
+    33.7,
+    115.0,
+    45.5,
+    130.5
+   ],
+   "block": "B08",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": ""
+  },
+  {
+   "item": "i015",
+   "type": "person",
+   "page": 5,
+   "box": [
+    268.6,
+    472.6,
+    497.5,
+    488.1
+   ],
+   "block": "B09",
+   "proposed": {
+    "owner": "firm"
+   },
+   "heading": "ARBOR REALTY TRUST, INC.,"
+  },
+  {
+   "item": "i016",
+   "type": "person",
+   "page": 5,
+   "box": [
+    268.6,
+    618.9,
+    497.5,
+    634.4
+   ],
+   "block": "B10",
+   "proposed": {
+    "owner": "investor"
+   },
+   "heading": "KOJAIAN VENTURES, L.L.C.,"
+  }
+ ],
+ "blocks": [
+  {
+   "page": 1,
+   "block": "B01",
+   "box": [
+    297.9,
+    181.0,
+    309.6,
+    196.5
+   ],
+   "heading": "FORM OF SUBSCRIPTION AGREEMENT",
+   "context": [
+    "<TEXT>",
+    "<PAGE>",
+    "Exhibit 10.16",
+    "FORM OF SUBSCRIPTION AGREEMENT"
+   ],
+   "places": [],
+   "items": [
+    "i001"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B02",
+   "box": [
+    415.3,
+    316.0,
+    427.0,
+    331.5
+   ],
+   "heading": "FORM OF SUBSCRIPTION AGREEMENT",
+   "context": [
+    "AND",
+    "KOJAIAN VENTURES, L.L.C.",
+    "<PAGE>",
+    "FORM OF SUBSCRIPTION AGREEMENT"
+   ],
+   "places": [],
+   "items": [
+    "i002"
+   ]
+  },
+  {
+   "page": 1,
+   "block": "B03",
+   "box": [
+    344.9,
+    383.5,
+    415.3,
+    399.0
+   ],
+   "heading": "RECITALS:",
+   "context": [
+    "SUBSCRIPTION AGREEMENT (this \"Agreement\") made as of April , 2004 by and",
+    "between ARBOR REALTY TRUST, INC., a Maryland corporation (the \"Company\") and",
+    "KOJAIAN VENTURES, L.L.C., a Michigan limited liability company (\"Kojaian\").",
+    "RECITALS:"
+   ],
+   "places": [
+    "p01-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B04",
+   "box": [
+    209.8,
+    428.5,
+    250.9,
+    444.0
+   ],
+   "heading": "RECITALS:",
+   "context": [
+    "RECITALS:",
+    "WHEREAS, the Company intends to issue and sell shares (the",
+    "\"Company Shares\") of its common stock, par value $.01 per share (the \"Common",
+    "Stock\"), to Wachovia Securities, UBS Securities LLC and JMP Securities LLC, as"
+   ],
+   "places": [
+    "p01-002"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B05",
+   "box": [
+    256.8,
+    518.5,
+    321.4,
+    534.0
+   ],
+   "heading": "RECITALS:",
+   "context": [
+    "Shares, the \"IPO Shares\") each for reoffering to the public pursuant to a",
+    "prospectus (the \"IPO Prospectus\") included in the Company's registration",
+    "statement on Form S-11 (No. 333-110472), as amended (the \"Registration",
+    "Statement\");"
+   ],
+   "places": [
+    "p01-003"
+   ],
+   "items": []
+  },
+  {
+   "page": 1,
+   "block": "B06",
+   "box": [
+    209.8,
+    698.5,
+    274.4,
+    725.3
+   ],
+   "heading": "SALE OF COMMON STOCK",
+   "context": [
+    "ARTICLE I",
+    "SALE OF COMMON STOCK",
+    "1.1 Issuance and Sale of Common Stock. Subject to the terms and conditions",
+    "herein stated, the Company agrees to issue and sell to Kojaian on the Closing"
+   ],
+   "places": [
+    "p01-004"
+   ],
+   "items": [
+    "i003"
+   ]
+  },
+  {
+   "page": 2,
+   "block": "B07",
+   "box": [
+    39.6,
+    58.8,
+    104.2,
+    74.3
+   ],
+   "heading": "",
+   "context": [
+    "1.2 Consideration. As full and total consideration for the issuance and",
+    "sale by the Company to Kojaian of the Kojaian Shares, Kojaian shall pay to the"
+   ],
+   "places": [
+    "p02-001"
+   ],
+   "items": []
+  },
+  {
+   "page": 2,
+   "block": "B08",
+   "box": [
+    33.7,
+    115.0,
+    45.5,
+    130.5
+   ],
+   "heading": "",
+   "context": [
+    "$ (the \"Aggregate Purchase Price\").",
+    "<PAGE>",
+    "1.3 Closing. (a) The issuance and sale of the Kojaian Shares (the",
+    "\"Closing\") shall take place at 9:00 a.m., New York Time, at the offices of"
+   ],
+   "places": [],
+   "items": [
+    "i004"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B09",
+   "box": [
+    268.6,
+    472.6,
+    497.5,
+    488.1
+   ],
+   "heading": "ARBOR REALTY TRUST, INC.,",
+   "context": [
+    "IN WITNESS WHEREOF, the parties have caused this Agreement to be executed",
+    "as of the day and year first above written.",
+    "ARBOR REALTY TRUST, INC.,",
+    "a Maryland corporation"
+   ],
+   "places": [],
+   "items": [
+    "i005"
+   ]
+  },
+  {
+   "page": 5,
+   "block": "B10",
+   "box": [
+    268.6,
+    618.9,
+    497.5,
+    634.4
+   ],
+   "heading": "KOJAIAN VENTURES, L.L.C.,",
+   "context": [
+    "a Michigan limited liability company",
+    "By: Kojaian Ventures-MM, Inc.,",
+    "a Michigan corporation,",
+    "the Manager of Kojaian Ventures, L.L.C."
+   ],
+   "places": [],
+   "items": [
+    "i006"
+   ]
+  }
+ ]
+}
