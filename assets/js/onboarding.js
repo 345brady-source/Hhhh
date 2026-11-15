@@ -1132,7 +1132,9 @@
     if (accredited === false && reg === '506b') {
       const name = String(d.stRepName || '').trim();
       const firm = String(d.stRepFirm || '').trim();
-      q.sophistication = { experience: String(d.stExp || '').trim(), education: String(d.stEdu || '').trim(), rep: d.stRep === 'yes' ? { name, firm } : null };
+      // Rule 501(i): the investor's written acknowledgment of the representative, when uploaded (rep-<investor>-<time>).
+      const file = d.stRepFileId ? { fileId: String(d.stRepFileId), fileName: String(d.stRepFileName || '') } : {};
+      q.sophistication = { experience: String(d.stExp || '').trim(), education: String(d.stEdu || '').trim(), rep: d.stRep === 'yes' ? Object.assign({ name, firm }, file) : null };
     }
     return q;
   }
@@ -1215,6 +1217,8 @@
           stRep: '',
           stRepName: '',
           stRepFirm: '',
+          stRepFileId: '',
+          stRepFileName: '',
           accAttest: false,
           accFile: '',
           usPerson: '',
@@ -1365,6 +1369,13 @@
     const own = String(d.stBasis || '');
     return own && EL().BASES.indexOf(own) < 0 ? [[own, own, 'The ground on your record']].concat(list) : list;
   }
+  /** Rule 501(i): the investor's written acknowledgment of their purchaser representative, optional (D-30). */
+  function repFile(d) {
+    const e = ob().errors.stRepFile;
+    return `<label class="field field-wide" for="ob-stRepFile"><span>Your written acknowledgment that this person is your purchaser representative <em>Optional</em></span>
+      <input id="ob-stRepFile" type="file" accept="application/pdf,image/png,image/jpeg" data-change="ivf-repfile"${e ? ' aria-invalid="true" aria-describedby="err-stRepFile"' : ''}>
+      <span class="hint" id="hint-stRepFile">${d.stRepFileName ? `Attached: ${h(d.stRepFileName)}` : `PDF, PNG or JPEG, up to ${mb(MAX_FILES)} MB.`}</span>${err('stRepFile')}</label>`;
+  }
   function fStatus(c) {
     const d = ob().d;
     const reg = regimeOf(c);
@@ -1390,7 +1401,7 @@
             ? `${input('stExp', 'Your investment experience', { wide: true, max: 400, hint: 'For example, the kinds of investments you have made and for how many years.' })}
         ${input('stEdu', 'Your education or profession', { wide: true, max: 200 })}
         ${radios('stRep', 'Is a purchaser representative advising you on this investment?', [['yes', 'Yes'], ['no', 'No']])}
-        ${d.stRep === 'yes' ? `${input('stRepName', 'Representative’s name', { max: 120 })}${input('stRepFirm', 'Representative’s firm', { max: 160 })}` : ''}`
+        ${d.stRep === 'yes' ? `${input('stRepName', 'Representative’s name', { max: 120 })}${input('stRepFirm', 'Representative’s firm', { max: 160 })}${repFile(d)}` : ''}`
             : ''
         }
       </div>
@@ -2204,6 +2215,36 @@
     if (shownChanged(c, key)) return;
     const n = steps.indexOf(key);
     if (n > 0) moveTo(c, steps[n - 1]);
+  };
+  /**
+   * The purchaser representative's acknowledgment chosen on the status step (Rule 501(i), T-06-05): a PDF, PNG or JPEG by its
+   * first bytes (the same tests the integration server applies) and at most MAX_FILES, kept in this browser's file store
+   * under the investor's own rep- id. Anything else is refused with a plain message, nothing is kept, and the step can still
+   * be continued (D-30): the message is not a field error.
+   */
+  NS.changes['ivf-repfile'] = async (el) => {
+    const c = fctx();
+    const o = ob();
+    const f = el.files && el.files[0];
+    if (!c || !o || !f) return;
+    delete o.errors.stRepFile;
+    const refuse = (msg) => {
+      o.errors.stRepFile = msg;
+      NS.app.render();
+    };
+    if (f.size > MAX_FILES) return refuse(`This file is ${mb(f.size)} MB, more than the ${mb(MAX_FILES)} MB this page accepts, so it was not added.`);
+    if (!f.size || !(await sendable(f, false))) return refuse('This file is not a PDF, PNG or JPEG, so it was not added.');
+    const id = `rep-${c.inv.id}-${Date.now().toString(36)}`;
+    try {
+      await NS.ops.files.put(id, f);
+    } catch (e) {
+      return refuse('This file could not be kept in this browser, so it was not added.');
+    }
+    o.d.stRepFileId = id;
+    o.d.stRepFileName = String(f.name || 'acknowledgment').slice(0, 200);
+    NS.app.render();
+    const again = document.getElementById('ob-stRepFile');
+    if (again) again.focus();
   };
   NS.actions['ivf-retry'] = () => {
     const o = ob();

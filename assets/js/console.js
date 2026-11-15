@@ -1894,6 +1894,17 @@
     if (r.type === 'redemption') return `Redemption: ${r.full ? 'full' : usdc(r.cents || 0)}`;
     return `${r.additional ? 'Additional subscription' : OPS().isOpen(o) ? 'Subscription' : 'New commitment'}: ${usdc(r.cents)}`;
   }
+  /** Rule 501(i): the purchaser representative an investor named on the status step, and their written acknowledgment. */
+  function repLine(r) {
+    const q = E.diy && NS.eligibility ? NS.eligibility.qualOf(r) : null;
+    const rep = q && q.sophistication && q.sophistication.rep;
+    if (!rep || typeof rep !== 'object') return '';
+    const who = [rep.name, rep.firm].map((x) => String(x || '').trim()).filter(Boolean).join(', ') || 'name not given';
+    const file = rep.fileId
+      ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(rep.fileId)}" data-name="${h(rep.fileName || 'acknowledgment')}">Download the written acknowledgment</button>`
+      : '; no written acknowledgment uploaded';
+    return `<span class="sub">Purchaser representative: ${h(who)}${file}</span>`;
+  }
   function reqStatus(r) {
     return { pending: badge('warn', 'Pending review'), approved: badge('adj', 'Approved'), rejected: badge('mute', 'Declined'), paid: badge('ok', `Paid ${date(r.paid)}`), funded: badge('ok', 'Funded'), accepted: badge('ok', 'Accepted') }[r.status] || badge('mute', r.status);
   }
@@ -1923,7 +1934,7 @@
           else if (r.status === 'approved') act = `<button class="cs-btn cs-btn-small" type="button" data-action="req-funded" data-id="${h(r.id)}">${OPS().isOpen(o) ? 'Record funding' : 'Countersign'}</button>`;
           // Eligibility warnings (C-01): shown under the request; Approve stays as it is, the sponsor decides.
           const warn = E.diy && NS.eligibility ? NS.eligibility.flags(w, r).map((f) => `<span class="sub"><span class="iv-warn">${h(f)}</span></span>`).join('') : '';
-          return `<tr><td class="nowrap">${date(r.submitted)}</td><td>${h(inv.title)}<span class="sub">${h(inv.id)}</span></td><td>${h(o.shortName || o.name)}</td><td>${h(reqLabel(r, o))}${warn}<span class="sub">E-signed by ${h(r.signedBy || inv.contact)}</span></td><td class="nowrap">${r.dealing ? date(r.dealing) : '—'}<span class="sub">${r.type === 'redemption' ? 'Dealing date' : OPS().isOpen(o) ? 'Effective' : 'Closing'}</span></td><td class="num">${est}</td><td>${reqStatus(r)}</td><td class="num nowrap">${act}</td></tr>`;
+          return `<tr><td class="nowrap">${date(r.submitted)}</td><td>${h(inv.title)}<span class="sub">${h(inv.id)}</span></td><td>${h(o.shortName || o.name)}</td><td>${h(reqLabel(r, o))}${warn}${repLine(r)}<span class="sub">E-signed by ${h(r.signedBy || inv.contact)}</span></td><td class="nowrap">${r.dealing ? date(r.dealing) : '—'}<span class="sub">${r.type === 'redemption' ? 'Dealing date' : OPS().isOpen(o) ? 'Effective' : 'Closing'}</span></td><td class="num">${est}</td><td>${reqStatus(r)}</td><td class="num nowrap">${act}</td></tr>`;
         })
         .join('');
       return shell(
