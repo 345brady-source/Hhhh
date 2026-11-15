@@ -4,7 +4,7 @@
 // one investor with the signature and date at the form's own places, the investor signs it in the portal, and the stored
 // signed PDF is read back: Documents category Tax for that investor alone, zero form fields, each value inside its own
 // field, the signature ink inside the sign place, the "Signed electronically" caption, the date, the certificate page.
-//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned,us-llc,us-ccorp,us-trust,us-disregarded,us-ira,us-joint,foreign-entity,passive-owners,passive-none,ffi-giin,treaty-entity,route,upload]
+//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned,us-llc,us-ccorp,us-trust,us-disregarded,us-ira,us-joint,foreign-entity,passive-owners,passive-none,ffi-giin,treaty-entity,route,upload,upload-ira,upload-refused]
 // The last line is "FORMS FLOW: PASS (cases run: N)" or "FORMS FLOW: FAIL (cases run: N) - <failed cases>". Exits 2
 // (NOT RUN) when the bundled forms do not match assets/forms/SHA256SUMS.
 const path = require('path');
@@ -2408,7 +2408,8 @@ async function chooseFile(page, file) {
   await page.waitForTimeout(400);
   return {
     hint: await page.locator('#hint-taxUpFile').innerText().catch(() => ''),
-    errors: await Lib.fieldErrors(page)
+    // the step form's messages only (a signing dialog used earlier leaves its own empty alert in the page)
+    errors: (await page.locator('.ivf-form .field-error').allInnerTexts().catch(() => [])).filter((x) => x.trim())
   };
 }
 const idPattern = (invId) => new RegExp('^tax-' + invId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '-[a-z0-9]+$');
@@ -2512,6 +2513,169 @@ async function uploadCase({ check, S }) {
   await A.context.close();
 }
 
+/** A real PNG: page 1 of a one-page PDF rendered by pdftoppm. */
+async function samplePng(dir, line) {
+  const src = path.join(dir, 'sample-src.pdf');
+  fs.writeFileSync(src, await samplePdf(line));
+  const pre = path.join(dir, 'sample-scan');
+  const r = spawnSync('pdftoppm', ['-png', '-r', '40', '-singlefile', src, pre]);
+  if (r.status !== 0) throw new Error('pdftoppm failed on ' + src);
+  return fs.readFileSync(pre + '.png');
+}
+
+/**
+ * upload-ira: an IRA (Harbor Trust Company Custodian FBO Bartholomew Achebe-Lindgren IRA) signs the W-9 the portal fills
+ * in, goes Back to the tax step and uploads its custodian's own W-9 as a PNG instead. The upload view offers the custodian's
+ * W-9 (chosen to start) or another form; Continue stores the PNG; the record names W-9 (uploaded); the W-9 signed earlier
+ * stays completed with its Documents entry and file (an upload replaces nothing signed earlier); the sponsor's row reads
+ * "W-9 uploaded <date>" and its Download gives the same bytes.
+ */
+async function uploadIraCase({ check, S }) {
+  const A = await Lib.open(S, { context: { acceptDownloads: true } });
+  const page = A.page;
+  const dir = path.join(OUT, 'upload-ira');
+  fs.mkdirSync(dir, { recursive: true });
+  const spec = { name: 'Bartholomew Achebe-Lindgren', email: 'bartholomew.achebe@example.com', account: 'Harbor Trust Company Custodian FBO Bartholomew Achebe-Lindgren IRA' };
+  const portal = await Lib.setupPortal(S, A);
+  const inv = await Lib.createInvitation(page, { name: spec.name, email: spec.email, type: 'ira', account: spec.account, offeringId: portal.offeringId });
+  await page.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
+  const w = await Lib.walk(page, { name: spec.name, acc: 'yes', basis: 0, until: /Tax certification/ });
+  check('the invited IRA reaches the tax step', w.reached && w.at === 'Tax certification' && w.errors.length === 0, { seen: w.seen, errors: w.errors });
+  if (!w.reached) return A.context.close();
+  const invId = inv.investorId;
+  const screens = [await Lib.screenText(page)];
+  // first the W-9 the portal fills in, signed
+  await Lib.submit(page);
+  await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 }).catch(() => {});
+  const made = await page.evaluate((id) => {
+    const ws = window.CVPortal.state.ws;
+    const i = ws.investors.find((x) => x.id === id);
+    const env = (ws.envelopes || []).find((e) => e.id === (i.onboarding.flow || {}).taxEnvelopeId);
+    return { env: env ? JSON.parse(JSON.stringify(env)) : null };
+  }, invId);
+  check('a W-9 was built to sign', !!made && !!made.env && made.env.taxForm.form === 'W-9', made && made.env && made.env.taxForm);
+  if (!made || !made.env) return A.context.close();
+  await Lib.finishTaxForm(page, signTaxForm(made.env.fields.find((f) => f.type === 'signature').id));
+  const signed = await uploadRecord(page, invId);
+  check('the W-9 is signed and on file', (await Lib.heading(page)) === 'Distribution payments' && signed.taxCert && signed.taxCert.signed === true && signed.taxCert.envelopeId === made.env.id, signed.taxCert);
+  // Back to the tax step: the custodian's own W-9 uploaded instead
+  await page.click('[data-action="ivf-back"]');
+  await page.waitForFunction(() => document.querySelector('.ivf-form h1') && document.querySelector('.ivf-form h1').innerText === 'Tax certification', null, { timeout: 15000 });
+  const link = await page.locator('[data-action="ivf-taxupload"]').allInnerTexts();
+  check('the W-9 answers view has one link to upload a completed form instead', link.length === 1 && /Upload it instead/.test(link[0]), link);
+  await page.click('[data-action="ivf-taxupload"]').catch(() => {});
+  await page.waitForSelector('#ob-taxUpFile', { timeout: 20000 }).catch(() => {});
+  if (!(await page.locator('#ob-taxUpFile').count())) {
+    check('the link opens the upload view', false, (await Lib.screenText(page)).slice(0, 300));
+    return A.context.close();
+  }
+  const forms = await radioState(page, 'ob-taxUpForm');
+  const labels = await page.locator('.ivf-form fieldset:has(input[name="ob-taxUpForm"]) .choice-row strong').allInnerTexts();
+  check('an IRA is offered the custodian’s Form W-9 (chosen to start) or another tax form', JSON.stringify(forms.values) === JSON.stringify(['W-9', 'other']) && forms.chosen === 'W-9' && labels[0] === 'The custodian’s Form W-9' && labels[1] === 'Another tax form', { forms, labels });
+  screens.push(await Lib.screenText(page));
+  await pickRadio(page, 'ob-taxUpForm', 'W-9');
+  const png = await samplePng(dir, 'Form W-9 - Harbor Trust Company, custodian (completed outside the portal)');
+  check('the sample is a PNG by its first bytes', png.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])), png.subarray(0, 8).toString('hex'));
+  const before = await storedIds(page);
+  const chosen = await chooseFile(page, { name: 'custodian-w9.png', mimeType: 'image/png', buffer: png });
+  check('the chosen PNG is shown as attached, with no message', /Attached: custodian-w9\.png/.test(chosen.hint) && chosen.errors.length === 0, chosen);
+  await page.screenshot({ path: path.join(dir, 'upload-ira-view.png'), fullPage: true });
+  await Lib.submit(page);
+  const hd = await Lib.heading(page);
+  check('Continue moves on to the next step', hd === 'Distribution payments', hd);
+  const R = await uploadRecord(page, invId);
+  const added = (await storedIds(page)).filter((x) => before.indexOf(x) < 0);
+  const tc = R.taxCert || {};
+  check('one file is stored, under tax-<investor id>-<time in base 36>', added.length === 1 && idPattern(invId).test(added[0]), added);
+  check('taxForm is W-9 and taxCert is { form W-9, uploaded true, fileId, fileName, at }', R.taxForm === 'W-9' && JSON.stringify(Object.keys(tc).sort()) === JSON.stringify(['at', 'fileId', 'fileName', 'form', 'uploaded']) && tc.form === 'W-9' && tc.uploaded === true && tc.fileId === added[0] && tc.fileName === 'custodian-w9.png', R.taxCert);
+  check('the stored file has the same bytes as the PNG chosen', !!R.stored && sha(Buffer.from(R.stored, 'base64')) === sha(png));
+  check('the upload counts as on file; the log reads "Tax form uploaded" naming W-9', R.onFile === true && R.log.some((l) => /^Tax form uploaded :: .*: Form W-9, /.test(l)), { onFile: R.onFile, log: R.log });
+  const envs = await taxEnvelopes(page, invId);
+  const e1 = envs.list.find((e) => e.id === made.env.id);
+  check('the W-9 signed earlier stays completed, with its Documents entry and its file', !!e1 && e1.status === 'completed' && e1.docs.length === 1 && e1.docs[0].file === true && envs.list.length === 1, envs.list);
+  const C = await consoleTaxRow(page, spec.email, dir, 'upload-ira-console.png');
+  check('the sponsor’s row reads "W-9 uploaded <date>" with one Download (not the signed W-9)', /W-9 uploaded [A-Z][a-z]+ \d{1,2}, \d{4}/.test(C.text) && !/W-9 signed/.test(C.text) && C.downloads === 1, C.text.slice(0, 300));
+  check('the Download gives the same bytes as the PNG chosen', !!C.bytes && sha(C.bytes) === sha(png), { download: C.bytes ? sha(C.bytes) : C.error, chosen: sha(png) });
+  const scr = Lib.leakCheck(screens.join('\n'));
+  check('white label: no vendor name or forbidden word on the tax screens', scr.ok, scr.hits);
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
+}
+
+/**
+ * upload-refused (T-06-45, D-30): a U.S. individual builds the W-9, goes Back without signing and opens the upload. A text
+ * file named .pdf and a 26 MB PDF are each refused with one plain sentence and nothing is held or stored; a refused file
+ * leaves a PDF attached before it in place; Back drops what was attached; Continue without a file moves on with nothing on
+ * file, the unsigned W-9 left as it was, and "Tax form not completed" in the log.
+ */
+async function uploadRefusedCase({ check, S }) {
+  const A = await Lib.open(S);
+  const page = A.page;
+  const dir = path.join(OUT, 'upload-refused');
+  fs.mkdirSync(dir, { recursive: true });
+  const who = { name: 'Ottoline Varga-Mbeki', email: 'ottoline.varga@example.com' };
+  const { inv, w } = await toTaxStep(S, A, who);
+  check('the invited U.S. individual reaches the tax step', w.reached && w.at === 'Tax certification' && w.errors.length === 0, { seen: w.seen, errors: w.errors });
+  if (!w.reached) return A.context.close();
+  const invId = inv.investorId;
+  await Lib.submit(page);
+  await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 }).catch(() => {});
+  const first = await taxEnvelopes(page, invId);
+  check('a W-9 was built to sign', first.list.length === 1 && first.list[0].status === 'sent', first.list);
+  await page.click('[data-action="ivf-taxanswers"]');
+  await page.waitForSelector('[data-action="ivf-taxupload"]', { timeout: 20000 }).catch(() => {});
+  await page.click('[data-action="ivf-taxupload"]').catch(() => {});
+  await page.waitForSelector('#ob-taxUpFile', { timeout: 20000 }).catch(() => {});
+  if (!(await page.locator('#ob-taxUpFile').count())) {
+    check('the link opens the upload view', false, (await Lib.screenText(page)).slice(0, 300));
+    return A.context.close();
+  }
+  const forms = await radioState(page, 'ob-taxUpForm');
+  check('a U.S. individual is offered Form W-9 (chosen to start) or another tax form', JSON.stringify(forms.values) === JSON.stringify(['W-9', 'other']) && forms.chosen === 'W-9', forms);
+  const empty = 'PDF, PNG or JPEG, up to 25 MB.';
+  const NOT_PDF = 'This file is not a PDF, PNG or JPEG, so it was not added.';
+  const TOO_BIG = 'This file is 26 MB, more than the 25 MB this page accepts, so it was not added.';
+  const before = await storedIds(page);
+  const text = Buffer.from('Form W-9\nThis is a plain text file that was renamed to end in .pdf.\n', 'utf8');
+  const t1 = await chooseFile(page, { name: 'my-w9.pdf', mimeType: 'application/pdf', buffer: text });
+  check('a text file named .pdf is refused with one plain sentence, nothing attached', JSON.stringify(t1.errors) === JSON.stringify([NOT_PDF]) && t1.hint === empty, t1);
+  await page.screenshot({ path: path.join(dir, 'upload-refused-text.png'), fullPage: true });
+  const big = Buffer.alloc(26 * 1048576, 0x20);
+  Buffer.from('%PDF-1.4\n', 'latin1').copy(big, 0);
+  const t2 = await chooseFile(page, { name: 'scan-w9.pdf', mimeType: 'application/pdf', buffer: big });
+  check('a 26 MB PDF is refused with one plain sentence, nothing attached', JSON.stringify(t2.errors) === JSON.stringify([TOO_BIG]) && t2.hint === empty, t2);
+  await page.screenshot({ path: path.join(dir, 'upload-refused-big.png'), fullPage: true });
+  const mid = await storedIds(page);
+  check('nothing was stored for either refused file', JSON.stringify(mid) === JSON.stringify(before), { before: before.length, now: mid.length });
+  // a good PDF, then a refused file: the PDF stays attached ("not added" means nothing changed)
+  const pdf = await samplePdf('Form W-9 - Ottoline Varga-Mbeki (completed outside the portal)');
+  const t3 = await chooseFile(page, { name: 'signed-w9.pdf', mimeType: 'application/pdf', buffer: pdf });
+  check('a PDF is attached', /Attached: signed-w9\.pdf/.test(t3.hint) && t3.errors.length === 0, t3);
+  const t4 = await chooseFile(page, { name: 'notes.pdf', mimeType: 'application/pdf', buffer: text });
+  check('a refused file after it leaves the PDF attached, with the one sentence', JSON.stringify(t4.errors) === JSON.stringify([NOT_PDF]) && /Attached: signed-w9\.pdf/.test(t4.hint), t4);
+  // Back drops what was attached; Continue without a file moves on (D-30)
+  await page.click('.ivf-form [data-action="ivf-taxanswers"]');
+  await page.waitForSelector('[data-action="ivf-taxupload"]', { timeout: 20000 });
+  await page.click('[data-action="ivf-taxupload"]');
+  await page.waitForSelector('#ob-taxUpFile', { timeout: 20000 });
+  const again = { hint: await page.locator('#hint-taxUpFile').innerText(), errors: await Lib.fieldErrors(page) };
+  check('after Back and the link again, nothing is attached and no message shows', again.hint === empty && again.errors.length === 0, again);
+  await Lib.submit(page);
+  const hd = await Lib.heading(page);
+  const errs = await Lib.fieldErrors(page);
+  check('Continue without a file moves on with no error', hd === 'Distribution payments' && errs.length === 0, { hd, errs });
+  const R = await uploadRecord(page, invId);
+  const after = await storedIds(page);
+  check('nothing is on file: no taxForm, no taxCert; no tax- file stored', R.taxForm === '' && !R.taxCert && !after.some((x) => /^tax-/.test(x)), { taxForm: R.taxForm, taxCert: R.taxCert, tax: after.filter((x) => /^tax-/.test(x)) });
+  check('the log reads "Tax form not completed", nothing uploaded', R.log.some((l) => /^Tax form not completed :: .*without a file/.test(l)) && !R.log.some((l) => /^Tax form uploaded/.test(l)), R.log);
+  const envs = await taxEnvelopes(page, invId);
+  check('the unsigned W-9 is left as it was (continuing without a file changes nothing)', envs.list.length === 1 && envs.list[0].status === 'sent' && envs.list[0].files.doc === true, envs.list);
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
+}
+
 const mmddyyyy = (iso) => {
   const [y, m, d] = String(iso).split('-');
   return `${m}-${d}-${y}`;
@@ -2592,7 +2756,9 @@ const cases = {
   'ffi-giin': ffiGiin,
   'treaty-entity': treatyEntity,
   route: routeCase,
-  upload: uploadCase
+  upload: uploadCase,
+  'upload-ira': uploadIraCase,
+  'upload-refused': uploadRefusedCase
 };
 
 // The bundled forms must match their pins before anything runs.
