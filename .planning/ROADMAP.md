@@ -258,7 +258,7 @@ Plans:
 **Goal:** An invited investor answers the investor-status questions their offering's exemption calls for and fills and e-signs the official IRS W-9 or W-8 inside onboarding, with nothing mandatory; the sponsor sees the Rule 506(b) non-accredited count against 35, Regulation A Tier 2 over-limit flags and the benefit-plan percentage per class against 25 percent, and receives the signed tax form
 **Requirements**: STAT-01, STAT-02, STAT-03, STAT-04, FORM-01, FORM-02, FORM-03, FORM-04, FORM-05, FORM-06, FORM-07, FORM-08, FORM-09, WL-01
 **Depends on:** Phase 5
-**Plans:** 12 plans
+**Plans:** 24 plans
 
 Plans:
 - [ ] 06-01-PLAN.md — Investor status step, Rule 506(b) slice: accredited or sophisticated non-accredited answers on the request, the forced "accredited" tick removed, sponsor's N of 35, console headings renamed "Offering details" (D-01, C-02, D-30)
@@ -268,8 +268,20 @@ Plans:
 - [ ] 06-05-PLAN.md — The full 25 percent figure: sponsor's controlling-person and affiliate marks, plan-asset entities, several classes, value basis named, unanswered holders
 - [ ] 06-06-PLAN.md — Server mode harness: status answers travel through /v1/invite/complete into the console and are counted as in local mode
 - [ ] 06-07-PLAN.md — Server mode: the 506(b) warning by one snapshot boolean, the investor on file carries plan answers and basis both ways, the acknowledgment file through the allowlist; owner's screenshot set of the status step
-- [ ] 06-08-PLAN.md — Official IRS PDFs pinned by SHA-256, every form field enumerated with pdf-lib, field maps written only from that list, fill and flatten proved (precondition: the PDFs and the owner's in-house choice)
-- [ ] 06-09-PLAN.md — Official W-9 end to end for a U.S. individual: filled through its own fields, flattened, e-signed with the signed-electronically caption and certificate; not-signed state everywhere; taxpayer ID only in memory and in the PDF
-- [ ] 06-10-PLAN.md — W-8BEN (MM-DD-YYYY date, non-Latin names, treaty lines), W-9 for every U.S. account type, edited answers rebuild the form
-- [ ] 06-11-PLAN.md — W-8BEN-E for the supported statuses, upload of a completed form for every other case, sponsor's review mark
-- [ ] 06-12-PLAN.md — Tax forms in server mode (allowlist, vault, console import), device copy with the full taxpayer ID deleted after sending, self-serve toggle labels, owner's check of four real signed forms
+- [ ] 06-08-PLAN.md — Gap (verifier 1, blocker; 4): the self-serve portal's own subscribe entry points go through the investor status step (no forced accredited tick, qual recorded, counted in N of 35); the owner gate renders fresh pictures each run
+- [ ] 06-09-PLAN.md — Gap (verifier 2, deferred 1 and 2): server-mode import withdraws a self-certified ground on "not accredited" as local mode does; the console sets imported signedAt and signedBy
+- [ ] 06-10-PLAN.md — Official IRS PDFs pinned (D-05 SHA-256), W-9 (23 fields) and W-8BEN (23 fields) maps from the real pdf-lib listing, fill engine with signature-field removal, form-maps check
+- [ ] 06-11-PLAN.md — Gap (verifier 3, warnings): Regulation A Tier 2 total counts holdings; benefit plan figure per position class; unanswered Tier 2 subscribers named on the panel
+- [ ] 06-12-PLAN.md — W-8BEN-E map (179 fields) from the real listing: Part I, treaty part, Active and Passive NFFE with owners, FFI GIIN, certification; every other part listed with its reason
+- [ ] 06-13-PLAN.md — An official form signed through the portal's e-signature: browser fill, createFromPdf, signed-electronically caption, Tax listing, MM-DD-YYYY date
+- [ ] 06-14-PLAN.md — Gap (server mode): the investor's committed amount carried in the snapshot so the device warns on a Tier 2 holding; the firm's drawn logo mark shown on the investor's device
+- [ ] 06-15-PLAN.md — Investor onboarding screens cleaned per D-06: each item kept only if legally required or needed for the step (reasons recorded), steps folded only where it helps; walkers and checks updated
+- [ ] 06-16-PLAN.md — W-9 in the tax step for a U.S. individual, pre-filled from onboarding (asks only what is left), signed on the page, sponsor row and download; every walker learns the step
+- [ ] 06-17-PLAN.md — Not-signed state everywhere, taxpayer ID only in memory and the signed PDF, backup withholding on the form, foreign path unblocked
+- [ ] 06-18-PLAN.md — W-8BEN for foreign individuals (pre-filled, MM-DD-YYYY, non-Latin names, validUntil); edited answers always rebuild the form
+- [ ] 06-19-PLAN.md — W-9 for every U.S. account type (LLC with line 3b, corporation, trust, disregarded LLC, IRA, joint)
+- [ ] 06-20-PLAN.md — W-8BEN-E for the supported statuses (Active and Passive NFFE with owners, FFIs with a GIIN, treaty part); routing for the rest
+- [ ] 06-21-PLAN.md — Upload a completed form instead (W-8IMY, W-8ECI, W-8EXP, the IRA custodian's W-9), sponsor's download and review mark
+- [ ] 06-22-PLAN.md — Tax forms in server mode: the signed form through the allowlist and vault into the console; forged envelopes dropped
+- [ ] 06-23-PLAN.md — The device deletes every copy holding the full taxpayer ID after a confirmed send; uploads and W-8BEN in server mode
+- [ ] 06-24-PLAN.md — Self-serve tax-form toggle; the owner's set of four real signed forms on unseen answers; the phase's final gate
