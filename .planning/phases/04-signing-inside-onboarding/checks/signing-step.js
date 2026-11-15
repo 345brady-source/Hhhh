@@ -115,7 +115,7 @@ async function investorAt(browser, opts) {
       const sign = pages[pages.length - 1];
       const scr = await fieldsOnScreen(p);
       envId = scr.envId;
-      const made = await p.evaluate((id) => { const ws = window.CVPortal.state.ws; const e = ws.envelopes.find((x) => x.id === id); return { n: ws.envelopes.length, status: e.status, by: e.createdBy }; }, envId);
+      const made = await p.evaluate((id) => { const ws = window.CVPortal.state.ws; const e = ws.envelopes.find((x) => x.id === id); return { n: ws.envelopes.filter((x) => x.kind !== 'tax').length, status: e.status, by: e.createdBy }; }, envId); // plan 06-16: the official W-9 of the tax step is an envelope of its own (kind tax)
       check('SIGN-02 the agreement was prepared and sent by the flow itself when the investor subscribed', made.n === 1 && made.status === 'sent', made);
       check('SIGN-01 the signing step shows no second consent, sign-up or hand-off: the document and its guide are on the wizard page', (await p.locator('.es-consent').count()) === 0 && (await p.locator('.ivf-agreement .sf-bar').count()) === 1 && (await p.locator('.ivf-agreement .es-doc-sign .es-page').count()) === 3 && !!scr.consentAt);
       check('SIGN-01 / LOOK-02 the signing step names no signing tool and no brand but the firm’s', !OTHER_BRAND.test(sign.text) && !OTHER_BRAND.test(await p.locator('body').innerText()), (sign.text.match(OTHER_BRAND) || [])[0]);

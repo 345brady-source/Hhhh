@@ -282,9 +282,22 @@ async function walkToAgreement(page, o) {
       else await page.check('input[name="ob-accBasis"] >> nth=0');
       await page.check('#ob-accAttest');
     } else if (/Tax certification/.test(hd)) {
-      if (await page.locator('input[name="ob-usPerson"]').count()) await page.check('input[name="ob-usPerson"][value="yes"]');
-      await page.check('#ob-w9');
-      await page.fill('#ob-taxSig', o.name);
+      if (await page.locator('#ob-w9').count()) {
+        if (await page.locator('input[name="ob-usPerson"]').count()) await page.check('input[name="ob-usPerson"][value="yes"]');
+        await page.check('#ob-w9');
+        await page.fill('#ob-taxSig', o.name);
+      } else {
+        // Phase 6 plan 06-16: the official W-9 in two views. The answers are continued as they stand, then the form is
+        // finished without a signature (D-30, nothing on it is required), and the heading changes (both views share it).
+        await submit(page);
+        await page.waitForSelector('.ivf-tax-sign .es-finish', { timeout: 60000 });
+        await page.click('.ivf-tax-sign .es-finish');
+        await page.waitForFunction((t) => {
+          const e = document.querySelector('.ivf-form h1');
+          return !!e && e.innerText !== t;
+        }, hd, { timeout: 60000 });
+        continue;
+      }
     } else if (/Distribution payments/.test(hd)) {
       if (await page.locator('#ob-routing').count()) {
         await page.fill('#ob-routing', '021000021');

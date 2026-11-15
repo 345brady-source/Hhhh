@@ -32,6 +32,13 @@ const LOCAL = {
   'pdf.js/3.11.174/pdf.worker.min.js': path.join(VENDOR, 'pdfjs/package/build/pdf.worker.min.js'),
   [WRITER]: path.join(VENDOR, 'pdflib/package/dist/pdf-lib.min.js')
 };
+const JSD = 'https://cdn.jsdelivr.net/npm/';
+const JSD_DIR = process.env.VENDOR_DIR || path.join(SCRATCH, 'vendor');
+const JSD_LOCAL = {
+  '@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js': [path.join(JSD_DIR, 'fontkit/package/dist/fontkit.umd.min.js'), 'application/javascript'],
+  'dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf': [path.join(JSD_DIR, 'dejavu/package/ttf/DejaVuSans.ttf'), 'font/ttf'],
+  'dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf': [path.join(JSD_DIR, 'dejavu/package/ttf/DejaVuSans-Bold.ttf'), 'font/ttf']
+};
 // The two archives, pinned by content: the hashes the package registry published for these versions (read when the phase was planned).
 const PINS = [
   ['pdfjs-dist-3.11.174.tgz', 'pdfjs', 'sha512-TdTZPf1trZ8/UFu5Cx/GXB7GZM30LT+wWUNfsi6Bq8ePLnb+woNKtDymI2mxZYBpMbonNFqKmiz684DIfnd8dA=='],
@@ -82,6 +89,10 @@ async function start() {
     if (u.startsWith(base) || u.startsWith('blob:') || u.startsWith('data:') || u.startsWith('about:')) return route.continue();
     if (u.startsWith(CDN) && LOCAL[u.slice(CDN.length)]) return route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(LOCAL[u.slice(CDN.length)]) });
     if (/fonts\.(googleapis|gstatic)\.com/.test(u)) return route.fulfill({ status: 200, contentType: 'text/css', body: '' });
+    // Plan 06-16: the official tax form in onboarding embeds the Unicode font through fontkit (esign.js), answered from the
+    // same vendored copies the phase 6 checks use, when they are there.
+    const jd = u.startsWith(JSD) && JSD_LOCAL[u.slice(JSD.length)];
+    if (jd && fs.existsSync(jd[0])) return route.fulfill({ status: 200, contentType: jd[1], headers: { 'access-control-allow-origin': '*' }, body: fs.readFileSync(jd[0]) });
     return route.abort();
   });
   const errors = [];
