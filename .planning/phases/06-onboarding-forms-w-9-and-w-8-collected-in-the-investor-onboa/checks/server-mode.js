@@ -629,6 +629,80 @@ const parts = {
   },
 
   /**
+   * Deferred item 2 / T-06-20 (plan 06-09): an imported request's signedBy and signedAt are the console's, never the device's.
+   * Each run alters the stored request before import (signedAt 2001-01-02T00:00:00Z, signedBy "Someone Else"):
+   *   envelope   signedBy is the console's investor name; signedAt is the kept envelope's investor signature time
+   *   unsigned   the envelope arrives with the investor's signature not made (they stopped before signing): signedAt ''
+   *   noenvelope a request signed without an envelope: the integration server's completion time
+   * every time inside the invitation window (from its sending to now).
+   */
+  async signed({ check, S }) {
+    const answers = { acc: 'no', exp: 'Six years of private fund commitments', edu: 'Architect', rep: 'no', amount: 60000 };
+    const FAKE = { signedAt: '2001-01-02T00:00:00Z', signedBy: 'Someone Else' };
+    const runs = [
+      ['envelope', (s) => Object.assign(s.request, FAKE)],
+      [
+        'unsigned',
+        (s) => {
+          Object.assign(s.request, FAKE);
+          s.envelope.status = 'sent';
+          s.envelope.completedAt = null;
+          s.envelope.signers.forEach((x) => x.role === 'investor' && Object.assign(x, { status: 'waiting', signedAt: null, signature: null, initials: null }));
+        }
+      ],
+      [
+        'noenvelope',
+        (s) => {
+          Object.assign(s.request, FAKE);
+          delete s.request.envelopeId;
+          s.envelope = null;
+        }
+      ]
+    ];
+    for (const [name, change] of runs) {
+      const F = await serverFlow(S, check, {
+        tag: `signed-${name}`,
+        exemption: 'Rule 506(b)',
+        answers,
+        beforeImport: async (srv, inv) => {
+          srv.alter(inv.serverId, change);
+          return srv.submission(inv.serverId);
+        }
+      });
+      try {
+        const st = (F.stored && F.stored.request) || {};
+        check(`signed ${name}: the stored request was altered before import (signedAt 2001-01-02, signedBy "Someone Else")`, st.signedAt === FAKE.signedAt && st.signedBy === FAKE.signedBy, { signedAt: st.signedAt, signedBy: st.signedBy });
+        commonChecks(check, F);
+        const got = await F.A.page.evaluate(({ rid, iid, ivid }) => {
+          const ws = window.CVPortal.state.ws;
+          const r = ws.requests.find((x) => x.id === rid) || {};
+          const i = ws.investors.find((x) => x.id === ivid) || {};
+          const it = ws.invitations.find((x) => x.id === iid) || {};
+          const e = r.envelopeId ? ws.envelopes.find((x) => x.id === r.envelopeId) : null;
+          const sg = e ? e.signers.find((x) => x.role === 'investor') : null;
+          return { signedAt: r.signedAt, signedBy: r.signedBy, envelopeId: r.envelopeId || '', envStatus: e ? e.status : '', signer: sg ? { status: sg.status, signedAt: sg.signedAt } : null, contact: i.contact, title: i.title, sentAt: it.sentAt, now: new Date().toISOString() };
+        }, { rid: F.req && F.req.id, iid: F.inv.id, ivid: F.inv.investorId });
+        const inWindow = (t) => !!t && Date.parse(t) >= Date.parse(got.sentAt) - 1000 && Date.parse(t) <= Date.parse(got.now);
+        check(`signed ${name}: signedBy is the console’s own investor name, not the device’s`, got.signedBy === (got.contact || got.title) && got.signedBy !== FAKE.signedBy, got);
+        if (name === 'envelope') {
+          const want = got.signer && got.signer.status === 'signed' ? String(got.signer.signedAt || '').replace(/\.\d{3}Z$/, 'Z') : '(unsigned)';
+          check('signed envelope: the request is tied to the kept envelope, whose investor signature is made', !!got.envelopeId && !!got.signer && got.signer.status === 'signed', got);
+          check('signed envelope: signedAt is the kept envelope’s investor signature time, inside the invitation window', got.signedAt === want && inWindow(got.signedAt), got);
+        } else if (name === 'unsigned') {
+          check('signed unsigned: the kept envelope’s investor signature is not made', !!got.envelopeId && !!got.signer && got.signer.status !== 'signed', got);
+          check('signed unsigned: signedAt is empty, whatever the device sent', got.signedAt === '', got);
+        } else {
+          const done = String((F.stored && F.stored.completedAt) || '').replace(/\.\d{3}Z$/, 'Z');
+          check('signed noenvelope: the request has no envelope', !got.envelopeId, got);
+          check('signed noenvelope: signedAt is the integration server’s completion time, inside the invitation window', !!done && got.signedAt === done && inWindow(got.signedAt), { got, serverCompletedAt: F.stored && F.stored.completedAt });
+        }
+      } finally {
+        await F.close();
+      }
+    }
+  },
+
+  /**
    * D-30 / T-06-16 in server mode (plan 06-07): a non-accredited 506(b) investor attaches the written acknowledgment of their
    * purchaser representative on their own device. It travels with the completion (rep-<investor id>-<time>, named by the
    * request's qual), passes the server's allowlist as evidence, is stored by the console's import, and the request row's
