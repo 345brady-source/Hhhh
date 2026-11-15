@@ -1,0 +1,143 @@
+// The reading service: the one place its client is built, with the settings every reading route shares (the model,
+// effort, the output limit), how a reply or an error is turned into an outcome, the published prices, the spend cap
+// and the read log. Nothing here is ever sent to the browser: the routes answer with neutral reasons only.
+import fs from 'node:fs';
+
+/** The model every reading route asks (the current Opus, D-31). */
+export const MODEL = 'claude-opus-5-5';
+/** Fixed, so an ambient base URL setting can never redirect the key. */
+const BASE_URL = 'https://api.anthropic.com';
+const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
+/** Published prices in US dollars per million tokens (input, output). */
+export const PRICES = Object.freeze({
+  'claude-opus-5-5': Object.freeze({ input: 4, output: 20 }),
+  'claude-opus-5': Object.freeze({ input: 5, output: 25 }),
+  'claude-opus-4-8': Object.freeze({ input: 5, output: 25 })
+});
+/** The dearest price in the table: what a model not in it is charged at, and what the spend cap's worst case uses. */
+export const DEAREST = Object.freeze({ input: 5, output: 25 });
+
+let loaded = null;
+let SDK = null;
+/** The client library, imported on first use so the server and every other route run without it; null when it is missing. */
+function loadSdk() {
+  if (!loaded)
+    loaded = import('@anthropic-ai/sdk').then(
+      (m) => (SDK = m),
+      () => null
+    );
+  return loaded;
+}
+
+const keyOf = (env) => String((env && env.CARROWVALE_API_KEY) || '').trim();
+/** Whether this server has a reading key (its value is never read out). */
+export const available = (env) => !!keyOf(env);
+
+/**
+ * The client, or null when CARROWVALE_API_KEY is empty or the library cannot be imported. The key comes from
+ * CARROWVALE_API_KEY only: authToken null and the base URL fixed, so no ambient key, token, profile or base URL is used.
+ */
+export async function createClient({ env = process.env, fetch, timeoutMs } = {}) {
+  const key = keyOf(env);
+  if (!key) return null;
+  const mod = await loadSdk();
+  if (!mod) return null;
+  const Client = mod.default || mod.Anthropic;
+  return new Client({ apiKey: key, authToken: null, baseURL: BASE_URL, timeout: timeoutMs || 600000, maxRetries: 1, fetch: fetch || undefined, logLevel: 'off' });
+}
+
+/** CARROWVALE_READ_EFFORT: low | medium | high | xhigh | max (default high). */
+export const effortOf = (env) => (EFFORTS.includes(String((env && env.CARROWVALE_READ_EFFORT) || '').trim()) ? String(env.CARROWVALE_READ_EFFORT).trim() : 'high');
+/** CARROWVALE_READ_MAX_TOKENS (default 64000), kept between 1024 and 128000. */
+export function maxTokensOf(env) {
+  const n = parseInt(String((env && env.CARROWVALE_READ_MAX_TOKENS) || ''), 10);
+  if (!Number.isFinite(n)) return 64000;
+  return Math.min(128000, Math.max(1024, n));
+}
+
+/** A finished reply: only end_turn is an answer; refusal is declined, max_tokens incomplete, anything else failed. */
+export function outcomeOf(message) {
+  const stopReason = String((message && message.stop_reason) || '');
+  if (stopReason === 'end_turn') return { ok: true, reason: '', stopReason };
+  if (stopReason === 'refusal') return { ok: false, reason: 'declined', stopReason };
+  if (stopReason === 'max_tokens') return { ok: false, reason: 'incomplete', stopReason };
+  return { ok: false, reason: 'failed', stopReason };
+}
+
+/**
+ * An error as a reason, from its class only (never its message): timeout for the client's own timeout, cancelled when
+ * the caller stopped the call (userAbort), timeout when the call was aborted otherwise (the overall limit), else failed.
+ */
+export function errorReason(err, { userAbort } = {}) {
+  const S = SDK || {};
+  if (S.APIConnectionTimeoutError && err instanceof S.APIConnectionTimeoutError) return 'timeout';
+  const aborted = (S.APIUserAbortError && err instanceof S.APIUserAbortError) || (err && (err.name === 'AbortError' || err.name === 'TimeoutError'));
+  if (aborted) return userAbort ? 'cancelled' : 'timeout';
+  if (userAbort) return 'cancelled';
+  return 'failed';
+}
+
+const num = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : 0);
+/** The four usage counts, as numbers. */
+export const usageOf = (u) => ({ input_tokens: num(u && u.input_tokens), output_tokens: num(u && u.output_tokens), cache_creation_input_tokens: num(u && u.cache_creation_input_tokens), cache_read_input_tokens: num(u && u.cache_read_input_tokens) });
+/** What a call cost in US dollars: cache tokens priced as input; a model not in PRICES at the dearest price, flagged. */
+export function costOf(usage, model) {
+  const u = usageOf(usage);
+  const p = PRICES[model];
+  const rate = p || DEAREST;
+  const input = u.input_tokens + u.cache_creation_input_tokens + u.cache_read_input_tokens;
+  return { usd: (input * rate.input + u.output_tokens * rate.output) / 1e6, flagged: !p };
+}
+
+/**
+ * The spend cap (CARROWVALE_SPEND_CAP_USD; off when unset). Spent starts as the cost of every call already in the read
+ * log and grows with each call. allow(inputTokens, maxTokens) is true only when spent plus the worst case of the next
+ * call (its input at $5 and its whole output limit at $25 per million) stays within the cap. A cap that is set but not
+ * a number allows nothing.
+ */
+export function createBudget(env = process.env) {
+  const raw = env.CARROWVALE_SPEND_CAP_USD;
+  const on = raw !== undefined && raw !== null && String(raw).trim() !== '';
+  const cap = on ? Number(String(raw).trim()) : Infinity;
+  let spent = 0;
+  if (on && env.CARROWVALE_READ_LOG) {
+    let text = '';
+    try {
+      text = fs.readFileSync(env.CARROWVALE_READ_LOG, 'utf8');
+    } catch {
+      text = '';
+    }
+    for (const line of text.split('\n')) {
+      if (!line.trim()) continue;
+      try {
+        const o = JSON.parse(line);
+        spent += costOf(o.usage, o.model).usd;
+      } catch {
+        /* a broken line costs nothing it can prove */
+      }
+    }
+  }
+  return {
+    on,
+    allow(inputTokens, maxTokens) {
+      if (!on) return true;
+      if (!Number.isFinite(cap) || !Number.isFinite(Number(inputTokens)) || !Number.isFinite(Number(maxTokens))) return false;
+      const bound = (Number(inputTokens) * DEAREST.input + Number(maxTokens) * DEAREST.output) / 1e6;
+      return spent + bound <= cap + 1e-9;
+    },
+    add(usage, model) {
+      spent += costOf(usage, model).usd;
+    },
+    spent: () => spent
+  };
+}
+
+/** One JSON line appended to CARROWVALE_READ_LOG when it is set (numbers, enums and the served model id only). */
+export function logLine(env, obj) {
+  if (!env || !env.CARROWVALE_READ_LOG) return;
+  try {
+    fs.appendFileSync(env.CARROWVALE_READ_LOG, JSON.stringify(obj) + '\n');
+  } catch {
+    /* the log is a record, never a reason to fail a reading */
+  }
+}

@@ -17,7 +17,8 @@
  *   GET  /hosted/:id              a page this server hosts for a provider flow (for example a provider's JS SDK)
  *   POST /hosted/:id              that page's form or SDK result
  *   GET  /sandbox/:ref            a stand-in hosted page for the "sandbox" provider (testing without accounts)
- *   GET  /health                  which providers are configured
+ *   POST /v1/intake               read an offering's documents for the intake screen (lib/intake.mjs; ndjson stream)
+ *   GET  /health                  which providers are configured, and whether reading is available
  *
  * Investor invitations (lib/invitations.mjs; see README.md):
  *   POST /v1/invitations          the console invites an investor; this server emails the link
@@ -31,7 +32,8 @@
  * (declarative connectors, code plug-ins, or hosted links plus the results
  * API; see README.md), as many per check as they like.
  *
- * Node 18 or later, no dependencies. Configure with environment variables
+ * Node 18 or later. One dependency, the reading service's official client (pinned in package.json), needed only for
+ * reading; every other route works without it. Configure with environment variables
  * (see README.md). Statuses are normalized for the portal: identity
  * pending | passed | review | failed; accreditation pending | verified |
  * review | rejected; screening pending | clear | potential_match. A provider
@@ -44,6 +46,8 @@ import { openStore } from './lib/store.mjs';
 import { id, safeEqual } from './lib/crypto.mjs';
 import { STATUSES } from './lib/statuses.mjs';
 import { createInvitations } from './lib/invitations.mjs';
+import { createIntake } from './lib/intake.mjs';
+import { costOf, logLine } from './lib/model.mjs';
 import { PROVIDERS as PROVIDERS_DEFAULT, configured, missingEnv, describe } from './providers/index.mjs';
 
 export { STATUSES };
@@ -146,6 +150,7 @@ export function createServer(opts = {}) {
   const origins = String(env.PORTAL_ORIGIN || '').split(',').map((s) => s.trim()).filter(Boolean);
   const limited = rateLimiter(env);
   const now = opts.now || (() => Date.now());
+  const intake = opts.intake || createIntake({ env, fetch: opts.fetch });
 
   const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls });
   /**
@@ -261,6 +266,104 @@ export function createServer(opts = {}) {
     return send(res, 200, donePage(rec, (r && r.message) || fallback), HTML);
   }
 
+  /** Whether reading is available (the key's value is never read out). */
+  async function readerOn() {
+    try {
+      return !!(await intake.available());
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * POST /v1/intake: the intake screen's prompt, sent to the reading service as it is. 503 before the body is read when
+   * reading is not available; 400 or 413 for a bad or oversized prompt; 402 when the spend cap could be passed (before any
+   * call); otherwise a 200 ndjson stream: { t } for each piece of the reply's text, { h: 1 } every 15 s while nothing else
+   * is sent, then one last line { ok: true, json } or { ok: false, reason }. Its own errors never reach the global handler,
+   * so no exception text, model or provider name is ever sent; the browser closing the connection stops the call.
+   */
+  const INTAKE_LIMIT = 500000;
+  const REASONS = ['declined', 'incomplete', 'invalid', 'timeout', 'failed'];
+  async function readIntake(req, res) {
+    const t0 = Date.now();
+    const record = (o) => logLine(env, Object.assign({ at: new Date().toISOString(), route: 'intake', ms: Date.now() - t0, chars: 0, counted: null, outcome: '', stopReason: '', model: '', usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 }, cost: 0 }, o));
+    try {
+      if (!(await readerOn())) return send(res, 503, { ok: false, reason: 'unavailable' });
+      let raw;
+      try {
+        raw = await readRaw(req, 2 * 1024 * 1024);
+      } catch (e) {
+        return send(res, e && e.status === 413 ? 413 : 400, { ok: false, reason: e && e.status === 413 ? 'too_large' : 'invalid' });
+      }
+      let body = null;
+      try {
+        body = JSON.parse(raw.toString('utf8'));
+      } catch {
+        body = null;
+      }
+      const prompt = body && typeof body === 'object' && !Array.isArray(body) ? body.prompt : undefined;
+      if (typeof prompt !== 'string' || !prompt.length) return send(res, 400, { ok: false, reason: 'invalid' });
+      if (prompt.length > INTAKE_LIMIT) return send(res, 413, { ok: false, reason: 'too_large' });
+
+      // The spend cap: the prompt counted (free) and the worst case of this call checked before anything is spent.
+      let counted = null;
+      const budget = intake.budget;
+      if (budget && budget.on) {
+        try {
+          counted = await intake.count(prompt);
+        } catch {
+          counted = null;
+        }
+        if (counted === null || !budget.allow(counted, intake.maxTokens())) {
+          record({ chars: prompt.length, counted, outcome: 'spend_cap' });
+          console.error('intake: spend_cap 402');
+          return send(res, 402, { ok: false, reason: 'spend_cap' });
+        }
+      }
+
+      const ctl = new AbortController();
+      const onClose = () => {
+        if (!res.writableFinished) ctl.abort();
+      };
+      res.on('close', onClose);
+      res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+      let last = Date.now();
+      const write = (o) => {
+        if (res.writableEnded || res.destroyed) return;
+        res.write(JSON.stringify(o) + '\n');
+        last = Date.now();
+      };
+      const beat = setInterval(() => {
+        if (Date.now() - last >= 15000) write({ h: 1 });
+      }, 1000);
+      if (beat.unref) beat.unref();
+      let r;
+      try {
+        r = await intake.run(prompt, { signal: ctl.signal, onText: (t) => write({ t: String(t) }) });
+      } catch {
+        r = null;
+      } finally {
+        clearInterval(beat);
+      }
+      r = r || { ok: false, reason: 'failed' };
+      const ok = !!(r.ok && r.json && typeof r.json === 'object' && !Array.isArray(r.json));
+      const reason = ok ? '' : ctl.signal.aborted ? 'cancelled' : REASONS.includes(r.reason) ? r.reason : 'failed';
+      write(ok ? { ok: true, json: r.json } : { ok: false, reason: reason === 'cancelled' ? 'failed' : reason });
+      res.off('close', onClose);
+      if (!res.writableEnded) res.end();
+      const usage = r.usage || {};
+      const cost = costOf(usage, r.model);
+      if (budget && budget.add) budget.add(usage, r.model);
+      record({ ms: Number(r.ms) || Date.now() - t0, chars: prompt.length, counted, outcome: ok ? 'read' : reason, stopReason: String(r.stopReason || ''), model: String(r.model || ''), usage: { input_tokens: Number(usage.input_tokens) || 0, output_tokens: Number(usage.output_tokens) || 0, cache_creation_input_tokens: Number(usage.cache_creation_input_tokens) || 0, cache_read_input_tokens: Number(usage.cache_read_input_tokens) || 0 }, cost: cost.usd });
+      if (!ok) console.error(`intake: ${reason}${r.status ? ' ' + Number(r.status) : ''}`);
+    } catch {
+      if (!res.headersSent) return send(res, 500, { ok: false, reason: 'failed' });
+      if (!res.writableEnded) {
+        res.write(JSON.stringify({ ok: false, reason: 'failed' }) + '\n');
+        res.end();
+      }
+    }
+  }
 
   async function route(req, res) {
     const url = new URL(req.url, 'http://localhost');
@@ -274,7 +377,7 @@ export function createServer(opts = {}) {
     if (!ownPage && !cors(req, res, env.PORTAL_ORIGIN)) return send(res, 403, { error: 'Origin not allowed' });
     if (req.method === 'OPTIONS') return send(res, 204, '');
 
-    if (req.method === 'GET' && path === '/health') return send(res, 200, { ok: true, providers: configured(env, PROVIDERS) });
+    if (req.method === 'GET' && path === '/health') return send(res, 200, { ok: true, providers: configured(env, PROVIDERS), reader: await readerOn() });
 
     // Provider callbacks: verify the signature over the exact bytes received, then update the record.
     const hook = path.match(/^\/webhooks\/([a-z0-9]+)$/);
@@ -437,6 +540,11 @@ export function createServer(opts = {}) {
     if (path.startsWith('/v1/') && ['POST', 'PUT', 'DELETE'].includes(req.method) && limited(req)) return send(res, 429, { error: 'Too many requests' });
 
     if (req.method === 'GET' && path === '/v1/connectors') return send(res, 200, { connectors: describe(env, PROVIDERS) });
+
+    if (path === '/v1/intake') {
+      if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
+      return readIntake(req, res);
+    }
 
     if (req.method === 'POST' && path === '/v1/verifications') {
       const body = parseObject(await readRaw(req));
