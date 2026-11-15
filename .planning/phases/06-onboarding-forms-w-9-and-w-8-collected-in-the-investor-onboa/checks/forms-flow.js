@@ -4,7 +4,7 @@
 // one investor with the signature and date at the form's own places, the investor signs it in the portal, and the stored
 // signed PDF is read back: Documents category Tax for that investor alone, zero form fields, each value inside its own
 // field, the signature ink inside the sign place, the "Signed electronically" caption, the date, the certificate page.
-//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy]
+//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign]
 // The last line is "FORMS FLOW: PASS (cases run: N)" or "FORMS FLOW: FAIL (cases run: N) - <failed cases>". Exits 2
 // (NOT RUN) when the bundled forms do not match assets/forms/SHA256SUMS.
 const path = require('path');
@@ -805,6 +805,296 @@ async function legacyCase({ check, S }) {
   await A.context.close();
 }
 
+/* ---------- Plan 06-17 Task 2: empty answers, the taxpayer ID, backup withholding, the foreign path ---------- */
+
+/** The W-9 page 1 fields an investor's answers go into (the requester is the firm, never an answer). */
+const W9_ANSWER_FIELDS = ['f1_01[0]', 'f1_02[0]', 'f1_05[0]', 'f1_06[0]', 'Address_ReadOrder[0].f1_07[0]', 'Address_ReadOrder[0].f1_08[0]', 'f1_10[0]', 'f1_11[0]', 'f1_12[0]', 'f1_13[0]', 'f1_14[0]', 'f1_15[0]'];
+
+/** The flow's current W-9 envelope and its filled form, read in the page: { envId, docId, filled (base64), taxCert, taxForm }. */
+async function flowTaxEnv(page, invId) {
+  return page.evaluate(
+    async ({ invId, b64src }) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const b64 = eval(b64src);
+      const i = ws.investors.find((x) => x.id === invId);
+      const fl = i.onboarding.flow || {};
+      const id = fl.taxEnvelopeId || (i.taxCert && i.taxCert.envelopeId);
+      const env = (ws.envelopes || []).find((e) => e.id === id);
+      const doc = env ? (ws.docs || []).find((d) => d.envelopeId === env.id) : null;
+      return {
+        envId: env ? env.id : '',
+        docId: env ? env.docId : '',
+        filled: await b64(env ? await NS.ops.files.get(env.docId) : null),
+        finished: await b64(doc ? await NS.ops.files.get(doc.id) : null),
+        taxForm: i.taxForm || '',
+        taxCert: JSON.parse(JSON.stringify(i.taxCert || null)),
+        blank: NS.taxmaps['W-9 2024-03'].file,
+        overlays: NS.taxmaps['W-9 2024-03'].overlays
+      };
+    },
+    { invId, b64src: B64_IN_PAGE }
+  );
+}
+
+/** The visible inputs of the step form, by id. */
+const visibleInputs = (page) =>
+  page.evaluate(() => {
+    const f = document.querySelector('.ivf-form');
+    const vis = (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+    return f ? Array.from(f.querySelectorAll('input, select, textarea')).filter((el) => el.type !== 'hidden' && vis(el)).map((el) => el.id || el.name) : [];
+  });
+
+/** A fresh portal with an invited investor at the tax step (answers: extra walk answers). */
+async function toTaxStep(S, A, who, answers) {
+  const page = A.page;
+  const portal = await Lib.setupPortal(S, A);
+  const inv = await Lib.createInvitation(page, { name: who.name, email: who.email, type: 'individual', offeringId: portal.offeringId });
+  if (who.taxType) {
+    await page.evaluate(
+      ({ id, t }) => {
+        const NS = window.CVPortal;
+        NS.state.ws.investors.find((x) => x.id === id).taxType = t;
+        NS.app.save(true);
+      },
+      { id: inv.investorId, t: who.taxType }
+    );
+  }
+  await page.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
+  const w = await Lib.walk(page, Object.assign({ name: who.name, acc: 'yes', basis: 0, until: /Tax certification/ }, answers || {}));
+  return { inv, w, portal };
+}
+
+/**
+ * D-30: every tax answer emptied ("Change your answers"), Continue and Finish still move on, and the form's answer fields
+ * stay empty.
+ */
+async function emptyCase({ check, S }) {
+  const A = await Lib.open(S);
+  const page = A.page;
+  const dir = path.join(OUT, 'empty');
+  fs.mkdirSync(dir, { recursive: true });
+  const name = 'Tomasz Ellery-Nakamura';
+  const { inv, w } = await toTaxStep(S, A, { name, email: 'tomasz.ellery@example.com' });
+  check('the investor reaches the tax step', w.reached && w.at === 'Tax certification' && w.errors.length === 0, { seen: w.seen, errors: w.errors });
+  // a reload between the steps: the taxpayer ID typed at Investor information is no longer in memory (T-06-35), so the
+  // number field is empty like every other answer (with the number in memory, its field says "Leave empty to keep it")
+  await page.reload();
+  await page.waitForSelector('[data-action="ivf-taxedit"]', { timeout: 30000 });
+  await page.click('[data-action="ivf-taxedit"]');
+  await page.waitForSelector('#ob-w9Name', { timeout: 10000 });
+  const shown = await visibleInputs(page);
+  for (const id of ['ob-w9Name', 'ob-w9Street', 'ob-w9City', 'ob-tin', 'ob-w9Exempt', 'ob-w9Fatca']) if (await page.locator('#' + id).count()) await page.fill('#' + id, '');
+  if (await page.locator('#ob-backup').count()) await page.uncheck('#ob-backup');
+  await page.screenshot({ path: path.join(dir, 'empty-answers.png'), fullPage: true });
+  await Lib.submit(page);
+  const errs = await Lib.fieldErrors(page);
+  check('Continue with every answer empty shows no error', errs.length === 0, { errs, shown });
+  await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 }).catch(() => {});
+  const made = await flowTaxEnv(page, inv.investorId);
+  check('Continue built the form to sign', !!made.envId && !!made.filled, made.envId);
+  if (made.filled) {
+    const filledFile = path.join(dir, 'filled.pdf');
+    fs.writeFileSync(filledFile, Buffer.from(made.filled, 'base64'));
+    const R = await rects(made.blank);
+    const W1 = words(filledFile, 1);
+    const printed = W9_ANSWER_FIELDS.map((f) => [f, wordsIn(W1, R.of[W9 + f], 0.5)]).filter((x) => x[1] !== '');
+    check('every answer field of the form stays empty (name, business name, exemptions, address, city, accounts, SSN, EIN)', printed.length === 0, printed);
+  }
+  if (made.envId) await Lib.finishTaxForm(page);
+  const next = await Lib.heading(page);
+  check('Finish without a signature moves on to the next step', next === 'Distribution payments', next);
+  const after = await flowTaxEnv(page, inv.investorId);
+  check('the record says W-9 not signed, no taxpayer ID digits', after.taxForm === 'W-9' && after.taxCert && after.taxCert.signed === false && after.taxCert.tinLast4 === '', after.taxCert);
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
+}
+
+/**
+ * Research Pitfall 2, T-06-38: the full taxpayer ID lives in this page's memory from Investor information until the form is
+ * built, then only inside the form. Same session: the number fills the form. Back from the form, and after a reload, the
+ * tax step asks for it again (not required). Afterwards no saved answer, record field, envelope field, change-log entry,
+ * console message, local or session storage entry holds more than its last four digits.
+ */
+async function tinCase({ check, S }) {
+  const A = await Lib.open(S);
+  const page = A.page;
+  const dir = path.join(OUT, 'tin');
+  fs.mkdirSync(dir, { recursive: true });
+  const msgs = [];
+  page.on('console', (m) => msgs.push(m.text()));
+  const SSN = '468023917';
+  // the number in every way it can be written, and every piece of it longer than its last four digits
+  const forbidden = [/468[-\s.]?02[-\s.]?3917/, /468[-\s.]?02/, /02[-\s.]?3917/, /8023917/, /680239/];
+  const dump = () =>
+    page.evaluate(() => {
+      const ls = Object.keys(localStorage).map((k) => `${k}=${localStorage.getItem(k)}`);
+      const ss = Object.keys(sessionStorage).map((k) => `${k}=${sessionStorage.getItem(k)}`);
+      return { ws: JSON.stringify(window.CVPortal.state.ws), ls: ls.join('\n'), ss: ss.join('\n') };
+    });
+  const hits = (t) => forbidden.filter((re) => re.test(t)).map(String);
+  const name = 'Ingrid Solberg-Achebe';
+  const portalPre = await Lib.setupPortal(S, A);
+  const pre = await dump();
+  check('before anything is typed, no piece of the test number is in the workspace or storage (the search is meaningful)', hits(pre.ws + pre.ls + pre.ss).length === 0, hits(pre.ws + pre.ls + pre.ss));
+  const inv = await Lib.createInvitation(page, { name, email: 'ingrid.solberg@example.com', type: 'individual', offeringId: portalPre.offeringId });
+  await page.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
+  const w = await Lib.walk(page, {
+    name,
+    acc: 'yes',
+    basis: 0,
+    until: /Tax certification/,
+    onFilled: async (hd) => {
+      if (/Investor information/.test(hd)) await page.fill('#ob-tin', '468-02-3917');
+    }
+  });
+  check('the investor reaches the tax step', w.reached && w.at === 'Tax certification', w.seen);
+  const mid = await dump();
+  check('between the steps nothing saved holds more than the last four digits', hits(mid.ws + mid.ls + mid.ss).length === 0, hits(mid.ws + mid.ls + mid.ss));
+  check('in the same session the tax step does not ask for the number (it is in memory)', (await visibleInputs(page)).indexOf('ob-tin') < 0, await visibleInputs(page));
+  await Lib.submit(page);
+  await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 });
+  const first = await flowTaxEnv(page, inv.investorId);
+  const R = await rects(first.blank);
+  if (first.filled) {
+    const f1 = path.join(dir, 'same-session.pdf');
+    fs.writeFileSync(f1, Buffer.from(first.filled, 'base64'));
+    const W1 = words(f1, 1);
+    const ssn = ['f1_11[0]', 'f1_12[0]', 'f1_13[0]'].map((f) => wordsIn(W1, R.of[W9 + f], 1).replace(/\s+/g, '')).join('/');
+    check('the number typed at Investor information fills the form in the same session', ssn === '468/02/3917', ssn);
+  } else check('the number typed at Investor information fills the form in the same session', false, 'no form');
+  const built = await dump();
+  check('once the form is built nothing saved holds more than the last four digits', hits(built.ws + built.ls + built.ss).length === 0, hits(built.ws + built.ls + built.ss));
+  await page.click('.ivf-tax-sign [data-action="ivf-taxanswers"]');
+  await page.waitForSelector('.ivf-form h1', { timeout: 10000 });
+  await page.waitForTimeout(300);
+  check('Back from the form: the number left memory when the form was built, so the step asks for it', (await visibleInputs(page)).indexOf('ob-tin') >= 0, await visibleInputs(page));
+  await page.reload();
+  await page.waitForSelector('.ivf-form h1', { timeout: 30000 });
+  await page.waitForTimeout(400);
+  const hd = await Lib.heading(page);
+  check('after a reload the flow is back on the tax step and asks for the number', hd === 'Tax certification' && (await visibleInputs(page)).indexOf('ob-tin') >= 0, { hd, inputs: await visibleInputs(page) });
+  await page.screenshot({ path: path.join(dir, 'tin-asked-again.png'), fullPage: true });
+  await Lib.submit(page);
+  const errs = await Lib.fieldErrors(page);
+  check('the number is not required: Continue with it empty builds the form', errs.length === 0, errs);
+  await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 });
+  const second = await flowTaxEnv(page, inv.investorId);
+  if (second.filled) {
+    const f2 = path.join(dir, 'after-reload.pdf');
+    fs.writeFileSync(f2, Buffer.from(second.filled, 'base64'));
+    const W2 = words(f2, 1);
+    const ssn2 = ['f1_11[0]', 'f1_12[0]', 'f1_13[0]'].map((f) => wordsIn(W2, R.of[W9 + f], 1)).join('');
+    check('the form built after the reload has no SSN', ssn2 === '', ssn2);
+  }
+  const gone = await page.evaluate(async (id) => !(await window.CVPortal.ops.files.get(id)), first.docId);
+  check('the earlier unsigned form that held the number is deleted from the file store', second.envId !== first.envId && gone, { first: first.envId, second: second.envId, gone });
+  await Lib.finishTaxForm(page);
+  check('finishing moves on', (await Lib.heading(page)) === 'Distribution payments', await Lib.heading(page));
+  const end = await dump();
+  const log = await page.evaluate((id) => (window.CVPortal.state.ws.audit || []).filter((e) => e.record === id).map((e) => `${e.action} :: ${e.detail}`), inv.investorId);
+  check('afterwards the whole workspace JSON holds no piece of the number longer than its last four digits', hits(end.ws).length === 0, hits(end.ws));
+  check('afterwards local and session storage hold none', hits(end.ls + end.ss).length === 0, hits(end.ls + end.ss));
+  check('no change-log entry holds it', hits(log.join('\n')).length === 0, log.filter((l) => /3917/.test(l)));
+  check('no console message held it', hits(msgs.join('\n')).length === 0, msgs.filter((m) => hits(m).length));
+  check('the record keeps the last four digits only', /"tinLast4":"3917"/.test(end.ws), (end.ws.match(/"tinLast4":"[^"]*"/g) || []).slice(0, 5));
+  void SSN;
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
+}
+
+/**
+ * Backup withholding: the tick ("Change your answers") crosses out certification item 2 with a drawn line along each
+ * printed line at the map's strike2 strokes (ink there against the blank form; none there in a form built without it),
+ * and the record keeps taxCert.backupWithholding true.
+ */
+async function backupCase({ check, S }) {
+  const A = await Lib.open(S);
+  const page = A.page;
+  const dir = path.join(OUT, 'backup');
+  fs.mkdirSync(dir, { recursive: true });
+  const name = 'Odalys Varga-Whitcombe';
+  const { inv, w } = await toTaxStep(S, A, { name, email: 'odalys.varga@example.com' });
+  check('the investor reaches the tax step', w.reached && w.at === 'Tax certification', w.seen);
+  await page.click('[data-action="ivf-taxedit"]');
+  await page.waitForSelector('#ob-backup', { timeout: 10000 });
+  await page.check('#ob-backup');
+  await Lib.submit(page);
+  await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 });
+  await page.screenshot({ path: path.join(dir, 'backup-signing.png'), fullPage: true });
+  const made = await flowTaxEnv(page, inv.investorId);
+  // the same form without the tick, built by the portal's own fill
+  const plain = await page.evaluate(
+    async ({ b64src }) => {
+      const NS = window.CVPortal;
+      const b64 = eval(b64src);
+      return b64(await NS.taxforms.prepare('W-9 2024-03', { name: 'Odalys Varga-Whitcombe', individual: true }));
+    },
+    { b64src: B64_IN_PAGE }
+  );
+  const R = await rects(made.blank);
+  const blankFile = path.join(dir, 'blank.pdf');
+  fs.copyFileSync(path.join(ROOT, made.blank), blankFile);
+  const withFile = path.join(dir, 'with-backup.pdf');
+  const plainFile = path.join(dir, 'without-backup.pdf');
+  fs.writeFileSync(withFile, Buffer.from(made.filled || '', 'base64'));
+  fs.writeFileSync(plainFile, Buffer.from(plain || '', 'base64'));
+  const st = made.overlays.strike2;
+  const DPI = 100;
+  const band = (s) => ({ x: s.x0 * R.pw, top: s.y * R.ph - 1.2, w: (s.x1 - s.x0) * R.pw, h: 2.4 });
+  const lenPx = (s) => (s.x1 - s.x0) * R.pw * (DPI / 72);
+  const withInk = st.lines.map((s) => inkBetween(blankFile, withFile, band(s), DPI));
+  const plainInk = st.lines.map((s) => inkBetween(blankFile, plainFile, band(s), DPI));
+  check('a line is drawn along each printed line of item 2 at the strike2 strokes', st.lines.every((s, n) => withInk[n] > 0.25 * lenPx(s)), { ink: withInk, lengthsPx: st.lines.map((s) => Math.round(lenPx(s))) });
+  check('a form without the tick has no ink there', plainInk.every((n) => n === 0), plainInk);
+  // nothing drawn between the strokes (the cross-out is lines, not a box)
+  const gaps = [0, 1].map((n) => ({ x0: Math.max(st.lines[n].x0, st.lines[n + 1].x0), x1: Math.min(st.lines[n].x1, st.lines[n + 1].x1), y: (st.lines[n].y + st.lines[n + 1].y) / 2 }));
+  const gapInk = gaps.map((g) => inkBetween(blankFile, withFile, { x: g.x0 * R.pw, top: g.y * R.ph - 0.6, w: (g.x1 - g.x0) * R.pw, h: 1.2 }, DPI));
+  check('no ink between the strokes', gapInk.every((n) => n < 5), gapInk);
+  await Lib.finishTaxForm(page);
+  const after = await flowTaxEnv(page, inv.investorId);
+  check('the record keeps taxCert.backupWithholding true', !!after.taxCert && after.taxCert.backupWithholding === true, after.taxCert);
+  if (after.finished) {
+    const finFile = path.join(dir, 'finished.pdf');
+    fs.writeFileSync(finFile, Buffer.from(after.finished, 'base64'));
+    const finInk = st.lines.map((s) => inkBetween(blankFile, finFile, band(s), DPI));
+    check('the stored finished form keeps the cross-out', st.lines.every((s, n) => finInk[n] > 0.25 * lenPx(s)), finInk);
+  } else check('the stored finished form keeps the cross-out', false, 'no stored form');
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
+}
+
+/** D-30: a non-U.S. individual on today's foreign certification continues with nothing filled (06-18 and 06-20 replace it). */
+async function foreignCase({ check, S }) {
+  const A = await Lib.open(S);
+  const page = A.page;
+  const name = 'Zoë Albrecht-Moreau';
+  const { inv, w } = await toTaxStep(S, A, { name, email: 'zoe.albrecht@example.com', taxType: 'foreign-individual' }, {
+    onFilled: async (hd) => {
+      if (/Investor information/.test(hd) && (await page.locator('#ob-country').count())) await page.selectOption('#ob-country', 'Germany');
+    }
+  });
+  check('the foreign individual reaches the tax step', w.reached && w.at === 'Tax certification', { seen: w.seen, errors: w.errors });
+  const v = await page.evaluate(() => document.querySelector('.ivf-form').innerText);
+  check('the step shows the foreign certification', /Form W-8BEN certification/.test(v), v.slice(0, 200));
+  await Lib.submit(page);
+  const errs = await Lib.fieldErrors(page);
+  const hd = await Lib.heading(page);
+  check('Continue with nothing filled shows no error and moves on', errs.length === 0 && hd === 'Distribution payments', { errs, hd });
+  const rec = await page.evaluate((id) => {
+    const i = window.CVPortal.state.ws.investors.find((x) => x.id === id);
+    return { taxForm: i.taxForm, taxCert: JSON.parse(JSON.stringify(i.taxCert || null)), log: (window.CVPortal.state.ws.audit || []).filter((e) => e.record === id).map((e) => `${e.action} :: ${e.detail}`) };
+  }, inv.investorId);
+  check('the record says W-8BEN, not signed (nothing was certified)', rec.taxForm === 'W-8BEN' && !!rec.taxCert && rec.taxCert.signed === false && rec.taxCert.signedBy === '', rec.taxCert);
+  check('the change log does not say it was signed', !rec.log.some((l) => /^Tax certification signed/.test(l)) && rec.log.some((l) => /^Tax certification completed without a signature/.test(l)), rec.log.slice(-3));
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
+}
+
 const mmddyyyy = (iso) => {
   const [y, m, d] = String(iso).split('-');
   return `${m}-${d}-${y}`;
@@ -864,7 +1154,11 @@ const cases = {
   'us-individual': usIndividual,
   'investor-type': investorType,
   unsigned: unsignedCase,
-  legacy: legacyCase
+  legacy: legacyCase,
+  empty: emptyCase,
+  tin: tinCase,
+  backup: backupCase,
+  foreign: foreignCase
 };
 
 // The bundled forms must match their pins before anything runs.
