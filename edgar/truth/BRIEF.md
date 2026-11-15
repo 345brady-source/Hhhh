@@ -17,3 +17,18 @@ Each place: `id`, `page`, `kind` (`tickbox`, `initials`, `blank`, `signature`, `
 - Draw every sheet over its pages (`pdftoppm -r 100`) and LOOK at the overlays: boxes must sit on the printed places. Fix and redraw until they do.
 - Write no personal email address anywhere; never print one. If a document prints personal data (executed copies), do not copy it into the sheet.
 - Return a short report: per document, places total by kind and owner, how sure, and any document you could not do and why.
+
+## Conventions settled by the orchestrator (2026-11-15), apply to every sheet
+- Blanks the issuer completes before the agreement is sent (prospectus or offering-circular date, closing date, offering amount in the recitals, deal terms in a two-party agreement), bracketed or not, are NOT places: list them under not_fields. The owner's rule: only the fields a signer must fill in.
+- A line or digit comb cut by a page break or a printed line wrap: one place per piece, each with the doubt "split by page break" / "split by line wrap".
+- A datum printed in segments on one line (area code and number, a hyphenated tax number, month/day/year boxes) is ONE place with its segments under `parts` when the tool supports it, otherwise one place covering the whole run.
+- Choices with no printed box (circle one, a word list with "check one"): tick-box places with a doubt.
+- "For office / internal / partnership / company use only" blocks: third-party with firm also accepted; the issuer's acceptance signature inside one is firm.
+- Labels are not judged (owner, D-24); write them anyway, briefly.
+- Exhibits that are separate instruments: places only if the exhibit is signed by the subscriber at the same closing (e.g. an escrow or joinder agreement with blank subscriber blocks). Not places: exhibits already signed (/s/), blanks the issuer fills, and forms used only on a later event (conversion, exercise, assignment, redemption request).
+- A place a person must fill that has no printed line (a gap before a period, an empty cell under a column heading): a place, with a doubt naming the missing line.
+
+### Further conventions settled by the orchestrator (2026-11-15, after PS01)
+- A box the issuer printed already checked is not a place (like an issuer-filled blank). Empty boxes in the same choice stay places, with a doubt.
+- Custodian and broker-dealer blocks are third-party; a row captioned only "Broker/Dealer" or "Account Executive" is a name blank with a doubt.
+- A tax or status certificate the subscriber signs as part of the same subscription package (even if dated before closing) counts, with must=false where the form says it is only for some holders; recital blanks whose filler is not printed are owner unclear with a doubt.
