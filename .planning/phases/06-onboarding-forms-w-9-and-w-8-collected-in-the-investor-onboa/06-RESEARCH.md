@@ -468,11 +468,11 @@ The "Field" column uses the printed line labels. The AcroForm names come from Wa
 
 ## Open Questions (for the owner, through the planner's checkpoint)
 
-1. **In-house versus outside service** (project rule). Recommendation: in-house (cost $0 per form, white-label, no third-party SSN exposure). Alternative: a hosted W-9/W-8 API at about $2-3 per form.
-2. **What happens when a commitment exceeds the Reg A Tier 2 limit, or a 506(b) subscription would be the 36th non-accredited purchaser?** Recommendation: warn the investor (Reg A) and flag the sponsor clearly on the request and in the offering panel. No hard block (D-30 and scope discipline); the sponsor declines at acceptance.
-3. **Count the 35 per offering or per issuer across offerings?** The portal does not know which offerings share an issuer. Recommendation: per offering for its life (conservative for that offering), with a note about the 90-day window across the same issuer's offerings.
-4. **Managed edition** (the non-invitation onboarding in onboarding.js with the substitute W-9 checkbox at the review step): leave it as is this phase, or apply the same forms? Recommendation: invitation flow only (the turnkey flow the owner named); the managed edition keeps its substitute certification.
-5. **Network access:** allow `www.irs.gov` for the build session, or the owner supplies the three PDFs (blocker for Wave 0).
+1. **OPEN (owner item a; blocks only plans 06-08 to 06-12).** **In-house versus outside service** (project rule). Recommendation: in-house (cost $0 per form, white-label, no third-party SSN exposure). Alternative: a hosted W-9/W-8 API at about $2-3 per form.
+2. **RESOLVED by C-01 (warn the investor, flag the sponsor, never block).** **What happens when a commitment exceeds the Reg A Tier 2 limit, or a 506(b) subscription would be the 36th non-accredited purchaser?** Recommendation: warn the investor (Reg A) and flag the sponsor clearly on the request and in the offering panel. No hard block (D-30 and scope discipline); the sponsor declines at acceptance.
+3. **RESOLVED by C-02 (per offering, with the 90-day note).** **Count the 35 per offering or per issuer across offerings?** The portal does not know which offerings share an issuer. Recommendation: per offering for its life (conservative for that offering), with a note about the 90-day window across the same issuer's offerings.
+4. **RESOLVED by C-03 (managed edition unchanged this phase).** **Managed edition** (the non-invitation onboarding in onboarding.js with the substitute W-9 checkbox at the review step): leave it as is this phase, or apply the same forms? Recommendation: invitation flow only (the turnkey flow the owner named); the managed edition keeps its substitute certification.
+5. **OPEN (owner item b; blocks only plans 06-08 to 06-12).** **Network access:** allow `www.irs.gov` for the build session, or the owner supplies the three PDFs (blocker for Wave 0).
 
 ## Environment Availability
 
