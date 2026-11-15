@@ -36,6 +36,73 @@ const JSDELIVR = {
 };
 const IGNORE = /Failed to load resource|net::ERR|favicon/;
 
+/*
+ * The owner's screenshot set (plan 06-07): every full-page screenshot a check takes on a page opened here is also copied to
+ * OWNER_SHOTS as <check>__<part>__<name>.png, and index.txt there names each shot, its part and what it shows, failed parts
+ * first. Each check describes its shots with describeShots([[name or regex, text], ...]).
+ */
+const OWNER_SHOTS = process.env.P6_SHOTS || path.join(SCRATCH, 'exec-06-07', 'shots');
+const shotRun = { check: '', slug: '', part: '', taken: {}, info: [] };
+function describeShots(list) {
+  list.forEach((x) => shotRun.info.push(x));
+}
+function shotWhat(name) {
+  const hit = shotRun.info.find(([k]) => (k instanceof RegExp ? k.test(name) : k === name));
+  return hit ? hit[1] : 'Screen as the check left it (no description given).';
+}
+function ownerShot(file) {
+  if (!shotRun.slug || !shotRun.part || !file) return;
+  fs.mkdirSync(OWNER_SHOTS, { recursive: true });
+  const name = path.basename(String(file));
+  const dest = `${shotRun.slug}__${shotRun.part}__${name}`;
+  fs.copyFileSync(file, path.join(OWNER_SHOTS, dest));
+  const list = (shotRun.taken[shotRun.part] = shotRun.taken[shotRun.part] || []);
+  const was = list.findIndex((x) => x.file === dest);
+  const row = { file: dest, what: shotWhat(name) };
+  if (was >= 0) list[was] = row;
+  else list.push(row);
+}
+/** Record this run's parts (merged with earlier runs of other parts of the same check) and write index.txt from every check. */
+function writeShotIndex(results) {
+  if (!shotRun.slug) return;
+  fs.mkdirSync(OWNER_SHOTS, { recursive: true });
+  const rec = path.join(OWNER_SHOTS, `parts-${shotRun.slug}.json`);
+  let parts = {};
+  try {
+    parts = JSON.parse(fs.readFileSync(rec, 'utf8')).parts || {};
+  } catch (e) {
+    parts = {};
+  }
+  results.forEach((r) => (parts[r.part] = { ok: r.ok, failed: r.failed, shots: shotRun.taken[r.part] || [], at: new Date().toISOString() }));
+  fs.writeFileSync(rec, JSON.stringify({ check: shotRun.check, parts }, null, 1));
+  const all = fs
+    .readdirSync(OWNER_SHOTS)
+    .filter((f) => /^parts-.*\.json$/.test(f))
+    .map((f) => JSON.parse(fs.readFileSync(path.join(OWNER_SHOTS, f), 'utf8')));
+  const rows = [];
+  all.forEach((c) => Object.keys(c.parts).forEach((k) => rows.push(Object.assign({ check: c.check, part: k }, c.parts[k]))));
+  const block = (r) => [`${r.check}, part ${r.part}: ${r.ok ? 'PASS' : `FAIL (${r.failed.length} check${r.failed.length === 1 ? '' : 's'} failed)`}, run ${r.at}`]
+    .concat(r.ok ? [] : r.failed.map((f) => `  FAILED: ${f}`))
+    .concat(r.shots.length ? r.shots.map((x) => `  ${x.file}\n      ${x.what}`) : ['  (no screenshot in this part)'])
+    .join('\n');
+  const bad = rows.filter((r) => !r.ok);
+  const good = rows.filter((r) => r.ok);
+  const n = rows.reduce((t, r) => t + r.shots.length, 0);
+  const text = [
+    'Investor status answers: the owner\'s screenshot set (phase 6, plan 06-07)',
+    `Folder: ${OWNER_SHOTS}`,
+    `${n} screenshots from ${rows.length} parts; the latest run of each part. Failed parts first.`,
+    '',
+    'FAILED PARTS',
+    bad.length ? bad.map(block).join('\n\n') : '(none)',
+    '',
+    'PASSED PARTS',
+    good.map(block).join('\n\n'),
+    ''
+  ].join('\n');
+  fs.writeFileSync(path.join(OWNER_SHOTS, 'index.txt'), text);
+}
+
 /** The vendor files this browser needs; the first one missing, or ''. */
 function missingVendor() {
   const all = Object.values(LOCAL).concat(Object.values(JSDELIVR).map((x) => x.file));
@@ -97,6 +164,12 @@ async function open(S, opts) {
     return route.abort();
   });
   const page = await context.newPage();
+  const shoot = page.screenshot.bind(page);
+  page.screenshot = async (o) => {
+    const out = await shoot(o);
+    if (o && o.path) ownerShot(o.path);
+    return out;
+  };
   const errors = [];
   page.on('console', (m) => m.type() === 'error' && !IGNORE.test(m.text()) && errors.push('console: ' + m.text()));
   page.on('pageerror', (e) => errors.push('pageerror: ' + String(e && e.stack ? e.stack : e)));
@@ -481,20 +554,35 @@ async function runParts(parts, opts) {
     S = await start();
   }
   const failed = [];
+  const summary = [];
   let ran = 0;
+  shotRun.check = NAME;
+  shotRun.slug = NAME.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   for (const n of names) {
     const R = reporter(n);
     ran++;
+    shotRun.part = n;
+    shotRun.taken[n] = [];
     try {
       await parts[n]({ check: R.check, S });
     } catch (e) {
       R.check('ran to the end', false, String(e && e.stack ? e.stack : e));
     }
     if (R.failed() || !R.results.length) failed.push(n);
+    summary.push({ part: n, ok: !(R.failed() || !R.results.length), failed: R.results.filter((r) => !r.ok).map((r) => r.name) });
+  }
+  shotRun.part = '';
+  if (opts.browser) {
+    try {
+      writeShotIndex(summary);
+    } catch (e) {
+      console.log(`FAIL the owner's screenshot index could not be written: ${e && e.message}`);
+      failed.push('(screenshot index)');
+    }
   }
   if (S) await S.stop();
   console.log(failed.length ? `${NAME}: FAIL (${unit} run: ${ran}) - ${failed.join(', ')}` : `${NAME}: PASS (${unit} run: ${ran})`);
   process.exit(failed.length ? 1 : 0);
 }
 
-module.exports = { ROOT, SCRATCH, VENDOR, OUT, missingVendor, serve, start, open, setupPortal, createInvitation, sandbox, heading, submit, fieldErrors, walk, screenText, leakCheck, reporter, runParts, VENDORS, VENDOR_RE, WORD_RE, freePort, serverPortal, consoleRoute, inviteFromConsole, importFromConsole, finishAgreement };
+module.exports = { OWNER_SHOTS, describeShots, ROOT, SCRATCH, VENDOR, OUT, missingVendor, serve, start, open, setupPortal, createInvitation, sandbox, heading, submit, fieldErrors, walk, screenText, leakCheck, reporter, runParts, VENDORS, VENDOR_RE, WORD_RE, freePort, serverPortal, consoleRoute, inviteFromConsole, importFromConsole, finishAgreement };

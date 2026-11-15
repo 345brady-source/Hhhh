@@ -13,6 +13,43 @@ const { isDeepStrictEqual } = require('util');
 const L = require('./lib.js');
 
 const SHOTS = path.join(L.OUT, 'server-shots');
+// The owner's screenshot set (plan 06-07): what each screenshot of this check shows (server mode: the console and the
+// investor's device are separate browsers that share only the integration server).
+L.describeShots([
+  ['b506-status.png', 'Investor’s own device (server mode), status step, Rule 506(b), answered "not accredited" with a purchaser representative and plan 4975.'],
+  ['b506-subscribe.png', 'Investor’s device, subscribe step: it states the account is not an accredited investor.'],
+  ['b506-done.png', 'Investor’s device, done screen after the completion went to the integration server.'],
+  ['b506-console-offering.png', 'Console after import: "Non-accredited purchasers: 1 of 35", and the Benefit plan investors panel with the request’s if-accepted figure.'],
+  ['regA-status.png', 'Investor’s device, Regulation A Tier 2 status step: income $85,000, net worth $120,000, "Your investment limit in this offering: $12,000".'],
+  ['regA-subscribe.png', 'Investor’s device, subscribe step: $60,000 over the $12,000 limit, the warning that does not block.'],
+  ['regA-done.png', 'Investor’s device, done screen (Regulation A).'],
+  ['regA-requests.png', 'Console requests page: "Over the Regulation A Tier 2 limit: $60,000 committed in this offering, limit $12,000" although the stored device flag was altered to "not over".'],
+  ['regA-console-offering.png', 'Console offering page: "1 non-accredited subscriber, 1 over their 10 percent limit" and Dana Whitfield’s line.'],
+  ['full34-status.png', 'Investor’s device with 34 non-accredited purchasers counted when invited: status step answered "not accredited", no warning (they would be the 35th).'],
+  ['full34-subscribe.png', 'Investor’s device, subscribe step (34 counted).'],
+  ['full34-done.png', 'Investor’s device, done screen (34 counted).'],
+  ['full34-console-offering.png', 'Console offering page after import with 34 counted before: "Non-accredited purchasers: 35 of 35", at the limit (the warning badge, not the red one).'],
+  ['full34-requests.png', 'Console requests page after a backdated completion: the Submitted and Date columns are the console’s own (today; the offering’s closing date), not 2001 or 1999.'],
+  ['full35-status.png', 'Investor’s device with 35 counted when invited: status step answered "not accredited" with the plain warning that the offering may already be full (no number, no names).'],
+  ['full35-subscribe.png', 'Investor’s device, subscribe step after the warning: the investor can still subscribe.'],
+  ['full35-done.png', 'Investor’s device, done screen: the warning did not block the subscription.'],
+  ['full35-console-offering.png', 'Console offering page after import: "Non-accredited purchasers: 36 of 35".'],
+  ['full35-requests.png', 'Console requests page: "Would be non-accredited purchaser 36 of the 35 allowed under Rule 506(b)" on the new request.'],
+  ['existing-status-prefilled.png', 'Investor on file, own device: the status step prefilled from the console (accredited, the ground on file, plan Title I, control yes), before the investor changes the plan to "none".'],
+  ['existing-status.png', 'Investor on file: status step after changing the benefit plan answer to "none of these".'],
+  ['existing-subscribe.png', 'Investor on file: subscribe step (accredited investor).'],
+  ['existing-done.png', 'Investor on file: done screen.'],
+  ['existing-console-offering.png', 'Console offering page after import: the Benefit plan investors panel with the investor’s answer now "none".'],
+  ['repack-status.png', 'Investor’s device: status step with the purchaser representative’s acknowledgment attached.'],
+  ['repack-subscribe.png', 'Investor’s device: subscribe step (not accredited, representative named).'],
+  ['repack-done.png', 'Investor’s device: done screen; the acknowledgment went with the completion.'],
+  ['repack-requests.png', 'Console requests page after import: "Purchaser representative: Morgan Ellery, Ellery Advisory Partners" with "Download the written acknowledgment" (returns the same bytes).'],
+  ['repbig-status.png', 'Investor’s device: a 25 MB acknowledgment attached (accepted, but it cannot go with the signed agreement).'],
+  ['repbig-subscribe.png', 'Investor’s device: subscribe step (25 MB acknowledgment case).'],
+  ['repbig-done.png', 'Investor’s device, done screen: "The acknowledgment of your purchaser representative you uploaded could not be sent with your details".'],
+  ['repbig-requests.png', 'Console requests page: the representative with the note that the acknowledgment did not fit and to ask the investor for it (no download).'],
+  ['clean-status.png', 'Investor’s device with 35 other non-accredited purchasers on the console: status step answered "not accredited", the warning from the one true or false value, nothing about the others.']
+]);
 fs.mkdirSync(SHOTS, { recursive: true });
 const INV = { first: 'Dana', last: 'Whitfield', name: 'Dana Whitfield', email: 'dana.whitfield@example.com' };
 
@@ -259,7 +296,10 @@ const parts = {
       check('with 34 counted the snapshot the investor’s page receives carries offering.nonAccreditedFull === false', F34.snaps.length >= 1 && !!sn.offering && sn.offering.nonAccreditedFull === false, sn.offering && { nonAccreditedFull: sn.offering.nonAccreditedFull });
       check('with 34 counted the investor answering "not accredited" sees no warning (before or after answering)', F34.R.warnBefore === 0 && !FULL_WARN.test(F34.R.warn || '') && !FULL_WARN.test(F34.R.status || ''), { before: F34.R.warnBefore, warn: F34.R.warn });
       commonChecks(check, F34);
-      await F34.A.page.screenshot({ path: path.join(SHOTS, 'full34-console.png'), fullPage: true }).catch(() => {});
+      await L.consoleRoute(F34.A.page, 'console-offering-' + F34.off.offeringId);
+      const el34 = await panelText(F34.A.page, 'Investor eligibility');
+      await F34.A.page.screenshot({ path: path.join(SHOTS, 'full34-console-offering.png'), fullPage: true });
+      check('the console counts the imported request: "Non-accredited purchasers: 35 of 35", at the limit', /Non-accredited purchasers: 35 of 35/.test(el34) && /At the limit/.test(el34), el34);
     } finally {
       await F34.close();
     }
@@ -579,6 +619,99 @@ const parts = {
       check('no script error on either side', G.A.errors.length === 0 && G.B.errors.length === 0, { A: G.A.errors, B: G.B.errors });
     } finally {
       await G.close();
+    }
+  },
+
+  /**
+   * T-06-15 (plan 06-07): what the investor's page receives from the server, read in the investor's own context, carries
+   * the C-01 answer only as true or false and nothing else about other investors: no count, no name, no email, no id and no
+   * request of the 35 non-accredited purchasers already on the console. The investor's own workspace holds only them.
+   */
+  async clean({ check, S }) {
+    const srv = await L.serverPortal(S);
+    const closers = [];
+    try {
+      const A = await L.open(S, { allow: [srv.base], init: srv.init });
+      closers.push(() => A.context.close());
+      const cp = A.page;
+      const off = await L.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+      const counted = await seedNonAccredited(cp, off.offeringId, 35, 'cl');
+      check('35 non-accredited purchasers counted in the console', counted === 35, counted);
+      // Every detail of the others the console holds, to search for in what the investor's page receives.
+      const others = await cp.evaluate(() => {
+        const ws = window.CVPortal.state.ws;
+        const inv = ws.investors.filter((i) => /^cl-inv-/.test(i.id));
+        const req = ws.requests.filter((r) => /^cl-req-/.test(r.id));
+        return { names: inv.map((i) => i.contact), emails: inv.map((i) => i.email), ids: inv.map((i) => i.id), requests: req.map((r) => r.id) };
+      });
+      await srv.configure(cp);
+      const inv = await L.inviteFromConsole(cp, { first: INV.first, last: INV.last, email: INV.email, offeringId: off.offeringId });
+      check('the console sends the invitation to the integration server', /^ivt_/.test(inv.serverId) && inv.link.indexOf(`server=${encodeURIComponent(srv.base)}`) > 0, inv);
+      const B = await L.open(S, { allow: [srv.base], init: srv.init });
+      closers.push(() => B.context.close());
+      const ip = B.page;
+      const raw = [];
+      ip.on('response', async (res) => {
+        if (res.request().method() !== 'GET' || !/\/v1\/invite$/.test(res.url().replace(/[?#].*$/, ''))) return;
+        try {
+          raw.push(await res.text());
+        } catch (e) {
+          raw.push('');
+        }
+      });
+      await ip.goto(inv.link);
+      await ip.waitForSelector('.ivf-form h1', { timeout: 30000 });
+      await ip.waitForTimeout(300);
+      check('the investor’s page received the snapshot from the server', raw.length >= 1 && raw[0].length > 0, raw.length);
+      let snap = {};
+      try {
+        snap = JSON.parse(raw[0] || '{}');
+      } catch (e) {
+        snap = {};
+      }
+      check('offering.nonAccreditedFull is a boolean, true (this investor would be the 36th)', typeof (snap.offering || {}).nonAccreditedFull === 'boolean' && snap.offering.nonAccreditedFull === true, snap.offering && snap.offering.nonAccreditedFull);
+      // Every key anywhere in the snapshot: none that could carry a count, a list of investors or requests, or a place.
+      const keys = new Set();
+      const walkKeys = (x) => {
+        if (Array.isArray(x)) return x.forEach(walkKeys);
+        if (x && typeof x === 'object') Object.keys(x).forEach((k) => (keys.add(k), walkKeys(x[k])));
+      };
+      walkKeys(snap);
+      const bad = Array.from(keys).filter((k) => /^(count|ranked|place|purchasers|investors|requests|positions|accepted|pending|unanswered|holders)$|^nonAccredited(?!Full$)/.test(k));
+      check('no key in the snapshot could carry a count, a place or other investors or requests', bad.length === 0, bad);
+      check('the offering in the snapshot has only its known fields', Object.keys(snap.offering || {}).every((k) => ['id', 'name', 'shortName', 'type', 'summary', 'minimum', 'closeDate', 'terms', 'exemption', 'classes', 'currency', 'documents', 'nonAccreditedFull'].indexOf(k) >= 0), Object.keys(snap.offering || {}));
+      check('the investor in the snapshot is the invited investor alone', !!snap.investor && snap.investor.id === inv.investorId && Object.keys(snap.investor).every((k) => ['id', 'contact', 'title', 'type', 'email', 'existing'].indexOf(k) >= 0), snap.investor);
+      const text = raw.join('\n');
+      const found = [].concat(others.names, others.emails, others.ids, others.requests).filter((v) => v && text.indexOf(v) >= 0);
+      check(`none of the others’ ${others.names.length} names, emails, investor ids or request ids appears in what the page received`, others.names.length === 35 && found.length === 0 && !/Seeded Purchaser/.test(text), found.slice(0, 10));
+      const dev = await ip.evaluate(() => {
+        const ws = window.CVPortal.state.ws;
+        return { investors: ws.investors.map((i) => i.id), requests: (ws.requests || []).length, offerings: ws.offerings.length, flag: ws.offerings[0] && ws.offerings[0].nonAccreditedFull };
+      });
+      check('the investor’s workspace holds one investor (them), one offering with the flag as true, and no request', dev.investors.length === 1 && dev.investors[0] === inv.investorId && dev.offerings === 1 && dev.flag === true && dev.requests === 0, dev);
+      // The status step from it: the warning, no number and no name.
+      const w = await L.walk(ip, {
+        name: INV.name,
+        acc: 'no',
+        exp: 'Eight years of private real estate commitments',
+        edu: 'Physician',
+        rep: 'no',
+        amount: 60000,
+        onFilled: async (hd) => {
+          if (hd !== 'Investor status') return;
+          dev.warn = await warnText(ip);
+          dev.st = await L.screenText(ip);
+          await ip.screenshot({ path: path.join(SHOTS, 'clean-status.png'), fullPage: true });
+        }
+      });
+      check('the status step warns from the flag, with no number and no other investor named', FULL_WARN.test(dev.warn || '') && !/\d/.test(dev.warn || '') && !/Seeded Purchaser/.test(dev.st || ''), { warn: dev.warn, seen: w.seen });
+      const lk = L.leakCheck(dev.st || '');
+      check('white label: the status screen passes the leak check', lk.ok, lk.hits);
+      check('no script error on either side', A.errors.length === 0 && B.errors.length === 0, { A: A.errors, B: B.errors });
+      check('the investor’s device reached nothing outside but the integration server', B.net.external.length === 0, B.net.external);
+    } finally {
+      for (const c of closers.reverse()) await c().catch(() => {});
+      await srv.close();
     }
   }
 };
