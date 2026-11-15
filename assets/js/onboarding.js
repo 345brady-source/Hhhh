@@ -627,7 +627,13 @@
       const note = document.getElementById('hint-tenancy');
       if (note) note.textContent = jointHint(ob().d);
     }
-    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stSoph', 'stPlan', 'w8Citizen', 'w8Country', 'w8MailCountry'].indexOf(path) >= 0) {
+    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stSoph', 'stPlan', 'w8Citizen', 'w8Country', 'w8MailCountry', 'w9Class', 'w9Llc', 'w9Disregarded'].indexOf(path) >= 0) {
+      // under "Change your answers" lines 1 and 2 follow the disregarded answer (the owner and the LLC, or the LLC alone)
+      const fc = (path === 'w9Class' || path === 'w9Disregarded') && ob().d.w9Edit ? fctx() : null;
+      if (fc) {
+        const k = w9Known(fc, ob().d);
+        Object.assign(ob().d, { w9Name: k.name, w9Business: k.business });
+      }
       NS.app.render();
       // Keep keyboard focus on the control that changed (the page was redrawn).
       const again = el.type === 'radio' ? document.querySelector(`input[name="${el.name}"][value="${CSS.escape(el.value)}"]`) : el.id && document.getElementById(el.id);
@@ -725,7 +731,7 @@
   const digitsOf = (s) => String(s || '').replace(/\D/g, '');
   const clone = (x) => (x == null ? x : JSON.parse(JSON.stringify(x)));
   /** Fields of the flow's form kept on the investor record between visits (never the password or full ID and account numbers). */
-  const SECRET = ['password', 'password2', 'tin', 'ftin', 'w8UsTin', 'routing', 'account', 'account2'];
+  const SECRET = ['password', 'password2', 'tin', 'ftin', 'w8UsTin', 'ownerTin', 'routing', 'account', 'account2'];
   const MAX_FILES = 25 * 1024 * 1024;
 
   /** 32 random bytes, base64url: an invitation token (local mode). */
@@ -1316,6 +1322,19 @@
           w9City: '',
           w9Exempt: '',
           w9Fatca: '',
+          // Plan 06-19: the W-9 classification (line 3a) asked of an entity's account, its LLC tax letter, the "other" text
+          // and line 3b; w9ClassFor is the account type they were answered for (a changed type starts them again).
+          w9Class: '',
+          w9ClassFor: '',
+          w9Llc: '',
+          w9Other: '',
+          w9Foreign: false,
+          // an LLC disregarded for U.S. tax: line 1 its owner, line 2 the LLC, the owner's SSN (ownerTin, memory only: SECRET)
+          w9Disregarded: false,
+          ownerTin: '',
+          w9Business: '',
+          // under "Change your answers": which taxpayer ID the number is (empty: an SSN for a person's account, else an EIN)
+          w9TinKind: '',
           taxCountry: '',
           ftin: '',
           noFtin: false,
@@ -1624,25 +1643,99 @@
     Object.keys(a).forEach((x) => (a[x] === '' || a[x] === false) && delete a[x]);
     return a;
   }
+  /** Line 3a of the W-9 (plan 06-19): the federal tax classifications in the form's printed order, by the map's own keys. */
+  const W9_CLASSES = [
+    ['individual', 'Individual or sole proprietor'],
+    ['ccorp', 'C corporation'],
+    ['scorp', 'S corporation'],
+    ['partnership', 'Partnership'],
+    ['trust', 'Trust or estate'],
+    ['llc', 'Limited liability company (LLC)'],
+    ['other', 'Other']
+  ];
+  /** How an LLC is taxed, the letter line 3a asks for. */
+  const W9_LLC = [
+    ['C', 'As a C corporation'],
+    ['S', 'As an S corporation'],
+    ['P', 'As a partnership']
+  ];
+  /**
+   * The accounts whose classification the step asks (D-06: onboarding does not know it): an entity's, and an IRA's (planner's
+   * choice, research A6: asked like an entity's, trust or estate chosen to start).
+   */
+  const w9Asks = (d) => d.type === 'entity' || d.type === 'ira';
+  /**
+   * The classification onboarding already knows (D-09: the investor type the sponsor chose): a person's account (individual
+   * or joint) is an individual; an entity whose name ends in LLC is an LLC (its tax letter is still asked).
+   */
+  function w9ClassKnown(c, d) {
+    if (PERSONAL(d.type)) return 'individual';
+    if (d.type === 'trust' || d.type === 'ira') return 'trust';
+    if (d.type === 'entity' && /\bP?L\.?\s?L\.?\s?C\.?$/i.test(tidy(c.inv.title))) return 'llc';
+    return '';
+  }
+  /** The account's line 3a classification: as answered on the step where it is asked, else as known; a changed account type starts the answers again. */
+  function w9Class(c, d) {
+    if (d.w9ClassFor !== d.type) Object.assign(d, { w9Class: w9ClassKnown(c, d), w9Llc: '', w9Other: '', w9Foreign: false, w9Disregarded: false, ownerTin: '', w9TinKind: '', w9ClassFor: d.type });
+    return w9Asks(d) ? d.w9Class || '' : w9ClassKnown(c, d);
+  }
+  /** An LLC answered as disregarded for U.S. tax ("disregarded" is asked only for an LLC). */
+  const w9Disregarded = (c, d) => d.type === 'entity' && w9Class(c, d) === 'llc' && !!d.w9Disregarded;
+  /**
+   * Line 3b is offered only for a partnership, a trust or estate, or an LLC taxed as a partnership; never for a person's
+   * account or an IRA (a tax-exempt account, not a flow-through entity).
+   */
+  const w9Offers3b = (d, cls) => (d.type === 'entity' || d.type === 'trust') && (cls === 'partnership' || cls === 'trust' || (cls === 'llc' && !d.w9Disregarded && d.w9Llc === 'P'));
+  /** Which boxes of Part I the number goes in: the owner's SSN for a disregarded LLC, else the answer, else by the account. */
+  const w9TinBox = (c, d) => (w9Disregarded(c, d) ? 'ssn' : PERSONAL(d.type) ? 'ssn' : d.w9TinKind === 'ssn' ? 'ssn' : 'ein');
+  /** The classification questions of the step: line 3a as radios, the LLC's letter or the "other" text, and line 3b where it applies. */
+  function w9ClassFields(c, d, cls) {
+    let f = '';
+    if (w9Asks(d)) {
+      f += radios('w9Class', 'Federal tax classification', W9_CLASSES);
+      if (cls === 'llc' && d.type === 'entity') {
+        f += check('w9Disregarded', 'The LLC is disregarded for U.S. tax: it has one owner and has not chosen to be taxed as a corporation.');
+        if (d.w9Disregarded) f += input('ownerTin', `Social Security number of ${h(tidy(c.inv.contact) || 'the owner')}, the LLC’s owner`, { mode: 'numeric', max: 11, hint: 'Nine digits. The form names the owner on line 1 and the LLC on line 2.' });
+      }
+      if (cls === 'llc' && !(d.type === 'entity' && d.w9Disregarded)) f += radios('w9Llc', 'How the LLC is taxed', W9_LLC);
+      if (cls === 'other') f += input('w9Other', 'The classification, as the form should show it', { wide: true, max: 30 });
+    }
+    if (w9Offers3b(d, cls)) f += check('w9Foreign', `The ${cls === 'trust' ? 'trust or estate' : cls === 'partnership' ? 'partnership' : 'LLC'} has foreign partners, owners, or beneficiaries (line 3b).`);
+    return f;
+  }
   /** Line 1, the street and the city line as Investor information gave them. */
   function w9Known(c, d) {
     const cityLine = [tidy(d.city), [tidy(d.st).toUpperCase(), tidy(d.zip)].filter(Boolean).join(' ')].filter(Boolean).join(', ');
-    return { name: tidy(PERSONAL(d.type) ? c.inv.contact : c.inv.title), street: tidy(d.street), city: d.country && d.country !== US ? [cityLine, d.country].filter(Boolean).join(', ') : cityLine };
+    // a disregarded LLC: line 1 its owner (the controlling person on file), line 2 the LLC
+    const dis = w9Disregarded(c, d);
+    return { name: tidy(PERSONAL(d.type) || dis ? c.inv.contact : c.inv.title), business: dis ? tidy(c.inv.title) : '', street: tidy(d.street), city: d.country && d.country !== US ? [cityLine, d.country].filter(Boolean).join(', ') : cityLine };
   }
   /** The W-9's answers, by the map's own keys: what onboarding knows, with any answer changed on this step. */
   function w9Answers(c, d) {
     const t = c.ws.tenant;
     const k = w9Known(c, d);
-    const person = PERSONAL(d.type);
     const tin = tinOf(c, d);
     // after "Change your answers" (d.w9Edit) the answers are used as given, an emptied one too (D-30); otherwise what
     // Investor information gave fills what the step did not ask
     const own = (v, known) => (d.w9Edit ? tidy(v) : tidy(v) || known);
     const a = { name: own(d.w9Name, k.name), address: own(d.w9Street, k.street), cityStateZip: own(d.w9City, k.city), requester: t.legalName || t.name };
-    if (person) a.individual = true;
-    else if (d.type === 'trust') a.trust = true;
-    if (tin) a[person ? 'ssn' : 'ein'] = tin;
-    if (tidy(d.w9Exempt)) a.exemptPayee = tidy(d.w9Exempt);
+    // line 3a: one box, by the map's own key; an LLC's tax letter and the "other" text only beside their own box
+    const cls = w9Class(c, d);
+    const dis = w9Disregarded(c, d);
+    const business = own(d.w9Business, k.business);
+    if (business) a.business = business;
+    // a disregarded LLC is classified as its owner, the controlling person: an individual
+    if (dis) a.individual = true;
+    else if (cls) a[cls] = true;
+    if (cls === 'llc' && !dis && /^[CSP]$/.test(d.w9Llc)) a.llcLetter = d.w9Llc;
+    if (cls === 'other' && tidy(d.w9Other)) a.otherText = tidy(d.w9Other).slice(0, 30);
+    if (w9Offers3b(d, cls) && d.w9Foreign) a.foreignOwners = true;
+    // T-06-42: digits only, into the SSN or the EIN boxes by the account's answers (the fill splits them by the comb fields)
+    const owner = digitsOf(d.ownerTin).length === 9 ? digitsOf(d.ownerTin) : '';
+    if (dis ? owner : tin) a[w9TinBox(c, d)] = dis ? owner : tin;
+    // an IRA's exempt payee code 1 (any IRA, the form's instructions) is pre-filled; emptied under "Change your answers", none
+    const exempt = d.w9Edit ? tidy(d.w9Exempt) : tidy(d.w9Exempt) || (d.type === 'ira' ? '1' : '');
+    if (exempt) a.exemptPayee = exempt;
     if (tidy(d.w9Fatca)) a.fatcaCode = tidy(d.w9Fatca);
     // the IRS has notified the investor of backup withholding: certification item 2 is crossed out on the form
     if (d.backup) a.backupWithholding = true;
@@ -1681,25 +1774,35 @@
     const person = PERSONAL(d.type);
     const k = w9Known(c, d);
     const tin = tinOf(c, d);
-    const tinLabel = person ? 'Social Security number' : 'Employer identification number';
     let body = '';
     const edit = o.taxEdit || !!d.w9Edit;
+    const cls = w9Class(c, d);
+    const dis = w9Disregarded(c, d);
+    const tinLabel = w9TinBox(c, d) === 'ssn' ? 'Social Security number' : 'Employer identification number';
     if (edit) {
+      const kind = person || dis ? '' : radios('w9TinKind', 'The taxpayer identification number is', [['ein', 'An employer identification number (EIN)'], ['ssn', 'A Social Security number (SSN)']]);
       body = `${input('w9Name', 'Name', { wide: true })}
+        ${input('w9Business', 'Business name or disregarded entity name, if different from above', { wide: true })}
         ${input('w9Street', 'Address (number, street, and apt. or suite no.)', { wide: true, auto: 'street-address' })}
         ${input('w9City', 'City, state, and ZIP code', { wide: true })}
-        ${input('tin', tinLabel, { mode: 'numeric', max: 11, hint: tin ? `Ending ${h(tin.slice(-4))}. Leave empty to keep it.` : 'Nine digits.' })}
+        ${w9ClassFields(c, d, cls)}
+        ${dis ? '' : `${kind}${input('tin', tinLabel, { mode: 'numeric', max: 11, hint: tin ? `Ending ${h(tin.slice(-4))}. Leave empty to keep it.` : 'Nine digits.' })}`}
         ${input('w9Exempt', 'Exempt payee code, if any', { narrow: true, max: 2 })}
         ${input('w9Fatca', 'Exemption from FATCA reporting code, if any', { narrow: true, max: 1 })}
         ${check('backup', 'The IRS has notified me that I am currently subject to backup withholding.')}`;
     } else {
+      body += w9ClassFields(c, d, cls);
       if (!k.name && !tidy(d.w9Name)) body += input('w9Name', 'Name', { wide: true });
       if (!k.street && !tidy(d.w9Street)) body += input('w9Street', 'Address (number, street, and apt. or suite no.)', { wide: true, auto: 'street-address' });
       if (!k.city && !tidy(d.w9City)) body += input('w9City', 'City, state, and ZIP code', { wide: true });
-      if (!tin) body += input('tin', tinLabel, { mode: 'numeric', max: 11, hint: 'Nine digits.' });
+      if (!tin && !dis) body += input('tin', tinLabel, { mode: 'numeric', max: 11, hint: 'Nine digits.' });
     }
+    // a joint account's W-9 is the form of the holder whose SSN is given (planner's choice): one line says whose
+    const holderName = d.type === 'joint' ? (d.w9Edit ? tidy(d.w9Name) : tidy(d.w9Name) || k.name) : '';
+    const holder = holderName ? `<p class="meta ivf-taxholder">This is the form of ${h(holderName)}, the first holder of the account.</p>` : '';
     return `${ivfH1(FL.tax)}
       <p class="lede">Your Form W-9 is filled in from your answers${body && !edit ? ', except what is asked below' : ''}. You check it and sign it on the next screen.</p>
+      ${holder}
       ${body ? `<div class="form-grid">${body}</div>` : ''}
       ${edit ? '' : '<p class="meta ivf-taxedit"><button class="link-btn" type="button" data-action="ivf-taxedit">Change your answers</button></p>'}
       ${who}`;
@@ -1794,7 +1897,7 @@
     const a = w8 ? w8Answers(c, d) : w9Answers(c, d);
     const old = fl.taxEnvelopeId && (ws.envelopes || []).find((e) => e.id === fl.taxEnvelopeId);
     const os = old && signerOf(old, i);
-    const typed = w8 ? !!(tidy(d.ftin) || digitsOf(d.w8UsTin)) : !!(digitsOf(d.tin) || TINS[i.id]);
+    const typed = w8 ? !!(tidy(d.ftin) || digitsOf(d.w8UsTin)) : !!(digitsOf(d.tin) || TINS[i.id] || digitsOf(d.ownerTin));
     const same = !!old && !!old.taxForm && old.taxForm.form === map.form && BUILT[old.id] === plainAnswers(a) && !typed;
     const unsignedOld = !!old && old.status === 'sent' && !(os && os.status === 'signed');
     if (same && old.status === 'completed' && i.taxCert && i.taxCert.envelopeId === old.id && i.taxCert.signed === true) return false;
@@ -1822,12 +1925,14 @@
       d.ftin = d.w8UsTin = '';
     } else {
       const tin = tinOf(c, d);
-      fl.taxTinLast4 = tin ? tin.slice(-4) : '';
+      // the last four digits of the number the form carries (a disregarded LLC's owner's SSN; the account's number otherwise)
+      const onForm = String(a.ssn || a.ein || '');
+      fl.taxTinLast4 = onForm ? onForm.slice(-4) : '';
       fl.taxBackup = !!d.backup;
       if (digitsOf(d.tin).length === 9) i.tinLast4 = tin.slice(-4);
       i.taxType = PERSONAL(d.type) ? 'us-individual' : 'us-entity';
       delete TINS[i.id];
-      d.tin = '';
+      d.tin = d.ownerTin = '';
     }
     ob().taxEdit = false;
     return true;
@@ -2046,6 +2151,8 @@
         // D-30: nothing on the W-9 is required; a taxpayer ID typed only in part is pointed out, as on Investor information.
         const tin = digitsOf(d.tin);
         if (tin.length && tin.length !== 9) e.tin = 'Enter all nine digits, or leave this empty.';
+        const own = digitsOf(d.ownerTin);
+        if (w9Disregarded(c, d) && own.length && own.length !== 9) e.ownerTin = 'Enter all nine digits, or leave this empty.';
       } else if (taxKey(c, d)) {
         // D-30: nothing on the W-8BEN is required; a U.S. taxpayer ID typed only in part is pointed out.
         const t = digitsOf(d.w8UsTin);
@@ -2115,7 +2222,7 @@
       }
       d.tin = '';
       // The W-9 takes its name and address from these answers again (an earlier change on the tax step no longer applies).
-      d.w9Name = d.w9Street = d.w9City = '';
+      d.w9Name = d.w9Business = d.w9Street = d.w9City = '';
       d.w9Edit = false;
       // the same for the W-8BEN (plan 06-18)
       ['w8Name', 'w8Citizen', 'w8CitizenOther', 'w8Street', 'w8City', 'w8Country', 'w8CountryOther', 'w8Dob'].forEach((k) => (d[k] = ''));
@@ -2727,6 +2834,9 @@
     }
     const k = w9Known(c, o.d);
     o.d.w9Name = tidy(o.d.w9Name) || k.name;
+    o.d.w9Business = tidy(o.d.w9Business) || k.business;
+    if (o.d.type === 'ira') o.d.w9Exempt = tidy(o.d.w9Exempt) || '1';
+    if (!PERSONAL(o.d.type) && !o.d.w9TinKind) o.d.w9TinKind = w9TinBox(c, o.d);
     o.d.w9Street = tidy(o.d.w9Street) || k.street;
     o.d.w9City = tidy(o.d.w9City) || k.city;
     o.d.w9Edit = true;

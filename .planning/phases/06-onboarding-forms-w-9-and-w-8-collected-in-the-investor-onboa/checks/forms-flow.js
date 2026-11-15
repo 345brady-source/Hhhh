@@ -4,7 +4,7 @@
 // one investor with the signature and date at the form's own places, the investor signs it in the portal, and the stored
 // signed PDF is read back: Documents category Tax for that investor alone, zero form fields, each value inside its own
 // field, the signature ink inside the sign place, the "Signed electronically" caption, the date, the certificate page.
-//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned]
+//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned,us-llc,us-ccorp,us-trust,us-disregarded,us-ira,us-joint]
 // The last line is "FORMS FLOW: PASS (cases run: N)" or "FORMS FLOW: FAIL (cases run: N) - <failed cases>". Exits 2
 // (NOT RUN) when the bundled forms do not match assets/forms/SHA256SUMS.
 const path = require('path');
@@ -1471,6 +1471,336 @@ async function editSignedCase({ check, S }) {
   await A.context.close();
 }
 
+/* ---------- Plan 06-19: the W-9 for every U.S. account type (D-01, D-04, D-06, D-09, D-30) ---------- */
+
+/** The W-9's text fields by the portal's key (last part of the field's name in the bundled file). */
+const W9F = {
+  name: 'f1_01[0]',
+  business: 'f1_02[0]',
+  llcLetter: 'Boxes3a-b_ReadOrder[0].f1_03[0]',
+  otherText: 'Boxes3a-b_ReadOrder[0].f1_04[0]',
+  exemptPayee: 'f1_05[0]',
+  fatcaCode: 'f1_06[0]',
+  address: 'Address_ReadOrder[0].f1_07[0]',
+  cityStateZip: 'Address_ReadOrder[0].f1_08[0]',
+  requester: 'f1_09[0]',
+  accounts: 'f1_10[0]',
+  ssn1: 'f1_11[0]',
+  ssn2: 'f1_12[0]',
+  ssn3: 'f1_13[0]',
+  ein1: 'f1_14[0]',
+  ein2: 'f1_15[0]'
+};
+/** The W-9's boxes: line 3a in printed order, then line 3b. */
+const W9BOX = { individual: 'c1_1[0]', ccorp: 'c1_1[1]', scorp: 'c1_1[2]', partnership: 'c1_1[3]', trust: 'c1_1[4]', llc: 'c1_1[5]', other: 'c1_1[6]', foreignOwners: 'c1_2[0]' };
+const boxField = (k) => `${W9}Boxes3a-b_ReadOrder[0].${W9BOX[k]}`;
+
+/**
+ * What one W-9 on file prints: { text: { key: words inside that field, with the blank form's own words taken out },
+ * ticks: { box: new ink px against the blank form, 2 pt inside the box } }.
+ */
+async function w9Read(pdfFile, dir, blank) {
+  const R = await rects(blank);
+  const blankFile = path.join(dir, 'blank.pdf');
+  if (!fs.existsSync(blankFile)) fs.copyFileSync(path.join(ROOT, blank), blankFile);
+  const WB = words(blankFile, 1);
+  const fresh = words(pdfFile, 1).filter((w) => !WB.some((b) => b.t === w.t && Math.abs(b.x0 - w.x0) < 0.5 && Math.abs(b.y0 - w.y0) < 0.5));
+  const text = {};
+  Object.keys(W9F).forEach((k) => (text[k] = wordsIn(fresh, R.of[W9 + W9F[k]], 1)));
+  const ticks = {};
+  Object.keys(W9BOX).forEach((k) => {
+    const r = R.of[boxField(k)];
+    ticks[k] = inkBetween(blankFile, pdfFile, { x: r.x + 2, top: r.top + 2, w: r.w - 4, h: r.h - 4 }, 100);
+  });
+  return { R, text, ticks };
+}
+
+/** The expected text of each W-9 field from { name, business, llcLetter, otherText, exemptPayee, ssn, ein, ... }. */
+function w9Want(want, firm) {
+  const t = { address: '12 Elm Street', cityStateZip: 'Austin, TX 78701', requester: firm };
+  ['name', 'business', 'llcLetter', 'otherText', 'exemptPayee'].forEach((k) => want[k] && (t[k] = want[k]));
+  if (want.ssn) Object.assign(t, { ssn1: want.ssn.slice(0, 3), ssn2: want.ssn.slice(3, 5), ssn3: want.ssn.slice(5) });
+  if (want.ein) Object.assign(t, { ein1: want.ein.slice(0, 2), ein2: want.ein.slice(2) });
+  return t;
+}
+
+/**
+ * Checks one read W-9 against what it must print: every expected value inside its own field, every other field empty,
+ * exactly the expected boxes ticked.
+ */
+function w9Expect(check, label, got, want, firm) {
+  const t = w9Want(want, firm);
+  Object.keys(t).forEach((k) => {
+    const at = /^(ssn|ein)\d$/.test(k) ? got.text[k].replace(/\s+/g, '') : got.text[k];
+    check(`${label}: "${t[k]}" prints inside its own field (${k})`, at === t[k], { field: W9F[k], inside: at });
+  });
+  const extra = Object.keys(W9F).filter((k) => !(k in t) && got.text[k] !== '').map((k) => [k, got.text[k]]);
+  check(`${label}: nothing else is filled`, extra.length === 0, extra);
+  const on = Object.keys(W9BOX).filter((k) => got.ticks[k] > 10);
+  const stray = Object.keys(W9BOX).filter((k) => got.ticks[k] > 0 && got.ticks[k] <= 10);
+  check(`${label}: ticked boxes are exactly ${JSON.stringify(want.boxes)}`, JSON.stringify(on) === JSON.stringify(want.boxes) && stray.length === 0, got.ticks);
+}
+
+/**
+ * One U.S. account type end to end (D-01, D-04, D-06): the sponsor invites it with its investor type (D-09), the walk
+ * reaches the tax step, spec.atTax answers what the step asks (and checks what it shows), Continue builds the official
+ * W-9, the investor signs it and finishes, and the stored signed copy is read back: zero fields, every value inside its
+ * own field, nothing else filled, exactly the expected boxes, signature ink and caption on page 1.
+ * spec: { id, name, email, type, account, atTax({ page, check, shown, lede }), want: { name, business, llcLetter,
+ * otherText, exemptPayee, ssn, ein, boxes }, tinLast4, after({ page, check, dir, made, inv }) }.
+ */
+function w9AccountCase(spec) {
+  return async ({ check, S }) => {
+    const A = await Lib.open(S);
+    const page = A.page;
+    const dir = path.join(OUT, spec.id);
+    fs.mkdirSync(dir, { recursive: true });
+    const portal = await Lib.setupPortal(S, A);
+    const inv = await Lib.createInvitation(page, { name: spec.name, email: spec.email, type: spec.type, account: spec.account || '', offeringId: portal.offeringId });
+    await page.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
+    const w = await Lib.walk(page, Object.assign({ name: spec.name, acc: 'yes', basis: 0, until: /Tax certification/ }, spec.walk || {}));
+    check(`the ${spec.id} investor reaches the tax step`, w.reached && w.at === 'Tax certification' && w.errors.length === 0, { seen: w.seen, errors: w.errors });
+    if (!w.reached) return A.context.close();
+    const screens = [await Lib.screenText(page)];
+    const shown = await visibleInputs(page);
+    const lede = await page.evaluate(() => Array.from(document.querySelectorAll('.ivf-form p.lede, .ivf-form p.meta')).map((x) => x.innerText).join(' '));
+    await page.screenshot({ path: path.join(dir, `${spec.id}-answers.png`), fullPage: true });
+    await spec.atTax({ page, check, shown, lede });
+    await page.screenshot({ path: path.join(dir, `${spec.id}-answered.png`), fullPage: true });
+    await Lib.submit(page);
+    const errs = await Lib.fieldErrors(page);
+    check('Continue shows no error', errs.length === 0, errs);
+    await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 }).catch(() => {});
+    await page.waitForTimeout(300);
+    screens.push(await Lib.screenText(page));
+    const made = await page.evaluate((invId) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const i = ws.investors.find((x) => x.id === invId);
+      const env = (ws.envelopes || []).find((e) => e.id === (i.onboarding.flow || {}).taxEnvelopeId);
+      const map = NS.taxmaps['W-9 2024-03'];
+      return { env: env ? JSON.parse(JSON.stringify(env)) : null, overlays: map.overlays, blank: map.file, firm: ws.tenant.legalName || ws.tenant.name, title: i.title };
+    }, inv.investorId);
+    check('Continue made a W-9 tax envelope with this investor as its one signer', !!made.env && made.env.kind === 'tax' && made.env.taxForm.form === 'W-9' && made.env.signers.length === 1 && made.env.signers[0].investorId === inv.investorId, made.env && { kind: made.env.kind, taxForm: made.env.taxForm });
+    if (!made.env) return A.context.close();
+    await page.screenshot({ path: path.join(dir, `${spec.id}-signing.png`), fullPage: true });
+    await Lib.finishTaxForm(page, signTaxForm(made.env.fields.find((f) => f.type === 'signature').id));
+    const next = await Lib.heading(page);
+    check('signing and Finish move on to the next step', next === 'Distribution payments', next);
+    const got = await page.evaluate(
+      async ({ id, invId, b64src }) => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const b64 = eval(b64src);
+        const env = ws.envelopes.find((x) => x.id === id);
+        const i = ws.investors.find((x) => x.id === invId);
+        const docs = (ws.docs || []).filter((d) => d.envelopeId === id);
+        return {
+          docs: JSON.parse(JSON.stringify(docs)),
+          pdf: await b64(docs[0] ? await NS.ops.files.get(docs[0].id) : null),
+          filled: await b64(await NS.ops.files.get(env.docId)),
+          env: JSON.parse(JSON.stringify(env)),
+          taxForm: i.taxForm,
+          taxCert: JSON.parse(JSON.stringify(i.taxCert || null)),
+          all: JSON.stringify(ws) + JSON.stringify(Object.keys(localStorage).map((k) => localStorage.getItem(k)))
+        };
+      },
+      { id: made.env.id, invId: inv.investorId, b64src: B64_IN_PAGE }
+    );
+    const tc = got.taxCert || {};
+    check('the record keeps the signed W-9 and the last four digits only', got.taxForm === 'W-9' && tc.form === 'W-9' && tc.envelopeId === made.env.id && tc.signed === true && tc.signedBy === spec.name && tc.tinLast4 === spec.tinLast4, tc);
+    const full = [spec.want.ssn, spec.want.ein].filter(Boolean);
+    check('the saved workspace and local storage hold no full taxpayer ID', full.every((n) => got.all.indexOf(n) < 0));
+    const doc = got.docs[0] || {};
+    check('one Documents entry, category Tax, for this investor alone', got.docs.length === 1 && doc.cat === 'Tax' && JSON.stringify(doc.investors) === JSON.stringify([inv.investorId]), got.docs);
+    const signedFile = path.join(dir, 'signed.pdf');
+    const filledFile = path.join(dir, 'filled.pdf');
+    const signed = Buffer.from(got.pdf || '', 'base64');
+    fs.writeFileSync(signedFile, signed);
+    fs.writeFileSync(filledFile, Buffer.from(got.filled || '', 'base64'));
+    check('the stored file is the sealed signed copy', got.env.sha256Signed === sha(signed), { env: got.env.sha256Signed, file: sha(signed) });
+    const sPdf = await PL.PDFDocument.load(signed, { updateMetadata: false });
+    check('zero form fields in the signed copy', sPdf.getForm().getFields().length === 0, sPdf.getForm().getFields().length);
+    const read = await w9Read(signedFile, dir, made.blank);
+    w9Expect(check, 'signed W-9', read, spec.want, made.firm);
+    const ink = inkBetween(filledFile, signedFile, pts(made.overlays.sign, read.R.pw, read.R.ph), 100);
+    check('the signature ink lies inside the sign place on page 1', ink > 60, ink);
+    const signedAt = got.env.signers[0].signedAt || '';
+    const cap = `Signed electronically ${signedAt.slice(0, 10)} ${signedAt.slice(11, 16)} UTC`;
+    const capAt = wordsIn(words(signedFile, 1), pts(made.overlays.caption, read.R.pw, read.R.ph), 1.5);
+    check('"Signed electronically <date time> UTC" in the caption place on page 1', capAt === cap, { want: cap, got: capAt });
+    if (spec.after) await spec.after({ page, check, dir, made, inv });
+    const scr = Lib.leakCheck(screens.join('\n'));
+    check('white label: no vendor name or forbidden word on the tax screens', scr.ok, scr.hits);
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  };
+}
+
+/** The radios of one question on the step: their values, and the one chosen. */
+const radioState = (page, name) =>
+  page.evaluate((n) => {
+    const list = Array.from(document.querySelectorAll(`.ivf-form input[type=radio][name="${n}"]`));
+    return { values: list.map((r) => r.value), chosen: (list.find((r) => r.checked) || {}).value || '' };
+  }, name);
+
+/**
+ * us-llc (the tracer): an LLC taxed as a partnership with foreign partners. The step asks the classification once, as
+ * radios; LLC is chosen (its name says LLC), the tax letter P is picked, line 3b is offered for it and ticked; the EIN
+ * typed at Investor information goes into the EIN boxes; line 1 is the LLC's name.
+ */
+const usLlc = w9AccountCase({
+  id: 'us-llc',
+  name: 'Søren Ibáñez-Holt',
+  email: 'soren.ibanez@example.com',
+  type: 'entity',
+  account: 'Lakeshore Ridge Holdings LLC',
+  tinLast4: '6789',
+  async atTax({ page, check, shown }) {
+    const cls = await radioState(page, 'ob-w9Class');
+    check('the step asks the federal tax classification once, as radios (individual, C corp, S corp, partnership, trust or estate, LLC, other)', JSON.stringify(cls.values) === JSON.stringify(['individual', 'ccorp', 'scorp', 'partnership', 'trust', 'llc', 'other']), cls);
+    check('LLC is chosen already, because the account’s name ends in LLC', cls.chosen === 'llc', cls.chosen);
+    check('the step asks only about the classification (the EIN given at Investor information is known)', shown.length > 0 && shown.every((x) => ['ob-w9Class', 'ob-w9Disregarded', 'ob-w9Llc'].indexOf(x) >= 0), shown);
+    await page.check('input[name="ob-w9Class"][value="llc"]');
+    await page.waitForTimeout(200);
+    const llc = await radioState(page, 'ob-w9Llc');
+    check('for an LLC the step asks its tax letter (C, S or P)', JSON.stringify(llc.values) === JSON.stringify(['C', 'S', 'P']), llc);
+    check('line 3b is not offered before the letter says partnership', (await page.locator('#ob-w9Foreign').count()) === 0);
+    await page.check('input[name="ob-w9Llc"][value="P"]');
+    await page.waitForTimeout(200);
+    check('line 3b is offered for an LLC taxed as a partnership', (await page.locator('#ob-w9Foreign').count()) === 1);
+    await page.check('#ob-w9Foreign');
+  },
+  want: { name: 'Lakeshore Ridge Holdings LLC', llcLetter: 'P', ein: '123456789', boxes: ['llc', 'foreignOwners'] }
+});
+
+/** us-ccorp: a corporation (its name does not say how it is taxed): nothing is chosen for it; C corporation and its EIN. */
+const usCcorp = w9AccountCase({
+  id: 'us-ccorp',
+  name: 'Hélène Vasquez-Adeyemi',
+  email: 'helene.vasquez@example.com',
+  type: 'entity',
+  account: 'Northgate Precision Tools, Inc.',
+  tinLast4: '6789',
+  async atTax({ page, check }) {
+    const cls = await radioState(page, 'ob-w9Class');
+    check('the classification is asked, with nothing chosen for a corporation (C or S is not known)', cls.values.length === 7 && cls.chosen === '', cls);
+    await page.check('input[name="ob-w9Class"][value="ccorp"]');
+    await page.waitForTimeout(200);
+    const shown = await visibleInputs(page);
+    check('a C corporation is asked nothing more: no LLC letter, no line 3b', shown.every((x) => x === 'ob-w9Class'), shown);
+  },
+  want: { name: 'Northgate Precision Tools, Inc.', ein: '123456789', boxes: ['ccorp'] }
+});
+
+/** us-trust: trust or estate is ticked without a question; line 3b is offered and left unticked; the trust's EIN. */
+const usTrust = w9AccountCase({
+  id: 'us-trust',
+  name: 'Ingrid Castellanos-Moore',
+  email: 'ingrid.castellanos@example.com',
+  type: 'trust',
+  account: 'Castellanos-Moore Family Trust',
+  tinLast4: '6789',
+  async atTax({ page, check, shown, lede }) {
+    check('no classification question for a trust', (await page.locator('input[name="ob-w9Class"]').count()) === 0, shown);
+    check('the step offers line 3b for the trust, and only that', JSON.stringify(shown) === JSON.stringify(['ob-w9Foreign']), shown);
+    check('line 3b starts unticked', !(await page.isChecked('#ob-w9Foreign').catch(() => true)));
+    check('the step says the form is filled in from the answers', /Form W-9 is filled in from your answers/.test(lede), lede);
+  },
+  want: { name: 'Castellanos-Moore Family Trust', ein: '123456789', boxes: ['trust'] }
+});
+
+/**
+ * us-disregarded: an LLC answered as disregarded for U.S. tax. Line 1 is the owner (the controlling person on file), line
+ * 2 the LLC, the individual box, and the owner's SSN (asked on the step; the LLC's EIN is not used); no letter, no 3b.
+ */
+const usDisregarded = w9AccountCase({
+  id: 'us-disregarded',
+  name: 'Mireille Østergaard-Nwosu',
+  email: 'mireille.ostergaard@example.com',
+  type: 'entity',
+  account: 'Brightwater Studio LLC',
+  tinLast4: '7386',
+  async atTax({ page, check }) {
+    check('"disregarded for U.S. tax?" is asked for the LLC', (await page.locator('#ob-w9Disregarded').count()) === 1);
+    await page.check('#ob-w9Disregarded');
+    await page.waitForTimeout(200);
+    const shown = await visibleInputs(page);
+    check('disregarded: no LLC letter, no line 3b; the owner’s SSN is asked', shown.indexOf('ob-w9Llc') < 0 && shown.indexOf('ob-w9Foreign') < 0 && shown.indexOf('ob-ownerTin') >= 0, shown);
+    const label = await page.locator('label[for="ob-ownerTin"] > span').first().innerText().catch(() => '');
+    check('the SSN field names the owner on file', /Social Security number/.test(label) && label.indexOf('Mireille Østergaard-Nwosu') >= 0, label);
+    await page.fill('#ob-ownerTin', '512407386');
+    // the disregarded question is asked only for an LLC
+    await page.check('input[name="ob-w9Class"][value="scorp"]');
+    await page.waitForTimeout(200);
+    check('the disregarded question is asked only for an LLC', (await page.locator('#ob-w9Disregarded').count()) === 0);
+    await page.check('input[name="ob-w9Class"][value="llc"]');
+    await page.waitForTimeout(200);
+    check('back on LLC the disregarded answer and the owner’s SSN are as given', (await page.isChecked('#ob-w9Disregarded').catch(() => false)) && (await page.inputValue('#ob-ownerTin').catch(() => '')) === '512407386');
+  },
+  want: { name: 'Mireille Østergaard-Nwosu', business: 'Brightwater Studio LLC', ssn: '512407386', boxes: ['individual'] }
+});
+
+/**
+ * us-ira: the IRA's W-9 (planner's choice, research A5): the classification is asked like an entity's, trust or estate
+ * chosen to start; exempt payee code 1 is pre-filled and printed on line 4; emptied under "Change your answers", it prints
+ * nothing.
+ */
+const usIra = w9AccountCase({
+  id: 'us-ira',
+  name: 'Thandiwe Abernathy-Ruiz',
+  email: 'thandiwe.abernathy@example.com',
+  type: 'ira',
+  account: 'Harbor Trust Company Custodian FBO Thandiwe Abernathy-Ruiz IRA',
+  tinLast4: '6789',
+  async atTax({ page, check, shown }) {
+    const cls = await radioState(page, 'ob-w9Class');
+    check('the IRA’s classification is asked as radios, trust or estate chosen to start', cls.values.length === 7 && cls.chosen === 'trust', cls);
+    check('no line 3b for an IRA, nothing else asked', shown.every((x) => x === 'ob-w9Class'), shown);
+  },
+  want: { name: 'Harbor Trust Company Custodian FBO Thandiwe Abernathy-Ruiz IRA', exemptPayee: '1', ein: '123456789', boxes: ['trust'] },
+  async after({ page, check, dir, made, inv }) {
+    await page.click('[data-action="ivf-back"]');
+    await page.waitForFunction(() => document.querySelector('.ivf-form h1') && document.querySelector('.ivf-form h1').innerText === 'Tax certification', null, { timeout: 15000 });
+    await page.click('[data-action="ivf-taxedit"]');
+    await page.waitForSelector('#ob-w9Exempt', { timeout: 10000 });
+    const was = await page.inputValue('#ob-w9Exempt');
+    check('"Change your answers" shows exempt payee code 1, editable', was === '1', was);
+    await page.fill('#ob-w9Exempt', '');
+    // the EIN left this page's memory once it was in the signed form (T-06-35); typed again here
+    await page.fill('#ob-tin', '123456789');
+    await Lib.submit(page);
+    await page.waitForFunction((id) => {
+      const i = window.CVPortal.state.ws.investors.find((x) => x.id === id);
+      return document.querySelector('.ivf-tax-sign .es-doc-sign .es-page img') && (i.onboarding.flow || {}).taxEnvelopeId;
+    }, inv.investorId, { timeout: 60000 });
+    const second = await flowTaxEnv(page, inv.investorId);
+    check('Continue built a new form', !!second.envId && second.envId !== made.env.id, { first: made.env.id, second: second.envId });
+    const f2 = path.join(dir, 'emptied.pdf');
+    fs.writeFileSync(f2, Buffer.from(second.filled || '', 'base64'));
+    const r2 = await w9Read(f2, dir, made.blank);
+    w9Expect(check, 'exempt code emptied', r2, { name: 'Harbor Trust Company Custodian FBO Thandiwe Abernathy-Ruiz IRA', ein: '123456789', boxes: ['trust'] }, made.firm);
+    await Lib.finishTaxForm(page);
+    check('Finish moves on', (await Lib.heading(page)) === 'Distribution payments', await Lib.heading(page));
+  }
+});
+
+/** us-joint: the W-9 of the holder whose SSN is given (planner's choice): line 1 the first holder; one line says whose form it is. */
+const usJoint = w9AccountCase({
+  id: 'us-joint',
+  name: 'Joaquín Ferreira-Lund',
+  email: 'joaquin.ferreira@example.com',
+  type: 'joint',
+  account: 'Joaquín Ferreira-Lund and Maëlle Ferreira-Lund, JTWROS',
+  tinLast4: '6789',
+  async atTax({ page, check, shown, lede }) {
+    check('a joint account is asked nothing on the tax step', shown.length === 0, shown);
+    check('one line says the form is the first holder’s', /This is the form of Joaquín Ferreira-Lund, the first holder of the account/.test(lede), lede);
+  },
+  want: { name: 'Joaquín Ferreira-Lund', ssn: '123456789', boxes: ['individual'] }
+});
+
 const mmddyyyy = (iso) => {
   const [y, m, d] = String(iso).split('-');
   return `${m}-${d}-${y}`;
@@ -1538,7 +1868,13 @@ const cases = {
   'foreign-individual': foreignIndividual,
   noftin: noFtinCase,
   edit: editCase,
-  editsigned: editSignedCase
+  editsigned: editSignedCase,
+  'us-llc': usLlc,
+  'us-ccorp': usCcorp,
+  'us-trust': usTrust,
+  'us-disregarded': usDisregarded,
+  'us-ira': usIra,
+  'us-joint': usJoint
 };
 
 // The bundled forms must match their pins before anything runs.
