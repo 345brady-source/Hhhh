@@ -16,8 +16,10 @@
  *   places     part a: 241 of 241 places found, no stray, no overlap
  *   kinds      places, and no kind differs from the answer sheet
  *   owners     kinds, and no owner differs, and every field is marked for review
- *   full       owners; names; "safe by default" passed; no failed row at all; the read summary says truthfully whose
- *              signature lines were found and on which pages (computed from the answer sheet)
+ *   full       owners; names; no offer to read pictures appeared (D-13, Phase 01.4: the pictures are read on upload
+ *              with no click, so the scorer reports that no offer appeared and writes no "safe by default" row); no
+ *              failed row at all; the read summary says truthfully whose signature lines were found and on which pages
+ *              (computed from the answer sheet)
  *   names      part a: every field's name (its party's prefix taken off) is its own place's caption, or the plain word
  *              of its kind, or a shape name ("Box", "Tick box") carried with its own mark (the reason that its words
  *              could not be read or its owner is in doubt, which page confirmation never takes away). The name is
@@ -244,8 +246,11 @@ if (total) {
   if (has('names') || has('full')) nameCheck();
   if (has('full')) {
     owners();
+    // D-13: the sponsor only uploads. An offer to read pictures (the scorer's "safe by default" row is written only when
+    // one was found and pressed) fails; the scorer must say that none appeared.
     const safe = rows.find((r) => r.part === 'a' && /safe by default/.test(r.name));
-    need(!!safe && safe.mark === 'PASS', 'the row "safe by default" of part a is not marked PASS');
+    const noOffer = rows.find((r) => r.part === 'a' && /no button or link "Read these pages from their picture" appeared/.test(r.name));
+    need(!safe && !!noOffer, safe ? 'an offer to read the pages from their picture appeared in part a: the pictures must be read on upload with no click' : 'part a does not report that no offer to read pictures appeared');
     failed().forEach((r) => need(false, 'failed: ' + short(r)));
     const note = String(score.note || '').replace(/[‘’]/g, "'");
     [
