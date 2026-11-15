@@ -248,6 +248,11 @@ const aSig = M.FEATURE_NAMES.length + M.AGG_NAMES.indexOf('agg:dec:kind:signatur
 line(ag.length === 4 && ag[0].x.length === L + M.AGG_NAMES.length && ag[0].x[aSig] === 0.5 && ag[1].x[aSig] === 0.5 && ag[2].x[aSig] === 1 && ag[3].x[aSig] === 1 && ag[0].x[ai('blk:n')] === 7,
   'aggregate: block means of the kind and party slots, block by page and block slots', ag.map((r) => r.x[aSig]).join(', '));
 
+// The rules' final kind as columns (plan 31): one-hot over RULE_NAMES, any other kind counts as text.
+const rc = (k) => Array.from(M.ruleColumns(k)).join('');
+line(M.RULE_NAMES.length === 6 && rc('signature') === '010000' && rc('checkbox') === '100000' && rc('text') === '000001' && rc('address') === '000001',
+  'ruleColumns: the rules\' final kind, one-hot', `${M.RULE_NAMES.join(' ')}; signature ${rc('signature')}, address ${rc('address')}`);
+
 // Parity (plan 31): the exported models give the trainer's own probabilities, raw and calibrated, to 1e-6.
 const pi = process.argv.indexOf('--parity');
 if (pi >= 0) {

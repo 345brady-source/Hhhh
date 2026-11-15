@@ -18,6 +18,8 @@
  *                         pid is the proposal's index in res.fields; box is in points of the page as displayed
  *   aggregate(rows)       the rows of one document with AGG_NAMES appended to each x: the mean over the row's block of
  *                         its kind and party slots (the person model reads these extra columns; model.agg is true)
+ *   ruleColumns(kind)     the rules' own final kind of the field as RULE_NAMES columns (one-hot), appended after the
+ *                         row's slots for a model whose model.rules is true (the kind model)
  *   predict(model, x)     class probabilities of a tree model for one row (null for a model of another FEATURES_V)
  *   calibrate(table, p)   p mapped through an isotonic table { x: [...], y: [...] } by linear interpolation
  *   FEATURES_V            the version of the feature list; any change to a name, an order, a word family, a reach or
@@ -506,6 +508,18 @@
     });
   }
 
+  // RULE_NAMES: the rules' own final kind of the field (the field esign placed from this proposal), one-hot, as extra
+  // columns after FEATURE_NAMES for the kind model (model.rules is true): the model learns where the rules go wrong.
+  const RULE_KINDS = ['checkbox', 'signature', 'initials', 'date', 'name', 'text'];
+  const RULE_NAMES = Object.freeze(RULE_KINDS.map((k) => `rule:kind:${k}`));
+  // ruleColumns(kind) -> the RULE_NAMES columns for the rules' final kind (any other kind counts as text).
+  function ruleColumns(kind) {
+    const out = new Float64Array(RULE_NAMES.length);
+    const k = RULE_KINDS.indexOf(kind);
+    out[k >= 0 ? k : RULE_KINDS.indexOf('text')] = 1;
+    return out;
+  }
+
   /* ---------- the tree evaluator and calibration ---------- */
   function predict(model, x) {
     if (!model || model.v !== FEATURES_V || !Array.isArray(model.trees)) return null;
@@ -548,7 +562,7 @@
     return b > a ? ys[i - 1] + ((p - a) / (b - a)) * (ys[i] - ys[i - 1]) : ys[i];
   }
 
-  const API = { blocks, features, aggregate, predict, calibrate, norm, fnv1a, bucket, FEATURES_V, FEATURE_NAMES, AGG_NAMES, lastRows: null };
+  const API = { blocks, features, aggregate, ruleColumns, predict, calibrate, norm, fnv1a, bucket, FEATURES_V, FEATURE_NAMES, AGG_NAMES, RULE_NAMES, lastRows: null };
   if (NS) NS.meaning = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
 })(typeof window !== 'undefined' && window.CVPortal ? window.CVPortal : typeof globalThis !== 'undefined' && globalThis.CVPortal ? globalThis.CVPortal : null);
