@@ -161,6 +161,22 @@ function page(w, h, ground) {
   line(got === null, 'a writing place with no line under it is dropped', `${fmt(got)} (expected none)`);
 }
 
+{
+  const p = page(400, 300);
+  p.rect(10, 200, 390, 202, 30); // a separator across the page, far past the place's ends
+  const P = PM.sheet(p.g, p.w, p.h, 255, 225, S);
+  const got = PM.snapRule(P, { x0: 150, y0: 175, x1: 250, y1: 206 });
+  line(got === null, 'a writing place on a separator across the page is dropped', `${fmt(got)} (expected none)`);
+}
+{
+  const p = page(400, 300);
+  p.rect(100, 200, 160, 202, 30); // a row of letters run together: print just under the row as well
+  for (let x = 100; x < 160; x += 4) p.rect(x, 202, x + 2, 210, 30);
+  const P = PM.sheet(p.g, p.w, p.h, 255, 225, S);
+  const got = PM.snapRule(P, { x0: 100, y0: 175, x1: 160, y1: 203 });
+  line(got === null, 'a writing place on letters run together is dropped', `${fmt(got)} (expected none)`);
+}
+
 /* ---------- whole path in points: snapAll and resample ---------- */
 {
   const p = page(400, 300);

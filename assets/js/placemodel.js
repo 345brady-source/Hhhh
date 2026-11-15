@@ -50,7 +50,8 @@
   const TICK_PT = [4.5, 16]; // the sides of a tick box
   const TICK_INK = 0.02; // the most of a tick box's inside that may be as dark as print
   const BOX_INK = 0.06; // the same for a row of letter boxes, its walls left out
-  const LINE_MIN_PT = 10; // the shortest printed line a writing place stands on
+  const LINE_MIN_PT = 18; // the shortest printed line a writing place stands on
+  const PAPER_INK = 0.1; // the most print on the rows just over and under a printed line
   const ROOM_PT = 12; // the room above a line that must be paper
   const ROOM_INK = 0.03;
   const LINE_T_PT = 1.5; // the thickest a printed line may be (and at least 2 pixels)
@@ -362,7 +363,8 @@
   /**
    * A writing or signature place snapped to the printed line it stands on: the row within SNAP_PT of the place's foot
    * with the longest run of print (gaps of a pixel bridged) inside the place widened by SNAP_PT, at least LINE_MIN_PT
-   * and half the place long; at most LINE_T_PT thick; paper over it for ROOM_PT (at most ROOM_INK print). b: canvas
+   * and half the place long; the whole line, followed past the place, ends within SNAP_PT of the place's two ends; at
+   * most LINE_T_PT thick; paper just over and under it; paper over it for ROOM_PT (at most ROOM_INK print). b: canvas
    * pixels. Returns { x0, y0, x1, y1, t, line: true } in canvas pixels (y0..y1 the stroke) or null.
    */
   function snapRule(P, b) {
@@ -393,6 +395,12 @@
       if (!best || len > best.len || (len === best.len && Math.abs(y - foot) < Math.abs(best.y - foot))) best = { y, x0: bestRun[0], x1: bestRun[1], len };
     }
     if (!best) return null;
+    // the whole of the printed line, followed past the place on both sides (gaps of a pixel bridged): its two ends
+    // must be the place's ends, each within SNAP_PT (a separator across the page is no writing place)
+    const at = (x) => x >= 0 && x < P.w && P.grey[best.y * P.w + x] < P.dark;
+    while (at(best.x0 - 1) || at(best.x0 - 2)) best.x0 -= at(best.x0 - 1) ? 1 : 2;
+    while (at(best.x1 + 1) || at(best.x1 + 2)) best.x1 += at(best.x1 + 1) ? 1 : 2;
+    if (Math.abs(best.x0 - b.x0) > d || Math.abs(best.x1 + 1 - b.x1) > d) return null;
     // its thickness: the rows next to it printed along nine tenths of the run
     let y0 = best.y;
     let y1 = best.y;
@@ -400,6 +408,8 @@
     while (y1 < P.h - 1 && rowInk(P, y1 + 1, best.x0, best.x1) >= 0.9) y1++;
     const t = y1 - y0 + 1;
     if (t > Math.max(2, Math.floor(LINE_T_PT * P.s))) return null;
+    // paper on both sides of it, two pixels off, along nine tenths of it (a row of letters run together has not)
+    if (rowInk(P, y0 - 2, best.x0, best.x1) > PAPER_INK || rowInk(P, y1 + 2, best.x0, best.x1) > PAPER_INK) return null;
     // room to write over it, along its middle four fifths
     const trim = Math.round(0.1 * (best.x1 - best.x0));
     const room = Math.round(ROOM_PT * P.s);
