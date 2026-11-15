@@ -285,8 +285,34 @@ export function createServer(opts = {}) {
    * call); otherwise a 200 ndjson stream: { t } for each piece of the reply's text, { h: 1 } every 15 s while nothing else
    * is sent, then one last line { ok: true, json } or { ok: false, reason }. Its own errors never reach the global handler,
    * so no exception text, model or provider name is ever sent; the browser closing the connection stops the call.
+   *
+   * pdfs (optional, D-37): [{ name, data, pages, of }], the PDFs whose text layer could not be read, sent as documents
+   * before the prompt. At most 5; each data base64 whose bytes start with %PDF-; 600 pages in all; a 32 MB body. With PDFs
+   * the input is always counted (free) first: over 900000 tokens is 413, a failed count is 402 with a cap and 502 without.
    */
   const INTAKE_LIMIT = 500000;
+  const INTAKE_BODY = 32 * 1024 * 1024;
+  const INTAKE_PDFS = 5;
+  const INTAKE_PAGES = 600;
+  const INTAKE_TOKENS = 900000;
+  /** The request's PDFs: [] when there are none, null when malformed, 'too_large' past the count or page limits. */
+  function intakePdfs(list) {
+    if (list === undefined || list === null) return [];
+    if (!Array.isArray(list)) return null;
+    if (!list.length) return [];
+    if (list.length > INTAKE_PDFS) return 'too_large';
+    let pages = 0;
+    for (const p of list) {
+      if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
+      if (typeof p.name !== 'string' || !p.name.trim() || p.name.length > 300) return null;
+      if (typeof p.data !== 'string' || !p.data.length || p.data.length % 4 !== 0 || !B64.test(p.data)) return null;
+      if (!Buffer.from(p.data.slice(0, 12), 'base64').subarray(0, 5).equals(Buffer.from('%PDF-'))) return null;
+      if (!Number.isInteger(p.pages) || p.pages < 1 || !Number.isInteger(p.of) || p.of < p.pages) return null;
+      pages += p.pages;
+    }
+    if (pages > INTAKE_PAGES) return 'too_large';
+    return list.map((p) => ({ name: p.name, data: p.data, pages: p.pages, of: p.of }));
+  }
   const REASONS = ['declined', 'incomplete', 'invalid', 'timeout', 'failed'];
   async function readIntake(req, res) {
     const t0 = Date.now();
@@ -295,7 +321,7 @@ export function createServer(opts = {}) {
       if (!(await readerOn())) return send(res, 503, { ok: false, reason: 'unavailable' });
       let raw;
       try {
-        raw = await readRaw(req, 2 * 1024 * 1024);
+        raw = await readRaw(req, INTAKE_BODY);
       } catch (e) {
         return send(res, e && e.status === 413 ? 413 : 400, { ok: false, reason: e && e.status === 413 ? 'too_large' : 'invalid' });
       }
@@ -305,23 +331,42 @@ export function createServer(opts = {}) {
       } catch {
         body = null;
       }
-      const prompt = body && typeof body === 'object' && !Array.isArray(body) ? body.prompt : undefined;
+      raw = null;
+      const obj = body && typeof body === 'object' && !Array.isArray(body) ? body : null;
+      body = null;
+      const prompt = obj ? obj.prompt : undefined;
       if (typeof prompt !== 'string' || !prompt.length) return send(res, 400, { ok: false, reason: 'invalid' });
       if (prompt.length > INTAKE_LIMIT) return send(res, 413, { ok: false, reason: 'too_large' });
+      const pdfs = intakePdfs(obj.pdfs);
+      if (pdfs === null) return send(res, 400, { ok: false, reason: 'invalid' });
+      if (pdfs === 'too_large') return send(res, 413, { ok: false, reason: 'too_large' });
+      // The read log counts the PDFs and their pages (numbers only), and only when there are some.
+      const sent = pdfs.length ? { pdfs: pdfs.length, pdfPages: pdfs.reduce((a, p) => a + p.pages, 0) } : {};
 
-      // The spend cap: the prompt counted (free) and the worst case of this call checked before anything is spent.
+      // The spend cap: the request counted (free) and the worst case of this call checked before anything is spent. With
+      // PDFs the request is always counted, so one past the reading service's input limit is refused before any call.
       let counted = null;
       const budget = intake.budget;
-      if (budget && budget.on) {
+      const capped = !!(budget && budget.on);
+      if (capped || pdfs.length) {
         try {
-          counted = await intake.count(prompt);
+          counted = pdfs.length ? await intake.count(prompt, pdfs) : await intake.count(prompt);
         } catch {
           counted = null;
         }
-        if (counted === null || !budget.allow(counted, intake.maxTokens())) {
-          record({ chars: prompt.length, counted, outcome: 'spend_cap' });
+        if (pdfs.length && counted !== null && counted > INTAKE_TOKENS) {
+          record(Object.assign({ chars: prompt.length, counted, outcome: 'too_large' }, sent));
+          return send(res, 413, { ok: false, reason: 'too_large' });
+        }
+        if (capped && (counted === null || !budget.allow(counted, intake.maxTokens()))) {
+          record(Object.assign({ chars: prompt.length, counted, outcome: 'spend_cap' }, sent));
           console.error('intake: spend_cap 402');
           return send(res, 402, { ok: false, reason: 'spend_cap' });
+        }
+        if (counted === null) {
+          record(Object.assign({ chars: prompt.length, counted, outcome: 'failed' }, sent));
+          console.error('intake: failed 502');
+          return send(res, 502, { ok: false, reason: 'failed' });
         }
       }
 
@@ -343,7 +388,7 @@ export function createServer(opts = {}) {
       if (beat.unref) beat.unref();
       let r;
       try {
-        r = await intake.run(prompt, { signal: ctl.signal, onText: (t) => write({ t: String(t) }) });
+        r = await intake.run(prompt, Object.assign({ signal: ctl.signal, onText: (t) => write({ t: String(t) }) }, pdfs.length ? { pdfs } : {}));
       } catch {
         r = null;
       } finally {
@@ -358,7 +403,7 @@ export function createServer(opts = {}) {
       const usage = r.usage || {};
       const cost = costOf(usage, r.model);
       if (budget && budget.add) budget.add(usage, r.model);
-      record({ ms: Number(r.ms) || Date.now() - t0, chars: prompt.length, counted, outcome: ok ? 'read' : reason, stopReason: String(r.stopReason || ''), model: String(r.model || ''), usage: { input_tokens: Number(usage.input_tokens) || 0, output_tokens: Number(usage.output_tokens) || 0, cache_creation_input_tokens: Number(usage.cache_creation_input_tokens) || 0, cache_read_input_tokens: Number(usage.cache_read_input_tokens) || 0 }, cost: cost.usd });
+      record(Object.assign({ ms: Number(r.ms) || Date.now() - t0, chars: prompt.length, counted, outcome: ok ? 'read' : reason, stopReason: String(r.stopReason || ''), model: String(r.model || ''), usage: { input_tokens: Number(usage.input_tokens) || 0, output_tokens: Number(usage.output_tokens) || 0, cache_creation_input_tokens: Number(usage.cache_creation_input_tokens) || 0, cache_read_input_tokens: Number(usage.cache_read_input_tokens) || 0 }, cost: cost.usd }, sent));
       if (!ok) console.error(`intake: ${reason}${r.status ? ' ' + Number(r.status) : ''}`);
     } catch {
       if (!res.headersSent) return send(res, 500, { ok: false, reason: 'failed' });

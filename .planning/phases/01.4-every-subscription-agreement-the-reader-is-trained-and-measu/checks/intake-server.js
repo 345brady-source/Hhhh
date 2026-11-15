@@ -2,7 +2,7 @@
 /*
  * The offering intake read through the portal's reading server (D-36), on the real intake screen.
  *
- *   node intake-server.js [--only unchanged,api,fallback,failures | measure | all]
+ *   node intake-server.js [--only unchanged,api,fallback,failures,unreadable | measure | all]
  *   node intake-server.js --only measure --doc <pdf> --out <dir> [--cap 1.00] [--max-tokens 24000] [--fake]
  *
  *   unchanged  every protected slice of intake.js and console.js hashes to the value recorded at planning (D-36: only the
@@ -15,6 +15,11 @@
  *   failures   the reading server answering 503, 401, 402, 413, 429, a failed last line, no last line, a refused
  *              connection, a reply past the browser's limit, and Stop pressed: each leaves the built-in result with
  *              today's note and method rules
+ *   unreadable D-37 and D-38 on public PDFs only (never the blind documents): the readability share of every public PDF,
+ *              of a public PPM made into a broken-text PDF (pictures of its first 12 pages with a scrambled invisible text
+ *              layer) and of a picture-only PDF, against UNREADABLE_BELOW; the broken PDF and the picture-only PDFs sent as
+ *              PDFs with a reading server set (the fictional fund reaches review); without one, today's behaviour exactly;
+ *              a readable public PPM sent as { prompt } byte for byte as plan 66 sends it. Made PDFs go to out-68 in SCRATCH.
  *   measure    one PDF once through the intake screen against a reading server (D-34 tooling, plan 67 runs it). Real mode
  *              needs CARROWVALE_API_KEY and spawns server/index.mjs on port 8798 with a fresh API_TOKEN, the read log and
  *              store in <dir> (the log is kept, so the cap counts every call made for that folder), the cap and output
@@ -37,7 +42,7 @@ const { pathToFileURL } = require('url');
 
 const ROOT = path.resolve(__dirname, '..', '..', '..', '..');
 const HARNESS = path.join(ROOT, '.planning/phases/01-accurate-field-placement/checks/harness.js');
-const ALL = ['unchanged', 'api', 'fallback', 'failures', 'measure'];
+const ALL = ['unchanged', 'api', 'fallback', 'failures', 'unreadable', 'measure'];
 const arg = (name) => {
   const i = process.argv.indexOf('--' + name);
   return i > 0 && process.argv[i + 1] && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : null;
@@ -51,6 +56,17 @@ if (!fs.existsSync(HARNESS)) notRun('the check browser is missing (' + HARNESS +
 const FAKE = flag('fake');
 const DOC = arg('doc');
 const OUT = arg('out');
+if (PARTS.includes('unreadable')) {
+  const pub = path.join(process.env.INTAKE_SCRATCH || path.join(os.tmpdir(), 'claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad'), 'public-agreements');
+  ['PPM_RockStep_Hometown_America_Fund_I', 'PPM_Worcester_Fund_LLC'].forEach((d) => fs.existsSync(path.join(pub, d, 'doc.pdf')) || notRun('the public PDF ' + d + ' is missing'));
+  ['pdftoppm', 'pdftotext'].forEach((t) => {
+    try {
+      execFileSync(t, ['-v'], { stdio: 'ignore' });
+    } catch (e) {
+      if (e.code === 'ENOENT') notRun(t + ' is not installed');
+    }
+  });
+}
 if (PARTS.includes('measure')) {
   if (!DOC || !fs.existsSync(DOC)) notRun('the document to measure is missing (--doc ' + (DOC || '') + ')');
   if (!OUT) notRun('no output folder (--out)');
@@ -76,7 +92,7 @@ const SLICES = [
   ['assets/js/intake.js', '  const TERMS = ', 'bff29f3668ceae40', true],
   ['assets/js/intake.js', '  const readWithRules = ', '954471e2c2951273', true],
   ['assets/js/intake.js', '  NS.intake = {', '48f32cb9213f564a', true], // plan 64 Task 3: white-label renames only (D-16, D-31); intake behaviour unchanged per D-36
-  ['assets/js/console.js', "  NS.actions['ik-read'] = async () => {", 'f702d6bff3f5f4d5', false, '  };'], // plan 64 Task 3: white-label renames only (D-16, D-31); intake behaviour unchanged per D-36
+  ['assets/js/console.js', "  NS.actions['ik-read'] = async () => {", 'b6e0356fd10fd2da', false, '  };'], // plan 68: D-38 routes a picture-only PDF to the PDF path instead of 'No readable text was found'
   ['assets/js/console.js', '  function ikUpload() {', '13f3a8a19730a1d5'], // plan 64 Task 3: white-label renames only (D-16, D-31); intake behaviour unchanged per D-36
   ['assets/js/console.js', '  function ikReview() {', '635f88df5f398127']
 ];
@@ -407,6 +423,274 @@ async function partFailures(h, page) {
   }
 }
 
+/* ---------- Part unreadable (D-37, D-38) ---------- */
+/** Public PDFs only (D-34: the blind documents are never used here); the made test PDFs are kept in OUT68. */
+const SCRATCH = process.env.INTAKE_SCRATCH || path.join(os.tmpdir(), 'claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad');
+const PUBLIC = path.join(SCRATCH, 'public-agreements');
+const OUT68 = path.join(SCRATCH, 'edgar/measure/out-68');
+const ROCKSTEP = path.join(PUBLIC, 'PPM_RockStep_Hometown_America_Fund_I/doc.pdf');
+const WORCESTER = path.join(PUBLIC, 'PPM_Worcester_Fund_LLC/doc.pdf');
+const NO_TEXT = 'No readable text was found. A scanned PDF needs OCR first, or paste the summary of terms.';
+const ATTACHED = 'attached as a PDF because its text layer could not be read';
+const sha = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
+/** Every letter moved 7 places along the alphabet (the scrambled text layer). */
+const shift7 = (s) =>
+  s.replace(/[A-Za-z]/g, (c) => {
+    const b = c <= 'Z' ? 65 : 97;
+    return String.fromCharCode(((c.charCodeAt(0) - b + 7) % 26) + b);
+  });
+/**
+ * Pages first..last of a public PDF rendered to pictures (pdftoppm, 110 dpi) and laid full-page into a new PDF with pdf-lib
+ * in the check browser. With scramble, each page also gets an invisible text layer (opacity 0) holding that page's
+ * extracted text with every letter shifted 7 places: the pages look the same while the text layer cannot be read.
+ * Made once into `out`.
+ */
+async function picturePdf(page, src, first, last, scramble, out) {
+  if (fs.existsSync(out)) return out;
+  fs.mkdirSync(OUT68, { recursive: true });
+  const tmp = fs.mkdtempSync(path.join(OUT68, 'render-'));
+  try {
+    execFileSync('pdftoppm', ['-r', '110', '-jpeg', '-f', String(first), '-l', String(last), src, path.join(tmp, 'p')]);
+    const imgs = fs
+      .readdirSync(tmp)
+      .filter((f) => f.endsWith('.jpg'))
+      .sort()
+      .map((f) => fs.readFileSync(path.join(tmp, f)).toString('base64'));
+    const texts = scramble ? imgs.map((_, i) => shift7(execFileSync('pdftotext', ['-layout', '-f', String(first + i), '-l', String(first + i), src, '-'], { encoding: 'utf8' })).replace(/[^\x20-\x7e\n]/g, ' ')) : null;
+    const b64 = await page.evaluate(
+      async ({ imgs, texts }) => {
+        if (!window.PDFLib)
+          await new Promise((res, rej) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+            s.onload = res;
+            s.onerror = rej;
+            document.head.appendChild(s);
+          });
+        const { PDFDocument, StandardFonts } = window.PDFLib;
+        const doc = await PDFDocument.create();
+        const font = texts ? await doc.embedFont(StandardFonts.Helvetica) : null;
+        const bin = (b) => Uint8Array.from(atob(b), (c) => c.charCodeAt(0));
+        for (let i = 0; i < imgs.length; i++) {
+          const img = await doc.embedJpg(bin(imgs[i]));
+          const w = (img.width * 72) / 110;
+          const hgt = (img.height * 72) / 110;
+          const pg = doc.addPage([w, hgt]);
+          pg.drawImage(img, { x: 0, y: 0, width: w, height: hgt });
+          if (texts) {
+            const lines = texts[i].split('\n').map((l) => l.replace(/\s+$/, ''));
+            const step = Math.min(10, (hgt - 40) / Math.max(1, lines.length));
+            lines.forEach((l, k) => {
+              if (l.trim()) pg.drawText(l, { x: 24, y: hgt - 30 - k * step, size: Math.max(4, step * 0.8), font, opacity: 0 });
+            });
+          }
+        }
+        const bytes = await doc.save();
+        let s = '';
+        for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+        return btoa(s);
+      },
+      { imgs, texts }
+    );
+    fs.writeFileSync(out, Buffer.from(b64, 'base64'));
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+  return out;
+}
+/** The readability share NS.intake's helper gives the text readFile extracts from each file. */
+async function sharesOf(page, files) {
+  const out = [];
+  for (const [label, f] of files) {
+    const r = await page.evaluate(
+      async ({ b64, name }) => {
+        const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+        const d = await window.CVPortal.intake.readFile(new File([bin], name, { type: 'application/pdf' }));
+        return { share: window.CVPortal.intake.unreadableShare(d.text), tokens: (d.text.toLowerCase().match(/[a-z]{2,}/g) || []).length, pages: d.pages };
+      },
+      { b64: fs.readFileSync(f).toString('base64'), name: path.basename(f) }
+    );
+    out.push(Object.assign({ label }, r));
+  }
+  return out;
+}
+/** A fake intake that records each request's prompt and PDFs; answer(i, prompt, pdfs) gives the reply (null: a failure). */
+function recordingIntake(answer, countOf) {
+  const seen = [];
+  return {
+    seen,
+    budget: null,
+    maxTokens: () => 24000,
+    count: countOf || (async (prompt, pdfs) => Math.ceil(prompt.length / 4) + (pdfs || []).reduce((a, p) => a + p.pages * 3000, 0)),
+    available: async () => true,
+    async run(prompt, { onText, pdfs }) {
+      const i = seen.length;
+      seen.push({ prompt, pdfs: pdfs || null });
+      const json = answer ? answer(i, prompt, pdfs) : FUND;
+      if (!json) return { ok: false, json: null, reason: 'failed', ms: 5, model: 'fake-model', stopReason: '', usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 } };
+      const text = JSON.stringify(json);
+      await pause(50);
+      onText(text.slice(0, 30));
+      onText(text.slice(30));
+      return { ok: true, json: JSON.parse(text), reason: '', ms: 60, model: 'fake-model', stopReason: 'end_turn', usage: { input_tokens: 1200, output_tokens: 300, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 } };
+    }
+  };
+}
+/** The request bodies the browser sends to POST /v1/intake on srv, kept as sent. */
+async function captureBodies(h, srv) {
+  const bodies = [];
+  await allow(h, srv.base, async (route) => {
+    const req = route.request();
+    if (req.method() === 'POST' && /\/v1\/intake$/.test(req.url())) bodies.push(req.postData() || '');
+    return route.continue();
+  });
+  return bodies;
+}
+/** One file uploaded on a fresh intake and Read documents pressed; resolves at the review step or the upload step's error. */
+async function readOutcome(page, file, timeout) {
+  await page.evaluate(() => {
+    const NS = window.CVPortal;
+    NS.state.ui.intake = null;
+    NS.app.render();
+    window.__progress = [];
+    window.__noText = false;
+    if (window.__noTextObs) window.__noTextObs.disconnect();
+    window.__noTextObs = new MutationObserver(() => {
+      if (document.body.textContent.indexOf('No readable text was found') >= 0) window.__noText = true;
+    });
+    window.__noTextObs.observe(document.body, { subtree: true, childList: true, characterData: true });
+  });
+  await page.waitForSelector('[data-action=ik-read]');
+  await page.setInputFiles('#ik-files', file);
+  await page.click('[data-action=ik-read]');
+  await page.waitForFunction(
+    () => {
+      const st = window.CVPortal.state.ui.intake;
+      return !!st && (st.step === 'review' || (st.step === 'upload' && !!st.error));
+    },
+    null,
+    { timeout: timeout || 60000 }
+  );
+  return page.evaluate(() => {
+    const NS = window.CVPortal;
+    const st = NS.state.ui.intake;
+    const good = st.docs.filter((d) => d.text && d.text.trim().length > 40);
+    const corp = NS.intake.corpus(good, NS.intake.LIMIT);
+    const rules = NS.intake.normalize(NS.intake.readWithRules(corp.text));
+    return {
+      step: st.step,
+      error: st.error || '',
+      method: st.method || '',
+      profile: st.profile || null,
+      rules,
+      corp: corp.text,
+      trimmed: !!st.trimmed,
+      filled: st.profile ? NS.intake.filled(st.profile) : 0,
+      noText: !!window.__noText || document.body.textContent.indexOf('No readable text was found') >= 0,
+      docs: st.docs.map((d) => ({ chars: d.text ? d.text.trim().length : 0, pages: d.pages, text: d.text || '' })),
+      shown: Array.from(document.querySelectorAll('input, textarea')).map((e) => e.value)
+    };
+  });
+}
+/** What today's ik-read does with no reading server: a document with more than 40 characters of text goes on to reading. */
+const todayWithout = (r) => (r.docs.some((d) => d.chars > 40) ? 'review' : 'message');
+async function partUnreadable(h, page) {
+  const broken = await picturePdf(page, ROCKSTEP, 1, 12, true, path.join(OUT68, 'broken.pdf'));
+  const pictures = await picturePdf(page, WORCESTER, 1, 8, false, path.join(OUT68, 'pictures.pdf'));
+  const pictures3 = await picturePdf(page, WORCESTER, 1, 3, false, path.join(OUT68, 'pictures-3.pdf'));
+  // The tuning record: every public PDF, the broken one and the picture-only one.
+  const T = await page.evaluate(() => window.CVPortal.intake.UNREADABLE_BELOW);
+  const publics = fs
+    .readdirSync(PUBLIC)
+    .filter((d) => fs.existsSync(path.join(PUBLIC, d, 'doc.pdf')))
+    .sort()
+    .map((d) => [d, path.join(PUBLIC, d, 'doc.pdf')]);
+  const shares = await sharesOf(page, publics.concat([['broken', broken], ['pictures', pictures]]));
+  for (const s of shares) console.log(`      share ${s.label}: ${s.share.toFixed(4)} (${s.tokens} tokens, ${s.pages} pages)`);
+  const pub = shares.filter((s) => s.label !== 'broken' && s.label !== 'pictures');
+  const low = pub.reduce((a, s) => Math.min(a, s.share), 1);
+  const br = shares.find((s) => s.label === 'broken');
+  const pic = shares.find((s) => s.label === 'pictures');
+  line(typeof T === 'number' && T > 0, `unreadable threshold UNREADABLE_BELOW ${T}`);
+  line(pub.length === 7 && pub.every((s) => s.share >= 2 * T), `unreadable every public PDF at least twice the threshold (${pub.length} PDFs, lowest ${low.toFixed(4)}, needs ${(2 * T).toFixed(4)})`);
+  line(br.share <= T / 2 && br.tokens > 1000, `unreadable the broken PDF at most half the threshold (${br.share.toFixed(4)}, needs ${(T / 2).toFixed(4)}; ${br.tokens} scrambled tokens in its text layer)`);
+  line(pic.share === 0, `unreadable the picture-only PDF has no letter tokens (share ${pic.share})`);
+
+  const rec = recordingIntake();
+  const srv = await portalServer(rec);
+  try {
+    const bodies = await captureBodies(h, srv);
+    await setServer(page, srv.base, srv.token);
+    // The page's own instructions, from a readable sample read the plan 66 way.
+    const s0 = await readOnce(page);
+    const p0 = (rec.seen[0] || {}).prompt || '';
+    const tail0 = '\n\nDOCUMENTS:\n' + s0.corp;
+    const instr = p0.endsWith(tail0) ? p0.slice(0, p0.length - tail0.length) : '';
+    line(!!instr && instr.startsWith('You are setting up a private investment fund') && !rec.seen[0].pdfs, `unreadable the readable sample's prompt is instructions, a blank line, DOCUMENTS: and the corpus (${instr.length} characters of instructions)`);
+
+    // The broken PDF: sent as the PDF itself, its scrambled text nowhere in the prompt.
+    let n = rec.seen.length;
+    let r = await readOutcome(page, broken);
+    let got = rec.seen.slice(n);
+    let req = got[0] || {};
+    let pdfs = req.pdfs || [];
+    const bytes = pdfs[0] ? Buffer.from(pdfs[0].data, 'base64') : Buffer.alloc(0);
+    line(got.length === 1 && pdfs.length === 1, `unreadable broken: one request with ${pdfs.length} PDF(s)`);
+    line(sha(bytes) === sha(fs.readFileSync(broken)) && pdfs[0].pages === 12 && pdfs[0].of === 12, `unreadable broken: the PDF's bytes hash to the broken file's SHA-256, pages ${pdfs[0] ? pdfs[0].pages : 0} of ${pdfs[0] ? pdfs[0].of : 0} (12 expected)`);
+    const prompt = req.prompt || '';
+    line(!!instr && prompt.startsWith(instr + '\n\nDOCUMENTS:\n'), 'unreadable broken: the prompt starts with the page\'s instructions, a blank line and DOCUMENTS:');
+    line(prompt.endsWith(`=== Document: broken.pdf (12 pages) === ${ATTACHED}`), 'unreadable broken: the prompt carries the attachment line');
+    const scrambled = (r.docs[0] ? r.docs[0].text : '')
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.length >= 30 && !/^\[p\. \d+\]$/.test(l));
+    const leaked = scrambled.filter((l) => prompt.indexOf(l.slice(0, 30)) >= 0).length;
+    line(scrambled.length > 20 && leaked === 0, `unreadable broken: none of the scrambled text is in the prompt (${leaked} of ${scrambled.length} lines found)`);
+    const keys = bodies.length ? Object.keys(JSON.parse(bodies[bodies.length - 1])).join(',') : '';
+    line(keys === 'prompt,pdfs', `unreadable broken: the request body is { ${keys} }`);
+    line(r.step === 'review' && r.method === 'auto' && r.profile.offering.name === FUND.offering.name && r.shown.includes(FUND.offering.name), `unreadable broken: the fictional fund reaches the review screen, method ${r.method === 'auto' ? 'auto' : r.method || 'none'}`);
+
+    // Picture-only PDFs with a reading server (D-38): read from the pages, never "No readable text was found".
+    for (const [file, pages] of [
+      [pictures, 8],
+      [pictures3, 3]
+    ]) {
+      n = rec.seen.length;
+      r = await readOutcome(page, file);
+      got = rec.seen.slice(n);
+      pdfs = (got[0] && got[0].pdfs) || [];
+      line(got.length === 1 && pdfs.length === 1 && pdfs[0].pages === pages && sha(Buffer.from(pdfs[0].data, 'base64')) === sha(fs.readFileSync(file)), `unreadable picture-only ${pages} pages, reading server set: sent as a PDF (${pdfs.length} PDF, ${pdfs[0] ? pdfs[0].pages : 0} pages)`);
+      line(r.step === 'review' && r.method === 'auto' && r.profile.offering.name === FUND.offering.name && !r.noText, `unreadable picture-only ${pages} pages, reading server set: the fictional fund reaches review, "No readable text was found" ${r.noText ? 'shown' : 'never shown'}`);
+    }
+
+    // Without a reading server, exactly today's behaviour: the 3-page file (40 characters or fewer) stops at today's
+    // message; the 8-page file has more than 40 characters of page markers, so today's code reads it with the built-in reader.
+    await setServer(page, '', '');
+    n = rec.seen.length;
+    r = await readOutcome(page, pictures3);
+    line(r.step === 'upload' && r.error === NO_TEXT && todayWithout(r) === 'message', `unreadable picture-only 3 pages, no reading server: today's message (${r.error === NO_TEXT ? 'exact' : 'different: ' + (r.error ? 'other text' : 'none')}; ${r.docs[0] ? r.docs[0].chars : 0} characters)`);
+    r = await readOutcome(page, pictures);
+    const today = todayWithout(r);
+    const same = today === 'message' ? r.step === 'upload' && r.error === NO_TEXT : r.step === 'review' && r.method === 'rules' && JSON.stringify(r.profile) === JSON.stringify(r.rules);
+    line(same, `unreadable picture-only 8 pages, no reading server: today's behaviour (${today === 'message' ? 'the message' : 'the built-in reader on ' + r.docs[0].chars + ' characters of page markers, no message'}) ${same ? 'kept' : 'changed'}`);
+    line(rec.seen.length === n, `unreadable no reading server: ${rec.seen.length - n} request(s) reached a server`);
+
+    // A readable public PPM: exactly plan 66's request.
+    await setServer(page, srv.base, srv.token);
+    n = rec.seen.length;
+    const before = bodies.length;
+    r = await readOutcome(page, ROCKSTEP, 120000);
+    got = rec.seen.slice(n);
+    const body = bodies.slice(before)[0] || '';
+    const want = JSON.stringify({ prompt: `${instr}\n\nDOCUMENTS:\n${r.corp}` });
+    line(got.length === 1 && !got[0].pdfs && body === want, `unreadable readable PPM: the body is { prompt } byte for byte as plan 66 sends it (${body.length} characters, ${body === want ? 'identical' : 'different'})`);
+    line(r.step === 'review' && r.method === 'auto', `unreadable readable PPM: review reached, method ${r.method || 'none'}`);
+  } finally {
+    await setServer(page, '', '');
+    await srv.close();
+  }
+}
+
 /* ---------- Part measure ---------- */
 const readRows = (file) => {
   try {
@@ -590,7 +874,7 @@ async function partMeasure(h, page) {
 
 (async () => {
   if (PARTS.includes('unchanged')) partUnchanged();
-  const browserParts = PARTS.filter((p) => ['api', 'fallback', 'failures', 'measure'].includes(p));
+  const browserParts = PARTS.filter((p) => ['api', 'fallback', 'failures', 'unreadable', 'measure'].includes(p));
   if (browserParts.length) {
     const h = await browser();
     try {
@@ -598,6 +882,7 @@ async function partMeasure(h, page) {
       if (PARTS.includes('api')) await partApi(h, page);
       if (PARTS.includes('fallback')) await partFallback(h, page);
       if (PARTS.includes('failures')) await partFailures(h, page);
+      if (PARTS.includes('unreadable')) await partUnreadable(h, page);
       if (PARTS.includes('measure')) await partMeasure(h, page);
       line(!h.errors.length, `page errors ${h.errors.length}`);
     } finally {

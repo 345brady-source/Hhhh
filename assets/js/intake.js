@@ -207,77 +207,129 @@ Reply with only one JSON object in exactly this shape:
 
 investorTerms: 6 to 12 key terms an investor would want on their investment page, in plain words (for example minimum, fees, profit split, liquidity, term or hold, target returns and distributions, property or strategy facts).`;
   }
+  /* ---------- Text layers that cannot be read (D-37) ---------- */
+  /** Common English function words: a readable text layer is full of them; a scrambled or empty one has almost none. */
+  const FUNCTION_WORDS = new Set(['the', 'of', 'and', 'to', 'in', 'is', 'that', 'for', 'by', 'on', 'with', 'as', 'be', 'or', 'any', 'such', 'will', 'this', 'are', 'which', 'from', 'at', 'an', 'its', 'not', 'may', 'shall', 'all', 'has', 'have', 'been', 'other', 'each', 'under', 'if', 'than', 'no', 'these', 'their', 'upon']);
+  /** The share of letter tokens (runs of two or more letters, lower-cased) that are common function words; 0 with no tokens. */
+  function unreadableShare(text) {
+    const tokens = String(text || '').toLowerCase().match(/[a-z]{2,}/g);
+    if (!tokens) return 0;
+    let n = 0;
+    for (const t of tokens) if (FUNCTION_WORDS.has(t)) n += 1;
+    return n / tokens.length;
+  }
+  /** A PDF whose extracted text has a smaller share than this is sent as the PDF itself (measured shares: see the record). */
+  const UNREADABLE_BELOW = 0.1;
+
   /**
    * The same prompt as always, sent to the reading server's POST /v1/intake. Its answer is a stream of lines: { t } for
    * each piece of the reply (onText gets the text so far), { h } to keep the connection open, then { ok, json }. Any
    * failure throws an error whose code the intake screen already explains: cancelled (Stop), not_granted (401),
    * prompt_too_large (413), rate_limited (429) or failed (anything else, the time limit included).
+   * Only when an uploaded PDF's extracted text cannot be read (D-37) does the request also carry that PDF ({ prompt, pdfs });
+   * the prompt then names the PDF in place of its text. Readable documents are sent exactly as before ({ prompt }).
    */
   async function readWithServer(sample, corp, opts) {
     const fail = (code) => Object.assign(new Error('Reading could not finish.'), { code });
-    const ctl = new AbortController();
-    let late = false;
-    const timer = setTimeout(() => {
-      late = true;
-      ctl.abort();
-    }, NS.intake.SERVER_LIMIT_MS);
-    const stop = () => ctl.abort();
-    if (opts.signal) {
-      if (opts.signal.aborted) ctl.abort();
-      else opts.signal.addEventListener('abort', stop);
-    }
-    const why = () => (opts.signal && opts.signal.aborted && !late ? 'cancelled' : 'failed');
-    try {
-      const headers = { 'Content-Type': 'application/json' };
-      if (sample.token) headers.Authorization = `Bearer ${sample.token}`;
-      let res;
-      try {
-        res = await fetch(String(sample.url).replace(/\/+$/, '') + '/v1/intake', { method: 'POST', headers, body: JSON.stringify({ prompt: `${instructions()}\n\nDOCUMENTS:\n${corp}` }), signal: ctl.signal });
-      } catch (e) {
-        throw fail(why());
+    /** One request; resolves to the answer's JSON and text. `before` is the text of earlier answers, kept in onText. */
+    const ask = async (body, before) => {
+      const ctl = new AbortController();
+      let late = false;
+      const timer = setTimeout(() => {
+        late = true;
+        ctl.abort();
+      }, NS.intake.SERVER_LIMIT_MS);
+      const stop = () => ctl.abort();
+      if (opts.signal) {
+        if (opts.signal.aborted) ctl.abort();
+        else opts.signal.addEventListener('abort', stop);
       }
-      if (!res.ok) throw fail(res.status === 401 ? 'not_granted' : res.status === 413 ? 'prompt_too_large' : res.status === 429 ? 'rate_limited' : 'failed');
-      if (!res.body || !res.body.getReader) throw fail('failed');
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
-      let buf = '';
-      let text = '';
-      let last = null;
-      const take = (line) => {
-        if (!line.trim()) return;
-        let m;
+      const why = () => (opts.signal && opts.signal.aborted && !late ? 'cancelled' : 'failed');
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (sample.token) headers.Authorization = `Bearer ${sample.token}`;
+        let res;
         try {
-          m = JSON.parse(line);
+          res = await fetch(String(sample.url).replace(/\/+$/, '') + '/v1/intake', { method: 'POST', headers, body: JSON.stringify(body), signal: ctl.signal });
         } catch (e) {
-          throw fail('failed');
+          throw fail(why());
         }
-        if (m && typeof m.t === 'string') {
-          text += m.t;
-          if (opts.onText) opts.onText({ text });
-        } else if (m && typeof m.ok === 'boolean') last = m;
-      };
-      try {
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buf += dec.decode(value, { stream: true });
-          let i;
-          while ((i = buf.indexOf('\n')) >= 0) {
-            const line = buf.slice(0, i);
-            buf = buf.slice(i + 1);
-            take(line);
+        if (!res.ok) throw fail(res.status === 401 ? 'not_granted' : res.status === 413 ? 'prompt_too_large' : res.status === 429 ? 'rate_limited' : 'failed');
+        if (!res.body || !res.body.getReader) throw fail('failed');
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        let text = '';
+        let last = null;
+        const take = (line) => {
+          if (!line.trim()) return;
+          let m;
+          try {
+            m = JSON.parse(line);
+          } catch (e) {
+            throw fail('failed');
           }
+          if (m && typeof m.t === 'string') {
+            text += m.t;
+            if (opts.onText) opts.onText({ text: before + text });
+          } else if (m && typeof m.ok === 'boolean') last = m;
+        };
+        try {
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buf += dec.decode(value, { stream: true });
+            let i;
+            while ((i = buf.indexOf('\n')) >= 0) {
+              const line = buf.slice(0, i);
+              buf = buf.slice(i + 1);
+              take(line);
+            }
+          }
+          take(buf + dec.decode());
+        } catch (e) {
+          throw e && typeof e.code === 'string' ? e : fail(why());
         }
-        take(buf + dec.decode());
-      } catch (e) {
-        throw e && typeof e.code === 'string' ? e : fail(why());
+        if (!last || last.ok !== true || !last.json || typeof last.json !== 'object' || Array.isArray(last.json)) throw fail(why());
+        return { json: last.json, text };
+      } finally {
+        clearTimeout(timer);
+        if (opts.signal) opts.signal.removeEventListener('abort', stop);
       }
-      if (!last || last.ok !== true || !last.json || typeof last.json !== 'object' || Array.isArray(last.json)) throw fail(why());
-      return last.json;
-    } finally {
-      clearTimeout(timer);
-      if (opts.signal) opts.signal.removeEventListener('abort', stop);
+    };
+    // The documents ik-read kept: text longer than 40 characters, or a PDF with less text when a reading server is set.
+    const ws = NS.state && NS.state.ws;
+    const served = !!(NS.integrations && ws && NS.integrations.serverUrl(ws));
+    const isPdf = (d) => !!d.file && typeof d.pages === 'number';
+    const docs = (NS.state && NS.state.ui && NS.state.ui.intake && NS.state.ui.intake.docs) || [];
+    const good = docs.filter((d) => (d.text && d.text.trim().length > 40) || (served && isPdf(d)));
+    const unread = good.filter((d) => isPdf(d) && unreadableShare(d.text) < UNREADABLE_BELOW);
+    if (!unread.length) return (await ask({ prompt: `${instructions()}\n\nDOCUMENTS:\n${corp}` }, '')).json;
+
+    // D-37: the readable documents' text as always, and each unreadable PDF named in the prompt and attached whole.
+    if (opts.signal && opts.signal.aborted) throw fail('cancelled');
+    const readable = good.filter((d) => unread.indexOf(d) < 0);
+    const named = unread.map((d) => `=== Document: ${d.name} (${d.pages} pages) === attached as a PDF because its text layer could not be read`);
+    const text = [readable.length ? corpus(readable, NS.intake.LIMIT).text : '', ...named].filter(Boolean).join('\n\n');
+    let pdfs;
+    try {
+      pdfs = await Promise.all(unread.map(async (d) => ({ name: d.name, data: await base64Of(d.file), pages: d.pages, of: d.pages })));
+    } catch (e) {
+      throw fail('failed');
     }
+    return (await ask({ prompt: `${instructions()}\n\nDOCUMENTS:\n${text}`, pdfs }, '')).json;
+  }
+  /** A file's bytes as base64 without line breaks. */
+  function base64Of(blob) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => {
+        const s = String(r.result || '');
+        resolve(s.slice(s.indexOf(',') + 1));
+      };
+      r.onerror = () => reject(r.error || new Error('Could not read the file.'));
+      r.readAsDataURL(blob);
+    });
   }
 
   /* ---------- The built-in reader (reader.js) ---------- */
@@ -608,4 +660,6 @@ Reporting. Members will receive quarterly reports and annual Schedule K-1s. The 
   NS.intake = { readFile, corpus, serverSample, readWithServer, readWithRules, normalize, fromOffering, apply, filled, agreementDoc, prepareAgreement, SAMPLES, LIMIT: 200000 };
   /** How long the browser waits for the reading server (its own limit is 600 s). */
   NS.intake.SERVER_LIMIT_MS = 630000;
+  NS.intake.unreadableShare = unreadableShare;
+  NS.intake.UNREADABLE_BELOW = UNREADABLE_BELOW;
 })(window.CVPortal);
