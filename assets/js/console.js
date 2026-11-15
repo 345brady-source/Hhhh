@@ -442,25 +442,59 @@
     const EL = NS.eligibility;
     const rows = NS.eligibility.erisa(W(), o);
     const lim = EL.BPI_LIMIT;
+    const nameOf = (id) => {
+      const inv = invById(id);
+      return inv ? inv.title : id;
+    };
     const lines = rows
       .map((r) => {
         const over = r.pct >= lim;
         const pend = r.ifAccepted
-          .map((x) => {
-            const inv = invById(x.investorId);
-            return `<p class="cs-muted cs-bpi-if" data-request="${h(x.requestId)}">If ${h(inv ? inv.title : x.investorId)}’s pending subscription of ${h(EL.usd(x.cents))} is accepted: ${h(EL.pctText(x.pct))}% of ${h(r.name)}${x.pct >= lim ? ` ${badge('warn', '25 percent or more')}` : ''}</p>`;
-          })
+          .map((x) => `<p class="cs-muted cs-bpi-if" data-request="${h(x.requestId)}">If ${h(nameOf(x.investorId))}’s pending subscription of ${h(EL.usd(x.cents))} is accepted: ${h(EL.pctText(x.pct))}% of ${h(r.name)}${x.pct >= lim ? ` ${badge('warn', '25 percent or more')}` : ''}</p>`)
           .join('');
+        const left = r.holders.filter((x) => x.controlling && x.share === 0);
+        const leftLine = left.length ? `<p class="cs-muted cs-bpi-left" data-class="${h(r.classId)}">Left out of ${h(r.name)} as held by controlling persons or affiliates: ${h(EL.usd(r.disregarded))} (${left.map((x) => h(nameOf(x.investorId))).join(', ')})</p>` : '';
         return `<p class="cs-bpi-line${over ? ' is-over' : ''}" data-class="${h(r.classId)}"><strong>${h(r.name)}: ${h(EL.pctText(r.pct))}% of value held by benefit plan investors</strong>${over ? ` ${badge('bad', '25 percent or more')}` : ''}</p>
-        ${over ? `<p class="cs-hint">Benefit plan investors hold 25 percent or more of ${h(r.name)}, so the offering’s assets may be treated as plan assets under ERISA.</p>` : ''}${pend}`;
+        ${over ? `<p class="cs-hint">Benefit plan investors hold 25 percent or more of ${h(r.name)}, so the offering’s assets may be treated as plan assets under ERISA.</p>` : ''}${leftLine}${pend}`;
       })
+      .join('');
+    // D-01: the sponsor's own marks, one per holder of the offering; a holder whose own answers say so is shown as such.
+    const seen = new Set();
+    const holders = [];
+    rows.forEach((r) =>
+      r.holders.forEach((x) => {
+        if (seen.has(x.investorId)) return;
+        seen.add(x.investorId);
+        holders.push(x);
+      })
+    );
+    holders.sort((a, b) => String(nameOf(a.investorId)).localeCompare(String(nameOf(b.investorId))));
+    const can = canConfigure();
+    const marks = holders
+      .map((x) => `<li><label class="cs-check" for="bpi-ctrl-${h(x.investorId)}"><input id="bpi-ctrl-${h(x.investorId)}" type="checkbox" data-action="bpi-ctrl" data-id="${h(x.investorId)}"${x.marked ? ' checked' : ''}${can ? '' : ' disabled'}><span>${h(nameOf(x.investorId))}${x.own ? '<span class="cs-hint">Its own answers say it has control over these assets or gives paid advice about them.</span>' : ''}</span></label></li>`)
       .join('');
     return panel(
       'Benefit plan investors',
       `${lines}
-      <p class="cs-hint">Value is what each holder has committed or subscribed, with accepted subscriptions not yet funded. A holder counts by their latest answers to the benefit plan questions; one who has not answered is counted as not a benefit plan investor.</p>`
+      <p class="cs-hint">Value is what each holder has committed or subscribed, with accepted subscriptions not yet funded. A holder counts by their latest answers to the benefit plan questions; one who has not answered is counted as not a benefit plan investor.</p>
+      <p class="cs-bpi-ctrl-head"><strong>Controlling persons and affiliates</strong></p>
+      <p class="cs-hint">Tick each holder that has discretionary authority or control over this offering’s assets or is paid for investment advice about them, or is an affiliate of such a person. That includes holdings of your firm and its affiliates recorded here as investors. The value they hold is left out of the class total, unless they are benefit plan investors themselves.</p>
+      ${holders.length ? `<ul class="cs-checks cs-bpi-ctrl">${marks}</ul>` : '<p class="cs-muted">No holders yet.</p>'}`
     );
   }
+  /** D-01: the sponsor marks or unmarks a holder as a controlling person or affiliate for the 25 percent test; each change is logged. */
+  NS.actions['bpi-ctrl'] = staffGuard((el) => {
+    const o = curOff();
+    const id = el.getAttribute('data-id');
+    const inv = invById(id);
+    if (!o || !inv) return;
+    const list = Array.isArray(o.erisaControlling) ? o.erisaControlling.filter((x) => typeof x === 'string' && x) : [];
+    const on = list.indexOf(id) < 0;
+    o.erisaControlling = on ? list.concat(id) : list.filter((x) => x !== id);
+    NS.app.save();
+    audit(on ? 'Marked as a controlling person or affiliate for the 25 percent test' : 'Unmarked as a controlling person or affiliate for the 25 percent test', `${inv.title} in ${o.name}`, o.id, inv.id);
+    NS.app.render();
+  });
   /** The panel for the offering's exemption: Rule 506(b)'s count, or Regulation A Tier 2's limits; none for others. */
   function exemptionPanel(o) {
     const EL = NS.eligibility;

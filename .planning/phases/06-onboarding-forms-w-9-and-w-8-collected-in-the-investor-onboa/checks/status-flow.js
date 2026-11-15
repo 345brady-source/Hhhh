@@ -588,6 +588,99 @@ const parts = {
     await A.context.close();
   },
 
+  /**
+   * Plan 06-05, D-01: the sponsor marks a holder of the offering (here its own general partner's holding) as a controlling
+   * person or affiliate. In a class where an IRA holds 20 percent and that holder 30 percent, the class figure goes from 20
+   * percent to 28.6 percent (20 of the 70 left), red; each mark and unmark is logged with the holder's name; a holder whose
+   * own answer says controlling, and which is a benefit plan investor, stays counted.
+   */
+  async controlling({ check, S }) {
+    const A = await L.open(S);
+    const p = A.page;
+    const off = await L.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+    const set = await p.evaluate((oid) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const o = ws.offerings.find((x) => x.id === oid);
+      o.classes = [
+        { id: 'cls-a', name: 'Class A Interests' },
+        { id: 'cls-c', name: 'Class C Interests' }
+      ];
+      const mk = (id, title, type, dollars, erisa) => {
+        const i = JSON.parse(JSON.stringify(ws.investors[0]));
+        i.id = id;
+        i.title = i.contact = title;
+        i.type = type;
+        i.email = id + '@example.com';
+        i.positions = [{ offeringId: oid, amount: dollars, date: NS.dates.today(), class: 'cls-c' }];
+        i.erisa = Object.assign({ planPct: null, controlling: null, at: new Date().toISOString() }, erisa);
+        ws.investors.push(i);
+      };
+      mk('ctl-ira', 'Harbor Trust Co. FBO Morgan Reyes IRA', 'ira', 200000, { plan: '4975' });
+      mk('ctl-gp', 'Kestrel Bay Partners GP LLC', 'entity', 300000, { plan: 'none' });
+      mk('ctl-ind', 'Rowan Ellery', 'individual', 500000, { plan: 'none' });
+      if (NS.clearCaches) NS.clearCaches();
+      NS.app.save(true);
+      const row = NS.eligibility.erisa(ws, o).find((r) => r.classId === 'cls-c');
+      return { total: row && row.total, pct: row && row.pct };
+    }, off.offeringId);
+    check('Class C: an IRA holds $200,000, the general partner $300,000, another holder $500,000 (20 percent held by benefit plan investors)', set.total === 100000000 && set.pct === 20, set);
+    await consoleOffering(p, off.offeringId);
+    const classC = () => p.evaluate(() => {
+      const x = document.querySelector('.cs-bpi-line[data-class="cls-c"]');
+      return x ? { text: x.innerText, red: x.classList.contains('is-over') && !!x.querySelector('.cs-badge-bad') } : null;
+    });
+    const pctIn = (x) => (x ? Number((x.text.match(/^Class C Interests: ([\d.]+)% of value held by benefit plan investors/) || [])[1]) : NaN);
+    let bp = await panelText(p, 'Benefit plan investors');
+    const c0 = await classC();
+    check('the panel shows Class C at 20.0 percent, not red', pctIn(c0) === 20 && !c0.red, c0);
+    check('the panel lists the controlling persons and affiliates, with a line on what is left out', /Controlling persons and affiliates/.test(bp) && /left out of the class total, unless they are benefit plan investors themselves/.test(bp), bp);
+    const boxes = await p.evaluate(() => Array.from(document.querySelectorAll('[data-action=bpi-ctrl]')).map((x) => ({ id: x.getAttribute('data-id'), on: x.checked })));
+    check('one unticked box per holder, the general partner among them', boxes.some((x) => x.id === 'ctl-gp' && !x.on) && boxes.some((x) => x.id === 'ctl-ira') && boxes.every((x) => !x.on) && new Set(boxes.map((x) => x.id)).size === boxes.length, boxes);
+    const logOf = () => p.evaluate(() => (window.CVPortal.state.ws.audit || []).filter((e) => e && e.record === 'ctl-gp').map((e) => ({ action: e.action, detail: e.detail })));
+    await p.click('[data-action=bpi-ctrl][data-id="ctl-gp"]');
+    await p.waitForTimeout(400);
+    const c1 = await classC();
+    bp = await panelText(p, 'Benefit plan investors');
+    await p.screenshot({ path: path.join(SHOTS, 'controlling-marked.png'), fullPage: true });
+    const stored = await p.evaluate((oid) => (window.CVPortal.state.ws.offerings.find((x) => x.id === oid) || {}).erisaControlling || null, off.offeringId);
+    check('the mark is kept on the offering', Array.isArray(stored) && stored.length === 1 && stored[0] === 'ctl-gp', stored);
+    check('marked: Class C reads 28.6 percent (20 of 70), in red', pctIn(c1) === 28.6 && c1.red, c1);
+    check('marked: the panel names what is left out of Class C and why', /Left out of Class C Interests as held by controlling persons or affiliates: \$300,000 \(Kestrel Bay Partners GP LLC\)/.test(bp), bp);
+    check('marked: the box stays ticked after the page is drawn again', await p.locator('[data-action=bpi-ctrl][data-id="ctl-gp"]').isChecked());
+    let log = await logOf();
+    check('the change log names the holder marked', log.some((e) => e.action === 'Marked as a controlling person or affiliate for the 25 percent test' && /^Kestrel Bay Partners GP LLC in /.test(e.detail)), log);
+    await p.click('[data-action=bpi-ctrl][data-id="ctl-gp"]');
+    await p.waitForTimeout(400);
+    const c2 = await classC();
+    log = await logOf();
+    check('unmarked: Class C returns to 20.0 percent, not red', pctIn(c2) === 20 && !c2.red, c2);
+    check('the change log names the holder unmarked', log.some((e) => e.action === 'Unmarked as a controlling person or affiliate for the 25 percent test' && /^Kestrel Bay Partners GP LLC in /.test(e.detail)), log);
+    // A second holder (the IRA, a plan under Code section 4975) answers that it has control: a benefit plan investor stays counted.
+    await p.evaluate(() => {
+      const NS = window.CVPortal;
+      const i = NS.state.ws.investors.find((x) => x.id === 'ctl-ira');
+      i.erisa = { plan: '4975', planPct: null, controlling: true, at: new Date().toISOString() };
+      NS.app.save(true);
+      NS.app.render();
+    });
+    await p.waitForTimeout(400);
+    const c3 = await classC();
+    bp = await panelText(p, 'Benefit plan investors');
+    check('an IRA answering controlling yes stays counted: Class C still 20.0 percent', pctIn(c3) === 20 && !/Left out of Class C Interests/.test(bp), { c3, bp });
+    check('the IRA is shown as controlling by its own answers', /Harbor Trust Co\. FBO Morgan Reyes IRA\s*Its own answers say it has control over these assets or gives paid advice about them/.test(bp), bp);
+    await p.click('[data-action=bpi-ctrl][data-id="ctl-gp"]');
+    await p.waitForTimeout(400);
+    const c4 = await classC();
+    check('the general partner marked again with the IRA controlling: 28.6 percent, the IRA still counted', pctIn(c4) === 28.6 && c4.red, c4);
+    await p.screenshot({ path: path.join(SHOTS, 'controlling-both.png'), fullPage: true });
+    const lk = L.leakCheck(await L.screenText(p));
+    check('white label: the console offering page passes the leak check', lk.ok, lk.hits);
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  },
+
   /** Another exemption: with the firm's toggle on, the accredited question; with it off, the benefit plan questions only (06-04). */
   async other({ check, S }) {
     const A = await L.open(S);

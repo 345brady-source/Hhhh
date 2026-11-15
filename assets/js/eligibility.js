@@ -227,25 +227,39 @@
     if (e.plan === 'other' || e.plan === 'none') return 0;
     return null;
   }
-  /** A percentage as shown: rounded down to one decimal place, so a figure under 25 never reads as 25. */
-  const pctText = (n) => String(Math.floor((Number(n) || 0) * 10 + 1e-9) / 10);
+  /**
+   * A percentage as shown, to one decimal place, rounded to the nearest tenth; a figure under 25 is never shown as 25 or
+   * more (24.96 reads 24.9), so the red mark and the number always agree.
+   */
+  const pctText = (n) => {
+    const v = Number(n) || 0;
+    let t = Math.round(v * 10 + 1e-9) / 10;
+    if (v < BPI_LIMIT && t >= BPI_LIMIT) t = Math.floor(v * 10) / 10;
+    return String(t);
+  };
   const erisaOf = (r) => {
     const q = qualOf(r);
     return q && q.erisa && typeof q.erisa === 'object' ? q.erisa : null;
   };
+  /** The investor ids the sponsor marked as controlling persons or affiliates for the offering (offering.erisaControlling). */
+  const controllingMarks = (o) => new Set(Array.isArray(o && o.erisaControlling) ? o.erisaControlling.filter((x) => typeof x === 'string' && x) : []);
   /**
    * The share of each class of an offering held by benefit plan investors (D-01), for the sponsor only (T-06-09). Value
    * is what each holder has committed or subscribed (a position's commitment, or its amount where it has none: the rule
    * NS.ops.commitOf applies; fully redeemed positions left out), plus subscriptions accepted but not yet on a position.
    * A holder's share comes from their latest answers on a subscription to the offering, else from their investor record,
-   * else 0 (not answered). An offering without classes has one, "All interests". For each pending subscription: the
-   * class's percentage were it accepted at its amount and its own answers. Rows: { classId, name, total, bpiValue (both
-   * in cents), pct, ifAccepted: [{ requestId, investorId, cents, pct }] }.
+   * else 0 (not answered). A holder is controlling when the sponsor marked it (offering.erisaControlling) or its own latest
+   * answer says it has control over the offering's assets or gives paid advice about them: the value of a controlling
+   * holder that is not a benefit plan investor (share 0) is left out of the class total (disregarded); a controlling
+   * benefit plan investor is counted. An offering without classes has one, "All interests". For each pending
+   * subscription: the class's percentage were it accepted at its amount and its own answers. Rows: { classId, name,
+   * total, bpiValue, disregarded (all in cents), pct, holders: [{ investorId, cents, share, controlling, marked, own }],
+   * ifAccepted: [{ requestId, investorId, cents, pct }] }.
    */
   function erisa(ws, o) {
     if (!ws || !o) return [];
     const list = Array.isArray(o.classes) && o.classes.length ? o.classes : null;
-    const rows = (list || [{ id: '', name: 'All interests' }]).map((c) => ({ classId: c.id, name: c.name || c.id || 'All interests', total: 0, bpiValue: 0, pct: 0, ifAccepted: [] }));
+    const rows = (list || [{ id: '', name: 'All interests' }]).map((c) => ({ classId: c.id, name: c.name || c.id || 'All interests', total: 0, bpiValue: 0, disregarded: 0, pct: 0, holders: [], ifAccepted: [] }));
     const rowById = (id) => rows.find((x) => x.classId === id) || rows[0];
     const SC = NS.structures;
     const invById = new Map((ws.investors || []).filter(Boolean).map((i) => [i.id, i]));
@@ -256,45 +270,65 @@
     };
     const subs = (ws.requests || []).filter((r) => r && r.type === 'subscription' && r.offeringId === o.id && r.status !== 'rejected');
     const answered = new Map();
+    const saidCtrl = new Map();
     subs.forEach((r) => {
-      const s = bpiShare(erisaOf(r));
+      const e = erisaOf(r);
+      const s = bpiShare(e);
       if (s != null) answered.set(r.investorId, s);
+      if (e && typeof e.controlling === 'boolean') saidCtrl.set(r.investorId, e.controlling);
     });
     const shareOf = (id) => {
       if (answered.has(id)) return answered.get(id);
       const s = bpiShare((invById.get(id) || {}).erisa);
       return s == null ? 0 : s;
     };
+    const marks = controllingMarks(o);
+    const ownCtrl = (id) => (saidCtrl.has(id) ? saidCtrl.get(id) : !!((invById.get(id) || {}).erisa && invById.get(id).erisa.controlling === true));
+    // One entry per holder and class; the figures are added up once every holding is in.
+    const entries = new Map();
+    const entry = (row, id) => {
+      const k = row.classId + '|' + id;
+      if (!entries.has(k)) entries.set(k, { row, investorId: id, cents: 0 });
+      return entries.get(k);
+    };
     const onPosition = new Set();
     invById.forEach((inv) => {
       const ps = (inv.positions || []).filter((p) => p && p.offeringId === o.id && !p.redeemed);
       if (!ps.length) return;
       ps.forEach((p) => p.ref && onPosition.add(p.ref));
-      const cents = ps.reduce((a, p) => a + Math.round((Number(p.commitment != null ? p.commitment : p.amount) || 0) * 100), 0);
-      const row = classOfInv(inv);
-      row.total += cents;
-      row.bpiValue += cents * shareOf(inv.id);
+      entry(classOfInv(inv), inv.id).cents += ps.reduce((a, p) => a + Math.round((Number(p.commitment != null ? p.commitment : p.amount) || 0) * 100), 0);
     });
     const centsOf = (r) => Math.max(0, Math.round(Number(r.cents)) || 0);
     const rowOfReq = (r) => (r.cls && list ? rowById(r.cls) : classOfInv(invById.get(r.investorId)));
     subs.forEach((r) => {
       if (r.status === 'pending' || onPosition.has(r.id)) return;
-      const row = rowOfReq(r);
-      row.total += centsOf(r);
-      row.bpiValue += centsOf(r) * shareOf(r.investorId);
+      entry(rowOfReq(r), r.investorId).cents += centsOf(r);
     });
-    const pctOf = (bpi, total) => (total > 0 ? Math.round((bpi * 100 * 1e6) / total) / 1e6 : 0);
-    rows.forEach((row) => (row.pct = pctOf(row.bpiValue, row.total)));
+    entries.forEach((x) => {
+      const share = shareOf(x.investorId);
+      const marked = marks.has(x.investorId);
+      const own = ownCtrl(x.investorId);
+      const controlling = marked || own;
+      x.row.total += x.cents;
+      x.row.bpiValue += x.cents * share;
+      if (controlling && share === 0) x.row.disregarded += x.cents;
+      x.row.holders.push({ investorId: x.investorId, cents: x.cents, share, controlling, marked, own });
+    });
+    const pctOf = (bpi, base) => (base > 0 ? Math.round((bpi * 100 * 1e6) / base) / 1e6 : 0);
+    rows.forEach((row) => (row.pct = pctOf(row.bpiValue, row.total - row.disregarded)));
     subs.forEach((r) => {
       if (r.status !== 'pending') return;
       const row = rowOfReq(r);
-      const own = bpiShare(erisaOf(r));
+      const e = erisaOf(r);
+      const own = bpiShare(e);
       const share = own == null ? shareOf(r.investorId) : own;
+      const ctrl = marks.has(r.investorId) || (e && typeof e.controlling === 'boolean' ? e.controlling : ownCtrl(r.investorId));
       const cents = centsOf(r);
-      row.ifAccepted.push({ requestId: r.id, investorId: r.investorId, cents, pct: pctOf(row.bpiValue + cents * share, row.total + cents) });
+      const left = ctrl && share === 0;
+      row.ifAccepted.push({ requestId: r.id, investorId: r.investorId, cents, pct: pctOf(row.bpiValue + cents * share, row.total - row.disregarded + (left ? 0 : cents)) });
     });
     return rows;
   }
 
-  NS.eligibility = { regime, LIMIT_506B, BASES, qualOf, nonAccredited, place, flags, figure, regALimitCents, usd, committedCents, regAStatus, BPI_LIMIT, planPct, bpiShare, pctText, erisa };
+  NS.eligibility = { regime, LIMIT_506B, BASES, qualOf, nonAccredited, place, flags, figure, regALimitCents, usd, committedCents, regAStatus, BPI_LIMIT, planPct, bpiShare, pctText, controllingMarks, erisa };
 })(window.CVPortal);
