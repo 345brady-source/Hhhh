@@ -2275,7 +2275,7 @@
   }
   function ikUpload() {
     const st = ikState();
-    IK().claudeSample(); // start connecting to Claude now, so reading starts at once
+    IK().serverSample(); // look up the reading server now, so reading starts at once
     const w = W();
     const names = st.files.map((f) => f.name).concat(st.samples.map((x) => x.name));
     const ready = st.files.length || st.samples.length || String(st.pasted).trim().length > 40;
@@ -2510,20 +2510,20 @@
     let raw = null;
     let method = 'rules';
     let why = '';
-    const sample = await IK().claudeSample();
+    const sample = await IK().serverSample();
     if (sample) {
       st.ctl = new AbortController();
       st.progress = 'Reading the offering. This usually takes one to three minutes.';
       NS.app.render();
       try {
-        raw = await IK().readWithClaude(sample, corp.text, {
+        raw = await IK().readWithServer(sample, corp.text, {
           signal: st.ctl.signal,
           onText: ({ text }) => {
             const el = document.getElementById('ik-progress');
             if (el) el.textContent = `Reading the offering… ${text.length.toLocaleString('en-US')} characters`;
           }
         });
-        method = 'claude';
+        method = 'auto';
       } catch (e) {
         const c = e && e.code;
         why = c === 'cancelled' ? 'Reading was stopped. ' : c === 'not_granted' || c === 'sampling_disabled' ? 'Reading was not allowed. ' : c === 'prompt_too_large' ? 'The documents were too long to read at once. ' : c === 'rate_limited' ? 'Reading is busy right now. ' : 'Reading could not finish. ';
@@ -2588,7 +2588,7 @@
         const list = [['Auditor', a0.auditor || pv.auditor], ['Administrator', a0.administrator || pv.administrator], ['Counsel', pv.counsel], ['Custodian', pv.custodian], ['Prime broker', pv.primeBroker]].filter((x) => x[1]).concat((pv.others || []).map((x) => [x.role, x.name]));
         return list.length ? ['Service providers', list.map(([r, n]) => `${h(r)}: ${h(n)}`).join('<br>')] : null;
       })(),
-      (o.sourceDocs || []).length ? ['Set up from', (o.sourceDocs || []).map((d) => `${h(d.name)} (${d.method === 'claude' ? 'read automatically' : d.method === 'manual' ? 'edited' : 'built-in reader'}, ${date(d.readOn)})`).join('<br>')] : null
+      (o.sourceDocs || []).length ? ['Set up from', (o.sourceDocs || []).map((d) => `${h(d.name)} (${d.method === 'manual' ? 'edited' : d.method === 'rules' ? 'built-in reader' : 'read automatically'}, ${date(d.readOn)})`).join('<br>')] : null
     ].filter(Boolean);
     return panel('Structure', `<dl class="cs-kv ik-kv">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`, canConfigure() ? `<button class="cs-btn cs-btn-small" type="button" data-action="struct-edit" data-id="${h(o.id)}">Edit structure</button>` : '');
   }

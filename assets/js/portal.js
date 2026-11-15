@@ -1158,7 +1158,7 @@
   NS.actions['update-bank'] = () => NS.startOnboarding(viewer().id, 'bank');
 
   /* ---------- Settings ---------- */
-  // Route is #preferences: the bare name "settings" is reserved by the Claude artifact viewer.
+  // Route is #preferences: the bare name "settings" is reserved by the host's artifact viewer.
   const THEMES = [
     ['light', 'Light', 'White background'],
     ['dark', 'Dark', 'Dark background, easier on the eyes in low light'],
