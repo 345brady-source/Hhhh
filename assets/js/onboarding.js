@@ -627,7 +627,7 @@
       const note = document.getElementById('hint-tenancy');
       if (note) note.textContent = jointHint(ob().d);
     }
-    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin'].indexOf(path) >= 0) {
+    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stRep'].indexOf(path) >= 0) {
       NS.app.render();
       // Keep keyboard focus on the control that changed (the page was redrawn).
       const again = el.type === 'radio' ? document.querySelector(`input[name="${el.name}"][value="${CSS.escape(el.value)}"]`) : el.id && document.getElementById(el.id);
@@ -710,6 +710,7 @@
     profile: 'Investor information',
     identity: 'Identity verification',
     accreditation: 'Accreditation',
+    status: 'Investor status',
     tax: 'Tax certification',
     payment: 'Distribution payments',
     subscribe: 'Subscription',
@@ -1105,11 +1106,33 @@
       return s;
     }
     const s = ['welcome', 'login', 'profile', 'identity'];
-    if (accVerifiedFor(c) || c.ws.tenant.onboarding.accreditation) s.push('accreditation');
+    // Verified accreditation (Rule 506(c), or the firm's rules) keeps its own step; otherwise the investor status step asks.
+    if (accVerifiedFor(c)) s.push('accreditation');
+    if (statusStep(c)) s.push('status');
     s.push('tax', 'payment');
     subSteps(c, s);
     s.push('done');
     return s;
+  }
+  /**
+   * The investor status step (D-01): asked where accreditation is self-certified, not verified. It shows when the invited
+   * offering is Rule 506(b), or when the firm asks about accreditation (then the accredited question only). Nothing on it
+   * is required (D-30).
+   */
+  const EL = () => NS.eligibility;
+  const regimeOf = (c) => (EL() && c.off ? EL().regime(c.off) : '');
+  const statusStep = (c) => !!EL() && !accVerifiedFor(c) && (regimeOf(c) === '506b' || !!c.ws.tenant.onboarding.accreditation);
+  /** The status answers kept on the subscription request (request.qual). */
+  function qualFrom(c, d) {
+    const reg = regimeOf(c);
+    const accredited = d.stAcc === 'yes' ? true : d.stAcc === 'no' ? false : accVerifiedFor(c) && IV() && NS.integrations.accreditationValid(c.ws, c.inv) ? true : null;
+    const q = { regime: reg, at: nowIso(), accredited, basis: accredited === true && d.stAcc === 'yes' ? String(d.stBasis || '') : '' };
+    if (accredited === false && reg === '506b') {
+      const name = String(d.stRepName || '').trim();
+      const firm = String(d.stRepFirm || '').trim();
+      q.sophistication = { experience: String(d.stExp || '').trim(), education: String(d.stEdu || '').trim(), rep: d.stRep === 'yes' ? { name, firm } : null };
+    }
+    return q;
   }
   const stepLabel = (c, k) => (k === 'accreditation' && accVerifiedFor(c) ? 'Accredited investor verification' : FL[k]);
   /** Why the verification step appeared after the investor had moved past it (flowSteps sets fl.accLate). */
@@ -1179,6 +1202,14 @@
           owner2pct: '',
           pep: '',
           accBasis: (i.accreditation && i.accreditation.basis) || '',
+          // Investor status (D-01): prefilled only from an accreditation basis already on the record; never required.
+          stAcc: i.accreditation && i.accreditation.basis ? 'yes' : '',
+          stBasis: (i.accreditation && i.accreditation.basis) || '',
+          stExp: '',
+          stEdu: '',
+          stRep: '',
+          stRepName: '',
+          stRepFirm: '',
           accAttest: false,
           accFile: '',
           usPerson: '',
@@ -1320,6 +1351,31 @@
       <div class="form-grid">${IV() ? IV().stepPanel(c.ws, c.inv, 'identity') : ''}${err('ivIdentity')}</div>
       <p class="meta">Sanctions and politically exposed person screening of ${ent ? 'the account and each beneficial owner' : 'your name'} runs automatically once your identity is verified. There is nothing to fill in for it, and your details are used only for anti-money-laundering compliance.</p>`;
   }
+  function fStatus(c) {
+    const d = ob().d;
+    const reg = regimeOf(c);
+    const t = c.ws.tenant;
+    const b506 = reg === '506b';
+    const lede = b506
+      ? `${h(c.off.name)} is offered under Rule 506(b) of Regulation D. ${h(t.shortName)} may accept a limited number of investors who are not accredited, so it asks about your status and, if you are not accredited, about your experience with investments like this one.`
+      : `${h(t.shortName)} asks each investor whether they are an accredited investor under Regulation D.`;
+    const no = d.stAcc === 'no' && b506;
+    return `${ivfH1(FL.status)}
+      <p class="lede">${lede} You may leave any question unanswered.</p>
+      <div class="form-grid">
+        ${radios('stAcc', `Is ${h(c.inv.title)} an accredited investor?`, [['yes', 'Yes'], ['no', 'No']])}
+        ${d.stAcc === 'yes' ? radios('stBasis', 'Which ground applies?', EL().BASES.map((x) => [x, x])) : ''}
+        ${
+          no
+            ? `${input('stExp', 'Your investment experience', { wide: true, max: 400, hint: 'For example, the kinds of investments you have made and for how many years.' })}
+        ${input('stEdu', 'Your education or profession', { wide: true, max: 200 })}
+        ${radios('stRep', 'Is a purchaser representative advising you on this investment?', [['yes', 'Yes'], ['no', 'No']])}
+        ${d.stRep === 'yes' ? `${input('stRepName', 'Representative’s name', { max: 120 })}${input('stRepFirm', 'Representative’s firm', { max: 160 })}` : ''}`
+            : ''
+        }
+      </div>
+      <p class="meta">Your answers are kept with your subscription and shared only with ${h(t.shortName)}.</p>`;
+  }
   function fTax(c) {
     const d = ob().d;
     const t = c.ws.tenant;
@@ -1387,6 +1443,15 @@
     const e = ob().errors;
     const ready = tplReady(c);
     const acc = c.inv.accreditation && c.inv.accreditation.basis;
+    // The accreditation tick follows the investor status answer (D-01) and is never required (D-30).
+    // An investor on file has no status step in this flow (their account is already set up), so today's sentence stays.
+    const accAns = accVerifiedFor(c) || c.it.existing || !statusStep(c) ? 'yes' : d.stAcc;
+    const accTick =
+      accAns === 'yes'
+        ? check('subAcc', `${h(c.inv.title)} is an accredited investor${acc ? ` (${h(acc)})` : ''}, and this remains accurate.`)
+        : accAns === 'no'
+          ? check('subAcc', `${h(c.inv.title)} is not an accredited investor, and the answers given under Investor status remain accurate.`)
+          : '';
     return `${ivfH1(FL.subscribe)}
       <p class="lede">${h(o.name)}${o.type ? ` · ${h(o.type)}` : ''}${o.summary ? ` · ${h(o.summary)}` : ''}</p>
       <dl class="terms ivf-facts">
@@ -1404,7 +1469,7 @@
         }
         ${classes.length > 1 ? `<label class="field" for="ob-cls"><span>Share class</span><select id="ob-cls" data-bind="ob:cls"${clsLocked ? ' disabled' : ''}>${classes.map((x) => `<option value="${h(x.id)}"${x.id === d.cls ? ' selected' : ''}>${h(x.name)}${x.minimum ? `, minimum ${money(o, Number(x.minimum))}` : ''}</option>`).join('')}</select>${clsLocked ? `<span class="hint">Set by ${h(t.shortName)} for this invitation.</span>` : ''}</label>` : ''}
         <label class="field field-wide" for="ob-acct"><span>Investing as</span><input id="ob-acct" type="text" value="${h(c.inv.title)} (${h((NS.ENTITY_TYPES[c.inv.type] || {}).label || c.inv.type)})" readonly></label>
-        ${check('subAcc', `${h(c.inv.title)} is an accredited investor${acc ? ` (${h(acc)})` : ''}, and this remains accurate.`)}
+        ${accTick}
         ${check('subDocs', 'I have received and read the offering documents listed above, including the subscription agreement, and I make the representations in the subscription agreement.')}
         ${ready ? '' : `${check('subEsign', 'I agree to sign these subscription documents electronically.')}${input('subSig', 'Type your full name to sign', { wide: true, hint: `Signing as ${h(c.inv.contact)} for ${h(c.inv.title)} on ${U.date(NS.dates.today(), 'long')}` })}`}
       </div>
@@ -1581,7 +1646,6 @@
       const min = Math.max(Number(o.minimum) || 0, (cls && Number(cls.minimum)) || 0);
       const cents = Math.round((Number(d.amount) || 0) * 100);
       if (!(c.it.cents > 0) && cents < Math.round(min * 100)) e.amount = `The minimum ${cls && cls.minimum ? `for ${cls.name} ` : ''}is ${money(o, min)}.`;
-      if (!d.subAcc) e.subAcc = 'Confirm your accreditation to continue.';
       if (!d.subDocs) e.subDocs = 'Confirm you have read the offering documents.';
       if (!tplReady(c)) {
         if (!d.subEsign) e.subEsign = 'Agree to electronic signature to continue.';
@@ -1641,6 +1705,14 @@
       if (IV() && !c.it.existing) await IV().finishOnboarding(ws, i, accVerifiedFor(c) ? Object.assign({}, d, { accBasis: '' }) : d);
       else if (IV()) IV().decide(ws, i);
     }
+    if (key === 'status') {
+      if (d.stAcc === 'yes' && d.stBasis) {
+        i.accreditation = Object.assign({}, i.accreditation, { basis: d.stBasis, date: NS.dates.today() });
+        if (IV() && !c.it.existing) await IV().finishOnboarding(ws, i, Object.assign({}, d, { accBasis: d.stBasis }));
+        else if (IV()) IV().decide(ws, i);
+      }
+      log('Investor status answered', d.stAcc === 'yes' ? `accredited investor${d.stBasis ? ` (${d.stBasis})` : ', ground not given'}` : d.stAcc === 'no' ? 'not an accredited investor' : 'not answered');
+    }
     if (key === 'tax') {
       const usp = d.type === 'ira' || d.usPerson === 'yes';
       if (usp && digitsOf(d.tin).length === 9) i.tinLast4 = digitsOf(d.tin).slice(-4);
@@ -1666,6 +1738,7 @@
       // also in server mode, where the temporary investor record has no positions to tell from.
       const r = NS.ops.submitSubscription(ws, i, o, { cents, signature: tplReady(c) ? i.contact : d.subSig.trim(), cls: cls ? cls.id : '', embedded: true, additional: holds(c) });
       if (r) {
+        r.qual = qualFrom(c, d);
         fl.requestId = r.id;
         if (r.envelopeId) fl.envelopeId = r.envelopeId;
       }
@@ -1990,7 +2063,7 @@
       const head = `<header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${B.lockup(t)}</span><span class="ob-note">Account setup</span></div></header>`;
       const list = steps.map((s, i) => `<li class="${i < n || (key === 'done' && c.fl.completedAt) ? 'done' : i === n ? 'current' : ''}"${i === n ? ' aria-current="step"' : ''}><span class="ob-num">${i < n || (key === 'done' && c.fl.completedAt) ? icon('check') : i + 1}</span><span>${h(stepLabel(c, s))}</span></li>`).join('');
       const progress = `<div class="ivf-progress"><p class="ob-count">Step ${n + 1} of ${steps.length}<span class="ivf-count-label">: ${h(stepLabel(c, key))}</span></p><div class="ivf-bar" role="progressbar" aria-label="Account setup progress" aria-valuemin="1" aria-valuemax="${steps.length}" aria-valuenow="${n + 1}" aria-valuetext="Step ${n + 1} of ${steps.length}: ${h(stepLabel(c, key))}"><span style="width:${(((n + 1) / steps.length) * 100).toFixed(1)}%"></span></div></div>`;
-      const body = { welcome: fWelcome, login: fLogin, profile: fProfile, identity: fIdentity, accreditation: () => stepAccreditation(accVerifiedFor(c), { why: accWhy(c) }).replace(/^\s*<h1>[^<]*<\/h1>/, () => ivfH1(h(stepLabel(c, 'accreditation'))) + (c.fl.accLate ? `<p class="meta ivf-why">${lateNote(c)}</p>` : '')), tax: fTax, payment: () => stepPayment().replace(/^\s*<h1>/, '<h1 tabindex="-1">'), subscribe: fSubscribe, agreement: fAgreement, done: fDone }[key](c);
+      const body = { welcome: fWelcome, login: fLogin, profile: fProfile, identity: fIdentity, status: fStatus, accreditation: () => stepAccreditation(accVerifiedFor(c), { why: accWhy(c) }).replace(/^\s*<h1>[^<]*<\/h1>/, () => ivfH1(h(stepLabel(c, 'accreditation'))) + (c.fl.accLate ? `<p class="meta ivf-why">${lateNote(c)}</p>` : '')), tax: fTax, payment: () => stepPayment().replace(/^\s*<h1>/, '<h1 tabindex="-1">'), subscribe: fSubscribe, agreement: fAgreement, done: fDone }[key](c);
       const back = n > 0 && key !== 'done' && !(key === 'subscribe' && c.req && envOf(c) && signerOf(envOf(c), c.inv) && signerOf(envOf(c), c.inv).status === 'signed') ? '<button class="btn" type="button" data-action="ivf-back">Back</button>' : '';
       const submit = { welcome: 'Get started', subscribe: c.req ? 'Continue' : tplReady(c) ? 'Continue to the agreement' : 'Sign and submit subscription' }[key] || (steps[n + 1] === 'done' ? 'Finish' : 'Continue');
       const saved = key === 'welcome' ? '' : '<p class="ivf-saved">Your progress is saved. You can come back with your invitation link at any time.</p>';
