@@ -584,11 +584,12 @@
   }
   /**
    * Fills an envelope's blanks with what the portal already knows. A text field of the investor that names an
-   * onboarding answer (field.prefill, a key of `values`) gets that answer and is locked; with no answer on file it
-   * is left empty for the investor to type (and an answer too long for its blank is filled in but not locked). Any
-   * other field is filled by its label from `labels`, as agreements
-   * stored before placement existed are (fresh: at creation every match is filled and locked; afterwards only the
-   * fields locked then follow a correction). Returns the fields whose value or lock changed.
+   * onboarding answer (field.prefill, a key of `values`) gets that answer, marked filled and never locked: the
+   * investor can change it (D-30, the owner: fill in what the portal holds, editable); with no answer on file it is
+   * left empty for the investor to type. Any other field is filled by its label from `labels`, as agreements stored
+   * before placement existed are (fresh: at creation every match is filled; afterwards only the fields filled then
+   * follow a correction): an investor's stays editable, any other signer's is locked. Returns the fields whose value
+   * or lock changed.
    */
   function fillIn(env, signer, labels, values, fresh) {
     // A currency or percent sign the agreement prints beside the blank is not written again in it.
@@ -601,26 +602,31 @@
       const accepted = f.prefill === 'amount' && env.signers.some((sg) => sg.id === f.signerId && sg.role === 'countersigner');
       if (f.prefill && f.type === 'text' && ((signer && f.signerId === signer.id) || accepted)) {
         const v = has(values, f.prefill) ? unsigned(f, String(values[f.prefill])) : null;
-        // An answer too long for its blank (a long address on a short line) is filled in but left open, so the
-        // investor can shorten it: a locked value that cannot be printed would stop them from finishing.
-        const lock = v != null && !accepted && !tooLong(env, f, v);
-        if (v != null && (f.value !== v || !!f.locked !== lock)) {
+        // Filled in and left open (an answer too long for its blank can then be shortened too); `filled` says the
+        // value came from the portal, so a correction made in onboarding still reaches it.
+        if (v != null && (f.value !== v || !!f.locked || !f.filled)) {
           f.value = v;
-          f.locked = lock;
+          f.locked = false;
+          f.filled = true;
           changed.push(f);
-        } else if (v == null && f.locked) {
+        } else if (v == null && (f.locked || f.filled)) {
           f.value = '';
           f.locked = false;
+          delete f.filled;
           changed.push(f);
         }
         return;
       }
       if (f.auto || !f.label || !has(labels, f.label)) return;
-      if (fresh ? f.type === 'text' || f.type === 'name' || f.type === 'checkbox' : f.locked && f.type !== 'checkbox') {
+      if (fresh ? f.type === 'text' || f.type === 'name' || f.type === 'checkbox' : (f.locked || f.filled) && f.type !== 'checkbox') {
         const v = f.type === 'checkbox' ? !!labels[f.label] : unsigned(f, String(labels[f.label]));
-        if (f.value !== v || !f.locked) changed.push(f);
+        // An investor's field stays editable (D-30); `filled` keeps it following a correction.
+        const lock = !investorsField(env, f);
+        if (f.value !== v || !!f.locked !== lock) changed.push(f);
         f.value = v;
-        f.locked = true;
+        f.locked = lock;
+        if (lock) delete f.filled;
+        else f.filled = true;
       }
     });
     return changed;
@@ -3254,7 +3260,7 @@
     const tpl = subscriptionTemplate(ws, o.id);
     const ready = !!tpl && templateReady(ws, o.id);
     const draft = envs(ws).find((e) => e.agreementFor === o.id && e.status === 'draft');
-    // What the investor completes, and what is filled in for them from the invitation (prefill labels, locked).
+    // What the investor completes, and what is filled in for them from the invitation (prefill labels; the investor can still change them, D-30).
     const PRE = /^(commitment( amount)?|subscription amount|amount|capital commitment|investor( name)?|subscriber name|account name|offering|fund|share class|class)$/i;
     const inv = tpl ? (tpl.fields || []).filter((f) => f.signerRole === 'Investor') : [];
     const isFilled = (f) => f.type === 'text' && (!!f.prefill || PRE.test(f.label || ''));

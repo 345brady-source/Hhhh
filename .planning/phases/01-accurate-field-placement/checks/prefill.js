@@ -1,6 +1,6 @@
 /*
  * Filling in from onboarding, from the uploaded agreement to each investor's envelope: blanks the portal has the
- * answer for arrive filled in and locked (a blank after a printed currency sign gets the figure alone, so the sign
+ * answer for arrive filled in and editable, D-30 (a blank after a printed currency sign gets the figure alone, so the sign
  * is not printed twice), the rest stay empty and fillable; the firm has a field only on the signature line the
  * agreement prints for it (nothing after its bare "Name:" and "Title:" labels); an individual gets the block for
  * individuals and an entity the block for entities; a correction made in onboarding reaches the agreement once;
@@ -94,12 +94,13 @@ const C = { name: 'Cleo Marsh', email: 'cleo.marsh@example.com', type: 'individu
     const ec = await read(c.envelopeId);
     check('each subscription made an envelope from the agreement', !!(ea && eb && ec) && ea.status === 'sent', { a, b, c });
 
-    const filled = (e, label, value) => by(e, label).value === value && by(e, label).locked === true;
-    check('individual: name, street, city, state, ZIP, email, phone and commitment arrive filled in and locked', filled(ea, 'Investor name', 'Ana Reyes') && filled(ea, 'Address', '12 Harbor Road') && filled(ea, 'City', 'Mystic') && filled(ea, 'State', 'CT') && filled(ea, 'ZIP code', '06355') && filled(ea, 'Email', A.email) && filled(ea, 'Phone', A.phone) && filled(ea, 'Commitment amount', '250,000'), ea.mine.filter((f) => f.type === 'text'));
+    // D-30 (Phase 01.4 plan 63): a pre-filled investor blank is filled in and stays editable (never locked).
+    const filled = (e, label, value) => by(e, label).value === value && by(e, label).locked === false;
+    check('individual: name, street, city, state, ZIP, email, phone and commitment arrive filled in and editable (D-30)', filled(ea, 'Investor name', 'Ana Reyes') && filled(ea, 'Address', '12 Harbor Road') && filled(ea, 'City', 'Mystic') && filled(ea, 'State', 'CT') && filled(ea, 'ZIP code', '06355') && filled(ea, 'Email', A.email) && filled(ea, 'Phone', A.phone) && filled(ea, 'Commitment amount', '250,000'), ea.mine.filter((f) => f.type === 'text'));
     check('individual: the taxpayer ID, the date of birth and the second address line are empty and can be typed into', ['Taxpayer ID', 'Date of birth', 'Address line 2'].every((l) => by(ea, l).value === '' && by(ea, l).locked === false), ea.mine.filter((f) => f.type === 'text'));
     check('individual: gets the block for individuals and none of the block for entities', ea.group === 'person' && ea.mine.some((f) => f.forType === 'person' && f.type === 'signature') && !ea.mine.some((f) => f.forType === 'entity'), ea.mine.map((f) => f.type + ':' + f.forType));
     check('entity: gets the block for entities and none of the block for individuals', eb.group === 'entity' && eb.mine.some((f) => f.forType === 'entity' && f.type === 'signature') && !eb.mine.some((f) => f.forType === 'person') && !!by(eb, 'State of organization').id && !by(ea, 'State of organization').id, eb.mine.map((f) => f.type + ':' + f.forType));
-    check('entity: the account name fills both name blanks; the title is left to type', eb.mine.filter((f) => f.label === 'Investor name').length === 2 && eb.mine.filter((f) => f.label === 'Investor name').every((f) => f.value === 'Harbor Light Holdings LLC' && f.locked) && by(eb, 'Title').value === '' && by(eb, 'Title').locked === false, eb.mine.filter((f) => f.type === 'text'));
+    check('entity: the account name fills both name blanks; the title is left to type', eb.mine.filter((f) => f.label === 'Investor name').length === 2 && eb.mine.filter((f) => f.label === 'Investor name').every((f) => f.value === 'Harbor Light Holdings LLC' && !f.locked) && by(eb, 'Title').value === '' && by(eb, 'Title').locked === false, eb.mine.filter((f) => f.type === 'text'));
     check('both get the fields meant for everyone, and the firm keeps its own', ['Email', 'Phone', 'Commitment amount'].every((l) => by(ea, l).id && by(eb, l).id) && ea.firm === 1 && eb.firm === 1, { a: ea.firm, b: eb.firm });
     check('tick boxes are left for the investor', ea.mine.filter((f) => f.type === 'checkbox').length === 7 && ea.mine.filter((f) => f.type === 'checkbox').every((f) => !f.value && !f.locked));
     check('no phone on file: the Phone blank is empty and unlocked', by(ec, 'Phone').value === '' && by(ec, 'Phone').locked === false, by(ec, 'Phone'));
@@ -143,7 +144,7 @@ const C = { name: 'Cleo Marsh', email: 'cleo.marsh@example.com', type: 'individu
       { id: a.investorId, envId: a.envelopeId, oid: setup.oid }
     );
     const ea3 = await read(a.envelopeId);
-    check('an individual who turns out to be an entity gets the entity block instead', swap === true && ea3.group === 'entity' && ea3.mine.some((f) => f.forType === 'entity' && f.type === 'signature') && !ea3.mine.some((f) => f.forType === 'person') && ea3.mine.filter((f) => f.label === 'Investor name').every((f) => f.value === 'Reyes Family Trust' && f.locked) && ea3.firm === 1, ea3.mine.map((f) => f.type + ':' + f.forType + ':' + f.value));
+    check('an individual who turns out to be an entity gets the entity block instead', swap === true && ea3.group === 'entity' && ea3.mine.some((f) => f.forType === 'entity' && f.type === 'signature') && !ea3.mine.some((f) => f.forType === 'person') && ea3.mine.filter((f) => f.label === 'Investor name').every((f) => f.value === 'Reyes Family Trust' && !f.locked) && ea3.firm === 1, ea3.mine.map((f) => f.type + ':' + f.forType + ':' + f.value));
 
     /* ---- An agreement stored the old way still fills in by label ---- */
     const legacy = await ev(async (arr) => {
@@ -171,7 +172,7 @@ const C = { name: 'Cleo Marsh', email: 'cleo.marsh@example.com', type: 'individu
     const lf = (l) => (legacy.fields || []).find((f) => f.label === l) || {};
     check('an agreement stored the old way is ready and gives every kind of investor its fields', legacy.ready && legacy.fields && legacy.fields.length === 5, legacy);
     check('an answer too long for its blank is filled in but left open, so the investor can shorten it', lf('Email').value === 'dara.lowe@example.org' && lf('Email').locked === false, lf('Email'));
-    check('and is still filled in by label and locked', lf('Commitment amount').value === '$100,000' && lf('Commitment amount').locked && lf('Investor name').value === 'Lowe Trust' && lf('Investor name').locked && lf('Mailing address').value === '' && !lf('Mailing address').locked, legacy.fields);
+    check('and is still filled in by label, editable (D-30)', lf('Commitment amount').value === '$100,000' && !lf('Commitment amount').locked && lf('Investor name').value === 'Lowe Trust' && !lf('Investor name').locked && lf('Mailing address').value === '' && !lf('Mailing address').locked, legacy.fields);
 
     /* ---- The editor: what is filled in, who gets a field ---- */
     // The console is already on this offering's page (sign-up left it there): draw it again with the agreement on it.
