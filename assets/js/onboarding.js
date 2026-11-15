@@ -1194,7 +1194,7 @@
   function raSubLine(c, d) {
     if (!c || !c.off || !raAsked(c, d) || d.stRaAttest === true) return '<div class="field-wide" id="ra-sub" hidden></div>';
     const t = c.ws.tenant;
-    return `<div class="field-wide" id="ra-sub"><p class="wire-warn" role="note">${icon('alert')}<span>You have not confirmed that your total investment in this offering is within your limit under Regulation A (10 percent of the greater of your income or net worth). You can still subscribe: ${h(t.shortName)} reviews every subscription and will let you know if yours cannot be accepted.</span></p></div>`;
+    return `<div class="field-wide" id="ra-sub"><p class="wire-warn" role="note">${icon('alert')}<span>You have not confirmed that your total investment in this offering is within your limit under Regulation A (10 percent of the greater of your income or net worth).</span></p></div>`;
   }
   /** The status answers kept on the subscription request (request.qual). */
   function qualFrom(c, d) {
@@ -1347,32 +1347,18 @@
     const first = String(c.inv.contact || '').split(/\s+/)[0];
     const ent = ENTITY_KYC(c.inv.type);
     const offName = (c.off || c.closed) && (c.off || c.closed).name.replace(/\.$/, '');
+    // D-06 (plan 06-15): who invited the investor and to what, in one sentence (the account named when it is not the
+    // person); no description of the page, no facts list repeating it, no "what you will need" list or time estimate.
+    const forAcct = c.inv.title && !sameName(c.inv.title, c.inv.contact) ? ` for ${h(c.inv.title)}` : '';
     const intro = c.it.existing
       ? c.off
-        ? `${h(t.name)} invited you to subscribe to ${h(offName)}. Your account details are already on file, so this page takes you through the subscription: the offering documents, your commitment and the subscription agreement.`
+        ? `${h(t.name)} invited you to subscribe to ${h(offName)}${forAcct}. Your account details are already on file.`
         : `${h(t.name)} invited you to subscribe to ${h(offName || 'an offering')}, which is no longer accepting subscriptions. Contact ${h(sup.team || 'investor relations')} about other opportunities.`
-      : `${h(t.name)} invited you to open your investor account${c.off ? ` and subscribe to ${h(offName)}` : ''}. This page takes you through every step, from creating your login to ${c.off ? 'signing your subscription documents' : 'setting up your distribution payments'}.`;
+      : `${h(t.name)} invited you to open an investor account${forAcct}${c.off ? ` and subscribe to ${h(offName)}` : ''}.`;
     return `${ivfH1(`Welcome${first ? `, ${h(first)}` : ''}`)}
       <p class="lede">${intro}</p>
       ${c.closed && !c.it.existing ? `<p class="meta ivf-closed">${h(offName)} is no longer accepting subscriptions, so this page sets up your account only. ${h(sup.team || 'Investor relations')} will contact you about it.</p>` : ''}
-      <dl class="terms ivf-facts">
-        <div><dt>Invited by</dt><dd>${sender && sender !== 'Offering sign-up link' ? `${h(sender)}, ${h(t.name)}` : h(t.name)}</dd></div>
-        <div><dt>Account</dt><dd>${h(c.inv.title)} · ${h((NS.ENTITY_TYPES[c.inv.type] || {}).label || c.inv.type)}</dd></div>
-        ${c.off ? `<div><dt>Offering</dt><dd>${h(c.off.name)}${c.off.type ? ` · ${h(c.off.type)}` : ''}</dd></div>` : ''}
-        ${c.off && c.it.cents ? `<div><dt>Commitment</dt><dd>${money(c.off, c.it.cents / 100)}${cls ? ` · ${h(cls.name)}` : ''}</dd></div>` : ''}
-      </dl>
       ${c.it.note ? `<figure class="ivf-note"><blockquote>${h(c.it.note)}</blockquote>${sender && sender !== 'Offering sign-up link' ? `<figcaption>${h(sender)}</figcaption>` : ''}</figure>` : ''}
-      <h2 class="ivf-h2">What you will need</h2>
-      <ul class="ivf-need">
-        ${
-          c.it.existing
-            ? `<li>About 5 minutes. Your investor information, tax form and distribution account stay as they are on file.</li>${c.fl.accStep ? '<li>Proof of your accredited investor status for the verification step</li>' : ''}`
-            : `<li>${ent ? 'Where the account was formed, and the name of anyone who owns 25% or more of it' : 'A government-issued photo ID: a driver’s license, passport or state ID'}</li>
-        <li>${ent ? 'The account’s taxpayer ID (EIN), or its foreign tax number' : 'Your Social Security number, or your foreign tax number if you are not a U.S. person'}</li>
-        <li>Your bank’s routing number and your account number, for distributions</li>
-        <li>About 10–15 minutes. Your progress is saved after each step: you can stop and come back with the same link.</li>`
-        }
-      </ul>
       <div class="cert ivf-consent" id="ivf-consent">
         <p class="cert-title">Consent to electronic records and signatures</p>
         <p>${h(t.legalName || t.name)} asks to provide your account documents to you electronically and to have you sign them electronically, under the U.S. Electronic Signatures in Global and National Commerce Act (ESIGN) and the Uniform Electronic Transactions Act (UETA).</p>
@@ -1391,14 +1377,12 @@
   function fLogin(c) {
     const i = c.inv;
     return `${ivfH1(FL.login)}
-      <p class="lede">You will sign in to ${h(c.ws.tenant.portalName)} with this email and password.</p>
       <div class="form-grid">
         ${loginNames(ob().d, i)}
         <label class="field" for="ob-email"><span>Email</span><input id="ob-email" type="email" value="${h(i.email)}" readonly autocomplete="username"></label>
         ${input('password', 'Password', { type: 'password', auto: 'new-password', hint: c.fl.loginAt ? 'Your login is set up. Enter a new password only to change it.' : 'At least 10 characters' })}
         ${input('password2', 'Confirm password', { type: 'password', auto: 'new-password' })}
-      </div>
-      <p class="meta">Each time you sign in from a new device you will also enter a 6-digit code from an authenticator app or a text message.</p>`;
+      </div>`;
   }
   function countrySelect(k, label, opts) {
     opts = opts || {};
@@ -1415,7 +1399,6 @@
     const req = needTin(d);
     const onFile = c.inv.tinLast4 ? ` On file: ending ${h(c.inv.tinLast4)}; leave empty to keep it.` : '';
     return `${ivfH1(FL.profile)}
-      <p class="lede">This appears on your account, your subscription documents and your tax forms.</p>
       <div class="form-grid">
         ${radios('type', 'Investing as', Object.keys(NS.ENTITY_TYPES).map((k) => [k, NS.ENTITY_TYPES[k].label]))}
         ${nameFields()}
@@ -1434,16 +1417,17 @@
             : `${input('dob', 'Date of birth', { type: 'date', auto: 'bday' })}
           ${radios('citizen', 'Citizenship', [['us', 'United States'], ['other', 'Another country']])}`
         }
-        ${input('tin', req ? tinLabel : `U.S. taxpayer ID <em>Optional</em>`, { mode: 'numeric', max: 11, hint: (req ? 'Nine digits. Stored encrypted; only the last four are shown again.' : 'Only if you have one. You give your foreign tax number in the tax step.') + onFile })}
-        ${radios('pep', `Is ${ent ? 'any owner or controlling person' : 'any account owner'} a senior political figure, or a close family member or associate of one?`, [['no', 'No'], ['yes', 'Yes', `${c.ws.tenant.support.team} will contact you for enhanced due diligence`]])}
+        ${input('tin', req ? tinLabel : `U.S. taxpayer ID <em>Optional</em>`, { mode: 'numeric', max: 11, hint: (req ? 'Nine digits.' : 'Only if you have one.') + onFile })}
+        ${radios('pep', `Is ${ent ? 'any owner or controlling person' : 'any account owner'} a senior political figure, or a close family member or associate of one?`, [['no', 'No'], ['yes', 'Yes']])}
       </div>`;
   }
   function fIdentity(c) {
     const ent = ENTITY_KYC(c.inv.type);
+    // D-06 (plan 06-15): whose identity is checked, for an account a person controls; no explanation of the firm's duty and
+    // no note about the screening the investor has nothing to do for.
     return `${ivfH1(FL.identity)}
-      <p class="lede">${h(c.ws.tenant.shortName)} is required to verify the identity of every investor before accepting an investment.${ent ? ` The check is for ${h(c.inv.contact)}, who controls the account.` : ''}</p>
-      <div class="form-grid">${IV() ? IV().stepPanel(c.ws, c.inv, 'identity') : ''}${err('ivIdentity')}</div>
-      <p class="meta">Sanctions and politically exposed person screening of ${ent ? 'the account and each beneficial owner' : 'your name'} runs automatically once your identity is verified. There is nothing to fill in for it, and your details are used only for anti-money-laundering compliance.</p>`;
+      ${ent ? `<p class="lede">The check is for ${h(c.inv.contact)}, who controls the account.</p>` : ''}
+      <div class="form-grid">${IV() ? IV().stepPanel(c.ws, c.inv, 'identity') : ''}${err('ivIdentity')}</div>`;
   }
   /**
    * The grounds offered on the status step. An investor on file whose record holds a ground worded another way (an earlier
@@ -1581,7 +1565,6 @@
     const clsLocked = !!c.it.cls && classes.some((x) => x.id === c.it.cls);
     const cls = classes.find((x) => x.id === d.cls);
     const min = Math.max(Number(o.minimum) || 0, (cls && Number(cls.minimum)) || 0);
-    const terms = (o.terms || []).filter((r) => r.show && r.label && r.value).slice(0, 8);
     const e = ob().errors;
     const ready = tplReady(c);
     const acc = c.inv.accreditation && c.inv.accreditation.basis;
@@ -1597,48 +1580,33 @@
         : accAns === 'no'
           ? check('subAcc', `${h(c.inv.title)} is not an accredited investor, and the answers given under Investor status remain accurate.`)
           : '';
+    // D-06 (plan 06-15): the offering named; its summary, type, first close and terms are in the offering documents, and the
+    // minimum is on the commitment field.
     return `${ivfH1(FL.subscribe)}
-      <p class="lede">${h(o.name)}${o.type ? ` · ${h(o.type)}` : ''}${o.summary ? ` · ${h(o.summary)}` : ''}</p>
-      <dl class="terms ivf-facts">
-        <div><dt>Minimum commitment</dt><dd>${money(o, min)}</dd></div>
-        ${o.closeDate ? `<div><dt>First close</dt><dd>${U.date(o.closeDate)} (targeted)</dd></div>` : ''}
-        ${terms.map((r) => `<div><dt>${h(r.label)}</dt><dd>${h(r.value)}</dd></div>`).join('')}
-      </dl>
+      <p class="lede">${h(o.name)}</p>
       <h2 class="ivf-h2">Offering documents</h2>
       ${docsHTML(c)}
       <div class="form-grid">
         ${
           locked
-            ? `<label class="field" for="ob-amount"><span>Commitment</span><input id="ob-amount" type="text" value="${money(o, c.it.cents / 100)}" readonly><span class="hint">Set by ${h(t.shortName)} for this invitation.</span></label>`
+            ? `<label class="field" for="ob-amount"><span>Commitment</span><input id="ob-amount" type="text" value="${money(o, c.it.cents / 100)}" readonly></label>`
             : `<label class="field" for="ob-amount"><span>Commitment (${curOf(o) === 'USD' ? '$' : h(curOf(o))})</span><input id="ob-amount" type="number" inputmode="numeric" min="${min}" step="1000" data-bind="ob:amount" value="${h(d.amount)}"${e.amount ? ' aria-invalid="true" aria-describedby="err-amount"' : ''}><span class="hint">Minimum ${money(o, min)}.</span>${err('amount')}</label>`
         }
         ${raSubLine(c, d)}
-        ${classes.length > 1 ? `<label class="field" for="ob-cls"><span>Share class</span><select id="ob-cls" data-bind="ob:cls"${clsLocked ? ' disabled' : ''}>${classes.map((x) => `<option value="${h(x.id)}"${x.id === d.cls ? ' selected' : ''}>${h(x.name)}${x.minimum ? `, minimum ${money(o, Number(x.minimum))}` : ''}</option>`).join('')}</select>${clsLocked ? `<span class="hint">Set by ${h(t.shortName)} for this invitation.</span>` : ''}</label>` : ''}
-        <label class="field field-wide" for="ob-acct"><span>Investing as</span><input id="ob-acct" type="text" value="${h(c.inv.title)} (${h((NS.ENTITY_TYPES[c.inv.type] || {}).label || c.inv.type)})" readonly></label>
+        ${classes.length > 1 ? `<label class="field" for="ob-cls"><span>Share class</span><select id="ob-cls" data-bind="ob:cls"${clsLocked ? ' disabled' : ''}>${classes.map((x) => `<option value="${h(x.id)}"${x.id === d.cls ? ' selected' : ''}>${h(x.name)}${x.minimum ? `, minimum ${money(o, Number(x.minimum))}` : ''}</option>`).join('')}</select></label>` : ''}
         ${accTick}
         ${check('subDocs', 'I have received and read the offering documents listed above, including the subscription agreement, and I make the representations in the subscription agreement.')}
         ${ready ? '' : `${check('subEsign', 'I agree to sign these subscription documents electronically.')}${input('subSig', 'Type your full name to sign', { wide: true, hint: `Signing as ${h(c.inv.contact)} for ${h(c.inv.title)} on ${U.date(NS.dates.today(), 'long')}` })}`}
-      </div>
-      <p class="meta">${ready ? `Next you sign ${h(t.shortName)}’s subscription agreement on this page, with your commitment and details filled in.` : 'Your investor information, tax certification and accreditation are carried into the subscription agreement.'} ${fundingText(c)}</p>`;
-  }
-  /** When money is due: a closed-end fund calls capital later; an open-ended fund is funded once the subscription is accepted. */
-  function fundingText(c) {
-    const t = c.ws.tenant;
-    return c.off && NS.ops && NS.ops.isOpen(c.off)
-      ? `No money is due until ${h(t.shortName)} accepts your subscription. You will then get wire instructions for funding it before the dealing date.`
-      : `No money is due now; ${h(t.shortName)} will send wire instructions when capital is called.`;
+      </div>`;
   }
   function fAgreement(c) {
     const env = envOf(c);
     const s = signerOf(env, c.inv);
     const declined = env && (env.status === 'declined' || (s && s.status === 'declined'));
     return `${ivfH1(FL.agreement)}
-      <p class="lede">${declined ? `You declined to sign. ${h(c.ws.tenant.support.team)} has been told and will contact you; you can also reach them at ${h(c.ws.tenant.support.email)}.` : `Review ${h(c.ws.tenant.shortName)}’s subscription agreement. Your commitment and details are filled in. Select Start to go to each field that needs you, then Finish.`}</p>
+      <p class="lede">${declined ? `You declined to sign. ${h(c.ws.tenant.support.team)} has been told and will contact you; you can also reach them at ${h(c.ws.tenant.support.email)}.` : 'Select Start to go to each field that needs you, then Finish.'}</p>
       ${c.fl.resignAt && !declined ? '<p class="meta ivf-why">The copy you signed earlier could not be sent from this device, so this is a new copy to sign. Your details and commitment are the same.</p>' : ''}
       ${env ? NS.esign.embed(env.id, c.inv.id) : ''}`;
-  }
-  function statusRow(label, value, cls) {
-    return `<div><dt>${label}</dt><dd>${cls ? `<span class="iv-chip ${cls}">${value}</span>` : value}</dd></div>`;
   }
   function fDone(c) {
     const t = c.ws.tenant;
@@ -1660,23 +1628,12 @@
       }
       return `${ivfH1('Finishing your account…')}<p class="lede ivf-loading" role="status">Saving your details and sending them to ${h(t.name)}.</p>`;
     }
-    // Read only (peek): showing the summary must not create a verification record (vOf does, for an investor without one).
-    const v = IV() ? (IV().peek ? IV().peek(i) : IV().vOf(i)) : null;
+    // D-06 (plan 06-15): no summary of what the investor just did; the lede says whether the firm is still reviewing and
+    // "What happens next" says what is still open.
     const dec = IV() ? IV().status(c.ws, i).key : 'approved';
-    const id = v ? v.identity.status : 'passed';
     const held = dec !== 'approved';
-    // While the firm reviews, the investor sees one verification status: never which check (a screening match is not disclosed).
-    const idTxt = held ? (dec === 'review' || dec === 'rejected' ? ['In review', 'iv-wait'] : ['Waiting for the results', 'iv-wait']) : id === 'passed' ? ['Verified', 'iv-ok'] : ['Submitted, waiting for the result', 'iv-wait'];
-    const a = v ? v.accreditation : {};
-    const accTxt = a.status === 'verified' && a.connection !== 'self' ? ['Verified', 'iv-ok'] : a.status === 'pending' || a.status === 'review' ? ['In review', 'iv-wait'] : i.accreditation && i.accreditation.basis ? ['Self-certified', 'iv-ok'] : ['Not provided', 'iv-wait'];
-    // A flow whose status step asks the accredited question reports the answer given there (the one on the subscription, when there is one).
-    const asked = accAsked(c);
-    const q = asked && c.req ? EL().qualOf(c.req) : null;
-    const said = q ? q.accredited : o.d.stAcc === 'yes' ? true : o.d.stAcc === 'no' ? false : null;
-    const stTxt = said === true ? ['Accredited (self-certified)', 'iv-ok'] : said === false ? ['Not accredited', ''] : ['Not answered', 'iv-wait'];
     const env = envOf(c);
     const s = signerOf(env, i);
-    const bank = i.payment && i.payment.method === 'ach' ? i.payment.bank : null;
     const signed = env && (env.status === 'completed' || (s && s.status === 'signed'));
     const allSigned = !!env && env.status === 'completed';
     // A countersignature is still to come only while one of the firm's signers has not signed. An agreement for the investor
@@ -1698,9 +1655,6 @@
     const unsent = (c.fl.unsent || []).map((k) => (k === 'identity' ? 'the ID you uploaded' : k === 'rep' ? 'the acknowledgment of your purchaser representative you uploaded' : 'the verification letter you uploaded'));
     if (unsent.length) next.push(`${unsent.join(' and ').replace(/^t/, 'T')} could not be sent with your details, so ${h(t.support.team)} may ask you for ${unsent.length > 1 ? 'them' : 'it'} again.`);
     next.push(`Questions? ${h(t.support.team)}${t.support.email ? ` at ${h(t.support.email)}` : ''}${t.support.phone ? ` or ${h(t.support.phone)}` : ''}.`);
-    const verifyRows = held
-      ? statusRow('Verification', idTxt[0], idTxt[1])
-      : `${statusRow('Identity', idTxt[0], idTxt[1])}${statusRow('Sanctions screening', v && v.aml.status === 'clear' ? 'Clear' : 'Runs automatically', v && v.aml.status === 'clear' ? 'iv-ok' : 'iv-wait')}`;
     const lede = c.it.existing
       ? c.req
         ? `Your subscription to ${h(c.off.name.replace(/\.$/, ''))} is submitted.${held ? ` ${h(t.support.team)} is reviewing your verification and will contact you if anything else is needed.` : ''}`
@@ -1711,15 +1665,6 @@
     return `<div class="ivf-done">
       ${ivfH1(c.it.existing ? (c.req ? 'Thank you. Your subscription is submitted' : 'This offering has closed') : held ? 'Thank you. Your paperwork is complete' : 'You’re all set')}
       <p class="lede">${lede}</p>
-      <dl class="terms ivf-summary">
-        ${c.it.existing ? '' : statusRow('Account', `Activated · ${h(i.title)}`, 'iv-ok')}
-        ${c.it.existing && !held ? '' : verifyRows}
-        ${asked ? statusRow('Accreditation', stTxt[0], stTxt[1]) : c.it.existing && !c.fl.accStep ? '' : statusRow('Accreditation', accTxt[0], accTxt[1])}
-        ${c.it.existing ? '' : statusRow('Tax form', h(i.taxForm || 'Not provided'), i.taxForm ? 'iv-ok' : 'iv-wait')}
-        ${c.it.existing ? '' : statusRow('Distributions', bank ? `ACH to the ${h(bank.type)} account ending ${h(U.last4(bank.account))}` : 'Check by mail')}
-        ${c.req && c.off ? statusRow('Subscription', `Submitted for ${money(c.off, c.req.cents / 100)} in ${h(c.off.name)}`, 'iv-ok') : c.closed ? statusRow('Subscription', `Not made: ${closedName} is no longer accepting subscriptions`, 'iv-wait') : ''}
-        ${env ? statusRow('Subscription agreement', allSigned ? 'Signed by everyone' : s && s.status === 'signed' ? (counter ? `Signed; waiting for ${h(t.shortName)}’s countersignature` : 'Signed') : 'Waiting for your signature', signed ? 'iv-ok' : 'iv-wait') : ''}
-      </dl>
       <h2 class="ivf-h2">What happens next</h2>
       <ul class="ivf-need">${next.map((x) => `<li>${x}</li>`).join('')}</ul>
       <a class="btn btn-primary" href="#overview">Go to your portal</a>
@@ -2276,7 +2221,7 @@
       const head = `<header class="pt-head"><div class="pt-head-in"><span class="pt-logo">${B.lockup(t)}</span><span class="ob-note">Account setup</span></div></header>`;
       const list = steps.map((s, i) => `<li class="${i < n || (key === 'done' && c.fl.completedAt) ? 'done' : i === n ? 'current' : ''}"${i === n ? ' aria-current="step"' : ''}><span class="ob-num">${i < n || (key === 'done' && c.fl.completedAt) ? icon('check') : i + 1}</span><span>${h(stepLabel(c, s))}</span></li>`).join('');
       const progress = `<div class="ivf-progress"><p class="ob-count">Step ${n + 1} of ${steps.length}<span class="ivf-count-label">: ${h(stepLabel(c, key))}</span></p><div class="ivf-bar" role="progressbar" aria-label="Account setup progress" aria-valuemin="1" aria-valuemax="${steps.length}" aria-valuenow="${n + 1}" aria-valuetext="Step ${n + 1} of ${steps.length}: ${h(stepLabel(c, key))}"><span style="width:${(((n + 1) / steps.length) * 100).toFixed(1)}%"></span></div></div>`;
-      const body = { welcome: fWelcome, login: fLogin, profile: fProfile, identity: fIdentity, status: fStatus, accreditation: () => stepAccreditation(accVerifiedFor(c), { why: accWhy(c) }).replace(/^\s*<h1>[^<]*<\/h1>/, () => ivfH1(h(stepLabel(c, 'accreditation'))) + (c.fl.accLate ? `<p class="meta ivf-why">${lateNote(c)}</p>` : '')), tax: fTax, payment: () => stepPayment().replace(/^\s*<h1>/, '<h1 tabindex="-1">'), subscribe: fSubscribe, agreement: fAgreement, done: fDone }[key](c);
+      const body = { welcome: fWelcome, login: fLogin, profile: fProfile, identity: fIdentity, status: fStatus, accreditation: () => stepAccreditation(accVerifiedFor(c), { why: accWhy(c) }).replace(/^\s*<h1>[^<]*<\/h1>\s*<p class="lede">[\s\S]*?<\/p>/, () => ivfH1(h(stepLabel(c, 'accreditation'))) + (c.fl.accLate ? `<p class="meta ivf-why">${lateNote(c)}</p>` : '')), tax: fTax, payment: () => stepPayment().replace(/^\s*<h1>/, '<h1 tabindex="-1">'), subscribe: fSubscribe, agreement: fAgreement, done: fDone }[key](c);
       const back = n > 0 && key !== 'done' && !(key === 'subscribe' && c.req && envOf(c) && signerOf(envOf(c), c.inv) && signerOf(envOf(c), c.inv).status === 'signed') ? '<button class="btn" type="button" data-action="ivf-back">Back</button>' : '';
       const submit = { welcome: 'Get started', subscribe: c.req ? 'Continue' : tplReady(c) ? 'Continue to the agreement' : 'Sign and submit subscription' }[key] || (steps[n + 1] === 'done' ? 'Finish' : 'Continue');
       const saved = key === 'welcome' ? '' : '<p class="ivf-saved">Your progress is saved. You can come back with your invitation link at any time.</p>';

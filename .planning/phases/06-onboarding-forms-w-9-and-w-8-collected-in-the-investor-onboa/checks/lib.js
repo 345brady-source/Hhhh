@@ -485,11 +485,11 @@ async function importFromConsole(page, invitationId) {
   await page.waitForTimeout(300);
 }
 
-/** The agreement on screen: Finish (D-30: nothing on it is required), then the done summary's text. */
+/** The agreement on screen: Finish (D-30: nothing on it is required), then the done screen's text (plan 06-15: no summary list; an older tree has one). */
 async function finishAgreement(page) {
   await page.waitForSelector('.es-finish', { timeout: 30000 });
   await page.click('.es-finish');
-  await page.waitForSelector('.ivf-done .ivf-summary', { timeout: 30000 });
+  await page.waitForSelector('.ivf-done .ivf-need, .ivf-done .ivf-summary', { timeout: 30000 });
   await page.waitForTimeout(300);
   return page.locator('.ivf-done').innerText();
 }

@@ -194,11 +194,11 @@ const requestRow = (page, id) =>
     return tr ? tr.innerText : '';
   }, id);
 
-/** The agreement on screen: Finish (D-30: nothing on it is required), then the done summary's text. */
+/** The agreement on screen: Finish (D-30: nothing on it is required), then the done screen's text (plan 06-15: no summary list; an older tree has one). */
 async function finishAgreement(page) {
   await page.waitForSelector('.es-finish', { timeout: 30000 });
   await page.click('.es-finish');
-  await page.waitForSelector('.ivf-done .ivf-summary', { timeout: 30000 });
+  await page.waitForSelector('.ivf-done .ivf-need, .ivf-done .ivf-summary', { timeout: 30000 });
   await page.waitForTimeout(300);
   return page.locator('.ivf-done').innerText();
 }
@@ -583,7 +583,8 @@ const parts = {
     check('the answer is in the change log', !!r && r.log.some((e) => e.action === 'Investor status answered' && e.detail.indexOf(`accredited investor (${bases[1]})`) >= 0), r && r.log);
     const done = await finishAgreement(p);
     await p.screenshot({ path: path.join(SHOTS, 'accredited-done.png'), fullPage: true });
-    check('the done summary’s Accreditation row reads "Accredited (self-certified)"', /Accreditation\s+Accredited \(self-certified\)/.test(done), done);
+    // D-06 (plan 06-15): the done screen's summary list is removed; what is still open is under "What happens next".
+    check('the done screen shows what happens next and no summary list (no Accreditation row)', /What happens next/.test(done) && !/Accreditation/.test(done), done);
     await consoleOffering(p, off.offeringId);
     const el = await eligibilityText(p);
     await p.screenshot({ path: path.join(SHOTS, 'accredited-console.png'), fullPage: true });
@@ -631,7 +632,8 @@ const parts = {
     check('request.qual.accredited is null', !!r && r.qual && r.qual.accredited === null && r.qual.regime === '506b', r && r.qual);
     check('the change log says the question was not answered', !!r && r.log.some((e) => e.action === 'Investor status answered' && /not answered/.test(e.detail)), r && r.log);
     const done = await finishAgreement(p);
-    check('the done summary’s Accreditation row reads "Not answered"', /Accreditation\s+Not answered/.test(done), done);
+    // D-06 (plan 06-15): the done screen's summary list is removed; what is still open is under "What happens next".
+    check('the done screen shows what happens next and no summary list (no Accreditation row)', /What happens next/.test(done) && !/Accreditation/.test(done), done);
     await consoleOffering(p, off.offeringId);
     const el = await eligibilityText(p);
     await p.screenshot({ path: path.join(SHOTS, 'unanswered-console.png'), fullPage: true });
@@ -904,7 +906,8 @@ const parts = {
     const q = (r && r.qual) || {};
     check('request.qual: regime other, accredited false, no sophistication answers', q.regime === 'other' && q.accredited === false && !q.sophistication, q);
     const done = await finishAgreement(p);
-    check('the done summary’s Accreditation row reads "Not accredited"', /Accreditation\s+Not accredited/.test(done), done);
+    // D-06 (plan 06-15): the done screen's summary list is removed; what is still open is under "What happens next".
+    check('the done screen shows what happens next and no summary list (no Accreditation row)', /What happens next/.test(done) && !/Accreditation/.test(done), done);
     await consoleOffering(p, off.offeringId);
     check('no Investor eligibility panel for a Regulation S offering', (await eligibilityText(p)) === '');
     await p.evaluate(() => {
@@ -1003,7 +1006,8 @@ const parts = {
     const q = (r && r.qual) || {};
     check('the request carries qual: regime 506b, accredited true, the ground on file', q.regime === '506b' && q.accredited === true && q.basis === who.basis, q);
     const done = await finishAgreement(p);
-    check('the done summary’s Accreditation row reads "Accredited (self-certified)"', /Accreditation\s+Accredited \(self-certified\)/.test(done), done);
+    // D-06 (plan 06-15): the done screen's summary list is removed; what is still open is under "What happens next".
+    check('the done screen shows what happens next and no summary list (no Accreditation row)', /What happens next/.test(done) && !/Accreditation/.test(done), done);
     const leak = L.leakCheck([st, sub, done].join('\n'));
     check('white label: status, subscribe and done screens pass the leak check', leak.ok, leak.hits);
     check('no script error in the browser', A.errors.length === 0, A.errors);
@@ -1276,7 +1280,8 @@ const parts = {
     check('no figure fields, no person-or-organization choice and no limit line; no Rule 506(b) sophistication questions', R.figFields === 0 && R.limit === null && R.soph === 0, R);
     // D-06 (plan 06-15): the notice of the limit stays (Rule 251(d)(2)(i)(C)); the sentence saying the firm asks for a confirmation goes (the statement itself asks).
     check('the step gives the notice of the limit', /limited to 10 percent of your annual income or your net worth, whichever is greater/.test(R.status || '') && !/asks you to confirm that your investment is within that limit/.test(R.status || ''), (R.status || '').slice(0, 1500));
-    check('the subscribe step warns plainly that the investor has not confirmed the limit and can still subscribe, with no amount worked out', RA_WARN.test(R.warn || '') && /You can still subscribe/.test(R.warn || '') && /reviews every subscription/.test(R.warn || '') && !/\$/.test(R.raSub || ''), R.raSub);
+    // D-06 (plan 06-15): the warning keeps what is missing; "You can still subscribe ..." goes (Continue shows it), the walk shows it does not block.
+    check('the subscribe step warns plainly that the investor has not confirmed the limit, with no amount worked out and nothing blocked', RA_WARN.test(R.warn || '') && !/You can still subscribe/.test(R.warn || '') && !/\$/.test(R.raSub || '') && w.reached, R.raSub);
     const r = await requestOf(p, inv.investorId, off.offeringId);
     check('request.qual: regime regA2, accredited false, regA exactly { attested: false }', !!r && r.qual.regime === 'regA2' && r.qual.accredited === false && JSON.stringify(r.qual.regA) === '{"attested":false}', r && r.qual);
     check('the change log says the investor did not attest (T-06-08)', !!r && r.log.some((e) => e.action === 'Investor status answered' && /Regulation A Tier 2: did not attest that the total invested in this offering is within 10 percent/.test(e.detail)), r && r.log);
@@ -1686,7 +1691,7 @@ const parts = {
           }
         });
         check('rega: the status step shows the Tier 2 statement and no figure fields', R.attestQ === 1 && R.figFields === 0, R);
-        check('rega: left unticked, the subscribe step warns without blocking (agreement reached)', RA_WARN.test(R.warn || '') && /You can still subscribe/.test(R.warn || '') && !!g && g.w.reached, R);
+        check('rega: left unticked, the subscribe step warns without blocking (agreement reached)', RA_WARN.test(R.warn || '') && !!g && g.w.reached, R); // D-06 (plan 06-15): "You can still subscribe" removed
         const q = (g && g.req && g.req.qual) || {};
         check('rega: request.qual.regA is exactly { attested: false }', JSON.stringify(q.regA) === '{"attested":false}' && q.accredited === false, q);
         if (g && g.req) {
@@ -1827,6 +1832,108 @@ const parts = {
       check('managed: no request left the check server', A.net.external.length === 0, A.net.external);
       await A.context.close();
     }
+  },
+
+  /**
+   * D-06 (owner, plan 06-15): every item of the investor onboarding screens recorded in checks/onboarding-items.json, held on
+   * the screens of five walks: a new individual under Rule 506(b) answering "not accredited" with a purchaser representative,
+   * a new LLC under Regulation A Tier 2 answering "not accredited" (an entity holding plan assets, 40 percent), a new IRA
+   * under Rule 506(c) (verification step) with the commitment set by the firm, an investor on file under Rule 506(b), and a
+   * new individual under Regulation A Tier 1 with the firm's accredited question off. Each item with a text: a keep is on its
+   * screen in every walk named, a removal or a fold is on none of them.
+   */
+  async lean({ check, S }) {
+    const items = JSON.parse(fs.readFileSync(path.join(__dirname, 'onboarding-items.json'), 'utf8'));
+    check('onboarding-items.json: every item has a screen, an item, a decision (keep, remove or folded) and a reason', Array.isArray(items) && items.length > 0 && items.every((x) => x.screen && x.item && /^(keep|remove|folded)$/.test(x.decision) && x.reason), items.filter((x) => !(x.screen && x.item && /^(keep|remove|folded)$/.test(x.decision) && x.reason)).slice(0, 5));
+    const keyOf = (hd) => (/^Welcome/.test(hd) ? 'welcome' : /Create your login/.test(hd) ? 'login' : /Investor information/.test(hd) ? 'profile' : /Identity verification/.test(hd) ? 'identity' : /Accredit/.test(hd) ? 'accreditation' : /^Investor status$/.test(hd) ? 'status' : /Distribution payments/.test(hd) ? 'payment' : /^Subscription$/.test(hd) ? 'subscribe' : /Tax certification/.test(hd) ? 'tax' : hd);
+    const formText = (p) => p.evaluate(() => (document.querySelector('.ivf-form') || document.body).innerText);
+    const walkOne = async (tag, o) => {
+      const A = await L.open(S);
+      const p = A.page;
+      const off = await L.setupPortal(S, A, { exemption: o.exemption });
+      if (o.toggleOff) {
+        await p.evaluate(() => {
+          window.CVPortal.state.ws.tenant.onboarding.accreditation = false;
+          window.CVPortal.app.save(true);
+        });
+      }
+      let name = INV.name;
+      let inv;
+      if (o.onFile) {
+        const who = await p.evaluate((oid) => {
+          const ws = window.CVPortal.state.ws;
+          const i = ws.investors.find((x) => x.onboarding && x.onboarding.status === 'complete' && x.type === 'individual' && x.accreditation && x.accreditation.basis && x.email && !(x.positions || []).some((y) => y.offeringId === oid));
+          return i ? { name: i.contact, email: i.email } : null;
+        }, off.offeringId);
+        name = who.name;
+        inv = await L.createInvitation(p, { name: who.name, email: who.email, offeringId: off.offeringId, cents: 0 });
+      } else inv = await L.createInvitation(p, { name: INV.name, email: INV.email, type: o.type, account: o.account, offeringId: off.offeringId, cents: o.cents || 0 });
+      await p.goto(`${S.base}?tenant=${inv.tenant}#invite-${inv.token}`);
+      const T = {};
+      const w = await L.walk(p, Object.assign({}, o.answers || {}, {
+        name,
+        amount: 60000,
+        onStep: async (hd) => {
+          const k = keyOf(hd);
+          if (k !== 'status' && k !== 'tax') {
+            T[k] = await formText(p);
+            await p.screenshot({ path: path.join(SHOTS, `lean-${tag}-${k}.png`), fullPage: true });
+          }
+        },
+        onFilled: async (hd) => {
+          if (keyOf(hd) !== 'status') return;
+          if (o.plan) await p.check(`input[name="ob-stPlan"][value="${o.plan}"]`);
+          if (o.planPct) {
+            await p.waitForSelector('#ob-stPlanPct', { timeout: 10000 });
+            await p.fill('#ob-stPlanPct', o.planPct);
+          }
+          await p.waitForTimeout(200);
+          T.status = await formText(p);
+          await p.screenshot({ path: path.join(SHOTS, `lean-${tag}-status.png`), fullPage: true });
+        }
+      }));
+      check(`${tag}: the walk reaches the subscription agreement with no field error`, w.reached && w.errors.length === 0, { seen: w.seen, errors: w.errors });
+      if (w.reached) {
+        T.agreement = await formText(p);
+        await p.screenshot({ path: path.join(SHOTS, `lean-${tag}-agreement.png`), fullPage: true });
+        await finishAgreement(p);
+        T.done = await formText(p);
+        await p.screenshot({ path: path.join(SHOTS, `lean-${tag}-done.png`), fullPage: true });
+      }
+      T['every step'] = T.login || '';
+      const lk = L.leakCheck(Object.values(T).join('\n'));
+      check(`${tag}: white label: every screen passes the leak check`, lk.ok, lk.hits);
+      check(`${tag}: no script error in the browser`, A.errors.length === 0, A.errors);
+      check(`${tag}: no request left the check server`, A.net.external.length === 0, A.net.external);
+      await A.context.close();
+      return { T, seen: w.seen };
+    };
+    const W = {
+      'individual-506b': await walkOne('individual-506b', { exemption: 'Rule 506(b)', answers: { acc: 'no', soph: 'rep', rep: 'yes', repName: 'Morgan Ellery' } }),
+      'entity-rega2': await walkOne('entity-rega2', { exemption: 'Regulation A Tier 2', type: 'entity', account: 'Whitfield Holdings LLC', answers: { acc: 'no' }, plan: 'planAssets', planPct: '40' }),
+      'ira-506c': await walkOne('ira-506c', { exemption: 'Rule 506(c)', type: 'ira', account: 'Harbor Trust Co. FBO Dana Whitfield IRA', cents: 25000000 }),
+      'onfile-506b': await walkOne('onfile-506b', { exemption: 'Rule 506(b)', onFile: true }),
+      'individual-rega1': await walkOne('individual-rega1', { exemption: 'Regulation A Tier 1', toggleOff: true })
+    };
+    const bad = [];
+    let held = 0;
+    items.forEach((x) => {
+      if (!x.text) return;
+      (x.paths || []).forEach((pth) => {
+        const t = (W[pth] && W[pth].T[x.screen]) || null;
+        const on = t != null && t.indexOf(x.text) >= 0;
+        held++;
+        if (t == null) bad.push(`${pth} ${x.screen}: screen not reached (${x.item})`);
+        else if (x.decision === 'keep' && !on) bad.push(`${pth} ${x.screen}: kept item missing: ${x.text}`);
+        else if (x.decision !== 'keep' && on) bad.push(`${pth} ${x.screen}: ${x.decision} item still shown: ${x.text}`);
+      });
+    });
+    check(`every recorded item with a text is held on its screens (${held} item and walk pairs): each keep present, each removal and fold absent`, held > 100 && bad.length === 0, bad);
+    const untested = items.filter((x) => !x.text && !x.heldBy && x.screen !== 'flow' && x.screen !== 'every step' && x.screen !== 'payment' && x.screen !== 'welcome');
+    check('every item without a text on a walked screen names the check that holds it, or is a step-level decision', untested.length === 0, untested.map((x) => x.item));
+    const steps = (k) => W[k].seen.map((s) => s.split(' | ').pop());
+    check('the steps are as before (no step removed or folded): 10 for a new individual under Rule 506(b), 11 under Rule 506(c), 5 for the investor on file', W['individual-506b'].seen.every((s) => /^Step \d+ of 10:/.test(s)) && W['ira-506c'].seen.every((s) => /^Step \d+ of 11:/.test(s)) && steps('onfile-506b').map((x) => (/^Welcome/.test(x) ? 'Welcome' : x)).join('|') === 'Welcome|Investor status|Subscription|Subscription agreement', { a: W['individual-506b'].seen, c: W['ira-506c'].seen, d: W['onfile-506b'].seen });
+    check('Regulation A Tier 1 with the accredited question off: no accreditation tick on Subscription', !/accredited investor/.test(W['individual-rega1'].T.subscribe || ''), (W['individual-rega1'].T.subscribe || '').slice(0, 800));
   }
 };
 
