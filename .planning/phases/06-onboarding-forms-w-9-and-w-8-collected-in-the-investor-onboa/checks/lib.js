@@ -70,14 +70,24 @@ async function start() {
   return { origin, base: `${origin}/diy.html`, browser, server, stop };
 }
 
-/** A fresh browser context on the check server: CDN and fonts answered locally, anything else outside refused. */
+/**
+ * A fresh browser context on the check server: CDN and fonts answered locally, anything else outside refused.
+ * opts.allow: more origins this context may reach (plan 06-06: the in-process integration server); opts.init: a script
+ * run before every page's own scripts (window.CVPortalConfig, as the firm sets it where the portal is published).
+ */
 async function open(S, opts) {
   opts = opts || {};
   const context = await S.browser.newContext(Object.assign({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 }, opts.context || {}));
-  const net = { external: [] };
+  if (opts.init) await context.addInitScript(opts.init);
+  const allow = (opts.allow || []).map((x) => String(x).replace(/\/+$/, '') + '/');
+  const net = { external: [], allowed: [] };
   await context.route('**/*', (route) => {
     const u = route.request().url();
     if (u.startsWith(S.origin + '/') || u.startsWith('blob:') || u.startsWith('data:') || u.startsWith('about:')) return route.continue();
+    if (allow.some((a) => u.startsWith(a))) {
+      net.allowed.push(`${route.request().method()} ${u.replace(/[?#].*$/, '')}`);
+      return route.continue();
+    }
     const m = u.match(/^https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/(.+)$/);
     if (m && LOCAL[m[1]]) return route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(LOCAL[m[1]]) });
     const jd = u.match(/^https:\/\/cdn\.jsdelivr\.net\/npm\/(.+)$/);
@@ -237,6 +247,173 @@ async function walk(page, answers) {
   return { seen, reached: false, errors: errs };
 }
 
+/* ---------- Server mode (plan 06-06; reused by plans 06-07 and 06-12) ---------- */
+
+/** A free local port (the integration server needs its own address before it starts: PUBLIC_URL goes into every link). */
+function freePort() {
+  return new Promise((resolve, reject) => {
+    const s = require('net').createServer();
+    s.once('error', reject);
+    s.listen(0, '127.0.0.1', () => {
+      const port = s.address().port;
+      s.close(() => resolve(port));
+    });
+  });
+}
+
+/**
+ * The firm's integration server, the real code (server/index.mjs) in this process: its own free port, NODE_ENV test, a store
+ * file in a temporary folder, a random API token, PORTAL_ORIGIN = the check's static origin (so the server takes the
+ * console's and the investor's calls from there and builds links to that page only), PUBLIC_URL = its own address.
+ * Returns { base, token, server, init, configure(page), call(method, path, body), rows(), submission(id), alter(id, fn),
+ * waitCompleted(id), close() }. init is the script that lists the server in window.CVPortalConfig.integrationServers, as
+ * the firm does where it publishes the portal, so an investor's page on another device trusts its ?server= link.
+ */
+async function serverPortal(S, extraEnv) {
+  const { pathToFileURL } = require('url');
+  const crypto = require('crypto');
+  const { createServer } = await import(pathToFileURL(path.join(ROOT, 'server/index.mjs')).href);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'p6-server-'));
+  const token = crypto.randomBytes(24).toString('hex');
+  const port = await freePort();
+  const base = `http://127.0.0.1:${port}`;
+  const env = Object.assign({ NODE_ENV: 'test', STORE_FILE: path.join(dir, 'store.json'), API_TOKEN: token, PORTAL_ORIGIN: S.origin, PUBLIC_URL: base }, extraEnv || {});
+  const server = createServer({ env });
+  await new Promise((r, j) => {
+    server.once('error', j);
+    server.listen(port, '127.0.0.1', r);
+  });
+  const call = async (method, p, body) => {
+    const res = await fetch(base + p, { method, headers: Object.assign({ Authorization: `Bearer ${token}` }, body !== undefined ? { 'Content-Type': 'application/json' } : {}), body: body !== undefined ? JSON.stringify(body) : undefined });
+    const text = await res.text();
+    let data = null;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      data = text;
+    }
+    return { status: res.status, body: data };
+  };
+  // The console lists its own workspace's invitations (the sample portal's tenant id unless told otherwise).
+  const rows = async (workspace) => {
+    const r = await call('GET', '/v1/invitations?workspace=' + encodeURIComponent(workspace || 'kestrel-bay'));
+    return Array.isArray(r.body) ? r.body : (r.body && r.body.invitations) || [];
+  };
+  return {
+    base,
+    token,
+    server,
+    init: `window.CVPortalConfig = Object.assign({}, window.CVPortalConfig || {}, { integrationServers: [${JSON.stringify(base)}] });`,
+    /** The console uses this server: the address and token on its Integrations settings (what invitations.js serverOn reads). */
+    configure: (page) =>
+      page.evaluate(
+        ({ base, token }) => {
+          const NS = window.CVPortal;
+          const ws = NS.state.ws;
+          const s = NS.integrations.ensure(ws).server;
+          s.url = base;
+          s.token = token;
+          NS.app.save(true);
+          return NS.invitations.serverOn(ws);
+        },
+        { base, token }
+      ),
+    call,
+    rows,
+    /** What the server holds for the console to import (GET /v1/invitations/:id/submission), as the console would read it. */
+    submission: async (id) => (await call('GET', `/v1/invitations/${encodeURIComponent(id)}/submission`)).body,
+    /** Change the stored submission in place (no DATA_KEY in this run: the store holds it as { plain }); a tampering check. */
+    alter(id, fn) {
+      const rec = server.store.get('invitations', id);
+      if (!rec || !rec.submission || !rec.submission.plain) throw new Error('no stored submission to alter for ' + id);
+      const sub = JSON.parse(JSON.stringify(rec.submission.plain));
+      fn(sub);
+      server.store.put('invitations', { id, submission: { plain: sub } });
+      return sub;
+    },
+    /** Wait until the server has the investor's completed submission for this invitation; resolves to its row. */
+    async waitCompleted(id, ms) {
+      const until = Date.now() + (ms || 30000);
+      for (;;) {
+        const row = (await rows()).find((x) => x.id === id);
+        if (row && row.status === 'completed' && row.hasSubmission) return row;
+        if (Date.now() > until) throw new Error('the server has no completed submission for ' + id + ': ' + JSON.stringify(row || null).slice(0, 400));
+        await new Promise((r) => setTimeout(r, 300));
+      }
+    },
+    close: async () => {
+      server.closeAllConnections();
+      await new Promise((r) => server.close(r));
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  };
+}
+
+/** A console route as a firm admin (the demo role control, when the page shows one), waiting for the selector. */
+async function consoleRoute(page, hash, sel) {
+  await page.evaluate((h) => (location.hash = h), hash);
+  await page.waitForTimeout(400);
+  if (await page.locator('#demo-role').count()) {
+    await page.selectOption('#demo-role', 'admin');
+    await page.waitForTimeout(400);
+    await page.evaluate((h) => (location.hash = h), hash);
+  }
+  await page.waitForSelector(sel || '.cs-panel-head h2', { timeout: 20000 });
+  await page.waitForTimeout(300);
+}
+
+/**
+ * The sponsor invites an investor with the console's own form on the Investors page (the real send path: invitations.js
+ * submitInvite, then send, which posts the snapshot to the integration server). Resolves to the invitation record once the
+ * server has answered: { id, serverId, link, investorId, emailStatus, emailError }.
+ */
+async function inviteFromConsole(page, o) {
+  await consoleRoute(page, 'console-investors', '[data-action=invite-toggle]');
+  if ((await page.locator('#iv-email').count()) === 0) await page.click('[data-action=invite-toggle]');
+  await page.waitForSelector('#iv-email', { timeout: 10000 });
+  await page.fill('#iv-contact', o.first);
+  await page.fill('#iv-last', o.last);
+  await page.fill('#iv-email', o.email);
+  if (!(await page.locator('#iv-more[open]').count())) await page.click('#iv-more summary');
+  await page.selectOption('#iv-off', o.offeringId);
+  await page.waitForTimeout(300);
+  if (o.type) await page.selectOption('#iv-type', o.type);
+  if (o.amount) await page.fill('#iv-amt', String(o.amount));
+  await page.click('.inv8-form[data-form="invite-one"] button[type=submit]');
+  await page.waitForFunction((email) => {
+    const ws = window.CVPortal.state.ws;
+    const inv = ws.investors.find((i) => String(i.email || '').toLowerCase() === email.toLowerCase());
+    const it = inv && (ws.invitations || []).filter((x) => x.investorId === inv.id).pop();
+    return !!(it && (it.serverId || it.emailStatus === 'failed' || it.emailStatus === 'manual'));
+  }, o.email, { timeout: 30000 });
+  return page.evaluate((email) => {
+    const ws = window.CVPortal.state.ws;
+    const inv = ws.investors.find((i) => String(i.email || '').toLowerCase() === email.toLowerCase());
+    const it = (ws.invitations || []).filter((x) => x.investorId === inv.id).pop();
+    return { id: it.id, serverId: it.serverId || '', link: it.link || '', token: it.token || '', investorId: inv.id, emailStatus: it.emailStatus, emailError: it.emailError || '' };
+  }, o.email);
+}
+
+/** The console imports what the server holds with its own "Check now" button; resolves once the invitation is imported. */
+async function importFromConsole(page, invitationId) {
+  await consoleRoute(page, 'console-investors', '[data-action=inv8-check]');
+  await page.click('[data-action=inv8-check]');
+  await page.waitForFunction((id) => {
+    const it = (window.CVPortal.state.ws.invitations || []).find((x) => x.id === id);
+    return !!(it && it.importedAt);
+  }, invitationId, { timeout: 30000 });
+  await page.waitForTimeout(300);
+}
+
+/** The agreement on screen: Finish (D-30: nothing on it is required), then the done summary's text. */
+async function finishAgreement(page) {
+  await page.waitForSelector('.es-finish', { timeout: 30000 });
+  await page.click('.es-finish');
+  await page.waitForSelector('.ivf-done .ivf-summary', { timeout: 30000 });
+  await page.waitForTimeout(300);
+  return page.locator('.ivf-done').innerText();
+}
+
 /** Everything the page shows as text. */
 const screenText = (page) => page.evaluate(() => document.body.innerText);
 
@@ -320,4 +497,4 @@ async function runParts(parts, opts) {
   process.exit(failed.length ? 1 : 0);
 }
 
-module.exports = { ROOT, SCRATCH, VENDOR, OUT, missingVendor, serve, start, open, setupPortal, createInvitation, sandbox, heading, submit, fieldErrors, walk, screenText, leakCheck, reporter, runParts, VENDORS, VENDOR_RE, WORD_RE };
+module.exports = { ROOT, SCRATCH, VENDOR, OUT, missingVendor, serve, start, open, setupPortal, createInvitation, sandbox, heading, submit, fieldErrors, walk, screenText, leakCheck, reporter, runParts, VENDORS, VENDOR_RE, WORD_RE, freePort, serverPortal, consoleRoute, inviteFromConsole, importFromConsole, finishAgreement };
