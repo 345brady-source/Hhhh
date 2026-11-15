@@ -253,14 +253,12 @@ if (total) {
     need(!safe && !!noOffer, safe ? 'an offer to read the pages from their picture appeared in part a: the pictures must be read on upload with no click' : 'part a does not report that no offer to read pictures appeared');
     failed().forEach((r) => need(false, 'failed: ' + short(r)));
     const note = String(score.note || '').replace(/[‘’]/g, "'");
-    [
-      ['investor', (on) => `The investor's signature line was found on ${on}.`],
-      ['co-investor/second signer', (on) => `The co-investor's signature line was found on ${on}.`],
-      ['unclear', (on) => `Signature lines for other people (a custodian, a broker, a representative or the like) were found on ${on}. Nobody is asked to sign them.`]
-    ].forEach(([whose, say]) => {
-      const pages = signedOn(whose);
-      if (pages.length) need(note.includes(say(pagesText(pages))), `the read summary does not say: "${say(pagesText(pages))}"`);
-    });
+    const investorSays = (on) => `The investor's signature line was found on ${on}.`;
+    const pages = signedOn('investor');
+    if (pages.length) need(note.includes(investorSays(pagesText(pages))), `the read summary does not say: "${investorSays(pagesText(pages))}"`);
+    // D-30 (the owner, Phase 01.4 plan 63): two people only. The co-investor's and other people's signature lines are the
+    // investor's places now, so the summary names no co-investor and no other people, whatever the sheet calls them.
+    ["The co-investor's signature line was found", 'Signature lines for other people'].forEach((said) => need(!note.includes(said), `the read summary still says "${said} ..." (D-30: only the investor and the firm)`));
   }
 }
 if (has('rows')) failed().forEach((r) => need(false, 'failed: ' + short(r)));

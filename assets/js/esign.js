@@ -137,8 +137,16 @@
   function addEvent(env, actor, action, detail, at) {
     env.events.push({ at: at || nowIso(), actor, action, detail: detail || '' });
   }
-  /** Required to finish: signature and initials unless the sponsor unticked Required; other fields only when ticked. */
-  const isReq = (f) => f.type !== 'date' && (f.type === 'signature' || f.type === 'initials' ? f.required !== false : !!f.required);
+  /**
+   * Required to finish: signature and initials unless the sponsor unticked Required; other fields only when ticked.
+   * Given the envelope, a field of an investor (or a co-investor) is never required (D-30, the owner: no field on the
+   * investor's side is mandatory, signatures included); the firm's fields keep their own flag.
+   */
+  const isReq = (f, env) => f.type !== 'date' && !(env && investorsField(env, f)) && (f.type === 'signature' || f.type === 'initials' ? f.required !== false : !!f.required);
+  const investorsField = (env, f) => {
+    const s = (env.signers || []).find((x) => x.id === f.signerId);
+    return !!s && s.role === 'investor';
+  };
   function logChange(ws, action, env, detail, actor) {
     if (!NS.audit) return;
     const e = { action, fund: env.offeringId || '', record: env.id, detail: env.title + (detail ? ': ' + detail : '') };
@@ -576,11 +584,12 @@
   }
   /**
    * Fills an envelope's blanks with what the portal already knows. A text field of the investor that names an
-   * onboarding answer (field.prefill, a key of `values`) gets that answer and is locked; with no answer on file it
-   * is left empty for the investor to type (and an answer too long for its blank is filled in but not locked). Any
-   * other field is filled by its label from `labels`, as agreements
-   * stored before placement existed are (fresh: at creation every match is filled and locked; afterwards only the
-   * fields locked then follow a correction). Returns the fields whose value or lock changed.
+   * onboarding answer (field.prefill, a key of `values`) gets that answer, marked filled and never locked: the
+   * investor can change it (D-30, the owner: fill in what the portal holds, editable); with no answer on file it is
+   * left empty for the investor to type. Any other field is filled by its label from `labels`, as agreements stored
+   * before placement existed are (fresh: at creation every match is filled; afterwards only the fields filled then
+   * follow a correction): an investor's stays editable, any other signer's is locked. Returns the fields whose value
+   * or lock changed.
    */
   function fillIn(env, signer, labels, values, fresh) {
     // A currency or percent sign the agreement prints beside the blank is not written again in it.
@@ -593,26 +602,31 @@
       const accepted = f.prefill === 'amount' && env.signers.some((sg) => sg.id === f.signerId && sg.role === 'countersigner');
       if (f.prefill && f.type === 'text' && ((signer && f.signerId === signer.id) || accepted)) {
         const v = has(values, f.prefill) ? unsigned(f, String(values[f.prefill])) : null;
-        // An answer too long for its blank (a long address on a short line) is filled in but left open, so the
-        // investor can shorten it: a locked value that cannot be printed would stop them from finishing.
-        const lock = v != null && !accepted && !tooLong(env, f, v);
-        if (v != null && (f.value !== v || !!f.locked !== lock)) {
+        // Filled in and left open (an answer too long for its blank can then be shortened too); `filled` says the
+        // value came from the portal, so a correction made in onboarding still reaches it.
+        if (v != null && (f.value !== v || !!f.locked || !f.filled)) {
           f.value = v;
-          f.locked = lock;
+          f.locked = false;
+          f.filled = true;
           changed.push(f);
-        } else if (v == null && f.locked) {
+        } else if (v == null && (f.locked || f.filled)) {
           f.value = '';
           f.locked = false;
+          delete f.filled;
           changed.push(f);
         }
         return;
       }
       if (f.auto || !f.label || !has(labels, f.label)) return;
-      if (fresh ? f.type === 'text' || f.type === 'name' || f.type === 'checkbox' : f.locked && f.type !== 'checkbox') {
+      if (fresh ? f.type === 'text' || f.type === 'name' || f.type === 'checkbox' : (f.locked || f.filled) && f.type !== 'checkbox') {
         const v = f.type === 'checkbox' ? !!labels[f.label] : unsigned(f, String(labels[f.label]));
-        if (f.value !== v || !f.locked) changed.push(f);
+        // An investor's field stays editable (D-30); `filled` keeps it following a correction.
+        const lock = !investorsField(env, f);
+        if (f.value !== v || !!f.locked !== lock) changed.push(f);
         f.value = v;
-        f.locked = true;
+        f.locked = lock;
+        if (lock) delete f.filled;
+        else f.filled = true;
       }
     });
     return changed;
@@ -673,7 +687,7 @@
   function coTodo(env) {
     const co = env && env.agreementFor ? env.signers.find((s) => s.co) : null;
     const mine = co ? env.fields.filter((f) => f.signerId === co.id) : [];
-    return mine.length && !mine.some((f) => f.type === 'signature' && f.required !== false) ? 'The co-investor has fields to complete but nowhere to sign. Add a signature field for the co-investor, or remove their fields.' : '';
+    return mine.length && !mine.some((f) => f.type === 'signature') ? 'The co-investor has fields to complete but nowhere to sign. Add a signature field for the co-investor, or remove their fields.' : '';
   }
   /** An investor's agreements that have, or can have, a co-investor: each with the investor's signer, the co-investor's and its template. */
   const coEnvelopes = (ws, inv) =>
@@ -1796,7 +1810,7 @@
     const s = signerById(env, f.signerId) || { name: 'Unassigned', color: '#888888' };
     const sel = ui.sel === f.id;
     const t = TYPES[f.type] || TYPES.text;
-    const req = isReq(f);
+    const req = isReq(f, env);
     const mark = editorFieldMark(env, f);
     // A place for somebody else: the optional look in the paper's second ink, no tag of its own; its hint, its spoken
     // name ("... for someone else (Custodian), page 3, optional", where another field names its signer) and its
@@ -1809,14 +1823,16 @@
   /** The selected field's properties: its type, who it is for, its label, whether it is required, and duplicate and remove. */
   function editorPropsHTML(env, sel) {
     const t = TYPES[sel.type] || TYPES.text;
-    const req = isReq(sel);
+    const req = isReq(sel, env);
+    // An investor's field is never required (D-30): the editor says so instead of offering the Required box.
+    const optional = investorsField(env, sel) && sel.type !== 'date' ? '<p class="cs-hint es-opt-note">Optional: investors can finish signing without completing this field.</p>' : '';
     return `<div class="es-props" data-fid="${h(sel.id)}">
       <div class="es-props-head"><h2>${h(t.label)} field</h2><span class="cs-hint">Page ${sel.page} of ${env.pages}</span><button class="cs-icon es-props-close" type="button" data-action="fe-props-close" aria-label="Close">${icon('close')}</button></div>
       ${editorPropsStatusHTML(env, sel)}
       <label class="cs-field" for="es-ft"><span>Type</span><select id="es-ft" data-change="es-fprop" data-k="type">${Object.keys(TYPES).map((k) => `<option value="${k}"${k === sel.type ? ' selected' : ''}>${h(TYPES[k].label)}</option>`).join('')}</select></label>
       <label class="cs-field" for="es-fs"><span>Signer</span><select id="es-fs" data-change="es-fprop" data-k="signerId">${isOther(sel) ? `<option value="" selected>Someone else (${h(sel.other)})</option>` : ''}${env.signers.map((s) => `<option value="${h(s.id)}"${s.id === sel.signerId && !isOther(sel) ? ' selected' : ''}>${h(s.name)}</option>`).join('')}</select></label>
       <label class="cs-field" for="es-fl"><span>Label <em>(shown to the signer)</em></span><input id="es-fl" type="text" maxlength="90" data-input="es-fprop" data-k="label" value="${h(sel.label || '')}" placeholder="${h(t.label)}"></label>
-      ${sel.type === 'date' ? '<p class="cs-hint">Filled automatically with the date the signer signs.</p>' : `<label class="cs-check" for="es-fr"><input id="es-fr" type="checkbox" data-change="es-fprop" data-k="required"${req ? ' checked' : ''}><span>Required${(sel.type === 'signature' || sel.type === 'initials') && !req ? '<span class="cs-hint">Optional: the signer can finish without signing here.</span>' : sel.type === 'checkbox' ? '<span class="cs-hint">Required means the signer must tick it to finish.</span>' : ''}</span></label>`}
+      ${sel.type === 'date' ? '<p class="cs-hint">Filled automatically with the date the signer signs.</p>' : optional || `<label class="cs-check" for="es-fr"><input id="es-fr" type="checkbox" data-change="es-fprop" data-k="required"${req ? ' checked' : ''}><span>Required${(sel.type === 'signature' || sel.type === 'initials') && !req ? '<span class="cs-hint">Optional: the signer can finish without signing here.</span>' : sel.type === 'checkbox' ? '<span class="cs-hint">Required means the signer must tick it to finish.</span>' : ''}</span></label>`}
       ${placementControlsHTML(env, sel)}
       <div class="es-props-acts"><button class="cs-btn cs-btn-small" type="button" data-action="fe-dup">${icon('copy')}Duplicate</button><button class="cs-btn cs-btn-small cs-btn-danger" type="button" data-action="es-fdel">${icon('x')}Remove</button></div>
     </div>`;
@@ -2224,7 +2240,7 @@
     return !fitText(t, browserWidth, f.w * ps.w, f.h * ps.h);
   }
   function missingFields(env, s, st) {
-    return fieldsOf(env, s).filter((f) => isReq(f) && !filledVal(f, st.vals[f.id]));
+    return fieldsOf(env, s).filter((f) => isReq(f, env) && !filledVal(f, st.vals[f.id]));
   }
   const overLong = (env, s, st) => fieldsOf(env, s).filter((f) => !f.locked && tooLong(env, f, st.vals[f.id]));
   /** A field as it appears once filled (others' fields, read-only previews). */
@@ -2249,7 +2265,7 @@
     const v = st.vals[f.id];
     const style = mineStyle(f, s.color);
     const label = f.label || TYPES[f.type].label;
-    const req = isReq(f);
+    const req = isReq(f, env);
     const dis = disabled ? ' disabled' : '';
     if (f.type === 'signature' || f.type === 'initials') {
       const sig = st.adopted[f.type] || (f.type === 'initials' ? s.initials : s.signature);
@@ -2420,7 +2436,7 @@
     const list = fieldsOf(env, s).filter((f) => f.type !== 'date' && !f.locked);
     const i = from && from !== 'finish' ? list.findIndex((f) => f.id === from) : -1;
     const later = (arr) => arr.find((f) => list.indexOf(f) > i);
-    const todo = list.filter((f) => (isReq(f) && !filledVal(f, st.vals[f.id])) || tooLong(env, f, st.vals[f.id]));
+    const todo = list.filter((f) => (isReq(f, env) && !filledVal(f, st.vals[f.id])) || tooLong(env, f, st.vals[f.id]));
     if (todo.length) return later(todo) || todo[0];
     const open = list.filter((f) => !filledVal(f, st.vals[f.id]));
     return later(open) || null;
@@ -3161,8 +3177,9 @@
     const inv = env.signers.find((s) => s.role === 'investor');
     const cs = env.signers.find((s) => s.role === 'countersigner');
     // Where a signer signs: a signature field that is theirs to complete. Initials are not a signature, and an optional
-    // line for a second person is not where this signer signs.
-    const signing = (sg) => env.fields.filter((f) => f.signerId === sg.id && f.type === 'signature' && f.required !== false);
+    // line for a second person is not where the firm signs. Every field of the investor's is optional (D-30), so any
+    // signature field of theirs, other than a place for somebody else, is where the investor signs.
+    const signing = (sg) => env.fields.filter((f) => f.signerId === sg.id && f.type === 'signature' && !isOther(f) && (sg.role === 'investor' || f.required !== false));
     if (!inv || !signing(inv).length) {
       if (env.read && (!env.read.ok || (!env.fields.length && env.read.scanned.length >= env.read.pages))) return 'This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign.';
       if (env.read && !env.read.investorPages.length) return 'No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.';
@@ -3243,7 +3260,7 @@
     const tpl = subscriptionTemplate(ws, o.id);
     const ready = !!tpl && templateReady(ws, o.id);
     const draft = envs(ws).find((e) => e.agreementFor === o.id && e.status === 'draft');
-    // What the investor completes, and what is filled in for them from the invitation (prefill labels, locked).
+    // What the investor completes, and what is filled in for them from the invitation (prefill labels; the investor can still change them, D-30).
     const PRE = /^(commitment( amount)?|subscription amount|amount|capital commitment|investor( name)?|subscriber name|account name|offering|fund|share class|class)$/i;
     const inv = tpl ? (tpl.fields || []).filter((f) => f.signerRole === 'Investor') : [];
     const isFilled = (f) => f.type === 'text' && (!!f.prefill || PRE.test(f.label || ''));

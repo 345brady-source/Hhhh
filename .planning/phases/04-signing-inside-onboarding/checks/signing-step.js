@@ -128,26 +128,19 @@ async function investorAt(browser, opts) {
       await p.waitForTimeout(400);
       await shot(p, 'sign-1440');
 
-      // The guide before anything is done.
+      // The guide before anything is done. D-30 (the owner, Phase 01.4 plan 63): no field of the investor's is required,
+      // signatures included, so the guide asks for nothing, still offers Start through the empty fields, and Finish is open.
       let g = await guide(p);
-      check('SIGN-03 the guide shows what remains ("5 of 6 left") and offers Start', g.count === '5 of 6 left' && g.next === 'Start' && g.nextMain, g);
-      const marks = await p.evaluate(() => ({ req: document.querySelectorAll('.es-doc-sign .es-f-mine.is-req:not(.is-filled) .sf-mark[data-k="req"]').length, given: document.querySelectorAll('.es-doc-sign .es-f-mine.is-given .sf-mark[data-k="lock"]').length, done: document.querySelectorAll('.es-doc-sign .es-f-mine.is-filled:not(.is-given) .sf-mark[data-k="done"]').length, opt: document.querySelectorAll('.es-doc-sign .es-f-mine.is-opt').length }));
-      check('SIGN-03 required fields are marked (5), the completed one is marked done (1), optional ones are told apart (2)', marks.req === 5 && marks.done === 1 && marks.opt === 2, marks);
-      const locked = await p.evaluate(() => Array.from(document.querySelectorAll('.es-doc-sign .es-f-mine.is-given')).map((b) => { const i = b.querySelector('input'); return { v: i ? i.value : b.textContent.trim(), ro: i ? i.readOnly : true }; }));
-      check('SIGN-03 values filled in for the signer show as complete and locked ($75,000, the investor’s name, the date)', marks.given === 3 && locked.length === 3 && locked.every((x) => x.ro && x.v) && locked.some((x) => x.v === '$75,000') && locked.some((x) => x.v === INV.name), { marks, locked });
-      const lockedId = mine.find((f) => f.locked).id;
-      await p.locator(`.es-doc-sign [data-fid="${lockedId}"]`).focus();
-      await p.keyboard.type('999');
-      check('SIGN-03 a locked value cannot be changed', (await p.locator(`.es-doc-sign [data-fid="${lockedId}"]`).inputValue()) === '$75,000');
-
-      // Finish pressed early.
-      check('SIGN-03 Finish is not open while fields remain', g.finishOff && !g.finishMain, g);
-      await p.click('.es-finish', { force: true });
-      await p.waitForTimeout(300);
-      g = await guide(p);
-      let a = await active(p);
-      check('SIGN-03 Finish pressed early says what is missing and goes to the first of it', /^Still needed: Mailing address \(page 1\), Initials \(page 1\) and 3 more\.$/.test(g.hint) && a.fid === addr.id && (await p.locator('.ivf-agreement').count()) === 1, { g, a });
-      await shot(p, 'sign-1440-finish-early');
+      check('SIGN-03 (D-30) the guide asks for nothing ("Ready to finish"), still offers Start, and Finish is open', g.count === 'Ready to finish' && g.next === 'Start' && !g.nextMain && /^Nothing is required\./.test(g.hint) && !g.finishOff && g.finishMain, g);
+      const marks = await p.evaluate(() => ({ req: document.querySelectorAll('.es-doc-sign .es-f-mine.is-req').length, given: document.querySelectorAll('.es-doc-sign .es-f-mine.is-given .sf-mark[data-k="lock"]').length, done: document.querySelectorAll('.es-doc-sign .es-f-mine.is-filled:not(.is-given) .sf-mark[data-k="done"]').length, opt: document.querySelectorAll('.es-doc-sign .es-f-mine.is-opt').length }));
+      check('SIGN-03 (D-30) no field is marked required (0); the date is filled in automatically (1); the filled-in values and the name show as done (3); every field the signer can complete is optional (10)', marks.req === 0 && marks.given === 1 && marks.done === 3 && marks.opt === 10, marks);
+      const amt = mine.find((f) => f.label === 'Commitment amount');
+      const pre = await p.evaluate((ids) => ids.map((id) => { const i = document.querySelector(`.es-doc-sign [data-fid="${id}"]`); return { v: i ? i.value : '', ro: i ? i.readOnly : true }; }), [amt.id, mine.find((f) => f.label === 'Investor name').id]);
+      check('SIGN-03 (D-30) values filled in for the signer are there and editable ($75,000, the investor’s name)', pre[0].v === '$75,000' && pre[1].v === INV.name && pre.every((x) => !x.ro), pre);
+      await p.locator(`.es-doc-sign [data-fid="${amt.id}"]`).fill('$80,000');
+      check('SIGN-03 (D-30) a filled-in value takes the signer’s change', (await p.locator(`.es-doc-sign [data-fid="${amt.id}"]`).inputValue()) === '$80,000');
+      await p.locator(`.es-doc-sign [data-fid="${amt.id}"]`).fill('$75,000');
+      let a;
 
       // Start, Next and the count going down.
       await p.reload();
@@ -157,7 +150,7 @@ async function investorAt(browser, opts) {
       await p.click('.sf-next');
       a = await active(p);
       g = await guide(p);
-      check('SIGN-03 Start scrolls to and focuses the first required field, and becomes Next', a.fid === addr.id && a.inView && g.next === 'Next' && /^Now: Mailing address, page 1$/.test(g.hint), { a, g });
+      check('SIGN-03 (D-30) Start scrolls to and focuses the first empty field, and becomes Next', a.fid === addr.id && a.inView && g.next === 'Next' && /^Now: Mailing address, page 1 \(optional\)$/.test(g.hint), { a, g });
       const flag = await p.evaluate(() => { const f = document.querySelector('.es-doc-sign .sf-flag'); const c = document.querySelector('.es-doc-sign .es-f-mine.is-current'); return f && c ? { text: f.textContent, level: Math.abs(f.getBoundingClientRect().top + f.getBoundingClientRect().height / 2 - (c.getBoundingClientRect().top + c.getBoundingClientRect().height / 2)) < 3 } : null; });
       check('SIGN-03 the field the signer is on is pointed out on the page', flag && flag.text === 'Fill in' && flag.level, flag);
       await shot(p, 'sign-1440-start');
@@ -165,14 +158,18 @@ async function investorAt(browser, opts) {
       counts.push((await guide(p)).left);
       await p.click('.sf-next');
       a = await active(p);
-      check('SIGN-03 Next moves focus to the next required field (the initials on page 1)', a.fid === by('initials', 1).id && a.inView, a);
+      check('SIGN-03 (D-30) Next moves focus to the next empty field (the initials on page 1)', a.fid === by('initials', 1).id && a.inView, a);
       await p.keyboard.press('Enter');
       const asked1 = await adoptIfAsked(p);
       counts.push((await guide(p)).left);
       a = await active(p);
-      check('SIGN-03 after initialling, the guide is on the next required field (the checkbox on page 2)', a.fid === acc.id && a.inView, a);
+      check('SIGN-03 (D-30) after initialling, the guide is on the next empty field (the checkbox on page 2)', a.fid === acc.id && a.inView, a);
       await p.keyboard.press('Space');
       counts.push((await guide(p)).left);
+      await p.click('.sf-next');
+      a = await active(p);
+      const paper = mine.find((f) => f.label === 'Paper tax documents');
+      check('SIGN-03 (D-30) Next goes through the optional tick box too (paper tax documents), left unticked', a.fid === paper.id && a.inView, a);
       await p.click('.sf-next');
       a = await active(p);
       check('SIGN-03 Next moves on to the initials on page 2', a.fid === by('initials', 2).id && a.inView, a);
@@ -180,18 +177,19 @@ async function investorAt(browser, opts) {
       const asked2 = await adoptIfAsked(p);
       counts.push((await guide(p)).left);
       check('SIGN-03 once adopted, initials are placed by one tap (no dialog the second time)', !asked2 && (await p.evaluate((id) => !!document.querySelector(`.es-doc-sign [data-fid="${id}"].is-filled img`), by('initials', 2).id)), { asked1, asked2 });
-      await p.click('.sf-next');
+      // D-30: with nothing required the guide moves on by itself to the next empty field once initials are placed (as
+      // it did after the first initials): Next pressed here would go past the signature, which is now optional.
       a = await active(p);
-      check('SIGN-03 Next moves on to the signature on page 3', a.fid === by('signature', 3).id && a.inView, a);
+      check('SIGN-03 (D-30) after the second initials the guide is on the signature on page 3', a.fid === by('signature', 3).id && a.inView, a);
       await shot(p, 'sign-1440-signature');
       await p.keyboard.press('Enter');
       await adoptIfAsked(p);
       counts.push((await guide(p)).left);
       g = await guide(p);
-      check('SIGN-03 the count goes down as fields are completed: 5, 4, 3, 2, 1, 0', counts.join() === '5,4,3,2,1,0', counts);
-      check('SIGN-03 with everything required complete, Finish opens and is the main action', g.count === 'Ready to finish' && !g.finishOff && g.finishMain && g.next === '', g);
+      check('SIGN-03 (D-30) nothing is ever counted as left: 0 throughout', counts.join() === '0,0,0,0,0,0', counts);
+      check('SIGN-03 (D-30) Finish stays open and the main action; Next stays for the empty optional fields (the paper box, the title)', g.count === 'Ready to finish' && !g.finishOff && g.finishMain && g.next === 'Next', g);
       const doneMarks = await p.evaluate(() => document.querySelectorAll('.es-doc-sign .es-f-mine.is-filled:not(.is-given) .sf-mark[data-k="done"]').length);
-      check('SIGN-03 completed fields are marked done (6)', doneMarks === 6, doneMarks);
+      check('SIGN-03 (D-30) completed fields are marked done (8: the 5 completed, the 2 filled-in values, the name)', doneMarks === 8, doneMarks);
       await p.evaluate(() => window.scrollTo(0, document.querySelector('.es-page[data-page="3"]').getBoundingClientRect().top + window.scrollY - 150));
       await p.waitForTimeout(200);
       await shot(p, 'sign-1440-ready');
@@ -229,7 +227,7 @@ async function investorAt(browser, opts) {
       await p.waitForSelector('.es-doc-sign .es-page img', { timeout: 20000 });
       await p.waitForTimeout(300);
       g = await guide(p);
-      check('SIGN-01 in the portal the investor is not asked to consent again: the document opens with its guide', (await p.locator('.es-consent').count()) === 0 && g && g.next === 'Start' && /^\d of \d left$/.test(g.count), g);
+      check('SIGN-01 in the portal the investor is not asked to consent again: the document opens with its guide', (await p.locator('.es-consent').count()) === 0 && g && g.next === 'Start' && g.count === 'Ready to finish', g); // D-30: nothing required
       await shot(p, 'portal-sign-1440');
 
       /* ---- The firm countersigns in the console ---- */
@@ -354,7 +352,8 @@ async function investorAt(browser, opts) {
           return { w: Math.round(Math.max(r.width, a.width)), h: Math.round(Math.max(r.height, a.height)), centre: at(cx, cy), around: [at(cx - 21, cy), at(cx + 21, cy), at(cx, cy - 21), at(cx, cy + 21)] };
         }, f.id));
       }
-      check(`SIGN-05 ${w}px: every field the signer completes has a touch area of at least 44px`, hits.length === 8 && hits.every((x) => x.w >= 44 && x.h >= 44 && x.centre === 'self' && x.around.every((k) => k !== 'none')), hits);
+      // D-30: the two filled-in values are editable too, so 10 fields (8 before).
+      check(`SIGN-05 ${w}px: every field the signer completes has a touch area of at least 44px`, hits.length === 10 && hits.every((x) => x.w >= 44 && x.h >= 44 && x.centre === 'self' && x.around.every((k) => k !== 'none')), hits);
 
       // Start: a blank is typed in the tray above the keyboard.
       await p.evaluate(() => window.scrollTo(0, 0));
@@ -366,7 +365,7 @@ async function investorAt(browser, opts) {
       await p.keyboard.type('12 Elm Street, Austin');
       const typed = await p.evaluate((id) => ({ page: document.querySelector(`.es-doc-sign [data-fid="${id}"]`).value, filled: document.querySelector(`.es-doc-sign [data-fid="${id}"]`).closest('.es-f').classList.contains('is-filled') }), addr.id);
       let g = await guide(p);
-      check(`SIGN-05 ${w}px: what is typed lands on the page and the count goes down`, typed.page === '12 Elm Street, Austin' && typed.filled && g.count === '4 of 6 left', { typed, g });
+      check(`SIGN-05 ${w}px: what is typed lands on the page (D-30: nothing is counted as required)`, typed.page === '12 Elm Street, Austin' && typed.filled && g.count === 'Ready to finish', { typed, g });
       await shot(p, `sign-${w}-tray`);
       of = await overflowing(p);
       check(`SIGN-05 ${w}px: nothing extends past the viewport with the tray open`, of.scrollW <= of.vw && of.out.length === 0, of);
@@ -395,15 +394,17 @@ async function investorAt(browser, opts) {
         // The rest of the signing by touch, to the wizard's next step.
         await tapField(p, ini1.id);
         await adoptIfAsked(p);
-        for (let i = 0; i < 6 && (await guide(p)).left > 0; i++) {
+        // D-30: nothing is required; the signer goes on with Next while the guide offers it (empty fields remain).
+        for (let i = 0; i < 6 && (await guide(p)).next; i++) {
           await p.tap('.sf-next');
           await p.waitForTimeout(200);
           a = await active(p);
+          if (!a.fid) break; // Next went to Finish: no empty field after this one
           await tapField(p, a.fid);
           await adoptIfAsked(p);
         }
         g = await guide(p);
-        check('SIGN-05 390px: the signer completes every field by touch', g.count === 'Ready to finish' && !g.finishOff, g);
+        check('SIGN-05 390px: the signer goes through the fields by touch, and Finish is open', g.count === 'Ready to finish' && !g.finishOff, g);
         await p.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
         await p.waitForTimeout(200);
         await shot(p, 'sign-390-dark');
@@ -438,7 +439,7 @@ async function investorAt(browser, opts) {
       check('SIGN-02 an investor invited before the agreement was set up reaches the signing step once its fields are set', !steps0.some((s) => /Subscription agreement/.test(s)) && r.reached, { steps0, seen: r.seen });
       await p.waitForTimeout(300);
       let g = await guide(p);
-      check('an agreement stored before this change (one signature field each) opens with the guide', g && g.count === '1 of 1 left' && g.next === 'Start', g);
+      check('an agreement stored before this change (one signature field each) opens with the guide (D-30: its signature is optional)', g && g.count === 'Ready to finish' && g.next === 'Start', g);
       await p.click('.sf-next');
       await p.keyboard.press('Enter');
       await adoptIfAsked(p);
