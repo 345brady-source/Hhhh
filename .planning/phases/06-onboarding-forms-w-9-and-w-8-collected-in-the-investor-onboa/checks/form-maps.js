@@ -504,6 +504,108 @@ const parts = {
       if (r.x > item[0].x0 + 1 || r.top > item[0].y0 + 1 || r.top + r.h < item[item.length - 1].y1 - 1) bad.push('the rectangle does not cover item 2');
       check('strike2 runs through the middle of each printed line of item 2, end to end', !bad.length, bad);
     }
+  }),
+  'W-8BEN': formPart({
+    key: 'W-8BEN 2021-10',
+    d05: 'b821dc1172c91b348a65675529cc792782f11fc1ae8579df92d627113203f918',
+    listing: 'W-8BEN',
+    counts: { total: 23, text: 20, comb: 0, check: 2, sig: 1, other: 0 },
+    cases: [
+      {
+        id: 'w8ben',
+        answers: {
+          name: 'Zoë Müller-Łukasz',
+          citizenship: 'Germany',
+          street: 'Lindenstraße 14, Wohnung 3',
+          cityLine: '10969 Berlin',
+          country: 'Germany',
+          ftin: '12345678901',
+          birthDate: '04-02-1980',
+          treatyCountry: 'Germany',
+          treatyArticle: '10(2)(b)',
+          treatyRate: '15',
+          treatyIncome: 'Dividends',
+          treatyExplain1: 'Art. 28',
+          treatyExplain2: 'Qualified resident under the limitation on benefits article',
+          capacity: true,
+          printName: 'Zoë Müller-Łukasz'
+        },
+        exact: ['Zoë Müller-Łukasz', 'Lindenstraße 14, Wohnung 3']
+      },
+      {
+        id: 'noftin',
+        answers: { name: 'Aiko Tanaka', citizenship: 'Japan', street: '2-11-3 Meguro', cityLine: 'Meguro-ku, Tokyo 153-0063', country: 'Japan', ftin: '', noFtin: true, birthDate: '11-23-1975', capacity: true, printName: 'Aiko Tanaka' }
+      },
+      {
+        id: 'every-field',
+        answers: {
+          name: 'Lucía Fernández',
+          citizenship: 'Spain',
+          street: 'Calle de Alcalá 42',
+          cityLine: '28014 Madrid',
+          country: 'Spain',
+          mailStreet: 'Apartado de Correos 118',
+          mailCityLine: '28080 Madrid',
+          mailCountry: 'Spain',
+          usTin: '912-70-1234',
+          ftin: '12345678Z',
+          reference: 'CV-2026-0042',
+          birthDate: '07-30-1988',
+          treatyCountry: 'Spain',
+          treatyArticle: '11(2)',
+          treatyRate: '10',
+          treatyIncome: 'Interest',
+          treatyExplain1: 'None',
+          treatyExplain2: 'No additional conditions apply',
+          capacity: true,
+          printName: 'Lucía Fernández'
+        }
+      }
+    ],
+    anchors: {
+      name: ['above', /1 Name of/],
+      citizenship: ['above', /^2 Country of citizenship/],
+      street: ['above', /Permanent residence address/],
+      cityLine: ['above', /^City or town, state or province/],
+      country: ['above', /^Country$/],
+      mailStreet: ['above', /^4 Mailing address/],
+      mailCityLine: ['above', /^City or town, state or province/],
+      mailCountry: ['above', /^Country$/],
+      usTin: ['above', /U\.S\. taxpayer identification number/],
+      ftin: ['above', /^6a Foreign tax identifying number/],
+      noFtin: ['left', /FTIN not legally required/],
+      reference: ['above', /^7 Reference number/],
+      birthDate: ['above', /^8 Date of birth \(MM-DD-YYYY\)/],
+      treatyCountry: ['left', /is a resident of$/],
+      treatyArticle: ['right', /^of the treaty identified/],
+      treatyRate: ['right', /^% rate of withholding/],
+      treatyIncome: ['above', /% rate of withholding on/],
+      treatyExplain1: ['left', /eligible for the rate of withholding:$/],
+      treatyExplain2: ['above', /^Explain the additional conditions/],
+      capacity: ['right', /^I certify that I have the capacity/],
+      printName: ['under', /^Print name of signer/]
+    },
+    below: { cityLine: 'street', country: 'street', mailStreet: 'cityLine', mailCityLine: 'mailStreet', mailCountry: 'mailStreet', treatyIncome: 'treatyArticle', treatyExplain2: 'treatyExplain1' },
+    overlays: async ({ check, map, ov, words: bw, byName, pw, ph }) => {
+      const P = 'topmostSubform[0].Page1[0].';
+      const sig = byName[P + 'f_20[0]'];
+      const date = byName[P + 'Date[0]'];
+      check('the signature field and the date field are in the file', !!sig && !!date && sig.kind === 'sig' && date.kind === 'text');
+      if (!sig || !date) return;
+      check('the signature field is removed before flattening', (map.removeBeforeFlatten || []).indexOf(P + 'f_20[0]') >= 0);
+      const fill = Object.keys(map.fields).filter((k) => map.fields[k].name === P + 'Date[0]');
+      const unused = Object.keys(map.unused || {}).filter((r) => map.unused[r].indexOf(P + 'Date[0]') >= 0);
+      check('the date field is never filled: unused, with the reason naming the e-sign date overlay', !fill.length && unused.length === 1 && /date overlay/.test(unused[0]), { fill, unused });
+      const same = (o, r) => o.page === r.page && Math.abs(o.x * pw - r.x) < 0.01 && Math.abs(o.y * ph - r.top) < 0.01 && Math.abs(o.w * pw - r.w) < 0.01 && Math.abs(o.h * ph - r.h) < 0.01;
+      check("sign is the signature field's rectangle", same(ov.sign, sig.rects[0]), { sign: pts(ov.sign, pw, ph), field: sig.rects[0] });
+      check("date is the date field's rectangle, MM-DD-YYYY", same(ov.date, date.rects[0]) && ov.date.fmt === 'MM-DD-YYYY', { date: pts(ov.date, pw, ph), fmt: ov.date.fmt, field: date.rects[0] });
+      // the printed labels sit just under both places
+      const s = pts(ov.sign, pw, ph);
+      const d = pts(ov.date, pw, ph);
+      const under = (r) => bw.words.filter((w) => w.y0 >= r.top + r.h - 0.5 && w.y0 <= r.top + r.h + 4 && w.x1 > r.x && w.x0 < r.x + r.w).map((w) => w.t).join(' ');
+      check('the signature label is printed just under sign', /^Signature of beneficial owner/.test(under(s)), under(s));
+      check('the date label is printed just under date', /^Date \(MM-DD-YYYY\)/.test(under(d)), under(d));
+    }
   })
 };
 
