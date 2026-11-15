@@ -52,6 +52,80 @@ async function chooseExemption(page, offeringId, value) {
   }, offeringId);
 }
 
+/** The exemption field on the console offering page now on screen: the value selected, the options and its hints. */
+const exemptionField = (page) =>
+  page.evaluate(() => {
+    const sel = document.getElementById('of-structure-exemption');
+    const label = sel && sel.closest('label');
+    return { selected: sel ? sel.value : '', options: sel ? Array.from(sel.options).map((x) => x.value) : [], hints: label ? Array.from(label.querySelectorAll('.cs-hint')).map((x) => x.innerText).join('\n') : '' };
+  });
+
+/** Regulation A figures on the status step, after "no": { kind, stIncome, stWorth, stRevenue, stAssets }. */
+async function fillFigures(page, fig) {
+  if (fig.kind) {
+    await page.check(`input[name="ob-stRaKind"][value="${fig.kind}"]`);
+    await page.waitForTimeout(200);
+  }
+  for (const k of ['stIncome', 'stWorth', 'stRevenue', 'stAssets']) if (fig[k] != null) await page.fill('#ob-' + k, String(fig[k]));
+}
+
+/**
+ * A Regulation A case end to end: the sample portal, the exemption chosen with the console's select (o.direct: stored as
+ * document intake would, without the select), o.before(page, off) for any set-up, the invitation (o.invite(page, off) for
+ * an investor on file), o.afterInvite(page, off, inv), then the walk with o.acc / o.basis / o.figures / o.amount. R keeps
+ * what the status and subscribe steps showed.
+ */
+async function regAFlow(S, o) {
+  const A = await L.open(S);
+  const p = A.page;
+  const off = await L.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+  let ex = null;
+  if (o.direct) {
+    await p.evaluate(
+      ({ id, v }) => {
+        const NS = window.CVPortal;
+        const x = NS.state.ws.offerings.find((y) => y.id === id);
+        x.structure = Object.assign({}, x.structure, { exemption: v });
+        NS.app.save(true);
+      },
+      { id: off.offeringId, v: o.exemption }
+    );
+  } else ex = await chooseExemption(p, off.offeringId, o.exemption);
+  if (o.before) await o.before(p, off);
+  const inv = o.invite ? await o.invite(p, off) : await L.createInvitation(p, { name: INV.name, email: INV.email, offeringId: off.offeringId, cents: 0 });
+  if (o.afterInvite) await o.afterInvite(p, off, inv);
+  await p.goto(`${S.base}?tenant=${inv.tenant}#invite-${inv.token}`);
+  const R = {};
+  const tag = o.tag || 'regA';
+  const w = await L.walk(p, {
+    name: o.name || INV.name,
+    acc: o.acc,
+    basis: o.basis,
+    amount: o.amount || 60000,
+    onFilled: async (hd) => {
+      if (hd === 'Investor status') {
+        if (o.figures) await fillFigures(p, o.figures);
+        R.kind = await p.evaluate(() => (document.querySelector('input[name="ob-stRaKind"]:checked') || {}).value || '');
+        R.figFields = await p.locator('#ob-stIncome, #ob-stWorth, #ob-stRevenue, #ob-stAssets').count();
+        R.fieldIds = await p.evaluate(() => Array.from(document.querySelectorAll('#ob-stIncome, #ob-stWorth, #ob-stRevenue, #ob-stAssets')).map((x) => x.id));
+        R.limit = (await p.locator('#ra-limit').count()) ? await p.locator('#ra-limit').innerText() : null;
+        R.status = await L.screenText(p);
+        await p.screenshot({ path: path.join(SHOTS, `${tag}-status.png`), fullPage: true });
+      }
+      if (hd === 'Subscription') {
+        R.raSub = (await p.locator('#ra-sub').count()) ? await p.locator('#ra-sub').innerText() : '';
+        R.warn = (await p.locator('#ra-sub .wire-warn').count()) ? await p.locator('#ra-sub .wire-warn').innerText() : '';
+        R.sub = await L.screenText(p);
+        await p.screenshot({ path: path.join(SHOTS, `${tag}-subscribe.png`), fullPage: true });
+      }
+    }
+  });
+  return { A, p, off, inv, w, R, ex };
+}
+
+/** The Regulation A request flag's wording. */
+const RA_FLAG = /Over the Regulation A Tier 2 limit: \$[\d,.]+ committed in this offering, limit \$[\d,.]+/;
+
 /** The eligibility panel's text on the console offering page ('' when there is none). */
 const eligibilityText = (page) =>
   page.evaluate(() => {
@@ -816,6 +890,250 @@ const parts = {
       const lk = L.leakCheck(t || '');
       check(`white label: the ${k} screen passes the leak check`, !!t && lk.ok, lk.hits);
     });
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  },
+
+  /** D-01: an LLC on file is asked as an organization; revenue 2,000,000 and net assets 500,000 give $200,000; 150,000 is within it. */
+  async entity({ check, S }) {
+    let who = null;
+    const F = await regAFlow(S, {
+      exemption: 'Regulation A Tier 2',
+      tag: 'entity',
+      acc: 'no',
+      figures: { stRevenue: 2000000, stAssets: 500000 },
+      amount: 150000,
+      invite: async (p, off) => {
+        who = await p.evaluate((oid) => {
+          const ws = window.CVPortal.state.ws;
+          const i = ws.investors.find((x) => x.type === 'entity' && /LLC/.test(x.title) && x.onboarding && x.onboarding.status === 'complete' && x.email && !(x.positions || []).some((y) => y.offeringId === oid) && !(ws.requests || []).some((r) => r.investorId === x.id && r.offeringId === oid));
+          return i ? { id: i.id, name: i.contact, title: i.title, email: i.email } : null;
+        }, off.offeringId);
+        if (!who) throw new Error('no LLC investor on file to invite');
+        return L.createInvitation(p, { name: who.name, email: who.email, type: 'entity', offeringId: off.offeringId, cents: 0 });
+      }
+    });
+    const { A, p, off, inv, w, R } = F;
+    check('an LLC investor on file is invited to subscribe', !!who && inv.investorId === who.id, { who, inv });
+    check('the investor reaches the subscription agreement with no field error', w.reached && w.errors.length === 0 && w.seen.some((s) => /\| Investor status$/.test(s)), { seen: w.seen, errors: w.errors });
+    check('the LLC is prefilled as an organization and asked revenue and net assets', R.kind === 'entity' && R.fieldIds.join() === 'ob-stRevenue,ob-stAssets' && /Revenue for the most recent fiscal year/.test(R.status) && /Net assets at the end of that year/.test(R.status), R);
+    check('the limit shown is $200,000', R.limit === 'Your investment limit in this offering: $200,000', R.limit);
+    check('a 150,000 commitment shows the limit and no warning', /Your investment limit in this offering under Regulation A: \$200,000/.test(R.raSub) && !R.warn, R);
+    const r = await requestOf(p, who.id, off.offeringId);
+    const ra = (r && r.qual && r.qual.regA) || {};
+    check('request.qual.regA: organization, revenue 2000000, net assets 500000, limitCents 20000000, commitmentCents 15000000, overLimit false', ra.kind === 'entity' && ra.revenue === 2000000 && ra.netAssets === 500000 && ra.limitCents === 20000000 && ra.commitmentCents === 15000000 && ra.overLimit === false, ra);
+    await consoleOffering(p, off.offeringId);
+    const el = await eligibilityText(p);
+    check('the panel: 1 non-accredited subscriber, 0 over their limit, nobody listed', /Regulation A Tier 2: 1 non-accredited subscriber, 0 over their 10 percent limit/.test(el) && (await p.locator('.cs-elig-over').count()) === 0, el);
+    const lk = L.leakCheck([R.status, R.sub, el].join('\n'));
+    check('white label: status, subscribe and panel pass the leak check', lk.ok, lk.hits);
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  },
+
+  /** An accredited investor under Tier 2: no figures, no limit, no warning, no regA on the request. */
+  async accredited2({ check, S }) {
+    const { A, p, off, inv, w, R } = await regAFlow(S, { exemption: 'Regulation A Tier 2', tag: 'accredited2', acc: 'yes', basis: 1, amount: 60000 });
+    check('the investor reaches the subscription agreement with no field error', w.reached && w.errors.length === 0 && w.seen.some((s) => /\| Investor status$/.test(s)), { seen: w.seen, errors: w.errors });
+    check('answered yes: no figure fields and no limit line on the status step', R.figFields === 0 && R.limit === null && /Which ground applies\?/.test(R.status), R);
+    check('the subscribe step shows no limit and no warning', !R.raSub && !R.warn && !/investment limit/.test(R.sub), R.raSub);
+    const r = await requestOf(p, inv.investorId, off.offeringId);
+    check('request.qual: regA2, accredited true, no regA', !!r && r.qual.regime === 'regA2' && r.qual.accredited === true && r.qual.regA === undefined, r && r.qual);
+    await consoleOffering(p, off.offeringId);
+    const el = await eligibilityText(p);
+    check('the panel counts no non-accredited subscriber', /Regulation A Tier 2: 0 non-accredited subscribers, 0 over their 10 percent limit/.test(el), el);
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  },
+
+  /** Regulation A Tier 1 (firm's toggle off): no status step, no figures, no limit, no panel. */
+  async tier1({ check, S }) {
+    const off0 = (p) => p.evaluate(() => {
+      window.CVPortal.state.ws.tenant.onboarding.accreditation = false;
+      window.CVPortal.app.save(true);
+    });
+    const { A, p, off, inv, w, R, ex } = await regAFlow(S, { exemption: 'Regulation A Tier 1', tag: 'tier1', before: off0, amount: 60000 });
+    check('the select stores "Regulation A Tier 1"', ex.stored === 'Regulation A Tier 1', ex);
+    check('no status step, and the investor reaches the agreement', w.reached && w.errors.length === 0 && !w.seen.some((s) => /Investor status/.test(s)), { seen: w.seen, errors: w.errors });
+    check('the subscribe step shows no limit and no warning', !R.raSub && !R.warn && !/investment limit/.test(R.sub || ''), R.raSub);
+    const r = await requestOf(p, inv.investorId, off.offeringId);
+    check('request.qual: regime regA1, no regA', !!r && r.qual.regime === 'regA1' && r.qual.regA === undefined, r && r.qual);
+    await consoleOffering(p, off.offeringId);
+    check('no Investor eligibility panel for Tier 1', (await eligibilityText(p)) === '');
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  },
+
+  /** Regulation A Tier 2 listed on an exchange (firm's toggle off): no limit applies, nothing asked or shown. */
+  async listed({ check, S }) {
+    const off0 = (p) => p.evaluate(() => {
+      window.CVPortal.state.ws.tenant.onboarding.accreditation = false;
+      window.CVPortal.app.save(true);
+    });
+    const { A, p, off, inv, w, R, ex } = await regAFlow(S, { exemption: 'Regulation A Tier 2, exchange-listed', tag: 'listed', before: off0, amount: 60000 });
+    check('the select stores "Regulation A Tier 2, exchange-listed"', ex.stored === 'Regulation A Tier 2, exchange-listed', ex);
+    check('no status step, and the investor reaches the agreement', w.reached && w.errors.length === 0 && !w.seen.some((s) => /Investor status/.test(s)), { seen: w.seen, errors: w.errors });
+    check('the subscribe step shows no limit and no warning', !R.raSub && !R.warn && !/investment limit/.test(R.sub || ''), R.raSub);
+    const r = await requestOf(p, inv.investorId, off.offeringId);
+    check('request.qual: regime regA2listed, no regA', !!r && r.qual.regime === 'regA2listed' && r.qual.regA === undefined, r && r.qual);
+    await consoleOffering(p, off.offeringId);
+    check('no Investor eligibility panel for an exchange-listed offering', (await eligibilityText(p)) === '');
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  },
+
+  /** C-04: a plain "Regulation A" (from document intake) asks the Tier 2 questions; the offering page asks for a tier. */
+  async untiered({ check, S }) {
+    let field = null;
+    let hintsShot = '';
+    const { A, p, off, inv, w, R } = await regAFlow(S, {
+      exemption: 'Regulation A',
+      direct: true,
+      tag: 'untiered',
+      acc: 'no',
+      figures: { stIncome: 100000 },
+      amount: 60000,
+      before: async (page, o) => {
+        await consoleOffering(page, o.offeringId);
+        field = await exemptionField(page);
+        hintsShot = path.join(SHOTS, 'untiered-console.png');
+        await page.screenshot({ path: hintsShot, fullPage: true });
+      }
+    });
+    check('the offering page’s select still shows the current value "Regulation A", with the tiers offered', !!field && field.selected === 'Regulation A' && field.options.indexOf('Regulation A') >= 0 && field.options.indexOf('Regulation A Tier 2') >= 0, field);
+    check('the offering page asks the sponsor to choose Tier 1 or Tier 2, and says investors get the Tier 2 questions until then', !!field && /choose Tier 1 or Tier 2/.test(field.hints) && /asked the Tier 2 questions/.test(field.hints), field && field.hints);
+    check('the hint keeps the existing Rule 506(c) note with it', !!field && /Rule 506\(c\) offerings take verified accredited investors only/.test(field.hints), field && field.hints);
+    check('the investor reaches the agreement with no field error, through the status step', w.reached && w.errors.length === 0 && w.seen.some((s) => /\| Investor status$/.test(s)), { seen: w.seen, errors: w.errors });
+    check('the Tier 2 questions are asked; the step names Regulation A without claiming a tier', R.kind === 'person' && R.figFields === 2 && /is offered under Regulation A\./.test(R.status) && !/Tier 2 of Regulation A/.test(R.status), R);
+    check('income 100,000 alone gives "Your investment limit in this offering: $10,000"', R.limit === 'Your investment limit in this offering: $10,000', R.limit);
+    check('a 60,000 commitment is warned', /above your investment limit under Regulation A/.test(R.warn), R.warn);
+    const r = await requestOf(p, inv.investorId, off.offeringId);
+    const ra = (r && r.qual && r.qual.regA) || {};
+    check('request.qual: regime regA2 with the figures and the limit', !!r && r.qual.regime === 'regA2' && ra.income === 100000 && ra.netWorth === null && ra.limitCents === 1000000 && ra.overLimit === true, r && r.qual);
+    const lk = L.leakCheck([field ? field.hints : '', R.status, R.sub].join('\n'));
+    check('white label: the hint, status and subscribe screens pass the leak check', lk.ok, lk.hits);
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  },
+
+  /** The limit is on the purchase in the offering: an earlier 30,000 plus a new 10,000 against a 20,000 limit is warned. */
+  async aggregate({ check, S }) {
+    const { A, p, off, inv, w, R } = await regAFlow(S, {
+      exemption: 'Regulation A Tier 2',
+      tag: 'aggregate',
+      acc: 'no',
+      figures: { stIncome: 200000 },
+      amount: 10000,
+      before: (page, o) =>
+        page.evaluate((id) => {
+          const NS = window.CVPortal;
+          NS.state.ws.offerings.find((x) => x.id === id).minimum = 10000;
+          NS.app.save(true);
+        }, o.offeringId),
+      afterInvite: (page, o, iv) =>
+        page.evaluate(
+          ({ offId, invId }) => {
+            const NS = window.CVPortal;
+            const ws = NS.state.ws;
+            const i = ws.investors.find((x) => x.id === invId);
+            const r = NS.ops.submitSubscription(ws, i, ws.offerings.find((x) => x.id === offId), { cents: 3000000, signature: i.contact });
+            r.id = 'ra-earlier';
+            NS.app.save(true);
+          },
+          { offId: o.offeringId, invId: iv.investorId }
+        )
+    });
+    check('the investor reaches the agreement with no field error', w.reached && w.errors.length === 0, { seen: w.seen, errors: w.errors });
+    check('the status step shows a $20,000 limit', R.limit === 'Your investment limit in this offering: $20,000', R.limit);
+    check('the subscribe step names the earlier $30,000 and warns about the 10,000 commitment', /already committed \$30,000/.test(R.raSub) && /together with your earlier subscriptions to this offering/.test(R.warn) && /above your investment limit/.test(R.warn), R);
+    const r = await requestOf(p, inv.investorId, off.offeringId);
+    const ra = (r && r.qual && r.qual.regA) || {};
+    check('request.qual.regA: commitmentCents 4000000 (both subscriptions), limitCents 2000000, overLimit true', ra.commitmentCents === 4000000 && ra.limitCents === 2000000 && ra.overLimit === true, ra);
+    await consoleOffering(p, off.offeringId);
+    const el = await eligibilityText(p);
+    check('the console totals $40,000 against the $20,000 limit', /Dana Whitfield: \$40,000 committed in this offering, limit \$20,000/.test(el) && /1 over their 10 percent limit/.test(el), el);
+    await consoleRequests(p);
+    const row = await requestRow(p, 'ra-earlier');
+    check('the earlier request carries the flag with the total', /Over the Regulation A Tier 2 limit: \$40,000 committed in this offering, limit \$20,000/.test(row), row);
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  },
+
+  /** D-30: not accredited with no figures: no limit, no warning, limitCents null; the sponsor sees who gave none. */
+  async nofigures({ check, S }) {
+    const { A, p, off, inv, w, R } = await regAFlow(S, { exemption: 'Regulation A Tier 2', tag: 'nofigures', acc: 'no', amount: 60000 });
+    check('Continue moves on with no figures and no field error, to the agreement', w.reached && w.errors.length === 0, { seen: w.seen, errors: w.errors });
+    check('no limit shown on the status step while no figure is given', R.limit === '' && R.figFields === 2, R);
+    check('no limit and no warning on the subscribe step', !R.raSub && !R.warn, R);
+    const r = await requestOf(p, inv.investorId, off.offeringId);
+    const ra = (r && r.qual && r.qual.regA) || {};
+    check('request.qual.regA: limitCents null, overLimit false, the figures null', r && r.qual.accredited === false && ra.limitCents === null && ra.overLimit === false && ra.income === null && ra.netWorth === null, r && r.qual);
+    check('the change log says no figures were given', !!r && r.log.some((e) => e.action === 'Investor status answered' && /figures \(person\): not given; investment limit not known/.test(e.detail)), r && r.log);
+    await consoleOffering(p, off.offeringId);
+    const el = await eligibilityText(p);
+    await p.screenshot({ path: path.join(SHOTS, 'nofigures-console.png'), fullPage: true });
+    check('the panel: 1 non-accredited subscriber, 0 over, and "1 subscriber has not given figures"', /Regulation A Tier 2: 1 non-accredited subscriber, 0 over their 10 percent limit/.test(el) && /1 subscriber has not given figures/.test(el), el);
+    await consoleRequests(p);
+    const row = await requestRow(p, r.id);
+    check('the request row carries no Regulation A flag', !!row && !RA_FLAG.test(row), row);
+    const lk = L.leakCheck([R.status, R.sub, el].join('\n'));
+    check('white label: status, subscribe and panel pass the leak check', lk.ok, lk.hits);
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  },
+
+  /** C-01: the request row flags an over-limit subscription, recomputed (a device flag is ignored); Approve stays. */
+  async flag({ check, S }) {
+    const A = await L.open(S);
+    const p = A.page;
+    const off = await L.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+    const ex = await chooseExemption(p, off.offeringId, 'Regulation A Tier 2');
+    check('the select stores "Regulation A Tier 2"', ex.stored === 'Regulation A Tier 2', ex);
+    await p.evaluate((offId) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const o = ws.offerings.find((x) => x.id === offId);
+      const mk = (id, name, cents, regA) => {
+        const i = JSON.parse(JSON.stringify(ws.investors[0]));
+        i.id = id + '-inv';
+        i.title = i.contact = name;
+        i.positions = [];
+        ws.investors.push(i);
+        const r = NS.ops.submitSubscription(ws, i, o, { cents, signature: name });
+        r.id = id + '-req';
+        r.qual = { regime: 'regA2', at: new Date().toISOString(), accredited: false, basis: '', regA };
+      };
+      // Over, though the device said it was not; under, though the device said it was over; no figures.
+      mk('fa', 'Avery Over', 5000000, { kind: 'person', income: 150000, netWorth: 400000, limitCents: 9000000, commitmentCents: 5000000, overLimit: false });
+      mk('fb', 'Blake Under', 5000000, { kind: 'person', income: 1000000, netWorth: null, limitCents: 100, commitmentCents: 5000000, overLimit: true });
+      mk('fc', 'Casey None', 5000000, { kind: 'person', income: null, netWorth: null, limitCents: null, commitmentCents: 5000000, overLimit: false });
+      NS.app.save(true);
+    }, off.offeringId);
+    await consoleRequests(p);
+    const rowA = await requestRow(p, 'fa-req');
+    await p.screenshot({ path: path.join(SHOTS, 'flag-requests.png'), fullPage: true });
+    check('the over-limit request row reads "Over the Regulation A Tier 2 limit: $50,000 committed in this offering, limit $40,000" (device said not over)', /Over the Regulation A Tier 2 limit: \$50,000 committed in this offering, limit \$40,000/.test(rowA), rowA);
+    check('a request the device marked over but within the recomputed limit carries no flag', !RA_FLAG.test(await requestRow(p, 'fb-req')));
+    check('a request with no figures carries no flag', !RA_FLAG.test(await requestRow(p, 'fc-req')));
+    check('exactly one request row is flagged', (await p.locator('.cs-tbl .iv-warn').count()) === 1, await p.locator('.cs-tbl .iv-warn').allInnerTexts());
+    check('the flagged row keeps Approve and Decline (nothing blocked)', (await p.locator('[data-action=req-approve][data-id="fa-req"]').count()) === 1 && (await p.locator('[data-action=req-decline][data-id="fa-req"]').count()) === 1);
+    const lk = L.leakCheck(await L.screenText(p));
+    check('white label: the requests view passes the leak check', lk.ok, lk.hits);
+    await p.click('[data-action=req-approve][data-id="fa-req"]');
+    await p.waitForTimeout(400);
+    const st = await p.evaluate(() => (window.CVPortal.state.ws.requests.find((r) => r.id === 'fa-req') || {}).status);
+    check('Approve works as before on the flagged request', st === 'approved', st);
+    await consoleOffering(p, off.offeringId);
+    const el = await eligibilityText(p);
+    check('the panel: 3 non-accredited subscribers, 1 over, Avery Over listed, 1 without figures', /Regulation A Tier 2: 3 non-accredited subscribers, 1 over their 10 percent limit/.test(el) && /Avery Over: \$50,000 committed in this offering, limit \$40,000/.test(el) && !/Blake Under:/.test(el) && /1 subscriber has not given figures/.test(el), el);
     check('no script error in the browser', A.errors.length === 0, A.errors);
     check('no request left the check server', A.net.external.length === 0, A.net.external);
     await A.context.close();
