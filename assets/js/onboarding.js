@@ -627,7 +627,7 @@
       const note = document.getElementById('hint-tenancy');
       if (note) note.textContent = jointHint(ob().d);
     }
-    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stSoph', 'stPlan', 'w8Citizen', 'w8Country', 'w8MailCountry'].indexOf(path) >= 0) {
+    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stSoph', 'stPlan', 'w8Citizen', 'w8Country', 'w8MailCountry', 'w9Class', 'w9Llc'].indexOf(path) >= 0) {
       NS.app.render();
       // Keep keyboard focus on the control that changed (the page was redrawn).
       const again = el.type === 'radio' ? document.querySelector(`input[name="${el.name}"][value="${CSS.escape(el.value)}"]`) : el.id && document.getElementById(el.id);
@@ -1316,6 +1316,13 @@
           w9City: '',
           w9Exempt: '',
           w9Fatca: '',
+          // Plan 06-19: the W-9 classification (line 3a) asked of an entity's account, its LLC tax letter, the "other" text
+          // and line 3b; w9ClassFor is the account type they were answered for (a changed type starts them again).
+          w9Class: '',
+          w9ClassFor: '',
+          w9Llc: '',
+          w9Other: '',
+          w9Foreign: false,
           taxCountry: '',
           ftin: '',
           noFtin: false,
@@ -1624,6 +1631,52 @@
     Object.keys(a).forEach((x) => (a[x] === '' || a[x] === false) && delete a[x]);
     return a;
   }
+  /** Line 3a of the W-9 (plan 06-19): the federal tax classifications in the form's printed order, by the map's own keys. */
+  const W9_CLASSES = [
+    ['individual', 'Individual or sole proprietor'],
+    ['ccorp', 'C corporation'],
+    ['scorp', 'S corporation'],
+    ['partnership', 'Partnership'],
+    ['trust', 'Trust or estate'],
+    ['llc', 'Limited liability company (LLC)'],
+    ['other', 'Other']
+  ];
+  /** How an LLC is taxed, the letter line 3a asks for. */
+  const W9_LLC = [
+    ['C', 'As a C corporation'],
+    ['S', 'As an S corporation'],
+    ['P', 'As a partnership']
+  ];
+  /** The accounts whose classification the step asks (D-06: onboarding does not know it): an entity's. */
+  const w9Asks = (d) => d.type === 'entity';
+  /**
+   * The classification onboarding already knows (D-09: the investor type the sponsor chose): a person's account (individual
+   * or joint) is an individual; an entity whose name ends in LLC is an LLC (its tax letter is still asked).
+   */
+  function w9ClassKnown(c, d) {
+    if (PERSONAL(d.type)) return 'individual';
+    if (d.type === 'trust') return 'trust';
+    if (d.type === 'entity' && /\bP?L\.?\s?L\.?\s?C\.?$/i.test(tidy(c.inv.title))) return 'llc';
+    return '';
+  }
+  /** The account's line 3a classification: as answered on the step where it is asked, else as known; a changed account type starts the answers again. */
+  function w9Class(c, d) {
+    if (d.w9ClassFor !== d.type) Object.assign(d, { w9Class: w9ClassKnown(c, d), w9Llc: '', w9Other: '', w9Foreign: false, w9ClassFor: d.type });
+    return w9Asks(d) ? d.w9Class || '' : w9ClassKnown(c, d);
+  }
+  /** Line 3b is offered only for a partnership, a trust or estate, or an LLC taxed as a partnership. */
+  const w9Offers3b = (d, cls) => d.type === 'entity' && (cls === 'partnership' || cls === 'trust' || (cls === 'llc' && d.w9Llc === 'P'));
+  /** The classification questions of the step: line 3a as radios, the LLC's letter or the "other" text, and line 3b where it applies. */
+  function w9ClassFields(c, d, cls) {
+    let f = '';
+    if (w9Asks(d)) {
+      f += radios('w9Class', 'Federal tax classification', W9_CLASSES);
+      if (cls === 'llc') f += radios('w9Llc', 'How the LLC is taxed', W9_LLC);
+      if (cls === 'other') f += input('w9Other', 'The classification, as the form should show it', { wide: true, max: 30 });
+    }
+    if (w9Offers3b(d, cls)) f += check('w9Foreign', `The ${cls === 'trust' ? 'trust or estate' : cls === 'partnership' ? 'partnership' : 'LLC'} has foreign partners, owners, or beneficiaries (line 3b).`);
+    return f;
+  }
   /** Line 1, the street and the city line as Investor information gave them. */
   function w9Known(c, d) {
     const cityLine = [tidy(d.city), [tidy(d.st).toUpperCase(), tidy(d.zip)].filter(Boolean).join(' ')].filter(Boolean).join(', ');
@@ -1639,8 +1692,12 @@
     // Investor information gave fills what the step did not ask
     const own = (v, known) => (d.w9Edit ? tidy(v) : tidy(v) || known);
     const a = { name: own(d.w9Name, k.name), address: own(d.w9Street, k.street), cityStateZip: own(d.w9City, k.city), requester: t.legalName || t.name };
-    if (person) a.individual = true;
-    else if (d.type === 'trust') a.trust = true;
+    // line 3a: one box, by the map's own key; an LLC's tax letter and the "other" text only beside their own box
+    const cls = w9Class(c, d);
+    if (cls) a[cls] = true;
+    if (cls === 'llc' && /^[CSP]$/.test(d.w9Llc)) a.llcLetter = d.w9Llc;
+    if (cls === 'other' && tidy(d.w9Other)) a.otherText = tidy(d.w9Other).slice(0, 30);
+    if (w9Offers3b(d, cls) && d.w9Foreign) a.foreignOwners = true;
     if (tin) a[person ? 'ssn' : 'ein'] = tin;
     if (tidy(d.w9Exempt)) a.exemptPayee = tidy(d.w9Exempt);
     if (tidy(d.w9Fatca)) a.fatcaCode = tidy(d.w9Fatca);
@@ -1684,15 +1741,18 @@
     const tinLabel = person ? 'Social Security number' : 'Employer identification number';
     let body = '';
     const edit = o.taxEdit || !!d.w9Edit;
+    const cls = w9Class(c, d);
     if (edit) {
       body = `${input('w9Name', 'Name', { wide: true })}
         ${input('w9Street', 'Address (number, street, and apt. or suite no.)', { wide: true, auto: 'street-address' })}
         ${input('w9City', 'City, state, and ZIP code', { wide: true })}
+        ${w9ClassFields(c, d, cls)}
         ${input('tin', tinLabel, { mode: 'numeric', max: 11, hint: tin ? `Ending ${h(tin.slice(-4))}. Leave empty to keep it.` : 'Nine digits.' })}
         ${input('w9Exempt', 'Exempt payee code, if any', { narrow: true, max: 2 })}
         ${input('w9Fatca', 'Exemption from FATCA reporting code, if any', { narrow: true, max: 1 })}
         ${check('backup', 'The IRS has notified me that I am currently subject to backup withholding.')}`;
     } else {
+      body += w9ClassFields(c, d, cls);
       if (!k.name && !tidy(d.w9Name)) body += input('w9Name', 'Name', { wide: true });
       if (!k.street && !tidy(d.w9Street)) body += input('w9Street', 'Address (number, street, and apt. or suite no.)', { wide: true, auto: 'street-address' });
       if (!k.city && !tidy(d.w9City)) body += input('w9City', 'City, state, and ZIP code', { wide: true });
