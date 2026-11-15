@@ -62,10 +62,10 @@
  },
  "counts_per_page": {
   "1": {
-   "total": 4,
+   "total": 3,
    "tickbox": 0,
    "initials": 0,
-   "blank": 3,
+   "blank": 2,
    "signature": 1,
    "date": 0
   },
@@ -94,32 +94,31 @@
    "date": 0
   },
   "7": {
-   "total": 10,
+   "total": 8,
    "tickbox": 0,
    "initials": 0,
    "blank": 3,
    "signature": 3,
-   "date": 4
+   "date": 2
   }
  },
  "counts_total": {
-  "total": 84,
+  "total": 81,
   "tickbox": 19,
   "initials": 0,
-  "blank": 57,
+  "blank": 56,
   "signature": 4,
-  "date": 4
+  "date": 2
  },
  "counts_by_owner": {
   "co-investor": 11,
   "firm": 3,
-  "investor": 53,
+  "investor": 51,
   "investor-entity": 8,
-  "third-party": 8,
-  "unclear": 1
+  "third-party": 8
  },
  "sure_per_page": {
-  "1": "sure of the places; the offering circular date is marked unclear (issuer or investor)",
+  "1": "sure",
   "2": "sure: prose only",
   "3": "sure of the rows; caption-only form, the room after each caption is the place; trust rows are the investor's, the corporation rows investor-entity",
   "4": "sure; custodian information is to be completed by the custodian (third party)",
@@ -131,7 +130,8 @@
   "1": [
    "the arrow bullets before the two payment paragraphs",
    "the bracketed bank details [ . ] the issuer completes",
-   "the boxed underlined headings"
+   "the boxed underlined headings",
+   "the offering circular date blank in the recital (the issuer completes it before sending)"
   ],
   "3": [
    "the full-width table rules and the section headings (Joint-Owner/Minor:, Brokerage:, Corporation/Partnership/Other:)"
@@ -213,41 +213,6 @@
     }
    },
    "what": "amount"
-  },
-  {
-   "id": "p01-003",
-   "page": 1,
-   "kind": "blank",
-   "owner": "unclear",
-   "label": "Date of the final offering circular",
-   "printed_label": "dated",
-   "must": false,
-   "x0": 427.0,
-   "y0": 200.7,
-   "x1": 486.8,
-   "y1": 216.2,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "of the Shares dated",
-    "candidate": "underscore",
-    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "date",
-     "box": [
-      427.0,
-      200.7,
-      486.8,
-      216.2
-     ]
-    }
-   },
-   "what": "date",
-   "doubt": "owner: the issuer completes the offering circular date before sending, or the investor; the page does not say"
   },
   {
    "id": "p01-004",
@@ -1764,12 +1729,12 @@
    "page": 7,
    "kind": "date",
    "owner": "investor",
-   "label": "Executed on: day",
-   "printed_label": "Executed this",
+   "label": "Execution date (day, month and year on one line)",
+   "printed_label": "Executed this day of 20",
    "must": true,
    "x0": 122.6,
    "y0": 148.0,
-   "x1": 140.1,
+   "x1": 270.0,
    "y1": 163.5,
    "printed_as": "reader field (no printed candidate under it)",
    "prefill": {
@@ -1786,71 +1751,6 @@
       121.6,
       148.0,
       141.1,
-      163.5
-     ]
-    }
-   }
-  },
-  {
-   "id": "p07-002",
-   "page": 7,
-   "kind": "date",
-   "owner": "investor",
-   "label": "Executed on: month",
-   "printed_label": "day of",
-   "must": true,
-   "x0": 175.2,
-   "y0": 148.0,
-   "x1": 237.6,
-   "y1": 163.5,
-   "printed_as": "measure candidate: rule (drawn rule)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor-entity",
-    "field_label": "day of",
-    "candidate": "rule",
-    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor-entity",
-     "what": "date",
-     "box": [
-      175.2,
-      148.0,
-      237.6,
-      163.5
-     ]
-    }
-   }
-  },
-  {
-   "id": "p07-003",
-   "page": 7,
-   "kind": "date",
-   "owner": "investor",
-   "label": "Executed on: year (20..)",
-   "printed_label": "20",
-   "must": true,
-   "x0": 252.5,
-   "y0": 148.0,
-   "x1": 270.0,
-   "y1": 163.5,
-   "printed_as": "reader field (no printed candidate under it)",
-   "prefill": {
-    "origin": "field",
-    "field_kind": "text",
-    "field_owner": "investor-entity",
-    "field_label": "20",
-    "candidate": null,
-    "initial": {
-     "kind": "blank",
-     "owner": "investor-entity",
-     "what": "text",
-     "box": [
-      251.5,
-      148.0,
-      269.9,
       163.5
      ]
     }

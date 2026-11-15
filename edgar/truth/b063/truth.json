@@ -100,14 +100,6 @@
   "kind": "Limited partnership subscription agreement printed from a text filing: the investor completes sections 5-9, initials each representation (a joint owner initials beside), signs with an optional joint owner on page 6 and may direct distributions; the registered representative completes and signs the broker-dealer section; the partnership records payment and accepts on page 8."
  },
  "counts_per_page": {
-  "1": {
-   "total": 1,
-   "tickbox": 0,
-   "initials": 0,
-   "blank": 1,
-   "signature": 0,
-   "date": 0
-  },
   "2": {
    "total": 26,
    "tickbox": 16,
@@ -166,29 +158,28 @@
   }
  },
  "counts_total": {
-  "total": 135,
+  "total": 134,
   "tickbox": 31,
   "initials": 20,
-  "blank": 77,
+  "blank": 76,
   "signature": 6,
   "date": 1
  },
  "counts_by_owner": {
   "co-investor": 11,
-  "firm": 7,
+  "firm": 3,
   "investor": 96,
-  "third-party": 20,
-  "unclear": 1
+  "third-party": 24
  },
  "sure_per_page": {
-  "1": "sure; the prospectus date is marked unclear (issuer or investor)",
+  "1": "sure: no place; the letter-o bullets and the prospectus date are not places",
   "2": "sure; the minimum shown in the additional investment caption is the issuer's, not a place",
   "3": "sure of the places; digit-cell combs are one place per number on each line; lines and combs cut by the print's line wrap are recorded on both lines; the zip code row has no printed line",
   "4": "sure; the section 9 occupation row has no printed line",
   "5": "sure; state and plan representations are optional (must false)",
   "6": "sure; the date line is the third column of the signature row, wrapped to the next line",
   "7": "sure",
-  "8": "sure; the partnership use block and acceptance are the issuer's",
+  "8": "sure; the partnership use block is third-party (firm also accepted); the acceptance signature, name and title are the issuer's",
   "9": "sure: prose only",
   "10": "sure: prose only",
   "11": "sure: instructions only",
@@ -199,7 +190,8 @@
  },
  "not_fields": {
   "1": [
-   "the letter-o bullets before the investor notices"
+   "the letter-o bullets before the investor notices",
+   "the prospectus date blank (the issuer completes it before sending)"
   ],
   "2": [
    "the minimum amount blank inside the additional investment caption (issuer text)",
@@ -222,41 +214,6 @@
   ]
  },
  "places": [
-  {
-   "id": "p01-001",
-   "page": 1,
-   "kind": "blank",
-   "owner": "unclear",
-   "label": "Date of the prospectus",
-   "printed_label": "prospectus of the Partnership dated",
-   "must": false,
-   "x0": 327.3,
-   "y0": 406.0,
-   "x1": 391.8,
-   "y1": 421.5,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "of the Partnership dated",
-    "candidate": "underscore",
-    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "date",
-     "box": [
-      327.3,
-      406.0,
-      391.8,
-      421.5
-     ]
-    }
-   },
-   "what": "date",
-   "doubt": "owner: the issuer completes the prospectus date before sending, or the investor; the page does not say"
-  },
   {
    "id": "p02-001",
    "page": 2,
@@ -4119,7 +4076,7 @@
    "id": "p08-008",
    "page": 8,
    "kind": "blank",
-   "owner": "firm",
+   "owner": "third-party",
    "label": "For partnership use: date",
    "printed_label": "Date:",
    "must": false,
@@ -4143,13 +4100,16 @@
      ]
     }
    },
-   "what": "date"
+   "what": "date",
+   "owner_also_ok": [
+    "firm"
+   ]
   },
   {
    "id": "p08-009",
    "page": 8,
    "kind": "blank",
-   "owner": "firm",
+   "owner": "third-party",
    "label": "For partnership use: amount",
    "printed_label": "Amount:",
    "must": false,
@@ -4173,13 +4133,16 @@
      ]
     }
    },
-   "what": "amount"
+   "what": "amount",
+   "owner_also_ok": [
+    "firm"
+   ]
   },
   {
    "id": "p08-010",
    "page": 8,
    "kind": "blank",
-   "owner": "firm",
+   "owner": "third-party",
    "label": "For partnership use: check number",
    "printed_label": "Check No.:",
    "must": false,
@@ -4203,13 +4166,16 @@
      ]
     }
    },
-   "what": "text"
+   "what": "text",
+   "owner_also_ok": [
+    "firm"
+   ]
   },
   {
    "id": "p08-011",
    "page": 8,
    "kind": "blank",
-   "owner": "firm",
+   "owner": "third-party",
    "label": "For partnership use: certificate number",
    "printed_label": "Certificate No.:",
    "must": false,
@@ -4233,7 +4199,10 @@
      ]
     }
    },
-   "what": "text"
+   "what": "text",
+   "owner_also_ok": [
+    "firm"
+   ]
   },
   {
    "id": "p08-012",

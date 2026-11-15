@@ -33,119 +33,42 @@
   "kind": "Small-company registered offering subscription agreement: the subscriber completes and signs the signature page (shares, amount, execution date, name, address, ownership choice, identification); the company signs the acceptance below. No third party."
  },
  "counts_per_page": {
-  "1": {
-   "total": 1,
-   "tickbox": 0,
-   "initials": 0,
-   "blank": 1,
-   "signature": 0,
-   "date": 0
-  },
   "2": {
-   "total": 25,
+   "total": 24,
    "tickbox": 11,
    "initials": 0,
-   "blank": 8,
+   "blank": 7,
    "signature": 2,
    "date": 4
   }
  },
  "counts_total": {
-  "total": 26,
+  "total": 24,
   "tickbox": 11,
   "initials": 0,
-  "blank": 9,
+  "blank": 7,
   "signature": 2,
   "date": 4
  },
  "counts_by_owner": {
   "firm": 3,
-  "investor": 21,
-  "unclear": 2
+  "investor": 21
  },
  "sure_per_page": {
-  "1": "sure; the closing date blank is the issuer's or the investor's, marked unclear",
-  "2": "sure of the places; the identification type is chosen by circling printed words (recorded as choice places with a doubt); the prospectus date is marked unclear"
+  "1": "sure: no place",
+  "2": "sure of the places; the identification type is chosen by circling printed words (recorded as choice places with a doubt)"
  },
  "not_fields": {
   "1": [
-   "the underlined headings and the issuer address blocks"
+   "the underlined headings and the issuer address blocks",
+   "the date the 180 days run from in the closing paragraph (the issuer completes it before sending)"
   ],
   "2": [
-   "the boxed headings (signature page, identification, acceptance) and the printed name of the company's president"
+   "the boxed headings (signature page, identification, acceptance) and the printed name of the company's president",
+   "the prospectus date in the opening paragraph (the issuer completes it before sending)"
   ]
  },
  "places": [
-  {
-   "id": "p01-001",
-   "page": 1,
-   "kind": "blank",
-   "owner": "unclear",
-   "label": "Closing: date the 180 days run from",
-   "printed_label": "will be held on 180 days from",
-   "must": false,
-   "x0": 479.1,
-   "y0": 333.2,
-   "x1": 494.1,
-   "y1": 348.7,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "on 180 days from",
-    "candidate": "underscore",
-    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      479.1,
-      333.2,
-      494.1,
-      348.7
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "owner: the issuer completes the date the 180 days run from before sending, or the investor; the page does not say"
-  },
-  {
-   "id": "p02-001",
-   "page": 2,
-   "kind": "blank",
-   "owner": "unclear",
-   "label": "Date of the prospectus",
-   "printed_label": "dated on or around",
-   "must": false,
-   "x0": 144.4,
-   "y0": 105.2,
-   "x1": 159.4,
-   "y1": 120.7,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "dated on or around",
-    "candidate": "underscore",
-    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "date",
-     "box": [
-      144.4,
-      105.2,
-      159.4,
-      120.7
-     ]
-    }
-   },
-   "what": "date",
-   "doubt": "owner: the issuer completes the prospectus date before sending, or the investor; the page does not say"
-  },
   {
    "id": "p02-002",
    "page": 2,
@@ -243,7 +166,8 @@
       192.7
      ]
     }
-   }
+   },
+   "doubt": "split by line wrap"
   },
   {
    "id": "p02-005",
@@ -276,7 +200,8 @@
       204.7
      ]
     }
-   }
+   },
+   "doubt": "split by line wrap"
   },
   {
    "id": "p02-006",
@@ -756,7 +681,8 @@
       564.7
      ]
     }
-   }
+   },
+   "doubt": "split by line wrap"
   },
   {
    "id": "p02-019",
@@ -789,7 +715,8 @@
       576.7
      ]
     }
-   }
+   },
+   "doubt": "split by line wrap"
   },
   {
    "id": "p02-020",

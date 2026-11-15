@@ -4,14 +4,14 @@ Limited partnership subscription agreement printed from a text filing: the inves
 
 | page | places | tick boxes | initials | blanks | signatures | dates | how sure |
 |---|---|---|---|---|---|---|---|
-| 1 | 1 | 0 | 0 | 1 | 0 | 0 | sure; the prospectus date is marked unclear (issuer or investor) |
+| 1 | 0 | 0 | 0 | 0 | 0 | 0 | sure: no place; the letter-o bullets and the prospectus date are not places |
 | 2 | 26 | 16 | 0 | 10 | 0 | 0 | sure; the minimum shown in the additional investment caption is the issuer's, not a place |
 | 3 | 42 | 14 | 0 | 28 | 0 | 0 | sure of the places; digit-cell combs are one place per number on each line; lines and combs cut by the print's line wrap are recorded on both lines; the zip code row has no printed line |
 | 4 | 15 | 0 | 6 | 9 | 0 | 0 | sure; the section 9 occupation row has no printed line |
 | 5 | 12 | 0 | 12 | 0 | 0 | 0 | sure; state and plan representations are optional (must false) |
 | 6 | 8 | 1 | 2 | 2 | 2 | 1 | sure; the date line is the third column of the signature row, wrapped to the next line |
 | 7 | 17 | 0 | 0 | 17 | 0 | 0 | sure |
-| 8 | 14 | 0 | 0 | 10 | 4 | 0 | sure; the partnership use block and acceptance are the issuer's |
+| 8 | 14 | 0 | 0 | 10 | 4 | 0 | sure; the partnership use block is third-party (firm also accepted); the acceptance signature, name and title are the issuer's |
 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | sure: prose only |
 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | sure: prose only |
 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | sure: instructions only |
@@ -19,13 +19,12 @@ Limited partnership subscription agreement printed from a text filing: the inves
 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | sure: instructions only |
 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | sure: instructions only |
 | 15 | 0 | 0 | 0 | 0 | 0 | 0 | sure: instructions only |
-| all | 135 | 31 | 20 | 77 | 6 | 1 | |
+| all | 134 | 31 | 20 | 76 | 6 | 1 | |
 
-By owner: co-investor 11, firm 7, investor 96, third-party 20, unclear 1
+By owner: co-investor 11, firm 3, investor 96, third-party 24
 
 ## Doubts
 
-- p01-001 (page 1, blank, unclear): owner: the issuer completes the prospectus date before sending, or the investor; the page does not say
 - p02-026 (page 2, blank, investor): split by line wrap
 - p02-027 (page 2, blank, investor): split by line wrap
 - p03-008 (page 3, blank, investor): wrapped to the next line by the text print
@@ -58,7 +57,7 @@ By owner: co-investor 11, firm 7, investor 96, third-party 20, unclear 1
 
 ## Must not get a field
 
-- page 1: the letter-o bullets before the investor notices
+- page 1: the letter-o bullets before the investor notices; the prospectus date blank (the issuer completes it before sending)
 - page 2: the minimum amount blank inside the additional investment caption (issuer text); the <Table>, <S>, <C>, <PAGE> filing tags
 - page 3: the filing tags and the dashes and slashes between digit cells
 - page 4: the column tags <S> <C>
