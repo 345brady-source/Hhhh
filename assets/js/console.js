@@ -427,8 +427,18 @@
     return panel(
       'Investor eligibility',
       `<p class="cs-elig-count"><strong>Non-accredited purchasers: ${h(String(n.count))} of ${h(String(lim))}</strong>${state}</p>
-      <p class="cs-muted">${h(String(a))} accepted${p ? ` and ${h(String(p))} more pending` : ''}. Declined subscriptions are not counted.</p>`
+      <p class="cs-muted">${h(String(a))} accepted${p ? ` and ${h(String(p))} more pending` : ''}. Declined subscriptions are not counted.</p>
+      ${unansweredLine(n)}
+      ${n.count ? '<p class="cs-hint">Rule 502(b): each purchaser who is not accredited must be given the disclosure and financial information the rule calls for a reasonable time before the sale.</p>' : ''}
+      <p class="cs-hint">Counted for this offering only. Offerings by the same issuer made within 90 days of each other may be treated as one offering, and their purchasers counted together.</p>`
     );
+  }
+  /** D-30: investors who left the status question open, and holders with no subscription made here, shown apart from the count. */
+  function unansweredLine(n) {
+    const u = n.unanswered;
+    if (!u) return '';
+    const held = n.holders ? `; ${h(String(n.holders))} of them hold${n.holders === 1 ? 's' : ''} the offering without a subscription made here` : '';
+    return `<p class="cs-muted">${h(String(u))} investor${u === 1 ? ' has' : 's have'} no status answer on file and ${u === 1 ? 'is' : 'are'} not in the count${held}.</p>`;
   }
   /** The read-only view of an offering for people who cannot configure it. */
   function offReadOnly(o) {

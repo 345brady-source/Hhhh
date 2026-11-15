@@ -1101,6 +1101,8 @@
         }
       }
       if (c.fl.accStep) s.push('accreditation');
+      // A new Rule 506(b) offering (or the firm's accreditation question) asks an investor on file about their status too.
+      if (statusStep(c)) s.push('status');
       subSteps(c, s);
       s.push('done');
       return s;
@@ -1146,7 +1148,10 @@
     // Finished, unless the investor is signing the agreement again (its signed copy could not be sent: ivf-resign).
     if (c.fl.completedAt && !c.fl.resignAt) return 'done';
     const k = c.fl.at || 'welcome';
-    return steps.indexOf(k) >= 0 ? k : 'welcome';
+    if (steps.indexOf(k) >= 0) return k;
+    // A flow saved at the self-certified Accreditation step (before the investor status step replaced it) resumes there.
+    if (k === 'accreditation' && steps.indexOf('status') >= 0) return 'status';
+    return 'welcome';
   }
   const curOf = (o) => (NS.structures ? NS.structures.curOf(o) : 'USD');
   const money = (o, n) => (curOf(o) === 'USD' ? U.usd(n) : NS.structures.fmtWhole(n, curOf(o)));
@@ -1351,6 +1356,15 @@
       <div class="form-grid">${IV() ? IV().stepPanel(c.ws, c.inv, 'identity') : ''}${err('ivIdentity')}</div>
       <p class="meta">Sanctions and politically exposed person screening of ${ent ? 'the account and each beneficial owner' : 'your name'} runs automatically once your identity is verified. There is nothing to fill in for it, and your details are used only for anti-money-laundering compliance.</p>`;
   }
+  /**
+   * The grounds offered on the status step. An investor on file whose record holds a ground worded another way (an earlier
+   * list) sees it first, selected, so the prefilled answer is visible and can be kept or changed.
+   */
+  function groundsFor(d) {
+    const list = EL().BASES.map((x) => [x, x]);
+    const own = String(d.stBasis || '');
+    return own && EL().BASES.indexOf(own) < 0 ? [[own, own, 'The ground on your record']].concat(list) : list;
+  }
   function fStatus(c) {
     const d = ob().d;
     const reg = regimeOf(c);
@@ -1370,7 +1384,7 @@
       <div class="form-grid">
         ${radios('stAcc', `Is ${h(c.inv.title)} an accredited investor?`, [['yes', 'Yes'], ['no', 'No']])}
         ${fullNote}
-        ${d.stAcc === 'yes' ? radios('stBasis', 'Which ground applies?', EL().BASES.map((x) => [x, x])) : ''}
+        ${d.stAcc === 'yes' ? radios('stBasis', 'Which ground applies?', groundsFor(d)) : ''}
         ${
           no
             ? `${input('stExp', 'Your investment experience', { wide: true, max: 400, hint: 'For example, the kinds of investments you have made and for how many years.' })}
@@ -1449,9 +1463,9 @@
     const e = ob().errors;
     const ready = tplReady(c);
     const acc = c.inv.accreditation && c.inv.accreditation.basis;
-    // The accreditation tick follows the investor status answer (D-01) and is never required (D-30).
-    // An investor on file has no status step in this flow (their account is already set up), so today's sentence stays.
-    const accAns = accVerifiedFor(c) || c.it.existing || !statusStep(c) ? 'yes' : d.stAcc;
+    // The accreditation tick follows the investor status answer (D-01) and is never required (D-30). Without a status step
+    // (verified accreditation, or no question asked) today's sentence stays.
+    const accAns = accVerifiedFor(c) || !statusStep(c) ? 'yes' : d.stAcc;
     const accTick =
       accAns === 'yes'
         ? check('subAcc', `${h(c.inv.title)} is an accredited investor${acc ? ` (${h(acc)})` : ''}, and this remains accurate.`)
@@ -1529,6 +1543,11 @@
     const idTxt = held ? (dec === 'review' || dec === 'rejected' ? ['In review', 'iv-wait'] : ['Waiting for the results', 'iv-wait']) : id === 'passed' ? ['Verified', 'iv-ok'] : ['Submitted, waiting for the result', 'iv-wait'];
     const a = v ? v.accreditation : {};
     const accTxt = a.status === 'verified' && a.connection !== 'self' ? ['Verified', 'iv-ok'] : a.status === 'pending' || a.status === 'review' ? ['In review', 'iv-wait'] : i.accreditation && i.accreditation.basis ? ['Self-certified', 'iv-ok'] : ['Not provided', 'iv-wait'];
+    // A flow with the investor status step reports the answer given there (the one on the subscription, when there is one).
+    const asked = statusStep(c);
+    const q = asked && c.req ? EL().qualOf(c.req) : null;
+    const said = q ? q.accredited : o.d.stAcc === 'yes' ? true : o.d.stAcc === 'no' ? false : null;
+    const stTxt = said === true ? ['Accredited (self-certified)', 'iv-ok'] : said === false ? ['Not accredited', ''] : ['Not answered', 'iv-wait'];
     const env = envOf(c);
     const s = signerOf(env, i);
     const bank = i.payment && i.payment.method === 'ach' ? i.payment.bank : null;
@@ -1569,7 +1588,7 @@
       <dl class="terms ivf-summary">
         ${c.it.existing ? '' : statusRow('Account', `Activated · ${h(i.title)}`, 'iv-ok')}
         ${c.it.existing && !held ? '' : verifyRows}
-        ${c.it.existing && !c.fl.accStep ? '' : statusRow('Accreditation', accTxt[0], accTxt[1])}
+        ${asked ? statusRow('Accreditation', stTxt[0], stTxt[1]) : c.it.existing && !c.fl.accStep ? '' : statusRow('Accreditation', accTxt[0], accTxt[1])}
         ${c.it.existing ? '' : statusRow('Tax form', h(i.taxForm || 'Not provided'), i.taxForm ? 'iv-ok' : 'iv-wait')}
         ${c.it.existing ? '' : statusRow('Distributions', bank ? `ACH to the ${h(bank.type)} account ending ${h(U.last4(bank.account))}` : 'Check by mail')}
         ${c.req && c.off ? statusRow('Subscription', `Submitted for ${money(c.off, c.req.cents / 100)} in ${h(c.off.name)}`, 'iv-ok') : c.closed ? statusRow('Subscription', `Not made: ${closedName} is no longer accepting subscriptions`, 'iv-wait') : ''}
@@ -1717,7 +1736,13 @@
         if (IV() && !c.it.existing) await IV().finishOnboarding(ws, i, Object.assign({}, d, { accBasis: d.stBasis }));
         else if (IV()) IV().decide(ws, i);
       }
-      log('Investor status answered', d.stAcc === 'yes' ? `accredited investor${d.stBasis ? ` (${d.stBasis})` : ', ground not given'}` : d.stAcc === 'no' ? 'not an accredited investor' : 'not answered');
+      const said = d.stAcc === 'yes' ? `accredited investor${d.stBasis ? ` (${d.stBasis})` : ', ground not given'}` : d.stAcc === 'no' ? 'not an accredited investor' : 'not answered';
+      log('Investor status answered', said);
+      // Corrected after subscribing: a request still pending carries the new answers; a decided one keeps what it was decided on.
+      if (c.req && c.req.status === 'pending') {
+        c.req.qual = qualFrom(c, d);
+        if (NS.audit) NS.audit.log(ws, { action: 'Investor status updated', record: c.req.id, fund: c.off ? c.off.id : '', detail: `${i.title}: subscription ${c.req.id} now records ${said}`, actor: actor() });
+      }
     }
     if (key === 'tax') {
       const usp = d.type === 'ira' || d.usPerson === 'yes';
