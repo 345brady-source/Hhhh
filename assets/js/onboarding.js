@@ -627,8 +627,16 @@
       const note = document.getElementById('hint-tenancy');
       if (note) note.textContent = jointHint(ob().d);
     }
-    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stSoph', 'stPlan', 'w8Citizen', 'w8Country', 'w8MailCountry', 'w9Class', 'w9Llc', 'w9Disregarded'].indexOf(path) >= 0) {
+    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stSoph', 'stPlan', 'w8Citizen', 'w8Country', 'w8MailCountry', 'e8Country', 'e8Res', 'e8MailCountry', 'e8Ch3', 'e8Ch4', 'e8Owners', 'e8Treaty', 'e8Lob', 'w9Class', 'w9Llc', 'w9Disregarded'].indexOf(path) >= 0) {
       // under "Change your answers" lines 1 and 2 follow the disregarded answer (the owner and the LLC, or the LLC alone)
+      // a Passive NFFE listing its U.S. owners: one row per beneficial owner onboarding collected, names pre-filled (once)
+      if (path === 'e8Owners' && v === 'listed' && !ob().d.e8OwnersSet) {
+        const od = ob().d;
+        const names = [1, 2].map((n) => ownerName(od, n)).filter(Boolean);
+        names.forEach((x, n) => (od['e8Owner' + (n + 1) + 'Name'] = x));
+        od.e8OwnerRows = Math.max(1, names.length);
+        od.e8OwnersSet = true;
+      }
       const fc = (path === 'w9Class' || path === 'w9Disregarded') && ob().d.w9Edit ? fctx() : null;
       if (fc) {
         const k = w9Known(fc, ob().d);
@@ -731,7 +739,9 @@
   const digitsOf = (s) => String(s || '').replace(/\D/g, '');
   const clone = (x) => (x == null ? x : JSON.parse(JSON.stringify(x)));
   /** Fields of the flow's form kept on the investor record between visits (never the password or full ID and account numbers). */
-  const SECRET = ['password', 'password2', 'tin', 'ftin', 'w8UsTin', 'ownerTin', 'routing', 'account', 'account2'];
+  // T-06-44: the W-8BEN-E's substantial U.S. owners' taxpayer IDs, typed by row, are never saved either
+  const E8_OWNER_TINS = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `e8Owner${n}Tin`);
+  const SECRET = ['password', 'password2', 'tin', 'ftin', 'w8UsTin', 'ownerTin', 'e8UsTin', 'routing', 'account', 'account2'].concat(E8_OWNER_TINS);
   const MAX_FILES = 25 * 1024 * 1024;
 
   /** 32 random bytes, base64url: an invitation token (local mode). */
@@ -1335,7 +1345,6 @@
           w9Business: '',
           // under "Change your answers": which taxpayer ID the number is (empty: an SSN for a person's account, else an EIN)
           w9TinKind: '',
-          taxCountry: '',
           ftin: '',
           noFtin: false,
           treaty: '',
@@ -1360,8 +1369,38 @@
           w8Explain1: '',
           w8Explain2: '',
           w8Capacity: false,
-          w8: false,
-          taxSig: '',
+          // The W-8BEN-E's answers (plan 06-20): the two statuses, and those the investor changed on the tax step (empty:
+          // taken from Investor information); e8UsTin is memory only (SECRET).
+          e8Ch3: '',
+          e8Ch4: '',
+          e8Giin: '',
+          e8Owners: '',
+          e8OwnerRows: 1,
+          e8OwnersSet: false,
+          e8Treaty: '',
+          e8Lob: '',
+          e8LobOther: '',
+          e8Article: '',
+          e8Rate: '',
+          e8Income: '',
+          e8Explain1: '',
+          e8Explain2: '',
+          e8Explain3: '',
+          e8Name: '',
+          e8Country: '',
+          e8CountryOther: '',
+          e8Street: '',
+          e8City: '',
+          e8Res: '',
+          e8ResOther: '',
+          e8MailStreet: '',
+          e8MailCity: '',
+          e8MailCountry: '',
+          e8MailCountryOther: '',
+          e8UsTin: '',
+          e8Ref: '',
+          e8Print: '',
+          e8Capacity: true,
           method: i.payment && i.payment.method === 'check' && fl.d ? 'check' : 'ach',
           holder: '',
           acctType: bank.type || 'checking',
@@ -1554,21 +1593,25 @@
    * wrong form would be signed). A U.S. person gets the official Form W-9 in two views: the answers, pre-filled from what
    * onboarding already knows so that only what is missing is asked, then the filled, flattened form to sign on the page
    * (built on Continue, never while rendering). A foreign individual (or the first holder of a foreign joint account) gets
-   * the official Form W-8BEN the same way (plan 06-18). A foreign entity certifies the foreign status form for now (plan
-   * 06-20 brings the official W-8BEN-E). Nothing on either form is required (D-30).
+   * the official Form W-8BEN the same way (plan 06-18). A foreign entity or trust gets the official Form W-8BEN-E for the
+   * statuses a pre-filled form can honestly cover (plan 06-20); any other status is pointed to the form that usually
+   * applies, and no W-8BEN-E is built. Nothing on any form is required (D-30).
    */
   // T-06-35: the nine digits typed at the profile step, by investor id, in this page's memory only until the form is built;
   // never saved (SECRET keeps tin out of saved answers). After a reload the tax step asks for the number again.
   const TINS = {};
   const W9_KEY = 'W-9 2024-03';
   const W8_KEY = 'W-8BEN 2021-10';
-  // T-06-40: the foreign tax ID and the U.S. taxpayer ID typed on the W-8BEN answers, by investor id, in this page's memory
-  // only until the form is finished (so a corrected answer rebuilds the form with them); never saved (SECRET).
+  const W8E_KEY = 'W-8BEN-E 2021-10';
+  // T-06-40, T-06-44: the foreign tax ID and the U.S. taxpayer IDs typed on the W-8BEN or W-8BEN-E answers (the entity's
+  // own, and its substantial U.S. owners' by row), by investor id, in this page's memory only until the form is finished
+  // (so a corrected answer rebuilds the form with them); never saved (SECRET).
   const W8MEM = {};
   // Research FORM-07: the answers each tax form was built from, by envelope id, in this page's memory only (no stored
   // fingerprint), without the tax numbers. Continue compares the new answers with them to keep or rebuild the form.
   const BUILT = {};
   const SECRET_ANSWERS = ['ssn', 'ein', 'ftin', 'usTin'];
+  const secretAnswer = (k) => SECRET_ANSWERS.indexOf(k) >= 0 || /^owner\dTin$/.test(k);
   // The countries of the list (COUNTRIES) with an income tax treaty with the United States in force: the IRS list "United
   // States Income Tax Treaties - A to Z" (irs.gov, last reviewed 3 January 2026). Hungary is on that list but its treaty was
   // terminated (effective 8 January 2023, the IRS Hungary treaty page), so it is left out.
@@ -1584,8 +1627,11 @@
   /** A U.S. person for the tax form: an IRA always (its custodian is one); otherwise the investor type, as corrected here. */
   const usTax = (c, d) => d.type === 'ira' || (d.usPerson ? d.usPerson === 'yes' : !foreignType(c.inv));
   const tinOf = (c, d) => (digitsOf(d.tin).length === 9 ? digitsOf(d.tin) : TINS[c.inv.id] || '');
-  /** The official form of the tax step: W-9 for a U.S. person, W-8BEN for a foreign individual or joint account, else ''. */
-  const taxKey = (c, d) => (usTax(c, d) ? W9_KEY : PERSONAL(d.type) ? W8_KEY : '');
+  /**
+   * The official form of the tax step: W-9 for a U.S. person, W-8BEN for a foreign individual or joint account, W-8BEN-E for
+   * a foreign entity or trust; '' when the entity gave a status the W-8BEN-E here does not cover (e8Routed).
+   */
+  const taxKey = (c, d) => (usTax(c, d) ? W9_KEY : PERSONAL(d.type) ? W8_KEY : e8Routed(d) ? '' : W8E_KEY);
   /** A country name the form can print: not the United States, not the list's "Another country", not empty. */
   const realCountry = (v) => (v && v !== US && v !== OTHER_COUNTRY ? v : '');
   /** A country answer of the W-8BEN: from the fixed list, or the name typed beside "Another country" (T-06-40). */
@@ -1638,6 +1684,159 @@
         treatyExplain1: tidy(d.w8Explain1),
         treatyExplain2: tidy(d.w8Explain2),
         capacity: !!d.w8Capacity
+      });
+    }
+    Object.keys(a).forEach((x) => (a[x] === '' || a[x] === false) && delete a[x]);
+    return a;
+  }
+  /*
+   * The W-8BEN-E (plan 06-20, research Pattern 3): the chapter 3 and chapter 4 statuses a pre-filled form can honestly
+   * cover, each with the map's own box key. 06-12: fill() does not stop two boxes being ticked, so the step offers exactly
+   * one answer for each (radios) and each answer ticks exactly one box.
+   */
+  const E8_CH3 = [
+    ['corporation', 'Corporation', 'ch3Corporation'],
+    ['simpleTrust', 'Simple trust', 'ch3SimpleTrust'],
+    ['complexTrust', 'Complex trust', 'ch3ComplexTrust'],
+    ['estate', 'Estate', 'ch3Estate']
+  ];
+  const E8_CH4 = [
+    ['activeNffe', 'Active NFFE', 'ch4ActiveNffe', 'Not a financial institution; less than half of its income and of its assets is passive'],
+    ['passiveNffe', 'Passive NFFE', 'ch4PassiveNffe', 'Not a financial institution, with mainly passive income or assets'],
+    ['participatingFfi', 'Participating FFI', 'ch4ParticipatingFfi', 'A financial institution with its own agreement with the IRS'],
+    ['model1Ffi', 'Reporting Model 1 FFI', 'ch4ReportingModel1Ffi', 'A financial institution that reports to its own government under a Model 1 agreement'],
+    ['model2Ffi', 'Reporting Model 2 FFI', 'ch4ReportingModel2Ffi', 'A financial institution that reports to the IRS under a Model 2 agreement']
+  ];
+  const E8_FFI = ['participatingFfi', 'model1Ffi', 'model2Ffi'];
+  /** Line 14b: the limitation on benefits provision the entity meets (one answer), by the map's own box keys. */
+  const E8_LOB = [
+    ['government', 'A government', 'lobGovernment'],
+    ['pension', 'A tax-exempt pension trust or pension fund', 'lobPension'],
+    ['taxExempt', 'Another tax-exempt organization', 'lobTaxExempt'],
+    ['publiclyTraded', 'A publicly traded corporation', 'lobPubliclyTraded'],
+    ['subsidiary', 'A subsidiary of a publicly traded corporation', 'lobSubsidiary'],
+    ['ownershipBaseErosion', 'Meets the ownership and base erosion test', 'lobOwnershipBaseErosion'],
+    ['derivative', 'Meets the derivative benefits test', 'lobDerivative'],
+    ['activeTrade', 'The income meets the active trade or business test', 'lobActiveTrade'],
+    ['discretionary', 'Received a favorable discretionary determination from the U.S. competent authority', 'lobDiscretionary'],
+    ['noArticle', 'The treaty has no limitation on benefits article', 'lobNoArticle'],
+    ['other', 'Another provision (give its article and paragraph)', 'lobOther']
+  ];
+  const E8_ROWS = 9;
+  const e8Pick = (list, v) => list.find((x) => x[0] === v) || null;
+  /** T-06-43: "Something else" on either status builds no W-8BEN-E (the step names the form that usually applies). */
+  const e8Routed = (d) => d.e8Ch3 === 'other' || d.e8Ch4 === 'other';
+  /** A U.S. owner's nine-digit taxpayer ID as typed in the EIN layout (XX-XXXXXXX), else in the SSN layout (XXX-XX-XXXX). */
+  const ownerTinText = (raw) => {
+    const t = digitsOf(raw);
+    if (t.length !== 9) return '';
+    return /^\s*\d{2}-\d{7}\s*$/.test(String(raw)) ? `${t.slice(0, 2)}-${t.slice(2)}` : `${t.slice(0, 3)}-${t.slice(3, 5)}-${t.slice(5)}`;
+  };
+  /** The owner rows shown for a Passive NFFE that lists its substantial U.S. owners (at least one, at most nine). */
+  const e8Rows = (d) => Math.min(E8_ROWS, Math.max(1, Number(d.e8OwnerRows) || 1));
+  /** Line 2: the country of organization, when the formation answer names a listed country (the whole answer, or its last part after a comma). */
+  function e8FormationCountry(d) {
+    const f = tidy(d.formation).replace(/\.$/, '');
+    const parts = [f, tidy(f.split(',').pop())].map((x) => x.toLowerCase());
+    return COUNTRIES.find((x) => x !== US && x !== OTHER_COUNTRY && parts.indexOf(x.toLowerCase()) >= 0) || '';
+  }
+  /**
+   * What onboarding already knows for the W-8BEN-E: the entity (the account name), its country of organization (from the
+   * formation answer), its permanent residence address, the U.S. taxpayer ID given at Investor information (an EIN), and
+   * the controlling person who signs for it (print name, capacity box ticked).
+   */
+  function e8Known(c, d) {
+    const res = realCountry(d.country);
+    const place = [tidy(d.city), tidy(d.st)].filter(Boolean).join(', ');
+    const tin = tinOf(c, d);
+    return { name: tidy(c.inv.title), country: e8FormationCountry(d), street: tidy(d.street), cityLine: [place, tidy(d.zip)].filter(Boolean).join(' '), residence: res, residencePick: res || (d.country === OTHER_COUNTRY ? OTHER_COUNTRY : ''), usTin: tin, printName: tidy(c.inv.contact) };
+  }
+  /** A tax number typed on this step now (a change: it is not in the answers BUILT compares). */
+  const e8Typed = (c, d) => !!(tidy(d.ftin) || digitsOf(d.e8UsTin) || TINS[c.inv.id] || E8_OWNER_TINS.some((k) => digitsOf(d[k])));
+  /** D-30: nothing on the W-8BEN-E is required; a number typed only in part is pointed out. */
+  function e8Problems(d) {
+    const e = {};
+    const t = digitsOf(d.e8UsTin);
+    if (t.length && t.length !== 9) e.e8UsTin = 'Enter all nine digits, or leave this empty.';
+    if (E8_FFI.indexOf(d.e8Ch4) >= 0 && tidy(d.e8Giin) && !/^[A-Z0-9]{6}\.[A-Z0-9]{5}\.[A-Z]{2}\.[0-9]{3}$/.test(tidy(d.e8Giin).toUpperCase())) e.e8Giin = 'Enter the GIIN as its 19 characters, like 98Q96B.00000.LE.250, or leave this empty.';
+    if (d.e8Ch4 === 'passiveNffe' && d.e8Owners === 'listed') {
+      for (let n = 1; n <= e8Rows(d); n++) {
+        const o = digitsOf(d['e8Owner' + n + 'Tin']);
+        if (o.length && o.length !== 9) e['e8Owner' + n + 'Tin'] = 'Enter all nine digits, or leave this empty.';
+      }
+    }
+    return e;
+  }
+  /** A nine-digit U.S. taxpayer ID as the entity's EIN (XX-XXXXXXX). */
+  const einText = (t) => (t.length === 9 ? `${t.slice(0, 2)}-${t.slice(2)}` : '');
+  /** The W-8BEN-E's answers, by the map's own keys: what onboarding knows, with any answer changed on this step. */
+  function w8eAnswers(c, d) {
+    const k = e8Known(c, d);
+    const ed = !!d.e8Edit;
+    // after "Change your answers" (d.e8Edit) the answers are used as given, an emptied one too (D-30)
+    const own = (v, known) => (ed ? v : v || known);
+    const m = W8MEM[c.inv.id] || {};
+    const a = {
+      name: own(tidy(d.e8Name), k.name),
+      country: own(w8CountryOf(d, 'e8Country'), k.country),
+      street: own(tidy(d.e8Street), k.street),
+      cityLine: own(tidy(d.e8City), k.cityLine),
+      residenceCountry: own(w8CountryOf(d, 'e8Res'), k.residence),
+      printName: own(tidy(d.e8Print), k.printName),
+      // the controlling person signs for the entity: the capacity box is ticked unless unticked under "Change your answers"
+      capacity: ed ? !!d.e8Capacity : true
+    };
+    const ch3 = e8Pick(E8_CH3, d.e8Ch3);
+    const ch4 = e8Pick(E8_CH4, d.e8Ch4);
+    if (ch3) a[ch3[2]] = true;
+    if (ch4) a[ch4[2]] = true;
+    if (d.e8Ch4 === 'activeNffe') a.activeNffe = true;
+    // an FFI's GIIN on line 9a
+    if (E8_FFI.indexOf(d.e8Ch4) >= 0 && tidy(d.e8Giin)) a.giin = tidy(d.e8Giin).toUpperCase();
+    if (d.e8Ch4 === 'passiveNffe') {
+      // Part XXVI: no substantial U.S. owners (40b), or each one listed in Part XXIX (40c), filled from the first row on
+      a.passiveNffe = true;
+      if (d.e8Owners === 'none') a.passiveNoOwners = true;
+      if (d.e8Owners === 'listed') {
+        a.passiveOwnersListed = true;
+        const owners = m.owners || {};
+        let row = 0;
+        for (let n = 1; n <= e8Rows(d); n++) {
+          const nm = tidy(d['e8Owner' + n + 'Name']);
+          const ad = tidy(d['e8Owner' + n + 'Addr']);
+          const typed = ownerTinText(d['e8Owner' + n + 'Tin']);
+          if (!nm && !ad && !typed) continue;
+          row++;
+          Object.assign(a, { ['owner' + row + 'Name']: nm.slice(0, 60), ['owner' + row + 'Address']: ad.slice(0, 120), ['owner' + row + 'Tin']: typed || owners[n] || '' });
+        }
+      }
+    }
+    const treaty = ed && TREATY.indexOf(d.e8Treaty) >= 0 ? d.e8Treaty : '';
+    // line 4: a simple trust answers whether it is a hybrid making a treaty claim (yes exactly when it claims one in Part III)
+    if (d.e8Ch3 === 'simpleTrust') a[treaty ? 'hybridYes' : 'hybridNo'] = true;
+    if (treaty) {
+      // Part III: the treaty country (14a), the limitation on benefits provision met (14b, one box), line 15
+      Object.assign(a, { treatyResident: true, treatyCountry: treaty });
+      const lob = e8Pick(E8_LOB, d.e8Lob);
+      if (lob) {
+        a.treatyLob = true;
+        a[lob[2]] = true;
+        if (lob[0] === 'other') a.lobOtherText = tidy(d.e8LobOther).slice(0, 30);
+      }
+      Object.assign(a, { treatyArticle: tidy(d.e8Article).slice(0, 30), treatyRate: tidy(d.e8Rate).slice(0, 6), treatyIncome: tidy(d.e8Income).slice(0, 20), treatyExplain1: tidy(d.e8Explain1).slice(0, 20), treatyExplain2: tidy(d.e8Explain2).slice(0, 110), treatyExplain3: tidy(d.e8Explain3).slice(0, 110) });
+    }
+    const ftin = tidy(d.ftin) || m.ftin || '';
+    if (d.noFtin) a.noFtin = true;
+    else if (ftin) a.ftin = ftin;
+    // line 8: typed here, else given at Investor information since the last form (TINS), else the one the last form carried
+    const us = digitsOf(d.e8UsTin).length === 9 ? digitsOf(d.e8UsTin) : k.usTin || m.usTin || '';
+    if (us) a.usTin = einText(us);
+    if (ed) {
+      Object.assign(a, {
+        mailStreet: tidy(d.e8MailStreet),
+        mailCityLine: tidy(d.e8MailCity),
+        mailCountry: w8CountryOf(d, 'e8MailCountry'),
+        reference: tidy(d.e8Ref).slice(0, 19)
       });
     }
     Object.keys(a).forEach((x) => (a[x] === '' || a[x] === false) && delete a[x]);
@@ -1743,30 +1942,13 @@
   }
   function fTax(c) {
     const d = ob().d;
-    const t = c.ws.tenant;
-    const ent = d.type === 'entity' || d.type === 'trust';
     const ira = d.type === 'ira';
     if (!ira && !d.usPerson) d.usPerson = foreignType(c.inv) ? 'no' : 'yes';
     const usp = usTax(c, d);
     const who = ira ? '' : `<p class="meta ivf-taxwho">${usp ? 'Not a U.S. person for tax purposes?' : 'A U.S. citizen or resident, or a U.S. entity?'} <button class="link-btn" type="button" data-action="ivf-taxwho">${usp ? 'Use the form for foreign investors' : 'Use Form W-9'}</button></p>`;
     if (usp) return w9View(c, d, who);
     if (PERSONAL(d.type)) return w8View(c, d, who);
-    if (d.usPerson === 'no' && !d.taxCountry && d.country !== US && COUNTRIES.indexOf(d.country) >= 0) d.taxCountry = d.treaty = d.country;
-    const sig = input('taxSig', 'Type your full name to sign', { wide: true, hint: `Signing as ${h(c.inv.contact)}${ent ? `, authorized to sign for ${h(c.inv.title)},` : ''} on ${U.date(NS.dates.today(), 'long')}` });
-    const formName = ent ? 'Form W-8BEN-E' : 'Form W-8BEN';
-    const form = `<div class="field-wide cert"><p class="cert-title">${formName} certification: Certificate of Foreign Status of Beneficial Owner for United States Tax Withholding and Reporting${ent ? ' (Entities)' : ''}</p>
-        <p>Name: ${h(c.inv.title)}. ${ent ? 'Country of organization' : 'Permanent residence address'}: ${h(c.inv.address || '')}.</p></div>
-      ${countrySelect('taxCountry', 'Country of tax residence', { exclude: US, empty: 'Choose a country' })}
-      ${input('ftin', 'Foreign tax identifying number', { max: 30, hint: c.inv.taxCert && c.inv.taxCert.ftinLast4 ? `On file: ending ${h(c.inv.taxCert.ftinLast4)}; leave empty to keep it.` : 'The tax number your country of residence issued to you' })}
-      ${check('noFtin', 'My country of tax residence does not issue a tax identifying number, or does not require one for this account.')}
-      ${countrySelect('treaty', 'Claim U.S. tax treaty benefits as a resident of', { exclude: US, empty: 'I do not claim treaty benefits', wide: true, hint: 'Usually your country of tax residence, if it has an income tax treaty with the United States.' })}
-      <div class="field-wide cert"><p>Under penalties of perjury, I declare that I have examined the information on this form and to the best of my knowledge and belief it is true, correct, and complete. I further certify under penalties of perjury that: ${ent ? 'the entity identified above is the beneficial owner of all the income or proceeds to which this form relates and is not a U.S. person' : 'I am the individual that is the beneficial owner (or am authorized to sign for the individual that is the beneficial owner) of all the income or proceeds to which this form relates, and the person named on this form is not a U.S. person'}; the income to which this form relates is not effectively connected with the conduct of a trade or business in the United States; the beneficial owner is a resident of the treaty country listed (if any) within the meaning of the income tax treaty between the United States and that country; and I agree to submit a new form within 30 days if any certification on this form becomes incorrect. I authorize this form to be provided to any withholding agent that has control, receipt, or custody of the income of which I am the beneficial owner.</p></div>
-      ${check('w8', 'I certify the statements above.')}
-      ${sig}`;
-    return `${ivfH1(FL.tax)}
-      <p class="lede">${h(t.shortName)} needs a tax form on file before paying distributions.</p>
-      <div class="form-grid">${form}</div>
-      ${who}`;
+    return w8eView(c, d, who);
   }
   /** The W-9 answers view: only what is missing; "Change your answers" shows every answer and the rare options. */
   function w9View(c, d, who) {
@@ -1862,6 +2044,99 @@
       ${edit ? '' : '<p class="meta ivf-taxedit"><button class="link-btn" type="button" data-action="ivf-taxedit">Change your answers</button></p>'}
       ${who}`;
   }
+  /** The two status questions of the W-8BEN-E (lines 4 and 5): one answer each, or "Something else". */
+  function e8StatusFields() {
+    return `${radios('e8Ch3', 'Type of entity (chapter 3 status)', E8_CH3.map((x) => [x[0], x[1]]).concat([['other', 'Something else', 'For example a partnership, a grantor trust, a government or a tax-exempt organization']]))}
+      ${radios('e8Ch4', 'FATCA status (chapter 4 status)', E8_CH4.map((x) => [x[0], x[1], x[3]]).concat([['other', 'Something else', 'Any other FATCA status']]))}`;
+  }
+  /**
+   * T-06-43: the one line for a status the W-8BEN-E here does not cover: the form that usually applies, and where to send it
+   * (D-30: the investor can continue without it).
+   */
+  function e8RouteLine(c) {
+    const sup = c.ws.tenant.support || {};
+    const to = sup.email ? `${h(sup.team || 'investor relations')} at ${h(sup.email)}` : h(sup.team || 'investor relations');
+    return `<p class="field-wide meta ivf-taxroute">This status needs a form the portal does not fill in: usually Form W-8IMY (partnerships, grantor trusts and intermediaries), Form W-8ECI (income effectively connected with a U.S. trade or business) or Form W-8EXP (governments and tax-exempt organizations), or a Form W-8BEN-E completed for the status that applies. Send the completed form to ${to}; you can continue without it now.</p>`;
+  }
+  /** A Passive NFFE: the owners statement, and the substantial U.S. owners' rows when it lists them (Part XXIX). */
+  function e8OwnerFields(d, m) {
+    let f = radios('e8Owners', 'Substantial U.S. owners (U.S. persons who own more than 10 percent)', [['none', 'The entity has none'], ['listed', 'The entity has them; they are listed below']]);
+    if (d.e8Owners !== 'listed') return f;
+    const owners = m.owners || {};
+    for (let n = 1; n <= e8Rows(d); n++) {
+      f += `${input('e8Owner' + n + 'Name', `U.S. owner ${n}: name`, { wide: true, max: 60, hint: n === 1 ? 'From the beneficial owners you gave. Empty a row for anyone who is not a U.S. person.' : '' })}
+        ${input('e8Owner' + n + 'Addr', `U.S. owner ${n}: address`, { wide: true, max: 120 })}
+        ${input('e8Owner' + n + 'Tin', `U.S. owner ${n}: U.S. taxpayer identification number`, { mode: 'numeric', max: 11, hint: owners[n] ? `Ending ${h(owners[n].slice(-4))}. Leave empty to keep it.` : 'Nine digits.' })}`;
+    }
+    if (e8Rows(d) < E8_ROWS) f += '<p class="field-wide meta"><button class="link-btn" type="button" data-action="ivf-e8owner">Add a U.S. owner</button></p>';
+    return f;
+  }
+  /** Part III under "Change your answers": the treaty country, then the limitation on benefits provision and line 15. */
+  function e8TreatyFields(d) {
+    let f = select('e8Treaty', 'Claim U.S. tax treaty benefits as a resident of', [['', 'No treaty claim']].concat(TREATY.map((x) => [x, x])), { wide: true });
+    if (TREATY.indexOf(d.e8Treaty) < 0) return f;
+    f += radios('e8Lob', 'Limitation on benefits provision the entity meets', E8_LOB.map((x) => [x[0], x[1]]));
+    if (d.e8Lob === 'other') f += input('e8LobOther', 'Article and paragraph of that provision', { max: 30 });
+    return `${f}
+      ${input('e8Article', 'Special rates and conditions: treaty article and paragraph, if any', { max: 30 })}
+      ${input('e8Rate', 'Rate of withholding claimed (%)', { narrow: true, max: 6, mode: 'decimal' })}
+      ${input('e8Income', 'Type of income', { max: 20 })}
+      ${input('e8Explain1', 'Conditions of the article the entity meets', { max: 20, hint: 'Continue on the lines below if needed.' })}
+      ${input('e8Explain2', 'Conditions, continued', { wide: true, max: 110 })}
+      ${input('e8Explain3', 'Conditions, continued', { wide: true, max: 110 })}`;
+  }
+  /**
+   * The W-8BEN-E answers view (plan 06-20, D-06): the two statuses and the foreign tax ID or its not-required tick, and
+   * anything onboarding does not know, the GIIN for an FFI and the owners statement (and rows) for a Passive NFFE;
+   * "Change your answers" shows every answer, with the mailing address, the U.S. taxpayer ID, the reference, the treaty
+   * claim (Part III), the print name and the capacity box.
+   */
+  function w8eView(c, d, who) {
+    const o = ob();
+    const k = e8Known(c, d);
+    const m = W8MEM[c.inv.id] || {};
+    const edit = o.taxEdit || !!d.e8Edit;
+    const ftin = `${d.noFtin ? '' : input('ftin', 'Foreign tax identifying number', { max: 30, hint: m.ftin ? `Ending ${h(m.ftin.slice(-4))}. Leave empty to keep it.` : 'The tax number the entity’s country of residence issued to it.' })}
+      ${check('noFtin', 'A foreign tax identifying number is not legally required for the entity (for example, its country does not issue one).')}`;
+    let body = e8StatusFields();
+    // "Something else" on either status: one line names the form that usually applies; nothing else is asked
+    if (e8Routed(d)) {
+      return `${ivfH1(FL.tax)}
+      <div class="form-grid">${body}${e8RouteLine(c)}</div>
+      ${who}`;
+    }
+    if (E8_FFI.indexOf(d.e8Ch4) >= 0) body += input('e8Giin', 'GIIN (global intermediary identification number)', { max: 19, upper: true, hint: '19 characters, for example 98Q96B.00000.LE.250.' });
+    if (d.e8Ch4 === 'passiveNffe') body += e8OwnerFields(d, m);
+    if (edit) {
+      const us = m.usTin || k.usTin;
+      body += `${input('e8Name', 'Name of the organization that is the beneficial owner', { wide: true, max: 120 })}
+        ${w8CountryField('e8Country', 'Country of incorporation or organization', 'Choose a country')}
+        ${input('e8Street', 'Permanent residence address (street, apt. or suite no.)', { wide: true, max: 120, auto: 'street-address' })}
+        ${input('e8City', 'City or town, state or province, and postal code', { wide: true, max: 120 })}
+        ${w8CountryField('e8Res', 'Country of permanent residence', 'Choose a country')}
+        ${input('e8MailStreet', 'Mailing address, only if different (street, apt. or suite no.)', { wide: true, max: 120 })}
+        ${input('e8MailCity', 'Mailing address: city or town, state or province, and postal code', { wide: true, max: 120 })}
+        ${w8CountryField('e8MailCountry', 'Mailing address: country', 'No different mailing address')}
+        ${input('e8UsTin', 'U.S. taxpayer identification number, if the entity has one', { mode: 'numeric', max: 11, hint: us ? `Ending ${h(us.slice(-4))}. Leave empty to keep it.` : 'Nine digits.' })}
+        ${ftin}
+        ${input('e8Ref', 'Reference number, if any', { max: 19 })}
+        ${e8TreatyFields(d)}
+        ${input('e8Print', 'Name of the person signing for the entity', { wide: true, max: 120 })}
+        ${check('e8Capacity', 'The person signing has the capacity to sign for the entity.')}`;
+    } else {
+      if (!k.name && !tidy(d.e8Name)) body += input('e8Name', 'Name of the organization that is the beneficial owner', { wide: true, max: 120 });
+      if (!k.country && !w8CountryOf(d, 'e8Country')) body += w8CountryField('e8Country', 'Country of incorporation or organization', 'Choose a country');
+      if (!k.street && !tidy(d.e8Street)) body += input('e8Street', 'Permanent residence address (street, apt. or suite no.)', { wide: true, max: 120, auto: 'street-address' });
+      if (!k.cityLine && !tidy(d.e8City)) body += input('e8City', 'City or town, state or province, and postal code', { wide: true, max: 120 });
+      if (!k.residence && !w8CountryOf(d, 'e8Res')) body += w8CountryField('e8Res', 'Country of permanent residence', 'Choose a country');
+      body += ftin;
+    }
+    return `${ivfH1(FL.tax)}
+      <p class="lede">Your Form W-8BEN-E is filled in from your answers${!edit ? ', except what is asked below' : ''}. You check it and sign it on the next screen.</p>
+      <div class="form-grid">${body}</div>
+      ${edit ? '' : '<p class="meta ivf-taxedit"><button class="link-btn" type="button" data-action="ivf-taxedit">Change your answers</button></p>'}
+      ${who}`;
+  }
   /** The flow's W-9 envelope while it is the step's signing view (unsigned, or signed and not yet recorded). */
   function taxSignEnv(c) {
     const fl = c.fl;
@@ -1875,7 +2150,7 @@
       ${NS.esign.embed(env.id, c.inv.id)}`;
   }
   /** The answers without the tax numbers, in key order: what BUILT keeps and compares (memory only). */
-  const plainAnswers = (a) => JSON.stringify(Object.keys(a).filter((k) => SECRET_ANSWERS.indexOf(k) < 0).sort().map((k) => [k, a[k]]));
+  const plainAnswers = (a) => JSON.stringify(Object.keys(a).filter((k) => !secretAnswer(k)).sort().map((k) => [k, a[k]]));
   /**
    * Continue on the tax answers (W-9 or W-8BEN). Research FORM-07, T-06-41: an edited answer always reaches the form, and
    * the flow has one live tax envelope at most.
@@ -1893,11 +2168,12 @@
     const fl = c.fl;
     const key = taxKey(c, d);
     const w8 = key === W8_KEY;
+    const w8e = key === W8E_KEY;
     const map = NS.taxforms.MAPS[key];
-    const a = w8 ? w8Answers(c, d) : w9Answers(c, d);
+    const a = w8 ? w8Answers(c, d) : w8e ? w8eAnswers(c, d) : w9Answers(c, d);
     const old = fl.taxEnvelopeId && (ws.envelopes || []).find((e) => e.id === fl.taxEnvelopeId);
     const os = old && signerOf(old, i);
-    const typed = w8 ? !!(tidy(d.ftin) || digitsOf(d.w8UsTin)) : !!(digitsOf(d.tin) || TINS[i.id] || digitsOf(d.ownerTin));
+    const typed = w8 ? !!(tidy(d.ftin) || digitsOf(d.w8UsTin)) : w8e ? e8Typed(c, d) : !!(digitsOf(d.tin) || TINS[i.id] || digitsOf(d.ownerTin));
     const same = !!old && !!old.taxForm && old.taxForm.form === map.form && BUILT[old.id] === plainAnswers(a) && !typed;
     const unsignedOld = !!old && old.status === 'sent' && !(os && os.status === 'signed');
     if (same && old.status === 'completed' && i.taxCert && i.taxCert.envelopeId === old.id && i.taxCert.signed === true) return false;
@@ -1923,6 +2199,26 @@
       fl.taxW8 = { country: a.country || '', ftinLast4: f ? f.slice(-4) : '', noFtin: !!a.noFtin, treatyCountry: a.treatyCountry || '' };
       i.taxType = 'foreign-individual';
       d.ftin = d.w8UsTin = '';
+    } else if (w8e) {
+      // T-06-44: the typed numbers stay in this page's memory until the form is finished, never in the saved answers
+      const m = (W8MEM[i.id] = W8MEM[i.id] || {});
+      if (tidy(d.ftin)) m.ftin = tidy(d.ftin);
+      const us = digitsOf(d.e8UsTin).length === 9 ? digitsOf(d.e8UsTin) : TINS[i.id] || '';
+      if (us) m.usTin = us;
+      delete TINS[i.id];
+      // T-06-44: the owners' numbers by row, until the form is finished
+      m.owners = m.owners || {};
+      for (let n = 1; n <= E8_ROWS; n++) {
+        const t = ownerTinText(d['e8Owner' + n + 'Tin']);
+        if (t) m.owners[n] = t;
+        d['e8Owner' + n + 'Tin'] = '';
+      }
+      const f = String(a.ftin || '').replace(/[\s-]/g, '');
+      const ch3 = e8Pick(E8_CH3, d.e8Ch3);
+      const ch4 = e8Pick(E8_CH4, d.e8Ch4);
+      fl.taxW8 = { country: a.country || '', ftinLast4: f ? f.slice(-4) : '', noFtin: !!a.noFtin, chapter3: ch3 ? ch3[1] : '', chapter4: ch4 ? ch4[1] : '' };
+      i.taxType = 'foreign-entity';
+      d.ftin = d.e8UsTin = '';
     } else {
       const tin = tinOf(c, d);
       // the last four digits of the number the form carries (a disregarded LLC's owner's SSN; the account's number otherwise)
@@ -1953,10 +2249,12 @@
       const signed = env.fields.some((f) => f.signerId === signer.id && f.type === 'signature' && !!f.value);
       const base = { form: env.taxForm.form, revision: env.taxForm.revision, envelopeId: env.id, at: signer.signedAt || nowIso(), signed, signedBy: signed ? signer.name : '' };
       i.taxForm = env.taxForm.form;
-      if (env.taxForm.form === 'W-8BEN') {
-        // the W-8BEN stays valid until 31 December of the third calendar year after the year it was signed
+      if (env.taxForm.form === 'W-8BEN' || env.taxForm.form === 'W-8BEN-E') {
+        // a W-8BEN or W-8BEN-E stays valid until 31 December of the third calendar year after the year it was signed
         const w = fl.taxW8 || {};
-        i.taxCert = Object.assign(base, { country: w.country || '', ftinLast4: w.ftinLast4 || '', noFtin: !!w.noFtin, treatyCountry: w.treatyCountry || '', validUntil: signed ? `${signYear(env, signer) + 3}-12-31` : '' });
+        const until = signed ? `${signYear(env, signer) + 3}-12-31` : '';
+        const facts = env.taxForm.form === 'W-8BEN' ? { country: w.country || '', ftinLast4: w.ftinLast4 || '', noFtin: !!w.noFtin, treatyCountry: w.treatyCountry || '' } : { chapter3: w.chapter3 || '', chapter4: w.chapter4 || '', country: w.country || '', ftinLast4: w.ftinLast4 || '', noFtin: !!w.noFtin };
+        i.taxCert = Object.assign(base, facts, { validUntil: until });
         delete W8MEM[i.id];
       } else i.taxCert = Object.assign(base, { tinLast4: fl.taxTinLast4 || '', backupWithholding: !!fl.taxBackup });
       if (NS.audit) NS.audit.log(c.ws, { action: signed ? 'Tax form signed' : 'Tax form completed without a signature', record: i.id, fund: c.off ? c.off.id : '', detail: `${i.title}: Form ${env.taxForm.form} (${env.taxForm.revision})${fl.taxBackup ? '; subject to backup withholding' : ''}${signed ? `; signed by ${signer.name}` : ''}`, actor: `${i.title} (investor)` });
@@ -2153,14 +2451,13 @@
         if (tin.length && tin.length !== 9) e.tin = 'Enter all nine digits, or leave this empty.';
         const own = digitsOf(d.ownerTin);
         if (w9Disregarded(c, d) && own.length && own.length !== 9) e.ownerTin = 'Enter all nine digits, or leave this empty.';
-      } else if (taxKey(c, d)) {
+      } else if (taxKey(c, d) === W8_KEY) {
         // D-30: nothing on the W-8BEN is required; a U.S. taxpayer ID typed only in part is pointed out.
         const t = digitsOf(d.w8UsTin);
         if (t.length && t.length !== 9) e.w8UsTin = 'Enter all nine digits, or leave this empty.';
-      } else if (String(d.taxSig || '').trim() && !sameName(d.taxSig, c.inv.contact)) {
-        // D-30: nothing on today's foreign certification is required (plans 06-18 and 06-20 replace it); a name typed to
-        // sign that is not the investor's is pointed out, as a part-typed taxpayer ID is.
-        e.taxSig = `Type your name exactly as ${c.inv.contact}, or leave this empty.`;
+      } else if (taxKey(c, d) === W8E_KEY) {
+        // D-30: nothing on the W-8BEN-E is required; a number typed only in part is pointed out.
+        Object.assign(e, e8Problems(d));
       }
     }
     if (key === 'payment') Object.assign(e, validate('payment'));
@@ -2227,6 +2524,10 @@
       // the same for the W-8BEN (plan 06-18)
       ['w8Name', 'w8Citizen', 'w8CitizenOther', 'w8Street', 'w8City', 'w8Country', 'w8CountryOther', 'w8Dob'].forEach((k) => (d[k] = ''));
       d.w8Edit = false;
+      // and the W-8BEN-E (plan 06-20); the statuses, which Investor information does not ask, stay
+      ['e8Name', 'e8Country', 'e8CountryOther', 'e8Street', 'e8City', 'e8Res', 'e8ResOther', 'e8Print'].forEach((k) => (d[k] = ''));
+      d.e8Capacity = true;
+      d.e8Edit = false;
       if (IV()) await IV().finishOnboarding(ws, i, d);
       refreshSubscription(c);
       log('Investor information confirmed', `${(NS.ENTITY_TYPES[i.type] || {}).label || i.type}; ${i.address}${i.tinLast4 ? `; taxpayer ID ending ${i.tinLast4}` : ''}${sameName(was, i.contact) ? '' : `; the investor gave their name as ${i.contact} (it was ${was || 'not'} on file)`}`);
@@ -2259,28 +2560,31 @@
         if (NS.audit) NS.audit.log(ws, { action: 'Investor status updated', record: c.req.id, fund: c.off ? c.off.id : '', detail: `${i.title}: subscription ${c.req.id} now records ${said}`, actor: actor() });
       }
     }
-    // Continue on the W-9 or W-8BEN answers builds the form and shows it to sign on this same step (true: the flow stays on
-    // the step); a signed form kept unchanged lets the flow move on.
+    // Continue on the W-9, W-8BEN or W-8BEN-E answers builds the form and shows it to sign on this same step (true: the flow
+    // stays on the step); a signed form kept unchanged lets the flow move on.
     if (key === 'tax' && taxKey(c, d)) {
       const stay = await buildTax(c, d);
       fl.d = persistable(d);
       NS.app.save(true);
       if (stay) return true;
     }
-    // A foreign entity's certification (until plan 06-20): nothing is required (D-30); it is signed only when it was
-    // certified and signed with the investor's name, and otherwise recorded as not signed (taxCert.signed false).
+    // T-06-43 (plan 06-20): a status the W-8BEN-E here does not cover builds no form; an unsigned W-8BEN-E built before is
+    // voided (its files deleted), a signed one stays; nothing is required (D-30), the flow moves on.
     if (key === 'tax' && !taxKey(c, d)) {
-      const ent = d.type === 'entity' || d.type === 'trust';
-      i.taxType = ent ? 'foreign-entity' : 'foreign-individual';
-      const form = ent ? 'W-8BEN-E' : 'W-8BEN';
-      const prev = i.taxCert || {};
-      const sig = String(d.taxSig || '').trim();
-      const signed = !!d.w8 && !!sig && sameName(sig, i.contact);
-      const ftin = String(d.ftin || '').trim();
-      i.taxForm = form;
-      i.taxCert = { form, at: nowIso(), signed, signedBy: signed ? sig : '', country: d.taxCountry || '', ftinLast4: d.noFtin ? '' : ftin ? ftin.slice(-4) : prev.ftinLast4 || '', noFtin: !!d.noFtin, treatyCountry: d.treaty || '' };
-      d.tin = d.ftin = '';
-      log(signed ? 'Tax certification signed' : 'Tax certification completed without a signature', `${form} certification${d.taxCountry ? `; tax residence ${d.taxCountry}` : ''}${d.treaty ? `; treaty benefits as a resident of ${d.treaty}` : ''}${signed ? `; signed by ${sig}` : ''}`);
+      const old = fl.taxEnvelopeId && (ws.envelopes || []).find((e) => e.id === fl.taxEnvelopeId);
+      const os = old && signerOf(old, i);
+      if (old && old.status === 'sent' && !(os && os.status === 'signed')) {
+        NS.esign.void(ws, old.id, 'The investor gave a status this form does not cover; no form was prepared', { quiet: true, actor: actor() });
+        await Promise.all([old.docId, old.workDocId].filter((id) => id && id.indexOf(old.id) === 0).map((id) => NS.ops.files.del(id).catch(() => {})));
+        delete fl.taxEnvelopeId;
+      }
+      delete fl.taxView;
+      delete W8MEM[i.id];
+      d.ftin = d.e8UsTin = '';
+      E8_OWNER_TINS.forEach((k) => (d[k] = ''));
+      i.taxType = 'foreign-entity';
+      const said = [d.e8Ch3 === 'other' ? 'chapter 3: something else' : '', d.e8Ch4 === 'other' ? 'chapter 4: something else' : ''].filter(Boolean).join(', ');
+      log('Tax form not completed', `the status given (${said}) needs a form other than the W-8BEN-E filled in here, usually W-8IMY, W-8ECI or W-8EXP`);
     }
     if (key === 'payment') {
       i.payment = d.method === 'ach' ? { method: 'ach', bank: { holder: bankHolder(d), routing: digitsOf(d.routing), account: digitsOf(d.account), type: d.acctType } } : { method: 'check', bank: null };
@@ -2812,6 +3116,26 @@
     const c = fctx();
     const o = ob();
     if (!c) return;
+    if (taxKey(c, o.d) === W8E_KEY) {
+      // the W-8BEN-E: every answer starts from what the form would carry now (an answer emptied later stays empty, D-30)
+      const d = o.d;
+      const w = e8Known(c, d);
+      if (!d.e8Edit) {
+        d.e8Name = tidy(d.e8Name) || w.name;
+        d.e8Country = d.e8Country || w.country;
+        d.e8Street = tidy(d.e8Street) || w.street;
+        d.e8City = tidy(d.e8City) || w.cityLine;
+        d.e8Res = d.e8Res || w.residencePick;
+        d.e8Print = tidy(d.e8Print) || w.printName;
+        d.e8Capacity = true;
+      }
+      d.e8Edit = true;
+      o.taxEdit = true;
+      NS.app.render();
+      const f = document.getElementById('ob-e8Name');
+      if (f) f.focus();
+      return;
+    }
     if (taxKey(c, o.d) === W8_KEY) {
       // the W-8BEN: every answer starts from what the form would carry now (an answer emptied later stays empty, D-30)
       const d = o.d;
@@ -2846,6 +3170,16 @@
     if (f) f.focus();
   };
   /** Back from the W-9 on screen to its answers (the form is built again on Continue). */
+  /** A Passive NFFE listing its substantial U.S. owners: one more row (Part XXIX has nine). */
+  NS.actions['ivf-e8owner'] = () => {
+    const o = ob();
+    if (!o || o.busy) return;
+    const n = Math.min(E8_ROWS, e8Rows(o.d) + 1);
+    o.d.e8OwnerRows = n;
+    NS.app.render();
+    const f = document.getElementById(`ob-e8Owner${n}Name`);
+    if (f) f.focus();
+  };
   NS.actions['ivf-taxanswers'] = () => {
     const c = fctx();
     if (!c) return;
