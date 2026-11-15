@@ -1,0 +1,36 @@
+{
+ "root": "/tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/owner-set/C/try",
+ "only": [
+  "1"
+ ],
+ "secs": 7,
+ "times": {
+  "1-3": 7
+ },
+ "rows": [
+  {
+   "step": 1,
+   "name": "example: 47 fields placed (found 47, 0 marked for review, upload 936 ms)",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "step": 1,
+   "name": "example: fields by page, kind and signer are the expected ones",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "step": 1,
+   "name": "example: every field judged clean by the independent judge (47 of 47)",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "step": 1,
+   "name": "example: every field read from the editor has a kind, a signer and a box",
+   "ok": true,
+   "info": "[]"
+  }
+ ]
+}

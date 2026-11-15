@@ -1,0 +1,185 @@
+{
+ "root": "/home/user/Hhhh",
+ "pass": false,
+ "whoOk": true,
+ "ms": 451,
+ "note": "1 page read. 0 tick boxes, 0 blanks and 2 signature lines got a field, each on a place the agreement prints. No signature line for the investor was found: add a signature field for the investor where they sign before saving. Your firm’s signature line was found on page 1. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.",
+ "status": "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.",
+ "said": [
+  "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.",
+  "1 page read. 0 tick boxes, 0 blanks and 2 signature lines got a field, each on a place the agreement prints. No signature line for the investor was found: add a signature field for the investor where they sign before saving. Your firm’s signature line was found on page 1. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here."
+ ],
+ "saveSays": [
+  {
+   "text": "Save subscription agreement",
+   "disabled": false,
+   "title": "",
+   "action": "es-agreement-save"
+  }
+ ],
+ "reviewList": [
+  "SignaturePage 1 · Could not tell whether the investor or your firm fills this in."
+ ],
+ "inside": {
+  "read": {
+   "ok": true,
+   "error": "",
+   "pages": 1,
+   "scanned": [],
+   "failed": [],
+   "places": 2,
+   "left": [],
+   "boxes": 0,
+   "blanks": 0,
+   "signatures": 2,
+   "investorPages": [],
+   "firmPages": [
+    1
+   ],
+   "firmLeft": 0,
+   "firmLeftPages": [],
+   "pictured": [],
+   "unread": {},
+   "asked": false
+  },
+  "readNote": "1 page read. 0 tick boxes, 0 blanks and 2 signature lines got a field, each on a place the agreement prints. No signature line for the investor was found: add a signature field for the investor where they sign before saving. Your firm’s signature line was found on page 1.",
+  "todo": "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.",
+  "signers": [
+   {
+    "role": "investor",
+    "name": "Investor (each subscriber)",
+    "co": false
+   },
+   {
+    "role": "investor",
+    "name": "Co-investor (if any)",
+    "co": true
+   },
+   {
+    "role": "countersigner",
+    "name": "Kestrel Bay (countersigns)",
+    "co": false
+   }
+  ],
+  "fields": [
+   {
+    "page": 1,
+    "type": "signature",
+    "kind": "signature",
+    "label": "",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "firm"
+   },
+   {
+    "page": 1,
+    "type": "signature",
+    "kind": "signature",
+    "label": "",
+    "required": true,
+    "review": true,
+    "reviewReason": "Could not tell whether the investor or your firm fills this in.",
+    "confidence": "medium",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "firm"
+   }
+  ]
+ },
+ "total": {
+  "places": 2,
+  "fields": 2,
+  "found": 2,
+  "missed": [],
+  "strays": [],
+  "kindDiff": [],
+  "ownerDiff": [],
+  "marked": [
+   {
+    "id": "p1-02",
+    "page": 1,
+    "portalMarked": true,
+    "sheetSays": "do not mark"
+   }
+  ],
+  "overlaps": [],
+  "pairs": [
+   {
+    "place": "p1-01",
+    "page": 1,
+    "kind": "signature",
+    "owner": "firm",
+    "signer": "Kestrel Bay (countersigns)",
+    "required": true,
+    "review": false,
+    "label": "Signature",
+    "box": [
+     303.8,
+     447.8,
+     541,
+     490.8
+    ],
+    "edges": {
+     "left": 0,
+     "right": 1,
+     "bottom": 1.8,
+     "top": null,
+     "height": 43
+    }
+   },
+   {
+    "place": "p1-02",
+    "page": 1,
+    "kind": "signature",
+    "owner": "firm",
+    "signer": "Kestrel Bay (countersigns)",
+    "required": true,
+    "review": true,
+    "label": "Signature",
+    "box": [
+     303.8,
+     578.8,
+     541,
+     621.8
+    ],
+    "edges": {
+     "left": 0,
+     "right": 1,
+     "bottom": 1.8,
+     "top": null,
+     "height": 43
+    }
+   }
+  ]
+ },
+ "per": {
+  "1": {
+   "page": 1,
+   "places": 2,
+   "fields": 2,
+   "found": 2,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [
+    {
+     "id": "p1-02",
+     "page": 1,
+     "portalMarked": true,
+     "sheetSays": "do not mark"
+    }
+   ],
+   "overlaps": []
+  }
+ },
+ "errors": []
+}

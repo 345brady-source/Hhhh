@@ -1,0 +1,209 @@
+[
+ {
+  "doc": "PPM_Blackcommerce_LLC_SEC_EDGAR",
+  "noForm": "",
+  "pages": 112,
+  "ms": 4966,
+  "said": [
+   "24 fields need your review before investors can sign.",
+   "Confirm or move the 24 fields marked for review.",
+   "112 pages read. 7 tick boxes, 39 blanks and 5 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on pages 101, 103 and 110. Your firm’s signature line was found on page 109. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here."
+  ],
+  "opened": true,
+  "dialogSays": "",
+  "reviewList": 24,
+  "screen": [
+   "If fields are missing or sit in the wrong place, the portal can read the PDF again. Fields you placed, moved or changed are kept."
+  ],
+  "fields": 51,
+  "clean": 51,
+  "unclean": 0,
+  "why": {
+   "notAnchored": 0,
+   "coversInk": 0,
+   "bracketed": 0,
+   "overlapping": 0
+  },
+  "errors": []
+ },
+ {
+  "doc": "PPM_RockStep_Hometown_America_Fund_I",
+  "noForm": "prose",
+  "pages": 69,
+  "ms": 3261,
+  "said": [
+   "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.",
+   "69 pages read: no line, blank or tick box to complete was found, so no field was placed. No signature line for the investor was found: add a signature field for the investor where they sign before saving. No signature line for your firm was found, so your firm does not sign this agreement. Add a signature field for your firm if it should. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here."
+  ],
+  "opened": true,
+  "dialogSays": "",
+  "reviewList": 0,
+  "screen": [
+   "If fields are missing or sit in the wrong place, the portal can read the PDF again. Fields you placed, moved or changed are kept.",
+   "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.",
+   "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign."
+  ],
+  "fields": 0,
+  "clean": 0,
+  "unclean": 0,
+  "why": {
+   "notAnchored": 0,
+   "coversInk": 0,
+   "bracketed": 0,
+   "overlapping": 0
+  },
+  "errors": []
+ },
+ {
+  "doc": "PPM_Worcester_Fund_LLC",
+  "noForm": "prose",
+  "pages": 85,
+  "ms": 3661,
+  "said": [
+   "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.",
+   "85 pages read: no line, blank or tick box to complete was found, so no field was placed. No signature line for the investor was found: add a signature field for the investor where they sign before saving. No signature line for your firm was found, so your firm does not sign this agreement. Add a signature field for your firm if it should. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here."
+  ],
+  "opened": true,
+  "dialogSays": "",
+  "reviewList": 0,
+  "screen": [
+   "If fields are missing or sit in the wrong place, the portal can read the PDF again. Fields you placed, moved or changed are kept.",
+   "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.",
+   "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign."
+  ],
+  "fields": 0,
+  "clean": 0,
+  "unclean": 0,
+  "why": {
+   "notAnchored": 0,
+   "coversInk": 0,
+   "bracketed": 0,
+   "overlapping": 0
+  },
+  "errors": []
+ },
+ {
+  "doc": "Subscription_Hedge_Fund_Template",
+  "noForm": "",
+  "pages": 18,
+  "ms": 937,
+  "said": [
+   "17 fields need your review before investors can sign.",
+   "Confirm or move the 17 fields marked for review.",
+   "18 pages read. 0 tick boxes, 56 blanks and 8 signature lines got a field, each on a place the agreement prints. Not every printed place got a field: check pages 5, 9 and 13 and add what is missing by hand. The investor’s signature line was found on pages 5, 9, 10, 15 and 18. Your firm’s signature line was found on page 5. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here."
+  ],
+  "opened": true,
+  "dialogSays": "",
+  "reviewList": 17,
+  "screen": [
+   "If fields are missing or sit in the wrong place, the portal can read the PDF again. Fields you placed, moved or changed are kept."
+  ],
+  "fields": 64,
+  "clean": 64,
+  "unclean": 0,
+  "why": {
+   "notAnchored": 0,
+   "coversInk": 0,
+   "bracketed": 0,
+   "overlapping": 0
+  },
+  "errors": []
+ },
+ {
+  "doc": "Subscription_ILPA_Model_Subscription_Agreement",
+  "noForm": "",
+  "pages": 25,
+  "ms": 1329,
+  "said": [
+   "26 fields need your review before investors can sign.",
+   "Confirm or move the 26 fields marked for review.",
+   "25 pages read. 11 tick boxes, 41 blanks and 6 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on page 11. Your firm’s signature line was found on pages 12 and 13. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here."
+  ],
+  "opened": true,
+  "dialogSays": "",
+  "reviewList": 26,
+  "screen": [
+   "Page 16 · This blank has no label; it was read as a second address line.",
+   "Page 16 · This blank has no label; it was read as a second address line.",
+   "If fields are missing or sit in the wrong place, the portal can read the PDF again. Fields you placed, moved or changed are kept."
+  ],
+  "fields": 58,
+  "clean": 58,
+  "unclean": 0,
+  "why": {
+   "notAnchored": 0,
+   "coversInk": 0,
+   "bracketed": 0,
+   "overlapping": 0
+  },
+  "errors": []
+ },
+ {
+  "doc": "Subscription_PA_SERS_Insight_Venture_Partners_VIII_Closing_Binder_Redacted",
+  "noForm": "scan",
+  "pages": 72,
+  "ms": 12395,
+  "said": [
+   "This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign.",
+   "Most of this PDF could not be read: 71 of its 72 pages are pictures, as in a scan. No field was placed. Upload the PDF the agreement was made from, or add each field by hand. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here."
+  ],
+  "opened": true,
+  "dialogSays": "",
+  "reviewList": 0,
+  "screen": [
+   "If fields are missing or sit in the wrong place, the portal can read the PDF again. Fields you placed, moved or changed are kept.",
+   "This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign.",
+   "This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign."
+  ],
+  "fields": 0,
+  "clean": 0,
+  "unclean": 0,
+  "why": {
+   "notAnchored": 0,
+   "coversInk": 0,
+   "bracketed": 0,
+   "overlapping": 0
+  },
+  "errors": [],
+  "couldNotRead": [
+   "This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign.",
+   "Most of this PDF could not be read: 71 of its 72 pages are pictures, as in a scan. No field was placed. Upload the PDF the agreement was made from, or add each field by hand. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.",
+   "This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign.",
+   "This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign."
+  ]
+ },
+ {
+  "doc": "Subscription_PA_SERS_Lubert_Adler_Real_Estate_Fund_VII_Redacted",
+  "noForm": "",
+  "pages": 43,
+  "ms": 5375,
+  "said": [
+   "37 fields need your review before investors can sign.",
+   "Confirm or move the 37 fields marked for review.",
+   "40 pages read. 83 tick boxes, 63 blanks and 1 signature line got a field, each on a place the agreement prints. Not every printed place got a field: check page 9 and add what is missing by hand. Pages 21, 41 and 43 are pictures, as in a scan, and could not be read: nothing was placed there. The investor’s signature line was found on page 20. No signature line for your firm was found, so your firm does not sign this agreement and 1 blank that reads as your firm’s on page 9 got no field. Add a signature field for your firm if it should. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here."
+  ],
+  "opened": true,
+  "dialogSays": "",
+  "reviewList": 37,
+  "screen": [
+   "Page 6 · A short blank read as a place for a tick. Replace it with an initials or a text field if that is what is meant.",
+   "Page 7 · A short blank read as a place for a tick. Replace it with an initials or a text field if that is what is meant.",
+   "Page 9 · A short blank read as a place for a tick. Replace it with an initials or a text field if that is what is meant.",
+   "Page 11 · A short blank read as a place for a tick. Replace it with an initials or a text field if that is what is meant.",
+   "Page 11 · A short blank read as a place for a tick. Replace it with an initials or a text field if that is what is meant.",
+   "Page 11 · A short blank read as a place for a tick. Replace it with an initials or a text field if that is what is meant.",
+   "Page 11 · A short blank read as a place for a tick. Replace it with an initials or a text field if that is what is meant.",
+   "Page 13 · A short blank read as a place for a tick. Replace it with an initials or a text field if that is what is meant."
+  ],
+  "fields": 147,
+  "clean": 147,
+  "unclean": 0,
+  "why": {
+   "notAnchored": 0,
+   "coversInk": 0,
+   "bracketed": 0,
+   "overlapping": 0
+  },
+  "errors": []
+ }
+]

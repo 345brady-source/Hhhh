@@ -1,0 +1,107 @@
+document A: 21 pages; editor opened true in 1271 ms; fields 28; places on the sheet 29
+READ SUMMARY (exact): "21 pages read. 0 tick boxes, 25 blanks and 3 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on page 18. No signature line for your firm was found, so your firm does not sign this agreement. Add a signature field for your firm if it should. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here."
+READ EXTRA: "21 pages read. 0 tick boxes, 25 blanks and 3 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on page 18. No signature line for your firm was found, so your firm does not sign this agreement. Add a signature field for your firm if it should. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here."
+STATUS: "Confirm or move the 12 fields marked for review."
+SAID: ["12 fields need your review before investors can sign.","Confirm or move the 12 fields marked for review.","21 pages read. 0 tick boxes, 25 blanks and 3 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on page 18. No signature line for your firm was found, so your firm does not sign this agreement. Add a signature field for your firm if it should. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here."]
+STORED READ: {"ok":true,"error":"","pages":21,"scanned":[],"failed":[],"places":28,"left":[],"boxes":0,"blanks":25,"signatures":3,"investorPages":[18],"firmPages":[],"firmLeft":0,"firmLeftPages":[],"pictured":[],"unread":{},"asked":false}
+ page   places   fields    found   missed   strays   kind!=   what!=  owner!=    req!=  label!=  prefill   marked  overlap
+   18        6        6        6        0        0        0        1        6        5        3        1        5        0
+   20       23       22       22        1        0        0        0       20       15        5        3        7        0
+  all       29       28       28        1        0        0        1       26       20        8        4       12        0
+MISSED (1):
+   p20-13 blank/email third-party "Email address of the operations contact" [72, 349.8, 501, 350.2]
+FINER KIND differs (1):
+   p18-02 "State in which the letter writer is licensed" sheet text, portal address
+OWNER differs (26):
+   p18-01 "Licence number of the letter writer" sheet third-party, portal investor ("Investor (each subscriber)")
+   p18-02 "State in which the letter writer is licensed" sheet third-party, portal investor ("Investor (each subscriber)")
+   p18-03 "Signature of the letter writer" sheet third-party, portal investor ("Investor (each subscriber)")
+   p18-04 "Printed name of the letter writer" sheet third-party, portal investor ("Investor (each subscriber)")
+   p18-05 "Date of the letter (beside the signature)" sheet third-party, portal investor ("Investor (each subscriber)")
+   p18-06 "Phone number of the letter writer" sheet third-party, portal investor ("Investor (each subscriber)")
+   p20-01 "Name of the broker-dealer or adviser firm" sheet third-party, portal investor ("Investor (each subscriber)")
+   p20-02 "Registration number of the firm" sheet third-party, portal investor ("Investor (each subscriber)")
+   p20-03 "Address of the broker-dealer (says if applicable)" sheet third-party, portal investor ("Investor (each subscriber)")
+   p20-04 "Name of the registered representative" sheet third-party, portal investor ("Investor (each subscriber)")
+   p20-05 "Identification number of the representative" sheet third-party, portal investor ("Investor (each subscriber)")
+   p20-06 "Name of the adviser representative" sheet third-party, portal investor ("Investor (each subscriber)")
+   p20-07 "Registration number of the adviser representative" sheet third-party, portal investor ("Investor (each subscriber)")
+   p20-08 "Address of the representative or adviser" sheet third-party, portal investor ("Investor (each subscriber)")
+   p20-09 "Email address of the representative or adviser" sheet third-party, portal investor ("Investor (each subscriber)")
+   p20-10 "Phone of the representative or adviser" sheet third-party, portal investor ("Investor (each subscriber)")
+   p20-11 "Name of the operations contact" sheet third-party, portal investor ("Investor (each subscriber)")
+   p20-12 "Phone of the operations contact" sheet third-party, portal investor ("Investor (each subscriber)")
+   p20-15 "Date beside the representative or adviser signature" sheet third-party, portal investor ("Investor (each subscriber)")
+   p20-17 "Date beside the principal approval signature" sheet third-party, portal investor ("Investor (each subscriber)")
+   p20-18 "Name of the custodian" sheet unclear, portal investor ("Investor (each subscriber)")
+   p20-19 "Tax number of the custodian" sheet unclear, portal investor ("Investor (each subscriber)")
+   p20-20 "Account number at the custodian" sheet unclear, portal investor ("Investor (each subscriber)")
+   p20-21 "Mailing address of the custodian, first line" sheet unclear, portal investor ("Investor (each subscriber)")
+   p20-22 "Mailing address of the custodian, second line" sheet unclear, portal investor ("Investor (each subscriber)")
+   p20-23 "Mailing address of the custodian, third line" sheet unclear, portal investor ("Investor (each subscriber)")
+REQUIRED differs (20):
+   p18-01 "Licence number of the letter writer" sheet optional, portal required
+   p18-02 "State in which the letter writer is licensed" sheet optional, portal required
+   p18-03 "Signature of the letter writer" sheet optional, portal required
+   p18-04 "Printed name of the letter writer" sheet optional, portal required
+   p18-06 "Phone number of the letter writer" sheet optional, portal required
+   p20-01 "Name of the broker-dealer or adviser firm" sheet optional, portal required
+   p20-02 "Registration number of the firm" sheet optional, portal required
+   p20-04 "Name of the registered representative" sheet optional, portal required
+   p20-05 "Identification number of the representative" sheet optional, portal required
+   p20-06 "Name of the adviser representative" sheet optional, portal required
+   p20-07 "Registration number of the adviser representative" sheet optional, portal required
+   p20-08 "Address of the representative or adviser" sheet optional, portal required
+   p20-09 "Email address of the representative or adviser" sheet optional, portal required
+   p20-10 "Phone of the representative or adviser" sheet optional, portal required
+   p20-11 "Name of the operations contact" sheet optional, portal required
+   p20-12 "Phone of the operations contact" sheet optional, portal required
+   p20-18 "Name of the custodian" sheet optional, portal required
+   p20-19 "Tax number of the custodian" sheet optional, portal required
+   p20-20 "Account number at the custodian" sheet optional, portal required
+   p20-21 "Mailing address of the custodian, first line" sheet optional, portal required
+LABEL differs from the printed label (8):
+   p18-04 printed "Print Name", portal "Name"
+   p18-05 printed "Date", portal "Date signed"
+   p18-06 printed "Phone Number", portal "Phone"
+   p20-14 printed "SIGNATURE OF REGISTERED REPRESENTATIVE OR REGISTERED INVESTMENT ADVISOR", portal "SIGNATURE OF REGISTERED REPRESENTATIVE OR"
+   p20-15 printed "Date", portal "Date signed"
+   p20-17 printed "Date", portal "Date signed"
+   p20-19 printed "TAX ID", portal "Taxpayer ID"
+   p20-21 printed "MAILING ADDRESS", portal "Address"
+FILLED IN FROM THE INVESTOR'S ONBOARDING on a place that is not the investor's (4):
+   p18-06 "Phone number of the letter writer" prefill phone
+   p20-10 "Phone of the representative or adviser" prefill phone
+   p20-12 "Phone of the operations contact" prefill phone
+   p20-21 "Mailing address of the custodian, first line" prefill address
+PAIRS (place: portal kind/finer kind, signer, required, review, label; edges left/right/bottom vs the printed blank, height):
+   p18-01: text/text | Investor (each subscriber) | req=true review=true | "licensed" | prefill=- | L-1 R-0.1 B1.3 H16.2 | why: A blank inside a sentence: check what goes here and who fills it in.
+   p18-02: text/address | Investor (each subscriber) | req=true review=true | "in the state of" | prefill=- | L-1.1 R-0.1 B1.3 H16.2 | why: A blank inside a sentence: check what goes here and who fills it in.
+   p18-03: signature/signature | Investor (each subscriber) | req=true review=true | "Signature" | prefill=- | L-1 R1 B1.3 H24.4 | why: The agreement prints a line here, but the portal could not tell what i
+   p18-04: name/text | Investor (each subscriber) | req=true review=true | "Name" | prefill=- | L0 R1 B1.3 H15.5 | why: Could not tell whether the investor or your firm fills this in.
+   p18-05: date/date | Investor (each subscriber) | req=false review=true | "Date signed" | prefill=- | L-1 R1 B1.2 H15.5 | why: Could not tell whether the investor or your firm fills this in.
+   p18-06: text/phone | Investor (each subscriber) | req=true review=false | "Phone" | prefill=phone | L0 R1 B1.2 H15.5
+   p20-01: text/text | Investor (each subscriber) | req=true review=false | "Broker-Dealer or RIA Firm Name" | prefill=- | L-1 R1 B1.1 H16
+   p20-02: text/text | Investor (each subscriber) | req=true review=false | "BD/RIA CRD No." | prefill=- | L-1 R1 B0.9 H16
+   p20-03: text/address | Investor (each subscriber) | req=false review=false | "Broker-Dealer Address" | prefill=- | L-1 R1 B1 H12.2
+   p20-04: text/text | Investor (each subscriber) | req=true review=false | "Registered Representative Name" | prefill=- | L-1 R1 B1.1 H16
+   p20-05: text/text | Investor (each subscriber) | req=true review=false | "Rep ID" | prefill=- | L0 R1 B0.9 H11.1
+   p20-06: text/text | Investor (each subscriber) | req=true review=false | "IAR Name" | prefill=- | L-1 R1 B1 H16
+   p20-07: text/text | Investor (each subscriber) | req=true review=false | "CRD No." | prefill=- | L-1 R1 B1.1 H11.1
+   p20-08: text/address | Investor (each subscriber) | req=true review=false | "Rep/IAR Address" | prefill=- | L-1 R1 B1 H12.2
+   p20-09: text/email | Investor (each subscriber) | req=true review=false | "Rep/IAR Email Address" | prefill=- | L-1 R1 B0.9 H11.2
+   p20-10: text/phone | Investor (each subscriber) | req=true review=false | "Phone" | prefill=phone | L0 R0.9 B1.1 H11.1
+   p20-11: text/text | Investor (each subscriber) | req=true review=false | "Operations/NIGO Contact" | prefill=- | L-1 R1 B1.1 H16
+   p20-12: text/phone | Investor (each subscriber) | req=true review=false | "Phone" | prefill=phone | L0 R0.9 B1 H11.1
+   p20-14: signature/signature | Investor (each subscriber) | req=false review=true | "SIGNATURE OF REGISTERED REPRESENTATIVE OR" | prefill=- | L-1 R1 B1.1 H36.5 | why: This line looks meant for a second signer, a witness or a notary. It i
+   p20-15: date/date | Investor (each subscriber) | req=false review=true | "Date signed" | prefill=- | L-1.1 R0.9 B1.2 H16 | why: Could not tell whether the investor or your firm fills this in.
+   p20-16: signature/signature | Investor (each subscriber) | req=false review=true | "BROKER-DEALER PRINCIPAL APPROVAL SIGNATURE (if required)" | prefill=- | L-1 R1 B0.9 H36.6 | why: This line looks meant for a second signer, a witness or a notary. It i
+   p20-17: date/date | Investor (each subscriber) | req=false review=true | "Date signed" | prefill=- | L-0.9 R1.1 B1.1 H16 | why: Could not tell whether the investor or your firm fills this in.
+   p20-18: text/text | Investor (each subscriber) | req=true review=false | "NAME OF CUSTODIAN" | prefill=- | L-1 R1 B1.3 H15.5
+   p20-19: text/taxId | Investor (each subscriber) | req=true review=false | "Taxpayer ID" | prefill=- | L-1 R1 B1.3 H15.5
+   p20-20: text/text | Investor (each subscriber) | req=true review=true | "CUSTODIAN ACCOUNT NO" | prefill=- | L-1 R1 B1.3 H15.5 | why: A blank inside a sentence: check what goes here and who fills it in.
+   p20-21: text/address | Investor (each subscriber) | req=true review=false | "Address" | prefill=address | L-1 R1 B1.4 H10.6
+   p20-22: text/address | Investor (each subscriber) | req=false review=true | "Address line 2" | prefill=- | L-1 R1 B1.4 H10.7 | why: This blank has no label; it was read as a second address line.
+   p20-23: text/address | Investor (each subscriber) | req=false review=true | "Address line 2" | prefill=- | L-1 R1 B1.4 H10.6 | why: This blank has no label; it was read as a second address line.
+SUMMARY TRUTHFUL about the investor signature block (sheet: none printed): false
+RESULT: FAIL

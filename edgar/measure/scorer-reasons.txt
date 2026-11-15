@@ -18,3 +18,23 @@ Scorer reasons: every change to exact.py's scoring, with exact.py's sha256 after
     found, exact-ready and right first time may not fall; missed, strays and fixes may not rise) and rates of the
     found places for kind, person and label right and required differences, and marks as a share of fields: so a
     newly found place with a wrong person is not read as a regression of the person rule.
+
+2026-11-15  plan 01.4-18  exact.py sha256 6eee4e74d75ede49c5aff97472cc84e9e6907bbe556f053f11106f2ae037d661
+  - D-24, the owner's decision 2026-11-15: labels are not judged; label differences are reported for information only.
+  - A place found with only a label difference is no longer a fix. Fixes = missed places, kind and owner differences,
+    wrong marks, strays. Exact-ready = fixes 0. Right first time = found, kind right, owner right, unmarked.
+  - The label column is printed as "label (info)" and kept in the JSON (labelDiff, labelled, labelledFound); the gate
+    no longer compares labelRightPct; the classes table counts a place to fix only for a non-label reason.
+  - targets.py --milestone wave3 drops its label bar (found, person, marks, exact-ready stay).
+  - exact-best.json re-seeded from the record's own runs (out-set-a, out-set-b, out-cal-final): held-out A totals
+    under the new definition: 3697 places, 1786 found, 517 strays, fixes 3843 -> 3693, right first time 371 -> 521,
+    0 of 39 exact-ready. The old record is kept under before_d24. No other set had a record.
+  - New flag --selftest-labels (no documents): SELFTEST LABELS: PASS. Builder mode and the read seal unchanged.
+
+2026-11-15 | exact.py | e4f42b56e6f0 | Plan 01.4-63, D-30 (the owner: two people only, investor and sponsor; no investor field mandatory).
+  - Person is judged on two classes: a sheet owner "firm" is the sponsor, every other sheet owner (investor,
+    investor-individual, investor-entity, co-investor, third-party, unclear) the investor; the portal's "firm" is the
+    sponsor, every other the investor; owner_also_ok maps the same way. owner_of_fine keeps the finer word.
+  - requiredDiff is counted only on the sponsor's places (no investor field is ever mandatory).
+  - Unchanged: matching, kinds, marks (an unclear place must still be marked), strays, labels (D-24), fixes definition.
+  - Not run on in-page output and exact-best.json not touched: D-33 (no in-page measurement). --selftest-labels: PASS.

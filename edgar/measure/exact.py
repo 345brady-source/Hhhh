@@ -38,10 +38,18 @@ The rules are the owner's scorers' (owner-set/C/score.js, owner-set/lib-score.js
 Sheet convention (scorer-reasons.txt): a place cut by a page break is recorded on both PDF pages with doubt
 "split by page break"; the two pieces count as one place, met by a field on either piece (a field on each piece:
 the second is a stray, because the sponsor would delete it).
-"Fixes" is the main number: every place the sponsor would touch (missed, or found with a kind, owner or label
-difference, or marked), each counted once, plus every stray field. A document is "exact-ready" when fixes is 0.
-"Right first time": a place found with the right kind, person and label, and unmarked.
+"Fixes" is the main number: every place the sponsor would touch (missed, or found with a kind or owner difference,
+or marked), each counted once, plus every stray field. A document is "exact-ready" when fixes is 0.
+"Right first time": a place found with the right kind and person, and unmarked.
+D-24 (the owner's decision, 2026-11-15): labels are not judged. Label differences are still counted and printed in the
+"label (info)" column and kept in the JSON, for information only; they are not fixes, do not stop exact-ready or right
+first time, and the gate does not compare them. --selftest-labels proves this on a made-up place (no documents).
 Required differences are reported beside it but are not in fixes (the sheets' must is a judgement call).
+D-30 (the owner's decision, 2026-11-15, Phase 01.4 plan 63): person is judged on two classes only. A sheet owner
+"firm" is the sponsor; every other sheet owner (investor, investor-individual, investor-entity, co-investor,
+third-party, unclear) is the investor; the portal's owner "firm" is the sponsor and every other is the investor
+(owner_also_ok maps the same way). Required is judged only on the sponsor's places: no investor field is ever
+mandatory (D-30). A place the sheet calls unclear must still carry a review mark, as before.
 """
 import sys, os, json, re, math, argparse, hashlib, datetime, glob
 
@@ -95,7 +103,17 @@ def label_ok(place, f):
     return False
 
 
+def person(o):
+    """D-30: the two classes. 'firm' is the sponsor; any other owner, of a sheet place or a portal field, the investor."""
+    return 'sponsor' if o == 'firm' else 'investor'
+
+
 def owner_of(f):
+    """The portal's owner as one of the two classes of D-30 (owner_of_fine keeps the finer word for the reports)."""
+    return person(owner_of_fine(f))
+
+
+def owner_of_fine(f):
     o = f.get('owner') or 'investor'
     if o == 'co-investor':
         return 'co-investor'
@@ -240,16 +258,15 @@ def score_doc(fields, truth, split=True):
             fix_places.add(p['id'])
             ok = False
         o = owner_of(f)
-        if not (p['owner'] == o or o in (p.get('owner_also_ok') or [])):
+        if not (person(p['owner']) == o or o in [person(x) for x in (p.get('owner_also_ok') or [])]):
             r['ownerDiff'].append({'id': p['id'], 'sheet': p['owner'], 'portal': o, 'kind': p['kind']})
             fix_places.add(p['id'])
             ok = False
         if p.get('printed_label'):
             labelledFound += 1
             if not label_ok(p, f):
+                # D-24: information only; not a fix, does not stop right first time
                 r['labelDiff'].append({'id': p['id'], 'printed': p['printed_label'][:60], 'portal': (f.get('label') or '')[:60], 'fine': f.get('fine') or f['kind']})
-                fix_places.add(p['id'])
-                ok = False
         must_mark = p['owner'] == 'unclear'
         if f.get('review') and must_mark:
             r['markedOk'].append({'id': p['id']})
@@ -263,7 +280,7 @@ def score_doc(fields, truth, split=True):
         if ok:
             r['rightFirst'].append({'id': p['id']})
         auto_dated = p['kind'] == 'date' and f['kind'] == 'date' and p.get('must')
-        if not auto_dated and bool(f.get('required')) != bool(p.get('must')):
+        if not auto_dated and person(p['owner']) == 'sponsor' and bool(f.get('required')) != bool(p.get('must')):
             r['requiredDiff'].append({'id': p['id'], 'sheet': 'must' if p.get('must') else 'optional', 'portal': 'required' if f.get('required') else 'optional'})
     marked = sum(1 for f in fields if f.get('review'))
     fixes = len(fix_places) + len(r['strays'])
@@ -276,6 +293,11 @@ def score_doc(fields, truth, split=True):
 # ---------------------------------------------------------------- sets, files, the seal
 COLS = ['places', 'fields', 'found', 'missed', 'strays', 'kindDiff', 'ownerDiff', 'labelDiff', 'marked', 'fixes', 'requiredDiff', 'rightFirstTime']
 EXTRA = ['labelled', 'labelledFound', 'splitPairs']
+HEAD = {'labelDiff': 'label (info)'}  # D-24: printed for information only
+
+
+def head(cols):
+    return ' | '.join(HEAD.get(k, k) for k in cols)
 
 
 def n(v):
@@ -431,8 +453,9 @@ def rates(t):
 # (name, direction): '=' must be equal (the sheets and the documents scored), '+' higher is better, '-' lower is better.
 # Counts for what does not depend on how much is found; rates of the found places for kind, person, label and required,
 # so finding more places is never punished as "more differences".
+# D-24: labelRightPct is no longer compared (labels are information only).
 GATE = [('scored', '='), ('places', '='), ('found', '+'), ('missed', '-'), ('strays', '-'), ('fixes', '-'), ('exactReady', '+'), ('rightFirstTime', '+'),
-        ('kindRightPct', '+'), ('ownerRightPct', '+'), ('labelRightPct', '+'), ('markedPct', '-'), ('requiredDiffPct', '-')]
+        ('kindRightPct', '+'), ('ownerRightPct', '+'), ('markedPct', '-'), ('requiredDiffPct', '-')]
 EPS = 1e-9
 
 
@@ -467,7 +490,7 @@ def sum_docs(docs):
 # ---------------------------------------------------------------- printing
 def closing(tot):
     rt = rates(tot)
-    return ('found %.1f%% of places; strays %.1f%% of fields; of found: kind right %.1f%%, owner right %.1f%%, label right %.1f%% of %d labelled; '
+    return ('found %.1f%% of places; strays %.1f%% of fields; of found: kind right %.1f%%, owner right %.1f%%, label right (info) %.1f%% of %d labelled; '
             'marked fields %.1f%% of all fields; right first time %d of %d places (%.1f%%); places to fix %d + strays %d = fixes %d; '
             'exact-ready documents %d of %d' % (
                 rt['foundPct'], rt['strayPct'], rt['kindRightPct'], rt['ownerRightPct'], rt['labelRightPct'], tot['labelledFound'], rt['markedPct'],
@@ -479,6 +502,7 @@ def classes_table(docs):
     """Every fix attributed to the place's kind, what, owner and the document's how-made; strays to the field's kind."""
     from collections import defaultdict
     KINDS = ('missed', 'kindDiff', 'ownerDiff', 'labelDiff', 'markedWrong')
+    FIXK = ('missed', 'kindDiff', 'ownerDiff', 'markedWrong')  # D-24: labelDiff alone is not a fix
     agg = {dim: defaultdict(lambda: defaultdict(int)) for dim in ('kind', 'what', 'owner', 'made')}
     strays = {dim: defaultdict(int) for dim in ('kind', 'owner', 'made')}
     for d in docs:
@@ -491,6 +515,8 @@ def classes_table(docs):
             for x in d[k]:
                 per[x['id']].add(k)
         for pid, ks in per.items():
+            if not (ks & set(FIXK)):
+                continue
             p = byid.get(pid, {})
             keys = {'kind': p.get('kind', '?'), 'what': p.get('what') or ('-' if p.get('kind') != 'blank' else '?'), 'owner': p.get('owner', '?'), 'made': made}
             for dim, v in keys.items():
@@ -503,7 +529,7 @@ def classes_table(docs):
             strays['made'][made] += 1
     out = []
     for dim in ('kind', 'what', 'owner', 'made'):
-        out += ['', '### fixes by the place\'s %s' % dim, '', '| %s | places to fix | missed | kind | person | label | marked |' % dim, '|---|---|---|---|---|---|---|']
+        out += ['', '### fixes by the place\'s %s' % dim, '', '| %s | places to fix | missed | kind | person | label (info) | marked |' % dim, '|---|---|---|---|---|---|---|']
         for v, c in sorted(agg[dim].items(), key=lambda kv: -kv[1]['places']):
             out.append('| %s | %d | %d | %d | %d | %d | %d |' % (v, c['places'], c['missed'], c['kindDiff'], c['ownerDiff'], c['labelDiff'], c['markedWrong']))
     for dim in ('kind', 'owner', 'made'):
@@ -523,8 +549,40 @@ def caller_of(a):
         return 'pid %d' % os.getppid()
 
 
+# ---------------------------------------------------------------- D-24 self-test (no documents)
+def selftest_labels():
+    place = {'id': 'p1', 'page': 1, 'kind': 'blank', 'what': 'name', 'owner': 'investor', 'printed_label': 'Name of Subscriber', 'must': True,
+             'x0': 100.0, 'y0': 200.0, 'x1': 300.0, 'y1': 214.0}
+    truth = {'places': [place]}
+    field = {'id': 'f1', 'page': 1, 'kind': 'text', 'label': 'Something else entirely', 'owner': 'investor', 'required': True,
+             'x0': 101.0, 'top': 201.0, 'x1': 299.0, 'bottom': 213.0}
+    checks = []
+    a = score_doc([field], truth)
+    checks.append(('label only differs: exact-ready 1', a['exactReady'] is True and a['fixes'] == 0))
+    checks.append(('label only differs: right first time 1', len(a['rightFirst']) == 1))
+    checks.append(('label only differs: label (info) counted 1', len(a['labelDiff']) == 1))
+    b = score_doc([dict(field, owner='firm')], truth)
+    checks.append(('owner differs too: exact-ready 0', b['exactReady'] is False and b['fixes'] == 1))
+    checks.append(('owner differs too: right first time 0', len(b['rightFirst']) == 0))
+    c = score_doc([dict(field, kind='checkbox')], truth)
+    checks.append(('kind differs: exact-ready 0', c['exactReady'] is False))
+    d = score_doc([dict(field, review=True)], truth)
+    checks.append(('marked: exact-ready 0', d['exactReady'] is False))
+    checks.append(('gate does not compare labels', all(k != 'labelRightPct' for k, _ in GATE)))
+    best = {'scored': 1, 'places': 1, 'found': 1, 'missed': 0, 'strays': 0, 'fixes': 0, 'exactReady': 1, 'rightFirstTime': 1, 'kindDiff': 0,
+            'ownerDiff': 0, 'labelDiff': 0, 'labelledFound': 1, 'marked': 0, 'fields': 1, 'requiredDiff': 0}
+    checks.append(('a label-only change is no gate failure', gate_compare(best, dict(best, labelDiff=1)) == []))
+    for name, ok in checks:
+        print('%s %s' % ('PASS' if ok else 'FAIL', name))
+    good = all(ok for _, ok in checks)
+    print('SELFTEST LABELS: %s' % ('PASS' if good else 'FAIL'))
+    return 0 if good else 1
+
+
 # ---------------------------------------------------------------- main
 def main():
+    if '--selftest-labels' in sys.argv[1:]:
+        sys.exit(selftest_labels())
     ap = argparse.ArgumentParser()
     ap.add_argument('--set', default='A', help='A, B, gold, train or dev:<k>')
     ap.add_argument('--runs', default='out-set-a,out-set-b,out-cal-final', help='run folders (relative to this folder or absolute), first match wins')
@@ -537,6 +595,7 @@ def main():
     ap.add_argument('--ratchet', action='store_true')
     ap.add_argument('--audit', action='store_true', help='held-out A or B: print every document (the audit plan only; logged)')
     ap.add_argument('--caller', default='')
+    ap.add_argument('--selftest-labels', action='store_true', help='D-24 self-test on a made-up place (no documents)')
     ap.add_argument('--no-split', action='store_true', help='score without the page-break convention (to compare with the research baseline)')
     a = ap.parse_args()
 
@@ -583,9 +642,9 @@ def main():
     allheld = heldA | heldB
     show_rows = not builder
     if show_rows:
-        print('| doc | ' + ' | '.join(COLS) + ' | exact-ready |')
+        print('| doc | ' + head(COLS) + ' | exact-ready |')
     else:
-        print('| set | ' + ' | '.join(COLS) + ' | exact-ready |')
+        print('| set | ' + head(COLS) + ' | exact-ready |')
     print('|' + '---|' * (len(COLS) + 2))
     docs, notrun = [], []
     for i in ids:

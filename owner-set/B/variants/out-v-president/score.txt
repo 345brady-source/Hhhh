@@ -1,0 +1,15 @@
+DOCUMENT B  root /home/user/Hhhh  editor opened  reading took 0.5 s
+read summary, exactly as the editor shows it:
+   1 page read. 0 tick boxes, 0 blanks and 2 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on page 1. Your firm’s signature line was found on page 1. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.
+what stops saving (agreementTodo): Confirm or move the field marked for review.
+read: investor signature pages [1] (sheet []), firm signature pages [1] (sheet [1]), left [], firmLeft 0
+ page   places   fields    found   missed   strays   kind!=  owner!=   mark!=  overlap
+    1        2        2        2        0        0        0        1        1        0
+  all        2        2        2        0        0        0        1        1        0
+pages with neither a place nor a field: none
+FOUND p1-01: signature for "Kestrel Bay (countersigns)" (firm) required true marked false box [303.8, 447.8, 541, 490.8] label "Signature" edges {"left":0,"right":1,"bottom":1.8,"top":null,"height":43}
+FOUND p1-02: signature for "Investor (each subscriber)" (investor) required true marked true box [303.8, 600.8, 541, 643.9] label "Signature" edges {"left":0,"right":1,"bottom":1.9,"top":null,"height":43}
+OWNER p1-02: sheet firm, portal investor ("Investor (each subscriber)")
+MARK p1-02 page 1: portal marked true, sheet says do not mark
+who signs: DIFFERS from the sheet
+FAIL

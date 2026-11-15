@@ -1,0 +1,328 @@
+{
+ "root": "/home/user/Hhhh",
+ "pass": false,
+ "whoOk": true,
+ "ms": 484,
+ "note": "1 page read. 0 tick boxes, 3 blanks and 2 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on page 1. Your firm’s signature line was found on page 1. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.",
+ "status": "Confirm or move the 3 fields marked for review.",
+ "said": [
+  "Confirm or move the 3 fields marked for review.",
+  "3 fields need your review before investors can sign.",
+  "1 page read. 0 tick boxes, 3 blanks and 2 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on page 1. Your firm’s signature line was found on page 1. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here."
+ ],
+ "saveSays": [
+  {
+   "text": "Save subscription agreement",
+   "disabled": false,
+   "title": "",
+   "action": "es-agreement-save"
+  }
+ ],
+ "reviewList": [
+  "SignaturePage 1 · Could not tell whether the investor or your firm fills this in.",
+  "NamePage 1 · Could not tell whether the investor or your firm fills this in.",
+  "TitlePage 1 · Could not tell whether the investor or your firm fills this in."
+ ],
+ "inside": {
+  "read": {
+   "ok": true,
+   "error": "",
+   "pages": 1,
+   "scanned": [],
+   "failed": [],
+   "places": 5,
+   "left": [],
+   "boxes": 0,
+   "blanks": 3,
+   "signatures": 2,
+   "investorPages": [
+    1
+   ],
+   "firmPages": [
+    1
+   ],
+   "firmLeft": 0,
+   "firmLeftPages": [],
+   "pictured": [],
+   "unread": {},
+   "asked": false
+  },
+  "readNote": "1 page read. 0 tick boxes, 3 blanks and 2 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on page 1. Your firm’s signature line was found on page 1.",
+  "todo": "Confirm or move the 3 fields marked for review.",
+  "signers": [
+   {
+    "role": "investor",
+    "name": "Investor (each subscriber)",
+    "co": false
+   },
+   {
+    "role": "investor",
+    "name": "Co-investor (if any)",
+    "co": true
+   },
+   {
+    "role": "countersigner",
+    "name": "Kestrel Bay (countersigns)",
+    "co": false
+   }
+  ],
+  "fields": [
+   {
+    "page": 1,
+    "type": "signature",
+    "kind": "signature",
+    "label": "",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "firm"
+   },
+   {
+    "page": 1,
+    "type": "text",
+    "kind": "text",
+    "label": "Investor name",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "investorName",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 1,
+    "type": "signature",
+    "kind": "signature",
+    "label": "",
+    "required": true,
+    "review": true,
+    "reviewReason": "Could not tell whether the investor or your firm fills this in.",
+    "confidence": "medium",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 1,
+    "type": "name",
+    "kind": "text",
+    "label": "",
+    "required": true,
+    "review": true,
+    "reviewReason": "Could not tell whether the investor or your firm fills this in.",
+    "confidence": "medium",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 1,
+    "type": "text",
+    "kind": "text",
+    "label": "Title",
+    "required": false,
+    "review": true,
+    "reviewReason": "Could not tell whether the investor or your firm fills this in.",
+    "confidence": "medium",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   }
+  ]
+ },
+ "total": {
+  "places": 5,
+  "fields": 5,
+  "found": 5,
+  "missed": [],
+  "strays": [],
+  "kindDiff": [],
+  "ownerDiff": [],
+  "marked": [
+   {
+    "id": "p1-03",
+    "page": 1,
+    "portalMarked": true,
+    "sheetSays": "do not mark"
+   },
+   {
+    "id": "p1-04",
+    "page": 1,
+    "portalMarked": true,
+    "sheetSays": "do not mark"
+   },
+   {
+    "id": "p1-05",
+    "page": 1,
+    "portalMarked": true,
+    "sheetSays": "do not mark"
+   }
+  ],
+  "overlaps": [],
+  "pairs": [
+   {
+    "place": "p1-01",
+    "page": 1,
+    "kind": "signature",
+    "owner": "firm",
+    "signer": "Kestrel Bay (countersigns)",
+    "required": true,
+    "review": false,
+    "label": "Signature",
+    "box": [
+     303.8,
+     447.8,
+     541,
+     490.8
+    ],
+    "edges": {
+     "left": 0,
+     "right": 1,
+     "bottom": 1.8,
+     "top": null,
+     "height": 43
+    }
+   },
+   {
+    "place": "p1-02",
+    "page": 1,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Investor name",
+    "box": [
+     287,
+     583.3,
+     541,
+     598.8
+    ],
+    "edges": {
+     "left": -1,
+     "right": 1,
+     "bottom": 1.8,
+     "top": null,
+     "height": 15.5
+    }
+   },
+   {
+    "place": "p1-03",
+    "page": 1,
+    "kind": "signature",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": true,
+    "label": "Signature",
+    "box": [
+     303.8,
+     610.1,
+     541,
+     643.9
+    ],
+    "edges": {
+     "left": 0,
+     "right": 1,
+     "bottom": 1.9,
+     "top": null,
+     "height": 33.8
+    }
+   },
+   {
+    "place": "p1-04",
+    "page": 1,
+    "kind": "name",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": true,
+    "label": "Name",
+    "box": [
+     318.3,
+     652.4,
+     541,
+     667.8
+    ],
+    "edges": {
+     "left": -1,
+     "right": 1,
+     "bottom": 1.8,
+     "top": null,
+     "height": 15.5
+    }
+   },
+   {
+    "place": "p1-05",
+    "page": 1,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": true,
+    "label": "Title",
+    "box": [
+     312.8,
+     676.3,
+     541,
+     691.8
+    ],
+    "edges": {
+     "left": -1,
+     "right": 1,
+     "bottom": 1.8,
+     "top": null,
+     "height": 15.5
+    }
+   }
+  ]
+ },
+ "per": {
+  "1": {
+   "page": 1,
+   "places": 5,
+   "fields": 5,
+   "found": 5,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [
+    {
+     "id": "p1-03",
+     "page": 1,
+     "portalMarked": true,
+     "sheetSays": "do not mark"
+    },
+    {
+     "id": "p1-04",
+     "page": 1,
+     "portalMarked": true,
+     "sheetSays": "do not mark"
+    },
+    {
+     "id": "p1-05",
+     "page": 1,
+     "portalMarked": true,
+     "sheetSays": "do not mark"
+    }
+   ],
+   "overlaps": []
+  }
+ },
+ "errors": []
+}

@@ -1,0 +1,18 @@
+DOCUMENT B  root /home/user/Hhhh  editor opened  reading took 1.6 s
+read summary, exactly as the editor shows it:
+   32 pages read. 0 tick boxes, 0 blanks and 2 signature lines got a field, each on a place the agreement prints. No signature line for the investor was found: add a signature field for the investor where they sign before saving. Your firm’s signature line was found on page 31. Check the fields, move or resize as needed, and add any others. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.
+what stops saving (agreementTodo): No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.
+read: investor signature pages [] (sheet []), firm signature pages [31] (sheet [31]), left [], firmLeft 0
+ page   places   fields    found   missed   strays   kind!=  owner!=   mark!=  overlap
+   31        2        2        2        0        0        0        0        0        0
+  all        2        2        2        0        0        0        0        0        0
+pages with neither a place nor a field: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 32
+FOUND p31-01: signature for "Kestrel Bay (countersigns)" (firm) required true marked false box [303.8, 466.8, 541, 509.3] label "Signature" edges {"left":0,"right":1,"bottom":1.8,"top":null,"height":42.5}
+FOUND p31-02: signature for "Kestrel Bay (countersigns)" (firm) required true marked false box [303.8, 618.4, 541, 660.8] label "Signature" edges {"left":0,"right":1,"bottom":1.8,"top":null,"height":42.4}
+PASS  places: every place found, no stray, no overlap, kinds and owners right, marks only where the sheet allows
+PASS  who signs, as read: investor pages and firm pages as on the sheet
+FAIL  told plainly: the screen does not tell the sponsor to add a signature field for the investor
+FAIL  told plainly: the screen says plainly that no investor signs this document (it is signed only by the firm)
+FAIL  told plainly: the editor offers a way forward for a document only the firm signs (a button for the firm to sign it, or nothing stops saving)
+PASS  told plainly: the summary names the firm's signature page (31)
+RESULT: FAIL

@@ -1,0 +1,9 @@
+
+PROOF RUN  root /tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/owner-set/C/try  steps 1  7 s  (step 1-3: 7 s)
+--------------------------------------------------------------------------------------
+PASS  [1]  example: 47 fields placed (found 47, 0 marked for review, upload 936 ms)
+PASS  [1]  example: fields by page, kind and signer are the expected ones
+PASS  [1]  example: every field judged clean by the independent judge (47 of 47)
+PASS  [1]  example: every field read from the editor has a kind, a signer and a box
+--------------------------------------------------------------------------------------
+4 passed, 0 failed

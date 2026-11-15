@@ -1,0 +1,653 @@
+{
+ "summary": {
+  "fields": 64,
+  "anchored": 64,
+  "notAnchored": [],
+  "coversInk": [],
+  "bracketed": [],
+  "overlapping": [],
+  "clean": 64
+ },
+ "per": [
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 0,
+   "page": 1,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 1,
+   "page": 1,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 2,
+   "page": 1,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 3,
+   "page": 2,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 4,
+   "page": 5,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 5,
+   "page": 5,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 6,
+   "page": 5,
+   "type": "date"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 7,
+   "page": 5,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 8,
+   "page": 5,
+   "type": "signature"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 9,
+   "page": 5,
+   "type": "name"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 10,
+   "page": 5,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 11,
+   "page": 5,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 12,
+   "page": 5,
+   "type": "signature"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 13,
+   "page": 5,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 14,
+   "page": 5,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 15,
+   "page": 5,
+   "type": "signature"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 16,
+   "page": 5,
+   "type": "name"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 17,
+   "page": 5,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 18,
+   "page": 8,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 19,
+   "page": 8,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 20,
+   "page": 8,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 21,
+   "page": 8,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 22,
+   "page": 8,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 23,
+   "page": 8,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 24,
+   "page": 8,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 25,
+   "page": 8,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 26,
+   "page": 8,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 27,
+   "page": 8,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 28,
+   "page": 8,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 29,
+   "page": 9,
+   "type": "signature"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 30,
+   "page": 9,
+   "type": "name"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 31,
+   "page": 9,
+   "type": "signature"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 32,
+   "page": 9,
+   "type": "name"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 33,
+   "page": 9,
+   "type": "date"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 34,
+   "page": 9,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 35,
+   "page": 10,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 36,
+   "page": 10,
+   "type": "date"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 37,
+   "page": 10,
+   "type": "name"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 38,
+   "page": 10,
+   "type": "signature"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 39,
+   "page": 12,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 40,
+   "page": 13,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 41,
+   "page": 13,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 42,
+   "page": 13,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 43,
+   "page": 13,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 44,
+   "page": 13,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 45,
+   "page": 13,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 46,
+   "page": 13,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 47,
+   "page": 13,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 48,
+   "page": 13,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 49,
+   "page": 13,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 50,
+   "page": 15,
+   "type": "date"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 51,
+   "page": 15,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 52,
+   "page": 15,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 53,
+   "page": 15,
+   "type": "signature"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 54,
+   "page": 15,
+   "type": "signature"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 55,
+   "page": 15,
+   "type": "name"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 56,
+   "page": 15,
+   "type": "name"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 57,
+   "page": 15,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 58,
+   "page": 18,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 59,
+   "page": 18,
+   "type": "text"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 60,
+   "page": 18,
+   "type": "date"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 61,
+   "page": 18,
+   "type": "name"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 62,
+   "page": 18,
+   "type": "signature"
+  },
+  {
+   "anchored": true,
+   "how": "printed line",
+   "covers": 0,
+   "bracketed": false,
+   "overlaps": [],
+   "i": 63,
+   "page": 18,
+   "type": "text"
+  }
+ ]
+}

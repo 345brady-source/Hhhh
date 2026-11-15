@@ -108,9 +108,13 @@ function ownerOf(f) {
   if (f.forType === 'entity') return 'investor-entity';
   return 'investor';
 }
+// D-30 (the owner, Phase 01.4 plan 63): person is judged on two classes: "firm" is the sponsor, every other owner (of a
+// sheet place or a portal field) the investor; required is judged on the sponsor's places only (no investor field is ever
+// mandatory). A place the sheet calls unclear must still be marked, as before.
+const person = (o) => (o === 'firm' ? 'sponsor' : 'investor');
 const ownerOk = (place, got) => {
-  if (place.owner === got) return true;
-  if ((place.owner_also_ok || []).includes(got)) return true;
+  if (person(place.owner) === person(got)) return true;
+  if ((place.owner_also_ok || []).some((o) => person(o) === person(got))) return true;
   return false;
 };
 // the fine kind the answer sheet asks for, against what the portal says the field is (its own kind word, or its label)
@@ -157,7 +161,7 @@ function score(fields, places) {
       // portal's signing-date field, which the portal fills automatically with the date the signer signs and never
       // leaves empty. A date the sheet calls optional and the portal shows as required still counts as a difference.
       const autoDated = p.kind === 'date' && f.kind === 'date' && p.must;
-      if (!autoDated && !!f.required !== !!p.must) r.requiredDiff.push({ id: p.id, sheet: p.must ? 'must' : 'optional', portal: f.required ? 'required' : 'optional', label: f.label });
+      if (!autoDated && person(p.owner) === 'sponsor' && !!f.required !== !!p.must) r.requiredDiff.push({ id: p.id, sheet: p.must ? 'must' : 'optional', portal: f.required ? 'required' : 'optional', label: f.label });
       // D-06: the field's label is the caption's own words (only places the sheet records with a caption are compared)
       if (p.printed_label && !LIB.labelOk(p, f)) r.labelDiff.push({ id: p.id, printed: p.printed_label, portal: f.label, fine: f.fine || f.kind });
       // filled in from onboarding: only on the investor's own places, and only on those the sheet lists in may_fill
@@ -228,9 +232,10 @@ function toldOf(note, sc) {
   const inv = S.filter((s) => /investor[’']s signature line was found/i.test(s));
   told.push([`the investor's signature line is named on page ${invPages.join(', ')} and not on page ${acceptPages.join(', ')}`, inv.length > 0 && inv.every((s) => invPages.every((n) => LIB.namesPage(s, n)) && !acceptPages.some((n) => !invPages.includes(n) && LIB.namesPage(s, n)))]);
   const coPages = (sg.second_investor && sg.second_investor.pages) || [];
-  if (coPages.length) told.push([`a sentence for a co-investor names pages ${coPages.join(' and ')}`, S.some((s) => /for a co-investor/i.test(s) && coPages.every((n) => LIB.namesPage(s, n)))]);
+  // D-30: the reader reads no place as a co-investor's or somebody else's: the summary has no sentence for them.
+  if (coPages.length) told.push([`no sentence for a co-investor (D-30: their places are the investor's)`, !S.some((s) => /for a co-investor/i.test(s))]);
   const otherPages = Array.from(new Set(TRUTH.places.filter((p) => p.owner === 'third-party').map((p) => p.page))).sort((a, b) => a - b);
-  if (otherPages.length) told.push([`the sentence for other people's places names pages ${otherPages.join(', ')}`, S.some((s) => /for someone else to complete/i.test(s) && otherPages.every((n) => LIB.namesPage(s, n)))]);
+  if (otherPages.length) told.push([`no sentence for other people's places (D-30: they are the investor's)`, !S.some((s) => /for someone else to complete/i.test(s))]);
   const unclearPages = Array.from(new Set(TRUTH.places.filter((p) => p.owner === 'unclear').map((p) => p.page)));
   if (unclearPages.length) told.push([`a sentence says a block carries words of acceptance but names another party, on page ${unclearPages.join(', ')}`, S.some((s) => /carries words of acceptance but names another party/i.test(s) && unclearPages.every((n) => LIB.namesPage(s, n)))]);
   const every = sc.all.found === sc.all.places;

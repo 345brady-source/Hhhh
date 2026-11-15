@@ -1,0 +1,6143 @@
+{
+ "per": {
+  "1": {
+   "page": 1,
+   "places": 4,
+   "fields": 4,
+   "found": 4,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "whatDiff": [],
+   "ownerDiff": [],
+   "markedOk": [],
+   "markedWrong": [
+    {
+     "id": "p01-amount",
+     "label": "Amount",
+     "why": "The words before this blank may not be its label: check what goes here."
+    }
+   ],
+   "unmarkedWrong": [],
+   "requiredDiff": [],
+   "overlaps": [],
+   "edges": [
+    1.0610674676525491,
+    3.9703571428571536,
+    0.9838955637708295,
+    1.516071428571422,
+    0.010790203327168513,
+    5.788928571428642,
+    0.9852818853973986,
+    0.9803571428572013,
+    1.8079020332717164,
+    1.1316071428572059,
+    1.7495147874306767,
+    1.6142857142856428,
+    1.8539510166358468,
+    1.1316071428572059,
+    1.9034658040665562,
+    1.6142857142856428
+   ],
+   "worst": [
+    {
+     "d": 3.9703571428571536,
+     "id": "p01-investor-name"
+    },
+    {
+     "d": 5.788928571428642,
+     "id": "p01-amount"
+    },
+    {
+     "d": 1.8079020332717164,
+     "id": "p01-class-a"
+    },
+    {
+     "d": 1.9034658040665562,
+     "id": "p01-class-b"
+    }
+   ],
+   "state": {
+    "p01-investor-name": "found",
+    "p01-amount": "found",
+    "p01-class-a": "found",
+    "p01-class-b": "found"
+   },
+   "edgeMedian": 1.5651785714285325,
+   "edgeMax": 5.788928571428642
+  },
+  "2": {
+   "page": 2,
+   "places": 41,
+   "fields": 40,
+   "found": 40,
+   "missed": [
+    {
+     "id": "p02-title-other",
+     "kind": "blank",
+     "what": "text",
+     "owner": "investor",
+     "printed_as": "underscore run of 29",
+     "box": [
+      480.5,
+      219.6,
+      582,
+      226.6
+     ]
+    }
+   ],
+   "strays": [],
+   "kindDiff": [
+    {
+     "id": "p02-joint-dob",
+     "sheet": "blank",
+     "portal": "date",
+     "label": "Co-investor date"
+    },
+    {
+     "id": "p02-joint-ssn",
+     "sheet": "blank",
+     "portal": "signature",
+     "label": "Co-investor signature"
+    }
+   ],
+   "whatDiff": [],
+   "ownerDiff": [
+    {
+     "id": "p02-entity-name",
+     "sheet": "investor",
+     "portal": "co-investor",
+     "signer": "Co-investor (if any)",
+     "label": "Co-investor name"
+    },
+    {
+     "id": "p02-city",
+     "sheet": "investor",
+     "portal": "co-investor",
+     "signer": "Co-investor (if any)",
+     "label": "Co-investor city"
+    },
+    {
+     "id": "p02-home-phone",
+     "sheet": "investor",
+     "portal": "co-investor",
+     "signer": "Co-investor (if any)",
+     "label": "Co-investor phone"
+    },
+    {
+     "id": "p02-alt-address",
+     "sheet": "investor",
+     "portal": "co-investor",
+     "signer": "Co-investor (if any)",
+     "label": "Co-investor section alternate mailing address or p o box"
+    },
+    {
+     "id": "p02-alt-city",
+     "sheet": "investor",
+     "portal": "co-investor",
+     "signer": "Co-investor (if any)",
+     "label": "Co-investor city"
+    },
+    {
+     "id": "p02-email",
+     "sheet": "investor",
+     "portal": "co-investor",
+     "signer": "Co-investor (if any)",
+     "label": "Co-investor email"
+    },
+    {
+     "id": "p02-citizen-2",
+     "sheet": "investor",
+     "portal": "co-investor",
+     "signer": "Co-investor (if any)",
+     "label": "Co-investor resident alien"
+    },
+    {
+     "id": "p02-citizen-3",
+     "sheet": "investor",
+     "portal": "co-investor",
+     "signer": "Co-investor (if any)",
+     "label": "Co-investor non resident alien country origin"
+    },
+    {
+     "id": "p02-country",
+     "sheet": "investor",
+     "portal": "co-investor",
+     "signer": "Co-investor (if any)",
+     "label": "Co-investor country origin"
+    },
+    {
+     "id": "p02-edelivery-initials",
+     "sheet": "investor",
+     "portal": "co-investor",
+     "signer": "Co-investor (if any)",
+     "label": "Co-investor field"
+    }
+   ],
+   "markedOk": [],
+   "markedWrong": [
+    {
+     "id": "p02-cat-3-relative",
+     "label": "and name of relative",
+     "why": "A blank inside a sentence: check what goes here and who fills it in."
+    },
+    {
+     "id": "p02-cat-4-relative",
+     "label": "and name of relative",
+     "why": "A blank inside a sentence: check what goes here and who fills it in."
+    }
+   ],
+   "unmarkedWrong": [],
+   "requiredDiff": [
+    {
+     "id": "p02-cat-3-relative",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "and name of relative"
+    },
+    {
+     "id": "p02-cat-4-relative",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "and name of relative"
+    },
+    {
+     "id": "p02-joint-name",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Co-investor name"
+    },
+    {
+     "id": "p02-entity-name",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Co-investor name"
+    },
+    {
+     "id": "p02-city",
+     "sheet": "must",
+     "portal": "optional",
+     "label": "Co-investor city"
+    },
+    {
+     "id": "p02-state",
+     "sheet": "must",
+     "portal": "optional",
+     "label": "State"
+    },
+    {
+     "id": "p02-zip",
+     "sheet": "must",
+     "portal": "optional",
+     "label": "ZIP code"
+    },
+    {
+     "id": "p02-home-phone",
+     "sheet": "must",
+     "portal": "optional",
+     "label": "Co-investor phone"
+    },
+    {
+     "id": "p02-dob",
+     "sheet": "must",
+     "portal": "optional",
+     "label": "INVESTOR DATE OF BIRTH ENTITY DATE)"
+    },
+    {
+     "id": "p02-joint-ssn",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Co-investor signature"
+    },
+    {
+     "id": "p02-edelivery-initials",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Co-investor field"
+    }
+   ],
+   "overlaps": [],
+   "edges": [
+    1.8079020332717164,
+    1.2751785714285688,
+    1.7495147874306767,
+    1.4707142857142799,
+    1.7975046210720933,
+    1.2751785714285688,
+    1.7599121996303069,
+    1.4707142857142799,
+    1.804782809611794,
+    1.2751785714285688,
+    1.7526340110906062,
+    1.4707142857142799,
+    1.8079020332717164,
+    1.1171428571428663,
+    1.7495147874306767,
+    1.6287499999999966,
+    1.8079020332717164,
+    1.2117857142857247,
+    1.7495147874306767,
+    1.534107142857124,
+    1.8079020332717164,
+    1.3241071428571445,
+    1.7495147874306767,
+    1.5217857142856985,
+    1.8079020332717164,
+    1.1194642857142867,
+    1.7495147874306767,
+    1.626428571428562,
+    1.0118761552679985,
+    1.9855357142857315,
+    0.9854667282809828,
+    0.9651785714285666,
+    0.9639556377079543,
+    5.797142857142859,
+    1.033387245841027,
+    0.9721428571428419,
+    1.7079020332717505,
+    1.2524999999999977,
+    1.6480591497227692,
+    1.4978571428571286,
+    1.7027033271718892,
+    1.2524999999999977,
+    1.6532578558226305,
+    1.4978571428571286,
+    1.7079020332717505,
+    1.2524999999999977,
+    1.6480591497227692,
+    1.4978571428571286,
+    1.713100739371555,
+    1.2524999999999977,
+    1.6428604436229648,
+    1.4978571428571286,
+    2.1882624768946357,
+    2.2148214285714687,
+    2.22067929759703,
+    0.034285714285715585,
+    2.1882624768946357,
+    1.977499999999992,
+    2.22067929759703,
+    0.030178571428621126,
+    2.1882624768946357,
+    1.981607142857115,
+    2.22067929759703,
+    0.07392857142860976,
+    2.1882624768946357,
+    1.9960714285714403,
+    2.22067929759703,
+    0.09767857142855974,
+    2.482694085027731,
+    2.0476785714285484,
+    2.532717190388155,
+    0.04660714285711265,
+    2.483803142329066,
+    2.0476785714285484,
+    2.5231746765249454,
+    0.04660714285711265,
+    2.4933456561922185,
+    2.0476785714285484,
+    2.521164510166386,
+    0.04660714285711265,
+    2.482694085027731,
+    2.0441071428571718,
+    2.532902033271739,
+    0.04303571428573605,
+    2.486760628465788,
+    2.0441071428571718,
+    2.5231746765249454,
+    0.04303571428573605,
+    2.4933456561922185,
+    2.0441071428571718,
+    2.521164510166386,
+    0.04303571428573605,
+    2.1882624768946357,
+    2.01267857142858,
+    2.22067929759703,
+    0.10214285714289417,
+    2.482694085027731,
+    2.0637500000000273,
+    2.532717190388155,
+    0.05107142857139024,
+    2.483803142329066,
+    2.0637500000000273,
+    2.5231746765249454,
+    0.05107142857139024,
+    2.4933456561922185,
+    2.0637500000000273,
+    2.521164510166386,
+    0.05107142857139024,
+    2.4877772643253238,
+    2.0739285714286098,
+    2.512777264325308,
+    0.05910714285710128,
+    2.4860674676525036,
+    2.0739285714286098,
+    2.514856746765247,
+    0.05910714285710128,
+    2.4839879852125364,
+    2.0739285714286098,
+    2.521164510166386,
+    0.05910714285710128,
+    2.4877772643253238,
+    2.0755357142857065,
+    2.525254158964856,
+    0.06071428571419801,
+    2.4852125693161042,
+    2.0755357142857065,
+    2.5273336414047662,
+    0.06071428571419801,
+    2.483133086876137,
+    2.0755357142857065,
+    2.521164510166386,
+    0.06071428571419801,
+    1.8079020332717164,
+    1.1899999999999409,
+    1.9509704251386353,
+    1.669107142857115,
+    1.8131007393715208,
+    1.1475000000000364,
+    1.7443160813308793,
+    1.5983928571428123,
+    1.8182994454713253,
+    1.1475000000000364,
+    1.7391173752310465,
+    1.5983928571428123,
+    1.0160813308687011,
+    5.7919642857142435,
+    0.9812615526801665,
+    0.9773214285714857,
+    1.8047828096118224,
+    1.1332142857143026,
+    1.7526340110906062,
+    1.612678571428546,
+    1.8068622920517328,
+    1.1332142857143026,
+    1.7505545286505821,
+    1.612678571428546,
+    1.9867837338262504,
+    6.143571428571363,
+    2.020378927911281,
+    0.14410714285713766
+   ],
+   "worst": [
+    {
+     "d": 1.8079020332717164,
+     "id": "p02-pay-1"
+    },
+    {
+     "d": 1.7975046210720933,
+     "id": "p02-pay-2"
+    },
+    {
+     "d": 1.804782809611794,
+     "id": "p02-pay-3"
+    },
+    {
+     "d": 1.8079020332717164,
+     "id": "p02-cat-1"
+    },
+    {
+     "d": 1.8079020332717164,
+     "id": "p02-cat-2"
+    },
+    {
+     "d": 1.8079020332717164,
+     "id": "p02-cat-3"
+    },
+    {
+     "d": 1.8079020332717164,
+     "id": "p02-cat-4"
+    },
+    {
+     "d": 1.9855357142857315,
+     "id": "p02-cat-3-relative"
+    },
+    {
+     "d": 5.797142857142859,
+     "id": "p02-cat-4-relative"
+    },
+    {
+     "d": 1.7079020332717505,
+     "id": "p02-title-1"
+    },
+    {
+     "d": 1.7027033271718892,
+     "id": "p02-title-2"
+    },
+    {
+     "d": 1.7079020332717505,
+     "id": "p02-title-3"
+    },
+    {
+     "d": 1.713100739371555,
+     "id": "p02-title-4"
+    },
+    {
+     "d": 2.22067929759703,
+     "id": "p02-name"
+    },
+    {
+     "d": 2.22067929759703,
+     "id": "p02-joint-name"
+    },
+    {
+     "d": 2.22067929759703,
+     "id": "p02-entity-name"
+    },
+    {
+     "d": 2.22067929759703,
+     "id": "p02-street"
+    },
+    {
+     "d": 2.532717190388155,
+     "id": "p02-city"
+    },
+    {
+     "d": 2.5231746765249454,
+     "id": "p02-state"
+    },
+    {
+     "d": 2.521164510166386,
+     "id": "p02-zip"
+    },
+    {
+     "d": 2.532902033271739,
+     "id": "p02-home-phone"
+    },
+    {
+     "d": 2.5231746765249454,
+     "id": "p02-business-phone"
+    },
+    {
+     "d": 2.521164510166386,
+     "id": "p02-phone-ext"
+    },
+    {
+     "d": 2.22067929759703,
+     "id": "p02-alt-address"
+    },
+    {
+     "d": 2.532717190388155,
+     "id": "p02-alt-city"
+    },
+    {
+     "d": 2.5231746765249454,
+     "id": "p02-alt-state"
+    },
+    {
+     "d": 2.521164510166386,
+     "id": "p02-alt-zip"
+    },
+    {
+     "d": 2.512777264325308,
+     "id": "p02-dob"
+    },
+    {
+     "d": 2.514856746765247,
+     "id": "p02-joint-dob"
+    },
+    {
+     "d": 2.521164510166386,
+     "id": "p02-entity-tax-id"
+    },
+    {
+     "d": 2.525254158964856,
+     "id": "p02-ssn"
+    },
+    {
+     "d": 2.5273336414047662,
+     "id": "p02-joint-ssn"
+    },
+    {
+     "d": 2.521164510166386,
+     "id": "p02-email"
+    },
+    {
+     "d": 1.9509704251386353,
+     "id": "p02-citizen-1"
+    },
+    {
+     "d": 1.8131007393715208,
+     "id": "p02-citizen-2"
+    },
+    {
+     "d": 1.8182994454713253,
+     "id": "p02-citizen-3"
+    },
+    {
+     "d": 5.7919642857142435,
+     "id": "p02-country"
+    },
+    {
+     "d": 1.8047828096118224,
+     "id": "p02-erisa-yes"
+    },
+    {
+     "d": 1.8068622920517328,
+     "id": "p02-erisa-no"
+    },
+    {
+     "d": 6.143571428571363,
+     "id": "p02-edelivery-initials"
+    }
+   ],
+   "state": {
+    "p02-pay-1": "found",
+    "p02-pay-2": "found",
+    "p02-pay-3": "found",
+    "p02-cat-1": "found",
+    "p02-cat-2": "found",
+    "p02-cat-3": "found",
+    "p02-cat-4": "found",
+    "p02-cat-3-relative": "found",
+    "p02-cat-4-relative": "found",
+    "p02-title-1": "found",
+    "p02-title-2": "found",
+    "p02-title-3": "found",
+    "p02-title-4": "found",
+    "p02-title-other": "missed",
+    "p02-name": "found",
+    "p02-joint-name": "found",
+    "p02-entity-name": "diff",
+    "p02-street": "found",
+    "p02-city": "diff",
+    "p02-state": "found",
+    "p02-zip": "found",
+    "p02-home-phone": "diff",
+    "p02-business-phone": "found",
+    "p02-phone-ext": "found",
+    "p02-alt-address": "diff",
+    "p02-alt-city": "diff",
+    "p02-alt-state": "found",
+    "p02-alt-zip": "found",
+    "p02-dob": "found",
+    "p02-joint-dob": "diff",
+    "p02-entity-tax-id": "found",
+    "p02-ssn": "found",
+    "p02-joint-ssn": "diff",
+    "p02-email": "diff",
+    "p02-citizen-1": "found",
+    "p02-citizen-2": "diff",
+    "p02-citizen-3": "diff",
+    "p02-country": "diff",
+    "p02-erisa-yes": "found",
+    "p02-erisa-no": "found",
+    "p02-edelivery-initials": "diff"
+   },
+   "edgeMedian": 1.7562731053604566,
+   "edgeMax": 6.143571428571363
+  },
+  "3": {
+   "page": 3,
+   "places": 36,
+   "fields": 36,
+   "found": 36,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "whatDiff": [
+    {
+     "id": "p03-trust-date",
+     "sheet": "date",
+     "portal": "text/text",
+     "label": "Trustee or Grantor"
+    },
+    {
+     "id": "p03-custodian-tax-id",
+     "sheet": "tax number",
+     "portal": "text/text",
+     "label": "TO BE COMPLETED BY CUSTODIAN OR OTHER ADMINISTRATOR CUSTODIA"
+    }
+   ],
+   "ownerDiff": [
+    {
+     "id": "p03-custodian-account",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "CUSTODIAN ACCOUNT #"
+    },
+    {
+     "id": "p03-custodian-admin-name",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "NAME OF CUSTODIAN OR OTHER ADMINISTRATOR"
+    },
+    {
+     "id": "p03-custodian-date",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Date signed"
+    }
+   ],
+   "markedOk": [
+    {
+     "id": "p03-custodian-tax-id"
+    },
+    {
+     "id": "p03-custodian-medallion"
+    },
+    {
+     "id": "p03-custodian-signature"
+    }
+   ],
+   "markedWrong": [
+    {
+     "id": "p03-own-02",
+     "label": "Checkbox",
+     "why": "This box has no words beside it: check what it is for."
+    },
+    {
+     "id": "p03-own-07",
+     "label": "Checkbox",
+     "why": "This box has no words beside it: check what it is for."
+    },
+    {
+     "id": "p03-own-08",
+     "label": "Checkbox",
+     "why": "This box has no words beside it: check what it is for."
+    },
+    {
+     "id": "p03-own-10",
+     "label": "Checkbox",
+     "why": "This box has no words beside it: check what it is for."
+    },
+    {
+     "id": "p03-own-11",
+     "label": "Checkbox",
+     "why": "This box has no words beside it: check what it is for."
+    },
+    {
+     "id": "p03-trust-date",
+     "label": "Trustee or Grantor",
+     "why": "The words before this blank may not be its label: check what goes here."
+    }
+   ],
+   "unmarkedWrong": [],
+   "requiredDiff": [
+    {
+     "id": "p03-trust-date",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Trustee or Grantor"
+    },
+    {
+     "id": "p03-own-other",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Other"
+    },
+    {
+     "id": "p03-ira-type",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "IRA"
+    },
+    {
+     "id": "p03-cust-other",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Other"
+    },
+    {
+     "id": "p03-custodian-name",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "NAME OF CUSTODIAN OR TRUSTEE"
+    },
+    {
+     "id": "p03-inherited-name",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Inherited/Beneficiary IRA Deceased’s Name"
+    },
+    {
+     "id": "p03-cust-address",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Address"
+    }
+   ],
+   "overlaps": [],
+   "edges": [
+    2.185143253234749,
+    8.047142857142859,
+    2.320425138632231,
+    0.05142857142857338,
+    1.8079020332717164,
+    1.2199999999999989,
+    1.7480591497227422,
+    1.4303571428571473,
+    1.8079020332717164,
+    1.165357142857161,
+    1.7480591497227422,
+    1.4850000000000136,
+    1.8079020332717164,
+    1.1178571428571331,
+    1.7480591497227422,
+    1.5325000000000273,
+    1.8079020332717164,
+    1.063214285714281,
+    1.7480591497227422,
+    1.587142857142851,
+    1.6595194085027742,
+    1.2199999999999989,
+    1.6964417744916886,
+    1.4303571428571473,
+    1.7595194085027686,
+    1.2092857142857127,
+    1.6964417744916886,
+    1.4410714285714334,
+    1.7037892791127547,
+    1.2003571428571433,
+    1.6521719038816798,
+    1.4499999999999886,
+    1.7037892791127547,
+    1.2125000000000057,
+    1.6521719038816798,
+    1.4378571428571547,
+    1.712546210720916,
+    1.2199999999999989,
+    1.643414972273547,
+    1.4303571428571473,
+    1.7047597042513871,
+    1.2057142857142935,
+    1.6512014787430758,
+    1.4446428571428669,
+    1.7047597042513871,
+    1.2178571428571274,
+    1.6512014787430758,
+    1.4325000000000045,
+    1.7136090573012552,
+    1.2199999999999989,
+    1.7423521256932304,
+    1.4303571428571473,
+    1.7136090573012552,
+    1.1601785714285597,
+    1.7423521256932304,
+    1.5901785714285666,
+    1.7136090573012552,
+    1.1057142857142992,
+    1.7423521256932304,
+    1.5446428571428896,
+    1.0626386321626455,
+    3.982857142857142,
+    0.9702402957485674,
+    1.5035714285714334,
+    1.0113216266174163,
+    3.9871428571428282,
+    0.9727818853973531,
+    1.499285714285719,
+    1.8079020332717164,
+    1.1933928571428396,
+    1.7480591497227422,
+    1.456964285714264,
+    1.8162199630314149,
+    1.1933928571428396,
+    1.7397412199630082,
+    1.456964285714264,
+    1.8016635859519283,
+    1.1933928571428396,
+    1.7542975970425232,
+    1.456964285714264,
+    1.8162199630314149,
+    1.1933928571428396,
+    1.7397412199630367,
+    1.456964285714264,
+    1.0484981515711596,
+    0.12767857142856087,
+    0.9432994454713537,
+    0.9237500000000409,
+    1.0432301293900537,
+    6.721785714285687,
+    0.9522643253234264,
+    0.9060714285714369,
+    2.390896487985213,
+    2.031964285714281,
+    2.424214417744963,
+    0.02464285714285097,
+    2.287222735674675,
+    2.031964285714281,
+    2.4211645101663635,
+    0.02464285714285097,
+    1.590896487985212,
+    2.0367857142857133,
+    1.721164510166318,
+    0.0294642857143117,
+    2.390896487985213,
+    2.03321428571428,
+    2.424214417744963,
+    0.025892857142878256,
+    2.3862523105360083,
+    2.03321428571428,
+    2.4304528650647512,
+    0.025892857142878256,
+    2.397689463955601,
+    2.03321428571428,
+    2.403488909426983,
+    0.025892857142878256,
+    2.1913817005545297,
+    2.096607142857181,
+    2.32354436229204,
+    0.010714285714243488,
+    1.590896487985212,
+    2.0500000000000114,
+    2.423174676524951,
+    0.04267857142849607,
+    2.387292051755992,
+    2.0500000000000114,
+    1.721164510166318,
+    0.04267857142849607,
+    1.590896487985212,
+    2.061964285714282,
+    1.721164510166318,
+    0.054642857142823686,
+    1.8908964879852128,
+    15.916785714285709,
+    2.7231746765249625,
+    0.12107142857144026,
+    2.387292051755992,
+    2.0562499999999773,
+    2.4251848428835956,
+    0.04892857142851881,
+    2.300531423290181,
+    2.0562499999999773,
+    1.7034889094269374,
+    0.04892857142851881
+   ],
+   "worst": [
+    {
+     "d": 8.047142857142859,
+     "id": "p03-edelivery-email"
+    },
+    {
+     "d": 1.8079020332717164,
+     "id": "p03-own-01"
+    },
+    {
+     "d": 1.8079020332717164,
+     "id": "p03-own-02"
+    },
+    {
+     "d": 1.8079020332717164,
+     "id": "p03-own-03"
+    },
+    {
+     "d": 1.8079020332717164,
+     "id": "p03-own-04"
+    },
+    {
+     "d": 1.6964417744916886,
+     "id": "p03-own-05"
+    },
+    {
+     "d": 1.7595194085027686,
+     "id": "p03-own-06"
+    },
+    {
+     "d": 1.7037892791127547,
+     "id": "p03-own-07"
+    },
+    {
+     "d": 1.7037892791127547,
+     "id": "p03-own-08"
+    },
+    {
+     "d": 1.712546210720916,
+     "id": "p03-own-09"
+    },
+    {
+     "d": 1.7047597042513871,
+     "id": "p03-own-10"
+    },
+    {
+     "d": 1.7047597042513871,
+     "id": "p03-own-11"
+    },
+    {
+     "d": 1.7423521256932304,
+     "id": "p03-own-12"
+    },
+    {
+     "d": 1.7423521256932304,
+     "id": "p03-own-13"
+    },
+    {
+     "d": 1.7423521256932304,
+     "id": "p03-own-14"
+    },
+    {
+     "d": 3.982857142857142,
+     "id": "p03-trust-date"
+    },
+    {
+     "d": 3.9871428571428282,
+     "id": "p03-own-other"
+    },
+    {
+     "d": 1.8079020332717164,
+     "id": "p03-cust-1"
+    },
+    {
+     "d": 1.8162199630314149,
+     "id": "p03-cust-2"
+    },
+    {
+     "d": 1.8016635859519283,
+     "id": "p03-cust-3"
+    },
+    {
+     "d": 1.8162199630314149,
+     "id": "p03-cust-4"
+    },
+    {
+     "d": 1.0484981515711596,
+     "id": "p03-ira-type"
+    },
+    {
+     "d": 6.721785714285687,
+     "id": "p03-cust-other"
+    },
+    {
+     "d": 2.424214417744963,
+     "id": "p03-custodian-name"
+    },
+    {
+     "d": 2.4211645101663635,
+     "id": "p03-inherited-name"
+    },
+    {
+     "d": 2.0367857142857133,
+     "id": "p03-cust-address"
+    },
+    {
+     "d": 2.424214417744963,
+     "id": "p03-cust-city"
+    },
+    {
+     "d": 2.4304528650647512,
+     "id": "p03-cust-state"
+    },
+    {
+     "d": 2.403488909426983,
+     "id": "p03-cust-zip"
+    },
+    {
+     "d": 2.32354436229204,
+     "id": "p03-cust-phone"
+    },
+    {
+     "d": 2.423174676524951,
+     "id": "p03-custodian-tax-id"
+    },
+    {
+     "d": 2.387292051755992,
+     "id": "p03-custodian-account"
+    },
+    {
+     "d": 2.061964285714282,
+     "id": "p03-custodian-admin-name"
+    },
+    {
+     "d": 15.916785714285709,
+     "id": "p03-custodian-medallion"
+    },
+    {
+     "d": 2.4251848428835956,
+     "id": "p03-custodian-signature"
+    },
+    {
+     "d": 2.300531423290181,
+     "id": "p03-custodian-date"
+    }
+   ],
+   "state": {
+    "p03-edelivery-email": "found",
+    "p03-own-01": "found",
+    "p03-own-02": "found",
+    "p03-own-03": "found",
+    "p03-own-04": "found",
+    "p03-own-05": "found",
+    "p03-own-06": "found",
+    "p03-own-07": "found",
+    "p03-own-08": "found",
+    "p03-own-09": "found",
+    "p03-own-10": "found",
+    "p03-own-11": "found",
+    "p03-own-12": "found",
+    "p03-own-13": "found",
+    "p03-own-14": "found",
+    "p03-trust-date": "found",
+    "p03-own-other": "found",
+    "p03-cust-1": "found",
+    "p03-cust-2": "found",
+    "p03-cust-3": "found",
+    "p03-cust-4": "found",
+    "p03-ira-type": "found",
+    "p03-cust-other": "found",
+    "p03-custodian-name": "found",
+    "p03-inherited-name": "found",
+    "p03-cust-address": "found",
+    "p03-cust-city": "found",
+    "p03-cust-state": "found",
+    "p03-cust-zip": "found",
+    "p03-cust-phone": "found",
+    "p03-custodian-tax-id": "found",
+    "p03-custodian-account": "diff",
+    "p03-custodian-admin-name": "diff",
+    "p03-custodian-medallion": "found",
+    "p03-custodian-signature": "found",
+    "p03-custodian-date": "diff"
+   },
+   "edgeMedian": 1.6779805914972314,
+   "edgeMax": 15.916785714285709
+  },
+  "4": {
+   "page": 4,
+   "places": 14,
+   "fields": 13,
+   "found": 13,
+   "missed": [
+    {
+     "id": "p04-bank-name",
+     "kind": "blank",
+     "what": "name",
+     "owner": "investor",
+     "printed_as": "drawn cell (four rules, 0.75 pt)",
+     "box": [
+      38.2,
+      227.8,
+      582.4,
+      242.2
+     ]
+    }
+   ],
+   "strays": [],
+   "kindDiff": [],
+   "whatDiff": [],
+   "ownerDiff": [
+    {
+     "id": "p04-pay-4",
+     "sheet": "investor",
+     "portal": "investor-individual",
+     "signer": "Investor (each subscriber)",
+     "label": "Mail to Alternate Address (Specify Below)"
+    },
+    {
+     "id": "p04-pay-5",
+     "sheet": "investor",
+     "portal": "investor-individual",
+     "signer": "Investor (each subscriber)",
+     "label": "Mail to Street Address"
+    },
+    {
+     "id": "p04-alt-address",
+     "sheet": "investor",
+     "portal": "investor-individual",
+     "signer": "Investor (each subscriber)",
+     "label": "ALTERNATE ADDRESS"
+    },
+    {
+     "id": "p04-city",
+     "sheet": "investor",
+     "portal": "investor-individual",
+     "signer": "Investor (each subscriber)",
+     "label": "City"
+    },
+    {
+     "id": "p04-aba",
+     "sheet": "investor",
+     "portal": "investor-individual",
+     "signer": "Investor (each subscriber)",
+     "label": "BANK ABA#"
+    }
+   ],
+   "markedOk": [],
+   "markedWrong": [],
+   "unmarkedWrong": [],
+   "requiredDiff": [],
+   "overlaps": [],
+   "edges": [
+    1.806862292051754,
+    1.1123214285714198,
+    1.7490988909427045,
+    1.5380357142857264,
+    1.806862292051754,
+    1.120892857142863,
+    1.7490988909427045,
+    1.6294642857142776,
+    1.765365064695004,
+    1.2117857142857247,
+    1.6905961182994815,
+    1.4385714285714357,
+    1.7064926062845984,
+    1.244821428571413,
+    1.6494685767098645,
+    1.5055357142857133,
+    1.7064926062845984,
+    1.2569642857143037,
+    1.6494685767098645,
+    1.4933928571428225,
+    1.765365064695004,
+    1.1514285714285677,
+    1.7905961182994474,
+    1.5989285714285586,
+    1.765365064695004,
+    1.2458928571428203,
+    1.6905961182994815,
+    1.5044642857142776,
+    1.587777264325318,
+    2.0355357142857144,
+    1.721164510166318,
+    0.028214285714284415,
+    2.287777264325321,
+    2.0258928571428214,
+    2.411067467652515,
+    0.018571428571476645,
+    2.397689463955601,
+    2.0258928571428214,
+    2.41173752310533,
+    0.018571428571476645,
+    2.27982902033267,
+    2.0258928571428214,
+    2.4211645101663635,
+    0.018571428571476645,
+    2.287777264325321,
+    2.030714285714282,
+    2.0138170055452917,
+    0.023392857142823686,
+    1.9985443622920513,
+    2.030714285714282,
+    2.403488909426983,
+    0.023392857142823686
+   ],
+   "worst": [
+    {
+     "d": 1.806862292051754,
+     "id": "p04-dist-cash"
+    },
+    {
+     "d": 1.806862292051754,
+     "id": "p04-dist-half"
+    },
+    {
+     "d": 1.765365064695004,
+     "id": "p04-pay-1"
+    },
+    {
+     "d": 1.7064926062845984,
+     "id": "p04-pay-2"
+    },
+    {
+     "d": 1.7064926062845984,
+     "id": "p04-pay-3"
+    },
+    {
+     "d": 1.7905961182994474,
+     "id": "p04-pay-4"
+    },
+    {
+     "d": 1.765365064695004,
+     "id": "p04-pay-5"
+    },
+    {
+     "d": 2.0355357142857144,
+     "id": "p04-alt-address"
+    },
+    {
+     "d": 2.411067467652515,
+     "id": "p04-city"
+    },
+    {
+     "d": 2.41173752310533,
+     "id": "p04-state"
+    },
+    {
+     "d": 2.4211645101663635,
+     "id": "p04-zip"
+    },
+    {
+     "d": 2.287777264325321,
+     "id": "p04-aba"
+    },
+    {
+     "d": 2.403488909426983,
+     "id": "p04-account"
+    }
+   ],
+   "state": {
+    "p04-dist-cash": "found",
+    "p04-dist-half": "found",
+    "p04-pay-1": "found",
+    "p04-pay-2": "found",
+    "p04-pay-3": "found",
+    "p04-pay-4": "diff",
+    "p04-pay-5": "diff",
+    "p04-bank-name": "missed",
+    "p04-alt-address": "diff",
+    "p04-city": "diff",
+    "p04-state": "found",
+    "p04-zip": "found",
+    "p04-aba": "diff",
+    "p04-account": "found"
+   },
+   "edgeMedian": 1.7064926062845984,
+   "edgeMax": 2.4211645101663635
+  },
+  "5": {
+   "page": 5,
+   "places": 13,
+   "fields": 13,
+   "found": 13,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [
+    {
+     "id": "p05-init-1c",
+     "sheet": "initials",
+     "portal": "text",
+     "label": "c"
+    }
+   ],
+   "whatDiff": [],
+   "ownerDiff": [
+    {
+     "id": "p05-init-1a",
+     "sheet": "investor-individual",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-1b",
+     "sheet": "investor-individual",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-1c",
+     "sheet": "investor-individual",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "c"
+    },
+    {
+     "id": "p05-init-1d",
+     "sheet": "investor-individual",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2a",
+     "sheet": "investor-entity",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2b",
+     "sheet": "investor-entity",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2c",
+     "sheet": "investor-entity",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2d",
+     "sheet": "investor-entity",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2e",
+     "sheet": "investor-entity",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2f",
+     "sheet": "investor-entity",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2g",
+     "sheet": "investor-entity",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2h",
+     "sheet": "investor-entity",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2i",
+     "sheet": "investor-entity",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Initials"
+    }
+   ],
+   "markedOk": [],
+   "markedWrong": [
+    {
+     "id": "p05-init-1c",
+     "label": "c",
+     "why": "A blank inside a sentence: check what goes here and who fills it in."
+    }
+   ],
+   "unmarkedWrong": [],
+   "requiredDiff": [
+    {
+     "id": "p05-init-1a",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-1b",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-1c",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "c"
+    },
+    {
+     "id": "p05-init-1d",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2a",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2b",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2c",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2d",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2e",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2f",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2g",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2h",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Initials"
+    },
+    {
+     "id": "p05-init-2i",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Initials"
+    }
+   ],
+   "overlaps": [],
+   "edges": [
+    0.9995841035120137,
+    0.9948214285714272,
+    0.9525646950092437,
+    1.2941071428571433,
+    0.9995841035120137,
+    0.9094642857142929,
+    0.9525646950092437,
+    1.2537499999999966,
+    0.9995841035120137,
+    1.0335714285714062,
+    0.9525646950092437,
+    1.2553571428571502,
+    0.9995841035120137,
+    1.031964285714281,
+    0.9525646950092437,
+    1.2569642857142753,
+    0.9995841035120137,
+    1.0303571428571558,
+    0.9525646950092437,
+    1.258571428571429,
+    0.9995841035120137,
+    0.9642857142856656,
+    0.9525646950092437,
+    1.3246428571428623,
+    0.9995841035120137,
+    0.9399999999999977,
+    0.9525646950092437,
+    1.2842857142856587,
+    0.9995841035120137,
+    0.9610714285714721,
+    0.9525646950092437,
+    1.3278571428571126,
+    0.9995841035120137,
+    0.9998214285714084,
+    0.9525646950092437,
+    1.2891071428571763,
+    0.9995841035120137,
+    0.9982142857142549,
+    0.9525646950092437,
+    1.29071428571433,
+    0.9995841035120137,
+    0.9966071428571581,
+    0.9525646950092437,
+    1.2923214285714266,
+    0.9995841035120137,
+    0.9950000000000045,
+    0.9525646950092437,
+    1.293928571428637,
+    0.9995841035120137,
+    0.9917857142856406,
+    0.9525646950092437,
+    1.2971428571429442
+   ],
+   "worst": [
+    {
+     "d": 1.2941071428571433,
+     "id": "p05-init-1a"
+    },
+    {
+     "d": 1.2537499999999966,
+     "id": "p05-init-1b"
+    },
+    {
+     "d": 1.2553571428571502,
+     "id": "p05-init-1c"
+    },
+    {
+     "d": 1.2569642857142753,
+     "id": "p05-init-1d"
+    },
+    {
+     "d": 1.258571428571429,
+     "id": "p05-init-2a"
+    },
+    {
+     "d": 1.3246428571428623,
+     "id": "p05-init-2b"
+    },
+    {
+     "d": 1.2842857142856587,
+     "id": "p05-init-2c"
+    },
+    {
+     "d": 1.3278571428571126,
+     "id": "p05-init-2d"
+    },
+    {
+     "d": 1.2891071428571763,
+     "id": "p05-init-2e"
+    },
+    {
+     "d": 1.29071428571433,
+     "id": "p05-init-2f"
+    },
+    {
+     "d": 1.2923214285714266,
+     "id": "p05-init-2g"
+    },
+    {
+     "d": 1.293928571428637,
+     "id": "p05-init-2h"
+    },
+    {
+     "d": 1.2971428571429442,
+     "id": "p05-init-2i"
+    }
+   ],
+   "state": {
+    "p05-init-1a": "diff",
+    "p05-init-1b": "diff",
+    "p05-init-1c": "diff",
+    "p05-init-1d": "diff",
+    "p05-init-2a": "diff",
+    "p05-init-2b": "diff",
+    "p05-init-2c": "diff",
+    "p05-init-2d": "diff",
+    "p05-init-2e": "diff",
+    "p05-init-2f": "diff",
+    "p05-init-2g": "diff",
+    "p05-init-2h": "diff",
+    "p05-init-2i": "diff"
+   },
+   "edgeMedian": 0.9995841035120137,
+   "edgeMax": 1.3278571428571126
+  },
+  "6": {
+   "page": 6,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "whatDiff": [],
+   "ownerDiff": [],
+   "markedOk": [],
+   "markedWrong": [],
+   "unmarkedWrong": [],
+   "requiredDiff": [],
+   "overlaps": [],
+   "edges": [],
+   "worst": [],
+   "state": {},
+   "edgeMedian": null,
+   "edgeMax": null
+  },
+  "7": {
+   "page": 7,
+   "places": 4,
+   "fields": 4,
+   "found": 4,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "whatDiff": [],
+   "ownerDiff": [
+    {
+     "id": "p07-joint-date",
+     "sheet": "co-investor",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Date signed"
+    }
+   ],
+   "markedOk": [],
+   "markedWrong": [],
+   "unmarkedWrong": [],
+   "requiredDiff": [
+    {
+     "id": "p07-investor-date",
+     "sheet": "must",
+     "portal": "optional",
+     "label": "Date signed"
+    },
+    {
+     "id": "p07-joint-date",
+     "sheet": "must",
+     "portal": "optional",
+     "label": "Date signed"
+    }
+   ],
+   "overlaps": [],
+   "edges": [
+    2.390896487985213,
+    2.080535714285702,
+    2.415896487985208,
+    0.07321428571424349,
+    2.2945702402957693,
+    2.080535714285702,
+    2.422134935304996,
+    0.07321428571424349,
+    2.3943853974121794,
+    2.080535714285702,
+    2.4219500924214117,
+    0.07321428571424349,
+    2.3006238447319447,
+    2.080535714285702,
+    2.403488909426983,
+    0.07321428571424349
+   ],
+   "worst": [
+    {
+     "d": 2.415896487985208,
+     "id": "p07-investor-signature"
+    },
+    {
+     "d": 2.422134935304996,
+     "id": "p07-investor-date"
+    },
+    {
+     "d": 2.4219500924214117,
+     "id": "p07-joint-signature"
+    },
+    {
+     "d": 2.403488909426983,
+     "id": "p07-joint-date"
+    }
+   ],
+   "state": {
+    "p07-investor-signature": "found",
+    "p07-investor-date": "found",
+    "p07-joint-signature": "found",
+    "p07-joint-date": "diff"
+   },
+   "edgeMedian": 2.1875529772907356,
+   "edgeMax": 2.422134935304996
+  },
+  "8": {
+   "page": 8,
+   "places": 18,
+   "fields": 18,
+   "found": 18,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "whatDiff": [],
+   "ownerDiff": [
+    {
+     "id": "p08-ria-firm-name",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "RIA FIRM NAME"
+    },
+    {
+     "id": "p08-ria-crd",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "CRD #"
+    },
+    {
+     "id": "p08-ria-firm-address",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "RIA FIRM ADDRESS OR P.O. BOX"
+    },
+    {
+     "id": "p08-ria-firm-city",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "City"
+    },
+    {
+     "id": "p08-ria-firm-state",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "State"
+    },
+    {
+     "id": "p08-ria-firm-zip",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "ZIP code"
+    },
+    {
+     "id": "p08-ria-firm-phone",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Phone"
+    },
+    {
+     "id": "p08-ria-firm-fax",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "FAX #"
+    },
+    {
+     "id": "p08-ria-rep-name",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "RIA REPRESENTATIVE NAME"
+    },
+    {
+     "id": "p08-ria-rep-number",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "REPRESENTATIVE #"
+    },
+    {
+     "id": "p08-ria-rep-address",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "RIA REPRESENTATIVE ADDRESS OR P.O. BOX"
+    },
+    {
+     "id": "p08-ria-branch",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "BRANCH ID #"
+    },
+    {
+     "id": "p08-ria-rep-city",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "City"
+    },
+    {
+     "id": "p08-ria-rep-state",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "State"
+    },
+    {
+     "id": "p08-ria-rep-zip",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "ZIP code"
+    },
+    {
+     "id": "p08-ria-rep-phone",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Phone"
+    },
+    {
+     "id": "p08-ria-rep-fax",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "FAX #"
+    },
+    {
+     "id": "p08-ria-rep-email",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Email"
+    }
+   ],
+   "markedOk": [],
+   "markedWrong": [],
+   "unmarkedWrong": [],
+   "requiredDiff": [
+    {
+     "id": "p08-ria-firm-name",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "RIA FIRM NAME"
+    },
+    {
+     "id": "p08-ria-crd",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "CRD #"
+    },
+    {
+     "id": "p08-ria-firm-phone",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Phone"
+    },
+    {
+     "id": "p08-ria-rep-name",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "RIA REPRESENTATIVE NAME"
+    },
+    {
+     "id": "p08-ria-rep-number",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "REPRESENTATIVE #"
+    },
+    {
+     "id": "p08-ria-rep-phone",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Phone"
+    }
+   ],
+   "overlaps": [],
+   "edges": [
+    1.590896487985212,
+    2.0162500000000136,
+    2.4084334565619088,
+    0.008928571428555188,
+    2.3964648798521466,
+    2.0162500000000136,
+    1.7034889094269374,
+    0.008928571428555188,
+    1.590896487985212,
+    2.014107142857142,
+    1.721164510166318,
+    0.006785714285712174,
+    1.590896487985212,
+    2.0173214285714494,
+    2.4198706099814444,
+    0.009999999999990905,
+    2.396649722735674,
+    2.0173214285714494,
+    2.412777264325314,
+    0.009999999999990905,
+    2.397689463955601,
+    2.0173214285714494,
+    1.7034889094269374,
+    0.009999999999990905,
+    1.590896487985212,
+    2.0328571428571536,
+    2.4198706099814444,
+    0.025535714285751965,
+    2.396649722735674,
+    2.0328571428571536,
+    1.721164510166318,
+    0.025535714285751965,
+    1.590896487985212,
+    2.0307142857143106,
+    2.4219500924214117,
+    0.02339285714288053,
+    2.4006238447319674,
+    2.0307142857143106,
+    1.7034889094269374,
+    0.02339285714288053,
+    1.590896487985212,
+    2.0285714285714107,
+    2.4219500924214117,
+    0.021250000000009095,
+    2.4006238447319674,
+    2.0285714285714107,
+    1.7034889094269374,
+    0.021250000000009095,
+    1.590896487985212,
+    2.044107142857115,
+    2.4198706099814444,
+    0.036785714285770155,
+    2.396649722735674,
+    2.044107142857115,
+    2.412777264325314,
+    0.036785714285770155,
+    2.397689463955601,
+    2.044107142857115,
+    1.7034889094269374,
+    0.036785714285770155,
+    1.590896487985212,
+    2.0419642857143003,
+    2.4198706099814444,
+    0.03464285714289872,
+    2.396649722735674,
+    2.0419642857143003,
+    1.721164510166318,
+    0.03464285714289872,
+    2.390896487985213,
+    2.039821428571429,
+    2.4211645101663635,
+    0.032500000000027285
+   ],
+   "worst": [
+    {
+     "d": 2.4084334565619088,
+     "id": "p08-ria-firm-name"
+    },
+    {
+     "d": 2.3964648798521466,
+     "id": "p08-ria-crd"
+    },
+    {
+     "d": 2.014107142857142,
+     "id": "p08-ria-firm-address"
+    },
+    {
+     "d": 2.4198706099814444,
+     "id": "p08-ria-firm-city"
+    },
+    {
+     "d": 2.412777264325314,
+     "id": "p08-ria-firm-state"
+    },
+    {
+     "d": 2.397689463955601,
+     "id": "p08-ria-firm-zip"
+    },
+    {
+     "d": 2.4198706099814444,
+     "id": "p08-ria-firm-phone"
+    },
+    {
+     "d": 2.396649722735674,
+     "id": "p08-ria-firm-fax"
+    },
+    {
+     "d": 2.4219500924214117,
+     "id": "p08-ria-rep-name"
+    },
+    {
+     "d": 2.4006238447319674,
+     "id": "p08-ria-rep-number"
+    },
+    {
+     "d": 2.4219500924214117,
+     "id": "p08-ria-rep-address"
+    },
+    {
+     "d": 2.4006238447319674,
+     "id": "p08-ria-branch"
+    },
+    {
+     "d": 2.4198706099814444,
+     "id": "p08-ria-rep-city"
+    },
+    {
+     "d": 2.412777264325314,
+     "id": "p08-ria-rep-state"
+    },
+    {
+     "d": 2.397689463955601,
+     "id": "p08-ria-rep-zip"
+    },
+    {
+     "d": 2.4198706099814444,
+     "id": "p08-ria-rep-phone"
+    },
+    {
+     "d": 2.396649722735674,
+     "id": "p08-ria-rep-fax"
+    },
+    {
+     "d": 2.4211645101663635,
+     "id": "p08-ria-rep-email"
+    }
+   ],
+   "state": {
+    "p08-ria-firm-name": "diff",
+    "p08-ria-crd": "diff",
+    "p08-ria-firm-address": "diff",
+    "p08-ria-firm-city": "diff",
+    "p08-ria-firm-state": "diff",
+    "p08-ria-firm-zip": "diff",
+    "p08-ria-firm-phone": "diff",
+    "p08-ria-firm-fax": "diff",
+    "p08-ria-rep-name": "diff",
+    "p08-ria-rep-number": "diff",
+    "p08-ria-rep-address": "diff",
+    "p08-ria-branch": "diff",
+    "p08-ria-rep-city": "diff",
+    "p08-ria-rep-state": "diff",
+    "p08-ria-rep-zip": "diff",
+    "p08-ria-rep-phone": "diff",
+    "p08-ria-rep-fax": "diff",
+    "p08-ria-rep-email": "diff"
+   },
+   "edgeMedian": 2.0162500000000136,
+   "edgeMax": 2.4219500924214117
+  },
+  "9": {
+   "page": 9,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "whatDiff": [],
+   "ownerDiff": [],
+   "markedOk": [],
+   "markedWrong": [],
+   "unmarkedWrong": [],
+   "requiredDiff": [],
+   "overlaps": [],
+   "edges": [],
+   "worst": [],
+   "state": {},
+   "edgeMedian": null,
+   "edgeMax": null
+  },
+  "10": {
+   "page": 10,
+   "places": 8,
+   "fields": 8,
+   "found": 8,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [
+    {
+     "id": "p10-ria-investor-state",
+     "sheet": "blank",
+     "portal": "signature",
+     "label": "Signature"
+    },
+    {
+     "id": "p10-ria-date",
+     "sheet": "date",
+     "portal": "signature",
+     "label": "Signature"
+    },
+    {
+     "id": "p10-acceptance-date",
+     "sheet": "date",
+     "portal": "signature",
+     "label": "Signature"
+    }
+   ],
+   "whatDiff": [],
+   "ownerDiff": [
+    {
+     "id": "p10-ria-rep-signature-1",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Signature"
+    },
+    {
+     "id": "p10-ria-rep-signature-2",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Signature"
+    },
+    {
+     "id": "p10-ria-investor-state",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Signature"
+    },
+    {
+     "id": "p10-ria-rep-date",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Date signed"
+    },
+    {
+     "id": "p10-ria-signature",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Signature"
+    },
+    {
+     "id": "p10-ria-date",
+     "sheet": "third-party",
+     "portal": "investor",
+     "signer": "Investor (each subscriber)",
+     "label": "Signature"
+    }
+   ],
+   "markedOk": [
+    {
+     "id": "p10-ria-signature"
+    },
+    {
+     "id": "p10-ria-date"
+    },
+    {
+     "id": "p10-acceptance-signature"
+    },
+    {
+     "id": "p10-acceptance-date"
+    }
+   ],
+   "markedWrong": [],
+   "unmarkedWrong": [],
+   "requiredDiff": [
+    {
+     "id": "p10-ria-rep-signature-1",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Signature"
+    },
+    {
+     "id": "p10-ria-rep-signature-2",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Signature"
+    },
+    {
+     "id": "p10-ria-investor-state",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Signature"
+    },
+    {
+     "id": "p10-ria-date",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Signature"
+    },
+    {
+     "id": "p10-acceptance-date",
+     "sheet": "optional",
+     "portal": "required",
+     "label": "Signature"
+    }
+   ],
+   "overlaps": [],
+   "edges": [
+    2.390896487985213,
+    2.0482142857142662,
+    2.4250693160813057,
+    0.04089285714280777,
+    2.2945702402957693,
+    2.0482142857142662,
+    2.414671903881697,
+    0.04089285714280777,
+    2.2841497227357195,
+    2.0482142857142662,
+    2.4157116451016236,
+    0.04089285714280777,
+    2.289186691312409,
+    2.0482142857142662,
+    2.4211645101663635,
+    0.04089285714280777,
+    2.390896487985213,
+    2.06767857142853,
+    2.4157116451016805,
+    0.06035714285707172,
+    2.289186691312409,
+    2.06767857142853,
+    2.4211645101663635,
+    0.06035714285707172,
+    2.390896487985213,
+    2.0924999999999727,
+    2.4157116451016805,
+    0.08517857142851426,
+    2.289186691312409,
+    2.0924999999999727,
+    2.4211645101663635,
+    0.08517857142851426
+   ],
+   "worst": [
+    {
+     "d": 2.4250693160813057,
+     "id": "p10-ria-rep-signature-1"
+    },
+    {
+     "d": 2.414671903881697,
+     "id": "p10-ria-rep-signature-2"
+    },
+    {
+     "d": 2.4157116451016236,
+     "id": "p10-ria-investor-state"
+    },
+    {
+     "d": 2.4211645101663635,
+     "id": "p10-ria-rep-date"
+    },
+    {
+     "d": 2.4157116451016805,
+     "id": "p10-ria-signature"
+    },
+    {
+     "d": 2.4211645101663635,
+     "id": "p10-ria-date"
+    },
+    {
+     "d": 2.4157116451016805,
+     "id": "p10-acceptance-signature"
+    },
+    {
+     "d": 2.4211645101663635,
+     "id": "p10-acceptance-date"
+    }
+   ],
+   "state": {
+    "p10-ria-rep-signature-1": "diff",
+    "p10-ria-rep-signature-2": "diff",
+    "p10-ria-investor-state": "diff",
+    "p10-ria-rep-date": "diff",
+    "p10-ria-signature": "diff",
+    "p10-ria-date": "diff",
+    "p10-acceptance-signature": "found",
+    "p10-acceptance-date": "diff"
+   },
+   "edgeMedian": 2.188324861367846,
+   "edgeMax": 2.4250693160813057
+  }
+ },
+ "all": {
+  "places": 138,
+  "fields": 136,
+  "found": 136,
+  "missed": [
+   {
+    "id": "p02-title-other",
+    "kind": "blank",
+    "what": "text",
+    "owner": "investor",
+    "printed_as": "underscore run of 29",
+    "box": [
+     480.5,
+     219.6,
+     582,
+     226.6
+    ]
+   },
+   {
+    "id": "p04-bank-name",
+    "kind": "blank",
+    "what": "name",
+    "owner": "investor",
+    "printed_as": "drawn cell (four rules, 0.75 pt)",
+    "box": [
+     38.2,
+     227.8,
+     582.4,
+     242.2
+    ]
+   }
+  ],
+  "strays": [],
+  "kindDiff": [
+   {
+    "id": "p02-joint-dob",
+    "sheet": "blank",
+    "portal": "date",
+    "label": "Co-investor date"
+   },
+   {
+    "id": "p02-joint-ssn",
+    "sheet": "blank",
+    "portal": "signature",
+    "label": "Co-investor signature"
+   },
+   {
+    "id": "p05-init-1c",
+    "sheet": "initials",
+    "portal": "text",
+    "label": "c"
+   },
+   {
+    "id": "p10-ria-investor-state",
+    "sheet": "blank",
+    "portal": "signature",
+    "label": "Signature"
+   },
+   {
+    "id": "p10-ria-date",
+    "sheet": "date",
+    "portal": "signature",
+    "label": "Signature"
+   },
+   {
+    "id": "p10-acceptance-date",
+    "sheet": "date",
+    "portal": "signature",
+    "label": "Signature"
+   }
+  ],
+  "whatDiff": [
+   {
+    "id": "p03-trust-date",
+    "sheet": "date",
+    "portal": "text/text",
+    "label": "Trustee or Grantor"
+   },
+   {
+    "id": "p03-custodian-tax-id",
+    "sheet": "tax number",
+    "portal": "text/text",
+    "label": "TO BE COMPLETED BY CUSTODIAN OR OTHER ADMINISTRATOR CUSTODIA"
+   }
+  ],
+  "ownerDiff": [
+   {
+    "id": "p02-entity-name",
+    "sheet": "investor",
+    "portal": "co-investor",
+    "signer": "Co-investor (if any)",
+    "label": "Co-investor name"
+   },
+   {
+    "id": "p02-city",
+    "sheet": "investor",
+    "portal": "co-investor",
+    "signer": "Co-investor (if any)",
+    "label": "Co-investor city"
+   },
+   {
+    "id": "p02-home-phone",
+    "sheet": "investor",
+    "portal": "co-investor",
+    "signer": "Co-investor (if any)",
+    "label": "Co-investor phone"
+   },
+   {
+    "id": "p02-alt-address",
+    "sheet": "investor",
+    "portal": "co-investor",
+    "signer": "Co-investor (if any)",
+    "label": "Co-investor section alternate mailing address or p o box"
+   },
+   {
+    "id": "p02-alt-city",
+    "sheet": "investor",
+    "portal": "co-investor",
+    "signer": "Co-investor (if any)",
+    "label": "Co-investor city"
+   },
+   {
+    "id": "p02-email",
+    "sheet": "investor",
+    "portal": "co-investor",
+    "signer": "Co-investor (if any)",
+    "label": "Co-investor email"
+   },
+   {
+    "id": "p02-citizen-2",
+    "sheet": "investor",
+    "portal": "co-investor",
+    "signer": "Co-investor (if any)",
+    "label": "Co-investor resident alien"
+   },
+   {
+    "id": "p02-citizen-3",
+    "sheet": "investor",
+    "portal": "co-investor",
+    "signer": "Co-investor (if any)",
+    "label": "Co-investor non resident alien country origin"
+   },
+   {
+    "id": "p02-country",
+    "sheet": "investor",
+    "portal": "co-investor",
+    "signer": "Co-investor (if any)",
+    "label": "Co-investor country origin"
+   },
+   {
+    "id": "p02-edelivery-initials",
+    "sheet": "investor",
+    "portal": "co-investor",
+    "signer": "Co-investor (if any)",
+    "label": "Co-investor field"
+   },
+   {
+    "id": "p03-custodian-account",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "CUSTODIAN ACCOUNT #"
+   },
+   {
+    "id": "p03-custodian-admin-name",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "NAME OF CUSTODIAN OR OTHER ADMINISTRATOR"
+   },
+   {
+    "id": "p03-custodian-date",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Date signed"
+   },
+   {
+    "id": "p04-pay-4",
+    "sheet": "investor",
+    "portal": "investor-individual",
+    "signer": "Investor (each subscriber)",
+    "label": "Mail to Alternate Address (Specify Below)"
+   },
+   {
+    "id": "p04-pay-5",
+    "sheet": "investor",
+    "portal": "investor-individual",
+    "signer": "Investor (each subscriber)",
+    "label": "Mail to Street Address"
+   },
+   {
+    "id": "p04-alt-address",
+    "sheet": "investor",
+    "portal": "investor-individual",
+    "signer": "Investor (each subscriber)",
+    "label": "ALTERNATE ADDRESS"
+   },
+   {
+    "id": "p04-city",
+    "sheet": "investor",
+    "portal": "investor-individual",
+    "signer": "Investor (each subscriber)",
+    "label": "City"
+   },
+   {
+    "id": "p04-aba",
+    "sheet": "investor",
+    "portal": "investor-individual",
+    "signer": "Investor (each subscriber)",
+    "label": "BANK ABA#"
+   },
+   {
+    "id": "p05-init-1a",
+    "sheet": "investor-individual",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-1b",
+    "sheet": "investor-individual",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-1c",
+    "sheet": "investor-individual",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "c"
+   },
+   {
+    "id": "p05-init-1d",
+    "sheet": "investor-individual",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2a",
+    "sheet": "investor-entity",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2b",
+    "sheet": "investor-entity",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2c",
+    "sheet": "investor-entity",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2d",
+    "sheet": "investor-entity",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2e",
+    "sheet": "investor-entity",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2f",
+    "sheet": "investor-entity",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2g",
+    "sheet": "investor-entity",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2h",
+    "sheet": "investor-entity",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2i",
+    "sheet": "investor-entity",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Initials"
+   },
+   {
+    "id": "p07-joint-date",
+    "sheet": "co-investor",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Date signed"
+   },
+   {
+    "id": "p08-ria-firm-name",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "RIA FIRM NAME"
+   },
+   {
+    "id": "p08-ria-crd",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "CRD #"
+   },
+   {
+    "id": "p08-ria-firm-address",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "RIA FIRM ADDRESS OR P.O. BOX"
+   },
+   {
+    "id": "p08-ria-firm-city",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "City"
+   },
+   {
+    "id": "p08-ria-firm-state",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "State"
+   },
+   {
+    "id": "p08-ria-firm-zip",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "ZIP code"
+   },
+   {
+    "id": "p08-ria-firm-phone",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Phone"
+   },
+   {
+    "id": "p08-ria-firm-fax",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "FAX #"
+   },
+   {
+    "id": "p08-ria-rep-name",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "RIA REPRESENTATIVE NAME"
+   },
+   {
+    "id": "p08-ria-rep-number",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "REPRESENTATIVE #"
+   },
+   {
+    "id": "p08-ria-rep-address",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "RIA REPRESENTATIVE ADDRESS OR P.O. BOX"
+   },
+   {
+    "id": "p08-ria-branch",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "BRANCH ID #"
+   },
+   {
+    "id": "p08-ria-rep-city",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "City"
+   },
+   {
+    "id": "p08-ria-rep-state",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "State"
+   },
+   {
+    "id": "p08-ria-rep-zip",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "ZIP code"
+   },
+   {
+    "id": "p08-ria-rep-phone",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Phone"
+   },
+   {
+    "id": "p08-ria-rep-fax",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "FAX #"
+   },
+   {
+    "id": "p08-ria-rep-email",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Email"
+   },
+   {
+    "id": "p10-ria-rep-signature-1",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Signature"
+   },
+   {
+    "id": "p10-ria-rep-signature-2",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Signature"
+   },
+   {
+    "id": "p10-ria-investor-state",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Signature"
+   },
+   {
+    "id": "p10-ria-rep-date",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Date signed"
+   },
+   {
+    "id": "p10-ria-signature",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Signature"
+   },
+   {
+    "id": "p10-ria-date",
+    "sheet": "third-party",
+    "portal": "investor",
+    "signer": "Investor (each subscriber)",
+    "label": "Signature"
+   }
+  ],
+  "markedOk": [
+   {
+    "id": "p03-custodian-tax-id"
+   },
+   {
+    "id": "p03-custodian-medallion"
+   },
+   {
+    "id": "p03-custodian-signature"
+   },
+   {
+    "id": "p10-ria-signature"
+   },
+   {
+    "id": "p10-ria-date"
+   },
+   {
+    "id": "p10-acceptance-signature"
+   },
+   {
+    "id": "p10-acceptance-date"
+   }
+  ],
+  "markedWrong": [
+   {
+    "id": "p01-amount",
+    "label": "Amount",
+    "why": "The words before this blank may not be its label: check what goes here."
+   },
+   {
+    "id": "p02-cat-3-relative",
+    "label": "and name of relative",
+    "why": "A blank inside a sentence: check what goes here and who fills it in."
+   },
+   {
+    "id": "p02-cat-4-relative",
+    "label": "and name of relative",
+    "why": "A blank inside a sentence: check what goes here and who fills it in."
+   },
+   {
+    "id": "p03-own-02",
+    "label": "Checkbox",
+    "why": "This box has no words beside it: check what it is for."
+   },
+   {
+    "id": "p03-own-07",
+    "label": "Checkbox",
+    "why": "This box has no words beside it: check what it is for."
+   },
+   {
+    "id": "p03-own-08",
+    "label": "Checkbox",
+    "why": "This box has no words beside it: check what it is for."
+   },
+   {
+    "id": "p03-own-10",
+    "label": "Checkbox",
+    "why": "This box has no words beside it: check what it is for."
+   },
+   {
+    "id": "p03-own-11",
+    "label": "Checkbox",
+    "why": "This box has no words beside it: check what it is for."
+   },
+   {
+    "id": "p03-trust-date",
+    "label": "Trustee or Grantor",
+    "why": "The words before this blank may not be its label: check what goes here."
+   },
+   {
+    "id": "p05-init-1c",
+    "label": "c",
+    "why": "A blank inside a sentence: check what goes here and who fills it in."
+   }
+  ],
+  "unmarkedWrong": [],
+  "requiredDiff": [
+   {
+    "id": "p02-cat-3-relative",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "and name of relative"
+   },
+   {
+    "id": "p02-cat-4-relative",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "and name of relative"
+   },
+   {
+    "id": "p02-joint-name",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Co-investor name"
+   },
+   {
+    "id": "p02-entity-name",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Co-investor name"
+   },
+   {
+    "id": "p02-city",
+    "sheet": "must",
+    "portal": "optional",
+    "label": "Co-investor city"
+   },
+   {
+    "id": "p02-state",
+    "sheet": "must",
+    "portal": "optional",
+    "label": "State"
+   },
+   {
+    "id": "p02-zip",
+    "sheet": "must",
+    "portal": "optional",
+    "label": "ZIP code"
+   },
+   {
+    "id": "p02-home-phone",
+    "sheet": "must",
+    "portal": "optional",
+    "label": "Co-investor phone"
+   },
+   {
+    "id": "p02-dob",
+    "sheet": "must",
+    "portal": "optional",
+    "label": "INVESTOR DATE OF BIRTH ENTITY DATE)"
+   },
+   {
+    "id": "p02-joint-ssn",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Co-investor signature"
+   },
+   {
+    "id": "p02-edelivery-initials",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Co-investor field"
+   },
+   {
+    "id": "p03-trust-date",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Trustee or Grantor"
+   },
+   {
+    "id": "p03-own-other",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Other"
+   },
+   {
+    "id": "p03-ira-type",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "IRA"
+   },
+   {
+    "id": "p03-cust-other",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Other"
+   },
+   {
+    "id": "p03-custodian-name",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "NAME OF CUSTODIAN OR TRUSTEE"
+   },
+   {
+    "id": "p03-inherited-name",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Inherited/Beneficiary IRA Deceased’s Name"
+   },
+   {
+    "id": "p03-cust-address",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Address"
+   },
+   {
+    "id": "p05-init-1a",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-1b",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-1c",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "c"
+   },
+   {
+    "id": "p05-init-1d",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2a",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2b",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2c",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2d",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2e",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2f",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2g",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2h",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Initials"
+   },
+   {
+    "id": "p05-init-2i",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Initials"
+   },
+   {
+    "id": "p07-investor-date",
+    "sheet": "must",
+    "portal": "optional",
+    "label": "Date signed"
+   },
+   {
+    "id": "p07-joint-date",
+    "sheet": "must",
+    "portal": "optional",
+    "label": "Date signed"
+   },
+   {
+    "id": "p08-ria-firm-name",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "RIA FIRM NAME"
+   },
+   {
+    "id": "p08-ria-crd",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "CRD #"
+   },
+   {
+    "id": "p08-ria-firm-phone",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Phone"
+   },
+   {
+    "id": "p08-ria-rep-name",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "RIA REPRESENTATIVE NAME"
+   },
+   {
+    "id": "p08-ria-rep-number",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "REPRESENTATIVE #"
+   },
+   {
+    "id": "p08-ria-rep-phone",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Phone"
+   },
+   {
+    "id": "p10-ria-rep-signature-1",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Signature"
+   },
+   {
+    "id": "p10-ria-rep-signature-2",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Signature"
+   },
+   {
+    "id": "p10-ria-investor-state",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Signature"
+   },
+   {
+    "id": "p10-ria-date",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Signature"
+   },
+   {
+    "id": "p10-acceptance-date",
+    "sheet": "optional",
+    "portal": "required",
+    "label": "Signature"
+   }
+  ],
+  "overlaps": [],
+  "worst": [
+   {
+    "d": 3.9703571428571536,
+    "id": "p01-investor-name"
+   },
+   {
+    "d": 5.788928571428642,
+    "id": "p01-amount"
+   },
+   {
+    "d": 1.8079020332717164,
+    "id": "p01-class-a"
+   },
+   {
+    "d": 1.9034658040665562,
+    "id": "p01-class-b"
+   },
+   {
+    "d": 1.8079020332717164,
+    "id": "p02-pay-1"
+   },
+   {
+    "d": 1.7975046210720933,
+    "id": "p02-pay-2"
+   },
+   {
+    "d": 1.804782809611794,
+    "id": "p02-pay-3"
+   },
+   {
+    "d": 1.8079020332717164,
+    "id": "p02-cat-1"
+   },
+   {
+    "d": 1.8079020332717164,
+    "id": "p02-cat-2"
+   },
+   {
+    "d": 1.8079020332717164,
+    "id": "p02-cat-3"
+   },
+   {
+    "d": 1.8079020332717164,
+    "id": "p02-cat-4"
+   },
+   {
+    "d": 1.9855357142857315,
+    "id": "p02-cat-3-relative"
+   },
+   {
+    "d": 5.797142857142859,
+    "id": "p02-cat-4-relative"
+   },
+   {
+    "d": 1.7079020332717505,
+    "id": "p02-title-1"
+   },
+   {
+    "d": 1.7027033271718892,
+    "id": "p02-title-2"
+   },
+   {
+    "d": 1.7079020332717505,
+    "id": "p02-title-3"
+   },
+   {
+    "d": 1.713100739371555,
+    "id": "p02-title-4"
+   },
+   {
+    "d": 2.22067929759703,
+    "id": "p02-name"
+   },
+   {
+    "d": 2.22067929759703,
+    "id": "p02-joint-name"
+   },
+   {
+    "d": 2.22067929759703,
+    "id": "p02-entity-name"
+   },
+   {
+    "d": 2.22067929759703,
+    "id": "p02-street"
+   },
+   {
+    "d": 2.532717190388155,
+    "id": "p02-city"
+   },
+   {
+    "d": 2.5231746765249454,
+    "id": "p02-state"
+   },
+   {
+    "d": 2.521164510166386,
+    "id": "p02-zip"
+   },
+   {
+    "d": 2.532902033271739,
+    "id": "p02-home-phone"
+   },
+   {
+    "d": 2.5231746765249454,
+    "id": "p02-business-phone"
+   },
+   {
+    "d": 2.521164510166386,
+    "id": "p02-phone-ext"
+   },
+   {
+    "d": 2.22067929759703,
+    "id": "p02-alt-address"
+   },
+   {
+    "d": 2.532717190388155,
+    "id": "p02-alt-city"
+   },
+   {
+    "d": 2.5231746765249454,
+    "id": "p02-alt-state"
+   },
+   {
+    "d": 2.521164510166386,
+    "id": "p02-alt-zip"
+   },
+   {
+    "d": 2.512777264325308,
+    "id": "p02-dob"
+   },
+   {
+    "d": 2.514856746765247,
+    "id": "p02-joint-dob"
+   },
+   {
+    "d": 2.521164510166386,
+    "id": "p02-entity-tax-id"
+   },
+   {
+    "d": 2.525254158964856,
+    "id": "p02-ssn"
+   },
+   {
+    "d": 2.5273336414047662,
+    "id": "p02-joint-ssn"
+   },
+   {
+    "d": 2.521164510166386,
+    "id": "p02-email"
+   },
+   {
+    "d": 1.9509704251386353,
+    "id": "p02-citizen-1"
+   },
+   {
+    "d": 1.8131007393715208,
+    "id": "p02-citizen-2"
+   },
+   {
+    "d": 1.8182994454713253,
+    "id": "p02-citizen-3"
+   },
+   {
+    "d": 5.7919642857142435,
+    "id": "p02-country"
+   },
+   {
+    "d": 1.8047828096118224,
+    "id": "p02-erisa-yes"
+   },
+   {
+    "d": 1.8068622920517328,
+    "id": "p02-erisa-no"
+   },
+   {
+    "d": 6.143571428571363,
+    "id": "p02-edelivery-initials"
+   },
+   {
+    "d": 8.047142857142859,
+    "id": "p03-edelivery-email"
+   },
+   {
+    "d": 1.8079020332717164,
+    "id": "p03-own-01"
+   },
+   {
+    "d": 1.8079020332717164,
+    "id": "p03-own-02"
+   },
+   {
+    "d": 1.8079020332717164,
+    "id": "p03-own-03"
+   },
+   {
+    "d": 1.8079020332717164,
+    "id": "p03-own-04"
+   },
+   {
+    "d": 1.6964417744916886,
+    "id": "p03-own-05"
+   },
+   {
+    "d": 1.7595194085027686,
+    "id": "p03-own-06"
+   },
+   {
+    "d": 1.7037892791127547,
+    "id": "p03-own-07"
+   },
+   {
+    "d": 1.7037892791127547,
+    "id": "p03-own-08"
+   },
+   {
+    "d": 1.712546210720916,
+    "id": "p03-own-09"
+   },
+   {
+    "d": 1.7047597042513871,
+    "id": "p03-own-10"
+   },
+   {
+    "d": 1.7047597042513871,
+    "id": "p03-own-11"
+   },
+   {
+    "d": 1.7423521256932304,
+    "id": "p03-own-12"
+   },
+   {
+    "d": 1.7423521256932304,
+    "id": "p03-own-13"
+   },
+   {
+    "d": 1.7423521256932304,
+    "id": "p03-own-14"
+   },
+   {
+    "d": 3.982857142857142,
+    "id": "p03-trust-date"
+   },
+   {
+    "d": 3.9871428571428282,
+    "id": "p03-own-other"
+   },
+   {
+    "d": 1.8079020332717164,
+    "id": "p03-cust-1"
+   },
+   {
+    "d": 1.8162199630314149,
+    "id": "p03-cust-2"
+   },
+   {
+    "d": 1.8016635859519283,
+    "id": "p03-cust-3"
+   },
+   {
+    "d": 1.8162199630314149,
+    "id": "p03-cust-4"
+   },
+   {
+    "d": 1.0484981515711596,
+    "id": "p03-ira-type"
+   },
+   {
+    "d": 6.721785714285687,
+    "id": "p03-cust-other"
+   },
+   {
+    "d": 2.424214417744963,
+    "id": "p03-custodian-name"
+   },
+   {
+    "d": 2.4211645101663635,
+    "id": "p03-inherited-name"
+   },
+   {
+    "d": 2.0367857142857133,
+    "id": "p03-cust-address"
+   },
+   {
+    "d": 2.424214417744963,
+    "id": "p03-cust-city"
+   },
+   {
+    "d": 2.4304528650647512,
+    "id": "p03-cust-state"
+   },
+   {
+    "d": 2.403488909426983,
+    "id": "p03-cust-zip"
+   },
+   {
+    "d": 2.32354436229204,
+    "id": "p03-cust-phone"
+   },
+   {
+    "d": 2.423174676524951,
+    "id": "p03-custodian-tax-id"
+   },
+   {
+    "d": 2.387292051755992,
+    "id": "p03-custodian-account"
+   },
+   {
+    "d": 2.061964285714282,
+    "id": "p03-custodian-admin-name"
+   },
+   {
+    "d": 15.916785714285709,
+    "id": "p03-custodian-medallion"
+   },
+   {
+    "d": 2.4251848428835956,
+    "id": "p03-custodian-signature"
+   },
+   {
+    "d": 2.300531423290181,
+    "id": "p03-custodian-date"
+   },
+   {
+    "d": 1.806862292051754,
+    "id": "p04-dist-cash"
+   },
+   {
+    "d": 1.806862292051754,
+    "id": "p04-dist-half"
+   },
+   {
+    "d": 1.765365064695004,
+    "id": "p04-pay-1"
+   },
+   {
+    "d": 1.7064926062845984,
+    "id": "p04-pay-2"
+   },
+   {
+    "d": 1.7064926062845984,
+    "id": "p04-pay-3"
+   },
+   {
+    "d": 1.7905961182994474,
+    "id": "p04-pay-4"
+   },
+   {
+    "d": 1.765365064695004,
+    "id": "p04-pay-5"
+   },
+   {
+    "d": 2.0355357142857144,
+    "id": "p04-alt-address"
+   },
+   {
+    "d": 2.411067467652515,
+    "id": "p04-city"
+   },
+   {
+    "d": 2.41173752310533,
+    "id": "p04-state"
+   },
+   {
+    "d": 2.4211645101663635,
+    "id": "p04-zip"
+   },
+   {
+    "d": 2.287777264325321,
+    "id": "p04-aba"
+   },
+   {
+    "d": 2.403488909426983,
+    "id": "p04-account"
+   },
+   {
+    "d": 1.2941071428571433,
+    "id": "p05-init-1a"
+   },
+   {
+    "d": 1.2537499999999966,
+    "id": "p05-init-1b"
+   },
+   {
+    "d": 1.2553571428571502,
+    "id": "p05-init-1c"
+   },
+   {
+    "d": 1.2569642857142753,
+    "id": "p05-init-1d"
+   },
+   {
+    "d": 1.258571428571429,
+    "id": "p05-init-2a"
+   },
+   {
+    "d": 1.3246428571428623,
+    "id": "p05-init-2b"
+   },
+   {
+    "d": 1.2842857142856587,
+    "id": "p05-init-2c"
+   },
+   {
+    "d": 1.3278571428571126,
+    "id": "p05-init-2d"
+   },
+   {
+    "d": 1.2891071428571763,
+    "id": "p05-init-2e"
+   },
+   {
+    "d": 1.29071428571433,
+    "id": "p05-init-2f"
+   },
+   {
+    "d": 1.2923214285714266,
+    "id": "p05-init-2g"
+   },
+   {
+    "d": 1.293928571428637,
+    "id": "p05-init-2h"
+   },
+   {
+    "d": 1.2971428571429442,
+    "id": "p05-init-2i"
+   },
+   {
+    "d": 2.415896487985208,
+    "id": "p07-investor-signature"
+   },
+   {
+    "d": 2.422134935304996,
+    "id": "p07-investor-date"
+   },
+   {
+    "d": 2.4219500924214117,
+    "id": "p07-joint-signature"
+   },
+   {
+    "d": 2.403488909426983,
+    "id": "p07-joint-date"
+   },
+   {
+    "d": 2.4084334565619088,
+    "id": "p08-ria-firm-name"
+   },
+   {
+    "d": 2.3964648798521466,
+    "id": "p08-ria-crd"
+   },
+   {
+    "d": 2.014107142857142,
+    "id": "p08-ria-firm-address"
+   },
+   {
+    "d": 2.4198706099814444,
+    "id": "p08-ria-firm-city"
+   },
+   {
+    "d": 2.412777264325314,
+    "id": "p08-ria-firm-state"
+   },
+   {
+    "d": 2.397689463955601,
+    "id": "p08-ria-firm-zip"
+   },
+   {
+    "d": 2.4198706099814444,
+    "id": "p08-ria-firm-phone"
+   },
+   {
+    "d": 2.396649722735674,
+    "id": "p08-ria-firm-fax"
+   },
+   {
+    "d": 2.4219500924214117,
+    "id": "p08-ria-rep-name"
+   },
+   {
+    "d": 2.4006238447319674,
+    "id": "p08-ria-rep-number"
+   },
+   {
+    "d": 2.4219500924214117,
+    "id": "p08-ria-rep-address"
+   },
+   {
+    "d": 2.4006238447319674,
+    "id": "p08-ria-branch"
+   },
+   {
+    "d": 2.4198706099814444,
+    "id": "p08-ria-rep-city"
+   },
+   {
+    "d": 2.412777264325314,
+    "id": "p08-ria-rep-state"
+   },
+   {
+    "d": 2.397689463955601,
+    "id": "p08-ria-rep-zip"
+   },
+   {
+    "d": 2.4198706099814444,
+    "id": "p08-ria-rep-phone"
+   },
+   {
+    "d": 2.396649722735674,
+    "id": "p08-ria-rep-fax"
+   },
+   {
+    "d": 2.4211645101663635,
+    "id": "p08-ria-rep-email"
+   },
+   {
+    "d": 2.4250693160813057,
+    "id": "p10-ria-rep-signature-1"
+   },
+   {
+    "d": 2.414671903881697,
+    "id": "p10-ria-rep-signature-2"
+   },
+   {
+    "d": 2.4157116451016236,
+    "id": "p10-ria-investor-state"
+   },
+   {
+    "d": 2.4211645101663635,
+    "id": "p10-ria-rep-date"
+   },
+   {
+    "d": 2.4157116451016805,
+    "id": "p10-ria-signature"
+   },
+   {
+    "d": 2.4211645101663635,
+    "id": "p10-ria-date"
+   },
+   {
+    "d": 2.4157116451016805,
+    "id": "p10-acceptance-signature"
+   },
+   {
+    "d": 2.4211645101663635,
+    "id": "p10-acceptance-date"
+   }
+  ],
+  "pairs": [
+   {
+    "place": "p01-investor-name",
+    "page": 1,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Investor name",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.1,
+     4,
+     1,
+     1.5
+    ]
+   },
+   {
+    "place": "p01-amount",
+    "page": 1,
+    "kind": "text",
+    "fine": "amount",
+    "owner": "investor",
+    "review": true,
+    "required": true,
+    "label": "Amount",
+    "conf": "",
+    "why": "The words before this blank may not be its label: check what goes here.",
+    "edges": [
+     0,
+     5.8,
+     1,
+     1
+    ]
+   },
+   {
+    "place": "p01-class-a",
+    "page": 1,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Class A Units",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.1,
+     1.7,
+     1.6
+    ]
+   },
+   {
+    "place": "p01-class-b",
+    "page": 1,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Class B Units",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.9,
+     1.1,
+     1.9,
+     1.6
+    ]
+   },
+   {
+    "place": "p02-pay-1",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Funds Enclosed",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.3,
+     1.7,
+     1.5
+    ]
+   },
+   {
+    "place": "p02-pay-2",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Funds Wired",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.3,
+     1.8,
+     1.5
+    ]
+   },
+   {
+    "place": "p02-pay-3",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Issued by Custodian",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.3,
+     1.8,
+     1.5
+    ]
+   },
+   {
+    "place": "p02-cat-1",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Investor investing through registered investment adviser (RI",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.1,
+     1.7,
+     1.6
+    ]
+   },
+   {
+    "place": "p02-cat-2",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Investor is an endowment, foundation, pension fund or other",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.2,
+     1.7,
+     1.5
+    ]
+   },
+   {
+    "place": "p02-cat-3",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "a participating RIA or investment adviser of an RIA",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.3,
+     1.7,
+     1.5
+    ]
+   },
+   {
+    "place": "p02-cat-4",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Officer of the Company or manager, officer, or employee of o",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.1,
+     1.7,
+     1.6
+    ]
+   },
+   {
+    "place": "p02-cat-3-relative",
+    "page": 2,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": true,
+    "required": true,
+    "label": "and name of relative",
+    "conf": "",
+    "why": "A blank inside a sentence: check what goes here and who fills it in.",
+    "edges": [
+     1,
+     2,
+     1,
+     1
+    ]
+   },
+   {
+    "place": "p02-cat-4-relative",
+    "page": 2,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": true,
+    "required": true,
+    "label": "and name of relative",
+    "conf": "",
+    "why": "A blank inside a sentence: check what goes here and who fills it in.",
+    "edges": [
+     1,
+     5.8,
+     1,
+     1
+    ]
+   },
+   {
+    "place": "p02-title-1",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Mr",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.7,
+     1.3,
+     1.6,
+     1.5
+    ]
+   },
+   {
+    "place": "p02-title-2",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Mrs",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.7,
+     1.3,
+     1.7,
+     1.5
+    ]
+   },
+   {
+    "place": "p02-title-3",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Ms",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.7,
+     1.3,
+     1.6,
+     1.5
+    ]
+   },
+   {
+    "place": "p02-title-4",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Other",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.7,
+     1.3,
+     1.6,
+     1.5
+    ]
+   },
+   {
+    "place": "p02-name",
+    "page": 2,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "SECTION NAME OF INVESTOR, TRUSTEE, OR AUTHORIZED SIGNER",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.2,
+     2.2,
+     2.2,
+     0
+    ]
+   },
+   {
+    "place": "p02-joint-name",
+    "page": 2,
+    "kind": "name",
+    "fine": "text",
+    "owner": "co-investor",
+    "review": false,
+    "required": true,
+    "label": "Co-investor name",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.2,
+     2,
+     2.2,
+     0
+    ]
+   },
+   {
+    "place": "p02-entity-name",
+    "page": 2,
+    "kind": "name",
+    "fine": "text",
+    "owner": "co-investor",
+    "review": false,
+    "required": true,
+    "label": "Co-investor name",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.2,
+     2,
+     2.2,
+     0.1
+    ]
+   },
+   {
+    "place": "p02-street",
+    "page": 2,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "SECTION INVESTOR, TRUSTEE, OR AUTHORIZED SIGNER’S STREET ADD",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.2,
+     2,
+     2.2,
+     0.1
+    ]
+   },
+   {
+    "place": "p02-city",
+    "page": 2,
+    "kind": "text",
+    "fine": "address",
+    "owner": "co-investor",
+    "review": false,
+    "required": false,
+    "label": "Co-investor city",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.5,
+     2,
+     2.5,
+     0
+    ]
+   },
+   {
+    "place": "p02-state",
+    "page": 2,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "State",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.5,
+     2,
+     2.5,
+     0
+    ]
+   },
+   {
+    "place": "p02-zip",
+    "page": 2,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "ZIP code",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.5,
+     2,
+     2.5,
+     0
+    ]
+   },
+   {
+    "place": "p02-home-phone",
+    "page": 2,
+    "kind": "text",
+    "fine": "phone",
+    "owner": "co-investor",
+    "review": false,
+    "required": false,
+    "label": "Co-investor phone",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.5,
+     2,
+     2.5,
+     0
+    ]
+   },
+   {
+    "place": "p02-business-phone",
+    "page": 2,
+    "kind": "text",
+    "fine": "phone",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Phone",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.5,
+     2,
+     2.5,
+     0
+    ]
+   },
+   {
+    "place": "p02-phone-ext",
+    "page": 2,
+    "kind": "text",
+    "fine": "phone",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "PHONE EXTENSION",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.5,
+     2,
+     2.5,
+     0
+    ]
+   },
+   {
+    "place": "p02-alt-address",
+    "page": 2,
+    "kind": "text",
+    "fine": "address",
+    "owner": "co-investor",
+    "review": false,
+    "required": false,
+    "label": "Co-investor section alternate mailing address or p o box",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.2,
+     2,
+     2.2,
+     0.1
+    ]
+   },
+   {
+    "place": "p02-alt-city",
+    "page": 2,
+    "kind": "text",
+    "fine": "address",
+    "owner": "co-investor",
+    "review": false,
+    "required": false,
+    "label": "Co-investor city",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.5,
+     2.1,
+     2.5,
+     0.1
+    ]
+   },
+   {
+    "place": "p02-alt-state",
+    "page": 2,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "State",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.5,
+     2.1,
+     2.5,
+     0.1
+    ]
+   },
+   {
+    "place": "p02-alt-zip",
+    "page": 2,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "ZIP code",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.5,
+     2.1,
+     2.5,
+     0.1
+    ]
+   },
+   {
+    "place": "p02-dob",
+    "page": 2,
+    "kind": "text",
+    "fine": "date",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "INVESTOR DATE OF BIRTH ENTITY DATE)",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.5,
+     2.1,
+     2.5,
+     0.1
+    ]
+   },
+   {
+    "place": "p02-joint-dob",
+    "page": 2,
+    "kind": "date",
+    "fine": "date",
+    "owner": "co-investor",
+    "review": false,
+    "required": false,
+    "label": "Co-investor date",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.5,
+     2.1,
+     2.5,
+     0.1
+    ]
+   },
+   {
+    "place": "p02-entity-tax-id",
+    "page": 2,
+    "kind": "text",
+    "fine": "taxId",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Taxpayer ID",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.5,
+     2.1,
+     2.5,
+     0.1
+    ]
+   },
+   {
+    "place": "p02-ssn",
+    "page": 2,
+    "kind": "text",
+    "fine": "taxId",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Taxpayer ID",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.5,
+     2.1,
+     2.5,
+     0.1
+    ]
+   },
+   {
+    "place": "p02-joint-ssn",
+    "page": 2,
+    "kind": "signature",
+    "fine": "signature",
+    "owner": "co-investor",
+    "review": false,
+    "required": true,
+    "label": "Co-investor signature",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.5,
+     2.1,
+     2.5,
+     0.1
+    ]
+   },
+   {
+    "place": "p02-email",
+    "page": 2,
+    "kind": "text",
+    "fine": "email",
+    "owner": "co-investor",
+    "review": false,
+    "required": false,
+    "label": "Co-investor email",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.5,
+     2.1,
+     2.5,
+     0.1
+    ]
+   },
+   {
+    "place": "p02-citizen-1",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "U.S. Citizen",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.2,
+     2,
+     1.7
+    ]
+   },
+   {
+    "place": "p02-citizen-2",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "co-investor",
+    "review": false,
+    "required": false,
+    "label": "Co-investor resident alien",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.1,
+     1.7,
+     1.6
+    ]
+   },
+   {
+    "place": "p02-citizen-3",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "co-investor",
+    "review": false,
+    "required": false,
+    "label": "Co-investor non resident alien country origin",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.1,
+     1.7,
+     1.6
+    ]
+   },
+   {
+    "place": "p02-country",
+    "page": 2,
+    "kind": "text",
+    "fine": "address",
+    "owner": "co-investor",
+    "review": false,
+    "required": false,
+    "label": "Co-investor country origin",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     5.8,
+     1,
+     1
+    ]
+   },
+   {
+    "place": "p02-erisa-yes",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Yes",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.1,
+     1.8,
+     1.6
+    ]
+   },
+   {
+    "place": "p02-erisa-no",
+    "page": 2,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "No",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.1,
+     1.8,
+     1.6
+    ]
+   },
+   {
+    "place": "p02-edelivery-initials",
+    "page": 2,
+    "kind": "initials",
+    "fine": "initials",
+    "owner": "co-investor",
+    "review": false,
+    "required": true,
+    "label": "Co-investor field",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2,
+     6.1,
+     2,
+     0.1
+    ]
+   },
+   {
+    "place": "p03-edelivery-email",
+    "page": 3,
+    "kind": "text",
+    "fine": "email",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Email",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.2,
+     8,
+     2.3,
+     0.1
+    ]
+   },
+   {
+    "place": "p03-own-01",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Individual",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.2,
+     1.7,
+     1.4
+    ]
+   },
+   {
+    "place": "p03-own-02",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": true,
+    "required": false,
+    "label": "Checkbox",
+    "conf": "",
+    "why": "This box has no words beside it: check what it is for.",
+    "edges": [
+     1.8,
+     1.2,
+     1.7,
+     1.5
+    ]
+   },
+   {
+    "place": "p03-own-03",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Tenants in Common",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.1,
+     1.7,
+     1.5
+    ]
+   },
+   {
+    "place": "p03-own-04",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Community Property",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.1,
+     1.7,
+     1.6
+    ]
+   },
+   {
+    "place": "p03-own-05",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Pension, Profit Sharing Plan, or 401K",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.7,
+     1.2,
+     1.7,
+     1.4
+    ]
+   },
+   {
+    "place": "p03-own-06",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Joint Tenants with Right of",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.2,
+     1.7,
+     1.4
+    ]
+   },
+   {
+    "place": "p03-own-07",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": true,
+    "required": false,
+    "label": "Checkbox",
+    "conf": "",
+    "why": "This box has no words beside it: check what it is for.",
+    "edges": [
+     1.7,
+     1.2,
+     1.7,
+     1.4
+    ]
+   },
+   {
+    "place": "p03-own-08",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": true,
+    "required": false,
+    "label": "Checkbox",
+    "conf": "",
+    "why": "This box has no words beside it: check what it is for.",
+    "edges": [
+     1.7,
+     1.2,
+     1.7,
+     1.4
+    ]
+   },
+   {
+    "place": "p03-own-09",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Corporation - Include copy of",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.7,
+     1.2,
+     1.6,
+     1.4
+    ]
+   },
+   {
+    "place": "p03-own-10",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": true,
+    "required": false,
+    "label": "Checkbox",
+    "conf": "",
+    "why": "This box has no words beside it: check what it is for.",
+    "edges": [
+     1.7,
+     1.2,
+     1.7,
+     1.4
+    ]
+   },
+   {
+    "place": "p03-own-11",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": true,
+    "required": false,
+    "label": "Checkbox",
+    "conf": "",
+    "why": "This box has no words beside it: check what it is for.",
+    "edges": [
+     1.7,
+     1.2,
+     1.7,
+     1.4
+    ]
+   },
+   {
+    "place": "p03-own-12",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Uniform Gift to Minors Act /",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.7,
+     1.2,
+     1.7,
+     1.4
+    ]
+   },
+   {
+    "place": "p03-own-13",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Partnership or LLC",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.7,
+     1.2,
+     1.7,
+     1.6
+    ]
+   },
+   {
+    "place": "p03-own-14",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Other",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.7,
+     1.1,
+     1.7,
+     1.5
+    ]
+   },
+   {
+    "place": "p03-trust-date",
+    "page": 3,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": true,
+    "required": true,
+    "label": "Trustee or Grantor",
+    "conf": "",
+    "why": "The words before this blank may not be its label: check what goes here.",
+    "edges": [
+     1.1,
+     4,
+     1,
+     1.5
+    ]
+   },
+   {
+    "place": "p03-own-other",
+    "page": 3,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Other",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     4,
+     1,
+     1.5
+    ]
+   },
+   {
+    "place": "p03-cust-1",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "IRA",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.2,
+     1.7,
+     1.5
+    ]
+   },
+   {
+    "place": "p03-cust-2",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Qualified Pension or Profit Sharing Plan",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.2,
+     1.7,
+     1.5
+    ]
+   },
+   {
+    "place": "p03-cust-3",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Non-Qualified Custodian Account",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.2,
+     1.8,
+     1.5
+    ]
+   },
+   {
+    "place": "p03-cust-4",
+    "page": 3,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Other",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.2,
+     1.7,
+     1.5
+    ]
+   },
+   {
+    "place": "p03-ira-type",
+    "page": 3,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "IRA",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     0.1,
+     0.9,
+     0.9
+    ]
+   },
+   {
+    "place": "p03-cust-other",
+    "page": 3,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Other",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     6.7,
+     1,
+     0.9
+    ]
+   },
+   {
+    "place": "p03-custodian-name",
+    "page": 3,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "NAME OF CUSTODIAN OR TRUSTEE",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p03-inherited-name",
+    "page": 3,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Inherited/Beneficiary IRA Deceased’s Name",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.3,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p03-cust-address",
+    "page": 3,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Address",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.6,
+     2,
+     1.7,
+     0
+    ]
+   },
+   {
+    "place": "p03-cust-city",
+    "page": 3,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "City",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p03-cust-state",
+    "page": 3,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "State",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p03-cust-zip",
+    "page": 3,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "ZIP code",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p03-cust-phone",
+    "page": 3,
+    "kind": "text",
+    "fine": "phone",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Phone",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.2,
+     2.1,
+     2.3,
+     0
+    ]
+   },
+   {
+    "place": "p03-custodian-tax-id",
+    "page": 3,
+    "kind": "text",
+    "fine": "text",
+    "owner": "third-party",
+    "review": true,
+    "required": false,
+    "label": "TO BE COMPLETED BY CUSTODIAN OR OTHER ADMINISTRATOR CUSTODIA",
+    "conf": "",
+    "why": "This line looks meant for a second signer, a witness or a notary. It is optional for the investor: check who fills it in, or remove it.",
+    "edges": [
+     1.6,
+     2.1,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p03-custodian-account",
+    "page": 3,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "CUSTODIAN ACCOUNT #",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2.1,
+     1.7,
+     0
+    ]
+   },
+   {
+    "place": "p03-custodian-admin-name",
+    "page": 3,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "NAME OF CUSTODIAN OR OTHER ADMINISTRATOR",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.6,
+     2.1,
+     1.7,
+     0.1
+    ]
+   },
+   {
+    "place": "p03-custodian-medallion",
+    "page": 3,
+    "kind": "signature",
+    "fine": "signature",
+    "owner": "third-party",
+    "review": true,
+    "required": false,
+    "label": "Custodian Medallion Signature Guarantee",
+    "conf": "",
+    "why": "This line looks meant for a second signer, a witness or a notary. It is optional for the investor: check who fills it in, or remove it.",
+    "edges": [
+     1.9,
+     15.9,
+     2.7,
+     0.1
+    ]
+   },
+   {
+    "place": "p03-custodian-signature",
+    "page": 3,
+    "kind": "signature",
+    "fine": "signature",
+    "owner": "third-party",
+    "review": true,
+    "required": false,
+    "label": "SIGNATURE OF CUSTODIAN (IF APPLICABLE)",
+    "conf": "",
+    "why": "This line looks meant for a second signer, a witness or a notary. It is optional for the investor: check who fills it in, or remove it.",
+    "edges": [
+     2.4,
+     2.1,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p03-custodian-date",
+    "page": 3,
+    "kind": "date",
+    "fine": "date",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Date signed",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.3,
+     2.1,
+     1.7,
+     0
+    ]
+   },
+   {
+    "place": "p04-dist-cash",
+    "page": 4,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "You are automatically enrolled",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.1,
+     1.7,
+     1.5
+    ]
+   },
+   {
+    "place": "p04-dist-half",
+    "page": 4,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "You are automatically enrolled",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.1,
+     1.7,
+     1.6
+    ]
+   },
+   {
+    "place": "p04-pay-1",
+    "page": 4,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Via Direct Deposit (ACH)",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.2,
+     1.7,
+     1.4
+    ]
+   },
+   {
+    "place": "p04-pay-2",
+    "page": 4,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Checking (must enclose voided check)",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.7,
+     1.2,
+     1.6,
+     1.5
+    ]
+   },
+   {
+    "place": "p04-pay-3",
+    "page": 4,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Savings (verification from bank must be provided)",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.7,
+     1.3,
+     1.6,
+     1.5
+    ]
+   },
+   {
+    "place": "p04-pay-4",
+    "page": 4,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor-individual",
+    "review": false,
+    "required": false,
+    "label": "Mail to Alternate Address (Specify Below)",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.2,
+     1.8,
+     1.6
+    ]
+   },
+   {
+    "place": "p04-pay-5",
+    "page": 4,
+    "kind": "checkbox",
+    "fine": "checkbox",
+    "owner": "investor-individual",
+    "review": false,
+    "required": false,
+    "label": "Mail to Street Address",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.8,
+     1.2,
+     1.7,
+     1.5
+    ]
+   },
+   {
+    "place": "p04-alt-address",
+    "page": 4,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor-individual",
+    "review": false,
+    "required": false,
+    "label": "ALTERNATE ADDRESS",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.6,
+     2,
+     1.7,
+     0
+    ]
+   },
+   {
+    "place": "p04-city",
+    "page": 4,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor-individual",
+    "review": false,
+    "required": false,
+    "label": "City",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.3,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p04-state",
+    "page": 4,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "State",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p04-zip",
+    "page": 4,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "ZIP code",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.3,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p04-aba",
+    "page": 4,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor-individual",
+    "review": false,
+    "required": false,
+    "label": "BANK ABA#",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.3,
+     2,
+     2,
+     0
+    ]
+   },
+   {
+    "place": "p04-account",
+    "page": 4,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "ACCOUNT #",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p05-init-1a",
+    "page": 5,
+    "kind": "initials",
+    "fine": "initials",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Initials",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     1,
+     1,
+     1.3
+    ]
+   },
+   {
+    "place": "p05-init-1b",
+    "page": 5,
+    "kind": "initials",
+    "fine": "initials",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Initials",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     0.9,
+     1,
+     1.3
+    ]
+   },
+   {
+    "place": "p05-init-1c",
+    "page": 5,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": true,
+    "required": true,
+    "label": "c",
+    "conf": "",
+    "why": "A blank inside a sentence: check what goes here and who fills it in.",
+    "edges": [
+     1,
+     1,
+     1,
+     1.3
+    ]
+   },
+   {
+    "place": "p05-init-1d",
+    "page": 5,
+    "kind": "initials",
+    "fine": "initials",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Initials",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     1,
+     1,
+     1.3
+    ]
+   },
+   {
+    "place": "p05-init-2a",
+    "page": 5,
+    "kind": "initials",
+    "fine": "initials",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Initials",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     1,
+     1,
+     1.3
+    ]
+   },
+   {
+    "place": "p05-init-2b",
+    "page": 5,
+    "kind": "initials",
+    "fine": "initials",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Initials",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     1,
+     1,
+     1.3
+    ]
+   },
+   {
+    "place": "p05-init-2c",
+    "page": 5,
+    "kind": "initials",
+    "fine": "initials",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Initials",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     0.9,
+     1,
+     1.3
+    ]
+   },
+   {
+    "place": "p05-init-2d",
+    "page": 5,
+    "kind": "initials",
+    "fine": "initials",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Initials",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     1,
+     1,
+     1.3
+    ]
+   },
+   {
+    "place": "p05-init-2e",
+    "page": 5,
+    "kind": "initials",
+    "fine": "initials",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Initials",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     1,
+     1,
+     1.3
+    ]
+   },
+   {
+    "place": "p05-init-2f",
+    "page": 5,
+    "kind": "initials",
+    "fine": "initials",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Initials",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     1,
+     1,
+     1.3
+    ]
+   },
+   {
+    "place": "p05-init-2g",
+    "page": 5,
+    "kind": "initials",
+    "fine": "initials",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Initials",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     1,
+     1,
+     1.3
+    ]
+   },
+   {
+    "place": "p05-init-2h",
+    "page": 5,
+    "kind": "initials",
+    "fine": "initials",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Initials",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     1,
+     1,
+     1.3
+    ]
+   },
+   {
+    "place": "p05-init-2i",
+    "page": 5,
+    "kind": "initials",
+    "fine": "initials",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Initials",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1,
+     1,
+     1,
+     1.3
+    ]
+   },
+   {
+    "place": "p07-investor-signature",
+    "page": 7,
+    "kind": "signature",
+    "fine": "signature",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Signature",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2.1,
+     2.4,
+     0.1
+    ]
+   },
+   {
+    "place": "p07-investor-date",
+    "page": 7,
+    "kind": "date",
+    "fine": "date",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Date signed",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.3,
+     2.1,
+     2.4,
+     0.1
+    ]
+   },
+   {
+    "place": "p07-joint-signature",
+    "page": 7,
+    "kind": "signature",
+    "fine": "signature",
+    "owner": "co-investor",
+    "review": false,
+    "required": true,
+    "label": "Co-investor signature",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2.1,
+     2.4,
+     0.1
+    ]
+   },
+   {
+    "place": "p07-joint-date",
+    "page": 7,
+    "kind": "date",
+    "fine": "date",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Date signed",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.3,
+     2.1,
+     2.4,
+     0.1
+    ]
+   },
+   {
+    "place": "p08-ria-firm-name",
+    "page": 8,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "RIA FIRM NAME",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.6,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-crd",
+    "page": 8,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "CRD #",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     1.7,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-firm-address",
+    "page": 8,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "RIA FIRM ADDRESS OR P.O. BOX",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.6,
+     2,
+     1.7,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-firm-city",
+    "page": 8,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "City",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.6,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-firm-state",
+    "page": 8,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "State",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-firm-zip",
+    "page": 8,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "ZIP code",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     1.7,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-firm-phone",
+    "page": 8,
+    "kind": "text",
+    "fine": "phone",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Phone",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.6,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-firm-fax",
+    "page": 8,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "FAX #",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     1.7,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-rep-name",
+    "page": 8,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "RIA REPRESENTATIVE NAME",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.6,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-rep-number",
+    "page": 8,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "REPRESENTATIVE #",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     1.7,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-rep-address",
+    "page": 8,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "RIA REPRESENTATIVE ADDRESS OR P.O. BOX",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.6,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-branch",
+    "page": 8,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "BRANCH ID #",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     1.7,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-rep-city",
+    "page": 8,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "City",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.6,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-rep-state",
+    "page": 8,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "State",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-rep-zip",
+    "page": 8,
+    "kind": "text",
+    "fine": "address",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "ZIP code",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     1.7,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-rep-phone",
+    "page": 8,
+    "kind": "text",
+    "fine": "phone",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Phone",
+    "conf": "",
+    "why": "",
+    "edges": [
+     1.6,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-rep-fax",
+    "page": 8,
+    "kind": "text",
+    "fine": "text",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "FAX #",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     1.7,
+     0
+    ]
+   },
+   {
+    "place": "p08-ria-rep-email",
+    "page": 8,
+    "kind": "text",
+    "fine": "email",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Email",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p10-ria-rep-signature-1",
+    "page": 10,
+    "kind": "signature",
+    "fine": "signature",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Signature",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.4,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p10-ria-rep-signature-2",
+    "page": 10,
+    "kind": "signature",
+    "fine": "signature",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Signature",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.3,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p10-ria-investor-state",
+    "page": 10,
+    "kind": "signature",
+    "fine": "signature",
+    "owner": "investor",
+    "review": false,
+    "required": true,
+    "label": "Signature",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.3,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p10-ria-rep-date",
+    "page": 10,
+    "kind": "date",
+    "fine": "date",
+    "owner": "investor",
+    "review": false,
+    "required": false,
+    "label": "Date signed",
+    "conf": "",
+    "why": "",
+    "edges": [
+     2.3,
+     2,
+     2.4,
+     0
+    ]
+   },
+   {
+    "place": "p10-ria-signature",
+    "page": 10,
+    "kind": "signature",
+    "fine": "signature",
+    "owner": "investor",
+    "review": true,
+    "required": false,
+    "label": "Signature",
+    "conf": "",
+    "why": "The heading for this block stands above another signature line: check whether the investor or your firm signs here.",
+    "edges": [
+     2.4,
+     2.1,
+     2.4,
+     0.1
+    ]
+   },
+   {
+    "place": "p10-ria-date",
+    "page": 10,
+    "kind": "signature",
+    "fine": "signature",
+    "owner": "investor",
+    "review": true,
+    "required": true,
+    "label": "Signature",
+    "conf": "",
+    "why": "The heading for this block stands above another signature line: check whether the investor or your firm signs here.",
+    "edges": [
+     2.3,
+     2.1,
+     2.4,
+     0.1
+    ]
+   },
+   {
+    "place": "p10-acceptance-signature",
+    "page": 10,
+    "kind": "signature",
+    "fine": "signature",
+    "owner": "third-party",
+    "review": true,
+    "required": false,
+    "label": "ACCEPTANCE BY MANAGING DEALER",
+    "conf": "",
+    "why": "This line looks meant for a second signer, a witness or a notary. It is optional for the investor: check who fills it in, or remove it.",
+    "edges": [
+     2.4,
+     2.1,
+     2.4,
+     0.1
+    ]
+   },
+   {
+    "place": "p10-acceptance-date",
+    "page": 10,
+    "kind": "signature",
+    "fine": "signature",
+    "owner": "firm",
+    "review": true,
+    "required": true,
+    "label": "Signature",
+    "conf": "",
+    "why": "Could not tell whether the investor or your firm fills this in.",
+    "edges": [
+     2.3,
+     2.1,
+     2.4,
+     0.1
+    ]
+   }
+  ],
+  "edgeMedian": 1.703639094269846,
+  "edgeWorst": {
+   "d": 15.916785714285709,
+   "id": "p03-custodian-medallion"
+  }
+ },
+ "said": [
+  "17 fields need your review before investors can sign.",
+  "Confirm or move the 17 fields marked for review.",
+  "10 pages read. 43 tick boxes, 68 blanks and 25 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on pages 7 and 10. Your firm’s signature line was found on page 10. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here."
+ ],
+ "read": {
+  "ok": true,
+  "error": "",
+  "pages": 10,
+  "scanned": [],
+  "failed": [],
+  "places": 136,
+  "left": [],
+  "boxes": 43,
+  "blanks": 68,
+  "signatures": 25,
+  "investorPages": [
+   7,
+   10
+  ],
+  "firmPages": [
+   10
+  ],
+  "firmLeft": 0,
+  "firmLeftPages": [],
+  "pictured": [],
+  "unread": {},
+  "asked": false
+ }
+}

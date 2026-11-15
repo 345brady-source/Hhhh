@@ -1,0 +1,60 @@
+{
+ "root": "/tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/owner-set/C/try",
+ "only": [
+  "5"
+ ],
+ "secs": 77,
+ "times": {
+  "5": 77
+ },
+ "rows": [
+  {
+   "step": 5,
+   "name": "PPM_Blackcommerce_LLC_SEC_EDGAR (112 pages): 51 fields, every one clean",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "step": 5,
+   "name": "PPM_RockStep_Hometown_America_Fund_I (prose, 69 pages): no field placed",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "step": 5,
+   "name": "PPM_Worcester_Fund_LLC (prose, 85 pages): no field placed",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "step": 5,
+   "name": "Subscription_Hedge_Fund_Template (18 pages): 64 fields, every one clean",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "step": 5,
+   "name": "Subscription_ILPA_Model_Subscription_Agreement (25 pages): 58 fields, every one clean",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "step": 5,
+   "name": "Subscription_PA_SERS_Insight_Venture_Partners_VIII_Closing_Binder_Redacted (scan, 72 pages): no field placed",
+   "ok": true,
+   "info": ""
+  },
+  {
+   "step": 5,
+   "name": "Subscription_PA_SERS_Insight_Venture_Partners_VIII_Closing_Binder_Redacted: the screen says plainly that it could not be read",
+   "ok": true,
+   "info": "words shown: This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign. | Most of this PDF could not be read: 71 of its 72 pages are pictures, as in a scan. No field was placed. Upload the PDF the agreement was made from, or add each field by hand. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here. | This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign. | This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign."
+  },
+  {
+   "step": 5,
+   "name": "Subscription_PA_SERS_Lubert_Adler_Real_Estate_Fund_VII_Redacted (43 pages): 147 fields, every one clean",
+   "ok": true,
+   "info": ""
+  }
+ ]
+}

@@ -1,0 +1,560 @@
+{
+ "root": "/home/user/Hhhh",
+ "pass": false,
+ "placesOk": true,
+ "whoOk": true,
+ "told": [
+  [
+   "the screen does not tell the sponsor to add a signature field for the investor",
+   false
+  ],
+  [
+   "the screen says plainly that no investor signs this document (it is signed only by the firm)",
+   false
+  ],
+  [
+   "the editor offers a way forward for a document only the firm signs (a button for the firm to sign it, or nothing stops saving)",
+   false
+  ],
+  [
+   "the summary names the firm's signature page (31)",
+   true
+  ]
+ ],
+ "ms": 1614,
+ "note": "32 pages read. 0 tick boxes, 0 blanks and 2 signature lines got a field, each on a place the agreement prints. No signature line for the investor was found: add a signature field for the investor where they sign before saving. Your firm’s signature line was found on page 31. Check the fields, move or resize as needed, and add any others. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.",
+ "status": "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.",
+ "said": [
+  "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.",
+  "32 pages read. 0 tick boxes, 0 blanks and 2 signature lines got a field, each on a place the agreement prints. No signature line for the investor was found: add a signature field for the investor where they sign before saving. Your firm’s signature line was found on page 31. Check the fields, move or resize as needed, and add any others. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here."
+ ],
+ "saveSays": [
+  {
+   "text": "Save subscription agreement",
+   "disabled": false,
+   "title": "",
+   "action": "es-agreement-save"
+  }
+ ],
+ "reviewList": [],
+ "inside": {
+  "read": {
+   "ok": true,
+   "error": "",
+   "pages": 32,
+   "scanned": [],
+   "failed": [],
+   "places": 2,
+   "left": [],
+   "boxes": 0,
+   "blanks": 0,
+   "signatures": 2,
+   "investorPages": [],
+   "firmPages": [
+    31
+   ],
+   "firmLeft": 0,
+   "firmLeftPages": [],
+   "pictured": [],
+   "unread": {},
+   "asked": false
+  },
+  "readNote": "32 pages read. 0 tick boxes, 0 blanks and 2 signature lines got a field, each on a place the agreement prints. No signature line for the investor was found: add a signature field for the investor where they sign before saving. Your firm’s signature line was found on page 31.",
+  "todo": "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.",
+  "signers": [
+   {
+    "role": "investor",
+    "name": "Investor (each subscriber)",
+    "co": false
+   },
+   {
+    "role": "investor",
+    "name": "Co-investor (if any)",
+    "co": true
+   },
+   {
+    "role": "countersigner",
+    "name": "Kestrel Bay (countersigns)",
+    "co": false
+   }
+  ],
+  "fields": [
+   {
+    "page": 31,
+    "type": "signature",
+    "kind": "signature",
+    "label": "",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "firm"
+   },
+   {
+    "page": 31,
+    "type": "signature",
+    "kind": "signature",
+    "label": "",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "firm"
+   }
+  ]
+ },
+ "total": {
+  "places": 2,
+  "fields": 2,
+  "found": 2,
+  "missed": [],
+  "strays": [],
+  "kindDiff": [],
+  "ownerDiff": [],
+  "marked": [],
+  "overlaps": [],
+  "pairs": [
+   {
+    "place": "p31-01",
+    "page": 31,
+    "kind": "signature",
+    "owner": "firm",
+    "signer": "Kestrel Bay (countersigns)",
+    "required": true,
+    "review": false,
+    "label": "Signature",
+    "box": [
+     303.8,
+     466.8,
+     541,
+     509.3
+    ],
+    "edges": {
+     "left": 0,
+     "right": 1,
+     "bottom": 1.8,
+     "top": null,
+     "height": 42.5
+    }
+   },
+   {
+    "place": "p31-02",
+    "page": 31,
+    "kind": "signature",
+    "owner": "firm",
+    "signer": "Kestrel Bay (countersigns)",
+    "required": true,
+    "review": false,
+    "label": "Signature",
+    "box": [
+     303.8,
+     618.4,
+     541,
+     660.8
+    ],
+    "edges": {
+     "left": 0,
+     "right": 1,
+     "bottom": 1.8,
+     "top": null,
+     "height": 42.4
+    }
+   }
+  ]
+ },
+ "per": {
+  "1": {
+   "page": 1,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "2": {
+   "page": 2,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "3": {
+   "page": 3,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "4": {
+   "page": 4,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "5": {
+   "page": 5,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "6": {
+   "page": 6,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "7": {
+   "page": 7,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "8": {
+   "page": 8,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "9": {
+   "page": 9,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "10": {
+   "page": 10,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "11": {
+   "page": 11,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "12": {
+   "page": 12,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "13": {
+   "page": 13,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "14": {
+   "page": 14,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "15": {
+   "page": 15,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "16": {
+   "page": 16,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "17": {
+   "page": 17,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "18": {
+   "page": 18,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "19": {
+   "page": 19,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "20": {
+   "page": 20,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "21": {
+   "page": 21,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "22": {
+   "page": 22,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "23": {
+   "page": 23,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "24": {
+   "page": 24,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "25": {
+   "page": 25,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "26": {
+   "page": 26,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "27": {
+   "page": 27,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "28": {
+   "page": 28,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "29": {
+   "page": 29,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "30": {
+   "page": 30,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "31": {
+   "page": 31,
+   "places": 2,
+   "fields": 2,
+   "found": 2,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "32": {
+   "page": 32,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  }
+ },
+ "errors": []
+}

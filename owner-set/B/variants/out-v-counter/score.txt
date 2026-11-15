@@ -1,0 +1,19 @@
+DOCUMENT B  root /home/user/Hhhh  editor opened  reading took 0.5 s
+read summary, exactly as the editor shows it:
+   1 page read. 0 tick boxes, 3 blanks and 2 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on page 1. Your firm’s signature line was found on page 1. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.
+what stops saving (agreementTodo): Confirm or move the 3 fields marked for review.
+read: investor signature pages [1] (sheet [1]), firm signature pages [1] (sheet [1]), left [], firmLeft 0
+ page   places   fields    found   missed   strays   kind!=  owner!=   mark!=  overlap
+    1        5        5        5        0        0        0        0        3        0
+  all        5        5        5        0        0        0        0        3        0
+pages with neither a place nor a field: none
+FOUND p1-01: signature for "Kestrel Bay (countersigns)" (firm) required true marked false box [303.8, 447.8, 541, 490.8] label "Signature" edges {"left":0,"right":1,"bottom":1.8,"top":null,"height":43}
+FOUND p1-02: text for "Investor (each subscriber)" (investor) required true marked false box [287, 583.3, 541, 598.8] label "Investor name" edges {"left":-1,"right":1,"bottom":1.8,"top":null,"height":15.5}
+FOUND p1-03: signature for "Investor (each subscriber)" (investor) required true marked true box [303.8, 610.1, 541, 643.9] label "Signature" edges {"left":0,"right":1,"bottom":1.9,"top":null,"height":33.8}
+FOUND p1-04: name for "Investor (each subscriber)" (investor) required true marked true box [318.3, 652.4, 541, 667.8] label "Name" edges {"left":-1,"right":1,"bottom":1.8,"top":null,"height":15.5}
+FOUND p1-05: text for "Investor (each subscriber)" (investor) required false marked true box [312.8, 676.3, 541, 691.8] label "Title" edges {"left":-1,"right":1,"bottom":1.8,"top":null,"height":15.5}
+MARK p1-03 page 1: portal marked true, sheet says do not mark
+MARK p1-04 page 1: portal marked true, sheet says do not mark
+MARK p1-05 page 1: portal marked true, sheet says do not mark
+who signs: read as the sheet says
+FAIL

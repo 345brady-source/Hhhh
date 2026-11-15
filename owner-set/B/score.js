@@ -47,6 +47,10 @@ const OWNER_RULES = [
 const ownerOf = (n) => { if (!String(n || '').trim()) return 'unassigned'; const r = OWNER_RULES.find((x) => x[1].test(n)); return r ? r[0] : 'firm'; };
 const OWNER_OK = { investor: ['investor'], 'investor-individual': ['investor'], 'investor-entity': ['investor'], 'co-investor': ['co-investor'], 'third-party': ['third-party', 'unassigned'], unclear: ['third-party', 'unassigned'], firm: ['firm'] };
 // D-09: a review mark belongs on a place the sheet calls unclear (owner "unclear", or the key unclear: true) and on no other
+// D-30 (the owner, Phase 01.4 plan 63): person is judged on two classes: "firm" is the sponsor, every other owner (of a
+// sheet place or a portal field) the investor; required is judged on the sponsor's places only (no investor field is ever
+// mandatory). A place the sheet calls unclear must still be marked, as before.
+const person = (o) => (o === 'firm' ? 'sponsor' : 'investor');
 const mustMark = (p) => p.owner === 'unclear' || p.unclear === true;
 const UP = 36; // pt: a place recorded as a hairline rule has its writing zone above the rule
 const DOWN = 4;
@@ -92,7 +96,7 @@ function score(fields, places, pagesN) {
       const d = { left: r1(f.x0 - p.x0), right: r1(f.x1 - p.x1), bottom: r1(f.bottom - (thin ? p.y0 : p.y1)), top: thin ? null : r1(f.top - p.y0), height: r1(f.bottom - f.top) };
       all.pairs.push({ place: p.id, page: pg, kind: f.kind, fine: f.fine || '', owner: f.owner, signer: f.signerName, required: f.required, review: !!f.review, label: f.label, box: [f.x0, f.top, f.x1, f.bottom].map(r1), edges: d });
       if (!(KIND_MAP[p.kind] || [p.kind]).includes(f.kind)) r.kindDiff.push({ id: p.id, sheet: p.kind, portal: f.kind || '(none)' });
-      if (!(OWNER_OK[p.owner] || [p.owner]).includes(f.owner)) r.ownerDiff.push({ id: p.id, sheet: p.owner, portal: f.owner, signer: f.signerName });
+      if (person(p.owner) !== person(f.owner)) r.ownerDiff.push({ id: p.id, sheet: p.owner, portal: f.owner, signer: f.signerName });
       if (!!f.review !== mustMark(p)) r.marked.push({ id: p.id, page: pg, portalMarked: !!f.review, sheetSays: mustMark(p) ? 'mark (unclear)' : 'do not mark' });
       // D-06: only a place whose sheet records the printed label is compared; the sheet's long description is never compared
       if (p.printed_label && !LIB.labelOk(p, f)) r.labelDiff.push({ id: p.id, printed: p.printed_label, portal: f.label, fine: f.fine || f.kind });

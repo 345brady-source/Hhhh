@@ -44,6 +44,10 @@ const OWNER_RULES = [
 const ownerOf = (n) => { if (!String(n || '').trim()) return 'unassigned'; const r = OWNER_RULES.find((x) => x[1].test(n)); return r ? r[0] : 'firm'; };
 const OWNER_OK = { investor: ['investor'], 'investor-individual': ['investor'], 'investor-entity': ['investor'], 'co-investor': ['co-investor'], firm: ['firm'], 'third-party': ['third-party', 'unassigned'], unclear: ['third-party', 'unassigned'] };
 // D-09: a review mark is right only on a place the sheet calls unclear (computed here; the sheet's places are untouched)
+// D-30 (the owner, Phase 01.4 plan 63): person is judged on two classes: "firm" is the sponsor, every other owner (of a
+// sheet place or a portal field) the investor; required is judged on the sponsor's places only (no investor field is ever
+// mandatory). A place the sheet calls unclear must still be marked, as before.
+const person = (o) => (o === 'firm' ? 'sponsor' : 'investor');
 const mayMark = (p) => p.owner === 'unclear';
 const GROW = 3, SHARE = 0.4, TOUCH = 0.5;
 const area = (b) => Math.max(0, b.x1 - b.x0) * Math.max(0, b.y1 - b.y0);
@@ -78,8 +82,8 @@ function score(fields, places, pages) {
       all.pairs.push({ place: p.id, page: pg, kind: f.kind, what: f.what || '', owner: f.owner, signer: f.signerName, required: f.required, review: !!f.review, why: f.why || '', prefill: f.prefill || '', label: f.label, edges: d });
       if (!(KIND_MAP[p.kind] || [p.kind]).includes(f.kind)) r.kindDiff.push({ id: p.id, label: p.label, sheet: p.kind, portal: f.kind || '(none)' });
       else if (f.what && WHAT_MAP[p.what] && !WHAT_MAP[p.what].includes(f.what)) r.whatDiff.push({ id: p.id, label: p.label, sheet: p.what, portal: f.what });
-      if (!(OWNER_OK[p.owner] || [p.owner]).includes(f.owner)) r.ownerDiff.push({ id: p.id, label: p.label, sheet: p.owner, portal: f.owner, signer: f.signerName || '' });
-      if (!!f.required !== !!p.required) r.requiredDiff.push({ id: p.id, label: p.label, sheet: p.required ? 'must complete' : 'optional', portal: f.required ? 'required' : 'optional' });
+      if (person(p.owner) !== person(f.owner)) r.ownerDiff.push({ id: p.id, label: p.label, sheet: p.owner, portal: f.owner, signer: f.signerName || '' });
+      if (person(p.owner) === 'sponsor' && !!f.required !== !!p.required) r.requiredDiff.push({ id: p.id, label: p.label, sheet: p.required ? 'must complete' : 'optional', portal: f.required ? 'required' : 'optional' });
       if (f.review && !mayMark(p)) r.markedWrong.push({ id: p.id, label: p.label });
       if (f.review && mayMark(p)) r.markedOk.push({ id: p.id });
       if (p.printed_label && LIB.nl(f.label) !== LIB.nl(p.printed_label)) r.labelDiff.push({ id: p.id, printed: p.printed_label, portal: f.label });
@@ -280,7 +284,8 @@ print(len(jobs))`;
     told.push(['the summary says "No signature line for the investor was found"', /No signature line for the investor was found/.test(note)]);
     told.push(['the summary says the agreement refers to a signature page that this PDF does not contain', /refers to a signature page that this PDF does not contain/i.test(note)]);
   } else told.push(["the summary says the investor's signature line was found", /investor[’']s signature line was found/i.test(note)]);
-  if (otherPages.length) told.push([`the summary has the sentence for other people's places, naming pages ${otherPages.join(' and ')}`, sents.some((s) => /for someone else to complete/i.test(s) && otherPages.every((n) => LIB.namesPage(s, n)))]);
+  // D-30: the reader reads no place as somebody else's, so the summary has no sentence for other people's places.
+  if (otherPages.length) told.push([`the summary has no sentence for other people's places (D-30: they are the investor's)`, !sents.some((s) => /for someone else to complete/i.test(s))]);
   // the status line may ask to confirm only fields on places the sheet calls unclear
   const asks = /confirm/i.test(res.status || '') ? Number((/(\d+)\s+fields?/.exec(res.status || '') || [0, 1])[1]) : 0;
   told.push([`the editor's status line asks to confirm no field of a place the sheet does not call unclear (it asks for ${asks}; ${a.markedOk.length} marked on unclear places)`, asks <= a.markedOk.length]);
