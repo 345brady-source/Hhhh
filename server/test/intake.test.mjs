@@ -414,3 +414,214 @@ test('spend cap on the route: 402 before any messages request past the cap, thro
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+/* ---------- PDFs whose text layer cannot be read (D-37, D-38) ---------- */
+/** A small stand-in PDF (bytes that start like a PDF; the fake service never parses it), as base64. */
+const pdfData = (n = 64) => Buffer.concat([Buffer.from('%PDF-1.7\n'), Buffer.alloc(n, 0x41)]).toString('base64');
+/** A fake intake that records the prompt, the PDFs and the count's arguments. */
+function pdfIntake({ count, budget } = {}) {
+  const seen = [];
+  const counted = [];
+  return {
+    seen,
+    counted,
+    budget,
+    maxTokens: () => 24000,
+    available: async () => true,
+    async count(prompt, pdfs) {
+      counted.push({ prompt, pdfs });
+      return count ? count(prompt, pdfs) : 1000;
+    },
+    async run(prompt, { pdfs, onText }) {
+      seen.push({ prompt, pdfs });
+      onText('{"a":1}');
+      return { ok: true, json: { a: 1 }, reason: '', ms: 5, model: MODEL, stopReason: 'end_turn', usage: { input_tokens: 10, output_tokens: 20 } };
+    }
+  };
+}
+
+test('with pdfs: one user message of a label and a base64 PDF document block per PDF, then the prompt unchanged; the count sees the same content', () =>
+  withAmbient(async () => {
+    const prompt = 'You are setting up a fund.\n\nDOCUMENTS:\n=== Document: a.pdf (3 pages) === attached as a PDF because its text layer could not be read';
+    const a = pdfData(100);
+    const b = pdfData(200);
+    const svc = fakeService({ reply: () => ({ texts: ['{"offering":{"name":"Larkspur"}}'] }), count: () => 5000 });
+    await withServer({ env: { CARROWVALE_API_KEY: KEY }, fetch: svc }, async (base) => {
+      const r = await post(`${base}/v1/intake`, { prompt, pdfs: [{ name: 'a.pdf', data: a, pages: 3, of: 3 }, { name: 'b.pdf', data: b, pages: 5, of: 12 }] });
+      assert.equal(r.status, 200);
+      assert.deepEqual(lines(await r.text()).pop(), { ok: true, json: { offering: { name: 'Larkspur' } } });
+      const m = svc.messages();
+      assert.equal(m.length, 1);
+      const content = m[0].body.messages[0].content;
+      assert.equal(m[0].body.messages.length, 1);
+      assert.equal(m[0].body.messages[0].role, 'user');
+      assert.equal(content.length, 5);
+      assert.equal(content[0].type, 'text');
+      assert.match(content[0].text, /a\.pdf/);
+      assert.deepEqual(content[1], { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: a } });
+      assert.equal(content[2].type, 'text');
+      assert.match(content[2].text, /b\.pdf/);
+      assert.deepEqual(content[3], { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b } });
+      assert.deepEqual(content[4], { type: 'text', text: prompt });
+      // With PDFs the input is always counted (free), on exactly the content the call sends.
+      const c = svc.counts();
+      assert.equal(c.length, 1);
+      assert.deepEqual(c[0].body.messages, m[0].body.messages);
+    });
+  }));
+
+test('with no pdfs (absent or empty) the content is still the prompt string exactly and nothing is counted without a cap', () =>
+  withAmbient(async () => {
+    const svc = fakeService({ reply: () => ({ texts: ['{"a":1}'] }) });
+    await withServer({ env: { CARROWVALE_API_KEY: KEY }, fetch: svc }, async (base) => {
+      for (const body of [{ prompt: 'p one' }, { prompt: 'p two', pdfs: [] }]) {
+        const r = await post(`${base}/v1/intake`, body);
+        assert.deepEqual(lines(await r.text()).pop(), { ok: true, json: { a: 1 } });
+      }
+      assert.deepEqual(svc.messages().map((c) => c.body.messages), [[{ role: 'user', content: 'p one' }], [{ role: 'user', content: 'p two' }]]);
+      assert.equal(svc.counts().length, 0);
+    });
+  }));
+
+test('pdf validation: 400 invalid or 413 too_large before any count or call', async () => {
+  const intake = pdfIntake();
+  const ok = { name: 'a.pdf', data: pdfData(), pages: 2, of: 2 };
+  await serve({}, intake, async (base) => {
+    const cases = [
+      [{ pdfs: 'x' }, 400],
+      [{ pdfs: [Object.assign({}, ok, { data: 'not base64!' })] }, 400],
+      [{ pdfs: [Object.assign({}, ok, { data: Buffer.from('<html>not a pdf</html>').toString('base64') })] }, 400],
+      [{ pdfs: [Object.assign({}, ok, { data: '' })] }, 400],
+      [{ pdfs: [Object.assign({}, ok, { pages: 0 })] }, 400],
+      [{ pdfs: [Object.assign({}, ok, { pages: 2.5 })] }, 400],
+      [{ pdfs: [Object.assign({}, ok, { of: 1 })] }, 400],
+      [{ pdfs: [Object.assign({}, ok, { name: '' })] }, 400],
+      [{ pdfs: [null] }, 400],
+      [{ pdfs: [ok, ok, ok, ok, ok, ok] }, 413],
+      [{ pdfs: [Object.assign({}, ok, { pages: 400, of: 400 }), Object.assign({}, ok, { pages: 201, of: 300 })] }, 413]
+    ];
+    for (const [extra, status] of cases) {
+      const r = await post(`${base}/v1/intake`, Object.assign({ prompt: 'p' }, extra));
+      assert.equal(r.status, status, JSON.stringify(extra).slice(0, 80));
+      assert.deepEqual(await r.json(), { ok: false, reason: status === 413 ? 'too_large' : 'invalid' });
+    }
+    assert.equal(intake.counted.length, 0);
+    assert.equal(intake.seen.length, 0);
+    // Five PDFs and 600 pages in all are within the limits.
+    const five = [1, 2, 3, 4, 5].map((i) => Object.assign({}, ok, { name: `p${i}.pdf`, pages: 120, of: 120 }));
+    const r = await post(`${base}/v1/intake`, { prompt: 'p', pdfs: five });
+    assert.equal(r.status, 200);
+    await r.text();
+    assert.equal(intake.seen.length, 1);
+    assert.equal(intake.counted.length, 1);
+  });
+});
+
+test('the body limit is 32 MB: a 3 MB PDF is read, a body over 32 MB is 413 too_large', async () => {
+  const intake = pdfIntake();
+  await serve({}, intake, async (base) => {
+    const big = { name: 'big.pdf', data: pdfData(3 * 1024 * 1024), pages: 40, of: 40 };
+    const a = await post(`${base}/v1/intake`, { prompt: 'p', pdfs: [big] });
+    assert.equal(a.status, 200);
+    await a.text();
+    assert.equal(intake.seen.length, 1);
+    assert.equal(intake.seen[0].pdfs[0].data, big.data);
+    const huge = { name: 'huge.pdf', data: pdfData(25 * 1024 * 1024), pages: 40, of: 40 };
+    const b = await post(`${base}/v1/intake`, { prompt: 'p', pdfs: [huge] });
+    assert.equal(b.status, 413);
+    assert.deepEqual(await b.json(), { ok: false, reason: 'too_large' });
+    assert.equal(intake.seen.length, 1);
+  });
+});
+
+test('with pdfs the input is always counted: over 900000 tokens is 413 before any call; a failed count is 502 without a cap, 402 with one', async () => {
+  await captureConsole(async () => {
+    const pdfs = [{ name: 'a.pdf', data: pdfData(), pages: 12, of: 12 }];
+    let intake = pdfIntake({ count: () => 900001 });
+    await serve({}, intake, async (base) => {
+      const r = await post(`${base}/v1/intake`, { prompt: 'p', pdfs });
+      assert.equal(r.status, 413);
+      assert.deepEqual(await r.json(), { ok: false, reason: 'too_large' });
+    });
+    assert.equal(intake.counted.length, 1);
+    assert.deepEqual(intake.counted[0].pdfs, pdfs);
+    assert.equal(intake.seen.length, 0);
+    intake = pdfIntake({ count: () => 900000 });
+    await serve({}, intake, async (base) => {
+      const r = await post(`${base}/v1/intake`, { prompt: 'p', pdfs });
+      assert.equal(r.status, 200);
+      await r.text();
+    });
+    assert.equal(intake.seen.length, 1);
+    intake = pdfIntake({
+      count: () => {
+        throw new Error('count down');
+      }
+    });
+    await serve({}, intake, async (base) => {
+      const r = await post(`${base}/v1/intake`, { prompt: 'p', pdfs });
+      assert.equal(r.status, 502);
+      assert.deepEqual(await r.json(), { ok: false, reason: 'failed' });
+    });
+    assert.equal(intake.seen.length, 0);
+    intake = pdfIntake({
+      count: () => {
+        throw new Error('count down');
+      },
+      budget: createBudget({ CARROWVALE_SPEND_CAP_USD: '5' })
+    });
+    await serve({}, intake, async (base) => {
+      const r = await post(`${base}/v1/intake`, { prompt: 'p', pdfs });
+      assert.equal(r.status, 402);
+    });
+    assert.equal(intake.seen.length, 0);
+  });
+});
+
+test('the spend cap counts the document blocks: the count request carries them and a call past the cap is 402 before any messages request', () =>
+  withAmbient(async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'intake-pdfcap-'));
+    try {
+      await captureConsole(async () => {
+        // 12 pages at 3000 tokens a page: 36000 counted; with 24000 output the worst case is $1.56, past $1.00.
+        const svc = fakeService({ reply: () => ({ texts: ['{"a":1}'] }), count: (call) => (call.body.messages[0].content.some((b) => b.type === 'document') ? 36000 : 10) });
+        const env = { CARROWVALE_API_KEY: KEY, CARROWVALE_SPEND_CAP_USD: '1.00', CARROWVALE_READ_LOG: path.join(dir, 'read.log'), CARROWVALE_READ_MAX_TOKENS: '24000' };
+        await serve(env, createIntake({ env, fetch: svc }), async (base) => {
+          const r = await post(`${base}/v1/intake`, { prompt: 'p', pdfs: [{ name: 'a.pdf', data: pdfData(), pages: 12, of: 12 }] });
+          assert.equal(r.status, 402);
+          assert.deepEqual(await r.json(), { ok: false, reason: 'spend_cap' });
+        });
+        assert.equal(svc.counts().length, 1);
+        assert.equal(svc.messages().length, 0);
+        const row = JSON.parse(fs.readFileSync(path.join(dir, 'read.log'), 'utf8').trim().split('\n').pop());
+        assert.equal(row.outcome, 'spend_cap');
+        assert.equal(row.counted, 36000);
+        assert.equal(row.pdfs, 1);
+        assert.equal(row.pdfPages, 12);
+      });
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  }));
+
+test('the read log line adds pdfs and pdfPages (numbers only) when PDFs were sent, and nothing else', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'intake-pdflog-'));
+  const log = path.join(dir, 'read.log');
+  try {
+    const intake = pdfIntake({ count: () => 7000 });
+    await serve({ CARROWVALE_READ_LOG: log }, intake, async (base) => {
+      const r = await post(`${base}/v1/intake`, { prompt: 'p', pdfs: [{ name: 'secret-name.pdf', data: pdfData(), pages: 5, of: 12 }, { name: 'b.pdf', data: pdfData(), pages: 3, of: 3 }] });
+      assert.equal(r.status, 200);
+      await r.text();
+    });
+    const row = JSON.parse(fs.readFileSync(log, 'utf8').trim());
+    assert.deepEqual(Object.keys(row).sort(), ['at', 'chars', 'cost', 'counted', 'ms', 'model', 'outcome', 'pdfPages', 'pdfs', 'route', 'stopReason', 'usage'].sort());
+    assert.equal(row.pdfs, 2);
+    assert.equal(row.pdfPages, 8);
+    assert.equal(row.counted, 7000);
+    assert.equal(row.outcome, 'read');
+    assert.ok(!JSON.stringify(row).includes('secret-name'));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

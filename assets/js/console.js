@@ -2499,7 +2499,7 @@
     }
     st.samples.forEach((x) => st.docs.push({ name: x.name, text: x.text, chars: x.text.length, pages: null, sha256: NS.audit.sha256(x.text), type: 'text/plain', size: new Blob([x.text]).size, file: new Blob([x.text], { type: 'text/plain' }) }));
     if (String(st.pasted).trim()) st.docs.push({ name: 'Pasted terms', text: st.pasted, chars: st.pasted.length, pages: null, sha256: NS.audit.sha256(st.pasted), type: 'text/plain', size: st.pasted.length });
-    const good = st.docs.filter((d) => d.text && d.text.trim().length > 40);
+    const good = st.docs.filter((d) => (d.text && d.text.trim().length > 40) || (d.file && typeof d.pages === 'number' && !!NS.integrations && !!NS.integrations.serverUrl(W())));
     if (!good.length) {
       st.step = 'upload';
       st.error = 'No readable text was found. A scanned PDF needs OCR first, or paste the summary of terms.';
