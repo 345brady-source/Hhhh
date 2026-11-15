@@ -20,6 +20,9 @@
  *   time         median of runs 2 to 6 at most 0.3 s
  *   determinism  all six outputs and the output of a fresh start are identical bit for bit (and finite, not all zero)
  *   console      no console message (page, frame or worker) and no error names a vendor or library
+ * Then the state upload (01.4-08, see upload() below): a train document of picture pages uploaded through the real
+ * dialog in a fresh frame, the place model started by the reading itself: upload model, upload requests, upload
+ * console, upload time (the model's seconds per picture page at most 0.3 s at the median).
  * Last line: "RUNTIME FRAME: PASS" or "RUNTIME FRAME: FAIL - ..."; exit 0 only on PASS.
  * When the proof runner, its wrapper page or the browser driver is missing: "NOT RUN: ..." and exit 2.
  */
@@ -218,6 +221,91 @@ const PAGE = async ({ H, W, n, probe, startMs }) => {
   return r;
 };
 
+/**
+ * State upload (01.4-08): a train document whose every page is a picture (a006) uploaded through the real dialog in a
+ * fresh frame; the reading runs by itself (D-13). NS.textread.page is watched (its own trace of each page's seconds,
+ * nothing else changed) so the place model's seconds per picture page are read from the page results.
+ *   upload model     the reading recorded read.modelPlaces above 0, and the model's worker and script were loaded
+ *   upload requests  from the upload on, nothing was asked of any address but the portal's own files, the script hosts
+ *                    the portal had already used, and the PDF reader the portal loads on its first PDF (its two
+ *                    script files, answered from local copies in the frame); nothing aborted
+ *   upload console   no console error and no error thrown at the page during the upload
+ *   upload time      the place model's seconds per picture page (the page result's model time: reading with the model
+ *                    minus without it) at most 0.3 s at the median
+ */
+async function upload(browser, srv) {
+  const DOC = path.join(SCRATCH, 'edgar/set-a/a006/doc.pdf');
+  if (!fs.existsSync(DOC)) return result(false, 'upload', `NOT RUN: the train document a006 is missing (${DOC})`);
+  const C = await P.newContext(browser, srv);
+  try {
+    const S = await P.openPortal(C, srv, true, '');
+    await S.P.waitForFunction(() => window.CVPortal && window.CVPortal.textread && document.readyState === 'complete', null, { timeout: 30000 });
+    const before = new Set();
+    const asked = [];
+    let watching = false;
+    C.context.on('request', (q) => (watching ? asked.push(q.url()) : before.add(new URL(q.url()).origin)));
+    const off = await P.prepare(S);
+    await S.P.evaluate(() => {
+      const NS = window.CVPortal;
+      const real = NS.textread.page;
+      window.__pages = [];
+      NS.textread.page = (pg, raw, o) =>
+        real(pg, raw, Object.assign({}, o || {}, { trace: true })).then((r) => {
+          window.__pages.push({ ms: r.trace && r.trace.ms, model: r.modelPlaces, added: r.modelAdded, picture: r.pictured === 'picture' });
+          return r;
+        });
+    });
+    const errorsFrom = S.errors.length;
+    watching = true;
+    const t0 = Date.now();
+    const up = await P.uploadDialog(S, off, DOC, 240000).catch((e) => ({ opened: false, error: String((e && e.message) || e) }));
+    // the reading has finished when the editor shows fields and nothing is busy for a second and a half
+    let quiet = 0;
+    let finished = false;
+    while (up.opened && Date.now() - t0 < 240000) {
+      await S.P.waitForTimeout(150);
+      const st = await S.P.evaluate(() => ({ busy: !!document.querySelector('[aria-busy=true], #dlg[open] button[type=submit][disabled]') || /Reading page \d+ of \d+|Finding the boxes on page \d+ of \d+|Reading [^.]{0,60}(…|\.\.\.)/.test(document.body.innerText), fields: document.querySelectorAll('.fe-doc .es-page [data-fid]').length })).catch(() => null);
+      if (st && !st.busy && st.fields > 0) {
+        quiet = quiet || Date.now();
+        if (Date.now() - quiet >= 1500) {
+          finished = true;
+          break;
+        }
+      } else quiet = 0;
+    }
+    watching = false;
+    const got = await S.P.evaluate(() => {
+      const NS = window.CVPortal;
+      const id = location.hash.replace(/^#console-envelope-/, '');
+      const env = [].concat(NS.state.ws.envelopes || [], NS.state.ws.esignTemplates || []).find((e) => e && e.id === id);
+      return { read: env && env.read ? JSON.parse(JSON.stringify(env.read)) : null, fields: env ? (env.fields || []).length : 0, pages: window.__pages || [] };
+    });
+    const read = got.read || {};
+    const pics = got.pages.filter((p) => p.picture && p.ms);
+    const own = `http://127.0.0.1:${srv.appPort}`;
+    const paths = asked.filter((u) => u.startsWith(own + '/')).map((u) => u.slice(own.length).split('?')[0]);
+    // the PDF reader the portal itself loads on its first PDF (pdf.js 3.11.174 from its script host, answered from the
+    // proof runner's local copies in the frame) is the portal's, not the model's; every other address counts
+    const READER_LIB = /^https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/pdf\.js\/3\.11\.174\/pdf(\.worker)?\.min\.js$/;
+    const outside = asked.filter((u) => !u.startsWith(own + '/') && !/^(blob|data|about):/.test(u) && !before.has(new URL(u).origin) && !READER_LIB.test(u));
+    const readerLib = asked.filter((u) => READER_LIB.test(u)).length;
+    const loaded = ['/assets/js/placemodel.js', '/assets/vendor/formread/places-worker.js', '/assets/vendor/formread/places-model.js'].filter((f) => paths.includes(f));
+    console.log(`upload: a006 (train, 14 picture pages) through the real dialog; editor ${up.opened ? 'opened' : 'NOT opened'}; reading ${finished ? 'finished' : 'NOT finished'} in ${((Date.now() - t0) / 1000).toFixed(1)} s; ${got.fields} fields`);
+    result(up.opened && finished && read.modelPlaces > 0 && loaded.length === 3, 'upload model', `read.modelPlaces ${read.modelPlaces}; places that joined what the rules found ${pics.reduce((a, p) => a + (p.added || 0), 0)}; picture pages read ${pics.length}; the model's files loaded: ${loaded.join(', ') || 'none'}${up.error ? '; upload: ' + up.error : ''}`);
+    result(outside.length === 0 && C.net.aborted.length === 0, 'upload requests', `${asked.length} requests from the upload on, ${paths.length} of them to the portal's own server (the model's: ${Array.from(new Set(paths.filter((p) => /formread|placemodel/.test(p)))).join(', ')}); ${readerLib} the portal's own PDF reader files; to other addresses: ${outside.length ? JSON.stringify(outside.slice(0, 4)) : 'none'}; aborted: ${C.net.aborted.length}`);
+    const errs = S.errors.slice(errorsFrom);
+    result(errs.length === 0, 'upload console', `${errs.length} console errors or errors thrown at the page${errs.length ? ': ' + JSON.stringify(errs.slice(0, 3)).slice(0, 400) : ''}`);
+    const ms = pics.map((p) => p.ms.model).sort((a, b) => a - b);
+    const median = ms.length ? (ms.length % 2 ? ms[(ms.length - 1) / 2] : (ms[ms.length / 2 - 1] + ms[ms.length / 2]) / 2) : NaN;
+    const rest = pics.map((p) => p.ms.draw + p.ms.find + p.ms.read).sort((a, b) => a - b);
+    result(ms.length > 0 && median <= TIME_MS, 'upload time', `the place model's seconds per picture page (ms): ${pics.map((p) => p.ms.model).join(' ')}; median ${(median / 1000).toFixed(3)} s (at most ${(TIME_MS / 1000).toFixed(1)} s; the first page includes the model's start); the rest of each page's reading, median ${(rest[Math.floor(rest.length / 2)] / 1000).toFixed(3)} s`);
+  } catch (e) {
+    result(false, 'upload', String((e && e.message) || e).slice(0, 300));
+  } finally {
+    await C.context.close().catch(() => {});
+  }
+}
+
 (async () => {
   const srv = await P.startServers();
   const browser = await chromium.launch();
@@ -284,6 +372,7 @@ const PAGE = async ({ H, W, n, probe, startMs }) => {
     result(named.length === 0, 'console', `${consoleLines.length} console messages, ${S.errors.length} errors; naming a vendor or library: ${named.length ? JSON.stringify(named.slice(0, 3)) : 'none'}`);
     if (consoleLines.length) console.log('  console (first 5): ' + JSON.stringify(consoleLines.slice(0, 5)).slice(0, 800));
     if (r.thrown) console.log('  thrown in the page: ' + r.thrown);
+    await upload(browser, srv);
   } catch (e) {
     fails.push('the run: ' + String((e && e.message) || e).slice(0, 300));
     console.log('FAIL run: ' + String((e && e.message) || e).slice(0, 300));
