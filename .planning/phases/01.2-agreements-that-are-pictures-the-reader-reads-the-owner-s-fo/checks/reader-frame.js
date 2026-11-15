@@ -29,8 +29,8 @@
  *
  * --form reads the owner's form inside the same frame (worker files served plainly, .gz and .gz.txt answered 404,
  * nothing added to the framed page: the portal loads its reader itself): the sample firm's offering is made ready,
- * the form goes through the real upload dialog, "Read these pages from their picture" is pressed and the reading is
- * waited for, then the fields are read from the editor. Required: the count of fields by kind, by owner and by kind
+ * the form goes through the real upload dialog, its picture pages are read during that first reading with nothing
+ * pressed (no offer to read pictures may appear), the reading is waited for, then the fields are read from the editor. Required: the count of fields by kind, by owner and by kind
  * and owner together equals the answer sheet's (computed from the sheet; the kinds and owners told by the scorer's
  * own rules, taken from its source); every field is marked; no request to another host was aborted; the frame holds
  * no policy refusal; every reader file answered came from the framed portal's own origin and folder (assets/) and
@@ -458,9 +458,9 @@ const showTally = (t) =>
     .map((k) => `${k} ${t[k]}`)
     .join(', ');
 
-/** The owner's form read inside the frame: the real upload dialog, the offer, the editor's fields against the sheet. */
+/** The owner's form read inside the frame: the real upload dialog reading its pictures by itself, the editor's fields against the sheet. */
 async function form() {
-  console.log("FORM: the owner's form inside the frame, through the upload dialog and the offer; worker files served plainly; .gz and .gz.txt answered 404");
+  console.log("FORM: the owner's form inside the frame, through the upload dialog, its pictures read with no click; worker files served plainly; .gz and .gz.txt answered 404");
   const R = scorerRules();
   if (!R) notRun(`the scorer's rules for kinds and owners (KIND_MAP, OWNER_RULES, ownerOf, OWNER_OK) were not found in ${SCORER}`);
   const sheet = JSON.parse(fs.readFileSync(SHEET, 'utf8'));
@@ -481,48 +481,33 @@ async function form() {
       (r) => (up = r),
       (e) => (up = { opened: false, error: String((e && e.message) || e) })
     );
-    // the offer: in the dialog or in the editor, once it can be pressed
-    const t0 = Date.now();
-    let btn = null;
-    while (Date.now() - t0 < FORM_MS) {
-      const b = S.P.locator('button:visible, a:visible, [role=button]:visible').filter({ hasText: OFFER_RE }).first();
-      if ((await b.count().catch(() => 0)) && !(await b.isDisabled().catch(() => true))) {
-        btn = b;
-        break;
-      }
-      if (up && !up.opened) break;
-      await S.P.waitForTimeout(200);
-    }
-    const before = await S.P.evaluate(() => document.querySelectorAll('.fe-doc .es-page [data-fid]').length).catch(() => -1);
-    if (!btn) {
-      need(false, `form: the offer "Read these pages from their picture" did not appear (${up ? (up.error || 'the dialog said: ' + (up.said || []).join(' | ')).slice(0, 300) : 'still uploading after ' + FORM_MS / 1000 + ' s'})`);
-      return;
-    }
-    const where = await btn.evaluate((e) => (e.closest('#dlg') ? 'the upload dialog' : 'the editor')).catch(() => '?');
-    console.log(`  upload: the offer appeared in ${where} after ${((Date.now() - t0) / 1000).toFixed(1)} s, with ${Math.max(0, before)} fields on the pages before it was pressed`);
-    need(before <= 0, `form: ${before} fields were on the pages before the offer was pressed`);
+    // D-13: the sponsor only uploads. The pictures are read during the upload's own reading; no offer to read them may
+    // appear, in the dialog or in the editor.
     const snap = () =>
       S.P.evaluate(
-        (busy) => {
-          const m = document.body.innerText.match(new RegExp(busy));
+        (a) => {
+          const m = document.body.innerText.match(new RegExp(a.busy));
+          const offer = Array.from(document.querySelectorAll('button, a, [role=button]')).some((e) => e.offsetParent !== null && new RegExp(a.offer, 'i').test(e.textContent || ''));
           return {
             progress: m ? m[0] : '',
             busy: !!m || !!document.querySelector('[aria-busy=true], #dlg[open] button[type=submit][disabled]'),
             editor: /^#console-envelope-/.test(location.hash) && !!document.querySelector('.fe-doc .es-page'),
-            fields: document.querySelectorAll('.fe-doc .es-page [data-fid]').length
+            fields: document.querySelectorAll('.fe-doc .es-page [data-fid]').length,
+            offer: offer || !!document.querySelector('[data-action="es-read-pictures"], .es-offer')
           };
         },
-        BUSY_RE.source
+        { busy: BUSY_RE.source, offer: OFFER_RE.source }
       ).catch(() => null);
     const t1 = Date.now();
-    await btn.click();
     let quiet = 0;
     let progress = 0;
     let finished = false;
+    let offered = false;
     while (Date.now() - t1 < FORM_MS) {
       await S.P.waitForTimeout(150);
       const st = await snap();
       if (!st) continue;
+      if (st.offer) offered = true;
       if (st.progress || st.busy) progress++;
       if (!st.busy && st.editor && st.fields > 0) {
         quiet = quiet || Date.now();
@@ -531,6 +516,13 @@ async function form() {
           break;
         }
       } else quiet = 0;
+      if (up && !up.opened) break;
+    }
+    console.log(`  upload: ${offered ? 'an offer to read pictures APPEARED' : 'no offer to read pictures appeared'}; the pictures were read during the upload's first reading`);
+    need(!offered, 'form: an offer to read the pages from their picture appeared; the pictures must be read on upload with no click');
+    if (up && !up.opened && !finished) {
+      need(false, `form: the upload did not open the editor (${(up.error || 'the dialog said: ' + (up.said || []).join(' | ')).slice(0, 300)})`);
+      return;
     }
     const ms = Date.now() - t1 - (finished ? 1500 : 0);
     await Promise.race([upload, new Promise((r) => setTimeout(r, 5000))]);

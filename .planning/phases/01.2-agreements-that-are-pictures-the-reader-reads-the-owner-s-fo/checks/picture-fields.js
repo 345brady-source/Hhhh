@@ -8,7 +8,7 @@
  *             NS.textread gives (found with bands and col, lines, heads, reader) with invented captions: one case for
  *             each kind rule (K1 to K6), each owner rule (O1 to O7), each trap, the deciding word lists, the
  *             same-size rule, two boxes that touch, and a page whose words could not be read
- *   owners    the owner's form uploaded as the upload form does and its text-less pages read (the offer's action):
+ *   owners    the owner's form uploaded as the upload form does, its text-less pages read on upload with no click:
  *             each field against its place of the answer sheet (centre inside the place grown by 3 pt): the investor's
  *             signer, the co-investor's, or somebody else's (NS.placement.isOther), optional, marked, named for the
  *             party, drawn with the class is-else and "for someone else" in its spoken name; a second investor's
@@ -27,7 +27,7 @@
  *             progress is called once for each page in page order; page 1 has its words, later pages only their boxes
  *             (reader 'limit'); every found empty box still has a field; on those pages each field is named by its
  *             shape and marked; the summary names exactly those pages with the limit's sentence; no page is unread
- *   confirm   through the screen, 1440 wide: the form's draft opened in the editor and the offer's button pressed; each
+ *   confirm   through the screen, 1440 wide: the form's draft read on upload and opened in the editor, no offer shown; each
  *             page's "I have checked this page" in the "To review" list takes away exactly that page's marks whose only
  *             reason is the picture (checkBy 'page'); the marks left are the fields whose caption was not read or whose
  *             owner is in doubt, each confirmed by its own buttons, and the agreement then saves, ready for investors.
@@ -720,13 +720,12 @@ async function openForm(h, opts) {
       const ws = NS.state.ws;
       const off = ws.offerings[ws.offerings.length - 1];
       const file = new File([new Uint8Array(arr)], 'Agreement.pdf', { type: 'application/pdf' });
+      // D-13: the upload's own reading reads the pages with no text from their picture; nothing is pressed.
       const env = await NS.esign.agreementDraft(ws, off.id, { file, title: 'Subscription Agreement' });
       const before = env.fields.length;
-      const asked = !!(env.read && env.read.scanned && env.read.scanned.length);
-      // The offer's action: the pages with no text read from their picture.
-      await NS.esignKit.rereadAgreement(env, { pictures: true });
+      const auto = !!(env.read && env.read.ok && (env.read.pictured || []).length && !(env.read.scanned || []).length && before > 0);
       NS.app.save(true);
-      return { envId: env.id, before, asked, offId: off.id };
+      return { envId: env.id, before, auto, offId: off.id };
     },
     { arr: Array.from(bytes) }
   );
@@ -1043,16 +1042,37 @@ async function confirmPart(h) {
   const page = await H.signUp(h);
   await page.setViewportSize({ width: 1440, height: 1000 });
   const { envId, offId } = await openDraft(page, PDF);
-  await page.waitForSelector('[data-action="es-read-pictures"]', { timeout: 30000 });
-  await page.click('[data-action="es-read-pictures"]');
-  await page.waitForFunction(
-    (id) => {
-      const e = window.CVPortal.state.ws.envelopes.find((x) => x.id === id);
-      return !!(e && e.read && e.read.asked && !document.querySelector('[data-action="es-read-pictures"]') && document.querySelectorAll('.es-editor .es-fld').length);
-    },
-    envId,
-    { timeout: 240000 }
-  );
+  // D-13: the first reading reads the pictures by itself. Waited for: no progress text for one second and the editor
+  // shows fields; no offer to read pictures is ever shown.
+  {
+    const t0 = Date.now();
+    let quiet = 0;
+    let offered = false;
+    let done = false;
+    while (Date.now() - t0 < 240000) {
+      const st = await page.evaluate(
+        (id) => {
+          const e = window.CVPortal.state.ws.envelopes.find((x) => x.id === id);
+          return {
+            busy: /Reading page \d+ of \d+|Finding the boxes on page \d+ of \d+|Reading the PDF/.test(document.body.innerText),
+            offer: !!document.querySelector('[data-action="es-read-pictures"], .es-offer'),
+            fields: !!(e && e.read && e.read.ok && document.querySelectorAll('.es-editor .es-fld').length)
+          };
+        },
+        envId
+      );
+      if (st.offer) offered = true;
+      if (!st.busy && st.fields) {
+        quiet = quiet || Date.now();
+        if (Date.now() - quiet >= 1000) {
+          done = true;
+          break;
+        }
+      } else quiet = 0;
+      await page.waitForTimeout(150);
+    }
+    if (!done || offered) throw new Error(`confirm: the first reading ${done ? 'finished' : 'had NOT finished after 240 s'}; an offer to read pictures was ${offered ? 'SHOWN' : 'not shown'}`);
+  }
   await page.waitForTimeout(300);
   const s0 = await marksOf(page, envId);
   const marks = s0.filter((f) => f.review);
@@ -1166,8 +1186,9 @@ async function confirmPart(h) {
     const doc = ['owners', 'edges', 'signing', 'twice', 'summary'].filter((p) => PARTS.includes(p));
     if (doc.length) {
       const one = await openForm(h);
-      line(one.asked, 'the form\'s pages have no text and nothing is placed before the offer is taken');
       const d = await draftFields(one.page, one.envId);
+      const offered = await one.page.evaluate(() => !!document.querySelector('[data-action="es-read-pictures"], .es-offer') || /read (these|the|those)? ?pages? from (their|its|the) pictures?/i.test(Array.from(document.querySelectorAll('button')).map((b) => b.textContent).join(' | ')));
+      line(one.auto && !offered, `the form's pages are read from their picture on upload with no click, and no offer is shown (${one.before} fields placed by the upload's reading; offer ${offered ? 'SHOWN' : 'none'})`);
       if (PARTS.includes('owners')) owners(d);
       if (PARTS.includes('edges')) edges(d, await finderBoxes(one.page));
       if (PARTS.includes('summary')) summary(d);
