@@ -441,6 +441,33 @@
     return (raw.blobs || []).filter((b) => b.y1 - b.y0 <= 40).length >= LETTER_SHAPES ? 'drawings' : '';
   }
 
+  /**
+   * The free stretches of a drawn rule with captions standing on it: the words on it in groups (a new group at a gap of
+   * 12 pt or more); with two groups or more (least), each stretch of 18 pt or more after a group, from just past the group's
+   * last character to just before the next group (or the rule's end). null when the rule is not so captioned: one
+   * group, a group that reads as a sentence, or no stretch.
+   */
+  function inlineStretches(l, on, least) {
+    const ws = on.slice().sort((a, b) => a.x0 - b.x0);
+    const groups = [];
+    ws.forEach((g) => {
+      const last = groups[groups.length - 1];
+      if (last && g.x0 - last.x1 < 12) {
+        last.x1 = Math.max(last.x1, g.x1);
+        last.s += (g.x0 - last.x1 > 0.18 * g.h ? ' ' : '') + g.u;
+      } else groups.push({ x0: g.x0, x1: g.x1, s: g.u });
+    });
+    // (a group that reads as a sentence, or a numbered heading: no captions)
+    if (groups.length < (least || 2) || groups.some((g) => g.s.length > 40 || /[.;!?]["\u201D)]*$/.test(g.s)) || /^\(?([0-9]{1,2}|[A-Za-z]|[IVXivx]{1,4})[.)]$/.test(groups[0].s)) return null;
+    const out = [];
+    groups.forEach((g, k) => {
+      const x0 = g.x1 + 1;
+      const x1 = k + 1 < groups.length ? groups[k + 1].x0 - 1 : l.x1;
+      if (x1 - x0 >= 18) out.push({ x0, x1, caption: g.s });
+    });
+    return out.length ? out : null;
+  }
+
   /** What placement reads of one page. raw: from walk(); size: { page, w, h }; forms: the PDF's form fields on it (already in displayed points). */
   function page(raw, size, forms) {
     const out = { page: size.page, w: size.w, h: size.h, items: [], rules: [], boxes: [], forms: [], filled: [], scan: false };
@@ -514,6 +541,21 @@
       if (out.boxes.some((b) => ov(b.x, b.x + b.w, r.x0, r.x1) > 0.5 * w && ov(b.y, b.y + b.h, r.y0, r.y1) > 0.5 * hh)) return;
       out.boxes.push({ x: r.x0, y: r.y0, w, h: hh, made: 'square' });
     });
+    // "|_|" typed as a box in plain text: two bars around one to three underscores (or spaces), no wider than three heights.
+    for (let i = 0; i < shown.length - 2; i++) {
+      const open = shown[i];
+      if (open.u !== '|' || open.sp) continue;
+      let j = i + 1;
+      while (j < shown.length && j - i <= 4 && (shown[j].sp || shown[j].u === '_') && Math.abs(shown[j].y - open.y) < 0.5) j++;
+      const end = shown[j];
+      if (j === i + 1 || !end || end.u !== '|' || Math.abs(end.y - open.y) >= 0.5 || end.x1 - open.x0 < 5 || end.x1 - open.x0 > 3 * open.h) continue;
+      // (a bar that touches a word, or a row of bars, is a table drawn in characters)
+      const before = shown[i - 1];
+      const after = shown[j + 1];
+      if ((before && !before.sp && Math.abs(before.y - open.y) < 0.5 && open.x0 - before.x1 < 0.2 * open.h) || (after && after.u === '_')) continue;
+      out.boxes.push({ x: open.x0, y: open.y - 0.75 * open.h, w: end.x1 - open.x0, h: 0.95 * open.h, made: 'bars' });
+      i = j;
+    }
     for (let i = 0; i < shown.length - 1; i++) {
       const open = shown[i];
       if (open.u !== '[' && open.u !== '(') continue;
@@ -671,10 +713,39 @@
       // line is an answer already given, and an answered blank gets no field.
       const dotted = l.made.indexOf('leader') >= 0;
       const on = words.filter((g) => !(dotted && /^[.\-\u2013\u2014\u2017]$/.test(g.u)) && l.y - g.y > -1.5 && l.y - g.y < 0.35 * g.h + 1.5 && ov(g.x0, g.x1, l.x0, l.x1) > 0.5 * (g.x1 - g.x0));
+      // Small captions set right on a drawn rule, their baselines up to 6 pt over it ("First Name ____ (MI) __ Last
+      // Name ____"): the free stretches after them are blanks of their own. Not words set larger than the body text,
+      // nor a heading in capitals (a rule under a heading).
+      if (!typed && !raw.pictured && !l.frame) {
+        const near = words.filter((g) => l.y - g.y > -1.5 && l.y - g.y <= 6 && ov(g.x0, g.x1, l.x0, l.x1) > 0.5 * (g.x1 - g.x0));
+        const coveredNear = near.reduce((s, g) => s + Math.max(0, ov(g.x0, g.x1, l.x0, l.x1)), 0);
+        const firstNear = near.length ? Math.min.apply(null, near.map((g) => g.x0)) : Infinity;
+        const caps = near.filter((g) => /[A-Za-z]/.test(g.u));
+        const heading = caps.length >= 6 && caps.every((g) => g.u === g.u.toUpperCase());
+        // (words that run on to the rule from before its start are a line of text, not captions of their own)
+        const f0 = near.find((g) => g.x0 === firstNear);
+        const runIn = !!f0 && words.some((g) => g !== f0 && Math.abs(g.y - f0.y) < 0.5 && g.x0 < l.x0 - 1 && g.x1 <= f0.x0 + 0.5 && f0.x0 - g.x1 < 0.3 * g.h);
+        const st = near.length && near.length > on.length && coveredNear < 0.45 * w && firstNear <= l.x0 + 6 && !heading && !runIn && near.every((g) => g.h <= 1.1 * body) ? inlineStretches(l, near, w <= 0.5 * size.w ? 1 : 2) : null;
+        if (st) {
+          st.forEach((x) => out.rules.push({ x0: x.x0, x1: x.x1, y: l.y, low: l.low, clear: emptyAbove(x.x0, x.x1, l.y), made: l.made, cut: false, inline: true, cell: false, table: walls.length > 0, bracketed }));
+          return;
+        }
+      }
       if (on.length) {
         const covered = on.reduce((s, g) => s + Math.max(0, ov(g.x0, g.x1, l.x0, l.x1)), 0);
         const first = Math.min.apply(null, on.map((g) => g.x0));
         const end = Math.max.apply(null, on.map((g) => g.x1));
+        // Several captions standing on one drawn rule ("First Name ____ (MI) __ Last Name ____"): each free stretch of
+        // 18 pt or more after a caption is a blank of its own (see inlineStretches).
+        const stretches = !typed && !raw.pictured && covered < 0.45 * w && first <= l.x0 + 6 ? inlineStretches(l, on) : null;
+        if (stretches) {
+          const walls0 = vs.filter((v) => v.c >= l.x0 - 1.5 && v.c <= l.x1 + 1.5 && v.a0 <= l.y + 1.5 && v.a1 >= l.y - 1.5);
+          stretches.forEach((st) => {
+            const c = raw.pictured ? Math.min(emptyAbove(st.x0, st.x1, l.y), Math.max(0, l.y)) : emptyAbove(st.x0, st.x1, l.y);
+            out.rules.push({ x0: st.x0, x1: st.x1, y: l.y, low: l.low, clear: c, made: l.made, cut: false, inline: true, cell: false, table: walls0.length > 0, bracketed });
+          });
+          return;
+        }
         if (typed || covered >= 0.45 * w || first > l.x0 + 6 || l.x1 - end < 36) return;
         // On a page read from its picture, words at the start of a line whose label already stands before it are an
         // answer written on the line (a date, a name filled in), not a label: the blank is answered.

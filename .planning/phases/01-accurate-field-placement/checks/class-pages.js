@@ -127,6 +127,43 @@ ${at(90, 100, 10, `${fallback('o', 'Pay distributions in cash')}&nbsp; Pay distr
 ${['The value of the units may go down as well as up and past results do not guide the future.', 'There is no public market for the units and none is expected to develop for many years to come.', 'The manager may call for capital at short notice and a late payment may cost the investor dearly.'].map((s, i) => at(90, 122 + i * 18, 9, `o&nbsp; ${s}`)).join('')}`)
   },
 
+  /* ---------- typed and drawn squares, short-rule choices, lines shared by captions (Phase 01.4 classes 23, 20, 5) ---------- */
+  // Three tick boxes beside options: "[ ]" typed with a non-breaking space inside, a drawn square of 7 pt, and "|_|"
+  // typed in a fixed-pitch font (a plain-text filing's box). One tick field each.
+  typedBoxMissed: {
+    html: pg(`${words(72, 80, 'Send reports by (check all that apply):')}
+${at(90, 100, 10, `<span data-k="bracket" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false })}'>[&nbsp;]</span> Post`)}
+${at(90, 118, 10, `<span class="sq" style="width:7pt;height:7pt" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false })}'></span> E-mail`)}
+${at(90, 136, 10, `<span style="font-family:'Courier New',monospace"><span data-k="bracket" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false })}'>|_|</span> Fax</span>`)}`)
+  },
+  // Three options under a choose-one caption, each opening with a drawn rule of 14 pt (shorter than any blank): three
+  // tick fields on the rules, and no text field.
+  shortRuleChoice: {
+    html: pg(`${words(72, 80, 'Tax status of the investor (choose one):')}
+${['A natural person resident in the country', 'A company formed in the country', 'Any other person'].map((l, i) => at(90, 100 + i * 20, 10, `<span class="rule" style="width:14pt" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false })}'></span>&nbsp;&nbsp;${l}`)).join('')}`)
+  },
+  // One drawn rule of 400 pt with three captions printed under it, each at the start of its part: three text fields,
+  // the first from the rule's start, each ending 8 pt before the next caption.
+  lineCaptionsUnder: {
+    html: pg(`${words(72, 80, '<b>INVESTOR DETAILS</b>', 11)}${stroke(72, 130, 400, SW)}
+${at(72, 134, 8, 'Name of Investor')}${at(250, 134, 8, 'Tax Identification Number')}${at(380, 134, 8, 'Date of Birth')}
+${['72:242', '250:372', '380:472'].map((x) => { const [a, b] = x.split(':').map(Number); return `<span data-k="rule" data-x='${attr({ type: 'text', role: 'investor' })}' style="position:absolute;left:${a}pt;top:${116 + SW}pt;width:${b - a}pt;height:14pt"></span>`; }).join('')}`),
+  },
+  // Captions standing on one drawn rule: "City", then a free stretch, "State", a free stretch, "Zip", a free stretch.
+  // Three text fields, one on each stretch.
+  lineInlineCaptions: {
+    html: pg(`${words(72, 80, 'Mailing address of the investor:')}
+<div style="position:absolute;left:72pt;top:100pt;display:inline-block;border-bottom:.75pt solid #000;font-size:10pt;line-height:1.15;white-space:nowrap">City<span data-k="rule" style="display:inline-block;width:200pt;height:10pt" data-x='${attr({ type: 'text', role: 'investor' })}'></span>State<span data-k="rule" style="display:inline-block;width:90pt;height:10pt" data-x='${attr({ type: 'text', role: 'investor' })}'></span>Zip<span data-k="rule" style="display:inline-block;width:60pt;height:10pt" data-x='${attr({ type: 'text', role: 'investor' })}'></span></div>`)
+  },
+  // Guard: a heading with a drawn rule right under it, and a rule set between two blocks right above the printed name of
+  // a party (a separator, nothing to write on). No field.
+  lineDecorationGuard: {
+    guard: true,
+    html: pg(`${at(72, 80, 12, '<b>PART 3. REPRESENTATIONS OF THE INVESTOR</b>')}${stroke(72, 96, 300, SW)}
+${words(72, 104, 'The investor confirms that it has read the memorandum and understands the risks set out in it.')}
+${words(72, 120, 'The investor confirms that it is acquiring the units for its own account and not for resale.')}
+${stroke(72, 168, 468, SW)}${at(72, 176, 11, '<b>NORTHGATE FUND I, LP</b>')}${words(72, 194, 'A limited partnership formed under the laws of the State of Delaware.')}`)
+  },
   /* ---------- places for somebody else ---------- */
   // An investor block and, lower on the same page, a heading in capitals ending in a colon that names a custodian and
   // says it applies only in some cases, with six blanks under it: four labelled, two unlabelled lines under the address.

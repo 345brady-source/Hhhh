@@ -456,6 +456,67 @@
       .replace(/\s+/g, ' ')
       .trim();
 
+  /**
+   * Short rules that are places to tick a choice: shorter than MIN_RULE (and 9 pt or more), each opening its printed line
+   * (nothing but a list mark before it) with an option's words starting within 40 pt after it, in a group of two or
+   * more at the same left edge (within 4 pt) no more than three printed lines apart. Returns a Set of the rules.
+   */
+  function shortRuleChoices(rules, lines) {
+    const opening = (r) => {
+      if (r.cell || r.table || r.x1 - r.x0 >= MIN_RULE - 1 || r.x1 - r.x0 < 9) return false;
+      const ln = lines.find((l) => r.y - l.y >= -0.3 * l.h && r.y - l.y <= 0.9 * l.h);
+      if (!ln) return false;
+      const before = ln.parts.filter((p) => p.x1 <= r.x0 + 1 && p.t === 'text');
+      if (before.some((p) => !LIST_MARK.test(p.s))) return false;
+      const next = ln.parts.find((p) => p.t === 'text' && p.x0 >= r.x1 - 1);
+      return !!next && next.x0 - r.x1 <= 40 && /[A-Za-z]/.test(next.s) ? ln : false;
+    };
+    const cands = rules.map((r) => ({ r, ln: r ? opening(r) : false })).filter((c) => c.ln);
+    const out = new Set();
+    cands.forEach((c) => {
+      if (cands.some((o) => o !== c && Math.abs(o.r.x0 - c.r.x0) <= 4 && Math.abs(o.r.y - c.r.y) <= 3.5 * Math.max(c.ln.h, o.ln.h))) {
+        out.add(c.r);
+        c.r.choice = true;
+      }
+    });
+    return out;
+  }
+
+  /**
+   * The captions printed under one long rule (150 pt or more, no label of its own before it): the words of the first
+   * printed line under it (0.6 to 2.2 of its height below), in groups (a new group at a gap of more than 12 pt), when
+   * that line holds only words, two groups or more, none a sentence. null otherwise.
+   */
+  function captionGroups(r, lines) {
+    if (r.cell || r.table || r.cut || r.x1 - r.x0 < 150) return null;
+    const cap = lines.filter((ln) => ln.y - r.y >= 0.6 * ln.h && ln.y - r.y <= 2.2 * ln.h).sort((a, b) => a.y - b.y)[0];
+    if (!cap || lines.some((ln) => Math.abs(ln.y - r.y) < 0.6 * ln.h && ln.parts.some((p) => p.t === 'text' && p.x1 <= r.x0 + 2 && r.x0 - p.x1 < 40))) return null;
+    const groups = [];
+    cap.parts.forEach((p) => {
+      if (p.t !== 'text' || p.x0 < r.x0 - 6 || p.x1 > r.x1 + 6) return;
+      const g = groups[groups.length - 1];
+      if (g && p.x0 - g.x1 <= 12) {
+        g.x1 = p.x1;
+        g.s += ' ' + p.s;
+      } else groups.push({ x0: p.x0, x1: p.x1, s: p.s });
+    });
+    if (groups.length < 2 || cap.parts.some((p) => p.t !== 'text') || groups.some((g) => g.s.length > 60 || /[.;!?]$/.test(g.s))) return null;
+    return groups;
+  }
+  /**
+   * A rule cut at its captions: one stretch for each group, from the group's start (the rule's start for the first) to
+   * 8 pt before the next group (the rule's end for the last). null when a stretch would be shorter than a blank.
+   */
+  function splitAtCaptions(r, groups) {
+    const pad = r.pad || { l: 0, r: 0, d: 0 };
+    const cutUp = groups.map((g, k) => {
+      const x0 = k ? g.x0 : r.x0;
+      const x1 = k + 1 < groups.length ? groups[k + 1].x0 - 8 : r.x1;
+      return Object.assign({}, r, { x0, x1, split: r, pad: { l: k ? 0 : pad.l, r: k + 1 < groups.length ? 0 : pad.r, d: pad.d } });
+    });
+    return cutUp.some((c) => c.x1 - c.x0 < MIN_RULE) ? null : cutUp;
+  }
+
   /** One page's text and printed places as printed lines whose elements are text segments, blanks and tick boxes. */
   function layout(pg) {
     const lines = linesOf(pg);
@@ -467,32 +528,19 @@
     // is no blank either: the row's blank is the empty cell. (A drawn cell was already found empty where it is read:
     // the caption printed just over a shallow cell is not in it.)
     const filled = (r) => !r.cell && r.table && r.clear < 12 && lines.some((ln) => ln.parts.some((p) => p.t === 'text' && p.y < r.y - 2 && p.y > r.y - r.clear - p.h && overlap(p.x0, p.x1, r.x0, r.x1) > 0));
-    const rules = (pg.rules || []).filter((r) => r && r.x1 - r.x0 >= MIN_RULE - 1 && r.clear >= TIGHT_CLEAR && !filled(r) && !boxes.some((b) => r.x0 >= b.x0 - 1.5 && r.x1 <= b.x1 + 1.5 && r.y >= b.y0 - 1.5 && r.y <= b.y1 + 1.5));
+    // A short rule (under the shortest blank, 9 pt or more) directly before an option's words, with another such rule at
+    // the same left edge within three printed lines: a place to tick a choice (shortRuleChoice), kept like a blank so
+    // that it is read as one (step 2, "a short blank that opens a line").
+    const choiceRules = shortRuleChoices(pg.rules || [], lines);
+    const rules = (pg.rules || []).filter((r) => r && (r.x1 - r.x0 >= MIN_RULE - 1 || choiceRules.has(r)) && r.clear >= TIGHT_CLEAR && !filled(r) && !boxes.some((b) => r.x0 >= b.x0 - 1.5 && r.x1 <= b.x1 + 1.5 && r.y >= b.y0 - 1.5 && r.y <= b.y1 + 1.5));
     // One line shared by several captions printed under it ("Name of Subscriber ... Social Security Number", two
-    // signatures on one rule): the line is cut at its captions, one blank for each.
+    // signatures on one rule): the line is cut at its captions, one blank for each. (Captions standing on a drawn rule
+    // are cut where the rule is read, NS.anchors.page: those stretches come here already cut.)
     for (let i = rules.length - 1; i >= 0; i--) {
       const r = rules[i];
-      if (r.cell || r.table || r.cut || r.x1 - r.x0 < 150) continue;
-      const cap = lines.filter((ln) => ln.y - r.y >= 0.6 * ln.h && ln.y - r.y <= 2.2 * ln.h).sort((a, b) => a.y - b.y)[0];
-      if (!cap || lines.some((ln) => Math.abs(ln.y - r.y) < 0.6 * ln.h && ln.parts.some((p) => p.t === 'text' && p.x1 <= r.x0 + 2 && r.x0 - p.x1 < 40))) continue;
-      const groups = [];
-      cap.parts.forEach((p) => {
-        if (p.t !== 'text' || p.x0 < r.x0 - 6 || p.x1 > r.x1 + 6) return;
-        const g = groups[groups.length - 1];
-        if (g && p.x0 - g.x1 <= 12) {
-          g.x1 = p.x1;
-          g.s += ' ' + p.s;
-        } else groups.push({ x0: p.x0, x1: p.x1, s: p.s });
-      });
-      if (groups.length < 2 || cap.parts.some((p) => p.t !== 'text') || groups.some((g) => g.s.length > 60 || /[.;!?]$/.test(g.s))) continue;
-      const pad = r.pad || { l: 0, r: 0, d: 0 };
-      const cutUp = groups.map((g, k) => {
-        const x0 = k ? g.x0 : r.x0;
-        const x1 = k + 1 < groups.length ? groups[k + 1].x0 - 8 : r.x1;
-        return Object.assign({}, r, { x0, x1, split: r, pad: { l: k ? 0 : pad.l, r: k + 1 < groups.length ? 0 : pad.r, d: pad.d } });
-      });
-      if (cutUp.some((c) => c.x1 - c.x0 < MIN_RULE)) continue;
-      rules.splice.apply(rules, [i, 1].concat(cutUp));
+      const groups = captionGroups(r, lines);
+      const cutUp = groups && splitAtCaptions(r, groups);
+      if (cutUp) rules.splice.apply(rules, [i, 1].concat(cutUp));
     }
     // A table row whose label does not fill its cell: the stretch after the label is the blank only when the cell
     // beside it is not an empty one (then that cell is).
@@ -569,7 +617,7 @@
         // Underscores or a leader are a blank only where a printed line was read for them.
         const r = pair.get(p);
         if (!r || (r.clear < BLANK_CLEAR && p.t !== 'gap')) return;
-        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, leader: /leader/.test(r.made || ''), cut: !!r.cut, cell: !!r.cell, table: !!r.table };
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, leader: /leader/.test(r.made || ''), cut: !!r.cut, cell: !!r.cell, table: !!r.table, choice: !!r.choice };
         slot.line = ln;
         slot.fromText = true;
         slot.src = p.src;
@@ -580,7 +628,7 @@
         if (taken.has(r) || r.clear < BLANK_CLEAR) return;
         // A stroke inside a run of words (two underscores in a name, a dash) is part of the text, not a blank.
         if (ln.parts.some((p) => p.t === 'text' && overlap(p.x0, p.x1, r.x0, r.x1) >= 0.6 * (r.x1 - r.x0))) return;
-        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, leader: /leader/.test(r.made || ''), line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table, mark: r.mark || null };
+        const slot = { x0: r.x0, x1: r.x1, y: r.y, clear: r.clear, pad: r.pad, split: r.split || null, bracketed: !!r.bracketed, leader: /leader/.test(r.made || ''), line: ln, fromText: false, cut: !!r.cut, cell: !!r.cell, table: !!r.table, mark: r.mark || null, choice: !!r.choice };
         slots.push(slot);
         els.push({ t: 'slot', key: r.x0, slot });
       });
@@ -992,6 +1040,11 @@
           const stmt = ln.els.slice(e.i + 1).find((o) => o.t !== 'seg' || !LIST_MARK.test(o.seg.s));
           const m = propose('initials', slot, null, { seg: stmt && stmt.t === 'seg' ? stmt.seg : null, how: 'after', required: mate.slot.made.p.required });
           return m;
+        }
+        // A short rule of a group of choices (shortRuleChoices) is a place to tick, whatever its option's words say.
+        if (slot.choice && opens) {
+          const stmt = ln.els.slice(e.i + 1).find((o) => o.t !== 'seg' || !LIST_MARK.test(o.seg.s));
+          if (stmt && stmt.t === 'seg') return tick(slot, stmt.seg.s, stmt.seg, false);
         }
         if ((opens || rowTick) && span <= 60) {
           const stmt = ln.els.slice(e.i + 1).find((o) => o.t !== 'seg' || !LIST_MARK.test(o.seg.s));
