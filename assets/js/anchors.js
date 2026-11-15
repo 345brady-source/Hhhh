@@ -468,6 +468,54 @@
     return out.length ? out : null;
   }
 
+  /**
+   * A run of hyphens, en or em dashes typed as a blank (plain-text filings: "Name: ------------", "the sum of $--------
+   * for ..."): 6 or more of them, 24 pt or longer. Not a blank: a run alone on its line across more than 72 percent of
+   * the column (a separator), a run alone on its line right under words of about its own width that start where it
+   * starts (a heading's underline, a table's column rule), a run that touches a "+" or "|" (a table drawn in
+   * characters), or a leader that ends in a page number (a table of contents).
+   */
+  function hyphenBlank(ld, ink, colW) {
+    if (ld.n < 6 || ld.x1 - ld.x0 < 24) return false;
+    const dash = (g) => /^[\-\u2013\u2014]$/.test(g.u);
+    const line0 = ink.filter((g) => Math.abs(g.y - ld.base) < 0.45 * ld.h && (g.x1 <= ld.x0 + 0.5 || g.x0 >= ld.x1 - 0.5));
+    // (other runs of dashes on the line are not words: a line of dashes only is alone)
+    const same = line0.filter((g) => !dash(g));
+    const touch = same.filter((g) => g.x1 > ld.x0 - 0.3 * ld.h && g.x0 < ld.x1 + 0.3 * ld.h);
+    if (touch.some((g) => /[+|]/.test(g.u))) return false;
+    const after = same.filter((g) => g.x0 >= ld.x1 - 0.5).sort((a, b) => a.x0 - b.x0);
+    const before = same.filter((g) => g.x1 <= ld.x0 + 0.5);
+    if (before.length && after.length && after.every((g) => /[0-9ivxlc\-\s]/i.test(g.u)) && after.length <= 4) return false;
+    if (before.length || after.length) return true;
+    if (ld.x1 - ld.x0 > 0.72 * colW) return false;
+    // Alone on its line: the printed lines right above and below it (within 2.5 heights). Words of about its width that
+    // start where it starts, right above it, are a heading it underlines; a heading in capitals centred over or under it
+    // is a banner it frames.
+    const w = ld.x1 - ld.x0;
+    const near = (dir) => {
+      const cand = ink.filter((g) => dir * (g.y - ld.base) > 0.3 * ld.h && dir * (g.y - ld.base) <= 2.5 * ld.h);
+      if (!cand.length) return null;
+      const y = dir < 0 ? Math.max.apply(null, cand.map((g) => g.y)) : Math.min.apply(null, cand.map((g) => g.y));
+      const line = cand.filter((g) => Math.abs(g.y - y) < 0.5 && g.x1 > ld.x0 - 2 * ld.h && g.x0 < ld.x1 + 2 * ld.h);
+      if (!line.length) return null;
+      const letters = line.filter((g) => /[A-Za-z]/.test(g.u));
+      const byX = line.slice().sort((a, b) => a.x0 - b.x0);
+      const lastG = byX[byX.length - 1];
+      const oneGroup = byX.every((g, k) => !k || g.x0 - byX[k - 1].x1 < 1.5 * ld.h);
+      return { oneGroup, figures: line.some((g) => /[0-9]/.test(g.u)), x0: Math.min.apply(null, line.map((g) => g.x0)), x1: Math.max.apply(null, line.map((g) => g.x1)), d: Math.abs(y - ld.base), colon: /:/.test(lastG.u), caps: letters.length >= 3 && letters.every((g) => g.u === g.u.toUpperCase()) && !/:/.test(line[line.length - 1].u) };
+    };
+    const up = near(-1);
+    const down = near(1);
+    // (words that end in a colon are a caption over the blank, not a heading)
+    if (up && up.d <= 1.8 * ld.h && up.oneGroup && !up.colon && Math.abs(up.x0 - ld.x0) <= 1.5 * ld.h && up.x1 - up.x0 >= 0.6 * w && up.x1 - up.x0 <= 1.4 * w) return false;
+    // A line of runs of dashes only, between column headings and rows of figures: the rule of a table.
+    if (line0.length > same.length && up && up.d <= 1.8 * ld.h && !up.oneGroup && down && down.d <= 1.8 * ld.h && down.figures) return false;
+    // (not set at its start: a caption at the start of a line is a caption, whatever its case)
+    const centred = (t) => !!t && t.caps && t.oneGroup && Math.abs(t.x0 - ld.x0) > 1.5 * ld.h && Math.abs((t.x0 + t.x1) / 2 - (ld.x0 + ld.x1) / 2) <= 0.15 * w + ld.h;
+    if (centred(up) || centred(down)) return false;
+    return true;
+  }
+
   /** What placement reads of one page. raw: from walk(); size: { page, w, h }; forms: the PDF's form fields on it (already in displayed points). */
   function page(raw, size, forms) {
     const out = { page: size.page, w: size.w, h: size.h, items: [], rules: [], boxes: [], forms: [], filled: [], scan: false };
@@ -605,7 +653,10 @@
         leaders.push(lead);
       } else if (!g.sp) lead = null;
     });
+    const colL = ink.length ? Math.min.apply(null, ink.map((g) => g.x0)) : 0;
+    const colR = ink.length ? Math.max.apply(null, ink.map((g) => g.x1)) : size.w;
     leaders.forEach((ld) => {
+      if (ld.u !== '.' && hyphenBlank(ld, ink, colR - colL)) return pieces.push({ x0: ld.x0, x1: ld.x1, base: ld.base, y: ld.base, low: ld.base + 0.5, n: 3, made: 'leader' });
       if (ld.n < (ld.u === '.' ? 8 : 6) || ld.x1 - ld.x0 < 36) return;
       const same = ink.filter((g) => Math.abs(g.y - ld.base) < 0.45 * ld.h);
       if (same.some((g) => g.x0 >= ld.x1 - 0.5)) return;

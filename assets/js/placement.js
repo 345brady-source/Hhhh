@@ -1597,7 +1597,10 @@
         // ("Name: Priya Raman"): none is a blank.
         const pageNo = !!cap && /^(-\s*)?(page\s+)?\d+(\s+of\s+\d+)?(\s*-)?$/i.test(cap.s);
         const filledIn = !!cap && /^(by|name|title|its|date)\s*[:\uFF1A]\s*\S/i.test(cap.s);
-        if (sl.cell || sl.table || prose || pageNo || filledIn || ruledOff || sl.x1 - sl.x0 >= 0.85 * (rightEdge - leftEdge)) return (sl.skip = true);
+        // A line right under a question or an instruction to write ("Describe ...", "... ?") is where the answer
+        // goes, however wide it is (lineIsPlace).
+        const asked = !cap && !!top && sl.y - top.y <= 3 * Math.max(top.h, bodyH) && (/\?\s*$/.test(top.s) || /^(please )?(describe|explain|list|state|specify|provide|identify|give|set out)\b/i.test(top.s));
+        if (sl.cell || sl.table || prose || pageNo || filledIn || ruledOff || (sl.x1 - sl.x0 >= 0.85 * (rightEdge - leftEdge) && !asked)) return (sl.skip = true);
         const name = captionLike(cap) ? cap : captionLike(top) && /[:\uFF1A]\s*$/.test(top.s) ? top : null;
         if (name) name.used = name.used || 'caption';
         if (name && name === cap && name.more) name.more.used = name.used;

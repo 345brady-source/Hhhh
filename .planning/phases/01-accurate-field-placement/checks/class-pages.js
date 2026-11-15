@@ -164,6 +164,30 @@ ${words(72, 104, 'The investor confirms that it has read the memorandum and unde
 ${words(72, 120, 'The investor confirms that it is acquiring the units for its own account and not for resale.')}
 ${stroke(72, 168, 468, SW)}${at(72, 176, 11, '<b>NORTHGATE FUND I, LP</b>')}${words(72, 194, 'A limited partnership formed under the laws of the State of Delaware.')}`)
   },
+  /* ---------- single lines and hyphen blanks (Phase 01.4 classes 4 and 9) ---------- */
+  // A drawn rule of 150 pt after a label the portal has no word for, and a drawn rule alone under a question: one text
+  // field each.
+  lineIsPlace: {
+    html: pg(`${at(72, 80, 10, `Name of the investor's favourite charity: ${rule(inv('text', { fillIn: true }), '150pt')}`)}
+${words(72, 120, 'Describe how the investor first heard of the offering.')}
+${at(72, 136, 10, rule(inv('text', { fillIn: true }), '300pt'))}`)
+  },
+  // Plain text typed in a fixed-pitch font: "Name: ------------------" and a run of hyphens inside a sentence. One field
+  // each.
+  hyphenBlanks: {
+    html: pg(`<div style="font-family:'Courier New',monospace;font-size:10pt">${at(72, 80, 10, `Name: ${blank(inv('name'), '-'.repeat(24))}`, "font-family:'Courier New',monospace")}
+${at(72, 110, 10, `The investor subscribes for ${blank(inv('text', { fillIn: true }), '-'.repeat(14))} units of the fund.`, "font-family:'Courier New',monospace")}</div>`)
+  },
+  // Guard, the same fixed-pitch text: a heading underlined with a line of hyphens, and a table whose column headings
+  // are ruled off with runs of hyphens, its rows filled in. No field.
+  hyphenHeadingGuard: {
+    guard: true,
+    html: pg(`${at(72, 80, 10, 'SUBSCRIPTION TERMS', "font-family:'Courier New',monospace")}${at(72, 92, 10, '-'.repeat(18), "font-family:'Courier New',monospace")}
+${at(72, 116, 10, 'Class&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minimum&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fee', "font-family:'Courier New',monospace")}
+${at(72, 128, 10, `${'-'.repeat(10)}&nbsp;&nbsp;${'-'.repeat(10)}&nbsp;&nbsp;${'-'.repeat(5)}`, "font-family:'Courier New',monospace")}
+${at(72, 140, 10, 'A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10,000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.0%', "font-family:'Courier New',monospace")}
+${at(72, 152, 10, 'B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;50,000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.5%', "font-family:'Courier New',monospace")}`)
+  },
   /* ---------- places for somebody else ---------- */
   // An investor block and, lower on the same page, a heading in capitals ending in a colon that names a custodian and
   // says it applies only in some cases, with six blanks under it: four labelled, two unlabelled lines under the address.
