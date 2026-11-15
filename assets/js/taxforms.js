@@ -36,7 +36,7 @@
     if (typeof hash !== 'function') throw new Error('No SHA-256 function is available to check the form file.');
     const got = String(await hash(bytes)).toLowerCase();
     if (got !== String(map.sha256).toLowerCase()) {
-      throw new Error(`The ${map.form} file does not match its pinned fingerprint (${map.revision}); nothing was filled.`);
+      throw Object.assign(new Error(`The ${map.form} file does not match its pinned fingerprint (${map.revision}); nothing was filled.`), { pin: true });
     }
     // every answer key must name a field or a group of the map: a misspelt key would silently drop a value
     const groups = map.groups || {};
@@ -95,10 +95,39 @@
     return pdf.save();
   }
 
+  /**
+   * In the browser (D-04): the bundled official form of formKey fetched, checked against its pin, filled through its own
+   * fields with the embedded Unicode font and flattened; returns the PDF as a Blob. A file that fails its pin gives the
+   * investor one plain sentence naming the firm's support team, and nothing is filled.
+   */
+  async function prepare(formKey, answers) {
+    const map = (NS.taxmaps || {})[formKey];
+    if (!map) throw new Error('This tax form is not available.');
+    const kit = NS.esignKit;
+    const L = await kit.writer();
+    const r = await fetch(map.file, { cache: 'no-store' });
+    if (!r.ok) throw new Error('This tax form could not be loaded. Check the connection and try again.');
+    const bytes = new Uint8Array(await r.arrayBuffer());
+    const { fontkit, fontBytes } = await kit.unicodeFont();
+    let out;
+    try {
+      out = await fill(L, bytes, map, answers, { fontkit, fontBytes, sha256: NS.audit.sha256 });
+    } catch (e) {
+      if (e && e.pin) {
+        const t = (NS.state && NS.state.ws && NS.state.ws.tenant) || {};
+        const team = (t.support && t.support.team) || 'the investor relations team';
+        throw new Error(`This tax form could not be prepared. Contact ${team}.`);
+      }
+      throw e;
+    }
+    return new Blob([out], { type: 'application/pdf' });
+  }
+
   NS.taxforms = {
     get MAPS() {
       return NS.taxmaps || {};
     },
-    fill
+    fill,
+    prepare
   };
 })((window.CVPortal = window.CVPortal || {}));

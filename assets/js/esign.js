@@ -123,6 +123,14 @@
     const [y, m, d] = String(iso).split('-');
     return `${m}/${d}/${y}`;
   };
+  /** The date a date field is filled with: the form's own format when it names one (the W-8 forms), else usDate. */
+  const dateFmt = (f, iso) => {
+    if (f && f.fmt === 'MM-DD-YYYY') {
+      const [y, m, d] = String(iso).split('-');
+      return `${m}-${d}-${y}`;
+    }
+    return usDate(iso);
+  };
   function stamp(iso) {
     if (!iso) return '';
     return new Date(iso).toLocaleString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' }) + ' UTC';
@@ -368,6 +376,13 @@
   }
   // The signed record (record.js) writes its certificate with the same PDF writer and fonts.
   NS.esignKit = Object.assign(NS.esignKit || {}, { writer: pdflib, fontsFor, printable, printed, textWidth, drawText, drawPictures });
+  /** The font embedder and the regular Unicode font file, for a writer outside this module (the tax forms, taxforms.js). */
+  async function unicodeFont() {
+    await loadOnce(FONTKIT_URL, () => !!window.fontkit);
+    if (!window.fontkit) throw new Error('Could not load the PDF writer. Check the connection and try again.');
+    return { fontkit: window.fontkit, fontBytes: await fetchFont(UNICODE_FONT.regular) };
+  }
+  NS.esignKit.unicodeFont = unicodeFont;
 
   /* ---------- Page images (rendered once per stored file, kept as object URLs) ---------- */
   const pageCache = {};
@@ -581,6 +596,44 @@
     logChange(ws, 'Envelope voided', env, reason);
     NS.app.save(true);
     U.toast('Envelope voided. Signers who had received it were notified (simulated).');
+  }
+  /**
+   * An envelope for one investor from a filled, flattened PDF (an official tax form, D-04): the file is stored under a new
+   * id, its SHA-256 is the original, one investor signer gets a signature field and a date field at the form's own places
+   * (overlays: page fractions, y from the top; the date keeps the form's fmt), both optional as every investor field is
+   * (D-30), and it is sent quietly. o = { blob, title, fileName, investorId, taxForm: { form, revision }, overlays }.
+   */
+  async function createFromPdf(ws, o) {
+    o = o || {};
+    const inv = (ws.investors || []).find((x) => x.id === o.investorId);
+    if (!inv) throw new Error('The investor is not on file.');
+    if (!o.blob) throw new Error('No form was given.');
+    const ov = o.overlays || {};
+    if (!ov.sign) throw new Error('The form has no place to sign.');
+    const bytes = new Uint8Array(await o.blob.arrayBuffer());
+    const L = await pdflib();
+    const doc = await L.PDFDocument.load(bytes, { updateMetadata: false });
+    const pageSizes = doc.getPages().map((pg) => {
+      const r = (((pg.getRotation().angle || 0) % 360) + 360) % 360;
+      const { width, height } = pg.getSize();
+      return r === 90 || r === 270 ? { w: height, h: width } : { w: width, h: height };
+    });
+    const id = uid('env');
+    const docId = id + '-orig';
+    await files().put(docId, new Blob([bytes], { type: 'application/pdf' }));
+    const env = makeEnvelope({ id, title: o.title || 'Tax form', fileName: o.fileName || 'Tax_form.pdf', docId, pages: pageSizes.length, pageSizes, sha256Original: NS.audit.sha256(bytes), sequential: true });
+    env.kind = 'tax';
+    env.taxForm = { form: (o.taxForm && o.taxForm.form) || '', revision: (o.taxForm && o.taxForm.revision) || '' };
+    env.caption = ov.caption ? { page: ov.caption.page || 1, x: ov.caption.x, y: ov.caption.y, w: ov.caption.w, h: ov.caption.h } : null;
+    const s = investorSigner(env, inv);
+    const field = (type, p, extra) => Object.assign({ id: uid('fd'), signerId: s.id, type, page: p.page || 1, x: p.x, y: p.y, w: p.w, h: p.h, required: false, label: '', value: '' }, extra || {});
+    env.fields.push(field('signature', ov.sign));
+    if (ov.date) env.fields.push(field('date', ov.date, ov.date.fmt ? { fmt: ov.date.fmt } : null));
+    addEvent(env, staffActor(), 'Created', `${env.taxForm.form} (${env.taxForm.revision}) filled for ${inv.contact}`);
+    envs(ws).push(env);
+    const sent = send(ws, env.id, { quiet: true });
+    if (!sent.ok) throw new Error(sent.error);
+    return env;
   }
   /**
    * Fills an envelope's blanks with what the portal already knows. A text field of the investor that names an
@@ -1062,6 +1115,18 @@
     text(opts.standalone ? 'This certificate was generated separately from the completed file, whose SHA-256 is listed above.' : 'The SHA-256 of this completed file (signed pages plus this certificate) is recorded with the envelope and in the sponsor\'s change log.', M, 7, font, mute);
     await drawPictures(pdf, fonts);
   }
+  /** "Signed electronically <YYYY-MM-DD HH:MM> UTC" in the caption place (page fractions, y from the top), in the stamp ink. */
+  function taxCaption(L, pdf, cap, at, fonts) {
+    const page = pdf.getPage((cap.page || 1) - 1);
+    const fr = pageFrame(page);
+    const text = `Signed electronically ${at.slice(0, 10)} ${at.slice(11, 16)} UTC`;
+    const w = cap.w * fr.w;
+    const hh = cap.h * fr.h;
+    let size = Math.min(hh * 0.95, 7);
+    while (size > MIN_TEXT_PT && fonts.regular.widthOfTextAtSize(text, size) > w) size -= 0.25;
+    const p = fr.toPdf(cap.x * fr.w, (cap.y + cap.h) * fr.h - size * 0.22);
+    page.drawText(text, { x: p.x, y: p.y, size, font: fonts.regular, color: L.rgb(0.04, 0.12, 0.27), rotate: L.degrees(fr.r) });
+  }
   /* ---------- Finishing a signature ---------- */
   const signedHooks = [];
   async function finishSigning(env, signer, st) {
@@ -1094,6 +1159,9 @@
       if (pdf.isEncrypted) throw new Error(`This PDF is password-protected, so signatures cannot be added to it. ${T().name} needs to send an unprotected copy.`);
       const fonts = await fontsFor(L, pdf, fieldsOf(next, me).map(fieldText));
       await stampFields(L, pdf, next, me, fonts);
+      // An official tax form (D-04): the line the IRS rules for an electronic W-8 ask for, on the form page beside the
+      // signature, only when this signer signed there.
+      if (next.kind === 'tax' && next.caption && fieldsOf(next, me).some((f) => f.type === 'signature' && f.value)) taxCaption(L, pdf, next.caption, at, fonts);
       if (fonts.replaced) addEvent(next, 'System', 'Characters replaced', 'This browser could not draw some characters, so they print as "?" in the stamped fields', at);
       // Once signed, the PDF's own form fields (a fillable PDF) can no longer be typed into.
       lockOwnFields(L, pdf);
@@ -1129,7 +1197,7 @@
         ws.docs = ws.docs || [];
         // The portal listing shares the envelope's file; removing the listing keeps the file (see docs-remove below).
         if (ids.length && !ws.docs.some((d) => d.id === env.signedDocId))
-          ws.docs.push({ id: env.signedDocId, title: env.title, fileName: slug(env.title) + '_signed.pdf', type: 'application/pdf', size: out.length, sha256: env.sha256Signed, cat: 'Legal', offeringId: env.offeringId || null, audience: 'investors', investors: ids, date: NS.dates.today(), taxYear: '', publishedAt: nowIso(), publishedBy: 'E-sign', envelopeId: env.id });
+          ws.docs.push({ id: env.signedDocId, title: env.title, fileName: slug(env.title) + '_signed.pdf', type: 'application/pdf', size: out.length, sha256: env.sha256Signed, cat: env.kind === 'tax' ? 'Tax' : 'Legal', offeringId: env.offeringId || null, audience: 'investors', investors: ids, date: NS.dates.today(), taxYear: '', publishedAt: nowIso(), publishedBy: 'E-sign', envelopeId: env.id });
         // A subscription signed through this envelope (the offering's subscription agreement template).
         (ws.requests || []).filter((r) => r.envelopeId === env.id && !r.signedAt).forEach((r) => (r.signedAt = at.replace(/\.\d{3}Z$/, 'Z')));
         logChange(ws, 'Envelope completed', env, `${env.signers.length} signer${env.signers.length === 1 ? '' : 's'}; signed pages SHA-256 ${env.sha256SignedPages}; signed PDF SHA-256 ${env.sha256Signed}; published to ${ids.length} investor portal${ids.length === 1 ? '' : 's'}`, actor);
@@ -2216,7 +2284,7 @@
       if (!s) return null;
       const vals = {};
       fieldsOf(env, s).forEach((f) => {
-        if (f.type === 'date') vals[f.id] = usDate(NS.dates.today());
+        if (f.type === 'date') vals[f.id] = dateFmt(f, NS.dates.today());
         else if (f.type === 'name') vals[f.id] = f.value || (s.role === 'countersigner' ? firmSignerName() : s.name);
         else if (f.type === 'text') vals[f.id] = f.value || '';
         else if (f.type === 'checkbox') vals[f.id] = !!f.value;
@@ -3800,6 +3868,7 @@
   NS.coSigning = { coOf, coPlaces, coAttach, coDetach, coUpdate, coHolding, coEnvelopes, mySigner };
   NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
   // How long the upload waits for the reading server before the in-page reading stands (a check may shorten it).
+  NS.esign.createFromPdf = createFromPdf;
   NS.esign.SERVER_LIMIT_MS = 330000;
   NS.esign.RANGE_PAGES = 600;
   NS.esign.RANGE_BYTES = 31 * 1024 * 1024;
