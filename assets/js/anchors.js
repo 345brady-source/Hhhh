@@ -69,6 +69,7 @@
     let cur = null;
     let picture = false;
     let image = null; // the picture that covers the page: its own pixel size and where it lies { w, h, x0, y0, x1, y1 }
+    const strips = []; // pictures of 2 to 60 percent of the page each: a scan stored in bands (several pictures side by side)
     const fontOf = (id) => {
       try {
         return page.commonObjs.get(id);
@@ -259,10 +260,23 @@
       else if (fn === OPS.paintImageXObject || fn === OPS.paintJpegXObject || fn === OPS.paintImageMaskXObject || fn === OPS.paintInlineImageXObject) {
         const p1 = at(st.ctm, 0, 0);
         const p2 = at(st.ctm, 1, 1);
-        if (Math.abs(p2[0] - p1[0]) * Math.abs(p2[1] - p1[1]) > 0.6 * vp.width * vp.height) {
+        const PA = vp.width * vp.height;
+        const ia = Math.abs(p2[0] - p1[0]) * Math.abs(p2[1] - p1[1]);
+        // A scan stored in bands: pictures that together cover more than 60 percent of the page, inside a frame that does.
+        let banded = false;
+        if (!picture && ia <= 0.6 * PA && ia >= 0.02 * PA) {
+          strips.push({ x0: Math.min(p1[0], p2[0]), y0: Math.min(p1[1], p2[1]), x1: Math.max(p1[0], p2[0]), y1: Math.max(p1[1], p2[1]) });
+          const sum = strips.reduce((t, b) => t + Math.max(0, Math.min(b.x1, vp.width) - Math.max(b.x0, 0)) * Math.max(0, Math.min(b.y1, vp.height) - Math.max(b.y0, 0)), 0);
+          const fx0 = Math.max(0, Math.min.apply(null, strips.map((b) => b.x0)));
+          const fy0 = Math.max(0, Math.min.apply(null, strips.map((b) => b.y0)));
+          const fx1 = Math.min(vp.width, Math.max.apply(null, strips.map((b) => b.x1)));
+          const fy1 = Math.min(vp.height, Math.max.apply(null, strips.map((b) => b.y1)));
+          banded = strips.length >= 2 && sum > 0.6 * PA && (fx1 - fx0) * (fy1 - fy0) > 0.6 * PA;
+        }
+        if (ia > 0.6 * PA || banded) {
           // A picture over the page covers whatever was drawn before it (the recognised text laid under a scan).
           picture = true;
-          image = fn === OPS.paintImageXObject && a && a[1] > 0 && a[2] > 0 && Math.abs(st.ctm[1]) < 1e-6 && Math.abs(st.ctm[2]) < 1e-6 ? { w: a[1], h: a[2], x0: Math.min(p1[0], p2[0]), y0: Math.min(p1[1], p2[1]), x1: Math.max(p1[0], p2[0]), y1: Math.max(p1[1], p2[1]) } : null;
+          image = !banded && fn === OPS.paintImageXObject && a && a[1] > 0 && a[2] > 0 && Math.abs(st.ctm[1]) < 1e-6 && Math.abs(st.ctm[2]) < 1e-6 ? { w: a[1], h: a[2], x0: Math.min(p1[0], p2[0]), y0: Math.min(p1[1], p2[1]), x1: Math.max(p1[0], p2[0]), y1: Math.max(p1[1], p2[1]) } : null;
           glyphs.forEach((g) => (g.hidden = true));
           segs.length = 0;
           rects.length = 0;
@@ -271,7 +285,7 @@
         }
       }
     }
-    return { glyphs, segs, rects, picture, blobs, frames, image };
+    return { glyphs, segs, rects, picture, blobs, frames, image, w: vp.width, h: vp.height };
   }
 
   /* Box characters. In a symbol font the code decides, whatever character the reader reports for it. */
@@ -358,8 +372,11 @@
    * line, in a font that is not of fixed pitch. A glyph that opens a sentence of more than 12 words (its lines run
    * on included) is a bullet unless the two lines above the list ask for a choice or its own words speak of its box.
    */
-  function inChoice(g, rows) {
-    const start = (o) => !!o && CHOICE_LETTER.test(o.u) && !SYMBOL_LIKE.test(o.font || '') && !FIXED_PITCH.test(o.font || '') && lone(o) && optionAfter(o);
+  function inChoice(g, rows, kind) {
+    // kind 'shape': a box-shaped glyph (shapeGlyph) instead of a fallback letter; one alone counts too when the words
+    // around it ask for a choice or speak of its box.
+    const shape = kind === 'shape';
+    const start = shape ? (o) => !!o && shapeGlyph(o) && lone(o) && optionAfter(o, 40) : (o) => !!o && CHOICE_LETTER.test(o.u) && !SYMBOL_LIKE.test(o.font || '') && !FIXED_PITCH.test(o.font || '') && lone(o) && optionAfter(o);
     if (!start(g)) return false;
     const r = g.row;
     // (set apart on its line: 12 pt, or two spaces, from the words before it)
@@ -375,7 +392,8 @@
       }
       return false;
     };
-    if (!ownRow && !near(-1) && !near(1)) return false;
+    const listed = ownRow || near(-1) || near(1);
+    if (!listed && !shape) return false;
     // A list set further in under a line that opens with a bullet is that bullet's sub-list: its letters are bullets too.
     // (the bulleted line may run on over up to three lines before the sub-list starts)
     for (let i = r.i - 1, parent = 0, below = r.y; i >= 0 && r.y - rows[i].y <= 40 * g.h && parent < 4; i--) {
@@ -406,6 +424,7 @@
       own += ' ' + rowText({ g: rows[i].g.slice(0, e + 1) }, k);
       last = rows[i];
     }
+    if (!listed) return BOX_SAID.test(own) || CHOICE_SAID.test(rows.slice(Math.max(0, r.i - 2), r.i).map((x) => rowText(x)).join(' '));
     if (own.split(/\s+/).filter(Boolean).length > 12) {
       // (the two lines over the first option of the list)
       let top = r.i;
@@ -418,6 +437,24 @@
       if (!CHOICE_SAID.test(above) && !BOX_SAID.test(own)) return false;
     }
     return true;
+  }
+  /**
+   * A glyph shaped like a tick box whatever its font is called: one character that is no letter or figure, set about
+   * square (its advance 5.5 to 15 pt, between 0.55 and 1.35 of its size), and either a private-use code, a control code,
+   * any character of a symbol font, or a geometric shape or dingbat that is not a bullet, arrow, star or tick. In a font
+   * named as a symbol font with a known box table (boxChar), that table decides instead.
+   */
+  const SHAPE_CODE = /^[\u25A0-\u25FF\u2700-\u27BF\u2B1A-\u2B1F\u2B55\u2B58\u2B5A-\u2B5F]$/;
+  const SHAPE_BULLET = /^[\u25A0\u25AA\u25AB\u25B2-\u25C5\u25C6\u25C8\u25CF\u25D8\u25D9\u25E6\u2701-\u2711\u2713-\u2718\u2721-\u274B\u274D\u2756\u2758-\u2775\u2794-\u27BF]$/;
+  function shapeGlyph(g) {
+    if (!g || !g.u || Array.from(g.u).length !== 1 || /[A-Za-z0-9]/.test(g.u)) return false;
+    if (SYMBOL_FONT.test(g.font || '')) return false;
+    const w = g.x1 - g.x0;
+    if (!(w >= 5.5 && w <= 15 && w >= 0.55 * g.h && w <= 1.35 * g.h)) return false;
+    const code = g.u.codePointAt(0);
+    if ((code >= 0xe000 && code <= 0xf8ff) || code < 0x20 || (code >= 0x7f && code <= 0x9f)) return true;
+    if (SYMBOL_LIKE.test(g.font || '')) return true;
+    return SHAPE_CODE.test(g.u) && !SHAPE_BULLET.test(g.u);
   }
   /** Marks the fallback-glyph tick boxes of a page (g.box), see FALLBACK_BOX. ink: the visible characters but spaces. */
   function fallbackBoxes(ink) {
@@ -432,10 +469,33 @@
     ink.forEach((g) => {
       if (!g.box && inChoice(g, rows)) g.box = 'choice';
     });
+    // A box-shaped glyph (shapeGlyph: a tick box printed in a font the reader cannot name): a private-use or control code
+    // before an option's words, or any such glyph starting a choice, is a box on its own extent.
+    ink.forEach((g) => {
+      if (g.box || !shapeGlyph(g)) return;
+      // (a private-use or control code has no bullet meaning of its own: before an option's words it is a box by itself)
+      const code = g.u.codePointAt(0);
+      const own = (code >= 0xe000 && code <= 0xf8ff) || code < 0x20 || (code >= 0x7f && code <= 0x9f);
+      if ((own && lone(g) && optionAfter(g, 40)) || inChoice(g, rows, 'shape')) g.box = 'shape';
+    });
     ink.forEach((g) => {
       delete g.row;
       delete g.k;
     });
+  }
+
+  /**
+   * A scanned page with a stamp printed over it (a page number, a footer, an envelope or Bates number added when the
+   * agreement was put together): a picture covers the page and the only characters drawn over it are few (STAMP_CHARS at
+   * most) and all lie in its margins (the top or bottom eighth, or the outer tenth at either side). Such a page is a
+   * picture of a page all the same, read from its picture; its stamp does not make it a text page.
+   */
+  const STAMP_CHARS = 200;
+  function stampOnly(raw, ink) {
+    const W = raw.w;
+    const H = raw.h;
+    if (!raw.picture || !(W > 0) || !(H > 0) || ink.length > STAMP_CHARS) return false;
+    return ink.every((g) => g.y <= 0.125 * H || g.y - g.h >= 0.875 * H || g.x1 <= 0.1 * W || g.x0 >= 0.9 * W);
   }
 
   /**
@@ -450,7 +510,9 @@
    * character is a text page, whatever lies behind it.
    */
   function textless(raw) {
-    if (!raw || raw.glyphs.some((g) => !g.hidden && !g.sp)) return '';
+    if (!raw) return '';
+    const ink = raw.glyphs.filter((g) => !g.hidden && !g.sp);
+    if (ink.length) return raw.picture && stampOnly(raw, ink) ? 'picture' : '';
     if (raw.picture) return 'picture';
     return (raw.blobs || []).filter((b) => b.y1 - b.y0 <= 40).length >= LETTER_SHAPES ? 'drawings' : '';
   }
@@ -539,7 +601,7 @@
     // A page with no text to read is not read by the rules for text (a page with real text over a background picture
     // is a text page): a picture of the page with no visible text on it (a scan), or a page whose letters are drawn
     // as shapes. Both are read from their picture only when the sponsor asks for it.
-    out.scan = !ink.length && !!textless(raw);
+    out.scan = !!textless(raw);
     if (out.scan) return out;
     shown.forEach((g) => (g.box = !g.sp && boxChar(g)));
     fallbackBoxes(ink);

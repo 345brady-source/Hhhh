@@ -3,16 +3,20 @@
  * Plan 01.4-69 (D-38), measurement tooling: any PDF made into a picture-only PDF with the same page count and page sizes.
  *
  *   node picture-pdf.js --in <pdf> --out <pdf> [--scramble] [--first N] [--last M] [--only 5,6,15] [--dpi 150]
+ *                       [--stamp] [--bands K]
  *
  * Each page (first..last, default every page) is rendered with pdftoppm and laid full-page, at the page's own size in
  * points, into a new PDF with pdf-lib in the check browser. The new PDF has no text layer; with --scramble each page also
  * gets an invisible text layer (opacity 0) holding that page's extracted text with every letter moved 7 places along the
  * alphabet, so the page looks the same while its text cannot be read. With --only, only the listed pages become pictures
- * and every other page of first..last is copied as it is (a mixed PDF). Prints counts only (pages, pictures, bytes), never
+ * and every other page of first..last is copied as it is (a mixed PDF). Plan 01.4-72: with --stamp each picture page also
+ * gets a visible stamp drawn over its picture in the margins (a copy line at the top, "Page i of N" at the bottom), as an
+ * agreement put together from scans carries; with --bands K each picture page is laid as K horizontal bands, one picture
+ * each, as some scanners store a page. Prints counts only (pages, pictures, bytes), never
  * any text of the document. Plan 65's measurement executor makes the picture version of the blind agreement with it,
  * inside SCRATCH/blind/; no builder runs it there.
  *
- * Also usable from a check: require('./picture-pdf.js').make({ input, output, scramble, first, last, only, dpi }, page)
+ * Also usable from a check: require('./picture-pdf.js').make({ input, output, scramble, first, last, only, dpi, stamp, bands }, page)
  * with a page of the check browser already open (otherwise one is started and stopped).
  */
 const { execFileSync } = require('child_process');
@@ -72,6 +76,7 @@ async function make(o, page) {
   const last = Math.min(N, Number(o.last) || N);
   const dpi = Number(o.dpi) || 150;
   const only = o.only && o.only.length ? new Set(o.only.map(Number)) : null;
+  const bands = Math.max(1, Math.floor(Number(o.bands) || 1));
   const pics = [];
   for (let i = first; i <= last; i++) if (!only || only.has(i)) pics.push(i);
   const tmp = fs.mkdtempSync(path.join(path.dirname(path.resolve(o.output)), 'render-'));
@@ -81,8 +86,21 @@ async function make(o, page) {
     const texts = {};
     for (const i of pics) {
       const base = path.join(tmp, 'p' + i);
-      execFileSync('pdftoppm', ['-r', String(dpi), '-jpeg', '-jpegopt', 'quality=90', '-f', String(i), '-l', String(i), '-singlefile', o.input, base]);
-      images[i] = fs.readFileSync(base + '.jpg').toString('base64');
+      if (bands > 1) {
+        // K horizontal bands of the page's picture, each rendered on its own (pdftoppm's crop box), top first.
+        const W = Math.round((sizes[i - 1][0] / 72) * dpi);
+        const Hp = Math.round((sizes[i - 1][1] / 72) * dpi);
+        images[i] = [];
+        for (let k = 0; k < bands; k++) {
+          const y0 = Math.round((k * Hp) / bands);
+          const y1 = Math.round(((k + 1) * Hp) / bands);
+          execFileSync('pdftoppm', ['-r', String(dpi), '-jpeg', '-jpegopt', 'quality=90', '-f', String(i), '-l', String(i), '-singlefile', '-x', '0', '-y', String(y0), '-W', String(W), '-H', String(y1 - y0), o.input, base + 'b' + k]);
+          images[i].push({ data: fs.readFileSync(base + 'b' + k + '.jpg').toString('base64'), top: y0 / Hp, bottom: y1 / Hp });
+        }
+      } else {
+        execFileSync('pdftoppm', ['-r', String(dpi), '-jpeg', '-jpegopt', 'quality=90', '-f', String(i), '-l', String(i), '-singlefile', o.input, base]);
+        images[i] = fs.readFileSync(base + '.jpg').toString('base64');
+      }
       if (o.scramble) texts[i] = shift7(execFileSync('pdftotext', ['-q', '-layout', '-f', String(i), '-l', String(i), o.input, '-'], { encoding: 'utf8' })).replace(/[^\x20-\x7e\n]/g, ' ');
     }
     if (!page) {
@@ -92,7 +110,7 @@ async function make(o, page) {
     }
     const original = only ? fs.readFileSync(o.input).toString('base64') : '';
     const b64 = await page.evaluate(
-      async ({ WRITER, images, texts, sizes, first, last, original, scramble }) => {
+      async ({ WRITER, images, texts, sizes, first, last, original, scramble, stamp, N }) => {
         if (!window.PDFLib)
           await new Promise((res, rej) => {
             const s = document.createElement('script');
@@ -105,7 +123,7 @@ async function make(o, page) {
         const bin = (b) => Uint8Array.from(atob(b), (c) => c.charCodeAt(0));
         const doc = await PDFDocument.create();
         const src = original ? await PDFDocument.load(bin(original), { ignoreEncryption: true }) : null;
-        const font = scramble ? await doc.embedFont(StandardFonts.Helvetica) : null;
+        const font = scramble || stamp ? await doc.embedFont(StandardFonts.Helvetica) : null;
         for (let i = first; i <= last; i++) {
           if (!images[i]) {
             const [copied] = await doc.copyPages(src, [i - 1]);
@@ -113,9 +131,17 @@ async function make(o, page) {
             continue;
           }
           const [w, h] = sizes[i - 1];
-          const img = await doc.embedJpg(bin(images[i]));
           const pg = doc.addPage([w, h]);
-          pg.drawImage(img, { x: 0, y: 0, width: w, height: h });
+          if (Array.isArray(images[i]))
+            for (const b of images[i]) {
+              const img = await doc.embedJpg(bin(b.data));
+              pg.drawImage(img, { x: 0, y: h * (1 - b.bottom), width: w, height: h * (b.bottom - b.top) });
+            }
+          else pg.drawImage(await doc.embedJpg(bin(images[i])), { x: 0, y: 0, width: w, height: h });
+          if (stamp) {
+            pg.drawText('Copy made 2026-11-15 10:12  ref 4F3A9C21-7D10-4B2E', { x: 24, y: h - 18, size: 7, font });
+            pg.drawText(`Page ${i} of ${N}`, { x: w - 90, y: 14, size: 8, font });
+          }
           if (scramble && texts[i]) {
             const lines = texts[i].split('\n').map((l) => l.replace(/\s+$/, ''));
             const step = Math.min(12, (h - 40) / Math.max(1, lines.length));
@@ -129,7 +155,7 @@ async function make(o, page) {
         for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
         return btoa(s);
       },
-      { WRITER, images, texts, sizes, first, last, original, scramble: !!o.scramble }
+      { WRITER, images, texts, sizes, first, last, original, scramble: !!o.scramble, stamp: !!o.stamp, N }
     );
     fs.writeFileSync(o.output, Buffer.from(b64, 'base64'));
   } finally {
@@ -168,7 +194,7 @@ if (require.main === module) {
       }
     }
   }
-  make({ input, output, scramble: argv.includes('--scramble'), first: arg('first'), last: arg('last'), only: arg('only') ? arg('only').split(',').map(Number) : null, dpi: arg('dpi') })
+  make({ input, output, scramble: argv.includes('--scramble'), first: arg('first'), last: arg('last'), only: arg('only') ? arg('only').split(',').map(Number) : null, dpi: arg('dpi'), stamp: argv.includes('--stamp'), bands: arg('bands') })
     .then((r) => {
       const same = r.sizes.length === r.want.length && r.sizes.every((s, i) => Math.abs(s[0] - r.want[i][0]) < 0.6 && Math.abs(s[1] - r.want[i][1]) < 0.6);
       console.log(`picture-pdf: ${r.pages} pages written, ${r.pictures} as pictures${argv.includes('--scramble') ? ' with a scrambled invisible text layer' : ''}, ${r.bytes} bytes; page sizes ${same ? 'the same' : 'DIFFERENT'} as the input's`);

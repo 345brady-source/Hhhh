@@ -620,3 +620,13 @@ test('the retries stay inside the overall limit: a service that always answers 5
     assert.equal(r.ok, false);
     assert.equal(svc.messages().length, 4); // the first attempt and 3 retries
   }));
+
+test('plan 01.4-72: the instructions skip tax forms, give a choice grid one checkbox per cell, tie a caption under a line to the line above, and leave document checklists out', () => {
+  const lines = SYSTEM.split('\n');
+  const has = (re) => lines.some((l) => re.test(l));
+  assert.ok(has(/^- Tax forms \(Form W-9, the Form W-8 series.*not places, even when attached/));
+  assert.ok(!/including tax forms/.test(SYSTEM), 'the signature rule no longer sends the reader to tax forms');
+  assert.ok(has(/empty cells the investor marks.*one checkbox per empty cell.*near -1, side on.*column heading and row heading.* \/ /));
+  assert.ok(has(/caption printed under its line.*line directly above it.*never the line below/));
+  assert.ok(has(/checklist of documents the investor must attach.*not a place/));
+});
