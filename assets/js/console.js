@@ -454,8 +454,11 @@
           .join('');
         const left = r.holders.filter((x) => x.controlling && x.share === 0);
         const leftLine = left.length ? `<p class="cs-muted cs-bpi-left" data-class="${h(r.classId)}">Left out of ${h(r.name)} as held by controlling persons or affiliates: ${h(EL.usd(r.disregarded))} (${left.map((x) => h(nameOf(x.investorId))).join(', ')})</p>` : '';
-        return `<p class="cs-bpi-line${over ? ' is-over' : ''}" data-class="${h(r.classId)}"><strong>${h(r.name)}: ${h(EL.pctText(r.pct))}% of value held by benefit plan investors</strong>${over ? ` ${badge('bad', '25 percent or more')}` : ''}</p>
-        ${over ? `<p class="cs-hint">Benefit plan investors hold 25 percent or more of ${h(r.name)}, so the offering’s assets may be treated as plan assets under ERISA.</p>` : ''}${leftLine}${pend}`;
+        const basis = r.basis === 'capital' ? `value by capital balances at ${date(r.asOf, 'long')}` : 'value by commitments and subscribed amounts';
+        const n = r.unanswered.length;
+        const naLine = n ? `<p class="cs-muted cs-bpi-unanswered" data-class="${h(r.classId)}">Not answered: ${n} ${n === 1 ? 'holder' : 'holders'} of ${h(r.name)}, each counted here as not a benefit plan investor: ${r.unanswered.map((id) => h(nameOf(id))).join(', ')}</p>` : '';
+        return `<p class="cs-bpi-line${over ? ' is-over' : ''}" data-class="${h(r.classId)}"><strong>${h(r.name)}: ${h(EL.pctText(r.pct))}% of value held by benefit plan investors</strong>${over ? ` ${badge('bad', '25 percent or more')}` : ''} <span class="cs-muted cs-bpi-basis">(${h(basis)})</span></p>
+        ${over ? `<p class="cs-hint">Benefit plan investors hold 25 percent or more of ${h(r.name)}, so the offering’s assets may be treated as plan assets under ERISA.</p>` : ''}${leftLine}${naLine}${pend}`;
       })
       .join('');
     // D-01: the sponsor's own marks, one per holder of the offering; a holder whose own answers say so is shown as such.
@@ -476,7 +479,7 @@
     return panel(
       'Benefit plan investors',
       `${lines}
-      <p class="cs-hint">Value is what each holder has committed or subscribed, with accepted subscriptions not yet funded. A holder counts by their latest answers to the benefit plan questions; one who has not answered is counted as not a benefit plan investor.</p>
+      <p class="cs-hint">Value is each holder’s capital balance at the last month end when every holder of the offering has one; otherwise it is what each holder has committed or subscribed, with accepted subscriptions not yet funded. Each class is worked out on its own. A holder counts by their latest answers to the benefit plan questions; one who has not answered counts as not a benefit plan investor and is listed. A pending subscription’s figure is on commitments, as it has no capital balance until it is funded.</p>
       <p class="cs-bpi-ctrl-head"><strong>Controlling persons and affiliates</strong></p>
       <p class="cs-hint">Tick each holder that has discretionary authority or control over this offering’s assets or is paid for investment advice about them, or is an affiliate of such a person. That includes holdings of your firm and its affiliates recorded here as investors. The value they hold is left out of the class total, unless they are benefit plan investors themselves.</p>
       ${holders.length ? `<ul class="cs-checks cs-bpi-ctrl">${marks}</ul>` : '<p class="cs-muted">No holders yet.</p>'}`
