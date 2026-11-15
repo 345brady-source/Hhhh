@@ -45,22 +45,34 @@
   }
 
   /**
-   * Purchasers of an offering who are not accredited, one per investor however many subscriptions they made.
-   * Declined subscriptions are left out. An investor with any subscription past pending (approved, funded, accepted,
-   * paid) is accepted; otherwise pending. The latest answer an investor gave decides. count is accepted plus pending:
-   * the figure measured against the limit if the pending ones are accepted. unanswered: investors who left the
-   * question open (no answers on file, or accredited not given).
+   * Each investor's subscriptions to an offering, declined ones left out: { past: any subscription beyond pending, qual:
+   * the latest answer given, first: where the investor's first subscription stands in the list of requests }.
    */
-  function nonAccredited(ws, o) {
+  function tally(ws, o) {
     const by = new Map();
-    ((ws && ws.requests) || []).forEach((r) => {
+    ((ws && ws.requests) || []).forEach((r, k) => {
       if (!r || r.type !== 'subscription' || !o || r.offeringId !== o.id || r.status === 'rejected') return;
-      const e = by.get(r.investorId) || { past: false, qual: null };
+      const e = by.get(r.investorId) || { past: false, qual: null, first: k };
       if (r.status !== 'pending') e.past = true;
       const q = qualOf(r);
       if (q) e.qual = q;
       by.set(r.investorId, e);
     });
+    return by;
+  }
+
+  /**
+   * Purchasers of an offering who are not accredited, one per investor however many subscriptions they made.
+   * Declined subscriptions are left out. An investor with any subscription past pending (approved, funded, accepted,
+   * paid) is accepted; otherwise pending. The latest answer an investor gave decides. count is accepted plus pending:
+   * the figure measured against the limit if the pending ones are accepted. unanswered: investors who left the
+   * question open (no answers on file, or accredited not given), and holders of the offering with no subscription made
+   * through the portal, whose status cannot be told (holders: how many of the unanswered these are). ranked: the counted
+   * investors in the order they take places under the limit, accepted ones first, then pending ones, each in the order
+   * they first subscribed. No Rule 501(e) exclusion is asked (relatives sharing a home), so the count errs on the high side.
+   */
+  function nonAccredited(ws, o) {
+    const by = tally(ws, o);
     const accepted = [];
     const pending = [];
     const unanswered = [];
@@ -68,8 +80,42 @@
       if (!e.qual || e.qual.accredited == null) unanswered.push(id);
       else if (e.qual.accredited === false) (e.past ? accepted : pending).push(id);
     });
-    return { accepted, pending, count: accepted.length + pending.length, unanswered: unanswered.length };
+    let holders = 0;
+    ((ws && ws.investors) || []).forEach((i) => {
+      if (!i || !o || by.has(i.id) || !(i.positions || []).some((x) => x && x.offeringId === o.id)) return;
+      unanswered.push(i.id);
+      holders++;
+    });
+    const first = (id) => by.get(id).first;
+    const inOrder = (list) => list.slice().sort((a, b) => first(a) - first(b));
+    const ranked = inOrder(accepted).concat(inOrder(pending));
+    return { accepted, pending, count: accepted.length + pending.length, unanswered: unanswered.length, holders, ranked };
   }
 
-  NS.eligibility = { regime, LIMIT_506B, BASES, qualOf, nonAccredited };
+  /**
+   * The place an investor takes among the offering's purchasers who are not accredited: their own place when already
+   * counted, otherwise the next one. A place above LIMIT_506B means the offering would pass the limit with them.
+   */
+  function place(ws, o, investorId) {
+    const n = nonAccredited(ws, o);
+    const k = n.ranked.indexOf(investorId);
+    return k >= 0 ? k + 1 : n.count + 1;
+  }
+
+  /**
+   * Warnings for the sponsor on one subscription request (C-01: shown, never blocking). Under Rule 506(b), a request that
+   * says the investor is not accredited, from an investor whose place under the limit comes after the 35th, is flagged.
+   */
+  function flags(ws, r) {
+    if (!r || r.type !== 'subscription' || r.status === 'rejected') return [];
+    const q = qualOf(r);
+    if (!q || q.accredited !== false) return [];
+    const o = ((ws && ws.offerings) || []).find((x) => x && x.id === r.offeringId);
+    if (!o || regime(o) !== '506b') return [];
+    const k = nonAccredited(ws, o).ranked.indexOf(r.investorId);
+    if (k < LIMIT_506B) return [];
+    return [`Would be non-accredited purchaser ${k + 1} of the ${LIMIT_506B} allowed under Rule 506(b)`];
+  }
+
+  NS.eligibility = { regime, LIMIT_506B, BASES, qualOf, nonAccredited, place, flags };
 })(window.CVPortal);

@@ -1101,6 +1101,8 @@
         }
       }
       if (c.fl.accStep) s.push('accreditation');
+      // A new Rule 506(b) offering (or the firm's accreditation question) asks an investor on file about their status too.
+      if (statusStep(c)) s.push('status');
       subSteps(c, s);
       s.push('done');
       return s;
@@ -1130,7 +1132,9 @@
     if (accredited === false && reg === '506b') {
       const name = String(d.stRepName || '').trim();
       const firm = String(d.stRepFirm || '').trim();
-      q.sophistication = { experience: String(d.stExp || '').trim(), education: String(d.stEdu || '').trim(), rep: d.stRep === 'yes' ? { name, firm } : null };
+      // Rule 501(i): the investor's written acknowledgment of the representative, when uploaded (rep-<investor>-<time>).
+      const file = d.stRepFileId ? { fileId: String(d.stRepFileId), fileName: String(d.stRepFileName || '') } : {};
+      q.sophistication = { experience: String(d.stExp || '').trim(), education: String(d.stEdu || '').trim(), rep: d.stRep === 'yes' ? Object.assign({ name, firm }, file) : null };
     }
     return q;
   }
@@ -1146,7 +1150,10 @@
     // Finished, unless the investor is signing the agreement again (its signed copy could not be sent: ivf-resign).
     if (c.fl.completedAt && !c.fl.resignAt) return 'done';
     const k = c.fl.at || 'welcome';
-    return steps.indexOf(k) >= 0 ? k : 'welcome';
+    if (steps.indexOf(k) >= 0) return k;
+    // A flow saved at the self-certified Accreditation step (before the investor status step replaced it) resumes there.
+    if (k === 'accreditation' && steps.indexOf('status') >= 0) return 'status';
+    return 'welcome';
   }
   const curOf = (o) => (NS.structures ? NS.structures.curOf(o) : 'USD');
   const money = (o, n) => (curOf(o) === 'USD' ? U.usd(n) : NS.structures.fmtWhole(n, curOf(o)));
@@ -1210,6 +1217,8 @@
           stRep: '',
           stRepName: '',
           stRepFirm: '',
+          stRepFileId: '',
+          stRepFileName: '',
           accAttest: false,
           accFile: '',
           usPerson: '',
@@ -1351,6 +1360,22 @@
       <div class="form-grid">${IV() ? IV().stepPanel(c.ws, c.inv, 'identity') : ''}${err('ivIdentity')}</div>
       <p class="meta">Sanctions and politically exposed person screening of ${ent ? 'the account and each beneficial owner' : 'your name'} runs automatically once your identity is verified. There is nothing to fill in for it, and your details are used only for anti-money-laundering compliance.</p>`;
   }
+  /**
+   * The grounds offered on the status step. An investor on file whose record holds a ground worded another way (an earlier
+   * list) sees it first, selected, so the prefilled answer is visible and can be kept or changed.
+   */
+  function groundsFor(d) {
+    const list = EL().BASES.map((x) => [x, x]);
+    const own = String(d.stBasis || '');
+    return own && EL().BASES.indexOf(own) < 0 ? [[own, own, 'The ground on your record']].concat(list) : list;
+  }
+  /** Rule 501(i): the investor's written acknowledgment of their purchaser representative, optional (D-30). */
+  function repFile(d) {
+    const e = ob().errors.stRepFile;
+    return `<label class="field field-wide" for="ob-stRepFile"><span>Your written acknowledgment that this person is your purchaser representative <em>Optional</em></span>
+      <input id="ob-stRepFile" type="file" accept="application/pdf,image/png,image/jpeg" data-change="ivf-repfile"${e ? ' aria-invalid="true" aria-describedby="err-stRepFile"' : ''}>
+      <span class="hint" id="hint-stRepFile">${d.stRepFileName ? `Attached: ${h(d.stRepFileName)}` : `PDF, PNG or JPEG, up to ${mb(MAX_FILES)} MB.`}</span>${err('stRepFile')}</label>`;
+  }
   function fStatus(c) {
     const d = ob().d;
     const reg = regimeOf(c);
@@ -1360,17 +1385,23 @@
       ? `${h(c.off.name)} is offered under Rule 506(b) of Regulation D. ${h(t.shortName)} may accept a limited number of investors who are not accredited, so it asks about your status and, if you are not accredited, about your experience with investments like this one.`
       : `${h(t.shortName)} asks each investor whether they are an accredited investor under Regulation D.`;
     const no = d.stAcc === 'no' && b506;
+    // C-01: the offering may already have as many purchasers who are not accredited as Rule 506(b) allows. The investor is
+    // told so plainly and can still subscribe; the firm decides. No count and no other investor is ever shown (T-06-04).
+    // Local mode only: in server mode this browser holds no other investor's subscription.
+    const full = no && !isRemote(c.ws) && EL().place(c.ws, c.off, c.inv.id) > EL().LIMIT_506B;
+    const fullNote = full ? `<p class="wire-warn field-wide" role="note">${icon('alert')}<span>This offering may already have as many investors who are not accredited as it is able to accept. You can still subscribe: ${h(t.shortName)} reviews every subscription and will let you know if yours cannot be accepted.</span></p>` : '';
     return `${ivfH1(FL.status)}
       <p class="lede">${lede} You may leave any question unanswered.</p>
       <div class="form-grid">
         ${radios('stAcc', `Is ${h(c.inv.title)} an accredited investor?`, [['yes', 'Yes'], ['no', 'No']])}
-        ${d.stAcc === 'yes' ? radios('stBasis', 'Which ground applies?', EL().BASES.map((x) => [x, x])) : ''}
+        ${fullNote}
+        ${d.stAcc === 'yes' ? radios('stBasis', 'Which ground applies?', groundsFor(d)) : ''}
         ${
           no
             ? `${input('stExp', 'Your investment experience', { wide: true, max: 400, hint: 'For example, the kinds of investments you have made and for how many years.' })}
         ${input('stEdu', 'Your education or profession', { wide: true, max: 200 })}
         ${radios('stRep', 'Is a purchaser representative advising you on this investment?', [['yes', 'Yes'], ['no', 'No']])}
-        ${d.stRep === 'yes' ? `${input('stRepName', 'Representative’s name', { max: 120 })}${input('stRepFirm', 'Representative’s firm', { max: 160 })}` : ''}`
+        ${d.stRep === 'yes' ? `${input('stRepName', 'Representative’s name', { max: 120 })}${input('stRepFirm', 'Representative’s firm', { max: 160 })}${repFile(d)}` : ''}`
             : ''
         }
       </div>
@@ -1443,9 +1474,9 @@
     const e = ob().errors;
     const ready = tplReady(c);
     const acc = c.inv.accreditation && c.inv.accreditation.basis;
-    // The accreditation tick follows the investor status answer (D-01) and is never required (D-30).
-    // An investor on file has no status step in this flow (their account is already set up), so today's sentence stays.
-    const accAns = accVerifiedFor(c) || c.it.existing || !statusStep(c) ? 'yes' : d.stAcc;
+    // The accreditation tick follows the investor status answer (D-01) and is never required (D-30). Without a status step
+    // (verified accreditation, or no question asked) today's sentence stays.
+    const accAns = accVerifiedFor(c) || !statusStep(c) ? 'yes' : d.stAcc;
     const accTick =
       accAns === 'yes'
         ? check('subAcc', `${h(c.inv.title)} is an accredited investor${acc ? ` (${h(acc)})` : ''}, and this remains accurate.`)
@@ -1523,6 +1554,11 @@
     const idTxt = held ? (dec === 'review' || dec === 'rejected' ? ['In review', 'iv-wait'] : ['Waiting for the results', 'iv-wait']) : id === 'passed' ? ['Verified', 'iv-ok'] : ['Submitted, waiting for the result', 'iv-wait'];
     const a = v ? v.accreditation : {};
     const accTxt = a.status === 'verified' && a.connection !== 'self' ? ['Verified', 'iv-ok'] : a.status === 'pending' || a.status === 'review' ? ['In review', 'iv-wait'] : i.accreditation && i.accreditation.basis ? ['Self-certified', 'iv-ok'] : ['Not provided', 'iv-wait'];
+    // A flow with the investor status step reports the answer given there (the one on the subscription, when there is one).
+    const asked = statusStep(c);
+    const q = asked && c.req ? EL().qualOf(c.req) : null;
+    const said = q ? q.accredited : o.d.stAcc === 'yes' ? true : o.d.stAcc === 'no' ? false : null;
+    const stTxt = said === true ? ['Accredited (self-certified)', 'iv-ok'] : said === false ? ['Not accredited', ''] : ['Not answered', 'iv-wait'];
     const env = envOf(c);
     const s = signerOf(env, i);
     const bank = i.payment && i.payment.method === 'ach' ? i.payment.bank : null;
@@ -1563,7 +1599,7 @@
       <dl class="terms ivf-summary">
         ${c.it.existing ? '' : statusRow('Account', `Activated · ${h(i.title)}`, 'iv-ok')}
         ${c.it.existing && !held ? '' : verifyRows}
-        ${c.it.existing && !c.fl.accStep ? '' : statusRow('Accreditation', accTxt[0], accTxt[1])}
+        ${asked ? statusRow('Accreditation', stTxt[0], stTxt[1]) : c.it.existing && !c.fl.accStep ? '' : statusRow('Accreditation', accTxt[0], accTxt[1])}
         ${c.it.existing ? '' : statusRow('Tax form', h(i.taxForm || 'Not provided'), i.taxForm ? 'iv-ok' : 'iv-wait')}
         ${c.it.existing ? '' : statusRow('Distributions', bank ? `ACH to the ${h(bank.type)} account ending ${h(U.last4(bank.account))}` : 'Check by mail')}
         ${c.req && c.off ? statusRow('Subscription', `Submitted for ${money(c.off, c.req.cents / 100)} in ${h(c.off.name)}`, 'iv-ok') : c.closed ? statusRow('Subscription', `Not made: ${closedName} is no longer accepting subscriptions`, 'iv-wait') : ''}
@@ -1711,7 +1747,13 @@
         if (IV() && !c.it.existing) await IV().finishOnboarding(ws, i, Object.assign({}, d, { accBasis: d.stBasis }));
         else if (IV()) IV().decide(ws, i);
       }
-      log('Investor status answered', d.stAcc === 'yes' ? `accredited investor${d.stBasis ? ` (${d.stBasis})` : ', ground not given'}` : d.stAcc === 'no' ? 'not an accredited investor' : 'not answered');
+      const said = d.stAcc === 'yes' ? `accredited investor${d.stBasis ? ` (${d.stBasis})` : ', ground not given'}` : d.stAcc === 'no' ? 'not an accredited investor' : 'not answered';
+      log('Investor status answered', said);
+      // Corrected after subscribing: a request still pending carries the new answers; a decided one keeps what it was decided on.
+      if (c.req && c.req.status === 'pending') {
+        c.req.qual = qualFrom(c, d);
+        if (NS.audit) NS.audit.log(ws, { action: 'Investor status updated', record: c.req.id, fund: c.off ? c.off.id : '', detail: `${i.title}: subscription ${c.req.id} now records ${said}`, actor: actor() });
+      }
     }
     if (key === 'tax') {
       const usp = d.type === 'ira' || d.usPerson === 'yes';
@@ -2173,6 +2215,36 @@
     if (shownChanged(c, key)) return;
     const n = steps.indexOf(key);
     if (n > 0) moveTo(c, steps[n - 1]);
+  };
+  /**
+   * The purchaser representative's acknowledgment chosen on the status step (Rule 501(i), T-06-05): a PDF, PNG or JPEG by its
+   * first bytes (the same tests the integration server applies) and at most MAX_FILES, kept in this browser's file store
+   * under the investor's own rep- id. Anything else is refused with a plain message, nothing is kept, and the step can still
+   * be continued (D-30): the message is not a field error.
+   */
+  NS.changes['ivf-repfile'] = async (el) => {
+    const c = fctx();
+    const o = ob();
+    const f = el.files && el.files[0];
+    if (!c || !o || !f) return;
+    delete o.errors.stRepFile;
+    const refuse = (msg) => {
+      o.errors.stRepFile = msg;
+      NS.app.render();
+    };
+    if (f.size > MAX_FILES) return refuse(`This file is ${mb(f.size)} MB, more than the ${mb(MAX_FILES)} MB this page accepts, so it was not added.`);
+    if (!f.size || !(await sendable(f, false))) return refuse('This file is not a PDF, PNG or JPEG, so it was not added.');
+    const id = `rep-${c.inv.id}-${Date.now().toString(36)}`;
+    try {
+      await NS.ops.files.put(id, f);
+    } catch (e) {
+      return refuse('This file could not be kept in this browser, so it was not added.');
+    }
+    o.d.stRepFileId = id;
+    o.d.stRepFileName = String(f.name || 'acknowledgment').slice(0, 200);
+    NS.app.render();
+    const again = document.getElementById('ob-stRepFile');
+    if (again) again.focus();
   };
   NS.actions['ivf-retry'] = () => {
     const o = ob();
