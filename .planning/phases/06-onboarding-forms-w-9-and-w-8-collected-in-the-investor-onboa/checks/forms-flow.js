@@ -1675,6 +1675,132 @@ const usLlc = w9AccountCase({
   want: { name: 'Lakeshore Ridge Holdings LLC', llcLetter: 'P', ein: '123456789', boxes: ['llc', 'foreignOwners'] }
 });
 
+/** us-ccorp: a corporation (its name does not say how it is taxed): nothing is chosen for it; C corporation and its EIN. */
+const usCcorp = w9AccountCase({
+  id: 'us-ccorp',
+  name: 'Hélène Vasquez-Adeyemi',
+  email: 'helene.vasquez@example.com',
+  type: 'entity',
+  account: 'Northgate Precision Tools, Inc.',
+  tinLast4: '6789',
+  async atTax({ page, check }) {
+    const cls = await radioState(page, 'ob-w9Class');
+    check('the classification is asked, with nothing chosen for a corporation (C or S is not known)', cls.values.length === 7 && cls.chosen === '', cls);
+    await page.check('input[name="ob-w9Class"][value="ccorp"]');
+    await page.waitForTimeout(200);
+    const shown = await visibleInputs(page);
+    check('a C corporation is asked nothing more: no LLC letter, no line 3b', shown.every((x) => x === 'ob-w9Class'), shown);
+  },
+  want: { name: 'Northgate Precision Tools, Inc.', ein: '123456789', boxes: ['ccorp'] }
+});
+
+/** us-trust: trust or estate is ticked without a question; line 3b is offered and left unticked; the trust's EIN. */
+const usTrust = w9AccountCase({
+  id: 'us-trust',
+  name: 'Ingrid Castellanos-Moore',
+  email: 'ingrid.castellanos@example.com',
+  type: 'trust',
+  account: 'Castellanos-Moore Family Trust',
+  tinLast4: '6789',
+  async atTax({ page, check, shown, lede }) {
+    check('no classification question for a trust', (await page.locator('input[name="ob-w9Class"]').count()) === 0, shown);
+    check('the step offers line 3b for the trust, and only that', JSON.stringify(shown) === JSON.stringify(['ob-w9Foreign']), shown);
+    check('line 3b starts unticked', !(await page.isChecked('#ob-w9Foreign').catch(() => true)));
+    check('the step says the form is filled in from the answers', /Form W-9 is filled in from your answers/.test(lede), lede);
+  },
+  want: { name: 'Castellanos-Moore Family Trust', ein: '123456789', boxes: ['trust'] }
+});
+
+/**
+ * us-disregarded: an LLC answered as disregarded for U.S. tax. Line 1 is the owner (the controlling person on file), line
+ * 2 the LLC, the individual box, and the owner's SSN (asked on the step; the LLC's EIN is not used); no letter, no 3b.
+ */
+const usDisregarded = w9AccountCase({
+  id: 'us-disregarded',
+  name: 'Mireille Østergaard-Nwosu',
+  email: 'mireille.ostergaard@example.com',
+  type: 'entity',
+  account: 'Brightwater Studio LLC',
+  tinLast4: '7386',
+  async atTax({ page, check }) {
+    check('"disregarded for U.S. tax?" is asked for the LLC', (await page.locator('#ob-w9Disregarded').count()) === 1);
+    await page.check('#ob-w9Disregarded');
+    await page.waitForTimeout(200);
+    const shown = await visibleInputs(page);
+    check('disregarded: no LLC letter, no line 3b; the owner’s SSN is asked', shown.indexOf('ob-w9Llc') < 0 && shown.indexOf('ob-w9Foreign') < 0 && shown.indexOf('ob-ownerTin') >= 0, shown);
+    const label = await page.locator('label[for="ob-ownerTin"] > span').first().innerText().catch(() => '');
+    check('the SSN field names the owner on file', /Social Security number/.test(label) && label.indexOf('Mireille Østergaard-Nwosu') >= 0, label);
+    await page.fill('#ob-ownerTin', '512407386');
+    // the disregarded question is asked only for an LLC
+    await page.check('input[name="ob-w9Class"][value="scorp"]');
+    await page.waitForTimeout(200);
+    check('the disregarded question is asked only for an LLC', (await page.locator('#ob-w9Disregarded').count()) === 0);
+    await page.check('input[name="ob-w9Class"][value="llc"]');
+    await page.waitForTimeout(200);
+    check('back on LLC the disregarded answer and the owner’s SSN are as given', (await page.isChecked('#ob-w9Disregarded').catch(() => false)) && (await page.inputValue('#ob-ownerTin').catch(() => '')) === '512407386');
+  },
+  want: { name: 'Mireille Østergaard-Nwosu', business: 'Brightwater Studio LLC', ssn: '512407386', boxes: ['individual'] }
+});
+
+/**
+ * us-ira: the IRA's W-9 (planner's choice, research A5): the classification is asked like an entity's, trust or estate
+ * chosen to start; exempt payee code 1 is pre-filled and printed on line 4; emptied under "Change your answers", it prints
+ * nothing.
+ */
+const usIra = w9AccountCase({
+  id: 'us-ira',
+  name: 'Thandiwe Abernathy-Ruiz',
+  email: 'thandiwe.abernathy@example.com',
+  type: 'ira',
+  account: 'Harbor Trust Company Custodian FBO Thandiwe Abernathy-Ruiz IRA',
+  tinLast4: '6789',
+  async atTax({ page, check, shown }) {
+    const cls = await radioState(page, 'ob-w9Class');
+    check('the IRA’s classification is asked as radios, trust or estate chosen to start', cls.values.length === 7 && cls.chosen === 'trust', cls);
+    check('no line 3b for an IRA, nothing else asked', shown.every((x) => x === 'ob-w9Class'), shown);
+  },
+  want: { name: 'Harbor Trust Company Custodian FBO Thandiwe Abernathy-Ruiz IRA', exemptPayee: '1', ein: '123456789', boxes: ['trust'] },
+  async after({ page, check, dir, made, inv }) {
+    await page.click('[data-action="ivf-back"]');
+    await page.waitForFunction(() => document.querySelector('.ivf-form h1') && document.querySelector('.ivf-form h1').innerText === 'Tax certification', null, { timeout: 15000 });
+    await page.click('[data-action="ivf-taxedit"]');
+    await page.waitForSelector('#ob-w9Exempt', { timeout: 10000 });
+    const was = await page.inputValue('#ob-w9Exempt');
+    check('"Change your answers" shows exempt payee code 1, editable', was === '1', was);
+    await page.fill('#ob-w9Exempt', '');
+    // the EIN left this page's memory once it was in the signed form (T-06-35); typed again here
+    await page.fill('#ob-tin', '123456789');
+    await Lib.submit(page);
+    await page.waitForFunction((id) => {
+      const i = window.CVPortal.state.ws.investors.find((x) => x.id === id);
+      return document.querySelector('.ivf-tax-sign .es-doc-sign .es-page img') && (i.onboarding.flow || {}).taxEnvelopeId;
+    }, inv.investorId, { timeout: 60000 });
+    const second = await flowTaxEnv(page, inv.investorId);
+    check('Continue built a new form', !!second.envId && second.envId !== made.env.id, { first: made.env.id, second: second.envId });
+    const f2 = path.join(dir, 'emptied.pdf');
+    fs.writeFileSync(f2, Buffer.from(second.filled || '', 'base64'));
+    const r2 = await w9Read(f2, dir, made.blank);
+    w9Expect(check, 'exempt code emptied', r2, { name: 'Harbor Trust Company Custodian FBO Thandiwe Abernathy-Ruiz IRA', ein: '123456789', boxes: ['trust'] }, made.firm);
+    await Lib.finishTaxForm(page);
+    check('Finish moves on', (await Lib.heading(page)) === 'Distribution payments', await Lib.heading(page));
+  }
+});
+
+/** us-joint: the W-9 of the holder whose SSN is given (planner's choice): line 1 the first holder; one line says whose form it is. */
+const usJoint = w9AccountCase({
+  id: 'us-joint',
+  name: 'Joaquín Ferreira-Lund',
+  email: 'joaquin.ferreira@example.com',
+  type: 'joint',
+  account: 'Joaquín Ferreira-Lund and Maëlle Ferreira-Lund, JTWROS',
+  tinLast4: '6789',
+  async atTax({ page, check, shown, lede }) {
+    check('a joint account is asked nothing on the tax step', shown.length === 0, shown);
+    check('one line says the form is the first holder’s', /This is the form of Joaquín Ferreira-Lund, the first holder of the account/.test(lede), lede);
+  },
+  want: { name: 'Joaquín Ferreira-Lund', ssn: '123456789', boxes: ['individual'] }
+});
+
 const mmddyyyy = (iso) => {
   const [y, m, d] = String(iso).split('-');
   return `${m}-${d}-${y}`;
@@ -1743,7 +1869,12 @@ const cases = {
   noftin: noFtinCase,
   edit: editCase,
   editsigned: editSignedCase,
-  'us-llc': usLlc
+  'us-llc': usLlc,
+  'us-ccorp': usCcorp,
+  'us-trust': usTrust,
+  'us-disregarded': usDisregarded,
+  'us-ira': usIra,
+  'us-joint': usJoint
 };
 
 // The bundled forms must match their pins before anything runs.
