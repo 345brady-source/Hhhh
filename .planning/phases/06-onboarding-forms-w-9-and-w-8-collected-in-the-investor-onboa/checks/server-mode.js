@@ -87,7 +87,7 @@ async function serverFlow(S, check, o) {
   };
   try {
     // The sponsor's console: its own context, the sample portal with the agreement, the exemption, the server set up.
-    const A = await L.open(S, { allow: [srv.base], init: srv.init });
+    const A = await L.open(S, { allow: [srv.base], init: srv.init, context: { acceptDownloads: true } });
     closers.push(() => A.context.close());
     out.A = A;
     const cp = A.page;
@@ -100,8 +100,10 @@ async function serverFlow(S, check, o) {
     }
     out.exemption = await cp.evaluate((id) => (window.CVPortal.state.ws.offerings.find((x) => x.id === id).structure || {}).exemption, off.offeringId);
     if (o.beforeInvite) await o.beforeInvite(cp, off, out);
+    // The investor invited: Dana Whitfield (new), or the one beforeInvite picked (out.who: an investor on file).
+    const who = out.who || INV;
     out.serverOn = await srv.configure(cp);
-    const inv = await L.inviteFromConsole(cp, Object.assign({ first: INV.first, last: INV.last, email: INV.email, offeringId: off.offeringId }, o.invite || {}));
+    const inv = await L.inviteFromConsole(cp, Object.assign({ first: who.first, last: who.last, email: who.email, offeringId: off.offeringId }, o.invite || {}));
     out.inv = inv;
     check('the console sends the invitation to the integration server with its own form (the server holds it)', out.serverOn === true && /^ivt_/.test(inv.serverId) && inv.token === '' && inv.link.indexOf(`server=${encodeURIComponent(srv.base)}`) > 0 && inv.link.indexOf(S.base) === 0, inv);
     const held = (await srv.rows()).find((x) => x.id === inv.serverId);
@@ -126,7 +128,7 @@ async function serverFlow(S, check, o) {
     // Workspace keys in this browser's storage (the edition's prefix, then ws:<id>).
     out.storageBefore = await ip.evaluate(() => Object.keys(localStorage).filter((k) => /ws:/.test(k)));
     const answers = Object.assign({}, o.answers, {
-      name: INV.name,
+      name: who.name,
       onStep: async (hd) => {
         if (hd === 'Investor status' && o.onStatusStep) await o.onStatusStep(ip, out.R);
       },
@@ -387,6 +389,169 @@ const parts = {
       check('white label: the investor’s status and subscribe screens and the console pages pass the leak check', lk.ok, lk.hits);
     } finally {
       await F.close();
+    }
+  },
+
+  /**
+   * D-01 in server mode, both ways (plan 06-07): an investor on file (benefit plan answer 'title1', a self-certified ground)
+   * is invited to the Rule 506(b) offering. Their device gets the answers in the snapshot's on-file summary, shows them
+   * prefilled, and the investor changes the plan to 'none'. After import the console's investor.erisa.plan is 'none', the
+   * ground is kept (dated by this answer) and the request's qual agrees.
+   */
+  async existing({ check, S }) {
+    const OLD_DATE = '2024-01-15';
+    const F = await serverFlow(S, check, {
+      tag: 'existing',
+      exemption: 'Rule 506(b)',
+      answers: { amount: 60000 },
+      beforeInvite: async (cp, off, out) => {
+        out.who = await cp.evaluate(
+          ({ oid, OLD_DATE }) => {
+            const NS = window.CVPortal;
+            const ws = NS.state.ws;
+            const i = ws.investors.find((x) => x.onboarding && x.onboarding.status === 'complete' && x.type === 'individual' && x.accreditation && x.accreditation.basis && !x.accreditation.verifiedBy && x.email && !(x.positions || []).some((y) => y.offeringId === oid));
+            if (!i) return null;
+            i.erisa = { plan: 'title1', planPct: null, controlling: true, at: '2025-06-01T12:00:00Z' };
+            i.accreditation = Object.assign({}, i.accreditation, { date: OLD_DATE });
+            NS.app.save(true);
+            const parts = String(i.contact).trim().split(/\s+/);
+            return { id: i.id, name: i.contact, first: parts[0], last: parts.slice(1).join(' ') || parts[0], email: i.email, basis: i.accreditation.basis };
+          },
+          { oid: off.offeringId, OLD_DATE }
+        );
+      },
+      onStatusStep: async (p, R) => {
+        R.pre = await p.evaluate(() => ({
+          acc: (document.querySelector('input[name="ob-stAcc"]:checked') || {}).value || '',
+          basis: (document.querySelector('input[name="ob-stBasis"]:checked') || {}).value || '',
+          plan: (document.querySelector('input[name="ob-stPlan"]:checked') || {}).value || '',
+          ctrl: (document.querySelector('input[name="ob-stCtrl"]:checked') || {}).value || ''
+        }));
+        await p.screenshot({ path: path.join(SHOTS, 'existing-status-prefilled.png'), fullPage: true });
+        await p.check('input[name="ob-stPlan"][value="none"]');
+        await p.waitForTimeout(200);
+      },
+      onStatus: async (p, R) => {
+        R.plan = await p.evaluate(() => (document.querySelector('input[name="ob-stPlan"]:checked') || {}).value || '');
+      }
+    });
+    try {
+      const who = F.who || {};
+      check('an active individual investor on file with a self-certified ground, not holding the offering', !!F.who && !!who.basis, F.who);
+      check('the invitation is to subscribe (the investor is on file)', (await F.A.page.evaluate((id) => !!(window.CVPortal.state.ws.invitations.find((x) => x.id === id) || {}).existing, F.inv.id)) && F.inv.investorId === who.id, F.inv);
+      const ex = ((F.snaps[0] || {}).investor || {}).existing || {};
+      check('the snapshot’s on-file summary carries the ground and the benefit plan answers, cleaned to known fields', ex.accBasis === who.basis && isDeepStrictEqual(ex.erisa, { plan: 'title1', planPct: null, controlling: true }), ex);
+      check('the on-file summary carries no personal details (no address, phone, taxpayer ID, bank or positions)', isDeepStrictEqual(Object.keys(ex).sort(), ['accBasis', 'accredited', 'accreditedUntil', 'erisa', 'holds']), Object.keys(ex));
+      check('the status step on the investor’s device is prefilled: accredited yes, the ground on file, plan title1, control yes', !!F.R.pre && F.R.pre.acc === 'yes' && F.R.pre.basis === who.basis && F.R.pre.plan === 'title1' && F.R.pre.ctrl === 'yes', { pre: F.R.pre, basis: who.basis });
+      check('the investor changed the plan to none', F.R.plan === 'none', F.R.plan);
+      const heads = F.walk.seen.map((x) => x.split(' | ').pop());
+      check('steps: welcome, status, subscribe, agreement', /^Welcome/.test(heads[0]) && heads.slice(1).join(',') === 'Investor status,Subscription,Subscription agreement', F.walk.seen);
+      commonChecks(check, F);
+      const q = (F.req && F.req.qual) || {};
+      check('qual: regime 506b, accredited true, the ground on file, plan none', q.regime === '506b' && q.accredited === true && q.basis === who.basis && !!q.erisa && q.erisa.plan === 'none' && q.erisa.share === 0, q);
+      const rec = await F.A.page.evaluate((id) => {
+        const i = window.CVPortal.state.ws.investors.find((x) => x.id === id) || {};
+        return { erisa: i.erisa || null, accreditation: i.accreditation || null };
+      }, who.id);
+      check('after import the console’s investor.erisa is the answer the link collected: plan none, controlling yes', !!rec.erisa && rec.erisa.plan === 'none' && rec.erisa.planPct === null && rec.erisa.controlling === true, rec.erisa);
+      check('the self-certified ground is kept, dated by this answer (not the old date)', !!rec.accreditation && rec.accreditation.basis === who.basis && rec.accreditation.basis === q.basis && rec.accreditation.date !== OLD_DATE && /^\d{4}-\d{2}-\d{2}$/.test(rec.accreditation.date || ''), rec.accreditation);
+      const cp = F.A.page;
+      await L.consoleRoute(cp, 'console-offering-' + F.off.offeringId);
+      const bp = await panelText(cp, 'Benefit plan investors');
+      await cp.screenshot({ path: path.join(SHOTS, 'existing-console-offering.png'), fullPage: true });
+      const lk = L.leakCheck([F.R.status, F.R.sub, bp].join('\n'));
+      check('white label: the status and subscribe screens and the benefit plan panel pass the leak check', lk.ok, lk.hits);
+    } finally {
+      await F.close();
+    }
+  },
+
+  /**
+   * D-30 / T-06-16 in server mode (plan 06-07): a non-accredited 506(b) investor attaches the written acknowledgment of their
+   * purchaser representative on their own device. It travels with the completion (rep-<investor id>-<time>, named by the
+   * request's qual), passes the server's allowlist as evidence, is stored by the console's import, and the request row's
+   * download returns the same bytes under the uploaded name.
+   */
+  async repack({ check, S }) {
+    const PDF = Buffer.from('%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\n% acknowledgment of purchaser representative, signed by Dana Whitfield\ntrailer << /Root 1 0 R >>\n%%EOF\n');
+    const answers = { acc: 'no', exp: 'Four years of real estate syndications', edu: 'Nurse', rep: 'yes', repName: 'Morgan Ellery', repFirm: 'Ellery Advisory Partners', amount: 60000 };
+    const F = await serverFlow(S, check, {
+      tag: 'repack',
+      exemption: 'Rule 506(b)',
+      answers,
+      onStatus: async (p, R) => {
+        await p.setInputFiles('#ob-stRepFile', { name: 'acknowledgment.pdf', mimeType: 'application/pdf', buffer: PDF });
+        await p.waitForTimeout(500);
+        R.fileId = await p.evaluate(() => (window.CVPortal.state.ui.ob || { d: {} }).d.stRepFileId || '');
+        R.hint = await p.locator('#hint-stRepFile').innerText().catch(() => '');
+      }
+    });
+    try {
+      const id = F.R.fileId;
+      check('the investor’s device keeps the acknowledgment as rep-{investor id}-{time}', new RegExp(`^rep-${F.inv.investorId}-[0-9a-z]+$`).test(id) && /Attached: acknowledgment\.pdf/.test(F.R.hint), F.R.hint);
+      const dr = ((F.deviceQual || {}).sophistication || {}).rep || {};
+      check('the device’s request names it: qual.sophistication.rep.fileId and fileName', dr.fileId === id && dr.fileName === 'acknowledgment.pdf', dr);
+      commonChecks(check, F);
+      const files = (F.stored && F.stored.files) || {};
+      check('the acknowledgment passed the server’s allowlist: the server holds it, byte for byte', typeof files[id] === 'string' && Buffer.from(files[id], 'base64').equals(PDF), Object.keys(files));
+      const rq = ((F.req && F.req.qual) || {}).sophistication || {};
+      check('the imported request keeps the pointer: rep.fileId and fileName', !!rq.rep && rq.rep.fileId === id && rq.rep.fileName === 'acknowledgment.pdf', rq.rep);
+      const kept = await F.A.page.evaluate(async (fid) => {
+        const b = await window.CVPortal.ops.files.get(fid);
+        return b ? Array.from(new Uint8Array(await b.arrayBuffer())) : null;
+      }, id);
+      check('the console stored the acknowledgment under the same id, byte for byte', !!kept && Buffer.from(kept).equals(PDF), kept && kept.length);
+      const cp = F.A.page;
+      await L.consoleRoute(cp, 'console-requests', '[data-action=req-tab][data-t=all]');
+      await cp.click('[data-action=req-tab][data-t=all]');
+      await cp.waitForTimeout(300);
+      const row = F.req ? await requestRow(cp, F.req.id) : '';
+      await cp.screenshot({ path: path.join(SHOTS, 'repack-requests.png'), fullPage: true });
+      check('the request row shows "Purchaser representative: Morgan Ellery, Ellery Advisory Partners" and the download', /Purchaser representative: Morgan Ellery, Ellery Advisory Partners/.test(row) && /Download the written acknowledgment/.test(row), row);
+      let got = null;
+      let name = '';
+      if (id && (await cp.locator(`[data-action=kyc-iv-file][data-id="${id}"]`).count())) {
+        const [dl] = await Promise.all([cp.waitForEvent('download', { timeout: 15000 }), cp.click(`[data-action=kyc-iv-file][data-id="${id}"]`)]);
+        got = fs.readFileSync(await dl.path());
+        name = dl.suggestedFilename();
+      }
+      check('the request row’s download returns the same bytes, under the uploaded name', !!got && got.equals(PDF) && name === 'acknowledgment.pdf', { size: got && got.length, want: PDF.length, name });
+      const lk = L.leakCheck([F.R.status, row].join('\n'));
+      check('white label: the status screen and the request row pass the leak check', lk.ok, lk.hits);
+    } finally {
+      await F.close();
+    }
+    // An acknowledgment of the full 25 MB the page accepts does not fit with the signed agreement: it stays on the device, the
+    // completion still goes, the firm's copy of the request says so and points at no file, and the investor is told.
+    const BIG = Buffer.alloc(25 * 1024 * 1024, 0x20);
+    PDF.copy(BIG, 0);
+    const G = await serverFlow(S, check, {
+      tag: 'repbig',
+      exemption: 'Rule 506(b)',
+      answers,
+      onStatus: async (p, R) => {
+        await p.setInputFiles('#ob-stRepFile', { name: 'acknowledgment-scan.pdf', mimeType: 'application/pdf', buffer: BIG });
+        await p.waitForTimeout(1500);
+        R.fileId = await p.evaluate(() => (window.CVPortal.state.ui.ob || { d: {} }).d.stRepFileId || '');
+      }
+    });
+    try {
+      check('a 25 MB acknowledgment is accepted on the status step', new RegExp(`^rep-${G.inv.investorId}-[0-9a-z]+$`).test(G.R.fileId), G.R.fileId);
+      check('it does not fit with the agreement: the server holds the agreement and no acknowledgment', !!G.stored && Object.keys(G.stored.files || {}).length === 1 && !Object.keys(G.stored.files || {}).some((k) => /^rep-/.test(k)), G.stored && Object.keys(G.stored.files || {}));
+      const sr = ((((G.stored || {}).request || {}).qual || {}).sophistication || {}).rep || {};
+      check('the firm’s copy of the request points at no file and says to ask the investor for it', !sr.fileId && !sr.fileName && /written acknowledgment of their purchaser representative the investor uploaded \(acknowledgment-scan\.pdf\) did not fit in the 25 MB/.test(sr.note || '') && /Ask the investor for it\./.test(sr.note || ''), sr);
+      check('the done screen tells the investor the acknowledgment could not be sent', /The acknowledgment of your purchaser representative you uploaded could not be sent with your details/.test(G.done || ''), (G.done || '').slice(0, 1500));
+      check('the firm’s change log records the acknowledgment not sent', await G.A.page.evaluate((id) => (window.CVPortal.state.ws.audit || []).some((e) => e.record === id && e.action === 'Uploaded evidence not sent' && /purchaser representative/.test(e.detail)), G.inv.investorId));
+      const cp = G.A.page;
+      await L.consoleRoute(cp, 'console-requests', '[data-action=req-tab][data-t=all]');
+      await cp.click('[data-action=req-tab][data-t=all]');
+      await cp.waitForTimeout(300);
+      const row = G.req ? await requestRow(cp, G.req.id) : '';
+      await cp.screenshot({ path: path.join(SHOTS, 'repbig-requests.png'), fullPage: true });
+      check('the request row gives the note instead of a download', /Purchaser representative: Morgan Ellery, Ellery Advisory Partners; The written acknowledgment/.test(row) && !/Download the written acknowledgment/.test(row), row);
+      check('no script error on either side', G.A.errors.length === 0 && G.B.errors.length === 0, { A: G.A.errors, B: G.B.errors });
+    } finally {
+      await G.close();
     }
   }
 };
