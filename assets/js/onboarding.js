@@ -1546,6 +1546,10 @@
   // T-06-40: the foreign tax ID and the U.S. taxpayer ID typed on the W-8BEN answers, by investor id, in this page's memory
   // only until the form is finished (so a corrected answer rebuilds the form with them); never saved (SECRET).
   const W8MEM = {};
+  // Research FORM-07: the answers each tax form was built from, by envelope id, in this page's memory only (no stored
+  // fingerprint), without the tax numbers. Continue compares the new answers with them to keep or rebuild the form.
+  const BUILT = {};
+  const SECRET_ANSWERS = ['ssn', 'ein', 'ftin', 'usTin'];
   // The countries of the list (COUNTRIES) with an income tax treaty with the United States in force: the IRS list "United
   // States Income Tax Treaties - A to Z" (irs.gov, last reviewed 3 January 2026). Hungary is on that list but its treaty was
   // terminated (effective 8 January 2023, the IRS Hungary treaty page), so it is left out.
@@ -1767,10 +1771,18 @@
       <p class="lede">Check your Form ${h((env.taxForm && env.taxForm.form) || 'W-9')}, sign it, then select Finish.</p>
       ${NS.esign.embed(env.id, c.inv.id)}`;
   }
+  /** The answers without the tax numbers, in key order: what BUILT keeps and compares (memory only). */
+  const plainAnswers = (a) => JSON.stringify(Object.keys(a).filter((k) => SECRET_ANSWERS.indexOf(k) < 0).sort().map((k) => [k, a[k]]));
   /**
-   * Continue on the tax answers (W-9 or W-8BEN): the filled, flattened official form, built now from the answers, becomes an
-   * envelope for this investor to sign on the page. An earlier form of this flow not yet signed is voided first and its
-   * file deleted (T-06-36); the W-9's full taxpayer ID leaves this page's memory once it is in the form. Returns true.
+   * Continue on the tax answers (W-9 or W-8BEN). Research FORM-07, T-06-41: an edited answer always reaches the form, and
+   * the flow has one live tax envelope at most.
+   *  - The answers are compared, in this page's memory only, with those the flow's current form was built from. A tax number
+   *    typed now is a change; one not typed again is not (it left memory once it was in the form).
+   *  - Unchanged: a signed form is kept (false: the flow moves on); an unsigned form still to sign is shown again.
+   *  - Changed (or not known after a reload): the filled, flattened official form is built now and becomes an envelope for
+   *    this investor to sign on the page. An unsigned earlier form is voided first ("answers changed before signing") and
+   *    its files deleted; a signed earlier form stays in the record and in Documents until the new one is finished.
+   * The W-9's full taxpayer ID leaves this page's memory once it is in the form (T-06-35). Returns true to stay on the step.
    */
   async function buildTax(c, d) {
     const ws = c.ws;
@@ -1782,13 +1794,22 @@
     const a = w8 ? w8Answers(c, d) : w9Answers(c, d);
     const old = fl.taxEnvelopeId && (ws.envelopes || []).find((e) => e.id === fl.taxEnvelopeId);
     const os = old && signerOf(old, i);
+    const typed = w8 ? !!(tidy(d.ftin) || digitsOf(d.w8UsTin)) : !!(digitsOf(d.tin) || TINS[i.id]);
+    const same = !!old && !!old.taxForm && old.taxForm.form === map.form && BUILT[old.id] === plainAnswers(a) && !typed;
     const unsignedOld = !!old && old.status === 'sent' && !(os && os.status === 'signed');
+    if (same && old.status === 'completed' && i.taxCert && i.taxCert.envelopeId === old.id && i.taxCert.signed === true) return false;
+    if (same && unsignedOld) {
+      fl.taxView = 'sign';
+      ob().taxEdit = false;
+      return true;
+    }
     const blob = await NS.taxforms.prepare(key, a);
     if (unsignedOld) {
-      NS.esign.void(ws, old.id, 'The investor changed their answers before signing; a new form was prepared', { quiet: true, actor: `${i.title} (investor)` });
-      [old.docId, old.workDocId].forEach((id) => id && id.indexOf(old.id) === 0 && NS.ops.files.del(id).catch(() => {}));
+      NS.esign.void(ws, old.id, 'Answers changed before signing; a new form was prepared', { quiet: true, actor: `${i.title} (investor)` });
+      await Promise.all([old.docId, old.workDocId].filter((id) => id && id.indexOf(old.id) === 0).map((id) => NS.ops.files.del(id).catch(() => {})));
     }
     const env = await NS.esign.createFromPdf(ws, { blob, title: `Form ${map.form} - ${w8 ? a.name || i.title : i.title}`, fileName: `Form_${map.form}.pdf`, investorId: i.id, taxForm: { form: map.form, revision: map.revision }, overlays: map.overlays });
+    BUILT[env.id] = plainAnswers(a);
     fl.taxEnvelopeId = env.id;
     fl.taxView = 'sign';
     if (w8) {
