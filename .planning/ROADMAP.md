@@ -127,8 +127,9 @@ Plans:
   3. The whole set of real EDGAR agreements (several hundred): at least 95 percent ready to send; no picture offer, no document with zero fields, unreadable or timed out, no missing signature field; review marks and strays each at most 0.5 percent of fields; at most 60 seconds a document at the 95th percentile with no console error
   4. The sponsor only uploads: no button, confirmation, install or page to check; everything runs in the portal's page; no document leaves it; no vendor or library name is visible anywhere
   5. Nothing that works today regresses: the owner's documents A 29 of 29, B 2 of 2 places, C 138 of 138, the picture form 241 of 241, the first agreement's 47 fields with none marked, the public documents' pins, the nine check files, the class pages and the walks
-  6. The owner has checked agreements the reader has never seen in the republished preview
-**Plans:** 50 plans
+  6. After the reader is frozen, 100 fresh agreements and 50 more made picture-only (half clean, half with scan effects), drawn at random from EDGAR and new to every set, are read by the frozen reader and scored (the measure on all 150, exact scores on a random 20 and 10), and the results reach the owner failures first
+  7. The owner has checked agreements the reader has never seen in the republished preview
+**Plans:** 58 plans
 
 Plans:
 - [ ] 01.4-01-PLAN.md — The measure sees what it was blind to (fallback glyph boxes, letter boxes, dates in parts, shared lines, illustrations), calibrated
@@ -180,7 +181,15 @@ Plans:
 - [ ] 01.4-47-PLAN.md — Held-out B answer sheets, batch B09, by an agent who builds nothing
 - [ ] 01.4-48-PLAN.md — Held-out B answer sheets, batch B10, by an agent who builds nothing
 - [ ] 01.4-49-PLAN.md — Held-out B answer sheets, batch B11, by an agent who builds nothing
-- [ ] 01.4-50-PLAN.md — Held-out B scored once, everything in one final run, and the owner's check on agreements the reader has never seen
+- [ ] 01.4-50-PLAN.md — Held-out B scored once, everything in one final run, and the reader frozen at a recorded commit
+- [ ] 01.4-51-PLAN.md — Final check (D-25, D-26): 100 fresh agreements and 50 more made picture-only, drawn at random after the freeze, read by the frozen reader and measured
+- [ ] 01.4-52-PLAN.md — Fresh-check answer sheets, batch F01, by an agent who builds nothing
+- [ ] 01.4-53-PLAN.md — Fresh-check answer sheets, batch F02, by an agent who builds nothing
+- [ ] 01.4-54-PLAN.md — Fresh-check answer sheets, batch F03, by an agent who builds nothing
+- [ ] 01.4-55-PLAN.md — Fresh-check answer sheets, batch F04, by an agent who builds nothing
+- [ ] 01.4-56-PLAN.md — Picture-check answer sheets, batch P01, by an agent who builds nothing
+- [ ] 01.4-57-PLAN.md — Picture-check answer sheets, batch P02, by an agent who builds nothing
+- [ ] 01.4-58-PLAN.md — Exact scores of the fresh 30, the owner's report failures first, and the owner's check
 
 ### Phase 2: Field Editor
 **Goal**: A sponsor can adjust fields by hand quickly and without frustration, in an editor that looks professionally made
