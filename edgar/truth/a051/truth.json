@@ -1,0 +1,1680 @@
+{
+ "file": "set-a/a051/doc.pdf",
+ "id": "a051",
+ "pages": 20,
+ "page_size_pt": [
+  612.0,
+  792.0
+ ],
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ],
+  "15": [
+   612.0,
+   792.0
+  ],
+  "16": [
+   612.0,
+   792.0
+  ],
+  "17": [
+   612.0,
+   792.0
+  ],
+  "18": [
+   612.0,
+   792.0
+  ],
+  "19": [
+   612.0,
+   792.0
+  ],
+  "20": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text",
+  "17": "text",
+  "18": "text",
+  "19": "text",
+  "20": "text"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
+ "signing": {
+  "investor_pages": [
+   18,
+   19
+  ],
+  "firm_pages": [
+   20
+  ],
+  "co_investor": true,
+  "third_parties": [],
+  "kind": "Private placement subscription agreement (exhibit): an individual investor (with an optional joint purchaser) signs and completes the individual signature page, or an entity signs and completes the entity signature page; the issuer completes and signs the acceptance page. No third party."
+ },
+ "counts_per_page": {
+  "1": {
+   "total": 1,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 1,
+   "signature": 0,
+   "date": 0
+  },
+  "18": {
+   "total": 25,
+   "tickbox": 3,
+   "initials": 0,
+   "blank": 18,
+   "signature": 2,
+   "date": 2
+  },
+  "19": {
+   "total": 14,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 12,
+   "signature": 1,
+   "date": 1
+  },
+  "20": {
+   "total": 7,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 5,
+   "signature": 1,
+   "date": 1
+  }
+ },
+ "counts_total": {
+  "total": 47,
+  "tickbox": 3,
+  "initials": 0,
+  "blank": 36,
+  "signature": 4,
+  "date": 4
+ },
+ "counts_by_owner": {
+  "co-investor": 9,
+  "firm": 7,
+  "investor": 1,
+  "investor-entity": 14,
+  "investor-individual": 16
+ },
+ "sure_per_page": {
+  "1": "sure",
+  "2": "draft",
+  "3": "draft",
+  "4": "draft",
+  "5": "draft",
+  "6": "draft",
+  "7": "draft",
+  "8": "draft",
+  "9": "draft",
+  "10": "draft",
+  "11": "draft",
+  "12": "draft",
+  "13": "draft",
+  "14": "draft",
+  "15": "draft",
+  "16": "draft",
+  "17": "draft",
+  "18": "sure; the joint purchaser column is the co-investor's; the joint ownership boxes are printed as the letter o",
+  "19": "sure",
+  "20": "sure: the issuer's acceptance page (firm)"
+ },
+ "not_fields": {
+  "1": [
+   "the exhibit header and the issuer heading"
+  ],
+  "2": [
+   "the underlined defined terms in the prose; pages 2-17 are prose only"
+  ],
+  "17": [
+   "the legends: prose only"
+  ],
+  "18": [
+   "the page headings and the IN WITNESS WHEREOF line"
+  ],
+  "20": [
+   "the page headings"
+  ]
+ },
+ "places": [
+  {
+   "id": "p01-001",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Subscriber name (cover)",
+   "printed_label": "Subscriber:",
+   "must": true,
+   "x0": 239.8,
+   "y0": 57.9,
+   "x1": 407.7,
+   "y1": 73.4,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Investor name",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      239.8,
+      57.9,
+      407.7,
+      73.4
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p18-001",
+   "page": 18,
+   "kind": "signature",
+   "owner": "investor-individual",
+   "label": "Individual investor signature",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 29.6,
+   "y0": 135.8,
+   "x1": 246.1,
+   "y1": 151.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "investor-individual",
+    "field_label": "Signature",
+    "candidate": "underscore",
+    "why": "reader marked it: This label sits above its line, which can also belong to the",
+    "initial": {
+     "kind": "signature",
+     "owner": "investor-individual",
+     "what": null,
+     "box": [
+      29.6,
+      135.8,
+      246.1,
+      151.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p18-002",
+   "page": 18,
+   "kind": "signature",
+   "owner": "co-investor",
+   "label": "Joint purchaser signature",
+   "printed_label": "Signature (If Purchased Jointly)",
+   "must": false,
+   "x0": 318.8,
+   "y0": 135.8,
+   "x1": 535.2,
+   "y1": 151.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "investor-individual",
+    "field_label": "Signature",
+    "candidate": "underscore",
+    "why": "reader marked it: This label sits above its line, which can also belong to the",
+    "initial": {
+     "kind": "signature",
+     "owner": "investor-individual",
+     "what": null,
+     "box": [
+      318.8,
+      135.8,
+      535.2,
+      151.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p18-003",
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Individual investor printed name",
+   "printed_label": "Print Name",
+   "must": true,
+   "x0": 63.8,
+   "y0": 153.7,
+   "x1": 250.4,
+   "y1": 169.2,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "name",
+    "field_owner": "investor-individual",
+    "field_label": "Name",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "name",
+     "box": [
+      63.8,
+      153.7,
+      250.4,
+      169.2
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p18-004",
+   "page": 18,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint purchaser printed name",
+   "printed_label": "Print Name",
+   "must": false,
+   "x0": 353.0,
+   "y0": 153.7,
+   "x1": 539.6,
+   "y1": 169.2,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "name",
+    "field_owner": "investor-individual",
+    "field_label": "Name",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "name",
+     "box": [
+      353.0,
+      153.7,
+      539.6,
+      169.2
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p18-005",
+   "page": 18,
+   "kind": "date",
+   "owner": "investor-individual",
+   "label": "Individual investor signature date",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 47.6,
+   "y0": 171.6,
+   "x1": 249.2,
+   "y1": 187.1,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "date",
+    "field_owner": "investor-individual",
+    "field_label": "Date signed",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "date",
+     "owner": "investor-individual",
+     "what": null,
+     "box": [
+      47.6,
+      171.6,
+      249.2,
+      187.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p18-006",
+   "page": 18,
+   "kind": "date",
+   "owner": "co-investor",
+   "label": "Joint purchaser signature date",
+   "printed_label": "Date",
+   "must": false,
+   "x0": 336.8,
+   "y0": 171.6,
+   "x1": 538.3,
+   "y1": 187.1,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "date",
+    "field_owner": "investor-individual",
+    "field_label": "Date signed",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "date",
+     "owner": "investor-individual",
+     "what": null,
+     "box": [
+      336.8,
+      171.6,
+      538.3,
+      187.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p18-007",
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Individual investor social security number",
+   "printed_label": "Social Security #",
+   "must": true,
+   "x0": 80.6,
+   "y0": 189.5,
+   "x1": 248.6,
+   "y1": 205.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Taxpayer ID",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "tax number",
+     "box": [
+      80.6,
+      189.5,
+      248.6,
+      205.0
+     ]
+    }
+   },
+   "what": "tax number"
+  },
+  {
+   "id": "p18-008",
+   "page": 18,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint purchaser social security number",
+   "printed_label": "Social Security #",
+   "must": false,
+   "x0": 369.8,
+   "y0": 189.5,
+   "x1": 537.7,
+   "y1": 205.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Taxpayer ID",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "tax number",
+     "box": [
+      369.8,
+      189.5,
+      537.7,
+      205.0
+     ]
+    }
+   },
+   "what": "tax number"
+  },
+  {
+   "id": "p18-009",
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Individual investor residential address line 1",
+   "printed_label": "Residential Address",
+   "must": true,
+   "x0": 89.1,
+   "y0": 207.4,
+   "x1": 245.9,
+   "y1": 222.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Address",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "address",
+     "box": [
+      89.1,
+      207.4,
+      245.9,
+      222.9
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p18-010",
+   "page": 18,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint purchaser residential address line 1",
+   "printed_label": "Residential Address",
+   "must": false,
+   "x0": 378.3,
+   "y0": 207.4,
+   "x1": 535.0,
+   "y1": 222.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Address",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "address",
+     "box": [
+      378.3,
+      207.4,
+      535.0,
+      222.9
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p18-011",
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Individual investor residential address line 2",
+   "must": false,
+   "x0": 29.6,
+   "y0": 225.4,
+   "x1": 242.3,
+   "y1": 240.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Address line 2",
+    "candidate": "underscore",
+    "why": "reader marked it: This blank has no label; it was read as a second address lin",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "address",
+     "box": [
+      29.6,
+      225.4,
+      242.3,
+      240.9
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p18-012",
+   "page": 18,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint purchaser residential address line 2",
+   "must": false,
+   "x0": 318.8,
+   "y0": 225.4,
+   "x1": 531.5,
+   "y1": 240.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Address line 2",
+    "candidate": "underscore",
+    "why": "reader marked it: This blank has no label; it was read as a second address lin",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "address",
+     "box": [
+      318.8,
+      225.4,
+      531.5,
+      240.9
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p18-013",
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Individual investor telephone",
+   "printed_label": "Telephone #",
+   "must": true,
+   "x0": 66.2,
+   "y0": 252.3,
+   "x1": 241.6,
+   "y1": 267.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Phone",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "phone",
+     "box": [
+      66.2,
+      252.3,
+      241.6,
+      267.8
+     ]
+    }
+   },
+   "what": "phone"
+  },
+  {
+   "id": "p18-014",
+   "page": 18,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint purchaser telephone",
+   "printed_label": "Telephone #",
+   "must": false,
+   "x0": 355.4,
+   "y0": 252.3,
+   "x1": 530.8,
+   "y1": 267.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Phone",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "phone",
+     "box": [
+      355.4,
+      252.3,
+      530.8,
+      267.8
+     ]
+    }
+   },
+   "what": "phone"
+  },
+  {
+   "id": "p18-015",
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Individual investor fax",
+   "printed_label": "Fax #",
+   "must": false,
+   "x0": 46.4,
+   "y0": 270.2,
+   "x1": 240.5,
+   "y1": 285.7,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Fax #",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "phone",
+     "box": [
+      46.4,
+      270.2,
+      240.5,
+      285.7
+     ]
+    }
+   },
+   "what": "phone"
+  },
+  {
+   "id": "p18-016",
+   "page": 18,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint purchaser fax",
+   "printed_label": "Fax #",
+   "must": false,
+   "x0": 335.6,
+   "y0": 270.2,
+   "x1": 529.6,
+   "y1": 285.7,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Fax #",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "phone",
+     "box": [
+      335.6,
+      270.2,
+      529.6,
+      285.7
+     ]
+    }
+   },
+   "what": "phone"
+  },
+  {
+   "id": "p18-017",
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Individual investor email",
+   "printed_label": "Email",
+   "must": true,
+   "x0": 49.5,
+   "y0": 288.1,
+   "x1": 243.6,
+   "y1": 303.6,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Email",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "email",
+     "box": [
+      49.5,
+      288.1,
+      243.6,
+      303.6
+     ]
+    }
+   },
+   "what": "email"
+  },
+  {
+   "id": "p18-018",
+   "page": 18,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint purchaser email",
+   "printed_label": "Email",
+   "must": false,
+   "x0": 338.7,
+   "y0": 288.1,
+   "x1": 532.7,
+   "y1": 303.6,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Email",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "email",
+     "box": [
+      338.7,
+      288.1,
+      532.7,
+      303.6
+     ]
+    }
+   },
+   "what": "email"
+  },
+  {
+   "id": "p18-019",
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Exact name in which the securities are to be issued (line 1)",
+   "printed_label": "EXACT Name in which Securities are to be issued:",
+   "must": true,
+   "x0": 197.7,
+   "y0": 315.0,
+   "x1": 541.1,
+   "y1": 330.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Investor name",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "name",
+     "box": [
+      197.7,
+      315.0,
+      541.1,
+      330.5
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p18-022",
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Exact name in which the securities are to be issued (line 2)",
+   "printed_label": "",
+   "must": false,
+   "x0": 29.6,
+   "y0": 332.1,
+   "x1": 563.3,
+   "y1": 347.6,
+   "printed_as": "underscore run of 143",
+   "what": "name"
+  },
+  {
+   "id": "p18-020",
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Purchase price",
+   "printed_label": "Purchase Price: $",
+   "must": true,
+   "x0": 83.3,
+   "y0": 350.8,
+   "x1": 243.8,
+   "y1": 366.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Commitment amount",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "amount",
+     "box": [
+      83.3,
+      350.8,
+      243.8,
+      366.3
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p18-023",
+   "page": 18,
+   "kind": "tickbox",
+   "owner": "investor-individual",
+   "label": "Form of joint ownership: tenants in common",
+   "printed_label": "Tenants-in-Common",
+   "must": false,
+   "x0": 238.4,
+   "y0": 377.6,
+   "x1": 241.5,
+   "y1": 381.2,
+   "printed_as": "letter o used as a box"
+  },
+  {
+   "id": "p18-024",
+   "page": 18,
+   "kind": "tickbox",
+   "owner": "investor-individual",
+   "label": "Form of joint ownership: joint tenants with right of survivorship",
+   "printed_label": "Joint Tenants with Right of Survivorship",
+   "must": false,
+   "x0": 358.0,
+   "y0": 377.6,
+   "x1": 361.1,
+   "y1": 381.2,
+   "printed_as": "letter o used as a box"
+  },
+  {
+   "id": "p18-021",
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Form of joint ownership: other (specify)",
+   "printed_label": "Other:",
+   "must": false,
+   "x0": 54.3,
+   "y0": 386.7,
+   "x1": 584.2,
+   "y1": 402.2,
+   "printed_as": "measure candidate: underscore (a typed line across the page (a separator))",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "oOther",
+    "candidate": "underscore",
+    "why": "candidate not counted by the measure (low)",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      54.3,
+      386.7,
+      584.2,
+      402.2
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p18-025",
+   "page": 18,
+   "kind": "tickbox",
+   "owner": "investor-individual",
+   "label": "Form of joint ownership: other",
+   "printed_label": "Other:",
+   "must": false,
+   "x0": 29.9,
+   "y0": 395.5,
+   "x1": 33.0,
+   "y1": 399.1,
+   "printed_as": "letter o used as a box"
+  },
+  {
+   "id": "p19-001",
+   "page": 19,
+   "kind": "signature",
+   "owner": "investor-entity",
+   "label": "Entity signatory signature",
+   "printed_label": "By:",
+   "must": true,
+   "x0": 42.3,
+   "y0": 126.8,
+   "x1": 232.6,
+   "y1": 142.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "investor",
+    "field_label": "Signature",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "signature",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      42.3,
+      126.8,
+      232.6,
+      142.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p19-002",
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Federal tax ID number",
+   "printed_label": "Federal Tax ID Number",
+   "must": true,
+   "x0": 378.9,
+   "y0": 126.8,
+   "x1": 528.2,
+   "y1": 142.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Federal Tax ID Number",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "tax number",
+     "box": [
+      378.9,
+      126.8,
+      528.2,
+      142.3
+     ]
+    }
+   },
+   "what": "tax number"
+  },
+  {
+   "id": "p19-003",
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Entity signatory name",
+   "printed_label": "Name:",
+   "must": true,
+   "x0": 51.4,
+   "y0": 144.7,
+   "x1": 234.2,
+   "y1": 160.2,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "name",
+    "field_owner": "investor",
+    "field_label": "Name",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "name",
+     "box": [
+      51.4,
+      144.7,
+      234.2,
+      160.2
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p19-004",
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "State of organization",
+   "printed_label": "State of Organization",
+   "must": true,
+   "x0": 373.2,
+   "y0": 144.7,
+   "x1": 526.2,
+   "y1": 160.2,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "State of Organization",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      373.2,
+      144.7,
+      526.2,
+      160.2
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p19-005",
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Entity signatory title",
+   "printed_label": "Title:",
+   "must": true,
+   "x0": 45.5,
+   "y0": 162.6,
+   "x1": 232.1,
+   "y1": 178.1,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Title",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "title",
+     "box": [
+      45.5,
+      162.6,
+      232.1,
+      178.1
+     ]
+    }
+   },
+   "what": "title"
+  },
+  {
+   "id": "p19-006",
+   "page": 19,
+   "kind": "date",
+   "owner": "investor-entity",
+   "label": "Entity signature date",
+   "printed_label": "Date:",
+   "must": true,
+   "x0": 47.6,
+   "y0": 180.6,
+   "x1": 234.2,
+   "y1": 196.1,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "date",
+    "field_owner": "investor",
+    "field_label": "Date signed",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "date",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      47.6,
+      180.6,
+      234.2,
+      196.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p19-007",
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Principal business address",
+   "printed_label": "Principal Business Address:",
+   "must": true,
+   "x0": 150.9,
+   "y0": 198.5,
+   "x1": 583.8,
+   "y1": 214.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Principal Business Address",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      150.9,
+      198.5,
+      583.8,
+      214.0
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p19-008",
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Attention (contact person)",
+   "printed_label": "Attn:",
+   "must": true,
+   "x0": 45.0,
+   "y0": 216.4,
+   "x1": 235.3,
+   "y1": 231.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Attn",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      45.0,
+      216.4,
+      235.3,
+      231.9
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p19-009",
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Entity telephone",
+   "printed_label": "Telephone:",
+   "must": true,
+   "x0": 62.7,
+   "y0": 234.3,
+   "x1": 238.1,
+   "y1": 249.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Phone",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "phone",
+     "box": [
+      62.7,
+      234.3,
+      238.1,
+      249.8
+     ]
+    }
+   },
+   "what": "phone"
+  },
+  {
+   "id": "p19-010",
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Entity fax",
+   "printed_label": "Fax:",
+   "must": false,
+   "x0": 46.6,
+   "y0": 252.3,
+   "x1": 240.7,
+   "y1": 267.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Fax",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "phone",
+     "box": [
+      46.6,
+      252.3,
+      240.7,
+      267.8
+     ]
+    }
+   },
+   "what": "phone"
+  },
+  {
+   "id": "p19-011",
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Entity email",
+   "printed_label": "Email:",
+   "must": true,
+   "x0": 49.5,
+   "y0": 270.2,
+   "x1": 243.6,
+   "y1": 285.7,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Email",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "email",
+     "box": [
+      49.5,
+      270.2,
+      243.6,
+      285.7
+     ]
+    }
+   },
+   "what": "email"
+  },
+  {
+   "id": "p19-012",
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Exact name in which the securities are to be issued (line 1)",
+   "printed_label": "EXACT Name in which Securities are to be issued:",
+   "must": true,
+   "x0": 197.7,
+   "y0": 288.1,
+   "x1": 541.1,
+   "y1": 303.6,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Investor name",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "name",
+     "box": [
+      197.7,
+      288.1,
+      541.1,
+      303.6
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p19-014",
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Exact name in which the securities are to be issued (line 2)",
+   "printed_label": "",
+   "must": false,
+   "x0": 29.6,
+   "y0": 305.3,
+   "x1": 563.3,
+   "y1": 320.8,
+   "printed_as": "underscore run of 143",
+   "what": "name"
+  },
+  {
+   "id": "p19-013",
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Purchase price",
+   "printed_label": "Purchase Price: $",
+   "must": true,
+   "x0": 83.3,
+   "y0": 323.9,
+   "x1": 243.8,
+   "y1": 339.4,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Commitment amount",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "amount",
+     "box": [
+      83.3,
+      323.9,
+      243.8,
+      339.4
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p20-001",
+   "page": 20,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Issuer acceptance: signature",
+   "printed_label": "By:",
+   "must": false,
+   "x0": 140.8,
+   "y0": 126.8,
+   "x1": 316.2,
+   "y1": 142.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "firm",
+    "field_label": "Signature",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "signature",
+     "owner": "firm",
+     "what": null,
+     "box": [
+      140.8,
+      126.8,
+      316.2,
+      142.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p20-002",
+   "page": 20,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Issuer acceptance: printed name",
+   "printed_label": "Printed Name:",
+   "must": false,
+   "x0": 140.8,
+   "y0": 144.7,
+   "x1": 316.2,
+   "y1": 160.2,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "name",
+    "field_owner": "firm",
+    "field_label": "Name",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "firm",
+     "what": "name",
+     "box": [
+      140.8,
+      144.7,
+      316.2,
+      160.2
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p20-003",
+   "page": 20,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Issuer acceptance: title",
+   "printed_label": "Title:",
+   "must": false,
+   "x0": 140.8,
+   "y0": 162.6,
+   "x1": 316.2,
+   "y1": 178.1,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "firm",
+    "field_label": "Title",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "firm",
+     "what": "title",
+     "box": [
+      140.8,
+      162.6,
+      316.2,
+      178.1
+     ]
+    }
+   },
+   "what": "title"
+  },
+  {
+   "id": "p20-004",
+   "page": 20,
+   "kind": "date",
+   "owner": "firm",
+   "label": "Issuer acceptance: date",
+   "printed_label": "Dated:",
+   "must": false,
+   "x0": 140.8,
+   "y0": 180.6,
+   "x1": 316.2,
+   "y1": 196.1,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "date",
+    "field_owner": "firm",
+    "field_label": "Date signed",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "date",
+     "owner": "firm",
+     "what": null,
+     "box": [
+      140.8,
+      180.6,
+      316.2,
+      196.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p20-005",
+   "page": 20,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Subscription agreement number",
+   "printed_label": "Subscription Agreement No:",
+   "must": false,
+   "x0": 140.8,
+   "y0": 207.4,
+   "x1": 316.2,
+   "y1": 222.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "firm",
+    "field_label": "Subscription Agreement No",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "firm",
+     "what": "text",
+     "box": [
+      140.8,
+      207.4,
+      316.2,
+      222.9
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p20-006",
+   "page": 20,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Accepted subscriber name",
+   "printed_label": "Subscriber:",
+   "must": false,
+   "x0": 140.8,
+   "y0": 225.4,
+   "x1": 316.2,
+   "y1": 240.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Investor name",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "amount",
+     "box": [
+      140.8,
+      225.4,
+      316.2,
+      240.9
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p20-007",
+   "page": 20,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Accepted amount of purchase price",
+   "printed_label": "Amount of Purchase Price: $",
+   "must": false,
+   "x0": 146.4,
+   "y0": 243.3,
+   "x1": 318.1,
+   "y1": 258.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Commitment amount",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "amount",
+     "box": [
+      146.4,
+      243.3,
+      318.1,
+      258.8
+     ]
+    }
+   },
+   "what": "amount"
+  }
+ ],
+ "may_fill": [],
+ "source": "hand",
+ "mode": "train",
+ "prefilled": {
+  "when": "2026-11-15T00:53:24Z",
+  "candidates": "ab8ec4ee637470fa-f01586d5.json",
+  "result": "out-set-a/a051/result.json",
+  "fields": 42,
+  "counted_candidates": 41
+ },
+ "done": "2026-11-15T00:55:30Z"
+}
