@@ -4,7 +4,7 @@
 // one investor with the signature and date at the form's own places, the investor signs it in the portal, and the stored
 // signed PDF is read back: Documents category Tax for that investor alone, zero form fields, each value inside its own
 // field, the signature ink inside the sign place, the "Signed electronically" caption, the date, the certificate page.
-//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual]
+//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type]
 // The last line is "FORMS FLOW: PASS (cases run: N)" or "FORMS FLOW: FAIL (cases run: N) - <failed cases>". Exits 2
 // (NOT RUN) when the bundled forms do not match assets/forms/SHA256SUMS.
 const path = require('path');
@@ -433,7 +433,10 @@ async function usIndividual({ check, S }) {
   // the classification boxes: new ink against the blank form inside the individual box only
   const DPI = 100;
   const k = DPI / 72;
-  const blankG = gray(path.join(ROOT, made.blank), 1, DPI);
+  // rendered from a copy in the case folder (the render's image file goes beside the PDF, never into the repository)
+  const blankFile = path.join(dir, 'blank.pdf');
+  fs.copyFileSync(path.join(ROOT, made.blank), blankFile);
+  const blankG = gray(blankFile, 1, DPI);
   const signedG = gray(signedFile, 1, DPI);
   const inkIn = (a, b, r) => {
     let n = 0;
@@ -441,7 +444,11 @@ async function usIndividual({ check, S }) {
       for (let x = Math.floor(r.x * k); x < Math.ceil((r.x + r.w) * k); x++) if (a.px[y * a.w + x] - b.px[y * b.w + x] > 80) n++;
     return n;
   };
-  const box = (n) => R.of[`${W9}Boxes3a-b_ReadOrder[0].c1_1[${n}]`];
+  // the inner part of each box (2 pt in from its edge): the tick, not the frame the blank form draws a little differently
+  const box = (n) => {
+    const r = R.of[`${W9}Boxes3a-b_ReadOrder[0].c1_1[${n}]`];
+    return { x: r.x + 2, top: r.top + 2, w: r.w - 4, h: r.h - 4 };
+  };
   const ticks = [0, 1, 2, 3, 4, 5, 6].map((n) => inkIn(blankG, signedG, box(n)));
   check('the individual or sole proprietor box is ticked, no other classification box', ticks[0] > 10 && ticks.slice(1).every((n) => n === 0), ticks);
   // the signature ink inside the sign place, against the filled unsigned form
@@ -458,7 +465,7 @@ async function usIndividual({ check, S }) {
     window.CVPortal.state.role = 'sponsor';
   });
   await Lib.consoleRoute(page, 'console-investors', '.cs-tbl');
-  const row = page.locator('.cs-tbl tbody tr', { hasText: email }).first();
+  const row = page.locator('table.cs-tbl:has(th:text-is("Paid by")) tbody tr', { hasText: email }).first();
   const rowText = (await row.innerText().catch(() => '')).replace(/\s+/g, ' ');
   check('the console row reads "W-9 signed <date>"', /W-9 signed [A-Z][a-z]+ \d{1,2}, \d{4}/.test(rowText), rowText.slice(0, 300));
   await page.screenshot({ path: path.join(dir, 'us-individual-console.png'), fullPage: false });
@@ -474,6 +481,139 @@ async function usIndividual({ check, S }) {
   check('white label: no vendor name or forbidden word on the tax screens', scr.ok, scr.hits);
   check('no script error in the browser', A.errors.length === 0, A.errors);
   check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
+}
+
+/**
+ * D-09 (owner, plan 06-16): the sponsor picks the investor type where investors are created (the invite form, an imported
+ * list, an investor added manually). It is kept on the record with the matching account type; the onboarding pre-selects
+ * the account from it and shows the tax form for that type, with one plain line to correct it.
+ */
+async function investorType({ check, S }) {
+  const A = await Lib.open(S);
+  const page = A.page;
+  const portal = await Lib.setupPortal(S, A);
+  await Lib.consoleRoute(page, 'console-investors', '[data-action=invite-toggle]');
+  if ((await page.locator('#iv-email').count()) === 0) await page.click('[data-action=invite-toggle]');
+  await page.waitForSelector('#iv-email', { timeout: 10000 });
+  const form = await page.evaluate(() => {
+    const sel = document.getElementById('iv-type');
+    const lab = sel && sel.closest('label');
+    return {
+      visible: !!sel && !sel.closest('details:not([open])'),
+      label: lab ? lab.querySelector('span').innerText : '',
+      chosen: sel ? sel.value : '',
+      options: sel ? Array.from(sel.querySelectorAll('option')).map((o) => `${o.parentElement.tagName === 'OPTGROUP' ? o.parentElement.label + ': ' : ''}${o.textContent}`) : []
+    };
+  });
+  check('the invite form shows "Investor type" with the name and email (not under More options)', form.visible && form.label === 'Investor type', form);
+  check('the types offered: U.S. individual, U.S. entity (LLC or corporation, trust, IRA, joint), foreign individual, foreign entity', JSON.stringify(form.options) === JSON.stringify(['U.S. individual', 'U.S. entity: LLC or corporation', 'U.S. entity: Trust', 'U.S. entity: IRA', 'U.S. entity: Joint account', 'Foreign individual', 'Foreign entity']), form.options);
+  check('with nothing chosen the invitation is for a U.S. individual', form.chosen === 'individual', form.chosen);
+  // the portal prepares the email itself when no integration server is connected: its dialog is closed to go on
+  const closeDlg = async () => {
+    await page.waitForTimeout(300);
+    if (await page.evaluate(() => !!(document.getElementById('dlg') || {}).open)) {
+      await page.click('#dlg [data-action="close-dialog"] >> nth=0').catch(() => page.evaluate(() => document.getElementById('dlg').close()));
+      await page.waitForTimeout(200);
+    }
+  };
+  const rec = (email) =>
+    page.evaluate((em) => {
+      const i = window.CVPortal.state.ws.investors.find((x) => x.email === em);
+      const it = i && (window.CVPortal.state.ws.invitations || []).filter((x) => x.investorId === i.id).pop();
+      return i ? { type: i.type, taxType: i.taxType, token: it ? it.token : '' } : null;
+    }, email);
+  // one investor, a foreign individual, from the form
+  await page.fill('#iv-contact', 'Zoë');
+  await page.fill('#iv-last', 'Müller');
+  await page.fill('#iv-email', 'zoe.muller@example.com');
+  await page.selectOption('#iv-type', 'foreign-individual');
+  await page.click('.inv8-form[data-form="invite-one"] button[type=submit]');
+  await page.waitForFunction(() => window.CVPortal.state.ws.investors.some((x) => x.email === 'zoe.muller@example.com'), null, { timeout: 15000 });
+  await closeDlg();
+  const zoe = await rec('zoe.muller@example.com');
+  check('the invite form keeps the foreign individual: account type individual, investor type foreign-individual', zoe && zoe.type === 'individual' && zoe.taxType === 'foreign-individual', zoe);
+  // an imported list: the type column takes the owner's four types and the earlier words
+  await page.evaluate(() => {
+    window.CVPortal.state.ui.inviteOpen = true;
+    window.CVPortal.state.ui.inviteTab = 'bulk';
+    window.CVPortal.app.render();
+  });
+  await page.waitForSelector('#iv-csv', { timeout: 10000 });
+  await page.fill('#iv-csv', ['first name,last name,email,offering,commitment,investor type', 'Hiro,Tanaka,hiro.tanaka@example.com,,,Foreign entity', 'Ana,Silva,ana.silva@example.com,,,"U.S. entity (LLC, corporation, trust, IRA, joint)"', 'Lee,Park,lee.park@example.com,,,trust', 'Sam,Ode,sam.ode@example.com,,,'].join('\n'));
+  await page.click('form[data-form="invite-bulk"] button[type=submit]');
+  await page.waitForSelector('[data-action="invite-bulk-add"]', { timeout: 10000 });
+  const preview = (await Lib.screenText(page)).replace(/\s+/g, ' ');
+  check('the list preview names each type', /Foreign entity/.test(preview) && /U\.S\. entity: LLC or corporation/.test(preview) && /U\.S\. entity: Trust/.test(preview), preview.slice(0, 400));
+  await page.click('[data-action="invite-bulk-add"]');
+  await page.waitForFunction(() => window.CVPortal.state.ws.investors.some((x) => x.email === 'sam.ode@example.com'), null, { timeout: 15000 });
+  await closeDlg();
+  const got = {};
+  for (const em of ['hiro.tanaka@example.com', 'ana.silva@example.com', 'lee.park@example.com', 'sam.ode@example.com']) got[em] = await rec(em);
+  check('the imported list keeps each type (foreign entity; U.S. entity; trust; none: U.S. individual)', got['hiro.tanaka@example.com'].taxType === 'foreign-entity' && got['hiro.tanaka@example.com'].type === 'entity' && got['ana.silva@example.com'].taxType === 'us-entity' && got['ana.silva@example.com'].type === 'entity' && got['lee.park@example.com'].taxType === 'us-entity' && got['lee.park@example.com'].type === 'trust' && got['sam.ode@example.com'].taxType === 'us-individual' && got['sam.ode@example.com'].type === 'individual', got);
+  // an investor added manually
+  await page.evaluate(() => {
+    window.CVPortal.state.ui.inviteOpen = true;
+    window.CVPortal.state.ui.inviteTab = 'manual';
+    window.CVPortal.app.render();
+  });
+  await page.waitForSelector('#im-type', { timeout: 10000 });
+  await page.fill('#im-first', 'Ines');
+  await page.fill('#im-last', 'Duarte');
+  await page.fill('#im-email', 'ines.duarte@example.com');
+  await page.selectOption('#im-type', 'foreign-entity');
+  await page.click('form[data-form="invite-manual"] button[type=submit]');
+  await page.waitForFunction(() => window.CVPortal.state.ws.investors.some((x) => x.email === 'ines.duarte@example.com'), null, { timeout: 15000 });
+  const ines = await rec('ines.duarte@example.com');
+  check('an investor added manually keeps the foreign entity type', ines && ines.type === 'entity' && ines.taxType === 'foreign-entity', ines);
+
+  // the foreign individual's onboarding: the account pre-selected from the type, the foreign tax form, one line to correct it
+  let profile = null;
+  await page.evaluate((t) => (location.hash = 'invite-' + t), zoe.token || '');
+  if (!zoe.token) {
+    const tok = await page.evaluate(() => {
+      const ws = window.CVPortal.state.ws;
+      const i = ws.investors.find((x) => x.email === 'zoe.muller@example.com');
+      return (ws.invitations || []).filter((x) => x.investorId === i.id).pop().token;
+    });
+    await page.evaluate((t) => (location.hash = 'invite-' + t), tok);
+  }
+  const w = await Lib.walk(page, {
+    name: 'Zoë Müller',
+    acc: 'yes',
+    basis: 0,
+    until: /Tax certification/,
+    onStep: async (hd) => {
+      if (!/Investor information/.test(hd)) return;
+      profile = await page.evaluate(() => ({ citizen: (document.querySelector('input[name="ob-citizen"]:checked') || {}).value || '', country: window.CVPortal.state.ui.ob.d.country, type: window.CVPortal.state.ui.ob.d.type }));
+      await page.selectOption('#ob-country', 'Germany');
+      await page.waitForTimeout(200);
+    }
+  });
+  check('Investor information starts as an individual with another citizenship and no country chosen', !!profile && profile.type === 'individual' && profile.citizen === 'other' && profile.country === '', profile);
+  check('the foreign individual reaches the tax step', w.reached && w.at === 'Tax certification', w.seen);
+  const view = () =>
+    page.evaluate(() => {
+      const f = document.querySelector('.ivf-form');
+      return { text: f.innerText, w8: !!document.getElementById('ob-w8'), usPerson: document.querySelectorAll('input[name="ob-usPerson"]').length, submit: (f.querySelector('button[type=submit]') || {}).innerText || '' };
+    });
+  const v1 = await view();
+  check('the foreign individual is shown the foreign form (W-8BEN), with no question about U.S. status', v1.w8 && /Form W-8BEN certification/.test(v1.text) && v1.usPerson === 0, v1.text.slice(0, 300));
+  check('one plain line corrects the type: "A U.S. citizen or resident, or a U.S. entity? Use Form W-9"', /A U\.S\. citizen or resident, or a U\.S\. entity\? Use Form W-9/.test(v1.text), v1.text);
+  await page.click('[data-action="ivf-taxwho"]');
+  await page.waitForTimeout(200);
+  const v2 = await view();
+  check('the correction shows the W-9 instead, asking nothing (the taxpayer ID from Investor information is in memory)', /Your Form W-9 is filled in from your answers\./.test(v2.text) && !v2.w8 && /Continue to the form/.test(v2.submit) && /Use the form for foreign investors/.test(v2.text), v2.text);
+  await page.click('[data-action="ivf-taxwho"]');
+  await page.waitForTimeout(200);
+  const v3 = await view();
+  check('the same line takes them back to the foreign form', v3.w8, v3.text.slice(0, 200));
+  await page.screenshot({ path: path.join(OUT, 'investor-type-foreign-tax.png'), fullPage: true });
+  const scr = Lib.leakCheck([v1.text, v2.text, v3.text].join('\n'));
+  check('white label: no vendor name or forbidden word on these screens', scr.ok, scr.hits);
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  void portal;
   await A.context.close();
 }
 
@@ -533,7 +673,8 @@ const cases = {
     dateField: W8 + 'Date[0]',
     signField: W8 + 'f_20[0]'
   }),
-  'us-individual': usIndividual
+  'us-individual': usIndividual,
+  'investor-type': investorType
 };
 
 // The bundled forms must match their pins before anything runs.

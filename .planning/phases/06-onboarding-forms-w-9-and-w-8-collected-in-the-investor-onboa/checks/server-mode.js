@@ -192,6 +192,12 @@ async function serverFlow(S, check, o) {
     const w = await L.walk(ip, answers);
     out.walk = w;
     check('the investor’s device runs on the server’s snapshot (state.remote) and reaches the agreement with no field error', w.reached && w.errors.length === 0 && w.seen.some((s) => /\| Investor status$/.test(s)), { seen: w.seen, errors: w.errors });
+    // D-09 (plan 06-16): the investor type the sponsor chose travels in the snapshot and the device's record keeps it (the
+    // console form's default, U.S. individual, for a new investor; an investor on file from before has none).
+    const snapInv = (out.snaps.find((x) => x && x.investor) || {}).investor || {};
+    const deviceType = await ip.evaluate(() => ((window.CVPortal.state.ws || {}).investors || []).map((x) => x.taxType || ''));
+    const wantType = out.who ? undefined : 'us-individual';
+    check('D-09: the snapshot carries the investor type the sponsor chose, and the investor’s device keeps it', snapInv.taxType === wantType && deviceType[0] === (wantType || ''), { snapshot: snapInv.taxType, device: deviceType });
     out.remote = await ip.evaluate(() => !!(window.CVPortal.state.remote && window.CVPortal.state.remote.server && !window.CVPortal.state.remote.refused));
     // The answers as the device holds them on its request, before it sends anything.
     out.deviceQual = await ip.evaluate(() => {
