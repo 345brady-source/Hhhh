@@ -905,7 +905,9 @@
         structure: { exemption: str(so.exemption, 60) },
         classes: (Array.isArray(so.classes) ? so.classes : []).slice(0, 20).map((c) => ({ id: str(c.id, 60), name: str(c.name, 80), minimum: c.minimum, currency: c.currency ? str(c.currency, 3) : '', mgmtFee: c.mgmtFee, carry: c.carry, subscribedBy: c.subscribedBy ? str(c.subscribedBy, 10) : '' })),
         update: '',
-        achOverride: { companyName: '', companyId: '' }
+        achOverride: { companyName: '', companyId: '' },
+        // C-01: the console's answer when it sent the invitation (this device holds no other investor's subscription).
+        nonAccreditedFull: so.nonAccreditedFull === true
       };
       if (so.currency) o.currency = str(so.currency, 3);
       ws.offerings.push(o);
@@ -941,7 +943,13 @@
     const onFile = ex
       ? { identity: { status: 'passed', onFile: true }, aml: { status: 'clear', onFile: true }, accreditation: ex.accredited === true ? { status: 'verified', expiresAt: until, onFile: true } : { status: 'not_started' }, decision: { status: 'approved', at: nowIso(), onFile: true } }
       : null;
-    ws.investors.push(Object.assign({ id: invId, contact: str(si.contact, 120), title: str(si.title || si.contact, 160), type: NS.ENTITY_TYPES[si.type] ? si.type : 'individual', email: str(si.email, 160), phone: '', address: '', tinLast4: '', accreditation: { basis: '', date: '' }, taxForm: '', edelivery: false, onboarding: { status: ex ? 'complete' : 'invited', step: 0, invited: NS.dates.today(), completed: '', source: 'invitation', invitationId: str(snap.id, 80), offeringId: so ? str(so.id, 80) : '' }, payment: { method: 'check', bank: null }, positions: [] }, onFile ? { verify: onFile } : {}));
+    // D-01: their own status answers on file (the ground on their record, their benefit plan answers) prefill the status step.
+    const exBasis = ex && typeof ex.accBasis === 'string' ? str(ex.accBasis, 300) : '';
+    const exPlan = ex && ex.erisa && typeof ex.erisa === 'object' ? ex.erisa : null;
+    const exErisa = exPlan
+      ? { plan: ['title1', '4975', 'planAssets', 'other', 'none'].indexOf(exPlan.plan) >= 0 ? exPlan.plan : '', planPct: typeof exPlan.planPct === 'number' && isFinite(exPlan.planPct) && exPlan.planPct >= 0 && exPlan.planPct <= 100 ? exPlan.planPct : null, controlling: exPlan.controlling === true ? true : exPlan.controlling === false ? false : null }
+      : null;
+    ws.investors.push(Object.assign({ id: invId, contact: str(si.contact, 120), title: str(si.title || si.contact, 160), type: NS.ENTITY_TYPES[si.type] ? si.type : 'individual', email: str(si.email, 160), phone: '', address: '', tinLast4: '', accreditation: { basis: exBasis, date: '' }, taxForm: '', edelivery: false, onboarding: { status: ex ? 'complete' : 'invited', step: 0, invited: NS.dates.today(), completed: '', source: 'invitation', invitationId: str(snap.id, 80), offeringId: so ? str(so.id, 80) : '' }, payment: { method: 'check', bank: null }, positions: [] }, onFile ? { verify: onFile } : {}, exErisa && (exErisa.plan || exErisa.controlling != null) ? { erisa: exErisa } : {}));
     ws.invitations.push(Object.assign({ id: str(snap.id, 80) || uid('invt'), serverId: str(snap.id, 80), investorId: invId, offeringId: so ? str(so.id, 80) : '', cents: Math.max(0, Math.round(Number(sv.cents) || 0)), cls: str(sv.cls, 60), note: str(sv.note, 2000), token: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: str(sv.sentAt || snap.sentAt, 40), openedAt: nowIso(), completedAt: '', expiresAt: str(sv.expiresAt || snap.expiresAt, 40), emailStatus: '', emailError: '', importedAt: '', sentBy: str(sv.senderName || sv.sentBy || snap.sentBy, 120) }, ex ? { existing: true, holds: ex.holds === true } : {}));
     const v = snap.verification || {};
     ws.integrations = { connections: Array.isArray(v.connections) ? clone(v.connections) : [], use: v.use && typeof v.use === 'object' ? clone(v.use) : {}, rules: v.rules && typeof v.rules === 'object' ? clone(v.rules) : {}, server: { url: server, token: '' }, configured: true };
@@ -1515,8 +1523,9 @@
     const no = d.stAcc === 'no' && b506;
     // C-01: the offering may already have as many purchasers who are not accredited as Rule 506(b) allows. The investor is
     // told so plainly and can still subscribe; the firm decides. No count and no other investor is ever shown (T-06-04).
-    // Local mode only: in server mode this browser holds no other investor's subscription.
-    const full = no && !isRemote(c.ws) && EL().place(c.ws, c.off, c.inv.id) > EL().LIMIT_506B;
+    // In server mode this browser holds no other investor's subscription: the console worked out the one flag when it sent
+    // the invitation (offering.nonAccreditedFull, a boolean on the snapshot); in local mode the live count decides.
+    const full = no && (isRemote(c.ws) ? !!c.off && c.off.nonAccreditedFull === true : EL().place(c.ws, c.off, c.inv.id) > EL().LIMIT_506B);
     const fullNote = full ? `<p class="wire-warn field-wide" role="note">${icon('alert')}<span>This offering may already have as many investors who are not accredited as it is able to accept. You can still subscribe: ${h(t.shortName)} reviews every subscription and will let you know if yours cannot be accepted.</span></p>` : '';
     // Rule 506(c) (accreditation verified in its own step), or no accredited question for this offering: the benefit plan
     // questions only.
@@ -1757,7 +1766,7 @@
     } else if (c.closed) next.push(`${closedName} stopped accepting subscriptions before you reached that step, so no subscription was made. ${h(t.support.team)} has been told and will contact you about it.`);
     else next.push('Your investments, distributions, statements and tax documents will appear in your portal.');
     // Evidence the integration server could not take with the rest (sendCompletion): the investor hears it from this page first.
-    const unsent = (c.fl.unsent || []).map((k) => (k === 'identity' ? 'the ID you uploaded' : 'the verification letter you uploaded'));
+    const unsent = (c.fl.unsent || []).map((k) => (k === 'identity' ? 'the ID you uploaded' : k === 'rep' ? 'the acknowledgment of your purchaser representative you uploaded' : 'the verification letter you uploaded'));
     if (unsent.length) next.push(`${unsent.join(' and ').replace(/^t/, 'T')} could not be sent with your details, so ${h(t.support.team)} may ask you for ${unsent.length > 1 ? 'them' : 'it'} again.`);
     next.push(`Questions? ${h(t.support.team)}${t.support.email ? ` at ${h(t.support.email)}` : ''}${t.support.phone ? ` or ${h(t.support.phone)}` : ''}.`);
     const verifyRows = held
@@ -2075,6 +2084,12 @@
     return pdf || (!pdfOnly && (png || jpeg));
   }
   const mb = (n) => (n / 1048576).toFixed(1).replace(/\.0$/, '');
+  const reEsc = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  /** The purchaser representative on a request's status answers (request.qual.sophistication.rep), or null. */
+  const repOf = (r) => {
+    const so = r && r.qual && typeof r.qual === 'object' ? r.qual.sophistication : null;
+    return so && typeof so === 'object' && so.rep && typeof so.rep === 'object' ? so.rep : null;
+  };
   async function sendCompletion(c) {
     const ws = c.ws;
     const i = c.inv;
@@ -2094,6 +2109,14 @@
         kindOf[id] = k;
       }
     });
+    // Then the written acknowledgment of their purchaser representative (Rule 501(i), D-30), named by the request's status
+    // answers under the investor's own rep- name (the server and the console take no other).
+    const repRec = repOf(c.req);
+    const repId = repRec && typeof repRec.fileId === 'string' && new RegExp(`^rep-${reEsc(i.id)}-[a-z0-9]+$`).test(repRec.fileId) ? repRec.fileId : '';
+    if (repId && ids.indexOf(repId) < 0) {
+      ids.push(repId);
+      kindOf[repId] = 'rep';
+    }
     const files = {};
     const unsent = []; // evidence that stays on this device: { kind, name, why }
     let total = 0;
@@ -2122,7 +2145,7 @@
       // Evidence that cannot go (no room left, or not a PDF, PNG or JPEG) is not sent: the firm's copy of the record says so
       // (below), and the investor's summary tells them the firm may ask for it again.
       const k = kindOf[id];
-      unsent.push({ kind: k, name: str(v[k].fileName, 120), why: !b ? 'could not be read from the storage of the investor’s browser' : !fits ? (b.size > MAX_FILES ? `is ${mb(b.size)} MB, more than the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser` : `did not fit in the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser with the rest of their details`) : 'is not a PDF, PNG or JPEG file' });
+      unsent.push({ kind: k, name: str(k === 'rep' ? repRec.fileName : v[k].fileName, 120), why: !b ? 'could not be read from the storage of the investor’s browser' : !fits ? (b.size > MAX_FILES ? `is ${mb(b.size)} MB, more than the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser` : `did not fit in the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser with the rest of their details`) : 'is not a PDF, PNG or JPEG file' });
     }
     const investor = clone(i);
     delete investor.onboarding.flow;
@@ -2134,8 +2157,9 @@
     }
     // Evidence left on this device: the firm's copy of the record says what happened and to ask the investor for it, and
     // points at no file (the console would offer a file it never received). This device's own record is left as it is.
-    const what = (x) => `${x.kind === 'identity' ? 'the ID' : 'the verification letter'} the investor uploaded${x.name ? ` (${x.name})` : ''}`;
+    const what = (x) => `${x.kind === 'identity' ? 'the ID' : x.kind === 'rep' ? 'the written acknowledgment of their purchaser representative' : 'the verification letter'} the investor uploaded${x.name ? ` (${x.name})` : ''}`;
     unsent.forEach((x) => {
+      if (x.kind === 'rep') return;
       const r = investor.verify && investor.verify[x.kind];
       if (!r || typeof r !== 'object') return;
       const note = `${what(x).replace(/^t/, 'T')} ${x.why}, so it was not sent with their details. Ask the investor for it.`;
@@ -2143,9 +2167,19 @@
       delete r.fileId;
       delete r.fileName;
     });
+    const request = c.req ? clone(c.req) : null;
+    // An acknowledgment that cannot go: the firm's copy of the request says so and points at no file.
+    const repOut = repOf(request);
+    unsent.filter((x) => x.kind === 'rep').forEach((x) => {
+      if (!repOut) return;
+      const note = `${what(x).replace(/^t/, 'T')} ${x.why}, so it was not sent with their details. Ask the investor for it.`;
+      repOut.note = repOut.note ? `${repOut.note} ${note}` : note;
+      delete repOut.fileId;
+      delete repOut.fileName;
+    });
     const payload = {
       investor,
-      request: c.req ? clone(c.req) : null,
+      request,
       envelope: env ? clone(env) : null,
       files,
       docs: (ws.docs || []).filter((x) => !x.fromSnapshot).map(clone),

@@ -7,6 +7,45 @@ const fs = require('fs');
 const L = require('./lib.js');
 
 const SHOTS = path.join(L.OUT, 'status-shots');
+// The owner's screenshot set (plan 06-07): what each screenshot of this check shows (local mode: one shared browser).
+L.describeShots([
+  ['b506-investor-status.png', 'Investor status step, Rule 506(b), answered "not accredited": experience, education and purchaser representative questions, then the benefit plan questions.'],
+  ['b506-subscription.png', 'Subscribe step under Rule 506(b): it states the account is not an accredited investor.'],
+  ['b506-console-offering.png', 'Console offering page: Investor eligibility panel, "Non-accredited purchasers: 1 of 35", 0 accepted and 1 pending.'],
+  ['full-status-warning.png', 'Status step for a 36th investor answering "not accredited": the plain warning that the offering may already have as many such investors as it can accept (no number, no names).'],
+  ['full-console-36.png', 'Console offering page: "Non-accredited purchasers: 36 of 35" with the red badge.'],
+  ['full-requests.png', 'Console requests page: the 36th request flagged "Would be non-accredited purchaser 36 of the 35 allowed under Rule 506(b)"; Approve and Decline kept.'],
+  ['accredited-done.png', 'Investor done screen after answering "accredited": the Accreditation row reads "Accredited (self-certified)".'],
+  ['accredited-console.png', 'Console offering page: an accredited investor is not counted (0 of 35, no badge).'],
+  ['unanswered-console.png', 'Console offering page: investors who left the questions open are shown as not answered (eligibility or benefit plan panel).'],
+  ['erisa-status.png', 'Status step: the benefit plan (ERISA) questions answered.'],
+  ['erisa-subscribe.png', 'Subscribe step after the benefit plan answers.'],
+  ['erisa-console-pending.png', 'Console offering page, Benefit plan investors panel before acceptance: the class at 0%, the pending request’s if-accepted figure at 25 percent or more, marked.'],
+  ['erisa-requests.png', 'Console requests page: the request flagged for bringing benefit plan investors to 25 percent or more of the class; Approve kept.'],
+  ['erisa-console-approved.png', 'Console offering page after approval: the class figure at 25 percent or more, in red.'],
+  ['controlling-marked.png', 'Benefit plan panel: the general partner marked as controlling and left out of the figure.'],
+  ['controlling-both.png', 'Benefit plan panel: the general partner marked again with the controlling IRA counted: 28.6 percent, in red.'],
+  ['planassets-status.png', 'Status step: an entity holding plan assets, 40 percent held by benefit plan investors.'],
+  ['planassets-console.png', 'Benefit plan panel: plan-asset entities counted at their percentage; stored percentages that are not valid count as 0 and are listed as not answered.'],
+  ['classes-console.png', 'Benefit plan panel with two share classes: each class has its own figure; the class over 25 percent is red.'],
+  ['prefill-status.png', 'Status step prefilled from the benefit plan answers on the investor’s record.'],
+  ['existing-status.png', 'Status step for an investor on file (local mode), prefilled with the ground on file.'],
+  ['repack-refused.png', 'Status step: a renamed text file and a 26 MB file refused as the purchaser representative’s acknowledgment, with plain messages, nothing kept.'],
+  ['repack-attached.png', 'Status step: the acknowledgment PDF attached ("Attached: acknowledgment.pdf").'],
+  ['repack-requests.png', 'Console requests page: "Purchaser representative: Morgan Ellery, Ellery Advisory Partners" with the download, and a representative named without a file.'],
+  [/^(regA|entity|accredited2|aggregate|nofigures)-status\.png$/, 'Status step under Regulation A Tier 2: the figures asked (person or organization) and the investment limit line.'],
+  [/^(tier1|listed|untiered)-status\.png$/, 'Status step under Regulation A Tier 1, Tier 2 listed or untiered: the plain statement of what is asked, no limit where none applies.'],
+  [/^(regA|entity|accredited2|aggregate|nofigures|tier1|listed|untiered)-subscribe\.png$/, 'Subscribe step under Regulation A: the limit and, when over it, the warning that does not block.'],
+  ['regA-console.png', 'Console offering page: Investor eligibility panel for Regulation A Tier 2 (non-accredited subscribers, those over their 10 percent limit).'],
+  ['untiered-console.png', 'Console offering page: the exemption field and its hints for an untiered Regulation A offering.'],
+  ['nofigures-console.png', 'Console offering page: a Regulation A investor who gave no figures (limit not known).'],
+  ['flag-requests.png', 'Console requests page: the Regulation A over-limit flag on the request rows.'],
+  ['other-regs-status.png', 'Status step for a Regulation S offering with the firm\'s accredited question on: the accredited question only, answered "no" (no sophistication questions, no warning).'],
+  [/^other-off-.*-status\.png$/, 'Status step with the firm\'s accredited question off (Regulation S, Regulation Crowdfunding or Section 4(a)(2)): the benefit plan questions only.'],
+  [/^other-off-.*-subscribe\.png$/, 'Subscribe step with the accredited question off: no "is an accredited investor" tick where the exemption is open to all (with a note saying why); the optional tick kept for Section 4(a)(2).'],
+  ['back-correct-to-no.png', 'Status step reached with Back while the request is pending, the answer being corrected from "yes" to "no".'],
+  ['resume-status.png', 'A flow saved by the earlier version resumes at the Investor status step, step 5 of 10, with the earlier answers kept.']
+]);
 fs.mkdirSync(SHOTS, { recursive: true });
 const INV = { name: 'Dana Whitfield', email: 'dana.whitfield@example.com' };
 
@@ -955,6 +994,7 @@ const parts = {
         if (hd !== 'Investor status') return;
         st = await L.screenText(p);
         soph = (await p.locator('#ob-stExp, #ob-stEdu, input[name="ob-stRep"]').count()) + (await p.locator('.ivf-form .wire-warn').count());
+        await p.screenshot({ path: path.join(SHOTS, 'other-regs-status.png'), fullPage: true });
       }
     });
     check('toggle on: the Regulation S flow has the status step and reaches the agreement', w.reached && w.errors.length === 0 && w.seen.some((s) => /\| Investor status$/.test(s)), { seen: w.seen, errors: w.errors });
@@ -988,11 +1028,13 @@ const parts = {
           if (hd !== 'Subscription') return;
           R.sub = await L.screenText(p);
           R.subAcc = await p.locator('#ob-subAcc').count();
+          await p.screenshot({ path: path.join(SHOTS, `other-off-${exemption.replace(/\W+/g, '-').toLowerCase()}-subscribe.png`), fullPage: true });
         },
         onFilled: async (hd) => {
           if (hd !== 'Investor status') return;
           R.st = await L.screenText(p);
           R.accQ = await p.locator('input[name="ob-stAcc"]').count();
+          await p.screenshot({ path: path.join(SHOTS, `other-off-${exemption.replace(/\W+/g, '-').toLowerCase()}-status.png`), fullPage: true });
         }
       });
       return R;
@@ -1103,6 +1145,7 @@ const parts = {
     // Corrected from yes to no while pending: the request, and now the investor record, follow the correction.
     check('Back reaches the status step to correct yes to no', await backTo(p, 'Investor status'), await L.heading(p));
     await p.check('input[name="ob-stAcc"][value="no"]');
+    await p.screenshot({ path: path.join(SHOTS, 'back-correct-to-no.png'), fullPage: true });
     await L.submit(p);
     const rn = await requestOf(p, inv.investorId, off.offeringId);
     const qn = (rn && rn.qual) || {};
@@ -1305,6 +1348,7 @@ const parts = {
       const o = window.CVPortal.state.ui.ob || {};
       return o.d ? { street: o.d.street, city: o.d.city, stAcc: o.d.stAcc } : null;
     });
+    await p.screenshot({ path: path.join(SHOTS, 'resume-status.png'), fullPage: true });
     check('the saved flow resumes at the Investor status step (not the welcome step)', hd === 'Investor status' && /^Step 5 of 10/.test(count), { hd, count });
     check('with its answers (the address given earlier is kept)', !!d && d.street === saved.street && saved.street === '12 Elm Street' && d.city === 'Austin' && saved.loginAt, { d, saved });
     const w = await L.walk(p, { name: INV.name, acc: 'no', exp: 'Six years of angel investing', edu: 'Teacher', rep: 'no', amount: 60000 });

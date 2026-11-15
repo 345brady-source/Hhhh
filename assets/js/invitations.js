@@ -437,7 +437,8 @@
         exemption: (off.structure || {}).exemption || '',
         classes: openClasses(off).map((c) => ({ id: c.id, name: c.name, minimum: c.minimum, currency: c.currency || '', mgmtFee: c.mgmtFee, carry: c.carry, subscribedBy: c.subscribedBy || '' })),
         currency: curOf(off),
-        documents: docs
+        documents: docs,
+        nonAccreditedFull: nonAccreditedFull(ws, off, inv)
       };
       const tpl = NS.esign && NS.esign.subscriptionTemplate ? NS.esign.subscriptionTemplate(ws, off.id) : null;
       const ready = tpl && (!NS.esign.templateReady || NS.esign.templateReady(ws, off.id));
@@ -467,8 +468,27 @@
   }
 
   /**
+   * C-01 in server mode: whether a Rule 506(b) offering may already have as many purchasers who are not accredited as it can
+   * accept, for this investor, worked out on the whole workspace when the invitation is sent: the place this investor would
+   * take among them (their own place when already counted) is past the 35th. One boolean only: the investor's device never
+   * learns the count or anything about another investor. The console counts again on every render; this is the warning only.
+   */
+  function nonAccreditedFull(ws, off, inv) {
+    const EL = NS.eligibility;
+    if (!EL || !off || EL.regime(off) !== '506b') return false;
+    return EL.place(ws, off, inv ? inv.id : '') > EL.LIMIT_506B;
+  }
+  /** D-01: the benefit plan answers as known fields only: plan (one of five values, or ''), planPct (0 to 100, or null), controlling (true, false or null). */
+  const PLANS = ['title1', '4975', 'planAssets', 'other', 'none'];
+  function cleanErisa(e) {
+    if (!e || typeof e !== 'object' || Array.isArray(e)) return null;
+    const pct = typeof e.planPct === 'number' && isFinite(e.planPct) && e.planPct >= 0 && e.planPct <= 100 ? e.planPct : null;
+    return { plan: PLANS.indexOf(e.plan) >= 0 ? e.plan : '', planPct: pct, controlling: e.controlling === true ? true : e.controlling === false ? false : null };
+  }
+  /**
    * What the investor's device needs about an investor already on file: whether their accreditation is current (and until when)
-   * and whether they already hold the offering. No personal details: the account stays in this console.
+   * and whether they already hold the offering, and (D-01) their own status answers to prefill the status step: the ground on
+   * their record (accBasis) and their benefit plan answers (erisa). No personal details: the account stays in this console.
    */
   function onFileSummary(ws, inv, it) {
     const I = IV();
@@ -478,7 +498,12 @@
     // probe(): reading must not leave a blank verification record on a legacy investor (it would read as unverified).
     const self = I && I.selfCertified ? I.selfCertified(a) : a.connection === 'self' || a.how === 'self' || a.provider === 'self';
     const ok = !!(I && I.accreditationValid && I.accreditationValid(ws, probe(inv))) && !self;
-    return { accredited: ok, accreditedUntil: ok && /^\d{4}-\d{2}-\d{2}$/.test(String(a.expiresAt || '')) ? a.expiresAt : '', holds: (inv.positions || []).some((p) => p.offeringId === it.offeringId) };
+    const out = { accredited: ok, accreditedUntil: ok && /^\d{4}-\d{2}-\d{2}$/.test(String(a.expiresAt || '')) ? a.expiresAt : '', holds: (inv.positions || []).some((p) => p.offeringId === it.offeringId) };
+    const basis = inv.accreditation && typeof inv.accreditation.basis === 'string' ? inv.accreditation.basis.slice(0, 300) : '';
+    if (basis) out.accBasis = basis;
+    const e = cleanErisa(inv.erisa);
+    if (e) out.erisa = e;
+    return out;
   }
   /** Send (or hand to the sponsor's email app). Resolves to { emailStatus, error? }. */
   async function send(ws, it) {
@@ -794,6 +819,16 @@
         delete inv.verify;
       }
       if (src.esignConsent && typeof src.esignConsent === 'object') inv.esignConsent = clone(src.esignConsent);
+      // D-01: the status answers the link collected. The benefit plan answers, cleaned to known fields (T-06-17).
+      const e = cleanErisa(src.erisa);
+      if (e && (e.plan || e.controlling != null)) inv.erisa = Object.assign(e, { at: nowIso() });
+      // The ground the investor self-certified on the status step, when no verification was taken: only the answer the request
+      // records (accredited, on this ground), and never over an accreditation a third party verified (that keeps today's rules).
+      const sq = sub.request && typeof sub.request === 'object' && sub.request.qual && typeof sub.request.qual === 'object' ? sub.request.qual : null;
+      const sa = src.accreditation && typeof src.accreditation === 'object' ? src.accreditation : null;
+      const basis = sa && typeof sa.basis === 'string' ? sa.basis.trim().slice(0, 300) : '';
+      const verified = !!(inv.accreditation && inv.accreditation.verifiedBy);
+      if (!taken && basis && !verified && sq && sq.accredited === true && sq.basis === basis) inv.accreditation = Object.assign({}, inv.accreditation, { basis, date: isDay(sa.date) && sa.date <= today() ? sa.date : today() });
       if (!inv.onboarding || typeof inv.onboarding !== 'object') inv.onboarding = {};
     } else {
       Object.keys(src).forEach((k) => {
@@ -844,6 +879,15 @@
       const cls = rIn.cls === undefined || rIn.cls === null || rIn.cls === '' ? String(it.cls || '') : String(rIn.cls);
       // Whether they already hold this offering is this console's to say: the device's copy of the record has no positions.
       Object.assign(rIn, { type: 'subscription', investorId: inv.id, offeringId: off.id, status: 'pending', cents: Number(rIn.cents), additional: inv.positions.some((p) => p.offeringId === off.id) });
+      // Its dates are this console's too, never the device's: the day it was made, from the invitation's sending to today, and
+      // the subscription's closing date (or, for an open-ended offering, its effective date, which a funded position takes),
+      // worked out here as operations.js does for a subscription made in this portal.
+      const sentDay = isDay(String(it.sentAt || '').slice(0, 10)) ? String(it.sentAt).slice(0, 10) : today();
+      let made = isDay(rIn.submitted) ? String(rIn.submitted) : today();
+      if (made < sentDay) made = sentDay;
+      if (made > today()) made = today();
+      rIn.submitted = made;
+      rIn.dealing = NS.ops && NS.ops.isOpen(off) ? NS.ops.subscriptionDate(made) : off.closeDate;
       if (cls) rIn.cls = cls;
       else delete rIn.cls;
       ['decided', 'note', 'completed', 'paid', 'paidCents', 'waitingFor'].forEach((k) => delete rIn[k]);
@@ -889,6 +933,12 @@
     const sent = (id) => typeof id === 'string' && Object.prototype.hasOwnProperty.call(files, id) && typeof files[id] === 'string';
     const allowed = evidence.slice();
     if (envIn) [envIn.workDocId, envIn.signedDocId].forEach((x) => x && allowed.push(x));
+    // D-30: the purchaser representative's written acknowledgment the imported request names, only under this investor's own
+    // rep- name (onboarding.js names it rep-<investor id>-<time>); the server applies the same test.
+    const so = rIn && rIn.qual && typeof rIn.qual === 'object' ? rIn.qual.sophistication : null;
+    const repRec = so && typeof so === 'object' && so.rep && typeof so.rep === 'object' ? so.rep : null;
+    const repName = new RegExp(`^rep-${reEsc(inv.id)}-[a-z0-9]+$`);
+    if (repRec && repRec.fileId && repName.test(String(repRec.fileId))) allowed.push(String(repRec.fileId));
     const kept = {}; // id -> size, for each file this submission brought that is now stored here
     for (const id of allowed) {
       if (kept[id] !== undefined || !sent(id) || !/^[\w.-]{1,120}$/.test(id)) continue;
@@ -907,6 +957,11 @@
       } catch (e) {
         /* a file that cannot be stored is listed as missing where it is used */
       }
+    }
+    // The request points at the acknowledgment only when this submission brought it (never at another file stored here).
+    if (repRec && repRec.fileId && kept[repRec.fileId] === undefined) {
+      delete repRec.fileId;
+      delete repRec.fileName;
     }
     // Evidence for a new result is a new upload: a pointer to an earlier file already stored here (an old letter, say) goes.
     for (const k of keptKinds) {
