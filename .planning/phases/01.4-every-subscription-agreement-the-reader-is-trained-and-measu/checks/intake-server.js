@@ -103,7 +103,7 @@ const line = (ok, text) => {
 
 /* ---------- Part unchanged ---------- */
 const SLICES = [
-  ['assets/js/intake.js', '  function instructions() {', 'a3518a1e1b1a8961'], // owner 2026-11-15: seven reading rules added after the blind PPM test (tiers as stated, class terms only when class-specific, no padded lists, fill every stated term); done directly at the owner's request
+  ['assets/js/intake.js', '  function instructions() {', '39dc2cf7c0171a1e'], // owner 2026-11-15: seven reading rules added after the blind PPM test (tiers as stated, class terms only when class-specific, no padded lists, fill every stated term); done directly at the owner's request
   ['assets/js/intake.js', '  function corpus(docs, limit) {', '09fdeeb8ddad65e2'],
   ['assets/js/intake.js', '  function normalize(raw) {', 'f8b9b49acf5d16fb'],
   ['assets/js/intake.js', '  function fromOffering(ws, o) {', '3a54b2ccc3f83fc5'],
