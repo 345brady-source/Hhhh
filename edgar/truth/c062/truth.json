@@ -1,0 +1,390 @@
+{
+ "file": "set-c/c062/doc.pdf",
+ "id": "c062",
+ "pages": 2,
+ "page_size_pt": [
+  612.0,
+  792.0
+ ],
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
+ "signing": {
+  "investor_pages": [
+   1
+  ],
+  "firm_pages": [],
+  "co_investor": true,
+  "third_parties": [
+   "broker-dealer"
+  ],
+  "kind": "the investor (individual with an optional co-subscriber, or an entity), then the broker's financial advisor and branch manager"
+ },
+ "counts_per_page": {
+  "1": {
+   "total": 9,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 6,
+   "signature": 3,
+   "date": 0
+  },
+  "2": {
+   "total": 5,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 1,
+   "signature": 2,
+   "date": 2
+  }
+ },
+ "counts_total": {
+  "total": 14,
+  "tickbox": 0,
+  "initials": 0,
+  "blank": 7,
+  "signature": 5,
+  "date": 2
+ },
+ "counts_by_owner": {
+  "co-investor": 2,
+  "investor": 1,
+  "investor-entity": 5,
+  "investor-individual": 3,
+  "third-party": 3
+ },
+ "sure_per_page": {
+  "1": "sure",
+  "2": "sure"
+ },
+ "not_fields": {
+  "1": [
+   "the dashed rule under the form date",
+   "the form date already printed"
+  ],
+  "2": [
+   "the dashed rules around the advisor-use heading",
+   "the three o-bullets in the advisor block: printed statements, not choices"
+  ]
+ },
+ "places": [
+  {
+   "id": "p01-006",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Brokerage account number (segmented)",
+   "printed_label": "Account No.",
+   "must": true,
+   "x0": 315.5,
+   "y0": 259.8,
+   "x1": 474.0,
+   "y1": 275.3,
+   "printed_as": "measured by hand",
+   "what": "text"
+  },
+  {
+   "id": "p01-002",
+   "page": 1,
+   "kind": "signature",
+   "owner": "investor-individual",
+   "label": "Subscriber signature",
+   "printed_label": "X",
+   "must": true,
+   "x0": 45.5,
+   "y0": 631.0,
+   "x1": 233.3,
+   "y1": 646.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "investor-individual",
+    "field_label": "Signature",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "signature",
+     "owner": "investor-individual",
+     "what": null,
+     "box": [
+      45.5,
+      631.0,
+      233.3,
+      646.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-007",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Name of entity",
+   "printed_label": "Print Full Name of Entity",
+   "must": true,
+   "x0": 245.1,
+   "y0": 631.0,
+   "x1": 503.3,
+   "y1": 646.5,
+   "printed_as": "measured by hand",
+   "what": "name"
+  },
+  {
+   "id": "p01-008",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Subscriber name",
+   "printed_label": "Print Full Name of Subscriber(s)",
+   "must": true,
+   "x0": 33.7,
+   "y0": 664.8,
+   "x1": 233.3,
+   "y1": 680.3,
+   "printed_as": "measured by hand",
+   "what": "name"
+  },
+  {
+   "id": "p01-003",
+   "page": 1,
+   "kind": "signature",
+   "owner": "investor-entity",
+   "label": "Signature for the entity",
+   "printed_label": "By: X",
+   "must": true,
+   "x0": 280.3,
+   "y0": 664.8,
+   "x1": 503.3,
+   "y1": 680.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "investor-entity",
+    "field_label": "Signature",
+    "candidate": "underscore",
+    "why": "reader marked it: Two labels could belong to this line.",
+    "initial": {
+     "kind": "signature",
+     "owner": "investor-entity",
+     "what": null,
+     "box": [
+      280.3,
+      664.8,
+      503.3,
+      680.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-005",
+   "page": 1,
+   "kind": "signature",
+   "owner": "co-investor",
+   "label": "Co-subscriber signature",
+   "printed_label": "X",
+   "must": true,
+   "x0": 45.5,
+   "y0": 698.5,
+   "x1": 233.3,
+   "y1": 714.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "investor-individual",
+    "field_label": "Signature",
+    "candidate": "underscore",
+    "why": "reader marked it: The heading for this block stands above another signature li",
+    "initial": {
+     "kind": "signature",
+     "owner": "investor-individual",
+     "what": null,
+     "box": [
+      45.5,
+      698.5,
+      233.3,
+      714.0
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-004",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Name of person signing for the entity",
+   "printed_label": "Print Full Name of Person Signing for Entity",
+   "must": true,
+   "x0": 262.7,
+   "y0": 698.5,
+   "x1": 503.3,
+   "y1": 714.0,
+   "printed_as": "reader field (no printed candidate under it)",
+   "prefill": {
+    "origin": "field",
+    "field_kind": "signature",
+    "field_owner": "investor-entity",
+    "field_label": "Signature",
+    "candidate": null,
+    "initial": {
+     "kind": "signature",
+     "owner": "investor-entity",
+     "what": null,
+     "box": [
+      262.7,
+      691.3,
+      504.3,
+      711.8
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p01-009",
+   "page": 1,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Co-subscriber name",
+   "printed_label": "Print Full Name of Co-Subscriber",
+   "must": true,
+   "x0": 33.7,
+   "y0": 732.3,
+   "x1": 233.3,
+   "y1": 747.8,
+   "printed_as": "measured by hand",
+   "what": "name"
+  },
+  {
+   "id": "p01-010",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Title of signer",
+   "printed_label": "Title",
+   "must": true,
+   "x0": 245.1,
+   "y0": 732.3,
+   "x1": 503.3,
+   "y1": 747.8,
+   "printed_as": "measured by hand",
+   "what": "title"
+  },
+  {
+   "id": "p02-002",
+   "page": 2,
+   "kind": "date",
+   "owner": "investor-individual",
+   "label": "Date (individual block)",
+   "printed_label": "Date:",
+   "must": true,
+   "x0": 33.7,
+   "y0": 36.3,
+   "x1": 162.9,
+   "y1": 51.8,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p02-003",
+   "page": 2,
+   "kind": "date",
+   "owner": "investor-entity",
+   "label": "Date (entity block)",
+   "printed_label": "Date:",
+   "must": true,
+   "x0": 245.1,
+   "y0": 36.3,
+   "x1": 374.2,
+   "y1": 51.8,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p02-004",
+   "page": 2,
+   "kind": "signature",
+   "owner": "third-party",
+   "label": "Financial advisor signature",
+   "printed_label": "(Financial Advisor MUST sign)",
+   "must": true,
+   "x0": 39.6,
+   "y0": 317.5,
+   "x1": 233.3,
+   "y1": 333.0,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p02-001",
+   "page": 2,
+   "kind": "signature",
+   "owner": "third-party",
+   "label": "Branch manager signature",
+   "printed_label": "X",
+   "must": true,
+   "x0": 251.0,
+   "y0": 317.5,
+   "x1": 503.3,
+   "y1": 333.0,
+   "printed_as": "reader field (no printed candidate under it)",
+   "prefill": {
+    "origin": "field",
+    "field_kind": "signature",
+    "field_owner": "investor-individual",
+    "field_label": "Signature",
+    "candidate": null,
+    "initial": {
+     "kind": "signature",
+     "owner": "investor-individual",
+     "what": null,
+     "box": [
+      250.9,
+      310.2,
+      504.3,
+      330.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-005",
+   "page": 2,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Branch telephone number",
+   "printed_label": "(Branch Telephone Number)",
+   "must": false,
+   "x0": 33.7,
+   "y0": 351.3,
+   "x1": 233.3,
+   "y1": 366.8,
+   "printed_as": "measured by hand",
+   "what": "phone"
+  }
+ ],
+ "may_fill": [],
+ "source": "hand",
+ "mode": "train",
+ "prefilled": {
+  "when": "2026-11-15T01:47:41Z",
+  "candidates": "ac4fe746ee7270b4-f01586d5.json",
+  "result": "out-ps01/c062/result.json",
+  "fields": 5,
+  "counted_candidates": 4
+ },
+ "done": "2026-11-15T01:48:51Z"
+}

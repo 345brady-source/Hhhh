@@ -1,0 +1,1158 @@
+{
+ "file": "set-c/c040/doc.pdf",
+ "id": "c040",
+ "pages": 99,
+ "page_size_pt": [
+  792.0,
+  612.0
+ ],
+ "page_sizes": {
+  "1": [
+   792.0,
+   612.0
+  ],
+  "2": [
+   792.0,
+   612.0
+  ],
+  "3": [
+   792.0,
+   612.0
+  ],
+  "4": [
+   792.0,
+   612.0
+  ],
+  "5": [
+   792.0,
+   612.0
+  ],
+  "6": [
+   792.0,
+   612.0
+  ],
+  "7": [
+   792.0,
+   612.0
+  ],
+  "8": [
+   792.0,
+   612.0
+  ],
+  "9": [
+   792.0,
+   612.0
+  ],
+  "10": [
+   792.0,
+   612.0
+  ],
+  "11": [
+   792.0,
+   612.0
+  ],
+  "12": [
+   792.0,
+   612.0
+  ],
+  "13": [
+   792.0,
+   612.0
+  ],
+  "14": [
+   792.0,
+   612.0
+  ],
+  "15": [
+   792.0,
+   612.0
+  ],
+  "16": [
+   792.0,
+   612.0
+  ],
+  "17": [
+   792.0,
+   612.0
+  ],
+  "18": [
+   792.0,
+   612.0
+  ],
+  "19": [
+   792.0,
+   612.0
+  ],
+  "20": [
+   792.0,
+   612.0
+  ],
+  "21": [
+   792.0,
+   612.0
+  ],
+  "22": [
+   792.0,
+   612.0
+  ],
+  "23": [
+   792.0,
+   612.0
+  ],
+  "24": [
+   792.0,
+   612.0
+  ],
+  "25": [
+   792.0,
+   612.0
+  ],
+  "26": [
+   792.0,
+   612.0
+  ],
+  "27": [
+   792.0,
+   612.0
+  ],
+  "28": [
+   792.0,
+   612.0
+  ],
+  "29": [
+   792.0,
+   612.0
+  ],
+  "30": [
+   792.0,
+   612.0
+  ],
+  "31": [
+   792.0,
+   612.0
+  ],
+  "32": [
+   792.0,
+   612.0
+  ],
+  "33": [
+   792.0,
+   612.0
+  ],
+  "34": [
+   792.0,
+   612.0
+  ],
+  "35": [
+   792.0,
+   612.0
+  ],
+  "36": [
+   792.0,
+   612.0
+  ],
+  "37": [
+   792.0,
+   612.0
+  ],
+  "38": [
+   792.0,
+   612.0
+  ],
+  "39": [
+   792.0,
+   612.0
+  ],
+  "40": [
+   792.0,
+   612.0
+  ],
+  "41": [
+   792.0,
+   612.0
+  ],
+  "42": [
+   792.0,
+   612.0
+  ],
+  "43": [
+   792.0,
+   612.0
+  ],
+  "44": [
+   792.0,
+   612.0
+  ],
+  "45": [
+   792.0,
+   612.0
+  ],
+  "46": [
+   792.0,
+   612.0
+  ],
+  "47": [
+   792.0,
+   612.0
+  ],
+  "48": [
+   792.0,
+   612.0
+  ],
+  "49": [
+   792.0,
+   612.0
+  ],
+  "50": [
+   792.0,
+   612.0
+  ],
+  "51": [
+   792.0,
+   612.0
+  ],
+  "52": [
+   792.0,
+   612.0
+  ],
+  "53": [
+   792.0,
+   612.0
+  ],
+  "54": [
+   792.0,
+   612.0
+  ],
+  "55": [
+   792.0,
+   612.0
+  ],
+  "56": [
+   792.0,
+   612.0
+  ],
+  "57": [
+   792.0,
+   612.0
+  ],
+  "58": [
+   792.0,
+   612.0
+  ],
+  "59": [
+   792.0,
+   612.0
+  ],
+  "60": [
+   792.0,
+   612.0
+  ],
+  "61": [
+   792.0,
+   612.0
+  ],
+  "62": [
+   792.0,
+   612.0
+  ],
+  "63": [
+   792.0,
+   612.0
+  ],
+  "64": [
+   792.0,
+   612.0
+  ],
+  "65": [
+   792.0,
+   612.0
+  ],
+  "66": [
+   792.0,
+   612.0
+  ],
+  "67": [
+   792.0,
+   612.0
+  ],
+  "68": [
+   792.0,
+   612.0
+  ],
+  "69": [
+   792.0,
+   612.0
+  ],
+  "70": [
+   792.0,
+   612.0
+  ],
+  "71": [
+   792.0,
+   612.0
+  ],
+  "72": [
+   792.0,
+   612.0
+  ],
+  "73": [
+   792.0,
+   612.0
+  ],
+  "74": [
+   792.0,
+   612.0
+  ],
+  "75": [
+   792.0,
+   612.0
+  ],
+  "76": [
+   792.0,
+   612.0
+  ],
+  "77": [
+   792.0,
+   612.0
+  ],
+  "78": [
+   792.0,
+   612.0
+  ],
+  "79": [
+   792.0,
+   612.0
+  ],
+  "80": [
+   792.0,
+   612.0
+  ],
+  "81": [
+   792.0,
+   612.0
+  ],
+  "82": [
+   792.0,
+   612.0
+  ],
+  "83": [
+   792.0,
+   612.0
+  ],
+  "84": [
+   792.0,
+   612.0
+  ],
+  "85": [
+   792.0,
+   612.0
+  ],
+  "86": [
+   792.0,
+   612.0
+  ],
+  "87": [
+   792.0,
+   612.0
+  ],
+  "88": [
+   792.0,
+   612.0
+  ],
+  "89": [
+   792.0,
+   612.0
+  ],
+  "90": [
+   792.0,
+   612.0
+  ],
+  "91": [
+   792.0,
+   612.0
+  ],
+  "92": [
+   792.0,
+   612.0
+  ],
+  "93": [
+   792.0,
+   612.0
+  ],
+  "94": [
+   792.0,
+   612.0
+  ],
+  "95": [
+   792.0,
+   612.0
+  ],
+  "96": [
+   792.0,
+   612.0
+  ],
+  "97": [
+   792.0,
+   612.0
+  ],
+  "98": [
+   792.0,
+   612.0
+  ],
+  "99": [
+   792.0,
+   612.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "picture",
+  "4": "picture",
+  "5": "picture",
+  "6": "picture",
+  "7": "picture",
+  "8": "picture",
+  "9": "picture",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "picture",
+  "14": "picture",
+  "15": "picture",
+  "16": "picture",
+  "17": "picture",
+  "18": "picture",
+  "19": "picture",
+  "20": "text",
+  "21": "text",
+  "22": "text",
+  "23": "picture",
+  "24": "picture",
+  "25": "picture",
+  "26": "picture",
+  "27": "picture",
+  "28": "picture",
+  "29": "picture",
+  "30": "text",
+  "31": "text",
+  "32": "text",
+  "33": "picture",
+  "34": "picture",
+  "35": "picture",
+  "36": "picture",
+  "37": "picture",
+  "38": "picture",
+  "39": "picture",
+  "40": "text",
+  "41": "text",
+  "42": "text",
+  "43": "picture",
+  "44": "picture",
+  "45": "picture",
+  "46": "picture",
+  "47": "picture",
+  "48": "picture",
+  "49": "picture",
+  "50": "text",
+  "51": "text",
+  "52": "text",
+  "53": "picture",
+  "54": "picture",
+  "55": "picture",
+  "56": "picture",
+  "57": "picture",
+  "58": "picture",
+  "59": "picture",
+  "60": "text",
+  "61": "text",
+  "62": "text",
+  "63": "picture",
+  "64": "picture",
+  "65": "picture",
+  "66": "picture",
+  "67": "picture",
+  "68": "picture",
+  "69": "picture",
+  "70": "text",
+  "71": "text",
+  "72": "text",
+  "73": "picture",
+  "74": "picture",
+  "75": "picture",
+  "76": "picture",
+  "77": "picture",
+  "78": "picture",
+  "79": "picture",
+  "80": "text",
+  "81": "text",
+  "82": "text",
+  "83": "picture",
+  "84": "picture",
+  "85": "picture",
+  "86": "picture",
+  "87": "picture",
+  "88": "picture",
+  "89": "picture",
+  "90": "text",
+  "91": "text",
+  "92": "text",
+  "93": "picture",
+  "94": "picture",
+  "95": "picture",
+  "96": "picture",
+  "97": "text",
+  "98": "text",
+  "99": "text"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
+ "signing": {
+  "investor_pages": [
+   66,
+   88,
+   95
+  ],
+  "firm_pages": [],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": "the investor (exchanging holder or subscriber); a non-U.S. holder also signs tax certificate C-1 or C-2 before closing; the issuer's acceptance blocks are already signed"
+ },
+ "counts_per_page": {
+  "66": {
+   "total": 5,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 4,
+   "signature": 1,
+   "date": 0
+  },
+  "86": {
+   "total": 2,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 2,
+   "signature": 0,
+   "date": 0
+  },
+  "87": {
+   "total": 1,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 1,
+   "signature": 0,
+   "date": 0
+  },
+  "88": {
+   "total": 5,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 3,
+   "signature": 1,
+   "date": 1
+  },
+  "93": {
+   "total": 2,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 2,
+   "signature": 0,
+   "date": 0
+  },
+  "94": {
+   "total": 2,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 2,
+   "signature": 0,
+   "date": 0
+  },
+  "95": {
+   "total": 4,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 2,
+   "signature": 1,
+   "date": 1
+  }
+ },
+ "counts_total": {
+  "total": 21,
+  "tickbox": 0,
+  "initials": 0,
+  "blank": 16,
+  "signature": 3,
+  "date": 2
+ },
+ "counts_by_owner": {
+  "investor": 17,
+  "unclear": 4
+ },
+ "sure_per_page": {
+  "1": "draft",
+  "2": "draft",
+  "3": "draft",
+  "4": "draft",
+  "5": "draft",
+  "6": "draft",
+  "7": "draft",
+  "8": "draft",
+  "9": "draft",
+  "10": "draft",
+  "11": "draft",
+  "12": "draft",
+  "13": "draft",
+  "14": "draft",
+  "15": "draft",
+  "16": "draft",
+  "17": "draft",
+  "18": "draft",
+  "19": "draft",
+  "20": "draft",
+  "21": "draft",
+  "22": "draft",
+  "23": "draft",
+  "24": "draft",
+  "25": "draft",
+  "26": "draft",
+  "27": "draft",
+  "28": "draft",
+  "29": "draft",
+  "30": "draft",
+  "31": "draft",
+  "32": "draft",
+  "33": "draft",
+  "34": "draft",
+  "35": "draft",
+  "36": "draft",
+  "37": "draft",
+  "38": "draft",
+  "39": "draft",
+  "40": "draft",
+  "41": "draft",
+  "42": "draft",
+  "43": "draft",
+  "44": "draft",
+  "45": "draft",
+  "46": "draft",
+  "47": "draft",
+  "48": "draft",
+  "49": "draft",
+  "50": "draft",
+  "51": "draft",
+  "52": "draft",
+  "53": "draft",
+  "54": "draft",
+  "55": "draft",
+  "56": "draft",
+  "57": "draft",
+  "58": "draft",
+  "59": "draft",
+  "60": "draft",
+  "61": "draft",
+  "62": "draft",
+  "63": "draft",
+  "64": "draft",
+  "65": "draft",
+  "66": "sure; Name, Title, Legal Name have no printed line",
+  "67": "draft",
+  "68": "draft",
+  "69": "draft",
+  "70": "draft",
+  "71": "draft",
+  "72": "draft",
+  "73": "draft",
+  "74": "draft",
+  "75": "draft",
+  "76": "draft",
+  "77": "draft",
+  "78": "draft",
+  "79": "draft",
+  "80": "draft",
+  "81": "draft",
+  "82": "draft",
+  "83": "draft",
+  "84": "draft",
+  "85": "draft",
+  "86": "mostly; recital brackets may be filled by the issuer",
+  "87": "draft",
+  "88": "sure",
+  "89": "draft",
+  "90": "draft",
+  "91": "draft",
+  "92": "draft",
+  "93": "mostly; recital brackets may be filled by the issuer",
+  "94": "draft",
+  "95": "sure",
+  "96": "draft",
+  "97": "draft",
+  "98": "draft",
+  "99": "draft"
+ },
+ "not_fields": {
+  "1": [
+   "hidden text layer pages carry no visible content"
+  ],
+  "5": [
+   "measure tick candidates on letters of the scanned text (pages 3-59 and others)"
+  ],
+  "68": [
+   "issuer acceptance blocks already signed with typed names"
+  ],
+  "69": [
+   "issuer acceptance block already signed"
+  ],
+  "86": [
+   "underlined section reference in the recital"
+  ],
+  "93": [
+   "underlined section reference in the recital"
+  ],
+  "83": [
+   "Exhibit A holder allocation spreadsheet placeholder"
+  ],
+  "63": [
+   "notice addresses already printed"
+  ]
+ },
+ "places": [
+  {
+   "id": "p66-002",
+   "page": 66,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor name (under [Investor]:)",
+   "printed_label": "",
+   "must": true,
+   "x0": 325.3,
+   "y0": 451.3,
+   "x1": 536.2,
+   "y1": 466.8,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      325.7,
+      451.6,
+      537.6,
+      467.1
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p66-003",
+   "page": 66,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Investor signature",
+   "printed_label": "",
+   "must": true,
+   "x0": 356.7,
+   "y0": 480.6,
+   "x1": 567.6,
+   "y1": 496.1,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      356.6,
+      481.8,
+      569.1,
+      497.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p66-004",
+   "page": 66,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name of signer",
+   "printed_label": "Name:",
+   "must": true,
+   "x0": 392.0,
+   "y0": 496.5,
+   "x1": 567.6,
+   "y1": 508.0,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "no printed line after the caption"
+  },
+  {
+   "id": "p66-005",
+   "page": 66,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Title of signer",
+   "printed_label": "Title:",
+   "must": true,
+   "x0": 383.0,
+   "y0": 510.5,
+   "x1": 567.6,
+   "y1": 522.0,
+   "printed_as": "measured by hand",
+   "what": "title",
+   "doubt": "no printed line after the caption"
+  },
+  {
+   "id": "p66-006",
+   "page": 66,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Legal name of the investor",
+   "printed_label": "Legal Name:",
+   "must": true,
+   "x0": 424.0,
+   "y0": 524.5,
+   "x1": 567.6,
+   "y1": 539.0,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "no printed line after the caption"
+  },
+  {
+   "id": "p86-001",
+   "page": 86,
+   "kind": "blank",
+   "owner": "unclear",
+   "label": "Certificate C-1: party to the agreement",
+   "printed_label": "",
+   "must": false,
+   "x0": 253.6,
+   "y0": 473.1,
+   "x1": 401.8,
+   "y1": 488.6,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "bracketed blank in the recital: the holder or the issuer may fill it"
+  },
+  {
+   "id": "p86-002",
+   "page": 86,
+   "kind": "blank",
+   "owner": "unclear",
+   "label": "Certificate C-1: name of the non-U.S. holder",
+   "printed_label": "",
+   "must": false,
+   "x0": 197.0,
+   "y0": 527.1,
+   "x1": 340.3,
+   "y1": 542.6,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "bracketed blank in the recital: the holder or the issuer may fill it"
+  },
+  {
+   "id": "p87-001",
+   "page": 87,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Certificate C-1: holder's office address",
+   "printed_label": "office address is",
+   "must": false,
+   "x0": 467.3,
+   "y0": 383.7,
+   "x1": 597.0,
+   "y1": 399.2,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p88-006",
+   "page": 88,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Certificate C-1: name of the non-U.S. holder",
+   "printed_label": "[NAME OF NON-U.S. HOLDER]",
+   "must": false,
+   "x0": 426.3,
+   "y0": 241.8,
+   "x1": 592.9,
+   "y1": 254.0,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "bracketed placeholder, no printed line: the holder's name replaces it"
+  },
+  {
+   "id": "p88-004",
+   "page": 88,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Certificate C-1: holder signature",
+   "printed_label": "",
+   "must": false,
+   "x0": 442.7,
+   "y0": 280.6,
+   "x1": 644.1,
+   "y1": 296.1,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      443.0,
+      281.5,
+      645.9,
+      297.0
+     ]
+    }
+   }
+  },
+  {
+   "id": "p88-007",
+   "page": 88,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Certificate C-1: name of signer",
+   "printed_label": "Name:",
+   "must": false,
+   "x0": 482.0,
+   "y0": 296.5,
+   "x1": 644.1,
+   "y1": 308.5,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "no printed line after the caption"
+  },
+  {
+   "id": "p88-008",
+   "page": 88,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Certificate C-1: title of signer",
+   "printed_label": "Title:",
+   "must": false,
+   "x0": 473.0,
+   "y0": 309.5,
+   "x1": 644.1,
+   "y1": 321.5,
+   "printed_as": "measured by hand",
+   "what": "title",
+   "doubt": "no printed line after the caption"
+  },
+  {
+   "id": "p88-005",
+   "page": 88,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Certificate C-1: date (month day, year)",
+   "printed_label": "",
+   "must": false,
+   "x0": 453.6,
+   "y0": 335.9,
+   "x1": 642.7,
+   "y1": 351.4,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      453.9,
+      336.4,
+      584.9,
+      351.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p93-001",
+   "page": 93,
+   "kind": "blank",
+   "owner": "unclear",
+   "label": "Certificate C-2: party to the agreement",
+   "printed_label": "",
+   "must": false,
+   "x0": 257.1,
+   "y0": 208.3,
+   "x1": 401.8,
+   "y1": 223.8,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "bracketed blank in the recital: the holder or the issuer may fill it"
+  },
+  {
+   "id": "p93-002",
+   "page": 93,
+   "kind": "blank",
+   "owner": "unclear",
+   "label": "Certificate C-2: name of the non-U.S. holder",
+   "printed_label": "",
+   "must": false,
+   "x0": 194.9,
+   "y0": 262.3,
+   "x1": 342.4,
+   "y1": 277.8,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "bracketed blank in the recital: the holder or the issuer may fill it"
+  },
+  {
+   "id": "p94-001",
+   "page": 94,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Certificate C-2: holder's office address",
+   "printed_label": "",
+   "must": false,
+   "x0": 469.3,
+   "y0": 213.1,
+   "x1": 594.2,
+   "y1": 228.6,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      469.0,
+      214.0,
+      595.9,
+      229.5
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p94-002",
+   "page": 94,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Certificate C-2: name of the non-U.S. holder",
+   "printed_label": "[NAME OF NON-U.S. HOLDER]",
+   "must": false,
+   "x0": 426.3,
+   "y0": 540.8,
+   "x1": 592.9,
+   "y1": 553.0,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "bracketed placeholder, no printed line: the holder's name replaces it"
+  },
+  {
+   "id": "p95-001",
+   "page": 95,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Certificate C-2: holder signature",
+   "printed_label": "",
+   "must": false,
+   "x0": 450.2,
+   "y0": 39.0,
+   "x1": 644.1,
+   "y1": 54.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      443.0,
+      40.2,
+      645.9,
+      55.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p95-003",
+   "page": 95,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Certificate C-2: name of signer",
+   "printed_label": "Name:",
+   "must": false,
+   "x0": 482.0,
+   "y0": 55.0,
+   "x1": 644.1,
+   "y1": 66.5,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "no printed line after the caption"
+  },
+  {
+   "id": "p95-004",
+   "page": 95,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Certificate C-2: title of signer",
+   "printed_label": "Title:",
+   "must": false,
+   "x0": 473.0,
+   "y0": 68.0,
+   "x1": 644.1,
+   "y1": 80.0,
+   "printed_as": "measured by hand",
+   "what": "title",
+   "doubt": "no printed line after the caption"
+  },
+  {
+   "id": "p95-002",
+   "page": 95,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Certificate C-2: date (month day, year)",
+   "printed_label": "",
+   "must": false,
+   "x0": 450.9,
+   "y0": 94.3,
+   "x1": 639.3,
+   "y1": 109.8,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      450.5,
+      95.0,
+      582.2,
+      110.5
+     ]
+    }
+   }
+  }
+ ],
+ "may_fill": [],
+ "source": "hand",
+ "mode": "train",
+ "prefilled": {
+  "when": "2026-11-15T01:47:41Z",
+  "candidates": "14c825eb6022973d-f01586d5.json",
+  "result": "out-ps01/c040/result.json",
+  "fields": 0,
+  "counted_candidates": 179
+ },
+ "done": "2026-11-15T02:03:19Z"
+}
