@@ -13,6 +13,14 @@ export const KINDS = ['signature', 'initials', 'date', 'checkbox', 'name', 'titl
 export const PERSONS = ['investor', 'sponsor'];
 export const GROUPS = ['all', 'individual', 'entity'];
 export const SIDES = ['on', 'right', 'left', 'below', 'above'];
+/**
+ * Page images (D-38): pages that are pictures, or whose text layer cannot be read, come with a picture of the page on
+ * which the browser has drawn and numbered its candidates. The published limits for this model: at most 600 images in
+ * one request, 10 MB per image (base64-encoded), JPEG or PNG here; the browser keeps each image's long side at 2000 px,
+ * under the 3000 px that applies to every image of a request with more than 20.
+ */
+export const IMAGE_MAX = 600;
+export const IMAGE_BYTES = 10 * 1024 * 1024;
 
 /** The answer's shape (structured output): every object closed, no numeric limits (the service rejects them). */
 export const ANSWER_SCHEMA = Object.freeze({
@@ -82,7 +90,7 @@ export const SYSTEM = [
 ].join('\n');
 
 /** The answer of a finished message, checked: { fields, missing } of known values, or null when it is not that shape. */
-export function parseAnswer(message, count) {
+export function parseAnswer(message, count, opts) {
   const blocks = Array.isArray(message && message.content) ? message.content : [];
   const text = blocks
     .filter((b) => b && b.type === 'text' && typeof b.text === 'string')
@@ -95,21 +103,30 @@ export function parseAnswer(message, count) {
   } catch {
     return null;
   }
-  return checkAnswer(v, count);
+  return checkAnswer(v, count, opts);
 }
 
 const isInt = (n) => Number.isInteger(n);
-/** An answer's shape: two arrays; each entry with integer ids in 1..count and values from the enums is kept, any other entry dropped. */
-export function checkAnswer(v, count) {
+/**
+ * An answer's shape: two arrays; each entry with integer ids in 1..count and values from the enums is kept, any other entry
+ * dropped. opts (a page range of a long agreement, D-38): { ids } the range's own place numbers (numbered across the whole
+ * agreement), which then replace 1..count, and { first, last } the range's pages, outside which a missing place is dropped.
+ */
+export function checkAnswer(v, count, opts) {
   if (!v || typeof v !== 'object' || Array.isArray(v) || !Array.isArray(v.fields) || !Array.isArray(v.missing)) return null;
   const n = Number(count) || 0;
+  const o = opts || {};
+  const ids = Array.isArray(o.ids) ? new Set(o.ids) : null;
+  const known = (id) => isInt(id) && (ids ? ids.has(id) : id >= 1 && id <= n);
+  const lo = isInt(o.first) ? o.first : 1;
+  const hi = isInt(o.last) ? o.last : Infinity;
   const common = (e) => KINDS.includes(e.kind) && PERSONS.includes(e.person) && GROUPS.includes(e.group);
   const seen = new Set();
   const fields = v.fields
-    .filter((e) => e && typeof e === 'object' && isInt(e.id) && e.id >= 1 && e.id <= n && common(e) && !seen.has(e.id) && seen.add(e.id))
+    .filter((e) => e && typeof e === 'object' && known(e.id) && common(e) && !seen.has(e.id) && seen.add(e.id))
     .map((e) => ({ id: e.id, kind: e.kind, person: e.person, group: e.group }));
   const missing = v.missing
-    .filter((e) => e && typeof e === 'object' && isInt(e.page) && e.page >= 1 && isInt(e.near) && (e.near === -1 || (e.near >= 1 && e.near <= n)) && typeof e.caption === 'string' && SIDES.includes(e.side) && common(e))
+    .filter((e) => e && typeof e === 'object' && isInt(e.page) && e.page >= lo && e.page <= hi && isInt(e.near) && (e.near === -1 || known(e.near)) && typeof e.caption === 'string' && SIDES.includes(e.side) && common(e))
     .map((e) => ({ page: e.page, near: e.near, caption: e.near === -1 ? e.caption.slice(0, 200) : '', side: e.side, kind: e.kind, person: e.person, group: e.group }));
   return { fields, missing };
 }
@@ -119,23 +136,26 @@ export function checkAnswer(v, count) {
  *   available()            whether a key is set (model.mjs available) and the client library loads
  *   budget                 the spend cap shared with the server's other reading calls
  *   maxTokens()            the output limit each call asks for
- *   count({ pdf, text })   the request's input tokens (a free count)
- *   read({ pdf, pages, text, count }, { signal })  → { ok, fields, missing, reason, ms, model, stopReason, usage, status }
+ *   count({ pdf, text, images })   the request's input tokens (a free count)
+ *   read({ pdf, pages, text, count, ids, first, last, images }, { signal })  → { ok, fields, missing, reason, ms, model, stopReason, usage, status }
  * }
+ * images (D-38, optional): [{ page, media_type, data }], each sent after the document as a label text block ("Page N with
+ * numbered candidates") and a base64 image block, before the list's text. Without images the message is the document
+ * block and the text block exactly. ids, first and last (a page range, D-38) are checkAnswer's opts.
  */
 export function createReader({ env = process.env, fetch, timeoutMs = READ_LIMIT_MS, budget } = {}) {
   const spend = budget || createBudget(env);
   let client = null;
   const getClient = async () => client || (client = await createClient({ env, fetch, timeoutMs }));
-  const messages = (pdf, text) => [
-    {
-      role: 'user',
-      content: [
-        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdf } },
-        { type: 'text', text }
-      ]
-    }
-  ];
+  const messages = (pdf, text, images) => {
+    const content = [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdf } }];
+    (Array.isArray(images) ? images : []).forEach((im) => {
+      content.push({ type: 'text', text: `Page ${im.page} with numbered candidates` });
+      content.push({ type: 'image', source: { type: 'base64', media_type: im.media_type, data: im.data } });
+    });
+    content.push({ type: 'text', text });
+    return [{ role: 'user', content }];
+  };
 
   return {
     budget: spend,
@@ -143,15 +163,15 @@ export function createReader({ env = process.env, fetch, timeoutMs = READ_LIMIT_
       return available(env) && !!(await getClient());
     },
     maxTokens: () => maxTokensOf(env),
-    async count({ pdf, text }) {
+    async count({ pdf, text, images }) {
       const c = await getClient();
       if (!c) throw new Error('unavailable');
-      const r = await c.messages.countTokens({ model: MODEL, system: SYSTEM, messages: messages(pdf, text) });
+      const r = await c.messages.countTokens({ model: MODEL, system: SYSTEM, messages: messages(pdf, text, images) });
       const n = Number(r && r.input_tokens);
       if (!Number.isFinite(n)) throw new Error('no count');
       return n;
     },
-    async read({ pdf, text, count }, { signal } = {}) {
+    async read({ pdf, text, count, ids, first, last, images }, { signal } = {}) {
       const t0 = Date.now();
       const done = (o) => Object.assign({ ok: false, fields: [], missing: [], reason: 'failed', model: '', stopReason: '', usage: usageOf(null), status: 0 }, o, { ms: Date.now() - t0 });
       const c = await getClient();
@@ -170,7 +190,7 @@ export function createReader({ env = process.env, fetch, timeoutMs = READ_LIMIT_
         betas: [FALLBACK_BETA],
         fallbacks: 'default',
         system: SYSTEM,
-        messages: messages(pdf, text)
+        messages: messages(pdf, text, images)
       };
       let stream = null;
       try {
@@ -180,7 +200,7 @@ export function createReader({ env = process.env, fetch, timeoutMs = READ_LIMIT_
         const out = outcomeOf(msg);
         const base = { model: String(msg.model || ''), stopReason: out.stopReason, usage: usageOf(msg.usage) };
         if (!out.ok) return done(Object.assign(base, { reason: out.reason }));
-        const answer = parseAnswer(msg, count);
+        const answer = parseAnswer(msg, count, ids || first || last ? { ids, first, last } : undefined);
         return done(Object.assign(base, answer ? { ok: true, fields: answer.fields, missing: answer.missing, reason: '' } : { reason: 'invalid' }));
       } catch (e) {
         // What the call used before it stopped still counts against the cap.

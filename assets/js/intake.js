@@ -225,6 +225,73 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
    * measured: 0.3949, 0.4081, 0.4177, 0.4191, 0.4204, 0.4317, 0.4584 (7 readable); 0.0109 (scrambled text layer); 0 (pictures).
    */
   const UNREADABLE_BELOW = 0.1;
+  /**
+   * D-38: which pages of one document cannot be read (true for such a page), judged page by page. A page with no letters
+   * cannot be read (a picture of a page). A page whose share is at least UNREADABLE_BELOW can. A page under it (a table, a
+   * form, a financial statement, or a scrambled text layer) can be read only when at least KNOWN_SHARE of its tokens are
+   * function words or words the document's readable pages also use: the words of a table or a form are the document's
+   * own words, those of a scrambled text layer are not. Plan 68 judged the whole document by its share alone; judged per
+   * page by share alone, readable table and form pages fell under the threshold (reason D-38, measured on public PDFs only).
+   */
+  const KNOWN_SHARE = 0.5;
+  function unreadablePages(texts) {
+    const toks = (texts || []).map((t) => String(t || '').toLowerCase().match(/[a-z]{2,}/g) || []);
+    const share = toks.map((t) => (t.length ? t.filter((w) => FUNCTION_WORDS.has(w)).length / t.length : 0));
+    const vocab = new Set();
+    toks.forEach((t, i) => share[i] >= UNREADABLE_BELOW && t.forEach((w) => vocab.add(w)));
+    return toks.map((t, i) => {
+      if (!t.length) return true;
+      if (share[i] >= UNREADABLE_BELOW) return false;
+      return t.filter((w) => vocab.has(w) || FUNCTION_WORDS.has(w)).length / t.length < KNOWN_SHARE;
+    });
+  }
+  /** A PDF's extracted text (readFile's "[p. N]" page markers) as one text per page, markers left out. */
+  function pageTexts(text) {
+    const parts = String(text || '').split(/(?:^|\n\n)\[p\. \d+\]\n/);
+    return parts.slice(1);
+  }
+
+  /*
+   * D-38: transient failures never show. One request to the reading server, sent again on a network error or a status
+   * 429, 500, 502, 503, 504 or 529: at most 3 attempts, after waits of 2 s and then 6 s. The caller's signal (its own time
+   * limit, or Stop) ends the waiting and the attempts at once. Anything else (an answer, 400, 401, 402, 413, ...) is
+   * returned at once; the last attempt's answer or error is the caller's to handle as before. Both readers use it.
+   */
+  const RETRY_STATUS = [429, 500, 502, 503, 504, 529];
+  const RETRY_WAITS = [2000, 6000];
+  async function readingFetch(url, init) {
+    const signal = init && init.signal;
+    const abortError = () => Object.assign(new Error('The reading was stopped.'), { name: 'AbortError' });
+    for (let attempt = 0; ; attempt++) {
+      let res = null;
+      let err = null;
+      try {
+        res = await fetch(url, init);
+      } catch (e) {
+        err = e;
+      }
+      const again = !(signal && signal.aborted) && attempt < RETRY_WAITS.length && (err ? true : RETRY_STATUS.indexOf(res.status) >= 0);
+      if (!again) {
+        if (err) throw err;
+        return res;
+      }
+      try {
+        if (res && res.body && res.body.cancel) res.body.cancel().catch(() => {});
+      } catch (e) {
+        /* the unused answer is only let go */
+      }
+      await new Promise((resolve) => {
+        const t = setTimeout(done, RETRY_WAITS[attempt]);
+        function done() {
+          clearTimeout(t);
+          if (signal) signal.removeEventListener('abort', done);
+          resolve();
+        }
+        if (signal) signal.addEventListener('abort', done, { once: true });
+      });
+      if (signal && signal.aborted) throw abortError();
+    }
+  }
 
   /**
    * The same prompt as always, sent to the reading server's POST /v1/intake. Its answer is a stream of lines: { t } for
@@ -255,7 +322,7 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
         if (sample.token) headers.Authorization = `Bearer ${sample.token}`;
         let res;
         try {
-          res = await fetch(String(sample.url).replace(/\/+$/, '') + '/v1/intake', { method: 'POST', headers, body: JSON.stringify(body), signal: ctl.signal });
+          res = await readingFetch(String(sample.url).replace(/\/+$/, '') + '/v1/intake', { method: 'POST', headers, body: JSON.stringify(body), signal: ctl.signal });
         } catch (e) {
           throw fail(why());
         }
@@ -308,8 +375,72 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
     const isPdf = (d) => !!d.file && typeof d.pages === 'number';
     const docs = (NS.state && NS.state.ui && NS.state.ui.intake && NS.state.ui.intake.docs) || [];
     const good = docs.filter((d) => (d.text && d.text.trim().length > 40) || (served && isPdf(d)));
-    const unread = good.filter((d) => isPdf(d) && unreadableShare(d.text) < UNREADABLE_BELOW);
-    if (!unread.length) return (await ask({ prompt: `${instructions()}\n\nDOCUMENTS:\n${corp}` }, '')).json;
+    // D-38: readability is judged page by page; a PDF with any page that cannot be read is sent as the PDF itself.
+    const unread = good.filter((d) => isPdf(d) && unreadablePages(pageTexts(d.text)).some(Boolean));
+    const answers = [];
+    let before = '';
+    // D-38 (over D-36's excerpt budget, on the server path only): the whole text of every readable document, the same
+    // prompt as always otherwise. corpus() returns the whole text when it fits its limit, so a text under the budget is
+    // sent byte for byte as before. When the reading server answers that one request is too large (413), the text is
+    // split, by document first and then into halves at the [p. N] page markers, every page sent exactly once, and the
+    // answers merged. The review screen is then not told of excerpts.
+    const chunksOf = (d) => {
+      const t = String(d.text || '');
+      const at = [];
+      const re = /(?:^|\n\n)\[p\. \d+\]\n/g;
+      let m;
+      while ((m = re.exec(t))) at.push(m.index === 0 ? 0 : m.index + 2);
+      if (at.length < 2) return [t];
+      return at.map((a, i) => t.slice(a, i + 1 < at.length ? at[i + 1] - 2 : t.length));
+    };
+    const textOf = (part) => {
+      if (part.docs) return corpus(part.docs, Infinity).text;
+      const d = part.d;
+      const N = chunksOf(d).length;
+      return `=== Document: ${d.name}${d.pages ? ` (${d.pages} pages)` : ''} (pages ${part.a} to ${part.b} of ${N}) ===\n${chunksOf(d).slice(part.a - 1, part.b).join('\n\n')}`;
+    };
+    /** Smaller parts of a text request: one per document, or a document's pages in two halves; null when it cannot be cut. */
+    const splitText = (part) => {
+      if (part.docs && part.docs.length > 1) return part.docs.map((d) => ({ docs: [d] }));
+      const d = part.docs ? part.docs[0] : part.d;
+      const a = part.docs ? 1 : part.a;
+      const b = part.docs ? chunksOf(d).length : part.b;
+      if (b <= a) return null;
+      const mid = a + Math.ceil((b - a + 1) / 2) - 1;
+      return [
+        { d, a, b: mid },
+        { d, a: mid + 1, b }
+      ];
+    };
+    const readText = async (docs) => {
+      let parts = [{ docs }];
+      while (parts.length) {
+        if (opts.signal && opts.signal.aborted) throw fail('cancelled');
+        const part = parts.shift();
+        let got;
+        try {
+          got = await ask({ prompt: `${instructions()}\n\nDOCUMENTS:\n${textOf(part)}` }, before);
+        } catch (e) {
+          const smaller = e && e.code === 'prompt_too_large' ? splitText(part) : null;
+          if (smaller) {
+            parts = smaller.concat(parts);
+            continue;
+          }
+          throw e;
+        }
+        answers.push(got.json);
+        before += got.text;
+      }
+    };
+    const finish = () => {
+      const st = NS.state && NS.state.ui && NS.state.ui.intake;
+      if (st) st.trimmed = false;
+      return answers.length === 1 ? answers[0] : mergeAnswers(answers);
+    };
+    if (!unread.length) {
+      await readText(good);
+      return finish();
+    }
 
     // D-37: the readable documents' text as always, and each unreadable PDF named in the prompt and attached. D-38: a PDF
     // over one request's limits (RANGE_PAGES pages, RANGE_BYTES encoded, or a 413 from the server) is read in consecutive
@@ -317,7 +448,8 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
     // measurement tool, to keep a test within its spend cap.
     if (opts.signal && opts.signal.aborted) throw fail('cancelled');
     const readable = good.filter((d) => unread.indexOf(d) < 0);
-    const text0 = readable.length ? corpus(readable, NS.intake.LIMIT).text : '';
+    const text0 = readable.length ? corpus(readable, Infinity).text : '';
+    let textDone = !text0;
     const span = Math.max(1, Math.floor(Number(NS.intake.RANGE_PAGES) || 600));
     const maxBytes = Number(NS.intake.RANGE_BYTES) || 31 * 1024 * 1024;
     const testCap = Number(NS.intake.TEST_PAGE_LIMIT) >= 1 ? Math.floor(Number(NS.intake.TEST_PAGE_LIMIT)) : 0;
@@ -359,12 +491,20 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
       queue = [[{ d: p.d, a: p.a, b: mid }], [{ d: p.d, a: mid + 1, b: p.b }]].concat(queue);
       return true;
     };
-    const answers = [];
-    let before = '';
+    // The readable documents' text rides in the first request; if a request cannot be made small enough with it, the
+    // text is read on its own (split as above) and the PDF's pages follow without it.
+    const textApart = async (req) => {
+      if (textDone) return false;
+      await readText(readable);
+      textDone = true;
+      queue.unshift(req);
+      return true;
+    };
     while (queue.length) {
       if (opts.signal && opts.signal.aborted) throw fail('cancelled');
       const req = queue.shift();
-      const prompt = `${instructions()}\n\nDOCUMENTS:\n${[answers.length ? '' : text0, ...req.map(named)].filter(Boolean).join('\n\n')}`;
+      const withText = !textDone;
+      const prompt = `${instructions()}\n\nDOCUMENTS:\n${[withText ? text0 : '', ...req.map(named)].filter(Boolean).join('\n\n')}`;
       let pdfs;
       try {
         pdfs = [];
@@ -375,6 +515,7 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
       const size = prompt.length + pdfs.reduce((n, x) => n + x.data.length + x.name.length + 64, 32);
       if (size > maxBytes) {
         if (halve(req)) continue;
+        if (withText && (await textApart(req))) continue;
         throw fail('prompt_too_large');
       }
       let got;
@@ -382,12 +523,14 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
         got = await ask({ prompt, pdfs }, before);
       } catch (e) {
         if (e && e.code === 'prompt_too_large' && halve(req)) continue;
+        if (e && e.code === 'prompt_too_large' && withText && (await textApart(req))) continue;
         throw e;
       }
+      if (withText) textDone = true;
       answers.push(got.json);
       before += got.text;
     }
-    return answers.length === 1 ? answers[0] : mergeAnswers(answers);
+    return finish();
   }
   /** A file's bytes as base64 without line breaks. */
   function base64Of(blob) {
@@ -810,4 +953,7 @@ Reporting. Members will receive quarterly reports and annual Schedule K-1s. The 
   NS.intake.mergeAnswers = mergeAnswers;
   NS.intake.RANGE_PAGES = 600;
   NS.intake.RANGE_BYTES = 31 * 1024 * 1024;
+  NS.intake.unreadablePages = unreadablePages;
+  NS.intake.pageTexts = pageTexts;
+  NS.readingFetch = readingFetch;
 })(window.CVPortal);
