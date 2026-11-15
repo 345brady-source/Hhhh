@@ -7,7 +7,10 @@
  *      an Error and nothing is filled (a changed or newer revision is never filled under the old map);
  *   2. each answer goes only into the field the map names for it: text cut to the field's own limit, a taxpayer number
  *      split over its comb fields by their lengths, a box ticked; an empty answer leaves its field empty (D-30);
- *   3. signature fields the writer cannot fill are taken out, the appearances are drawn with the embedded Unicode font
+ *   3. answers.backupWithholding (only on a map with overlays.strike2, the W-9): when true, certification item 2 is
+ *      crossed out with a drawn line along each of its printed lines, as the form's instructions ask of a payee the IRS
+ *      has notified that it is subject to backup withholding;
+ *   4. signature fields the writer cannot fill are taken out, the appearances are drawn with the embedded Unicode font
  *      (so an accented name prints) and the form is flattened, leaving no field.
  * L is the PDF writer library object; opts = { fontkit, fontBytes, sha256(Uint8Array) -> hex (or a promise of it; the
  * default is NS.audit.sha256) }. No page or DOM use, so it runs the same in the browser and in a sandbox.
@@ -37,6 +40,14 @@
     const got = String(await hash(bytes)).toLowerCase();
     if (got !== String(map.sha256).toLowerCase()) {
       throw Object.assign(new Error(`The ${map.form} file does not match its pinned fingerprint (${map.revision}); nothing was filled.`), { pin: true });
+    }
+    // the cross-out of item 2 is not a field: taken from the answers before they are checked against the map's fields
+    const strike = map.overlays && map.overlays.strike2;
+    const backup = strike ? answers.backupWithholding : undefined;
+    if (strike && 'backupWithholding' in answers) {
+      answers = Object.assign({}, answers);
+      delete answers.backupWithholding;
+      if (!(isEmpty(backup) || backup === true || backup === false || YES.test(String(backup)) || NO.test(String(backup)))) throw new Error('The answer "backupWithholding" must be yes or no.');
     }
     // every answer key must name a field or a group of the map: a misspelt key would silently drop a value
     const groups = map.groups || {};
@@ -84,6 +95,13 @@
         at += lens[i];
       });
     });
+
+    if (strike && (backup === true || YES.test(String(backup)))) {
+      const pg = pdf.getPage((strike.page || 1) - 1);
+      const pw = pg.getWidth();
+      const ph = pg.getHeight();
+      (strike.lines || []).forEach((s) => pg.drawLine({ start: { x: s.x0 * pw, y: ph - s.y * ph }, end: { x: s.x1 * pw, y: ph - s.y * ph }, thickness: 1, color: L.rgb(0, 0, 0) }));
+    }
 
     (map.removeBeforeFlatten || []).forEach((name) => removeField(pdf, form, form.getField(name)));
 
