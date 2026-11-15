@@ -3,19 +3,25 @@
 // and the read log. Nothing here is ever sent to the browser: the routes answer with neutral reasons only.
 import fs from 'node:fs';
 
-/** The model every reading route asks (the current Opus, D-31). */
-export const MODEL = 'claude-opus-5-5';
+/** The model every reading route asks (the owner's choice, D-39; thinking is always on for it, effort sets its depth). */
+export const MODEL = 'claude-fable-5-2';
 /** Fixed, so an ambient base URL setting can never redirect the key. */
 const BASE_URL = 'https://api.anthropic.com';
 const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
-/** Published prices in US dollars per million tokens (input, output). */
+/** Published prices in US dollars per million tokens (input, output, and cache reads where the price list gives them). */
 export const PRICES = Object.freeze({
-  'claude-opus-5-5': Object.freeze({ input: 4, output: 20 }),
+  'claude-fable-5-2': Object.freeze({ input: 8, output: 40, cacheRead: 0.2 }),
+  'claude-fable-5-1': Object.freeze({ input: 10, output: 50 }),
+  'claude-fable-5': Object.freeze({ input: 10, output: 50 }),
+  'claude-opus-5-5': Object.freeze({ input: 4, output: 20, cacheRead: 0.2 }),
   'claude-opus-5': Object.freeze({ input: 5, output: 25 }),
   'claude-opus-4-8': Object.freeze({ input: 5, output: 25 })
 });
-/** The dearest price in the table: what a model not in it is charged at, and what the spend cap's worst case uses. */
-export const DEAREST = Object.freeze({ input: 5, output: 25 });
+/**
+ * The dearest price in the table: what a model not in it is charged at (a refusal fallback may be served by another
+ * model), and what the spend cap's worst case uses.
+ */
+export const DEAREST = Object.freeze({ input: 10, output: 50 });
 
 let loaded = null;
 let SDK = null;
@@ -80,19 +86,23 @@ export function errorReason(err, { userAbort } = {}) {
 const num = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : 0);
 /** The four usage counts, as numbers. */
 export const usageOf = (u) => ({ input_tokens: num(u && u.input_tokens), output_tokens: num(u && u.output_tokens), cache_creation_input_tokens: num(u && u.cache_creation_input_tokens), cache_read_input_tokens: num(u && u.cache_read_input_tokens) });
-/** What a call cost in US dollars: cache tokens priced as input; a model not in PRICES at the dearest price, flagged. */
+/**
+ * What a call cost in US dollars: cache reads at the model's cache-read price where it has one, other cache tokens as
+ * input; a model not in PRICES at the dearest price (every input token as input), flagged.
+ */
 export function costOf(usage, model) {
   const u = usageOf(usage);
   const p = PRICES[model];
   const rate = p || DEAREST;
-  const input = u.input_tokens + u.cache_creation_input_tokens + u.cache_read_input_tokens;
-  return { usd: (input * rate.input + u.output_tokens * rate.output) / 1e6, flagged: !p };
+  const reads = p && typeof p.cacheRead === 'number' ? u.cache_read_input_tokens * p.cacheRead : u.cache_read_input_tokens * rate.input;
+  const input = u.input_tokens + u.cache_creation_input_tokens;
+  return { usd: (input * rate.input + reads + u.output_tokens * rate.output) / 1e6, flagged: !p };
 }
 
 /**
  * The spend cap (CARROWVALE_SPEND_CAP_USD; off when unset). Spent starts as the cost of every call already in the read
  * log and grows with each call. allow(inputTokens, maxTokens) is true only when spent plus the worst case of the next
- * call (its input at $5 and its whole output limit at $25 per million) stays within the cap. A cap that is set but not
+ * call (its input at $10 and its whole output limit at $50 per million) stays within the cap. A cap that is set but not
  * a number allows nothing.
  */
 export function createBudget(env = process.env) {

@@ -1,6 +1,6 @@
 # Integration server
 
-A small Node server that does the provider work for automated investor verification in the portal: identity (KYC), sanctions and PEP screening (AML) and accredited investor verification. The portal runs in the browser and must never hold provider API keys, so it asks this server to start checks, and this server calls the providers, receives their webhooks and keeps the results. It also reads offering documents for the portal's offering intake, with the reading key kept here and never in the browser (see Reading offering documents).
+A small Node server that does the provider work for automated investor verification in the portal: identity (KYC), sanctions and PEP screening (AML) and accredited investor verification. The portal runs in the browser and must never hold provider API keys, so it asks this server to start checks, and this server calls the providers, receives their webhooks and keeps the results. It also reads offering documents for the portal's offering intake and the subscription agreements sponsors upload, with the reading key kept here and never in the browser (see Reading offering documents and Reading agreements).
 
 No verification vendor is built in or recommended. You plug in the services you already use, in whichever of three ways suits each one, and you can connect more than one per check (for example one identity service for individuals and another for entities, or two screening services). The portal shows every provider plugged in here and lets you choose per check.
 
@@ -14,7 +14,7 @@ Built in, with no accounts needed:
 
 The portal also offers options that need no server at all: upload for team review, team screening, and self-certification (Rule 506(b) offerings only).
 
-Node 18 or later. One dependency: the reading service's official client, pinned to an exact version in `package.json` (install it with `npm ci` in `server/`). It is needed only for reading offering documents; every other route works without it.
+Node 18 or later. One dependency: the reading service's official client, pinned to an exact version in `package.json` (install it with `npm ci` in `server/`). It is needed only for reading offering documents and agreements; every other route works without it.
 
 ## Quick start
 
@@ -57,11 +57,11 @@ Then, in the portal, open Integrations and enter this server's URL.
 | `OFAC_CONSOLIDATED` | `0` screens the SDN list only (default: SDN and Consolidated). |
 | `OFAC_USER_AGENT` | User-Agent sent to the Sanctions List Service. |
 | `OFAC_BASE_URL` | Alternative location for the OFAC list files (a mirror). |
-| `CARROWVALE_API_KEY` | The reading key. Set it only in this server's environment, never in the portal or in a file in the repository. Unset, reading is off: `POST /v1/intake` answers 503 and the intake screen uses its built-in reader. |
-| `CARROWVALE_READ_EFFORT` | How much effort each reading takes: `low`, `medium`, `high`, `xhigh` or `max` (default `high`). |
+| `CARROWVALE_API_KEY` | The reading key. Set it only in this server's environment, never in the portal or in a file in the repository. Unset, reading is off: `POST /v1/intake` and `POST /v1/read` answer 503, the intake screen uses its built-in reader and the agreement upload places fields with the portal's own reading. |
+| `CARROWVALE_READ_EFFORT` | How much effort each reading takes, for offering documents and agreements alike: `low`, `medium`, `high`, `xhigh` or `max` (default `high`; any other value is `high`). |
 | `CARROWVALE_READ_MAX_TOKENS` | The longest reply a reading may produce, in tokens (default 64000, kept between 1024 and 128000). |
 | `CARROWVALE_SPEND_CAP_USD` | A spend cap in US dollars. When set, a reading is refused (402) before anything is spent if its worst case would take the money already spent past the cap. Unset, there is no cap. |
-| `CARROWVALE_READ_LOG` | A file that gets one line per reading (numbers only, below). With a cap, the money already spent is counted from this file, so keep it for as long as the cap should cover. |
+| `CARROWVALE_READ_LOG` | Optional. A file that gets one line per reading of either kind (numbers and outcome codes only, below). With a cap, the money already spent is counted from this file, so keep it for as long as the cap should cover. |
 
 Provider keys and webhook secrets are environment variables too: each connector or plug-in lists the ones it needs, and `GET /v1/connectors` reports which are missing (by name, never by value). Keep them in a `.env` file or your host's secret store, never in `connectors.json` or the portal.
 
@@ -69,7 +69,7 @@ Provider keys and webhook secrets are environment variables too: each connector 
 
 | Call | What it does |
 | --- | --- |
-| `GET /health` | `{ ok, providers, reader }`: the ids of providers whose environment variables are all set, and whether reading is available (a reading key is set and the client is installed; the key itself is never shown). |
+| `GET /health` | `{ ok, providers, reader }`: the ids of providers whose environment variables are all set, and whether reading is available for both reading routes (a reading key is set and the client is installed; the key itself is never shown). |
 | `GET /v1/connectors` | The providers plugged in, for the portal (below). |
 | `POST /v1/verifications` | Start an identity or accreditation check: `{ kind, provider, settings?, investor: { id, name, email?, ... }, returnUrl? }` → `{ id, status, url }`. Send the investor to `url`. |
 | `GET /v1/verifications/:id` | `{ id, kind, provider, status, method, detail, expiresAt, screening, evidence, url, providerStatus, updatedAt }`, refreshed from the provider while pending. |
@@ -87,6 +87,7 @@ Provider keys and webhook secrets are environment variables too: each connector 
 | `GET /v1/outbox` | Messages kept here when no SMTP server is set. |
 | `GET /v1/invite`, `PUT /v1/invite/progress`, `POST /v1/invite/complete` | The investor's browser, with the link's token in `X-Invite-Token`. |
 | `POST /v1/intake` | Read an offering's documents for the intake screen: `{ prompt }` → a stream of JSON lines ending `{ ok, json }` (below). API_TOKEN; invitation tokens are refused. |
+| `POST /v1/read` | Read an uploaded subscription agreement: `{ pdf, pages, text, list }` → `{ ok, fields, missing, ms }` (see Reading agreements). API_TOKEN; invitation tokens are refused. |
 
 `GET /v1/connectors` answers:
 
@@ -363,9 +364,23 @@ The portal's offering intake (Offerings, set up from documents) proposes an offe
 
 No answer ever carries a key, a model or provider name, or the text of an error. A reading may take up to 600 seconds on this server; the intake screen waits up to 630 seconds. When the browser closes the connection, the reading is stopped.
 
-**Spend cap.** With `CARROWVALE_SPEND_CAP_USD` set, the prompt's tokens are counted first (counting is free) and the reading is refused with 402 unless the money already spent (every line of `CARROWVALE_READ_LOG`, priced at the published rates) plus the worst case of this reading (its prompt at $5 and its whole reply limit at $25 per million tokens) stays within the cap. If the count itself fails, the reading is refused too.
+**Spend cap.** With `CARROWVALE_SPEND_CAP_USD` set, the prompt's tokens are counted first (counting is free) and the reading is refused with 402 unless the money already spent (every line of `CARROWVALE_READ_LOG`, priced at the published rates) plus the worst case of this reading (its prompt at $10 and its whole reply limit at $50 per million tokens, the dearest published rates, since a refused reading may be answered by another model) stays within the cap. If the count itself fails, the reading is refused too.
 
 **Documents and the read log.** The documents' text passes through this server's memory for the reading only and is never stored. Each reading adds one line to `CARROWVALE_READ_LOG` (when set): `{ at, route, ms, chars, counted, outcome, stopReason, model, usage: { input_tokens, output_tokens, cache_creation_input_tokens, cache_read_input_tokens }, cost }` (times, counts, outcome codes and the id of the model that answered, never any document text). A failure also prints one line to the console with its reason and HTTP status only.
+
+## Reading agreements
+
+When a sponsor uploads a subscription agreement and the workspace has this server's address under Integrations, the portal reads the PDF's pages as before, numbers every printed place it measured on them (each blank line, run of underscores, empty table cell, square and form field), and sends this server the PDF with that numbered list. This server has it read with `CARROWVALE_API_KEY`: the reading decides which numbered places a person completes, the kind of each (signature, initials, date of signing, name, title, address, amount, tick box and so on) and whether it is the investor's or the sponsor's (the sponsor only for acceptance, countersignature and places reserved for the firm's use). The portal then puts each field exactly on the printed line, box, cell or form field it measured itself; a place the reading names without a number is put on unclaimed printed geometry beside the place it names, and is dropped (never placed) when nothing is printed there. Investor fields are never required, and those the portal can fill from onboarding are filled in. The sponsor still reviews every field before saving.
+
+**Fallback.** With no address under Integrations, no reading key on this server, a PDF over 22 MB or 600 pages (checked in the browser before sending), a network error, no answer within 330 seconds, a refusal, a cut-off answer or an answer of the wrong shape, the upload keeps the portal's own reading exactly as it is without this server, with the same note. While it waits, the upload button says "Finding every place to fill in…".
+
+`POST /v1/read` takes `{ "pdf": "<base64>", "pages": 1-600, "text": "<the numbered list as text, at most 4 MB>", "list": [[id, page, x0, y0, x1, y1, what], ...] }` (at most 20000 places, numbered 1 upwards) in a body of at most 32 MB. Before any reading it answers `503 { ok: false, reason: "unavailable" }` (no reading key, or the client is not installed; before the body is read), `400 { reason: "invalid" }`, `413 { reason: "too_large" }` or `402 { reason: "spend_cap" }` (the same cap as the intake, counted over both routes). Otherwise:
+
+- `200 { "ok": true, "fields": [{ id, kind, person, group }], "missing": [{ page, near, caption, side, kind, person, group }], "ms" }`: `person` is `investor` or `sponsor`; `group` is `all`, `individual` or `entity`; `near` is a numbered place or -1 (then `caption` holds the printed words beside the place); `side` is `on`, `right`, `left`, `below` or `above`;
+- `504 { ok: false, reason: "timeout" }` when the reading did not finish within 300 seconds on this server;
+- `502 { ok: false, reason: "declined" | "incomplete" | "invalid" | "failed" }` for a refusal, a cut-off answer, an answer of the wrong shape, or any other error.
+
+No answer ever carries a key, a model or provider name, or the text of an error. When the browser closes the connection, the reading is stopped. The PDF passes through this server's memory for the reading only and is never stored. Each reading adds one line to `CARROWVALE_READ_LOG` (when set): `{ at, route: "read", ms, pages, candidates, counted, outcome, stopReason, model, usage: { input_tokens, output_tokens, cache_creation_input_tokens, cache_read_input_tokens }, cost }`, never any document text. A failure also prints one line to the console with its reason and HTTP status only.
 
 ## Data protection
 
@@ -386,7 +401,7 @@ Invitations hold investors' personal details, bank details and signed documents,
 - Webhooks are verified over the raw bytes, timestamp-checked and de-duplicated; unsigned webhooks are refused.
 - `GET /hosted/:id` never redirects to a link the portal supplied (the `link` provider), so this server's domain cannot be used as an open redirect.
 - Error messages are scrubbed of every secret, raw, URL-encoded or inside base64 (for example a basic-auth `user:password` echoed back by a provider).
-- Reading: the reading key is read from `CARROWVALE_API_KEY` only (no other key, token, profile or address setting is used, and the service address is fixed), it is built into one client in `lib/model.mjs`, and it never leaves this server. `POST /v1/intake` sits behind `PORTAL_ORIGIN`, `API_TOKEN`, the rate limit, the size limits and the spend cap.
+- Reading: the reading key is read from `CARROWVALE_API_KEY` only (no other key, token, profile or address setting is used, and the service address is fixed), it is built into one client in `lib/model.mjs`, and it never leaves this server. `POST /v1/intake` and `POST /v1/read` sit behind `PORTAL_ORIGIN`, `API_TOKEN`, the rate limit, the size limits and the spend cap. Text inside an uploaded agreement is treated as data: the reading can only choose among places the browser measured on the page, and every field lands on printed geometry.
 - Invitations: personal data encrypted at rest with `DATA_KEY`, tokens stored only as hashes, links scoped to one investor, submissions deleted after import (see Data protection). SMTP credentials are never sent unencrypted or included in error messages.
 
 Before production:

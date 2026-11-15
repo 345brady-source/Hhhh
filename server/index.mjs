@@ -18,6 +18,7 @@
  *   POST /hosted/:id              that page's form or SDK result
  *   GET  /sandbox/:ref            a stand-in hosted page for the "sandbox" provider (testing without accounts)
  *   POST /v1/intake               read an offering's documents for the intake screen (lib/intake.mjs; ndjson stream)
+ *   POST /v1/read                 read an uploaded subscription agreement's places (lib/read.mjs)
  *   GET  /health                  which providers are configured, and whether reading is available
  *
  * Investor invitations (lib/invitations.mjs; see README.md):
@@ -47,6 +48,7 @@ import { id, safeEqual } from './lib/crypto.mjs';
 import { STATUSES } from './lib/statuses.mjs';
 import { createInvitations } from './lib/invitations.mjs';
 import { createIntake } from './lib/intake.mjs';
+import { createReader } from './lib/read.mjs';
 import { costOf, logLine } from './lib/model.mjs';
 import { PROVIDERS as PROVIDERS_DEFAULT, configured, missingEnv, describe } from './providers/index.mjs';
 
@@ -151,6 +153,8 @@ export function createServer(opts = {}) {
   const limited = rateLimiter(env);
   const now = opts.now || (() => Date.now());
   const intake = opts.intake || createIntake({ env, fetch: opts.fetch });
+  // The agreement reader shares the intake's spend cap, so the cap counts every reading call this server makes.
+  const reader = opts.reader || createReader({ env, fetch: opts.fetch, budget: intake.budget || undefined });
 
   const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls });
   /**
@@ -365,6 +369,106 @@ export function createServer(opts = {}) {
     }
   }
 
+  /**
+   * POST /v1/read: an uploaded agreement and the numbered places the browser measured on it, read by the reading service.
+   * 503 before the body is read when reading is not available; 400 for a malformed request, 413 for one over the limits
+   * (32 MB body, 600 pages, 4 MB of text, 20000 places); 402 when the spend cap could be passed (before any call);
+   * otherwise 200 { ok: true, fields, missing, ms } or a failure { ok: false, reason } (504 timeout; 502 declined,
+   * incomplete, invalid or failed). Its own errors never reach the global handler, so no exception text, model or
+   * provider name is ever sent; the browser closing the connection stops the call. The PDF is never stored.
+   */
+  const READ_BODY = 32 * 1024 * 1024;
+  const READ_TEXT = 4 * 1024 * 1024;
+  const READ_PLACES = 20000;
+  const READ_PAGES = 600;
+  const READ_STATUS = { unavailable: 503, timeout: 504, declined: 502, incomplete: 502, invalid: 502, failed: 502 };
+  const B64 = /^[A-Za-z0-9+/]+={0,2}$/;
+  async function readAgreement(req, res) {
+    const t0 = Date.now();
+    const zero = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
+    const record = (o) => logLine(env, Object.assign({ at: new Date().toISOString(), route: 'read', ms: Date.now() - t0, pages: 0, candidates: 0, outcome: '', stopReason: '', model: '', usage: zero, cost: 0 }, o));
+    const fail = (status, reason) => send(res, status, { ok: false, reason });
+    try {
+      let on = false;
+      try {
+        on = !!(await reader.available());
+      } catch {
+        on = false;
+      }
+      if (!on) return fail(503, 'unavailable');
+      let raw;
+      try {
+        raw = await readRaw(req, READ_BODY);
+      } catch (e) {
+        return e && e.status === 413 ? fail(413, 'too_large') : fail(400, 'invalid');
+      }
+      let body = null;
+      try {
+        body = JSON.parse(raw.toString('utf8'));
+      } catch {
+        body = null;
+      }
+      raw = null;
+      if (!body || typeof body !== 'object' || Array.isArray(body)) return fail(400, 'invalid');
+      const { pdf, pages, text, list } = body;
+      if (typeof pdf !== 'string' || !pdf.length || pdf.length % 4 !== 0 || !B64.test(pdf)) return fail(400, 'invalid');
+      if (!Number.isInteger(pages) || pages < 1) return fail(400, 'invalid');
+      if (pages > READ_PAGES) return fail(413, 'too_large');
+      if (typeof text !== 'string' || !text.trim()) return fail(400, 'invalid');
+      if (text.length > READ_TEXT) return fail(413, 'too_large');
+      if (!Array.isArray(list) || !list.length) return fail(400, 'invalid');
+      if (list.length > READ_PLACES) return fail(413, 'too_large');
+      const place = (e, i) => Array.isArray(e) && e.length === 7 && e[0] === i + 1 && Number.isInteger(e[1]) && e[1] >= 1 && e[1] <= pages && e.slice(2, 6).every((n) => typeof n === 'number' && Number.isFinite(n)) && typeof e[6] === 'string' && e[6].length <= 16;
+      if (!list.every(place)) return fail(400, 'invalid');
+      const count = list.length;
+
+      // The spend cap: the request counted (free) and the worst case of this call checked before anything is spent.
+      let counted = null;
+      const budget = reader.budget;
+      if (budget && budget.on) {
+        try {
+          counted = await reader.count({ pdf, text });
+        } catch {
+          counted = null;
+        }
+        if (counted === null || !budget.allow(counted, reader.maxTokens())) {
+          record({ pages, candidates: count, outcome: 'spend_cap' });
+          console.error('read: spend_cap 402');
+          return fail(402, 'spend_cap');
+        }
+      }
+
+      const ctl = new AbortController();
+      const onClose = () => {
+        if (!res.writableFinished) ctl.abort();
+      };
+      res.on('close', onClose);
+      let r;
+      try {
+        r = await reader.read({ pdf, pages, text, count, list }, { signal: ctl.signal });
+      } catch {
+        r = null;
+      }
+      res.off('close', onClose);
+      r = r || { ok: false, reason: 'failed' };
+      const ok = !!(r.ok && Array.isArray(r.fields) && Array.isArray(r.missing));
+      const reason = ok ? '' : READ_STATUS[r.reason] ? r.reason : 'failed';
+      const status = ok ? 200 : READ_STATUS[reason];
+      if (!res.writableEnded && !res.destroyed) {
+        if (ok) send(res, 200, { ok: true, fields: r.fields, missing: r.missing, ms: Number(r.ms) || Date.now() - t0 });
+        else fail(status, reason);
+      }
+      const usage = r.usage || {};
+      const cost = costOf(usage, r.model);
+      if (budget && budget.add) budget.add(usage, r.model);
+      record({ ms: Number(r.ms) || Date.now() - t0, pages, candidates: count, counted, outcome: ok ? 'read' : ctl.signal.aborted ? 'cancelled' : reason, stopReason: String(r.stopReason || ''), model: String(r.model || ''), usage: { input_tokens: Number(usage.input_tokens) || 0, output_tokens: Number(usage.output_tokens) || 0, cache_creation_input_tokens: Number(usage.cache_creation_input_tokens) || 0, cache_read_input_tokens: Number(usage.cache_read_input_tokens) || 0 }, cost: cost.usd });
+      if (!ok) console.error(`read: ${reason} ${status}`);
+    } catch {
+      if (!res.headersSent) fail(502, 'failed');
+      console.error('read: failed 502');
+    }
+  }
+
   async function route(req, res) {
     const url = new URL(req.url, 'http://localhost');
     const path = url.pathname;
@@ -544,6 +648,11 @@ export function createServer(opts = {}) {
     if (path === '/v1/intake') {
       if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
       return readIntake(req, res);
+    }
+
+    if (path === '/v1/read') {
+      if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
+      return readAgreement(req, res);
     }
 
     if (req.method === 'POST' && path === '/v1/verifications') {

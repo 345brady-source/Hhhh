@@ -81,7 +81,7 @@
     if (d.close) d.close();
     else d.removeAttribute('open');
   }
-  /** Offer a generated file: the viewer's save prompt when the page runs inside Claude, a normal download elsewhere. */
+  /** Offer a generated file: the viewer's save prompt when the page runs inside the host assistant, a normal download elsewhere. */
   async function download(filename, data, opts) {
     opts = opts || {};
     let dl = null;

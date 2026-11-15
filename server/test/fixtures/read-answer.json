@@ -1,0 +1,16 @@
+{
+  "fields": [
+    { "id": 1, "kind": "investorName", "person": "investor", "group": "all" },
+    { "id": 2, "kind": "amount", "person": "investor", "group": "all" },
+    { "id": 3, "kind": "checkbox", "person": "investor", "group": "individual" },
+    { "id": 4, "kind": "checkbox", "person": "investor", "group": "entity" },
+    { "id": 5, "kind": "signature", "person": "investor", "group": "all" },
+    { "id": 6, "kind": "date", "person": "investor", "group": "all" },
+    { "id": 7, "kind": "signature", "person": "sponsor", "group": "all" },
+    { "id": 8, "kind": "nameTitle", "person": "sponsor", "group": "all" }
+  ],
+  "missing": [
+    { "page": 2, "near": 5, "caption": "", "side": "below", "kind": "name", "person": "investor", "group": "all" },
+    { "page": 1, "near": -1, "caption": "Telephone", "side": "right", "kind": "phone", "person": "investor", "group": "all" }
+  ]
+}

@@ -190,7 +190,7 @@ test('the request: model, adaptive thinking, effort high, output limit, the prom
       assert.ok(![...call.headers.values()].some((v) => /ambient/.test(v)), 'no ambient credential in any header');
       assert.match(call.headers.get('anthropic-beta') || '', /server-side-fallback-2026-07-01/);
       const b = call.body;
-      assert.equal(b.model, 'claude-opus-5-5');
+      assert.equal(b.model, 'claude-fable-5-2');
       assert.deepEqual(b.thinking, { type: 'adaptive' });
       assert.deepEqual(b.output_config, { effort: 'high' });
       assert.equal(b.max_tokens, 64000);
@@ -333,7 +333,7 @@ test('the read log holds only numbers, enums and the served model id', async () 
     assert.equal(row.chars, 1);
     assert.equal(row.usage.input_tokens, 2000);
     assert.equal(row.usage.output_tokens, 500);
-    assert.ok(Math.abs(row.cost - (2000 * 4 + 500 * 20) / 1e6) < 1e-12);
+    assert.ok(Math.abs(row.cost - (2000 * 8 + 500 * 40) / 1e6) < 1e-12);
     assert.ok(!JSON.stringify(row).includes(KEY));
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -341,27 +341,32 @@ test('the read log holds only numbers, enums and the served model id', async () 
 });
 
 /* ---------- Prices and the spend cap ---------- */
-test('costOf prices by the table, cache tokens as input, an unknown model at the dearest price and flagged', () => {
+test('costOf prices by the table, cache reads at their own price where listed, an unknown model at the dearest price and flagged', () => {
   const u = { input_tokens: 1e6, output_tokens: 1e6, cache_creation_input_tokens: 1e6, cache_read_input_tokens: 1e6 };
-  assert.deepEqual(PRICES[MODEL], { input: 4, output: 20 });
-  assert.deepEqual(costOf(u, MODEL), { usd: 32, flagged: false });
+  // D-39: the reading model at $8 input, $40 output and $0.20 cache reads per million tokens.
+  assert.equal(MODEL, 'claude-fable-5-2');
+  assert.deepEqual(PRICES[MODEL], { input: 8, output: 40, cacheRead: 0.2 });
+  assert.ok(Math.abs(costOf(u, MODEL).usd - 56.2) < 1e-9);
+  assert.equal(costOf(u, MODEL).flagged, false);
   assert.deepEqual(costOf(u, 'claude-opus-5'), { usd: 40, flagged: false });
-  assert.deepEqual(costOf(u, 'some-other-model'), { usd: 40, flagged: true });
+  assert.deepEqual(costOf(u, 'some-other-model'), { usd: 80, flagged: true });
   assert.deepEqual(costOf(null, MODEL), { usd: 0, flagged: false });
 });
 
-test('createBudget: off when unset; spent starts from the read log; allow uses the worst case at $5 and $25 per million', () => {
+test('createBudget: off when unset; spent starts from the read log; allow uses the worst case at $10 and $50 per million', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'intake-cap-'));
   const log = path.join(dir, 'read.log');
   try {
-    fs.writeFileSync(log, JSON.stringify({ route: 'intake', model: MODEL, usage: { input_tokens: 50000, output_tokens: 25000 } }) + '\n');
+    // A call in the log priced at $4 and $20 per million: $0.70.
+    fs.writeFileSync(log, JSON.stringify({ route: 'intake', model: 'claude-opus-5-5', usage: { input_tokens: 50000, output_tokens: 25000 } }) + '\n');
     assert.equal(createBudget({}).on, false);
     assert.equal(createBudget({}).allow(1e9, 1e9), true);
     const b = createBudget({ CARROWVALE_SPEND_CAP_USD: '1.00', CARROWVALE_READ_LOG: log });
     assert.ok(Math.abs(b.spent() - 0.7) < 1e-9);
     assert.equal(b.allow(20000, 24000), false);
-    assert.equal(b.allow(20000, 4000), true);
-    b.add({ input_tokens: 0, output_tokens: 10000 }, MODEL);
+    assert.equal(b.allow(20000, 4000), false);
+    assert.equal(b.allow(10000, 2000), true);
+    b.add({ input_tokens: 0, output_tokens: 5000 }, MODEL);
     assert.ok(Math.abs(b.spent() - 0.9) < 1e-9);
     assert.equal(createBudget({ CARROWVALE_SPEND_CAP_USD: 'lots' }).allow(1, 1), false);
   } finally {
@@ -372,10 +377,10 @@ test('createBudget: off when unset; spent starts from the read log; allow uses t
 test('spend cap on the route: 402 before any messages request past the cap, through within it, 402 on a failed count, no count when unset', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'intake-cap-'));
   const log = path.join(dir, 'read.log');
-  const seed = JSON.stringify({ route: 'intake', model: MODEL, usage: { input_tokens: 50000, output_tokens: 25000, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 } }) + '\n';
+  const seed = JSON.stringify({ route: 'intake', model: 'claude-opus-5-5', usage: { input_tokens: 50000, output_tokens: 25000, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 } }) + '\n';
   try {
     await captureConsole(async () => {
-      // $0.70 already spent; 20000 tokens counted and 24000 output: worst case $0.70, past $1.00.
+      // $0.70 already spent; 20000 tokens counted and 24000 output: worst case $1.40 at $10 and $50, past $1.00.
       fs.writeFileSync(log, seed);
       let svc = fakeService({ reply: () => ({ texts: ['{"a":1}'] }), count: () => 20000 });
       let got = await lastLine({ CARROWVALE_SPEND_CAP_USD: '1.00', CARROWVALE_READ_LOG: log, CARROWVALE_READ_MAX_TOKENS: '24000' }, svc);
@@ -383,10 +388,10 @@ test('spend cap on the route: 402 before any messages request past the cap, thro
       assert.deepEqual(JSON.parse(got.text), { ok: false, reason: 'spend_cap' });
       assert.equal(svc.counts().length, 1);
       assert.equal(svc.messages().length, 0, 'no messages request');
-      // The same with 4000 output: worst case $0.20, within $1.00.
+      // 10000 counted and 2000 output: worst case $0.20, within $1.00.
       fs.writeFileSync(log, seed);
-      svc = fakeService({ reply: () => ({ texts: ['{"a":1}'] }), count: () => 20000 });
-      got = await lastLine({ CARROWVALE_SPEND_CAP_USD: '1.00', CARROWVALE_READ_LOG: log, CARROWVALE_READ_MAX_TOKENS: '4000' }, svc);
+      svc = fakeService({ reply: () => ({ texts: ['{"a":1}'] }), count: () => 10000 });
+      got = await lastLine({ CARROWVALE_SPEND_CAP_USD: '1.00', CARROWVALE_READ_LOG: log, CARROWVALE_READ_MAX_TOKENS: '2000' }, svc);
       assert.equal(got.status, 200);
       assert.deepEqual(got.last, { ok: true, json: { a: 1 } });
       assert.equal(svc.messages().length, 1);

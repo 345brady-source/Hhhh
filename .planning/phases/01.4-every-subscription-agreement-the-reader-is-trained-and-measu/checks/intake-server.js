@@ -70,14 +70,14 @@ const SLICES = [
   ['assets/js/intake.js', '  function corpus(docs, limit) {', '09fdeeb8ddad65e2'],
   ['assets/js/intake.js', '  function normalize(raw) {', 'f8b9b49acf5d16fb'],
   ['assets/js/intake.js', '  function fromOffering(ws, o) {', '3a54b2ccc3f83fc5'],
-  ['assets/js/intake.js', '  async function apply(ws, prof, opts) {', 'd80760ab0ec45dcf'],
+  ['assets/js/intake.js', '  async function apply(ws, prof, opts) {', '0de69fa96168ce4f'], // plan 64 Task 3: white-label renames only (D-16, D-31); intake behaviour unchanged per D-36
   ['assets/js/intake.js', '  function filled(p) {', 'f02ce693e7be7276'],
   ['assets/js/intake.js', '  async function readFile(file) {', 'ae6aa343b3a8e0e3'],
   ['assets/js/intake.js', '  const TERMS = ', 'bff29f3668ceae40', true],
   ['assets/js/intake.js', '  const readWithRules = ', '954471e2c2951273', true],
-  ['assets/js/intake.js', '  NS.intake = {', 'fa7805f3ed7a6e4e', true],
-  ['assets/js/console.js', "  NS.actions['ik-read'] = async () => {", '60ae8c3670613f7b', false, '  };'],
-  ['assets/js/console.js', '  function ikUpload() {', 'bb1ff38b75e42a3a'],
+  ['assets/js/intake.js', '  NS.intake = {', '48f32cb9213f564a', true], // plan 64 Task 3: white-label renames only (D-16, D-31); intake behaviour unchanged per D-36
+  ['assets/js/console.js', "  NS.actions['ik-read'] = async () => {", 'f702d6bff3f5f4d5', false, '  };'], // plan 64 Task 3: white-label renames only (D-16, D-31); intake behaviour unchanged per D-36
+  ['assets/js/console.js', '  function ikUpload() {', '13f3a8a19730a1d5'], // plan 64 Task 3: white-label renames only (D-16, D-31); intake behaviour unchanged per D-36
   ['assets/js/console.js', '  function ikReview() {', '635f88df5f398127']
 ];
 /** The slice from the first line starting with `start` to the first later line equal to `end` (or that line alone). */
@@ -276,7 +276,7 @@ async function partApi(h, page) {
     const counted = r.progress.filter((t) => /characters/.test(t)).length;
     line(counted > 0, `api the progress line counted characters ${counted} time(s)`);
     line(r.shown.includes(FUND.offering.name) && r.profile.offering.name === FUND.offering.name, `api the review screen shows the fictional fund's name (${FUND.offering.name})`);
-    line(r.method === 'claude', `api method is the automatic-reading value (${r.method === 'claude' ? 'yes' : 'no'})`);
+    line(r.method === 'auto', `api method is the automatic-reading value (${r.method === 'auto' ? 'yes' : 'no'})`); // plan 64 Task 3: the stored value renamed (white label)
     line(r.hostCalls === 0, `api the host runtime stub was touched ${r.hostCalls} time(s)`);
   } finally {
     await srv.close();
@@ -457,7 +457,7 @@ async function measureRun(h, page, srv, dir, readLog, M) {
     if (last && typeof last.ok !== 'boolean') last = null;
   }
   const raw = last && last.ok && last.json ? last.json : null;
-  const outcome = !r ? 'failed' : captured && captured.status === 402 ? 'cap' : r.method === 'claude' && raw ? 'read' : r.method === 'rules' ? 'fallback' : 'failed';
+  const outcome = !r ? 'failed' : captured && captured.status === 402 ? 'cap' : r.method === 'auto' && raw ? 'read' : r.method === 'rules' ? 'fallback' : 'failed';
   const why = !r ? 'the review step was not reached' : !captured ? 'no request reached the reading server' : captured.status !== 200 ? 'http ' + captured.status : last ? (last.ok ? '' : String(last.reason || '')) : 'no last line';
   const note = r && r.profile && r.profile.notes && r.profile.notes[0] ? String(r.profile.notes[0]) : '';
   const run = {

@@ -170,7 +170,7 @@
 
   /* ---------- Reading through the portal's reading server ---------- */
   /** The workspace's reading server ({ url, token }, as saved under Integrations), or null when none is set. */
-  async function claudeSample() {
+  async function serverSample() {
     const I = NS.integrations;
     const ws = NS.state && NS.state.ws;
     const url = I && ws ? I.serverUrl(ws) : '';
@@ -213,7 +213,7 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
    * failure throws an error whose code the intake screen already explains: cancelled (Stop), not_granted (401),
    * prompt_too_large (413), rate_limited (429) or failed (anything else, the time limit included).
    */
-  async function readWithClaude(sample, corp, opts) {
+  async function readWithServer(sample, corp, opts) {
     const fail = (code) => Object.assign(new Error('Reading could not finish.'), { code });
     const ctl = new AbortController();
     let late = false;
@@ -496,7 +496,7 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
         action: isNew ? 'Offering created from documents' : 'Offering updated from documents',
         fund: o.id,
         record: o.id,
-        detail: `${o.name}: ${opts.fields} terms applied, read by ${opts.method === 'claude' ? 'automatic reading' : opts.method === 'manual' ? 'manual edit' : 'the built-in reader'} from ${opts.docs.length ? opts.docs.map((d) => `${d.name} (SHA-256 ${String(d.sha256).slice(0, 12)}…)`).join(', ') : 'the structure editor'}`
+        detail: `${o.name}: ${opts.fields} terms applied, read by ${opts.method === 'manual' ? 'manual edit' : opts.method === 'rules' ? 'the built-in reader' : 'automatic reading'} from ${opts.docs.length ? opts.docs.map((d) => `${d.name} (SHA-256 ${String(d.sha256).slice(0, 12)}…)`).join(', ') : 'the structure editor'}`
       });
     if (NS.clearCaches) NS.clearCaches();
     // The subscription agreement among the documents: its signing fields are prepared straight away, so the firm only has to
@@ -605,7 +605,7 @@ Reporting. Members will receive quarterly reports and annual Schedule K-1s. The 
     return window.JSZip;
   };
   NS.pdfLib = pdfLib;
-  NS.intake = { readFile, corpus, claudeSample, readWithClaude, readWithRules, normalize, fromOffering, apply, filled, agreementDoc, prepareAgreement, SAMPLES, LIMIT: 200000 };
+  NS.intake = { readFile, corpus, serverSample, readWithServer, readWithRules, normalize, fromOffering, apply, filled, agreementDoc, prepareAgreement, SAMPLES, LIMIT: 200000 };
   /** How long the browser waits for the reading server (its own limit is 600 s). */
   NS.intake.SERVER_LIMIT_MS = 630000;
 })(window.CVPortal);

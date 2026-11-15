@@ -2856,5 +2856,275 @@
     return v;
   }
 
-  NS.placement = { read, analyze, labelOf, needsReview, reviewFields, reviewCount, confirm, statusOf, groupOf, fits, values, PREFILL, FOR_TYPES, asOther, isOther, otherParty, OTHER_NOTE, isPlainLabel };
+  /* =====================================================================
+   * The reading server's places and its answer (D-31)
+   * ===================================================================== */
+  /*
+   * candidates(pages, inpage) numbers every printed place the page geometry shows (each blank line, run of underscores
+   * and empty cell layout() finds, each square, each form widget of the PDF, and each place the in-page reading proposed
+   * that none of those covers), and writes them into the text the reading server reads beside the PDF.
+   * fromAnswer(pages, list, answer) turns the server's answer into proposed fields shaped like read()'s: a chosen place
+   * becomes one field on its own printed geometry; a place the answer names without a number is put on unclaimed printed
+   * geometry on the stated side of its anchor, or dropped and counted. Nothing is ever placed off printed geometry.
+   */
+  const ANSWER_KINDS = ['signature', 'initials', 'date', 'checkbox', 'name', 'title', 'nameTitle', 'investorName', 'amount', 'address', 'address2', 'city', 'state', 'zip', 'cityStateZip', 'email', 'phone', 'taxId', 'text'];
+  const ANSWER_SIDES = ['on', 'right', 'left', 'below', 'above'];
+  const r1 = (n) => Math.round(n * 10) / 10;
+  const rectOf = (p) => ({ x0: p.x, y0: p.y, x1: p.x + p.w, y1: p.y + p.h });
+  const boxRect = (r) => ({ x: r.x0, y: r.y0, w: r.x1 - r.x0, h: r.y1 - r.y0 });
+  /** Two rectangles that overlap by more than half of the smaller one both ways. */
+  const halfOver = (a, b) => overlap(a.x0, a.x1, b.x0, b.x1) > 0.5 * Math.min(a.x1 - a.x0, b.x1 - b.x0) && overlap(a.y0, a.y1, b.y0, b.y1) > 0.5 * Math.min(a.y1 - a.y0, b.y1 - b.y0);
+  const area = (a, b) => Math.max(0, overlap(a.x0, a.x1, b.x0, b.x1)) * Math.max(0, overlap(a.y0, a.y1, b.y0, b.y1));
+  /** Words as compared with a caption: lower case, letters and digits only, single spaces. */
+  const squash = (s) => tidy(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+  function candidates(pages, inpage) {
+    const items = [];
+    const props = (inpage || []).filter((p) => p && p.w > 0 && p.h > 0);
+    const shown = [];
+    (pages || []).forEach((pg) => {
+      if (!pg || pg.scan || pg.failed || !(pg.w > 0) || !(pg.h > 0)) return;
+      let L;
+      try {
+        L = layout(pg);
+      } catch (e) {
+        return;
+      }
+      const mine = [];
+      const add = (what, r, ref) => mine.push(Object.assign({ id: 0, page: pg.page, what, x0: r1(r.x0), y0: r1(r.y0), x1: r1(r.x1), y1: r1(r.y1), base: r1(r.base), L, pg }, ref));
+      L.slots.forEach((s) => add(s.cell ? 'cell' : s.fromText ? 'underscore' : 'line', Object.assign(rectOf(boxOn(KINDS.other, s)), { base: s.y }), { slot: s, line: s.line || null }));
+      L.boxes.forEach((b) => add('box', Object.assign({}, b, { base: b.y1 }), { box: b, line: b.line || null }));
+      (pg.forms || []).forEach((f) => !f.readOnly && f.x1 > f.x0 && f.y1 > f.y0 && add('form', Object.assign({}, f, { base: f.y1 }), { form: f, line: null }));
+      // The in-page reading's rectangle is reused for the place it covers; a proposal on none of these is a place of its own.
+      props
+        .filter((p) => p.page === pg.page)
+        .forEach((p) => {
+          const r = rectOf(p);
+          let best = null;
+          let most = 0;
+          mine.forEach((c) => {
+            if (c.what === 'place' || !halfOver(c, r)) return;
+            const a = area(c, r);
+            if (a > most) {
+              most = a;
+              best = c;
+            }
+          });
+          if (best) {
+            if (!best.prop) best.prop = p;
+          } else add('place', Object.assign(r, { base: r.y1 }), { prop: p, line: null });
+        });
+      // Forms and places stand on the printed line whose band holds their foot.
+      mine.forEach((c) => {
+        if (c.line) return;
+        let best = null;
+        let d = Infinity;
+        L.lines.forEach((ln) => {
+          const e = Math.abs(c.base - ln.y);
+          if (c.base >= ln.y - 1.1 * ln.h && c.base <= ln.y + 0.9 * ln.h && e < d) {
+            d = e;
+            best = ln;
+          }
+        });
+        c.line = best;
+      });
+      mine.sort((a, b) => a.base - b.base || a.x0 - b.x0);
+      mine.forEach((c) => items.push(c));
+      shown.push({ pg, L, mine });
+    });
+    items.forEach((c, i) => (c.id = i + 1));
+    // The text: per page its number and size, then each printed line holding a place with the lines directly above and
+    // below it, [#id] where each place sits; places on no printed line one line each, with their nearest words.
+    const out = [];
+    shown.forEach(({ pg, L, mine }) => {
+      out.push(`=== Page ${pg.page} (${r1(pg.w)} x ${r1(pg.h)} pt) ===`);
+      const bySlot = new Map();
+      const byBox = new Map();
+      const extra = new Map();
+      mine.forEach((c) => {
+        if (c.slot && c.slot.line) bySlot.set(c.slot, c);
+        else if (c.box && c.box.line) byBox.set(c.box, c);
+        else if (c.line) (extra.get(c.line) || extra.set(c.line, []).get(c.line)).push(c);
+      });
+      const hosts = new Set();
+      mine.forEach((c) => c.line && hosts.add(c.line.i));
+      const show = new Set();
+      hosts.forEach((i) => [i - 1, i, i + 1].forEach((k) => k >= 0 && k < L.lines.length && show.add(k)));
+      let last = -2;
+      Array.from(show)
+        .sort((a, b) => a - b)
+        .forEach((k) => {
+          const ln = L.lines[k];
+          if (last >= 0 && k > last + 1) out.push('…');
+          last = k;
+          const toks = [];
+          (ln.els || []).forEach((e) => {
+            if (e.t === 'seg') toks.push({ x: e.seg.x0, s: e.seg.s });
+            else if (e.t === 'slot' && bySlot.has(e.slot)) toks.push({ x: e.slot.x0, s: `[#${bySlot.get(e.slot).id}]` });
+            else if (e.t === 'box' && byBox.has(e.box)) toks.push({ x: e.box.x0, s: `[#${byBox.get(e.box).id}]` });
+          });
+          (extra.get(ln) || []).forEach((c) => toks.push({ x: c.x0, s: `[#${c.id}]` }));
+          toks.sort((a, b) => a.x - b.x);
+          const s = toks.map((t) => t.s).join(' ');
+          if (s) out.push(s);
+        });
+      mine
+        .filter((c) => !c.line)
+        .forEach((c) => {
+          const mx = (c.x0 + c.x1) / 2;
+          const my = (c.y0 + c.y1) / 2;
+          const dist = (g) => Math.hypot(Math.max(0, g.x0 - mx, mx - g.x1), Math.max(0, g.y - g.h - my, my - g.y));
+          const words = [];
+          L.segs
+            .slice()
+            .sort((a, b) => dist(a) - dist(b))
+            .some((g) => (wordsOf(g.s).forEach((w) => words.length < 8 && words.push(w)), words.length >= 8));
+          out.push(`[#${c.id}] ${c.what} at ${c.x0},${c.y0} to ${c.x1},${c.y1}${words.length ? ' near: ' + words.join(' ') : ''}`);
+        });
+    });
+    const rows = items.map((c) => [c.id, c.page, c.x0, c.y0, c.x1, c.y1, c.what]);
+    return { items, rows, text: out.join('\n') };
+  }
+
+  /** The words of the caption nearest a place on its page: on its printed line first (before it, then after), then under it. */
+  function captionNear(L, r) {
+    const base = r.base;
+    let best = null;
+    let d = Infinity;
+    const take = (g, e) => e < d && ((d = e), (best = g));
+    L.segs.forEach((g) => {
+      if (Math.abs(g.y - base) <= Math.max(4, 0.6 * g.h)) {
+        if (g.x1 <= r.x0 + 2 && r.x0 - g.x1 <= 60) take(g, r.x0 - g.x1);
+        else if (g.x0 >= r.x1 - 2 && g.x0 - r.x1 <= 40) take(g, 1 + g.x0 - r.x1);
+      } else if (g.y > base && g.y - base <= 2.2 * g.h && overlap(g.x0, g.x1, r.x0, r.x1) > 0) take(g, 100 + g.y - base);
+    });
+    return best ? best.s : '';
+  }
+
+  /** A proposed field from the answer's kind, person and group on a rectangle (D-30, D-24). */
+  function answerField(e, page, rect, words) {
+    const K = e.kind === 'text' || e.kind === 'checkbox' ? KINDS.other : KINDS[e.kind] || KINDS.other;
+    const type = e.kind === 'checkbox' ? 'checkbox' : e.kind === 'text' ? 'text' : K.type;
+    const firm = e.person === 'sponsor';
+    let label = K.label;
+    if (e.kind === 'checkbox' || e.kind === 'text') {
+      const said = labelOf(words || '');
+      label = said && KINDS[said.kind] && KINDS[said.kind].label ? KINDS[said.kind].label : clean(ownWords(words || '')) || (e.kind === 'checkbox' ? 'Tick box' : 'Text');
+    }
+    const p = { type, role: firm ? 'firm' : 'investor', page, x: rect.x, y: rect.y, w: rect.w, h: rect.h, label, required: firm ? e.kind !== 'checkbox' && !!K.required : false, conf: 'high', why: '', kind: e.kind === 'text' ? 'other' : e.kind };
+    if (!firm && K.prefill && e.kind !== 'checkbox') p.prefill = K.prefill;
+    if (e.group === 'individual') p.forType = 'person';
+    else if (e.group === 'entity') p.forType = 'entity';
+    p.kind = kindOf(p);
+    return p;
+  }
+  /** The field rectangle on a numbered place: the in-page reading's where it placed one, else the place's own geometry. */
+  function rectFor(c, kind) {
+    if (c.prop) return { x: c.prop.x, y: c.prop.y, w: c.prop.w, h: c.prop.h };
+    if (c.slot) return boxOn(kind === 'checkbox' || kind === 'text' ? KINDS.other : KINDS[kind] || KINDS.other, c.slot);
+    if (c.box) return { x: c.box.x0 + CELL_INSET, y: c.box.y0 + CELL_INSET, w: c.box.x1 - c.box.x0 - 2 * CELL_INSET, h: c.box.y1 - c.box.y0 - 2 * CELL_INSET };
+    return boxRect(c);
+  }
+
+  function fromAnswer(pages, list, answer) {
+    if (!answer || typeof answer !== 'object' || Array.isArray(answer) || !Array.isArray(answer.fields) || !Array.isArray(answer.missing)) return null;
+    const items = list || [];
+    const byId = new Map(items.map((c) => [c.id, c]));
+    const known = (e) => e && typeof e === 'object' && ANSWER_KINDS.indexOf(e.kind) >= 0 && (e.person === 'investor' || e.person === 'sponsor') && ['all', 'individual', 'entity'].indexOf(e.group) >= 0;
+    let ignored = 0;
+    let dropped = 0;
+    let merged = 0;
+    const made = []; // { p, r (rectangle as x0..y1), c (the place, when numbered) }
+    const chosen = new Set();
+    answer.fields
+      .slice()
+      .filter((e) => {
+        const ok = known(e) && byId.has(e.id) && !chosen.has(e.id);
+        if (ok) chosen.add(e.id);
+        else ignored++;
+        return ok;
+      })
+      .sort((a, b) => a.id - b.id)
+      .forEach((e) => {
+        const c = byId.get(e.id);
+        const rect = rectFor(c, e.kind);
+        const words = e.kind === 'checkbox' || e.kind === 'text' ? captionNear(c.L, c) || (c.form && c.form.label) || (c.prop && c.prop.label) || '' : '';
+        made.push({ p: answerField(e, c.page, rect, words), r: rectOf(rect), c });
+      });
+    // Places the answer names without a number: snapped to unclaimed printed geometry on the stated side of the anchor.
+    const pageOf = new Map((pages || []).filter(Boolean).map((pg) => [pg.page, pg]));
+    const layouts = new Map(items.map((c) => [c.page, c.L]));
+    const layoutOf = (n) => {
+      if (layouts.has(n)) return layouts.get(n);
+      const pg = pageOf.get(n);
+      let L = null;
+      try {
+        L = pg && !pg.scan && !pg.failed ? layout(pg) : null;
+      } catch (e) {
+        L = null;
+      }
+      layouts.set(n, L);
+      return L;
+    };
+    const claimed = (r, page) => made.some((m) => m.p.page === page && halfOver(m.r, r));
+    answer.missing.forEach((e) => {
+      if (!known(e) || ANSWER_SIDES.indexOf(e.side) < 0 || !Number.isInteger(e.near) || (e.near !== -1 && !byId.has(e.near))) return ignored++;
+      let anchor = null;
+      let page = e.page;
+      if (e.near !== -1) {
+        anchor = byId.get(e.near);
+        page = anchor.page;
+      } else {
+        const L = layoutOf(page);
+        const want = squash(e.caption);
+        const g = L && want.length >= 3 ? L.segs.find((s) => squash(s.s).indexOf(want) >= 0) : null;
+        if (g) anchor = { x0: g.x0, y0: g.y - g.h, x1: g.x1, y1: g.y, base: g.y };
+      }
+      if (!anchor) return dropped++;
+      const pg = pageOf.get(page);
+      const pool = [];
+      items.forEach((c) => c.page === page && !chosen.has(c.id) && (c !== anchor || e.side === 'on') && pool.push({ r: c, c, rect: () => rectFor(c, e.kind) }));
+      ((pg && pg.rules) || []).forEach((rl) => {
+        if (!rl || rl.x1 - rl.x0 < 9 || !(rl.clear >= TIGHT_CLEAR)) return;
+        const slot = { x0: rl.x0, x1: rl.x1, y: rl.y, clear: rl.clear, pad: null };
+        const rect = () => boxOn(e.kind === 'checkbox' || e.kind === 'text' ? KINDS.other : KINDS[e.kind] || KINDS.other, slot);
+        pool.push({ r: Object.assign(rectOf(rect()), { base: rl.y }), c: null, rect });
+      });
+      const dist = (q) => {
+        const r = q.r;
+        const line = Math.abs(r.base - anchor.base) <= 4;
+        if (e.side === 'right') return line && r.x0 >= anchor.x1 - 1 && r.x0 - anchor.x1 <= 300 ? r.x0 - anchor.x1 : Infinity;
+        if (e.side === 'left') return line && r.x1 <= anchor.x0 + 1 && anchor.x0 - r.x1 <= 300 ? anchor.x0 - r.x1 : Infinity;
+        const across = overlap(r.x0, r.x1, anchor.x0, anchor.x1) > 0 || Math.abs(r.x0 - anchor.x0) <= 40;
+        if (e.side === 'below') return across && r.base - anchor.base > 1 && r.base - anchor.base <= 40 ? r.base - anchor.base : Infinity;
+        if (e.side === 'above') return across && anchor.base - r.base > 1 && anchor.base - r.base <= 40 ? anchor.base - r.base : Infinity;
+        return area(r, anchor) > 0 ? Math.hypot((r.x0 + r.x1 - anchor.x0 - anchor.x1) / 2, (r.y0 + r.y1 - anchor.y0 - anchor.y1) / 2) : Infinity;
+      };
+      let best = null;
+      let d = Infinity;
+      pool.forEach((q) => {
+        const k = dist(q);
+        if (k < d && !claimed(q.r, page)) {
+          d = k;
+          best = q;
+        }
+      });
+      if (!best) return dropped++;
+      const rect = best.rect();
+      const L = best.c ? best.c.L : layoutOf(page);
+      const words = (e.kind === 'checkbox' || e.kind === 'text') && L ? captionNear(L, Object.assign(rectOf(rect), { base: best.r.base })) : '';
+      made.push({ p: answerField(e, page, rect, words), r: rectOf(rect), c: best.c });
+    });
+    // No two fields overlap by more than half both ways: the first (by place number, then the answer's order) stays.
+    const keep = [];
+    made.forEach((m) => {
+      if (!(m.p.w > 0) || !(m.p.h > 0)) return dropped++;
+      if (keep.some((k) => k.p.page === m.p.page && halfOver(k.r, m.r))) return merged++;
+      keep.push(m);
+    });
+    const fields = keep.map((m) => m.p).sort((a, b) => a.page - b.page || a.y - b.y || a.x - b.x);
+    return { fields, dropped, merged, ignored };
+  }
+
+  NS.placement = { read, analyze, labelOf, needsReview, reviewFields, reviewCount, confirm, statusOf, groupOf, fits, values, PREFILL, FOR_TYPES, asOther, isOther, otherParty, OTHER_NOTE, isPlainLabel, candidates, fromAnswer };
 })(typeof window !== 'undefined' ? window.CVPortal : globalThis.CVPortal);
