@@ -10,6 +10,12 @@
  *   5. each strip is enlarged four times, its contrast stretched, and read by NS.textengine (assets/js/textengine.js,
  *      loaded by a script element on first need; it starts from the portal's own files and makes no request);
  *   6. the words are attached to the box, rule or heading their strip was cut for.
+ * On a picture, between 2 and 3, the place model (NS.placemodel, assets/js/placemodel.js, loaded by a script element on
+ * first need like the engine) looks at the same drawing: a place of it that lies on a box or free rule already found
+ * gives that box or rule pModel; a place over nothing found joins them (src 'model'; every other box and rule has src
+ * 'rule'), but only as the model snapped it to a printed edge, tint step or line; an illustration place makes the
+ * boxes inside it no place (why 'illustration'). A model that cannot start or read the page leaves the page exactly
+ * as the rules read it.
  * Nothing here places a field: the printed places still come only from what is printed (NS.anchors.page) and the
  * fields from NS.placement. A box exists by its pixels: no word read adds one or removes one.
  *
@@ -18,7 +24,8 @@
  *                                            reader  the reader state to give when words is false ('off' when not given)
  *                                            ink     the finder's ink level
  *                                            trace   also return the finder's levels, the strips, and the seconds
- *                                                    spent drawing, finding and reading
+ *                                                    spent drawing, finding, asking the place model and reading
+ *                                            model   false: the place model is not asked
  *                                          Resolves to a raw page of the same form as NS.anchors.walk gives, plus:
  *                                            pictured  'picture' or 'drawings'
  *                                            approx    true for a picture: positions come from its pixels
@@ -26,8 +33,13 @@
  *                                            found     every box: { x0, y0, x1, y1, outer (the outer edge of its
  *                                                      ink, NS.picturepage.find), small, ink, shared, place, why,
  *                                                      col, inside (its words as plain text), bands { over, under,
- *                                                      before, after, inside: each { s, conf } } }
- *                                            lines     every free rule: { x0, x1, y, t, bands { over, under, before, after } }
+ *                                                      before, after, inside: each { s, conf } }, src ('rule' or
+ *                                                      'model'), pModel (the place model's probability, when it
+ *                                                      saw a place there) }
+ *                                            lines     every free rule: { x0, x1, y, t, bands { over, under, before,
+ *                                                      after }, src, pModel }
+ *                                            modelPlaces  the places the model saw that snapped (0 when it was not asked)
+ *                                            modelAdded   those of them that joined found or lines
  *                                            heads     [{ kind 'column' | 'letter' | 'margin' | 'use', col, x0, y0, x1, y1, s, conf }]
  *                                            reader    'ok' read; 'load' the engine could not start; 'time' the words of
  *                                                      the page ran out of time; 'fail' a strip could not be read; 'off'
@@ -86,6 +98,83 @@
   function stop() {
     refused = null;
     if (NS.textengine) NS.textengine.stop();
+    modelRefused = null;
+    modelSaid = false;
+    if (NS.placemodel) NS.placemodel.stop();
+  }
+
+  // The place model, loaded on first need and started; a start that failed is remembered for the rest of the reading
+  // (stop() forgets it). Its failure is said once, in the console only: the page is read by the rules alone.
+  let modelRefused = null;
+  let modelSaid = false;
+  async function placeModel() {
+    if (modelRefused) throw modelRefused;
+    try {
+      await script(new URL('assets/js/placemodel.js', document.baseURI).href, () => !!NS.placemodel);
+      await NS.placemodel.start();
+      return NS.placemodel;
+    } catch (e) {
+      modelRefused = fail('load', e);
+      throw modelRefused;
+    }
+  }
+  function modelFailed(e) {
+    if (modelSaid) return;
+    modelSaid = true;
+    console.info('Pages read from their picture are read by the rules alone (' + String((e && (e.detail || e.message)) || e).slice(0, 120) + ').');
+  }
+
+  /**
+   * The model's snapped places joined to what the finder found, in pixels of the drawing (see the head of this file).
+   * A box place on a found box (half the smaller covered), or a line place on a found free rule (their writing rooms
+   * half covered) or on the edge of a found box, only gives it pModel; any other joins boxes or rules. Every place is
+   * decided before anything is changed. Returns how many places joined.
+   */
+  function mergeModel(seen, places, s) {
+    const area = (r) => Math.max(0, r.x1 - r.x0) * Math.max(0, r.y1 - r.y0);
+    const share = (a, b) => {
+      const ix = ov(a.x0, a.x1, b.x0, b.x1);
+      const iy = ov(a.y0, a.y1, b.y0, b.y1);
+      const least = Math.min(area(a), area(b));
+      return ix > 0 && iy > 0 && least > 0 ? (ix * iy) / least : 0;
+    };
+    const room = (l) => ({ x0: l.x0, y0: l.y0 - 14 * s, x1: l.x1, y1: l.y1 });
+    const confirm = [];
+    const boxes = [];
+    const rules = [];
+    const art = [];
+    places.forEach((q) => {
+      const r = q.px;
+      if (q.cls === 'illustration') return void art.push(r);
+      if (r.line) {
+        const same = seen.rules.filter((l) => share(room(l), room(r)) >= 0.5);
+        const edge = seen.boxes.filter((b) => ov(b.x0, b.x1, r.x0, r.x1) > 0.5 * Math.min(b.x1 - b.x0, r.x1 - r.x0) && r.y1 > b.y0 - 2 * s && r.y0 < b.y1 + 2 * s);
+        const mine = rules.concat(boxes).filter((x) => share(room(x), room(r)) >= 0.5);
+        same.concat(edge).forEach((x) => confirm.push([x, q.p]));
+        if (!same.length && !edge.length && !mine.length) rules.push({ x0: r.x0, y0: r.y0, x1: r.x1, y1: r.y1, t: r.t, src: 'model', pModel: q.p });
+        return;
+      }
+      const hit = seen.boxes.filter((b) => share(b, r) >= 0.5);
+      hit.forEach((x) => confirm.push([x, q.p]));
+      // (a free rule through it, or a place the model gave already, is not a second place)
+      const crossed = seen.rules.concat(rules).some((l) => ov(l.x0, l.x1, r.x0, r.x1) > 0 && l.y1 > r.y0 && l.y0 < r.y1);
+      if (hit.length || crossed || boxes.some((b) => share(b, r) > 0)) return;
+      const small = (r.x1 - r.x0) / s <= 14 && (r.y1 - r.y0) / s <= 14;
+      boxes.push({ x0: r.x0, y0: r.y0, x1: r.x1, y1: r.y1, outer: { x0: r.x0, y0: r.y0, x1: r.x1, y1: r.y1 }, w: r.x1 - r.x0 - 2, h: r.y1 - r.y0 - 2, ink: r.ink, small, shared: false, place: true, why: '', src: 'model', pModel: q.p });
+    });
+    confirm.forEach(([x, p]) => (x.pModel = Math.max(x.pModel || 0, p)));
+    const order = (a, b) => a.y0 - b.y0 || a.x0 - b.x0 || a.x1 - b.x1 || a.y1 - b.y1;
+    seen.boxes = seen.boxes.concat(boxes).sort(order);
+    seen.rules = seen.rules.concat(rules).sort(order);
+    // the boxes of an illustration (a cheque, an example) are part of the picture: no place
+    art.forEach((a) =>
+      seen.boxes.forEach((b) => {
+        const cx = (b.x0 + b.x1) / 2;
+        const cy = (b.y0 + b.y1) / 2;
+        if (cx > a.x0 && cx < a.x1 && cy > a.y0 && cy < a.y1) Object.assign(b, { place: false, why: 'illustration' });
+      })
+    );
+    return boxes.length + rules.length;
   }
 
   /**
@@ -450,7 +539,7 @@
 
   async function page(pdfPage, raw, opts) {
     const o = opts || {};
-    const ms = { draw: 0, find: 0, read: 0 };
+    const ms = { draw: 0, find: 0, model: 0, read: 0 };
     let pic = null;
     try {
       let t = Date.now();
@@ -471,8 +560,25 @@
       } catch (e) {
         throw fail('fail', e);
       }
+      // The place model looks at the same drawing (a picture only); a model that fails leaves the finder's reading.
+      let snapped = 0;
+      let added = 0;
+      if (raw.picture && o.model !== false) {
+        const tm = Date.now();
+        try {
+          const pm = await placeModel();
+          const v1 = pdfPage.getViewport({ scale: 1 });
+          const places = await pm.find(pic.canvas, { scale: pic.scale, sy: pic.sy, ox: pic.ox, oy: pic.oy, pw: v1.width, ph: v1.height, grey, paper: seen.paper, range: seen.range });
+          added = mergeModel(seen, places, pic.scale);
+          snapped = places.filter((q) => q.cls !== 'illustration').length;
+        } catch (e) {
+          modelFailed(e);
+        }
+        ms.model = Date.now() - tm;
+        t += ms.model; // (the finder's seconds leave the model's out)
+      }
       let where = null;
-      const out = { glyphs: [], segs: [], rects: [], picture: false, pictured: raw.picture ? 'picture' : 'drawings', approx: !!raw.picture, words: [], found: [], lines: [], heads: [], reader: 'ok' };
+      const out = { glyphs: [], segs: [], rects: [], picture: false, pictured: raw.picture ? 'picture' : 'drawings', approx: !!raw.picture, words: [], found: [], lines: [], heads: [], reader: 'ok', modelPlaces: snapped, modelAdded: added };
       const trace = (strips) => {
         if (o.trace) out.trace = { paper: seen.paper, print: seen.print, range: seen.range, tau: seen.tau, ms, strips: strips || 0, margin: where ? where.margin : null, zones: where ? where.zones.map((z) => z.kind) : [] };
         return out;
@@ -597,14 +703,15 @@
         const b = toPt(r);
         const m = { x0: at.x(r.x0 + 0.5), y0: at.y(r.y0 + 0.5), x1: at.x(r.x1 - 0.5), y1: at.y(r.y1 - 0.5), t: t0 };
         const inside = read.words.filter((q) => q.letters && (q.x0 + q.x1) / 2 > b.x0 && (q.x0 + q.x1) / 2 < b.x1 && (q.y0 + q.y1) / 2 > b.y0 && (q.y0 + q.y1) / 2 < b.y1);
-        out.found.push(Object.assign({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, outer: toPt(r.outer || r), small: r.small, ink: r.ink, shared: r.shared, place: r.place, why: r.why, col: r.col, inside: inside.map((q) => q.s).join(' '), bands: bandsOf('box', i, SIDES) }, r.row ? { row: true } : null));
+        out.found.push(Object.assign({ x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, outer: toPt(r.outer || r), small: r.small, ink: r.ink, shared: r.shared, place: r.place, why: r.why, col: r.col, inside: inside.map((q) => q.s).join(' '), bands: bandsOf('box', i, SIDES), src: r.src || 'rule' }, r.row ? { row: true } : null, r.pModel ? { pModel: r.pModel } : null));
         // A box full of print (a letter or a mark the finder took for a frame) is print to the line rules, not a frame.
         if (r.why === 'filled') return;
         out.rects.push(m);
         out.segs.push({ o: 'h', a0: m.x0, a1: m.x1, c: m.y0, t: t0, frame: true }, { o: 'h', a0: m.x0, a1: m.x1, c: m.y1, t: t0, frame: true }, { o: 'v', a0: m.y0, a1: m.y1, c: m.x0, t: t0 }, { o: 'v', a0: m.y0, a1: m.y1, c: m.x1, t: t0 });
       });
       seen.rules.forEach((r, i) => {
-        const ln = { x0: at.x(r.x0), x1: at.x(r.x1), y: at.y((r.y0 + r.y1) / 2), t: r.t / pic.sy, bands: bandsOf('rule', i, RULE_SIDES) };
+        const ln = { x0: at.x(r.x0), x1: at.x(r.x1), y: at.y((r.y0 + r.y1) / 2), t: r.t / pic.sy, bands: bandsOf('rule', i, RULE_SIDES), src: r.src || 'rule' };
+        if (r.pModel) ln.pModel = r.pModel;
         if (r.bracket) ln.bracket = true;
         if (r.hang) ln.hang = true;
         if (r.under >= 0) ln.under = at.x(r.under);
