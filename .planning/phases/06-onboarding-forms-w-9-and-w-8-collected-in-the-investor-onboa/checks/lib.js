@@ -254,6 +254,8 @@ async function walk(page, answers) {
       break;
     }
     seen.push(`${count} | ${hd}`);
+    // a.until: stop on the first step whose heading matches (the caller works that step itself, then may walk on).
+    if (a.until && a.until.test(hd)) return { seen, reached: true, at: hd, errors: errs };
     if (a.onStep) await a.onStep(hd);
     if (/^Welcome/.test(hd)) {
       await page.check('#ob-esignConsent');
@@ -298,9 +300,18 @@ async function walk(page, answers) {
       else await page.check('input[name="ob-accBasis"] >> nth=0');
       await page.check('#ob-accAttest');
     } else if (/Tax certification/.test(hd)) {
-      if (await page.locator('input[name="ob-usPerson"]').count()) await page.check('input[name="ob-usPerson"][value="yes"]');
-      await page.check('#ob-w9');
-      await page.fill('#ob-taxSig', a.name);
+      if (await page.locator('#ob-w9').count()) {
+        // An older tree: the typed substitute certification.
+        if (await page.locator('input[name="ob-usPerson"]').count()) await page.check('input[name="ob-usPerson"][value="yes"]');
+        await page.check('#ob-w9');
+        await page.fill('#ob-taxSig', a.name);
+      } else {
+        // Plan 06-16: the answers view continued as it stands, then the official form finished without a signature (D-30).
+        if (a.onFilled) await a.onFilled(hd);
+        await submit(page);
+        await finishTaxForm(page);
+        continue;
+      }
     } else if (/Distribution payments/.test(hd)) {
       if (await page.locator('#ob-routing').count()) {
         await page.fill('#ob-routing', '021000021');
@@ -325,6 +336,22 @@ async function walk(page, answers) {
     if (fe.length) errs.push(`${hd}: ${fe.join(' / ')}`);
   }
   return { seen, reached: false, errors: errs };
+}
+
+/**
+ * Plan 06-16: the tax step's signing view (the official form, embedded) finished as it stands, then the wait until the
+ * heading changes (both tax views share it). sign(page) may sign first.
+ */
+async function finishTaxForm(page, sign) {
+  await page.waitForSelector('.ivf-tax-sign .es-finish', { timeout: 60000 });
+  if (sign) await sign(page);
+  const before = await heading(page);
+  await page.click('.ivf-tax-sign .es-finish');
+  await page.waitForFunction((hd) => {
+    const h = document.querySelector('.ivf-form h1');
+    return h && h.innerText !== hd;
+  }, before, { timeout: 60000 });
+  await page.waitForTimeout(200);
 }
 
 /* ---------- Server mode (plan 06-06; reused by plans 06-07 and 06-12) ---------- */
@@ -592,4 +619,4 @@ async function runParts(parts, opts) {
   process.exit(failed.length ? 1 : 0);
 }
 
-module.exports = { OWNER_SHOTS, describeShots, ROOT, SCRATCH, VENDOR, OUT, missingVendor, serve, start, open, setupPortal, createInvitation, sandbox, heading, submit, fieldErrors, walk, screenText, leakCheck, reporter, runParts, VENDORS, VENDOR_RE, WORD_RE, freePort, serverPortal, consoleRoute, inviteFromConsole, importFromConsole, finishAgreement };
+module.exports = { finishTaxForm, OWNER_SHOTS, describeShots, ROOT, SCRATCH, VENDOR, OUT, missingVendor, serve, start, open, setupPortal, createInvitation, sandbox, heading, submit, fieldErrors, walk, screenText, leakCheck, reporter, runParts, VENDORS, VENDOR_RE, WORD_RE, freePort, serverPortal, consoleRoute, inviteFromConsole, importFromConsole, finishAgreement };

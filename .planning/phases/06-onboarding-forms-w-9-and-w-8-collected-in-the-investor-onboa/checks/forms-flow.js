@@ -4,7 +4,7 @@
 // one investor with the signature and date at the form's own places, the investor signs it in the portal, and the stored
 // signed PDF is read back: Documents category Tax for that investor alone, zero form fields, each value inside its own
 // field, the signature ink inside the sign place, the "Signed electronically" caption, the date, the certificate page.
-//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben]
+//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual]
 // The last line is "FORMS FLOW: PASS (cases run: N)" or "FORMS FLOW: FAIL (cases run: N) - <failed cases>". Exits 2
 // (NOT RUN) when the bundled forms do not match assets/forms/SHA256SUMS.
 const path = require('path');
@@ -304,6 +304,179 @@ function formCase(spec) {
   };
 }
 
+/**
+ * Plan 06-16 (D-01, D-04, D-06, D-09): a U.S. individual invited by the sponsor walks the onboarding (the SSN typed at
+ * the profile step) to the tax step, which asks nothing: one sentence and the button. Continue builds the official W-9
+ * from what onboarding knows and shows it to sign on the page; the investor adopts a signature, finishes and reaches the
+ * next step. The stored signed copy is read back, and the sponsor's investor list shows "W-9 signed" with a download of
+ * the same bytes.
+ */
+async function usIndividual({ check, S }) {
+  const A = await Lib.open(S, { context: { acceptDownloads: true } });
+  const page = A.page;
+  const dir = path.join(OUT, 'us-individual');
+  fs.mkdirSync(dir, { recursive: true });
+  const portal = await Lib.setupPortal(S, A);
+  const name = 'Renée Zoë Ångström';
+  const email = 'renee.angstrom@example.com';
+  const inv = await Lib.createInvitation(page, { name, email, type: 'individual', offeringId: portal.offeringId });
+  await page.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
+  const w = await Lib.walk(page, { name, acc: 'yes', basis: 0, until: /Tax certification/ });
+  check('the invited U.S. individual reaches the tax step', w.reached && w.at === 'Tax certification', w.seen);
+  const screens = [];
+  const ask = await page.evaluate(() => {
+    const f = document.querySelector('.ivf-form');
+    const vis = (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+    const inputs = Array.from(f.querySelectorAll('input, select, textarea')).filter((el) => el.type !== 'hidden' && vis(el));
+    return { inputs: inputs.map((el) => el.id || el.name), submit: (f.querySelector('button[type=submit]') || {}).innerText || '', lede: Array.from(f.querySelectorAll('p.lede')).map((x) => x.innerText) };
+  });
+  screens.push(await Lib.screenText(page));
+  await page.screenshot({ path: path.join(dir, 'us-individual-answers.png'), fullPage: true });
+  check('the tax step asks no question (nothing missing)', ask.inputs.length === 0, ask.inputs);
+  check('the tax step is one sentence and the button to the form', ask.lede.length === 1 && /Continue to the form/.test(ask.submit), ask);
+  await Lib.submit(page);
+  await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 });
+  await page.waitForTimeout(400);
+  check('the signing view keeps the step heading', (await Lib.heading(page)) === 'Tax certification', await Lib.heading(page));
+  const made = await page.evaluate((em) => {
+    const NS = window.CVPortal;
+    const ws = NS.state.ws;
+    const i = ws.investors.find((x) => x.email === em);
+    const fl = i.onboarding.flow;
+    const env = (ws.envelopes || []).find((e) => e.id === fl.taxEnvelopeId);
+    const map = NS.taxmaps['W-9 2024-03'];
+    return { invId: i.id, envId: env && env.id, env: env && JSON.parse(JSON.stringify(env)), overlays: map.overlays, blank: map.file, firm: ws.tenant.legalName || ws.tenant.name, title: i.title };
+  }, email);
+  check('Continue made a tax envelope for the W-9 with this investor as its one signer', !!made.env && made.env.kind === 'tax' && made.env.taxForm.form === 'W-9' && made.env.signers.length === 1 && made.env.signers[0].investorId === made.invId, made.env && { kind: made.env.kind, taxForm: made.env.taxForm });
+  check('the envelope title names the account', !!made.env && made.env.title === `Form W-9 - ${made.title}`, made.env && made.env.title);
+  screens.push(await Lib.screenText(page));
+  await page.screenshot({ path: path.join(dir, 'us-individual-signing.png'), fullPage: true });
+  const sigFid = made.env.fields.find((f) => f.type === 'signature').id;
+  await Lib.finishTaxForm(page, async (pg) => {
+    if (await pg.locator('#es-consent-box').count()) {
+      await pg.check('#es-consent-box');
+      await pg.click('[data-action="es-consent"]');
+      await pg.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 30000 });
+    }
+    await signField(pg, sigFid);
+  });
+  const next = await Lib.heading(page);
+  check('finishing moves on to the next step', next === 'Distribution payments', next);
+  screens.push(await Lib.screenText(page));
+
+  const got = await page.evaluate(
+    async ({ id, invId }) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const env = ws.envelopes.find((x) => x.id === id);
+      const i = ws.investors.find((x) => x.id === invId);
+      const docs = (ws.docs || []).filter((d) => d.envelopeId === id);
+      const b64 = async (blob) => {
+        if (!blob) return '';
+        const u8 = new Uint8Array(await blob.arrayBuffer());
+        let s = '';
+        for (let k = 0; k < u8.length; k += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(k, k + 0x8000));
+        return btoa(s);
+      };
+      const log = (ws.audit || []).filter((e) => e.record === invId).map((e) => `${e.action} :: ${e.detail}`);
+      return {
+        docs: JSON.parse(JSON.stringify(docs)),
+        pdf: await b64(docs[0] ? await NS.ops.files.get(docs[0].id) : null),
+        filled: await b64(await NS.ops.files.get(env.docId)),
+        env: JSON.parse(JSON.stringify(env)),
+        taxForm: i.taxForm,
+        taxCert: JSON.parse(JSON.stringify(i.taxCert || null)),
+        log,
+        all: JSON.stringify(ws) + JSON.stringify(Object.keys(localStorage).map((k) => localStorage.getItem(k)))
+      };
+    },
+    { id: made.envId, invId: made.invId }
+  );
+  const tc = got.taxCert || {};
+  check('investor.taxForm is W-9', got.taxForm === 'W-9', got.taxForm);
+  check('investor.taxCert records the form, revision, envelope, time, signature, signer, last four digits and no backup withholding', tc.form === 'W-9' && tc.revision === 'Rev. March 2024' && tc.envelopeId === made.envId && /^\d{4}-\d{2}-\d{2}T/.test(tc.at || '') && tc.signed === true && tc.signedBy === name && tc.tinLast4 === '6789' && tc.backupWithholding === false, tc);
+  check('the change log says the tax form was signed', got.log.some((l) => /^Tax form signed :: /.test(l)), got.log.slice(-4));
+  check('no change-log entry holds the taxpayer ID', !got.log.some((l) => /123-?45-?6789/.test(l)), got.log.filter((l) => /6789/.test(l)));
+  check('the saved workspace and local storage hold no full taxpayer ID', !/123-?45-?6789/.test(got.all));
+  const doc = got.docs[0] || {};
+  check('one Documents entry for the signed W-9, category Tax, for this investor alone', got.docs.length === 1 && doc.cat === 'Tax' && JSON.stringify(doc.investors) === JSON.stringify([made.invId]), got.docs);
+  const signedFile = path.join(dir, 'signed.pdf');
+  const filledFile = path.join(dir, 'filled.pdf');
+  const signed = Buffer.from(got.pdf, 'base64');
+  fs.writeFileSync(signedFile, signed);
+  fs.writeFileSync(filledFile, Buffer.from(got.filled, 'base64'));
+  check('the stored file is the sealed signed copy', got.env.sha256Signed === sha(signed), { env: got.env.sha256Signed, file: sha(signed) });
+  const sPdf = await PL.PDFDocument.load(signed, { updateMetadata: false });
+  check('zero form fields in the signed copy', sPdf.getForm().getFields().length === 0, sPdf.getForm().getFields().length);
+  check('the certificate page follows the 6 form pages', sPdf.getPageCount() > 6 && /Certificate of completion/.test(text(signedFile, 7)), sPdf.getPageCount());
+  const R = await rects(made.blank);
+  const W1 = words(signedFile, 1);
+  [
+    [name, W9 + 'f1_01[0]'],
+    ['12 Elm Street', W9 + 'Address_ReadOrder[0].f1_07[0]'],
+    ['Austin, TX 78701', W9 + 'Address_ReadOrder[0].f1_08[0]'],
+    [made.firm, W9 + 'f1_09[0]']
+  ].forEach(([want, fname]) => {
+    const at = wordsIn(W1, R.of[fname], 1);
+    check(`"${want}" prints inside its own field`, at === want, { field: fname, inside: at });
+  });
+  [
+    ['123', W9 + 'f1_11[0]'],
+    ['45', W9 + 'f1_12[0]'],
+    ['6789', W9 + 'f1_13[0]']
+  ].forEach(([want, fname]) => {
+    const at = wordsIn(W1, R.of[fname], 1).replace(/\s+/g, '');
+    check(`the SSN ${want.length}-digit group prints inside its own comb field`, at === want, { field: fname, inside: at });
+  });
+  const empty = ['f1_14[0]', 'f1_15[0]', 'f1_10[0]', 'f1_02[0]', 'f1_05[0]', 'f1_06[0]'].filter((f) => wordsIn(W1, R.of[W9 + f], 0.5) !== '');
+  check('nothing prints in the EIN, account numbers, business name or exemption fields', empty.length === 0, empty);
+  // the classification boxes: new ink against the blank form inside the individual box only
+  const DPI = 100;
+  const k = DPI / 72;
+  const blankG = gray(path.join(ROOT, made.blank), 1, DPI);
+  const signedG = gray(signedFile, 1, DPI);
+  const inkIn = (a, b, r) => {
+    let n = 0;
+    for (let y = Math.floor(r.top * k); y < Math.ceil((r.top + r.h) * k); y++)
+      for (let x = Math.floor(r.x * k); x < Math.ceil((r.x + r.w) * k); x++) if (a.px[y * a.w + x] - b.px[y * b.w + x] > 80) n++;
+    return n;
+  };
+  const box = (n) => R.of[`${W9}Boxes3a-b_ReadOrder[0].c1_1[${n}]`];
+  const ticks = [0, 1, 2, 3, 4, 5, 6].map((n) => inkIn(blankG, signedG, box(n)));
+  check('the individual or sole proprietor box is ticked, no other classification box', ticks[0] > 10 && ticks.slice(1).every((n) => n === 0), ticks);
+  // the signature ink inside the sign place, against the filled unsigned form
+  const filledG = gray(filledFile, 1, DPI);
+  const ink = inkIn(filledG, signedG, pts(made.overlays.sign, R.pw, R.ph));
+  check('the signature ink lies inside the sign place', ink > 60, ink);
+  const signedAt = got.env.signers[0].signedAt || '';
+  const cap = `Signed electronically ${signedAt.slice(0, 10)} ${signedAt.slice(11, 16)} UTC`;
+  const capAt = wordsIn(W1, pts(made.overlays.caption, R.pw, R.ph), 1.5);
+  check('"Signed electronically <date time> UTC" in the caption place, dated today (UTC)', capAt === cap && signedAt.slice(0, 10) === new Date().toISOString().slice(0, 10), { want: cap, got: capAt });
+
+  // the sponsor's investor list: one line under Activation, and the download of the stored copy
+  await page.evaluate(() => {
+    window.CVPortal.state.role = 'sponsor';
+  });
+  await Lib.consoleRoute(page, 'console-investors', '.cs-tbl');
+  const row = page.locator('.cs-tbl tbody tr', { hasText: email }).first();
+  const rowText = (await row.innerText().catch(() => '')).replace(/\s+/g, ' ');
+  check('the console row reads "W-9 signed <date>"', /W-9 signed [A-Z][a-z]+ \d{1,2}, \d{4}/.test(rowText), rowText.slice(0, 300));
+  await page.screenshot({ path: path.join(dir, 'us-individual-console.png'), fullPage: false });
+  let dlSha = '';
+  try {
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), row.locator('[data-action="kyc-iv-file"]').first().click()]);
+    dlSha = sha(fs.readFileSync(await dl.path()));
+  } catch (e) {
+    dlSha = String(e.message || e).slice(0, 200);
+  }
+  check('the console download is the stored signed copy (same SHA-256)', dlSha === sha(signed), { download: dlSha, stored: sha(signed) });
+  const scr = Lib.leakCheck(screens.join('\n'));
+  check('white label: no vendor name or forbidden word on the tax screens', scr.ok, scr.hits);
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
+}
+
 const mmddyyyy = (iso) => {
   const [y, m, d] = String(iso).split('-');
   return `${m}-${d}-${y}`;
@@ -359,7 +532,8 @@ const cases = {
     dateFmt: mmddyyyy,
     dateField: W8 + 'Date[0]',
     signField: W8 + 'f_20[0]'
-  })
+  }),
+  'us-individual': usIndividual
 };
 
 // The bundled forms must match their pins before anything runs.
