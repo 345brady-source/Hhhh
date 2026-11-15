@@ -1,0 +1,445 @@
+{
+ "file": "set-c/c268/doc.pdf",
+ "id": "c268",
+ "pages": 7,
+ "page_size_pt": [
+  612.0,
+  792.0
+ ],
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
+ "signing": {
+  "investor_pages": [
+   1
+  ],
+  "firm_pages": [
+   2
+  ],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": "the subscriber completes and signs the first page; the issuer accepts (date on page 1, signature on page 2)"
+ },
+ "counts_per_page": {
+  "1": {
+   "total": 17,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 15,
+   "signature": 1,
+   "date": 1
+  },
+  "2": {
+   "total": 2,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 1,
+   "signature": 1,
+   "date": 0
+  }
+ },
+ "counts_total": {
+  "total": 19,
+  "tickbox": 0,
+  "initials": 0,
+  "blank": 16,
+  "signature": 2,
+  "date": 1
+ },
+ "counts_by_owner": {
+  "firm": 3,
+  "investor": 14,
+  "investor-entity": 2
+ },
+ "sure_per_page": {
+  "1": "fairly sure: the print dropped the lines above the captions; places are the rooms above each caption",
+  "2": "fairly sure: By: has no printed line",
+  "3": "sure: no places",
+  "4": "sure: no places",
+  "5": "sure: no places",
+  "6": "sure: no places",
+  "7": "sure: no places"
+ },
+ "not_fields": {
+  "1": [
+   "outer frames of the subscriber, delivery and registration boxes",
+   "underlined headings (Deliver the Units..., Register the Units...)"
+  ],
+  "2": [
+   "empty bar frame under the page number"
+  ],
+  "4": [
+   "decorative page rule"
+  ],
+  "6": [
+   "decorative page rule"
+  ]
+ },
+ "places": [
+  {
+   "id": "p01-014",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of Units",
+   "printed_label": "Number of Units:",
+   "must": true,
+   "x0": 312.7,
+   "y0": 209.2,
+   "x1": 567.0,
+   "y1": 237.0,
+   "printed_as": "drawn cell",
+   "what": "amount"
+  },
+  {
+   "id": "p01-007",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name of Subscriber (print)",
+   "printed_label": "(Name of Subscriber - please print)",
+   "must": true,
+   "x0": 40.0,
+   "y0": 235.0,
+   "x1": 276.0,
+   "y1": 250.5,
+   "printed_as": "room above a caption whose line the print dropped",
+   "what": "name",
+   "doubt": "no printed line above the caption (line dropped in the print)"
+  },
+  {
+   "id": "p01-015",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Aggregate Subscription Price (U.S.$)",
+   "printed_label": "Aggregate Subscription Price: U.S.$",
+   "must": true,
+   "x0": 313.5,
+   "y0": 246.7,
+   "x1": 567.0,
+   "y1": 274.5,
+   "printed_as": "drawn cell",
+   "what": "amount"
+  },
+  {
+   "id": "p01-008",
+   "page": 1,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Authorized signature of the subscriber",
+   "printed_label": "By: (Authorized Signature)",
+   "must": true,
+   "x0": 58.0,
+   "y0": 262.2,
+   "x1": 276.0,
+   "y1": 277.7,
+   "printed_as": "room after By: on its line",
+   "doubt": "no printed line after By: (line dropped in the print)"
+  },
+  {
+   "id": "p01-009",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Official capacity or title if the subscriber is a corporation",
+   "printed_label": "(Official Capacity or Title if Subscriber is a corporation - please print)",
+   "must": false,
+   "x0": 40.0,
+   "y0": 292.7,
+   "x1": 276.0,
+   "y1": 308.2,
+   "printed_as": "room above a caption whose line the print dropped",
+   "what": "title",
+   "doubt": "no printed line above the caption (line dropped in the print)"
+  },
+  {
+   "id": "p01-010",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Printed name of the signatory if different from the subscriber",
+   "printed_label": "(Please print name of individual whose signature appears above if different than the name of the subscriber printed above)",
+   "must": false,
+   "x0": 40.0,
+   "y0": 336.2,
+   "x1": 276.0,
+   "y1": 351.7,
+   "printed_as": "room above a caption whose line the print dropped",
+   "what": "name",
+   "doubt": "no printed line above the caption (line dropped in the print)"
+  },
+  {
+   "id": "p01-016",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Deliver the units to: name (if different from residential address)",
+   "printed_label": "(Name)",
+   "must": false,
+   "x0": 324.0,
+   "y0": 336.2,
+   "x1": 560.0,
+   "y1": 351.7,
+   "printed_as": "room above a caption whose line the print dropped",
+   "what": "name",
+   "doubt": "no printed line above the caption (line dropped in the print)"
+  },
+  {
+   "id": "p01-011",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Subscriber's residential address",
+   "printed_label": "(Subscriber's Residential Address)",
+   "must": true,
+   "x0": 40.0,
+   "y0": 375.2,
+   "x1": 276.0,
+   "y1": 390.7,
+   "printed_as": "room above a caption whose line the print dropped",
+   "what": "address",
+   "doubt": "no printed line above the caption (line dropped in the print)"
+  },
+  {
+   "id": "p01-017",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Deliver the units to: account reference",
+   "printed_label": "(Account reference, if applicable)",
+   "must": false,
+   "x0": 324.0,
+   "y0": 375.2,
+   "x1": 560.0,
+   "y1": 390.7,
+   "printed_as": "room above a caption whose line the print dropped",
+   "what": "text",
+   "doubt": "no printed line above the caption (line dropped in the print)"
+  },
+  {
+   "id": "p01-018",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Deliver the units to: contact name",
+   "printed_label": "(Contact Name)",
+   "must": false,
+   "x0": 324.0,
+   "y0": 412.0,
+   "x1": 560.0,
+   "y1": 427.5,
+   "printed_as": "room above a caption whose line the print dropped",
+   "what": "name",
+   "doubt": "no printed line above the caption (line dropped in the print)"
+  },
+  {
+   "id": "p01-019",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Deliver the units to: address",
+   "printed_label": "(Address)",
+   "must": false,
+   "x0": 324.0,
+   "y0": 454.0,
+   "x1": 560.0,
+   "y1": 469.5,
+   "printed_as": "room above a caption whose line the print dropped",
+   "what": "address",
+   "doubt": "no printed line above the caption (line dropped in the print)"
+  },
+  {
+   "id": "p01-012",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Telephone number",
+   "printed_label": "(Telephone Number)",
+   "must": true,
+   "x0": 40.0,
+   "y0": 469.7,
+   "x1": 198.0,
+   "y1": 485.2,
+   "printed_as": "room above a caption whose line the print dropped",
+   "what": "phone",
+   "doubt": "no printed line above the caption (line dropped in the print)"
+  },
+  {
+   "id": "p01-013",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "E-mail address",
+   "printed_label": "(E-mail Address)",
+   "must": true,
+   "x0": 198.0,
+   "y0": 469.7,
+   "x1": 276.0,
+   "y1": 485.2,
+   "printed_as": "room above a caption whose line the print dropped",
+   "what": "email",
+   "doubt": "no printed line above the caption (line dropped in the print)"
+  },
+  {
+   "id": "p01-020",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Register the units in: name",
+   "printed_label": "(Name)",
+   "must": true,
+   "x0": 40.0,
+   "y0": 558.2,
+   "x1": 276.0,
+   "y1": 573.7,
+   "printed_as": "room above a caption whose line the print dropped",
+   "what": "name",
+   "doubt": "no printed line above the caption (line dropped in the print)"
+  },
+  {
+   "id": "p01-021",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Register the units in: account reference",
+   "printed_label": "(Account reference, if applicable)",
+   "must": false,
+   "x0": 40.0,
+   "y0": 591.2,
+   "x1": 276.0,
+   "y1": 606.7,
+   "printed_as": "room above a caption whose line the print dropped",
+   "what": "text",
+   "doubt": "no printed line above the caption (line dropped in the print)"
+  },
+  {
+   "id": "p01-022",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Register the units in: address",
+   "printed_label": "(Address)",
+   "must": true,
+   "x0": 40.0,
+   "y0": 624.2,
+   "x1": 276.0,
+   "y1": 639.7,
+   "printed_as": "room above a caption whose line the print dropped",
+   "what": "address",
+   "doubt": "no printed line above the caption (line dropped in the print)"
+  },
+  {
+   "id": "p01-006",
+   "page": 1,
+   "kind": "date",
+   "owner": "firm",
+   "label": "Acceptance date (month and day, year printed)",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 714.2,
+   "x1": 178.7,
+   "y1": 729.7,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      33.7,
+      714.2,
+      178.7,
+      729.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-001",
+   "page": 2,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Subscription number (issuer, on acceptance)",
+   "printed_label": "Subscription No:",
+   "must": false,
+   "x0": 464.6,
+   "y0": 36.4,
+   "x1": 560.6,
+   "y1": 94.9,
+   "printed_as": "drawn box",
+   "what": "text",
+   "doubt": "owner: issuer or its agent (numbering on acceptance)"
+  },
+  {
+   "id": "p02-002",
+   "page": 2,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Issuer acceptance: By",
+   "printed_label": "By:",
+   "must": true,
+   "x0": 56.0,
+   "y0": 78.7,
+   "x1": 300.0,
+   "y1": 94.2,
+   "printed_as": "room after By: on its line",
+   "doubt": "no printed line after By: (line dropped in the print)"
+  }
+ ],
+ "may_fill": [],
+ "source": "hand",
+ "mode": "train",
+ "prefilled": {
+  "when": "2026-11-15T01:47:34Z",
+  "candidates": "4213bf4edfde3586-f01586d5.json",
+  "result": "out-ps02/c268/result.json",
+  "fields": 2,
+  "counted_candidates": 6
+ },
+ "done": "2026-11-15T01:55:54Z"
+}

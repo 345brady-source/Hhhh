@@ -131,6 +131,10 @@ def main():
         ids = [a.id]
     elif a.batch:
         ids = (L.manifest().get('batches') or {}).get(a.batch)
+        if ids is None:  # added batches of set-c (manifest-c.json key ps), plan 01.4-06
+            mc = os.path.join(L.EDGAR, 'train', 'manifest-c.json')
+            if os.path.exists(mc):
+                ids = ((json.load(open(mc)).get('ps') or {}).get('batches') or {}).get(a.batch)
         if ids is None:
             ids = L.held_b_batches().get(a.batch)
         if ids is None:

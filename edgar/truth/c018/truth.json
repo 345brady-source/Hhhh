@@ -1,0 +1,290 @@
+{
+ "file": "set-c/c018/doc.pdf",
+ "id": "c018",
+ "pages": 4,
+ "page_size_pt": [
+  792.0,
+  612.0
+ ],
+ "page_sizes": {
+  "1": [
+   792.0,
+   612.0
+  ],
+  "2": [
+   792.0,
+   612.0
+  ],
+  "3": [
+   792.0,
+   612.0
+  ],
+  "4": [
+   792.0,
+   612.0
+  ]
+ },
+ "page_kinds": {
+  "1": "picture",
+  "2": "picture",
+  "3": "picture",
+  "4": "picture"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
+ "signing": {
+  "investor_pages": [
+   4
+  ],
+  "firm_pages": [],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": "the purchaser signs on the last page; the issuer's officer signature is already made on the form"
+ },
+ "counts_per_page": {
+  "4": {
+   "total": 7,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 6,
+   "signature": 1,
+   "date": 0
+  }
+ },
+ "counts_total": {
+  "total": 7,
+  "tickbox": 0,
+  "initials": 0,
+  "blank": 6,
+  "signature": 1,
+  "date": 0
+ },
+ "counts_by_owner": {
+  "investor": 6,
+  "unclear": 1
+ },
+ "sure_per_page": {
+  "1": "sure: no places (recitals)",
+  "2": "sure: wiring table is the issuer's escrow account",
+  "3": "sure: no places",
+  "4": "fairly sure: line captions are ambiguous (caption above or below each line)"
+ },
+ "not_fields": {
+  "2": [
+   "wiring instructions table (bank, routing, account number, address): the issuer's escrow account details, completed by the issuer"
+  ],
+  "4": [
+   "issuer's By: signature line, already signed on the form",
+   "investment amount / number of shares has no line of its own (caption only)"
+  ]
+ },
+ "places": [
+  {
+   "id": "p04-008",
+   "page": 4,
+   "kind": "blank",
+   "owner": "unclear",
+   "label": "Date the agreement is executed (month and day, year printed)",
+   "printed_label": "",
+   "must": true,
+   "x0": 91.7,
+   "y0": 130.6,
+   "x1": 135.8,
+   "y1": 146.1,
+   "printed_as": "picture pixels: two underscore runs on one line (month, day), one place covering the whole run",
+   "what": "date",
+   "doubt": "owner: investor or issuer (testimonium date of both parties)"
+  },
+  {
+   "id": "p04-002",
+   "page": 4,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature of Purchaser",
+   "printed_label": "",
+   "must": true,
+   "x0": 91.7,
+   "y0": 188.1,
+   "x1": 173.3,
+   "y1": 203.6,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      91.7,
+      188.1,
+      173.3,
+      203.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-003",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name of Purchaser (line between the investment-amount caption above and the name caption below)",
+   "printed_label": "",
+   "must": true,
+   "x0": 91.4,
+   "y0": 222.8,
+   "x1": 177.6,
+   "y1": 238.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "caption above reads investment amount / number of shares, caption below reads name of purchaser: which datum this line takes is not printed clearly",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      91.4,
+      222.8,
+      177.6,
+      238.3
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p04-004",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Exact name shares are to be registered in / title",
+   "printed_label": "",
+   "must": true,
+   "x0": 91.4,
+   "y0": 257.3,
+   "x1": 177.8,
+   "y1": 272.8,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "caption above reads registration name, caption below reads title (if applicable)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      91.4,
+      257.3,
+      177.8,
+      272.8
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p04-005",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 1",
+   "printed_label": "",
+   "must": true,
+   "x0": 91.2,
+   "y0": 280.2,
+   "x1": 177.8,
+   "y1": 295.7,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      91.2,
+      280.2,
+      177.8,
+      295.7
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p04-006",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 2",
+   "printed_label": "",
+   "must": false,
+   "x0": 91.2,
+   "y0": 291.9,
+   "x1": 177.4,
+   "y1": 307.4,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      91.2,
+      291.9,
+      177.4,
+      307.4
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p04-007",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Address line 3",
+   "printed_label": "",
+   "must": false,
+   "x0": 91.2,
+   "y0": 303.0,
+   "x1": 176.9,
+   "y1": 318.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      91.2,
+      303.0,
+      176.9,
+      318.5
+     ]
+    }
+   },
+   "what": "address"
+  }
+ ],
+ "may_fill": [],
+ "source": "hand",
+ "mode": "train",
+ "prefilled": {
+  "when": "2026-11-15T01:47:33Z",
+  "candidates": "3328e11d9515a3c2-f01586d5.json",
+  "result": "out-ps02/c018/result.json",
+  "fields": 0,
+  "counted_candidates": 9
+ },
+ "done": "2026-11-15T01:49:35Z"
+}

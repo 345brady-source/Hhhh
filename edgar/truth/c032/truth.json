@@ -1,0 +1,346 @@
+{
+ "file": "set-c/c032/doc.pdf",
+ "id": "c032",
+ "pages": 5,
+ "page_size_pt": [
+  792.0,
+  612.0
+ ],
+ "page_sizes": {
+  "1": [
+   792.0,
+   612.0
+  ],
+  "2": [
+   792.0,
+   612.0
+  ],
+  "3": [
+   792.0,
+   612.0
+  ],
+  "4": [
+   792.0,
+   612.0
+  ],
+  "5": [
+   792.0,
+   612.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "picture",
+  "4": "picture",
+  "5": "text"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
+ "signing": {
+  "investor_pages": [
+   4
+  ],
+  "firm_pages": [
+   4
+  ],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": "the investor signs (name, address, signatory) and the issuer's president signs below"
+ },
+ "counts_per_page": {
+  "3": {
+   "total": 3,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 3,
+   "signature": 0,
+   "date": 0
+  },
+  "4": {
+   "total": 5,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 3,
+   "signature": 2,
+   "date": 0
+  }
+ },
+ "counts_total": {
+  "total": 8,
+  "tickbox": 0,
+  "initials": 0,
+  "blank": 6,
+  "signature": 2,
+  "date": 0
+ },
+ "counts_by_owner": {
+  "firm": 1,
+  "investor": 7
+ },
+ "sure_per_page": {
+  "1": "sure: header only",
+  "2": "sure: blank page",
+  "3": "sure: picture page, three blanks",
+  "4": "sure: picture page",
+  "5": "sure: header rule only"
+ },
+ "not_fields": {
+  "3": [
+   "letter C glyphs in the body text that look like small boxes"
+  ],
+  "5": [
+   "decorative page rule"
+  ]
+ },
+ "places": [
+  {
+   "id": "p03-003",
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Date",
+   "printed_label": "",
+   "must": true,
+   "x0": 148.3,
+   "y0": 519.5,
+   "x1": 237.6,
+   "y1": 535.0,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      148.3,
+      519.5,
+      237.6,
+      535.0
+     ]
+    }
+   },
+   "what": "date"
+  },
+  {
+   "id": "p03-004",
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Amount of Investment ($)",
+   "printed_label": "",
+   "must": true,
+   "x0": 472.3,
+   "y0": 519.5,
+   "x1": 537.8,
+   "y1": 535.0,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      472.3,
+      519.5,
+      537.8,
+      535.0
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p03-005",
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of Shares",
+   "printed_label": "",
+   "must": true,
+   "x0": 212.4,
+   "y0": 546.9,
+   "x1": 272.2,
+   "y1": 562.4,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      212.4,
+      546.9,
+      272.2,
+      562.4
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p04-001",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Print Full Name of Investor",
+   "printed_label": "",
+   "must": true,
+   "x0": 427.7,
+   "y0": 36.4,
+   "x1": 630.0,
+   "y1": 51.9,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      427.7,
+      36.4,
+      630.0,
+      51.9
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p04-002",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Permanent Address of Investor, line 1",
+   "printed_label": "",
+   "must": true,
+   "x0": 427.0,
+   "y0": 68.1,
+   "x1": 630.0,
+   "y1": 83.6,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      427.0,
+      68.1,
+      630.0,
+      83.6
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p04-003",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Permanent Address of Investor, line 2",
+   "printed_label": "",
+   "must": false,
+   "x0": 427.0,
+   "y0": 99.8,
+   "x1": 630.0,
+   "y1": 115.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      427.0,
+      99.8,
+      630.0,
+      115.3
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p04-004",
+   "page": 4,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Authorized Signatory (investor)",
+   "printed_label": "",
+   "must": true,
+   "x0": 426.2,
+   "y0": 131.4,
+   "x1": 630.0,
+   "y1": 146.9,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      426.2,
+      131.4,
+      630.0,
+      146.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-005",
+   "page": 4,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Authorized signature of the issuer's President (acceptance)",
+   "printed_label": "",
+   "must": true,
+   "x0": 118.8,
+   "y0": 255.3,
+   "x1": 346.3,
+   "y1": 270.8,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      118.8,
+      255.3,
+      346.3,
+      270.8
+     ]
+    }
+   }
+  }
+ ],
+ "may_fill": [],
+ "source": "hand",
+ "mode": "train",
+ "prefilled": {
+  "when": "2026-11-15T01:47:33Z",
+  "candidates": "dace6b13d9859f65-f01586d5.json",
+  "result": "out-ps02/c032/result.json",
+  "fields": 0,
+  "counted_candidates": 10
+ },
+ "done": "2026-11-15T01:50:29Z"
+}
