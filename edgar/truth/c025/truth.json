@@ -1,0 +1,3101 @@
+{
+ "file": "set-c/c025/doc.pdf",
+ "id": "c025",
+ "pages": 25,
+ "page_size_pt": [
+  792.0,
+  612.0
+ ],
+ "page_sizes": {
+  "1": [
+   792.0,
+   612.0
+  ],
+  "2": [
+   792.0,
+   612.0
+  ],
+  "3": [
+   792.0,
+   612.0
+  ],
+  "4": [
+   792.0,
+   612.0
+  ],
+  "5": [
+   792.0,
+   612.0
+  ],
+  "6": [
+   792.0,
+   612.0
+  ],
+  "7": [
+   792.0,
+   612.0
+  ],
+  "8": [
+   792.0,
+   612.0
+  ],
+  "9": [
+   792.0,
+   612.0
+  ],
+  "10": [
+   792.0,
+   612.0
+  ],
+  "11": [
+   792.0,
+   612.0
+  ],
+  "12": [
+   792.0,
+   612.0
+  ],
+  "13": [
+   792.0,
+   612.0
+  ],
+  "14": [
+   792.0,
+   612.0
+  ],
+  "15": [
+   792.0,
+   612.0
+  ],
+  "16": [
+   792.0,
+   612.0
+  ],
+  "17": [
+   792.0,
+   612.0
+  ],
+  "18": [
+   792.0,
+   612.0
+  ],
+  "19": [
+   792.0,
+   612.0
+  ],
+  "20": [
+   792.0,
+   612.0
+  ],
+  "21": [
+   792.0,
+   612.0
+  ],
+  "22": [
+   792.0,
+   612.0
+  ],
+  "23": [
+   792.0,
+   612.0
+  ],
+  "24": [
+   792.0,
+   612.0
+  ],
+  "25": [
+   792.0,
+   612.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "picture",
+  "3": "mixed",
+  "4": "picture",
+  "5": "mixed",
+  "6": "picture",
+  "7": "mixed",
+  "8": "picture",
+  "9": "mixed",
+  "10": "picture",
+  "11": "mixed",
+  "12": "picture",
+  "13": "mixed",
+  "14": "picture",
+  "15": "mixed",
+  "16": "picture",
+  "17": "mixed",
+  "18": "picture",
+  "19": "mixed",
+  "20": "picture",
+  "21": "mixed",
+  "22": "picture",
+  "23": "mixed",
+  "24": "picture",
+  "25": "mixed"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
+ "signing": {
+  "investor_pages": [
+   12,
+   18
+  ],
+  "firm_pages": [
+   20
+  ],
+  "co_investor": true,
+  "third_parties": [
+   "broker-dealer",
+   "custodian"
+  ],
+  "kind": "the subscriber (individual, trustee, beneficial owner or custodian) and a joint owner or co-trustee; the broker-dealer firm acknowledges; the issuer accepts"
+ },
+ "counts_per_page": {
+  "6": {
+   "total": 13,
+   "tickbox": 5,
+   "initials": 0,
+   "blank": 8,
+   "signature": 0,
+   "date": 0
+  },
+  "8": {
+   "total": 36,
+   "tickbox": 16,
+   "initials": 0,
+   "blank": 20,
+   "signature": 0,
+   "date": 0
+  },
+  "9": {
+   "total": 8,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 8,
+   "signature": 0,
+   "date": 0
+  },
+  "10": {
+   "total": 24,
+   "tickbox": 3,
+   "initials": 0,
+   "blank": 21,
+   "signature": 0,
+   "date": 0
+  },
+  "11": {
+   "total": 4,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 4,
+   "signature": 0,
+   "date": 0
+  },
+  "12": {
+   "total": 12,
+   "tickbox": 4,
+   "initials": 0,
+   "blank": 4,
+   "signature": 2,
+   "date": 2
+  },
+  "14": {
+   "total": 4,
+   "tickbox": 3,
+   "initials": 0,
+   "blank": 1,
+   "signature": 0,
+   "date": 0
+  },
+  "18": {
+   "total": 13,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 5,
+   "signature": 4,
+   "date": 4
+  },
+  "20": {
+   "total": 4,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 2,
+   "signature": 1,
+   "date": 1
+  },
+  "22": {
+   "total": 12,
+   "tickbox": 12,
+   "initials": 0,
+   "blank": 0,
+   "signature": 0,
+   "date": 0
+  },
+  "23": {
+   "total": 1,
+   "tickbox": 1,
+   "initials": 0,
+   "blank": 0,
+   "signature": 0,
+   "date": 0
+  }
+ },
+ "counts_total": {
+  "total": 131,
+  "tickbox": 44,
+  "initials": 0,
+  "blank": 73,
+  "signature": 7,
+  "date": 7
+ },
+ "counts_by_owner": {
+  "co-investor": 18,
+  "firm": 4,
+  "investor": 52,
+  "investor-entity": 28,
+  "investor-individual": 11,
+  "third-party": 18
+ },
+ "sure_per_page": {
+  "1": "sure: cover text, no places",
+  "2": "sure: instructions; the offering circular date and wire details are the issuer's",
+  "3": "sure: no places",
+  "4": "sure: instructions, no places",
+  "5": "sure: no places",
+  "6": "sure: rules measured from the picture",
+  "7": "sure: footer only",
+  "8": "sure: boxes and table rules measured from the picture",
+  "9": "sure; two rows split by the page break",
+  "10": "sure; one row split by the page break",
+  "11": "sure",
+  "12": "sure",
+  "13": "sure: footer only",
+  "14": "sure",
+  "15": "sure: footer only",
+  "16": "sure: text, no places",
+  "17": "sure: footer only",
+  "18": "fairly sure: one line beside the representative signature has no caption",
+  "19": "sure: footer only",
+  "20": "sure",
+  "21": "sure: footer only",
+  "22": "sure: short mark lines as tick boxes",
+  "23": "sure",
+  "24": "sure: no places",
+  "25": "sure: footer only"
+ },
+ "not_fields": {
+  "2": [
+   "Offering circular date in the opening paragraph (issuer completes)",
+   "ABA and account numbers in the wire instructions (issuer's bank details)"
+  ],
+  "6": [
+   "CUSIP (if any): no line, the issuer's identifier",
+   "ABA No and Acct No in the wire instructions (issuer's bank details)"
+  ],
+  "8": [
+   "Logo marks and the empty header cell between the two ownership columns"
+  ],
+  "7": [
+   "Footer rule and page footer"
+  ]
+ },
+ "places": [
+  {
+   "id": "p06-005",
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Initial investment",
+   "printed_label": "",
+   "must": true,
+   "x0": 172.1,
+   "y0": 186.5,
+   "x1": 179.3,
+   "y1": 192.2,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      172.1,
+      186.5,
+      179.3,
+      192.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p06-006",
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Additional investment",
+   "printed_label": "",
+   "must": true,
+   "x0": 172.1,
+   "y0": 207.4,
+   "x1": 179.3,
+   "y1": 213.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      172.1,
+      207.4,
+      179.3,
+      213.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p06-017",
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Account number for existing account",
+   "printed_label": "Account number for existing account:",
+   "must": false,
+   "x0": 309.5,
+   "y0": 208.7,
+   "x1": 381.5,
+   "y1": 224.7,
+   "printed_as": "measured by hand",
+   "what": "text"
+  },
+  {
+   "id": "p06-007",
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Bonds subscription amount",
+   "printed_label": "Bonds Subscription Amount: $",
+   "must": true,
+   "x0": 269.3,
+   "y0": 226.8,
+   "x1": 324.7,
+   "y1": 242.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      269.3,
+      226.8,
+      324.7,
+      242.3
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p06-018",
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of bonds",
+   "printed_label": "# of Bonds:",
+   "must": true,
+   "x0": 231.0,
+   "y0": 235.3,
+   "x1": 262.5,
+   "y1": 251.5,
+   "printed_as": "measured by hand",
+   "what": "text"
+  },
+  {
+   "id": "p06-008",
+   "page": 6,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Broker-dealer or adviser firm name",
+   "printed_label": "Name of firm:",
+   "must": false,
+   "x0": 222.5,
+   "y0": 307.5,
+   "x1": 417.6,
+   "y1": 323.0,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      222.5,
+      307.5,
+      417.6,
+      323.0
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p06-009",
+   "page": 6,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "CRD/branch number",
+   "printed_label": "CRD/Branch Number:",
+   "must": false,
+   "x0": 514.8,
+   "y0": 307.1,
+   "x1": 627.1,
+   "y1": 322.6,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      514.8,
+      307.1,
+      627.1,
+      322.6
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p06-010",
+   "page": 6,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Representative name",
+   "printed_label": "Name of individual representative:",
+   "must": false,
+   "x0": 284.4,
+   "y0": 329.8,
+   "x1": 393.8,
+   "y1": 345.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      284.4,
+      329.8,
+      393.8,
+      345.3
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p06-011",
+   "page": 6,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Representative phone",
+   "printed_label": "Phone #:",
+   "must": false,
+   "x0": 426.2,
+   "y0": 329.8,
+   "x1": 488.9,
+   "y1": 345.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      426.2,
+      329.8,
+      488.9,
+      345.3
+     ]
+    }
+   },
+   "what": "phone"
+  },
+  {
+   "id": "p06-012",
+   "page": 6,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Representative email",
+   "printed_label": "Email:",
+   "must": false,
+   "x0": 516.2,
+   "y0": 329.8,
+   "x1": 623.5,
+   "y1": 345.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      516.2,
+      329.8,
+      623.5,
+      345.3
+     ]
+    }
+   },
+   "what": "email"
+  },
+  {
+   "id": "p06-013",
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Payment by mail",
+   "printed_label": "By Mail",
+   "must": false,
+   "x0": 175.0,
+   "y0": 382.3,
+   "x1": 182.9,
+   "y1": 388.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      175.0,
+      382.3,
+      182.9,
+      388.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p06-014",
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Payment by wire",
+   "printed_label": "By Wire Transfer",
+   "must": false,
+   "x0": 175.0,
+   "y0": 414.0,
+   "x1": 182.9,
+   "y1": 420.5,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      175.0,
+      414.0,
+      182.9,
+      420.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p06-016",
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Custodial account",
+   "printed_label": "Custodial Accounts",
+   "must": false,
+   "x0": 175.0,
+   "y0": 503.3,
+   "x1": 182.9,
+   "y1": 509.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      175.0,
+      503.3,
+      182.9,
+      509.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p08-017",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Individual",
+   "printed_label": "Individual",
+   "must": true,
+   "x0": 173.2,
+   "y0": 144.8,
+   "x1": 179.8,
+   "y1": 150.2,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p08-027",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Traditional IRA",
+   "printed_label": "Traditional IRA",
+   "must": true,
+   "x0": 414.2,
+   "y0": 145.0,
+   "x1": 420.5,
+   "y1": 150.2,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p08-018",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Joint tenants with rights of survivorship",
+   "printed_label": "Joint Tenants with Rights of Survivorship",
+   "must": true,
+   "x0": 173.5,
+   "y0": 158.2,
+   "x1": 179.5,
+   "y1": 163.5,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p08-028",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Roth IRA",
+   "printed_label": "Roth IRA",
+   "must": true,
+   "x0": 414.2,
+   "y0": 158.5,
+   "x1": 420.5,
+   "y1": 163.5,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p08-003",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "SEP",
+   "printed_label": "Simplified Employee Pension/Trust (SEP)",
+   "must": true,
+   "x0": 414.0,
+   "y0": 169.9,
+   "x1": 421.2,
+   "y1": 176.4,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      414.0,
+      169.9,
+      421.2,
+      176.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p08-019",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Community property",
+   "printed_label": "Community Property",
+   "must": true,
+   "x0": 173.2,
+   "y0": 179.8,
+   "x1": 179.8,
+   "y1": 185.5,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p08-020",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Tenants in common",
+   "printed_label": "Tenants in Common",
+   "must": true,
+   "x0": 173.2,
+   "y0": 192.2,
+   "x1": 179.8,
+   "y1": 197.5,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p08-004",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "KEOGH",
+   "printed_label": "KEOGH",
+   "must": true,
+   "x0": 414.0,
+   "y0": 191.5,
+   "x1": 421.2,
+   "y1": 198.0,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      414.0,
+      191.5,
+      421.2,
+      198.0
+     ]
+    }
+   }
+  },
+  {
+   "id": "p08-005",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "UGMA state",
+   "printed_label": "State of",
+   "must": false,
+   "x0": 311.8,
+   "y0": 196.6,
+   "x1": 339.8,
+   "y1": 212.1,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      311.8,
+      196.6,
+      339.8,
+      212.1
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p08-006",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Other custodial: specify",
+   "printed_label": "Other",
+   "must": false,
+   "x0": 455.0,
+   "y0": 196.6,
+   "x1": 598.3,
+   "y1": 212.1,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      455.0,
+      196.6,
+      598.3,
+      212.1
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p08-021",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "UGMA",
+   "printed_label": "Uniform Gift to Minors Act",
+   "must": true,
+   "x0": 173.2,
+   "y0": 204.2,
+   "x1": 179.8,
+   "y1": 209.8,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p08-007",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Other custodial",
+   "printed_label": "Other",
+   "must": true,
+   "x0": 414.0,
+   "y0": 203.8,
+   "x1": 421.2,
+   "y1": 210.2,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      414.0,
+      203.8,
+      421.2,
+      210.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p08-008",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "UTMA state",
+   "printed_label": "State of",
+   "must": false,
+   "x0": 326.9,
+   "y0": 217.8,
+   "x1": 355.0,
+   "y1": 233.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      326.9,
+      217.8,
+      355.0,
+      233.3
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p08-009",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "UTMA",
+   "printed_label": "Uniform Transfer to Minors Act",
+   "must": true,
+   "x0": 172.8,
+   "y0": 226.1,
+   "x1": 180.0,
+   "y1": 231.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      172.8,
+      226.1,
+      180.0,
+      231.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p08-022",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Qualified pension or profit sharing plan",
+   "printed_label": "Qualified Pension or Profit Sharing Plan",
+   "must": true,
+   "x0": 173.2,
+   "y0": 247.8,
+   "x1": 179.8,
+   "y1": 253.0,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p08-010",
+   "page": 8,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Name of custodian",
+   "printed_label": "Name of Custodian:",
+   "must": false,
+   "x0": 413.2,
+   "y0": 247.5,
+   "x1": 546.5,
+   "y1": 268.0,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      412.6,
+      233.7,
+      547.2,
+      249.2
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p08-023",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Trust",
+   "printed_label": "Trust",
+   "must": true,
+   "x0": 173.5,
+   "y0": 269.5,
+   "x1": 179.5,
+   "y1": 274.8,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p08-011",
+   "page": 8,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Custodian mailing address, city, state",
+   "printed_label": "Mailing Address; City; State:",
+   "must": false,
+   "x0": 413.2,
+   "y0": 268.0,
+   "x1": 546.5,
+   "y1": 288.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      412.6,
+      253.8,
+      546.5,
+      269.3
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p08-012",
+   "page": 8,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Custodian ZIP code",
+   "printed_label": "Zip Code:",
+   "must": false,
+   "x0": 413.2,
+   "y0": 288.5,
+   "x1": 546.5,
+   "y1": 309.0,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      412.6,
+      274.7,
+      546.5,
+      290.2
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p08-024",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Corporation",
+   "printed_label": "Corporation",
+   "must": true,
+   "x0": 173.5,
+   "y0": 291.2,
+   "x1": 179.5,
+   "y1": 296.5,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p08-013",
+   "page": 8,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Custodian tax ID",
+   "printed_label": "Custodian Tax ID #:",
+   "must": false,
+   "x0": 413.2,
+   "y0": 309.0,
+   "x1": 546.5,
+   "y1": 329.2,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      412.6,
+      294.9,
+      546.5,
+      310.4
+     ]
+    }
+   },
+   "what": "tax number"
+  },
+  {
+   "id": "p08-025",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Partnership",
+   "printed_label": "Partnership",
+   "must": true,
+   "x0": 173.5,
+   "y0": 321.9,
+   "x1": 179.5,
+   "y1": 327.2,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p08-014",
+   "page": 8,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Custodian account number",
+   "printed_label": "Custodian Account #:",
+   "must": false,
+   "x0": 413.2,
+   "y0": 329.2,
+   "x1": 546.5,
+   "y1": 349.9,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      412.6,
+      315.4,
+      547.2,
+      330.9
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p08-015",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Other: specify",
+   "printed_label": "Other (Specify)",
+   "must": false,
+   "x0": 245.5,
+   "y0": 335.6,
+   "x1": 363.6,
+   "y1": 351.1,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      245.5,
+      335.6,
+      363.6,
+      351.1
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p08-026",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Other",
+   "printed_label": "Other (Specify)",
+   "must": true,
+   "x0": 173.2,
+   "y0": 343.0,
+   "x1": 179.8,
+   "y1": 348.5,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p08-016",
+   "page": 8,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Custodian phone",
+   "printed_label": "Custodian Phone #:",
+   "must": false,
+   "x0": 413.2,
+   "y0": 349.9,
+   "x1": 546.5,
+   "y1": 370.8,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      412.6,
+      335.9,
+      547.2,
+      351.4
+     ]
+    }
+   },
+   "what": "phone"
+  },
+  {
+   "id": "p08-029",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Owner name",
+   "printed_label": "First, Middle, Last Name:",
+   "must": true,
+   "x0": 179.1,
+   "y0": 431.6,
+   "x1": 388.1,
+   "y1": 456.8,
+   "printed_as": "measured by hand",
+   "what": "name"
+  },
+  {
+   "id": "p08-030",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Owner SSN",
+   "printed_label": "Social Security #:",
+   "must": true,
+   "x0": 388.1,
+   "y0": 431.6,
+   "x1": 627.0,
+   "y1": 456.8,
+   "printed_as": "measured by hand",
+   "what": "tax number"
+  },
+  {
+   "id": "p08-031",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Owner street address",
+   "printed_label": "Street Address:",
+   "must": true,
+   "x0": 179.1,
+   "y0": 456.8,
+   "x1": 388.1,
+   "y1": 480.8,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p08-032",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Owner city, state, ZIP",
+   "printed_label": "City, State, Zip Code:",
+   "must": true,
+   "x0": 388.1,
+   "y0": 456.8,
+   "x1": 627.0,
+   "y1": 480.8,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p08-033",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Owner daytime phone",
+   "printed_label": "Daytime Phone #:",
+   "must": true,
+   "x0": 179.1,
+   "y0": 480.8,
+   "x1": 388.1,
+   "y1": 505.6,
+   "printed_as": "measured by hand",
+   "what": "phone"
+  },
+  {
+   "id": "p08-034",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Owner date of birth",
+   "printed_label": "Date of Birth:",
+   "must": true,
+   "x0": 388.1,
+   "y0": 480.8,
+   "x1": 627.0,
+   "y1": 505.6,
+   "printed_as": "measured by hand",
+   "what": "date"
+  },
+  {
+   "id": "p08-035",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Owner citizenship",
+   "printed_label": "Citizenship (If Not a US Citizen, Specify Country):",
+   "must": true,
+   "x0": 179.1,
+   "y0": 505.6,
+   "x1": 388.1,
+   "y1": 530.2,
+   "printed_as": "measured by hand",
+   "what": "text"
+  },
+  {
+   "id": "p08-036",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor-individual",
+   "label": "Owner email",
+   "printed_label": "E-mail Address:",
+   "must": true,
+   "x0": 388.1,
+   "y0": 505.6,
+   "x1": 627.0,
+   "y1": 530.2,
+   "printed_as": "measured by hand",
+   "what": "email"
+  },
+  {
+   "id": "p08-037",
+   "page": 8,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint owner name",
+   "printed_label": "First, Middle, Last Name:",
+   "must": false,
+   "x0": 179.1,
+   "y0": 556.5,
+   "x1": 388.1,
+   "y1": 576.0,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "split by page break"
+  },
+  {
+   "id": "p08-038",
+   "page": 8,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint owner SSN",
+   "printed_label": "Social Security #:",
+   "must": false,
+   "x0": 388.1,
+   "y0": 556.5,
+   "x1": 627.0,
+   "y1": 576.0,
+   "printed_as": "measured by hand",
+   "what": "tax number",
+   "doubt": "split by page break"
+  },
+  {
+   "id": "p09-001",
+   "page": 9,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint owner name",
+   "printed_label": "",
+   "must": false,
+   "x0": 179.1,
+   "y0": 35.8,
+   "x1": 388.1,
+   "y1": 41.4,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "split by page break"
+  },
+  {
+   "id": "p09-002",
+   "page": 9,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint owner SSN",
+   "printed_label": "",
+   "must": false,
+   "x0": 388.1,
+   "y0": 35.8,
+   "x1": 627.0,
+   "y1": 41.4,
+   "printed_as": "measured by hand",
+   "what": "tax number",
+   "doubt": "split by page break"
+  },
+  {
+   "id": "p09-003",
+   "page": 9,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint owner street address",
+   "printed_label": "Street Address:",
+   "must": false,
+   "x0": 179.1,
+   "y0": 41.4,
+   "x1": 388.1,
+   "y1": 66.0,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p09-004",
+   "page": 9,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint owner city, state, ZIP",
+   "printed_label": "City, State, Zip Code:",
+   "must": false,
+   "x0": 388.1,
+   "y0": 41.4,
+   "x1": 627.0,
+   "y1": 66.0,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p09-005",
+   "page": 9,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint owner daytime phone",
+   "printed_label": "Daytime Phone #:",
+   "must": false,
+   "x0": 179.1,
+   "y0": 66.0,
+   "x1": 388.1,
+   "y1": 90.6,
+   "printed_as": "measured by hand",
+   "what": "phone"
+  },
+  {
+   "id": "p09-006",
+   "page": 9,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint owner date of birth",
+   "printed_label": "Date of Birth:",
+   "must": false,
+   "x0": 388.1,
+   "y0": 66.0,
+   "x1": 627.0,
+   "y1": 90.6,
+   "printed_as": "measured by hand",
+   "what": "date"
+  },
+  {
+   "id": "p09-007",
+   "page": 9,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint owner citizenship",
+   "printed_label": "Citizenship (If Not a US Citizen, Specify Country):",
+   "must": false,
+   "x0": 179.1,
+   "y0": 90.6,
+   "x1": 388.1,
+   "y1": 103.0,
+   "printed_as": "measured by hand",
+   "what": "text",
+   "doubt": "split by page break"
+  },
+  {
+   "id": "p09-008",
+   "page": 9,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint owner email",
+   "printed_label": "E-mail Address:",
+   "must": false,
+   "x0": 388.1,
+   "y0": 90.6,
+   "x1": 627.0,
+   "y1": 103.0,
+   "printed_as": "measured by hand",
+   "what": "email",
+   "doubt": "split by page break"
+  },
+  {
+   "id": "p10-001",
+   "page": 10,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint owner citizenship",
+   "printed_label": "",
+   "must": false,
+   "x0": 179.1,
+   "y0": 97.4,
+   "x1": 388.1,
+   "y1": 110.0,
+   "printed_as": "measured by hand",
+   "what": "text",
+   "doubt": "split by page break"
+  },
+  {
+   "id": "p10-002",
+   "page": 10,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint owner email",
+   "printed_label": "",
+   "must": false,
+   "x0": 388.1,
+   "y0": 97.4,
+   "x1": 627.0,
+   "y1": 110.0,
+   "printed_as": "measured by hand",
+   "what": "email",
+   "doubt": "split by page break"
+  },
+  {
+   "id": "p10-003",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Name of trust",
+   "printed_label": "Name of Trust:",
+   "must": false,
+   "x0": 179.1,
+   "y0": 149.8,
+   "x1": 388.1,
+   "y1": 174.6,
+   "printed_as": "measured by hand",
+   "what": "name"
+  },
+  {
+   "id": "p10-004",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Trust tax ID",
+   "printed_label": "Tax ID #:",
+   "must": false,
+   "x0": 388.1,
+   "y0": 149.8,
+   "x1": 627.0,
+   "y1": 161.5,
+   "printed_as": "measured by hand",
+   "what": "tax number"
+  },
+  {
+   "id": "p10-005",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Date of trust",
+   "printed_label": "Date of Trust:",
+   "must": false,
+   "x0": 388.1,
+   "y0": 161.5,
+   "x1": 627.0,
+   "y1": 174.6,
+   "printed_as": "measured by hand",
+   "what": "date"
+  },
+  {
+   "id": "p10-006",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Trustee names",
+   "printed_label": "Name(s) of Trustee(s)*:",
+   "must": false,
+   "x0": 179.1,
+   "y0": 174.6,
+   "x1": 388.1,
+   "y1": 198.6,
+   "printed_as": "measured by hand",
+   "what": "name"
+  },
+  {
+   "id": "p10-007",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Beneficial owner names",
+   "printed_label": "Name(s) of Beneficial Owner(s)*:",
+   "must": false,
+   "x0": 388.1,
+   "y0": 174.6,
+   "x1": 627.0,
+   "y1": 198.6,
+   "printed_as": "measured by hand",
+   "what": "name"
+  },
+  {
+   "id": "p10-008",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Beneficial owner street address",
+   "printed_label": "Beneficial Owner(s) Street Address:",
+   "must": false,
+   "x0": 179.1,
+   "y0": 198.6,
+   "x1": 388.1,
+   "y1": 223.4,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p10-009",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Beneficial owner city, state, ZIP",
+   "printed_label": "City, State, Zip Code:",
+   "must": false,
+   "x0": 388.1,
+   "y0": 198.6,
+   "x1": 627.0,
+   "y1": 223.4,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p10-010",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Beneficial owner SSN",
+   "printed_label": "Social Security #:",
+   "must": false,
+   "x0": 179.1,
+   "y0": 223.4,
+   "x1": 388.1,
+   "y1": 248.2,
+   "printed_as": "measured by hand",
+   "what": "tax number"
+  },
+  {
+   "id": "p10-011",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Beneficial owner date of birth",
+   "printed_label": "Date of Birth:",
+   "must": false,
+   "x0": 388.1,
+   "y0": 223.4,
+   "x1": 627.0,
+   "y1": 248.2,
+   "printed_as": "measured by hand",
+   "what": "date"
+  },
+  {
+   "id": "p10-012",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Beneficial owner occupation",
+   "printed_label": "Occupation:",
+   "must": false,
+   "x0": 179.1,
+   "y0": 248.2,
+   "x1": 388.1,
+   "y1": 272.9,
+   "printed_as": "measured by hand",
+   "what": "text"
+  },
+  {
+   "id": "p10-013",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Beneficial owner email",
+   "printed_label": "E-mail Address:",
+   "must": false,
+   "x0": 388.1,
+   "y0": 248.2,
+   "x1": 627.0,
+   "y1": 272.9,
+   "printed_as": "measured by hand",
+   "what": "email"
+  },
+  {
+   "id": "p10-014",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Name of entity",
+   "printed_label": "Name of Entity:",
+   "must": false,
+   "x0": 179.1,
+   "y0": 312.6,
+   "x1": 388.2,
+   "y1": 337.2,
+   "printed_as": "measured by hand",
+   "what": "name"
+  },
+  {
+   "id": "p10-015",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Entity tax ID",
+   "printed_label": "Tax ID #:",
+   "must": false,
+   "x0": 388.2,
+   "y0": 312.6,
+   "x1": 627.0,
+   "y1": 324.9,
+   "printed_as": "measured by hand",
+   "what": "tax number"
+  },
+  {
+   "id": "p10-016",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Date of entity formation",
+   "printed_label": "Date of Entity Formation:",
+   "must": false,
+   "x0": 388.2,
+   "y0": 324.9,
+   "x1": 627.0,
+   "y1": 337.2,
+   "printed_as": "measured by hand",
+   "what": "date"
+  },
+  {
+   "id": "p10-017",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Officer, general partner or authorized person names",
+   "printed_label": "Name(s) of Officer(s), General Partner or Authorized:",
+   "must": false,
+   "x0": 179.1,
+   "y0": 337.2,
+   "x1": 388.2,
+   "y1": 361.5,
+   "printed_as": "measured by hand",
+   "what": "name"
+  },
+  {
+   "id": "p10-018",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Additional authorized person",
+   "printed_label": "Additional Name of Authorized Person (if any):",
+   "must": false,
+   "x0": 388.2,
+   "y0": 337.2,
+   "x1": 627.0,
+   "y1": 361.5,
+   "printed_as": "measured by hand",
+   "what": "name"
+  },
+  {
+   "id": "p10-019",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Entity legal street address",
+   "printed_label": "Legal Street Address:",
+   "must": false,
+   "x0": 179.1,
+   "y0": 361.5,
+   "x1": 388.2,
+   "y1": 386.2,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p10-020",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Entity city, state, ZIP",
+   "printed_label": "City, State, Zip Code:",
+   "must": false,
+   "x0": 388.2,
+   "y0": 361.5,
+   "x1": 627.0,
+   "y1": 386.2,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p10-021",
+   "page": 10,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Distributions mailed to section 4 address",
+   "printed_label": "I choose to have distributions mailed to me at the address listed in Section 4.",
+   "must": true,
+   "x0": 175.5,
+   "y0": 488.5,
+   "x1": 182.2,
+   "y1": 494.0,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p10-023",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Distribution mailing address",
+   "printed_label": "I choose to have distributions mailed to me at the following address.",
+   "must": false,
+   "x0": 414.2,
+   "y0": 500.0,
+   "x1": 591.8,
+   "y1": 516.7,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p10-022",
+   "page": 10,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Distributions mailed to another address",
+   "printed_label": "I choose to have distributions mailed to me at the following address.",
+   "must": true,
+   "x0": 175.5,
+   "y0": 508.8,
+   "x1": 182.2,
+   "y1": 514.2,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p10-024",
+   "page": 10,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Distributions deposited to an account",
+   "printed_label": "I choose to have distributions deposited in a checking, savings or brokerage account.",
+   "must": true,
+   "x0": 175.5,
+   "y0": 527.0,
+   "x1": 182.2,
+   "y1": 532.5,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p11-001",
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Financial institution name",
+   "printed_label": "Name of Financial Institution:",
+   "must": false,
+   "x0": 179.1,
+   "y0": 43.0,
+   "x1": 388.6,
+   "y1": 73.0,
+   "printed_as": "measured by hand",
+   "what": "name"
+  },
+  {
+   "id": "p11-002",
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Bank ABA routing number",
+   "printed_label": "Your Bank's ABA Routing #:",
+   "must": false,
+   "x0": 388.6,
+   "y0": 43.0,
+   "x1": 626.8,
+   "y1": 73.0,
+   "printed_as": "measured by hand",
+   "what": "text"
+  },
+  {
+   "id": "p11-003",
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Bank account number",
+   "printed_label": "Your Account #:",
+   "must": false,
+   "x0": 179.1,
+   "y0": 73.0,
+   "x1": 388.6,
+   "y1": 100.0,
+   "printed_as": "measured by hand",
+   "what": "text"
+  },
+  {
+   "id": "p11-004",
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name on account or FBO",
+   "printed_label": "Name on Account or FBO:",
+   "must": false,
+   "x0": 388.6,
+   "y0": 73.0,
+   "x1": 626.8,
+   "y1": 100.0,
+   "printed_as": "measured by hand",
+   "what": "name"
+  },
+  {
+   "id": "p12-008",
+   "page": 12,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Brokerage mailing address",
+   "printed_label": "Brokerage Mailing Address:",
+   "must": false,
+   "x0": 179.1,
+   "y0": 97.4,
+   "x1": 388.6,
+   "y1": 127.5,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p12-009",
+   "page": 12,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Brokerage city, state, ZIP",
+   "printed_label": "City, State, Zip Code:",
+   "must": false,
+   "x0": 388.6,
+   "y0": 97.4,
+   "x1": 626.6,
+   "y1": 148.4,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p12-010",
+   "page": 12,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: checking",
+   "printed_label": "Checking",
+   "must": false,
+   "x0": 244.0,
+   "y0": 133.0,
+   "x1": 250.0,
+   "y1": 138.2,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p12-011",
+   "page": 12,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: savings",
+   "printed_label": "Savings",
+   "must": false,
+   "x0": 292.0,
+   "y0": 133.2,
+   "x1": 297.2,
+   "y1": 138.5,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p12-012",
+   "page": 12,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: brokerage",
+   "printed_label": "Brokerage",
+   "must": false,
+   "x0": 332.8,
+   "y0": 132.8,
+   "x1": 338.8,
+   "y1": 138.2,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p12-002",
+   "page": 12,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Bank account owner signature (deposit authorization)",
+   "printed_label": "Signature of Individual/Trustee/Beneficial Owner",
+   "must": false,
+   "x0": 167.0,
+   "y0": 228.3,
+   "x1": 355.0,
+   "y1": 243.8,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      167.0,
+      228.3,
+      355.0,
+      243.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p12-003",
+   "page": 12,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date",
+   "printed_label": "Date",
+   "must": false,
+   "x0": 412.6,
+   "y0": 228.3,
+   "x1": 523.4,
+   "y1": 243.8,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      412.6,
+      228.3,
+      523.4,
+      243.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p12-004",
+   "page": 12,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Printed name",
+   "printed_label": "Printed Name",
+   "must": false,
+   "x0": 167.0,
+   "y0": 254.9,
+   "x1": 354.2,
+   "y1": 270.4,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      167.0,
+      254.9,
+      354.2,
+      270.4
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p12-005",
+   "page": 12,
+   "kind": "signature",
+   "owner": "co-investor",
+   "label": "Joint owner signature (deposit authorization)",
+   "printed_label": "Signature of Joint Owner/Co-trustee",
+   "must": false,
+   "x0": 166.3,
+   "y0": 281.6,
+   "x1": 355.0,
+   "y1": 297.1,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      166.3,
+      281.6,
+      355.0,
+      297.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p12-006",
+   "page": 12,
+   "kind": "date",
+   "owner": "co-investor",
+   "label": "Date",
+   "printed_label": "Date",
+   "must": false,
+   "x0": 412.6,
+   "y0": 281.6,
+   "x1": 524.2,
+   "y1": 297.1,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      412.6,
+      281.6,
+      524.2,
+      297.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p12-007",
+   "page": 12,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint owner printed name",
+   "printed_label": "Printed Name",
+   "must": false,
+   "x0": 167.0,
+   "y0": 308.2,
+   "x1": 354.2,
+   "y1": 323.7,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      167.0,
+      308.2,
+      354.2,
+      323.7
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p12-013",
+   "page": 12,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Electronic delivery consent",
+   "printed_label": "In lieu of receiving documents by mail, I authorize the company",
+   "must": false,
+   "x0": 173.5,
+   "y0": 385.8,
+   "x1": 179.8,
+   "y1": 391.2,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p14-002",
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Email for electronic delivery",
+   "printed_label": "E-mail Address:",
+   "must": false,
+   "x0": 249.1,
+   "y0": 109.8,
+   "x1": 439.9,
+   "y1": 125.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      249.1,
+      109.8,
+      439.9,
+      125.3
+     ]
+    }
+   },
+   "what": "email"
+  },
+  {
+   "id": "p14-003",
+   "page": 14,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Natural person within 10% limit",
+   "printed_label": "I am a natural person",
+   "must": true,
+   "x0": 202.8,
+   "y0": 283.0,
+   "x1": 209.2,
+   "y1": 288.2,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p14-004",
+   "page": 14,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Non-natural person within 10% limit",
+   "printed_label": "I am a non-natural person",
+   "must": true,
+   "x0": 202.8,
+   "y0": 310.8,
+   "x1": 209.2,
+   "y1": 316.2,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p14-005",
+   "page": 14,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Accredited investor",
+   "printed_label": "I am an accredited investor.",
+   "must": true,
+   "x0": 202.8,
+   "y0": 339.2,
+   "x1": 209.2,
+   "y1": 344.8,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p18-012",
+   "page": 18,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Subscriber signature",
+   "printed_label": "Signature of Individual/Trustee/Beneficial Owner/Custodian",
+   "must": true,
+   "x0": 166.8,
+   "y0": 161.8,
+   "x1": 396.2,
+   "y1": 178.7,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p18-002",
+   "page": 18,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 442.8,
+   "y0": 162.4,
+   "x1": 579.6,
+   "y1": 177.9,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      442.8,
+      162.4,
+      579.6,
+      177.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p18-003",
+   "page": 18,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Printed name",
+   "printed_label": "Printed Name",
+   "must": true,
+   "x0": 167.0,
+   "y0": 195.2,
+   "x1": 396.7,
+   "y1": 210.7,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      167.0,
+      195.2,
+      396.7,
+      210.7
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p18-013",
+   "page": 18,
+   "kind": "signature",
+   "owner": "co-investor",
+   "label": "Joint owner signature",
+   "printed_label": "Signature of Joint Owner/Co-trustee",
+   "must": false,
+   "x0": 166.8,
+   "y0": 237.5,
+   "x1": 396.2,
+   "y1": 254.0,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p18-004",
+   "page": 18,
+   "kind": "date",
+   "owner": "co-investor",
+   "label": "Date",
+   "printed_label": "Date",
+   "must": false,
+   "x0": 443.5,
+   "y0": 238.0,
+   "x1": 578.9,
+   "y1": 253.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      443.5,
+      238.0,
+      578.9,
+      253.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p18-005",
+   "page": 18,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint owner printed name",
+   "printed_label": "Printed Name",
+   "must": false,
+   "x0": 167.0,
+   "y0": 270.8,
+   "x1": 396.7,
+   "y1": 286.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      167.0,
+      270.8,
+      396.7,
+      286.3
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p18-014",
+   "page": 18,
+   "kind": "signature",
+   "owner": "third-party",
+   "label": "Firm principal signature",
+   "printed_label": "Signature - Firm Principal",
+   "must": false,
+   "x0": 166.8,
+   "y0": 377.5,
+   "x1": 396.5,
+   "y1": 394.5,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p18-006",
+   "page": 18,
+   "kind": "date",
+   "owner": "third-party",
+   "label": "Date",
+   "printed_label": "Date",
+   "must": false,
+   "x0": 443.5,
+   "y0": 378.4,
+   "x1": 578.9,
+   "y1": 393.9,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      443.5,
+      378.4,
+      578.9,
+      393.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p18-007",
+   "page": 18,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Firm principal printed name",
+   "printed_label": "Printed Name",
+   "must": false,
+   "x0": 167.8,
+   "y0": 410.8,
+   "x1": 396.0,
+   "y1": 426.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      167.8,
+      410.8,
+      396.0,
+      426.3
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p18-008",
+   "page": 18,
+   "kind": "signature",
+   "owner": "third-party",
+   "label": "Authorized representative signature",
+   "printed_label": "Signature - Authorized Representative",
+   "must": false,
+   "x0": 167.0,
+   "y0": 454.4,
+   "x1": 396.7,
+   "y1": 469.9,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      167.0,
+      454.4,
+      396.7,
+      469.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p18-009",
+   "page": 18,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Line beside representative signature",
+   "must": false,
+   "x0": 443.5,
+   "y0": 454.4,
+   "x1": 578.9,
+   "y1": 469.9,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "no printed caption under this line (beside the representative's signature)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      443.5,
+      454.4,
+      578.9,
+      469.9
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p18-010",
+   "page": 18,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Representative printed name",
+   "printed_label": "Printed Name",
+   "must": false,
+   "x0": 167.0,
+   "y0": 486.0,
+   "x1": 396.0,
+   "y1": 501.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      207.4,
+      486.0,
+      396.0,
+      501.5
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p18-011",
+   "page": 18,
+   "kind": "date",
+   "owner": "third-party",
+   "label": "Date",
+   "printed_label": "Date",
+   "must": false,
+   "x0": 443.5,
+   "y0": 486.8,
+   "x1": 579.6,
+   "y1": 502.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      443.5,
+      486.8,
+      579.6,
+      502.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p20-002",
+   "page": 20,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Issuer acceptance signature",
+   "printed_label": "By:",
+   "must": true,
+   "x0": 185.0,
+   "y0": 235.8,
+   "x1": 448.6,
+   "y1": 251.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      185.0,
+      235.8,
+      448.6,
+      251.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p20-003",
+   "page": 20,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Signer name",
+   "printed_label": "Name:",
+   "must": true,
+   "x0": 198.0,
+   "y0": 261.0,
+   "x1": 385.9,
+   "y1": 276.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      198.0,
+      261.0,
+      385.9,
+      276.5
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p20-004",
+   "page": 20,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Signer title",
+   "printed_label": "Its:",
+   "must": true,
+   "x0": 182.9,
+   "y0": 274.0,
+   "x1": 352.1,
+   "y1": 289.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      182.9,
+      274.0,
+      352.1,
+      289.5
+     ]
+    }
+   },
+   "what": "title"
+  },
+  {
+   "id": "p20-005",
+   "page": 20,
+   "kind": "date",
+   "owner": "firm",
+   "label": "Acceptance date",
+   "printed_label": "Dated:",
+   "must": true,
+   "x0": 385.9,
+   "y0": 274.0,
+   "x1": 488.2,
+   "y1": 289.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      385.9,
+      274.0,
+      488.2,
+      289.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p22-002",
+   "page": 22,
+   "kind": "tickbox",
+   "owner": "investor-individual",
+   "label": "Net worth over 1M",
+   "printed_label": "(a)",
+   "must": false,
+   "x0": 197.3,
+   "y0": 164.2,
+   "x1": 223.9,
+   "y1": 179.7,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      197.3,
+      164.2,
+      223.9,
+      179.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p22-003",
+   "page": 22,
+   "kind": "tickbox",
+   "owner": "investor-individual",
+   "label": "Income over 200k/300k",
+   "printed_label": "(b)",
+   "must": false,
+   "x0": 198.0,
+   "y0": 197.0,
+   "x1": 223.9,
+   "y1": 212.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      198.0,
+      197.0,
+      223.9,
+      212.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p22-004",
+   "page": 22,
+   "kind": "tickbox",
+   "owner": "investor-individual",
+   "label": "Officer or general partner of the issuer",
+   "printed_label": "(c)",
+   "must": false,
+   "x0": 197.3,
+   "y0": 230.4,
+   "x1": 224.6,
+   "y1": 245.9,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      197.3,
+      230.4,
+      224.6,
+      245.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p22-005",
+   "page": 22,
+   "kind": "tickbox",
+   "owner": "investor-entity",
+   "label": "Entity: 501(c)(3), corporation, trust, partnership over 5M",
+   "printed_label": "(a)",
+   "must": false,
+   "x0": 198.0,
+   "y0": 279.0,
+   "x1": 223.2,
+   "y1": 294.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      198.0,
+      279.0,
+      223.2,
+      294.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p22-006",
+   "page": 22,
+   "kind": "tickbox",
+   "owner": "investor-entity",
+   "label": "Entity: trust over 5M",
+   "printed_label": "(b)",
+   "must": false,
+   "x0": 197.3,
+   "y0": 316.1,
+   "x1": 223.2,
+   "y1": 331.6,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      197.3,
+      316.1,
+      223.2,
+      331.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "p22-007",
+   "page": 22,
+   "kind": "tickbox",
+   "owner": "investor-entity",
+   "label": "Entity: broker-dealer",
+   "printed_label": "(c)",
+   "must": false,
+   "x0": 198.0,
+   "y0": 362.2,
+   "x1": 222.5,
+   "y1": 377.7,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      198.0,
+      362.2,
+      222.5,
+      377.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p22-008",
+   "page": 22,
+   "kind": "tickbox",
+   "owner": "investor-entity",
+   "label": "Entity: investment company or BDC",
+   "printed_label": "(d)",
+   "must": false,
+   "x0": 198.0,
+   "y0": 382.4,
+   "x1": 222.5,
+   "y1": 397.9,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      198.0,
+      382.4,
+      222.5,
+      397.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p22-013",
+   "page": 22,
+   "kind": "tickbox",
+   "owner": "investor-entity",
+   "label": "Entity: SBIC",
+   "printed_label": "(e)",
+   "must": false,
+   "x0": 197.2,
+   "y0": 410.8,
+   "x1": 223.0,
+   "y1": 427.3,
+   "printed_as": "measured by hand"
+  },
+  {
+   "id": "p22-009",
+   "page": 22,
+   "kind": "tickbox",
+   "owner": "investor-entity",
+   "label": "Entity: ERISA plan",
+   "printed_label": "(f)",
+   "must": false,
+   "x0": 197.3,
+   "y0": 440.7,
+   "x1": 223.2,
+   "y1": 456.2,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      197.3,
+      440.7,
+      223.2,
+      456.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p22-010",
+   "page": 22,
+   "kind": "tickbox",
+   "owner": "investor-entity",
+   "label": "Entity: private BDC",
+   "printed_label": "(g)",
+   "must": false,
+   "x0": 197.3,
+   "y0": 487.1,
+   "x1": 223.2,
+   "y1": 502.6,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      197.3,
+      487.1,
+      223.2,
+      502.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "p22-011",
+   "page": 22,
+   "kind": "tickbox",
+   "owner": "investor-entity",
+   "label": "Entity: bank, S&L or insurer",
+   "printed_label": "(h)",
+   "must": false,
+   "x0": 198.0,
+   "y0": 515.6,
+   "x1": 223.2,
+   "y1": 531.1,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      198.0,
+      515.6,
+      223.2,
+      531.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p22-012",
+   "page": 22,
+   "kind": "tickbox",
+   "owner": "investor-entity",
+   "label": "Entity: state plan over 5M",
+   "printed_label": "(i)",
+   "must": false,
+   "x0": 198.0,
+   "y0": 553.0,
+   "x1": 223.2,
+   "y1": 568.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      198.0,
+      553.0,
+      223.2,
+      568.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p23-001",
+   "page": 23,
+   "kind": "tickbox",
+   "owner": "investor-entity",
+   "label": "Entity: all equity owners accredited",
+   "printed_label": "(j)",
+   "must": false,
+   "x0": 198.0,
+   "y0": 42.5,
+   "x1": 222.5,
+   "y1": 58.0,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      198.0,
+      42.5,
+      222.5,
+      58.0
+     ]
+    }
+   }
+  }
+ ],
+ "may_fill": [],
+ "source": "hand",
+ "mode": "train",
+ "prefilled": {
+  "when": "2026-11-15T01:48:05Z",
+  "candidates": "a91fc5f3fa75e866-f01586d5.json",
+  "result": "out-ps03/c025/result.json",
+  "fields": 0,
+  "counted_candidates": 95
+ },
+ "done": "2026-11-15T02:06:56Z"
+}
