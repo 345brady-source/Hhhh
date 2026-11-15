@@ -98,7 +98,104 @@ const SIG_PAGE_PROSE = [
 /** A tick box drawn as a box character, with its own words after it. */
 const glyph = (label, more) => `<span data-k="bracket" data-x='${attr(Object.assign({ type: 'checkbox', role: 'investor', fillIn: true, required: false, label, review: false }, more || {}))}'>&#9744;</span> `;
 
+/** A tick box printed as a fallback glyph: the box character of a symbol font shown in a text font (a lone U+00A8), or a lone letter. */
+const fallback = (ch, label, more) => `<span data-k="bracket" data-x='${attr(Object.assign({ type: 'checkbox', role: 'investor', fillIn: true, required: false, label, review: false }, more || {}))}'>${ch}</span>`;
+/** A line of words at an exact place, nothing expected on it. */
+const words = (x, top, s, size) => at(x, top, size || 10, s);
+
 const CLASS_PAGES = {
+  /* ---------- tick boxes printed as a fallback glyph (Phase 01.4 class 8) ---------- */
+  // A column of five options under a question, each opening with a lone U+00A8 (a word processor's box character
+  // printed in a text font that has no box), a wide space, then the option's words. Five tick boxes, none marked.
+  glyphFallback: {
+    marks: 0,
+    html: pg(`${words(72, 80, '<b>2. FORM OF OWNERSHIP</b>', 11)}${words(72, 100, 'How will the units be held?')}
+${['Individual', 'Joint tenants', 'Trust', 'Corporation', 'Retirement account'].map((l, i) => at(90, 122 + i * 18, 10, `${fallback('&#168;', l)}&nbsp;&nbsp;&nbsp;&nbsp;${l}`)).join('')}`)
+  },
+  // Two options under a check-one caption, each opening with a lone letter o in the text font, set at the same left
+  // edge on two lines: two tick boxes.
+  glyphChoice: {
+    marks: 0,
+    html: pg(`${words(72, 80, 'Distributions (check one):')}
+${at(90, 100, 10, `${fallback('o', 'Pay distributions in cash')}&nbsp; Pay distributions in cash`)}${at(90, 118, 10, `${fallback('o', 'Reinvest distributions')}&nbsp; Reinvest distributions`)}`)
+  },
+  // Guard: three statements, each a long sentence opening with a lone letter o set as a bullet, with no words of
+  // choice above them or in them. No field.
+  glyphBullet: {
+    guard: true,
+    html: pg(`${words(72, 80, '<b>RISK FACTORS</b>', 11)}${words(72, 100, 'Before investing, read the following statements carefully.')}
+${['The value of the units may go down as well as up and past results do not guide the future.', 'There is no public market for the units and none is expected to develop for many years to come.', 'The manager may call for capital at short notice and a late payment may cost the investor dearly.'].map((s, i) => at(90, 122 + i * 18, 9, `o&nbsp; ${s}`)).join('')}`)
+  },
+
+  // Guard: a bulleted list whose item runs on to a second line, with a sub-list set further in under it, each sub-item
+  // opening with a lone letter o (a word processor's second-level bullet) and short words, no words of choice. No field.
+  glyphSubBullet: {
+    guard: true,
+    html: pg(`${words(72, 80, 'Evidence of the investor\'s status may be given by:')}
+${words(72, 100, '&#8226;&nbsp;&nbsp;Net worth of more than one million, shown by one of the documents below, each dated')}${words(72, 114, 'within the last three months:')}
+${['Bank statements in the investor\'s name', 'Statements of an investment account', 'A letter from the investor\'s accountant'].map((s, i) => at(108, 130 + i * 14, 10, `o&nbsp; ${s}`)).join('')}`)
+  },
+  /* ---------- typed and drawn squares, short-rule choices, lines shared by captions (Phase 01.4 classes 23, 20, 5) ---------- */
+  // Three tick boxes beside options: "[ ]" typed with a non-breaking space inside, a drawn square of 7 pt, and "|_|"
+  // typed in a fixed-pitch font (a plain-text filing's box). One tick field each.
+  typedBoxMissed: {
+    html: pg(`${words(72, 80, 'Send reports by (check all that apply):')}
+${at(90, 100, 10, `<span data-k="bracket" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false })}'>[&nbsp;]</span> Post`)}
+${at(90, 118, 10, `<span class="sq" style="width:7pt;height:7pt" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false })}'></span> E-mail`)}
+${at(90, 136, 10, `<span style="font-family:'Courier New',monospace"><span data-k="bracket" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false })}'>|_|</span> Fax</span>`)}`)
+  },
+  // Three options under a choose-one caption, each opening with a drawn rule of 14 pt (shorter than any blank): three
+  // tick fields on the rules, and no text field.
+  shortRuleChoice: {
+    html: pg(`${words(72, 80, 'Tax status of the investor (choose one):')}
+${['A natural person resident in the country', 'A company formed in the country', 'Any other person'].map((l, i) => at(90, 100 + i * 20, 10, `<span class="rule" style="width:14pt" data-x='${attr({ type: 'checkbox', role: 'investor', fillIn: true, required: false })}'></span>&nbsp;&nbsp;${l}`)).join('')}`)
+  },
+  // One drawn rule of 400 pt with three captions printed under it, each at the start of its part: three text fields,
+  // the first from the rule's start, each ending 8 pt before the next caption.
+  lineCaptionsUnder: {
+    html: pg(`${words(72, 80, '<b>INVESTOR DETAILS</b>', 11)}${stroke(72, 130, 400, SW)}
+${at(72, 134, 8, 'Name of Investor')}${at(250, 134, 8, 'Tax Identification Number')}${at(380, 134, 8, 'Date of Birth')}
+${['72:242', '250:372', '380:472'].map((x) => { const [a, b] = x.split(':').map(Number); return `<span data-k="rule" data-x='${attr({ type: 'text', role: 'investor' })}' style="position:absolute;left:${a}pt;top:${116 + SW}pt;width:${b - a}pt;height:14pt"></span>`; }).join('')}`),
+  },
+  // Captions standing on one drawn rule: "City", then a free stretch, "State", a free stretch, "Zip", a free stretch.
+  // Three text fields, one on each stretch.
+  lineInlineCaptions: {
+    html: pg(`${words(72, 80, 'Mailing address of the investor:')}
+<div style="position:absolute;left:72pt;top:100pt;display:inline-block;border-bottom:.75pt solid #000;font-size:10pt;line-height:1.15;white-space:nowrap">City<span data-k="rule" style="display:inline-block;width:200pt;height:10pt" data-x='${attr({ type: 'text', role: 'investor' })}'></span>State<span data-k="rule" style="display:inline-block;width:90pt;height:10pt" data-x='${attr({ type: 'text', role: 'investor' })}'></span>Zip<span data-k="rule" style="display:inline-block;width:60pt;height:10pt" data-x='${attr({ type: 'text', role: 'investor' })}'></span></div>`)
+  },
+  // Guard: a heading with a drawn rule right under it, and a rule set between two blocks right above the printed name of
+  // a party (a separator, nothing to write on). No field.
+  lineDecorationGuard: {
+    guard: true,
+    html: pg(`${at(72, 80, 12, '<b>PART 3. REPRESENTATIONS OF THE INVESTOR</b>')}${stroke(72, 96, 300, SW)}
+${words(72, 104, 'The investor confirms that it has read the memorandum and understands the risks set out in it.')}
+${words(72, 120, 'The investor confirms that it is acquiring the units for its own account and not for resale.')}
+${stroke(72, 168, 468, SW)}${at(72, 176, 11, '<b>NORTHGATE FUND I, LP</b>')}${words(72, 194, 'A limited partnership formed under the laws of the State of Delaware.')}`)
+  },
+  /* ---------- single lines and hyphen blanks (Phase 01.4 classes 4 and 9) ---------- */
+  // A drawn rule of 150 pt after a label the portal has no word for, and a drawn rule alone under a question: one text
+  // field each.
+  lineIsPlace: {
+    html: pg(`${at(72, 80, 10, `Name of the investor's favourite charity: ${rule(inv('text', { fillIn: true }), '150pt')}`)}
+${words(72, 120, 'Describe how the investor first heard of the offering.')}
+${at(72, 136, 10, rule(inv('text', { fillIn: true }), '300pt'))}`)
+  },
+  // Plain text typed in a fixed-pitch font: "Name: ------------------" and a run of hyphens inside a sentence. One field
+  // each.
+  hyphenBlanks: {
+    html: pg(`<div style="font-family:'Courier New',monospace;font-size:10pt">${at(72, 80, 10, `Name: ${blank(inv('name'), '-'.repeat(24))}`, "font-family:'Courier New',monospace")}
+${at(72, 110, 10, `The investor subscribes for ${blank(inv('text', { fillIn: true }), '-'.repeat(14))} units of the fund.`, "font-family:'Courier New',monospace")}</div>`)
+  },
+  // Guard, the same fixed-pitch text: a heading underlined with a line of hyphens, and a table whose column headings
+  // are ruled off with runs of hyphens, its rows filled in. No field.
+  hyphenHeadingGuard: {
+    guard: true,
+    html: pg(`${at(72, 80, 10, 'SUBSCRIPTION TERMS', "font-family:'Courier New',monospace")}${at(72, 92, 10, '-'.repeat(18), "font-family:'Courier New',monospace")}
+${at(72, 116, 10, 'Class&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minimum&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fee', "font-family:'Courier New',monospace")}
+${at(72, 128, 10, `${'-'.repeat(10)}&nbsp;&nbsp;${'-'.repeat(10)}&nbsp;&nbsp;${'-'.repeat(5)}`, "font-family:'Courier New',monospace")}
+${at(72, 140, 10, 'A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10,000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.0%', "font-family:'Courier New',monospace")}
+${at(72, 152, 10, 'B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;50,000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.5%', "font-family:'Courier New',monospace")}`)
+  },
   /* ---------- places for somebody else ---------- */
   // An investor block and, lower on the same page, a heading in capitals ending in a colon that names a custodian and
   // says it applies only in some cases, with six blanks under it: four labelled, two unlabelled lines under the address.
