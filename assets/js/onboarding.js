@@ -1520,6 +1520,12 @@
   // never saved (SECRET keeps tin out of saved answers). After a reload the tax step asks for the number again.
   const TINS = {};
   const W9_KEY = 'W-9 2024-03';
+  /**
+   * D-30, research Pitfall 1: the one rule for "a tax form is on file", used by every reader (the console row, the
+   * investor's Account page, the audit's tax-forms check and register). A form finished without a signature
+   * (taxCert.signed false) is not on file; a record from before signing existed (no signed flag) still is.
+   */
+  const taxOnFile = (i) => !!(i && i.taxForm) && (i.taxCert || {}).signed !== false;
   const foreignType = (i) => /^foreign-/.test((i && i.taxType) || '');
   /** A U.S. person for the tax form: an IRA always (its custodian is one); otherwise the investor type, as corrected here. */
   const usTax = (c, d) => d.type === 'ira' || (d.usPerson ? d.usPerson === 'yes' : !foreignType(c.inv));
@@ -2237,7 +2243,7 @@
         delete c.fl.d;
         const st = IV() ? IV().status(ws, i) : { key: 'approved', label: 'Verified' };
         if (NS.audit && c.it.existing) NS.audit.log(ws, { action: 'Invitation to subscribe finished', record: i.id, fund: c.off ? c.off.id : c.it.offeringId, detail: `${i.title}: ${c.req && c.off ? `subscription of ${money(c.off, c.req.cents / 100)} submitted from the invitation link` : 'no subscription: the offering is no longer raising'}`, actor: `${i.title} (investor)` });
-        else if (NS.audit) NS.audit.log(ws, { action: 'Account activated', record: i.id, fund: c.off ? c.off.id : '', detail: `${i.title}: onboarding finished from the invitation link; ${i.taxForm || 'tax form'} and distribution account confirmed; verification ${st.label.toLowerCase()}${c.req && c.off ? `; subscription of ${money(c.off, c.req.cents / 100)} submitted` : ''}`, actor: `${i.title} (investor)` });
+        else if (NS.audit) NS.audit.log(ws, { action: 'Account activated', record: i.id, fund: c.off ? c.off.id : '', detail: `${i.title}: onboarding finished from the invitation link; ${i.taxForm && !taxOnFile(i) ? `${i.taxForm} not signed; distribution account confirmed` : `${i.taxForm || 'tax form'} and distribution account confirmed`}; verification ${st.label.toLowerCase()}${c.req && c.off ? `; subscription of ${money(c.off, c.req.cents / 100)} submitted` : ''}`, actor: `${i.title} (investor)` });
         if (st.key === 'review') notify(ws, 'verification_review', `${i.title} is held for verification review`, ((IV().peek ? IV().peek(i) : IV().vOf(i)).decision.reason || 'A check needs a person to look at it') + '. Their paperwork is complete.', 'console-kyc');
         NS.app.save(true);
         if (!isRemote(ws)) {
@@ -2612,5 +2618,5 @@
     const req = fl.requestId ? (ws.requests || []).find((r) => r.id === fl.requestId) || null : null;
     return flowSteps({ ws, it, inv: i, fl, req, off: ws.offerings.find((x) => x.id === it.offeringId && (x.status === 'Raising' || req)) || null });
   }
-  NS.inviteFlow = { newToken, openFor, selfInvite, byToken, remote, steps: invitationSteps, labels: FL };
+  NS.inviteFlow = { newToken, openFor, selfInvite, byToken, remote, steps: invitationSteps, labels: FL, taxOnFile };
 })(window.CVPortal);
