@@ -2293,7 +2293,7 @@
           <label class="cs-check" for="ik-publish"><input id="ik-publish" type="checkbox" data-bind="ikt:publish"${st.publish ? ' checked' : ''}><span>Make uploaded documents available to investors in this offering (and on its subscription page)</span></label>
         </div>
         ${st.error ? `<p class="cs-error">${h(st.error)}</p>` : ''}
-        <div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="ik-read"${ready ? '' : ' disabled'}>Read documents</button><span class="cs-hint">The documents are read and their terms filled in for you to review (you may be asked to allow reading once).</span></div>`
+        <div class="cs-row"><button class="cs-btn cs-btn-primary" type="button" data-action="ik-read"${ready ? '' : ' disabled'}>Read documents</button><span class="cs-hint">The documents are read and their terms filled in for you to review.</span></div>`
       )}`,
       'console-intake'
     );

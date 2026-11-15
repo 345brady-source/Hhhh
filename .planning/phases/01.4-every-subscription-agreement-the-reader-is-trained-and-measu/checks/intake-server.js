@@ -114,7 +114,7 @@ const SLICES = [
   ['assets/js/intake.js', '  const readWithRules = ', '954471e2c2951273', true],
   ['assets/js/intake.js', '  NS.intake = {', '48f32cb9213f564a', true], // plan 64 Task 3: white-label renames only (D-16, D-31); intake behaviour unchanged per D-36
   ['assets/js/console.js', "  NS.actions['ik-read'] = async () => {", 'b6e0356fd10fd2da', false, '  };'], // plan 68: D-38 routes a picture-only PDF to the PDF path instead of 'No readable text was found'
-  ['assets/js/console.js', '  function ikUpload() {', '13f3a8a19730a1d5'], // plan 64 Task 3: white-label renames only (D-16, D-31); intake behaviour unchanged per D-36
+  ['assets/js/console.js', '  function ikUpload() {', '276f15a55bd2a8b9'], // plan 69 Task 3: D-38 removes the allow wording; behaviour unchanged
   ['assets/js/console.js', '  function ikReview() {', '635f88df5f398127']
 ];
 /** The slice from the first line starting with `start` to the first later line equal to `end` (or that line alone). */
