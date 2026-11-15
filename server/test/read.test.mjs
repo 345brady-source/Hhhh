@@ -445,6 +445,40 @@ test('with images: after the document, a label and an image block per page, then
     });
   }));
 
+test('D-43: a text agreement sends its full text list, the PDF and one picture per page with places; the instructions tie the pictures to the list', () =>
+  withAmbient(async () => {
+    const svc = fakeService({ count: () => 6000 });
+    await serveReal(svc, async (base) => {
+      // Three text pages, places on pages 1 and 3 only: the words stay in the text, page 2 has no picture.
+      const list = [[1, 1, 72, 100, 288, 114, 'line'], [2, 1, 72, 140, 288, 154, 'line'], [3, 3, 72, 600, 288, 614, 'line']];
+      const text = '=== Page 1 (612 x 792 pt) ===\nName of Subscriber [#1]\nSignature [#2]\n=== Page 3 (612 x 792 pt) ===\nAccepted by [#3]';
+      const images = [{ page: 1, data: JPEG, marks: [1, 2] }, { page: 3, data: JPEG, marks: [3] }];
+      const r = await post(`${base}/v1/read`, { pdf: PDF, pages: 3, text, list, images });
+      assert.equal(r.status, 200);
+      const body = await r.json();
+      assert.equal(body.ok, true);
+      const m = svc.messages();
+      assert.equal(m.length, 1);
+      assert.deepEqual(m[0].body.messages[0].content, [
+        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: PDF } },
+        { type: 'text', text: 'Page 1 with numbered candidates' },
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: JPEG } },
+        { type: 'text', text: 'Page 3 with numbered candidates' },
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: JPEG } },
+        { type: 'text', text }
+      ]);
+      assert.doesNotMatch(text, /read the page image/);
+      // The marks are the browser's and never reach the reading service.
+      assert.doesNotMatch(JSON.stringify(m[0].body), /"marks"/);
+      // One line of the instructions says the pictures show the list's numbered places, for layout, shading and captions.
+      const said = m[0].body.system.split('\n').filter((l) => /^Pictures of pages/.test(l));
+      assert.equal(said.length, 1);
+      assert.match(said[0], /same numbered places as the list/);
+      assert.match(said[0], /layout, shading and captions/);
+      assert.match(said[0], /list's numbers to answer/);
+    });
+  }));
+
 test('without images and range the request is plan 64\'s exactly: no count, the document and the text only', () =>
   withAmbient(async () => {
     const svc = fakeService();

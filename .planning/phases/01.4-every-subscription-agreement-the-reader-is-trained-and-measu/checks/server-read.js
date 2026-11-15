@@ -22,12 +22,16 @@
  *   picture   the first agreement rendered to pictures (picture-pdf.js, into SCRATCH/edgar/measure/out-69) and the owner's
  *             picture form: one numbered image per picture page whose marks are exactly the list's numbers for that
  *             page, the page's words replaced by "(read the page image)", the fields exactly the fixed rule's picks on
- *             their candidates' pixel boxes, the picture notice once; the first agreement as it is sends plan 64's
- *             request (the uploaded file, { pdf, pages, text, list }, no image)
+ *             their candidates' pixel boxes, the picture notice once; the first agreement as it is (D-43, plan 70)
+ *             sends { pdf, pages, text, list, images }: the uploaded file itself, the full text list (no "(read the
+ *             page image)"), and exactly one numbered picture per page with places (none for a page without), each
+ *             2000 px on its long side, its marks the list's numbers for that page; the fields the picks on the PDF's
+ *             exact geometry
  *   broken    the first agreement rendered with a scrambled invisible text layer: every page flagged and sent as an image,
  *             the fields the picks
  *   long      NS.esign.RANGE_PAGES 3: consecutive ranges, each a new PDF of exactly its pages with its own places
- *             (numbered across the agreement), the fields equal to the one-request reading's; RANGE_BYTES lowered: halved
+ *             (numbered across the agreement) and one picture per page with places in it (D-43), the fields equal to
+ *             the one-request reading's; RANGE_BYTES lowered (pictures counted): halved
  *             until each body fits; a 413 (over 900000 counted tokens) halved and sent again, never unchanged
  *   retry     a stand-in server answering 503, 503 then 200; 429 then 200; a refused connection then 200: read, no added
  *             note; 503 every time: today's fallback after exactly 3 attempts; 400, 401 and 402: never sent again
@@ -391,6 +395,23 @@ const shape = (s) =>
     return s.fields.length === chose.length && chose.every((c, k) => matched[k].length === 1 && matched[k][0].type === c.kind && matched[k][0].role === (c.person === 'sponsor' ? 'countersigner' : 'investor'));
   };
   const count = (text, sub) => text.split(sub).length - 1;
+  /** A base64 JPEG's size in pixels from its frame header, or null. */
+  const jpegSize = (b64) => {
+    const b = Buffer.from(b64, 'base64');
+    for (let k = 2; k + 9 < b.length; ) {
+      if (b[k] !== 0xff) return null;
+      const m = b[k + 1];
+      if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) return { w: b.readUInt16BE(k + 7), h: b.readUInt16BE(k + 5) };
+      k += 2 + b.readUInt16BE(k + 2);
+    }
+    return null;
+  };
+  /** D-43: one picture per page that has numbered places in the request, none for any other page. */
+  const onePerPlacedPage = (req) => {
+    const placed = [...new Set((req.list || []).map((e) => e[1]))].sort((a, b) => a - b);
+    const got = (req.images || []).map((im) => im.page);
+    return { ok: JSON.stringify(got) === JSON.stringify(placed), placed, got };
+  };
 
   await run('picture', async () => {
     fs.mkdirSync(OUT69, { recursive: true });
@@ -420,16 +441,25 @@ const shape = (s) =>
         await srv.close();
       }
     }
-    // A text agreement: no images, and the request is plan 64's (the uploaded file itself, the four keys in order).
+    // D-43 (plan 70): a text agreement sends the uploaded file itself, its full text list, and one numbered picture per
+    // page with places (none for a page without); the picks still land on the PDF's exact geometry.
     const reader = pickingReader();
     const srv = await portalServer(reader);
     try {
       const bodies = [];
       const s = await upload({ url: srv.base, token: srv.token, bodies });
       const b = bodies[0] ? JSON.parse(bodies[0]) : {};
-      const req = reader.seen[0] || {};
-      line(bodies.length === 1 && Object.keys(b).join(',') === 'pdf,pages,text,list' && b.pdf === fs.readFileSync(TEXT).toString('base64') && b.pages === 13 && b.list.every((e, k) => e[0] === k + 1) && !/read the page image/.test(b.text), `picture text pages unchanged: the request is { ${Object.keys(b).join(', ')} } with the uploaded file itself and no image`);
-      line(!req.images && exactlyPicks(s, reader.state.chose), `picture text pages unchanged: no image reached the reader, ${s.fields.length} fields are the picks`);
+      const req = reader.seen[0] || { list: [] };
+      line(bodies.length === 1 && Object.keys(b).join(',') === 'pdf,pages,text,list,images' && b.pdf === fs.readFileSync(TEXT).toString('base64') && b.pages === 13 && b.list.length > 0 && b.list.every((e, k) => e[0] === k + 1) && /=== Page 1 /.test(b.text) && !/read the page image/.test(b.text), `picture text agreement: the request is { ${Object.keys(b).join(', ')} } with the uploaded file itself and the full text list of ${(b.list || []).length} places (no page's words left out)`);
+      const per = onePerPlacedPage(b);
+      const none = [];
+      for (let n = 1; n <= (b.pages || 0); n++) if (!per.placed.includes(n)) none.push(n);
+      line(per.ok && per.got.length > 0 && per.got.length < 13, `picture text agreement: one picture for each of the ${per.placed.length} pages with places (pages ${per.got.join(', ')}), none for the ${none.length} pages without (${none.join(', ')})`);
+      const im = imagesMatch(req);
+      const sizes = (b.images || []).map((x) => jpegSize(x.data));
+      const big = sizes.every((z) => z && Math.max(z.w, z.h) === 2000);
+      line(im.ok && JSON.stringify(im.pages) === JSON.stringify(per.got) && big, `picture text agreement: every picture reached the reader as a JPEG carrying exactly the list's numbers for its page, ${big ? 'each 2000 px on its long side' : 'sizes ' + JSON.stringify(sizes)}`);
+      line(reader.state.chose.length > 0 && exactlyPicks(s, reader.state.chose) && s.server && s.server.used && s.server.images === per.got.length && (s.server.pictures || []).length === 0, `picture text agreement: ${s.fields.length} fields are the ${reader.state.chose.length} picks, each on its candidate's exact box; no page counted as a picture page (${(s.server && s.server.pictures ? s.server.pictures.length : -1)}), ${s.server ? s.server.images : 0} pictures sent`);
       apiNote = s.readNote;
     } finally {
       await srv.close();
@@ -460,8 +490,9 @@ const shape = (s) =>
     const one = pickingReader();
     let srv = await portalServer(one);
     let whole = null;
+    const wholeBodies = [];
     try {
-      whole = await upload({ url: srv.base, token: srv.token });
+      whole = await upload({ url: srv.base, token: srv.token, bodies: wholeBodies });
     } finally {
       await srv.close();
     }
@@ -478,6 +509,8 @@ const shape = (s) =>
       line(JSON.stringify(ranges) === JSON.stringify(withPlaces), `long RANGE_PAGES 3: ${ranged.seen.length} requests, pages ${ranges.map((r) => r[0] + '-' + r[1]).join(', ')} (every range with numbered places, in order)`);
       const own = ranged.seen.every((q) => q.list.every((e) => e[1] >= q.range[0] && e[1] <= q.range[1]) && pdfPages(q.pdf) === q.range[1] - q.range[0] + 1 && q.pages === q.range[1] - q.range[0] + 1);
       line(own, 'long each request carries only its range: a new PDF of exactly its pages and its own numbered places');
+      const pics = ranged.seen.map(onePerPlacedPage);
+      line(pics.every((x) => x.ok) && ranged.seen.every((q) => imagesMatch(q).ok), `long each range carries one numbered picture per page with places in it (${pics.map((x) => x.got.length).join(', ')} pictures)`);
       const ids = ranged.seen.flatMap((q) => q.list.map((e) => e[0]));
       line(ids.length === one.seen[0].list.length && ids.every((id, k) => id === one.seen[0].list[k][0]), `long the numbers run across the agreement: ${ids.length} places sent once each (${one.seen[0].list.length} in the one-request reading)`);
       line(shape(s) === shape(whole), `long the fields equal the one-request reading's (${s.fields.length} and ${whole.fields.length})`);
@@ -489,9 +522,9 @@ const shape = (s) =>
     srv = await portalServer(halves);
     try {
       const bodies = [];
-      // Under the whole request (about 200000 characters) and over each half: a page range's new PDF still carries the
-      // fonts its pages share (a single page of this agreement is about 129000 characters), so a lower limit cannot be met.
-      const limit = Math.round(fs.readFileSync(TEXT).toString('base64').length * 0.82);
+      // Under the whole request and over each half: the one-request body (the PDF and, D-43, a picture of every page
+      // with places) less a fifth; a single page's range PDF and picture are far under it.
+      const limit = Math.round((wholeBodies[0] || '').length * 0.82);
       const s = await upload({ url: srv.base, token: srv.token, set: { RANGE_BYTES: limit }, bodies });
       const ranges = halves.seen.map((q) => q.range || [1, 13, 13]);
       line(halves.seen.length >= 2 && bodies.every((b) => b.length <= limit) && s.server.used && shape(s) === shape(whole), `long a request over the byte limit is halved: ${halves.seen.length} requests (${ranges.map((r) => r[0] + '-' + r[1]).join(', ')}), every body within ${limit} characters, fields equal`);
