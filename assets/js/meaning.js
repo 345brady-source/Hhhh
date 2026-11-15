@@ -16,6 +16,8 @@
  *   features(pages, res)  one row per proposed field of res.fields (placement.read), in reading order (page, top,
  *                         left, then the proposal's index): [{ pid, page, box: [x0, y0, x1, y1], x: Float64Array }]
  *                         pid is the proposal's index in res.fields; box is in points of the page as displayed
+ *   aggregate(rows)       the rows of one document with AGG_NAMES appended to each x: the mean over the row's block of
+ *                         its kind and party slots (the person model reads these extra columns; model.agg is true)
  *   predict(model, x)     class probabilities of a tree model for one row (null for a model of another FEATURES_V)
  *   calibrate(table, p)   p mapped through an isotonic table { x: [...], y: [...] } by linear interpolation
  *   FEATURES_V            the version of the feature list; any change to a name, an order, a word family, a reach or
@@ -469,6 +471,41 @@
     });
   }
 
+  /* ---------- block aggregates (the person model's extra columns) ---------- */
+  // AGG_NAMES: the mean over a field's block of each of these slots, as extra columns after FEATURE_NAMES. A block is
+  // told apart by its page and by every slot that describes the block itself (its heading's words, its words, its
+  // place counts and its kind), which every row of one block shares. It is a function of the rows alone, so the
+  // trained person model sees exactly the numbers the page computes.
+  const AGG_OF = [].concat(
+    KIND_LIST.map((k) => `dec:kind:${k}`),
+    ['dec:kind:unknown', 'dec:role:investor', 'dec:role:firm', 'dec:role:none', 'dec:second', 'dec:other', 'dec:forType:person', 'dec:forType:entity'],
+    ['pw:co', 'pw:other', 'pw:investor', 'pw:bareCo', 'pw:bareOther', 're:coInvestor', 're:otherParty'].map((f) => `cap:fam:${f}`)
+  );
+  const AGG_NAMES = Object.freeze(AGG_OF.map((n) => `agg:${n}`));
+  const AGG_AT = AGG_OF.map((n) => AT[n]);
+  const BLOCK_KEY_AT = FEATURE_NAMES.map((n, i) => ((n.startsWith('head:') || n.startsWith('blk:')) && n !== 'blk:index' && n !== 'blk:indexFrac' ? i : -1)).filter((i) => i >= 0);
+  // aggregate(rows) -> one row per input row: { pid, page, box, x } where x is the row's own slots followed by AGG_NAMES.
+  function aggregate(rows) {
+    const keyOf = (r) => `${r.page}|${BLOCK_KEY_AT.map((i) => r.x[i]).join(',')}`;
+    const groups = new Map();
+    (rows || []).forEach((r) => {
+      const k = keyOf(r);
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(r);
+    });
+    return (rows || []).map((r) => {
+      const mates = groups.get(keyOf(r));
+      const x = new Float64Array(FEATURE_NAMES.length + AGG_NAMES.length);
+      for (let i = 0; i < FEATURE_NAMES.length; i++) x[i] = num(r.x[i]);
+      AGG_AT.forEach((at, j) => {
+        let s = 0;
+        mates.forEach((m) => (s += num(m.x[at])));
+        x[FEATURE_NAMES.length + j] = s / mates.length;
+      });
+      return { pid: r.pid, page: r.page, box: r.box, x };
+    });
+  }
+
   /* ---------- the tree evaluator and calibration ---------- */
   function predict(model, x) {
     if (!model || model.v !== FEATURES_V || !Array.isArray(model.trees)) return null;
@@ -511,7 +548,7 @@
     return b > a ? ys[i - 1] + ((p - a) / (b - a)) * (ys[i] - ys[i - 1]) : ys[i];
   }
 
-  const API = { blocks, features, predict, calibrate, norm, fnv1a, bucket, FEATURES_V, FEATURE_NAMES, lastRows: null };
+  const API = { blocks, features, aggregate, predict, calibrate, norm, fnv1a, bucket, FEATURES_V, FEATURE_NAMES, AGG_NAMES, lastRows: null };
   if (NS) NS.meaning = API;
   if (typeof module !== 'undefined' && module && module.exports) module.exports = API;
 })(typeof window !== 'undefined' && window.CVPortal ? window.CVPortal : typeof globalThis !== 'undefined' && globalThis.CVPortal ? globalThis.CVPortal : null);
