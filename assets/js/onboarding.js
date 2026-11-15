@@ -621,22 +621,13 @@
       const st = document.getElementById('routing-status');
       if (st) st.outerHTML = routingStatus(v);
     }
-    // Regulation A Tier 2: the limit follows the figures, and the subscribe step's warning the amount, without a redraw.
-    if (['stIncome', 'stWorth', 'stRevenue', 'stAssets'].indexOf(path) >= 0) {
-      const el2 = document.getElementById('ra-limit');
-      if (el2) el2.outerHTML = raLimitLine(fctx(), ob().d);
-    }
-    if (path === 'amount') {
-      const el2 = document.getElementById('ra-sub');
-      if (el2) el2.outerHTML = raSubLine(fctx(), ob().d);
-    }
     // The name fields change with the kind of account: a message about a field no longer shown goes with it.
     if (path === 'type') ['title', 'first', 'last', 'first2', 'last2'].forEach((k) => delete ob().errors[k]);
     if (['first', 'last', 'first2', 'last2', 'tenancy'].indexOf(path) >= 0) {
       const note = document.getElementById('hint-tenancy');
       if (note) note.textContent = jointHint(ob().d);
     }
-    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stRep', 'stRaKind', 'stPlan', 'stCtrl'].indexOf(path) >= 0) {
+    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stRep', 'stPlan', 'stCtrl'].indexOf(path) >= 0) {
       NS.app.render();
       // Keep keyboard focus on the control that changed (the page was redrawn).
       const again = el.type === 'radio' ? document.querySelector(`input[name="${el.name}"][value="${CSS.escape(el.value)}"]`) : el.id && document.getElementById(el.id);
@@ -1186,46 +1177,29 @@
     const ctrl = e.controlling === true ? 'yes' : e.controlling === false ? 'no' : 'not answered';
     return `benefit plan: ${plan}; authority, control or paid advice over the offering’s assets: ${ctrl}`;
   }
-  /** Regulation A Tier 2 asks a person for annual income and net worth, an organization for revenue and net assets. */
+  /** Regulation A Tier 2: a person attests against annual income or net worth, an organization against revenue or net assets. */
   const raKindDefault = (c, d) => (['trust', 'entity'].indexOf(d.type || c.inv.type) >= 0 ? 'entity' : 'person');
-  /** The figures the investor gave on the status step, as whole dollars (null when not given or not a number that counts). */
-  function raFigures(c, d) {
-    const kind = d.stRaKind === 'entity' || d.stRaKind === 'person' ? d.stRaKind : raKindDefault(c, d);
-    const n = (x) => {
-      const v = EL().figure(String(x == null ? '' : x).replace(/[\s,$]/g, ''));
-      return v == null ? null : Math.round(v);
-    };
-    return kind === 'entity' ? { kind, revenue: n(d.stRevenue), netAssets: n(d.stAssets) } : { kind, income: n(d.stIncome), netWorth: n(d.stWorth) };
-  }
-  /** Under Regulation A Tier 2, an investor who said they are not accredited has a limit (when their figures give one). */
+  /** Under Regulation A Tier 2, an investor who said they are not accredited is asked to attest to the 10 percent limit. */
   const raAsked = (c, d) => accAsked(c) && regimeOf(c) === 'regA2' && d.stAcc === 'no';
-  /** T-06-08: the Regulation A figures and the limit, for the change log. */
-  function raLogText(c, d) {
-    const f = raFigures(c, d);
-    const lim = EL().regALimitCents(f);
-    const usd = (n) => EL().usd(n * 100);
-    const given = (f.kind === 'entity' ? [['revenue', f.revenue], ['net assets', f.netAssets]] : [['annual income', f.income], ['net worth', f.netWorth]]).filter((x) => x[1] != null).map((x) => `${x[0]} ${usd(x[1])}`);
-    return `; Regulation A Tier 2 figures (${f.kind === 'entity' ? 'organization' : 'person'}): ${given.length ? given.join(', ') : 'not given'}; investment limit ${lim == null ? 'not known' : EL().usd(lim)}`;
-  }
-  /** The investor's limit as they type their figures (NS.binders.ob redraws it in place): nothing while it is not known. */
-  function raLimitLine(c, d) {
-    const lim = c && raAsked(c, d) ? EL().regALimitCents(raFigures(c, d)) : null;
-    return `<p class="field-wide ivf-ra-limit" id="ra-limit" role="status">${lim == null ? '' : `Your investment limit in this offering: <strong>${h(EL().usd(lim))}</strong>`}</p>`;
-  }
   /**
-   * C-01 on the subscribe step: the limit, and a plain warning when the commitment (typed or set by the firm, with the
-   * investor's earlier subscriptions to the offering) is above it. The investor can still subscribe; nothing is required.
+   * D-07 (owner, Rule 251(d)(2)(i)(C)): the investor's own statement that the total they put into this offering is within
+   * the limit. The portal asks for no figures and works out no limit; the issuer may rely on the statement. Optional (D-30).
+   */
+  function raAttestText(c, d) {
+    if (raKindDefault(c, d) === 'entity') return `The total ${h(c.inv.title)} is investing in this offering, counting anything it already holds or has subscribed for in it, is not more than 10 percent of its revenue or its net assets for the most recent fiscal year, whichever is greater.`;
+    if ((d.type || c.inv.type) === 'joint') return 'The total we are investing in this offering, counting anything we already hold or have subscribed for in it, is not more than 10 percent of our annual income or our net worth (not counting our primary residence), whichever is greater.';
+    return 'The total I am investing in this offering, counting anything I already hold or have subscribed for in it, is not more than 10 percent of my annual income or my net worth (not counting my primary residence), whichever is greater.';
+  }
+  /** T-06-08: the attestation, for the change log. */
+  const raLogText = (c, d) => `; Regulation A Tier 2: ${d.stRaAttest === true ? 'attested' : 'did not attest'} that the total invested in this offering is within 10 percent of the greater of income or net worth (organizations: revenue or net assets)`;
+  /**
+   * C-01 on the subscribe step: a plain warning when the investor did not attest to the limit. They can still subscribe;
+   * nothing is required.
    */
   function raSubLine(c, d) {
-    const lim = c && c.off && raAsked(c, d) ? EL().regALimitCents(raFigures(c, d)) : null;
-    if (lim == null) return '<div class="field-wide" id="ra-sub" hidden></div>';
-    const earlier = EL().committedCents(c.ws, c.off, c.inv.id);
-    const now = c.it.cents > 0 ? c.it.cents : Math.round((Number(d.amount) || 0) * 100);
-    const over = now + earlier > lim;
+    if (!c || !c.off || !raAsked(c, d) || d.stRaAttest === true) return '<div class="field-wide" id="ra-sub" hidden></div>';
     const t = c.ws.tenant;
-    return `<div class="field-wide" id="ra-sub"><p class="meta">Your investment limit in this offering under Regulation A: <strong>${h(EL().usd(lim))}</strong>${earlier ? `. You have already committed ${h(EL().usd(earlier))} to it` : ''}.</p>${
-      over ? `<p class="wire-warn" role="note">${icon('alert')}<span>This commitment${earlier ? ', together with your earlier subscriptions to this offering,' : ''} is above your investment limit under Regulation A. You can still subscribe: ${h(t.shortName)} reviews every subscription and will let you know if yours cannot be accepted.</span></p>` : ''
-    }</div>`;
+    return `<div class="field-wide" id="ra-sub"><p class="wire-warn" role="note">${icon('alert')}<span>You have not confirmed that your total investment in this offering is within your limit under Regulation A (10 percent of the greater of your income or net worth). You can still subscribe: ${h(t.shortName)} reviews every subscription and will let you know if yours cannot be accepted.</span></p></div>`;
   }
   /** The status answers kept on the subscription request (request.qual). */
   function qualFrom(c, d) {
@@ -1242,12 +1216,8 @@
       q.sophistication = { experience: String(d.stExp || '').trim(), education: String(d.stEdu || '').trim(), rep: d.stRep === 'yes' ? Object.assign({ name, firm }, file) : null };
     }
     if (accredited === false && reg === 'regA2') {
-      // The console works the limit and the total out again from these figures and the requests (T-06-06): overLimit is
-      // what this device showed the investor, kept with the rest.
-      const f = raFigures(c, d);
-      const limitCents = EL().regALimitCents(f);
-      const commitmentCents = c.off ? EL().committedCents(c.ws, c.off, c.inv.id) : 0;
-      q.regA = Object.assign(f, { limitCents, commitmentCents, overLimit: limitCents != null && commitmentCents > limitCents });
+      // D-07: the attestation only (true ticked, false shown and left unticked, null when the step never showed it).
+      q.regA = { attested: d.stRaAttest === true ? true : d.stRaAttest === false ? false : null };
     }
     // D-01: the benefit plan answers, with the share of this interest counted as held by benefit plan investors.
     if (statusStep(c)) q.erisa = erisaFrom(d);
@@ -1339,12 +1309,8 @@
           stPlan: (i.erisa && i.erisa.plan) || '',
           stPlanPct: i.erisa && i.erisa.planPct != null ? String(i.erisa.planPct) : '',
           stCtrl: i.erisa && i.erisa.controlling === true ? 'yes' : i.erisa && i.erisa.controlling === false ? 'no' : '',
-          // Regulation A Tier 2 (D-01): person or organization (set from the account type when the step is shown), and figures.
-          stRaKind: '',
-          stIncome: '',
-          stWorth: '',
-          stRevenue: '',
-          stAssets: '',
+          // Regulation A Tier 2 (D-07): the investor's attestation to the 10 percent limit, never required.
+          stRaAttest: false,
           accAttest: false,
           accFile: '',
           usPerson: '',
@@ -1512,22 +1478,10 @@
     const lede = b506
       ? `${h(c.off.name)} is offered under Rule 506(b) of Regulation D. ${h(t.shortName)} may accept a limited number of investors who are not accredited, so it asks about your status and, if you are not accredited, about your experience with investments like this one.`
       : ra2
-        ? `${h(c.off.name)} is offered under ${raName}. If you are not an accredited investor, what you may put into this offering is limited to 10 percent of your annual income or your net worth, whichever is greater (for an organization, its revenue or its net assets for the most recent fiscal year). ${h(t.shortName)} asks for these figures so it can show you your limit.`
+        ? `${h(c.off.name)} is offered under ${raName}. If you are not an accredited investor, what you may put into this offering is limited to 10 percent of your annual income or your net worth, whichever is greater (for an organization, its revenue or its net assets for the most recent fiscal year). ${h(t.shortName)} asks you to confirm that your investment is within that limit.`
         : `${h(t.shortName)} asks each investor whether they are an accredited investor under Regulation D.`;
-    // Regulation A Tier 2, not accredited: person or organization (from the account type until the investor changes it), figures, limit.
-    if (ra2 && d.stAcc === 'no' && d.stRaKind !== 'person' && d.stRaKind !== 'entity') d.stRaKind = raKindDefault(c, d);
-    const joint = (d.type || c.inv.type) === 'joint';
-    const num = { type: 'number', mode: 'numeric' };
-    const raFields =
-      ra2 && d.stAcc === 'no'
-        ? `${radios('stRaKind', 'Whose figures are these?', [['person', 'A person’s', 'Annual income and net worth'], ['entity', 'An organization’s', 'Revenue and net assets for the most recent fiscal year']])}
-        ${
-          d.stRaKind === 'entity'
-            ? `${input('stRevenue', 'Revenue for the most recent fiscal year ($)', num)}${input('stAssets', 'Net assets at the end of that year ($)', num)}`
-            : `${input('stIncome', 'Annual income ($)', Object.assign({ hint: joint ? 'For a joint account, income and net worth may be given together with a spouse or spousal equivalent.' : 'In US dollars.' }, num))}${input('stWorth', 'Net worth, not counting your primary residence ($)', num)}`
-        }
-        ${raLimitLine(c, d)}`
-        : '';
+    // Regulation A Tier 2, not accredited: the attestation (D-07), optional.
+    const raFields = ra2 && d.stAcc === 'no' ? check('stRaAttest', raAttestText(c, d)) : '';
     const no = d.stAcc === 'no' && b506;
     // C-01: the offering may already have as many purchasers who are not accredited as Rule 506(b) allows. The investor is
     // told so plainly and can still subscribe; the firm decides. No count and no other investor is ever shown (T-06-04).

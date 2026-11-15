@@ -31,37 +31,12 @@
     return 'other';
   }
 
-  /** A figure the investor gave, in whole dollars: counted only when it is a finite number from 0 to one trillion. */
-  function figure(x) {
-    if (x == null || typeof x === 'boolean' || (typeof x === 'string' && !x.trim())) return null;
-    const n = typeof x === 'number' ? x : typeof x === 'string' ? Number(x.trim()) : NaN;
-    return Number.isFinite(n) && n >= 0 && n <= 1e12 ? n : null;
-  }
-
-  /**
-   * Regulation A Tier 2's investment limit for an investor who is not accredited (Rule 251(d)(2)(i)(C)), in cents: 10 percent
-   * of the greater of annual income and net worth for a person, or of revenue and net assets for the most recent fiscal year
-   * for an organization. q: { kind: 'person' | 'entity', income, netWorth, revenue, netAssets } in whole dollars. null when
-   * neither figure of the pair counts, so the limit is not known.
-   */
-  function regALimitCents(q) {
-    if (!q || typeof q !== 'object') return null;
-    const pair = q.kind === 'person' ? [q.income, q.netWorth] : q.kind === 'entity' ? [q.revenue, q.netAssets] : [];
-    const got = pair.map(figure).filter((n) => n != null);
-    return got.length ? Math.round(Math.max.apply(null, got) * 10) : null;
-  }
-
   /** An amount in cents as US dollars: "$40,000", or "$1,234.50" when it has cents. */
   function usd(cents) {
     const c = Math.round(Number(cents) || 0);
     const whole = String(Math.floor(Math.abs(c) / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     const rest = Math.abs(c) % 100;
     return `${c < 0 ? '-' : ''}$${whole}${rest ? '.' + String(rest).padStart(2, '0') : ''}`;
-  }
-
-  /** What an investor has committed to an offering: their subscriptions to it, declined ones left out, in cents. */
-  function committedCents(ws, o, investorId) {
-    return ((ws && ws.requests) || []).reduce((t, r) => (r && r.type === 'subscription' && o && r.offeringId === o.id && r.investorId === investorId && r.status !== 'rejected' ? t + (Math.round(Number(r.cents)) || 0) : t), 0);
   }
 
   /** The grounds for accredited status under Rule 501(a), as amended in 2020, in short wording of our own. */
@@ -155,11 +130,11 @@
     return exemptionFlags(ws, r, off).concat(bpiFlags(ws, r, off));
   }
   function exemptionFlags(ws, r, off) {
-    // Regulation A Tier 2: every subscription of an investor whose total in the offering is above their limit, as worked
-    // out again from their figures (regAStatus), whatever the device said.
+    // Regulation A Tier 2 (D-07): every subscription of an investor who is not accredited and whose latest answer does not
+    // attest to the 10 percent limit.
     if (off && regime(off) === 'regA2') {
       const row = regAStatus(ws, off).rows.find((x) => x.investorId === r.investorId);
-      return row && row.over ? [`Over the Regulation A Tier 2 limit: ${usd(row.totalCents)} committed in this offering, limit ${usd(row.limitCents)}`] : [];
+      return row && row.attested !== true ? [RA_NOT_ATTESTED] : [];
     }
     const q = qualOf(r);
     if (!q || q.accredited !== false) return [];
@@ -178,25 +153,28 @@
     return [];
   }
 
+  /** The sponsor's flag on a Tier 2 subscription without the investor's attestation (D-07, C-01: shown, never blocking). */
+  const RA_NOT_ATTESTED = 'Not accredited and has not attested to the Regulation A Tier 2 limit (10 percent of income or net worth)';
   /**
-   * Regulation A Tier 2 (D-01, C-01): each investor with a subscription to the offering (declined ones left out) whose latest
-   * answer says not accredited. rows: { investorId, totalCents (every such subscription of theirs to it), limitCents
-   * (worked out again here from the figures they gave, never the over-limit flag their device set: T-06-06), over }.
-   * over: how many rows are above their limit; noFigures: how many gave no figure that counts (limit not known). Empty
+   * Regulation A Tier 2 (D-07, C-01): each investor with a subscription to the offering (declined ones left out) whose latest
+   * answer says not accredited, with whether that answer attests that the total they put into the offering is within 10
+   * percent of the greater of their income or net worth (organizations: revenue or net assets). rows: { investorId,
+   * attested (true; false when left unticked; null when the answer carries no attestation) }. notAttested: how many rows do
+   * not attest. The portal takes no figures and works out no limit: the issuer relies on the investor's statement (Rule
+   * 251(d)(2)(i)(C)). unanswered: [{ investorId }], the subscribers whose latest answer leaves the accredited question
+   * open (or who have no answers on file): they were not asked about the limit, so the sponsor sees them apart. Empty
    * unless the offering is Tier 2 and not listed on an exchange.
    */
   function regAStatus(ws, o) {
-    const out = { rows: [], over: 0, noFigures: 0 };
+    const out = { rows: [], notAttested: 0, unanswered: [] };
     if (regime(o) !== 'regA2') return out;
     tally(ws, o).forEach((e, id) => {
-      if (!e.qual || e.qual.accredited !== false) return;
+      if (!e.qual || typeof e.qual.accredited !== 'boolean') return void out.unanswered.push({ investorId: id });
+      if (e.qual.accredited !== false) return;
       const ra = e.qual.regA && typeof e.qual.regA === 'object' ? e.qual.regA : null;
-      const limitCents = regALimitCents(ra);
-      const totalCents = committedCents(ws, o, id);
-      const over = limitCents != null && totalCents > limitCents;
-      out.rows.push({ investorId: id, totalCents, limitCents, over });
-      if (over) out.over++;
-      if (limitCents == null) out.noFigures++;
+      const attested = ra && typeof ra.attested === 'boolean' ? ra.attested : null;
+      out.rows.push({ investorId: id, attested });
+      if (attested !== true) out.notAttested++;
     });
     return out;
   }
@@ -391,5 +369,5 @@
     return rows;
   }
 
-  NS.eligibility = { regime, LIMIT_506B, BASES, qualOf, nonAccredited, place, flags, figure, regALimitCents, usd, committedCents, regAStatus, BPI_LIMIT, planPct, bpiShare, pctText, controllingMarks, erisa };
+  NS.eligibility = { regime, LIMIT_506B, BASES, qualOf, nonAccredited, place, flags, usd, RA_NOT_ATTESTED, regAStatus, BPI_LIMIT, planPct, bpiShare, pctText, controllingMarks, erisa };
 })(window.CVPortal);
