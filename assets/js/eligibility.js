@@ -147,10 +147,14 @@
   /**
    * Warnings for the sponsor on one subscription request (C-01: shown, never blocking). Under Rule 506(b), a request that
    * says the investor is not accredited, from an investor whose place under the limit comes after the 35th, is flagged.
+   * Under every exemption, a pending request that would bring benefit plan investors to 25 percent or more of its class.
    */
   function flags(ws, r) {
     if (!r || r.type !== 'subscription' || r.status === 'rejected') return [];
     const off = ((ws && ws.offerings) || []).find((x) => x && x.id === r.offeringId);
+    return exemptionFlags(ws, r, off).concat(bpiFlags(ws, r, off));
+  }
+  function exemptionFlags(ws, r, off) {
     // Regulation A Tier 2: every subscription of an investor whose total in the offering is above their limit, as worked
     // out again from their figures (regAStatus), whatever the device said.
     if (off && regime(off) === 'regA2') {
@@ -159,11 +163,19 @@
     }
     const q = qualOf(r);
     if (!q || q.accredited !== false) return [];
-    const o = ((ws && ws.offerings) || []).find((x) => x && x.id === r.offeringId);
-    if (!o || regime(o) !== '506b') return [];
-    const k = nonAccredited(ws, o).ranked.indexOf(r.investorId);
+    if (!off || regime(off) !== '506b') return [];
+    const k = nonAccredited(ws, off).ranked.indexOf(r.investorId);
     if (k < LIMIT_506B) return [];
     return [`Would be non-accredited purchaser ${k + 1} of the ${LIMIT_506B} allowed under Rule 506(b)`];
+  }
+  /** D-01: a pending request whose if-accepted share of benefit plan investors in its class is 25 percent or more. */
+  function bpiFlags(ws, r, off) {
+    if (!off || r.status !== 'pending') return [];
+    for (const row of erisa(ws, off)) {
+      const f = row.ifAccepted.find((x) => x.requestId === r.id);
+      if (f && f.pct >= BPI_LIMIT) return [`If accepted, benefit plan investors would hold ${pctText(f.pct)}% of ${row.name} (25 percent or more)`];
+    }
+    return [];
   }
 
   /**
@@ -189,5 +201,100 @@
     return out;
   }
 
-  NS.eligibility = { regime, LIMIT_506B, BASES, qualOf, nonAccredited, place, flags, figure, regALimitCents, usd, committedCents, regAStatus };
+  /* ---------- Benefit plan investors (ERISA), D-01 ---------- */
+
+  /** At 25 percent or more of the value of any class held by benefit plan investors, a fund's assets can be plan assets. */
+  const BPI_LIMIT = 25;
+  /** A plan-asset entity's stated percentage, counted only when it is a finite number from 0 to 100; otherwise null. */
+  function planPct(x) {
+    if (x == null || typeof x === 'boolean' || (typeof x === 'string' && !x.trim())) return null;
+    const n = typeof x === 'number' ? x : typeof x === 'string' ? Number(x.trim().replace(/%$/, '')) : NaN;
+    return Number.isFinite(n) && n >= 0 && n <= 100 ? n : null;
+  }
+  /**
+   * How much of a holder's interest counts as held by benefit plan investors, from their answers e = { plan, planPct }:
+   * 1 for a plan under Title I of ERISA or under Code section 4975 (an IRA or Keogh plan), the stated percentage for an
+   * entity whose assets include plan assets, 0 for a governmental, church or non-U.S. plan or none of these, and null
+   * when the question was not answered (or a plan-asset entity gave no percentage that counts).
+   */
+  function bpiShare(e) {
+    if (!e || typeof e !== 'object') return null;
+    if (e.plan === 'title1' || e.plan === '4975') return 1;
+    if (e.plan === 'planAssets') {
+      const n = planPct(e.planPct);
+      return n == null ? null : n / 100;
+    }
+    if (e.plan === 'other' || e.plan === 'none') return 0;
+    return null;
+  }
+  /** A percentage as shown: rounded down to one decimal place, so a figure under 25 never reads as 25. */
+  const pctText = (n) => String(Math.floor((Number(n) || 0) * 10 + 1e-9) / 10);
+  const erisaOf = (r) => {
+    const q = qualOf(r);
+    return q && q.erisa && typeof q.erisa === 'object' ? q.erisa : null;
+  };
+  /**
+   * The share of each class of an offering held by benefit plan investors (D-01), for the sponsor only (T-06-09). Value
+   * is what each holder has committed or subscribed (a position's commitment, or its amount where it has none: the rule
+   * NS.ops.commitOf applies; fully redeemed positions left out), plus subscriptions accepted but not yet on a position.
+   * A holder's share comes from their latest answers on a subscription to the offering, else from their investor record,
+   * else 0 (not answered). An offering without classes has one, "All interests". For each pending subscription: the
+   * class's percentage were it accepted at its amount and its own answers. Rows: { classId, name, total, bpiValue (both
+   * in cents), pct, ifAccepted: [{ requestId, investorId, cents, pct }] }.
+   */
+  function erisa(ws, o) {
+    if (!ws || !o) return [];
+    const list = Array.isArray(o.classes) && o.classes.length ? o.classes : null;
+    const rows = (list || [{ id: '', name: 'All interests' }]).map((c) => ({ classId: c.id, name: c.name || c.id || 'All interests', total: 0, bpiValue: 0, pct: 0, ifAccepted: [] }));
+    const rowById = (id) => rows.find((x) => x.classId === id) || rows[0];
+    const SC = NS.structures;
+    const invById = new Map((ws.investors || []).filter(Boolean).map((i) => [i.id, i]));
+    const classOfInv = (inv) => {
+      if (!list || !inv || !SC || !SC.classOf) return rows[0];
+      const c = SC.classOf(o, { positions: inv.positions || [] }, list);
+      return rowById(c ? c.id : '');
+    };
+    const subs = (ws.requests || []).filter((r) => r && r.type === 'subscription' && r.offeringId === o.id && r.status !== 'rejected');
+    const answered = new Map();
+    subs.forEach((r) => {
+      const s = bpiShare(erisaOf(r));
+      if (s != null) answered.set(r.investorId, s);
+    });
+    const shareOf = (id) => {
+      if (answered.has(id)) return answered.get(id);
+      const s = bpiShare((invById.get(id) || {}).erisa);
+      return s == null ? 0 : s;
+    };
+    const onPosition = new Set();
+    invById.forEach((inv) => {
+      const ps = (inv.positions || []).filter((p) => p && p.offeringId === o.id && !p.redeemed);
+      if (!ps.length) return;
+      ps.forEach((p) => p.ref && onPosition.add(p.ref));
+      const cents = ps.reduce((a, p) => a + Math.round((Number(p.commitment != null ? p.commitment : p.amount) || 0) * 100), 0);
+      const row = classOfInv(inv);
+      row.total += cents;
+      row.bpiValue += cents * shareOf(inv.id);
+    });
+    const centsOf = (r) => Math.max(0, Math.round(Number(r.cents)) || 0);
+    const rowOfReq = (r) => (r.cls && list ? rowById(r.cls) : classOfInv(invById.get(r.investorId)));
+    subs.forEach((r) => {
+      if (r.status === 'pending' || onPosition.has(r.id)) return;
+      const row = rowOfReq(r);
+      row.total += centsOf(r);
+      row.bpiValue += centsOf(r) * shareOf(r.investorId);
+    });
+    const pctOf = (bpi, total) => (total > 0 ? Math.round((bpi * 100 * 1e6) / total) / 1e6 : 0);
+    rows.forEach((row) => (row.pct = pctOf(row.bpiValue, row.total)));
+    subs.forEach((r) => {
+      if (r.status !== 'pending') return;
+      const row = rowOfReq(r);
+      const own = bpiShare(erisaOf(r));
+      const share = own == null ? shareOf(r.investorId) : own;
+      const cents = centsOf(r);
+      row.ifAccepted.push({ requestId: r.id, investorId: r.investorId, cents, pct: pctOf(row.bpiValue + cents * share, row.total + cents) });
+    });
+    return rows;
+  }
+
+  NS.eligibility = { regime, LIMIT_506B, BASES, qualOf, nonAccredited, place, flags, figure, regALimitCents, usd, committedCents, regAStatus, BPI_LIMIT, planPct, bpiShare, pctText, erisa };
 })(window.CVPortal);

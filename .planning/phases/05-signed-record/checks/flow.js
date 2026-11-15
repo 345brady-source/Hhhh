@@ -244,6 +244,8 @@ async function walk(page, o) {
     } else if (/all set|paperwork is complete|Finishing/.test(hd)) {
       await page.waitForSelector('.ivf-done', { timeout: 30000 });
       break;
+    } else if (hd === 'Investor status') {
+      // Phase 6 (plan 06-04, D-01): the benefit plan questions; nothing on the step is required (D-30), so nothing is answered.
     } else break;
     await submit(page);
   }

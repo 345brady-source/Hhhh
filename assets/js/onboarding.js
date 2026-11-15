@@ -636,7 +636,7 @@
       const note = document.getElementById('hint-tenancy');
       if (note) note.textContent = jointHint(ob().d);
     }
-    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stRep', 'stRaKind'].indexOf(path) >= 0) {
+    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stRep', 'stRaKind', 'stPlan', 'stCtrl'].indexOf(path) >= 0) {
       NS.app.render();
       // Keep keyboard focus on the control that changed (the page was redrawn).
       const again = el.type === 'radio' ? document.querySelector(`input[name="${el.name}"][value="${CSS.escape(el.value)}"]`) : el.id && document.getElementById(el.id);
@@ -1126,13 +1126,33 @@
     return s;
   }
   /**
-   * The investor status step (D-01): asked where accreditation is self-certified, not verified. It shows when the invited
-   * offering is Rule 506(b), or when the firm asks about accreditation (then the accredited question only). Nothing on it
-   * is required (D-30).
+   * The investor status step (D-01). It asks the accredited question where accreditation is self-certified, not verified:
+   * when the invited offering is Rule 506(b) or Regulation A Tier 2, or when the firm asks about accreditation (then the
+   * accredited question only). Every invitation with an offering to subscribe to also asks the benefit plan (ERISA)
+   * questions there, under every exemption: under Rule 506(c) the verification step is unchanged and the status step
+   * shows only those questions. Nothing on it is required (D-30).
    */
   const EL = () => NS.eligibility;
   const regimeOf = (c) => (EL() && c.off ? EL().regime(c.off) : '');
-  const statusStep = (c) => !!EL() && !accVerifiedFor(c) && (regimeOf(c) === '506b' || regimeOf(c) === 'regA2' || !!c.ws.tenant.onboarding.accreditation);
+  const accAsked = (c) => !!EL() && !accVerifiedFor(c) && (regimeOf(c) === '506b' || regimeOf(c) === 'regA2' || !!c.ws.tenant.onboarding.accreditation);
+  const statusStep = (c) => accAsked(c) || (!!EL() && !!c.off);
+  /** Offerings any investor may buy, accredited or not, with no investment limit: Regulation A Tier 1, and Tier 2 listed on an exchange. */
+  const openToAll = (c) => regimeOf(c) === 'regA1' || regimeOf(c) === 'regA2listed';
+  /** The benefit plan answers on the form: { plan, planPct (0 to 100, or null), controlling (true, false or null), share }. */
+  function erisaFrom(d) {
+    const plan = ['title1', '4975', 'planAssets', 'other', 'none'].indexOf(d.stPlan) >= 0 ? d.stPlan : '';
+    const planPct = plan === 'planAssets' ? EL().planPct(String(d.stPlanPct == null ? '' : d.stPlanPct).trim()) : null;
+    const controlling = d.stCtrl === 'yes' ? true : d.stCtrl === 'no' ? false : null;
+    return { plan, planPct, controlling, share: EL().bpiShare({ plan, planPct }) };
+  }
+  const PLAN_SAID = { title1: 'a plan under Title I of ERISA', 4975: 'a plan or account under Code section 4975', planAssets: 'an entity holding plan assets', other: 'a governmental, church or non-U.S. plan', none: 'none of these' };
+  /** T-06-01: the benefit plan answers, for the change log. */
+  function erisaLogText(d) {
+    const e = erisaFrom(d);
+    const plan = e.plan ? `${PLAN_SAID[e.plan]}${e.plan === 'planAssets' ? ` (${e.planPct == null ? 'percentage not given' : `${e.planPct}% held by benefit plan investors`})` : ''}` : 'not answered';
+    const ctrl = e.controlling === true ? 'yes' : e.controlling === false ? 'no' : 'not answered';
+    return `benefit plan: ${plan}; authority, control or paid advice over the offering’s assets: ${ctrl}`;
+  }
   /** Regulation A Tier 2 asks a person for annual income and net worth, an organization for revenue and net assets. */
   const raKindDefault = (c, d) => (['trust', 'entity'].indexOf(d.type || c.inv.type) >= 0 ? 'entity' : 'person');
   /** The figures the investor gave on the status step, as whole dollars (null when not given or not a number that counts). */
@@ -1145,7 +1165,7 @@
     return kind === 'entity' ? { kind, revenue: n(d.stRevenue), netAssets: n(d.stAssets) } : { kind, income: n(d.stIncome), netWorth: n(d.stWorth) };
   }
   /** Under Regulation A Tier 2, an investor who said they are not accredited has a limit (when their figures give one). */
-  const raAsked = (c, d) => statusStep(c) && regimeOf(c) === 'regA2' && d.stAcc === 'no';
+  const raAsked = (c, d) => accAsked(c) && regimeOf(c) === 'regA2' && d.stAcc === 'no';
   /** T-06-08: the Regulation A figures and the limit, for the change log. */
   function raLogText(c, d) {
     const f = raFigures(c, d);
@@ -1177,8 +1197,10 @@
   /** The status answers kept on the subscription request (request.qual). */
   function qualFrom(c, d) {
     const reg = regimeOf(c);
-    const accredited = d.stAcc === 'yes' ? true : d.stAcc === 'no' ? false : accVerifiedFor(c) && IV() && NS.integrations.accreditationValid(c.ws, c.inv) ? true : null;
-    const q = { regime: reg, at: nowIso(), accredited, basis: accredited === true && d.stAcc === 'yes' ? String(d.stBasis || '') : '' };
+    // The answer counts only where the step asked it (a ground prefilled from the record is not an answer elsewhere).
+    const asked = accAsked(c);
+    const accredited = asked && d.stAcc === 'yes' ? true : asked && d.stAcc === 'no' ? false : accVerifiedFor(c) && IV() && NS.integrations.accreditationValid(c.ws, c.inv) ? true : null;
+    const q = { regime: reg, at: nowIso(), accredited, basis: accredited === true && asked && d.stAcc === 'yes' ? String(d.stBasis || '') : '' };
     if (accredited === false && reg === '506b') {
       const name = String(d.stRepName || '').trim();
       const firm = String(d.stRepFirm || '').trim();
@@ -1194,6 +1216,8 @@
       const commitmentCents = c.off ? EL().committedCents(c.ws, c.off, c.inv.id) : 0;
       q.regA = Object.assign(f, { limitCents, commitmentCents, overLimit: limitCents != null && commitmentCents > limitCents });
     }
+    // D-01: the benefit plan answers, with the share of this interest counted as held by benefit plan investors.
+    if (statusStep(c)) q.erisa = erisaFrom(d);
     return q;
   }
   const stepLabel = (c, k) => (k === 'accreditation' && accVerifiedFor(c) ? 'Accredited investor verification' : FL[k]);
@@ -1277,6 +1301,11 @@
           stRepFirm: '',
           stRepFileId: '',
           stRepFileName: '',
+          // Benefit plan questions (D-01): from the answers on the investor record (an IRA starts at Code section 4975 when
+          // the step is first shown: fStatus); never required.
+          stPlan: (i.erisa && i.erisa.plan) || '',
+          stPlanPct: i.erisa && i.erisa.planPct != null ? String(i.erisa.planPct) : '',
+          stCtrl: i.erisa && i.erisa.controlling === true ? 'yes' : i.erisa && i.erisa.controlling === false ? 'no' : '',
           // Regulation A Tier 2 (D-01): person or organization (set from the account type when the step is shown), and figures.
           stRaKind: '',
           stIncome: '',
@@ -1472,6 +1501,17 @@
     // Local mode only: in server mode this browser holds no other investor's subscription.
     const full = no && !isRemote(c.ws) && EL().place(c.ws, c.off, c.inv.id) > EL().LIMIT_506B;
     const fullNote = full ? `<p class="wire-warn field-wide" role="note">${icon('alert')}<span>This offering may already have as many investors who are not accredited as it is able to accept. You can still subscribe: ${h(t.shortName)} reviews every subscription and will let you know if yours cannot be accepted.</span></p>` : '';
+    // Rule 506(c) (accreditation verified in its own step), or no accredited question for this offering: the benefit plan
+    // questions only.
+    if (!accAsked(c)) {
+      const only = accVerifiedFor(c)
+        ? `Your accreditation is verified in its own step, so this step asks only whether ${h(c.inv.title)} invests on behalf of a benefit plan.`
+        : `This step asks only whether ${h(c.inv.title)} invests on behalf of a benefit plan.`;
+      return `${ivfH1(FL.status)}
+      <p class="lede">${only} You may leave any question unanswered.</p>
+      ${planQuestions(c, d)}
+      <p class="meta">Your answers are kept with your subscription and shared only with ${h(t.shortName)}.</p>`;
+    }
     return `${ivfH1(FL.status)}
       <p class="lede">${lede} You may leave any question unanswered.</p>
       <div class="form-grid">
@@ -1488,7 +1528,37 @@
             : ''
         }
       </div>
+      ${c.off ? planQuestions(c, d) : ''}
       <p class="meta">Your answers are kept with your subscription and shared only with ${h(t.shortName)}.</p>`;
+  }
+  /**
+   * The benefit plan (ERISA) questions on the status step (D-01), none required (D-30). When benefit plan investors hold
+   * 25 percent or more of any class, the offering's assets can be treated as plan assets, so the firm follows that share.
+   * An IRA account starts at Code section 4975 the first time the step is shown in a session; the investor can change it.
+   */
+  function planQuestions(c, d) {
+    const o = ob();
+    if (!o.planSeen) {
+      o.planSeen = true;
+      if (!d.stPlan && (d.type || c.inv.type) === 'ira') d.stPlan = '4975';
+    }
+    const who = h(c.inv.title);
+    return `<h2 class="ivf-h2">Benefit plans</h2>
+      <p class="meta">When benefit plan investors come to hold 25 percent or more of a class of interests in this offering, its assets can be treated as plan assets under ERISA. ${h(c.ws.tenant.shortName)} uses these answers to follow that share.</p>
+      <div class="form-grid">
+        ${radios('stPlan', `Which of these describes ${who}?`, [
+          ['title1', 'An employee benefit plan covered by ERISA’s fiduciary rules (Title I, Part 4)', 'Such as a company pension or 401(k) plan'],
+          ['4975', 'A plan or account covered by section 4975 of the Internal Revenue Code', 'Such as an IRA or a Keogh plan'],
+          ['planAssets', 'An entity whose assets include plan assets', 'Such as a fund or account in which benefit plans invest'],
+          ['other', 'A governmental, church or non-U.S. plan', 'Plans outside those rules'],
+          ['none', 'None of these']
+        ])}
+        ${d.stPlan === 'planAssets' ? input('stPlanPct', 'Share of the entity’s equity held by benefit plan investors (%)', { type: 'number', mode: 'decimal', narrow: true, hint: 'From 0 to 100. Only that part of this investment is counted as plan money.' }) : ''}
+        ${radios('stCtrl', `Does ${who}, or an affiliate, have discretionary authority or control over this offering’s assets, or give paid investment advice about them?`, [
+          ['yes', 'Yes'],
+          ['no', 'No']
+        ])}
+      </div>`;
   }
   function fTax(c) {
     const d = ob().d;
@@ -1557,11 +1627,15 @@
     const e = ob().errors;
     const ready = tplReady(c);
     const acc = c.inv.accreditation && c.inv.accreditation.basis;
-    // The accreditation tick follows the investor status answer (D-01) and is never required (D-30). Without a status step
-    // (verified accreditation, or no question asked) today's sentence stays.
-    const accAns = accVerifiedFor(c) || !statusStep(c) ? 'yes' : d.stAcc;
+    // The accreditation tick follows the investor status answer (D-01) and is never required (D-30). Without the
+    // accredited question (verified accreditation, or no question asked) today's sentence stays, except where the offering
+    // is open to investors who are not accredited with no limit (Regulation A Tier 1, or Tier 2 listed on an exchange):
+    // there no statement about accreditation is asked for, and a short note says why.
+    const accAns = accVerifiedFor(c) ? 'yes' : accAsked(c) ? d.stAcc : openToAll(c) ? 'open' : 'yes';
     const accTick =
-      accAns === 'yes'
+      accAns === 'open'
+        ? '<p class="field-wide meta ivf-acc-open">Regulation A does not limit this offering to accredited investors, so no statement about accreditation is asked for here.</p>'
+        : accAns === 'yes'
         ? check('subAcc', `${h(c.inv.title)} is an accredited investor${acc ? ` (${h(acc)})` : ''}, and this remains accurate.`)
         : accAns === 'no'
           ? check('subAcc', `${h(c.inv.title)} is not an accredited investor, and the answers given under Investor status remain accurate.`)
@@ -1638,8 +1712,8 @@
     const idTxt = held ? (dec === 'review' || dec === 'rejected' ? ['In review', 'iv-wait'] : ['Waiting for the results', 'iv-wait']) : id === 'passed' ? ['Verified', 'iv-ok'] : ['Submitted, waiting for the result', 'iv-wait'];
     const a = v ? v.accreditation : {};
     const accTxt = a.status === 'verified' && a.connection !== 'self' ? ['Verified', 'iv-ok'] : a.status === 'pending' || a.status === 'review' ? ['In review', 'iv-wait'] : i.accreditation && i.accreditation.basis ? ['Self-certified', 'iv-ok'] : ['Not provided', 'iv-wait'];
-    // A flow with the investor status step reports the answer given there (the one on the subscription, when there is one).
-    const asked = statusStep(c);
+    // A flow whose status step asks the accredited question reports the answer given there (the one on the subscription, when there is one).
+    const asked = accAsked(c);
     const q = asked && c.req ? EL().qualOf(c.req) : null;
     const said = q ? q.accredited : o.d.stAcc === 'yes' ? true : o.d.stAcc === 'no' ? false : null;
     const stTxt = said === true ? ['Accredited (self-certified)', 'iv-ok'] : said === false ? ['Not accredited', ''] : ['Not answered', 'iv-wait'];
@@ -1827,13 +1901,19 @@
     }
     if (key === 'status') {
       let gone = '';
-      if (d.stAcc === 'yes' && d.stBasis) {
+      // The accredited answer is saved only where the step asked it (under Rule 506(c) the verification step decides).
+      const asked = accAsked(c);
+      if (asked && d.stAcc === 'yes' && d.stBasis) {
         i.accreditation = Object.assign({}, i.accreditation, { basis: d.stBasis, date: NS.dates.today() });
         if (IV() && !c.it.existing) await IV().finishOnboarding(ws, i, Object.assign({}, d, { accBasis: d.stBasis }));
         else if (IV()) IV().decide(ws, i);
-      } else if (d.stAcc === 'no') gone = withdrawGround(c);
-      const said = d.stAcc === 'yes' ? `accredited investor${d.stBasis ? ` (${d.stBasis})` : ', ground not given'}` : d.stAcc === 'no' ? 'not an accredited investor' : 'not answered';
-      log('Investor status answered', `${said}${gone ? `; the self-certified ground on the record (${gone}) no longer applies` : ''}${raAsked(c, d) ? raLogText(c, d) : ''}`);
+      } else if (asked && d.stAcc === 'no') gone = withdrawGround(c);
+      // D-01: the benefit plan answers are kept on the investor record to prefill their next subscription.
+      const e = c.off ? erisaFrom(d) : null;
+      if (e && (e.plan || e.controlling != null)) i.erisa = { plan: e.plan, planPct: e.planPct, controlling: e.controlling, at: nowIso() };
+      const accSaid = d.stAcc === 'yes' ? `accredited investor${d.stBasis ? ` (${d.stBasis})` : ', ground not given'}` : d.stAcc === 'no' ? 'not an accredited investor' : 'not answered';
+      const said = asked ? accSaid : e ? erisaLogText(d) : 'not answered';
+      log('Investor status answered', `${said}${gone ? `; the self-certified ground on the record (${gone}) no longer applies` : ''}${raAsked(c, d) ? raLogText(c, d) : ''}${asked && e ? `; ${erisaLogText(d)}` : ''}`);
       // Corrected after subscribing: a request still pending carries the new answers; a decided one keeps what it was decided on.
       if (c.req && c.req.status === 'pending') {
         c.req.qual = qualFrom(c, d);

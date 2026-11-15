@@ -301,6 +301,8 @@ async function walkToAgreement(page, o) {
     } else if (/Subscription agreement/.test(hd)) {
       await page.waitForSelector('.es-doc-sign .es-page img', { timeout: 20000 });
       return { seen, reached: true };
+    } else if (hd === 'Investor status') {
+      // Phase 6 (plan 06-04, D-01): the benefit plan questions; nothing on the step is required (D-30), so nothing is answered.
     } else break;
     await submit(page);
   }

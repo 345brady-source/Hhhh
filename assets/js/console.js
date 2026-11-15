@@ -400,13 +400,15 @@
   }
   /**
    * The exemption field's hint (self-serve edition). C-04: a Regulation A value with no tier (read from documents) is
-   * treated as Tier 2 until the sponsor chooses, and the hint says so, next to the Rule 506(c) note.
+   * treated as Tier 2 until the sponsor chooses, and the hint says so. The Rule 506(c) note shows only under Rule 506(c).
    */
   function exemptionHint(o) {
-    if (!E.diy) return '';
+    if (!E.diy || !NS.eligibility) return '';
     const ex = ((o.structure || {}).exemption || '').trim();
-    const untiered = !!NS.eligibility && NS.eligibility.regime(o) === 'regA2' && !/\bTier\b/i.test(ex);
-    return `${untiered ? 'This offering names Regulation A without a tier: choose Tier 1 or Tier 2 above. Until you do, investors who are not accredited are asked the Tier 2 questions and shown their 10 percent limit. ' : ''}Rule 506(c) offerings take verified accredited investors only: investors verify their status while they onboard, before they can subscribe.`;
+    const reg = NS.eligibility.regime(o);
+    if (reg === 'regA2' && !/\bTier\b/i.test(ex)) return 'This offering names Regulation A without a tier: choose Tier 1 or Tier 2 above. Until you do, investors who are not accredited are asked the Tier 2 questions and shown their 10 percent limit.';
+    if (reg === '506c') return 'Rule 506(c) offerings take verified accredited investors only: investors verify their status while they onboard, before they can subscribe.';
+    return '';
   }
   function offPreview(o) {
     const x = NS.exitInfo(o);
@@ -428,8 +430,40 @@
    * pending ones are counted and shown apart.
    */
   function eligibilityPanel(o) {
+    if (!E.diy || !NS.eligibility) return '';
+    return exemptionPanel(o) + bpiPanel(o);
+  }
+  /**
+   * D-01: the share of value held by benefit plan investors in each class of the offering, against 25 percent, for every
+   * offering (the sponsor's view only: T-06-09). Red at 25 or more. Each pending subscription shows the class's figure if
+   * it is accepted; such a request is flagged on its row (NS.eligibility.flags), never blocked.
+   */
+  function bpiPanel(o) {
     const EL = NS.eligibility;
-    if (!E.diy || !EL) return '';
+    const rows = NS.eligibility.erisa(W(), o);
+    const lim = EL.BPI_LIMIT;
+    const lines = rows
+      .map((r) => {
+        const over = r.pct >= lim;
+        const pend = r.ifAccepted
+          .map((x) => {
+            const inv = invById(x.investorId);
+            return `<p class="cs-muted cs-bpi-if" data-request="${h(x.requestId)}">If ${h(inv ? inv.title : x.investorId)}’s pending subscription of ${h(EL.usd(x.cents))} is accepted: ${h(EL.pctText(x.pct))}% of ${h(r.name)}${x.pct >= lim ? ` ${badge('warn', '25 percent or more')}` : ''}</p>`;
+          })
+          .join('');
+        return `<p class="cs-bpi-line${over ? ' is-over' : ''}" data-class="${h(r.classId)}"><strong>${h(r.name)}: ${h(EL.pctText(r.pct))}% of value held by benefit plan investors</strong>${over ? ` ${badge('bad', '25 percent or more')}` : ''}</p>
+        ${over ? `<p class="cs-hint">Benefit plan investors hold 25 percent or more of ${h(r.name)}, so the offering’s assets may be treated as plan assets under ERISA.</p>` : ''}${pend}`;
+      })
+      .join('');
+    return panel(
+      'Benefit plan investors',
+      `${lines}
+      <p class="cs-hint">Value is what each holder has committed or subscribed, with accepted subscriptions not yet funded. A holder counts by their latest answers to the benefit plan questions; one who has not answered is counted as not a benefit plan investor.</p>`
+    );
+  }
+  /** The panel for the offering's exemption: Rule 506(b)'s count, or Regulation A Tier 2's limits; none for others. */
+  function exemptionPanel(o) {
+    const EL = NS.eligibility;
     if (EL.regime(o) === 'regA2') return regAPanel(o);
     if (EL.regime(o) !== '506b') return '';
     const n = EL.nonAccredited(W(), o);
