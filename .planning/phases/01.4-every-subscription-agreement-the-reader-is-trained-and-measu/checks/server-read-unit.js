@@ -178,6 +178,28 @@ const shortRule = find((c) => c.page === 1 && c.x0 >= 139 && c.x1 <= 241);
   const c3 = PL.candidates([{ page: 1, scan: true }, { page: 2, failed: true, w: 612, h: 792 }, null], []);
   line(c3.items.length === 0 && c3.text === '', 'unreadable pages', `${c3.items.length} places`);
 }
+{
+  // Plan 01.4-72 (owner 2026-11-15): a tax form's page, judged by its printed title, has no place; a page that only
+  // mentions the form in its text keeps its places.
+  const w9 = { page: 1, w: 612, h: 792, items: [word('Form', 36, 50, 22), word('W-9', 60, 56, 30), word('Request for Taxpayer Identification Number and Certification', 200, 52, 260), word('Department of the Treasury', 36, 80, 110), word('1 Name', 36, 200, 30)], rules: [{ x0: 80, x1: 400, y: 200, clear: 14 }], boxes: [], forms: [] };
+  const inst = { page: 2, w: 612, h: 792, items: [word('Form W-9 (Rev. 3-2024)', 36, 40, 100), word('Page 2', 520, 40, 30), word('Requester name', 36, 300, 70)], rules: [{ x0: 120, x1: 400, y: 300, clear: 14 }], boxes: [], forms: [] };
+  const mention = { page: 3, w: 612, h: 792, items: [word('Form W-9 must be attached; see the Internal Revenue Service instructions.', 36, 400, 330), word('Name', 36, 500, 30)], rules: [{ x0: 80, x1: 400, y: 500, clear: 14 }], boxes: [], forms: [] };
+  const tp = PL.taxPages([w9, inst, mention]);
+  const c = PL.candidates([w9, inst, mention], []);
+  const out = PL.fromAnswer([w9, inst, mention], c.items, { fields: [], missing: [{ page: 1, near: -1, caption: '1 Name', side: 'right', kind: 'text', person: 'investor', group: 'all' }] });
+  line(JSON.stringify(tp) === '[1,2]' && c.items.every((x) => x.page === 3) && c.items.length > 0 && out.fields.length === 0 && out.skipped === 1, 'tax form pages have no place', `tax pages ${JSON.stringify(tp)}, places on pages ${JSON.stringify([...new Set(c.items.map((x) => x.page))])}, a missing place on the form skipped (${out.skipped}), ${out.fields.length} field(s)`);
+}
+{
+  // Plan 01.4-72: a scanned page with a stamp over its picture is a picture page; a picture under real text is not.
+  const actx = { window: { CVPortal: {} }, console };
+  vm.createContext(actx);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'assets/js/anchors.js'), 'utf8'), actx, { filename: 'anchors.js' });
+  const A = actx.window.CVPortal.anchors;
+  const g = (u, x, y) => ({ u, sp: false, x0: x, x1: x + 5, y, h: 8, font: 'Helvetica', hidden: false });
+  const stamped = { picture: true, w: 612, h: 792, glyphs: 'Page 6 of 16'.split('').map((u, k) => g(u, 500 + 5 * k, 780)).filter((x) => x.u !== ' '), segs: [], rects: [], blobs: [] };
+  const body = { picture: true, w: 612, h: 792, glyphs: 'Name of the Investor'.split('').map((u, k) => g(u, 72 + 5 * k, 400)).filter((x) => x.u !== ' '), segs: [], rects: [], blobs: [] };
+  line(A.textless(stamped) === 'picture' && A.textless(body) === '', 'stamped scan', `a picture with only a margin stamp over it: '${A.textless(stamped)}'; a picture under body text: '${A.textless(body)}'`);
+}
 
 console.log(bad ? `SERVER READ UNIT: FAIL (${bad})` : 'SERVER READ UNIT: PASS');
 process.exit(bad ? 1 : 0);

@@ -3182,7 +3182,7 @@
     }
   }
   async function serverReading(env, layout, res, opts) {
-    const rec = (env.read.server = { used: false, why: '', fields: 0, dropped: 0, requests: 0, ranges: [], pictures: [], images: 0 });
+    const rec = (env.read.server = { used: false, why: '', fields: 0, dropped: 0, requests: 0, ranges: [], pictures: [], images: 0, tax: [] });
     const wait = opts && typeof opts.wait === 'function' ? opts.wait : null;
     const keep = (why) => ((rec.why = why), res);
     let waiting = false;
@@ -3197,7 +3197,10 @@
       // Picture pages: read from their picture, or a text layer that cannot be read (judged page by page).
       const texts = layout.map((pg) => (!pg || pg.pictured || pg.scan || pg.failed ? '' : (pg.items || []).map((t) => t.s).join(' ')));
       const unreadable = NS.intake && NS.intake.unreadablePages ? NS.intake.unreadablePages(texts) : texts.map(() => false);
-      const pictures = layout.filter((pg, i) => pg && !pg.scan && !pg.failed && (pg.pictured || unreadable[i])).map((pg) => pg.page);
+      // (owner 2026-11-15: a tax form's pages are not read, so they are never sent as pictures either)
+      const tax = new Set(NS.placement.taxPages ? NS.placement.taxPages(layout) : []);
+      rec.tax = Array.from(tax);
+      const pictures = layout.filter((pg, i) => pg && !pg.scan && !pg.failed && (pg.pictured || unreadable[i]) && !tax.has(pg.page)).map((pg) => pg.page);
       rec.pictures = pictures.slice();
       const cand = NS.placement.candidates(layout, res.fields, { pictures });
       if (!cand.items.length) return keep('no-places');
@@ -3342,7 +3345,7 @@
         coPages: [],
         coSignaturePages: []
       });
-      Object.assign(rec, { used: true, why: 'read', fields: fields.length, dropped: out.dropped });
+      Object.assign(rec, { used: true, why: 'read', fields: fields.length, dropped: out.dropped, skipped: out.skipped || 0 });
       return next;
     } catch (e) {
       return keep('failed');

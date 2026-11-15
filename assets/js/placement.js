@@ -2883,6 +2883,44 @@
   /** Words as compared with a caption: lower case, letters and digits only, single spaces. */
   const squash = (s) => tidy(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
+  /*
+   * Owner 2026-11-15: tax forms (Form W-9, the Form W-8 series and similar IRS forms) and their instruction pages are
+   * not places: the portal collects them in its own onboarding step. taxForm(pg) is true for such a page, judged from its
+   * printed title: a line in the top fifth of the page that starts with "Form W-9" / "Form W-8..." together with the
+   * form's official heading (its title, "Department of the Treasury", "Internal Revenue Service", or "Instructions for
+   * Form W-...") in the top fifth; or the form's running header or footer ("Form W-9 (Rev. ...") in the top or bottom
+   * eighth. A page of the agreement that only mentions a tax form in its text (a box to certify a W-9 is attached) is
+   * not one. A page read from its picture is judged by the words recognised on it, when any.
+   */
+  const TAX_FORM = /^\s*Form\s*W\s?-?\s?(9|8\s?(BEN(-E)?|ECI|EXP|IMY|CE)?)\b/i;
+  const TAX_RUNNING = /^\s*Form\s*W\s?-?\s?(9|8\s?(BEN(-E)?|ECI|EXP|IMY|CE)?)\s*\(\s*Rev\b/i;
+  const TAX_HEAD = /Request for Taxpayer Identification Number|Certificate of (Foreign )?Status of Beneficial Owner|Certificate of Foreign (Person|Government|Intermediary)|Certificate of Entities Claiming|Department of the Treasury|Internal Revenue Service|Instructions for (the Requester of )?Form\s*W\s?-?\s?[89]/i;
+  function taxForm(pg) {
+    if (!pg || pg.failed || !(pg.h > 0) || !Array.isArray(pg.items) || !pg.items.length) return false;
+    // Printed lines: items on the same baseline (within about half their height), left to right.
+    const lines = [];
+    pg.items
+      .filter((t) => t && typeof t.s === 'string' && t.s.trim())
+      .slice()
+      .sort((a, b) => a.y - b.y || a.x - b.x)
+      .forEach((t) => {
+        const ln = lines[lines.length - 1];
+        if (ln && Math.abs(t.y - ln.y) <= 0.5 * Math.max(t.h || 0, ln.h, 2)) {
+          ln.items.push(t);
+          ln.h = Math.max(ln.h, t.h || 0);
+        } else lines.push({ y: t.y, h: t.h || 0, items: [t] });
+      });
+    lines.forEach((ln) => (ln.s = tidy(ln.items.sort((a, b) => a.x - b.x).map((t) => t.s).join(' '))));
+    const top = lines.filter((ln) => ln.y <= 0.2 * pg.h);
+    if (lines.some((ln) => (ln.y <= 0.125 * pg.h || ln.y >= 0.875 * pg.h) && TAX_RUNNING.test(ln.s))) return true;
+    // (the word "Form" set small beside a large "W-9" stands on its own baseline: the two are one title)
+    const topItems = pg.items.filter((t) => t && typeof t.s === 'string' && t.y <= 0.2 * pg.h);
+    const split = topItems.some((t) => /^\s*Form\s*$/i.test(t.s) && topItems.some((o) => o !== t && o.x >= t.x && o.x - (t.x + (t.w || 0)) <= 60 && Math.abs(o.y - t.y) <= 24 && TAX_FORM.test('Form ' + o.s)));
+    return (split || top.some((ln) => TAX_FORM.test(ln.s))) && TAX_HEAD.test(top.map((ln) => ln.s).join(' '));
+  }
+  /** The numbers of the pages that are tax forms (taxForm). */
+  const taxPages = (pages) => (pages || []).filter((pg) => pg && taxForm(pg)).map((pg) => pg.page);
+
   function candidates(pages, inpage, opts) {
     const pictures = new Set(((opts && opts.pictures) || []).map(Number));
     const items = [];
@@ -2890,6 +2928,8 @@
     const shown = [];
     (pages || []).forEach((pg) => {
       if (!pg || pg.scan || pg.failed || !(pg.w > 0) || !(pg.h > 0)) return;
+      // (a tax form's page has no place: owner 2026-11-15)
+      if (taxForm(pg)) return;
       let L;
       try {
         L = layout(pg);
@@ -3128,6 +3168,64 @@
     return { x, y, w: W, h };
   }
 
+  /**
+   * The tick box printed beside a choice on its own line, or null: a box candidate whose foot is on the anchor's line
+   * (within 4 pt, or 0.6 of the anchor's height) and whose nearer edge is within far pt of the anchor's words, either side.
+   */
+  function boxBeside(anchor, boxes, far) {
+    const band = Math.max(4, 0.6 * ((anchor.y1 || anchor.base) - (anchor.y0 || anchor.base)));
+    let best = null;
+    let d = Infinity;
+    boxes.forEach((c) => {
+      if (Math.abs(c.base - anchor.base) > band) return;
+      const gap = c.x1 <= anchor.x0 + 1 ? anchor.x0 - c.x1 : c.x0 >= anchor.x1 - 1 ? c.x0 - anchor.x1 : 0;
+      if (gap <= far && gap < d) {
+        d = gap;
+        best = c;
+      }
+    });
+    return best;
+  }
+  /**
+   * The point of a choice grid's cell named "column heading / row heading" (the reader's caption for a cell with no
+   * number): the middle of the column heading across, the middle of the row heading's line down; null unless both
+   * headings are printed on the page. A heading matches the segment holding all its words, else the longest segment
+   * whose words are all in it (a heading printed on two lines).
+   */
+  function gridPoint(L, caption) {
+    const parts = String(caption).split(' / ').map((t) => squash(t)).filter((t) => t.length >= 2);
+    if (parts.length < 2) return null;
+    const find = (want) => {
+      const whole = L.segs.find((g) => squash(g.s) === want) || L.segs.find((g) => squash(g.s).indexOf(want) >= 0);
+      if (whole) return whole;
+      let best = null;
+      L.segs.forEach((g) => {
+        const q = squash(g.s);
+        if (q.length >= 4 && (' ' + want + ' ').indexOf(' ' + q + ' ') >= 0 && (!best || q.length > squash(best.s).length)) best = g;
+      });
+      return best;
+    };
+    const col = find(parts[0]);
+    const row = find(parts[1]);
+    if (!col || !row || col === row) return null;
+    return { x: (col.x0 + col.x1) / 2, y: row.y - row.h / 2, words: tidy(String(caption)) };
+  }
+  /**
+   * The field rectangle for a grid cell's point: the free numbered cell or box holding it, else the page's empty drawn
+   * cell holding it (the field is the cell, inset as for a numbered cell), else a 10 pt tick box centred on it.
+   */
+  function gridRect(pt, free, pg, kind) {
+    const inside = (r) => pt.x >= r.x0 - 1 && pt.x <= r.x1 + 1 && pt.y >= r.y0 - 1 && pt.y <= r.y1 + 1;
+    const c = free.find((q) => (q.what === 'cell' || q.what === 'box') && inside(q));
+    if (c) return rectFor(c, kind);
+    const rl = ((pg && pg.rules) || []).find((r) => r && r.cell && r.x1 > r.x0 && inside({ x0: r.x0 - 2, x1: r.x1 + 2, y0: r.y - r.clear - 1, y1: r.y }));
+    if (rl) return boxOn(KINDS.other, { x0: rl.x0, x1: rl.x1, y: rl.y, clear: rl.clear, pad: null, cell: true });
+    if (kind !== 'checkbox' || !pg || !(pg.w > 0)) return null;
+    const x = Math.max(9, Math.min(pg.w - 19, pt.x - 5));
+    const y = Math.max(9, Math.min(pg.h - 19, pt.y - 5));
+    return { x, y, w: 10, h: 10 };
+  }
+
   function fromAnswer(pages, list, answer) {
     if (!answer || typeof answer !== 'object' || Array.isArray(answer) || !Array.isArray(answer.fields) || !Array.isArray(answer.missing)) return null;
     const items = list || [];
@@ -3136,6 +3234,8 @@
     let ignored = 0;
     let dropped = 0;
     let merged = 0;
+    let skipped = 0; // places on a tax form's page (owner 2026-11-15: no field there)
+    const tax = new Set(taxPages(pages));
     const made = []; // { p, r (rectangle as x0..y1), c (the place, when numbered) }
     const chosen = new Set();
     answer.fields
@@ -3144,6 +3244,7 @@
         const ok = known(e) && byId.has(e.id) && !chosen.has(e.id);
         if (ok) chosen.add(e.id);
         else ignored++;
+        if (ok && tax.has(byId.get(e.id).page)) return (skipped++, false);
         return ok;
       })
       .sort((a, b) => a.id - b.id)
@@ -3173,6 +3274,7 @@
       if (!known(e) || ANSWER_SIDES.indexOf(e.side) < 0 || !Number.isInteger(e.near) || (e.near !== -1 && !byId.has(e.near))) return ignored++;
       let anchor = null;
       let page = e.page;
+      let grid = null;
       if (e.near !== -1) {
         anchor = byId.get(e.near);
         page = anchor.page;
@@ -3181,14 +3283,24 @@
         const want = squash(e.caption);
         const g = L && want.length >= 3 ? L.segs.find((s) => squash(s.s).indexOf(want) >= 0) : null;
         if (g) anchor = { x0: g.x0, y0: g.y - g.h, x1: g.x1, y1: g.y, base: g.y };
+        else if (L && / \/ /.test(e.caption)) grid = gridPoint(L, e.caption);
+      }
+      if (tax.has(page)) return skipped++;
+      const pg = pageOf.get(page);
+      if (grid) {
+        // A cell of a choice grid named by its column and row headings: the field goes in that cell.
+        const rect = gridRect(grid, items.filter((c) => c.page === page && !chosen.has(c.id)), pg, e.kind);
+        if (!rect || claimed(rectOf(rect), page)) return dropped++;
+        made.push({ p: answerField(e, page, rect, e.kind === 'checkbox' || e.kind === 'text' ? grid.words : ''), r: rectOf(rect), c: null });
+        return;
       }
       if (!anchor) return dropped++;
-      const pg = pageOf.get(page);
       const pool = [];
       items.forEach((c) => c.page === page && !chosen.has(c.id) && (c !== anchor || e.side === 'on') && pool.push({ r: c, c, rect: () => rectFor(c, e.kind) }));
       ((pg && pg.rules) || []).forEach((rl) => {
         if (!rl || rl.x1 - rl.x0 < 9 || !(rl.clear >= TIGHT_CLEAR)) return;
-        const slot = { x0: rl.x0, x1: rl.x1, y: rl.y, clear: rl.clear, pad: null };
+        // (an empty drawn cell keeps its cell: the field is the cell, as for a numbered one)
+        const slot = { x0: rl.x0, x1: rl.x1, y: rl.y, clear: rl.clear, pad: null, cell: !!rl.cell };
         const rect = () => boxOn(e.kind === 'checkbox' || e.kind === 'text' ? KINDS.other : KINDS[e.kind] || KINDS.other, slot);
         pool.push({ r: Object.assign(rectOf(rect()), { base: rl.y }), c: null, rect });
       });
@@ -3204,13 +3316,64 @@
       };
       let best = null;
       let d = Infinity;
-      pool.forEach((q) => {
-        const k = dist(q);
-        if (k < d && !claimed(q.r, page)) {
-          d = k;
-          best = q;
+      // A short caption printed under a line (Name, Signature, Date below the rule) names the line directly above it,
+      // whatever side the answer gave: that line is the place, never the line below the caption. When it is already a
+      // field, nothing is added.
+      if (e.near === -1 && (e.side === 'below' || e.side === 'on') && wordsOf(squash(e.caption)).length <= 6) {
+        const hh = Math.max(4, anchor.y1 - anchor.y0);
+        let under = null;
+        let du = Infinity;
+        const lineAbove = (q) => {
+          if (q.c && !(q.c.what === 'line' || q.c.what === 'underscore')) return;
+          const r = q.r;
+          const gap = anchor.y0 - r.base;
+          const across = overlap(r.x0, r.x1, anchor.x0, anchor.x1) > 0 || Math.abs(r.x0 - anchor.x0) <= 40;
+          if (across && gap >= -2 && gap <= Math.max(14, 1.6 * hh) && gap < du) {
+            du = gap;
+            under = q;
+          }
+        };
+        // (a line nearer under the caption than the line over it is the caption's own: the caption stands over its line)
+        let db = Infinity;
+        const lineBelow = (q) => {
+          if (q.c && !(q.c.what === 'line' || q.c.what === 'underscore')) return;
+          const gap = q.r.base - anchor.base;
+          if ((overlap(q.r.x0, q.r.x1, anchor.x0, anchor.x1) > 0 || Math.abs(q.r.x0 - anchor.x0) <= 40) && gap > 1 && gap < db) db = gap;
+        };
+        const takenLines = items.filter((c) => c.page === page && chosen.has(c.id)).map((c) => ({ r: c, c, taken: true }));
+        pool.forEach(lineAbove);
+        takenLines.forEach(lineAbove);
+        pool.forEach(lineBelow);
+        takenLines.forEach(lineBelow);
+        if (under && db < du) under = null;
+        if (under && (under.taken || claimed(under.r, page))) return merged++;
+        if (under) best = under;
+      }
+      // A tick box: the box printed right against the choice's words (12 pt or less, either side, on its line) is the
+      // choice's own box, whatever side the answer gave; when it is already a field, no second box is made.
+      const boxes = e.kind === 'checkbox' ? items.filter((c) => c.page === page && c !== anchor && (c.what === 'box' || (c.what === 'form' && c.form && c.form.check))) : [];
+      if (!best && boxes.length && e.near === -1) {
+        const own = boxBeside(anchor, boxes, 12);
+        if (own && (chosen.has(own.id) || claimed(own, page))) return merged++;
+        if (own) best = { r: own, c: own, rect: () => rectFor(own, e.kind) };
+      }
+      if (!best)
+        pool.forEach((q) => {
+          const k = dist(q);
+          if (k < d && !claimed(q.r, page)) {
+            d = k;
+            best = q;
+          }
+        });
+      if (!best && e.kind === 'checkbox') {
+        // A tick box printed beside the choice (any side, on its line) is the choice's box: used when free, and when it is
+        // already a field no second box is made beside it.
+        const box = boxBeside(anchor, boxes, 36);
+        if (box) {
+          if (chosen.has(box.id) || claimed(box, page)) return merged++;
+          best = { r: box, c: box, rect: () => rectFor(box, e.kind) };
         }
-      });
+      }
       if (!best) {
         // No printed line or box on that side (D-38): a place printed as a caption with empty space, or a choice with no box.
         const made0 = spaceBeside(e, anchor, pg);
@@ -3233,8 +3396,8 @@
       keep.push(m);
     });
     const fields = keep.map((m) => m.p).sort((a, b) => a.page - b.page || a.y - b.y || a.x - b.x);
-    return { fields, dropped, merged, ignored };
+    return { fields, dropped, merged, ignored, skipped };
   }
 
-  NS.placement = { read, analyze, labelOf, needsReview, reviewFields, reviewCount, confirm, statusOf, groupOf, fits, values, PREFILL, FOR_TYPES, asOther, isOther, otherParty, OTHER_NOTE, isPlainLabel, candidates, fromAnswer, acceptanceBlock, firmSignature };
+  NS.placement = { read, analyze, labelOf, needsReview, reviewFields, reviewCount, confirm, statusOf, groupOf, fits, values, PREFILL, FOR_TYPES, asOther, isOther, otherParty, OTHER_NOTE, isPlainLabel, candidates, fromAnswer, acceptanceBlock, firmSignature, taxForm, taxPages };
 })(typeof window !== 'undefined' ? window.CVPortal : globalThis.CVPortal);
