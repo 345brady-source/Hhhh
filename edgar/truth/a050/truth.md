@@ -1,10 +1,10 @@
 # Answer sheet a050 (22 pages, source: hand)
 
-Warrant to purchase common stock (subscription agreement exhibit): the company completes the warrant face on page 1 and signs on page 19; the registered holder uses the exercise notice (page 20) and the assignment form (page 22) only when exercising or assigning. No third party.
+Warrant to purchase common stock filed as an exhibit: a separate instrument issued and signed by the company; the subscriber signs nothing in it at this closing, and its exercise notice and assignment form are used only on later events. No places.
 
 | page | places | tick boxes | initials | blanks | signatures | dates | how sure |
 |---|---|---|---|---|---|---|---|
-| 1 | 6 | 0 | 0 | 6 | 0 | 0 | unsure whether the warrant-face blanks count: they are completed by the issuer when issuing the warrant (kept as firm places with a doubt) |
+| 1 | 0 | 0 | 0 | 0 | 0 | 0 | sure: no place (issuer-completed warrant face) |
 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | draft |
 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | draft |
 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | draft |
@@ -22,26 +22,21 @@ Warrant to purchase common stock (subscription agreement exhibit): the company c
 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | draft |
 | 17 | 0 | 0 | 0 | 0 | 0 | 0 | draft |
 | 18 | 0 | 0 | 0 | 0 | 0 | 0 | draft |
-| 19 | 1 | 0 | 0 | 0 | 1 | 0 | sure |
-| 20 | 17 | 4 | 0 | 11 | 1 | 1 | sure; the short lines before the two exercise options are tick boxes; the forms are used only on exercise, so nothing is must |
+| 19 | 0 | 0 | 0 | 0 | 0 | 0 | sure: no place |
+| 20 | 0 | 0 | 0 | 0 | 0 | 0 | sure: no place |
 | 21 | 0 | 0 | 0 | 0 | 0 | 0 | draft |
-| 22 | 6 | 0 | 0 | 4 | 1 | 1 | sure; used only on assignment |
-| all | 30 | 4 | 0 | 21 | 3 | 2 | |
+| 22 | 0 | 0 | 0 | 0 | 0 | 0 | sure: no place |
+| all | 0 | 0 | 0 | 0 | 0 | 0 | |
 
-By owner: firm 7, investor 23
+By owner: 
 
 ## Doubts
 
-- p01-001 (page 1, blank, firm): completed by the issuer when issuing the warrant
-- p01-002 (page 1, blank, firm): completed by the issuer when issuing the warrant
-- p01-003 (page 1, blank, firm): completed by the issuer when issuing the warrant
-- p01-004 (page 1, blank, firm): completed by the issuer when issuing the warrant
-- p01-005 (page 1, blank, firm): completed by the issuer when issuing the warrant
-- p01-006 (page 1, blank, firm): completed by the issuer when issuing the warrant
+- none
 
 ## Must not get a field
 
-- page 1: the legends and the warrant terms
+- page 1: the legends and the warrant terms; the warrant-face blanks (warrant number, share count, issuance date, holder name, share amount in words and figures): completed by the issuer when issuing
 - page 2: prose only
 - page 3: prose only
 - page 4: prose only
@@ -59,7 +54,7 @@ By owner: firm 7, investor 23
 - page 16: prose only
 - page 17: prose only
 - page 18: prose only; the signature-page-follows line
-- page 19: the printed officer name and title
-- page 20: the company and counsel addresses; the Name: and Title: captions under the signature (no line printed)
+- page 19: the printed officer name and title; the company signature on the warrant: a separate instrument not signed by the subscriber at this closing
+- page 20: the company and counsel addresses; the Name: and Title: captions under the signature (no line printed); the exercise notice: a form used only on a later exercise
 - page 21: exhibit label only
-- page 22: the note under the form
+- page 22: the note under the form; the assignment form: a form used only on a later assignment

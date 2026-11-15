@@ -102,25 +102,25 @@
    "date": 0
   },
   "12": {
-   "total": 18,
+   "total": 20,
    "tickbox": 0,
    "initials": 0,
-   "blank": 13,
+   "blank": 15,
    "signature": 3,
    "date": 2
   }
  },
  "counts_total": {
-  "total": 23,
+  "total": 25,
   "tickbox": 0,
   "initials": 0,
-  "blank": 18,
+  "blank": 20,
   "signature": 3,
   "date": 2
  },
  "counts_by_owner": {
   "co-investor": 8,
-  "firm": 2,
+  "firm": 4,
   "investor": 13
  },
  "sure_per_page": {
@@ -173,14 +173,14 @@
   "11": [
    "the column captions under the lines"
   ],
-  "12": [
-   "the frame of the joint subscriber column; the Name: and Title: captions under the company signature (no line printed)"
-  ],
   "13": [
    "Appendix A definitions"
   ],
   "14": [
    "Appendix A definitions"
+  ],
+  "12": [
+   "the frame of the joint subscriber column"
   ]
  },
  "places": [
@@ -922,6 +922,38 @@
      ]
     }
    }
+  },
+  {
+   "id": "p12-021",
+   "page": 12,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Company signer name",
+   "printed_label": "Name:",
+   "must": true,
+   "x0": 374.0,
+   "y0": 437.4,
+   "x1": 540.5,
+   "y1": 450.9,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "no printed line after the caption"
+  },
+  {
+   "id": "p12-022",
+   "page": 12,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Company signer title",
+   "printed_label": "Title:",
+   "must": true,
+   "x0": 369.0,
+   "y0": 462.5,
+   "x1": 540.5,
+   "y1": 476.0,
+   "printed_as": "measured by hand",
+   "what": "title",
+   "doubt": "no printed line after the caption"
   }
  ],
  "may_fill": [],

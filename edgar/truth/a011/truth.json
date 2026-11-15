@@ -44,25 +44,25 @@
  },
  "counts_per_page": {
   "1": {
-   "total": 27,
-   "tickbox": 9,
+   "total": 29,
+   "tickbox": 10,
    "initials": 0,
-   "blank": 18,
+   "blank": 19,
    "signature": 0,
    "date": 0
   },
   "3": {
-   "total": 9,
+   "total": 8,
    "tickbox": 0,
    "initials": 0,
-   "blank": 4,
+   "blank": 3,
    "signature": 3,
    "date": 2
   }
  },
  "counts_total": {
-  "total": 36,
-  "tickbox": 9,
+  "total": 37,
+  "tickbox": 10,
   "initials": 0,
   "blank": 22,
   "signature": 3,
@@ -70,8 +70,8 @@
  },
  "counts_by_owner": {
   "co-investor": 7,
-  "firm": 3,
-  "investor": 26
+  "firm": 2,
+  "investor": 28
  },
  "sure_per_page": {
   "1": "sure",
@@ -80,11 +80,6 @@
   "4": "draft"
  },
  "not_fields": {
-  "1": [
-   "headings, the payable-to line and the representations paragraphs",
-   "the area-code parentheses before each phone line (part of the phone place, not a box)",
-   "the Corporation line under the custodian options: no box and no blank printed"
-  ],
   "2": [
    "prose only"
   ],
@@ -93,6 +88,9 @@
   ],
   "4": [
    "blank page"
+  ],
+  "1": [
+   "headings, the payable-to line and the representations paragraphs"
   ]
  },
  "places": [
@@ -529,10 +527,10 @@
    "page": 1,
    "kind": "blank",
    "owner": "investor",
-   "label": "Business phone",
+   "label": "Business phone (area code and number)",
    "printed_label": "Business Phone: ( )",
    "must": false,
-   "x0": 126.0,
+   "x0": 101.1,
    "y0": 444.6,
    "x1": 279.0,
    "y1": 460.1,
@@ -562,10 +560,10 @@
    "page": 1,
    "kind": "blank",
    "owner": "investor",
-   "label": "Home phone",
+   "label": "Home phone (area code and number)",
    "printed_label": "Home Phone: ( )",
    "must": false,
-   "x0": 366.0,
+   "x0": 346.4,
    "y0": 444.6,
    "x1": 578.2,
    "y1": 460.1,
@@ -772,6 +770,37 @@
      ]
     }
    }
+  },
+  {
+   "id": "p01-030",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: Corporation",
+   "printed_label": "Corporation (Inc., LLC, LP)",
+   "must": false,
+   "x0": 224.3,
+   "y0": 542.7,
+   "x1": 272.6,
+   "y1": 552.7,
+   "printed_as": "measured by hand",
+   "doubt": "choice with no printed box"
+  },
+  {
+   "id": "p01-031",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Corporation: list of officers, directors, partners, managers",
+   "printed_label": "Please List all officers, directors, partners, managers, etc.:",
+   "must": false,
+   "x0": 364.0,
+   "y0": 551.2,
+   "x1": 578.2,
+   "y1": 566.2,
+   "printed_as": "measured by hand",
+   "what": "text",
+   "doubt": "no printed line after the caption"
   },
   {
    "id": "p01-024",
@@ -1150,12 +1179,12 @@
    "page": 3,
    "kind": "blank",
    "owner": "firm",
-   "label": "Subscription accepted: day",
+   "label": "Subscription accepted: date (day and month)",
    "printed_label": "Investor\u2019s Subscription Accepted this",
    "must": true,
    "x0": 185.7,
    "y0": 355.7,
-   "x1": 220.7,
+   "x1": 365.9,
    "y1": 371.2,
    "printed_as": "reader field (no printed candidate under it)",
    "prefill": {
@@ -1173,40 +1202,6 @@
       354.7,
       221.7,
       370.6
-     ]
-    }
-   },
-   "what": "date"
-  },
-  {
-   "id": "p03-008",
-   "page": 3,
-   "kind": "blank",
-   "owner": "firm",
-   "label": "Subscription accepted: month",
-   "printed_label": "day of",
-   "must": true,
-   "x0": 251.0,
-   "y0": 355.7,
-   "x1": 365.9,
-   "y1": 371.2,
-   "printed_as": "measure candidate: dateparts (a date printed in 2 parts)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "firm",
-    "field_label": "day of",
-    "candidate": "dateparts",
-    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill; 1 more reader field(s) on the same printed place",
-    "initial": {
-     "kind": "blank",
-     "owner": "firm",
-     "what": "date",
-     "box": [
-      185.7,
-      355.7,
-      365.9,
-      371.2
      ]
     }
    },

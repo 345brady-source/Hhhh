@@ -4,21 +4,22 @@ Regulation A share subscription: the buyer completes section 2 and 3 on page 1 a
 
 | page | places | tick boxes | initials | blanks | signatures | dates | how sure |
 |---|---|---|---|---|---|---|---|
-| 1 | 27 | 9 | 0 | 18 | 0 | 0 | sure |
+| 1 | 29 | 10 | 0 | 19 | 0 | 0 | sure |
 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | draft |
-| 3 | 9 | 0 | 0 | 4 | 3 | 2 | sure; the second Buyer block is read as the joint buyer's, matching the Joint Name block on page 1 |
+| 3 | 8 | 0 | 0 | 3 | 3 | 2 | sure; the second Buyer block is read as the joint buyer's, matching the Joint Name block on page 1 |
 | 4 | 0 | 0 | 0 | 0 | 0 | 0 | draft |
-| all | 36 | 9 | 0 | 22 | 3 | 2 | |
+| all | 37 | 10 | 0 | 22 | 3 | 2 | |
 
-By owner: co-investor 7, firm 3, investor 26
+By owner: co-investor 7, firm 2, investor 28
 
 ## Doubts
 
-- none
+- p01-030 (page 1, tickbox, investor): choice with no printed box
+- p01-031 (page 1, blank, investor): no printed line after the caption
 
 ## Must not get a field
 
-- page 1: headings, the payable-to line and the representations paragraphs; the area-code parentheses before each phone line (part of the phone place, not a box); the Corporation line under the custodian options: no box and no blank printed
+- page 1: headings, the payable-to line and the representations paragraphs
 - page 2: prose only
 - page 3: the printed officer name and title under the acceptance line; the mailing address block
 - page 4: blank page

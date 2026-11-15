@@ -60,25 +60,25 @@
    "date": 0
   },
   "4": {
-   "total": 6,
+   "total": 7,
    "tickbox": 0,
    "initials": 0,
-   "blank": 3,
+   "blank": 4,
    "signature": 2,
    "date": 1
   }
  },
  "counts_total": {
-  "total": 33,
+  "total": 34,
   "tickbox": 10,
   "initials": 0,
-  "blank": 20,
+  "blank": 21,
   "signature": 2,
   "date": 1
  },
  "counts_by_owner": {
   "co-investor": 3,
-  "firm": 3,
+  "firm": 4,
   "investor": 27
  },
  "sure_per_page": {
@@ -99,7 +99,7 @@
    "prose only"
   ],
   "4": [
-   "the bank delivery details; the Name: and Its: captions under the company signature (no line printed)"
+   "the bank delivery details"
   ]
  },
  "places": [
@@ -1027,12 +1027,12 @@
    "page": 4,
    "kind": "blank",
    "owner": "firm",
-   "label": "Subscription accepted: day",
+   "label": "Subscription accepted: date (day and month)",
    "printed_label": "Investor Subscription accepted as of this",
    "must": true,
    "x0": 203.1,
    "y0": 585.9,
-   "x1": 218.1,
+   "x1": 293.3,
    "y1": 601.4,
    "printed_as": "measure candidate: dateparts (a date printed in 2 parts)",
    "prefill": {
@@ -1054,21 +1054,6 @@
      ]
     }
    },
-   "what": "date"
-  },
-  {
-   "id": "p04-006",
-   "page": 4,
-   "kind": "blank",
-   "owner": "firm",
-   "label": "Subscription accepted: month",
-   "printed_label": "day of",
-   "must": true,
-   "x0": 248.3,
-   "y0": 585.9,
-   "x1": 293.3,
-   "y1": 601.4,
-   "printed_as": "measured by hand",
    "what": "date"
   },
   {
@@ -1103,6 +1088,38 @@
      ]
     }
    }
+  },
+  {
+   "id": "p04-006",
+   "page": 4,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Company signer name",
+   "printed_label": "Name:",
+   "must": true,
+   "x0": 68.0,
+   "y0": 653.9,
+   "x1": 200.6,
+   "y1": 667.4,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "no printed line after the caption"
+  },
+  {
+   "id": "p04-007",
+   "page": 4,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Company signer title",
+   "printed_label": "Its:",
+   "must": true,
+   "x0": 54.0,
+   "y0": 665.9,
+   "x1": 200.6,
+   "y1": 679.4,
+   "printed_as": "measured by hand",
+   "what": "title",
+   "doubt": "no printed line after the caption"
   }
  ],
  "may_fill": [],

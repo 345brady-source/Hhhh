@@ -15,16 +15,18 @@ Regulation A share subscription agreement, scanned: the subscriber completes the
 | 9 | 0 | 0 | 0 | 0 | 0 | 0 | draft |
 | 10 | 0 | 0 | 0 | 0 | 0 | 0 | draft |
 | 11 | 5 | 0 | 0 | 5 | 0 | 0 | sure, except the uncaptioned line beside option (ii) (kept as a blank with a doubt) |
-| 12 | 18 | 0 | 0 | 13 | 3 | 2 | sure; the right column is the joint subscriber's (If the Securities are to be purchased in joint names) |
+| 12 | 20 | 0 | 0 | 15 | 3 | 2 | sure; the right column is the joint subscriber's (If the Securities are to be purchased in joint names) |
 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | draft |
 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | draft |
-| all | 23 | 0 | 0 | 18 | 3 | 2 | |
+| all | 25 | 0 | 0 | 20 | 3 | 2 | |
 
-By owner: co-investor 8, firm 2, investor 13
+By owner: co-investor 8, firm 4, investor 13
 
 ## Doubts
 
 - p11-004 (page 11, blank, investor): line beside option (ii) with no caption: a mark or initials goes here
+- p12-021 (page 12, blank, firm): no printed line after the caption
+- p12-022 (page 12, blank, firm): no printed line after the caption
 
 ## Must not get a field
 
@@ -39,6 +41,6 @@ By owner: co-investor 8, firm 2, investor 13
 - page 9: the company notice address
 - page 10: prose only
 - page 11: the column captions under the lines
-- page 12: the frame of the joint subscriber column; the Name: and Title: captions under the company signature (no line printed)
+- page 12: the frame of the joint subscriber column
 - page 13: Appendix A definitions
 - page 14: Appendix A definitions
