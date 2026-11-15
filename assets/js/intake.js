@@ -6,9 +6,9 @@
  * providers. Carrow & Vale reviews every field (with the source quote and a
  * confidence level) before it is applied.
  *
- * Inside Claude the page asks Claude to read the documents (the `sample`
- * capability, on the viewer's own Claude account). Anywhere else, or if the
- * viewer declines, a built-in reader finds what it can with patterns.
+ * When the workspace has a reading server (its address saved under
+ * Integrations), the portal's server reads the documents. Without one, or if
+ * that reading cannot finish, a built-in reader finds what it can with patterns.
  */
 (function (NS) {
   'use strict';
@@ -117,7 +117,7 @@
     return { name: file.name, size: file.size, type: file.type || '', sha256, pages: r.pages, text: r.text, chars: r.text.length, scanned: !!r.scanned, file };
   }
 
-  /* ---------- Choosing what Claude reads ---------- */
+  /* ---------- Choosing what is read ---------- */
   const TERMS = /management fee|carried interest|incentive (?:fee|allocation)|performance (?:fee|allocation)|promote|preferred return|hurdle|catch[- ]?up|waterfall|distribut|redemption|redeem|withdraw|lock[- ]?up|notice|gate|side pocket|equaliz|series|class [a-z]\b|share class|high[- ]water|minimum|subscription|commitment|capital call|drawdown|term of|investment period|extension|maturity|currency|denominated|master fund|feeder|domicile|cayman|delaware|auditor|administrator|custodian|prime broker|regulation d|rule 506|3\(c\)\(|accredited|qualified purchaser|offering size|target|leverage|acquisition fee|disposition fee|asset management fee|organizational|hold(?:ing)? period|interest rate|coupon|clawback|key person|closing/gi;
   /**
    * Everything if it fits; otherwise the start of each document (cover and
@@ -168,17 +168,13 @@
     return { text, trimmed: true, chars: text.length };
   }
 
-  /* ---------- Reading with Claude ---------- */
-  let samplePromise = null;
-  /** Claude through the artifact runtime's sample capability, or null outside Claude (asked once, then reused). */
+  /* ---------- Reading through the portal's reading server ---------- */
+  /** The workspace's reading server ({ url, token }, as saved under Integrations), or null when none is set. */
   async function claudeSample() {
-    try {
-      if (!samplePromise) samplePromise = window.claude && typeof window.claude.use === 'function' ? window.claude.use('sample') : Promise.resolve(null);
-      return await samplePromise;
-    } catch (e) {
-      samplePromise = null;
-      return null;
-    }
+    const I = NS.integrations;
+    const ws = NS.state && NS.state.ws;
+    const url = I && ws ? I.serverUrl(ws) : '';
+    return url ? { url, token: String(I.ensure(ws).server.token || '') } : null;
   }
   function instructions() {
     const types = Object.keys(NS.OFFERING_TYPES).map((t) => JSON.stringify(t)).join(', ');
@@ -211,12 +207,81 @@ Reply with only one JSON object in exactly this shape:
 
 investorTerms: 6 to 12 key terms an investor would want on their investment page, in plain words (for example minimum, fees, profit split, liquidity, term or hold, target returns and distributions, property or strategy facts).`;
   }
+  /**
+   * The same prompt as always, sent to the reading server's POST /v1/intake. Its answer is a stream of lines: { t } for
+   * each piece of the reply (onText gets the text so far), { h } to keep the connection open, then { ok, json }. Any
+   * failure throws an error whose code the intake screen already explains: cancelled (Stop), not_granted (401),
+   * prompt_too_large (413), rate_limited (429) or failed (anything else, the time limit included).
+   */
   async function readWithClaude(sample, corp, opts) {
-    return sample.json(`${instructions()}\n\nDOCUMENTS:\n${corp}`, { modelTier: 'complex', signal: opts.signal, onText: opts.onText });
+    const fail = (code) => Object.assign(new Error('Reading could not finish.'), { code });
+    const ctl = new AbortController();
+    let late = false;
+    const timer = setTimeout(() => {
+      late = true;
+      ctl.abort();
+    }, NS.intake.SERVER_LIMIT_MS);
+    const stop = () => ctl.abort();
+    if (opts.signal) {
+      if (opts.signal.aborted) ctl.abort();
+      else opts.signal.addEventListener('abort', stop);
+    }
+    const why = () => (opts.signal && opts.signal.aborted && !late ? 'cancelled' : 'failed');
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (sample.token) headers.Authorization = `Bearer ${sample.token}`;
+      let res;
+      try {
+        res = await fetch(String(sample.url).replace(/\/+$/, '') + '/v1/intake', { method: 'POST', headers, body: JSON.stringify({ prompt: `${instructions()}\n\nDOCUMENTS:\n${corp}` }), signal: ctl.signal });
+      } catch (e) {
+        throw fail(why());
+      }
+      if (!res.ok) throw fail(res.status === 401 ? 'not_granted' : res.status === 413 ? 'prompt_too_large' : res.status === 429 ? 'rate_limited' : 'failed');
+      if (!res.body || !res.body.getReader) throw fail('failed');
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      let text = '';
+      let last = null;
+      const take = (line) => {
+        if (!line.trim()) return;
+        let m;
+        try {
+          m = JSON.parse(line);
+        } catch (e) {
+          throw fail('failed');
+        }
+        if (m && typeof m.t === 'string') {
+          text += m.t;
+          if (opts.onText) opts.onText({ text });
+        } else if (m && typeof m.ok === 'boolean') last = m;
+      };
+      try {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          let i;
+          while ((i = buf.indexOf('\n')) >= 0) {
+            const line = buf.slice(0, i);
+            buf = buf.slice(i + 1);
+            take(line);
+          }
+        }
+        take(buf + dec.decode());
+      } catch (e) {
+        throw e && typeof e.code === 'string' ? e : fail(why());
+      }
+      if (!last || last.ok !== true || !last.json || typeof last.json !== 'object' || Array.isArray(last.json)) throw fail(why());
+      return last.json;
+    } finally {
+      clearTimeout(timer);
+      if (opts.signal) opts.signal.removeEventListener('abort', stop);
+    }
   }
 
   /* ---------- The built-in reader (reader.js) ---------- */
-  /** Terms found by section and pattern, with sources, when Claude is not available. */
+  /** Terms found by section and pattern, with sources, when the reading server is not set or its reading cannot finish. */
   const readWithRules = (text) => NS.reader.read(text);
 
   /* ---------- One clean shape for review ---------- */
@@ -541,4 +606,6 @@ Reporting. Members will receive quarterly reports and annual Schedule K-1s. The 
   };
   NS.pdfLib = pdfLib;
   NS.intake = { readFile, corpus, claudeSample, readWithClaude, readWithRules, normalize, fromOffering, apply, filled, agreementDoc, prepareAgreement, SAMPLES, LIMIT: 200000 };
+  /** How long the browser waits for the reading server (its own limit is 600 s). */
+  NS.intake.SERVER_LIMIT_MS = 630000;
 })(window.CVPortal);
