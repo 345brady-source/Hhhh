@@ -127,6 +127,14 @@ ${at(90, 100, 10, `${fallback('o', 'Pay distributions in cash')}&nbsp; Pay distr
 ${['The value of the units may go down as well as up and past results do not guide the future.', 'There is no public market for the units and none is expected to develop for many years to come.', 'The manager may call for capital at short notice and a late payment may cost the investor dearly.'].map((s, i) => at(90, 122 + i * 18, 9, `o&nbsp; ${s}`)).join('')}`)
   },
 
+  // Guard: a bulleted list whose item runs on to a second line, with a sub-list set further in under it, each sub-item
+  // opening with a lone letter o (a word processor's second-level bullet) and short words, no words of choice. No field.
+  glyphSubBullet: {
+    guard: true,
+    html: pg(`${words(72, 80, 'Evidence of the investor\'s status may be given by:')}
+${words(72, 100, '&#8226;&nbsp;&nbsp;Net worth of more than one million, shown by one of the documents below, each dated')}${words(72, 114, 'within the last three months:')}
+${['Bank statements in the investor\'s name', 'Statements of an investment account', 'A letter from the investor\'s accountant'].map((s, i) => at(108, 130 + i * 14, 10, `o&nbsp; ${s}`)).join('')}`)
+  },
   /* ---------- typed and drawn squares, short-rule choices, lines shared by captions (Phase 01.4 classes 23, 20, 5) ---------- */
   // Three tick boxes beside options: "[ ]" typed with a non-breaking space inside, a drawn square of 7 pt, and "|_|"
   // typed in a fixed-pitch font (a plain-text filing's box). One tick field each.

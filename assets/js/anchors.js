@@ -376,16 +376,30 @@
       return false;
     };
     if (!ownRow && !near(-1) && !near(1)) return false;
+    // A list set further in under a line that opens with a bullet is that bullet's sub-list: its letters are bullets too.
+    // (the bulleted line may run on over up to three lines before the sub-list starts)
+    for (let i = r.i - 1, parent = 0, below = r.y; i >= 0 && r.y - rows[i].y <= 40 * g.h && parent < 4; i--) {
+      const left = rows[i].g[0];
+      if (!left || left.x0 >= g.x0 - 4) {
+        below = rows[i].y;
+        continue;
+      }
+      if (parent && below - rows[i].y > 2 * g.h) break;
+      if (/^[•·▪■●‣∙◦–*-]$/.test(left.u) && lone(left)) return false;
+      parent++;
+      below = rows[i].y;
+    }
     // The option's own words: up to a gap of a column (one and a half times the height) on its line.
     let end = g.k + 1;
     while (end + 1 < r.g.length && r.g[end + 1].x0 - r.g[end].x1 <= 1.5 * g.h) end++;
     let own = rowText({ g: r.g.slice(0, end + 1) }, g.k + 1);
-    // ... and the lines its sentence runs on to: set further in than the glyph, within two line heights each, until
-    // a line ends the sentence.
+    // ... and the lines its sentence runs on to: set further in than the glyph or wrapped back to its edge, within two
+    // line heights each, until a line ends the sentence.
     const lead = r.g[g.k + 1].x0;
     for (let i = r.i + 1, last = r; i < rows.length && !/[.;:?!]\s*$/.test(own) && rows[i].y - last.y <= 2 * g.h; i++) {
       const first = rows[i].g.find((x) => x.x0 >= g.x0 - 4 && x.x0 <= lead + 4 * g.h);
-      if (!first || first.x0 < g.x1 || rows[i].g.some((x) => x.x0 < g.x0 - 4 && x.x0 >= g.x0 - 40)) break;
+      // (a line that wraps back to the glyph's own left edge goes on with the sentence too, unless it opens the next option)
+      if (!first || (first.x0 < g.x1 && (Math.abs(first.x0 - g.x0) > 4 || start(first))) || rows[i].g.some((x) => x.x0 < g.x0 - 4 && x.x0 >= g.x0 - 40)) break;
       const k = rows[i].g.indexOf(first);
       let e = k;
       while (e + 1 < rows[i].g.length && rows[i].g[e + 1].x0 - rows[i].g[e].x1 <= 1.5 * g.h) e++;
