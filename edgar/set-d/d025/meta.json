@@ -1,0 +1,59 @@
+{
+  "id": "d025",
+  "url": "https://www.sec.gov/Archives/edgar/data/1632275/000165917317000213/e992.htm",
+  "cik": "1632275",
+  "issuer": "CAT9 Group Inc.",
+  "form": "8-K",
+  "file_date": "2017-05-10",
+  "year": 2017,
+  "exhibit": "EX-99.2",
+  "exhibit_description": "STOCK SUBSCRIPTION AGREEMENT, WENFA SIMON SUN",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "a1dce2c7755ac871b5c5bd55bb802b341f923ec826e91078930819840e170367",
+  "layout_notes": [
+    "stock subscription agreement, signature page"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 3,
+    "words": 18
+  },
+  "extra_files": [
+    "image_003.jpg",
+    "image_004.jpg",
+    "image_005.jpg"
+  ],
+  "pages": 9,
+  "page_kinds": {
+    "text": 1,
+    "picture": 6,
+    "blank": 2
+  },
+  "page_kind_list": [
+    "text",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "baef75bf6af6c00b49d633c04f49621ebffc3aa51df44ea10c9611cb47241ec0"
+}

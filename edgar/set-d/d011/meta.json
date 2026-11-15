@@ -1,0 +1,71 @@
+{
+  "id": "d011",
+  "url": "https://www.sec.gov/Archives/edgar/data/29504/000151597117000046/exhibit101.htm",
+  "cik": "29504",
+  "issuer": "OMEGA COMMERCIAL FINANCE CORP",
+  "form": "8-K/A",
+  "file_date": "2017-03-20",
+  "year": 2017,
+  "exhibit": "EX-10",
+  "exhibit_description": "EXHIBIT 10.1",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "910a5bbf6408aadf251978f059028c76296bd5dfac0ca78449350e2f3fdc2073",
+  "layout_notes": [
+    "subscription agreement with e-signature certificate"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 6,
+    "words": 9
+  },
+  "extra_files": [
+    "exhibit101001.jpg",
+    "exhibit101002.jpg",
+    "exhibit101003.jpg",
+    "exhibit101004.jpg",
+    "exhibit101005.jpg",
+    "exhibit101006.jpg"
+  ],
+  "pages": 18,
+  "page_kinds": {
+    "text": 1,
+    "picture": 12,
+    "blank": 5
+  },
+  "page_kind_list": [
+    "text",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "2e3a26ceed2890aeedf3baa88a302c30ef0102203b30b1b4989e7e0130572d05"
+}

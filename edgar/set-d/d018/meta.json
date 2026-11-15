@@ -1,0 +1,83 @@
+{
+  "id": "d018",
+  "url": "https://www.sec.gov/Archives/edgar/data/1817511/000149315226003083/ex10-1.htm",
+  "cik": "1817511",
+  "issuer": "SOCIETY PASS INCORPORATED.  (SOPA)",
+  "form": "8-K",
+  "file_date": "2026-01-21",
+  "year": 2026,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "EX-10.1",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "af3ed30f78f9d6ae2d35d12b7826b5391d086d59525fd5fc9274b015b158b492",
+  "layout_notes": [
+    "subscription agreement, signed by subscribers and company"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 9,
+    "words": 6
+  },
+  "extra_files": [
+    "ex10-1_001.jpg",
+    "ex10-1_002.jpg",
+    "ex10-1_003.jpg",
+    "ex10-1_004.jpg",
+    "ex10-1_005.jpg",
+    "ex10-1_006.jpg",
+    "ex10-1_007.jpg",
+    "ex10-1_008.jpg",
+    "ex10-1_009.jpg"
+  ],
+  "pages": 27,
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 18,
+    "blank": 8
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "8e18bc122ddfd749b6a0ced002c1f0e30498b39516c1cada5953c2b99a3e4986"
+}

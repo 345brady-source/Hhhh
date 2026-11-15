@@ -1,0 +1,71 @@
+{
+  "id": "d009",
+  "url": "https://www.sec.gov/Archives/edgar/data/1415935/000107878211000289/axius8k020411aex101.htm",
+  "cik": "1415935",
+  "issuer": "Axius Inc.",
+  "form": "8-K",
+  "file_date": "2011-02-04",
+  "year": 2011,
+  "exhibit": "EX-10",
+  "exhibit_description": "EX 10.1 PRIVATE PLACEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "98d009abe249a221a5eb8898b7325b93e79ac71784c905913cc3b4501244ff0d",
+  "layout_notes": [
+    "private placement subscription agreement, signed and accepted"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 6,
+    "words": 11
+  },
+  "extra_files": [
+    "axius8k020411aex101001.jpg",
+    "axius8k020411aex101002.jpg",
+    "axius8k020411aex101003.jpg",
+    "axius8k020411aex101004.jpg",
+    "axius8k020411aex101005.jpg",
+    "axius8k020411aex101006.jpg"
+  ],
+  "pages": 18,
+  "page_kinds": {
+    "text": 1,
+    "picture": 12,
+    "blank": 5
+  },
+  "page_kind_list": [
+    "text",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "7512b36a36e60852803c2027cbcc223a23b06e466621f94ebc6ee520eedc5735"
+}

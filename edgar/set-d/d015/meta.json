@@ -1,0 +1,68 @@
+{
+  "id": "d015",
+  "url": "https://www.sec.gov/Archives/edgar/data/1157300/000114420405028556/v025565_ex10-1.htm",
+  "cik": "1157300",
+  "issuer": "Global Pharmatech, Inc.",
+  "form": "8-K",
+  "file_date": "2005-09-12",
+  "year": 2005,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "96a0dc4ea19160d5fd5c8b7e0ad599a898a613315537428610de3d8a3f21224c",
+  "layout_notes": [
+    "Regulation S subscription agreement, scanned, signed with company seal"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 7,
+    "words": 17
+  },
+  "extra_files": [
+    "v025565_ex10-1x1x1.jpg",
+    "v025565_ex10-1x2x1.jpg",
+    "v025565_ex10-1x3x1.jpg",
+    "v025565_ex10-1x4x1.jpg",
+    "v025565_ex10-1x5x1.jpg",
+    "v025565_ex10-1x6x1.jpg",
+    "v025565_ex10-1x8x1.jpg"
+  ],
+  "pages": 15,
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 14
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "ec06fa78dd9f56b66972afa6ecd362ec1e7aa74a2307363e2444a0f847e55a38"
+}

@@ -1,0 +1,74 @@
+{
+  "id": "d004",
+  "url": "https://www.sec.gov/Archives/edgar/data/1343259/000108503707001290/f8k052107ex101.htm",
+  "cik": "1343259",
+  "issuer": "VECTr SYSTEMS INC",
+  "form": "8-K",
+  "file_date": "2007-05-30",
+  "year": 2007,
+  "exhibit": "EX-10",
+  "exhibit_description": "",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "d1a1aaee7baa044d4b628fb4d37767ab0e38d061dd942c2a2a1c9734671a3905",
+  "layout_notes": [
+    "debt settlement and subscription agreement, scanned, signed and accepted"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 9,
+    "words": 16
+  },
+  "extra_files": [
+    "x1x1.jpg",
+    "x2x1.jpg",
+    "x3x1.jpg",
+    "x4x1.jpg",
+    "x5x1.jpg",
+    "x6x1.jpg",
+    "x7x1.jpg",
+    "x8x1.jpg",
+    "x9x1.jpg"
+  ],
+  "pages": 19,
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 18
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "b1f7453cc14945106b6dd66d2e11c7a7c660f6a592c741208c8e99d5b960eca7"
+}

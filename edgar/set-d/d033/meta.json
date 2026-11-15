@@ -1,0 +1,74 @@
+{
+  "id": "d033",
+  "url": "https://www.sec.gov/Archives/edgar/data/908821/000106299309004560/exhibit10-2.htm",
+  "cik": "908821",
+  "issuer": "CHEETAH OIL & GAS LTD.",
+  "form": "8-K",
+  "file_date": "2009-12-30",
+  "year": 2009,
+  "exhibit": "EX-10.2",
+  "exhibit_description": "DEBT SETTLEMENT AND SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "1088586e33721ecd7dc8b881439805a218a6b544cf92fa07fee5a421472d0307",
+  "layout_notes": [
+    "debt settlement subscription agreement (offshore), scanned, acceptance signed"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 9,
+    "words": 19
+  },
+  "extra_files": [
+    "exhibit10-2x1x1.jpg",
+    "exhibit10-2x2x1.jpg",
+    "exhibit10-2x3x1.jpg",
+    "exhibit10-2x4x1.jpg",
+    "exhibit10-2x5x1.jpg",
+    "exhibit10-2x6x1.jpg",
+    "exhibit10-2x7x1.jpg",
+    "exhibit10-2x8x1.jpg",
+    "exhibit10-2x9x1.jpg"
+  ],
+  "pages": 19,
+  "page_kinds": {
+    "text": 1,
+    "picture": 18
+  },
+  "page_kind_list": [
+    "text",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "779fd3f775d21ac63a57df14511c14a40d7389f8cafdcdbc9938a0931cd8df19"
+}

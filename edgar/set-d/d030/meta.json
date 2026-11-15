@@ -1,0 +1,59 @@
+{
+  "id": "d030",
+  "url": "https://www.sec.gov/Archives/edgar/data/2025942/000149315224041335/ex10-3.htm",
+  "cik": "2025942",
+  "issuer": "Curanex Pharmaceuticals Inc",
+  "form": "S-1",
+  "file_date": "2024-10-16",
+  "year": 2024,
+  "exhibit": "EX-10.3",
+  "exhibit_description": "",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "7619fa8ee59f6774de28e9919f32b1828a73c117157e58be049dd97159f52141",
+  "layout_notes": [
+    "subscription agreement, signed by company and subscriber"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 3,
+    "words": 5
+  },
+  "extra_files": [
+    "ex10-3_001.jpg",
+    "ex10-3_002.jpg",
+    "ex10-3_003.jpg"
+  ],
+  "pages": 9,
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 6,
+    "blank": 2
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "d1341da949bae0815d55d7bcad8d2e19b2f44bd5dfc85130b1822305cd514cc5"
+}

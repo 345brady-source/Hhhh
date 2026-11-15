@@ -1,0 +1,79 @@
+{
+  "id": "d007",
+  "url": "https://www.sec.gov/Archives/edgar/data/1714562/000164117225021355/ex10-1.htm",
+  "cik": "1714562",
+  "issuer": "GameSquare Holdings, Inc.  (GAME)",
+  "form": "8-K",
+  "file_date": "2025-07-29",
+  "year": 2025,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "EX-10.1",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "24d08792ba057b616c68f260ba55fcc827e34346be25bb0de54a9fa74e86ea6a",
+  "layout_notes": [
+    "subscription agreement, e-signed by subscriber and company"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 8,
+    "words": 6
+  },
+  "extra_files": [
+    "ex10-1_001.jpg",
+    "ex10-1_002.jpg",
+    "ex10-1_003.jpg",
+    "ex10-1_004.jpg",
+    "ex10-1_005.jpg",
+    "ex10-1_006.jpg",
+    "ex10-1_007.jpg",
+    "ex10-1_008.jpg"
+  ],
+  "pages": 24,
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 16,
+    "blank": 7
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "b2992238cc917de38d8f6eef04ea0fd0d2b3c50d1acea19cf95fa26d4c4e0965"
+}

@@ -1,0 +1,83 @@
+{
+  "id": "d001",
+  "url": "https://www.sec.gov/Archives/edgar/data/1907425/000164117225017991/ex10-1.htm",
+  "cik": "1907425",
+  "issuer": "JOCOM HOLDINGS CORP.  (JOCM)",
+  "form": "8-K",
+  "file_date": "2025-07-07",
+  "year": 2025,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "EX-10.1",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "adc3295f392ff2467d00e4f9af5861b500a54bbc5cf19b05b7b851b3b1621466",
+  "layout_notes": [
+    "executed subscription agreement, signed by company and purchaser"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 9,
+    "words": 6
+  },
+  "extra_files": [
+    "ex10-1_001.jpg",
+    "ex10-1_002.jpg",
+    "ex10-1_003.jpg",
+    "ex10-1_004.jpg",
+    "ex10-1_005.jpg",
+    "ex10-1_006.jpg",
+    "ex10-1_007.jpg",
+    "ex10-1_008.jpg",
+    "ex10-1_009.jpg"
+  ],
+  "pages": 27,
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 18,
+    "blank": 8
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "0b730d07723574e4d8201a07f0e8a85ace16204311e0d7a74eac09d4c4741ec7"
+}

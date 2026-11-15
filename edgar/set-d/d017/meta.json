@@ -1,0 +1,82 @@
+{
+  "id": "d017",
+  "url": "https://www.sec.gov/Archives/edgar/data/1160798/000114420409033950/v153108_ex1.htm",
+  "cik": "1160798",
+  "issuer": "Odyssey Oil & Gas, Inc.  (OOGI)",
+  "form": "8-K",
+  "file_date": "2009-06-23",
+  "year": 2009,
+  "exhibit": "EX-99.1",
+  "exhibit_description": "",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "15304829e3ac3e1b2f91d901bd45146f053d5fef13f62ee943e29dbfaed681ca",
+  "layout_notes": [
+    "subscription agreement, scanned, initialled, signed addendum"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 11,
+    "words": 3
+  },
+  "extra_files": [
+    "v153108_ex1x10x1.jpg",
+    "v153108_ex1x11x1.jpg",
+    "v153108_ex1x1x1.jpg",
+    "v153108_ex1x2x1.jpg",
+    "v153108_ex1x3x1.jpg",
+    "v153108_ex1x4x1.jpg",
+    "v153108_ex1x5x1.jpg",
+    "v153108_ex1x6x1.jpg",
+    "v153108_ex1x7x1.jpg",
+    "v153108_ex1x8x1.jpg",
+    "v153108_ex1x9x1.jpg"
+  ],
+  "pages": 24,
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 22,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "blank"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "82b8855fa0aaac0a5399611ca029b99773739fc03261c26143708f04e622182e"
+}

@@ -1,0 +1,884 @@
+{
+ "0001641172-25-017991:ex10-1.htm": {
+  "ok": true,
+  "notes": [
+   "executed subscription agreement, signed by company and purchaser"
+  ],
+  "when": "2026-11-15T02:01:25"
+ },
+ "0001144204-04-021701:v09887_ex10-1.htm": {
+  "ok": false,
+  "notes": [
+   "term loan and securities purchase agreement"
+  ],
+  "when": "2026-11-15T02:01:25"
+ },
+ "0001085037-09-000180:ex101.htm": {
+  "ok": true,
+  "notes": [
+   "offshore subscription agreement, scanned, signed and accepted"
+  ],
+  "when": "2026-11-15T02:01:25"
+ },
+ "0001165527-13-000838:ex10-1.htm": {
+  "ok": true,
+  "notes": [
+   "offshore subscription agreement, signed and accepted"
+  ],
+  "when": "2026-11-15T02:01:25"
+ },
+ "0001085037-07-001290:f8k052107ex101.htm": {
+  "ok": true,
+  "notes": [
+   "debt settlement and subscription agreement, scanned, signed and accepted"
+  ],
+  "when": "2026-11-15T02:01:25"
+ },
+ "0001144204-17-032161:v468766_ex4-1.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement, acceptance signed"
+  ],
+  "when": "2026-11-15T02:01:25"
+ },
+ "0001515971-12-000446:exhibit101.htm": {
+  "ok": false,
+  "notes": [
+   "securities purchase agreement (not titled subscription)"
+  ],
+  "when": "2026-11-15T02:01:25"
+ },
+ "0001078782-20-000555:f8k072020_ex10z1.htm": {
+  "ok": false,
+  "notes": [
+   "securities purchase agreement, single buyer"
+  ],
+  "when": "2026-11-15T02:01:25"
+ },
+ "0001085037-08-000845:ex10-1.htm": {
+  "ok": true,
+  "notes": [
+   "private placement subscription agreement (offshore), scanned fax copy, acceptance signed"
+  ],
+  "when": "2026-11-15T02:06:38"
+ },
+ "0001641172-25-021355:ex10-1.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement, e-signed by subscriber and company"
+  ],
+  "when": "2026-11-15T02:06:38"
+ },
+ "0001144204-07-030136:v077412_ex4-1.htm": {
+  "ok": false,
+  "notes": [
+   "consent to amendment of note"
+  ],
+  "when": "2026-11-15T02:06:38"
+ },
+ "0001144204-12-014195:v305210_ex10-1.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement, company signature block"
+  ],
+  "when": "2026-11-15T02:06:38"
+ },
+ "0001078782-11-000289:axius8k020411aex101.htm": {
+  "ok": true,
+  "notes": [
+   "private placement subscription agreement, signed and accepted"
+  ],
+  "when": "2026-11-15T02:06:38"
+ },
+ "0001445866-17-000780:nbft_ex10z1.htm": {
+  "ok": false,
+  "notes": [
+   "securities purchase agreement, single buyer"
+  ],
+  "when": "2026-11-15T02:06:38"
+ },
+ "0001144204-09-037573:v154922_ex10-1.htm": {
+  "ok": false,
+  "notes": [
+   "management agreement"
+  ],
+  "when": "2026-11-15T02:06:38"
+ },
+ "0001144204-05-037624:v030423_ex99-2.htm": {
+  "ok": false,
+  "notes": [
+   "loan agreement"
+  ],
+  "when": "2026-11-15T02:06:38"
+ },
+ "0001144204-05-040142:v031661_ex10-7.htm": {
+  "ok": false,
+  "notes": [
+   "employment contract"
+  ],
+  "when": "2026-11-15T02:06:38"
+ },
+ "0001014897-14-000365:privateplacementagreement.htm": {
+  "ok": false,
+  "notes": [
+   "private placement agreement (not titled subscription)"
+  ],
+  "when": "2026-11-15T02:06:38"
+ },
+ "0001144204-08-041878:v120887_ex99.htm": {
+  "ok": true,
+  "notes": [
+   "subscription documents: offeree letter and subscription agreement with signature lines"
+  ],
+  "when": "2026-11-15T02:06:38"
+ },
+ "0001515971-17-000046:exhibit101.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement with e-signature certificate"
+  ],
+  "when": "2026-11-15T02:06:38"
+ },
+ "0001204459-10-000674:exhibit10-1.htm": {
+  "ok": false,
+  "notes": [
+   "amendment to option and subscription agreement"
+  ],
+  "when": "2026-11-15T02:06:38"
+ },
+ "0001144204-07-047472:v086779_ex10-1.htm": {
+  "ok": true,
+  "notes": [
+   "share subscription agreement (Korea), scanned, signature page p21 with seal"
+  ],
+  "when": "2026-11-15T02:07:07"
+ },
+ "0001062993-09-004156:exhibit10-1.htm": {
+  "ok": false,
+  "notes": [
+   "share issuance agreement"
+  ],
+  "when": "2026-11-15T02:18:36"
+ },
+ "0001144204-07-000146:v061708_ex4-1.htm": {
+  "ok": false,
+  "notes": [
+   "warrant"
+  ],
+  "when": "2026-11-15T02:18:36"
+ },
+ "0001108078-12-000052:exhibit10-1.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement with investment representations and AML form, signature lines"
+  ],
+  "when": "2026-11-15T02:18:36"
+ },
+ "0001144204-06-027342:v046976_ex99-1.htm": {
+  "ok": false,
+  "notes": [
+   "promissory note"
+  ],
+  "when": "2026-11-15T02:18:36"
+ },
+ "0001493152-24-002626:ex10-10.htm": {
+  "ok": true,
+  "notes": [
+   "unit subscription purchase agreement, signature page"
+  ],
+  "when": "2026-11-15T02:18:36"
+ },
+ "0001493152-19-014907:ex10-1.htm": {
+  "ok": false,
+  "notes": [
+   "line of credit agreement"
+  ],
+  "when": "2026-11-15T02:18:36"
+ },
+ "0001144204-05-028556:v025565_ex10-1.htm": {
+  "ok": true,
+  "notes": [
+   "Regulation S subscription agreement, scanned, signed with company seal"
+  ],
+  "when": "2026-11-15T02:18:36"
+ },
+ "0001144204-08-042895:v119504_ex10-81.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement for notes, subscriber signature lines"
+  ],
+  "when": "2026-11-15T02:18:36"
+ },
+ "0001144204-09-033950:v153108_ex1.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement, scanned, initialled, signed addendum"
+  ],
+  "when": "2026-11-15T02:18:36"
+ },
+ "0001493152-26-003083:ex10-1.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement, signed by subscribers and company"
+  ],
+  "when": "2026-11-15T02:18:36"
+ },
+ "0001062993-17-003929:exhibit4-1.htm": {
+  "ok": false,
+  "notes": [
+   "certificate of designation"
+  ],
+  "when": "2026-11-15T02:18:36"
+ },
+ "0001144204-11-014083:v214325_ex10-1.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement (bilingual English/Chinese), scanned, signed and accepted"
+  ],
+  "when": "2026-11-15T02:18:36"
+ },
+ "0001575705-17-000083:ex10_1.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement, scanned, initialled, signed counterpart pages"
+  ],
+  "when": "2026-11-15T02:18:36"
+ },
+ "0001144204-09-057165:v165026_ex10-13.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement, signed by company and subscriber (p11)"
+  ],
+  "when": "2026-11-15T02:19:57"
+ },
+ "0001144204-10-068012:v206313_ex10-1.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement (Hong Kong law firm form), 40 page pictures, signing page with company chops"
+  ],
+  "when": "2026-11-15T02:19:57"
+ },
+ "0001144204-08-059333:v129588_ex10-1.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement booklet, blank signature page and investor questionnaire (picture-only form)"
+  ],
+  "when": "2026-11-15T02:19:57"
+ },
+ "0001144204-08-035263:v117483_ex99-1.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement, scanned, signed by purchaser and company"
+  ],
+  "when": "2026-11-15T02:53:07"
+ },
+ "0001085037-08-000681:ex10-1.htm": {
+  "ok": false,
+  "notes": [
+   "lease purchase letter agreement"
+  ],
+  "when": "2026-11-15T02:53:07"
+ },
+ "0001659173-17-000213:e992.htm": {
+  "ok": true,
+  "notes": [
+   "stock subscription agreement, signature page"
+  ],
+  "when": "2026-11-15T02:53:07"
+ },
+ "0001144204-08-044685:v122414_ex99-1.htm": {
+  "ok": false,
+  "notes": [
+   "press release"
+  ],
+  "when": "2026-11-15T02:53:07"
+ },
+ "0001144204-13-052215:v355748_ex10-1.htm": {
+  "ok": false,
+  "notes": [
+   "consulting agreement"
+  ],
+  "when": "2026-11-15T02:53:07"
+ },
+ "0001144204-04-022269:v010126_ex4-3.htm": {
+  "ok": false,
+  "notes": [
+   "registration rights agreement"
+  ],
+  "when": "2026-11-15T02:53:07"
+ },
+ "0001493152-26-034145:ex4-1.htm": {
+  "ok": false,
+  "notes": [
+   "certificate of designation"
+  ],
+  "when": "2026-11-15T02:53:07"
+ },
+ "0001477932-13-000274:amplitech_ex106.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement, signature page for subscriber and joint subscriber"
+  ],
+  "when": "2026-11-15T02:53:07"
+ },
+ "0001144204-09-062651:v167990_ex4-2.htm": {
+  "ok": false,
+  "notes": [
+   "certificate of designation"
+  ],
+  "when": "2026-11-15T02:53:07"
+ },
+ "0000107140-15-000035:exhibit99-10.htm": {
+  "ok": false,
+  "notes": [
+   "earnings presentation"
+  ],
+  "when": "2026-11-15T02:53:07"
+ },
+ "0001062993-08-003021:exhibit10-1.htm": {
+  "ok": false,
+  "notes": [
+   "term sheet"
+  ],
+  "when": "2026-11-15T02:53:07"
+ },
+ "0001144204-08-056148:v127541_ex99-1.htm": {
+  "ok": false,
+  "notes": [
+   "investment agreement (not titled subscription)"
+  ],
+  "when": "2026-11-15T02:53:07"
+ },
+ "0000721748-17-000049:site8k012617ex10_2.htm": {
+  "ok": false,
+  "notes": [
+   "side letter"
+  ],
+  "when": "2026-11-15T02:53:07"
+ },
+ "0001493152-20-006840:ex10-1.htm": {
+  "ok": false,
+  "notes": [
+   "SBA note"
+  ],
+  "when": "2026-11-15T02:53:07"
+ },
+ "0001264931-14-000413:ex10_12.htm": {
+  "ok": false,
+  "notes": [
+   "advisory agreement"
+  ],
+  "when": "2026-11-15T02:53:07"
+ },
+ "0001537435-23-000131:jnhnotesubscription.htm": {
+  "ok": true,
+  "notes": [
+   "note subscription agreement, signature page p4 signed by company and noteholder"
+  ],
+  "when": "2026-11-15T02:53:22"
+ },
+ "0001675426-16-000052:clia_waivers.htm": {
+  "ok": false,
+  "notes": [
+   "FDA letter"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001078782-12-000811:distributionagree_ex10z1.htm": {
+  "ok": false,
+  "notes": [
+   "distributorship agreement"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001019056-15-000294:ex99_1.htm": {
+  "ok": false,
+  "notes": [
+   "services agreement amendment"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001144204-08-026786:v113203_ex4-1.htm": {
+  "ok": false,
+  "notes": [
+   "rights agreement"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001144204-08-062838:v130977_ex10-1.htm": {
+  "ok": false,
+  "notes": [
+   "share exchange agreement"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001493152-23-001650:ex10-12.htm": {
+  "ok": false,
+  "notes": [
+   "warrant modification letter"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001144204-09-015061:v142148_ex10-1.htm": {
+  "ok": false,
+  "notes": [
+   "lease amendment and certificates"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001683168-17-001427:blackridge_ex9901.htm": {
+  "ok": false,
+  "notes": [
+   "presentation"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001171843-13-004189:exh_108.htm": {
+  "ok": false,
+  "notes": [
+   "consulting agreement"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001640334-21-001319:vrdr_ex10.htm": {
+  "ok": false,
+  "notes": [
+   "settlement of debts agreement"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001165527-13-000914:ex10-4.htm": {
+  "ok": false,
+  "notes": [
+   "publishing contract"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001144204-09-000577:v136305_ex10-3.htm": {
+  "ok": false,
+  "notes": [
+   "land transfer contract"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001078782-10-002881:radiant8ka120810ex992.htm": {
+  "ok": false,
+  "notes": [
+   "reserve report"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001091818-12-000403:ex101.htm": {
+  "ok": false,
+  "notes": [
+   "asset purchase agreement"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001213900-22-054644:ea165475ex10-1_cepton.htm": {
+  "ok": false,
+  "notes": [
+   "exclusivity letter"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001515971-13-000559:exhibit106.htm": {
+  "ok": false,
+  "notes": [
+   "employment agreement"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001493152-24-041243:ex10-1.htm": {
+  "ok": false,
+  "notes": [
+   "master services agreement"
+  ],
+  "when": "2026-11-15T03:01:39"
+ },
+ "0001144204-08-004542:ex10-1.htm": {
+  "ok": false,
+  "notes": [
+   "patent assignment"
+  ],
+  "when": "2026-11-15T03:13:17"
+ },
+ "0001144204-05-039068:v030890_exh4-1.htm": {
+  "ok": false,
+  "notes": [
+   "stock certificate specimen"
+  ],
+  "when": "2026-11-15T03:13:17"
+ },
+ "0001144204-07-006328:v065006_ex10-15.htm": {
+  "ok": false,
+  "notes": [
+   "sales and marketing agreement"
+  ],
+  "when": "2026-11-15T03:13:17"
+ },
+ "0001144204-07-020147:v071966_ex4-4.htm": {
+  "ok": false,
+  "notes": [
+   "certificate of correction"
+  ],
+  "when": "2026-11-15T03:13:17"
+ },
+ "0001144204-06-039485:v052593_ex10-8.htm": {
+  "ok": false,
+  "notes": [
+   "purchase order"
+  ],
+  "when": "2026-11-15T03:13:17"
+ },
+ "0001144204-07-046711:v086232_ex10-1.htm": {
+  "ok": false,
+  "notes": [
+   "patent assignment"
+  ],
+  "when": "2026-11-15T03:13:17"
+ },
+ "0001144204-06-029781:v048184_ex4-16.htm": {
+  "ok": true,
+  "notes": [
+   "subscription booklet: instructions, subscription agreement, signature page (p18), receipt and acceptance block"
+  ],
+  "when": "2026-11-15T03:13:17"
+ },
+ "0001144204-06-001868:v033477_ex10-12.htm": {
+  "ok": false,
+  "notes": [
+   "security agreement"
+  ],
+  "when": "2026-11-15T03:13:17"
+ },
+ "0001144204-04-013322:v06231_ex10-5.htm": {
+  "ok": false,
+  "notes": [
+   "lease"
+  ],
+  "when": "2026-11-15T03:13:17"
+ },
+ "0001144204-08-005221:v101228_ex4-21.htm": {
+  "ok": false,
+  "notes": [
+   "warrant"
+  ],
+  "when": "2026-11-15T03:13:17"
+ },
+ "0000950153-07-001289:p73418a2exv4w1.htm": {
+  "ok": false,
+  "notes": [
+   "stock certificate specimen"
+  ],
+  "when": "2026-11-15T03:13:17"
+ },
+ "0001144204-07-064310:v095484_ex10-1.htm": {
+  "ok": false,
+  "notes": [
+   "patent licensing agreement"
+  ],
+  "when": "2026-11-15T03:13:17"
+ },
+ "0001144204-07-038004:v081383_ex10-14.htm": {
+  "ok": false,
+  "notes": [
+   "assignment of oil and gas leases"
+  ],
+  "when": "2026-11-15T03:13:17"
+ },
+ "0001144204-05-029564:v026044_ex99-1.htm": {
+  "ok": false,
+  "notes": [
+   "certificate of designation"
+  ],
+  "when": "2026-11-15T03:13:17"
+ },
+ "0001437749-16-038152:ex99-2.htm": {
+  "ok": false,
+  "notes": [
+   "presentation"
+  ],
+  "when": "2026-11-15T03:13:17"
+ },
+ "0001078782-15-001014:f8k062315_ex10z1.htm": {
+  "ok": false,
+  "notes": [
+   "technology license agreement"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0001493152-19-014126:ex10-6.htm": {
+  "ok": false,
+  "notes": [
+   "supplementary business cooperation agreement"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0001567860-14-000042:exhibit991.htm": {
+  "ok": false,
+  "notes": [
+   "patent filing receipt"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0001903596-23-000333:ex10_6.htm": {
+  "ok": false,
+  "notes": [
+   "business services contract"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0001144204-08-052409:v126022_ex10-39.htm": {
+  "ok": false,
+  "notes": [
+   "joint venture agreement"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0001144204-10-033889:v188438_ex4-1.htm": {
+  "ok": false,
+  "notes": [
+   "stock certificate"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0000721748-17-000033:avoz010517s1ex10_1.htm": {
+  "ok": false,
+  "notes": [
+   "code of conduct"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0001104659-22-015987:tm222851d1_ex4-1.htm": {
+  "ok": false,
+  "notes": [
+   "stock certificate specimen"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0001144204-15-059929:v422176_ex10-3.htm": {
+  "ok": false,
+  "notes": [
+   "commercial lease"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0001493152-24-042927:ex4-8.htm": {
+  "ok": true,
+  "notes": [
+   "broker-dealer style subscription agreement form (picture pages): investor, account type, custodian/IRA, financial representative signature sections"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0001493152-24-041335:ex10-3.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement, signed by company and subscriber"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0001552781-14-000534:exhibit10_11.htm": {
+  "ok": false,
+  "notes": [
+   "consulting services agreement"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0001056520-10-000191:ex109bbt.htm": {
+  "ok": false,
+  "notes": [
+   "bank security agreement"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0001144204-14-063867:v392645_ex10-8.htm": {
+  "ok": false,
+  "notes": [
+   "investment confirmation letter and business licence"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0001171843-17-007704:exh_41.htm": {
+  "ok": false,
+  "notes": [
+   "stock certificate sample"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0001144204-06-027023:v046004_ex10-15.htm": {
+  "ok": false,
+  "notes": [
+   "interim executive services agreement"
+  ],
+  "when": "2026-11-15T03:23:55"
+ },
+ "0001731122-18-000013:e1079_ex10-10.htm": {
+  "ok": false,
+  "notes": [
+   "lease listing agreement"
+  ],
+  "when": "2026-11-15T03:27:29"
+ },
+ "0001144204-11-035204:v225632_ex4-1.htm": {
+  "ok": false,
+  "notes": [
+   "promissory note"
+  ],
+  "when": "2026-11-15T03:27:29"
+ },
+ "0001144204-08-032121:v115834_ex10-1.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement (Australian law firm form), signing page signed and witnessed"
+  ],
+  "when": "2026-11-15T03:27:29"
+ },
+ "0001144204-10-064646:v204393_ex10-19.htm": {
+  "ok": false,
+  "notes": [
+   "services letter agreement"
+  ],
+  "when": "2026-11-15T03:27:29"
+ },
+ "0001144204-10-022747:v182529_ex99-2.htm": {
+  "ok": false,
+  "notes": [
+   "financial statements"
+  ],
+  "when": "2026-11-15T03:27:29"
+ },
+ "0001096906-14-000260:ex10-1.pdf": {
+  "ok": true,
+  "notes": [
+   "subscription agreement booklet filed as image-only PDF (no text layer): signature pages for individuals and entities, acceptance, broker-dealer (GVC Capital) privacy notice"
+  ],
+  "when": "2026-11-15T03:27:44"
+ },
+ "0001078782-13-001683:f10q063013_ex10z25.htm": {
+  "ok": false,
+  "notes": [
+   "securities purchase agreement (not titled subscription)"
+  ],
+  "when": "2026-11-15T03:40:18"
+ },
+ "0001144204-14-032533:v379084_ex10-168.htm": {
+  "ok": false,
+  "notes": [
+   "forbearance agreement"
+  ],
+  "when": "2026-11-15T03:40:18"
+ },
+ "0001493152-26-046279:ex10-53.htm": {
+  "ok": false,
+  "notes": [
+   "promissory note"
+  ],
+  "when": "2026-11-15T03:40:18"
+ },
+ "0001903596-22-000902:ex99-1.htm": {
+  "ok": false,
+  "notes": [
+   "press release"
+  ],
+  "when": "2026-11-15T03:40:18"
+ },
+ "0001144204-05-037724:v029158_ex10-53.htm": {
+  "ok": false,
+  "notes": [
+   "employment agreement"
+  ],
+  "when": "2026-11-15T03:40:18"
+ },
+ "0001387308-15-000126:figure1santaelenareport.pdf": {
+  "ok": false,
+  "notes": [
+   "geology report"
+  ],
+  "when": "2026-11-15T03:40:18"
+ },
+ "0001469709-15-000485:ex10_12apg.htm": {
+  "ok": false,
+  "notes": [
+   "term sheet"
+  ],
+  "when": "2026-11-15T03:40:18"
+ },
+ "0001062993-08-003189:exhibit10-14.htm": {
+  "ok": false,
+  "notes": [
+   "lease termination"
+  ],
+  "when": "2026-11-15T03:40:18"
+ },
+ "0001108078-11-000152:exhibit10-06.htm": {
+  "ok": false,
+  "notes": [
+   "consulting agreement"
+  ],
+  "when": "2026-11-15T03:40:18"
+ },
+ "0001472375-11-000113:exhibit10-1.htm": {
+  "ok": false,
+  "notes": [
+   "employment agreement"
+  ],
+  "when": "2026-11-15T03:40:18"
+ },
+ "0001493152-24-009117:ex10-6.htm": {
+  "ok": false,
+  "notes": [
+   "convertible note"
+  ],
+  "when": "2026-11-15T03:40:18"
+ },
+ "0001013762-10-002605:ex991.pdf": {
+  "ok": false,
+  "notes": [
+   "settlement agreement"
+  ],
+  "when": "2026-11-15T03:40:18"
+ },
+ "0001062993-09-004560:exhibit10-2.htm": {
+  "ok": true,
+  "notes": [
+   "debt settlement subscription agreement (offshore), scanned, acceptance signed"
+  ],
+  "when": "2026-11-15T03:40:18"
+ },
+ "0001096906-08-001391:who8k072208ex10-2.htm": {
+  "ok": false,
+  "notes": [
+   "assignment agreement"
+  ],
+  "when": "2026-11-15T03:40:18"
+ },
+ "0001116502-09-001981:gpmz_ex101.htm": {
+  "ok": true,
+  "notes": [
+   "non-U.S. share private placement subscription agreement, scanned, signed by subscriber and accepted"
+  ],
+  "when": "2026-11-15T03:43:05"
+ },
+ "0001096906-06-001179:geovax8k100106ex10-9.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement, signature page signed and accepted"
+  ],
+  "when": "2026-11-15T03:43:05"
+ },
+ "0001165527-14-000197:ex10-2.htm": {
+  "ok": false,
+  "notes": [
+   "assignment agreement"
+  ],
+  "when": "2026-11-15T03:43:05"
+ },
+ "0001615774-16-006383:s103730_ex99-2.htm": {
+  "ok": false,
+  "notes": [
+   "presentation"
+  ],
+  "when": "2026-11-15T03:43:05"
+ }
+}

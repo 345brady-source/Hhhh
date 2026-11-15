@@ -1,0 +1,75 @@
+{
+  "id": "d005",
+  "url": "https://www.sec.gov/Archives/edgar/data/862651/000114420417032161/v468766_ex4-1.htm",
+  "cik": "862651",
+  "issuer": "Investview, Inc.  (INVU, INVUP)",
+  "form": "8-K",
+  "file_date": "2017-06-12",
+  "year": 2017,
+  "exhibit": "EX-4.1",
+  "exhibit_description": "EXHIBIT 4.1",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "dd638efe208740f860b107fda80f910d20d603ba13bd479d8a45d96cc3433ff6",
+  "layout_notes": [
+    "subscription agreement, acceptance signed"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 7,
+    "words": 7
+  },
+  "extra_files": [
+    "ex4x1_00001.jpg",
+    "ex4x1_00002.jpg",
+    "ex4x1_00003.jpg",
+    "ex4x1_00004.jpg",
+    "ex4x1_00005.jpg",
+    "ex4x1_00007.jpg",
+    "ex4x1_00008.jpg"
+  ],
+  "pages": 21,
+  "page_kinds": {
+    "text": 1,
+    "picture": 14,
+    "blank": 6
+  },
+  "page_kind_list": [
+    "text",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "3df8b47d16c9ceeb9195d145ef140df2d3ae2325600d4d118ab44a1ec5011ba5"
+}

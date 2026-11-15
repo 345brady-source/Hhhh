@@ -1,0 +1,74 @@
+{
+  "id": "d006",
+  "url": "https://www.sec.gov/Archives/edgar/data/1167887/000108503708000845/ex10-1.htm",
+  "cik": "1167887",
+  "issuer": "ARGENTEX MINING CORP",
+  "form": "8-K",
+  "file_date": "2008-10-21",
+  "year": 2008,
+  "exhibit": "EX-10",
+  "exhibit_description": "EXHIBIT 10.1",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "3767ea68e5f576028ffb5abbfcb95a556dd1c07ab25b34c3938de79d829ec7f2",
+  "layout_notes": [
+    "private placement subscription agreement (offshore), scanned fax copy, acceptance signed"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 9,
+    "words": 18
+  },
+  "extra_files": [
+    "x1x1.jpg",
+    "x2x1.jpg",
+    "x3x1.jpg",
+    "x4x1.jpg",
+    "x5x1.jpg",
+    "x6x1.jpg",
+    "x7x1.jpg",
+    "x8x1.jpg",
+    "x9x1.jpg"
+  ],
+  "pages": 19,
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 18
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "b8643ff84deb788899b3be39ec632e7844891cb4db544f2fc275d6a2ed588bad"
+}

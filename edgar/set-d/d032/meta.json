@@ -1,0 +1,55 @@
+{
+  "id": "d032",
+  "url": "https://www.sec.gov/Archives/edgar/data/1405227/000109690614000260/ex10-1.pdf",
+  "cik": "1405227",
+  "issuer": "LAS VEGAS RAILWAY EXPRESS, INC.",
+  "form": "8-K",
+  "file_date": "2014-03-03",
+  "year": 2014,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "EXHIBIT 10.1",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.pdf",
+  "source_sha256": "f6f6850cdceb80d0ce20f3775e5334d07d5099bae33b9f5424f7d7ceff8e18e2",
+  "layout_notes": [
+    "subscription agreement booklet filed as image-only PDF (no text layer): signature pages for individuals and entities, acceptance, broker-dealer (GVC Capital) privacy notice"
+  ],
+  "found_by": "hunt",
+  "how_made": "scan",
+  "kind": "scanned PDF (page pictures, no usable text layer)",
+  "features": {
+    "pages": 19,
+    "median_chars": 0,
+    "img_pages": 19,
+    "alpha_ratio": 0.0
+  },
+  "extra_files": [],
+  "pages": 19,
+  "page_kinds": {
+    "picture": 19
+  },
+  "page_kind_list": [
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "f6f6850cdceb80d0ce20f3775e5334d07d5099bae33b9f5424f7d7ceff8e18e2"
+}

@@ -1,0 +1,72 @@
+{
+  "id": "d029",
+  "url": "https://www.sec.gov/Archives/edgar/data/1144879/000149315224042927/ex4-8.htm",
+  "cik": "1144879",
+  "issuer": "Applied Digital Corp.  (APLD)",
+  "form": "S-1/A",
+  "file_date": "2024-10-29",
+  "year": 2024,
+  "exhibit": "EX-4.8",
+  "exhibit_description": "",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "e820db326ca469b0270602532d3328d1b11c5a1db08ddfef975c17db303d4dfe",
+  "layout_notes": [
+    "broker-dealer style subscription agreement form (picture pages): investor, account type, custodian/IRA, financial representative signature sections"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 5,
+    "words": 5
+  },
+  "extra_files": [
+    "ex4-8_001.jpg",
+    "ex4-8_002.jpg",
+    "ex4-8_003.jpg",
+    "ex4-8_004.jpg",
+    "ex4-8_005.jpg"
+  ],
+  "pages": 20,
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 10,
+    "blank": 9
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture",
+    "blank",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "blank",
+    "picture",
+    "picture",
+    "blank"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "b8b1ae422dc27eeea4a849af915442bbff0343619640f80212613a6e71d284fb"
+}

@@ -1,0 +1,75 @@
+{
+  "id": "d035",
+  "url": "https://www.sec.gov/Archives/edgar/data/832489/000109690606001179/geovax8k100106ex10-9.htm",
+  "cik": "832489",
+  "issuer": "Geovax Labs, Inc.  (GOVX, GOVXW)",
+  "form": "8-K",
+  "file_date": "2006-10-04",
+  "year": 2006,
+  "exhibit": "EX-10.9",
+  "exhibit_description": "EXHIBIT 10.9 - SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "37e0d82d077f6d054f12bcdc9461b5365900b388b21d523fecfb7ce4dc556c76",
+  "layout_notes": [
+    "subscription agreement, signature page signed and accepted"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 7,
+    "words": 15
+  },
+  "extra_files": [
+    "ex10-9pg1.jpg",
+    "ex10-9pg2.jpg",
+    "ex10-9pg3.jpg",
+    "ex10-9pg4.jpg",
+    "ex10-9pg5.jpg",
+    "ex10-9pg6.jpg",
+    "ex10-9pg7.jpg"
+  ],
+  "pages": 21,
+  "page_kinds": {
+    "text": 1,
+    "picture": 14,
+    "blank": 6
+  },
+  "page_kind_list": [
+    "text",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "6dce371032678907450c39caf877504177957fb9a0c269972b51756779a17483"
+}

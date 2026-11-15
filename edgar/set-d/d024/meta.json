@@ -1,0 +1,82 @@
+{
+  "id": "d024",
+  "url": "https://www.sec.gov/Archives/edgar/data/1394872/000114420408035263/v117483_ex99-1.htm",
+  "cik": "1394872",
+  "issuer": "MIPSolutions, Inc.",
+  "form": "8-K",
+  "file_date": "2008-06-16",
+  "year": 2008,
+  "exhibit": "EX-99.1",
+  "exhibit_description": "",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "129f692597fc83789cc091bc3fd2010dbaff6bc220cf2b5ec2ee06ffe19d16b2",
+  "layout_notes": [
+    "subscription agreement, scanned, signed by purchaser and company"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 11,
+    "words": 3
+  },
+  "extra_files": [
+    "v117483_ex99-1x10x1.jpg",
+    "v117483_ex99-1x11x1.jpg",
+    "v117483_ex99-1x1x1.jpg",
+    "v117483_ex99-1x2x1.jpg",
+    "v117483_ex99-1x3x1.jpg",
+    "v117483_ex99-1x4x1.jpg",
+    "v117483_ex99-1x5x1.jpg",
+    "v117483_ex99-1x6x1.jpg",
+    "v117483_ex99-1x7x1.jpg",
+    "v117483_ex99-1x8x1.jpg",
+    "v117483_ex99-1x9x1.jpg"
+  ],
+  "pages": 24,
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 22,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "blank"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "e8edeb717ef59b7027b1174b6ab8adc295410692efaf5dd5ceb097481881f33a"
+}

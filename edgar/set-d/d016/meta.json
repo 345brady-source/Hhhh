@@ -1,0 +1,83 @@
+{
+  "id": "d016",
+  "url": "https://www.sec.gov/Archives/edgar/data/1110361/000114420408042895/v119504_ex10-81.htm",
+  "cik": "1110361",
+  "issuer": "EROOMSYSTEM TECHNOLOGIES INC",
+  "form": "8-K",
+  "file_date": "2008-07-30",
+  "year": 2008,
+  "exhibit": "EX-10.81",
+  "exhibit_description": "",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "6e1757435539e3e960f9c3003519207013197b1a2d5b1bcc51ee73cc5dcf10f2",
+  "layout_notes": [
+    "subscription agreement for notes, subscriber signature lines"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 12,
+    "words": 17
+  },
+  "extra_files": [
+    "v119504_ex10-81x10x1.jpg",
+    "v119504_ex10-81x11x1.jpg",
+    "v119504_ex10-81x1x1.jpg",
+    "v119504_ex10-81x2x1.jpg",
+    "v119504_ex10-81x3x1.jpg",
+    "v119504_ex10-81x4x1.jpg",
+    "v119504_ex10-81x5x1.jpg",
+    "v119504_ex10-81x6x1.jpg",
+    "v119504_ex10-81x6x2.jpg",
+    "v119504_ex10-81x7x1.jpg",
+    "v119504_ex10-81x8x1.jpg",
+    "v119504_ex10-81x9x1.jpg"
+  ],
+  "pages": 24,
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 21,
+    "blank": 2
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "blank"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "8899b24ff6f4f0ca3ac653dda8b5b055a4e4a74d9ff3598ee0a753a45c19de85"
+}
