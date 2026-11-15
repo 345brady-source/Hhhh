@@ -380,10 +380,9 @@ function covers(f, e) {
 }
 /**
  * What is wrong with a field that rests on a blank ('' when it is right): kind of field, signer, kind of investor, label,
- * key, required, second signer, cover. Two more keys are compared only when the page gives them, so a page that does
- * not give them is judged exactly as before:
- *   other    a party's name: the field is for somebody else and names that party; true: for somebody else, whoever;
- *            false (or left out on a place that is not a second signer's): the field is nobody else's
+ * key, required (the firm's places only: under D-30 no field of the investor's is required), cover; and, under D-30,
+ * no field is kept apart for a second signer or somebody else (a place the page marks second or other is the
+ * investor's). One more key is compared only when the page gives it:
  *   review   true: the field is marked for review; false: it is not
  */
 function wrong(f, e) {
@@ -393,14 +392,13 @@ function wrong(f, e) {
   if (e.forType != null && (f.forType || '') !== e.forType) bad.push(`for ${f.forType || 'everyone'}, not ${e.forType || 'everyone'}`);
   if (e.label != null && f.label !== e.label) bad.push(`label "${f.label}", not "${e.label}"`);
   if (e.key != null && (f.prefill || '') !== e.key) bad.push(`filled in from ${f.prefill || 'nothing'}, not ${e.key || 'nothing'}`);
-  if (e.required != null && f.type !== 'date' && !!f.required !== !!e.required) bad.push(`${f.required ? 'required' : 'optional'}, not ${e.required ? 'required' : 'optional'}`);
-  if (!!f.second !== !!e.second) bad.push(e.second ? 'not kept apart as a line for a second signer' : 'treated as a line for a second signer');
-  const whose = f.other || '';
-  if (typeof e.other === 'string') {
-    if (whose !== e.other) bad.push(`for ${whose ? '"' + whose + '"' : 'nobody else'}, not for "${e.other}"`);
-  } else if (e.other === true) {
-    if (!whose) bad.push('not given to somebody else');
-  } else if ((e.other === false || !e.second) && whose) bad.push(`given to somebody else ("${whose}")`);
+  // D-30 (the owner, Phase 01.4 plan 63): two people only. A field of the firm keeps its own required flag; a field of
+  // the investor is never required; and the reader keeps nothing apart for a second signer or for somebody else: a
+  // place the page prints for them (e.second, e.other) is the investor's, optional, like any other of theirs.
+  if (e.role === 'firm') {
+    if (e.required != null && f.type !== 'date' && !!f.required !== !!e.required) bad.push(`${f.required ? 'required' : 'optional'}, not ${e.required ? 'required' : 'optional'}`);
+  } else if (f.required && f.type !== 'date') bad.push('required, not optional (D-30: no field of the investor is required)');
+  if (f.second || f.other) bad.push(`kept apart for ${f.other ? '"' + f.other + '"' : 'a second signer'}, not the investor's (D-30)`);
   if (e.review != null && !!f.review !== !!e.review) bad.push(e.review ? 'not marked for review' : 'marked for review');
   if (!covers(f, e)) bad.push(`does not cover its line (field x ${f.x0.toFixed(1)}-${f.x1.toFixed(1)} bottom ${f.bottom.toFixed(1)}; line x ${e.x0.toFixed(1)}-${e.x1.toFixed(1)} y ${e.line.toFixed(1)})`);
   return bad.join('; ');

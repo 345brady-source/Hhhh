@@ -22,9 +22,10 @@
  *   reviewReason  one plain sentence saying why it is marked
  *   forType       'person' | 'entity' when only investors of that kind get the field; absent for everyone
  *   prefill       a key from PREFILL when onboarding already has the answer; absent when the investor types it
- *   second        true: a line for somebody other than the investor and the firm (kept on the investor's signer, optional)
- *   other         with second: the party who completes it (Custodian, Broker-dealer, Representative, Adviser, Manager,
- *                 Transfer agent, Third party): nobody's required field, left out of every signing step (see isOther)
+ *   role          'investor' | 'firm' only (D-30): the firm's places are acceptance, countersignature and places reserved
+ *                 for its use; every other place is the investor's, and no field of the investor's is required
+ *   second, other no longer set by read (D-30); an agreement stored before D-30 may still carry them: a place for
+ *                 somebody else, optional and left out of every signing step (see isOther)
  *
  * Helpers for the editor and the save gates (all pure):
  *   needsReview(fieldOrAgreement)  reviewCount(agreement)  reviewFields(agreement)  confirm(field)  statusOf(field)
@@ -435,6 +436,18 @@
   }
   /** True for a field or proposal that is somebody else's to complete (see asOther). */
   const isOther = (f) => !!(f && f.second && typeof f.other === 'string' && f.other.trim());
+  /**
+   * D-30: a proposed field as one of the two people's. A place reserved for the firm's use (FIRM_USE_PARTY) is the
+   * firm's; a field the firm's rules gave the firm stays the firm's with its own required flag; every other field is
+   * the investor's and optional. The second-signer and other-party marks go (the label keeps the document's words).
+   */
+  function twoPersons(p) {
+    const firmUse = isOther(p) && p.other === FIRM_USE_PARTY;
+    delete p.second;
+    delete p.other;
+    if (firmUse) Object.assign(p, { role: 'firm', required: false });
+    else if (p.role !== 'firm') Object.assign(p, { role: 'investor', required: false });
+  }
   /** A label's own words as printed: one line, no list marker, bracketed remark, trailing condition, currency sign or colon. */
   const ownWords = (text) =>
     tidy(text)
@@ -2735,6 +2748,14 @@
         if (p.type === 'signature' && res.otherSignaturePages.indexOf(p.page) < 0) res.otherSignaturePages.push(p.page);
       }
     });
+    // D-30 (the owner): two people only. Every field is the sponsor's (the firm's: acceptance, countersignature, a
+    // place reserved for the firm's use) or the investor's (everything else, whatever the document calls who completes
+    // it: a co-subscriber, a joint holder, a spouse, a witness, a custodian, a broker-dealer). The reader assigns no
+    // co-investor and no other party (the editor still offers Co-investor to a sponsor who wants it), and no field of
+    // the investor's is required to finish. The pages counted above (whose signature lines were found where) stay as
+    // read; the counts of co-investor places and of places for somebody else are none.
+    res.fields.forEach(twoPersons);
+    Object.assign(res, { cos: 0, coPages: [], coSignaturePages: [], others: 0, otherPages: [], otherSignaturePages: [] });
     // No signature line for the investor, and the text speaks of a signature page (or of a signature block attached,
     // below or hereto): the agreement refers to a page this PDF does not contain.
     if (!res.investorPages.length) res.signaturePageMentioned = (pages || []).some((pg) => !!pg && !pg.scan && !pg.failed && SIG_PAGE_SAID.test(linesOf(pg).map((ln) => ln.text).join(' ').toLowerCase()));

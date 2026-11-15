@@ -28,16 +28,21 @@
   function measure(env, s, st) {
     const k = kit();
     const missing = k.missing(env, s, st);
-    const total = k.fieldsOf(env, s).filter((f) => k.isReq(f) && (!f.locked || missing.indexOf(f) >= 0)).length;
+    const total = k.fieldsOf(env, s).filter((f) => k.isReq(f, env) && (!f.locked || missing.indexOf(f) >= 0)).length;
     return { total, left: missing.length, missing };
   }
-  /** Where Next goes from `from` (a field id, 'finish' or null): the next required field still to complete, wrapping round. */
+  /**
+   * Where Next goes from `from` (a field id, 'finish' or null): the next required field still to complete, wrapping
+   * round; when nothing required is left (an investor's fields are all optional, D-30), the next empty field after this
+   * one, then Finish (null).
+   */
   function target(env, s, st, from) {
     const k = kit();
     const list = own(env, s);
     const i = from && from !== 'finish' ? list.findIndex((f) => f.id === from) : -1;
-    const todo = list.filter((f) => (k.isReq(f) && !k.filled(f, st.vals[f.id])) || k.tooLong(env, f, st.vals[f.id]));
-    return todo.find((f) => list.indexOf(f) > i) || todo[0] || null;
+    const todo = list.filter((f) => (k.isReq(f, env) && !k.filled(f, st.vals[f.id])) || k.tooLong(env, f, st.vals[f.id]));
+    if (todo.length) return todo.find((f) => list.indexOf(f) > i) || todo[0];
+    return list.find((f) => list.indexOf(f) > i && !k.filled(f, st.vals[f.id])) || null;
   }
   const where = (f) => `${kit().label(f)}, page ${f.page}`;
   /** The word on the pointer in the page's margin, beside the field the signer is on. */
@@ -55,7 +60,7 @@
     const now = st.started ? openField(env, s, st) : null;
     if (!m.left && !now) return `<strong>Ready to finish</strong><span class="sf-hint">${m.total ? 'Every required field is complete.' : 'Review the document, then select Finish.'}</span>`;
     const head = m.left ? `${m.left} of ${m.total} left` : 'Ready to finish';
-    if (now) return `<strong>${head}</strong><span class="sf-hint">Now: ${h(where(now))}${kit().isReq(now) ? '' : ' (optional)'}</span>`;
+    if (now) return `<strong>${head}</strong><span class="sf-hint">Now: ${h(where(now))}${kit().isReq(now, env) ? '' : ' (optional)'}</span>`;
     const nx = target(env, s, st, st.cursor);
     return `<strong>${head}</strong><span class="sf-hint">${st.started && nx ? `Next: ${h(where(nx))}` : 'Select Start to begin.'}</span>`;
   }
@@ -244,7 +249,7 @@
         // No control: the date, filled automatically.
         const given = !f || !!f.locked;
         const done = given || k.filled(f, st.vals[f.id]);
-        const req = !given && k.isReq(f);
+        const req = !given && k.isReq(f, env);
         const current = !given && st.cursor === f.id;
         box.classList.toggle('is-given', given);
         box.classList.toggle('is-req', req);
@@ -297,7 +302,7 @@
       tray.hidden = !on;
       bar.classList.toggle('has-tray', on);
       if (on && tray.getAttribute('data-fid') !== cf.id) {
-        const req = k.isReq(cf);
+        const req = k.isReq(cf, env);
         tray.setAttribute('data-fid', cf.id);
         tray.querySelector('.sf-tray-label').innerHTML = `${h(k.label(cf))}${req ? '<b aria-hidden="true">*</b>' : ' (optional)'}`;
         const input = tray.querySelector('.sf-tray-in');

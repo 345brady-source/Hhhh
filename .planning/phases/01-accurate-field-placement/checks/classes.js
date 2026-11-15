@@ -66,9 +66,16 @@ function pageFails(fx, expect, out, j) {
   const r = fx.read || {};
   if (r.investorPages && !same(read.investorPages, r.investorPages)) fails.push(`the investor's signature line was read on page(s) [${sorted(read.investorPages)}], not [${sorted(r.investorPages)}]`);
   if (r.firmPages && !same(read.firmPages, r.firmPages)) fails.push(`the firm's signature line was read on page(s) [${sorted(read.firmPages)}], not [${sorted(r.firmPages)}]`);
-  if (r.otherPages && !same(out.otherPages, r.otherPages)) fails.push(`places for somebody else were read on page(s) [${sorted(out.otherPages)}], not [${sorted(r.otherPages)}]`);
+  // D-30 (the owner, Phase 01.4 plan 63): two people only. The reader reads no place as somebody else's or a
+  // co-investor's, so no page is named for them and the summary says no sentence about them, whatever the page prints.
+  if ((out.otherPages || []).length) fails.push(`places for somebody else were read on page(s) [${sorted(out.otherPages)}], not none (D-30)`);
   if (r.left && !same(read.left, r.left)) fails.push(`pages named as left without a field: [${sorted(read.left)}], not [${sorted(r.left)}]`);
-  (fx.summary || []).forEach((p) => { if (!p.test(out.note || '')) fails.push(`the read summary does not say ${p}: "${out.note || ''}"`); });
+  const D30 = /co-investor|someone else|somebody else/i;
+  (fx.summary || []).forEach((p) => {
+    if (D30.test(p.source)) {
+      if (p.test(out.note || '')) fails.push(`the read summary says ${p}, which it must not under D-30: "${out.note || ''}"`);
+    } else if (!p.test(out.note || '')) fails.push(`the read summary does not say ${p}: "${out.note || ''}"`);
+  });
   (fx.notSaid || []).forEach((p) => { if (p.test(out.note || '')) fails.push(`the read summary says ${p}, which it must not: "${out.note || ''}"`); });
   if (fx.saves === true && !out.saved) fails.push(`cannot be saved as read: ${out.todo}`);
   if (fx.saves === false && out.saved) fails.push('saved although something should hold it');
