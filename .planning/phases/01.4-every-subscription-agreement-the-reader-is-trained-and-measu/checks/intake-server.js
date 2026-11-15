@@ -2,8 +2,9 @@
 /*
  * The offering intake read through the portal's reading server (D-36), on the real intake screen.
  *
- *   node intake-server.js [--only unchanged,api,fallback,failures,unreadable,retry,wholetext,mixedpages | measure | all]
+ *   node intake-server.js [--only unchanged,api,fallback,failures,unreadable,retry,wholetext,mixedpages,combined | measure | all]
  *   node intake-server.js --only measure --doc <pdf> --out <dir> [--cap 1.00] [--max-tokens 24000] [--fake]
+ *   node intake-server.js --only measure --combined --doc <pdf> --out <dir> [--cap 6.00] [--max-tokens 64000] [--fake --range a-b]
  *
  *   unchanged  every protected slice of intake.js and console.js hashes to the value recorded at planning (D-36: only the
  *              two reading functions and the comments that described the old path change)
@@ -34,6 +35,19 @@
  *   mixedpages the RockStep PPM's first 20 pages with pages 5, 6 and 15 made pictures (picture-pdf.js, out-69/mixed.pdf):
  *              per-page scores printed, the picture pages failing and every other page passing; sent on the PDF path with
  *              every page; the unchanged RockStep PPM (every page passing) still sent on the text path
+ *   Plan 01.4-71 (D-44), fake intakes and fake agreement readers only, public PDFs only, nothing spent:
+ *   combined   one PPM upload with the subscription agreement inside (out-71/combined.pdf = the RockStep PPM then the
+ *              hedge-fund agreement template, agreement on pages 70 to 87): adjust (71 to 86 on review: a 16-page cut equal
+ *              to those pages is what the reading server receives), untick (no cut, no stored document, no /v1/read),
+ *              none (no panel, nothing extra), bad (last page 200, first page 0, first above last, an unknown document with
+ *              two PDFs: no panel, nothing extra; plus agreementPart on made-up answers), failure (503 every time: after
+ *              3 attempts the agreement equals the same cut read with no reading server; terms there; why set), hang (a
+ *              3 s browser limit and a 6 s reader: the done step within 2 s while the request is open, the reading
+ *              sentence and no upload button, then the in-page agreement), existing (an offering with an agreement keeps
+ *              it, nothing read, review says so), ranges (out-71/combined-broken.pdf, 30 pages on the PDF path with
+ *              RANGE_PAGES 10, answers null, 3 to 10 and 21 to 30: st.agreement 13 to 30, an 18-page cut of those pages),
+ *              separate (a PPM and a separately uploaded agreement, the answer giving its pages 1 to 18: that file itself,
+ *              no extra document, one agreement, read in the background)
  *   measure    one PDF once through the intake screen against a reading server (D-34 tooling, plan 67 runs it). Real mode
  *              needs CARROWVALE_API_KEY and spawns server/index.mjs on port 8798 with a fresh API_TOKEN, the read log and
  *              store in <dir> (the log is kept, so the cap counts every call made for that folder), the cap and output
@@ -73,7 +87,7 @@ const { pathToFileURL } = require('url');
 
 const ROOT = path.resolve(__dirname, '..', '..', '..', '..');
 const HARNESS = path.join(ROOT, '.planning/phases/01-accurate-field-placement/checks/harness.js');
-const ALL = ['unchanged', 'api', 'fallback', 'failures', 'unreadable', 'retry', 'wholetext', 'mixedpages', 'measure'];
+const ALL = ['unchanged', 'api', 'fallback', 'failures', 'unreadable', 'retry', 'wholetext', 'mixedpages', 'combined', 'measure'];
 const arg = (name) => {
   const i = process.argv.indexOf('--' + name);
   return i > 0 && process.argv[i + 1] && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : null;
@@ -88,10 +102,10 @@ const FAKE = flag('fake');
 const COMBINED = flag('combined');
 const DOC = arg('doc');
 const OUT = arg('out');
-if (PARTS.some((p) => ['unreadable', 'wholetext', 'mixedpages'].includes(p))) {
+if (PARTS.some((p) => ['unreadable', 'wholetext', 'mixedpages', 'combined'].includes(p))) {
   const pub = path.join(process.env.INTAKE_SCRATCH || path.join(os.tmpdir(), 'claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad'), 'public-agreements');
-  ['PPM_RockStep_Hometown_America_Fund_I', 'PPM_Worcester_Fund_LLC'].forEach((d) => fs.existsSync(path.join(pub, d, 'doc.pdf')) || notRun('the public PDF ' + d + ' is missing'));
-  ['pdftoppm', 'pdftotext'].forEach((t) => {
+  ['PPM_RockStep_Hometown_America_Fund_I', 'PPM_Worcester_Fund_LLC'].concat(PARTS.includes('combined') ? ['Subscription_Hedge_Fund_Template'] : []).forEach((d) => fs.existsSync(path.join(pub, d, 'doc.pdf')) || notRun('the public PDF ' + d + ' is missing'));
+  ['pdftoppm', 'pdftotext'].concat(PARTS.includes('combined') ? ['pdfinfo', 'pdfunite'] : []).forEach((t) => {
     try {
       execFileSync(t, ['-v'], { stdio: 'ignore' });
     } catch (e) {
@@ -1523,6 +1537,12 @@ async function combinedFlow(h, page, srv, file, opts) {
   const why = noText ? 'no-readable-text' : !r ? 'the review step was not reached' : !lastReq ? 'no request reached the reading server' : lastReq.status !== 200 ? 'http ' + lastReq.status : last && typeof last.ok === 'boolean' ? (last.ok ? '' : String(last.reason || '')) : 'no last line';
   const out = { r, answers, outcome, why, ppmSeconds, cap, read, agreement: null, reviewLine: '', reviewHint: '', panel: false, nameMissing: false, applied: false };
   if (r && r.step === 'review') {
+    // Apply to an existing offering: chosen as on the upload screen, so review shows what happens to it.
+    if (o.target)
+      await page.evaluate((id) => {
+        window.CVPortal.state.ui.intake.target = id;
+        window.CVPortal.app.render();
+      }, o.target);
     const rv = await page.evaluate(() => {
       const st = window.CVPortal.state.ui.intake;
       const found = document.getElementById('ika-found');
@@ -1543,7 +1563,6 @@ async function combinedFlow(h, page, srv, file, opts) {
     return true;
   });
   if (out.nameMissing) console.log('      combined: nameMissing true (the reading left the offering name empty; a placeholder was entered)');
-  if (o.target) await page.evaluate((id) => (window.CVPortal.state.ui.intake.target = id), o.target);
   out.agreementAtApply = await page.evaluate(() => {
     const a = window.CVPortal.state.ui.intake.agreement;
     return a ? Object.assign({}, a) : null;
@@ -1600,6 +1619,7 @@ async function combinedFlow(h, page, srv, file, opts) {
       sponsor: fields.filter((f) => roleOf(f) === 'sponsor').length,
       review: src ? NS.placement.reviewCount(src) : 0,
       pages: src ? src.pages : null,
+      drafts: (ws.envelopes || []).filter((x) => x.agreementFor === oid && x.status === 'draft').length,
       fieldShape: fields.map((f) => [f.page, f.type, roleOf(f), Math.round(f.x * 1e4), Math.round(f.y * 1e4), Math.round(f.w * 1e4), Math.round(f.h * 1e4)]).sort().map(String),
       doc: doc ? { id: doc.id, offeringDoc: !!doc.offeringDoc, title: doc.title, fileName: doc.fileName, sha256: doc.sha256, hidden: !!doc.hidden } : null,
       docs: (ws.docs || []).length,
@@ -1718,7 +1738,7 @@ async function combinedMeasure(h, page) {
   fs.writeFileSync(path.join(OUT, 'result.json'), JSON.stringify(result, null, 2));
   const usd = (n) => '$' + Number(n || 0).toFixed(4);
   const A = result.agreement;
-  const said = `COMBINED: ${result.range ? `range ${result.range.firstPage} to ${result.range.lastPage} of ${result.range.pages}` : 'no subscription agreement found'}; PPM ${result.ppm.outcome}, ${result.ppm.filled} terms filled; agreement ${A.state}, ${A.fields} fields placed (investor ${A.investor}, sponsor ${A.sponsor}, ${A.review} marked for review), saved ${A.saved ? 'yes' : 'no'}; cost ${usd(result.cost)} (PPM ${usd(result.ppm.cost)}, agreement ${usd(A.cost)}) of $${Number(cap).toFixed(2)}; seconds ${seconds} (PPM ${result.ppm.seconds}, agreement ${A.seconds === null ? 0 : A.seconds})`;
+  const said = `COMBINED: ${result.range ? `range ${result.range.firstPage} to ${result.range.lastPage} of ${result.range.pages}` : 'no subscription agreement found'}; PPM ${result.ppm.outcome}, ${result.ppm.filled} terms filled; agreement ${A.state}, ${A.fields} fields placed (investor ${A.investor}, sponsor ${A.sponsor}, ${A.review} marked for review), saved ${A.saved ? 'yes' : 'no'}; cost ${usd(result.cost)} (PPM ${usd(result.ppm.cost)}, agreement ${usd(A.cost)}) of $${Number(cap) < 0.01 ? String(cap) : Number(cap).toFixed(2)}; seconds ${seconds} (PPM ${result.ppm.seconds}, agreement ${A.seconds === null ? 0 : A.seconds})`;
   console.log(said);
   if (!FAKE) {
     line(result.ppm.outcome !== 'failed', `measure combined PPM outcome ${result.ppm.outcome}${result.ppm.why ? ' (' + result.ppm.why + ')' : ''}`);
@@ -1756,9 +1776,194 @@ async function combinedMeasure(h, page) {
   line(allKeys && intakeRows.length >= 1 && readRowsOf.length >= 1 && Math.abs(written.cost - fakeCost) < 1e-9, `measure combined result.json has every documented field: ${allKeys ? 'yes' : 'no'}; cost $${Number(written.cost).toFixed(4)} = the fake usage priced over both routes ($${fakeCost.toFixed(4)}, ${intakeRows.length} intake and ${readRowsOf.length} read rows)`);
 }
 
+/** The inputs of part combined, made from public PDFs only into out-71 (once). */
+async function combinedInputs(page) {
+  fs.mkdirSync(OUT71, { recursive: true });
+  const HEDGE = path.join(PUBLIC, 'Subscription_Hedge_Fund_Template/doc.pdf');
+  const f = {
+    combined: path.join(OUT71, 'combined.pdf'),
+    broken: path.join(OUT71, 'combined-broken.pdf'),
+    ppm: path.join(OUT71, 'rockstep-ppm.pdf'),
+    agreement: path.join(OUT71, 'hedge-subscription-agreement.pdf')
+  };
+  if (!fs.existsSync(f.combined)) execFileSync('pdfunite', [ROCKSTEP, HEDGE, f.combined], { stdio: 'ignore' });
+  if (!fs.existsSync(f.broken)) {
+    const broken = await picturePdf(page, ROCKSTEP, 1, 12, true, path.join(OUT68, 'broken.pdf'));
+    execFileSync('pdfunite', [broken, HEDGE, f.broken], { stdio: 'ignore' });
+  }
+  if (!fs.existsSync(f.ppm)) fs.copyFileSync(ROCKSTEP, f.ppm);
+  if (!fs.existsSync(f.agreement)) fs.copyFileSync(HEDGE, f.agreement);
+  return f;
+}
+/** One case of part combined: a fake intake answering answer(i), a fake agreement reader, the combined flow on file. */
+async function combinedCase(h, page, file, answer, readerOpts, flowOpts) {
+  const intake = recordingIntake((i, prompt, pdfs) => answer(i, prompt, pdfs));
+  const reader = fakeAgreementReader(null, readerOpts);
+  const srv = await portalServer(intake, {}, reader);
+  try {
+    const fo = Object.assign({ timeout: 120000 }, flowOpts || {});
+    if (fo.atDone) {
+      const cb = fo.atDone;
+      fo.atDone = (pg, out) => cb(pg, out, reader);
+    }
+    const x = await combinedFlow(h, page, srv, file, fo);
+    return { x, intake, reader };
+  } finally {
+    await srv.close();
+  }
+}
+/** Whether a request's PDF has exactly n pages, each with the text of file's page first-1+i. */
+function cutIs(req, file, first, n, tag) {
+  if (!req || typeof req.pdf !== 'string') return { ok: false, pages: 0 };
+  const sent = path.join(OUT71, `sent-${tag}.pdf`);
+  fs.writeFileSync(sent, Buffer.from(req.pdf, 'base64'));
+  const pages = pdfPageCount(sent);
+  let ok = pages === n;
+  for (let i = 1; ok && i <= n; i++) if (pageTextOf(sent, i) !== pageTextOf(file, first - 1 + i)) ok = false;
+  return { ok, pages };
+}
+const withPart = (part) => (i) => Object.assign({}, FUND, { subscriptionAgreement: part });
+async function partCombined(h, page) {
+  const f = await combinedInputs(page);
+  const terms = (x) => !!x.after && x.after.name === FUND.offering.name && x.after.mgmtFee === FUND.fees.mgmtFee;
+  const nothingMore = (c, files) => c.reader.seen.length === 0 && c.x.cap.read.length === 0 && !!c.x.after && c.x.after.docs === c.x.docsBefore + files && !c.x.after.entry && !c.x.after.saved && c.x.after.drafts === 0;
+  const fill = async (sel, v) => {
+    await page.fill(sel, String(v));
+    await page.dispatchEvent(sel, 'change');
+  };
+
+  // adjust: the pages changed on review (with the other page following an edit that crossed it) are what is cut and read.
+  let crossed = null;
+  const adj = await combinedCase(h, page, f.combined, withPart({ document: 'combined.pdf', firstPage: 70, lastPage: 87 }), null, {
+    review: async (pg) => {
+      await fill('#ika-last', 60);
+      const one = await pg.evaluate(() => [window.CVPortal.state.ui.intake.agreement.firstPage, window.CVPortal.state.ui.intake.agreement.lastPage, document.getElementById('ika-first').value]);
+      await fill('#ika-first', 71);
+      const two = await pg.evaluate(() => [window.CVPortal.state.ui.intake.agreement.firstPage, window.CVPortal.state.ui.intake.agreement.lastPage, document.getElementById('ika-last').value]);
+      await fill('#ika-last', 86);
+      crossed = { one, two };
+    }
+  });
+  const ac = cutIs(adj.reader.seen[0], f.combined, 71, 16, 'adjust');
+  line(!!crossed && crossed.one.join() === '60,60,60' && crossed.two.join() === '71,71,71', `combined adjust: last page 60 under first 71 sets the first page to 60 (${crossed ? crossed.one.join(' ') : 'none'}); first page 71 over last 60 sets the last to 71 (${crossed ? crossed.two.join(' ') : 'none'})`);
+  line(!!adj.x.agreementAtApply && adj.x.agreementAtApply.firstPage === 71 && adj.x.agreementAtApply.lastPage === 86 && adj.x.agreementAtApply.foundFirst === 70 && adj.x.reviewLine.indexOf('Subscription agreement found on pages 70 to 87 of combined.pdf') === 0, `combined adjust: review said pages 70 to 87; applied with ${adj.x.agreementAtApply ? `${adj.x.agreementAtApply.firstPage} to ${adj.x.agreementAtApply.lastPage}` : 'none'}`);
+  line(adj.reader.seen.length === 1 && ac.ok && terms(adj.x) && adj.x.after.saved, `combined adjust: the reading server received a ${ac.pages}-page cut equal to combined pages 71 to 86: ${ac.ok ? 'yes' : 'no'}; terms applied; agreement saved ${adj.x.after ? adj.x.after.saved : false} with ${adj.x.after ? adj.x.after.fields : 0} fields`);
+
+  // untick: no cut, no stored document, no reading, no agreement; the terms applied.
+  const un = await combinedCase(h, page, f.combined, withPart({ document: 'combined.pdf', firstPage: 70, lastPage: 87 }), null, { review: async (pg) => pg.click('#ika-use') });
+  line(!!un.x.agreementAtApply && un.x.agreementAtApply.use === false && nothingMore(un, 1) && terms(un.x), `combined untick: use ${un.x.agreementAtApply ? un.x.agreementAtApply.use : 'none'}; /v1/read requests ${un.x.cap.read.length}; documents stored ${un.x.after ? un.x.after.docs - un.x.docsBefore : 0} (the PPM); agreement ${un.x.after && (un.x.after.saved || un.x.after.drafts) ? 'made' : 'none'}; terms applied ${terms(un.x)}`);
+
+  // none: no subscription agreement in the answer: no panel, nothing extra.
+  const no = await combinedCase(h, page, f.combined, withPart(null), null);
+  line(!no.x.panel && !no.x.agreement && nothingMore(no, 1) && terms(no.x), `combined none: panel ${no.x.panel ? 'shown' : 'absent'}; st.agreement ${no.x.agreement ? 'set' : 'null'}; /v1/read requests ${no.x.cap.read.length}; documents stored ${no.x.after ? no.x.after.docs - no.x.docsBefore : 0}`);
+
+  // bad: a range or a document that fails a test is ignored, never clamped or guessed.
+  const bads = [
+    ['last page 200', [f.combined], { document: 'combined.pdf', firstPage: 70, lastPage: 200 }],
+    ['first page 0', [f.combined], { document: 'combined.pdf', firstPage: 0, lastPage: 18 }],
+    ['first above last', [f.combined], { document: 'combined.pdf', firstPage: 80, lastPage: 75 }],
+    ['unknown document with two PDFs', [f.combined, f.ppm], { document: 'other.pdf', firstPage: 70, lastPage: 87 }]
+  ];
+  for (const [tag, files, part] of bads) {
+    const b = await combinedCase(h, page, files.length === 1 ? files[0] : files, withPart(part), null);
+    line(!b.x.panel && !b.x.agreement && nothingMore(b, files.length) && terms(b.x), `combined bad (${tag}): st.agreement ${b.x.agreement ? 'set' : 'null'}; panel ${b.x.panel ? 'shown' : 'absent'}; /v1/read requests ${b.x.cap.read.length}; documents stored ${b.x.after ? b.x.after.docs - b.x.docsBefore : 0}`);
+  }
+  const unit = await page.evaluate(() => {
+    const P = window.CVPortal.intake.agreementPart;
+    const two = [{ name: 'combined.pdf', file: {}, pages: 87 }, { name: 'b.pdf', file: {}, pages: 10 }];
+    const one = [{ name: 'Pasted terms', text: 'x', pages: null }, { name: 'combined.pdf', file: {}, pages: 87 }];
+    const r = (v) => (v ? `${v.name} ${v.firstPage}-${v.lastPage}` : 'null');
+    return [
+      r(P({ subscriptionAgreement: { document: 'combined.pdf', firstPage: 70.5, lastPage: 87 } }, two)),
+      r(P({ subscriptionAgreement: { document: 'combined.pdf', firstPage: '70', lastPage: '87' } }, two)),
+      r(P({ subscriptionAgreement: [70, 87] }, two)),
+      r(P({ subscriptionAgreement: null }, two)),
+      r(P({ subscriptionAgreement: { document: ' COMBINED .PDF', firstPage: 70, lastPage: 87 } }, two)),
+      r(P({ subscriptionAgreement: { document: 'Exhibit C', firstPage: 70, lastPage: 87 } }, one)),
+      r(P({ subscriptionAgreement: { document: 'combined.pdf', firstPage: 70, lastPage: 87 } }, [{ name: 'combined.pdf', text: 'x', pages: null, file: {} }])),
+      r(P({ subscriptionAgreement: { document: 'b.pdf', firstPage: 1, lastPage: 11 } }, two))
+    ].join(', ');
+  });
+  line(unit === 'null, null, null, null, combined.pdf 70-87, combined.pdf 70-87, null, null', `combined bad agreementPart on made-up answers: ${unit}`);
+
+  // failure: the reading server answering 503 every time: after its 3 attempts, the same agreement as the cut read with
+  // no reading server (a separate upload's fallback); the terms there; why set.
+  const fl = await combinedCase(h, page, f.combined, withPart({ document: 'combined.pdf', firstPage: 70, lastPage: 87 }), { fail: true });
+  const flEntry = fl.x.after ? fl.x.after.entry : null;
+  const base = flEntry && flEntry.docId
+    ? await page.evaluate(async ({ docId, oid }) => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const s = NS.integrations.ensure(ws).server;
+        const was = { url: s.url, token: s.token };
+        s.url = '';
+        s.token = '';
+        try {
+          const env = await NS.esign.agreementDraft(ws, oid, { docId, title: 'Subscription Agreement' });
+          ws.envelopes = ws.envelopes.filter((e) => e !== env);
+          const roleOf = (f) => {
+            const sg = env.signers.find((x) => x.id === f.signerId);
+            return sg ? (sg.role === 'investor' ? 'investor' : sg.role === 'countersigner' ? 'sponsor' : 'other') : 'other';
+          };
+          return env.fields.map((f) => [f.page, f.type, roleOf(f), Math.round(f.x * 1e4), Math.round(f.y * 1e4), Math.round(f.w * 1e4), Math.round(f.h * 1e4)]).sort().map(String);
+        } finally {
+          s.url = was.url;
+          s.token = was.token;
+          NS.app.save(true);
+        }
+      }, { docId: flEntry.docId, oid: fl.x.oid })
+    : null;
+  line(fl.reader.seen.length === 3 && !!base && base.length > 0 && JSON.stringify(base) === JSON.stringify(fl.x.after.fieldShape) && terms(fl.x) && flEntry.state === 'done' && !!flEntry.why, `combined failure: ${fl.reader.seen.length} attempts; ${fl.x.after ? fl.x.after.fields : 0} fields, equal to the same cut read with no reading server (${base ? base.length : 0}): ${base && JSON.stringify(base) === JSON.stringify(fl.x.after.fieldShape) ? 'yes' : 'no'}; terms applied; agreementReading ${flEntry ? flEntry.state : 'none'}, why ${flEntry && flEntry.why ? 'set' : 'empty'}`);
+
+  // hang: a 3 s browser limit and a reader that waits 6 s: the done step and the terms come at once while the request is
+  // open, the done screen says the agreement is being read and offers no upload; then the in-page agreement is there.
+  let open = null;
+  const hg = await combinedCase(h, page, f.combined, withPart({ document: 'combined.pdf', firstPage: 70, lastPage: 87 }), { wait: 6000 }, {
+    before: async (pg) => pg.evaluate(() => (window.CVPortal.esign.SERVER_LIMIT_MS = 3000)),
+    atDone: async (pg, out, rd) => {
+      for (let i = 0; i < 120 && !rd.seen.length; i++) await pause(250);
+      open = await pg.evaluate((oid) => {
+        const e = window.CVPortal.intake.agreementReading(oid);
+        return { state: e ? e.state : null, text: document.getElementById('view').innerText, add: !!document.querySelector(`[data-action="es-agreement-new"][data-offering="${oid}"]`), buttons: document.querySelectorAll('#agreement button, #agreement a.cs-btn').length };
+      }, out.oid);
+      open.requests = rd.seen.length;
+    }
+  });
+  await page.evaluate(() => (window.CVPortal.esign.SERVER_LIMIT_MS = 330000));
+  const sentence = 'Reading the subscription agreement found on pages 70 to 87 of combined.pdf.';
+  line(hg.x.doneMs < 2000 && !!hg.x.atDone && hg.x.atDone.state === 'reading' && hg.x.atDone.name === FUND.offering.name && hg.x.atDone.mgmtFee === FUND.fees.mgmtFee, `combined hang: done step ${hg.x.doneMs} ms after apply with the terms saved; reading ${hg.x.atDone ? hg.x.atDone.state : 'none'}`);
+  line(!!open && open.requests >= 1 && open.state === 'reading' && open.text.indexOf(sentence) >= 0 && !open.add && open.buttons === 0 && hg.x.atDone.text.indexOf(sentence) >= 0 && !hg.x.atDone.addButton, `combined hang: while the request is open (${open ? open.requests : 0} received, reading ${open ? open.state : 'none'}) the done screen says "${sentence.slice(0, 40)}…": ${open && open.text.indexOf(sentence) >= 0 ? 'yes' : 'no'}; add button ${open && open.add ? 'shown' : 'absent'}, ${open ? open.buttons : 0} buttons in the panel`);
+  const hgE = hg.x.after ? hg.x.after.entry : null;
+  line(!!hgE && hgE.state === 'done' && !!hgE.why && hg.x.after.fields > 0 && (hg.x.after.saved || hg.x.after.drafts === 1), `combined hang: afterwards the in-page agreement is there: ${hg.x.after ? hg.x.after.fields : 0} fields, ${hg.x.after && hg.x.after.saved ? 'saved' : 'a draft'}; why ${hgE && hgE.why ? hgE.why : 'empty'}`);
+
+  // existing: an offering that already has a subscription agreement keeps it; nothing is read; review says so.
+  const tplBefore = await page.evaluate((oid) => {
+    const t = window.CVPortal.esign.subscriptionTemplate(window.CVPortal.state.ws, oid);
+    return t ? t.id : null;
+  }, adj.x.oid);
+  const ex = await combinedCase(h, page, f.combined, withPart({ document: 'combined.pdf', firstPage: 70, lastPage: 87 }), null, { target: adj.x.oid });
+  line(!!tplBefore && ex.x.oid === adj.x.oid && !!ex.x.after && ex.x.after.tplId === tplBefore && ex.x.after.templates === 1 && ex.reader.seen.length === 0 && ex.x.cap.read.length === 0 && ex.x.reviewHint === 'This offering already has a subscription agreement; it is kept.', `combined existing: template ${ex.x.after && ex.x.after.tplId === tplBefore ? 'unchanged' : 'changed'} (${ex.x.after ? ex.x.after.templates : 0} for the offering); /v1/read requests ${ex.x.cap.read.length}; review says "${ex.x.reviewHint}"`);
+
+  // ranges: read whole in page ranges on the PDF path; pages reported from the start of a range become the file's own.
+  const rgAns = (i) => (i === 0 ? Object.assign({}, FUND, { subscriptionAgreement: null }) : i === 1 ? { subscriptionAgreement: { document: 'combined-broken.pdf', firstPage: 3, lastPage: 10 } } : { subscriptionAgreement: { document: 'combined-broken.pdf', firstPage: 21, lastPage: 30 } });
+  const rg = await combinedCase(h, page, f.broken, rgAns, null, { before: async (pg) => pg.evaluate(() => (window.CVPortal.intake.RANGE_PAGES = 10)) });
+  await page.evaluate(() => (window.CVPortal.intake.RANGE_PAGES = 600));
+  const rgSent = rg.intake.seen.map((s) => (s.pdfs || []).map((p) => p.pages).join('+')).join(', ');
+  const rc = cutIs(rg.reader.seen[0], f.broken, 13, 18, 'ranges');
+  line(rg.intake.seen.length === 3 && rgSent === '10, 10, 10' && !!rg.x.agreement && rg.x.agreement.foundFirst === 13 && rg.x.agreement.foundLast === 30, `combined ranges: ${rg.intake.seen.length} PDF requests of ${rgSent} pages; st.agreement ${rg.x.agreement ? `${rg.x.agreement.foundFirst} to ${rg.x.agreement.foundLast}` : 'none'}`);
+  line(rc.ok && rg.reader.seen.length === 1 && terms(rg.x), `combined ranges: the cut has ${rc.pages} pages equal to pages 13 to 30 of the 30-page file: ${rc.ok ? 'yes' : 'no'}; terms applied`);
+
+  // separate: the agreement uploaded as its own file, the answer giving its pages 1 to 18: that file itself, no extra
+  // document, exactly one agreement, read in the background.
+  const sp = await combinedCase(h, page, [f.ppm, f.agreement], withPart({ document: 'hedge-subscription-agreement.pdf', firstPage: 1, lastPage: 18 }), { wait: 1500 });
+  const spReq = sp.reader.seen[0];
+  const spSame = !!spReq && sha(Buffer.from(spReq.pdf, 'base64')) === sha(fs.readFileSync(f.agreement));
+  line(!!sp.x.atDone && sp.x.atDone.state === 'reading' && sp.reader.seen.length === 1 && spSame && !!sp.x.after && sp.x.after.docs === sp.x.docsBefore + 2 && sp.x.after.templates + sp.x.after.drafts === 1 && !!sp.x.after.doc && sp.x.after.doc.fileName === 'hedge-subscription-agreement.pdf' && terms(sp.x), `combined separate: at the done step the reading was ${sp.x.atDone ? sp.x.atDone.state : 'none'}; the reading server received the uploaded file itself: ${spSame ? 'yes' : 'no'}; documents stored ${sp.x.after ? sp.x.after.docs - sp.x.docsBefore : 0}; agreements ${sp.x.after ? sp.x.after.templates + sp.x.after.drafts : 0}`);
+}
+
 (async () => {
   if (PARTS.includes('unchanged')) partUnchanged();
-  const browserParts = PARTS.filter((p) => ['api', 'fallback', 'failures', 'unreadable', 'retry', 'wholetext', 'mixedpages', 'measure'].includes(p));
+  const browserParts = PARTS.filter((p) => ['api', 'fallback', 'failures', 'unreadable', 'retry', 'wholetext', 'mixedpages', 'combined', 'measure'].includes(p));
   if (browserParts.length) {
     const h = await browser();
     try {
@@ -1773,6 +1978,7 @@ async function combinedMeasure(h, page) {
       if (PARTS.includes('retry')) await partRetry(h, page);
       if (PARTS.includes('wholetext')) await partWholeText(h, page);
       if (PARTS.includes('mixedpages')) await partMixedPages(h, page);
+      if (PARTS.includes('combined')) await partCombined(h, page);
       if (PARTS.includes('measure')) await partMeasure(h, page);
       line(!h.errors.length, `page errors ${h.errors.length}`);
     } finally {

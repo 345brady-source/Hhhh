@@ -3547,6 +3547,9 @@
     const tpl = subscriptionTemplate(ws, o.id);
     const ready = !!tpl && templateReady(ws, o.id);
     const draft = envs(ws).find((e) => e.agreementFor === o.id && e.status === 'draft');
+    // D-44: the agreement found inside the offering's documents is being read in the background: said so, and no second upload.
+    const bg = !tpl && !draft && NS.intake && NS.intake.agreementReading ? NS.intake.agreementReading(o.id) : null;
+    if (bg && bg.state === 'reading') return CK().panel('Subscription agreement', `<div class="es-agr-panel" id="agreement"><p>Reading the subscription agreement found on pages ${bg.firstPage} to ${bg.lastPage} of ${h(bg.name)}. Its fields are placed automatically, as for an agreement uploaded on its own; this takes a few minutes and you can keep working.</p></div>`);
     // What the investor completes, and what is filled in for them from the invitation (prefill labels; the investor can still change them, D-30).
     const PRE = /^(commitment( amount)?|subscription amount|amount|capital commitment|investor( name)?|subscriber name|account name|offering|fund|share class|class)$/i;
     const inv = tpl ? (tpl.fields || []).filter((f) => f.signerRole === 'Investor') : [];

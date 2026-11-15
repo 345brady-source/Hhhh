@@ -440,13 +440,52 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
           throw e;
         }
         answers.push(got.json);
+        asked.push(null);
         before += got.text;
       }
+    };
+    // D-44 and D-38: the request each answer came from (null for a text request), to read its agreement pages whole.
+    const asked = [];
+    const flat = (t) => String(t == null ? '' : t).replace(/\s+/g, '').toLowerCase();
+    /**
+     * The subscription agreement's pages reported by several answers, as one report in the uploaded file's own pages, or
+     * undefined when no answer reports one. An answer from a PDF request of pages a to b (a above 1) of one PDF, naming that
+     * PDF (or naming nothing when the request carried only that PDF and no text), counted from the start of its range when
+     * its whole report fits inside 1 to (b - a + 1) and starts below a; otherwise, and for text requests ([p. N] markers),
+     * its pages are the file's own. The first document reported wins; its reports are joined (lowest first page, highest
+     * last page).
+     */
+    const joinedPart = () => {
+      const whole = (n) => typeof n === 'number' && Number.isInteger(n);
+      const reports = [];
+      answers.forEach((ans, i) => {
+        const s = ans && typeof ans === 'object' ? ans.subscriptionAgreement : null;
+        if (!s || typeof s !== 'object' || Array.isArray(s) || !whole(s.firstPage) || !whole(s.lastPage)) return;
+        const req = asked[i];
+        const one = req && req.parts.length === 1 ? req.parts[0] : null;
+        const named = typeof s.document === 'string' && s.document.trim() ? s.document : '';
+        const ours = !!one && (named ? named === one.d.name || flat(named) === flat(one.d.name) : !req.withText);
+        let first = s.firstPage;
+        let last = s.lastPage;
+        if (ours && one.a > 1 && first >= 1 && last <= one.b - one.a + 1 && first < one.a) {
+          first += one.a - 1;
+          last += one.a - 1;
+        }
+        reports.push({ document: named || (ours ? one.d.name : ''), firstPage: first, lastPage: last });
+      });
+      if (!reports.length) return answers.some((a) => a && typeof a === 'object' && a.subscriptionAgreement && typeof a.subscriptionAgreement === 'object') ? null : undefined;
+      const key = flat(reports[0].document);
+      const same = reports.filter((r) => flat(r.document) === key);
+      return { document: reports[0].document, firstPage: Math.min.apply(null, same.map((r) => r.firstPage)), lastPage: Math.max.apply(null, same.map((r) => r.lastPage)) };
     };
     const finish = () => {
       const st = NS.state && NS.state.ui && NS.state.ui.intake;
       if (st) st.trimmed = false;
-      return answers.length === 1 ? answers[0] : mergeAnswers(answers);
+      if (answers.length === 1) return answers[0];
+      const merged = mergeAnswers(answers);
+      const part = joinedPart();
+      if (part !== undefined) merged.subscriptionAgreement = part;
+      return merged;
     };
     if (!unread.length) {
       await readText(good);
@@ -539,6 +578,7 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
       }
       if (withText) textDone = true;
       answers.push(got.json);
+      asked.push({ parts: req, withText });
       before += got.text;
     }
     return finish();

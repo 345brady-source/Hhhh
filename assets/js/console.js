@@ -2314,7 +2314,8 @@
    */
   function ikAgreement(st, target) {
     const a = st.agreement;
-    const kept = !!(target && NS.esign && NS.esign.subscriptionTemplate && NS.esign.subscriptionTemplate(W(), target.id));
+    // An offering with an agreement (or one being prepared) keeps it: apply prepares nothing then.
+    const kept = !!target && ((NS.esign && NS.esign.subscriptionTemplate && !!NS.esign.subscriptionTemplate(W(), target.id)) || (W().envelopes || []).some((e) => e.agreementFor === target.id && e.status === 'draft'));
     const off = a.use === false ? ' disabled' : '';
     return panel(
       'Subscription agreement',
@@ -2411,6 +2412,11 @@
       'console-intake'
     );
   }
+  /** D-44: true while the agreement found inside the offering's documents is read in the background. */
+  const ikReadingAgreement = (id) => {
+    const e = IK().agreementReading ? IK().agreementReading(id) : null;
+    return !!e && e.state === 'reading';
+  };
   function ikDone() {
     const st = ikState();
     const o = W().offerings.find((x) => x.id === st.done);
@@ -2431,7 +2437,7 @@
     ].filter(Boolean);
     return shell(
       `${head(`${h(o.name)} is set up`, o.status === 'Raising' ? 'Investors can now review the terms and subscribe online; capital calls, statements and audit schedules use these terms.' : 'Capital accounts, statements and audit schedules now use these terms.', `<a class="cs-btn" href="#console-intake" data-action="ik-restart">Set up another</a><a class="cs-btn cs-btn-primary" href="#console-offering-${h(o.id)}">Open the offering</a>`)}
-      ${NS.esign && NS.esign.agreementPanel && !NS.esign.templateReady(W(), o.id) ? `<p class="cs-hint ik-next">Next: add the subscription agreement, so every investor you invite signs it during onboarding.</p>${NS.esign.agreementPanel(W(), o, true)}` : ''}
+      ${NS.esign && NS.esign.agreementPanel && !NS.esign.templateReady(W(), o.id) ? `${ikReadingAgreement(o.id) ? '' : '<p class="cs-hint ik-next">Next: add the subscription agreement, so every investor you invite signs it during onboarding.</p>'}${NS.esign.agreementPanel(W(), o, true)}` : ''}
       ${panel('What was applied', `<ul class="cs-list">${items.map((x) => `<li>${x}</li>`).join('')}</ul><p class="cs-hint">Valuations and holdings come from the fund’s books once investors are in; until then the offering carries a placeholder portfolio line.</p>`)}`,
       'console-intake'
     );
