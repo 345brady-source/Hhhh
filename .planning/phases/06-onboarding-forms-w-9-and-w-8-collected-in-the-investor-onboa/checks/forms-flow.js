@@ -4,7 +4,7 @@
 // one investor with the signature and date at the form's own places, the investor signs it in the portal, and the stored
 // signed PDF is read back: Documents category Tax for that investor alone, zero form fields, each value inside its own
 // field, the signature ink inside the sign place, the "Signed electronically" caption, the date, the certificate page.
-//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned,us-llc,us-ccorp,us-trust,us-disregarded,us-ira,us-joint]
+//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned,us-llc,us-ccorp,us-trust,us-disregarded,us-ira,us-joint,foreign-entity]
 // The last line is "FORMS FLOW: PASS (cases run: N)" or "FORMS FLOW: FAIL (cases run: N) - <failed cases>". Exits 2
 // (NOT RUN) when the bundled forms do not match assets/forms/SHA256SUMS.
 const path = require('path');
@@ -1801,6 +1801,300 @@ const usJoint = w9AccountCase({
   want: { name: 'Joaquín Ferreira-Lund', ssn: '123456789', boxes: ['individual'] }
 });
 
+/* ---------- Plan 06-20: the W-8BEN-E for a foreign entity or trust ---------- */
+
+const E8KEY = 'W-8BEN-E 2021-10';
+
+/** Every widget of a bundled form: { of: name -> { page (1 = first), x, top, w, h } (points, y from the top), pw, ph }. */
+async function pagedRects(file) {
+  const pdf = await PL.PDFDocument.load(fs.readFileSync(path.join(ROOT, file)), { updateMetadata: false });
+  const pages = pdf.getPages();
+  const onPage = new Map();
+  pages.forEach((pg, n) => {
+    const an = pg.node.Annots();
+    if (an) for (let k = 0; k < an.size(); k++) onPage.set(String(an.get(k)), n + 1);
+  });
+  const ph = pages[0].getHeight();
+  const out = { pw: pages[0].getWidth(), ph, of: {} };
+  pdf
+    .getForm()
+    .getFields()
+    .forEach((f) => {
+      const wd = f.acroField.getWidgets()[0];
+      const r = wd.getRectangle();
+      out.of[f.getName()] = { page: onPage.get(String(pdf.context.getObjectRef(wd.dict))) || 0, x: r.x, top: ph - r.y - r.height, w: r.width, h: r.height };
+    });
+  return out;
+}
+
+/**
+ * What a filled or signed W-8BEN-E prints, field by field over all 8 pages: { R, text: { key: the words inside that field
+ * with the blank form's own printed words taken out }, ticks: { key: new ink px against the blank form, 2 pt inside the
+ * box } } for every key of the map. fields: the map's fields ({ key: { name, kind } }).
+ */
+async function e8Read(pdfFile, dir, blank, fields) {
+  const R = await pagedRects(blank);
+  const blankFile = path.join(dir, 'blank-e.pdf');
+  if (!fs.existsSync(blankFile)) fs.copyFileSync(path.join(ROOT, blank), blankFile);
+  const fresh = {};
+  const freshOn = (p) => {
+    if (!fresh[p]) {
+      const WB = words(blankFile, p);
+      fresh[p] = words(pdfFile, p).filter((w) => !WB.some((b) => b.t === w.t && Math.abs(b.x0 - w.x0) < 0.5 && Math.abs(b.y0 - w.y0) < 0.5));
+    }
+    return fresh[p];
+  };
+  const g = {};
+  const G = (f, p) => g[f + p] || (g[f + p] = gray(f, p, 100));
+  const ink = (p, r) => {
+    const k = 100 / 72;
+    const a = G(blankFile, p);
+    const b = G(pdfFile, p);
+    let n = 0;
+    for (let y = Math.floor(r.top * k); y < Math.ceil((r.top + r.h) * k); y++) for (let x = Math.floor(r.x * k); x < Math.ceil((r.x + r.w) * k); x++) if (a.px[y * a.w + x] - b.px[y * b.w + x] > 80) n++;
+    return n;
+  };
+  const text = {};
+  const ticks = {};
+  Object.keys(fields).forEach((key) => {
+    const r = R.of[fields[key].name];
+    if (fields[key].kind === 'check') ticks[key] = ink(r.page, { x: r.x + 2, top: r.top + 2, w: r.w - 4, h: r.h - 4 });
+    else text[key] = wordsIn(freshOn(r.page), r, 1);
+  });
+  return { R, text, ticks, ink, freshOn };
+}
+
+/**
+ * Checks one read W-8BEN-E against what it must print: every expected value inside its own field, every other mapped text
+ * field empty, exactly the expected boxes ticked (and no stray ink in any other box).
+ */
+function e8Expect(check, label, got, want) {
+  Object.keys(want.text).forEach((k) => check(`${label}: "${want.text[k]}" prints inside its own field (${k})`, got.text[k] === want.text[k], { key: k, inside: got.text[k] }));
+  const extra = Object.keys(got.text).filter((k) => !(k in want.text) && got.text[k] !== '').map((k) => [k, got.text[k]]);
+  check(`${label}: no other field prints anything`, extra.length === 0, extra);
+  const on = Object.keys(got.ticks).filter((k) => got.ticks[k] > 10);
+  const stray = Object.keys(got.ticks).filter((k) => got.ticks[k] > 0 && got.ticks[k] <= 10);
+  check(`${label}: ticked boxes are exactly ${JSON.stringify(want.boxes)}`, JSON.stringify(on.slice().sort()) === JSON.stringify(want.boxes.slice().sort()) && stray.length === 0, { on, stray });
+}
+
+/** A fresh portal with a foreign entity invited by the sponsor (D-09), walked to the tax step; spec.profile fills Investor information. */
+async function toE8Step(S, A, spec) {
+  const page = A.page;
+  const portal = await Lib.setupPortal(S, A);
+  const inv = await Lib.createInvitation(page, { name: spec.name, email: spec.email, type: 'foreign-entity', account: spec.account, offeringId: portal.offeringId });
+  await page.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
+  const p = Object.assign({ country: 'Cayman Islands', street: '94 Solaris Avenue', city: 'Camana Bay', st: 'Grand Cayman', zip: 'KY1-1108', formation: 'Cayman Islands' }, spec.profile || {});
+  const w = await Lib.walk(page, {
+    name: spec.name,
+    acc: 'yes',
+    basis: 0,
+    until: /Tax certification/,
+    onFilled: async (hd) => {
+      if (!/Investor information/.test(hd)) return;
+      await page.selectOption('#ob-country', p.country);
+      await page.waitForTimeout(200);
+      await page.fill('#ob-street', p.street);
+      await page.fill('#ob-city', p.city);
+      await page.fill('#ob-st', p.st);
+      await page.fill('#ob-zip', p.zip);
+      await page.fill('#ob-formation', p.formation);
+      // a foreign entity gives a U.S. taxpayer ID only when it has one
+      await page.fill('#ob-tin', p.tin || '');
+      if (p.owner2) {
+        await page.fill('#ob-owner1pct', String(p.owner1pct || 50));
+        await page.fill('#ob-owner2', p.owner2[0]);
+        await page.fill('#ob-owner2Last', p.owner2[1]);
+        await page.fill('#ob-owner2pct', String(p.owner2pct || 50));
+      }
+    }
+  });
+  return { inv, w, portal, p };
+}
+
+/**
+ * One foreign entity end to end on the official W-8BEN-E (D-01, D-04, D-06, D-09): the sponsor invites it as a foreign
+ * entity, the walk reaches the tax step, spec.atTax answers what the step asks (and checks what it shows), Continue builds
+ * the form, the controlling person signs it on page 8 and finishes, and the stored signed copy is read back over all 8
+ * pages: zero fields, every value inside its own field, nothing else printed, exactly the expected boxes, signature ink,
+ * the date (MM-DD-YYYY) and the caption on page 8; the record and the console row.
+ * spec: { id, name, email, account, profile, atTax({ page, check, shown, lede, radios }), want: { text, boxes }, cert,
+ * secrets: [full numbers that must be saved nowhere], console: true to check the sponsor's row, after({ page, check }) }.
+ */
+function w8eCase(spec) {
+  return async ({ check, S }) => {
+    const A = await Lib.open(S, { context: { acceptDownloads: true } });
+    const page = A.page;
+    const dir = path.join(OUT, spec.id);
+    fs.mkdirSync(dir, { recursive: true });
+    const { inv, w } = await toE8Step(S, A, spec);
+    check(`the invited foreign entity (${spec.id}) reaches the tax step`, w.reached && w.at === 'Tax certification' && w.errors.length === 0, { seen: w.seen, errors: w.errors });
+    if (!w.reached) return A.context.close();
+    const screens = [await Lib.screenText(page)];
+    const shown = await visibleInputs(page);
+    const lede = await page.evaluate(() => Array.from(document.querySelectorAll('.ivf-form p.lede, .ivf-form p.meta')).map((x) => x.innerText).join(' '));
+    await page.screenshot({ path: path.join(dir, `${spec.id}-answers.png`), fullPage: true });
+    check('the step says the form is the W-8BEN-E, filled in from the answers', /Form W-8BEN-E is filled in from your answers/.test(lede), lede.slice(0, 200));
+    await spec.atTax({ page, check, shown, lede, radios: { ch3: await radioState(page, 'ob-e8Ch3'), ch4: await radioState(page, 'ob-e8Ch4') } });
+    await page.screenshot({ path: path.join(dir, `${spec.id}-answered.png`), fullPage: true });
+    screens.push(await Lib.screenText(page));
+    check('the button goes to the form', /Continue to the form/.test(await page.locator('.ivf-form button[type=submit]').innerText()), await page.locator('.ivf-form button[type=submit]').innerText());
+    await Lib.submit(page);
+    const errs = await Lib.fieldErrors(page);
+    check('Continue shows no error', errs.length === 0, errs);
+    await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 }).catch(() => {});
+    await page.waitForTimeout(400);
+    check('the signing view keeps the step heading', (await Lib.heading(page)) === 'Tax certification', await Lib.heading(page));
+    const made = await page.evaluate((invId) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const i = ws.investors.find((x) => x.id === invId);
+      const env = (ws.envelopes || []).find((e) => e.id === (i.onboarding.flow || {}).taxEnvelopeId);
+      const map = NS.taxmaps['W-8BEN-E 2021-10'];
+      return { env: env ? JSON.parse(JSON.stringify(env)) : null, fields: map.fields, overlays: map.overlays, blank: map.file, all: JSON.stringify(ws) + JSON.stringify(Object.keys(localStorage).map((k) => localStorage.getItem(k))) + JSON.stringify(Object.keys(sessionStorage).map((k) => sessionStorage.getItem(k))) };
+    }, inv.investorId);
+    check('Continue made a tax envelope for the W-8BEN-E (Rev. October 2021) with this investor as its one signer', !!made.env && made.env.kind === 'tax' && made.env.taxForm.form === 'W-8BEN-E' && made.env.taxForm.revision === 'Rev. October 2021' && made.env.signers.length === 1 && made.env.signers[0].investorId === inv.investorId, made.env && { kind: made.env.kind, taxForm: made.env.taxForm });
+    if (!made.env) return A.context.close();
+    check(`the envelope title is "Form W-8BEN-E - ${spec.account}"`, made.env.title === `Form W-8BEN-E - ${spec.account}`, made.env.title);
+    const sigField = made.env.fields.find((f) => f.type === 'signature');
+    const dateField = made.env.fields.find((f) => f.type === 'date');
+    check('the signature and the date are placed on page 8', !!sigField && sigField.page === 8 && !!dateField && dateField.page === 8, made.env.fields.map((f) => [f.type, f.page]));
+    check('no typed tax number is saved anywhere once the form is built', (spec.secrets || []).every((n) => made.all.indexOf(n) < 0), spec.secrets);
+    await page.screenshot({ path: path.join(dir, `${spec.id}-signing.png`), fullPage: false });
+    screens.push(await Lib.screenText(page));
+    await Lib.finishTaxForm(page, signTaxForm(sigField.id));
+    const next = await Lib.heading(page);
+    check('signing and Finish move on to the next step', next === 'Distribution payments', next);
+    screens.push(await Lib.screenText(page));
+    const got = await page.evaluate(
+      async ({ id, invId, b64src }) => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const b64 = eval(b64src);
+        const env = ws.envelopes.find((x) => x.id === id);
+        const i = ws.investors.find((x) => x.id === invId);
+        const docs = (ws.docs || []).filter((d) => d.envelopeId === id);
+        return {
+          docs: JSON.parse(JSON.stringify(docs)),
+          pdf: await b64(docs[0] ? await NS.ops.files.get(docs[0].id) : null),
+          filled: await b64(await NS.ops.files.get(env.docId)),
+          env: JSON.parse(JSON.stringify(env)),
+          taxForm: i.taxForm,
+          taxType: i.taxType,
+          taxCert: JSON.parse(JSON.stringify(i.taxCert || null)),
+          today: NS.dates.today(),
+          log: (ws.audit || []).filter((e) => e.record === invId).map((e) => `${e.action} :: ${e.detail}`),
+          all: JSON.stringify(ws) + JSON.stringify(Object.keys(localStorage).map((k) => localStorage.getItem(k))) + JSON.stringify(Object.keys(sessionStorage).map((k) => sessionStorage.getItem(k)))
+        };
+      },
+      { id: made.env.id, invId: inv.investorId, b64src: B64_IN_PAGE }
+    );
+    const tc = got.taxCert || {};
+    const year = Number(got.today.slice(0, 4));
+    check('investor.taxForm is W-8BEN-E and the investor type stays foreign entity', got.taxForm === 'W-8BEN-E' && got.taxType === 'foreign-entity', { taxForm: got.taxForm, taxType: got.taxType });
+    const c = spec.cert;
+    check(
+      `investor.taxCert keeps form, revision, envelope, time, signed, signer, chapter 3 "${c.chapter3}", chapter 4 "${c.chapter4}", country "${c.country}", ${c.noFtin ? 'noFtin' : `FTIN last four ${c.ftinLast4}`}`,
+      tc.form === 'W-8BEN-E' && tc.revision === 'Rev. October 2021' && tc.envelopeId === made.env.id && /^\d{4}-\d{2}-\d{2}T/.test(tc.at || '') && tc.signed === true && tc.signedBy === spec.name && tc.chapter3 === c.chapter3 && tc.chapter4 === c.chapter4 && tc.country === c.country && tc.ftinLast4 === (c.ftinLast4 || '') && tc.noFtin === !!c.noFtin,
+      tc
+    );
+    check(`validUntil is 31 December of the third calendar year after signing (${year + 3}-12-31)`, tc.validUntil === `${year + 3}-12-31`, tc.validUntil);
+    check('the change log says the W-8BEN-E was signed', got.log.some((l) => /^Tax form signed :: .*W-8BEN-E/.test(l)), got.log.slice(-4));
+    check('no saved workspace, storage or change-log entry holds a full typed tax number', (spec.secrets || []).every((n) => got.all.indexOf(n) < 0 && !got.log.some((l) => l.indexOf(n) >= 0)), spec.secrets);
+    const doc = got.docs[0] || {};
+    check('one Documents entry for the signed W-8BEN-E, category Tax, for this investor alone', got.docs.length === 1 && doc.cat === 'Tax' && JSON.stringify(doc.investors) === JSON.stringify([inv.investorId]), got.docs);
+    const signedFile = path.join(dir, 'signed.pdf');
+    const filledFile = path.join(dir, 'filled.pdf');
+    const signed = Buffer.from(got.pdf || '', 'base64');
+    fs.writeFileSync(signedFile, signed);
+    fs.writeFileSync(filledFile, Buffer.from(got.filled || '', 'base64'));
+    check('the stored file is the sealed signed copy', got.env.sha256Signed === sha(signed), { env: got.env.sha256Signed, file: sha(signed) });
+    if (!signed.length) {
+      check('the signed copy could be read', false, 'no stored file');
+      return A.context.close();
+    }
+    const sPdf = await PL.PDFDocument.load(signed, { updateMetadata: false });
+    check('zero form fields in the signed copy', sPdf.getForm().getFields().length === 0, sPdf.getForm().getFields().length);
+    check('the certificate page follows the 8 form pages', sPdf.getPageCount() === 9 && /Certificate of completion/.test(text(signedFile, 9, 9)), sPdf.getPageCount());
+    const read = await e8Read(signedFile, dir, made.blank, made.fields);
+    e8Expect(check, 'signed W-8BEN-E', read, spec.want);
+    if (spec.exact) spec.exact.forEach((s) => check(`"${s}" prints exactly`, text(signedFile, 1, 8).indexOf(s) >= 0));
+    const wantDate = mmddyyyy(got.today);
+    const at8 = (o, tol) => wordsIn(read.freshOn(8), pts(o, read.R.pw, read.R.ph), tol);
+    check(`the date at page 8's date place reads today as MM-DD-YYYY (${wantDate})`, at8(made.overlays.date, 1) === wantDate, at8(made.overlays.date, 1));
+    const signedAt = got.env.signers[0].signedAt || '';
+    const cap = `Signed electronically ${signedAt.slice(0, 10)} ${signedAt.slice(11, 16)} UTC`;
+    check('"Signed electronically <date time> UTC" in the caption place on page 8', at8(made.overlays.caption, 1.5) === cap, { want: cap, got: at8(made.overlays.caption, 1.5) });
+    const k = 100 / 72;
+    const sp = pts(made.overlays.sign, read.R.pw, read.R.ph);
+    const fA = gray(filledFile, 8, 100);
+    const fB = gray(signedFile, 8, 100);
+    let ink = 0;
+    for (let y = Math.floor(sp.top * k); y < Math.ceil((sp.top + sp.h) * k); y++) for (let x = Math.floor(sp.x * k); x < Math.ceil((sp.x + sp.w) * k); x++) if (fA.px[y * fA.w + x] - fB.px[y * fB.w + x] > 80) ink++;
+    check('the signature ink lies inside the sign place on page 8', ink > 60, ink);
+    if (spec.console) {
+      await page.evaluate(() => {
+        window.CVPortal.state.role = 'sponsor';
+      });
+      await Lib.consoleRoute(page, 'console-investors', '.cs-tbl');
+      const row = page.locator('table.cs-tbl:has(th:text-is("Paid by")) tbody tr', { hasText: spec.email }).first();
+      const rowText = (await row.innerText().catch(() => '')).replace(/\s+/g, ' ');
+      await page.screenshot({ path: path.join(dir, `${spec.id}-console.png`), fullPage: false });
+      check(`the console row reads "W-8BEN-E signed <date>, valid until Dec 31, ${year + 3}"`, new RegExp(`W-8BEN-E signed [A-Z][a-z]+ \\d{1,2}, ${year}, valid until Dec 31, ${year + 3}`).test(rowText), rowText.slice(0, 300));
+      let dlSha = '';
+      try {
+        const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), row.locator('[data-action="kyc-iv-file"]').first().click()]);
+        dlSha = sha(fs.readFileSync(await dl.path()));
+      } catch (e) {
+        dlSha = String(e.message || e).slice(0, 200);
+      }
+      check('the console download is the stored signed copy (same SHA-256)', dlSha === sha(signed), { download: dlSha, stored: sha(signed) });
+    }
+    if (spec.after) await spec.after({ page, check, dir, inv, got, read });
+    const scr = Lib.leakCheck(screens.join('\n'));
+    check('white label: no vendor name or forbidden word on the tax screens', scr.ok, scr.hits);
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  };
+}
+
+/** The radios on the step answered by value, and the visible inputs after (each change redraws the step). */
+async function pickRadio(page, name, value) {
+  await page.check(`input[name="${name}"][value="${value}"]`);
+  await page.waitForTimeout(200);
+}
+
+/**
+ * foreign-entity (the tracer): Coral Reef Capital Ltd., a Cayman Islands corporation that is an Active NFFE. The step asks
+ * only the two statuses (one answer each) and the foreign tax ID; everything else comes from onboarding: line 1 the account,
+ * line 2 the country named by the formation answer, line 6 the address, and the controlling person as print name with the
+ * capacity box ticked. Part XXV is ticked for the Active NFFE.
+ */
+const foreignEntity = w8eCase({
+  id: 'foreign-entity',
+  name: 'Annika Lindqvist-Barros',
+  email: 'annika.lindqvist@example.com',
+  account: 'Coral Reef Capital Ltd.',
+  console: true,
+  secrets: ['KY48213907'],
+  async atTax({ page, check, shown, radios }) {
+    check('the step asks only the two statuses (as one group of radios each) and the foreign tax ID or its tick', JSON.stringify(shown.filter((x) => x !== 'ob-e8Ch3' && x !== 'ob-e8Ch4')) === JSON.stringify(['ob-ftin', 'ob-noFtin']) && radios.ch3.values.length >= 4 && radios.ch4.values.length >= 5, shown);
+    check('the chapter 3 radios offer corporation, simple trust, complex trust and estate, in the form’s order, nothing chosen', JSON.stringify(radios.ch3.values.slice(0, 4)) === JSON.stringify(['corporation', 'simpleTrust', 'complexTrust', 'estate']) && radios.ch3.chosen === '', radios.ch3);
+    check('the chapter 4 radios offer Active NFFE, Passive NFFE, Participating FFI, Reporting Model 1 FFI and Reporting Model 2 FFI, nothing chosen', JSON.stringify(radios.ch4.values.slice(0, 5)) === JSON.stringify(['activeNffe', 'passiveNffe', 'participatingFfi', 'model1Ffi', 'model2Ffi']) && radios.ch4.chosen === '', radios.ch4);
+    await pickRadio(page, 'ob-e8Ch3', 'corporation');
+    await pickRadio(page, 'ob-e8Ch4', 'activeNffe');
+    const after = await visibleInputs(page);
+    check('an Active NFFE is asked nothing more', JSON.stringify(after.filter((x) => x !== 'ob-e8Ch3' && x !== 'ob-e8Ch4')) === JSON.stringify(['ob-ftin', 'ob-noFtin']), after);
+    await page.fill('#ob-ftin', 'KY48213907');
+  },
+  want: {
+    text: { name: 'Coral Reef Capital Ltd.', country: 'Cayman Islands', street: '94 Solaris Avenue', cityLine: 'Camana Bay, Grand Cayman KY1-1108', residenceCountry: 'Cayman Islands', ftin: 'KY48213907', printName: 'Annika Lindqvist-Barros' },
+    boxes: ['ch3Corporation', 'ch4ActiveNffe', 'activeNffe', 'capacity']
+  },
+  exact: ['Annika Lindqvist-Barros'],
+  cert: { chapter3: 'Corporation', chapter4: 'Active NFFE', country: 'Cayman Islands', ftinLast4: '3907' }
+});
+
 const mmddyyyy = (iso) => {
   const [y, m, d] = String(iso).split('-');
   return `${m}-${d}-${y}`;
@@ -1874,7 +2168,8 @@ const cases = {
   'us-trust': usTrust,
   'us-disregarded': usDisregarded,
   'us-ira': usIra,
-  'us-joint': usJoint
+  'us-joint': usJoint,
+  'foreign-entity': foreignEntity
 };
 
 // The bundled forms must match their pins before anything runs.

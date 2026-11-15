@@ -134,7 +134,7 @@
     if (!tc || !tc.envelopeId || !tc.form) return '';
     if (!NS.inviteFlow.taxOnFile(inv)) return `<span class="sub">${h(tc.form)} not signed</span>`;
     const doc = (w.docs || []).find((d) => d.envelopeId === tc.envelopeId && (d.investors || []).indexOf(inv.id) >= 0);
-    // plan 06-18: a W-8BEN also says until when it is valid (31 December of the third year after signing)
+    // plans 06-18 and 06-20: a W-8BEN or W-8BEN-E also says until when it is valid (31 December of the third year after signing)
     return `<span class="sub">${h(tc.form)} signed ${date(String(tc.at || '').slice(0, 10))}${tc.validUntil ? `, valid until ${date(tc.validUntil)}` : ''}${doc ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(doc.id)}" data-name="${h(doc.fileName || 'tax-form.pdf')}">Download</button>` : ''}</span>`;
   }
 
