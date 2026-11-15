@@ -2866,6 +2866,11 @@
    * fromAnswer(pages, list, answer) turns the server's answer into proposed fields shaped like read()'s: a chosen place
    * becomes one field on its own printed geometry; a place the answer names without a number is put on unclaimed printed
    * geometry on the stated side of its anchor, or dropped and counted. Nothing is ever placed off printed geometry.
+   *
+   * D-38: candidates(pages, inpage, { pictures }) takes the pages that are pictures, or whose text layer cannot be read
+   * (page numbers): their words are not written (the server gets a picture of the page with every candidate drawn and
+   * numbered on it), only "(read the page image)" and each place's [#id] on its line. Every other page's text is exactly
+   * as before. The result also gives each page's own part of the text (byPage) so a long agreement can be sent in ranges.
    */
   const ANSWER_KINDS = ['signature', 'initials', 'date', 'checkbox', 'name', 'title', 'nameTitle', 'investorName', 'amount', 'address', 'address2', 'city', 'state', 'zip', 'cityStateZip', 'email', 'phone', 'taxId', 'text'];
   const ANSWER_SIDES = ['on', 'right', 'left', 'below', 'above'];
@@ -2878,7 +2883,8 @@
   /** Words as compared with a caption: lower case, letters and digits only, single spaces. */
   const squash = (s) => tidy(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
-  function candidates(pages, inpage) {
+  function candidates(pages, inpage, opts) {
+    const pictures = new Set(((opts && opts.pictures) || []).map(Number));
     const items = [];
     const props = (inpage || []).filter((p) => p && p.w > 0 && p.h > 0);
     const shown = [];
@@ -2936,8 +2942,12 @@
     // The text: per page its number and size, then each printed line holding a place with the lines directly above and
     // below it, [#id] where each place sits; places on no printed line one line each, with their nearest words.
     const out = [];
+    const byPage = {};
     shown.forEach(({ pg, L, mine }) => {
+      const from = out.length;
+      const picture = pictures.has(pg.page);
       out.push(`=== Page ${pg.page} (${r1(pg.w)} x ${r1(pg.h)} pt) ===`);
+      if (picture) out.push('(read the page image)');
       const bySlot = new Map();
       const byBox = new Map();
       const extra = new Map();
@@ -2955,11 +2965,13 @@
         .sort((a, b) => a - b)
         .forEach((k) => {
           const ln = L.lines[k];
-          if (last >= 0 && k > last + 1) out.push('…');
+          if (!picture && last >= 0 && k > last + 1) out.push('…');
           last = k;
           const toks = [];
           (ln.els || []).forEach((e) => {
-            if (e.t === 'seg') toks.push({ x: e.seg.x0, s: e.seg.s });
+            if (e.t === 'seg') {
+              if (!picture) toks.push({ x: e.seg.x0, s: e.seg.s });
+            }
             else if (e.t === 'slot' && bySlot.has(e.slot)) toks.push({ x: e.slot.x0, s: `[#${bySlot.get(e.slot).id}]` });
             else if (e.t === 'box' && byBox.has(e.box)) toks.push({ x: e.box.x0, s: `[#${byBox.get(e.box).id}]` });
           });
@@ -2975,15 +2987,70 @@
           const my = (c.y0 + c.y1) / 2;
           const dist = (g) => Math.hypot(Math.max(0, g.x0 - mx, mx - g.x1), Math.max(0, g.y - g.h - my, my - g.y));
           const words = [];
-          L.segs
-            .slice()
-            .sort((a, b) => dist(a) - dist(b))
-            .some((g) => (wordsOf(g.s).forEach((w) => words.length < 8 && words.push(w)), words.length >= 8));
+          if (!picture)
+            L.segs
+              .slice()
+              .sort((a, b) => dist(a) - dist(b))
+              .some((g) => (wordsOf(g.s).forEach((w) => words.length < 8 && words.push(w)), words.length >= 8));
           out.push(`[#${c.id}] ${c.what} at ${c.x0},${c.y0} to ${c.x1},${c.y1}${words.length ? ' near: ' + words.join(' ') : ''}`);
         });
+      byPage[pg.page] = out.slice(from).join('\n');
     });
     const rows = items.map((c) => [c.id, c.page, c.x0, c.y0, c.x1, c.y1, c.what]);
-    return { items, rows, text: out.join('\n') };
+    return { items, rows, text: out.join('\n'), byPage };
+  }
+
+  /*
+   * D-38: the firm's signature place when a reading gave the firm fields but nowhere to sign. acceptanceBlock(pg) finds,
+   * from the page's own text layout, the printed heading of the firm's acceptance or countersignature block (null on a
+   * page with no such words, and on a page read from its picture). firmSignature(pg, last) gives the rectangle of a
+   * signature field there: on the first free printed line under the heading when there is one, else just under the
+   * heading; with no block, directly below the firm's last field (last: { x, y, w, h }); always inside the page's margins,
+   * sized by the signature kind through boxOn.
+   */
+  const ACCEPT_WORDS = /\b(accept(ed|ance)|countersign(ed|ature)?|agreed\s+to\s+and\s+accepted|agreed\s+and\s+accepted)\b/i;
+  function acceptanceBlock(pg) {
+    if (!pg || pg.scan || pg.failed || pg.pictured || !(pg.w > 0)) return null;
+    let L;
+    try {
+      L = layout(pg);
+    } catch (e) {
+      return null;
+    }
+    // The last such heading on the page: an acceptance block closes the signature page.
+    let best = null;
+    L.lines.forEach((ln) => {
+      const words = (ln.els || []).filter((e) => e.t === 'seg').map((e) => e.seg);
+      if (!words.length) return;
+      const text = words.map((g) => g.s).join(' ');
+      if (!ACCEPT_WORDS.test(text) || text.length > 160) return;
+      const x0 = Math.min(...words.map((g) => g.x0));
+      const x1 = Math.max(...words.map((g) => g.x1));
+      best = { x0, x1, y0: ln.y - ln.h, y1: ln.y, base: ln.y, L };
+    });
+    return best;
+  }
+  function firmSignature(pg, last) {
+    if (!pg || !(pg.w > 0) || !(pg.h > 0)) return null;
+    const K = KINDS.signature;
+    const M = 36; // pt: the page's margin
+    const width = Math.min(216, pg.w - 2 * M);
+    // A blank line of the signature's width at (x0, y), moved inside the margins.
+    const inside = (x0, y) => {
+      const x = Math.max(M, Math.min(x0, pg.w - M - width));
+      return { x0: x, x1: x + width, y: Math.max(M + K.top, Math.min(y, pg.h - M)), clear: K.top + 1, pad: null };
+    };
+    const block = acceptanceBlock(pg);
+    if (block) {
+      // The first printed line under the heading (within about two inches) that is long enough to sign on.
+      const rule = (pg.rules || [])
+        .filter((rl) => rl && rl.y > block.base + 4 && rl.y - block.base <= 150 && rl.x1 - rl.x0 >= 72 && rl.x0 >= M / 2 && rl.x1 <= pg.w - M / 2)
+        .sort((a, b) => a.y - b.y)[0];
+      if (rule) return boxOn(K, { x0: rule.x0, x1: Math.min(rule.x1, rule.x0 + Math.max(width, 72)), y: rule.y, clear: Math.max(TIGHT_CLEAR, Math.min(K.top + 1, rule.clear || K.top + 1)), pad: null });
+      return boxOn(K, inside(block.x0, block.base + 6 + K.top));
+    }
+    if (!last) return null;
+    return boxOn(K, inside(last.x, last.y + last.h + 8 + K.top));
   }
 
   /** The words of the caption nearest a place on its page: on its printed line first (before it, then after), then under it. */
@@ -3126,5 +3193,5 @@
     return { fields, dropped, merged, ignored };
   }
 
-  NS.placement = { read, analyze, labelOf, needsReview, reviewFields, reviewCount, confirm, statusOf, groupOf, fits, values, PREFILL, FOR_TYPES, asOther, isOther, otherParty, OTHER_NOTE, isPlainLabel, candidates, fromAnswer };
+  NS.placement = { read, analyze, labelOf, needsReview, reviewFields, reviewCount, confirm, statusOf, groupOf, fits, values, PREFILL, FOR_TYPES, asOther, isOther, otherParty, OTHER_NOTE, isPlainLabel, candidates, fromAnswer, acceptanceBlock, firmSignature };
 })(typeof window !== 'undefined' ? window.CVPortal : globalThis.CVPortal);

@@ -42,6 +42,8 @@ export const available = (env) => !!keyOf(env);
 /**
  * The client, or null when CARROWVALE_API_KEY is empty or the library cannot be imported. The key comes from
  * CARROWVALE_API_KEY only: authToken null and the base URL fixed, so no ambient key, token, profile or base URL is used.
+ * Transient failures (a dropped connection, 408, 409, 429, 5xx including 529) are retried by the client up to 3 times
+ * (D-38: the flow never stutters), always inside the overall limit each route sets on the whole call.
  */
 export async function createClient({ env = process.env, fetch, timeoutMs } = {}) {
   const key = keyOf(env);
@@ -49,7 +51,7 @@ export async function createClient({ env = process.env, fetch, timeoutMs } = {})
   const mod = await loadSdk();
   if (!mod) return null;
   const Client = mod.default || mod.Anthropic;
-  return new Client({ apiKey: key, authToken: null, baseURL: BASE_URL, timeout: timeoutMs || 600000, maxRetries: 1, fetch: fetch || undefined, logLevel: 'off' });
+  return new Client({ apiKey: key, authToken: null, baseURL: BASE_URL, timeout: timeoutMs || 600000, maxRetries: 3, fetch: fetch || undefined, logLevel: 'off' });
 }
 
 /** CARROWVALE_READ_EFFORT: low | medium | high | xhigh | max (default high). */

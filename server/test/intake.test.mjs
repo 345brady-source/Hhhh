@@ -152,17 +152,52 @@ test('the /v1/ guards apply: an invitation token is refused, and without the bea
   });
 });
 
-test('an empty prompt is 400 invalid, one over 500000 characters is 413 too_large; neither is read', async () => {
-  const intake = fakeIntake();
+// Plan 01.4-69 (D-38: the whole text is sent on the server path): the 500000-character prompt limit is gone. A prompt over
+// 200000 characters is always counted (free): over 900000 tokens it is 413 too_large before any call.
+test('an empty prompt is 400 invalid; a prompt over 200000 characters is counted: read under 900000 tokens, 413 too_large over', async () => {
+  let counted = 0;
+  const intake = fakeIntake({ count: async (prompt) => (counted++, prompt.length > 700000 ? 900001 : 150000) });
   await serve({}, intake, async (base) => {
     const a = await post(`${base}/v1/intake`, { prompt: '' });
     assert.equal(a.status, 400);
     assert.deepEqual(await a.json(), { ok: false, reason: 'invalid' });
-    const b = await post(`${base}/v1/intake`, { prompt: 'x'.repeat(500001) });
-    assert.equal(b.status, 413);
-    assert.deepEqual(await b.json(), { ok: false, reason: 'too_large' });
-    const c = await post(`${base}/v1/intake`, '{not json');
-    assert.equal(c.status, 400);
+    const b = await post(`${base}/v1/intake`, { prompt: 'x'.repeat(600000) });
+    assert.equal(b.status, 200);
+    await b.text();
+    assert.equal(intake.seen.length, 1);
+    assert.equal(intake.seen[0].length, 600000);
+    assert.equal(counted, 1);
+    const c = await post(`${base}/v1/intake`, { prompt: 'x'.repeat(800000) });
+    assert.equal(c.status, 413);
+    assert.deepEqual(await c.json(), { ok: false, reason: 'too_large' });
+    assert.equal(counted, 2);
+    // At 200000 characters or fewer (and no cap) nothing is counted: today's request exactly.
+    const d = await post(`${base}/v1/intake`, { prompt: 'x'.repeat(200000) });
+    assert.equal(d.status, 200);
+    await d.text();
+    assert.equal(counted, 2);
+    const e = await post(`${base}/v1/intake`, '{not json');
+    assert.equal(e.status, 400);
+    assert.equal(intake.seen.length, 2);
+  });
+});
+
+test('a long prompt whose count fails is 502 failed without a cap (never a blind call)', async () => {
+  const intake = fakeIntake({
+    count: async () => {
+      throw new Error('down');
+    }
+  });
+  await serve({}, intake, async (base) => {
+    const keep = console.error;
+    console.error = () => {};
+    try {
+      const r = await post(`${base}/v1/intake`, { prompt: 'x'.repeat(200001) });
+      assert.equal(r.status, 502);
+      assert.deepEqual(await r.json(), { ok: false, reason: 'failed' });
+    } finally {
+      console.error = keep;
+    }
     assert.equal(intake.seen.length, 0);
   });
 });
@@ -625,3 +660,32 @@ test('the read log line adds pdfs and pdfPages (numbers only) when PDFs were sen
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+/* ---------- Plan 01.4-69 (D-38): silent retries on the server ---------- */
+test('the intake\'s client retries transient failures: 529 twice, then the reply; the run succeeds', () =>
+  withAmbient(async () => {
+    let n = 0;
+    const svc = fakeService({
+      reply: () => {
+        n += 1;
+        if (n <= 2) return new Response(JSON.stringify({ type: 'error', error: { type: 'overloaded_error', message: 'x' } }), { status: 529, headers: { 'content-type': 'application/json', 'retry-after-ms': '5' } });
+        return { texts: ['{"offering":{"name":"Larkspur"}}'] };
+      }
+    });
+    const intake = createIntake({ env: { CARROWVALE_API_KEY: KEY }, fetch: svc, timeoutMs: 20000 });
+    const r = await intake.run('Read this.', {});
+    assert.equal(r.ok, true);
+    assert.deepEqual(r.json, { offering: { name: 'Larkspur' } });
+    assert.equal(svc.messages().length, 3);
+  }));
+
+test('the intake\'s retries stay inside the overall limit: a reply that never comes ends as a timeout', () =>
+  withAmbient(async () => {
+    const svc = fakeService({ reply: (call) => new Promise((resolve, reject) => call.signal && call.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })))) });
+    const intake = createIntake({ env: { CARROWVALE_API_KEY: KEY }, fetch: svc, timeoutMs: 300 });
+    const t0 = Date.now();
+    const r = await intake.run('Read this.', {});
+    assert.equal(r.ok, false);
+    assert.equal(r.reason, 'timeout');
+    assert.ok(Date.now() - t0 < 5000);
+  }));

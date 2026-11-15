@@ -414,3 +414,175 @@ test('the spend cap refuses a call that could pass it (402 spend_cap) before any
       assert.equal(svc.messages().length, 0);
     });
   }));
+
+/* ---------- Plan 01.4-69 (D-38): page images, page ranges, retries ---------- */
+/** A one-pixel JPEG's first bytes and a one-pixel PNG, base64 (the fake service never decodes them). */
+const JPEG = '/9j/4AAQSkZJRgABAQAAAQABAAD/';
+const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
+
+test('with images: after the document, a label and an image block per page, then the list text; the count sees the same content', () =>
+  withAmbient(async () => {
+    const svc = fakeService({ count: () => 4000 });
+    await serveReal(svc, async (base) => {
+      const r = await post(`${base}/v1/read`, request({ images: [{ page: 1, data: JPEG, marks: [1, 2] }, { page: 2, data: PNG, marks: [] }] }));
+      assert.equal(r.status, 200);
+      await r.json();
+      const m = svc.messages();
+      assert.equal(m.length, 1);
+      const content = m[0].body.messages[0].content;
+      assert.deepEqual(content, [
+        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: PDF } },
+        { type: 'text', text: 'Page 1 with numbered candidates' },
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: JPEG } },
+        { type: 'text', text: 'Page 2 with numbered candidates' },
+        { type: 'image', source: { type: 'base64', media_type: 'image/png', data: PNG } },
+        { type: 'text', text: request().text }
+      ]);
+      // With images the request is always counted (free), on exactly the content the call sends.
+      const c = svc.calls.filter((x) => /count_tokens/.test(x.url));
+      assert.equal(c.length, 1);
+      assert.deepEqual(c[0].body.messages, m[0].body.messages);
+    });
+  }));
+
+test('without images and range the request is plan 64\'s exactly: no count, the document and the text only', () =>
+  withAmbient(async () => {
+    const svc = fakeService();
+    await serveReal(svc, async (base) => {
+      const r = await post(`${base}/v1/read`, request());
+      assert.equal(r.status, 200);
+      await r.json();
+      assert.equal(svc.calls.filter((x) => /count_tokens/.test(x.url)).length, 0);
+      assert.equal(svc.messages()[0].body.messages[0].content.length, 2);
+    });
+  }));
+
+test('malformed images are 400 invalid, too many or too large 413 too_large, before any count or call', async () => {
+  const reader = fakeReader();
+  await serve({}, reader, async (base) => {
+    const big = 'A'.repeat(10 * 1024 * 1024 + 4);
+    const cases = [
+      [{ images: {} }, 400, 'invalid'],
+      [{ images: [{ page: 1, data: 'not base64!' }] }, 400, 'invalid'],
+      [{ images: [{ page: 1, data: PDF }] }, 400, 'invalid'],
+      [{ images: [{ page: 3, data: JPEG }] }, 400, 'invalid'],
+      [{ images: [{ page: 1, data: JPEG }, { page: 1, data: JPEG }] }, 400, 'invalid'],
+      [{ images: [{ page: 1.5, data: JPEG }] }, 400, 'invalid'],
+      [{ images: [{ page: 1, data: JPEG, marks: ['x'] }] }, 400, 'invalid'],
+      [{ images: [{ page: 1, data: '/9j/' + big }] }, 413, 'too_large'],
+      [{ images: Array.from({ length: 601 }, (_, i) => ({ page: 1 + i, data: JPEG })) }, 413, 'too_large']
+    ];
+    let counted = 0;
+    reader.count = async () => (counted++, 1000);
+    for (const [extra, status, reason] of cases) {
+      const r = await post(`${base}/v1/read`, request(extra));
+      assert.equal(r.status, status, JSON.stringify(extra).slice(0, 80));
+      assert.deepEqual(await r.json(), { ok: false, reason });
+    }
+    assert.equal(reader.seen.length, 0);
+    assert.equal(counted, 0);
+  });
+});
+
+test('with images a request over 900000 counted tokens is 413 too_large before any call; a failed count is 502 without a cap', async () => {
+  for (const [count, status, reason] of [
+    [async () => 900001, 413, 'too_large'],
+    [
+      async () => {
+        throw new Error('down');
+      },
+      502,
+      'failed'
+    ]
+  ]) {
+    const reader = fakeReader({ count });
+    await serve({}, reader, async (base) => {
+      await captureConsole(async () => {
+        const r = await post(`${base}/v1/read`, request({ images: [{ page: 1, data: JPEG }] }));
+        assert.equal(r.status, status);
+        assert.deepEqual(await r.json(), { ok: false, reason });
+      });
+      assert.equal(reader.seen.length, 0);
+    });
+  }
+});
+
+test('a page range: the list numbered across the agreement, its pages inside the range; the reader gets the ids and the range', async () => {
+  const reader = fakeReader();
+  await serve({}, reader, async (base) => {
+    const list = [
+      [14, 5, 72, 100, 288, 114, 'line'],
+      [15, 6, 72, 120, 288, 134, 'box'],
+      [19, 7, 72, 140, 288, 154, 'line']
+    ];
+    const r = await post(`${base}/v1/read`, request({ pages: 3, range: [5, 7, 40], list, images: [{ page: 6, data: JPEG, marks: [15] }] }));
+    assert.equal(r.status, 200);
+    await r.json();
+    assert.equal(reader.seen.length, 1);
+    const q = reader.seen[0];
+    assert.deepEqual(q.ids, [14, 15, 19]);
+    assert.equal(q.first, 5);
+    assert.equal(q.last, 7);
+    assert.deepEqual(q.range, [5, 7, 40]);
+    assert.deepEqual(q.images, [{ page: 6, media_type: 'image/jpeg', data: JPEG, marks: [15] }]);
+    // Malformed ranges and lists that do not fit them are 400 invalid.
+    for (const extra of [
+      { pages: 3, range: [5, 8, 40], list },
+      { pages: 3, range: [0, 2, 40], list },
+      { pages: 3, range: [5, 7, 6], list },
+      { pages: 3, range: [5, 7], list },
+      { pages: 3, range: [5, 7, 40], list: [list[1], list[0]] },
+      { pages: 3, range: [5, 7, 40], list: [[3, 4, 72, 100, 288, 114, 'line']] }
+    ]) {
+      const b = await post(`${base}/v1/read`, request(extra));
+      assert.equal(b.status, 400, JSON.stringify(extra.range));
+      await b.json();
+    }
+    assert.equal(reader.seen.length, 1);
+  });
+});
+
+test('checkAnswer with a range\'s ids keeps only those ids (as fields and as near) and missing places on its pages', () => {
+  const got = checkAnswer(
+    {
+      fields: [
+        { id: 14, kind: 'signature', person: 'investor', group: 'all' },
+        { id: 2, kind: 'date', person: 'investor', group: 'all' }
+      ],
+      missing: [
+        { page: 6, near: 15, caption: '', side: 'below', kind: 'name', person: 'investor', group: 'all' },
+        { page: 9, near: -1, caption: 'Title', side: 'right', kind: 'title', person: 'sponsor', group: 'all' },
+        { page: 6, near: 3, caption: '', side: 'below', kind: 'name', person: 'investor', group: 'all' }
+      ]
+    },
+    3,
+    { ids: [14, 15, 19], first: 5, last: 7 }
+  );
+  assert.deepEqual(got.fields.map((f) => f.id), [14]);
+  assert.deepEqual(got.missing.map((m) => m.near), [15]);
+});
+
+test('the reader\'s client retries transient failures: 529 twice, then the answer; the read succeeds', () =>
+  withAmbient(async () => {
+    let n = 0;
+    const svc = fakeService({
+      reply: () => {
+        n += 1;
+        if (n <= 2) return new Response(JSON.stringify({ type: 'error', error: { type: 'overloaded_error', message: 'x' } }), { status: 529, headers: { 'content-type': 'application/json', 'retry-after-ms': '5' } });
+        return { texts: [JSON.stringify(ANSWER)] };
+      }
+    });
+    const reader = createReader({ env: { CARROWVALE_API_KEY: KEY }, fetch: svc, timeoutMs: 20000 });
+    const r = await reader.read({ pdf: PDF, pages: 1, text: 't', count: 8 });
+    assert.equal(r.ok, true);
+    assert.equal(svc.messages().length, 3);
+  }));
+
+test('the retries stay inside the overall limit: a service that always answers 529 ends the call as a failure', () =>
+  withAmbient(async () => {
+    const svc = fakeService({ reply: () => new Response('{}', { status: 529, headers: { 'content-type': 'application/json', 'retry-after-ms': '5' } }) });
+    const reader = createReader({ env: { CARROWVALE_API_KEY: KEY }, fetch: svc, timeoutMs: 20000 });
+    const r = await reader.read({ pdf: PDF, pages: 1, text: 't', count: 8 });
+    assert.equal(r.ok, false);
+    assert.equal(svc.messages().length, 4); // the first attempt and 3 retries
+  }));
