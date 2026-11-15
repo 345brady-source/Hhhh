@@ -21,6 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Signatures** - Cursive and other signature styles, a natural drawn signature, upload, adopt once
 - [ ] **Phase 4: Signing Inside Onboarding** - A polished, guided signing step for investors and countersigning for sponsors, with no separate tool
 - [ ] **Phase 5: Signed Record** - Final signed PDF with certificate page, audit trail and tamper evidence
+- [ ] **Phase 6: Onboarding forms: W-9 and W-8 collected in the investor onboarding, plus investor-status questions (506(b) non-accredited count of 35, Reg A Tier 2 10 percent investment limit, ERISA 25 percent benefit-plan test)**
 
 ## Phase Details
 
@@ -251,3 +252,13 @@ Plans:
 | 3. Signatures | 0/TBD | Not started | - |
 | 4. Signing Inside Onboarding | 0/TBD | Not started | - |
 | 5. Signed Record | 0/TBD | Not started | - |
+
+### Phase 6: Onboarding forms: W-9 and W-8 collected in the investor onboarding, plus investor-status questions (506(b) non-accredited count of 35, Reg A Tier 2 10 percent investment limit, ERISA 25 percent benefit-plan test)
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 5
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 6 to break down)
