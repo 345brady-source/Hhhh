@@ -3093,6 +3093,41 @@
     return boxRect(c);
   }
 
+  /**
+   * A field rectangle in the empty space beside an anchor when no printed line or box is there: a tick box left of a choice
+   * (or right of it when asked), a writing space right of a caption or under it. Kept inside the page margins; null when it
+   * would not fit.
+   */
+  function spaceBeside(e, anchor, pg) {
+    if (!pg || !anchor) return null;
+    const M = 18;
+    const K = e.kind === 'checkbox' || e.kind === 'text' ? KINDS.other : KINDS[e.kind] || KINDS.other;
+    const h = e.kind === 'checkbox' ? 10 : Math.max(12, Math.min(22, K.top + 4 || 14));
+    const w = e.kind === 'checkbox' ? 10 : e.kind === 'signature' || e.kind === 'initials' ? 150 : e.kind === 'date' ? 90 : 160;
+    const base = anchor.base;
+    let x;
+    let y;
+    if (e.kind === 'checkbox' && e.side !== 'right') {
+      x = anchor.x0 - 4 - w;
+      y = base - h;
+    } else if (e.side === 'below') {
+      x = anchor.x0;
+      y = base + 4;
+    } else if (e.side === 'above') {
+      x = anchor.x0;
+      y = anchor.y0 - 4 - h;
+    } else if (e.side === 'left') {
+      x = anchor.x0 - 6 - w;
+      y = base - h + 2;
+    } else {
+      x = anchor.x1 + 6;
+      y = base - h + 2;
+    }
+    const W = Math.min(w, pg.w - M - x);
+    if (!(W >= (e.kind === 'checkbox' ? 8 : 48)) || x < M / 2 || y < M / 2 || y + h > pg.h - M / 2) return null;
+    return { x, y, w: W, h };
+  }
+
   function fromAnswer(pages, list, answer) {
     if (!answer || typeof answer !== 'object' || Array.isArray(answer) || !Array.isArray(answer.fields) || !Array.isArray(answer.missing)) return null;
     const items = list || [];
@@ -3176,7 +3211,15 @@
           best = q;
         }
       });
-      if (!best) return dropped++;
+      if (!best) {
+        // No printed line or box on that side (D-38): a place printed as a caption with empty space, or a choice with no box.
+        const made0 = spaceBeside(e, anchor, pg);
+        if (!made0 || claimed(rectOf(made0), page)) return dropped++;
+        const L0 = layoutOf(page);
+        const words0 = (e.kind === 'checkbox' || e.kind === 'text') && L0 ? captionNear(L0, Object.assign(rectOf(made0), { base: anchor.base })) || e.caption || '' : '';
+        made.push({ p: answerField(e, page, made0, words0), r: rectOf(made0), c: null });
+        return;
+      }
       const rect = best.rect();
       const L = best.c ? best.c.L : layoutOf(page);
       const words = (e.kind === 'checkbox' || e.kind === 'text') && L ? captionNear(L, Object.assign(rectOf(rect), { base: best.r.base })) : '';

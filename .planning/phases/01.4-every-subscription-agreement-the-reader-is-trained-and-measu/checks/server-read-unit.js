@@ -129,7 +129,10 @@ const shortRule = find((c) => c.page === 1 && c.x0 >= 139 && c.x1 <= 241);
 }
 {
   const out = PL.fromAnswer(pages, items, { fields: [{ id: addr.id, kind: 'address', person: 'investor', group: 'all' }], missing: [{ page: 2, near: addr.id, caption: '', side: 'right', kind: 'city', person: 'investor', group: 'all' }] });
-  line(out.fields.length === 1 && out.dropped === 1, 'missing place with nothing printed there', `${out.fields.length} field(s), ${out.dropped} dropped (expected 1, 1)`);
+  // Owner 2026-11-15 (D-38, after the blind test): a place with no printed line or box is placed in the empty space beside its anchor, not dropped.
+  const g = out.fields.find((x) => x.prefill === 'city' || x.kind === 'city');
+  const a = addr && addr.box ? addr.box : null;
+  line(out.fields.length === 2 && out.dropped === 0 && !!g && g.page === 2, 'missing place with nothing printed there is placed beside its anchor', g ? `field at ${g.x},${g.y} ${g.w}x${g.h} on page ${g.page}; ${out.dropped} dropped${a ? '' : ''}` : `${out.fields.length} field(s), ${out.dropped} dropped`);
 }
 {
   const out = PL.fromAnswer(pages, items, { fields: [], missing: [{ page: 1, near: -1, caption: 'TELEPHONE ', side: 'right', kind: 'phone', person: 'investor', group: 'all' }] });
