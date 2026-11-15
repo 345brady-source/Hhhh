@@ -44,7 +44,12 @@ L.describeShots([
   [/^other-off-.*-status\.png$/, 'Status step with the firm\'s accredited question off (Regulation S, Regulation Crowdfunding or Section 4(a)(2)): the benefit plan questions only.'],
   [/^other-off-.*-subscribe\.png$/, 'Subscribe step with the accredited question off: no "is an accredited investor" tick where the exemption is open to all (with a note saying why); the optional tick kept for Section 4(a)(2).'],
   ['back-correct-to-no.png', 'Status step reached with Back while the request is pending, the answer being corrected from "yes" to "no".'],
-  ['resume-status.png', 'A flow saved by the earlier version resumes at the Investor status step, step 5 of 10, with the earlier answers kept.']
+  ['resume-status.png', 'A flow saved by the earlier version resumes at the Investor status step, step 5 of 10, with the earlier answers kept.'],
+  [/^portal-(link|investments|address)-status\.png$/, 'Self-serve portal (plan 06-08): an investor on file who is not accredited, after the offering link, the Investments button or the subscribe address: the guided Investor status step, never the old form with the accredited tick.'],
+  ['portal-address-box.png', 'Self-serve portal (plan 06-08): the subscribe address for an investor on file shows only the "Continue your subscription" box, no form and no accredited tick.'],
+  ['portal-console-3.png', 'Console offering page after the three portal subscriptions: "Non-accredited purchasers: 3 of 35".'],
+  [/^portal-other-.*\.png$/, 'Self-serve portal (plan 06-08): Regulation A, benefit plan, unanswered and withdrawn-ground subscriptions reached from the portal.'],
+  ['portal-managed-subscribe.png', 'Managed edition (plan 06-08, C-03): the portal subscribe page unchanged, with its accredited tick.']
 ]);
 fs.mkdirSync(SHOTS, { recursive: true });
 const INV = { name: 'Dana Whitfield', email: 'dana.whitfield@example.com' };
@@ -265,6 +270,126 @@ const seedNonAccredited = (page, offeringId, n, prefix) =>
     },
     { offeringId, n, prefix }
   );
+
+/* ---------- Plan 06-08: the self-serve portal's own subscribe entry points (verifier gap 1) ---------- */
+
+/**
+ * n active investors on file with no invitation and no holding or request in the offering, individuals first. withGround
+ * false (the default) leaves each without an accreditation ground, as the status step leaves an investor who answered no;
+ * withGround true gives each a self-certified ground. Returns [{ id, name, title, type, email, basis }].
+ */
+const onFile = (page, offeringId, n, withGround) =>
+  page.evaluate(
+    ({ oid, n, withGround }) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const ok = (x) => x.onboarding && x.onboarding.status === 'complete' && x.email && !(x.positions || []).some((y) => y.offeringId === oid) && !(ws.invitations || []).some((t) => t.investorId === x.id) && !(ws.requests || []).some((r) => r.investorId === x.id && r.offeringId === oid);
+      const list = ws.investors
+        .filter(ok)
+        .sort((a, b) => (a.type === 'individual' ? 0 : 1) - (b.type === 'individual' ? 0 : 1))
+        .slice(0, n);
+      list.forEach((i) => (i.accreditation = withGround ? { basis: 'Licensed professional (Series 7, 65 or 82)', date: NS.dates.today(), self: true } : { basis: '', date: '' }));
+      NS.app.save(true);
+      return list.map((i) => ({ id: i.id, name: i.contact, title: i.title, type: i.type, email: i.email, basis: i.accreditation.basis }));
+    },
+    { oid: offeringId, n, withGround: !!withGround }
+  );
+
+/** Signed in as the investor (the portal's own session), on the given route. */
+const asInvestor = (page, investorId, route) =>
+  page.evaluate(
+    ({ id, route }) => {
+      const NS = window.CVPortal;
+      NS.state.role = 'investor';
+      NS.store.set('role', 'investor');
+      NS.state.viewer = id;
+      NS.app.go(route);
+    },
+    { id: investorId, route }
+  );
+
+/** The firm's offering link (#join-<offering>) filled in with an investor on file's name and email. */
+async function joinFromLink(page, offeringId, who) {
+  await page.evaluate((id) => (location.hash = 'join-' + id), offeringId);
+  await page.waitForSelector('form[data-form=join]', { timeout: 20000 });
+  const n = String(who.name).split(' ');
+  await page.fill('#jn-name', n[0]);
+  await page.fill('#jn-last', n.slice(1).join(' ') || n[0]);
+  await page.fill('#jn-email', who.email);
+  await page.check('#jn-consent');
+  await page.click('form[data-form=join] button[type=submit]');
+  await page.waitForTimeout(900);
+}
+
+/** Signed in as the investor, the Investments page's subscribe control for the offering. false when it is not offered. */
+async function fromInvestments(page, offeringId, who) {
+  await asInvestor(page, who.id, 'investments');
+  await page.waitForTimeout(700);
+  const ctl = page.locator(`[data-action=sub-start][data-id="${offeringId}"], a[href="#subscribe-${offeringId}"]`).first();
+  if (!(await ctl.count())) return false;
+  await ctl.click();
+  await page.waitForTimeout(900);
+  return true;
+}
+
+/** No "is an accredited investor" statement and no #sb-acc tick on the screen now shown. */
+async function noAccTick(page) {
+  const text = await L.screenText(page);
+  const sbAcc = await page.locator('#sb-acc').count();
+  return { ok: !/is an accredited investor/.test(text) && sbAcc === 0, sbAcc, text };
+}
+
+/** The invitation the screen now shows (#invite-<token>), or null. */
+const shownInvitation = (page) =>
+  page.evaluate(() => {
+    const tok = location.hash.replace(/^#invite-/, '');
+    const x = (window.CVPortal.state.ws.invitations || []).find((y) => y.token && y.token === tok);
+    return x ? { id: x.id, offeringId: x.offeringId, investorId: x.investorId, existing: !!x.existing, sentBy: x.sentBy, status: x.status } : null;
+  });
+
+/**
+ * After a portal entry point: the screen must be the guided subscription of an investor on file for this offering (never
+ * the old form), walked with answers (default: not accredited, the sophistication answers, no representative), the
+ * agreement signed. Returns { st, sub, done, req, texts } or null when the flow was not reached.
+ */
+async function guidedFromPortal(p, check, tag, who, offeringId, answers, shot) {
+  const first = await noAccTick(p);
+  check(`${tag}: no "is an accredited investor" statement and no #sb-acc on the screen the entry point opens`, first.ok, { sbAcc: first.sbAcc, text: first.text.slice(0, 700) });
+  const inFlow = await p.waitForSelector('.ivf-form h1', { timeout: 6000 }).then(
+    () => true,
+    () => false
+  );
+  check(`${tag}: the entry point opens the guided subscription`, inFlow, first.text.slice(0, 500));
+  if (!inFlow) return null;
+  const it = await shownInvitation(p);
+  check(`${tag}: the guided subscription is the investor's own, for this offering, as an investor on file`, !!it && it.offeringId === offeringId && it.investorId === who.id && it.existing, it);
+  const texts = [];
+  const R = { st: '', sub: '' };
+  const a = Object.assign({ name: who.name, acc: 'no', exp: 'Ten years of private real estate fund commitments', edu: 'Accountant', rep: 'no', amount: 60000 }, answers || {});
+  const userFilled = a.onFilled;
+  const userStep = a.onStep;
+  a.onStep = async (hd) => {
+    texts.push(await L.screenText(p));
+    if (userStep) await userStep(hd);
+  };
+  a.onFilled = async (hd) => {
+    if (hd === 'Investor status') {
+      R.st = await L.screenText(p);
+      if (shot) await p.screenshot({ path: path.join(SHOTS, `${shot}-status.png`), fullPage: true });
+    }
+    if (hd === 'Subscription') R.sub = await L.screenText(p);
+    if (userFilled) await userFilled(hd);
+  };
+  const w = await L.walk(p, a);
+  const heads = w.seen.map((s) => s.split(' | ').pop());
+  check(`${tag}: the steps of an investor on file: welcome, Investor status, subscription, agreement`, w.reached && w.errors.length === 0 && /^Welcome/.test(heads[0]) && heads.slice(1).join(',') === 'Investor status,Subscription,Subscription agreement', { seen: w.seen, errors: w.errors });
+  check(`${tag}: no screen of the flow asks for the "is an accredited investor" statement`, !texts.concat(R.sub).some((t) => /is an accredited investor/.test(t)) || a.acc === 'yes', texts.map((t) => (t.match(/[^\n]*is an accredited investor[^\n]*/) || [''])[0]).filter(Boolean));
+  const req = w.reached ? await requestOf(p, who.id, offeringId) : null;
+  const done = w.reached ? await finishAgreement(p) : '';
+  const lk = L.leakCheck(texts.concat(R.sub, done).join('\n'));
+  check(`${tag}: white label: every screen of the flow passes the leak check`, lk.ok, lk.hits);
+  return { st: R.st, sub: R.sub, done, req, texts, w };
+}
 
 const parts = {
   /** A non-accredited investor subscribes to a Rule 506(b) offering; the sponsor sees 1 of 35. */
@@ -1689,6 +1814,89 @@ const parts = {
     await consoleOffering(p, off.offeringId);
     const el = await eligibilityText(p);
     check('the panel: 3 non-accredited subscribers, 1 over, Avery Over listed, 1 without figures', /Regulation A Tier 2: 3 non-accredited subscribers, 1 over their 10 percent limit/.test(el) && /Avery Over: \$50,000 committed in this offering, limit \$40,000/.test(el) && !/Blake Under:/.test(el) && /1 subscriber has not given figures/.test(el), el);
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  },
+
+  /**
+   * Plan 06-08 (verifier gap 1, C-05, D-30): in the self-serve portal, investors on file who are not accredited subscribe
+   * to a Rule 506(b) offering from the firm's offering link (Run A), from Investments (Run B) and from the subscribe
+   * address with an open invitation for another offering (Run C). Never the old form's accredited tick; each goes through
+   * the guided status step, the request carries qual and the console counts all three.
+   */
+  async 'portal-506b'({ check, S }) {
+    const A = await L.open(S);
+    const p = A.page;
+    const off = await L.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+    check('the offering is Rule 506(b) with its agreement ready', off.ready && off.exemption === 'Rule 506(b)', off);
+    const people = await onFile(p, off.offeringId, 3);
+    check('three active investors on file who are not accredited, with no invitation', people.length === 3, people);
+    if (people.length < 3) return A.context.close();
+    const qualOk = (r, who, exp) => {
+      const q = (r && r.qual) || {};
+      const so = q.sophistication || {};
+      return !!r && q.regime === '506b' && q.accredited === false && so.experience === exp;
+    };
+
+    // Run A: the firm's offering link, signed in with the email of an account that is complete.
+    await joinFromLink(p, off.offeringId, people[0]);
+    const a = await guidedFromPortal(p, check, 'Run A (offering link)', people[0], off.offeringId, { exp: 'Run A: twelve years of fund commitments' }, 'portal-link');
+    if (a) {
+      check('Run A: the status step asks the accredited and sophistication questions', /an accredited investor\?/.test(a.st) && /investment experience/i.test(a.st), a.st.slice(0, 900));
+      check('Run A: the subscribe step states the account is not an accredited investor', /is not an accredited investor/.test(a.sub), a.sub.slice(0, 900));
+      check('Run A: the request carries qual: regime 506b, accredited false, the sophistication answers', qualOk(a.req, people[0], 'Run A: twelve years of fund commitments'), a.req);
+      check('Run A: the agreement was signed (done screen)', /Accreditation/.test(a.done) || a.done.length > 0, a.done.slice(0, 400));
+    }
+
+    // Run B: Investments, the offering's subscribe control.
+    const offered = await fromInvestments(p, off.offeringId, people[1]);
+    check('Run B: the Investments page offers the offering to an investor on file who is not accredited', offered);
+    const b = offered ? await guidedFromPortal(p, check, 'Run B (Investments)', people[1], off.offeringId, { exp: 'Run B: eight years of private equity' }, 'portal-investments') : null;
+    if (b) check('Run B: the request carries qual: regime 506b, accredited false, the sophistication answers', qualOk(b.req, people[1], 'Run B: eight years of private equity'), b.req);
+
+    // Run C: the subscribe address typed or bookmarked, with an open invitation for a different offering.
+    const other = await p.evaluate((oid) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const o = ws.offerings.find((x) => x.id === oid);
+      const c = JSON.parse(JSON.stringify(o));
+      c.id = oid + '-second';
+      c.name = 'Second Test Offering';
+      c.status = 'Raising';
+      ws.offerings.push(c);
+      NS.app.save(true);
+      return { id: c.id, name: c.name };
+    }, off.offeringId);
+    const otherInv = await L.createInvitation(p, { name: people[2].name, email: people[2].email, offeringId: other.id, cents: 0 });
+    const otherIt = await p.evaluate((id) => (window.CVPortal.state.ws.invitations || []).find((x) => x.id === id) || null, otherInv.invitationId);
+    check('Run C: the investor holds an open invitation to subscribe to a different offering', !!otherIt && otherIt.existing && otherIt.offeringId === other.id, otherIt);
+    await asInvestor(p, people[2].id, 'subscribe-' + off.offeringId);
+    await p.waitForTimeout(900);
+    const addr = await noAccTick(p);
+    await p.screenshot({ path: path.join(SHOTS, 'portal-address-box.png'), fullPage: true });
+    check('Run C: the subscribe address shows no "is an accredited investor" statement and no #sb-acc', addr.ok, { sbAcc: addr.sbAcc, text: addr.text.slice(0, 900) });
+    const boxBtn = p.locator('.done-box [data-action=sub-start]', { hasText: 'Continue your subscription' });
+    const hasBox = (await boxBtn.count()) === 1;
+    check('Run C: the "Continue your subscription" box with its button is shown', hasBox, addr.text.slice(0, 900));
+    check('white label: the subscribe address screen passes the leak check', L.leakCheck(addr.text).ok, L.leakCheck(addr.text).hits);
+    let c = null;
+    if (hasBox) {
+      await boxBtn.click();
+      await p.waitForTimeout(900);
+      c = await guidedFromPortal(p, check, 'Run C (subscribe address)', people[2], off.offeringId, { exp: 'Run C: five years of venture funds' }, 'portal-address');
+    }
+    if (c) check('Run C: the request carries qual: regime 506b, accredited false, the sophistication answers', qualOk(c.req, people[2], 'Run C: five years of venture funds'), c.req);
+    const after = await p.evaluate((id) => (window.CVPortal.state.ws.invitations || []).find((x) => x.id === id) || null, otherInv.invitationId);
+    check('Run C: the invitation for the other offering is left as it was (still open, same offering)', !!after && after.offeringId === other.id && ['cancelled', 'expired', 'completed'].indexOf(after.status) < 0, after);
+
+    // The console counts all three.
+    await consoleOffering(p, off.offeringId);
+    const ct = await L.screenText(p);
+    await p.screenshot({ path: path.join(SHOTS, 'portal-console-3.png'), fullPage: true });
+    check('the console offering page reads "Non-accredited purchasers: 3 of 35"', /Non-accredited purchasers: 3 of 35/.test(ct), (ct.match(/[^\n]*Non-accredited purchasers[^\n]*/) || [ct.slice(0, 600)])[0]);
+    const lkC = L.leakCheck(ct);
+    check('white label: the console offering page passes the leak check', lkC.ok, lkC.hits);
     check('no script error in the browser', A.errors.length === 0, A.errors);
     check('no request left the check server', A.net.external.length === 0, A.net.external);
     await A.context.close();

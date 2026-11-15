@@ -255,6 +255,13 @@
     NS.app.save(true);
     if (inv.onboarding.status === 'complete') {
       S().viewer = inv.id;
+      // An account on file goes through the guided subscription of an investor on file (status step, subscription,
+      // agreement), never the typed form with its accredited statement (plan 06-08, C-05, D-30).
+      if (o && NS.inviteFlow) {
+        const it = NS.inviteFlow.selfInvite(ws, inv, o, { existing: true });
+        NS.app.save(true);
+        return NS.app.go('invite-' + it.token);
+      }
       return NS.app.go(o ? `subscribe-${o.id}` : 'overview');
     }
     // The same guided flow as an emailed invitation: an invitation record of their own, opened straight away.

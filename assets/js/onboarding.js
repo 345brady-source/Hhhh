@@ -777,17 +777,25 @@
     ws.notifications = ws.notifications || [];
     ws.notifications.push({ id: uid('ntf'), at: new Date().toISOString(), kind, title, detail, route, read: false });
   }
-  /** The investor's own invitation, for someone who signed up from an offering's sign-up link (diy.js). */
-  function selfInvite(ws, inv, o) {
-    const have = openFor(ws, inv);
+  /**
+   * The investor's own invitation, for someone who signed up from an offering's sign-up link (diy.js). opts.existing (plan
+   * 06-08): an investor on file subscribing from the portal (offering link, Investments, a subscribe address) gets the
+   * guided subscription an invitation to an investor on file gives (status step by exemption, subscription, agreement):
+   * their open invitation for this same offering, never one for another offering, or a new one marked existing.
+   */
+  function selfInvite(ws, inv, o, opts) {
+    const onFile = !!(opts && opts.existing);
+    const have = onFile ? (ws.invitations || []).filter((x) => x.investorId === inv.id && x.token && x.existing && x.offeringId === (o ? o.id : '') && ['cancelled', 'expired', 'completed'].indexOf(x.status) < 0 && !expired(x)).pop() || null : openFor(ws, inv);
     if (have) return have;
     const at = new Date().toISOString();
-    const it = { id: uid('invt'), investorId: inv.id, offeringId: o ? o.id : '', cents: 0, cls: '', note: '', token: newToken(), serverId: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: at, openedAt: at, completedAt: '', expiresAt: new Date(Date.now() + 30 * 864e5).toISOString(), emailStatus: 'not_sent', emailError: '', importedAt: '', sentBy: 'Offering sign-up link' };
+    const it = { id: uid('invt'), investorId: inv.id, offeringId: o ? o.id : '', cents: 0, cls: '', note: '', token: newToken(), serverId: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: at, openedAt: at, completedAt: '', expiresAt: new Date(Date.now() + 30 * 864e5).toISOString(), emailStatus: 'not_sent', emailError: '', importedAt: '', sentBy: onFile ? 'Investor portal' : 'Offering sign-up link' };
+    if (onFile) it.existing = true;
     it.link = `${location.origin}${location.pathname}?tenant=${encodeURIComponent(ws.tenant.id)}#invite-${it.token}`;
     ws.invitations = ws.invitations || [];
     ws.invitations.push(it);
     inv.onboarding = Object.assign({}, inv.onboarding, { invitationId: it.id, offeringId: it.offeringId });
-    notify(ws, 'invite_opened', `${inv.title} signed up${o ? ` for ${o.name}` : ''}`, 'From the offering sign-up link; onboarding has started', 'console-investors');
+    if (onFile) notify(ws, 'invite_opened', `${inv.title} started a subscription${o ? ` to ${o.name}` : ''}`, 'From the investor portal', 'console-investors');
+    else notify(ws, 'invite_opened', `${inv.title} signed up${o ? ` for ${o.name}` : ''}`, 'From the offering sign-up link; onboarding has started', 'console-investors');
     return it;
   }
 
