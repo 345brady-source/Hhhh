@@ -20,6 +20,9 @@
  *              layer) and of a picture-only PDF, against UNREADABLE_BELOW; the broken PDF and the picture-only PDFs sent as
  *              PDFs with a reading server set (the fictional fund reaches review); without one, today's behaviour exactly;
  *              a readable public PPM sent as { prompt } byte for byte as plan 66 sends it. Made PDFs go to out-68 in SCRATCH.
+ *              Then read whole (D-38): mergeAnswers on synthetic answers; with RANGE_PAGES 5 the broken PDF read in three
+ *              requests of exactly their pages and the merged answer on review; a request over the byte limit halved; a
+ *              413 halved and sent again; a failing range falling back with today's note; no page dropped.
  *   measure    one PDF once through the intake screen against a reading server (D-34 tooling, plan 67 runs it). Real mode
  *              needs CARROWVALE_API_KEY and spawns server/index.mjs on port 8798 with a fresh API_TOKEN, the read log and
  *              store in <dir> (the log is kept, so the cap counts every call made for that folder), the cap and output
@@ -27,7 +30,14 @@
  *              model call is retried once with the server restarted without NODE_USE_ENV_PROXY. --fake uses a server in
  *              this process with a fake intake and a fake token count, no key, nothing spent; it also runs a second time
  *              in the same folder with a cap below the bound (written to <dir>/cap/), which must be refused. Writes
- *              <dir>/raw.json, <dir>/profile.json and <dir>/run.json; prints counts only.
+ *              <dir>/raw.json, <dir>/profile.json and <dir>/run.json; prints counts only. run.json also records what was
+ *              sent (sent text or pdf, ranges, pdfOf, testPageLimit) and the attempts. Test spend cap: after a refusal that
+ *              cost nothing the server restarts with the output limit fitted to what remains of the cap with every page;
+ *              only if even 16000 does not fit is the test-only NS.intake.TEST_PAGE_LIMIT set, reported as "test spend
+ *              cap: pages 1 to N of M"; at most 3 attempts. The intake returning to upload with "No readable text was
+ *              found" stops the run: outcome failed, why no-readable-text. --fake (on the broken PDF) proves a cap that
+ *              refuses 64000 output tokens but fits a lower limit (default cap 2.00), a page-limit case (<dir>/pages/,
+ *              cap 1.00) and the below-the-cap case.
  *
  * A missing harness or document prints "NOT RUN: (what)" and the exit status is 2. Output holds counts and the fictional
  * fund's name only. One line per check; last line "INTAKE SERVER: PASS" or "INTAKE SERVER: FAIL"; exit 0 or 1.
@@ -587,6 +597,7 @@ async function readOutcome(page, file, timeout) {
       trimmed: !!st.trimmed,
       filled: st.profile ? NS.intake.filled(st.profile) : 0,
       noText: !!window.__noText || document.body.textContent.indexOf('No readable text was found') >= 0,
+      progress: (window.__progress || []).slice(),
       docs: st.docs.map((d) => ({ chars: d.text ? d.text.trim().length : 0, pages: d.pages, text: d.text || '' })),
       shown: Array.from(document.querySelectorAll('input, textarea')).map((e) => e.value)
     };
@@ -691,6 +702,161 @@ async function partUnreadable(h, page) {
   }
 }
 
+/* ---------- Part unreadable, continued: read whole (D-38) ---------- */
+/** JSON with every object's keys sorted, so two objects compare by content. */
+const canonJson = (v) => (Array.isArray(v) ? '[' + v.map(canonJson).join(',') + ']' : v && typeof v === 'object' ? '{' + Object.keys(v).sort().map((k) => JSON.stringify(k) + ':' + canonJson(v[k])).join(',') + '}' : JSON.stringify(v));
+/** Synthetic answers with conflicting and overlapping values (fictional; no document text), and their expected merge. */
+const MERGE_IN = [
+  {
+    offering: { name: 'Larkspur Ridge Income Fund, LP', shortName: '', type: 'Real Estate', minimum: null, currency: 'USD' },
+    structure: { gp: null, feeders: [{ name: 'Larkspur Offshore', domicile: 'Cayman', for: null }], sidePockets: { allowed: false, maxPct: null } },
+    classes: [{ name: 'Class A', mgmtFee: 1.5 }],
+    fees: { mgmtFee: 1.5, carry: null, other: ['Acquisition fee 1%'] },
+    waterfall: { type: null, tiers: [{ kind: 'roc' }] },
+    providers: { auditor: null, others: [{ role: 'escrow agent', name: 'Harbor Escrow' }] },
+    investorTerms: [{ label: 'Minimum', value: '$25,000' }],
+    update: '',
+    sources: { 'offering.name': 'A one [p. 1]', 'fees.mgmtFee': 'A two [p. 3]' },
+    confidence: { 'offering.name': 'high', 'fees.mgmtFee': 'medium' },
+    notes: ['Key person: J. Doe']
+  },
+  {
+    offering: { name: 'Larkspur Ridge Fund', minimum: 25000, currency: 'EUR' },
+    structure: { gp: 'Larkspur GP, LLC', feeders: [{ name: 'larkspur  offshore', domicile: 'BVI' }, { name: 'Larkspur Onshore' }], sidePockets: { allowed: true, maxPct: 10 } },
+    classes: [{ name: 'class a', mgmtFee: 2 }, { name: 'Class B', mgmtFee: 1 }],
+    fees: { mgmtFee: 2, carry: 20, other: ['acquisition  fee 1%', 'Disposition fee 0.5%'] },
+    waterfall: { type: 'european', tiers: [{ kind: 'roc' }, { kind: 'pref', rate: 8 }] },
+    providers: { auditor: 'Fictional Audit LLP', others: [{ role: 'lender', name: 'harbor escrow' }] },
+    investorTerms: [{ label: 'minimum', value: '25k' }, { label: 'Target  return', value: '12%' }],
+    update: 'An income fund.',
+    sources: { 'offering.name': 'B one', 'offering.minimum': 'B two [p. 7]', 'fees.carry': 'B three [p. 8]', 'structure.gp': 'B four', 'classes[1].mgmtFee': 'B five' },
+    confidence: { 'offering.minimum': 'high', 'fees.carry': 'high', 'structure.gp': 'low' },
+    notes: ['key person:  j. doe', 'Clawback applies']
+  },
+  { offering: { shortName: 'Larkspur' }, update: 'Ignored', notes: [], sources: { 'offering.shortName': 'C one', 'classes[1].mgmtFee': 'C two' }, confidence: {} }
+];
+const MERGE_OUT = {
+  offering: { name: 'Larkspur Ridge Income Fund, LP', shortName: 'Larkspur', type: 'Real Estate', minimum: 25000, currency: 'USD' },
+  structure: { gp: 'Larkspur GP, LLC', feeders: [{ name: 'Larkspur Offshore', domicile: 'Cayman', for: null }, { name: 'Larkspur Onshore' }], sidePockets: { allowed: true, maxPct: 10 } },
+  classes: [{ name: 'Class A', mgmtFee: 1.5 }, { name: 'Class B', mgmtFee: 1 }],
+  fees: { mgmtFee: 1.5, carry: 20, other: ['Acquisition fee 1%', 'Disposition fee 0.5%'] },
+  waterfall: { type: 'european', tiers: [{ kind: 'roc' }, { kind: 'pref', rate: 8 }] },
+  providers: { auditor: 'Fictional Audit LLP', others: [{ role: 'escrow agent', name: 'Harbor Escrow' }] },
+  investorTerms: [{ label: 'Minimum', value: '$25,000' }, { label: 'Target  return', value: '12%' }],
+  update: 'An income fund.',
+  notes: ['Key person: J. Doe', 'Clawback applies'],
+  sources: { 'offering.name': 'A one [p. 1]', 'fees.mgmtFee': 'A two [p. 3]', 'offering.minimum': 'B two [p. 7]', 'fees.carry': 'B three [p. 8]', 'structure.gp': 'B four', 'classes[1].mgmtFee': 'B five', 'offering.shortName': 'C one' },
+  confidence: { 'offering.name': 'high', 'fees.mgmtFee': 'medium', 'offering.minimum': 'high', 'fees.carry': 'high', 'structure.gp': 'low' }
+};
+/** Pages and text of one sent PDF (pdfinfo, pdftotext), through a file in OUT68 that is removed at once. */
+function pdfFacts(b64, first, last) {
+  const f = path.join(OUT68, 'range-' + crypto.randomBytes(4).toString('hex') + '.pdf');
+  fs.writeFileSync(f, Buffer.from(b64, 'base64'));
+  try {
+    const pages = Number((/Pages:\s+(\d+)/.exec(execFileSync('pdfinfo', [f], { encoding: 'utf8' })) || [])[1] || 0);
+    const text = execFileSync('pdftotext', ['-q', f, '-'], { encoding: 'utf8' }).replace(/\s+/g, ' ').trim();
+    return { pages, text };
+  } finally {
+    fs.rmSync(f, { force: true });
+  }
+}
+const brokenText = (a, b) => execFileSync('pdftotext', ['-q', '-f', String(a), '-l', String(b), path.join(OUT68, 'broken.pdf'), '-'], { encoding: 'utf8' }).replace(/\s+/g, ' ').trim();
+const rangeOf = (prompt, of) => {
+  const m = /\(pages (\d+) to (\d+) of (\d+)/.exec(prompt) || /test spend cap: pages (1) to (\d+) of (\d+)/.exec(prompt);
+  return m ? [Number(m[1]), Number(m[2])] : [1, of];
+};
+/** Every page 1..M covered exactly once by the ranges. */
+const coversOnce = (ranges, M) => {
+  const seen = new Array(M + 1).fill(0);
+  ranges.forEach(([a, b]) => {
+    for (let i = a; i <= b; i++) seen[i] = (seen[i] || 0) + 1;
+  });
+  return seen.slice(1).length === M && seen.slice(1).every((x) => x === 1);
+};
+async function partWhole(h, page) {
+  const broken = path.join(OUT68, 'broken.pdf');
+  // The deterministic merge, on synthetic answers.
+  const merged = await page.evaluate((ins) => (typeof window.CVPortal.intake.mergeAnswers === 'function' ? window.CVPortal.intake.mergeAnswers(ins) : null), MERGE_IN);
+  line(!!merged && canonJson(merged) === canonJson(MERGE_OUT), `whole mergeAnswers gives exactly the expected object on 3 synthetic answers (${merged ? (canonJson(merged) === canonJson(MERGE_OUT) ? 'same' : 'different') : 'missing'})`);
+  const defaults = await page.evaluate(() => ({ range: window.CVPortal.intake.RANGE_PAGES, limit: window.CVPortal.intake.TEST_PAGE_LIMIT === undefined }));
+  line(defaults.range === 600 && defaults.limit, `whole RANGE_PAGES ${defaults.range} by default (600 expected), TEST_PAGE_LIMIT ${defaults.limit ? 'unset' : 'set'}`);
+
+  // Three ranges of 5, 5 and 2 pages, each its own request and answer; the merged answer reaches review through normalize.
+  const parts = [FUND, { fees: { carry: 25, other: ['Range two fee'] }, notes: ['Range two note'] }, { investorTerms: [{ label: 'Range three term', value: 'Yes' }] }];
+  let rec = recordingIntake((i) => parts[i] || FUND);
+  let srv = await portalServer(rec);
+  try {
+    await captureBodies(h, srv);
+    await setServer(page, srv.base, srv.token);
+    await page.evaluate(() => (window.CVPortal.intake.RANGE_PAGES = 5));
+    const r = await readOutcome(page, broken);
+    const sent = rec.seen.map((x) => ({ ranges: rangeOf(x.prompt, 12), pages: x.pdfs ? x.pdfs.map((p) => p.pages) : [], of: x.pdfs && x.pdfs[0] ? x.pdfs[0].of : 0, facts: x.pdfs && x.pdfs[0] ? pdfFacts(x.pdfs[0].data) : null, prompt: x.prompt }));
+    const ranges = sent.map((x) => x.ranges);
+    line(sent.length === 3 && JSON.stringify(ranges) === '[[1,5],[6,10],[11,12]]', `whole RANGE_PAGES 5: ${sent.length} requests, pages ${ranges.map((x) => x.join(' to ')).join(', ')}`);
+    line(sent.every((x) => x.pages.length === 1 && x.of === 12 && x.pages[0] === x.ranges[1] - x.ranges[0] + 1), `whole each request carries one PDF of its range's page count, of 12 (${sent.map((x) => x.pages.join('+')).join(', ')})`);
+    const exact = sent.filter((x) => x.facts && x.facts.pages === x.ranges[1] - x.ranges[0] + 1 && x.facts.text === brokenText(x.ranges[0], x.ranges[1])).length;
+    line(exact === sent.length && sent.length === 3, `whole each sent PDF is a new PDF of exactly its pages (${exact}/${sent.length} by page count and text layer)`);
+    const head = sent[0] ? sent[0].prompt.slice(0, sent[0].prompt.indexOf('\n\nDOCUMENTS:\n')) : '';
+    line(!!head && sent.every((x) => x.prompt.startsWith(head + '\n\nDOCUMENTS:\n') && x.prompt.indexOf(`(pages ${x.ranges[0]} to ${x.ranges[1]} of 12)`) >= 0), 'whole each request has the same instructions and a line naming its range');
+    line(coversOnce(ranges, 12), 'whole the ranges cover every page once; no page dropped');
+    const want = await page.evaluate((ps) => window.CVPortal.intake.normalize(window.CVPortal.intake.mergeAnswers(ps)), parts);
+    line(r.step === 'review' && r.method === 'auto' && JSON.stringify(r.profile) === JSON.stringify(want), `whole the merged answer reaches review through normalize unchanged (method ${r.method || 'none'})`);
+    const most = Math.max(0, ...r.progress.map((t) => Number((/([\d,]+) characters/.exec(t) || [0, '0'])[1].replace(/,/g, ''))));
+    const all = parts.reduce((n, p) => n + JSON.stringify(p).length, 0);
+    line(most === all, `whole the progress line kept counting across the requests (${most} of ${all} characters)`);
+  } finally {
+    await page.evaluate(() => (window.CVPortal.intake.RANGE_PAGES = 600));
+    await srv.close();
+  }
+
+  // A range whose encoded request is over the byte limit is halved until it fits (the limit lowered for the test).
+  rec = recordingIntake();
+  srv = await portalServer(rec);
+  try {
+    const bodies = await captureBodies(h, srv);
+    await setServer(page, srv.base, srv.token);
+    const limit = Math.round(fs.readFileSync(broken).toString('base64').length * 0.7);
+    await page.evaluate((n) => (window.CVPortal.intake.RANGE_BYTES = n), limit);
+    const r = await readOutcome(page, broken);
+    const ranges = rec.seen.map((x) => rangeOf(x.prompt, 12));
+    line(rec.seen.length >= 2 && bodies.every((b) => b.length <= limit) && coversOnce(ranges, 12) && r.method === 'auto', `whole a request over the byte limit is halved: ${rec.seen.length} requests (${ranges.map((x) => x.join(' to ')).join(', ')}), every body within ${limit} characters, no failure`);
+  } finally {
+    await page.evaluate(() => (window.CVPortal.intake.RANGE_BYTES = 31 * 1024 * 1024));
+    await srv.close();
+  }
+
+  // A range the server answers 413 (over 900000 counted tokens) is halved and sent again.
+  rec = recordingIntake(null, async (prompt, pdfs) => (pdfs || []).reduce((a, p) => a + p.pages * 100000, 0));
+  srv = await portalServer(rec);
+  try {
+    const bodies = await captureBodies(h, srv);
+    await setServer(page, srv.base, srv.token);
+    const r = await readOutcome(page, broken);
+    const ranges = rec.seen.map((x) => rangeOf(x.prompt, 12));
+    line(bodies.length === 3 && JSON.stringify(ranges) === '[[1,6],[7,12]]' && r.method === 'auto' && r.profile.offering.name === FUND.offering.name, `whole a 413 (1200000 counted tokens) is halved and sent again: ${bodies.length} requests, read ${ranges.map((x) => x.join(' to ')).join(', ')}, method ${r.method || 'none'}`);
+  } finally {
+    await srv.close();
+  }
+
+  // Any range that fails makes the whole reading fail: the built-in result and today's note.
+  rec = recordingIntake((i) => (i === 1 ? null : FUND));
+  srv = await portalServer(rec);
+  try {
+    await captureBodies(h, srv);
+    await setServer(page, srv.base, srv.token);
+    await page.evaluate(() => (window.CVPortal.intake.RANGE_PAGES = 5));
+    const r = await readOutcome(page, broken);
+    const notes = r.profile ? r.profile.notes.slice() : [];
+    const first = notes.shift() || '';
+    const same = !!r.profile && JSON.stringify(Object.assign({}, r.profile, { notes })) === JSON.stringify(r.rules);
+    line(rec.seen.length === 2 && r.method === 'rules' && same && first === WHY.other + 'The built-in reader was used instead.', `whole a failing second range: ${rec.seen.length} requests, method ${r.method || 'none'}, built-in result ${same ? 'kept' : 'changed'}, note "${first.replace(FALLBACK_NOTE, '').trim()}"`);
+  } finally {
+    await page.evaluate(() => (window.CVPortal.intake.RANGE_PAGES = 600));
+    await setServer(page, '', '');
+    await srv.close();
+  }
+}
+
 /* ---------- Part measure ---------- */
 const readRows = (file) => {
   try {
@@ -704,35 +870,56 @@ const readRows = (file) => {
   }
 };
 const KNOWN_NOTE = /^(Reading was stopped|Reading was not allowed|The documents were too long to read at once|Reading is busy right now|Reading could not finish)\. The built-in reader was used instead\.$/;
-/** The PDF uploaded on a fresh intake against srv, the /v1/intake answer captured unchanged; files written to dir. */
-async function measureRun(h, page, srv, dir, readLog, M) {
+/** What a request body sent, in numbers only: whether it carried PDFs, each PDF's page range and the document's pages. */
+function sentOf(text) {
+  let b = null;
+  try {
+    b = JSON.parse(text);
+  } catch (e) {
+    b = null;
+  }
+  const pdfs = b && Array.isArray(b.pdfs) ? b.pdfs : [];
+  const prompt = b && typeof b.prompt === 'string' ? b.prompt : '';
+  return { pdf: pdfs.length > 0, pages: pdfs.reduce((a, p) => a + (Number(p.pages) || 0), 0), of: pdfs[0] ? Number(pdfs[0].of) || null : null, range: pdfs[0] ? rangeOf(prompt, Number(pdfs[0].of) || 0) : null, cap: /test spend cap: pages 1 to (\d+) of \d+/.test(prompt) };
+}
+/** The PDF uploaded on a fresh intake against srv, every /v1/intake answer captured unchanged; files written to dir. */
+async function measureRun(h, page, srv, dir, readLog, M, maxTokens, testPageLimit) {
   fs.mkdirSync(dir, { recursive: true });
-  let captured = null;
+  const captured = [];
   await allow(h, srv.base, async (route) => {
     const req = route.request();
     if (req.method() === 'POST' && /\/v1\/intake$/.test(req.url())) {
+      const entry = { sent: sentOf(req.postData() || ''), status: 0, body: '' };
+      captured.push(entry);
       const resp = await route.fetch({ timeout: 700000 });
-      const body = await resp.text();
-      captured = { status: resp.status(), body };
-      return route.fulfill({ response: resp, body });
+      entry.body = await resp.text();
+      entry.status = resp.status();
+      return route.fulfill({ response: resp, body: entry.body });
     }
     return route.continue();
   });
   await setServer(page, srv.base, srv.token);
-  const before = readRows(readLog).length;
+  await page.evaluate((n) => {
+    if (n) window.CVPortal.intake.TEST_PAGE_LIMIT = n;
+    else delete window.CVPortal.intake.TEST_PAGE_LIMIT;
+  }, testPageLimit || 0);
+  const before = readRows(readLog);
   const t0 = Date.now();
   let r = null;
   try {
-    r = await readOnce(page, { file: DOC, timeout: 700000 });
+    r = await readOutcome(page, DOC, 1800000);
   } catch (e) {
     r = null;
   }
+  await page.evaluate(() => delete window.CVPortal.intake.TEST_PAGE_LIMIT);
   const seconds = Math.round((Date.now() - t0) / 100) / 10;
   const rows = readRows(readLog);
-  const row = rows.length > before ? rows[rows.length - 1] : null;
+  const row = rows.length > before.length ? rows[rows.length - 1] : null;
+  const spentOf = (list) => list.reduce((a, x) => a + M.costOf(x.usage, x.model).usd, 0);
+  const lastReq = captured.length ? captured[captured.length - 1] : null;
   let last = null;
-  if (captured && captured.status === 200) {
-    const ls = captured.body.split('\n').filter((l) => l.trim());
+  if (lastReq && lastReq.status === 200) {
+    const ls = lastReq.body.split('\n').filter((l) => l.trim());
     try {
       last = ls.length ? JSON.parse(ls[ls.length - 1]) : null;
     } catch (e) {
@@ -740,44 +927,110 @@ async function measureRun(h, page, srv, dir, readLog, M) {
     }
     if (last && typeof last.ok !== 'boolean') last = null;
   }
-  const raw = last && last.ok && last.json ? last.json : null;
-  const outcome = !r ? 'failed' : captured && captured.status === 402 ? 'cap' : r.method === 'auto' && raw ? 'read' : r.method === 'rules' ? 'fallback' : 'failed';
-  const why = !r ? 'the review step was not reached' : !captured ? 'no request reached the reading server' : captured.status !== 200 ? 'http ' + captured.status : last ? (last.ok ? '' : String(last.reason || '')) : 'no last line';
+  // The answers of every request, in order (one per page range); raw.json is the one answer, or the list when split.
+  const answers = captured.filter((c) => c.status === 200).map((c) => {
+    const ls = c.body.split('\n').filter((l) => l.trim());
+    try {
+      const m = JSON.parse(ls[ls.length - 1]);
+      return m && m.ok ? m.json : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const noText = !!r && r.step === 'upload' && r.error === NO_TEXT;
+  const read = !!r && r.step === 'review' && r.method === 'auto' && answers.length > 0 && answers.every(Boolean);
+  const raw = read ? (answers.length === 1 ? answers[0] : answers) : null;
+  const capped = captured.some((c) => c.status === 402);
+  const outcome = !r || noText ? 'failed' : capped ? 'cap' : read ? 'read' : r.method === 'rules' ? 'fallback' : 'failed';
+  const why = noText ? 'no-readable-text' : !r ? 'the review step was not reached' : !lastReq ? 'no request reached the reading server' : lastReq.status !== 200 ? 'http ' + lastReq.status : last ? (last.ok ? '' : String(last.reason || '')) : 'no last line';
   const note = r && r.profile && r.profile.notes && r.profile.notes[0] ? String(r.profile.notes[0]) : '';
+  const pdfReqs = captured.filter((c) => c.sent.pdf);
   const run = {
     outcome,
     why,
     seconds,
     readingMs: row ? row.ms : null,
     counted: row ? row.counted : null,
-    maxTokens: Number(arg('max-tokens') || 24000),
+    maxTokens,
     model: row ? row.model : '',
     usage: row ? row.usage : null,
     cost: row ? row.cost : 0,
-    spent: rows.reduce((a, x) => a + M.costOf(x.usage, x.model).usd, 0),
+    spent: spentOf(rows),
     method: r ? r.method : '',
     firstNote: KNOWN_NOTE.test(note) ? note : '',
-    trimmed: r ? r.trimmed : null
+    trimmed: r ? r.trimmed : null,
+    sent: !captured.length ? null : pdfReqs.length ? 'pdf' : 'text',
+    ranges: pdfReqs.map((c) => c.sent.range),
+    pdfOf: pdfReqs.length ? pdfReqs[0].sent.of : null,
+    testPageLimit: testPageLimit || null,
+    requests: captured.length
   };
   fs.writeFileSync(path.join(dir, 'raw.json'), JSON.stringify(raw, null, 2));
-  fs.writeFileSync(path.join(dir, 'profile.json'), JSON.stringify(r ? r.profile : null, null, 2));
+  fs.writeFileSync(path.join(dir, 'profile.json'), JSON.stringify(r && r.profile ? r.profile : null, null, 2));
   fs.writeFileSync(path.join(dir, 'run.json'), JSON.stringify(run, null, 2));
-  return { run, raw, r, row };
+  // A refusal that cost nothing: refused for the cap, nothing added to the folder's spend.
+  const free = capped && Math.abs(spentOf(rows) - spentOf(before)) < 1e-12;
+  return { run, raw, r, row, free, refused: capped ? pdfReqs.concat(captured.filter((c) => !c.sent.pdf)).find((c) => c.status === 402) : null };
 }
-/** A fake intake for the measure's fake mode: a fake token count, the fictional fund's reply, fake usage. */
+/**
+ * The test spend cap (D-38: production never cuts a document). After a refusal that cost nothing, first the output limit
+ * is lowered to what fits what remains of the cap with every page: the refusal's counted tokens scaled to all pages,
+ * priced at model.mjs's DEAREST prices, times 0.95, used only when that is at least 16000. Only when even 16000 does not
+ * fit is the test-only page limit set, to the most pages that fit at 16000. At most 3 attempts; null when nothing fits.
+ */
+function fitTestCap(M, cap, x) {
+  const row = x.row;
+  if (!x.free || !row || row.outcome !== 'spend_cap' || typeof row.counted !== 'number' || !x.refused) return null;
+  const remaining = Number(cap) - x.run.spent;
+  const sentPages = x.refused.sent.pages;
+  const of = x.refused.sent.of || 0;
+  const allIn = sentPages && of ? (row.counted * of) / sentPages : row.counted;
+  const maxTokens = Math.floor((((remaining * 1e6 - allIn * M.DEAREST.input) / M.DEAREST.output) * 0.95));
+  if (maxTokens >= 16000) return { maxTokens, testPageLimit: null };
+  if (!sentPages || !of) return null;
+  const perPage = row.counted / sentPages;
+  const pages = Math.floor(((remaining * 1e6 - 16000 * M.DEAREST.output) / M.DEAREST.input / perPage) * 0.95);
+  if (pages < 1) return null;
+  return { maxTokens: 16000, testPageLimit: Math.min(pages, of) };
+}
+/** A run, then up to two more fitted to the test cap; the attempts are stated. mk(maxTokens) starts a server. */
+async function fittedRun(h, page, mk, dir, readLog, M, cap, maxTokens, tag) {
+  const attempts = [];
+  let fit = { maxTokens, testPageLimit: null };
+  let x = null;
+  while (fit && attempts.length < 3) {
+    const srv = await mk(fit.maxTokens);
+    if (!srv) return { x, attempts, srvFailed: true };
+    try {
+      x = await measureRun(h, page, srv, dir, readLog, M, fit.maxTokens, fit.testPageLimit);
+    } finally {
+      await srv.close();
+    }
+    attempts.push({ maxTokens: fit.maxTokens, testPageLimit: fit.testPageLimit, outcome: x.run.outcome, free: x.free });
+    if (x.run.outcome !== 'cap') break;
+    fit = fitTestCap(M, cap, x);
+  }
+  x.run.attempts = attempts;
+  fs.writeFileSync(path.join(dir, 'run.json'), JSON.stringify(x.run, null, 2));
+  const said = attempts.map((a) => `max tokens ${a.maxTokens}${a.testPageLimit ? `, test spend cap: pages 1 to ${a.testPageLimit} of ${x.run.pdfOf}` : ''}: ${a.outcome === 'cap' ? (a.free ? 'refused at no cost' : 'refused') : a.outcome}`);
+  console.log(`      measure ${tag} attempts: ${attempts.length} (${said.join('; ')})`);
+  if (x.run.testPageLimit) console.log(`      measure ${tag}: test spend cap: pages 1 to ${x.run.testPageLimit} of ${x.run.pdfOf}`);
+  return { x, attempts };
+}
+/** A fake intake for the measure's fake mode: a fake count of 3000 tokens a page, the fictional fund's reply, fake usage. */
 function fakeMeasureIntake(budget, maxTokens) {
-  const tokens = (prompt) => Math.ceil(prompt.length / 4);
+  const tokens = (prompt, pdfs) => Math.ceil(prompt.length / 4) + (pdfs || []).reduce((a, p) => a + p.pages * 3000, 0);
   return {
     budget,
     maxTokens: () => maxTokens,
-    count: async (prompt) => tokens(prompt),
+    count: async (prompt, pdfs) => tokens(prompt, pdfs),
     available: async () => true,
-    async run(prompt, { onText }) {
+    async run(prompt, { onText, pdfs }) {
       const text = JSON.stringify(FUND);
       onText(text.slice(0, 40));
       await pause(100);
       onText(text.slice(40));
-      return { ok: true, json: JSON.parse(text), reason: '', ms: 150, model: 'fake-model', stopReason: 'end_turn', usage: { input_tokens: tokens(prompt), output_tokens: 3000, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 } };
+      return { ok: true, json: JSON.parse(text), reason: '', ms: 150, model: 'fake-model', stopReason: 'end_turn', usage: { input_tokens: tokens(prompt, pdfs), output_tokens: 3000, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 } };
     }
   };
 }
@@ -812,61 +1065,63 @@ async function spawnServer(dir, cap, maxTokens, proxy) {
 async function partMeasure(h, page) {
   const M = await import(pathToFileURL(path.join(ROOT, 'server/lib/model.mjs')).href);
   fs.mkdirSync(OUT, { recursive: true });
-  const cap = arg('cap') || '1.00';
-  const maxTokens = Number(arg('max-tokens') || 24000);
-  const readLog = path.join(OUT, 'read.log');
-  const say = (tag, x) => `measure ${tag}: outcome ${x.run.outcome}, ${x.run.seconds} s, cost $${Number(x.run.cost || 0).toFixed(4)}, ${x.r ? x.r.filled : 0} terms filled`;
+  const say = (tag, x) => `measure ${tag}: outcome ${x.run.outcome}${x.run.why ? ' (' + x.run.why + ')' : ''}, ${x.run.seconds} s, cost $${Number(x.run.cost || 0).toFixed(4)}, ${x.r && x.r.profile ? x.r.filled : 0} terms filled, sent ${x.run.sent || 'nothing'}${x.run.sent === 'pdf' ? ` (ranges ${x.run.ranges.map((g) => g.join(' to ')).join(', ')} of ${x.run.pdfOf})` : ''}`;
   if (FAKE) {
-    const mk = (capValue) => {
-      const env = { CARROWVALE_SPEND_CAP_USD: String(capValue), CARROWVALE_READ_LOG: readLog, CARROWVALE_READ_MAX_TOKENS: String(maxTokens) };
-      return portalServer(fakeMeasureIntake(M.createBudget(env), maxTokens), env);
+    // The fake cases: a cap that refuses 64000 output tokens but fits a lower limit; a cap where only a page limit fits;
+    // and the first folder again with a cap below anything (refused, nothing fits).
+    const mkFor = (capValue, log) => (mt) => {
+      const env = { CARROWVALE_SPEND_CAP_USD: String(capValue), CARROWVALE_READ_LOG: log, CARROWVALE_READ_MAX_TOKENS: String(mt) };
+      return portalServer(fakeMeasureIntake(M.createBudget(env), mt), env);
     };
-    let srv = await mk(cap);
-    let a;
-    try {
-      a = await measureRun(h, page, srv, OUT, readLog, M);
-    } finally {
-      await srv.close();
-    }
+    const readLog = path.join(OUT, 'read.log');
+    const capA = arg('cap') || '2.00';
+    const a = (await fittedRun(h, page, mkFor(capA, readLog), OUT, readLog, M, capA, Number(arg('max-tokens') || 64000), 'fake')).x;
     const expected = await page.evaluate((f) => window.CVPortal.intake.normalize(f), FUND);
     const usage = a.row ? a.row.usage : null;
     line(a.run.outcome === 'read', say('fake', a));
+    line(a.run.attempts.length === 2 && a.run.attempts[0].outcome === 'cap' && a.run.attempts[0].free && a.run.attempts[1].maxTokens >= 16000 && a.run.attempts[1].maxTokens < 64000 && a.run.testPageLimit === null, `measure fake the cap refused max tokens ${a.run.attempts[0] ? a.run.attempts[0].maxTokens : 0} at no cost; the retry used ${a.run.maxTokens} with every page (test page limit ${a.run.testPageLimit === null ? 'none' : a.run.testPageLimit})`);
+    line(a.run.sent === 'pdf' && a.run.pdfOf === 12 && coversOnce(a.run.ranges, 12), `measure fake run.json: sent ${a.run.sent}, ranges ${JSON.stringify(a.run.ranges)}, pdfOf ${a.run.pdfOf}, testPageLimit ${a.run.testPageLimit}`);
     line(!!usage && a.run.cost > 0 && Math.abs(a.run.cost - M.costOf(usage, 'fake-model').usd) < 1e-12, `measure fake usage priced into cost (${usage ? usage.input_tokens + usage.output_tokens : 0} tokens)`);
     line(JSON.stringify(a.raw) === JSON.stringify(FUND), 'measure raw.json equals the fake reply');
     line(JSON.stringify(JSON.parse(fs.readFileSync(path.join(OUT, 'profile.json'), 'utf8'))) === JSON.stringify(expected), 'measure profile.json equals the normalized reply');
-    // The same folder again with a cap below the bound: refused before any reading, the built-in result kept.
-    srv = await mk('0.01');
-    let b;
-    try {
-      b = await measureRun(h, page, srv, path.join(OUT, 'cap'), readLog, M);
-    } finally {
-      await srv.close();
-    }
-    const notes = b.r ? b.r.profile.notes.slice() : [];
+
+    // Only a page limit fits: reported as a test cap, pages 1 to N.
+    const pagesDir = path.join(OUT, 'pages');
+    fs.mkdirSync(pagesDir, { recursive: true });
+    const pagesLog = path.join(pagesDir, 'read.log');
+    const b = (await fittedRun(h, page, mkFor('1.00', pagesLog), pagesDir, pagesLog, M, '1.00', 64000, 'fake page limit')).x;
+    const n = b.run.testPageLimit;
+    line(b.run.outcome === 'read' && b.run.attempts.length === 2 && b.run.maxTokens === 16000 && n > 0 && n < 12 && JSON.stringify(b.run.ranges) === JSON.stringify([[1, n]]), `measure fake page limit: ${b.run.outcome}, max tokens ${b.run.maxTokens}, test spend cap: pages 1 to ${n} of ${b.run.pdfOf}, ranges ${JSON.stringify(b.run.ranges)}`);
+
+    // The first folder again with a cap below the bound: refused before any reading, nothing fits, the built-in result kept.
+    const c = (await fittedRun(h, page, mkFor('0.01', readLog), path.join(OUT, 'cap'), readLog, M, '0.01', 64000, 'fake below the cap')).x;
+    const notes = c.r && c.r.profile ? c.r.profile.notes.slice() : [];
     const first = notes.shift() || '';
-    const same = !!b.r && JSON.stringify(Object.assign({}, b.r.profile, { notes })) === JSON.stringify(b.r.rules);
-    line(b.run.outcome === 'cap' && same && first === WHY.other + 'The built-in reader was used instead.', say('fake below the cap', b) + (same ? ', built-in profile' : ', profile changed'));
-    line(Math.abs(b.run.spent - a.run.cost) < 1e-12, `measure the cap counted the folder's earlier call ($${b.run.spent.toFixed(4)} spent)`);
+    const same = !!c.r && !!c.r.profile && JSON.stringify(Object.assign({}, c.r.profile, { notes })) === JSON.stringify(c.r.rules);
+    line(c.run.outcome === 'cap' && c.run.attempts.length === 1 && same && first === WHY.other + 'The built-in reader was used instead.', say('fake below the cap', c) + (same ? ', built-in profile' : ', profile changed'));
+    line(Math.abs(c.run.spent - a.run.cost) < 1e-12, `measure the cap counted the folder's earlier call ($${c.run.spent.toFixed(4)} spent)`);
     return;
   }
-  let srv = await spawnServer(OUT, cap, maxTokens, true);
-  if (!line(!!srv, 'measure the reading server answered /health with reader true within 20 s')) return;
-  let a;
-  try {
-    a = await measureRun(h, page, srv, OUT, readLog, M);
-  } finally {
-    await srv.close();
-  }
+  const cap = arg('cap') || '1.00';
+  const maxTokens = Number(arg('max-tokens') || 24000);
+  const readLog = path.join(OUT, 'read.log');
+  let proxy = true;
+  let srvOk = true;
+  const mk = async (mt) => {
+    const s = await spawnServer(OUT, cap, mt, proxy);
+    if (!s) srvOk = false;
+    return s;
+  };
+  let out = await fittedRun(h, page, mk, OUT, readLog, M, cap, maxTokens, 'real');
+  if (!line(srvOk && !!out.x, 'measure the reading server answered /health with reader true within 20 s')) return;
+  let a = out.x;
   const noCall = (x) => x.row && ((['failed', 'timeout'].includes(x.row.outcome) && !x.row.model && !(x.row.usage && x.row.usage.input_tokens)) || (x.row.outcome === 'spend_cap' && x.row.counted === null));
   if ((a.run.outcome === 'fallback' || a.run.outcome === 'cap') && noCall(a)) {
     console.log('measure the network failed before any reading; retried once without the proxy setting');
-    srv = await spawnServer(OUT, cap, maxTokens, false);
-    if (!line(!!srv, 'measure the reading server answered /health with reader true within 20 s (retry)')) return;
-    try {
-      a = await measureRun(h, page, srv, OUT, readLog, M);
-    } finally {
-      await srv.close();
-    }
+    proxy = false;
+    out = await fittedRun(h, page, mk, OUT, readLog, M, cap, maxTokens, 'real (retry)');
+    if (!line(srvOk && !!out.x, 'measure the reading server answered /health with reader true within 20 s (retry)')) return;
+    a = out.x;
   }
   console.log(`measure spent in this folder $${a.run.spent.toFixed(4)}, counted ${a.run.counted === null ? 'none' : a.run.counted} tokens`);
   line(a.run.outcome !== 'failed', say('real', a));
@@ -882,7 +1137,10 @@ async function partMeasure(h, page) {
       if (PARTS.includes('api')) await partApi(h, page);
       if (PARTS.includes('fallback')) await partFallback(h, page);
       if (PARTS.includes('failures')) await partFailures(h, page);
-      if (PARTS.includes('unreadable')) await partUnreadable(h, page);
+      if (PARTS.includes('unreadable')) {
+        await partUnreadable(h, page);
+        await partWhole(h, page);
+      }
       if (PARTS.includes('measure')) await partMeasure(h, page);
       line(!h.errors.length, `page errors ${h.errors.length}`);
     } finally {

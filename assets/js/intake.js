@@ -22,6 +22,8 @@
     zip: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
   };
   const loading = {};
+  /** The PDF writer the portal already loads elsewhere, used here only to cut a long unreadable PDF into page ranges. */
+  const WRITER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
   function loadScript(src) {
     if (!loading[src])
       loading[src] = new Promise((res, rej) => {
@@ -218,7 +220,10 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
     for (const t of tokens) if (FUNCTION_WORDS.has(t)) n += 1;
     return n / tokens.length;
   }
-  /** A PDF whose extracted text has a smaller share than this is sent as the PDF itself (measured shares: see the record). */
+  /**
+   * A PDF whose extracted text has a smaller share than this is sent as the PDF itself. Tuned on public PDFs only; shares
+   * measured: 0.3949, 0.4081, 0.4177, 0.4191, 0.4204, 0.4317, 0.4584 (7 readable); 0.0109 (scrambled text layer); 0 (pictures).
+   */
   const UNREADABLE_BELOW = 0.1;
 
   /**
@@ -306,18 +311,83 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
     const unread = good.filter((d) => isPdf(d) && unreadableShare(d.text) < UNREADABLE_BELOW);
     if (!unread.length) return (await ask({ prompt: `${instructions()}\n\nDOCUMENTS:\n${corp}` }, '')).json;
 
-    // D-37: the readable documents' text as always, and each unreadable PDF named in the prompt and attached whole.
+    // D-37: the readable documents' text as always, and each unreadable PDF named in the prompt and attached. D-38: a PDF
+    // over one request's limits (RANGE_PAGES pages, RANGE_BYTES encoded, or a 413 from the server) is read in consecutive
+    // page ranges, one request each, and the answers merged; no page is ever left out. TEST_PAGE_LIMIT is set only by the
+    // measurement tool, to keep a test within its spend cap.
     if (opts.signal && opts.signal.aborted) throw fail('cancelled');
     const readable = good.filter((d) => unread.indexOf(d) < 0);
-    const named = unread.map((d) => `=== Document: ${d.name} (${d.pages} pages) === attached as a PDF because its text layer could not be read`);
-    const text = [readable.length ? corpus(readable, NS.intake.LIMIT).text : '', ...named].filter(Boolean).join('\n\n');
-    let pdfs;
-    try {
-      pdfs = await Promise.all(unread.map(async (d) => ({ name: d.name, data: await base64Of(d.file), pages: d.pages, of: d.pages })));
-    } catch (e) {
-      throw fail('failed');
+    const text0 = readable.length ? corpus(readable, NS.intake.LIMIT).text : '';
+    const span = Math.max(1, Math.floor(Number(NS.intake.RANGE_PAGES) || 600));
+    const maxBytes = Number(NS.intake.RANGE_BYTES) || 31 * 1024 * 1024;
+    const testCap = Number(NS.intake.TEST_PAGE_LIMIT) >= 1 ? Math.floor(Number(NS.intake.TEST_PAGE_LIMIT)) : 0;
+    const lastOf = (d) => (testCap ? Math.min(testCap, d.pages) : d.pages);
+    const named = (p) => {
+      const M = p.d.pages;
+      const N = lastOf(p.d);
+      const range = p.a === 1 && p.b === M ? '' : N < M && p.a === 1 && p.b === N ? '' : ` (pages ${p.a} to ${p.b} of ${M})`;
+      return `=== Document: ${p.d.name} (${M} pages) === attached as a PDF because its text layer could not be read${range}${N < M ? ` (test spend cap: pages 1 to ${N} of ${M})` : ''}`;
+    };
+    const loaded = new Map();
+    /** A part's PDF as base64: the uploaded file itself when the part is the whole document, else a new PDF of its pages. */
+    const dataOf = async (p) => {
+      if (p.a === 1 && p.b === p.d.pages) return base64Of(p.d.file);
+      await loadScript(WRITER);
+      const L = window.PDFLib;
+      if (!loaded.has(p.d)) loaded.set(p.d, await L.PDFDocument.load(new Uint8Array(await p.d.file.arrayBuffer()), { ignoreEncryption: true }));
+      const out = await L.PDFDocument.create();
+      const idx = [];
+      for (let i = p.a - 1; i < p.b; i++) idx.push(i);
+      (await out.copyPages(loaded.get(p.d), idx)).forEach((pg) => out.addPage(pg));
+      return base64Of(new Blob([await out.save()], { type: 'application/pdf' }));
+    };
+    const parts = unread.map((d) => ({ d, a: 1, b: lastOf(d) }));
+    let queue = [];
+    if (parts.length <= 5 && parts.reduce((n, p) => n + p.b, 0) <= span) queue.push(parts);
+    else parts.forEach((p) => {
+      for (let a = 1; a <= p.b; a += span) queue.push([{ d: p.d, a, b: Math.min(p.b, a + span - 1) }]);
+    });
+    /** A request too large to send: one request per PDF, or a range cut in two halves; false when it cannot be cut. */
+    const halve = (req) => {
+      if (req.length > 1) {
+        queue = req.map((p) => [p]).concat(queue);
+        return true;
+      }
+      const p = req[0];
+      if (p.b <= p.a) return false;
+      const mid = p.a + Math.ceil((p.b - p.a + 1) / 2) - 1;
+      queue = [[{ d: p.d, a: p.a, b: mid }], [{ d: p.d, a: mid + 1, b: p.b }]].concat(queue);
+      return true;
+    };
+    const answers = [];
+    let before = '';
+    while (queue.length) {
+      if (opts.signal && opts.signal.aborted) throw fail('cancelled');
+      const req = queue.shift();
+      const prompt = `${instructions()}\n\nDOCUMENTS:\n${[answers.length ? '' : text0, ...req.map(named)].filter(Boolean).join('\n\n')}`;
+      let pdfs;
+      try {
+        pdfs = [];
+        for (const p of req) pdfs.push({ name: p.d.name, data: await dataOf(p), pages: p.b - p.a + 1, of: p.d.pages });
+      } catch (e) {
+        throw fail('failed');
+      }
+      const size = prompt.length + pdfs.reduce((n, x) => n + x.data.length + x.name.length + 64, 32);
+      if (size > maxBytes) {
+        if (halve(req)) continue;
+        throw fail('prompt_too_large');
+      }
+      let got;
+      try {
+        got = await ask({ prompt, pdfs }, before);
+      } catch (e) {
+        if (e && e.code === 'prompt_too_large' && halve(req)) continue;
+        throw e;
+      }
+      answers.push(got.json);
+      before += got.text;
     }
-    return (await ask({ prompt: `${instructions()}\n\nDOCUMENTS:\n${text}`, pdfs }, '')).json;
+    return answers.length === 1 ? answers[0] : mergeAnswers(answers);
   }
   /** A file's bytes as base64 without line breaks. */
   function base64Of(blob) {
@@ -330,6 +400,81 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
       r.onerror = () => reject(r.error || new Error('Could not read the file.'));
       r.readAsDataURL(blob);
     });
+  }
+
+  /** Lists of named entries, merged by that name (case and spacing ignored); every other list by its normalized JSON or text. */
+  const MERGE_BY = { classes: 'name', 'structure.feeders': 'name', 'providers.others': 'name', investorTerms: 'label' };
+  /**
+   * The answers of several page ranges, in range order, as one answer in the instructions' shape (D-38). A term takes the
+   * first non-empty value (false counts as empty: it is the shape's default), with that same answer's sources and
+   * confidence for it; lists are concatenated in range order and de-duplicated, the first entry kept; update takes the first
+   * non-empty value. Source keys that are not a merged term (e.g. a list entry's) come from the first answer that has them.
+   */
+  function mergeAnswers(answers) {
+    const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+    const list = (answers || []).filter(isObj);
+    const empty = (v) => v == null || v === false || (typeof v === 'string' && !v.trim()) || (Array.isArray(v) && !v.length) || (isObj(v) && !Object.keys(v).length);
+    const norm = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim().toLowerCase();
+    const canon = (v) => (Array.isArray(v) ? '[' + v.map(canon).join(',') + ']' : isObj(v) ? '{' + Object.keys(v).sort().map((k) => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}' : typeof v === 'string' ? JSON.stringify(norm(v)) : JSON.stringify(v));
+    const sources = {};
+    const confidence = {};
+    const decided = new Set();
+    const take = (i, p) => {
+      const a = list[i];
+      if (isObj(a.sources) && a.sources[p] != null) sources[p] = a.sources[p];
+      if (isObj(a.confidence) && a.confidence[p] != null) confidence[p] = a.confidence[p];
+    };
+    // vals: [answer index, value] in range order, for one path.
+    const merge = (vals, p) => {
+      if (vals.some(([, v]) => Array.isArray(v))) {
+        decided.add(p);
+        const by = MERGE_BY[p];
+        const out = [];
+        const seen = new Set();
+        let first = -1;
+        vals.forEach(([i, v]) => {
+          if (!Array.isArray(v)) return;
+          if (v.length && first < 0) first = i;
+          v.forEach((x) => {
+            const k = by && isObj(x) && norm(x[by]) ? 'n:' + norm(x[by]) : 'j:' + canon(x);
+            if (seen.has(k)) return;
+            seen.add(k);
+            out.push(x);
+          });
+        });
+        if (first >= 0) take(first, p);
+        return out;
+      }
+      if (vals.some(([, v]) => isObj(v))) {
+        const keys = [];
+        vals.forEach(([, v]) => isObj(v) && Object.keys(v).forEach((k) => keys.indexOf(k) < 0 && keys.push(k)));
+        const out = {};
+        keys.forEach((k) => {
+          out[k] = merge(vals.filter(([, v]) => isObj(v) && v[k] !== undefined).map(([i, v]) => [i, v[k]]), p ? `${p}.${k}` : k);
+        });
+        return out;
+      }
+      decided.add(p);
+      const hit = vals.find(([, v]) => !empty(v));
+      if (hit) {
+        take(hit[0], p);
+        return hit[1];
+      }
+      return vals.length ? vals[0][1] : null;
+    };
+    const keys = [];
+    list.forEach((a) => Object.keys(a).forEach((k) => k !== 'sources' && k !== 'confidence' && keys.indexOf(k) < 0 && keys.push(k)));
+    const out = {};
+    keys.forEach((k) => {
+      out[k] = merge(list.map((a, i) => [i, a[k]]).filter(([, v]) => v !== undefined), k);
+    });
+    list.forEach((a) => {
+      if (isObj(a.sources)) Object.keys(a.sources).forEach((k) => !decided.has(k) && !(k in sources) && a.sources[k] != null && (sources[k] = a.sources[k]));
+      if (isObj(a.confidence)) Object.keys(a.confidence).forEach((k) => !decided.has(k) && !(k in confidence) && a.confidence[k] != null && (confidence[k] = a.confidence[k]));
+    });
+    out.sources = sources;
+    out.confidence = confidence;
+    return out;
   }
 
   /* ---------- The built-in reader (reader.js) ---------- */
@@ -662,4 +807,7 @@ Reporting. Members will receive quarterly reports and annual Schedule K-1s. The 
   NS.intake.SERVER_LIMIT_MS = 630000;
   NS.intake.unreadableShare = unreadableShare;
   NS.intake.UNREADABLE_BELOW = UNREADABLE_BELOW;
+  NS.intake.mergeAnswers = mergeAnswers;
+  NS.intake.RANGE_PAGES = 600;
+  NS.intake.RANGE_BYTES = 31 * 1024 * 1024;
 })(window.CVPortal);
