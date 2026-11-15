@@ -14,8 +14,9 @@ export const PERSONS = ['investor', 'sponsor'];
 export const GROUPS = ['all', 'individual', 'entity'];
 export const SIDES = ['on', 'right', 'left', 'below', 'above'];
 /**
- * Page images (D-38): pages that are pictures, or whose text layer cannot be read, come with a picture of the page on
- * which the browser has drawn and numbered its candidates. The published limits for this model: at most 600 images in
+ * Page images (D-38, D-43): every page with a numbered place (a picture page, a page whose text layer cannot be read,
+ * and on subscription agreements every text page too) comes with a picture of the page on which the browser has drawn
+ * and numbered its candidates. The published limits for this model: at most 600 images in
  * one request, 10 MB per image (base64-encoded), JPEG or PNG here; the browser keeps each image's long side at 2000 px,
  * under the 3000 px that applies to every image of a request with more than 20.
  */
@@ -67,6 +68,7 @@ export const ANSWER_SCHEMA = Object.freeze({
 /** The instructions: the generic rules of what is and is not a place (no document's text). */
 export const SYSTEM = [
   'You prepare subscription agreements for electronic signing. You receive the agreement as a PDF and a list of the printed places measured on its pages: every line, run of underscores, empty table cell, square and form field, each numbered [#id] where it sits among the printed words of its line. Decide which of them are places a person completes when signing, and what each one is.',
+  'Pictures of pages, when attached after the PDF, show the same numbered places as the list, each outlined and labelled #id: use the pictures to see the layout, shading and captions around each place, and the list\'s numbers to answer.',
   '',
   'What is a place:',
   '- Every place a person is meant to complete is a field, and nothing else is.',

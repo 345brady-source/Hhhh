@@ -3115,7 +3115,11 @@
    *   candidate number (missing places kept with their page). Size is never a reason to fall back.
    * - Never stutters: each request is sent through NS.readingFetch (network errors and 429, 500, 502, 503, 504, 529 sent
    *   again, at most 3 attempts, inside SERVER_LIMIT_MS); only the last failure falls back.
-   * A document that fits one request and has no picture page is sent exactly as plan 64 sends it.
+   * - D-43 (owner): every page with at least one numbered place is also sent as its picture, on text agreements too:
+   *   a text page keeps its words in the list and adds a picture (same size, quality and marks as a picture page) so the
+   *   reader sees layout, shading and captions; a page with no numbered place gets no picture. Chosen candidates still
+   *   land on the PDF's exact geometry. The pictures count toward a request's size and image limits (ranges halved).
+   * A document none of whose pages has a numbered place is never sent.
    */
   const SERVER_WHY = ['unavailable', 'timeout', 'declined', 'incomplete', 'invalid', 'failed'];
   const SERVER_WAIT = 'Finding every place to fill in…';
@@ -3197,6 +3201,9 @@
       rec.pictures = pictures.slice();
       const cand = NS.placement.candidates(layout, res.fields, { pictures });
       if (!cand.items.length) return keep('no-places');
+      // D-43: the pages sent as pictures: every picture page (plan 69), and every text page with a numbered place.
+      const placed = new Set(cand.rows.map((r) => r[1]));
+      const imaged = Array.from(new Set(pictures.concat(Array.from(placed)))).sort((a, b) => a - b);
       const token = String(NS.integrations.ensure(ws).server.token || '');
       const M = layout.length;
       const E = NS.esign || {};
@@ -3228,10 +3235,9 @@
       /** One request's body for pages a..b, or null when it has more pictures than one request may carry. */
       const bodyOf = async (a, b) => {
         const whole = a === 1 && b === M;
-        const pics = pictures.filter((n) => n >= a && n <= b);
+        const pics = imaged.filter((n) => n >= a && n <= b);
         if (pics.length > imageMax) return null;
         const list = whole ? cand.rows : cand.rows.filter((r) => r[1] >= a && r[1] <= b);
-        if (whole && !pics.length) return JSON.stringify({ pdf: await base64Of(blob), pages: M, text: cand.text, list });
         const images = [];
         for (const n of pics) images.push(await pictureOf(n));
         let text = cand.text;
@@ -3308,7 +3314,7 @@
         // Pictures already sent are let go.
         for (const n of Array.from(drawn.keys())) if (n >= a && n <= b) drawn.delete(n);
       }
-      rec.images = pictures.length;
+      rec.images = imaged.length;
       // The union of the ranges' choices, each place once (the first range's answer for it stands).
       const seen = new Set();
       merged.fields = merged.fields.filter((f) => f && !seen.has(f.id) && seen.add(f.id));

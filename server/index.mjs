@@ -425,8 +425,8 @@ export function createServer(opts = {}) {
    * incomplete, invalid or failed). Its own errors never reach the global handler, so no exception text, model or
    * provider name is ever sent; the browser closing the connection stops the call. The PDF is never stored.
    *
-   * D-38, both optional: images [{ page, data, marks }], a picture of each picture page (or page whose text layer cannot be
-   * read) with the candidates drawn and numbered on it (data base64 JPEG or PNG, at most IMAGE_BYTES each and IMAGE_MAX in
+   * D-38, both optional: images [{ page, data, marks }], a picture of each page with numbered places (picture pages, pages
+   * whose text layer cannot be read, and since D-43 every text page with a place) with the candidates drawn and numbered on it (data base64 JPEG or PNG, at most IMAGE_BYTES each and IMAGE_MAX in
    * all, one per page; marks the numbers drawn on it); range [first, last, of], when the PDF holds only pages first..last
    * of a longer agreement: the list's pages are then the agreement's own, inside the range, and its numbers are the
    * agreement's (increasing, not from 1). With images, or a PDF of more than 100 pages or 8 MB, the request is always
