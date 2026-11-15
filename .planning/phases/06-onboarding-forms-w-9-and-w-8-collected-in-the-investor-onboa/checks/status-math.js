@@ -136,78 +136,68 @@ const cases = {
     check('no flag when the offering is not Rule 506(b)', E.flags({ offerings: [o2], requests: seq(36) }, seq(36)[35]).length === 0);
     check('no flag for a redemption, a missing request or a missing offering', E.flags(ws, { type: 'redemption', investorId: 'p36', offeringId: 'o1', status: 'pending', qual: na }).length === 0 && E.flags(ws, null).length === 0 && E.flags({ requests: seq(36) }, seq(36)[35]).length === 0);
   },
-  regalimit({ check }) {
+  /** D-07 (owner, plan 06-11): Regulation A Tier 2 takes the investor's attestation; no figures, no limit worked out. */
+  'rega-attest-api'({ check }) {
     const E = eligibility();
-    check('eligibility.js exports regALimitCents, regAStatus, committedCents and usd', typeof E.regALimitCents === 'function' && typeof E.regAStatus === 'function' && typeof E.committedCents === 'function' && typeof E.usd === 'function');
-    const L2 = (q) => E.regALimitCents(q);
-    check('a person: 10 percent of the greater of income 150000 and net worth 400000 is 4,000,000 cents', L2({ kind: 'person', income: 150000, netWorth: 400000 }) === 4000000);
-    check('a person whose income is the greater: income 900000, net worth 300000 gives 9,000,000 cents', L2({ kind: 'person', income: 900000, netWorth: 300000 }) === 9000000);
-    check('an organization: revenue 2000000, net assets 500000 gives 20,000,000 cents ($200,000)', L2({ kind: 'entity', revenue: 2000000, netAssets: 500000 }) === 20000000);
-    check('an organization’s figures are read from revenue and net assets, not income and net worth', L2({ kind: 'entity', income: 9e9, netWorth: 9e9, revenue: 100000 }) === 1000000);
-    check('a person’s figures are read from income and net worth, not revenue and net assets', L2({ kind: 'person', revenue: 9e9, netAssets: 9e9, netWorth: 250000 }) === 2500000);
-    check('one figure given: the limit is 10 percent of it', L2({ kind: 'person', income: 200000 }) === 2000000 && L2({ kind: 'entity', netAssets: 70000 }) === 700000);
-    check('figures as text count when they are numbers', L2({ kind: 'person', income: '150000', netWorth: ' 400000 ' }) === 4000000);
-    check('no figure: the limit is not known (null)', L2({ kind: 'person' }) === null && L2({ kind: 'person', income: '', netWorth: null }) === null && L2({ kind: 'entity', revenue: undefined }) === null);
-    check('negative, absurd (over one trillion), infinite, NaN, boolean and non-numeric figures do not count', L2({ kind: 'person', income: -5, netWorth: 2e12 }) === null && L2({ kind: 'person', income: Infinity, netWorth: NaN }) === null && L2({ kind: 'person', income: true, netWorth: 'lots' }) === null && L2({ kind: 'person', income: -1, netWorth: 100000 }) === 1000000);
-    check('zero counts: income 0 and no net worth gives a limit of 0', L2({ kind: 'person', income: 0 }) === 0);
-    check('one trillion is the largest figure that counts', L2({ kind: 'entity', revenue: 1e12 }) === 1e13 && L2({ kind: 'entity', revenue: 1e12 + 1 }) === null);
-    check('no kind, an unknown kind, null or a non-object: null', L2({ income: 100000 }) === null && L2({ kind: 'trust', income: 100000 }) === null && L2(null) === null && L2('100000') === null);
-    check('a figure with cents: 10 percent rounded to the cent', L2({ kind: 'person', income: 123456.78 }) === 1234568);
+    check('eligibility.js exports regAStatus, RA_NOT_ATTESTED and usd', typeof E.regAStatus === 'function' && typeof E.RA_NOT_ATTESTED === 'string' && typeof E.usd === 'function');
+    check('no figure or limit arithmetic is left: regALimitCents, committedCents and figure are gone', E.regALimitCents === undefined && E.committedCents === undefined && E.figure === undefined, Object.keys(E));
     check('usd: "$40,000", "$1,234.50", "$0", "$1,000,000"', E.usd(4000000) === '$40,000' && E.usd(123450) === '$1,234.50' && E.usd(0) === '$0' && E.usd(100000000) === '$1,000,000', [E.usd(4000000), E.usd(123450), E.usd(0), E.usd(100000000)]);
   },
   regastatus({ check }) {
     const E = eligibility();
     const o = off('o1', 'Regulation A Tier 2');
-    const qa = (fig, extra) => Object.assign({ regime: 'regA2', accredited: false, basis: '', regA: fig }, extra || {});
+    const qa = (attested, extra) => Object.assign({ regime: 'regA2', accredited: false, basis: '' }, attested === undefined ? {} : { regA: { attested } }, extra || {});
     const c = (r, cents) => Object.assign(r, { cents });
     const ws = {
       offerings: [o],
       requests: [
-        c(sub('a', 'o1', 'approved', qa({ kind: 'person', income: 150000, netWorth: 400000, overLimit: false })), 3000000),
-        c(sub('a', 'o1', 'pending', qa({ kind: 'person', income: 150000, netWorth: 400000, overLimit: false })), 2000000),
-        c(sub('a', 'o1', 'rejected', qa({ kind: 'person', income: 150000, netWorth: 400000 })), 9000000),
-        c(sub('b', 'o1', 'pending', qa({ kind: 'entity', revenue: 2000000, netAssets: 500000, limitCents: 1, overLimit: true })), 15000000),
-        c(sub('n', 'o1', 'pending', qa({ kind: 'person' })), 5000000),
+        c(sub('a', 'o1', 'approved', qa(true)), 3000000),
+        c(sub('a', 'o1', 'pending', qa(true)), 2000000),
+        c(sub('b', 'o1', 'pending', qa(false)), 15000000),
+        c(sub('n', 'o1', 'pending', qa(null)), 5000000),
         c(sub('z', 'o1', 'pending', qa(undefined)), 5000000),
+        c(sub('old', 'o1', 'pending', qa(undefined, { regA: { kind: 'person', income: 1, limitCents: 10, overLimit: false } })), 5000000),
+        c(sub('d', 'o1', 'rejected', qa(false)), 9000000),
         c(sub('acc', 'o1', 'pending', { regime: 'regA2', accredited: true, basis: 'x' }), 99000000),
         c(sub('q', 'o1', 'pending'), 99000000),
-        c(sub('a', 'o2', 'pending', qa({ kind: 'person', income: 1 })), 99000000)
+        c(sub('x', 'o2', 'pending', qa(false)), 99000000)
       ]
     };
     const s = E.regAStatus(ws, o);
     const row = (id) => s.rows.find((r) => r.investorId === id) || {};
-    check('one row per investor who said not accredited (a, b, n, z); accredited and unanswered left out', same(s.rows.map((r) => r.investorId), ['a', 'b', 'n', 'z']), s.rows);
-    check('totals per investor over their subscriptions to this offering, declined not counted, other offerings not counted', row('a').totalCents === 5000000 && row('b').totalCents === 15000000, s.rows);
-    check('the limit is worked out from the stored figures: a 4,000,000, b 20,000,000', row('a').limitCents === 4000000 && row('b').limitCents === 20000000, s.rows);
-    check('a device overLimit false that disagrees is ignored: a (5,000,000 against 4,000,000) is over', row('a').over === true, row('a'));
-    check('a device overLimit true and a device limitCents that disagree are ignored: b (15,000,000 against 20,000,000) is not over', row('b').over === false, row('b'));
-    check('no figures (or no regA at all): the limit is not known, not over, counted apart', row('n').limitCents === null && row('n').over === false && row('z').limitCents === null && s.noFigures === 2, s);
-    check('over counts the investors above their limit (1)', s.over === 1, s);
-    check('committedCents: declined and other offerings left out', E.committedCents(ws, o, 'a') === 5000000 && E.committedCents(ws, o, 'nobody') === 0 && E.committedCents({}, o, 'a') === 0);
+    check('one row per investor who said not accredited (a, b, n, z, old); accredited, unanswered, declined and other offerings left out', same(s.rows.map((r) => r.investorId), ['a', 'b', 'n', 'z', 'old']), s.rows);
+    check('a ticked attestation reads attested true; left unticked reads false', row('a').attested === true && row('b').attested === false, s.rows);
+    check('no attestation on the answer (null, missing, or an earlier answer with figures) reads null', row('n').attested === null && row('z').attested === null && row('old').attested === null, s.rows);
+    check('rows carry no amount and no limit (the portal works none out)', s.rows.every((r) => Object.keys(r).sort().join() === 'attested,investorId'), s.rows);
+    check('notAttested counts every row that does not attest (4)', s.notAttested === 4, s);
     ['Regulation A Tier 1', 'Regulation A Tier 2, exchange-listed', 'Rule 506(b)', ''].forEach((ex) => {
       const r = E.regAStatus(Object.assign({}, ws, { offerings: [off('o1', ex)] }), off('o1', ex));
-      check(`no rows when the offering is "${ex || 'not set'}" (no limit applies)`, r.rows.length === 0 && r.over === 0 && r.noFigures === 0, r);
+      check(`no rows when the offering is "${ex || 'not set'}" (no limit applies)`, r.rows.length === 0 && r.notAttested === 0, r);
     });
     const u = E.regAStatus(ws, off('o1', 'Regulation A'));
-    check('an untiered "Regulation A" offering is worked out as Tier 2', u.rows.length === 4 && u.over === 1, u);
-    check('the latest answer decides: an investor who later said accredited has no row', E.regAStatus({ offerings: [o], requests: [c(sub('x', 'o1', 'pending', qa({ kind: 'person', income: 1 })), 100), c(sub('x', 'o1', 'pending', { regime: 'regA2', accredited: true }), 100)] }, o).rows.length === 0);
+    check('an untiered "Regulation A" offering is worked out as Tier 2', u.rows.length === 5 && u.notAttested === 4, u);
+    check('the latest answer decides: an investor who later said accredited has no row', E.regAStatus({ offerings: [o], requests: [c(sub('x', 'o1', 'pending', qa(false)), 100), c(sub('x', 'o1', 'pending', { regime: 'regA2', accredited: true }), 100)] }, o).rows.length === 0);
+    check('the latest answer decides: a later attestation replaces an earlier one left unticked', E.regAStatus({ offerings: [o], requests: [c(sub('x', 'o1', 'pending', qa(false)), 100), c(sub('x', 'o1', 'pending', qa(true)), 100)] }, o).rows[0].attested === true);
   },
   raflags({ check }) {
     const E = eligibility();
     const o = off('o1', 'Regulation A Tier 2');
-    const qa = (fig) => ({ regime: 'regA2', accredited: false, basis: '', regA: fig });
-    const r1 = Object.assign(sub('a', 'o1', 'pending', qa({ kind: 'person', income: 150000, netWorth: 400000, overLimit: false })), { cents: 5000000 });
-    const r2 = Object.assign(sub('b', 'o1', 'pending', qa({ kind: 'person', income: 1000000, overLimit: true })), { cents: 5000000 });
-    const r3 = Object.assign(sub('n', 'o1', 'pending', qa({ kind: 'person' })), { cents: 5000000 });
+    const qa = (attested) => ({ regime: 'regA2', accredited: false, basis: '', regA: { attested } });
+    const FLAG = 'Not accredited and has not attested to the Regulation A Tier 2 limit (10 percent of income or net worth)';
+    const r1 = Object.assign(sub('a', 'o1', 'pending', qa(false)), { cents: 5000000 });
+    const r2 = Object.assign(sub('b', 'o1', 'pending', qa(true)), { cents: 500000000 });
+    const r3 = Object.assign(sub('n', 'o1', 'pending', qa(null)), { cents: 5000000 });
     const ws = { offerings: [o], requests: [r1, r2, r3] };
-    check('an investor over their limit: the request reads "Over the Regulation A Tier 2 limit: $50,000 committed in this offering, limit $40,000"', JSON.stringify(E.flags(ws, r1)) === JSON.stringify(['Over the Regulation A Tier 2 limit: $50,000 committed in this offering, limit $40,000']), E.flags(ws, r1));
-    check('under the limit (whatever the device said): no flag', E.flags(ws, r2).length === 0, E.flags(ws, r2));
-    check('no figures: no flag', E.flags(ws, r3).length === 0);
+    check(`not attested: the request reads "${FLAG}"`, E.flags(ws, r1).join() === FLAG && E.RA_NOT_ATTESTED === FLAG, E.flags(ws, r1));
+    check('attested: no flag, whatever the amount', E.flags(ws, r2).length === 0, E.flags(ws, r2));
+    check('no attestation on the answer: flagged', E.flags(ws, r3).join() === FLAG, E.flags(ws, r3));
     const earlier = Object.assign(sub('a', 'o1', 'approved'), { cents: 1000000 });
     const ws2 = { offerings: [o], requests: [earlier, r1] };
-    check('each subscription of an investor over the limit carries the flag, with the total of all of them', E.flags(ws2, earlier).join() === 'Over the Regulation A Tier 2 limit: $60,000 committed in this offering, limit $40,000' && E.flags(ws2, r1).join() === E.flags(ws2, earlier).join(), [E.flags(ws2, earlier), E.flags(ws2, r1)]);
+    check('each subscription of an investor who has not attested carries the flag', E.flags(ws2, earlier).join() === FLAG && E.flags(ws2, r1).join() === FLAG, [E.flags(ws2, earlier), E.flags(ws2, r1)]);
     const declined = Object.assign({}, r1, { status: 'rejected' });
     check('a declined request is not flagged', E.flags({ offerings: [o], requests: [declined] }, declined).length === 0);
+    const acc = Object.assign(sub('c', 'o1', 'pending', { regime: 'regA2', accredited: true, basis: 'x' }), { cents: 5000000 });
+    check('an accredited investor is not flagged', E.flags({ offerings: [o], requests: [acc] }, acc).length === 0);
     ['Regulation A Tier 1', 'Regulation A Tier 2, exchange-listed'].forEach((ex) => {
       const ox = off('o1', ex);
       check(`no Regulation A flag under "${ex}"`, E.flags({ offerings: [ox], requests: [r1] }, r1).length === 0);

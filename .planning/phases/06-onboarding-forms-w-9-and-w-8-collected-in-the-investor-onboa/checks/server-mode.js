@@ -20,11 +20,11 @@ L.describeShots([
   ['b506-subscribe.png', 'Investor’s device, subscribe step: it states the account is not an accredited investor.'],
   ['b506-done.png', 'Investor’s device, done screen after the completion went to the integration server.'],
   ['b506-console-offering.png', 'Console after import: "Non-accredited purchasers: 1 of 35", and the Benefit plan investors panel with the request’s if-accepted figure.'],
-  ['regA-status.png', 'Investor’s device, Regulation A Tier 2 status step: income $85,000, net worth $120,000, "Your investment limit in this offering: $12,000".'],
-  ['regA-subscribe.png', 'Investor’s device, subscribe step: $60,000 over the $12,000 limit, the warning that does not block.'],
+  ['regA-status.png', 'Investor’s device, Regulation A Tier 2 status step (D-07): "not accredited", the one statement about the 10 percent limit left unticked, no figures asked.'],
+  ['regA-subscribe.png', 'Investor’s device, subscribe step: the warning that the investor has not confirmed the limit, which does not block.'],
   ['regA-done.png', 'Investor’s device, done screen (Regulation A).'],
-  ['regA-requests.png', 'Console requests page: "Over the Regulation A Tier 2 limit: $60,000 committed in this offering, limit $12,000" although the stored device flag was altered to "not over".'],
-  ['regA-console-offering.png', 'Console offering page: "1 non-accredited subscriber, 1 over their 10 percent limit" and Dana Whitfield’s line.'],
+  ['regA-requests.png', 'Console requests page: "Not accredited and has not attested to the Regulation A Tier 2 limit (10 percent of income or net worth)" on the imported request.'],
+  ['regA-console-offering.png', 'Console offering page: "1 non-accredited subscriber, 1 not attested to the 10 percent limit" and Dana Whitfield named.'],
   ['full34-status.png', 'Investor’s device with 34 non-accredited purchasers counted when invited: status step answered "not accredited", no warning (they would be the 35th).'],
   ['full34-subscribe.png', 'Investor’s device, subscribe step (34 counted).'],
   ['full34-done.png', 'Investor’s device, done screen (34 counted).'],
@@ -396,10 +396,9 @@ const parts = {
   },
 
   /**
-   * C-01 / T-06-06 / T-06-13 in server mode: a Regulation A Tier 2 person who is not accredited gives figures (income
-   * $85,000, net worth $120,000: limit $12,000), commits $60,000, sees the warning and completes on their own device.
-   * Before the console imports, the check alters the stored submission: overLimit false and a limit of $1,000,000. The
-   * console recomputes from the stored figures and its own requests and still flags the investor: $60,000 against $12,000.
+   * C-01 / D-07 / T-06-13 in server mode: a Regulation A Tier 2 person who is not accredited leaves the attestation to the
+   * 10 percent limit unticked, commits $60,000, sees the warning and completes on their own device. The attestation
+   * (attested false) travels to the server and the console unchanged; the console flags the request and names the investor.
    */
   async regA({ check, S }) {
     const F = await serverFlow(S, check, {
@@ -407,51 +406,38 @@ const parts = {
       exemption: 'Regulation A Tier 2',
       answers: { acc: 'no', amount: 60000 },
       onStatus: async (p, R) => {
-        R.kind = await p.evaluate(() => (document.querySelector('input[name="ob-stRaKind"]:checked') || {}).value || '');
-        await p.fill('#ob-stIncome', '85000');
-        await p.fill('#ob-stWorth', '120000');
-        await p.waitForTimeout(200);
-        R.limit = await p.locator('#ra-limit').innerText().catch(() => '');
+        R.attestQ = await p.locator('#ob-stRaAttest').count();
+        R.attestText = R.attestQ ? await p.locator('label[for="ob-stRaAttest"]').innerText() : '';
+        R.figFields = await p.locator('#ob-stIncome, #ob-stWorth, #ob-stRevenue, #ob-stAssets, input[name="ob-stRaKind"], #ra-limit').count();
       },
       onSubscribe: async (p, R) => {
         R.raSub = await p.locator('#ra-sub').innerText().catch(() => '');
         R.warn = await p.locator('#ra-sub .wire-warn').innerText().catch(() => '');
-      },
-      beforeImport: async (srv, inv, stored) => {
-        const sub = srv.alter(inv.serverId, (s) => {
-          s.request.qual.regA.overLimit = false;
-          s.request.qual.regA.limitCents = 100000000;
-        });
-        // Read back through the console's own pickup, so the console is given exactly the altered copy.
-        const now = await srv.submission(inv.serverId);
-        return isDeepStrictEqual(now.request.qual, sub.request.qual) ? now : { altered: false, now };
       }
     });
     try {
       check('the offering is "Regulation A Tier 2", chosen with the console’s select', F.exemption === 'Regulation A Tier 2', F.exemption);
-      check('the investor’s device shows the limit from the figures: "Your investment limit in this offering: $12,000"', F.R.kind === 'person' && F.R.limit === 'Your investment limit in this offering: $12,000', F.R);
-      check('the subscribe step shows the limit and warns about $60,000 over it, without blocking', /Your investment limit in this offering under Regulation A: \$12,000/.test(F.R.raSub || '') && !!F.R.warn && F.walk.errors.length === 0, { raSub: F.R.raSub, warn: F.R.warn });
-      const dq = F.deviceQual && F.deviceQual.regA;
-      check('the device’s own qual said over the limit ($12,000, $60,000)', !!dq && dq.overLimit === true && dq.limitCents === 1200000 && dq.commitmentCents === 6000000, F.deviceQual);
+      check('the investor’s device shows the one statement about the 10 percent limit and no figure fields or limit line', F.R.attestQ === 1 && /is not more than 10 percent of my annual income or my net worth/.test(F.R.attestText || '') && F.R.figFields === 0, F.R);
+      check('left unticked, the subscribe step warns without blocking', /You have not confirmed that your total investment in this offering is within your limit under Regulation A/.test(F.R.warn || '') && F.walk.errors.length === 0, { raSub: F.R.raSub, warn: F.R.warn });
+      check('the device’s own qual carries regA exactly { attested: false }', !!F.deviceQual && JSON.stringify(F.deviceQual.regA) === '{"attested":false}', F.deviceQual);
       commonChecks(check, F);
       const q = (F.req && F.req.qual) || {};
-      check('the console holds the altered device values (overLimit false, limit $1,000,000) on the imported request', q.regime === 'regA2' && q.accredited === false && !!q.regA && q.regA.overLimit === false && q.regA.limitCents === 100000000, q);
-      // The console recomputes: the request row and the eligibility panel flag the investor with the right total and limit.
+      check('the console’s imported request: regA2, not accredited, attested false', q.regime === 'regA2' && q.accredited === false && JSON.stringify(q.regA) === '{"attested":false}', q);
       const cp = F.A.page;
       await L.consoleRoute(cp, 'console-requests', '[data-action=req-tab][data-t=all]');
       await cp.click('[data-action=req-tab][data-t=all]');
       await cp.waitForTimeout(300);
       const row = F.req ? await requestRow(cp, F.req.id) : '';
       await cp.screenshot({ path: path.join(SHOTS, 'regA-requests.png'), fullPage: true });
-      check('the request row reads "Over the Regulation A Tier 2 limit: $60,000 committed in this offering, limit $12,000"', /Over the Regulation A Tier 2 limit: \$60,000 committed in this offering, limit \$12,000/.test(row), row);
+      check('the request row reads "Not accredited and has not attested to the Regulation A Tier 2 limit (10 percent of income or net worth)"', /Not accredited and has not attested to the Regulation A Tier 2 limit \(10 percent of income or net worth\)/.test(row), row);
       check('the flagged request keeps Approve and Decline (nothing blocked)', F.req && (await cp.locator(`[data-action=req-approve][data-id="${F.req.id}"]`).count()) === 1 && (await cp.locator(`[data-action=req-decline][data-id="${F.req.id}"]`).count()) === 1);
       const rowText = await L.screenText(cp);
       await L.consoleRoute(cp, 'console-offering-' + F.off.offeringId);
       const el = await panelText(cp, 'Investor eligibility');
       const ct = await L.screenText(cp);
       await cp.screenshot({ path: path.join(SHOTS, 'regA-console-offering.png'), fullPage: true });
-      check('the eligibility panel: 1 non-accredited subscriber, 1 over their 10 percent limit', /Regulation A Tier 2: 1 non-accredited subscribers?, 1 over their 10 percent limit/.test(el), el);
-      check('the eligibility panel lists Dana Whitfield: $60,000 committed in this offering, limit $12,000', /Dana Whitfield: \$60,000 committed in this offering, limit \$12,000/.test(el) && !/\$1,000,000/.test(el), el);
+      check('the eligibility panel: 1 non-accredited subscriber, 1 not attested to the 10 percent limit', /Regulation A Tier 2: 1 non-accredited subscribers?, 1 not attested to the 10 percent limit/.test(el), el);
+      check('the eligibility panel names Dana Whitfield as not attested, with no amount or limit', /Dana Whitfield has not attested that this investment is within their 10 percent limit/.test(el) && !/\$/.test(el), el);
       const lk = L.leakCheck([F.R.status, F.R.sub, rowText, ct].join('\n'));
       check('white label: the investor’s status and subscribe screens and the console pages pass the leak check', lk.ok, lk.hits);
     } finally {

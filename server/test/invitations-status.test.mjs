@@ -40,7 +40,7 @@ const QUAL = {
   accredited: false,
   basis: '',
   sophistication: { experience: 'Twelve years of private real estate and venture fund commitments', education: 'Civil engineer, MBA', rep: { name: 'Morgan Ellery', firm: 'Ellery Advisory Partners', fileId: 'rep-HRC-0042-mh2x1q', fileName: 'acknowledgment.pdf' } },
-  regA: { kind: 'person', figures: { income: 85000, worth: 120000, revenue: null, assets: null }, limitCents: 1200000, commitmentCents: 6000000, overLimit: true },
+  regA: { attested: true },
   erisa: { plan: 'planAssets', planPct: 40, controlling: false, share: 0.4 },
   note: 'Unicode stays as typed: Zoë, “quotes”, 10 %'
 };
@@ -96,15 +96,15 @@ test('request.qual (506(b), Regulation A Tier 2 and benefit plan answers) reache
     const sub = await j(base, 'GET', `/v1/invitations/${r.id}/submission`);
     assert.equal(sub.status, 200);
     assert.deepEqual(sub.body.request.qual, QUAL, 'qual comes back exactly as the device sent it');
-    // The invitation's own ids still win over the device's (T-06-14), and the device's flags are kept, not recomputed.
+    // The invitation's own ids still win over the device's (T-06-14), and the device's answers are kept as sent.
     assert.equal(sub.body.request.investorId, 'HRC-0042');
     assert.equal(sub.body.request.offeringId, 'hr-fund-iii');
     assert.equal(sub.body.request.cents, 6000000);
-    assert.equal(sub.body.request.qual.regA.overLimit, true);
+    assert.equal(sub.body.request.qual.regA.attested, true);
     assert.equal(sub.body.request.qual.erisa.share, 0.4);
-    // A device that claims a flag the figures do not support gets it passed through as sent: the console recomputes.
+    // The other answer (Regulation A attestation left unticked) is passed through as sent too: the console reads it.
     const r2 = await invite(base, { investor: { id: 'HRC-0043', contact: 'Lee Okafor', title: 'Lee Okafor', type: 'individual', email: 'lee@investor.example' } });
-    const lying = Object.assign({}, QUAL, { regA: Object.assign({}, QUAL.regA, { overLimit: false }) });
+    const lying = Object.assign({}, QUAL, { regA: { attested: false } });
     const s2 = submission(lying);
     s2.investor = Object.assign({}, s2.investor, { id: 'HRC-0043', contact: 'Lee Okafor', title: 'Lee Okafor', email: 'lee@investor.example' });
     s2.request = Object.assign({}, s2.request, { investorId: 'HRC-0043' });
@@ -116,7 +116,7 @@ test('request.qual (506(b), Regulation A Tier 2 and benefit plan answers) reache
 test('an investor’s answers for a commitment the sponsor set: qual unchanged, the locked amount forced', () =>
   start(async (base) => {
     const r = await invite(base, { invitation: { cents: 6000000, cls: 'A', note: '', expiresAt: new Date(T0 + 30 * DAY).toISOString() } });
-    const qual = { regime: 'regA2', at: '2026-11-10T12:20:00Z', accredited: false, basis: '', regA: { kind: 'organization', figures: { income: null, worth: null, revenue: 400000, assets: 250000 }, limitCents: 4000000, commitmentCents: 6000000, overLimit: true }, erisa: { plan: '4975', planPct: null, controlling: true, share: 1 } };
+    const qual = { regime: 'regA2', at: '2026-11-10T12:20:00Z', accredited: false, basis: '', regA: { attested: false }, erisa: { plan: '4975', planPct: null, controlling: true, share: 1 } };
     assert.deepEqual((await complete(base, r.token, submission(qual))).body, { ok: true });
     const sub = await j(base, 'GET', `/v1/invitations/${r.id}/submission`);
     assert.deepEqual(sub.body.request.qual, qual);

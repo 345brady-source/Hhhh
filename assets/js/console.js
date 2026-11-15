@@ -519,28 +519,30 @@
     );
   }
   /**
-   * Regulation A Tier 2 (D-01, C-01): the subscribers who said they are not accredited, and each one whose subscriptions to
-   * this offering add up to more than 10 percent of the greater of the figures they gave. Every limit and total is worked
-   * out here from the stored figures and the requests (regAStatus), never from a flag the investor's device set. Nothing
-   * is blocked: the sponsor decides on each subscription.
+   * Regulation A Tier 2 (D-07, C-01): the subscribers who said they are not accredited, and which of them attested that the
+   * total they put into this offering is within 10 percent of the greater of their income or net worth (organizations:
+   * revenue or net assets). The portal asks for no figures and works out no limit. Nothing is blocked: the sponsor decides
+   * on each subscription.
    */
   function regAPanel(o) {
     const EL = NS.eligibility;
     const s = EL.regAStatus(W(), o);
     const n = s.rows.length;
-    const over = s.rows
-      .filter((r) => r.over)
-      .map((r) => {
-        const inv = invById(r.investorId);
-        return `<p class="cs-elig-over">${badge('bad', 'Over the limit')} <strong>${h(inv ? inv.title : r.investorId)}</strong>: ${h(EL.usd(r.totalCents))} committed in this offering, limit ${h(EL.usd(r.limitCents))}</p>`;
-      })
+    const nameOf = (id) => {
+      const inv = invById(id);
+      return inv ? inv.title : id;
+    };
+    const not = s.rows
+      .filter((r) => r.attested !== true)
+      .map((r) => `<p class="cs-elig-noattest" data-investor="${h(r.investorId)}">${badge('warn', 'Not attested')} <strong>${h(nameOf(r.investorId))}</strong> has not attested that this investment is within their 10 percent limit</p>`)
       .join('');
-    const none = s.noFigures ? `<p class="cs-muted">${h(String(s.noFigures))} ${s.noFigures === 1 ? 'subscriber has' : 'subscribers have'} not given figures, so ${s.noFigures === 1 ? 'that limit is' : 'those limits are'} not known.</p>` : '';
+    const yes = s.rows.filter((r) => r.attested === true).map((r) => nameOf(r.investorId));
+    const attestedLine = yes.length ? `<p class="cs-muted cs-elig-attested">Attested to the 10 percent limit: ${h(yes.join(', '))}</p>` : '';
     return panel(
       'Investor eligibility',
-      `<p class="cs-elig-count"><strong>Regulation A Tier 2: ${h(String(n))} non-accredited subscriber${n === 1 ? '' : 's'}, ${h(String(s.over))} over their 10 percent limit</strong></p>
-      ${over}${none}
-      <p class="cs-hint">Each limit is 10 percent of the greater of the annual income and net worth an investor stated (for an organization, its revenue and net assets for the most recent fiscal year), set against all their subscriptions to this offering. Declined subscriptions are not counted, and accredited investors have no limit.</p>`
+      `<p class="cs-elig-count"><strong>Regulation A Tier 2: ${h(String(n))} non-accredited subscriber${n === 1 ? '' : 's'}, ${h(String(s.notAttested))} not attested to the 10 percent limit</strong></p>
+      ${not}${attestedLine}
+      <p class="cs-hint">An investor who is not accredited may put no more than 10 percent of the greater of their annual income and net worth (for an organization, its revenue and net assets for the most recent fiscal year) into this offering. Each one is asked to attest to it; the portal asks for no figures. Declined subscriptions are not counted, and accredited investors have no limit.</p>`
     );
   }
   /** D-30: investors who left the status question open, and holders with no subscription made here, shown apart from the count. */
