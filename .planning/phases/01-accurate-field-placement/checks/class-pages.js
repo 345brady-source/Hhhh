@@ -98,7 +98,35 @@ const SIG_PAGE_PROSE = [
 /** A tick box drawn as a box character, with its own words after it. */
 const glyph = (label, more) => `<span data-k="bracket" data-x='${attr(Object.assign({ type: 'checkbox', role: 'investor', fillIn: true, required: false, label, review: false }, more || {}))}'>&#9744;</span> `;
 
+/** A tick box printed as a fallback glyph: the box character of a symbol font shown in a text font (a lone U+00A8), or a lone letter. */
+const fallback = (ch, label, more) => `<span data-k="bracket" data-x='${attr(Object.assign({ type: 'checkbox', role: 'investor', fillIn: true, required: false, label, review: false }, more || {}))}'>${ch}</span>`;
+/** A line of words at an exact place, nothing expected on it. */
+const words = (x, top, s, size) => at(x, top, size || 10, s);
+
 const CLASS_PAGES = {
+  /* ---------- tick boxes printed as a fallback glyph (Phase 01.4 class 8) ---------- */
+  // A column of five options under a question, each opening with a lone U+00A8 (a word processor's box character
+  // printed in a text font that has no box), a wide space, then the option's words. Five tick boxes, none marked.
+  glyphFallback: {
+    marks: 0,
+    html: pg(`${words(72, 80, '<b>2. FORM OF OWNERSHIP</b>', 11)}${words(72, 100, 'How will the units be held?')}
+${['Individual', 'Joint tenants', 'Trust', 'Corporation', 'Retirement account'].map((l, i) => at(90, 122 + i * 18, 10, `${fallback('&#168;', l)}&nbsp;&nbsp;&nbsp;&nbsp;${l}`)).join('')}`)
+  },
+  // Two options under a check-one caption, each opening with a lone letter o in the text font, set at the same left
+  // edge on two lines: two tick boxes.
+  glyphChoice: {
+    marks: 0,
+    html: pg(`${words(72, 80, 'Distributions (check one):')}
+${at(90, 100, 10, `${fallback('o', 'Pay distributions in cash')}&nbsp; Pay distributions in cash`)}${at(90, 118, 10, `${fallback('o', 'Reinvest distributions')}&nbsp; Reinvest distributions`)}`)
+  },
+  // Guard: three statements, each a long sentence opening with a lone letter o set as a bullet, with no words of
+  // choice above them or in them. No field.
+  glyphBullet: {
+    guard: true,
+    html: pg(`${words(72, 80, '<b>RISK FACTORS</b>', 11)}${words(72, 100, 'Before investing, read the following statements carefully.')}
+${['The value of the units may go down as well as up and past results do not guide the future.', 'There is no public market for the units and none is expected to develop for many years to come.', 'The manager may call for capital at short notice and a late payment may cost the investor dearly.'].map((s, i) => at(90, 122 + i * 18, 9, `o&nbsp; ${s}`)).join('')}`)
+  },
+
   /* ---------- places for somebody else ---------- */
   // An investor block and, lower on the same page, a heading in capitals ending in a colon that names a custodian and
   // says it applies only in some cases, with six blanks under it: four labelled, two unlabelled lines under the address.

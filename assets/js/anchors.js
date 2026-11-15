@@ -288,6 +288,142 @@
     return set.indexOf(low) >= 0;
   }
 
+  /*
+   * Tick boxes printed as a fallback glyph. A word processor's box character printed in a font that does not have it
+   * comes out as another character: a lone U+00A8 (the box's code in the symbol font, shown in a text font), or a
+   * lone q, o or U+00A8 in a symbol font whose code the reader cannot map. A lone letter o, p, q, r, c, i or an
+   * apostrophe in a text font is a box only in a choice position (inChoice). Lone: no other character touches it on its line.
+   */
+  const FALLBACK_BOX = /^\u00A8$/;
+  const SYMBOL_LIKE = /wingding|dingbat|symbol|webding/i;
+  const SYMBOL_LETTER = /^[qo\u00A8]$/;
+  // (o, p, q and r are the symbol font's own box codes shown in a text font; c, i and an apostrophe are printed for them too)
+  const CHOICE_LETTER = /^[opqrci'\u2019]$/;
+  /** Words that ask for a choice: in the lines over a list of options, or in an option's own words. */
+  const CHOICE_SAID = /\b(check|tick|mark|select|choose|circle|indicate|elect)(ed|s|ing)?\b|\b(applicable|apply|applies)\b|\bone of the following\b/i;
+  /** An option's own words that speak of its box ("Check this box if ..."). */
+  const BOX_SAID = /\b(check|tick|mark)(ed|ing)?\b[^.]{0,30}\bbox\b|\bthis box\b/i;
+  /**
+   * A fixed-pitch font: text typed as plain text has no symbol font to fall back from, and a word processor prints its
+   * second-level bullet as an o in one. A lone letter in it is never a fallback box.
+   */
+  const FIXED_PITCH = /mono|courier|consol|typewriter|fixed/i;
+  /** Printed lines of characters: the same baseline within half a point, each ordered left to right. */
+  function rowsOf(ink) {
+    const rows = [];
+    ink.slice().sort((a, b) => a.y - b.y || a.x0 - b.x0).forEach((g) => {
+      const r = rows[rows.length - 1];
+      if (r && Math.abs(g.y - r.y) < 0.5) r.g.push(g);
+      else rows.push({ y: g.y, g: [g] });
+    });
+    rows.forEach((r, i) => {
+      r.g.sort((a, b) => a.x0 - b.x0);
+      r.i = i;
+      r.g.forEach((g, k) => Object.assign(g, { row: r, k }));
+    });
+    return rows;
+  }
+  /** No other character touches the glyph on its line (a letter of a word has a neighbour closer than a fifth of its height). */
+  function lone(g) {
+    const touch = (o) => !!o && o.x0 < g.x1 + 0.2 * g.h && o.x1 > g.x0 - 0.2 * g.h;
+    return !touch(g.row.g[g.k - 1]) && !touch(g.row.g[g.k + 1]);
+  }
+  /**
+   * Words of an option right after the glyph on its line: a space, then a word (a letter or figure with the next
+   * character touching it) or an opening bracket. A row of lone letters (a comb printed as letters) is no option.
+   */
+  function optionAfter(g, far) {
+    const n = g.row.g[g.k + 1];
+    if (!n || n.x0 - g.x1 < 0.15 * g.h || n.x0 - g.x1 > (far || 3 * g.h)) return false;
+    if (/[$(\u201C"]/.test(n.u)) return true;
+    if (!/[A-Za-z0-9]/.test(n.u)) return false;
+    // (the next character a lone letter of the same kind, with nothing touching it: a comb printed as letters)
+    const n2 = g.row.g[g.k + 2];
+    const n2Touches = !!n2 && n2.x0 < n.x1 + 0.2 * n.h;
+    return n2Touches || !(CHOICE_LETTER.test(n.u) || n.u === g.u);
+  }
+  /** The words of a printed line (from character k on), with a space where the characters stand apart. */
+  function rowText(r, k) {
+    let s = '';
+    for (let i = k || 0; i < r.g.length; i++) {
+      const g = r.g[i];
+      const prev = r.g[i - 1];
+      s += (prev && i > (k || 0) && g.x0 - prev.x1 > 0.18 * g.h ? ' ' : '') + g.u;
+    }
+    return s;
+  }
+  /**
+   * A lone o, p, q, r, c, i or apostrophe in a text font that starts an option, with at least one more such glyph that starts an
+   * option within 4 pt of the same left edge on a neighbouring printed line, or after a gap of 12 pt or more on its own
+   * line, in a font that is not of fixed pitch. A glyph that opens a sentence of more than 12 words (its lines run
+   * on included) is a bullet unless the two lines above the list ask for a choice or its own words speak of its box.
+   */
+  function inChoice(g, rows) {
+    const start = (o) => !!o && CHOICE_LETTER.test(o.u) && !SYMBOL_LIKE.test(o.font || '') && !FIXED_PITCH.test(o.font || '') && lone(o) && optionAfter(o);
+    if (!start(g)) return false;
+    const r = g.row;
+    // (set apart on its line: 12 pt, or two spaces, from the words before it)
+    const apart = (o) => o.k === 0 || o.x0 - r.g[o.k - 1].x1 >= Math.min(12, 0.45 * o.h);
+    const ownRow = r.g.some((o) => o !== g && start(o) && apart(o) && (apart(g) || o.k > g.k));
+    // The next line with a character at the same left edge, past the lines of an option's words that run on further in;
+    // a line that starts a little to the left of the edge ends the list.
+    const near = (d) => {
+      for (let i = r.i + d; i >= 0 && i < rows.length && Math.abs(rows[i].y - r.y) <= 12 * g.h; i += d) {
+        const o = rows[i].g.find((x) => Math.abs(x.x0 - g.x0) <= 4);
+        if (o) return start(o);
+        if (rows[i].g.some((x) => x.x0 < g.x0 - 4 && x.x0 >= g.x0 - 40)) return false;
+      }
+      return false;
+    };
+    if (!ownRow && !near(-1) && !near(1)) return false;
+    // The option's own words: up to a gap of a column (one and a half times the height) on its line.
+    let end = g.k + 1;
+    while (end + 1 < r.g.length && r.g[end + 1].x0 - r.g[end].x1 <= 1.5 * g.h) end++;
+    let own = rowText({ g: r.g.slice(0, end + 1) }, g.k + 1);
+    // ... and the lines its sentence runs on to: set further in than the glyph, within two line heights each, until
+    // a line ends the sentence.
+    const lead = r.g[g.k + 1].x0;
+    for (let i = r.i + 1, last = r; i < rows.length && !/[.;:?!]\s*$/.test(own) && rows[i].y - last.y <= 2 * g.h; i++) {
+      const first = rows[i].g.find((x) => x.x0 >= g.x0 - 4 && x.x0 <= lead + 4 * g.h);
+      if (!first || first.x0 < g.x1 || rows[i].g.some((x) => x.x0 < g.x0 - 4 && x.x0 >= g.x0 - 40)) break;
+      const k = rows[i].g.indexOf(first);
+      let e = k;
+      while (e + 1 < rows[i].g.length && rows[i].g[e + 1].x0 - rows[i].g[e].x1 <= 1.5 * g.h) e++;
+      own += ' ' + rowText({ g: rows[i].g.slice(0, e + 1) }, k);
+      last = rows[i];
+    }
+    if (own.split(/\s+/).filter(Boolean).length > 12) {
+      // (the two lines over the first option of the list)
+      let top = r.i;
+      for (let i = r.i - 1; i >= 0 && r.y - rows[i].y <= 40 * g.h; i--) {
+        const o = rows[i].g.find((x) => Math.abs(x.x0 - g.x0) <= 4);
+        if (o && start(o)) top = i;
+        else if (o || rows[i].g.some((x) => x.x0 < g.x0 - 4 && x.x0 >= g.x0 - 40)) break;
+      }
+      const above = rows.slice(Math.max(0, top - 2), top).map((x) => rowText(x)).join(' ');
+      if (!CHOICE_SAID.test(above) && !BOX_SAID.test(own)) return false;
+    }
+    return true;
+  }
+  /** Marks the fallback-glyph tick boxes of a page (g.box), see FALLBACK_BOX. ink: the visible characters but spaces. */
+  function fallbackBoxes(ink) {
+    const rows = rowsOf(ink);
+    ink.forEach((g) => {
+      if (g.box || !g.u || !lone(g)) return;
+      if (FALLBACK_BOX.test(g.u)) g.box = 'fallback';
+      else if (SYMBOL_LIKE.test(g.font || '') && SYMBOL_LETTER.test(g.u)) g.box = 'fallback';
+      // A code of a symbol font the reader has no character for (a control code) before an option's words.
+      else if (SYMBOL_LIKE.test(g.font || '') && /^[\u0000-\u001F\u007F-\u009F]$/.test(g.u) && optionAfter(g, 40)) g.box = 'symbol';
+    });
+    ink.forEach((g) => {
+      if (!g.box && inChoice(g, rows)) g.box = 'choice';
+    });
+    ink.forEach((g) => {
+      delete g.row;
+      delete g.k;
+    });
+  }
+
   /**
    * The least number of letter-like drawn shapes (filled, not a plain rectangle, no taller than 40 pt) that makes a
    * page with no visible character a page of drawings. A page of the outlined copies that holds anything printed has
@@ -317,6 +453,7 @@
     out.scan = !ink.length && !!textless(raw);
     if (out.scan) return out;
     shown.forEach((g) => (g.box = !g.sp && boxChar(g)));
+    fallbackBoxes(ink);
     const words = ink.filter((g) => g.u !== '_' && !g.box);
 
     // A small square drawn as four separate strokes is a square all the same.
