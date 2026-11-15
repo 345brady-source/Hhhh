@@ -4,7 +4,7 @@
 // one investor with the signature and date at the form's own places, the investor signs it in the portal, and the stored
 // signed PDF is read back: Documents category Tax for that investor alone, zero form fields, each value inside its own
 // field, the signature ink inside the sign place, the "Signed electronically" caption, the date, the certificate page.
-//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual]
+//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned]
 // The last line is "FORMS FLOW: PASS (cases run: N)" or "FORMS FLOW: FAIL (cases run: N) - <failed cases>". Exits 2
 // (NOT RUN) when the bundled forms do not match assets/forms/SHA256SUMS.
 const path = require('path');
@@ -1290,6 +1290,187 @@ async function foreignCase({ check, S }) {
   await A.context.close();
 }
 
+/* ---------- Plan 06-18 Task 2: the not-required tick, and an edited answer always reaching the form ---------- */
+
+/** The flow's tax envelopes for one investor (kind tax, that investor the signer), oldest first, read in the page. */
+async function taxEnvelopes(page, invId) {
+  return page.evaluate(async (invId) => {
+    const NS = window.CVPortal;
+    const ws = NS.state.ws;
+    const i = ws.investors.find((x) => x.id === invId);
+    const list = (ws.envelopes || []).filter((e) => e.kind === 'tax' && e.signers.some((s) => s.investorId === invId));
+    const out = [];
+    for (const e of list) {
+      const docs = [];
+      for (const d of (ws.docs || []).filter((x) => x.envelopeId === e.id)) docs.push({ id: d.id, cat: d.cat, file: !!(d.id && (await NS.ops.files.get(d.id).catch(() => null))) });
+      out.push({
+        id: e.id,
+        status: e.status,
+        voidReason: e.voidReason || '',
+        files: { doc: !!(e.docId && (await NS.ops.files.get(e.docId).catch(() => null))), work: e.workDocId ? !!(await NS.ops.files.get(e.workDocId).catch(() => null)) : null },
+        docs
+      });
+    }
+    return { list: out, taxCert: JSON.parse(JSON.stringify(i.taxCert || null)), flowEnv: (i.onboarding.flow || {}).taxEnvelopeId || '' };
+  }, invId);
+}
+
+/** The words printed inside one field of page 1 of a stored filled form (base64), by the field's full name. */
+async function printedIn(b64, dir, file, blank, fieldName) {
+  const f = path.join(dir, file);
+  fs.writeFileSync(f, Buffer.from(b64 || '', 'base64'));
+  if (!b64) return '(no form)';
+  const R = await rects(blank);
+  return wordsIn(words(f, 1), R.of[fieldName], 1);
+}
+
+/** Line 6b: the foreign individual ticks "not legally required"; the form has the 6b box ticked and no FTIN. */
+async function noFtinCase({ check, S }) {
+  const A = await Lib.open(S);
+  const page = A.page;
+  const dir = path.join(OUT, 'noftin');
+  fs.mkdirSync(dir, { recursive: true });
+  const { inv, w } = await toW8Step(S, A, { name: 'Kaito Brennan-Sato', email: 'kaito.brennan@example.com' });
+  check('the foreign individual reaches the tax step', w.reached && w.at === 'Tax certification', w.seen);
+  await page.check('#ob-noFtin');
+  await page.waitForTimeout(250);
+  const shown = await visibleInputs(page);
+  check('with the tick, the foreign tax ID field is no longer asked', shown.indexOf('ob-ftin') < 0 && shown.indexOf('ob-noFtin') >= 0, shown);
+  await Lib.submit(page);
+  await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 });
+  const made = await flowW8(page, inv.investorId);
+  const filledFile = path.join(dir, 'filled.pdf');
+  fs.writeFileSync(filledFile, Buffer.from(made.filled || '', 'base64'));
+  const R = await rects(made.blank);
+  const blankFile = path.join(dir, 'blank.pdf');
+  fs.copyFileSync(path.join(ROOT, made.blank), blankFile);
+  const r = R.of[W8 + 'c1_01[0]'];
+  const tick = inkBetween(blankFile, filledFile, { x: r.x + 2, top: r.top + 2, w: r.w - 4, h: r.h - 4 }, 100);
+  check('the 6b box is ticked on the form', tick > 10, tick);
+  check('no foreign tax ID prints on line 6a', wordsIn(words(filledFile, 1), R.of[W8 + 'f_10[0]'], 1) === '', wordsIn(words(filledFile, 1), R.of[W8 + 'f_10[0]'], 1));
+  await Lib.finishTaxForm(page);
+  const got = await flowW8(page, inv.investorId);
+  check('the record keeps noFtin true and no FTIN digits', !!got.taxCert && got.taxCert.noFtin === true && got.taxCert.ftinLast4 === '', got.taxCert);
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
+}
+
+/**
+ * Research FORM-07, T-06-41: on the form view the investor goes Back, changes the street and continues. The first envelope
+ * is voided ("answers changed before signing") and its files are gone; the new form carries the new street (and the foreign
+ * tax ID typed before); one tax envelope of the flow is not voided. Back and Continue with nothing changed keeps that form.
+ */
+async function editCase({ check, S }) {
+  const A = await Lib.open(S);
+  const page = A.page;
+  const dir = path.join(OUT, 'edit');
+  fs.mkdirSync(dir, { recursive: true });
+  const FTIN = '98765432109';
+  const { inv, w } = await toW8Step(S, A, { name: 'Linnea Haugen-Ortiz', email: 'linnea.haugen@example.com' });
+  check('the foreign individual reaches the tax step', w.reached && w.at === 'Tax certification', w.seen);
+  await page.fill('#ob-ftin', FTIN);
+  await Lib.submit(page);
+  await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 });
+  const first = await flowW8(page, inv.investorId);
+  await page.click('.ivf-tax-sign [data-action="ivf-taxanswers"]');
+  await page.waitForSelector('[data-action="ivf-taxedit"]', { timeout: 10000 });
+  await page.click('[data-action="ivf-taxedit"]');
+  await page.waitForSelector('#ob-w8Street', { timeout: 10000 });
+  const was = await page.inputValue('#ob-w8Street');
+  check('"Change your answers" shows the street the form carries', was === 'Königsallee 27', was);
+  await page.fill('#ob-w8Street', 'Kaiserswerther Straße 115');
+  await Lib.submit(page);
+  await page.waitForFunction((id) => {
+    const i = window.CVPortal.state.ws.investors.find((x) => x.id === id);
+    return document.querySelector('.ivf-tax-sign .es-doc-sign .es-page img') && (i.onboarding.flow || {}).taxEnvelopeId;
+  }, inv.investorId, { timeout: 60000 });
+  await page.waitForTimeout(300);
+  const second = await flowW8(page, inv.investorId);
+  const E = await taxEnvelopes(page, inv.investorId);
+  const e1 = E.list.find((e) => e.id === first.envId) || {};
+  check('Continue built a new form', !!second.envId && second.envId !== first.envId, { first: first.envId, second: second.envId });
+  check('the first envelope is voided with the reason "answers changed before signing"', e1.status === 'voided' && /answers changed before signing/i.test(e1.voidReason), e1);
+  check('the first form’s work files are gone from storage', e1.files && e1.files.doc === false && e1.files.work !== true, e1.files);
+  check('exactly one tax envelope of the flow is not voided', E.list.filter((e) => e.status !== 'voided').length === 1, E.list.map((e) => [e.id, e.status]));
+  const street = await printedIn(second.filled, dir, 'second.pdf', second.blank, W8 + 'f_3[0]');
+  check('the new form shows the new street', street === 'Kaiserswerther Straße 115', street);
+  const ftin = await printedIn(second.filled, dir, 'second.pdf', second.blank, W8 + 'f_10[0]');
+  check('the new form still carries the foreign tax ID typed before (held in memory, not typed again)', ftin === FTIN, ftin);
+  // Back and Continue with nothing changed: the same unsigned form is shown again, nothing voided
+  await page.click('.ivf-tax-sign [data-action="ivf-taxanswers"]');
+  await page.waitForSelector('.ivf-form button[type=submit]', { timeout: 10000 });
+  await Lib.submit(page);
+  await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 });
+  const E2 = await taxEnvelopes(page, inv.investorId);
+  check('Back and Continue with nothing changed keeps the same form (no new envelope, nothing voided)', E2.flowEnv === second.envId && E2.list.length === E.list.length && E2.list.filter((e) => e.status === 'voided').length === 1, E2.list.map((e) => [e.id, e.status]));
+  await Lib.finishTaxForm(page);
+  const all = (await flowW8(page, inv.investorId)).all;
+  check('the foreign tax ID is not saved anywhere', all.indexOf(FTIN) < 0);
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
+}
+
+/**
+ * Research FORM-07 after signing (on the W-9): Back from the next step shows the answers; Continue with no change keeps the
+ * signed form (nothing new, nothing voided); a change builds a new form to sign, and the earlier signed form stays in the
+ * record (until the new one is finished) and in Documents.
+ */
+async function editSignedCase({ check, S }) {
+  const A = await Lib.open(S);
+  const page = A.page;
+  const dir = path.join(OUT, 'editsigned');
+  fs.mkdirSync(dir, { recursive: true });
+  const name = 'Aurelio Brandt-Kowalski';
+  const { inv, w } = await toTaxStep(S, A, { name, email: 'aurelio.brandt@example.com' });
+  check('the investor reaches the tax step', w.reached && w.at === 'Tax certification', w.seen);
+  await Lib.submit(page);
+  await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 });
+  const first = await flowTaxEnv(page, inv.investorId);
+  const env1 = await page.evaluate((id) => JSON.parse(JSON.stringify(window.CVPortal.state.ws.envelopes.find((e) => e.id === id))), first.envId);
+  await Lib.finishTaxForm(page, signTaxForm(env1.fields.find((f) => f.type === 'signature').id));
+  check('the signed form moves the flow on', (await Lib.heading(page)) === 'Distribution payments', await Lib.heading(page));
+  const signed1 = await taxEnvelopes(page, inv.investorId);
+  check('the record holds the signed W-9', !!signed1.taxCert && signed1.taxCert.envelopeId === first.envId && signed1.taxCert.signed === true, signed1.taxCert);
+  // Back to the tax step: the answers, not the signed form
+  await page.click('[data-action="ivf-back"]');
+  await page.waitForFunction(() => document.querySelector('.ivf-form h1') && document.querySelector('.ivf-form h1').innerText === 'Tax certification', null, { timeout: 15000 });
+  await page.waitForTimeout(300);
+  check('Back shows the tax answers (not the form)', (await page.locator('.ivf-tax-sign').count()) === 0 && (await page.locator('.ivf-form button[type=submit]').count()) === 1);
+  await Lib.submit(page);
+  await page.waitForFunction(() => document.querySelector('.ivf-form h1') && document.querySelector('.ivf-form h1').innerText !== 'Tax certification', null, { timeout: 30000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  const kept = await taxEnvelopes(page, inv.investorId);
+  check('Continue with no change keeps the signed form and moves on', (await Lib.heading(page)) === 'Distribution payments' && kept.list.length === 1 && kept.list[0].status === 'completed' && kept.taxCert.envelopeId === first.envId, { heading: await Lib.heading(page), list: kept.list.map((e) => [e.id, e.status]) });
+  check('nothing was voided', kept.list.every((e) => e.status !== 'voided'), kept.list.map((e) => [e.id, e.status]));
+  // Back again and a change: a new form to sign; the signed one stays
+  if ((await Lib.heading(page)) !== 'Tax certification') {
+    await page.click('[data-action="ivf-back"]');
+    await page.waitForFunction(() => document.querySelector('.ivf-form h1') && document.querySelector('.ivf-form h1').innerText === 'Tax certification', null, { timeout: 15000 });
+  }
+  await page.click('[data-action="ivf-taxedit"]');
+  await page.waitForSelector('#ob-w9Street', { timeout: 10000 });
+  await page.fill('#ob-w9Street', '480 Canal Street Apt 9');
+  await Lib.submit(page);
+  await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 });
+  const second = await flowTaxEnv(page, inv.investorId);
+  const E = await taxEnvelopes(page, inv.investorId);
+  const e1 = E.list.find((e) => e.id === first.envId) || {};
+  check('a change builds a new form to sign', !!second.envId && second.envId !== first.envId && (await page.locator('.ivf-tax-sign').count()) === 1, { first: first.envId, second: second.envId });
+  check('the new form shows the new street', (await printedIn(second.filled, dir, 'second.pdf', second.blank, W9 + 'Address_ReadOrder[0].f1_07[0]')) === '480 Canal Street Apt 9');
+  check('the earlier signed form is not voided and stays in the record until the new one is finished', e1.status === 'completed' && !!E.taxCert && E.taxCert.envelopeId === first.envId && E.taxCert.signed === true, { e1, taxCert: E.taxCert });
+  check('the earlier signed form stays in Documents (Tax, file present)', (e1.docs || []).length === 1 && e1.docs[0].cat === 'Tax' && e1.docs[0].file === true, e1.docs);
+  await Lib.finishTaxForm(page);
+  const end = await taxEnvelopes(page, inv.investorId);
+  const e1b = end.list.find((e) => e.id === first.envId) || {};
+  check('after the new form is finished, the earlier signed form is still completed and in Documents', e1b.status === 'completed' && (e1b.docs || []).length === 1 && e1b.docs[0].file === true, e1b);
+  check('no tax envelope of the flow was voided (the signed one was never live, the new one was finished)', end.list.every((e) => e.status !== 'voided'), end.list.map((e) => [e.id, e.status]));
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
+}
+
 const mmddyyyy = (iso) => {
   const [y, m, d] = String(iso).split('-');
   return `${m}-${d}-${y}`;
@@ -1354,7 +1535,10 @@ const cases = {
   tin: tinCase,
   backup: backupCase,
   foreign: foreignCase,
-  'foreign-individual': foreignIndividual
+  'foreign-individual': foreignIndividual,
+  noftin: noFtinCase,
+  edit: editCase,
+  editsigned: editSignedCase
 };
 
 // The bundled forms must match their pins before anything runs.
