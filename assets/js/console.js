@@ -127,10 +127,17 @@
 
   /**
    * Plan 06-16: the investor's official tax form, one line under Activation: signed, with a download of the signed copy
-   * (its Documents entry), or not signed; nothing when the investor has no such form.
+   * (its Documents entry), or not signed, or uploaded (plan 06-21); nothing when the investor has no such form.
    */
   function taxLine(w, inv) {
     const tc = inv.taxCert;
+    // plan 06-21 (D-01, T-06-45): a form completed elsewhere and uploaded by the investor, with a download of that file when
+    // it is stored under the investor's own tax- id (onboarding.js names it tax-<investor id>-<time>)
+    if (tc && tc.uploaded && tc.form) {
+      const idRe = String(inv.id).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const own = typeof tc.fileId === 'string' && new RegExp('^tax-' + idRe + '-[a-z0-9]+$').test(tc.fileId);
+      return `<span class="sub">${h(tc.form)} uploaded ${date(String(tc.at || '').slice(0, 10))}${own ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(tc.fileId)}" data-name="${h(tc.fileName || 'tax-form')}">Download</button>` : ''}</span>`;
+    }
     if (!tc || !tc.envelopeId || !tc.form) return '';
     if (!NS.inviteFlow.taxOnFile(inv)) return `<span class="sub">${h(tc.form)} not signed</span>`;
     const doc = (w.docs || []).find((d) => d.envelopeId === tc.envelopeId && (d.investors || []).indexOf(inv.id) >= 0);

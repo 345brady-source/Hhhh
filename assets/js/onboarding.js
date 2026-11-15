@@ -1610,6 +1610,9 @@
   // Research FORM-07: the answers each tax form was built from, by envelope id, in this page's memory only (no stored
   // fingerprint), without the tax numbers. Continue compares the new answers with them to keep or rebuild the form.
   const BUILT = {};
+  // Plan 06-21 (D-01, T-06-45): the completed form chosen on the upload view, by investor id, in this page's memory only
+  // until Continue stores it (after its first bytes and size were checked when it was chosen, and again then).
+  const UPLOADS = {};
   const SECRET_ANSWERS = ['ssn', 'ein', 'ftin', 'usTin'];
   const secretAnswer = (k) => SECRET_ANSWERS.indexOf(k) >= 0 || /^owner\dTin$/.test(k);
   // The countries of the list (COUNTRIES) with an income tax treaty with the United States in force: the IRS list "United
@@ -1632,6 +1635,17 @@
    * a foreign entity or trust; '' when the entity gave a status the W-8BEN-E here does not cover (e8Routed).
    */
   const taxKey = (c, d) => (usTax(c, d) ? W9_KEY : PERSONAL(d.type) ? W8_KEY : e8Routed(d) ? '' : W8E_KEY);
+  /**
+   * Plan 06-21 (D-01): the completed forms an investor can upload instead, for the account as it stands on the step (value,
+   * label, hint). "other" is recorded as "Tax form".
+   */
+  function upForms(c, d) {
+    const other = [['other', 'Another tax form']];
+    if (usTax(c, d)) return [['W-9', d.type === 'ira' ? 'The custodian’s Form W-9' : 'Form W-9']].concat(other);
+    const eci = ['W-8ECI', 'Form W-8ECI', 'Income effectively connected with a U.S. trade or business'];
+    if (PERSONAL(d.type)) return [['W-8BEN', 'Form W-8BEN'], eci].concat(other);
+    return [['W-8BEN-E', 'Form W-8BEN-E'], ['W-8IMY', 'Form W-8IMY', 'Partnerships, grantor trusts and intermediaries'], eci, ['W-8EXP', 'Form W-8EXP', 'Governments and tax-exempt organizations']].concat(other);
+  }
   /** A country name the form can print: not the United States, not the list's "Another country", not empty. */
   const realCountry = (v) => (v && v !== US && v !== OTHER_COUNTRY ? v : '');
   /** A country answer of the W-8BEN: from the fixed list, or the name typed beside "Another country" (T-06-40). */
@@ -1944,11 +1958,25 @@
     const d = ob().d;
     const ira = d.type === 'ira';
     if (!ira && !d.usPerson) d.usPerson = foreignType(c.inv) ? 'no' : 'yes';
+    if (c.fl.taxView === 'upload') return taxUploadView(c, d);
     const usp = usTax(c, d);
-    const who = ira ? '' : `<p class="meta ivf-taxwho">${usp ? 'Not a U.S. person for tax purposes?' : 'A U.S. citizen or resident, or a U.S. entity?'} <button class="link-btn" type="button" data-action="ivf-taxwho">${usp ? 'Use the form for foreign investors' : 'Use Form W-9'}</button></p>`;
+    const who = ira ? '' :`<p class="meta ivf-taxwho">${usp ? 'Not a U.S. person for tax purposes?' : 'A U.S. citizen or resident, or a U.S. entity?'} <button class="link-btn" type="button" data-action="ivf-taxwho">${usp ? 'Use the form for foreign investors' : 'Use Form W-9'}</button></p>`;
     if (usp) return w9View(c, d, who);
     if (PERSONAL(d.type)) return w8View(c, d, who);
     return w8eView(c, d, who);
+  }
+  /**
+   * Plan 06-21 (D-01, D-06, D-30): the upload of a form completed elsewhere: which form it is, and the file (PDF, PNG or
+   * JPEG, at most MAX_FILES). Nothing is required; Back returns to the answers.
+   */
+  function taxUploadView(c, d) {
+    const up = UPLOADS[c.inv.id];
+    const e = ob().errors.taxUpFile;
+    return `${ivfH1(FL.tax)}
+      <div class="form-grid">${radios('taxUpForm', 'Which form is it?', upForms(c, d))}
+      <label class="field field-wide" for="ob-taxUpFile"><span>The completed, signed form</span>
+      <input id="ob-taxUpFile" type="file" accept="application/pdf,image/png,image/jpeg" data-change="ivf-taxfile"${e ? ' aria-invalid="true" aria-describedby="err-taxUpFile"' : ''}>
+      <span class="hint" id="hint-taxUpFile">${up ? `Attached: ${h(up.name)}` : `PDF, PNG or JPEG, up to ${mb(MAX_FILES)} MB.`}</span>${err('taxUpFile')}</label></div>`;
   }
   /** The W-9 answers view: only what is missing; "Change your answers" shows every answer and the rare options. */
   function w9View(c, d, who) {
@@ -1987,6 +2015,7 @@
       ${holder}
       ${body ? `<div class="form-grid">${body}</div>` : ''}
       ${edit ? '' : '<p class="meta ivf-taxedit"><button class="link-btn" type="button" data-action="ivf-taxedit">Change your answers</button></p>'}
+      ${upLink()}
       ${who}`;
   }
   /** A W-8BEN country answer: the fixed list (no United States), and a typed name only beside "Another country" (T-06-40). */
@@ -2042,6 +2071,7 @@
       ${holder}
       <div class="form-grid">${body}</div>
       ${edit ? '' : '<p class="meta ivf-taxedit"><button class="link-btn" type="button" data-action="ivf-taxedit">Change your answers</button></p>'}
+      ${upLink()}
       ${who}`;
   }
   /** The two status questions of the W-8BEN-E (lines 4 and 5): one answer each, or "Something else". */
@@ -2050,14 +2080,14 @@
       ${radios('e8Ch4', 'FATCA status (chapter 4 status)', E8_CH4.map((x) => [x[0], x[1], x[3]]).concat([['other', 'Something else', 'Any other FATCA status']]))}`;
   }
   /**
-   * T-06-43: the one line for a status the W-8BEN-E here does not cover: the form that usually applies, and where to send it
-   * (D-30: the investor can continue without it).
+   * T-06-43: the one line for a status the W-8BEN-E here does not cover: the form that usually applies, and the upload of
+   * that form when completed (plan 06-21, D-01; D-30: the investor can continue without it).
    */
-  function e8RouteLine(c) {
-    const sup = c.ws.tenant.support || {};
-    const to = sup.email ? `${h(sup.team || 'investor relations')} at ${h(sup.email)}` : h(sup.team || 'investor relations');
-    return `<p class="field-wide meta ivf-taxroute">This status needs a form the portal does not fill in: usually Form W-8IMY (partnerships, grantor trusts and intermediaries), Form W-8ECI (income effectively connected with a U.S. trade or business) or Form W-8EXP (governments and tax-exempt organizations), or a Form W-8BEN-E completed for the status that applies. Send the completed form to ${to}; you can continue without it now.</p>`;
+  function e8RouteLine() {
+    return `<p class="field-wide meta ivf-taxroute">This status needs a form the portal does not fill in: usually Form W-8IMY (partnerships, grantor trusts and intermediaries), Form W-8ECI (income effectively connected with a U.S. trade or business) or Form W-8EXP (governments and tax-exempt organizations), or a Form W-8BEN-E completed for the status that applies. <button class="link-btn" type="button" data-action="ivf-taxupload">Upload the completed form</button>, or continue without it now.</p>`;
   }
+  /** Plan 06-21 (D-01): the one link from the answers to the upload of a form completed elsewhere. */
+  const upLink = () => '<p class="meta ivf-taxupload">Already have a completed form? <button class="link-btn" type="button" data-action="ivf-taxupload">Upload it instead</button></p>';
   /** A Passive NFFE: the owners statement, and the substantial U.S. owners' rows when it lists them (Part XXIX). */
   function e8OwnerFields(d, m) {
     let f = radios('e8Owners', 'Substantial U.S. owners (U.S. persons who own more than 10 percent)', [['none', 'The entity has none'], ['listed', 'The entity has them; they are listed below']]);
@@ -2102,7 +2132,7 @@
     // "Something else" on either status: one line names the form that usually applies; nothing else is asked
     if (e8Routed(d)) {
       return `${ivfH1(FL.tax)}
-      <div class="form-grid">${body}${e8RouteLine(c)}</div>
+      <div class="form-grid">${body}${e8RouteLine()}</div>
       ${who}`;
     }
     if (E8_FFI.indexOf(d.e8Ch4) >= 0) body += input('e8Giin', 'GIIN (global intermediary identification number)', { max: 19, upper: true, hint: '19 characters, for example 98Q96B.00000.LE.250.' });
@@ -2135,6 +2165,7 @@
       <p class="lede">Your Form W-8BEN-E is filled in from your answers${!edit ? ', except what is asked below' : ''}. You check it and sign it on the next screen.</p>
       <div class="form-grid">${body}</div>
       ${edit ? '' : '<p class="meta ivf-taxedit"><button class="link-btn" type="button" data-action="ivf-taxedit">Change your answers</button></p>'}
+      ${upLink()}
       ${who}`;
   }
   /** The flow's W-9 envelope while it is the step's signing view (unsigned, or signed and not yet recorded). */
@@ -2444,7 +2475,8 @@
       } else if (!d.accBasis) e.accBasis = 'Select the basis that applies.';
       if (!d.accAttest) e.accAttest = 'Confirm the statement to continue.';
     }
-    if (key === 'tax') {
+    // the upload view (plan 06-21) asks nothing that can be wrong: the answers behind it are not on screen
+    if (key === 'tax' && c.fl.taxView !== 'upload') {
       if (usTax(c, d)) {
         // D-30: nothing on the W-9 is required; a taxpayer ID typed only in part is pointed out, as on Investor information.
         const tin = digitsOf(d.tin);
@@ -2477,6 +2509,54 @@
   }
 
   /* ---------- Saving each step to the investor record ---------- */
+  /** The flow's tax form built and not signed is voided (its files deleted); a signed one stays in the record and Documents. */
+  async function voidUnsignedTax(c, reason) {
+    const fl = c.fl;
+    const old = fl.taxEnvelopeId && (c.ws.envelopes || []).find((e) => e.id === fl.taxEnvelopeId);
+    const os = old && signerOf(old, c.inv);
+    if (!old || old.status !== 'sent' || (os && os.status === 'signed')) return;
+    NS.esign.void(c.ws, old.id, reason, { quiet: true, actor: `${c.inv.title} (investor)` });
+    await Promise.all([old.docId, old.workDocId].filter((id) => id && id.indexOf(old.id) === 0).map((id) => NS.ops.files.del(id).catch(() => {})));
+    delete fl.taxEnvelopeId;
+  }
+  /**
+   * Plan 06-21 (D-01, T-06-45): Continue on the upload view. A file chosen there that is a PDF, PNG or JPEG by its first
+   * bytes and at most MAX_FILES is stored under the investor's own id tax-<investor id>-<time in base 36>; the record names
+   * the form (taxForm) and keeps where the file is (taxCert, uploaded). A form built here and not signed is voided; one signed
+   * earlier stays in the record's Documents. The tax numbers typed for the forms here leave this page's memory. Without a
+   * file nothing is stored and the flow moves on (D-30).
+   */
+  async function storeTaxUpload(c, d, log) {
+    const i = c.inv;
+    const fl = c.fl;
+    const up = UPLOADS[i.id];
+    const ok = !!up && up.file.size > 0 && up.file.size <= MAX_FILES && (await sendable(up.file, false));
+    const pick = upForms(c, d).find((x) => x[0] === d.taxUpForm);
+    const form = pick && pick[0] !== 'other' ? pick[0] : 'Tax form';
+    let id = '';
+    if (ok) {
+      id = `tax-${i.id}-${Date.now().toString(36)}`;
+      try {
+        await NS.ops.files.put(id, up.file);
+      } catch (e) {
+        throw new Error('The form could not be kept in this browser. Try again, or go Back and continue without it.');
+      }
+    }
+    delete UPLOADS[i.id];
+    delete fl.taxView;
+    if (!ok) {
+      if (!taxOnFile(i)) log('Tax form not completed', 'continued from the upload of a completed form without a file');
+      return;
+    }
+    await voidUnsignedTax(c, 'The investor uploaded a completed form instead');
+    delete W8MEM[i.id];
+    delete TINS[i.id];
+    ['tin', 'ownerTin', 'ftin', 'w8UsTin', 'e8UsTin'].concat(E8_OWNER_TINS).forEach((k) => (d[k] = ''));
+    i.taxForm = form;
+    i.taxCert = { form, uploaded: true, fileId: id, fileName: up.name, at: nowIso() };
+    i.taxType = usTax(c, d) ? (PERSONAL(d.type) ? 'us-individual' : 'us-entity') : PERSONAL(d.type) ? 'foreign-individual' : 'foreign-entity';
+    log('Tax form uploaded', form === 'Tax form' ? 'a completed tax form' : `Form ${form}, completed outside the portal`);
+  }
   function persistable(d) {
     const out = {};
     Object.keys(d).forEach((k) => {
@@ -2560,6 +2640,13 @@
         if (NS.audit) NS.audit.log(ws, { action: 'Investor status updated', record: c.req.id, fund: c.off ? c.off.id : '', detail: `${i.title}: subscription ${c.req.id} now records ${said}`, actor: actor() });
       }
     }
+    // Plan 06-21 (D-01): Continue on the upload view stores the chosen form, or moves on without one (D-30).
+    if (key === 'tax' && fl.taxView === 'upload') {
+      await storeTaxUpload(c, d, log);
+      fl.d = persistable(d);
+      NS.app.save(true);
+      return false;
+    }
     // Continue on the W-9, W-8BEN or W-8BEN-E answers builds the form and shows it to sign on this same step (true: the flow
     // stays on the step); a signed form kept unchanged lets the flow move on.
     if (key === 'tax' && taxKey(c, d)) {
@@ -2571,13 +2658,7 @@
     // T-06-43 (plan 06-20): a status the W-8BEN-E here does not cover builds no form; an unsigned W-8BEN-E built before is
     // voided (its files deleted), a signed one stays; nothing is required (D-30), the flow moves on.
     if (key === 'tax' && !taxKey(c, d)) {
-      const old = fl.taxEnvelopeId && (ws.envelopes || []).find((e) => e.id === fl.taxEnvelopeId);
-      const os = old && signerOf(old, i);
-      if (old && old.status === 'sent' && !(os && os.status === 'signed')) {
-        NS.esign.void(ws, old.id, 'The investor gave a status this form does not cover; no form was prepared', { quiet: true, actor: actor() });
-        await Promise.all([old.docId, old.workDocId].filter((id) => id && id.indexOf(old.id) === 0).map((id) => NS.ops.files.del(id).catch(() => {})));
-        delete fl.taxEnvelopeId;
-      }
+      await voidUnsignedTax(c, 'The investor gave a status this form does not cover; no form was prepared');
       delete fl.taxView;
       delete W8MEM[i.id];
       d.ftin = d.e8UsTin = '';
@@ -2984,8 +3065,10 @@
       const progress = `<div class="ivf-progress"><p class="ob-count">Step ${n + 1} of ${steps.length}<span class="ivf-count-label">: ${h(stepLabel(c, key))}</span></p><div class="ivf-bar" role="progressbar" aria-label="Account setup progress" aria-valuemin="1" aria-valuemax="${steps.length}" aria-valuenow="${n + 1}" aria-valuetext="Step ${n + 1} of ${steps.length}: ${h(stepLabel(c, key))}"><span style="width:${(((n + 1) / steps.length) * 100).toFixed(1)}%"></span></div></div>`;
       const taxEnv = key === 'tax' ? taxSignEnv(c) : null;
       const body = taxEnv ? fTaxSign(c, taxEnv) : { welcome: fWelcome, login: fLogin, profile: fProfile, identity: fIdentity, status: fStatus, accreditation: () => stepAccreditation(accVerifiedFor(c), { why: accWhy(c) }).replace(/^\s*<h1>[^<]*<\/h1>\s*<p class="lede">[\s\S]*?<\/p>/, () => ivfH1(h(stepLabel(c, 'accreditation'))) + (c.fl.accLate ? `<p class="meta ivf-why">${lateNote(c)}</p>` : '')), tax: fTax, payment: () => stepPayment().replace(/^\s*<h1>/, '<h1 tabindex="-1">'), subscribe: fSubscribe, agreement: fAgreement, done: fDone }[key](c);
-      const back = n > 0 && key !== 'done' && !(key === 'subscribe' && c.req && envOf(c) && signerOf(envOf(c), c.inv) && signerOf(envOf(c), c.inv).status === 'signed') ? '<button class="btn" type="button" data-action="ivf-back">Back</button>' : '';
-      const submit = { welcome: 'Get started', tax: key === 'tax' && taxKey(c, o.d) ? 'Continue to the form' : '', subscribe: c.req ? 'Continue' : tplReady(c) ? 'Continue to the agreement' : 'Sign and submit subscription' }[key] || (steps[n + 1] === 'done' ? 'Finish' : 'Continue');
+      // the upload view (plan 06-21): Back returns to the tax answers, not to the step before
+      const upView = key === 'tax' && c.fl.taxView === 'upload';
+      const back = upView ? '<button class="btn" type="button" data-action="ivf-taxanswers">Back</button>' : n > 0 && key !== 'done' && !(key === 'subscribe' && c.req && envOf(c) && signerOf(envOf(c), c.inv) && signerOf(envOf(c), c.inv).status === 'signed') ? '<button class="btn" type="button" data-action="ivf-back">Back</button>' : '';
+      const submit = { welcome: 'Get started', tax: key === 'tax' && !upView && taxKey(c, o.d) ? 'Continue to the form' : '', subscribe: c.req ? 'Continue' : tplReady(c) ? 'Continue to the agreement' : 'Sign and submit subscription' }[key] || (steps[n + 1] === 'done' ? 'Finish' : 'Continue');
       const saved = key === 'welcome' ? '' : '<p class="ivf-saved">Your progress is saved. You can come back with your invitation link at any time.</p>';
       const inner =
         key === 'done'
@@ -3184,7 +3267,45 @@
     const c = fctx();
     if (!c) return;
     delete c.fl.taxView;
+    delete UPLOADS[c.inv.id];
     moveTo(c, 'tax');
+  };
+  /**
+   * Plan 06-21 (D-01): from the tax answers (or the routing line) to the upload of a form completed elsewhere. The form the
+   * step would fill in is chosen to start (the IRA custodian's W-9 for an IRA); nothing for a status routed elsewhere.
+   */
+  NS.actions['ivf-taxupload'] = () => {
+    const c = fctx();
+    const o = ob();
+    if (!c || o.busy) return;
+    const d = o.d;
+    if (!upForms(c, d).some((x) => x[0] === d.taxUpForm)) d.taxUpForm = { [W9_KEY]: 'W-9', [W8_KEY]: 'W-8BEN', [W8E_KEY]: 'W-8BEN-E' }[taxKey(c, d)] || '';
+    o.taxEdit = false;
+    c.fl.taxView = 'upload';
+    moveTo(c, 'tax');
+  };
+  /**
+   * The completed form chosen on the upload view (T-06-45): a PDF, PNG or JPEG by its first bytes (the same tests the
+   * integration server applies) and at most MAX_FILES, held in this page's memory until Continue stores it. Anything else is
+   * refused with one plain sentence and nothing is held; the step can still be continued (D-30): it is not a field error.
+   */
+  NS.changes['ivf-taxfile'] = async (el) => {
+    const c = fctx();
+    const o = ob();
+    const f = el.files && el.files[0];
+    if (!c || !o || !f) return;
+    delete o.errors.taxUpFile;
+    delete UPLOADS[c.inv.id];
+    const refuse = (msg) => {
+      o.errors.taxUpFile = msg;
+      NS.app.render();
+    };
+    if (f.size > MAX_FILES) return refuse(`This file is ${mb(f.size)} MB, more than the ${mb(MAX_FILES)} MB this page accepts, so it was not added.`);
+    if (!f.size || !(await sendable(f, false))) return refuse('This file is not a PDF, PNG or JPEG, so it was not added.');
+    UPLOADS[c.inv.id] = { file: f, name: String(f.name || 'tax-form').slice(0, 200) };
+    NS.app.render();
+    const again = document.getElementById('ob-taxUpFile');
+    if (again) again.focus();
   };
   NS.actions['ivf-back'] = () => {
     const c = fctx();
