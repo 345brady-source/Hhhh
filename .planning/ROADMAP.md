@@ -129,7 +129,7 @@ Plans:
   5. Nothing that works today regresses: the owner's documents A 29 of 29, B 2 of 2 places, C 138 of 138, the picture form 241 of 241, the first agreement's 47 fields with none marked, the public documents' pins, the nine check files, the class pages and the walks
   6. After the reader is frozen, 100 fresh agreements and 50 more made picture-only (half clean, half with scan effects), drawn at random from EDGAR and new to every set, are read by the frozen reader and scored (the measure on all 150, exact scores on a random 20 and 10), and the results reach the owner failures first
   7. The owner has checked agreements the reader has never seen in the republished preview
-**Plans:** 63 plans (4 dropped by D-28: 20, 21, 56, 57; 9 added: 59 to 67)
+**Plans:** 65 plans (4 dropped by D-28: 20, 21, 56, 57; 11 added: 59 to 69)
 
 Plans:
 - [ ] 01.4-01-PLAN.md — The measure sees what it was blind to (fallback glyph boxes, letter boxes, dates in parts, shared lines, illustrations), calibrated
@@ -194,7 +194,9 @@ Plans:
 - [ ] 01.4-64-PLAN.md — D-31: the API reader from server/ (white-labelled, key on the server only), fields snapped to printed geometry, the in-page reader as fallback, leak row extended to provider and model names
 - [ ] 01.4-65-PLAN.md — D-31: the API reader measured on gold and held-out A through the real upload, cost and seconds per agreement, failures first (needs CARROWVALE_API_KEY; NOT RUN without it)
 - [ ] 01.4-66-PLAN.md — D-36: offering intake rerouted from the viewer's own model to POST /v1/intake on the owner's key (same prompt, same JSON, every intake function byte-identical); shared SDK install, client module and spend cap that plan 64 reuses; measuring tool proved without spending
-- [ ] 01.4-67-PLAN.md — D-34/D-35: the blind PPM: answer key by an agent who builds nothing, one reading through the real upload within $1.00, term-by-term score against the 90 percent bar, failures first (needs CARROWVALE_API_KEY; NOT RUN without it)
+- [ ] 01.4-67-PLAN.md — D-34/D-35/D-40/D-42: both blind PPMs, each read exactly once (ppm2.pdf text path, $3.00; ppm.pdf picture path with its frozen key, $8.00): ppm2 key by an agent who builds nothing, zero-spend worst-case probes, one run each by the orchestrator with the key, a score line each against the 90 percent bar, failures first (after 66, 68, 69)
+- [ ] 01.4-68-PLAN.md — D-37/D-38: PDF fallback for PPMs whose extracted text is unreadable (readability test tuned on public PDFs; readable PDFs keep the exact D-36 request); PDFs over one request's limits (600 pages, 32 MB encoded, token count) read in page ranges and merged, never cut; measure part fits a test cap by max tokens first
+- [ ] 01.4-69-PLAN.md — D-38: subscription API reader reads picture-only and broken-text pages from numbered page images with the picture reader's pixel candidates; long agreements read whole in ranges; silent retries; no dialog or allow step; a firm signature place guaranteed after every reading (walkC); walkA to two people (D-30); owner gate walk rows green; picture-pdf tool for plan 65
 
 ### Phase 2: Field Editor
 **Goal**: A sponsor can adjust fields by hand quickly and without frustration, in an editor that looks professionally made

@@ -1780,7 +1780,7 @@
     if (el.disabled) return;
     el.disabled = true;
     el.textContent = 'Reading the PDF…';
-    await rereadAgreement(env, { step: (i, all, boxes) => (el.textContent = pictureStep(i, all, boxes)) });
+    await rereadAgreement(env, { step: (i, all, boxes) => (el.textContent = pictureStep(i, all, boxes)), wait: (text) => (el.textContent = text || 'Reading the PDF…') });
     U.closeDialog();
     if (editorEnv() !== env) return NS.app.save(true);
     if (!env.fields.some((f) => f.id === esUi().sel)) esUi().sel = null;
@@ -2052,6 +2052,11 @@
     // Changed with the signer in the same step, so one undo puts both back.
     const f = k === 'signerId' ? env.fields.find((x) => x.id === esUi().sel) : null;
     if (f && isOther(f) && (f.type === 'signature' || f.type === 'initials') && signerById(env, v)) delete f.required;
+    // The same for an investor's signature or initials given to the firm (D-38: saving never stalls): it was optional only
+    // because every investor field is (D-30); as the firm's it is required, as every firm signature is.
+    const to = f ? signerById(env, v) : null;
+    const from = f ? signerById(env, f.signerId) : null;
+    if (f && to && to.role === 'countersigner' && from && from.role !== 'countersigner' && (f.type === 'signature' || f.type === 'initials') && f.required === false) delete f.required;
     NS.fieldEditor.setProp(k, v);
   };
   NS.actions['es-fdel'] = () => {
@@ -3005,10 +3010,11 @@
   async function autoFields(env, opts) {
     const read = (env.read = { ok: false, error: '', pages: 0, scanned: [], failed: [], places: 0, left: [], boxes: 0, blanks: 0, signatures: 0, initials: 0, investorPages: [], firmPages: [], firmLeft: 0, firmLeftPages: [], pictured: [], unread: {}, otherPages: [], others: 0, otherSignaturePages: [], coPages: [], cos: 0, coSignaturePages: [], firmDoubtPages: [], signaturePageMentioned: false, notEmpty: 0, wordless: {} });
     let res = null;
+    let layout = null;
     try {
       const t = T();
       const o = W().offerings.find((x) => x.id === (env.agreementFor || env.offeringId)) || {};
-      const layout = await pageLayout(env.docId, { step: opts && opts.step, pictures: !!(opts && opts.pictures), limitMs: opts && opts.limitMs });
+      layout = await pageLayout(env.docId, { step: opts && opts.step, pictures: !!(opts && opts.pictures), limitMs: opts && opts.limitMs });
       // Pages with no text that could not be read from their pictures either, by reason.
       layout.forEach((pg) => pg.unread && (read.unread[pg.unread] = read.unread[pg.unread] || []).push(pg.page));
       read.modelPlaces = layout.modelPlaces || 0;
@@ -3029,6 +3035,10 @@
       return 0;
     }
     res.errors.forEach((x) => console.error('Placing fields on page ' + x.page + ' failed:', x.reason));
+    // D-31: the workspace's reading server decides the fields when it can; on anything else the in-page reading stands.
+    res = await serverReading(env, layout, res, opts);
+    // D-38: no reading leaves the firm fields to complete and nowhere to sign.
+    res = firmSigned(res, layout, !!(read.server && read.server.used));
     Object.assign(read, { ok: res.pages > 0, pages: res.pages, scanned: res.scanned, failed: res.failed, places: res.places, left: res.left.slice(), investorPages: res.investorPages, firmPages: res.firmPages, pictured: res.pictured || [], otherPages: (res.otherPages || []).slice(), others: res.others || 0, otherSignaturePages: (res.otherSignaturePages || []).slice(), coPages: (res.coPages || []).slice(), cos: res.cos || 0, coSignaturePages: (res.coSignaturePages || []).slice(), firmDoubtPages: (res.firmDoubtPages || []).slice(), signaturePageMentioned: !!res.signaturePageMentioned, notEmpty: res.notEmpty || 0, wordless: Object.assign({}, res.wordless || {}) });
     const inv = env.signers.find((s) => s.role === 'investor');
     const cs = env.signers.find((s) => s.role === 'countersigner');
@@ -3063,6 +3073,277 @@
       if (p.type === 'initials') read.initials++;
     });
     return env.fields.length;
+  }
+  /**
+   * D-38: when a reading gives the firm fields but no signature of its own, one firm signature field is added: at the
+   * firm's acceptance or countersignature block when the page prints one, else directly below the firm's last field, on
+   * that field's page and inside its margins (NS.placement.firmSignature). A reading that already has a firm signature is
+   * returned as it is. For the in-page reading, firm blanks on an agreement with no firm signature line get no field at
+   * all (autoFields), so nothing is added there.
+   */
+  function firmSigned(res, layout, server) {
+    if (!res || !Array.isArray(res.fields)) return res;
+    const firm = res.fields.filter((p) => p.role === 'firm');
+    if (!firm.length || firm.some((p) => p.type === 'signature')) return res;
+    if (!server && !(res.firmPages || []).length) return res;
+    const last = firm.slice().sort((a, b) => a.page - b.page || a.y + a.h - (b.y + b.h) || a.x - b.x).pop();
+    const pg = (layout || []).find((x) => x && x.page === last.page);
+    const r = NS.placement.firmSignature ? NS.placement.firmSignature(pg, last) : null;
+    if (!r || !(r.w > 0) || !(r.h > 0)) return res;
+    const p = { type: 'signature', role: 'firm', page: last.page, x: r.x, y: r.y, w: r.w, h: r.h, label: '', required: true, conf: 'high', why: '', kind: 'signature' };
+    const firmPages = (res.firmPages || []).concat([last.page]).filter((n, i, all) => all.indexOf(n) === i).sort((a, b) => a - b);
+    return Object.assign({}, res, { fields: res.fields.concat([p]), firmPages, signatures: (res.signatures || 0) + 1, places: (res.places || 0) + 1, firmSigned: last.page });
+  }
+  /*
+   * D-31: the agreement read by the workspace's reading server (its Integrations address). The PDF and the numbered
+   * printed places (NS.placement.candidates) are sent to POST /v1/read with the server's access token; on an answer the
+   * fields become the server's decisions on the printed geometry (NS.placement.fromAnswer) and the counts are made from
+   * them, while what was read of the pages (pages, pictures, scans, failures) stays as read. On anything else (no server,
+   * a network error, a refusal, a status other than 200, an answer of the wrong shape, no answer within SERVER_LIMIT_MS)
+   * the in-page reading is returned exactly as it was. Never throws. What happened is kept in env.read.server =
+   * { used, why, fields, dropped, requests, ranges, pictures, images } (never shown).
+   *
+   * D-38, every upload read with the same bar:
+   * - Picture pages: a page read from its picture, or one whose text layer cannot be read (NS.intake.unreadablePages), is
+   *   sent as a picture of the page (long side IMAGE_LONG px, JPEG at IMAGE_QUALITY) with every candidate on it outlined
+   *   and labelled with its number; its words are left out of the text ("(read the page image)"). Chosen candidates keep
+   *   their pixel geometry, so fields land on the picture reader's lines and boxes.
+   * - Read whole: an agreement over one request's limits (NS.esign.RANGE_PAGES pages, NS.esign.RANGE_BYTES encoded,
+   *   NS.esign.IMAGE_MAX images) is sent in consecutive page ranges, each a new PDF of exactly its pages with its own
+   *   candidates (numbered across the whole agreement), text and pictures, one after another; a range that does not fit,
+   *   or that the server answers 413 (too many tokens), is cut in two halves and sent again. The answers are merged by
+   *   candidate number (missing places kept with their page). Size is never a reason to fall back.
+   * - Never stutters: each request is sent through NS.readingFetch (network errors and 429, 500, 502, 503, 504, 529 sent
+   *   again, at most 3 attempts, inside SERVER_LIMIT_MS); only the last failure falls back.
+   * A document that fits one request and has no picture page is sent exactly as plan 64 sends it.
+   */
+  const SERVER_WHY = ['unavailable', 'timeout', 'declined', 'incomplete', 'invalid', 'failed'];
+  const SERVER_WAIT = 'Finding every place to fill in…';
+  const IMAGE_LONG = 2000; // px: the long side of a page picture (under the 3000 px of a request with more than 20 images)
+  const IMAGE_QUALITY = 0.85;
+  /** The PDF as base64, built in chunks so a large file never goes through one huge string call. */
+  async function base64Of(blob) {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const parts = [];
+    const CH = 0x6000; // a multiple of 3, so every chunk but the last encodes without padding
+    for (let i = 0; i < bytes.length; i += CH) parts.push(btoa(String.fromCharCode.apply(null, bytes.subarray(i, i + CH))));
+    return parts.join('');
+  }
+  /** A picture of one page with its candidates outlined and numbered: { page, data (base64 JPEG), marks (the numbers drawn) }. */
+  async function markedPicture(doc, pageNo, items) {
+    const page = await doc.getPage(pageNo);
+    try {
+      const vp1 = page.getViewport({ scale: 1 });
+      const scale = IMAGE_LONG / Math.max(vp1.width, vp1.height);
+      const vp = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(vp.width));
+      canvas.height = Math.max(1, Math.round(vp.height));
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      const marks = [];
+      const big = Math.max(14, Math.round(Math.max(canvas.width, canvas.height) / 100));
+      ctx.textBaseline = 'top';
+      items
+        .filter((c) => c.page === pageNo)
+        .forEach((c) => {
+          const x = c.x0 * scale;
+          const y = c.y0 * scale;
+          const w = Math.max(2, (c.x1 - c.x0) * scale);
+          const hh = Math.max(2, (c.y1 - c.y0) * scale);
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = '#d0021b';
+          ctx.strokeRect(x, y, w, hh);
+          const label = '#' + c.id;
+          // Inside the place whenever it is tall enough (its blank space covers no printed word), the number sized to it;
+          // else small, just above it.
+          const size = Math.max(11, Math.min(big, Math.floor(hh - 5)));
+          ctx.font = `bold ${size}px sans-serif`;
+          const lw = ctx.measureText(label).width + 6;
+          const within = hh >= size + 5 && w >= lw + 4;
+          const ly = within ? y + 2 : y - size - 4 >= 0 ? y - size - 4 : y + hh + 1;
+          const lx = within ? x + 2 : x;
+          ctx.fillStyle = '#d0021b';
+          ctx.fillRect(lx, ly, lw, size + 3);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(label, lx + 3, ly + 2);
+          marks.push(c.id);
+        });
+      const url = canvas.toDataURL('image/jpeg', IMAGE_QUALITY);
+      return { page: pageNo, data: url.slice(url.indexOf(',') + 1), marks };
+    } finally {
+      page.cleanup();
+    }
+  }
+  async function serverReading(env, layout, res, opts) {
+    const rec = (env.read.server = { used: false, why: '', fields: 0, dropped: 0, requests: 0, ranges: [], pictures: [], images: 0 });
+    const wait = opts && typeof opts.wait === 'function' ? opts.wait : null;
+    const keep = (why) => ((rec.why = why), res);
+    let waiting = false;
+    let shown = null; // the pdf.js document pictures are drawn from, opened on first use
+    try {
+      const ws = W();
+      const url = NS.integrations && ws ? NS.integrations.serverUrl(ws) : '';
+      if (!url) return keep('no-server');
+      if (!res || !Array.isArray(layout)) return keep('invalid');
+      const blob = await files().get(env.docId);
+      if (!blob) return keep('failed');
+      // Picture pages: read from their picture, or a text layer that cannot be read (judged page by page).
+      const texts = layout.map((pg) => (!pg || pg.pictured || pg.scan || pg.failed ? '' : (pg.items || []).map((t) => t.s).join(' ')));
+      const unreadable = NS.intake && NS.intake.unreadablePages ? NS.intake.unreadablePages(texts) : texts.map(() => false);
+      const pictures = layout.filter((pg, i) => pg && !pg.scan && !pg.failed && (pg.pictured || unreadable[i])).map((pg) => pg.page);
+      rec.pictures = pictures.slice();
+      const cand = NS.placement.candidates(layout, res.fields, { pictures });
+      if (!cand.items.length) return keep('no-places');
+      const token = String(NS.integrations.ensure(ws).server.token || '');
+      const M = layout.length;
+      const E = NS.esign || {};
+      const span = Math.max(1, Math.floor(Number(E.RANGE_PAGES) || 600));
+      const maxBytes = Number(E.RANGE_BYTES) || 31 * 1024 * 1024;
+      const imageMax = Math.max(1, Math.floor(Number(E.IMAGE_MAX) || 600));
+      const limitMs = E.SERVER_LIMIT_MS > 0 ? E.SERVER_LIMIT_MS : 330000;
+      const drawn = new Map();
+      const pictureOf = async (n) => {
+        if (drawn.has(n)) return drawn.get(n);
+        if (!shown) {
+          const lib = await pdfjs();
+          shown = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()), isEvalSupported: false }).promise;
+        }
+        const im = await markedPicture(shown, n, cand.items);
+        drawn.set(n, im);
+        return im;
+      };
+      let src = null;
+      const rangePdf = async (a, b) => {
+        const L = await pdflib();
+        if (!src) src = await L.PDFDocument.load(new Uint8Array(await blob.arrayBuffer()), { ignoreEncryption: true });
+        const out = await L.PDFDocument.create();
+        const idx = [];
+        for (let i = a - 1; i < b; i++) idx.push(i);
+        (await out.copyPages(src, idx)).forEach((pg) => out.addPage(pg));
+        return base64Of(new Blob([await out.save()], { type: 'application/pdf' }));
+      };
+      /** One request's body for pages a..b, or null when it has more pictures than one request may carry. */
+      const bodyOf = async (a, b) => {
+        const whole = a === 1 && b === M;
+        const pics = pictures.filter((n) => n >= a && n <= b);
+        if (pics.length > imageMax) return null;
+        const list = whole ? cand.rows : cand.rows.filter((r) => r[1] >= a && r[1] <= b);
+        if (whole && !pics.length) return JSON.stringify({ pdf: await base64Of(blob), pages: M, text: cand.text, list });
+        const images = [];
+        for (const n of pics) images.push(await pictureOf(n));
+        let text = cand.text;
+        if (!whole) {
+          const own = [];
+          for (let n = a; n <= b; n++) if (cand.byPage[n]) own.push(cand.byPage[n]);
+          text = `Pages ${a} to ${b} of the agreement's ${M} pages. The attached PDF holds only these pages, in order (its first page is page ${a}); page numbers here and in your answer are the agreement's own.\n${own.join('\n')}`;
+        }
+        const body = { pdf: whole ? await base64Of(blob) : await rangePdf(a, b), pages: b - a + 1, text, list };
+        if (images.length) body.images = images;
+        if (!whole) body.range = [a, b, M];
+        return JSON.stringify(body);
+      };
+      let queue = [];
+      for (let a = 1; a <= M; a += span) queue.push([a, Math.min(M, a + span - 1)]);
+      /** A range cut in two halves, sent first; false for a single page. */
+      const halve = ([a, b]) => {
+        if (b <= a) return false;
+        const mid = a + Math.ceil((b - a + 1) / 2) - 1;
+        queue = [
+          [a, mid],
+          [mid + 1, b]
+        ].concat(queue);
+        return true;
+      };
+      const merged = { fields: [], missing: [] };
+      while (queue.length) {
+        const [a, b] = queue.shift();
+        // Pages with no numbered place give the server nothing to choose from.
+        if (!cand.rows.some((r) => r[1] >= a && r[1] <= b)) continue;
+        const body = await bodyOf(a, b);
+        if (body === null || body.length > maxBytes) {
+          if (halve([a, b])) continue;
+          return keep('too-large');
+        }
+        if (wait && !waiting) {
+          waiting = true;
+          wait(SERVER_WAIT);
+        }
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), limitMs);
+        let r;
+        let answer = null;
+        try {
+          const headers = { 'Content-Type': 'application/json' };
+          if (token) headers.Authorization = `Bearer ${token}`;
+          rec.requests++;
+          try {
+            r = await NS.readingFetch(url + '/v1/read', { method: 'POST', headers, body, signal: ctl.signal });
+          } catch (e) {
+            return keep(ctl.signal.aborted ? 'timeout' : 'network');
+          }
+          try {
+            answer = await r.json();
+          } catch (e) {
+            answer = null;
+            if (ctl.signal.aborted) return keep('timeout');
+          }
+        } finally {
+          clearTimeout(timer);
+        }
+        if (r.status === 413) {
+          if (halve([a, b])) continue;
+          return keep('too-large');
+        }
+        if (r.status !== 200) {
+          const said = answer && typeof answer.reason === 'string' ? answer.reason : '';
+          return keep(r.status === 503 ? 'unavailable' : r.status === 504 ? 'timeout' : SERVER_WHY.indexOf(said) >= 0 ? said : 'failed');
+        }
+        if (!answer || answer.ok !== true || !Array.isArray(answer.fields) || !Array.isArray(answer.missing)) return keep('invalid');
+        answer.fields.forEach((f) => merged.fields.push(f));
+        answer.missing.forEach((m) => merged.missing.push(m));
+        rec.ranges.push([a, b]);
+        // Pictures already sent are let go.
+        for (const n of Array.from(drawn.keys())) if (n >= a && n <= b) drawn.delete(n);
+      }
+      rec.images = pictures.length;
+      // The union of the ranges' choices, each place once (the first range's answer for it stands).
+      const seen = new Set();
+      merged.fields = merged.fields.filter((f) => f && !seen.has(f.id) && seen.add(f.id));
+      const out = NS.placement.fromAnswer(layout, cand.items, merged);
+      if (!out) return keep('invalid');
+      // The counts are made from the server's fields; what was read of the pages stays as read.
+      const fields = out.fields;
+      const pagesOf = (keepIt) => fields.filter(keepIt).map((p) => p.page).filter((p, i, all) => all.indexOf(p) === i).sort((a, b) => a - b);
+      const sig = (role) => (p) => p.type === 'signature' && p.role === role;
+      const next = Object.assign({}, res, {
+        fields,
+        places: fields.length + out.dropped,
+        left: [],
+        boxes: fields.filter((p) => p.type === 'checkbox').length,
+        signatures: fields.filter((p) => p.type === 'signature' || p.type === 'initials').length,
+        initials: fields.filter((p) => p.type === 'initials').length,
+        blanks: fields.filter((p) => p.type !== 'checkbox' && p.type !== 'signature' && p.type !== 'initials').length,
+        investorPages: pagesOf(sig('investor')),
+        firmPages: pagesOf(sig('firm')),
+        firmDoubtPages: [],
+        others: 0,
+        otherPages: [],
+        otherSignaturePages: [],
+        cos: 0,
+        coPages: [],
+        coSignaturePages: []
+      });
+      Object.assign(rec, { used: true, why: 'read', fields: fields.length, dropped: out.dropped });
+      return next;
+    } catch (e) {
+      return keep('failed');
+    } finally {
+      if (shown) shown.destroy();
+      if (waiting) wait('');
+    }
   }
   /** What the portal read in an agreement's PDF, in plain sentences ('' for an agreement that was not read here). */
   function readNote(env) {
@@ -3238,7 +3519,7 @@
       makeSigner(env, { name: `${T().shortName} (countersigns)`, email: T().support.email || '' });
       if (tpl) applyTemplateFields(env, tpl);
       // Every page with no text is read from its picture on this first reading: the sponsor only uploads.
-      else env.autoPlaced = await autoFields(env, { step: src.step, pictures: true });
+      else env.autoPlaced = await autoFields(env, { step: src.step, wait: src.wait, pictures: true });
       addEvent(env, staffActor(), 'Created', `Subscription agreement for ${o.name}`);
       envs(ws).push(env);
       NS.app.save(true);
@@ -3360,7 +3641,9 @@
     try {
       // A page with no text is read from its picture, which takes a few seconds a page: the button says which page.
       const step = (i, all, boxes) => btn && (btn.textContent = pictureStep(i, all, boxes));
-      const env = await agreementDraft(w, oid, { file: file || null, docId: file ? '' : docId, title: form.title.value, step });
+      // While the reading server reads the agreement, the button says so; afterwards it reads as before.
+      const wait = (text) => btn && (btn.textContent = text || 'Reading the PDF…');
+      const env = await agreementDraft(w, oid, { file: file || null, docId: file ? '' : docId, title: form.title.value, step, wait });
       U.closeDialog();
       // The editor always opens on a new agreement: the sponsor sees what was read and where each field sits, then saves.
       openAgreement(env);
@@ -3504,4 +3787,9 @@
   NS.esignKit = Object.assign(NS.esignKit || {}, { pageLayout, readNote, agreementTodo, fileRefusal, firmOnly });
   NS.coSigning = { coOf, coPlaces, coAttach, coDetach, coUpdate, coHolding, coEnvelopes, mySigner };
   NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
+  // How long the upload waits for the reading server before the in-page reading stands (a check may shorten it).
+  NS.esign.SERVER_LIMIT_MS = 330000;
+  NS.esign.RANGE_PAGES = 600;
+  NS.esign.RANGE_BYTES = 31 * 1024 * 1024;
+  NS.esign.IMAGE_MAX = 600;
 })(window.CVPortal);

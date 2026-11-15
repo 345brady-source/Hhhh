@@ -18,6 +18,7 @@
  *   POST /hosted/:id              that page's form or SDK result
  *   GET  /sandbox/:ref            a stand-in hosted page for the "sandbox" provider (testing without accounts)
  *   POST /v1/intake               read an offering's documents for the intake screen (lib/intake.mjs; ndjson stream)
+ *   POST /v1/read                 read an uploaded subscription agreement's places (lib/read.mjs)
  *   GET  /health                  which providers are configured, and whether reading is available
  *
  * Investor invitations (lib/invitations.mjs; see README.md):
@@ -47,6 +48,7 @@ import { id, safeEqual } from './lib/crypto.mjs';
 import { STATUSES } from './lib/statuses.mjs';
 import { createInvitations } from './lib/invitations.mjs';
 import { createIntake } from './lib/intake.mjs';
+import { createReader, IMAGE_MAX, IMAGE_BYTES } from './lib/read.mjs';
 import { costOf, logLine } from './lib/model.mjs';
 import { PROVIDERS as PROVIDERS_DEFAULT, configured, missingEnv, describe } from './providers/index.mjs';
 
@@ -151,6 +153,8 @@ export function createServer(opts = {}) {
   const limited = rateLimiter(env);
   const now = opts.now || (() => Date.now());
   const intake = opts.intake || createIntake({ env, fetch: opts.fetch });
+  // The agreement reader shares the intake's spend cap, so the cap counts every reading call this server makes.
+  const reader = opts.reader || createReader({ env, fetch: opts.fetch, budget: intake.budget || undefined });
 
   const invites = createInvitations({ env, store, publicUrl, returnTo: (u) => returnTo(u), limited, now, mailTls: opts.mailTls });
   /**
@@ -281,8 +285,36 @@ export function createServer(opts = {}) {
    * call); otherwise a 200 ndjson stream: { t } for each piece of the reply's text, { h: 1 } every 15 s while nothing else
    * is sent, then one last line { ok: true, json } or { ok: false, reason }. Its own errors never reach the global handler,
    * so no exception text, model or provider name is ever sent; the browser closing the connection stops the call.
+   *
+   * pdfs (optional, D-37): [{ name, data, pages, of }], the PDFs whose text layer could not be read, sent as documents
+   * before the prompt. At most 5; each data base64 whose bytes start with %PDF-; 600 pages in all; a 32 MB body. With PDFs
+   * the input is always counted (free) first: over 900000 tokens is 413, a failed count is 402 with a cap and 502 without.
+   * D-38: the prompt has no character limit of its own (the whole text of the documents is sent); a prompt over 200000
+   * characters is always counted the same way, so one past the reading service's input limit is refused before any call.
    */
-  const INTAKE_LIMIT = 500000;
+  const INTAKE_COUNT_CHARS = 200000;
+  const INTAKE_BODY = 32 * 1024 * 1024;
+  const INTAKE_PDFS = 5;
+  const INTAKE_PAGES = 600;
+  const INTAKE_TOKENS = 900000;
+  /** The request's PDFs: [] when there are none, null when malformed, 'too_large' past the count or page limits. */
+  function intakePdfs(list) {
+    if (list === undefined || list === null) return [];
+    if (!Array.isArray(list)) return null;
+    if (!list.length) return [];
+    if (list.length > INTAKE_PDFS) return 'too_large';
+    let pages = 0;
+    for (const p of list) {
+      if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
+      if (typeof p.name !== 'string' || !p.name.trim() || p.name.length > 300) return null;
+      if (typeof p.data !== 'string' || !p.data.length || p.data.length % 4 !== 0 || !B64.test(p.data)) return null;
+      if (!Buffer.from(p.data.slice(0, 12), 'base64').subarray(0, 5).equals(Buffer.from('%PDF-'))) return null;
+      if (!Number.isInteger(p.pages) || p.pages < 1 || !Number.isInteger(p.of) || p.of < p.pages) return null;
+      pages += p.pages;
+    }
+    if (pages > INTAKE_PAGES) return 'too_large';
+    return list.map((p) => ({ name: p.name, data: p.data, pages: p.pages, of: p.of }));
+  }
   const REASONS = ['declined', 'incomplete', 'invalid', 'timeout', 'failed'];
   async function readIntake(req, res) {
     const t0 = Date.now();
@@ -291,7 +323,7 @@ export function createServer(opts = {}) {
       if (!(await readerOn())) return send(res, 503, { ok: false, reason: 'unavailable' });
       let raw;
       try {
-        raw = await readRaw(req, 2 * 1024 * 1024);
+        raw = await readRaw(req, INTAKE_BODY);
       } catch (e) {
         return send(res, e && e.status === 413 ? 413 : 400, { ok: false, reason: e && e.status === 413 ? 'too_large' : 'invalid' });
       }
@@ -301,23 +333,43 @@ export function createServer(opts = {}) {
       } catch {
         body = null;
       }
-      const prompt = body && typeof body === 'object' && !Array.isArray(body) ? body.prompt : undefined;
+      raw = null;
+      const obj = body && typeof body === 'object' && !Array.isArray(body) ? body : null;
+      body = null;
+      const prompt = obj ? obj.prompt : undefined;
       if (typeof prompt !== 'string' || !prompt.length) return send(res, 400, { ok: false, reason: 'invalid' });
-      if (prompt.length > INTAKE_LIMIT) return send(res, 413, { ok: false, reason: 'too_large' });
+      const pdfs = intakePdfs(obj.pdfs);
+      if (pdfs === null) return send(res, 400, { ok: false, reason: 'invalid' });
+      if (pdfs === 'too_large') return send(res, 413, { ok: false, reason: 'too_large' });
+      // The read log counts the PDFs and their pages (numbers only), and only when there are some.
+      const sent = pdfs.length ? { pdfs: pdfs.length, pdfPages: pdfs.reduce((a, p) => a + p.pages, 0) } : {};
 
-      // The spend cap: the prompt counted (free) and the worst case of this call checked before anything is spent.
+      // The spend cap: the request counted (free) and the worst case of this call checked before anything is spent. With
+      // PDFs or a long prompt the request is always counted, so one past the reading service's input limit is refused
+      // before any call.
       let counted = null;
       const budget = intake.budget;
-      if (budget && budget.on) {
+      const capped = !!(budget && budget.on);
+      const large = pdfs.length > 0 || prompt.length > INTAKE_COUNT_CHARS;
+      if (capped || large) {
         try {
-          counted = await intake.count(prompt);
+          counted = pdfs.length ? await intake.count(prompt, pdfs) : await intake.count(prompt);
         } catch {
           counted = null;
         }
-        if (counted === null || !budget.allow(counted, intake.maxTokens())) {
-          record({ chars: prompt.length, counted, outcome: 'spend_cap' });
+        if (large && counted !== null && counted > INTAKE_TOKENS) {
+          record(Object.assign({ chars: prompt.length, counted, outcome: 'too_large' }, sent));
+          return send(res, 413, { ok: false, reason: 'too_large' });
+        }
+        if (capped && (counted === null || !budget.allow(counted, intake.maxTokens()))) {
+          record(Object.assign({ chars: prompt.length, counted, outcome: 'spend_cap' }, sent));
           console.error('intake: spend_cap 402');
           return send(res, 402, { ok: false, reason: 'spend_cap' });
+        }
+        if (counted === null) {
+          record(Object.assign({ chars: prompt.length, counted, outcome: 'failed' }, sent));
+          console.error('intake: failed 502');
+          return send(res, 502, { ok: false, reason: 'failed' });
         }
       }
 
@@ -339,7 +391,7 @@ export function createServer(opts = {}) {
       if (beat.unref) beat.unref();
       let r;
       try {
-        r = await intake.run(prompt, { signal: ctl.signal, onText: (t) => write({ t: String(t) }) });
+        r = await intake.run(prompt, Object.assign({ signal: ctl.signal, onText: (t) => write({ t: String(t) }) }, pdfs.length ? { pdfs } : {}));
       } catch {
         r = null;
       } finally {
@@ -354,7 +406,7 @@ export function createServer(opts = {}) {
       const usage = r.usage || {};
       const cost = costOf(usage, r.model);
       if (budget && budget.add) budget.add(usage, r.model);
-      record({ ms: Number(r.ms) || Date.now() - t0, chars: prompt.length, counted, outcome: ok ? 'read' : reason, stopReason: String(r.stopReason || ''), model: String(r.model || ''), usage: { input_tokens: Number(usage.input_tokens) || 0, output_tokens: Number(usage.output_tokens) || 0, cache_creation_input_tokens: Number(usage.cache_creation_input_tokens) || 0, cache_read_input_tokens: Number(usage.cache_read_input_tokens) || 0 }, cost: cost.usd });
+      record(Object.assign({ ms: Number(r.ms) || Date.now() - t0, chars: prompt.length, counted, outcome: ok ? 'read' : reason, stopReason: String(r.stopReason || ''), model: String(r.model || ''), usage: { input_tokens: Number(usage.input_tokens) || 0, output_tokens: Number(usage.output_tokens) || 0, cache_creation_input_tokens: Number(usage.cache_creation_input_tokens) || 0, cache_read_input_tokens: Number(usage.cache_read_input_tokens) || 0 }, cost: cost.usd }, sent));
       if (!ok) console.error(`intake: ${reason}${r.status ? ' ' + Number(r.status) : ''}`);
     } catch {
       if (!res.headersSent) return send(res, 500, { ok: false, reason: 'failed' });
@@ -362,6 +414,166 @@ export function createServer(opts = {}) {
         res.write(JSON.stringify({ ok: false, reason: 'failed' }) + '\n');
         res.end();
       }
+    }
+  }
+
+  /**
+   * POST /v1/read: an uploaded agreement and the numbered places the browser measured on it, read by the reading service.
+   * 503 before the body is read when reading is not available; 400 for a malformed request, 413 for one over the limits
+   * (32 MB body, 600 pages, 4 MB of text, 20000 places); 402 when the spend cap could be passed (before any call);
+   * otherwise 200 { ok: true, fields, missing, ms } or a failure { ok: false, reason } (504 timeout; 502 declined,
+   * incomplete, invalid or failed). Its own errors never reach the global handler, so no exception text, model or
+   * provider name is ever sent; the browser closing the connection stops the call. The PDF is never stored.
+   *
+   * D-38, both optional: images [{ page, data, marks }], a picture of each picture page (or page whose text layer cannot be
+   * read) with the candidates drawn and numbered on it (data base64 JPEG or PNG, at most IMAGE_BYTES each and IMAGE_MAX in
+   * all, one per page; marks the numbers drawn on it); range [first, last, of], when the PDF holds only pages first..last
+   * of a longer agreement: the list's pages are then the agreement's own, inside the range, and its numbers are the
+   * agreement's (increasing, not from 1). With images, or a PDF of more than 100 pages or 8 MB, the request is always
+   * counted (free) first: over 900000 tokens is 413 too_large (the browser then sends smaller ranges), a failed count is
+   * 402 with a cap and 502 without. Without either, the request is plan 64's exactly.
+   */
+  const READ_BODY = 32 * 1024 * 1024;
+  const READ_TEXT = 4 * 1024 * 1024;
+  const READ_PLACES = 20000;
+  const READ_PAGES = 600;
+  const READ_TOKENS = 900000;
+  const READ_COUNT_PAGES = 100;
+  const READ_COUNT_CHARS = 8 * 1024 * 1024;
+  /** An image's type from its first bytes: JPEG or PNG, else ''. */
+  const imageType = (data) => {
+    const head = Buffer.from(data.slice(0, 12), 'base64');
+    if (head.length >= 3 && head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff) return 'image/jpeg';
+    if (head.length >= 8 && head.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'image/png';
+    return '';
+  };
+  const READ_STATUS = { unavailable: 503, timeout: 504, declined: 502, incomplete: 502, invalid: 502, failed: 502 };
+  const B64 = /^[A-Za-z0-9+/]+={0,2}$/;
+  async function readAgreement(req, res) {
+    const t0 = Date.now();
+    const zero = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
+    const record = (o) => logLine(env, Object.assign({ at: new Date().toISOString(), route: 'read', ms: Date.now() - t0, pages: 0, candidates: 0, outcome: '', stopReason: '', model: '', usage: zero, cost: 0 }, o));
+    const fail = (status, reason) => send(res, status, { ok: false, reason });
+    try {
+      let on = false;
+      try {
+        on = !!(await reader.available());
+      } catch {
+        on = false;
+      }
+      if (!on) return fail(503, 'unavailable');
+      let raw;
+      try {
+        raw = await readRaw(req, READ_BODY);
+      } catch (e) {
+        return e && e.status === 413 ? fail(413, 'too_large') : fail(400, 'invalid');
+      }
+      let body = null;
+      try {
+        body = JSON.parse(raw.toString('utf8'));
+      } catch {
+        body = null;
+      }
+      raw = null;
+      if (!body || typeof body !== 'object' || Array.isArray(body)) return fail(400, 'invalid');
+      const { pdf, pages, text, list } = body;
+      if (typeof pdf !== 'string' || !pdf.length || pdf.length % 4 !== 0 || !B64.test(pdf)) return fail(400, 'invalid');
+      if (!Number.isInteger(pages) || pages < 1) return fail(400, 'invalid');
+      if (pages > READ_PAGES) return fail(413, 'too_large');
+      if (typeof text !== 'string' || !text.trim()) return fail(400, 'invalid');
+      if (text.length > READ_TEXT) return fail(413, 'too_large');
+      if (!Array.isArray(list) || !list.length) return fail(400, 'invalid');
+      if (list.length > READ_PLACES) return fail(413, 'too_large');
+      // A page range of a longer agreement (D-38): the list's pages are the agreement's own, inside the range.
+      const range = body.range === undefined || body.range === null ? null : body.range;
+      if (range !== null && !(Array.isArray(range) && range.length === 3 && range.every((n) => Number.isInteger(n)) && range[0] >= 1 && range[1] >= range[0] && range[2] >= range[1] && range[1] - range[0] + 1 === pages)) return fail(400, 'invalid');
+      const first = range ? range[0] : 1;
+      const last = range ? range[1] : pages;
+      const place = (e, i) => Array.isArray(e) && e.length === 7 && (range ? Number.isInteger(e[0]) && e[0] >= 1 && (i === 0 || e[0] > list[i - 1][0]) : e[0] === i + 1) && Number.isInteger(e[1]) && e[1] >= first && e[1] <= last && e.slice(2, 6).every((n) => typeof n === 'number' && Number.isFinite(n)) && typeof e[6] === 'string' && e[6].length <= 16;
+      if (!list.every(place)) return fail(400, 'invalid');
+      const count = list.length;
+      // Page images (D-38): at most one per page of the range, JPEG or PNG, within the published limits.
+      let images = null;
+      if (body.images !== undefined && body.images !== null) {
+        if (!Array.isArray(body.images)) return fail(400, 'invalid');
+        if (body.images.length > IMAGE_MAX) return fail(413, 'too_large');
+        const seenPages = new Set();
+        images = [];
+        for (const im of body.images) {
+          if (!im || typeof im !== 'object' || Array.isArray(im)) return fail(400, 'invalid');
+          if (!Number.isInteger(im.page) || im.page < first || im.page > last || seenPages.has(im.page)) return fail(400, 'invalid');
+          if (typeof im.data !== 'string' || !im.data.length || im.data.length % 4 !== 0 || !B64.test(im.data)) return fail(400, 'invalid');
+          if (im.data.length > IMAGE_BYTES) return fail(413, 'too_large');
+          const media = imageType(im.data);
+          if (!media) return fail(400, 'invalid');
+          if (im.marks !== undefined && !(Array.isArray(im.marks) && im.marks.length <= READ_PLACES && im.marks.every((n) => Number.isInteger(n) && n >= 1))) return fail(400, 'invalid');
+          seenPages.add(im.page);
+          images.push(Object.assign({ page: im.page, media_type: media, data: im.data }, im.marks ? { marks: im.marks.slice() } : {}));
+        }
+        if (!images.length) images = null;
+      }
+
+      // The spend cap: the request counted (free) and the worst case of this call checked before anything is spent. With
+      // images or a large PDF the request is always counted, so one past the reading service's input limit is refused
+      // before any call (the browser then reads smaller page ranges).
+      let counted = null;
+      const budget = reader.budget;
+      const capped = !!(budget && budget.on);
+      const large = !!images || pages > READ_COUNT_PAGES || pdf.length > READ_COUNT_CHARS;
+      const sent = images ? { images: images.length } : {};
+      if (capped || large) {
+        try {
+          counted = images ? await reader.count({ pdf, text, images }) : await reader.count({ pdf, text });
+        } catch {
+          counted = null;
+        }
+        if (large && counted !== null && counted > READ_TOKENS) {
+          record(Object.assign({ pages, candidates: count, counted, outcome: 'too_large' }, sent));
+          return fail(413, 'too_large');
+        }
+        if (capped && (counted === null || !budget.allow(counted, reader.maxTokens()))) {
+          record(Object.assign({ pages, candidates: count, outcome: 'spend_cap' }, sent));
+          console.error('read: spend_cap 402');
+          return fail(402, 'spend_cap');
+        }
+        if (counted === null) {
+          record(Object.assign({ pages, candidates: count, counted, outcome: 'failed' }, sent));
+          console.error('read: failed 502');
+          return fail(502, 'failed');
+        }
+      }
+
+      const ctl = new AbortController();
+      const onClose = () => {
+        if (!res.writableFinished) ctl.abort();
+      };
+      res.on('close', onClose);
+      let r;
+      try {
+        const req = { pdf, pages, text, count, list };
+        if (range) Object.assign(req, { ids: list.map((e) => e[0]), first, last, range });
+        if (images) req.images = images;
+        r = await reader.read(req, { signal: ctl.signal });
+      } catch {
+        r = null;
+      }
+      res.off('close', onClose);
+      r = r || { ok: false, reason: 'failed' };
+      const ok = !!(r.ok && Array.isArray(r.fields) && Array.isArray(r.missing));
+      const reason = ok ? '' : READ_STATUS[r.reason] ? r.reason : 'failed';
+      const status = ok ? 200 : READ_STATUS[reason];
+      if (!res.writableEnded && !res.destroyed) {
+        if (ok) send(res, 200, { ok: true, fields: r.fields, missing: r.missing, ms: Number(r.ms) || Date.now() - t0 });
+        else fail(status, reason);
+      }
+      const usage = r.usage || {};
+      const cost = costOf(usage, r.model);
+      if (budget && budget.add) budget.add(usage, r.model);
+      record(Object.assign({ ms: Number(r.ms) || Date.now() - t0, pages, candidates: count, counted, outcome: ok ? 'read' : ctl.signal.aborted ? 'cancelled' : reason, stopReason: String(r.stopReason || ''), model: String(r.model || ''), usage: { input_tokens: Number(usage.input_tokens) || 0, output_tokens: Number(usage.output_tokens) || 0, cache_creation_input_tokens: Number(usage.cache_creation_input_tokens) || 0, cache_read_input_tokens: Number(usage.cache_read_input_tokens) || 0 }, cost: cost.usd }, sent));
+      if (!ok) console.error(`read: ${reason} ${status}`);
+    } catch {
+      if (!res.headersSent) fail(502, 'failed');
+      console.error('read: failed 502');
     }
   }
 
@@ -544,6 +756,11 @@ export function createServer(opts = {}) {
     if (path === '/v1/intake') {
       if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
       return readIntake(req, res);
+    }
+
+    if (path === '/v1/read') {
+      if (req.method !== 'POST') return send(res, 405, { error: 'Use POST' });
+      return readAgreement(req, res);
     }
 
     if (req.method === 'POST' && path === '/v1/verifications') {
