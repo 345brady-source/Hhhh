@@ -9,3 +9,6 @@ server/data/
 # Local environment files with provider secrets
 .env
 .env.*
+
+# Integration server dependencies (installed from server/package-lock.json with npm ci)
+server/node_modules/
