@@ -1152,7 +1152,7 @@
         </div>
         <div class="cols">
           <section class="sec">${sec('Tax and accreditation')}<dl class="terms">
-            ${row('Tax form', inv.taxForm ? `${h(inv.taxForm)} on file` : 'Not provided')}
+            ${row('Tax form', !inv.taxForm ? 'Not provided' : NS.inviteFlow.taxOnFile(inv) ? `${h(inv.taxForm)} on file` : `${h(inv.taxForm)} not signed`)}
             ${row('Taxpayer ID', inv.tinLast4 ? `ending ${h(inv.tinLast4)}` : 'Not provided')}
             ${row('Accreditation', (() => {
               const IVN = NS.integrations;

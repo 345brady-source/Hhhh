@@ -1019,8 +1019,9 @@
       add('kyc', 'AML/KYC cleared and current', !kycIssues.length, `Identity verified and sanctions and PEP screening clear for ${live.length - kycIssues.length} of ${live.length} investors.`, kycIssues);
     }
 
-    const noTax = live.filter((a) => !a.investor.taxForm);
-    add('tax', 'Tax forms on file', !noTax.length, `W-9 or W-8 on file for ${live.length - noTax.length} of ${live.length} investors.`, noTax.map((a) => `${a.investor.title} (${a.investor.id}): no tax form. Request a W-9 before year-end tax reporting.`));
+    // D-30 (plan 06-17): a form finished without a signature counts as missing (NS.inviteFlow.taxOnFile, the one rule).
+    const noTax = live.filter((a) => !NS.inviteFlow.taxOnFile(a.investor));
+    add('tax', 'Tax forms on file', !noTax.length, `W-9 or W-8 on file for ${live.length - noTax.length} of ${live.length} investors.`, noTax.map((a) => (a.investor.taxForm ? `${a.investor.title} (${a.investor.id}): ${a.investor.taxForm} not signed. Request a signed ${a.investor.taxForm} before year-end tax reporting.` : `${a.investor.title} (${a.investor.id}): no tax form. Request a W-9 before year-end tax reporting.`)));
 
     // DIY edition: an investor verified through a provider counts only while the verification is current.
     const accOk = (inv) => (NS.integrations && NS.integrations.active(ws) && inv.verify ? NS.integrations.accreditationValid(ws, inv) || !NS.integrations.needsAccreditation(ws, inv) : !!(inv.accreditation && inv.accreditation.basis));
@@ -1166,7 +1167,7 @@
       const kl = k ? NS.ops.kycLabel(k, P.to) : null;
       const acc = i.accreditation && i.accreditation.basis ? `Verified accredited investor, ${dateShort(i.accreditation.date)}` : 'Not verified';
       const first = i.positions.filter((p) => p.offeringId === o.id).map((p) => p.date).sort()[0];
-      return [i.id, i.title, ...xVals(a), i.contact, (NS.ENTITY_TYPES[i.type] || {}).label || i.type, first, a.commit, a.contribCum, unf(a), a.distCum, a.end, a.own, i.taxForm ? `${i.taxForm} on file` : 'Missing', i.tinLast4 ? `ending ${i.tinLast4}` : 'Not provided', acc, kl ? kl.label + (k.screenedOn ? `, screened ${dateShort(k.screenedOn)}` : '') : '', k && k.nextReview ? k.nextReview : '', i.onboarding.status === 'complete' ? 'Active' : i.onboarding.status === 'in_progress' ? 'Onboarding' : 'Invited', payLabel(i)];
+      return [i.id, i.title, ...xVals(a), i.contact, (NS.ENTITY_TYPES[i.type] || {}).label || i.type, first, a.commit, a.contribCum, unf(a), a.distCum, a.end, a.own, !i.taxForm ? 'Missing' : NS.inviteFlow.taxOnFile(i) ? `${i.taxForm} on file` : `${i.taxForm} not signed`, i.tinLast4 ? `ending ${i.tinLast4}` : 'Not provided', acc, kl ? kl.label + (k.screenedOn ? `, screened ${dateShort(k.screenedOn)}` : '') : '', k && k.nextReview ? k.nextReview : '', i.onboarding.status === 'complete' ? 'Active' : i.onboarding.status === 'in_progress' ? 'Onboarding' : 'Invited', payLabel(i)];
     });
     out.push(
       sched(

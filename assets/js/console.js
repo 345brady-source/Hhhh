@@ -132,7 +132,7 @@
   function taxLine(w, inv) {
     const tc = inv.taxCert;
     if (!tc || !tc.envelopeId || !tc.form) return '';
-    if (!tc.signed) return `<span class="sub">${h(tc.form)} not signed</span>`;
+    if (!NS.inviteFlow.taxOnFile(inv)) return `<span class="sub">${h(tc.form)} not signed</span>`;
     const doc = (w.docs || []).find((d) => d.envelopeId === tc.envelopeId && (d.investors || []).indexOf(inv.id) >= 0);
     return `<span class="sub">${h(tc.form)} signed ${date(String(tc.at || '').slice(0, 10))}${doc ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(doc.id)}" data-name="${h(doc.fileName || 'tax-form.pdf')}">Download</button>` : ''}</span>`;
   }
