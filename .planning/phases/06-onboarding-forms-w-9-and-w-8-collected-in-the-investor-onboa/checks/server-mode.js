@@ -192,6 +192,12 @@ async function serverFlow(S, check, o) {
     const w = await L.walk(ip, answers);
     out.walk = w;
     check('the investor’s device runs on the server’s snapshot (state.remote) and reaches the agreement with no field error', w.reached && w.errors.length === 0 && w.seen.some((s) => /\| Investor status$/.test(s)), { seen: w.seen, errors: w.errors });
+    // D-09 (plan 06-16): the investor type the sponsor chose travels in the snapshot and the device's record keeps it (the
+    // console form's default, U.S. individual, for a new investor; an investor on file from before has none).
+    const snapInv = (out.snaps.find((x) => x && x.investor) || {}).investor || {};
+    const deviceType = await ip.evaluate(() => ((window.CVPortal.state.ws || {}).investors || []).map((x) => x.taxType || ''));
+    const wantType = out.who ? undefined : 'us-individual';
+    check('D-09: the snapshot carries the investor type the sponsor chose, and the investor’s device keeps it', snapInv.taxType === wantType && deviceType[0] === (wantType || ''), { snapshot: snapInv.taxType, device: deviceType });
     out.remote = await ip.evaluate(() => !!(window.CVPortal.state.remote && window.CVPortal.state.remote.server && !window.CVPortal.state.remote.refused));
     // The answers as the device holds them on its request, before it sends anything.
     out.deviceQual = await ip.evaluate(() => {
@@ -829,7 +835,7 @@ const parts = {
       const bad = Array.from(keys).filter((k) => /^(count|ranked|place|purchasers|investors|requests|positions|accepted|pending|unanswered|holders)$|^nonAccredited/.test(k));
       check('no key in the snapshot could carry a count, a place or other investors or requests', bad.length === 0, bad);
       check('the offering in the snapshot has only its known fields', Object.keys(snap.offering || {}).every((k) => ['id', 'name', 'shortName', 'type', 'summary', 'minimum', 'closeDate', 'terms', 'exemption', 'classes', 'currency', 'documents'].indexOf(k) >= 0), Object.keys(snap.offering || {}));
-      check('the investor in the snapshot is the invited investor alone', !!snap.investor && snap.investor.id === inv.investorId && Object.keys(snap.investor).every((k) => ['id', 'contact', 'title', 'type', 'email', 'existing'].indexOf(k) >= 0), snap.investor);
+      check('the investor in the snapshot is the invited investor alone', !!snap.investor && snap.investor.id === inv.investorId && Object.keys(snap.investor).every((k) => ['id', 'contact', 'title', 'type', 'email', 'taxType', 'existing'].indexOf(k) >= 0), snap.investor);
       const text = raw.join('\n');
       const found = [].concat(others.names, others.emails, others.ids, others.requests).filter((v) => v && text.indexOf(v) >= 0);
       check(`none of the others’ ${others.names.length} names, emails, investor ids or request ids appears in what the page received`, others.names.length === 35 && found.length === 0 && !/Seeded Purchaser/.test(text), found.slice(0, 10));

@@ -73,6 +73,20 @@ test('an investor already on file: the flag and accreditation summary reach the 
     assert.ok(!/photo ID|bank details ready/i.test(re.text));
   }));
 
+test('D-09: the investor type the sponsor chose reaches the investor link; anything but the four types is dropped', () =>
+  start(async (base) => {
+    for (const taxType of ['us-individual', 'us-entity', 'foreign-individual', 'foreign-entity']) {
+      const r = await create(base, { investor: { id: 'HRC-0009', contact: 'Zoë Müller', type: 'individual', email: `zoe.${taxType}@investor.example`, taxType } });
+      const snap = (await j(base, 'GET', '/v1/invite', { token: r.token, auth: false })).body;
+      assert.equal(snap.investor.taxType, taxType, JSON.stringify(snap.investor));
+    }
+    for (const taxType of ['foreign', 'US individual', '<b>us-entity</b>', 7, null]) {
+      const r = await create(base, { investor: { id: 'HRC-0010', contact: 'Ada Q', email: `ada.${String(taxType).replace(/\W/g, '')}@investor.example`, taxType } });
+      const snap = (await j(base, 'GET', '/v1/invite', { token: r.token, auth: false })).body;
+      assert.equal(snap.investor.taxType, undefined, `dropped: ${JSON.stringify(taxType)}`);
+    }
+  }));
+
 test('a bad existing summary is cleaned: a date that is not a date is dropped, flags are only true when true', () =>
   start(async (base) => {
     const r = await create(base, { investor: { id: 'HRC-0008', contact: 'Ada Q', email: 'ada@investor.example', existing: { accredited: 'yes', accreditedUntil: '2027-03-01<script>', holds: 1 } }, invitation: { cents: 0, existing: 'true' } });

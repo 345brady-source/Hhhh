@@ -125,6 +125,18 @@
     return `Invited ${date(o.invited)}`;
   }
 
+  /**
+   * Plan 06-16: the investor's official tax form, one line under Activation: signed, with a download of the signed copy
+   * (its Documents entry), or not signed; nothing when the investor has no such form.
+   */
+  function taxLine(w, inv) {
+    const tc = inv.taxCert;
+    if (!tc || !tc.envelopeId || !tc.form) return '';
+    if (!tc.signed) return `<span class="sub">${h(tc.form)} not signed</span>`;
+    const doc = (w.docs || []).find((d) => d.envelopeId === tc.envelopeId && (d.investors || []).indexOf(inv.id) >= 0);
+    return `<span class="sub">${h(tc.form)} signed ${date(String(tc.at || '').slice(0, 10))}${doc ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(doc.id)}" data-name="${h(doc.fileName || 'tax-form.pdf')}">Download</button>` : ''}</span>`;
+  }
+
   /** Net asset value and capital by fund at the last month-end (from the capital accounts in audit.js). */
   function fundsPanel(w) {
     if (!NS.audit || !w.offerings.length) return '';
@@ -766,7 +778,7 @@
             <th scope="row"><span class="strong">${h(i.title)}</span><span class="sub">${h(i.contact)} · ${h(i.email)}</span>${NS.coInvestor ? NS.coInvestor.statusHTML(w, i) : ''}</th>
             <td>${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</td>
             <td class="num">${usd(invested)}<span class="sub">${committed > Math.round(invested * 100) ? `${usd(committed / 100)} committed · ` : ''}${i.positions.length} investment${i.positions.length === 1 ? '' : 's'}</span></td>
-            <td>${activation(i)}</td>
+            <td>${activation(i)}${taxLine(w, i)}</td>
             <td>${payLabel(i)}</td>
             <td class="cs-row-actions">${NS.coInvestor ? NS.coInvestor.recordButton(i) : ''}${
               done

@@ -89,12 +89,15 @@ function cleanFirm(x) {
     onboarding: cleanJson(f.onboarding, 32 * KB, 'firm.onboarding') || {}
   };
 }
+const TAX_TYPES = ['us-individual', 'us-entity', 'foreign-individual', 'foreign-entity'];
 function cleanInvestor(x) {
   const i = obj(x);
   if (!i || !/^[\w.-]{1,64}$/.test(String(i.id || ''))) throw fail(400, 'investor.id is required (letters, digits, dots, dashes; at most 64)');
   if (!clip(i.contact, 120).trim()) throw fail(400, 'investor.contact (the investor’s name) is required');
   if (!validAddress(i.email)) throw fail(400, 'investor.email is not a valid email address');
   const out = { id: String(i.id), contact: clip(i.contact, 120).trim(), title: clip(i.title || i.contact, 200).trim(), type: clip(i.type, 40), email: i.email };
+  // D-09: the investor type the sponsor chose (it decides the tax form the investor's page shows); one of the four or none.
+  if (TAX_TYPES.includes(i.taxType)) out.taxType = i.taxType;
   // An investor already on the firm's books, invited to subscribe to another offering: flags and a date, no personal details;
   // and (D-01) their own status answers to prefill the status step: the ground on their record and their benefit plan answers.
   const e = obj(i.existing);

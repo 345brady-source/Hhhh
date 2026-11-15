@@ -176,7 +176,9 @@
     const off = offOf(ws, o.offeringId);
     const classes = openClasses(off);
     const cls = off && classes.some((c) => c.id === o.cls) ? o.cls : off && classes.length === 1 ? classes[0].id : '';
-    const type = NS.ENTITY_TYPES[o.type] ? o.type : 'individual';
+    // D-09: the investor type the sponsor chose (a kind of U.S. account, or a foreign type; U.S. individual when none).
+    const kind = NS.investorKind(o.type);
+    const type = kind.type;
     const at = nowIso();
     const id = uid('invt');
     const token = serverOn(ws) ? '' : newToken();
@@ -187,6 +189,7 @@
       contact: name,
       title: String(o.account || '').trim() || name,
       type,
+      taxType: kind.taxType,
       email,
       phone: '',
       address: '',
@@ -203,7 +206,7 @@
       have.onboarding = Object.assign({}, have.onboarding, { invitationId: id, offeringId: off ? off.id : '' });
     } else if (have) {
       // Invited again after an earlier invitation was cancelled: the details the sponsor entered now, and a fresh start.
-      Object.assign(have, { contact: name, title: String(o.account || '').trim() || have.title || name, type });
+      Object.assign(have, { contact: name, title: String(o.account || '').trim() || have.title || name, type, taxType: kind.taxType });
       have.onboarding = Object.assign({}, have.onboarding, { status: 'invited', step: 0, invited: today(), completed: '', source: 'invitation', invitationId: id, offeringId: off ? off.id : '' });
     }
     const invitation = {
@@ -458,7 +461,7 @@
       consoleUrl: `${portalPage()}#console-investors`,
       notifyEmail: senderEmail(ws),
       firm: { name: t.name, shortName: t.shortName, legalName: t.legalName, supportTeam: t.support.team, supportEmail: isEmail(t.support.email) ? t.support.email : '', supportPhone: t.support.phone || '', colors: { primary: t.colors.primary, accent: t.colors.accent }, logo, portalName: t.portalName, disclaimer: t.disclaimer || '', onboarding: clone(t.onboarding || {}) },
-      investor: Object.assign({ id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email }, it.existing ? { existing: onFileSummary(ws, inv, it) } : {}),
+      investor: Object.assign({ id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email }, NS.INVESTOR_TYPES[inv.taxType] ? { taxType: inv.taxType } : {}, it.existing ? { existing: onFileSummary(ws, inv, it) } : {}),
       offering,
       invitation: Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}),
       verification: { connections: clone(c.connections), use: clone(c.use), rules: clone(c.rules), accreditationRequired },
@@ -566,7 +569,7 @@
     const inv = invOf(ws, it.investorId);
     if (!inv || it.status !== 'cancelled') return null;
     const off = offOf(ws, it.offeringId);
-    const o = { name: inv.contact, email: inv.email, type: inv.type, account: inv.title, offeringId: off && off.status === 'Raising' ? off.id : '', cents: off && off.status === 'Raising' ? it.cents : 0, cls: it.cls, note: it.note };
+    const o = { name: inv.contact, email: inv.email, type: NS.investorKindOf(inv), account: inv.title, offeringId: off && off.status === 'Raising' ? off.id : '', cents: off && off.status === 'Raising' ? it.cents : 0, cls: it.cls, note: it.note };
     const e = validate(ws, o);
     if (e.amount || e.cls) Object.assign(o, { cents: 0, cls: '' });
     const again = validate(ws, o);
@@ -1275,7 +1278,7 @@
     const cur = off ? curOf(off) : 'USD';
     // Only the name and email are asked for; everything else is optional and stays folded away until it is used or has a problem.
     const dflt = offs.length === 1 ? offs[0].id : '';
-    const moreOpen = !!(d.more || d.errors.offering || d.errors.amount || d.errors.cls || /Choose an offering/.test(d.errors.email || '') || d.type !== 'individual' || d.account || d.amount !== '' || d.cls || d.note || (d.offeringId || '') !== dflt);
+    const moreOpen = !!(d.more || d.errors.offering || d.errors.amount || d.errors.cls || /Choose an offering/.test(d.errors.email || '') || d.account || d.amount !== '' || d.cls || d.note || (d.offeringId || '') !== dflt);
     const agreement = off && NS.esign && NS.esign.templateReady ? (NS.esign.templateReady(w, off.id) ? 'ready' : 'missing') : '';
     const what = off
       ? `They will be invited to ${h(off.name.replace(/\.$/, ''))}${agreement === 'ready' ? ' and sign its subscription agreement during onboarding' : ''} (change under More options).`
@@ -1286,12 +1289,12 @@
       <label class="cs-field" for="iv-contact"><span>First name</span><input id="iv-contact" name="contact" maxlength="60" autocomplete="off" data-bind="inv8:first" value="${h(d.first || '')}"${inval(d, 'name')}></label>
       <label class="cs-field" for="iv-last"><span>Last name</span><input id="iv-last" name="last" maxlength="60" autocomplete="off" data-bind="inv8:last" value="${h(d.last || '')}"${inval(d, 'name')}>${fieldErr(d, 'name')}</label>
       <label class="cs-field cs-wide" for="iv-email"><span>Email</span><input id="iv-email" name="email" type="email" maxlength="120" autocomplete="off" data-bind="inv8:email" value="${h(d.email)}"${inval(d, 'email')}>${fieldErr(d, 'email')}</label>
-      <p class="cs-hint cs-wide inv8-what" id="iv-what">They choose how they invest during onboarding. ${what}</p>
+      <label class="cs-field cs-wide" for="iv-type"><span>Investor type</span><select id="iv-type" name="type" data-bind="inv8:type">${NS.investorKindOptions(d.type, h)}</select><span class="cs-hint">Decides the tax form they are shown. They can correct it during onboarding.</span></label>
+      <p class="cs-hint cs-wide inv8-what" id="iv-what">${what}</p>
       ${agreement === 'missing' ? `<p class="cs-hint cs-hint-warn cs-wide inv8-warn" id="iv-agreement-warn">${h(off.name.replace(/\.$/, ''))} has no subscription agreement yet. <a href="#console-offering-${h(off.id)}">Add it on the offering</a> so investors sign it during onboarding.</p>` : ''}
       <details class="cs-wide inv8-more" id="iv-more"${moreOpen ? ' open' : ''}>
         <summary>More options (optional)</summary>
         <div class="cs-grid inv8-more-body">
-          <label class="cs-field" for="iv-type"><span>Investing as <em>Optional</em></span><select id="iv-type" name="type" data-bind="inv8:type">${Object.keys(NS.ENTITY_TYPES).map((k) => `<option value="${k}"${d.type === k ? ' selected' : ''}>${h(NS.ENTITY_TYPES[k].label)}</option>`).join('')}</select><span class="cs-hint">The investor confirms or changes this during onboarding.</span></label>
           <label class="cs-field" for="iv-title"><span>Account name <em>Optional</em></span><input id="iv-title" name="title" maxlength="120" autocomplete="off" placeholder="Defaults to the full name" data-bind="inv8:account" value="${h(d.account)}"><span class="cs-hint">For a trust, company or IRA, its legal name. The investor can correct it.</span></label>
           <label class="cs-field" for="iv-off"><span>Offering <em>Optional</em></span><select id="iv-off" name="offering" data-bind="inv8:offeringId"${inval(d, 'offering')}><option value=""${!off ? ' selected' : ''}>No offering: account only</option>${offs.map((o) => `<option value="${h(o.id)}"${off && off.id === o.id ? ' selected' : ''}>${h(o.name)}</option>`).join('')}</select>${offs.length ? '' : '<span class="cs-hint">No offering is raising. The investor sets up their account and can subscribe later.</span>'}${fieldErr(d, 'offering')}</label>
           <label class="cs-field" for="iv-amt"><span>Commitment (${cur === 'USD' ? '$' : h(cur)}) <em>Optional</em></span><input id="iv-amt" name="amount" type="number" min="0" step="1000" inputmode="decimal" data-bind="inv8:amount" value="${h(d.amount)}"${off ? '' : ' disabled'}${inval(d, 'amount')}><span class="cs-hint">${off ? `Minimum ${h(money(off, min))}. Leave blank for the investor to choose; if you set it, they cannot change it.` : 'Choose an offering to set a commitment.'}</span>${fieldErr(d, 'amount')}</label>
@@ -1305,8 +1308,8 @@
     const ui = S().ui;
     const eg = h(offs[0] ? offs[0].shortName || offs[0].name : 'Fund I');
     const bulk = `<form class="cs-form" data-form="invite-bulk" novalidate>
-      <label class="cs-field" for="iv-file"><span>Upload a CSV or Excel file</span><input id="iv-file" name="file" type="file" accept="${FILE_ACCEPT}" data-change="inv8-file"${ui.bulkFileError ? ' aria-invalid="true" aria-describedby="iv-file-msg"' : ''}><span class="cs-hint">A .csv or .xlsx file with one investor per row. Columns: first name, last name, email, then optionally offering, commitment and how they invest. A header row is recognized; the first worksheet of an Excel file is read.</span>${ui.bulkFileError ? `<span class="cs-error" id="iv-file-msg" role="alert">${h(ui.bulkFileError)}</span>` : ui.bulkFileNote ? `<span class="cs-hint inv8-file-note" id="iv-file-msg" role="status">${h(ui.bulkFileNote)}</span>` : ''}</label>
-      <label class="cs-field" for="iv-csv"><span>Or paste a list: first name, last name, email, offering, commitment</span><textarea id="iv-csv" name="csv" rows="6" spellcheck="false" placeholder="first name,last name,email,offering,commitment&#10;Anita,Shah,anita.shah@example.com,${eg},100000&#10;Ravi,Patel,ravi.patel@example.com">${h(ui.bulkText || '')}</textarea><span class="cs-hint">One investor per line. Offering and commitment are optional; the offering can be its short name or full name. Add a last column to say how they invest (individual, joint, trust, entity or IRA); otherwise they choose during onboarding. A list with the full name in one column (name, email, offering, commitment) also works.</span></label>
+      <label class="cs-field" for="iv-file"><span>Upload a CSV or Excel file</span><input id="iv-file" name="file" type="file" accept="${FILE_ACCEPT}" data-change="inv8-file"${ui.bulkFileError ? ' aria-invalid="true" aria-describedby="iv-file-msg"' : ''}><span class="cs-hint">A .csv or .xlsx file with one investor per row. Columns: first name, last name, email, then optionally offering, commitment and investor type. A header row is recognized; the first worksheet of an Excel file is read.</span>${ui.bulkFileError ? `<span class="cs-error" id="iv-file-msg" role="alert">${h(ui.bulkFileError)}</span>` : ui.bulkFileNote ? `<span class="cs-hint inv8-file-note" id="iv-file-msg" role="status">${h(ui.bulkFileNote)}</span>` : ''}</label>
+      <label class="cs-field" for="iv-csv"><span>Or paste a list: first name, last name, email, offering, commitment</span><textarea id="iv-csv" name="csv" rows="6" spellcheck="false" placeholder="first name,last name,email,offering,commitment&#10;Anita,Shah,anita.shah@example.com,${eg},100000&#10;Ravi,Patel,ravi.patel@example.com">${h(ui.bulkText || '')}</textarea><span class="cs-hint">One investor per line. Offering and commitment are optional; the offering can be its short name or full name. Add a last column for the investor type: individual, joint, trust, entity or IRA (all U.S.), foreign individual or foreign entity. Without it: U.S. individual. A list with the full name in one column (name, email, offering, commitment) also works.</span></label>
       ${ui.bulkResult || ''}
       <div class="cs-row"><button class="cs-btn" type="submit">Check list</button>${ui.bulkRows && ui.bulkRows.length ? `<button class="cs-btn cs-btn-primary" type="button" data-action="invite-bulk-add"${ui.bulkBusy ? ' disabled aria-busy="true"' : ''}>${ui.bulkBusy ? 'Sending…' : `Send ${ui.bulkRows.length} invitation${ui.bulkRows.length === 1 ? '' : 's'}`}</button>` : ''}</div>
     </form>`;
@@ -1362,7 +1365,7 @@
       <label class="cs-field" for="im-last"><span>Last name</span><input id="im-last" name="last" maxlength="60" autocomplete="off" data-bind="inv8m:last" value="${h(d.last)}"${bad('name')}>${err('name')}</label>
       <label class="cs-field" for="im-email"><span>Email</span><input id="im-email" name="email" type="email" maxlength="120" autocomplete="off" data-bind="inv8m:email" value="${h(d.email)}"${bad('email')}>${err('email')}</label>
       <label class="cs-field" for="im-phone"><span>Phone <em>Optional</em></span><input id="im-phone" name="phone" type="text" inputmode="tel" maxlength="40" autocomplete="off" data-bind="inv8m:phone" value="${h(d.phone)}"></label>
-      <label class="cs-field" for="im-type"><span>Investing as <em>Optional</em></span><select id="im-type" name="type" data-bind="inv8m:type">${Object.keys(NS.ENTITY_TYPES).map((k) => `<option value="${k}"${d.type === k ? ' selected' : ''}>${h(NS.ENTITY_TYPES[k].label)}</option>`).join('')}</select></label>
+      <label class="cs-field" for="im-type"><span>Investor type</span><select id="im-type" name="type" data-bind="inv8m:type">${NS.investorKindOptions(d.type, h)}</select></label>
       <label class="cs-field" for="im-title"><span>Account name <em>Optional</em></span><input id="im-title" name="title" maxlength="120" autocomplete="off" placeholder="Defaults to the full name" data-bind="inv8m:account" value="${h(d.account)}"><span class="cs-hint">For a trust, company or IRA, its legal name.</span></label>
       <label class="cs-field cs-wide" for="im-address"><span>Mailing address <em>Optional</em></span><textarea id="im-address" name="address" rows="2" maxlength="300" data-bind="inv8m:address">${h(d.address)}</textarea></label>
       <label class="cs-field" for="im-off"><span>Offering <em>Optional</em></span><select id="im-off" name="offering" data-bind="inv8m:offeringId"${bad('offering')}><option value=""${!off ? ' selected' : ''}>No offering: account only</option>${w.offerings.map((o) => `<option value="${h(o.id)}"${off && off.id === o.id ? ' selected' : ''}>${h(o.name)}</option>`).join('')}</select>${err('offering')}</label>
@@ -1407,11 +1410,13 @@
     const off = offOf(ws, o.offeringId);
     const cents = off ? Math.max(0, Math.round(Number(o.cents) || 0)) : 0;
     const actor = NS.app.actor();
+    const kind = NS.investorKind(o.type);
     const investor = {
       id: nextInvestorId(ws),
       contact: name,
       title: String(o.account || '').trim() || name,
-      type: NS.ENTITY_TYPES[o.type] ? o.type : 'individual',
+      type: kind.type,
+      taxType: kind.taxType,
       email,
       phone: String(o.phone || '').trim().slice(0, 40),
       address: String(o.address || '').trim().slice(0, 300),
@@ -1493,7 +1498,7 @@
     let it = null;
     let res = null;
     if (d.link) {
-      it = create(w, { name: inv.contact, email: inv.email, type: inv.type, account: inv.title, access: true }).invitation;
+      it = create(w, { name: inv.contact, email: inv.email, type: NS.investorKindOf(inv), account: inv.title, access: true }).invitation;
       NS.app.save(true);
       res = await send(w, it);
     }
@@ -1598,7 +1603,7 @@
     rows
       .map((r) => r.map((c) => (/[",\t\r\n]/.test(c) ? `"${String(c).replace(/[\r\n]+/g, ' ').replace(/"/g, '""')}"` : c)).join(','))
       .join('\n');
-  const TYPE_WORDS = { individual: 'individual', joint: 'joint', trust: 'trust', entity: 'entity', company: 'entity', llc: 'entity', corporation: 'entity', partnership: 'entity', ira: 'ira' };
+  const TYPE_WORDS = { individual: 'individual', joint: 'joint', trust: 'trust', entity: 'entity', company: 'entity', llc: 'entity', corporation: 'entity', partnership: 'entity', ira: 'ira', usindividual: 'individual', usentity: 'entity', foreignindividual: 'foreign-individual', foreignentity: 'foreign-entity' };
   const HEADERS = {
     first: ['first name', 'first', 'firstname', 'given name'],
     last: ['last name', 'last', 'lastname', 'surname', 'family name'],
@@ -1665,7 +1670,9 @@
       const name = full || [first, last].map((x) => String(x || '').trim()).filter(Boolean).join(' ');
       const o = offName ? w.offerings.find((x) => [x.id, x.shortName, x.name].some((n) => n && n.toLowerCase() === String(offName).toLowerCase())) : null;
       const dollars = amt ? Number(String(amt).replace(/[$,\s]/g, '')) : 0;
-      const type = typ ? TYPE_WORDS[String(typ).toLowerCase().replace(/[^a-z]/g, '')] : 'individual';
+      const tw = String(typ || '').toLowerCase().replace(/[^a-z]/g, '');
+      // The owner's four types, also as the form labels read ("U.S. entity (LLC, corporation, trust, IRA, joint)").
+      const type = typ ? TYPE_WORDS[tw] || TYPE_WORDS[['usindividual', 'usentity', 'foreignindividual', 'foreignentity'].find((x) => tw.indexOf(x) === 0) || ''] : 'individual';
       let why = '';
       if (!name) why = 'missing name';
       else if (!isEmail(email)) why = `invalid email "${email || ''}"`;
@@ -1698,7 +1705,7 @@
     const { rows, errors } = parseBulk(ui.bulkText);
     ui.bulkRows = rows;
     ui.bulkResult = `<div class="cs-bulk">${rows.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact inv8-bulk-tbl"><thead><tr><th scope="col">First name</th><th scope="col">Last name</th><th scope="col">Email</th><th scope="col">Offering</th><th scope="col" class="num">Commitment</th></tr></thead><tbody>${rows
-      .map((r) => `<tr><td>${h(r.first)}</td><td>${h(r.last)}${r.type !== 'individual' ? `<span class="sub">${h(NS.ENTITY_TYPES[r.type].label)}</span>` : ''}</td><td>${h(r.email)}</td><td>${r.offeringName ? h(r.offeringName) : '<span class="cs-muted">Account only</span>'}</td><td class="num">${r.cents ? h(money(offOf(w, r.offeringId), r.cents)) : '<span class="cs-muted">Investor chooses</span>'}</td></tr>`)
+      .map((r) => `<tr><td>${h(r.first)}</td><td>${h(r.last)}${r.type !== 'individual' ? `<span class="sub">${h(NS.investorKindLabel(r.type))}</span>` : ''}</td><td>${h(r.email)}</td><td>${r.offeringName ? h(r.offeringName) : '<span class="cs-muted">Account only</span>'}</td><td class="num">${r.cents ? h(money(offOf(w, r.offeringId), r.cents)) : '<span class="cs-muted">Investor chooses</span>'}</td></tr>`)
       .join('')}</tbody></table></div>` : ''}${errors.length ? `<ul class="cs-errors">${errors.map((e) => `<li>${h(e)}</li>`).join('')}</ul>` : ''}${!rows.length && !errors.length ? '<p class="cs-muted">No rows found.</p>' : ''}</div>`;
     return { rows, errors };
   }

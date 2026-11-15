@@ -112,6 +112,41 @@
     entity: { label: 'LLC, partnership or corporation', sec: 'CCD' },
     ira: { label: 'IRA (through a custodian)', sec: 'CCD' }
   };
+  /**
+   * D-09 (owner): the investor type the sponsor picks when inviting or adding an investor. It decides the tax form the
+   * onboarding shows (W-9 for a U.S. person, W-8BEN for a foreign individual, W-8BEN-E for a foreign entity) and the kind
+   * of account pre-selected on Investor information. The investor can correct it on the tax step.
+   */
+  NS.INVESTOR_TYPES = {
+    'us-individual': { label: 'U.S. individual', form: 'W-9' },
+    'us-entity': { label: 'U.S. entity (LLC, corporation, trust, IRA, joint)', form: 'W-9' },
+    'foreign-individual': { label: 'Foreign individual', form: 'W-8BEN' },
+    'foreign-entity': { label: 'Foreign entity', form: 'W-8BEN-E' }
+  };
+  /**
+   * The sponsor's one choice (the invite forms' "Investor type"): a kind of U.S. account (an ENTITY_TYPES key), or a
+   * foreign type. Returns the account type and the investor type; anything else is a U.S. individual (the default).
+   */
+  NS.investorKind = (v) => {
+    if (v === 'foreign-individual') return { type: 'individual', taxType: v };
+    if (v === 'foreign-entity') return { type: 'entity', taxType: v };
+    if (v === 'us-entity') return { type: 'entity', taxType: v };
+    const type = NS.ENTITY_TYPES[v] ? v : 'individual';
+    return { type, taxType: type === 'individual' ? 'us-individual' : 'us-entity' };
+  };
+  /** The choice that stands for an investor record (the reverse of investorKind). */
+  NS.investorKindOf = (i) => (i && /^foreign-/.test(i.taxType || '') ? i.taxType : (i && NS.ENTITY_TYPES[i.type] ? i.type : 'individual'));
+  /** The options of the "Investor type" select: U.S. individual, the kinds of U.S. entity, then the two foreign types. */
+  NS.investorKindOptions = (sel, esc) => {
+    const o = (v, label) => `<option value="${v}"${sel === v ? ' selected' : ''}>${esc(label)}</option>`;
+    return `${o('individual', 'U.S. individual')}<optgroup label="U.S. entity">${o('entity', 'LLC or corporation')}${o('trust', 'Trust')}${o('ira', 'IRA')}${o('joint', 'Joint account')}</optgroup>${o('foreign-individual', 'Foreign individual')}${o('foreign-entity', 'Foreign entity')}`;
+  };
+  /** "U.S. individual", "U.S. entity: Trust", "Foreign entity": what the sponsor chose, in words. */
+  NS.investorKindLabel = (v) => {
+    const k = NS.investorKind(v);
+    if (k.taxType !== 'us-entity') return NS.INVESTOR_TYPES[k.taxType].label;
+    return `U.S. entity: ${{ entity: 'LLC or corporation', trust: 'Trust', ira: 'IRA', joint: 'Joint account' }[k.type] || 'LLC or corporation'}`;
+  };
 
   function makeInvestor(t, i, R, used) {
     let first;
