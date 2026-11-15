@@ -193,6 +193,8 @@ Plans:
 - [ ] 01.4-63-PLAN.md — D-30: investor or sponsor only, no investor field mandatory, pre-filled investor fields editable; scorers judge two people
 - [ ] 01.4-64-PLAN.md — D-31: the API reader from server/ (white-labelled, key on the server only), fields snapped to printed geometry, the in-page reader as fallback, leak row extended to provider and model names
 - [ ] 01.4-65-PLAN.md — D-31: the API reader measured on gold and held-out A through the real upload, cost and seconds per agreement, failures first (needs CARROWVALE_API_KEY; NOT RUN without it)
+- [ ] 01.4-66-PLAN.md — D-36: offering intake rerouted from the viewer's own model to POST /v1/intake on the owner's key (same prompt, same JSON, every intake function byte-identical); shared SDK install, client module and spend cap that plan 64 reuses; measuring tool proved without spending
+- [ ] 01.4-67-PLAN.md — D-34/D-35: the blind PPM: answer key by an agent who builds nothing, one reading through the real upload within $1.00, term-by-term score against the 90 percent bar, failures first (needs CARROWVALE_API_KEY; NOT RUN without it)
 
 ### Phase 2: Field Editor
 **Goal**: A sponsor can adjust fields by hand quickly and without frustration, in an editor that looks professionally made
