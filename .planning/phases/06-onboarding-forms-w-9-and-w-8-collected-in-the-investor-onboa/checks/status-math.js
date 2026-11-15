@@ -245,138 +245,44 @@ const cases = {
     check('holders of the offering with no subscription made here are counted as without an answer, once each', r.unanswered === 3 && r.holders === 2 && r.count === 1, r);
     check('a holder of another offering is not counted', E.nonAccredited({ offerings: [o], investors: [inv('x', ['o2'])], requests: [] }, o).unanswered === 0);
   },
-  /** D-01 (plans 06-04, 06-05): how much of each answer counts as held by benefit plan investors. */
-  bpishare({ check }) {
+  /**
+   * D-08 (1) (owner, plan 06-15): the sponsor's benefit plan panel is a plain list of the investors whose latest answer says
+   * they are benefit plan investors, with what each has committed (and, apart, what is pending), for the sponsor's own
+   * judgment. No per-class percentages, no if-accepted figures, no value basis, no controlling marks.
+   */
+  'erisa-list'({ check }) {
     const E = eligibility();
-    const W = { title1: 1, '4975': 1, other: 0, none: 0 };
-    Object.keys(W).forEach((k) => check(`bpiShare plan "${k}" is ${W[k]}`, E.bpiShare({ plan: k }) === W[k], E.bpiShare({ plan: k })));
-    const PA = [[40, 0.4], ['40', 0.4], ['40%', 0.4], [0, 0], [100, 1], ['12.5', 0.125]];
-    PA.forEach(([v, want]) => check(`bpiShare planAssets at ${JSON.stringify(v)} is ${want}`, E.bpiShare({ plan: 'planAssets', planPct: v }) === want, E.bpiShare({ plan: 'planAssets', planPct: v })));
-    const BAD = [140, '140', -1, '', '  ', null, undefined, 'abc', true, NaN, Infinity];
-    BAD.forEach((v) => check(`T-06-12: bpiShare planAssets at ${String(JSON.stringify(v))} is null (not answered)`, E.bpiShare({ plan: 'planAssets', planPct: v }) === null, E.bpiShare({ plan: 'planAssets', planPct: v })));
-    check('bpiShare with no answer, an empty plan or an unknown plan is null', [null, undefined, {}, { plan: '' }, { plan: 'x' }, 'title1'].every((e) => E.bpiShare(e) === null));
-  },
-
-  /** D-01, D-30 (plan 06-05): erisa() on workspaces built by hand. */
-  erisa({ check }) {
-    const E = eligibility({ structures: true });
-    const o = (extra) => Object.assign({ id: 'o1', structure: { exemption: 'Rule 506(b)' } }, extra || {});
-    const holder = (id, dollars, erisa, extra) => Object.assign({ id, positions: [Object.assign({ offeringId: 'o1', amount: dollars, date: '2024-01-01' }, (extra && extra.pos) || {})] }, erisa === undefined ? {} : { erisa });
-    const row = (rows, id) => rows.find((r) => r.classId === (id || '')) || {};
-    const near = (a, b) => Math.abs(a - b) < 1e-6;
-
-    // Plan-asset entities.
-    let ws = { investors: [holder('pa', 100000, { plan: 'planAssets', planPct: 40 }), holder('n1', 100000, { plan: 'none' })], requests: [] };
-    let r = row(E.erisa(ws, o()));
-    check('planassets: an entity answering 40 percent counts at 0.4 of its value (20 percent of the class)', near(r.pct, 20) && r.bpiValue === 4000000 && r.total === 20000000, r);
-    ['140', '', 140, -5].forEach((bad) => {
-      ws = { investors: [holder('pa', 100000, { plan: 'planAssets', planPct: bad }), holder('n1', 100000, { plan: 'none' })], requests: [] };
-      r = row(E.erisa(ws, o()));
-      check(`planassets: at ${JSON.stringify(bad)} the entity counts as 0 and is listed as not answered`, r.pct === 0 && Array.isArray(r.unanswered) && r.unanswered.length === 1 && r.unanswered[0] === 'pa', r);
-    });
-
-    // Unanswered holders.
-    ws = { investors: [holder('i1', 100000, { plan: '4975' }), holder('u1', 100000), holder('u2', 200000, { plan: '' }), holder('u3', 100000, { plan: 'none' })], requests: [] };
-    r = row(E.erisa(ws, o()));
-    check('unanswered: holders with no answers count as 0 (20 percent of the class) and are listed, with their count', near(r.pct, 20) && Array.isArray(r.unanswered) && same(r.unanswered, ['u1', 'u2']), r);
-    ws.requests = [Object.assign(sub('u1', 'o1', 'approved'), { cents: 0, qual: { erisa: { plan: 'none', share: 0 } } })];
-    r = row(E.erisa(ws, o()));
-    check('unanswered: an answer on a subscription to the offering takes the holder off the list', same(r.unanswered || [], ['u2']), r);
-
-    // Several classes.
-    const two = [{ id: 'A', name: 'Class A' }, { id: 'B', name: 'Class B' }];
-    ws = {
-      investors: [holder('a1', 300000, { plan: '4975' }, { pos: { class: 'A' } }), holder('a2', 700000, { plan: 'none' }, { pos: { class: 'A' } }), holder('b1', 400000, { plan: 'none' }, { pos: { class: 'B' } })],
-      requests: []
+    check('eligibility.js exports planInvestors', !!E && typeof E.planInvestors === 'function', E && Object.keys(E));
+    if (!E || typeof E.planInvestors !== 'function') return;
+    const o = off('o1', 'Rule 506(b)');
+    const holder = (id, dollars, erisa) => Object.assign({ id, title: id.toUpperCase(), positions: dollars ? [{ offeringId: 'o1', amount: dollars, date: '2024-01-01' }] : [] }, erisa ? { erisa } : {});
+    const q = (erisa) => ({ regime: '506b', accredited: true, basis: 'x', erisa });
+    const req = (inv, status, cents, erisa, offeringId) => Object.assign(sub(inv, offeringId || 'o1', status, erisa === undefined ? undefined : q(erisa)), { cents });
+    const ws = {
+      offerings: [o],
+      investors: [holder('h1', 100000, { plan: '4975' }), holder('h2', 200000, { plan: 'none' }), holder('h3'), holder('h4'), holder('h5'), holder('h6'), holder('h7', 100000, { plan: 'title1' }), holder('h8')],
+      requests: [
+        req('h3', 'pending', 5000000, { plan: 'planAssets', planPct: 40 }),
+        req('h4', 'approved', 7500000, { plan: 'title1', planPct: null }),
+        req('h5', 'pending', 5000000, { plan: 'other', planPct: null }),
+        req('h6', 'rejected', 5000000, { plan: 'title1', planPct: null }),
+        req('h7', 'approved', 1000000, { plan: 'none', planPct: null }),
+        req('h8', 'pending', 5000000, { plan: 'title1', planPct: null }, 'o2')
+      ]
     };
-    const before = E.erisa(ws, o({ classes: two }));
-    check('classes: two classes give two lines', before.length === 2 && row(before, 'A').name === 'Class A' && row(before, 'B').name === 'Class B' && near(row(before, 'A').pct, 30) && row(before, 'B').pct === 0, before);
-    ws.requests = [Object.assign(sub('ira', 'o1', 'pending'), { cents: 40000000, cls: 'B', qual: { erisa: { plan: '4975', share: 1 } } })];
-    const pend = E.erisa(ws, o({ classes: two }));
-    check('classes: a pending request for Class B gives Class B an if-accepted figure (50 percent) and Class A none', row(pend, 'B').ifAccepted.length === 1 && near(row(pend, 'B').ifAccepted[0].pct, 50) && row(pend, 'A').ifAccepted.length === 0, pend);
-    ws.requests[0].status = 'approved';
-    const after = E.erisa(ws, o({ classes: two }));
-    check('classes: the Class B request, accepted, moves Class B to 50 percent and never changes Class A', near(row(after, 'B').pct, 50) && row(after, 'A').pct === row(before, 'A').pct && row(after, 'A').total === row(before, 'A').total, after);
-
-    // The sponsor's marks and the holder's own answer.
-    const ctl = () => ({ investors: [holder('ira', 200000, { plan: '4975' }), holder('gp', 300000, { plan: 'none' }), holder('x', 500000, { plan: 'none' })], requests: [] });
-    r = row(E.erisa(ctl(), o({ erisaControlling: ['gp'] })));
-    check('marks: a marked holder that is not a benefit plan investor is left out (20 of 70)', near(r.pct, (20 / 70) * 100) && r.disregarded === 30000000, r);
-    r = row(E.erisa(ctl(), o({ erisaControlling: ['ira'] })));
-    check('marks: a marked benefit plan investor is counted (20 percent)', near(r.pct, 20) && r.disregarded === 0, r);
-    const both = ctl();
-    both.investors[1].erisa = { plan: 'none', controlling: true };
-    r = row(E.erisa(both, o({ erisaControlling: ['gp'] })));
-    check('marks: a holder both marked and answering controlling is left out once', near(r.pct, (20 / 70) * 100) && r.disregarded === 30000000 && r.holders.filter((x) => x.investorId === 'gp').length === 1, r);
-    r = row(E.erisa(both, o()));
-    check('marks: a holder answering controlling is left out without a mark', near(r.pct, (20 / 70) * 100) && r.holders.find((x) => x.investorId === 'gp').own === true, r);
-    r = row(E.erisa(ctl(), o({ erisaControlling: ['gp', 'x', 'ira'] })));
-    check('marks: a mark on every holder leaves only the plan investor (100 percent)', near(r.pct, 100), r);
-    r = row(E.erisa(ctl(), o({ erisaControlling: ['gp', 'x'] , classes: undefined })));
-    check('marks: the class total less what is left out is the base', r.total === 100000000 && r.disregarded === 80000000 && near(r.pct, 100), r);
-    const allLeft = { investors: [holder('gp', 300000, { plan: 'none' })], requests: [] };
-    r = row(E.erisa(allLeft, o({ erisaControlling: ['gp'] })));
-    check('marks: nothing left after the controlling holders gives 0 percent, not a division by zero', r.pct === 0 && Number.isFinite(r.pct), r);
-
-    // The value basis.
-    const caps = { ira: 25000000, gp: 25000000, x: 50000000 };
-    const capE = eligibility({ structures: true, capital: (ws, inv) => (caps[inv.id] != null ? { a: { end: caps[inv.id] } } : null) });
-    r = row(capE.erisa(ctl(), o()));
-    check('basis: every holder has a capital balance, so capital balances are the basis, named, with the date', r.basis === 'capital' && r.asOf === '2026-10-31' && near(r.pct, 25) && r.total === 100000000, r);
-    const noCap = ctl();
-    noCap.investors.push(holder('y', 100000, { plan: 'none' }));
-    r = row(capE.erisa(noCap, o()));
-    check('basis: one holder without a capital balance, so commitments and subscribed amounts are the basis, named', r.basis === 'commitments' && near(r.pct, (200000 / 1100000) * 100), r);
-    const appr = ctl();
-    appr.requests = [Object.assign(sub('z', 'o1', 'approved'), { cents: 10000000 })];
-    r = row(capE.erisa(appr, o()));
-    check('basis: an accepted subscription not yet on a position has no capital balance, so commitments are the basis', r.basis === 'commitments' && r.total === 110000000, r);
-    r = row(E.erisa(ctl(), o()));
-    check('basis: without the capital accounts loaded, commitments are the basis', r.basis === 'commitments' && near(r.pct, 20), r);
-    const pendCap = ctl();
-    pendCap.requests = [Object.assign(sub('n', 'o1', 'pending'), { cents: 100000000, qual: { erisa: { plan: '4975', share: 1 } } })];
-    r = row(capE.erisa(pendCap, o()));
-    check('basis: on capital balances, an if-accepted figure uses commitments, the basis once the subscription is accepted (60 percent)', r.basis === 'capital' && near(r.ifAccepted[0].pct, 60), r);
-
-    // A class total of 0.
-    r = row(E.erisa({ investors: [], requests: [] }, o()));
-    check('a class with no value gives 0 percent', r.pct === 0 && r.total === 0 && Array.isArray(r.unanswered) && r.unanswered.length === 0, r);
-    r = row(E.erisa({ investors: [holder('z0', 0, { plan: '4975' })], requests: [] }, o()));
-    check('a class whose holders hold 0 gives 0 percent', r.pct === 0, r);
-  },
-  managed({ check }) {
-    // C-03: the managed edition's onboarding is left as it is in phase 6. Each slice runs from its first line to the next
-    // line that closes it at the same indent; the recorded hashes are those of plan 06-01's base commit,
-    // 414fd9a2b6eb4e423e1a41fed9a21935c724ea47 (sha256 of the slice's lines joined with \n, first 16 hex digits).
-    const SLICES = [
-      ['assets/js/onboarding.js', '  const LABELS = {', '4fa6f6fc0b8759be', false, '  };'],
-      ['assets/js/onboarding.js', '  function stepsFor(mode) {', '0fa03c54b5cc28dd'],
-      ['assets/js/onboarding.js', '  function stepAccreditation(verified, opts) {', '73e617b210a0b0dd'],
-      ['assets/js/onboarding.js', '  function stepReview() {', '3f94f46405a65dfa'],
-      ['assets/js/onboarding.js', '  function validate(step) {', '756467c16d196fc5'],
-      ['assets/js/onboarding.js', '  NS.views.onboarding = {', '777c8ec499ced579', false, '  };'],
-      ['assets/js/data.js', '  const ACCRED = ', 'c5ec1b6df6b607c1', true]
-    ];
-    const hashOf = (file, start, single, end) => {
-      const lines = SRC(file).split('\n');
-      const a = lines.findIndex((l) => l.startsWith(start));
-      if (a < 0) return 'missing';
-      const z = single ? a : lines.findIndex((l, i) => i > a && l === (end || '  }'));
-      if (z < 0) return 'unterminated';
-      return require('crypto').createHash('sha256').update(lines.slice(a, z + 1).join('\n')).digest('hex').slice(0, 16);
-    };
-    SLICES.forEach(([file, start, want, single, end]) => {
-      const got = hashOf(file, start, single, end);
-      check(`managed edition unchanged: ${path.basename(file)} "${start.trim()}" hashes as at the base commit`, got === want, { got, want });
-    });
-    check('the slice test notices a change (a copy of stepsFor with one character altered hashes differently)', (() => {
-      const lines = SRC('assets/js/onboarding.js').split('\n');
-      const a = lines.findIndex((l) => l.startsWith('  function stepsFor(mode) {'));
-      const z = lines.findIndex((l, i) => i > a && l === '  }');
-      const body = lines.slice(a, z + 1).join('\n');
-      const h = (s) => require('crypto').createHash('sha256').update(s).digest('hex').slice(0, 16);
-      return h(body) === '0fa03c54b5cc28dd' && h(body.replace('mode', 'Mode')) !== '0fa03c54b5cc28dd';
-    })());
+    const rows = E.planInvestors(ws, o);
+    const by = (id) => rows.find((x) => x.investorId === id);
+    check('the list holds exactly the investors whose latest answer is yes (h1, h3, h4)', Array.isArray(rows) && same(rows.map((x) => x.investorId), ['h1', 'h3', 'h4']), rows);
+    check('a holder answering on their record (a section 4975 plan): its commitment on the books, nothing pending', !!by('h1') && by('h1').plan === '4975' && by('h1').cents === 10000000 && by('h1').pendingCents === 0, by('h1'));
+    check('an entity holding plan assets: its stated share (40) and its pending subscription apart', !!by('h3') && by('h3').plan === 'planAssets' && by('h3').planPct === 40 && by('h3').cents === 0 && by('h3').pendingCents === 5000000, by('h3'));
+    check('an accepted subscription not yet on the books counts as committed', !!by('h4') && by('h4').plan === 'title1' && by('h4').cents === 7500000 && by('h4').pendingCents === 0, by('h4'));
+    check('"none", an old "governmental, church or non-U.S. plan" answer, a declined request and another offering are not listed', !by('h2') && !by('h5') && !by('h6') && !by('h8'));
+    check('a later "none" on a subscription replaces a "yes" on the record (h7 not listed)', !by('h7'));
+    const bad = E.planInvestors({ offerings: [o], investors: [holder('pa')], requests: [req('pa', 'pending', 100, { plan: 'planAssets', planPct: '140' })] }, o);
+    check('a plan-asset entity with a share that does not count is still listed (it answered yes), its share null', bad.length === 1 && bad[0].planPct === null, bad);
+    check('no request flag from a benefit plan answer (no if-accepted figure)', E.flags(ws, ws.requests[0]).length === 0, E.flags(ws, ws.requests[0]));
+    check('the per-class figures are gone: no erisa(), bpiShare, pctText, controllingMarks or BPI_LIMIT', ['erisa', 'bpiShare', 'pctText', 'controllingMarks', 'BPI_LIMIT'].every((k) => E[k] === undefined), Object.keys(E));
+    check('an empty workspace gives an empty list, no error', E.planInvestors({}, o).length === 0 && E.planInvestors(null, o).length === 0);
   },
   titles({ check }) {
     const text = SRC('assets/js/console.js');
