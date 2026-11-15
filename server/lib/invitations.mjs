@@ -95,10 +95,24 @@ function cleanInvestor(x) {
   if (!clip(i.contact, 120).trim()) throw fail(400, 'investor.contact (the investor’s name) is required');
   if (!validAddress(i.email)) throw fail(400, 'investor.email is not a valid email address');
   const out = { id: String(i.id), contact: clip(i.contact, 120).trim(), title: clip(i.title || i.contact, 200).trim(), type: clip(i.type, 40), email: i.email };
-  // An investor already on the firm's books, invited to subscribe to another offering: flags and a date, no personal details.
+  // An investor already on the firm's books, invited to subscribe to another offering: flags and a date, no personal details;
+  // and (D-01) their own status answers to prefill the status step: the ground on their record and their benefit plan answers.
   const e = obj(i.existing);
-  if (e) out.existing = { accredited: e.accredited === true, accreditedUntil: /^\d{4}-\d{2}-\d{2}$/.test(String(e.accreditedUntil || '')) ? String(e.accreditedUntil) : '', holds: e.holds === true };
+  if (e) {
+    out.existing = { accredited: e.accredited === true, accreditedUntil: /^\d{4}-\d{2}-\d{2}$/.test(String(e.accreditedUntil || '')) ? String(e.accreditedUntil) : '', holds: e.holds === true };
+    // Only when there is one: the summary of an investor with no answers on file stays as it was.
+    const basis = typeof e.accBasis === 'string' ? clip(e.accBasis, 300) : '';
+    if (basis) out.existing.accBasis = basis;
+    const plan = obj(e.erisa);
+    if (plan) out.existing.erisa = cleanErisa(plan);
+  }
   return out;
+}
+/** D-01: benefit plan answers as known fields only (assets/js/onboarding.js erisaFrom): plan, planPct (0 to 100 or null), controlling. */
+const PLANS = ['title1', '4975', 'planAssets', 'other', 'none'];
+function cleanErisa(e) {
+  const pct = typeof e.planPct === 'number' && Number.isFinite(e.planPct) && e.planPct >= 0 && e.planPct <= 100 ? e.planPct : null;
+  return { plan: PLANS.includes(e.plan) ? e.plan : '', planPct: pct, controlling: e.controlling === true ? true : e.controlling === false ? false : null };
 }
 /** Offering documents go to blob files (sealed); the snapshot keeps their names, sizes and hashes. */
 function cleanOffering(x) {
@@ -218,7 +232,8 @@ function cleanSubmission(body, rec, snap) {
   const env = out.envelope;
   // The files this submission may carry: what it produced itself. Its envelope's copies keep esign.js's names (<envelope id>-work
   // once the investor has signed, <envelope id>-signed once everyone has, so only for a completed envelope), and evidence is
-  // the investor's own upload named by their verification record (integrations.js names uploads kyc-<investor id>-<time>).
+  // the investor's own upload named by their verification record (integrations.js names uploads kyc-<investor id>-<time>), or
+  // their purchaser representative's acknowledgment named by the request (rep-<investor id>-<time>).
   // The console imports nothing else either (assets/js/invitations.js merge). An investor already on file brings back an
   // accreditation check at most, so only its evidence.
   const allowed = Object.create(null); // file id -> 'agreement' (a PDF) or 'evidence' (a PDF, PNG or JPEG)
@@ -233,6 +248,13 @@ function cleanSubmission(body, rec, snap) {
     const x = obj(v[k]);
     if (x && typeof x.fileId === 'string' && kycName.test(x.fileId) && !allowed[x.fileId]) allowed[x.fileId] = 'evidence';
   }
+  // D-30: the written acknowledgment of the investor's purchaser representative (Rule 501(i)), named by the request's own
+  // status answers (request.qual.sophistication.rep.fileId) under this investor's rep- name (onboarding.js: rep-<investor id>-<time>).
+  const q = out.request && obj(out.request.qual);
+  const so = q && obj(q.sophistication);
+  const rp = so && obj(so.rep);
+  const repName = new RegExp(`^rep-${reEsc(rec.investorId)}-[a-z0-9]+$`);
+  if (rp && typeof rp.fileId === 'string' && repName.test(rp.fileId) && !allowed[rp.fileId]) allowed[rp.fileId] = 'evidence';
   if (body.docs !== undefined && !Array.isArray(body.docs)) throw fail(400, 'docs must be a list');
   if ((body.docs || []).length > 50) throw fail(400, 'docs: at most 50 entries');
   const docs = (cleanJson(body.docs || [], 1 * MB, 'docs') || []).filter(obj);

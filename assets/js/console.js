@@ -2017,7 +2017,9 @@
     const who = [rep.name, rep.firm].map((x) => String(x || '').trim()).filter(Boolean).join(', ') || 'name not given';
     const file = rep.fileId
       ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(rep.fileId)}" data-name="${h(rep.fileName || 'acknowledgment')}">Download the written acknowledgment</button>`
-      : '; no written acknowledgment uploaded';
+      : rep.note
+        ? `; ${h(String(rep.note).slice(0, 400))}`
+        : '; no written acknowledgment uploaded';
     return `<span class="sub">Purchaser representative: ${h(who)}${file}</span>`;
   }
   function reqStatus(r) {
