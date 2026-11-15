@@ -1,0 +1,79 @@
+{
+  "id": "d037",
+  "url": "https://www.sec.gov/Archives/edgar/data/823546/000149315220007691/ex10-1.htm",
+  "cik": "823546",
+  "issuer": "ROCKETFUEL BLOCKCHAIN, INC.  (RKFL)",
+  "form": "8-K",
+  "file_date": "2020-05-05",
+  "year": 2020,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "4ccaf51f5becde008f81bf7172b6627fac0067297c7ac4e69a42b2f8a7d7789c",
+  "layout_notes": [
+    "Regulation S subscription agreement, signed by subscriber and accepted"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 8,
+    "words": 5
+  },
+  "extra_files": [
+    "ex10-1_001.jpg",
+    "ex10-1_002.jpg",
+    "ex10-1_003.jpg",
+    "ex10-1_004.jpg",
+    "ex10-1_005.jpg",
+    "ex10-1_006.jpg",
+    "ex10-1_007.jpg",
+    "ex10-1_008.jpg"
+  ],
+  "pages": 24,
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 16,
+    "blank": 7
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "3ebbeef642b09d9bbd64181d26375fc1eaf163578332b257afa2998b82f1e4af"
+}

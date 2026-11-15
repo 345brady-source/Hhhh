@@ -1,0 +1,79 @@
+{
+  "id": "d042",
+  "url": "https://www.sec.gov/Archives/edgar/data/1520320/000146929913000004/polar105.htm",
+  "cik": "1520320",
+  "issuer": "Polar Petroleum Corp.",
+  "form": "8-K/A",
+  "file_date": "2013-01-04",
+  "year": 2013,
+  "exhibit": "EX-10.5",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "7897a79e2a9f99e3f98eed33ea1aea83ee7f4126ac93c25732c3ca73d1081eea",
+  "layout_notes": [
+    "Regulation S subscription agreement, acceptance signed"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 8,
+    "words": 10
+  },
+  "extra_files": [
+    "polar105p1.jpg",
+    "polar105p2.jpg",
+    "polar105p3.jpg",
+    "polar105p4.jpg",
+    "polar105p5.jpg",
+    "polar105p6.jpg",
+    "polar105p7.jpg",
+    "polar105p8.jpg"
+  ],
+  "pages": 24,
+  "page_kinds": {
+    "text": 1,
+    "picture": 16,
+    "blank": 7
+  },
+  "page_kind_list": [
+    "text",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "b8cb0ca9ec40fe748459e53d8f5689a933ef7227505aea50c7cc9e4414634818"
+}

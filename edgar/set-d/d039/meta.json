@@ -1,0 +1,65 @@
+{
+  "id": "d039",
+  "url": "https://www.sec.gov/Archives/edgar/data/1326252/000106299309000028/exhibit10-1.htm",
+  "cik": "1326252",
+  "issuer": "FOX PETROLEUM INC.",
+  "form": "8-K",
+  "file_date": "2009-01-07",
+  "year": 2009,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "baf86ce252c3ebedf31922c110fa91fe1086c11b8d007a27cd98c11fa294c0b3",
+  "layout_notes": [
+    "private placement subscription agreement (non-U.S.), scanned, signed, sealed and accepted"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 7,
+    "words": 15
+  },
+  "extra_files": [
+    "exhibit10-1x1x1.jpg",
+    "exhibit10-1x2x1.jpg",
+    "exhibit10-1x3x1.jpg",
+    "exhibit10-1x4x1.jpg",
+    "exhibit10-1x5x1.jpg",
+    "exhibit10-1x6x1.jpg",
+    "exhibit10-1x7x1.jpg"
+  ],
+  "pages": 11,
+  "page_kinds": {
+    "text": 1,
+    "picture": 9,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "blank",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "629b55db04b0030810e5488f4c03ae4ec8ea98790b298c2d2b294c488444ffe6"
+}

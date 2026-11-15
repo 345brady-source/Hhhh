@@ -1,0 +1,83 @@
+{
+  "id": "d036",
+  "url": "https://www.sec.gov/Archives/edgar/data/1374845/000106299307004756/exhibit10-2.htm",
+  "cik": "1374845",
+  "issuer": "TAMM Oil & Gas Corp.",
+  "form": "8-K",
+  "file_date": "2007-11-28",
+  "year": 2007,
+  "exhibit": "EX-10.2",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT DATED NOVEMBER 23, 2007",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "72dad78a095c6b189342e643bdd7dfd16b743b7fb75f38c32ea816229dc477f3",
+  "layout_notes": [
+    "private placement subscription agreement (Canadian form), fax copy, signed by purchaser and accepted"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 12,
+    "words": 26
+  },
+  "extra_files": [
+    "exhibit10-2x10x1.jpg",
+    "exhibit10-2x11x1.jpg",
+    "exhibit10-2x12x1.jpg",
+    "exhibit10-2x1x1.jpg",
+    "exhibit10-2x2x1.jpg",
+    "exhibit10-2x3x1.jpg",
+    "exhibit10-2x4x1.jpg",
+    "exhibit10-2x5x1.jpg",
+    "exhibit10-2x6x1.jpg",
+    "exhibit10-2x7x1.jpg",
+    "exhibit10-2x8x1.jpg",
+    "exhibit10-2x9x1.jpg"
+  ],
+  "pages": 25,
+  "page_kinds": {
+    "text": 1,
+    "picture": 24
+  },
+  "page_kind_list": [
+    "text",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "79d1c8095135678189e08c8e31c2a3753cef7a941cee5f0a7756b3ae68577a1e"
+}

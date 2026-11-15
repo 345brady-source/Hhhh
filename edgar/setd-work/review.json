@@ -880,5 +880,103 @@
    "presentation"
   ],
   "when": "2026-11-15T03:43:05"
+ },
+ "0001654954-19-000443:a8k-01092019exhibit101.htm": {
+  "ok": false,
+  "notes": [
+   "uplisting advisory agreement"
+  ],
+  "when": "2026-11-15T03:56:28"
+ },
+ "0001062993-10-000105:exhibit10-3.htm": {
+  "ok": false,
+  "notes": [
+   "securities commission letters"
+  ],
+  "when": "2026-11-15T03:56:28"
+ },
+ "0001062993-07-004756:exhibit10-2.htm": {
+  "ok": true,
+  "notes": [
+   "private placement subscription agreement (Canadian form), fax copy, signed by purchaser and accepted"
+  ],
+  "when": "2026-11-15T03:56:28"
+ },
+ "0001065949-09-000241:jfgicertofdesig.htm": {
+  "ok": false,
+  "notes": [
+   "certificate of designation"
+  ],
+  "when": "2026-11-15T03:56:28"
+ },
+ "0001165527-11-000771:ex10-2.htm": {
+  "ok": false,
+  "notes": [
+   "share application and offer letter (not a subscription agreement)"
+  ],
+  "when": "2026-11-15T03:56:28"
+ },
+ "0001493152-20-007691:ex10-1.htm": {
+  "ok": true,
+  "notes": [
+   "Regulation S subscription agreement, signed by subscriber and accepted"
+  ],
+  "when": "2026-11-15T03:56:28"
+ },
+ "0001387131-09-000324:ex-10_3.htm": {
+  "ok": false,
+  "notes": [
+   "offer letter and letter of confirmation (not a subscription agreement)"
+  ],
+  "when": "2026-11-15T03:56:28"
+ },
+ "0001078782-12-003323:f8k122112_ex10z6.htm": {
+  "ok": true,
+  "notes": [
+   "subscription booklet (blank form): instructions, subscription agreement, signature page, purchaser questionnaire, wire authorization"
+  ],
+  "when": "2026-11-15T03:57:22"
+ },
+ "0001062993-09-000028:exhibit10-1.htm": {
+  "ok": true,
+  "notes": [
+   "private placement subscription agreement (non-U.S.), scanned, signed, sealed and accepted"
+  ],
+  "when": "2026-11-15T03:57:22"
+ },
+ "0001144204-10-006405:v173444_ex10-15.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement (blank form), signature page p11 and accredited investor certificate"
+  ],
+  "when": "2026-11-15T03:57:22"
+ },
+ "0001062993-09-004321:exhibit10-2.htm": {
+  "ok": true,
+  "notes": [
+   "debt settlement and subscription agreement, scanned, signed by company and subscriber"
+  ],
+  "when": "2026-11-15T04:07:00"
+ },
+ "0001469299-13-000004:polar105.htm": {
+  "ok": true,
+  "notes": [
+   "Regulation S subscription agreement, acceptance signed"
+  ],
+  "when": "2026-11-15T04:07:00"
+ },
+ "0001415408-10-000680:ex10-1.htm": {
+  "ok": true,
+  "notes": [
+   "private placement subscription agreement for shares (non-U.S.), filled in, signed and accepted"
+  ],
+  "when": "2026-11-15T04:07:00"
+ },
+ "0001137171-10-000165:ex4-1.htm": {
+  "ok": true,
+  "notes": [
+   "subscription agreement for units (Canadian agents form, blank), subscriber signature blocks"
+  ],
+  "when": "2026-11-15T04:07:00"
  }
 }

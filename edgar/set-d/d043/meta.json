@@ -1,0 +1,60 @@
+{
+  "id": "d043",
+  "url": "https://www.sec.gov/Archives/edgar/data/1378625/000141540810000680/ex10-1.htm",
+  "cik": "1378625",
+  "issuer": "GOLDEN CENTURY RESOURCES Ltd",
+  "form": "8-K",
+  "file_date": "2010-12-15",
+  "year": 2010,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "PRIVATE PLACEMENT SUBSCRIPTION AGREEMENT WITH ALIVE GOLD LIMITED.",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "64b6a541b8e0d8829ab8e04dd5301f5e2591b30217c27aa34ed083ebddf0bb34",
+  "layout_notes": [
+    "private placement subscription agreement for shares (non-U.S.), filled in, signed and accepted"
+  ],
+  "found_by": "hunt",
+  "how_made": "picture-print",
+  "owner_method": true,
+  "kind": "picture-only HTML exhibit (page pictures) printed by the owner's method",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "imgs": 3,
+    "words": 15
+  },
+  "extra_files": [
+    "ex101-1.jpg",
+    "ex101-2.jpg",
+    "ex101-3.jpg"
+  ],
+  "pages": 10,
+  "page_kinds": {
+    "text": 1,
+    "picture": 6,
+    "blank": 3
+  },
+  "page_kind_list": [
+    "text",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "58430a6dea7c8760f7dfcdfdc98835f6845d725ccb18c0c5d3de7b80f0e1ce33"
+}
