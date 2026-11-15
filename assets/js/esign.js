@@ -585,17 +585,19 @@
     NS.app.save(true);
     U.toast(`Reminder emailed to ${who.map((s) => s.name).join(', ')} (simulated).`);
   }
-  function voidEnvelope(ws, envId, reason) {
+  /** opts.quiet: no emails and no message (the investor replaced their own unsigned tax form, onboarding.js); opts.actor. */
+  function voidEnvelope(ws, envId, reason, opts) {
+    opts = opts || {};
     const env = envById(ws, envId);
     if (!env || (env.status !== 'sent' && env.status !== 'draft')) return;
     env.status = 'voided';
     env.voidedAt = nowIso();
     env.voidReason = reason;
-    addEvent(env, staffActor(), 'Voided', reason);
-    env.signers.filter((s) => s.status !== 'waiting').forEach((s) => email(env, s, `Voided: ${env.title}. ${reason}`));
-    logChange(ws, 'Envelope voided', env, reason);
+    addEvent(env, opts.actor || staffActor(), 'Voided', reason);
+    if (!opts.quiet) env.signers.filter((s) => s.status !== 'waiting').forEach((s) => email(env, s, `Voided: ${env.title}. ${reason}`));
+    logChange(ws, 'Envelope voided', env, reason, opts.actor);
     NS.app.save(true);
-    U.toast('Envelope voided. Signers who had received it were notified (simulated).');
+    if (!opts.quiet) U.toast('Envelope voided. Signers who had received it were notified (simulated).');
   }
   /**
    * An envelope for one investor from a filled, flattened PDF (an official tax form, D-04): the file is stored under a new
