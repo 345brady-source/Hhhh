@@ -489,7 +489,9 @@ const shape = (s) =>
     srv = await portalServer(halves);
     try {
       const bodies = [];
-      const limit = Math.round(fs.readFileSync(TEXT).toString('base64').length * 0.6);
+      // Under the whole request (about 200000 characters) and over each half: a page range's new PDF still carries the
+      // fonts its pages share (a single page of this agreement is about 129000 characters), so a lower limit cannot be met.
+      const limit = Math.round(fs.readFileSync(TEXT).toString('base64').length * 0.82);
       const s = await upload({ url: srv.base, token: srv.token, set: { RANGE_BYTES: limit }, bodies });
       const ranges = halves.seen.map((q) => q.range || [1, 13, 13]);
       line(halves.seen.length >= 2 && bodies.every((b) => b.length <= limit) && s.server.used && shape(s) === shape(whole), `long a request over the byte limit is halved: ${halves.seen.length} requests (${ranges.map((r) => r[0] + '-' + r[1]).join(', ')}), every body within ${limit} characters, fields equal`);

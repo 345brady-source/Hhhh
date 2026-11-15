@@ -2,7 +2,7 @@
 /*
  * The offering intake read through the portal's reading server (D-36), on the real intake screen.
  *
- *   node intake-server.js [--only unchanged,api,fallback,failures,unreadable | measure | all]
+ *   node intake-server.js [--only unchanged,api,fallback,failures,unreadable,retry,wholetext,mixedpages | measure | all]
  *   node intake-server.js --only measure --doc <pdf> --out <dir> [--cap 1.00] [--max-tokens 24000] [--fake]
  *
  *   unchanged  every protected slice of intake.js and console.js hashes to the value recorded at planning (D-36: only the
@@ -23,6 +23,17 @@
  *              Then read whole (D-38): mergeAnswers on synthetic answers; with RANGE_PAGES 5 the broken PDF read in three
  *              requests of exactly their pages and the merged answer on review; a request over the byte limit halved; a
  *              413 halved and sent again; a failing range falling back with today's note; no page dropped.
+ *   Plan 01.4-69 (D-38), fake intakes only, nothing spent:
+ *   retry      a stand-in server answering 503, 503 then 200; 429 then 200; a refused connection then 200: the fictional
+ *              fund on review, no note; 503 every time: today's fallback after exactly 3 attempts; 400, 401, 402 and 413
+ *              sent once (failures above now also pass through the 3 attempts where the status is transient)
+ *   wholetext  with a reading server, the first public PPM with more than 200,000 characters of text: one prompt of the
+ *              instructions, DOCUMENTS: and corpus(good, Infinity).text, no trimming note on review; with the fake intake
+ *              answering 413 over a threshold: split by document, then by halves at the [p. N] markers, every page sent
+ *              once, the answers merged with mergeAnswers; no server: the built-in reader on today's trimmed corpus
+ *   mixedpages the RockStep PPM's first 20 pages with pages 5, 6 and 15 made pictures (picture-pdf.js, out-69/mixed.pdf):
+ *              per-page scores printed, the picture pages failing and every other page passing; sent on the PDF path with
+ *              every page; the unchanged RockStep PPM (every page passing) still sent on the text path
  *   measure    one PDF once through the intake screen against a reading server (D-34 tooling, plan 67 runs it). Real mode
  *              needs CARROWVALE_API_KEY and spawns server/index.mjs on port 8798 with a fresh API_TOKEN, the read log and
  *              store in <dir> (the log is kept, so the cap counts every call made for that folder), the cap and output
@@ -52,7 +63,7 @@ const { pathToFileURL } = require('url');
 
 const ROOT = path.resolve(__dirname, '..', '..', '..', '..');
 const HARNESS = path.join(ROOT, '.planning/phases/01-accurate-field-placement/checks/harness.js');
-const ALL = ['unchanged', 'api', 'fallback', 'failures', 'unreadable', 'measure'];
+const ALL = ['unchanged', 'api', 'fallback', 'failures', 'unreadable', 'retry', 'wholetext', 'mixedpages', 'measure'];
 const arg = (name) => {
   const i = process.argv.indexOf('--' + name);
   return i > 0 && process.argv[i + 1] && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : null;
@@ -66,7 +77,7 @@ if (!fs.existsSync(HARNESS)) notRun('the check browser is missing (' + HARNESS +
 const FAKE = flag('fake');
 const DOC = arg('doc');
 const OUT = arg('out');
-if (PARTS.includes('unreadable')) {
+if (PARTS.some((p) => ['unreadable', 'wholetext', 'mixedpages'].includes(p))) {
   const pub = path.join(process.env.INTAKE_SCRATCH || path.join(os.tmpdir(), 'claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad'), 'public-agreements');
   ['PPM_RockStep_Hometown_America_Fund_I', 'PPM_Worcester_Fund_LLC'].forEach((d) => fs.existsSync(path.join(pub, d, 'doc.pdf')) || notRun('the public PDF ' + d + ' is missing'));
   ['pdftoppm', 'pdftotext'].forEach((t) => {
@@ -586,6 +597,8 @@ async function readOutcome(page, file, timeout) {
     const st = NS.state.ui.intake;
     const good = st.docs.filter((d) => d.text && d.text.trim().length > 40);
     const corp = NS.intake.corpus(good, NS.intake.LIMIT);
+    // Plan 69 (D-38): the whole text, as the server path now sends it.
+    const whole = NS.intake.corpus(good, Infinity);
     const rules = NS.intake.normalize(NS.intake.readWithRules(corp.text));
     return {
       step: st.step,
@@ -598,6 +611,9 @@ async function readOutcome(page, file, timeout) {
       filled: st.profile ? NS.intake.filled(st.profile) : 0,
       noText: !!window.__noText || document.body.textContent.indexOf('No readable text was found') >= 0,
       progress: (window.__progress || []).slice(),
+      whole: whole.text,
+      names: st.docs.map((d) => d.name),
+      pageText: document.body.innerText,
       docs: st.docs.map((d) => ({ chars: d.text ? d.text.trim().length : 0, pages: d.pages, text: d.text || '' })),
       shown: Array.from(document.querySelectorAll('input, textarea')).map((e) => e.value)
     };
@@ -693,8 +709,10 @@ async function partUnreadable(h, page) {
     r = await readOutcome(page, ROCKSTEP, 120000);
     got = rec.seen.slice(n);
     const body = bodies.slice(before)[0] || '';
-    const want = JSON.stringify({ prompt: `${instr}\n\nDOCUMENTS:\n${r.corp}` });
-    line(got.length === 1 && !got[0].pdfs && body === want, `unreadable readable PPM: the body is { prompt } byte for byte as plan 66 sends it (${body.length} characters, ${body === want ? 'identical' : 'different'})`);
+    // Plan 69 (D-38 sends the whole text on the server path): the body is { prompt } with corpus(good, Infinity).text in
+    // place of corpus(good, LIMIT).text; for a text under the budget the two are identical (this PPM is just over it).
+    const want = JSON.stringify({ prompt: `${instr}\n\nDOCUMENTS:\n${r.whole}` });
+    line(got.length === 1 && !got[0].pdfs && body === want, `unreadable readable PPM: the body is { prompt } byte for byte, the whole text on the server path (${body.length} characters, ${body === want ? 'identical' : 'different'})`);
     line(r.step === 'review' && r.method === 'auto', `unreadable readable PPM: review reached, method ${r.method || 'none'}`);
   } finally {
     await setServer(page, '', '');
@@ -852,6 +870,248 @@ async function partWhole(h, page) {
     line(rec.seen.length === 2 && r.method === 'rules' && same && first === WHY.other + 'The built-in reader was used instead.', `whole a failing second range: ${rec.seen.length} requests, method ${r.method || 'none'}, built-in result ${same ? 'kept' : 'changed'}, note "${first.replace(FALLBACK_NOTE, '').trim()}"`);
   } finally {
     await page.evaluate(() => (window.CVPortal.intake.RANGE_PAGES = 600));
+    await setServer(page, '', '');
+    await srv.close();
+  }
+}
+
+/* ---------- Plan 01.4-69 (D-38): silent retries, whole text, per-page readability ---------- */
+const OUT69 = path.join(SCRATCH, 'edgar/measure/out-69');
+const TRIM_NOTE = '(long documents: the cover pages and every passage that mentions terms were read)';
+let firstTry = false;
+/**
+ * A stand-in reading server for the intake (CORS open): answers POST /v1/intake with the given statuses in turn, then a
+ * 200 stream of the fictional fund; attempts() counts the requests. opts.port: listen on that port.
+ */
+async function scriptedIntake(statuses, opts) {
+  const queue = statuses.slice();
+  let attempts = 0;
+  const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type, Authorization', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
+  const server = http.createServer((req, res) => {
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, cors);
+      return res.end();
+    }
+    req.resume();
+    req.on('end', () => {
+      attempts++;
+      const status = queue.length ? queue.shift() : 200;
+      if (status !== 200) {
+        res.writeHead(status, Object.assign({ 'Content-Type': 'application/json' }, cors));
+        return res.end(JSON.stringify({ ok: false, reason: 'x' }));
+      }
+      res.writeHead(200, Object.assign({ 'Content-Type': 'application/x-ndjson' }, cors));
+      res.end(JSON.stringify({ t: JSON.stringify(FUND) }) + '\n' + JSON.stringify({ ok: true, json: FUND }) + '\n');
+    });
+  });
+  await new Promise((r) => server.listen((opts && opts.port) || 0, '127.0.0.1', r));
+  return { base: `http://127.0.0.1:${server.address().port}`, attempts: () => attempts, close: () => new Promise((r) => (server.closeAllConnections(), server.close(r))) };
+}
+async function partRetry(h, page) {
+  const want = await page.evaluate((f) => window.CVPortal.intake.normalize(f), FUND);
+  const read = (name, r, attempts, n) => line(r.method === 'auto' && JSON.stringify(r.profile) === JSON.stringify(want) && attempts === n, `retry ${name} then 200: ${attempts} attempts (${n} expected), the fictional fund on review, method ${r.method}, no note added`);
+  for (const [name, statuses] of [
+    ['503, 503', [503, 503]],
+    ['429', [429]]
+  ]) {
+    const srv = await scriptedIntake(statuses);
+    try {
+      await allow(h, srv.base);
+      await setServer(page, srv.base, 'check-token');
+      const r = await readOnce(page);
+      read(name, r, srv.attempts(), statuses.length + 1);
+    } finally {
+      await srv.close();
+    }
+  }
+  // A refused connection: the port opens only once the first attempt has been refused.
+  {
+    const port = Number((await closedBase()).split(':').pop());
+    const url = `http://127.0.0.1:${port}`;
+    firstTry = false;
+    await allow(h, url, (route) => {
+      if (route.request().method() === 'POST') firstTry = true;
+      return route.continue();
+    });
+    await setServer(page, url, 'check-token');
+    let srv = null;
+    const opener = (async () => {
+      for (let k = 0; k < 600 && !firstTry; k++) await pause(100);
+      srv = await scriptedIntake([], { port });
+    })();
+    const r = await readOnce(page);
+    await opener;
+    read('a refused connection', r, srv ? srv.attempts() + 1 : 0, 2);
+    if (srv) await srv.close();
+  }
+  // Every attempt failing: today's fallback after exactly 3 attempts. 400, 401 and 402: sent once.
+  for (const [name, statuses, n, why] of [
+    ['503 on every attempt', [503, 503, 503, 503], 3, WHY.other],
+    ['400', [400], 1, WHY.other],
+    ['401', [401], 1, WHY.denied],
+    ['402', [402], 1, WHY.other]
+  ]) {
+    const srv = await scriptedIntake(statuses);
+    try {
+      await allow(h, srv.base);
+      await setServer(page, srv.base, 'check-token');
+      const r = await readOnce(page);
+      const notes = r.profile.notes.slice();
+      const first = notes.shift() || '';
+      const same = JSON.stringify(Object.assign({}, r.profile, { notes })) === JSON.stringify(r.rules);
+      line(srv.attempts() === n && r.method === 'rules' && same && first === why + 'The built-in reader was used instead.', `retry ${name}: ${srv.attempts()} attempt(s) (${n} expected), then the built-in result with today's note "${first.replace(FALLBACK_NOTE, '').trim()}"`);
+    } finally {
+      await srv.close();
+    }
+  }
+  // A 413 is never sent again unchanged: the text is split at its page markers and the parts sent instead.
+  {
+    const srv = await scriptedIntake([413]);
+    const bodies = [];
+    try {
+      await allow(h, srv.base, (route) => {
+        if (route.request().method() === 'POST') bodies.push(route.request().postData() || '');
+        return route.continue();
+      });
+      await setServer(page, srv.base, 'check-token');
+      const r = await readOnce(page);
+      const again = bodies.slice(1).some((b) => b === bodies[0]);
+      line(bodies.length >= 2 && !again && r.method === 'auto', `retry 413: ${bodies.length} requests, the first never sent again unchanged (${again ? 'resent' : 'split'}), method ${r.method}`);
+    } finally {
+      await srv.close();
+    }
+  }
+  await setServer(page, '', '');
+}
+
+/** The first public PPM whose extracted text is over 200,000 characters (sorted by folder name), or null. */
+async function longPpm(page) {
+  const dirs = fs
+    .readdirSync(PUBLIC)
+    .filter((d) => /^PPM_/.test(d) && fs.existsSync(path.join(PUBLIC, d, 'doc.pdf')))
+    .sort();
+  for (const d of dirs) {
+    const f = path.join(PUBLIC, d, 'doc.pdf');
+    const chars = await page.evaluate(
+      async ({ b64, name }) => {
+        const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+        return (await window.CVPortal.intake.readFile(new File([bin], name, { type: 'application/pdf' }))).text.length;
+      },
+      { b64: fs.readFileSync(f).toString('base64'), name: 'doc.pdf' }
+    );
+    if (chars > 200000) return { file: f, chars };
+  }
+  return null;
+}
+/** The page markers [p. N] of each document named in a prompt, as { name: [N, ...] }. */
+function pagesIn(prompt) {
+  const out = {};
+  const docs = prompt.split(/^=== Document: /m).slice(1);
+  docs.forEach((d) => {
+    const name = d.slice(0, d.indexOf(' ('));
+    const seen = (d.match(/^\[p\. (\d+)\]$/gm) || []).map((m) => Number(/\d+/.exec(m)[0]));
+    out[name] = (out[name] || []).concat(seen);
+  });
+  return out;
+}
+async function partWholeText(h, page) {
+  const doc = await longPpm(page);
+  if (!line(!!doc, `wholetext a public PPM with more than 200,000 characters of text: ${doc ? path.basename(path.dirname(doc.file)) + ' (' + doc.chars + ' characters)' : 'none found'}`)) return;
+  // With a reading server: one prompt of instructions, a blank line, DOCUMENTS: and the whole text.
+  let rec = recordingIntake();
+  let srv = await portalServer(rec);
+  try {
+    await captureBodies(h, srv);
+    await setServer(page, srv.base, srv.token);
+    const r = await readOutcome(page, doc.file, 180000);
+    const p = (rec.seen[0] || {}).prompt || '';
+    const instr = p.slice(0, Math.max(0, p.indexOf('\n\nDOCUMENTS:\n')));
+    line(rec.seen.length === 1 && !rec.seen[0].pdfs && instr.startsWith('You are setting up a private investment fund') && p === `${instr}\n\nDOCUMENTS:\n${r.whole}` && r.whole.length > 200000 && r.corp.length < r.whole.length, `wholetext the prompt is the instructions, DOCUMENTS: and corpus(good, Infinity).text (${r.whole.length} characters; the trimmed corpus would be ${r.corp.length})`);
+    line(r.step === 'review' && r.method === 'auto' && !r.trimmed && !r.pageText.includes(TRIM_NOTE), `wholetext the review screen shows no trimming note (trimmed ${r.trimmed})`);
+  } finally {
+    await srv.close();
+  }
+  // Too large for one request: split by document, then by halves at the page markers; every page sent once, merged.
+  // Two documents under names of their own (both public files are called doc.pdf), copied into out-69.
+  fs.mkdirSync(OUT69, { recursive: true });
+  const two = [[doc.file, 'long-ppm.pdf'], [ROCKSTEP, 'rockstep-ppm.pdf']].map(([f, n]) => {
+    const to = path.join(OUT69, n);
+    if (!fs.existsSync(to)) fs.copyFileSync(f, to);
+    return to;
+  });
+  const T = 215000;
+  const answers = [FUND, { fees: { carry: 25, other: ['Part two fee'] }, notes: ['Part two note'] }, { investorTerms: [{ label: 'Part three term', value: 'Yes' }] }];
+  rec = recordingIntake((i) => answers[i] || { notes: ['Part ' + (i + 1)] }, async (prompt) => (prompt.length > T ? 950000 : 1000));
+  srv = await portalServer(rec);
+  try {
+    const bodies = await captureBodies(h, srv);
+    await setServer(page, srv.base, srv.token);
+    const r = await readOutcome(page, two, 240000);
+    const names = r.names;
+    const sent = {};
+    rec.seen.forEach((x) => Object.entries(pagesIn(x.prompt)).forEach(([n, ps]) => (sent[n] = (sent[n] || []).concat(ps))));
+    const once = names.every((n, i) => {
+      const N = r.docs[i].pages;
+      const ps = (sent[n] || []).slice().sort((a, b) => a - b);
+      return ps.length === N && ps.every((p, k) => p === k + 1);
+    });
+    line(bodies.length > rec.seen.length && rec.seen.length >= 3 && rec.seen.every((x) => x.prompt.length <= T) && once, `wholetext too large for one request (over ${T} characters answered 413): ${bodies.length} requests, ${rec.seen.length} read; every page of ${names.length} documents sent exactly once: ${once ? 'yes' : 'no'}`);
+    const merged = await page.evaluate((n) => {
+      const I = window.CVPortal.intake;
+      return I.normalize(I.mergeAnswers(n));
+    }, rec.seen.map((x, i) => answers[i] || { notes: ['Part ' + (i + 1)] }));
+    line(r.step === 'review' && r.method === 'auto' && JSON.stringify(r.profile) === JSON.stringify(merged), `wholetext the ${rec.seen.length} answers merged with mergeAnswers reach review (method ${r.method || 'none'})`);
+  } finally {
+    await srv.close();
+  }
+  // No reading server: the built-in reader gets exactly today's trimmed corpus.
+  await setServer(page, '', '');
+  const r = await readOutcome(page, doc.file, 180000);
+  line(r.method === 'rules' && r.trimmed && JSON.stringify(r.profile) === JSON.stringify(r.rules) && r.corp.length < r.whole.length, `wholetext no reading server: the built-in reader read today's trimmed corpus(good, LIMIT) (${r.corp.length} characters), trimmed ${r.trimmed}`);
+}
+
+async function partMixedPages(h, page) {
+  fs.mkdirSync(OUT69, { recursive: true });
+  const mixed = path.join(OUT69, 'mixed.pdf');
+  const PP = require('./picture-pdf.js');
+  if (!fs.existsSync(mixed)) await PP.make({ input: ROCKSTEP, output: mixed, last: 20, only: [5, 6, 15] }, page);
+  const scores = await page.evaluate(
+    async ({ a, b }) => {
+      const I = window.CVPortal.intake;
+      const read = async (b64) => (await I.readFile(new File([Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))], 'x.pdf', { type: 'application/pdf' }))).text;
+      const out = [];
+      for (const b64 of [a, b]) {
+        const pages = I.pageTexts(await read(b64));
+        const flags = I.unreadablePages(pages);
+        out.push(pages.map((t, i) => ({ page: i + 1, share: I.unreadableShare(t), fails: flags[i] })));
+      }
+      return out;
+    },
+    { a: fs.readFileSync(mixed).toString('base64'), b: fs.readFileSync(ROCKSTEP).toString('base64') }
+  );
+  const [mx, rs] = scores;
+  const T = await page.evaluate(() => window.CVPortal.intake.UNREADABLE_BELOW);
+  console.log('      per-page shares, mixed PDF: ' + mx.map((p) => `${p.page}:${p.share.toFixed(3)}${p.fails ? '*' : ''}`).join(' '));
+  console.log(`      per-page shares, unchanged PPM (${rs.length} pages): lowest ${Math.min(...rs.map((p) => p.share)).toFixed(3)}, failing pages ${rs.filter((p) => p.fails).length}`);
+  const pics = [5, 6, 15];
+  line(mx.length === 20 && mx.every((p) => (pics.includes(p.page) ? p.fails && p.share < T : !p.fails && p.share >= T)), `mixedpages the picture pages 5, 6 and 15 are under the threshold ${T} and every other page above it (${mx.filter((p) => p.fails).map((p) => p.page).join(', ')} fail)`);
+  line(rs.every((p) => !p.fails), `mixedpages every page of the unchanged PPM passes (${rs.filter((p) => !p.fails).length}/${rs.length})`);
+  const rec = recordingIntake();
+  const srv = await portalServer(rec);
+  try {
+    await captureBodies(h, srv);
+    await setServer(page, srv.base, srv.token);
+    const r = await readOutcome(page, mixed, 120000);
+    const req = rec.seen[0] || {};
+    const pdfs = req.pdfs || [];
+    line(rec.seen.length === 1 && pdfs.length === 1 && pdfs[0].pages === 20 && pdfs[0].of === 20 && sha(Buffer.from(pdfs[0].data, 'base64')) === sha(fs.readFileSync(mixed)) && (req.prompt || '').endsWith(`=== Document: mixed.pdf (20 pages) === ${ATTACHED}`), `mixedpages the mixed PDF is sent on the PDF path with every page (${pdfs.length} PDF, ${pdfs[0] ? pdfs[0].pages : 0} pages), not as text`);
+    line(r.step === 'review' && r.method === 'auto', `mixedpages review reached, method ${r.method || 'none'}`);
+    // The unchanged PPM (every page passes): the text path, whole (D-38; under the budget identical to D-36's prompt).
+    const n = rec.seen.length;
+    const r2 = await readOutcome(page, ROCKSTEP, 120000);
+    const q = rec.seen[n] || {};
+    line(rec.seen.length === n + 1 && !q.pdfs && (q.prompt || '').endsWith('\n\nDOCUMENTS:\n' + r2.whole), 'mixedpages the unchanged PPM sends the text-path prompt (instructions, DOCUMENTS: and its whole text), no PDF');
+  } finally {
     await setServer(page, '', '');
     await srv.close();
   }
@@ -1129,7 +1389,7 @@ async function partMeasure(h, page) {
 
 (async () => {
   if (PARTS.includes('unchanged')) partUnchanged();
-  const browserParts = PARTS.filter((p) => ['api', 'fallback', 'failures', 'unreadable', 'measure'].includes(p));
+  const browserParts = PARTS.filter((p) => ['api', 'fallback', 'failures', 'unreadable', 'retry', 'wholetext', 'mixedpages', 'measure'].includes(p));
   if (browserParts.length) {
     const h = await browser();
     try {
@@ -1141,6 +1401,9 @@ async function partMeasure(h, page) {
         await partUnreadable(h, page);
         await partWhole(h, page);
       }
+      if (PARTS.includes('retry')) await partRetry(h, page);
+      if (PARTS.includes('wholetext')) await partWholeText(h, page);
+      if (PARTS.includes('mixedpages')) await partMixedPages(h, page);
       if (PARTS.includes('measure')) await partMeasure(h, page);
       line(!h.errors.length, `page errors ${h.errors.length}`);
     } finally {
