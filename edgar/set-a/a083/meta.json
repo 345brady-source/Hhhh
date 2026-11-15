@@ -1,0 +1,25 @@
+{
+  "id": "a083",
+  "url": "https://www.sec.gov/Archives/edgar/data/1344802/000091384906000005/ex99-3.pdf",
+  "cik": "1344802",
+  "issuer": "Mutual Federal Bancorp, Inc.",
+  "form": "SB-2/A",
+  "file_date": "2006-01-04",
+  "exhibit": "EX-99.3",
+  "exhibit_description": "FORM OF MARKETING MATERIALS",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.pdf",
+  "source_sha256": "bdf4b0bee7063c11292c5f48731eda2d23caed3416c09b6c99afd19fc195b867",
+  "extra_files": [],
+  "layout_notes": [
+    "bank conversion offering mailing packet: designed stock order form and certification among letters and Q&A"
+  ],
+  "pdf_made": "filed-pdf",
+  "pages": 24,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {},
+  "page_kinds": {
+    "text": 23,
+    "blank": 1
+  }
+}

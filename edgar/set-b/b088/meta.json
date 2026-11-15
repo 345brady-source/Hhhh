@@ -1,0 +1,60 @@
+{
+ "id": "b088",
+ "url": "https://www.sec.gov/Archives/edgar/data/1489367/000095012311026651/y03348b3e424b3.htm",
+ "cik": "1489367",
+ "accession": "0000950123-11-026651",
+ "filename": "y03348b3e424b3.htm",
+ "sponsor": "SQN Alternative Investment Fund III",
+ "form": "424B3",
+ "file_date": "2011-03-18",
+ "kind": "appendix",
+ "doc_type": "424B3",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   11812,
+   null
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": true,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "trimmed_trailing_pages": 1,
+ "pages": 12,
+ "text_pages": 11,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2798,
+  0,
+  2634,
+  3412,
+  2169,
+  1535,
+  2061,
+  489,
+  3107,
+  1967,
+  2640,
+  2411
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

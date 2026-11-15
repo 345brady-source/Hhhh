@@ -1,0 +1,61 @@
+{
+  "id": "a057",
+  "url": "https://www.sec.gov/Archives/edgar/data/1329606/000150441216000341/exhibit101_ex10z1.htm",
+  "cik": "1329606",
+  "issuer": "Probe Manufacturing Inc",
+  "form": "8-K",
+  "file_date": "2016-11-08",
+  "exhibit": "EX-10",
+  "exhibit_description": null,
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "7cb3678df3e92861610152437188cd87badf0d45e95954861cc427a8190d5f35",
+  "extra_files": [
+    "exhibit101001.jpg",
+    "exhibit101002.jpg",
+    "exhibit101003.jpg",
+    "exhibit101004.jpg",
+    "exhibit101005.jpg",
+    "exhibit101006.jpg",
+    "exhibit101007.jpg",
+    "exhibit101008.jpg",
+    "exhibit101009.jpg",
+    "exhibit101010.jpg",
+    "exhibit101011.jpg",
+    "exhibit101012.jpg",
+    "exhibit101013.jpg",
+    "exhibit101014.jpg",
+    "exhibit101016.gif",
+    "exhibit101018.gif"
+  ],
+  "layout_notes": [
+    "filed as page pictures inside an HTML exhibit (scanned executed copy: entries and signatures already filled in by hand)"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 48,
+  "page_content": "pictures (no text layer)",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "entity": false,
+    "countersign": false,
+    "imgs": 16,
+    "underscores": 0
+  },
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 32,
+    "blank": 15
+  }
+}

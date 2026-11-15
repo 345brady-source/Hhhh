@@ -1,0 +1,51 @@
+{
+ "id": "b034",
+ "url": "https://www.sec.gov/Archives/edgar/data/1617896/000138713115002678/ex-d.htm",
+ "cik": "1617896",
+ "accession": "0001387131-15-002678",
+ "filename": "ex-d.htm",
+ "sponsor": "Corporate Capital Trust II (CNL/KKR)",
+ "form": "N-2/A",
+ "file_date": "2015-08-31",
+ "kind": "exhibit",
+ "doc_type": "EX-99.(D)",
+ "notes": "",
+ "pictures_in_source": [
+  "ex99-d_001.jpg",
+  "ex99-d_002.jpg",
+  "ex99-d_003.jpg",
+  "ex99-d_004.jpg",
+  "ex99-d_005.jpg"
+ ],
+ "pdf_made": "pictures-printed",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 13,
+ "text_pages": 0,
+ "picture_pages": 5,
+ "page_content": "pictures",
+ "chars_per_page": [
+  83,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0
+ ],
+ "layout": [
+  "picture pages",
+  "tables"
+ ]
+}

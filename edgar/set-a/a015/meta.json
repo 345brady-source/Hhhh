@@ -1,0 +1,48 @@
+{
+  "id": "a015",
+  "url": "https://www.sec.gov/Archives/edgar/data/1726711/000161577418004406/s110141_ex4-1.htm",
+  "cik": "1726711",
+  "issuer": "ADiTx Therapeutics, Inc.",
+  "form": "1-A/A",
+  "file_date": "2018-05-25",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EX1A-4 SUBS AGMT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "f64dffe0c5f53cb5f8f237e94bbc381e26cbc0c0f75ac5734bcb77af34c5ba52",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Wingdings characters",
+    "fill-in lines drawn as table cell borders",
+    "heavily table-based layout",
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 9,
+  "page_content": "real text",
+  "features": {
+    "boxes": 28,
+    "tables": 82,
+    "questionnaire": true,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 21
+  },
+  "page_kinds": {
+    "text": 9
+  }
+}

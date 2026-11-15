@@ -1,0 +1,45 @@
+{
+  "id": "a065",
+  "url": "https://www.sec.gov/Archives/edgar/data/1840199/000121390021060377/ea150570ex10-1_waldencast.htm",
+  "cik": "1840199",
+  "issuer": "Waldencast Acquisition Corp.",
+  "form": "8-K/A",
+  "file_date": "2021-11-17",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENTS",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "822a1c2323f48e4421d284993cdbf8993608eba3774c1186351f1baf2bccf824",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Unicode box characters",
+    "fill-in lines drawn as table cell borders",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 23,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 12,
+    "tables": 10,
+    "questionnaire": false,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 1
+  },
+  "page_kinds": {
+    "text": 22,
+    "little or no text": 1
+  }
+}

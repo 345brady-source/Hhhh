@@ -1,0 +1,60 @@
+{
+ "id": "b078",
+ "url": "https://www.sec.gov/Archives/edgar/data/1347523/000095013706000270/a15959orsv11.htm",
+ "cik": "1347523",
+ "accession": "0000950137-06-000270",
+ "filename": "a15959orsv11.htm",
+ "sponsor": "NNN Apartment REIT (Triple Net Properties)",
+ "form": "S-11",
+ "file_date": "2006-01-10",
+ "kind": "appendix",
+ "doc_type": "S-11",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   36519,
+   36973
+  ]
+ },
+ "pictures_in_source": [
+  "a15959ora1595909.gif"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 11,
+ "text_pages": 9,
+ "picture_pages": 1,
+ "page_content": "mixed",
+ "chars_per_page": [
+  2355,
+  2381,
+  2996,
+  2029,
+  1622,
+  1411,
+  1589,
+  18,
+  2498,
+  1624,
+  15
+ ],
+ "layout": [
+  "IRA",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "picture pages",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

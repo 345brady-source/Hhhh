@@ -1,0 +1,48 @@
+{
+  "id": "a032",
+  "url": "https://www.sec.gov/Archives/edgar/data/1991899/000121390025092835/ea025897501ex4-1_central.htm",
+  "cik": "1991899",
+  "issuer": "Central RoRo, LLC",
+  "form": "1-A/A",
+  "file_date": "2025-09-29",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "e6214ae32bd575bbfcfc2ebf535fc99197ffddd06f3fc425e99197276a0dbf43",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Unicode box characters",
+    "fill-in lines drawn as table cell borders",
+    "heavily table-based layout",
+    "underscore fill-in lines",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 31,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 7,
+    "tables": 89,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 125
+  },
+  "page_kinds": {
+    "text": 30,
+    "blank": 1
+  }
+}

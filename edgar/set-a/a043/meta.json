@@ -1,0 +1,44 @@
+{
+  "id": "a043",
+  "url": "https://www.sec.gov/Archives/edgar/data/1094320/000116169708000265/ex1031.htm",
+  "cik": "1094320",
+  "issuer": "JESUP & LAMONT, INC.",
+  "form": "8-K/A",
+  "file_date": "2008-03-12",
+  "exhibit": "EX-10",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "668f5b4f9872160d6eaa75620788990bffa0fb256241f5245d2326a2ab37f7b3",
+  "extra_files": [],
+  "layout_notes": [
+    "heavily table-based layout",
+    "underscore fill-in lines",
+    "investor questionnaire"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 40,
+  "page_content": "real text",
+  "features": {
+    "boxes": 4,
+    "tables": 37,
+    "questionnaire": true,
+    "joint": false,
+    "entity": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 14
+  },
+  "page_kinds": {
+    "text": 40
+  }
+}

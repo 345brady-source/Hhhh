@@ -1,0 +1,48 @@
+{
+  "id": "a102",
+  "url": "https://www.sec.gov/Archives/edgar/data/1173313/000121390019011793/fs12018a2ex10-1_american.htm",
+  "cik": "1173313",
+  "issuer": "American BriVision",
+  "form": "S-1/A",
+  "file_date": "2019-06-28",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "edccdedd3333e44273a69a5a79ca3d173a443434ecd5218d8017a9872d484361",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Wingdings characters",
+    "tick boxes as Unicode box characters",
+    "fill-in lines drawn as table cell borders",
+    "heavily table-based layout",
+    "underscore fill-in lines",
+    "investor questionnaire"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 21,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 54,
+    "tables": 132,
+    "questionnaire": true,
+    "joint": false,
+    "entity": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 40
+  },
+  "page_kinds": {
+    "text": 20,
+    "little or no text": 1
+  }
+}

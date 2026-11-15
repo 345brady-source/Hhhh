@@ -1,0 +1,46 @@
+{
+  "id": "a036",
+  "url": "https://www.sec.gov/Archives/edgar/data/826253/000082625302000036/subagree.txt",
+  "cik": "826253",
+  "issuer": "AURA SYSTEMS INC",
+  "form": "8-K",
+  "file_date": "2002-12-16",
+  "exhibit": "EX-99",
+  "exhibit_description": null,
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.txt",
+  "source_sha256": "9d4d43edbe1bd4b823b6b315a48f9578785dbfb98cb7d8f73e6eadf55d2ce438",
+  "extra_files": [],
+  "layout_notes": [
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block",
+    "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 4,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": true,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 3
+  },
+  "page_kinds": {
+    "text": 4
+  }
+}

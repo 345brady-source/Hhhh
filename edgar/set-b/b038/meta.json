@@ -1,0 +1,52 @@
+{
+ "id": "b038",
+ "url": "https://www.sec.gov/Archives/edgar/data/1732078/000121390018007088/n22018a3ex-p_flatrock.htm",
+ "cik": "1732078",
+ "accession": "0001213900-18-007088",
+ "filename": "n22018a3ex-p_flatrock.htm",
+ "sponsor": "Flat Rock Opportunity Fund",
+ "form": "N-2/A",
+ "file_date": "2018-05-31",
+ "kind": "exhibit",
+ "doc_type": "EX-99.P",
+ "notes": "",
+ "pictures_in_source": [
+  "image_007.jpg",
+  "image_008.jpg",
+  "image_009.jpg",
+  "image_010.jpg",
+  "image_011.jpg"
+ ],
+ "pdf_made": "pictures-printed",
+ "print": {
+  "orientation": "landscape",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 15,
+ "text_pages": 0,
+ "picture_pages": 10,
+ "page_content": "pictures",
+ "chars_per_page": [
+  70,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0
+ ],
+ "layout": [
+  "picture pages"
+ ]
+}

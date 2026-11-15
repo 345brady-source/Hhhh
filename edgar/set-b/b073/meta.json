@@ -1,0 +1,58 @@
+{
+ "id": "b073",
+ "url": "https://www.sec.gov/Archives/edgar/data/1308606/000095014405001816/g92207a1sv11za.htm",
+ "cik": "1308606",
+ "accession": "0000950144-05-001816",
+ "filename": "g92207a1sv11za.htm",
+ "sponsor": "Cole Credit Property Trust II",
+ "form": "S-11/A",
+ "file_date": "2005-02-24",
+ "kind": "appendix",
+ "doc_type": "S-11/A",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   25273,
+   25940
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-landscape",
+ "print": {
+  "orientation": "landscape",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 13,
+ "text_pages": 9,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2639,
+  177,
+  3005,
+  3,
+  2172,
+  1299,
+  994,
+  38,
+  498,
+  715,
+  2093,
+  1168,
+  15
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

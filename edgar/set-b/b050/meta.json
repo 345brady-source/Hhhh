@@ -1,0 +1,44 @@
+{
+ "id": "b050",
+ "url": "https://www.sec.gov/Archives/edgar/data/1174166/000116923202000645/d51313_ex10-3.txt",
+ "cik": "1174166",
+ "accession": "0001169232-02-000645",
+ "filename": "d51313_ex10-3.txt",
+ "sponsor": "Sandalwood Lodging Investment Corp",
+ "form": "S-11/A",
+ "file_date": "2002-08-09",
+ "kind": "exhibit",
+ "doc_type": "EX-10.3",
+ "notes": "",
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 7,
+ "text_pages": 7,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  1901,
+  2345,
+  1557,
+  1276,
+  2113,
+  2985,
+  1552
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "underscore fill lines"
+ ]
+}

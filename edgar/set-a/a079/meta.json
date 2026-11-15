@@ -1,0 +1,44 @@
+{
+  "id": "a079",
+  "url": "https://www.sec.gov/Archives/edgar/data/1275548/000112707404000043/lutcam_sub.htm",
+  "cik": "1275548",
+  "issuer": "LUTCAM INC",
+  "form": "SB-2/A",
+  "file_date": "2004-08-04",
+  "exhibit": "EX-10",
+  "exhibit_description": "LUTCAM SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "386f0e9a75f3de2dcfa45a21c9f8d4d0760399a5566a5fedc343c719dc504974",
+  "extra_files": [],
+  "layout_notes": [
+    "underscore fill-in lines",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 18
+  },
+  "page_kinds": {
+    "text": 2
+  }
+}

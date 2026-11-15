@@ -1,0 +1,61 @@
+{
+  "id": "a059",
+  "url": "https://www.sec.gov/Archives/edgar/data/1378125/000164033418002292/togl_ex101.htm",
+  "cik": "1378125",
+  "issuer": "Toga Ltd",
+  "form": "8-K",
+  "file_date": "2018-11-28",
+  "exhibit": "EX-10.1",
+  "exhibit_description": null,
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "3d95020f8dc2b0a4db4d1fb73bc454219bf5466f87ddba3c66678da17a7180ee",
+  "extra_files": [
+    "togl_ex101img1.jpg",
+    "togl_ex101img10.jpg",
+    "togl_ex101img11.jpg",
+    "togl_ex101img12.jpg",
+    "togl_ex101img13.jpg",
+    "togl_ex101img14.jpg",
+    "togl_ex101img15.jpg",
+    "togl_ex101img2.jpg",
+    "togl_ex101img3.jpg",
+    "togl_ex101img4.jpg",
+    "togl_ex101img5.jpg",
+    "togl_ex101img6.jpg",
+    "togl_ex101img7.jpg",
+    "togl_ex101img8.jpg",
+    "togl_ex101img9.jpg"
+  ],
+  "layout_notes": [
+    "filed as page pictures inside an HTML exhibit (scanned executed copy: entries and signatures already filled in by hand)",
+    "fill-in lines drawn as table cell borders"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 46,
+  "page_content": "pictures (no text layer)",
+  "features": {
+    "boxes": 0,
+    "tables": 15,
+    "questionnaire": false,
+    "joint": false,
+    "entity": false,
+    "countersign": false,
+    "imgs": 15,
+    "underscores": 0
+  },
+  "page_kinds": {
+    "text": 1,
+    "picture": 30,
+    "blank": 15
+  }
+}

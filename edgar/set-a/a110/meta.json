@@ -1,0 +1,44 @@
+{
+  "id": "a110",
+  "url": "https://www.sec.gov/Archives/edgar/data/2008027/000147793224008292/calor_ex33.htm",
+  "cik": "2008027",
+  "issuer": "Calor Del Sol Inc.",
+  "form": "S-1/A",
+  "file_date": "2024-12-26",
+  "exhibit": "EX-3.3",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "13268ec7f24273b55694bffc8a7145be6301d989aa8d12617c2af002544bca66",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text",
+  "features": {
+    "boxes": 11,
+    "tables": 6,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 15
+  },
+  "page_kinds": {
+    "text": 3
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "id": "a044",
+  "url": "https://www.sec.gov/Archives/edgar/data/882508/000119312509236820/dex101.htm",
+  "cik": "882508",
+  "issuer": "QUICKLOGIC CORPORATION",
+  "form": "8-K/A",
+  "file_date": "2009-11-17",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "90180846f396973f07386eb0798b751b768f8f70c41f659356449f188df18c01",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "investor questionnaire",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 14,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 12,
+    "questionnaire": true,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 0
+  },
+  "page_kinds": {
+    "text": 14
+  }
+}

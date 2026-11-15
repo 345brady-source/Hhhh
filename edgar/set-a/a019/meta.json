@@ -1,0 +1,44 @@
+{
+  "id": "a019",
+  "url": "https://www.sec.gov/Archives/edgar/data/1745449/000147793218004549/esi_ex41.htm",
+  "cik": "1745449",
+  "issuer": "Elegance Spirits, Inc.",
+  "form": "1-A/A",
+  "file_date": "2018-09-18",
+  "exhibit": "EX1A-4 SUBS AGMT.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "0ed24cc0e7c6500546728e3977f5493279b901a9077978da2f8bf3b4f84e12e6",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 16,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 17,
+    "questionnaire": false,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 10
+  },
+  "page_kinds": {
+    "text": 16
+  }
+}

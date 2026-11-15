@@ -1,0 +1,43 @@
+{
+  "id": "a037",
+  "url": "https://www.sec.gov/Archives/edgar/data/356830/000119312503056303/dex101.htm",
+  "cik": "356830",
+  "issuer": "GENOME THERAPEUTICS CORP",
+  "form": "8-K",
+  "file_date": "2003-10-01",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "f9807f4932df080f1302a4116be4b665928380125422edaa7db540b174b50a74",
+  "extra_files": [],
+  "layout_notes": [
+    "underscore fill-in lines",
+    "investor questionnaire"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 11,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": true,
+    "joint": false,
+    "entity": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 3
+  },
+  "page_kinds": {
+    "text": 11
+  }
+}

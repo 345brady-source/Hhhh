@@ -1,0 +1,58 @@
+{
+ "id": "b065",
+ "url": "https://www.sec.gov/Archives/edgar/data/1260793/000104746903041685/a2124546zs-11a.txt",
+ "cik": "1260793",
+ "accession": "0001047469-03-041685",
+ "filename": "a2124546zs-11a.txt",
+ "sponsor": "Boston Capital Real Estate Investment Trust",
+ "form": "S-11/A",
+ "file_date": "2003-12-22",
+ "kind": "appendix",
+ "doc_type": "S-11/A",
+ "notes": "",
+ "cut": {
+  "lines": [
+   14236,
+   14852
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 11,
+ "text_pages": 10,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2228,
+  2354,
+  2452,
+  2196,
+  2120,
+  1924,
+  1707,
+  1904,
+  2040,
+  1396,
+  6
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

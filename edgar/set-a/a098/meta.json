@@ -1,0 +1,44 @@
+{
+  "id": "a098",
+  "url": "https://www.sec.gov/Archives/edgar/data/1658304/000147793216013026/fund_ex33.htm",
+  "cik": "1658304",
+  "issuer": "FundThatCompany",
+  "form": "S-1/A",
+  "file_date": "2016-10-20",
+  "exhibit": "EX-3.3",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "1c51bb79a124ce7d486e5905a876aa4148d4d9464cbabb7c8de42d0878537dd1",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 1,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 13
+  },
+  "page_kinds": {
+    "text": 2
+  }
+}

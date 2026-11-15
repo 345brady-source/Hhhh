@@ -1,0 +1,48 @@
+{
+  "id": "a103",
+  "url": "https://www.sec.gov/Archives/edgar/data/1760903/000126493120000139/ex10_1s.htm",
+  "cik": "1760903",
+  "issuer": "Jupiter Wellness, Inc.",
+  "form": "S-1/A",
+  "file_date": "2020-07-14",
+  "exhibit": "EX-10",
+  "exhibit_description": "COMMON STOCK AND WARRANT SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "4d0a055defefc5538774dca2ae3c3ebb2c1ee1a589142f38485345bc5e07aa96",
+  "extra_files": [
+    "image_001.jpg"
+  ],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "investor questionnaire"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 13,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 0,
+    "tables": 12,
+    "questionnaire": true,
+    "joint": false,
+    "entity": false,
+    "countersign": false,
+    "imgs": 1,
+    "underscores": 11
+  },
+  "page_kinds": {
+    "text": 10,
+    "little or no text": 2,
+    "blank": 1
+  }
+}

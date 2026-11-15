@@ -1,0 +1,22 @@
+{
+  "id": "a029",
+  "url": "https://www.sec.gov/Archives/edgar/data/1994005/000199400523000005/Exhibit_3_SubAgreement.pdf",
+  "cik": "1994005",
+  "issuer": "Azotto Technology, LLC",
+  "form": "1-A/A",
+  "file_date": "2023-11-16",
+  "exhibit": "EX-96",
+  "exhibit_description": "SUB AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "6d723e1c27d60082b3341c61b128e614f445e5110e0d952756968fc6a09a7742",
+  "extra_files": [],
+  "layout_notes": [],
+  "pdf_made": "filed-pdf",
+  "pages": 10,
+  "page_content": "real text",
+  "features": {},
+  "page_kinds": {
+    "text": 10
+  }
+}

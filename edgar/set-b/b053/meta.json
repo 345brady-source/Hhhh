@@ -1,0 +1,56 @@
+{
+ "id": "b053",
+ "url": "https://www.sec.gov/Archives/edgar/data/1959353/000121390023022740/ea150172_ex99-p.htm",
+ "cik": "1959353",
+ "accession": "0001213900-23-022740",
+ "filename": "ea150172_ex99-p.htm",
+ "sponsor": "Oxford Park Income Fund",
+ "form": "N-2/A",
+ "file_date": "2023-03-24",
+ "kind": "exhibit",
+ "doc_type": "EX-99.(P)",
+ "notes": "",
+ "pictures_in_source": [
+  "ex99-p_001.jpg",
+  "ex99-p_002.jpg",
+  "ex99-p_003.jpg",
+  "ex99-p_004.jpg",
+  "ex99-p_005.jpg",
+  "ex99-p_006.jpg"
+ ],
+ "pdf_made": "pictures-printed",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 18,
+ "text_pages": 0,
+ "picture_pages": 6,
+ "page_content": "pictures",
+ "chars_per_page": [
+  67,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0
+ ],
+ "layout": [
+  "picture pages"
+ ]
+}

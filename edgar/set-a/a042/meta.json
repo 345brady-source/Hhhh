@@ -1,0 +1,46 @@
+{
+  "id": "a042",
+  "url": "https://www.sec.gov/Archives/edgar/data/873198/000134990507000065/financing8607subagreee101.htm",
+  "cik": "873198",
+  "issuer": "GUARDIAN TECHNOLOGIES INTERNATIONAL INC",
+  "form": "8-K/A",
+  "file_date": "2007-11-13",
+  "exhibit": "EX-10",
+  "exhibit_description": "EX 10.1 SUBSCRIPTION AGREEMENT FINANCING 8-6-07",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "6f757fcf1f41cae797765351b4197a432032bc2112ba55b3a530e3aed14482ed",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 20,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 0,
+    "tables": 5,
+    "questionnaire": true,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 19
+  },
+  "page_kinds": {
+    "text": 19,
+    "little or no text": 1
+  }
+}

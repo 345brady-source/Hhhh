@@ -1,0 +1,44 @@
+{
+ "id": "b045",
+ "url": "https://www.sec.gov/Archives/edgar/data/2149147/000199937126024845/ex99-p.htm",
+ "cik": "2149147",
+ "accession": "0001999371-26-024845",
+ "filename": "ex99-p.htm",
+ "sponsor": "LongevityFP US Large-Cap Fund",
+ "form": "N-2/A",
+ "file_date": "2026-11-06",
+ "kind": "exhibit",
+ "doc_type": "EX-99.(P)",
+ "notes": "",
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 9,
+ "text_pages": 8,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  3217,
+  3403,
+  4209,
+  3588,
+  2906,
+  1718,
+  2339,
+  0,
+  3243
+ ],
+ "layout": [
+  "W-9 certification",
+  "countersignature/acceptance block",
+  "entity investors",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

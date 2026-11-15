@@ -1,0 +1,64 @@
+{
+ "id": "b096",
+ "url": "https://www.sec.gov/Archives/edgar/data/1939433/000119312526029603/d90063ds11a.htm",
+ "cik": "1939433",
+ "accession": "0001193125-26-029603",
+ "filename": "d90063ds11a.htm",
+ "sponsor": "Cohen & Steers Income Opportunities REIT",
+ "form": "S-11/A",
+ "file_date": "2026-01-29",
+ "kind": "appendix",
+ "doc_type": "S-11/A",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   11752,
+   13754
+  ]
+ },
+ "pictures_in_source": [
+  "g90063g94q69.jpg"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": true,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 15,
+ "text_pages": 14,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  1764,
+  1241,
+  1278,
+  1440,
+  1436,
+  2154,
+  3206,
+  1725,
+  2958,
+  2701,
+  3000,
+  2341,
+  2753,
+  1759,
+  133
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "browser header/footer",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

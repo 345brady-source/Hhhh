@@ -1,0 +1,55 @@
+{
+ "id": "b061",
+ "url": "https://www.sec.gov/Archives/edgar/data/1027099/000091205701523613/a2054029z424b3.txt",
+ "cik": "1027099",
+ "accession": "0000912057-01-523613",
+ "filename": "a2054029z424b3.txt",
+ "sponsor": "JWH Global Trust",
+ "form": "424B3",
+ "file_date": "2001-07-12",
+ "kind": "appendix",
+ "doc_type": "424B3",
+ "notes": "",
+ "cut": {
+  "lines": [
+   8618,
+   null
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 9,
+ "text_pages": 9,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  1862,
+  1944,
+  3683,
+  2982,
+  1525,
+  2249,
+  1709,
+  2497,
+  968
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

@@ -1,0 +1,45 @@
+{
+  "id": "a090",
+  "url": "https://www.sec.gov/Archives/edgar/data/1497316/000149731611000004/exhibit20.htm",
+  "cik": "1497316",
+  "issuer": "GREEN & QUALITY HOME LIFE, INC.",
+  "form": "S-1/A",
+  "file_date": "2011-03-22",
+  "exhibit": "EX-20",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT FORM",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "d3a8e8407ada474b857f124865284d6b7fdf4b795f88fa8cb44995f49c0b6d4b",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Wingdings characters",
+    "underscore fill-in lines",
+    "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 17,
+    "tables": 1,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 15
+  },
+  "page_kinds": {
+    "text": 2,
+    "little or no text": 1
+  }
+}

@@ -1,0 +1,49 @@
+{
+ "id": "b013",
+ "url": "https://www.sec.gov/Archives/edgar/data/1459241/000119312511309455/d254549dex411.htm",
+ "cik": "1459241",
+ "accession": "0001193125-11-309455",
+ "filename": "d254549dex411.htm",
+ "sponsor": "Global Income Trust (CNL)",
+ "form": "POS AM",
+ "file_date": "2011-11-14",
+ "kind": "exhibit",
+ "doc_type": "EX-4.1.1.",
+ "notes": "",
+ "pictures_in_source": [
+  "g254551g48u22.jpg"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": true,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 7,
+ "text_pages": 6,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  1716,
+  1952,
+  58,
+  3083,
+  320,
+  3305,
+  213
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

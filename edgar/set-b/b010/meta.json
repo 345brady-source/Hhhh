@@ -1,0 +1,50 @@
+{
+ "id": "b010",
+ "url": "https://www.sec.gov/Archives/edgar/data/1410567/000119312510071126/dex41.htm",
+ "cik": "1410567",
+ "accession": "0001193125-10-071126",
+ "filename": "dex41.htm",
+ "sponsor": "Strategic Storage Trust",
+ "form": "10-K",
+ "file_date": "2010-03-30",
+ "kind": "exhibit",
+ "doc_type": "EX-4.1",
+ "notes": "",
+ "pictures_in_source": [
+  "g38741img2.jpg",
+  "g38741img4.jpg",
+  "g38741g63k16.jpg"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 7,
+ "text_pages": 6,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2971,
+  3,
+  1861,
+  753,
+  3016,
+  5138,
+  238
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

@@ -1,0 +1,47 @@
+{
+  "id": "a062",
+  "url": "https://www.sec.gov/Archives/edgar/data/1777835/000121390020045792/ea132500ex10-1_fintechacq4.htm",
+  "cik": "1777835",
+  "issuer": "FinTech Acquisition Corp. IV",
+  "form": "8-K/A",
+  "file_date": "2020-12-31",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "3ce02d8c0455d82633084cbff5c0f9cbe37a1fac6097c02db8332bf0d161d708",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Unicode box characters",
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 28,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 31,
+    "tables": 9,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 7
+  },
+  "page_kinds": {
+    "text": 26,
+    "little or no text": 2
+  }
+}

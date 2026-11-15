@@ -1,0 +1,47 @@
+{
+ "id": "b036",
+ "url": "https://www.sec.gov/Archives/edgar/data/841501/000084150199000002/0000841501-99-000002.txt",
+ "cik": "841501",
+ "accession": "0000841501-99-000002",
+ "filename": "0000841501-99-000002.txt",
+ "sponsor": "Owens Mortgage Investment Fund",
+ "form": "S-11",
+ "file_date": "1999-01-27",
+ "kind": "appendix",
+ "doc_type": "S-11",
+ "notes": "1999 complete submission text file; Exhibit B cut by lines",
+ "cut": {
+  "lines": [
+   8924,
+   9273
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 6,
+ "text_pages": 6,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2521,
+  3144,
+  2498,
+  1695,
+  1541,
+  630
+ ],
+ "layout": [
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "power of attorney",
+  "underscore fill lines"
+ ]
+}

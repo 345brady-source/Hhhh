@@ -1,0 +1,47 @@
+{
+  "id": "a067",
+  "url": "https://www.sec.gov/Archives/edgar/data/1080319/000101738623000052/exhibit_10-3.htm",
+  "cik": "1080319",
+  "issuer": "Elys Game Technology, Corp.",
+  "form": "8-K/A",
+  "file_date": "2023-02-07",
+  "exhibit": "EX-10.3",
+  "exhibit_description": "FORM OF WARRANT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "dbba942b8890cea0a73a666a5831f99b879c45590284c75d38b3654c4356af47",
+  "extra_files": [
+    "image_002.jpg"
+  ],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 35,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 2,
+    "tables": 10,
+    "questionnaire": false,
+    "joint": false,
+    "entity": false,
+    "countersign": false,
+    "imgs": 1,
+    "underscores": 59
+  },
+  "page_kinds": {
+    "text": 31,
+    "blank": 3,
+    "little or no text": 1
+  }
+}

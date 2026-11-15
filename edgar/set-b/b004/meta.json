@@ -1,0 +1,56 @@
+{
+ "id": "b004",
+ "url": "https://www.sec.gov/Archives/edgar/data/1816389/000119312521033799/d945449dex99p2.htm",
+ "cik": "1816389",
+ "accession": "0001193125-21-033799",
+ "filename": "d945449dex99p2.htm",
+ "sponsor": "BlackRock Private Investments Fund",
+ "form": "N-2/A",
+ "file_date": "2021-02-09",
+ "kind": "exhibit",
+ "doc_type": "EX-99.(P)(2)",
+ "notes": "",
+ "pictures_in_source": [
+  "g945449g56o14.jpg"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": true,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 14,
+ "text_pages": 12,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2081,
+  1471,
+  492,
+  6020,
+  7080,
+  7125,
+  1651,
+  1795,
+  1824,
+  6275,
+  1241,
+  156,
+  156,
+  225
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "browser header/footer",
+  "custodian section",
+  "entity investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

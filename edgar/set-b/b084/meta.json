@@ -1,0 +1,64 @@
+{
+ "id": "b084",
+ "url": "https://www.sec.gov/Archives/edgar/data/1455650/000095014409003343/g17812a1sv11za.htm",
+ "cik": "1455650",
+ "accession": "0000950144-09-003343",
+ "filename": "g17812a1sv11za.htm",
+ "sponsor": "NorthStar Real Estate Income Trust",
+ "form": "S-11/A",
+ "file_date": "2009-04-20",
+ "kind": "appendix",
+ "doc_type": "S-11/A",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   14285,
+   15240
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": true,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 16,
+ "text_pages": 12,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2836,
+  946,
+  3472,
+  989,
+  1725,
+  163,
+  1407,
+  123,
+  2224,
+  305,
+  1611,
+  127,
+  2584,
+  2674,
+  4202,
+  139
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "browser header/footer",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

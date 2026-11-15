@@ -1,0 +1,57 @@
+{
+ "id": "b069",
+ "url": "https://www.sec.gov/Archives/edgar/data/1296884/000119312504118256/ds11.htm",
+ "cik": "1296884",
+ "accession": "0001193125-04-118256",
+ "filename": "ds11.htm",
+ "sponsor": "Lightstone Value Plus REIT",
+ "form": "S-11",
+ "file_date": "2004-07-14",
+ "kind": "appendix",
+ "doc_type": "S-11",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   7817,
+   8336
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "trimmed_trailing_pages": 2,
+ "pages": 12,
+ "text_pages": 8,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2794,
+  108,
+  3014,
+  3,
+  970,
+  176,
+  479,
+  2134,
+  856,
+  579,
+  2460,
+  3
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "custodian section",
+  "joint investors",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

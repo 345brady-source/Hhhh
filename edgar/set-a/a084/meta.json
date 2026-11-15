@@ -1,0 +1,46 @@
+{
+  "id": "a084",
+  "url": "https://www.sec.gov/Archives/edgar/data/1369748/000106299306003442/exhibit10-3.htm",
+  "cik": "1369748",
+  "issuer": "FUNDSTECH CORP",
+  "form": "SB-2",
+  "file_date": "2006-11-08",
+  "exhibit": "EX-10.3",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "8009239cf38d261df566260f7839f9f71ef79f759f442fc980327f91e7be4317",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "entity signature block",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 11,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 13,
+    "questionnaire": true,
+    "joint": false,
+    "entity": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 7
+  },
+  "page_kinds": {
+    "text": 11
+  }
+}

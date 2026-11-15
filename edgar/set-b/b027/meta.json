@@ -1,0 +1,50 @@
+{
+ "id": "b027",
+ "url": "https://www.sec.gov/Archives/edgar/data/1550913/000092290713000284/exhibit99d_062513.htm",
+ "cik": "1550913",
+ "accession": "0000922907-13-000284",
+ "filename": "exhibit99d_062513.htm",
+ "sponsor": "MacKenzie Realty Capital",
+ "form": "N-2/A",
+ "file_date": "2013-07-19",
+ "kind": "exhibit",
+ "doc_type": "EX-99.D.",
+ "notes": "",
+ "pictures_in_source": [
+  "mackenzie3.jpg"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": true,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 6,
+ "text_pages": 5,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  3902,
+  3,
+  3722,
+  4778,
+  5583,
+  4943
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

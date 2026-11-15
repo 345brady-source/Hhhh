@@ -1,0 +1,47 @@
+{
+  "id": "a011",
+  "url": "https://www.sec.gov/Archives/edgar/data/1703429/000158258617000044/redfish_subscription.htm",
+  "cik": "1703429",
+  "issuer": "Red Fish Properties, Inc.",
+  "form": "1-A/A",
+  "file_date": "2017-09-13",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SAMPLE SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "943857fbea64166acd27c72c09342c5abb40199aec44e4c0a04c9aeca40ac1e4",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Wingdings characters",
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 4,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 18,
+    "tables": 9,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 14
+  },
+  "page_kinds": {
+    "text": 3,
+    "blank": 1
+  }
+}

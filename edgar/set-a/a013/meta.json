@@ -1,0 +1,23 @@
+{
+  "id": "a013",
+  "url": "https://www.sec.gov/Archives/edgar/data/1697746/000169774618000004/exh17.4subagmtbfi.pdf",
+  "cik": "1697746",
+  "issuer": "Bio Fil Inc",
+  "form": "1-A/A",
+  "file_date": "2018-02-20",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT OF BIO FIL INC PDF",
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "3c79797e66d809e0f4a680e19c29942beefb6407a6c73997e5b5fe3d07331c1f",
+  "extra_files": [],
+  "layout_notes": [],
+  "pdf_made": "filed-pdf",
+  "pages": 10,
+  "page_content": "real text with some picture pages",
+  "features": {},
+  "page_kinds": {
+    "text": 9,
+    "picture": 1
+  }
+}

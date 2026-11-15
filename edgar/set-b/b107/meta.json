@@ -1,0 +1,60 @@
+{
+ "id": "b107",
+ "url": "https://www.sec.gov/Archives/edgar/data/1456016/000119312509230589/d424b3.htm",
+ "cik": "1456016",
+ "accession": "0001193125-09-230589",
+ "filename": "d424b3.htm",
+ "sponsor": "GC Net Lease REIT (Griffin Capital)",
+ "form": "424B3",
+ "file_date": "2009-11-10",
+ "kind": "appendix",
+ "doc_type": "424B3",
+ "notes": "text pages plus two pages of the form filed as pictures",
+ "cut": {
+  "blocks": [
+   19626,
+   20674
+  ]
+ },
+ "pictures_in_source": [
+  "g52329appbpg02.jpg",
+  "g52329appbpg03.jpg"
+ ],
+ "pdf_made": "printed-landscape",
+ "print": {
+  "orientation": "landscape",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 10,
+ "text_pages": 9,
+ "picture_pages": 0,
+ "page_content": "mixed",
+ "chars_per_page": [
+  1749,
+  600,
+  1072,
+  1211,
+  1467,
+  2074,
+  2753,
+  1012,
+  599,
+  41
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

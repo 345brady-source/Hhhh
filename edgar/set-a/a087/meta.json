@@ -1,0 +1,47 @@
+{
+  "id": "a087",
+  "url": "https://www.sec.gov/Archives/edgar/data/1421265/000121478209000010/ex10-1.htm",
+  "cik": "1421265",
+  "issuer": "DRS Inc.",
+  "form": "S-1/A",
+  "file_date": "2009-01-06",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "99b0b67b96bd35139177d34f045d6e5008096dcdf41cbac8ea9b80c864e58cca",
+  "extra_files": [],
+  "layout_notes": [
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 15,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 0,
+    "tables": 13,
+    "questionnaire": true,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 87
+  },
+  "page_kinds": {
+    "text": 13,
+    "little or no text": 1,
+    "blank": 1
+  }
+}

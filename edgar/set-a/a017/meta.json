@@ -1,0 +1,46 @@
+{
+  "id": "a017",
+  "url": "https://www.sec.gov/Archives/edgar/data/1706951/000168316818002108/advanced_1aa2-ex04.htm",
+  "cik": "1706951",
+  "issuer": "Advanced Bio-Oil Technologies Ltd.",
+  "form": "1-A/A",
+  "file_date": "2018-08-02",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "e767f541c9e6ba7720383260c902acd5e3a950b10961d474b7a0d3bc44fce6d4",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 7,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 0,
+    "tables": 6,
+    "questionnaire": true,
+    "joint": true,
+    "entity": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 34
+  },
+  "page_kinds": {
+    "text": 5,
+    "little or no text": 2
+  }
+}

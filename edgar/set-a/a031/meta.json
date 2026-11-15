@@ -1,0 +1,49 @@
+{
+  "id": "a031",
+  "url": "https://www.sec.gov/Archives/edgar/data/2050256/000168316825004335/ridepair_ex0401.htm",
+  "cik": "2050256",
+  "issuer": "Ridepair Inc.",
+  "form": "1-A/A",
+  "file_date": "2025-06-09",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT FOR SERIES B 10% CONVERTIBLE PREFERRED STOCK",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "f42ef1b357bd3af849b1171c7fdc93bb9a7882dda68787518ccc2c89c96e124d",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Unicode box characters",
+    "fill-in lines drawn as table cell borders",
+    "heavily table-based layout",
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 38,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 107,
+    "tables": 157,
+    "questionnaire": true,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 115
+  },
+  "page_kinds": {
+    "text": 34,
+    "little or no text": 4
+  }
+}

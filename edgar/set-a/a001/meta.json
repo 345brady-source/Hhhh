@@ -1,0 +1,44 @@
+{
+  "id": "a001",
+  "url": "https://www.sec.gov/Archives/edgar/data/1652238/000119312515337847/d33449dex1a4subsagmt1.htm",
+  "cik": "1652238",
+  "issuer": "Sun Dental Holdings, LLC",
+  "form": "1-A/A",
+  "file_date": "2015-10-06",
+  "exhibit": "EX1A-4 SUBS AGMT.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "ed37339bbfc550764af67e33936a3a7de6f7828f2a573102ab33633224990163",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Wingdings characters",
+    "fill-in lines drawn as table cell borders",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 4,
+  "page_content": "real text",
+  "features": {
+    "boxes": 17,
+    "tables": 19,
+    "questionnaire": false,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 0
+  },
+  "page_kinds": {
+    "text": 4
+  }
+}

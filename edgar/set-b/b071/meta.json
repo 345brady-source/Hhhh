@@ -1,0 +1,59 @@
+{
+ "id": "b071",
+ "url": "https://www.sec.gov/Archives/edgar/data/1272430/000119312504110624/ds11a.htm",
+ "cik": "1272430",
+ "accession": "0001193125-04-110624",
+ "filename": "ds11a.htm",
+ "sponsor": "Paladin Realty Income Properties",
+ "form": "S-11/A",
+ "file_date": "2004-06-29",
+ "kind": "appendix",
+ "doc_type": "S-11/A",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   13619,
+   14391
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": true,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 13,
+ "text_pages": 11,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  786,
+  3155,
+  140,
+  3239,
+  688,
+  1541,
+  776,
+  1934,
+  2193,
+  883,
+  1158,
+  1566,
+  15
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables"
+ ]
+}

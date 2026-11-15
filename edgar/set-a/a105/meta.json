@@ -1,0 +1,48 @@
+{
+  "id": "a105",
+  "url": "https://www.sec.gov/Archives/edgar/data/1828748/000159991621000015/sample_subscription.htm",
+  "cik": "1828748",
+  "issuer": "ASIAFIN HOLDINGS CORP.",
+  "form": "S-1/A",
+  "file_date": "2021-02-08",
+  "exhibit": "EX-99.1",
+  "exhibit_description": "SAMPLE SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "9082256a1073b42782d177680ad3aa4cd56a90808df93cd1153644820f6be103",
+  "extra_files": [
+    "image_007.jpg",
+    "image_008.jpg",
+    "image_009.jpg"
+  ],
+  "layout_notes": [
+    "signature and fill-in lines are thin line pictures",
+    "underscore fill-in lines",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 8,
+    "questionnaire": false,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 9,
+    "underscores": 3
+  },
+  "page_kinds": {
+    "text": 3
+  }
+}

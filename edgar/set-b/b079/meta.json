@@ -1,0 +1,54 @@
+{
+ "id": "b079",
+ "url": "https://www.sec.gov/Archives/edgar/data/1353722/000095013406003502/d33105sv1.htm",
+ "cik": "1353722",
+ "accession": "0000950134-06-003502",
+ "filename": "d33105sv1.htm",
+ "sponsor": "Mewbourne Energy 06-07 Drilling Program",
+ "form": "S-1",
+ "file_date": "2006-02-22",
+ "kind": "appendix",
+ "doc_type": "S-1",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   14975,
+   15370
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 9,
+ "text_pages": 5,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  65,
+  3742,
+  90,
+  3728,
+  51,
+  1690,
+  720,
+  1632,
+  15
+ ],
+ "layout": [
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables"
+ ]
+}

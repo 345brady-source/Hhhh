@@ -1,0 +1,68 @@
+{
+ "id": "b077",
+ "url": "https://www.sec.gov/Archives/edgar/data/1376074/000112528206006060/p414969_s1.htm",
+ "cik": "1376074",
+ "accession": "0001125282-06-006060",
+ "filename": "p414969_s1.htm",
+ "sponsor": "LEAF Equipment Leasing Income Fund III",
+ "form": "S-1",
+ "file_date": "2006-10-02",
+ "kind": "appendix",
+ "doc_type": "S-1",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   8703,
+   9640
+  ]
+ },
+ "pictures_in_source": [
+  "emptybox.gif"
+ ],
+ "pdf_made": "printed-landscape",
+ "print": {
+  "orientation": "landscape",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "trimmed_trailing_pages": 2,
+ "pages": 17,
+ "text_pages": 16,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  1899,
+  1125,
+  944,
+  1785,
+  1334,
+  1954,
+  1941,
+  1168,
+  2899,
+  784,
+  1523,
+  2670,
+  175,
+  701,
+  501,
+  2443,
+  212
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

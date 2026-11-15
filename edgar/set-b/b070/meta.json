@@ -1,0 +1,63 @@
+{
+ "id": "b070",
+ "url": "https://www.sec.gov/Archives/edgar/data/1175535/000095014404005762/g86518a1sv11za.htm",
+ "cik": "1175535",
+ "accession": "0000950144-04-005762",
+ "filename": "g86518a1sv11za.htm",
+ "sponsor": "Hartman Commercial Properties REIT",
+ "form": "S-11/A",
+ "file_date": "2004-05-24",
+ "kind": "appendix",
+ "doc_type": "S-11/A",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   43365,
+   44666
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 15,
+ "text_pages": 11,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2020,
+  215,
+  1727,
+  936,
+  2276,
+  45,
+  1009,
+  2577,
+  1350,
+  2505,
+  3,
+  2936,
+  0,
+  599,
+  15
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

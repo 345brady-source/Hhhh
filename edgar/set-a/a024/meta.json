@@ -1,0 +1,44 @@
+{
+  "id": "a024",
+  "url": "https://www.sec.gov/Archives/edgar/data/1809660/000147793221002943/alfa_ex4.htm",
+  "cik": "1809660",
+  "issuer": "ALFADAN INC.",
+  "form": "1-A/A",
+  "file_date": "2021-05-07",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "09b203bd57c884f38c3d7e23371cc30f93b8f52c4cd5f76d79e4060f00a80bba",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 17,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 0,
+    "tables": 19,
+    "questionnaire": false,
+    "joint": false,
+    "entity": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 13
+  },
+  "page_kinds": {
+    "text": 16,
+    "blank": 1
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "a008",
+  "url": "https://www.sec.gov/Archives/edgar/data/1677331/000167733116000006/EXHIBIT1A-4SubAgreement.pdf",
+  "cik": "1677331",
+  "issuer": "Viva Consulting Group Inc.",
+  "form": "1-A/A",
+  "file_date": "2016-09-26",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": null,
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "c6cc8f91534eca7a5838d383a2354610c2fc0e3892f7cf20a1b2282a4776012e",
+  "extra_files": [],
+  "layout_notes": [
+    "scanned pages with an OCR text layer"
+  ],
+  "pdf_made": "scanned",
+  "pages": 17,
+  "page_content": "pictures with a text layer (OCR or hidden text)",
+  "features": {},
+  "page_kinds": {
+    "picture+ocr-text": 17
+  }
+}

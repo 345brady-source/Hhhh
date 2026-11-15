@@ -1,0 +1,48 @@
+{
+  "id": "a053",
+  "url": "https://www.sec.gov/Archives/edgar/data/1076682/000141588915000535/ex10-1.htm",
+  "cik": "1076682",
+  "issuer": "MAJESCO ENTERTAINMENT CO",
+  "form": "8-K/A",
+  "file_date": "2015-02-13",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "1a839418a89776d52c7489e989a9556aaee8d3417a6cd03f7e559f1730e3bcd4",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "heavily table-based layout",
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 29,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 0,
+    "tables": 24,
+    "questionnaire": true,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 41
+  },
+  "page_kinds": {
+    "text": 28,
+    "blank": 1
+  }
+}

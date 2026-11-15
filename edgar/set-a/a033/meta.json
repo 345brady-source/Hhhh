@@ -1,0 +1,46 @@
+{
+  "id": "a033",
+  "url": "https://www.sec.gov/Archives/edgar/data/2126221/000119983526000252/recx-ex4_1.htm",
+  "cik": "2126221",
+  "issuer": "Recreatives Industries, Inc.",
+  "form": "1-A/A",
+  "file_date": "2026-07-13",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "f2c7a9d8ba9e6627600831cd00016fda043a2fb2df0ed8351099d7e90ca25aab",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "heavily table-based layout",
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 8,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 29,
+    "questionnaire": true,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 9
+  },
+  "page_kinds": {
+    "text": 8
+  }
+}

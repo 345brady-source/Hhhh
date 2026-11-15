@@ -1,0 +1,54 @@
+{
+ "id": "b097",
+ "url": "https://www.sec.gov/Archives/edgar/data/1307748/000104746905003256/a2151540zs-11.txt",
+ "cik": "1307748",
+ "accession": "0001047469-05-003256",
+ "filename": "a2151540zs-11.txt",
+ "sponsor": "Inland American Real Estate Trust",
+ "form": "S-11",
+ "file_date": "2005-02-11",
+ "kind": "appendix",
+ "doc_type": "S-11",
+ "notes": "",
+ "cut": {
+  "lines": [
+   12446,
+   12938
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 9,
+ "text_pages": 9,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2841,
+  2850,
+  2537,
+  3051,
+  2043,
+  1651,
+  2337,
+  2176,
+  862
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

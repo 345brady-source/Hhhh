@@ -1,0 +1,38 @@
+{
+ "id": "b105",
+ "url": "https://www.sec.gov/Archives/edgar/data/1713407/000171340720000079/appendixcx.pdf",
+ "cik": "1713407",
+ "accession": "0001713407-20-000079",
+ "filename": "appendixcx.pdf",
+ "sponsor": "Oaktree Real Estate Income Trust",
+ "form": "424B3",
+ "file_date": "2020-11-13",
+ "kind": "exhibit",
+ "doc_type": "GRAPHIC",
+ "notes": "Appendix C filed as a separate PDF (GRAPHIC) with the 424B3",
+ "pdf_made": "filed-pdf",
+ "pages": 8,
+ "text_pages": 7,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  1780,
+  1615,
+  2736,
+  4083,
+  3735,
+  4734,
+  4415,
+  0
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "tick boxes"
+ ]
+}

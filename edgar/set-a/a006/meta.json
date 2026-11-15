@@ -1,0 +1,24 @@
+{
+  "id": "a006",
+  "url": "https://www.sec.gov/Archives/edgar/data/1677159/000167715916000001/SUBSCRIPTIONAGREEMENT-Bofat.pdf",
+  "cik": "1677159",
+  "issuer": "Bofat Investment Inc",
+  "form": "1-A",
+  "file_date": "2016-06-24",
+  "exhibit": null,
+  "exhibit_description": null,
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "3e10971e0505708ba42a01db2f644aec46690625398787ce226a44d229aa789b",
+  "extra_files": [],
+  "layout_notes": [
+    "scanned pages with an OCR text layer (OCR errors in the text)"
+  ],
+  "pdf_made": "scanned",
+  "pages": 14,
+  "page_content": "pictures with a text layer (OCR or hidden text)",
+  "features": {},
+  "page_kinds": {
+    "picture+ocr-text": 14
+  }
+}

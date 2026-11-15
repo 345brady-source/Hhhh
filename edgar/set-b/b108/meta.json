@@ -1,0 +1,67 @@
+{
+ "id": "b108",
+ "url": "https://www.sec.gov/Archives/edgar/data/1868516/000110465925010929/tm243536-15_s11a.htm",
+ "cik": "1868516",
+ "accession": "0001104659-25-010929",
+ "filename": "tm243536-15_s11a.htm",
+ "sponsor": "StratCap Digital Infrastructure REIT",
+ "form": "S-11/A",
+ "file_date": "2025-02-10",
+ "kind": "appendix",
+ "doc_type": "S-11/A",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   31683,
+   31749
+  ]
+ },
+ "pictures_in_source": [
+  "pg_strategicappc01-4c.jpg",
+  "pg_strategicappc02-4c.jpg",
+  "pg_strategicappc03-4c.jpg",
+  "pg_strategicappc04-4c.jpg",
+  "pg_strategicappc05-4c.jpg",
+  "pg_strategicappc06-4c.jpg",
+  "pg_strategicappc07-4c.jpg",
+  "pg_strategicappc08-4c.jpg",
+  "pg_strategicappc09-4c.jpg",
+  "pg_strategicappc10-4c.jpg",
+  "pg_strategicappc11-4c.jpg",
+  "pg_strategicappc12-4c.jpg"
+ ],
+ "pdf_made": "pictures-printed",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 15,
+ "text_pages": 0,
+ "picture_pages": 12,
+ "page_content": "pictures",
+ "chars_per_page": [
+  39,
+  18,
+  18,
+  18,
+  18,
+  18,
+  18,
+  18,
+  18,
+  19,
+  19,
+  19,
+  19,
+  16,
+  0
+ ],
+ "layout": [
+  "picture pages",
+  "shaded cells/bands",
+  "tables"
+ ]
+}

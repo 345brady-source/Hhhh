@@ -1,0 +1,46 @@
+{
+  "id": "a025",
+  "url": "https://www.sec.gov/Archives/edgar/data/1630176/000152013821000314/grck-1aex4z1.htm",
+  "cik": "1630176",
+  "issuer": "HEALTHY EXTRACTS INC.",
+  "form": "1-A/A",
+  "file_date": "2021-06-07",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EX1A-4 SUBS AGMT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "600208a176856d72a419c56a8ffed0f86e4dcb69b32949eedc34f47135d8c9ec",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Wingdings characters",
+    "fill-in lines drawn as table cell borders",
+    "investor questionnaire",
+    "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 13,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 3,
+    "tables": 4,
+    "questionnaire": true,
+    "joint": true,
+    "entity": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 0
+  },
+  "page_kinds": {
+    "text": 8,
+    "little or no text": 5
+  }
+}

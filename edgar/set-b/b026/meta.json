@@ -1,0 +1,44 @@
+{
+ "id": "b026",
+ "url": "https://www.sec.gov/Archives/edgar/data/1471039/000092290710000342/n2aexhp1_060910.htm",
+ "cik": "1471039",
+ "accession": "0000922907-10-000342",
+ "filename": "n2aexhp1_060910.htm",
+ "sponsor": "Zea Capital Fund",
+ "form": "N-2/A",
+ "file_date": "2010-06-14",
+ "kind": "exhibit",
+ "doc_type": "EX-99.P.1",
+ "notes": "",
+ "pictures_in_source": [
+  "zealogo.jpg"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": true,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 5,
+ "text_pages": 5,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  3042,
+  3846,
+  895,
+  1766,
+  891
+ ],
+ "layout": [
+  "browser header/footer",
+  "countersignature/acceptance block",
+  "entity investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "underscore fill lines"
+ ]
+}

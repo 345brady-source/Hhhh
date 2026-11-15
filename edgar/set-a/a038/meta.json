@@ -1,0 +1,24 @@
+{
+  "id": "a038",
+  "url": "https://www.sec.gov/Archives/edgar/data/1023731/000102373105000010/exhibit4-2.pdf",
+  "cik": "1023731",
+  "issuer": "8X8 INC /DE/",
+  "form": "8-K/A",
+  "file_date": "2005-03-08",
+  "exhibit": "EX-4.2",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.pdf",
+  "source_sha256": "f540affe3a7da9893b3e8fcec3549dbcd0f37a35448ba782f7e6cac8b9a6f030",
+  "extra_files": [],
+  "layout_notes": [
+    "unofficial PDF copy filed alongside the official exhibit"
+  ],
+  "pdf_made": "filed-pdf",
+  "pages": 11,
+  "page_content": "real text",
+  "features": {},
+  "page_kinds": {
+    "text": 11
+  }
+}

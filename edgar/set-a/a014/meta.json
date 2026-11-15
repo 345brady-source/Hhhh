@@ -1,0 +1,46 @@
+{
+  "id": "a014",
+  "url": "https://www.sec.gov/Archives/edgar/data/1621388/000154921218000015/subscriptionagreeement050118.htm",
+  "cik": "1621388",
+  "issuer": "SW Innovative Holdings, Inc.",
+  "form": "1-A/A",
+  "file_date": "2018-05-08",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EXHIBIT 4.1",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "f21e2bf70989f983c3f7d75c6eea5784acc82aba37dad5cd82dea29bd9778ff9",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Wingdings characters",
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 12,
+  "page_content": "real text",
+  "features": {
+    "boxes": 15,
+    "tables": 5,
+    "questionnaire": true,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 21
+  },
+  "page_kinds": {
+    "text": 12
+  }
+}

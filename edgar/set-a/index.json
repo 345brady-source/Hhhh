@@ -1,0 +1,4868 @@
+[
+ {
+  "id": "a001",
+  "url": "https://www.sec.gov/Archives/edgar/data/1652238/000119312515337847/d33449dex1a4subsagmt1.htm",
+  "cik": "1652238",
+  "issuer": "Sun Dental Holdings, LLC",
+  "form": "1-A/A",
+  "file_date": "2015-10-06",
+  "exhibit": "EX1A-4 SUBS AGMT.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "ed37339bbfc550764af67e33936a3a7de6f7828f2a573102ab33633224990163",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Wingdings characters",
+   "fill-in lines drawn as table cell borders",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 4,
+  "page_content": "real text",
+  "features": {
+   "boxes": 17,
+   "tables": 19,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 0
+  },
+  "page_kinds": {
+   "text": 4
+  }
+ },
+ {
+  "id": "a002",
+  "url": "https://www.sec.gov/Archives/edgar/data/1647636/000164763615000007/ExhibitD.pdf",
+  "cik": "1647636",
+  "issuer": "ralliBox, Inc.",
+  "form": "1-A/A",
+  "file_date": "2015-10-15",
+  "exhibit": "EX1A-6 MAT CTRCT",
+  "exhibit_description": "EXHIBIT D SUB AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "5eae4148eebd629570e98727707a7c46cf7a6150108eb469ef7485332d435867",
+  "extra_files": [],
+  "layout_notes": [
+   "subscription agreement with one named subscriber, blank signature lines for subscriber and company"
+  ],
+  "pdf_made": "filed-pdf",
+  "pages": 4,
+  "page_content": "real text",
+  "features": {},
+  "page_kinds": {
+   "text": 4
+  }
+ },
+ {
+  "id": "a003",
+  "url": "https://www.sec.gov/Archives/edgar/data/1531266/000121465915007182/ex4_1.htm",
+  "cik": "1531266",
+  "issuer": "Elio Motors, Inc.",
+  "form": "1-A/A",
+  "file_date": "2015-10-21",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EXHIBIT 4.1",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "ea76471a1cd0cd589d0c720fb22b80b611d8a3b9ccab1a49252b2a6eaa4cee3a",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": true,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 8,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 2,
+   "tables": 43,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 3
+  },
+  "page_kinds": {
+   "text": 7,
+   "blank": 1
+  }
+ },
+ {
+  "id": "a004",
+  "url": "https://www.sec.gov/Archives/edgar/data/1643584/000158258615000022/sample_subscription.htm",
+  "cik": "1643584",
+  "issuer": "Weed Real Estate, Inc.",
+  "form": "1-A/A",
+  "file_date": "2015-11-24",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "aa63965b45afe7e36038af1c44b2aa569eb7d82dff28a08870d526bc37dc919b",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 8,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 9
+  },
+  "page_kinds": {
+   "text": 2
+  }
+ },
+ {
+  "id": "a005",
+  "url": "https://www.sec.gov/Archives/edgar/data/1653596/000110465915081207/a15-24053_1ex1a4subsagmt.htm",
+  "cik": "1653596",
+  "issuer": "First Light Bancorp",
+  "form": "1-A/A",
+  "file_date": "2015-11-25",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EX1A-4 SUBS AGMT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "f022d3d2be141470bd6c1bdc67281937f73332070d66f8b48405693a8e008394",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "landscape",
+   "background_graphics": true,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 2,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 0
+  },
+  "page_kinds": {
+   "text": 3
+  }
+ },
+ {
+  "id": "a006",
+  "url": "https://www.sec.gov/Archives/edgar/data/1677159/000167715916000001/SUBSCRIPTIONAGREEMENT-Bofat.pdf",
+  "cik": "1677159",
+  "issuer": "Bofat Investment Inc",
+  "form": "1-A",
+  "file_date": "2016-06-24",
+  "exhibit": null,
+  "exhibit_description": null,
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "3e10971e0505708ba42a01db2f644aec46690625398787ce226a44d229aa789b",
+  "extra_files": [],
+  "layout_notes": [
+   "scanned pages with an OCR text layer (OCR errors in the text)"
+  ],
+  "pdf_made": "scanned",
+  "pages": 14,
+  "page_content": "pictures with a text layer (OCR or hidden text)",
+  "features": {},
+  "page_kinds": {
+   "picture+ocr-text": 14
+  }
+ },
+ {
+  "id": "a007",
+  "url": "https://www.sec.gov/Archives/edgar/data/1671941/000165495416002220/vid_ex41.htm",
+  "cik": "1671941",
+  "issuer": "VidAngel, Inc.",
+  "form": "1-A/A",
+  "file_date": "2016-09-16",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "119a4740ea0dab8909ca1d09108950b1cc1694bdc9ed20edff686fe9cb0b9b5a",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Wingdings characters",
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 7,
+  "page_content": "real text",
+  "features": {
+   "boxes": 16,
+   "tables": 6,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 8
+  },
+  "page_kinds": {
+   "text": 7
+  }
+ },
+ {
+  "id": "a008",
+  "url": "https://www.sec.gov/Archives/edgar/data/1677331/000167733116000006/EXHIBIT1A-4SubAgreement.pdf",
+  "cik": "1677331",
+  "issuer": "Viva Consulting Group Inc.",
+  "form": "1-A/A",
+  "file_date": "2016-09-26",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": null,
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "c6cc8f91534eca7a5838d383a2354610c2fc0e3892f7cf20a1b2282a4776012e",
+  "extra_files": [],
+  "layout_notes": [
+   "scanned pages with an OCR text layer"
+  ],
+  "pdf_made": "scanned",
+  "pages": 17,
+  "page_content": "pictures with a text layer (OCR or hidden text)",
+  "features": {},
+  "page_kinds": {
+   "picture+ocr-text": 17
+  }
+ },
+ {
+  "id": "a009",
+  "url": "https://www.sec.gov/Archives/edgar/data/1677092/000167709216000007/SUBSAlliance.pdf",
+  "cik": "1677092",
+  "issuer": "Alliance Freight Lines Inc",
+  "form": "1-A/A",
+  "file_date": "2016-11-08",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUB AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "6a45c19f8f16c21d7aadb6f3f3ea15c5e7a45494a9bd7ffb21c7db70d07fb32c",
+  "extra_files": [],
+  "layout_notes": [
+   "scanned pages with an OCR text layer"
+  ],
+  "pdf_made": "scanned",
+  "pages": 15,
+  "page_content": "pictures with a text layer (OCR or hidden text)",
+  "features": {},
+  "page_kinds": {
+   "picture+ocr-text": 14,
+   "picture": 1
+  }
+ },
+ {
+  "id": "a010",
+  "url": "https://www.sec.gov/Archives/edgar/data/1690477/000169047717000004/tensv2_ex4.pdf",
+  "cik": "1690477",
+  "issuer": "Tensleep Financial Corp",
+  "form": "1-A/A",
+  "file_date": "2017-01-18",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT REVISED",
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "d250fede099d90b83a1d492d5f4808ef3437f28ef5cd927cc29b44eda5caee20",
+  "extra_files": [],
+  "layout_notes": [
+   "one-page subscription form, underscore tick blanks"
+  ],
+  "pdf_made": "filed-pdf",
+  "pages": 1,
+  "page_content": "real text",
+  "features": {},
+  "page_kinds": {
+   "text": 1
+  }
+ },
+ {
+  "id": "a011",
+  "url": "https://www.sec.gov/Archives/edgar/data/1703429/000158258617000044/redfish_subscription.htm",
+  "cik": "1703429",
+  "issuer": "Red Fish Properties, Inc.",
+  "form": "1-A/A",
+  "file_date": "2017-09-13",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SAMPLE SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "943857fbea64166acd27c72c09342c5abb40199aec44e4c0a04c9aeca40ac1e4",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Wingdings characters",
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 4,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 18,
+   "tables": 9,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 14
+  },
+  "page_kinds": {
+   "text": 3,
+   "blank": 1
+  }
+ },
+ {
+  "id": "a012",
+  "url": "https://www.sec.gov/Archives/edgar/data/1698370/000169837017000016/ex4tlsubscriptionagm111317v1.htm",
+  "cik": "1698370",
+  "issuer": "TRUE LEAF MEDICINE INTERNATIONAL LTD.",
+  "form": "1-A/A",
+  "file_date": "2017-11-13",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EXHIBIT 4 - SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "0f008fb23405f7821ee39735fa58908f1c0da125e5c8f531fe163443b94958d9",
+  "extra_files": [
+   "box1.jpg",
+   "tl-logopg1.jpg"
+  ],
+  "layout_notes": [
+   "tick boxes drawn as small pictures",
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 15,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 28,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 29,
+   "underscores": 20
+  },
+  "page_kinds": {
+   "text": 15
+  }
+ },
+ {
+  "id": "a013",
+  "url": "https://www.sec.gov/Archives/edgar/data/1697746/000169774618000004/exh17.4subagmtbfi.pdf",
+  "cik": "1697746",
+  "issuer": "Bio Fil Inc",
+  "form": "1-A/A",
+  "file_date": "2018-02-20",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT OF BIO FIL INC PDF",
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "3c79797e66d809e0f4a680e19c29942beefb6407a6c73997e5b5fe3d07331c1f",
+  "extra_files": [],
+  "layout_notes": [],
+  "pdf_made": "filed-pdf",
+  "pages": 10,
+  "page_content": "real text with some picture pages",
+  "features": {},
+  "page_kinds": {
+   "text": 9,
+   "picture": 1
+  }
+ },
+ {
+  "id": "a014",
+  "url": "https://www.sec.gov/Archives/edgar/data/1621388/000154921218000015/subscriptionagreeement050118.htm",
+  "cik": "1621388",
+  "issuer": "SW Innovative Holdings, Inc.",
+  "form": "1-A/A",
+  "file_date": "2018-05-08",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EXHIBIT 4.1",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "f21e2bf70989f983c3f7d75c6eea5784acc82aba37dad5cd82dea29bd9778ff9",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Wingdings characters",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 12,
+  "page_content": "real text",
+  "features": {
+   "boxes": 15,
+   "tables": 5,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 21
+  },
+  "page_kinds": {
+   "text": 12
+  }
+ },
+ {
+  "id": "a015",
+  "url": "https://www.sec.gov/Archives/edgar/data/1726711/000161577418004406/s110141_ex4-1.htm",
+  "cik": "1726711",
+  "issuer": "ADiTx Therapeutics, Inc.",
+  "form": "1-A/A",
+  "file_date": "2018-05-25",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EX1A-4 SUBS AGMT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "f64dffe0c5f53cb5f8f237e94bbc381e26cbc0c0f75ac5734bcb77af34c5ba52",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Wingdings characters",
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 9,
+  "page_content": "real text",
+  "features": {
+   "boxes": 28,
+   "tables": 82,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 21
+  },
+  "page_kinds": {
+   "text": 9
+  }
+ },
+ {
+  "id": "a016",
+  "url": "https://www.sec.gov/Archives/edgar/data/1733443/000165495418005888/chosen_ex4.htm",
+  "cik": "1733443",
+  "issuer": "Chosen, LLC",
+  "form": "1-A/A",
+  "file_date": "2018-05-25",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EXHIBIT 4",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "6608e0890f14d00cb33dcb46ddb7e7250c9cba27c38bbe92077d8af66abe1fb7",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 6,
+  "page_content": "real text",
+  "features": {
+   "boxes": 16,
+   "tables": 5,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 17
+  },
+  "page_kinds": {
+   "text": 6
+  }
+ },
+ {
+  "id": "a017",
+  "url": "https://www.sec.gov/Archives/edgar/data/1706951/000168316818002108/advanced_1aa2-ex04.htm",
+  "cik": "1706951",
+  "issuer": "Advanced Bio-Oil Technologies Ltd.",
+  "form": "1-A/A",
+  "file_date": "2018-08-02",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "e767f541c9e6ba7720383260c902acd5e3a950b10961d474b7a0d3bc44fce6d4",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "landscape",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 7,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 0,
+   "tables": 6,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 34
+  },
+  "page_kinds": {
+   "text": 5,
+   "little or no text": 2
+  }
+ },
+ {
+  "id": "a018",
+  "url": "https://www.sec.gov/Archives/edgar/data/1548187/000162827918000193/solyexhibit4_1-aa3.htm",
+  "cik": "1548187",
+  "issuer": "Soliton, Inc.",
+  "form": "1-A/A",
+  "file_date": "2018-08-10",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EXHIBIT 4",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "1446f0be5daf9bcb62643b02504e31b8feaf73959b20774efc1f905032d06a8c",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 17,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 0,
+   "tables": 6,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 2
+  },
+  "page_kinds": {
+   "text": 14,
+   "blank": 3
+  }
+ },
+ {
+  "id": "a019",
+  "url": "https://www.sec.gov/Archives/edgar/data/1745449/000147793218004549/esi_ex41.htm",
+  "cik": "1745449",
+  "issuer": "Elegance Spirits, Inc.",
+  "form": "1-A/A",
+  "file_date": "2018-09-18",
+  "exhibit": "EX1A-4 SUBS AGMT.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "0ed24cc0e7c6500546728e3977f5493279b901a9077978da2f8bf3b4f84e12e6",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 16,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 17,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 10
+  },
+  "page_kinds": {
+   "text": 16
+  }
+ },
+ {
+  "id": "a020",
+  "url": "https://www.sec.gov/Archives/edgar/data/1600983/000114420419032526/tv524325_ex4-2.htm",
+  "cik": "1600983",
+  "issuer": "Knightscope, Inc.",
+  "form": "1-A/A",
+  "file_date": "2019-06-27",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EXHIBIT 4.2",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "0d1699ff1b600f66f4b30bf68685e65630f6ac5a212ade6ae0da906dbf755328",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": true,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 20,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 0,
+   "tables": 30,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 4
+  },
+  "page_kinds": {
+   "text": 19,
+   "blank": 1
+  }
+ },
+ {
+  "id": "a021",
+  "url": "https://www.sec.gov/Archives/edgar/data/1790169/000159406219000095/ex41.htm",
+  "cik": "1790169",
+  "issuer": "Flora Growth Corp.",
+  "form": "1-A/A",
+  "file_date": "2019-11-22",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT.",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "9d117d61f53a6749b6542e044681f2ec7f29e8ca216dea74bc9b8e89644a331e",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 22,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 15,
+   "tables": 19,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 7
+  },
+  "page_kinds": {
+   "text": 21,
+   "little or no text": 1
+  }
+ },
+ {
+  "id": "a022",
+  "url": "https://www.sec.gov/Archives/edgar/data/1350455/000135045519000014/subscription__agreement.htm",
+  "cik": "1350455",
+  "issuer": "GILMORE HOMES - GILMORE LOANS, LLC",
+  "form": "1-A/A",
+  "file_date": "2019-12-20",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EXHIBIT D: SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "12cb296a52452db6be6a9bc65eb74fab1d11f7882019c6bb305611de9ab3b5b7",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 7,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 83
+  },
+  "page_kinds": {
+   "text": 7
+  }
+ },
+ {
+  "id": "a023",
+  "url": "https://www.sec.gov/Archives/edgar/data/1797807/000157570520000128/ex4.htm",
+  "cik": "1797807",
+  "issuer": "Zimmerman BioPharma Holding, Inc.",
+  "form": "1-A/A",
+  "file_date": "2020-07-10",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EXHIBIT 4 SUBS AGMT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "8445f37e6160fa2aef2b2741e176466433708cf7ffa5ccf9854549b39c27be8d",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 6,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 10,
+   "tables": 4,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 10
+  },
+  "page_kinds": {
+   "text": 5,
+   "little or no text": 1
+  }
+ },
+ {
+  "id": "a024",
+  "url": "https://www.sec.gov/Archives/edgar/data/1809660/000147793221002943/alfa_ex4.htm",
+  "cik": "1809660",
+  "issuer": "ALFADAN INC.",
+  "form": "1-A/A",
+  "file_date": "2021-05-07",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "09b203bd57c884f38c3d7e23371cc30f93b8f52c4cd5f76d79e4060f00a80bba",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 17,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 0,
+   "tables": 19,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 13
+  },
+  "page_kinds": {
+   "text": 16,
+   "blank": 1
+  }
+ },
+ {
+  "id": "a025",
+  "url": "https://www.sec.gov/Archives/edgar/data/1630176/000152013821000314/grck-1aex4z1.htm",
+  "cik": "1630176",
+  "issuer": "HEALTHY EXTRACTS INC.",
+  "form": "1-A/A",
+  "file_date": "2021-06-07",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EX1A-4 SUBS AGMT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "600208a176856d72a419c56a8ffed0f86e4dcb69b32949eedc34f47135d8c9ec",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Wingdings characters",
+   "fill-in lines drawn as table cell borders",
+   "investor questionnaire",
+   "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "landscape",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 13,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 3,
+   "tables": 4,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 0
+  },
+  "page_kinds": {
+   "text": 8,
+   "little or no text": 5
+  }
+ },
+ {
+  "id": "a026",
+  "url": "https://www.sec.gov/Archives/edgar/data/1877235/000109690622000146/doi_ex4z1.pdf",
+  "cik": "1877235",
+  "issuer": "Diversified Opportunity, Inc.",
+  "form": "1-A/A",
+  "file_date": "2022-01-18",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT - PDF",
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "8baf17fb0bd5631520c903e60b029e6c486011ad94816ec4ffe2a5864a7710e8",
+  "extra_files": [],
+  "layout_notes": [],
+  "pdf_made": "filed-pdf",
+  "pages": 11,
+  "page_content": "real text",
+  "features": {},
+  "page_kinds": {
+   "text": 11
+  }
+ },
+ {
+  "id": "a027",
+  "url": "https://www.sec.gov/Archives/edgar/data/1715032/000126493122000090/ex4_1.htm",
+  "cik": "1715032",
+  "issuer": "Water Technologies International,Inc.",
+  "form": "1-A/A",
+  "file_date": "2022-03-30",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "5c26b5079802b661bd1ae3cbc022f358b6d3bdb3df599258f88294a59da3385c",
+  "extra_files": [
+   "image_001.jpg",
+   "image_002.jpg"
+  ],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "entity signature block",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "landscape",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 7,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 10,
+   "questionnaire": false,
+   "joint": true,
+   "entity": true,
+   "countersign": true,
+   "imgs": 2,
+   "underscores": 9
+  },
+  "page_kinds": {
+   "text": 7
+  }
+ },
+ {
+  "id": "a028",
+  "url": "https://www.sec.gov/Archives/edgar/data/1285543/000147793222008171/sfor_ex41.htm",
+  "cik": "1285543",
+  "issuer": "Zerify, Inc.",
+  "form": "1-A/A",
+  "file_date": "2022-11-04",
+  "exhibit": "EX1A-4 SUBS AGMT.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "73910e4a6191d7f210871348bbe13eb707d92c22c8953731affb8e7c403fd59e",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 25,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 97,
+   "tables": 97,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 27
+  },
+  "page_kinds": {
+   "text": 22,
+   "little or no text": 3
+  }
+ },
+ {
+  "id": "a029",
+  "url": "https://www.sec.gov/Archives/edgar/data/1994005/000199400523000005/Exhibit_3_SubAgreement.pdf",
+  "cik": "1994005",
+  "issuer": "Azotto Technology, LLC",
+  "form": "1-A/A",
+  "file_date": "2023-11-16",
+  "exhibit": "EX-96",
+  "exhibit_description": "SUB AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "6d723e1c27d60082b3341c61b128e614f445e5110e0d952756968fc6a09a7742",
+  "extra_files": [],
+  "layout_notes": [],
+  "pdf_made": "filed-pdf",
+  "pages": 10,
+  "page_content": "real text",
+  "features": {},
+  "page_kinds": {
+   "text": 10
+  }
+ },
+ {
+  "id": "a030",
+  "url": "https://www.sec.gov/Archives/edgar/data/1952144/000195214423000004/ex4_subagmt.htm",
+  "cik": "1952144",
+  "issuer": "SciMar Ltd.",
+  "form": "1-A/A",
+  "file_date": "2023-12-13",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "03f7bb8104d517946a4b128e53ec33ae24c62ffd83e8ed03b615b9b4a3b04321",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Wingdings characters",
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "investor questionnaire",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": true,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 9,
+  "page_content": "real text",
+  "features": {
+   "boxes": 3,
+   "tables": 74,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 2
+  },
+  "page_kinds": {
+   "text": 9
+  }
+ },
+ {
+  "id": "a031",
+  "url": "https://www.sec.gov/Archives/edgar/data/2050256/000168316825004335/ridepair_ex0401.htm",
+  "cik": "2050256",
+  "issuer": "Ridepair Inc.",
+  "form": "1-A/A",
+  "file_date": "2025-06-09",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT FOR SERIES B 10% CONVERTIBLE PREFERRED STOCK",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "f42ef1b357bd3af849b1171c7fdc93bb9a7882dda68787518ccc2c89c96e124d",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 38,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 107,
+   "tables": 157,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 115
+  },
+  "page_kinds": {
+   "text": 34,
+   "little or no text": 4
+  }
+ },
+ {
+  "id": "a032",
+  "url": "https://www.sec.gov/Archives/edgar/data/1991899/000121390025092835/ea025897501ex4-1_central.htm",
+  "cik": "1991899",
+  "issuer": "Central RoRo, LLC",
+  "form": "1-A/A",
+  "file_date": "2025-09-29",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "e6214ae32bd575bbfcfc2ebf535fc99197ffddd06f3fc425e99197276a0dbf43",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": true,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 31,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 7,
+   "tables": 89,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 125
+  },
+  "page_kinds": {
+   "text": 30,
+   "blank": 1
+  }
+ },
+ {
+  "id": "a033",
+  "url": "https://www.sec.gov/Archives/edgar/data/2126221/000119983526000252/recx-ex4_1.htm",
+  "cik": "2126221",
+  "issuer": "Recreatives Industries, Inc.",
+  "form": "1-A/A",
+  "file_date": "2026-07-13",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "f2c7a9d8ba9e6627600831cd00016fda043a2fb2df0ed8351099d7e90ca25aab",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 8,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 29,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 9
+  },
+  "page_kinds": {
+   "text": 8
+  }
+ },
+ {
+  "id": "a034",
+  "url": "https://www.sec.gov/Archives/edgar/data/884847/000095013502001431/b42325miex4-1.txt",
+  "cik": "884847",
+  "issuer": "MATRITECH INC/DE/",
+  "form": "8-K",
+  "file_date": "2002-03-20",
+  "exhibit": "EX-4.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT WITH PURCHASERS",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.txt",
+  "source_sha256": "4e877494a24e241fd770cc84bd22ba66166ec5c1c89101a6b05fb2a4d13ba3b2",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options",
+   "entity signature block",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 37,
+  "page_content": "real text",
+  "features": {
+   "boxes": 8,
+   "tables": 0,
+   "questionnaire": true,
+   "joint": true,
+   "entity": true,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 11
+  },
+  "page_kinds": {
+   "text": 37
+  }
+ },
+ {
+  "id": "a035",
+  "url": "https://www.sec.gov/Archives/edgar/data/230131/000091142002000244/e842228.txt",
+  "cik": "230131",
+  "issuer": "COMDIAL CORP",
+  "form": "8-K",
+  "file_date": "2002-10-02",
+  "exhibit": "EX-4.6",
+  "exhibit_description": "FORM OF WINFIELD SUBSCRIPTION AGT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.txt",
+  "source_sha256": "d976ce64cf0da9ac3953b5cea919ffc51f717d52576ebc08647b1d75e15cd353",
+  "extra_files": [],
+  "layout_notes": [
+   "investor questionnaire",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 22,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 0
+  },
+  "page_kinds": {
+   "text": 22
+  }
+ },
+ {
+  "id": "a036",
+  "url": "https://www.sec.gov/Archives/edgar/data/826253/000082625302000036/subagree.txt",
+  "cik": "826253",
+  "issuer": "AURA SYSTEMS INC",
+  "form": "8-K",
+  "file_date": "2002-12-16",
+  "exhibit": "EX-99",
+  "exhibit_description": null,
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.txt",
+  "source_sha256": "9d4d43edbe1bd4b823b6b315a48f9578785dbfb98cb7d8f73e6eadf55d2ce438",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 4,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 3
+  },
+  "page_kinds": {
+   "text": 4
+  }
+ },
+ {
+  "id": "a037",
+  "url": "https://www.sec.gov/Archives/edgar/data/356830/000119312503056303/dex101.htm",
+  "cik": "356830",
+  "issuer": "GENOME THERAPEUTICS CORP",
+  "form": "8-K",
+  "file_date": "2003-10-01",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "f9807f4932df080f1302a4116be4b665928380125422edaa7db540b174b50a74",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "investor questionnaire"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "landscape",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 11,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 3
+  },
+  "page_kinds": {
+   "text": 11
+  }
+ },
+ {
+  "id": "a038",
+  "url": "https://www.sec.gov/Archives/edgar/data/1023731/000102373105000010/exhibit4-2.pdf",
+  "cik": "1023731",
+  "issuer": "8X8 INC /DE/",
+  "form": "8-K/A",
+  "file_date": "2005-03-08",
+  "exhibit": "EX-4.2",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.pdf",
+  "source_sha256": "f540affe3a7da9893b3e8fcec3549dbcd0f37a35448ba782f7e6cac8b9a6f030",
+  "extra_files": [],
+  "layout_notes": [
+   "unofficial PDF copy filed alongside the official exhibit"
+  ],
+  "pdf_made": "filed-pdf",
+  "pages": 11,
+  "page_content": "real text",
+  "features": {},
+  "page_kinds": {
+   "text": 11
+  }
+ },
+ {
+  "id": "a039",
+  "url": "https://www.sec.gov/Archives/edgar/data/1020391/000119312505151107/dex41.htm",
+  "cik": "1020391",
+  "issuer": "ALLIN CORP",
+  "form": "8-K",
+  "file_date": "2005-07-28",
+  "exhibit": "EX-4.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "c21dec5032644c7c3bb57c217b7a04c0e4f5f05fa12eb265aec0ce2f53ee4f89",
+  "extra_files": [],
+  "layout_notes": [
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 11,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 13,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 0
+  },
+  "page_kinds": {
+   "text": 11
+  }
+ },
+ {
+  "id": "a040",
+  "url": "https://www.sec.gov/Archives/edgar/data/808011/000101054905000780/lvrc8kex101110405.txt",
+  "cik": "808011",
+  "issuer": "LAS VEGAS RESORTS CORP",
+  "form": "8-K",
+  "file_date": "2005-11-04",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.txt",
+  "source_sha256": "13ad77299f828c0905056360b87d842cb04fc9716ce01abe0d8f29d9cc31e097",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 12,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 5
+  },
+  "page_kinds": {
+   "text": 11,
+   "little or no text": 1
+  }
+ },
+ {
+  "id": "a041",
+  "url": "https://www.sec.gov/Archives/edgar/data/1084554/000108503706000338/f8k122305ex106.htm",
+  "cik": "1084554",
+  "issuer": "NOVASTAR RESOURCES LTD.",
+  "form": "8-K",
+  "file_date": "2006-02-21",
+  "exhibit": "EX-10",
+  "exhibit_description": "10.6 FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "977c2790558997c096016863cb1cba3eca2e19bbacb5b36adf067c7e309002fd",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "entity signature block",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": true,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 35,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 0,
+   "tables": 185,
+   "questionnaire": true,
+   "joint": false,
+   "entity": true,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 24
+  },
+  "page_kinds": {
+   "text": 26,
+   "blank": 8,
+   "little or no text": 1
+  }
+ },
+ {
+  "id": "a042",
+  "url": "https://www.sec.gov/Archives/edgar/data/873198/000134990507000065/financing8607subagreee101.htm",
+  "cik": "873198",
+  "issuer": "GUARDIAN TECHNOLOGIES INTERNATIONAL INC",
+  "form": "8-K/A",
+  "file_date": "2007-11-13",
+  "exhibit": "EX-10",
+  "exhibit_description": "EX 10.1 SUBSCRIPTION AGREEMENT FINANCING 8-6-07",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "6f757fcf1f41cae797765351b4197a432032bc2112ba55b3a530e3aed14482ed",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 20,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 0,
+   "tables": 5,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 19
+  },
+  "page_kinds": {
+   "text": 19,
+   "little or no text": 1
+  }
+ },
+ {
+  "id": "a043",
+  "url": "https://www.sec.gov/Archives/edgar/data/1094320/000116169708000265/ex1031.htm",
+  "cik": "1094320",
+  "issuer": "JESUP & LAMONT, INC.",
+  "form": "8-K/A",
+  "file_date": "2008-03-12",
+  "exhibit": "EX-10",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "668f5b4f9872160d6eaa75620788990bffa0fb256241f5245d2326a2ab37f7b3",
+  "extra_files": [],
+  "layout_notes": [
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "investor questionnaire"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 40,
+  "page_content": "real text",
+  "features": {
+   "boxes": 4,
+   "tables": 37,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 14
+  },
+  "page_kinds": {
+   "text": 40
+  }
+ },
+ {
+  "id": "a044",
+  "url": "https://www.sec.gov/Archives/edgar/data/882508/000119312509236820/dex101.htm",
+  "cik": "882508",
+  "issuer": "QUICKLOGIC CORPORATION",
+  "form": "8-K/A",
+  "file_date": "2009-11-17",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "90180846f396973f07386eb0798b751b768f8f70c41f659356449f188df18c01",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "investor questionnaire",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 14,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 12,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 0
+  },
+  "page_kinds": {
+   "text": 14
+  }
+ },
+ {
+  "id": "a045",
+  "url": "https://www.sec.gov/Archives/edgar/data/1007019/000135448811003626/jva_ex102.htm",
+  "cik": "1007019",
+  "issuer": "COFFEE HOLDING CO INC",
+  "form": "8-K/A",
+  "file_date": "2011-09-29",
+  "exhibit": "EX-10.2",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "28cebeb702ae6d1c82b2be243bd9abaecf542787259e2646e467be22332997c8",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 14,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 2,
+   "tables": 1,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 15
+  },
+  "page_kinds": {
+   "text": 13,
+   "little or no text": 1
+  }
+ },
+ {
+  "id": "a046",
+  "url": "https://www.sec.gov/Archives/edgar/data/1162896/000114420411065468/v239516_ex10-5.htm",
+  "cik": "1162896",
+  "issuer": "Wizard World, Inc.",
+  "form": "8-K/A",
+  "file_date": "2011-11-17",
+  "exhibit": "EX-10.5",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "ee440712866ecb2e00624ef1e83b842e350c356db4064b2bab6b72863f855dcc",
+  "extra_files": [
+   "exhibita.jpg",
+   "logo1.jpg",
+   "logo2.jpg"
+  ],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "landscape",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 97,
+  "page_content": "real text (some pages blank or nearly blank) with some picture pages",
+  "features": {
+   "boxes": 2,
+   "tables": 74,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 5,
+   "underscores": 27
+  },
+  "page_kinds": {
+   "text": 88,
+   "blank": 4,
+   "picture": 2,
+   "little or no text": 3
+  }
+ },
+ {
+  "id": "a047",
+  "url": "https://www.sec.gov/Archives/edgar/data/1424404/000106299311004683/exhibit10-1.htm",
+  "cik": "1424404",
+  "issuer": "Wolverine Exploration Inc.",
+  "form": "8-K/A",
+  "file_date": "2011-11-25",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT - US SUBSCRIBERS",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "9fec310633285579b59d69b59e490f5667f6ffe3e0fb1282ad57a2905f9af0aa",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "entity signature block",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 12,
+  "page_content": "real text",
+  "features": {
+   "boxes": 2,
+   "tables": 24,
+   "questionnaire": true,
+   "joint": false,
+   "entity": true,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 15
+  },
+  "page_kinds": {
+   "text": 12
+  }
+ },
+ {
+  "id": "a048",
+  "url": "https://www.sec.gov/Archives/edgar/data/924515/000112178111000380/ex10one.htm",
+  "cik": "924515",
+  "issuer": "GUIDED THERAPEUTICS INC",
+  "form": "8-K/A",
+  "file_date": "2011-11-28",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "4a2adba6ff522452abc3d65dfc31e87553b067d2963eeb2a2e33a2222ba92f7f",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 5,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 2,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 4
+  },
+  "page_kinds": {
+   "text": 5
+  }
+ },
+ {
+  "id": "a049",
+  "url": "https://www.sec.gov/Archives/edgar/data/1413891/000106299313001912/exhibit10-1.htm",
+  "cik": "1413891",
+  "issuer": "Mantra Venture Group Ltd.",
+  "form": "8-K/A",
+  "file_date": "2013-04-16",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "EXHIBIT 10.1",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "ae51f4f25dd512a4ff74bc9ea8d5dd482ff2f01eaccec53bd719408f1f774367",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "entity signature block",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 27,
+  "page_content": "real text",
+  "features": {
+   "boxes": 29,
+   "tables": 32,
+   "questionnaire": true,
+   "joint": false,
+   "entity": true,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 33
+  },
+  "page_kinds": {
+   "text": 27
+  }
+ },
+ {
+  "id": "a050",
+  "url": "https://www.sec.gov/Archives/edgar/data/1090908/000143774913006992/sltc20130603_8kaex10-5.htm",
+  "cik": "1090908",
+  "issuer": "SELECTICA INC",
+  "form": "8-K/A",
+  "file_date": "2013-06-04",
+  "exhibit": "EX-10",
+  "exhibit_description": "EXHIBIT 10.5",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "271c9714ca92fe19dd67054f1d14524d2ba18f71872670985f70fd2dabf4d57f",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 22,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 2,
+   "tables": 2,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 22
+  },
+  "page_kinds": {
+   "text": 21,
+   "little or no text": 1
+  }
+ },
+ {
+  "id": "a051",
+  "url": "https://www.sec.gov/Archives/edgar/data/1071411/000135448814000079/fsnn_ex1082.htm",
+  "cik": "1071411",
+  "issuer": "FUSION TELECOMMUNICATIONS INTERNATIONAL INC",
+  "form": "8-K/A",
+  "file_date": "2014-01-07",
+  "exhibit": "EX-10.82",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "2995fd00be24630e571871b1b04641f5b422769e9ce5602f50e788c71fefcb29",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Wingdings characters",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 20,
+  "page_content": "real text",
+  "features": {
+   "boxes": 3,
+   "tables": 117,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 44
+  },
+  "page_kinds": {
+   "text": 20
+  }
+ },
+ {
+  "id": "a052",
+  "url": "https://www.sec.gov/Archives/edgar/data/1422109/000139390514000011/bblu_ex101.htm",
+  "cik": "1422109",
+  "issuer": "Blue Earth, Inc.",
+  "form": "8-K/A",
+  "file_date": "2014-01-09",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "03c697dc8ad440ad7e9d9642b40846d6fce6477166d01d2a17643ff81a643efd",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "entity signature block",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 16,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 4,
+   "questionnaire": true,
+   "joint": false,
+   "entity": true,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 22
+  },
+  "page_kinds": {
+   "text": 16
+  }
+ },
+ {
+  "id": "a053",
+  "url": "https://www.sec.gov/Archives/edgar/data/1076682/000141588915000535/ex10-1.htm",
+  "cik": "1076682",
+  "issuer": "MAJESCO ENTERTAINMENT CO",
+  "form": "8-K/A",
+  "file_date": "2015-02-13",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "1a839418a89776d52c7489e989a9556aaee8d3417a6cd03f7e559f1730e3bcd4",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 29,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 0,
+   "tables": 24,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 41
+  },
+  "page_kinds": {
+   "text": 28,
+   "blank": 1
+  }
+ },
+ {
+  "id": "a054",
+  "url": "https://www.sec.gov/Archives/edgar/data/1133869/000114420416088528/v434504_ex4-1.htm",
+  "cik": "1133869",
+  "issuer": "CAPRICOR THERAPEUTICS, INC.",
+  "form": "8-K/A",
+  "file_date": "2016-03-16",
+  "exhibit": "EX-4.1",
+  "exhibit_description": "EXHIBIT 4.1",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "2932b9ed8a67d01fbf75bcab4f60debc63c814e3f341c3b6491a669abb4aeaaa",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "investor questionnaire"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "landscape",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 19,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 0,
+   "tables": 2,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 8
+  },
+  "page_kinds": {
+   "text": 18,
+   "blank": 1
+  }
+ },
+ {
+  "id": "a055",
+  "url": "https://www.sec.gov/Archives/edgar/data/1414628/000141462816000026/seriesdsubscriptionagreeme.htm",
+  "cik": "1414628",
+  "issuer": "Calpian, Inc.",
+  "form": "8-K/A",
+  "file_date": "2016-06-23",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "EXHIBIT 10.1 SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "eaf1926903c519f7330cfe289cd7ff0fce7aa3995536be25431ddc2c0064802e",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options",
+   "entity signature block",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "landscape",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 24,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 17,
+   "questionnaire": true,
+   "joint": true,
+   "entity": true,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 65
+  },
+  "page_kinds": {
+   "text": 24
+  }
+ },
+ {
+  "id": "a056",
+  "url": "https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm",
+  "cik": "1543623",
+  "issuer": "US NUCLEAR CORP.",
+  "form": "8-K/A",
+  "file_date": "2016-08-30",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "PRIVATE OFFERING MEMORANDUM",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "9910c5b21e5977e839f68f2f5fec0cc66a0ed60c97f819794e17b5f6a72fa21b",
+  "extra_files": [
+   "image_001.jpg",
+   "image_002.jpg",
+   "image_003.jpg",
+   "image_004.jpg",
+   "image_005.jpg",
+   "image_006.jpg",
+   "image_007.jpg",
+   "image_008.jpg",
+   "image_009.jpg",
+   "image_010.jpg",
+   "image_011.jpg",
+   "image_012.jpg",
+   "image_013.jpg",
+   "image_014.jpg",
+   "image_015.jpg",
+   "image_016.jpg",
+   "image_017.jpg",
+   "image_018.jpg",
+   "image_019.jpg",
+   "image_020.jpg",
+   "image_021.jpg",
+   "image_022.jpg",
+   "image_023.jpg",
+   "image_024.jpg",
+   "image_025.jpg",
+   "image_026.jpg",
+   "image_027.jpg",
+   "image_028.jpg",
+   "image_029.jpg",
+   "image_030.jpg",
+   "image_031.jpg",
+   "image_032.jpg",
+   "image_033.jpg",
+   "image_034.jpg"
+  ],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "investor questionnaire"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "landscape",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 78,
+  "page_content": "mixed: 34 text, 11 little or no text, 33 picture",
+  "features": {
+   "boxes": 0,
+   "tables": 26,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 34,
+   "underscores": 24
+  },
+  "page_kinds": {
+   "text": 34,
+   "little or no text": 11,
+   "picture": 33
+  }
+ },
+ {
+  "id": "a057",
+  "url": "https://www.sec.gov/Archives/edgar/data/1329606/000150441216000341/exhibit101_ex10z1.htm",
+  "cik": "1329606",
+  "issuer": "Probe Manufacturing Inc",
+  "form": "8-K",
+  "file_date": "2016-11-08",
+  "exhibit": "EX-10",
+  "exhibit_description": null,
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "7cb3678df3e92861610152437188cd87badf0d45e95954861cc427a8190d5f35",
+  "extra_files": [
+   "exhibit101001.jpg",
+   "exhibit101002.jpg",
+   "exhibit101003.jpg",
+   "exhibit101004.jpg",
+   "exhibit101005.jpg",
+   "exhibit101006.jpg",
+   "exhibit101007.jpg",
+   "exhibit101008.jpg",
+   "exhibit101009.jpg",
+   "exhibit101010.jpg",
+   "exhibit101011.jpg",
+   "exhibit101012.jpg",
+   "exhibit101013.jpg",
+   "exhibit101014.jpg",
+   "exhibit101016.gif",
+   "exhibit101018.gif"
+  ],
+  "layout_notes": [
+   "filed as page pictures inside an HTML exhibit (scanned executed copy: entries and signatures already filled in by hand)"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "landscape",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 48,
+  "page_content": "pictures (no text layer)",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 16,
+   "underscores": 0
+  },
+  "page_kinds": {
+   "little or no text": 1,
+   "picture": 32,
+   "blank": 15
+  }
+ },
+ {
+  "id": "a058",
+  "url": "https://www.sec.gov/Archives/edgar/data/1058307/000165495417000247/ex10-1.htm",
+  "cik": "1058307",
+  "issuer": "Orbital Tracking Corp.",
+  "form": "8-K/A",
+  "file_date": "2017-01-13",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "bc48f8297509668e08c69d7e51e37e683d2ae430b1da807aa32cef301fdc893e",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 32,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 2,
+   "tables": 5,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 78
+  },
+  "page_kinds": {
+   "text": 30,
+   "little or no text": 2
+  }
+ },
+ {
+  "id": "a059",
+  "url": "https://www.sec.gov/Archives/edgar/data/1378125/000164033418002292/togl_ex101.htm",
+  "cik": "1378125",
+  "issuer": "Toga Ltd",
+  "form": "8-K",
+  "file_date": "2018-11-28",
+  "exhibit": "EX-10.1",
+  "exhibit_description": null,
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "3d95020f8dc2b0a4db4d1fb73bc454219bf5466f87ddba3c66678da17a7180ee",
+  "extra_files": [
+   "togl_ex101img1.jpg",
+   "togl_ex101img10.jpg",
+   "togl_ex101img11.jpg",
+   "togl_ex101img12.jpg",
+   "togl_ex101img13.jpg",
+   "togl_ex101img14.jpg",
+   "togl_ex101img15.jpg",
+   "togl_ex101img2.jpg",
+   "togl_ex101img3.jpg",
+   "togl_ex101img4.jpg",
+   "togl_ex101img5.jpg",
+   "togl_ex101img6.jpg",
+   "togl_ex101img7.jpg",
+   "togl_ex101img8.jpg",
+   "togl_ex101img9.jpg"
+  ],
+  "layout_notes": [
+   "filed as page pictures inside an HTML exhibit (scanned executed copy: entries and signatures already filled in by hand)",
+   "fill-in lines drawn as table cell borders"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "landscape",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 46,
+  "page_content": "pictures (no text layer)",
+  "features": {
+   "boxes": 0,
+   "tables": 15,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 15,
+   "underscores": 0
+  },
+  "page_kinds": {
+   "text": 1,
+   "picture": 30,
+   "blank": 15
+  }
+ },
+ {
+  "id": "a060",
+  "url": "https://www.sec.gov/Archives/edgar/data/1645155/000149315220004131/ex10-1.htm",
+  "cik": "1645155",
+  "issuer": "Webstar Technology Group Inc.",
+  "form": "8-K",
+  "file_date": "2020-03-17",
+  "exhibit": "EX-10.1",
+  "exhibit_description": null,
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "2aa950e01169ea8dd37fce8325551d8dfb8278ae76578a1b7fb6c410205bf91c",
+  "extra_files": [
+   "ex10-1_001.jpg",
+   "ex10-1_002.jpg",
+   "ex10-1_003.jpg",
+   "ex10-1_004.jpg",
+   "ex10-1_005.jpg",
+   "ex10-1_006.jpg",
+   "ex10-1_007.jpg"
+  ],
+  "layout_notes": [
+   "filed as page pictures inside an HTML exhibit (scanned executed copy: entries and signatures already filled in by hand)",
+   "fill-in lines drawn as table cell borders"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "landscape",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 21,
+  "page_content": "pictures (no text layer)",
+  "features": {
+   "boxes": 0,
+   "tables": 13,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 7,
+   "underscores": 0
+  },
+  "page_kinds": {
+   "little or no text": 1,
+   "picture": 14,
+   "blank": 6
+  }
+ },
+ {
+  "id": "a061",
+  "url": "https://www.sec.gov/Archives/edgar/data/1514183/000121390020009770/ea120926ex10-3_uppercut.htm",
+  "cik": "1514183",
+  "issuer": "Uppercut Brands, Inc.",
+  "form": "8-K/A",
+  "file_date": "2020-04-22",
+  "exhibit": "EX-10.3",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "5909eefe68723d4ab8bf9d723972504acf4fee1952d146a5ab18e4964c16e8f4",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 21,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 2,
+   "tables": 27,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 59
+  },
+  "page_kinds": {
+   "text": 20,
+   "little or no text": 1
+  }
+ },
+ {
+  "id": "a062",
+  "url": "https://www.sec.gov/Archives/edgar/data/1777835/000121390020045792/ea132500ex10-1_fintechacq4.htm",
+  "cik": "1777835",
+  "issuer": "FinTech Acquisition Corp. IV",
+  "form": "8-K/A",
+  "file_date": "2020-12-31",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "3ce02d8c0455d82633084cbff5c0f9cbe37a1fac6097c02db8332bf0d161d708",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 28,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 31,
+   "tables": 9,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 7
+  },
+  "page_kinds": {
+   "text": 26,
+   "little or no text": 2
+  }
+ },
+ {
+  "id": "a063",
+  "url": "https://www.sec.gov/Archives/edgar/data/1787412/000159991621000197/specimen_regswbba.htm",
+  "cik": "1787412",
+  "issuer": "WB Burgers Asia, Inc.",
+  "form": "8-K/A",
+  "file_date": "2021-08-25",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "SPECIMEN SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "984ed57aad5f97a2fee9d0a3df5b86265c2b558dc1e4f82a63ec87129a7fec9e",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "underscore fill-in lines",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 4,
+  "page_content": "real text",
+  "features": {
+   "boxes": 3,
+   "tables": 14,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 6
+  },
+  "page_kinds": {
+   "text": 4
+  }
+ },
+ {
+  "id": "a064",
+  "url": "https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm",
+  "cik": "1865631",
+  "issuer": "NEXTNAV INC.",
+  "form": "8-K/A",
+  "file_date": "2021-10-28",
+  "exhibit": "EX-10.3",
+  "exhibit_description": "FORM OF PIPE SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "d6e4a229fa50a006fb40c6c55d8b0ace9388c066ccbe16b1b18329a7a91fabef",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 28,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 22,
+   "tables": 13,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 2
+  },
+  "page_kinds": {
+   "text": 27,
+   "little or no text": 1
+  }
+ },
+ {
+  "id": "a065",
+  "url": "https://www.sec.gov/Archives/edgar/data/1840199/000121390021060377/ea150570ex10-1_waldencast.htm",
+  "cik": "1840199",
+  "issuer": "Waldencast Acquisition Corp.",
+  "form": "8-K/A",
+  "file_date": "2021-11-17",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENTS",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "822a1c2323f48e4421d284993cdbf8993608eba3774c1186351f1baf2bccf824",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 23,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 12,
+   "tables": 10,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 1
+  },
+  "page_kinds": {
+   "text": 22,
+   "little or no text": 1
+  }
+ },
+ {
+  "id": "a066",
+  "url": "https://www.sec.gov/Archives/edgar/data/1864448/000186444822000071/a101-formofsubscriptiona.htm",
+  "cik": "1864448",
+  "issuer": "Wejo Group Ltd",
+  "form": "8-K/A",
+  "file_date": "2022-08-04",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "EX-10.1",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "9c09d599b7019b06609d174615fbce2d468d5ef4f1a5c1d243c7f794d5b1b23f",
+  "extra_files": [
+   "a101-formofsubscriptiona001.jpg",
+   "a101-formofsubscriptiona002.jpg",
+   "a101-formofsubscriptiona003.jpg",
+   "a101-formofsubscriptiona004.jpg",
+   "a101-formofsubscriptiona005.jpg",
+   "a101-formofsubscriptiona006.jpg",
+   "a101-formofsubscriptiona007.jpg",
+   "a101-formofsubscriptiona008.jpg",
+   "a101-formofsubscriptiona009.jpg",
+   "a101-formofsubscriptiona010.jpg",
+   "a101-formofsubscriptiona011.jpg",
+   "a101-formofsubscriptiona012.jpg",
+   "a101-formofsubscriptiona013.jpg",
+   "a101-formofsubscriptiona014.jpg",
+   "a101-formofsubscriptiona015.jpg",
+   "a101-formofsubscriptiona016.jpg",
+   "a101-formofsubscriptiona017.jpg",
+   "a101-formofsubscriptiona018.jpg",
+   "a101-formofsubscriptiona019.jpg",
+   "a101-formofsubscriptiona020.jpg",
+   "a101-formofsubscriptiona021.jpg"
+  ],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 43,
+  "page_content": "pictures with a text layer (OCR or hidden text)",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 21,
+   "underscores": 5
+  },
+  "page_kinds": {
+   "picture+ocr-text": 21,
+   "blank": 22
+  }
+ },
+ {
+  "id": "a067",
+  "url": "https://www.sec.gov/Archives/edgar/data/1080319/000101738623000052/exhibit_10-3.htm",
+  "cik": "1080319",
+  "issuer": "Elys Game Technology, Corp.",
+  "form": "8-K/A",
+  "file_date": "2023-02-07",
+  "exhibit": "EX-10.3",
+  "exhibit_description": "FORM OF WARRANT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "dbba942b8890cea0a73a666a5831f99b879c45590284c75d38b3654c4356af47",
+  "extra_files": [
+   "image_002.jpg"
+  ],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": true,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 35,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 2,
+   "tables": 10,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 1,
+   "underscores": 59
+  },
+  "page_kinds": {
+   "text": 31,
+   "blank": 3,
+   "little or no text": 1
+  }
+ },
+ {
+  "id": "a068",
+  "url": "https://www.sec.gov/Archives/edgar/data/1688126/000164117225025020/ex10-1.htm",
+  "cik": "1688126",
+  "issuer": "Crypto Co",
+  "form": "8-K/A",
+  "file_date": "2025-08-21",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "EX-10.1",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "cabea741b643b47b7309b7dd78e44f79948a1c0af559b8e849e1d6c8210c597a",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 9,
+  "page_content": "real text",
+  "features": {
+   "boxes": 22,
+   "tables": 22,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 9
+  },
+  "page_kinds": {
+   "text": 9
+  }
+ },
+ {
+  "id": "a069",
+  "url": "https://www.sec.gov/Archives/edgar/data/894556/000164033425001979/gevi_ex103.htm",
+  "cik": "894556",
+  "issuer": "General Enterprise Ventures, Inc.",
+  "form": "8-K/A",
+  "file_date": "2025-11-05",
+  "exhibit": "EX-10.3",
+  "exhibit_description": "EX-10.3",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "fe4c1fab9eafb4abb2f032d5c10f428184c54eef9bb47722125e017ef5aadb4e",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 14,
+  "page_content": "real text",
+  "features": {
+   "boxes": 2,
+   "tables": 21,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 6
+  },
+  "page_kinds": {
+   "text": 14
+  }
+ },
+ {
+  "id": "a070",
+  "url": "https://www.sec.gov/Archives/edgar/data/1018871/0000950144-99-000514.txt",
+  "cik": "1018871",
+  "issuer": "HEALTHTRONICS INC /GA",
+  "form": "SB-2/A",
+  "file_date": "1999-01-26",
+  "exhibit": "EX-3.7",
+  "exhibit_description": null,
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "8c8eea49b18a0395ad682268d589bb7704e03be231006b15d956c9c3edaa4f7a",
+  "extra_files": [],
+  "layout_notes": [
+   "pre-2001 filing: the exhibit is a document inside the complete submission text file (url); source.txt is that document's text as filed",
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 7
+  },
+  "page_kinds": {
+   "text": 1,
+   "little or no text": 1
+  }
+ },
+ {
+  "id": "a071",
+  "url": "https://www.sec.gov/Archives/edgar/data/1099358/0001019687-99-000831.txt",
+  "cik": "1099358",
+  "issuer": "1STOPSALE COM HOLDINGS INC",
+  "form": "SB-2",
+  "file_date": "1999-12-27",
+  "exhibit": "EX-1.1",
+  "exhibit_description": null,
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "f1a36f72d6edbfc0a127020cd53ae6274f15ae1e17160ce9911d9d87d369e914",
+  "extra_files": [],
+  "layout_notes": [
+   "pre-2001 filing: the exhibit is a document inside the complete submission text file (url); source.txt is that document's text as filed",
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text",
+  "features": {
+   "boxes": 16,
+   "tables": 0,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 37
+  },
+  "page_kinds": {
+   "text": 3
+  }
+ },
+ {
+  "id": "a072",
+  "url": "https://www.sec.gov/Archives/edgar/data/1102944/0001102944-00-000002.txt",
+  "cik": "1102944",
+  "issuer": "PALAL MINING CORP",
+  "form": "SB-2",
+  "file_date": "2000-01-13",
+  "exhibit": "EX-99",
+  "exhibit_description": null,
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "0c1a266630800e4f3ee8eceff9e620b59f9b02566a663a220724d572b56a7f09",
+  "extra_files": [],
+  "layout_notes": [
+   "pre-2001 filing: the exhibit is a document inside the complete submission text file (url); source.txt is that document's text as filed",
+   "underscore fill-in lines",
+   "issuer acceptance / countersignature block",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 1,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 21
+  },
+  "page_kinds": {
+   "text": 1
+  }
+ },
+ {
+  "id": "a073",
+  "url": "https://www.sec.gov/Archives/edgar/data/1101173/0001015608-00-000003.txt",
+  "cik": "1101173",
+  "issuer": "SPECIAL ACQUISITIONS INC",
+  "form": "SB-2/A",
+  "file_date": "2000-02-22",
+  "exhibit": "EX-1.1",
+  "exhibit_description": null,
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "8dd235d3334996f53e274f484a626b3920567122e444638683d629a53e297097",
+  "extra_files": [],
+  "layout_notes": [
+   "pre-2001 filing: the exhibit is a document inside the complete submission text file (url); source.txt is that document's text as filed",
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 1,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 18
+  },
+  "page_kinds": {
+   "text": 1
+  }
+ },
+ {
+  "id": "a074",
+  "url": "https://www.sec.gov/Archives/edgar/data/356664/0000950152-00-004747.txt",
+  "cik": "356664",
+  "issuer": "ALPHACOM INC",
+  "form": "SB-2/A",
+  "file_date": "2000-06-20",
+  "exhibit": "EX-1.1",
+  "exhibit_description": null,
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "d6a7a9fda7d3436dcb24b259ff9ce5cb9a52bd94d55dc473cc5c7109e5fb645b",
+  "extra_files": [],
+  "layout_notes": [
+   "pre-2001 filing: the exhibit is a document inside the complete submission text file (url); source.txt is that document's text as filed",
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 7
+  },
+  "page_kinds": {
+   "text": 2
+  }
+ },
+ {
+  "id": "a075",
+  "url": "https://www.sec.gov/Archives/edgar/data/1122154/0001104888-00-000045.txt",
+  "cik": "1122154",
+  "issuer": "SHOPATHOMEKIDS COM INC",
+  "form": "SB-2",
+  "file_date": "2000-10-06",
+  "exhibit": "EX-99.2",
+  "exhibit_description": null,
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "204a4f6f85a60a131b73b436585caa9a0cc18be733280d4a8fa819e31398114c",
+  "extra_files": [],
+  "layout_notes": [
+   "pre-2001 filing: the exhibit is a document inside the complete submission text file (url); source.txt is that document's text as filed",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "issuer acceptance / countersignature block",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 7,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 28
+  },
+  "page_kinds": {
+   "text": 7
+  }
+ },
+ {
+  "id": "a076",
+  "url": "https://www.sec.gov/Archives/edgar/data/1163300/000112785502000138/pisb2asubscripagree.txt",
+  "cik": "1163300",
+  "issuer": "PACIFIC INTERMEDIA INC",
+  "form": "SB-2/A",
+  "file_date": "2002-03-20",
+  "exhibit": "EX-10.4",
+  "exhibit_description": "PACIFIC INTERMEDIA SB-2/A, SUBSCRIPTION AGREE",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "c9aff764205f8059a3909db10a3b782de0db88b969dbb22fc2831ca1f5e5f41f",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "issuer acceptance / countersignature block",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 4
+  },
+  "page_kinds": {
+   "text": 3
+  }
+ },
+ {
+  "id": "a077",
+  "url": "https://www.sec.gov/Archives/edgar/data/1176219/000117621902000001/asb2exh101-080102.txt",
+  "cik": "1176219",
+  "issuer": "BROAD STREET INVESTMENT I INC",
+  "form": "SB-2",
+  "file_date": "2002-08-20",
+  "exhibit": "EX-10",
+  "exhibit_description": "CONSULTATION AND SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "6baa931369debd94752b6d92c40563e0e3e7a52bef7af12f0fc4ad6b090579f9",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 13,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 1,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 14
+  },
+  "page_kinds": {
+   "text": 13
+  }
+ },
+ {
+  "id": "a078",
+  "url": "https://www.sec.gov/Archives/edgar/data/1178552/000101738602000266/stratabid_exhibit99-1.pdf",
+  "cik": "1178552",
+  "issuer": "STRATABID COM INC",
+  "form": "SB-2/A",
+  "file_date": "2002-11-26",
+  "exhibit": "EX-99.1",
+  "exhibit_description": "PURCHASER SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.pdf",
+  "source_sha256": "2933c6717184dd9c8f2a62e69f71f8438f203dc7e9c58ccf22c043a2afe8dc3a",
+  "extra_files": [],
+  "layout_notes": [
+   "scanned pictures, no text; one page has rotated text"
+  ],
+  "pdf_made": "scanned",
+  "pages": 6,
+  "page_content": "pictures (no text layer)",
+  "features": {},
+  "page_kinds": {
+   "picture": 6
+  }
+ },
+ {
+  "id": "a079",
+  "url": "https://www.sec.gov/Archives/edgar/data/1275548/000112707404000043/lutcam_sub.htm",
+  "cik": "1275548",
+  "issuer": "LUTCAM INC",
+  "form": "SB-2/A",
+  "file_date": "2004-08-04",
+  "exhibit": "EX-10",
+  "exhibit_description": "LUTCAM SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "386f0e9a75f3de2dcfa45a21c9f8d4d0760399a5566a5fedc343c719dc504974",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 18
+  },
+  "page_kinds": {
+   "text": 2
+  }
+ },
+ {
+  "id": "a080",
+  "url": "https://www.sec.gov/Archives/edgar/data/1320691/000132069105000011/subscriptionagreement.pdf",
+  "cik": "1320691",
+  "issuer": "GEORGIA INTERNATIONAL MINING CORP",
+  "form": "SB-2/A",
+  "file_date": "2005-09-12",
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.pdf",
+  "source_sha256": "e0ba25d03fa5f17730575d94be017f8f5c7347013b857e768ae26399cd00a35f",
+  "extra_files": [],
+  "layout_notes": [],
+  "pdf_made": "filed-pdf",
+  "pages": 3,
+  "page_content": "real text",
+  "features": {},
+  "page_kinds": {
+   "text": 3
+  }
+ },
+ {
+  "id": "a081",
+  "url": "https://www.sec.gov/Archives/edgar/data/876367/000112330905000074/subscriptionagmt.txt",
+  "cik": "876367",
+  "issuer": "CANCER THERAPEUTICS INC",
+  "form": "SB-2/A",
+  "file_date": "2005-09-28",
+  "exhibit": "EX-10",
+  "exhibit_description": "EXHIBIT 10.6 SUBSCRIPTION AGREEMENT CTI",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "07b96955a5c0d0b44bbc8ac4c89d3b339cd987dace3228ecf759a79f1c841815",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "entity signature block",
+   "issuer acceptance / countersignature block",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 6,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 2,
+   "questionnaire": false,
+   "joint": true,
+   "entity": true,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 51
+  },
+  "page_kinds": {
+   "text": 6
+  }
+ },
+ {
+  "id": "a082",
+  "url": "https://www.sec.gov/Archives/edgar/data/1326917/000113902005000355/subdocexhibit1.htm",
+  "cik": "1326917",
+  "issuer": "Sputnik, Inc.",
+  "form": "SB-2/A",
+  "file_date": "2005-12-21",
+  "exhibit": "EX-1",
+  "exhibit_description": null,
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "c5fd9e36e4a4923e1a3f37acedb1a97c34b6ffab785109676a51b0f6bdfc9132",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "landscape",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 9,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 12,
+   "tables": 7,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 3
+  },
+  "page_kinds": {
+   "text": 4,
+   "blank": 5
+  }
+ },
+ {
+  "id": "a083",
+  "url": "https://www.sec.gov/Archives/edgar/data/1344802/000091384906000005/ex99-3.pdf",
+  "cik": "1344802",
+  "issuer": "Mutual Federal Bancorp, Inc.",
+  "form": "SB-2/A",
+  "file_date": "2006-01-04",
+  "exhibit": "EX-99.3",
+  "exhibit_description": "FORM OF MARKETING MATERIALS",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.pdf",
+  "source_sha256": "bdf4b0bee7063c11292c5f48731eda2d23caed3416c09b6c99afd19fc195b867",
+  "extra_files": [],
+  "layout_notes": [
+   "bank conversion offering mailing packet: designed stock order form and certification among letters and Q&A"
+  ],
+  "pdf_made": "filed-pdf",
+  "pages": 24,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {},
+  "page_kinds": {
+   "text": 23,
+   "blank": 1
+  }
+ },
+ {
+  "id": "a084",
+  "url": "https://www.sec.gov/Archives/edgar/data/1369748/000106299306003442/exhibit10-3.htm",
+  "cik": "1369748",
+  "issuer": "FUNDSTECH CORP",
+  "form": "SB-2",
+  "file_date": "2006-11-08",
+  "exhibit": "EX-10.3",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "8009239cf38d261df566260f7839f9f71ef79f759f442fc980327f91e7be4317",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "entity signature block",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "landscape",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 11,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 13,
+   "questionnaire": true,
+   "joint": false,
+   "entity": true,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 7
+  },
+  "page_kinds": {
+   "text": 11
+  }
+ },
+ {
+  "id": "a085",
+  "url": "https://www.sec.gov/Archives/edgar/data/1366744/000095013706012787/n06843a3exv4w2.htm",
+  "cik": "1366744",
+  "issuer": "HOMELAND ENERGY SOLUTIONS LLC",
+  "form": "SB-2/A",
+  "file_date": "2006-11-22",
+  "exhibit": "EX-4.2",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "019aa7ff631e4a7bcee0f7440cbe83addbea5a02b21b921f1f6e4cedef4468e4",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Wingdings characters",
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": true,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 12,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 8,
+   "tables": 27,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 0
+  },
+  "page_kinds": {
+   "text": 10,
+   "blank": 2
+  }
+ },
+ {
+  "id": "a086",
+  "url": "https://www.sec.gov/Archives/edgar/data/1408095/000116169707000932/ex_99-1.txt",
+  "cik": "1408095",
+  "issuer": "Premier Nursing Products Corp.",
+  "form": "SB-2",
+  "file_date": "2007-08-15",
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "df1288dc209fd0cbde10635a00f07f2617e626a524a2e6b9e7090b05982069ad",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "issuer acceptance / countersignature block",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 13,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 97
+  },
+  "page_kinds": {
+   "text": 13
+  }
+ },
+ {
+  "id": "a087",
+  "url": "https://www.sec.gov/Archives/edgar/data/1421265/000121478209000010/ex10-1.htm",
+  "cik": "1421265",
+  "issuer": "DRS Inc.",
+  "form": "S-1/A",
+  "file_date": "2009-01-06",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "99b0b67b96bd35139177d34f045d6e5008096dcdf41cbac8ea9b80c864e58cca",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "investor questionnaire",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "landscape",
+   "background_graphics": true,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 15,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 0,
+   "tables": 13,
+   "questionnaire": true,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 87
+  },
+  "page_kinds": {
+   "text": 13,
+   "little or no text": 1,
+   "blank": 1
+  }
+ },
+ {
+  "id": "a088",
+  "url": "https://www.sec.gov/Archives/edgar/data/1465856/000116169709000921/ex_99-1.txt",
+  "cik": "1465856",
+  "issuer": "mBeach Software, Inc.",
+  "form": "S-1/A",
+  "file_date": "2009-09-18",
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "59d08380ded710af4797f4a5cd3d2744c2bb0dbd5778f4b9e8682469a6035798",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 14
+  },
+  "page_kinds": {
+   "text": 3
+  }
+ },
+ {
+  "id": "a089",
+  "url": "https://www.sec.gov/Archives/edgar/data/1494473/000107878210002219/lyons1aex10a.htm",
+  "cik": "1494473",
+  "issuer": "LYONHEART CAPITAL, INC.",
+  "form": "S-1/A",
+  "file_date": "2010-09-27",
+  "exhibit": "EX-10",
+  "exhibit_description": "EX-10A SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "35d052a73727809c44bc59ef02ae0d0ef58f3a5eccf408d540ecb67c9f6a8944",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 4,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 0,
+   "tables": 2,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 11
+  },
+  "page_kinds": {
+   "text": 3,
+   "blank": 1
+  }
+ },
+ {
+  "id": "a090",
+  "url": "https://www.sec.gov/Archives/edgar/data/1497316/000149731611000004/exhibit20.htm",
+  "cik": "1497316",
+  "issuer": "GREEN & QUALITY HOME LIFE, INC.",
+  "form": "S-1/A",
+  "file_date": "2011-03-22",
+  "exhibit": "EX-20",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT FORM",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "d3a8e8407ada474b857f124865284d6b7fdf4b795f88fa8cb44995f49c0b6d4b",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Wingdings characters",
+   "underscore fill-in lines",
+   "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 17,
+   "tables": 1,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 15
+  },
+  "page_kinds": {
+   "text": 2,
+   "little or no text": 1
+  }
+ },
+ {
+  "id": "a091",
+  "url": "https://www.sec.gov/Archives/edgar/data/1518720/000151872011000003/subscriptionagr.htm",
+  "cik": "1518720",
+  "issuer": "M Street Gallery Inc.",
+  "form": "S-1/A",
+  "file_date": "2011-06-27",
+  "exhibit": "EX-10",
+  "exhibit_description": null,
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "3619b574682511311f9d37d7017fadc2c194de3f5ab6410f26f8fd97a94ed2ab",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 7,
+  "page_content": "real text",
+  "features": {
+   "boxes": 4,
+   "tables": 1,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 9
+  },
+  "page_kinds": {
+   "text": 7
+  }
+ },
+ {
+  "id": "a092",
+  "url": "https://www.sec.gov/Archives/edgar/data/1571919/000107878213000785/s1a_ex99z1.htm",
+  "cik": "1571919",
+  "issuer": "SBH ASSOCIATES, INC.",
+  "form": "S-1/A",
+  "file_date": "2013-04-18",
+  "exhibit": "EX-99.1",
+  "exhibit_description": "EXHIBIT 99.1 COPY OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "9690a14af3167f1c62965f5d0a90e91b804e39428158186a4cb6b79676024c21",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 0,
+   "tables": 3,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 3
+  },
+  "page_kinds": {
+   "text": 2,
+   "blank": 1
+  }
+ },
+ {
+  "id": "a093",
+  "url": "https://www.sec.gov/Archives/edgar/data/6732/000121390015000405/fs12015a1ex10vii_nacglobal.htm",
+  "cik": "6732",
+  "issuer": "NAC GLOBAL TECHNOLOGIES, INC.",
+  "form": "S-1/A",
+  "file_date": "2015-01-20",
+  "exhibit": "EX-10.7",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "5de0465057496c2ed2bc4bc49236ec53ec1614d5244561a6568415e583c7b859",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 3,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 16
+  },
+  "page_kinds": {
+   "text": 2
+  }
+ },
+ {
+  "id": "a094",
+  "url": "https://www.sec.gov/Archives/edgar/data/1236275/000121390015001203/fs12015a3ex10vi_silversun.htm",
+  "cik": "1236275",
+  "issuer": "SilverSun Technologies, Inc.",
+  "form": "S-1/A",
+  "file_date": "2015-02-18",
+  "exhibit": "EX-10.6",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "47a781755cf3c88c895d06b89335d2689d61b4cb5cf38cd41365b31f43f94e96",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text",
+  "features": {
+   "boxes": 3,
+   "tables": 3,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 19
+  },
+  "page_kinds": {
+   "text": 2
+  }
+ },
+ {
+  "id": "a095",
+  "url": "https://www.sec.gov/Archives/edgar/data/1627469/000156786015000025/subscription_agreement.htm",
+  "cik": "1627469",
+  "issuer": "Exquisite Acquisition, Inc.",
+  "form": "S-1/A",
+  "file_date": "2015-03-12",
+  "exhibit": "EX-99.2",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "cacb90c5ac4a1a1469c65af92a23705b39a97cab5b136871ab14f72c049ca35d",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Wingdings characters",
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text",
+  "features": {
+   "boxes": 14,
+   "tables": 10,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 6
+  },
+  "page_kinds": {
+   "text": 2
+  }
+ },
+ {
+  "id": "a096",
+  "url": "https://www.sec.gov/Archives/edgar/data/1643721/000116552715000482/ex99-1.txt",
+  "cik": "1643721",
+  "issuer": "AP EVENT INC.",
+  "form": "S-1/A",
+  "file_date": "2015-10-07",
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "3dc4e24defa45489431a970f8fb91f851fd72e73e7b5ec190205baaea774e5bf",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text",
+  "features": {
+   "boxes": 9,
+   "tables": 0,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 38
+  },
+  "page_kinds": {
+   "text": 2
+  }
+ },
+ {
+  "id": "a097",
+  "url": "https://www.sec.gov/Archives/edgar/data/1657249/000165725016000063/subscription_sample.htm",
+  "cik": "1657249",
+  "issuer": "Road Marshall, Inc.",
+  "form": "S-1/A",
+  "file_date": "2016-04-20",
+  "exhibit": "EX-99.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "7e83d34a63d3bf5cc9ee7ff7a36b03badbc3dc1a31e0ae6fc3d6feb8a3f70867",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 12,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 6
+  },
+  "page_kinds": {
+   "text": 3
+  }
+ },
+ {
+  "id": "a098",
+  "url": "https://www.sec.gov/Archives/edgar/data/1658304/000147793216013026/fund_ex33.htm",
+  "cik": "1658304",
+  "issuer": "FundThatCompany",
+  "form": "S-1/A",
+  "file_date": "2016-10-20",
+  "exhibit": "EX-3.3",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "1c51bb79a124ce7d486e5905a876aa4148d4d9464cbabb7c8de42d0878537dd1",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 1,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 13
+  },
+  "page_kinds": {
+   "text": 2
+  }
+ },
+ {
+  "id": "a099",
+  "url": "https://www.sec.gov/Archives/edgar/data/1295961/000172186818000733/f2sqegys1082218ex10_12.htm",
+  "cik": "1295961",
+  "issuer": "QUANTUM ENERGY INC.",
+  "form": "S-1/A",
+  "file_date": "2018-12-06",
+  "exhibit": "EX-10.12",
+  "exhibit_description": "FORM OF PUBLIC OFFERING SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "5d7e1140b3396f88fa667a5047c179ed0708ea6cd5cd0ca0e7af9b82ac29978a",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 5,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 17,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 40
+  },
+  "page_kinds": {
+   "text": 5
+  }
+ },
+ {
+  "id": "a100",
+  "url": "https://www.sec.gov/Archives/edgar/data/1729637/000147793218006107/cocoluv_ex33.htm",
+  "cik": "1729637",
+  "issuer": "COCOLUV INC.",
+  "form": "S-1/A",
+  "file_date": "2018-12-21",
+  "exhibit": "EX-3.3",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "9ffde187d5de4b3b82b0e812ac29a231e75dddf188130b8d09812a105c08113d",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Wingdings characters",
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text",
+  "features": {
+   "boxes": 12,
+   "tables": 2,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 15
+  },
+  "page_kinds": {
+   "text": 2
+  }
+ },
+ {
+  "id": "a101",
+  "url": "https://www.sec.gov/Archives/edgar/data/1764443/000137647419000141/ghar_ex10z1.htm",
+  "cik": "1764443",
+  "issuer": "Ghar Inc",
+  "form": "S-1/A",
+  "file_date": "2019-05-21",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "66efd027aa1742db27f832f3d064c8429d3138f81b59687612f3b6f1f899bf4f",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 0,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 17
+  },
+  "page_kinds": {
+   "text": 2
+  }
+ },
+ {
+  "id": "a102",
+  "url": "https://www.sec.gov/Archives/edgar/data/1173313/000121390019011793/fs12018a2ex10-1_american.htm",
+  "cik": "1173313",
+  "issuer": "American BriVision",
+  "form": "S-1/A",
+  "file_date": "2019-06-28",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "edccdedd3333e44273a69a5a79ca3d173a443434ecd5218d8017a9872d484361",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Wingdings characters",
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "investor questionnaire"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 21,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 54,
+   "tables": 132,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 40
+  },
+  "page_kinds": {
+   "text": 20,
+   "little or no text": 1
+  }
+ },
+ {
+  "id": "a103",
+  "url": "https://www.sec.gov/Archives/edgar/data/1760903/000126493120000139/ex10_1s.htm",
+  "cik": "1760903",
+  "issuer": "Jupiter Wellness, Inc.",
+  "form": "S-1/A",
+  "file_date": "2020-07-14",
+  "exhibit": "EX-10",
+  "exhibit_description": "COMMON STOCK AND WARRANT SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "4d0a055defefc5538774dca2ae3c3ebb2c1ee1a589142f38485345bc5e07aa96",
+  "extra_files": [
+   "image_001.jpg"
+  ],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "investor questionnaire"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 13,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 0,
+   "tables": 12,
+   "questionnaire": true,
+   "joint": false,
+   "entity": false,
+   "countersign": false,
+   "imgs": 1,
+   "underscores": 11
+  },
+  "page_kinds": {
+   "text": 10,
+   "little or no text": 2,
+   "blank": 1
+  }
+ },
+ {
+  "id": "a104",
+  "url": "https://www.sec.gov/Archives/edgar/data/1796297/000179629720000006/exhibit99.htm",
+  "cik": "1796297",
+  "issuer": "Bymax Corp.",
+  "form": "S-1/A",
+  "file_date": "2020-09-28",
+  "exhibit": "EX-99.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "c73dd717822d2c6ad15eac0431a46367f43bd633ae04fc2b5ccdad9aea6a9424",
+  "extra_files": [],
+  "layout_notes": [
+   "underscore fill-in lines",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 1,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 11
+  },
+  "page_kinds": {
+   "text": 3
+  }
+ },
+ {
+  "id": "a105",
+  "url": "https://www.sec.gov/Archives/edgar/data/1828748/000159991621000015/sample_subscription.htm",
+  "cik": "1828748",
+  "issuer": "ASIAFIN HOLDINGS CORP.",
+  "form": "S-1/A",
+  "file_date": "2021-02-08",
+  "exhibit": "EX-99.1",
+  "exhibit_description": "SAMPLE SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "9082256a1073b42782d177680ad3aa4cd56a90808df93cd1153644820f6be103",
+  "extra_files": [
+   "image_007.jpg",
+   "image_008.jpg",
+   "image_009.jpg"
+  ],
+  "layout_notes": [
+   "signature and fill-in lines are thin line pictures",
+   "underscore fill-in lines",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 8,
+   "questionnaire": false,
+   "joint": false,
+   "entity": false,
+   "countersign": true,
+   "imgs": 9,
+   "underscores": 3
+  },
+  "page_kinds": {
+   "text": 3
+  }
+ },
+ {
+  "id": "a106",
+  "url": "https://www.sec.gov/Archives/edgar/data/811868/000101054921000170/exh991.htm",
+  "cik": "811868",
+  "issuer": "ECRID, INC",
+  "form": "S-1/A",
+  "file_date": "2021-08-06",
+  "exhibit": "EX-99.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "87553874aec4e1adeb6f8c9a28877abcc116db179e38ca273a9212e3a4f159a0",
+  "extra_files": [
+   "image_002.gif",
+   "image_004.gif",
+   "image_005.gif",
+   "image_006.gif"
+  ],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "signature and fill-in lines are thin line pictures",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 4,
+  "page_content": "real text",
+  "features": {
+   "boxes": 10,
+   "tables": 24,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 6,
+   "underscores": 13
+  },
+  "page_kinds": {
+   "text": 4
+  }
+ },
+ {
+  "id": "a107",
+  "url": "https://www.sec.gov/Archives/edgar/data/1779372/000121390023028604/fs12023a1ex10-16_heartbeam.htm",
+  "cik": "1779372",
+  "issuer": "HeartBeam, Inc.",
+  "form": "S-1/A",
+  "file_date": "2023-04-10",
+  "exhibit": "EX-10.16",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT FOR THE OFFERING",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "35446f6bb479fbcd1063731bd0bc9fd510a802d60a5e27522e5dd65c08046d83",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 8,
+  "page_content": "real text",
+  "features": {
+   "boxes": 0,
+   "tables": 10,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 17
+  },
+  "page_kinds": {
+   "text": 8
+  }
+ },
+ {
+  "id": "a108",
+  "url": "https://www.sec.gov/Archives/edgar/data/1573901/000121390023050196/fs12023a3ex10-12_originlife.htm",
+  "cik": "1573901",
+  "issuer": "Origin Life Sciences, Inc.",
+  "form": "S-1/A",
+  "file_date": "2023-06-21",
+  "exhibit": "EX-10.12",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT FOR SECOND PRIVATE PLACEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "0f28a4378b29cb2730a27fc9ac2d083cbd89bbda610e4767cc930dae09916d09",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "joint / co-owner registration options",
+   "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": true,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 16,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 0,
+   "tables": 6,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": true,
+   "imgs": 0,
+   "underscores": 26
+  },
+  "page_kinds": {
+   "text": 13,
+   "little or no text": 3
+  }
+ },
+ {
+  "id": "a109",
+  "url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390023056901/ea181640ex10-2_lqrhouse.htm",
+  "cik": "1843165",
+  "issuer": "LQR House Inc.",
+  "form": "S-1/A",
+  "file_date": "2023-07-14",
+  "exhibit": "EX-10.2",
+  "exhibit_description": "FORM OF PRIVATE PLACEMENT SUBSCRIPTION AGREEMENT 2023",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "428f9fcbc906484b8e760cfcae66bb6b623b9d0b660ff73c144c9afbe28f0f02",
+  "extra_files": [],
+  "layout_notes": [
+   "tick boxes as Unicode box characters",
+   "fill-in lines drawn as table cell borders",
+   "heavily table-based layout",
+   "underscore fill-in lines",
+   "entity signature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": true,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 34,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+   "boxes": 26,
+   "tables": 170,
+   "questionnaire": false,
+   "joint": false,
+   "entity": true,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 35
+  },
+  "page_kinds": {
+   "text": 33,
+   "little or no text": 1
+  }
+ },
+ {
+  "id": "a110",
+  "url": "https://www.sec.gov/Archives/edgar/data/2008027/000147793224008292/calor_ex33.htm",
+  "cik": "2008027",
+  "issuer": "Calor Del Sol Inc.",
+  "form": "S-1/A",
+  "file_date": "2024-12-26",
+  "exhibit": "EX-3.3",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "13268ec7f24273b55694bffc8a7145be6301d989aa8d12617c2af002544bca66",
+  "extra_files": [],
+  "layout_notes": [
+   "fill-in lines drawn as table cell borders",
+   "underscore fill-in lines",
+   "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+   "browser": "Chromium (headless, Playwright)",
+   "paper": "Letter",
+   "orientation": "portrait",
+   "background_graphics": false,
+   "headers_and_footers": false,
+   "margins_in": 0.4,
+   "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text",
+  "features": {
+   "boxes": 11,
+   "tables": 6,
+   "questionnaire": false,
+   "joint": true,
+   "entity": false,
+   "countersign": false,
+   "imgs": 0,
+   "underscores": 15
+  },
+  "page_kinds": {
+   "text": 3
+  }
+ }
+]

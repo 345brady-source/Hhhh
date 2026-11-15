@@ -1,0 +1,59 @@
+{
+ "id": "b076",
+ "url": "https://www.sec.gov/Archives/edgar/data/1335732/000095013405021896/d26344a1sv11za.htm",
+ "cik": "1335732",
+ "accession": "0000950134-05-021896",
+ "filename": "d26344a1sv11za.htm",
+ "sponsor": "United Development Funding III",
+ "form": "S-11/A",
+ "file_date": "2005-11-18",
+ "kind": "appendix",
+ "doc_type": "S-11/A",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   16228,
+   17019
+  ]
+ },
+ "pictures_in_source": [
+  "d26344a1d2634400.gif"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 10,
+ "text_pages": 9,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  3742,
+  361,
+  4568,
+  330,
+  2577,
+  1315,
+  2441,
+  2497,
+  519,
+  15
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

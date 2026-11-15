@@ -1,0 +1,49 @@
+{
+  "id": "a041",
+  "url": "https://www.sec.gov/Archives/edgar/data/1084554/000108503706000338/f8k122305ex106.htm",
+  "cik": "1084554",
+  "issuer": "NOVASTAR RESOURCES LTD.",
+  "form": "8-K",
+  "file_date": "2006-02-21",
+  "exhibit": "EX-10",
+  "exhibit_description": "10.6 FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "977c2790558997c096016863cb1cba3eca2e19bbacb5b36adf067c7e309002fd",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "heavily table-based layout",
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "entity signature block",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 35,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 0,
+    "tables": 185,
+    "questionnaire": true,
+    "joint": false,
+    "entity": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 24
+  },
+  "page_kinds": {
+    "text": 26,
+    "blank": 8,
+    "little or no text": 1
+  }
+}

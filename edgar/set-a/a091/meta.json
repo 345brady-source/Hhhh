@@ -1,0 +1,44 @@
+{
+  "id": "a091",
+  "url": "https://www.sec.gov/Archives/edgar/data/1518720/000151872011000003/subscriptionagr.htm",
+  "cik": "1518720",
+  "issuer": "M Street Gallery Inc.",
+  "form": "S-1/A",
+  "file_date": "2011-06-27",
+  "exhibit": "EX-10",
+  "exhibit_description": null,
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "3619b574682511311f9d37d7017fadc2c194de3f5ab6410f26f8fd97a94ed2ab",
+  "extra_files": [],
+  "layout_notes": [
+    "underscore fill-in lines",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 7,
+  "page_content": "real text",
+  "features": {
+    "boxes": 4,
+    "tables": 1,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 9
+  },
+  "page_kinds": {
+    "text": 7
+  }
+}

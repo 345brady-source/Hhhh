@@ -1,0 +1,61 @@
+{
+ "id": "b011",
+ "url": "https://www.sec.gov/Archives/edgar/data/1341141/000119312510068609/dex41.htm",
+ "cik": "1341141",
+ "accession": "0001193125-10-068609",
+ "filename": "dex41.htm",
+ "sponsor": "Wells Timberland REIT",
+ "form": "10-K",
+ "file_date": "2010-03-26",
+ "kind": "exhibit",
+ "doc_type": "EX-4.1",
+ "notes": "",
+ "pictures_in_source": [
+  "g51298ex4_1pg001.jpg",
+  "g51298ex4_1pg0023.jpg",
+  "g51298ex4_1pg002new.jpg",
+  "g51298ex4_1pg004new.jpg",
+  "g51298logo.jpg",
+  "g51298ex4_1pg005.jpg",
+  "g51298ex4_1pg006.jpg"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": true,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 11,
+ "text_pages": 9,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2060,
+  644,
+  3085,
+  2654,
+  3252,
+  144,
+  150,
+  2889,
+  879,
+  3467,
+  1387
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "browser header/footer",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

@@ -1,0 +1,49 @@
+{
+  "id": "a027",
+  "url": "https://www.sec.gov/Archives/edgar/data/1715032/000126493122000090/ex4_1.htm",
+  "cik": "1715032",
+  "issuer": "Water Technologies International,Inc.",
+  "form": "1-A/A",
+  "file_date": "2022-03-30",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "5c26b5079802b661bd1ae3cbc022f358b6d3bdb3df599258f88294a59da3385c",
+  "extra_files": [
+    "image_001.jpg",
+    "image_002.jpg"
+  ],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "joint / co-owner registration options",
+    "entity signature block",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 7,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 10,
+    "questionnaire": false,
+    "joint": true,
+    "entity": true,
+    "countersign": true,
+    "imgs": 2,
+    "underscores": 9
+  },
+  "page_kinds": {
+    "text": 7
+  }
+}

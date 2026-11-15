@@ -1,0 +1,47 @@
+{
+  "id": "a109",
+  "url": "https://www.sec.gov/Archives/edgar/data/1843165/000121390023056901/ea181640ex10-2_lqrhouse.htm",
+  "cik": "1843165",
+  "issuer": "LQR House Inc.",
+  "form": "S-1/A",
+  "file_date": "2023-07-14",
+  "exhibit": "EX-10.2",
+  "exhibit_description": "FORM OF PRIVATE PLACEMENT SUBSCRIPTION AGREEMENT 2023",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "428f9fcbc906484b8e760cfcae66bb6b623b9d0b660ff73c144c9afbe28f0f02",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Unicode box characters",
+    "fill-in lines drawn as table cell borders",
+    "heavily table-based layout",
+    "underscore fill-in lines",
+    "entity signature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 34,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 26,
+    "tables": 170,
+    "questionnaire": false,
+    "joint": false,
+    "entity": true,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 35
+  },
+  "page_kinds": {
+    "text": 33,
+    "little or no text": 1
+  }
+}

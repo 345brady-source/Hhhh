@@ -1,0 +1,71 @@
+{
+ "id": "b091",
+ "url": "https://www.sec.gov/Archives/edgar/data/1645873/000114420416110527/v443229_424b3.htm",
+ "cik": "1645873",
+ "accession": "0001144204-16-110527",
+ "filename": "v443229_424b3.htm",
+ "sponsor": "Rich Uncles NNN REIT",
+ "form": "424B3",
+ "file_date": "2016-06-29",
+ "kind": "appendix",
+ "doc_type": "424B3",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   8765,
+   11186
+  ]
+ },
+ "pictures_in_source": [
+  "tlogo2.jpg"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 24,
+ "text_pages": 20,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  33,
+  748,
+  897,
+  2567,
+  2738,
+  2828,
+  2950,
+  3,
+  2848,
+  2931,
+  3,
+  2724,
+  2769,
+  2740,
+  2724,
+  2853,
+  2783,
+  2727,
+  2777,
+  2738,
+  2728,
+  2728,
+  1063,
+  0
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

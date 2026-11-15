@@ -1,0 +1,44 @@
+{
+ "id": "b015",
+ "url": "https://www.sec.gov/Archives/edgar/data/1282723/000095013404003005/d13198exv4w2.txt",
+ "cik": "1282723",
+ "accession": "0000950134-04-003005",
+ "filename": "d13198exv4w2.txt",
+ "sponsor": "Mewbourne Energy Partners 05-A",
+ "form": "S-1",
+ "file_date": "2004-03-05",
+ "kind": "exhibit",
+ "doc_type": "EX-4.2",
+ "notes": "",
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 6,
+ "text_pages": 6,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2341,
+  2464,
+  2472,
+  1572,
+  2285,
+  2208
+ ],
+ "layout": [
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "tables",
+  "underscore fill lines"
+ ]
+}

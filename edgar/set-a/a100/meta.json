@@ -1,0 +1,45 @@
+{
+  "id": "a100",
+  "url": "https://www.sec.gov/Archives/edgar/data/1729637/000147793218006107/cocoluv_ex33.htm",
+  "cik": "1729637",
+  "issuer": "COCOLUV INC.",
+  "form": "S-1/A",
+  "file_date": "2018-12-21",
+  "exhibit": "EX-3.3",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "9ffde187d5de4b3b82b0e812ac29a231e75dddf188130b8d09812a105c08113d",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Wingdings characters",
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text",
+  "features": {
+    "boxes": 12,
+    "tables": 2,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 15
+  },
+  "page_kinds": {
+    "text": 2
+  }
+}

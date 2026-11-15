@@ -1,0 +1,24 @@
+{
+  "id": "a002",
+  "url": "https://www.sec.gov/Archives/edgar/data/1647636/000164763615000007/ExhibitD.pdf",
+  "cik": "1647636",
+  "issuer": "ralliBox, Inc.",
+  "form": "1-A/A",
+  "file_date": "2015-10-15",
+  "exhibit": "EX1A-6 MAT CTRCT",
+  "exhibit_description": "EXHIBIT D SUB AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "5eae4148eebd629570e98727707a7c46cf7a6150108eb469ef7485332d435867",
+  "extra_files": [],
+  "layout_notes": [
+    "subscription agreement with one named subscriber, blank signature lines for subscriber and company"
+  ],
+  "pdf_made": "filed-pdf",
+  "pages": 4,
+  "page_content": "real text",
+  "features": {},
+  "page_kinds": {
+    "text": 4
+  }
+}

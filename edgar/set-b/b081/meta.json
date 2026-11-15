@@ -1,0 +1,56 @@
+{
+ "id": "b081",
+ "url": "https://www.sec.gov/Archives/edgar/data/1384710/000110465908031984/a07-31961_1s11a.htm",
+ "cik": "1384710",
+ "accession": "0001104659-08-031984",
+ "filename": "a07-31961_1s11a.htm",
+ "sponsor": "Behringer Harvard Multifamily REIT I",
+ "form": "S-11/A",
+ "file_date": "2008-05-09",
+ "kind": "appendix",
+ "doc_type": "S-11/A",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   27458,
+   28032
+  ]
+ },
+ "pictures_in_source": [
+  "g319611be09i001.jpg"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 7,
+ "text_pages": 6,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  1564,
+  1769,
+  1429,
+  3141,
+  2867,
+  1659,
+  3
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

@@ -1,0 +1,35 @@
+{
+ "id": "b047",
+ "url": "https://www.sec.gov/Archives/edgar/data/1160864/000093041301501349/c22094_ex99-p.txt",
+ "cik": "1160864",
+ "accession": "0000930413-01-501349",
+ "filename": "c22094_ex99-p.txt",
+ "sponsor": "BlackRock Core Bond Trust",
+ "form": "N-2/A",
+ "file_date": "2001-10-25",
+ "kind": "exhibit",
+ "doc_type": "EX-99.P",
+ "notes": "",
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 3,
+ "text_pages": 2,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2493,
+  2048,
+  108
+ ],
+ "layout": [
+  "entity investors",
+  "underscore fill lines"
+ ]
+}

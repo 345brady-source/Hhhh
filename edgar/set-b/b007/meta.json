@@ -1,0 +1,58 @@
+{
+ "id": "b007",
+ "url": "https://www.sec.gov/Archives/edgar/data/1862281/000119312525142850/d936961dex99p.htm",
+ "cik": "1862281",
+ "accession": "0001193125-25-142850",
+ "filename": "d936961dex99p.htm",
+ "sponsor": "Adams Street Private Equity Navigator Fund",
+ "form": "N-2/A",
+ "file_date": "2025-06-20",
+ "kind": "exhibit",
+ "doc_type": "EX-99.(P)",
+ "notes": "",
+ "pictures_in_source": [
+  "g936961dsp60.jpg"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": true,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 16,
+ "text_pages": 16,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  3413,
+  6107,
+  5412,
+  1992,
+  1084,
+  1358,
+  1259,
+  3647,
+  1464,
+  2990,
+  1278,
+  3541,
+  4818,
+  7206,
+  7084,
+  4904
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

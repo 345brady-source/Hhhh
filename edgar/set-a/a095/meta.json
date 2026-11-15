@@ -1,0 +1,46 @@
+{
+  "id": "a095",
+  "url": "https://www.sec.gov/Archives/edgar/data/1627469/000156786015000025/subscription_agreement.htm",
+  "cik": "1627469",
+  "issuer": "Exquisite Acquisition, Inc.",
+  "form": "S-1/A",
+  "file_date": "2015-03-12",
+  "exhibit": "EX-99.2",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "cacb90c5ac4a1a1469c65af92a23705b39a97cab5b136871ab14f72c049ca35d",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Wingdings characters",
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text",
+  "features": {
+    "boxes": 14,
+    "tables": 10,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 6
+  },
+  "page_kinds": {
+    "text": 2
+  }
+}

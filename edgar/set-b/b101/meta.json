@@ -1,0 +1,31 @@
+{
+ "id": "b101",
+ "url": "https://www.sec.gov/Archives/edgar/data/1270425/000127042504000002/pdc2004.pdf",
+ "cik": "1270425",
+ "accession": "0001270425-04-000002",
+ "filename": "pdc2004.pdf",
+ "sponsor": "PDC 2004-2006 Drilling Program (Petroleum Development Corp)",
+ "form": "424B3",
+ "file_date": "2004-02-11",
+ "kind": "appendix",
+ "doc_type": "424B3",
+ "notes": "",
+ "source_pages_used": "188-191",
+ "pdf_made": "filed-pdf",
+ "pages": 4,
+ "text_pages": 4,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2677,
+  1147,
+  1565,
+  1396
+ ],
+ "layout": [
+  "broker-dealer block",
+  "entity investors",
+  "joint investors",
+  "power of attorney"
+ ]
+}

@@ -1,0 +1,47 @@
+{
+ "id": "b056",
+ "url": "https://www.sec.gov/Archives/edgar/data/1125604/000112560401500004/prospect1.txt",
+ "cik": "1125604",
+ "accession": "0001125604-01-500004",
+ "filename": "prospect1.txt",
+ "sponsor": "PDC 2003 Drilling Program (Petroleum Development Corp)",
+ "form": "424B3",
+ "file_date": "2001-02-01",
+ "kind": "appendix",
+ "doc_type": "424B3",
+ "notes": "",
+ "cut": {
+  "lines": [
+   16537,
+   16832
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 5,
+ "text_pages": 5,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2108,
+  1895,
+  1120,
+  1145,
+  562
+ ],
+ "layout": [
+  "broker-dealer block",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

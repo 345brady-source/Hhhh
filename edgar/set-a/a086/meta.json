@@ -1,0 +1,45 @@
+{
+  "id": "a086",
+  "url": "https://www.sec.gov/Archives/edgar/data/1408095/000116169707000932/ex_99-1.txt",
+  "cik": "1408095",
+  "issuer": "Premier Nursing Products Corp.",
+  "form": "SB-2",
+  "file_date": "2007-08-15",
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "df1288dc209fd0cbde10635a00f07f2617e626a524a2e6b9e7090b05982069ad",
+  "extra_files": [],
+  "layout_notes": [
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "issuer acceptance / countersignature block",
+    "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 13,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": true,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 97
+  },
+  "page_kinds": {
+    "text": 13
+  }
+}

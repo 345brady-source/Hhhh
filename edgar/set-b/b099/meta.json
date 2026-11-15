@@ -1,0 +1,57 @@
+{
+ "id": "b099",
+ "url": "https://www.sec.gov/Archives/edgar/data/1164246/000101706202000072/ds11.txt",
+ "cik": "1164246",
+ "accession": "0001017062-02-000072",
+ "filename": "ds11.txt",
+ "sponsor": "G REIT (Triple Net Properties)",
+ "form": "S-11",
+ "file_date": "2002-01-10",
+ "kind": "appendix",
+ "doc_type": "S-11",
+ "notes": "",
+ "cut": {
+  "lines": [
+   9596,
+   10141
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 11,
+ "text_pages": 11,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2243,
+  2559,
+  2320,
+  2461,
+  2041,
+  1395,
+  1717,
+  1750,
+  1630,
+  1990,
+  1436
+ ],
+ "layout": [
+  "IRA",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

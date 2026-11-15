@@ -1,0 +1,53 @@
+{
+ "id": "b002",
+ "url": "https://www.sec.gov/Archives/edgar/data/1618696/000104746915006366/a2225472zex-99_d.htm",
+ "cik": "1618696",
+ "accession": "0001047469-15-006366",
+ "filename": "a2225472zex-99_d.htm",
+ "sponsor": "Carey Credit Income Fund (W. P. Carey)",
+ "form": "N-2/A",
+ "file_date": "2015-07-28",
+ "kind": "exhibit",
+ "doc_type": "EX-99.(D)",
+ "notes": "",
+ "pictures_in_source": [
+  "g456730.jpg",
+  "g270915.jpg"
+ ],
+ "pdf_made": "printed-landscape",
+ "print": {
+  "orientation": "landscape",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 11,
+ "text_pages": 9,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  1600,
+  1018,
+  382,
+  1612,
+  1717,
+  184,
+  3972,
+  2776,
+  1854,
+  464,
+  0
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

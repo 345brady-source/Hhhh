@@ -1,0 +1,49 @@
+{
+ "id": "b019",
+ "url": "https://www.sec.gov/Archives/edgar/data/1286320/000090901204000237/exh10-13.txt",
+ "cik": "1286320",
+ "accession": "0000909012-04-000237",
+ "filename": "exh10-13.txt",
+ "sponsor": "Dividend Capital Total Realty",
+ "form": "S-11",
+ "file_date": "2004-04-08",
+ "kind": "exhibit",
+ "doc_type": "EX-10.13",
+ "notes": "",
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 10,
+ "text_pages": 9,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  1715,
+  2173,
+  2016,
+  1611,
+  3380,
+  1000,
+  1583,
+  1553,
+  1956,
+  27
+ ],
+ "layout": [
+  "IRA",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

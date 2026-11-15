@@ -1,0 +1,47 @@
+{
+ "id": "b022",
+ "url": "https://www.sec.gov/Archives/edgar/data/1037189/000095012398006119/0000950123-98-006119.txt",
+ "cik": "1037189",
+ "accession": "0000950123-98-006119",
+ "filename": "0000950123-98-006119.txt",
+ "sponsor": "Smith Barney Westport Futures Fund",
+ "form": "S-1",
+ "file_date": "1998-06-22",
+ "kind": "appendix",
+ "doc_type": "S-1",
+ "notes": "1998 complete submission text file; Exhibit B subscription agreement cut by lines",
+ "cut": {
+  "lines": [
+   9026,
+   9265
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 4,
+ "text_pages": 4,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2695,
+  2852,
+  1552,
+  1691
+ ],
+ "layout": [
+  "IRA",
+  "broker-dealer block",
+  "entity investors",
+  "power of attorney",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

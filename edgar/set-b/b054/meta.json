@@ -1,0 +1,47 @@
+{
+ "id": "b054",
+ "url": "https://www.sec.gov/Archives/edgar/data/923660/000095012398003468/0000950123-98-003468.txt",
+ "cik": "923660",
+ "accession": "0000950123-98-003468",
+ "filename": "0000950123-98-003468.txt",
+ "sponsor": "Smith Barney Diversified Futures Fund II",
+ "form": "POS AM",
+ "file_date": "1998-04-07",
+ "kind": "appendix",
+ "doc_type": "POS AM",
+ "notes": "1998 complete submission text file; Exhibit B cut by lines",
+ "cut": {
+  "lines": [
+   10930,
+   11173
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": true,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 4,
+ "text_pages": 4,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2842,
+  2929,
+  1493,
+  1891
+ ],
+ "layout": [
+  "IRA",
+  "broker-dealer block",
+  "browser header/footer",
+  "entity investors",
+  "power of attorney",
+  "tables",
+  "underscore fill lines"
+ ]
+}

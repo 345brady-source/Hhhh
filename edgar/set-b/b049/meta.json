@@ -1,0 +1,37 @@
+{
+ "id": "b049",
+ "url": "https://www.sec.gov/Archives/edgar/data/1525201/000119312511346727/d270242dex99p.htm",
+ "cik": "1525201",
+ "accession": "0001193125-11-346727",
+ "filename": "d270242dex99p.htm",
+ "sponsor": "DoubleLine Opportunistic Credit Fund",
+ "form": "N-2/A",
+ "file_date": "2011-12-20",
+ "kind": "exhibit",
+ "doc_type": "EX-99.(P)",
+ "notes": "",
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 3,
+ "text_pages": 3,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2072,
+  2214,
+  624
+ ],
+ "layout": [
+  "entity investors",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

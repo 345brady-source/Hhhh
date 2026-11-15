@@ -1,0 +1,46 @@
+{
+  "id": "a092",
+  "url": "https://www.sec.gov/Archives/edgar/data/1571919/000107878213000785/s1a_ex99z1.htm",
+  "cik": "1571919",
+  "issuer": "SBH ASSOCIATES, INC.",
+  "form": "S-1/A",
+  "file_date": "2013-04-18",
+  "exhibit": "EX-99.1",
+  "exhibit_description": "EXHIBIT 99.1 COPY OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "9690a14af3167f1c62965f5d0a90e91b804e39428158186a4cb6b79676024c21",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 0,
+    "tables": 3,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 3
+  },
+  "page_kinds": {
+    "text": 2,
+    "blank": 1
+  }
+}

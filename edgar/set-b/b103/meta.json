@@ -1,0 +1,43 @@
+{
+ "id": "b103",
+ "url": "https://www.sec.gov/Archives/edgar/data/1176373/000118811204000761/t424b3-2616.pdf",
+ "cik": "1176373",
+ "accession": "0001188112-04-000761",
+ "filename": "t424b3-2616.pdf",
+ "sponsor": "Behringer Harvard REIT I",
+ "form": "424B3",
+ "file_date": "2004-05-12",
+ "kind": "appendix",
+ "doc_type": "424B3",
+ "notes": "",
+ "source_pages_used": "177-187",
+ "pdf_made": "filed-pdf",
+ "pages": 11,
+ "text_pages": 11,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2507,
+  1214,
+  3025,
+  2541,
+  880,
+  2745,
+  1151,
+  1975,
+  3011,
+  2727,
+  2721
+ ],
+ "layout": [
+  "IRA",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

@@ -1,0 +1,66 @@
+{
+  "id": "a066",
+  "url": "https://www.sec.gov/Archives/edgar/data/1864448/000186444822000071/a101-formofsubscriptiona.htm",
+  "cik": "1864448",
+  "issuer": "Wejo Group Ltd",
+  "form": "8-K/A",
+  "file_date": "2022-08-04",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "EX-10.1",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "9c09d599b7019b06609d174615fbce2d468d5ef4f1a5c1d243c7f794d5b1b23f",
+  "extra_files": [
+    "a101-formofsubscriptiona001.jpg",
+    "a101-formofsubscriptiona002.jpg",
+    "a101-formofsubscriptiona003.jpg",
+    "a101-formofsubscriptiona004.jpg",
+    "a101-formofsubscriptiona005.jpg",
+    "a101-formofsubscriptiona006.jpg",
+    "a101-formofsubscriptiona007.jpg",
+    "a101-formofsubscriptiona008.jpg",
+    "a101-formofsubscriptiona009.jpg",
+    "a101-formofsubscriptiona010.jpg",
+    "a101-formofsubscriptiona011.jpg",
+    "a101-formofsubscriptiona012.jpg",
+    "a101-formofsubscriptiona013.jpg",
+    "a101-formofsubscriptiona014.jpg",
+    "a101-formofsubscriptiona015.jpg",
+    "a101-formofsubscriptiona016.jpg",
+    "a101-formofsubscriptiona017.jpg",
+    "a101-formofsubscriptiona018.jpg",
+    "a101-formofsubscriptiona019.jpg",
+    "a101-formofsubscriptiona020.jpg",
+    "a101-formofsubscriptiona021.jpg"
+  ],
+  "layout_notes": [
+    "underscore fill-in lines",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 43,
+  "page_content": "pictures with a text layer (OCR or hidden text)",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 21,
+    "underscores": 5
+  },
+  "page_kinds": {
+    "picture+ocr-text": 21,
+    "blank": 22
+  }
+}

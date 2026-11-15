@@ -1,0 +1,46 @@
+{
+  "id": "a089",
+  "url": "https://www.sec.gov/Archives/edgar/data/1494473/000107878210002219/lyons1aex10a.htm",
+  "cik": "1494473",
+  "issuer": "LYONHEART CAPITAL, INC.",
+  "form": "S-1/A",
+  "file_date": "2010-09-27",
+  "exhibit": "EX-10",
+  "exhibit_description": "EX-10A SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "35d052a73727809c44bc59ef02ae0d0ef58f3a5eccf408d540ecb67c9f6a8944",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 4,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 0,
+    "tables": 2,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 11
+  },
+  "page_kinds": {
+    "text": 3,
+    "blank": 1
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "id": "a021",
+  "url": "https://www.sec.gov/Archives/edgar/data/1790169/000159406219000095/ex41.htm",
+  "cik": "1790169",
+  "issuer": "Flora Growth Corp.",
+  "form": "1-A/A",
+  "file_date": "2019-11-22",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT.",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "9d117d61f53a6749b6542e044681f2ec7f29e8ca216dea74bc9b8e89644a331e",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Unicode box characters",
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 22,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 15,
+    "tables": 19,
+    "questionnaire": true,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 7
+  },
+  "page_kinds": {
+    "text": 21,
+    "little or no text": 1
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "id": "a064",
+  "url": "https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm",
+  "cik": "1865631",
+  "issuer": "NEXTNAV INC.",
+  "form": "8-K/A",
+  "file_date": "2021-10-28",
+  "exhibit": "EX-10.3",
+  "exhibit_description": "FORM OF PIPE SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "d6e4a229fa50a006fb40c6c55d8b0ace9388c066ccbe16b1b18329a7a91fabef",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Unicode box characters",
+    "fill-in lines drawn as table cell borders",
+    "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 28,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 22,
+    "tables": 13,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 2
+  },
+  "page_kinds": {
+    "text": 27,
+    "little or no text": 1
+  }
+}

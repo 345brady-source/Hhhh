@@ -1,0 +1,51 @@
+{
+ "id": "b008",
+ "url": "https://www.sec.gov/Archives/edgar/data/1969180/000113322824000336/cspeof-html7069_ex99p2.htm",
+ "cik": "1969180",
+ "accession": "0001133228-24-000336",
+ "filename": "cspeof-html7069_ex99p2.htm",
+ "sponsor": "Coller Secondaries Private Equity Opportunities Fund",
+ "form": "N-2/A",
+ "file_date": "2024-01-22",
+ "kind": "exhibit",
+ "doc_type": "EX-99.(P)(2)",
+ "notes": "",
+ "pictures_in_source": [
+  "image_001a.jpg"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 9,
+ "text_pages": 8,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2450,
+  4343,
+  8,
+  3490,
+  810,
+  1878,
+  1052,
+  2341,
+  2071
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

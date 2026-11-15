@@ -1,0 +1,54 @@
+{
+ "id": "b090",
+ "url": "https://www.sec.gov/Archives/edgar/data/1581552/000118518515002594/energy11posam102015.htm",
+ "cik": "1581552",
+ "accession": "0001185185-15-002594",
+ "filename": "energy11posam102015.htm",
+ "sponsor": "Energy 11",
+ "form": "POS AM",
+ "file_date": "2015-10-22",
+ "kind": "appendix",
+ "doc_type": "POS AM",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   12038,
+   12456
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "trimmed_trailing_pages": 2,
+ "pages": 7,
+ "text_pages": 5,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2727,
+  3,
+  2728,
+  3,
+  1554,
+  1518,
+  574
+ ],
+ "layout": [
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

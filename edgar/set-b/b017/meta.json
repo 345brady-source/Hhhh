@@ -1,0 +1,44 @@
+{
+ "id": "b017",
+ "url": "https://www.sec.gov/Archives/edgar/data/1191260/000119126002000005/exhibd.txt",
+ "cik": "1191260",
+ "accession": "0001191260-02-000005",
+ "filename": "exhibd.txt",
+ "sponsor": "CBCI Income & Growth Fund",
+ "form": "S-11/A",
+ "file_date": "2002-11-21",
+ "kind": "exhibit",
+ "doc_type": "EX-4",
+ "notes": "",
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 5,
+ "text_pages": 5,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  1137,
+  1804,
+  1837,
+  2243,
+  324
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

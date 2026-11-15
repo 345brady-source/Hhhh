@@ -1,0 +1,51 @@
+{
+ "id": "b062",
+ "url": "https://www.sec.gov/Archives/edgar/data/1166260/000113542802000040/formn2.txt",
+ "cik": "1166260",
+ "accession": "0001135428-02-000040",
+ "filename": "formn2.txt",
+ "sponsor": "ACP Continuum Return Fund II",
+ "form": "N-2",
+ "file_date": "2002-02-13",
+ "kind": "appendix",
+ "doc_type": "N-2",
+ "notes": "",
+ "cut": {
+  "lines": [
+   3137,
+   3506
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 6,
+ "text_pages": 6,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  3080,
+  3237,
+  3251,
+  2212,
+  1932,
+  838
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "tables",
+  "underscore fill lines"
+ ]
+}

@@ -1,0 +1,53 @@
+{
+  "id": "a060",
+  "url": "https://www.sec.gov/Archives/edgar/data/1645155/000149315220004131/ex10-1.htm",
+  "cik": "1645155",
+  "issuer": "Webstar Technology Group Inc.",
+  "form": "8-K",
+  "file_date": "2020-03-17",
+  "exhibit": "EX-10.1",
+  "exhibit_description": null,
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "2aa950e01169ea8dd37fce8325551d8dfb8278ae76578a1b7fb6c410205bf91c",
+  "extra_files": [
+    "ex10-1_001.jpg",
+    "ex10-1_002.jpg",
+    "ex10-1_003.jpg",
+    "ex10-1_004.jpg",
+    "ex10-1_005.jpg",
+    "ex10-1_006.jpg",
+    "ex10-1_007.jpg"
+  ],
+  "layout_notes": [
+    "filed as page pictures inside an HTML exhibit (scanned executed copy: entries and signatures already filled in by hand)",
+    "fill-in lines drawn as table cell borders"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 21,
+  "page_content": "pictures (no text layer)",
+  "features": {
+    "boxes": 0,
+    "tables": 13,
+    "questionnaire": false,
+    "joint": false,
+    "entity": false,
+    "countersign": false,
+    "imgs": 7,
+    "underscores": 0
+  },
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 14,
+    "blank": 6
+  }
+}

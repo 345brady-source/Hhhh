@@ -1,0 +1,44 @@
+{
+ "id": "b039",
+ "url": "https://www.sec.gov/Archives/edgar/data/1716951/000171695118000013/p-formofsubscriptionagreem.htm",
+ "cik": "1716951",
+ "accession": "0001716951-18-000013",
+ "filename": "p-formofsubscriptionagreem.htm",
+ "sponsor": "OFS Credit Company",
+ "form": "N-2/A",
+ "file_date": "2018-08-09",
+ "kind": "exhibit",
+ "doc_type": "EX-99.P",
+ "notes": "",
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": true,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 7,
+ "text_pages": 7,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2205,
+  3403,
+  3884,
+  3008,
+  262,
+  1295,
+  2214
+ ],
+ "layout": [
+  "broker-dealer block",
+  "browser header/footer",
+  "countersignature/acceptance block",
+  "entity investors",
+  "shaded cells/bands",
+  "tables",
+  "underscore fill lines"
+ ]
+}

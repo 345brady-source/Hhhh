@@ -1,0 +1,45 @@
+{
+  "id": "a052",
+  "url": "https://www.sec.gov/Archives/edgar/data/1422109/000139390514000011/bblu_ex101.htm",
+  "cik": "1422109",
+  "issuer": "Blue Earth, Inc.",
+  "form": "8-K/A",
+  "file_date": "2014-01-09",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "03c697dc8ad440ad7e9d9642b40846d6fce6477166d01d2a17643ff81a643efd",
+  "extra_files": [],
+  "layout_notes": [
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "entity signature block",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 16,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 4,
+    "questionnaire": true,
+    "joint": false,
+    "entity": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 22
+  },
+  "page_kinds": {
+    "text": 16
+  }
+}

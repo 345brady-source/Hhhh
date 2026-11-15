@@ -1,0 +1,46 @@
+{
+  "id": "a085",
+  "url": "https://www.sec.gov/Archives/edgar/data/1366744/000095013706012787/n06843a3exv4w2.htm",
+  "cik": "1366744",
+  "issuer": "HOMELAND ENERGY SOLUTIONS LLC",
+  "form": "SB-2/A",
+  "file_date": "2006-11-22",
+  "exhibit": "EX-4.2",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "019aa7ff631e4a7bcee0f7440cbe83addbea5a02b21b921f1f6e4cedef4468e4",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Wingdings characters",
+    "fill-in lines drawn as table cell borders",
+    "heavily table-based layout",
+    "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 12,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 8,
+    "tables": 27,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 0
+  },
+  "page_kinds": {
+    "text": 10,
+    "blank": 2
+  }
+}

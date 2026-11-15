@@ -1,0 +1,49 @@
+{
+  "id": "a012",
+  "url": "https://www.sec.gov/Archives/edgar/data/1698370/000169837017000016/ex4tlsubscriptionagm111317v1.htm",
+  "cik": "1698370",
+  "issuer": "TRUE LEAF MEDICINE INTERNATIONAL LTD.",
+  "form": "1-A/A",
+  "file_date": "2017-11-13",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EXHIBIT 4 - SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "0f008fb23405f7821ee39735fa58908f1c0da125e5c8f531fe163443b94958d9",
+  "extra_files": [
+    "box1.jpg",
+    "tl-logopg1.jpg"
+  ],
+  "layout_notes": [
+    "tick boxes drawn as small pictures",
+    "fill-in lines drawn as table cell borders",
+    "heavily table-based layout",
+    "underscore fill-in lines",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 15,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 28,
+    "questionnaire": false,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 29,
+    "underscores": 20
+  },
+  "page_kinds": {
+    "text": 15
+  }
+}

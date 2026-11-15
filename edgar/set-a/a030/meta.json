@@ -1,0 +1,46 @@
+{
+  "id": "a030",
+  "url": "https://www.sec.gov/Archives/edgar/data/1952144/000195214423000004/ex4_subagmt.htm",
+  "cik": "1952144",
+  "issuer": "SciMar Ltd.",
+  "form": "1-A/A",
+  "file_date": "2023-12-13",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "03f7bb8104d517946a4b128e53ec33ae24c62ffd83e8ed03b615b9b4a3b04321",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Wingdings characters",
+    "fill-in lines drawn as table cell borders",
+    "heavily table-based layout",
+    "investor questionnaire",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 9,
+  "page_content": "real text",
+  "features": {
+    "boxes": 3,
+    "tables": 74,
+    "questionnaire": true,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 2
+  },
+  "page_kinds": {
+    "text": 9
+  }
+}

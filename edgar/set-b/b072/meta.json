@@ -1,0 +1,63 @@
+{
+ "id": "b072",
+ "url": "https://www.sec.gov/Archives/edgar/data/1312910/000119312505030585/ds1a.htm",
+ "cik": "1312910",
+ "accession": "0001193125-05-030585",
+ "filename": "ds1a.htm",
+ "sponsor": "ICON Leasing Fund Eleven",
+ "form": "S-1/A",
+ "file_date": "2005-02-15",
+ "kind": "appendix",
+ "doc_type": "S-1/A",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   36172,
+   37339
+  ]
+ },
+ "pictures_in_source": [
+  "g80221g33k29.jpg"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 14,
+ "text_pages": 13,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2300,
+  1030,
+  1608,
+  1044,
+  2012,
+  1189,
+  3306,
+  1548,
+  704,
+  542,
+  296,
+  2461,
+  364,
+  15
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

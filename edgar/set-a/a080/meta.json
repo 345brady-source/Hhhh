@@ -1,0 +1,22 @@
+{
+  "id": "a080",
+  "url": "https://www.sec.gov/Archives/edgar/data/1320691/000132069105000011/subscriptionagreement.pdf",
+  "cik": "1320691",
+  "issuer": "GEORGIA INTERNATIONAL MINING CORP",
+  "form": "SB-2/A",
+  "file_date": "2005-09-12",
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.pdf",
+  "source_sha256": "e0ba25d03fa5f17730575d94be017f8f5c7347013b857e768ae26399cd00a35f",
+  "extra_files": [],
+  "layout_notes": [],
+  "pdf_made": "filed-pdf",
+  "pages": 3,
+  "page_content": "real text",
+  "features": {},
+  "page_kinds": {
+    "text": 3
+  }
+}

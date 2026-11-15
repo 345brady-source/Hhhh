@@ -1,0 +1,51 @@
+{
+ "id": "b016",
+ "url": "https://www.sec.gov/Archives/edgar/data/1544519/000154451912000017/subagmt.htm",
+ "cik": "1544519",
+ "accession": "0001544519-12-000017",
+ "filename": "subagmt.htm",
+ "sponsor": "MA Managed Futures Fund",
+ "form": "S-1/A",
+ "file_date": "2012-09-19",
+ "kind": "exhibit",
+ "doc_type": "EX-10.1",
+ "notes": "",
+ "pictures_in_source": [],
+ "pdf_made": "printed-landscape",
+ "print": {
+  "orientation": "landscape",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 12,
+ "text_pages": 11,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2975,
+  759,
+  2278,
+  0,
+  3407,
+  3430,
+  3222,
+  951,
+  3131,
+  4408,
+  4471,
+  2937
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "shaded cells/bands",
+  "tables",
+  "underscore fill lines"
+ ]
+}

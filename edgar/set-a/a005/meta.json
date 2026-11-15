@@ -1,0 +1,43 @@
+{
+  "id": "a005",
+  "url": "https://www.sec.gov/Archives/edgar/data/1653596/000110465915081207/a15-24053_1ex1a4subsagmt.htm",
+  "cik": "1653596",
+  "issuer": "First Light Bancorp",
+  "form": "1-A/A",
+  "file_date": "2015-11-25",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EX1A-4 SUBS AGMT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "f022d3d2be141470bd6c1bdc67281937f73332070d66f8b48405693a8e008394",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 2,
+    "questionnaire": false,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 0
+  },
+  "page_kinds": {
+    "text": 3
+  }
+}

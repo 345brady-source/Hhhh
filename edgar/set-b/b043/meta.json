@@ -1,0 +1,61 @@
+{
+ "id": "b043",
+ "url": "https://www.sec.gov/Archives/edgar/data/1817825/000121390026034052/ea027588201ex10-7_steele.htm",
+ "cik": "1817825",
+ "accession": "0001213900-26-034052",
+ "filename": "ea027588201ex10-7_steele.htm",
+ "sponsor": "Steele Creek Capital Corp",
+ "form": "10-K",
+ "file_date": "2026-03-25",
+ "kind": "exhibit",
+ "doc_type": "EX-10.7",
+ "notes": "",
+ "pictures_in_source": [
+  "ex10-13_001.jpg"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 20,
+ "text_pages": 17,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  870,
+  1597,
+  78,
+  1400,
+  1507,
+  281,
+  1787,
+  2888,
+  1,
+  3800,
+  384,
+  4059,
+  688,
+  4628,
+  1014,
+  4208,
+  733,
+  3061,
+  104,
+  587
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

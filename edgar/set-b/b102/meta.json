@@ -1,0 +1,41 @@
+{
+ "id": "b102",
+ "url": "https://www.sec.gov/Archives/edgar/data/1162725/000095013101504349/ds11.pdf",
+ "cik": "1162725",
+ "accession": "0000950131-01-504349",
+ "filename": "ds11.pdf",
+ "sponsor": "Price Fund I",
+ "form": "S-1",
+ "file_date": "2001-11-29",
+ "kind": "appendix",
+ "doc_type": "S-1",
+ "notes": "Exhibit C subscription agreement and power of attorney plus Exhibit D agreement for existing investors",
+ "source_pages_used": "121-132",
+ "pdf_made": "filed-pdf",
+ "pages": 12,
+ "text_pages": 12,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2238,
+  2543,
+  2817,
+  3783,
+  2319,
+  889,
+  1783,
+  488,
+  2198,
+  456,
+  3429,
+  1909
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney"
+ ]
+}

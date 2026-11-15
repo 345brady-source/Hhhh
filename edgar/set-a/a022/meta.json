@@ -1,0 +1,45 @@
+{
+  "id": "a022",
+  "url": "https://www.sec.gov/Archives/edgar/data/1350455/000135045519000014/subscription__agreement.htm",
+  "cik": "1350455",
+  "issuer": "GILMORE HOMES - GILMORE LOANS, LLC",
+  "form": "1-A/A",
+  "file_date": "2019-12-20",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EXHIBIT D: SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "12cb296a52452db6be6a9bc65eb74fab1d11f7882019c6bb305611de9ab3b5b7",
+  "extra_files": [],
+  "layout_notes": [
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 7,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": true,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 83
+  },
+  "page_kinds": {
+    "text": 7
+  }
+}

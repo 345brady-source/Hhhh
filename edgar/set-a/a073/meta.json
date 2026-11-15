@@ -1,0 +1,46 @@
+{
+  "id": "a073",
+  "url": "https://www.sec.gov/Archives/edgar/data/1101173/0001015608-00-000003.txt",
+  "cik": "1101173",
+  "issuer": "SPECIAL ACQUISITIONS INC",
+  "form": "SB-2/A",
+  "file_date": "2000-02-22",
+  "exhibit": "EX-1.1",
+  "exhibit_description": null,
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "8dd235d3334996f53e274f484a626b3920567122e444638683d629a53e297097",
+  "extra_files": [],
+  "layout_notes": [
+    "pre-2001 filing: the exhibit is a document inside the complete submission text file (url); source.txt is that document's text as filed",
+    "underscore fill-in lines",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block",
+    "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 1,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 18
+  },
+  "page_kinds": {
+    "text": 1
+  }
+}

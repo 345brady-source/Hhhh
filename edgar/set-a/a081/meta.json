@@ -1,0 +1,46 @@
+{
+  "id": "a081",
+  "url": "https://www.sec.gov/Archives/edgar/data/876367/000112330905000074/subscriptionagmt.txt",
+  "cik": "876367",
+  "issuer": "CANCER THERAPEUTICS INC",
+  "form": "SB-2/A",
+  "file_date": "2005-09-28",
+  "exhibit": "EX-10",
+  "exhibit_description": "EXHIBIT 10.6 SUBSCRIPTION AGREEMENT CTI",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "07b96955a5c0d0b44bbc8ac4c89d3b339cd987dace3228ecf759a79f1c841815",
+  "extra_files": [],
+  "layout_notes": [
+    "underscore fill-in lines",
+    "joint / co-owner registration options",
+    "entity signature block",
+    "issuer acceptance / countersignature block",
+    "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 6,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 2,
+    "questionnaire": false,
+    "joint": true,
+    "entity": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 51
+  },
+  "page_kinds": {
+    "text": 6
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "a026",
+  "url": "https://www.sec.gov/Archives/edgar/data/1877235/000109690622000146/doi_ex4z1.pdf",
+  "cik": "1877235",
+  "issuer": "Diversified Opportunity, Inc.",
+  "form": "1-A/A",
+  "file_date": "2022-01-18",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT - PDF",
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "8baf17fb0bd5631520c903e60b029e6c486011ad94816ec4ffe2a5864a7710e8",
+  "extra_files": [],
+  "layout_notes": [],
+  "pdf_made": "filed-pdf",
+  "pages": 11,
+  "page_content": "real text",
+  "features": {},
+  "page_kinds": {
+    "text": 11
+  }
+}

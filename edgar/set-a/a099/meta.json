@@ -1,0 +1,44 @@
+{
+  "id": "a099",
+  "url": "https://www.sec.gov/Archives/edgar/data/1295961/000172186818000733/f2sqegys1082218ex10_12.htm",
+  "cik": "1295961",
+  "issuer": "QUANTUM ENERGY INC.",
+  "form": "S-1/A",
+  "file_date": "2018-12-06",
+  "exhibit": "EX-10.12",
+  "exhibit_description": "FORM OF PUBLIC OFFERING SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "5d7e1140b3396f88fa667a5047c179ed0708ea6cd5cd0ca0e7af9b82ac29978a",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 5,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 17,
+    "questionnaire": false,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 40
+  },
+  "page_kinds": {
+    "text": 5
+  }
+}

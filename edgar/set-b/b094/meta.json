@@ -1,0 +1,58 @@
+{
+ "id": "b094",
+ "url": "https://www.sec.gov/Archives/edgar/data/1893262/000119312522188668/d256945ds11a.htm",
+ "cik": "1893262",
+ "accession": "0001193125-22-188668",
+ "filename": "d256945ds11a.htm",
+ "sponsor": "J.P. Morgan Real Estate Income Trust",
+ "form": "S-11/A",
+ "file_date": "2022-07-06",
+ "kind": "appendix",
+ "doc_type": "S-11/A",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   12618,
+   14179
+  ]
+ },
+ "pictures_in_source": [
+  "g256945g48k76.jpg",
+  "g256945g10a01.jpg"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 9,
+ "text_pages": 8,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  1953,
+  2313,
+  2787,
+  5119,
+  3610,
+  4363,
+  4300,
+  2407,
+  15
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

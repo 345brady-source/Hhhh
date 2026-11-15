@@ -1,0 +1,24 @@
+{
+  "id": "a078",
+  "url": "https://www.sec.gov/Archives/edgar/data/1178552/000101738602000266/stratabid_exhibit99-1.pdf",
+  "cik": "1178552",
+  "issuer": "STRATABID COM INC",
+  "form": "SB-2/A",
+  "file_date": "2002-11-26",
+  "exhibit": "EX-99.1",
+  "exhibit_description": "PURCHASER SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.pdf",
+  "source_sha256": "2933c6717184dd9c8f2a62e69f71f8438f203dc7e9c58ccf22c043a2afe8dc3a",
+  "extra_files": [],
+  "layout_notes": [
+    "scanned pictures, no text; one page has rotated text"
+  ],
+  "pdf_made": "scanned",
+  "pages": 6,
+  "page_content": "pictures (no text layer)",
+  "features": {},
+  "page_kinds": {
+    "picture": 6
+  }
+}

@@ -1,0 +1,61 @@
+{
+ "id": "b063",
+ "url": "https://www.sec.gov/Archives/edgar/data/1179351/000095013402015941/h01769a1sv11za.txt",
+ "cik": "1179351",
+ "accession": "0000950134-02-015941",
+ "filename": "h01769a1sv11za.txt",
+ "sponsor": "Behringer Harvard Short-Term Opportunity Fund I",
+ "form": "S-11/A",
+ "file_date": "2002-12-23",
+ "kind": "appendix",
+ "doc_type": "S-11/A",
+ "notes": "",
+ "cut": {
+  "lines": [
+   17719,
+   18597
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 15,
+ "text_pages": 15,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2146,
+  1003,
+  976,
+  1208,
+  2339,
+  1779,
+  1518,
+  983,
+  2162,
+  2076,
+  2533,
+  2196,
+  1997,
+  2355,
+  609
+ ],
+ "layout": [
+  "IRA",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

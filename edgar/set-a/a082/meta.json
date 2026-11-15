@@ -1,0 +1,45 @@
+{
+  "id": "a082",
+  "url": "https://www.sec.gov/Archives/edgar/data/1326917/000113902005000355/subdocexhibit1.htm",
+  "cik": "1326917",
+  "issuer": "Sputnik, Inc.",
+  "form": "SB-2/A",
+  "file_date": "2005-12-21",
+  "exhibit": "EX-1",
+  "exhibit_description": null,
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "c5fd9e36e4a4923e1a3f37acedb1a97c34b6ffab785109676a51b0f6bdfc9132",
+  "extra_files": [],
+  "layout_notes": [
+    "underscore fill-in lines",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 9,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 12,
+    "tables": 7,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 3
+  },
+  "page_kinds": {
+    "text": 4,
+    "blank": 5
+  }
+}

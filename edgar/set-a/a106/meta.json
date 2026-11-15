@@ -1,0 +1,53 @@
+{
+  "id": "a106",
+  "url": "https://www.sec.gov/Archives/edgar/data/811868/000101054921000170/exh991.htm",
+  "cik": "811868",
+  "issuer": "ECRID, INC",
+  "form": "S-1/A",
+  "file_date": "2021-08-06",
+  "exhibit": "EX-99.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "87553874aec4e1adeb6f8c9a28877abcc116db179e38ca273a9212e3a4f159a0",
+  "extra_files": [
+    "image_002.gif",
+    "image_004.gif",
+    "image_005.gif",
+    "image_006.gif"
+  ],
+  "layout_notes": [
+    "tick boxes as Unicode box characters",
+    "fill-in lines drawn as table cell borders",
+    "signature and fill-in lines are thin line pictures",
+    "heavily table-based layout",
+    "underscore fill-in lines",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 4,
+  "page_content": "real text",
+  "features": {
+    "boxes": 10,
+    "tables": 24,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 6,
+    "underscores": 13
+  },
+  "page_kinds": {
+    "text": 4
+  }
+}

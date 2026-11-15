@@ -1,0 +1,43 @@
+{
+  "id": "a104",
+  "url": "https://www.sec.gov/Archives/edgar/data/1796297/000179629720000006/exhibit99.htm",
+  "cik": "1796297",
+  "issuer": "Bymax Corp.",
+  "form": "S-1/A",
+  "file_date": "2020-09-28",
+  "exhibit": "EX-99.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "c73dd717822d2c6ad15eac0431a46367f43bd633ae04fc2b5ccdad9aea6a9424",
+  "extra_files": [],
+  "layout_notes": [
+    "underscore fill-in lines",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 3,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 1,
+    "questionnaire": false,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 11
+  },
+  "page_kinds": {
+    "text": 3
+  }
+}

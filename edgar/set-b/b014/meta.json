@@ -1,0 +1,41 @@
+{
+ "id": "b014",
+ "url": "https://www.sec.gov/Archives/edgar/data/1448038/000088912309000010/exhibit4_1toamend2.pdf",
+ "cik": "1448038",
+ "accession": "0000889123-09-000010",
+ "filename": "exhibit4_1toamend2.pdf",
+ "sponsor": "Redwood Mortgage Investors IX",
+ "form": "S-11/A",
+ "file_date": "2009-03-17",
+ "kind": "exhibit",
+ "doc_type": "EX-4.1",
+ "notes": "",
+ "pdf_made": "filed-pdf",
+ "pages": 10,
+ "text_pages": 10,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  3265,
+  3417,
+  1515,
+  1723,
+  1619,
+  3448,
+  378,
+  3489,
+  2328,
+  1144
+ ],
+ "layout": [
+  "IRA",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

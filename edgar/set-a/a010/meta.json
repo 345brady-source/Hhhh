@@ -1,0 +1,24 @@
+{
+  "id": "a010",
+  "url": "https://www.sec.gov/Archives/edgar/data/1690477/000169047717000004/tensv2_ex4.pdf",
+  "cik": "1690477",
+  "issuer": "Tensleep Financial Corp",
+  "form": "1-A/A",
+  "file_date": "2017-01-18",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT REVISED",
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "d250fede099d90b83a1d492d5f4808ef3437f28ef5cd927cc29b44eda5caee20",
+  "extra_files": [],
+  "layout_notes": [
+    "one-page subscription form, underscore tick blanks"
+  ],
+  "pdf_made": "filed-pdf",
+  "pages": 1,
+  "page_content": "real text",
+  "features": {},
+  "page_kinds": {
+    "text": 1
+  }
+}

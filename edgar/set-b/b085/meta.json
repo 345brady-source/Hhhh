@@ -1,0 +1,65 @@
+{
+ "id": "b085",
+ "url": "https://www.sec.gov/Archives/edgar/data/1468010/000095012309024465/g19714sv11.htm",
+ "cik": "1468010",
+ "accession": "0000950123-09-024465",
+ "filename": "g19714sv11.htm",
+ "sponsor": "Steadfast Secure Income REIT",
+ "form": "S-11",
+ "file_date": "2009-07-23",
+ "kind": "appendix",
+ "doc_type": "S-11",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   28070,
+   28994
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 18,
+ "text_pages": 13,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2599,
+  1133,
+  3543,
+  1021,
+  1730,
+  3,
+  1209,
+  0,
+  902,
+  0,
+  1599,
+  1602,
+  3,
+  2258,
+  2431,
+  463,
+  3932,
+  15
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

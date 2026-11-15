@@ -1,0 +1,25 @@
+{
+  "id": "a009",
+  "url": "https://www.sec.gov/Archives/edgar/data/1677092/000167709216000007/SUBSAlliance.pdf",
+  "cik": "1677092",
+  "issuer": "Alliance Freight Lines Inc",
+  "form": "1-A/A",
+  "file_date": "2016-11-08",
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUB AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.pdf",
+  "source_sha256": "6a45c19f8f16c21d7aadb6f3f3ea15c5e7a45494a9bd7ffb21c7db70d07fb32c",
+  "extra_files": [],
+  "layout_notes": [
+    "scanned pages with an OCR text layer"
+  ],
+  "pdf_made": "scanned",
+  "pages": 15,
+  "page_content": "pictures with a text layer (OCR or hidden text)",
+  "features": {},
+  "page_kinds": {
+    "picture+ocr-text": 14,
+    "picture": 1
+  }
+}

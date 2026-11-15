@@ -1,0 +1,46 @@
+{
+  "id": "a070",
+  "url": "https://www.sec.gov/Archives/edgar/data/1018871/0000950144-99-000514.txt",
+  "cik": "1018871",
+  "issuer": "HEALTHTRONICS INC /GA",
+  "form": "SB-2/A",
+  "file_date": "1999-01-26",
+  "exhibit": "EX-3.7",
+  "exhibit_description": null,
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.txt",
+  "source_sha256": "8c8eea49b18a0395ad682268d589bb7704e03be231006b15d956c9c3edaa4f7a",
+  "extra_files": [],
+  "layout_notes": [
+    "pre-2001 filing: the exhibit is a document inside the complete submission text file (url); source.txt is that document's text as filed",
+    "underscore fill-in lines",
+    "joint / co-owner registration options",
+    "plain-text exhibit (monospace when printed)"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 2,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 7
+  },
+  "page_kinds": {
+    "text": 1,
+    "little or no text": 1
+  }
+}

@@ -1,0 +1,57 @@
+{
+ "id": "b080",
+ "url": "https://www.sec.gov/Archives/edgar/data/1410997/000114420407048606/v086974_s11.htm",
+ "cik": "1410997",
+ "accession": "0001144204-07-048606",
+ "filename": "v086974_s11.htm",
+ "sponsor": "American Realty Capital Trust",
+ "form": "S-11",
+ "file_date": "2007-09-10",
+ "kind": "appendix",
+ "doc_type": "S-11",
+ "notes": "",
+ "cut": {
+  "blocks": [
+   4514,
+   5038
+  ]
+ },
+ "pictures_in_source": [
+  "line.gif",
+  "spacer.gif"
+ ],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": true,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 7,
+ "text_pages": 7,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2257,
+  3125,
+  2816,
+  2836,
+  3071,
+  3791,
+  1496
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes"
+ ]
+}

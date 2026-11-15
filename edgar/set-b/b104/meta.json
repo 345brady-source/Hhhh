@@ -1,0 +1,37 @@
+{
+ "id": "b104",
+ "url": "https://www.sec.gov/Archives/edgar/data/1550913/000155091316000158/ex99d_072916.pdf",
+ "cik": "1550913",
+ "accession": "0001550913-16-000158",
+ "filename": "ex99d_072916.pdf",
+ "sponsor": "MacKenzie Realty Capital",
+ "form": "N-2",
+ "file_date": "2016-08-01",
+ "kind": "exhibit",
+ "doc_type": "EX-99.D",
+ "notes": "",
+ "pdf_made": "filed-pdf",
+ "pages": 6,
+ "text_pages": 6,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  4109,
+  4164,
+  4427,
+  5975,
+  3572,
+  1845
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "underscore fill lines"
+ ]
+}

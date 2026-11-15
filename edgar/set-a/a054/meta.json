@@ -1,0 +1,45 @@
+{
+  "id": "a054",
+  "url": "https://www.sec.gov/Archives/edgar/data/1133869/000114420416088528/v434504_ex4-1.htm",
+  "cik": "1133869",
+  "issuer": "CAPRICOR THERAPEUTICS, INC.",
+  "form": "8-K/A",
+  "file_date": "2016-03-16",
+  "exhibit": "EX-4.1",
+  "exhibit_description": "EXHIBIT 4.1",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "2932b9ed8a67d01fbf75bcab4f60debc63c814e3f341c3b6491a669abb4aeaaa",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "investor questionnaire"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 19,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 0,
+    "tables": 2,
+    "questionnaire": true,
+    "joint": false,
+    "entity": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 8
+  },
+  "page_kinds": {
+    "text": 18,
+    "blank": 1
+  }
+}

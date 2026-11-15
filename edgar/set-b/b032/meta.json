@@ -1,0 +1,51 @@
+{
+ "id": "b032",
+ "url": "https://www.sec.gov/Archives/edgar/data/1601855/000144586614000907/exhibit_d.htm",
+ "cik": "1601855",
+ "accession": "0001445866-14-000907",
+ "filename": "exhibit_d.htm",
+ "sponsor": "Yorke Capital Corp",
+ "form": "N-2/A",
+ "file_date": "2014-07-31",
+ "kind": "exhibit",
+ "doc_type": "EX-99.D CONTRACTS",
+ "notes": "",
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 9,
+ "text_pages": 8,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2745,
+  1743,
+  2028,
+  4328,
+  3522,
+  3587,
+  1200,
+  709,
+  0
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

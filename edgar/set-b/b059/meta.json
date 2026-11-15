@@ -1,0 +1,56 @@
+{
+ "id": "b059",
+ "url": "https://www.sec.gov/Archives/edgar/data/1141615/000095011601500322/p311951.txt",
+ "cik": "1141615",
+ "accession": "0000950116-01-500322",
+ "filename": "p311951.txt",
+ "sponsor": "Commonwealth Income & Growth Fund IV",
+ "form": "S-1",
+ "file_date": "2001-06-07",
+ "kind": "appendix",
+ "doc_type": "S-1",
+ "notes": "",
+ "cut": {
+  "lines": [
+   5209,
+   5591
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-landscape",
+ "print": {
+  "orientation": "landscape",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 9,
+ "text_pages": 9,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  947,
+  1691,
+  2284,
+  1516,
+  1620,
+  2141,
+  1855,
+  1604,
+  863
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "countersignature/acceptance block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "power of attorney",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

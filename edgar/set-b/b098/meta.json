@@ -1,0 +1,52 @@
+{
+ "id": "b098",
+ "url": "https://www.sec.gov/Archives/edgar/data/1118384/000095013703002668/c76560sv1.txt",
+ "cik": "1118384",
+ "accession": "0000950137-03-002668",
+ "filename": "c76560sv1.txt",
+ "sponsor": "Rogers International Raw Materials Fund",
+ "form": "S-1",
+ "file_date": "2003-05-06",
+ "kind": "appendix",
+ "doc_type": "S-1",
+ "notes": "",
+ "cut": {
+  "lines": [
+   8074,
+   8548
+  ]
+ },
+ "pictures_in_source": [],
+ "pdf_made": "printed-portrait",
+ "print": {
+  "orientation": "portrait",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 8,
+ "text_pages": 8,
+ "picture_pages": 0,
+ "page_content": "text",
+ "chars_per_page": [
+  2446,
+  2045,
+  2363,
+  2325,
+  2065,
+  2586,
+  2590,
+  746
+ ],
+ "layout": [
+  "IRA",
+  "W-9 certification",
+  "broker-dealer block",
+  "custodian section",
+  "joint investors",
+  "tables",
+  "tick boxes",
+  "underscore fill lines"
+ ]
+}

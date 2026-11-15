@@ -1,0 +1,48 @@
+{
+  "id": "a028",
+  "url": "https://www.sec.gov/Archives/edgar/data/1285543/000147793222008171/sfor_ex41.htm",
+  "cik": "1285543",
+  "issuer": "Zerify, Inc.",
+  "form": "1-A/A",
+  "file_date": "2022-11-04",
+  "exhibit": "EX1A-4 SUBS AGMT.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "source_file": "source.htm",
+  "source_sha256": "73910e4a6191d7f210871348bbe13eb707d92c22c8953731affb8e7c403fd59e",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Unicode box characters",
+    "fill-in lines drawn as table cell borders",
+    "heavily table-based layout",
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "joint / co-owner registration options"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 25,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 97,
+    "tables": 97,
+    "questionnaire": true,
+    "joint": true,
+    "entity": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 27
+  },
+  "page_kinds": {
+    "text": 22,
+    "little or no text": 3
+  }
+}

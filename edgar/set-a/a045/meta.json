@@ -1,0 +1,46 @@
+{
+  "id": "a045",
+  "url": "https://www.sec.gov/Archives/edgar/data/1007019/000135448811003626/jva_ex102.htm",
+  "cik": "1007019",
+  "issuer": "COFFEE HOLDING CO INC",
+  "form": "8-K/A",
+  "file_date": "2011-09-29",
+  "exhibit": "EX-10.2",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "28cebeb702ae6d1c82b2be243bd9abaecf542787259e2646e467be22332997c8",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 14,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 2,
+    "tables": 1,
+    "questionnaire": true,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 15
+  },
+  "page_kinds": {
+    "text": 13,
+    "little or no text": 1
+  }
+}

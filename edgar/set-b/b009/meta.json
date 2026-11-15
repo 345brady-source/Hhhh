@@ -1,0 +1,52 @@
+{
+ "id": "b009",
+ "url": "https://www.sec.gov/Archives/edgar/data/1252849/000119312503052546/dex43.htm",
+ "cik": "1252849",
+ "accession": "0001193125-03-052546",
+ "filename": "dex43.htm",
+ "sponsor": "Wells Real Estate Investment Trust II",
+ "form": "S-11/A",
+ "file_date": "2003-09-23",
+ "kind": "exhibit",
+ "doc_type": "EX-4.3",
+ "notes": "",
+ "pictures_in_source": [
+  "g46206subagr1.jpg",
+  "g46206subagr2.jpg"
+ ],
+ "pdf_made": "pictures-printed",
+ "print": {
+  "orientation": "landscape",
+  "paper": "letter",
+  "background_graphics": false,
+  "header_footer": false,
+  "engine": "Chromium (Playwright) page.pdf"
+ },
+ "pages": 11,
+ "text_pages": 6,
+ "picture_pages": 2,
+ "page_content": "mixed",
+ "chars_per_page": [
+  1897,
+  2062,
+  427,
+  1989,
+  2308,
+  600,
+  0,
+  0,
+  0,
+  0,
+  0
+ ],
+ "layout": [
+  "broker-dealer block",
+  "custodian section",
+  "entity investors",
+  "joint investors",
+  "picture pages",
+  "power of attorney",
+  "shaded cells/bands",
+  "tables"
+ ]
+}

@@ -1,0 +1,46 @@
+{
+  "id": "a108",
+  "url": "https://www.sec.gov/Archives/edgar/data/1573901/000121390023050196/fs12023a3ex10-12_originlife.htm",
+  "cik": "1573901",
+  "issuer": "Origin Life Sciences, Inc.",
+  "form": "S-1/A",
+  "file_date": "2023-06-21",
+  "exhibit": "EX-10.12",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT FOR SECOND PRIVATE PLACEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "source_file": "source.htm",
+  "source_sha256": "0f28a4378b29cb2730a27fc9ac2d083cbd89bbda610e4767cc930dae09916d09",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 16,
+  "page_content": "real text (some pages blank or nearly blank)",
+  "features": {
+    "boxes": 0,
+    "tables": 6,
+    "questionnaire": false,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 26
+  },
+  "page_kinds": {
+    "text": 13,
+    "little or no text": 3
+  }
+}

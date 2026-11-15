@@ -1,0 +1,47 @@
+{
+  "id": "a051",
+  "url": "https://www.sec.gov/Archives/edgar/data/1071411/000135448814000079/fsnn_ex1082.htm",
+  "cik": "1071411",
+  "issuer": "FUSION TELECOMMUNICATIONS INTERNATIONAL INC",
+  "form": "8-K/A",
+  "file_date": "2014-01-07",
+  "exhibit": "EX-10.82",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "2995fd00be24630e571871b1b04641f5b422769e9ce5602f50e788c71fefcb29",
+  "extra_files": [],
+  "layout_notes": [
+    "tick boxes as Wingdings characters",
+    "heavily table-based layout",
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "joint / co-owner registration options",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-portrait",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 20,
+  "page_content": "real text",
+  "features": {
+    "boxes": 3,
+    "tables": 117,
+    "questionnaire": true,
+    "joint": true,
+    "entity": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 44
+  },
+  "page_kinds": {
+    "text": 20
+  }
+}

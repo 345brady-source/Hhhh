@@ -1,0 +1,52 @@
+{
+  "id": "a046",
+  "url": "https://www.sec.gov/Archives/edgar/data/1162896/000114420411065468/v239516_ex10-5.htm",
+  "cik": "1162896",
+  "issuer": "Wizard World, Inc.",
+  "form": "8-K/A",
+  "file_date": "2011-11-17",
+  "exhibit": "EX-10.5",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "ee440712866ecb2e00624ef1e83b842e350c356db4064b2bab6b72863f855dcc",
+  "extra_files": [
+    "exhibita.jpg",
+    "logo1.jpg",
+    "logo2.jpg"
+  ],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "heavily table-based layout",
+    "underscore fill-in lines",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 97,
+  "page_content": "real text (some pages blank or nearly blank) with some picture pages",
+  "features": {
+    "boxes": 2,
+    "tables": 74,
+    "questionnaire": false,
+    "joint": false,
+    "entity": false,
+    "countersign": true,
+    "imgs": 5,
+    "underscores": 27
+  },
+  "page_kinds": {
+    "text": 88,
+    "blank": 4,
+    "picture": 2,
+    "little or no text": 3
+  }
+}

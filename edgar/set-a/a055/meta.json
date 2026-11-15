@@ -1,0 +1,47 @@
+{
+  "id": "a055",
+  "url": "https://www.sec.gov/Archives/edgar/data/1414628/000141462816000026/seriesdsubscriptionagreeme.htm",
+  "cik": "1414628",
+  "issuer": "Calpian, Inc.",
+  "form": "8-K/A",
+  "file_date": "2016-06-23",
+  "exhibit": "EX-10.1",
+  "exhibit_description": "EXHIBIT 10.1 SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "source_file": "source.htm",
+  "source_sha256": "eaf1926903c519f7330cfe289cd7ff0fce7aa3995536be25431ddc2c0064802e",
+  "extra_files": [],
+  "layout_notes": [
+    "fill-in lines drawn as table cell borders",
+    "underscore fill-in lines",
+    "investor questionnaire",
+    "joint / co-owner registration options",
+    "entity signature block",
+    "issuer acceptance / countersignature block"
+  ],
+  "pdf_made": "printed-landscape",
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "pages": 24,
+  "page_content": "real text",
+  "features": {
+    "boxes": 0,
+    "tables": 17,
+    "questionnaire": true,
+    "joint": true,
+    "entity": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 65
+  },
+  "page_kinds": {
+    "text": 24
+  }
+}

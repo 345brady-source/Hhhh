@@ -1,0 +1,30 @@
+{
+ "id": "b100",
+ "url": "https://www.sec.gov/Archives/edgar/data/1168990/000095013702003591/c66226a1sv1zaxpdfy.pdf",
+ "cik": "1168990",
+ "accession": "0000950137-02-003591",
+ "filename": "c66226a1sv1zaxpdfy.pdf",
+ "sponsor": "Quadriga Superfund",
+ "form": "S-1/A",
+ "file_date": "2002-06-12",
+ "kind": "appendix",
+ "doc_type": "S-1/A",
+ "notes": "Exhibit D subscription instructions and agreement pages cut from the filed PDF prospectus; grey side band, boxed form",
+ "source_pages_used": "93-98",
+ "pdf_made": "filed-pdf",
+ "pages": 6,
+ "text_pages": 0,
+ "picture_pages": 0,
+ "page_content": "vector-drawn form: text is outlined graphics, no text layer",
+ "chars_per_page": [
+  11,
+  14,
+  11,
+  3,
+  3,
+  3
+ ],
+ "layout": [
+  "vector-outlined form (no text layer)"
+ ]
+}
