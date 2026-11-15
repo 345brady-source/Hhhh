@@ -242,6 +242,10 @@ function formCase(spec) {
     const wantDate = spec.dateFmt(made.today);
     const dateAt = wordsIn(W1, dPlace, 1);
     check(`the date place reads ${wantDate}`, dateAt === wantDate, dateAt);
+    if (spec.dateField) {
+      const at = wordsIn(W1, R.of[spec.dateField], 1);
+      check(`the form's own date rectangle reads ${wantDate}`, at === wantDate, { field: spec.dateField, inside: at });
+    }
 
     // the caption in the caption place: the time the investor signed, in UTC
     const signedAt = got.env.signers[0].signedAt || '';
@@ -275,6 +279,11 @@ function formCase(spec) {
     }
     check('page 1 renders the same size signed and unsigned', a.w === b.w && a.h === b.h, { a: [a.w, a.h], b: [b.w, b.h] });
     check('the signature ink lies inside the sign place', inSign > 60, inSign);
+    if (spec.signField) {
+      const f = R.of[spec.signField];
+      const near = ['x', 'top', 'w', 'h'].every((q) => Math.abs(f[q] - sPlace[q]) < 0.5);
+      check('the sign place is the form’s own signature rectangle', near, { field: f, place: sPlace });
+    }
     check('no new ink outside the sign, date and caption places', stray === 0, { stray, at: strayAt });
 
     // white label: the signing screens, and the signed PDF's words that are not already printed on the blank form
@@ -304,6 +313,7 @@ const usDate = (iso) => {
   return `${m}/${d}/${y}`;
 };
 const W9 = 'topmostSubform[0].Page1[0].';
+const W8 = 'topmostSubform[0].Page1[0].';
 
 const cases = {
   'sign-w9': formCase({
@@ -328,6 +338,27 @@ const cases = {
     exact: ['Renée Zoë Ångström'],
     // the W-9 has no date format of its own: the portal's usual date
     dateFmt: usDate
+  }),
+  'sign-w8ben': formCase({
+    id: 'sign-w8ben',
+    key: 'W-8BEN 2021-10',
+    form: 'W-8BEN',
+    revision: 'Rev. October 2021',
+    title: 'Form W-8BEN',
+    fileName: 'Form_W-8BEN.pdf',
+    answers: { name: 'Zoë Müller-Łukasz', citizenship: 'Germany', street: 'Königsallee 27', cityLine: 'Düsseldorf 40212', country: 'Germany', ftin: '12345678901', birthDate: '04-12-1985', printName: 'Zoë Müller-Łukasz' },
+    values: [
+      ['Zoë Müller-Łukasz', W8 + 'f_1[0]'],
+      ['Germany', W8 + 'f_2[0]'],
+      ['Königsallee 27', W8 + 'f_3[0]'],
+      ['Düsseldorf 40212', W8 + 'f_4[0]'],
+      ['Zoë Müller-Łukasz', W8 + 'f_21[0]']
+    ],
+    exact: ['Zoë Müller-Łukasz', 'Königsallee 27', 'Düsseldorf 40212'],
+    // the W-8 forms ask for month-day-year with hyphens, stamped on the day of signing in the form's own date rectangle
+    dateFmt: mmddyyyy,
+    dateField: W8 + 'Date[0]',
+    signField: W8 + 'f_20[0]'
   })
 };
 
@@ -337,5 +368,4 @@ if (pins.status !== 0) {
   console.log(`NOT RUN: the bundled forms do not match assets/forms/SHA256SUMS\n${(pins.stdout || '') + (pins.stderr || '')}`);
   process.exit(2);
 }
-void mmddyyyy;
 Lib.runParts(cases, { name: 'FORMS FLOW', unit: 'cases', flag: '--case', browser: true });
