@@ -1,0 +1,63 @@
+{
+  "onnxruntime-web@1.30.0": {
+    "plan": "01.4-05",
+    "approval": "APPROVED",
+    "approved_by": "owner",
+    "answer_text": "Approve",
+    "answered_at": "2026-11-15T00:20:33Z",
+    "registry": {
+      "tarball": "https://registry.npmjs.org/onnxruntime-web/-/onnxruntime-web-1.30.0.tgz",
+      "integrity": "sha512-q0y+JrrtukXSzsBWEMccVfqX25LRmosXHF+CaRJmg8pZClzcV7svNc4rKY3jL02Vb7QmRMDs1SigqR4CXAfKYQ==",
+      "shasum_sha1": "b88b09117992e6f486321e931a826fd2f7775377",
+      "fileCount": 509,
+      "unpackedSize": 144618540,
+      "published": "2026-09-14T20:20:13.234Z",
+      "publisher": "microsoft1es",
+      "license": "MIT",
+      "repository": "github.com/Microsoft/onnxruntime",
+      "registry_signature_keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U (npm registry key, not expired)",
+      "provenance_attestation": "none (registry returns 404)",
+      "install_scripts": "none (no preinstall/install/postinstall)"
+    },
+    "tarball_sha256": "d2228df7e4616bc3348bf504ee888f3bec43789a273f0a63f3e68d203ce3bf71",
+    "vendored": {
+      "assets/vendor/formread/LICENSE-runtime.txt": {
+        "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+        "size": 1073,
+        "from": "upstream repository LICENSE at tag v1.30.0, verbatim (the package itself carries no LICENSE file)",
+        "third_party": true
+      },
+      "assets/vendor/formread/places-worker.js": {
+        "sha256": "160fd237354df0b22c02b95826d66037710dc47b03e071728388fa7c0e3125d5",
+        "size": 5197,
+        "from": "our own worker",
+        "third_party": false
+      },
+      "assets/vendor/formread/runtime-wasm.js": {
+        "sha256": "cf140e04c2492e6e36f1502ccabc2096791342aca24f006f195a87787283c731",
+        "size": 4870386,
+        "from": "package dist/ort-wasm-simd-threaded.wasm, gzip level 9 (mtime 0), base64, as self.FORMREAD_WASM_GZ64",
+        "third_party": true
+      },
+      "assets/vendor/formread/runtime.min.js": {
+        "sha256": "11e64bd8ffe11bd1a2a2f0d6275fdfbbba7262f0b76b99b53d228a8a22ef3d90",
+        "size": 73054,
+        "from": "package dist/ort.wasm.bundle.min.mjs, unchanged (bundle build: the plain build imports a separate glue module by address)",
+        "third_party": true
+      }
+    },
+    "answer_channel": "typed by the owner in chat, relayed verbatim by the phase coordinator",
+    "tarball_size": 33106585,
+    "tarball_integrity_check": "sha512 of the downloaded tarball equals the registry integrity (checked before extraction)",
+    "source_files": {
+      "dist/ort.wasm.bundle.min.mjs": {
+        "sha256": "11e64bd8ffe11bd1a2a2f0d6275fdfbbba7262f0b76b99b53d228a8a22ef3d90",
+        "size": 73054
+      },
+      "dist/ort-wasm-simd-threaded.wasm": {
+        "sha256": "3398c10d07d229bd91b364548e130e0e51a8e5704b88c7c083ebbeb78842dee2",
+        "size": 14239897
+      }
+    }
+  }
+}

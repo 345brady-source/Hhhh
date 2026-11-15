@@ -1,0 +1,101 @@
+# Training environment pins (scratch only, never shipped, never in the repository)
+# STATUS: APPROVED BY THE OWNER on 2026-11-15. Owner's words, verbatim, relayed by the orchestrator: "Approved, PyTorch site".
+# Meaning: all 7 direct packages and 18 dependencies approved; torch is the CPU-only build from
+# https://download.pytorch.org/whl/cpu (host opened by the owner); no NVIDIA package is installed.
+# Plan 01.4-04, Task 1 (blocking human checkpoint, D-12).
+#
+# Pin rule: the version RESEARCH named if it was uploaded on or before 2026-10-24
+# (21 days before 2026-11-15), otherwise the newest final, non-yanked release
+# uploaded on or before 2026-10-24.
+# Source of every field: pypi.org/pypi/<name>/<version>/json, read 2026-11-15.
+# Target: CPython 3.13.18, Linux x86_64, glibc 2.39 (manylinux_2_28 wheels apply).
+# Size = the Linux x86_64 cp313 wheel download from PyPI (compressed), in bytes.
+#
+# Columns: pin | first upload | licence (PyPI metadata) | project page | wheel bytes | human answer
+#
+# ---- Direct packages (the seven the owner approved in principle) ----
+torch==2.14.1+cpu                # 2026-09-30 (CPU build uploaded 2026-09-30T19:48:15Z) | CPU-only build from https://download.pytorch.org/whl/cpu | Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT | https://download.pytorch.org/whl/cpu/torch/ (pytorch.org) | 196253851 | approved_by: owner ("Approved, PyTorch site")
+#   (RESEARCH named 2.15.0: uploaded 2026-10-28, too new; 2.14.1 is the newest on or before 2026-10-24)
+#   wheel torch-2.14.1+cpu-cp313-cp313-manylinux_2_28_x86_64.whl sha256 331fa474e26e428e2e6af1143b2fdab19cee492d7d21897b8899ce1c14755662 (from the download.pytorch.org/whl/cpu index)
+#   (the PyPI build, 554618164 B plus NVIDIA libraries, is NOT used)
+onnx==1.23.2                     # 2026-10-06 | Apache-2.0 | https://pypi.org/project/onnx/ (onnx.ai, LF AI & Data) | 8881633 | approved_by: owner ("Approved, PyTorch site")
+#   wheel onnx-1.23.2-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl sha256 7abf381d278f31ac62487fddedc9dd42da842dce94d5d43536836ee3efdf4a2b
+onnxruntime==1.31.0              # 2026-10-09 | MIT | https://pypi.org/project/onnxruntime/ (Microsoft Corporation, onnxruntime.ai) | 23760708 | approved_by: owner ("Approved, PyTorch site")
+#   (RESEARCH named 1.32.0: uploaded 2026-11-13, too new; 1.31.1 uploaded 2026-10-26, too new; 1.31.0 is the newest on or before 2026-10-24)
+#   wheel onnxruntime-1.31.0-cp313-cp313-manylinux_2_28_x86_64.whl sha256 37fd78cee5160c7a43a1730ccb3682ffd880af9c9e80385d625c0c2f8b125809
+scikit-learn==1.9.1              # 2026-09-10 | BSD-3-Clause | https://pypi.org/project/scikit-learn/ (scikit-learn.org) | 9121732 | approved_by: owner ("Approved, PyTorch site")
+#   wheel scikit_learn-1.9.1-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl sha256 55e79d6e9b0923f1a978179822bd43d7f5543f45e970a00fe861f43486380aba
+numpy==2.5.4                     # 2026-10-10 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 | https://pypi.org/project/numpy/ (numpy.org) | 16718044 | approved_by: owner ("Approved, PyTorch site")
+#   wheel numpy-2.5.4-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl sha256 6ffa07666f8da0eef81d149934a626d0d95fbd6838432a33e66245423a9062c0
+pypdfium2==5.14.0                # 2026-10-04 | BSD-3-Clause, Apache-2.0, dependency licenses | https://pypi.org/project/pypdfium2/ (pypdfium2-team) | 3799581 | approved_by: owner ("Approved, PyTorch site")
+#   (RESEARCH named 5.15.2: uploaded 2026-11-09, too new; 5.14.0 is the newest final on or before 2026-10-24; 5.14.0b1 was yanked)
+#   wheel pypdfium2-5.14.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl sha256 11f281613fa22313d9c7ab89947665e84eccf8ebe40e1198a84a88352305648d
+opencv-python-headless==5.0.0.93 # 2026-07-02 | Apache 2.0 | https://pypi.org/project/opencv-python-headless/ (OpenCV Team) | 61204038 | approved_by: owner ("Approved, PyTorch site")
+#   (4.14.0.94 of 2026-07-28 is a later upload on the older 4.x line; the 5.0 line named by RESEARCH is kept)
+#   wheel opencv_python_headless-5.0.0.93-cp37-abi3-manylinux_2_28_x86_64.whl sha256 ed709fdf9aa0bd1f2ed8549e71d19449b03a675bb581eb292285f6861953be37
+#
+# Direct total: 678103900 bytes downloaded
+#
+# ---- Dependencies these seven pull in (light path; all pure Python or small) ----
+scipy==1.18.1                    # 2026-08-21 | BSD (classifier BSD License) | https://pypi.org/project/scipy/ | 35312578 | approved_by: owner ("Approved, PyTorch site")  (needed by scikit-learn)
+joblib==1.6.0                    # 2026-08-31 | BSD-3-Clause | https://pypi.org/project/joblib/ | 306115 | approved_by: owner ("Approved, PyTorch site")  (scikit-learn)
+cloudpickle==3.1.2               # 2025-11-03 | BSD-3-Clause | https://pypi.org/project/cloudpickle/ | 22228 | approved_by: owner ("Approved, PyTorch site")  (joblib)
+threadpoolctl==3.7.0             # 2026-09-15 | BSD-3-Clause | https://pypi.org/project/threadpoolctl/ | 26362 | approved_by: owner ("Approved, PyTorch site")  (scikit-learn)
+narwhals==2.27.1                 # 2026-10-10 | MIT | https://pypi.org/project/narwhals/ | 483211 | approved_by: owner ("Approved, PyTorch site")  (scikit-learn)
+protobuf==7.36.2                 # 2026-09-17 | 3-Clause BSD | https://pypi.org/project/protobuf/ (Google) | 343223 | approved_by: owner ("Approved, PyTorch site")  (onnx, onnxruntime)
+ml-dtypes==0.6.0                 # 2026-08-13 | Apache-2.0 | https://pypi.org/project/ml-dtypes/ (jax-ml) | 410169 | approved_by: owner ("Approved, PyTorch site")  (onnx)
+typing-extensions==4.16.0        # 2026-07-02 | PSF-2.0 | https://pypi.org/project/typing-extensions/ | 45571 | approved_by: owner ("Approved, PyTorch site")  (onnx, torch)
+flatbuffers==25.12.19            # 2025-12-19 | Apache 2.0 | https://pypi.org/project/flatbuffers/ (Google) | 26661 | approved_by: owner ("Approved, PyTorch site")  (onnxruntime)
+packaging==26.3                  # 2026-08-04 | Apache-2.0 OR BSD-2-Clause | https://pypi.org/project/packaging/ (PyPA) | 129956 | approved_by: owner ("Approved, PyTorch site")  (onnxruntime)
+filelock==4.2.4                  # 2026-10-19 | MIT | https://pypi.org/project/filelock/ | 162475 | approved_by: owner ("Approved, PyTorch site")  (torch)
+sympy==1.14.0                    # 2025-04-27 | BSD | https://pypi.org/project/sympy/ | 6299353 | approved_by: owner ("Approved, PyTorch site")  (torch)
+mpmath==1.3.0                    # 2023-03-07 | BSD | https://pypi.org/project/mpmath/ | 536198 | approved_by: owner ("Approved, PyTorch site")  (sympy; sympy 1.14.0 requires mpmath<1.4, so not 1.4.1)
+networkx==3.7                    # 2026-09-21 | BSD-3-Clause | https://pypi.org/project/networkx/ | 2142205 | approved_by: owner ("Approved, PyTorch site")  (torch)
+jinja2==3.1.6                    # 2025-03-05 | BSD | https://pypi.org/project/jinja2/ (Pallets) | 134899 | approved_by: owner ("Approved, PyTorch site")  (torch)
+markupsafe==3.0.4                # 2026-10-02 | BSD-3-Clause | https://pypi.org/project/markupsafe/ (Pallets) | 23017 | approved_by: owner ("Approved, PyTorch site")  (jinja2)
+fsspec==2026.9.0                 # 2026-09-18 | BSD-3-Clause | https://pypi.org/project/fsspec/ | 221738 | approved_by: owner ("Approved, PyTorch site")  (torch)
+setuptools==84.2.1               # 2026-10-20 | MIT | https://pypi.org/project/setuptools/ (PyPA) | 876263 | approved_by: owner ("Approved, PyTorch site")  (torch lists it)
+#
+# Dependency total: 47502222 bytes. Light path total: 725606122 bytes downloaded (installed size measured after install).
+#
+# ---- Fallback ONLY if `import torch` fails without them (separate yes/no) ----
+# torch 2.14.1 on Linux also lists NVIDIA GPU libraries. The plan first installs torch WITHOUT them.
+# If torch will not import that way, these are needed (they run on CPU-only machines too):
+#   nvidia-cudnn-cu13==9.24.0.43   2026-07-02 | licence field empty (NVIDIA)         | 553099438
+#   nvidia-cusparselt-cu13==0.8.1  2025-09-05 | NVIDIA Proprietary Software         | 170148586
+#   nvidia-nccl-cu13==2.30.7       2026-06-09 | licence field empty (NVIDIA)         | 215965170
+#   nvidia-nvshmem-cu13==3.4.5     2025-09-06 | licence field empty (NVIDIA)         | 60412546
+#   triton 3.8.x (3.8.0 2026-08-28)           | MIT                                 | 247975122
+#   cuda-bindings 13.x                        | Apache-2.0                          | 8385548 (13.5.0, 2026-11-05 is too new; an older 13.x would be pinned)
+#   cuda-toolkit[...]==13.0.3      2026-04-14 | licence field empty; pulls nvidia-cublas, nvidia-cufft, nvidia-cusolver,
+#                                               nvidia-cusparse, nvidia-curand, nvidia-cufile, nvidia-cuda-runtime, -nvrtc,
+#                                               -cupti, -nvtx, nvjitlink (not sized)
+# Measured for the six sized wheels: 1255986410 bytes, plus the cuda-toolkit libraries (not sized). FALLBACK ANSWER: NOT USED. The owner chose the CPU-only build from download.pytorch.org; no NVIDIA package is installed.
+
+# ---- INSTALLED (pip freeze, 2026-11-15) with each package's licence from its installed metadata ----
+# venv: /tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/train/venv  disk used (du -sb): 1410647366 bytes; installed with --only-binary=:all: --require-hashes -r install-hashed.txt
+# NVIDIA / CUDA / triton packages installed: none (torch.version.cuda is None)
+cloudpickle==3.1.2  # licence: BSD-3-Clause
+filelock==4.2.4  # licence: MIT
+flatbuffers==25.12.19  # licence: Apache 2.0
+fsspec==2026.9.0  # licence: BSD-3-Clause
+Jinja2==3.1.6  # licence: BSD License
+joblib==1.6.0  # licence: BSD-3-Clause
+MarkupSafe==3.0.4  # licence: BSD-3-Clause
+ml_dtypes==0.6.0  # licence: Apache-2.0
+mpmath==1.3.0  # licence: BSD
+narwhals==2.27.1  # licence: MIT
+networkx==3.7  # licence: BSD-3-Clause
+numpy==2.5.4  # licence: BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0
+onnx==1.23.2  # licence: Apache-2.0
+onnxruntime==1.31.0  # licence: MIT License
+opencv-python-headless==5.0.0.93  # licence: Apache 2.0
+packaging==26.3  # licence: Apache-2.0 OR BSD-2-Clause
+protobuf==7.36.2  # licence: 3-Clause BSD License
+pypdfium2==5.14.0  # licence: BSD-3-Clause, Apache-2.0, dependency licenses
+scikit-learn==1.9.1  # licence: BSD-3-Clause
+scipy==1.18.1  # licence: BSD (classifier 'OSI Approved :: BSD License'; licence field holds the BSD text)
+setuptools==84.2.1  # licence: MIT
+sympy==1.14.0  # licence: BSD
+threadpoolctl==3.7.0  # licence: BSD-3-Clause
+torch==2.14.1+cpu  (local wheel from download.pytorch.org/whl/cpu, sha256 331fa474e26e428e2e6af1143b2fdab19cee492d7d21897b8899ce1c14755662 verified)  # licence: Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT
