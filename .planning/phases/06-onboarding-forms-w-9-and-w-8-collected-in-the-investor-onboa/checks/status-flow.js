@@ -717,24 +717,49 @@ const parts = {
       window.CVPortal.state.ws.tenant.onboarding.accreditation = false;
       window.CVPortal.app.save(true);
     });
-    const inv2 = await L.createInvitation(p, { name: 'Lee Ortiz', email: 'lee.ortiz@example.com', offeringId: off.offeringId, cents: 0 });
-    await p.goto(`${S.base}?tenant=${inv2.tenant}#invite-${inv2.token}`);
-    let st2 = '';
-    let q2 = -1;
-    const w2 = await L.walk(p, {
-      name: 'Lee Ortiz',
-      amount: 60000,
-      onFilled: async (hd) => {
-        if (hd !== 'Investor status') return;
-        st2 = await L.screenText(p);
-        q2 = await p.locator('input[name="ob-stAcc"]').count();
-      }
-    });
+    // Toggle off: one investor per exemption, with what the status and subscribe steps show.
+    const offWalk = async (exemption, name, email) => {
+      await p.evaluate(({ oid, exemption }) => {
+        const NS = window.CVPortal;
+        const o = NS.state.ws.offerings.find((x) => x.id === oid);
+        o.structure = Object.assign({}, o.structure, { exemption });
+        NS.app.save(true);
+      }, { oid: off.offeringId, exemption });
+      const iv = await L.createInvitation(p, { name, email, offeringId: off.offeringId, cents: 0 });
+      await p.goto(`${S.base}?tenant=${iv.tenant}#invite-${iv.token}`);
+      const R = { st: '', accQ: -1, sub: '', subAcc: -1 };
+      R.w = await L.walk(p, {
+        name,
+        amount: 60000,
+        onStep: async (hd) => {
+          if (hd !== 'Subscription') return;
+          R.sub = await L.screenText(p);
+          R.subAcc = await p.locator('#ob-subAcc').count();
+        },
+        onFilled: async (hd) => {
+          if (hd !== 'Investor status') return;
+          R.st = await L.screenText(p);
+          R.accQ = await p.locator('input[name="ob-stAcc"]').count();
+        }
+      });
+      return R;
+    };
+    const s2 = await offWalk('Regulation S', 'Lee Ortiz', 'lee.ortiz@example.com');
+    const w2 = s2.w;
     // Plan 06-04, D-01: every invitation with an offering now has the status step for the benefit plan questions; with the
     // toggle off it asks nothing about accreditation (before 06-04 there was no status step here).
-    check('toggle off: the status step asks only the benefit plan questions, and the investor reaches the agreement', w2.reached && w2.errors.length === 0 && w2.seen.some((s) => /\| Investor status$/.test(s)) && q2 === 0 && /asks only whether Lee Ortiz invests on behalf of a benefit plan/.test(st2), { seen: w2.seen, errors: w2.errors, q2, st2: st2.slice(0, 900) });
-    const leak = L.leakCheck(st + '\n' + done + '\n' + st2);
-    check('white label: the status and done screens pass the leak check', leak.ok, leak.hits);
+    check('toggle off: the status step asks only the benefit plan questions, and the investor reaches the agreement', w2.reached && w2.errors.length === 0 && w2.seen.some((s) => /\| Investor status$/.test(s)) && s2.accQ === 0 && /asks only whether Lee Ortiz invests on behalf of a benefit plan/.test(s2.st), { seen: w2.seen, errors: w2.errors, q2: s2.accQ, st2: s2.st.slice(0, 900) });
+    // Rule 1 fix with plan 06-05: Regulation S and Regulation Crowdfunding are not limited to accredited investors, so with the
+    // toggle off the subscribe step offers no accreditation tick and says why (as 06-04 did for Reg A Tier 1 and listed Tier 2).
+    check('toggle off, Regulation S: the subscribe step offers no "is an accredited investor" tick and says why', s2.subAcc === 0 && !/is an accredited investor/.test(s2.sub) && /Regulation S is not limited to accredited investors/.test(s2.sub), { subAcc: s2.subAcc, sub: s2.sub.slice(0, 1500) });
+    const cf = await offWalk('Regulation Crowdfunding', 'Rae Lindgren', 'rae.lindgren@example.com');
+    check('toggle off, Regulation Crowdfunding: the investor reaches the agreement with no field error', cf.w.reached && cf.w.errors.length === 0 && cf.accQ === 0, { seen: cf.w.seen, errors: cf.w.errors, accQ: cf.accQ });
+    check('toggle off, Regulation Crowdfunding: no "is an accredited investor" tick, and a note says why', cf.subAcc === 0 && !/is an accredited investor/.test(cf.sub) && /Regulation Crowdfunding is open to investors who are not accredited/.test(cf.sub), { subAcc: cf.subAcc, sub: cf.sub.slice(0, 1500) });
+    // Section 4(a)(2) keeps today's optional tick (the caller's instruction with plan 06-05).
+    const s4 = await offWalk('Section 4(a)(2)', 'Noor Halvorsen', 'noor.halvorsen@example.com');
+    check('toggle off, Section 4(a)(2): the optional "is an accredited investor" tick stays, and the investor reaches the agreement', s4.w.reached && s4.w.errors.length === 0 && s4.subAcc === 1 && /Noor Halvorsen is an accredited investor/.test(s4.sub) && !/not limited to accredited investors|open to investors who are not accredited/.test(s4.sub), { subAcc: s4.subAcc, seen: s4.w.seen, errors: s4.w.errors, sub: s4.sub.slice(0, 1200) });
+    const leak = L.leakCheck([st, done, s2.st, s2.sub, cf.st, cf.sub, s4.sub].join('\n'));
+    check('white label: the status, subscribe and done screens pass the leak check', leak.ok, leak.hits);
     check('no script error in the browser', A.errors.length === 0, A.errors);
     check('no request left the check server', A.net.external.length === 0, A.net.external);
     await A.context.close();

@@ -1138,6 +1138,23 @@
   const statusStep = (c) => accAsked(c) || (!!EL() && !!c.off);
   /** Offerings any investor may buy, accredited or not, with no investment limit: Regulation A Tier 1, and Tier 2 listed on an exchange. */
   const openToAll = (c) => regimeOf(c) === 'regA1' || regimeOf(c) === 'regA2listed';
+  /**
+   * Exemptions that are not limited to accredited investors, read from the offering's exemption text (regime 'other'):
+   * 'regCF' for Regulation Crowdfunding, 'regS' for Regulation S (not Regulation S-K or S-X), else ''. Plan 06-05, Rule 1 fix.
+   */
+  const openKind = (c) => {
+    if (regimeOf(c) !== 'other') return '';
+    const ex = String(((c.off && c.off.structure) || {}).exemption || '');
+    if (/\bRegulation Crowdfunding\b|\bReg\.? ?CF\b/i.test(ex)) return 'regCF';
+    if (/\bRegulation S(?![\w-])|\bReg\.? S(?![\w-])/.test(ex)) return 'regS';
+    return '';
+  };
+  /** The note shown on the subscribe step in place of the accreditation tick, by the kind of open offering. */
+  const OPEN_NOTE = {
+    regA: 'Regulation A does not limit this offering to accredited investors, so no statement about accreditation is asked for here.',
+    regCF: 'Regulation Crowdfunding is open to investors who are not accredited, so this step asks for no statement on accreditation.',
+    regS: 'Regulation S is not limited to accredited investors, so you are not asked to state whether you are one.'
+  };
   /** The benefit plan answers on the form: { plan, planPct (0 to 100, or null), controlling (true, false or null), share }. */
   function erisaFrom(d) {
     const plan = ['title1', '4975', 'planAssets', 'other', 'none'].indexOf(d.stPlan) >= 0 ? d.stPlan : '';
@@ -1629,12 +1646,14 @@
     const acc = c.inv.accreditation && c.inv.accreditation.basis;
     // The accreditation tick follows the investor status answer (D-01) and is never required (D-30). Without the
     // accredited question (verified accreditation, or no question asked) today's sentence stays, except where the offering
-    // is open to investors who are not accredited with no limit (Regulation A Tier 1, or Tier 2 listed on an exchange):
-    // there no statement about accreditation is asked for, and a short note says why.
-    const accAns = accVerifiedFor(c) ? 'yes' : accAsked(c) ? d.stAcc : openToAll(c) ? 'open' : 'yes';
+    // is open to investors who are not accredited (Regulation A Tier 1, Tier 2 listed on an exchange, Regulation
+    // Crowdfunding, Regulation S): there no statement about accreditation is asked for, and a short note says why.
+    // Plan 06-05 (Rule 1 fix): Regulation Crowdfunding and Regulation S are treated the same way.
+    const open = openToAll(c) ? 'regA' : openKind(c);
+    const accAns = accVerifiedFor(c) ? 'yes' : accAsked(c) ? d.stAcc : open ? 'open' : 'yes';
     const accTick =
       accAns === 'open'
-        ? '<p class="field-wide meta ivf-acc-open">Regulation A does not limit this offering to accredited investors, so no statement about accreditation is asked for here.</p>'
+        ? `<p class="field-wide meta ivf-acc-open">${OPEN_NOTE[open]}</p>`
         : accAns === 'yes'
         ? check('subAcc', `${h(c.inv.title)} is an accredited investor${acc ? ` (${h(acc)})` : ''}, and this remains accurate.`)
         : accAns === 'no'
