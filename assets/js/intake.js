@@ -270,7 +270,7 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
         }
         take(buf + dec.decode());
       } catch (e) {
-        throw e && e.code ? e : fail(why());
+        throw e && typeof e.code === 'string' ? e : fail(why());
       }
       if (!last || last.ok !== true || !last.json || typeof last.json !== 'object' || Array.isArray(last.json)) throw fail(why());
       return last.json;
