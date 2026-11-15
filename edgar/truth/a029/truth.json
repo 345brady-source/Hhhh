@@ -1,0 +1,257 @@
+{
+ "file": "doc.pdf",
+ "pages": 10,
+ "page_size_pt": [
+  612.0,
+  792.0
+ ],
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run: the character box. Drawn rule: x extent, y1 = bottom of the rule, y0 = y1 - 10.",
+ "how_measured": "pdfplumber characters and filled rectangles of the filed PDF; every page looked at at 100 dpi; overlays looked at.",
+ "signing": {
+  "investor_pages": [
+   9
+  ],
+  "firm_pages": [
+   9
+  ],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": "One investor completes and signs the signature page (page 9); the company accepts under it. Page 10 is the offering statement's own signatures page, already signed."
+ },
+ "counts_per_page": {
+  "9": {
+   "total": 11,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 9,
+   "signature": 2,
+   "date": 0
+  }
+ },
+ "counts_total": {
+  "total": 11,
+  "tickbox": 0,
+  "initials": 0,
+  "blank": 9,
+  "signature": 2,
+  "date": 0
+ },
+ "counts_by_owner": {
+  "firm": 2,
+  "investor": 9
+ },
+ "sure_per_page": {
+  "1": "sure (no place)",
+  "2": "sure (no place)",
+  "3": "sure (no place)",
+  "4": "sure (no place)",
+  "5": "sure (no place)",
+  "6": "sure (no place)",
+  "7": "sure (no place)",
+  "8": "sure (no place)",
+  "9": "sure",
+  "10": "sure (no place: the filing's own signatures, already made)"
+ },
+ "not_fields": {
+  "1": [
+   "the title underline (y 117)"
+  ],
+  "2": [
+   "\"February __, 2024\", \"August __, 2024\", \"October __, 2023\" (twice): dates in the prose that the company completes (offering circular and termination dates)"
+  ],
+  "4": [
+   "\"___________________.\" and \"qualified by the SEC on ______________, 2023\": the company's blanks for the offering circular link and qualification date",
+   "the yellow highlight of a paragraph (y 359-440): a drafting mark"
+  ],
+  "6": [
+   "the wire instructions block (highlighted yellow): ABA #, Account# and three bank lines are the company's own bank details to fill in, not the investor's"
+  ],
+  "9": [
+   "\"Name of Authorized Signatory: Turaj Belgameh, CEO\" (printed)",
+   "the bracketed page caption"
+  ],
+  "10": [
+   "the Form 1-A signatures page of the offering statement: the company's officers, already signed /s/; \"Date: September __, 2023\" belongs to it; the rules under the /s/ names"
+  ]
+ },
+ "places": [
+  {
+   "id": "p09-exec-day",
+   "page": 9,
+   "kind": "blank",
+   "what": "date",
+   "owner": "investor",
+   "label": "Date of execution: day (witness clause)",
+   "printed_label": "executed as of the ______ day",
+   "must": true,
+   "x0": 429.5,
+   "y0": 349.6,
+   "x1": 459.6,
+   "y1": 359.5,
+   "printed_as": "underscore run of 6"
+  },
+  {
+   "id": "p09-exec-month",
+   "page": 9,
+   "kind": "blank",
+   "what": "date",
+   "owner": "investor",
+   "label": "Date of execution: month (the year 2023 is printed)",
+   "printed_label": "day of _________",
+   "must": true,
+   "x0": 492.5,
+   "y0": 349.6,
+   "x1": 537.6,
+   "y1": 359.5,
+   "printed_as": "underscore run of 9"
+  },
+  {
+   "id": "p09-tokens",
+   "page": 9,
+   "kind": "blank",
+   "what": "amount",
+   "owner": "investor",
+   "label": "Number of tokens subscribed for (caption left, rule in the right column)",
+   "printed_label": "Number of Tokens Subscribed For:",
+   "must": true,
+   "x0": 250.7,
+   "y0": 385.4,
+   "x1": 540.0,
+   "y1": 395.4,
+   "printed_as": "drawn rule at y=395.4 (thin filled rectangle 0; box = the 10 pt of writing room above it)"
+  },
+  {
+   "id": "p09-price",
+   "page": 9,
+   "kind": "blank",
+   "what": "amount",
+   "owner": "investor",
+   "label": "Total purchase price (a \"$\" prints at the start of the rule) (caption left, rule in the right column)",
+   "printed_label": "Total Purchase Price:",
+   "must": true,
+   "x0": 250.7,
+   "y0": 409.9,
+   "x1": 540.0,
+   "y1": 419.9,
+   "printed_as": "drawn rule at y=419.9 (thin filled rectangle 1; box = the 10 pt of writing room above it)"
+  },
+  {
+   "id": "p09-signature",
+   "page": 9,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "investor",
+   "label": "Investor signature (caption left, rule in the right column)",
+   "printed_label": "Signature of Investor:",
+   "must": true,
+   "x0": 250.7,
+   "y0": 434.4,
+   "x1": 540.0,
+   "y1": 444.4,
+   "printed_as": "drawn rule at y=444.4 (thin filled rectangle 2; box = the 10 pt of writing room above it)"
+  },
+  {
+   "id": "p09-name",
+   "page": 9,
+   "kind": "blank",
+   "what": "name",
+   "owner": "investor",
+   "label": "Investor name (caption left, rule in the right column)",
+   "printed_label": "Name of Investor:",
+   "must": true,
+   "x0": 250.7,
+   "y0": 459.0,
+   "x1": 540.0,
+   "y1": 469.0,
+   "printed_as": "drawn rule at y=469.0 (thin filled rectangle 3; box = the 10 pt of writing room above it)"
+  },
+  {
+   "id": "p09-address",
+   "page": 9,
+   "kind": "blank",
+   "what": "address",
+   "owner": "investor",
+   "label": "Investor address (caption left, rule in the right column)",
+   "printed_label": "Address of Investor:",
+   "must": true,
+   "x0": 250.7,
+   "y0": 483.4,
+   "x1": 540.0,
+   "y1": 493.4,
+   "printed_as": "drawn rule at y=493.4 (thin filled rectangle 4; box = the 10 pt of writing room above it)"
+  },
+  {
+   "id": "p09-email",
+   "page": 9,
+   "kind": "blank",
+   "what": "email",
+   "owner": "investor",
+   "label": "Investor e-mail address (caption left, rule in the right column)",
+   "printed_label": "Electronic Mail Address:",
+   "must": true,
+   "x0": 250.7,
+   "y0": 507.9,
+   "x1": 540.0,
+   "y1": 517.9,
+   "printed_as": "drawn rule at y=517.9 (thin filled rectangle 5; box = the 10 pt of writing room above it)"
+  },
+  {
+   "id": "p09-tin",
+   "page": 9,
+   "kind": "blank",
+   "what": "tax number",
+   "owner": "investor",
+   "label": "Investor social security or tax ID number (caption left, rule in the right column)",
+   "printed_label": "Investor's SS# or Tax ID#:",
+   "must": true,
+   "x0": 250.0,
+   "y0": 532.5,
+   "x1": 540.0,
+   "y1": 542.5,
+   "printed_as": "drawn rule at y=542.5 (thin filled rectangle 6; box = the 10 pt of writing room above it)"
+  },
+  {
+   "id": "p09-accept-signature",
+   "page": 9,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "firm",
+   "label": "Signature of the company's authorized signatory (name printed on the next line)",
+   "printed_label": "Signature of Authorized Signatory:",
+   "must": true,
+   "x0": 215.3,
+   "y0": 578.5,
+   "x1": 385.1,
+   "y1": 588.5,
+   "printed_as": "underscore run of 34"
+  },
+  {
+   "id": "p09-accept-date",
+   "page": 9,
+   "kind": "blank",
+   "what": "date",
+   "owner": "firm",
+   "label": "Date of acceptance (the year 2023 is printed)",
+   "printed_label": "Date of Acceptance:",
+   "must": true,
+   "x0": 156.1,
+   "y0": 624.5,
+   "x1": 241.1,
+   "y1": 634.4,
+   "printed_as": "underscore run of 17"
+  }
+ ],
+ "may_fill": [
+  "p09-exec-day",
+  "p09-exec-month",
+  "p09-tokens",
+  "p09-price",
+  "p09-signature",
+  "p09-name",
+  "p09-address",
+  "p09-email",
+  "p09-tin",
+  "p09-accept-signature",
+  "p09-accept-date"
+ ]
+}

@@ -1,0 +1,474 @@
+{
+ "file": "set-a/a004/doc.pdf",
+ "id": "a004",
+ "pages": 2,
+ "page_size_pt": [
+  612.0,
+  792.0
+ ],
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
+ "signing": {
+  "investor_pages": [
+   2
+  ],
+  "firm_pages": [],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": "the subscriber signs alone; no issuer acceptance block, no co-subscriber block"
+ },
+ "counts_per_page": {
+  "2": {
+   "total": 12,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 10,
+   "signature": 1,
+   "date": 1
+  }
+ },
+ "counts_total": {
+  "total": 12,
+  "tickbox": 0,
+  "initials": 0,
+  "blank": 10,
+  "signature": 1,
+  "date": 1
+ },
+ "counts_by_owner": {
+  "investor": 12
+ },
+ "sure_per_page": {
+  "1": "sure",
+  "2": "sure | phone and tax number: one place each over their printed segments"
+ },
+ "not_fields": {
+  "1": [
+   "the offering circular qualification date blank inside representation 3.1 (the issuer completes it before sending)",
+   "section heading underlines and the filing header rule"
+  ],
+  "2": [
+   "the underlined heading SUBSCRIBER SIGNATURE and the rule above it"
+  ]
+ },
+ "places": [
+  {
+   "id": "p02-001",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of shares subscribed",
+   "printed_label": "Number of Shares",
+   "must": true,
+   "x0": 398.2,
+   "y0": 298.0,
+   "x1": 571.5,
+   "y1": 313.5,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "PLEASE PRINT OR TYPE) Number of Shares",
+    "candidate": "rule",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "amount",
+     "box": [
+      398.2,
+      298.0,
+      571.5,
+      313.5
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p02-002",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Total amount of subscription",
+   "printed_label": "Total Amount of Subscription",
+   "must": true,
+   "x0": 398.2,
+   "y0": 335.5,
+   "x1": 571.5,
+   "y1": 351.0,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "x $0.02 Total Amount of Subscription",
+    "candidate": "rule",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "amount",
+     "box": [
+      398.2,
+      335.5,
+      571.5,
+      351.0
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p02-003",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Exact name(s) of subscriber(s)",
+   "printed_label": "Exact name(s) of Subscriber(s)",
+   "must": true,
+   "x0": 398.2,
+   "y0": 361.0,
+   "x1": 571.5,
+   "y1": 376.5,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Investor name",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "name",
+     "box": [
+      398.2,
+      361.0,
+      571.5,
+      376.5
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p02-004",
+   "page": 2,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature of subscriber(s)",
+   "printed_label": "Signature of Subscriber(s)",
+   "must": true,
+   "x0": 398.2,
+   "y0": 386.5,
+   "x1": 571.5,
+   "y1": 402.0,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "investor",
+    "field_label": "Signature",
+    "candidate": "rule",
+    "why": "reader marked it: Could not tell whether the investor or your firm fills this ",
+    "initial": {
+     "kind": "signature",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      398.2,
+      386.5,
+      571.5,
+      402.0
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-005",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Subscriber's printed name",
+   "printed_label": "(Print Name)",
+   "must": true,
+   "x0": 398.2,
+   "y0": 436.0,
+   "x1": 571.5,
+   "y1": 451.5,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "name",
+    "field_owner": "investor",
+    "field_label": "Name",
+    "candidate": "rule",
+    "why": "reader marked it: Could not tell whether the investor or your firm fills this ",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "name",
+     "box": [
+      398.2,
+      436.0,
+      571.5,
+      451.5
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p02-006",
+   "page": 2,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date of signing",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 398.2,
+   "y0": 473.5,
+   "x1": 571.5,
+   "y1": 489.0,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Date",
+    "candidate": "rule",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "date",
+     "box": [
+      398.2,
+      473.5,
+      571.5,
+      489.0
+     ]
+    }
+   },
+   "what": "date"
+  },
+  {
+   "id": "p02-007",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Residence or physical mailing address, line 1",
+   "printed_label": "Residence or Physical Mailing Address (cannot be a P.O. Box)",
+   "must": true,
+   "x0": 33.7,
+   "y0": 521.4,
+   "x1": 203.7,
+   "y1": 536.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      33.7,
+      521.4,
+      203.7,
+      536.9
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p02-008",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Residence or physical mailing address, line 2",
+   "printed_label": "Residence or Physical Mailing Address (cannot be a P.O. Box)",
+   "must": false,
+   "x0": 33.7,
+   "y0": 545.4,
+   "x1": 203.7,
+   "y1": 560.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      33.7,
+      545.4,
+      203.7,
+      560.9
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p02-009",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Residence or physical mailing address, line 3",
+   "printed_label": "Residence or Physical Mailing Address (cannot be a P.O. Box)",
+   "must": false,
+   "x0": 33.7,
+   "y0": 569.4,
+   "x1": 203.7,
+   "y1": 584.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      33.7,
+      569.4,
+      203.7,
+      584.9
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p02-011",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Business telephone with area code",
+   "printed_label": "Business:",
+   "must": false,
+   "x0": 77.9,
+   "y0": 629.4,
+   "x1": 161.2,
+   "y1": 644.9,
+   "printed_as": "one place over two underscore runs: area code in brackets, then number",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      96.2,
+      629.4,
+      161.2,
+      644.9
+     ]
+    }
+   },
+   "what": "phone"
+  },
+  {
+   "id": "p02-013",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Home telephone with area code",
+   "printed_label": "Home:",
+   "must": false,
+   "x0": 329.2,
+   "y0": 629.4,
+   "x1": 427.5,
+   "y1": 644.9,
+   "printed_as": "one place over two underscore runs: area code in brackets, then number",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      347.5,
+      629.4,
+      427.5,
+      644.9
+     ]
+    }
+   },
+   "what": "phone"
+  },
+  {
+   "id": "p02-016",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Social security or taxpayer identification number",
+   "printed_label": "Social Security or Taxpayer Identification Number(s)",
+   "must": true,
+   "x0": 143.7,
+   "y0": 653.4,
+   "x1": 225.3,
+   "y1": 668.9,
+   "printed_as": "one place over three underscore runs joined by hyphens",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      200.3,
+      653.4,
+      225.3,
+      668.9
+     ]
+    }
+   },
+   "what": "tax number"
+  }
+ ],
+ "may_fill": [],
+ "source": "hand",
+ "mode": "train",
+ "prefilled": {
+  "when": "2026-11-15T00:42:27Z",
+  "candidates": "0dd3c1168cc54f25-f01586d5.json",
+  "result": "out-set-a/a004/result.json",
+  "fields": 10,
+  "counted_candidates": 17
+ },
+ "done": "2026-11-15T00:44:41Z"
+}

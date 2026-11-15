@@ -1,0 +1,1012 @@
+{
+ "note": "Phase 01.4 train manifest (D-22, D-03). Built by make_manifest.py from meta.json and classes.json only. Held-out ids never appear here.",
+ "built_by": "make_manifest.py",
+ "strata_rule": "pdf_made x offering kind (meta offering_kind, else derived from the form type)",
+ "train": [
+  "a001",
+  "a002",
+  "a003",
+  "a004",
+  "a005",
+  "a006",
+  "a007",
+  "a010",
+  "a011",
+  "a012",
+  "a014",
+  "a015",
+  "a017",
+  "a018",
+  "a019",
+  "a020",
+  "a021",
+  "a022",
+  "a023",
+  "a026",
+  "a027",
+  "a028",
+  "a030",
+  "a031",
+  "a032",
+  "a033",
+  "a034",
+  "a035",
+  "a036",
+  "a037",
+  "a038",
+  "a039",
+  "a040",
+  "a041",
+  "a042",
+  "a043",
+  "a044",
+  "a045",
+  "a046",
+  "a047",
+  "a048",
+  "a049",
+  "a050",
+  "a051",
+  "a052",
+  "a053",
+  "a058",
+  "a059",
+  "a061",
+  "a062",
+  "a063",
+  "a065",
+  "a067",
+  "a068",
+  "a069",
+  "a070",
+  "a071",
+  "a072",
+  "a073",
+  "a074",
+  "a075",
+  "a076",
+  "a077",
+  "a079",
+  "a081",
+  "a082",
+  "a085",
+  "a086",
+  "a087",
+  "a088",
+  "a089",
+  "a090",
+  "a091",
+  "a092",
+  "a093",
+  "a094",
+  "a096",
+  "a097",
+  "a098",
+  "a099",
+  "a101",
+  "a102",
+  "a103",
+  "a104",
+  "a105",
+  "a106",
+  "a107",
+  "a108",
+  "a109",
+  "a110",
+  "b003",
+  "b004",
+  "b005",
+  "b006",
+  "b007",
+  "b008",
+  "b010",
+  "b011",
+  "b012",
+  "b013",
+  "b014",
+  "b015",
+  "b016",
+  "b017",
+  "b018",
+  "b019",
+  "b020",
+  "b021",
+  "b022",
+  "b023",
+  "b024",
+  "b025",
+  "b026",
+  "b027",
+  "b028",
+  "b029",
+  "b031",
+  "b032",
+  "b033",
+  "b036",
+  "b037",
+  "b039",
+  "b040",
+  "b041",
+  "b042",
+  "b043",
+  "b044",
+  "b045",
+  "b046",
+  "b047",
+  "b048",
+  "b049",
+  "b050",
+  "b051",
+  "b054",
+  "b055",
+  "b056",
+  "b057",
+  "b058",
+  "b060",
+  "b062",
+  "b063",
+  "b064",
+  "b065",
+  "b066",
+  "b067",
+  "b068",
+  "b069",
+  "b070",
+  "b071",
+  "b072",
+  "b073",
+  "b074",
+  "b075",
+  "b076",
+  "b079",
+  "b080",
+  "b081",
+  "b082",
+  "b084",
+  "b085",
+  "b086",
+  "b087",
+  "b089",
+  "b090",
+  "b091",
+  "b092",
+  "b093",
+  "b094",
+  "b095",
+  "b096",
+  "b097",
+  "b098",
+  "b099",
+  "b101",
+  "b103",
+  "b104",
+  "b108",
+  "b109",
+  "b110"
+ ],
+ "folds": {
+  "1": [
+   "a001",
+   "a005",
+   "a014",
+   "a021",
+   "a026",
+   "a028",
+   "a034",
+   "a042",
+   "a047",
+   "a051",
+   "a068",
+   "a071",
+   "a090",
+   "a096",
+   "a099",
+   "a102",
+   "a104",
+   "a110",
+   "b017",
+   "b021",
+   "b032",
+   "b043",
+   "b045",
+   "b046",
+   "b056",
+   "b062",
+   "b064",
+   "b065",
+   "b066",
+   "b067",
+   "b070",
+   "b071",
+   "b075",
+   "b082",
+   "b091",
+   "b101"
+  ],
+  "2": [
+   "a002",
+   "a003",
+   "a004",
+   "a017",
+   "a018",
+   "a032",
+   "a035",
+   "a040",
+   "a044",
+   "a058",
+   "a067",
+   "a073",
+   "a079",
+   "a081",
+   "a091",
+   "a094",
+   "a097",
+   "a108",
+   "a109",
+   "b010",
+   "b014",
+   "b016",
+   "b019",
+   "b024",
+   "b028",
+   "b033",
+   "b039",
+   "b047",
+   "b073",
+   "b081",
+   "b084",
+   "b086",
+   "b092",
+   "b093",
+   "b099",
+   "b110"
+  ],
+  "3": [
+   "a010",
+   "a011",
+   "a012",
+   "a023",
+   "a030",
+   "a037",
+   "a043",
+   "a045",
+   "a049",
+   "a061",
+   "a069",
+   "a075",
+   "a076",
+   "a105",
+   "a106",
+   "b003",
+   "b007",
+   "b015",
+   "b018",
+   "b020",
+   "b022",
+   "b025",
+   "b041",
+   "b042",
+   "b044",
+   "b048",
+   "b049",
+   "b054",
+   "b068",
+   "b079",
+   "b094",
+   "b096",
+   "b097",
+   "b098",
+   "b104",
+   "b109"
+  ],
+  "4": [
+   "a007",
+   "a019",
+   "a020",
+   "a033",
+   "a036",
+   "a038",
+   "a048",
+   "a052",
+   "a053",
+   "a059",
+   "a063",
+   "a070",
+   "a072",
+   "a082",
+   "a085",
+   "a089",
+   "a092",
+   "a098",
+   "b004",
+   "b006",
+   "b011",
+   "b023",
+   "b026",
+   "b029",
+   "b036",
+   "b040",
+   "b057",
+   "b060",
+   "b063",
+   "b069",
+   "b072",
+   "b074",
+   "b085",
+   "b089",
+   "b095",
+   "b108"
+  ],
+  "5": [
+   "a006",
+   "a015",
+   "a022",
+   "a027",
+   "a031",
+   "a039",
+   "a041",
+   "a046",
+   "a050",
+   "a062",
+   "a065",
+   "a074",
+   "a077",
+   "a086",
+   "a087",
+   "a088",
+   "a093",
+   "a101",
+   "a103",
+   "a107",
+   "b005",
+   "b008",
+   "b012",
+   "b013",
+   "b027",
+   "b031",
+   "b037",
+   "b050",
+   "b051",
+   "b055",
+   "b058",
+   "b076",
+   "b080",
+   "b087",
+   "b090",
+   "b103"
+  ]
+ },
+ "tranche": [
+  "a001",
+  "a004",
+  "a006",
+  "a007",
+  "a011",
+  "a038",
+  "a046",
+  "a049",
+  "a050",
+  "a051",
+  "a058",
+  "a081",
+  "a088",
+  "a098",
+  "a099",
+  "a103",
+  "a106",
+  "a109",
+  "b005",
+  "b016",
+  "b020",
+  "b022",
+  "b029",
+  "b042",
+  "b046",
+  "b051",
+  "b056",
+  "b063",
+  "b065",
+  "b066",
+  "b082",
+  "b090",
+  "b093",
+  "b104",
+  "b108",
+  "b110"
+ ],
+ "batches": {
+  "TR01": [
+   "b108",
+   "b016",
+   "a004",
+   "b046",
+   "b065",
+   "a081"
+  ],
+  "TR02": [
+   "a006",
+   "b042",
+   "a011",
+   "a050",
+   "b093",
+   "a106"
+  ],
+  "TR03": [
+   "b104",
+   "b090",
+   "a007",
+   "a051",
+   "b063",
+   "a098"
+  ],
+  "TR04": [
+   "a038",
+   "b056",
+   "b020",
+   "a058",
+   "b066",
+   "a103"
+  ],
+  "TR05": [
+   "a046",
+   "b110",
+   "b029",
+   "a049",
+   "a088",
+   "a109"
+  ],
+  "TR06": [
+   "b082",
+   "a001",
+   "b005",
+   "b051",
+   "a099",
+   "b022"
+  ]
+ },
+ "tranche_strata": {
+  "a001": {
+   "pdf_made": "printed-portrait",
+   "offering": "Regulation A",
+   "fold": 1,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "a004": {
+   "pdf_made": "printed-portrait",
+   "offering": "Regulation A",
+   "fold": 2,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "a006": {
+   "pdf_made": "scanned",
+   "offering": "Regulation A",
+   "fold": 5,
+   "covers": [
+    "class 17",
+    "class 21",
+    "class 4",
+    "class 5",
+    "offering=Regulation A",
+    "pdf_made=scanned"
+   ]
+  },
+  "a007": {
+   "pdf_made": "printed-portrait",
+   "offering": "Regulation A",
+   "fold": 4,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "a011": {
+   "pdf_made": "printed-portrait",
+   "offering": "Regulation A",
+   "fold": 3,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "a038": {
+   "pdf_made": "filed-pdf",
+   "offering": "Regulation D / private placement exhibit",
+   "fold": 4,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "a046": {
+   "pdf_made": "printed-landscape",
+   "offering": "Regulation D / private placement exhibit",
+   "fold": 5,
+   "covers": [
+    "class 18",
+    "class 20",
+    "class 22",
+    "offering=Regulation D / private placement exhibit",
+    "pdf_made=printed-landscape"
+   ]
+  },
+  "a049": {
+   "pdf_made": "printed-portrait",
+   "offering": "Regulation D / private placement exhibit",
+   "fold": 3,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "a050": {
+   "pdf_made": "printed-portrait",
+   "offering": "Regulation D / private placement exhibit",
+   "fold": 5,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "a051": {
+   "pdf_made": "printed-portrait",
+   "offering": "Regulation D / private placement exhibit",
+   "fold": 1,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "a058": {
+   "pdf_made": "printed-portrait",
+   "offering": "Regulation D / private placement exhibit",
+   "fold": 2,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "a081": {
+   "pdf_made": "printed-portrait",
+   "offering": "small-company registered offering (S-1/SB-2)",
+   "fold": 2,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "a088": {
+   "pdf_made": "printed-portrait",
+   "offering": "small-company registered offering (S-1/SB-2)",
+   "fold": 5,
+   "covers": [
+    "offering=small-company registered offering (S-1/SB-2)"
+   ]
+  },
+  "a098": {
+   "pdf_made": "printed-portrait",
+   "offering": "small-company registered offering (S-1/SB-2)",
+   "fold": 4,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "a099": {
+   "pdf_made": "printed-portrait",
+   "offering": "small-company registered offering (S-1/SB-2)",
+   "fold": 1,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "a103": {
+   "pdf_made": "printed-portrait",
+   "offering": "small-company registered offering (S-1/SB-2)",
+   "fold": 5,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "a106": {
+   "pdf_made": "printed-portrait",
+   "offering": "small-company registered offering (S-1/SB-2)",
+   "fold": 3,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "a109": {
+   "pdf_made": "printed-portrait",
+   "offering": "small-company registered offering (S-1/SB-2)",
+   "fold": 2,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "b005": {
+   "pdf_made": "printed-portrait",
+   "offering": "registered fund or BDC (N-2)",
+   "fold": 5,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "b016": {
+   "pdf_made": "printed-landscape",
+   "offering": "small-company registered offering (S-1/SB-2)",
+   "fold": 2,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "b020": {
+   "pdf_made": "printed-portrait",
+   "offering": "registered fund or BDC (N-2)",
+   "fold": 3,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "b022": {
+   "pdf_made": "printed-portrait",
+   "offering": "small-company registered offering (S-1/SB-2)",
+   "fold": 3,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "b029": {
+   "pdf_made": "printed-portrait",
+   "offering": "registered fund or BDC (N-2)",
+   "fold": 4,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "b042": {
+   "pdf_made": "printed-portrait",
+   "offering": "periodic report exhibit (10-K/8-K)",
+   "fold": 3,
+   "covers": [
+    "class 12",
+    "class 13",
+    "class 8",
+    "offering=periodic report exhibit (10-K/8-K)"
+   ]
+  },
+  "b046": {
+   "pdf_made": "printed-portrait",
+   "offering": "registered fund or BDC (N-2)",
+   "fold": 1,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "b051": {
+   "pdf_made": "printed-portrait",
+   "offering": "real estate program (S-11)",
+   "fold": 5,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "b056": {
+   "pdf_made": "printed-portrait",
+   "offering": "continuous registered offering (424B/POS AM)",
+   "fold": 1,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "b063": {
+   "pdf_made": "printed-portrait",
+   "offering": "real estate program (S-11)",
+   "fold": 4,
+   "covers": [
+    "class 23"
+   ]
+  },
+  "b065": {
+   "pdf_made": "printed-portrait",
+   "offering": "real estate program (S-11)",
+   "fold": 1,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "b066": {
+   "pdf_made": "printed-portrait",
+   "offering": "real estate program (S-11)",
+   "fold": 1,
+   "covers": [
+    "class 16",
+    "class 6",
+    "class 7",
+    "class 9",
+    "offering=real estate program (S-11)"
+   ]
+  },
+  "b082": {
+   "pdf_made": "printed-landscape",
+   "offering": "real estate program (S-11)",
+   "fold": 1,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "b090": {
+   "pdf_made": "printed-portrait",
+   "offering": "continuous registered offering (424B/POS AM)",
+   "fold": 5,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "b093": {
+   "pdf_made": "printed-portrait",
+   "offering": "real estate program (S-11)",
+   "fold": 2,
+   "covers": [
+    "fill (fold and offering-kind balance)"
+   ]
+  },
+  "b104": {
+   "pdf_made": "filed-pdf",
+   "offering": "registered fund or BDC (N-2)",
+   "fold": 3,
+   "covers": [
+    "class 11",
+    "offering=registered fund or BDC (N-2)",
+    "pdf_made=filed-pdf"
+   ]
+  },
+  "b108": {
+   "pdf_made": "pictures-printed",
+   "offering": "real estate program (S-11)",
+   "fold": 4,
+   "covers": [
+    "pdf_made=pictures-printed"
+   ]
+  },
+  "b110": {
+   "pdf_made": "printed-portrait",
+   "offering": "continuous registered offering (424B/POS AM)",
+   "fold": 2,
+   "covers": [
+    "class 10",
+    "class 15",
+    "class 19",
+    "offering=continuous registered offering (424B/POS AM)",
+    "pdf_made=printed-portrait"
+   ]
+  }
+ },
+ "coverage": {
+  "class 10": [
+   "a006",
+   "a046",
+   "b042",
+   "b046",
+   "b108",
+   "b110"
+  ],
+  "class 11": [
+   "a109",
+   "b005",
+   "b082",
+   "b093",
+   "b104"
+  ],
+  "class 12": [
+   "a007",
+   "a011",
+   "b005",
+   "b029",
+   "b042",
+   "b082",
+   "b093"
+  ],
+  "class 13": [
+   "b042"
+  ],
+  "class 15": [
+   "b110"
+  ],
+  "class 16": [
+   "b066"
+  ],
+  "class 17": [
+   "a006"
+  ],
+  "class 18": [
+   "a046"
+  ],
+  "class 19": [
+   "b108",
+   "b110"
+  ],
+  "class 20": [
+   "a046"
+  ],
+  "class 21": [
+   "a006"
+  ],
+  "class 22": [
+   "a046"
+  ],
+  "class 23": [
+   "b063"
+  ],
+  "class 4": [
+   "a006",
+   "a007",
+   "a038",
+   "a046",
+   "a049",
+   "a058",
+   "a088",
+   "a103",
+   "a109",
+   "b005",
+   "b029",
+   "b046",
+   "b051",
+   "b063",
+   "b065",
+   "b093",
+   "b104"
+  ],
+  "class 5": [
+   "a004",
+   "a006",
+   "a046",
+   "a049",
+   "a058",
+   "a099",
+   "a109",
+   "b005",
+   "b029",
+   "b046",
+   "b082",
+   "b090",
+   "b104"
+  ],
+  "class 6": [
+   "a046",
+   "a049",
+   "a106",
+   "a109",
+   "b005",
+   "b016",
+   "b029",
+   "b042",
+   "b046",
+   "b051",
+   "b056",
+   "b063",
+   "b066",
+   "b082"
+  ],
+  "class 7": [
+   "a007",
+   "a046",
+   "a049",
+   "a109",
+   "b005",
+   "b029",
+   "b051",
+   "b063",
+   "b066",
+   "b082",
+   "b090",
+   "b093"
+  ],
+  "class 8": [
+   "b005",
+   "b042"
+  ],
+  "class 9": [
+   "a088",
+   "b020",
+   "b022",
+   "b051",
+   "b063",
+   "b065",
+   "b066"
+  ],
+  "offering=Regulation A": [
+   "a001",
+   "a004",
+   "a006",
+   "a007",
+   "a011"
+  ],
+  "offering=Regulation D / private placement exhibit": [
+   "a038",
+   "a046",
+   "a049",
+   "a050",
+   "a051",
+   "a058"
+  ],
+  "offering=continuous registered offering (424B/POS AM)": [
+   "b056",
+   "b090",
+   "b110"
+  ],
+  "offering=periodic report exhibit (10-K/8-K)": [
+   "b042"
+  ],
+  "offering=real estate program (S-11)": [
+   "b051",
+   "b063",
+   "b065",
+   "b066",
+   "b082",
+   "b093",
+   "b108"
+  ],
+  "offering=registered fund or BDC (N-2)": [
+   "b005",
+   "b020",
+   "b029",
+   "b046",
+   "b104"
+  ],
+  "offering=small-company registered offering (S-1/SB-2)": [
+   "a081",
+   "a088",
+   "a098",
+   "a099",
+   "a103",
+   "a106",
+   "a109",
+   "b016",
+   "b022"
+  ],
+  "pdf_made=filed-pdf": [
+   "a038",
+   "b104"
+  ],
+  "pdf_made=pictures-printed": [
+   "b108"
+  ],
+  "pdf_made=printed-landscape": [
+   "a046",
+   "b016",
+   "b082"
+  ],
+  "pdf_made=printed-portrait": [
+   "a001",
+   "a004",
+   "a007",
+   "a011",
+   "a049",
+   "a050",
+   "a051",
+   "a058",
+   "a081",
+   "a088",
+   "a098",
+   "a099",
+   "a103",
+   "a106",
+   "a109",
+   "b005",
+   "b020",
+   "b022",
+   "b029",
+   "b042",
+   "b046",
+   "b051",
+   "b056",
+   "b063",
+   "b065",
+   "b066",
+   "b090",
+   "b093",
+   "b110"
+  ],
+  "pdf_made=scanned": [
+   "a006"
+  ]
+ },
+ "classes_without_train_document": [
+  14
+ ]
+}

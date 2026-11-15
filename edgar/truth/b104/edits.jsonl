@@ -1,0 +1,159 @@
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-001", "changes": ["label=Date of the prospectus the investor reviewed"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-002", "changes": ["label=Brokerage investment: subscription amount"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-003", "changes": ["label=Advisory / net of commission investment: subscription amount"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-004", "changes": ["must=false", "doubt=", "label=Names of the other subscribers combined for the volume discount"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-005", "changes": ["what=text", "must=false", "doubt=", "label=UGMA account: state", "printed_label=UGMA: State of"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-006", "changes": ["what=text", "must=false", "doubt=", "label=UTMA account: state", "printed_label=UTMA: State of"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-007", "changes": ["what=name", "label=Individual/beneficial owner name (first, middle, last)"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-008", "changes": ["doubt=", "label=Individual/beneficial owner email address", "printed_label=email address"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-009", "changes": ["label=Individual/beneficial owner SSN or tax ID"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-010", "changes": ["what=text", "doubt=", "label=Individual/beneficial owner country of citizenship"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-011", "changes": ["label=Individual/beneficial owner contact phone"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-012", "changes": ["label=Individual/beneficial owner mailing address (street)"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-013", "changes": ["what=address", "must=true", "doubt=", "label=Individual/beneficial owner mailing address (city/state)", "printed_label=(city/state)"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-014", "changes": ["doubt=", "label=Individual/beneficial owner mailing address (zip)", "printed_label=(zip)"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-015", "changes": ["label=Individual/beneficial owner date of birth"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-016", "changes": ["label=Individual/beneficial owner permanent address (street)"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-017", "changes": ["what=address", "doubt=", "label=Individual/beneficial owner permanent address (city/state)"], "why": null}
+{"when": "2026-11-15T00:47:02Z", "op": "set", "place": "p01-018", "changes": ["label=Individual/beneficial owner permanent address (zip)"], "why": null}
+{"when": "2026-11-15T00:47:03Z", "op": "set", "place": "p01-019", "changes": ["what=name", "owner=co-investor", "must=false", "label=Joint or beneficial owner name (first, middle, last)"], "why": null}
+{"when": "2026-11-15T00:47:03Z", "op": "set", "place": "p01-020", "changes": ["owner=co-investor", "must=false", "doubt=", "label=Joint owner email address", "printed_label=email address"], "why": null}
+{"when": "2026-11-15T00:47:03Z", "op": "set", "place": "p01-021", "changes": ["owner=co-investor", "must=false", "label=Joint owner SSN or tax ID"], "why": null}
+{"when": "2026-11-15T00:47:03Z", "op": "set", "place": "p01-022", "changes": ["what=text", "owner=co-investor", "must=false", "doubt=", "label=Joint owner country of citizenship"], "why": null}
+{"when": "2026-11-15T00:47:03Z", "op": "set", "place": "p01-023", "changes": ["owner=co-investor", "must=false", "label=Joint owner contact phone"], "why": null}
+{"when": "2026-11-15T00:47:03Z", "op": "set", "place": "p01-024", "changes": ["owner=co-investor", "must=false", "label=Joint owner mailing address (street)"], "why": null}
+{"when": "2026-11-15T00:47:03Z", "op": "set", "place": "p01-025", "changes": ["what=address", "owner=co-investor", "must=false", "doubt=", "label=Joint owner mailing address (city/state)", "printed_label=(city/state)"], "why": null}
+{"when": "2026-11-15T00:47:03Z", "op": "set", "place": "p01-026", "changes": ["owner=co-investor", "must=false", "doubt=", "label=Joint owner mailing address (zip)", "printed_label=(zip)"], "why": null}
+{"when": "2026-11-15T00:47:03Z", "op": "set", "place": "p01-027", "changes": ["owner=co-investor", "must=false", "label=Joint owner date of birth"], "why": null}
+{"when": "2026-11-15T00:47:03Z", "op": "set", "place": "p01-028", "changes": ["owner=co-investor", "must=false", "label=Joint owner permanent address (street)"], "why": null}
+{"when": "2026-11-15T00:47:03Z", "op": "set", "place": "p01-029", "changes": ["what=address", "owner=co-investor", "must=false", "doubt=", "label=Joint owner permanent address (city/state)"], "why": null}
+{"when": "2026-11-15T00:47:04Z", "op": "set", "place": "p01-030", "changes": ["owner=co-investor", "must=false", "label=Joint owner permanent address (zip)"], "why": null}
+{"when": "2026-11-15T00:47:04Z", "op": "add", "place": "p01-031", "why": null}
+{"when": "2026-11-15T00:47:04Z", "op": "add", "place": "p01-032", "why": null}
+{"when": "2026-11-15T00:47:04Z", "op": "add", "place": "p01-033", "why": null}
+{"when": "2026-11-15T00:47:04Z", "op": "add", "place": "p01-034", "why": null}
+{"when": "2026-11-15T00:47:04Z", "op": "add", "place": "p01-035", "why": null}
+{"when": "2026-11-15T00:47:04Z", "op": "add", "place": "p01-036", "why": null}
+{"when": "2026-11-15T00:47:05Z", "op": "add", "place": "p01-037", "why": null}
+{"when": "2026-11-15T00:47:05Z", "op": "add", "place": "p01-038", "why": null}
+{"when": "2026-11-15T00:47:05Z", "op": "add", "place": "p01-039", "why": null}
+{"when": "2026-11-15T00:47:05Z", "op": "add", "place": "p01-040", "why": null}
+{"when": "2026-11-15T00:47:05Z", "op": "add", "place": "p01-041", "why": null}
+{"when": "2026-11-15T00:47:05Z", "op": "add", "place": "p01-042", "why": null}
+{"when": "2026-11-15T00:47:05Z", "op": "add", "place": "p01-043", "why": null}
+{"when": "2026-11-15T00:47:05Z", "op": "add", "place": "p01-044", "why": null}
+{"when": "2026-11-15T00:47:05Z", "op": "add", "place": "p01-045", "why": null}
+{"when": "2026-11-15T00:47:06Z", "op": "add", "place": "p01-046", "why": null}
+{"when": "2026-11-15T00:47:06Z", "op": "add", "place": "p01-047", "why": null}
+{"when": "2026-11-15T00:47:06Z", "op": "add", "place": "p01-048", "why": null}
+{"when": "2026-11-15T00:47:06Z", "op": "add", "place": "p01-049", "why": null}
+{"when": "2026-11-15T00:47:06Z", "op": "add", "place": "p01-050", "why": null}
+{"when": "2026-11-15T00:47:06Z", "op": "add", "place": "p01-051", "why": null}
+{"when": "2026-11-15T00:47:06Z", "op": "add", "place": "p01-052", "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "add", "place": "p01-053", "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-001", "changes": ["owner=investor", "what=name", "must=false", "label=Name of trust or custodian"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-002", "changes": ["owner=investor", "must=false", "label=Date of trust"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-003", "changes": ["owner=investor", "must=false", "label=Trust/custodian address (street)"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-004", "changes": ["owner=investor", "what=address", "must=false", "doubt=", "label=Trust/custodian address (city/state)", "printed_label=(city/state)"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-005", "changes": ["owner=investor", "must=false", "label=Trust/custodian address (zip)"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-006", "changes": ["owner=investor", "must=false", "label=Trust/custodian phone"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-007", "changes": ["owner=investor", "must=false", "label=Trust/custodian email"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-008", "changes": ["owner=investor", "what=name", "must=false", "label=Trustee(s) or custodian"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-009", "changes": ["owner=investor", "must=false", "label=Custodian tax ID"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-010", "changes": ["owner=investor", "what=name", "must=false", "label=Beneficial owner(s)"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-011", "changes": ["owner=investor", "must=false", "label=Beneficial owner social security number"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-012", "changes": ["owner=investor", "must=false", "label=Beneficial owner address (street)"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-013", "changes": ["owner=investor", "must=false", "label=Beneficial owner address (city/state)"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-014", "changes": ["owner=investor", "must=false", "label=Beneficial owner address (zip)"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-015", "changes": ["owner=investor", "what=date", "must=false", "label=Beneficial owner date of birth"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-016", "changes": ["owner=investor", "must=false", "label=Custodial account number"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-017", "changes": ["owner=investor-entity", "must=false", "label=Entity name"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-018", "changes": ["owner=investor-entity", "what=date", "must=false", "label=Date of entity formation", "printed_label=Date of Entity Formation"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-019", "changes": ["owner=investor-entity", "must=false", "label=Entity address (street)"], "why": null}
+{"when": "2026-11-15T00:47:07Z", "op": "set", "place": "p02-020", "changes": ["owner=investor-entity", "what=address", "must=false", "doubt=", "label=Entity address (city/state)", "printed_label=(city/state)"], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p02-021", "changes": ["owner=investor-entity", "must=false", "label=Entity address (zip)"], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p02-022", "changes": ["owner=investor-entity", "must=false", "label=Entity type"], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p02-023", "changes": ["owner=investor-entity", "must=false", "label=Entity tax ID", "printed_label=Tax ID"], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p02-024", "changes": ["owner=investor-entity", "what=name", "must=false", "doubt=", "label=Officer(s), general partner or authorized person(s)"], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p02-025", "changes": ["must=false", "doubt=", "label=Dividends mailed to: address line 1", "printed_label="], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p02-026", "changes": ["must=false", "doubt=", "label=Dividends mailed to: address line 2", "printed_label="], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p02-027", "changes": ["must=false", "doubt=", "label=Direct deposit: name of financial institution"], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p02-028", "changes": ["must=false", "label=Direct deposit: account type"], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p02-029", "changes": ["must=false", "label=Direct deposit: bank mailing address (street)"], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p02-030", "changes": ["owner=investor", "must=false", "label=Direct deposit: bank address (city/state)", "printed_label=(city/state)"], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p02-031", "changes": ["must=false", "label=Direct deposit: bank address (zip)", "printed_label=(zip)"], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p02-032", "changes": ["label=Direct deposit: ABA routing number", "printed_label=ABA Routing Number (if applicable)"], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p02-033", "changes": ["label=Direct deposit: account number", "printed_label=Account Number"], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "add", "place": "p02-034", "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "add", "place": "p02-035", "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "add", "place": "p02-036", "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "add", "place": "p02-037", "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "add", "place": "p02-038", "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "add", "place": "p02-039", "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "add", "place": "p03-025", "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p03-001", "changes": ["must=false", "label=Email address for electronic delivery"], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p03-002", "changes": ["must=false", "label=Initials for electronic delivery"], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p05-001", "changes": ["kind=blank", "what=name", "owner=investor", "must=true", "doubt=", "label=Owner or authorized person: printed name", "printed_label=Owner or Authorized Person (Print Name)"], "why": null}
+{"when": "2026-11-15T00:47:08Z", "op": "set", "place": "p05-002", "changes": ["kind=blank", "what=name", "owner=co-investor", "must=false", "doubt=", "label=Second owner or authorized person: printed name", "printed_label=Owner or Authorized Person (Print Name)"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-003", "changes": ["kind=signature", "what=", "owner=investor", "must=true", "doubt=", "label=Owner or authorized person signature", "printed_label=Owner or Authorized Person Signature"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-004", "changes": ["kind=signature", "what=", "owner=co-investor", "must=false", "doubt=", "label=Second owner or authorized person signature", "printed_label=Owner or Authorized Person Signature"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-005", "changes": ["kind=date", "what=", "owner=investor", "must=true", "doubt=", "label=Owner signature date"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-006", "changes": ["kind=date", "what=", "owner=co-investor", "must=false", "doubt=", "label=Second owner signature date"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-007", "changes": ["kind=blank", "what=name", "owner=third-party", "must=false", "label=Custodian printed name", "printed_label=Custodian Name [if applicable] (Print Name)"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-008", "changes": ["kind=signature", "owner=third-party", "must=false", "label=Custodian signature", "printed_label=Custodian Signature [if applicable]"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-009", "changes": ["kind=date", "what=", "owner=third-party", "must=false", "doubt=", "label=Custodian signature date"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-010", "changes": ["owner=third-party", "must=false", "label=Broker-dealer name"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-011", "changes": ["owner=third-party", "must=false", "label=Financial adviser name (first, middle, last)"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-012", "changes": ["owner=third-party", "what=name", "must=false", "label=Operational contact name (optional)"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-013", "changes": ["owner=third-party", "must=false", "label=Financial adviser address (street)"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-014", "changes": ["owner=third-party", "must=false", "label=Financial adviser address (city/state)"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-015", "changes": ["owner=third-party", "must=false", "label=Financial adviser address (zip)"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-016", "changes": ["owner=third-party", "must=false", "label=Adviser number"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-017", "changes": ["owner=third-party", "must=false", "doubt=", "label=Branch number"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-018", "changes": ["owner=third-party", "must=false", "label=Financial adviser telephone"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-019", "changes": ["owner=third-party", "must=false", "label=Financial adviser email address"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-020", "changes": ["owner=third-party", "must=false", "label=Financial adviser fax"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-021", "changes": ["owner=third-party", "must=false", "label=Financial adviser signature"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-022", "changes": ["owner=third-party", "must=false", "label=Financial adviser signature date"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-023", "changes": ["owner=third-party", "must=false", "doubt=", "label=Principal signature (broker-dealer)"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "set", "place": "p05-024", "changes": ["kind=date", "owner=third-party", "must=false", "doubt=", "label=Principal signature date"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "add", "place": "p05-025", "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "add", "place": "p05-026", "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "add", "place": "p05-027", "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "meta", "changes": ["signing.kind=Subscription agreement for common shares of a closed-end company: the owner (and a second owner for joint accounts) completes sections 1-6, initials each representation on pages 3-4 and signs on page 5; a custodian signs for custodial accounts; the financial adviser and a principal of the broker-dealer complete and sign section 8. No issuer acceptance block.", "signing.third_parties=custodian,broker-dealer"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "meta", "changes": ["sure.1=sure of every place; the joint or beneficial owner block is the co-investor's", "sure.2=sure of the places; trust/custodian rows follow the investor's form (investor), the corporation/partnership block is investor-entity", "sure.3=sure; owner column = investor, joint owner column = co-investor", "sure.4=sure; owner column = investor, joint owner column = co-investor", "sure.5=sure; second owner column = co-investor; section 8 is the broker-dealer's", "sure.6=sure: prose only, no place"], "why": null}
+{"when": "2026-11-15T00:47:09Z", "op": "meta", "changes": ["not.1=the section heading bars and the volume discount paragraphs", "not.1=the printed captions under the boxes ((street), (city/state), (zip), (mm/dd/yyyy))"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "meta", "changes": ["not.2=the Trust or Custodian and Corporation headings; the paragraphs of section 4"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "meta", "changes": ["not.3=the Owner (initials) and Joint Owner (initials) column header boxes", "not.3=the representation text"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "meta", "changes": ["not.4=the Owner / Joint Owner column header boxes", "not.4=the W-9 certification and acknowledgment paragraphs"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "meta", "changes": ["not.5=the printed payment address and wire details in section 9", "not.5=the section 8 certification paragraph"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "meta", "changes": ["not.6=the uncertificated shares notice: prose only"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-003", "changes": ["kind=initials", "what=", "owner=investor", "must=true", "doubt=", "label=Representation a: owner initials", "printed_label=Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-004", "changes": ["kind=initials", "what=", "owner=co-investor", "must=false", "doubt=", "label=Representation a: joint owner initials", "printed_label=Joint Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-005", "changes": ["kind=initials", "what=", "owner=investor", "must=true", "doubt=", "label=Representation b: owner initials", "printed_label=Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-006", "changes": ["kind=initials", "what=", "owner=co-investor", "must=false", "doubt=", "label=Representation b: joint owner initials", "printed_label=Joint Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-007", "changes": ["kind=initials", "what=", "owner=investor", "must=true", "doubt=", "label=Representation c: owner initials", "printed_label=Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-008", "changes": ["kind=initials", "what=", "owner=co-investor", "must=false", "doubt=", "label=Representation c: joint owner initials", "printed_label=Joint Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-009", "changes": ["kind=initials", "what=", "owner=investor", "must=true", "doubt=", "label=Representation d: owner initials", "printed_label=Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-010", "changes": ["kind=initials", "what=", "owner=co-investor", "must=false", "doubt=", "label=Representation d: joint owner initials", "printed_label=Joint Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-011", "changes": ["kind=initials", "what=", "owner=investor", "must=false", "doubt=", "label=Representation e: owner initials", "printed_label=Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-012", "changes": ["kind=initials", "what=", "owner=co-investor", "must=false", "doubt=", "label=Representation e: joint owner initials", "printed_label=Joint Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-013", "changes": ["kind=initials", "what=", "owner=investor", "must=false", "doubt=", "label=Representation f: owner initials", "printed_label=Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-014", "changes": ["kind=initials", "what=", "owner=co-investor", "must=false", "doubt=", "label=Representation f: joint owner initials", "printed_label=Joint Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-015", "changes": ["kind=initials", "what=", "owner=investor", "must=false", "doubt=", "label=Representation g: owner initials", "printed_label=Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-016", "changes": ["kind=initials", "what=", "owner=co-investor", "must=false", "doubt=", "label=Representation g: joint owner initials", "printed_label=Joint Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-017", "changes": ["kind=initials", "what=", "owner=investor", "must=false", "doubt=", "label=Representation h: owner initials", "printed_label=Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-018", "changes": ["kind=initials", "what=", "owner=co-investor", "must=false", "doubt=", "label=Representation h: joint owner initials", "printed_label=Joint Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-019", "changes": ["kind=initials", "what=", "owner=investor", "must=false", "doubt=", "label=Representation i: owner initials", "printed_label=Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:10Z", "op": "set", "place": "p03-020", "changes": ["kind=initials", "what=", "owner=co-investor", "must=false", "doubt=", "label=Representation i: joint owner initials", "printed_label=Joint Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:11Z", "op": "set", "place": "p03-021", "changes": ["kind=initials", "what=", "owner=investor", "must=false", "doubt=", "label=Representation j: owner initials", "printed_label=Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:11Z", "op": "set", "place": "p03-022", "changes": ["kind=initials", "what=", "owner=co-investor", "must=false", "doubt=", "label=Representation j: joint owner initials", "printed_label=Joint Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:11Z", "op": "set", "place": "p03-023", "changes": ["kind=initials", "what=", "owner=investor", "must=false", "doubt=", "label=Representation k: owner initials", "printed_label=Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:11Z", "op": "set", "place": "p03-024", "changes": ["kind=initials", "what=", "owner=co-investor", "must=false", "doubt=", "label=Representation k: joint owner initials", "printed_label=Joint Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:11Z", "op": "set", "place": "p04-001", "changes": ["kind=initials", "what=", "owner=investor", "must=false", "doubt=", "label=Representation l: owner initials", "printed_label=Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:11Z", "op": "set", "place": "p04-002", "changes": ["kind=initials", "what=", "owner=co-investor", "must=false", "doubt=", "label=Representation l: joint owner initials", "printed_label=Joint Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:11Z", "op": "set", "place": "p04-003", "changes": ["kind=initials", "what=", "owner=investor", "must=false", "doubt=", "label=Representation m: owner initials", "printed_label=Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:11Z", "op": "set", "place": "p04-004", "changes": ["kind=initials", "what=", "owner=co-investor", "must=false", "doubt=", "label=Representation m: joint owner initials", "printed_label=Joint Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:11Z", "op": "set", "place": "p04-005", "changes": ["kind=initials", "what=", "owner=investor", "must=false", "doubt=", "label=Representation n: owner initials", "printed_label=Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:11Z", "op": "set", "place": "p04-006", "changes": ["kind=initials", "what=", "owner=co-investor", "must=false", "doubt=", "label=Representation n: joint owner initials", "printed_label=Joint Owner (initials)"], "why": null}
+{"when": "2026-11-15T00:47:29Z", "op": "done"}

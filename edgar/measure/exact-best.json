@@ -1,0 +1,42 @@
+{
+ "A": {
+  "when": "2026-11-15T00:25:07",
+  "runs": [
+   "out-set-a",
+   "out-set-b",
+   "out-cal-final"
+  ],
+  "exactPy": "a0afa78e056fbce26ebbf1097074d6c583a2c9bbba14143ea6f1198fb54abfc5",
+  "totals": {
+   "places": 3697,
+   "fields": 2303,
+   "found": 1786,
+   "missed": 1911,
+   "strays": 517,
+   "kindDiff": 190,
+   "ownerDiff": 473,
+   "labelDiff": 755,
+   "marked": 1516,
+   "fixes": 3843,
+   "requiredDiff": 608,
+   "rightFirstTime": 371,
+   "labelled": 3168,
+   "labelledFound": 1616,
+   "splitPairs": 14,
+   "exactReady": 0,
+   "scored": 39,
+   "foundPct": 48.309,
+   "kindRightPct": 89.362,
+   "ownerRightPct": 73.516,
+   "labelRightPct": 53.28,
+   "markedPct": 65.827,
+   "strayPct": 22.449,
+   "requiredDiffPct": 34.043,
+   "rightFirstTimePct": 10.035,
+   "exactReadyPct": 0.0,
+   "sheetsSha": "61317176e03d9d355783fae04e86d8a028e71f979bb95f40713c7d7c5814922f",
+   "notRun": 0
+  },
+  "note": "seeded by plan 01.4-02 from the research runs (out-set-a, out-set-b, out-cal-final; reader of 2026-11-14); page-break convention on (14 pairs). Without it the totals equal RESEARCH: 3711 places, 1786 found, 517 strays, 3857 fixes, 371 right first time, 0 of 39 exact-ready."
+ }
+}

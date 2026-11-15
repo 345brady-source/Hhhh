@@ -1,0 +1,607 @@
+{
+ "file": "set-a/a001/doc.pdf",
+ "id": "a001",
+ "pages": 4,
+ "page_size_pt": [
+  612.0,
+  792.0
+ ],
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
+ "signing": {
+  "investor_pages": [],
+  "firm_pages": [
+   4
+  ],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": "Regulation A subscription agreement: the subscriber ticks an accredited basis (page 2) and completes units, amount, name, tax number and address (page 4); no signature line is printed for the subscriber; the company accepts by signature and date on page 4."
+ },
+ "counts_per_page": {
+  "2": {
+   "total": 8,
+   "tickbox": 8,
+   "initials": 0,
+   "blank": 0,
+   "signature": 0,
+   "date": 0
+  },
+  "4": {
+   "total": 10,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 9,
+   "signature": 1,
+   "date": 0
+  }
+ },
+ "counts_total": {
+  "total": 18,
+  "tickbox": 8,
+  "initials": 0,
+  "blank": 9,
+  "signature": 1,
+  "date": 0
+ },
+ "counts_by_owner": {
+  "firm": 4,
+  "investor": 14
+ },
+ "sure_per_page": {
+  "1": "draft",
+  "2": "sure",
+  "3": "draft",
+  "4": "sure of the places; no subscriber signature line is printed; the acceptance date has gaps of spaces, no rule"
+ },
+ "not_fields": {
+  "1": [
+   "the offering circular date gap and the bracketed price per unit (the issuer completes them before sending)"
+  ],
+  "4": [
+   "the short underline tail under the amount line (the amount underline wrapped to the next line)",
+   "the printed company officer name and title",
+   "headings and paragraphs"
+  ],
+  "3": [
+   "prose only"
+  ]
+ },
+ "places": [
+  {
+   "id": "p02-001",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "accredited basis: bank, broker-dealer, insurer, investment company, benefit plan",
+   "must": false,
+   "x0": 74.0,
+   "y0": 103.9,
+   "x1": 84.0,
+   "y1": 113.9,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.0,
+      103.9,
+      84.0,
+      113.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-002",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "accredited basis: private business development company",
+   "must": false,
+   "x0": 74.0,
+   "y0": 266.7,
+   "x1": 84.0,
+   "y1": 276.7,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.0,
+      266.7,
+      84.0,
+      276.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-003",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "accredited basis: 501(c)(3) organisation, corporation, trust or partnership over $5 million",
+   "must": false,
+   "x0": 74.0,
+   "y0": 285.4,
+   "x1": 84.0,
+   "y1": 295.4,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.0,
+      285.4,
+      84.0,
+      295.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-004",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "accredited basis: natural person net worth over $1 million",
+   "must": false,
+   "x0": 74.0,
+   "y0": 328.2,
+   "x1": 84.0,
+   "y1": 338.2,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.0,
+      328.2,
+      84.0,
+      338.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-005",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "accredited basis: natural person income over $200,000 / $300,000 joint",
+   "must": false,
+   "x0": 74.0,
+   "y0": 406.9,
+   "x1": 84.0,
+   "y1": 416.9,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.0,
+      406.9,
+      84.0,
+      416.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-006",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "accredited basis: trust over $5 million directed by a sophisticated person",
+   "must": false,
+   "x0": 74.0,
+   "y0": 449.7,
+   "x1": 84.0,
+   "y1": 459.7,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.0,
+      449.7,
+      84.0,
+      459.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-007",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "accredited basis: entity owned by accredited investors",
+   "must": false,
+   "x0": 74.0,
+   "y0": 492.4,
+   "x1": 84.0,
+   "y1": 502.4,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.0,
+      492.4,
+      84.0,
+      502.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-008",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "accredited basis: director or executive officer of the company",
+   "must": false,
+   "x0": 74.0,
+   "y0": 523.2,
+   "x1": 84.0,
+   "y1": 533.2,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.0,
+      523.2,
+      84.0,
+      533.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-001",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "number of units subscribed",
+   "printed_label": "Number of Units:",
+   "must": true,
+   "x0": 111.0,
+   "y0": 165.6,
+   "x1": 171.0,
+   "y1": 181.1,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Number of Units",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "amount",
+     "box": [
+      111.0,
+      165.6,
+      171.0,
+      181.1
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p04-002",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "total dollar amount of subscription",
+   "printed_label": "Total Dollar Amount of Subscription:",
+   "must": true,
+   "x0": 193.9,
+   "y0": 177.6,
+   "x1": 258.9,
+   "y1": 193.1,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Total Dollar Amount of Subscription",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "amount",
+     "box": [
+      193.9,
+      177.6,
+      258.9,
+      193.1
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p04-003",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "subscriber name",
+   "printed_label": "Name:",
+   "must": true,
+   "x0": 33.7,
+   "y0": 215.9,
+   "x1": 180.0,
+   "y1": 231.4,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Name",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "name",
+     "box": [
+      33.7,
+      215.9,
+      180.0,
+      231.4
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p04-004",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "tax identification or social security number",
+   "printed_label": "Tax Identification or Social Security Number",
+   "must": true,
+   "x0": 33.7,
+   "y0": 253.4,
+   "x1": 180.0,
+   "y1": 268.9,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Taxpayer ID",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "tax number",
+     "box": [
+      33.7,
+      253.4,
+      180.0,
+      268.9
+     ]
+    }
+   },
+   "what": "tax number"
+  },
+  {
+   "id": "p04-005",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "subscriber address",
+   "printed_label": "Address",
+   "must": true,
+   "x0": 33.7,
+   "y0": 303.6,
+   "x1": 180.0,
+   "y1": 319.1,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Address",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      33.7,
+      303.6,
+      180.0,
+      319.1
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p04-006",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "subscriber city, state and zip code",
+   "printed_label": "City, State and Zip Code",
+   "must": true,
+   "x0": 33.7,
+   "y0": 341.1,
+   "x1": 180.0,
+   "y1": 356.6,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "City, state and ZIP",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      33.7,
+      341.1,
+      180.0,
+      356.6
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p04-008",
+   "page": 4,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "acceptance date: day",
+   "printed_label": "day of",
+   "must": true,
+   "x0": 411.0,
+   "y0": 399.4,
+   "x1": 433.5,
+   "y1": 410.4,
+   "printed_as": "measured by hand",
+   "what": "date",
+   "doubt": "no printed rule: a gap of spaces in the acceptance sentence"
+  },
+  {
+   "id": "p04-009",
+   "page": 4,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "acceptance date: month",
+   "printed_label": "",
+   "must": true,
+   "x0": 458.7,
+   "y0": 399.4,
+   "x1": 501.2,
+   "y1": 410.4,
+   "printed_as": "measured by hand",
+   "what": "date",
+   "doubt": "no printed rule: a gap of spaces in the acceptance sentence"
+  },
+  {
+   "id": "p04-010",
+   "page": 4,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "acceptance date: final number of the year",
+   "printed_label": "201",
+   "must": true,
+   "x0": 521.2,
+   "y0": 399.4,
+   "x1": 531.2,
+   "y1": 410.4,
+   "printed_as": "measured by hand",
+   "what": "date",
+   "doubt": "no printed rule: a gap of spaces in the acceptance sentence"
+  },
+  {
+   "id": "p04-007",
+   "page": 4,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "company acceptance signature",
+   "printed_label": "By:",
+   "must": true,
+   "x0": 64.5,
+   "y0": 446.1,
+   "x1": 251.2,
+   "y1": 461.6,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "firm",
+    "field_label": "Signature",
+    "candidate": "rule",
+    "initial": {
+     "kind": "signature",
+     "owner": "firm",
+     "what": null,
+     "box": [
+      64.5,
+      446.1,
+      251.2,
+      461.6
+     ]
+    }
+   }
+  }
+ ],
+ "may_fill": [],
+ "source": "hand",
+ "mode": "train",
+ "prefilled": {
+  "when": "2026-11-15T00:43:56Z",
+  "candidates": "25c8612c3819b91c-f01586d5.json",
+  "result": "out-set-a/a001/result.json",
+  "fields": 7,
+  "counted_candidates": 15
+ },
+ "done": "2026-11-15T00:45:21Z"
+}

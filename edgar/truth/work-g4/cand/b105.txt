@@ -1,0 +1,244 @@
+=== page 1  (U 0, B 26, H 10, X 0)
+ B0 373.5 142.2 378.9 147.8 U+2610 | Investment Amount $ [] Initial Purchase
+ B1 373.3 158.9 378.7 164.5 U+2610 |  [] Subsequent Purchase
+ B2 63.5 190.8 68.9 196.4 U+2610 |  [] By mail Attach a check to this
+ B3 63.5 207.5 68.9 213.1 U+2610 |  [] By wire Name: DST as Agent for
+ B4 64.4 269.6 69.8 275.2 U+2610 |  [] Broker-dealer/Financial adviso
+ B5 50.6 316.8 56.0 322.4 U+2610 |  [] Share Class T (minimum investm
+ B6 50.6 333.4 56.0 338.9 U+2610 |  [] Share Class S (minimum investm
+ B7 50.6 350.1 56.0 355.7 U+2610 |  [] Share Class D (minimum investm
+ B8 50.6 366.7 56.0 372.2 U+2610 |  [] Share Class I (minimum investm
+ B9 52.6 413.5 58.0 419.0 U+2610 |  [] Oaktree Employee ☐ Oaktree Off
+ B10 132.7 413.5 138.1 419.0 U+2610 | ☐ Oaktree Employee [] Oaktree Officer or Director ☐ 
+ B11 255.8 413.5 261.2 419.0 U+2610 | tree Officer or Director [] Oaktree Affiliate ☐ Not Applic
+ B12 341.8 413.5 347.2 419.0 U+2610 | ctor ☐ Oaktree Affiliate [] Not Applicable
+ B13 53.6 477.2 59.0 482.8 U+2610 |  [] INDIVIDUAL OR JOINT TENANT WIT
+ B14 351.7 477.2 357.1 482.8 U+2610 | H RIGHTS OF SURVIVORSHIP [] IRA
+ B15 83.9 488.0 89.3 493.6 U+2610 |  [] TRANSFER ON DEATH (Optional De
+ B16 53.6 514.6 59.0 520.2 U+2610 |  [] TENANTS IN COMMON
+ B17 351.7 488.0 357.1 493.6 U+2610 | ation. Not Available for [] ROTH IRA
+ B18 351.7 505.4 357.1 511.0 U+2610 |  [] SEP IRA
+ B19 351.7 522.9 357.1 528.5 U+2610 |  [] SIMPLE IRA
+ B20 53.6 534.4 59.0 540.0 U+2610 |  [] COMMUNITY PROPERTY ☐ OTHER
+ B21 353.3 534.4 358.7 540.0 U+2610 | ☐ COMMUNITY PROPERTY [] OTHER
+ B22 53.6 560.3 59.0 565.9 U+2610 |  [] UNIFORM GIFT/TRANSFER TO MINOR
+ B23 53.6 587.3 59.0 592.9 U+2610 |  [] PENSION PLAN (Include Certific
+ B24 53.6 603.9 59.0 609.5 U+2610 |  [] TRUST (Include Certification o
+ B25 53.6 620.6 59.0 626.2 U+2610 |  [] CORPORATION / PARTNERSHIP / OT
+ H0 135.4 139.3 191.6 149.3 w=56 th=0.5 | Investment Amount $ ___ ☐ Initial Purchase ^
+ H1 43.9 434.7 583.4 444.7 w=539 th=0.7 |  ___  ^2. Ownership Type (Select only one)
+ H2 175.5 457.4 228.1 467.4 w=53 th=0.5 | B ROKERAGE ACCOUNT NUMBER ___ CUSTODIAN ACCOUNT NUMBER ^Non-Custodial Account
+ H3 458.8 457.4 511.4 467.4 w=53 th=0.5 | CCOUNT NUMBER CUSTODIAN ACCOUNT NUMBER ___  ^Custodial Account
+ H4 386.8 531.1 494.1 541.1 w=107 th=0.5 | ☐ COMMUNITY PROPERTY ☐ OTHER ___  ^IRA
+ H5 110.2 566.7 250.4 576.7 w=140 th=0.5 | STATE OF ___ CUSTODIAN NAME ^GIFT/TRANSFER TO MINORS
+ H6 443.9 567.9 517.9 577.9 w=74 th=0.5 | STATE OF CUSTODIAN NAME ___  ^
+ H7 449.0 584.4 522.9 594.4 w=74 th=0.5 | stment Powers Form) CUSTODIAN TAX ID # ___  ^
+ H8 446.1 601.0 520.1 611.0 w=74 th=0.5 | estment Powers Form) CUSTODIAN PHONE # ___  ^
+ H9 43.9 639.8 583.4 649.8 w=539 th=0.7 |  ___  ^(Corporate Resolution or Partnership Agr
+=== page 2  (U 0, B 17, H 19, X 0)
+ B0 36.7 120.8 42.1 126.4 U+2610 |  [] Retirement Plan ☐ Trust ☐ S-Co
+ B1 117.4 120.8 122.8 126.4 U+2610 | ☐ Retirement Plan [] Trust ☐ S-Corp ☐ C-Corp ☐ LLC 
+ B2 161.1 120.8 166.5 126.4 U+2610 |  Retirement Plan ☐ Trust [] S-Corp ☐ C-Corp ☐ LLC ☐ Partne
+ B3 222.5 120.8 227.9 126.4 U+2610 | nt Plan ☐ Trust ☐ S-Corp [] C-Corp ☐ LLC ☐ Partnership E x
+ B4 273.4 120.8 278.8 126.4 U+2610 |  Trust ☐ S-Corp ☐ C-Corp [] LLC ☐ Partnership E xempt paye
+ B5 315.4 120.8 320.8 126.4 U+2610 |  ☐ S-Corp ☐ C-Corp ☐ LLC [] Partnership E xempt payee code
+ B6 36.7 137.3 42.1 142.9 U+2610 |  [] O ther Jurisdiction (if Non-U.
+ B7 36.7 342.0 42.1 347.6 U+2610 |  [] Resident Alien ☐ Non-Resident 
+ B8 128.5 342.0 133.9 347.6 U+2610 | ☐ Resident Alien [] Non-Resident Alien (Attach a c
+ B9 36.7 367.9 42.1 373.5 U+2610 |  [] Oaktree Employee ☐ Oaktree Off
+ B10 128.5 367.9 133.9 373.5 U+2610 | ☐ Oaktree Employee [] Oaktree Officer or Director ☐ 
+ B11 272.2 367.9 277.6 373.5 U+2610 | tree Officer or Director [] Oaktree Affiliate
+ B12 36.7 518.4 42.1 524.0 U+2610 |  [] Resident Alien ☐ Non-Resident 
+ B13 128.5 518.4 133.9 524.0 U+2610 | ☐ Resident Alien [] Non-Resident Alien (Attach a c
+ B14 36.7 560.9 42.1 566.5 U+2610 |  [] Oaktree Employee ☐ Oaktree Off
+ B15 113.2 560.9 118.6 566.5 U+2610 | ☐ Oaktree Employee [] Oaktree Officer or Director ☐ 
+ B16 222.3 560.9 227.7 566.5 U+2610 | tree Officer or Director [] Oaktree Affiliate
+ H0 36.0 58.5 576.2 68.5 w=540 th=0.7 |  ___  ^
+ H1 36.0 92.6 576.2 102.6 w=540 th=0.7 |  ___  ^
+ H2 485.9 118.0 543.8 128.0 w=58 th=0.5 | artnership E xempt payee code (if any) ___  ^
+ H3 304.0 133.1 384.1 143.1 w=80 th=0.5 | ☐ O ther Jurisdiction (if Non-U.S.) ___ Exemption from FATCA reporting ^
+ H4 62.9 134.3 153.2 144.3 w=90 th=0.5 | ☐ O ther ___ Jurisdiction (if Non-U.S.) Exemption f ^
+ H5 436.2 143.9 534.5 153.9 w=98 th=0.5 | ted applicable Form W-8) code (if any) ___  ^from FATCA reporting
+ H6 36.0 217.2 576.2 227.2 w=540 th=0.7 |  ___  ^
+ H7 36.0 235.5 576.2 245.5 w=540 th=0.7 |  ___  ^First Name (MI) Last Name Gender
+ H8 36.0 259.5 253.5 269.5 w=218 th=0.7 |  ___ Date of Birth (MM/DD/YYYY) Daytime Pho ^Social Security Number/Tax ID
+ H9 255.2 259.5 576.2 269.5 w=321 th=0.7 | Social Security Number/Tax ID ___  ^Date of Birth (MM/DD/YYYY) Daytime Phone
+ H10 36.0 283.7 576.2 293.7 w=540 th=0.7 |  ___  ^Residential Street Address City State Zi
+ H11 36.0 307.7 576.2 317.7 w=540 th=0.7 |  ___  ^Email Address
+ H12 495.6 339.8 541.7 349.8 w=46 th=0.5 | Rev. July 2017) Country of Citizenship ___  ^
+ H13 36.0 383.6 576.2 393.6 w=540 th=0.7 |  ___  ^B. Co-Investor Name (Co-Investor/Co-Trus
+ H14 36.0 411.7 576.2 421.7 w=540 th=0.7 |  ___  ^First Name Gender (MI) Last Name
+ H15 36.0 435.9 253.5 445.9 w=218 th=0.7 |  ___ Date of Birth (MM/DD/YYYY) Daytime Pho ^Social Security Number/Tax ID
+ H16 255.2 435.9 576.2 445.9 w=321 th=0.7 | Social Security Number/Tax ID ___  ^Date of Birth (MM/DD/YYYY) Daytime Phone
+ H17 36.0 459.9 576.2 469.9 w=540 th=0.7 |  ___  ^Residential Street Address City State Zi
+ H18 36.0 484.2 576.2 494.2 w=540 th=0.7 |  ___  ^Email Address
+=== page 3  (U 0, B 13, H 19, X 0)
+ B0 484.2 65.0 489.6 70.6 U+2610 | te of Birth (MM/DD/YYYY) [] Primary
+ B1 484.2 79.7 489.6 85.3 U+2610 |  [] Secondary %
+ B2 484.2 94.5 489.6 100.1 U+2610 | te of Birth (MM/DD/YYYY) [] Primary
+ B3 484.2 109.3 489.6 114.8 U+2610 |  [] Secondary %
+ B4 484.2 124.0 489.6 129.6 U+2610 | te of Birth (MM/DD/YYYY) [] Primary
+ B5 484.2 138.8 489.6 144.4 U+2610 |  [] Secondary %
+ B6 484.2 153.5 489.6 159.1 U+2610 | te of Birth (MM/DD/YYYY) [] Primary
+ B7 484.2 168.7 489.6 174.2 U+2610 |  [] Secondary %
+ B8 542.5 283.0 556.4 296.8 U+2610 |  [] 
+ B9 294.3 379.1 308.2 392.9 U+2610 | Plan, initial this box*: [] 
+ B10 46.3 442.6 51.7 448.2 U+2610 | A. [] Cash/Check Mailed to the addre
+ B11 44.3 467.8 53.1 475.9 U+2610 | B. [] Cash/Check Mailed to Third Par
+ B12 46.3 519.1 51.7 524.7 U+2610 | C. [] Cash/Direct Deposit - Attach a
+ H0 289.6 51.6 576.2 61.6 w=287 th=0.7 |  ___  ^
+ H1 528.2 76.7 534.7 86.7 w=6 th=0.5 | ☐ Secondary ___ % ^
+ H2 36.0 81.1 576.2 91.1 w=540 th=0.7 |  ___  ^☐ Secondary %
+ H3 528.2 106.2 534.7 116.2 w=6 th=0.5 | ☐ Secondary ___ % ^
+ H4 36.0 110.9 576.2 120.9 w=540 th=0.7 |  ___  ^☐ Secondary %
+ H5 528.2 135.7 534.7 145.7 w=6 th=0.5 | ☐ Secondary ___ % ^
+ H6 36.0 140.4 576.2 150.4 w=540 th=0.7 |  ___  ^☐ Secondary %
+ H7 528.2 165.5 534.7 175.5 w=6 th=0.5 | ☐ Secondary ___ % ^
+ H8 36.0 191.1 576.2 201.1 w=540 th=0.7 |  ___  ^4. Contact Information (If different tha
+ H9 36.0 207.9 576.2 217.9 w=540 th=0.7 |  ___  ^Email Address
+ H10 84.5 257.6 101.8 267.6 w=17 th=0.7 | IF YOU ARE ___ AN ALABAMA, IDAHO, KANSAS, KENTUCKY, M ^NOT
+ H11 63.6 335.8 82.6 345.8 w=19 th=0.7 | IF YOU ___ AN ALABAMA, IDAHO, KANSAS, KENTUCKY, M ^ARE
+ H12 36.0 448.7 576.2 458.7 w=540 th=0.7 |  ___  ^A. ☐ Cash/Check Mailed to the address se
+ H13 36.0 465.9 576.2 475.9 w=540 th=0.7 |  ___  ^B. ☐ Cash/Check Mailed to Third Party/Cu
+ H14 36.0 483.0 576.2 493.0 w=540 th=0.7 |  ___  ^Name/Entity Name/Financial Institution M
+ H15 36.0 500.1 576.2 510.1 w=540 th=0.7 |  ___  ^City State Zip Code Account Number (Requ
+ H16 163.0 516.1 248.7 526.1 w=86 th=0.7 | C. ☐ Cash/Direct Deposit - Attach a ___ (Non-Custodian Investors Only) ^pre-printed voided check.
+ H17 36.0 559.8 576.2 569.8 w=540 th=0.7 |  ___  ^account, they are authorized to debit my
+ H18 36.0 576.9 576.2 586.9 w=540 th=0.7 |  ___  ^Financial Institution Name Mailing Addre
+=== page 4  (U 0, B 0, H 16, X 0)
+ H0 36.0 77.7 576.2 87.7 w=540 th=0.7 |  ___  ^state designated as the investor’s legal
+ H1 441.3 93.6 576.2 103.6 w=135 th=0.7 | Financial Advisor Name ___  ^
+ H2 36.0 114.2 576.2 124.2 w=540 th=0.7 |  ___  ^Advisor Mailing Address
+ H3 36.0 134.4 576.2 144.4 w=540 th=0.7 |  ___  ^City State Zip Code
+ H4 36.0 151.7 576.2 161.7 w=540 th=0.7 |  ___  ^Financial Advisor Number Branch Number T
+ H5 70.6 366.8 258.3 376.8 w=188 th=0.7 |  ___  ^advice regarding a prospective investmen
+ H6 270.1 366.8 305.2 376.8 w=35 th=0.7 |  ___  ^contact your broker-dealer
+ H7 340.7 366.8 528.5 376.8 w=188 th=0.7 |  ___  ^or other financial intermediary.
+ H8 540.5 366.8 575.5 376.8 w=35 th=0.7 |  ___  ^
+ H9 71.8 389.4 258.3 399.4 w=187 th=0.7 |  ___  ^
+ H10 271.3 389.4 305.2 399.4 w=34 th=0.7 |  ___  ^
+ H11 341.9 389.4 528.5 399.4 w=187 th=0.7 |  ___  ^
+ H12 541.7 389.4 575.5 399.4 w=34 th=0.7 |  ___  ^
+ H13 177.9 568.7 208.7 578.7 w=31 th=0.7 |  ___  ^
+ H14 179.1 595.8 208.7 605.8 w=30 th=0.7 |  ___  ^
+ H15 34.6 615.8 577.7 625.8 w=543 th=0.7 |  ___  ^Initials
+=== page 5  (U 0, B 0, H 48, X 0)
+ H0 481.1 176.4 517.2 186.4 w=36 th=0.7 |  ___  ^
+ H1 540.9 176.4 575.8 186.4 w=35 th=0.7 |  ___  ^
+ H2 482.4 196.6 517.2 206.6 w=35 th=0.7 |  ___  ^
+ H3 540.9 196.6 575.8 206.6 w=35 th=0.7 |  ___  ^
+ H4 482.4 210.0 517.2 220.0 w=35 th=0.7 |  ___ Initials ^Initials
+ H5 540.9 210.0 575.8 220.0 w=35 th=0.7 | Initials ___  ^Initials
+ H6 482.4 229.9 517.2 239.9 w=35 th=0.7 | nual gross income of at least $70,000. ___  ^
+ H7 540.9 229.9 575.8 239.9 w=35 th=0.7 | nual gross income of at least $70,000. ___  ^
+ H8 482.4 243.4 517.2 253.4 w=35 th=0.7 |  ___ Initials ^Initials
+ H9 540.9 243.4 575.8 253.4 w=35 th=0.7 | Initials ___  ^Initials
+ H10 482.4 263.6 517.2 273.6 w=35 th=0.7 | spectus under “SUITABILITY STANDARDS.” ___  ^
+ H11 540.9 263.6 575.8 273.6 w=35 th=0.7 | spectus under “SUITABILITY STANDARDS.” ___  ^
+ H12 482.4 276.8 517.2 286.8 w=35 th=0.7 |  ___ Initials ^Initials
+ H13 540.9 276.8 575.8 286.8 w=35 th=0.7 | Initials ___  ^Initials
+ H14 482.4 296.9 517.2 306.9 w=35 th=0.7 |  ___  ^
+ H15 540.9 296.9 575.8 306.9 w=35 th=0.7 |  ___  ^
+ H16 482.4 310.1 517.2 320.1 w=35 th=0.7 |  ___ Initials ^Initials
+ H17 540.0 310.1 575.8 320.1 w=36 th=0.7 | Initials ___  ^Initials
+ H18 482.4 330.3 517.2 340.3 w=35 th=0.7 |  ___  ^
+ H19 540.0 330.3 575.8 340.3 w=36 th=0.7 |  ___  ^
+ H20 482.4 343.5 517.2 353.5 w=35 th=0.7 |  ___ Initials ^Initials
+ H21 540.9 343.5 575.8 353.5 w=35 th=0.7 | Initials ___  ^Initials
+ H22 482.4 363.7 517.2 373.7 w=35 th=0.7 | ith the SEC, available at www.sec.gov. ___  ^
+ H23 540.9 363.7 575.8 373.7 w=35 th=0.7 | ith the SEC, available at www.sec.gov. ___  ^
+ H24 482.4 376.9 517.2 386.9 w=35 th=0.7 |  ___ Initials ^Initials
+ H25 540.9 376.9 575.8 386.9 w=35 th=0.7 | Initials ___  ^Initials
+ H26 482.4 432.8 517.2 442.8 w=35 th=0.7 | 833-OAK-REIT (625-7348). ___  ^
+ H27 540.9 432.8 575.8 442.8 w=35 th=0.7 | 833-OAK-REIT (625-7348). ___  ^
+ H28 482.4 447.2 517.2 457.2 w=35 th=0.7 |  ___ I nitials ^I nitials
+ H29 540.9 447.2 575.8 457.2 w=35 th=0.7 | I nitials ___  ^I nitials
+ H30 482.4 475.8 517.2 485.8 w=35 th=0.7 | t to receive my distributions in cash. ___  ^
+ H31 540.9 475.8 575.8 485.8 w=35 th=0.7 | t to receive my distributions in cash. ___  ^
+ H32 482.4 489.0 517.2 499.0 w=35 th=0.7 |  ___ Initials ^Initials
+ H33 540.9 489.0 575.8 499.0 w=35 th=0.7 | Initials ___  ^Initials
+ H34 482.4 509.2 517.2 519.2 w=35 th=0.7 | liquid net worth. ___  ^
+ H35 540.9 509.2 575.8 519.2 w=35 th=0.7 | liquid net worth. ___  ^
+ H36 482.4 522.4 517.2 532.4 w=35 th=0.7 |  ___ Initials ^Initials
+ H37 540.9 522.4 575.8 532.4 w=35 th=0.7 | Initials ___  ^Initials
+ H38 482.4 542.5 517.2 552.5 w=35 th=0.7 |  ___  ^
+ H39 540.9 542.5 575.8 552.5 w=35 th=0.7 |  ___  ^
+ H40 482.4 555.7 517.2 565.7 w=35 th=0.7 |  ___ Initials ^Initials
+ H41 540.9 555.7 575.8 565.7 w=35 th=0.7 | Initials ___  ^Initials
+ H42 482.4 584.1 517.2 594.1 w=35 th=0.7 | worth. ___  ^
+ H43 540.9 584.1 575.8 594.1 w=35 th=0.7 | worth. ___  ^
+ H44 482.4 598.5 517.2 608.5 w=35 th=0.7 |  ___ Initials ^Initials
+ H45 540.9 598.5 575.8 608.5 w=35 th=0.7 | Initials ___  ^Initials
+ H46 482.4 636.1 517.2 646.1 w=35 th=0.7 | ) does not exceed 10% of my net worth. ___  ^
+ H47 540.9 636.1 575.8 646.1 w=35 th=0.7 | ) does not exceed 10% of my net worth. ___  ^
+=== page 6  (U 0, B 0, H 56, X 0)
+ H0 480.9 27.6 516.9 37.6 w=36 th=0.7 |  ___  ^
+ H1 539.5 27.6 575.5 37.6 w=36 th=0.7 |  ___  ^
+ H2 482.1 65.0 516.9 75.0 w=35 th=0.7 | nts and readily marketable securities. ___  ^
+ H3 540.7 65.0 575.5 75.0 w=35 th=0.7 | nts and readily marketable securities. ___  ^
+ H4 482.1 78.2 516.9 88.2 w=35 th=0.7 |  ___ Initials ^Initials
+ H5 540.7 78.2 575.5 88.2 w=35 th=0.7 | Initials ___  ^Initials
+ H6 482.1 97.4 516.9 107.4 w=35 th=0.7 | not exceed 10% of my liquid net worth. ___  ^
+ H7 540.7 97.4 575.5 107.4 w=35 th=0.7 | not exceed 10% of my liquid net worth. ___  ^
+ H8 482.1 110.6 516.9 120.6 w=35 th=0.7 |  ___ Initials ^Initials
+ H9 540.7 110.6 575.5 120.6 w=35 th=0.7 | Initials ___  ^Initials
+ H10 482.1 129.9 516.9 139.9 w=35 th=0.7 | not exceed 10% of my liquid net worth. ___  ^
+ H11 540.7 129.9 575.5 139.9 w=35 th=0.7 | not exceed 10% of my liquid net worth. ___  ^
+ H12 482.1 143.0 516.9 153.0 w=35 th=0.7 |  ___ Initials ^Initials
+ H13 540.7 143.0 575.5 153.0 w=35 th=0.7 | Initials ___  ^Initials
+ H14 482.1 162.2 516.9 172.2 w=35 th=0.7 | not exceed 10% of my liquid net worth. ___  ^
+ H15 540.7 162.2 575.5 172.2 w=35 th=0.7 | not exceed 10% of my liquid net worth. ___  ^
+ H16 482.1 175.4 516.9 185.4 w=35 th=0.7 |  ___ Initials ^Initials
+ H17 539.7 175.4 575.5 185.4 w=36 th=0.7 | Initials ___  ^Initials
+ H18 482.1 194.7 516.9 204.7 w=35 th=0.7 | Income Trust, Inc. ___  ^
+ H19 539.7 194.7 575.5 204.7 w=36 th=0.7 | Income Trust, Inc. ___  ^
+ H20 482.1 207.9 516.9 217.9 w=35 th=0.7 |  ___ Initials ^Initials
+ H21 540.7 207.9 575.5 217.9 w=35 th=0.7 | Initials ___  ^Initials
+ H22 482.1 236.4 516.9 246.4 w=35 th=0.7 | Ts may not exceed 10% of my net worth. ___  ^
+ H23 540.7 236.4 575.5 246.4 w=35 th=0.7 | Ts may not exceed 10% of my net worth. ___  ^
+ H24 482.1 249.6 516.9 259.6 w=35 th=0.7 |  ___ Initials ^Initials
+ H25 540.7 249.6 575.5 259.6 w=35 th=0.7 | Initials ___  ^Initials
+ H26 482.1 278.0 516.9 288.0 w=35 th=0.7 | al liabilities) that consists of cash, ___  ^
+ H27 540.7 278.0 575.5 288.0 w=35 th=0.7 | al liabilities) that consists of cash, ___  ^
+ H28 482.1 435.5 516.9 445.5 w=35 th=0.7 | t to Class I shares or Class D shares. ___  ^
+ H29 540.7 435.5 575.5 445.5 w=35 th=0.7 | t to Class I shares or Class D shares. ___  ^
+ H30 482.1 454.7 516.9 464.7 w=35 th=0.7 | estment trusts to 10% of my net worth. ___  ^
+ H31 540.7 454.7 575.5 464.7 w=35 th=0.7 | estment trusts to 10% of my net worth. ___  ^
+ H32 482.1 467.9 516.9 477.9 w=35 th=0.7 |  ___ Initials ^Initials
+ H33 540.7 467.9 575.5 477.9 w=35 th=0.7 | Initials ___  ^Initials
+ H34 482.1 483.5 516.9 493.5 w=35 th=0.7 |  ___  ^
+ H35 540.7 483.5 575.5 493.5 w=35 th=0.7 |  ___  ^
+ H36 482.1 496.7 516.9 506.7 w=35 th=0.7 |  ___ Initials ^Initials
+ H37 540.7 496.7 575.5 506.7 w=35 th=0.7 | Initials ___  ^Initials
+ H38 482.1 534.4 516.9 544.4 w=35 th=0.7 | ts, and readily marketable securities. ___  ^
+ H39 540.7 534.4 575.5 544.4 w=35 th=0.7 | ts, and readily marketable securities. ___  ^
+ H40 482.1 547.6 516.9 557.6 w=35 th=0.7 |  ___ Initials ^Initials
+ H41 540.7 547.6 575.5 557.6 w=35 th=0.7 | Initials ___  ^Initials
+ H42 482.1 566.8 516.9 576.8 w=35 th=0.7 | liquid net worth. ___  ^
+ H43 540.7 566.8 575.5 576.8 w=35 th=0.7 | liquid net worth. ___  ^
+ H44 481.9 579.9 517.2 589.9 w=35 th=0.5 |  ___ Initials ^Initials
+ H45 540.5 579.9 575.8 589.9 w=35 th=0.5 | Initials ___  ^Initials
+ H46 481.9 595.2 517.2 605.2 w=35 th=0.5 |  ___  ^
+ H47 540.5 595.2 575.8 605.2 w=35 th=0.5 |  ___  ^
+ H48 481.9 608.2 517.2 618.2 w=35 th=0.5 |  ___ Initials ^Initials
+ H49 540.5 608.2 575.8 618.2 w=35 th=0.5 | Initials ___  ^Initials
+ H50 481.9 645.4 517.2 655.4 w=35 th=0.5 | ts, and readily marketable securities. ___  ^
+ H51 540.5 645.4 575.8 655.4 w=35 th=0.5 | ts, and readily marketable securities. ___  ^
+ H52 481.9 659.8 517.2 669.8 w=35 th=0.5 |  ___ Initials ^Initials
+ H53 540.5 659.8 575.8 669.8 w=35 th=0.5 | Initials ___  ^Initials
+ H54 481.9 674.9 517.2 684.9 w=35 th=0.5 | Oaktree Real Estate Income Trust, Inc. ___  ^
+ H55 540.5 674.9 575.8 684.9 w=35 th=0.5 | Oaktree Real Estate Income Trust, Inc. ___  ^
+=== page 7  (U 0, B 0, H 12, X 0)
+ H0 480.9 27.6 516.9 37.6 w=36 th=0.7 |  ___  ^
+ H1 539.5 27.6 575.5 37.6 w=36 th=0.7 |  ___  ^
+ H2 482.1 55.9 516.9 65.9 w=35 th=0.7 |  automobiles) minus total liabilities. ___  ^
+ H3 540.7 55.9 575.5 65.9 w=35 th=0.7 |  automobiles) minus total liabilities. ___  ^
+ H4 61.0 385.5 224.7 395.5 w=164 th=0.7 |  ___  ^
+ H5 241.5 385.5 284.0 395.5 w=43 th=0.7 |  ___  ^
+ H6 326.1 385.5 498.4 395.5 w=172 th=0.7 |  ___  ^
+ H7 513.1 385.5 553.2 395.5 w=40 th=0.7 |  ___  ^
+ H8 62.7 412.2 224.7 422.2 w=162 th=0.7 |  ___  ^
+ H9 242.7 412.2 284.0 422.2 w=41 th=0.7 |  ___  ^
+ H10 327.3 412.2 498.4 422.2 w=171 th=0.7 |  ___  ^
+ H11 514.3 412.2 553.2 422.2 w=39 th=0.7 |  ___  ^
+=== page 8  (U 0, B 0, H 0, X 0)

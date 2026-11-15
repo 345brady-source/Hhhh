@@ -1,0 +1,25 @@
+{
+ "note": "builder artifacts guard.py --artifacts scans for any held-out A or B id (whole lower-case token); repo globs are relative to --root (the checkout), scratch globs to SCRATCH/edgar; text files only; heldout/ folders, burned.json and this file are not scanned",
+ "repo": [
+  ".planning/phases/01.4-*/*-SUMMARY.md",
+  ".planning/phases/01.4-*/checks/**",
+  ".planning/phases/01-accurate-field-placement/checks/class-pages.js"
+ ],
+ "scratch": [
+  "measure/quick.json",
+  "measure/quick.md",
+  "measure/residual*.md",
+  "measure/speed.md",
+  "train/manifest*.json",
+  "train/bootstrap/**",
+  "train/disputes*.json",
+  "train/adjudicate/**",
+  "train/rows/**",
+  "train/variants/**/index*.json",
+  "train/variants/**/*.md",
+  "train/place-model/**",
+  "train/meaning/**",
+  "train/dev*/**",
+  "train/dev*.md"
+ ]
+}

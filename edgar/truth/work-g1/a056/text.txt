@@ -1,0 +1,1824 @@
+11/14/26, 10:12 AM                                                                             e101.htm
+
+
+
+
+ EX-10.1 2 e101.htm PRIVATE OFFERING MEMORANDUM
+                                                                                                                                             Copy Number:
+
+
+
+    “Creating Radiation and Chemical Sniffing Drones and Innovative Detection Solutions for
+                the Nuclear Energy, Medical and Emergency Response Markets.”
+
+
+
+
+                                                                                     $600,000.00
+                                                                        Private Placement Offering Memorandum
+                                                                              2,000,000 Shares of Common Stock
+
+                                                                     $.30/Share with 35,000 Minimum Purchase
+     This Private Placement Offering Memorandum (“PPM” or “Memorandum” or “Offering Memorandum” or “Offering”) is issued by US Nuclear Corp., a Delaware corporation,
+ doing business at 7051 Eton Avenue in Canoga Park, California 91303 (the “Company”). The following exhibits are incorporated herein:
+        Exhibit A Accredited Investor Questionnaire
+        Exhibit B Subscription Agreement
+        Exhibit C Link to Annual Report for 2015 (Financial and Operational Disclosures)
+        Exhibit D Business Presentation
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                        1/78
+11/14/26, 10:12 AM                                                                            e101.htm
+
+
+
+     The Company is making the Offering only to accredited investors, as defined in Rule 501(a) under the Securities Act of 1933, as amended (the “Securities Act”), or to a limited
+ number of sophisticated investors, as allowed for by the Securities Act. This offering is being made in reliance on exemptions from registration pursuant to Section 4(2) of the
+ Securities Act and Rule 506(b) of Regulation D promulgated thereunder and applicable state securities laws.
+      The shares of common stock will be sold pursuant to the terms of the Subscription Agreement (the “Subscription Agreement”) as described herein. Pending completion of the
+ Offering, all funds representing an investor’s common stock purchase will be placed on deposit with the Company for immediate use pursuant to the Use of Funds schedule
+ attached hereto. There is no impound requirement in this offering and, as such, any funds received from this offering may be used by the Company at any time. The Company is
+ currently listed on the Over-The-Counter Bulletin Board exchange operated by the Financial Industry Regulatory Authority (“FINRA”) under the symbol “UCLE”. We are DTC
+ eligible under the rules promulgated by the Depository Trust and Clearing Corporation. Our transfer agent is Action Stock Transfer located at 2469 E. Fort Union Boulevard, Salt
+ Lake City, Utah 84121. The current number of shares of issued and outstanding common stock in the Company is 13,475,000. All other financial and operational disclosures can be
+ found at the link set forth at Exhibit C or at www.sec.gov.
+                                                                                        -1-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                       2/78
+11/14/26, 10:12 AM                                                                                      e101.htm
+
+
+
+
+      It is not the intent of the Company, at this time, to register shares of common stock purchased under this Offering; however, general business practices and internal decisions
+ of the Board of Directors might dictate otherwise in the future. A public market currently exists for the common stock of the Company, but it is limited, as set forth in the
+ Company’s public filings. The Company cannot provide any assurances regarding the common stock under this Offering, and the Company cannot assure that an active public
+ market for any of those securities will develop in the future. The Company’s stock is subject to restrictions on transferability and resale, and may not be resold unless they are
+ subsequently registered under the Securities Act and applicable state securities laws or an exemption from registration is available.
+      There are certain perceived benefits to being a reporting company. These are commonly thought to include the following: (a) increased visibility in the financial community;
+ (b) compliance with a requirement for admission to quotation on the OTC Bulletin Board or eventually on the Nasdaq Capital Market; (c) the facilitation of borrowing from
+ financial institutions; (d) increased valuation; (e) greater ease in raising capital; (f) compensation of key employees through stock options for which there may be a market
+ valuation; and (f) enhanced corporate image. There are also certain perceived disadvantages to being a reporting company. These are commonly thought to include the following:
+ (a) requirement for audited financial statements; (b) required publication of corporate information; (c) required filings of periodic and episodic reports with the SEC; and (d)
+ increased rules and regulations governing management, corporate activities and shareholder relations.
+        An investment in the Company is speculative, involves a high degree of risk, and should be considered only by sophisticated investors who can bear the economic risks of their investments for
+ an indefinite period and who can afford to sustain a complete loss of their investments. See “Risk Factors.”
+
+
+        In making an investment decision, investors must rely on their own examination of the person or entity creating the securities and the terms of the common stock offering herein, including
+ the merits and risks involved. The securities offered hereby have not been registered under the Securities Act or applicable state securities laws. These securities have not been approved or
+ disapproved by the United States Securities and Exchange Commission (the “SEC”), any state securities commission or other regulatory authority. Furthermore, the foregoing authorities have
+ not confirmed the accuracy or determined the adequacy of this document. Any representation to the contrary is a criminal offense.
+
+
+        These securities are subject to restrictions on transferability and resale and may not be transferred or resold except as permitted under the Securities Act and the applicable state
+ securities laws, pursuant to registration or exemption there from. Investors should be aware that they will be required to bear the financial risks of this investment for an indefinite period of
+ time.
+
+
+
+                                                                                                  -2-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                                         3/78
+11/14/26, 10:12 AM                                                                            e101.htm
+
+
+
+
+     This Memorandum is furnished on a confidential basis to the person whose name appears on the cover page hereof (the “Offeree"). This Memorandum constitutes an offer
+ only to the Offeree and is provided to the Offeree solely for the purpose of evaluating an investment in the Company offered hereby. By accepting delivery of this Memorandum,
+ the Offeree agrees (i) to keep confidential the contents of this Memorandum and any other oral or written information provided by the Company (directly or through one of its
+ financial or legal advisors) in connection with the offering and not to disclose the same to any third party or otherwise use the same for any purpose other than evaluating an
+ investment in the Company, (ii) not to copy, in whole or in part, this Memorandum or any other written information provided by the Company (directly or through one of its
+ financial or legal advisors) in connection herewith and (iii) to return this Memorandum and any such written information to Robert I. Goldstein, the Company’s Chairman of the
+ Board, Chief Executive Officer and President, or its Counsel, Paesano Akkashian Apkarian, PC located at 7457 Franklin Road, Suite 200 in Bloomfield Hills, Michigan 48301, in the
+ event that the Offeree does not subscribe to purchase any common stock pursuant to this offering, no portion of the Offeree’s subscription is accepted or the Company’s offering is
+ terminated or withdrawn.
+
+     This Memorandum does not constitute an offer to sell, or a solicitation of an offer to buy, any common stock offered hereby to any person in any jurisdiction in which it is
+ unlawful to make such an offer or solicitation to such person. Neither the delivery of this Memorandum nor any sale made hereunder shall under any circumstance create any
+ implication that the information contained herein is correct as of any date subsequent to the date hereof.
+     The Company reserves the right, in its sole discretion and for any reason whatsoever, to modify, amend, withdraw or terminate the Offering, including extending the Offering
+ but no later than May 23, 2017, to accept or reject in whole or in part any prospective investment in the common stock offered hereby, or to allot to the Offeree fewer than the
+ number of shares of common stock the Offeree desires to purchase. The Company shall have no liability whatsoever to the Offeree in the event that any of the foregoing shall
+ occur.
+     In determining whether to invest in the Company offering, the Offeree must rely upon his, her or its own examination of the Company and the terms of the offering made
+ hereby, including the merits and risks involved. The Company will, prior to the closing of the offering made hereby, afford prospective investors an opportunity to ask questions of
+ and to receive answers from the Company concerning the terms and conditions of the offering and to obtain any additional relevant information which the Company possesses or
+ can acquire without unreasonable effort or expense. Except as aforesaid, no person is authorized in connection with the offering to give any information or make any
+ representation not contained in this Memorandum and, if given or made, such information or representation must not be relied upon as having been authorized by the Company.
+     The Company makes no express or implied representation or warranty as to the attainability of any forward looking statements or projections set forth herein or as to the
+ accuracy or completeness of the assumptions from which that projected information is derived. Projections of the Company’s future performance are necessarily subject to a high
+ degree of uncertainty, including certain factors set forth in the following risk factors and elsewhere in this Memorandum, and the Company’s public filings, and actual results may
+ vary materially and adversely from any projections. It is expected that the Offeree will pursue its own independent investigation with respect to the projected financial
+ information included herein. Any estimates and projections contained herein have been prepared by the management of the Company and involve significant elements of
+ subjective judgment and analysis that may or may not be correct. Neither the Company nor its financial or legal advisors makes any representation or warranty, express or
+ implied, as to the accuracy or completeness of the information contained in this document, and nothing contained herein is, or shall be relied upon as a warranty or
+ representation, whether as to past or future.
+
+ FORWARD LOOKING STATEMENTS DISCLOSURE AND INTRODUCTION TO RISK FACTORS
+
+      This Offering Memorandum, including the Use of Proceeds and Projections, below, and the Business Presentation at Exhibit D, contains forward-looking statements which
+ relate to future events or our future financial performance. In some cases, you can identify forward-looking statements by terminology such as "may", "should", "expects", "plans",
+ "anticipates", "believes", "estimates", "predicts", "potential" or "continue" or the negative of these terms or other comparable terminology. These statements are only predictions
+ and involve known and unknown risks, uncertainties and other factors, including the risks in the sections entitled "Risk Factors," that may cause our or our industry's actual
+ results, levels of activity, performance or achievements to be materially different from any future results, levels of activity, performance or achievements expressed or implied by
+ these forward-looking statements.
+
+     While these forward-looking statements, and any assumptions upon which they are based, are made in good faith and reflect our current judgment regarding the direction of
+ our business, actual results will almost always vary, sometimes materially, from any estimates, predictions, projections, assumptions or other future performance suggested herein.
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                        4/78
+11/14/26, 10:12 AM                                                                          e101.htm
+
+
+
+ Except as required by applicable law, including the securities laws of the United States, we do not intend to update any of the forward-looking statements to conform these
+ statements to actual results.
+
+      Although management believes that the assumptions underlying the forward looking statements included in this filing are reasonable, they do not guarantee our future
+ performance, and actual results could differ from those contemplated by these forward looking statements. The assumptions used for purposes of the forward-looking statements
+ specified in the following information represent estimates of future events and are subject to uncertainty as to possible changes in economic, legislative, industry, and other
+ circumstances. As a result, the identification and interpretation of data and other information and their use in developing and selecting assumptions from and among reasonable
+ alternatives require the exercise of judgment.
+
+
+                                                                                      -3-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                   5/78
+11/14/26, 10:12 AM                                                                                      e101.htm
+
+
+
+
+     To the extent that the assumed events do not occur, the outcome may vary substantially from anticipated or projected results, and, accordingly, no opinion is expressed on the
+ achievability of those forward-looking statements. In the light of these risks and uncertainties, there can be no assurance that the results and events contemplated by the forward-
+ looking statements contained in this filing will in fact transpire. You are cautioned not to place undue reliance on these forward-looking statements, which speak only as of their
+ dates. We do not undertake any obligation to update or revise any forward-looking statements.
+
+      Factors that might cause or contribute to such differences include, but are not limited to, those discussed in "Risk Factors" contained in this Offering. As a result of these
+ factors, we cannot assure you that the forward-looking statements in this Offering will prove to be accurate. Except as required by law, we expressly disclaim any obligation to
+ update publicly any forward-looking statements for any reason after the date of this report, to conform these statements to actual results, or to changes in our expectations. You
+ should, however, review the factors and risks we describe in the reports we will file from time to time with the SEC.
+
+ EXECUTIVE SUMMARY – US NUCLEAR CORP.[1]
+
+      The Company incorporates by reference its Annual Report on Form 10-K filed with the SEC on April 14, 2016 and its Quarterly Report on Form 10-Q filed on May 16, 2016. These
+ reports, and all other reporting with the SEC at the link at Exhibit C, and on the Electronic Data Gathering, Analysis and Retrieval portal managed by the SEC, commonly referred
+ to as “EDGAR” set forth in detail the events leading up to this Offering.
+
+      Although management believes that the assumptions underlying the forward looking statements included in its public filings and this offering are reasonable, they do not
+ guarantee our future performance, and actual results could differ from those contemplated by these forward looking statements. The assumptions used for purposes of the
+ forward-looking statements specified in the following information represent estimates of future events and are subject to uncertainty as to possible changes in economic,
+ legislative, industry, and other circumstances. As a result, the identification and interpretation of data and other information and their use in developing and selecting
+ assumptions from and among reasonable alternatives require the exercise of judgment.
+
+     To the extent that the assumed events do not occur, the outcome may vary substantially from anticipated or projected results, and, accordingly, no opinion is expressed on the
+ achievability of those forward-looking statements. In the light of these risks and uncertainties, there can be no assurance that the results and events contemplated by the forward-
+ looking statements contained in this filing will in fact transpire. You are cautioned not to place undue reliance on these forward-looking statements, which speak only as of their
+ dates. We do not undertake any obligation to update or revise any forward-looking statements.
+
+      Factors that might cause or contribute to such differences include, but are not limited to, those discussed in this offering. As a result of these factors, we cannot assure you
+ that the forward-looking statements in this offering will prove to be accurate. Except as required by law, we expressly disclaim any obligation to update publicly any forward-
+ looking statements for any reason after the date of this report, to conform these statements to actual results, or to changes in our expectations. You should, however, review the
+ factors and risks we describe in the reports we will file from time to time with the SEC after the date of this report.
+
+                                                          Our Mission Is To Provide End-to-End Solutions of Products and Services Globally And To
+                                                                           Deliver Significant Value to Partners and Shareholders
+
+          Following a merger in October of 2013 with APEX 3, Inc., US Nuclear Acquisition Corp. and Optron Scientific Company, Inc. d/b/a Technical Associates (referred to herein
+ as “Technical Associates,” a related-party to the Company), we began to provide a full line of radiation detection equipment and services to industries ranging from nuclear reactor
+ plants, universities, local and state hospitals, government agencies, and emergency medical technicians or EMT/first responders. The Company’s nuclear radiation safety
+ detection equipment company has its roots from the famous Manhattan Project of the 1940s. In 1971, Allen Goldstein, the father to our current President and CEO, Robert
+ Goldstein, acquired the assets of Technical Associates and incorporated the company. The Company designed and built the first industrial grade radiation monitors and continues
+ to innovate its legacy with new product engineering for radiation measurement and safety instruments.
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                         6/78
+11/14/26, 10:12 AM                                                                  e101.htm
+
+
+
+                                                                              -4-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                    7/78
+11/14/26, 10:12 AM                                                                              e101.htm
+
+
+
+
+         The Company designs and manufactures nuclear radiation detection and safety equipment, survey meters, air and water monitors, port security equipment and tritium
+ air monitors. The Company’s customers are diverse groups such as Homeland Security, Lawrence Livermore Labs, Los Alamos National Labs, Department of Defense, FBI, CIA, US
+ Navy, Chevron Corporation, Bechtel Corporation, Biotechnology Laboratories, Hospitals, Universities, and Civil Emergency Management departments such as Fire, Paramedics and
+ Law Enforcement. The Company is headquartered in Canoga Park, California and, in addition to its public filings, the Company’s information can be accessed through
+ usnuclearcorp.com, and through its related-party websites at tech-associates.com and overhoff.com.
+
+               Technology and Products
+
+          The Company designs and develops both technologies in-house by its Chief Executive Officer, Robert I. Goldstein, as well as offers products from other manufacturers. Mr.
+ Goldstein’s extensive experience of over forty years in the field of nuclear radiation detection has allowed the Company to achieve significant recognition. The Company has been
+ approved by United States federal standards set by the Environmental Protection Agency (EPA), Food and Drug Administration (FDA) and the Nuclear Regulatory Commission
+ (NRC).
+
+          The Company has complete ownership of all of its technology and there are no licenses held by any outside party. No persons, company, vendor, distributor or contractor
+ holds any title or claim to any of the Company’s work or technology. The Company believes that its technology and business is defensible due to the fact that the barriers of entry
+ are high and technically complex. The Company has sought out niche markets in its business by becoming a leading category player in devices such as Tritium equipment. The
+ Company’s products consist of radiation water monitors, tritium monitors, air and water monitors, nano-second x-ray monitors, and vehicle, personnel, exit and room monitors.
+ The Company also offers handheld survey meters/dosimeters, and port security equipment, along with supporting software and services.
+
+              Radiation Water Monitors
+
+          The Company’s radiation water monitors allow detection of radioactive materials in drinking water, ground water, rainfall, rivers, and lakes. In order to detect radioactive
+ materials, the emitted radiation must travel from the radiation emitter to the detector. Alpha, Beta, Gamma, and Neutron radiation moves well through air, but poorly through
+ water. The complexity of detecting radiation in water and developing an efficient monitor has given the Company’s monitors a reasonable edge against competitors, and for this
+ reason, has limited competition in the water monitor business. The Company has invested more than ten years developing highly sensitive detectors for this market, giving it a
+ clear advantage over competitors. The Company’s radiation water monitors are used to check for radioactive materials being released as liquid effluent in drain pipes by
+ universities, hospitals, pharmaceutical companies, oil and gas extraction facilities, industrial chemical plants, and nuclear reactor plants.
+
+              Tritium Monitors
+
+          We are one of very few companies that currently operate within the tritium space. Overhoff is a leading manufacturer of tritium detection and monitors. The demand for
+ tritium detection and monitors are steadily increasing as countries develop solutions to their energy needs. In addition to CANDU reactors (Canada Deuterium Uranium), the
+ next generation of nuclear reactors called Molten Salt Reactors, (MSR) and Liquid-Fluoride Thorium Reactors (LFTR) utilize fuels other than traditional uranium and plutonium
+ sources. Thorium, which is more significantly abundant than uranium, is very difficult to use to create nuclear weapons, is favored by many governments, and as a source of
+ conventional energy it has been proven to be highly effective. By way of energy production, MSR and LFTRs produce high amounts of tritium which need to be constantly
+ monitored for detection. Additionally, the waste products of LFTR reactors are less hazardous than the current light-water uranium-plutonium reactors, and thus, LFTR reactors
+ provide higher level of safety and security against terrorist threats. The Company expects that a significant portion of its future sales and business strategy is tied to the growth of
+ MSR and LFTRs, as well as from CANDU reactors.
+
+
+                                                                                          -5-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                            8/78
+11/14/26, 10:12 AM                                                                            e101.htm
+
+
+
+
+          Tritium is produced naturally in the upper atmosphere when cosmic rays strike nitrogen molecules in the air. More commonly, tritium is produced during nuclear
+ weapons explosions, and as a byproduct in reactors producing electricity. Generally, tritium has several important uses; its most significant contribution is its use as a component
+ in the triggering mechanism in thermonuclear weapons. Very large quantities of required for the maintenance of nuclear weapons capabilities. Tritium is also produced
+ commercially in nuclear reactors, as well as used in various self-luminescent devices, such as exit signs in buildings, aircraft dials, gauges, luminous paints, and wristwatches.
+
+           In the mid-1950s and early 1960s, tritium was widely dispersed during above-ground testing of nuclear weapons. Today, sources of tritium come from commercial nuclear
+ reactors, research reactors, and government weapons production plants. Tritium may also be released as steam from these facilities or may leak into the underlying soil and
+ ground water. Additionally, self-luminescent devices illegally disposed in municipal landfills come into contact with water which pass through water ways, carrying dangerous
+ levels of tritium. Tritium holds a very dangerous health risk and high levels of exposure to tritium increases risk of developing cancer. To combat tritium leaks and to maintain
+ acceptable levels, the Company has developed several tritium monitors to gauge tritium in water and in the air.
+
+              Alpha, Beta, Gamma and Tritium Monitors
+
+          Our water monitors allow detection of radioactive materials in drinking water, ground water, rainfall, rivers, and lakes. In order to detect radioactive materials, the
+ emitted radiation must travel from the radiation emitter to the detector. Alpha, Beta, Gamma, and Neutron radiation moves well through air, but poorly through water. The
+ complexity of detecting radiation in water and developing an efficient monitor has given the Company’s monitors a reasonable edge against competitors, and for this reason, has
+ limited competition in the water monitor business. The Company has invested more than ten years developing highly sensitive detectors for this market, giving it a clear
+ advantage over competitors. The Company’s radiation water monitors are used to check for radioactive materials being released as liquid effluent in drain pipes by universities,
+ hospitals, pharmaceutical companies, oil and gas extraction facilities, industrial chemical plants, and nuclear reactor plants.
+
+          For the past 20 years, Overhoff has been devoted exclusively to the design, manufacturing and servicing of Tritium monitors. Overoff has leading control over market
+ share in the Tritium monitor space as the top maker of Tritium monitors. Tritium monitors are a highly delicate process and are particularly dependent on the selection of the
+ finest materials such as Teflon for low leakage insulators and nafion membranes for separation of noble gas from Tritium. Overhoff DC amplifiers called “electrometers” are stable
+ with the ability to register small currents down to the femto-ampere level, 10-13 to 10-15ampre range. The Overhoff electrometer also has the unique ability to reject false counts
+ from Radon gas. Because Tritium is a radioactive material, the Nuclear Regulatory Commission (“NRC”) regulations and state health agencies require Tritium to be measured at
+ every nuclear power plant, all national laboratories, in the nuclear powered Navies of the United States, France and the United Kingdom, at weapons facilities, at pharmaceutical
+ and pesticide research facilities, and at Fusion Power research sites.
+
+              Nano-Second X-Ray Monitors
+
+         The Company has introduced a hand held TBM-IC-PLUSE-X survey meter for the US Navy. These new meters protect sailors and the general public from the new Nano-
+ Second X-Ray machines now being deployed to check for welding and corrosion flaws in military hardware from fighter jets to battle ships.
+
+              Air and Water Monitors
+
+           Our Overhoff Air Monitors come in both hand-held portables and mid-to large-sized air and stack monitors. These are classified as Dual Ion Chamber style detectors or
+ Dual Proportional Detectors. The sample flows into one chamber where ionization current is measured, and at the same time a sealed background detector of the same volume
+ measures the ionization current due to any external gamma emitters plus the addition of background from radioactive minerals in the soil with cosmic rays. The current from the
+ background chamber is subtracted from the current in the main sample chamber to give the net tritium level without distortion from radon or gamma in the background. In
+ nuclear power plants, radioactive noble gases are also in the air stream in small or large quantities. Overhoff combats this problem using Dow Chemical Nafion® tubing which
+ physically separates the noble gases from the tritium oxide prior to measurement. The Company is currently expecting a large number of its users and larger numbers of its
+ competitor’s customers will need to replace or supplement their current air and stack monitors to combat the two biggest pollution nuclides now coming out of nuclear power
+ plants, tritium and C-14. As of today, only US Nuclear Corp offers these full service monitors.
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                        9/78
+11/14/26, 10:12 AM                                                                  e101.htm
+
+
+
+
+                                                                              -6-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                    10/78
+11/14/26, 10:12 AM                                                                             e101.htm
+
+
+
+
+              Vehicle Monitors, Personnel Monitors, Exit Monitors and Room Monitors
+
+          The Company’s suite of radiation monitors can be used in various scenarios where humans may come into contact with radiation contamination. The Company’s Vehicle
+ Monitors, Personnel Monitors, Exit Monitors and Room Monitors are effective tools in detection of radiation in hospitals where radioactivity is used in many departments such as
+ nuclear medicine, oncology, blood labs, and imaging. Since radiation is also used in diagnosing and treating cancer, and since some cancers can develop in any organ, each
+ department in a hospital becomes involved, from ophthalmology to thoracic medicine. Additionally, the Company’s monitors are used to check hospital laundry to detect any
+ radiation on clothes as well as in trash bins before they are picked up by the applicable waste management team. Lastly, the Company’s monitors can be placed in the entrance of
+ hospitals in case there is an incident at a nearby nuclear power plant. These monitors are the first line of defense against further contamination, by providing early warning
+ detection; doctors can provide treatment without placing other patients and staff in direct contact with patients who are contaminated with radiation.
+
+              Radon Air Monitors and Radon Switch Products
+
+          The Company produces a full line of radon air monitors and switches that are used to determine the radon content in the air in basements, mills, mines, buildings, or
+ anywhere that radon concentration is a concern. The radon switch products activate and controls radon mitigation fans. These switches have a built-in computer storage with
+ data storage. The Company also makes both radon tritium monitors that are portable instruments used for detection and measurement of airborne Vadose zone, between the top
+ of the ground surface to the water table.
+
+              Handheld Survey Meters and Personal Dosimeters, Pocket Micro-R Meters
+
+          The Company’s survey meters are light-weight, hand-held radiation detectors. They function as general purpose radiation survey meters, but also serve as special purpose
+ survey meters. For example, the Company’s radon monitors are used in mines where workers are at risk for breathing radon gas along with air. The Company’s surface monitors
+ are used in hospitals, research labs, even in high school chemistry and physics labs to check for radioactive contamination on lab benches. Friskers are used to check if worker’s
+ hands or shoe bottoms have picked up any radiation contamination and the Company’s Gamma survey meter check packages at post offices or airports for radiation, along with
+ scrap metals at collection points and again before it is accepted for processing.
+
+              Port Security Equipment
+
+          Due to increased terror threats from IED (Improvised Explosive Devices), dirty bombs and potential radioactive materials following 9/11 at shipping ports, we began
+ utilizing passive detectors to review radiation emanating from inside containers. While other port security scanners generally use radioactive materials or x-ray generating
+ machines to check everything from shipping containers, Federal Express, USPS (United States Postal Service) packages, and luggage for contraband, our scanner solutions do not
+ use radiation, allowing for safe usage by investigators. We were approached by the FDA after the events of 9/11, and we designed our P-8Neon Quick-Scan X-ray detector to provide
+ complete scanning without releasing any harmful radiation in the process. Our RAD-CANSCAN machines can measure which shipping containers hold radioactive materials by
+ mapping inside the container so that TSA personnel will know the results without having to open each container. Additionally, our TBM-6SPE is a multi-detector system that lets
+ an investigator check specifically for each of the four main emissions of radiation, Alpha, Beta, Gamma and Neutrons.
+
+              Drones with Airborne Radiation Sensors
+
+          Model DroneRad quad- and hex-copters carry radiation detectors. Chemical sensors and thermal hot spot imagers are planned as well. The market includes nuclear
+ power plants, anti-smuggling inspection teams, the National Laboratories, fire departments, first responders, mining companies, and environmental agencies. These drones have
+ the capability to navigate over areas of debris from an explosion, earthquake, flood, or any disaster. A drone can move easily in areas too dangerous for humans, or too difficult for
+ a robot to approach. Drones with high tech sensors can fill a big hole in the ability to search dangerous areas, and to discover the exact location and current conditions at the site
+ of an explosion or a toxic/radioactive material leak. The portion of the biosphere that is more than 10 feet above the ground is hard for us to monitor for toxic material. Drones can
+ detect gases and contaminated air emerging from smokestacks or crossing the property line of a chemical or nuclear plant, and allow one health physicist (or other professional)
+ to view and measure over mile wide radius from their position. These are measurements that cannot be made by using a computer simulation, ladder, or fixed wing aircraft.
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                         11/78
+11/14/26, 10:12 AM                                                                  e101.htm
+
+
+
+
+                                                                              -7-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                    12/78
+11/14/26, 10:12 AM                                                                                      e101.htm
+
+
+
+
+              Software
+
+            The Company’s Overhoff Overview software program provides centralized radiation and environmental monitoring for entire facilities within one building or several
+ square miles allowing monitoring of a nuclear power plant or subway station. Overview accepts data from networked radiation detectors, environmental monitors and webcams,
+ and allows the user to view and generate reports on the data, as well as track maintenance due on instruments. Additionally, Overview lets the user see real-time monitoring for
+ differential pressure on containment boxes or rooms. Our software measures gamma and neutron radiation levels, airborne radioactivity levels, temperature and humidity in the
+ facility, status of security doors, wind speed and direction, and barometric pressure.
+
+ TERMS OF OFFERING
+ The following summary of the Company Offering made hereby is qualified in its entirety by the more detailed information appearing elsewhere in this Memorandum along with the
+ appropriate investor Subscription Agreement included with this Memorandum.
+
+                                                                              List of Terms
+   THE OFFERING:                                                              Common Stocks. The Company is offering 2,000,000 shares of its common stock at $0.30/per share with a
+                                                                              minimum purchase of 35,000 shares. The Company may be required to seek additional funding in the future
+                                                                              through the issuance of equity or debt, either of which is likely to result in dilution to holders of the stock
+                                                                              sold in the Offering. The Company might utilize the services of a registered representative under the rules
+                                                                              promulgated by FINRA to sell its shares, which might result in commissions being paid, and disclosed on
+                                                                              Form D with the SEC.
+   PURCHASERS:                                                                The Offering is made to “Accredited Investors” only and as defined under the Securities Act, and a limited
+                                                                              number of sophisticated investors.
+
+   CAPITALIZATION:                                                            Upon the Closing of the offering, the estimated capital structure of the Company, expressed in stock and fully
+                                                                              diluted assuming the closing of the entirety of the offering shall be 15,475,000 shares of common stock issued
+                                                                              and outstanding.
+
+   CLOSING:                                                                   The Company expects the closing of the offering to occur by or before August 31, 2016, or as soon thereafter as
+                                                                              practicable and the Closing Date may be unilaterally extended by the Company without notice.
+
+   SUBSCRIPTION AGREEMENT:                                                    All Investors in the common stock are required to execute the Investor Questionnaire and Subscription
+                                                                              Agreement attached hereto. The Subscription Agreement sets for the terms and conditions of the purchase of
+                                                                              the common stock and should be read carefully by each prospective investor.
+
+   FINANCIAL STATEMENTS AND                                                   The Company will continue to submit financial statements consistent with the reporting requirements of the
+   REPORTING:                                                                 SEC. The Company will provide other customary information and materials, including, without limitation,
+                                                                              reports of adverse developments, and communications with investors, press releases and effective registration
+                                                                              statements through the appropriate filings.
+
+
+                                                                                                  -8-
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                                13/78
+11/14/26, 10:12 AM                                                                                       e101.htm
+
+
+
+
+ USE OF PROCEEDS
+
+
+      It is the Company’s intention to use proceeds raised through the Offering as set forth in the chart below. To the extent there are excess proceeds from the Offering, the
+ Company intends on using such proceeds in furtherance of its business purpose, as set forth herein. Regardless of the number of shares of common stock sold, the Company
+ expects to incur offering expenses estimated at $10,000 for legal, accounting, printing and other costs in connection with this offering. We will not maintain an escrow account for
+ the receipt of proceeds from the sale of our shares of common stock.
+
+                                                                              If 25% of shares were         If 50% of shares were   If 75% of shares were   If 100% of shares were
+                              Application of Funds
+                                                                                       sold                          sold                    sold                    sold
+
+   SALES AND MARKETING
+   Website Upgrade                                                                                 *                      $10,000                 $15,000                  $16,000
+   Trade Show Attendance                                                                    $20,000                       $20,000                 $50,000                  $50,000
+   Other Travel                                                                             $15,000                        $5,000                 $15,000                  $16,000
+   Sales Lead Tracking System/Program                                                              *                            *                 $10,000                  $10,000
+   Re-Approach Old Customers                                                                $15,000                        $5,000                 $18,000                  $16,000
+   Advertising Especially On-Line                                                           $10,000                       $10,000                 $10,000                  $10,000
+   Upgrade to OTC-QX                                                                              *                             *                 $12,000                  $12,000
+
+   MAKE PRODUCT DEMOS TO CUSTOMERS AND OPINION                                              $20,000                       $40,000                 $50,000                  $50,000
+   LEADERS
+
+   BUILD STOCK
+   Most Popular Products to Allow Quick Shipment                                            $20,000                       $40,000                 $40,000                  $50,000
+   Stand-Out Products for Demos to Customers and Opinion                                    $20,000                       $35,000                 $40,000                  $50,000
+   Leaders
+   Build Stock of Common Sub-Assemblies Used in Bigger                                      $20,000                       $35,000                 $40,000                  $50,000
+   Products
+
+   DEVELOP NEW PRODUCTS                                                                              *                    $80,000                $100,000                 $160,000
+   Radon Switch
+   Tritium Sensitivity Break-Through Products
+   Water Monitors
+
+   WORKING CAPITAL AND RESERVES                                                             $10,000                       $20,000                 $50,000                  $110,000
+
+   TOTAL                                                                                   $150,000                      $300,000                $450,000                 $600,000
+
+
+                                                                                               -9-
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                       14/78
+11/14/26, 10:12 AM                                                                                    e101.htm
+
+
+
+
+ PROJECTIONS (2016-2019)
+
+         The projections set forth in Exhibit D are forward-looking statements in reliance on the forward-looking disclosure above. These projections are subject to modification
+ without notice to you or any other shareholder. They are being provided merely as an educated, commercially reasonable assessment of future growth.
+
+ OPERATIONAL AND GENERAL BUSINESS RISK FACTORS, AND RISKS ASSOCIATED WITH OUR STOCK
+
+      The stock offered hereby involves a high degree of risk. No one should invest who is not prepared to lose his, her, or its entire investment. There is no active public market in
+ the foreseeable future for the resale of the stock. Prospective investors, prior to making an investment, should carefully examine the risk factors set forth in the Company’s public
+ filings, and the risk factors set forth therein, all of which are inherent in making an investment in, and affecting the business of, the Company, in addition to the other information
+ presented in this Memorandum. In the interests of conserving resources, and in the interests of maintaining consistency in our disclosures to the public (and to you in this
+ Offering), the Company is not going to restate prior public disclosures herein. However, to the extent you do not have access to the internet, the Company is willing to provide you
+ with printed documents for your review, or review by your advisors.
+
+ SECURITIES RISK FACTORS AND SUITABILITY DISCLOSURES
+
+     INVESTORS SHALL BE REQUIRED TO REPRESENT THAT THEY ARE FAMILIAR WITH AND UNDERSTAND THE TERMS, RISKS AND MERITS OF THE OFFERING DESCRIBED
+ IN THIS MEMORANDUM AND ALL THE ATTACHMENTS HERETO. THE COMMON STOCK IS BEING OFFERED IN A PRIVATE OFFERING TO A LIMITED NUMBER OF
+ INDIVIDUALS OR ENTITIES MEETING CERTAIN SUITABILITY STANDARDS. THIS OFFERING INVOLVES A HIGH DEGREE OF RISK AND PROSPECTIVE INVESTORS SHOULD BE
+ AWARE THAT THEY MAY SUSTAIN A LOSS OF THEIR ENTIRE INVESTMENT.
+
+                                                                          EXCLUSIVE NATURE OF THE PRIVATE PLACEMENT MEMORANDUM
+
+     NO ENTITY HAS BEEN AUTHORIZED TO GIVE ANY INFORMATION OR TO MAKE ANY REPRESENTATIONS OTHER THAN THOSE CONTAINED IN THIS MEMORANDUM.
+ ANY INFORMATION OR REPRESENTATION NOT CONTAINED HEREIN MUST NOT BE RELIED UPON AS HAVING BEEN AUTHORIZED BY THE COMPANY. MOREOVER, NEITHER
+ THE DELIVERY OF THIS MEMORANDUM NOR THE SALE OF THE COMMON STOCK SHALL UNDER ANY CIRCUMSTANCES CREATE ANY IMPLICATION THAT THERE HAS BEEN
+ NO CHANGE IN THE MATTERS DISCUSSED IN THIS MEMORANDUM SINCE THE DATE HEREOF; HOWEVER, IN THE EVENT OF ANY MATERIAL CHANGE OCCURRING PRIOR TO
+ THE COMPLETION OF THE OFFERING DESCRIBED HEREIN, THIS MEMORANDUM SHALL BE AMENDED AND REVISED ACCORDINGLY. THE COMPANY DISCLAIMS ANY AND
+ ALL LIABILITIES FOR REPRESENTATIONS OR WARRANTIES EXPRESSED OR IMPLIED, CONTAINED IN, OR OMISSIONS FROM, THIS MEMORANDUM, OR ANY OTHER WRITTEN
+ OR ORAL COMMUNICATION TRANSMITTED OR MADE AVAILABLE TO THE RECIPIENT. EACH INVESTOR SHALL BE ENTITLED TO RELY SOLELY ON THOSE REPRESENTATIONS
+ AND WARRANTIES WHICH MAY BE MADE TO THE INVESTOR IN ANY FINAL PURCHASE OR SUBSCRIPTION AGREEMENT RELATING TO THE COMMON STOCK. THE DELIVERY
+ OF THIS MEMORANDUM DOES NOT CONSTITUTE AN OFFER IN ANY JURISDICTION TO ANY PERSON TO WHOM SUCH OFFER WOULD BE UNLAWFUL IN SUCH
+ JURISDICTION.
+
+    THIS MEMORANDUM DOES NOT PURPORT TO BE ALL-INCLUSIVE OR TO CONTAIN ALL OF THE INFORMATION THAT A PROSPECTIVE INVESTOR MAY DESIRE IN
+ EVALUATING AN INVESTMENT IN THE COMPANY. INVESTORS MUST CONDUCT AND RELY ON THEIR OWN EVALUATIONS OF THE COMPANY AND THE TERMS OF THE
+ OFFERING, INCLUDING THE MERITS AND RISKS INVOLVED IN MAKING AN INVESTMENT DECISION WITH RESPECT TO THE COMMON STOCK. THE RISK FACTORS DEFINED
+ ABOVE SHOULD BE CONSIDERED IN CONNECTION WITH THE PURCHASE OF THE COMMON STOCK. NEITHER THE DELIVERY OF THIS MEMORANDUM AT ANY TIME, NOR
+ ANY SALE OF THE COMMON STOCK HEREUNDER, SHALL UNDER ANY CIRCUMSTANCES CREATE AN IMPLICATION THAT THE INFORMATION CONTAINED IN THIS
+ MEMORANDUM IS CORRECT AS OF ANY TIME SUBSEQUENT TO ITS DATE.
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                          15/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+                                                                              -10-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     16/78
+11/14/26, 10:12 AM                                                                                       e101.htm
+
+
+
+
+                                                                              STATEMENT REGARDING FORWARD LOOKING PROJECTIONS
+
+      THE STATEMENTS, PROJECTIONS AND ESTIMATES OF FUTURE PERFORMANCE OF THE COMPANY OR VARIOUS ELEMENTS OF THE COMPANY’S BUSINESS CONTAINED
+ IN THIS MEMORANDUM THAT ARE NOT HISTORICAL FACTS ARE FORWARD-LOOKING STATEMENTS. INVESTORS SHOULD EXPECT THAT ANTICIPATED EVENTS AND
+ CIRCUMSTANCES MAY NOT OCCUR, THAT UNANTICIPATED EVENTS AND CIRCUMSTANCES SHALL OCCUR, AND THAT ACTUAL RESULTS SHALL LIKELY VARY FROM THE
+ FORWARD-LOOKING CIRCUMSTANCES. INVESTORS SHOULD BE AWARE THAT A NUMBER OF FACTORS COULD CAUSE THE FORWARD-LOOKING STATEMENTS OR
+ PROJECTIONS CONTAINED IN THIS MEMORANDUM OR OTHERWISE MADE BY OR ON BEHALF OF THE COMPANY TO BE INCORRECT OR TO DIFFER MATERIALLY FROM
+ ACTUAL RESULTS. SUCH FACTORS MAY INCLUDE, WITHOUT LIMITATION, (i) THE ABILITY OF THE COMPANY TO PROVIDE SERVICES AND TO COMPLETE THE DEVELOPMENT
+ OF ITS PRODUCTS IN A TIMELY MANNER, (ii) THE DEMAND FOR AND TIMING OF DEMAND FOR SUCH SERVICES AND PRODUCTS, (iii) COMPETITION FROM OTHER
+ PRODUCTS AND COMPANIES, (iv) THE COMPANY’S SALES AND MARKETING CAPABILITIES, (v) THE COMPANY’S ABILITY TO SELL ITS SERVICES AND PRODUCTS PROFITABLY,
+ (vi) AVAILABILITY OF ADEQUATE DEBT AND EQUITY FINANCING, AND (vii) GENERAL BUSINESS AND ECONOMIC CONDITIONS. THESE IMPORTANT FACTORS AND CERTAIN
+ OTHER FACTORS THAT MIGHT AFFECT THE COMPANY’S FINANCIAL AND BUSINESS RESULTS ARE DISCUSSED IN THIS MEMORANDUM UNDER “RISK FACTORS.” THERE CAN
+ BE NO ASSURANCE THAT THE COMPANY SHALL BE ABLE TO ANTICIPATE, RESPOND TO OR ADAPT TO CHANGES IN ANY FACTORS AFFECTING THE COMPANY’S BUSINESS
+ AND FINANCIAL RESULTS.
+
+                                                                                        SAFE HARBOR STATEMENT UNDER
+                                                                                 THE PRIVATE SECURITIES LITIGATION REFORM ACT
+
+     WITH THE EXCEPTION OF THE HISTORICAL INFORMATION CONTAINED IN THIS DOCUMENT, THE MATTERS DESCRIBED HEREIN CONTAIN FORWARD-LOOKING
+ STATEMENTS THAT INVOLVE RISK AND UNCERTAINTIES THAT INDIVIDUALLY OR MUTUALLY IMPACT THE MATTERS HEREIN DESCRIBED INCLUDING, BUT NOT LIMITED
+ TO, FINANCIAL PROJECTIONS, PRODUCT DEMAND AND MARKET ACCEPTANCE, THE EFFECT OF ECONOMIC CONDITIONS, THE IMPACT OF COMPETITIVE PRODUCTS AND
+ PRICING, GOVERNMENTAL REGULATIONS, TECHNOLOGICAL DIFFICULTIES AND/OR OTHER FACTORS OUTSIDE THE CONTROL OF THE COMPANY.
+
+                                                                                              DISCLAIMERS
+
+     THE COMMON STOCK OFFERED HEREBY IN THIS OFFERING MEMORANDUM HAS NOT BEEN REGISTERED WITH, OR APPROVED, BY THE SEC, NOR HAS SUCH COMMON
+ STOCK OR THIS MEMORANDUM BEEN FILED WITH OR REVIEWED BY THE ATTORNEY GENERAL OF ANY STATE OR THE SECURITIES REGULATORY AUTHORITY OF ANY
+ STATE. THIS OFFERING IS BASED ON THE EXEMPTIONS FROM SUCH REGISTRATION AS SET FORTH IN §4(2) AND RULE 506 OF REGULATION D OF THE SECURITIES ACT OF
+ 1933, AS AMENDED.
+
+    THE INVESTMENT DESCRIBED IN THIS MEMORANDUM INVOLVES RISKS, AND IS OFFERED ONLY TO INDIVIDUALS WHO CAN AFFORD TO ASSUME SUCH RISK FOR AN
+ INDEFINITE PERIOD OF TIME AND WHO AGREE TO PURCHASE THE COMMON STOCK ONLY FOR INVESTMENT PURPOSES AND NOT WITH A VIEW TOWARD THE TRANSFER,
+ RESALE, EXCHANGE OR FURTHER DISTRIBUTION THEREOF. THERE WILL BE NO PUBLIC MARKET FOR THE COMMON STOCK ISSUED PURSUANT TO THIS OFFERING
+ MEMORANDUM. THE RESALE OF THE COMMON STOCK IS LIMITED BY FEDERAL AND STATE SECURITIES LAWS AND IT IS THEREFORE RECOMMENDED THAT EACH
+ POTENTIAL INVESTOR SEEK COUNSEL SHOULD THEY DESIRE MORE INFORMATION.
+
+    THE PRICE OF THE COMMON STOCK AS DESCRIBED IN THIS OFFERING MEMORANDUM HAS BEEN ARBITRARILY DETERMINED BY THE SPONSORS OF THIS
+ INVESTMENT, AND EACH PROSPECTIVE INVESTOR SHOULD MAKE AN INDEPENDENT EVALUATION OF THE FAIRNESS OF SUCH PRICE UNDER ALL THE CIRCUMSTANCES AS
+ DESCRIBED IN THE ATTACHED OFFERING MEMORANDUM. NO PERSON IS AUTHORIZED TO GIVE ANY INFORMATION OR MAKE ANY REPRESENTATION IN CONNECTION
+ WITH THIS MEMORANDUM, EXCEPT SUCH INFORMATION AS IS CONTAINED OR REFERENCED IN THIS MEMORANDUM. ONLY INFORMATION OR REPRESENTATIONS
+ CONTAINED OR REFERENCED HEREIN MAY BE RELIED UPON AS HAVING BEEN MADE BY THE COMPANY. PROSPECTIVE INVESTORS WHO HAVE QUESTIONS CONCERNING
+ THE TERMS AND CONDITIONS OF THIS PRIVATE OFFERING MEMORANDUM OR WHO DESIRE ADDITIONAL INFORMATION OR DOCUMENTATION TO VERIFY THE
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                       17/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+ INFORMATION CONTAINED HEREIN SHOULD CONTACT THE COMPANY. PROJECTIONS OR FORECASTS CONTAINED IN THIS PRIVATE OFFERING MEMORANDUM, OR OTHER
+ MATERIALS, MUST BE VIEWED ONLY AS ESTIMATES. ALTHOUGH ANY PROJECTIONS CONTAINED IN THIS MEMORANDUM ARE BASED UPON ASSUMPTIONS WHICH THE
+ COMPANY BELIEVES TO BE REASONABLE, THE ACTUAL PERFORMANCE OF THE COMPANY MAY DEPEND UPON FACTORS BEYOND THE CONTROL OF THE COMPANY. NO
+ ASSURANCE CAN BE GIVEN THAT THE COMPANY’S ACTUAL PERFORMANCE WILL MATCH ITS INTENDED RESULTS.
+
+
+                                                                              -11-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                             18/78
+11/14/26, 10:12 AM                                                                                  e101.htm
+
+
+
+
+                                                                              JURISDICTIONAL (NASAA) LEGENDS
+
+    FOR RESIDENTS OF ALL STATES: THE PRESENCE OF A LEGEND FOR ANY GIVEN STATE REFLECTS ONLY THAT A LEGEND MAY BE REQUIRED BY THAT STATE AND SHOULD
+ NOT BE CONSTRUED TO MEAN AN OFFER OR SALE MAY BE MADE IN A PARTICULAR STATE. IF YOU ARE UNCERTAIN AS TO WHETHER OR NOT OFFERS OR SALES MAY BE
+ LAWFULLY MADE IN ANY GIVEN STATE, YOU ARE HEREBY ADVISED TO CONTACT THE COMPANY. THE SECURITIES DESCRIBED IN THIS MEMORANDUM HAVE NOT BEEN
+ REGISTERED UNDER ANY STATE SECURITIES LAWS (COMMONLY CALLED "BLUE SKY" LAWS). THESE SECURITIES MUST BE ACQUIRED FOR INVESTMENT PURPOSES ONLY
+ AND MAY NOT BE SOLD OR TRANSFERRED IN THE ABSENCE OF AN EFFECTIVE REGISTRATION OF SUCH SECURITIES UNDER SUCH LAWS, OR AN OPINION OF COUNSEL
+ ACCEPTABLE TO THE COMPANY THAT SUCH REGISTRATION IS NOT REQUIRED.
+
+     THE PRESENCE OF A LEGEND FOR ANY GIVEN STATE REFLECTS ONLY THAT A LEGEND MAY BE REQUIRED BY THE STATE AND SHOULD NOT BE CONSTRUED TO MEAN
+ AN OFFER OF SALE MAY BE MADE IN ANY PARTICULAR STATE. THE DISCLOSURES BELOW ARE SUBJECT TO REVISION OR MODIFICATION, AND THE INVESTOR IS ADVISED
+ TO SEEK INDEPENDENT LEGAL ADVICE IN THEIR JURISDICTION.
+
+ 1. NOTICE TO ALABAMA RESIDENTS ONLY: THESE SECURITIES ARE OFFERED PURSUANT TO A CLAIM OF EXEMPTION UNDER THE ALABAMA SECURITIES ACT. A
+ REGISTRATION STATEMENT RELATING TO THESE SECURITIES HAS NOT BEEN FILED WITH THE ALABAMA SECURITIES COMMISSION. THE COMMISSION DOES NOT
+ RECOMMEND OR ENDORSE THE PURCHASE OF ANY SECURITIES, NOR DOES IT PASS UPON THE ACCURACY OR COMPLETENESS OF THIS PRIVATE PLACEMENT
+ MEMORANDUM. ANY REPRESENTATION TO THE CONTRARY IS A CRIMINAL OFFENSE.
+
+ 2. NOTICE TO ALASKA RESIDENTS ONLY: THE SECURITIES OFFERED HAVE NOT BEEN REGISTERED WITH THE ADMINISTRATOR OF SECURITIES OF THE STATE OF ALASKA
+ UNDER PROVISIONS OF 3 AAC 08.500-3 AAC 08.504. THE INVESTOR IS ADVISED THAT THE ADMINISTRATOR HAS NOT MADE A REVIEW OF THE REGISTRATION STATEMENT
+ AND HAS NOT REVIEWED THIS DOCUMENT SINCE THE DOCUMENT IS NOT REQUIRED TO BE FILED WITH THE ADMINISTRATOR. THE FACT OF REGISTRATION DOES NOT
+ MEAN THAT THE ADMINISTRATOR HAS PASSED IN ANY WAY UPON THE MERITS, RECOMMENDED, OR APPROVED THE SECURITIES. ANY REPRESENTATION TO THE
+ CONTRARY IS A VIOLATION OF 45.55.170. THE INVESTOR MUST RELY ON THE INVESTOR'S OWN EXAMINATION OF THE PERSON OR ENTITY CREATING THE SECURITIES AND
+ THE TERMS OF THE OFFERING, INCLUDING THE MERITS AND RISKS INVOLVED IN MAKING AN INVESTMENT DECISION ON THESE SECURITIES.
+
+ 3. NOTICE TO ARIZONA RESIDENTS ONLY: THESE SECURITIES HAVE NOT BEEN REGISTERED UNDER THE ARIZONA SECURITIES ACT IN RELIANCE UPON AN EXEMPTION
+ FROM REGISTRATION PURSUANT TO A.R.S. SECTION 44-1844 (1) AND THEREFORE CANNOT BE RESOLD UNLESS THEY ARE ALSO REGISTERED OR UNLESS AN EXEMPTION
+ FROM REGISTRATION IS AVAILABLE.
+
+ 4. NOTICE TO ARKANSAS RESIDENTS ONLY: THESE SECURITIES ARE OFFERED IN RELIANCE UPON CLAIMS OF EXEMPTION UNDER THE ARKANSAS SECURITIES ACT AND
+ SECTION 4(2) OF THE SECURITIES ACT OF 1933. A REGISTRATION STATEMENT RELATING TO THESE SECURITIES HAS NOT BEEN FILED WITH THE ARKANSAS SECURITIES
+ DEPARTMENT OR WITH THE SECURITIES AND EXCHANGE COMMISSION. NEITHER THE DEPARTMENT NOR THE COMMISSION HAS PASSED UPON THE VALUE OF THESE
+ SECURITIES, MADE ANY RECOMMENDATIONS AS TO THEIR PURCHASE, APPROVED OR DISAPPROVED THIS OFFERING OR PASSED UPON THE ADEQUACY OR ACCURACY OF
+ THIS MEMORANDUM. ANY REPRESENTATION TO THE CONTRARY IS UNLAWFUL.
+
+ 5. FOR CALIFORNIA RESIDENTS ONLY: THE SALE OF THE SECURITIES WHICH ARE THE SUBJECT OF THIS OFFERING HAS NOT BEEN QUALIFIED WITH COMMISSIONER OF
+ CORPORATIONS OF THE STATE OF CALIFORNIA AND THE ISSUANCE OF SUCH SECURITIES OR PAYMENT OR RECEIPT OF ANY PART OF THE CONSIDERATION THEREFORE
+ PRIOR TO SUCH QUALIFICATIONS IS UNLAWFUL, UNLESS THE SALE OF SECURITIES IS EXEMPTED FROM QUALIFICATION BY SECTION 25100, 25102, OR 25104 OF THE
+ CALIFORNIA CORPORATIONS CODE. THE RIGHTS OF ALL PARTIES TO THIS OFFERING ARE EXPRESSLY CONDITION UPON SUCH QUALIFICATIONS BEING OBTAINED, UNLESS
+ THE SALE IS SO EXEMPT.
+
+
+                                                                                             -12-
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                     19/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+ 6. FOR COLORADO RESIDENTS ONLY: THE SECURITIES HAVE NOT BEEN REGISTERED UNDER THE SECURITIES ACT OF 1933, AS AMENDED, OR THE COLORADO SECURITIES
+ ACT OF 1991 BY REASON OF SPECIFIC EXEMPTIONS THEREUNDER RELATING TO THE LIMITED AVAILABILITY OF THE OFFERING. THESE SECURITIES CANNOT BE RESOLD,
+ TRANSFERRED OR OTHERWISE DISPOSED OF TO ANY PERSON OR ENTITY UNLESS SUBSEQUENTLY REGISTERED UNDER THE SECURITIES ACT OF 1933, AS AMENDED, OR
+ THE COLORADO SECURITIES ACT OF 1991, IF SUCH REGISTRATION IS REQUIRED.
+
+ 7. NOTICE TO CONNECTICUT RESIDENTS ONLY: SHARES ACQUIRED BY CONNECTICUT RESIDENTS ARE BEING SOLD AS A TRANSACTION EXEMPT UNDER SECTION 36-
+ 409(b)(9)(A) OF THE CONNECTICUT, UNIFORM SECURITIES ACT. THE SHARES HAVE NOT BEEN REGISTERED UNDER SAID ACT IN THE STATE OF CONNECTICUT. ALL
+ INVESTORS SHOULD BE AWARE THAT THERE IS CERTAIN RESTRICTIONS AS TO THE TRANSFERABILITY OF THE SHARES.
+
+ 8. NOTICE TO DELAWARE RESIDENTS ONLY: IF YOU ARE A DELAWARE RESIDENT, YOU ARE HEREBY ADVISED THAT THESE SECURITIES ARE BEING OFFERED IN A
+ TRANSACTION EXEMPT FROM THE REGISTRATION REQUIREMENTS OF THE DELAWARE SECURITIES ACT. THE SECURITIES CANNOT BE SOLD OR TRANSFERRED EXCEPT IN
+ A TRANSACTION WHICH IS EXEMPT UNDER THE ACT OR PURSUANT TO AN EFFECTIVE REGISTRATION STATEMENT UNDER THE ACT OR IN A TRANSACTION WHICH IS
+ OTHERWISE IN COMPLIANCE WITH THE ACT.
+
+ 9. NOTICE TO DISTRICT OF COLUMBIA RESIDENTS ONLY: THESE SECURITIES HAVE NOT BEEN APPROVED OR DISAPPROVED BY THE SECURITIES BUREAU OF THE
+ DISTRICT OF COLUMBIA NOR HAS THE COMMISSIONER PASSED UPON THE ACCURACY OR ADEQUACY OF THIS DOCUMENT. ANY REPRESENTATION TO THE CONTRARY IS
+ UNLAWFUL.
+
+ 10. NOTICE TO FLORIDA RESIDENTS ONLY: THE SHARES DESCRIBED HEREIN HAVE NOT BEEN REGISTERED WITH THE FLORIDA DIVISION OF SECURITIES AND INVESTOR
+ PROTECTION UNDER THE FLORIDA SECURITIES ACT. THE SHARES REFERRED TO HEREIN WILL BE SOLD TO, AND ACQUIRED BY THE HOLDER IN A TRANSACTION EXEMPT
+ UNDER SECTION 517.061 OF SAID ACT. THE SHARES HAVE NOT BEEN REGISTERED UNDER SAID ACT IN THE STATE OF FLORIDA. IN ADDITION, ALL OFFEREES WHO ARE
+ FLORIDA RESIDENTS SHOULD BE AWARE THAT SECTION 517.061(11)(a)(5) OF THE ACT PROVIDES, IN RELEVANT PART, AS FOLLOWS: "WHEN SALES ARE MADE TO FIVE OR
+ MORE PERSONS IN [FLORIDA], ANY SALE IN [FLORIDA] MADE PURSUANT TO [THIS SECTION] IS VOIDABLE BY THE PURCHASER IN SUCH SALE EITHER WITHIN 3 DAYS
+ AFTER THE FIRST TENDER OF CONSIDERATION IS MADE BY THE PURCHASER TO THE ISSUER, AN AGENT OF THE ISSUER OR AN ESCROW AGENT OR WITHIN 3 DAYS AFTER
+ THE AVAILABILITY OF THAT PRIVILEGE IS COMMUNICATED TO SUCH PURCHASER, WHICHEVER OCCURS LATER."
+
+ THE AVAILABILITY OF THE PRIVILEGE TO VOID SALES PURSUANT TO SECTION 517.061(11) IS HEREBY COMMUNICATED TO EACH FLORIDA OFFEREE. EACH PERSON
+ ENTITLED TO EXERCISE THE PRIVILEGE TO AVOID SALES GRANTED BY SECTION 517.061 (11) (A)(5) AND WHO WISHES TO EXERCISE SUCH RIGHT, MUST, WITHIN 3 DAYS
+ AFTER THE TENDER OF ANY AMOUNT TO THE COMPANY OR TO ANY AGENT OF THE COMPANY (INCLUDING THE SELLING AGENT OR ANY OTHER DEALER ACTING ON
+ BEHALF OF THE PARTNERSHIP OR ANY SALESMAN OF SUCH DEALER) OR AN ESCROW AGENT CAUSE A WRITTEN NOTICE OR TELEGRAM TO BE SENT TO THE COMPANY AT
+ THE ADDRESS PROVIDED IN THIS CONFIDENTIAL EXECUTIVE SUMMARY. SUCH LETTER OR TELEGRAM MUST BE SENT AND, IF POSTMARKED, POSTMARKED ON OR PRIOR
+ TO THE END OF THE AFOREMENTIONED THIRD DAY. IF A PERSON IS SENDING A LETTER, IT IS PRUDENT TO SEND SUCH LETTER BY CERTIFIED MAIL, RETURN RECEIPT
+ REQUESTED, TO ASSURE THAT IT IS RECEIVED AND ALSO TO EVIDENCE THE TIME IT WAS MAILED. SHOULD A PERSON MAKE THIS REQUEST ORALLY, HE MUST ASK FOR
+ WRITTEN CONFIRMATION THAT HIS REQUEST HAS BEEN RECEIVED.
+
+ 11. NOTICE TO GEORGIA RESIDENTS ONLY: THESE SECURITIES ARE OFFERED IN A TRANSACTION EXEMPT FROM THE REGISTRATION REQUIREMENTS OF THE GEORGIA
+ SECURITIES ACT PURSUANT TO REGULATION 590-4-5-04 AND -01. THE SECURITIES CANNOT BE SOLD OR TRANSFERRED EXCEPT IN A TRANSACTION WHICH IS EXEMPT
+ UNDER THE ACT OR PURSUANT TO AN EFFECTIVE REGISTRATION STATEMENT UNDER THE ACT OR IN A TRANSACTION WHICH IS OTHERWISE IN COMPLIANCE WITH THE
+ ACT.
+
+
+                                                                              -13-
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                      20/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+ 12. NOTICE TO HAWAII RESIDENTS ONLY: NEITHER THIS OFFERING NOR THE SECURITIES DESCRIBED HEREIN HAVE BEEN APPROVED OR DISAPPROVED BY THE
+ COMMISSIONER OF SECURITIES OF THE STATE OF HAWAII NOR HAS THE COMMISSIONER PASSED UPON THE ACCURACY OR ADEQUACY OF THIS OFFERING.
+
+ 13. NOTICE TO IDAHO RESIDENTS ONLY: THESE SECURITIES EVIDENCED HEREBY HAVE NOT BEEN REGISTERED UNDER THE IDAHO SECURITIES ACT IN RELIANCE UPON
+ EXEMPTION FROM REGISTRATION PURSUANT TO SECTION 30-14-203 OR 302(c) THEREOF AND MAY NOT BE SOLD, TRANSFERRED, PLEDGED OR HYPOTHECATED EXCEPT IN
+ A TRANSACTION WHICH IS EXEMPT UNDER SAID ACT OR PURSUANT TO AN EFFECTIVE REGISTRATION UNDER SAID ACT.
+
+ 14. NOTICE TO ILLINOIS RESIDENTS: THESE SECURITIES HAVE NOT BEEN APPROVED OR DISAPPROVED BY THE SECRETARY OF THE STATE OF ILLINOIS NOR HAS THE
+ STATE OF ILLINOIS PASSED UPON THE ACCURACY OR ADEQUACY OF THE OFFERING. ANY REPRESENTATION TO THE CONTRARY IS UNLAWFUL.
+
+ 15. NOTICE TO INDIANA RESIDENTS ONLY: THESE SECURITIES ARE OFFERED PURSUANT TO A CLAIM OF EXEMPTION UNDER SECTION 23-2-1-2 OF THE INDIANA
+ SECURITIES LAW AND HAVE NOT BEEN REGISTERED UNDER SECTION 23-2-1-3. THEY CANNOT THEREFORE BE RESOLD UNLESS THEY ARE REGISTERED UNDER SAID LAW
+ OR UNLESS AN EXEMPTION FORM REGISTRATION IS AVAILABLE. A CLAIM OF EXEMPTION UNDER SAID LAW HAS BEEN FILED, AND IF SUCH EXEMPTION IS NOT
+ DISALLOWED SALES OF THESE SECURITIES MAY BE MADE. HOWEVER, UNTIL SUCH EXEMPTION IS GRANTED, ANY OFFER MADE PURSUANT HERETO IS PRELIMINARY AND
+ SUBJECT TO MATERIAL CHANGE.
+
+ 16. NOTICE TO IOWA RESIDENTS ONLY: IN MAKING AN INVESTMENT DECISION INVESTORS MUST RELY ON THEIR OWN EXAMINATION OF THE PERSON OR ENTITY
+ CREATING THE SECURITIES AND THE TERMS OF THE OFFERING, INCLUDING THE MERITS AND RISKS INVOLVED. THESE SECURITIES HAVE NOT BEEN RECOMMENDED; THE
+ FOREGOING AUTHORITIES HAVE NOT CONFIRMED THE ACCURACY OR DETERMINED THE ADEQUACY OF THIS DOCUMENT. ANY REPRESENTATION TO THE CONTRARY IS A
+ CRIMINAL OFFENSE. THESE SECURITIES ARE SUBJECT TO RESTRICTIONS ON TRANSFERABILITY AND RESALE AND MAY NOT BE TRANSFERRED OR RESOLD EXCEPT AS
+ PERMITTED UNDER THE SECURITIES ACT OF 1933, AS AMENDED, AND THE APPLICABLE STATE SECURITIES LAWS, PURSUANT TO REGISTRATION OR EXEMPTION
+ THEREFROM. INVESTORS SHOULD BE AWARE THAT THEY WILL BE REQUIRED TO BEAR THE FINANCIAL RISKS OF THIS INVESTMENT FOR AN INDEFINITE PERIOD OF
+ TIME.
+
+ 17. NOTICE TO KANSAS RESIDENTS ONLY: IF AN INVESTOR ACCEPTS AN OFFER TO PURCHASE ANY OF THE SECURITIES, THE INVESTOR IS HEREBY ADVISED THE
+ SECURITIES WILL BE SOLD TO AND ACQUIRED BY IT/HIM/HER IN A TRANSACTION EXEMPT FROM REGISTRATION UNDER SECTION 81-5-6 OF THE KANSAS SECURITIES
+ ACT AND MAY NOT BE RE-OFFERED FOR SALE, TRANSFERRED, OR RESOLD EXCEPT IN COMPLIANCE WITH SUCH ACT AND APPLICABLE RULES PROMULGATED
+ THEREUNDER.
+
+ 18. NOTICE TO KENTUCKY RESIDENTS ONLY: IF AN INVESTOR ACCEPTS AN OFFER TO PURCHASE ANY OF THE SECURITIES, THE INVESTOR IS HEREBY ADVISED THE
+ SECURITIES WILL BE SOLD TO AND ACQUIRED BY IT/HIM/HER IN A TRANSACTION EXEMPT FROM REGISTRATION UNDER RULE 808 OF THE KENTUCKY SECURITIES ACT
+ AND MAY NOT BE RE-OFFERED FOR SALE, TRANSFERRED, OR RESOLD EXCEPT IN COMPLIANCE WITH SUCH ACT AND APPLICABLE RULES PROMULGATED THEREUNDER.
+
+ 19. NOTICE TO LOUISIANA RESIDENTS ONLY: IF AN INVESTOR ACCEPTS AN OFFER TO PURCHASE ANY OF THE SECURITIES, THE INVESTOR IS HEREBY ADVISED THE
+ SECURITIES WILL BE SOLD TO AND ACQUIRED BY IT/HIM/HER IN A TRANSACTION EXEMPT FROM REGISTRATION UNDER RULE 1 OF THE LOUISIANA SECURITIES LAW
+ AND MAY NOT BE RE-OFFERED FOR SALE, TRANSFERRED, OR RESOLD EXCEPT IN COMPLIANCE WITH SUCH ACT AND APPLICABLE RULES PROMULGATED THEREUNDER.
+
+ 20. NOTICE TO MAINE RESIDENTS ONLY: THE ISSUER IS REQUIRED TO MAKE A REASONABLE FINDING THAT THE SECURITIES OFFERED ARE A SUITABLE INVESTMENT
+ FOR THE PURCHASER AND THAT THE PURCHASER IS FINANCIALLY ABLE TO BEAR THE RISK OF LOSING THE ENTIRE AMOUNT INVESTED. THESE SECURITIES ARE OFFERED
+ PURSUANT TO AN EXEMPTION UNDER §16202(15) OF THE MAINE UNIFORM SECURITIES ACT AND ARE NOT REGISTERED WITH THE SECURITIES ADMINISTRATOR OF THE
+ STATE OF MAINE. THE SECURITIES OFFERED FOR SALE MAY BE RESTRICTED SECURITIES AND THE HOLDER MAY NOT BE ABLE TO RESELL THE SECURITIES UNLESS: (1) THE
+ SECURITIES ARE REGISTERED UNDER STATE AND FEDERAL SECURITIES LAWS, OR (2) AN EXEMPTION IS AVAILABLE UNDER THOSE LAWS.
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                       21/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+                                                                              -14-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     22/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+ 21. NOTICE TO MARYLAND RESIDENTS ONLY: IF YOU ARE A MARYLAND RESIDENT AND YOU ACCEPT AN OFFER TO PURCHASE THESE SECURITIES PURSUANT TO THIS
+ MEMORANDUM, YOU ARE HEREBY ADVISED THAT THESE SECURITIES ARE BEING SOLD AS A TRANSACTION EXEMPT UNDER SECTION 11-602(9) OF THE MARYLAND
+ SECURITIES ACT. THE SHARES HAVE NOT BEEN REGISTERED UNDER SAID ACT IN THE STATE OF MARYLAND. ALL INVESTORS SHOULD BE AWARE THAT THERE ARE CERTAIN
+ RESTRICTIONS AS TO THE TRANSFERABILITY OF THE SHARES.
+
+ 22. NOTICE TO MASSACHUSETTS RESIDENTS ONLY: THESE SECURITIES HAVE NOT BEEN REGISTERED UNDER THE SECURITIES ACT OF 1933, AS AMENDED, OR THE
+ MASSACHUSETTS UNIFORM SECURITIES ACT, BY REASON OF SPECIFIC EXEMPTIONS THEREUNDER RELATING TO THE LIMITED AVAILABILITY OF THIS OFFERING. THESE
+ SECURITIES CANNOT BE SOLD, TRANSFERRED, OR OTHERWISE DISPOSED OF TO ANY PERSON OR ENTITY UNLESS THEY ARE SUBSEQUENTLY REGISTERED OR AN
+ EXEMPTION FROM REGISTRATION IS AVAILABLE.
+
+ 23. NOTICE TO MICHIGAN RESIDENTS ONLY: THESE SECURITIES HAVE NOT BEEN REGISTERED UNDER SECTION 451.701 OF THE MICHIGAN UNIFORM SECURITIES ACT
+ (THE ACT) AND MAY BE TRANSFERRED OR RESOLD BY RESIDENTS OF MICHIGAN ONLY IF REGISTERED PURSUANT TO THE PROVISIONS OF THE ACT, OR IF AN EXEMPTION
+ FROM REGISTRATION IS AVAILABLE. THE INVESTMENT IS SUITABLE IF IT DOES NOT EXCEED 10% OF THE INVESTOR'S NET WORTH.
+
+ 24. NOTICE TO MINNESOTA RESIDENTS ONLY: THESE SECURITIES BEING OFFERED HEREBY HAVE NOT BEEN REGISTERED UNDER CHAPTER 80A OF THE MINNESOTA
+ SECURITIES LAWS AND MAY NOT BE SOLD, TRANSFERRED, OR OTHERWISE DISPOSED OF EXCEPT PURSUANT TO REGISTRATION, OR AN EXEMPTION THEREFROM.
+
+ 25. NOTICE TO MISSISSIPPI RESIDENTS ONLY: THE SHARES ARE OFFERED PURSUANT TO A CLAIM OF EXEMPTION UNDER THE MISSISSIPPI SECURITIES ACT. A
+ REGISTRATION STATEMENT RELATING TO THESE SECURITIES HAS NOT BEEN FILED WITH THE MISSISSIPPI SECRETARY OF STATE OR WITH THE SECURITIES AND
+ EXCHANGE COMMISSION. NEITHER THE SECRETARY OF STATE NOR THE COMMISSION HAS PASSED UPON THE VALUE OF THESE SECURITIES, OR APPROVED OR
+ DISAPPROVED THIS OFFERING. THE SECRETARY OF STATE DOES NOT RECOMMEND THE PURCHASE OF THESE OR ANY OTHER SECURITIES. EACH PURCHASER OF THE
+ SECURITIES MUST MEET CERTAIN SUITABILITY STANDARDS AND MUST BE ABLE TO BEAR AN ENTIRE LOSS OF THIS INVESTMENT. THE SECURITIES MAY NOT BE
+ TRANSFERRED FOR A PERIOD OF ONE (1) YEAR EXCEPT IN A TRANSACTION WHICH IS EXEMPT UNDER THE MISSISSIPPI SECURITIES ACT OR IN A TRANSACTION IN
+ COMPLIANCE WITH THE MISSISSIPPI SECURITIES ACT.
+
+ 26. FOR MISSOURI RESIDENTS ONLY: THE SECURITIES OFFERED HEREIN WILL BE SOLD TO, AND ACQUIRED BY, THE PURCHASER IN A TRANSACTION EXEMPT UNDER
+ SECTION 4.G OF THE MISSOURI SECURITIES LAW OF 1953, AS AMENDED. THESE SECURITIES HAVE NOT BEEN REGISTERED UNDER SAID ACT IN THE STATE OF MISSOURI.
+ UNLESS THE SECURITIES ARE SO REGISTERED, THEY MAY NOT BE OFFERED FOR SALE OR RESOLD IN THE STATE OF MISSOURI, EXCEPT AS A SECURITY, OR IN A
+ TRANSACTION EXEMPT UNDER SAID ACT.
+
+ 27. NOTICE TO MONTANA RESIDENTS ONLY: IN ADDITION TO THE INVESTOR SUITABILITY STANDARDS THAT ARE OTHERWISE APPLICABLE, ANY INVESTOR WHO IS A
+ MONTANA RESIDENT MUST HAVE A NET WORTH (EXCLUSIVE OF HOME, FURNISHINGS AND AUTOMOBILES) IN EXCESS OF FIVE (5) TIMES THE AGGREGATE AMOUNT
+ INVESTED BY SUCH INVESTOR IN THE SHARES.
+
+ 28. NOTICE TO NEBRASKA RESIDENTS ONLY: IF AN INVESTOR ACCEPTS AN OFFER TO PURCHASE ANY OF THE SECURITIES, THE INVESTOR IS HEREBY ADVISED THE
+ SECURITIES WILL BE SOLD TO AND ACQUIRED BY IT/HIM/HER IN A TRANSACTION EXEMPT FROM REGISTRATION UNDER CHAPTER 15 OF THE NEBRASKA SECURITIES
+ LAW AND MAY NOT BE RE-OFFERED FOR SALE, TRANSFERRED, OR RESOLD EXCEPT IN COMPLIANCE WITH SUCH ACT AND APPLICABLE RULES PROMULGATED
+ THEREUNDER.
+
+
+                                                                              -15-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                     23/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+ 29. NOTICE TO NEVADA RESIDENTS ONLY: IF ANY INVESTOR ACCEPTS ANY OFFER TO PURCHASE THE SECURITIES, THE INVESTOR IS HEREBY ADVISED THE SECURITIES
+ WILL BE SOLD TO AND ACQUIRED BY IT/HIM/HER IN A TRANSACTION EXEMPT FROM REGISTRATION UNDER SECTION 49:3-60(b) OF THE NEVADA SECURITIES LAW. THE
+ INVESTOR IS HEREBY ADVISED THAT THE ATTORNEY GENERAL OF THE STATE OF NEVADA HAS NOT PASSED ON OR ENDORSED THE MERITS OF THIS OFFERING AND THE
+ FILING OF THE OFFERING WITH THE BUREAU OF SECURITIES DOES NOT CONSTITUTE APPROVAL OF THE ISSUE, OR SALE THEREOF, BY THE BUREAU OF SECURITIES OR THE
+ DEPARTMENT OF LAW AND PUBLIC SAFETY OF THE STATE OF NEVADA. ANY REPRESENTATION TO THE CONTRARY IS UNLAWFUL. NEVADA ALLOWS THE SALE OF
+ SECURITIES TO 25 OR FETHE COMPANYR PURCHASERS IN THE STATE WITHOUT REGISTRATION. HOWEVER, CERTAIN CONDITIONS APPLY, I.E., THERE CAN BE NO GENERAL
+ ADVERTISING OR SOLICITATION AND COMMISSIONS ARE LIMITED TO LICENSED BROKER-DEALERS. THIS EXEMPTION IS GENERALLY USED WHERE THE PROSPECTIVE
+ INVESTOR IS ALREADY KNOWN AND HAS A PRE-EXISTING RELATIONSHIP WITH THE COMPANY. (SEE NRS 90.530.11.)
+
+ 30. NOTICE TO NEW HAMPSHIRE RESIDENTS ONLY: NEITHER THE FACT THAT A REGISTRATION STATEMENT OR AN APPLICATION FOR A LICENSE UNDER THIS CHAPTER
+ HAS BEEN FILED WITH THE STATE OF NEW HAMPSHIRE NOR THE FACT THAT A SECURITY IS EFFECTIVELY REGISTERED OR A PERSON IS LICENSED IN THE STATE OF NEW
+ HAMPSHIRE CONSTITUTES A FINDING BY THE SECRETARY OF STATE THAT ANY DOCUMENT FILED UNDER RSA 421-B IS TRUE, COMPLETE AND NOT MISLEADING. NEITHER
+ ANY SUCH FACT NOR THE FACT THAT AN EXEMPTION OR EXCETHE COMPANYON IS AVAILABLE FOR A SECURITY OR A TRANSACTION MEANS THAT THE SECRETARY OF
+ STATE HAS PASSED IN ANY WAY UPON THE MERITS OR QUALIFICATIONS OF, OR RECOMMENDED OR GIVEN APPROVAL TO, ANY PERSON, SECURITY, OR TRANSACTION. IT IS
+ UNLAWFUL TO MAKE, OR CAUSE TO BE MADE, TO ANY PROSPECTIVE PURCHASER, CUSTOMER, OR CLIENT ANY REPRESENTATION INCONSISTENT WITH THE PROVISIONS
+ OF THIS PARAGRAPH.
+
+ 31. NOTICE TO NEW JERSEY RESIDENTS ONLY: IF YOU ARE A NEW JERSEY RESIDENT AND YOU ACCEPT AN OFFER TO PURCHASE THESE SECURITIES PURSUANT TO THIS
+ MEMORANDUM, YOU ARE HEREBY ADVISED THAT THIS MEMORANDUM HAS NOT BEEN FILED WITH OR REVIEWED BY THE ATTORNEY GENERAL OF THE STATE OF NEW
+ JERSEY PRIOR TO ITS ISSUANCE AND USE. THE ATTORNEY GENERAL OF THE STATE OF NEW JERSEY HAS NOT PASSED ON OR ENDORSED THE MERITS OF THIS OFFERING.
+ ANY REPRESENTATION TO THE CONTRARY IS UNLAWFUL.
+
+ 32. NOTICE TO NEW MEXICO RESIDENTS ONLY: THESE SECURITIES HAVE NOT BEEN APPROVED OR DISAPPROVED BY THE SECURITIES DIVISION OF THE NEW MEXICO
+ DEPARTMENT OF BANKING NOR HAS THE SECURITIES DIVISION PASSED UPON THE ACCURACY OR ADEQUACY OF THIS PRIVATE PLACEMENT MEMORANDUM. ANY
+ REPRESENTATION TO THE CONTRARY IS A CRIMINAL OFFENSE.
+
+ 33. NOTICE TO NEW YORK RESIDENTS ONLY: THIS DOCUMENT HAS NOT BEEN REVIEWED BY THE ATTORNEY GENERAL OF THE STATE OF NEW YORK PRIOR TO ITS
+ ISSUANCE AND USE. THE ATTORNEY GENERAL OF THE STATE OF NEW YORK HAS NOT PASSED ON OR ENDORSED THE MERITS OF THIS OFFERING. ANY REPRESENTATION TO
+ THE CONTRARY IS UNLAWFUL. THE COMPANY HAS TAKEN NO STEPS TO CREATE AN AFTER MARKET FOR THE SHARES OFFERED HEREIN AND HAS MADE NO
+ ARRANGEMENTS WITH BROKERS OF OTHERS TO TRADE OR MAKE A MARKET IN THE SHARES. AT SOME TIME IN THE FUTURE, THE COMPANY MAY ATTEMPT TO
+ ARRANGE FOR INTERESTED BROKERS TO TRADE OR MAKE A MARKET IN THE SECURITIES AND TO QUOTE THE SAME IN A PUBLISHED QUOTATION MEDIUM, HOWEVER,
+ NO SUCH ARRANGEMENTS HAVE BEEN MADE AND THERE IS NO ASSURANCE THAT ANY BROKERS WILL EVER HAVE SUCH AN INTEREST IN THE SECURITIES OF THE
+ COMPANY OR THAT THERE WILL EVER BE A MARKET THEREFORE.
+
+ 34. NOTICE TO NORTH CAROLINA RESIDENTS ONLY: IN MAKING AN INVESTMENT DECISION, INVESTORS MUST RELY ON THEIR OWN EXAMINATION OF THE PERSON OR
+ ENTITY CREATING THE SECURITIES AND THE TERMS OF THE OFFERING, INCLUDING MERITS AND RISKS INVOLVED. THESE SECURITIES HAVE NOT BEEN RECOMMENDED
+ BY ANY FEDERAL OR STATE SECURITIES COMMISSION OR REGULATORY AUTHORITY. FURTHERMORE, THE FORGOING AUTHORITIES HAVE NOT CONFIRMED ACCURACY OR
+ DETERMINED ADEQUACY OF THIS DOCUMENT. REPRESENTATION TO THE CONTRARY IS UNLAWFUL. THESE SECURITIES ARE SUBJECT TO RESTRICTIONS ON
+ TRANSFERABILITY AND RESALE AND MAY NOT BE TRANSFERRED OR RESOLD EXCEPT AS PERMITTED UNDER THE SECURITIES ACT OF 1933, AS AMENDED, AND
+ APPLICABLE STATE SECURITIES LAWS, PURSUANT TO REGISTRATION OR EXEMPTION THEREFROM. INVESTORS SHOULD BE AWARE THAT THEY WILL BE REQUIRED TO
+ BEAR THE FINANCIAL RISKS OF THIS INVESTMENT FOR AN INDEFINITE PERIOD OF TIME.
+
+ 35. NOTICE TO NORTH DAKOTA RESIDENTS ONLY: THESE SECURITIES HAVE NOT BEEN APPROVED OR DISAPPROVED BY THE SECURITIES COMMISSIONER OF THE STATE
+ OF NORTH DAKOTA NOR HAS THE COMMISSIONER PASSED UPON THE ACCURACY OR ADEQUACY OF THIS OFFERING. ANY REPRESENTATION TO THE CONTRARY IS A
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                      24/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+ CRIMINAL OFFENSE.
+
+
+                                                                              -16-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     25/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+ 36. NOTICE TO OHIO RESIDENTS ONLY: IF AN INVESTOR ACCEPTS AN OFFER TO PURCHASE ANY OF THE SECURITIES, THE INVESTOR IS HEREBY ADVISED THE SECURITIES
+ WILL BE SOLD TO AND ACQUIRED BY IT/HIM/HER IN A TRANSACTION EXEMPT FROM REGISTRATION UNDER SECTION 107.03(2) OF THE OHIO SECURITIES LAW AND MAY
+ NOT BE RE-OFFERED FOR SALE, TRANSFERRED, OR RESOLD EXCEPT IN COMPLIANCE WITH SUCH ACT AND APPLICABLE RULES PROMULGATED THEREUNDER.
+
+ 37. NOTICE TO OKLAHOMA RESIDENTS ONLY: THESE SECURITIES ARE OFFERED FOR SALE IN THE STATE OF OKLAHOMA IN RELIANCE UPON AN EXEMPTION FROM
+ REGISTRATION FOR PRIVATE OFFERINGS. ALTHOUGH A PRIOR FILING OF THIS MEMORANDUM AND THE INFORMATION HAS BEEN MADE WITH THE OKLAHOMA
+ SECURITIES COMMISSION, SUCH FILING IS PERMISSIVE ONLY AND DOES NOT CONSTITUTE AN APPROVAL, RECOMMENDATION OR ENDORSEMENT, AND IN NO SENSE IS TO
+ BE REPRESENTED AS AN INDICATION OF THE INVESTMENT MERIT OF SUCH SECURITIES. ANY SUCH REPRESENTATION IS UNLAWFUL.
+
+ 38. NOTICE TO OREGON RESIDENTS ONLY: THE SECURITIES OFFERED HAVE NOT BEEN REGISTERED WITH THE CORPORATION COMMISSION OF THE STATE OF OREGON
+ UNDER PROVISIONS OF OAR 815 DIVISION 36. THE INVESTOR IS ADVISED THAT THE COMMISSIONER HAS NOT MADE A CURSORY REVIEW OF THE REGISTRATION
+ STATEMENT AND HAS NOT REVIEWED THIS DOCUMENT SINCE THE DOCUMENT IS NOT REQUIRED TO BE FILED WITH THE COMMISSIONER. THE INVESTOR MUST RELY
+ ON THE INVESTOR'S OWN EXAMINATION OF THE COMPANY CREATING THE SECURITIES, AND THE TERMS OF THE OFFERING INCLUDING THE MERITS AND RISKS
+ INVOLVED IN MAKING AN INVESTMENT DECISION ON THESE SECURITIES.
+
+ 39. NOTICE TO PENNSYLVANIA RESIDENTS ONLY: EACH PERSON WHO ACCEPTS AN OFFER TO PURCHASE SECURITIES EXEMPTED FROM REGISTRATION BY SECTION
+ 203(d), DIRECTLY FROM THE ISSUER OR AFFILIATE OF THIS ISSUER, SHALL HAVE THE RIGHT TO WITHDRAW HIS ACCEPTANCE WITHOUT INCURRING ANY LIABILITY TO
+ THE SELLER, UNDERWRITER (IF ANY) OR ANY OTHER PERSON WITHIN TWO (2) BUSINESS DAYS FROM THE DATE OF RECEIPT BY THE ISSUER OF HIS WRITTEN BINDING
+ CONTRACT OF PURCHASE OR, IN THE CASE OF A TRANSACTION IN WHICH THERE IS NO BINDING CONTRACT OF PURCHASE, WITHIN TWO (2) BUSINESS DAYS AFTER HE
+ MAKES THE INITIAL PAYMENT FOR THE SECURITIES BEING OFFERED. IF YOU HAVE ACCEPTED AN OFFER TO PURCHASE THESE SECURITIES MADE PURSUANT TO AN
+ OFFERING WHICH CONTAINS A NOTICE EXPLAINING YOUR RIGHT TO WITHDRAW YOUR ACCEPTANCE PURSUANT TO SECTION 207(m) OF THE PENNSYLVANIA SECURITIES
+ ACT OF 1972 (70 PS § 1-207(m), YOU MAY ELECT, WITHIN TWO (2) BUSINESS DAYS AFTER THE FIRST TIME YOU HAVE RECEIVED THIS NOTICE AND AN OFFERING TO
+ WITHDRAW FROM YOUR PURCHASE AGREEMENT AND RECEIVE A FULL REFUND OF ALL MONEYS PAID BY YOU. YOUR WITHDRAWAL WILL BE WITHOUT ANY FURTHER
+ LIABILITY TO ANY PERSON. TO ACCOMPLISH THIS WITHDRAWAL, YOU NEED ONLY SEND A LETTER OR TELEGRAM TO THE ISSUER INDICATING YOUR INTENTION TO
+ WITHDRAW. SUCH LETTER OR TELEGRAM SHOULD BE SENT AND POSTMARKED PRIOR TO THE END OF THE AFOREMENTIONED SECOND BUSINESS DAY. IF YOU ARE
+ SENDING A LETTER, IT IS PRUDENT TO SEND IT BY CERTIFIED MAIL, RETURN RECEIPT REQUESTED, TO ENSGTI THAT IT IS RECEIVED AND ALSO EVIDENCE THE TIME
+ WHEN IT WAS MAILED. SHOULD YOU MAKE THIS REQUEST ORALLY, YOU SHOULD ASK WRITTEN CONFIRMATION THAT YOUR REQUEST HAS BEEN RECEIVED. NO SALE OF
+ THE SECURITIES WILL BE MADE TO RESIDENTS OF THE STATE OF PENNSYLVANIA WHO ARE NON-ACCREDITED INVESTORS IF THE AMOUNT OF SUCH INVESTMENT IN THE
+ SECURITIES WOULD EXCEED TTHE COMPANYNTY (20%) OF SUCH INVESTOR'S NET WORTH (EXCLUDING PRINCIPAL RESIDENCE, FURNISHINGS THEREIN AND PERSONAL
+ AUTOMOBILES). EACH PENNSYLVANIA RESIDENT MUST AGREE NOT TO SELL THESE SECURITIES FOR A PERIOD OF TTHE COMPANYLVE (12) MONTHS AFTER THE DATE OF
+ PURCHASE, EXCEPT IN ACCORDANCE WITH WAIVERS ESTABLISHED BY RULE OR ORDER OF THE COMMISSION. THE SECURITIES HAVE BEEN ISSUED PURSUANT TO AN
+ EXEMPTION FROM THE REGISTRATION REQUIREMENT OF THE PENNSYLVANIA SECURITIES ACT OF 1972. NO SUBSEQUENT RESALE OR OTHER DISPOSITION OF THE
+ SECURITIES MAY BE MADE WITHIN 12 MONTHS FOLLOWING THEIR INITIAL SALE IN THE ABSENCE OF AN EFFECTIVE REGISTRATION, EXCEPT IN ACCORDANCE WITH
+ WAIVERS ESTABLISHED BY RULE OR ORDER OF THE COMMISSION, AND THEREAFTER ONLY PURSUANT TO AN EFFECTIVE REGISTRATION OR EXEMPTION.
+
+ 40. NOTICE TO RHODE ISLAND RESIDENTS ONLY: THESE SECURITIES HAVE NOT BEEN APPROVED OR DISAPPROVED BY THE DEPARTMENT OF BUSINESS REGULATION OF
+ THE STATE OF RHODE ISLAND NOR HAS THE DIRECTOR PASSED UPON THE ACCURACY OR ADEQUACY OF THIS DOCUMENT. ANY REPRESENTATION TO THE CONTRARY IS
+ UNLAWFUL.
+
+
+                                                                              -17-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                      26/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+ 41. NOTICE TO SOUTH CAROLINA RESIDENTS ONLY: THESE SECURITIES ARE BEING OFFERED PURSUANT TO A CLAIM OF EXEMPTION UNDER THE SOUTH CAROLINA
+ UNIFORM SECURITIES ACT. A REGISTRATION STATEMENT RELATING TO THESE SECURITIES HAS NOT BEEN FILED WITH THE SOUTH CAROLINA SECURITIES
+ COMMISSIONER. THE COMMISSIONER DOES NOT RECOMMEND OR ENDORSE THE PURCHASE OF ANY SECURITIES, NOR DOES IT PASS UPON THE ACCURACY OR
+ COMPLETENESS OF THIS PRIVATE PLACEMENT MEMORANDUM. ANY REPRESENTATION TO THE CONTRARY IS A CRIMINAL OFFENSE.
+
+ 42. NOTICE TO SOUTH DAKOTA RESIDENTS ONLY: THESE SECURITIES ARE BEING OFFERED FOR SALE IN THE STATE OF SOUTH DAKOTA PURSUANT TO AN EXEMPTION
+ FROM REGISTRATION UNDER THE SOUTH DAKOTA BLUE SKY LAW, CHAPTER 47-31, WITH THE DIRECTOR OF THE DIVISION OF SECURITIES OF THE DEPARTMENT OF
+ COMMERCE AND REGULATION OF THE STATE OF SOUTH DAKOTA. THE EXEMPTION DOES NOT CONSTITUTE A FINDING THAT THIS MEMORANDUM IS TRUE, COMPLETE,
+ AND NOT MISLEADING, NOR HAS THE DIRECTOR OF THE DIVISION OF SECURITIES PASSED IN ANY WAY UPON THE MERITS OF, RECOMMENDED, OR GIVEN APPROVAL TO
+ THESE SECURITIES. ANY REPRESENTATION TO THE CONTRARY IS A CRIMINAL OFFENSE.
+
+ 43. NOTICE TO TENNESSEE RESIDENT ONLY: IN MAKING AN INVESTMENT DECISION INVESTORS MUST RELY ON THEIR OWN EXAMINATION OF THE ISSUER AND THE
+ TERMS OF THE OFFERING, INCLUDING THE MERITS AND RISKS INVOLVED. THESE SECURITIES HAVE NOT BEEN RECOMMENDED BY ANY FEDERAL OR STATE SECURITIES
+ COMMISSION OR REGULATORY AUTHORITY. FURTHERMORE, THE FOREGOING AUTHORITIES HAVE NOT CONFIRMED THE ACCURACY OR DETERMINED THE ADEQUACY OF
+ THIS DOCUMENT. ANY REPRESENTATION TO THE CONTRARY IS A CRIMINAL OFFENSE.
+
+ THESE SECURITIES ARE SUBJECT TO RESTRICTIONS ON TRANSFERABILITY AND RESALE AND MAY NOT BE TRANSFERRED OR RESOLD. EXCEPT AS PERMITTED UNDER THE
+ SECURITIES ACT OF 1933, AS AMENDED AND THE APPLICABLE STATE SECURITIES LAWS, PURSUANT TO REGISTRATION OR EXEMPTION THEREFROM. INVESTORS SHOULD
+ BE AWARE THAT THEY MAY BE REQUIRED TO BEAR THE FINANCIAL RISK OF THIS INVESTMENT FOR AN INDEFINITE PERIOD OF TIME.
+
+ 44. NOTICE TO TEXAS RESIDENTS ONLY: THE SECURITIES OFFERED HEREUNDER HAVE NOT BEEN REGISTERED UNDER APPLICABLE TEXAS SECURITIES LAWS AND,
+ THEREFORE, ANY PURCHASER THEREOF MUST BEAR THE ECONOMIC RISK OF THE INVESTMENT FOR AN INDEFINITE PERIOD OF TIME BECAUSE THE SECURITIES
+ CANNOT BE RESOLD UNLESS THEY ARE SUBSEQUENTLY REGISTERED UNDER SUCH SECURITIES LAWS OR AN EXEMPTION FROM SUCH REGISTRATION IS AVAILABLE.
+ FURTHER, PURSUANT TO §109.13 UNDER THE TEXAS SECURITIES ACT, THE COMPANY IS REQUIRED TO APPRISE PROSPECTIVE INVESTORS OF THE FOLLOWING: A LEGEND
+ SHALL BE PLACED, UPON ISSUANCE, ON CERTIFICATES REPRESENTING SECURITIES PURCHASED HEREUNDER, AND ANY PURCHASER HEREUNDER SHALL BE REQUIRED TO
+ SIGN A WRITTEN AGREEMENT THAT HE WILL NOT SELL THE SUBJECT SECURITIES WITHOUT REGISTRATION UNDER APPLICABLE SECURITIES LAWS, OR EXEMPTIONS
+ THEREFROM.
+
+ 45. NOTICE TO UTAH RESIDENTS ONLY: THESE SECURITIES ARE BEING OFFERED IN A TRANSACTION EXEMPT FROM THE REGISTRATION REQUIREMENTS OF THE UTAH
+ SECURITIES ACT. THE SECURITIES CANNOT BE TRANSFERRED OR SOLD EXCEPT IN TRANSACTIONS WHICH ARE EXEMPT UNDER THE ACT OR PURSUANT TO AN EFFECTIVE
+ REGISTRATION STATEMENT UNDER THE ACT OR IN A TRANSACTION WHICH IS OTHERWISE IN COMPLIANCE WITH THE ACT.
+
+ 46. NOTICE TO VERMONT RESIDENTS ONLY: THESE SECURITIES HAVE NOT BEEN APPROVED OR DISAPPROVED BY THE SECURITIES DIVISION OF THE STATE OF VERMONT
+ NOR HAS THE COMMISSIONER PASSED UPON THE ACCURACY OR ADEQUACY OF THIS DOCUMENT. ANY REPRESENTATION TO THE CONTRARY IS UNLAWFUL.
+
+ 47. NOTICE TO VIRGINIA RESIDENTS ONLY: IF AN INVESTOR ACCEPTS AN OFFER TO PURCHASE ANY OF THE SECURITIES, THE INVESTOR IS HEREBY ADVISED THE
+ SECURITIES WILL BE SOLD TO AND ACQUIRED BY IT/HIM/HER IN A TRANSACTION UNDER SECTION 13.1-514 OF THE VIRGINIA SECURITIES ACT AND MAY NOT BE RE-
+ OFFERED FOR SALE, TRANSFERRED, OR RESOLD EXCEPT IN COMPLIANCE WITH SUCH ACT AND APPLICABLE RULES PROMULGATED THEREUNDER.
+
+
+                                                                              -18-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                   27/78
+11/14/26, 10:12 AM                                                                                  e101.htm
+
+
+
+
+ 48. NOTICE TO WASHINGTON RESIDENTS ONLY: THE ADMINISTRATOR OF SECURITIES HAS NOT REVIEWED THE OFFERING OR PRIVATE PLACEMENT MEMORANDUM
+ AND THE SECURITIES HAVE NOT BEEN REGISTERED IN RELIANCE UPON THE SECURITIES ACT OF WASHINGTON, CHAPTER 21.20 RCW, AND THEREFORE, CANNOT BE
+ RESOLD UNLESS THEY ARE REGISTERED UNDER THE SECURITIES ACT OF WASHINGTON, CHAPTER 21.20 RCW, OR UNLESS AN EXEMPTION FROM REGISTRATION IS MADE
+ AVAILABLE.
+
+ 49. NOTICE TO WEST VIRGINIA RESIDENTS ONLY: IF AN INVESTOR ACCEPTS AN OFFER TO PURCHASE ANY OF THE SECURITIES, THE INVESTOR IS HEREBY ADVISED THE
+ SECURITIES WILL BE SOLD TO AND ACQUIRED BY IT/HIM/HER IN A TRANSACTION EXEMPT FROM REGISTRATION UNDER SECTION 15.06(b)(9) OF THE WEST VIRGINIA
+ SECURITIES LAW AND MAY NOT BE REOFFERED FOR SALE, TRANSFERRED, OR RESOLD EXCEPT IN COMPLIANCE WITH SUCH ACT AND APPLICABLE RULES PROMULGATED
+ THEREUNDER.
+
+ 50. NOTICE TO WISCONSIN RESIDENTS ONLY: IN ADDITION TO THE INVESTOR SUITABILITY STANDARDS THAT ARE OTHERWISE APPLICABLE, ANY INVESTOR WHO IS A
+ WISCONSIN RESIDENT MUST HAVE A NET WORTH (EXCLUSIVE OF HOME, FURNISHINGS AND AUTOMOBILES) IN EXCESS OF THREE AND ONE-THIRD (3 1/3) TIMES THE
+ AGGREGATE AMOUNT INVESTED BY SUCH INVESTOR IN THE SHARES OFFERED HEREIN.
+
+ 51. FOR WYOMING RESIDENTS ONLY: ALL WYOMING RESIDENTS WHO SUBSCRIBE TO PURCHASE SHARES OFFERED BY THE COMPANY MUST SATISFY THE FOLLOWING
+ MINIMUM FINANCIAL SUITABILITY REQUIREMENTS IN ORDER TO PURCHASE SHARES: (1) A NET WORTH (EXCLUSIVE OF HOME, FURNISHINGS AND AUTOMOBILES) OF
+ TWO HUNDRED FIFTY THOUSAND DOLLARS ($250,000); AND (2) THE PURCHASE PRICE OF SHARES SUBSCRIBED FOR MAY NOT EXCEED TWENTY PERCENT (20%) OF THE
+ NET WORTH OF THE SUBSCRIBER; AND (3) "TAXABLE INCOME" AS DEFINED IN SECTION 63 OF THE INTERNAL REVENUE CODE OF 1986, AS AMENDED, DURING THE LAST
+ TAX YEAR AND ESTIMATED "TAXABLE INCOME" DURING THE CURRENT TAX YEAR SUBJECT TO A FEDERAL INCOME TAX RATE OF NOT LESS THAN THIRTY-THREE PERCENT
+ (33%). IN ORDER TO VERIFY THE FOREGOING, ALL SUBSCRIBERS WHO ARE WYOMING RESIDENTS WILL BE REQUIRED TO REPRESENT IN THE SUBSCRIPTION AGREEMENT
+ THAT THEY MEET THESE WYOMING SPECIAL INVESTOR SUITABILITY REQUIREMENTS.
+
+                                                                              ANTI-MONEY LAUNDERING REGULATIONS
+
+          The Company may require a detailed verification of your identity and the source of the payment for the common stock. Depending on the circumstances, a detailed verification
+ might not be required where (a) you are regulated by a recognized regulatory authority, or (b) the Subscription is made through an intermediary who is regulated by a recognized
+ regulatory authority. In this situation, The Company may rely on a written assurance from the intermediary that the requisite identification procedures in respect of the subscriber have been
+ carried out. These exceptions will only apply if you or intermediary referred to above are within a country recognized as having sufficient anti-money laundering regulations.
+
+           The Company reserves the right to request such information as is necessary to verify your identity. In the event of delay or failure to produce any information required for
+ verification purposes, The Company may refuse to accept the Subscription Agreement and the Subscription monies relating thereto. If any person has a suspicion that a payment to us (by
+ way of Subscription or otherwise) contains the proceeds of criminal conduct or has a suspicion obtained in the course of business that any other person is engaged in money laundering that
+ person is required to report such suspicion and such report shall not be treated as a breach of any restriction upon disclosure of information imposed by any enactment or otherwise
+
+                                                                                       USA PATRIOT ACT
+
+          In addition to the foregoing requirements, you will be required to comply with the additional verification requirements set forth in the Subscription Agreement for the Common stock, as
+ required by the USA PATRIOT Act and applicable regulations. The Company may in the future request additional information and/or representations to comply with the PATRIOT Act
+ and regulations.
+
+        DURING THE COURSE OF THE OFFERING AND PRIOR TO ANY SALE, EACH OFFEREE OF THE SHARES AND HIS OR HER PROFESSIONAL ADVISOR(S), IF ANY, ARE
+ INVITED TO ASK QUESTIONS CONCERNING THE TERMS AND CONDITIONS OF THE OFFERING AND TO OBTAIN ANY ADDITIONAL INFORMATION NECESSARY TO VERIFY THE
+ ACCURACY OF THE INFORMATION SET FORTH HEREIN. SUCH INFORMATION WILL BE PROVIDED TO THE EXTENT THE COMPANY POSSESS SUCH INFORMATION OR CAN
+ ACQUIRE IT WITHOUT UNREASONABLE EFFORT OR EXPENSE.
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                                    28/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -19-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     29/78
+11/14/26, 10:12 AM                                                                                  e101.htm
+
+
+
+
+        EACH PROSPECTIVE INVESTOR WILL BE GIVEN AN OPPORTUNITY TO ASK QUESTIONS OF, AND RECEIVE ANSTHE COMPANYRS FROM, MANAGEMENT OF THE
+ COMPANY CONCERNING THE TERMS AND CONDITIONS OF THIS OFFERING AND TO OBTAIN ANY ADDITIONAL INFORMATION, TO THE EXTENT THE COMPANY POSSESSES
+ SUCH INFORMATION OR CAN ACQUIRE IT WITHOUT UNREASONABLE EFFORTS OR EXPENSE, NECESSARY TO VERIFY THE ACCURACY OF THE INFORMATION CONTAINED IN
+ THIS MEMORANDUM. IF YOU HAVE ANY QUESTIONS WHATSOEVER REGARDING THIS OFFERING, OR DESIRE ANY ADDITIONAL INFORMATION OR DOCUMENTS TO VERIFY
+ OR SUPPLEMENT THE INFORMATION CONTAINED IN THIS MEMORANDUM, PLEASE WRITE OR CALL:
+
+                                                                                        Robert Goldstein
+                                                                                     US Nuclear Corp. Inc.
+                                                                              President and Chief Executive Officer
+                                                                                       7051 Eton Avenue
+                                                                                 Canoga Park, California 91303
+                                                                                         (818) 883-7043
+
+
+
+
+                                                                                             -20-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                30/78
+11/14/26, 10:12 AM                                                                                      e101.htm
+
+
+
+
+ EXHIBIT A – ACCREDITED INVESTOR QUESTIONNAIRE
+     This Accredited Investor Questionnaire is intended to assess interest in participation in the offering of common stock of the Company as an accredited investor. We ask that
+ you please complete and return this Accredited Investor Questionnaire regardless of whether you wish to participate in the Offering.
+     This questionnaire is not intended to be, and does not constitute, an offer to sell or the solicitation of an offer to buy any security. No binding agreement or
+ obligation of any kind shall be created by this questionnaire.
+        1. Print Name of Potential Investor: ______________________________________________________
+        2. Please select one of the following options:
+                     ( ) Participation Interest
+                     If you are interested in participating in the Offering, please indicate the maximum dollar amount you are interested in investing:
+                     Maximum Amount of Desired Investment:
+                     $___________________________________
+                     ( ) No Participation Interest
+                     If you are not interested in participating the Offering, please place an “X” here: _______
+     3. Participation in the Offering following completion of this Accredited Investor Questionnaire is available only to the “accredited investor.” Please note that the
+ Company is also entertaining offers up to 35 non-accredited, but sophisticated investors. In completing this Accredited Investor Questionnaire, please refer to the definitions
+ below. Please place an “X” in the appropriate box below to indicate your status (ONLY ONE BOX NEEDS TO BE CHECKED; CONTACT THE COMPANY IF NONE IS APPLICABLE):
+        “Accredited investor” means any person who comes within any of the following categories:
+        (1) Any natural person whose individual net worth, or joint net worth with that person's spouse, at the time of the purchase exceeds $1,000,000. [______]
+     (2) Any natural person who had an individual income in excess of $200,000 in each of the two most recent years or joint income with that person's spouse in excess of
+ $300,000 in each of those years and has a reasonable expectation of reaching the same income level in the current year. [______]
+      (3) Any bank as defined in Section 3(a)(2) of the Securities Act of 1933, as amended (the “Act”), or any savings and loan association or other institution as defined in Section
+ 3(a)(5)(A) of the Act whether acting in its individual or fiduciary capacity; any broker dealer registered pursuant to Section 15 of the Securities Exchange Act of 1934; any
+ insurance company as defined in Section 2(13) of the Act; any investment company registered under the Investment Company Act of 1940 or a business development company as
+ defined in Section 2(a)(48) of that Act; any Small Business Investment Company licensed by the U.S. Small Business Administration under Section 301(c) or (d) of the Small
+ Business Investment Act of 1958; any plan established and maintained by a state, its political subdivisions, or any agency or instrumentality of a state or its political subdivisions,
+ for the benefit of its employees, if such plan has total assets in excess of $5,000,000; any employee benefit plan within the meaning of the Employee Retirement Income Security
+ Act of 1974, if the investment decision is made by a plan fiduciary, as defined in Section 3(21) of such Act, which is either a bank, savings and loan association, insurance company,
+ or registered investment advisor, or if the employee benefit plan has total assets in excess of $5,000,000, or, if a self-directed plan, with investment decisions made solely by
+ persons that are accredited investors. [______]
+        (4) Any private business development company as defined in Section 202(a)(22) of the Investment Advisors Act of 1940. [______]
+     (5) Any organization described in Section 501(c)(3) of the Internal Revenue Code, corporation, company, or similar business trust, or Company, not formed for the specific
+ purpose of acquiring the securities offered, with total assets in excess of $5,000,000. [______]
+      (6) Any director, executive officer, or Company of the issuer of the securities being offered or sold, or any director, executive officer, or Company of a Company of that issuer.
+ [______]
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                          31/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -21-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     32/78
+11/14/26, 10:12 AM                                                                                    e101.htm
+
+
+
+
+        (7) Any trust with total assets in excess of $5,000,000, not formed for the specific purpose of acquiring the securities offered, whose purchase is directed by a sophisticated
+            person as described in Rule 506(b)(2)(ii). [______]
+        (8) Any entity in which all of the equity owners are accredited investors. [______]
+     4. Reliance. I understand you will be relying on my representations. If there is any material change in the information provided to you prior to your acceptance of the
+ Subscription Agreement, I will immediately provide you with information regarding such change. Furthermore, the Executive Summary will be provided upon completion of this
+ Questionnaire, and once produced will be incorporated herein.
+      Please note that because the amount of the Offering is limited, we cannot assure you that you will be able to participate in the Offering at your desired investment level, or at all.
+ Allocation of the available Offering amount will be made by Company, in its sole and absolute discretion.
+        5. Signature. The undersigned has executed this Investor Questionnaire on ____________ ____, 2016.
+
+
+                     Print Name of Potential Investor: _____________________________________________________________
+
+
+                     Signature: ___________________________________________________________________
+
+
+                     Address: ___________________________________________________________________
+                     ___________________________________________________________________
+                     ___________________________________________________________________
+
+
+                     Phone: ___________________________________________________________________
+                     Fax: ___________________________________________________________________
+                     Contact: ___________________________________________________________________
+
+
+                     If the Investor is an entity, also complete the following:
+
+
+                     Name of Signatory: _______________________________________________
+
+
+                     Title: _____________________________________________________
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                              33/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -22-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     34/78
+11/14/26, 10:12 AM                                                                                   e101.htm
+
+
+
+
+ EXHIBIT B - SUBSCRIPTION AGREEMENT
+         This Subscription Agreement (this “Agreement”), with an effective date as of the date of purchase by the Subscriber, as identified below, regardless of the actual date of
+ execution by the parties, by and between US Nuclear Corp., a Delaware corporation, (the “Company”), and the signatory on the signature page hereto (“Subscriber”).
+          WHEREAS, the Company and the Subscriber are executing and delivering this Agreement in reliance upon an exemption from securities registration afforded by the
+ provisions of Section 4(2), Section 4(6) and/or Regulation D (“Regulation D”) as promulgated by the United States Securities and Exchange Commission (the “Commission”) under
+ the Securities Act of 1933, as amended (the “1933 Act”); and
+          WHEREAS, the parties desire that, upon the terms and subject to the conditions contained herein, the Company shall issue and sell to the Subscriber, and the Subscriber
+ shall subscribe to and purchase common stock in the Company (the “Common Stock”).
+              NOW, THEREFORE, in consideration of the mutual covenants and other agreements contained in this Agreement the Company and the Subscriber hereby agree as
+ follows:
+ 1. Purchase and Sale. The Company has offered for sale, and the undersigned Subscriber hereby tenders this subscription and applies for the purchase of, the applicable number of
+ the Common stocks at the applicable purchase price (the “Purchase Price”) all as set forth on the signature page hereto (the “Signature Page”). Together with this Subscription
+ Agreement, the Subscriber is delivering to the Company the full amount of the Purchase Price for the Common Stock. This subscription may be rejected by the Company in its sole
+ discretion in whole or in part. THE SIGNATURE OF THE UNDERSIGNED ON THE SIGNATURE PAGE CONSTITUTES THE EXECUTION OF THIS SUBSCRIPTION AGREEMENT.
+
+ 2. Closing and Conditions to Closing.
+
+ 3. Closing. The consummation of the transactions contemplated herein shall take place at the offices of the Company, as soon as practicable following the satisfaction or waiver of
+ all conditions to closing set forth in this Agreement (the “Closing Date”). Subject to the satisfaction or waiver of the terms and conditions of this Agreement, on the Closing Date,
+ Subscriber shall purchase and the Company shall sell to Subscriber the applicable number of Common Stock for the applicable Purchase Price.
+
+ 4. Conditions to Closing. As a condition precedent to closing, the Subscriber shall approve, consent to and agree to be bound by the terms, conditions and other provisions of the
+ Company’s Bylaws.
+
+ 5. Subscriber’s Representations and Warranties. Subscriber hereby represents and warrants to and agrees with the Company that:
+
+              (a) If an entity, Subscriber is duly organized, validly existing and in good standing under the laws of the jurisdiction of its incorporation or organization.
+
+              (b) Subscriber has the requisite power and authority to enter into and perform this Agreement and to purchase the Common Stock being sold to it hereunder. The
+              execution, delivery and performance of this Agreement by Subscriber and the consummation by it of the transactions contemplated hereby and thereby have been duly
+              authorized by all necessary action, and no further consent or authorization of such Subscriber is required. This Agreement has been duly authorized, executed and
+              delivered by Subscriber and constitutes, or shall constitute when executed and delivered, a valid and binding obligation of the Subscriber enforceable against the
+              Subscriber in accordance with the term hereof.
+
+              (c) The execution, delivery and performance of this Agreement and the consummation by Subscriber of the transactions contemplated hereby or relating hereto do not
+              and will not (i) result in a violation of such Subscriber’s charter documents or bylaws or other organizational documents or (ii) conflict with, or constitute a default (or
+              an event which with notice or lapse of time or both would become a default) under, or give to others any rights of termination, amendment, acceleration or cancellation
+              of any agreement, indenture or instrument or obligation to which Subscriber is a party or by which its properties or assets are bound, or result in a violation of any law,
+              rule, or regulation, or any order, judgment or decree of any court or governmental agency applicable to Subscriber or its properties (except for such conflicts, defaults and
+              violations as would not, individually or in the aggregate, have a material adverse effect on Subscriber). Subscriber is not required to obtain any consent, authorization or
+              order of, or make any filing or registration with, any court or governmental agency in order for it to execute, deliver or perform any of its obligations under this
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                             35/78
+11/14/26, 10:12 AM                                                                             e101.htm
+
+
+
+              Agreement or to purchase the Common Stock in accordance with the terms hereof, provided that for purposes of the representation made in this sentence, Subscriber is
+              assuming and relying upon the accuracy of the relevant representations and agreements of the Company herein.
+
+
+                                                                                        -23-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                    36/78
+11/14/26, 10:12 AM                                                                                 e101.htm
+
+
+
+
+              (d) The Subscriber has received in writing from the Company such information concerning its operations, financial condition and other matters as the Subscriber has
+              requested in writing (such information is collectively, the “Company Information”), and considered all factors the Subscriber deems material in deciding on the
+              advisability of investing in the Securities.
+
+              (e) The Subscriber is, and will be on the Closing Date, an “accredited investor”, as such term is defined in Regulation D promulgated by the Commission under the 1933
+              Act, or is considered a sophisticated investor, and is experienced in investments and business matters, has made investments of a speculative nature and has purchased
+              securities of United States privately-owned companies in private placements in the past and, with its representatives, has such knowledge and experience in financial, tax
+              and other business matters as to enable the Subscriber to utilize the information made available by the Company to evaluate the merits and risks of and to make an
+              informed investment decision with respect to the proposed purchase of the Common Stock, which represents a speculative investment. The Subscriber is able to bear the
+              risk of such investment for an indefinite period and to afford a complete loss thereof. The information set forth on the signature page hereto regarding the Subscriber is
+              accurate.
+
+              (f) The Subscriber understands and agrees that the Common Stock has not been registered under the 1933 Act or any applicable state securities laws, by reason of their
+              issuance in a transaction that does not require registration under the 1933 Act (based in part on the accuracy of the representations and warranties of Subscriber
+              contained herein), and that the Common Stock must be held indefinitely unless a subsequent disposition is registered under the 1933 Act or any applicable state
+              securities laws or is exempt from such registration. Notwithstanding anything to the contrary contained in this Agreement, Subscriber may transfer (without restriction
+              and without the need for an opinion of counsel) the Common Stock to its Affiliates (as defined below) provided that each such Affiliate is an “accredited investor” under
+              Regulation D and such Affiliate agrees to be bound by the terms and conditions of this Agreement. For the purposes of this Agreement, an “Affiliate” of any person or
+              entity means any other person or entity directly or indirectly controlling, controlled by or under direct or indirect common control with such person or entity. Affiliate
+              when employed in connection with the Company includes each Subsidiary as defined in Section 4(a) of this Agreement. For purposes of this definition, “control” means
+              the power to direct the management and policies of such person or firm, directly or indirectly, whether through the ownership of voting securities, by contract or
+              otherwise.
+
+              (g) The offer to sell the Common Stock was directly communicated to the Subscriber by the Company. At no time was the Subscriber presented with or solicited by any
+              leaflet, newspaper or magazine article, radio or television advertisement, or any other form of general advertising or solicited or invited to attend a promotional meeting
+              otherwise than in connection and concurrently with such communicated offer.
+
+              (h) The Subscriber intends on holding the Common Stock in its/his/her personal account without the intent of public distribution.
+
+ 6. No Governmental Review. Subscriber understands that no United States federal or state agency or any other governmental or state agency has passed on or made
+ recommendations or endorsement of the Common Stock or the suitability of the investment in the Common stocks nor have such authorities passed upon or endorsed the merits
+ of the offering of the Common Stock.
+
+ 7. Correctness of Representations. Subscriber represents that the foregoing representations and warranties are true and correct as of the date hereof and, unless such Subscriber
+ otherwise notifies the Company prior to the Closing Date shall be true and correct as of the Closing Date.
+
+
+                                                                                            -24-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                           37/78
+11/14/26, 10:12 AM                                                                                  e101.htm
+
+
+
+
+ 8. Survival. The foregoing representations and warranties shall survive the Closing Date for a period of one year after the Closing Date.
+
+ 9. Company Representations and Warranties. The Company represents and warrants to and agrees with Subscriber that:
+
+              (a) The Company is a corporation incorporated, validly existing and in good standing under the laws of the State of Delaware and has the requisite corporate power to
+              own its properties and to carry on its business as it is currently conducted.
+
+              (b) All issued and outstanding stock of the Company have been duly authorized and validly issued and are fully paid and non-assessable, and all such stock of the
+              Company have been issued in compliance with all applicable federal and state securities laws.
+
+              (c) This Agreement and any other agreements delivered together with this Agreement or in connection herewith (collectively “Transaction Documents”) have been duly
+              authorized, executed and delivered by the Company and are valid and binding agreements enforceable against the Company in accordance with their respective terms,
+              subject to bankruptcy, insolvency, fraudulent transfer, reorganization, moratorium and similar laws of general applicability relating to or affecting creditors’ rights
+              generally and to general principles of equity. The Company has full corporate power and authority necessary to enter into and deliver the Transaction Documents and to
+              perform its obligations thereunder.
+
+              (d) No consent, approval, authorization or order of any court, governmental agency or body or arbitrator having jurisdiction over the Company, or any of its Affiliates, nor
+              the Company’s Members is required for the execution by the Company of the Transaction Documents and compliance and performance by the Company of its obligations
+              under the Transaction Documents, including, without limitation, the issuance and sale of the Common Stock.
+
+              (e) Assuming the representations and warranties of the Subscriber in Section 5 are true and correct, neither the issuance and sale of the Common Stock nor the
+              performance of the Company’s obligations under this Agreement and all other agreements entered into by the Company relating thereto by the Company will violate,
+              conflict with, result in a breach of, or constitute a default (or an event which with the giving of notice or the lapse of time or both would be reasonably likely to constitute
+              a default in any material respect) under (i) the articles of incorporation of the Company, (ii) to the Company’s knowledge, any decree, judgment, order, law, treaty, rule,
+              regulation or determination applicable to the Company of any court, governmental agency or body, or arbitrator having jurisdiction over the Company or over the
+              properties or assets of the Company or any of its Affiliates, (iii) the terms of any common stock, debenture, note or any other evidence of indebtedness, or any agreement,
+              unit option or other similar plan, indenture, lease, mortgage, deed of trust or other instrument to which the Company or any of its Affiliates is a party, by which the
+              Company or any of its Affiliates is bound, or to which any of the properties of the Company or any of its Affiliates is subject, or (iv) the terms of any “lock-up” or similar
+              provision of any underwriting or similar agreement to which the Company, or any of its Affiliates is a party.
+
+              (f) Except as described in the Company Information, there is no pending or, to the best knowledge of the Company, basis for or threatened action, suit, proceeding or
+              investigation before any court, governmental agency or body, or arbitrator having jurisdiction over the Company, or any of its Affiliates to which the Company or any of
+              its Affiliates is a party or which could adversely affect the Company or any of its Subsidiaries or the business conducted or proposed to be conducted by any of them.
+
+ 10. Regulation D Offering. The offer, issuance and sale of the Common Stock to the Subscriber is being made pursuant to the exemption from the registration provisions of the 1933
+ Act afforded by Section 4(2) or Section 4(6) of the 1933 Act and/or Rule 506 of Regulation D promulgated thereunder.
+
+ 11. Broker’s Commission. The Company represents that there are no parties entitled to receive fees, commissions, or similar payments in connection with the offering described in
+ this Agreement.
+
+ 12. Legal Fees. Each party shall pay their own legal fees incurred in connection with the transaction contemplated herein, including, but not limited to, the drafting and negotiation
+ of the Transaction Documents.
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                                38/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+                                                                              -25-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     39/78
+11/14/26, 10:12 AM                                                                                   e101.htm
+
+
+
+
+ 13. Covenants of the Company. The Company covenants and agrees with the Subscriber as follows:
+
+              (a) The proceeds of this offering will be utilized in accordance with the Use of Proceeds, as described in detail in the Company’s Private Placement Memorandum for the
+              purpose of working capital and general administrative expenses and professional fees.
+
+              (b) No press release notice, disclosure or any other publicity concerning the transactions set forth herein shall be issued, given or disseminated by either party without
+              the approval of the other party.
+
+              (c) The Company agrees to indemnify, hold harmless, reimburse and defend the Subscriber, the Subscriber’s officers, directors, agents, Affiliates, control persons, and
+              principal shareholders, against any claim, cost, expense, liability, obligation, loss or damage (including reasonable legal fees) of any nature, incurred by or imposed upon
+              the Subscriber or any such person which results, arises out of or is based upon (i) any misrepresentation by Company or breach of any warranty by Company in this
+              Agreement or in any Schedules attached hereto, or other agreement delivered pursuant hereto; or (ii) after any applicable notice and/or cure periods, any breach or
+              default in performance by the Company of any covenant or undertaking to be performed by the Company hereunder, or any other agreement entered into by the
+              Company and Subscriber relating hereto.
+
+ 14. Covenants of the Subscriber. Subscriber agrees to indemnify, hold harmless, reimburse and defend the Company and each of the Company’s officers, directors, agents, Affiliates,
+ control persons against any claim, cost, expense, liability, obligation, loss or damage (including reasonable legal fees) of any nature, incurred by or imposed upon the Company or
+ any such person which results, arises out of or is based upon (i) any misrepresentation by such Subscriber in this Agreement or in any Schedule attached hereto, or other
+ agreement delivered pursuant hereto; or (ii) after any applicable notice and/or cure periods, any breach or default in performance by such Subscriber of any covenant or
+ undertaking to be performed by such Subscriber hereunder, or any other agreement entered into by the Company and Subscriber, relating hereto.
+
+ 15. Miscellaneous.
+
+              (a) All notices, demands, requests, consents, approvals, and other communications required or permitted hereunder shall be in writing and, unless otherwise specified
+              herein, shall be (i) personally served, (ii) deposited in the mail, registered or certified, return receipt requested, postage prepaid, (iii) delivered by reputable air courier
+              service with charges prepaid, or (iv) transmitted by hand delivery, telegram, or facsimile, addressed as set forth below or to such other address as such party shall have
+              specified most recently by written notice. Any notice or other communication required or permitted to be given hereunder shall be deemed effective (i) upon hand
+              delivery or delivery by facsimile, with accurate confirmation generated by the transmitting facsimile machine, at the address or number designated below (if delivered on
+              a business day during normal business hours where such notice is to be received), or the first business day following such delivery (if delivered other than on a business
+              day during normal business hours where such notice is to be received) or (ii) on the second business day following the date of mailing by express courier service, fully
+              prepaid, addressed to such address, or upon actual receipt of such mailing, whichever shall first occur. The addresses for such communications shall be to the Company at
+              the address first stated hereinabove.
+
+              (b) This Agreement and the Transaction Documents delivered in connection herewith represent the entire agreement between the parties hereto with respect to the
+              subject matter hereof and may be amended only by a writing executed by both parties. Neither the Company nor the Subscriber has relied on any representations not
+              contained or referred to in this Agreement and the documents delivered herewith. No right or obligation of the Company shall be assigned except to an Affiliate without
+              prior notice to and the written consent of the Subscriber.
+
+              (c) This Agreement may be executed in any number of counterparts and by the different signatories hereto on separate counterparts, each of which, when so executed,
+              shall be deemed an original, but all such counterparts shall constitute but one and the same instrument. This Agreement may be executed by facsimile signature and
+              delivered by facsimile transmission.
+
+
+                                                                                              -26-
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                                40/78
+11/14/26, 10:12 AM                                                                                   e101.htm
+
+
+
+
+              (d) This Agreement shall be governed by and construed in accordance with the laws of the State of Delaware without regard to conflicts of laws principles that would
+              result in the application of the substantive laws of another jurisdiction. Any action brought by either party against the other concerning the transactions contemplated
+              by this Agreement shall be brought only in the civil or state court located in the City of Los Angeles, State of California (the situs of the Company’s main offices) or in the
+              United States District Court for the Central District of California in Los Angeles, California. THE PARTIES AND THE INDIVIDUALS EXECUTING THIS AGREEMENT AND
+              OTHER AGREEMENTS REFERRED TO HEREIN OR DELIVERED IN CONNECTION HEREWITH ON BEHALF OF THE COMPANY AGREE TO SUBMIT TO THE JURISDICTION
+              OF SUCH COURTS AND WAIVE TRIAL BY JURY. The prevailing party shall be entitled to recover from the other party its reasonable attorney’s fees and costs. In the event
+              that any provision of this Agreement or any other agreement delivered in connection herewith is invalid or unenforceable under any applicable statute or rule of law,
+              then such provision shall be deemed inoperative to the extent that it may conflict therewith and shall be deemed modified to conform with such statute or rule of law.
+              Any such provision which may prove invalid or unenforceable under any law shall not affect the validity or enforceability of any other provision of any agreement.
+
+              (e) To the extent permitted by law, the Company and Subscriber acknowledge and agree that irreparable damage would occur in the event that any of the provisions of
+              this Agreement were not performed in accordance with their specific terms or were otherwise breached. It is accordingly agreed that the parties shall be entitled to one
+              or more preliminary and final injunctions to prevent or cure breaches of the provisions of this Agreement and to enforce specifically the terms and provisions hereof, this
+              being in addition to any other remedy to which any of them may be entitled by law or equity. Subject to Section 10(d) hereof, each of the Company, Subscriber and any
+              signator hereto in his personal capacity hereby waives, and agrees not to assert in any such suit, action or proceeding, any claim that it is not personally subject to the
+              jurisdiction in California of such court, that the suit, action or proceeding is brought in an inconvenient forum or that the venue of the suit, action or proceeding is
+              improper. Nothing in this Section shall affect or limit any right to serve process in any other manner permitted by law.
+
+              (f) Nothing contained herein or in any document referred to herein or delivered in connection herewith shall be deemed to establish or require the payment of a rate of
+              interest or other charges in excess of the maximum permitted by applicable law. In the event that the rate of interest or dividends required to be paid or other charges
+              hereunder exceed the maximum permitted by such law, any payments in excess of such maximum shall be credited against amounts owed by the Company to the
+              Subscriber and thus refunded to the Company.
+
+
+                                                                                 [SIGNATURES ON NEXT PAGE]
+
+
+
+
+                                                                                              -27-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                               41/78
+11/14/26, 10:12 AM                                                                                                  e101.htm
+
+
+
+
+        Please acknowledge your acceptance of the foregoing Subscription Agreement by signing and returning a copy to the undersigned whereupon it shall become a binding
+ agreement between us.
+
+                                                                          US NUCLEAR CORP.
+
+
+                                                                          By:______________________________________________________
+                                                                          Name: Robert I. Goldstein
+                                                                          Its: Chief Executive Officer and President
+
+                                                                          Dated:
+
+   SUBSCRIBER                                                                                        PURCHASE PRICE                   NUMBER OF COMMON   PERCENTAGE INTEREST
+                                                                                                                                      STOCKS
+
+                                                                                                     $
+   ________________________________
+   By:
+   Its:
+
+   Address:
+
+
+
+
+                                                                                                             -28-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                                                                                                    42/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+ EXHIBIT C – Link to Annual Report for 2015 (Financial and Operational Disclosures)
+
+ FORM 10-K (2015) – ANNUAL REPORT AND AUDITED FINANCIALS
+
+ WWW.SEC.GOV/ARCHIVES/EDGAR/DATA/1543623/000165917316000242/UCLE201510KV3.HTM
+
+ FORM 10-Q (1ST QUARTER 2016) – QUARTERLY REPORT AND UNAUDITED BUT REVIEWED FINANCIALS
+
+ WWW.SEC.GOV/ARCHIVES/EDGAR/DATA/1543623/000165917316000300/UCLE1Q10Q20160516.HTM
+
+
+
+
+                                                                              -29-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     43/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+ EXHIBIT D – BUSINESS PRESENTATION
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              44/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              45/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -30-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     46/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              47/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -31-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     48/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              49/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -32-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     50/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              51/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -33-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     52/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              53/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -34-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     54/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              55/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -35-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     56/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              57/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -36-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     58/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              59/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -37-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     60/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              61/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -38-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     62/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              63/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -39-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     64/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              65/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -40-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     66/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              67/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -41-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     68/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              69/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -42-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     70/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              71/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -43-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     72/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              73/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -44-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     74/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              75/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -45-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     76/78
+11/14/26, 10:12 AM                                                                   e101.htm
+
+
+
+
+                                                                              -46-
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm                     77/78
+11/14/26, 10:12 AM                                                            e101.htm
+
+
+
+
+ [1]
+       Also, please review Exhibit D for our Business Presentation
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1543623/000165917316000463/e101.htm              78/78
+

@@ -1,0 +1,995 @@
+{
+ "file": "a056/doc.pdf (US NUCLEAR CORP., 8-K/A EX-10.1)",
+ "pages": 78,
+ "page_size_pt": [
+  792.0,
+  612.0
+ ],
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run: the run's character box. Drawn rule: the rule's x extent and the 10 pt of writing room above it. Cell: the cell's own rules. Tick box: the printed square (ink at 400 dpi). Picture pages: measured on the picture's own pixels and converted through the page's drawing matrix.",
+ "how_measured": "pdfplumber characters and rectangles (geom.json in work-g1); every text page with a mark looked at at 100 dpi; the 33 picture pages looked at as a contact sheet (presentation slides, nothing to complete); overlays drawn and looked at.",
+ "signing": {
+  "investor_pages": [
+   31,
+   33,
+   42
+  ],
+  "firm_pages": [
+   42
+  ],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": "A private offering memorandum with an accredited investor questionnaire (Exhibit A, signed by the investor) and a subscription agreement (Exhibit B) countersigned by the company above a one-row subscriber table; the business presentation (pages 45-77) is slides only."
+ },
+ "counts_per_page": {
+  "31": {
+   "total": 11,
+   "tickbox": 9,
+   "initials": 0,
+   "blank": 2,
+   "signature": 0,
+   "date": 0
+  },
+  "33": {
+   "total": 13,
+   "tickbox": 2,
+   "initials": 0,
+   "blank": 9,
+   "signature": 1,
+   "date": 1
+  },
+  "42": {
+   "total": 9,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 6,
+   "signature": 2,
+   "date": 1
+  }
+ },
+ "counts_total": {
+  "total": 33,
+  "tickbox": 11,
+  "initials": 0,
+  "blank": 17,
+  "signature": 3,
+  "date": 2
+ },
+ "counts_by_owner": {
+  "investor": 29,
+  "investor-entity": 2,
+  "firm": 2
+ },
+ "sure_per_page": {
+  "1": "sure (no investor place; the copy number is the issuer's)",
+  "2": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "3": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "4": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "5": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "6": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "7": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "8": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "9": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "10": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "11": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "12": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "13": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "14": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "15": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "16": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "17": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "18": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "19": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "20": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "21": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "22": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "23": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "24": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "25": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "26": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "27": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "28": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "29": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "30": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "31": "sure (judgement: \"[____]\" and \"( )\" are tick boxes; the \"X here\" run is a second mark place for the same choice)",
+  "32": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "33": "sure",
+  "34": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "35": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "36": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "37": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "38": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "39": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "40": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "41": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "42": "sure of the places; whose the line in the subscriber cell is (signature or name) and who fills the percentage are judgements",
+  "43": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "44": "sure (no place: memorandum or agreement text, or a nearly empty page)",
+  "45": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "46": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "47": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "48": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "49": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "50": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "51": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "52": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "53": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "54": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "55": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "56": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "57": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "58": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "59": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "60": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "61": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "62": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "63": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "64": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "65": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "66": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "67": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "68": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "69": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "70": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "71": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "72": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "73": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "74": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "75": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "76": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "77": "sure (no place: a slide of the business presentation, filed as a picture)",
+  "78": "sure (no place: memorandum or agreement text, or a nearly empty page)"
+ },
+ "not_fields": {
+  "1": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number",
+   "\"Copy Number:\" with an underlined empty space: the issuer's own copy-control number, completed before the memorandum is sent",
+   "the company logo picture"
+  ],
+  "2": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "3": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "4": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "5": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "6": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "7": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "8": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "9": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "10": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "11": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "12": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "13": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "14": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number",
+   "the use-of-proceeds table (its cells hold printed figures)"
+  ],
+  "15": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "16": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "17": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "18": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "19": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "20": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "21": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "22": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "23": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "24": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "25": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "26": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "27": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "28": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "29": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "30": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "31": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the rule under the exhibit heading (y 91.5, full width)"
+  ],
+  "32": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "33": [
+   "the browser header and footer lines (date, file name, web address and page count)"
+  ],
+  "34": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "35": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "36": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "37": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "38": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "39": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "40": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "41": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "42": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the officer's name and title, already printed",
+   "the heading row of the table",
+   "the subscriber cell as a whole (its places are the line and the three captions inside it)",
+   "the rule above the page number"
+  ],
+  "43": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "44": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ],
+  "45": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "46": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "47": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "48": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "49": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "50": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "51": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "52": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "53": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "54": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "55": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "56": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "57": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "58": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "59": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "60": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "61": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "62": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "63": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "64": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "65": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "66": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "67": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "68": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "69": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "70": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "71": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "72": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "73": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "74": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "75": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "76": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "77": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "the slide picture (a presentation slide: no form element on it; all 33 slides looked at)"
+  ],
+  "78": [
+   "the browser header and footer lines (date, file name, web address and page count)",
+   "rules under headings and the full-width rule above the page number"
+  ]
+ },
+ "places": [
+  {
+   "id": "p31-name",
+   "page": 31,
+   "kind": "blank",
+   "what": "name",
+   "owner": "investor",
+   "label": "1. Print name of potential investor",
+   "printed_label": "Print Name of Potential Investor",
+   "must": true,
+   "x0": 196.1,
+   "y0": 156.8,
+   "x1": 396.3,
+   "y1": 166.8,
+   "printed_as": "underscore run of 54"
+  },
+  {
+   "id": "p31-participate",
+   "page": 31,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "2. Participation interest",
+   "printed_label": "Participation Interest",
+   "must": false,
+   "x0": 87.8,
+   "y0": 191.2,
+   "x1": 97.6,
+   "y1": 201.2,
+   "printed_as": "a pair of round brackets with a space, \"( )\" (box = the bracket pair)",
+   "group": "p31 participation: one of two"
+  },
+  {
+   "id": "p31-max-amount",
+   "page": 31,
+   "kind": "blank",
+   "what": "amount",
+   "owner": "investor",
+   "label": "2. Maximum amount of desired investment (after a dollar sign, on the line under the caption)",
+   "printed_label": "Maximum Amount of Desired Investment",
+   "must": false,
+   "x0": 92.8,
+   "y0": 243.0,
+   "x1": 222.6,
+   "y1": 253.0,
+   "printed_as": "underscore run of 35"
+  },
+  {
+   "id": "p31-no-participate",
+   "page": 31,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "2. No participation interest",
+   "printed_label": "No Participation Interest",
+   "must": false,
+   "x0": 87.8,
+   "y0": 260.2,
+   "x1": 97.6,
+   "y1": 270.2,
+   "printed_as": "a pair of round brackets with a space, \"( )\" (box = the bracket pair)",
+   "group": "p31 participation: one of two"
+  },
+  {
+   "id": "p31-no-participate-x",
+   "page": 31,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "2. If not interested, place an \"X\" here (a short underscore run used as a mark place)",
+   "printed_label": "please place an \"X\" here",
+   "must": false,
+   "x0": 407.7,
+   "y0": 277.5,
+   "x1": 433.7,
+   "y1": 287.5,
+   "printed_as": "underscore run of 7",
+   "group": "p31 participation: one of two",
+   "doubt": "a second mark place for the same \"no participation\" choice as the bracket pair above it"
+  },
+  {
+   "id": "p31-accredited-1",
+   "page": 31,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "3. Accredited investor category (1): natural person, net worth over $1,000,000",
+   "must": false,
+   "x0": 636.2,
+   "y0": 351.8,
+   "x1": 665.8,
+   "y1": 361.8,
+   "printed_as": "square brackets around an underscore run, \"[____]\" (box = the bracket pair)",
+   "group": "p31-33 accredited category: place an X in one"
+  },
+  {
+   "id": "p31-accredited-2",
+   "page": 31,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "3. Accredited investor category (2): natural person, income over $200,000 / $300,000",
+   "must": false,
+   "x0": 519.3,
+   "y0": 380.2,
+   "x1": 548.9,
+   "y1": 390.2,
+   "printed_as": "square brackets around an underscore run, \"[____]\" (box = the bracket pair)",
+   "group": "p31-33 accredited category: place an X in one"
+  },
+  {
+   "id": "p31-accredited-3",
+   "page": 31,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "3. Accredited investor category (3): bank, broker-dealer, insurance or investment company, SBIC, state or ERISA plan",
+   "must": false,
+   "x0": 187.0,
+   "y0": 487.5,
+   "x1": 216.6,
+   "y1": 497.5,
+   "printed_as": "square brackets around an underscore run, \"[____]\" (box = the bracket pair)",
+   "group": "p31-33 accredited category: place an X in one"
+  },
+  {
+   "id": "p31-accredited-4",
+   "page": 31,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "3. Accredited investor category (4): private business development company",
+   "must": false,
+   "x0": 539.1,
+   "y0": 504.8,
+   "x1": 568.7,
+   "y1": 514.8,
+   "printed_as": "square brackets around an underscore run, \"[____]\" (box = the bracket pair)",
+   "group": "p31-33 accredited category: place an X in one"
+  },
+  {
+   "id": "p31-accredited-5",
+   "page": 31,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "3. Accredited investor category (5): 501(c)(3) organization, corporation or business trust over $5,000,000",
+   "must": false,
+   "x0": 374.8,
+   "y0": 533.2,
+   "x1": 404.4,
+   "y1": 543.2,
+   "printed_as": "square brackets around an underscore run, \"[____]\" (box = the bracket pair)",
+   "group": "p31-33 accredited category: place an X in one"
+  },
+  {
+   "id": "p31-accredited-6",
+   "page": 31,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "3. Accredited investor category (6): director or executive officer of the issuer",
+   "must": false,
+   "x0": 33.8,
+   "y0": 561.8,
+   "x1": 63.4,
+   "y1": 571.8,
+   "printed_as": "square brackets around an underscore run, \"[____]\" (box = the bracket pair)",
+   "group": "p31-33 accredited category: place an X in one"
+  },
+  {
+   "id": "p33-accredited-7",
+   "page": 33,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "3. Accredited investor category (7): trust over $5,000,000 directed by a sophisticated person",
+   "must": false,
+   "x0": 240.3,
+   "y0": 86.2,
+   "x1": 269.9,
+   "y1": 96.2,
+   "printed_as": "square brackets around an underscore run, \"[____]\" (box = the bracket pair)",
+   "group": "p31-33 accredited category: place an X in one"
+  },
+  {
+   "id": "p33-accredited-8",
+   "page": 33,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "3. Accredited investor category (8): entity whose equity owners are all accredited",
+   "must": false,
+   "x0": 347.3,
+   "y0": 103.5,
+   "x1": 376.9,
+   "y1": 113.5,
+   "printed_as": "square brackets around an underscore run, \"[____]\" (box = the bracket pair)",
+   "group": "p31-33 accredited category: place an X in one"
+  },
+  {
+   "id": "p33-date",
+   "page": 33,
+   "kind": "date",
+   "what": "date",
+   "owner": "investor",
+   "label": "5. Signature: the questionnaire was executed on ____ __, 2016 (the only date for the signature below)",
+   "printed_label": "The undersigned has executed this Investor Questionnaire on",
+   "must": true,
+   "x0": 358.9,
+   "y0": 189.0,
+   "x1": 420.5,
+   "y1": 199.0,
+   "printed_as": "2 underscore runs (month, day) read as one date; parts give each run",
+   "parts": [
+    [
+     358.9,
+     189.0,
+     403.4,
+     199.0
+    ],
+    [
+     405.6,
+     189.0,
+     420.5,
+     199.0
+    ]
+   ]
+  },
+  {
+   "id": "p33-name",
+   "page": 33,
+   "kind": "blank",
+   "what": "name",
+   "owner": "investor",
+   "label": "Print name of potential investor (signature block)",
+   "printed_label": "Print Name of Potential Investor",
+   "must": true,
+   "x0": 238.1,
+   "y0": 225.0,
+   "x1": 486.9,
+   "y1": 236.0,
+   "printed_as": "underscore run of 61"
+  },
+  {
+   "id": "p33-signature",
+   "page": 33,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "investor",
+   "label": "Signature of the investor (questionnaire)",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 135.9,
+   "y0": 262.5,
+   "x1": 409.2,
+   "y1": 273.5,
+   "printed_as": "underscore run of 67"
+  },
+  {
+   "id": "p33-address-1",
+   "page": 33,
+   "kind": "blank",
+   "what": "address",
+   "owner": "investor",
+   "label": "Address, first line",
+   "printed_label": "Address",
+   "must": true,
+   "x0": 128.5,
+   "y0": 300.0,
+   "x1": 401.8,
+   "y1": 311.0,
+   "printed_as": "underscore run of 67"
+  },
+  {
+   "id": "p33-address-2",
+   "page": 33,
+   "kind": "blank",
+   "what": "address",
+   "owner": "investor",
+   "label": "Address, second line",
+   "must": false,
+   "x0": 87.8,
+   "y0": 318.8,
+   "x1": 361.0,
+   "y1": 329.8,
+   "printed_as": "underscore run of 67"
+  },
+  {
+   "id": "p33-address-3",
+   "page": 33,
+   "kind": "blank",
+   "what": "address",
+   "owner": "investor",
+   "label": "Address, third line",
+   "must": false,
+   "x0": 87.8,
+   "y0": 337.5,
+   "x1": 361.0,
+   "y1": 348.5,
+   "printed_as": "underscore run of 67"
+  },
+  {
+   "id": "p33-phone",
+   "page": 33,
+   "kind": "blank",
+   "what": "phone",
+   "owner": "investor",
+   "label": "Phone",
+   "printed_label": "Phone",
+   "must": false,
+   "x0": 121.2,
+   "y0": 375.0,
+   "x1": 394.4,
+   "y1": 386.0,
+   "printed_as": "underscore run of 67"
+  },
+  {
+   "id": "p33-fax",
+   "page": 33,
+   "kind": "blank",
+   "what": "phone",
+   "owner": "investor",
+   "label": "Fax",
+   "printed_label": "Fax",
+   "must": false,
+   "x0": 108.7,
+   "y0": 393.8,
+   "x1": 381.9,
+   "y1": 404.8,
+   "printed_as": "underscore run of 67"
+  },
+  {
+   "id": "p33-contact",
+   "page": 33,
+   "kind": "blank",
+   "what": "name",
+   "owner": "investor",
+   "label": "Contact",
+   "printed_label": "Contact",
+   "must": false,
+   "x0": 127.0,
+   "y0": 412.5,
+   "x1": 400.2,
+   "y1": 423.5,
+   "printed_as": "underscore run of 67"
+  },
+  {
+   "id": "p33-ent-signer",
+   "page": 33,
+   "kind": "blank",
+   "what": "name",
+   "owner": "investor-entity",
+   "label": "If the investor is an entity: name of signatory",
+   "printed_label": "Name of Signatory",
+   "must": false,
+   "x0": 175.8,
+   "y0": 487.5,
+   "x1": 367.5,
+   "y1": 498.5,
+   "printed_as": "underscore run of 47",
+   "condition": "investor is an entity"
+  },
+  {
+   "id": "p33-ent-title",
+   "page": 33,
+   "kind": "blank",
+   "what": "title",
+   "owner": "investor-entity",
+   "label": "If the investor is an entity: title",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 113.5,
+   "y0": 525.0,
+   "x1": 329.7,
+   "y1": 536.0,
+   "printed_as": "underscore run of 53",
+   "condition": "investor is an entity"
+  },
+  {
+   "id": "p42-firm-signature",
+   "page": 42,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "firm",
+   "label": "Company signature (By:), above the officer's printed name and title",
+   "printed_label": "By",
+   "must": false,
+   "x0": 262.9,
+   "y0": 154.5,
+   "x1": 463.2,
+   "y1": 164.5,
+   "printed_as": "underscore run of 54"
+  },
+  {
+   "id": "p42-firm-date",
+   "page": 42,
+   "kind": "date",
+   "what": "date",
+   "owner": "firm",
+   "label": "Company: dated (caption only; nothing printed after it)",
+   "printed_label": "Dated",
+   "must": false,
+   "x0": 278.1,
+   "y0": 199.5,
+   "x1": 463.2,
+   "y1": 209.5,
+   "printed_as": "nothing printed: the empty writing room after the label, up to the next caption (text line height)",
+   "doubt": "caption only: the box is the empty room after \"Dated:\" as wide as the signature line"
+  },
+  {
+   "id": "p42-sub-signature",
+   "page": 42,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "investor",
+   "label": "Subscriber: the line at the top of the subscriber cell (signature; \"By:\" and \"Its:\" follow under it)",
+   "printed_label": "SUBSCRIBER",
+   "must": true,
+   "x0": 39.9,
+   "y0": 268.5,
+   "x1": 158.6,
+   "y1": 278.5,
+   "printed_as": "underscore run of 32",
+   "doubt": "the line carries no caption of its own: taken as the subscriber's signature (it could be the subscriber's name with the signature after \"By:\")"
+  },
+  {
+   "id": "p42-sub-by",
+   "page": 42,
+   "kind": "blank",
+   "what": "name",
+   "owner": "investor",
+   "label": "Subscriber: \"By:\" (name of the person signing for the subscriber)",
+   "printed_label": "By",
+   "must": false,
+   "x0": 55.0,
+   "y0": 280.0,
+   "x1": 344.0,
+   "y1": 290.0,
+   "printed_as": "nothing printed: the empty writing room after the label, up to the next caption (text line height)",
+   "doubt": "caption only inside the subscriber cell: the box is the empty room after the caption to the cell edge"
+  },
+  {
+   "id": "p42-sub-its",
+   "page": 42,
+   "kind": "blank",
+   "what": "title",
+   "owner": "investor",
+   "label": "Subscriber: \"Its:\" (title of the person signing)",
+   "printed_label": "Its",
+   "must": false,
+   "x0": 55.1,
+   "y0": 291.0,
+   "x1": 344.0,
+   "y1": 301.0,
+   "printed_as": "nothing printed: the empty writing room after the label, up to the next caption (text line height)",
+   "doubt": "caption only inside the subscriber cell: the box is the empty room after the caption to the cell edge"
+  },
+  {
+   "id": "p42-sub-address",
+   "page": 42,
+   "kind": "blank",
+   "what": "address",
+   "owner": "investor",
+   "label": "Subscriber: address",
+   "printed_label": "Address",
+   "must": true,
+   "x0": 76.9,
+   "y0": 313.5,
+   "x1": 344.0,
+   "y1": 323.2,
+   "printed_as": "nothing printed: the empty writing room after the label, up to the next caption (text line height)",
+   "doubt": "caption only inside the subscriber cell: the box is the empty room after the caption to the cell edge"
+  },
+  {
+   "id": "p42-price",
+   "page": 42,
+   "kind": "blank",
+   "what": "amount",
+   "owner": "investor",
+   "label": "Purchase price (a dollar sign is printed at the top of the cell)",
+   "printed_label": "PURCHASE PRICE",
+   "must": true,
+   "x0": 345.4,
+   "y0": 244.1,
+   "x1": 482.6,
+   "y1": 323.6,
+   "printed_as": "drawn table cell under its column heading (0.75 pt rules; box = the cell's rules)"
+  },
+  {
+   "id": "p42-shares",
+   "page": 42,
+   "kind": "blank",
+   "what": "text",
+   "owner": "investor",
+   "label": "Number of common stocks",
+   "printed_label": "NUMBER OF COMMON STOCKS",
+   "must": true,
+   "x0": 482.6,
+   "y0": 244.1,
+   "x1": 620.6,
+   "y1": 323.6,
+   "printed_as": "drawn table cell under its column heading (0.75 pt rules; box = the cell's rules)"
+  },
+  {
+   "id": "p42-percentage",
+   "page": 42,
+   "kind": "blank",
+   "what": "percentage",
+   "owner": "investor",
+   "label": "Percentage interest",
+   "printed_label": "PERCENTAGE INTEREST",
+   "must": false,
+   "x0": 620.6,
+   "y0": 244.1,
+   "x1": 757.9,
+   "y1": 323.6,
+   "printed_as": "drawn table cell under its column heading (0.75 pt rules; box = the cell's rules)",
+   "owner_also_ok": [
+    "firm"
+   ],
+   "doubt": "a percentage of the company the issuer may work out and fill in"
+  }
+ ],
+ "may_fill": [
+  "p31-name",
+  "p31-max-amount",
+  "p33-name",
+  "p33-address-1",
+  "p33-phone",
+  "p33-fax",
+  "p33-contact",
+  "p42-price"
+ ]
+}

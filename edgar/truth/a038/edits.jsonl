@@ -1,0 +1,38 @@
+{"when": "2026-11-15T00:44:15Z", "op": "del", "place": ["p01-001"], "n": 1, "why": null}
+{"when": "2026-11-15T00:44:15Z", "op": "del", "place": ["p01-002"], "n": 1, "why": null}
+{"when": "2026-11-15T00:44:15Z", "op": "set", "place": "p01-003", "changes": ["kind=tickbox", "owner=investor", "label=Settlement by electronic book-entry (DWAC)", "printed_label=A.", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:15Z", "op": "set", "place": "p02-001", "changes": ["kind=tickbox", "owner=investor", "label=Settlement by delivery versus payment (DVP)", "printed_label=B.", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "add", "place": "p02-002", "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p04-001", "changes": ["what=amount", "label=Number of shares subscribed", "printed_label=Number of Shares:", "must=true"], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p04-002", "changes": ["what=amount", "label=Purchase price per share", "printed_label=Purchase Price Per Share: $", "must=true"], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p04-003", "changes": ["what=amount", "label=Aggregate purchase price", "printed_label=Aggregate Purchase Price: $", "must=true"], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p04-004", "changes": ["kind=date", "owner=investor", "label=Investor signature date (day of March)", "printed_label=Dated as of: March", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p04-005", "changes": ["what=name", "label=Investor name", "printed_label=INVESTOR", "must=true"], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p04-006", "changes": ["label=Investor signature", "printed_label=By:", "must=true"], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p04-007", "changes": ["what=name", "label=Signer printed name", "printed_label=Print Name:", "must=true"], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p04-008", "changes": ["what=title", "label=Signer title", "printed_label=Title:", "must=false"], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p04-009", "changes": ["what=address", "label=Investor address line 1", "printed_label=Address:", "must=true"], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p04-010", "changes": ["what=address", "label=Investor address line 2", "printed_label=", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p04-011", "changes": ["what=address", "label=Investor address line 3", "printed_label=", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p04-012", "changes": ["kind=date", "owner=firm", "label=Company acceptance date (day of March)", "printed_label=Agreed and Accepted this", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p04-013", "changes": ["label=Company signature", "printed_label=By:", "must=true"], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p04-014", "changes": ["what=name", "label=Company signer name", "printed_label=Name:", "must=true"], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p04-015", "changes": ["what=title", "label=Company signer title", "printed_label=Title:", "must=true"], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "del", "place": ["p06-001"], "n": 1, "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p11-001", "changes": ["what=name", "label=Name shares are registered in", "printed_label=", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p11-002", "changes": ["what=text", "label=Relationship of investor to registered holder", "printed_label=", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:16Z", "op": "set", "place": "p11-003", "changes": ["what=address", "label=Mailing address of registered holder", "printed_label=", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:17Z", "op": "set", "place": "p11-004", "changes": ["what=tax number", "label=SSN or tax ID of registered holder", "printed_label=", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:17Z", "op": "set", "place": "p11-005", "changes": ["what=name", "label=Name of DTC participant (broker-dealer)", "printed_label=", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:17Z", "op": "set", "place": "p11-006", "changes": ["what=text", "label=DTC participant number", "printed_label=DTC Participant Number", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:17Z", "op": "set", "place": "p11-007", "changes": ["what=name", "label=Name of account at DTC participant", "printed_label=", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:17Z", "op": "set", "place": "p11-008", "changes": ["what=text", "label=Account number at DTC participant", "printed_label=", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:17Z", "op": "meta", "changes": ["signing.kind=investor signs page 4 and completes the questionnaire on page 11; the company countersigns page 4", "sure.1=sure", "sure.2=sure", "sure.4=sure", "sure.11=sure", "not.1=Total Shares count and per-share price in section 2 (offering terms the company completes)", "not.6=escrow agreement date in section 3.3(a) (company completes)", "not.2=boxed bold settlement warning (a frame, not a place)"], "why": null}
+{"when": "2026-11-15T00:44:25Z", "op": "set", "place": "p11-001", "changes": ["printed_label=The exact name that your Shares are to be registered in"], "why": null}
+{"when": "2026-11-15T00:44:25Z", "op": "set", "place": "p11-002", "changes": ["printed_label=The relationship between the Investor and the registered holder"], "why": null}
+{"when": "2026-11-15T00:44:25Z", "op": "set", "place": "p11-003", "changes": ["printed_label=The mailing address of the registered holder"], "why": null}
+{"when": "2026-11-15T00:44:25Z", "op": "set", "place": "p11-004", "changes": ["printed_label=The Social Security Number or Tax Identification Number of the registered holder"], "why": null}
+{"when": "2026-11-15T00:44:25Z", "op": "set", "place": "p11-005", "changes": ["printed_label=Name of DTC Participant"], "why": null}
+{"when": "2026-11-15T00:44:25Z", "op": "set", "place": "p11-007", "changes": ["printed_label=Name of Account at DTC Participant being credited with the Shares"], "why": null}
+{"when": "2026-11-15T00:44:25Z", "op": "set", "place": "p11-008", "changes": ["printed_label=Account Number at DTC Participant being credited with the Shares"], "why": null}
+{"when": "2026-11-15T00:44:26Z", "op": "done"}

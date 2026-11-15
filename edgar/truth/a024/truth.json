@@ -1,0 +1,291 @@
+{
+ "file": "doc.pdf",
+ "pages": 17,
+ "page_size_pt": [
+  612.0,
+  792.0
+ ],
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run: the character box.",
+ "how_measured": "pdfplumber characters and thin filled rectangles; every page looked at at 100 dpi (pages 1-12 and 14-16 are prose); overlays looked at.",
+ "signing": {
+  "investor_pages": [
+   13
+  ],
+  "firm_pages": [
+   13
+  ],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": "One subscriber signs the signature page (page 13) and gives the details under it; the company accepts at its foot. Pages 14-16 are an accredited-investor appendix with no places."
+ },
+ "counts_per_page": {
+  "13": {
+   "total": 13,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 10,
+   "signature": 2,
+   "date": 1
+  }
+ },
+ "counts_total": {
+  "total": 13,
+  "tickbox": 0,
+  "initials": 0,
+  "blank": 10,
+  "signature": 2,
+  "date": 1
+ },
+ "counts_by_owner": {
+  "firm": 2,
+  "investor": 11
+ },
+ "sure_per_page": {
+  "1": "sure (no place)",
+  "2": "sure (no place)",
+  "3": "sure (no place)",
+  "4": "sure (no place)",
+  "5": "sure (no place)",
+  "6": "sure (no place)",
+  "7": "sure (no place)",
+  "8": "sure (no place)",
+  "9": "sure (no place)",
+  "10": "sure (no place)",
+  "11": "sure (no place)",
+  "12": "sure (no place)",
+  "13": "sure (captions print UNDER each line)",
+  "14": "sure (no place)",
+  "15": "sure (no place)",
+  "16": "sure (no place)",
+  "17": "sure (no place)"
+ },
+ "not_fields": {
+  "1": [
+   "the stray underscore in the EX1A-4 header line"
+  ],
+  "2": [
+   "page rules above and below the page number on every page (full width)",
+   "underlined section headings on pages 3-11"
+  ],
+  "3": [
+   "\"[DATE]\" of the offering circular (bracketed text the company completes)",
+   "underlined headings"
+  ],
+  "13": [
+   "the printed officer name and title under \"By:\"",
+   "the \"[shares of Common Stock\" bracket (an unclosed bracket in the printed text, not a blank)",
+   "the page rule (y 736)"
+  ]
+ },
+ "places": [
+  {
+   "id": "p13-shares",
+   "page": 13,
+   "kind": "blank",
+   "what": "amount",
+   "owner": "investor",
+   "label": "Number of securities subscribed for (caption \"(print number of Securities)\" under the blank)",
+   "printed_label": "print number of Securities",
+   "must": true,
+   "x0": 448.4,
+   "y0": 136.9,
+   "x1": 518.3,
+   "y1": 146.9,
+   "printed_as": "underscore run of 14"
+  },
+  {
+   "id": "p13-price",
+   "page": 13,
+   "kind": "blank",
+   "what": "amount",
+   "owner": "investor",
+   "label": "Aggregate purchase price in dollars (caption \"(print aggregate purchase price)\" under it)",
+   "printed_label": "print aggregate purchase price",
+   "must": true,
+   "x0": 453.4,
+   "y0": 184.9,
+   "x1": 518.3,
+   "y1": 194.9,
+   "printed_as": "underscore run of 13"
+  },
+  {
+   "id": "p13-owner-name",
+   "page": 13,
+   "kind": "blank",
+   "what": "name",
+   "owner": "investor",
+   "label": "Name in which the securities are recorded (caption under the line)",
+   "printed_label": "print name of owner",
+   "must": true,
+   "x0": 66.7,
+   "y0": 268.9,
+   "x1": 281.6,
+   "y1": 278.9,
+   "printed_as": "underscore run of 43"
+  },
+  {
+   "id": "p13-signature",
+   "page": 13,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "investor",
+   "label": "Subscriber signature (caption under the line)",
+   "printed_label": "Signature",
+   "must": true,
+   "x0": 66.7,
+   "y0": 316.9,
+   "x1": 271.6,
+   "y1": 326.9,
+   "printed_as": "underscore run of 41"
+  },
+  {
+   "id": "p13-name",
+   "page": 13,
+   "kind": "blank",
+   "what": "name",
+   "owner": "investor",
+   "label": "Subscriber name, printed",
+   "printed_label": "Name (Please Print)",
+   "must": true,
+   "x0": 66.7,
+   "y0": 352.9,
+   "x1": 266.6,
+   "y1": 362.9,
+   "printed_as": "underscore run of 40"
+  },
+  {
+   "id": "p13-email",
+   "page": 13,
+   "kind": "blank",
+   "what": "email",
+   "owner": "investor",
+   "label": "Subscriber e-mail address",
+   "printed_label": "Email address",
+   "must": true,
+   "x0": 66.7,
+   "y0": 388.9,
+   "x1": 266.6,
+   "y1": 398.9,
+   "printed_as": "underscore run of 40"
+  },
+  {
+   "id": "p13-address",
+   "page": 13,
+   "kind": "blank",
+   "what": "address",
+   "owner": "investor",
+   "label": "Subscriber address, first line",
+   "printed_label": "Address",
+   "must": true,
+   "x0": 66.7,
+   "y0": 424.9,
+   "x1": 266.6,
+   "y1": 434.9,
+   "printed_as": "underscore run of 40"
+  },
+  {
+   "id": "p13-address-2",
+   "page": 13,
+   "kind": "blank",
+   "what": "address",
+   "owner": "investor",
+   "label": "Subscriber address, second line (no caption of its own, under \"Address\")",
+   "must": false,
+   "x0": 66.7,
+   "y0": 448.9,
+   "x1": 266.6,
+   "y1": 458.9,
+   "printed_as": "underscore run of 40"
+  },
+  {
+   "id": "p13-phone",
+   "page": 13,
+   "kind": "blank",
+   "what": "phone",
+   "owner": "investor",
+   "label": "Telephone number",
+   "printed_label": "Telephone Number",
+   "must": true,
+   "x0": 66.7,
+   "y0": 484.9,
+   "x1": 266.6,
+   "y1": 494.9,
+   "printed_as": "underscore run of 40"
+  },
+  {
+   "id": "p13-tin",
+   "page": 13,
+   "kind": "blank",
+   "what": "tax number",
+   "owner": "investor",
+   "label": "Social security number or EIN",
+   "printed_label": "Social Security Number/EIN",
+   "must": true,
+   "x0": 66.7,
+   "y0": 520.9,
+   "x1": 266.6,
+   "y1": 530.9,
+   "printed_as": "underscore run of 40"
+  },
+  {
+   "id": "p13-date",
+   "page": 13,
+   "kind": "date",
+   "what": "date",
+   "owner": "investor",
+   "label": "Date (last line of the subscriber block, caption under it)",
+   "printed_label": "Date",
+   "must": true,
+   "x0": 66.7,
+   "y0": 556.9,
+   "x1": 266.6,
+   "y1": 566.9,
+   "printed_as": "underscore run of 40"
+  },
+  {
+   "id": "p13-accept-date",
+   "page": 13,
+   "kind": "blank",
+   "what": "date",
+   "owner": "firm",
+   "label": "Date the company accepts (month and day; the year 2021 is printed)",
+   "printed_label": "This Subscription is accepted on",
+   "must": true,
+   "x0": 79.2,
+   "y0": 640.9,
+   "x1": 144.2,
+   "y1": 650.9,
+   "printed_as": "underscore run of 13"
+  },
+  {
+   "id": "p13-accept-signature",
+   "page": 13,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "firm",
+   "label": "Signature for the company (name and title printed under)",
+   "printed_label": "By:",
+   "must": true,
+   "x0": 317.0,
+   "y0": 640.9,
+   "x1": 471.9,
+   "y1": 650.9,
+   "printed_as": "underscore run of 31"
+  }
+ ],
+ "may_fill": [
+  "p13-shares",
+  "p13-price",
+  "p13-owner-name",
+  "p13-signature",
+  "p13-name",
+  "p13-email",
+  "p13-address",
+  "p13-address-2",
+  "p13-phone",
+  "p13-tin",
+  "p13-date",
+  "p13-accept-date",
+  "p13-accept-signature"
+ ]
+}

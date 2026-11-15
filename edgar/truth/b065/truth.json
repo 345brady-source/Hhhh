@@ -1,0 +1,2436 @@
+{
+ "file": "set-b/b065/doc.pdf",
+ "id": "b065",
+ "pages": 11,
+ "page_size_pt": [
+  612.0,
+  792.0
+ ],
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
+ "signing": {
+  "investor_pages": [],
+  "firm_pages": [
+   10
+  ],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": ""
+ },
+ "counts_per_page": {
+  "1": {
+   "total": 1,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 1,
+   "signature": 0,
+   "date": 0
+  },
+  "6": {
+   "total": 2,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 2,
+   "signature": 0,
+   "date": 0
+  },
+  "7": {
+   "total": 26,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 26,
+   "signature": 0,
+   "date": 0
+  },
+  "8": {
+   "total": 13,
+   "tickbox": 0,
+   "initials": 2,
+   "blank": 11,
+   "signature": 0,
+   "date": 0
+  },
+  "9": {
+   "total": 10,
+   "tickbox": 0,
+   "initials": 3,
+   "blank": 7,
+   "signature": 0,
+   "date": 0
+  },
+  "10": {
+   "total": 15,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 13,
+   "signature": 1,
+   "date": 1
+  }
+ },
+ "counts_total": {
+  "total": 67,
+  "tickbox": 0,
+  "initials": 5,
+  "blank": 60,
+  "signature": 1,
+  "date": 1
+ },
+ "counts_by_owner": {
+  "firm": 2,
+  "investor": 61,
+  "investor-entity": 1,
+  "third-party": 3
+ },
+ "sure_per_page": {
+  "1": "draft",
+  "2": "draft",
+  "3": "draft",
+  "4": "draft",
+  "5": "draft",
+  "6": "draft",
+  "7": "draft",
+  "8": "draft",
+  "9": "draft",
+  "10": "draft",
+  "11": "draft"
+ },
+ "not_fields": {},
+ "places": [
+  {
+   "id": "p01-001",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Company dated",
+   "printed_label": "Company dated",
+   "must": true,
+   "x0": 115.9,
+   "y0": 271.0,
+   "x1": 162.9,
+   "y1": 286.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Company dated",
+    "candidate": "underscore",
+    "why": "reader marked it: The words before this blank may not be its label: check what",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "date",
+     "box": [
+      115.9,
+      271.0,
+      162.9,
+      286.5
+     ]
+    }
+   },
+   "what": "date",
+   "doubt": "check"
+  },
+  {
+   "id": "p06-001",
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 57.2,
+   "y0": 745.0,
+   "x1": 180.5,
+   "y1": 760.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      57.2,
+      745.0,
+      180.5,
+      760.5
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p06-002",
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "PAYABLE TO",
+   "printed_label": "",
+   "must": false,
+   "x0": 239.2,
+   "y0": 745.0,
+   "x1": 356.6,
+   "y1": 760.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "PAYABLE TO",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      239.2,
+      745.0,
+      356.6,
+      760.5
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-001",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "which sale was made",
+   "printed_label": "made",
+   "must": true,
+   "x0": 63.1,
+   "y0": 92.5,
+   "x1": 204.0,
+   "y1": 108.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "which sale was made",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      63.1,
+      92.5,
+      204.0,
+      108.0
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-002",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Common Other Trust of",
+   "printed_label": "/ / Other Trust of",
+   "must": true,
+   "x0": 174.6,
+   "y0": 328.8,
+   "x1": 356.6,
+   "y1": 344.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Common Other Trust of",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      174.6,
+      328.8,
+      356.6,
+      344.3
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-003",
+   "page": 7,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Custodian",
+   "printed_label": "Custodian for",
+   "must": false,
+   "x0": 115.9,
+   "y0": 340.0,
+   "x1": 262.7,
+   "y1": 355.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "third-party",
+    "field_label": "Custodian",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "third-party",
+     "what": "text",
+     "box": [
+      115.9,
+      340.0,
+      262.7,
+      355.5
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p07-004",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "for the Benefit of",
+   "printed_label": "for the Benefit of",
+   "must": true,
+   "x0": 198.1,
+   "y0": 351.3,
+   "x1": 344.9,
+   "y1": 366.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "for the Benefit of",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      198.1,
+      351.3,
+      344.9,
+      366.8
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-005",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "of the State of",
+   "printed_label": "Minors Act of the State of",
+   "must": true,
+   "x0": 192.2,
+   "y0": 385.0,
+   "x1": 268.5,
+   "y1": 400.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "of the State of",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      192.2,
+      385.0,
+      268.5,
+      400.5
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-006",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "4. REGISTRATION NAME AND ADDRESS",
+   "printed_label": "4. REGISTRATION NAME AND ADDRESS",
+   "must": false,
+   "x0": 33.7,
+   "y0": 407.5,
+   "x1": 309.6,
+   "y1": 423.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      33.7,
+      407.5,
+      309.6,
+      423.0
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p07-007",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Other",
+   "printed_label": "/ PhD / / DDS / / Other",
+   "must": true,
+   "x0": 462.3,
+   "y0": 463.8,
+   "x1": 573.8,
+   "y1": 479.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Other",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      462.3,
+      463.8,
+      573.8,
+      479.3
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-008",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor name",
+   "printed_label": "Name",
+   "must": true,
+   "x0": 63.1,
+   "y0": 486.3,
+   "x1": 327.2,
+   "y1": 501.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Investor name",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "name",
+     "box": [
+      63.1,
+      486.3,
+      327.2,
+      501.8
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p07-009",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Taxpayer ID",
+   "printed_label": "Social",
+   "must": true,
+   "x0": 456.4,
+   "y0": 520.0,
+   "x1": 474.0,
+   "y1": 535.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Taxpayer ID",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "tax number",
+     "box": [
+      456.4,
+      520.0,
+      474.0,
+      535.5
+     ]
+    }
+   },
+   "what": "tax number"
+  },
+  {
+   "id": "p07-010",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "Social",
+   "must": false,
+   "x0": 479.9,
+   "y0": 520.0,
+   "x1": 497.5,
+   "y1": 535.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      479.9,
+      520.0,
+      497.5,
+      535.5
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-011",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "-",
+   "printed_label": "Security",
+   "must": false,
+   "x0": 509.2,
+   "y0": 520.0,
+   "x1": 526.8,
+   "y1": 535.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "-",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      509.2,
+      520.0,
+      526.8,
+      535.5
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-012",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "-",
+   "printed_label": "Security",
+   "must": false,
+   "x0": 532.7,
+   "y0": 520.0,
+   "x1": 550.3,
+   "y1": 535.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "-",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      532.7,
+      520.0,
+      550.3,
+      535.5
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-013",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "-",
+   "printed_label": "",
+   "must": false,
+   "x0": 556.2,
+   "y0": 520.0,
+   "x1": 573.8,
+   "y1": 535.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "-",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      556.2,
+      520.0,
+      573.8,
+      535.5
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-014",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number",
+   "printed_label": "Number",
+   "must": false,
+   "x0": 33.7,
+   "y0": 531.3,
+   "x1": 51.4,
+   "y1": 546.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Number",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      33.7,
+      531.3,
+      51.4,
+      546.8
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-015",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "Number",
+   "must": false,
+   "x0": 57.2,
+   "y0": 531.3,
+   "x1": 74.8,
+   "y1": 546.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      57.2,
+      531.3,
+      74.8,
+      546.8
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-016",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 80.7,
+   "y0": 531.3,
+   "x1": 98.3,
+   "y1": 546.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      80.7,
+      531.3,
+      98.3,
+      546.8
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-017",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 104.2,
+   "y0": 531.3,
+   "x1": 121.8,
+   "y1": 546.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      104.2,
+      531.3,
+      121.8,
+      546.8
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-018",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 456.4,
+   "y0": 565.0,
+   "x1": 474.0,
+   "y1": 580.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      456.4,
+      565.0,
+      474.0,
+      580.5
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-019",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 479.9,
+   "y0": 565.0,
+   "x1": 497.5,
+   "y1": 580.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      479.9,
+      565.0,
+      497.5,
+      580.5
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-020",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 503.4,
+   "y0": 565.0,
+   "x1": 521.0,
+   "y1": 580.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      503.4,
+      565.0,
+      521.0,
+      580.5
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-021",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "-",
+   "printed_label": "",
+   "must": true,
+   "x0": 538.6,
+   "y0": 565.0,
+   "x1": 556.2,
+   "y1": 580.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "-",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      538.6,
+      565.0,
+      556.2,
+      580.5
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p07-022",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Street Address or P.O. Box",
+   "printed_label": "Street",
+   "must": false,
+   "x0": 33.7,
+   "y0": 576.3,
+   "x1": 51.4,
+   "y1": 591.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Street Address or P.O. Box",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      33.7,
+      576.3,
+      51.4,
+      591.8
+     ]
+    }
+   },
+   "what": "address",
+   "doubt": "check"
+  },
+  {
+   "id": "p07-023",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "-",
+   "printed_label": "",
+   "must": true,
+   "x0": 69.0,
+   "y0": 576.3,
+   "x1": 86.6,
+   "y1": 591.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "-",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      69.0,
+      576.3,
+      86.6,
+      591.8
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p07-024",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "-",
+   "printed_label": "",
+   "must": true,
+   "x0": 92.4,
+   "y0": 576.3,
+   "x1": 110.1,
+   "y1": 591.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "-",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      92.4,
+      576.3,
+      110.1,
+      591.8
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p07-025",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "-",
+   "printed_label": "or",
+   "must": true,
+   "x0": 115.9,
+   "y0": 576.3,
+   "x1": 133.5,
+   "y1": 591.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "-",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      115.9,
+      576.3,
+      133.5,
+      591.8
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p07-026",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "-",
+   "printed_label": "P.O",
+   "must": true,
+   "x0": 139.4,
+   "y0": 576.3,
+   "x1": 157.0,
+   "y1": 591.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "-",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      139.4,
+      576.3,
+      157.0,
+      591.8
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p08-001",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Other",
+   "printed_label": "/ PhD / / DDS / / Other",
+   "must": true,
+   "x0": 462.3,
+   "y0": 36.3,
+   "x1": 573.8,
+   "y1": 51.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Other",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      462.3,
+      36.3,
+      573.8,
+      51.8
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p08-002",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Name",
+   "printed_label": "Name",
+   "must": true,
+   "x0": 63.1,
+   "y0": 81.3,
+   "x1": 274.4,
+   "y1": 96.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "name",
+    "field_owner": "investor",
+    "field_label": "Name",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "name",
+     "box": [
+      63.1,
+      81.3,
+      274.4,
+      96.8
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p08-003",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number",
+   "printed_label": "",
+   "must": false,
+   "x0": 456.4,
+   "y0": 81.3,
+   "x1": 474.0,
+   "y1": 96.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Number",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      456.4,
+      81.3,
+      474.0,
+      96.8
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p08-004",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number",
+   "printed_label": "",
+   "must": false,
+   "x0": 479.9,
+   "y0": 81.3,
+   "x1": 497.5,
+   "y1": 96.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Number",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      479.9,
+      81.3,
+      497.5,
+      96.8
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p08-005",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number",
+   "printed_label": "",
+   "must": false,
+   "x0": 503.3,
+   "y0": 81.3,
+   "x1": 521.0,
+   "y1": 96.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Number",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      503.3,
+      81.3,
+      521.0,
+      96.8
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p08-006",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "-",
+   "printed_label": "",
+   "must": true,
+   "x0": 538.6,
+   "y0": 81.3,
+   "x1": 556.2,
+   "y1": 96.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "-",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      538.6,
+      81.3,
+      556.2,
+      96.8
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p08-007",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 92.5,
+   "x1": 51.4,
+   "y1": 108.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      33.7,
+      92.5,
+      51.4,
+      108.0
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p08-008",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "-",
+   "printed_label": "",
+   "must": true,
+   "x0": 69.0,
+   "y0": 92.5,
+   "x1": 86.6,
+   "y1": 108.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "-",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      69.0,
+      92.5,
+      86.6,
+      108.0
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p08-009",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "-",
+   "printed_label": "",
+   "must": true,
+   "x0": 92.4,
+   "y0": 92.5,
+   "x1": 110.1,
+   "y1": 108.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "-",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      92.4,
+      92.5,
+      110.1,
+      108.0
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p08-010",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "-",
+   "printed_label": "",
+   "must": true,
+   "x0": 115.9,
+   "y0": 92.5,
+   "x1": 133.5,
+   "y1": 108.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "-",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      115.9,
+      92.5,
+      133.5,
+      108.0
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p08-011",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "-",
+   "printed_label": "",
+   "must": true,
+   "x0": 139.4,
+   "y0": 92.5,
+   "x1": 157.0,
+   "y1": 108.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "-",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      139.4,
+      92.5,
+      157.0,
+      108.0
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p08-012",
+   "page": 8,
+   "kind": "initials",
+   "owner": "investor",
+   "label": "Initials",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 576.3,
+   "x1": 51.4,
+   "y1": 591.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "initials",
+    "field_owner": "investor",
+    "field_label": "Initials",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "initials",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      33.7,
+      576.3,
+      51.4,
+      591.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p08-013",
+   "page": 8,
+   "kind": "initials",
+   "owner": "investor",
+   "label": "Initials",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 666.3,
+   "x1": 51.4,
+   "y1": 681.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "initials",
+    "field_owner": "investor",
+    "field_label": "Initials",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "initials",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      33.7,
+      666.3,
+      51.4,
+      681.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p09-001",
+   "page": 9,
+   "kind": "initials",
+   "owner": "investor",
+   "label": "Initials",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 70.0,
+   "x1": 51.4,
+   "y1": 85.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "initials",
+    "field_owner": "investor",
+    "field_label": "Initials",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "initials",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      33.7,
+      70.0,
+      51.4,
+      85.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p09-002",
+   "page": 9,
+   "kind": "initials",
+   "owner": "investor",
+   "label": "Initials",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 148.8,
+   "x1": 51.4,
+   "y1": 164.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "initials",
+    "field_owner": "investor",
+    "field_label": "Initials",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "initials",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      33.7,
+      148.8,
+      51.4,
+      164.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p09-003",
+   "page": 9,
+   "kind": "initials",
+   "owner": "investor",
+   "label": "Initials",
+   "printed_label": "",
+   "must": true,
+   "x0": 33.7,
+   "y0": 171.3,
+   "x1": 51.4,
+   "y1": 186.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "initials",
+    "field_owner": "investor",
+    "field_label": "Initials",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "initials",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      33.7,
+      171.3,
+      51.4,
+      186.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p09-004",
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Agreement Dated",
+   "printed_label": "Agreement Dated",
+   "must": true,
+   "x0": 127.7,
+   "y0": 250.0,
+   "x1": 297.9,
+   "y1": 265.5,
+   "printed_as": "measure candidate: dateparts (a date printed in 2 parts)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Agreement Dated",
+    "candidate": "dateparts",
+    "why": "reader marked it: The words before this blank may not be its label: check what; 1 more reader field(s) on the same printed place",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "date",
+     "box": [
+      127.7,
+      250.0,
+      297.9,
+      265.5
+     ]
+    }
+   },
+   "what": "date",
+   "doubt": "check"
+  },
+  {
+   "id": "p09-005",
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "20",
+   "printed_label": "20",
+   "must": true,
+   "x0": 262.7,
+   "y0": 248.9,
+   "x1": 298.9,
+   "y1": 264.8,
+   "printed_as": "reader field (no printed candidate under it)",
+   "prefill": {
+    "origin": "field",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "20",
+    "candidate": null,
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      262.7,
+      248.9,
+      298.9,
+      264.8
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "field only"
+  },
+  {
+   "id": "p09-006",
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "X",
+   "printed_label": "/X/",
+   "must": true,
+   "x0": 51.4,
+   "y0": 261.3,
+   "x1": 327.2,
+   "y1": 276.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "X",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      51.4,
+      261.3,
+      327.2,
+      276.8
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p09-007",
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Owner",
+   "printed_label": "Owner (Print Name of Custodian or Trustee)",
+   "must": false,
+   "x0": 33.7,
+   "y0": 272.5,
+   "x1": 297.9,
+   "y1": 288.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Owner",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "name",
+     "box": [
+      33.7,
+      272.5,
+      297.9,
+      288.0
+     ]
+    }
+   },
+   "what": "name",
+   "doubt": "check"
+  },
+  {
+   "id": "p09-008",
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "/X/",
+   "printed_label": "/X/ Authorized Signature (Custodian or Trustee)",
+   "must": false,
+   "x0": 33.7,
+   "y0": 317.5,
+   "x1": 297.9,
+   "y1": 333.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "/X/",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      33.7,
+      317.5,
+      297.9,
+      333.0
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p09-009",
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "X",
+   "printed_label": "/X/",
+   "must": true,
+   "x0": 51.4,
+   "y0": 328.8,
+   "x1": 327.2,
+   "y1": 344.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "X",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      51.4,
+      328.8,
+      327.2,
+      344.3
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p09-010",
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "of participation 100 Other",
+   "printed_label": "of participation: 100% / / Other / /",
+   "must": true,
+   "x0": 315.5,
+   "y0": 396.3,
+   "x1": 344.9,
+   "y1": 411.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "of participation 100 Other",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "percentage",
+     "box": [
+      315.5,
+      396.3,
+      344.9,
+      411.8
+     ]
+    }
+   },
+   "what": "percentage",
+   "doubt": "check"
+  },
+  {
+   "id": "p10-001",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 33.7,
+   "y0": 157.6,
+   "x1": 250.9,
+   "y1": 173.1,
+   "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      33.7,
+      157.6,
+      250.9,
+      173.1
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p10-002",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 397.7,
+   "y0": 157.6,
+   "x1": 573.8,
+   "y1": 173.1,
+   "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      397.7,
+      157.6,
+      573.8,
+      173.1
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p10-003",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Broker-Dealer",
+   "printed_label": "Broker-Dealer",
+   "must": false,
+   "x0": 33.7,
+   "y0": 168.9,
+   "x1": 115.9,
+   "y1": 184.4,
+   "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      33.7,
+      168.9,
+      115.9,
+      184.4
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p10-004",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor-entity",
+   "label": "Amount",
+   "printed_label": "Amount",
+   "must": true,
+   "x0": 380.1,
+   "y0": 306.3,
+   "x1": 515.1,
+   "y1": 321.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-entity",
+    "field_label": "Amount",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-entity",
+     "what": "amount",
+     "box": [
+      380.1,
+      306.3,
+      515.1,
+      321.8
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p10-005",
+   "page": 10,
+   "kind": "date",
+   "owner": "third-party",
+   "label": "Date",
+   "printed_label": "Date",
+   "must": false,
+   "x0": 63.1,
+   "y0": 317.5,
+   "x1": 204.0,
+   "y1": 333.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "date",
+    "field_owner": "third-party",
+    "field_label": "Date",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "date",
+     "owner": "third-party",
+     "what": null,
+     "box": [
+      63.1,
+      317.5,
+      204.0,
+      333.0
+     ]
+    }
+   }
+  },
+  {
+   "id": "p10-006",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Check No",
+   "printed_label": "Check No",
+   "must": true,
+   "x0": 397.7,
+   "y0": 328.8,
+   "x1": 515.1,
+   "y1": 344.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Check No",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      397.7,
+      328.8,
+      515.1,
+      344.3
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p10-007",
+   "page": 10,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Certificate No",
+   "printed_label": "Certificate No",
+   "must": true,
+   "x0": 127.7,
+   "y0": 340.0,
+   "x1": 204.0,
+   "y1": 355.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "firm",
+    "field_label": "Certificate No",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "firm",
+     "what": "text",
+     "box": [
+      127.7,
+      340.0,
+      204.0,
+      355.5
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p10-008",
+   "page": 10,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Signature",
+   "printed_label": "By",
+   "must": true,
+   "x0": 51.4,
+   "y0": 362.5,
+   "x1": 227.5,
+   "y1": 378.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "firm",
+    "field_label": "Signature",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "signature",
+     "owner": "firm",
+     "what": null,
+     "box": [
+      51.4,
+      362.5,
+      227.5,
+      378.0
+     ]
+    }
+   }
+  },
+  {
+   "id": "p10-009",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Registered Representative #",
+   "printed_label": "Registered Representative #",
+   "must": false,
+   "x0": 339.0,
+   "y0": 362.5,
+   "x1": 515.1,
+   "y1": 378.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Registered Representative #",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      339.0,
+      362.5,
+      515.1,
+      378.0
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p10-010",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Account #",
+   "printed_label": "Account #",
+   "must": false,
+   "x0": 33.7,
+   "y0": 373.8,
+   "x1": 198.1,
+   "y1": 389.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Account #",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      33.7,
+      373.8,
+      198.1,
+      389.3
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p10-011",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "Account # Broker-Dealer #",
+   "must": false,
+   "x0": 33.7,
+   "y0": 385.0,
+   "x1": 227.5,
+   "y1": 400.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      33.7,
+      385.0,
+      227.5,
+      400.5
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  },
+  {
+   "id": "p10-012",
+   "page": 10,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Until",
+   "printed_label": "Until",
+   "must": false,
+   "x0": 69.0,
+   "y0": 486.3,
+   "x1": 180.5,
+   "y1": 501.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "third-party",
+    "field_label": "Until",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "third-party",
+     "what": "text",
+     "box": [
+      69.0,
+      486.3,
+      180.5,
+      501.8
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p10-013",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 239.2,
+   "y0": 641.4,
+   "x1": 297.9,
+   "y1": 656.9,
+   "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      239.2,
+      641.4,
+      297.9,
+      656.9
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p10-014",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 239.2,
+   "y0": 686.4,
+   "x1": 297.9,
+   "y1": 701.9,
+   "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      239.2,
+      686.4,
+      297.9,
+      701.9
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p10-015",
+   "page": 10,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Text",
+   "printed_label": "",
+   "must": false,
+   "x0": 215.7,
+   "y0": 733.8,
+   "x1": 292.0,
+   "y1": 749.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      215.7,
+      733.8,
+      292.0,
+      749.3
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "check"
+  }
+ ],
+ "may_fill": [],
+ "source": "hand",
+ "draft": true,
+ "mode": "train",
+ "prefilled": {
+  "when": "2026-11-15T00:42:27Z",
+  "candidates": "346bd1432f1ebc82-f01586d5.json",
+  "result": "out-set-b/b065/result.json",
+  "fields": 61,
+  "counted_candidates": 66
+ }
+}

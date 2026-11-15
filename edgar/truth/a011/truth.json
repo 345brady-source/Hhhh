@@ -1,0 +1,1259 @@
+{
+ "file": "set-a/a011/doc.pdf",
+ "id": "a011",
+ "pages": 4,
+ "page_size_pt": [
+  612.0,
+  792.0
+ ],
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "empty"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
+ "signing": {
+  "investor_pages": [
+   3
+  ],
+  "firm_pages": [
+   3
+  ],
+  "co_investor": true,
+  "third_parties": [],
+  "kind": "Regulation A share subscription: the buyer completes section 2 and 3 on page 1 and signs on page 3; a second buyer block below it serves the joint buyer named on page 1; the company accepts and signs on page 3. No third party."
+ },
+ "counts_per_page": {
+  "1": {
+   "total": 27,
+   "tickbox": 9,
+   "initials": 0,
+   "blank": 18,
+   "signature": 0,
+   "date": 0
+  },
+  "3": {
+   "total": 9,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 4,
+   "signature": 3,
+   "date": 2
+  }
+ },
+ "counts_total": {
+  "total": 36,
+  "tickbox": 9,
+  "initials": 0,
+  "blank": 22,
+  "signature": 3,
+  "date": 2
+ },
+ "counts_by_owner": {
+  "co-investor": 7,
+  "firm": 3,
+  "investor": 26
+ },
+ "sure_per_page": {
+  "1": "sure",
+  "2": "draft",
+  "3": "sure; the second Buyer block is read as the joint buyer's, matching the Joint Name block on page 1",
+  "4": "draft"
+ },
+ "not_fields": {
+  "1": [
+   "headings, the payable-to line and the representations paragraphs",
+   "the area-code parentheses before each phone line (part of the phone place, not a box)",
+   "the Corporation line under the custodian options: no box and no blank printed"
+  ],
+  "2": [
+   "prose only"
+  ],
+  "3": [
+   "the printed officer name and title under the acceptance line; the mailing address block"
+  ],
+  "4": [
+   "blank page"
+  ]
+ },
+ "places": [
+  {
+   "id": "p01-001",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Number of shares subscribed",
+   "printed_label": "subscribes for",
+   "must": true,
+   "x0": 217.3,
+   "y0": 116.4,
+   "x1": 472.2,
+   "y1": 131.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "undersigned Buyer subscribes",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      217.3,
+      116.4,
+      472.2,
+      131.9
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p01-002",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Total subscription price",
+   "printed_label": "Total subscription price ($.20 x Number of Shares): = $",
+   "must": true,
+   "x0": 272.4,
+   "y0": 152.4,
+   "x1": 467.4,
+   "y1": 167.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Commitment amount",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "amount",
+     "box": [
+      272.4,
+      152.4,
+      467.4,
+      167.9
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p01-003",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Buyer name (type or print)",
+   "printed_label": "Name (type or print)",
+   "must": true,
+   "x0": 33.7,
+   "y0": 236.9,
+   "x1": 311.2,
+   "y1": 252.4,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "rule",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "email",
+     "box": [
+      33.7,
+      236.9,
+      311.2,
+      252.4
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p01-004",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Buyer SSN/EIN/Taxpayer I.D.",
+   "printed_label": "SSN/EIN/Taxpayer I.D.",
+   "must": true,
+   "x0": 317.2,
+   "y0": 236.9,
+   "x1": 578.2,
+   "y1": 252.4,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Name (type or print",
+    "candidate": "rule",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "name",
+     "box": [
+      317.2,
+      236.9,
+      578.2,
+      252.4
+     ]
+    }
+   },
+   "what": "tax number"
+  },
+  {
+   "id": "p01-005",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Buyer e-mail address",
+   "printed_label": "E-mail address:",
+   "must": true,
+   "x0": 99.0,
+   "y0": 260.9,
+   "x1": 289.5,
+   "y1": 276.4,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Email",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "email",
+     "box": [
+      99.0,
+      260.9,
+      289.5,
+      276.4
+     ]
+    }
+   },
+   "what": "email"
+  },
+  {
+   "id": "p01-006",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Buyer address",
+   "printed_label": "Address:",
+   "must": true,
+   "x0": 72.0,
+   "y0": 285.6,
+   "x1": 306.0,
+   "y1": 301.1,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Address",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      72.0,
+      285.6,
+      306.0,
+      301.1
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p01-007",
+   "page": 1,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint name (type or print)",
+   "printed_label": "Joint Name (type or print)",
+   "must": false,
+   "x0": 33.7,
+   "y0": 335.1,
+   "x1": 311.2,
+   "y1": 350.6,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "rule",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "email",
+     "box": [
+      33.7,
+      335.1,
+      311.2,
+      350.6
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p01-008",
+   "page": 1,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint buyer SSN/EIN/Taxpayer I.D.",
+   "printed_label": "SSN/EIN/Taxpayer I.D.",
+   "must": false,
+   "x0": 317.2,
+   "y0": 335.1,
+   "x1": 578.2,
+   "y1": 350.6,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Joint Name (type or print",
+    "candidate": "rule",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "name",
+     "box": [
+      317.2,
+      335.1,
+      578.2,
+      350.6
+     ]
+    }
+   },
+   "what": "tax number"
+  },
+  {
+   "id": "p01-009",
+   "page": 1,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint buyer e-mail address",
+   "printed_label": "E-mail address:",
+   "must": false,
+   "x0": 96.0,
+   "y0": 359.9,
+   "x1": 283.5,
+   "y1": 375.4,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Email",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "email",
+     "box": [
+      96.0,
+      359.9,
+      283.5,
+      375.4
+     ]
+    }
+   },
+   "what": "email"
+  },
+  {
+   "id": "p01-010",
+   "page": 1,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Joint buyer address",
+   "printed_label": "Address:",
+   "must": false,
+   "x0": 69.0,
+   "y0": 384.6,
+   "x1": 291.0,
+   "y1": 400.1,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Address",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      69.0,
+      384.6,
+      291.0,
+      400.1
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p01-011",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Mailing address (if different): street",
+   "printed_label": "Street",
+   "must": false,
+   "x0": 213.7,
+   "y0": 408.6,
+   "x1": 279.0,
+   "y1": 423.6,
+   "printed_as": "measure candidate: captionsplit (one of 3 places on one line (captions under the line))",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "captionsplit",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      213.7,
+      408.6,
+      257.8,
+      424.1
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p01-012",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Mailing address (if different): city/state",
+   "printed_label": "City/State",
+   "must": false,
+   "x0": 279.0,
+   "y0": 408.6,
+   "x1": 523.5,
+   "y1": 423.6,
+   "printed_as": "measure candidate: captionsplit (one of 3 places on one line (captions under the line))",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Mailing Address",
+    "candidate": "captionsplit",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      257.8,
+      408.6,
+      421.3,
+      424.1
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p01-013",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Mailing address (if different): zip",
+   "printed_label": "Zip",
+   "must": false,
+   "x0": 523.5,
+   "y0": 408.6,
+   "x1": 578.2,
+   "y1": 423.6,
+   "printed_as": "measure candidate: captionsplit (one of 3 places on one line (captions under the line))",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "captionsplit",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      421.3,
+      408.6,
+      578.2,
+      424.1
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p01-014",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Business phone",
+   "printed_label": "Business Phone: ( )",
+   "must": false,
+   "x0": 126.0,
+   "y0": 444.6,
+   "x1": 279.0,
+   "y1": 460.1,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Home Phone",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "phone",
+     "box": [
+      126.0,
+      444.6,
+      279.0,
+      460.1
+     ]
+    }
+   },
+   "what": "phone"
+  },
+  {
+   "id": "p01-015",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Home phone",
+   "printed_label": "Home Phone: ( )",
+   "must": false,
+   "x0": 366.0,
+   "y0": 444.6,
+   "x1": 578.2,
+   "y1": 460.1,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "City/State",
+    "candidate": "rule",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      366.0,
+      444.6,
+      578.2,
+      460.1
+     ]
+    }
+   },
+   "what": "phone"
+  },
+  {
+   "id": "p01-018",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: Individual",
+   "printed_label": "Individual",
+   "must": false,
+   "x0": 30.4,
+   "y0": 495.4,
+   "x1": 40.4,
+   "y1": 505.4,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      30.4,
+      495.4,
+      40.4,
+      505.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-019",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Custodian for (name of minor)",
+   "printed_label": "Custodian for:",
+   "must": false,
+   "x0": 284.3,
+   "y0": 503.4,
+   "x1": 394.2,
+   "y1": 518.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "third-party",
+    "field_label": "Custodian",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "third-party",
+     "what": "text",
+     "box": [
+      284.3,
+      503.4,
+      394.2,
+      518.9
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p01-020",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: Custodian",
+   "printed_label": "Custodian for:",
+   "must": false,
+   "x0": 193.8,
+   "y0": 507.4,
+   "x1": 203.8,
+   "y1": 517.4,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      193.8,
+      507.4,
+      203.8,
+      517.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-021",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: Tenants in Common",
+   "printed_label": "Tenants in Common",
+   "must": false,
+   "x0": 30.4,
+   "y0": 519.4,
+   "x1": 40.4,
+   "y1": 529.4,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      30.4,
+      519.4,
+      40.4,
+      529.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-022",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Uniform Gifts to Minors Act: state of",
+   "printed_label": "Uniform Gifts to Minors Act of the State of:",
+   "must": false,
+   "x0": 403.4,
+   "y0": 526.7,
+   "x1": 458.4,
+   "y1": 542.2,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Uniform Gifts to Minors Act of the State of",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      403.4,
+      526.7,
+      458.4,
+      542.2
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p01-023",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: Uniform Gifts to Minors Act",
+   "printed_label": "Uniform Gifts to Minors Act of the State of:",
+   "must": false,
+   "x0": 193.8,
+   "y0": 530.7,
+   "x1": 203.8,
+   "y1": 540.7,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      193.8,
+      530.7,
+      203.8,
+      540.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-024",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: Joint Tenants with rights of Survivorship",
+   "printed_label": "Joint Tenants with rights of Survivorship",
+   "must": false,
+   "x0": 30.4,
+   "y0": 566.7,
+   "x1": 40.4,
+   "y1": 576.7,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      30.4,
+      566.7,
+      40.4,
+      576.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-025",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: Partnership",
+   "printed_label": "Partnership (Limited Partnerships use \u201cCorporation\u201d)",
+   "must": false,
+   "x0": 30.4,
+   "y0": 578.7,
+   "x1": 40.4,
+   "y1": 588.7,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      30.4,
+      578.7,
+      40.4,
+      588.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-026",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: Trust",
+   "printed_label": "Trust",
+   "must": false,
+   "x0": 30.4,
+   "y0": 590.7,
+   "x1": 40.4,
+   "y1": 600.7,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      30.4,
+      590.7,
+      40.4,
+      600.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-027",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: Community Property",
+   "printed_label": "Community Property",
+   "must": false,
+   "x0": 30.4,
+   "y0": 602.7,
+   "x1": 40.4,
+   "y1": 612.7,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      30.4,
+      602.7,
+      40.4,
+      612.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-028",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Other type of ownership (explain)",
+   "printed_label": "Other (please explain):",
+   "must": false,
+   "x0": 136.2,
+   "y0": 610.7,
+   "x1": 286.1,
+   "y1": 626.2,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "\u00a8 Other",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "text",
+     "box": [
+      136.2,
+      610.7,
+      286.1,
+      626.2
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p01-029",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: Other",
+   "printed_label": "Other (please explain):",
+   "must": false,
+   "x0": 30.4,
+   "y0": 614.7,
+   "x1": 40.4,
+   "y1": 624.7,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"\u00a8\")",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      30.4,
+      614.7,
+      40.4,
+      624.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-001",
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Printed name of buyer",
+   "printed_label": "Printed Name of Buyer:",
+   "must": true,
+   "x0": 129.5,
+   "y0": 60.9,
+   "x1": 289.5,
+   "y1": 76.4,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Investor name",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "name",
+     "box": [
+      129.5,
+      60.9,
+      289.5,
+      76.4
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p03-002",
+   "page": 3,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Signature of buyer",
+   "printed_label": "Signature of Buyer:",
+   "must": true,
+   "x0": 112.6,
+   "y0": 96.9,
+   "x1": 262.5,
+   "y1": 112.4,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "investor",
+    "field_label": "Signature",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "signature",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      112.6,
+      96.9,
+      262.5,
+      112.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-003",
+   "page": 3,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Date beside buyer signature",
+   "printed_label": "Date:",
+   "must": true,
+   "x0": 286.7,
+   "y0": 96.9,
+   "x1": 411.6,
+   "y1": 112.4,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "date",
+    "field_owner": "investor",
+    "field_label": "Date signed",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "date",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      286.7,
+      96.9,
+      411.6,
+      112.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-004",
+   "page": 3,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Printed name of second (joint) buyer",
+   "printed_label": "Printed Name of Buyer:",
+   "must": false,
+   "x0": 129.5,
+   "y0": 188.4,
+   "x1": 289.5,
+   "y1": 203.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Investor name",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "name",
+     "box": [
+      129.5,
+      188.4,
+      289.5,
+      203.9
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p03-005",
+   "page": 3,
+   "kind": "signature",
+   "owner": "co-investor",
+   "label": "Signature of second (joint) buyer",
+   "printed_label": "Signature of Buyer :",
+   "must": false,
+   "x0": 115.1,
+   "y0": 224.4,
+   "x1": 265.0,
+   "y1": 239.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "investor",
+    "field_label": "Signature",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "signature",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      115.1,
+      224.4,
+      265.0,
+      239.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-006",
+   "page": 3,
+   "kind": "date",
+   "owner": "co-investor",
+   "label": "Date beside second buyer signature",
+   "printed_label": "Date:",
+   "must": false,
+   "x0": 289.2,
+   "y0": 224.4,
+   "x1": 414.1,
+   "y1": 239.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "date",
+    "field_owner": "investor",
+    "field_label": "Date signed",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "date",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      289.2,
+      224.4,
+      414.1,
+      239.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-007",
+   "page": 3,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Subscription accepted: day",
+   "printed_label": "Investor\u2019s Subscription Accepted this",
+   "must": true,
+   "x0": 185.7,
+   "y0": 355.7,
+   "x1": 220.7,
+   "y1": 371.2,
+   "printed_as": "reader field (no printed candidate under it)",
+   "prefill": {
+    "origin": "field",
+    "field_kind": "text",
+    "field_owner": "firm",
+    "field_label": "Investor\u2019s Subscription Accepted this",
+    "candidate": null,
+    "initial": {
+     "kind": "blank",
+     "owner": "firm",
+     "what": "text",
+     "box": [
+      184.7,
+      354.7,
+      221.7,
+      370.6
+     ]
+    }
+   },
+   "what": "date"
+  },
+  {
+   "id": "p03-008",
+   "page": 3,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Subscription accepted: month",
+   "printed_label": "day of",
+   "must": true,
+   "x0": 251.0,
+   "y0": 355.7,
+   "x1": 365.9,
+   "y1": 371.2,
+   "printed_as": "measure candidate: dateparts (a date printed in 2 parts)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "firm",
+    "field_label": "day of",
+    "candidate": "dateparts",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill; 1 more reader field(s) on the same printed place",
+    "initial": {
+     "kind": "blank",
+     "owner": "firm",
+     "what": "date",
+     "box": [
+      185.7,
+      355.7,
+      365.9,
+      371.2
+     ]
+    }
+   },
+   "what": "date"
+  },
+  {
+   "id": "p03-009",
+   "page": 3,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Accepted by (company officer signature)",
+   "printed_label": "Accepted by :",
+   "must": true,
+   "x0": 89.3,
+   "y0": 387.9,
+   "x1": 279.2,
+   "y1": 403.4,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "firm",
+    "field_label": "Signature",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "signature",
+     "owner": "firm",
+     "what": null,
+     "box": [
+      89.3,
+      387.9,
+      279.2,
+      403.4
+     ]
+    }
+   }
+  }
+ ],
+ "may_fill": [],
+ "source": "hand",
+ "mode": "train",
+ "prefilled": {
+  "when": "2026-11-15T00:42:52Z",
+  "candidates": "aad0ed2eb63aa6de-f01586d5.json",
+  "result": "out-set-a/a011/result.json",
+  "fields": 27,
+  "counted_candidates": 36
+ },
+ "done": "2026-11-15T00:44:16Z"
+}

@@ -1,0 +1,172 @@
+{
+ "file": "doc.pdf",
+ "pages": 21,
+ "page_size_pt": [
+  792.0,
+  612.0
+ ],
+ "coordinates": "PDF points, origin top-left, y grows downward (landscape page 792 x 612). Rule in the picture: its x extent, y1 = bottom of the rule, y0 = y1 - 10.",
+ "how_measured": "Browser print (landscape) of an HTML exhibit made of seven scanned page pictures (935 x 1210 px). Each picture is drawn twice, split over two PDF pages: page CTM .24 0 0 -.24 0 612 and picture cm 2031.25 0 0 -2628.1248 628.125 2743.7498 (first page) or ... 424.99976 (second page), clipped to y 27.75-583.75. So x = 150.75 + col * 487.5/935 and y = 27.75 + row * 630.75/1210 on the first page (top -528.75 on the second); the page break falls at picture row 1066.6. Rules found in the picture pixels (rows darker than 170, runs with gaps of 4 px or less, 30 px or longer; handwriting crossing a rule checked row by row); all seven pictures looked at at full resolution; overlays looked at.",
+ "signing": {
+  "investor_pages": [
+   20
+  ],
+  "firm_pages": [
+   20
+  ],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": "Executed scanned copy of a single-subscriber agreement: name, amount and dates were typed in before signing; the subscriber signed and wrote address and e-mail on the last picture, and the company signed its acceptance under it (page 20)."
+ },
+ "counts_per_page": {
+  "20": {
+   "total": 5,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 3,
+   "signature": 2,
+   "date": 0
+  }
+ },
+ "counts_total": {
+  "total": 5,
+  "tickbox": 0,
+  "initials": 0,
+  "blank": 3,
+  "signature": 2,
+  "date": 0
+ },
+ "counts_by_owner": {
+  "firm": 1,
+  "investor": 4
+ },
+ "sure_per_page": {
+  "1": "sure (no place)",
+  "2": "sure (no place)",
+  "3": "sure (no place)",
+  "4": "sure (no place)",
+  "5": "sure (no place)",
+  "6": "sure (no place)",
+  "7": "sure (no place)",
+  "8": "sure (no place)",
+  "9": "sure (no place)",
+  "10": "sure (no place)",
+  "11": "sure (no place)",
+  "12": "sure (no place)",
+  "13": "sure (no place)",
+  "14": "sure (no place)",
+  "15": "sure (no place)",
+  "16": "sure (no place)",
+  "17": "sure (no place)",
+  "18": "sure (no place)",
+  "19": "sure (no place)",
+  "20": "sure of the five printed rules; every other entry on the page was typed before signing",
+  "21": "sure (no place)"
+ },
+ "not_fields": {
+  "1": [
+   "page 1 holds only the EDGAR header line; pages 4, 7, 10, 13, 16 and 19 are blank leftovers of the split pictures"
+  ],
+  "2": [
+   "the double rule around the agreement title (picture 1)",
+   "the subscriber name, share count and price typed into the first paragraph: filled in, no blank"
+  ],
+  "11": [
+   "footnote rules on pictures 4 and 5 (pages 11 and 14)"
+  ],
+  "20": [
+   "the typed \"Dated:\" date and the typed subscriber name beside \"Name:\" (twice): filled in before execution, no blank printed",
+   "the typed acceptance date, officer name and title: filled in",
+   "the underlines of the labels \"Name:\", \"By:\", \"Address:\", \"Email address:\" and of \"ACCEPTANCE\": underlined words",
+   "the handwriting and signatures themselves (personal data; not copied)"
+  ]
+ },
+ "places": [
+  {
+   "id": "p20-signature",
+   "page": 20,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "investor",
+   "label": "Subscriber signature (already signed by hand on this copy)",
+   "printed_label": "By:",
+   "must": true,
+   "x0": 357.7,
+   "y0": 169.4,
+   "x1": 464.6,
+   "y1": 179.4,
+   "printed_as": "rule in picture 7 (px x 397-601, row 290); box = its x extent and the 10 pt above its bottom",
+   "doubt": "executed copy"
+  },
+  {
+   "id": "p20-address-1",
+   "page": 20,
+   "kind": "blank",
+   "what": "address",
+   "owner": "investor",
+   "label": "Subscriber address, first line (handwritten on this copy)",
+   "printed_label": "Address:",
+   "must": true,
+   "x0": 359.3,
+   "y0": 209.6,
+   "x1": 464.6,
+   "y1": 219.6,
+   "printed_as": "rule in picture 7 (px x 400-601, row 367); box = its x extent and the 10 pt above its bottom",
+   "doubt": "executed copy"
+  },
+  {
+   "id": "p20-address-2",
+   "page": 20,
+   "kind": "blank",
+   "what": "address",
+   "owner": "investor",
+   "label": "Subscriber address, second line",
+   "must": false,
+   "x0": 359.3,
+   "y0": 220.5,
+   "x1": 464.6,
+   "y1": 230.5,
+   "printed_as": "rule in picture 7 (px x 400-601, row 388); box = its x extent and the 10 pt above its bottom",
+   "doubt": "executed copy"
+  },
+  {
+   "id": "p20-email",
+   "page": 20,
+   "kind": "blank",
+   "what": "email",
+   "owner": "investor",
+   "label": "Subscriber e-mail address (handwritten on this copy)",
+   "printed_label": "Email address:",
+   "must": false,
+   "x0": 359.3,
+   "y0": 242.9,
+   "x1": 464.1,
+   "y1": 252.9,
+   "printed_as": "rule in picture 7 (px x 400-600, row 431); box = its x extent and the 10 pt above its bottom",
+   "doubt": "executed copy"
+  },
+  {
+   "id": "p20-accept-signature",
+   "page": 20,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "firm",
+   "label": "Signature for the company under \"ACCEPTANCE\" (already signed)",
+   "printed_label": "By:",
+   "must": true,
+   "x0": 372.9,
+   "y0": 367.0,
+   "x1": 530.3,
+   "y1": 377.0,
+   "printed_as": "rule in picture 7 (px x 426-727, row 669); box = its x extent and the 10 pt above its bottom",
+   "doubt": "executed copy"
+  }
+ ],
+ "may_fill": [
+  "p20-signature",
+  "p20-address-1",
+  "p20-address-2",
+  "p20-email",
+  "p20-accept-signature"
+ ]
+}

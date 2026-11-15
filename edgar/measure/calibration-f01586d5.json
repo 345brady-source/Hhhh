@@ -1,0 +1,43 @@
+{
+ "finder": "f01586d5",
+ "documents": 39,
+ "notRun": [],
+ "kinds": {
+  "blank": {
+   "places": 2038,
+   "found": 1369,
+   "recall": 67.2,
+   "candidatesOnPlace": 2010
+  },
+  "tickbox": {
+   "places": 969,
+   "found": 684,
+   "recall": 70.6,
+   "candidatesOnPlace": 689
+  },
+  "initials": {
+   "places": 302,
+   "found": 209,
+   "recall": 69.2,
+   "candidatesOnPlace": 209
+  },
+  "signature": {
+   "places": 223,
+   "found": 164,
+   "recall": 73.5,
+   "candidatesOnPlace": 169
+  },
+  "date": {
+   "places": 179,
+   "found": 131,
+   "recall": 73.2,
+   "candidatesOnPlace": 116
+  }
+ },
+ "places": 3711,
+ "found": 2557,
+ "recall": 68.9,
+ "counted": 3977,
+ "countedOnPlace": 3193,
+ "precision": 80.3
+}

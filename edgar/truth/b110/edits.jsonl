@@ -1,0 +1,68 @@
+{"when": "2026-11-15T00:48:22Z", "op": "del", "place": ["p01-001"], "n": 1, "why": null}
+{"when": "2026-11-15T00:48:22Z", "op": "add", "place": "p01-039", "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "add", "place": "p01-040", "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-002", "changes": ["what=amount", "must=true", "label=Investment amount: REIT", "printed_label=Investment Amount", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-004", "changes": ["what=amount", "must=false", "label=Investment amount: Program", "printed_label=Investment Amount", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-003", "changes": ["label=Payment: enclosed checks", "printed_label=Enclosed Checks", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-005", "changes": ["label=Payment: funds wired", "printed_label=Funds Wired", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-006", "changes": ["label=Payment: funds to follow", "printed_label=Funds to Follow", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-008", "changes": ["label=Account type: individual", "printed_label=Individual (If TOD, attach application)", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-013", "changes": ["label=Account type: joint tenant", "printed_label=Joint Tenant* (If TOD, attach application)", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-017", "changes": ["label=Account type: tenants in common", "printed_label=Tenants in Common*", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-021", "changes": ["label=Account type: community property", "printed_label=Community Property*", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-023", "changes": ["label=Account type: trust", "printed_label=Trust**", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-027", "changes": ["label=Account type: non-profit organization", "printed_label=Non-Profit Organization**", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-009", "changes": ["label=Account type: UGMA", "printed_label=UGMA: State of", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-007", "changes": ["label=UGMA state", "printed_label=UGMA: State of", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-016", "changes": ["label=Account type: UTMA", "printed_label=UTMA: State of", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-012", "changes": ["label=UTMA state", "printed_label=UTMA: State of", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-018", "changes": ["label=Account type: corporation", "printed_label=Corporation**", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-024", "changes": ["label=Account type: partnership", "printed_label=Partnership**", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-028", "changes": ["label=Account type: other", "printed_label=Other (Specify)", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-025", "changes": ["label=Other account type, specify", "printed_label=Other (Specify)", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-010", "changes": ["label=Account type: traditional IRA", "printed_label=Traditional (Individual) IRA", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:23Z", "op": "set", "place": "p01-011", "changes": ["label=Account type: SEP IRA", "printed_label=SEP IRA", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:24Z", "op": "set", "place": "p01-014", "changes": ["label=Account type: simple IRA", "printed_label=Simple IRA", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:24Z", "op": "set", "place": "p01-015", "changes": ["label=Account type: Roth IRA", "printed_label=ROTH IRA", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:24Z", "op": "set", "place": "p01-019", "changes": ["label=Account type: beneficial IRA", "printed_label=Beneficial IRA", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:24Z", "op": "set", "place": "p01-020", "changes": ["what=name", "label=Beneficial IRA: as beneficiary for", "printed_label=as Beneficiary for:", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:24Z", "op": "set", "place": "p01-022", "changes": ["label=Account type: pension plan", "printed_label=Pension Plan**", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:24Z", "op": "set", "place": "p01-026", "changes": ["label=Account type: profit sharing plan", "printed_label=Profit Sharing Plan**", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:24Z", "op": "set", "place": "p01-029", "changes": ["label=Account type: KEOGH plan", "printed_label=KEOGH Plan**", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:24Z", "op": "add", "place": "p01-041", "why": null}
+{"when": "2026-11-15T00:48:24Z", "op": "add", "place": "p01-042", "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "add", "place": "p01-043", "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "add", "place": "p01-044", "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "add", "place": "p01-045", "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "add", "place": "p01-046", "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "add", "place": "p01-047", "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "add", "place": "p01-048", "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "set", "place": "p01-030", "changes": ["x0=85.0", "y0=457.2", "x1=528.1", "y1=472.7", "what=address", "must=true", "label=Street address", "printed_label=Street Address:", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "add", "place": "p01-049", "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "add", "place": "p01-050", "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "add", "place": "p01-051", "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "set", "place": "p01-031", "changes": ["x0=85.0", "y0=497.0", "x1=528.1", "y1=512.5", "what=address", "must=false", "label=Mailing address (optional)", "printed_label=Mailing Address:", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "add", "place": "p01-052", "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "add", "place": "p01-053", "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "add", "place": "p01-054", "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "set", "place": "p01-032", "changes": ["x0=85.7", "y0=531.7", "x1=284.0", "y1=547.2", "what=phone", "must=false", "label=Phone (day)", "printed_label=Phone (day):", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "add", "place": "p01-055", "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "add", "place": "p01-056", "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "set", "place": "p01-033", "changes": ["label=US citizen", "printed_label=US Citizen", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "set", "place": "p01-034", "changes": ["label=US citizen residing outside the US", "printed_label=US Citizen residing outside the US", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "set", "place": "p01-036", "changes": ["label=Foreign citizen", "printed_label=Foreign citizen, country:", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "set", "place": "p01-035", "changes": ["label=Foreign citizen: country", "printed_label=Foreign citizen, country:", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "set", "place": "p01-037", "changes": ["label=Subject to backup withholding", "printed_label=Check here if you are subject to backup withholding", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:25Z", "op": "add", "place": "p01-057", "why": null}
+{"when": "2026-11-15T00:48:26Z", "op": "set", "place": "p01-038", "changes": ["x0=85.0", "y0=640.8", "x1=528.1", "y1=652.7", "what=name", "must=false", "label=Investment title line 2", "printed_label=Title Line 2:", "doubt="], "why": null}
+{"when": "2026-11-15T00:48:26Z", "op": "add", "place": "p01-058", "why": null}
+{"when": "2026-11-15T00:48:26Z", "op": "add", "place": "p01-059", "why": null}
+{"when": "2026-11-15T00:48:57Z", "op": "set", "place": "p01-041", "changes": ["x0=239.4", "y0=353.4", "x1=243.9", "y1=357.9"], "why": null}
+{"when": "2026-11-15T00:48:57Z", "op": "set", "place": "p01-042", "changes": ["x0=264.1", "y0=353.4", "x1=268.6", "y1=357.9"], "why": null}
+{"when": "2026-11-15T00:48:57Z", "op": "set", "place": "p01-016", "changes": ["x0=226.6", "y0=333.2", "x1=235.8", "y1=341.4"], "why": null}
+{"when": "2026-11-15T00:48:57Z", "op": "set", "place": "p01-023", "changes": ["x0=84.8", "y0=365.4", "x1=93.9", "y1=374.5"], "why": null}
+{"when": "2026-11-15T00:48:57Z", "op": "set", "place": "p01-024", "changes": ["x0=226.6", "y0=365.4", "x1=235.8", "y1=374.5"], "why": null}
+{"when": "2026-11-15T00:48:57Z", "op": "set", "place": "p01-026", "changes": ["x0=339.2", "y0=365.4", "x1=347.4", "y1=374.5"], "why": null}
+{"when": "2026-11-15T00:48:57Z", "op": "set", "place": "p01-027", "changes": ["x0=84.8", "y0=376.6", "x1=93.9", "y1=385.8"], "why": null}
+{"when": "2026-11-15T00:48:57Z", "op": "set", "place": "p01-028", "changes": ["x0=226.6", "y0=376.6", "x1=235.8", "y1=385.8"], "why": null}
+{"when": "2026-11-15T00:48:57Z", "op": "set", "place": "p01-029", "changes": ["x0=339.2", "y0=376.6", "x1=347.4", "y1=385.8"], "why": null}

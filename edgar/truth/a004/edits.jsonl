@@ -1,0 +1,19 @@
+{"when": "2026-11-15T00:44:27Z", "op": "del", "place": ["p01-001"], "n": 1, "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "set", "place": "p02-001", "changes": ["what=amount", "label=Number of shares subscribed", "printed_label=Number of Shares", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "set", "place": "p02-002", "changes": ["what=amount", "label=Total amount of subscription", "printed_label=Total Amount of Subscription", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "set", "place": "p02-003", "changes": ["what=name", "label=Exact name(s) of subscriber(s)", "printed_label=Exact name(s) of Subscriber(s)", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "set", "place": "p02-004", "changes": ["label=Signature of subscriber(s)", "printed_label=Signature of Subscriber(s)", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "set", "place": "p02-005", "changes": ["what=name", "label=Subscriber's printed name", "printed_label=(Print Name)", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "set", "place": "p02-006", "changes": ["kind=date", "what=date", "label=Date of signing", "printed_label=Date", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "set", "place": "p02-007", "changes": ["what=address", "label=Residence or physical mailing address, line 1", "printed_label=Residence or Physical Mailing Address (cannot be a P.O. Box)", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "set", "place": "p02-008", "changes": ["what=address", "label=Residence or physical mailing address, line 2", "printed_label=Residence or Physical Mailing Address (cannot be a P.O. Box)", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "set", "place": "p02-009", "changes": ["what=address", "label=Residence or physical mailing address, line 3", "printed_label=Residence or Physical Mailing Address (cannot be a P.O. Box)", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "del", "place": ["p02-010"], "n": 1, "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "set", "place": "p02-011", "changes": ["x0=77.9", "what=phone", "label=Business telephone with area code", "printed_label=Business:", "must=false", "doubt=", "printed_as=one place over two underscore runs: area code in brackets, then number"], "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "del", "place": ["p02-012"], "n": 1, "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "set", "place": "p02-013", "changes": ["x0=329.2", "what=phone", "label=Home telephone with area code", "printed_label=Home:", "must=false", "doubt=", "printed_as=one place over two underscore runs: area code in brackets, then number"], "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "del", "place": ["p02-014"], "n": 1, "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "del", "place": ["p02-015"], "n": 1, "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "set", "place": "p02-016", "changes": ["x0=143.7", "what=tax number", "label=Social security or taxpayer identification number", "printed_label=Social Security or Taxpayer Identification Number(s)", "must=true", "doubt=", "printed_as=one place over three underscore runs joined by hyphens"], "why": null}
+{"when": "2026-11-15T00:44:28Z", "op": "meta", "changes": ["signing.kind=the subscriber signs alone; no issuer acceptance block, no co-subscriber block", "not.1=the offering circular qualification date blank inside representation 3.1 (the issuer completes it before sending)", "not.1=section heading underlines and the filing header rule", "not.2=the underlined heading SUBSCRIBER SIGNATURE and the rule above it", "sure.1=sure", "sure.2=sure | phone and tax number: one place each over their printed segments"], "why": null}
+{"when": "2026-11-15T00:44:41Z", "op": "done"}

@@ -1,0 +1,49 @@
+{"when": "2026-11-15T00:47:34Z", "op": "set", "place": "p01-001", "changes": ["kind=blank", "what=amount", "owner=investor", "label=Number of units subscribed", "printed_label=I hereby agree to purchase", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "set", "place": "p01-002", "changes": ["kind=blank", "what=amount", "owner=investor", "label=Total subscription amount", "printed_label=of $", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-001", "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-002", "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-003", "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-004", "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-005", "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-006", "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-007", "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-008", "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-009", "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-010", "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-011", "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-012", "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-013", "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-014", "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-015", "why": null}
+{"when": "2026-11-15T00:47:34Z", "op": "add", "place": "p03-016", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p03-017", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p03-018", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p03-019", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p04-001", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p04-002", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p04-003", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p04-004", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p04-005", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p04-006", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p04-007", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p04-008", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p04-009", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p04-010", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p05-001", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p05-002", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p05-003", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p05-004", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p05-005", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p05-006", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p05-007", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p05-008", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p05-009", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p05-010", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p05-011", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p05-012", "why": null}
+{"when": "2026-11-15T00:47:35Z", "op": "add", "place": "p05-013", "why": null}
+{"when": "2026-11-15T00:47:36Z", "op": "add", "place": "p05-014", "why": null}
+{"when": "2026-11-15T00:47:36Z", "op": "add", "place": "p05-015", "why": null}
+{"when": "2026-11-15T00:47:36Z", "op": "add", "place": "p05-016", "why": null}
+{"when": "2026-11-15T00:47:36Z", "op": "meta", "changes": ["signing.kind=investor (and the joint owner where title is joint or in common) signs page 3; the managing general partner accepts on page 4; the registered representative completes page 5", "signing.third_parties=registered-representative", "sure.1=sure", "sure.3=places sure; boxes inferred: the filing lost every line, boxes are the empty rooms by the captions", "sure.4=places sure; boxes inferred for the company block (lines lost)", "sure.5=places fairly sure; boxes inferred (lines lost, captions wrapped); FC RR AE code columns not explained", "not.1=bracketed partnership names (issuer text)", "not.2=no place on this page", "not.5=', 2001' remnant (counted with the representative's date)"], "why": null}
+{"when": "2026-11-15T00:47:58Z", "op": "done"}

@@ -1,0 +1,101 @@
+=== page 1  (U 1, B 0, H 4, X 0)
+ U0 177.4 34.8 183.4 46.8 n=1 | EX-99.(D) 5 ___ EXHIBIT 99(D): FORM OF SUBSCRIPTION AG
+ H0 702.2 155.4 758.2 165.4 w=56 th=0.7 | FOR PROSPECTUS DATED ___  ^ORDER FORM
+ H1 54.7 249.9 86.2 259.9 w=31 th=0.7 | 1. ___ INVESTMENT ^
+ H2 169.5 249.9 758.2 259.9 w=589 th=0.7 | 1. INVESTMENT ___  ^
+ H3 287.7 355.6 372.1 365.6 w=84 th=0.7 | ed copy of (b) Amount of Investment: $ ___  ^
+=== page 2  (U 0, B 0, H 17, X 0)
+ H0 54.7 103.6 86.2 113.6 w=31 th=0.7 | 2. ___ INFORMATION ^
+ H1 208.5 103.6 758.2 113.6 w=550 th=0.7 | 2. INFORMATION ___  ^
+ H2 195.0 179.4 556.5 189.4 w=361 th=0.7 | in, verify and record information that ___  ^
+ H3 565.5 179.4 677.2 189.4 w=112 th=0.7 | in, verify and record information that ___  ^
+ H4 686.2 179.4 758.2 189.4 w=72 th=0.7 | in, verify and record information that ___  ^
+ H5 195.0 222.9 556.5 232.9 w=361 th=0.7 | are to be registered. ___  ^
+ H6 565.5 222.9 677.2 232.9 w=112 th=0.7 | are to be registered. ___  ^
+ H7 686.2 222.9 758.2 232.9 w=72 th=0.7 | are to be registered. ___  ^
+ H8 195.0 255.1 758.2 265.1 w=563 th=0.7 | No P.O. Boxes. ___  ^Residential Address:
+ H9 195.0 282.1 556.5 292.1 w=361 th=0.7 |  ___  ^
+ H10 565.5 282.1 677.2 292.1 w=112 th=0.7 |  ___  ^
+ H11 686.2 282.1 758.2 292.1 w=72 th=0.7 |  ___  ^
+ H12 195.0 306.1 556.5 316.1 w=361 th=0.7 |  ___  ^
+ H13 565.5 306.1 758.2 316.1 w=193 th=0.7 |  ___  ^
+ H14 195.0 333.1 758.2 343.1 w=563 th=0.7 |  ___  ^
+ H15 300.0 474.1 483.7 484.1 w=184 th=0.7 | Signature of Investor/Trustee: ___  ^
+ H16 195.0 527.4 759.7 537.4 w=565 th=0.7 |  ___  ^Investor's Account Number with Broker/De
+=== page 3  (U 0, B 0, H 3, X 0)
+ H0 330.5 69.1 414.8 79.1 w=84 th=0.7 | Exemption payee code (if any) ___  ^
+ H1 381.6 90.9 466.0 100.9 w=84 th=0.7 | ion from FATCA reporting code (if any) ___  ^
+ H2 33.7 176.7 758.2 186.7 w=724 th=1.5 |  ___  ^Regular Mail: P.O. Box 219145, Kansas Ci
+=== page 4  (U 0, B 0, H 19, X 0)
+ H0 54.7 53.4 86.2 63.4 w=31 th=0.7 | 3. ___ OWNERSHIP ^
+ H1 198.0 53.4 758.2 63.4 w=560 th=0.7 | 3. OWNERSHIP ___  ^
+ H2 195.0 104.4 291.2 114.4 w=96 th=0.7 |  ___  ^Non-Qualified Account
+ H3 115.2 123.1 126.5 133.1 w=11 th=0.7 | Important: Please choose ___ option, either o Individual o Joint Te ^one
+ H4 644.1 156.1 719.1 166.1 w=75 th=0.7 | oth investors must sign and initial of ___  ^Act/State
+ H5 636.0 164.4 690.4 174.4 w=54 th=0.7 | in ___  ^of
+ H6 657.0 206.4 726.4 216.4 w=69 th=0.7 | y Property o Tenants in Common o Other ___  ^
+ H7 636.0 214.6 681.0 224.6 w=45 th=0.7 | 6 All parties must sign and initial in ___  ^Other
+ H8 195.0 252.9 249.7 262.9 w=55 th=0.7 |  ___  ^Trust Ownership
+ H9 243.0 291.9 535.5 301.9 w=292 th=0.7 | Name of Trust ___  ^
+ H10 224.5 309.1 267.7 319.1 w=43 th=0.7 | Tax ID # ___ Date Established ^
+ H11 532.1 309.1 603.3 319.1 w=71 th=0.7 | Tax ID # Date Established ___  ^
+ H12 195.0 326.4 252.3 336.4 w=57 th=0.7 | For Entity Ownership: ___  ^Entity Ownership
+ H13 413.8 343.6 633.2 353.6 w=219 th=0.7 | orporation, Partnership, Other) Entity ___  ^
+ H14 224.5 365.4 267.7 375.4 w=43 th=0.7 | w the applicable entity type. Tax ID # ___ Date Established ^
+ H15 532.1 365.4 603.3 375.4 w=71 th=0.7 | entity type. Tax ID # Date Established ___  ^
+ H16 237.8 500.4 309.0 510.4 w=71 th=0.7 | o Other ___  ^
+ H17 195.0 513.1 759.7 523.1 w=565 th=0.7 |  ___  ^o Other Please specify
+ H18 195.0 535.6 270.6 545.6 w=76 th=0.7 |  ___  ^Qualified Account
+=== page 5  (U 0, B 0, H 16, X 0)
+ H0 236.5 42.9 307.8 52.9 w=71 th=0.7 | Name ___  ^
+ H1 54.7 99.1 86.2 109.1 w=31 th=0.7 | 4. ___ INFORMATION ^
+ H2 216.7 99.1 758.2 109.1 w=541 th=0.7 | 4. INFORMATION ___  ^
+ H3 293.8 180.9 411.9 190.9 w=118 th=0.7 | Custodian Name: ___ Custodian Tax ID #: ^Information:
+ H4 567.4 180.9 687.4 190.9 w=120 th=0.7 | Custodian Name: Custodian Tax ID #: ___  ^the Custodian:
+ H5 293.3 189.1 411.5 199.1 w=118 th=0.7 | ork to the custodian. Mailing Address: ___ Custodian Account #: ^
+ H6 571.6 189.1 700.9 199.1 w=129 th=0.7 |  Mailing Address: Custodian Account #: ___  ^
+ H7 286.9 197.4 412.5 207.4 w=126 th=0.7 | City/State/ZIP: ___ Custodian Phone #: ^Address:
+ H8 565.3 197.4 685.3 207.4 w=120 th=0.7 | City/State/ZIP: Custodian Phone #: ___  ^#:
+ H9 54.7 294.9 86.2 304.9 w=31 th=0.7 | 5. ___ OPTIONS ^
+ H10 245.2 294.9 758.2 304.9 w=513 th=0.7 | 5. OPTIONS ___  ^
+ H11 331.4 461.4 550.7 471.4 w=219 th=0.7 | notify Bank, Brokerage Firm or Person: ___  ^
+ H12 283.5 469.6 502.8 479.6 w=219 th=0.7 | or Investment Advisor Mailing Address: ___  ^Firm or Person:
+ H13 277.0 477.9 496.4 487.9 w=219 th=0.7 |  meets the suitability City/State/ZIP: ___  ^Address:
+ H14 264.7 486.1 367.8 496.1 w=103 th=0.7 | d in the prospectus and any Account #: ___ Bank ABA # (FOR ACH ONLY) : ^City/State/ZIP:
+ H15 476.5 486.1 579.6 496.1 w=103 th=0.7 | Account #: Bank ABA # (FOR ACH ONLY) : ___  ^
+=== page 6  (U 0, B 0, H 1, X 0)
+ H0 33.7 71.0 758.2 81.0 w=724 th=1.5 |  ___  ^4
+=== page 7  (U 0, B 0, H 3, X 0)
+ H0 55.5 53.4 87.0 63.4 w=31 th=0.7 | 6. ___ INVESTOR(S) ^
+ H1 234.0 53.4 758.2 63.4 w=524 th=0.7 | 6. INVESTOR(S) ___  ^
+ H2 195.0 254.4 758.2 264.4 w=563 th=0.7 |  ___  ^o o Initials Initials
+=== page 8  (U 0, B 0, H 5, X 0)
+ H0 686.2 387.1 759.7 397.1 w=73 th=0.7 |  ___  ^
+ H1 307.5 390.9 478.1 400.9 w=171 th=0.7 | Signature of Investor/Trustee: ___ Date: ^
+ H2 686.2 429.1 759.7 439.1 w=73 th=0.7 |  ___  ^
+ H3 307.5 432.9 478.1 442.9 w=171 th=0.7 | Signature of Joint ___ Date: ^
+ H4 33.7 506.7 758.2 516.7 w=724 th=1.5 |  ___  ^Regular Mail: P.O. Box 219145, Kansas Ci
+=== page 9  (U 0, B 0, H 17, X 0)
+ H0 55.5 53.4 87.0 63.4 w=31 th=0.7 | 7. ___ SIGNATURE ^
+ H1 216.0 53.4 758.2 63.4 w=542 th=0.7 | 7. SIGNATURE ___  ^
+ H2 686.2 108.1 759.7 118.1 w=73 th=0.7 |  ___  ^
+ H3 276.0 111.9 446.6 121.9 w=171 th=0.7 | l Investments. Signature of Custodian: ___ Date: ^
+ H4 431.8 207.9 602.4 217.9 w=171 th=0.7 |  ___  ^
+ H5 55.5 264.1 87.0 274.1 w=31 th=0.7 | 8. ___ INFORMATION ^
+ H6 309.0 264.1 758.2 274.1 w=449 th=0.7 | 8. INFORMATION ___  ^
+ H7 191.2 303.1 758.2 313.1 w=567 th=0.7 |  ___  ^Registered Representative(s) Name(s):
+ H8 191.2 330.9 758.2 340.9 w=567 th=0.7 |  ___  ^Broker/Dealer Name:
+ H9 191.2 375.9 342.7 385.9 w=151 th=0.7 |  ___  ^
+ H10 351.7 375.9 758.2 385.9 w=406 th=0.7 |  ___  ^
+ H11 191.2 403.6 758.2 413.6 w=567 th=0.7 |  ___  ^Registered Representative Address:
+ H12 191.2 431.4 342.7 441.4 w=151 th=0.7 |  ___  ^City:
+ H13 351.7 431.4 470.2 441.4 w=118 th=0.7 |  ___  ^State:
+ H14 503.2 431.4 758.2 441.4 w=255 th=0.7 |  ___  ^ZIP:
+ H15 191.2 458.4 342.7 468.4 w=151 th=0.7 |  ___  ^Telephone Number:
+ H16 351.7 458.4 758.2 468.4 w=406 th=0.7 |  ___  ^Email Address:
+=== page 10  (U 0, B 0, H 4, X 0)
+ H0 351.7 27.1 447.7 37.1 w=96 th=0.7 |  ___  ^
+ H1 503.2 27.1 759.7 37.1 w=256 th=0.7 |  ___  ^
+ H2 339.1 93.9 387.0 103.9 w=48 th=0.7 | Please complete this form and mail ___ to: ^the original
+ H3 33.7 271.2 758.2 281.2 w=724 th=1.5 |  ___  ^Page 4 of 4
+=== page 11  (U 0, B 0, H 0, X 0)

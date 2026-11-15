@@ -1,0 +1,60 @@
+{"when": "2026-11-15T00:45:38Z", "op": "del", "place": ["p01-001"], "n": 1, "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "del", "place": ["p01-002"], "n": 1, "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "set", "place": "p02-001", "changes": ["owner=firm", "must=false", "label=Fund signature (By)", "printed_label=By:", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "del", "place": ["p02-002"], "n": 1, "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "set", "place": "p02-003", "changes": ["owner=investor", "must=true", "label=Subscriber signature (By)", "printed_label=By:", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "del", "place": ["p03-001"], "n": 1, "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "set", "place": "p03-002", "changes": ["must=false", "label=Investor's account number", "printed_label=Investor's account number:", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "set", "place": "p03-003", "changes": ["kind=tickbox", "what=", "must=false", "label=New investor", "printed_label=New investor", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "set", "place": "p03-004", "changes": ["kind=tickbox", "what=", "must=false", "label=Existing investor", "printed_label=Existing investor", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "set", "place": "p03-005", "changes": ["owner=investor-individual"], "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "set", "place": "p03-006", "changes": ["must=false"], "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "set", "place": "p03-007", "changes": ["owner=investor-individual"], "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "set", "place": "p03-009", "changes": ["owner=investor-individual", "what=date", "label=Primary owner's date of birth", "printed_label=Primary owner's late of birth (MM/DD/YYYY)"], "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "set", "place": "p03-010", "changes": ["kind=tickbox", "what=", "owner=investor-entity", "must=false", "label=Taxable entity: Corporation", "printed_label=Corporation", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "set", "place": "p03-011", "changes": ["kind=tickbox", "what=", "owner=investor-entity", "must=false", "label=Tax-exempt entity: 401(k)", "printed_label=401(k)", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "set", "place": "p03-012", "changes": ["kind=tickbox", "what=", "owner=investor-entity", "must=false", "label=Taxable entity: Partnership", "printed_label=Partnership", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:38Z", "op": "set", "place": "p03-013", "changes": ["kind=tickbox", "what=", "owner=investor-entity", "must=false", "label=Tax-exempt entity: IRA", "printed_label=IRA", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p03-014", "changes": ["must=false", "label=Taxable entity: Other, specify", "printed_label=Other:"], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p03-015", "changes": ["must=false", "label=Tax-exempt entity: Other, specify", "printed_label=Other:"], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p03-016", "changes": ["kind=tickbox", "what=", "owner=investor-entity", "must=false", "label=Taxable entity: Other", "printed_label=Other:", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p03-017", "changes": ["kind=tickbox", "what=", "owner=investor-entity", "must=false", "label=Living trust: Irrevocable", "printed_label=Irrevocable", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p03-018", "changes": ["kind=tickbox", "what=", "owner=investor-entity", "must=false", "label=Tax-exempt entity: Other", "printed_label=Other:", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p03-019", "changes": ["kind=tickbox", "what=", "owner=investor-entity", "must=false", "label=GRAT/CRAT trust: Irrevocable", "printed_label=Irrevocable", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p03-020", "changes": ["kind=tickbox", "what=", "owner=investor-entity", "must=false", "label=Living trust: Revocable", "printed_label=Revocable", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p03-021", "changes": ["kind=tickbox", "what=", "owner=investor-entity", "must=false", "label=GRAT/CRAT trust: Revocable", "printed_label=Revocable", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p03-024", "changes": ["label=Authorized individual's name"], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p03-026", "changes": ["kind=tickbox", "what=", "must=false", "label=Distributions: reinvest in fund", "printed_label=Reinvest in fund", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p03-027", "changes": ["kind=tickbox", "what=", "must=false", "label=Distributions: electronic deposit into account", "printed_label=Electronic deposit into account", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p04-001", "changes": ["label=Primary account street address", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p04-002", "changes": ["label=Primary account apartment/suite number", "printed_label=Apartment/suite number"], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p04-003", "changes": ["label=Primary account city", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p04-004", "changes": ["label=Primary account state"], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p04-005", "changes": ["label=Primary account ZIP code"], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p04-006", "changes": ["must=false", "label=Mailing street address (if different)", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p04-007", "changes": ["label=Mailing apartment/suite number", "printed_label=Apartment/suite number"], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p04-008", "changes": ["must=false", "label=Mailing city (if different)", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p04-009", "changes": ["must=false", "label=Mailing state (if different)"], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p04-010", "changes": ["must=false", "label=Mailing ZIP code (if different)"], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "set", "place": "p04-020", "changes": ["must=true", "label=Accredited investor letter(s) (a)-(i)", "printed_label=write the corresponding letter(s) here:", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "del", "place": ["p04-021"], "n": 1, "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "del", "place": ["p07-001"], "n": 1, "why": null}
+{"when": "2026-11-15T00:45:39Z", "op": "add", "place": "p06-001", "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "set", "place": "p08-001", "changes": ["label=Desired investment amount", "printed_label=$", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "set", "place": "p08-002", "changes": ["owner=investor-individual", "label=Signature of primary owner", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "set", "place": "p08-003", "changes": ["must=false"], "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "set", "place": "p08-004", "changes": ["owner=investor-individual", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "set", "place": "p08-005", "changes": ["must=false"], "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "set", "place": "p08-006", "changes": ["kind=date", "what=", "owner=investor-individual", "label=Date signed (primary owner)", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "set", "place": "p08-007", "changes": ["kind=date", "what=", "owner=co-investor", "must=false", "label=Date signed (joint owner)", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "set", "place": "p08-008", "changes": ["doubt="], "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "set", "place": "p08-009", "changes": ["owner=investor-entity", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "set", "place": "p08-010", "changes": ["owner=investor-entity", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "set", "place": "p08-011", "changes": ["owner=investor-entity", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "del", "place": ["p08-012"], "n": 1, "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "set", "place": "p10-001", "changes": ["what=name", "owner=third-party", "must=false", "label=ERISA plan or IRA custodian name", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "set", "place": "p10-002", "changes": ["must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "set", "place": "p10-003", "changes": ["kind=date", "what=", "must=false", "label=Branch manager date signed", "doubt="], "why": null}
+{"when": "2026-11-15T00:45:40Z", "op": "set", "place": "p10-004", "changes": ["kind=blank", "what=name", "owner=third-party", "must=false", "label=Name of branch manager", "printed_label=Name of Branch Manager", "doubt="], "why": null}
+{"when": "2026-11-15T00:46:05Z", "op": "meta", "changes": ["signing.kind=Closed-end fund subscription agreement: the fund signs page 2 (By) and the subscriber signs beside it; Schedule A is the account application the investor completes (pages 3, 4, 6, 8), signing the individual block (joint owner beside) or the entity block on page 8; the branch manager completes and signs the ERISA/IRA custodian certification on page 10.", "signing.third_parties=branch-manager,custodian", "sure.1=sure (no place: the bracketed date, subscriber name and share figures are issuer text)", "sure.2=sure; Name and Title under each By line have no printed line", "sure.3=sure; box glyphs are tick boxes; section A is individual, section B entity", "sure.4=sure; the financial advisor section is third party", "sure.5=sure (no place)", "sure.6=sure of the place; the qualified-client letter has no printed line, only spaces before a period", "sure.7=sure (no place)", "sure.8=sure", "sure.9=sure (no place)", "sure.10=sure; the branch manager section is third party", "not.1=bracketed issuer text: the agreement date, the subscriber name, share count and price", "not.2=the bracketed subscriber name heading over the second By line; Name and Title captions with no line", "not.3=the header frame; the bracketed mailing address and ATTN bracket; headings", "not.4=the header frame; boxed section headings; the footnote rule", "not.7=the footnote rule", "not.8=the header frame; the footnote rule at the foot of the page"], "why": null}
+{"when": "2026-11-15T00:46:20Z", "op": "done"}

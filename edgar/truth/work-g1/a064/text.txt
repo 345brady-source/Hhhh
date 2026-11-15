@@ -1,0 +1,1424 @@
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+ EX-10.3 8 ea149507ex10-3_nextnav.htm FORM OF PIPE SUBSCRIPTION AGREEMENT
+                                                                                                                             Exhibit 10.3
+
+                                                            FORM OF SUBSCRIPTION AGREEMENT
+
+          This SUBSCRIPTION AGREEMENT (this “Subscription Agreement”) is entered into on [●], 2021, by and among Spartacus
+ Acquisition Corporation, a Delaware corporation (the “Issuer”), the subscriber party set forth on the signature page hereto
+ (“Subscriber”), and Spartacus Acquisition Shelf Corp., a Delaware corporation (“Holdings”).
+
+           WHEREAS, the Issuer is concurrently with the execution and delivery hereof entering into an Agreement and Plan of Merger
+ (as amended or modified, the “Merger Agreement”), by and among Issuer, NextNav Holdings LLC, a Delaware limited liability
+ company (the “Company”), Holdings, and the other merger parties to be named therein (collectively, the “Transaction Parties”),
+ whereby the parties intend to effect a business combination whereby each of the Issuer and the Company would become wholly-owned
+ subsidiaries of Holdings, and the stockholders or the Issuer and the equityholders of the Company would receive shares of Holdings’
+ common stock, par value $0.0001 per share (“Holdings Shares”), on the terms and subject to the conditions set forth therein
+ (collectively, the “Transactions”);
+
+          WHEREAS, to finance a portion of the Transactions, Subscriber desires to subscribe for and purchase from the Issuer that
+ number of shares of the Issuer’s Class A common stock, par value $0.0001 per share (the “Class A Shares”), as set forth on the
+ signature page hereto (the “Acquired Shares”) for a purchase price of $10.00 per share and an aggregate purchase price set forth on the
+ signature page hereto (the “Purchase Price”), and the Issuer desires to issue and sell to Subscriber the Acquired Shares in consideration
+ of the payment of the Purchase Price by or on behalf of Subscriber to the Issuer on or prior to the Closing (as defined below);
+
+          WHEREAS, in connection with the Transactions, each Acquired Share that is issued and outstanding immediately prior to the
+ Effective Time shall be converted into, and the holder of such Acquired Share shall be entitled to receive, one Holdings Share for such
+ Acquired Share;
+
+          WHEREAS, to finance a portion of the Transactions, certain other “qualified institutional buyers” (as defined in Rule 144A
+ under the Securities Act of 1933, as amended (the “Securities Act”)) or institutional “accredited investors” (as such term is defined in
+ Rule 501 under the Securities Act), have (severally and not jointly) entered into separate subscription agreements with the Issuer (the
+ “Other Subscription Agreements”), pursuant to which such investors have agreed to purchase Class A Shares on or prior to the Closing
+ Date at the Purchase Price; and
+
+         WHEREAS, the aggregate amount of Class A Shares to be sold by Issuer pursuant to this Subscription Agreement and the
+ Other Subscription Agreements equals 20,500,000 Class A Shares.
+
+ Capitalized terms used herein without definition shall have the meanings ascribed thereto in the Merger Agreement.
+
+          NOW, THEREFORE, in consideration of the foregoing and the mutual representations, warranties and covenants, and subject
+ to the conditions, herein contained, and intending to be legally bound hereby, the parties hereto hereby agree as follows:
+
+          1. Subscription. Subject to the terms and conditions hereof, Subscriber hereby agrees to subscribe for and purchase, and the
+ Issuer hereby agrees to issue and sell to Subscriber, upon the payment of the Purchase Price, the Acquired Shares (such subscription
+ and issuance, the “Subscription”).
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                            1/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+              2. Closing.
+
+                    a. The closing of the Subscription contemplated hereby (the “Closing”) is contingent upon the substantially
+ concurrent consummation of the Transactions and shall occur immediately prior thereto. Not less than five (5) business days prior to the
+ scheduled closing date of the Transactions (the “Closing Date”), the Issuer shall provide written notice to Subscriber (the “Closing
+ Notice”) of such Closing Date. Subscriber shall deliver to the Issuer no later than one (1) Business Day before the Closing Date (as
+ specified in the Closing Notice or otherwise agreed to by the Issuer and Subscriber) the Purchase Price for the Acquired Shares by wire
+ transfer of U.S. dollars in immediately available funds (i) to the account specified by the Issuer in the Closing Notice, to be held in
+ escrow by the Issuer. On the Closing Date, the Issuer shall deliver to Subscriber (i) the Acquired Shares in book entry (or if requested
+ by Subscriber in writing at a reasonable time in advance of the Closing, certificated) form, free and clear of any liens or other
+ restrictions whatsoever (other than those set forth in this Subscription Agreement, arising under any written agreement of which
+ Subscriber is a party or arising under state or federal securities laws), in the name of Subscriber (or its nominee in accordance with its
+ delivery instructions) or to a custodian designated by Subscriber, as applicable, and (ii) a copy of the records of the Issuer’s transfer
+ agent (the “Transfer Agent”) showing Subscriber as the owner of the Acquired Shares on and as of the Closing Date (the “Subscriber’s
+ Deliveries”). In the event the closing of the Transactions does not occur within five (5) business days of the Closing Date specified in
+ the Closing Notice, unless otherwise instructed by the Issuer and Subscriber, the Issuer shall promptly (but not later than two (2)
+ business days thereafter) return the Purchase Price to Subscriber by wire transfer of U.S. dollars in immediately available funds to the
+ account specified by Subscriber, and any book entries or share certificates shall be deemed cancelled and any share certificates shall be
+ promptly (but not later than one (1) business day thereafter) returned to the Issuer. Notwithstanding such return, (i) a failure to close on
+ the expected Closing Date shall not, by itself, be deemed to be a failure of any of the conditions to Closing set forth in this Section 2 to
+ be satisfied or waived on or prior to the Closing Date, and (ii) Subscriber shall remain obligated (A) to redeliver funds to the Issuer
+ following the Issuer’s delivery to Subscriber of a new Closing Notice and (B) to consummate the Closing upon satisfaction of the
+ conditions set forth in this Section 2.
+
+                         b. The Closing shall be subject to the conditions that, on the Closing Date:
+
+                              (i) solely with respect to Subscriber, the representations and warranties made by the Issuer and Holdings
+ (other than the representations and warranties set forth in Section 3(b), Section 3(c), Section 3(h), Section 4(b) and Section 4(c)) in this
+ Subscription Agreement shall be true and correct in all material respects as of the Closing Date (other than those representations and
+ warranties expressly made as of an earlier date, which shall be true and correct in all material respects as of such date, and other than
+ those representations and warranties that are qualified as to materiality, Material Adverse Effect or Holdings Material Adverse Effect,
+ which shall be true and correct in all respects as of the Closing Date), and the representations and warranties made by the Issuer and
+ Holdings set forth in Section 3(b), Section 3(c), Section 3(h), Section 4(b) and Section 4(c) shall be true and correct in all respects as of
+ the Closing Date (other than those representations and warranties expressly made as of an earlier date, which shall be true and correct in
+ all respects as of such date), in each case without giving effect to the consummation of the Transactions;
+
+                            (ii) solely with respect to the Issuer, the representations and warranties made by Subscriber in this
+ Subscription Agreement shall be true and correct in all material respects as of the Closing Date (other than those representations and
+ warranties expressly made as of an earlier date, which shall be true and correct in all material respects as of such date, and other than
+ those representations and warranties that are qualified as to materiality or Material Adverse Effect, which shall be true and correct in all
+ respects as of the Closing Date), in each case without giving effect to the consummation of the Transactions;
+
+                               (iii) solely with respect to Subscriber, the Issuer shall have performed, satisfied and complied in all material
+ respects with all covenants, agreements and conditions required by this Subscription Agreement to be performed, satisfied or complied
+ with by it at or prior to the Closing, except where the failure of such performance or compliance would not or would not reasonably be
+ expected to prevent, materially delay, or materially impair the ability of the Issuer to consummate the Closing;
+
+                              (iv) no governmental authority having jurisdiction shall have enacted, issued, promulgated, enforced or
+ entered any material judgment, order, law, rule or regulation (whether temporary, preliminary or permanent) which is then in effect and
+ has the effect of restraining, enjoining or otherwise prohibiting or making illegal the consummation of the transactions contemplated by
+ this Subscription Agreement;
+
+                              (v) the Acquired Shares shall have been approved for listing on the Nasdaq Capital Market (“Nasdaq”),
+ subject to official notice of issuance;
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                 2/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+                                                                                            2
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                        3/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                           (vi) solely with respect to Subscriber, no amendment or modification of the Merger Agreement shall have
+ occurred that would reasonably be expected to materially and adversely affect the economic benefits that Subscriber would reasonably
+ be expected to receive under this Subscription Agreement; and
+
+                              (vii) all conditions precedent to the closing of the Transactions set forth in the Merger Agreement shall have
+ been satisfied or waived by the party entitled to the benefit thereof under the Merger Agreement (other than those conditions that may
+ only be satisfied at the closing of the Transactions, but subject to satisfaction or waiver by such party of such conditions as of the
+ closing of the Transactions).
+
+                    c. At the Closing, the parties hereto shall execute and deliver such additional documents and take such additional
+ actions as the parties reasonably may deem necessary in order to consummate the Subscription as contemplated by this Subscription
+ Agreement and Holdings shall assume the Issuer’s obligations hereunder.
+
+              3. Issuer Representations and Warranties. The Issuer represents and warrants that:
+
+                   a. The Issuer has been duly incorporated and is validly existing as a corporation in good standing under the laws of
+ the State of Delaware, with corporate power and authority to own, lease and operate its properties and conduct its business as presently
+ conducted and to enter into, deliver and perform its obligations under this Subscription Agreement.
+
+                   b. The Acquired Shares have been duly authorized and, when issued and delivered to Subscriber against full payment
+ for the Acquired Shares in accordance with the terms of this Subscription Agreement and registered with the Transfer Agent, the
+ Acquired Shares will be validly issued, fully paid and non-assessable and will not have been issued in violation of or subject to any
+ preemptive or similar rights created under the Issuer’s certificate of incorporation and bylaws or under the laws of the State of
+ Delaware.
+
+                    c. This Subscription Agreement, the Merger Agreement and the Other Subscription Agreements (collectively, the
+ “Transaction Documents”) have been duly authorized, executed and delivered by the Issuer and, assuming that the Transaction
+ Documents constitute the valid and binding agreement of the other parties thereto, are valid and binding obligations of the Issuer, and
+ are enforceable against it in accordance with their terms, except as may be limited or otherwise affected by (i) bankruptcy, insolvency,
+ reorganization, fraudulent conveyance, moratorium or other laws relating to or affecting the rights of creditors generally, and (ii)
+ principles of equity, whether considered at law or equity.
+
+                     d. The execution, delivery and performance of this Subscription Agreement and the other Transaction Documents,
+ including the issuance and sale of the Acquired Shares and the consummation of the other transactions contemplated hereby and
+ thereby, will not conflict with or result in a breach or violation of any of the terms or provisions of, or constitute a default under, or
+ result in the creation or imposition of any lien, charge or encumbrance upon any of the property or assets of the Issuer pursuant to the
+ terms of: (i) any indenture, mortgage, deed of trust, loan agreement, lease, license or other agreement or instrument to which the Issuer
+ is a party or by which the Issuer is bound or to which any of the property or assets of the Issuer is subject; (ii) the organizational
+ documents of the Issuer; or (iii) any statute or any judgment, order, rule or regulation of any court or governmental agency, taxing
+ authority or regulatory body, domestic or foreign, having jurisdiction over the Issuer or any of its properties that, in the case of clauses
+ (i) and (iii), would reasonably be expected to have a material adverse effect on the business, properties, assets, liabilities, operations,
+ condition (including financial condition), stockholders’ equity or results of operations of the Issuer or materially and adversely affect
+ the validity of the Acquired Shares or the legal authority or ability of the Issuer to perform in any material respects its obligations
+ hereunder (a “Material Adverse Effect”).
+
+                    e. There are no securities or instruments issued by or to which the Issuer is a party containing anti-dilution or similar
+ provisions that will be triggered by the issuance of (i) the Acquired Shares or (ii) the shares to be issued pursuant to any Other
+ Subscription Agreement, that have not been or will not be validly waived on or prior to the Closing Date, including such provisions in
+ the Issuer’s Class B common stock, par value $0.0001 per share (the “Class B Shares”), pursuant to the terms of the Issuer’s certificate
+ of incorporation.
+
+
+                                                                                            3
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                               4/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                     f. The Issuer is not in default or violation (and no event has occurred which, with notice or the lapse of time or both,
+ would constitute a default or violation) of any term, condition or provision of (i) the organizational documents of the Issuer, (ii) any
+ loan or credit agreement, guarantee, note, bond, mortgage, indenture, lease or other agreement, permit, franchise or license to which, as
+ of the date of this Subscription Agreement, the Issuer is a party or by which the Issuer’s properties or assets are bound or (iii) any
+ statute or any judgment, order, rule or regulation of any court or governmental agency, taxing authority or regulatory body, domestic or
+ foreign, having jurisdiction over the Issuer or any of its properties, except, in the case of clauses (ii) and (iii), for defaults or violations
+ that have not had and would not be reasonably likely to have, individually or in the aggregate, a Material Adverse Effect.
+
+                     g. The Issuer is not required to obtain any consent, waiver, authorization or order of, give any notice to, or make any
+ filing or registration with, any court or other federal, state, local or other governmental authority, self-regulatory organization or other
+ person in connection with the execution, delivery and performance by the Issuer of this Subscription Agreement (including, without
+ limitation, the issuance of the Acquired Shares), other than: (i) the filing with the Securities and Exchange Commission (the
+ “Commission”) of the Registration Statement (as defined below); (ii) filings required by applicable state securities laws; (iii) the filing
+ of a Notice of Exempt Offering of Securities on Form D with the Commission under Regulation D of the Securities Act; (iv) the filings
+ required in accordance with Section 10(r) of this Subscription Agreement; (v) those required by Nasdaq, including with respect to
+ obtaining approval of the Issuer’s stockholders; and (vi) any filing, the failure of which to obtain would not be reasonably likely to
+ have, individually or in the aggregate, a Material Adverse Effect.
+
+                    h. As of the date of this Subscription Agreement and as of immediately prior to the Closing Date, the authorized
+ capital stock of the Issuer consists of (i) 1,000,000 shares of preferred stock, par value $0.0001 per share (“Preferred Stock”) and (ii)
+ 220,000,000 shares of common stock, par value $0.0001 per share (the “Common Stock”), including (1) 200,000,000 Class A Shares
+ and (2) 20,000,000 Class B Shares. As of the date of this Subscription Agreement, (i) no shares of Preferred Stock are issued and
+ outstanding, (ii) 20,000,000 Class A Shares are issued and outstanding, (iii) 5,000,000 Class B Shares are issued and outstanding and
+ (iv) 10,000,000 redeemable warrants to purchase Class A Shares and 8,750,000 private placement warrants to purchase Class A Shares
+ are outstanding. All (i) issued and outstanding Class A Shares and Class B Shares have been duly authorized and validly issued, are
+ fully paid and are non-assessable and are not subject to preemptive rights and (ii) outstanding warrants have been duly authorized and
+ validly issued, are fully paid and are not subject to preemptive rights. Except as set forth above and pursuant to the Other Subscription
+ Agreements and the Merger Agreement, there are no outstanding options, warrants or other rights to subscribe for, purchase or acquire
+ from the Issuer any shares of Common Stock or other equity interests in the Issuer, or securities convertible into or exchangeable or
+ exercisable for such equity interests. As of the date hereof, the Issuer has no subsidiaries and does not own, directly or indirectly,
+ interests or investments (whether equity or debt) in any person, whether incorporated or unincorporated. There are no stockholder
+ agreements, voting trusts or other agreements or understandings to which the Issuer is a party or by which it is bound relating to the
+ voting of any securities of the Issuer, other than (A) as set forth in the SEC Documents and (B) as contemplated by the Merger
+ Agreement. Except as disclosed in the SEC Documents, as of March 31, 2021, the Issuer has no outstanding indebtedness.
+
+                    i. The Issuer has not received any written communication from a governmental entity that alleges that the Issuer is not
+ in compliance with or is in default or violation of any applicable law, except where such non-compliance, default or violation would
+ not, individually or in the aggregate, be reasonably likely to have a Material Adverse Effect.
+
+                    j. The issued and outstanding Class A Shares are registered pursuant to Section 12(b) of the Securities Exchange Act
+ of 1934, as amended (the “Exchange Act”), and are listed for trading on Nasdaq under the symbol “TMTS.” There is no suit, action,
+ proceeding or investigation pending or, to the knowledge of the Issuer, threatened against the Issuer by Nasdaq or the Commission with
+ respect to any intention by such entity to deregister the Class A Shares or prohibit or terminate the listing of the Class A Shares on
+ Nasdaq, excluding, for the purposes of clarity, the customary ongoing review by Nasdaq of the Issuer’s continued listing application in
+ connection with the Transactions. The Issuer has taken no action that is designed to terminate the registration of the Class A Shares
+ under the Exchange Act or the listing of the Class A Shares on Nasdaq.
+
+
+                                                                                            4
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                   5/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                  k. Assuming the accuracy of Subscriber’s representations and warranties set forth in Section 4 of this Subscription
+ Agreement, no registration under the Securities Act is required for the offer and sale of the Acquired Shares by the Issuer to Subscriber
+ in the manner contemplated by this Subscription Agreement.
+
+                   l. Neither the Issuer nor any person acting on its behalf has engaged or will engage in any form of general solicitation
+ or general advertising (within the meaning of Regulation D of the Securities Act) in connection with any offer or sale of the Acquired
+ Shares.
+
+                    m. The Issuer has not entered into any Other Subscription Agreement (or side letter or similar agreement in respect
+ thereof) on terms (economic or otherwise) more favorable to such subscriber or investor than as set forth in this Subscription
+ Agreement, nor will any Other Subscription Agreement be entered into or amended after the date hereof to provide for terms with
+ respect to the purchase of the Class A Shares that are more favorable to any other subscriber thereunder than the terms of this
+ Subscription Agreement, unless such amended terms are also offered to the Subscriber.
+
+                     n. The Issuer’s public reports filed with the Commission, and all subsequent reports (collectively, the “Exchange Act
+ Reports”) that have been filed with the Commission or sent to stockholders, pursuant to Section 13 of the Exchange Act, did not when
+ filed, and taken as a whole and as amended to the date hereof, do not contain any untrue statement of a material fact or omit to state a
+ material fact necessary in order to make the statements made therein, in the light of the circumstances under which they were made, not
+ misleading and such Exchange Act Reports complied in all material respects with the requirements of the Exchange Act and the rules
+ and regulations of the Commission promulgated thereunder. The Issuer has timely filed each report, statement, schedule, prospectus,
+ and registration statement that the Issuer was required to file with the Commission since its inception. There are no material outstanding
+ or unresolved comments in comment letters from the Commission Staff with respect to any of the Issuer’s filings with the Commission
+ (the “SEC Documents”). In addition, the Issuer has made available to Subscriber (including via the Commission’s EDGAR system) a
+ copy of the Exchange Act Reports since its initial registration of the Class A Shares with the Commission. Each of the financial
+ statements (including, in each case, any notes thereto) contained in the SEC Documents was prepared in accordance with U.S. generally
+ accepted accounting principles applied on a consistent basis throughout the periods indicated (except as may be indicated in the notes
+ thereto or, in the case of unaudited statements, as permitted by the Commission’s Form 10-Q) and each fairly presents, in all material
+ respects, the financial position, results of operations and cash flows of the Issuer as at the respective dates thereof and for the respective
+ periods indicated therein. Notwithstanding anything to the contrary, the Issuer makes no representation or warranty as to (i) the
+ accounting treatment of the Issuer’s issued and outstanding warrants, (ii) any deficiencies in disclosure (including with respect to
+ accounting and disclosure controls) arising from the treatment of such warrants as equity rather than liabilities in the Issuer’s financial
+ statements, or (iii) the impact of such accounting treatment on any of the other representations and warranties contained in this Section
+ 3.
+
+                    o. Except for such matters as have not had and would not be reasonably likely to have, individually or in the
+ aggregate, a Material Adverse Effect, there is no (i) investigation, action, suit, claim or other proceeding, in each case by or before any
+ governmental authority pending, or, to the knowledge of the Issuer, threatened against the Issuer or (ii) judgment, decree, injunction,
+ ruling or order of any governmental entity outstanding against the Issuer.
+
+                    p. Except for placement fees payable to the Placement Agents (as defined herein), the Issuer has not paid, and is not
+ obligated to pay, any brokerage, finder’s or other fee or commission in connection with its issuance and sale of the Acquired Shares,
+ including, for the avoidance of doubt, any fee or commission payable to any stockholder or affiliate of the Issuer.
+
+                     q. Except as provided in this Subscription Agreement and the Other Subscription Agreements, none of the Issuer, its
+ subsidiaries or any of their affiliates, nor any person acting on their behalf has, directly or indirectly, made any offers or sales of any
+ security or solicited any offers to buy any security, under circumstances that would require registration of the issuance of any of the
+ Acquired Shares under the Securities Act, whether through integration with prior offerings pursuant to Rule 502(a) of the Securities Act
+ or otherwise.
+
+
+                                                                                            5
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                  6/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                    r. Neither the Issuer nor any of its subsidiaries has taken any steps to seek protection pursuant to any law or statute
+ relating to bankruptcy, insolvency, reorganization, receivership, liquidation, administration or winding up or failed to pay its debts when
+ due, nor does the Issuer or any subsidiary have any knowledge or reason to believe that any of their respective creditors intend to
+ initiate involuntary bankruptcy proceedings or seek to commence an administration.
+
+                    s. Except for discussions specifically regarding the offer and sale of the Acquired Shares, the Issuer confirms that
+ neither it nor any other person acting on its behalf has provided Subscriber or its agents or counsel with any information that constitutes
+ or could reasonably be expected to constitute material, non-public information concerning the Issuer or any of its subsidiaries, other
+ than with respect to the Transactions and the transactions contemplated by this Subscription Agreement. The Issuer understands and
+ confirms that Subscriber will rely on the foregoing representations in effecting transactions in securities of the Issuer. Except with
+ respect to the Transactions and the transactions contemplated by this Subscription Agreement and the Other Subscription Agreements,
+ no event or circumstance has occurred which, under applicable law, rule or regulation, requires public disclosure at or before the date
+ hereof or announcement by the Issuer but which has not been so publicly disclosed.
+
+                    t. The Issuer acknowledges and agrees that, notwithstanding anything herein to the contrary, including, without
+ limitation, Section 5(e) of this Subscription Agreement, the Acquired Shares may be pledged by Subscriber in connection with a bona
+ fide margin agreement, which shall not be deemed to be a transfer, sale or assignment of the Acquired Shares hereunder, and Subscriber
+ effecting a pledge of Acquired Shares shall not be required to provide the Issuer with any notice thereof or otherwise make any delivery
+ to the Issuer pursuant to this Subscription Agreement; provided that Subscriber and its pledgee shall be required to comply with the
+ provisions of Section 5(e) hereof in order to effect a sale, transfer or assignment of Acquired Shares to such pledgee. The Issuer hereby
+ agrees to execute and deliver such documentation as a pledgee of the Acquired Shares may reasonably request in connection with a
+ pledge of the Acquired Shares to such pledgee by Subscriber.
+
+                    u. The Issuer represents and warrants that each of the Issuer, the Transaction Parties, any of their respective directors
+ and officers and, to the best of the Issuer’s knowledge, the Company, any of the Company’s directors and officers and any of the
+ Issuer’s, Transaction Party’s and the Company’s employees, representatives, agents and any person acting on its or their behalf is not (i)
+ a person or entity named on the List of Specially Designated Nationals and Blocked Persons, the Executive Order 13599 List, the
+ Foreign Sanctions Evaders List, or the Sectoral Sanctions Identification List, each of which is administered by the U.S. Treasury
+ Department’s Office of Foreign Assets Control (“OFAC”), or any other Executive Order issued by the President of the United States
+ and administered by OFAC (collectively “OFAC Lists”), (ii) owned or controlled by, or acting on behalf of, a person, that is named on
+ an OFAC List, (iii) organized, incorporated, established, located, resident or born in, or a citizen, national, or the government, including
+ any political subdivision, agency, or instrumentality thereof, of, Cuba, Iran, North Korea, Syria, the Crimea region of Ukraine, or any
+ other country or territory embargoed or subject to substantial trade restrictions by the United States or (iv) a Designated National as
+ defined in the Cuban Assets Control Regulations, 31 C.F.R. Part 515.
+
+                    v. The Issuer represents and warrants that (i) each of the Issuer, the Transaction Parties, any of their respective
+ directors and officers and, to the best of the Issuer’s knowledge, the Company, any of the Company’s directors and officers and any of
+ the Issuer’s, Transaction Party’s and the Company’s employees, representatives, agents and any person acting on its or their behalf has
+ not engaged in any activity or conduct which would violate any applicable anti-bribery, anti-corruption or anti-money laundering laws,
+ regulations or rules in any applicable jurisdiction (including, without limitation, the U.S. Foreign Corrupt Practices Act of 1977, as
+ amended), (ii) the Issuer and the Transaction Parties and, to the best of the Issuer’s knowledge, the Company has instituted and
+ maintains systems, policies and procedures designed to prevent violation of such laws, regulations and rules and (iii) no action, suit or
+ proceeding by or before any court or governmental or regulatory agency, authority or body or any arbitrator having jurisdiction over the
+ Issuer, the Transaction Parties or, to the best of the Issuer’s knowledge, the Company with respect to such laws, regulations and rules is
+ pending and, to the best of the Issuer’s knowledge, no such actions, suits or proceedings are threatened or contemplated.
+
+
+                                                                                            6
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                              7/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+              4. Holdings Representations and Warranties. Holdings represents and warrants that:
+
+                  a. Holdings has been duly incorporated and is validly existing as a corporation in good standing under the laws of the
+ State of Delaware, with corporate power and authority to own, lease and operate its properties and conduct its business as presently
+ conducted and to enter into, deliver and perform its obligations under this Subscription Agreement.
+
+                    b. The Holdings Shares have been duly authorized and, when issued and delivered to Subscriber against cancellation
+ of the Holdings Shares in accordance with the terms of the Merger Agreement and registered with the Transfer Agent, the Holdings
+ Shares will be validly issued, fully paid and non-assessable and will not have been issued in violation of or subject to any preemptive or
+ similar rights created under Holdings’ certificate of incorporation and bylaws or under the laws of the State of Delaware.
+
+                     c. The Transaction Documents have been duly authorized, executed and delivered by Holdings and, assuming that the
+ Transaction Documents constitute the valid and binding agreement of the other parties thereto, are valid and binding obligations of
+ Holdings, and are enforceable against it in accordance with their terms, except as may be limited or otherwise affected by (i)
+ bankruptcy, insolvency, reorganization, fraudulent conveyance, moratorium or other laws relating to or affecting the rights of creditors
+ generally, and (ii) principles of equity, whether considered at law or equity.
+
+                    d. The execution, delivery and performance of this Subscription Agreement and the other Transaction Documents,
+ including the consummation of the transactions contemplated hereby and thereby, will not conflict with or result in a breach or violation
+ of any of the terms or provisions of, or constitute a default under, or result in the creation or imposition of any lien, charge or
+ encumbrance upon any of the property or assets of Holdings pursuant to the terms of: (i) any indenture, mortgage, deed of trust, loan
+ agreement, lease, license or other agreement or instrument to which Holdings is a party or by which Holdings is bound or to which any
+ of the property or assets of Holdings is subject; (ii) the organizational documents of Holdings; or (iii) any statute or any judgment,
+ order, rule or regulation of any court or governmental agency, taxing authority or regulatory body, domestic or foreign, having
+ jurisdiction over Holdings or any of its properties that, in the case of clauses (i) and (iii), would reasonably be expected to have a
+ material adverse effect on the business, properties, assets, liabilities, operations, condition (including financial condition), stockholders’
+ equity or results of operations of Holdings or materially and adversely affect the legal authority or ability of Holdings to perform in any
+ material respects its obligations hereunder (a “Holdings Material Adverse Effect”).
+
+              5. Subscriber Representations and Warranties. Subscriber represents and warrants that:
+
+                    a. Subscriber has been duly formed or incorporated and is validly existing in good standing under the laws of its
+ jurisdiction of incorporation or formation, with power and authority to enter into, deliver and perform its obligations under this
+ Subscription Agreement.
+
+                    b. This Subscription Agreement has been duly authorized, executed and delivered by Subscriber and, assuming that
+ this Subscription Agreement constitutes the valid and binding agreement of the Issuer and Holdings, this Subscription Agreement is the
+ valid and binding obligation of Subscriber, enforceable against Subscriber in accordance with its terms, except as may be limited or
+ otherwise affected by (i) bankruptcy, insolvency, reorganization, fraudulent conveyance, moratorium or other laws relating to or
+ affecting the rights of creditors generally, and (ii) principles of equity, whether considered at law or equity.
+
+                     c. The execution, delivery and performance by Subscriber of this Subscription Agreement, including the
+ consummation of the transactions contemplated hereby, will not conflict with or result in a breach or violation of any of the terms or
+ provisions of, or constitute a default under, or result in the creation or imposition of any lien, charge or encumbrance upon any of the
+ property or assets of Subscriber or any of its subsidiaries pursuant to the terms of (i) any indenture, mortgage, deed of trust, loan
+ agreement, lease, license or other agreement or instrument to which Subscriber or any of its subsidiaries is a party or by which
+ Subscriber or any of its subsidiaries is bound or to which any of the property or assets of Subscriber or any of its subsidiaries is subject;
+ (ii) the organizational documents of Subscriber; or (iii) any statute or any judgment, order, rule or regulation of any court or
+ governmental agency or body, domestic or foreign, having jurisdiction over Subscriber or any of its subsidiaries or any of their
+ respective properties that, in the case of clauses (i) and (iii), would reasonably be expected to have a material adverse effect on the legal
+ authority or ability of Subscriber to perform in any material respects its obligations hereunder.
+
+
+                                                                                            7
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                8/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                     d. Subscriber (i) is a “qualified institutional buyer” (as defined in Rule 144A under the Securities Act) or an
+ institutional “accredited investor” (within the meaning of Rule 501(a) under the Securities Act) satisfying the applicable requirements
+ set forth on Schedule A, (ii) is acquiring the Acquired Shares only for its own account and not for the account of others, or if Subscriber
+ is a “qualified institutional buyer” and is subscribing for the Acquired Shares as a fiduciary or agent for one or more investor accounts,
+ each owner of such account is a “qualified institutional buyer” and Subscriber has full investment discretion with respect to each such
+ account, and the full power and authority to make the acknowledgements, representations and agreements herein on behalf of each
+ owner of each such account, and (iii) is not acquiring the Acquired Shares with a view to, or for offer or sale in connection with, any
+ distribution thereof in violation of the Securities Act (and shall provide the requested information on Schedule A following the signature
+ page hereto). Subscriber is not an entity formed for the specific purpose of acquiring the Acquired Shares, unless such newly formed
+ entity is an entity in which all of the equity owners are “accredited investors” (within the meaning of Rule 501(a) under the Securities
+ Act).
+
+                    e. Subscriber understands that the Acquired Shares are being offered in a transaction not involving any public offering
+ within the meaning of the Securities Act and that the Acquired Shares have not been registered under the Securities Act. Subscriber
+ understands that the Acquired Shares may not be resold, transferred, pledged or otherwise disposed of by Subscriber absent an effective
+ registration statement under the Securities Act, except (i) to the Issuer or a subsidiary thereof, (ii) to non-U.S. persons pursuant to offers
+ and sales that occur in an “offshore transaction” within the meaning of Regulation S under the Securities Act, (iii) pursuant to Rule 144
+ under the Securities Act, provided that all of the applicable conditions thereof (including those set out in Rule 144(i) which are
+ applicable to the Issuer) have been met or (iv) pursuant to another applicable exemption from the registration requirements of the
+ Securities Act, and that any certificates or book-entry records representing the Acquired Shares shall contain a legend to such effect.
+ Subscriber acknowledges that the Acquired Shares will not be eligible for resale pursuant to Rule 144A promulgated under the
+ Securities Act. Subscriber understands and agrees that the Acquired Shares will be subject to transfer restrictions and, as a result of
+ these transfer restrictions, Subscriber may not be able to readily resell the Acquired Shares and may be required to bear the financial
+ risk of an investment in the Acquired Shares for an indefinite period of time. Subscriber understands that it has been advised to consult
+ legal counsel prior to making any offer, resale, pledge or transfer of any of the Acquired Shares.
+
+                    f. Subscriber understands and agrees that Subscriber is purchasing the Acquired Shares directly from the Issuer.
+ Subscriber further acknowledges that there have been no representations, warranties, covenants and agreements made to Subscriber by
+ the Issuer or any of its officers, directors or representatives, expressly or by implication, other than those representations, warranties,
+ covenants and agreements included in this Subscription Agreement.
+
+                    g. Subscriber represents and warrants that its acquisition and holding of the Acquired Shares will not constitute or
+ result in a non-exempt prohibited transaction under section 406 of the Employee Retirement Income Security Act of 1974, as amended,
+ section 4975 of the Internal Revenue Code of 1986, as amended (the “Code”), or any applicable similar law.
+
+                    h. In making its decision to purchase the Acquired Shares, Subscriber represents that it has relied solely upon
+ independent investigation made by Subscriber and the representations, warranties, covenants and agreements made by Issuer herein.
+ Subscriber acknowledges and agrees that Subscriber has received such information as Subscriber deems necessary in order to make an
+ investment decision with respect to the Acquired Shares, including with respect to the Issuer, the Company and the Transactions.
+ Subscriber represents and agrees that Subscriber and Subscriber’s professional advisor(s), if any, have had the opportunity to ask such
+ questions, receive such answers and obtain such information as Subscriber and such Subscriber’s professional advisor(s), if any, have
+ deemed necessary to make an investment decision with respect to the Acquired Shares. Subscriber acknowledges and agrees that it has
+ not relied on any statements or other information provided by the Placement Agents or any of the affiliates of the Placement Agents
+ with respect to the Transactions, the Issuer, the Company or its decision to purchase the Acquired Shares other than the representations,
+ warranties, covenants and agreements made by Issuer herein. Subscriber further acknowledges that the information provided to
+ Subscriber (other than the information reflected in the representations and warranties made herein) is preliminary and subject to change,
+ and that any changes to such information, including, without limitation, any changes based on updated information, shall in no way
+ affect Subscriber’s obligation to purchase the Acquired Shares hereunder.
+
+
+                                                                                            8
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                9/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                    i. Subscriber became aware of this offering of the Acquired Shares solely by means of direct contact between
+ Subscriber and the Issuer or by means of contact from B. Riley Securities, Inc. or PJT Partners LP, acting as placement agents for the
+ Issuer (each a “Placement Agent”), and the Acquired Shares were offered to Subscriber solely by direct contact between Subscriber and
+ the Issuer or by contact between Subscriber and the Placement Agent. Subscriber did not become aware of this offering of the Acquired
+ Shares, nor were the Acquired Shares offered to Subscriber, by any other means. Subscriber acknowledges that the Issuer represents
+ and warrants that the Acquired Shares (i) were not offered by any form of general advertising or, to its knowledge, general solicitation,
+ and (ii) to its knowledge are not being offered in a manner involving a public offering under, or in a distribution in violation of, the
+ Securities Act, or any state securities laws.
+
+                   j. Subscriber acknowledges that it is aware that there are substantial risks incident to the purchase and ownership of
+ the Acquired Shares, including those set forth in the SEC Documents. Subscriber has such knowledge and experience in financial and
+ business matters as to be capable of evaluating the merits and risks of an investment in the Acquired Shares, and Subscriber has sought
+ such accounting, legal and tax advice as Subscriber has considered necessary to make an informed investment decision.
+
+                    k. Alone, or together with any professional advisor(s), Subscriber represents and acknowledges that Subscriber has
+ adequately analyzed and fully considered the risks of an investment in the Acquired Shares and determined that the Acquired Shares are
+ a suitable investment for Subscriber and that Subscriber is able at this time and in the foreseeable future to bear the economic risk of a
+ total loss of Subscriber’s investment in the Issuer. Subscriber acknowledges specifically that a possibility of total loss exists.
+
+                   l. Subscriber understands and agrees that no federal or state agency has passed upon or endorsed the merits of the
+ offering of the Acquired Shares or made any findings or determination as to the fairness of this investment.
+
+                    m. Subscriber represents and warrants that Subscriber is not (i) a person or entity named on the OFAC List, (ii)
+ owned or controlled by, or acting on behalf of, a person, that is named on an OFAC List, (iii) organized, incorporated, established,
+ located, resident or born in, or a citizen, national, or the government, including any political subdivision, agency, or instrumentality
+ thereof, of, Cuba, Iran, North Korea, Syria, the Crimea region of Ukraine, or any other country or territory embargoed or subject to
+ substantial trade restrictions by the United States, (iv) a Designated National as defined in the Cuban Assets Control Regulations, 31
+ C.F.R. Part 515, or (v) a non-U.S. shell bank or providing banking services indirectly to a non-U.S. shell bank (collectively, a
+ “Prohibited Investor”). Subscriber agrees to provide law enforcement agencies, if requested thereby, such records as required by
+ applicable law, provided that Subscriber is permitted to do so under applicable law. Subscriber represents that if it is a financial
+ institution subject to the Bank Secrecy Act (31 U.S.C. section 5311 et seq.), as amended by the USA PATRIOT Act of 2001, and its
+ implementing regulations (collectively, the “BSA/PATRIOT Act”), that Subscriber maintains policies and procedures reasonably
+ designed to comply with applicable obligations under the BSA/PATRIOT Act. Subscriber also represents that, to the extent required, it
+ maintains policies and procedures reasonably designed to ensure compliance with OFAC-administered sanctions programs, including
+ for the screening of its investors against the OFAC Lists. Subscriber further represents and warrants that, to the extent required, it
+ maintains policies and procedures reasonably designed to ensure that the funds held by Subscriber and used to purchase the Acquired
+ Shares were legally derived.
+
+                    n. If Subscriber is an employee benefit plan that is subject to Title I of the Employee Retirement Income Security Act
+ of 1974, as amended (“ERISA”), a plan, an individual retirement account or other arrangement that is subject to section 4975 of the
+ Code or an employee benefit plan that is a governmental plan (as defined in section 3(32) of ERISA), a church plan (as defined in
+ section 3(33) of ERISA), a non-U.S. plan (as described in section 4(b)(4) of ERISA) or other plan that is not subject to the foregoing
+ but may be subject to provisions under any other federal, state, local, non-U.S. or other laws or regulations that are similar to such
+ provisions of ERISA or the Code, or an entity whose underlying assets are considered to include “plan assets” of any such plan, account
+ or arrangement (each, a “Plan”) subject to the fiduciary or prohibited transaction provisions of ERISA or section 4975 of the Code,
+ Subscriber represents and warrants that: (i) no Transaction Party, nor any of their respective affiliates has acted as the Plan’s fiduciary,
+ or has been relied on for advice, with respect to its decision to acquire and hold the Acquired Shares, and none of the Transaction
+ Parties shall at any time be relied upon as the Plan’s fiduciary with respect to any decision to acquire, continue to hold or transfer the
+ Acquired Shares; and (ii) the decision to invest in the Acquired Shares has been made at the recommendation or direction of an
+ “independent fiduciary” (“Independent Fiduciary”) within the meaning of U.S. Code of Federal Regulations 29 C.F.R. section 2510.3
+ 21(c), as amended from time to time (the “Fiduciary Rule”) who (1) is independent of the Transaction Parties, (2) is capable of
+ evaluating investment risks independently, both in general and with respect to particular transactions and investment strategies (within
+ the meaning of the Fiduciary Rule), (3) is a fiduciary (under ERISA and/or section 4975 of the Code) with respect to Subscriber’s
+ investment in the Acquired Shares and is responsible for exercising independent judgment in evaluating the investment in the Acquired
+ Shares, and (4) is aware of and acknowledges that (A) none of the Transaction Parties is undertaking to provide impartial investment
+ advice, or to give advice in a fiduciary capacity, in connection with the purchaser’s or transferee’s investment in the Acquired Shares,
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                             10/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+ and (B) the Transaction Parties have a financial interest in the purchaser’s investment in the Acquired Shares on account of the fees and
+ other remuneration they expect to receive in connection with transactions contemplated by this Subscription Agreement.
+
+
+                                                                                            9
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                           11/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                         o. Subscriber has, and at the Closing will have, sufficient funds to pay the Purchase Price pursuant to Section 2(a).
+
+                    p. Subscriber acknowledges that: (i) PJT Partners LP is also acting as financial advisor to the Company with respect
+ to the Merger Agreement and will receive compensation from the Company for such services; (ii) B. Riley Securities, Inc. will receive a
+ fee described in the October 2020 Prospectus; and (iii) an affiliate of B. Riley Securities, Inc. has indirect interests in the Issuer through
+ Spartacus Sponsor LLC as described in the October 2020 Prospectus.
+
+                    q. Subscriber represents that it (i) is an institutional account as defined in Rule 4512(c) of The Financial Industry
+ Regulatory Authority (“FINRA”), (ii) is a sophisticated investor, experienced in investing in private equity transactions and capable of
+ evaluating investment risks independently, both in general and with regard to all transactions and investment strategies involving a
+ security or securities, including its participation in the purchase of the Acquired Shares, and (iii) has exercised independent judgment in
+ evaluating its participation in the purchase of the Acquired Shares. Accordingly, Subscriber understands that the offering meets (i) the
+ exemptions from filing under FINRA Rule 5123(b)(1)(A) and (ii) the institutional customer exemption under FINRA Rule 2111(b).
+
+                    r. Subscriber acknowledges that: (i) no disclosure or offering document has been prepared by any Placement Agent or
+ any of their respective affiliates in connection with the offer and sale of the Class A Shares; and (ii) neither the Placement Agents, nor
+ any of their respective affiliates, nor any control persons, officers, directors, employees, partners, agents or representatives of any of the
+ foregoing have made any independent investigation with respect to the Issuer, Holdings, the Company or their respective affiliates or
+ any of their respective businesses, or the Class A Shares or the accuracy, completeness or adequacy of any information supplied to
+ Subscriber by the Issuer, Holdings, the Company or their respective affiliates.
+
+              6. Registration Rights.
+
+                    a. Holdings agrees that, within fifteen (15) business days after the Closing Date (the “Filing Date”), Holdings will file
+ with the Commission (at Holdings’ sole cost and expense) a registration statement registering the resale of the Holdings Shares (the
+ “Registration Statement”), and Holdings shall use its commercially reasonable efforts to have the Registration Statement declared
+ effective as soon as practicable after the filing thereof, but no later than the earlier of (i) the 60th calendar day (or 90th calendar day if
+ the Commission notifies Holdings that it will “review” the Registration Statement) following the Filing Date and (ii) the 10th business
+ day after the date Holdings is notified (orally or in writing, whichever is earlier) by the Commission that the Registration Statement will
+ not be “reviewed” or will not be subject to further review (such earlier date, the “Effectiveness Date”); provided, however, that if the
+ Commission is closed for operations due to a government shutdown, the Effectiveness Date shall be extended by the same amount of
+ days that the Commission remains closed for operations; provided, further, that Holdings’ obligations to include the Holdings Shares in
+ the Registration Statement are contingent upon Subscriber furnishing in writing to Holdings such information regarding Subscriber, the
+ securities of Holdings held by Subscriber and the intended method of disposition of the Holdings Shares as shall be reasonably
+ requested by Holdings to effect the registration of the Holdings Shares, and Subscriber shall execute such documents in connection with
+ such registration as Holdings may reasonably request that are customary of a selling stockholder in similar situations, including
+ providing that Holdings shall be entitled to postpone and suspend the effectiveness or use of the Registration Statement during any
+ customary blackout or similar period or as permitted hereunder; provided that Subscriber shall not in connection with the foregoing be
+ required to execute any lock-up or similar agreement or otherwise be subject to any contractual restriction on the ability to transfer the
+ Holdings Shares. Any failure by Holdings to file the Registration Statement by the Filing Date or to effect such Registration Statement
+ by the Effectiveness Date shall not otherwise relieve Holdings of its obligations to file or effect the Registration Statement as set forth
+ above in this Section 6. Holdings will provide a draft of the Registration Statement to the undersigned for review at least two (2)
+ business days in advance of filing the Registration Statement. In no event shall the undersigned be identified as a statutory underwriter
+ in the Registration Statement unless requested by the Commission. Notwithstanding the foregoing, if the Commission prevents
+ Holdings from including any or all of the shares proposed to be registered under the Registration Statement due to limitations on the
+ use of Rule 415 of the Securities Act for the resale of the Holdings Shares by the applicable stockholders or otherwise, such
+ Registration Statement shall register for resale such number of Holdings Shares which is equal to the maximum number of Holdings
+ Shares as is permitted by the SEC. In such event, the number of Holdings Shares to be registered for each selling stockholder named in
+ the Registration Statement shall be reduced pro rata among all such selling stockholders. Holdings will use its commercially reasonable
+ efforts to maintain the continuous effectiveness of the Registration Statement until all such securities cease to be Registrable Securities
+ (as defined below) or such shorter period upon which each undersigned party with Registrable Securities included in such Registration
+ Statement have notified Holdings that such Registrable Securities have actually been sold. Holdings will file all reports, and provide all
+ customary and reasonable cooperation, necessary to enable the undersigned to resell Registrable Securities pursuant to the Registration
+ Statement or Rule 144 under the Securities Act (“Rule 144”), as applicable, qualify the Registrable Securities for listing on the
+ applicable stock exchange, update or amend the Registration Statement as necessary to include Registrable Securities and provide
+ customary notice to holders of Registrable Securities. “Registrable Securities” shall mean, as of any date of determination, the Holdings
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                    12/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+ Shares and any other equity security of Holdings issued or issuable with respect to the Holdings Shares by way of share split, dividend,
+ distribution, recapitalization, merger, exchange, replacement or similar event or otherwise. As to any particular Registrable Securities,
+ once issued, such securities shall cease to be Registrable Securities at the earliest of (A) when the undersigned ceases to hold any such
+ Registrable Securities, (B) the date all such Registrable Securities held by the undersigned may be sold without restriction under Rule
+ 144, including without limitation, any volume and manner of sale restrictions which may be applicable to affiliates under Rule 144,
+ other than the requirement for Holdings to be in compliance with the current public information required under Rule 144(c), (C) when
+ they shall have ceased to be outstanding and (D) two years from the date of effectiveness of the Registration Statement.
+
+
+                                                                                           10
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                           13/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                  b. In the case of the registration, qualification, exemption or compliance effected by Holdings pursuant to this
+ Subscription Agreement, Holdings shall, upon reasonable request, inform Subscriber as to the status of such registration, qualification,
+ exemption and compliance. At its expense Holdings shall:
+
+                             (i) except for such times as Holdings is permitted hereunder to suspend the use of the prospectus forming
+ part of a Registration Statement, use its commercially reasonable efforts to keep such registration, and any qualification, exemption or
+ compliance under state securities laws which Holdings determines to obtain, continuously effective with respect to Subscriber, and to
+ keep the applicable Registration Statement or any subsequent shelf registration statement free of any material misstatements or
+ omissions, until the earliest of the following: (i) Subscriber ceases to hold any such Registrable Securities; (ii) the date all such
+ Registrable Securities held by Subscriber may be sold without restriction under Rule 144, including without limitation, any volume and
+ manner of sale restrictions which may be applicable to affiliates under Rule 144 other than the requirement for Holdings to be in
+ compliance with the current public information required under Rule 144(c); and (iii) two years from the effective date of the
+ Registration Statement. The period of time during which Holdings is required hereunder to keep a Registration Statement effective is
+ referred to herein as the “Registration Period”;
+
+                                     (ii) advise Subscriber within five (5) business days:
+
+                                                 (1)          when a Registration Statement or any amendment thereto has been filed with the
+                                                              Commission and when such Registration Statement or any post-effective amendment
+                                                              thereto has become effective;
+
+                                                 (2)          of any request by the Commission for amendments or supplements to any Registration
+                                                              Statement or the prospectus included therein or for additional information;
+
+                                                 (3)          of the issuance by the Commission of any stop order suspending the effectiveness of any
+                                                              Registration Statement or the initiation of any proceedings for such purpose;
+
+                                                 (4)          of the receipt by Holdings of any notification with respect to the suspension of the
+                                                              qualification of the Holdings Shares included therein for sale in any jurisdiction or the
+                                                              initiation or threatening of any proceeding for such purpose; and
+
+                                                 (5)          subject to the provisions in this Subscription Agreement, of the occurrence of any event
+                                                              that requires the making of any changes in any Registration Statement or prospectus so
+                                                              that, as of such date, the statements therein are not misleading and do not omit to state a
+                                                              material fact required to be stated therein or necessary to make the statements therein (in
+                                                              the case of a prospectus, in the light of the circumstances under which they were made) not
+                                                              misleading.
+
+ Notwithstanding anything to the contrary set forth herein, Holdings shall not, when so advising Subscriber of such events, provide
+ Subscriber with any material, nonpublic information regarding Holdings other than to the extent that providing notice to Subscriber of
+ the occurrence of the events listed in (1) through (5) above constitutes material, nonpublic information regarding Holdings;
+
+                            (iii) use its commercially reasonable efforts to obtain the withdrawal of any order suspending the
+ effectiveness of any Registration Statement as soon as reasonably practicable;
+
+                            (iv) upon the occurrence of any event contemplated above, except for such times as Holdings is permitted
+ hereunder to suspend, and has suspended, the use of a prospectus forming part of a Registration Statement, Holdings shall use its
+ commercially reasonable efforts to as soon as reasonably practicable prepare a post-effective amendment to such Registration
+ Statement or a supplement to the related prospectus, or file any other required document so that, as thereafter delivered to purchasers of
+ the Holdings Shares included therein, such prospectus will not include any untrue statement of a material fact or omit to state any
+ material fact necessary to make the statements therein, in the light of the circumstances under which they were made, not misleading;
+
+                            (v) use its commercially reasonable efforts to cause all Holdings Shares to be listed on each securities
+ exchange or market, if any, on which the Acquired Shares have been listed; and
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                             14/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+                          (vi) use its commercially reasonable efforts to take all other steps necessary to effect the registration of the
+ Holdings Shares contemplated hereby and to enable Subscriber to sell the Holdings Shares under Rule 144.
+
+
+                                                                                           11
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                15/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                     c. Notwithstanding anything to the contrary in this Subscription Agreement, Holdings shall be entitled to delay or
+ postpone the effectiveness of the Registration Statement, and from time to time to require Subscriber not to sell under the Registration
+ Statement or to suspend the effectiveness thereof, if the negotiation or consummation of a transaction by Holdings or its subsidiaries is
+ pending or an event has occurred, which negotiation, consummation or event Holdings’ board of directors reasonably believes, upon the
+ advice of legal counsel, would require additional disclosure by Holdings in the Registration Statement of material information that
+ Holdings has a bona fide business purpose for keeping confidential and the non-disclosure of which in the Registration Statement
+ would be expected, in the reasonable determination of Holdings’ board of directors, upon the advice of legal counsel, to cause the
+ Registration Statement to fail to comply with applicable disclosure requirements (each such circumstance, a “Suspension Event”);
+ provided, however, that Holdings may not delay or suspend the Registration Statement on more than two occasions or for more than
+ sixty (60) consecutive calendar days, or more than one hundred and twenty (120) total calendar days, in each case during any twelve-
+ month period. Upon receipt of any written notice from Holdings of the happening of any Suspension Event during the period that the
+ Registration Statement is effective or if as a result of a Suspension Event the Registration Statement or related prospectus contains any
+ untrue statement of a material fact or omits to state any material fact required to be stated therein or necessary to make the statements
+ therein, in light of the circumstances under which they were made (in the case of the prospectus) not misleading, Subscriber agrees that
+ (i) it will immediately discontinue offers and sales of the Holdings Shares under the Registration Statement (excluding, for the
+ avoidance of doubt, sales conducted pursuant to Rule 144) until Subscriber receives copies of a supplemental or amended prospectus
+ (which Holdings agrees to promptly prepare) that corrects the misstatement(s) or omission(s) referred to above and receives notice that
+ any post-effective amendment has become effective or unless otherwise notified by Holdings that it may resume such offers and sales,
+ and (ii) it will maintain the confidentiality of any information included in such written notice delivered by Holdings unless otherwise
+ required by law or subpoena. If so directed by Holdings, Subscriber will deliver to Holdings or, in Subscriber’s sole discretion destroy,
+ all copies of the prospectus covering the Holdings Shares in Subscriber’s possession; provided, however, that this obligation to deliver
+ or destroy all copies of the prospectus covering the Holdings Shares shall not apply (i) to the extent Subscriber is required to retain a
+ copy of such prospectus (a) in order to comply with applicable legal, regulatory, self-regulatory or professional requirements or (b) in
+ accordance with a bona fide pre-existing document retention policy, or (ii) to copies stored electronically on archival servers as a result
+ of automatic data back-up.
+
+                    d. Subscriber may deliver written notice (an “Opt-Out Notice”) to Holdings requesting that Subscriber not receive
+ notices from Holdings otherwise required by this Section 6; provided, however, that Subscriber may later revoke any such Opt-Out
+ Notice in writing. Following receipt of an Opt-Out Notice from Subscriber (unless subsequently revoked), (i) Holdings shall not deliver
+ any such notices to Subscriber and Subscriber shall no longer be entitled to the rights associated with any such notice, and (ii) each time
+ prior to Subscriber’s intended use of an effective Registration Statement, Subscriber will notify Holdings in writing at least two (2)
+ business days in advance of such intended use, and if a notice of a Suspension Event was previously delivered (or would have been
+ delivered but for the provisions of this Section 6(d)) and the related suspension period remains in effect, Holdings will so notify
+ Subscriber, within one (1) business day of Subscriber’s notification to Holdings, by delivering to Subscriber a copy of such previous
+ notice of Suspension Event, and thereafter will provide Subscriber with the related notice of the conclusion of such Suspension Event
+ immediately upon its availability.
+
+                         e. Indemnification.
+
+                             (i) Holdings agrees to indemnify and hold harmless, to the extent permitted by law, Subscriber, its directors,
+ officers, employees, agents, each person who controls Subscriber (within the meaning of the Securities Act or the Exchange Act) and
+ each affiliate of Subscriber (within the meaning of Rule 405 under the Securities Act) from and against any and all losses, claims,
+ damages, liabilities and expenses (including, without limitation, reasonable attorneys’ fees and expenses incurred in connection with
+ defending or investigating any such action or claim) caused by any untrue or alleged untrue statement of material fact contained in any
+ Registration Statement, prospectus included in any Registration Statement (“Prospectus”) or preliminary Prospectus or any amendment
+ thereof or supplement thereto or document incorporated by reference therein or any omission or alleged omission of a material fact
+ required to be stated therein or necessary to make the statements therein not misleading, except insofar as the same are caused by or
+ contained in any information furnished in writing to Holdings by or on behalf of such Subscriber expressly for use therein.
+
+                            (ii) In connection with any Registration Statement in which Subscriber is participating, Subscriber shall
+ furnish to Holdings in writing such information and affidavits as Holdings reasonably requests for use in connection with any such
+ Registration Statement or Prospectus. Subscriber agrees, severally and not jointly with any other Person that is a party to the Other
+ Subscription Agreements, to indemnify and hold harmless, to the extent permitted by law, Holdings, its directors and officers and
+ agents and each person who controls Holdings (within the meaning of the Securities Act) against any losses, claims, damages, liabilities
+ and expenses (including, without limitation, reasonable attorneys’ fees) resulting from any untrue statement of material fact contained
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                            16/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+ in the Registration Statement, Prospectus or preliminary Prospectus or any amendment thereof or supplement thereto or any omission
+ of a material fact required to be stated therein or necessary to make the statements therein not misleading, but only to the extent that
+ such untrue statement or omission is contained in any information or affidavit so furnished in writing by such Subscriber expressly for
+ use therein; provided, however, that in no event shall the liability of each such Subscriber be greater in amount than the dollar amount
+ of the net proceeds received by such Subscriber from the sale of Holdings Shares pursuant to such Registration Statement giving rise to
+ such indemnification obligation.
+
+
+                                                                                           12
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                          17/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                            (iii) Any person entitled to indemnification herein shall (1) give prompt written notice to the indemnifying
+ party of any claim with respect to which it seeks indemnification (provided that the failure to give prompt notice shall not impair any
+ person’s right to indemnification hereunder to the extent such failure has not prejudiced the indemnifying party) and (2) permit such
+ indemnifying party to assume the defense of such claim with counsel reasonably satisfactory to the indemnified party. If such defense is
+ assumed, the indemnifying party shall not be subject to any liability for any settlement made by the indemnified party without its
+ consent. An indemnifying party who elects not to assume the defense of a claim shall not be obligated to pay the fees and expenses of
+ more than one counsel for all parties indemnified by such indemnifying party with respect to such claim, unless in the reasonable
+ judgment of legal counsel to any indemnified party a conflict of interest exists between such indemnified party and any other of such
+ indemnified parties with respect to such claim. No indemnifying party shall, without the consent of the indemnified party, consent to
+ the entry of any judgment or enter into any settlement which cannot be settled in all respects by the payment of money (and such
+ money is so paid by the indemnifying party pursuant to the terms of such settlement) or which settlement does not include as an
+ unconditional term thereof the giving by the claimant or plaintiff to such indemnified party of a release from all liability in respect to
+ such claim or litigation.
+
+                            (iv) The indemnification provided for under this Subscription Agreement shall remain in full force and effect
+ regardless of any investigation made by or on behalf of the indemnified party or any officer, director, employee, agent, affiliate or
+ controlling person of such indemnified party and shall survive the transfer of the Acquired Shares.
+
+                              (v) If the indemnification provided under this Section 6(e) from the indemnifying party is unavailable or
+ insufficient to hold harmless an indemnified party in respect of any losses, claims, damages, liabilities and expenses referred to herein,
+ then the indemnifying party, in lieu of indemnifying the indemnified party, shall contribute to the amount paid or payable by the
+ indemnified party as a result of such losses, claims, damages, liabilities and expenses in such proportion as is appropriate to reflect the
+ relative fault of the indemnifying party and the indemnified party, as well as any other relevant equitable considerations. The relative
+ fault of the indemnifying party and indemnified party shall be determined by reference to, among other things, whether any action in
+ question, including any untrue or alleged untrue statement of a material fact or omission or alleged omission to state a material fact,
+ was made by, or relates to information supplied by, such indemnifying party or indemnified party, and the indemnifying party’s and
+ indemnified party’s relative intent, knowledge, access to information and opportunity to correct or prevent such action. The amount
+ paid or payable by a party as a result of the losses or other liabilities referred to above shall be deemed to include, subject to the
+ limitations set forth in Sections 6(e)(i), (ii) and (iii) above, any legal or other fees, charges or expenses reasonably incurred by such
+ party in connection with any investigation or proceeding. No person guilty of fraudulent misrepresentation (within the meaning of
+ Section 11(f) of the Securities Act) shall be entitled to contribution pursuant to this Section 6(e)(v) from any person who was not guilty
+ of such fraudulent misrepresentation. Any contribution pursuant to this Section 6(e)(v) by any seller of Acquired Shares shall be limited
+ in amount to the amount of net proceeds received by such seller from the sale of such Acquired Shares pursuant to the Registration
+ Statement.
+
+           7. Termination. This Subscription Agreement shall terminate and be void and of no further force and effect, and all rights and
+ obligations of the parties hereunder shall terminate without any further liability on the part of any party in respect thereof, upon the
+ earlier to occur of (a) such date and time as the Merger Agreement is terminated in accordance with its terms, (b) upon the mutual
+ written agreement of each of the parties hereto and the Company to terminate this Subscription Agreement, (c) if, on the Closing Date
+ of the Transactions, any of the conditions to Closing set forth in Section 2 of this Subscription Agreement have not been satisfied as of
+ the time required hereunder to be so satisfied or waived by the party entitled to grant such waiver and, as a result thereof, the
+ transactions contemplated by this Subscription Agreement are not consummated, or (d) written notice by either party to the other party
+ to terminate this Subscription Agreement if the transactions contemplated by this Subscription Agreement are not consummated on or
+ prior to November 19, 2021; provided, that nothing herein will relieve any party from liability for any willful breach hereof prior to the
+ time of termination, and each party will be entitled to any remedies at law or in equity to recover losses, liabilities or damages arising
+ from such breach. The Issuer shall promptly notify Subscriber in writing of the termination of the Merger Agreement.
+
+
+                                                                                           13
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                            18/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+              8. Additional Agreements and Waivers of Subscriber.
+
+                     a. Trust Account Waiver. Subscriber acknowledges that the Issuer is a blank check company with the powers and
+ privileges to effect a merger, asset acquisition, reorganization or similar business combination involving the Issuer and one or more
+ businesses or assets. Subscriber further acknowledges that, as described in the Issuer’s prospectus relating to its initial public offering
+ dated October 15, 2020 (the “October 2020 Prospectus”), available at www.sec.gov, substantially all of the Issuer’s assets consist of the
+ cash proceeds of the Issuer’s initial public offering and private placements of its securities, and substantially all of those proceeds have
+ been deposited in a trust account (the “Trust Account”) for the benefit of its public stockholders and the underwriters of its initial public
+ offering. Except with respect to interest earned on the funds held in the Trust Account that may be released to the Issuer to pay its tax
+ obligations, if any, the cash in the Trust Account may be disbursed only for the purposes set forth in the October 2020 Prospectus. For
+ and in consideration of the Issuer entering into this Subscription Agreement, the receipt and sufficiency of which are hereby
+ acknowledged, Subscriber, on behalf of itself and its affiliates and representatives, hereby irrevocably waives any and all right, title and
+ interest, or any claim of any kind they have or may have in the future as a result of, or arising out of, this Subscription Agreement, in or
+ to any monies held in the Trust Account, and agrees not to seek recourse or make or bring any action, suit, claim or other proceeding
+ against the Trust Account as a result of, or arising out of, this Subscription Agreement, the transactions contemplated hereby or the
+ Acquired Shares, regardless of whether such claim arises based on contract, tort, equity or any other theory of legal liability; provided,
+ however, that nothing in this Section 8 shall be deemed to limit any Subscriber’s right, title, interest or claim to the Trust Account by
+ virtue of such Subscriber’s record or beneficial ownership of securities of the Issuer acquired by any means other than pursuant to this
+ Subscription Agreement, including but not limited to any redemption right with respect to any such securities of the Company.
+ Subscriber acknowledges and agrees that it shall not have any redemption rights with respect to the Acquired Shares pursuant to the
+ Issuer’s certificate of incorporation in connection with the Transactions or any other business combination, any subsequent liquidation
+ of the Trust Account or the Issuer or otherwise. In the event Subscriber has any claim against the Issuer as a result of, or arising out of,
+ this Subscription Agreement, the transactions contemplated hereby or the Acquired Shares, it shall pursue such claim solely against the
+ Issuer and its assets outside the Trust Account and not against the Trust Account or any monies or other assets in the Trust Account.
+ This paragraph shall survive any termination of this Subscription Agreement.
+
+                   b. No Hedging. Subscriber hereby agrees that neither it, nor any person or entity acting on its behalf or pursuant to
+ any understanding with it, shall execute any short sales or engage in other hedging transactions of any kind with respect to the Acquired
+ Shares during the period from the date of this Subscription Agreement through the Closing. Nothing in this Section 8(b) shall prohibit
+ such persons from engaging in hedging transactions with respect to other securities of the Issuer, including Class A Shares acquired in
+ open market purchases, so long as such person does not create any “put equivalent position,” as such term is defined in Rule 16a-1
+ under the Exchange Act, or short sale positions, with respect to the Acquired Shares, nor shall this Section 8(b) prohibit any other
+ investment portfolios of Subscriber that have no knowledge of this Subscription Agreement or of Subscriber’s participation in this
+ transaction (including Subscriber’s controlled affiliates and/or affiliates) from entering into any short sales or engaging in other hedging
+ transactions.
+
+              9. Issuer’s Covenants.
+
+                   a. Except as contemplated herein, Holdings, its subsidiaries and their respective affiliates shall not, and shall cause
+ any person acting on behalf of any of the foregoing to not, take any action or steps that would require registration of the issuance of any
+ of the Holdings Shares under the Securities Act.
+
+                    b. With a view to making available to Subscriber the benefits of Rule 144 promulgated under the Securities Act or
+ any other similar rule or regulation of the Commission that may at any time permit Subscriber to sell securities of the Issuer or
+ Holdings, as applicable, to the public without registration, Holdings agrees, until the third anniversary of the Closing Date, to:
+
+                                     (i) make and keep public information available, as those terms are understood and defined in Rule 144;
+
+
+                                                                                           14
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                 19/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                             (ii) file with the Commission in a timely manner all reports and other documents required of Holdings under
+ the Securities Act and the Exchange Act so long as Holdings remains subject to such requirements and the filing of such reports and
+ other documents is required for the applicable provisions of Rule 144; and
+
+                               (iii) furnish to Subscriber so long as it owns Holdings Shares, promptly upon request, (x) a written statement
+ by Holdings, if true, that it has complied with the reporting requirements of Rule 144, the Securities Act and the Exchange Act, (y) a
+ copy of the most recent annual or quarterly report of Holdings and such other reports and documents so filed by Holdings and (z) such
+ other information as may be reasonably requested to permit Subscriber to sell such securities pursuant to Rule 144 without registration.
+
+                  c. Holdings will use the proceeds from the sale of the Holdings Shares and the shares issued and sold pursuant to the
+ Other Subscription Agreement solely to finance the Transactions.
+
+                    d. The legend described in Section 5(e) shall be removed and Holdings shall issue a certificate without such legend to
+ the holder of the Holdings Shares upon which it is stamped or issue to such holder by electronic delivery at the applicable balance
+ account at The Depository Trust Company (“DTC”), if (i) such Holdings Shares are registered for resale under the Securities Act, (ii) in
+ connection with a sale, assignment or other transfer, such holder provides Holdings with an opinion of counsel, in a form reasonably
+ acceptable to Holdings, to the effect that such sale, assignment or transfer of the Holdings Shares may be made without registration
+ under the applicable requirements of the Securities Act, or (iii) the Holdings Shares can be sold, assigned or transferred pursuant to
+ Rule 144, and in each case, the holder provides Holdings with an undertaking to effect any sales or other transfers in accordance with
+ the Securities Act. Holdings shall be responsible for the fees of its transfer agent and all DTC fees associated with such issuance.
+
+              10. Miscellaneous.
+
+                    a. Each party hereto acknowledges that the other party hereto and others will rely on the acknowledgments,
+ understandings, agreements, representations and warranties contained in this Subscription Agreement. Prior to the Closing, each party
+ hereto agrees to promptly notify the other party hereto if any of the acknowledgments, understandings, agreements, representations and
+ warranties set forth herein with respect to it are no longer accurate in all material respects. Subscriber further acknowledges and agrees
+ that each Placement Agent is a third-party beneficiary of the representations and warranties of Subscriber contained in this Subscription
+ Agreement. The Issuer, Holdings and Subscriber acknowledge and agree that (i) the Company is a third-party beneficiary hereof and no
+ consent, waiver, modification or amendment hereunder or hereof may be given of agreed to by the Issuer or Holdings without the
+ Company’s consent, (ii) this Subscription Agreement is being entered into in order to induce each of the Issuer and the Company to
+ execute and deliver the Merger Agreement and without the representations, warranties, covenants and agreements of the Issuer and
+ Subscriber hereunder, each of the Issuer and the Company would not enter into the Merger Agreement, (iii) each representation,
+ warranty, covenant and agreement of the Issuer and Subscriber hereunder is being made also for the benefit of the Company and (d) the
+ Company may directly enforce (including by an action for specific performance, injunctive relief or other equitable relief) each of the
+ covenants and agreements of each of the Issuer and Subscriber under this Subscription Agreement.
+
+                    b. Each of the Issuer, Holdings and Subscriber is entitled to rely upon this Subscription Agreement and is irrevocably
+ authorized to produce this Subscription Agreement or a copy hereof to any interested party in any administrative or legal proceeding or
+ official inquiry with respect to the matters covered hereby. Each Placement Agent is entitled to rely upon the representations and
+ warranties made by Subscriber in this Subscription Agreement.
+
+
+                                                                                           15
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                             20/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                    c. Neither this Subscription Agreement nor any rights, interests or obligations that may accrue to the parties hereunder
+ (including Subscriber’s rights to purchase the Acquired Shares) may be transferred or assigned without the prior written consent of each
+ of the other parties hereto (other than the Acquired Shares acquired hereunder, if any, and then only in accordance with this
+ Subscription Agreement); provided, however, that this Subscription Agreement and any of Subscriber’s rights and obligations hereunder
+ may be assigned to any affiliates of Subscriber or any fund or account managed by the same investment manager as Subscriber, without
+ the prior consent of the Issuer; provided, further, that such assignee(s) agrees in writing to be bound by the terms hereof. Upon such
+ assignment by a Subscriber, the assignee(s) shall become Subscriber hereunder and have the rights and obligations provided for herein
+ to the extent of such assignment; provided, further, that, no assignment shall relieve the assigning party of any of its obligations
+ hereunder, including any assignment to any fund or account managed by the same investment manager as Subscriber. Neither this
+ Subscription Agreement nor any rights that may accrue to the Issuer hereunder or any of the Issuer’s obligations may be transferred or
+ assigned other than pursuant to the Transactions.
+
+                  d. All the representations and warranties made by each party hereto in this Subscription Agreement shall survive the
+ Closing. All covenants made by each party hereto in this Subscription Agreement required to be performed after the Closing shall
+ expire upon performance. All other agreements made by each party hereto in this Subscription Agreement shall expire at the Closing.
+
+                    e. The Issuer may request from Subscriber such additional information as the Issuer may deem reasonably necessary
+ to evaluate the eligibility of Subscriber to acquire the Acquired Shares, and Subscriber shall provide such information as may be
+ reasonably requested, to the extent readily available and to the extent consistent with its internal policies and procedures and provided
+ that the Issuer agrees to keep any such information provided by Subscriber confidential; provided, however, that upon recipient of such
+ additional information, the Issuer shall be allowed to convey such information to each Placement Agent and such Placement Agent shall
+ keep the information confidential, except as may be required by applicable law, rule, regulation or in connection with any legal
+ proceeding or regulatory request.
+
+                 f. This Subscription Agreement may not be modified, waived or terminated except by an instrument in writing, signed
+ by the Company and the party against whom enforcement of such modification, waiver, or termination is sought.
+
+                   g. This Subscription Agreement constitutes the entire agreement, and supersedes all other prior agreements,
+ understandings, representations and warranties, both written and oral, among the parties, with respect to the subject matter hereof.
+
+                    h. Except as otherwise provided herein, this Subscription Agreement shall be binding upon, and inure to the benefit of
+ the parties hereto and their heirs, executors, administrators, successors, legal representatives, and permitted assigns, and the agreements,
+ representations, warranties, covenants and acknowledgments contained herein shall be deemed to be made by, and be binding upon,
+ such heirs, executors, administrators, successors, legal representatives and permitted assigns.
+
+                    i. If any provision of this Subscription Agreement shall be invalid, illegal or unenforceable, the validity, legality or
+ enforceability of the remaining provisions of this Subscription Agreement shall not in any way be affected or impaired thereby and shall
+ continue in full force and effect.
+
+                    j. This Subscription Agreement may be executed in two (2) or more counterparts (including by electronic means), all
+ of which shall be considered one and the same agreement and shall become effective when signed by each of the parties and delivered
+ to the other parties, it being understood that all parties need not sign the same counterpart.
+
+                  k. Each party shall pay all of its own expenses in connection with this Subscription Agreement and the transactions
+ contemplated by this Subscription Agreement.
+
+
+                                                                                           16
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                             21/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                    l. The Issuer shall be responsible for the fees of its transfer agent, stamp taxes and all of DTC’s fees associated with
+ the issuance of the Acquired Shares.
+
+                    m. Subscriber understands and agrees that: (i) no disclosure or offering document has been prepared by either
+ Placement Agent or any of their respective affiliates in connection with the offer and sale of the Acquired Shares; (ii) each Placement
+ Agent and its directors, officers, employees, representatives and controlling persons have made no independent investigation with
+ respect to the Issuer, the Company, the Transactions or the Acquired Shares or the accuracy, completeness or adequacy of any
+ information supplied to Subscriber by the Issuer; and (iii) in connection with the issue and purchase of the Acquired Shares, neither
+ Placement Agent has not acted as Subscriber’s financial advisor, tax or fiduciary.
+
+                    n. Any notice or communication required or permitted hereunder shall be in writing and either delivered personally,
+ emailed or sent by overnight mail via a reputable overnight carrier, or sent by certified or registered mail, postage prepaid, and shall be
+ deemed to be given and received (i) when so delivered personally, (ii) when sent, with no mail undeliverable or other rejection notice, if
+ sent by email, or (iii) three (3) business days after the date of mailing to the address below or to such other address or addresses as such
+ person may hereafter designate by notice given hereunder:
+
+                                     (i) if to Subscriber, to such address or addresses set forth on the signature page hereto;
+
+                                     (ii) if to the Issuer (prior to Closing), to:
+
+                                                 Spartacus Acquisition Corporation
+                                                 6470 East Johns Crossing, Suite 490
+                                                 Duluth, GA 30097
+                                                 Attention: Igor Volshteyn
+                                                 E-mail: igorv@spartacus-ac.com
+
+                                                 with a required copy to (which copy shall not constitute notice):
+
+                                                 K&L Gates LLP
+                                                 599 Lexington Avenue
+                                                 New York, NY 10022
+                                                 Attention: Robert S. Matlin, Esq.
+                                                 E-mail: Robert.Matlin@klgates.com
+
+                                     (iii) if to Holdings (following the Closing), to:
+
+                                                 c/o NextNav Holdings LLC
+                                                 1775 Tysons Blvd., 5th Floor
+                                                 McLean, VA 22102
+                                                 Attention: Chief Financial Officer
+
+                                                 with a required copy to (which copy shall not constitute notice):
+
+                                                 Hogan Lovells US LLP
+                                                 8350 Broad Street, 17th Floor
+                                                 Tysons, VA 22102
+                                                 Attention: Randy S. Segal
+                                                 E-mail: randy.segal@hoganlovells.com
+
+
+                                                                                           17
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                  22/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                     o. The parties hereto agree that irreparable damage would occur in the event that any of the provisions of this
+ Subscription Agreement were not performed in accordance with their specific terms or were otherwise breached and that money
+ damages or other legal remedies would not be an adequate remedy for any such damage. It is accordingly agreed that the parties shall
+ be entitled to an injunction or injunctions to prevent breaches or threatened breaches of this Subscription Agreement and to enforce
+ specifically the terms and provisions of this Subscription Agreement, this being in addition to any other remedy to which such party is
+ entitled at law, in equity, in contract, in tort or otherwise. The right to specific enforcement shall include the right of the parties hereto to
+ cause the other parties hereto to cause the transactions contemplated hereby to be consummated on the terms and subject to the
+ conditions and limitations set forth in this Subscription Agreement. The parties hereto further agree (i) to waive any requirement for the
+ security or posting of any bond in connection with any such equitable remedy, (ii) not to assert that a remedy of specific enforcement
+ pursuant to this Section 10(o) is unenforceable, invalid, contrary to applicable law or inequitable for any reason and (iii) to waive any
+ defenses in any action for specific performance, including the defense that a remedy at law would be adequate. The parties
+ acknowledge and agree that this Section 10(o) is an integral part of the transactions contemplated hereby and without that right, the
+ parties hereto would not have entered into this Subscription Agreement.
+
+                   p. This Subscription Agreement, and any claim or cause of action hereunder based upon, arising out of or related to
+ this Subscription Agreement (whether based on law, in equity, in contract, in tort or any other theory) or the negotiation, execution,
+ performance or enforcement of this Subscription Agreement, shall be governed by and construed in accordance with the laws of the
+ State of New York, without giving effect to the principles of conflicts of laws thereof.
+
+ THE PARTIES HERETO IRREVOCABLY SUBMIT TO THE EXCLUSIVE JURISDICTION OF THE UNITED STATES DISTRICT
+ COURT FOR THE SOUTHERN DISTRICT OF NEW YORK, THE SUPREME COURT OF THE STATE OF NEW YORK AND THE
+ FEDERAL COURTS OF THE UNITED STATES OF AMERICA LOCATED IN THE STATE OF NEW YORK SOLELY IN
+ RESPECT OF THE INTERPRETATION AND ENFORCEMENT OF THE PROVISIONS OF THIS SUBSCRIPTION AGREEMENT
+ AND THE TRANSACTIONS CONTEMPLATED HEREBY, AND HEREBY WAIVE, AND AGREE NOT TO ASSERT, AS A
+ DEFENSE IN ANY ACTION, SUIT OR PROCEEDING FOR INTERPRETATION OR ENFORCEMENT HEREOF OR THAT SUCH
+ ACTION, SUIT OR PROCEEDING MAY NOT BE BROUGHT OR IS NOT MAINTAINABLE IN SAID COURTS OR THAT
+ VENUE THEREOF MAY NOT BE APPROPRIATE OR THAT THIS SUBSCRIPTION AGREEMENT MAY NOT BE ENFORCED
+ IN OR BY SUCH COURTS, AND THE PARTIES HERETO IRREVOCABLY AGREE THAT ALL CLAIMS WITH RESPECT TO
+ SUCH ACTION, SUIT OR PROCEEDING SHALL BE HEARD AND DETERMINED BY SUCH A NEW YORK STATE OR
+ FEDERAL COURT. THE PARTIES HEREBY CONSENT TO AND GRANT ANY SUCH COURT JURISDICTION OVER THE
+ PERSON OF SUCH PARTIES AND OVER THE SUBJECT MATTER OF SUCH DISPUTE AND AGREE THAT MAILING OF
+ PROCESS OR OTHER PAPERS IN CONNECTION WITH SUCH ACTION, SUIT OR PROCEEDING IN THE MANNER
+ PROVIDED IN SECTION 10(n) OR IN SUCH OTHER MANNER AS MAY BE PERMITTED BY LAW SHALL BE VALID AND
+ SUFFICIENT SERVICE THEREOF.
+
+ EACH PARTY ACKNOWLEDGES AND AGREES THAT ANY CONTROVERSY WHICH MAY ARISE UNDER THIS
+ SUBSCRIPTION AGREEMENT OR THE TRANSACTIONS CONTEMPLATED HEREBY IS LIKELY TO INVOLVE
+ COMPLICATED AND DIFFICULT ISSUES, AND THEREFORE EACH SUCH PARTY HEREBY IRREVOCABLY AND
+ UNCONDITIONALLY WAIVES ANY RIGHT SUCH PARTY MAY HAVE TO A TRIAL BY JURY IN RESPECT OF ANY
+ LITIGATION DIRECTLY OR INDIRECTLY ARISING OUT OF OR RELATING TO THIS SUBSCRIPTION AGREEMENT OR
+ THE TRANSACTIONS CONTEMPLATED BY THIS SUBSCRIPTION AGREEMENT. EACH PARTY CERTIFIES AND
+ ACKNOWLEDGES THAT (I) NO REPRESENTATIVE, PLACEMENT AGENT OR ATTORNEY OF ANY OTHER PARTY HAS
+ REPRESENTED, EXPRESSLY OR OTHERWISE, THAT SUCH OTHER PARTY WOULD NOT, IN THE EVENT OF LITIGATION,
+ SEEK TO ENFORCE THE FOREGOING WAIVER; (II) SUCH PARTY UNDERSTANDS AND HAS CONSIDERED THE
+ IMPLICATIONS OF THE FOREGOING WAIVER; (III) SUCH PARTY MAKES THE FOREGOING WAIVER VOLUNTARILY;
+ AND (IV) SUCH PARTY HAS BEEN INDUCED TO ENTER INTO THIS SUBSCRIPTION AGREEMENT BY, AMONG OTHER
+ THINGS, THE MUTUAL WAIVER AND CERTIFICATIONS IN THIS SECTION 10(p).
+
+
+                                                                                           18
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                  23/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                    q. If, any change in the Class A Shares shall occur between the date hereof and immediately prior to the Closing by
+ reason of any reclassification, recapitalization, stock split (including reverse stock split) or combination, exchange or readjustment of
+ shares, or any stock dividend, the number of Acquired Shares issued to Subscriber shall be appropriately adjusted to reflect such
+ change.
+
+                     r. The Issuer shall, by 9:00 a.m., New York City time, on the first (1st) business day immediately following the date of
+ this Subscription Agreement, issue one or more press releases or file with the Commission a Current Report on Form 8-K (collectively,
+ the “Disclosure Document”) disclosing all material terms of the transactions contemplated hereby and by the Other Subscription
+ Agreements, the Transactions and any other material, nonpublic information that the Issuer has provided to Subscriber at any time prior
+ to the filing of the Disclosure Document. Upon the issuance of the Disclosure Document, to the Issuer’s knowledge, Subscriber shall
+ not be in possession of any material, non-public information received from the Issuer or any of its officers, directors or employees or
+ agents (including the Placement Agent) and Subscriber shall no longer be subject to any confidentiality or similar obligations under any
+ current agreement, whether written or oral with the Issuer or any of its affiliates. Notwithstanding anything in this Subscription
+ Agreement to the contrary, the Issuer shall not publicly disclose the name of Subscriber or any of its affiliates, or include the name of
+ Subscriber or any of its affiliates in any press release or in any filing with the Commission or any regulatory agency or trading market,
+ without the prior written consent of Subscriber, except (i) as required by the federal securities law and (ii) to the extent such disclosure
+ is required by law, at the request of the Staff of the Commission or regulatory agency or under the regulations of Nasdaq.
+
+                    s. The obligations of Subscriber under this Subscription Agreement are several and not joint with the obligations of
+ any Other Subscriber or any other investor under the Other Subscription Agreements, and Subscriber shall not be responsible in any
+ way for the performance of the obligations of any Other Subscriber under this Subscription Agreement or any Other Subscriber or other
+ investor under the Other Subscription Agreements. Nothing contained herein or in any Other Subscription Agreement, and no action
+ taken by Subscriber or investor pursuant hereto or thereto, shall be deemed to constitute Subscriber and Other Subscribers or other
+ investors as a partnership, an association, a joint venture or any other kind of entity, or create a presumption that Subscriber and Other
+ Subscribers or other investors are in any way acting in concert or as a group with respect to such obligations or the transactions
+ contemplated by this Subscription Agreement and the Other Subscription Agreements. Subscriber shall be entitled to independently
+ protect and enforce its rights, including without limitation the rights arising out of this Subscription Agreement, and it shall not be
+ necessary for any Other Subscriber or investor to be joined as an additional party in any proceeding for such purpose..
+
+              11. Non-Reliance and Exculpation.
+
+           Subscriber acknowledges that it is not relying upon, and has not relied upon, any statement, representation, warranty or other
+ information made or provided by any person, firm or corporation (including, without limitation, the Placement Agents, any of their
+ respective affiliates or any control persons, officers, directors, employees, partners, agents or representatives of any of the foregoing),
+ other than the statements, representations expressly contained in Section 3 of this Subscription Agreement, in making its investment or
+ decision to invest. Subscriber acknowledges and agrees that, other than the statements, representations and warranties expressly
+ contained in Section 3 of this Subscription Agreement, none of (i) any other investor pursuant to this Subscription Agreement or any
+ Other Subscription Agreement (including the investor’s respective affiliates or any control persons, officers, directors, employees,
+ partners, agents or representatives of any of the foregoing) or (ii) the Placement Agents, their respective affiliates or any control
+ persons, officers, directors, employees, partners, agents or representatives of any of the foregoing shall have any liability to Subscriber,
+ or to any other investor, pursuant to, arising out of or relating to this Subscription Agreement or any Other Subscription Agreement, the
+ negotiation hereof or thereof or its subject matter, or the transactions contemplated hereby or thereby, including, without limitation,
+ with respect to any action heretofore or hereafter taken or omitted to be taken by any of them in connection with the purchase of the
+ Class A Shares or with respect to any claim (whether in tort, contract or otherwise) for breach of this Subscription Agreement or in
+ respect of any written or oral representations made or alleged to be made in connection herewith, as expressly provided herein, or for
+ any actual or alleged inaccuracies, misstatements or omissions with respect to any information or materials of any kind furnished by the
+ Issuer, Holdings, the Placement Agents or any Non-Party Affiliate (as defined below) concerning the Issuer, Holdings, the Placement
+ Agents, any of their respective controlled affiliates, this Subscription Agreement or the transactions contemplated hereby. For purposes
+ of this Subscription Agreement, “Non-Party Affiliates” means each former, current or future officer, director, employee, partner,
+ member, manager, direct or indirect equityholder or affiliate of the Issuer, Holdings, the Placement Agents or any of their respective
+ controlled affiliates or any family member of the foregoing.
+
+                                                                            [Signature pages follow]
+
+
+                                                                                           19
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                24/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+         IN WITNESS WHEREOF, each of the Issuer, Holdings and Subscriber has executed or caused this Subscription Agreement to
+ be executed by its duly authorized representative as of the date set forth below.
+
+                                                                                                             ISSUER:
+
+                                                                                                             Spartacus Acquisition Corporation
+
+                                                                                                             By:
+                                                                                                             Name:
+                                                                                                             Title:
+
+                                                                                                             HOLDINGS:
+
+                                                                                                             Spartacus Acquisition Shelf Corp.
+
+                                                                                                             By:
+                                                                                                             Name:
+                                                                                                             Title:
+
+ Date: [●], 2021
+
+                                                     SIGNATURE PAGE TO SUBSCRIPTION AGREEMENT
+
+
+                                                                                           20
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                    25/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+ SUBSCRIBER:
+
+ Signature of Subscriber:                                                                                     Signature of Joint Subscriber, if applicable:
+
+ By:                                                                                                          By:
+ Name:                                                                                                        Name:
+ Title:                                                                                                       Title:
+ Date:
+
+ Name of Subscriber:                                                                                          Name of Joint Subscriber, if applicable:
+
+
+ (Please print. Please indicate name and                                                                      (Please print. Please indicate name and
+ capacity of person signing above)                                                                            capacity of person signing above)
+
+
+ Name in which shares are to be registered
+ (if different):
+
+ If there are joint investors, please check one:
+
+ ☐ Joint Tenants with Rights of Survivorship
+
+ ☐ Tenants-in-Common
+
+ ☐ Community Property
+
+ Subscriber’s EIN:                                                                                            Joint Subscriber’s EIN:
+
+ Email Address:
+
+ Business Address:                                                                                            Mailing Address (if different):
+
+
+
+
+ Telephone No.:                                                                                               Telephone No.:
+
+ Facsimile No.:                                                                                               Facsimile No.:
+
+ Aggregate Number of Acquired Shares subscribed for: ________________________
+
+ Aggregate Purchase Price: $_______________________
+
+ You must pay the Purchase Price by wire transfer of United States dollars in immediately available funds to the account
+ specified by the Issuer in the Closing Notice.
+
+                                                     SIGNATURE PAGE TO SUBSCRIPTION AGREEMENT
+
+
+                                                                                           21
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                                 26/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+                                                                   SCHEDULE A
+                                                   ELIGIBILITY REPRESENTATIONS OF SUBSCRIBER
+
+ A.                  QUALIFIED INSTITUTIONAL BUYER STATUS
+                     (Please check the applicable subparagraphs):
+                     1.     ☐ We are a “qualified institutional buyer” (as defined in Rule 144A under the Securities Act, a “QIB”).
+                     2.     ☐ We are subscribing for the Acquired Shares as a fiduciary or agent for one or more investor accounts, and
+                            each owner of such account is a QIB.
+
+ ***OR***
+
+ B.                  ACCREDITED INVESTOR STATUS
+                     (Please check the applicable subparagraphs):
+                     1.     ☐ We are an “accredited investor” (within the meaning of Rule 501(a)(1), (2), (3) or (7) under the Securities Act
+                            or an entity in which all of the equityholders are accredited investors within the meaning of Rule 501(a)(1), (2), (3)
+                            or (7) under the Securities Act), and have marked and initialed the appropriate boxes on the following page
+                            indicating all provisions under which we qualify as an “accredited investor.”
+                     2.     ☐ We are not a natural person.
+
+ ***AND***
+
+ C.                  AFFILIATE STATUS
+                     (Please check the applicable box)
+                     SUBSCRIBER:
+                     ☐      is:
+                     ☐      is not:
+                            an “affiliate” (as defined in Rule 144 under the Securities Act) of the Issuer or acting on behalf of an affiliate of the
+                            Issuer.
+
+ ***AND***
+
+ D.                  INSTITUTIONAL ACCOUNT STATUS
+                     (Please check the applicable box)
+                     ☐      is:
+                     ☐      is not:
+                            an “Institutional Account” (as defined in FINRA 4512(c)).
+
+                                                           This page should be completed by Subscriber
+                                                        and constitutes a part of the Subscription Agreement.
+
+
+                                                                                 SCHEDULE A-1
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                      27/28
+11/14/26, 10:12 AM                                                                      ea149507ex10-3_nextnav.htm
+
+
+
+
+ Rule 501(a), in relevant part, states that an “accredited investor” shall mean any person who comes within any of the below listed
+ categories, or who the issuer reasonably believes comes within any of the below listed categories, at the time of the sale of the securities
+ to that person. Subscriber has indicated, by marking and initialing the appropriate box below, the provision(s) below which
+ apply to Subscriber and under which Subscriber accordingly qualifies as an “accredited investor.”
+
+ ☐ Any bank as defined in Section 3(a)(2) of the Securities Act, or any savings and loan association or other institution as defined in
+ Section 3(a)(5)(A) of the Securities Act whether acting in its individual or fiduciary capacity;
+
+ ☐ Any broker or dealer registered pursuant to Section 15 of the Exchange Act;
+
+ ☐ Any insurance company as defined in Section 2(a)(13) of the Securities Act;
+
+ ☐ Any investment company registered under the Investment Company Act of 1940 or a business development company as defined in
+ Section 2(a)(48) of the Investment Company Act of 1940;
+
+ ☐ Any Small Business Investment Company licensed by the U.S. Small Business Administration under Section 301(c) or (d) of the
+ Small Business Investment Act of 1958;
+
+ ☐ Any Rural Business Investment Company as defined in section 384A of the Consolidated Farm and Rural Development Act;
+
+ ☐ Any plan established and maintained by a state, its political subdivisions, or any agency or instrumentality of a state or its political
+ subdivisions for the benefit of its employees, if such plan has total assets in excess of $5,000,000;
+
+ ☐ Any employee benefit plan, within the meaning of ERISA, if a bank, insurance company, or registered investment adviser makes the
+ investment decisions, or if such plan has total assets in excess of $5,000,000;
+
+ ☐ Any private business development company as defined in Section 202(a)(22) of the Investment Advisers Act of 1940;
+
+ ☐ Any organization described in Section 501(c)(3) of the Internal Revenue Code, corporation, Massachusetts or similar business trust,
+ partnership, or limited liability company not formed for the specific purpose of acquiring the securities offered, with total assets in
+ excess of $5,000,000; or
+
+ ☐ Any trust, with total assets in excess of $5,000,000, not formed for the specific purpose of acquiring the securities offered, whose
+ purchase is directed by a sophisticated person as described in Rule 506(b)(2)(ii) of the Securities Act.
+
+                                                           This page should be completed by Subscriber
+                                                        and constitutes a part of the Subscription Agreement.
+
+                                                                                 SCHEDULE A-2
+
+
+
+
+https://www.sec.gov/Archives/edgar/data/1865631/000121390021055145/ea149507ex10-3_nextnav.htm                                                 28/28
+

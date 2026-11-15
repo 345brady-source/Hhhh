@@ -1,0 +1,4505 @@
+{
+"1": {
+"w": 594.0,
+"h": 774.0,
+"runs": [],
+"boxes": [],
+"rects": [],
+"lines": [],
+"curves": [],
+"words": [
+{
+"t": "EXHIBITC",
+"x0": 270.75,
+"x1": 323.22,
+"top": 67.05,
+"bottom": 77.05
+},
+{
+"t": "SUBSCRIPTIONAGREEMENTANDPOWEROFATTORNEYFOR",
+"x0": 143.85,
+"x1": 450.14,
+"top": 85.05,
+"bottom": 95.05
+},
+{
+"t": "UNITSOFTHEPRICEFUNDI,L.P.",
+"x0": 215.3,
+"x1": 378.73,
+"top": 97.05,
+"bottom": 107.05
+},
+{
+"t": "ThisAgreementmustbemailedordeliveredtotheplacementagent:",
+"x0": 89.0,
+"x1": 363.9,
+"top": 121.17,
+"bottom": 131.17
+},
+{
+"t": "AtriumSecurities,Inc.",
+"x0": 69.0,
+"x1": 166.34,
+"top": 139.05,
+"bottom": 149.05
+},
+{
+"t": "141WestJacksonBoulevard",
+"x0": 69.0,
+"x1": 192.07,
+"top": 151.05,
+"bottom": 161.05
+},
+{
+"t": "Suite1340A",
+"x0": 69.0,
+"x1": 120.4,
+"top": 163.05,
+"bottom": 173.05
+},
+{
+"t": "Chicago,Illinois60604",
+"x0": 69.0,
+"x1": 166.03,
+"top": 175.05,
+"bottom": 185.05
+},
+{
+"t": "ThisAgreement,togetherwithpaymentforthesubscriptionamountmustbereceivedatleast10business",
+"x0": 89.0,
+"x1": 521.76,
+"top": 199.05,
+"bottom": 209.05
+},
+{
+"t": "daysbeforetheinitialorapplicablemonthlyclosing.",
+"x0": 69.0,
+"x1": 285.45,
+"top": 211.05,
+"bottom": 221.05
+},
+{
+"t": "Note:",
+"x0": 69.0,
+"x1": 91.21,
+"top": 235.17,
+"bottom": 245.17
+},
+{
+"t": "IfyouhavealreadybeenadmittedtotheFundasalimitedpartnerandyouarepurchasingadditional",
+"x0": 101.25,
+"x1": 503.75,
+"top": 235.17,
+"bottom": 245.17
+},
+{
+"t": "units,youdonotneedtocompletethisform.Instead,youshouldcompleteaSubscriptionAgreementfor",
+"x0": 101.0,
+"x1": 521.87,
+"top": 247.17,
+"bottom": 257.17
+},
+{
+"t": "ExistingInvestorsorSubscribersintheformattachedtotheprospectusasExhibitD.",
+"x0": 101.0,
+"x1": 442.18,
+"top": 259.17,
+"bottom": 269.17
+},
+{
+"t": "SUBSCRIPTIONINSTRUCTIONS",
+"x0": 69.0,
+"x1": 222.47,
+"top": 289.05,
+"bottom": 299.05
+},
+{
+"t": "Beforemakinganinvestmentdecision,youshouldcarefullyreadandreviewThePriceFundI,L.P.",
+"x0": 89.0,
+"x1": 501.2,
+"top": 307.05,
+"bottom": 317.05
+},
+{
+"t": "prospectusandthissubscriptionagreementandpowerofattorney.Whenreadingtheprospectus,youshould",
+"x0": 69.0,
+"x1": 516.0,
+"top": 319.05,
+"bottom": 329.05
+},
+{
+"t": "payparticularattentiontothemattersdiscussedunder\u201cRiskFactors,\u201d\u201cConflictsofInterest\u201dand",
+"x0": 69.0,
+"x1": 474.08,
+"top": 331.05,
+"bottom": 341.05
+},
+{
+"t": "\u201cDescriptionofCharges.\u201d",
+"x0": 69.0,
+"x1": 177.14,
+"top": 343.05,
+"bottom": 353.05
+},
+{
+"t": "Ifyouwishtosubscribeforunitsinthepartnership,youwillberequiredtocompletethesubscription",
+"x0": 89.0,
+"x1": 506.22,
+"top": 367.05,
+"bottom": 377.05
+},
+{
+"t": "form(pagesC-6throughC-8).Instructionsforcompletingthesubscriptionpagesaresetforthbelow.",
+"x0": 69.0,
+"x1": 486.24,
+"top": 379.05,
+"bottom": 389.05
+},
+{
+"t": "Bysubscribingforunits,youwillbedeemedtomakeeachapplicablerepresentationandwarranty",
+"x0": 89.0,
+"x1": 493.03,
+"top": 403.05,
+"bottom": 413.05
+},
+{
+"t": "containedonpagesC-3throughC-5,andtosatisfyanyapplicablespecialstatesuitabilityrequirement",
+"x0": 69.0,
+"x1": 489.8,
+"top": 415.05,
+"bottom": 425.05
+},
+{
+"t": "describedonpageC-3.Therefore,pleasemakesurethatyoucarefullyreviewallrepresentationsand",
+"x0": 69.0,
+"x1": 483.98,
+"top": 427.05,
+"bottom": 437.05
+},
+{
+"t": "warrantiesandstatesuitabilityrequirementsbeforesigningthisagreement.",
+"x0": 69.0,
+"x1": 380.33,
+"top": 439.05,
+"bottom": 449.05
+},
+{
+"t": "InstructionsforCompletingtheSubscriptionForm.",
+"x0": 69.0,
+"x1": 290.3,
+"top": 469.05,
+"bottom": 479.05
+},
+{
+"t": "Note:",
+"x0": 69.0,
+"x1": 91.21,
+"top": 487.17,
+"bottom": 497.17
+},
+{
+"t": "TheitemnumbersbelowlettertothecorrespondingsectionsontheSubscriptionForm.",
+"x0": 101.25,
+"x1": 450.92,
+"top": 487.17,
+"bottom": 497.17
+},
+{
+"t": "A.",
+"x0": 69.0,
+"x1": 78.72,
+"top": 511.17,
+"bottom": 521.17
+},
+{
+"t": "Entertheexactname(s)inwhichyourUnitsaretobeheldbasedonownershiptypeandenterresidencyand",
+"x0": 89.0,
+"x1": 522.07,
+"top": 511.17,
+"bottom": 521.17
+},
+{
+"t": "otherinformationrequested.",
+"x0": 89.0,
+"x1": 202.76,
+"top": 523.17,
+"bottom": 533.17
+},
+{
+"t": "B.",
+"x0": 69.0,
+"x1": 78.17,
+"top": 547.17,
+"bottom": 557.17
+},
+{
+"t": "Enterthedollaramountofyoursubscriptionpayment.ThenumberofUnitsyoureceiveforthatsubscription",
+"x0": 89.0,
+"x1": 524.83,
+"top": 547.17,
+"bottom": 557.17
+},
+{
+"t": "paymentwillbedeterminedasdescribedbelowunderthecaption\u201cAmountofSubscription.\u201d",
+"x0": 89.0,
+"x1": 462.56,
+"top": 559.17,
+"bottom": 569.17
+},
+{
+"t": "C.",
+"x0": 69.0,
+"x1": 78.17,
+"top": 583.17,
+"bottom": 593.17
+},
+{
+"t": "ChecktheappropriateboxtoindicateinwhatcapacityyouaresubscribingforUnits(e.g.,inyourindividual",
+"x0": 89.0,
+"x1": 524.02,
+"top": 583.17,
+"bottom": 593.17
+},
+{
+"t": "capacity,jointlyoronbehalfofanentity).",
+"x0": 89.0,
+"x1": 258.4,
+"top": 595.17,
+"bottom": 605.17
+},
+{
+"t": "D.",
+"x0": 69.0,
+"x1": 78.72,
+"top": 619.17,
+"bottom": 629.17
+},
+{
+"t": "EnteryourSocialSecurityNumberor,ifyouaresubscribingonbehalfofanentity,theentity\u2019sTaxpayerID",
+"x0": 89.0,
+"x1": 524.68,
+"top": 619.17,
+"bottom": 629.17
+},
+{
+"t": "Number.IftheUnitswillbeownedbyjointtenantsortenantsincommon,youmayuseeitherperson\u2019s",
+"x0": 89.0,
+"x1": 502.84,
+"top": 631.17,
+"bottom": 641.17
+},
+{
+"t": "SocialSecurityNumber.",
+"x0": 89.0,
+"x1": 187.71,
+"top": 643.17,
+"bottom": 653.17
+},
+{
+"t": "E.",
+"x0": 69.0,
+"x1": 77.61,
+"top": 667.17,
+"bottom": 677.17
+},
+{
+"t": "Reviewtherepresentationrelatingtobackupwithholdingtaxandenteryourtaxableyear,ifotherthan",
+"x0": 89.0,
+"x1": 499.63,
+"top": 667.17,
+"bottom": 677.17
+},
+{
+"t": "calendaryear.",
+"x0": 89.0,
+"x1": 145.15,
+"top": 679.17,
+"bottom": 689.17
+},
+{
+"t": "C-1",
+"x0": 289.5,
+"x1": 304.5,
+"top": 703.17,
+"bottom": 713.17
+}
+],
+"annots": 0
+},
+"2": {
+"w": 594.0,
+"h": 774.0,
+"runs": [],
+"boxes": [],
+"rects": [],
+"lines": [],
+"curves": [],
+"words": [
+{
+"t": "F.",
+"x0": 69.0,
+"x1": 77.06,
+"top": 67.17,
+"bottom": 77.17
+},
+{
+"t": "CompletePartF.1ifyouaresubscribingasanindividualorjointlywithanotherperson.Ifyouare",
+"x0": 87.05,
+"x1": 481.28,
+"top": 67.17,
+"bottom": 77.17
+},
+{
+"t": "subscribingjointly,bothsubscribersmustsign.",
+"x0": 89.0,
+"x1": 277.97,
+"top": 79.17,
+"bottom": 89.17
+},
+{
+"t": "CompletePartF.2ifyouaresubscribingonbehalfofanentity.Bysigningonbehalfofanentity,youwill",
+"x0": 89.0,
+"x1": 514.87,
+"top": 104.07,
+"bottom": 114.07
+},
+{
+"t": "berepresentingyourauthoritytosignthisAgreementonbehalfoftheentity.",
+"x0": 89.0,
+"x1": 396.98,
+"top": 116.07,
+"bottom": 126.07
+},
+{
+"t": "SUBSCRIPTIONFORTHEPRICEFUNDI,L.P.",
+"x0": 189.5,
+"x1": 404.53,
+"top": 153.75,
+"bottom": 163.75
+},
+{
+"t": "ByexecutinganddeliveringtheSubscriptionSignaturePageandbypayingthepurchasepriceforUnitsof",
+"x0": 89.0,
+"x1": 516.73,
+"top": 178.77,
+"bottom": 188.77
+},
+{
+"t": "limitedpartnershipinterestinThePriceFundI,L.P.,youherebysubscribeforUnitsinthePartnershipataprice",
+"x0": 69.0,
+"x1": 520.0,
+"top": 190.77,
+"bottom": 200.77
+},
+{
+"t": "equalto:",
+"x0": 69.0,
+"x1": 103.75,
+"top": 202.77,
+"bottom": 212.77
+},
+{
+"t": "\u2022",
+"x0": 89.0,
+"x1": 92.5,
+"top": 221.22,
+"bottom": 231.22
+},
+{
+"t": "UntilthePartnershiphasacceptedsubscriptionsfor1,000Unitsandbeginstrading,$1,000perUnit;and",
+"x0": 99.0,
+"x1": 519.05,
+"top": 221.22,
+"bottom": 231.22
+},
+{
+"t": "\u2022",
+"x0": 89.0,
+"x1": 92.5,
+"top": 239.67,
+"bottom": 249.67
+},
+{
+"t": "AfterthePartnershiphascommencedtrading,100%ofthenetassetvalueperUnitasofthecloseof",
+"x0": 99.0,
+"x1": 501.6,
+"top": 239.67,
+"bottom": 249.67
+},
+{
+"t": "businessonthedateoftheapplicablemonthlyclosing.",
+"x0": 99.0,
+"x1": 318.45,
+"top": 251.67,
+"bottom": 261.67
+},
+{
+"t": "Youmayrevokethisagreement,andreceiveafullrefundofthesubscriptionamountyoupaidnolater",
+"x0": 89.0,
+"x1": 511.1,
+"top": 276.45,
+"bottom": 286.45
+},
+{
+"t": "than3:00p.m.,Chicagotime,10businessdayspriortothedateoftheinitialorapplicablemonthlyclosingby",
+"x0": 69.0,
+"x1": 520.45,
+"top": 288.45,
+"bottom": 298.45
+},
+{
+"t": "deliveringwrittennoticetoPriceAssetManagement,Inc.Otherwise,yoursubscriptionisirrevocable.",
+"x0": 69.0,
+"x1": 487.85,
+"top": 300.45,
+"bottom": 310.45
+},
+{
+"t": "PAYMENTINSTRUCTIONS",
+"x0": 69.0,
+"x1": 198.03,
+"top": 331.8,
+"bottom": 341.8
+},
+{
+"t": "SelectONEofthefollowingtwopaymentoptions:",
+"x0": 89.0,
+"x1": 293.87,
+"top": 350.25,
+"bottom": 360.37
+},
+{
+"t": "InitialOfferingPeriod.",
+"x0": 89.0,
+"x1": 187.77,
+"top": 375.15,
+"bottom": 385.15
+},
+{
+"t": "Duringtheinitialofferingperiod(thatis,untilthePartnershiphassolda",
+"x0": 197.8,
+"x1": 488.15,
+"top": 375.27,
+"bottom": 385.27
+},
+{
+"t": "minimumof1,000units,subscriptionpaymentswillbeheldbyLaSalleBankNationalAssociation,whichhas",
+"x0": 69.0,
+"x1": 511.85,
+"top": 387.27,
+"bottom": 397.27
+},
+{
+"t": "beenappointedasEscrowAgentforthepurposeofholdingsubscriptionpayments.Yoursubscriptionpayment",
+"x0": 69.0,
+"x1": 513.63,
+"top": 399.27,
+"bottom": 409.27
+},
+{
+"t": "maybemadebycheckorwiretransfer.Yourcheckshouldbepayableto\u201cThePriceFundI,L.P.Escrow",
+"x0": 69.0,
+"x1": 490.19,
+"top": 411.27,
+"bottom": 421.27
+},
+{
+"t": "Number62-8795-40-3.\u201dWiringinstructionsshouldbegiventoreferenceTrustGL2090067,forcreditto",
+"x0": 69.0,
+"x1": 491.81,
+"top": 423.27,
+"bottom": 433.27
+},
+{
+"t": "account62-8795-40-3attheaddressshownbelow.",
+"x0": 69.0,
+"x1": 272.76,
+"top": 435.27,
+"bottom": 445.27
+},
+{
+"t": "OR",
+"x0": 289.5,
+"x1": 304.5,
+"top": 453.6,
+"bottom": 463.6
+},
+{
+"t": "ContinuingOfferingPeriod.",
+"x0": 89.0,
+"x1": 209.9,
+"top": 472.05,
+"bottom": 482.05
+},
+{
+"t": "Duringthecontinuingofferingperiod(thatis,afterthepartnershiphassold",
+"x0": 219.95,
+"x1": 522.17,
+"top": 472.17,
+"bottom": 482.17
+},
+{
+"t": "1,000unitsandhasbeguntrading),subscriptionpaymentswillbeheldinaspecialsubscriptionaccountpending",
+"x0": 69.0,
+"x1": 519.68,
+"top": 484.17,
+"bottom": 494.17
+},
+{
+"t": "eachmonthlyclosingdate.Yoursubscriptionpaymentmaybemadebycheckorwiretransfer.Yourcheck",
+"x0": 69.0,
+"x1": 497.89,
+"top": 496.17,
+"bottom": 506.17
+},
+{
+"t": "shouldbepayableto\u201cThePriceFundI,L.P.SubscriptionAccount#5200939543,\u201dorwiretransferinstructions",
+"x0": 69.0,
+"x1": 515.94,
+"top": 508.17,
+"bottom": 518.17
+},
+{
+"t": "shouldbegiventoreferencethisaccountattheaddressshownbelow.",
+"x0": 69.0,
+"x1": 348.24,
+"top": 520.17,
+"bottom": 530.17
+},
+{
+"t": "Wiretransfersshouldbemadeto:",
+"x0": 89.0,
+"x1": 224.49,
+"top": 545.07,
+"bottom": 555.07
+},
+{
+"t": "ABA#071000505",
+"x0": 234.54,
+"x1": 308.8,
+"top": 545.07,
+"bottom": 555.07
+},
+{
+"t": "LaSalleBankNationalAssociation",
+"x0": 234.5,
+"x1": 375.41,
+"top": 557.07,
+"bottom": 567.07
+},
+{
+"t": "135SouthLaSalleStreet",
+"x0": 234.5,
+"x1": 334.27,
+"top": 569.07,
+"bottom": 579.07
+},
+{
+"t": "Chicago,Illinois60603",
+"x0": 234.5,
+"x1": 328.78,
+"top": 581.07,
+"bottom": 591.07
+},
+{
+"t": "RECEIPTOFDOCUMENTATION",
+"x0": 69.0,
+"x1": 224.44,
+"top": 612.3,
+"bottom": 622.3
+},
+{
+"t": "TheregulationsoftheCFTCrequirethatyoubegivenacopyoftheProspectus,aswellascertainadditional",
+"x0": 89.0,
+"x1": 523.95,
+"top": 630.87,
+"bottom": 640.87
+},
+{
+"t": "documentationconsistingof:(a)asupplementtotheProspectus,whichmustbegiventoyouiftheProspectusis",
+"x0": 69.0,
+"x1": 520.05,
+"top": 642.87,
+"bottom": 652.87
+},
+{
+"t": "datedmorethanninemonthsbeforethedatethatyoufirstreceivedtheProspectus,and(b)themostcurrent",
+"x0": 69.0,
+"x1": 499.43,
+"top": 654.87,
+"bottom": 664.87
+},
+{
+"t": "monthlyaccountstatement(report)forthePartnership.BysubscribingforUnits,youherebyacknowledge",
+"x0": 69.0,
+"x1": 495.94,
+"top": 666.87,
+"bottom": 676.87
+},
+{
+"t": "receiptoftheProspectusandtheadditionaldocumentationreferredtoabove,ifany.",
+"x0": 69.0,
+"x1": 405.7,
+"top": 678.87,
+"bottom": 688.87
+},
+{
+"t": "C-2",
+"x0": 289.5,
+"x1": 304.5,
+"top": 703.17,
+"bottom": 713.17
+}
+],
+"annots": 0
+},
+"3": {
+"w": 594.0,
+"h": 774.0,
+"runs": [],
+"boxes": [],
+"rects": [],
+"lines": [],
+"curves": [],
+"words": [
+{
+"t": "ADMISSIONTOTHEPARTNERSHIP",
+"x0": 69.0,
+"x1": 241.43,
+"top": 67.05,
+"bottom": 77.05
+},
+{
+"t": "IftheGeneralPartneracceptsyoursubscription,yoursubscriptionpaymentwillbereleasedtothe",
+"x0": 89.0,
+"x1": 482.74,
+"top": 84.42,
+"bottom": 94.42
+},
+{
+"t": "PartnershipwhenyouareadmittedtothePartnership,whichwilleitherbewhenthePartnershipbeginstradingor",
+"x0": 69.0,
+"x1": 524.15,
+"top": 96.42,
+"bottom": 106.42
+},
+{
+"t": "thenextmonthlyclosingdate.Ifyoursubscriptionisrejected,itwillbereturnedtoyou.Duringtheinitial",
+"x0": 69.0,
+"x1": 493.34,
+"top": 108.42,
+"bottom": 118.42
+},
+{
+"t": "offeringperiod,youwillbepaidyourshareofanyinterestearnedonyoursubscriptionpaymentwhileheldin",
+"x0": 69.0,
+"x1": 509.4,
+"top": 120.42,
+"bottom": 130.42
+},
+{
+"t": "escrow.Duringthecontinuingofferingperiod,youwillnotreceiveanyinterestonyoursubscriptionpayment.",
+"x0": 69.0,
+"x1": 511.77,
+"top": 132.42,
+"bottom": 142.42
+},
+{
+"t": "AtthetimeofyouradmissiontothePartnership,youwillbecomeapartytoandbeboundbythe",
+"x0": 89.0,
+"x1": 477.84,
+"top": 154.97,
+"bottom": 164.97
+},
+{
+"t": "Partnership\u2019sLimitedPartnershipAgreementincludedasExhibitBtotheProspectus.Byexecutingthe",
+"x0": 69.0,
+"x1": 485.17,
+"top": 166.85,
+"bottom": 176.97
+},
+{
+"t": "signaturepageofthisagreement,youwillbedeemedtohaveexecutedthisagreementandthelimited",
+"x0": 69.0,
+"x1": 485.91,
+"top": 178.85,
+"bottom": 188.85
+},
+{
+"t": "partnershipagreement,includingthepowersofattorneyinbothagreements.",
+"x0": 69.0,
+"x1": 385.17,
+"top": 190.85,
+"bottom": 200.85
+},
+{
+"t": "YouwillnotbeissuedacertificateevidencingtheUnitsthatyouarepurchasing,butyouwillreceivea",
+"x0": 89.0,
+"x1": 502.16,
+"top": 213.52,
+"bottom": 223.52
+},
+{
+"t": "writtenconfirmationofthepurchaseintheGeneralPartner\u2019scustomaryform.",
+"x0": 69.0,
+"x1": 382.05,
+"top": 225.52,
+"bottom": 235.52
+},
+{
+"t": "STATESUITABILITYREQUIREMENTS",
+"x0": 69.0,
+"x1": 254.33,
+"top": 253.2,
+"bottom": 263.2
+},
+{
+"t": "Exceptasindicatedbelow,investorsmusthaveanetworth(exclusiveofhome,furnishingsand",
+"x0": 89.0,
+"x1": 472.22,
+"top": 270.57,
+"bottom": 280.57
+},
+{
+"t": "automobiles)ofatleast$150,000or,failingthatstandard,havebothanetworth(sameexclusions)ofatleast",
+"x0": 69.0,
+"x1": 506.7,
+"top": 282.57,
+"bottom": 292.57
+},
+{
+"t": "$45,000andanannualgrossincomeofatleast$45,000.Ifaninvestorissubscribingwithhis/herspouseasjoint",
+"x0": 69.0,
+"x1": 519.66,
+"top": 294.57,
+"bottom": 304.57
+},
+{
+"t": "owners,he/shemaycountjointnetworthandjointincomeinsatisfyingtheserequirements,aswellasthespecial",
+"x0": 69.0,
+"x1": 523.09,
+"top": 306.57,
+"bottom": 316.57
+},
+{
+"t": "requirementsdescribedbelow.However,thestateslistedbelow(or,incertaincases,inspecialSupplements",
+"x0": 69.0,
+"x1": 501.87,
+"top": 318.57,
+"bottom": 328.57
+},
+{
+"t": "attachedtotheProspectus)havemorerestrictivesuitabilityorminimuminvestmentrequirementsfortheir",
+"x0": 69.0,
+"x1": 495.25,
+"top": 330.57,
+"bottom": 340.57
+},
+{
+"t": "residents.Pleasereadthefollowinglisttomakesurethatyoumeettheminimumsuitabilityand/orinvestment",
+"x0": 69.0,
+"x1": 510.14,
+"top": 342.57,
+"bottom": 352.57
+},
+{
+"t": "requirementsforthestateinwhichyoureside.(Asusedbelow,\u201cNW\u201dmeansnetworthexclusiveofhome,",
+"x0": 69.0,
+"x1": 497.28,
+"top": 354.57,
+"bottom": 364.57
+},
+{
+"t": "furnishings,andautomobiles;\u201cAI\u201dmeansannualgrossincome;and\u201cTI\u201dmeansannualtaxableincomefor",
+"x0": 69.0,
+"x1": 498.22,
+"top": 366.57,
+"bottom": 376.57
+},
+{
+"t": "federalincometaxpurposes.)",
+"x0": 69.0,
+"x1": 187.47,
+"top": 378.57,
+"bottom": 388.57
+},
+{
+"t": "1.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 395.82,
+"bottom": 405.82
+},
+{
+"t": "Arizona\u2014$225,000NWofatleast$60,000and$60,000AI.",
+"x0": 109.0,
+"x1": 351.88,
+"top": 395.82,
+"bottom": 405.82
+},
+{
+"t": "2.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 413.07,
+"bottom": 423.07
+},
+{
+"t": "California\u2014$100,000NWand$50,000AI.",
+"x0": 109.0,
+"x1": 283.78,
+"top": 413.07,
+"bottom": 423.07
+},
+{
+"t": "3.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 430.32,
+"bottom": 440.32
+},
+{
+"t": "Iowa\u2014$225,000NWor$60,000AI.",
+"x0": 109.0,
+"x1": 257.04,
+"top": 430.32,
+"bottom": 440.32
+},
+{
+"t": "4.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 447.57,
+"bottom": 457.57
+},
+{
+"t": "Massachusetts\u2014$225,000NWand$60,000AI.",
+"x0": 109.0,
+"x1": 301.03,
+"top": 447.57,
+"bottom": 457.57
+},
+{
+"t": "5.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 464.82,
+"bottom": 474.82
+},
+{
+"t": "Michigan\u2014$225,000NWor$60,000NWand$60,000AIduringtheprecedingyearandthe",
+"x0": 109.0,
+"x1": 480.85,
+"top": 464.82,
+"bottom": 474.82
+},
+{
+"t": "expectationof$60,000AIduringthecurrentyear.",
+"x0": 109.0,
+"x1": 310.58,
+"top": 476.82,
+"bottom": 486.82
+},
+{
+"t": "6.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 494.07,
+"bottom": 504.07
+},
+{
+"t": "Oregon\u2014$225,000NWor$60,000NWand$60,000AI.",
+"x0": 109.0,
+"x1": 338.14,
+"top": 494.07,
+"bottom": 504.07
+},
+{
+"t": "7.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 511.32,
+"bottom": 521.32
+},
+{
+"t": "Pennsylvania\u2014$175,000NWor$100,000NWand$50,000AI.",
+"x0": 109.0,
+"x1": 366.53,
+"top": 511.32,
+"bottom": 521.32
+},
+{
+"t": "8.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 528.57,
+"bottom": 538.57
+},
+{
+"t": "Texas\u2014$225,000NWor$60,000NWand$60,000AI.",
+"x0": 109.0,
+"x1": 332.04,
+"top": 528.57,
+"bottom": 538.57
+},
+{
+"t": "REPRESENTATIONSANDWARRANTIES",
+"x0": 69.0,
+"x1": 262.63,
+"top": 556.25,
+"bottom": 566.25
+},
+{
+"t": "ByexecutingtheSignaturePageofthisAgreement,you(foryourselfandanyco-subscriber,and,ifyouare",
+"x0": 89.0,
+"x1": 520.61,
+"top": 573.62,
+"bottom": 583.62
+},
+{
+"t": "signingonbehalfofanentity,onbehalfofandwithrespecttothatentityanditsshareholders,partners,",
+"x0": 69.0,
+"x1": 483.26,
+"top": 585.62,
+"bottom": 595.62
+},
+{
+"t": "beneficiariesormembers),representandwarranttotheGeneralPartnerandthePartnershipasfollows(AsUsed",
+"x0": 69.0,
+"x1": 518.89,
+"top": 597.5,
+"bottom": 607.62
+},
+{
+"t": "Below,TheTerms\u201cYou\u201dAnd\u201cYour\u201dReferToYouAndYourCo-Subscriber,IfAny,OrIfYouAreSigning",
+"x0": 69.0,
+"x1": 517.61,
+"top": 609.5,
+"bottom": 619.5
+},
+{
+"t": "OnBehalfOfAnEntity,ThatEntity):",
+"x0": 69.0,
+"x1": 225.48,
+"top": 621.5,
+"bottom": 631.62
+},
+{
+"t": "1.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 644.17,
+"bottom": 654.17
+},
+{
+"t": "IhavereceivedacopyoftheProspectus,includingtheLimitedPartnershipAgreement.",
+"x0": 101.5,
+"x1": 452.53,
+"top": 644.17,
+"bottom": 654.17
+},
+{
+"t": "2.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 666.72,
+"bottom": 676.72
+},
+{
+"t": "Ifanindividualsubscriber,IamoflegalagetoexecutethisAgreementandamlegallycompetenttodo",
+"x0": 101.5,
+"x1": 515.32,
+"top": 666.72,
+"bottom": 676.72
+},
+{
+"t": "so.",
+"x0": 69.0,
+"x1": 80.38,
+"top": 678.72,
+"bottom": 688.72
+},
+{
+"t": "C-3",
+"x0": 289.5,
+"x1": 304.5,
+"top": 703.17,
+"bottom": 713.17
+}
+],
+"annots": 0
+},
+"4": {
+"w": 594.0,
+"h": 774.0,
+"runs": [],
+"boxes": [],
+"rects": [],
+"lines": [],
+"curves": [],
+"words": [
+{
+"t": "3.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 67.17,
+"bottom": 77.17
+},
+{
+"t": "Isatisfytheapplicablefinancialsuitabilityandminimuminvestmentrequirements,assetforthbelow",
+"x0": 101.5,
+"x1": 508.0,
+"top": 67.17,
+"bottom": 77.17
+},
+{
+"t": "underthecaption\u201cStateSuitabilityRequirements\u201d(orinaspecialSupplementtotheProspectus)forresidentsof",
+"x0": 69.0,
+"x1": 522.11,
+"top": 79.17,
+"bottom": 89.17
+},
+{
+"t": "theStateinwhichIreside.IagreetoprovideanyadditionaldocumentationrequestedbytheGeneralPartner,as",
+"x0": 69.0,
+"x1": 518.05,
+"top": 91.17,
+"bottom": 101.17
+},
+{
+"t": "mayberequiredbythesecuritiesadministratorofmystateofresidence,toconfirmthatImeettheapplicable",
+"x0": 69.0,
+"x1": 506.8,
+"top": 103.17,
+"bottom": 113.17
+},
+{
+"t": "minimumfinancialsuitabilitystandardstoinvestinthePartnership.",
+"x0": 69.0,
+"x1": 340.94,
+"top": 115.17,
+"bottom": 125.17
+},
+{
+"t": "4.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 137.67,
+"bottom": 147.67
+},
+{
+"t": "TheaddresssetforthontheSignaturePageismytrueandcorrectresidenceandIhavenopresent",
+"x0": 101.5,
+"x1": 493.69,
+"top": 137.67,
+"bottom": 147.67
+},
+{
+"t": "intentionofbecomingaresidentofanyotherstateorcountry.AlltheinformationthatIhaveprovidedonthe",
+"x0": 69.0,
+"x1": 506.99,
+"top": 149.67,
+"bottom": 159.67
+},
+{
+"t": "SignaturePageiscorrectandcompleteasofthedateofthisAgreement,and,ifthereisanymaterialchangein",
+"x0": 69.0,
+"x1": 511.45,
+"top": 161.67,
+"bottom": 171.67
+},
+{
+"t": "thatinformationbeforemyadmissionasaLimitedPartner,Iwillimmediatelyfurnishsuchrevisedorcorrected",
+"x0": 69.0,
+"x1": 516.81,
+"top": 173.67,
+"bottom": 183.67
+},
+{
+"t": "informationtotheGeneralPartner.",
+"x0": 69.0,
+"x1": 209.47,
+"top": 185.67,
+"bottom": 195.67
+},
+{
+"t": "5.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 208.17,
+"bottom": 218.17
+},
+{
+"t": "IfIamrepresentinganemployeebenefitplan,tothebestofmyknowledge,neithertheGeneralPartner",
+"x0": 101.5,
+"x1": 516.29,
+"top": 208.17,
+"bottom": 218.17
+},
+{
+"t": "noranyTradingAdvisor,noranyoftheiraffiliates:(a)hasinvestmentdiscretionwithrespecttotheinvestment",
+"x0": 69.0,
+"x1": 516.44,
+"top": 220.17,
+"bottom": 230.17
+},
+{
+"t": "ofmyplanassets;(b)hasauthorityorresponsibilitytogiveorregularlygivesinvestmentadvicewithrespectto",
+"x0": 69.0,
+"x1": 517.7,
+"top": 232.17,
+"bottom": 242.17
+},
+{
+"t": "suchplanassetsforafeeandunderanagreementorunderstandingthatsuchadvice(i)willserveasaprimary",
+"x0": 69.0,
+"x1": 510.22,
+"top": 244.17,
+"bottom": 254.17
+},
+{
+"t": "basisforinvestmentdecisionswithrespecttosuchplanassetsand(ii)willbebasedontheparticularinvestment",
+"x0": 69.0,
+"x1": 519.24,
+"top": 256.17,
+"bottom": 266.17
+},
+{
+"t": "needsoftheplan;or(c)isanemployermaintainingorcontributingtothatplan.Forpurposesofthis",
+"x0": 69.0,
+"x1": 471.11,
+"top": 268.17,
+"bottom": 278.17
+},
+{
+"t": "representation(5),an\u201cemployeebenefitplan\u201dincludesplansandaccountsofvarioustypes(includingtheir",
+"x0": 69.0,
+"x1": 499.99,
+"top": 280.17,
+"bottom": 290.17
+},
+{
+"t": "relatedtrusts)whichprovidefortheaccumulationofaportionofanindividual\u2019searningsorcompensation,as",
+"x0": 69.0,
+"x1": 510.65,
+"top": 292.17,
+"bottom": 302.17
+},
+{
+"t": "wellasinvestmentincomeearnedthereon,freefromfederalincometaxuntilsuchtimeasfundsaredistributed",
+"x0": 69.0,
+"x1": 514.79,
+"top": 304.17,
+"bottom": 314.17
+},
+{
+"t": "fromtheplan,andincludecorporate\u201cpension\u201dandprofit-sharingplans,\u201csimplifiedemployeepensionplans,\u201d",
+"x0": 69.0,
+"x1": 511.41,
+"top": 316.17,
+"bottom": 326.17
+},
+{
+"t": "\u201cKeogh\u201dplansforself-employedindividualsandindividualretirementaccounts(\u201cIRAs\u201d).",
+"x0": 69.0,
+"x1": 432.29,
+"top": 328.17,
+"bottom": 338.17
+},
+{
+"t": "6.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 350.67,
+"bottom": 360.67
+},
+{
+"t": "Unlessrepresentation(7)or(8)belowisapplicable,mysubscriptionismadewithmyfundsformyown",
+"x0": 101.5,
+"x1": 519.38,
+"top": 350.67,
+"bottom": 360.67
+},
+{
+"t": "accountandnotastrustee,custodianornomineeforanother.",
+"x0": 69.0,
+"x1": 312.94,
+"top": 362.67,
+"bottom": 372.67
+},
+{
+"t": "7.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 385.17,
+"bottom": 395.17
+},
+{
+"t": "IfIamsubscribingascustodianforaminor,either(a)thesubscriptionisagiftIhavemadetothatminor",
+"x0": 101.5,
+"x1": 522.9,
+"top": 385.17,
+"bottom": 395.17
+},
+{
+"t": "andisnotmadewiththatminor\u2019sfunds,inwhichcasetherepresentationsastonetworthandannualincome",
+"x0": 69.0,
+"x1": 505.75,
+"top": 397.17,
+"bottom": 407.17
+},
+{
+"t": "belowapplyonlytome,asthecustodian;or(b)ifthesubscriptionisnotagift,therepresentationsastonet",
+"x0": 69.0,
+"x1": 499.53,
+"top": 409.17,
+"bottom": 419.17
+},
+{
+"t": "worthandannualincomebelowapplyonlytothatminor.",
+"x0": 69.0,
+"x1": 299.21,
+"top": 421.17,
+"bottom": 431.17
+},
+{
+"t": "8.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 443.67,
+"bottom": 453.67
+},
+{
+"t": "IfIamsubscribingasatrusteeorcustodianofanemployeebenefitplanorofanIRAatthedirectionof",
+"x0": 101.5,
+"x1": 517.5,
+"top": 443.67,
+"bottom": 453.67
+},
+{
+"t": "thebeneficiaryofthatplanorIRA,therepresentationsinthissubscriptionagreementandpowerofattorney",
+"x0": 69.0,
+"x1": 501.63,
+"top": 455.67,
+"bottom": 465.67
+},
+{
+"t": "applyonlytothebeneficiaryofthatplanorIRA.",
+"x0": 69.0,
+"x1": 265.39,
+"top": 467.67,
+"bottom": 477.67
+},
+{
+"t": "9.",
+"x0": 89.0,
+"x1": 96.5,
+"top": 490.17,
+"bottom": 500.17
+},
+{
+"t": "IfIamsubscribinginarepresentativecapacity,IhavefullpowerandauthoritytopurchaseUnitsand",
+"x0": 101.5,
+"x1": 508.31,
+"top": 490.17,
+"bottom": 500.17
+},
+{
+"t": "enterintoandbeboundbythisAgreementonbehalfoftheentityforwhichIampurchasingtheUnits,andthat",
+"x0": 69.0,
+"x1": 515.17,
+"top": 502.17,
+"bottom": 512.17
+},
+{
+"t": "entityhasfullrightandpowertopurchasetheUnitsandenterintoandbeboundbythisAgreementandbecome",
+"x0": 69.0,
+"x1": 518.4,
+"top": 514.17,
+"bottom": 524.17
+},
+{
+"t": "aLimitedPartnerundertheLimitedPartnershipAgreement.",
+"x0": 69.0,
+"x1": 311.02,
+"top": 526.17,
+"bottom": 536.17
+},
+{
+"t": "10.",
+"x0": 89.0,
+"x1": 101.5,
+"top": 548.67,
+"bottom": 558.67
+},
+{
+"t": "Ieither:(a)amnotrequiredtoberegisteredwiththeCommodityFuturesTradingCommission",
+"x0": 106.5,
+"x1": 487.12,
+"top": 548.67,
+"bottom": 558.67
+},
+{
+"t": "(\u201cCFTC\u201d)ortobeamemberoftheNationalFuturesAssociation(\u201cNFA\u201d);or(b),ifsorequired,Iamduly",
+"x0": 69.0,
+"x1": 497.59,
+"top": 560.67,
+"bottom": 570.67
+},
+{
+"t": "registeredwiththeCFTCandamamemberingoodstandingoftheNFA.ItisanNFArequirementthatthe",
+"x0": 69.0,
+"x1": 500.29,
+"top": 572.67,
+"bottom": 582.67
+},
+{
+"t": "GeneralPartnerattempttoverifythatanypersonorentitythatseekstopurchaseUnitsbedulyregisteredwith",
+"x0": 69.0,
+"x1": 510.35,
+"top": 584.67,
+"bottom": 594.67
+},
+{
+"t": "theCFTCandamemberoftheNFA,ifrequired.IagreetosupplytheGeneralPartnerwithsuchinformationas",
+"x0": 69.0,
+"x1": 517.29,
+"top": 596.67,
+"bottom": 606.67
+},
+{
+"t": "theGeneralPartnermayreasonablyrequesttoattemptsuchverification.CertainentitiesthatacquireUnitsmay,",
+"x0": 69.0,
+"x1": 518.49,
+"top": 608.67,
+"bottom": 618.67
+},
+{
+"t": "asaresult,themselvesbecome\u201ccommoditypools\u201dwithintheintentofapplicableCFTCandNFArules,and",
+"x0": 69.0,
+"x1": 504.55,
+"top": 620.67,
+"bottom": 630.67
+},
+{
+"t": "theirsponsors,accordingly,mayberequiredtoregisteras\u201ccommoditypooloperators.\u201d",
+"x0": 69.0,
+"x1": 420.65,
+"top": 632.67,
+"bottom": 642.67
+},
+{
+"t": "11.",
+"x0": 89.0,
+"x1": 101.5,
+"top": 655.17,
+"bottom": 665.17
+},
+{
+"t": "IunderstandthatthePartnership\u2019slimitedpartnershipagreementimposessubstantialrestrictionsonthe",
+"x0": 106.5,
+"x1": 521.89,
+"top": 655.17,
+"bottom": 665.17
+},
+{
+"t": "transferabilityofmyunitsandthatmyinvestmentisnotliquidexceptforlimitedredemptionprovisions,asset",
+"x0": 69.0,
+"x1": 513.33,
+"top": 667.17,
+"bottom": 677.17
+},
+{
+"t": "forthintheProspectusandtheLimitedPartnershipAgreement.",
+"x0": 69.0,
+"x1": 322.97,
+"top": 679.17,
+"bottom": 689.17
+},
+{
+"t": "C-4",
+"x0": 289.5,
+"x1": 304.5,
+"top": 703.17,
+"bottom": 713.17
+}
+],
+"annots": 0
+},
+"5": {
+"w": 594.0,
+"h": 774.0,
+"runs": [],
+"boxes": [],
+"rects": [],
+"lines": [],
+"curves": [],
+"words": [
+{
+"t": "Bymakingtherepresentationsandwarrantiessetforthabove,investorsshouldbeawarethattheyhavenot",
+"x0": 89.0,
+"x1": 517.15,
+"top": 67.17,
+"bottom": 77.17
+},
+{
+"t": "waivedanyrightsofactionwhichtheymayhaveunderapplicablefederalorstatesecuritieslaws.Federaland",
+"x0": 69.0,
+"x1": 510.26,
+"top": 79.17,
+"bottom": 89.17
+},
+{
+"t": "statesecuritieslawsprovidethatanysuchwaiverwouldbeunenforceable.Investorsshouldbeaware,however,",
+"x0": 69.0,
+"x1": 516.79,
+"top": 91.17,
+"bottom": 101.17
+},
+{
+"t": "thattherepresentationsandwarrantiessetforthabovemaybeassertedinthedefenseofthePartnership,the",
+"x0": 69.0,
+"x1": 500.88,
+"top": 103.17,
+"bottom": 113.17
+},
+{
+"t": "GeneralPartner,anyTradingAdvisor,orothersinanysubsequentlitigationorotherproceeding.",
+"x0": 69.0,
+"x1": 457.28,
+"top": 115.17,
+"bottom": 125.17
+},
+{
+"t": "POWEROFATTORNEYANDGOVERNINGLAW",
+"x0": 69.0,
+"x1": 297.93,
+"top": 145.05,
+"bottom": 155.05
+},
+{
+"t": "IherebyirrevocablyconstituteandappointPriceAssetManagement,Inc.,theGeneralPartnerofthe",
+"x0": 89.0,
+"x1": 492.69,
+"top": 163.17,
+"bottom": 173.17
+},
+{
+"t": "Partnership,asmytrueandlawfulattorney-in-fact,withfullpowerofsubstitution,inmyname,placeandstead:",
+"x0": 69.0,
+"x1": 519.49,
+"top": 175.17,
+"bottom": 185.17
+},
+{
+"t": "(1)todoallthingsnecessarytoadmitmeasaLimitedPartnerofthePartnership;(2)toadmitothersas",
+"x0": 69.0,
+"x1": 482.65,
+"top": 187.17,
+"bottom": 197.17
+},
+{
+"t": "additionalorsubstitutedLimitedPartnerstosuchPartnership(s)solongassuchadmissionisinaccordancewith",
+"x0": 69.0,
+"x1": 519.3,
+"top": 199.17,
+"bottom": 209.17
+},
+{
+"t": "thetermsoftheLimitedPartnershipAgreementoranyamendmenttoit;(3)tofile,prosecute,defend,settleor",
+"x0": 69.0,
+"x1": 512.4,
+"top": 211.17,
+"bottom": 221.17
+},
+{
+"t": "compromiseanyandallactionsatlaworsuitsinequityfororonbehalfofthePartnershipinconnectionwith",
+"x0": 69.0,
+"x1": 508.09,
+"top": 223.17,
+"bottom": 233.17
+},
+{
+"t": "anyclaim,demandorliabilityassertedorthreatenedbyoragainstthePartnership;and(4)toexecute,",
+"x0": 69.0,
+"x1": 476.39,
+"top": 235.17,
+"bottom": 245.17
+},
+{
+"t": "acknowledge,swearto,deliver,fileandrecordonmybehalfandasnecessaryintheappropriatepublicoffices,",
+"x0": 69.0,
+"x1": 514.32,
+"top": 247.17,
+"bottom": 257.17
+},
+{
+"t": "andpublish:(a)theLimitedPartnershipAgreementandCertificateofLimitedPartnershipandallamendmentsto",
+"x0": 69.0,
+"x1": 524.06,
+"top": 259.17,
+"bottom": 269.17
+},
+{
+"t": "thempermittedbytheirterms;(b)allinstrumentsthattheGeneralPartnerdeemsnecessaryorappropriateto",
+"x0": 69.0,
+"x1": 503.86,
+"top": 271.17,
+"bottom": 281.17
+},
+{
+"t": "reflectanyamendment,changeormodificationofanyLimitedPartnershipAgreementoranyCertificateof",
+"x0": 69.0,
+"x1": 499.51,
+"top": 283.17,
+"bottom": 293.17
+},
+{
+"t": "LimitedPartnershipmadeinaccordancewiththetermsofsuchLimitedPartnershipAgreement;(c)certificates",
+"x0": 69.0,
+"x1": 514.72,
+"top": 295.17,
+"bottom": 305.17
+},
+{
+"t": "ofassumedname;and(d)allinstrumentsthattheGeneralPartnerdeemsnecessaryorappropriatetoqualifyor",
+"x0": 69.0,
+"x1": 512.91,
+"top": 307.17,
+"bottom": 317.17
+},
+{
+"t": "maintainthequalificationofthepartnershiptodobusinessasaforeignlimitedpartnershipinotherjurisdictions.",
+"x0": 69.0,
+"x1": 520.14,
+"top": 319.17,
+"bottom": 329.17
+},
+{
+"t": "IagreetobeboundbyanyrepresentationmadebytheGeneralPartneroranysuccessortotheGeneralPartner",
+"x0": 69.0,
+"x1": 511.49,
+"top": 331.17,
+"bottom": 341.17
+},
+{
+"t": "actingingoodfaithunderthisPowerofAttorney.",
+"x0": 69.0,
+"x1": 268.91,
+"top": 343.17,
+"bottom": 353.17
+},
+{
+"t": "ThePowerofAttorneygrantedherebywillbedeemedtobecoupledwithaninterestandwillbeirrevocable",
+"x0": 89.0,
+"x1": 522.79,
+"top": 367.17,
+"bottom": 377.17
+},
+{
+"t": "andsurvivemydeath,incapacity,dissolution,liquidationortermination.",
+"x0": 69.0,
+"x1": 360.55,
+"top": 379.17,
+"bottom": 389.17
+},
+{
+"t": "Thissubscriptionagreementandpowerofattorneywillbegovernedbyandinterpretedinaccordance",
+"x0": 89.0,
+"x1": 524.77,
+"top": 403.05,
+"bottom": 413.05
+},
+{
+"t": "withthelawsoftheStateofIllinois,provided,however,thatthisprovisionwillnotbedeemedawaiverof",
+"x0": 69.0,
+"x1": 518.29,
+"top": 415.05,
+"bottom": 425.05
+},
+{
+"t": "anyrightsofactionImayhaveunderapplicablefederalorstatesecuritieslaw.",
+"x0": 69.0,
+"x1": 405.47,
+"top": 427.05,
+"bottom": 437.05
+},
+{
+"t": "C-5",
+"x0": 289.5,
+"x1": 304.5,
+"top": 703.17,
+"bottom": 713.17
+}
+],
+"annots": 0
+},
+"6": {
+"w": 594.0,
+"h": 774.0,
+"runs": [],
+"boxes": [],
+"rects": [],
+"lines": [
+{
+"x0": 89.0,
+"y0": 141.0,
+"x1": 525.0,
+"y1": 141.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 89.0,
+"y0": 159.0,
+"x1": 525.0,
+"y1": 159.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 152.7,
+"y0": 195.0,
+"x1": 525.0,
+"y1": 195.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 108.75,
+"y0": 225.0,
+"x1": 226.65,
+"y1": 225.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 249.2,
+"y0": 225.0,
+"x1": 367.1,
+"y1": 225.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 407.1,
+"y0": 225.0,
+"x1": 525.0,
+"y1": 225.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 164.9,
+"y0": 245.75,
+"x1": 184.9,
+"y1": 245.75,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 190.75,
+"y0": 243.0,
+"x1": 522.5,
+"y1": 243.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 223.95,
+"y0": 269.75,
+"x1": 243.95,
+"y1": 269.75,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 249.8,
+"y0": 267.0,
+"x1": 525.0,
+"y1": 267.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 199.45,
+"y0": 291.0,
+"x1": 522.5,
+"y1": 291.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 152.7,
+"y0": 333.0,
+"x1": 525.0,
+"y1": 333.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 108.75,
+"y0": 369.0,
+"x1": 226.65,
+"y1": 369.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 249.2,
+"y0": 369.0,
+"x1": 367.1,
+"y1": 369.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 407.1,
+"y0": 369.0,
+"x1": 525.0,
+"y1": 369.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 164.9,
+"y0": 395.75,
+"x1": 184.9,
+"y1": 395.75,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 190.75,
+"y0": 393.0,
+"x1": 492.5,
+"y1": 393.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 199.45,
+"y0": 417.0,
+"x1": 522.5,
+"y1": 417.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 94.0,
+"y0": 465.0,
+"x1": 189.0,
+"y1": 465.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+}
+],
+"curves": [],
+"words": [
+{
+"t": "SUBSCRIPTIONFORM",
+"x0": 243.0,
+"x1": 350.93,
+"top": 67.05,
+"bottom": 77.05
+},
+{
+"t": "PLEASEPRINTORTYPE(EXCEPTSIGNATURES).USEBLACKINKONLY.",
+"x0": 128.8,
+"x1": 465.17,
+"top": 91.17,
+"bottom": 101.17
+},
+{
+"t": "A.",
+"x0": 69.0,
+"x1": 78.72,
+"top": 115.05,
+"bottom": 125.05
+},
+{
+"t": "EXACTNAME(S)INWHICHTITLETOTHEUNITSWILLBEHELD:",
+"x0": 89.0,
+"x1": 408.14,
+"top": 115.05,
+"bottom": 125.05
+},
+{
+"t": "SUBSCRIBERADDRESS:",
+"x0": 89.0,
+"x1": 200.8,
+"top": 169.17,
+"bottom": 179.17
+},
+{
+"t": "StreetAddress",
+"x0": 89.0,
+"x1": 147.66,
+"top": 187.17,
+"bottom": 197.17
+},
+{
+"t": "(MUSTberesidenceaddress\u2014P.O.Boxalonenotacceptable)",
+"x0": 171.75,
+"x1": 422.09,
+"top": 199.17,
+"bottom": 209.17
+},
+{
+"t": "City",
+"x0": 89.0,
+"x1": 106.22,
+"top": 217.17,
+"bottom": 227.17
+},
+{
+"t": "State",
+"x0": 226.65,
+"x1": 246.64,
+"top": 217.17,
+"bottom": 227.17
+},
+{
+"t": "ZipCode",
+"x0": 367.1,
+"x1": 404.6,
+"top": 217.17,
+"bottom": 227.17
+},
+{
+"t": "DaytimeTel.No.(",
+"x0": 89.0,
+"x1": 164.88,
+"top": 235.17,
+"bottom": 245.17
+},
+{
+"t": ")",
+"x0": 184.9,
+"x1": 188.23,
+"top": 235.17,
+"bottom": 245.17
+},
+{
+"t": "ResidenceTel.No.(ifdifferent)(",
+"x0": 89.0,
+"x1": 223.94,
+"top": 259.17,
+"bottom": 269.17
+},
+{
+"t": ")",
+"x0": 243.96,
+"x1": 247.29,
+"top": 259.17,
+"bottom": 269.17
+},
+{
+"t": "E-MailAddress(Optional)",
+"x0": 89.0,
+"x1": 196.83,
+"top": 283.17,
+"bottom": 293.17
+},
+{
+"t": "CO-SUBSCRIBERADDRESS(ifdifferentfromsubscriberaddress):",
+"x0": 89.0,
+"x1": 368.47,
+"top": 307.17,
+"bottom": 317.17
+},
+{
+"t": "StreetAddress",
+"x0": 89.0,
+"x1": 147.66,
+"top": 325.17,
+"bottom": 335.17
+},
+{
+"t": "(MUSTberesidenceaddress\u2014P.O.Boxalonenotacceptable)",
+"x0": 171.75,
+"x1": 422.09,
+"top": 337.17,
+"bottom": 347.17
+},
+{
+"t": "City",
+"x0": 89.0,
+"x1": 106.22,
+"top": 361.17,
+"bottom": 371.17
+},
+{
+"t": "State",
+"x0": 226.65,
+"x1": 246.64,
+"top": 361.17,
+"bottom": 371.17
+},
+{
+"t": "ZipCode",
+"x0": 367.1,
+"x1": 404.6,
+"top": 361.17,
+"bottom": 371.17
+},
+{
+"t": "DaytimeTel.No.(",
+"x0": 89.0,
+"x1": 164.88,
+"top": 385.17,
+"bottom": 395.17
+},
+{
+"t": ")",
+"x0": 184.9,
+"x1": 188.23,
+"top": 385.17,
+"bottom": 395.17
+},
+{
+"t": "E-MailAddress(Optional)",
+"x0": 89.0,
+"x1": 196.83,
+"top": 409.17,
+"bottom": 419.17
+},
+{
+"t": "B.",
+"x0": 69.0,
+"x1": 78.17,
+"top": 433.05,
+"bottom": 443.05
+},
+{
+"t": "AMOUNTOFSUBSCRIPTION:",
+"x0": 89.0,
+"x1": 231.72,
+"top": 433.05,
+"bottom": 443.05
+},
+{
+"t": "$",
+"x0": 89.0,
+"x1": 94.0,
+"top": 457.17,
+"bottom": 467.17
+},
+{
+"t": "NOTE:Theinitialinvestmentmustbeforaminimumof$5,000($2,000forIRAsandqualified",
+"x0": 89.0,
+"x1": 492.91,
+"top": 475.05,
+"bottom": 485.05
+},
+{
+"t": "retirementplans).Subscriptionsaremadeinmultiplesof$1,000abovetheseminimumamounts.All",
+"x0": 89.0,
+"x1": 515.6,
+"top": 487.05,
+"bottom": 497.05
+},
+{
+"t": "subscriptionsarepayableinU.S.Dollars.",
+"x0": 89.0,
+"x1": 265.18,
+"top": 499.05,
+"bottom": 509.05
+},
+{
+"t": "C.",
+"x0": 69.0,
+"x1": 78.72,
+"top": 523.05,
+"bottom": 533.05
+},
+{
+"t": "CHECKTHEBOXBELOWWHICHDESCRIBESTHECAPACITYINWHICHYOUARE",
+"x0": 89.0,
+"x1": 491.8,
+"top": 523.05,
+"bottom": 533.05
+},
+{
+"t": "SUBSCRIBING:",
+"x0": 89.0,
+"x1": 161.2,
+"top": 535.05,
+"bottom": 545.05
+},
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 551.08,
+"bottom": 561.08
+},
+{
+"t": "IndividualOwnership",
+"x0": 109.0,
+"x1": 196.55,
+"top": 553.17,
+"bottom": 563.17
+},
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 569.08,
+"bottom": 579.08
+},
+{
+"t": "JointTenantswithRightsofSurvivorship",
+"x0": 109.0,
+"x1": 276.63,
+"top": 571.17,
+"bottom": 581.17
+},
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 587.08,
+"bottom": 597.08
+},
+{
+"t": "TenantsinCommon",
+"x0": 109.0,
+"x1": 190.71,
+"top": 589.17,
+"bottom": 599.17
+},
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 605.08,
+"bottom": 615.08
+},
+{
+"t": "CommunityProperty",
+"x0": 109.0,
+"x1": 193.77,
+"top": 607.17,
+"bottom": 617.17
+},
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 623.08,
+"bottom": 633.08
+},
+{
+"t": "GrantororotherRevocableTrust",
+"x0": 109.0,
+"x1": 242.44,
+"top": 625.17,
+"bottom": 635.17
+},
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 641.08,
+"bottom": 651.08
+},
+{
+"t": "OtherTrust",
+"x0": 109.0,
+"x1": 155.4,
+"top": 643.17,
+"bottom": 653.17
+},
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 659.08,
+"bottom": 669.08
+},
+{
+"t": "Estate",
+"x0": 109.0,
+"x1": 133.43,
+"top": 661.17,
+"bottom": 671.17
+},
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 677.08,
+"bottom": 687.08
+},
+{
+"t": "IRA",
+"x0": 109.0,
+"x1": 126.21,
+"top": 679.17,
+"bottom": 689.17
+},
+{
+"t": "C-6",
+"x0": 289.5,
+"x1": 304.5,
+"top": 703.17,
+"bottom": 713.17
+}
+],
+"annots": 0
+},
+"7": {
+"w": 594.0,
+"h": 774.0,
+"runs": [],
+"boxes": [],
+"rects": [],
+"lines": [
+{
+"x0": 174.95,
+"y0": 166.0,
+"x1": 525.0,
+"y1": 166.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 112.6,
+"y0": 226.8,
+"x1": 249.0,
+"y1": 226.8,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 350.95,
+"y0": 226.8,
+"x1": 486.5,
+"y1": 226.8,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 109.0,
+"y0": 332.55,
+"x1": 171.8,
+"y1": 332.55,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 69.0,
+"y0": 541.6,
+"x1": 277.0,
+"y1": 541.6,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 69.0,
+"y0": 571.6,
+"x1": 277.0,
+"y1": 571.6,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 401.2,
+"y0": 541.6,
+"x1": 520.0,
+"y1": 541.6,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 401.2,
+"y0": 571.6,
+"x1": 520.0,
+"y1": 571.6,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+}
+],
+"curves": [],
+"words": [
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 65.08,
+"bottom": 75.08
+},
+{
+"t": "OtherParticipant-DirectedBenefitPlan(includingKEOGHorSEPaccounts)",
+"x0": 109.0,
+"x1": 420.32,
+"top": 67.17,
+"bottom": 77.17
+},
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 83.28,
+"bottom": 93.28
+},
+{
+"t": "DefinedBenefitPlan",
+"x0": 109.0,
+"x1": 193.53,
+"top": 85.37,
+"bottom": 95.37
+},
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 101.48,
+"bottom": 111.48
+},
+{
+"t": "UGMA/UTMA(Minor)",
+"x0": 109.0,
+"x1": 205.84,
+"top": 103.57,
+"bottom": 113.57
+},
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 119.68,
+"bottom": 129.68
+},
+{
+"t": "PartnershiporLimitedLiabilityCompany",
+"x0": 109.0,
+"x1": 278.18,
+"top": 121.77,
+"bottom": 131.77
+},
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 137.88,
+"bottom": 147.88
+},
+{
+"t": "Corporation",
+"x0": 109.0,
+"x1": 157.3,
+"top": 139.97,
+"bottom": 149.97
+},
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 156.08,
+"bottom": 166.08
+},
+{
+"t": "Other(specify)",
+"x0": 109.0,
+"x1": 169.83,
+"top": 158.17,
+"bottom": 168.17
+},
+{
+"t": "D.",
+"x0": 69.0,
+"x1": 78.72,
+"top": 182.45,
+"bottom": 192.45
+},
+{
+"t": "SUBSCRIBER\u2019SSOCIALSECURITYNUMBER(SSN)ORTAXPAYERIDENTIFICATION",
+"x0": 89.0,
+"x1": 494.24,
+"top": 182.45,
+"bottom": 192.45
+},
+{
+"t": "NUMBER(TIN):",
+"x0": 89.0,
+"x1": 163.6,
+"top": 194.45,
+"bottom": 204.45
+},
+{
+"t": "SSN:",
+"x0": 89.0,
+"x1": 110.11,
+"top": 218.97,
+"bottom": 228.97
+},
+{
+"t": "TIN:",
+"x0": 329.0,
+"x1": 348.43,
+"top": 218.97,
+"bottom": 228.97
+},
+{
+"t": "E.",
+"x0": 69.0,
+"x1": 78.17,
+"top": 243.25,
+"bottom": 253.25
+},
+{
+"t": "TAXPAYERREPRESENTATIONS:",
+"x0": 89.0,
+"x1": 248.52,
+"top": 243.25,
+"bottom": 253.25
+},
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 259.48,
+"bottom": 269.48
+},
+{
+"t": "CheckboxifyouaresubjecttobackupwithholdingundertheprovisionsofSection3406(a)(1)(C)of",
+"x0": 109.0,
+"x1": 513.64,
+"top": 261.57,
+"bottom": 271.57
+},
+{
+"t": "theInternalRevenueCode.",
+"x0": 109.0,
+"x1": 218.54,
+"top": 273.57,
+"bottom": 283.57
+},
+{
+"t": "\u2018",
+"x0": 89.0,
+"x1": 99.0,
+"top": 289.68,
+"bottom": 299.68
+},
+{
+"t": "Checkboxifyourtaxableyearisotherthanthecalendaryearandindicatethemonthanddayonwhich",
+"x0": 109.0,
+"x1": 523.15,
+"top": 291.77,
+"bottom": 301.77
+},
+{
+"t": "yourtaxableyearends:",
+"x0": 109.0,
+"x1": 202.16,
+"top": 303.77,
+"bottom": 313.77
+},
+{
+"t": "/",
+"x0": 139.0,
+"x1": 141.78,
+"top": 321.97,
+"bottom": 331.97
+},
+{
+"t": "MM",
+"x0": 114.0,
+"x1": 131.78,
+"top": 333.97,
+"bottom": 343.97
+},
+{
+"t": "DD",
+"x0": 149.3,
+"x1": 163.73,
+"top": 333.97,
+"bottom": 343.97
+},
+{
+"t": "Underpenaltiesofperjury,bysigningbelow,IcertifythattheSocialSecurityNumber(orTaxpayer",
+"x0": 89.0,
+"x1": 516.82,
+"top": 358.25,
+"bottom": 368.25
+},
+{
+"t": "IDNumber)abovetobethetrue,correctandcompleteSocialSecurityNumber(orTaxpayerID",
+"x0": 89.0,
+"x1": 500.34,
+"top": 370.25,
+"bottom": 380.25
+},
+{
+"t": "Number)andthatalltheinformationaboveistrue,correctandcomplete.",
+"x0": 89.0,
+"x1": 403.39,
+"top": 382.25,
+"bottom": 392.25
+},
+{
+"t": "F.1.INDIVIDUALORJOINTSUBSCRIPTION,INCLUDINGPARTICIPANTDIRECTED",
+"x0": 69.0,
+"x1": 467.43,
+"top": 406.65,
+"bottom": 416.65
+},
+{
+"t": "EMPLOYEEBENEFITPLAN,SEP,KEOGHORIRASUBSCRIPTION",
+"x0": 89.0,
+"x1": 404.05,
+"top": 418.65,
+"bottom": 428.65
+},
+{
+"t": "Ifyouaresubscribingforajointorcommunitypropertyaccount,thestatements,representationsand",
+"x0": 89.0,
+"x1": 492.56,
+"top": 436.97,
+"bottom": 446.97
+},
+{
+"t": "warrantiessetforthinthisAgreementwillbedeemedtohavebeenmadebyeachsubscriber.",
+"x0": 69.0,
+"x1": 441.15,
+"top": 448.97,
+"bottom": 458.97
+},
+{
+"t": "\u2030",
+"x0": 89.0,
+"x1": 91.78,
+"top": 465.08,
+"bottom": 475.08
+},
+{
+"t": "IftheUnitswillbeownedbyjointowners,tenantsincommon,orascommunityproperty,signaturesof",
+"x0": 99.0,
+"x1": 515.14,
+"top": 467.17,
+"bottom": 477.17
+},
+{
+"t": "allownersarerequired.",
+"x0": 99.0,
+"x1": 193.51,
+"top": 479.17,
+"bottom": 489.17
+},
+{
+"t": "\u2030",
+"x0": 89.0,
+"x1": 91.78,
+"top": 495.28,
+"bottom": 505.28
+},
+{
+"t": "InthecaseofanIRAoraparticipant-directedemployeebenefitplan,thebeneficiarymustsign",
+"x0": 99.0,
+"x1": 480.78,
+"top": 497.37,
+"bottom": 507.37
+},
+{
+"t": "immediatelybelowandthetrusteeorcustodianmustsignbelowunder\u201cEntitySubscription.\u201d",
+"x0": 99.0,
+"x1": 473.69,
+"top": 509.37,
+"bottom": 519.37
+},
+{
+"t": "Date:",
+"x0": 377.0,
+"x1": 398.65,
+"top": 533.77,
+"bottom": 543.77
+},
+{
+"t": "(Signature)",
+"x0": 150.45,
+"x1": 195.42,
+"top": 545.77,
+"bottom": 555.77
+},
+{
+"t": "Date:",
+"x0": 377.0,
+"x1": 398.65,
+"top": 563.77,
+"bottom": 573.77
+},
+{
+"t": "(SignatureofCo-Subscriber)",
+"x0": 114.85,
+"x1": 231.0,
+"top": 575.77,
+"bottom": 585.77
+},
+{
+"t": "F.2.ENTITYSUBSCRIPTION",
+"x0": 69.0,
+"x1": 203.33,
+"top": 600.05,
+"bottom": 610.05
+},
+{
+"t": "Acceptanceofsubscriptiononbehalfofemployeebenefitplans(includingIRAs)isinnorespecta",
+"x0": 89.0,
+"x1": 493.73,
+"top": 618.25,
+"bottom": 628.25
+},
+{
+"t": "representationbythegeneralpartnerthatthisinvestmentmeetsallrelevantlegalrequirementswithrespectto",
+"x0": 69.0,
+"x1": 522.36,
+"top": 630.25,
+"bottom": 640.25
+},
+{
+"t": "investmentsbyanyparticularplan,orthatthisinvestmentisappropriateforanyparticularplan.",
+"x0": 69.0,
+"x1": 467.39,
+"top": 642.25,
+"bottom": 652.25
+},
+{
+"t": "Theundersignedofficer,partner,trustee,managerorotherrepresentativeherebycertifiesandwarrantsthat:",
+"x0": 89.0,
+"x1": 521.44,
+"top": 666.77,
+"bottom": 676.77
+},
+{
+"t": "(a)s/hehasfullpowerandauthorityfromoronbehalfoftheentitynamedbelowanditsshareholders,partners,",
+"x0": 69.0,
+"x1": 516.06,
+"top": 678.77,
+"bottom": 688.77
+},
+{
+"t": "C-7",
+"x0": 289.5,
+"x1": 304.5,
+"top": 703.17,
+"bottom": 713.17
+}
+],
+"annots": 0
+},
+"8": {
+"w": 594.0,
+"h": 774.0,
+"runs": [],
+"boxes": [],
+"rects": [],
+"lines": [
+{
+"x0": 89.0,
+"y0": 147.0,
+"x1": 287.0,
+"y1": 147.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 105.95,
+"y0": 183.0,
+"x1": 287.0,
+"y1": 183.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 89.0,
+"y0": 219.0,
+"x1": 287.0,
+"y1": 219.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 89.0,
+"y0": 255.0,
+"x1": 287.0,
+"y1": 255.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 401.2,
+"y0": 147.0,
+"x1": 520.0,
+"y1": 147.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+}
+],
+"curves": [],
+"words": [
+{
+"t": "beneficiariesormemberstocomplete,executeanddeliverthisAgreementontheirbehalfandtomakethe",
+"x0": 69.0,
+"x1": 493.94,
+"top": 67.17,
+"bottom": 77.17
+},
+{
+"t": "statements,representationsandwarrantiesmadeinthissubscriptionagreementandpowerofattorneyontheir",
+"x0": 69.0,
+"x1": 509.5,
+"top": 79.17,
+"bottom": 89.17
+},
+{
+"t": "behalf;and(b)theinvestmentinthePartnershipspecifiedisauthorizedunderapplicablelawandthegoverning",
+"x0": 69.0,
+"x1": 515.85,
+"top": 91.17,
+"bottom": 101.17
+},
+{
+"t": "documentsoftheentity,hasbeenaffirmativelyauthorizedbythegoverningboardorbody,ifany,oftheentity,",
+"x0": 69.0,
+"x1": 515.72,
+"top": 103.17,
+"bottom": 113.17
+},
+{
+"t": "andislegallypermissible.",
+"x0": 69.0,
+"x1": 173.54,
+"top": 115.17,
+"bottom": 125.17
+},
+{
+"t": "NameofEntity(PrintorType)",
+"x0": 89.0,
+"x1": 213.31,
+"top": 151.17,
+"bottom": 161.17
+},
+{
+"t": "By:",
+"x0": 89.0,
+"x1": 103.44,
+"top": 175.17,
+"bottom": 185.17
+},
+{
+"t": "AuthorizedSignatory",
+"x0": 144.75,
+"x1": 231.18,
+"top": 187.17,
+"bottom": 197.17
+},
+{
+"t": "Name(PrintorType)",
+"x0": 144.75,
+"x1": 231.22,
+"top": 223.17,
+"bottom": 233.17
+},
+{
+"t": "Title(PrintorType)",
+"x0": 147.2,
+"x1": 228.72,
+"top": 259.17,
+"bottom": 269.17
+},
+{
+"t": "Date:",
+"x0": 377.0,
+"x1": 398.65,
+"top": 139.17,
+"bottom": 149.17
+},
+{
+"t": "C-8",
+"x0": 289.5,
+"x1": 304.5,
+"top": 703.17,
+"bottom": 713.17
+}
+],
+"annots": 0
+},
+"9": {
+"w": 594.0,
+"h": 774.0,
+"runs": [],
+"boxes": [],
+"rects": [],
+"lines": [
+{
+"x0": 352.6,
+"y0": 221.95,
+"x1": 382.6,
+"y1": 221.95,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 390.1,
+"y0": 221.95,
+"x1": 422.6,
+"y1": 221.95,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 336.55,
+"y0": 356.7,
+"x1": 439.05,
+"y1": 356.7,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+}
+],
+"curves": [],
+"words": [
+{
+"t": "EXHIBITD",
+"x0": 270.75,
+"x1": 323.22,
+"top": 67.05,
+"bottom": 77.05
+},
+{
+"t": "THEPRICEFUNDI,L.P.",
+"x0": 240.0,
+"x1": 354.03,
+"top": 85.05,
+"bottom": 95.05
+},
+{
+"t": "SUBSCRIPTIONAGREEMENTFOREXISTINGINVESTORSORSUBSCRIBERS",
+"x0": 113.35,
+"x1": 480.81,
+"top": 97.05,
+"bottom": 107.05
+},
+{
+"t": "PLEASEPRINTORTYPE(EXCEPTSIGNATURES).USEBLACKINKONLY.",
+"x0": 89.0,
+"x1": 425.42,
+"top": 123.47,
+"bottom": 133.47
+},
+{
+"t": "Thisformtogetherwithpaymentforthesubscriptionamountmustbereceivedatleast10businessdays",
+"x0": 89.0,
+"x1": 505.24,
+"top": 149.77,
+"bottom": 159.77
+},
+{
+"t": "beforetheinitialorapplicablemonthlyclosing.",
+"x0": 69.0,
+"x1": 259.63,
+"top": 161.77,
+"bottom": 171.77
+},
+{
+"t": "IamanexistinginvestororsubscriberinThePriceFundI,L.P.(the\u201cPartnership\u201d).",
+"x0": 89.0,
+"x1": 425.5,
+"top": 188.07,
+"bottom": 198.07
+},
+{
+"t": "IacknowledgereceiptofThePriceFundI,L.P.Prospectusdated",
+"x0": 89.0,
+"x1": 350.07,
+"top": 214.37,
+"bottom": 224.37
+},
+{
+"t": ",",
+"x0": 385.12,
+"x1": 387.62,
+"top": 214.37,
+"bottom": 224.37
+},
+{
+"t": "(the\u201cProspectus\u201d).I",
+"x0": 425.12,
+"x1": 507.2,
+"top": 214.37,
+"bottom": 224.37
+},
+{
+"t": "havesignedthisform,whichupdatestheSubscriptionAgreementandPowerofAttorney(the\u201cSubscription",
+"x0": 69.0,
+"x1": 502.49,
+"top": 226.37,
+"bottom": 236.37
+},
+{
+"t": "Agreement\u201d)IsignedwhenIpurchasedUnitsofthePartnership,sothatImaypurchaseadditionalUnitsofthe",
+"x0": 69.0,
+"x1": 514.39,
+"top": 238.37,
+"bottom": 248.37
+},
+{
+"t": "PartnershipwithouttheneedtoexecuteanewSubscriptionAgreement.",
+"x0": 69.0,
+"x1": 355.97,
+"top": 250.37,
+"bottom": 260.37
+},
+{
+"t": "Iherebyconfirmthattherepresentations,warrantiesandotherinformationregardingtheSubscriberinthe",
+"x0": 89.0,
+"x1": 514.53,
+"top": 276.67,
+"bottom": 286.67
+},
+{
+"t": "SubscriptionAgreementIpreviouslyexecutedarestillaccurate,andthatanypurchaseofadditionalUnits",
+"x0": 69.0,
+"x1": 493.33,
+"top": 288.67,
+"bottom": 298.67
+},
+{
+"t": "followingthedateofthissubscriptionagreementupdateformwillbedeemedconfirmationthatsuch",
+"x0": 69.0,
+"x1": 473.1,
+"top": 300.67,
+"bottom": 310.67
+},
+{
+"t": "representations,warrantiesandotherinformationarestillaccurateatthetimeofthatadditionalpurchase.",
+"x0": 69.0,
+"x1": 490.98,
+"top": 312.67,
+"bottom": 322.67
+},
+{
+"t": "AMOUNTOFADDITIONALSUBSCRIPTION:",
+"x0": 69.0,
+"x1": 279.09,
+"top": 346.0,
+"bottom": 356.0
+},
+{
+"t": "$",
+"x0": 331.54,
+"x1": 336.54,
+"top": 346.0,
+"bottom": 356.0
+},
+{
+"t": "NOTE:Mustbeinmultiplesof$1,000.",
+"x0": 89.0,
+"x1": 246.9,
+"top": 365.27,
+"bottom": 375.27
+},
+{
+"t": "PAYMENTINSTRUCTIONS",
+"x0": 69.0,
+"x1": 198.03,
+"top": 398.6,
+"bottom": 408.6
+},
+{
+"t": "SelectONEofthefollowingtwopaymentoptions:",
+"x0": 89.0,
+"x1": 293.87,
+"top": 417.75,
+"bottom": 427.87
+},
+{
+"t": "InitialOfferingPeriod.",
+"x0": 89.0,
+"x1": 187.77,
+"top": 444.05,
+"bottom": 454.05
+},
+{
+"t": "Duringtheinitialofferingperiod(thatis,untilthePartnershiphassolda",
+"x0": 197.8,
+"x1": 488.15,
+"top": 444.17,
+"bottom": 454.17
+},
+{
+"t": "minimumof1,000units,subscriptionpaymentswillbeheldbyLaSalleBankNationalAssociation,whichhas",
+"x0": 69.0,
+"x1": 511.85,
+"top": 456.17,
+"bottom": 466.17
+},
+{
+"t": "beenappointedasEscrowAgentforthepurposeofholdingsubscriptionpayments.Yoursubscriptionpayment",
+"x0": 69.0,
+"x1": 513.7,
+"top": 468.17,
+"bottom": 478.17
+},
+{
+"t": "maybemadebycheckorwiretransfer.Yourcheckshouldbepayableto\u201cThePriceFundI,L.P.Escrow",
+"x0": 69.0,
+"x1": 490.19,
+"top": 480.17,
+"bottom": 490.17
+},
+{
+"t": "Number62-8795-40-3.\u201dWiringinstructionsshouldbegiventoreferenceTrustGL2090067,forcreditto",
+"x0": 69.0,
+"x1": 491.81,
+"top": 492.17,
+"bottom": 502.17
+},
+{
+"t": "account62-8795-40-3attheaddressshownbelow.",
+"x0": 69.0,
+"x1": 272.76,
+"top": 504.17,
+"bottom": 514.17
+},
+{
+"t": "OR",
+"x0": 289.5,
+"x1": 304.5,
+"top": 523.2,
+"bottom": 533.2
+},
+{
+"t": "ContinuingOfferingPeriod.",
+"x0": 89.0,
+"x1": 209.91,
+"top": 542.35,
+"bottom": 552.35
+},
+{
+"t": "Duringthecontinuingofferingperiod(thatis,afterthepartnershiphassold",
+"x0": 219.95,
+"x1": 522.17,
+"top": 542.47,
+"bottom": 552.47
+},
+{
+"t": "1,000unitsandhasbeguntrading),subscriptionpaymentswillbeheldinaspecialsubscriptionaccountpending",
+"x0": 69.0,
+"x1": 519.68,
+"top": 554.47,
+"bottom": 564.47
+},
+{
+"t": "eachmonthlyclosingdate.Yoursubscriptionpaymentmaybemadebycheckorwiretransfer.Yourcheck",
+"x0": 69.0,
+"x1": 497.89,
+"top": 566.47,
+"bottom": 576.47
+},
+{
+"t": "shouldbepayableto\u201cThePriceFundI,L.P.SubscriptionAccount#5200939543,\u201dorwiretransferinstructions",
+"x0": 69.0,
+"x1": 515.94,
+"top": 578.47,
+"bottom": 588.47
+},
+{
+"t": "shouldbegiventoreferencethisaccountattheaddressshownbelow.",
+"x0": 69.0,
+"x1": 348.24,
+"top": 590.47,
+"bottom": 600.47
+},
+{
+"t": "Wiretransfersshouldbemadeto:",
+"x0": 69.0,
+"x1": 204.49,
+"top": 616.77,
+"bottom": 626.77
+},
+{
+"t": "ABA#071000505",
+"x0": 214.54,
+"x1": 288.8,
+"top": 616.77,
+"bottom": 626.77
+},
+{
+"t": "LaSalleBankNationalAssociation",
+"x0": 214.55,
+"x1": 355.46,
+"top": 628.77,
+"bottom": 638.77
+},
+{
+"t": "135SouthLaSalleStreet",
+"x0": 214.55,
+"x1": 314.32,
+"top": 640.77,
+"bottom": 650.77
+},
+{
+"t": "Chicago,Illinois60603",
+"x0": 214.55,
+"x1": 308.83,
+"top": 652.77,
+"bottom": 662.77
+},
+{
+"t": "[Signature(s)appearonfollowingpage]",
+"x0": 216.85,
+"x1": 377.06,
+"top": 679.07,
+"bottom": 689.07
+},
+{
+"t": "D-1",
+"x0": 289.2,
+"x1": 304.75,
+"top": 703.17,
+"bottom": 713.17
+}
+],
+"annots": 0
+},
+"10": {
+"w": 594.0,
+"h": 774.0,
+"runs": [],
+"boxes": [],
+"rects": [],
+"lines": [
+{
+"x0": 69.0,
+"y0": 123.0,
+"x1": 292.0,
+"y1": 123.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 69.0,
+"y0": 159.0,
+"x1": 292.0,
+"y1": 159.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 69.0,
+"y0": 195.0,
+"x1": 292.0,
+"y1": 195.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 69.0,
+"y0": 231.0,
+"x1": 292.0,
+"y1": 231.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 69.0,
+"y0": 315.0,
+"x1": 292.0,
+"y1": 315.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 93.2,
+"y0": 345.0,
+"x1": 292.0,
+"y1": 345.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 302.0,
+"y0": 123.0,
+"x1": 520.0,
+"y1": 123.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 318.95,
+"y0": 159.0,
+"x1": 520.0,
+"y1": 159.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 302.0,
+"y0": 195.0,
+"x1": 520.0,
+"y1": 195.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 302.0,
+"y0": 231.0,
+"x1": 520.0,
+"y1": 231.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 302.0,
+"y0": 315.0,
+"x1": 520.0,
+"y1": 315.0,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+}
+],
+"curves": [],
+"words": [
+{
+"t": "SIGNATURE",
+"x0": 69.0,
+"x1": 128.42,
+"top": 67.05,
+"bottom": 77.05
+},
+{
+"t": "IfSubscriber(s)AreIndividuals",
+"x0": 69.0,
+"x1": 205.5,
+"top": 91.05,
+"bottom": 101.05
+},
+{
+"t": "IfSubscriberIsanEntity",
+"x0": 302.0,
+"x1": 410.97,
+"top": 91.05,
+"bottom": 101.05
+},
+{
+"t": "NameofSubscriber(PrintorType)",
+"x0": 69.0,
+"x1": 211.66,
+"top": 127.17,
+"bottom": 137.17
+},
+{
+"t": "NameofEntity(PrintorType)",
+"x0": 302.0,
+"x1": 426.31,
+"top": 127.17,
+"bottom": 137.17
+},
+{
+"t": "By:",
+"x0": 302.0,
+"x1": 316.44,
+"top": 151.17,
+"bottom": 161.17
+},
+{
+"t": "NameofCo-Subscriber(PrintorType)",
+"x0": 69.0,
+"x1": 226.66,
+"top": 163.17,
+"bottom": 173.17
+},
+{
+"t": "AuthorizedSignatory",
+"x0": 367.75,
+"x1": 454.18,
+"top": 163.17,
+"bottom": 173.17
+},
+{
+"t": "SignatureofSubscriber",
+"x0": 69.0,
+"x1": 163.51,
+"top": 199.17,
+"bottom": 209.17
+},
+{
+"t": "NameofSignatory(PrintorType)",
+"x0": 302.0,
+"x1": 440.76,
+"top": 199.17,
+"bottom": 209.17
+},
+{
+"t": "SignatureofCo-Subscriber",
+"x0": 69.0,
+"x1": 178.48,
+"top": 235.17,
+"bottom": 245.17
+},
+{
+"t": "Title(PrintorType)",
+"x0": 302.0,
+"x1": 383.52,
+"top": 235.17,
+"bottom": 245.17
+},
+{
+"t": "Address:",
+"x0": 69.0,
+"x1": 104.53,
+"top": 271.17,
+"bottom": 281.17
+},
+{
+"t": "Street",
+"x0": 69.0,
+"x1": 92.32,
+"top": 319.17,
+"bottom": 329.17
+},
+{
+"t": "City",
+"x0": 302.0,
+"x1": 319.23,
+"top": 319.17,
+"bottom": 329.17
+},
+{
+"t": "State",
+"x0": 375.71,
+"x1": 395.71,
+"top": 319.17,
+"bottom": 329.17
+},
+{
+"t": "Zip",
+"x0": 452.22,
+"x1": 466.11,
+"top": 319.17,
+"bottom": 329.17
+},
+{
+"t": "Date:",
+"x0": 69.0,
+"x1": 90.65,
+"top": 337.17,
+"bottom": 347.17
+},
+{
+"t": "PLEASERETURNTHISFORMAND,IFAPPLICABLE,ACHECKTOTHEPLACEMENTAGENT:",
+"x0": 69.0,
+"x1": 517.26,
+"top": 385.05,
+"bottom": 395.05
+},
+{
+"t": "AtriumSecurities,Inc.",
+"x0": 69.0,
+"x1": 166.34,
+"top": 403.05,
+"bottom": 413.05
+},
+{
+"t": "141WestJacksonBoulevard",
+"x0": 69.0,
+"x1": 192.07,
+"top": 415.05,
+"bottom": 425.05
+},
+{
+"t": "Suite1340A",
+"x0": 69.0,
+"x1": 120.4,
+"top": 427.05,
+"bottom": 437.05
+},
+{
+"t": "Chicago,Illinois60604",
+"x0": 69.0,
+"x1": 166.03,
+"top": 439.05,
+"bottom": 449.05
+},
+{
+"t": "TelephoneNo.(312)648-2212",
+"x0": 69.0,
+"x1": 195.66,
+"top": 451.05,
+"bottom": 461.05
+},
+{
+"t": "D-2",
+"x0": 289.2,
+"x1": 304.75,
+"top": 703.17,
+"bottom": 713.17
+}
+],
+"annots": 0
+},
+"11": {
+"w": 594.0,
+"h": 774.0,
+"runs": [],
+"boxes": [],
+"rects": [],
+"lines": [
+{
+"x0": 492.5,
+"y0": 246.45,
+"x1": 525.0,
+"y1": 246.45,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 492.5,
+"y0": 262.45,
+"x1": 525.0,
+"y1": 262.45,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 492.5,
+"y0": 264.45,
+"x1": 525.0,
+"y1": 264.45,
+"lw": 0.5,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+}
+],
+"curves": [],
+"words": [
+{
+"t": "THEPRICEFUNDI,L.P.",
+"x0": 240.0,
+"x1": 354.03,
+"top": 67.05,
+"bottom": 77.05
+},
+{
+"t": "PARTII",
+"x0": 278.25,
+"x1": 315.68,
+"top": 85.05,
+"bottom": 95.05
+},
+{
+"t": "INFORMATIONNOTREQUIREDINPROSPECTUS",
+"x0": 178.5,
+"x1": 415.56,
+"top": 97.05,
+"bottom": 107.05
+},
+{
+"t": "ITEM13.",
+"x0": 69.0,
+"x1": 110.64,
+"top": 123.9,
+"bottom": 133.9
+},
+{
+"t": "OTHEREXPENSESOFISSUANCEANDDISTRIBUTION.",
+"x0": 120.65,
+"x1": 376.95,
+"top": 123.9,
+"bottom": 133.9
+},
+{
+"t": "SECregistrationfee",
+"x0": 69.0,
+"x1": 150.21,
+"top": 150.87,
+"bottom": 160.87
+},
+{
+"t": "..................................................................",
+"x0": 155.0,
+"x1": 482.5,
+"top": 150.87,
+"bottom": 160.87
+},
+{
+"t": "$12,500",
+"x0": 492.5,
+"x1": 524.98,
+"top": 150.87,
+"bottom": 160.87
+},
+{
+"t": "NASDfilingfee",
+"x0": 69.0,
+"x1": 135.1,
+"top": 162.87,
+"bottom": 172.87
+},
+{
+"t": ".....................................................................",
+"x0": 140.0,
+"x1": 482.5,
+"top": 162.87,
+"bottom": 172.87
+},
+{
+"t": "Printingandengraving",
+"x0": 69.0,
+"x1": 160.72,
+"top": 174.87,
+"bottom": 184.87
+},
+{
+"t": "................................................................",
+"x0": 165.0,
+"x1": 482.5,
+"top": 174.87,
+"bottom": 184.87
+},
+{
+"t": "Legalfeesandexpenses,excludingBlueSkylegalfees",
+"x0": 69.0,
+"x1": 290.61,
+"top": 186.87,
+"bottom": 196.87
+},
+{
+"t": "......................................",
+"x0": 295.0,
+"x1": 482.5,
+"top": 186.87,
+"bottom": 196.87
+},
+{
+"t": "Accountingfeesandexpenses",
+"x0": 69.0,
+"x1": 189.89,
+"top": 198.87,
+"bottom": 208.87
+},
+{
+"t": "..........................................................",
+"x0": 195.0,
+"x1": 482.5,
+"top": 198.87,
+"bottom": 208.87
+},
+{
+"t": "Annualescrowagentfees..............................................................",
+"x0": 69.0,
+"x1": 482.5,
+"top": 210.87,
+"bottom": 220.87
+},
+{
+"t": "BlueSkyfeesandexpenses,includingBlueSkylegalfees",
+"x0": 69.0,
+"x1": 303.11,
+"top": 222.87,
+"bottom": 232.87
+},
+{
+"t": "...................................",
+"x0": 310.0,
+"x1": 482.5,
+"top": 222.87,
+"bottom": 232.87
+},
+{
+"t": "Miscellaneous",
+"x0": 69.0,
+"x1": 126.73,
+"top": 234.87,
+"bottom": 244.87
+},
+{
+"t": ".......................................................................",
+"x0": 130.0,
+"x1": 482.5,
+"top": 234.87,
+"bottom": 244.87
+},
+{
+"t": "Total",
+"x0": 89.0,
+"x1": 110.1,
+"top": 250.87,
+"bottom": 260.87
+},
+{
+"t": "..........................................................................",
+"x0": 115.0,
+"x1": 482.5,
+"top": 250.87,
+"bottom": 260.87
+},
+{
+"t": "$",
+"x0": 492.5,
+"x1": 497.5,
+"top": 250.87,
+"bottom": 260.87
+},
+{
+"t": "ITEM14.",
+"x0": 69.0,
+"x1": 110.64,
+"top": 291.0,
+"bottom": 301.0
+},
+{
+"t": "INDEMNIFICATIONOFDIRECTORSANDOFFICERS.",
+"x0": 120.65,
+"x1": 367.81,
+"top": 291.0,
+"bottom": 301.0
+},
+{
+"t": "Section14(b)ofthepartnership\u2019slimitedpartnershipagreement(aformofwhichisannexedtothe",
+"x0": 89.0,
+"x1": 486.69,
+"top": 310.52,
+"bottom": 320.52
+},
+{
+"t": "prospectusasExhibitB)providesforindemnificationbythepartnershipofthegeneralpartneranditsaffiliates",
+"x0": 69.0,
+"x1": 514.19,
+"top": 322.52,
+"bottom": 332.52
+},
+{
+"t": "(asthattermisdefinedinthelimitedpartnershipagreement)foranyloss,liability,damage,costorexpense",
+"x0": 69.0,
+"x1": 500.47,
+"top": 334.52,
+"bottom": 344.52
+},
+{
+"t": "arisingfromanyact,omission,activityorconductundertakenbyoronbehalfofthepartnershipbythegeneral",
+"x0": 69.0,
+"x1": 513.59,
+"top": 346.52,
+"bottom": 356.52
+},
+{
+"t": "partnerthatthegeneralpartnerdeterminedingoodfaithtobeinthebestinterestsofthepartnershipandthatwas",
+"x0": 69.0,
+"x1": 521.56,
+"top": 358.52,
+"bottom": 368.52
+},
+{
+"t": "nottheresultofmisconductornegligence.",
+"x0": 69.0,
+"x1": 240.03,
+"top": 370.52,
+"bottom": 380.52
+},
+{
+"t": "Section7ofthesellingagentagreementwithAtriumSecurities,Inc.providesforindemnificationofthe",
+"x0": 89.0,
+"x1": 506.74,
+"top": 397.37,
+"bottom": 407.37
+},
+{
+"t": "partnership,thegeneralpartneranditsaffiliatesbyAtriumSecuritiesforanyloss,claim,damage,liability,cost",
+"x0": 69.0,
+"x1": 516.92,
+"top": 409.37,
+"bottom": 419.37
+},
+{
+"t": "andexpenseincurredasaresultofabreachbyAtriumSecuritiesofanyofitsrepresentationsoragreementsin",
+"x0": 69.0,
+"x1": 512.85,
+"top": 421.37,
+"bottom": 431.37
+},
+{
+"t": "thesellingagentagreement,orasaresultofmisleadingstatementsormaterialomissionsininformationprovided",
+"x0": 69.0,
+"x1": 524.16,
+"top": 433.37,
+"bottom": 443.37
+},
+{
+"t": "byAtriumSecuritiesforuseintheregistrationstatementorprospectus.Thatsectionalsoprovidesforthe",
+"x0": 69.0,
+"x1": 491.78,
+"top": 445.37,
+"bottom": 455.37
+},
+{
+"t": "indemnificationbythepartnershipofAtriumSecuritiesandanyadditionalsellingagentappointedbyAtrium",
+"x0": 69.0,
+"x1": 507.55,
+"top": 457.37,
+"bottom": 467.37
+},
+{
+"t": "Securitiesforanyloss,claim,damage,liability,costandexpenseincurredbyAtriumSecuritiesoftheadditional",
+"x0": 69.0,
+"x1": 520.35,
+"top": 469.37,
+"bottom": 479.37
+},
+{
+"t": "sellingagentasaresultofabreachbythepartnershipofanyofitsrepresentationsoragreementsintheselling",
+"x0": 69.0,
+"x1": 511.47,
+"top": 481.37,
+"bottom": 491.37
+},
+{
+"t": "agentagreement,orasaresultofanyothermisleadingstatementsormaterialomissionsintheprospectus.",
+"x0": 69.0,
+"x1": 494.82,
+"top": 493.37,
+"bottom": 503.37
+},
+{
+"t": "Section12ofthecustomeragreementwithManFinancialInc.providesforindemnificationofMan",
+"x0": 89.0,
+"x1": 488.3,
+"top": 520.22,
+"bottom": 530.22
+},
+{
+"t": "Financialanditsaffiliatesforliabilities,losses,damages,costs,orexpensesforactivitiesundertakenbyMan",
+"x0": 69.0,
+"x1": 506.34,
+"top": 532.22,
+"bottom": 542.22
+},
+{
+"t": "Financialforthepartnership\u2019saccountorarisingasaresultofthePartnership\u2019sbreachofitsrepresentations,",
+"x0": 69.0,
+"x1": 505.58,
+"top": 544.22,
+"bottom": 554.22
+},
+{
+"t": "warrantiesorobligationsunderthecustomeragreement.",
+"x0": 69.0,
+"x1": 294.56,
+"top": 556.22,
+"bottom": 566.22
+},
+{
+"t": "Section11oftheadvisoryagreementbetweenthepartnershipandeachofitstradingadvisorsprovidesfor",
+"x0": 89.0,
+"x1": 515.23,
+"top": 583.07,
+"bottom": 593.07
+},
+{
+"t": "indemnificationofthepartnership,generalpartnerandtheiraffiliatesbythetradingadvisorforlosses,claims,",
+"x0": 69.0,
+"x1": 511.02,
+"top": 595.07,
+"bottom": 605.07
+},
+{
+"t": "damages,liabilities,costsandexpensesincurredasaresultofabreachofanyagreementorrepresentationbythe",
+"x0": 69.0,
+"x1": 522.04,
+"top": 607.07,
+"bottom": 617.07
+},
+{
+"t": "tradingadvisorintheadvisoryagreementrelatingtotheofferingoftheunits,orasaresultofmisleading",
+"x0": 69.0,
+"x1": 489.49,
+"top": 619.07,
+"bottom": 629.07
+},
+{
+"t": "statementsormaterialomissionsininformationprovidedbythetradingadvisorforuseintheregistration",
+"x0": 69.0,
+"x1": 491.75,
+"top": 631.07,
+"bottom": 641.07
+},
+{
+"t": "statementorprospectus.Thatsectionalsoprovidesfortheindemnificationofthetradingadvisorbythe",
+"x0": 69.0,
+"x1": 484.24,
+"top": 643.07,
+"bottom": 653.07
+},
+{
+"t": "partnershipforanyloss,claim,damage,liability,costandexpenseincurredbythetradingadvisorasaresultofa",
+"x0": 69.0,
+"x1": 522.36,
+"top": 655.07,
+"bottom": 665.07
+},
+{
+"t": "breachbythepartnershipofanyofitsrepresentationsoragreementsintheadvisoryagreementrelatingtothe",
+"x0": 69.0,
+"x1": 507.89,
+"top": 667.07,
+"bottom": 677.07
+},
+{
+"t": "offering,orasaresultofanyothermisleadingstatementsormaterialomissionsintheprospectus.",
+"x0": 69.0,
+"x1": 461.17,
+"top": 679.07,
+"bottom": 689.07
+},
+{
+"t": "II-1",
+"x0": 289.45,
+"x1": 304.5,
+"top": 703.17,
+"bottom": 713.17
+}
+],
+"annots": 0
+},
+"12": {
+"w": 594.0,
+"h": 774.0,
+"runs": [],
+"boxes": [],
+"rects": [],
+"lines": [
+{
+"x0": 69.0,
+"y0": 164.5,
+"x1": 124.75,
+"y1": 164.5,
+"lw": 1.0,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+},
+{
+"x0": 292.25,
+"y0": 164.5,
+"x1": 377.5,
+"y1": 164.5,
+"lw": 1.0,
+"sc": [
+0.0,
+0.0,
+0.0,
+1.0
+]
+}
+],
+"curves": [],
+"words": [
+{
+"t": "ITEM15.",
+"x0": 69.0,
+"x1": 110.64,
+"top": 67.05,
+"bottom": 77.05
+},
+{
+"t": "RECENTSALESOFUNREGISTEREDSECURITIES.",
+"x0": 120.65,
+"x1": 353.9,
+"top": 67.05,
+"bottom": 77.05
+},
+{
+"t": "None.",
+"x0": 89.0,
+"x1": 113.15,
+"top": 85.17,
+"bottom": 95.17
+},
+{
+"t": "ITEM16.",
+"x0": 69.0,
+"x1": 110.64,
+"top": 115.05,
+"bottom": 125.05
+},
+{
+"t": "EXHIBITSANDFINANCIALSTATEMENTS.",
+"x0": 120.65,
+"x1": 319.35,
+"top": 115.05,
+"bottom": 125.05
+},
+{
+"t": "(a)",
+"x0": 89.0,
+"x1": 100.1,
+"top": 133.17,
+"bottom": 143.17
+},
+{
+"t": "Exhibits",
+"x0": 107.65,
+"x1": 140.98,
+"top": 133.17,
+"bottom": 143.17
+},
+{
+"t": "ExhibitNumber",
+"x0": 69.0,
+"x1": 124.75,
+"top": 154.64,
+"bottom": 162.64
+},
+{
+"t": "DescriptionofDocument",
+"x0": 292.25,
+"x1": 377.51,
+"top": 154.64,
+"bottom": 162.64
+},
+{
+"t": "1.01",
+"x0": 88.15,
+"x1": 105.64,
+"top": 173.17,
+"bottom": 183.17
+},
+{
+"t": "FormofSellingAgentAgreementamongtheRegistrant,PriceAssetManagement,Inc.and",
+"x0": 144.75,
+"x1": 512.71,
+"top": 173.17,
+"bottom": 183.17
+},
+{
+"t": "AtriumSecurities,Inc.",
+"x0": 154.75,
+"x1": 246.02,
+"top": 185.17,
+"bottom": 195.17
+},
+{
+"t": "1.02",
+"x0": 88.15,
+"x1": 105.64,
+"top": 201.17,
+"bottom": 211.17
+},
+{
+"t": "FormofSelectedAdditionalSellingAgentAgreementbetweenAtriumSecurities,Inc.and",
+"x0": 144.75,
+"x1": 510.56,
+"top": 201.17,
+"bottom": 211.17
+},
+{
+"t": "additionalsellingagents.",
+"x0": 154.75,
+"x1": 254.64,
+"top": 213.17,
+"bottom": 223.17
+},
+{
+"t": "1.03",
+"x0": 88.15,
+"x1": 105.64,
+"top": 229.17,
+"bottom": 239.17
+},
+{
+"t": "FormofLimitedPartnershipAgreementoftheRegistrant(includedasExhibitBtothe",
+"x0": 144.75,
+"x1": 493.39,
+"top": 229.17,
+"bottom": 239.17
+},
+{
+"t": "prospectus).",
+"x0": 154.75,
+"x1": 203.33,
+"top": 241.17,
+"bottom": 251.17
+},
+{
+"t": "1.04",
+"x0": 88.15,
+"x1": 105.64,
+"top": 257.17,
+"bottom": 267.17
+},
+{
+"t": "OpinionofHenderson&LymantotheRegistrantregardingthelegalityofunits(including",
+"x0": 144.75,
+"x1": 508.86,
+"top": 257.17,
+"bottom": 267.17
+},
+{
+"t": "consent).",
+"x0": 154.75,
+"x1": 191.11,
+"top": 269.17,
+"bottom": 279.17
+},
+{
+"t": "1.05",
+"x0": 88.15,
+"x1": 105.64,
+"top": 285.17,
+"bottom": 295.17
+},
+{
+"t": "OpinionofHenderson&LymantotheRegistrantregardingcertainfederalincometaxmatters",
+"x0": 144.75,
+"x1": 523.9,
+"top": 285.17,
+"bottom": 295.17
+},
+{
+"t": "(includingconsent).",
+"x0": 154.75,
+"x1": 234.81,
+"top": 297.17,
+"bottom": 307.17
+},
+{
+"t": "1.06",
+"x0": 88.15,
+"x1": 105.64,
+"top": 313.17,
+"bottom": 323.17
+},
+{
+"t": "AdvisoryAgreement,datedasofOctober29,2001betweenClarkeCapitalManagement,Inc.",
+"x0": 144.75,
+"x1": 521.18,
+"top": 313.17,
+"bottom": 323.17
+},
+{
+"t": "andtheRegistrant.",
+"x0": 154.75,
+"x1": 230.04,
+"top": 325.17,
+"bottom": 335.17
+},
+{
+"t": "1.07",
+"x0": 88.15,
+"x1": 105.64,
+"top": 341.17,
+"bottom": 351.17
+},
+{
+"t": "AdvisoryAgreement,datedasofOctober24,2001betweenCampbell&Companyandthe",
+"x0": 144.75,
+"x1": 510.29,
+"top": 341.17,
+"bottom": 351.17
+},
+{
+"t": "Registrant.",
+"x0": 154.75,
+"x1": 198.34,
+"top": 353.17,
+"bottom": 363.17
+},
+{
+"t": "1.08",
+"x0": 88.15,
+"x1": 105.64,
+"top": 369.17,
+"bottom": 379.17
+},
+{
+"t": "AdvisoryAgreement,datedasofOctober12,2001betweenMillburnRidgefieldCorporation",
+"x0": 144.75,
+"x1": 519.22,
+"top": 369.17,
+"bottom": 379.17
+},
+{
+"t": "andtheRegistrant.",
+"x0": 154.75,
+"x1": 230.04,
+"top": 381.17,
+"bottom": 391.17
+},
+{
+"t": "1.09",
+"x0": 88.15,
+"x1": 105.64,
+"top": 397.17,
+"bottom": 407.17
+},
+{
+"t": "AdvisoryAgreementdatedasofOctober12,2001betweenArcanumInvestmentManagement",
+"x0": 144.75,
+"x1": 524.46,
+"top": 397.17,
+"bottom": 407.17
+},
+{
+"t": "andtheRegistrant.",
+"x0": 154.75,
+"x1": 230.04,
+"top": 409.17,
+"bottom": 419.17
+},
+{
+"t": "1.10",
+"x0": 88.15,
+"x1": 105.64,
+"top": 425.17,
+"bottom": 435.17
+},
+{
+"t": "AdvisoryAgreement,datedasofApril25,2001betweenPriceCapitalMarkets,Inc.andthe",
+"x0": 144.75,
+"x1": 516.29,
+"top": 425.17,
+"bottom": 435.17
+},
+{
+"t": "Registrant.",
+"x0": 154.75,
+"x1": 198.34,
+"top": 437.17,
+"bottom": 447.17
+},
+{
+"t": "1.11",
+"x0": 88.15,
+"x1": 105.64,
+"top": 453.17,
+"bottom": 463.17
+},
+{
+"t": "CustomerAgreement,datedasofOctober1,2001,betweentheRegistrantandManFinancial",
+"x0": 144.75,
+"x1": 520.62,
+"top": 453.17,
+"bottom": 463.17
+},
+{
+"t": "Inc.",
+"x0": 154.75,
+"x1": 170.01,
+"top": 465.17,
+"bottom": 475.17
+},
+{
+"t": "1.12",
+"x0": 88.15,
+"x1": 105.64,
+"top": 481.17,
+"bottom": 491.17
+},
+{
+"t": "InterestMemo,datedasofNovember21,2001,betweenPriceAssetManagement,Inc.and",
+"x0": 144.75,
+"x1": 512.36,
+"top": 481.17,
+"bottom": 491.17
+},
+{
+"t": "ManFinancialInc.",
+"x0": 154.75,
+"x1": 230.67,
+"top": 493.17,
+"bottom": 503.17
+},
+{
+"t": "1.13",
+"x0": 88.15,
+"x1": 105.64,
+"top": 509.17,
+"bottom": 519.17
+},
+{
+"t": "ExpenseAgreement,datedasofMay9,2001,betweentheRegistrantandThePriceFutures",
+"x0": 144.75,
+"x1": 514.76,
+"top": 509.17,
+"bottom": 519.17
+},
+{
+"t": "Group,Inc.",
+"x0": 154.75,
+"x1": 200.56,
+"top": 521.17,
+"bottom": 531.17
+},
+{
+"t": "1.14",
+"x0": 88.15,
+"x1": 105.64,
+"top": 537.17,
+"bottom": 547.17
+},
+{
+"t": "FormofSubscriptionAgreementtobeexecutedbyeachpurchaserofunits(includedas",
+"x0": 144.75,
+"x1": 496.65,
+"top": 537.17,
+"bottom": 547.17
+},
+{
+"t": "ExhibitCtotheprospectus).",
+"x0": 154.75,
+"x1": 269.53,
+"top": 549.17,
+"bottom": 559.17
+},
+{
+"t": "1.15",
+"x0": 88.15,
+"x1": 105.64,
+"top": 565.17,
+"bottom": 575.17
+},
+{
+"t": "FormofSubscriptionAgreementforExistingInvestorsorSubscribersFormtobeexecutedby",
+"x0": 144.75,
+"x1": 523.97,
+"top": 565.17,
+"bottom": 575.17
+},
+{
+"t": "eachpurchaserofadditionalunits(includedasExhibitDtotheprospectus).",
+"x0": 154.75,
+"x1": 459.04,
+"top": 577.17,
+"bottom": 587.17
+},
+{
+"t": "1.16",
+"x0": 88.15,
+"x1": 105.64,
+"top": 593.17,
+"bottom": 603.17
+},
+{
+"t": "FormofEscrowAgreementamongtheRegistrant,PriceAssetManagement,Inc.andLaSalle",
+"x0": 144.75,
+"x1": 520.47,
+"top": 593.17,
+"bottom": 603.17
+},
+{
+"t": "BankNationalAssociation,astheescrowagent.",
+"x0": 154.75,
+"x1": 348.26,
+"top": 605.17,
+"bottom": 615.17
+},
+{
+"t": "1.17",
+"x0": 88.15,
+"x1": 105.64,
+"top": 621.17,
+"bottom": 631.17
+},
+{
+"t": "ConsentofIndependentAuditorsfortheRegistrant",
+"x0": 144.75,
+"x1": 350.47,
+"top": 621.17,
+"bottom": 631.17
+},
+{
+"t": "1.18",
+"x0": 88.15,
+"x1": 105.64,
+"top": 637.17,
+"bottom": 647.17
+},
+{
+"t": "ConsentofIndependentAuditorsforPriceAssetManagement,Inc.",
+"x0": 144.75,
+"x1": 415.04,
+"top": 637.17,
+"bottom": 647.17
+},
+{
+"t": "1.19",
+"x0": 88.15,
+"x1": 105.64,
+"top": 653.17,
+"bottom": 663.17
+},
+{
+"t": "CapitalDemandNote,datedasofMarch31,2001,fromWalterThomasPriceIII,tothe",
+"x0": 144.75,
+"x1": 498.82,
+"top": 653.17,
+"bottom": 663.17
+},
+{
+"t": "Registrant.",
+"x0": 154.75,
+"x1": 198.34,
+"top": 665.17,
+"bottom": 675.17
+},
+{
+"t": "II-2",
+"x0": 289.45,
+"x1": 304.5,
+"top": 703.17,
+"bottom": 713.17
+}
+],
+"annots": 0
+}
+}

@@ -1,0 +1,1413 @@
+{
+ "file": "set-b/b082/doc.pdf",
+ "id": "b082",
+ "pages": 24,
+ "page_size_pt": [
+  792.0,
+  612.0
+ ],
+ "page_sizes": {
+  "1": [
+   792.0,
+   612.0
+  ],
+  "2": [
+   792.0,
+   612.0
+  ],
+  "3": [
+   792.0,
+   612.0
+  ],
+  "4": [
+   792.0,
+   612.0
+  ],
+  "5": [
+   792.0,
+   612.0
+  ],
+  "6": [
+   792.0,
+   612.0
+  ],
+  "7": [
+   792.0,
+   612.0
+  ],
+  "8": [
+   792.0,
+   612.0
+  ],
+  "9": [
+   792.0,
+   612.0
+  ],
+  "10": [
+   792.0,
+   612.0
+  ],
+  "11": [
+   792.0,
+   612.0
+  ],
+  "12": [
+   792.0,
+   612.0
+  ],
+  "13": [
+   792.0,
+   612.0
+  ],
+  "14": [
+   792.0,
+   612.0
+  ],
+  "15": [
+   792.0,
+   612.0
+  ],
+  "16": [
+   792.0,
+   612.0
+  ],
+  "17": [
+   792.0,
+   612.0
+  ],
+  "18": [
+   792.0,
+   612.0
+  ],
+  "19": [
+   792.0,
+   612.0
+  ],
+  "20": [
+   792.0,
+   612.0
+  ],
+  "21": [
+   792.0,
+   612.0
+  ],
+  "22": [
+   792.0,
+   612.0
+  ],
+  "23": [
+   792.0,
+   612.0
+  ],
+  "24": [
+   792.0,
+   612.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text",
+  "17": "text",
+  "18": "text",
+  "19": "text",
+  "20": "text",
+  "21": "text",
+  "22": "text",
+  "23": "text",
+  "24": "text"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
+ "signing": {
+  "investor_pages": [],
+  "firm_pages": [],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": ""
+ },
+ "counts_per_page": {
+  "6": {
+   "total": 18,
+   "tickbox": 9,
+   "initials": 0,
+   "blank": 9,
+   "signature": 0,
+   "date": 0
+  },
+  "7": {
+   "total": 6,
+   "tickbox": 5,
+   "initials": 0,
+   "blank": 1,
+   "signature": 0,
+   "date": 0
+  },
+  "8": {
+   "total": 5,
+   "tickbox": 1,
+   "initials": 0,
+   "blank": 4,
+   "signature": 0,
+   "date": 0
+  },
+  "14": {
+   "total": 7,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 7,
+   "signature": 0,
+   "date": 0
+  },
+  "17": {
+   "total": 3,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 3,
+   "signature": 0,
+   "date": 0
+  }
+ },
+ "counts_total": {
+  "total": 39,
+  "tickbox": 15,
+  "initials": 0,
+  "blank": 24,
+  "signature": 0,
+  "date": 0
+ },
+ "counts_by_owner": {
+  "investor": 38,
+  "third-party": 1
+ },
+ "sure_per_page": {
+  "1": "draft",
+  "2": "draft",
+  "3": "draft",
+  "4": "draft",
+  "5": "draft",
+  "6": "draft",
+  "7": "draft",
+  "8": "draft",
+  "9": "draft",
+  "10": "draft",
+  "11": "draft",
+  "12": "draft",
+  "13": "draft",
+  "14": "draft",
+  "15": "draft",
+  "16": "draft",
+  "17": "draft",
+  "18": "draft",
+  "19": "draft",
+  "20": "draft",
+  "21": "draft",
+  "22": "draft",
+  "23": "draft",
+  "24": "draft"
+ },
+ "not_fields": {},
+ "places": [
+  {
+   "id": "p06-001",
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "total dollar amount invested",
+   "printed_label": "Total Dollar Amount Invested",
+   "must": true,
+   "x0": 78.7,
+   "y0": 161.1,
+   "x1": 393.7,
+   "y1": 176.6,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "amount",
+     "box": [
+      78.7,
+      161.1,
+      393.7,
+      176.6
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p06-002",
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "total number of shares purchased",
+   "printed_label": "Total Number of Shares Purchased",
+   "must": true,
+   "x0": 406.5,
+   "y0": 161.1,
+   "x1": 709.5,
+   "y1": 176.6,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "amount",
+     "box": [
+      406.5,
+      161.1,
+      709.5,
+      176.6
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p06-003",
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "state of sale",
+   "printed_label": "State of Sale:",
+   "must": true,
+   "x0": 133.0,
+   "y0": 205.4,
+   "x1": 233.3,
+   "y1": 220.9,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "State of Sale",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      133.0,
+      205.4,
+      233.3,
+      220.9
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p06-004",
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "purchase through an RIA, wrap or fee account",
+   "must": false,
+   "x0": 74.7,
+   "y0": 229.2,
+   "x1": 84.7,
+   "y1": 239.2,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      229.2,
+      84.7,
+      239.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p06-005",
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "form of ownership: individual",
+   "printed_label": "Individual",
+   "must": false,
+   "x0": 74.7,
+   "y0": 292.2,
+   "x1": 84.7,
+   "y1": 302.2,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      292.2,
+      84.7,
+      302.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p06-006",
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "form of ownership: joint tenants with rights of survivorship",
+   "printed_label": "Joint Tenants with Rights of Survivorship",
+   "must": false,
+   "x0": 74.7,
+   "y0": 310.9,
+   "x1": 84.7,
+   "y1": 320.9,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      310.9,
+      84.7,
+      320.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p06-007",
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "form of ownership: tenants in common",
+   "printed_label": "Tenants in Common",
+   "must": false,
+   "x0": 74.7,
+   "y0": 329.7,
+   "x1": 84.7,
+   "y1": 339.7,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      329.7,
+      84.7,
+      339.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p06-008",
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "form of ownership: corporation",
+   "printed_label": "Corporation",
+   "must": false,
+   "x0": 74.7,
+   "y0": 348.4,
+   "x1": 84.7,
+   "y1": 358.4,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      348.4,
+      84.7,
+      358.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p06-009",
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "form of ownership: partnership",
+   "printed_label": "Partnership",
+   "must": false,
+   "x0": 74.7,
+   "y0": 378.4,
+   "x1": 84.7,
+   "y1": 388.4,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      378.4,
+      84.7,
+      388.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p06-010",
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "general or limited partnership",
+   "printed_label": "Identify whether general or limited partnership:",
+   "must": false,
+   "x0": 295.1,
+   "y0": 392.1,
+   "x1": 395.3,
+   "y1": 407.6,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Identify whether general or limited partnership",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "text",
+     "box": [
+      295.1,
+      392.1,
+      395.3,
+      407.6
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p06-011",
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "form of ownership: estate",
+   "printed_label": "Estate",
+   "must": false,
+   "x0": 74.7,
+   "y0": 415.9,
+   "x1": 84.7,
+   "y1": 425.9,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      415.9,
+      84.7,
+      425.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p06-012",
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "name of executor",
+   "printed_label": "Name of Executor:",
+   "must": false,
+   "x0": 181.0,
+   "y0": 429.6,
+   "x1": 281.2,
+   "y1": 445.1,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Name of Executor",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "name",
+     "box": [
+      181.0,
+      429.6,
+      281.2,
+      445.1
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p06-013",
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "form of ownership: trust",
+   "printed_label": "Trust",
+   "must": false,
+   "x0": 74.7,
+   "y0": 453.4,
+   "x1": 84.7,
+   "y1": 463.4,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      453.4,
+      84.7,
+      463.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p06-014",
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "name of trust",
+   "printed_label": "Name of Trust:",
+   "must": false,
+   "x0": 165.5,
+   "y0": 467.1,
+   "x1": 265.7,
+   "y1": 482.6,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-entity",
+    "field_label": "Investor name",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-entity",
+     "what": "name",
+     "box": [
+      165.5,
+      467.1,
+      265.7,
+      482.6
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p06-015",
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "name of trustee",
+   "printed_label": "Name of Trustee:",
+   "must": false,
+   "x0": 174.3,
+   "y0": 485.9,
+   "x1": 274.6,
+   "y1": 501.4,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Name of Trustee",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "name",
+     "box": [
+      174.3,
+      485.9,
+      274.6,
+      501.4
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p06-016",
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "name of beneficiary",
+   "printed_label": "Name of Beneficiary:",
+   "must": false,
+   "x0": 191.5,
+   "y0": 504.6,
+   "x1": 291.8,
+   "y1": 520.1,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Name of Beneficiary",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "name",
+     "box": [
+      191.5,
+      504.6,
+      291.8,
+      520.1
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p06-017",
+   "page": 6,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "form of ownership: qualified pension or profit sharing plan (non-custodian)",
+   "printed_label": "Qualified Pension Plan or Profit Sharing Plan (Non-Custodian)",
+   "must": false,
+   "x0": 74.7,
+   "y0": 528.4,
+   "x1": 84.7,
+   "y1": 538.4,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      528.4,
+      84.7,
+      538.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p06-018",
+   "page": 6,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "name of plan trustee",
+   "printed_label": "Name of Trustee:",
+   "must": false,
+   "x0": 174.3,
+   "y0": 554.1,
+   "x1": 274.6,
+   "y1": 569.6,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-individual",
+    "field_label": "Name of Trustee",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-individual",
+     "what": "name",
+     "box": [
+      174.3,
+      554.1,
+      274.6,
+      569.6
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p07-001",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "form of ownership: other non-custodial account",
+   "printed_label": "Other Non-Custodial Ownership Account (Specify):",
+   "must": false,
+   "x0": 74.7,
+   "y0": 28.9,
+   "x1": 84.7,
+   "y1": 38.9,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      28.9,
+      84.7,
+      38.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p07-002",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "custodial account: traditional IRA",
+   "printed_label": "Traditional IRA",
+   "must": false,
+   "x0": 74.7,
+   "y0": 85.2,
+   "x1": 84.7,
+   "y1": 95.2,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      85.2,
+      84.7,
+      95.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p07-003",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "custodial account: Roth IRA",
+   "printed_label": "Roth IRA",
+   "must": false,
+   "x0": 74.7,
+   "y0": 103.2,
+   "x1": 84.7,
+   "y1": 113.2,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      103.2,
+      84.7,
+      113.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p07-004",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "custodial account: KEOGH plan",
+   "printed_label": "KEOGH Plan",
+   "must": false,
+   "x0": 74.7,
+   "y0": 121.2,
+   "x1": 84.7,
+   "y1": 131.2,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      121.2,
+      84.7,
+      131.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p07-005",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "custodial account: simplified employee pension/trust (SEP)",
+   "printed_label": "Simplified Employee Pension/Trust (SEP)",
+   "must": false,
+   "x0": 74.7,
+   "y0": 139.2,
+   "x1": 84.7,
+   "y1": 149.2,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      139.2,
+      84.7,
+      149.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p08-001",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "custodial account: pension or profit-sharing plan",
+   "printed_label": "Pension or Profit-Sharing Plan",
+   "must": false,
+   "x0": 74.7,
+   "y0": 74.7,
+   "x1": 84.7,
+   "y1": 84.7,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      74.7,
+      84.7,
+      84.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p08-002",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 74.7,
+   "y0": 92.7,
+   "x1": 84.7,
+   "y1": 102.7,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      92.7,
+      84.7,
+      102.7
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p08-003",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "State of",
+   "printed_label": "State of",
+   "must": true,
+   "x0": 138.5,
+   "y0": 106.4,
+   "x1": 238.8,
+   "y1": 121.9,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "State of",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      138.5,
+      106.4,
+      238.8,
+      121.9
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p08-004",
+   "page": 8,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Custodian",
+   "printed_label": "Custodian for",
+   "must": false,
+   "x0": 311.2,
+   "y0": 106.4,
+   "x1": 411.5,
+   "y1": 121.9,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "third-party",
+    "field_label": "Custodian",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "third-party",
+     "what": "text",
+     "box": [
+      311.2,
+      106.4,
+      411.5,
+      121.9
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p08-005",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 74.7,
+   "y0": 130.2,
+   "x1": 84.7,
+   "y1": 140.2,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      130.2,
+      84.7,
+      140.2
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p14-001",
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 74.7,
+   "y0": 74.7,
+   "x1": 84.7,
+   "y1": 84.7,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      74.7,
+      84.7,
+      84.7
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p14-002",
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 74.7,
+   "y0": 168.4,
+   "x1": 84.7,
+   "y1": 178.4,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      168.4,
+      84.7,
+      178.4
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p14-003",
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "o",
+   "printed_label": "o",
+   "must": false,
+   "x0": 74.7,
+   "y0": 198.4,
+   "x1": 84.7,
+   "y1": 208.4,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      198.4,
+      84.7,
+      208.4
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p14-004",
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 74.7,
+   "y0": 216.4,
+   "x1": 84.7,
+   "y1": 226.4,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      216.4,
+      84.7,
+      226.4
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p14-015",
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 77.5,
+   "y0": 392.7,
+   "x1": 87.5,
+   "y1": 402.7,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      77.5,
+      392.7,
+      87.5,
+      402.7
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p14-016",
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 74.7,
+   "y0": 451.2,
+   "x1": 84.7,
+   "y1": 461.2,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      451.2,
+      84.7,
+      461.2
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p14-017",
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 74.7,
+   "y0": 493.9,
+   "x1": 84.7,
+   "y1": 503.9,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      493.9,
+      84.7,
+      503.9
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p17-002",
+   "page": 17,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 74.7,
+   "y0": 302.7,
+   "x1": 84.7,
+   "y1": 312.7,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      302.7,
+      84.7,
+      312.7
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p17-003",
+   "page": 17,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 74.7,
+   "y0": 344.7,
+   "x1": 84.7,
+   "y1": 354.7,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      344.7,
+      84.7,
+      354.7
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p17-004",
+   "page": 17,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 74.7,
+   "y0": 511.9,
+   "x1": 84.7,
+   "y1": 521.9,
+   "printed_as": "measure candidate: glyphbox (tick box printed as its fallback glyph \"o\" in a choice column)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "glyphbox",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      74.7,
+      511.9,
+      84.7,
+      521.9
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p07-006",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "other non-custodial account: specify",
+   "printed_label": "Specify",
+   "must": false,
+   "x0": 96.0,
+   "y0": 38.9,
+   "x1": 707.2,
+   "y1": 52.5,
+   "printed_as": "measured by hand",
+   "what": "text"
+  }
+ ],
+ "may_fill": [],
+ "source": "hand",
+ "draft": true,
+ "mode": "train",
+ "prefilled": {
+  "when": "2026-11-15T00:43:56Z",
+  "candidates": "a3e52923e04705c0-f01586d5.json",
+  "result": "out-set-b/b082/result.json",
+  "fields": 45,
+  "counted_candidates": 83
+ }
+}

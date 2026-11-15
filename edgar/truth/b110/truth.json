@@ -1,0 +1,4063 @@
+{
+ "file": "set-b/b110/doc.pdf",
+ "id": "b110",
+ "pages": 9,
+ "page_size_pt": [
+  612.0,
+  792.0
+ ],
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "picture",
+  "2": "picture",
+  "3": "picture",
+  "4": "picture",
+  "5": "picture",
+  "6": "picture",
+  "7": "picture",
+  "8": "picture",
+  "9": "picture"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
+ "signing": {
+  "investor_pages": [],
+  "firm_pages": [],
+  "co_investor": true,
+  "third_parties": [],
+  "kind": ""
+ },
+ "counts_per_page": {
+  "1": {
+   "total": 58,
+   "tickbox": 28,
+   "initials": 0,
+   "blank": 30,
+   "signature": 0,
+   "date": 0
+  },
+  "2": {
+   "total": 22,
+   "tickbox": 9,
+   "initials": 0,
+   "blank": 13,
+   "signature": 0,
+   "date": 0
+  },
+  "3": {
+   "total": 19,
+   "tickbox": 16,
+   "initials": 0,
+   "blank": 3,
+   "signature": 0,
+   "date": 0
+  },
+  "4": {
+   "total": 24,
+   "tickbox": 22,
+   "initials": 0,
+   "blank": 2,
+   "signature": 0,
+   "date": 0
+  },
+  "5": {
+   "total": 16,
+   "tickbox": 14,
+   "initials": 0,
+   "blank": 2,
+   "signature": 0,
+   "date": 0
+  },
+  "7": {
+   "total": 2,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 2,
+   "signature": 0,
+   "date": 0
+  }
+ },
+ "counts_total": {
+  "total": 141,
+  "tickbox": 89,
+  "initials": 0,
+  "blank": 52,
+  "signature": 0,
+  "date": 0
+ },
+ "counts_by_owner": {
+  "co-investor": 4,
+  "investor": 137
+ },
+ "sure_per_page": {
+  "1": "draft",
+  "2": "draft",
+  "3": "draft",
+  "4": "draft",
+  "5": "draft",
+  "6": "draft",
+  "7": "draft",
+  "8": "draft",
+  "9": "draft"
+ },
+ "not_fields": {},
+ "places": [
+  {
+   "id": "p01-002",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investment amount: REIT",
+   "printed_label": "Investment Amount",
+   "must": true,
+   "x0": 468.0,
+   "y0": 221.8,
+   "x1": 528.5,
+   "y1": 237.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      468.0,
+      221.8,
+      528.5,
+      237.3
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p01-003",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Payment: enclosed checks",
+   "printed_label": "Enclosed Checks",
+   "must": false,
+   "x0": 84.2,
+   "y0": 241.9,
+   "x1": 93.6,
+   "y1": 251.3,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      241.9,
+      93.6,
+      251.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-004",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investment amount: Program",
+   "printed_label": "Investment Amount",
+   "must": false,
+   "x0": 468.0,
+   "y0": 247.4,
+   "x1": 528.5,
+   "y1": 262.9,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      468.0,
+      247.4,
+      528.5,
+      262.9
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p01-005",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Payment: funds wired",
+   "printed_label": "Funds Wired",
+   "must": false,
+   "x0": 84.2,
+   "y0": 254.2,
+   "x1": 93.6,
+   "y1": 263.5,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      254.2,
+      93.6,
+      263.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-006",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Payment: funds to follow",
+   "printed_label": "Funds to Follow",
+   "must": false,
+   "x0": 84.2,
+   "y0": 265.0,
+   "x1": 93.6,
+   "y1": 274.3,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      265.0,
+      93.6,
+      274.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-007",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "UGMA state",
+   "printed_label": "UGMA: State of",
+   "must": false,
+   "x0": 283.7,
+   "y0": 314.0,
+   "x1": 326.9,
+   "y1": 329.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      283.7,
+      314.0,
+      326.9,
+      329.5
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p01-008",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: individual",
+   "printed_label": "Individual (If TOD, attach application)",
+   "must": false,
+   "x0": 84.2,
+   "y0": 321.8,
+   "x1": 93.6,
+   "y1": 331.2,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      321.8,
+      93.6,
+      331.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-009",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: UGMA",
+   "printed_label": "UGMA: State of",
+   "must": false,
+   "x0": 226.1,
+   "y0": 321.8,
+   "x1": 235.4,
+   "y1": 331.2,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      226.1,
+      321.8,
+      235.4,
+      331.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-010",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: traditional IRA",
+   "printed_label": "Traditional (Individual) IRA",
+   "must": false,
+   "x0": 338.4,
+   "y0": 321.8,
+   "x1": 347.8,
+   "y1": 331.2,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      338.4,
+      321.8,
+      347.8,
+      331.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-011",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: SEP IRA",
+   "printed_label": "SEP IRA",
+   "must": false,
+   "x0": 470.9,
+   "y0": 321.8,
+   "x1": 480.2,
+   "y1": 331.2,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      470.9,
+      321.8,
+      480.2,
+      331.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-012",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "UTMA state",
+   "printed_label": "UTMA: State of",
+   "must": false,
+   "x0": 284.4,
+   "y0": 325.1,
+   "x1": 326.2,
+   "y1": 340.6,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      284.4,
+      325.1,
+      326.2,
+      340.6
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p01-013",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: joint tenant",
+   "printed_label": "Joint Tenant* (If TOD, attach application)",
+   "must": false,
+   "x0": 84.2,
+   "y0": 331.9,
+   "x1": 93.6,
+   "y1": 341.3,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      331.9,
+      93.6,
+      341.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-014",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: simple IRA",
+   "printed_label": "Simple IRA",
+   "must": false,
+   "x0": 338.4,
+   "y0": 331.9,
+   "x1": 347.8,
+   "y1": 341.3,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      338.4,
+      331.9,
+      347.8,
+      341.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-015",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: Roth IRA",
+   "printed_label": "ROTH IRA",
+   "must": false,
+   "x0": 470.9,
+   "y0": 331.9,
+   "x1": 480.2,
+   "y1": 341.3,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      470.9,
+      331.9,
+      480.2,
+      341.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-016",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: UTMA",
+   "printed_label": "UTMA: State of",
+   "must": false,
+   "x0": 226.6,
+   "y0": 333.2,
+   "x1": 235.8,
+   "y1": 341.4,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      228.2,
+      334.1,
+      233.3,
+      339.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-017",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: tenants in common",
+   "printed_label": "Tenants in Common*",
+   "must": false,
+   "x0": 84.2,
+   "y0": 343.4,
+   "x1": 93.6,
+   "y1": 352.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      343.4,
+      93.6,
+      352.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-018",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: corporation",
+   "printed_label": "Corporation**",
+   "must": false,
+   "x0": 226.1,
+   "y0": 343.4,
+   "x1": 235.4,
+   "y1": 352.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      226.1,
+      343.4,
+      235.4,
+      352.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-019",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: beneficial IRA",
+   "printed_label": "Beneficial IRA",
+   "must": false,
+   "x0": 338.4,
+   "y0": 343.4,
+   "x1": 348.5,
+   "y1": 352.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      338.4,
+      343.4,
+      348.5,
+      352.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-020",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Beneficial IRA: as beneficiary for",
+   "printed_label": "as Beneficiary for:",
+   "must": false,
+   "x0": 407.5,
+   "y0": 347.8,
+   "x1": 528.5,
+   "y1": 363.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      407.5,
+      347.8,
+      528.5,
+      363.3
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p01-021",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: community property",
+   "printed_label": "Community Property*",
+   "must": false,
+   "x0": 84.2,
+   "y0": 353.5,
+   "x1": 93.6,
+   "y1": 362.9,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      353.5,
+      93.6,
+      362.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-022",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: pension plan",
+   "printed_label": "Pension Plan**",
+   "must": false,
+   "x0": 470.9,
+   "y0": 365.0,
+   "x1": 480.2,
+   "y1": 374.4,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      470.9,
+      365.0,
+      480.2,
+      374.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-023",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: trust",
+   "printed_label": "Trust**",
+   "must": false,
+   "x0": 84.8,
+   "y0": 365.4,
+   "x1": 93.9,
+   "y1": 374.5,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      85.7,
+      367.2,
+      91.4,
+      372.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-024",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: partnership",
+   "printed_label": "Partnership**",
+   "must": false,
+   "x0": 226.6,
+   "y0": 365.4,
+   "x1": 235.8,
+   "y1": 374.5,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      228.2,
+      367.2,
+      234.0,
+      372.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-025",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Other account type, specify",
+   "printed_label": "Other (Specify)",
+   "must": false,
+   "x0": 285.1,
+   "y0": 369.0,
+   "x1": 326.9,
+   "y1": 384.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      285.1,
+      369.0,
+      326.9,
+      384.5
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p01-026",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: profit sharing plan",
+   "printed_label": "Profit Sharing Plan**",
+   "must": false,
+   "x0": 339.2,
+   "y0": 365.4,
+   "x1": 347.4,
+   "y1": 374.5,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      340.6,
+      367.2,
+      346.3,
+      372.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-027",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: non-profit organization",
+   "printed_label": "Non-Profit Organization**",
+   "must": false,
+   "x0": 84.8,
+   "y0": 376.6,
+   "x1": 93.9,
+   "y1": 385.8,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      85.7,
+      378.0,
+      91.4,
+      383.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-028",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: other",
+   "printed_label": "Other (Specify)",
+   "must": false,
+   "x0": 226.6,
+   "y0": 376.6,
+   "x1": 235.8,
+   "y1": 385.8,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      228.2,
+      378.0,
+      233.3,
+      383.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-029",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Account type: KEOGH plan",
+   "printed_label": "KEOGH Plan**",
+   "must": false,
+   "x0": 339.2,
+   "y0": 376.6,
+   "x1": 347.4,
+   "y1": 385.8,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      340.6,
+      378.0,
+      346.3,
+      383.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-030",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Street address",
+   "printed_label": "Street Address:",
+   "must": true,
+   "x0": 85.0,
+   "y0": 457.2,
+   "x1": 528.1,
+   "y1": 472.7,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      85.0,
+      456.9,
+      528.5,
+      472.4
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p01-031",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Mailing address (optional)",
+   "printed_label": "Mailing Address:",
+   "must": false,
+   "x0": 85.0,
+   "y0": 497.0,
+   "x1": 528.1,
+   "y1": 512.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      84.2,
+      497.2,
+      528.5,
+      512.7
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p01-032",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Phone (day)",
+   "printed_label": "Phone (day):",
+   "must": false,
+   "x0": 85.7,
+   "y0": 531.7,
+   "x1": 284.0,
+   "y1": 547.2,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      85.0,
+      531.8,
+      528.5,
+      547.3
+     ]
+    }
+   },
+   "what": "phone"
+  },
+  {
+   "id": "p01-033",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "US citizen",
+   "printed_label": "US Citizen",
+   "must": false,
+   "x0": 84.2,
+   "y0": 567.4,
+   "x1": 93.6,
+   "y1": 576.7,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      567.4,
+      93.6,
+      576.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-034",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "US citizen residing outside the US",
+   "printed_label": "US Citizen residing outside the US",
+   "must": false,
+   "x0": 244.8,
+   "y0": 568.1,
+   "x1": 254.2,
+   "y1": 578.2,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      244.8,
+      568.1,
+      254.2,
+      578.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-035",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Foreign citizen: country",
+   "printed_label": "Foreign citizen, country:",
+   "must": false,
+   "x0": 167.0,
+   "y0": 575.7,
+   "x1": 300.2,
+   "y1": 591.2,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      167.0,
+      575.7,
+      300.2,
+      591.2
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p01-036",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Foreign citizen",
+   "printed_label": "Foreign citizen, country:",
+   "must": false,
+   "x0": 84.2,
+   "y0": 581.0,
+   "x1": 93.6,
+   "y1": 590.4,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      581.0,
+      93.6,
+      590.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-037",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Subject to backup withholding",
+   "printed_label": "Check here if you are subject to backup withholding",
+   "must": false,
+   "x0": 315.4,
+   "y0": 581.0,
+   "x1": 324.7,
+   "y1": 590.4,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      315.4,
+      581.0,
+      324.7,
+      590.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p01-038",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investment title line 2",
+   "printed_label": "Title Line 2:",
+   "must": false,
+   "x0": 85.0,
+   "y0": 640.8,
+   "x1": 528.1,
+   "y1": 652.7,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      85.0,
+      636.9,
+      528.5,
+      652.4
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p02-001",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 85.0,
+   "y0": 78.9,
+   "x1": 528.5,
+   "y1": 94.4,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      85.0,
+      78.9,
+      528.5,
+      94.4
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p02-002",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 85.0,
+   "y0": 90.0,
+   "x1": 529.2,
+   "y1": 105.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      85.0,
+      90.0,
+      529.2,
+      105.5
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p02-003",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 85.0,
+   "y0": 101.6,
+   "x1": 529.2,
+   "y1": 117.1,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      85.0,
+      101.6,
+      529.2,
+      117.1
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p02-004",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 85.0,
+   "y0": 135.8,
+   "x1": 528.5,
+   "y1": 151.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      85.0,
+      135.8,
+      528.5,
+      151.3
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p02-005",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 481.0,
+   "y0": 266.1,
+   "x1": 529.2,
+   "y1": 281.6,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      481.0,
+      266.1,
+      529.2,
+      281.6
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p02-006",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 271.4,
+   "x1": 93.6,
+   "y1": 280.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      271.4,
+      93.6,
+      280.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-007",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 282.2,
+   "x1": 93.6,
+   "y1": 291.6,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      282.2,
+      93.6,
+      291.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-008",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 85.7,
+   "y0": 295.9,
+   "x1": 91.4,
+   "y1": 301.0,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      85.7,
+      295.9,
+      91.4,
+      301.0
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-009",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 313.2,
+   "x1": 528.5,
+   "y1": 328.7,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      84.2,
+      313.2,
+      528.5,
+      328.7
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p02-010",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 85.0,
+   "y0": 356.4,
+   "x1": 94.3,
+   "y1": 366.5,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      85.0,
+      356.4,
+      94.3,
+      366.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-011",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 85.7,
+   "y0": 395.7,
+   "x1": 529.2,
+   "y1": 411.2,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      85.7,
+      395.7,
+      529.2,
+      411.2
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p02-012",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 479.5,
+   "y0": 401.0,
+   "x1": 485.3,
+   "y1": 406.8,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      479.5,
+      401.0,
+      485.3,
+      406.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-013",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 478.1,
+   "y0": 411.1,
+   "x1": 487.4,
+   "y1": 420.5,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      478.1,
+      411.1,
+      487.4,
+      420.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-014",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 443.9,
+   "x1": 528.5,
+   "y1": 459.4,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      84.2,
+      443.9,
+      528.5,
+      459.4
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p02-015",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 456.2,
+   "x1": 528.5,
+   "y1": 471.7,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      84.2,
+      456.2,
+      528.5,
+      471.7
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p02-016",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 468.0,
+   "x1": 528.5,
+   "y1": 483.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      84.2,
+      468.0,
+      528.5,
+      483.5
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p02-017",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 479.6,
+   "x1": 528.5,
+   "y1": 495.1,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      84.2,
+      479.6,
+      528.5,
+      495.1
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p02-018",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 85.7,
+   "y0": 514.5,
+   "x1": 529.2,
+   "y1": 530.0,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      85.7,
+      514.5,
+      529.2,
+      530.0
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p02-019",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 550.1,
+   "x1": 93.6,
+   "y1": 559.4,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      550.1,
+      93.6,
+      559.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-020",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 342.0,
+   "y0": 555.8,
+   "x1": 351.4,
+   "y1": 565.2,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      342.0,
+      555.8,
+      351.4,
+      565.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-021",
+   "page": 2,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 562.3,
+   "x1": 93.6,
+   "y1": 571.7,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      562.3,
+      93.6,
+      571.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p02-022",
+   "page": 2,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 85.0,
+   "y0": 611.7,
+   "x1": 528.5,
+   "y1": 627.2,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      85.0,
+      611.7,
+      528.5,
+      627.2
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p03-001",
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 162.0,
+   "y0": 201.3,
+   "x1": 528.5,
+   "y1": 216.8,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      162.0,
+      201.3,
+      528.5,
+      216.8
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p03-002",
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 162.0,
+   "y0": 212.8,
+   "x1": 528.5,
+   "y1": 228.3,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      162.0,
+      212.8,
+      528.5,
+      228.3
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p03-003",
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 162.0,
+   "y0": 224.0,
+   "x1": 528.5,
+   "y1": 239.5,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      162.0,
+      224.0,
+      528.5,
+      239.5
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p03-004",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 290.2,
+   "x1": 100.1,
+   "y1": 306.0,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      290.2,
+      100.1,
+      306.0
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-005",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 126.0,
+   "y0": 290.2,
+   "x1": 142.6,
+   "y1": 306.0,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      126.0,
+      290.2,
+      142.6,
+      306.0
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-006",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 317.5,
+   "x1": 100.1,
+   "y1": 334.1,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      317.5,
+      100.1,
+      334.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-007",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 128.2,
+   "y0": 319.7,
+   "x1": 141.1,
+   "y1": 331.9,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      128.2,
+      319.7,
+      141.1,
+      331.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-008",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 385.2,
+   "x1": 100.1,
+   "y1": 401.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      385.2,
+      100.1,
+      401.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-009",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 128.2,
+   "y0": 387.4,
+   "x1": 141.1,
+   "y1": 399.6,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      128.2,
+      387.4,
+      141.1,
+      399.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-010",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 412.6,
+   "x1": 100.1,
+   "y1": 428.4,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      412.6,
+      100.1,
+      428.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-011",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 126.0,
+   "y0": 412.6,
+   "x1": 142.6,
+   "y1": 428.4,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      126.0,
+      412.6,
+      142.6,
+      428.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-012",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 431.3,
+   "x1": 100.1,
+   "y1": 447.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      431.3,
+      100.1,
+      447.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-013",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 126.0,
+   "y0": 431.3,
+   "x1": 142.6,
+   "y1": 447.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      126.0,
+      431.3,
+      142.6,
+      447.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-014",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 479.5,
+   "x1": 100.1,
+   "y1": 495.4,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      479.5,
+      100.1,
+      495.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-015",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 126.0,
+   "y0": 479.5,
+   "x1": 142.6,
+   "y1": 496.1,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      126.0,
+      479.5,
+      142.6,
+      496.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-016",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 508.3,
+   "x1": 100.1,
+   "y1": 524.9,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      508.3,
+      100.1,
+      524.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-017",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 126.0,
+   "y0": 508.3,
+   "x1": 142.6,
+   "y1": 524.9,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      126.0,
+      508.3,
+      142.6,
+      524.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-018",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 593.3,
+   "x1": 100.1,
+   "y1": 609.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      593.3,
+      100.1,
+      609.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-019",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 128.2,
+   "y0": 595.4,
+   "x1": 141.1,
+   "y1": 607.7,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      128.2,
+      595.4,
+      141.1,
+      607.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-001",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 88.6,
+   "x1": 100.1,
+   "y1": 105.1,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      88.6,
+      100.1,
+      105.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-002",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 129.6,
+   "y0": 90.7,
+   "x1": 141.8,
+   "y1": 103.0,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      129.6,
+      90.7,
+      141.8,
+      103.0
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-003",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 116.6,
+   "x1": 100.1,
+   "y1": 132.5,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      116.6,
+      100.1,
+      132.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-004",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 127.4,
+   "y0": 116.6,
+   "x1": 144.0,
+   "y1": 132.5,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      127.4,
+      116.6,
+      144.0,
+      132.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-005",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 145.4,
+   "x1": 100.1,
+   "y1": 162.0,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      145.4,
+      100.1,
+      162.0
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-006",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 129.6,
+   "y0": 147.6,
+   "x1": 141.8,
+   "y1": 159.8,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      129.6,
+      147.6,
+      141.8,
+      159.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-007",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 211.0,
+   "y0": 213.8,
+   "x1": 217.4,
+   "y1": 220.3,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      211.0,
+      213.8,
+      217.4,
+      220.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-008",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 312.5,
+   "y0": 213.8,
+   "x1": 320.4,
+   "y1": 220.3,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      312.5,
+      213.8,
+      320.4,
+      220.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-009",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 85.0,
+   "y0": 272.6,
+   "x1": 528.5,
+   "y1": 288.1,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      85.0,
+      272.6,
+      528.5,
+      288.1
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p04-010",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 85.0,
+   "y0": 298.5,
+   "x1": 528.5,
+   "y1": 314.0,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      85.0,
+      298.5,
+      528.5,
+      314.0
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p04-011",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 367.2,
+   "x1": 100.1,
+   "y1": 383.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      367.2,
+      100.1,
+      383.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-012",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 129.6,
+   "y0": 369.4,
+   "x1": 141.8,
+   "y1": 381.6,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      129.6,
+      369.4,
+      141.8,
+      381.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-013",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 395.3,
+   "x1": 100.1,
+   "y1": 411.1,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      395.3,
+      100.1,
+      411.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-014",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 127.4,
+   "y0": 395.3,
+   "x1": 144.0,
+   "y1": 411.1,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      127.4,
+      395.3,
+      144.0,
+      411.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-015",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 461.5,
+   "x1": 100.1,
+   "y1": 478.1,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      461.5,
+      100.1,
+      478.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-016",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 127.4,
+   "y0": 460.8,
+   "x1": 144.0,
+   "y1": 477.4,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      127.4,
+      460.8,
+      144.0,
+      477.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-017",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 491.0,
+   "x1": 100.1,
+   "y1": 507.6,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      491.0,
+      100.1,
+      507.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-018",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 127.4,
+   "y0": 491.0,
+   "x1": 144.0,
+   "y1": 507.6,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      127.4,
+      491.0,
+      144.0,
+      507.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-019",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 509.8,
+   "x1": 100.1,
+   "y1": 526.3,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      509.8,
+      100.1,
+      526.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-020",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 127.4,
+   "y0": 509.8,
+   "x1": 144.0,
+   "y1": 526.3,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      127.4,
+      509.8,
+      144.0,
+      526.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-021",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 556.6,
+   "x1": 100.1,
+   "y1": 573.1,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      556.6,
+      100.1,
+      573.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-022",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 127.4,
+   "y0": 556.6,
+   "x1": 144.0,
+   "y1": 573.1,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      127.4,
+      556.6,
+      144.0,
+      573.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-023",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 584.6,
+   "x1": 100.1,
+   "y1": 600.5,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      584.6,
+      100.1,
+      600.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-024",
+   "page": 4,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 127.4,
+   "y0": 584.6,
+   "x1": 144.0,
+   "y1": 600.5,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      127.4,
+      584.6,
+      144.0,
+      600.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p05-001",
+   "page": 5,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 89.3,
+   "x1": 100.1,
+   "y1": 105.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      89.3,
+      100.1,
+      105.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p05-002",
+   "page": 5,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 129.6,
+   "y0": 91.4,
+   "x1": 141.8,
+   "y1": 103.7,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      129.6,
+      91.4,
+      141.8,
+      103.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p05-003",
+   "page": 5,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 136.8,
+   "x1": 100.1,
+   "y1": 152.6,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      136.8,
+      100.1,
+      152.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "p05-004",
+   "page": 5,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 127.4,
+   "y0": 136.8,
+   "x1": 144.0,
+   "y1": 152.6,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      127.4,
+      136.8,
+      144.0,
+      152.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "p05-005",
+   "page": 5,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 164.9,
+   "x1": 100.1,
+   "y1": 181.4,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      164.9,
+      100.1,
+      181.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p05-006",
+   "page": 5,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 127.4,
+   "y0": 164.9,
+   "x1": 144.0,
+   "y1": 181.4,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      127.4,
+      164.9,
+      144.0,
+      181.4
+     ]
+    }
+   }
+  },
+  {
+   "id": "p05-007",
+   "page": 5,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 221.8,
+   "x1": 100.1,
+   "y1": 237.6,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      221.8,
+      100.1,
+      237.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "p05-008",
+   "page": 5,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 127.4,
+   "y0": 221.8,
+   "x1": 144.0,
+   "y1": 237.6,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      127.4,
+      221.8,
+      144.0,
+      237.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "p05-009",
+   "page": 5,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 268.6,
+   "x1": 100.1,
+   "y1": 285.1,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      268.6,
+      100.1,
+      285.1
+     ]
+    }
+   }
+  },
+  {
+   "id": "p05-010",
+   "page": 5,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 129.6,
+   "y0": 270.7,
+   "x1": 141.8,
+   "y1": 283.0,
+   "printed_as": "measure candidate: tick (light rectangle on a tinted ground)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      129.6,
+      270.7,
+      141.8,
+      283.0
+     ]
+    }
+   }
+  },
+  {
+   "id": "p05-011",
+   "page": 5,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 297.4,
+   "x1": 100.1,
+   "y1": 313.2,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      84.2,
+      297.4,
+      100.1,
+      313.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p05-012",
+   "page": 5,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 127.4,
+   "y0": 297.4,
+   "x1": 144.0,
+   "y1": 313.2,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      127.4,
+      297.4,
+      144.0,
+      313.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p05-013",
+   "page": 5,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 288.7,
+   "y0": 328.3,
+   "x1": 295.2,
+   "y1": 334.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      288.7,
+      328.3,
+      295.2,
+      334.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p05-014",
+   "page": 5,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "tick box",
+   "printed_label": "",
+   "must": false,
+   "x0": 447.1,
+   "y0": 328.3,
+   "x1": 453.6,
+   "y1": 334.8,
+   "printed_as": "measure candidate: tick (enclosed light rectangle)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      447.1,
+      328.3,
+      453.6,
+      334.8
+     ]
+    }
+   }
+  },
+  {
+   "id": "p05-015",
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 401.4,
+   "x1": 528.5,
+   "y1": 416.9,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      84.2,
+      401.4,
+      528.5,
+      416.9
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p05-016",
+   "page": 5,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 84.2,
+   "y0": 427.7,
+   "x1": 528.5,
+   "y1": 443.2,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      84.2,
+      427.7,
+      528.5,
+      443.2
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p07-001",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 85.0,
+   "y0": 140.4,
+   "x1": 527.8,
+   "y1": 155.9,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      85.0,
+      140.4,
+      527.8,
+      155.9
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p07-002",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "blank",
+   "printed_label": "",
+   "must": false,
+   "x0": 175.0,
+   "y0": 244.1,
+   "x1": 208.8,
+   "y1": 259.6,
+   "printed_as": "measure candidate: rule (dark stroke)",
+   "doubt": "candidate only",
+   "prefill": {
+    "origin": "candidate",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      175.0,
+      244.1,
+      208.8,
+      259.6
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p01-039",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Amount of subscription",
+   "printed_label": "Amount of Subscription:",
+   "must": true,
+   "x0": 85.3,
+   "y0": 185.6,
+   "x1": 311.0,
+   "y1": 201.1,
+   "printed_as": "measured by hand",
+   "what": "amount"
+  },
+  {
+   "id": "p01-040",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "State of sale",
+   "printed_label": "State of Sale:",
+   "must": false,
+   "x0": 311.0,
+   "y0": 185.6,
+   "x1": 527.8,
+   "y1": 201.1,
+   "printed_as": "measured by hand",
+   "what": "text"
+  },
+  {
+   "id": "p01-041",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Corporation: S-Corp",
+   "printed_label": "S-Corp",
+   "must": false,
+   "x0": 239.4,
+   "y0": 353.4,
+   "x1": 243.9,
+   "y1": 357.9,
+   "printed_as": "picture pixels at the picture's resolution: snapped to the printed stroke(s) within 6 pt"
+  },
+  {
+   "id": "p01-042",
+   "page": 1,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Corporation: C-Corp",
+   "printed_label": "C-Corp",
+   "must": false,
+   "x0": 264.1,
+   "y0": 353.4,
+   "x1": 268.6,
+   "y1": 357.9,
+   "printed_as": "picture pixels at the picture's resolution: snapped to the printed stroke(s) within 6 pt"
+  },
+  {
+   "id": "p01-043",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor #1 name",
+   "printed_label": "Investor #1 Name:",
+   "must": true,
+   "x0": 85.3,
+   "y0": 422.1,
+   "x1": 255.7,
+   "y1": 437.6,
+   "printed_as": "measured by hand",
+   "what": "name"
+  },
+  {
+   "id": "p01-044",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor #1 SSN/Tax ID",
+   "printed_label": "SSN/Tax ID:",
+   "must": true,
+   "x0": 255.7,
+   "y0": 422.1,
+   "x1": 386.2,
+   "y1": 437.6,
+   "printed_as": "measured by hand",
+   "what": "tax number"
+  },
+  {
+   "id": "p01-045",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor #1 date of birth",
+   "printed_label": "DOB:",
+   "must": true,
+   "x0": 386.2,
+   "y0": 422.1,
+   "x1": 528.1,
+   "y1": 437.6,
+   "printed_as": "measured by hand",
+   "what": "date"
+  },
+  {
+   "id": "p01-046",
+   "page": 1,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Investor #2 name",
+   "printed_label": "Investor #2 Name:",
+   "must": false,
+   "x0": 85.3,
+   "y0": 440.1,
+   "x1": 255.7,
+   "y1": 455.6,
+   "printed_as": "measured by hand",
+   "what": "name"
+  },
+  {
+   "id": "p01-047",
+   "page": 1,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Investor #2 SSN/Tax ID",
+   "printed_label": "SSN/Tax ID:",
+   "must": false,
+   "x0": 255.7,
+   "y0": 440.1,
+   "x1": 386.2,
+   "y1": 455.6,
+   "printed_as": "measured by hand",
+   "what": "tax number"
+  },
+  {
+   "id": "p01-048",
+   "page": 1,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Investor #2 date of birth",
+   "printed_label": "DOB:",
+   "must": false,
+   "x0": 386.2,
+   "y0": 440.1,
+   "x1": 528.1,
+   "y1": 455.6,
+   "printed_as": "measured by hand",
+   "what": "date"
+  },
+  {
+   "id": "p01-049",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "City",
+   "printed_label": "City:",
+   "must": true,
+   "x0": 85.3,
+   "y0": 474.8,
+   "x1": 284.0,
+   "y1": 490.3,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p01-050",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "State",
+   "printed_label": "State:",
+   "must": true,
+   "x0": 284.0,
+   "y0": 474.8,
+   "x1": 369.0,
+   "y1": 490.3,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p01-051",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "ZIP code",
+   "printed_label": "Zip Code:",
+   "must": true,
+   "x0": 369.0,
+   "y0": 474.8,
+   "x1": 528.1,
+   "y1": 490.3,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p01-052",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Mailing city",
+   "printed_label": "City:",
+   "must": false,
+   "x0": 85.7,
+   "y0": 514.4,
+   "x1": 284.0,
+   "y1": 529.9,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p01-053",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Mailing state",
+   "printed_label": "State:",
+   "must": false,
+   "x0": 284.0,
+   "y0": 514.4,
+   "x1": 369.0,
+   "y1": 529.9,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p01-054",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Mailing ZIP code",
+   "printed_label": "Zip Code:",
+   "must": false,
+   "x0": 369.0,
+   "y0": 514.4,
+   "x1": 527.8,
+   "y1": 529.9,
+   "printed_as": "measured by hand",
+   "what": "address"
+  },
+  {
+   "id": "p01-055",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Phone (evening)",
+   "printed_label": "Phone (evening):",
+   "must": false,
+   "x0": 284.0,
+   "y0": 531.7,
+   "x1": 527.8,
+   "y1": 547.2,
+   "printed_as": "measured by hand",
+   "what": "phone"
+  },
+  {
+   "id": "p01-056",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "E-mail",
+   "printed_label": "E-mail:",
+   "must": false,
+   "x0": 85.3,
+   "y0": 548.3,
+   "x1": 527.8,
+   "y1": 563.8,
+   "printed_as": "measured by hand",
+   "what": "email"
+  },
+  {
+   "id": "p01-057",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investment title line 1",
+   "printed_label": "Title Line 1:",
+   "must": true,
+   "x0": 85.0,
+   "y0": 626.2,
+   "x1": 528.1,
+   "y1": 641.2,
+   "printed_as": "measured by hand",
+   "what": "name"
+  },
+  {
+   "id": "p01-058",
+   "page": 1,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Primary SSN/TIN",
+   "printed_label": "Primary SSN/TIN:",
+   "must": true,
+   "x0": 85.3,
+   "y0": 652.2,
+   "x1": 283.5,
+   "y1": 663.9,
+   "printed_as": "measured by hand",
+   "what": "tax number"
+  },
+  {
+   "id": "p01-059",
+   "page": 1,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "Secondary SSN/TIN",
+   "printed_label": "Secondary SSN/TIN:",
+   "must": false,
+   "x0": 283.5,
+   "y0": 652.2,
+   "x1": 489.6,
+   "y1": 663.9,
+   "printed_as": "measured by hand",
+   "what": "tax number",
+   "doubt": "owner: second registered owner, or the custodian of an IRA"
+  }
+ ],
+ "may_fill": [],
+ "source": "hand",
+ "draft": true,
+ "mode": "train",
+ "prefilled": {
+  "when": "2026-11-15T00:43:47Z",
+  "candidates": "80a4779cfdbecdf1-f01586d5.json",
+  "result": "out-quick/b110/result.json",
+  "fields": 0,
+  "counted_candidates": 121
+ }
+}

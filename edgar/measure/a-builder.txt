@@ -1,0 +1,6 @@
+| set | places | fields | found | missed | strays | kindDiff | ownerDiff | labelDiff | marked | fixes | requiredDiff | rightFirstTime | exact-ready |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| **total (39)** | 3697 | 2303 | 1786 | 1911 | 517 | 190 | 473 | 755 | 1516 | 3843 | 608 | 371 | 0 |
+
+found 48.3% of places; strays 22.4% of fields; of found: kind right 89.4%, owner right 73.5%, label right 53.3% of 1616 labelled; marked fields 65.8% of all fields; right first time 371 of 3697 places (10.0%); places to fix 3326 + strays 517 = fixes 3843; exact-ready documents 0 of 39
+EXACT GATE A: PASS

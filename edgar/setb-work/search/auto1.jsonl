@@ -1,0 +1,18 @@
+{"id": "0000931763-01-000050:0001.txt", "err": "nofetch"}
+{"id": "0001005150-01-000030:0001.txt", "err": "nofetch"}
+{"id": "0001011723-01-000005:0001.txt", "err": "nofetch"}
+{"id": "0000912057-01-003607:a2036602zs-11a.txt", "n": 18615, "stop": 17919, "cands": [{"s": 17236, "e": 17760, "chars": 19977, "sig": 20, "blank": 35, "shead": "APPENDIX C | SUBSCRIPTION AGREEMENT | <PAGE>", "ehead": "APPENDIX D"}]}
+{"id": "0001125604-01-500004:prospect1.txt", "n": 20664, "stop": 20646, "cands": [{"s": 16537, "e": 16681, "chars": 5515, "sig": 2, "blank": 2, "shead": "APPENDIX B TO PROSPECTUS | PDC 2003 DRILLING PROGRAM | SUBSCRIPTION AGREEMENT", "ehead": "Appendix C to the Prospectus."}]}
+{"id": "0000950133-01-000742:w40925a2s-1a.txt", "n": 8710, "stop": 8403, "cands": [{"s": 7962, "e": 8403, "chars": 20971, "sig": 9, "blank": 0, "shead": "EXHIBIT C | CAMPBELL ALTERNATIVE ASSET TRUST", "ehead": "PART II"}, {"s": 8239, "e": 8403, "chars": 6370, "sig": 7, "blank": 0, "shead": "EXHIBIT D | SIGNATURE PAGE | SUBSCRIPTION AGREEMENT", "ehead": "PART II"}]}
+{"id": "0001095811-01-501355:a68113a1s-11a.txt", "n": 11611, "stop": 11300, "cands": [{"s": 10342, "e": 11109, "chars": 28571, "sig": 20, "blank": 38, "shead": "EXHIBIT B | BY EXECUTING THIS SUBSCRIPTION AGREEMENT, AN INVESTOR IS NOT WAIVING | ANY RIGHTS UNDER THE FEDERAL SECURITIES LAWS.", "ehead": "APPENDIX A"}]}
+{"id": "0000950116-01-500322:p311951.txt", "n": 10546, "stop": 10300, "cands": [{"s": 5209, "e": 5591, "chars": 16517, "sig": 18, "blank": 15, "shead": "APPENDIX I", "ehead": "APPENDIX II"}]}
+{"id": "0001130758-01-500013:fund247.txt", "n": 8039, "stop": 8039, "cands": [{"s": 7544, "e": 8039, "chars": 18642, "sig": 19, "blank": 0, "shead": "EXHIBIT D | AEI INCOME & GROWTH FUND 24 LLC | SUBSCRIPTION AGREEMENT", "ehead": "END"}]}
+{"id": "0000912057-01-523613:a2054029z424b3.txt", "n": 9184, "stop": 9184, "cands": [{"s": 8431, "e": 8618, "chars": 10479, "sig": 5, "blank": 0, "shead": "EXHIBIT B | JWH GLOBAL TRUST", "ehead": "EXHIBIT C"}]}
+{"id": "0000950005-01-500460:p14230-s1.txt", "n": 17242, "stop": 16955, "cands": [{"s": 13577, "e": 16955, "chars": 170811, "sig": 37, "blank": 243, "shead": "Exhibit C | Subscription Agreement", "ehead": "PART II"}]}
+{"id": "0001132072-01-500312:s15-2425w_posam.txt", "n": 25357, "stop": 25027, "cands": [{"s": 24911, "e": 25027, "chars": 5017, "sig": 3, "blank": 13, "shead": "EXHIBIT C | MORGAN STANLEY DEAN WITTER CHARTER SERIES | SUBSCRIPTION AGREEMENT UPDATE FORM", "ehead": "PART II"}]}
+{"id": "0001135428-02-000040:formn2.txt", "n": 6705, "stop": 6643, "cands": [{"s": 3137, "e": 3506, "chars": 17230, "sig": 6, "blank": 11, "shead": "EXHIBIT B | SUBSCRIPTION AGREEMENT AND POWER OF ATTORNEY", "ehead": "EXHIBIT C"}]}
+{"id": "0000950134-02-015941:h01769a1sv11za.txt", "n": 19732, "stop": 18976, "cands": [{"s": 17719, "e": 18597, "chars": 30814, "sig": 16, "blank": 6, "shead": "EXHIBIT C | SUBSCRIPTION AGREEMENT | BEHRINGER HARVARD SHORT-TERM OPPORTUNITY FUND I LP", "ehead": "EXHIBIT D"}]}
+{"id": "0001047469-03-011964:a2107497zs-1.htm", "err": "nostart", "n": 5296, "stop": 5119}
+{"id": "0000950134-03-017042:h08527a1sv11za.txt", "n": 17524, "stop": 16782, "cands": [{"s": 16206, "e": 16491, "chars": 10414, "sig": 6, "blank": 0, "shead": "APPENDIX B | [HINES LOGO] | Page 1 of 3", "ehead": "APPENDIX C"}]}
+{"id": "0001193125-03-080299:ds1a.htm", "err": "nostart", "n": 21367, "stop": 18747}
+{"id": "0001047469-03-041685:a2124546zs-11a.txt", "n": 15481, "stop": 14852, "cands": [{"s": 14236, "e": 14852, "chars": 24253, "sig": 32, "blank": 30, "shead": "EXHIBIT B | SUBSCRIPTION AGREEMENT", "ehead": "PART II"}]}

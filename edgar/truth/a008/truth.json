@@ -1,0 +1,678 @@
+{
+ "file": "a008/doc.pdf (Viva Consulting Group Inc., 1-A/A EX1A-4 SUBS AGMT)",
+ "pages": 17,
+ "page_size_pt": [
+  612.2,
+  792.5
+ ],
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run: the run's character box. Drawn rule: the rule's x extent and the 10 pt of writing room above it. Cell: the cell's own rules. Tick box: the printed square (ink at 400 dpi). Picture pages: measured on the picture's own pixels and converted through the page's drawing matrix.",
+ "how_measured": "Every page is a 1284 x 1662 px scan (151 ppi) drawn over the whole page; lines and squares located on the scan's pixels (plines.py, squares.py in work-g1) and converted through the drawing matrix; every page looked at; overlays drawn and looked at.",
+ "signing": {
+  "investor_pages": [
+   16
+  ],
+  "firm_pages": [
+   17
+  ],
+  "co_investor": true,
+  "third_parties": [],
+  "kind": "A scanned Regulation A subscription agreement: the investor fills and signs the one-page signature page (with a joint investor line, capacity choices, joint ownership choices, backup withholding and foreign person boxes); the company accepts on the last page."
+ },
+ "counts_per_page": {
+  "16": {
+   "total": 26,
+   "tickbox": 12,
+   "initials": 0,
+   "blank": 12,
+   "signature": 2,
+   "date": 0
+  },
+  "17": {
+   "total": 7,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 4,
+   "signature": 1,
+   "date": 2
+  }
+ },
+ "counts_total": {
+  "total": 33,
+  "tickbox": 12,
+  "initials": 0,
+  "blank": 16,
+  "signature": 3,
+  "date": 2
+ },
+ "counts_by_owner": {
+  "investor": 24,
+  "co-investor": 2,
+  "firm": 7
+ },
+ "sure_per_page": {
+  "1": "sure (no place: scanned agreement text, general instructions and wire details)",
+  "2": "sure (no place: scanned agreement text, general instructions and wire details)",
+  "3": "sure (no place: scanned agreement text, general instructions and wire details)",
+  "4": "sure (no place: scanned agreement text, general instructions and wire details)",
+  "5": "sure (no place: scanned agreement text, general instructions and wire details)",
+  "6": "sure (no place: scanned agreement text, general instructions and wire details)",
+  "7": "sure (no place: scanned agreement text, general instructions and wire details)",
+  "8": "sure (no place: scanned agreement text, general instructions and wire details)",
+  "9": "sure (no place: scanned agreement text, general instructions and wire details)",
+  "10": "sure (no place: scanned agreement text, general instructions and wire details)",
+  "11": "sure (no place: scanned agreement text, general instructions and wire details)",
+  "12": "sure (no place: scanned agreement text, general instructions and wire details)",
+  "13": "sure (no place: scanned agreement text, general instructions and wire details)",
+  "14": "sure (no place: scanned agreement text, general instructions and wire details)",
+  "15": "sure (no place: scanned agreement text, general instructions and wire details)",
+  "16": "sure of the places; boxes measured on a 151 ppi scan (0.48 pt a pixel); judgement: City / State / Zip split from one line",
+  "17": "sure"
+ },
+ "not_fields": {
+  "1": [
+   "scanned text; underlined headings",
+   "the OCR text layer (invisible) and its drawn lines, if any"
+  ],
+  "2": [
+   "scanned text; underlined headings",
+   "the OCR text layer (invisible) and its drawn lines, if any"
+  ],
+  "3": [
+   "scanned text; underlined headings",
+   "the OCR text layer (invisible) and its drawn lines, if any"
+  ],
+  "4": [
+   "scanned text; underlined headings",
+   "the OCR text layer (invisible) and its drawn lines, if any"
+  ],
+  "5": [
+   "scanned text; underlined headings",
+   "the OCR text layer (invisible) and its drawn lines, if any"
+  ],
+  "6": [
+   "scanned text; underlined headings",
+   "the OCR text layer (invisible) and its drawn lines, if any"
+  ],
+  "7": [
+   "scanned text; underlined headings",
+   "the OCR text layer (invisible) and its drawn lines, if any"
+  ],
+  "8": [
+   "scanned text; underlined headings",
+   "the OCR text layer (invisible) and its drawn lines, if any"
+  ],
+  "9": [
+   "scanned text; underlined headings",
+   "the OCR text layer (invisible) and its drawn lines, if any"
+  ],
+  "10": [
+   "scanned text; underlined headings",
+   "the OCR text layer (invisible) and its drawn lines, if any"
+  ],
+  "11": [
+   "scanned text; underlined headings",
+   "the OCR text layer (invisible) and its drawn lines, if any"
+  ],
+  "12": [
+   "scanned text; underlined headings",
+   "the OCR text layer (invisible) and its drawn lines, if any"
+  ],
+  "13": [
+   "scanned text; underlined headings",
+   "the OCR text layer (invisible) and its drawn lines, if any"
+  ],
+  "14": [
+   "scanned text; underlined headings",
+   "the OCR text layer (invisible) and its drawn lines, if any",
+   "the printed wire and mailing details (already filled in)",
+   "\"Acceptance of Delivery\" heading at the foot (nothing to complete printed under it)"
+  ],
+  "15": [
+   "scanned text; underlined headings",
+   "the OCR text layer (invisible) and its drawn lines, if any"
+  ],
+  "16": [
+   "the heading and the certification paragraphs",
+   "the captions under the lines",
+   "the empty bracket \"( )\" of the telephone area code (part of the phone blank, not a box)"
+  ],
+  "17": [
+   "the company name in the acceptance block",
+   "the bold acceptance sentence (only its blanks are places)"
+  ]
+ },
+ "places": [
+  {
+   "id": "p16-units",
+   "page": 16,
+   "kind": "blank",
+   "what": "text",
+   "owner": "investor",
+   "label": "(a) number of units subscribed for at $100 a unit",
+   "printed_label": "The undersigned irrevocably subscribes for",
+   "must": true,
+   "x0": 355.2,
+   "y0": 158.1,
+   "x1": 391.5,
+   "y1": 168.1,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]"
+  },
+  {
+   "id": "p16-price",
+   "page": 16,
+   "kind": "blank",
+   "what": "amount",
+   "owner": "investor",
+   "label": "(a) total purchase price (after a dollar sign)",
+   "printed_label": "a total Purchase Price of $",
+   "must": true,
+   "x0": 270.8,
+   "y0": 172.4,
+   "x1": 372.9,
+   "y1": 182.4,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]"
+  },
+  {
+   "id": "p16-inv-name",
+   "page": 16,
+   "kind": "blank",
+   "what": "name",
+   "owner": "investor",
+   "label": "Name of investor (print); caption under the line",
+   "printed_label": "Name of Investor (Print)",
+   "must": true,
+   "x0": 108.2,
+   "y0": 222.9,
+   "x1": 319.9,
+   "y1": 232.9,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]"
+  },
+  {
+   "id": "p16-joint-name",
+   "page": 16,
+   "kind": "blank",
+   "what": "name",
+   "owner": "co-investor",
+   "label": "Name of joint investor, if any (print)",
+   "printed_label": "Name of Joint Investor (if any) (Print)",
+   "must": false,
+   "x0": 108.2,
+   "y0": 255.8,
+   "x1": 319.9,
+   "y1": 265.8,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]"
+  },
+  {
+   "id": "p16-inv-signature",
+   "page": 16,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "investor",
+   "label": "Signature of investor",
+   "printed_label": "Signature of Investor",
+   "must": true,
+   "x0": 108.2,
+   "y0": 295.4,
+   "x1": 329.0,
+   "y1": 305.4,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]"
+  },
+  {
+   "id": "p16-joint-signature",
+   "page": 16,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "co-investor",
+   "label": "Signature of joint investor (if any)",
+   "printed_label": "Signature of Joint Investor (if any)",
+   "must": false,
+   "x0": 108.2,
+   "y0": 328.3,
+   "x1": 319.9,
+   "y1": 338.3,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]"
+  },
+  {
+   "id": "p16-capacity",
+   "page": 16,
+   "kind": "blank",
+   "what": "title",
+   "owner": "investor",
+   "label": "Capacity of signatory (if applicable)",
+   "printed_label": "Capacity of Signatory (if applicable)",
+   "must": false,
+   "x0": 108.2,
+   "y0": 366.9,
+   "x1": 329.5,
+   "y1": 376.9,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]",
+   "owner_also_ok": [
+    "investor-entity"
+   ]
+  },
+  {
+   "id": "p16-tax-id",
+   "page": 16,
+   "kind": "blank",
+   "what": "tax number",
+   "owner": "investor",
+   "label": "Social security or taxpayer identification number",
+   "printed_label": "Social Security or Taxpayer Identification Number",
+   "must": true,
+   "x0": 108.2,
+   "y0": 402.2,
+   "x1": 329.0,
+   "y1": 412.2,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]"
+  },
+  {
+   "id": "p16-address",
+   "page": 16,
+   "kind": "blank",
+   "what": "address",
+   "owner": "investor",
+   "label": "Residence address",
+   "printed_label": "Residence Address",
+   "must": true,
+   "x0": 108.2,
+   "y0": 453.7,
+   "x1": 329.0,
+   "y1": 463.7,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]"
+  },
+  {
+   "id": "p16-city",
+   "page": 16,
+   "kind": "blank",
+   "what": "address",
+   "owner": "investor",
+   "label": "City (left part of the line)",
+   "printed_label": "City",
+   "must": true,
+   "x0": 108.2,
+   "y0": 493.3,
+   "x1": 200.7,
+   "y1": 503.3,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]",
+   "doubt": "one line with three captions under it (City, State, Zip Code): split between the captions"
+  },
+  {
+   "id": "p16-state",
+   "page": 16,
+   "kind": "blank",
+   "what": "address",
+   "owner": "investor",
+   "label": "State (middle part of the line)",
+   "printed_label": "State",
+   "must": true,
+   "x0": 200.3,
+   "y0": 493.3,
+   "x1": 281.8,
+   "y1": 503.3,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]",
+   "doubt": "one line with three captions under it (City, State, Zip Code): split between the captions"
+  },
+  {
+   "id": "p16-zip",
+   "page": 16,
+   "kind": "blank",
+   "what": "address",
+   "owner": "investor",
+   "label": "Zip code (right part of the line)",
+   "printed_label": "Zip Code",
+   "must": true,
+   "x0": 281.3,
+   "y0": 493.3,
+   "x1": 319.9,
+   "y1": 503.3,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]",
+   "doubt": "one line with three captions under it (City, State, Zip Code): split between the captions"
+  },
+  {
+   "id": "p16-phone",
+   "page": 16,
+   "kind": "blank",
+   "what": "phone",
+   "owner": "investor",
+   "label": "Telephone (after an empty area-code bracket)",
+   "printed_label": "Telephone ( )",
+   "must": false,
+   "x0": 166.9,
+   "y0": 529.5,
+   "x1": 330.4,
+   "y1": 539.5,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]"
+  },
+  {
+   "id": "p16-capacity-1",
+   "page": 16,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "If other than an individual, capacity of signatory: trust",
+   "must": false,
+   "x0": 320.4,
+   "y0": 226.0,
+   "x1": 330.4,
+   "y1": 235.5,
+   "printed_as": "picture (scan): printed square located on the picture's pixels (ink)",
+   "group": "p16 capacity: check one",
+   "note": "the boxes stand in a column between the signature lines and the choice words on the right; each belongs to the choice on its row"
+  },
+  {
+   "id": "p16-capacity-2",
+   "page": 16,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "If other than an individual, capacity of signatory: estate",
+   "must": false,
+   "x0": 319.9,
+   "y0": 237.9,
+   "x1": 330.4,
+   "y1": 247.5,
+   "printed_as": "picture (scan): printed square located on the picture's pixels (ink)",
+   "group": "p16 capacity: check one",
+   "note": "the boxes stand in a column between the signature lines and the choice words on the right; each belongs to the choice on its row"
+  },
+  {
+   "id": "p16-capacity-3",
+   "page": 16,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "If other than an individual, capacity of signatory: Uniform Gifts to Minors Act",
+   "must": false,
+   "x0": 320.4,
+   "y0": 248.9,
+   "x1": 330.4,
+   "y1": 258.9,
+   "printed_as": "picture (scan): printed square located on the picture's pixels (ink)",
+   "group": "p16 capacity: check one",
+   "note": "the boxes stand in a column between the signature lines and the choice words on the right; each belongs to the choice on its row"
+  },
+  {
+   "id": "p16-capacity-4",
+   "page": 16,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "If other than an individual, capacity of signatory: attorney-in-fact",
+   "must": false,
+   "x0": 320.4,
+   "y0": 260.3,
+   "x1": 330.4,
+   "y1": 270.4,
+   "printed_as": "picture (scan): printed square located on the picture's pixels (ink)",
+   "group": "p16 capacity: check one",
+   "note": "the boxes stand in a column between the signature lines and the choice words on the right; each belongs to the choice on its row"
+  },
+  {
+   "id": "p16-capacity-5",
+   "page": 16,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "If other than an individual, capacity of signatory: corporation",
+   "must": false,
+   "x0": 319.9,
+   "y0": 272.3,
+   "x1": 330.4,
+   "y1": 281.8,
+   "printed_as": "picture (scan): printed square located on the picture's pixels (ink)",
+   "group": "p16 capacity: check one",
+   "note": "the boxes stand in a column between the signature lines and the choice words on the right; each belongs to the choice on its row"
+  },
+  {
+   "id": "p16-capacity-6",
+   "page": 16,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "If other than an individual, capacity of signatory: other",
+   "must": false,
+   "x0": 320.4,
+   "y0": 283.2,
+   "x1": 330.4,
+   "y1": 293.2,
+   "printed_as": "picture (scan): printed square located on the picture's pixels (ink)",
+   "group": "p16 capacity: check one",
+   "note": "the boxes stand in a column between the signature lines and the choice words on the right; each belongs to the choice on its row"
+  },
+  {
+   "id": "p16-ugma-state",
+   "page": 16,
+   "kind": "blank",
+   "what": "text",
+   "owner": "investor",
+   "label": "Uniform Gifts to Minors Act of State of ___",
+   "printed_label": "Uniform Gifts to Minors Act of State of",
+   "must": false,
+   "x0": 557.9,
+   "y0": 255.8,
+   "x1": 582.7,
+   "y1": 265.8,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]"
+  },
+  {
+   "id": "p16-joint-1",
+   "page": 16,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "If joint ownership, check one: joint tenants with right of survivorship",
+   "must": false,
+   "x0": 319.9,
+   "y0": 315.2,
+   "x1": 330.4,
+   "y1": 324.7,
+   "printed_as": "picture (scan): printed square located on the picture's pixels (ink)",
+   "group": "p16 joint ownership: check one",
+   "note": "the boxes stand in a column between the signature lines and the choice words on the right; each belongs to the choice on its row"
+  },
+  {
+   "id": "p16-joint-2",
+   "page": 16,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "If joint ownership, check one: tenants in common",
+   "must": false,
+   "x0": 319.9,
+   "y0": 326.1,
+   "x1": 330.4,
+   "y1": 335.7,
+   "printed_as": "picture (scan): printed square located on the picture's pixels (ink)",
+   "group": "p16 joint ownership: check one",
+   "note": "the boxes stand in a column between the signature lines and the choice words on the right; each belongs to the choice on its row"
+  },
+  {
+   "id": "p16-joint-3",
+   "page": 16,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "If joint ownership, check one: tenants by entirety",
+   "must": false,
+   "x0": 319.9,
+   "y0": 337.6,
+   "x1": 330.4,
+   "y1": 347.1,
+   "printed_as": "picture (scan): printed square located on the picture's pixels (ink)",
+   "group": "p16 joint ownership: check one",
+   "note": "the boxes stand in a column between the signature lines and the choice words on the right; each belongs to the choice on its row"
+  },
+  {
+   "id": "p16-joint-4",
+   "page": 16,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "If joint ownership, check one: community property",
+   "must": false,
+   "x0": 319.9,
+   "y0": 349.5,
+   "x1": 330.4,
+   "y1": 359.0,
+   "printed_as": "picture (scan): printed square located on the picture's pixels (ink)",
+   "group": "p16 joint ownership: check one",
+   "note": "the boxes stand in a column between the signature lines and the choice words on the right; each belongs to the choice on its row"
+  },
+  {
+   "id": "p16-backup",
+   "page": 16,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "Backup withholding statement: check only if the investor is subject to backup withholding",
+   "must": false,
+   "x0": 320.4,
+   "y0": 402.0,
+   "x1": 330.4,
+   "y1": 411.5,
+   "printed_as": "picture (scan): printed square located on the picture's pixels (ink)",
+   "group": "p16 backup withholding"
+  },
+  {
+   "id": "p16-foreign",
+   "page": 16,
+   "kind": "tickbox",
+   "what": "tickbox",
+   "owner": "investor",
+   "label": "Foreign person: check only if the investor is a nonresident alien, foreign corporation, company, trust or estate",
+   "must": false,
+   "x0": 320.4,
+   "y0": 494.9,
+   "x1": 330.4,
+   "y1": 504.5,
+   "printed_as": "picture (scan): printed square located on the picture's pixels (ink)",
+   "group": "p16 foreign person"
+  },
+  {
+   "id": "p17-firm-units",
+   "page": 17,
+   "kind": "blank",
+   "what": "text",
+   "owner": "firm",
+   "label": "Acceptance: number of units accepted",
+   "printed_label": "THE SUBSCRIPTION FOR",
+   "must": false,
+   "x0": 248.9,
+   "y0": 103.7,
+   "x1": 336.2,
+   "y1": 113.7,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]"
+  },
+  {
+   "id": "p17-firm-price",
+   "page": 17,
+   "kind": "blank",
+   "what": "amount",
+   "owner": "firm",
+   "label": "Acceptance: total purchase price accepted (after a dollar sign)",
+   "printed_label": "FOR A TOTAL PURCHASE PRICE OF $",
+   "must": false,
+   "x0": 328.1,
+   "y0": 119.0,
+   "x1": 400.1,
+   "y1": 129.0,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]"
+  },
+  {
+   "id": "p17-firm-accept-date",
+   "page": 17,
+   "kind": "date",
+   "what": "date",
+   "owner": "firm",
+   "label": "Acceptance: \"accepted as of ____, 201_\" (month and day, last digit of the year)",
+   "printed_label": "IS ACCEPTED AS OF",
+   "must": false,
+   "x0": 343.3,
+   "y0": 133.3,
+   "x1": 480.6,
+   "y1": 143.8,
+   "printed_as": "picture (scan): two drawn lines read as one date; parts give each [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]",
+   "parts": [
+    [
+     343.3,
+     133.3,
+     450.6,
+     143.3
+    ],
+    [
+     474.0,
+     133.8,
+     480.6,
+     143.8
+    ]
+   ]
+  },
+  {
+   "id": "p17-firm-signature",
+   "page": 17,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "firm",
+   "label": "Company acceptance: signature (By:)",
+   "printed_label": "By",
+   "must": false,
+   "x0": 289.0,
+   "y0": 227.2,
+   "x1": 487.3,
+   "y1": 237.2,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]"
+  },
+  {
+   "id": "p17-firm-name",
+   "page": 17,
+   "kind": "blank",
+   "what": "name",
+   "owner": "firm",
+   "label": "Company acceptance: name of the signer",
+   "printed_label": "Name",
+   "must": false,
+   "x0": 302.3,
+   "y0": 252.5,
+   "x1": 484.5,
+   "y1": 262.5,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]"
+  },
+  {
+   "id": "p17-firm-title",
+   "page": 17,
+   "kind": "blank",
+   "what": "title",
+   "owner": "firm",
+   "label": "Company acceptance: title of the signer",
+   "printed_label": "Title",
+   "must": false,
+   "x0": 299.4,
+   "y0": 265.4,
+   "x1": 486.8,
+   "y1": 275.4,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]"
+  },
+  {
+   "id": "p17-firm-date",
+   "page": 17,
+   "kind": "date",
+   "what": "date",
+   "owner": "firm",
+   "label": "Company acceptance: date",
+   "printed_label": "Date",
+   "must": false,
+   "x0": 297.1,
+   "y0": 277.8,
+   "x1": 489.7,
+   "y1": 287.8,
+   "printed_as": "picture (scan): drawn line located on the picture's pixels; box = the line and the 10 pt above it [picture 1284x1662 px drawn at x 0.00-612.24, y 0.00-792.48 pt (0.4768 x 0.4768 pt per pixel)]",
+   "doubt": "a second date in the same block, beside the signature (the acceptance sentence carries the first)"
+  }
+ ],
+ "may_fill": [
+  "p16-price",
+  "p16-inv-name",
+  "p16-address",
+  "p16-phone"
+ ]
+}

@@ -1,0 +1,74 @@
+=== page 1  (U 0, B 0, H 0, X 0)
+=== page 2  (U 0, B 0, H 1, X 0)
+ H0 33.7 18.5 578.2 28.5 w=544 th=1.5 |  ___  ^
+=== page 3  (U 0, B 0, H 2, X 0)
+ H0 33.7 44.4 108.6 54.4 w=75 th=0.7 |  ___  ^
+ H1 33.7 698.0 578.2 708.0 w=544 th=1.5 |  ___  ^C-2
+=== page 4  (U 0, B 0, H 2, X 0)
+ H0 33.7 44.4 108.6 54.4 w=75 th=0.7 |  ___  ^
+ H1 33.7 710.7 578.2 720.7 w=544 th=1.5 |  ___  ^C-3
+=== page 5  (U 0, B 0, H 2, X 0)
+ H0 33.7 44.4 108.6 54.4 w=75 th=0.7 |  ___  ^
+ H1 33.7 476.7 578.2 486.7 w=544 th=1.5 |  ___  ^C-4
+=== page 6  (U 0, B 0, H 25, X 0)
+ H0 33.7 44.4 108.6 54.4 w=75 th=0.7 |  ___  ^
+ H1 184.9 188.4 285.1 198.4 w=100 th=0.7 | Information: Name(s) ___  ^Subscriber Information
+ H2 313.0 200.4 413.2 210.4 w=100 th=0.7 |  I.D. No.(s) or Social Security No.(s) ___  ^
+ H3 256.0 224.4 356.2 234.4 w=100 th=0.7 | Residential Street Address ___  ^
+ H4 167.7 236.4 267.9 246.4 w=100 th=0.7 | City ___ State Zip Code ^Residential Street Address
+ H5 295.0 236.4 395.3 246.4 w=100 th=0.7 | City State ___ Zip Code ^
+ H6 439.8 236.4 540.1 246.4 w=100 th=0.7 | City State Zip Code ___  ^
+ H7 237.5 248.4 337.7 258.4 w=100 th=0.7 | Telephone No. (Day) ___ Date of ^State
+ H8 387.9 260.4 488.2 270.4 w=100 th=0.7 | Birth ___  ^Date of
+ H9 209.1 272.4 309.3 282.4 w=100 th=0.7 | Email Address ___  ^
+ H10 168.7 322.6 540.0 332.6 w=371 th=0.7 |  ___  ^Investment Advisor Firm
+ H11 217.0 345.1 477.3 355.1 w=260 th=0.7 | Trustee Name(s) ___  ^applicable: Trustee, Custodial IRA’s, Qu
+ H12 200.6 357.1 450.8 367.1 w=250 th=0.7 | Tax I.D. No. ___  ^Name(s)
+ H13 241.0 369.1 481.2 379.1 w=240 th=0.7 | Date Trust Established ___  ^
+ H14 225.5 381.1 325.8 391.1 w=100 th=0.7 | Grantor’s Name(s) ___  ^Established
+ H15 208.5 393.1 308.7 403.1 w=100 th=0.7 | Street Address ___  ^Name(s)
+ H16 167.7 405.1 267.9 415.1 w=100 th=0.7 | City ___ State Zip Code ^Street Address
+ H17 295.0 405.1 395.3 415.1 w=100 th=0.7 | City State ___ Zip Code ^
+ H18 439.8 405.1 540.1 415.1 w=100 th=0.7 | City State Zip Code ___  ^
+ H19 218.8 417.1 319.0 427.1 w=100 th=0.7 | Name of Contact ___  ^State
+ H20 253.6 429.1 353.8 439.1 w=100 th=0.7 | Telephone No. of Contact ___  ^
+ H21 235.4 441.1 335.7 451.1 w=100 th=0.7 | (e) Custodian Name ___ Custodian Acct. No. ^Contact
+ H22 420.7 441.1 520.9 451.1 w=100 th=0.7 | (e) Custodian Name Custodian Acct. No. ___  ^
+ H23 432.6 489.1 532.9 499.1 w=100 th=0.7 | e) o Limited Liability o Trust o Other ___  ^Partnership
+ H24 33.7 646.2 578.2 656.2 w=544 th=1.5 |  ___  ^C-5
+=== page 7  (U 0, B 0, H 15, X 0)
+ H0 33.7 44.4 108.6 54.4 w=75 th=0.7 |  ___  ^
+ H1 219.5 181.6 319.8 191.6 w=100 th=0.7 | Payee Name ___  ^following section:
+ H2 248.4 193.6 348.7 203.6 w=100 th=0.7 | ABA (Routing) No. ___  ^
+ H3 220.4 205.6 320.6 215.6 w=100 th=0.7 | Account No. ___  ^(Routing) No.
+ H4 225.3 217.6 325.6 227.6 w=100 th=0.7 | Account Type ___  ^
+ H5 233.4 229.6 333.7 239.6 w=100 th=0.7 | Account Holder ___  ^
+ H6 227.3 241.6 327.6 251.6 w=100 th=0.7 | Street Address ___  ^Holder
+ H7 186.5 253.6 286.8 263.6 w=100 th=0.7 | City ___ State Zip ^Street Address
+ H8 315.9 253.6 416.2 263.6 w=100 th=0.7 | City State ___ Zip ^
+ H9 439.2 253.6 539.4 263.6 w=100 th=0.7 | City State Zip ___  ^
+ H10 243.7 609.1 344.0 619.1 w=100 th=0.7 | Your Subscription Sign X ___ Sign X ^
+ H11 419.7 609.1 519.9 619.1 w=100 th=0.7 | Your Subscription Sign X Sign X ___  ^
+ H12 236.2 656.4 363.7 666.4 w=127 th=0.7 |  ___  ^Custodian/Trustee/Officer/Partner)
+ H13 412.5 656.4 540.0 666.4 w=127 th=0.7 |  ___  ^Custodian/Trustee/Officer/Partner)
+ H14 33.7 722.7 578.2 732.7 w=544 th=1.5 |  ___  ^C-6
+=== page 8  (U 0, B 0, H 3, X 0)
+ H0 33.7 44.4 108.6 54.4 w=75 th=0.7 |  ___  ^
+ H1 329.7 153.1 429.9 163.1 w=100 th=0.7 | By: ___ Authorized ^
+ H2 33.7 202.2 578.2 212.2 w=544 th=1.5 |  ___  ^C-7
+=== page 9  (U 0, B 0, H 2, X 0)
+ H0 33.7 44.4 108.6 54.4 w=75 th=0.7 |  ___  ^
+ H1 33.7 702.5 578.2 712.5 w=544 th=1.5 |  ___  ^C-8
+=== page 10  (U 0, B 0, H 2, X 0)
+ H0 33.7 44.4 108.6 54.4 w=75 th=0.7 |  ___  ^
+ H1 33.7 621.5 578.2 631.5 w=544 th=1.5 |  ___  ^C-9
+=== page 11  (U 0, B 0, H 2, X 0)
+ H0 33.7 44.4 108.6 54.4 w=75 th=0.7 |  ___  ^
+ H1 33.7 688.2 578.2 698.2 w=544 th=1.5 |  ___  ^C-10
+=== page 12  (U 0, B 0, H 6, X 0)
+ H0 33.7 44.4 108.6 54.4 w=75 th=0.7 |  ___  ^
+ H1 98.2 273.9 205.2 283.9 w=107 th=0.7 |  ___ whereby investors will be notified tha ^posting Offering Materials to
+ H2 66.7 630.1 540.0 640.1 w=473 th=0.7 |  ___  ^hereof.
+ H3 66.7 649.6 540.0 659.6 w=473 th=0.7 |  ___  ^Print Name
+ H4 66.7 662.4 540.0 672.4 w=473 th=0.7 |  ___  ^Signature Date
+ H5 33.7 722.0 578.2 732.0 w=544 th=1.5 |  ___  ^C-11

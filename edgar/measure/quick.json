@@ -1,0 +1,117 @@
+{
+ "note": "quick check: 12 train documents covering failure classes 4-11, 13, 15-18, 21 where a train document exists (plan 01.4-02); never a held-out id",
+ "docs": [
+  {
+   "id": "a006",
+   "pdf": "../set-a/a006/doc.pdf",
+   "classes": [
+    4,
+    5,
+    10,
+    17,
+    21
+   ]
+  },
+  {
+   "id": "a023",
+   "pdf": "../set-a/a023/doc.pdf",
+   "classes": [
+    4,
+    7,
+    8
+   ]
+  },
+  {
+   "id": "a059",
+   "pdf": "../set-a/a059/doc.pdf",
+   "classes": [
+    10,
+    18
+   ]
+  },
+  {
+   "id": "a070",
+   "pdf": "../set-a/a070/doc.pdf",
+   "classes": [
+    5,
+    7,
+    9
+   ]
+  },
+  {
+   "id": "a074",
+   "pdf": "../set-a/a074/doc.pdf",
+   "classes": [
+    7,
+    9
+   ]
+  },
+  {
+   "id": "a096",
+   "pdf": "../set-a/a096/doc.pdf",
+   "classes": [
+    4,
+    6
+   ]
+  },
+  {
+   "id": "b005",
+   "pdf": "../set-b/b005/doc.pdf",
+   "classes": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    11
+   ]
+  },
+  {
+   "id": "b042",
+   "pdf": "../set-b/b042/doc.pdf",
+   "classes": [
+    6,
+    8,
+    10,
+    13
+   ]
+  },
+  {
+   "id": "b066",
+   "pdf": "../set-b/b066/doc.pdf",
+   "classes": [
+    6,
+    7,
+    9,
+    16
+   ]
+  },
+  {
+   "id": "b094",
+   "pdf": "../set-b/b094/doc.pdf",
+   "classes": [
+    4,
+    5,
+    11,
+    13
+   ]
+  },
+  {
+   "id": "b104",
+   "pdf": "../set-b/b104/doc.pdf",
+   "classes": [
+    4,
+    5,
+    11
+   ]
+  },
+  {
+   "id": "b110",
+   "pdf": "../set-b/b110/doc.pdf",
+   "classes": [
+    10,
+    15
+   ]
+  }
+ ]
+}

@@ -1,0 +1,20 @@
+Scorer reasons: every change to exact.py's scoring, with exact.py's sha256 after it. Append only.
+
+2026-11-15  plan 01.4-02  exact.py sha256 09bde1909dd78bbb5e57fe05ffbae1804767192e5a9c65652122a17b36064f73
+  - Matching, kind, owner, label and mark rules unchanged (GROW 3 pt, SHARE 0.4, KIND_MAP, label_ok).
+  - Fixed order: fields and places of a page are matched in id order (then original position for a repeated id), so
+    equal distances always resolve the same way, whatever order the result file lists them in. On today's runs this
+    changes nothing: without the page-break rule below, held-out A totals equal the research baseline exactly
+    (3711 places, 1786 found, 517 strays, 3857 fixes, 371 right first time, 0 of 39 exact-ready).
+  - Sheet convention (BRIEF.md): a place cut by a page break is recorded on both PDF pages with doubt
+    "split by page break". The two pieces count as ONE place, met by a field on either piece. A field on each piece:
+    the second is a stray (the sponsor would delete it). Pairing is structural: both pieces carry the doubt, are on
+    consecutive pages, have the same kind, overlap across by at least half of the narrower piece, and the first sits
+    lower on its page than the second on the next; widest overlap first, then by id; each piece pairs once.
+    Effect on today's held-out A: 14 pairs; places 3711 -> 3697, missed 1925 -> 1911, fixes 3857 -> 3843; found,
+    strays, kind, owner, label, marks and right first time unchanged. `--no-split` scores without the rule.
+  - New column "right first time": a place found with the right kind, person and label, and unmarked.
+  - The gate compares counts where finding more places cannot make them worse (scored and places must be equal;
+    found, exact-ready and right first time may not fall; missed, strays and fixes may not rise) and rates of the
+    found places for kind, person and label right and required differences, and marks as a share of fields: so a
+    newly found place with a wrong person is not read as a regression of the person rule.
