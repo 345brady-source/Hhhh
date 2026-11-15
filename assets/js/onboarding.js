@@ -1467,7 +1467,7 @@
         ${reg === 'regA2' && d.stAcc === 'no' ? check('stRaAttest', raAttestText(c, d)) : ''}
         ${
           no
-            ? `${radios('stSoph', `Does ${who}, alone or with a purchaser representative, have enough knowledge and experience in financial and business matters to evaluate the merits and risks of this investment?`, [['alone', 'Yes, alone'], ['rep', 'Yes, with a purchaser representative'], ['no', 'No']])}
+            ? `${radios('stSoph', `Does ${who}, alone or with a purchaser representative, have enough knowledge and experience of business and financial matters to judge the merits and risks of this investment?`, [['alone', 'Yes, alone'], ['rep', 'Yes, with a purchaser representative'], ['no', 'No']])}
         ${soph === 'rep' ? `${input('stRepName', 'Purchaser representative’s name', { max: 120 })}${repFile(d)}` : ''}`
             : ''
         }

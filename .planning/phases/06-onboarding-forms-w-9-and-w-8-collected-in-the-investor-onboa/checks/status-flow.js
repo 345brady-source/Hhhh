@@ -415,7 +415,7 @@ const parts = {
     check('no field error on any step', w.errors.length === 0, w.errors);
     const st = screens['Investor status'] || '';
     // D-08 (2) (owner, plan 06-15): only Rule 506(b)(2)(ii)'s question and, with a representative, who it is (Rule 501(i)).
-    check('the status step asks the accredited question and Rule 506(b)(2)(ii)’s question, and the representative’s name; no experience, education or firm questions', /Is Dana Whitfield an accredited investor\?/.test(st) && /alone or with a purchaser representative, have enough knowledge and experience in financial and business matters to evaluate the merits and risks of this investment\?/.test(st) && /Purchaser representative’s name/.test(st) && !/investment experience/i.test(st) && !/education or profession/i.test(st) && !/Representative.s firm/.test(st), st.slice(0, 1200));
+    check('the status step asks the accredited question and Rule 506(b)(2)(ii)’s question, and the representative’s name; no experience, education or firm questions', /Is Dana Whitfield an accredited investor\?/.test(st) && /alone or with a purchaser representative, have enough knowledge and experience of business and financial matters to judge the merits and risks of this investment\?/.test(st) && /Purchaser representative’s name/.test(st) && !/investment experience/i.test(st) && !/education or profession/i.test(st) && !/Representative.s firm/.test(st), st.slice(0, 1200));
     // D-06 (plan 06-15): the lede explaining the firm's reasons is gone.
     check('D-06: no lede on the Rule 506(b) status step', !/may accept a limited number of investors/.test(st) && !/leave any question unanswered/i.test(st), st.slice(0, 600));
     const sub = screens.Subscription || '';

@@ -764,10 +764,10 @@
  },
  {
   "screen": "status",
-  "item": "Question \"Does <account>, alone or with a purchaser representative, have enough knowledge and experience in financial and business matters to evaluate the merits and risks of this investment?\" (Yes, alone / Yes, with a purchaser representative / No)",
+  "item": "Question \"Does <account>, alone or with a purchaser representative, have enough knowledge and experience of business and financial matters to judge the merits and risks of this investment?\" (Yes, alone / Yes, with a purchaser representative / No)",
   "decision": "keep",
   "reason": "Rule 506(b)(2)(ii): each non-accredited purchaser, alone or with a purchaser representative, has that knowledge and experience (D-08 (2)).",
-  "text": "alone or with a purchaser representative, have enough knowledge and experience in financial and business matters",
+  "text": "alone or with a purchaser representative, have enough knowledge and experience of business and financial matters",
   "paths": [
    "individual-506b"
   ]
