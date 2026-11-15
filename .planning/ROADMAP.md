@@ -129,7 +129,7 @@ Plans:
   5. Nothing that works today regresses: the owner's documents A 29 of 29, B 2 of 2 places, C 138 of 138, the picture form 241 of 241, the first agreement's 47 fields with none marked, the public documents' pins, the nine check files, the class pages and the walks
   6. After the reader is frozen, 100 fresh agreements and 50 more made picture-only (half clean, half with scan effects), drawn at random from EDGAR and new to every set, are read by the frozen reader and scored (the measure on all 150, exact scores on a random 20 and 10), and the results reach the owner failures first
   7. The owner has checked agreements the reader has never seen in the republished preview
-**Plans:** 61 plans (4 dropped by D-28: 20, 21, 56, 57; 7 added: 59 to 65)
+**Plans:** 63 plans (4 dropped by D-28: 20, 21, 56, 57; 9 added: 59 to 67)
 
 Plans:
 - [ ] 01.4-01-PLAN.md — The measure sees what it was blind to (fallback glyph boxes, letter boxes, dates in parts, shared lines, illustrations), calibrated
