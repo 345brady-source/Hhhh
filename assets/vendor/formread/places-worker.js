@@ -11,7 +11,7 @@
  *                                                self.FORMREAD_MODEL_GZ64 (the model, gzip then base64)
  *               { type: 'run', pixels, w, h, id } pixels: Float32Array of w*h grey values 0..1 (row by row)
  *               { type: 'stop' }
- * Messages out: { type: 'ready' }
+ * Messages out: { type: 'ready', threads }
  *               { type: 'maps', data, w, h, classes, id }  data: Float32Array, classes maps of h*w each (transferred)
  *               { type: 'error', code, detail, id }  code: 'load' | 'compile' | 'run'; detail is for the console only
  */
@@ -75,7 +75,7 @@ async function start(modelScript) {
     session = null;
     return fail('compile', e);
   }
-  reply({ type: 'ready' });
+  reply({ type: 'ready', threads: rt.env.wasm.numThreads });
 }
 
 async function run(m) {
