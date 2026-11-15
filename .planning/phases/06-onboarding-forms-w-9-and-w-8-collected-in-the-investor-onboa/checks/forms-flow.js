@@ -4,7 +4,7 @@
 // one investor with the signature and date at the form's own places, the investor signs it in the portal, and the stored
 // signed PDF is read back: Documents category Tax for that investor alone, zero form fields, each value inside its own
 // field, the signature ink inside the sign place, the "Signed electronically" caption, the date, the certificate page.
-//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned,us-llc,us-ccorp,us-trust,us-disregarded,us-ira,us-joint,foreign-entity]
+//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned,us-llc,us-ccorp,us-trust,us-disregarded,us-ira,us-joint,foreign-entity,passive-owners,passive-none,ffi-giin,treaty-entity,route]
 // The last line is "FORMS FLOW: PASS (cases run: N)" or "FORMS FLOW: FAIL (cases run: N) - <failed cases>". Exits 2
 // (NOT RUN) when the bundled forms do not match assets/forms/SHA256SUMS.
 const path = require('path');
@@ -2095,6 +2095,244 @@ const foreignEntity = w8eCase({
   cert: { chapter3: 'Corporation', chapter4: 'Active NFFE', country: 'Cayman Islands', ftinLast4: '3907' }
 });
 
+/* ---------- Plan 06-20 Task 2: Passive NFFEs, FFIs, the treaty lines, and routing what the form cannot cover ---------- */
+
+const without = (list, names) => list.filter((x) => names.indexOf(x) < 0);
+
+/**
+ * passive-owners: Maison Verdier Holding SAS, a French company that is a Passive NFFE with two substantial U.S. owners.
+ * The owners statement is asked; "listed" shows one row per beneficial owner onboarding collected, each name pre-filled
+ * (editable), the address and U.S. TIN typed. Part XXVI's box, the owners-listed box and two Part XXIX rows are filled;
+ * the owners' TINs are saved nowhere (T-06-44).
+ */
+const passiveOwners = w8eCase({
+  id: 'passive-owners',
+  name: 'Élodie Verdier-Lambert',
+  email: 'elodie.verdier@example.com',
+  account: 'Maison Verdier Holding SAS',
+  profile: { country: 'France', street: '17 Rue du Faubourg Saint-Honoré', city: 'Paris', st: '', zip: '75008', formation: 'France', owner2: ['Thomas', 'Okafor-Reyes'], owner1pct: 60, owner2pct: 40 },
+  secrets: ['FR40303265045', '987654321', '987-65-4321', '876543219', '876-54-3219'],
+  async atTax({ page, check }) {
+    await pickRadio(page, 'ob-e8Ch3', 'corporation');
+    await pickRadio(page, 'ob-e8Ch4', 'passiveNffe');
+    const st = await radioState(page, 'ob-e8Owners');
+    check('a Passive NFFE is asked the owners statement: none, or listed', JSON.stringify(st.values) === JSON.stringify(['none', 'listed']) && st.chosen === '', st);
+    await pickRadio(page, 'ob-e8Owners', 'listed');
+    const shown = await visibleInputs(page);
+    const rows = without(shown, ['ob-e8Ch3', 'ob-e8Ch4', 'ob-e8Owners', 'ob-ftin', 'ob-noFtin']);
+    check('"listed" shows one row per beneficial owner from onboarding: name, address, U.S. TIN', JSON.stringify(rows) === JSON.stringify(['ob-e8Owner1Name', 'ob-e8Owner1Addr', 'ob-e8Owner1Tin', 'ob-e8Owner2Name', 'ob-e8Owner2Addr', 'ob-e8Owner2Tin']), shown);
+    const pre = [await page.inputValue('#ob-e8Owner1Name'), await page.inputValue('#ob-e8Owner2Name')];
+    check('the owners’ names are pre-filled from the beneficial owners onboarding collected', JSON.stringify(pre) === JSON.stringify(['Élodie Verdier-Lambert', 'Thomas Okafor-Reyes']), pre);
+    check('the rows’ addresses and U.S. TINs start empty', (await page.inputValue('#ob-e8Owner1Addr')) === '' && (await page.inputValue('#ob-e8Owner1Tin')) === '');
+    await page.fill('#ob-e8Owner1Addr', '221 Pine Street, Seattle, WA 98101');
+    await page.fill('#ob-e8Owner1Tin', '987654321');
+    await page.fill('#ob-e8Owner2Name', 'Thomas A. Okafor-Reyes');
+    await page.fill('#ob-e8Owner2Addr', '88 Beacon Street, Boston, MA 02108');
+    await page.fill('#ob-e8Owner2Tin', '876-54-3219');
+    await page.fill('#ob-ftin', 'FR40303265045');
+  },
+  want: {
+    text: {
+      name: 'Maison Verdier Holding SAS',
+      country: 'France',
+      street: '17 Rue du Faubourg Saint-Honoré',
+      cityLine: 'Paris 75008',
+      residenceCountry: 'France',
+      ftin: 'FR40303265045',
+      owner1Name: 'Élodie Verdier-Lambert',
+      owner1Address: '221 Pine Street, Seattle, WA 98101',
+      owner1Tin: '987-65-4321',
+      owner2Name: 'Thomas A. Okafor-Reyes',
+      owner2Address: '88 Beacon Street, Boston, MA 02108',
+      owner2Tin: '876-54-3219',
+      printName: 'Élodie Verdier-Lambert'
+    },
+    boxes: ['ch3Corporation', 'ch4PassiveNffe', 'passiveNffe', 'passiveOwnersListed', 'capacity']
+  },
+  exact: ['Maison Verdier Holding SAS', '17 Rue du Faubourg Saint-Honoré'],
+  cert: { chapter3: 'Corporation', chapter4: 'Passive NFFE', country: 'France', ftinLast4: '5045' }
+});
+
+/**
+ * passive-none: Tanjong Pagar Family Trust, a Singapore simple trust that is a Passive NFFE with no substantial U.S.
+ * owners and no foreign tax ID required. Part XXVI and the no-owners box are ticked, Part XXIX stays empty, line 9c is
+ * ticked, and line 4's hybrid question is answered No (a simple trust making no treaty claim).
+ */
+const passiveNone = w8eCase({
+  id: 'passive-none',
+  name: 'Wei Ling Tan-Abdullah',
+  email: 'weiling.tan@example.com',
+  account: 'Tanjong Pagar Family Trust',
+  profile: { country: 'Singapore', street: '8 Marina View, #40-01', city: 'Singapore', st: '', zip: '018960', formation: 'Singapore' },
+  async atTax({ page, check }) {
+    await pickRadio(page, 'ob-e8Ch3', 'simpleTrust');
+    await pickRadio(page, 'ob-e8Ch4', 'passiveNffe');
+    await pickRadio(page, 'ob-e8Owners', 'none');
+    await page.check('#ob-noFtin');
+    await page.waitForTimeout(200);
+    const shown = await visibleInputs(page);
+    check('"none" asks no owner rows, and the tick takes the foreign tax ID off the step', JSON.stringify(without(shown, ['ob-e8Ch3', 'ob-e8Ch4', 'ob-e8Owners'])) === JSON.stringify(['ob-noFtin']), shown);
+  },
+  want: {
+    text: { name: 'Tanjong Pagar Family Trust', country: 'Singapore', street: '8 Marina View, #40-01', cityLine: 'Singapore 018960', residenceCountry: 'Singapore', printName: 'Wei Ling Tan-Abdullah' },
+    boxes: ['ch3SimpleTrust', 'hybridNo', 'ch4PassiveNffe', 'passiveNffe', 'passiveNoOwners', 'noFtin', 'capacity']
+  },
+  cert: { chapter3: 'Simple trust', chapter4: 'Passive NFFE', country: 'Singapore', noFtin: true }
+});
+
+/**
+ * ffi-giin: Nordhavn Kapital A/S, a Danish Reporting Model 1 FFI. The GIIN is asked (only for an FFI); a GIIN typed in
+ * part is pointed out with one sentence; the full GIIN prints on line 9a, the line 5 box is ticked, and no NFFE part is.
+ */
+const ffiGiin = w8eCase({
+  id: 'ffi-giin',
+  name: 'Mads Østergaard-Holm',
+  email: 'mads.ostergaard@example.com',
+  account: 'Nordhavn Kapital A/S',
+  profile: { country: 'Denmark', street: 'Strandvejen 70', city: 'Hellerup', st: '', zip: '2900', formation: 'Denmark' },
+  secrets: ['DK31415926'],
+  async atTax({ page, check }) {
+    await pickRadio(page, 'ob-e8Ch3', 'corporation');
+    await pickRadio(page, 'ob-e8Ch4', 'activeNffe');
+    check('the GIIN is not asked of an NFFE', (await page.locator('#ob-e8Giin').count()) === 0);
+    await pickRadio(page, 'ob-e8Ch4', 'model1Ffi');
+    const shown = await visibleInputs(page);
+    check('a Reporting Model 1 FFI is asked the GIIN, and nothing about owners', JSON.stringify(without(shown, ['ob-e8Ch3', 'ob-e8Ch4'])) === JSON.stringify(['ob-e8Giin', 'ob-ftin', 'ob-noFtin']), shown);
+    await page.fill('#ob-e8Giin', '98Q96B.000');
+    await page.fill('#ob-ftin', 'DK31415926');
+    await Lib.submit(page);
+    const errs = await Lib.fieldErrors(page);
+    check('a GIIN typed in part is pointed out in one sentence, and the step stays', errs.length === 1 && /GIIN/.test(errs[0]) && (await page.locator('#ob-e8Giin').count()) === 1, errs);
+    await page.fill('#ob-e8Giin', '98Q96B.00000.LE.250');
+    if (!(await page.inputValue('#ob-ftin'))) await page.fill('#ob-ftin', 'DK31415926');
+  },
+  want: {
+    text: { name: 'Nordhavn Kapital A/S', country: 'Denmark', street: 'Strandvejen 70', cityLine: 'Hellerup 2900', residenceCountry: 'Denmark', giin: '98Q96B.00000.LE.250', ftin: 'DK31415926', printName: 'Mads Østergaard-Holm' },
+    boxes: ['ch3Corporation', 'ch4ReportingModel1Ffi', 'capacity']
+  },
+  cert: { chapter3: 'Corporation', chapter4: 'Reporting Model 1 FFI', country: 'Denmark', ftinLast4: '5926' }
+});
+
+/**
+ * treaty-entity: Rheinwerk Beteiligungen GmbH, a German corporation (formation "Düsseldorf, Germany") that is an Active
+ * NFFE and claims treaty benefits. Part III is only under "Change your answers": the treaty country (14a), one
+ * limitation-on-benefits box (14b, one answer), and the line 15 article, rate, income type and conditions.
+ */
+const treatyEntity = w8eCase({
+  id: 'treaty-entity',
+  name: 'Jürgen Weiß-Albrecht',
+  email: 'jurgen.weiss@example.com',
+  account: 'Rheinwerk Beteiligungen GmbH',
+  profile: { country: 'Germany', street: 'Königsallee 92a', city: 'Düsseldorf', st: '', zip: '40212', formation: 'Düsseldorf, Germany' },
+  secrets: ['DE5133081508'],
+  async atTax({ page, check }) {
+    await pickRadio(page, 'ob-e8Ch3', 'corporation');
+    await pickRadio(page, 'ob-e8Ch4', 'activeNffe');
+    check('no treaty question on the first view', (await page.locator('#ob-e8Treaty').count()) === 0);
+    await page.fill('#ob-ftin', 'DE5133081508');
+    await page.click('[data-action="ivf-taxedit"]');
+    await page.waitForTimeout(300);
+    const pre = { name: await page.inputValue('#ob-e8Name'), country: await page.inputValue('#ob-e8Country'), street: await page.inputValue('#ob-e8Street'), print: await page.inputValue('#ob-e8Print'), cap: await page.isChecked('#ob-e8Capacity'), treaty: await page.inputValue('#ob-e8Treaty') };
+    check('"Change your answers" shows every answer as the form would carry it, the treaty claim empty', pre.name === 'Rheinwerk Beteiligungen GmbH' && pre.country === 'Germany' && pre.street === 'Königsallee 92a' && pre.print === 'Jürgen Weiß-Albrecht' && pre.cap === true && pre.treaty === '', pre);
+    check('the limitation-on-benefits question appears only with a treaty country', (await page.locator('input[name="ob-e8Lob"]').count()) === 0);
+    await page.selectOption('#ob-e8Treaty', 'Germany');
+    await page.waitForTimeout(300);
+    const lob = await radioState(page, 'ob-e8Lob');
+    check('the limitation-on-benefits provision is one answer of eleven', lob.values.length === 11 && lob.chosen === '', lob);
+    await pickRadio(page, 'ob-e8Lob', 'activeTrade');
+    await page.fill('#ob-e8Article', '10(2)(a)');
+    await page.fill('#ob-e8Rate', '5');
+    await page.fill('#ob-e8Income', 'Dividends');
+    await page.fill('#ob-e8Explain1', 'Art. 28(4)');
+    await page.fill('#ob-e8Explain2', 'Owns at least 10 percent of the voting stock of the company paying the dividends');
+    if (!(await page.inputValue('#ob-ftin'))) await page.fill('#ob-ftin', 'DE5133081508');
+  },
+  want: {
+    text: {
+      name: 'Rheinwerk Beteiligungen GmbH',
+      country: 'Germany',
+      street: 'Königsallee 92a',
+      cityLine: 'Düsseldorf 40212',
+      residenceCountry: 'Germany',
+      ftin: 'DE5133081508',
+      treatyCountry: 'Germany',
+      treatyArticle: '10(2)(a)',
+      treatyRate: '5',
+      treatyIncome: 'Dividends',
+      treatyExplain1: 'Art. 28(4)',
+      treatyExplain2: 'Owns at least 10 percent of the voting stock of the company paying the dividends',
+      printName: 'Jürgen Weiß-Albrecht'
+    },
+    boxes: ['ch3Corporation', 'ch4ActiveNffe', 'activeNffe', 'treatyResident', 'treatyLob', 'lobActiveTrade', 'capacity']
+  },
+  exact: ['Rheinwerk Beteiligungen GmbH', 'Jürgen Weiß-Albrecht'],
+  cert: { chapter3: 'Corporation', chapter4: 'Active NFFE', country: 'Germany', ftinLast4: '1508' }
+});
+
+/**
+ * route (T-06-43): "Something else" on either status builds no W-8BEN-E. One line names the form that usually applies
+ * (W-8IMY, W-8ECI, W-8EXP) and how to give it; the rest of the questions go. An unsigned W-8BEN-E built before is voided;
+ * Continue moves on with no tax envelope live and nothing on file.
+ */
+async function routeCase({ check, S }) {
+  const A = await Lib.open(S);
+  const page = A.page;
+  const dir = path.join(OUT, 'route');
+  fs.mkdirSync(dir, { recursive: true });
+  const spec = { name: 'Rafael Quintero-Haas', email: 'rafael.quintero@example.com', account: 'Halcyon Ridge Partners LP' };
+  const { inv, w } = await toE8Step(S, A, spec);
+  check('the invited foreign entity reaches the tax step', w.reached && w.at === 'Tax certification' && w.errors.length === 0, { seen: w.seen, errors: w.errors });
+  if (!w.reached) return A.context.close();
+  const ch3 = await radioState(page, 'ob-e8Ch3');
+  const ch4 = await radioState(page, 'ob-e8Ch4');
+  check('chapter 3 offers exactly corporation, simple trust, complex trust, estate, or something else', JSON.stringify(ch3.values) === JSON.stringify(['corporation', 'simpleTrust', 'complexTrust', 'estate', 'other']), ch3);
+  check('chapter 4 offers exactly Active NFFE, Passive NFFE, Participating FFI, Reporting Model 1 FFI, Reporting Model 2 FFI, or something else', JSON.stringify(ch4.values) === JSON.stringify(['activeNffe', 'passiveNffe', 'participatingFfi', 'model1Ffi', 'model2Ffi', 'other']), ch4);
+  // first an unsigned W-8BEN-E: a corporation and Active NFFE, built and left unsigned
+  await pickRadio(page, 'ob-e8Ch3', 'corporation');
+  await pickRadio(page, 'ob-e8Ch4', 'activeNffe');
+  check('no routing line while both statuses are supported', (await page.locator('.ivf-taxroute').count()) === 0);
+  await Lib.submit(page);
+  await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 }).catch(() => {});
+  const first = await taxEnvelopes(page, inv.investorId);
+  check('a W-8BEN-E was built to sign', first.list.length === 1 && first.list[0].status === 'sent', first.list);
+  await page.click('[data-action="ivf-taxanswers"]');
+  await page.waitForSelector('input[name="ob-e8Ch4"]', { timeout: 20000 });
+  // chapter 4 "something else"
+  await pickRadio(page, 'ob-e8Ch4', 'other');
+  const line4 = await page.locator('.ivf-taxroute').allInnerTexts();
+  const shown4 = await visibleInputs(page);
+  check('chapter 4 "something else" shows one line naming the usual forms (W-8IMY, W-8ECI, W-8EXP)', line4.length === 1 && /W-8IMY/.test(line4[0]) && /W-8ECI/.test(line4[0]) && /W-8EXP/.test(line4[0]), line4);
+  check('the routing line says where to send the completed form', line4.length === 1 && /ir@kestrelbaycap\.com/.test(line4[0]), line4);
+  check('nothing else is asked once the status is routed (no FTIN, no "Change your answers")', JSON.stringify(without(shown4, ['ob-e8Ch3', 'ob-e8Ch4'])) === '[]' && (await page.locator('[data-action="ivf-taxedit"]').count()) === 0, shown4);
+  // chapter 3 "something else" (a partnership), chapter 4 back on a supported status: still routed
+  await pickRadio(page, 'ob-e8Ch4', 'activeNffe');
+  check('back on two supported statuses, the line goes', (await page.locator('.ivf-taxroute').count()) === 0);
+  await pickRadio(page, 'ob-e8Ch3', 'other');
+  const line3 = await page.locator('.ivf-taxroute').allInnerTexts();
+  check('chapter 3 "something else" shows the same one line', line3.length === 1 && /W-8IMY/.test(line3[0]), line3);
+  await page.screenshot({ path: path.join(dir, 'route-answers.png'), fullPage: true });
+  const btn = await page.locator('.ivf-form button[type=submit]').innerText();
+  check('the button reads Continue (no form to go to)', btn.trim() === 'Continue', btn);
+  const screens = [await Lib.screenText(page)];
+  await Lib.submit(page);
+  const hd = await Lib.heading(page);
+  check('Continue moves on to the next step', hd === 'Distribution payments', hd);
+  const after = await taxEnvelopes(page, inv.investorId);
+  check('no W-8BEN-E envelope was created, and the unsigned one is voided', after.list.length === 1 && after.list[0].status === 'voided', after.list);
+  const rec = await page.evaluate((id) => {
+    const ws = window.CVPortal.state.ws;
+    const i = ws.investors.find((x) => x.id === id);
+    return { taxForm: i.taxForm || '', taxCert: i.taxCert || null, taxType: i.taxType, log: (ws.audit || []).filter((e) => e.record === id).map((e) => `${e.action} :: ${e.detail}`), flowEnv: (i.onboarding.flow || {}).taxEnvelopeId || '' };
+  }, inv.investorId);
+  check('nothing is on file: no taxForm, no taxCert; the investor type stays foreign entity', rec.taxForm === '' && !rec.taxCert && rec.taxType === 'foreign-entity', rec);
+  check('the change log names the forms that usually apply', rec.log.some((l) => /^Tax form not completed :: .*W-8IMY/.test(l)), rec.log.slice(-3));
+  const scr = Lib.leakCheck(screens.join('\n'));
+  check('white label: no vendor name or forbidden word on the tax screen', scr.ok, scr.hits);
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
+}
+
 const mmddyyyy = (iso) => {
   const [y, m, d] = String(iso).split('-');
   return `${m}-${d}-${y}`;
@@ -2169,7 +2407,12 @@ const cases = {
   'us-disregarded': usDisregarded,
   'us-ira': usIra,
   'us-joint': usJoint,
-  'foreign-entity': foreignEntity
+  'foreign-entity': foreignEntity,
+  'passive-owners': passiveOwners,
+  'passive-none': passiveNone,
+  'ffi-giin': ffiGiin,
+  'treaty-entity': treatyEntity,
+  route: routeCase
 };
 
 // The bundled forms must match their pins before anything runs.
