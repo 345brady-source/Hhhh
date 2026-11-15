@@ -129,7 +129,7 @@ Plans:
   5. Nothing that works today regresses: the owner's documents A 29 of 29, B 2 of 2 places, C 138 of 138, the picture form 241 of 241, the first agreement's 47 fields with none marked, the public documents' pins, the nine check files, the class pages and the walks
   6. After the reader is frozen, 100 fresh agreements and 50 more made picture-only (half clean, half with scan effects), drawn at random from EDGAR and new to every set, are read by the frozen reader and scored (the measure on all 150, exact scores on a random 20 and 10), and the results reach the owner failures first
   7. The owner has checked agreements the reader has never seen in the republished preview
-**Plans:** 65 plans (4 dropped by D-28: 20, 21, 56, 57; 11 added: 59 to 69)
+**Plans:** 66 plans (4 dropped by D-28: 20, 21, 56, 57; 12 added: 59 to 69 and 71; 70 ran as a quick task)
 
 Plans:
 - [ ] 01.4-01-PLAN.md — The measure sees what it was blind to (fallback glyph boxes, letter boxes, dates in parts, shared lines, illustrations), calibrated
@@ -197,6 +197,7 @@ Plans:
 - [ ] 01.4-67-PLAN.md — D-34/D-35/D-40/D-42: both blind PPMs, each read exactly once (ppm2.pdf text path, $3.00; ppm.pdf picture path with its frozen key, $8.00): ppm2 key by an agent who builds nothing, zero-spend worst-case probes, one run each by the orchestrator with the key, a score line each against the 90 percent bar, failures first (after 66, 68, 69)
 - [ ] 01.4-68-PLAN.md — D-37/D-38: PDF fallback for PPMs whose extracted text is unreadable (readability test tuned on public PDFs; readable PDFs keep the exact D-36 request); PDFs over one request's limits (600 pages, 32 MB encoded, token count) read in page ranges and merged, never cut; measure part fits a test cap by max tokens first
 - [ ] 01.4-69-PLAN.md — D-38: subscription API reader reads picture-only and broken-text pages from numbered page images with the picture reader's pixel candidates; long agreements read whole in ranges; silent retries; no dialog or allow step; a firm signature place guaranteed after every reading (walkC); walkA to two people (D-30); owner gate walk rows green; picture-pdf tool for plan 65
+- [ ] 01.4-71-PLAN.md — D-44: one PPM upload with the subscription agreement inside does both: the PPM reader reports the agreement's pages, the portal cuts them into their own PDF, makes it the offering's agreement and reads it in the background with no question; review states the pages and lets the sponsor adjust them; fake-mode checks on a public combined PDF; one real run by the orchestrator on the blind combined file (zero-spend probe, $6.00 cap); starts after the queued blind readings
 
 ### Phase 2: Field Editor
 **Goal**: A sponsor can adjust fields by hand quickly and without frustration, in an editor that looks professionally made
