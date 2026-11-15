@@ -87,5 +87,54 @@
     }
   };
 
+  // W-8BEN, October 2021 revision: 1 page, 23 fields (20 text, 2 boxes, 1 signature field).
+  const W8 = 'topmostSubform[0].Page1[0].';
+  const W8_W = 612;
+  const W8_H = 792.008;
+  maps['W-8BEN 2021-10'] = {
+    form: 'W-8BEN',
+    revision: 'Rev. October 2021',
+    file: 'assets/forms/fw8ben-2021-10.pdf',
+    sha256: 'b821dc1172c91b348a65675529cc792782f11fc1ae8579df92d627113203f918',
+    fields: {
+      name: { name: W8 + 'f_1[0]', kind: 'text' }, // line 1: the individual who owns the income
+      citizenship: { name: W8 + 'f_2[0]', kind: 'text' }, // line 2: country of nationality
+      street: { name: W8 + 'f_3[0]', kind: 'text' }, // line 3: home street address abroad
+      cityLine: { name: W8 + 'f_4[0]', kind: 'text' }, // line 3: city, region and postcode of that home
+      country: { name: W8 + 'f_5[0]', kind: 'text' }, // line 3: country of that home
+      mailStreet: { name: W8 + 'f_6[0]', kind: 'text' }, // line 4: postal street, only when it differs
+      mailCityLine: { name: W8 + 'f_7[0]', kind: 'text' }, // line 4: postal city, region and postcode
+      mailCountry: { name: W8 + 'f_8[0]', kind: 'text' }, // line 4: postal country
+      usTin: { name: W8 + 'f_9[0]', kind: 'text', max: 11 }, // line 5: a US number (SSN or ITIN) when the owner has one
+      ftin: { name: W8 + 'f_10[0]', kind: 'text' }, // line 6a: the home country's tax number
+      noFtin: { name: W8 + 'c1_01[0]', kind: 'check', on: '1' }, // line 6b: the home country issues no such number
+      reference: { name: W8 + 'f_11[0]', kind: 'text' }, // line 7: the requester's own reference
+      birthDate: { name: W8 + 'f_12[0]', kind: 'text', max: 10 }, // line 8: born on, month-day-year
+      treatyCountry: { name: W8 + 'f_13[0]', kind: 'text' }, // line 9: the treaty partner country
+      treatyArticle: { name: W8 + 'f_14[0]', kind: 'text' }, // line 10: which article and paragraph is relied on
+      treatyRate: { name: W8 + 'f_15[0]', kind: 'text' }, // line 10: the reduced percentage
+      treatyIncome: { name: W8 + 'f_16[0]', kind: 'text' }, // line 10: what kind of payment the rate covers
+      treatyExplain1: { name: W8 + 'f_17[0]', kind: 'text' }, // line 10: the conditions met, start (short slot at line end)
+      treatyExplain2: { name: W8 + 'f_18[0]', kind: 'text' }, // line 10: the conditions met, continued on the next line
+      capacity: { name: W8 + 'c1_02[0]', kind: 'check', on: '1' }, // Part III: the signer may sign for the owner
+      printName: { name: W8 + 'f_21[0]', kind: 'text' } // Part III: the signer's name in print
+    },
+    groups: {},
+    unused: {
+      'the signing date is stamped by the e-sign date overlay at this rectangle, on the day of signing, after the form is flattened': [W8 + 'Date[0]']
+    },
+    // the signature field has no appearance: the writer cannot fill it and flattening fails while it is there
+    removeBeforeFlatten: [W8 + 'f_20[0]'],
+    // sign and date are the signature field's and the date field's own rectangles (x 108 y 72 w 316.8 h 12 and x 432
+    // y 72.01 w 144 h 12 in points from the bottom). The caption goes in the free band just above the signature place:
+    // the printed label under it starts at y 720.9 from the top and the print-name field follows at 732, while the
+    // capacity line above ends by y 695.
+    overlays: {
+      sign: place(W8_W, W8_H, 1, 108, W8_H - 72 - 12, 316.8, 12),
+      date: place(W8_W, W8_H, 1, 432, W8_H - 72.01 - 12, 144, 12, { fmt: 'MM-DD-YYYY' }),
+      caption: place(W8_W, W8_H, 1, 108, 699, 316.8, 7)
+    }
+  };
+
   NS.taxmaps = maps;
 })((window.CVPortal = window.CVPortal || {}));
