@@ -879,6 +879,15 @@
       const cls = rIn.cls === undefined || rIn.cls === null || rIn.cls === '' ? String(it.cls || '') : String(rIn.cls);
       // Whether they already hold this offering is this console's to say: the device's copy of the record has no positions.
       Object.assign(rIn, { type: 'subscription', investorId: inv.id, offeringId: off.id, status: 'pending', cents: Number(rIn.cents), additional: inv.positions.some((p) => p.offeringId === off.id) });
+      // Its dates are this console's too, never the device's: the day it was made, from the invitation's sending to today, and
+      // the subscription's closing date (or, for an open-ended offering, its effective date, which a funded position takes),
+      // worked out here as operations.js does for a subscription made in this portal.
+      const sentDay = isDay(String(it.sentAt || '').slice(0, 10)) ? String(it.sentAt).slice(0, 10) : today();
+      let made = isDay(rIn.submitted) ? String(rIn.submitted) : today();
+      if (made < sentDay) made = sentDay;
+      if (made > today()) made = today();
+      rIn.submitted = made;
+      rIn.dealing = NS.ops && NS.ops.isOpen(off) ? NS.ops.subscriptionDate(made) : off.closeDate;
       if (cls) rIn.cls = cls;
       else delete rIn.cls;
       ['decided', 'note', 'completed', 'paid', 'paidCents', 'waitingFor'].forEach((k) => delete rIn[k]);
