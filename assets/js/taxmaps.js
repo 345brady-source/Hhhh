@@ -219,8 +219,64 @@
       ftin: text(E2 + 'Line9b_ReadOrder[0].f2_3[0]'), // line 9b: foreign TIN
       noFtin: box(E2 + 'c2_1[0]', 1), // line 9c: FTIN not legally required
       reference: text(E2 + 'f2_4[0]', 19), // line 10: reference number(s)
+      // Part III, page 2: claim of tax treaty benefits
+      treatyResident: box(E2 + 'c2_3[0]', 1), // line 14a: the beneficial owner is a resident of the country named
+      treatyCountry: text(E2 + 'f2_9[0]'), // line 14a: the treaty country
+      treatyLob: box(E2 + 'c2_4[0]', 1), // line 14b: derives the income and meets the limitation on benefits article
+      // line 14b: the type of limitation on benefits provision met, left column (on-values 1 to 5) then right (6 to 11)
+      lobGovernment: box(E2 + 'CheckboxesLine14b_ReadOrder[0].c2_5[0]', 1),
+      lobPension: box(E2 + 'CheckboxesLine14b_ReadOrder[0].c2_5[1]', 2),
+      lobTaxExempt: box(E2 + 'CheckboxesLine14b_ReadOrder[0].c2_5[2]', 3),
+      lobPubliclyTraded: box(E2 + 'CheckboxesLine14b_ReadOrder[0].c2_5[3]', 4),
+      lobSubsidiary: box(E2 + 'CheckboxesLine14b_ReadOrder[0].c2_5[4]', 5),
+      lobOwnershipBaseErosion: box(E2 + 'c2_5[0]', 6),
+      lobDerivative: box(E2 + 'c2_5[1]', 7),
+      lobActiveTrade: box(E2 + 'c2_5[2]', 8),
+      lobDiscretionary: box(E2 + 'c2_5[3]', 9),
+      lobNoArticle: box(E2 + 'c2_5[4]', 10),
+      lobOther: box(E2 + 'c2_5[5]', 11),
+      lobOtherText: text(E2 + 'f2_10[0]'), // line 14b: "Other": the article and paragraph
+      treatyUsSource: box(E2 + 'c2_6[0]', 1), // line 14c: treaty benefits for U.S. source dividends from a foreign corporation
+      treatyArticle: text(E2 + 'f2_11[0]'), // line 15: article and paragraph
+      treatyRate: text(E2 + 'f2_12[0]'), // line 15: the percentage rate of withholding
+      treatyIncome: text(E2 + 'f2_13[0]'), // line 15: the type of income
+      treatyExplain1: text(E2 + 'f2_14[0]'), // line 15: the additional conditions met, start (short slot at line end)
+      treatyExplain2: text(E2 + 'f2_15[0]'), // line 15: continued on the next line
+      treatyExplain3: text(E2 + 'f2_16[0]'), // line 15: and the line after
       // Part XXV, page 7: Active NFFE
       activeNffe: box(E7 + 'c7_5[0]', 1), // line 39
+      // Part XXVI, page 7: Passive NFFE
+      passiveNffe: box(E7 + 'c7_6[0]', 1), // line 40a
+      passiveNoOwners: box(E7 + 'c7_7[0]', 1), // line 40b: no substantial U.S. owners (or controlling U.S. persons)
+      passiveOwnersListed: box(E7 + 'c7_7[1]', 2), // line 40c: each substantial U.S. owner is listed in Part XXIX
+      // Part XXIX, page 8: substantial U.S. owners of the passive NFFE, nine rows of name, address and TIN
+      owner1Name: text(E8 + 'Table_Part29[0].BodyRow1[0].f8_3[0]'),
+      owner1Address: text(E8 + 'Table_Part29[0].BodyRow1[0].f8_4[0]'),
+      owner1Tin: text(E8 + 'Table_Part29[0].BodyRow1[0].f8_5[0]', 11),
+      owner2Name: text(E8 + 'Table_Part29[0].BodyRow2[0].f8_6[0]'),
+      owner2Address: text(E8 + 'Table_Part29[0].BodyRow2[0].f8_7[0]'),
+      owner2Tin: text(E8 + 'Table_Part29[0].BodyRow2[0].f8_8[0]', 11),
+      owner3Name: text(E8 + 'Table_Part29[0].BodyRow3[0].f8_9[0]'),
+      owner3Address: text(E8 + 'Table_Part29[0].BodyRow3[0].f8_10[0]'),
+      owner3Tin: text(E8 + 'Table_Part29[0].BodyRow3[0].f8_11[0]', 11),
+      owner4Name: text(E8 + 'Table_Part29[0].BodyRow4[0].f8_12[0]'),
+      owner4Address: text(E8 + 'Table_Part29[0].BodyRow4[0].f8_13[0]'),
+      owner4Tin: text(E8 + 'Table_Part29[0].BodyRow4[0].f8_14[0]', 11),
+      owner5Name: text(E8 + 'Table_Part29[0].BodyRow5[0].f8_15[0]'),
+      owner5Address: text(E8 + 'Table_Part29[0].BodyRow5[0].f8_16[0]'),
+      owner5Tin: text(E8 + 'Table_Part29[0].BodyRow5[0].f8_17[0]', 11),
+      owner6Name: text(E8 + 'Table_Part29[0].BodyRow6[0].f8_18[0]'),
+      owner6Address: text(E8 + 'Table_Part29[0].BodyRow6[0].f8_19[0]'),
+      owner6Tin: text(E8 + 'Table_Part29[0].BodyRow6[0].f8_20[0]', 11),
+      owner7Name: text(E8 + 'Table_Part29[0].BodyRow7[0].f8_21[0]'),
+      owner7Address: text(E8 + 'Table_Part29[0].BodyRow7[0].f8_22[0]'),
+      owner7Tin: text(E8 + 'Table_Part29[0].BodyRow7[0].f8_23[0]', 11),
+      owner8Name: text(E8 + 'Table_Part29[0].BodyRow8[0].f8_24[0]'),
+      owner8Address: text(E8 + 'Table_Part29[0].BodyRow8[0].f8_25[0]'),
+      owner8Tin: text(E8 + 'Table_Part29[0].BodyRow8[0].f8_26[0]', 11),
+      owner9Name: text(E8 + 'Table_Part29[0].BodyRow9[0].f8_27[0]'),
+      owner9Address: text(E8 + 'Table_Part29[0].BodyRow9[0].f8_28[0]'),
+      owner9Tin: text(E8 + 'Table_Part29[0].BodyRow9[0].f8_29[0]', 11),
       // Part XXX, page 8: certification
       capacity: box(E8 + 'c8_3[0]', 1), // the signer has the capacity to sign for the entity on line 1
       printName: text(E8 + 'f8_31[0]') // print name of the individual signing
@@ -228,43 +284,84 @@
     groups: {},
     unused: {
       'Part XXX, the signing date: stamped by the e-sign date overlay at this rectangle on the day of signing, after the form is flattened': [E8 + 'f8_32[0]'],
-      'temporary (plan 06-12 task 1): mapped or listed with its Part and reason by the second task of plan 06-12': [
-        // Part II
-        E2 + 'CheckboxesCol1_ReadOrder[0].c2_2[0]', E2 + 'CheckboxesCol1_ReadOrder[0].c2_2[1]', E2 + 'CheckboxesCol2_ReadOrder[0].c2_2[0]',
-        E2 + 'CheckboxesCol2_ReadOrder[0].c2_2[1]', E2 + 'c2_2[0]', E2 + 'f2_5[0]', E2 + 'f2_6[0]', E2 + 'f2_7[0]', E2 + 'f2_8[0]',
-        // Part III
-        E2 + 'c2_3[0]', E2 + 'f2_9[0]', E2 + 'c2_4[0]', E2 + 'CheckboxesLine14b_ReadOrder[0].c2_5[0]', E2 + 'CheckboxesLine14b_ReadOrder[0].c2_5[1]',
-        E2 + 'CheckboxesLine14b_ReadOrder[0].c2_5[2]', E2 + 'CheckboxesLine14b_ReadOrder[0].c2_5[3]', E2 + 'CheckboxesLine14b_ReadOrder[0].c2_5[4]',
-        E2 + 'c2_5[0]', E2 + 'c2_5[1]', E2 + 'c2_5[2]', E2 + 'c2_5[3]', E2 + 'c2_5[4]', E2 + 'c2_5[5]', E2 + 'f2_10[0]', E2 + 'c2_6[0]',
-        E2 + 'f2_11[0]', E2 + 'f2_12[0]', E2 + 'f2_13[0]', E2 + 'f2_14[0]', E2 + 'f2_15[0]', E2 + 'f2_16[0]',
-        // Part IV
-        E2 + 'f2_17[0]', E2 + 'c2_7[0]', E2 + 'c2_8[0]',
-        // Parts V to XXIV
-        E + 'Page3[0].c3_1[0]', E + 'Page3[0].c3_2[0]', E + 'Page3[0].f3_1[0]', E + 'Page3[0].c3_3[0]', E + 'Page3[0].c3_4[0]',
-        E + 'Page3[0].c3_5[0]', E + 'Page3[0].c3_6[0]', E + 'Page4[0].c4_1[0]', E + 'Page4[0].c4_1[1]', E + 'Page4[0].c4_2[0]',
-        E + 'Page4[0].c4_3[0]', E + 'Page4[0].c4_4[0]', E + 'Page4[0].c4_4[1]', E + 'Page5[0].c5_1[0]',
-        E + 'Page5[0].BulletedList1[0].Bullet1[0].f5_01[0]', E + 'Page5[0].BulletedList1[0].Bullet1[0].c5_2[0]',
-        E + 'Page5[0].BulletedList1[0].Bullet1[0].c5_2[1]', E + 'Page5[0].BulletedList1[0].Bullet1[0].f5_2[0]',
-        E + 'Page5[0].BulletedList1[0].Bullet2[0].f5_03[0]', E + 'Page5[0].BulletedList1[0].Bullet2[0].c5_3[0]',
-        E + 'Page5[0].BulletedList1[0].Bullet2[0].c5_3[1]', E + 'Page5[0].c5_4[0]', E + 'Page5[0].c5_5[0]', E + 'Page5[0].c5_5[1]',
+      'Part II, disregarded entity or branch receiving payment: filled only when a branch or disregarded entity with its own chapter 4 status receives the payment; the portal fills the form for the entity itself, and an investor paid through such a branch uploads a completed form instead': [
+        E2 + 'CheckboxesCol1_ReadOrder[0].c2_2[0]', E2 + 'CheckboxesCol1_ReadOrder[0].c2_2[1]',
+        E2 + 'CheckboxesCol2_ReadOrder[0].c2_2[0]', E2 + 'CheckboxesCol2_ReadOrder[0].c2_2[1]', E2 + 'c2_2[0]', E2 + 'f2_5[0]',
+        E2 + 'f2_6[0]', E2 + 'f2_7[0]', E2 + 'f2_8[0]'
+      ],
+      'Part IV, sponsored FFI: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E2 + 'f2_17[0]', E2 + 'c2_7[0]', E2 + 'c2_8[0]'
+      ],
+      'Part V, certified deemed-compliant nonregistering local bank: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E + 'Page3[0].c3_1[0]'
+      ],
+      'Part VI, certified deemed-compliant FFI with only low-value accounts: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E + 'Page3[0].c3_2[0]'
+      ],
+      'Part VII, certified deemed-compliant sponsored, closely held investment vehicle: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E + 'Page3[0].f3_1[0]', E + 'Page3[0].c3_3[0]'
+      ],
+      'Part VIII, certified deemed-compliant limited life debt investment entity: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E + 'Page3[0].c3_4[0]'
+      ],
+      'Part IX, certain investment entities that do not maintain financial accounts: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E + 'Page3[0].c3_5[0]'
+      ],
+      'Part X, owner-documented FFI: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E + 'Page3[0].c3_6[0]', E + 'Page4[0].c4_1[0]', E + 'Page4[0].c4_1[1]', E + 'Page4[0].c4_2[0]'
+      ],
+      'Part XI, restricted distributor: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E + 'Page4[0].c4_3[0]', E + 'Page4[0].c4_4[0]', E + 'Page4[0].c4_4[1]'
+      ],
+      'Part XII, nonreporting IGA FFI: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E + 'Page5[0].c5_1[0]', E + 'Page5[0].BulletedList1[0].Bullet1[0].f5_01[0]',
+        E + 'Page5[0].BulletedList1[0].Bullet1[0].c5_2[0]', E + 'Page5[0].BulletedList1[0].Bullet1[0].c5_2[1]',
+        E + 'Page5[0].BulletedList1[0].Bullet1[0].f5_2[0]', E + 'Page5[0].BulletedList1[0].Bullet2[0].f5_03[0]',
+        E + 'Page5[0].BulletedList1[0].Bullet2[0].c5_3[0]', E + 'Page5[0].BulletedList1[0].Bullet2[0].c5_3[1]'
+      ],
+      'Part XIII, foreign government, government of a U.S. possession or foreign central bank of issue: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E + 'Page5[0].c5_4[0]'
+      ],
+      'Part XIV, international organization: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E + 'Page5[0].c5_5[0]', E + 'Page5[0].c5_5[1]'
+      ],
+      'Part XV, exempt retirement plans (lines 29a to 29f, over pages 5 and 6): not a status the portal fills in; an investor in this status uploads a completed form instead': [
         E + 'Page5[0].c5_6[0]', E + 'Page5[0].c5_6[1]', E + 'Page5[0].c5_6[2]', E + 'Page6[0].c5_6[0]', E + 'Page6[0].c5_6[1]',
-        E + 'Page6[0].c5_6[2]', E + 'Page6[0].c6_1[0]', E + 'Page6[0].c6_2[0]', E + 'Page6[0].c6_3[0]', E + 'Page6[0].c6_4[0]',
-        E + 'Page6[0].BulletList4[0].Bullet1[0].f6_1[0]', E + 'Page6[0].c6_5[0]', E + 'Page6[0].BulletList5[0].Bullet1[0].f6_2[0]',
-        E7 + 'c7_1[0]', E7 + 'BulletList1[0].Bullet1[0].f7_1[0]', E7 + 'c7_2[0]', E7 + 'c7_3[0]', E7 + 'BulletList3[0].Bullet2[0].f7_2[0]',
-        E7 + 'c7_3[1]', E7 + 'BulletList4[0].Bullet3[0].f7_3[0]', E7 + 'BulletList4[0].Bullet4[0].f7_4[0]', E7 + 'c7_4[0]',
-        // Part XXVI
-        E7 + 'c7_6[0]', E7 + 'c7_7[0]', E7 + 'c7_7[1]',
-        // Parts XXVII to XXIX
-        E8 + 'c8_1[0]', E8 + 'f8_1[0]', E8 + 'c8_2[0]',
-        E8 + 'Table_Part29[0].BodyRow1[0].f8_3[0]', E8 + 'Table_Part29[0].BodyRow1[0].f8_4[0]', E8 + 'Table_Part29[0].BodyRow1[0].f8_5[0]',
-        E8 + 'Table_Part29[0].BodyRow2[0].f8_6[0]', E8 + 'Table_Part29[0].BodyRow2[0].f8_7[0]', E8 + 'Table_Part29[0].BodyRow2[0].f8_8[0]',
-        E8 + 'Table_Part29[0].BodyRow3[0].f8_9[0]', E8 + 'Table_Part29[0].BodyRow3[0].f8_10[0]', E8 + 'Table_Part29[0].BodyRow3[0].f8_11[0]',
-        E8 + 'Table_Part29[0].BodyRow4[0].f8_12[0]', E8 + 'Table_Part29[0].BodyRow4[0].f8_13[0]', E8 + 'Table_Part29[0].BodyRow4[0].f8_14[0]',
-        E8 + 'Table_Part29[0].BodyRow5[0].f8_15[0]', E8 + 'Table_Part29[0].BodyRow5[0].f8_16[0]', E8 + 'Table_Part29[0].BodyRow5[0].f8_17[0]',
-        E8 + 'Table_Part29[0].BodyRow6[0].f8_18[0]', E8 + 'Table_Part29[0].BodyRow6[0].f8_19[0]', E8 + 'Table_Part29[0].BodyRow6[0].f8_20[0]',
-        E8 + 'Table_Part29[0].BodyRow7[0].f8_21[0]', E8 + 'Table_Part29[0].BodyRow7[0].f8_22[0]', E8 + 'Table_Part29[0].BodyRow7[0].f8_23[0]',
-        E8 + 'Table_Part29[0].BodyRow8[0].f8_24[0]', E8 + 'Table_Part29[0].BodyRow8[0].f8_25[0]', E8 + 'Table_Part29[0].BodyRow8[0].f8_26[0]',
-        E8 + 'Table_Part29[0].BodyRow9[0].f8_27[0]', E8 + 'Table_Part29[0].BodyRow9[0].f8_28[0]', E8 + 'Table_Part29[0].BodyRow9[0].f8_29[0]'
+        E + 'Page6[0].c5_6[2]'
+      ],
+      'Part XVI, entity wholly owned by exempt beneficial owners: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E + 'Page6[0].c6_1[0]'
+      ],
+      'Part XVII, territory financial institution: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E + 'Page6[0].c6_2[0]'
+      ],
+      'Part XVIII, excepted nonfinancial group entity: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E + 'Page6[0].c6_3[0]'
+      ],
+      'Part XIX, excepted nonfinancial start-up company: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E + 'Page6[0].c6_4[0]', E + 'Page6[0].BulletList4[0].Bullet1[0].f6_1[0]'
+      ],
+      'Part XX, excepted nonfinancial entity in liquidation or bankruptcy: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E + 'Page6[0].c6_5[0]', E + 'Page6[0].BulletList5[0].Bullet1[0].f6_2[0]'
+      ],
+      'Part XXI, 501(c) organization: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E7 + 'c7_1[0]', E7 + 'BulletList1[0].Bullet1[0].f7_1[0]'
+      ],
+      'Part XXII, nonprofit organization: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E7 + 'c7_2[0]'
+      ],
+      'Part XXIII, publicly traded NFFE or NFFE affiliate of a publicly traded corporation: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E7 + 'c7_3[0]', E7 + 'BulletList3[0].Bullet2[0].f7_2[0]', E7 + 'c7_3[1]', E7 + 'BulletList4[0].Bullet3[0].f7_3[0]',
+        E7 + 'BulletList4[0].Bullet4[0].f7_4[0]'
+      ],
+      'Part XXIV, excepted territory NFFE: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E7 + 'c7_4[0]'
+      ],
+      'Part XXVII, excepted inter-affiliate FFI: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E8 + 'c8_1[0]'
+      ],
+      'Part XXVIII, sponsored direct reporting NFFE: not a status the portal fills in; an investor in this status uploads a completed form instead': [
+        E8 + 'f8_1[0]', E8 + 'c8_2[0]'
       ]
     },
     // the signature field has no appearance: the writer cannot fill it and flattening fails while it is there

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// The official tax forms and their maps (plan 06-10, D-04, D-05), no browser:
-//   node form-maps.js [--only W-9,W-8BEN]
+// The official tax forms and their maps (plans 06-10 and 06-12, D-04, D-05), no browser:
+//   node form-maps.js [--only W-9,W-8BEN,W-8BEN-E]
 // For each form: the bundled file's pin (SHA256SUMS, the map and the D-05 value agree with the file); the file's own field
 // list read live and compared with the map both ways (every field mapped, unused or removed; every mapped name in the
 // file; kinds, lengths and on-values as the file has them; the same names as the planner's listing); a copy with one byte
@@ -762,7 +762,7 @@ const W8BENE_ANCHORS = {
   activeNffe: [['left', /^39$/], ['above', /XXV/]],
   // Part III
   treatyResident: [['left', /^a$/], ['right', /^The beneficial owner is a resident of$/, 140]],
-  treatyCountry: [['left', /a The beneficial owner is a resident of$/], ['right', /^within the meaning of the income tax/]],
+  treatyCountry: [['left', /a The beneficial owner is a resident of$/], ['right', /^within the meaning of the income tax$/, 160]],
   treatyLob: [['left', /^b$/], ['right', /^The beneficial owner derives the item \(or items\) of income for which the treaty benefits are claimed/, 480]],
   lobGovernment: ['right', /^Government$/, 160],
   lobPension: ['right', /^Tax-exempt pension trust or pension fund$/, 160],
