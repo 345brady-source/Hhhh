@@ -1,0 +1,23 @@
+--- /home/user/Hhhh/assets/js/anchors.js	2026-11-13 20:24:01.590773728 +0000
++++ try-anchors-v1.js	2026-11-13 21:28:19.366617398 +0000
+@@ -424,7 +424,9 @@
+     const lines = [];
+     pieces.forEach((p) => {
+       if (p.made === 'underscores' && p.n < 2) return;
+-      const m = lines.find((l) => !l.frame && !p.frame && Math.abs(l.y - p.y) <= 2.2 && p.x0 - l.x1 <= 3.5 && p.x1 >= l.x0 - 3.5);
++      const typedP = p.made === 'underscores' || p.made === 'leader';
++      const sameKind = (l) => (l.made.indexOf('rule') >= 0 && l.made.indexOf('underscores') < 0 && l.made.indexOf('leader') < 0) === !typedP || (Math.abs(l.x0 - p.x0) <= 6 && Math.abs(l.x1 - p.x1) <= 6);
++      const m = lines.find((l) => !l.frame && !p.frame && sameKind(l) && Math.abs(l.y - p.y) <= 2.2 && p.x0 - l.x1 <= 3.5 && p.x1 >= l.x0 - 3.5);
+       if (m) {
+         m.x0 = Math.min(m.x0, p.x0);
+         m.x1 = Math.max(m.x1, p.x1);
+@@ -484,7 +486,8 @@
+           if (b - a < 16) continue;
+           const roof = hs.filter((s) => s.c < l.y - 6 && s.c > l.y - 80 && ov(s.a0, s.a1, a, b) > 0.5 * (b - a)).sort((p, q) => q.c - p.c)[0];
+           const top = roof ? roof.c : l.y - 20;
+-          if (ink.some((g) => (g.x0 + g.x1) / 2 > a && (g.x0 + g.x1) / 2 < b && g.y > top && g.y - 0.4 * g.h < l.y + 1)) continue;
++          const inCell = ink.filter((g) => (g.x0 + g.x1) / 2 > a && (g.x0 + g.x1) / 2 < b && g.y > top && g.y - 0.4 * g.h < l.y + 1);
++          if (inCell.length && !(inCell.length === 1 && /^[xX\u00D7\u2715\u2717]$/.test(inCell[0].u) && inCell[0].x0 - a < 12)) continue;
+           out.rules.push({ x0: a + 2, x1: b - 2, y: l.y, clear: Math.max(0, l.y - top - 1), made: 'cell', cut: false, cell: true, table: true });
+         }
+         return;

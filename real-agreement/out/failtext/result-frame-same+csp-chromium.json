@@ -1,0 +1,213 @@
+{
+ "mode": "frame-same+csp",
+ "browser": "chromium",
+ "sandbox": "allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin",
+ "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'none'; worker-src 'none'; child-src 'none'",
+ "env": {
+  "origin": "http://localhost:36821",
+  "localStorage": "object",
+  "indexedDB": "opens",
+  "app": true,
+  "bodyText": "Carrow & Vale Explore a sample portal Create your portal Firm name First name Last name Work email Password At least 10 characters. You will add a second sign-i"
+ },
+ "took": 536,
+ "outcome": "draft opened in the field editor",
+ "toasts": [
+  "Welcome, Priya. Your portal is ready.",
+  "6 fields need your review before investors can sign."
+ ],
+ "fields": [
+  {
+   "n": 1,
+   "page": 13,
+   "type": "signature",
+   "role": "investor",
+   "label": "",
+   "conf": "low",
+   "review": true,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs.",
+   "forType": "",
+   "prefill": "",
+   "x0": 61.2,
+   "x1": 241.2,
+   "top": 522.7,
+   "bottom": 564.7
+  },
+  {
+   "n": 2,
+   "page": 13,
+   "type": "date",
+   "role": "investor",
+   "label": "",
+   "conf": "low",
+   "review": true,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs.",
+   "forType": "",
+   "prefill": "",
+   "x0": 379.4,
+   "x1": 489.4,
+   "top": 538.6,
+   "bottom": 558.6
+  },
+  {
+   "n": 3,
+   "page": 13,
+   "type": "name",
+   "role": "investor",
+   "label": "",
+   "conf": "low",
+   "review": true,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs.",
+   "forType": "",
+   "prefill": "",
+   "x0": 61.2,
+   "x1": 231.2,
+   "top": 578.2,
+   "bottom": 598.2
+  },
+  {
+   "n": 4,
+   "page": 13,
+   "type": "signature",
+   "role": "firm",
+   "label": "",
+   "conf": "low",
+   "review": true,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs.",
+   "forType": "",
+   "prefill": "",
+   "x0": 61.2,
+   "x1": 241.2,
+   "top": 649.4,
+   "bottom": 691.4
+  },
+  {
+   "n": 5,
+   "page": 13,
+   "type": "date",
+   "role": "firm",
+   "label": "",
+   "conf": "low",
+   "review": true,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs.",
+   "forType": "",
+   "prefill": "",
+   "x0": 379.4,
+   "x1": 489.4,
+   "top": 665.3,
+   "bottom": 685.3
+  },
+  {
+   "n": 6,
+   "page": 13,
+   "type": "name",
+   "role": "firm",
+   "label": "",
+   "conf": "low",
+   "review": true,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs.",
+   "forType": "",
+   "prefill": "",
+   "x0": 61.2,
+   "x1": 231.2,
+   "top": 704.9,
+   "bottom": 724.9
+  }
+ ],
+ "layoutError": "Error: simulated: the text of this page cannot be read\n    at proto.getTextContent (eval at evaluate (:311:30), <anonymous>:7:53)\n    at Object.pageLayout (http://localhost:36821/assets/js/esign.js:2387:31)\n    at async eval (eval at evaluate (:311:30), <anonymous>:14:20)\n    at async <anonymous>:337:30",
+ "layout": null,
+ "imgs": [
+  {
+   "src": "blob:http://localhost:36821/d7",
+   "complete": true,
+   "w": 1300
+  },
+  {
+   "src": "blob:http://localhost:36821/5e",
+   "complete": true,
+   "w": 1300
+  },
+  {
+   "src": "blob:http://localhost:36821/77",
+   "complete": true,
+   "w": 1300
+  },
+  {
+   "src": "",
+   "complete": true,
+   "w": 0
+  },
+  {
+   "src": "",
+   "complete": true,
+   "w": 0
+  },
+  {
+   "src": "",
+   "complete": true,
+   "w": 0
+  },
+  {
+   "src": "",
+   "complete": true,
+   "w": 0
+  },
+  {
+   "src": "",
+   "complete": true,
+   "w": 0
+  },
+  {
+   "src": "",
+   "complete": true,
+   "w": 0
+  },
+  {
+   "src": "",
+   "complete": true,
+   "w": 0
+  },
+  {
+   "src": "",
+   "complete": true,
+   "w": 0
+  },
+  {
+   "src": "",
+   "complete": true,
+   "w": 0
+  },
+  {
+   "src": "",
+   "complete": true,
+   "w": 0
+  }
+ ],
+ "note": "6 fields were placed for you from the blanks in the PDF. Those marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.",
+ "todo": "Confirm or move the 6 fields marked for review.",
+ "review": {
+  "list": 12,
+  "text": "Signature\nPage 13 · No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs.\nDate signed\nPage 13 · No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs.\nName\nPage 13",
+  "pageShown": "1",
+  "zoom": "fit"
+ },
+ "drawn": {
+  "13": {
+   "fields": 6,
+   "drawn": 6,
+   "anyFldOnPage": 6,
+   "worstOffsetAsFractionOfPage": 0,
+   "page": [
+    403,
+    522
+   ],
+   "img": [
+    403,
+    522,
+    1300
+   ]
+  }
+ },
+ "console": [],
+ "aborted": []
+}

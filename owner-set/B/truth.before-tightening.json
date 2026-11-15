@@ -1,0 +1,313 @@
+{
+ "file": "shp-lpa.pdf",
+ "letter": "B",
+ "pages": 32,
+ "page_size_pt": [
+  612,
+  792
+ ],
+ "coordinates": "PDF points, origin top-left of the page, y down",
+ "how_measured": "drawn rules from the page content streams (pdfplumber and a raw pypdf read of the \"re ... f\" operators, both agree to 0.01 pt); words from pdftotext -bbox; every page rendered at 100 dpi and looked at; machine sweep of all 32 pages for underscores (0), box or symbol-font characters (0), stroked paths (0), form fields (0), filled rectangles (9: 1 on page 16, 2 on page 31, 6 on page 32)",
+ "kind_of_document": "A limited partnership agreement. It is signed in this file only by the sponsor side: the managing (general) partner entity and the Class B partner entity, both by the same named manager. There is NO investor signature page, no joinder page, no counterpart signature page for limited partners, no blank for an investor anywhere. The text says an investor becomes a partner by executing a subscription agreement and a counterpart of this agreement, and grants the managing partner a power of attorney; the place where the investor signs is in the separate subscription document, not here.",
+ "investor_signature_block": {
+  "present": false,
+  "pages": []
+ },
+ "firm_block": {
+  "present": true,
+  "pages": [
+   31
+  ],
+  "note": "two blocks, one under the other, right half of the page: heading, entity name, \"By:\" + rule, printed name and title"
+ },
+ "second_investor_places": false,
+ "third_parties": false,
+ "individual_entity_split": false,
+ "counts_total": {
+  "places": 2,
+  "signature": 2,
+  "tickbox": 0,
+  "initials": 0,
+  "blank": 0,
+  "date": 0
+ },
+ "counts_by_owner": {
+  "firm": 2,
+  "investor": 0,
+  "co-investor": 0,
+  "third-party": 0,
+  "unclear": 0
+ },
+ "per_page": {
+  "1": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "2": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "3": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "4": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "5": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "6": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "7": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "8": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "9": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "10": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "11": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "12": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "13": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "14": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "15": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "16": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "17": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "18": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "19": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "20": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "21": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "22": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "23": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "24": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "25": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "26": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "27": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "28": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "29": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "30": {
+   "places": 0,
+   "confidence": "certain"
+  },
+  "31": {
+   "places": 2,
+   "confidence": "certain"
+  },
+  "32": {
+   "places": 0,
+   "confidence": "certain"
+  }
+ },
+ "scoring_note": "A signature place is recorded as its rule (a hairline). A field belongs to it when the field stands on the rule: see score.js (the writing zone is the rule widened upward by 36 pt and downward by 4 pt).",
+ "fields": [
+  {
+   "id": "p31-01",
+   "page": 31,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "firm",
+   "whose": "firm",
+   "required": true,
+   "optional": false,
+   "label": "Managing partner (the general partner entity): signature line after \"By:\"; the signatory's name and title are already printed under the line",
+   "x0": 303.84,
+   "y0": 507.48,
+   "x1": 540.0,
+   "y1": 507.96,
+   "box_is": "the drawn rule (a filled rectangle 0.48 pt tall); the label \"By:\" ends at x 303.9 on the same baseline; the writing space is the 35 pt of empty paper above the rule (the entity name ends at y 466.3)"
+  },
+  {
+   "id": "p31-02",
+   "page": 31,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "firm",
+   "whose": "firm",
+   "required": true,
+   "optional": false,
+   "label": "Class B partner (the sponsor's own entity): signature line after \"By:\"; the signatory's name and title are already printed under the line",
+   "x0": 303.84,
+   "y0": 658.92,
+   "x1": 540.0,
+   "y1": 659.4,
+   "box_is": "the drawn rule (a filled rectangle 0.48 pt tall); the label \"By:\" ends at x 303.9; writing space above the rule up to y 617.9"
+  }
+ ],
+ "must_not_get_a_field": {
+  "1": [
+   "cover: a logo picture (it contains two short horizontal strokes beside a word, part of the picture), title lines. No place."
+  ],
+  "2": [
+   "table of contents: 39 dot-leader lines with page numbers, each a link annotation. Dot leaders are not blanks."
+  ],
+  "3": [
+   "table of contents continued: 31 dot-leader lines, link annotations. Not blanks."
+  ],
+  "4": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "5": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "6": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "7": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "8": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "9": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "10": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "11": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "12": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "13": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "14": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "15": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "16": [
+   "one drawn rule [126.48, 630.12, 530.88, 630.6]: the underline of a sentence of prose (emphasis). Text sits directly on it. Not a blank.",
+   "running prose; footer"
+  ],
+  "17": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "18": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "19": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "20": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "21": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "22": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "23": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "24": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "25": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "26": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "27": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "28": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "29": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "30": [
+   "running prose with headings; footer (two lines and a page number). No rule, no underscore, no box, no form field on the page."
+  ],
+  "31": [
+   "the effective-date sentence above the blocks has its date printed (already filled in): no date field",
+   "block headings in bold capitals and the two printed entity names: no field",
+   "the printed name and title under each rule (\"name, title\" already filled in): no name field, no title field",
+   "there is NO date line, NO name line, NO title line beside either signature; none may be invented",
+   "footer (two lines and a page number)"
+  ],
+  "32": [
+   "six drawn rules under the three column headings (two lines each): [319.56,202.92,355.44,203.4] [325.56,216.6,349.44,217.08] [378.6,202.92,426.72,203.4] [378.72,216.6,426.72,217.08] [445.8,202.92,530.52,203.4] [470.16,216.6,506.16,217.08]: underlined headings, text sits on each. Not blanks.",
+   "table cells are clip rectangles only (no drawn frame): not boxes",
+   "cells holding a placeholder word (\"to be determined\") for three classes of holder, and cells holding a hyphen or \"N/A\": printed values the sponsor maintains (the agreement lets the managing partner update this exhibit); no field",
+   "the word standing for the investors in three rows: printed text, no blank",
+   "printed entity names and addresses; footer"
+  ]
+ }
+}

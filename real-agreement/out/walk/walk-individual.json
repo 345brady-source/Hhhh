@@ -1,0 +1,84 @@
+{
+ "kind": "individual",
+ "uploadMs": 1499,
+ "editorNote": "48 fields were placed for you from the blanks in the PDF. Those marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.",
+ "editorStatus": "Confirm or move the 8 fields marked for review.",
+ "beforeSave": {
+  "fields": 48,
+  "marked": 8,
+  "todoBefore": "Confirm or move the 8 fields marked for review.",
+  "todoAfter": ""
+ },
+ "ready": true,
+ "steps": [
+  "Step 1 of 10: Welcome | Welcome, Morgan",
+  "Step 2 of 10: Create your login | Create your login",
+  "Step 3 of 10: Investor information | Investor information",
+  "Step 4 of 10: Identity verification | Identity verification",
+  "Step 5 of 10: Accredited investor verification | Accredited investor verification",
+  "Step 6 of 10: Tax certification | Tax certification",
+  "Step 7 of 10: Distribution payments | Distribution payments",
+  "Step 8 of 10: Subscription | Subscription",
+  "Step 9 of 10: Subscription agreement | Subscription agreement"
+ ],
+ "reachedSigning": true,
+ "signing": {
+  "envelopeFields": 35,
+  "mine": 29,
+  "byType": {
+   "text*": 7,
+   "checkbox": 15,
+   "text*(filled in)": 4,
+   "name*": 1,
+   "signature*": 1,
+   "date": 1
+  },
+  "prefilled": [
+   "p5 address",
+   "p11 address",
+   "p11 email",
+   "p11 phone"
+  ],
+  "missingAtStart": 8,
+  "group": "person",
+  "signers": [
+   "investor:viewed",
+   "countersigner:waiting"
+  ]
+ },
+ "signShots": 13,
+ "afterSignatureOnly": {
+  "missing": [
+   "text:p2:Partner's discretion)",
+   "text:p7:under ERISA) is approximately",
+   "text:p11:Taxpayer ID",
+   "text:p13:Text",
+   "text:p13:Text",
+   "text:p13:Text",
+   "text:p13:Text"
+  ],
+  "finishDisabled": true
+ },
+ "afterAll": {
+  "missing": [],
+  "tooLong": [],
+  "ticked": 15,
+  "filled": 11
+ },
+ "finished": true,
+ "toasts": [
+  "Account activated"
+ ],
+ "firmCanSign": true,
+ "firmFields": [
+  "text p12 \"Commitment amount\" = \"$250,000\"",
+  "signature* p12 \"\" = \"\"",
+  "name* p12 \"\" = \"Kestrel Bay Investor Relations\"",
+  "text p12 \"Title\" = \"\"",
+  "date p12 \"\" = \"11/13/2026\"",
+  "text* p12 \"Effective Date of Admission\" = \"\""
+ ],
+ "completed": true,
+ "errorsSponsor": [],
+ "errorsInvestor": []
+}

@@ -1,0 +1,63 @@
+--- /home/user/Hhhh/assets/js/placement.js	2026-11-13 20:52:16.465334792 +0000
++++ try-placement-v1.js	2026-11-13 21:28:19.365103688 +0000
+@@ -322,7 +322,7 @@
+     // (the bottom edge of a table cell, with the cell's sides standing on it, is one).
+     // In a table, the edge under a cell that has words in it (a label standing a little above its cell's bottom edge)
+     // is no blank either: the row's blank is the empty cell.
+-    const filled = (r) => r.table && r.clear < 12 && lines.some((ln) => ln.parts.some((p) => p.t === 'text' && p.y < r.y - 2 && p.y > r.y - r.clear - p.h && overlap(p.x0, p.x1, r.x0, r.x1) > 0));
++    const filled = (r) => !r.cell && r.table && r.clear < 12 && lines.some((ln) => ln.parts.some((p) => p.t === 'text' && p.y < r.y - 2 && p.y > r.y - r.clear - p.h && overlap(p.x0, p.x1, r.x0, r.x1) > 0));
+     const rules = (pg.rules || []).filter((r) => r && r.x1 - r.x0 >= MIN_RULE - 1 && r.clear >= TIGHT_CLEAR && !filled(r) && !boxes.some((b) => r.x0 >= b.x0 - 1.5 && r.x1 <= b.x1 + 1.5 && r.y >= b.y0 - 1.5 && r.y <= b.y1 + 1.5));
+     // One line shared by several captions printed under it ("Name of Subscriber ... Social Security Number", two
+     // signatures on one rule): the line is cut at its captions, one blank for each.
+@@ -858,6 +858,51 @@
+         // One empty cell in a table of words may just be an empty cell: sure only where a column of them stands.
+         if (slot.cell && !L.slots.some((o) => o !== slot && o.cell && Math.abs(o.x0 - slot.x0) <= 3 && Math.abs(o.x1 - slot.x1) <= 3)) weaken(m, WHY.phrase);
+       });
++    /* 2c (trial). An empty ruled cell: its caption is the words over its top edge, every line of them. */
++    const cellSlots = L.slots.filter((s) => s.cell && !s.made && !s.skip).sort((a, b) => a.y - b.y || a.x0 - b.x0);
++    cellSlots.forEach((slot) => {
++      const top = slot.y - slot.clear - 1;
++      const mine = L.segs.filter((g) => !g.used && g.y <= top + 1.5 && top - g.y <= 46 && (g.x0 + g.x1) / 2 > slot.x0 - 4 && (g.x0 + g.x1) / 2 < slot.x1 + 4 && g.s.length <= 90).sort((a, b) => b.y - a.y || a.x0 - b.x0);
++      if (!mine.length || top - mine[0].y > Math.max(1.6 * mine[0].h, 12)) return;
++      const rows = [];
++      let lastY = null;
++      for (const g of mine) {
++        if (lastY != null && Math.abs(g.y - lastY) < 1) { rows[rows.length - 1].push(g); continue; }
++        if (lastY != null && (lastY - g.y > 1.45 * g.h || rows.length >= 3)) break;
++        // another cell or rule between this line and the one under it ends the caption
++        if (lastY != null && L.slots.some((o) => o !== slot && o.y > g.y + 1 && o.y < lastY - 1 && overlap(o.x0, o.x1, g.x0, g.x1) > 0)) break;
++        if (L.slots.some((o) => o !== slot && o.cell && o.y > g.y - 2 && o.y - o.clear - 1 < g.y - 0.5 * g.h && overlap(o.x0, o.x1, g.x0, g.x1) > 0.5 * (g.x1 - g.x0))) break;
++        rows.push([g]);
++        lastY = g.y;
++      }
++      const capSegs = rows.reverse().map((r) => r.sort((a, b) => a.x0 - b.x0)).reduce((a, b) => a.concat(b), []);
++      if (!capSegs.length) return;
++      const whole = tidy(capSegs.map((g) => g.s).join(' '));
++      const near = capSegs[capSegs.length - 1];
++      const req = /\(\s*required\s*\)/i.test(whole);
++      const opt = OPTIONAL_RE.test(whole.toLowerCase());
++      const c0 = classify(whole) || classify(near.s);
++      capSegs.forEach((g) => (g.used = 'above'));
++      slot.capSegs = capSegs;
++      let m;
++      if (c0 && c0.kind === 'skip') m = second(slot, Object.assign({}, c0, { text: whole }), near);
++      else if (c0 && FIELD(c0.kind)) m = propose(c0.kind, slot, c0, { seg: near, how: 'above', required: req && !opt });
++      else m = generic(slot, { kind: 'other', who: whoIn(plain(whole)), forType: '', optional: !req || opt, colon: true, by: false, text: whole, any: true }, near, true);
++      if (m && m.p && !m.second) m.p.required = req && !opt;
++    });
++    // a cell with no caption of its own beside a captioned cell of its row under one centred caption: the same caption
++    cellSlots.filter((s) => !s.made).forEach((slot) => {
++      const mate = cellSlots.filter((o) => o.made && o.capSegs && Math.abs(o.y - slot.y) <= 1 && Math.abs(o.x1 - slot.x0) <= 8 && o.capSegs.some((g) => g.x1 > o.x1 - 6)).pop();
++      if (!mate) return;
++      const m = propose(mate.made.kind, slot, mate.made.info, { seg: mate.made.seg, how: 'above', label: mate.made.p.label, required: mate.made.p.required });
++      if (mate.made.second) Object.assign(m, { second: true, block: false, co: mate.made.co }), Object.assign(m.p, { second: true, conf: 'low', why: WHY.second });
++    });
++    // a cell with no caption at all still gets its field: optional and marked
++    cellSlots.filter((s) => !s.made).forEach((slot) => {
++      const m = propose('other', slot, null, { label: 'Text', required: false });
++      weaken(m, 'This box has no caption on its page: check what goes here.');
++    });
++
+     /* 3. Blanks with no label on their line: a caption under the line, or a label above it. */
+     const lonely = L.slots.filter((s) => !s.made && !s.skip).sort((a, b) => a.y - b.y || a.x0 - b.x0);
+     // Stacks of such blanks in one column are read together: either every label is a caption, or every label is above.

@@ -1,0 +1,1077 @@
+{
+ "example": {
+  "fields": 47,
+  "marked": 0,
+  "list": [
+   {
+    "page": 2,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Commitment amount",
+    "storedLabel": "Commitment amount",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "amount",
+    "forType": "",
+    "box": [
+     206.8,
+     180.1,
+     467.3,
+     192.6
+    ]
+   },
+   {
+    "page": 4,
+    "kind": "checkbox",
+    "signer": "investor",
+    "label": "I / we certify that none of the above categories apply, and",
+    "storedLabel": "I / we certify that none of the above categories apply, and",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     586.6,
+     81.4,
+     596.1
+    ]
+   },
+   {
+    "page": 4,
+    "kind": "checkbox",
+    "signer": "investor",
+    "label": "At the time this order to purchase Interests originated, I /",
+    "storedLabel": "At the time this order to purchase Interests originated, I /",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     652.5,
+     81.4,
+     662
+    ]
+   },
+   {
+    "page": 5,
+    "kind": "checkbox",
+    "signer": "investor",
+    "label": "I / we am / are purchasing the Interest",
+    "storedLabel": "I / we am / are purchasing the Interest for my / our own acc",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     75,
+     81.4,
+     84.5
+    ]
+   },
+   {
+    "page": 5,
+    "kind": "checkbox",
+    "signer": "investor",
+    "label": "I / we did not learn of this offering, or receive any offer",
+    "storedLabel": "I / we did not learn of this offering, or receive any offer",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     123.4,
+     81.4,
+     132.9
+    ]
+   },
+   {
+    "page": 5,
+    "kind": "checkbox",
+    "signer": "investor",
+    "label": "I / we understand and agree that the Interests are subject t",
+    "storedLabel": "I / we understand and agree that the Interests are subject t",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     158,
+     81.4,
+     167.5
+    ]
+   },
+   {
+    "page": 5,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Country of citizenship / organization",
+    "storedLabel": "Country of citizenship / organization",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     278.4,
+     331.6,
+     290.8
+    ]
+   },
+   {
+    "page": 5,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Country of primary residence / principal office",
+    "storedLabel": "Country of primary residence / principal office",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     314.1,
+     331.6,
+     326.5
+    ]
+   },
+   {
+    "page": 5,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Address",
+    "storedLabel": "Address",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "address",
+    "forType": "",
+    "box": [
+     71.1,
+     349.8,
+     331.6,
+     362.2
+    ]
+   },
+   {
+    "page": 6,
+    "kind": "checkbox",
+    "signer": "investor",
+    "label": "I am a natural person (or a natural person together with my",
+    "storedLabel": "I am a natural person (or a natural person together with my",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     164.8,
+     81.4,
+     174.3
+    ]
+   },
+   {
+    "page": 6,
+    "kind": "checkbox",
+    "signer": "investor",
+    "label": "The Subscriber is a company owned directly or indirectly by",
+    "storedLabel": "The Subscriber is a company owned directly or indirectly by",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     213.2,
+     81.4,
+     222.7
+    ]
+   },
+   {
+    "page": 6,
+    "kind": "checkbox",
+    "signer": "investor",
+    "label": "The Subscriber is a trust that was not formed",
+    "storedLabel": "The Subscriber is a trust that was not formed for the specif",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     261.6,
+     81.4,
+     271.1
+    ]
+   },
+   {
+    "page": 6,
+    "kind": "checkbox",
+    "signer": "investor",
+    "label": "The Subscriber is an entity, acting",
+    "storedLabel": "The Subscriber is an entity, acting for its own account or t",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     310,
+     81.4,
+     319.5
+    ]
+   },
+   {
+    "page": 6,
+    "kind": "checkbox",
+    "signer": "investor",
+    "label": "The Subscriber is an entity each of whose equity owners is a",
+    "storedLabel": "The Subscriber is an entity each of whose equity owners is a",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     344.6,
+     81.4,
+     354.1
+    ]
+   },
+   {
+    "page": 7,
+    "kind": "checkbox",
+    "signer": "investor",
+    "label": "The Subscriber is an “employee benefit plan” subject to Titl",
+    "storedLabel": "The Subscriber is an “employee benefit plan” subject to Titl",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     141.4,
+     81.4,
+     150.9
+    ]
+   },
+   {
+    "page": 7,
+    "kind": "checkbox",
+    "signer": "investor",
+    "label": "The Subscriber is a plan, individual retirement account, or",
+    "storedLabel": "The Subscriber is a plan, individual retirement account, or",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     162.2,
+     81.4,
+     171.7
+    ]
+   },
+   {
+    "page": 7,
+    "kind": "checkbox",
+    "signer": "investor",
+    "label": "The Subscriber is an entity whose underlying assets are deem",
+    "storedLabel": "The Subscriber is an entity whose underlying assets are deem",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     196.8,
+     81.4,
+     206.3
+    ]
+   },
+   {
+    "page": 7,
+    "kind": "checkbox",
+    "signer": "investor",
+    "label": "The Subscriber is a governmental, church, or non-U.S. plan s",
+    "storedLabel": "The Subscriber is a governmental, church, or non-U.S. plan s",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     245.2,
+     81.4,
+     254.7
+    ]
+   },
+   {
+    "page": 7,
+    "kind": "checkbox",
+    "signer": "investor",
+    "label": "None of the above apply to the Subscriber",
+    "storedLabel": "None of the above apply to the Subscriber",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     71.1,
+     293.6,
+     81.4,
+     303.1
+    ]
+   },
+   {
+    "page": 7,
+    "kind": "text",
+    "signer": "investor",
+    "label": "If the Subscriber is an entity described above, the percenta",
+    "storedLabel": "If the Subscriber is an entity described above, the percenta",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     269.5,
+     341.4,
+     530,
+     353.9
+    ]
+   },
+   {
+    "page": 9,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Type of entity",
+    "storedLabel": "Type of entity",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "entity",
+    "box": [
+     71.1,
+     114.9,
+     331.6,
+     127.3
+    ]
+   },
+   {
+    "page": 9,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Jurisdiction of formation",
+    "storedLabel": "Jurisdiction of formation",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "entity",
+    "box": [
+     232.4,
+     134.2,
+     492.9,
+     150.2
+    ]
+   },
+   {
+    "page": 9,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Date of formation",
+    "storedLabel": "Date of formation",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "entity",
+    "box": [
+     188.7,
+     157.1,
+     449.2,
+     173.1
+    ]
+   },
+   {
+    "page": 9,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Taxpayer ID",
+    "storedLabel": "Taxpayer ID",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "entity",
+    "box": [
+     71.1,
+     196.5,
+     331.6,
+     208.9
+    ]
+   },
+   {
+    "page": 9,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Name and title",
+    "storedLabel": "Name and title",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "entity",
+    "box": [
+     71.1,
+     232.2,
+     331.6,
+     244.6
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "name",
+    "signer": "investor",
+    "label": "Name",
+    "storedLabel": "",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "person",
+    "box": [
+     149.9,
+     128.8,
+     410.4,
+     144.8
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "signature",
+    "signer": "investor",
+    "label": "Signature",
+    "storedLabel": "",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "person",
+    "box": [
+     139.8,
+     146.3,
+     400.3,
+     167.8
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "date",
+    "signer": "investor",
+    "label": "Date signed",
+    "storedLabel": "",
+    "required": true,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "person",
+    "box": [
+     107.7,
+     174.7,
+     368.2,
+     190.7
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Taxpayer ID",
+    "storedLabel": "Taxpayer ID",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "person",
+    "box": [
+     225.3,
+     197.6,
+     485.8,
+     213.7
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Address",
+    "storedLabel": "Address",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "address",
+    "forType": "person",
+    "box": [
+     128.1,
+     220.6,
+     388.6,
+     236.6
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Email",
+    "storedLabel": "Email",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "email",
+    "forType": "person",
+    "box": [
+     167.4,
+     243.5,
+     427.9,
+     259.6
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Phone",
+    "storedLabel": "Phone",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "phone",
+    "forType": "person",
+    "box": [
+     171.6,
+     266.5,
+     432.1,
+     282.5
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Investor name",
+    "storedLabel": "Investor name",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "investorName",
+    "forType": "entity",
+    "box": [
+     155.7,
+     351.3,
+     416.2,
+     367.3
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "signature",
+    "signer": "investor",
+    "label": "Signature",
+    "storedLabel": "",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "entity",
+    "box": [
+     94.7,
+     368.8,
+     355.2,
+     390.3
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "name",
+    "signer": "investor",
+    "label": "Name",
+    "storedLabel": "",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "entity",
+    "box": [
+     114.8,
+     397.2,
+     375.3,
+     413.2
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Title",
+    "storedLabel": "Title",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "entity",
+    "box": [
+     107.6,
+     420.2,
+     368.1,
+     436.2
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "date",
+    "signer": "investor",
+    "label": "Date signed",
+    "storedLabel": "",
+    "required": true,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "entity",
+    "box": [
+     107.7,
+     443.1,
+     368.2,
+     459.1
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Taxpayer ID",
+    "storedLabel": "Taxpayer ID",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "entity",
+    "box": [
+     71.1,
+     482.5,
+     331.6,
+     494.9
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Address",
+    "storedLabel": "Address",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "address",
+    "forType": "entity",
+    "box": [
+     128.1,
+     501.8,
+     388.6,
+     517.8
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Email",
+    "storedLabel": "Email",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "email",
+    "forType": "entity",
+    "box": [
+     167.4,
+     524.7,
+     427.9,
+     540.8
+    ]
+   },
+   {
+    "page": 11,
+    "kind": "text",
+    "signer": "investor",
+    "label": "Phone",
+    "storedLabel": "Phone",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "phone",
+    "forType": "entity",
+    "box": [
+     171.6,
+     547.7,
+     432.1,
+     563.7
+    ]
+   },
+   {
+    "page": 12,
+    "kind": "text",
+    "signer": "firm",
+    "label": "Commitment amount",
+    "storedLabel": "Commitment amount",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "amount",
+    "forType": "",
+    "box": [
+     79.1,
+     129.4,
+     161.6,
+     142.8
+    ]
+   },
+   {
+    "page": 12,
+    "kind": "signature",
+    "signer": "firm",
+    "label": "Signature",
+    "storedLabel": "",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     94.7,
+     199.1,
+     355.2,
+     221.6
+    ]
+   },
+   {
+    "page": 12,
+    "kind": "name",
+    "signer": "firm",
+    "label": "Name",
+    "storedLabel": "",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     114.8,
+     228.5,
+     375.3,
+     244.6
+    ]
+   },
+   {
+    "page": 12,
+    "kind": "text",
+    "signer": "firm",
+    "label": "Title",
+    "storedLabel": "Title",
+    "required": false,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     107.6,
+     251.5,
+     368.1,
+     267.5
+    ]
+   },
+   {
+    "page": 12,
+    "kind": "date",
+    "signer": "firm",
+    "label": "Date signed",
+    "storedLabel": "",
+    "required": true,
+    "shownRequired": false,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     198,
+     274.5,
+     458.5,
+     290.5
+    ]
+   },
+   {
+    "page": 12,
+    "kind": "text",
+    "signer": "firm",
+    "label": "Effective Date of Admission",
+    "storedLabel": "Effective Date of Admission",
+    "required": true,
+    "shownRequired": true,
+    "second": false,
+    "prefill": "",
+    "forType": "",
+    "box": [
+     249,
+     297.4,
+     509.5,
+     313.4
+    ]
+   }
+  ]
+ },
+ "public": {
+  "PPM_Blackcommerce_LLC_SEC_EDGAR": {
+   "fields": 38,
+   "prefill": 6,
+   "kinds": {
+    "checkbox": 7,
+    "text": 22,
+    "date": 4,
+    "signature": 5,
+    "initials": 0
+   },
+   "marked": 14,
+   "required": 29,
+   "shownRequired": 26,
+   "second": 3,
+   "other": 0,
+   "co": 3,
+   "person": 10,
+   "entity": 6,
+   "investorPages": [
+    101,
+    103,
+    110
+   ],
+   "firmPages": [
+    109
+   ],
+   "left": []
+  },
+  "PPM_RockStep_Hometown_America_Fund_I": {
+   "fields": 0,
+   "prefill": 0,
+   "kinds": {
+    "checkbox": 0,
+    "text": 0,
+    "date": 0,
+    "signature": 0,
+    "initials": 0
+   },
+   "marked": 0,
+   "required": 0,
+   "shownRequired": 0,
+   "second": 0,
+   "other": 0,
+   "co": 0,
+   "person": 0,
+   "entity": 0,
+   "investorPages": [],
+   "firmPages": [],
+   "left": []
+  },
+  "PPM_Worcester_Fund_LLC": {
+   "fields": 0,
+   "prefill": 0,
+   "kinds": {
+    "checkbox": 0,
+    "text": 0,
+    "date": 0,
+    "signature": 0,
+    "initials": 0
+   },
+   "marked": 0,
+   "required": 0,
+   "shownRequired": 0,
+   "second": 0,
+   "other": 0,
+   "co": 0,
+   "person": 0,
+   "entity": 0,
+   "investorPages": [],
+   "firmPages": [],
+   "left": []
+  },
+  "Subscription_Hedge_Fund_Template": {
+   "fields": 64,
+   "prefill": 12,
+   "kinds": {
+    "checkbox": 0,
+    "text": 50,
+    "date": 5,
+    "signature": 9,
+    "initials": 0
+   },
+   "marked": 16,
+   "required": 54,
+   "shownRequired": 49,
+   "second": 2,
+   "other": 0,
+   "co": 2,
+   "person": 0,
+   "entity": 9,
+   "investorPages": [
+    5,
+    9,
+    10,
+    15,
+    18
+   ],
+   "firmPages": [
+    5
+   ],
+   "left": []
+  },
+  "Subscription_ILPA_Model_Subscription_Agreement": {
+   "fields": 58,
+   "prefill": 3,
+   "kinds": {
+    "checkbox": 11,
+    "text": 41,
+    "date": 0,
+    "signature": 6,
+    "initials": 0
+   },
+   "marked": 26,
+   "required": 23,
+   "shownRequired": 23,
+   "second": 6,
+   "other": 0,
+   "co": 0,
+   "person": 0,
+   "entity": 14,
+   "investorPages": [
+    11
+   ],
+   "firmPages": [
+    12,
+    13
+   ],
+   "left": []
+  },
+  "Subscription_PA_SERS_Insight_Venture_Partners_VIII_Closing_Binder_Redacted": {
+   "fields": 0,
+   "prefill": 0,
+   "kinds": {
+    "checkbox": 0,
+    "text": 0,
+    "date": 0,
+    "signature": 0,
+    "initials": 0
+   },
+   "marked": 0,
+   "required": 0,
+   "shownRequired": 0,
+   "second": 0,
+   "other": 0,
+   "co": 0,
+   "person": 0,
+   "entity": 0,
+   "investorPages": [],
+   "firmPages": [],
+   "left": []
+  },
+  "Subscription_PA_SERS_Lubert_Adler_Real_Estate_Fund_VII_Redacted": {
+   "fields": 147,
+   "prefill": 0,
+   "kinds": {
+    "checkbox": 83,
+    "text": 63,
+    "date": 0,
+    "signature": 1,
+    "initials": 0
+   },
+   "marked": 37,
+   "required": 55,
+   "shownRequired": 55,
+   "second": 1,
+   "other": 0,
+   "co": 0,
+   "person": 34,
+   "entity": 23,
+   "investorPages": [
+    20
+   ],
+   "firmPages": [],
+   "left": [
+    9
+   ]
+  }
+ },
+ "explained": [
+  {
+   "doc": "PPM_Blackcommerce_LLC_SEC_EDGAR",
+   "key": "required",
+   "now": 27,
+   "reason": "Plan 01.3-04, label rule class 1: the two blanks labelled with the name and the address of a trustee or custodian on the entities' page name another party, so they are now somebody else's, optional, kept apart as second, for everyone, and still marked for the sponsor to confirm because the label also names the investor's own side."
+  },
+  {
+   "doc": "PPM_Blackcommerce_LLC_SEC_EDGAR",
+   "key": "shownRequired",
+   "now": 24,
+   "reason": "Plan 01.3-04, label rule class 1: the two blanks labelled with the name and the address of a trustee or custodian on the entities' page name another party, so they are now somebody else's, optional, kept apart as second, for everyone, and still marked for the sponsor to confirm because the label also names the investor's own side."
+  },
+  {
+   "doc": "PPM_Blackcommerce_LLC_SEC_EDGAR",
+   "key": "second",
+   "now": 5,
+   "reason": "Plan 01.3-04, label rule class 1: the two blanks labelled with the name and the address of a trustee or custodian on the entities' page name another party, so they are now somebody else's, optional, kept apart as second, for everyone, and still marked for the sponsor to confirm because the label also names the investor's own side."
+  },
+  {
+   "doc": "PPM_Blackcommerce_LLC_SEC_EDGAR",
+   "key": "other",
+   "now": 2,
+   "reason": "Plan 01.3-04, label rule class 1: the two blanks labelled with the name and the address of a trustee or custodian on the entities' page name another party, so they are now somebody else's, optional, kept apart as second, for everyone, and still marked for the sponsor to confirm because the label also names the investor's own side."
+  },
+  {
+   "doc": "PPM_Blackcommerce_LLC_SEC_EDGAR",
+   "key": "entity",
+   "now": 4,
+   "reason": "Plan 01.3-04, label rule class 1: the two blanks labelled with the name and the address of a trustee or custodian on the entities' page name another party, so they are now somebody else's, optional, kept apart as second, for everyone, and still marked for the sponsor to confirm because the label also names the investor's own side."
+  },
+  {
+   "doc": "Subscription_Hedge_Fund_Template",
+   "key": "prefill",
+   "now": 7,
+   "reason": "Plan 01.3-04, label rule 3: five blanks whose printed label says more than the kind's plain word (a home telephone number, two business addresses and two business telephone numbers) are no longer filled in from the investor's onboarding; each now carries its printed label."
+  },
+  {
+   "doc": "Subscription_ILPA_Model_Subscription_Agreement",
+   "key": "marked",
+   "now": 25,
+   "reason": "Plan 01.3-06, class 12 (a tick box belongs to the printed line of its own glyph): on page 16 two tick boxes in a right-hand column, each with its item letter printed just before it, were claimed by a line of footnote marks set a little higher; each now takes its item letter as its words, so the box that had none is no longer marked, and the other box's words are its item letter instead of a footnote mark."
+  }
+ ]
+}

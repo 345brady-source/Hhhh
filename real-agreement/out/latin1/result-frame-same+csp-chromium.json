@@ -1,0 +1,21 @@
+{
+ "mode": "frame-same+csp",
+ "browser": "chromium",
+ "sandbox": "allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin",
+ "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'none'; worker-src 'none'; child-src 'none'",
+ "env": {
+  "origin": "http://localhost:33395",
+  "localStorage": "object",
+  "indexedDB": "opens",
+  "app": true,
+  "bodyText": "Carrow & Vale Explore a sample portal Create your portal Firm name First name Last name Work email Password At least 10 characters. You will add a second sign-i"
+ },
+ "failed": "frame.waitForSelector: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-action=\"es-agreement-new\"][data-offering=\"off-mwf4uqtz\"]') to be visible\u001b[22m\n\n    at /tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/real-agreement/work/sandbox-latin1.js:133:14",
+ "console": [
+  "pageerror: SyntaxError: Invalid regular expression: /[Ì€-Í¯]/g: Range out of order in character class",
+  "pageerror: SyntaxError: Invalid regular expression: /[â€‹-â€ï»¿]/g: Range out of order in character class",
+  "pageerror: SyntaxError: Invalid regular expression: /[â€‹-â€ï»¿]/g: Range out of order in character class",
+  "pageerror: TypeError: Cannot read properties of undefined (reading 'abaValid')\n    at achReady (http://localhost:33395/assets/js/console.js:112:21)\n    at Object.render (http://localhost:33395/assets/js/console.js:168:102)\n    at render (http://localhost:33395/assets/js/app.js:468:25)\n    at onRoute (http://localhost:33395/assets/js/app.js:330:5)"
+ ],
+ "aborted": []
+}

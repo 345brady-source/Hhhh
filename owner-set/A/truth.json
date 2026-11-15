@@ -1,0 +1,1418 @@
+{
+ "file": "reszi.pdf",
+ "letter": "A",
+ "pages": 21,
+ "page_size_pt": [
+  612,
+  792
+ ],
+ "coordinates": "PDF points, origin top-left. x0,y0,x1,y1 is the printed blank itself (the ink of the underscore run or of the drawn rule). write is the line-high area above it where a value goes (12 pt above the bottom of the rule): the scorer matches fields to write.",
+ "how_measured": "characters from pdfplumber (underscore runs: x from the first and last underscore character, without the label or punctuation glued to the run); drawn rules from the page content stream via pypdf (thin filled rectangles); the y of each underscore rule from the ink of a 288 dpi pdftoppm render; every page rendered at 100 dpi and looked at; overlays truth-overlay-pNN.png looked at",
+ "signing": {
+  "kind": "a subscription agreement template made for an investor-portal product that adds the investor questionnaire, the investor signature page and the firm acceptance page itself. The PDF as supplied prints none of them.",
+  "investor_signature_block": {
+   "present": false,
+   "pages": [],
+   "note": "the text refers to a signature page and to a subscription amount line on it; neither is printed in this file"
+  },
+  "firm_block": {
+   "present": false,
+   "pages": [],
+   "note": "the text refers to an acceptance page signed for the firm; it is not printed in this file"
+  },
+  "second_investor_places": {
+   "present": false,
+   "pages": []
+  },
+  "third_parties": {
+   "present": true,
+   "pages": [
+    18,
+    20
+   ],
+   "who": [
+    "page 18: the professional (attorney, accountant, broker-dealer or investment adviser) who writes a letter confirming the investor is accredited",
+    "page 20: the broker-dealer or adviser firm, its registered representative, its principal; and details of a custodian (if applicable)"
+   ]
+  },
+  "who_signs": "in this file: only third parties (page 18 one signature; page 20 two signatures). No printed place for the investor or the firm. Every one of the 29 places is optional and nobody the portal has as a signer is required to complete any."
+ },
+ "counts_per_page": {
+  "1": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "2": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "3": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "4": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "5": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "6": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "7": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "8": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "9": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "10": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "11": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "12": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "13": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "14": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "15": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "16": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "17": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "18": {
+   "total": 6,
+   "signature": 1,
+   "date": 1,
+   "blank": 4,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high for the six places and their boxes; the row of four profession words is a judgement (no printed box, so no place)"
+  },
+  "19": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  },
+  "20": {
+   "total": 23,
+   "signature": 2,
+   "date": 2,
+   "blank": 19,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high for the 23 places and their boxes; who completes the six custodian blanks is a judgement (recorded as unclear)"
+  },
+  "21": {
+   "total": 0,
+   "signature": 0,
+   "date": 0,
+   "blank": 0,
+   "tickbox": 0,
+   "initials": 0,
+   "confidence": "high"
+  }
+ },
+ "counts_total": {
+  "total": 29,
+  "signature": 3,
+  "date": 3,
+  "blank": 23,
+  "tickbox": 0,
+  "initials": 0
+ },
+ "counts_by_owner": {
+  "investor": 0,
+  "investor-individual": 0,
+  "investor-entity": 0,
+  "co-investor": 0,
+  "firm": 0,
+  "third-party": 23,
+  "unclear": 6
+ },
+ "places": [
+  {
+   "id": "p18-01",
+   "page": 18,
+   "kind": "blank",
+   "what": "text",
+   "owner": "third-party",
+   "party": "the professional who writes the accreditation letter",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Licence number of the letter writer",
+   "printed_label": "",
+   "printed_as": "underscore run (25 characters)",
+   "x0": 127.2,
+   "y0": 316.8,
+   "x1": 277.4,
+   "y1": 317.2,
+   "write": {
+    "x0": 127.2,
+    "y0": 305.2,
+    "x1": 277.4,
+    "y1": 317.2
+   },
+   "convention": "blank inside a sentence, in round brackets after a number sign"
+  },
+  {
+   "id": "p18-02",
+   "page": 18,
+   "kind": "blank",
+   "what": "text",
+   "owner": "third-party",
+   "party": "the professional who writes the accreditation letter",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "State in which the letter writer is licensed",
+   "printed_label": "",
+   "printed_as": "underscore run (12 characters)",
+   "x0": 455.7,
+   "y0": 316.8,
+   "x1": 527.7,
+   "y1": 317.2,
+   "write": {
+    "x0": 455.7,
+    "y0": 305.2,
+    "x1": 527.7,
+    "y1": 317.2
+   },
+   "convention": "blank at the end of a sentence, followed by a full stop"
+  },
+  {
+   "id": "p18-03",
+   "page": 18,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "third-party",
+   "party": "the professional who writes the accreditation letter",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Signature of the letter writer",
+   "printed_label": "",
+   "printed_as": "drawn rule (thin filled rectangle)",
+   "x0": 72.0,
+   "y0": 366.8,
+   "x1": 252.0,
+   "y1": 367.4,
+   "write": {
+    "x0": 72.0,
+    "y0": 355.4,
+    "x1": 252.0,
+    "y1": 367.4
+   },
+   "convention": "drawn rule under a closing word (\"Sincerely,\"), no caption; the next lines are the printed name, date and phone"
+  },
+  {
+   "id": "p18-04",
+   "page": 18,
+   "kind": "blank",
+   "what": "name",
+   "owner": "third-party",
+   "party": "the professional who writes the accreditation letter",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Printed name of the letter writer",
+   "printed_label": "Print Name",
+   "printed_as": "drawn rule (thin filled rectangle)",
+   "x0": 130.3,
+   "y0": 392.0,
+   "x1": 252.0,
+   "y1": 392.6,
+   "write": {
+    "x0": 130.3,
+    "y0": 380.6,
+    "x1": 252.0,
+    "y1": 392.6
+   },
+   "convention": "drawn rule after a label and colon"
+  },
+  {
+   "id": "p18-05",
+   "page": 18,
+   "kind": "date",
+   "what": "date",
+   "owner": "third-party",
+   "party": "the professional who writes the accreditation letter",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Date of the letter (beside the signature)",
+   "printed_label": "Date",
+   "printed_as": "drawn rule (thin filled rectangle)",
+   "x0": 100.9,
+   "y0": 417.4,
+   "x1": 252.0,
+   "y1": 418.0,
+   "write": {
+    "x0": 100.9,
+    "y0": 406.0,
+    "x1": 252.0,
+    "y1": 418.0
+   },
+   "convention": "drawn rule after a label and colon"
+  },
+  {
+   "id": "p18-06",
+   "page": 18,
+   "kind": "blank",
+   "what": "phone",
+   "owner": "third-party",
+   "party": "the professional who writes the accreditation letter",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Phone number of the letter writer",
+   "printed_label": "Phone Number",
+   "printed_as": "drawn rule (thin filled rectangle)",
+   "x0": 147.6,
+   "y0": 442.7,
+   "x1": 252.0,
+   "y1": 443.3,
+   "write": {
+    "x0": 147.6,
+    "y0": 431.3,
+    "x1": 252.0,
+    "y1": 443.3
+   },
+   "convention": "drawn rule after a label and colon"
+  },
+  {
+   "id": "p20-01",
+   "page": 20,
+   "kind": "blank",
+   "what": "name",
+   "owner": "third-party",
+   "party": "broker-dealer or adviser firm",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Name of the broker-dealer or adviser firm",
+   "printed_label": "Broker-Dealer or RIA Firm Name",
+   "printed_as": "underscore run (40 characters)",
+   "x0": 228.2,
+   "y0": 84.0,
+   "x1": 448.2,
+   "y1": 84.5,
+   "write": {
+    "x0": 228.2,
+    "y0": 72.5,
+    "x1": 448.2,
+    "y1": 84.5
+   },
+   "convention": "underscores after a label and colon"
+  },
+  {
+   "id": "p20-02",
+   "page": 20,
+   "kind": "blank",
+   "what": "text",
+   "owner": "third-party",
+   "party": "broker-dealer or adviser firm",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Registration number of the firm",
+   "printed_label": "BD/RIA CRD No.",
+   "printed_as": "underscore run (30 characters)",
+   "x0": 159.4,
+   "y0": 109.5,
+   "x1": 324.4,
+   "y1": 110.0,
+   "write": {
+    "x0": 159.4,
+    "y0": 98.0,
+    "x1": 324.4,
+    "y1": 110.0
+   },
+   "convention": "underscores after a label and colon"
+  },
+  {
+   "id": "p20-03",
+   "page": 20,
+   "kind": "blank",
+   "what": "address",
+   "owner": "third-party",
+   "party": "broker-dealer or adviser firm",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Address of the broker-dealer (says if applicable)",
+   "printed_label": "Broker-Dealer Address",
+   "printed_as": "underscore run (82 characters)",
+   "x0": 72.0,
+   "y0": 147.2,
+   "x1": 523.0,
+   "y1": 147.8,
+   "write": {
+    "x0": 72.0,
+    "y0": 135.8,
+    "x1": 523.0,
+    "y1": 147.8
+   },
+   "convention": "full-width underscores on the line below its label"
+  },
+  {
+   "id": "p20-04",
+   "page": 20,
+   "kind": "blank",
+   "what": "name",
+   "owner": "third-party",
+   "party": "registered representative",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Name of the registered representative",
+   "printed_label": "Registered Representative Name",
+   "printed_as": "underscore run (53 characters)",
+   "x0": 222.1,
+   "y0": 172.5,
+   "x1": 513.7,
+   "y1": 173.0,
+   "write": {
+    "x0": 222.1,
+    "y0": 161.0,
+    "x1": 513.7,
+    "y1": 173.0
+   },
+   "convention": "underscores after a label and colon"
+  },
+  {
+   "id": "p20-05",
+   "page": 20,
+   "kind": "blank",
+   "what": "text",
+   "owner": "third-party",
+   "party": "registered representative",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Identification number of the representative",
+   "printed_label": "Rep ID",
+   "printed_as": "underscore run (25 characters)",
+   "x0": 107.2,
+   "y0": 185.2,
+   "x1": 244.7,
+   "y1": 185.8,
+   "write": {
+    "x0": 107.2,
+    "y0": 173.8,
+    "x1": 244.7,
+    "y1": 185.8
+   },
+   "convention": "underscores glued to the label, no space"
+  },
+  {
+   "id": "p20-06",
+   "page": 20,
+   "kind": "blank",
+   "what": "name",
+   "owner": "third-party",
+   "party": "adviser representative",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Name of the adviser representative",
+   "printed_label": "IAR Name",
+   "printed_as": "underscore run (73 characters)",
+   "x0": 125.9,
+   "y0": 210.5,
+   "x1": 527.3,
+   "y1": 211.0,
+   "write": {
+    "x0": 125.9,
+    "y0": 199.0,
+    "x1": 527.3,
+    "y1": 211.0
+   },
+   "convention": "underscores after a label and colon"
+  },
+  {
+   "id": "p20-07",
+   "page": 20,
+   "kind": "blank",
+   "what": "text",
+   "owner": "third-party",
+   "party": "adviser representative",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Registration number of the adviser representative",
+   "printed_label": "CRD No.",
+   "printed_as": "underscore run (24 characters)",
+   "x0": 119.4,
+   "y0": 223.0,
+   "x1": 251.5,
+   "y1": 223.5,
+   "write": {
+    "x0": 119.4,
+    "y0": 211.5,
+    "x1": 251.5,
+    "y1": 223.5
+   },
+   "convention": "underscores after a label and colon"
+  },
+  {
+   "id": "p20-08",
+   "page": 20,
+   "kind": "blank",
+   "what": "address",
+   "owner": "third-party",
+   "party": "representative or adviser",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Address of the representative or adviser",
+   "printed_label": "Rep/IAR Address",
+   "printed_as": "underscore run (83 characters)",
+   "x0": 72.0,
+   "y0": 248.5,
+   "x1": 528.5,
+   "y1": 249.0,
+   "write": {
+    "x0": 72.0,
+    "y0": 237.0,
+    "x1": 528.5,
+    "y1": 249.0
+   },
+   "convention": "full-width underscores on the line below its label"
+  },
+  {
+   "id": "p20-09",
+   "page": 20,
+   "kind": "blank",
+   "what": "email",
+   "owner": "third-party",
+   "party": "representative or adviser",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Email address of the representative or adviser",
+   "printed_label": "Rep/IAR Email Address",
+   "printed_as": "underscore run (48 characters)",
+   "x0": 185.4,
+   "y0": 261.2,
+   "x1": 449.3,
+   "y1": 261.8,
+   "write": {
+    "x0": 185.4,
+    "y0": 249.8,
+    "x1": 449.3,
+    "y1": 261.8
+   },
+   "convention": "underscores after a label and colon"
+  },
+  {
+   "id": "p20-10",
+   "page": 20,
+   "kind": "blank",
+   "what": "phone",
+   "owner": "third-party",
+   "party": "representative or adviser",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Phone of the representative or adviser",
+   "printed_label": "Phone",
+   "printed_as": "underscore run (38 characters)",
+   "x0": 102.6,
+   "y0": 273.8,
+   "x1": 311.7,
+   "y1": 274.2,
+   "write": {
+    "x0": 102.6,
+    "y0": 262.2,
+    "x1": 311.7,
+    "y1": 274.2
+   },
+   "convention": "underscores glued to the label, no space"
+  },
+  {
+   "id": "p20-11",
+   "page": 20,
+   "kind": "blank",
+   "what": "name",
+   "owner": "third-party",
+   "party": "operations contact at the firm",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Name of the operations contact",
+   "printed_label": "Operations/NIGO Contact",
+   "printed_as": "underscore run (45 characters)",
+   "x0": 193.6,
+   "y0": 299.0,
+   "x1": 441.0,
+   "y1": 299.5,
+   "write": {
+    "x0": 193.6,
+    "y0": 287.5,
+    "x1": 441.0,
+    "y1": 299.5
+   },
+   "convention": "underscores after a label and colon"
+  },
+  {
+   "id": "p20-12",
+   "page": 20,
+   "kind": "blank",
+   "what": "phone",
+   "owner": "third-party",
+   "party": "operations contact at the firm",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Phone of the operations contact",
+   "printed_label": "Phone",
+   "printed_as": "underscore run (38 characters)",
+   "x0": 102.6,
+   "y0": 311.8,
+   "x1": 311.7,
+   "y1": 312.2,
+   "write": {
+    "x0": 102.6,
+    "y0": 300.2,
+    "x1": 311.7,
+    "y1": 312.2
+   },
+   "convention": "underscores glued to the label, no space"
+  },
+  {
+   "id": "p20-13",
+   "page": 20,
+   "kind": "blank",
+   "what": "email",
+   "owner": "third-party",
+   "party": "operations contact at the firm",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Email address of the operations contact",
+   "printed_label": "Operations/NIGO Contact E-mail Address",
+   "printed_as": "underscore run (78 characters)",
+   "x0": 72.0,
+   "y0": 349.8,
+   "x1": 501.0,
+   "y1": 350.2,
+   "write": {
+    "x0": 72.0,
+    "y0": 338.2,
+    "x1": 501.0,
+    "y1": 350.2
+   },
+   "convention": "full-width underscores two lines below its label (an empty line between)"
+  },
+  {
+   "id": "p20-14",
+   "page": 20,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "third-party",
+   "party": "registered representative or adviser",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Signature of the registered representative or adviser",
+   "printed_label": "SIGNATURE OF REGISTERED REPRESENTATIVE OR REGISTERED INVESTMENT ADVISOR",
+   "printed_as": "underscore run (48 characters)",
+   "x0": 72.0,
+   "y0": 387.5,
+   "x1": 336.0,
+   "y1": 388.0,
+   "write": {
+    "x0": 72.0,
+    "y0": 376.0,
+    "x1": 336.0,
+    "y1": 388.0
+   },
+   "convention": "underscores with the caption on the two lines below, in capitals"
+  },
+  {
+   "id": "p20-15",
+   "page": 20,
+   "kind": "date",
+   "what": "date",
+   "owner": "third-party",
+   "party": "registered representative or adviser",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Date beside the representative or adviser signature",
+   "printed_label": "Date",
+   "printed_as": "underscore run (42 characters)",
+   "x0": 98.7,
+   "y0": 438.0,
+   "x1": 329.7,
+   "y1": 438.5,
+   "write": {
+    "x0": 98.7,
+    "y0": 426.5,
+    "x1": 329.7,
+    "y1": 438.5
+   },
+   "convention": "underscores after a label and colon"
+  },
+  {
+   "id": "p20-16",
+   "page": 20,
+   "kind": "signature",
+   "what": "signature",
+   "owner": "third-party",
+   "party": "broker-dealer principal",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Approval signature of the broker-dealer principal (says if required)",
+   "printed_label": "BROKER-DEALER PRINCIPAL APPROVAL SIGNATURE",
+   "printed_as": "underscore run (48 characters)",
+   "x0": 72.0,
+   "y0": 476.2,
+   "x1": 336.0,
+   "y1": 476.8,
+   "write": {
+    "x0": 72.0,
+    "y0": 464.8,
+    "x1": 336.0,
+    "y1": 476.8
+   },
+   "convention": "underscores with the caption on the line below, in capitals"
+  },
+  {
+   "id": "p20-17",
+   "page": 20,
+   "kind": "date",
+   "what": "date",
+   "owner": "third-party",
+   "party": "broker-dealer principal",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Date beside the principal approval signature",
+   "printed_label": "Date",
+   "printed_as": "underscore run (42 characters)",
+   "x0": 98.6,
+   "y0": 514.0,
+   "x1": 329.6,
+   "y1": 514.5,
+   "write": {
+    "x0": 98.6,
+    "y0": 502.5,
+    "x1": 329.6,
+    "y1": 514.5
+   },
+   "convention": "underscores after a label and colon"
+  },
+  {
+   "id": "p20-18",
+   "page": 20,
+   "kind": "blank",
+   "what": "name",
+   "owner": "unclear",
+   "party": "custodian details (heading says if applicable)",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Name of the custodian",
+   "printed_label": "NAME OF CUSTODIAN",
+   "printed_as": "drawn rule (thin filled rectangle)",
+   "x0": 193.3,
+   "y0": 576.7,
+   "x1": 360.0,
+   "y1": 577.2,
+   "write": {
+    "x0": 193.3,
+    "y0": 565.2,
+    "x1": 360.0,
+    "y1": 577.2
+   },
+   "convention": "drawn rule after a label in capitals; first of two blanks on one line"
+  },
+  {
+   "id": "p20-19",
+   "page": 20,
+   "kind": "blank",
+   "what": "tax number",
+   "owner": "unclear",
+   "party": "custodian details (heading says if applicable)",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Tax number of the custodian",
+   "printed_label": "TAX ID",
+   "printed_as": "drawn rule (thin filled rectangle)",
+   "x0": 408.2,
+   "y0": 576.7,
+   "x1": 504.0,
+   "y1": 577.2,
+   "write": {
+    "x0": 408.2,
+    "y0": 565.2,
+    "x1": 504.0,
+    "y1": 577.2
+   },
+   "convention": "drawn rule after a label in capitals; second of two blanks on one line"
+  },
+  {
+   "id": "p20-20",
+   "page": 20,
+   "kind": "blank",
+   "what": "text",
+   "owner": "unclear",
+   "party": "custodian details (heading says if applicable)",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Account number at the custodian",
+   "printed_label": "CUSTODIAN ACCOUNT NO.",
+   "printed_as": "drawn rule (thin filled rectangle)",
+   "x0": 215.6,
+   "y0": 602.0,
+   "x1": 396.0,
+   "y1": 602.5,
+   "write": {
+    "x0": 215.6,
+    "y0": 590.5,
+    "x1": 396.0,
+    "y1": 602.5
+   },
+   "convention": "drawn rule after a label in capitals with a full stop, no colon"
+  },
+  {
+   "id": "p20-21",
+   "page": 20,
+   "kind": "blank",
+   "what": "address",
+   "owner": "unclear",
+   "party": "custodian details (heading says if applicable)",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Mailing address of the custodian, first line",
+   "printed_label": "MAILING ADDRESS",
+   "printed_as": "drawn rule (thin filled rectangle)",
+   "x0": 178.3,
+   "y0": 614.6,
+   "x1": 396.0,
+   "y1": 615.1,
+   "write": {
+    "x0": 178.3,
+    "y0": 603.1,
+    "x1": 396.0,
+    "y1": 615.1
+   },
+   "convention": "drawn rule after a label in capitals"
+  },
+  {
+   "id": "p20-22",
+   "page": 20,
+   "kind": "blank",
+   "what": "address",
+   "owner": "unclear",
+   "party": "custodian details (heading says if applicable)",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Mailing address of the custodian, second line",
+   "printed_label": "",
+   "printed_as": "drawn rule (thin filled rectangle)",
+   "x0": 72.0,
+   "y0": 627.4,
+   "x1": 396.0,
+   "y1": 627.8,
+   "write": {
+    "x0": 72.0,
+    "y0": 615.8,
+    "x1": 396.0,
+    "y1": 627.8
+   },
+   "convention": "full-width drawn rule with no label of its own: continuation of the line above"
+  },
+  {
+   "id": "p20-23",
+   "page": 20,
+   "kind": "blank",
+   "what": "address",
+   "owner": "unclear",
+   "party": "custodian details (heading says if applicable)",
+   "required": false,
+   "optional": true,
+   "review_allowed": true,
+   "label": "Mailing address of the custodian, third line",
+   "printed_label": "",
+   "printed_as": "drawn rule (thin filled rectangle)",
+   "x0": 72.0,
+   "y0": 640.0,
+   "x1": 396.0,
+   "y1": 640.4,
+   "write": {
+    "x0": 72.0,
+    "y0": 628.4,
+    "x1": 396.0,
+    "y1": 640.4
+   },
+   "convention": "full-width drawn rule with no label of its own: continuation of the line above"
+  }
+ ],
+ "must_not_get_a_field": {
+  "1": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "a third invisible merge tag after the last label of the wire-instruction list (x 252 to 358, y 576 to 592): nothing is printed there for a person to see",
+   "the wire-instruction list: labels followed by printed values (already filled in); its last label has no value and no blank",
+   "numbered steps 1 to 5"
+  ],
+  "2": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "running text only"
+  ],
+  "3": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "two underlined cross-references in running text (rules at x 187 to 239, y 265.6 and x 495 to 540, y 305.3)"
+  ],
+  "4": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "running text only"
+  ],
+  "5": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "running text only"
+  ],
+  "6": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "the footnote separator: a 144 pt rule at the left margin with empty paper above it (x 72 to 216, y 535.2) and small-print footnotes under it; superscript footnote numbers"
+  ],
+  "7": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "the footnote separator: a 144 pt rule at the left margin with empty paper above it (x 72 to 216, y 413.8) and small-print footnotes under it; superscript footnote numbers"
+  ],
+  "8": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "running text only"
+  ],
+  "9": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "running text only"
+  ],
+  "10": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "running text only"
+  ],
+  "11": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "the footnote separator: a 144 pt rule at the left margin with empty paper above it (x 72 to 216, y 616.2) and small-print footnotes under it; superscript footnote numbers"
+  ],
+  "12": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "running text only"
+  ],
+  "13": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "running text only"
+  ],
+  "14": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "running text only"
+  ],
+  "15": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "an underlined phrase in running text (rule at x 265 to 475, y 97.1)",
+   "two closing statements in capitals numbered (i) and (ii): nothing to tick or initial is printed"
+  ],
+  "16": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "eleven rules that underline words (headings ending in a colon and phrases in running text)",
+   "round bullets and lower-case letter \"o\" sub-bullets: list marks, not tick boxes"
+  ],
+  "17": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "six rules that underline words",
+   "round bullets and a lower-case letter \"o\" sub-bullet: list marks, not tick boxes"
+  ],
+  "18": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "the underlined heading (rule at x 282 to 330, y 83.9)",
+   "four profession words in a row with no printed box beside any of them: a choice with no printed place",
+   "the sentence in the first paragraph where the name of the investor would go: no blank is printed"
+  ],
+  "19": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "the underlined heading (x 282 to 330, y 83.9) and the underlined bold section heading (x 72 to 286, y 133.4); the rest is running text"
+  ],
+  "20": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "the underlined bold heading of the custodian part (rule at x 72 to 292, y 551.4)"
+  ],
+  "21": [
+   "the header: a centred line of words, and under it two merge tags printed in the paper colour (invisible; x 165 to 272 and x 304 to 447, y 40 to 56, each containing underscore characters) with a visible upright bar between them",
+   "the full-width rule above the footer (x 70.6 to 541.4, y 734.4) and the footer words under it",
+   "nothing else: the page is empty apart from header and footer"
+  ]
+ },
+ "rules_not_blanks": {
+  "1": [],
+  "2": [],
+  "3": [
+   [
+    "rect",
+    187.4,
+    265.6,
+    238.7,
+    266.2,
+    9
+   ],
+   [
+    "rect",
+    494.9,
+    305.3,
+    540.0,
+    305.9,
+    8
+   ]
+  ],
+  "4": [],
+  "5": [],
+  "6": [
+   [
+    "rect",
+    72.0,
+    535.2,
+    216.0,
+    535.8,
+    0
+   ]
+  ],
+  "7": [
+   [
+    "rect",
+    72.0,
+    413.8,
+    216.0,
+    414.4,
+    0
+   ]
+  ],
+  "8": [],
+  "9": [],
+  "10": [],
+  "11": [
+   [
+    "rect",
+    72.0,
+    616.2,
+    216.0,
+    616.8,
+    0
+   ]
+  ],
+  "12": [],
+  "13": [],
+  "14": [],
+  "15": [
+   [
+    "rect",
+    265.1,
+    97.1,
+    474.5,
+    97.7,
+    40
+   ]
+  ],
+  "16": [
+   [
+    "rect",
+    270.0,
+    83.9,
+    341.9,
+    85.0,
+    9
+   ],
+   [
+    "rect",
+    72.0,
+    134.5,
+    166.9,
+    135.1,
+    19
+   ],
+   [
+    "rect",
+    397.1,
+    162.1,
+    444.2,
+    162.7,
+    8
+   ],
+   [
+    "rect",
+    439.7,
+    175.9,
+    540.0,
+    176.5,
+    18
+   ],
+   [
+    "rect",
+    72.0,
+    189.7,
+    107.4,
+    190.3,
+    6
+   ],
+   [
+    "rect",
+    72.0,
+    355.3,
+    140.9,
+    355.9,
+    14
+   ],
+   [
+    "rect",
+    467.4,
+    396.7,
+    540.0,
+    397.3,
+    13
+   ],
+   [
+    "rect",
+    72.0,
+    410.5,
+    134.3,
+    411.1,
+    11
+   ],
+   [
+    "rect",
+    228.6,
+    534.7,
+    297.2,
+    535.3,
+    12
+   ],
+   [
+    "rect",
+    72.0,
+    576.1,
+    254.6,
+    576.7,
+    35
+   ],
+   [
+    "rect",
+    324.2,
+    603.7,
+    442.3,
+    604.3,
+    20
+   ]
+  ],
+  "17": [
+   [
+    "rect",
+    72.0,
+    84.5,
+    196.7,
+    85.1,
+    23
+   ],
+   [
+    "rect",
+    324.2,
+    112.1,
+    442.3,
+    112.7,
+    20
+   ],
+   [
+    "rect",
+    96.8,
+    125.9,
+    184.7,
+    127.1,
+    17
+   ],
+   [
+    "rect",
+    460.6,
+    181.1,
+    507.7,
+    182.3,
+    8
+   ],
+   [
+    "rect",
+    72.0,
+    236.3,
+    200.6,
+    236.9,
+    25
+   ],
+   [
+    "rect",
+    265.4,
+    263.9,
+    383.5,
+    264.5,
+    20
+   ]
+  ],
+  "18": [
+   [
+    "rect",
+    282.1,
+    83.9,
+    329.8,
+    85.0,
+    8
+   ],
+   [
+    "rect",
+    72.0,
+    366.8,
+    252.0,
+    367.4,
+    0
+   ],
+   [
+    "rect",
+    130.3,
+    392.0,
+    252.0,
+    392.6,
+    0
+   ],
+   [
+    "rect",
+    100.9,
+    417.4,
+    252.0,
+    418.0,
+    0
+   ],
+   [
+    "rect",
+    147.6,
+    442.7,
+    252.0,
+    443.3,
+    0
+   ]
+  ],
+  "19": [
+   [
+    "rect",
+    282.5,
+    83.9,
+    329.5,
+    85.0,
+    8
+   ],
+   [
+    "rect",
+    72.0,
+    133.4,
+    286.2,
+    134.5,
+    29
+   ]
+  ],
+  "20": [
+   [
+    "rect",
+    72.0,
+    551.4,
+    292.3,
+    552.5,
+    35
+   ],
+   [
+    "rect",
+    193.3,
+    576.7,
+    360.0,
+    577.2,
+    0
+   ],
+   [
+    "rect",
+    408.2,
+    576.7,
+    504.0,
+    577.2,
+    0
+   ],
+   [
+    "rect",
+    215.6,
+    602.0,
+    396.0,
+    602.5,
+    0
+   ],
+   [
+    "rect",
+    178.3,
+    614.6,
+    396.0,
+    615.1,
+    0
+   ],
+   [
+    "rect",
+    72.0,
+    627.4,
+    396.0,
+    627.8,
+    0
+   ],
+   [
+    "rect",
+    72.0,
+    640.0,
+    396.0,
+    640.4,
+    0
+   ]
+  ],
+  "21": []
+ }
+}

@@ -1,0 +1,137 @@
+{
+ "seeded": "2026-11-13",
+ "best": {
+  "A": {
+   "measures": {
+    "missed": 1,
+    "strays": 0,
+    "overlaps": 0,
+    "kindDiff": 0,
+    "whatDiff": 1,
+    "ownerDiff": 0,
+    "requiredDiff": 0,
+    "markedWrong": 0,
+    "labelDiff": 1,
+    "prefillWrong": 0,
+    "coversWords": 0
+   },
+   "by": "/home/user/Hhhh/.claude/worktrees/agent-aacd7eb526268a447",
+   "on": "2026-11-14"
+  },
+  "B": {
+   "measures": {
+    "missed": 0,
+    "strays": 0,
+    "overlaps": 0,
+    "kindDiff": 0,
+    "ownerDiff": 0,
+    "markDiff": 0,
+    "labelDiff": 0,
+    "who": 0
+   },
+   "by": "/home/user/Hhhh/.claude/worktrees/agent-a004afad0cf949173",
+   "on": "2026-11-13"
+  },
+  "C": {
+   "measures": {
+    "missed": 5,
+    "strays": 0,
+    "overlaps": 0,
+    "kindDiff": 1,
+    "whatDiff": 1,
+    "ownerDiff": 0,
+    "requiredDiff": 10,
+    "markedWrong": 10,
+    "unmarkedWrong": 0,
+    "labelDiff": 2,
+    "prefillWrong": 0
+   },
+   "by": "/home/user/Hhhh/.claude/worktrees/agent-a96ec606dafda4248",
+   "on": "2026-11-14"
+  },
+  "Bvar:v-control": {
+   "measures": {
+    "missed": 0,
+    "strays": 0,
+    "overlaps": 0,
+    "kindDiff": 0,
+    "ownerDiff": 0,
+    "markDiff": 0,
+    "labelDiff": 0,
+    "who": 0
+   },
+   "by": "/home/user/Hhhh/.claude/worktrees/agent-a004afad0cf949173",
+   "on": "2026-11-13"
+  },
+  "Bvar:v-president": {
+   "measures": {
+    "missed": 0,
+    "strays": 0,
+    "overlaps": 0,
+    "kindDiff": 0,
+    "ownerDiff": 1,
+    "markDiff": 1,
+    "labelDiff": 0,
+    "who": 1
+   },
+   "by": "/home/user/Hhhh/.claude/worktrees/agent-a004afad0cf949173",
+   "on": "2026-11-13"
+  },
+  "Bvar:v-bare": {
+   "measures": {
+    "missed": 0,
+    "strays": 0,
+    "overlaps": 0,
+    "kindDiff": 0,
+    "ownerDiff": 0,
+    "markDiff": 1,
+    "labelDiff": 0,
+    "who": 0
+   },
+   "by": "/home/user/Hhhh/.claude/worktrees/agent-a004afad0cf949173",
+   "on": "2026-11-13"
+  },
+  "Bvar:v-lp-page": {
+   "measures": {
+    "missed": 0,
+    "strays": 0,
+    "overlaps": 0,
+    "kindDiff": 0,
+    "ownerDiff": 0,
+    "markDiff": 0,
+    "labelDiff": 0,
+    "who": 0
+   },
+   "by": "/home/user/Hhhh/.claude/worktrees/agent-a004afad0cf949173",
+   "on": "2026-11-13"
+  },
+  "Bvar:v-counter": {
+   "measures": {
+    "missed": 0,
+    "strays": 0,
+    "overlaps": 0,
+    "kindDiff": 0,
+    "ownerDiff": 0,
+    "markDiff": 0,
+    "labelDiff": 0,
+    "who": 0
+   },
+   "by": "/home/user/Hhhh/.claude/worktrees/agent-a004afad0cf949173",
+   "on": "2026-11-13"
+  },
+  "Bvar:example47": {
+   "measures": {
+    "missed": 0,
+    "strays": 0,
+    "overlaps": 0,
+    "kindDiff": 0,
+    "ownerDiff": 0,
+    "markDiff": 0,
+    "labelDiff": 0,
+    "who": 0
+   },
+   "by": "/home/user/Hhhh/.claude/worktrees/agent-a004afad0cf949173",
+   "on": "2026-11-13"
+  }
+ }
+}

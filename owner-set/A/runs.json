@@ -1,0 +1,614 @@
+{
+ "18": [
+  {
+   "src": "underscores",
+   "n": 25,
+   "x0": 127.2,
+   "x1": 277.4,
+   "top": 306.6,
+   "bottom": 318.6,
+   "rule_y0": 316.8,
+   "rule_y1": 317.2,
+   "ink_x0": 127.0,
+   "ink_x1": 278.2,
+   "size": 12.0
+  },
+  {
+   "src": "underscores",
+   "n": 12,
+   "x0": 455.7,
+   "x1": 527.7,
+   "top": 306.6,
+   "bottom": 318.6,
+   "rule_y0": 316.8,
+   "rule_y1": 317.2,
+   "ink_x0": 455.5,
+   "ink_x1": 527.8,
+   "size": 12.0
+  },
+  {
+   "src": "rule",
+   "x0": 70.6,
+   "x1": 541.4,
+   "rule_y0": 734.4,
+   "rule_y1": 734.9,
+   "text_above": ""
+  },
+  {
+   "src": "rule",
+   "x0": 282.1,
+   "x1": 329.8,
+   "rule_y0": 83.9,
+   "rule_y1": 85.0,
+   "text_above": "ExhibitA"
+  },
+  {
+   "src": "rule",
+   "x0": 72.0,
+   "x1": 252.0,
+   "rule_y0": 366.8,
+   "rule_y1": 367.4,
+   "text_above": ""
+  },
+  {
+   "src": "rule",
+   "x0": 130.3,
+   "x1": 252.0,
+   "rule_y0": 392.0,
+   "rule_y1": 392.6,
+   "text_above": ""
+  },
+  {
+   "src": "rule",
+   "x0": 100.9,
+   "x1": 252.0,
+   "rule_y0": 417.4,
+   "rule_y1": 418.0,
+   "text_above": ""
+  },
+  {
+   "src": "rule",
+   "x0": 147.6,
+   "x1": 252.0,
+   "rule_y0": 442.7,
+   "rule_y1": 443.3,
+   "text_above": ""
+  }
+ ],
+ "lines18": [
+  [
+   31,
+   241.6,
+   "Proprietary and Confidential"
+  ],
+  [
+   44,
+   165.4,
+   "[[__account.name__]] | [[__commitment_amount__]]"
+  ],
+  [
+   75,
+   282.1,
+   "Exhibit A"
+  ],
+  [
+   100,
+   251.0,
+   "Letter of Accreditation"
+  ],
+  [
+   125,
+   72.0,
+   "In conjunction with a proposed investment pursuant to Rule 506(c) of Regulation D under the"
+  ],
+  [
+   139,
+   72.0,
+   "Securities Act of 1933, as amended, I hereby confirm that, as of the date set forth below, is an"
+  ],
+  [
+   152,
+   72.0,
+   "Accredited Investor (the \u201cInvestor\u201d) as defined in Rule 501 of Regulation D."
+  ],
+  [
+   178,
+   72.0,
+   "In making this determination, I have reviewed documentation provided by or on behalf of the"
+  ],
+  [
+   192,
+   72.0,
+   "Investor. I have taken \u201creasonable steps\u201d as outlined by the Securities and Exchange"
+  ],
+  [
+   205,
+   72.0,
+   "Commission in making my determination."
+  ],
+  [
+   256,
+   72.0,
+   "I am a(n)"
+  ],
+  [
+   281,
+   72.0,
+   "Attorney Accountant Broker-dealer Investment Adviser"
+  ],
+  [
+   307,
+   72.0,
+   "licensed (# _________________________) and in good standing in the state of ____________."
+  ],
+  [
+   332,
+   72.0,
+   "Sincerely,"
+  ],
+  [
+   382,
+   72.0,
+   "Print Name:"
+  ],
+  [
+   408,
+   72.0,
+   "Date:"
+  ],
+  [
+   433,
+   72.0,
+   "Phone Number:"
+  ],
+  [
+   741,
+   72.0,
+   "Subscription Agreement page 18"
+  ]
+ ],
+ "20": [
+  {
+   "src": "underscores",
+   "n": 40,
+   "x0": 228.2,
+   "x1": 448.2,
+   "top": 74.5,
+   "bottom": 85.6,
+   "rule_y0": 84.0,
+   "rule_y1": 84.5,
+   "ink_x0": 228.0,
+   "ink_x1": 448.2,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 30,
+   "x0": 159.4,
+   "x1": 324.4,
+   "top": 99.9,
+   "bottom": 110.9,
+   "rule_y0": 109.5,
+   "rule_y1": 110.0,
+   "ink_x0": 159.2,
+   "ink_x1": 324.5,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 82,
+   "x0": 72.0,
+   "x1": 523.0,
+   "top": 137.8,
+   "bottom": 148.8,
+   "rule_y0": 147.2,
+   "rule_y1": 147.8,
+   "ink_x0": 72.0,
+   "ink_x1": 523.0,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 53,
+   "x0": 222.1,
+   "x1": 513.7,
+   "top": 163.1,
+   "bottom": 174.1,
+   "rule_y0": 172.5,
+   "rule_y1": 173.0,
+   "ink_x0": 222.0,
+   "ink_x1": 513.8,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 25,
+   "x0": 107.2,
+   "x1": 244.7,
+   "top": 175.7,
+   "bottom": 186.7,
+   "rule_y0": 185.2,
+   "rule_y1": 185.8,
+   "ink_x0": 107.0,
+   "ink_x1": 244.8,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 73,
+   "x0": 125.9,
+   "x1": 527.3,
+   "top": 201.0,
+   "bottom": 212.0,
+   "rule_y0": 210.5,
+   "rule_y1": 211.0,
+   "ink_x0": 125.8,
+   "ink_x1": 527.5,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 24,
+   "x0": 119.4,
+   "x1": 251.5,
+   "top": 213.6,
+   "bottom": 224.6,
+   "rule_y0": 223.0,
+   "rule_y1": 223.5,
+   "ink_x0": 119.2,
+   "ink_x1": 251.8,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 83,
+   "x0": 72.0,
+   "x1": 528.5,
+   "top": 238.9,
+   "bottom": 250.0,
+   "rule_y0": 248.5,
+   "rule_y1": 249.0,
+   "ink_x0": 72.0,
+   "ink_x1": 528.5,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 48,
+   "x0": 185.4,
+   "x1": 449.3,
+   "top": 251.6,
+   "bottom": 262.7,
+   "rule_y0": 261.2,
+   "rule_y1": 261.8,
+   "ink_x0": 185.2,
+   "ink_x1": 449.5,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 38,
+   "x0": 102.6,
+   "x1": 311.7,
+   "top": 264.2,
+   "bottom": 275.3,
+   "rule_y0": 273.8,
+   "rule_y1": 274.2,
+   "ink_x0": 102.5,
+   "ink_x1": 311.8,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 45,
+   "x0": 193.6,
+   "x1": 441.0,
+   "top": 289.5,
+   "bottom": 300.6,
+   "rule_y0": 299.0,
+   "rule_y1": 299.5,
+   "ink_x0": 193.5,
+   "ink_x1": 441.0,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 38,
+   "x0": 102.6,
+   "x1": 311.7,
+   "top": 302.1,
+   "bottom": 313.2,
+   "rule_y0": 311.8,
+   "rule_y1": 312.2,
+   "ink_x0": 102.5,
+   "ink_x1": 311.8,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 78,
+   "x0": 72.0,
+   "x1": 501.0,
+   "top": 340.2,
+   "bottom": 351.2,
+   "rule_y0": 349.8,
+   "rule_y1": 350.2,
+   "ink_x0": 72.0,
+   "ink_x1": 501.0,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 48,
+   "x0": 72.0,
+   "x1": 336.0,
+   "top": 378.1,
+   "bottom": 389.1,
+   "rule_y0": 387.5,
+   "rule_y1": 388.0,
+   "ink_x0": 72.0,
+   "ink_x1": 336.0,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 42,
+   "x0": 98.7,
+   "x1": 329.7,
+   "top": 428.6,
+   "bottom": 439.6,
+   "rule_y0": 438.0,
+   "rule_y1": 438.5,
+   "ink_x0": 98.5,
+   "ink_x1": 329.8,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 48,
+   "x0": 72.0,
+   "x1": 336.0,
+   "top": 466.6,
+   "bottom": 477.7,
+   "rule_y0": 476.2,
+   "rule_y1": 476.8,
+   "ink_x0": 72.0,
+   "ink_x1": 336.0,
+   "size": 11.04
+  },
+  {
+   "src": "underscores",
+   "n": 42,
+   "x0": 98.6,
+   "x1": 329.6,
+   "top": 504.5,
+   "bottom": 515.6,
+   "rule_y0": 514.0,
+   "rule_y1": 514.5,
+   "ink_x0": 98.5,
+   "ink_x1": 329.8,
+   "size": 11.04
+  },
+  {
+   "src": "rule",
+   "x0": 70.6,
+   "x1": 541.4,
+   "rule_y0": 734.4,
+   "rule_y1": 734.9,
+   "text_above": ""
+  },
+  {
+   "src": "rule",
+   "x0": 72.0,
+   "x1": 292.3,
+   "rule_y0": 551.4,
+   "rule_y1": 552.5,
+   "text_above": "CUSTODIANINFORMATION(ifapplicable):"
+  },
+  {
+   "src": "rule",
+   "x0": 193.3,
+   "x1": 360.0,
+   "rule_y0": 576.7,
+   "rule_y1": 577.2,
+   "text_above": ""
+  },
+  {
+   "src": "rule",
+   "x0": 408.2,
+   "x1": 504.0,
+   "rule_y0": 576.7,
+   "rule_y1": 577.2,
+   "text_above": ""
+  },
+  {
+   "src": "rule",
+   "x0": 215.6,
+   "x1": 396.0,
+   "rule_y0": 602.0,
+   "rule_y1": 602.5,
+   "text_above": ""
+  },
+  {
+   "src": "rule",
+   "x0": 178.3,
+   "x1": 396.0,
+   "rule_y0": 614.6,
+   "rule_y1": 615.1,
+   "text_above": ""
+  },
+  {
+   "src": "rule",
+   "x0": 72.0,
+   "x1": 396.0,
+   "rule_y0": 627.4,
+   "rule_y1": 627.8,
+   "text_above": ""
+  },
+  {
+   "src": "rule",
+   "x0": 72.0,
+   "x1": 396.0,
+   "rule_y0": 640.0,
+   "rule_y1": 640.4,
+   "text_above": ""
+  }
+ ],
+ "lines20": [
+  [
+   31,
+   241.6,
+   "Proprietary and Confidential"
+  ],
+  [
+   44,
+   165.4,
+   "[[__account.name__]] | [[__commitment_amount__]]"
+  ],
+  [
+   75,
+   72.0,
+   "Broker-Dealer or RIA Firm Name: ________________________________________"
+  ],
+  [
+   100,
+   72.0,
+   "BD/RIA CRD No.: ______________________________"
+  ],
+  [
+   125,
+   72.0,
+   "Broker-Dealer Address (if applicable):"
+  ],
+  [
+   138,
+   72.0,
+   "__________________________________________________________________________________"
+  ],
+  [
+   163,
+   72.0,
+   "Registered Representative Name: _____________________________________________________"
+  ],
+  [
+   176,
+   72.0,
+   "Rep ID:_________________________"
+  ],
+  [
+   201,
+   72.0,
+   "IAR Name: _________________________________________________________________________"
+  ],
+  [
+   214,
+   72.0,
+   "CRD No.: ________________________"
+  ],
+  [
+   226,
+   72.0,
+   "Rep/IAR Address:"
+  ],
+  [
+   239,
+   72.0,
+   "___________________________________________________________________________________"
+  ],
+  [
+   252,
+   72.0,
+   "Rep/IAR Email Address: ________________________________________________"
+  ],
+  [
+   264,
+   72.0,
+   "Phone:______________________________________"
+  ],
+  [
+   290,
+   72.0,
+   "Operations/NIGO Contact: _____________________________________________"
+  ],
+  [
+   302,
+   72.0,
+   "Phone:______________________________________"
+  ],
+  [
+   315,
+   72.0,
+   "Operations/NIGO Contact E-mail Address:"
+  ],
+  [
+   340,
+   72.0,
+   "______________________________________________________________________________"
+  ],
+  [
+   378,
+   72.0,
+   "________________________________________________"
+  ],
+  [
+   391,
+   72.0,
+   "SIGNATURE OF REGISTERED REPRESENTATIVE OR"
+  ],
+  [
+   403,
+   72.0,
+   "REGISTERED INVESTMENT ADVISOR"
+  ],
+  [
+   429,
+   72.0,
+   "Date: __________________________________________"
+  ],
+  [
+   467,
+   72.0,
+   "________________________________________________"
+  ],
+  [
+   479,
+   72.0,
+   "BROKER-DEALER PRINCIPAL APPROVAL SIGNATURE (if required)"
+  ],
+  [
+   505,
+   72.0,
+   "Date: __________________________________________"
+  ],
+  [
+   542,
+   225.5,
+   "(if applicable):"
+  ],
+  [
+   543,
+   72.0,
+   "CUSTODIAN INFORMATION"
+  ],
+  [
+   568,
+   72.0,
+   "NAME OF CUSTODIAN: TAX ID:"
+  ],
+  [
+   593,
+   72.0,
+   "CUSTODIAN ACCOUNT NO."
+  ],
+  [
+   606,
+   72.0,
+   "MAILING ADDRESS:"
+  ],
+  [
+   741,
+   72.0,
+   "Subscription Agreement page 20"
+  ]
+ ]
+}

@@ -1,0 +1,164 @@
+21:28:37 serving /tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/owner-set/C/try on http://localhost:8951; evidence in /tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/owner-set/C/out-try2
+21:28:39 upload: editor opened after 1030 ms
+ page   places   fields    found   missed   strays   kind!=  owner!=   marked   mark!=  overlap edge med edge max
+    1        4        4        4        0        0        0        0        1        1        0      1.6      5.8
+    2       41       40       40        1        0        2       10        2        2        0      1.8      6.1
+    3       36       36       36        0        0        0        3        9        6        0      1.7     15.9
+    4       14       13       13        1        0        0        5        0        0        0      1.7      2.4
+    5       13       13       13        0        0        1       13        1        1        0      1.0      1.3
+    6        0        0        0        0        0        0        0        0        0        0        -        -
+    7        4        4        4        0        0        0        1        0        0        0      2.2      2.4
+    8       18       18       18        0        0        0       18        0        0        0      2.0      2.4
+    9        0        0        0        0        0        0        0        0        0        0        -        -
+   10        8        8        8        0        0        3        6        4        0        0      2.2      2.4
+  all      138      136      136        2        0        6       56       17       10        0      1.7     15.9
+
+places without a field (2):
+   p02-title-other  blank/text  investor  [480.5, 219.6, 582, 226.6]  underscore run of 29
+   p04-bank-name  blank/name  investor  [38.2, 227.8, 582.4, 242.2]  drawn cell (four rules, 0.75 pt)
+
+kind differences (6):
+   p02-joint-dob: sheet blank, portal date  "Co-investor date"
+   p02-joint-ssn: sheet blank, portal signature  "Co-investor signature"
+   p05-init-1c: sheet initials, portal text  "c"
+   p10-ria-investor-state: sheet blank, portal signature  "Signature"
+   p10-ria-date: sheet date, portal signature  "Signature"
+   p10-acceptance-date: sheet date, portal signature  "Signature"
+
+finer kind differences (blanks; told from the portal's kind word or label) (2):
+   p03-trust-date: sheet date, portal text/text  "Trustee or Grantor"
+   p03-custodian-tax-id: sheet tax number, portal text/text  "TO BE COMPLETED BY CUSTODIAN OR OTHER ADMINISTRATOR CUSTODIA"
+
+owner differences (56):
+   p02-entity-name: sheet investor, portal co-investor (Co-investor (if any))  "Co-investor name"
+   p02-city: sheet investor, portal co-investor (Co-investor (if any))  "Co-investor city"
+   p02-home-phone: sheet investor, portal co-investor (Co-investor (if any))  "Co-investor phone"
+   p02-alt-address: sheet investor, portal co-investor (Co-investor (if any))  "Co-investor section alternate mailing address or p o box"
+   p02-alt-city: sheet investor, portal co-investor (Co-investor (if any))  "Co-investor city"
+   p02-email: sheet investor, portal co-investor (Co-investor (if any))  "Co-investor email"
+   p02-citizen-2: sheet investor, portal co-investor (Co-investor (if any))  "Co-investor resident alien"
+   p02-citizen-3: sheet investor, portal co-investor (Co-investor (if any))  "Co-investor non resident alien country origin"
+   p02-country: sheet investor, portal co-investor (Co-investor (if any))  "Co-investor country origin"
+   p02-edelivery-initials: sheet investor, portal co-investor (Co-investor (if any))  "Co-investor field"
+   p03-custodian-account: sheet third-party, portal investor (Investor (each subscriber))  "CUSTODIAN ACCOUNT #"
+   p03-custodian-admin-name: sheet third-party, portal investor (Investor (each subscriber))  "NAME OF CUSTODIAN OR OTHER ADMINISTRATOR"
+   p03-custodian-date: sheet third-party, portal investor (Investor (each subscriber))  "Date signed"
+   p04-pay-4: sheet investor, portal investor-individual (Investor (each subscriber))  "Mail to Alternate Address (Specify Below)"
+   p04-pay-5: sheet investor, portal investor-individual (Investor (each subscriber))  "Mail to Street Address"
+   p04-alt-address: sheet investor, portal investor-individual (Investor (each subscriber))  "ALTERNATE ADDRESS"
+   p04-city: sheet investor, portal investor-individual (Investor (each subscriber))  "City"
+   p04-aba: sheet investor, portal investor-individual (Investor (each subscriber))  "BANK ABA#"
+   p05-init-1a: sheet investor-individual, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-1b: sheet investor-individual, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-1c: sheet investor-individual, portal investor (Investor (each subscriber))  "c"
+   p05-init-1d: sheet investor-individual, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2a: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2b: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2c: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2d: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2e: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2f: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2g: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2h: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2i: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p07-joint-date: sheet co-investor, portal investor (Investor (each subscriber))  "Date signed"
+   p08-ria-firm-name: sheet third-party, portal investor (Investor (each subscriber))  "RIA FIRM NAME"
+   p08-ria-crd: sheet third-party, portal investor (Investor (each subscriber))  "CRD #"
+   p08-ria-firm-address: sheet third-party, portal investor (Investor (each subscriber))  "RIA FIRM ADDRESS OR P.O. BOX"
+   p08-ria-firm-city: sheet third-party, portal investor (Investor (each subscriber))  "City"
+   p08-ria-firm-state: sheet third-party, portal investor (Investor (each subscriber))  "State"
+   p08-ria-firm-zip: sheet third-party, portal investor (Investor (each subscriber))  "ZIP code"
+   p08-ria-firm-phone: sheet third-party, portal investor (Investor (each subscriber))  "Phone"
+   p08-ria-firm-fax: sheet third-party, portal investor (Investor (each subscriber))  "FAX #"
+   p08-ria-rep-name: sheet third-party, portal investor (Investor (each subscriber))  "RIA REPRESENTATIVE NAME"
+   p08-ria-rep-number: sheet third-party, portal investor (Investor (each subscriber))  "REPRESENTATIVE #"
+   p08-ria-rep-address: sheet third-party, portal investor (Investor (each subscriber))  "RIA REPRESENTATIVE ADDRESS OR P.O. BOX"
+   p08-ria-branch: sheet third-party, portal investor (Investor (each subscriber))  "BRANCH ID #"
+   p08-ria-rep-city: sheet third-party, portal investor (Investor (each subscriber))  "City"
+   p08-ria-rep-state: sheet third-party, portal investor (Investor (each subscriber))  "State"
+   p08-ria-rep-zip: sheet third-party, portal investor (Investor (each subscriber))  "ZIP code"
+   p08-ria-rep-phone: sheet third-party, portal investor (Investor (each subscriber))  "Phone"
+   p08-ria-rep-fax: sheet third-party, portal investor (Investor (each subscriber))  "FAX #"
+   p08-ria-rep-email: sheet third-party, portal investor (Investor (each subscriber))  "Email"
+   p10-ria-rep-signature-1: sheet third-party, portal investor (Investor (each subscriber))  "Signature"
+   p10-ria-rep-signature-2: sheet third-party, portal investor (Investor (each subscriber))  "Signature"
+   p10-ria-investor-state: sheet third-party, portal investor (Investor (each subscriber))  "Signature"
+   p10-ria-rep-date: sheet third-party, portal investor (Investor (each subscriber))  "Date signed"
+   p10-ria-signature: sheet third-party, portal investor (Investor (each subscriber))  "Signature"
+   p10-ria-date: sheet third-party, portal investor (Investor (each subscriber))  "Signature"
+
+marked for review where the sheet has no doubt (10):
+   p01-amount  "Amount"  The words before this blank may not be its label: check what goes here.
+   p02-cat-3-relative  "and name of relative"  A blank inside a sentence: check what goes here and who fills it in.
+   p02-cat-4-relative  "and name of relative"  A blank inside a sentence: check what goes here and who fills it in.
+   p03-own-02  "Checkbox"  This box has no words beside it: check what it is for.
+   p03-own-07  "Checkbox"  This box has no words beside it: check what it is for.
+   p03-own-08  "Checkbox"  This box has no words beside it: check what it is for.
+   p03-own-10  "Checkbox"  This box has no words beside it: check what it is for.
+   p03-own-11  "Checkbox"  This box has no words beside it: check what it is for.
+   p03-trust-date  "Trustee or Grantor"  The words before this blank may not be its label: check what goes here.
+   p05-init-1c  "c"  A blank inside a sentence: check what goes here and who fills it in.
+
+required differences (information) (44):
+   p02-cat-3-relative: sheet optional, portal required  "and name of relative"
+   p02-cat-4-relative: sheet optional, portal required  "and name of relative"
+   p02-joint-name: sheet optional, portal required  "Co-investor name"
+   p02-entity-name: sheet optional, portal required  "Co-investor name"
+   p02-city: sheet must, portal optional  "Co-investor city"
+   p02-state: sheet must, portal optional  "State"
+   p02-zip: sheet must, portal optional  "ZIP code"
+   p02-home-phone: sheet must, portal optional  "Co-investor phone"
+   p02-dob: sheet must, portal optional  "INVESTOR DATE OF BIRTH ENTITY DATE)"
+   p02-joint-ssn: sheet optional, portal required  "Co-investor signature"
+   p02-edelivery-initials: sheet optional, portal required  "Co-investor field"
+   p03-trust-date: sheet optional, portal required  "Trustee or Grantor"
+   p03-own-other: sheet optional, portal required  "Other"
+   p03-ira-type: sheet optional, portal required  "IRA"
+   p03-cust-other: sheet optional, portal required  "Other"
+   p03-custodian-name: sheet optional, portal required  "NAME OF CUSTODIAN OR TRUSTEE"
+   p03-inherited-name: sheet optional, portal required  "Inherited/Beneficiary IRA Deceased’s Name"
+   p03-cust-address: sheet optional, portal required  "Address"
+   p05-init-1a: sheet optional, portal required  "Initials"
+   p05-init-1b: sheet optional, portal required  "Initials"
+   p05-init-1c: sheet optional, portal required  "c"
+   p05-init-1d: sheet optional, portal required  "Initials"
+   p05-init-2a: sheet optional, portal required  "Initials"
+   p05-init-2b: sheet optional, portal required  "Initials"
+   p05-init-2c: sheet optional, portal required  "Initials"
+   p05-init-2d: sheet optional, portal required  "Initials"
+   p05-init-2e: sheet optional, portal required  "Initials"
+   p05-init-2f: sheet optional, portal required  "Initials"
+   p05-init-2g: sheet optional, portal required  "Initials"
+   p05-init-2h: sheet optional, portal required  "Initials"
+   p05-init-2i: sheet optional, portal required  "Initials"
+   p07-investor-date: sheet must, portal optional  "Date signed"
+   p07-joint-date: sheet must, portal optional  "Date signed"
+   p08-ria-firm-name: sheet optional, portal required  "RIA FIRM NAME"
+   p08-ria-crd: sheet optional, portal required  "CRD #"
+   p08-ria-firm-phone: sheet optional, portal required  "Phone"
+   p08-ria-rep-name: sheet optional, portal required  "RIA REPRESENTATIVE NAME"
+   p08-ria-rep-number: sheet optional, portal required  "REPRESENTATIVE #"
+   p08-ria-rep-phone: sheet optional, portal required  "Phone"
+   p10-ria-rep-signature-1: sheet optional, portal required  "Signature"
+   p10-ria-rep-signature-2: sheet optional, portal required  "Signature"
+   p10-ria-investor-state: sheet optional, portal required  "Signature"
+   p10-ria-date: sheet optional, portal required  "Signature"
+   p10-acceptance-date: sheet optional, portal required  "Signature"
+
+the portal said:
+   17 fields need your review before investors can sign.
+   Confirm or move the 17 fields marked for review.
+   10 pages read. 43 tick boxes, 68 blanks and 25 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on pages 7 and 10. Your firm’s signature line was found on page 10. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.
+
+what the reader says it read: {"ok":true,"error":"","pages":10,"scanned":[],"failed":[],"places":136,"left":[],"boxes":43,"blanks":68,"signatures":25,"investorPages":[7,10],"firmPages":[10],"firmLeft":0,"firmLeftPages":[],"pictured":[],"unread":{},"asked":false}
+
+signers: [{"id":"sg-mwfho6fimjbzg","name":"Investor (each subscriber)","i":0,"investorId":"__each_investor__"},{"id":"sg-mwfho6fifwug3","name":"Co-investor (if any)","i":1,"investorId":"__co_investor__"},{"id":"sg-mwfho6fiavr04","name":"Kestrel Bay (countersigns)","i":2,"investorId":""}]
+fields by owner: {"investor":112,"co-investor":14,"third-party":4,"investor-individual":5,"firm":1}
+fields by kind: {"text":61,"checkbox":43,"name":2,"date":5,"signature":12,"initials":13}
+page errors: []
+aborted requests: []
+
+FAIL
+21:28:44 pictures: 10 editor pages, compare pictures in /tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/owner-set/C/out-try2
+21:28:44 server stopped
+try2 exit 1

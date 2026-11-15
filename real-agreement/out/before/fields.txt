@@ -1,0 +1,8 @@
+12 date firm "" x 241.1 351.1 y 105.6 125.6
+12 signature firm "" x 96.7 276.7 y 176.2 218.2
+12 name firm "" x 116.9 286.9 y 221.2 241.2
+12 text firm "Title" x 109.6 279.6 y 244.1 264.1
+2 text investor "Commitment amount" x 72.1 242.1 y 179.5 199.5
+13 signature investor "" x 61.2 241.2 y 522.7 564.7
+13 name investor "" x 61.2 231.2 y 578.2 598.2
+13 date investor "" x 379.4 489.4 y 538.6 558.6

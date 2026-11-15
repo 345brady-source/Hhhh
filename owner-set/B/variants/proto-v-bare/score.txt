@@ -1,0 +1,13 @@
+DOCUMENT B  root /tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/owner-set/B/proto  editor opened  reading took 0.4 s
+read summary, exactly as the editor shows it:
+   1 page read. 0 tick boxes, 0 blanks and 2 signature lines got a field, each on a place the agreement prints. No signature line for the investor was found: add a signature field for the investor where they sign before saving. Your firm’s signature line was found on page 1. Check the fields, move or resize as needed, and add any others. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.
+what stops saving (agreementTodo): No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.
+read: investor signature pages [] (sheet []), firm signature pages [1] (sheet [1]), left [], firmLeft 0
+ page   places   fields    found   missed   strays   kind!=  owner!=   mark!=  overlap
+    1        2        2        2        0        0        0        0        0        0
+  all        2        2        2        0        0        0        0        0        0
+pages with neither a place nor a field: none
+FOUND p1-01: signature for "Kestrel Bay (countersigns)" (firm) required true marked false box [303.8, 447.8, 541, 490.8] label "Signature" edges {"left":0,"right":1,"bottom":1.8,"top":null,"height":43}
+FOUND p1-02: signature for "Kestrel Bay (countersigns)" (firm) required true marked false box [303.8, 578.8, 541, 621.8] label "Signature" edges {"left":0,"right":1,"bottom":1.8,"top":null,"height":43}
+who signs: read as the sheet says
+PASS

@@ -1,0 +1,680 @@
+#!/usr/bin/env node
+/*
+ * Independent scorer for PDFs that have no text (page pictures, letters drawn as outlines). Scratch: not in the repository.
+ *
+ *   NODE_PATH=$(npm root -g) node score-notext.js --root <checkout> [--only a,b,c,d,e] [--out <dir>]
+ *   node score-notext.js --self-test          (no browser: the scoring itself, against the answer sheet)
+ *
+ * --take-offer (the default for parts a, b, c, d; never for e; --no-take-offer switches it off): a PDF with pages that
+ * have no text is not read from its pictures until the sponsor asks. After the upload the runner looks, in the dialog
+ * and in the editor, for a button or link reading "Read these pages from their picture", notes the state before
+ * (parts a and d: zero fields and a plain sentence that the pages have no text = "safe by default"), clicks it, waits
+ * until the reading has finished (up to 4 minutes) and only then reads the fields.
+ *
+ * Reuses proof.js's helpers (server, browser, the real upload dialog as a sponsor, reading the editor's fields).
+ * Serves the checkout on a port in 8870-8890 (stopped at the end), one browser at a time, up to 4 minutes per document.
+ *
+ *   a  the owner's picture file against the answer sheet (241 printed places)
+ *   b  example-scan.pdf        c  example-outlined.pdf      (47 fields, by page; places from the pinned 47-field reference)
+ *   d  prose-scan.pdf, prose-outlined.pdf                    (zero fields)
+ *   e  the normal-text example still gives 47, none marked, under 3 s, text reader not loaded
+ */
+const fs = require('fs');
+const path = require('path');
+const { spawnSync } = require('child_process');
+const P = require('./proof.js');
+const { mk, pad, say } = P;
+
+const HERE = __dirname;
+const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
+const SELF = process.argv.includes('--self-test');
+const TAKE_OFFER = !process.argv.includes('--no-take-offer');
+const OFFER_RE = /read (these|the|those)? ?pages? from (their|its|the) pictures?/i;
+const BUSY_RE = /Reading page \d+ of \d+|Reading [^.]{0,60}(…|\.\.\.)/;
+// a plain sentence that the pages have no text (or are pictures)
+const NO_TEXT_RE = /\b(no|without( any)?) text\b|pages? (is|are) (a |only )?pictures?|only pictures? of/i;
+const ONLY = arg('--only', 'a,b,c,d,e').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+const want = (k) => ONLY.includes(k);
+const OUT = path.resolve(arg('--out', path.join(HERE, 'out-notext')));
+const TRUTH_DIR = path.join(P.SCRATCH, 'build/ocr-truth');
+const PRINTED = process.env.PRINTED_PDF || path.join(P.SCRATCH, 'xx/printed-no-text.pdf');
+const TRUTH = JSON.parse(fs.readFileSync(path.join(TRUTH_DIR, 'truth-printed.json'), 'utf8'));
+const REF47 = path.join(HERE, 'ref-example-47.json'); // the 47 fields of the normal-text example, from a run judged clean
+const PER_DOC_MS = 240000;
+const READ_LIMIT_MS = 3000;
+const EMPTY_PAGES = [1, 3, 8, 10, 13];
+
+/* ---------- the scoring rules (also printed with every run) ---------- */
+// answer sheet kind -> the portal's field kinds that count as the same thing
+const KIND_MAP = { tickbox: ['checkbox'], initials: ['initials'], signature: ['signature'], date: ['date'], blank: ['text', 'name'] };
+// the portal's signer name -> owner. Order matters: a co-investor is tested before the investor.
+const OWNER_RULES = [
+  ['co-investor', /co-?\s?(investor|subscriber|signer|owner|applicant)|second (signer|investor|subscriber|holder)|joint (investor|owner|holder|subscriber)|spouse/i],
+  ['third party', /someone else|custodian|broker|dealer|registered rep|representative|advis[eo]r|branch manager|third[- ]party|other party|unassigned|no one|nobody|witness|notary/i],
+  ['investor', /investor|subscriber|purchaser|individual|entity|member|partner \(|limited partner/i]
+];
+const ownerOf = (signerName) => { if (!String(signerName || '').trim()) return 'unassigned'; const r = OWNER_RULES.find((x) => x[1].test(signerName)); return r ? r[0] : 'firm'; };
+// answer sheet owner -> the owners that count as right ("unclear" is a third party: not the investor, not the fund)
+const OWNER_OK = { investor: ['investor'], 'co-investor/second signer': ['co-investor'], unclear: ['third party', 'unassigned'], firm: ['firm'] };
+const GROW = 3; // pt: the centre of a field inside the place's box grown by this
+const SHARE = 0.4; // or the overlap is at least this share of the smaller box
+const TOUCH = 0.5; // pt: two fields overlap when their boxes share more than this in both directions
+const RULES = [
+  `match: same page, and the field's centre inside the place's box grown by ${GROW} pt, or overlap of at least ${SHARE * 100}% of the smaller box; one field to one place (nearest centres first, then the pairing with most places found); a second field on a place already taken is a stray`,
+  `kinds: ${Object.entries(KIND_MAP).map(([k, v]) => `sheet "${k}" = portal ${v.map((x) => `"${x}"`).join(' or ')}`).join('; ')}`,
+  `owners: sheet "investor" = a signer named as the investor; "co-investor/second signer" = a signer named as co-investor, second signer, joint or spouse; "unclear" (custodian, broker-dealer: a third party) = a signer named as that third party, or no signer; a signer matching none of these is taken as the firm`,
+  `overlap: two fields on a page whose boxes share more than ${TOUCH} pt both ways`,
+  'edge distance: for a matched field, the distance of each of its four edges from the same edge of the place (pt)'
+];
+
+/* ---------- geometry ---------- */
+const area = (b) => Math.max(0, b.x1 - b.x0) * Math.max(0, b.y1 - b.y0);
+const inter = (a, b) => ({ w: Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), h: Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0) });
+const fbox = (f) => ({ x0: f.x0, y0: f.top, x1: f.x1, y1: f.bottom });
+const r1 = (v) => Math.round(v * 10) / 10;
+const boxStr = (b) => `[${r1(b.x0)}, ${r1(b.y0)}, ${r1(b.x1)}, ${r1(b.y1)}]`;
+const median = (a) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+function candidate(fb, pb) {
+  const cx = (fb.x0 + fb.x1) / 2;
+  const cy = (fb.y0 + fb.y1) / 2;
+  const inside = cx >= pb.x0 - GROW && cx <= pb.x1 + GROW && cy >= pb.y0 - GROW && cy <= pb.y1 + GROW;
+  const i = inter(fb, pb);
+  const small = Math.min(area(fb), area(pb));
+  const share = i.w > 0 && i.h > 0 && small > 0 ? (i.w * i.h) / small : 0;
+  if (!inside && share < SHARE) return null;
+  return { d: Math.hypot(cx - (pb.x0 + pb.x1) / 2, cy - (pb.y0 + pb.y1) / 2), share };
+}
+
+/**
+ * Score fields against places.
+ * fields: [{ page, kind, x0, x1, top, bottom, owner, review, signerName, label }]
+ * places: [{ id, page, kind, whose, label, x0, y0, x1, y1, optional }]
+ * opts.kinds / opts.owners false: the places carry none to compare (the 47-field reference carries the portal's own).
+ */
+function score(fields, places, opts) {
+  opts = Object.assign({ kinds: true, owners: true, frame: null }, opts || {});
+  const pageNos = Array.from(new Set(places.map((p) => p.page).concat(fields.map((f) => f.page)).concat(opts.pages || []))).sort((a, b) => a - b);
+  const per = {};
+  const all = { places: places.length, fields: fields.length, found: 0, missed: [], strays: [], kindDiff: [], ownerDiff: [], marked: fields.filter((f) => f.review).length, overlaps: [], edges: [], worst: [], pairs: [] };
+  pageNos.forEach((pg) => {
+    const F = fields.filter((f) => f.page === pg);
+    const PL = places.filter((p) => p.page === pg);
+    const cand = F.map((f) => PL.map((p) => candidate(fbox(f), p)));
+    const fOf = new Array(PL.length).fill(-1); // place -> field
+    const pOf = new Array(F.length).fill(-1); // field -> place
+    // nearest centres first
+    const edges = [];
+    cand.forEach((row, i) => row.forEach((c, j) => c && edges.push({ i, j, d: c.d })));
+    edges.sort((a, b) => a.d - b.d).forEach((e) => { if (pOf[e.i] < 0 && fOf[e.j] < 0) { pOf[e.i] = e.j; fOf[e.j] = e.i; } });
+    // then the pairing that leaves the fewest places without a field (augmenting paths)
+    const tryField = (i, seen) => {
+      for (let j = 0; j < PL.length; j++) {
+        if (!cand[i][j] || seen[j]) continue;
+        seen[j] = true;
+        if (fOf[j] < 0 || tryField(fOf[j], seen)) { fOf[j] = i; pOf[i] = j; return true; }
+      }
+      return false;
+    };
+    F.forEach((f, i) => { if (pOf[i] < 0) tryField(i, new Array(PL.length).fill(false)); });
+    const r = (per[pg] = { page: pg, places: PL.length, fields: F.length, found: 0, missed: [], strays: [], kindDiff: [], ownerDiff: [], marked: F.filter((f) => f.review).length, overlaps: [], edges: [], worst: [] });
+    PL.forEach((p, j) => {
+      if (fOf[j] < 0) { r.missed.push({ id: p.id, kind: p.kind, whose: p.whose, label: p.label, optional: !!p.optional, box: [p.x0, p.y0, p.x1, p.y1] }); return; }
+      const f = F[fOf[j]];
+      r.found++;
+      const d = [Math.abs(f.x0 - p.x0), Math.abs(f.top - p.y0), Math.abs(f.x1 - p.x1), Math.abs(f.bottom - p.y1)];
+      r.edges.push(...d);
+      r.worst.push({ d: Math.max(...d), id: p.id });
+      all.pairs.push({ place: p.id, page: pg, field: f.id || '', kind: f.kind, owner: f.owner, review: !!f.review, edges: d.map(r1) });
+      if (opts.kinds && !(KIND_MAP[p.kind] || [p.kind]).includes(f.kind)) r.kindDiff.push({ id: p.id, label: p.label, sheet: p.kind, portal: f.kind || '(none)' });
+      if (opts.owners && !(OWNER_OK[p.whose] || [p.whose]).includes(f.owner)) r.ownerDiff.push({ id: p.id, label: p.label, sheet: p.whose, portal: f.owner, signer: f.signerName || '' });
+    });
+    F.forEach((f, i) => {
+      if (pOf[i] >= 0) return;
+      const b = fbox(f);
+      const on = PL.find((p, j) => cand[i][j]);
+      const fr = opts.frame && opts.frame[pg];
+      const outside = fr && ((b.y0 + b.y1) / 2 < fr.y0 || (b.y0 + b.y1) / 2 > fr.y1 || (b.x0 + b.x1) / 2 < fr.x0 || (b.x0 + b.x1) / 2 > fr.x1);
+      r.strays.push({ page: pg, kind: f.kind, owner: f.owner, label: f.label || '', box: [b.x0, b.y0, b.x1, b.y1].map(r1), why: on ? `a second field on ${on.id}, which already has one` : outside ? 'outside the form picture (browser header or footer)' : 'on no printed place' });
+    });
+    for (let i = 0; i < F.length; i++) for (let k = i + 1; k < F.length; k++) {
+      const x = inter(fbox(F[i]), fbox(F[k]));
+      if (x.w > TOUCH && x.h > TOUCH) r.overlaps.push({ page: pg, a: [F[i].x0, F[i].top, F[i].x1, F[i].bottom].map(r1), b: [F[k].x0, F[k].top, F[k].x1, F[k].bottom].map(r1), shared: `${r1(x.w)} x ${r1(x.h)} pt` });
+    }
+    all.found += r.found;
+    ['missed', 'strays', 'kindDiff', 'ownerDiff', 'overlaps', 'edges', 'worst'].forEach((k) => all[k].push(...r[k]));
+    r.edgeMedian = median(r.edges);
+    r.fieldWorstMedian = median(r.worst.map((w) => w.d));
+    r.edgeWorst = r.worst.length ? r.worst.reduce((a, b) => (b.d > a.d ? b : a)) : null;
+  });
+  all.edgeMedian = median(all.edges);
+  all.fieldWorstMedian = median(all.worst.map((w) => w.d));
+  all.edgeWorst = all.worst.length ? all.worst.reduce((a, b) => (b.d > a.d ? b : a)) : null;
+  return { per, all, pageNos };
+}
+const fx = (v) => (v == null ? '-' : v.toFixed(1));
+/** The per-page table and the lists, as lines of text. */
+function report(sc, o) {
+  o = Object.assign({ kinds: true, owners: true }, o || {});
+  const L = [];
+  const row = (c) => c.map((v, i) => String(v).padStart(i ? 8 : 5)).join(' ');
+  L.push(row(['page', 'places', 'fields', 'found', 'missed', 'strays', 'kind!=', 'owner!=', 'marked', 'overlap', 'edge med', 'edge max']));
+  const one = (n, r) => row([n, r.places, r.fields, r.found, r.missed.length, r.strays.length, o.kinds ? r.kindDiff.length : '-', o.owners ? r.ownerDiff.length : '-', r.marked, r.overlaps.length, fx(r.edgeMedian), fx(r.edgeWorst && r.edgeWorst.d)]);
+  sc.pageNos.forEach((pg) => L.push(one(pg, sc.per[pg])));
+  L.push(one('all', sc.all));
+  const a = sc.all;
+  L.push(`edge distance over ${a.found} matched fields: median of all edges ${fx(a.edgeMedian)} pt; median of each field's worst edge ${fx(a.fieldWorstMedian)} pt; worst ${fx(a.edgeWorst && a.edgeWorst.d)} pt${a.edgeWorst ? ' (' + a.edgeWorst.id + ')' : ''}`);
+  const list = (title, items, f, cap) => { if (!items.length) return; L.push(`${title} (${items.length}):`); items.slice(0, cap || 400).forEach((x) => L.push('   ' + f(x))); if (items.length > (cap || 400)) L.push(`   ... and ${items.length - (cap || 400)} more (all in score.json)`); };
+  // a page with none of its places found is said in one line (every place is in score.json)
+  const whole = sc.pageNos.filter((pg) => sc.per[pg].places > 0 && sc.per[pg].found === 0);
+  if (whole.length) L.push(`MISSED WHOLE: ${whole.map((pg) => `page ${pg} (all ${sc.per[pg].places} places)`).join(', ')}: no place on ${whole.length === 1 ? 'this page' : 'these pages'} has a field`);
+  list('MISSED: places with no field' + (whole.length ? ' (on the other pages)' : ''), a.missed.filter((m) => !whole.includes(Number(/^(?:ref-)?p(\d+)-/.exec(m.id)[1]))), (m) => `${m.id}  ${m.kind}  ${m.whose}  "${m.label}"${m.optional ? '  (optional on the sheet)' : ''}  ${boxStr({ x0: m.box[0], y0: m.box[1], x1: m.box[2], y1: m.box[3] })}`);
+  list('STRAYS: fields on no place', a.strays, (s) => `page ${s.page}  ${s.kind || '?'}  ${s.owner}  [${s.box.join(', ')}]  ${s.why}${s.label ? '  "' + s.label.slice(0, 50) + '"' : ''}`);
+  if (o.kinds) list('KIND differs from the sheet', a.kindDiff, (k) => `${k.id}  "${k.label}"  sheet ${k.sheet}, portal ${k.portal}`, 80);
+  if (o.owners) list('OWNER differs from the sheet', a.ownerDiff, (k) => `${k.id}  "${k.label}"  sheet ${k.sheet}, portal ${k.portal}${k.signer ? ' ("' + k.signer.slice(-60) + '")' : ''}`, 80);
+  list('OVERLAPPING fields', a.overlaps, (v) => `page ${v.page}  [${v.a.join(', ')}] and [${v.b.join(', ')}]  share ${v.shared}`, 60);
+  return L;
+}
+
+/* ---------- pictures ---------- */
+/**
+ * jobs: [{ src, resizedOut?, out, width, map: { ox, oy, sx, sy } (pt -> px of the picture at `width`), items: [{ box:[x0,y0,x1,y1] pt, color, text }], legend }]
+ * The source is resized to `width` pixels wide (saved to resizedOut when given), then the items are drawn on a copy.
+ */
+function draw(jobs) {
+  if (!jobs.length) return [];
+  const py = `
+import sys, json
+from PIL import Image, ImageDraw, ImageFont
+jobs = json.load(open(sys.argv[1]))
+try:
+    font = ImageFont.truetype('DejaVuSans.ttf', 15); small = ImageFont.truetype('DejaVuSans.ttf', 12)
+except Exception:
+    font = small = ImageFont.load_default()
+COL = {'green': (0, 150, 60), 'red': (220, 0, 0), 'orange': (255, 130, 0)}
+done = []
+for j in jobs:
+    im = Image.open(j['src']).convert('RGB')
+    w = j['width']; h = round(im.height * w / im.width)
+    if im.width != w: im = im.resize((w, h), Image.LANCZOS)
+    if j.get('resizedOut'): im.save(j['resizedOut'])
+    if j.get('out'):
+        d = ImageDraw.Draw(im, 'RGBA'); m = j['map']
+        for it in j['items']:
+            c = COL[it['color']]; b = it['box']
+            x0 = m['ox'] + b[0] * m['sx']; y0 = m['oy'] + b[1] * m['sy']; x1 = m['ox'] + b[2] * m['sx']; y1 = m['oy'] + b[3] * m['sy']
+            if it['color'] != 'green': d.rectangle([x0, y0, x1, y1], fill=c + (60,))
+            for k in range(3): d.rectangle([x0 - k, y0 - k, x1 + k, y1 + k], outline=c + (255,))
+            if it.get('text'):
+                tw = d.textlength(it['text'], font=small)
+                tx = min(max(2, x0), w - tw - 4); ty = y0 - 16 if y0 > 18 else y1 + 3
+                d.rectangle([tx - 1, ty - 1, tx + tw + 2, ty + 14], fill=(255, 255, 255, 215)); d.text((tx, ty), it['text'], fill=c, font=small)
+        lg = j.get('legend') or ''
+        if lg:
+            tw = d.textlength(lg, font=font); d.rectangle([6, 6, 16 + tw, 30], fill=(255, 255, 255, 235), outline=(0, 0, 0, 255)); d.text((11, 9), lg, fill=(0, 0, 0), font=font)
+        im.save(j['out'])
+    done.append({'out': j.get('out') or j.get('resizedOut'), 'w': im.width, 'h': im.height})
+print(json.dumps(done))`;
+  const jf = path.join(OUT, `.draw-${process.pid}.json`);
+  fs.writeFileSync(jf, JSON.stringify(jobs));
+  const r = spawnSync('python3', ['-I', '-c', py, jf], { encoding: 'utf8', maxBuffer: 1 << 26 });
+  fs.unlinkSync(jf);
+  if (r.status !== 0) throw new Error('drawing failed: ' + (r.stderr || '').slice(-400));
+  return JSON.parse(r.stdout);
+}
+/** What to draw for one page: found places green, missed red (with id), strays orange. */
+function overlayItems(sc, places, pg) {
+  const r = sc.per[pg] || { missed: [], strays: [] };
+  const missed = new Set(r.missed.map((m) => m.id));
+  const items = places.filter((p) => p.page === pg).map((p) => (missed.has(p.id) ? { box: [p.x0, p.y0, p.x1, p.y1], color: 'red', text: p.id } : { box: [p.x0, p.y0, p.x1, p.y1], color: 'green' }));
+  r.strays.forEach((s) => items.push({ box: s.box, color: 'orange', text: 'stray' }));
+  return { items, legend: `page ${pg}: ${r.found || 0} found (green)  ${r.missed.length} missed (red)  ${r.strays.length} stray (orange)` };
+}
+
+/* ---------- results ---------- */
+const rows = [];
+function line(part, name, ok, info) {
+  const mark = ok === null ? 'INFO' : ok ? 'PASS' : 'FAIL';
+  rows.push({ part, name, mark, info: info == null ? '' : typeof info === 'string' ? info : JSON.stringify(info) });
+  say(`${mark} [${part}] ${name}${info ? ' :: ' + rows[rows.length - 1].info.slice(0, 600) : ''}`);
+}
+const places241 = () => TRUTH.fields.map((p) => Object.assign({}, p));
+const asField = (p) => ({ id: 'self-' + p.id, page: p.page, kind: KIND_MAP[p.kind][0], x0: p.x0, x1: p.x1, top: p.y0, bottom: p.y1, owner: OWNER_OK[p.whose][0], signerName: p.whose, review: false, label: p.label });
+
+/* ---------- the self-test: no browser ---------- */
+function selfTest() {
+  const dir = mk(path.join(OUT, 'self-test'));
+  const places = places241();
+  const same = (a, b) => JSON.stringify(a.slice().sort()) === JSON.stringify(b.slice().sort());
+  const frame = TRUTH.image_placement_pt;
+  // 1. the answer sheet's own places as if they were the portal's fields
+  let sc = score(places.map(asField), places, { frame });
+  let a = sc.all;
+  console.log('\nSELF-TEST 1: the answer sheet fed in as the fields\n' + report(sc).join('\n'));
+  const perPage = Object.keys(TRUTH.counts_per_page).every((k) => sc.per[k].found === TRUTH.counts_per_page[k].total);
+  line('self', `1. sheet as fields: found ${a.found} of ${a.places}, missed ${a.missed.length}, strays ${a.strays.length}, kind differs ${a.kindDiff.length}, owner differs ${a.ownerDiff.length}, overlaps ${a.overlaps.length}, worst edge ${fx(a.edgeWorst.d)} pt`, a.found === 241 && a.places === 241 && !a.missed.length && !a.strays.length && !a.kindDiff.length && !a.ownerDiff.length && !a.overlaps.length && a.edgeWorst.d === 0 && perPage);
+  // 2. five places without a field, three fields on no place
+  const drop = ['p1-12', 'p2-37', 'p4-03', 'p5-19', 'p7-20'];
+  const strays = [
+    { id: 'stray-1', page: 1, kind: 'text', x0: 60, x1: 180, top: 20, bottom: 32, owner: 'investor', signerName: 'Investor', review: true, label: 'in the browser header' },
+    { id: 'stray-2', page: 6, kind: 'signature', x0: 300, x1: 420, top: 600, bottom: 624, owner: 'firm', signerName: 'Firm', review: false, label: 'on empty paper' },
+    { id: 'stray-3', page: 8, kind: 'checkbox', x0: 80, x1: 88, top: 300, bottom: 308, owner: 'investor', signerName: 'Investor', review: false, label: 'in the left column' }
+  ];
+  const missing = drop.filter((id) => !places.some((p) => p.id === id));
+  let fields = places.filter((p) => !drop.includes(p.id)).map(asField).concat(strays);
+  sc = score(fields, places, { frame });
+  a = sc.all;
+  console.log('\nSELF-TEST 2: 5 places removed (' + drop.join(', ') + '), 3 strays added\n' + report(sc).join('\n'));
+  const strayOk = a.strays.length === 3 && strays.every((s) => a.strays.some((x) => x.page === s.page && JSON.stringify(x.box) === JSON.stringify([s.x0, s.top, s.x1, s.bottom])));
+  line('self', `2. five removed, three strays: found ${a.found}, missed ${a.missed.length} (${a.missed.map((m) => m.id).join(', ')}), strays ${a.strays.length} (pages ${a.strays.map((s) => s.page).join(', ')}), marked ${a.marked}`, !missing.length && a.found === 236 && same(a.missed.map((m) => m.id), drop) && strayOk && a.marked === 1 && !a.overlaps.length && !a.kindDiff.length && !a.ownerDiff.length, missing.length ? 'ids not on the sheet: ' + missing.join(', ') : '');
+  // the comparison pictures for this case, on a plain render of the PDF: shows the drawing lands on the printed boxes
+  const jobs = [];
+  for (let pg = 1; pg <= TRUTH.pages; pg++) {
+    const base = path.join(dir, `render-p${pad(pg)}`);
+    spawnSync('pdftoppm', ['-f', String(pg), '-l', String(pg), '-scale-to-x', '1440', '-scale-to-y', '-1', '-png', '-singlefile', PRINTED, base]);
+    if (!fs.existsSync(base + '.png')) continue;
+    jobs.push(Object.assign({ src: base + '.png', out: path.join(dir, `compare-p${pad(pg)}.png`), width: 1440, map: { ox: 0, oy: 0, sx: 1440 / 612, sy: 1440 / 612 } }, overlayItems(sc, places, pg)));
+  }
+  const made = draw(jobs);
+  jobs.forEach((j) => fs.unlinkSync(j.src));
+  line('self', `2. comparison pictures drawn over a plain render of each page (${made.length} of ${TRUTH.pages}, ${made.map((m) => m.w).filter((w) => w === 1440).length} are 1440 wide)`, made.length === TRUTH.pages && made.every((m) => m.w === 1440), path.join(dir, 'compare-pNN.png'));
+  // 3. the tolerance: every field 1.5 pt inside its box and 1 pt off still counts; nothing else changes
+  fields = places.map(asField).map((f) => (f.x1 - f.x0 > 5 && f.bottom - f.top > 5 ? Object.assign(f, { x0: f.x0 + 2.5, x1: f.x1 - 0.5, top: f.top + 2.5, bottom: f.bottom - 0.5 }) : Object.assign(f, { x0: f.x0 + 1, x1: f.x1 + 1, top: f.top + 1, bottom: f.bottom + 1 })));
+  sc = score(fields, places, { frame });
+  a = sc.all;
+  line('self', `3. every field 1.5 pt inside its box and shifted 1 pt: found ${a.found}, missed ${a.missed.length}, strays ${a.strays.length}, worst edge ${fx(a.edgeWorst.d)} pt, median ${fx(a.edgeMedian)} pt`, a.found === 241 && !a.missed.length && !a.strays.length && Math.abs(a.edgeWorst.d - 2.5) < 1e-6);
+  // 4. a field one tick box too low (8 pt) is a miss and a stray, not a find; two wrong kinds, two wrong owners, one doubled field
+  fields = places.map(asField);
+  const by = (id) => fields.find((f) => f.id === 'self-' + id);
+  Object.assign(by('p1-35'), { top: by('p1-35').top + 9, bottom: by('p1-35').bottom + 9 }); // "Estate": nothing printed 9 pt below it
+  by('p1-02').kind = 'text';
+  by('p6-01').kind = 'text';
+  by('p4-02').owner = 'investor';
+  by('p1-37').owner = 'investor';
+  const dbl = Object.assign({}, by('p3-01'), { id: 'dbl' });
+  fields.push(dbl);
+  sc = score(fields, places, { frame });
+  a = sc.all;
+  console.log('\nSELF-TEST 4: one field 9 pt low, two wrong kinds, two wrong owners, one doubled field\n' + report(sc).join('\n'));
+  line('self', `4. one field 9 pt low, two kinds and two owners changed, one field doubled: missed ${a.missed.map((m) => m.id).join(', ')}; strays ${a.strays.length}; kind differs ${a.kindDiff.map((k) => k.id).join(', ')}; owner differs ${a.ownerDiff.map((k) => k.id).join(', ')}; overlaps ${a.overlaps.length}`, a.found === 240 && same(a.missed.map((m) => m.id), ['p1-35']) && a.strays.length === 2 && a.strays.some((s) => /second field on p3-01/.test(s.why)) && same(a.kindDiff.map((k) => k.id), ['p1-02', 'p6-01']) && same(a.ownerDiff.map((k) => k.id), ['p1-37', 'p4-02']) && a.overlaps.length === 1);
+  // 5. the 47-field reference scored against itself, and against the stated counts
+  if (fs.existsSync(REF47)) {
+    const ref = JSON.parse(fs.readFileSync(REF47, 'utf8'));
+    const rp = refPlaces(ref);
+    sc = score(ref.map((f) => Object.assign({ owner: f.signer }, f)), rp, { kinds: false, owners: false, pages: EMPTY_PAGES });
+    const diffs = P.compareExample(ref);
+    line('self', `5. the pinned 47-field reference: ${ref.length} fields, by page as stated (${diffs.length} differences), found ${sc.all.found} of ${rp.length} against itself, strays ${sc.all.strays.length}`, ref.length === 47 && !diffs.length && sc.all.found === 47 && !sc.all.strays.length);
+  } else line('self', '5. the pinned 47-field reference is on disk', false, REF47);
+}
+const refPlaces = (ref) => ref.map((f, i) => ({ id: `ref-p${f.page}-${pad(i + 1)}`, page: f.page, kind: f.kind, whose: f.signer, label: `${f.kind} for the ${f.signer}`, x0: f.x0, y0: f.top, x1: f.x1, y1: f.bottom }));
+
+/* ---------- one document through the real upload dialog ---------- */
+const noteText = async (S) => (await S.P.locator('.es-agr-note').first().innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+const editorOpen = (S) => S.P.evaluate(() => /^#console-envelope-/.test(location.hash) && !!document.querySelector('.fe-doc .es-page')).catch(() => false);
+/**
+ * The upload through proof.js's uploadDialog. When the offer is watched for, the upload also ends when the dialog
+ * itself stays open showing the offer (the editor has not opened yet): { offerInDialog: true }.
+ */
+async function upload(S, off, pdf, watch) {
+  const main = P.uploadDialog(S, off, pdf, PER_DOC_MS);
+  if (!watch) return main;
+  main.catch(() => {}); // it may still be polling when the browser closes
+  let stop = false;
+  const t0 = Date.now();
+  const watcher = (async () => {
+    while (!stop) {
+      const st = await S.P.evaluate((src) => {
+        const d = document.querySelector('#dlg[open]');
+        if (!d) return null;
+        const re = new RegExp(src, 'i');
+        const offer = Array.from(d.querySelectorAll('button, a, [role=button]')).some((e) => e.offsetParent !== null && !e.disabled && re.test(e.textContent.replace(/\s+/g, ' ')));
+        const busy = !!d.querySelector('button[type=submit][disabled], [aria-busy=true]');
+        return { offer, busy, text: d.innerText.replace(/\s+/g, ' ').trim().slice(0, 900) };
+      }, OFFER_RE.source).catch(() => null);
+      if (st && st.offer && !st.busy) return { opened: false, ms: Date.now() - t0, said: [st.text], dialogSays: st.text, offerInDialog: true };
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    return null;
+  })();
+  const r = await Promise.race([main, watcher.then((v) => v || main)]);
+  stop = true;
+  return r;
+}
+/**
+ * Look for the offer in the dialog or the editor, click it and wait until the reading has finished: no progress text
+ * ("Reading page N of M from its picture…"), nothing busy, the editor open, for 1.5 s on end, and either progress was
+ * seen, or the screen changed, or 10 s went by with nothing happening.
+ * Resolves to { found, text, where, ms, finished, progressSeen, lastProgress }.
+ */
+async function takeOffer(S) {
+  const btn = S.P.locator('button:visible, a:visible, [role=button]:visible').filter({ hasText: OFFER_RE }).first();
+  if (!(await btn.count().catch(() => 0))) return { found: false };
+  const text = (await btn.innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+  const where = await btn.evaluate((e) => (e.closest('#dlg') ? 'the upload dialog' : 'the editor')).catch(() => '?');
+  const snap = () => S.P.evaluate((a) => {
+    const body = document.body.innerText;
+    const m = body.match(new RegExp(a.busy));
+    const re = new RegExp(a.offer, 'i');
+    return {
+      progress: m ? m[0] : '',
+      busy: !!m || !!document.querySelector('[aria-busy=true], #dlg[open] button[type=submit][disabled]'),
+      editor: /^#console-envelope-/.test(location.hash) && !!document.querySelector('.fe-doc .es-page'),
+      note: (document.querySelector('.es-agr-note') || {}).textContent || '',
+      fields: document.querySelectorAll('.fe-doc .es-page [data-fid]').length,
+      offer: Array.from(document.querySelectorAll('button, a, [role=button]')).some((e) => e.offsetParent !== null && re.test(e.textContent.replace(/\s+/g, ' ')))
+    };
+  }, { busy: BUSY_RE.source, offer: OFFER_RE.source }).catch(() => null);
+  const before = (await snap()) || { note: '', fields: 0 };
+  const t0 = Date.now();
+  await btn.click();
+  let quiet = 0;
+  let seen = false;
+  let last = '';
+  let finished = false;
+  while (Date.now() - t0 < PER_DOC_MS) {
+    await S.P.waitForTimeout(150);
+    const st = await snap();
+    if (!st) continue;
+    if (st.progress) { seen = true; last = st.progress; }
+    if (st.busy) seen = true;
+    const changed = st.note !== before.note || st.fields !== before.fields || !st.offer;
+    if (!st.busy && st.editor) {
+      quiet = quiet || Date.now();
+      if (Date.now() - quiet >= 1500 && (seen || changed || Date.now() - t0 > 10000)) { finished = true; break; }
+    } else quiet = 0;
+  }
+  const ms = Date.now() - t0 - (finished ? 1500 : 0);
+  await S.P.waitForTimeout(400);
+  return { found: true, text, where, ms, finished, progressSeen: seen, lastProgress: last };
+}
+/** Resolves to { opened, ms, said, note, fields, pages, reviewList, readerLoaded, errors } and leaves pictures in dir. */
+async function runDoc(srv, pdf, dir, o) {
+  o = o || {};
+  mk(dir);
+  const { chromium } = require('playwright');
+  const sizes = P.pageSizes(pdf);
+  const res = { pdf: path.basename(pdf), pages: sizes.length, opened: false, fields: [], said: [], note: '' };
+  const browser = await chromium.launch();
+  try {
+    const C = await P.newContext(browser, srv);
+    const reader = new Set();
+    C.context.on('request', (rq) => { const m = /\/assets\/vendor\/textread\/([^?#]+)/.exec(rq.url()); if (m) reader.add(m[1]); });
+    const S = await P.openPortal(C, srv, false);
+    const off = await P.prepare(S);
+    const up = await upload(S, off, pdf, !!o.takeOffer);
+    Object.assign(res, { opened: up.opened, ms: up.ms, said: up.said, dialogSays: up.dialogSays });
+    if (o.takeOffer) {
+      // the state before the offer is taken, then the offer
+      const b = up.opened ? await P.readEditor(S, sizes) : { fields: [] };
+      const by = {};
+      b.fields.forEach((f) => (by['p' + f.page] = (by['p' + f.page] || 0) + 1));
+      res.before = { opened: up.opened, ms: up.ms, fields: b.fields.length, byPage: by, marked: b.fields.filter((f) => f.review).length, note: up.opened ? await noteText(S) : '', said: up.said, dialogSays: up.dialogSays || '', offerInDialog: !!up.offerInDialog };
+      await S.page.screenshot({ path: path.join(dir, 'before-offer.png') }).catch(() => {});
+      // the runner's own check of the click-and-wait path (never part of a score): MOCK_OFFER=1 puts a stand-in button
+      // in the editor that shows the progress text for three seconds and then goes away
+      if (process.env.MOCK_OFFER === '1') await S.P.evaluate(() => { const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Read these pages from their picture'; b.style.cssText = 'position:fixed;top:4px;left:4px;z-index:99999'; b.onclick = () => { const d = document.createElement('div'); document.body.appendChild(d); let i = 0; const t = setInterval(() => { i++; if (i > 3) { clearInterval(t); d.remove(); b.remove(); } else d.textContent = `Reading page ${i} of 3 from its picture…`; }, 1000); }; document.body.appendChild(b); });
+      res.offer = await takeOffer(S);
+      if (res.offer.found) {
+        res.opened = await editorOpen(S);
+        res.said = Array.from(new Set((res.said || []).concat(await P.toasts(S.P))));
+        if (res.opened) for (const sel of ['.es-agr-note', '.fe-status']) for (const t of await S.P.locator(sel).allInnerTexts().catch(() => [])) if (t.trim() && !res.said.includes(t.replace(/\s+/g, ' ').trim())) res.said.push(t.replace(/\s+/g, ' ').trim());
+      }
+    }
+    if (res.opened) {
+      const ed = await P.readEditor(S, sizes);
+      // somebody else's place: the portal marks the field with the class is-else and says "someone else" in its spoken name, while its signer stays the investor's
+      ed.fields.forEach((f) => { f.owner = (/\bis-else\b/.test(f.cls || '') || /someone else/i.test(f.aria || '')) ? 'third party' : ownerOf(f.signerName); delete f.cls; });
+      res.fields = ed.fields;
+      res.editorPages = ed.pages;
+      res.reviewList = ed.reviewList.length;
+      // the read summary exactly as the editor shows it
+      res.note = await noteText(S);
+      res.readExtra = (await S.P.locator('.es-read').first().innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+      res.status = (await S.P.locator('.fe-status').first().innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+      res.read = await S.P.evaluate(() => { try { const NS = window.CVPortal; const id = location.hash.replace('#console-envelope-', ''); const ws = NS.state.ws; const e = [].concat(ws.esignTemplates || [], ws.envelopes || [], ws.esign || []).find((x) => x && x.id === id); return e && e.read ? e.read : null; } catch (err) { return null; } }).catch(() => null);
+      await S.page.screenshot({ path: path.join(dir, 'editor-window.png') }).catch(() => {});
+      if (o.pictures) res.shots = await pictures(C, S, dir, sizes, o.pictures);
+    } else await S.page.screenshot({ path: path.join(dir, 'not-opened.png') }).catch(() => {});
+    (await S.P.evaluate(() => performance.getEntriesByType('resource').map((r) => r.name)).catch(() => [])).forEach((u) => { const m = /\/assets\/vendor\/textread\/([^?#]+)/.exec(u); if (m) reader.add(m[1]); });
+    res.readerLoaded = Array.from(reader);
+    res.errors = S.errors.slice(0, 6);
+    res.aborted = Array.from(new Set(C.net.aborted)).slice(0, 10);
+  } catch (e) {
+    res.error = String(e && e.stack ? e.stack : e).slice(0, 700);
+  } finally {
+    await browser.close();
+  }
+  fs.writeFileSync(path.join(dir, 'fields.json'), JSON.stringify(res.fields, null, 1));
+  fs.writeFileSync(path.join(dir, 'run.json'), JSON.stringify(Object.assign({}, res, { fields: res.fields.length }), null, 1));
+  return res;
+}
+/**
+ * One picture per page of the sponsor's editor, 1440 pixels wide with the page filling it: the page element is
+ * photographed at twice the screen's pixel density (the layout stays that of a 1440-wide window) and brought to 1440.
+ * Returns [{ page, raw, geo }] ; make(sc) then writes editor-pNN.png and compare-pNN.png.
+ */
+async function pictures(C, S, dir, sizes, name) {
+  const cdp = await C.context.newCDPSession(S.page).catch(() => null);
+  // The window is given room for the whole page (a page taller than the window is photographed past the window's
+  // foot, where the picture comes out a few pixels off the page's proportion).
+  if (cdp) await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 2400, deviceScaleFactor: 2, mobile: false }).catch(() => {});
+  await S.P.waitForTimeout(600);
+  // The page is photographed whole, from its top edge to its foot: what the portal fixes to the window or sticks to an
+  // edge of it (its bottom bar, the role switch, the toasts, the editor's own bar) and does not hold the page is hidden
+  // for the time of the photographs, then shown again. Only the photographing changes; nothing is scored here.
+  const hide = () => S.P.evaluate(() => document.querySelectorAll('body *').forEach((e) => { const p = getComputedStyle(e).position; if ((p === 'fixed' || p === 'sticky') && !e.querySelector('.es-page') && !e.closest('.es-page')) { e.setAttribute('data-shot-hidden', e.style.visibility || '-'); e.style.visibility = 'hidden'; } })).catch(() => {});
+  const show = () => S.P.evaluate(() => document.querySelectorAll('[data-shot-hidden]').forEach((e) => { const v = e.getAttribute('data-shot-hidden'); e.style.visibility = v === '-' ? '' : v; e.removeAttribute('data-shot-hidden'); })).catch(() => {});
+  // One page photographed as the proof runner's shotPages does (scrolled to the top of the window, its picture
+  // loaded), with its top-left corner first moved onto a whole pixel: the photograph's frame is rounded out to whole
+  // pixels, which otherwise adds a row or a column to some pages and changes their proportion.
+  const shoot = async (i, raw) => {
+    const el = S.P.locator(`.fe-doc .es-page[data-page="${i}"]`);
+    if (!(await el.count())) return false;
+    await el.evaluate((e) => e.scrollIntoView({ block: 'start' }));
+    await S.P.waitForFunction((n) => { const img = document.querySelector(`.fe-doc .es-page[data-page="${n}"] img`); return img && img.complete && img.naturalWidth > 0; }, i, { timeout: 20000 }).catch(() => {});
+    await el.evaluate((e) => { const r = e.getBoundingClientRect(); e.style.translate = `${-(r.left - Math.floor(r.left))}px ${-(r.top - Math.floor(r.top))}px`; });
+    await S.P.waitForTimeout(150);
+    const dbg = await el.evaluate((e) => { const r = e.getBoundingClientRect(); const ed = document.querySelector('.es-editor.fe'); const sc = document.querySelector('.fe-scroll'); return { inner: [innerWidth, innerHeight, devicePixelRatio], top: r.top, bottom: r.bottom, left: r.left, w: r.width, edH: ed && ed.getBoundingClientRect().height, feh: ed && ed.style.getPropertyValue('--fe-h'), scroll: sc && [sc.getBoundingClientRect().top, sc.getBoundingClientRect().bottom, sc.scrollTop], docTop: document.scrollingElement.scrollTop }; });
+    require('fs').appendFileSync(require('path').join(dir, 'dbg.txt'), i + ' ' + JSON.stringify(dbg) + '\n');
+    const ok = await el.screenshot({ path: raw }).then(() => true, (e) => (P.say('  picture failed', path.basename(raw), String(e).slice(0, 100)), false));
+    await el.evaluate((e) => (e.style.translate = '')).catch(() => {});
+    return ok;
+  };
+  // The editor shows its pages in a pane of a set height (--fe-h) that scrolls: a page taller than the pane is cut at
+  // the pane's foot in a photograph. For the time of the photographs the pane is given room for a whole page.
+  await S.P.evaluate(() => { const ed = document.querySelector('.es-editor.fe'); if (ed) { ed.setAttribute('data-shot-h', ed.style.getPropertyValue('--fe-h') || '-'); ed.style.setProperty('--fe-h', '3000px'); } }).catch(() => {});
+  await S.P.waitForTimeout(600);
+  const out = [];
+  for (let i = 1; i <= sizes.length; i++) {
+    const raw = path.join(dir, `.raw-p${pad(i)}.png`);
+    await hide();
+    const made = await shoot(i, raw);
+    await show();
+    if (!made) continue;
+    const geo = await S.P.evaluate((n) => { const e = document.querySelector(`.fe-doc .es-page[data-page="${n}"]`); const r = e.getBoundingClientRect(); return { w: r.width, h: r.height, cl: e.clientLeft, ct: e.clientTop, cw: e.clientWidth, ch: e.clientHeight }; }, i);
+    out.push({ page: i, raw, geo, size: sizes[i - 1] });
+  }
+  await S.P.evaluate(() => { const ed = document.querySelector('.es-editor.fe[data-shot-h]'); if (ed) { const v = ed.getAttribute('data-shot-h'); if (v === '-') ed.style.removeProperty('--fe-h'); else ed.style.setProperty('--fe-h', v); ed.removeAttribute('data-shot-h'); } }).catch(() => {});
+  return out;
+}
+function finishPictures(shots, dir, sc, places) {
+  const jobs = (shots || []).map((s) => {
+    const k = 1440 / s.geo.w;
+    return Object.assign({ src: s.raw, resizedOut: path.join(dir, `editor-p${pad(s.page)}.png`), out: path.join(dir, `compare-p${pad(s.page)}.png`), width: 1440, map: { ox: s.geo.cl * k, oy: s.geo.ct * k, sx: (s.geo.cw / s.size.w) * k, sy: (s.geo.ch / s.size.h) * k } }, overlayItems(sc, places, s.page));
+  });
+  const made = draw(jobs);
+  jobs.forEach((j) => fs.existsSync(j.src) && fs.unlinkSync(j.src));
+  return { made, blank: P.blankCheck(jobs.map((j) => j.resizedOut).filter((f) => fs.existsSync(f))) };
+}
+/** What the screen said before the offer was taken, as one string. */
+const beforeSays = (r) => { const b = r.before || {}; return Array.from(new Set([b.note].concat(b.dialogSays ? [b.dialogSays] : []).concat(b.said || []).filter(Boolean))); };
+/**
+ * The lines about the offer for one document. scoreBefore: parts a and d score the state before ("safe by default").
+ * Returns the words to put after a line's name: '' | ' (after the offer was taken)'.
+ */
+function offerLines(part, name, r, scoreBefore) {
+  if (!r.before) return '';
+  const b = r.before;
+  const says = beforeSays(r);
+  const plain = says.find((t) => NO_TEXT_RE.test(t)) || '';
+  console.log(`before the offer: ${b.fields} fields${b.fields ? ' ' + JSON.stringify(b.byPage) : ''}, ${b.marked} marked, ${secs(b.ms)}; editor ${b.opened ? 'opened' : 'not opened'}; the screen said:\n   ` + (says.join('\n   ') || '(nothing)'));
+  if (!r.offer || !r.offer.found) {
+    line(part, `${name}: no button or link "Read these pages from their picture" appeared in the dialog or the editor, so what is there is scored as it is (${b.fields} fields; the screen ${plain ? 'says the pages have no text or are pictures' : 'does not say the pages have no text'})`, null);
+    return '';
+  }
+  const o = r.offer;
+  console.log(`the offer: "${o.text}" in ${o.where}; taken; reading from pictures took ${secs(o.ms)}${o.finished ? '' : ' and had NOT finished after the 4 minutes allowed'}${o.lastProgress ? '; last progress shown: "' + o.lastProgress + '"' : o.progressSeen ? '' : '; no progress text was seen'}`);
+  if (scoreBefore) line(part, `${name}: safe by default - before the offer is taken: zero fields (${b.fields}) and a plain sentence that the pages have no text`, b.fields === 0 && !!plain, b.fields ? `${b.fields} fields were placed before the sponsor asked: ${JSON.stringify(b.byPage)}` : plain ? '' : 'no sentence saying the pages have no text; the screen said: ' + (says.join(' | ').slice(0, 500) || 'nothing'));
+  else line(part, `${name}: before the offer is taken: ${b.fields} fields; the screen ${plain ? 'says the pages have no text or are pictures' : 'does not say the pages have no text'}`, null);
+  if (scoreBefore && plain) line(part, `${name}: before the offer the screen says: "${plain.slice(0, 420)}"`, null);
+  line(part, `${name}: the offer "${o.text}" (in ${o.where}) was taken and the reading finished within 4 minutes (${secs(o.ms)})`, o.finished, o.finished ? '' : 'still reading after 4 minutes' + (o.lastProgress ? '; last shown: ' + o.lastProgress : ''));
+  return ' (after the offer was taken)';
+}
+const totalMs = (r) => (r.ms == null ? null : r.ms + (r.offer && r.offer.found ? r.offer.ms : 0));
+const secs = (ms) => (ms == null ? '?' : (ms / 1000).toFixed(1) + ' s');
+const screenSays = (r) => { const s = [r.note].concat(r.said || []).concat(r.dialogSays ? [r.dialogSays] : []).filter(Boolean); return Array.from(new Set(s)); };
+const signersSeen = (fields) => { const m = {}; fields.forEach((f) => { const k = `${f.owner} <- "${String(f.signerName).slice(-48)}"`; m[k] = (m[k] || 0) + 1; }); return Object.entries(m).map(([k, v]) => `${v} x ${k}`).join('; '); };
+
+/* ---------- a: the owner's picture file ---------- */
+async function partA(srv) {
+  const dir = mk(path.join(OUT, 'printed'));
+  const places = places241();
+  const r = await runDoc(srv, PRINTED, dir, { pictures: true, takeOffer: TAKE_OFFER });
+  if (r.error) line('a', 'printed-no-text.pdf: the upload ran', false, r.error);
+  console.log(`\nPART a  printed-no-text.pdf (${r.pages} pages)  upload and first reading took ${secs(r.ms)}${r.offer && r.offer.found ? ', reading from pictures ' + secs(r.offer.ms) : ''}${totalMs(r) > PER_DOC_MS ? ' (over the 4 minutes allowed)' : ''}  editor ${r.opened ? 'opened' : 'NOT opened'}`);
+  const after = offerLines('a', 'printed', r, true);
+  if (after) console.log('AFTER the offer was taken:');
+  console.log('read summary, exactly as the editor shows it:\n   ' + (r.note || '(none shown)'));
+  if (!r.opened) console.log('the screen said: ' + (screenSays(r).join(' | ') || 'nothing'));
+  console.log('text reader files loaded: ' + ((r.readerLoaded || []).join(', ') || 'none'));
+  const sc = score(r.fields, places, { frame: TRUTH.image_placement_pt, pages: [1, 2, 3, 4, 5, 6, 7, 8] });
+  const rep = report(sc);
+  console.log(rep.join('\n'));
+  if (r.fields.length) console.log('signers seen and the owner each was taken as: ' + signersSeen(r.fields));
+  const a = sc.all;
+  const sheetKinds = {};
+  a.pairs.forEach((p) => { const pl = places.find((x) => x.id === p.place); const k = `${pl.kind} -> ${p.kind || '(none)'}`; sheetKinds[k] = (sheetKinds[k] || 0) + 1; });
+  const ownerPairs = {};
+  a.pairs.forEach((p) => { const pl = places.find((x) => x.id === p.place); const k = `${pl.whose} -> ${p.owner}`; ownerPairs[k] = (ownerPairs[k] || 0) + 1; });
+  console.log('kinds of the matched fields (sheet -> portal): ' + (JSON.stringify(sheetKinds)));
+  console.log('owners of the matched fields (sheet -> portal): ' + (JSON.stringify(ownerPairs)));
+  fs.writeFileSync(path.join(dir, 'score.json'), JSON.stringify({ root: P.ROOT, pdf: PRINTED, ms: r.ms, before: r.before || null, offer: r.offer || null, note: r.note, rules: RULES, total: Object.assign({}, a, { edges: undefined, worst: undefined }), per: sc.per }, null, 1));
+  fs.writeFileSync(path.join(dir, 'score.txt'), [`reading took ${secs(r.ms)}`, 'read summary: ' + r.note, ''].concat(rep).join('\n') + '\n');
+  const optMiss = a.missed.filter((m) => m.optional).length;
+  line('a', `printed${after}: every printed place has a field (found ${a.found} of ${a.places}; missed ${a.missed.length}${optMiss ? ', ' + optMiss + ' of them optional on the sheet' : ''}; ${r.fields.length} fields placed; reading ${secs(totalMs(r))})`, a.found === 241 && a.places === 241, a.missed.length ? 'by page: ' + sc.pageNos.map((p) => `p${p} ${sc.per[p].found}/${sc.per[p].places}`).join(', ') + (r.opened ? '' : '; the editor did not open: ' + screenSays(r).join(' | ')) : '');
+  line('a', `printed${after}: no field on no place (strays ${a.strays.length})${r.fields.length ? '' : ' - holds only because no field was placed at all'}`, r.opened && a.strays.length === 0, a.strays.slice(0, 6).map((s) => `p${s.page} ${s.kind} [${s.box.join(', ')}]`).join('; '));
+  line('a', `printed${after}: no two fields overlap (overlaps ${a.overlaps.length})${r.fields.length ? '' : ' - holds only because no field was placed at all'}`, r.opened && a.overlaps.length === 0, a.overlaps.slice(0, 4).map((v) => `p${v.page} [${v.a.join(', ')}] x [${v.b.join(', ')}]`).join('; '));
+  line('a', `printed${after}: kind differs on ${a.kindDiff.length} of ${a.found} matched; owner differs on ${a.ownerDiff.length}; marked for review ${a.marked} of ${r.fields.length}; edge distance median ${fx(a.edgeMedian)} pt, worst ${fx(a.edgeWorst && a.edgeWorst.d)} pt`, null);
+  line('a', `printed${after}: read summary shown: ${r.note ? '"' + r.note.slice(0, 500) + '"' : '(none)'}`, null);
+  if (r.shots) {
+    const pic = finishPictures(r.shots, dir, sc, places);
+    const wide = pic.made.filter((m) => m.w === 1440).length;
+    line('a', `printed: editor pictures, one per page and one with the answer sheet drawn over (${pic.blank.length} + ${pic.made.length} of ${r.pages}, ${wide} are 1440 wide), none blank`, pic.made.length === r.pages && wide === r.pages && pic.blank.length === r.pages && pic.blank.every((b) => !b.blank), path.join(dir, 'editor-pNN.png') + ' , compare-pNN.png');
+  } else line('a', 'printed: editor pictures, one per page', false, r.opened ? 'no picture was made' : 'the editor did not open, so there is nothing to photograph');
+  return r;
+}
+
+/* ---------- b, c: the text-less copies of the example ---------- */
+async function partExample(srv, part, file) {
+  const name = file.replace(/\.pdf$/, '');
+  const dir = mk(path.join(OUT, name));
+  const r = await runDoc(srv, path.join(TRUTH_DIR, file), dir, { takeOffer: TAKE_OFFER });
+  if (r.error) line(part, `${name}: the upload ran`, false, r.error);
+  const F = r.fields;
+  const byPage = {};
+  F.forEach((f) => { const k = f.page; byPage[k] = byPage[k] || { tick: 0, other: 0 }; byPage[k][f.kind === 'checkbox' ? 'tick' : 'other']++; });
+  const diffs = P.compareExample(F);
+  const onEmpty = F.filter((f) => EMPTY_PAGES.includes(f.page));
+  const ref = fs.existsSync(REF47) ? JSON.parse(fs.readFileSync(REF47, 'utf8')) : null;
+  const sc = ref ? score(F, refPlaces(ref), { kinds: false, owners: false, pages: Array.from({ length: 13 }, (_, i) => i + 1) }) : null;
+  const overlaps = sc ? sc.all.overlaps : [];
+  const marked = F.filter((f) => f.review).length;
+  console.log(`\nPART ${part}  ${file} (${r.pages} pages)  upload and first reading took ${secs(r.ms)}${r.offer && r.offer.found ? ', reading from pictures ' + secs(r.offer.ms) : ''}  editor ${r.opened ? 'opened' : 'NOT opened'}`);
+  const after = offerLines(part, name, r, false);
+  if (after) console.log('AFTER the offer was taken:');
+  console.log('read summary, exactly as the editor shows it:\n   ' + (r.note || '(none shown)'));
+  if (!r.opened) console.log('the screen said: ' + (screenSays(r).join(' | ') || 'nothing'));
+  console.log(`fields ${F.length} (expected ${P.EXPECT_TOTAL}), marked for review ${marked}, overlapping pairs ${overlaps.length}`);
+  console.log(' page  tick(exp)  other(exp)');
+  for (let p = 1; p <= 13; p++) { const e = P.EXPECT[p] || { checkbox: 0, other: 0 }; const g = byPage[p] || { tick: 0, other: 0 }; console.log(`${String(p).padStart(5)}  ${String(g.tick).padStart(4)}(${e.checkbox})   ${String(g.other).padStart(5)}(${e.other})${g.tick !== e.checkbox || g.other !== e.other ? '   <-- differs' : ''}`); }
+  if (sc) { console.log('against the places of the pinned 47-field reference (the same agreement with its text):'); console.log(report(sc, { kinds: false, owners: false }).join('\n')); }
+  fs.writeFileSync(path.join(dir, 'score.json'), JSON.stringify({ root: P.ROOT, ms: r.ms, before: r.before || null, offer: r.offer || null, note: r.note, fields: F.length, marked, byPage, diffs, onEmptyPages: onEmpty.length, reference: sc ? Object.assign({}, sc.all, { edges: undefined, worst: undefined, pairs: undefined }) : null }, null, 1));
+  const posStrays = sc ? sc.all.strays : [];
+  line(part, `${name}${after}: ${P.EXPECT_TOTAL} fields (found ${F.length}; marked ${marked}; overlaps ${overlaps.length}; reading ${secs(totalMs(r))})`, F.length === P.EXPECT_TOTAL, r.opened ? '' : 'the editor did not open: ' + screenSays(r).join(' | '));
+  line(part, `${name}${after}: fields by page, kind and signer as expected (${diffs.length} differences)`, r.opened && diffs.length === 0, diffs.join('; '));
+  line(part, `${name}${after}: no strays (${onEmpty.length} on pages ${EMPTY_PAGES.join(', ')}; ${posStrays.length} on no place of the reference; ${sc ? sc.all.found : '?'} of 47 reference places have a field)${F.length ? '' : ' - holds only because no field was placed at all'}`, r.opened && onEmpty.length === 0 && posStrays.length === 0, posStrays.slice(0, 6).map((s) => `p${s.page} ${s.kind} [${s.box.join(', ')}]`).join('; '));
+  return r;
+}
+
+/* ---------- d: prose ---------- */
+async function partD(srv) {
+  for (const file of ['prose-scan.pdf', 'prose-outlined.pdf']) {
+    const name = file.replace(/\.pdf$/, '');
+    const dir = mk(path.join(OUT, name));
+    const r = await runDoc(srv, path.join(TRUTH_DIR, file), dir, { takeOffer: TAKE_OFFER });
+    if (r.error) line('d', `${name}: the upload ran`, false, r.error);
+    const by = {};
+    r.fields.forEach((f) => (by['p' + f.page] = (by['p' + f.page] || 0) + 1));
+    console.log(`\nPART d  ${file} (${r.pages} pages)  upload and first reading took ${secs(r.ms)}${r.offer && r.offer.found ? ', reading from pictures ' + secs(r.offer.ms) : ''}  editor ${r.opened ? 'opened' : 'NOT opened'}  fields ${r.fields.length}  marked ${r.fields.filter((f) => f.review).length}`);
+    const after = offerLines('d', name, r, true);
+    console.log((after ? 'AFTER the offer was taken, ' : '') + 'the screen says:\n   ' + (screenSays(r).join('\n   ') || '(nothing)'));
+    r.fields.slice(0, 40).forEach((f) => console.log(`   field: page ${f.page} ${f.kind} ${f.owner} ${boxStr(fbox(f))}`));
+    line('d', `${name}${after}: no field placed (found ${r.fields.length}; reading ${secs(totalMs(r))})`, !r.error && (r.opened || screenSays(r).length > 0) && r.fields.length === 0, r.fields.length ? JSON.stringify(by) : r.opened ? '' : 'the editor did not open: ' + screenSays(r).join(' | '));
+    line('d', `${name}${after}: the screen says: ${screenSays(r).map((s) => '"' + s.slice(0, 420) + '"').join(' | ') || '(nothing)'}`, null);
+  }
+}
+
+/* ---------- e: the normal-text example ---------- */
+async function partE(srv) {
+  const dir = mk(path.join(OUT, 'regression'));
+  const r = await runDoc(srv, P.EXAMPLE, dir, {});
+  if (r.error) line('e', 'normal-text example: the upload ran', false, r.error);
+  const marked = r.fields.filter((f) => f.review).length;
+  const diffs = P.compareExample(r.fields);
+  const pictured = /had no text|from (the|its|their) pictures?/i.test(r.note || '');
+  console.log(`\nPART e  agreement.pdf (normal text, ${r.pages} pages)  reading took ${secs(r.ms)}  fields ${r.fields.length}  marked ${marked}  text reader files loaded: ${(r.readerLoaded || []).join(', ') || 'none'}`);
+  console.log('read summary, exactly as the editor shows it:\n   ' + (r.note || '(none shown)'));
+  line('e', `normal-text example: exactly ${P.EXPECT_TOTAL} fields, by page as expected (found ${r.fields.length}, ${diffs.length} differences)`, r.fields.length === P.EXPECT_TOTAL && diffs.length === 0, diffs.join('; ') || (r.opened ? '' : 'the editor did not open: ' + screenSays(r).join(' | ')));
+  line('e', `normal-text example: none marked for review (${marked})`, r.opened && marked === 0);
+  line('e', `normal-text example: read in under 3 seconds (${secs(r.ms)})`, r.opened && r.ms < READ_LIMIT_MS);
+  line('e', `normal-text example: recognition did not switch on (text reader files loaded: ${(r.readerLoaded || []).length}; summary speaks of pictures: ${pictured ? 'yes' : 'no'})`, r.opened && !(r.readerLoaded || []).length && !pictured, (r.readerLoaded || []).join(', '));
+  // keep the reference fresh only when this run is itself the correct 47
+  return r;
+}
+
+/* ---------- main ---------- */
+(async () => {
+  const t0 = Date.now();
+  mk(OUT);
+  console.log('SCORING RULES\n' + RULES.map((r) => ' - ' + r).join('\n'));
+  const times = {};
+  if (SELF) selfTest();
+  else {
+    if (!fs.existsSync(path.join(P.ROOT, 'diy.html'))) { console.error('not a checkout of the portal: ' + P.ROOT); process.exit(2); }
+    P.PORTS.from = 8870;
+    P.PORTS.to = 8890;
+    const srv = await P.startServers();
+    say(`serving ${P.ROOT} on http://localhost:${srv.appPort}; evidence in ${OUT}`);
+    const timed = async (k, fn) => { const t = Date.now(); try { await fn(); } catch (e) { line(k, 'the part ran', false, String(e && e.stack ? e.stack : e).slice(0, 500)); } times[k] = Math.round((Date.now() - t) / 1000); };
+    try {
+      if (want('a')) await timed('a', () => partA(srv));
+      if (want('b')) await timed('b', () => partExample(srv, 'b', 'example-scan.pdf'));
+      if (want('c')) await timed('c', () => partExample(srv, 'c', 'example-outlined.pdf'));
+      if (want('d')) await timed('d', () => partD(srv));
+      if (want('e')) await timed('e', () => partE(srv));
+    } finally {
+      srv.close();
+    }
+  }
+  const total = Math.round((Date.now() - t0) / 1000);
+  const fails = rows.filter((r) => r.mark === 'FAIL').length;
+  const w = Math.min(150, Math.max(...rows.map((r) => r.name.length), 10));
+  const head = SELF ? `SELF-TEST of the scorer  ${total} s` : `NO-TEXT SCORE  root ${P.ROOT}  parts ${ONLY.join(',')}  ${total} s  (${Object.entries(times).map(([k, v]) => `part ${k}: ${v} s`).join(', ')})`;
+  const table = ['', head, '-'.repeat(w + 12)]
+    .concat(rows.map((r) => `${r.mark}  [${r.part}]  ${r.name}${r.mark === 'FAIL' && r.info ? '\n          -> ' + r.info.slice(0, 900) : ''}`))
+    .concat(['-'.repeat(w + 12), `${rows.filter((r) => r.mark === 'PASS').length} passed, ${fails} failed`]);
+  console.log(table.join('\n'));
+  const tag = SELF ? 'self-test' : ONLY.join('');
+  fs.writeFileSync(path.join(OUT, `table-${tag}.txt`), table.join('\n') + '\n');
+  fs.writeFileSync(path.join(OUT, `results-${tag}.json`), JSON.stringify({ root: P.ROOT, only: ONLY, selfTest: SELF, secs: total, times, rules: RULES, rows }, null, 1));
+  process.exit(fails ? 1 : 0);
+})();

@@ -1,0 +1,89 @@
+{
+ "fields": [
+  {
+   "kind": "signature",
+   "what": "signature",
+   "owner": "firm",
+   "x0": 303.84,
+   "y0": 489,
+   "x1": 540,
+   "y1": 489.5,
+   "label": "GENERAL PARTNER: By",
+   "id": "p1-01",
+   "page": 1,
+   "required": true,
+   "printed_label": "By"
+  },
+  {
+   "kind": "blank",
+   "what": "name",
+   "owner": "investor",
+   "x0": 288,
+   "y0": 597,
+   "x1": 540,
+   "y1": 597.5,
+   "label": "name of COUNTERPART SIGNATURE PAGE:",
+   "id": "p1-02",
+   "page": 1,
+   "required": true
+  },
+  {
+   "kind": "signature",
+   "what": "signature",
+   "owner": "investor",
+   "x0": 303.84,
+   "y0": 642,
+   "x1": 540,
+   "y1": 642.5,
+   "label": "COUNTERPART SIGNATURE PAGE: By",
+   "id": "p1-03",
+   "page": 1,
+   "required": true,
+   "printed_label": "By",
+   "unclear": true,
+   "unclear_why": "a block after the firm block, under a heading the reader does not know and with no company name of its own: real doubt (D-09), the mark is right"
+  },
+  {
+   "kind": "blank",
+   "what": "name",
+   "owner": "investor",
+   "x0": 319.33,
+   "y0": 666,
+   "x1": 540,
+   "y1": 666.5,
+   "label": "COUNTERPART SIGNATURE PAGE: Name:",
+   "id": "p1-04",
+   "page": 1,
+   "required": true,
+   "printed_label": "Name",
+   "unclear": true,
+   "unclear_why": "a block after the firm block, under a heading the reader does not know and with no company name of its own: real doubt (D-09), the mark is right"
+  },
+  {
+   "kind": "blank",
+   "what": "title",
+   "owner": "investor",
+   "x0": 313.84,
+   "y0": 690,
+   "x1": 540,
+   "y1": 690.5,
+   "label": "COUNTERPART SIGNATURE PAGE: Title:",
+   "id": "p1-05",
+   "page": 1,
+   "required": true,
+   "printed_label": "Title",
+   "unclear": true,
+   "unclear_why": "a block after the firm block, under a heading the reader does not know and with no company name of its own: real doubt (D-09), the mark is right"
+  }
+ ],
+ "firm_block": {
+  "pages": [
+   1
+  ]
+ },
+ "investor_signature_block": {
+  "pages": [
+   1
+  ]
+ }
+}

@@ -1,0 +1,632 @@
+{
+ "doc": "C",
+ "as": "individual",
+ "root": "/home/user/Hhhh/.claude/worktrees/agent-a2229449adc46503d",
+ "lines": [
+  "PASS stage: upload dialog",
+  "PASS check: editor: the two places marked for review are the acceptance signature and its date on page 10 (date p10, signature p10)",
+  "PASS check: editor: both are the firm's and their marks are cleared; nothing else needs confirming",
+  "PASS stage: save",
+  "PASS stage: invitation",
+  "PASS stage: the firm adds a co-investor to the account",
+  "PASS stage: onboarding (individual)",
+  "PASS check: signing: the investor is shown the individuals' list of initials (4 of 4) and none of the other list (0)",
+  "PASS check: signing: no input stands on a custodian's, an adviser's, the co-investor's or the other kind of investor's place",
+  "PASS check: signing: every field of the investor stands on a place of theirs (92 fields)",
+  "PASS check: signing: every place the sheet requires of the investor is one of their fields",
+  "PASS check: signing: every place of the investor's own is completed (38 typed, 0 left empty)",
+  "PASS stage: signing (individual)",
+  "PASS stage: the co-investor signs in",
+  "PASS check: co-investor: their fields are their 5 places (5 fields)",
+  "PASS stage: co-investor signing",
+  "PASS check: firm: shown the acceptance block on page 10 only (date p10, signature p10)",
+  "PASS stage: the firm's countersigning",
+  "PASS stage: download of the finished PDF",
+  "PASS check: finished PDF: every value is inside its own place, nothing inside a place no value was given for, no \"?\" and no doubled currency sign (99 values on 99 places; 39 places empty)",
+  "PASS check: finished PDF: no place of the signers is left empty"
+ ],
+ "given": [
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 1,
+   "value": "Morgan Ellery"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 1,
+   "value": "250,000"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 1,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 1,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "Iv Name9"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "Iv Name10"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "Iv11"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "Iv Name1"
+  },
+  {
+   "type": "name",
+   "who": "co",
+   "page": 2,
+   "value": "Riley Ellery"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "Iv Name12"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "2 Elm St"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "Iv03"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "Iv04"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "Iv05"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "512 555 0106"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "512 555 0113"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "512 555 0114"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "15 Elm St"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "Iv16"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "Iv17"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "Iv18"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "01/08/2027"
+  },
+  {
+   "type": "text",
+   "who": "co",
+   "page": 2,
+   "value": "01/13/2027"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "12-345679"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "12-345678"
+  },
+  {
+   "type": "text",
+   "who": "co",
+   "page": 2,
+   "value": "12-345670"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "morgan@ellery-example.com"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 2,
+   "value": "Iv20"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 2,
+   "value": "x"
+  },
+  {
+   "type": "initials",
+   "who": "investor",
+   "page": 2,
+   "value": "drawn"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 3,
+   "value": "morgan@ellery-example.com"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 3,
+   "value": "01/22/2027"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 3,
+   "value": "Iv22"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 3,
+   "value": "Iv23"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 3,
+   "value": "x"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 3,
+   "value": "Iv24"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 3,
+   "value": "Iv Name25"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 3,
+   "value": "Iv Name26"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 3,
+   "value": "27 Elm St"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 3,
+   "value": "Iv28"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 3,
+   "value": "Iv29"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 3,
+   "value": "Iv30"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 3,
+   "value": "512 555 0131"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 4,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 4,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 4,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 4,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 4,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 4,
+   "value": "x"
+  },
+  {
+   "type": "checkbox",
+   "who": "investor",
+   "page": 4,
+   "value": "x"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 4,
+   "value": "Iv Name32"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 4,
+   "value": "33 Elm St"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 4,
+   "value": "Iv34"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 4,
+   "value": "Iv35"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 4,
+   "value": "Iv36"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 4,
+   "value": "Iv37"
+  },
+  {
+   "type": "text",
+   "who": "investor",
+   "page": 4,
+   "value": "Iv38"
+  },
+  {
+   "type": "initials",
+   "who": "investor",
+   "page": 5,
+   "value": "drawn"
+  },
+  {
+   "type": "initials",
+   "who": "investor",
+   "page": 5,
+   "value": "drawn"
+  },
+  {
+   "type": "initials",
+   "who": "investor",
+   "page": 5,
+   "value": "drawn"
+  },
+  {
+   "type": "initials",
+   "who": "investor",
+   "page": 5,
+   "value": "drawn"
+  },
+  {
+   "type": "signature",
+   "who": "investor",
+   "page": 7,
+   "value": "drawn"
+  },
+  {
+   "type": "date",
+   "who": "investor",
+   "page": 7,
+   "value": "11/14/2026"
+  },
+  {
+   "type": "signature",
+   "who": "co",
+   "page": 7,
+   "value": "drawn"
+  },
+  {
+   "type": "date",
+   "who": "co",
+   "page": 7,
+   "value": "11/14/2026"
+  },
+  {
+   "type": "signature",
+   "who": "firm",
+   "page": 10,
+   "value": "drawn"
+  },
+  {
+   "type": "date",
+   "who": "firm",
+   "page": 10,
+   "value": "11/14/2026"
+  }
+ ],
+ "readBack-individual": {
+  "given": 99,
+  "places": 99,
+  "empty": 39,
+  "problems": []
+ },
+ "secs": 64,
+ "result": "PASS"
+}

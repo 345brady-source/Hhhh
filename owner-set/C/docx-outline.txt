@@ -1,0 +1,265 @@
+P000 [] CASCARA RTL FUND 1, LLC
+P001 [] SUBSCRIPTION AGREEMENT AND ACCREDITED INVESTOR QUESTIONNAIRE
+P002 [] 
+P003 [] UNITS OF LLC MEMBERSHIP INTERESTS
+P004 [pBdr] Please carefully read the Confidential Private Placement Memorandum dated October 10, 2025, and all exhibits and supplements thereto (the “Memorandum”
+P005 [] AS A PROSPECTIVE INVESTOR IN THE UNITS, YOU SHOULD EXAMINE THE SUITABILITY OF THIS TYPE OF INVESTMENT IN THE CONTEXT OF YOUR OWN NEEDS, INVESTMENT OBJ
+P006 [] This offering is limited to investors who certify that they meet all of the suitability requirements set forth in the Memorandum for the purchase of t
+TBL rows=1
+   ROW {w5539 b:|Cascara RTL Fund 1, LLC  / 105 Central Way, Suite 205 / Kirk} {w5539 b:|Make Payments By Wire To:  / Bank: Columbia Bank  / Bank Add}
+P007 [] Upon receipt of this signed Subscription Agreement, verification of your investment qualifications, and acceptance by the Company, the Company will no
+P008 [] Important Note: The person or entity actually making the decision to invest in Units should complete and execute this Subscription Agreement.
+P009 [] ACCEPTABLE FORMS OF PAYMENT:
+P010 [] Wire transfers 
+P011 [] Pre-printed personal checks 
+P012 [] Cashier’s checks 
+P013 [] Business checks when applied to company/corporate account 
+P014 [] Trust checks for trust accounts 
+P015 [] Custodial checks for IRA accounts 
+P016 [] Checks endorsed from other investment programs will be accepted if they meet the minimum investment requirement 
+P017 [] WE CANNOT ACCEPT: Cash, foreign checks, money orders, third party checks, temporary/starter checks, or traveler’s checks. 
+P018 [] PLEASE NOTE: Because of our anti-money laundering policies, if the investor’s name used in this Subscription Agreement/Signature Page does not match t
+P019 [] YOUR INVESTMENT (REQUIRED): 
+P020 [] $______________________________ total purchase amount at the Unit price set forth in the Memorandum.
+P021 [] Check one below:
+P022 [] ☐ Class A Units ☐ Class B Units
+P023 [] (Minimum purchase $100,000 in Units except as otherwise described in the Memorandum)
+P024 [] 
+P025 [] You understand and agree that your purchase is subject to the terms, conditions, acknowledgments, representations, and warranties stated herein and in
+P026 [] 
+P027 [SECT] <SECT>
+P028 [] 
+P029 [] Method of Payment (REQUIRED):
+P030 [] ☐ Funds Enclosed\t☐ Funds Wired\t☐ Issued by Custodian
+P031 [] Investor Category (check one) (REQUIRED):
+P032 [] ☐ Investor investing through registered investment adviser (RIA) in a fee-based program or wrap account 
+P033 [] ☐ Investor is an endowment, foundation, pension fund or other institutional investor 
+P034 [] ☐ a participating RIA or investment adviser of an RIA for his, her, or its (a) own account, IRAs, or other retirement plans, or (b) immediate family m
+P035 [] If for a family member indicate relationship and name of relative: __________________________________
+OTHER {http://schemas.openxmlformats.org/wordprocessingml/2006/main}bookmarkStart
+P036 [] ☐ Officer of the Company or manager, officer, or employee of our Manager or its affiliates, including sponsor and consultants or immediate family memb
+OTHER {http://schemas.openxmlformats.org/wordprocessingml/2006/main}bookmarkEnd
+P037 [] If for a family member, indicate relationship and name of relative: __________________________________
+OTHER {http://schemas.openxmlformats.org/wordprocessingml/2006/main}bookmarkEnd
+OTHER {http://schemas.openxmlformats.org/wordprocessingml/2006/main}bookmarkEnd
+P038 [pBdr] 
+P039 [] ADDRESS AND INVESTOR INFORMATION:
+P040 [] SECTION (a)
+P041 [] NAME OF INVESTOR, TRUSTEE, OR AUTHORIZED SIGNER (REQUIRED)\t☐ Mr.\t☐ Mrs.\t☐ Ms.\t☐ Other _____________________________
+TBL rows=1
+   ROW {w10898 b:|}
+P042 [] NAME OF JOINT INVESTOR  (IF APPLICABLE)
+TBL rows=1
+   ROW {w10898 b:|}
+P043 [] NAME OF TRUST, BUSINESS, OR PLAN (IF APPLICABLE)
+TBL rows=1
+   ROW {w10898 b:|}
+P044 [] SECTION (b) 
+P045 [] INVESTOR, TRUSTEE, OR AUTHORIZED SIGNER’S STREET ADDRESS (REQUIRED) - NO P.O. BOX
+TBL rows=1
+   ROW {w10898 b:|}
+P046 [] CITY\tSTATE\tZIP CODE
+TBL rows=1
+   ROW {w6739 b:tlbr|} {w270 b:lr|} {w1888 b:tlbr|} {w270 b:lr|} {w1721 b:tlbr|}
+P047 [] HOME PHONE (REQUIRED)\tBUSINESS PHONE\tPHONE EXTENSION
+TBL rows=1
+   ROW {w5570 b:tlbr|} {w236 b:lr|} {w3091 b:tlbr|} {w270 b:lr|} {w1721 b:tlbr|}
+P048 [] SECTION (c) 
+P049 [] ALTERNATE MAILING ADDRESS OR P.O. BOX (IF APPLICABLE)
+TBL rows=1
+   ROW {w10898 b:|}
+P050 [] CITY\tSTATE\tZIP CODE
+TBL rows=1
+   ROW {w6739 b:tlbr|} {w270 b:lr|} {w1888 b:tlbr|} {w270 b:lr|} {w1721 b:tlbr|}
+P051 [] SECTION (d)
+TBL rows=2
+   ROW {w2695 b:b|INVESTOR DATE OF BIRTH (MM/DD/YYYY) (REQUIRED)} {w1530 b:b|(TRUST OR ENTITY DATE)  / (IF APPLICABLE)} {w270 b:|} {w3420 b:b|JOINT INVESTOR / AUTHORIZED SIGNER DATE OF BIRTH (MM/DD/YYYY} {w270 b:|} {w2713 b:b|ENTITY TAX ID #  (IF APPLICABLE)}
+   ROW {w4225 b:lbr|} {w270 b:lr|} {w3420 b:tlbr|} {w270 b:lr|} {w2713 b:tlbr|}
+P052 [] 
+TBL rows=2
+   ROW {w3415 b:b|INVESTOR SSN (REQUIRED)} {w270 b:|} {w3420 b:b|JOINT INVESTOR / AUTHORIZED SIGNER SSN / (IF APPLICABLE)} {w270 b:|} {w3523 b:b|EMAIL ADDRESS}
+   ROW {w3415 b:tlbr|} {w270 b:lr|} {w3420 b:tlbr|} {w270 b:lr|} {w3523 b:tlbr|}
+P053 [] 
+P054 [] SECTION (e) 
+P055 [] Please indicate Citizenship Status (REQUIRED): if a box is not checked, then you are certifying that you are a U.S. citizen.
+P056 [] ☐ U.S. Citizen\t☐ Resident Alien\t☐ Non-Resident Alien - Country of Origin __________________________________
+P057 []                                                                                                                 (W-8 Required)
+P058 []   
+P059 [] Are you a plan subject to the Employee Retirement Income Security Act of 1974 (“ERISA”) Section 4975 of the Internal Revenue Code of 1986, as amended?
+P060 [] ELECTRONIC DELIVERY OF REPORTS AND UPDATES (insert initials in this box)
+P061 [] <DRAWING>Instead of receiving paper copies of the Memorandum, Memorandum supplements, reports, voting materials, organizational documents, sales mater
+P062 [] <LRPB>(You must provide an e-mail address if you choose this option.) E-mail address:
+TBL rows=1
+   ROW {w6205 b:|}
+P063 [] 
+P064 [] FORM OF OWNERSHIP (REQUIRED Choose Non-Custodial or Custodial Ownership):
+P065 [] <DRAWING>Non-Custodial Ownership
+TBL rows=1
+   ROW {w2785 b:|☐ Individual  / Investor must sign, initial, and date / ☐ Jo} {w3060 b:|☐ Pension, Profit Sharing Plan, or 401K  / <DRAWING>Include } {w2463 b:|☐ Corporation - Include copy of Corporate Resolution. Author} {w2770 b:|☐ Uniform Gift to Minors Act / Uniform Transfers to Minors A}
+P066 [pBdr] 
+P067 [] Custodial Ownership - Send all paperwork directly to the custodian
+P068 [] ☐ IRA _____________________\t☐ Qualified Pension or Profit Sharing Plan\t☐ Non-Qualified Custodian Account\t☐ Other: _______
+P069 [] \t(Type)\t(Specify)
+TBL rows=2
+   ROW {w7105 b:b|NAME OF CUSTODIAN OR TRUSTEE (REQUIRED)} {w280 b:|} {w3693 b:b|Inherited/Beneficiary IRA Deceased’s Name (REQUIRED)}
+   ROW {w7105 b:tlbr|} {w280 b:lr|} {w3693 b:tlbr|}
+P070 [] 
+TBL rows=4
+   ROW {w11078 b:b|MAILING ADDRESS (REQUIRED)}
+   ROW {w11078 b:tlbr|}
+   ROW {w7105 b:tb|CITY} {w270 b:t|} {w1620 b:tb|STATE} {w270 b:t|} {w1813 b:tb|ZIP CODE}
+   ROW {w7105 b:tlbr|} {w270 b:lr|} {w1620 b:tlbr|} {w270 b:lr|} {w1813 b:tlbr|}
+P071 [] 
+P072 [] BUSINESS PHONE
+TBL rows=1
+   ROW {w3685 b:|}
+P073 [pBdr] 
+P074 [] 
+P075 [] 
+P076 [] 
+P077 [] TO BE COMPLETED BY CUSTODIAN OR OTHER ADMINISTRATOR
+TBL rows=10
+   ROW {w4495 b:b|CUSTODIAN TAX ID} {w270 b:|} {w6313 b:b|CUSTODIAN ACCOUNT #}
+   ROW {w4495 b:tlbr|} {w270 b:lr|} {w6313 b:tlbr|}
+   ROW {w11078 b:b|NAME OF CUSTODIAN OR OTHER ADMINISTRATOR}
+   ROW {w11078 b:tlbr|}
+   ROW {w4495 b:tb|Custodian Medallion Signature Guarantee} {w270 b:t|} {w3859 b:tb|SIGNATURE OF CUSTODIAN (IF APPLICABLE)} {w238 b:t|} {w2216 b:tb|DATE (REQUIRED)}
+   ROW {w4495 b:tlr| /  /  /  /  /  / } {w270 b:lr|} {w3859 b:tlbr|} {w238 b:lr|} {w2216 b:tlbr|}
+   ROW {w4495 b:lr|} {w270 b:l|} {w6313 b:|(MUST BE SIGNED BY CUSTODIAN OR TRUSTEE IF IRA OR QUALIFIED }
+   ROW {w4495 b:lr|} {w270 b:l|} {w6313 b:|}
+   ROW {w4495 b:lr|} {w270 b:l|} {w6313 b:|}
+   ROW {w4495 b:lbr|} {w270 b:l|} {w6313 b:|}
+P078 [pBdr] 
+P079 [SECT] <SECT>
+P080 [] 
+P081 [] DISTRIBUTION OPTIONS: 
+P082 [] All distributions for custodial accounts will be sent to the custodian
+P083 [] YOU ARE AUTOMATICALLY ENROLLED FOR DISTRIBUTION REINVESTMENTS UNLESS YOU MARK ONE OF THE BOXES BELOW.
+P084 [] ☐ You are automatically enrolled for distribution reinvestment; please check here if you do not wish to be enrolled for distribution reinvestments and
+P085 [] ☐ You are automatically enrolled for distribution reinvestment; please check here if you wish to have 50% cash distributions and 50% Distribution Rein
+P086 [] 
+P087 [] <DRAWING><DRAWING>IMPORTANT: If you are not enrolled for distribution reinvestment, please complete the Cash Distribution Information section below.
+TBL rows=6
+   ROW {w5448 b:b|Cash Distributions Directed To:  / NAME OF BANK, BROKERAGE F} {w5450 b:b|Instructions for Cash Portion of Distributions (Check One): }
+   ROW {w10898 b:lr|}
+   ROW {w5448 b:tb|ALTERNATE ADDRESS (OPTIONAL)} {w5450 b:tb|}
+   ROW {w10898 b:lbr|}
+   ROW {w7555 b:t|CITY} {w1710 b:tb|STATE} {w180 b:t|} {w1453 b:tb|ZIP CODE}
+   ROW {w7380 b:tlbr|} {w175 b:lr|} {w1710 b:tlbr|} {w180 b:lr|} {w1453 b:tlbr|}
+P088 [] 
+TBL rows=2
+   ROW {w3775 b:b|BANK ABA# (FOR ACH ONLY)} {w7123 b:b|ACCOUNT #}
+   ROW {w3775 b:tlbr|} {w7123 b:tlbr|}
+P089 [] AUTOMATED CLEARING HOUSE (ACH): I (we) hereby authorize the Company to deposit distributions from my (our) Units of the Company into the account liste
+P090 [] (MUST ENCLOSE A VOIDED CHECK OR VERIFICATION FROM BANK)
+P091 [SECT] <SECT>
+P092 [] 
+P093 [] SUBSCRIBER CERTIFICATIONS AND SIGNATURES (REQUIRED): 
+P094 [] In order to induce the Company to accept this Subscription Agreement for the Units and as further consideration for such acceptance, I hereby make, ad
+P095 [] (If joint investors, each investor must separately initial the appropriate box(es) in Section 1 and/or Section 2.)
+P096 [] 1. If a natural person, I hereby represent and warrant that (initial as appropriate):
+P097 [] a)\t_______ I, together with my spouse or spousal equivalent<FN>, have a net worth, exclusive of my primary residence, in excess of $1,000,000<FN>; 
+P098 [] b) \t_______ I have individual income in excess of $200,000, or joint income with my spouse or spousal equivalent, in excess of $300,000, in each of t
+P099 [] c\t_______ I hold one of the following licenses in good standing: General Securities Representative license (Series 7), Private Securities Offerings R
+P100 [] d) \t_______ I am an executive officer of the Company. 
+P101 [] 2. If other than a natural person, such entity represents and warrants that (initial as appropriate):
+P102 [] a) \t_______ The purchaser is a bank as defined in section 3(a)(2) of the Securities Act of 1933, as amended (the “Securities Act”), a savings and loa
+P103 [] b) \t_______ The purchaser is a private business development company as defined in Section 202(a)(22) of the Advisers Act; 
+P104 [] c) \t_______ The purchaser is an organization described in Section 501(c)(3) of the Internal Revenue Code or a corporation, partnership, a limited lia
+P105 [] d) \t_______ The purchaser is a trust with total assets in excess of $5,000,000, such trust’s purchase of Units is directed by a person who either alo
+P106 [] e) \t_______ The purchaser is an entity and each of the equity owners of the purchaser come within at least one of the foregoing categories of “accred
+P107 [] f) \t_______ The purchaser is a plan established and maintained by a state, its political subdivisions, or any agency or instrumentality of a state or
+P108 [] g) \t_______ The purchaser is an entity, of a type not listed in Subsections 2(a) to (f) above, owning investments (as defined in Rule 2a51-1(b) of th
+P109 [] h) \t_______ The purchaser is a “family office,” as defined in Rule 202(a)(11)(G)-1 under the Advisers Act, with assets under management in excess of 
+P110 [] i) \t_______ The purchaser is a “family client,” as defined in Rule 202(a)(11)(G)-1 under the Advisers Act, of a family office meeting the requirement
+P111 [] 3.\tI understand that the Company reserves the right, in its sole discretion, to accept or reject this subscription, in whole or in part, for any reas
+P112 [] 4.\tI acknowledge that I have received, read, and fully understand the Memorandum. I acknowledge that I am basing my decision to invest in the Units o
+P113 [] 5.\tMy overall commitment to investments that are not readily marketable is not disproportionate to my individual net worth, and my investment in the 
+P114 [] 6.\tI acknowledge that the sale of Units has not been accompanied by any general solicitation or advertisement and is not the direct result of an inve
+P115 [] 
+P116 [] 
+P117 [] 7.\tAll information that I have provided to the Company herein concerning my suitability to invest in the Units is complete, accurate, and correct as 
+P118 [] 8.\tI acknowledge that the Company may periodically request that I re-certify my status as an accredited investor, and in such an event, I agree to re
+P119 [] 9.\tI have had the opportunity to ask questions of, and receive answers from, the Company concerning the Company, the creation or operation of the Com
+P120 [] 10.\tI am purchasing the Units for my own account and for investment purposes only and have no present intention, understanding, or arrangement for th
+P121 [] 11.\tI understand that legends will be placed on any certificates evidencing the Units with respect to restrictions on distribution, transfer, resale,
+P122 [] 12.\tThis Subscription Agreement shall be construed in accordance with and governed by the laws of the State of Delaware without regard to its choice 
+P123 [] 13.\tIf subject to the Employee Retirement Income Security Act of 1974, as amended (“ERISA”), I am aware of, and have taken into consideration, the di
+P124 [] 14.\tTHE UNITS OFFERED HEREBY HAVE NOT BEEN REGISTERED UNDER THE SECURITIES ACT OR THE SECURITIES LAWS OF ANY STATE AND ARE BEING OFFERED AND SOLD IN 
+P125 [] 15.\tI hereby covenant and agree that any dispute, claim, or controversy arising out of or related to this Subscription Agreement, the breach hereof, 
+P126 [] BY EXECUTING THIS AGREEMENT, YOU ARE AGREEING TO HAVE CERTAIN DISPUTES DECIDED BY NEUTRAL ARBITRATION, AND YOU ARE GIVING UP ANY RIGHTS YOU MIGHT POSS
+P127 [] 16.\tI hereby constitute and appoint the Company as my true and lawful representative and attorney-in-fact, in my name, place, and stead, to execute, 
+P128 [] 17.\tI am executing this Subscription Agreement: (A) on my own behalf, as a natural person, and I have the legal capacity to execute, deliver and perf
+P129 [] 18.\tI am not, and, in the case of a corporation, partnership, limited liability company, trust or other entity, none of its principal owners, partner
+P130 [] 19.\tI understand that, if I am acquiring the Units in a fiduciary capacity, the representations, warranties, statements, covenants and agreements set
+P131 [] 20.\tI hereby agree to indemnify, defend, and hold harmless the Company, its affiliates, and all of their directors, partners, members, managers, Unit
+P132 [] 21.\tI hereby acknowledge and agree that: (a) I may not transfer or assign this Subscription Agreement, or an interest herein, and any purported trans
+P133 [] 
+P134 [] TAXPAYER IDENTIFICATION NUMBER OR SOCIAL SECURITY NUMBER CERTIFICATION (REQUIRED): By signing below, under penalties of perjury, I certify that (1) th
+P135 [] Certification instructions. You must cross out certification (2) in the previous paragraph if you have been notified by the IRS that you are currently
+P136 [] I understand that I will not be admitted as a member until my investment has been accepted. Depositing of my check alone does not constitute acceptanc
+P137 [] The IRS does not require your consent to any provision of this document other than the certifications required to avoid backup withholding.
+TBL rows=2
+   ROW {w3055 b:b|SIGNATURE OF INVESTOR, TRUSTEE, OR AUTHORIZED SIGNER (REQUIR} {w270 b:|} {w1620 b:b|DATE (REQUIRED)} {w270 b:|} {w3960 b:b|SIGNATURE OF JOINT INVESTOR, TRUSTEE,  / AUTHORIZED SIGNER, } {w270 b:|} {w1633 b:b|DATE (REQUIRED)}
+   ROW {w3055 b:tlbr|} {w270 b:lr|} {w1620 b:tlbr|} {w270 b:lr|} {w3960 b:tlbr|} {w270 b:lr|} {w1633 b:tlbr|}
+P138 [SECT] <SECT>
+P139 [] 
+P140 [] RIA INFORMATION: 
+P141 [] TO BE COMPLETED BY RIA REPRESENTATIVE
+P142 [] The Registered Investment Advisor Firm (“RIA”), or RIA Financial Advisor Representative (“RIA Representative”) must complete the information below, re
+TBL rows=18
+   ROW {w5845 b:b|RIA FIRM NAME (REQUIRED)} {w270 b:|} {w4963 b:b|CRD # (REQUIRED)}
+   ROW {w5845 b:tlbr|} {w270 b:lr|} {w4963 b:tlbr|}
+   ROW {w11078 b:b|RIA FIRM ADDRESS OR P.O. BOX}
+   ROW {w11078 b:tlr|}
+   ROW {w7015 b:tb|CITY} {w270 b:t|} {w1710 b:tb|STATE} {w270 b:t|} {w1813 b:tb|ZIP CODE}
+   ROW {w7015 b:tlbr|} {w270 b:lr|} {w1710 b:tlbr|} {w270 b:lr|} {w1813 b:tlbr|}
+   ROW {w7015 b:tb|BUSINESS PHONE (REQUIRED)} {w270 b:|} {w3793 b:b|FAX #}
+   ROW {w7015 b:tlbr|} {w270 b:lr|} {w3793 b:tlbr|}
+   ROW {w7645 b:b|RIA REPRESENTATIVE(S) NAME(S) (REQUIRED)} {w270 b:t|} {w3163 b:tb|REPRESENTATIVE # (REQUIRED)}
+   ROW {w7645 b:tlbr|} {w270 b:lr|} {w3163 b:tlbr|}
+   ROW {w7645 b:tb|RIA REPRESENTATIVE(S) ADDRESS OR P.O. BOX} {w270 b:|} {w3163 b:tb|BRANCH ID #}
+   ROW {w7645 b:tlbr|} {w270 b:lr|} {w3163 b:tlbr|}
+   ROW {w7015 b:tb|CITY} {w270 b:t|} {w1710 b:b|STATE} {w270 b:|} {w1813 b:b|ZIP CODE}
+   ROW {w7015 b:tlbr|} {w270 b:lr|} {w1710 b:tlbr|} {w270 b:lr|} {w1813 b:tlbr|}
+   ROW {w7015 b:tb|BUSINESS PHONE (REQUIRED)} {w270 b:|} {w3793 b:b|FAX #}
+   ROW {w7015 b:tlbr|} {w270 b:lr|} {w3793 b:tlbr|}
+   ROW {w11078 b:b|EMAIL ADDRESS}
+   ROW {w11078 b:tlbr|}
+P143 [] 
+P144 [SECT] <SECT>
+P145 [] 
+P146 [] RIA REPRESENTATIONS
+P147 [] The RIA Financial Advisor Representative (“RIA Representative”), on behalf of the RIA Representative and the Registered Investment Adviser firm (“RIA”
+P148 [] The undersigned confirm by their signature, on behalf of the RIA Representative and RIA, that RIA Representative and RIA: (i) have reasonable grounds 
+P149 [] Standards of suitability have been established by the Company and are fully disclosed in the Memorandum. Prior to recommending purchase of the Units, 
+P150 [] The RIA Representative and RIA verify that the above subscription either does not involve a discretionary account or, if so, that they have made the i
+P151 [] The RIA Representative and RIA hereby certify that they are registered in the state of sale (investor’s state of residence) and they are not subject t
+P152 [] The RIA Representative and RIA are not authorized or permitted to give, and represents that they have not given to a prospective investor, any informa
+P153 [] The RIA Representative and RIA hereby agree to, and shall, indemnify and hold harmless the Company, its respective affiliates, and any trustees, offic
+P154 [] The RIA Representative and RIA shall not be liable under the indemnification provisions of this Purchaser Questionnaire and Subscription Agreement wit
+P155 [] The RIA represents that it is properly licensed and presently registered as an investment adviser under the Investment Advisers Act of 1940, as amende
+P156 [] 
+P157 [] 
+P158 [] to the activities of the RIA Representative or RIA pursuant to this Purchaser Questionnaire and Subscription Agreement, including without limitation t
+P159 [] The RIA Representative and RIA represent that the investor meets the suitability and financial qualifications set forth in the Memorandum, as amended 
+P160 [] With respect to any use by the RIA Representative and RIA of electronic delivery of the Memorandum and Supplemental Information and electronic signatu
+P161 [] The undersigned represents that the Units will be purchased through the RIA listed above. RIA and the Company acknowledge that if RIA and the Company 
+TBL rows=2
+   ROW {w6205 b:|SIGNATURE(S) OF <BR:line>RIA REPRESENTATIVE / (REQUIRED)} {w124 b:|} {w2486 b:b|INVESTOR STATE OF RESIDENCE / (REQUIRED)} {w270 b:|} {w1993 b:b| / DATE / (REQUIRED)}
+   ROW {w3235 b:tlbr| x} {w90 b:lr|} {w2880 b:tlbr| x} {w124 b:lr|} {w2486 b:tlbr|} {w270 b:lr|} {w1993 b:tlbr|}
+P162 [] 
+TBL rows=2
+   ROW {w8815 b:|SIGNATURE OF RIA (IF REQUIRED)} {w270 b:|} {w1993 b:b|DATE / (REQUIRED)}
+   ROW {w8815 b:tlbr| x} {w270 b:lr|} {w1993 b:tlbr|}
+P163 [] 
+P164 [] 
+P165 [] PLEASE REFER TO PAGE 1 FOR MAILING AND PAYMENT<BR:line>INSTRUCTIONS
+P166 [] 
+P167 [] 
+TBL rows=2
+   ROW {w8815 b:|ACCEPTANCE BY MANAGING DEALER } {w270 b:|} {w1993 b:b|DATE / (REQUIRED)}
+   ROW {w8815 b:tlbr| x} {w270 b:lr|} {w1993 b:tlbr|}
+P168 [] 
+P169 [] 
+OTHER {http://schemas.openxmlformats.org/wordprocessingml/2006/main}sectPr

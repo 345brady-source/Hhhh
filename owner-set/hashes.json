@@ -1,0 +1,106 @@
+{
+ "recorded": "2026-11-13T23:21:12.734Z",
+ "note": "taken after the tightening of plan 01.3-01 task 1 step 2; a changed file is re-recorded only with a line in reasons.txt (date | file | first 12 of the new hash | why) and measure.js --rehash",
+ "files": {
+  "A/truth.json": {
+   "sha256": "d55b11737289dc6667d11ab6cb9f59fe5d91729932070731813b5628f61ae4d4",
+   "first": "d55b11737289dc6667d11ab6cb9f59fe5d91729932070731813b5628f61ae4d4"
+  },
+  "B/truth.json": {
+   "sha256": "c279e74e23f1fd56357e13811bd789fbd72f69027d978916b4024b8459e36de7",
+   "first": "c279e74e23f1fd56357e13811bd789fbd72f69027d978916b4024b8459e36de7"
+  },
+  "C/truth.json": {
+   "sha256": "5373f14519fd56fb72d756d64c717c623e92de46871ec3e35dfccd80fd907e40",
+   "first": "5373f14519fd56fb72d756d64c717c623e92de46871ec3e35dfccd80fd907e40"
+  },
+  "B/variants/v-control.truth.json": {
+   "sha256": "1c3fcb5b43da76ac12f590d4ae0ad762889b2813de311d6315e8e911c809e742",
+   "first": "1c3fcb5b43da76ac12f590d4ae0ad762889b2813de311d6315e8e911c809e742"
+  },
+  "B/variants/v-president.truth.json": {
+   "sha256": "1c3fcb5b43da76ac12f590d4ae0ad762889b2813de311d6315e8e911c809e742",
+   "first": "1c3fcb5b43da76ac12f590d4ae0ad762889b2813de311d6315e8e911c809e742"
+  },
+  "B/variants/v-bare.truth.json": {
+   "sha256": "eea1fbd1e0d1ca8ee5e14b6530afd959f16775e30eb56a5c6c8cbfa0f33e2459",
+   "first": "eea1fbd1e0d1ca8ee5e14b6530afd959f16775e30eb56a5c6c8cbfa0f33e2459"
+  },
+  "B/variants/v-lp-page.truth.json": {
+   "sha256": "00597e65e5b4fefe5ae941a9086d8d6e4184a588c8716afd8802ca3ea4c221a5",
+   "first": "00597e65e5b4fefe5ae941a9086d8d6e4184a588c8716afd8802ca3ea4c221a5"
+  },
+  "B/variants/v-counter.truth.json": {
+   "sha256": "c5a3fcd5a3cc7ab48084042b4806db8add1035d6e67d259e2c9f029edb76e8e4",
+   "first": "c5a3fcd5a3cc7ab48084042b4806db8add1035d6e67d259e2c9f029edb76e8e4"
+  },
+  "B/variants/example47.truth.json": {
+   "sha256": "1747f4cf6dff644b6edbf5c6e1a06613eacd60e619dbcd914900de395adb8230",
+   "first": "1747f4cf6dff644b6edbf5c6e1a06613eacd60e619dbcd914900de395adb8230"
+  },
+  "A/score.js": {
+   "sha256": "3e15760b60dfa9a84ede71f801f5d262af9e9b83904e305dbe9da26f38ea77e7",
+   "first": "8cdcfce8ed0e150f3b0ab7c59114b92eed24f09c9afdb8649f3659dac7c9519d",
+   "history": [
+    {
+     "sha256": "8cdcfce8ed0e150f3b0ab7c59114b92eed24f09c9afdb8649f3659dac7c9519d",
+     "until": "2026-11-13"
+    },
+    {
+     "sha256": "f8c11cb4fa4936e5f4331ad92e47253ebf977a604e8d3214be8a0a88dfbab1ef",
+     "until": "2026-11-13"
+    }
+   ]
+  },
+  "B/score.js": {
+   "sha256": "9c22dc1e8b33e55633a478c98b0f48ac0beeed060bbfd356ad77cf8f71a9f5ba",
+   "first": "2e00e9f5b359196d9ffa4baf395d7ac438ec6b2e1ead8d8d48f2b7654a96fc06",
+   "history": [
+    {
+     "sha256": "2e00e9f5b359196d9ffa4baf395d7ac438ec6b2e1ead8d8d48f2b7654a96fc06",
+     "until": "2026-11-13"
+    },
+    {
+     "sha256": "4315b763ad9434ed874145f17265eec790b408bb2a0ee45eefdbee178880fc8a",
+     "until": "2026-11-13"
+    }
+   ]
+  },
+  "C/score.js": {
+   "sha256": "0cdd34ed5771467b1f6593771092b73b6d824bdc68577136013b9e69f93f86a8",
+   "first": "fc60f36f33f9064f761f34292ebad1852e48f81140bd03888f2635b2ac99c0c7",
+   "history": [
+    {
+     "sha256": "fc60f36f33f9064f761f34292ebad1852e48f81140bd03888f2635b2ac99c0c7",
+     "until": "2026-11-13"
+    },
+    {
+     "sha256": "d8c288b80cea30e805e68e1f2cf9c10f11796145ca0dc39ef7b6a1604d137609",
+     "until": "2026-11-13"
+    },
+    {
+     "sha256": "077a9b2cf9f5e590a64fa228c7913802c380d5c8d5ba3bcae7db70ff899b8c64",
+     "until": "2026-11-14"
+    }
+   ]
+  },
+  "lib-score.js": {
+   "sha256": "e309d7e18c90e8d17fc129d042466f341ec51e5a8690a1871ba3044bd9c34d17",
+   "first": "157885621cb4d710b6a51577a1217ff2547404c0b4fb20f81a2da18dbce5ffc9",
+   "history": [
+    {
+     "sha256": "157885621cb4d710b6a51577a1217ff2547404c0b4fb20f81a2da18dbce5ffc9",
+     "until": "2026-11-13"
+    },
+    {
+     "sha256": "0c483935ad78b945e4caddaa2eed068c265d20c86978a1688d44cb6cdb78f61f",
+     "until": "2026-11-13"
+    }
+   ]
+  },
+  "pins.json (pinned values, without the explained list)": {
+   "sha256": "8eae05dacb15c19a47406fd8482642095c1c83c859f1b94149e65f49b3bc60cd",
+   "first": "8eae05dacb15c19a47406fd8482642095c1c83c859f1b94149e65f49b3bc60cd"
+  }
+ }
+}

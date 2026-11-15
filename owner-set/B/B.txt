@@ -1,0 +1,1529 @@
+    LIMITED PARTNERSHIP AGREEMENT
+
+
+
+
+SHALEHAVEN PARTNERS 2025 LP
+           a Texas limited partnership
+                                                           Table of Contents
+Recitals.......................................................................................................................................................... 4
+Article I – Definitions & General Provisions ............................................................................................... 4
+  1.    Definitions ....................................................................................................................................... 4
+  2.    Formation & Name ........................................................................................................................ 12
+  3.    Filings ............................................................................................................................................ 12
+  4.    Place of Business, Registered Agent & Registered Office ............................................................ 12
+  5.    Term ............................................................................................................................................... 12
+  6.    Purpose........................................................................................................................................... 12
+  7.    Issuance of Units & Admission of Partners ................................................................................... 12
+  8.    Tax Information Required .............................................................................................................. 13
+Article II – Management & Partnership Operations .................................................................................. 13
+  1.    Management................................................................................................................................... 13
+  2.    Reimbursements & Management Fee ............................................................................................ 15
+  3.    Payment of Partnership Expenses .................................................................................................. 15
+  4.    Other Oil & Gas, Business Interests .............................................................................................. 15
+  5.    Exculpation & Indemnification for Certain Acts ........................................................................... 15
+  6.    General Partner Liability Insurance ............................................................................................... 16
+  7.    Amendments to Agreement............................................................................................................ 16
+Article III – Capital Contributions & Capital Accounts ............................................................................ 16
+  1.    Capital Contributions ..................................................................................................................... 16
+  2.    No Return of Subscription Amount; Interest ................................................................................. 16
+  3.    Capital Accounts ............................................................................................................................ 17
+  4.    Transfer of Capital Account ........................................................................................................... 17
+Article IV – Rights & Obligations of Partners ........................................................................................... 18
+  1.    Limitation on Liability ................................................................................................................... 18
+  2.    Voting Rights ................................................................................................................................. 18
+  3.    Conversion of General Partner Interests ........................................................................................ 18
+  4.    Liability Allocation ........................................................................................................................ 18
+  5.    Unit Holders’ Right to Modify Tax Savings .................................................................................. 18
+  6.    Limited Liquidity Option for Unit Holders.................................................................................... 19
+Article V – Allocations of Profit & Loss, Special Allocations ................................................................... 19
+  1.    Allocation of Profits & Losses ....................................................................................................... 19
+  2.    Special Allocations......................................................................................................................... 20
+  3.    Regulatory Allocations................................................................................................................... 21
+  4.    Adjustment of Gross Asset Values ................................................................................................. 22
+  5.    Guaranteed Payments..................................................................................................................... 22
+  6.    Partnership Withholding ................................................................................................................ 22
+Article VI – Distributions to Partners ........................................................................................................ 22
+Article VII – Books & Records ................................................................................................................. 23
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                                                      2
+  1.    Books & Records Generally .......................................................................................................... 23
+  2.    Examination of Books & Records ................................................................................................. 23
+  3.    Value Calculations & Reporting .................................................................................................... 24
+  4.    Tax Returns .................................................................................................................................... 24
+  5.    Tax Audit........................................................................................................................................ 24
+Article VIII – Transfers of Partnership Interests ....................................................................................... 25
+  1.    Transfers Generally ........................................................................................................................ 25
+  2.    Exceptions ...................................................................................................................................... 25
+  3.    Consent Required for Transferee ................................................................................................... 26
+Article IX – Dissolution & Termination of Partnership ............................................................................. 26
+  1.    Dissolution ..................................................................................................................................... 26
+  2.    Effect of Dissolution ...................................................................................................................... 26
+  3.    Distribution of Partnership Assets ................................................................................................. 26
+  4.    Termination Date ........................................................................................................................... 27
+  5.    Certificate of Termination .............................................................................................................. 27
+Article X – Arbitration ............................................................................................................................... 27
+Article XI – Miscellaneous Provisions ...................................................................................................... 28
+  1.    Trade Secrets & Confidential Information ..................................................................................... 28
+  2.    Durable Power of Attorney ............................................................................................................ 29
+  3.    Governing Law .............................................................................................................................. 29
+  4.    Security Election ............................................................................................................................ 29
+  5.    Further Assurances ......................................................................................................................... 29
+  6.    Construction & Headings............................................................................................................... 29
+  7.    No Waiver ...................................................................................................................................... 30
+  8.    Binding Effect ................................................................................................................................ 30
+  9.    Creditors......................................................................................................................................... 30
+  10. Execution & Counterparts.............................................................................................................. 30
+  11. Notices & Electronic Delivery ....................................................................................................... 30
+  12. Partial Invalidity ............................................................................................................................ 31
+  13. Entire Agreement ........................................................................................................................... 31
+Exhibit A ..................................................................................................................................................... 32
+
+
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                                                     3
+This Limited Partnership Agreement (this “Agreement”) of Shalehaven Partners 2025 LP (the
+“Partnership”) is made and entered into by and among Shalehaven Partners 2025 GP LLC, a Texas limited
+liability company (when acting in its capacity as the managing general partner of the Partnership, the
+“Managing Partner”), and those Persons who have subscribed or will subscribe to Units in the Partnership.
+The Managing Partner and Partners holding any class of Units are referred to herein individually as a
+“Partner” or “Party” and collectively as the “Partners” or “Parties.”
+
+
+                                                Recitals
+        WHEREAS, the Partnership was formed on January 1, 2025, by filing a Certificate of Formation
+with the Texas Secretary of State; and
+        WHEREAS, the Parties hereto wish to enter into this Agreement to provide for the respective rights
+and obligations of the Parties as provided for herein.
+         NOW THEREFORE, for and in consideration of the mutual covenants and agreements contained
+within this Agreement, the receipt and sufficiency of which are hereby acknowledged, the Parties hereto
+enter into this Agreement pursuant to the provisions and upon the terms and conditions herein contained
+and hereby agree as follows:
+
+
+                     Article I – Definitions & General Provisions
+         1. Definitions
+
+For the purposes of this Agreement, unless otherwise expressly indicated herein, the following terms shall
+have the following meanings:
+         AFE. Also known as “Authority for Expenditure.” An AFE describes the estimated costs
+associated with a specific oilfield operation, normally the drilling and completing of a new Well. In general,
+an operator who proposes to drill a new Well will prepare the AFE and submit it for approval to other
+owners of a Working Interest (Non-Operators) in the Well. Upon receipt of an AFE, a Non-Operator
+generally has the ability to consent to the proposed operation and pay its proportionate share of costs within
+a specified time period or not consent to the proposed operation and either be penalized or lose its interest
+in the Well.
+       Adjusted Capital Account Deficit. With respect to any Unit Holder, the deficit balance, if any, in
+such Unit Holder’s Capital Account as of the end of the relevant tax year, after giving effect to the
+adjustments set forth herein or the Code or Regulations as determined by the Managing Partner.
+         Affiliate. Any Person controlling, controlled by, or under common control with another Person.
+        Assumed Marginal Tax Rate. Thirty-seven percent (37%) regardless of a particular Unit Holder’s
+actual highest individual or aggregate marginal tax rate at the federal, state, local, and/or foreign level.
+         Book Depreciation. For any asset for any fiscal period, an amount equal to the depreciation,
+amortization or other cost recovery deduction allowable for federal income tax purposes with respect to an
+asset for which the Gross Asset Value equals its adjusted tax basis. If the Gross Asset Value of an asset
+differs from its adjusted basis for federal income tax purposes at the beginning of such fiscal period, Book
+Depreciation shall be an amount that bears the same ratio to the Gross Asset Value of that asset at the
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                           4
+beginning of such fiscal period as the federal income tax depreciation, amortization or other cost recovery
+deduction allowable for that asset for such period bears to the adjusted tax basis of that asset at the beginning
+of such period. If the federal income tax depreciation, amortization, simulated depletion (with respect to
+oil and gas properties), or other cost recovery deduction allowable for any asset for such period is zero, then
+Book Depreciation for that asset shall be determined with reference to such beginning Gross Asset Value
+using any reasonable method selected by the Managing Partner.
+         Capital Account. The account maintained for a Unit Holder as described herein.
+        Class A Unit. A Unit of Partnership Interest designated as Class A. While the Managing Partner
+has sole discretion to approve or disapprove a sale of Class A Units to any Person, Class A Units will
+generally be available during the entire subscription period of this Offering and only to Class A Unit Holders
+in Shalehaven Partners 2024 LP.
+
+         Class A Unit Holder. A Person holding Class A Units.
+
+         Class B Unit. A Unit of Partnership Interest designated as Class B. Class B Units are not being
+offered in this Offering.
+
+         Class B Unit Holder. A Person holding Class B Units.
+
+        Class H1 Unit. A Unit of Partnership Interest designated as Class H1. While the Managing Partner
+has sole discretion to approve or disapprove a sale of Class H1 Units to any Person, Class H1 Units will
+generally be available from January 1, 2025, through June 30, 2025.
+
+         Class H1 Unit Holder. A Person holding Class H1 Units.
+
+        Class H2 Unit. A Unit of Partnership Interest designated as Class H2. While the Managing Partner
+has sole discretion to approve or disapprove a sale of Class H2 Units to any Person, Class H2 Units will
+generally be available from July 1, 2025, through December 31, 2025.
+
+         Class H2 Unit Holder. A Person holding Class H2 Units.
+
+        Class Sharing Ratio. The ratio resulting from dividing the Units of a specific class held by a Unit
+Holder by all outstanding Units of that same class. For example, if 100 Class A Units are issued, a Class A
+Unit Holder holding one (1) Class A Unit would have a Class Sharing Ratio of 1 divided by 100 Units, or
+0.01. The Class Sharing Ratio shall initially be determined as of the end of the offering of Units and
+thereafter as necessary.
+
+         Code. The Internal Revenue Code of 1986, as amended.
+
+         Confidential Information. All information (whether oral or written and whenever or however
+delivered) regarding the Managing Partner, the Partnership, Shalehaven Management Company, current or
+prospective Partnership Assets, or the Partners, including without limitation, the terms and conditions of
+this Agreement, the Partners’ investments in the Company or any other information concerning the business,
+affairs, operations, strategies, management, policies, or organizational or personnel matters related to the
+Partnership, Shalehaven Management Company, the Partnership Assets, the Partners, or any of their
+Affiliates, any employee, manager, partner, member, equity holder, director or officer thereof and all
+financial statements, tax reports, valuations and other information (whether generated by the Managing
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                             5
+Partner, the Partnership, Shalehaven Management Company, the Partners, or any other Person) concerning
+potential or actual investments encountered, reviewed or made by the Partnership of its Affiliates, and all
+other documents and information concerning the affairs of the Partnership and its consummated or proposed
+investments including the terms and conditions or status of any proposed or consummated investment, that
+any Partner may receive, whether verbally or in writing, pursuant to or in accordance with this Agreement
+or otherwise as a result of its ownership of a Partnership Interest and specifically including any information
+with respect to the Partnership Assets that the Managing Partner or its Affiliates is bound to keep
+confidential; provided, that Confidential Information shall not include information which (a) is already or
+otherwise becomes publicly available other than through breach of this Agreement by a Partner; (b) was
+already known by the Partner prior to the date of such disclosure to such Partner, as documented in writing
+by the Partner; or (c) the Partner received from a source unrelated to the Partner providing such Confidential
+Information and who was not under a duty of confidentiality.
+
+         Event of Withdrawal. Occurs when a Partner provides written notice to the Partnership of the
+Partner’s intent will to withdraw as a Partner; makes an assignment for the benefit of creditors; files a
+voluntary petition in bankruptcy; is adjudged a bankrupt or insolvent or has entered against such Partner an
+order for relief in any bankruptcy or insolvency proceeding; has been expelled from the Partnership by a
+final judicial decree; is subject to any order or judgment attaching or foreclosing upon any part of its
+Partnership Interest; a Partner (or a controlling Person of such Partner) is on the list of Specially Designated
+Nationals and Blocked Persons maintained by the Office of Foreign Assets Control or any similar list or is
+otherwise a Person the Partnership is prohibited from doing business with; commences any proceeding
+adverse to the Partnership; or transfers any Partnership Interest, as to the interest transferred. As to a Partner
+who is a natural Person, an Event of Withdrawal also occurs upon the Partner’s death, the appointment of
+a guardian or general conservator for the Partner or an adjudication of incompetency of the Partner. As to
+a Partner who is an entity, an Event of Withdrawal also occurs upon the termination, dissolution, or cessation
+of business of the Partner.
+
+         Fiscal Year. The Partnership’s fiscal year shall be the calendar year ending December 31.
+
+         General and Administrative Expenses. All customary and routine legal, accounting, geological,
+engineering, consulting, marketing, travel, office rent, telephone, compensation to officers and employees,
+investor communications, reporting, issuance of revenue cycle distributions, costs and fees incurred for the
+preparation and dissemination of annual partnership tax information, and other similar incidental expenses
+incurred by the Partnership or by the Managing Partner on behalf of the Partnership, which the Managing
+Partner, in its sole discretion, deems necessary to the conduct of Partnership’s operations; excluding,
+however, Organization and Offering Expenses. Such expenses may include, but are not limited to, (i) the
+pursuit (including diligence and negotiation processes), purchase, holding, and disposition of Partnership
+Assets (whether or not ultimately consummated), legal and accounting fees, due diligence costs, travel
+expenses, valuations, broker and bank fees, and management fees and incentive fees payable with respect
+to actual and potential Partnership Assets; (ii) all legal, accounting, fund administration, trade association,
+consulting and other fees related to the Partnership; (iii) insurance premiums for insurance held for the
+benefit of the Partnership or in connection with the activities of the Partnership; (iv) all other expenses of
+the Partnership incurred by the General Partner; (v) expenses for ongoing Partner support, including, but
+not limited to, visits to Partners and annual or other periodic meetings with one or more of the Limited
+Partners; (vi) costs and expenses relating to signature events or Partner retreats hosted or sponsored by the
+Partnership; and (vii) all costs and expenses relating to the disposition of Partnership assets and the
+dissolution and winding up of the Partnership.
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                             6
+        General Partner. A Person admitted to the Partnership as a General Partner by the Managing
+Partner and any Person who becomes a General Partner in accordance with the terms hereof.
+
+         Gross Asset Value. For any asset, the asset’s adjusted basis for federal income tax purposes, except
+as set forth below:
+
+        (a)      The Gross Asset Values of all Partnership assets shall be adjusted to equal their gross fair
+market values, as determined by the Managing Partner, as of the following times: (1) the contribution of
+more than a de minimis amount of money to the Partnership as a Subscription Amount by a new or existing
+Unit Holder; (2) the liquidation of the Partnership within the meaning of the Regulations, or (3) upon any
+other event to the extent determined by the Managing Partner to be necessary to properly reflect the Gross
+Asset Values in accordance with the standards set forth in Regulations.
+
+        (b)     The Gross Asset Values of Partnership assets shall be increased (or decreased) to reflect
+any adjustment to the adjusted basis of such assets pursuant to the Code, but only to the extent that such
+adjustments are taken into account in determining Capital Accounts pursuant to the Regulations.
+
+        (c)      The Gross Asset Value of depletable property shall be reduced by the amount of simulated
+depletion in respect of such property in lieu of depletion;
+
+        (d)      If the Gross Asset Value of an asset has been determined or adjusted pursuant to the
+foregoing, such Gross Asset Value shall thereafter be adjusted by the Book Depreciation taken into account
+with respect to such asset for purposes of computing Profits and Losses.
+
+        (e)     The Gross Asset Value of any Partnership asset distributed to any Unit Holder shall be the
+gross fair market value of such asset on the date of distribution.
+
+        (f)      Gain or loss resulting from any disposition of property with respect to which gain or loss
+is recognized for federal income tax purposes shall be computed by reference to the Gross Asset Value of
+the property disposed of, notwithstanding that the adjusted tax basis of the property differs from the Gross
+Asset Value of the property.
+
+         Guaranteed Payments. Any payments made by the Partnership to a Unit Holder other than in
+their capacity as a Unit Holder, as further defined in Code Section 707(c). Guaranteed Payments shall be
+included in the calculation of Partnership profit and loss but shall not be considered a distribution to such
+Unit Holder.
+
+       Hydrocarbons. Oil, natural gas, condensate, liquids, casinghead gas, products or other minerals
+produced through a wellbore.
+
+        IDCs. Also known as “Intangible Drilling Costs.” Those expenses and other expenditures
+associated with asset acquisition and the drilling and completion of Wells that are generally accepted as
+fully deductible for federal income tax purposes. These include all expenditures made with respect to any
+Well before the establishment of production for wages, fuel, repairs, hauling, supplies and other costs and
+expenses incident to and necessary for the drilling of the Well and the preparation of the Well for the
+production of oil or gas, that are currently deductible pursuant to the Code and Regulations, which are
+generally termed “intangible drilling and development costs,” including the expense of plugging and
+abandoning any Well before a completion attempt. IDCs shall also include, for all purposes under this
+Agreement, any and all IDCs which are attributable to mineral interests owned by third parties in any Wells,
+but are charged to, and paid by, the Partnership under participation agreements, farmout agreements,
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                           7
+operating agreements, fixed cost drilling contracts, and any other agreements or any other interest in favor
+of third parties which burdens any Well or to which the Partnership is subject, even though payment by the
+Partnership of those IDCs which are in excess of the Partnership’s permanent share of the Working Interest
+in the Wells may be treated under the Code as payment of depletable Lease Acquisition Costs for tax
+purposes and therefore not currently deductible as IDCs.
+
+        JIB. Also known as “Joint Interest Billing.” This is an oilfield accounting term for an invoice
+and/or revenue statement that is prepared by the Operator and sent to Non-Operators that divides the
+expenses and revenue associated with a oilfield operation among the various Working Interest owners.
+
+         Lease Acquisition Costs. Those payments and expenses incurred in connection with the
+acquisition of an Oil and Gas Lease or an interest therein, including, but not limited to, lease bonuses,
+brokers’ fees and commissions, abstracting costs, title examination and filing fees, costs incurred in curing
+or defending title, capitalized screening, seismic, geological, and geophysical expenses incident to either
+the evaluation or the acquisition of an Oil and Gas Lease or an interest in an Oil and Gas Lease, and delay
+rentals. Lease Acquisition Costs may include costs incurred to evaluate an Oil and Gas Lease or similar
+interest which is not actually acquired by the Partnership.
+
+         Lease Operating Costs. All expenditures made and costs incurred in connection with (i) the
+operation of a Well and the production and marketing of oil and gas from completed Wells, including labor,
+fuel, repairs, hauling, materials, supplies, utility charges, and other costs incident to or therefrom, (ii) ad
+valorem, severance, and other applicable taxes, (iii) insurance and casualty loss expense, (iv) compensation
+to Affiliates of the Managing Partner or others for services rendered in conducting such operations, (v)
+acquiring and installing a compressor and a gas pipeline to deliver and transport any natural gas production,
+(vi) any salt water disposal system, (vii) completing additional zones, and (viii) lease bonus, extension, and
+renewal payments.
+
+        Limited Partner. A Person admitted to the Partnership as a Limited Partner by the Managing
+Partner and any General Partner who is thereafter converted to a Limited Partner pursuant to the terms
+hereof.
+
+        Management Agreement. That certain Management Agreement dated January 1, 2025, by and
+between the Partnership and Shalehaven Management Company. The Partners agree that the Partnership
+is bound by the terms and conditions of the Management Agreement.
+
+        Management Fee. A fee due to Shalehaven Management Company in an amount equal to two
+percent (2%) of the aggregate Subscription Amounts. While the offering of Units in the Partnership is open
+to new investors, the Partnership shall pay the Management Fee upon receipt of the Subscription Amounts,
+and after such payment, no additional Management Fee shall be due or payable from the Subscription
+Amounts. When the offering of Units in the Partnership is closed, the Management Fee will not be deducted
+from the Subscription Amounts of the Partners but will be paid by the Partnership quarterly in arrears from
+funds which would otherwise be available for distribution to the Partners herein. To the extent that the
+Partnership has insufficient distributable funds during a particular quarter to fully pay the Management Fee
+payable during such quarter, then the amount of such unpaid Management Fee will be carried forward and
+payable in the succeeding quarter(s) until fully paid. The Management Fee shall terminate and be of no
+further force or effect beginning with the quarter after all Unit Holders have achieved Payback. For
+example, if the Unit Holders achieve Payback in Q1 of a Fiscal Year, no Management Fee shall be payable
+beginning in Q2 of such Fiscal Year.
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                            8
+         Net Operating Cash Flow. Net operating cash flow for Partnership distribution purposes is at the
+sole discretion of the Managing Partner. However, in general terms, net operating cash flow for a specific
+production period equals gross production revenue received by the Partnership, reduced by the following
+items: royalty, overriding royalty, and net profits burdens, revenue deductions, production, severance,
+and/or ad valorem taxes, lease operating expenses, interest expense applicable to any loans, General and
+Administrative Expenses, other Partnership operating expenses and possible contingency reserves as
+determined by the Managing Partner. For the avoidance of doubt, Net Operating Cash Flow shall not
+include any amount the Managing Partner, in its sole discretion, determines the Partnership should retain
+for known or anticipated future AFEs and/or Subsequent Operations or to deploy for the acquisition of
+additional Partnership Assets. Net Operating Cash Flow shall not be reduced by depreciation, amortization,
+or other similar non-cash allowances, and shall be increased by any reductions in reserve that, when
+previously established, reduced Net Operating Cash Flow.
+
+        Non-Operator. A Person owning a Working Interest in Oil and Gas Leases and/or Wells that does
+not own the right or undertake the obligation of serving as operator of record of the Oil and Gas Leases
+and/or Wells. The Partnership intends to be a Non-Operator.
+
+         NPV17.5. The net present value of future cash flows from Partnership Assets with a seventeen and
+a half percent (17.5%) discount factor utilizing the value set forth in the Third Party Reserve Report.
+
+        Oil and Gas Lease. Full or partial interests in oil and gas leases or other rights under which the
+holder or a Person participating with the holder thereof is entitled to explore, drill for, and produce
+Hydrocarbons or to enter upon such land for the purpose of exploring or drilling for or producing
+Hydrocarbons.
+
+         Operating Agreement. Also referred to as a “Joint Operating Agreement” or “JOA.” An
+Operating Agreement covers a particular prospect or contract area and outlines and defines the rights,
+responsibilities, risks, and penalties between two or more parties involved in exploring, developing, and
+producing oil and gas therefrom. An Operating Agreement will establish which party will serve as operator
+and which parties will be Non-Operators. Oftentimes, an Operating Agreement will require a test Well be
+drilled within a certain time period and as to a certain depth and will contain certain penalties in the event
+a Non-Operator does not consent to proposed operations. Model Form Operating Agreements promulgated
+by the American Association of Professional Landmen are widely used in the industry.
+
+        Organization and Offering Expenses. A reimbursement to be paid by the Partnership to the
+Managing Partner or Manager from the Subscription Amounts to the Partnership or distributions, in
+payment of costs and expenses paid or incurred by the Managing Partner or Manager in connection with
+the organization of the Partnership and offer of Units in the Partnership, including, without limitation, legal,
+printing, accounting, rent, personnel, travel costs, and all other such expenses of the Managing Partner or
+Manager.
+
+       Partnership Audit Rules. The partnership tax audit regime implemented under Internal Revenue
+Code Section 6221.
+
+         Partnership Assets. All assets and interests owned or claimed by the Partnership, whether now
+owned or acquired hereafter, including, but not limited to, interests in Oil and Gas Leases, Wellbore
+Interests, Wells, and Working Interests.
+
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                            9
+       Partnership Expenses. All expenses or obligations of the Partnership or otherwise incurred by
+the managing Partner in connection with this Agreement, including, but not limited to, General and
+Administrative Expenses, the Management Fee, and Organization and Offering Expenses.
+
+         Partnership Interest. A Unit Holder’s (a) share of the Partnership Assets, profits, losses, and
+distributions pursuant to this Agreement and the TBOC; (b) share in allocations of income, gain, loss,
+deduction, credit, or similar items; (c) Capital Account; and (d) in the case of the Managing Partner, the
+right to participate in the management or affairs of the Partnership as provided herein. A Partnership Interest
+is expressed as a number of Units.
+
+        Partnership Representative. The Managing Partner shall serve as the Partnership Representative
+required to be designated by Code Section 6223, as amended, as provided herein.
+
+         Payback. With respect to each Unit Holder, the point in time when the sum of (i) aggregate
+distributions under this Agreement and (ii) Tax Savings based on the Assumed Marginal Tax Rate is equal
+to the total aggregate Subscription Amounts of such Unit Holder. For example, if a Unit Holder invested
+$200,000 and if such Unit Holder’s Tax Savings computed at the Assumed Marginal Tax Rate equals
+$62,900, then such Unit Holder will be deemed to have achieved Payback when aggregate distributions to
+such Unit Holder under this Agreement equal $137,100.
+
+         Person. An individual, trust, estate, or any incorporated or unincorporated entity, including any
+general or limited partnership, limited liability company, corporation, joint venture, association,
+cooperative, government or governmental subdivision or agency and any other legally cognizable entity,
+and all heirs, executors, administrators, legal representatives, successors and assigns of such Person where
+permitted or required by the context.
+
+       Profit and/or Loss. The profit or loss of the Partnership with respect to each Fiscal Year,
+determined in accordance with Section 704(b) of the Code and applicable Regulations.
+        Qualified Depreciation Expenses. All costs which are immediately deductible under Section
+168(k) of the Code.
+
+        Regulations. The permanent, temporary, or proposed and temporary regulations of Department of
+the Treasury under the Code as may be amended.
+
+        Shalehaven Management Company. Shalehaven Partners Energy & Asset Management LLC, a
+Texas limited liability company.
+
+        Subscription Agreement. With respect to a Partner, the subscription agreement executed and
+delivered to the Managing Partner in connection with such Partner’s subscription to purchase Units, which
+subscription agreement contains certain representations, warranties, covenants, and agreements, including
+an agreement to arbitrate.
+
+        Subscription Amount. With respect to each Unit Holder, the United States Dollar amount
+subscribed for to the Partnership in accordance with such Unit Holder’s Subscription Agreement.
+
+        Subsequent Operations. Generally, all operations defined as subsequent operations under an
+Operating Agreement, including, but not limited to, the drilling of an additional Well, the reworking or
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                           10
+recompletion of a Well, the completion of a Well in a different or additional zone, activities designed to
+increase production in a Well, and activities designed to bring production from a Well to market.
+
+         Tangible Costs. Costs associated with acquisition and the drilling and completion of Wells which
+are generally accepted as capital expenditures pursuant to the provisions of the Code. This includes all
+costs of equipment, parts and items of hardware used in drilling and completing a Well, and those items
+necessary to deliver Hydrocarbons to purchasers to the extent installed downstream from the wellhead of
+any well and which are required to be capitalized pursuant to applicable provisions of the Code and
+Regulations. Tangible Costs also include any and all Tangible Costs which are attributable to mineral
+interests owned by third parties in any Wells, but which costs are charged to the Partnership under
+participation agreements, farmout agreements, Operating Agreements, drilling contracts, and any other
+agreements, or any other interests in favor of third parties which burden any Well or to which the Partnership
+is subject, even though payment by the Partnership of Tangible Costs in excess of the Partnership’s share
+of the Working Interest in the Well may be treated under the Code as payment of depletable Lease
+Acquisition Costs for tax purposes and, therefore, not depreciable as Tangible Costs.
+
+         Tax Savings. For the 2025 Fiscal Year, the cumulative amount of losses and deductions allocated
+by the Partnership (without regard to any offsetting income or gain allocations) to each Unit Holder,
+multiplied by the Assumed Marginal Tax Rate. For purposes of this definition, Tax Savings for each Unit
+Holder shall be determined solely from the losses and deductions actually allocated to each Unit Holder by
+the Partnership and shall not be reduced by deductions that cannot be used by such Unit Holder due to any
+limitation, under federal, state, local or foreign tax law. For example, if the cumulative losses and
+deductions allocated to a Unit Holder were $170,000, then such Unit Holder would be deemed to have Tax
+Savings in the amount of $62,900.
+
+         TBOC. The Texas Business Organizations Code and all amendments to such code or successor
+statutes or codes.
+
+        Third Party Reserve Report. On an annual basis, the Managing Partner will contract with an
+independent third party to prepare a reserve report reflecting the value, inclusive of any hedges in place, of
+the Partnership Assets.
+
+         Transfer. A transfer includes any sale, assignment, pledge, hypothecation, exchange or other
+transaction in which any record or beneficial interest in a Partnership Interest is transferred to another
+Person and includes any transfer by operation of law in connection with a probate, bankruptcy, receivership,
+divorce, guardianship or similar Proceeding.
+
+         Unit. A unit of Partnership Interest in a class designated by the Partnership. Units are not required
+to be proportionate to Subscription Amounts. Units are designated as Class A, Class B, Class H1, and Class
+H2 at inception of the Partnership.
+
+        Unit Holder. A Person holding a Unit of Partnership Interest. Unit Holders include Partners and
+Persons not admitted as a Partner who hold a Unit of Partnership Interest.
+
+        Wellbore Interest. An undivided ownership interest in a Well that does not necessarily include a
+proportionate ownership interest in the underlying Oil and Gas Lease or other depths or zones outside of
+the Well itself. Generally, a Wellbore Interest entitles the owner thereof the right to share in the costs and
+revenue from a particular existing or proposed Well.
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                           11
+         Wells. Those oil and gas wells or associated injection or disposal wells (or undivided interests
+therein) evaluated and/or acquired by the Partnership.
+
+        Working Interest. An ownership interest under an Oil and Gas Lease, the owner of which interest
+generally has the right to explore for oil, gas, and other minerals in, on, and under the lands covered by the
+Oil and Gas Lease (sometimes as to specific depths only) and has the obligation to pay the costs of
+exploration, drilling, and operating the Oil and Gas Lease (or a proportionate share thereof).
+
+         2. Formation & Name
+
+The Partnership was formed by the filing of a Certificate of Formation with the Texas Secretary of State on
+January 1, 2025. The name of the Partnership is “Shalehaven Partners 2025 LP.” The Parties hereto hereby
+ratify, confirm, and approve such filing. The Managing Partner may adopt such trade or fictitious names
+as it may deem appropriate. The existence of the Partnership as a separate legal entity shall continue until
+the cancelation of the Certificate of Formation.
+
+         3. Filings
+
+The Managing Partner is authorized to execute, deliver, and file all instruments, agreements, or filings
+required by law in connection with the formation or continuation of the Partnership or otherwise necessary
+or appropriate to effectuate the provisions of this Agreement and to conduct the operations of the Partnership
+as contemplated hereby, including, without limitation, any amendments to the Certificate of Formation
+required under the TBOC or made in accordance with this Agreement.
+
+         4. Place of Business, Registered Agent & Registered Office
+
+The principal place of business of the Partnership shall be at 15150 Preston Road, Suite 300, Dallas, Texas
+75248, or at such other location as the Managing Partner, in its sole discretion, may determine. The
+Managing Partner shall notify the Unit Holders within 30 days in writing of any change in location. The
+Partnership’s registered office shall be 15150 Preston Road, Suite 300, Dallas, Texas 75248. The registered
+agent is its Managing Partner. The registered office and registered agent may be changed from time to time
+pursuant to the TBOC and the applicable rules promulgated thereunder, as approved by the Managing
+Partner.
+
+         5. Term
+
+The term of the Partnership commenced on the date the Certificate of Formation was filed with the Secretary
+of State of Texas, is being continued under this Agreement, and shall continue until the Partnership is
+dissolved and its affairs wound up in accordance with the provisions of this Agreement or the TBOC.
+
+         6. Purpose
+
+The Partnership shall have the authority to engage in any activities permitted generally to limited
+partnerships. The Partnership intends to acquire interests and participate – as a Non-Operator – in the
+drilling, completion, and production of Wells and related assets located within the United States.
+
+         7. Issuance of Units & Admission of Partners
+
+The initial Partners shall be the Managing Partner, as a General Partner, and Shalehaven Partners 2025 B
+LLC, as the Class B Unit Holder, each of which is admitted as a Partner in the Partnership. Shalehaven
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                           12
+Management Company, as Manager, may incur preformation expenses prior to the formation of the
+Partnership and, as such, shall be entitled to reimbursement of said expenses.
+        (a)    Each Person whose subscription for a Unit, either whole or partial, has been accepted by
+the Managing Partner, in its sole discretion, shall become a Partner upon the execution and delivery by such
+Person and the Managing Partner of counterparts of a subscription agreement and this Agreement.
+        (b)      The Managing Partner may issue Units or partial Units to Persons and admit such Persons
+as Unit Holders and as General Partners or Limited Partners or allow one or more existing Partners to
+increase its Subscription Amount, at any time and from time to time, on such terms and for such
+consideration, as the Managing Partner may determine in its sole discretion.
+        (c)      Notwithstanding anything to the contrary herein, the Managing Partner shall keep
+confidential from any Partner the identity, Subscription Amount, and all other information set forth on
+Exhibit A of any other Partner. No Unit Holder shall have any preferential or preemptive rights to acquire
+Units or other debt or equity securities issued by the Partnership.
+        (d)     Units issued by the Partnership shall not be represented by certificates. The books and
+records of the Partnership shall be prima facie evidence of the identity of Partners or Unit Holders and the
+Units or Partnership Interests held by each. The Partnership shall not be required to recognize the claim of
+any other Person to any Capital Account or Unit.
+         8. Tax Information Required
+
+Each Partner agrees to provide the Partnership with true and accurate information or documentation
+necessary, or reasonably requested, to permit the Partnership to fulfill any tax withholding or other
+obligation relating to such Partner, including but not limited to, any documentation necessary or reasonably
+requested to establish the Partner’s eligibility for benefits under any applicable tax treaty. Each Partner
+agrees to provide the Partnership with notice of any change in the Partner’s tax status and to update any tax
+related forms previously submitted to the Partnership by the Partner if the information contained therein is
+no longer correct or has been updated.
+
+
+               Article II – Management & Partnership Operations
+         1. Management
+
+Subject to the Managing Partner’s authority to delegate powers and duties as set forth herein, the
+management and control of the Partnership and of its business and the power to act for and bind the
+Partnership shall be vested solely and exclusively in the Managing Partner, and all matters and questions of
+policy and management shall be decided by the Managing Partner. Except as specifically provided in this
+Agreement, the Partners shall have no authority to manage, control, bind or act on behalf of the Partnership.
+Without limiting the generality of the foregoing, all of the Partners hereby specifically agree and consent
+that the Managing Partner may, on behalf of the Partnership, at any time, and without further notice to, or
+consent from, any Partner, do the following:
+         (a)       source, locate, research, and conduct due diligence on potential acquisitions;
+         (b)       negotiate the terms and conditions of potential acquisitions and divestitures;
+        (c)      make investments, acquire interests, and divest Partnership Assets (either in whole or in
+part) consistent with the Purpose of the Partnership as set forth above;
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                             13
+        (d)    elect to participate or to not participate in the drilling, testing, and completion and
+equipping of Wells;
+       (e)      elect to plug and abandon a Well if such action is required by law or contract or is otherwise
+determined by the Managing Partner, acting in its sole discretion, to be in the best interest of the Partnership;
+        (f)     participate in Subsequent Operations if such actions are required by law or contract or are
+otherwise determined by the Managing Partner, acting in its sole discretion, to be in the best interest of the
+Partnership;
+        (g)     enter into, on such terms as the Managing Partner may determine in its sole discretion, Oil
+and Gas Leases and assignments thereof, drilling contracts, completion contracts, operating agreements,
+farmin or farmout agreements, unitization agreements, pooling agreements, participation agreements, and
+any other agreements customarily employed in the oil and gas industry in furtherance of the Purpose of the
+Partnership;
+         (h)      offer and sell, pledge, hedge (including, but not limited to, the execution of swaps, options,
+and fixed-price physical contracts) or otherwise dispose of Hydrocarbons produced and any interests therein
+or rights thereto, for periods and on other terms and conditions as the Managing Partner shall determine;
+        (i)     borrow money on behalf of the Partnership, or enter into transactions having a similar
+leveraging effect on behalf of the Partnership upon such terms and conditions as the Managing Partner may
+deem advisable and proper;
+         (j)     open, maintain, and close accounts with brokers, dealers, banks, commodities traders and
+others, and issue all instructions and authorizations regarding the purchase and sale or entering into, as the
+case may be, of assets, instruments or agreements consistent with the Purpose of the Partnership;
+        (k)      use the funds and revenues of the Partnership for any purpose, including without limitation
+the conduct or financing, in whole or in part, of the activities of the Partnership, and the repayment of any
+loans used to finance such operations or activities;
+        (l)     sell, exchange, release, surrender, assign or abandon, any or all Partnership Assets
+including, without limitation, all or any part of the Partnership Assets;
+        (m)     exercise the rights granted to it under the power of attorney created pursuant to this
+Partnership Agreement;
+        (n)      serve as the Partnership Representative and to make such elections under the Code, state
+tax laws and other relevant tax laws as to the treatment of items of Partnership income, gain, loss, deduction
+and credit, and as to all other relevant matters, as may be provided herein or as the Managing Partner deem
+necessary or appropriate;
+        (o)       purchase, at the expense of the Partnership, such liability and other insurance as the
+Managing Partner deems advisable to protect the Partnership’s assets and business or as may be required
+by the laws of any jurisdiction to which the Partnership is subject, it being the intent hereof to permit the
+Managing Partner in its sole discretion to cause the Partnership to elect not to purchase insurance against
+any or all risks;
+       (p)      appoint a Manager to perform or cause to be performed for the Partnership all services
+customarily performed by a management company;
+         (q)       retain outside tax advisors, legal counsel, and independent auditors for the Partnership; and
+         (r)       to incur all costs and make all expenditures in any way related to any of the foregoing.
+
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                             14
+         2. Reimbursements & Management Fee
+
+The Managing Partner and its Affiliates shall be reimbursed by the Partnership for General and
+Administrative Expenses which it may incur which are attributable to the operation of the Partnership.
+Amounts paid or reimbursed shall not grossly exceed reasonable and customary compensation in the same
+general geographic area for similar services.
+The Partnership shall reimburse the Managing Partner or its Affiliates for Organization and Offering
+Expenses. In addition, the Partnership will use a portion of the Unit Holders’ Subscription Amounts to
+reimburse the Managing Partner or its Affiliates for such pre-formation expenses that were incurred by the
+Managing Partner or its Affiliates on behalf of the Partnership.
+As set forth in the Management Agreement, in consideration for services to be rendered by Shalehaven
+Management Company in managing the business of the Partnership, the Partnership will pay to Shalehaven
+Management Company the Management Fee. Any management fee paid to Shalehaven Management
+company shall be deemed a Guaranteed Payment.
+
+         3. Payment of Partnership Expenses
+
+The Partnership shall be responsible for, and shall pay, all Partnership Expenses.
+
+         4. Other Oil & Gas, Business Interests
+
+The Managing Partner shall devote such time and effort to the Partnership as may be necessary to promote
+adequately the interests of the Partnership and the interests of the Partners; however, it is specifically
+understood and agreed that the Managing Partner shall not be required to devote full time to Partnership
+business, and the Managing Partner and its Affiliates may at any time and from time to time engage in and
+own interests in other business ventures of any and every type and description, independently or with others,
+including without limitation, the acquisition, ownership, exploration, development, operation, and
+management of oil and gas properties for themselves and other persons and the organization and
+management of other partnerships and joint ventures similar to the Partnership, and neither the Partnership
+nor any Partner shall by virtue of this Agreement or the law of partnership opportunity have any right, title,
+or interest in or to such independent ventures. However, except as otherwise provided herein, the Managing
+Partner and any of its Affiliates may pursue business opportunities that are consistent with the Partnership’s
+investment objectives for their own account only after they have determined that such opportunity either
+cannot be pursued by the Partnership because of insufficient funds or because it is not appropriate for the
+Partnership under the circumstances existing at the time.
+
+         5. Exculpation & Indemnification for Certain Acts
+
+The Managing Partner has not guaranteed, and shall not have any obligation with respect to, the return of a
+Unit Holder’s Subscription Amount, the amount, if any, of distributions to be made to the Partners, or profits
+or losses from the business of the Partnership. To the fullest extent permitted by applicable law, neither the
+Managing Partner nor its directors, employees, or agents or any of their Affiliates (each a “Covered
+Person”) shall be liable to the Partnership, its Partners, or any other Person who is bound by this Agreement
+(and, to the fullest extent permitted by applicable law, a Covered Person shall be entitled to indemnification
+from the Partnership) for any loss, damage or claim incurred by reason of any act or omission performed
+or omitted by such Covered Person in good faith on behalf of the Partnership and in a manner reasonably
+believed to be within the scope of the authority conferred on such Covered Person by this Agreement;
+provided, that a Covered Person shall be liable for any such loss, damage or claim incurred by reason of
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                           15
+such Covered Person’s gross negligence or willful misconduct. The indemnity under this provision shall
+be paid from, and only to the extent of, Partnership Assets, and neither the Managing Partner nor any Partner
+shall have any personal liability on account thereof. The exculpation and indemnity provided for above
+shall survive the termination of this Agreement and shall inure to the benefit of the heirs, executors, and
+administrations of such Covered Person.
+
+         6. General Partner Liability Insurance
+
+Upon the acquisition of the first Partnership Asset, the Managing Partner shall, on behalf of the Partnership,
+promptly obtain and thereafter maintain in full force and effect, at the expense of the Partnership, general
+partner liability insurance coverage. Such insurance shall provide coverage for the General Partners against
+claims arising from their activities as General Partners of the Partnership, in amounts and with terms
+reasonably acceptable to the Managing Partner, consistent with industry standards for similar funds of a
+similar size and capitalization. The Managing Partner shall endeavor to obtain coverage that includes, but
+is not limited to, defense costs, indemnification, and errors and omissions coverage. Such insurance shall
+be maintained until the conversion of all General Partners to Limited Partners in accordance with IV.03, or
+the final liquidation of the Partnership, whichever occurs first.
+
+         7. Amendments to Agreement
+
+The Managing Partner is specifically authorized to make amendments to this Agreement if necessary or
+appropriate in the Managing Partner’s sole discretion (i) to comply with the Internal Revenue Code or to
+carry out the intent of the allocation or distribution provisions in this Agreement, or (ii) in relation to an
+action taken by the Managing Partner within the scope of the Managing Partner’s right or authority under
+this Agreement. In particular and without limitation, the Managing Partner may update Exhibit A to this
+Agreement at any time to reflect the proper names, addresses, Units held, and capital contributions of the
+Partners.
+
+
+           Article III – Capital Contributions & Capital Accounts
+         1. Capital Contributions
+
+Each Partner shall be required to make a monetary contribution in United States Dollars to the Partnership
+equal to its Subscription Amount. By executing and delivering the Subscription Agreement, upon its
+acceptance by the Managing Partner, each Partner shall be obligated to pay the Subscription Amount within
+five (5) business days.
+
+         2. No Return of Subscription Amount; Interest
+
+There is no agreement for, nor time set for, return of any Subscription Amount of any Unit Holder or
+distribution of the Capital Account to any Unit Holder. Except as otherwise expressly set forth in this
+Agreement, no Unit Holder shall have the right to withdraw its Subscription Amount or Capital Account.
+Further, no Unit Holder shall be entitled to receive interest, whether on the amount of any Subscription
+Amount, Capital Account, or other amounts related to the Partnership Assets. The Managing Partner shall
+not be required to place any Subscription Amounts or other amounts related to the Partnership Assets in an
+interest-bearing account.
+
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                           16
+         3. Capital Accounts
+
+An individual Capital Account shall be established and maintained by the Partnership for each Unit Holder
+in accordance with the applicable provisions of the Regulations.
+        (a)     The Capital Account of each Unit Holder shall be credited with (i) an amount equal to such
+Unit Holder’s Subscription Amount, (ii) such Unit Holder's allocable share of the Partnership’s items of
+income and gain, (iii) the amount of any Partnership liabilities assumed by such Unit Holder or that are
+secured by property distributed to such Unit Holder, and (iv) any other item of income or gain, including
+simulated gain, allocated to it pursuant to this Agreement.
+         (b)      The Capital Account of each Unit Holder shall be debited by (i) the amount distributed to
+such Unit Holder, (ii) such Unit Holder's allocable share of the Partnership's items of loss and deduction,
+and (iii) any other item of loss or deduction, including simulated depletion and simulated loss, allocated to
+it pursuant to this Agreement.
+         (c)     For purposes of computing Capital Accounts, (i) Unit Holders will be allocated a share of
+the Partnership’s adjusted tax basis in the Partnership’s oil and gas properties in the proportion each Unit
+Holder’s Subscription Amount bears to the aggregate Subscription Amounts of all Unit Holders
+(notwithstanding the foregoing, the Unit Holders shall at all times be allocated those percentages of such
+adjusted tax basis as is necessary to insure that subsequent adjustments to each Unit Holder’s Capital
+Account for allocations of simulated depletion, simulated gain, and simulated loss do not lack substantial
+economic effect for purposes of Section 704(b) of the Code); (ii) the Unit Holders will be allocated
+simulated depletion, based upon cost or percentage depletion as the Managing Partner may elect, in the
+same percentages as the adjusted tax basis of the oil and gas properties is allocated, but not in excess of
+such adjusted tax basis, and the Unit Holders will be allocated simulated loss in proportion to each Unit
+Holder’s distributable share of the total amount realized from the disposition of the oil and gas properties
+that represents a recovery of the Partnership’s simulated adjusted tax basis in such properties; (iii) except
+as otherwise required by Section 704(c) of the Code, the amount realized by the Partnership from the taxable
+disposition of any oil and gas properties that represents recovery of the Partnership’s simulated adjusted tax
+basis in the oil and gas properties shall be allocated to the Unit Holders in the same proportions as the
+aggregate adjusted tax basis of such properties was allocated to the Unit Holders; and (iv) the portion of the
+amount realized by the Partnership on its taxable disposition of the oil and gas properties that exceeds the
+simulated adjusted tax basis of such properties shall be allocated to the Unit Holders as part of the allocation
+of Profits as set forth herein. The Managing Partner may authorize a reallocation of the Partnership’s
+adjusted tax basis in an oil and gas property in accordance with the requirements of Regulations. For
+purposes of this Section, simulated adjusted tax basis, simulated depletion, simulated gain, and simulated
+loss shall have the meanings set forth in Regulations Section 1.704-1(b).
+          (d)     Notwithstanding the foregoing, the Managing Partner is authorized to modify the manner
+in which the Capital Accounts are maintained if the Managing Partner determines that such modification
+(i) is required or prudent to comply with the Code or Regulations and (ii) is not likely to have a material
+adverse effect on the amounts distributable to any Unit Holder upon the dissolution of the Partnership.
+
+         4. Transfer of Capital Account
+
+Upon a Transfer of any Interest in accordance with the terms and provisions of this Agreement, the
+transferee shall succeed in interest to the Capital Account of the transferor.
+
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                            17
+                    Article IV – Rights & Obligations of Partners
+         1. Limitation on Liability
+
+The liability of each Unit Holder shall be limited as set forth in the TBOC and this Agreement. No Unit
+Holder holding Units as a Limited Partner shall have any personal liability for any debts or losses of the
+Partnership, by virtue of its status as a Unit Holder.
+
+         2. Voting Rights
+
+So long as any Unit Holder holds any Partnership Interest, in addition to the approval of the Managing
+Partner, the following actions by the Partnership shall be subject to the approval of a simple majority of the
+Unit Holders: (a) materially alter, change, revise, or amend the preferences, privileges or rights of the
+Partners or (b) engage in any business other than the business purpose of the Partnership as set forth herein.
+
+         3. Conversion of General Partner Interests
+
+No later than January 1, 2026, the General Partners who are also Unit Holders will be converted to Limited
+Partners, unless the Managing Partner determines that such conversion at that time would not be in the best
+interests of the General Partners subject to conversion or the Partnership. Subscription Amounts remitted
+to Shalehaven Management Company shall be deemed as having been expended on or prior to December
+31, 2025, in accordance with the Management Agreement. If conversion is delayed for any reason, the
+Managing Partner will continue to have the power and authority to cause such conversion as to any General
+Partner with the consent of such General Partner at any time within a Fiscal Year. On January 1 of any
+subsequent year during the term of the Partnership, the General Partners who are also Unit Holders will be
+converted to Limited Partners unless the Managing Partner determines that such conversion at that time
+would not be in the best interests of the General Partners subject to conversion or the Partnership. The
+Managing Partner shall have the right to convert some but not all General Partners, depending on the status
+of applying the special allocations as described herein. The Managing Partner shall have the right to convert
+any Class B Partner from a General Partner to a Limited Partner at any time in the sole discretion of the
+Managing Partner. Immediately following any conversion, the Managing Partner will take such actions
+necessary or appropriate to accomplish conversion of the interests to a limited partnership interest status,
+and upon conversion each such General Partner shall have the rights and obligations of a Limited Partner
+and will be entitled to limited liability to the extent provided by the TBOC; provided, however, that General
+Partners will remain liable to the Partnership for their proportionate share of Partnership obligations and
+liabilities arising prior to the conversion of their General Partner interests in the Partnership to Limited
+Partner interests.
+
+         4. Liability Allocation
+
+Notwithstanding the joint and several liability between the Managing Partner and the General Partners, they
+hereby agree that each shall be solely and individually responsible for its pro rata share of liabilities and
+obligations of the Partnership, and any Partner who incurs liability in excess shall be entitled to contribution
+from the other Partners.
+
+         5. Unit Holders’ Right to Modify Tax Savings
+
+Payback, as defined hereinabove, includes the value of a Unit Holder’s Tax Savings, which is initially
+calculated at the Assumed Marginal Tax Rate (being the highest federal marginal tax rate of 37%). Unit
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                            18
+Holders shall have the right prior to December 31, 2026, to submit sufficient documentation to the
+Managing Partner evidencing such Unit Holder’s actual Tax Savings. Provided such documentation is
+timely submitted and accepted by the Managing Partner, such Unit Holder’s Tax Savings will be adjusted
+downward accordingly.
+
+         6. Limited Liquidity Option for Unit Holders
+
+After a Unit Holder has achieved Payback, such Unit Holder shall thereafter have the ongoing right to
+submit a request to the Class B Unit Holder to purchase (liquidate) such Unit Holder’s Units, as set forth
+herein.
+Not more often than once per rolling six-month period, a Unit Holder may submit a written request to the
+Class B Unit Holder indicating such desire to have the Class B Unit Holder purchase its Units (a “Liquidity
+Request”). Within thirty (30) days after receipt of a Liquidity Request, the Class B Unit Holder shall
+submit a written offer to purchase such Unit Holder’s Units at a price equal to NPV17.5 (the “Liquidity
+Offer”). The Unit Holder shall thereafter have five (5) business days after receipt of the Liquidity Offer to
+notify the Class B Unit Holder of its acceptance thereof in writing; provided, that in the event the Unit
+Holder fails to timely respond, it shall be deemed that the Unit Holder rejected such Liquidity Offer. If the
+Unit Holder timely accepts the Liquidity Offer, within thirty (30) days after such acceptance, (i) the Class
+B Unit Holder shall purchase the Units and (ii) the Unit Holder shall execute a transfer of such Units to the
+Class B Unit Holder effective as of the first day of the calendar quarter for the quarter in which the Units
+are transferred.
+In any given calendar quarter, the Class B Unit Holder shall not be required to (but may, in its sole
+discretion), make Liquidity Offers, which, in the aggregate, cover more than two and a half percent (2.5%)
+of the outstanding Units. During any calendar quarter, Liquidity Requests will be evaluated by the Class B
+Unit Holder in the order in which such requests are received.
+
+
+      Article V – Allocations of Profit & Loss, Special Allocations
+         1. Allocation of Profits & Losses
+
+After giving effect to the Special Allocations and Regulatory Allocations set forth herein, except as
+otherwise provided in this Agreement, Profits or Losses or, alternatively, income, gain, loss, and deduction,
+for any Fiscal Year, will be allocated among the Partners such that the Capital Account of each Partner,
+immediately after giving effect to such allocations, will equal, as nearly as possible, the amount of the
+distributions that would be made to such Partner during such Fiscal Year if: (i) the Partnership were
+dissolved, (ii) its affairs were wound up and each asset were sold for its Gross Asset Value, (iii) all liabilities
+of the Partnership were satisfied in cash in accordance with their terms (limited in the case of non-recourse
+liabilities to the Gross Asset Value of the property securing such liabilities); and (iv) the net assets of the
+Partnership were distributed to the Partners in accordance with Article VI, with such adjustments as the
+General Partner determines to be appropriate to take into account any Partnership minimum gain or partner
+nonrecourse debt minimum gain. The General Partner will make such calculations and other assumptions
+as it deems necessary or appropriate in its good faith and reasonable judgment in order to effectuate the
+intended entitlements of the Partners.
+Upon the liquidation of the Partnership and after all other allocations provided for herein have been made,
+if a distribution to one or more Partners under Article IX would be different from the distributions to the
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                             19
+Partners under Article VI, then items of income, gain, loss and deduction for the Fiscal Year in which the
+Partnership liquidates will be allocated to the Capital Accounts of the Partners such that the Capital Account
+of each Partner, immediately after giving effect to such allocations, will equal, as nearly as possible, the
+amount of the distributions that would be made to such Partner pursuant to Article VI.
+
+         2. Special Allocations
+
+        (a)     Organization and Offering Expenses shall be specially allocated to the Unit Holders other
+than the Class B Unit Holders pro rata.
+        (b)      Pursuant to the provisions of the Code, all depletion deductions with respect to oil and gas
+properties in which the Partnership holds a direct or indirect interest shall be computed by the Unit Holders
+separately rather than the Partnership. Simulated gain, simulated depletion and simulated losses shall be
+allocated among the Partners in accordance with Article V.4. Upon request of the Partnership
+Representative, each Partner shall advise the Partnership Representative of its adjusted tax basis in each
+separate oil and gas property and any depletion computed with respect thereto, both as computed in
+accordance with the Code and this Agreement. The Partnership Representative may rely on such
+information and, if it is not provided by the Partner, may make such reasonable assumptions as it shall
+determine with respect thereto.
+         (c)     Qualified Depreciation Expenses and all other depreciation deductions shall be specially
+allocated among the Unit Holders so that the cumulative amount of all such depreciation deductions
+allocated to the Unit Holders, at any time, is always in proportion to their Subscription Amounts, except
+that, in making such special allocations of depreciation deductions to the Unit Holders, in Unit Holder may
+only be allocated such depreciation deductions attributable to a period arising on or after the date on which
+such Unit Holder was admitted to the Partnership (as and to the extent determined under Code Section 168
+and 706). In the event the Managing Partner shall determine that such result is not likely to be achieved
+through such special allocations of such depreciation deductions, the Managing Partner may allocate a
+portion of Profits or Losses so as to achieve the same effect on the Capital Accounts of the Unit Holders,
+notwithstanding any other provision of this Agreement to the contrary. The Partnership shall make an
+election to expense Qualified Depreciation Expenses. For current year Tangible Cost additions, Code
+Section 168 MACRS depreciation allowances will be allocated in the same manner as Qualified
+Depreciation Expenses.
+         (d)     All IDCs deductible under Section 263(c) of the Code shall be specially allocated among
+the Unit Holders so that the cumulative amount of such IDC deductions allocated to the Unit Holders at
+any time is always in proportion to their Subscription Amounts, except that, in making such special
+allocations of such IDC deductions to the Unit Holders, a Unit Holder may only be allocated deductions
+arising on or after the date on which such Unit Holder was admitted to the Partnership. For purposes of the
+preceding sentence, a deduction shall not be deemed to arise on or after the date on which a Unit Holder is
+admitted to the Partnership to the extent that the “cash accounting rule” as described in Code Section
+706(d)(2) attributes such deduction to any period prior to the admission of such Unit Holder. In the event
+the Managing Partner shall determine that such result is not likely to be achieved through such special
+allocations of such IDC deductions, the Managing Partner may allocate a portion of Profits or Losses so as
+to achieve the same effect on the Capital Accounts of the Unit Holders, notwithstanding any other provision
+of this Agreement to the contrary.
+
+
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                           20
+         3. Regulatory Allocations
+
+The following special allocations shall be made in the following order:
+        (a)      Minimum Gain Chargeback. If there is a net decrease in Partnership minimum gain
+during a Partnership taxable year, each Unit Holder shall be allocated before any other allocation is made
+pursuant to this Section items of income and gain for such year (and, if necessary, for subsequent years)
+equal to that Unit Holder’s share of the net decrease in partnership minimum gain. A Unit Holder’s share
+of the net decrease in partnership minimum gain shall be determined in accordance with the Regulations.
+         (b)      Qualified Income Offset Allocation. In the event any Unit Holder unexpectedly receives
+any adjustments, allocations or distributions described in Regulations Section 1.704-1(b)(2)(ii)(d)(4), (5)
+or (6) which would cause the negative balance in such Unit Holder’s Capital Account to exceed the sum of
+(1) its obligation to restore a Capital Account deficit upon liquidation of the Partnership, plus (2) its share
+of partnership minimum gain, plus (3) such Unit Holder’s share of partner nonrecourse debt minimum gain,
+items of Partnership income and gain shall be specially allocated to such Unit Holder in an amount and
+manner sufficient to eliminate such excess negative balance in its Capital Account as quickly as possible.
+        (c)      Gross Income Allocation. If any Partner has an Adjusted Capital Account Deficit, such
+Partner shall be specially allocated items of income and gain in the amount of such deficit as rapidly as
+possible, provided that an allocation pursuant to this Section shall be made if and only to the extent that
+such Partner would have an Adjusted Capital Account Deficit after all other allocations provided for in this
+Agreement have been tentatively made as if this Section were not in this Agreement.
+         (d)     Partner Nonrecourse Deductions. Partner nonrecourse deductions determined pursuant
+to the Regulations shall be allocated pursuant to the Regulations to the Unit Holder who bears the economic
+risk of loss with respect to such deductions.
+        (e)    Nonrecourse Deductions.          Nonrecourse deductions determined pursuant to the
+Regulations shall be allocated pursuant to the Regulations to the Unit Holders as determined appropriate
+by the Managing Partner.
+         (f)     Basis Adjustment. To the extent an adjustment to the adjusted tax basis of any Partnership
+assets is required, pursuant to the Code or Regulations, to be taken into account in determining Capital
+Accounts, the amount of such adjustment to the Capital Accounts shall be treated as an item of gain, if the
+adjustment increases the basis of the asset, or loss, if the adjustment decreases such basis, and such gain or
+loss shall be specially allocated to the Unit Holders in a manner consistent with the manner in which their
+Capital Accounts are required to be adjusted pursuant to the Regulations.
+         (g)     Curative Allocations. The allocations set forth in the preceding provisions are intended
+to comply with certain requirements of the Regulations. Notwithstanding any other provision of this
+Article, such allocations shall be taken into account in allocating profits and losses and items of Partnership
+income, gain, loss and deductions to the Unit Holders so that, to the extent possible, the net amount of such
+allocations of profits and losses and other items and those allocations to each Unit Holder in the current and
+future periods shall be equal to the net amount of items that would have been allocated to each such Unit
+Holder if the allocations under the preceding provisions of Section had not occurred.
+        (h)     Recapture. All recapture of income tax deductions resulting from the disposition of
+Partnership property (e.g., under Sections 1245, 1250 and 1254 of the Code) shall, to the maximum extent
+
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                           21
+possible, be allocated to the Partner to whom the deduction that gave rise to such recapture was allocated
+hereunder to the extent that such Partner is allocated any gain from the disposition of such property.
+
+         4. Adjustment of Gross Asset Values
+
+Any item of gain or loss resulting from an adjustment of the Gross Asset Value of a Partnership asset shall
+be allocated to the Unit Holders in accordance with the provisions for distributions to the Unit Holders in
+effect from time to time, taking into account any anticipated change in distributions. Any adjustment to the
+Gross Asset Value of a Partnership asset pursuant to the definition of Gross Asset Value in this Agreement
+shall thereafter be taken into account as a built-in gain or loss for purposes of Code Section 704(c). The
+allocations described in this Section shall be made using any method permitted under Regulations Section
+1.704-3, as determined by the Managing Partner, in its sole discretion.
+
+         5. Guaranteed Payments
+
+Any fees, salaries, or similar compensation payable to a Partner pursuant to this Agreement shall be deemed
+a Guaranteed Payment for federal income tax purposes and not a distribution to such Partner for such
+purposes. Such payments to a Partner shall not reduce the Capital Account of such Partner, except to the
+extent of its distributive share of any Partnership Losses or other downward capital adjustment resulting
+from such payment. To the extent any compensation paid to any Unit Holder by the Partnership is
+determined by the IRS not to be a guaranteed payment under Code Section 707(c) or is not paid to the Unit
+Holder other than in the Person’s capacity as a Unit Holder within the meaning of Code Section 707(a), the
+Unit Holder shall be specially allocated gross income of the Partnership in an amount equal to the amount
+of that compensation, and the Unit Holder’s Capital Account shall be adjusted to reflect the payment of that
+compensation.
+
+         6. Partnership Withholding
+
+Should the Partnership be required pursuant to the Code, the laws of any state, or any other provision of
+law, to withhold any amount from amounts otherwise distributable to any Unit, the Partnership shall
+withhold those amounts, and any amounts so withheld shall be deemed to have been distributed to that Unit
+Holder under this Agreement. If any sums are withheld pursuant to this provision, the Partnership shall
+remit the sums so withheld to, and file the required forms with, the Internal Revenue Service and/or
+appropriate authority. In the event of any claimed over-withholding, a Unit Holder shall be limited to an
+action against the Internal Revenue Service and/or appropriate authority for refund, and each Unit Holder
+hereby waives any claim or right of action against the Partnership on account of such withholding.
+
+
+                           Article VI – Distributions to Partners
+After provision of sufficient working capital consistent with sound fiscal operating policy and management
+and such other needs of the Partnership as the Managing Partner, in its discretion, deems necessary or
+advisable, including, without limitation, reimbursing the Managing Partner for any Partnership Expenses
+advanced by the Managing Partner, the Managing Partner shall distribute Net Operating Cash Flow as set
+forth below. For the avoidance of doubt, the Managing Partner is specifically authorized to hold back and/or
+reinvest all or a portion of Net Operating Cash Flow in its sole discretion.
+The Managing Partner shall endeavor to make distributions of Net Operating Cash Flow for each given
+quarter beginning the first quarter of Fiscal Year 2026 and in each quarter thereafter as soon as practicable
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                          22
+after the close of such quarter; provided, however, that all distributions of Net Operating Cash Flow shall
+be at such times in such amounts as determined by the Managing Partner, in its sole discretion. Any such
+distributions of Net Operating Cash Flow shall be distributed pro rata as follows:
+       (a)     First, 100% to the Class A, Class H1, and Class H2 Unit Holders until the Class A, Class
+H1, and Class H2 Unit Holders have achieved Payback;
+        (b)    Then, to the Class A, Class H1, and Class H2 Unit Holders in the relative proportions in
+which such Class’s aggregate Subscription Amounts bear to the total Subscription Amounts for all Classes,
+as follows:
+                   (A)          80% to the Class A Unit Holders and 20% to the Class B Unit Holder;
+                   (B)          75% to the Class H1 Unit Holders and 25% to the Class B Unit Holder; and
+                   (C)          70% to the Class H2 Unit Holders and 30% to the Class B Unit Holder.
+In the event a distribution is erroneously made to a Unit Holder in excess of the amounts determined in
+accordance herewith, such Unit Holder agrees to reimburse the Partnership for the amount of such
+erroneous distribution. In the event a Unit Holder fails to reimburse the Partnership, the Managing Partner
+shall have the right to suspend and retain any future distributions to such Unit Holder as offset until the
+aggregate amount of the erroneous distribution is recovered.
+If the Managing Partner becomes aware of a dispute or other claim regarding ownership of a Partnership
+Interest which remains unresolved to Managing Partner’s reasonable satisfaction, the Managing Partner
+shall have the right to suspend distributions (without interest) with respect to such Partnership Interest until
+the dispute or claim has been resolved to Managing Partner’s reasonable satisfaction.
+Any distribution by the Partnership to the Person or entity reflected on the Partnership’s records as a Partner
+shall absolve the Partnership and the Managing Partner of any and all liability to any other Person who may
+otherwise be entitled to or have an interest in such distribution.
+
+
+                                   Article VII – Books & Records
+         1. Books & Records Generally
+
+The Managing Partner shall maintain at its principal place of business records and accounts of all operations
+and expenditures of the Partnership. The books and records of the Partnership shall be prima facie evidence
+of the Persons who have been admitted as Partners and of the Unit Holders entitled to allocations and
+distributions, and the Partnership shall not be required to recognize the claim of any other Person to any
+Capital Account, Partnership Interest, or Unit.
+
+         2. Examination of Books & Records
+
+The books and records of the Partnership shall be open to the reasonable inspection and examination of the
+Unit Holders or their duly authorized representatives during reasonable business hours and upon prior
+written request to the Partnership made a reasonable time in advance of any time requested for such
+inspection. A Unit Holder is limited to one request and/or inspection of the books and records of the
+Partnership every rolling 12-month period.
+
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                               23
+If such inspection may, in the Managing Partner’s reasonable belief, include access to Confidential
+Information, the Managing Partner may require the Unit Holder requesting the inspection to execute an
+agreement to keep such information confidential and not to use such information other than for legitimate
+purposes. The Partnership shall not be required to provide the name, address, or other identifying personal
+or financial information about a Unit Holder or any information about the Partnership Interest of any Unit
+Holder to any Person (including other Unit Holders) except as necessary to discharge any withholding
+responsibilities or as otherwise required by applicable law. Notwithstanding the foregoing, the Managing
+Partner shall have reasonable discretion in determining whether the disclosure of such information is
+necessary or required by law.
+
+         3. Value Calculations & Reporting
+
+The Managing Partner may, from time to time, internally value the Partnership as a whole and/or the Units
+(the “Reporting Value”) and report such Reporting Value to Unit Holders and third parties, including, but
+not limited to asset/portfolio managers and other financial professionals (“Third Party Managers”) for
+general valuation, recordkeeping, and other legitimate purposes. In general terms, the Managing Partner
+anticipates that the Reporting Value of a Unit will be equal to the Subscription Amount for a Unit until
+Payback and thereafter will be valued based upon the discounted future value of expected distributions
+attributable to such Unit. The Managing Partner shall not be liable for any acts or omissions related to
+calculating and reporting the Reporting Value and further shall not be liable for any acts or omissions of
+any Unit Holder or Third Party Managers with respect to same.
+
+         4. Tax Returns
+
+The Managing Partner shall cause the preparation and timely filing of all tax returns required to be filed by
+the Partnership pursuant to the Code and all other tax returns deemed necessary or required in each
+jurisdiction in which the Partnership does business. Within 95 days following the close of each Fiscal Year
+or as soon as practicable thereafter, the Managing Partner shall prepare, or cause to be prepared, and shall
+mail to each Unit Holder, a Schedule K-1 setting forth in sufficient detail such transactions effected by the
+Partnership during such Fiscal Year as shall enable each Unit Holder to prepare its U.S. Federal income tax
+return.
+
+         5. Tax Audit
+
+The Partnership may, if it is eligible and at the discretion of the Partnership Representative, elect to opt out
+of the Partnership Audit Rules. The Partnership Representative shall notify all Unit Holders of any
+proceedings commenced by the Internal Revenue Service and thereafter shall furnish all Unit Holders
+periodic reports at least quarterly on the status of such proceedings. The Partnership Representative is
+authorized and required to represent the Partnership in connection with all examinations of the Partnership
+by any taxing authority having jurisdiction over the Partnership, and to take such action, including
+settlement or litigation of such proceedings, as it, in its sole discretion, deems to be in the best interest of
+the Partnership. Each Unit Holder agrees to cooperate with the Partnership Representative and to do or
+refrain from doing any and all things reasonably requested by the Partnership Representative with respect
+to any such examination or any resulting filing or proceeding. The Partnership Representative shall have
+sole discretion to determine whether the Partnership will contest any proposed or assessed tax deficiencies
+or penalties on its own behalf or on behalf of the Unit Holders. Any tax payment deficiency and penalty
+shall be allocated to and paid by the Unit Holders (including former Unit Holders) who held Units in the
+year under review, in proportion to their respective Partnership Interests in the year under review, as
+determined by the Managing Partner. The foregoing is included for clarification purposes and shall not
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                            24
+serve to limit the powers of the Partnership Representative under the Code. Any tax overpayment shall be
+allocated to the Unit Holders who hold Units in the year in which the tax overpayment is finally determined
+by the Internal Revenue Service or other taxing authority, in proportion to their respective Partnership
+Interests. Each Unit Holder (including former Unit Holders) shall pay its proportionate share of any tax
+payment deficiency or penalty finally determined by the Internal Revenue Service or other taxing authority
+within 30 days after demand by the Partnership Representative.
+Notwithstanding the foregoing, the Partnership Representative shall have the right (i) to pay the share of
+any tax payment deficiency or penalty on behalf of such Unit Holder (or former Unit Holder) and treat such
+amount as a distribution to such Unit Holder (or former Unit Holder) or (ii) to reduce the amount of any
+distributions which would otherwise have been made to such Unit Holder, including by reducing the
+proceeds of liquidation otherwise payable to such Unit Holder, and to treat such amount as being distributed
+to the Unit Holder.
+Any taxes, penalties, and interest payable under the Partnership Audit Rules by the Partnership shall be
+treated as attributable to the Unit Holders of the Partnership. Each Unit Holder hereby agrees to indemnify
+and hold harmless the Partnership and the other Unit Holders (including former Unit Holders) from and
+against any liability for taxes allocated to such Unit Holder.
+The provisions of this Section shall survive the termination of the Partnership or the termination of any
+Partner’s Partnership Interest and shall remain binding on the Partners (or former Partners) for a period of
+time necessary to resolve with the IRS or the United States Department of the Treasury any and all matters
+regarding the United States federal income taxation of the Partnership.
+
+
+                 Article VIII – Transfers of Partnership Interests
+         1. Transfers Generally
+
+A Partnership Interest may not be Transferred, voluntarily or involuntarily (including by operation of law
+or otherwise), except in accordance with the provisions of this Article. Any attempt to Transfer any interest
+in a Partnership Interest in violation of this Agreement or any applicable state or federal law shall be void
+and of no effect, except that any Transfer by operation of law shall result in the transferee having the rights
+of an assignee who has not been admitted as a Partner as to allocations and distributions but not the rights
+of a Partner under this Agreement unless admitted as a Partner by the Managing Partner.
+
+         2. Exceptions
+
+This Article shall not apply to transfers of Partnership Interests between existing Partners of the Partnership.
+A Unit Holder that is an entity may change its name or merge or consolidate with an Affiliate without the
+prior consent of the Managing Partner, and such action shall not be considered a Transfer. A Unit Holder
+may transfer all or part of its Partnership Interest to a trust or other entity established for the benefit of the
+Unit Holder and/or members of such owner’s immediate family without the prior consent of the Managing
+Partner, and such action shall not be considered a Transfer. However, any Transfer, either voluntarily or by
+operation of law, shall not be binding on the Partnership until sixty (60) days after the Partnership has
+received satisfactory written evidence of such transfer. In addition, the Managing Partner shall nevertheless
+have the right to temporarily suspend distributions to a Unit Holder pending transfer or due to the death,
+divorce, bankruptcy, or other event related to a Unit Holder that puts in question the identity of the Person
+entitled to such distribution.
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                             25
+         3. Consent Required for Transferee
+
+A transferee of any Partnership Interest may become a Partner only upon (a) execution and delivery by the
+transferee of a written acceptance and adoption of this Agreement, as the same may be amended, together
+with such other documents, if any, as the Managing Partner may require; (b) the payment to the Partnership
+by the Unit Holder Transferring its Partnership Interest of all reasonable expenses, if any, incurred by the
+Partnership in connection with such Transfer; and (c) upon the consent of the Managing Partner, which
+may, in each case, be given or denied in the sole discretion of the Managing Partner. Upon such execution,
+payment and consent, the transferee shall, with respect to the Partnership Interest assigned, be admitted to
+the Partnership and become a substituted Partner therein. A transferee who is not admitted as a Partner
+shall be entitled to allocations and distributions in respect to the Partnership Interest transferred but shall
+not have any rights reserved to Partners under this Agreement.
+
+
+           Article IX – Dissolution & Termination of Partnership
+         1. Dissolution
+
+The Partnership shall be dissolved upon (a) the determination of the Managing Partner following the sale
+or other disposition of all or substantially all of the Partnership Assets; (b) the entry of a decree of judicial
+dissolution under Section 11.314 of the TBOC; or (c) the death or termination of the legal existence of the
+last remaining Partner of the Partnership or the occurrence of any other event which terminates the
+continued membership of the last remaining Partner of the Partnership.
+
+         2. Effect of Dissolution
+
+Upon dissolution, the Partnership shall cease to carry on its business, except as permitted by the TBOC or
+this Agreement. Upon dissolution, the Managing Partner or liquidator shall make such filings and publish
+any notice required by the TBOC.
+
+         3. Distribution of Partnership Assets
+
+Upon dissolution, each Unit Holder shall look solely to the assets of the Partnership for the return of its
+Subscription Amount and Capital Account and shall be entitled only to a cash distribution of the Partnership
+Assets made in accordance with this Article. In the event of dissolution, the Partnership Assets shall be
+paid and distributed in the following order:
+        (a)      All of the Partnership’s debts and liabilities to Persons other than Unit Holders, but
+excluding secured creditors whose obligations will be assumed or otherwise transferred upon the liquidation
+of Partnership Assets, shall be paid and discharged and any reserve deemed necessary by the Managing
+Partner or liquidator for the payment of such debts shall be set aside;
+        (b)     All of the Partnership’s debts and liabilities to Unit Holders, excluding any accrued and
+unpaid portion of any Management Fee, shall then be paid and discharged; and
+         (c)     The balance of the Partnership Assets shall then be distributed (i) to the Unit Holders, pro
+rata, in proportion, and to the extent of their remaining positive Capital Account balances; provided,
+however, that the Unit Holders’ Capital Accounts first shall be adjusted to reflect the manner in which any
+unrealized income, gain, loss and deduction inherent in the Partnership’s property (including oil and gas
+properties) which has not previously been reflected in the Unit Holders’ Capital Accounts, would be
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                            26
+allocated among the Unit Holders if there had been a taxable disposition of the Partnership’s assets at fair
+market value on the date of distribution and then (ii) to the Unit Holders in accordance with the provisions
+of Article VI.
+
+         4. Termination Date
+
+Upon the completion of the distribution of Partnership Assets as provided in this Article, the existence of
+the Partnership shall thereupon be terminated.
+
+         5. Certificate of Termination
+
+When all debts, liabilities, and obligations have been paid and discharged or adequate provisions have been
+made therefore and all of the remaining property and assets have been distributed to the Unit Holders, a
+certificate evidencing such termination may be executed and filed with the Secretary of State of Texas in
+accordance with the TBOC.
+
+
+                                    Article X – Arbitration
+The Parties agree to resolve any dispute, controversy or claim arising out of or in relation to or in connection
+with this Agreement, including without limitation any dispute as to its validity, interpretation, enforceability
+or breach, and including any state or federal statutory claims and including claims for tortious conduct, by
+binding arbitration before the American Arbitration Association (“AAA”), and, except for any claims
+requiring emergency temporary or preliminary injunctive relief or the right to enforce an arbitration award,
+the Parties waive all rights to have any such disputes heard before a court of law and expressly waive their
+rights to a trial by jury. Further, Unit Holders agree that as a condition of entering into this Agreement, they
+hereby waive their rights to bring or participate in any class action lawsuit or arbitration with respect to any
+claim. In other words, ARBITRATION MUST BE ON AN INDIVIDUAL BASIS; NO PARTNER MAY
+JOIN OR CONSOLIDATE CLAIMS IN ARBITRATION BY OR AGAINST OTHER PARTNERS OR
+LITIGATE IN COURT OR ARBITRATE ANY CLAIMS AS A REPRESENTATIVE OR MEMBER OF A
+CLASS OR IN A PRIVATE ATTORNEY GENERAL CAPACITY.
+Arbitration shall proceed in accordance with the following terms:
+         (a)     The exclusive venue for arbitration shall be Dallas, Texas. The Expedited Procedures, the
+Optional Procedures and the Optional Rules set out in AAA's Commercial Dispute Resolution Procedures
+shall not apply to this arbitration. Arbitration shall be governed by the Federal Arbitration Act, 9 U.S.C. §
+1 et seq., notwithstanding any state law provisions to the contrary. Judgment upon any award rendered by
+the arbitration panel may be entered in any court having jurisdiction. The prevailing party is entitled to
+reasonable attorneys’ fees in any court proceeding necessary to enforce or collect any award or judgment
+rendered by the arbitration panel.
+         (b)     Either Party may initiate binding arbitration by notice to the other. The notice must contain
+a statement of the issue(s) to be determined by arbitration. Within thirty (30) days after receipt of a notice,
+the other Party may designate any additional issue(s) for arbitration by notice in reply. Within thirty (30)
+days of the notice, each side must designate a AAA arbitrator. Once each side has designated their
+respective arbitrator, the two arbitrators shall agree upon a third arbitrator chosen from a list of potential
+arbitrators provided by the AAA. In the event that the third arbitrator has a conflict that prevents him/her
+from hearing the matter, then a new arbitrator shall be selected by the remaining two arbitrators.
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                            27
+     (c)      Except as modified herein, the arbitration shall be conducted in accordance with the
+Commercial Arbitration Rules of the AAA.
+         (d)     Limited civil discovery, which shall be governed by the Texas Rules of Civil Procedure,
+shall be permitted for the production of documents only, and no other discovery shall be allowed. If
+discovery is requested by either Party, but the Parties dispute whether such discovery is permitted, within
+thirty (30) days after the request for discovery is made, the Parties shall submit their discovery dispute to
+the arbitration panel who shall enter a limited order concerning such discovery dispute.
+         (e)    The arbitration panel has no authority to award punitive or exemplary damages. The
+panel’s award must be rendered within thirty (30) days following the conclusion of the hearing or
+submission of evidence. The award of the panel shall be in writing and signed by the arbitrators and shall
+be final and binding (subject to corrections for errors to be determined by the arbitrator) without the right
+of appeal.
+         (f)     All evidence submitted in an arbitration proceeding, transcripts of such proceedings, and
+all documents submitted by the Parties in an arbitration proceeding, shall be kept confidential by the
+arbitration panel and the Parties. Each Party must bear its expenses and costs of its own attorneys and
+witnesses, and one-half of the expense and costs of the arbitration panel, unless otherwise decided by the
+panel.
+
+
+                           Article XI – Miscellaneous Provisions
+         1. Trade Secrets & Confidential Information
+
+From time to time, the Managing Partner, Shalehaven Management Company, and/or their Affiliates may
+provide Partners with Confidential Information. No Partner shall (a) use the Confidential Information in
+any way detrimental to the Managing Partner, Shalehaven Management Company, the Partnership, or any
+of their respective Affiliates or for personal or financial gain or (b) reproduce, modify, or reverse-engineer
+any Confidential Information or portion thereof or make the contents thereof available to any third party
+without the prior written consent of the Managing Partner, except (i) to advisors and other professionals
+with a need to know such information; (ii) to such Partner’s beneficial owners and their Affiliates who agree
+to treat such information as confidential; and (iii) to the extent required or requested to do so in accordance
+with applicable law or regulation (in which case such Partner shall promptly notify, if permitted, the
+Managing Partner of its obligation to disclose any Confidential Information). Each Partner shall ensure that
+such Partner’s advisors, other professionals, beneficial owners, and their Affiliates abide by the aforesaid
+provisions and shall be jointly and severally liable for any breach hereof by such third parties. All
+Confidential Information is and shall at all times remain the property of the disclosing party. If for any
+reason a Partner is or may be required to disclose Confidential Information, that Partner shall promptly
+notify the Managing Partner of the relevant facts concerning such disclosure, shall work with the Managing
+Partner to protect from disclosure as much of the Confidential Information as can be protected from
+disclosure under applicable law and shall permit such Partner to intervene in any Proceeding in order to
+protect Confidential Information. Notwithstanding the foregoing, each Partner may disclose to any and all
+Persons without limitation of any kind, the U.S. tax treatment and U.S. tax structure of (a) the Partnership;
+(b) any of its transactions; and (c) all materials of any kind (including opinions or other U.S. tax analyses)
+that are provided to the Partner relating to such U.S. tax treatment and U.S. tax structure. Each such Person
+acknowledges and agrees that in the event of a real or threatened breach by such Person of any of the
+provisions contained herein, the Partnership and each Partner shall be entitled to commence proceedings in
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                           28
+a court of competent jurisdiction located in Dallas, Dallas County, Texas, for and be entitled to obtain
+preliminary and/or permanent injunctive relief and all costs related thereto and other appropriate equitable
+remedies, which rights and remedies shall be in addition to any other rights or remedies to which they may
+be justly entitled at law.
+
+         2. Durable Power of Attorney
+
+By execution of this Agreement, each Unit Holder does hereby irrevocably constitute and appoint the
+Managing Partner such Partner’s true and lawful agent and attorney-in-fact, with full power and authority
+in its name, place and stead, for the purpose of making, executing, acknowledging, swearing to, delivering,
+filing and recording such documents and instruments as may be necessary or appropriate to carry out the
+provisions of this Agreement, including, but not limited to, (i) such amendments to this Agreement and the
+Certificate of Formation as are necessary to effectuate the provisions of this Agreement or to admit to the
+Partnership a substituted or additional Partner pursuant to this Agreement; (ii) such documents and
+instruments as are necessary to cancel the Certificate of Formation upon dissolution and termination; (iii)
+an amended Certificate of Formation reflecting the terms of this Agreement or any amendment hereto, if
+required by the TBOC; (iv) all certificates and other instruments deemed advisable by the Managing Partner
+to permit the Partnership to become or to continue as a limited liability company wherein the Partners have
+limited liability in the jurisdictions where the Partnership may be doing business; (v) all fictitious or
+assumed name certificates required or permitted to be filed on behalf of the Partnership and (vi) all other
+instruments which may be required or permitted by law to be filed on behalf of the Partnership. The
+foregoing power of attorney is coupled with an interest and shall be irrevocable and survive the death,
+dissolution, bankruptcy, incapacity, or death of any Partner. Any schedule, any amendments thereto or any
+amendments to this Agreement, as aforesaid, when prepared by said attorney-in-fact shall be deemed a part
+of this Agreement and incorporated herein by reference, as of the effective date of such schedule,
+amendment thereto or amendment to this Agreement, to the same extent as if attached hereto and
+incorporated herein by this reference on the date hereof.
+
+         3. Governing Law
+
+      This Agreement, and the application or interpretation hereof, shall be governed by its terms, by the
+TBOC and by the laws of the State of Texas without reference to the laws of any other jurisdiction.
+
+         4. Security Election
+
+        The Partnership hereby elects, pursuant to the Texas Business and Commerce Code (“BCC”)
+Section 8-103(c), that each Partnership Interest in the Partnership shall constitute a security governed by
+BCC Article 8.
+
+         5. Further Assurances
+
+        Each Unit Holder hereby agrees to execute such other and further statements of interest and
+holdings, designations, powers of attorney, and other instruments necessary or convenient to comply with
+any laws, rules or regulations.
+
+         6. Construction & Headings
+
+       Whenever the singular number is used in this Agreement and when required by the context, the
+same shall include the plural and vice versa, and each gender shall include all other genders. The headings
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                          29
+in this Agreement are inserted for convenience only and are in no way intended to describe, interpret, define,
+or limit the scope, extent or intent of this Agreement or any provision hereof.
+
+         7. No Waiver
+
+         No waiver of any violation of the provisions of this Agreement shall constitute a waiver of any
+further or other violation. No failure to enforce a right or remedy shall constitute a waiver of that or any
+other right or remedy.
+
+         8. Binding Effect
+
+        Each and all of the covenants, terms, provisions and agreements herein contained shall be binding
+upon and inure to the benefit of the Parties hereto and, to the extent permitted by this Agreement, their
+respective heirs, legal representatives, successors and assigns.
+
+         9. Creditors
+
+        None of the provisions of this Agreement shall be for the benefit of or enforceable by any creditor
+of the Partnership or by any Person not a Party hereto.
+
+         10. Execution & Counterparts
+
+        An electronic signature or an electronic copy of a manual signature to this Agreement or any other
+notice or document regarding the Partnership shall be effective and deemed valid and binding on the Person
+authorizing or transmitting such signature and any Person to whom the signature is attributable, whether or
+not such signature is encrypted or otherwise verified. This Agreement may be executed in counterparts,
+each of which shall be deemed an original but all of which shall constitute one and the same instrument.
+
+         11. Notices & Electronic Delivery
+
+          Each Unit Holder agrees that the Partnership may send information related to the Partnership
+electronically on an unencrypted basis (i) via email to the email address designated by the Unit Holder in
+its Subscription Agreement or subsequently modified in writing by the Unit Holder, (ii) by access to a web
+site that the Partnership designates in an email notice, or (iii) by access to a web site or investor portal that
+the Partnership designates in advance for such purpose. In addition, any notice or document hereunder may
+be sent by hand delivery or by facsimile providing confirmation of receipt or by FedEx or similar courier
+delivery or by USPS CMRRR to the Party entitled to receive such notice or other document at the address
+provided herein for the Partnership or Managing Partner and at the address provided to the Partnership by
+any Unit Holder in its Subscription Agreement for any notice to any Unit Holder, or any such other address
+as such Person may designate in a written notice made in compliance herewith. Such notice or document
+will be deemed received on the earlier of the date actually received, if provided by email, through a web
+site, sent by hand delivery, confirmed facsimile or courier delivery, or three (3) business days after it is
+deposited in the U.S. mail properly addressed and sent by CMRRR. Notice provided in accordance with
+this Section shall be effective notwithstanding anything in the TBOC to the contrary. A Unit Holder may
+withdraw its consent to receipt of information, disclosures or notices via unencrypted email by written
+notice to the Managing Partner.
+
+
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                            30
+         12. Partial Invalidity
+
+        The invalidity or inability to enforce any particular provision of this Agreement shall not affect the
+other provisions hereof, and the Agreement shall be construed in all respects as if such invalid or
+unenforceable provision were omitted. If any particular provision herein is construed to be in conflict with
+the provisions of the TBOC, the provisions of this Agreement shall control to the fullest extent permitted
+by applicable law.
+
+         13. Entire Agreement
+
+        This Agreement and the other agreements referred to herein, including the Management Agreement,
+constitute the entire agreement between the Parties hereto pertaining to the subject matter hereof and fully
+supersedes any and all prior or contemporaneous agreements or understandings between the Parties hereto
+pertaining to the subject matter hereof. Notwithstanding the provisions of this Agreement, it is hereby
+acknowledged and agreed that the Managing Partner on its own behalf or on behalf of the Partnership
+without the approval of any Unit Holder or any other Person may enter into a side letter or similar agreement
+to or with a Unit Holder which has the effect of establishing rights under, or altering or supplementing the
+terms of, this Agreement. The Parties hereto agree that any terms contained in any such side letter or similar
+agreement to or with a Unit Holder will govern with respect to such Unit Holder notwithstanding the
+provisions of this Agreement.
+
+
+This Agreement was adopted effective as of (although not necessarily signed on) January 1, 2025.
+
+
+                                                  MANAGING PARTNER:
+
+
+                                                  SHALEHAVEN PARTNERS 2025 GP LLC
+
+
+                                                  By:
+                                                           Nathan A. Myers, Manager
+
+
+                                                  CLASS B PARTNER:
+
+
+                                                  SHALEHAVEN PARTNERS 2025 B LLC
+
+
+                                                  By:
+                                                           Nathan A. Myers, Manager
+
+
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                           31
+                                        Exhibit A
+                                     Initial Unit Holders
+
+
+                                Effective as of January 1, 2025
+
+
+                                                   Class of       Number of    Initial Subscription
+                                                    Units         Units Held         Amount
+
+ MANAGING PARTNER:
+ SHALEHAVEN PARTNERS 2025 GP LLC
+ 15150 Preston Road                                  N/A              -                 -
+ Suite 300
+ Dallas, Texas 75248
+
+
+ CLASS A UNIT HOLDERS:
+ Investors                                         Class A          TBD               TBD
+
+
+
+ CLASS H1 UNIT HOLDERS:
+ Investors                                         Class H1         TBD               TBD
+
+
+
+ CLASS H2 UNIT HOLDERS:
+ Investors                                         Class H2         TBD               TBD
+
+
+
+ CLASS B UNIT HOLDER:
+ SHALEHAVEN PARTNERS 2025 B LLC
+ 15150 Preston Road                                Class B           100                -
+ Suite 300
+ Dallas, Texas 75248
+
+
+
+
+Limited Partnership Agreement
+Shalehaven Partners 2025 LP                   32
+

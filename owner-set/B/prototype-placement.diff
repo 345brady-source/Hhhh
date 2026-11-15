@@ -1,0 +1,17 @@
+--- /home/user/Hhhh/assets/js/placement.js	2026-11-13 20:52:16.465334792 +0000
++++ proto/assets/js/placement.js	2026-11-13 21:17:22.511908504 +0000
+@@ -1137,9 +1137,12 @@
+               // Blanks to complete in the body are the investor's unless a heading for the firm stands close above them.
+               role = hd.who === 'firm' && hd.strong && own.y - hd.y <= 200 ? 'firm' : 'investor';
+               sure = true;
+-            } else if (named && hd.who !== 'firm') {
+-              // The firm's or the fund's own name stands between this blank and a heading for the investor.
++            } else if (named && (hd.who !== 'firm' || (blocked && named.y > blocked.y))) {
++              // The firm's or the fund's own name stands between this blank and a heading for the investor, or between
++              // this blank and its block's own heading (one the portal does not know): a printed name over a line is the firm's.
+               role = 'firm';
++              // Sure when the name is this block's own: nearer than any other heading and with no other signature line between.
++              sure = (!blocked || named.y > blocked.y) && named.y > hd.y && own.y - named.y <= 90 && !sigBetween(named.y, own.y, own);
+             } else if (blocked && sigBetween(hd.y, blocked.y, own)) {
+               // Another heading starts a new block after that side's signature line: probably the other side.
+               role = hd.who === 'investor' ? 'firm' : 'investor';

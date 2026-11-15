@@ -1,0 +1,40 @@
+{
+ "fields": [
+  {
+   "kind": "signature",
+   "what": "signature",
+   "owner": "firm",
+   "x0": 303.84,
+   "y0": 489,
+   "x1": 540,
+   "y1": 489.5,
+   "label": "GENERAL PARTNER: By",
+   "id": "p1-01",
+   "page": 1,
+   "required": true,
+   "printed_label": "By"
+  },
+  {
+   "kind": "signature",
+   "what": "signature",
+   "owner": "firm",
+   "x0": 303.84,
+   "y0": 620,
+   "x1": 540,
+   "y1": 620.5,
+   "label": "SPECIAL LIMITED PARTNER: By",
+   "id": "p1-02",
+   "page": 1,
+   "required": true,
+   "printed_label": "By"
+  }
+ ],
+ "firm_block": {
+  "pages": [
+   1
+  ]
+ },
+ "investor_signature_block": {
+  "pages": []
+ }
+}

@@ -1,0 +1,79 @@
+{
+ "fields": [
+  {
+   "kind": "signature",
+   "what": "signature",
+   "owner": "firm",
+   "x0": 303.84,
+   "y0": 489,
+   "x1": 540,
+   "y1": 489.5,
+   "label": "GENERAL PARTNER: By",
+   "id": "p1-01",
+   "page": 1,
+   "required": true
+  },
+  {
+   "kind": "blank",
+   "what": "name",
+   "owner": "investor",
+   "x0": 288,
+   "y0": 597,
+   "x1": 540,
+   "y1": 597.5,
+   "label": "name of LIMITED PARTNER:",
+   "id": "p1-02",
+   "page": 1,
+   "required": true
+  },
+  {
+   "kind": "signature",
+   "what": "signature",
+   "owner": "investor",
+   "x0": 303.84,
+   "y0": 642,
+   "x1": 540,
+   "y1": 642.5,
+   "label": "LIMITED PARTNER: By",
+   "id": "p1-03",
+   "page": 1,
+   "required": true
+  },
+  {
+   "kind": "blank",
+   "what": "name",
+   "owner": "investor",
+   "x0": 319.33,
+   "y0": 666,
+   "x1": 540,
+   "y1": 666.5,
+   "label": "LIMITED PARTNER: Name:",
+   "id": "p1-04",
+   "page": 1,
+   "required": true
+  },
+  {
+   "kind": "blank",
+   "what": "title",
+   "owner": "investor",
+   "x0": 313.84,
+   "y0": 690,
+   "x1": 540,
+   "y1": 690.5,
+   "label": "LIMITED PARTNER: Title:",
+   "id": "p1-05",
+   "page": 1,
+   "required": true
+  }
+ ],
+ "firm_block": {
+  "pages": [
+   1
+  ]
+ },
+ "investor_signature_block": {
+  "pages": [
+   1
+  ]
+ }
+}

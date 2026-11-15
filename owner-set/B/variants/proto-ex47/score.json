@@ -1,0 +1,2026 @@
+{
+ "root": "/tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/owner-set/B/proto",
+ "pass": true,
+ "whoOk": true,
+ "ms": 935,
+ "note": "13 pages read. 15 tick boxes, 29 blanks and 3 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on page 11. Your firm’s signature line was found on page 12. Check the fields, move or resize as needed, and add any others. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.",
+ "status": "Ready to save.",
+ "said": [
+  "47 fields were placed, each on a place the agreement prints. Check them, then save.",
+  "Ready to save.",
+  "13 pages read. 15 tick boxes, 29 blanks and 3 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on page 11. Your firm’s signature line was found on page 12. Check the fields, move or resize as needed, and add any others. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here."
+ ],
+ "saveSays": [
+  {
+   "text": "Save subscription agreement",
+   "disabled": false,
+   "title": "",
+   "action": "es-agreement-save"
+  }
+ ],
+ "reviewList": [],
+ "inside": {
+  "read": {
+   "ok": true,
+   "error": "",
+   "pages": 13,
+   "scanned": [],
+   "failed": [],
+   "places": 47,
+   "left": [],
+   "boxes": 15,
+   "blanks": 29,
+   "signatures": 3,
+   "investorPages": [
+    11
+   ],
+   "firmPages": [
+    12
+   ],
+   "firmLeft": 0,
+   "firmLeftPages": [],
+   "pictured": [],
+   "unread": {},
+   "asked": false
+  },
+  "readNote": "13 pages read. 15 tick boxes, 29 blanks and 3 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on page 11. Your firm’s signature line was found on page 12.",
+  "todo": "",
+  "signers": [
+   {
+    "role": "investor",
+    "name": "Investor (each subscriber)",
+    "co": false
+   },
+   {
+    "role": "investor",
+    "name": "Co-investor (if any)",
+    "co": true
+   },
+   {
+    "role": "countersigner",
+    "name": "Kestrel Bay (countersigns)",
+    "co": false
+   }
+  ],
+  "fields": [
+   {
+    "page": 2,
+    "type": "text",
+    "kind": "amount",
+    "label": "Commitment amount",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "amount",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 4,
+    "type": "checkbox",
+    "kind": "checkbox",
+    "label": "I / we certify that none of the above categories apply, and",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 4,
+    "type": "checkbox",
+    "kind": "checkbox",
+    "label": "At the time this order to purchase Interests originated, I /",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 5,
+    "type": "checkbox",
+    "kind": "checkbox",
+    "label": "I / we am / are purchasing the Interest for my / our own acc",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 5,
+    "type": "checkbox",
+    "kind": "checkbox",
+    "label": "I / we did not learn of this offering, or receive any offer",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 5,
+    "type": "checkbox",
+    "kind": "checkbox",
+    "label": "I / we understand and agree that the Interests are subject t",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 5,
+    "type": "text",
+    "kind": "address",
+    "label": "Country of citizenship / organization",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 5,
+    "type": "text",
+    "kind": "address",
+    "label": "Country of primary residence / principal office",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 5,
+    "type": "text",
+    "kind": "address",
+    "label": "Address",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "address",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 6,
+    "type": "checkbox",
+    "kind": "checkbox",
+    "label": "I am a natural person (or a natural person together with my",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 6,
+    "type": "checkbox",
+    "kind": "checkbox",
+    "label": "The Subscriber is a company owned directly or indirectly by",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 6,
+    "type": "checkbox",
+    "kind": "checkbox",
+    "label": "The Subscriber is a trust that was not formed for the specif",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 6,
+    "type": "checkbox",
+    "kind": "checkbox",
+    "label": "The Subscriber is an entity, acting for its own account or t",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 6,
+    "type": "checkbox",
+    "kind": "checkbox",
+    "label": "The Subscriber is an entity each of whose equity owners is a",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 7,
+    "type": "checkbox",
+    "kind": "checkbox",
+    "label": "The Subscriber is an “employee benefit plan” subject to Titl",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 7,
+    "type": "checkbox",
+    "kind": "checkbox",
+    "label": "The Subscriber is a plan, individual retirement account, or",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 7,
+    "type": "checkbox",
+    "kind": "checkbox",
+    "label": "The Subscriber is an entity whose underlying assets are deem",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 7,
+    "type": "checkbox",
+    "kind": "checkbox",
+    "label": "The Subscriber is a governmental, church, or non-U.S. plan s",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 7,
+    "type": "checkbox",
+    "kind": "checkbox",
+    "label": "None of the above apply to the Subscriber",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 7,
+    "type": "text",
+    "kind": "percentage",
+    "label": "If the Subscriber is an entity described above, the percenta",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 9,
+    "type": "text",
+    "kind": "text",
+    "label": "Type of entity",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "entity",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 9,
+    "type": "text",
+    "kind": "text",
+    "label": "Jurisdiction of formation",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "entity",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 9,
+    "type": "text",
+    "kind": "date",
+    "label": "Date of formation",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "entity",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 9,
+    "type": "text",
+    "kind": "taxId",
+    "label": "Taxpayer ID",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "entity",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 9,
+    "type": "text",
+    "kind": "text",
+    "label": "Name and title",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "entity",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "name",
+    "kind": "text",
+    "label": "",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "person",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "signature",
+    "kind": "signature",
+    "label": "",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "person",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "date",
+    "kind": "date",
+    "label": "",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "person",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "text",
+    "kind": "taxId",
+    "label": "Taxpayer ID",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "person",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "text",
+    "kind": "address",
+    "label": "Address",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "person",
+    "prefill": "address",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "text",
+    "kind": "email",
+    "label": "Email",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "person",
+    "prefill": "email",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "text",
+    "kind": "phone",
+    "label": "Phone",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "person",
+    "prefill": "phone",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "text",
+    "kind": "text",
+    "label": "Investor name",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "entity",
+    "prefill": "investorName",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "signature",
+    "kind": "signature",
+    "label": "",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "entity",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "name",
+    "kind": "text",
+    "label": "",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "entity",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "text",
+    "kind": "text",
+    "label": "Title",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "entity",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "date",
+    "kind": "date",
+    "label": "",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "entity",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "text",
+    "kind": "taxId",
+    "label": "Taxpayer ID",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "entity",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "text",
+    "kind": "address",
+    "label": "Address",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "entity",
+    "prefill": "address",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "text",
+    "kind": "email",
+    "label": "Email",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "entity",
+    "prefill": "email",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 11,
+    "type": "text",
+    "kind": "phone",
+    "label": "Phone",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "entity",
+    "prefill": "phone",
+    "printed": "",
+    "second": false,
+    "role": "investor"
+   },
+   {
+    "page": 12,
+    "type": "text",
+    "kind": "amount",
+    "label": "Commitment amount",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "amount",
+    "printed": "$",
+    "second": false,
+    "role": "firm"
+   },
+   {
+    "page": 12,
+    "type": "signature",
+    "kind": "signature",
+    "label": "",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "firm"
+   },
+   {
+    "page": 12,
+    "type": "name",
+    "kind": "text",
+    "label": "",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "firm"
+   },
+   {
+    "page": 12,
+    "type": "text",
+    "kind": "text",
+    "label": "Title",
+    "required": false,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "firm"
+   },
+   {
+    "page": 12,
+    "type": "date",
+    "kind": "date",
+    "label": "",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "firm"
+   },
+   {
+    "page": 12,
+    "type": "text",
+    "kind": "date",
+    "label": "Effective Date of Admission",
+    "required": true,
+    "review": false,
+    "reviewReason": "",
+    "confidence": "high",
+    "forType": "",
+    "prefill": "",
+    "printed": "",
+    "second": false,
+    "role": "firm"
+   }
+  ]
+ },
+ "total": {
+  "places": 47,
+  "fields": 47,
+  "found": 47,
+  "missed": [],
+  "strays": [],
+  "kindDiff": [],
+  "ownerDiff": [],
+  "marked": [],
+  "overlaps": [],
+  "pairs": [
+   {
+    "place": "p2-01",
+    "page": 2,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount",
+    "box": [
+     206.8,
+     180.1,
+     467.3,
+     192.6
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 12.5
+    }
+   },
+   {
+    "place": "p4-02",
+    "page": 4,
+    "kind": "checkbox",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "I / we certify that none of the above categories apply, and",
+    "box": [
+     71.1,
+     586.6,
+     81.4,
+     596.1
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 9.5
+    }
+   },
+   {
+    "place": "p4-03",
+    "page": 4,
+    "kind": "checkbox",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "At the time this order to purchase Interests originated, I /",
+    "box": [
+     71.1,
+     652.5,
+     81.4,
+     662
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 9.5
+    }
+   },
+   {
+    "place": "p5-04",
+    "page": 5,
+    "kind": "checkbox",
+    "owner": "investor",
+    "signer": "my / our own acc for Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "I / we am / are purchasing the Interest",
+    "box": [
+     71.1,
+     75,
+     81.4,
+     84.5
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 9.5
+    }
+   },
+   {
+    "place": "p5-05",
+    "page": 5,
+    "kind": "checkbox",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "I / we did not learn of this offering, or receive any offer",
+    "box": [
+     71.1,
+     123.4,
+     81.4,
+     132.9
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 9.5
+    }
+   },
+   {
+    "place": "p5-06",
+    "page": 5,
+    "kind": "checkbox",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "I / we understand and agree that the Interests are subject t",
+    "box": [
+     71.1,
+     158,
+     81.4,
+     167.5
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 9.5
+    }
+   },
+   {
+    "place": "p5-07",
+    "page": 5,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Country of citizenship / organization",
+    "box": [
+     71.1,
+     278.4,
+     331.6,
+     290.8
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 12.3
+    }
+   },
+   {
+    "place": "p5-08",
+    "page": 5,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Country of primary residence / principal office",
+    "box": [
+     71.1,
+     314.1,
+     331.6,
+     326.5
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 12.3
+    }
+   },
+   {
+    "place": "p5-09",
+    "page": 5,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Address",
+    "box": [
+     71.1,
+     349.8,
+     331.6,
+     362.2
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 12.3
+    }
+   },
+   {
+    "place": "p6-10",
+    "page": 6,
+    "kind": "checkbox",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "I am a natural person (or a natural person together with my",
+    "box": [
+     71.1,
+     164.8,
+     81.4,
+     174.3
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 9.5
+    }
+   },
+   {
+    "place": "p6-11",
+    "page": 6,
+    "kind": "checkbox",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "The Subscriber is a company owned directly or indirectly by",
+    "box": [
+     71.1,
+     213.2,
+     81.4,
+     222.7
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 9.5
+    }
+   },
+   {
+    "place": "p6-12",
+    "page": 6,
+    "kind": "checkbox",
+    "owner": "investor",
+    "signer": "the specif for Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "The Subscriber is a trust that was not formed",
+    "box": [
+     71.1,
+     261.6,
+     81.4,
+     271.1
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 9.5
+    }
+   },
+   {
+    "place": "p6-13",
+    "page": 6,
+    "kind": "checkbox",
+    "owner": "investor",
+    "signer": "its own account or t for Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "The Subscriber is an entity, acting",
+    "box": [
+     71.1,
+     310,
+     81.4,
+     319.5
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 9.5
+    }
+   },
+   {
+    "place": "p6-14",
+    "page": 6,
+    "kind": "checkbox",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "The Subscriber is an entity each of whose equity owners is a",
+    "box": [
+     71.1,
+     344.6,
+     81.4,
+     354.1
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 9.5
+    }
+   },
+   {
+    "place": "p7-15",
+    "page": 7,
+    "kind": "checkbox",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "The Subscriber is an “employee benefit plan” subject to Titl",
+    "box": [
+     71.1,
+     141.4,
+     81.4,
+     150.9
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 9.5
+    }
+   },
+   {
+    "place": "p7-16",
+    "page": 7,
+    "kind": "checkbox",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "The Subscriber is a plan, individual retirement account, or",
+    "box": [
+     71.1,
+     162.2,
+     81.4,
+     171.7
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 9.5
+    }
+   },
+   {
+    "place": "p7-17",
+    "page": 7,
+    "kind": "checkbox",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "The Subscriber is an entity whose underlying assets are deem",
+    "box": [
+     71.1,
+     196.8,
+     81.4,
+     206.3
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 9.5
+    }
+   },
+   {
+    "place": "p7-18",
+    "page": 7,
+    "kind": "checkbox",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "The Subscriber is a governmental, church, or non-U.S. plan s",
+    "box": [
+     71.1,
+     245.2,
+     81.4,
+     254.7
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 9.5
+    }
+   },
+   {
+    "place": "p7-19",
+    "page": 7,
+    "kind": "checkbox",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "None of the above apply to the Subscriber",
+    "box": [
+     71.1,
+     293.6,
+     81.4,
+     303.1
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 9.5
+    }
+   },
+   {
+    "place": "p7-20",
+    "page": 7,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "If the Subscriber is an entity described above, the percenta",
+    "box": [
+     269.5,
+     341.4,
+     530,
+     353.9
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 12.5
+    }
+   },
+   {
+    "place": "p9-21",
+    "page": 9,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Type of entity",
+    "box": [
+     71.1,
+     114.9,
+     331.6,
+     127.3
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 12.3
+    }
+   },
+   {
+    "place": "p9-22",
+    "page": 9,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Jurisdiction of formation",
+    "box": [
+     232.4,
+     134.2,
+     492.9,
+     150.2
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p9-23",
+    "page": 9,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Date of formation",
+    "box": [
+     188.7,
+     157.1,
+     449.2,
+     173.1
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p9-24",
+    "page": 9,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Taxpayer ID",
+    "box": [
+     71.1,
+     196.5,
+     331.6,
+     208.9
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 12.3
+    }
+   },
+   {
+    "place": "p9-25",
+    "page": 9,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Name and title",
+    "box": [
+     71.1,
+     232.2,
+     331.6,
+     244.6
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 12.3
+    }
+   },
+   {
+    "place": "p11-26",
+    "page": 11,
+    "kind": "name",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Name",
+    "box": [
+     149.9,
+     128.8,
+     410.4,
+     144.8
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p11-27",
+    "page": 11,
+    "kind": "signature",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Signature",
+    "box": [
+     139.8,
+     146.3,
+     400.3,
+     167.8
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 21.5
+    }
+   },
+   {
+    "place": "p11-28",
+    "page": 11,
+    "kind": "date",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "Date signed",
+    "box": [
+     107.7,
+     174.7,
+     368.2,
+     190.7
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p11-29",
+    "page": 11,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Taxpayer ID",
+    "box": [
+     225.3,
+     197.6,
+     485.8,
+     213.7
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p11-30",
+    "page": 11,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Address",
+    "box": [
+     128.1,
+     220.6,
+     388.6,
+     236.6
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p11-31",
+    "page": 11,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Email",
+    "box": [
+     167.4,
+     243.5,
+     427.9,
+     259.6
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p11-32",
+    "page": 11,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Phone",
+    "box": [
+     171.6,
+     266.5,
+     432.1,
+     282.5
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p11-33",
+    "page": 11,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Investor name",
+    "box": [
+     155.7,
+     351.3,
+     416.2,
+     367.3
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p11-34",
+    "page": 11,
+    "kind": "signature",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Signature",
+    "box": [
+     94.7,
+     368.8,
+     355.2,
+     390.3
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 21.5
+    }
+   },
+   {
+    "place": "p11-35",
+    "page": 11,
+    "kind": "name",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Name",
+    "box": [
+     114.8,
+     397.2,
+     375.3,
+     413.2
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p11-36",
+    "page": 11,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "Title",
+    "box": [
+     107.6,
+     420.2,
+     368.1,
+     436.2
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p11-37",
+    "page": 11,
+    "kind": "date",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": false,
+    "review": false,
+    "label": "Date signed",
+    "box": [
+     107.7,
+     443.1,
+     368.2,
+     459.1
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p11-38",
+    "page": 11,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Taxpayer ID",
+    "box": [
+     71.1,
+     482.5,
+     331.6,
+     494.9
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 12.3
+    }
+   },
+   {
+    "place": "p11-39",
+    "page": 11,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Address",
+    "box": [
+     128.1,
+     501.8,
+     388.6,
+     517.8
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p11-40",
+    "page": 11,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Email",
+    "box": [
+     167.4,
+     524.7,
+     427.9,
+     540.8
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p11-41",
+    "page": 11,
+    "kind": "text",
+    "owner": "investor",
+    "signer": "Investor (each subscriber)",
+    "required": true,
+    "review": false,
+    "label": "Phone",
+    "box": [
+     171.6,
+     547.7,
+     432.1,
+     563.7
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p12-42",
+    "page": 12,
+    "kind": "text",
+    "owner": "firm",
+    "signer": "Kestrel Bay (countersigns)",
+    "required": false,
+    "review": false,
+    "label": "Commitment amount",
+    "box": [
+     79.1,
+     129.4,
+     161.6,
+     142.8
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 13.4
+    }
+   },
+   {
+    "place": "p12-43",
+    "page": 12,
+    "kind": "signature",
+    "owner": "firm",
+    "signer": "Kestrel Bay (countersigns)",
+    "required": true,
+    "review": false,
+    "label": "Signature",
+    "box": [
+     94.7,
+     199.1,
+     355.2,
+     221.6
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 22.5
+    }
+   },
+   {
+    "place": "p12-44",
+    "page": 12,
+    "kind": "name",
+    "owner": "firm",
+    "signer": "Kestrel Bay (countersigns)",
+    "required": true,
+    "review": false,
+    "label": "Name",
+    "box": [
+     114.8,
+     228.5,
+     375.3,
+     244.6
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p12-45",
+    "page": 12,
+    "kind": "text",
+    "owner": "firm",
+    "signer": "Kestrel Bay (countersigns)",
+    "required": false,
+    "review": false,
+    "label": "Title",
+    "box": [
+     107.6,
+     251.5,
+     368.1,
+     267.5
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p12-46",
+    "page": 12,
+    "kind": "date",
+    "owner": "firm",
+    "signer": "Kestrel Bay (countersigns)",
+    "required": false,
+    "review": false,
+    "label": "Date signed",
+    "box": [
+     198,
+     274.5,
+     458.5,
+     290.5
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   },
+   {
+    "place": "p12-47",
+    "page": 12,
+    "kind": "text",
+    "owner": "firm",
+    "signer": "Kestrel Bay (countersigns)",
+    "required": true,
+    "review": false,
+    "label": "Effective Date of Admission",
+    "box": [
+     249,
+     297.4,
+     509.5,
+     313.4
+    ],
+    "edges": {
+     "left": 0,
+     "right": 0,
+     "bottom": 0,
+     "top": 0,
+     "height": 16
+    }
+   }
+  ]
+ },
+ "per": {
+  "1": {
+   "page": 1,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "2": {
+   "page": 2,
+   "places": 1,
+   "fields": 1,
+   "found": 1,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "3": {
+   "page": 3,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "4": {
+   "page": 4,
+   "places": 2,
+   "fields": 2,
+   "found": 2,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "5": {
+   "page": 5,
+   "places": 6,
+   "fields": 6,
+   "found": 6,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "6": {
+   "page": 6,
+   "places": 5,
+   "fields": 5,
+   "found": 5,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "7": {
+   "page": 7,
+   "places": 6,
+   "fields": 6,
+   "found": 6,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "8": {
+   "page": 8,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "9": {
+   "page": 9,
+   "places": 5,
+   "fields": 5,
+   "found": 5,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "10": {
+   "page": 10,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "11": {
+   "page": 11,
+   "places": 16,
+   "fields": 16,
+   "found": 16,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "12": {
+   "page": 12,
+   "places": 6,
+   "fields": 6,
+   "found": 6,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  },
+  "13": {
+   "page": 13,
+   "places": 0,
+   "fields": 0,
+   "found": 0,
+   "missed": [],
+   "strays": [],
+   "kindDiff": [],
+   "ownerDiff": [],
+   "marked": [],
+   "overlaps": []
+  }
+ },
+ "errors": []
+}

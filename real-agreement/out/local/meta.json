@@ -1,0 +1,68 @@
+{
+ "took": 2515,
+ "mode": "draft opened in the field editor",
+ "todo": "Confirm or move the 8 fields marked for review.",
+ "marks": 8,
+ "toasts": [
+  "48 fields were placed for you from the blanks in the PDF. Those marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.",
+  "Confirm or move the 8 fields marked for review.",
+  "8 fields need your review before investors can sign.",
+  "8 fields need your review before investors can sign."
+ ],
+ "sizes": [
+  {
+   "w": 612,
+   "h": 792
+  },
+  {
+   "w": 612,
+   "h": 792
+  },
+  {
+   "w": 612,
+   "h": 792
+  },
+  {
+   "w": 612,
+   "h": 792
+  },
+  {
+   "w": 612,
+   "h": 792
+  },
+  {
+   "w": 612,
+   "h": 792
+  },
+  {
+   "w": 612,
+   "h": 792
+  },
+  {
+   "w": 612,
+   "h": 792
+  },
+  {
+   "w": 612,
+   "h": 792
+  },
+  {
+   "w": 612,
+   "h": 792
+  },
+  {
+   "w": 612,
+   "h": 792
+  },
+  {
+   "w": 612,
+   "h": 792
+  },
+  {
+   "w": 612,
+   "h": 792
+  }
+ ],
+ "hasWorkerGlobal": true,
+ "workerSrc": "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"
+}

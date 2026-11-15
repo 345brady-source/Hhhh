@@ -1,0 +1,239 @@
+{
+ "about": "Places nobody completes on the scan set, recorded by looking at the pictures of plans 01.2-05 and 01.2-06 (points from the page's top left; kind of place only). A field lying mostly (80 % of its area) inside one is a fault; a region marked 'whole' counts only a field that also covers half of it (a cell of a table taken for one box: the lines inside it are places).",
+ "binder": {
+  "7": [
+   [
+    92.8,
+    99.8,
+    529,
+    115.3,
+    "table top edge"
+   ],
+   [
+    100.3,
+    346.8,
+    123.6,
+    362.3,
+    "edge of a ticked box"
+   ],
+   [
+    450,
+    185.1,
+    483.3,
+    200.6,
+    "piece at a line's end"
+   ],
+   [
+    491.3,
+    185.1,
+    521.8,
+    200.6,
+    "piece at a line's end"
+   ],
+   [
+    415.7,
+    239.4,
+    464.8,
+    250.6,
+    "piece at a line's end"
+   ],
+   [
+    472.8,
+    239.4,
+    519.6,
+    250.6,
+    "piece at a line's end"
+   ],
+   [
+    203.8,
+    516.9,
+    303.5,
+    532.4,
+    "piece at a line's end"
+   ],
+   [
+    314.2,
+    441.1,
+    529.2,
+    623.4,
+    "table cell taken for one box",
+    "whole"
+   ]
+  ],
+  "9": [
+   [
+    83,
+    688.9,
+    225.2,
+    699.4,
+    "footnote rule"
+   ]
+  ],
+  "14": [
+   [
+    75.0,
+    152.6,
+    300.0,
+    165.8,
+    "table edge"
+   ],
+   [
+    306.0,
+    152.6,
+    540.1,
+    165.8,
+    "table edge"
+   ]
+  ],
+  "15": [
+   [
+    80.8,
+    172.3,
+    323.2,
+    183.5,
+    "table edge"
+   ],
+   [
+    83.8,
+    637.8,
+    545,
+    708.1,
+    "table cell taken for one box",
+    "whole"
+   ]
+  ],
+  "25": [
+   [
+    100.8,
+    425.3,
+    120.3,
+    440.8,
+    "edge of a ticked box"
+   ]
+  ],
+  "26": [
+   [
+    96.2,
+    97.3,
+    115.5,
+    112.8,
+    "edge of a ticked box"
+   ]
+  ],
+  "29": [
+   [
+    81.3,
+    117.1,
+    101.8,
+    132.6,
+    "edge of a ticked box"
+   ]
+  ],
+  "30": [
+   [
+    82.3,
+    544.6,
+    102.5,
+    560.1,
+    "edge of a ticked box"
+   ]
+  ],
+  "33": [
+   [
+    81.6,
+    645.2,
+    222.8,
+    660.7,
+    "footnote rule"
+   ]
+  ],
+  "35": [
+   [
+    86.8,
+    682.8,
+    228.3,
+    698.3,
+    "footnote rule"
+   ]
+  ],
+  "38": [
+   [
+    196.8,
+    237.4,
+    302.9,
+    252.9,
+    "piece at a line's end"
+   ]
+  ],
+  "60": [
+   [
+    501.4,
+    562.5,
+    532.4,
+    578,
+    "piece at a line's end"
+   ]
+  ],
+  "63": [
+   [
+    237.4,
+    340.1,
+    305.1,
+    355.6,
+    "piece at a line's end"
+   ],
+   [
+    475.7,
+    487.8,
+    535.7,
+    503.3,
+    "piece at a line's end"
+   ]
+  ],
+  "65": [
+   [
+    239.3,
+    513.4,
+    304.6,
+    528.9,
+    "piece at a line's end"
+   ]
+  ],
+  "70": [
+   [
+    365,
+    141.4,
+    398.4,
+    156.9,
+    "table edge"
+   ],
+   [
+    196.5,
+    141.7,
+    243.2,
+    157.2,
+    "table edge"
+   ]
+  ]
+ },
+ "booklet": {
+  "41": [
+   [
+    312.2,
+    493.7,
+    515.1,
+    504.8,
+    "date line already answered"
+   ]
+  ],
+  "43": [
+   [
+    312.2,
+    493.7,
+    515.1,
+    504.8,
+    "date line already answered"
+   ]
+  ]
+ }
+}

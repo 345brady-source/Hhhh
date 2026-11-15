@@ -1,0 +1,43 @@
+--- /home/user/Hhhh/assets/js/placement.js	2026-11-13 20:52:16.465334792 +0000
++++ exp-root/assets/js/placement.js	2026-11-13 21:20:25.614792352 +0000
+@@ -646,7 +646,7 @@
+       let best = null;
+       L.segs.forEach((g) => {
+         const d = s.y - g.y;
+-        if (d < 0.3 * g.h || d > Math.max(2.2 * g.h, 16)) return;
++        if (d < 0.3 * g.h || d > Math.max((/[:\uFF1A]\s*$/.test(g.s) ? 3.3 : 2.2) * g.h, 16)) return;
+         if (!(overlap(g.x0, g.x1, s.x0, s.x1) >= 0.5 * Math.min(g.x1 - g.x0, s.x1 - s.x0))) return;
+         if (!best || g.y > best.y) best = g;
+       });
+@@ -905,15 +905,19 @@
+       const caps = (nCap > 0 || splitCaps) && (nCap > nTop || (nCap === nTop && !(headed && !footed)) || (splitCaps && nCap >= nTop));
+       const sure = caps ? nCap > nTop && nCap === st.length : false;
+       st.forEach((s, i) => {
+-        const info = caps ? capInfo[i] || capAny(s, below[i]) : topInfo[i];
+-        const seg = caps ? below[i] : above[i];
++        let info = caps ? capInfo[i] || capAny(s, below[i]) : topInfo[i];
++        let seg = caps ? below[i] : above[i];
++        // experiment: in a column of captions, a line with nothing under it and a label ending in a colon right above it, set where the line starts
++        let own = false;
++        if (caps && !info && !below[i] && topInfo[i] && topInfo[i].colon && above[i] && !above[i].used && Math.abs(above[i].x0 - s.x0) <= 12) { info = topInfo[i]; seg = above[i]; own = true; }
+         // Any other text under a rule (a heading, a page number, a footnote) means the rule is not a blank.
+         if (!info || !seg || seg.used) return;
+-        seg.used = caps ? 'caption' : 'above';
++        seg.used = caps && !own ? 'caption' : 'above';
+         if (info.kind === 'skip') return second(s, info, seg);
+         // The same caption a second time on one shared line (a second "Signature of Subscriber") is a second signer's.
+         if (caps && s.split && ['signature', 'name', 'date', 'taxId', 'investorName'].indexOf(info.kind) >= 0 && L.slots.some((o) => o !== s && o.split === s.split && o.x0 < s.x0 && o.made && o.made.kind === info.kind)) return second(s, Object.assign({}, info, { text: seg.s, co: true }), seg);
+-        const m = info.any ? generic(s, info, seg) : propose(info.kind, s, info, { seg, how: caps ? 'after' : 'above' });
++        const m = info.any ? generic(s, info, seg) : propose(info.kind, s, info, { seg, how: caps && !own ? 'after' : 'above' });
++        if (own) return;
+         // A label that ends in a colon and starts where its blank starts, with no caption anywhere in the stack, is plain.
+         const plainAbove = !caps && !nCap && info.colon && Math.abs(seg.x0 - s.x0) <= 12;
+         if (!caps && !plainAbove) weaken(m, st.length > 1 && nCap === nTop ? WHY.between : WHY.above);
+@@ -1184,6 +1188,7 @@
+       if (m.block && !sure) weaken(m, m.aboveSig ? WHY.aboveSig : WHY.who);
+       m.who = m.who || (sure ? role : '');
+     });
++    try { (window.__dbg = window.__dbg || {})[pg.page] = { rightEdge, leftEdge, bodyH, slots: L.slots.map((s) => ({ x0: Math.round(s.x0), x1: Math.round(s.x1), y: Math.round(s.y * 10) / 10, clear: s.clear, made: !!s.made, kind: s.made ? s.made.kind : '', skip: !!s.skip, cell: !!s.cell, table: !!s.table, fromText: !!s.fromText, split: !!s.split })), segs: L.segs.filter((g) => g.y > 300 && g.y < 420).map((g) => ({ s: g.s.slice(0, 50), x0: Math.round(g.x0), x1: Math.round(g.x1), y: Math.round(g.y * 10) / 10, h: Math.round(g.h * 10) / 10, used: g.used || '' })) }; } catch (e) {}
+     made.forEach((m) => out.push(m.p));
+   }
+ 

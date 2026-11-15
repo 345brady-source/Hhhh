@@ -1,0 +1,158 @@
+{
+ "nothing-read": [
+  {
+   "page": 13,
+   "type": "signature",
+   "role": "investor",
+   "x0": 61.2,
+   "x1": 241.2,
+   "top": 522.7,
+   "bottom": 564.7,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs."
+  },
+  {
+   "page": 13,
+   "type": "date",
+   "role": "investor",
+   "x0": 379.4,
+   "x1": 489.4,
+   "top": 538.6,
+   "bottom": 558.6,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs."
+  },
+  {
+   "page": 13,
+   "type": "name",
+   "role": "investor",
+   "x0": 61.2,
+   "x1": 231.2,
+   "top": 578.2,
+   "bottom": 598.2,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs."
+  },
+  {
+   "page": 13,
+   "type": "signature",
+   "role": "firm",
+   "x0": 61.2,
+   "x1": 241.2,
+   "top": 649.4,
+   "bottom": 691.4,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs."
+  },
+  {
+   "page": 13,
+   "type": "date",
+   "role": "firm",
+   "x0": 379.4,
+   "x1": 489.4,
+   "top": 665.3,
+   "bottom": 685.3,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs."
+  },
+  {
+   "page": 13,
+   "type": "name",
+   "role": "firm",
+   "x0": 61.2,
+   "x1": 231.2,
+   "top": 704.9,
+   "bottom": 724.9,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs."
+  }
+ ],
+ "no-acceptance-page (pages 1-11)": [
+  {
+   "page": 11,
+   "type": "signature",
+   "role": "firm",
+   "x0": 61.2,
+   "x1": 241.2,
+   "top": 649.4,
+   "bottom": 691.4,
+   "why": "No line for your firm’s countersignature could be read in this PDF, so this was placed on the last page. Move it to where it belongs."
+  },
+  {
+   "page": 11,
+   "type": "date",
+   "role": "firm",
+   "x0": 379.4,
+   "x1": 489.4,
+   "top": 665.3,
+   "bottom": 685.3,
+   "why": "No line for your firm’s countersignature could be read in this PDF, so this was placed on the last page. Move it to where it belongs."
+  },
+  {
+   "page": 11,
+   "type": "name",
+   "role": "firm",
+   "x0": 61.2,
+   "x1": 231.2,
+   "top": 704.9,
+   "bottom": 724.9,
+   "why": "No line for your firm’s countersignature could be read in this PDF, so this was placed on the last page. Move it to where it belongs."
+  }
+ ],
+ "no-signature-pages (pages 1-4)": [
+  {
+   "page": 4,
+   "type": "signature",
+   "role": "firm",
+   "x0": 61.2,
+   "x1": 241.2,
+   "top": 269.3,
+   "bottom": 311.3,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs."
+  },
+  {
+   "page": 4,
+   "type": "date",
+   "role": "firm",
+   "x0": 379.4,
+   "x1": 489.4,
+   "top": 285.1,
+   "bottom": 305.1,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs."
+  },
+  {
+   "page": 4,
+   "type": "name",
+   "role": "firm",
+   "x0": 61.2,
+   "x1": 231.2,
+   "top": 324.7,
+   "bottom": 344.7,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs."
+  },
+  {
+   "page": 4,
+   "type": "signature",
+   "role": "investor",
+   "x0": 61.2,
+   "x1": 241.2,
+   "top": 396,
+   "bottom": 438,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs."
+  },
+  {
+   "page": 4,
+   "type": "date",
+   "role": "investor",
+   "x0": 379.4,
+   "x1": 489.4,
+   "top": 411.8,
+   "bottom": 431.8,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs."
+  },
+  {
+   "page": 4,
+   "type": "name",
+   "role": "investor",
+   "x0": 61.2,
+   "x1": 231.2,
+   "top": 451.4,
+   "bottom": 471.4,
+   "why": "No signature line could be read in this PDF, so this was placed at the foot of the last page. Move it to where it belongs."
+  }
+ ]
+}

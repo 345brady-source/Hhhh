@@ -103,40 +103,18 @@
  "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
  "signing": {
   "investor_pages": [
-   14
+   13,
+   14,
+   15
   ],
   "firm_pages": [
    15
   ],
   "co_investor": false,
   "third_parties": [],
-  "kind": ""
+  "kind": "investor signs the subscription signature page (p14) and both operating agreement signature page copies (p15); the company and its investment manager accept (p15-16); entities also complete supplemental data and the authorized signatories table (p13-14)"
  },
  "counts_per_page": {
-  "1": {
-   "total": 3,
-   "tickbox": 0,
-   "initials": 0,
-   "blank": 3,
-   "signature": 0,
-   "date": 0
-  },
-  "4": {
-   "total": 1,
-   "tickbox": 0,
-   "initials": 0,
-   "blank": 1,
-   "signature": 0,
-   "date": 0
-  },
-  "7": {
-   "total": 1,
-   "tickbox": 0,
-   "initials": 0,
-   "blank": 1,
-   "signature": 0,
-   "date": 0
-  },
   "8": {
    "total": 2,
    "tickbox": 0,
@@ -162,42 +140,42 @@
    "date": 0
   },
   "11": {
-   "total": 5,
+   "total": 4,
    "tickbox": 0,
    "initials": 4,
-   "blank": 1,
+   "blank": 0,
    "signature": 0,
    "date": 0
   },
   "12": {
-   "total": 4,
+   "total": 3,
    "tickbox": 0,
    "initials": 3,
-   "blank": 1,
+   "blank": 0,
    "signature": 0,
    "date": 0
   },
   "13": {
    "total": 21,
-   "tickbox": 0,
-   "initials": 4,
-   "blank": 17,
-   "signature": 0,
+   "tickbox": 8,
+   "initials": 0,
+   "blank": 8,
+   "signature": 5,
    "date": 0
   },
   "14": {
-   "total": 24,
+   "total": 25,
    "tickbox": 0,
    "initials": 0,
-   "blank": 23,
-   "signature": 1,
-   "date": 0
+   "blank": 20,
+   "signature": 4,
+   "date": 1
   },
   "15": {
-   "total": 9,
+   "total": 15,
    "tickbox": 0,
    "initials": 0,
-   "blank": 0,
+   "blank": 6,
    "signature": 5,
    "date": 4
   },
@@ -205,23 +183,24 @@
    "total": 1,
    "tickbox": 0,
    "initials": 0,
-   "blank": 1,
+   "blank": 0,
    "signature": 0,
-   "date": 0
+   "date": 1
   }
  },
  "counts_total": {
   "total": 82,
-  "tickbox": 0,
-  "initials": 24,
-  "blank": 48,
-  "signature": 6,
-  "date": 4
+  "tickbox": 8,
+  "initials": 20,
+  "blank": 34,
+  "signature": 14,
+  "date": 6
  },
  "counts_by_owner": {
-  "firm": 7,
-  "investor": 61,
-  "investor-entity": 14
+  "firm": 12,
+  "investor": 23,
+  "investor-entity": 39,
+  "investor-individual": 8
  },
  "sure_per_page": {
   "1": "draft",
@@ -231,191 +210,44 @@
   "5": "draft",
   "6": "draft",
   "7": "draft",
-  "8": "draft",
-  "9": "draft",
-  "10": "draft",
-  "11": "draft",
-  "12": "draft",
-  "13": "draft",
-  "14": "draft",
-  "15": "draft",
-  "16": "draft",
+  "8": "sure",
+  "9": "sure",
+  "10": "sure",
+  "11": "sure",
+  "12": "sure",
+  "13": "sure; signatory rows are hyphen lines",
+  "14": "sure",
+  "15": "sure; Name and Title under the company signatures have no line",
+  "16": "sure",
   "17": "draft",
   "18": "draft"
  },
- "not_fields": {},
+ "not_fields": {
+  "1": [
+   "cover page hyphen rules around the booklet title and under the exhibit label"
+  ],
+  "4": [
+   "footnote separator rule"
+  ],
+  "7": [
+   "footnote separator rule"
+  ],
+  "11": [
+   "footnote separator rule"
+  ],
+  "12": [
+   "footnote separator rule"
+  ]
+ },
  "places": [
-  {
-   "id": "p01-001",
-   "page": 1,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
-   "must": false,
-   "x0": 444.7,
-   "y0": 144.9,
-   "x1": 497.5,
-   "y1": 160.4,
-   "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
-   "prefill": {
-    "origin": "candidate",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      444.7,
-      144.9,
-      497.5,
-      160.4
-     ]
-    }
-   },
-   "what": "text"
-  },
-  {
-   "id": "p01-002",
-   "page": 1,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
-   "must": false,
-   "x0": 180.5,
-   "y0": 347.4,
-   "x1": 356.6,
-   "y1": 362.9,
-   "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
-   "prefill": {
-    "origin": "candidate",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      180.5,
-      347.4,
-      356.6,
-      362.9
-     ]
-    }
-   },
-   "what": "text"
-  },
-  {
-   "id": "p01-003",
-   "page": 1,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
-   "must": false,
-   "x0": 180.5,
-   "y0": 414.9,
-   "x1": 356.6,
-   "y1": 430.4,
-   "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
-   "prefill": {
-    "origin": "candidate",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      180.5,
-      414.9,
-      356.6,
-      430.4
-     ]
-    }
-   },
-   "what": "text"
-  },
-  {
-   "id": "p04-001",
-   "page": 4,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "1] At the time that the Company transmits the final material",
-   "printed_label": "[1] At the time that the",
-   "must": false,
-   "x0": 33.7,
-   "y0": 70.0,
-   "x1": 192.2,
-   "y1": 85.5,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "1] At the time that the Company transmits the final material",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      33.7,
-      70.0,
-      192.2,
-      85.5
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
-   "id": "p07-001",
-   "page": 7,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Text",
-   "printed_label": "",
-   "must": false,
-   "x0": 33.7,
-   "y0": 160.0,
-   "x1": 221.6,
-   "y1": 175.5,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Text",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      33.7,
-      160.0,
-      221.6,
-      175.5
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
-  },
   {
    "id": "p08-001",
    "page": 8,
    "kind": "initials",
-   "owner": "investor",
-   "label": "1.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-individual",
+   "label": "Individual Part I (accredited investor) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 677.5,
    "x1": 115.9,
@@ -444,10 +276,10 @@
    "id": "p08-002",
    "page": 8,
    "kind": "initials",
-   "owner": "investor",
-   "label": "2.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-individual",
+   "label": "Individual Part I (accredited investor) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 745.0,
    "x1": 115.9,
@@ -476,10 +308,10 @@
    "id": "p09-001",
    "page": 9,
    "kind": "initials",
-   "owner": "investor",
-   "label": "3.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-individual",
+   "label": "Individual Part I (accredited investor) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 92.5,
    "x1": 115.9,
@@ -508,10 +340,10 @@
    "id": "p09-002",
    "page": 9,
    "kind": "initials",
-   "owner": "investor",
-   "label": "4.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-individual",
+   "label": "Individual Part I (accredited investor) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 137.5,
    "x1": 115.9,
@@ -540,10 +372,10 @@
    "id": "p09-003",
    "page": 9,
    "kind": "initials",
-   "owner": "investor",
-   "label": "1.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-individual",
+   "label": "Individual Part II (qualified client) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 295.0,
    "x1": 115.9,
@@ -572,10 +404,10 @@
    "id": "p09-004",
    "page": 9,
    "kind": "initials",
-   "owner": "investor",
-   "label": "2.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-individual",
+   "label": "Individual Part II (qualified client) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 351.3,
    "x1": 115.9,
@@ -604,10 +436,10 @@
    "id": "p09-005",
    "page": 9,
    "kind": "initials",
-   "owner": "investor",
-   "label": "3.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-individual",
+   "label": "Individual Part II (qualified client) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 385.0,
    "x1": 115.9,
@@ -636,10 +468,10 @@
    "id": "p09-006",
    "page": 9,
    "kind": "initials",
-   "owner": "investor",
-   "label": "4.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-individual",
+   "label": "Individual Part II (qualified client) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 430.0,
    "x1": 115.9,
@@ -668,10 +500,10 @@
    "id": "p10-001",
    "page": 10,
    "kind": "initials",
-   "owner": "investor",
-   "label": "1.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-entity",
+   "label": "Entity Part I (accredited investor) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 160.0,
    "x1": 110.1,
@@ -700,10 +532,10 @@
    "id": "p10-002",
    "page": 10,
    "kind": "initials",
-   "owner": "investor",
-   "label": "2.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-entity",
+   "label": "Entity Part I (accredited investor) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 238.8,
    "x1": 110.1,
@@ -732,10 +564,10 @@
    "id": "p10-003",
    "page": 10,
    "kind": "initials",
-   "owner": "investor",
-   "label": "3.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-entity",
+   "label": "Entity Part I (accredited investor) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 430.0,
    "x1": 110.1,
@@ -764,10 +596,10 @@
    "id": "p10-004",
    "page": 10,
    "kind": "initials",
-   "owner": "investor",
-   "label": "4.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-entity",
+   "label": "Entity Part I (accredited investor) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 486.3,
    "x1": 110.1,
@@ -796,10 +628,10 @@
    "id": "p10-005",
    "page": 10,
    "kind": "initials",
-   "owner": "investor",
-   "label": "1.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-entity",
+   "label": "Entity Part II (qualified client) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 700.0,
    "x1": 110.1,
@@ -828,10 +660,10 @@
    "id": "p11-001",
    "page": 11,
    "kind": "initials",
-   "owner": "investor",
-   "label": "2.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-entity",
+   "label": "Entity Part II (qualified client) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 58.8,
    "x1": 110.1,
@@ -860,10 +692,10 @@
    "id": "p11-002",
    "page": 11,
    "kind": "initials",
-   "owner": "investor",
-   "label": "3.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-entity",
+   "label": "Entity Part II (qualified client) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 115.0,
    "x1": 110.1,
@@ -893,9 +725,9 @@
    "page": 11,
    "kind": "initials",
    "owner": "investor-entity",
-   "label": "4.",
-   "printed_label": "",
-   "must": true,
+   "label": "Entity Part II (qualified client) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 193.8,
    "x1": 110.1,
@@ -921,48 +753,13 @@
    }
   },
   {
-   "id": "p11-004",
-   "page": 11,
-   "kind": "blank",
-   "owner": "investor-entity",
-   "label": "*",
-   "printed_label": "* An investor may be deemed",
-   "must": false,
-   "x0": 33.7,
-   "y0": 418.8,
-   "x1": 186.4,
-   "y1": 434.3,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor-entity",
-    "field_label": "*",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor-entity",
-     "what": "text",
-     "box": [
-      33.7,
-      418.8,
-      186.4,
-      434.3
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
    "id": "p11-005",
    "page": 11,
    "kind": "initials",
    "owner": "investor-entity",
-   "label": "5.",
-   "printed_label": "",
-   "must": true,
+   "label": "Entity Part II (qualified client) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 700.0,
    "x1": 110.1,
@@ -991,10 +788,10 @@
    "id": "p12-001",
    "page": 12,
    "kind": "initials",
-   "owner": "investor",
-   "label": "6.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-entity",
+   "label": "Entity Part II (qualified client) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 47.5,
    "x1": 110.1,
@@ -1023,10 +820,10 @@
    "id": "p12-002",
    "page": 12,
    "kind": "initials",
-   "owner": "investor",
-   "label": "8.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-entity",
+   "label": "Entity Part II (qualified client) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 171.3,
    "x1": 110.1,
@@ -1052,48 +849,13 @@
    }
   },
   {
-   "id": "p12-003",
-   "page": 12,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "*",
-   "printed_label": "* \"Qualified Purchaser\"",
-   "must": false,
-   "x0": 33.7,
-   "y0": 283.8,
-   "x1": 180.5,
-   "y1": 299.3,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "*",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      33.7,
-      283.8,
-      180.5,
-      299.3
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
    "id": "p12-004",
    "page": 12,
    "kind": "initials",
-   "owner": "investor",
-   "label": "9.",
-   "printed_label": "",
-   "must": true,
+   "owner": "investor-entity",
+   "label": "Entity Part II (qualified client) statement",
+   "printed_label": "PLEASE INITIAL APPLICABLE STATEMENTS BELOW",
+   "must": false,
    "x0": 86.6,
    "y0": 497.5,
    "x1": 110.1,
@@ -1123,9 +885,9 @@
    "page": 13,
    "kind": "blank",
    "owner": "investor-entity",
-   "label": "1.",
-   "printed_label": "Jurisdiction of organization",
-   "must": false,
+   "label": "Legal form of entity",
+   "printed_label": "Legal form of entity (corporation, partnership, trust, etc.):",
+   "must": true,
    "x0": 86.6,
    "y0": 47.5,
    "x1": 409.4,
@@ -1150,8 +912,7 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "what": "text"
   },
   {
    "id": "p13-002",
@@ -1159,7 +920,7 @@
    "kind": "blank",
    "owner": "investor-entity",
    "label": "Jurisdiction of organization",
-   "printed_label": "Jurisdiction of organization",
+   "printed_label": "Jurisdiction of organization:",
    "must": true,
    "x0": 262.7,
    "y0": 70.0,
@@ -1189,11 +950,11 @@
   {
    "id": "p13-003",
    "page": 13,
-   "kind": "initials",
+   "kind": "tickbox",
    "owner": "investor-entity",
-   "label": "Initials",
-   "printed_label": "fiscal year-end",
-   "must": true,
+   "label": "Registered investment company or 3(c)(1)/3(c)(7) fund: Yes",
+   "printed_label": "Yes",
+   "must": false,
    "x0": 139.4,
    "y0": 171.3,
    "x1": 162.9,
@@ -1216,15 +977,16 @@
       186.8
      ]
     }
-   }
+   },
+   "doubt": "a short underscore run before the choice's label, used as the place to check it"
   },
   {
    "id": "p13-004",
    "page": 13,
-   "kind": "blank",
+   "kind": "tickbox",
    "owner": "investor-entity",
-   "label": "The fiscal year-end of the Investor is",
-   "printed_label": "Investor",
+   "label": "Registered investment company or 3(c)(1)/3(c)(7) fund: No",
+   "printed_label": "No",
    "must": false,
    "x0": 245.1,
    "y0": 171.3,
@@ -1250,15 +1012,14 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "doubt": "a short underscore run before the choice's label, used as the place to check it"
   },
   {
    "id": "p13-005",
    "page": 13,
    "kind": "blank",
    "owner": "investor-entity",
-   "label": "of the Investor is",
+   "label": "Fiscal year-end (month/day)",
    "printed_label": "The fiscal year-end of the Investor is",
    "must": true,
    "x0": 309.6,
@@ -1285,17 +1046,16 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "what": "date"
   },
   {
    "id": "p13-006",
    "page": 13,
-   "kind": "initials",
+   "kind": "tickbox",
    "owner": "investor-entity",
-   "label": "Initials",
-   "printed_label": "than",
-   "must": true,
+   "label": "Organized for the specific purpose of acquiring shares: Yes",
+   "printed_label": "Yes",
+   "must": false,
    "x0": 139.4,
    "y0": 261.3,
    "x1": 168.8,
@@ -1318,15 +1078,16 @@
       276.8
      ]
     }
-   }
+   },
+   "doubt": "a short underscore run before the choice's label, used as the place to check it"
   },
   {
    "id": "p13-007",
    "page": 13,
-   "kind": "blank",
+   "kind": "tickbox",
    "owner": "investor-entity",
-   "label": "Will more than 40% of Investor's total assets (on a consolid",
-   "printed_label": "assets",
+   "label": "Organized for the specific purpose of acquiring shares: No",
+   "printed_label": "No",
    "must": false,
    "x0": 309.6,
    "y0": 261.3,
@@ -1352,17 +1113,16 @@
      ]
     }
    },
-   "what": "percentage",
-   "doubt": "check"
+   "doubt": "a short underscore run before the choice's label, used as the place to check it"
   },
   {
    "id": "p13-008",
    "page": 13,
-   "kind": "initials",
+   "kind": "tickbox",
    "owner": "investor-entity",
-   "label": "Initials",
-   "printed_label": "interest",
-   "must": true,
+   "label": "More than 40% of total assets invested in the company: Yes",
+   "printed_label": "Yes",
+   "must": false,
    "x0": 139.4,
    "y0": 328.8,
    "x1": 168.8,
@@ -1385,15 +1145,16 @@
       344.3
      ]
     }
-   }
+   },
+   "doubt": "a short underscore run before the choice's label, used as the place to check it"
   },
   {
    "id": "p13-009",
    "page": 13,
-   "kind": "blank",
+   "kind": "tickbox",
    "owner": "investor-entity",
-   "label": "Are the interest holders in the Investor able to decide indi",
-   "printed_label": "Investor able",
+   "label": "More than 40% of total assets invested in the company: No",
+   "printed_label": "No",
    "must": false,
    "x0": 309.6,
    "y0": 328.8,
@@ -1419,17 +1180,16 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "doubt": "a short underscore run before the choice's label, used as the place to check it"
   },
   {
    "id": "p13-010",
    "page": 13,
-   "kind": "initials",
+   "kind": "tickbox",
    "owner": "investor-entity",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Interest holders decide individually on participation: Yes",
+   "printed_label": "Yes",
+   "must": false,
    "x0": 139.4,
    "y0": 396.3,
    "x1": 168.8,
@@ -1452,15 +1212,16 @@
       411.8
      ]
     }
-   }
+   },
+   "doubt": "a short underscore run before the choice's label, used as the place to check it"
   },
   {
    "id": "p13-011",
    "page": 13,
-   "kind": "blank",
+   "kind": "tickbox",
    "owner": "investor-entity",
-   "label": "Investor's investment in the Company?",
-   "printed_label": "",
+   "label": "Interest holders decide individually on participation: No",
+   "printed_label": "No",
    "must": false,
    "x0": 309.6,
    "y0": 396.3,
@@ -1486,23 +1247,22 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "doubt": "a short underscore run before the choice's label, used as the place to check it"
   },
   {
    "id": "p13-012",
    "page": 13,
    "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 1 name",
+   "printed_label": "NAME",
    "must": false,
    "x0": 33.7,
    "y0": 585.1,
    "x1": 280.3,
    "y1": 600.6,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1518,22 +1278,22 @@
      ]
     }
    },
-   "what": "text"
+   "what": "name"
   },
   {
    "id": "p13-013",
    "page": 13,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "kind": "signature",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 1 signature",
+   "printed_label": "SIGNATURE",
    "must": false,
    "x0": 286.2,
    "y0": 585.1,
    "x1": 491.6,
    "y1": 600.6,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1548,23 +1308,22 @@
       600.6
      ]
     }
-   },
-   "what": "text"
+   }
   },
   {
    "id": "p13-014",
    "page": 13,
    "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 2 name",
+   "printed_label": "NAME",
    "must": false,
    "x0": 33.7,
    "y0": 618.9,
    "x1": 280.3,
    "y1": 634.4,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1580,22 +1339,22 @@
      ]
     }
    },
-   "what": "text"
+   "what": "name"
   },
   {
    "id": "p13-015",
    "page": 13,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "kind": "signature",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 2 signature",
+   "printed_label": "SIGNATURE",
    "must": false,
    "x0": 286.2,
    "y0": 618.9,
    "x1": 491.6,
    "y1": 634.4,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1610,23 +1369,22 @@
       634.4
      ]
     }
-   },
-   "what": "text"
+   }
   },
   {
    "id": "p13-016",
    "page": 13,
    "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 3 name",
+   "printed_label": "NAME",
    "must": false,
    "x0": 33.7,
    "y0": 652.6,
    "x1": 280.3,
    "y1": 668.1,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1642,22 +1400,22 @@
      ]
     }
    },
-   "what": "text"
+   "what": "name"
   },
   {
    "id": "p13-017",
    "page": 13,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "kind": "signature",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 3 signature",
+   "printed_label": "SIGNATURE",
    "must": false,
    "x0": 286.2,
    "y0": 652.6,
    "x1": 491.6,
    "y1": 668.1,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1672,23 +1430,22 @@
       668.1
      ]
     }
-   },
-   "what": "text"
+   }
   },
   {
    "id": "p13-018",
    "page": 13,
    "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 4 name",
+   "printed_label": "NAME",
    "must": false,
    "x0": 33.7,
    "y0": 686.4,
    "x1": 280.3,
    "y1": 701.9,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1704,22 +1461,22 @@
      ]
     }
    },
-   "what": "text"
+   "what": "name"
   },
   {
    "id": "p13-019",
    "page": 13,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "kind": "signature",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 4 signature",
+   "printed_label": "SIGNATURE",
    "must": false,
    "x0": 286.2,
    "y0": 686.4,
    "x1": 491.6,
    "y1": 701.9,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1734,23 +1491,22 @@
       701.9
      ]
     }
-   },
-   "what": "text"
+   }
   },
   {
    "id": "p13-020",
    "page": 13,
    "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 5 name",
+   "printed_label": "NAME",
    "must": false,
    "x0": 33.7,
    "y0": 720.1,
    "x1": 280.3,
    "y1": 735.6,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1766,22 +1522,22 @@
      ]
     }
    },
-   "what": "text"
+   "what": "name"
   },
   {
    "id": "p13-021",
    "page": 13,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "kind": "signature",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 5 signature",
+   "printed_label": "SIGNATURE",
    "must": false,
    "x0": 286.2,
    "y0": 720.1,
    "x1": 491.6,
    "y1": 735.6,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1796,23 +1552,22 @@
       735.6
      ]
     }
-   },
-   "what": "text"
+   }
   },
   {
    "id": "p14-001",
    "page": 14,
    "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 6 name",
+   "printed_label": "NAME",
    "must": false,
    "x0": 33.7,
    "y0": 22.6,
    "x1": 280.3,
    "y1": 38.1,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1828,22 +1583,22 @@
      ]
     }
    },
-   "what": "text"
+   "what": "name"
   },
   {
    "id": "p14-002",
    "page": 14,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "kind": "signature",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 6 signature",
+   "printed_label": "SIGNATURE",
    "must": false,
    "x0": 286.2,
    "y0": 22.6,
    "x1": 491.6,
    "y1": 38.1,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1858,23 +1613,22 @@
       38.1
      ]
     }
-   },
-   "what": "text"
+   }
   },
   {
    "id": "p14-003",
    "page": 14,
    "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 7 name",
+   "printed_label": "NAME",
    "must": false,
    "x0": 33.7,
    "y0": 56.4,
    "x1": 280.3,
    "y1": 71.9,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1890,22 +1644,22 @@
      ]
     }
    },
-   "what": "text"
+   "what": "name"
   },
   {
    "id": "p14-004",
    "page": 14,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "kind": "signature",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 7 signature",
+   "printed_label": "SIGNATURE",
    "must": false,
    "x0": 286.2,
    "y0": 56.4,
    "x1": 491.6,
    "y1": 71.9,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1920,23 +1674,22 @@
       71.9
      ]
     }
-   },
-   "what": "text"
+   }
   },
   {
    "id": "p14-005",
    "page": 14,
    "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 8 name",
+   "printed_label": "NAME",
    "must": false,
    "x0": 33.7,
    "y0": 90.1,
    "x1": 280.3,
    "y1": 105.6,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1952,22 +1705,22 @@
      ]
     }
    },
-   "what": "text"
+   "what": "name"
   },
   {
    "id": "p14-006",
    "page": 14,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "kind": "signature",
+   "owner": "investor-entity",
+   "label": "Authorized signatory 8 signature",
+   "printed_label": "SIGNATURE",
    "must": false,
    "x0": 286.2,
    "y0": 90.1,
    "x1": 491.6,
    "y1": 105.6,
    "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "doubt": "hyphen line in the authorized signatories table (entities only)",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1982,15 +1735,14 @@
       105.6
      ]
     }
-   },
-   "what": "text"
+   }
   },
   {
    "id": "p14-007",
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "Investor name",
+   "label": "Subscriber name",
    "printed_label": "Subscriber Name (Please print)",
    "must": true,
    "x0": 209.8,
@@ -2023,7 +1775,7 @@
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "Residence or Office Address",
+   "label": "Residence or office address",
    "printed_label": "Residence or Office Address",
    "must": true,
    "x0": 192.2,
@@ -2056,7 +1808,7 @@
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "City, state and ZIP",
+   "label": "Residence city, state, zip",
    "printed_label": "City, State, Zip Code",
    "must": true,
    "x0": 157.0,
@@ -2089,9 +1841,9 @@
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "Address",
+   "label": "Mailing address (if different)",
    "printed_label": "Mailing Address",
-   "must": true,
+   "must": false,
    "x0": 121.8,
    "y0": 295.0,
    "x1": 485.7,
@@ -2122,9 +1874,9 @@
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "City, state and ZIP",
+   "label": "Mailing city, state, zip (if different)",
    "printed_label": "City, State, Zip Code",
-   "must": true,
+   "must": false,
    "x0": 157.0,
    "y0": 306.3,
    "x1": 485.7,
@@ -2155,9 +1907,9 @@
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "Business Telephone",
+   "label": "Business telephone",
    "printed_label": "Business Telephone",
-   "must": true,
+   "must": false,
    "x0": 139.4,
    "y0": 317.5,
    "x1": 485.7,
@@ -2188,9 +1940,9 @@
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "Facsimile",
+   "label": "Facsimile (home/business)",
    "printed_label": "Facsimile (Home/Business)",
-   "must": true,
+   "must": false,
    "x0": 180.5,
    "y0": 328.8,
    "x1": 485.7,
@@ -2214,16 +1966,16 @@
      ]
     }
    },
-   "what": "text"
+   "what": "phone"
   },
   {
    "id": "p14-014",
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "Internet Address",
+   "label": "Internet (email) address",
    "printed_label": "Internet Address",
-   "must": true,
+   "must": false,
    "x0": 127.7,
    "y0": 340.0,
    "x1": 485.7,
@@ -2247,15 +1999,15 @@
      ]
     }
    },
-   "what": "address"
+   "what": "email"
   },
   {
    "id": "p14-015",
    "page": 14,
    "kind": "signature",
    "owner": "investor",
-   "label": "Signature",
-   "printed_label": "By",
+   "label": "Investor signature (authorized representative if not an individual)",
+   "printed_label": "By:",
    "must": true,
    "x0": 274.4,
    "y0": 407.5,
@@ -2282,12 +2034,28 @@
    }
   },
   {
+   "id": "p14-025",
+   "page": 14,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "State where signed, if other than state of residence or office",
+   "printed_label": "State in which Subscription Agreement signed if other than state of residence or office:",
+   "must": false,
+   "x0": 98.3,
+   "y0": 490.5,
+   "x1": 485.7,
+   "y1": 500.3,
+   "printed_as": "nothing printed: the empty writing room after the label, up to the next caption (text line height)",
+   "what": "text",
+   "doubt": "caption only: no line is printed after it; the box is the empty room after the caption on its last line"
+  },
+  {
    "id": "p14-016",
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "The Investor agrees to purchase the following aggregate doll",
-   "printed_label": "Shares on or prior to June 30, 2006",
+   "label": "Aggregate dollar amount of shares subscribed",
+   "printed_label": "The Investor agrees to purchase the following aggregate dollar amount of Common Shares on or prior to June 30, 2006:",
    "must": true,
    "x0": 245.1,
    "y0": 531.3,
@@ -2312,15 +2080,15 @@
      ]
     }
    },
-   "what": "text"
+   "what": "amount"
   },
   {
    "id": "p14-017",
    "page": 14,
-   "kind": "blank",
+   "kind": "date",
    "owner": "investor",
-   "label": "Date of execution by Subscriber",
-   "printed_label": "Date of execution by Subscriber",
+   "label": "Date of execution by subscriber",
+   "printed_label": "Date of execution by Subscriber:",
    "must": true,
    "x0": 221.6,
    "y0": 553.8,
@@ -2344,16 +2112,15 @@
       569.3
      ]
     }
-   },
-   "what": "date"
+   }
   },
   {
    "id": "p14-018",
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "Taxpayer ID",
-   "printed_label": "Security or Taxpayer I.D. No. (Must be completed)",
+   "label": "Social security or taxpayer ID",
+   "printed_label": "Social Security or Taxpayer I.D. No. (Must be completed)",
    "must": true,
    "x0": 362.5,
    "y0": 576.3,
@@ -2385,9 +2152,9 @@
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "Bank Name",
-   "printed_label": "Bank Name",
-   "must": true,
+   "label": "Wire: bank name",
+   "printed_label": "Bank Name:",
+   "must": false,
    "x0": 151.2,
    "y0": 643.8,
    "x1": 485.7,
@@ -2418,9 +2185,9 @@
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "Bank Address",
-   "printed_label": "Bank Address",
-   "must": true,
+   "label": "Wire: bank address",
+   "printed_label": "Bank Address:",
+   "must": false,
    "x0": 162.9,
    "y0": 655.0,
    "x1": 485.7,
@@ -2451,9 +2218,9 @@
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "ABA or CHIPS Number",
-   "printed_label": "ABA or CHIPS Number",
-   "must": true,
+   "label": "Wire: ABA or CHIPS number",
+   "printed_label": "ABA or CHIPS Number:",
+   "must": false,
    "x0": 209.9,
    "y0": 666.3,
    "x1": 485.7,
@@ -2484,9 +2251,9 @@
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "Investor name",
-   "printed_label": "Account Name",
-   "must": true,
+   "label": "Wire: account name",
+   "printed_label": "Account Name:",
+   "must": false,
    "x0": 168.8,
    "y0": 677.5,
    "x1": 485.7,
@@ -2517,9 +2284,9 @@
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "Account Number",
-   "printed_label": "Account Number",
-   "must": true,
+   "label": "Wire: account number",
+   "printed_label": "Account Number:",
+   "must": false,
    "x0": 180.5,
    "y0": 688.8,
    "x1": 485.7,
@@ -2550,9 +2317,9 @@
    "page": 14,
    "kind": "blank",
    "owner": "investor",
-   "label": "Reference",
-   "printed_label": "Reference",
-   "must": true,
+   "label": "Wire: reference",
+   "printed_label": "Reference:",
+   "must": false,
    "x0": 151.2,
    "y0": 700.0,
    "x1": 485.7,
@@ -2583,8 +2350,8 @@
    "page": 15,
    "kind": "signature",
    "owner": "firm",
-   "label": "Signature",
-   "printed_label": "By",
+   "label": "Company acceptance signature",
+   "printed_label": "By:",
    "must": true,
    "x0": 57.2,
    "y0": 126.3,
@@ -2611,12 +2378,44 @@
    }
   },
   {
+   "id": "p15-010",
+   "page": 15,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Company acceptance signer name",
+   "printed_label": "Name:",
+   "must": true,
+   "x0": 98.4,
+   "y0": 141.8,
+   "x1": 245.1,
+   "y1": 151.5,
+   "printed_as": "nothing printed: the empty writing room after the label, up to the next caption (text line height)",
+   "what": "name",
+   "doubt": "caption only: no line is printed after it; the box is the empty room after the caption up to the end of the signature rule above"
+  },
+  {
+   "id": "p15-011",
+   "page": 15,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Company acceptance signer title",
+   "printed_label": "Title:",
+   "must": true,
+   "x0": 104.2,
+   "y0": 153.0,
+   "x1": 245.1,
+   "y1": 162.8,
+   "printed_as": "nothing printed: the empty writing room after the label, up to the next caption (text line height)",
+   "what": "title",
+   "doubt": "caption only: no line is printed after it; the box is the empty room after the caption up to the end of the signature rule above"
+  },
+  {
    "id": "p15-002",
    "page": 15,
    "kind": "date",
    "owner": "firm",
-   "label": "Date signed",
-   "printed_label": "Date",
+   "label": "Company acceptance date",
+   "printed_label": "Date:",
    "must": true,
    "x0": 63.1,
    "y0": 182.5,
@@ -2647,8 +2446,8 @@
    "page": 15,
    "kind": "date",
    "owner": "investor",
-   "label": "Date signed",
-   "printed_label": "Date",
+   "label": "Operating agreement signature page copy 1: investor date",
+   "printed_label": "Date:",
    "must": true,
    "x0": 63.1,
    "y0": 295.0,
@@ -2673,16 +2472,15 @@
       310.5
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p15-004",
    "page": 15,
    "kind": "signature",
-   "owner": "firm",
-   "label": "Signature",
-   "printed_label": "By",
+   "owner": "investor",
+   "label": "Operating agreement signature page copy 1: investor signature",
+   "printed_label": "By:",
    "must": true,
    "x0": 309.6,
    "y0": 295.0,
@@ -2713,8 +2511,8 @@
    "page": 15,
    "kind": "signature",
    "owner": "firm",
-   "label": "Signature",
-   "printed_label": "By",
+   "label": "Operating agreement copy 1: manager acceptance signature",
+   "printed_label": "By:",
    "must": true,
    "x0": 51.4,
    "y0": 418.8,
@@ -2741,12 +2539,44 @@
    }
   },
   {
+   "id": "p15-012",
+   "page": 15,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Operating agreement copy 1: manager signer name",
+   "printed_label": "Name:",
+   "must": true,
+   "x0": 98.4,
+   "y0": 434.3,
+   "x1": 245.1,
+   "y1": 444.0,
+   "printed_as": "nothing printed: the empty writing room after the label, up to the next caption (text line height)",
+   "what": "name",
+   "doubt": "caption only: no line is printed after it; the box is the empty room after the caption up to the end of the signature rule above"
+  },
+  {
+   "id": "p15-013",
+   "page": 15,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Operating agreement copy 1: manager signer title",
+   "printed_label": "Title:",
+   "must": true,
+   "x0": 104.2,
+   "y0": 445.5,
+   "x1": 245.1,
+   "y1": 455.3,
+   "printed_as": "nothing printed: the empty writing room after the label, up to the next caption (text line height)",
+   "what": "title",
+   "doubt": "caption only: no line is printed after it; the box is the empty room after the caption up to the end of the signature rule above"
+  },
+  {
    "id": "p15-006",
    "page": 15,
    "kind": "date",
    "owner": "firm",
-   "label": "Date signed",
-   "printed_label": "Date",
+   "label": "Operating agreement copy 1: manager acceptance date",
+   "printed_label": "Date:",
    "must": true,
    "x0": 63.1,
    "y0": 475.0,
@@ -2777,8 +2607,8 @@
    "page": 15,
    "kind": "date",
    "owner": "investor",
-   "label": "Date signed",
-   "printed_label": "Date",
+   "label": "Operating agreement signature page copy 2: investor date",
+   "printed_label": "Date:",
    "must": true,
    "x0": 63.1,
    "y0": 587.5,
@@ -2803,16 +2633,15 @@
       603.0
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p15-008",
    "page": 15,
    "kind": "signature",
-   "owner": "firm",
-   "label": "Signature",
-   "printed_label": "By",
+   "owner": "investor",
+   "label": "Operating agreement signature page copy 2: investor signature",
+   "printed_label": "By:",
    "must": true,
    "x0": 309.6,
    "y0": 587.5,
@@ -2837,16 +2666,15 @@
       603.0
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p15-009",
    "page": 15,
    "kind": "signature",
    "owner": "firm",
-   "label": "Signature",
-   "printed_label": "By",
+   "label": "Operating agreement copy 2: manager acceptance signature",
+   "printed_label": "By:",
    "must": true,
    "x0": 51.4,
    "y0": 711.3,
@@ -2873,12 +2701,44 @@
    }
   },
   {
+   "id": "p15-014",
+   "page": 15,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Operating agreement copy 2: manager signer name",
+   "printed_label": "Name:",
+   "must": true,
+   "x0": 86.6,
+   "y0": 726.8,
+   "x1": 245.1,
+   "y1": 736.5,
+   "printed_as": "nothing printed: the empty writing room after the label, up to the next caption (text line height)",
+   "what": "name",
+   "doubt": "caption only: no line is printed after it; the box is the empty room after the caption up to the end of the signature rule above"
+  },
+  {
+   "id": "p15-015",
+   "page": 15,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Operating agreement copy 2: manager signer title",
+   "printed_label": "Title:",
+   "must": true,
+   "x0": 92.5,
+   "y0": 738.0,
+   "x1": 245.1,
+   "y1": 747.8,
+   "printed_as": "nothing printed: the empty writing room after the label, up to the next caption (text line height)",
+   "what": "title",
+   "doubt": "caption only: no line is printed after it; the box is the empty room after the caption up to the end of the signature rule above"
+  },
+  {
    "id": "p16-001",
    "page": 16,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Date signed",
-   "printed_label": "Date",
+   "kind": "date",
+   "owner": "firm",
+   "label": "Operating agreement copy 2: manager acceptance date",
+   "printed_label": "Date:",
    "must": true,
    "x0": 63.1,
    "y0": 36.3,
@@ -2903,14 +2763,11 @@
       51.8
      ]
     }
-   },
-   "doubt": "check",
-   "what": "date"
+   }
   }
  ],
  "may_fill": [],
  "source": "hand",
- "draft": true,
  "mode": "train",
  "prefilled": {
   "when": "2026-11-15T00:48:03Z",
@@ -2918,5 +2775,6 @@
   "result": "out-set-b/b020/result.json",
   "fields": 63,
   "counted_candidates": 82
- }
+ },
+ "done": "2026-11-15T00:50:36Z"
 }

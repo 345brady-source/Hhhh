@@ -1,0 +1,192 @@
+21:17:49 serving /home/user/Hhhh on http://localhost:8951; evidence in /tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/owner-set/C/out
+21:17:51 upload: editor opened after 965 ms
+ page   places   fields    found   missed   strays   kind!=  owner!=   marked   mark!=  overlap edge med edge max
+    1        4        4        4        0        0        0        0        1        1        0      1.6      5.8
+    2       41       20       20       21        0        0        5        2        2        0      1.6      6.1
+    3       36       25       25       11        0        1        2        7        6        0      1.6      6.7
+    4       14        9        9        5        0        0        4        2        2        0      1.6      2.0
+    5       13       13       13        0        0        1       13        1        1        0      1.0      1.3
+    6        0        0        0        0        0        0        0        0        0        0        -        -
+    7        4        1        1        3        0        0        0        1        1        0      2.2      2.4
+    8       18        9        9        9        0        0        9        9        0        0      2.0      2.4
+    9        0        0        0        0        0        0        0        0        0        0        -        -
+   10        8        3        3        5        0        3        3        1        1        0      2.2      2.4
+  all      138       84       84       54        0        5       36       24       14        0      1.5      6.7
+
+places without a field (54):
+   p02-title-other  blank/text  investor  [480.5, 219.6, 582, 226.6]  underscore run of 29
+   p02-name  blank/name  investor  [37.9, 227.2, 583.2, 238.2]  drawn cell (four rules, 0.5 pt)
+   p02-joint-name  blank/name  co-investor  [37.9, 252.7, 583.2, 263.6]  drawn cell (four rules, 0.5 pt)
+   p02-entity-name  blank/name  investor  [37.9, 278.1, 583.2, 288.9]  drawn cell (four rules, 0.5 pt)
+   p02-street  blank/address  investor  [37.9, 315.9, 583.2, 328.6]  drawn cell (four rules, 0.5 pt)
+   p02-city  blank/text  investor  [37.8, 341.5, 375.7, 352.8]  drawn cell (four rules, 1 pt)
+   p02-state  blank/text  investor  [388.2, 341.5, 483.6, 352.8]  drawn cell (four rules, 1 pt)
+   p02-zip  blank/text  investor  [496.1, 341.5, 583.2, 352.8]  drawn cell (four rules, 1 pt)
+   p02-home-phone  blank/phone  investor  [37.8, 365.9, 317.3, 377.2]  drawn cell (four rules, 1 pt)
+   p02-business-phone  blank/phone  investor  [328.1, 365.9, 483.6, 377.2]  drawn cell (four rules, 1 pt)
+   p02-phone-ext  blank/text  investor  [496.1, 365.9, 583.2, 377.2]  drawn cell (four rules, 1 pt)
+   p02-alt-address  blank/address  investor  [37.9, 404.4, 583.2, 416.9]  drawn cell (four rules, 0.5 pt)
+   p02-alt-city  blank/text  investor  [37.8, 429.7, 375.7, 441.1]  drawn cell (four rules, 1 pt)
+   p02-alt-state  blank/text  investor  [388.2, 429.7, 483.6, 441.1]  drawn cell (four rules, 1 pt)
+   p02-alt-zip  blank/text  investor  [496.1, 429.7, 583.2, 441.1]  drawn cell (four rules, 1 pt)
+   p02-dob  blank/date  investor  [37.3, 484.9, 249.6, 495.1]  drawn cell (four rules, 1 pt)
+   p02-joint-dob  blank/date  co-investor  [262.1, 484.9, 434.1, 495.1]  drawn cell (four rules, 1 pt)
+   p02-entity-tax-id  blank/tax number  investor  [446.6, 484.9, 583.2, 495.1]  drawn cell (four rules, 1 pt)
+   p02-ssn  blank/tax number  investor  [37.3, 525.4, 209.1, 535.6]  drawn cell (four rules, 1 pt)
+   p02-joint-ssn  blank/tax number  co-investor  [221.5, 525.4, 393.6, 535.6]  drawn cell (four rules, 1 pt)
+   p02-email  blank/email  investor  [406, 525.4, 583.2, 535.6]  drawn cell (four rules, 1 pt)
+   p03-edelivery-email  blank/email  investor  [46.9, 48.1, 357.6, 70.2]  drawn cell (four rules, 0.5 pt)
+   p03-custodian-name  blank/name  investor  [28.4, 246.9, 384.5, 261.3]  drawn cell (four rules, 0.75 pt)
+   p03-inherited-name  blank/name  investor  [397.8, 246.9, 583.1, 261.3]  drawn cell (four rules, 0.75 pt)
+   p03-cust-city  blank/text  investor  [28.4, 303.7, 384.5, 318.1]  drawn cell (four rules, 0.75 pt)
+   p03-cust-state  blank/text  investor  [397.1, 303.7, 479, 318.1]  drawn cell (four rules, 0.75 pt)
+   p03-cust-zip  blank/text  investor  [491.6, 303.7, 583.1, 318.1]  drawn cell (four rules, 0.75 pt)
+   p03-cust-phone  blank/phone  investor  [28.9, 335.9, 213.6, 350.4]  drawn cell (four rules, 0.5 pt)
+   p03-custodian-account  blank/text  third-party  [266.6, 398.9, 582.4, 413.3]  drawn cell (four rules, 0.75 pt)
+   p03-custodian-medallion  blank/stamp  third-party  [28.9, 445.6, 254.3, 503.4]  drawn cell (four rules, 1.5 pt)
+   p03-custodian-signature  signature/signature  third-party  [266.6, 445.3, 460.4, 459.7]  drawn cell (four rules, 0.75 pt)
+   p03-custodian-date  date/date  third-party  [471.6, 445.3, 582.4, 459.7]  drawn cell (four rules, 0.75 pt)
+   p04-city  blank/text  investor  [37.5, 276.5, 407.2, 290.9]  drawn cell (four rules, 0.75 pt)
+   p04-state  blank/text  investor  [415.1, 276.5, 501.5, 290.9]  drawn cell (four rules, 0.75 pt)
+   p04-zip  blank/text  investor  [509.8, 276.5, 583.1, 290.9]  drawn cell (four rules, 0.75 pt)
+   p04-aba  blank/text  investor  [37.5, 308.9, 226.6, 323.3]  drawn cell (four rules, 0.75 pt)
+   p04-account  blank/text  investor  [226.6, 308.9, 583.1, 323.3]  drawn cell (four rules, 0.75 pt)
+   p07-investor-date  date/date  investor  [194.7, 515, 276.5, 529.4]  drawn cell (four rules, 0.75 pt)
+   p07-joint-signature  signature/signature  co-investor  [289.2, 515, 487.9, 529.4]  drawn cell (four rules, 0.75 pt)
+   p07-joint-date  date/date  co-investor  [500.8, 515, 583.1, 529.4]  drawn cell (four rules, 0.75 pt)
+   p08-ria-firm-name  blank/name  third-party  [29.2, 122.6, 321.4, 137]  drawn cell (four rules, 0.75 pt)
+   p08-ria-crd  blank/text  third-party  [334.2, 122.6, 582.4, 137]  drawn cell (four rules, 0.75 pt)
+   p08-ria-firm-address  blank/address  third-party  [29.2, 151.1, 582.4, 165.5]  drawn cell (four rules, 0.75 pt)
+   p08-ria-firm-fax  blank/phone  third-party  [392.6, 211.1, 582.4, 225.5]  drawn cell (four rules, 0.75 pt)
+   p08-ria-rep-name  blank/name  third-party  [29.2, 239.6, 411.4, 254]  drawn cell (four rules, 0.75 pt)
+   p08-ria-rep-number  blank/text  third-party  [424.2, 239.6, 582.4, 254]  drawn cell (four rules, 0.75 pt)
+   p08-ria-rep-address  blank/address  third-party  [29.2, 268.1, 411.4, 282.5]  drawn cell (four rules, 0.75 pt)
+   p08-ria-branch  blank/text  third-party  [424.2, 268.1, 582.4, 282.5]  drawn cell (four rules, 0.75 pt)
+   p08-ria-rep-fax  blank/phone  third-party  [392.6, 325.1, 582.4, 339.5]  drawn cell (four rules, 0.75 pt)
+   p10-ria-rep-signature-1  signature/signature  third-party  [28.4, 411.1, 190.9, 425.5]  drawn cell (four rules, 0.75 pt)
+   p10-ria-rep-signature-2  signature/signature  third-party  [194.7, 411.1, 339.4, 425.5]  drawn cell (four rules, 0.75 pt)
+   p10-ria-rep-date  date/date  third-party  [482.8, 411.1, 583.1, 425.5]  drawn cell (four rules, 0.75 pt)
+   p10-ria-signature  signature/signature  third-party  [28.4, 468.2, 469.9, 482.6]  drawn cell (four rules, 0.75 pt)
+   p10-acceptance-signature  signature/signature  unclear  [28.4, 597.6, 469.9, 612]  drawn cell (four rules, 0.75 pt)
+
+kind differences (5):
+   p03-custodian-admin-name: sheet blank, portal signature  "Custodian Medallion Signature Guarantee"
+   p05-init-1c: sheet initials, portal text  "c"
+   p10-ria-investor-state: sheet blank, portal signature  "Signature"
+   p10-ria-date: sheet date, portal signature  "Signature"
+   p10-acceptance-date: sheet date, portal signature  "Signature"
+
+finer kind differences (blanks; told from the portal's kind word or label) (3):
+   p03-trust-date: sheet date, portal text/text  "Trustee or Grantor"
+   p03-custodian-tax-id: sheet tax number, portal text/text  "NAME OF CUSTODIAN OR OTHER ADMINISTRATOR"
+   p04-bank-name: sheet name, portal text/address  "ALTERNATE ADDRESS"
+
+owner differences (36):
+   p02-citizen-2: sheet investor, portal investor-entity (Investor (each subscriber))  "Resident Alien"
+   p02-citizen-3: sheet investor, portal firm (Co-investor (if any))  "Co-investor non resident alien country origin"
+   p02-country: sheet investor, portal firm (Co-investor (if any))  "Co-investor country origin"
+   p02-erisa-yes: sheet investor, portal investor-entity (Investor (each subscriber))  "Yes"
+   p02-erisa-no: sheet investor, portal investor-entity (Investor (each subscriber))  "No"
+   p03-custodian-tax-id: sheet third-party, portal investor (Investor (each subscriber))  "NAME OF CUSTODIAN OR OTHER ADMINISTRATOR"
+   p03-custodian-admin-name: sheet third-party, portal investor (Investor (each subscriber))  "Custodian Medallion Signature Guarantee"
+   p04-pay-4: sheet investor, portal investor-individual (Investor (each subscriber))  "Mail to Alternate Address (Specify Below)"
+   p04-pay-5: sheet investor, portal investor-individual (Investor (each subscriber))  "Mail to Street Address"
+   p04-bank-name: sheet investor, portal investor-individual (Investor (each subscriber))  "ALTERNATE ADDRESS"
+   p04-alt-address: sheet investor, portal investor-individual (Investor (each subscriber))  "City"
+   p05-init-1a: sheet investor-individual, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-1b: sheet investor-individual, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-1c: sheet investor-individual, portal investor (Investor (each subscriber))  "c"
+   p05-init-1d: sheet investor-individual, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2a: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2b: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2c: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2d: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2e: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2f: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2g: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2h: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p05-init-2i: sheet investor-entity, portal investor (Investor (each subscriber))  "Initials"
+   p08-ria-firm-city: sheet third-party, portal investor (Investor (each subscriber))  "City"
+   p08-ria-firm-state: sheet third-party, portal investor (Investor (each subscriber))  "State"
+   p08-ria-firm-zip: sheet third-party, portal investor (Investor (each subscriber))  "ZIP code"
+   p08-ria-firm-phone: sheet third-party, portal investor (Investor (each subscriber))  "Phone"
+   p08-ria-rep-city: sheet third-party, portal investor (Investor (each subscriber))  "City"
+   p08-ria-rep-state: sheet third-party, portal investor (Investor (each subscriber))  "State"
+   p08-ria-rep-zip: sheet third-party, portal investor (Investor (each subscriber))  "ZIP code"
+   p08-ria-rep-phone: sheet third-party, portal investor (Investor (each subscriber))  "Phone"
+   p08-ria-rep-email: sheet third-party, portal investor (Investor (each subscriber))  "Email"
+   p10-ria-investor-state: sheet third-party, portal investor (Investor (each subscriber))  "Signature"
+   p10-ria-date: sheet third-party, portal investor (Investor (each subscriber))  "Signature"
+   p10-acceptance-date: sheet unclear, portal investor (Kestrel Bay (countersigns))  "Signature"
+
+marked for review where the sheet has no doubt (13):
+   p01-amount  "Amount"  The words before this blank may not be its label: check what goes here.
+   p02-cat-3-relative  "and name of relative"  A blank inside a sentence: check what goes here and who fills it in.
+   p02-cat-4-relative  "and name of relative"  A blank inside a sentence: check what goes here and who fills it in.
+   p03-own-02  "Checkbox"  This box has no words beside it: check what it is for.
+   p03-own-07  "Checkbox"  This box has no words beside it: check what it is for.
+   p03-own-08  "Checkbox"  This box has no words beside it: check what it is for.
+   p03-own-10  "Checkbox"  This box has no words beside it: check what it is for.
+   p03-own-11  "Checkbox"  This box has no words beside it: check what it is for.
+   p03-trust-date  "Trustee or Grantor"  The words before this blank may not be its label: check what goes here.
+   p04-bank-name  "ALTERNATE ADDRESS"  Could not tell whether this label belongs to the line above it or the line below it.
+   p04-alt-address  "City"  Could not tell whether this label belongs to the line above it or the line below it.
+   p05-init-1c  "c"  A blank inside a sentence: check what goes here and who fills it in.
+   p07-investor-signature  "Signature"  This label sits above its line, which can also belong to the line before.
+
+not marked where the sheet says unclear (1):
+   p10-acceptance-date  "Signature"
+
+required differences (information) (35):
+   p02-cat-3-relative: sheet optional, portal required  "and name of relative"
+   p02-cat-4-relative: sheet optional, portal required  "and name of relative"
+   p02-edelivery-initials: sheet optional, portal required  "Initials"
+   p03-trust-date: sheet optional, portal required  "Trustee or Grantor"
+   p03-own-other: sheet optional, portal required  "Other"
+   p03-ira-type: sheet optional, portal required  "IRA"
+   p03-cust-other: sheet optional, portal required  "Other"
+   p03-cust-address: sheet optional, portal required  "City"
+   p03-custodian-tax-id: sheet optional, portal required  "NAME OF CUSTODIAN OR OTHER ADMINISTRATOR"
+   p04-alt-address: sheet optional, portal required  "City"
+   p05-init-1a: sheet optional, portal required  "Initials"
+   p05-init-1b: sheet optional, portal required  "Initials"
+   p05-init-1c: sheet optional, portal required  "c"
+   p05-init-1d: sheet optional, portal required  "Initials"
+   p05-init-2a: sheet optional, portal required  "Initials"
+   p05-init-2b: sheet optional, portal required  "Initials"
+   p05-init-2c: sheet optional, portal required  "Initials"
+   p05-init-2d: sheet optional, portal required  "Initials"
+   p05-init-2e: sheet optional, portal required  "Initials"
+   p05-init-2f: sheet optional, portal required  "Initials"
+   p05-init-2g: sheet optional, portal required  "Initials"
+   p05-init-2h: sheet optional, portal required  "Initials"
+   p05-init-2i: sheet optional, portal required  "Initials"
+   p08-ria-firm-city: sheet optional, portal required  "City"
+   p08-ria-firm-state: sheet optional, portal required  "State"
+   p08-ria-firm-zip: sheet optional, portal required  "ZIP code"
+   p08-ria-firm-phone: sheet optional, portal required  "Phone"
+   p08-ria-rep-city: sheet optional, portal required  "City"
+   p08-ria-rep-state: sheet optional, portal required  "State"
+   p08-ria-rep-zip: sheet optional, portal required  "ZIP code"
+   p08-ria-rep-phone: sheet optional, portal required  "Phone"
+   p08-ria-rep-email: sheet optional, portal required  "Email"
+   p10-ria-investor-state: sheet optional, portal required  "Signature"
+   p10-ria-date: sheet optional, portal required  "Signature"
+   p10-acceptance-date: sheet optional, portal required  "Signature"
+
+the portal said:
+   24 fields need your review before investors can sign.
+   Confirm or move the 24 fields marked for review.
+   10 pages read. 43 tick boxes, 23 blanks and 18 signature lines got a field, each on a place the agreement prints. The investor’s signature line was found on pages 7 and 10. Your firm’s signature line was found on page 10. Fields marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.
+
+what the reader says it read: {"ok":true,"error":"","pages":10,"scanned":[],"failed":[],"places":84,"left":[],"boxes":43,"blanks":23,"signatures":18,"investorPages":[7,10],"firmPages":[10],"firmLeft":0,"firmLeftPages":[],"pictured":[],"unread":{},"asked":false}
+
+signers: [{"id":"sg-mwfhaagrig7mk","name":"Investor (each subscriber)","i":0,"investorId":"__each_investor__"},{"id":"sg-mwfhaagr4mymv","name":"Co-investor (if any)","i":1,"investorId":"__co_investor__"},{"id":"sg-mwfhaagrrqq3v","name":"Kestrel Bay (countersigns)","i":2,"investorId":""}]
+fields by owner: {"investor":75,"firm":2,"investor-entity":3,"investor-individual":4}
+fields by kind: {"text":23,"checkbox":43,"initials":13,"signature":5}
+page errors: []
+aborted requests: []
+
+FAIL
+21:17:54 pictures: 10 editor pages, compare pictures in /tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/owner-set/C/out
+21:17:54 server stopped

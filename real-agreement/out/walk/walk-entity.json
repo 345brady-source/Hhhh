@@ -1,0 +1,14 @@
+{
+ "kind": "entity",
+ "uploadMs": 1433,
+ "editorNote": "48 fields were placed for you from the blanks in the PDF. Those marked Review are listed on the left: confirm each one or move it to the right place before saving. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.",
+ "editorStatus": "Confirm or move the 8 fields marked for review.",
+ "beforeSave": {
+  "fields": 48,
+  "marked": 8,
+  "todoBefore": "Confirm or move the 8 fields marked for review.",
+  "todoAfter": ""
+ },
+ "ready": true,
+ "error": "page.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ob-dob')\u001b[22m\n\n    at Object.walkToAgreement (/home/user/Hhhh/.planning/phases/04-signing-inside-onboarding/checks/lib.js:275:18)\n    at async /tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/research-011/walk-example.js:106:15"
+}

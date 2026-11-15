@@ -1,0 +1,45 @@
+{
+ "doc": "A",
+ "as": "individual",
+ "root": "/home/user/Hhhh/.claude/worktrees/agent-a2229449adc46503d",
+ "lines": [
+  "PASS stage: upload dialog",
+  "PASS check: editor: the 29 places are drawn as someone else's (29 drawn so, 29 fields)",
+  "PASS check: editor: nothing is on the \"To review\" list",
+  "PASS check: editor: the screen asks for the investor's signature field",
+  "PASS check: editor: saving is refused while the investor has no signature field",
+  "PASS check: editor: the investor's signature field is added by hand on page 17",
+  "PASS stage: save",
+  "PASS stage: invitation",
+  "PASS stage: onboarding (individual)",
+  "PASS check: signing: no input and no signature button stands on any of the 29 places",
+  "PASS check: signing: the guide counts only the investor's own field (1 of 1 left)",
+  "PASS stage: signing",
+  "PASS stage: download of the finished PDF",
+  "PASS check: finished PDF: the investor's signature is on the hand-placed field (4680 points drawn there)",
+  "PASS check: finished PDF: nothing is written inside any of the 29 places for other people",
+  "PASS check: finished PDF: no other value was given"
+ ],
+ "refusal": [
+  "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.",
+  "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.",
+  "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign.",
+  "No signature line for the investor was found in this agreement. Add a signature field for the investor where they sign."
+ ],
+ "handField": {
+  "id": "fd-mwg0qolmdto1h",
+  "type": "signature",
+  "who": "investor",
+  "page": 17,
+  "review": false,
+  "other": "",
+  "cls": "es-fld es-fld-signature is-sel is-req",
+  "drawn": true,
+  "x0": 54.7985212569316,
+  "x1": 234.79852125693162,
+  "top": 340.3288995023099,
+  "bottom": 382.3288995023099
+ },
+ "secs": 14,
+ "result": "PASS"
+}

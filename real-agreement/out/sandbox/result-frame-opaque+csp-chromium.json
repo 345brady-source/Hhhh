@@ -1,0 +1,21 @@
+{
+ "mode": "frame-opaque+csp",
+ "browser": "chromium",
+ "sandbox": "allow-scripts allow-forms allow-popups allow-modals allow-downloads",
+ "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'none'; worker-src 'none'; child-src 'none'",
+ "env": {
+  "origin": "null",
+  "localStorage": "THROWS SecurityError: Failed to read the 'localStorage' property from 'Window': The document is sandboxed and lacks the 'allow-same-origin' flag.",
+  "indexedDB": "THROWS SecurityError: Failed to execute 'open' on 'IDBFactory': access to the Indexed Database API is denied in this context.",
+  "app": true,
+  "bodyText": "Carrow & Vale Explore a sample portal Create your portal Firm name First name Last name Work email Password At least 10 characters. You will add a second sign-i"
+ },
+ "took": 1552,
+ "outcome": "upload refused: the dialog stays open",
+ "toasts": [
+  "Welcome, Priya. Your portal is ready.",
+  "Failed to execute 'open' on 'IDBFactory': access to the Indexed Database API is denied in this context."
+ ],
+ "console": [],
+ "aborted": []
+}

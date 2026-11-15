@@ -1,0 +1,21 @@
+PASS A (17 s): PLACES: PASS, TOLD: PASS, RESULT: PASS; 29 of 29 found, {"missed":0,"strays":0,"overlaps":0,"kindDiff":0,"whatDiff":0,"ownerDiff":0,"requiredDiff":0,"markedWrong":0,"labelDiff":0,"prefillWrong":0,"coversWords":0}
+FAIL B (24 s): PLACES: PASS, TOLD: FAIL, RESULT: FAIL; 2 of 2 found, {"missed":0,"strays":0,"overlaps":0,"kindDiff":0,"ownerDiff":0,"markDiff":0,"labelDiff":0,"who":0}; RESULT: FAIL (told: the editor offers a way forward for a document only the firm signs (a button for the firm to sign it, or nothing stops saving))
+PASS C (8 s): PLACES: PASS, TOLD: PASS, RESULT: PASS; 138 of 138 found, {"missed":0,"strays":0,"overlaps":0,"kindDiff":0,"whatDiff":0,"ownerDiff":0,"requiredDiff":0,"markedWrong":0,"unmarkedWrong":0,"labelDiff":0,"prefillWrong":0}
+FAIL Bvar (13 s): v-control FAILS (RESULT: FAIL (told: the editor offers a way forward for a document only the firm signs (a button for the firm to sign it, or nothing stops saving))); v-president FAILS (RESULT: FAIL (told: the editor offers a way forward for a document only the firm signs (a button for the firm to sign it, or nothing stops saving))); v-bare FAILS (RESULT: FAIL (told: the editor offers a way forward for a document only the firm signs (a button for the firm to sign it, or nothing stops saving))); v-lp-page ok; v-counter ok; example47 ok
+PASS classes (11 s): 43/43 passed
+PASS notpdf (146 s): 148/148 passed
+PASS walkA (15 s): individual: 16 PASS, 0 FAIL, RESULT: PASS
+PASS walkB (32 s): firm: 10 PASS, 0 FAIL, RESULT: PASS
+PASS walkC (96 s): individual: 21 PASS, 0 FAIL, RESULT: PASS; entity: 17 PASS, 0 FAIL, RESULT: PASS
+PASS stable:A (6 s): 29 fields twice: the same page, kind, box to the nearest point, owner, required and mark, in the same order
+PASS stable:B (8 s): 2 fields twice: the same page, kind, box to the nearest point, owner, required and mark, in the same order
+PASS stable:C (6 s): 138 fields twice: the same page, kind, box to the nearest point, owner, required and mark, in the same order
+PASS proof1 (7 s): 7 passed, 0 failed
+PASS proof3 (15 s): 8 passed, 0 failed
+PASS proof4 (15 s): 8 passed, 0 failed
+PASS proof5 (73 s): 15 passed, 0 failed
+PASS proof6 (38 s): 25 passed, 0 failed
+PASS proof7 (144 s): 9 passed, 0 failed
+PASS leak (2 s): 218 files and 84 commit messages searched: no name of the list, no run of eight words outside the allowed list
+MEASURE: FAIL
+exit 1

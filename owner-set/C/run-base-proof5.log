@@ -1,0 +1,23 @@
+21:30:06 serving /home/user/Hhhh on http://localhost:8700 (frame host on :8701); evidence in /tmp/claude-0/-home-user-Hhhh/718a3a12-5721-5a9e-a5ca-f390e1aa2396/scratchpad/owner-set/C/out-base-proof5
+21:30:16 PASS [5] PPM_Blackcommerce_LLC_SEC_EDGAR (112 pages): 38 fields, every one clean
+21:30:21 PASS [5] PPM_RockStep_Hometown_America_Fund_I (prose, 69 pages): no field placed
+21:30:26 PASS [5] PPM_Worcester_Fund_LLC (prose, 85 pages): no field placed
+21:30:35 PASS [5] Subscription_Hedge_Fund_Template (18 pages): 64 fields, every one clean
+21:30:44 PASS [5] Subscription_ILPA_Model_Subscription_Agreement (25 pages): 58 fields, every one clean
+21:31:03 PASS [5] Subscription_PA_SERS_Insight_Venture_Partners_VIII_Closing_Binder_Redacted (scan, 72 pages): no field placed
+21:31:03 PASS [5] Subscription_PA_SERS_Insight_Venture_Partners_VIII_Closing_Binder_Redacted: the screen says plainly that it could not be read :: words shown: This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign. | Most of this PDF could not be read: 71 of its 72 pages are pictures, as in a scan. No field was placed. Upload the PDF the agreement was made from, or add each field by hand. Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here. | This PDF could not be read, so no field was placed. Add a signature field for the investor where they sign. | This PDF could not be read, so no field was placed. Add a signature field for the investor where they si
+21:31:22 PASS [5] Subscription_PA_SERS_Lubert_Adler_Real_Estate_Fund_VII_Redacted (43 pages): 147 fields, every one clean
+
+PROOF RUN  root /home/user/Hhhh  steps 5  76 s  (step 5: 76 s)
+-------------------------------------------------------------------------------------------------------------------------------------------
+PASS  [5]  PPM_Blackcommerce_LLC_SEC_EDGAR (112 pages): 38 fields, every one clean
+PASS  [5]  PPM_RockStep_Hometown_America_Fund_I (prose, 69 pages): no field placed
+PASS  [5]  PPM_Worcester_Fund_LLC (prose, 85 pages): no field placed
+PASS  [5]  Subscription_Hedge_Fund_Template (18 pages): 64 fields, every one clean
+PASS  [5]  Subscription_ILPA_Model_Subscription_Agreement (25 pages): 58 fields, every one clean
+PASS  [5]  Subscription_PA_SERS_Insight_Venture_Partners_VIII_Closing_Binder_Redacted (scan, 72 pages): no field placed
+PASS  [5]  Subscription_PA_SERS_Insight_Venture_Partners_VIII_Closing_Binder_Redacted: the screen says plainly that it could not be read
+PASS  [5]  Subscription_PA_SERS_Lubert_Adler_Real_Estate_Fund_VII_Redacted (43 pages): 147 fields, every one clean
+-------------------------------------------------------------------------------------------------------------------------------------------
+8 passed, 0 failed
+exit 0

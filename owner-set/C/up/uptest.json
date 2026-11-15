@@ -1,0 +1,92 @@
+[
+ {
+  "case": "1a docx chosen, before pressing the button",
+  "envelopes": 0,
+  "hash": "#console-offering-kb-fund-ii",
+  "dlgOpen": true,
+  "accept": "application/pdf,.pdf",
+  "chosen": "agreement.docx (application/vnd.openxmlformats-officedocument.wordprocessingml.document)",
+  "hint": "One PDF, up to 25 MB.",
+  "button": "Continue to place fields",
+  "toasts": [],
+  "errorsInDialog": [],
+  "toastHtml": ""
+ },
+ {
+  "case": "1b docx chosen, button pressed",
+  "envelopes": 0,
+  "hash": "#console-offering-kb-fund-ii",
+  "dlgOpen": true,
+  "accept": "application/pdf,.pdf",
+  "chosen": "agreement.docx (application/vnd.openxmlformats-officedocument.wordprocessingml.document)",
+  "hint": "One PDF, up to 25 MB.",
+  "button": "Continue to place fields",
+  "toasts": [
+   "Choose a PDF file.",
+   "Choose a PDF file."
+  ],
+  "errorsInDialog": [],
+  "toastHtml": "<div class=\"toast\">Choose a PDF file.</div>"
+ },
+ {
+  "case": "2 docx renamed to pdf, button pressed",
+  "envelopes": 0,
+  "hash": "#console-offering-kb-fund-ii",
+  "dlgOpen": true,
+  "accept": "application/pdf,.pdf",
+  "chosen": "agreement-renamed.pdf (application/pdf)",
+  "hint": "One PDF, up to 25 MB.",
+  "button": "Continue to place fields",
+  "toasts": [
+   "Choose a PDF file.Choose a PDF file.",
+   "Choose a PDF file.",
+   "Choose a PDF file."
+  ],
+  "errorsInDialog": [],
+  "toastHtml": "<div class=\"toast\">Choose a PDF file.</div>"
+ },
+ {
+  "case": "3a docx dropped on the file input",
+  "envelopes": 0,
+  "hash": "#console-offering-kb-fund-ii",
+  "dlgOpen": true,
+  "accept": "application/pdf,.pdf",
+  "chosen": "agreement.docx (application/vnd.openxmlformats-officedocument.wordprocessingml.document)",
+  "hint": "One PDF, up to 25 MB.",
+  "button": "Continue to place fields",
+  "toasts": [
+   "Choose a PDF file.Choose a PDF file.",
+   "Choose a PDF file.",
+   "Choose a PDF file."
+  ],
+  "errorsInDialog": [],
+  "toastHtml": "<div class=\"toast out\">Choose a PDF file.</div>"
+ },
+ {
+  "case": "3b docx dropped on the file input, button pressed",
+  "envelopes": 0,
+  "hash": "#console-offering-kb-fund-ii",
+  "dlgOpen": true,
+  "accept": "application/pdf,.pdf",
+  "chosen": "agreement.docx (application/vnd.openxmlformats-officedocument.wordprocessingml.document)",
+  "hint": "One PDF, up to 25 MB.",
+  "button": "Continue to place fields",
+  "toasts": [
+   "Choose a PDF file.Choose a PDF file.",
+   "Choose a PDF file.",
+   "Choose a PDF file."
+  ],
+  "errorsInDialog": [],
+  "toastHtml": "<div class=\"toast out\">Choose a PDF file.</div>"
+ },
+ {
+  "case": "4 docx dropped on the dialog heading",
+  "urlBefore": "http://localhost:8951/diy.html#console-offering-kb-fund-ii",
+  "urlAfter": "http://localhost:8951/diy.html#console-offering-kb-fund-ii",
+  "portalStillThere": true
+ },
+ {
+  "pageErrors": [],
+  "dialogs": []
+ }
+]
