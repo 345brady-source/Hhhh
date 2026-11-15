@@ -170,7 +170,7 @@
   const bucket = (pair) => fnv1a(pair) % BUCKETS;
 
   /* ---------- the feature names ---------- */
-  const KIND_LIST = ['signature', 'name', 'date', 'title', 'nameTitle', 'initials', 'investorName', 'amount', 'address', 'city', 'state', 'zip', 'cityStateZip', 'email', 'phone', 'taxId', 'other', 'checkbox'];
+  const KIND_LIST = ['signature', 'name', 'date', 'title', 'nameTitle', 'initials', 'investorName', 'amount', 'address', 'city', 'state', 'zip', 'cityStateZip', 'email', 'phone', 'taxId', 'other', 'checkbox', 'text'];
   const EVIDENCE = ['rule', 'underscore', 'box', 'glyph', 'cell', 'comb', 'dateparts', 'picture'];
   const SLOTS = ['cap', 'after', 'under', 'over', 'head', 'blk'];
   const BLOCK_KINDS = ['signature', 'section', 'branch', 'none'];
