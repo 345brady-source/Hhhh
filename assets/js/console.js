@@ -386,7 +386,9 @@
   const EXEMPTIONS = [
     ['Rule 506(b)', 'Rule 506(b)'],
     ['Rule 506(c)', 'Rule 506(c): verified accredited investors only'],
-    ['Regulation A', 'Regulation A'],
+    ['Regulation A Tier 1', 'Regulation A Tier 1'],
+    ['Regulation A Tier 2', 'Regulation A Tier 2: 10 percent investment limit for non-accredited investors'],
+    ['Regulation A Tier 2, exchange-listed', 'Regulation A Tier 2: listed on a national securities exchange'],
     ['Regulation Crowdfunding', 'Regulation Crowdfunding'],
     ['Regulation S', 'Regulation S'],
     ['Section 4(a)(2)', 'Section 4(a)(2)']
@@ -395,6 +397,16 @@
     const cur = ((o.structure || {}).exemption || '').trim();
     const known = EXEMPTIONS.some(([v]) => v === cur);
     return [['', 'Not set']].concat(cur && !known ? [[cur, cur]] : [], EXEMPTIONS);
+  }
+  /**
+   * The exemption field's hint (self-serve edition). C-04: a Regulation A value with no tier (read from documents) is
+   * treated as Tier 2 until the sponsor chooses, and the hint says so, next to the Rule 506(c) note.
+   */
+  function exemptionHint(o) {
+    if (!E.diy) return '';
+    const ex = ((o.structure || {}).exemption || '').trim();
+    const untiered = !!NS.eligibility && NS.eligibility.regime(o) === 'regA2' && !/\bTier\b/i.test(ex);
+    return `${untiered ? 'This offering names Regulation A without a tier: choose Tier 1 or Tier 2 above. Until you do, investors who are not accredited are asked the Tier 2 questions and shown their 10 percent limit. ' : ''}Rule 506(c) offerings take verified accredited investors only: investors verify their status while they onboard, before they can subscribe.`;
   }
   function offPreview(o) {
     const x = NS.exitInfo(o);
@@ -417,7 +429,9 @@
    */
   function eligibilityPanel(o) {
     const EL = NS.eligibility;
-    if (!E.diy || !EL || EL.regime(o) !== '506b') return '';
+    if (!E.diy || !EL) return '';
+    if (EL.regime(o) === 'regA2') return regAPanel(o);
+    if (EL.regime(o) !== '506b') return '';
     const n = EL.nonAccredited(W(), o);
     const a = n.accepted.length;
     const p = n.pending.length;
@@ -431,6 +445,31 @@
       ${unansweredLine(n)}
       ${n.count ? '<p class="cs-hint">Rule 502(b): each purchaser who is not accredited must be given the disclosure and financial information the rule calls for a reasonable time before the sale.</p>' : ''}
       <p class="cs-hint">Counted for this offering only. Offerings by the same issuer made within 90 days of each other may be treated as one offering, and their purchasers counted together.</p>`
+    );
+  }
+  /**
+   * Regulation A Tier 2 (D-01, C-01): the subscribers who said they are not accredited, and each one whose subscriptions to
+   * this offering add up to more than 10 percent of the greater of the figures they gave. Every limit and total is worked
+   * out here from the stored figures and the requests (regAStatus), never from a flag the investor's device set. Nothing
+   * is blocked: the sponsor decides on each subscription.
+   */
+  function regAPanel(o) {
+    const EL = NS.eligibility;
+    const s = EL.regAStatus(W(), o);
+    const n = s.rows.length;
+    const over = s.rows
+      .filter((r) => r.over)
+      .map((r) => {
+        const inv = invById(r.investorId);
+        return `<p class="cs-elig-over">${badge('bad', 'Over the limit')} <strong>${h(inv ? inv.title : r.investorId)}</strong>: ${h(EL.usd(r.totalCents))} committed in this offering, limit ${h(EL.usd(r.limitCents))}</p>`;
+      })
+      .join('');
+    const none = s.noFigures ? `<p class="cs-muted">${h(String(s.noFigures))} ${s.noFigures === 1 ? 'subscriber has' : 'subscribers have'} not given figures, so ${s.noFigures === 1 ? 'that limit is' : 'those limits are'} not known.</p>` : '';
+    return panel(
+      'Investor eligibility',
+      `<p class="cs-elig-count"><strong>Regulation A Tier 2: ${h(String(n))} non-accredited subscriber${n === 1 ? '' : 's'}, ${h(String(s.over))} over their 10 percent limit</strong></p>
+      ${over}${none}
+      <p class="cs-hint">Each limit is 10 percent of the greater of the annual income and net worth an investor stated (for an organization, its revenue and net assets for the most recent fiscal year), set against all their subscriptions to this offering. Declined subscriptions are not counted, and accredited investors have no limit.</p>`
     );
   }
   /** D-30: investors who left the status question open, and holders with no subscription made here, shown apart from the count. */
@@ -531,7 +570,7 @@
               ${offField('Closing date', 'closeDate', { type: 'date' })}
               ${offField('One-line description', 'summary', { wide: true, max: 100 })}
               ${offField('Minimum investment ($)', 'minimum', { type: 'number' })}
-              ${offField('Securities exemption', 'structure.exemption', { select: exemptionOptions(o), hint: E.diy ? 'Rule 506(c) offerings take verified accredited investors only: investors verify their status while they onboard, before they can subscribe.' : '' })}
+              ${offField('Securities exemption', 'structure.exemption', { select: exemptionOptions(o), hint: exemptionHint(o) })}
             </div>`)}
             ${eligibilityPanel(o)}
             ${NS.esign && NS.esign.agreementPanel ? NS.esign.agreementPanel(W(), o, true) : ''}
@@ -603,7 +642,12 @@
     }
     NS.app.save();
     if (path === 'exit.basis' || path === 'type' || path === 'distribution.day' || path === 'distribution.frequency') NS.app.render();
-    else {
+    else if (path === 'structure.exemption') {
+      // The eligibility panel and the exemption's hint follow the exemption chosen; focus stays on the select.
+      NS.app.render();
+      const sel = document.getElementById('of-structure-exemption');
+      if (sel) sel.focus();
+    } else {
       const pv = document.getElementById('off-preview');
       if (pv) pv.innerHTML = offPreview(o);
     }
