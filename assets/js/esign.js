@@ -123,6 +123,14 @@
     const [y, m, d] = String(iso).split('-');
     return `${m}/${d}/${y}`;
   };
+  /** The date a date field is filled with: the form's own format when it names one (the W-8 forms), else usDate. */
+  const dateFmt = (f, iso) => {
+    if (f && f.fmt === 'MM-DD-YYYY') {
+      const [y, m, d] = String(iso).split('-');
+      return `${m}-${d}-${y}`;
+    }
+    return usDate(iso);
+  };
   function stamp(iso) {
     if (!iso) return '';
     return new Date(iso).toLocaleString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' }) + ' UTC';
@@ -2276,7 +2284,7 @@
       if (!s) return null;
       const vals = {};
       fieldsOf(env, s).forEach((f) => {
-        if (f.type === 'date') vals[f.id] = usDate(NS.dates.today());
+        if (f.type === 'date') vals[f.id] = dateFmt(f, NS.dates.today());
         else if (f.type === 'name') vals[f.id] = f.value || (s.role === 'countersigner' ? firmSignerName() : s.name);
         else if (f.type === 'text') vals[f.id] = f.value || '';
         else if (f.type === 'checkbox') vals[f.id] = !!f.value;
