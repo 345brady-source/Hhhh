@@ -44,7 +44,12 @@ L.describeShots([
   [/^other-off-.*-status\.png$/, 'Status step with the firm\'s accredited question off (Regulation S, Regulation Crowdfunding or Section 4(a)(2)): the benefit plan questions only.'],
   [/^other-off-.*-subscribe\.png$/, 'Subscribe step with the accredited question off: no "is an accredited investor" tick where the exemption is open to all (with a note saying why); the optional tick kept for Section 4(a)(2).'],
   ['back-correct-to-no.png', 'Status step reached with Back while the request is pending, the answer being corrected from "yes" to "no".'],
-  ['resume-status.png', 'A flow saved by the earlier version resumes at the Investor status step, step 5 of 10, with the earlier answers kept.']
+  ['resume-status.png', 'A flow saved by the earlier version resumes at the Investor status step, step 5 of 10, with the earlier answers kept.'],
+  [/^portal-(link|investments|address)-status\.png$/, 'Self-serve portal (plan 06-08): an investor on file who is not accredited, after the offering link, the Investments button or the subscribe address: the guided Investor status step, never the old form with the accredited tick.'],
+  ['portal-address-box.png', 'Self-serve portal (plan 06-08): the subscribe address for an investor on file shows only the "Continue your subscription" box, no form and no accredited tick.'],
+  ['portal-console-3.png', 'Console offering page after the three portal subscriptions: "Non-accredited purchasers: 3 of 35".'],
+  [/^portal-other-.*\.png$/, 'Self-serve portal (plan 06-08): Regulation A, benefit plan, unanswered and withdrawn-ground subscriptions reached from the portal.'],
+  ['portal-managed-subscribe.png', 'Managed edition (plan 06-08, C-03): the portal subscribe page unchanged, with its accredited tick.']
 ]);
 fs.mkdirSync(SHOTS, { recursive: true });
 const INV = { name: 'Dana Whitfield', email: 'dana.whitfield@example.com' };
@@ -265,6 +270,126 @@ const seedNonAccredited = (page, offeringId, n, prefix) =>
     },
     { offeringId, n, prefix }
   );
+
+/* ---------- Plan 06-08: the self-serve portal's own subscribe entry points (verifier gap 1) ---------- */
+
+/**
+ * n active investors on file with no invitation and no holding or request in the offering, individuals first, each left
+ * without an accreditation ground, as the status step leaves an investor who answered no. Returns [{ id, name, title,
+ * type, email, basis }].
+ */
+const onFile = (page, offeringId, n) =>
+  page.evaluate(
+    ({ oid, n }) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const ok = (x) => x.onboarding && x.onboarding.status === 'complete' && x.email && !(x.positions || []).some((y) => y.offeringId === oid) && !(ws.invitations || []).some((t) => t.investorId === x.id) && !(ws.requests || []).some((r) => r.investorId === x.id && r.offeringId === oid);
+      const list = ws.investors
+        .filter(ok)
+        .sort((a, b) => (a.type === 'individual' ? 0 : 1) - (b.type === 'individual' ? 0 : 1))
+        .slice(0, n);
+      list.forEach((i) => (i.accreditation = { basis: '', date: '' }));
+      NS.app.save(true);
+      return list.map((i) => ({ id: i.id, name: i.contact, title: i.title, type: i.type, email: i.email, basis: i.accreditation.basis }));
+    },
+    { oid: offeringId, n }
+  );
+
+/** Signed in as the investor (the portal's own session), on the given route. */
+const asInvestor = (page, investorId, route) =>
+  page.evaluate(
+    ({ id, route }) => {
+      const NS = window.CVPortal;
+      NS.state.role = 'investor';
+      NS.store.set('role', 'investor');
+      NS.state.viewer = id;
+      NS.app.go(route);
+    },
+    { id: investorId, route }
+  );
+
+/** The firm's offering link (#join-<offering>) filled in with an investor on file's name and email. */
+async function joinFromLink(page, offeringId, who) {
+  await page.evaluate((id) => (location.hash = 'join-' + id), offeringId);
+  await page.waitForSelector('form[data-form=join]', { timeout: 20000 });
+  const n = String(who.name).split(' ');
+  await page.fill('#jn-name', n[0]);
+  await page.fill('#jn-last', n.slice(1).join(' ') || n[0]);
+  await page.fill('#jn-email', who.email);
+  await page.check('#jn-consent');
+  await page.click('form[data-form=join] button[type=submit]');
+  await page.waitForTimeout(900);
+}
+
+/** Signed in as the investor, the Investments page's subscribe control for the offering. false when it is not offered. */
+async function fromInvestments(page, offeringId, who) {
+  await asInvestor(page, who.id, 'investments');
+  await page.waitForTimeout(700);
+  const ctl = page.locator(`[data-action=sub-start][data-id="${offeringId}"], a[href="#subscribe-${offeringId}"]`).first();
+  if (!(await ctl.count())) return false;
+  await ctl.click();
+  await page.waitForTimeout(900);
+  return true;
+}
+
+/** No "is an accredited investor" statement and no #sb-acc tick on the screen now shown. */
+async function noAccTick(page) {
+  const text = await L.screenText(page);
+  const sbAcc = await page.locator('#sb-acc').count();
+  return { ok: !/is an accredited investor/.test(text) && sbAcc === 0, sbAcc, text };
+}
+
+/** The invitation the screen now shows (#invite-<token>), or null. */
+const shownInvitation = (page) =>
+  page.evaluate(() => {
+    const tok = location.hash.replace(/^#invite-/, '');
+    const x = (window.CVPortal.state.ws.invitations || []).find((y) => y.token && y.token === tok);
+    return x ? { id: x.id, offeringId: x.offeringId, investorId: x.investorId, existing: !!x.existing, sentBy: x.sentBy, status: x.status } : null;
+  });
+
+/**
+ * After a portal entry point: the screen must be the guided subscription of an investor on file for this offering (never
+ * the old form), walked with answers (default: not accredited, the sophistication answers, no representative), the
+ * agreement signed. Returns { st, sub, done, req, texts } or null when the flow was not reached.
+ */
+async function guidedFromPortal(p, check, tag, who, offeringId, answers, shot) {
+  const first = await noAccTick(p);
+  check(`${tag}: no "is an accredited investor" statement and no #sb-acc on the screen the entry point opens`, first.ok, { sbAcc: first.sbAcc, text: first.text.slice(0, 700) });
+  const inFlow = await p.waitForSelector('.ivf-form h1', { timeout: 6000 }).then(
+    () => true,
+    () => false
+  );
+  check(`${tag}: the entry point opens the guided subscription`, inFlow, first.text.slice(0, 500));
+  if (!inFlow) return null;
+  const it = await shownInvitation(p);
+  check(`${tag}: the guided subscription is the investor's own, for this offering, as an investor on file`, !!it && it.offeringId === offeringId && it.investorId === who.id && it.existing, it);
+  const texts = [];
+  const R = { st: '', sub: '' };
+  const a = Object.assign({ name: who.name, acc: 'no', exp: 'Ten years of private real estate fund commitments', edu: 'Accountant', rep: 'no', amount: 60000 }, answers || {});
+  const userFilled = a.onFilled;
+  const userStep = a.onStep;
+  a.onStep = async (hd) => {
+    texts.push(await L.screenText(p));
+    if (userStep) await userStep(hd);
+  };
+  a.onFilled = async (hd) => {
+    if (hd === 'Investor status') {
+      R.st = await L.screenText(p);
+      if (shot) await p.screenshot({ path: path.join(SHOTS, `${shot}-status.png`), fullPage: true });
+    }
+    if (hd === 'Subscription') R.sub = await L.screenText(p);
+    if (userFilled) await userFilled(hd);
+  };
+  const w = await L.walk(p, a);
+  const heads = w.seen.map((s) => s.split(' | ').pop());
+  check(`${tag}: the steps of an investor on file: welcome, Investor status, subscription, agreement`, w.reached && w.errors.length === 0 && /^Welcome/.test(heads[0]) && heads.slice(1).join(',') === 'Investor status,Subscription,Subscription agreement', { seen: w.seen, errors: w.errors });
+  check(`${tag}: no screen of the flow asks for the "is an accredited investor" statement`, !texts.concat(R.sub).some((t) => /is an accredited investor/.test(t)) || a.acc === 'yes', texts.map((t) => (t.match(/[^\n]*is an accredited investor[^\n]*/) || [''])[0]).filter(Boolean));
+  const req = w.reached ? await requestOf(p, who.id, offeringId) : null;
+  const done = w.reached ? await finishAgreement(p) : '';
+  const lk = L.leakCheck(texts.concat(R.sub, done).join('\n'));
+  check(`${tag}: white label: every screen of the flow passes the leak check`, lk.ok, lk.hits);
+  return { st: R.st, sub: R.sub, done, req, texts, w };
+}
 
 const parts = {
   /** A non-accredited investor subscribes to a Rule 506(b) offering; the sponsor sees 1 of 35. */
@@ -1692,6 +1817,266 @@ const parts = {
     check('no script error in the browser', A.errors.length === 0, A.errors);
     check('no request left the check server', A.net.external.length === 0, A.net.external);
     await A.context.close();
+  },
+
+  /**
+   * Plan 06-08 (verifier gap 1, C-05, D-30): in the self-serve portal, investors on file who are not accredited subscribe
+   * to a Rule 506(b) offering from the firm's offering link (Run A), from Investments (Run B) and from the subscribe
+   * address with an open invitation for another offering (Run C). Never the old form's accredited tick; each goes through
+   * the guided status step, the request carries qual and the console counts all three.
+   */
+  async 'portal-506b'({ check, S }) {
+    const A = await L.open(S);
+    const p = A.page;
+    const off = await L.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+    check('the offering is Rule 506(b) with its agreement ready', off.ready && off.exemption === 'Rule 506(b)', off);
+    const people = await onFile(p, off.offeringId, 3);
+    check('three active investors on file who are not accredited, with no invitation', people.length === 3, people);
+    if (people.length < 3) return A.context.close();
+    const qualOk = (r, who, exp) => {
+      const q = (r && r.qual) || {};
+      const so = q.sophistication || {};
+      return !!r && q.regime === '506b' && q.accredited === false && so.experience === exp;
+    };
+
+    // Run A: the firm's offering link, signed in with the email of an account that is complete.
+    await joinFromLink(p, off.offeringId, people[0]);
+    const a = await guidedFromPortal(p, check, 'Run A (offering link)', people[0], off.offeringId, { exp: 'Run A: twelve years of fund commitments' }, 'portal-link');
+    if (a) {
+      check('Run A: the status step asks the accredited and sophistication questions', /an accredited investor\?/.test(a.st) && /investment experience/i.test(a.st), a.st.slice(0, 900));
+      check('Run A: the subscribe step states the account is not an accredited investor', /is not an accredited investor/.test(a.sub), a.sub.slice(0, 900));
+      check('Run A: the request carries qual: regime 506b, accredited false, the sophistication answers', qualOk(a.req, people[0], 'Run A: twelve years of fund commitments'), a.req);
+      check('Run A: the agreement was signed (done screen)', /Accreditation/.test(a.done) || a.done.length > 0, a.done.slice(0, 400));
+    }
+
+    // Run B: Investments, the offering's subscribe control.
+    const offered = await fromInvestments(p, off.offeringId, people[1]);
+    check('Run B: the Investments page offers the offering to an investor on file who is not accredited', offered);
+    const b = offered ? await guidedFromPortal(p, check, 'Run B (Investments)', people[1], off.offeringId, { exp: 'Run B: eight years of private equity' }, 'portal-investments') : null;
+    if (b) check('Run B: the request carries qual: regime 506b, accredited false, the sophistication answers', qualOk(b.req, people[1], 'Run B: eight years of private equity'), b.req);
+
+    // Run C: the subscribe address typed or bookmarked, with an open invitation for a different offering.
+    const other = await p.evaluate((oid) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const o = ws.offerings.find((x) => x.id === oid);
+      const c = JSON.parse(JSON.stringify(o));
+      c.id = oid + '-second';
+      c.name = 'Second Test Offering';
+      c.status = 'Raising';
+      ws.offerings.push(c);
+      NS.app.save(true);
+      return { id: c.id, name: c.name };
+    }, off.offeringId);
+    const otherInv = await L.createInvitation(p, { name: people[2].name, email: people[2].email, offeringId: other.id, cents: 0 });
+    const otherIt = await p.evaluate((id) => (window.CVPortal.state.ws.invitations || []).find((x) => x.id === id) || null, otherInv.invitationId);
+    check('Run C: the investor holds an open invitation to subscribe to a different offering', !!otherIt && otherIt.existing && otherIt.offeringId === other.id, otherIt);
+    await asInvestor(p, people[2].id, 'subscribe-' + off.offeringId);
+    await p.waitForTimeout(900);
+    const addr = await noAccTick(p);
+    await p.screenshot({ path: path.join(SHOTS, 'portal-address-box.png'), fullPage: true });
+    check('Run C: the subscribe address shows no "is an accredited investor" statement and no #sb-acc', addr.ok, { sbAcc: addr.sbAcc, text: addr.text.slice(0, 900) });
+    const boxBtn = p.locator('.done-box [data-action=sub-start]', { hasText: 'Continue your subscription' });
+    const hasBox = (await boxBtn.count()) === 1;
+    check('Run C: the "Continue your subscription" box with its button is shown', hasBox, addr.text.slice(0, 900));
+    check('white label: the subscribe address screen passes the leak check', L.leakCheck(addr.text).ok, L.leakCheck(addr.text).hits);
+    let c = null;
+    if (hasBox) {
+      await boxBtn.click();
+      await p.waitForTimeout(900);
+      c = await guidedFromPortal(p, check, 'Run C (subscribe address)', people[2], off.offeringId, { exp: 'Run C: five years of venture funds' }, 'portal-address');
+    }
+    if (c) check('Run C: the request carries qual: regime 506b, accredited false, the sophistication answers', qualOk(c.req, people[2], 'Run C: five years of venture funds'), c.req);
+    const after = await p.evaluate((id) => (window.CVPortal.state.ws.invitations || []).find((x) => x.id === id) || null, otherInv.invitationId);
+    check('Run C: the invitation for the other offering is left as it was (still open, same offering)', !!after && after.offeringId === other.id && ['cancelled', 'expired', 'completed'].indexOf(after.status) < 0, after);
+
+    // The console counts all three.
+    await consoleOffering(p, off.offeringId);
+    const ct = await L.screenText(p);
+    await p.screenshot({ path: path.join(SHOTS, 'portal-console-3.png'), fullPage: true });
+    check('the console offering page reads "Non-accredited purchasers: 3 of 35"', /Non-accredited purchasers: 3 of 35/.test(ct), (ct.match(/[^\n]*Non-accredited purchasers[^\n]*/) || [ct.slice(0, 600)])[0]);
+    const lkC = L.leakCheck(ct);
+    check('white label: the console offering page passes the leak check', lkC.ok, lkC.hits);
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  },
+
+  /**
+   * Plan 06-08 (C-05, D-30, D-01, C-03): the same portal route carries Regulation A Tier 2 figures (offering link), the
+   * benefit plan answers, an empty status step and a withdrawn self-certified ground (Investments); the managed edition's
+   * subscribe page is unchanged.
+   */
+  async 'portal-other'({ check, S }) {
+    // rega: Regulation A Tier 2 from the firm's offering link.
+    {
+      const A = await L.open(S);
+      const p = A.page;
+      const off = await L.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+      const ex = await chooseExemption(p, off.offeringId, 'Regulation A Tier 2');
+      check('rega: the offering stores "Regulation A Tier 2"', ex.stored === 'Regulation A Tier 2', ex);
+      const [who] = await onFile(p, off.offeringId, 1);
+      check('rega: an individual investor on file who is not accredited, with no invitation', !!who && who.type === 'individual', who);
+      if (who) {
+        await joinFromLink(p, off.offeringId, who);
+        const R = {};
+        const g = await guidedFromPortal(p, check, 'rega (offering link)', who, off.offeringId, {
+          amount: 60000,
+          onFilled: async (hd) => {
+            if (hd === 'Investor status') {
+              await fillFigures(p, { kind: 'person', stIncome: 85000, stWorth: 120000 });
+              R.limit = await p.locator('#ra-limit').innerText().catch(() => '');
+            }
+            if (hd === 'Subscription') {
+              R.raSub = await p.locator('#ra-sub').innerText().catch(() => '');
+              R.warn = await p.locator('#ra-sub .wire-warn').innerText().catch(() => '');
+              await p.screenshot({ path: path.join(SHOTS, 'portal-other-rega-subscribe.png'), fullPage: true });
+            }
+          }
+        });
+        check('rega: the status step shows the $12,000 limit (10 percent of the $120,000 net worth)', /\$12,000/.test(R.limit || ''), R.limit);
+        check('rega: the subscribe step names the $12,000 limit and warns that the commitment is above it, without blocking (agreement reached)', /Your investment limit in this offering under Regulation A: \$12,000/.test(R.raSub || '') && /above your investment limit under Regulation A/.test(R.warn || '') && /You can still subscribe/.test(R.warn || '') && !!g && g.w.reached, R);
+        const q = (g && g.req && g.req.qual) || {};
+        const ra = q.regA || {};
+        check('rega: request.qual.regA keeps the figures, the $12,000 limit and over-limit', ra.kind === 'person' && ra.income === 85000 && ra.netWorth === 120000 && ra.limitCents === 1200000 && ra.overLimit === true && q.accredited === false, q);
+        if (g && g.req) {
+          await consoleRequests(p);
+          const row = await requestRow(p, g.req.id);
+          check('rega: the console flags the request "Over the Regulation A Tier 2 limit: $60,000 committed in this offering, limit $12,000"', /Over the Regulation A Tier 2 limit: \$60,000 committed in this offering, limit \$12,000/.test(row), row);
+          check('white label: the requests view passes the leak check', L.leakCheck(await L.screenText(p)).ok);
+        }
+      }
+      check('rega: no script error in the browser', A.errors.length === 0, A.errors);
+      check('rega: no request left the check server', A.net.external.length === 0, A.net.external);
+      await A.context.close();
+    }
+
+    // erisa, empty, withdraw: Rule 506(b) from Investments; the firm accepts self-certification (a ground is recorded).
+    {
+      const A = await L.open(S);
+      const p = A.page;
+      const off = await L.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+      const people = await onFile(p, off.offeringId, 3);
+      check('three investors on file with no invitation', people.length === 3, people);
+      const ground = await p.evaluate((id) => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        NS.integrations.ensure(ws).use.accreditation = ['self'];
+        const i = ws.investors.find((x) => x.id === id);
+        const b = NS.eligibility.BASES[0];
+        if (i) i.accreditation = { basis: b, date: NS.dates.today() };
+        NS.app.save(true);
+        return b;
+      }, (people[2] || {}).id);
+      const before = await p.evaluate((oid) => {
+        const ws = window.CVPortal.state.ws;
+        const n = window.CVPortal.eligibility.nonAccredited(ws, ws.offerings.find((x) => x.id === oid));
+        return { count: n.count, unanswered: n.unanswered };
+      }, off.offeringId);
+      if (people.length === 3) {
+        // erisa: the benefit plan question answered (Title I plan).
+        let offered = await fromInvestments(p, off.offeringId, people[0]);
+        check('erisa: the Investments page offers the offering', offered);
+        const ge = offered
+          ? await guidedFromPortal(p, check, 'erisa (Investments)', people[0], off.offeringId, {
+              onFilled: async (hd) => {
+                if (hd === 'Investor status') {
+                  await p.check('input[name="ob-stPlan"][value="title1"]');
+                  await p.waitForTimeout(200);
+                  await p.screenshot({ path: path.join(SHOTS, 'portal-other-erisa-status.png'), fullPage: true });
+                }
+              }
+            })
+          : null;
+        const eq = (ge && ge.req && ge.req.qual && ge.req.qual.erisa) || {};
+        const rec = await p.evaluate((id) => (window.CVPortal.state.ws.investors.find((x) => x.id === id) || {}).erisa || null, people[0].id);
+        check('erisa: request.qual.erisa and the investor record carry the Title I answer', eq.plan === 'title1' && !!rec && rec.plan === 'title1', { qual: ge && ge.req && ge.req.qual, rec });
+
+        // empty: every status answer left open (D-30).
+        offered = await fromInvestments(p, off.offeringId, people[1]);
+        check('empty: the Investments page offers the offering', offered);
+        let pre = null;
+        const gm = offered
+          ? await guidedFromPortal(p, check, 'empty (Investments)', people[1], off.offeringId, {
+              acc: '',
+              exp: null,
+              edu: null,
+              rep: '',
+              onStep: async (hd) => {
+                if (hd === 'Investor status') pre = await p.evaluate(() => Array.from(document.querySelectorAll('.ivf-form input:checked')).map((x) => x.name + '=' + x.value));
+              }
+            })
+          : null;
+        check('empty: nothing on the status step is answered for the investor', !!pre && !pre.some((x) => /^ob-st/.test(x)), pre);
+        const mq = (gm && gm.req && gm.req.qual) || {};
+        check('empty: the subscription is made with request.qual.accredited null', !!(gm && gm.req) && mq.regime === '506b' && mq.accredited === null, mq);
+
+        // withdraw: a self-certified ground on file, the investor answers "not accredited".
+        offered = await fromInvestments(p, off.offeringId, people[2]);
+        check('withdraw: the Investments page offers the offering', offered);
+        const gw = offered ? await guidedFromPortal(p, check, 'withdraw (Investments)', people[2], off.offeringId, { exp: 'Six years of private credit funds' }) : null;
+        const acc = await p.evaluate((id) => (window.CVPortal.state.ws.investors.find((x) => x.id === id) || {}).accreditation || null, people[2].id);
+        check('withdraw: the record no longer holds the ground (basis empty, kept as superseded)', !!acc && !acc.basis && !!acc.superseded && acc.superseded.basis === ground, acc);
+        check('withdraw: request.qual.accredited is false', !!(gw && gw.req) && gw.req.qual.accredited === false, gw && gw.req && gw.req.qual);
+
+        // The 506(b) panel: two more counted, the empty one listed as not answered.
+        await consoleOffering(p, off.offeringId);
+        const el = await eligibilityText(p);
+        await p.screenshot({ path: path.join(SHOTS, 'portal-other-console.png'), fullPage: true });
+        check(`the console counts the two "not accredited" answers (${before.count + 2} of 35)`, new RegExp(`Non-accredited purchasers: ${before.count + 2} of 35`).test(el), el);
+        check(`the panel lists the empty answer as not answered (${before.unanswered + 1} investors without a status answer)`, new RegExp(`${before.unanswered + 1} investors have no status answer on file`).test(el), el);
+        check('white label: the console offering page passes the leak check', L.leakCheck(el).ok, L.leakCheck(el).hits);
+      }
+      check('erisa/empty/withdraw: no script error in the browser', A.errors.length === 0, A.errors);
+      check('erisa/empty/withdraw: no request left the check server', A.net.external.length === 0, A.net.external);
+      await A.context.close();
+    }
+
+    // managed: C-03, the managed edition's subscribe page is unchanged (the accredited tick, required) and still submits.
+    {
+      const A = await L.open(S);
+      const p = A.page;
+      await p.goto(`${S.origin}/index.html`);
+      await p.evaluate(() => Object.keys(localStorage).forEach((k) => localStorage.removeItem(k)));
+      await p.goto(`${S.origin}/index.html`);
+      await p.waitForFunction(() => window.CVPortal && window.CVPortal.state && window.CVPortal.state.ws, null, { timeout: 20000 });
+      const m = await p.evaluate(() => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const o = ws.offerings.find((x) => x.status === 'Raising') || ws.offerings[0];
+        o.status = 'Raising';
+        const i = ws.investors.find((x) => x.onboarding.status === 'complete' && x.accreditation && x.accreditation.basis && !(x.positions || []).some((y) => y.offeringId === o.id));
+        if (!i) return null;
+        NS.app.save(true);
+        NS.state.role = 'investor';
+        NS.store.set('role', 'investor');
+        NS.state.viewer = i.id;
+        NS.app.go('subscribe-' + o.id);
+        return { edition: NS.EDITION.id, oid: o.id, id: i.id, contact: i.contact };
+      });
+      check('managed: an accredited investor on file and a raising offering', !!m && m.edition === 'managed', m);
+      if (m) {
+        await p.waitForSelector('form[data-form=sub-submit]', { timeout: 20000 });
+        const txt = await L.screenText(p);
+        await p.screenshot({ path: path.join(SHOTS, 'portal-managed-subscribe.png'), fullPage: true });
+        check('managed: the subscribe page keeps #sb-acc and its "is an accredited investor" statement', (await p.locator('#sb-acc').count()) === 1 && /is an accredited investor/.test(txt), txt.slice(0, 600));
+        await p.check('#sb-docs');
+        await p.check('#sb-esign');
+        await p.fill('#sb-sig', m.contact);
+        await p.click('.sub-form button[type=submit]');
+        await p.waitForTimeout(600);
+        const errs = await L.fieldErrors(p);
+        check('managed: without the tick the page still says "Confirm your accreditation to continue."', errs.some((e) => /Confirm your accreditation to continue\./.test(e)), errs);
+        await p.check('#sb-acc');
+        await p.click('.sub-form button[type=submit]');
+        await p.waitForTimeout(900);
+        const r = await p.evaluate(({ id, oid }) => (window.CVPortal.state.ws.requests || []).filter((x) => x.type === 'subscription' && x.investorId === id && x.offeringId === oid).pop() || null, m);
+        check('managed: the subscription request is submitted as before', !!r && r.status === 'pending', r && { status: r.status, qual: r.qual });
+      }
+      check('managed: no script error in the browser', A.errors.length === 0, A.errors);
+      check('managed: no request left the check server', A.net.external.length === 0, A.net.external);
+      await A.context.close();
+    }
   }
 };
 

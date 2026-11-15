@@ -203,14 +203,17 @@
   /** Offerings this investor can subscribe to now. */
   function openOfferings(inv) {
     const w = W();
-    if (!OPS() || !(inv.accreditation && inv.accreditation.basis) || inv.onboarding.status !== 'complete') return [];
+    // Self-serve edition: the guided subscription asks the status questions by exemption (D-01), so an investor on file who
+    // is not accredited is offered the offering too (C-05, D-30). The managed edition keeps its accredited-only list (C-03).
+    const diy = !!(NS.EDITION && NS.EDITION.diy && NS.inviteFlow);
+    if (!OPS() || (!diy && !(inv.accreditation && inv.accreditation.basis)) || inv.onboarding.status !== 'complete') return [];
     return w.offerings.filter((o) => o.status === 'Raising' && !inv.positions.some((p) => p.offeringId === o.id) && !myRequests(inv, o.id).some((r) => r.status === 'pending' || r.status === 'approved'));
   }
   function openOfferingsHTML(inv, label) {
     const list = openOfferings(inv);
     if (!list.length) return '';
     return `<section class="sec">${sec(label || 'Open for investment')}<div class="offers">${list
-      .map((o) => `<div class="offer"><div class="offer-main"><strong>${h(o.name)}</strong><span class="sub">${h(o.type)}${o.summary ? ' · ' + h(o.summary) : ''}</span><span class="sub">Minimum ${usd(o.minimum)} · first close targeted ${date(o.closeDate)}</span></div><a class="btn btn-primary" href="#subscribe-${h(o.id)}">Review and subscribe</a></div>`)
+      .map((o) => `<div class="offer"><div class="offer-main"><strong>${h(o.name)}</strong><span class="sub">${h(o.type)}${o.summary ? ' · ' + h(o.summary) : ''}</span><span class="sub">Minimum ${usd(o.minimum)} · first close targeted ${date(o.closeDate)}</span></div>${NS.EDITION && NS.EDITION.diy && NS.inviteFlow ? `<button class="btn btn-primary" type="button" data-action="sub-start" data-id="${h(o.id)}">Review and subscribe</button>` : `<a class="btn btn-primary" href="#subscribe-${h(o.id)}">Review and subscribe</a>`}</div>`)
       .join('')}</div></section>`;
   }
   function capitalHTML(inv, o) {
@@ -368,6 +371,13 @@
       // Self-serve edition: the investor signs the offering's own subscription agreement, never a typed form in its place.
       const agr = NS.EDITION && NS.EDITION.diy && NS.esign && NS.esign.templateReady ? NS.esign.templateReady(W(), o.id) : null;
       if (agr === false) return shell(`<a class="back" href="#investments">${icon('back')}Investments</a>${title(`Subscribe to ${h(o.name)}`)}<div class="done-box"><p class="lede">The subscription agreement for ${h(o.name)} is not available to sign online yet. Contact ${h(T().support.team)}${T().support.email ? ` at ${h(T().support.email)}` : ''}.</p></div>`, 'investments');
+      // Self-serve edition, no invitation for this offering (a typed or bookmarked address): never the typed form with its
+      // accredited statement (C-05, D-30). The button starts the same guided subscription as Investments (sub-start); a
+      // render never creates records.
+      if (NS.EDITION && NS.EDITION.diy && NS.inviteFlow) {
+        const onFile = inv.onboarding.status === 'complete';
+        return shell(`<a class="back" href="#investments">${icon('back')}Investments</a>${title(`Subscribe to ${h(o.name)}`)}<div class="done-box"><p class="lede">${onFile ? 'Your subscription takes you through the documents and the subscription agreement.' : 'Finish setting up your account first. Your subscription is the last step.'}</p><button class="btn btn-primary" type="button" data-action="sub-start" data-id="${h(o.id)}">${onFile ? 'Continue your subscription' : 'Continue account setup'}</button></div>`, 'investments');
+      }
       const f = subForm(o);
       const cfg = NS.audit ? NS.audit.settings(o) : null;
       if (f.done) {
@@ -1061,6 +1071,18 @@
         if (body) body.innerHTML = '<p class="empty">This browser blocked document storage, so the file cannot be opened here.</p>';
       });
   }
+  /**
+   * Self-serve edition (plan 06-08): an investor subscribing from the portal goes through the guided subscription an
+   * invitation gives (status step by exemption, subscription, agreement), for this offering only.
+   */
+  NS.actions['sub-start'] = (el) => {
+    const inv = viewer();
+    const o = W().offerings.find((x) => x.id === el.getAttribute('data-id'));
+    if (!inv || !o || o.status !== 'Raising' || !NS.inviteFlow) return;
+    const it = NS.inviteFlow.selfInvite(W(), inv, o, inv.onboarding.status === 'complete' ? { existing: true } : undefined);
+    NS.app.save(true);
+    NS.app.go('invite-' + it.token);
+  };
   NS.actions['sub-doc'] = (el) => {
     const d = (W().docs || []).find((x) => x.id === el.getAttribute('data-id') && x.offeringDoc && !x.hidden);
     if (d) openUploaded(d);
