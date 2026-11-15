@@ -3287,7 +3287,8 @@
   /**
    * The completed form chosen on the upload view (T-06-45): a PDF, PNG or JPEG by its first bytes (the same tests the
    * integration server applies) and at most MAX_FILES, held in this page's memory until Continue stores it. Anything else is
-   * refused with one plain sentence and nothing is held; the step can still be continued (D-30): it is not a field error.
+   * refused with one plain sentence and not held; a file attached before it stays ("not added" changes nothing). The step
+   * can still be continued (D-30): the message is not a field error.
    */
   NS.changes['ivf-taxfile'] = async (el) => {
     const c = fctx();
@@ -3295,7 +3296,6 @@
     const f = el.files && el.files[0];
     if (!c || !o || !f) return;
     delete o.errors.taxUpFile;
-    delete UPLOADS[c.inv.id];
     const refuse = (msg) => {
       o.errors.taxUpFile = msg;
       NS.app.render();
