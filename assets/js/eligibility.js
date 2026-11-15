@@ -150,6 +150,13 @@
    */
   function flags(ws, r) {
     if (!r || r.type !== 'subscription' || r.status === 'rejected') return [];
+    const off = ((ws && ws.offerings) || []).find((x) => x && x.id === r.offeringId);
+    // Regulation A Tier 2: every subscription of an investor whose total in the offering is above their limit, as worked
+    // out again from their figures (regAStatus), whatever the device said.
+    if (off && regime(off) === 'regA2') {
+      const row = regAStatus(ws, off).rows.find((x) => x.investorId === r.investorId);
+      return row && row.over ? [`Over the Regulation A Tier 2 limit: ${usd(row.totalCents)} committed in this offering, limit ${usd(row.limitCents)}`] : [];
+    }
     const q = qualOf(r);
     if (!q || q.accredited !== false) return [];
     const o = ((ws && ws.offerings) || []).find((x) => x && x.id === r.offeringId);

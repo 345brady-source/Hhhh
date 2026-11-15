@@ -398,6 +398,16 @@
     const known = EXEMPTIONS.some(([v]) => v === cur);
     return [['', 'Not set']].concat(cur && !known ? [[cur, cur]] : [], EXEMPTIONS);
   }
+  /**
+   * The exemption field's hint (self-serve edition). C-04: a Regulation A value with no tier (read from documents) is
+   * treated as Tier 2 until the sponsor chooses, and the hint says so, next to the Rule 506(c) note.
+   */
+  function exemptionHint(o) {
+    if (!E.diy) return '';
+    const ex = ((o.structure || {}).exemption || '').trim();
+    const untiered = !!NS.eligibility && NS.eligibility.regime(o) === 'regA2' && !/\bTier\b/i.test(ex);
+    return `${untiered ? 'This offering names Regulation A without a tier: choose Tier 1 or Tier 2 above. Until you do, investors who are not accredited are asked the Tier 2 questions and shown their 10 percent limit. ' : ''}Rule 506(c) offerings take verified accredited investors only: investors verify their status while they onboard, before they can subscribe.`;
+  }
   function offPreview(o) {
     const x = NS.exitInfo(o);
     const terms = (o.terms || []).filter((r) => r.show && r.label);
@@ -560,7 +570,7 @@
               ${offField('Closing date', 'closeDate', { type: 'date' })}
               ${offField('One-line description', 'summary', { wide: true, max: 100 })}
               ${offField('Minimum investment ($)', 'minimum', { type: 'number' })}
-              ${offField('Securities exemption', 'structure.exemption', { select: exemptionOptions(o), hint: E.diy ? 'Rule 506(c) offerings take verified accredited investors only: investors verify their status while they onboard, before they can subscribe.' : '' })}
+              ${offField('Securities exemption', 'structure.exemption', { select: exemptionOptions(o), hint: exemptionHint(o) })}
             </div>`)}
             ${eligibilityPanel(o)}
             ${NS.esign && NS.esign.agreementPanel ? NS.esign.agreementPanel(W(), o, true) : ''}
