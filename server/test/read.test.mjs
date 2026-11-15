@@ -260,3 +260,157 @@ test('entries with ids outside the list or values outside the enums are dropped;
     { page: 1, near: 2, caption: '', side: 'below', kind: 'name', person: 'sponsor', group: 'all' }
   ]);
 });
+
+/* ---------- Outcomes, failures and what reaches the browser ---------- */
+const VENDOR = /anthropic|claude|\bopus\b|sonnet|haiku/i;
+/** Every console line written during fn, kept. */
+async function captureConsole(fn) {
+  const seen = [];
+  const keep = { log: console.log, warn: console.warn, error: console.error, info: console.info };
+  for (const k of Object.keys(keep)) console[k] = (...a) => seen.push(a.map(String).join(' '));
+  try {
+    await fn();
+  } finally {
+    Object.assign(console, keep);
+  }
+  return seen;
+}
+/** A reply stream that sends its start and one piece, then stalls until the call is aborted. */
+function stalled(call) {
+  const enc = new TextEncoder();
+  const head = sse({ texts: ['{"fields":'] }).split('event: content_block_stop')[0];
+  return new Response(
+    new ReadableStream({
+      start(c) {
+        c.enqueue(enc.encode(head));
+        call.signal.addEventListener('abort', () => c.error(Object.assign(new Error('aborted'), { name: 'AbortError' })));
+      }
+    }),
+    { status: 200, headers: { 'content-type': 'text/event-stream' } }
+  );
+}
+/** A server whose reader is the real one on the fake service, with the read log in a fresh folder. */
+async function serveReal(svc, fn, { timeoutMs } = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'read-test-'));
+  const env = { CARROWVALE_API_KEY: KEY, CARROWVALE_READ_LOG: path.join(dir, 'read.log') };
+  try {
+    await serve(env, createReader({ env, fetch: svc, timeoutMs }), (base) => fn(base, env.CARROWVALE_READ_LOG));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+test('outcomes: refusal 502 declined, max_tokens 502 incomplete, unparseable or wrong shape 502 invalid; nothing leaks', () =>
+  withAmbient(async () => {
+    const cases = [
+      [{ texts: [JSON.stringify(ANSWER)], stop: 'refusal' }, 502, 'declined', 'refusal'],
+      [{ texts: ['{"fields":[{"id":1'], stop: 'max_tokens' }, 502, 'incomplete', 'max_tokens'],
+      [{ texts: ['{"fields": [] , "missing": '] }, 502, 'invalid', 'end_turn'],
+      [{ texts: ['{"fields": {}, "missing": []}'] }, 502, 'invalid', 'end_turn'],
+      [{ texts: ['[1, 2, 3]'] }, 502, 'invalid', 'end_turn']
+    ];
+    for (const [reply, status, reason, stopReason] of cases) {
+      const svc = fakeService({ reply: () => reply });
+      const bodies = [];
+      const logs = await captureConsole(() =>
+        serveReal(svc, async (base, log) => {
+          const r = await post(`${base}/v1/read`, request());
+          const text = await r.text();
+          bodies.push(text);
+          assert.equal(r.status, status);
+          assert.deepEqual(JSON.parse(text), { ok: false, reason });
+          const rows = fs.readFileSync(log, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+          assert.equal(rows.length, 1);
+          assert.equal(rows[0].outcome, reason);
+          assert.equal(rows[0].stopReason, stopReason);
+        })
+      );
+      assert.deepEqual(logs, [`read: ${reason} ${status}`]);
+      for (const s of bodies.concat(logs)) {
+        assert.equal(s.includes(KEY), false, 'the key never appears');
+        assert.equal(VENDOR.test(s), false, 'no provider or model name');
+      }
+    }
+  }));
+
+test('the client\'s own timeout and the overall limit are 504 timeout; any other service or connection error is 502 failed', () =>
+  withAmbient(async () => {
+    const never = (call) => new Promise((resolve, reject) => call.signal && call.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))));
+    const cases = [
+      ['no response before the timeout', fakeService({ reply: never }), 504, 'timeout', 300],
+      ['a stream that stalls past the overall limit', fakeService({ reply: stalled }), 504, 'timeout', 300],
+      ['a service error', fakeService({ reply: () => new Response(JSON.stringify({ type: 'error', error: { type: 'api_error', message: 'Internal error at the provider' } }), { status: 500, headers: { 'content-type': 'application/json' } }) }), 502, 'failed', 20000],
+      ['a refused connection', fakeService({ reply: () => Promise.reject(new TypeError('fetch failed')) }), 502, 'failed', 20000]
+    ];
+    // (The client retries a service or connection error once after a short wait: those cases get a limit that allows it.)
+    for (const [name, svc, status, reason, timeoutMs] of cases) {
+      const logs = await captureConsole(() =>
+        serveReal(
+          svc,
+          async (base) => {
+            const r = await post(`${base}/v1/read`, request());
+            const text = await r.text();
+            assert.equal(r.status, status, name);
+            assert.deepEqual(JSON.parse(text), { ok: false, reason }, name);
+            assert.equal(VENDOR.test(text) || text.includes(KEY), false, name);
+          },
+          { timeoutMs }
+        )
+      );
+      assert.deepEqual(logs, [`read: ${reason} ${status}`], name);
+      assert.equal(logs.some((l) => l.includes(KEY) || VENDOR.test(l)), false, name);
+    }
+  }));
+
+test('a body over 32 MB is 413 too_large and is never read', async () => {
+  const reader = fakeReader();
+  await serve({}, reader, async (base) => {
+    const big = Buffer.alloc(32 * 1024 * 1024 + 1024, 0x41);
+    const r = await post(`${base}/v1/read`, big);
+    assert.equal(r.status, 413);
+    assert.deepEqual(await r.json(), { ok: false, reason: 'too_large' });
+    assert.equal(reader.seen.length, 0);
+  });
+});
+
+test('the read log holds one line per call of numbers and enums only; the usage and the served model are recorded', () =>
+  withAmbient(async () => {
+    const svc = fakeService();
+    await serveReal(svc, async (base, log) => {
+      const r = await post(`${base}/v1/read`, request());
+      assert.equal(r.status, 200);
+      await r.json();
+      const text = fs.readFileSync(log, 'utf8');
+      const rows = text.trim().split('\n').map((l) => JSON.parse(l));
+      assert.equal(rows.length, 1);
+      const row = rows[0];
+      assert.deepEqual(Object.keys(row).sort(), ['at', 'candidates', 'cost', 'counted', 'ms', 'model', 'outcome', 'pages', 'route', 'stopReason', 'usage'].sort());
+      assert.equal(row.route, 'read');
+      assert.equal(row.outcome, 'read');
+      assert.equal(row.stopReason, 'end_turn');
+      assert.equal(row.model, MODEL);
+      assert.equal(row.pages, 2);
+      assert.equal(row.candidates, 8);
+      assert.deepEqual(row.usage, { input_tokens: 5200, output_tokens: 900, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 });
+      assert.ok(Math.abs(row.cost - (5200 * 4 + 900 * 20) / 1e6) < 1e-12);
+      assert.match(row.at, /^\d{4}-\d{2}-\d{2}T/);
+      assert.equal(text.includes(PDF), false, 'no document bytes');
+      assert.equal(text.includes('[#1]'), false, 'no document text');
+      assert.equal(text.includes(KEY), false, 'no key');
+    });
+  }));
+
+test('the spend cap refuses a call that could pass it (402 spend_cap) before anything is spent', () =>
+  withAmbient(async () => {
+    const svc = fakeService({ count: () => 50000 });
+    const env = { CARROWVALE_API_KEY: KEY, CARROWVALE_SPEND_CAP_USD: '0.50' };
+    await serve(env, createReader({ env, fetch: svc }), async (base) => {
+      const logs = await captureConsole(async () => {
+        const r = await post(`${base}/v1/read`, request());
+        assert.equal(r.status, 402);
+        assert.deepEqual(await r.json(), { ok: false, reason: 'spend_cap' });
+      });
+      assert.deepEqual(logs, ['read: spend_cap 402']);
+      assert.equal(svc.messages().length, 0);
+    });
+  }));
