@@ -77,6 +77,62 @@ const cases = {
     const r10 = E.nonAccredited({ requests: many }, o);
     check('36 purchasers: 30 accepted, 6 pending, count 36', r10.count === 36 && r10.accepted.length === 30 && r10.pending.length === 6, { count: r10.count, a: r10.accepted.length, p: r10.pending.length });
   },
+  flags({ check }) {
+    const E = eligibility();
+    check('eligibility.js exports place and flags', typeof E.place === 'function' && typeof E.flags === 'function');
+    const o = off('o1', 'Rule 506(b)');
+    const seq = (n, status) => Array.from({ length: n }, (_, k) => Object.assign(sub('p' + (k + 1), 'o1', status || 'pending', na), { id: 'r' + (k + 1) }));
+    const MSG = (n) => `Would be non-accredited purchaser ${n} of the 35 allowed under Rule 506(b)`;
+    // 35 counted plus one new.
+    let reqs = seq(36);
+    let ws = { offerings: [o], requests: reqs };
+    check('35 counted plus one new: the 36th request is flagged "36 of the 35"', JSON.stringify(E.flags(ws, reqs[35])) === JSON.stringify([MSG(36)]), E.flags(ws, reqs[35]));
+    check('35 counted plus one new: a request within the first 35 is not flagged', E.flags(ws, reqs[0]).length === 0 && E.flags(ws, reqs[34]).length === 0, E.flags(ws, reqs[34]));
+    check('place: the 36th investor holds place 36; an investor not yet counted would take place 37', E.place(ws, o, 'p36') === 36 && E.place(ws, o, 'nobody') === 37 && E.place(ws, o, 'p1') === 1);
+    // 34 plus one.
+    reqs = seq(35);
+    ws = { offerings: [o], requests: reqs };
+    check('34 counted plus one new: nothing flagged (35 is within the limit)', reqs.every((r) => E.flags(ws, r).length === 0));
+    check('34 plus one: a further investor would take place 36', E.place(ws, o, 'nobody') === 36);
+    // The 36th declined.
+    reqs = seq(36);
+    reqs[35].status = 'rejected';
+    ws = { offerings: [o], requests: reqs };
+    check('the 36th declined: its request is not flagged and the count is 35', E.flags(ws, reqs[35]).length === 0 && E.nonAccredited(ws, o).count === 35);
+    // One of the first 35 declined: the 36th moves into place 35.
+    reqs = seq(36);
+    reqs[3].status = 'rejected';
+    ws = { offerings: [o], requests: reqs };
+    check('one of the first 35 declined: the 36th is no longer flagged', reqs.every((r) => E.flags(ws, r).length === 0) && E.place(ws, o, 'p36') === 35);
+    // Accepted purchasers take their places first.
+    reqs = seq(35).concat([Object.assign(sub('late', 'o1', 'approved', na), { id: 'rl' })]);
+    ws = { offerings: [o], requests: reqs };
+    check('an accepted purchaser who subscribed last takes a place ahead of pending ones; the last pending one is flagged', E.flags(ws, reqs[35]).length === 0 && E.place(ws, o, 'late') === 1 && JSON.stringify(E.flags(ws, reqs[34])) === JSON.stringify([MSG(36)]), { late: E.place(ws, o, 'late'), p35: E.flags(ws, reqs[34]) });
+    // A second subscription by a counted investor.
+    reqs = seq(35).concat([Object.assign(sub('p2', 'o1', 'pending', na), { id: 'again' })]);
+    ws = { offerings: [o], requests: reqs };
+    check('a second subscription by a counted investor: count stays 35 and nothing is flagged', E.nonAccredited(ws, o).count === 35 && reqs.every((r) => E.flags(ws, r).length === 0));
+    // Requests that are never flagged.
+    reqs = seq(36);
+    ws = { offerings: [o], requests: reqs.concat([Object.assign(sub('acc', 'o1', 'pending', ac), { id: 'ra' }), Object.assign(sub('none', 'o1', 'pending'), { id: 'rn' })]) };
+    check('an accredited request and one without answers are never flagged', E.flags(ws, ws.requests[36]).length === 0 && E.flags(ws, ws.requests[37]).length === 0);
+    const o2 = off('o1', 'Rule 506(c)');
+    check('no flag when the offering is not Rule 506(b)', E.flags({ offerings: [o2], requests: seq(36) }, seq(36)[35]).length === 0);
+    check('no flag for a redemption, a missing request or a missing offering', E.flags(ws, { type: 'redemption', investorId: 'p36', offeringId: 'o1', status: 'pending', qual: na }).length === 0 && E.flags(ws, null).length === 0 && E.flags({ requests: seq(36) }, seq(36)[35]).length === 0);
+  },
+  holders({ check }) {
+    const E = eligibility();
+    const o = off('o1', 'Rule 506(b)');
+    const inv = (id, offs) => ({ id, positions: offs.map((x) => ({ offeringId: x, amount: 1, date: '2024-01-01' })) });
+    const ws = {
+      offerings: [o],
+      investors: [inv('h1', ['o1']), inv('h2', ['o1', 'o1']), inv('h3', ['o2']), inv('h4', ['o1']), inv('h5', [])],
+      requests: [sub('h4', 'o1', 'pending', na), sub('n1', 'o1', 'pending')]
+    };
+    const r = E.nonAccredited(ws, o);
+    check('holders of the offering with no subscription made here are counted as without an answer, once each', r.unanswered === 3 && r.holders === 2 && r.count === 1, r);
+    check('a holder of another offering is not counted', E.nonAccredited({ offerings: [o], investors: [inv('x', ['o2'])], requests: [] }, o).unanswered === 0);
+  },
   titles({ check }) {
     const text = SRC('assets/js/console.js');
     const titles = [];
