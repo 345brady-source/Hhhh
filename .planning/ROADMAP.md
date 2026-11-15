@@ -129,7 +129,7 @@ Plans:
   5. Nothing that works today regresses: the owner's documents A 29 of 29, B 2 of 2 places, C 138 of 138, the picture form 241 of 241, the first agreement's 47 fields with none marked, the public documents' pins, the nine check files, the class pages and the walks
   6. After the reader is frozen, 100 fresh agreements and 50 more made picture-only (half clean, half with scan effects), drawn at random from EDGAR and new to every set, are read by the frozen reader and scored (the measure on all 150, exact scores on a random 20 and 10), and the results reach the owner failures first
   7. The owner has checked agreements the reader has never seen in the republished preview
-**Plans:** 59 plans (4 dropped by D-28: 20, 21, 56, 57; 5 added: 59 to 63)
+**Plans:** 61 plans (4 dropped by D-28: 20, 21, 56, 57; 7 added: 59 to 65)
 
 Plans:
 - [ ] 01.4-01-PLAN.md — The measure sees what it was blind to (fallback glyph boxes, letter boxes, dates in parts, shared lines, illustrations), calibrated
@@ -191,6 +191,8 @@ Plans:
 - [ ] 01.4-61-PLAN.md — set-e labelled by three voters, the agreement rule and trust chosen on hand sheets, one review tranche sized
 - [ ] 01.4-62-PLAN.md — set-e review tranche ET01 with spot checks of the automatic labels
 - [ ] 01.4-63-PLAN.md — D-30: investor or sponsor only, no investor field mandatory, pre-filled investor fields editable; scorers judge two people
+- [ ] 01.4-64-PLAN.md — D-31: the API reader from server/ (white-labelled, key on the server only), fields snapped to printed geometry, the in-page reader as fallback, leak row extended to provider and model names
+- [ ] 01.4-65-PLAN.md — D-31: the API reader measured on gold and held-out A through the real upload, cost and seconds per agreement, failures first (needs CARROWVALE_API_KEY; NOT RUN without it)
 
 ### Phase 2: Field Editor
 **Goal**: A sponsor can adjust fields by hand quickly and without frustration, in an editor that looks professionally made
