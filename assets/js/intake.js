@@ -201,6 +201,7 @@ Rules:
 - distribution.type: "Interest" for debt, note or fixed preferred-return payments; "Income" for rental or operating income; "Return of capital" when distributions return contributions; "Realization proceeds" or "Proceeds" for sale proceeds; "Distribution" only when the documents name no source.
 - Read every page completely, including tables, charts, footnotes, sidebars and small print; when pages are attached as a PDF or as pictures, read the text in the images exactly, keeping every digit, percent sign and decimal point.
 - Fill every stated term: when the documents give a preferred return, a target distribution rate, a class's name, minimum or eligibility, fill that field (with its source) rather than leaving it null.
+- subscriptionAgreement: when a document includes a subscription agreement or subscription booklet (the form investors complete and sign), usually as an exhibit or appendix, give that document's name as in its "=== Document:" line and the agreement's first and last page as page numbers of the uploaded file itself (the [p. N] markers; for an attached PDF, its pages counted from the first page of the uploaded file), ending before any tax forms (W-9, W-8 series) and their instructions that follow it; null if there is none.
 
 Reply with only one JSON object in exactly this shape:
 {"offering":{"name":"","shortName":"(24 characters or fewer)","type":one of [${types}],"summary":"(under 100 characters)","status":"Raising" or "Active","firstClose":date or null,"minimum":number or null,"targetSize":number or null,"currency":"ISO code such as USD"},
@@ -214,6 +215,7 @@ Reply with only one JSON object in exactly this shape:
 "providers":{"auditor":null,"administrator":null,"counsel":null,"custodian":null,"primeBroker":null,"others":[{"role":"placement agent, property manager, escrow agent, lender, ...","name":""}]},
 "investorTerms":[{"label":"","value":""}],
 "update":"(one or two sentences describing the investment for its investors)",
+"subscriptionAgreement":{"document":"(the document's name as in its === Document: line)","firstPage":number,"lastPage":number} or null,
 "sources":{},"confidence":{},"notes":[]}
 
 investorTerms: 6 to 12 key terms an investor would want on their investment page, in plain words (for example minimum, fees, profit split, liquidity, term or hold, target returns and distributions, property or strategy facts).`;
@@ -438,13 +440,52 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
           throw e;
         }
         answers.push(got.json);
+        asked.push(null);
         before += got.text;
       }
+    };
+    // D-44 and D-38: the request each answer came from (null for a text request), to read its agreement pages whole.
+    const asked = [];
+    const flat = (t) => String(t == null ? '' : t).replace(/\s+/g, '').toLowerCase();
+    /**
+     * The subscription agreement's pages reported by several answers, as one report in the uploaded file's own pages, or
+     * undefined when no answer reports one. An answer from a PDF request of pages a to b (a above 1) of one PDF, naming that
+     * PDF (or naming nothing when the request carried only that PDF and no text), counted from the start of its range when
+     * its whole report fits inside 1 to (b - a + 1) and starts below a; otherwise, and for text requests ([p. N] markers),
+     * its pages are the file's own. The first document reported wins; its reports are joined (lowest first page, highest
+     * last page).
+     */
+    const joinedPart = () => {
+      const whole = (n) => typeof n === 'number' && Number.isInteger(n);
+      const reports = [];
+      answers.forEach((ans, i) => {
+        const s = ans && typeof ans === 'object' ? ans.subscriptionAgreement : null;
+        if (!s || typeof s !== 'object' || Array.isArray(s) || !whole(s.firstPage) || !whole(s.lastPage)) return;
+        const req = asked[i];
+        const one = req && req.parts.length === 1 ? req.parts[0] : null;
+        const named = typeof s.document === 'string' && s.document.trim() ? s.document : '';
+        const ours = !!one && (named ? named === one.d.name || flat(named) === flat(one.d.name) : !req.withText);
+        let first = s.firstPage;
+        let last = s.lastPage;
+        if (ours && one.a > 1 && first >= 1 && last <= one.b - one.a + 1 && first < one.a) {
+          first += one.a - 1;
+          last += one.a - 1;
+        }
+        reports.push({ document: named || (ours ? one.d.name : ''), firstPage: first, lastPage: last });
+      });
+      if (!reports.length) return answers.some((a) => a && typeof a === 'object' && a.subscriptionAgreement && typeof a.subscriptionAgreement === 'object') ? null : undefined;
+      const key = flat(reports[0].document);
+      const same = reports.filter((r) => flat(r.document) === key);
+      return { document: reports[0].document, firstPage: Math.min.apply(null, same.map((r) => r.firstPage)), lastPage: Math.max.apply(null, same.map((r) => r.lastPage)) };
     };
     const finish = () => {
       const st = NS.state && NS.state.ui && NS.state.ui.intake;
       if (st) st.trimmed = false;
-      return answers.length === 1 ? answers[0] : mergeAnswers(answers);
+      if (answers.length === 1) return answers[0];
+      const merged = mergeAnswers(answers);
+      const part = joinedPart();
+      if (part !== undefined) merged.subscriptionAgreement = part;
+      return merged;
     };
     if (!unread.length) {
       await readText(good);
@@ -537,6 +578,7 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
       }
       if (withText) textDone = true;
       answers.push(got.json);
+      asked.push({ parts: req, withText });
       before += got.text;
     }
     return finish();
@@ -850,7 +892,7 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
     if (NS.clearCaches) NS.clearCaches();
     // The subscription agreement among the documents: its signing fields are prepared straight away, so the firm only has to
     // check them on the offering page and every investor signs the agreement during onboarding.
-    await prepareAgreement(ws, o);
+    await prepareAgreement(ws, o, opts);
     return o;
   }
   /** A PDF among an offering's documents that reads as its subscription agreement (by its name), newest first. */
@@ -864,14 +906,100 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
     );
   }
   /**
+   * D-44: the subscription agreement the reading server found inside an uploaded PDF (raw.subscriptionAgreement, read
+   * before normalize so the terms stay as they are), as { name, pages, firstPage, lastPage, foundFirst, foundLast, use },
+   * or null. The pages must be whole numbers inside that PDF (1 <= first <= last <= its pages) and the document an uploaded
+   * PDF named as in the answer (exactly, else ignoring case and spaces), or the only PDF uploaded; otherwise null. A range
+   * the reader did not give is never clamped or guessed.
+   */
+  function agreementPart(raw, docs) {
+    const s = raw && typeof raw === 'object' ? raw.subscriptionAgreement : null;
+    if (!s || typeof s !== 'object' || Array.isArray(s)) return null;
+    const whole = (n) => typeof n === 'number' && Number.isInteger(n);
+    if (!whole(s.firstPage) || !whole(s.lastPage)) return null;
+    const pdfs = (docs || []).filter((d) => d && d.file && typeof d.pages === 'number' && d.pages >= 1);
+    const flat = (t) => String(t == null ? '' : t).replace(/\s+/g, '').toLowerCase();
+    const named = typeof s.document === 'string' ? s.document : '';
+    const d = pdfs.find((x) => x.name === named) || (flat(named) ? pdfs.find((x) => flat(x.name) === flat(named)) : null) || (pdfs.length === 1 ? pdfs[0] : null);
+    if (!d) return null;
+    if (!(s.firstPage >= 1 && s.firstPage <= s.lastPage && s.lastPage <= d.pages)) return null;
+    return { name: d.name, pages: d.pages, firstPage: s.firstPage, lastPage: s.lastPage, foundFirst: s.firstPage, foundLast: s.lastPage, use: true };
+  }
+  /** D-44: the background reading of an agreement found inside an uploaded PDF, by offering id. */
+  const readings = new Map();
+  /**
+   * D-44: the agreement found inside an uploaded PDF, made the offering's subscription agreement in the background, with
+   * no question: its pages cut into their own PDF (or, when the range is the whole file, the file apply just stored),
+   * stored with the offering's documents as a separately uploaded agreement is, then read and placed by agreementDraft and
+   * saved when nothing is left to do, exactly as prepareAgreement hands a separately uploaded agreement. The offering's
+   * terms were applied and saved before this starts and are never touched; any failure leaves the entry 'failed'.
+   */
+  async function readPart(ws, o, opts, d, part, entry) {
+    const es = NS.esign;
+    const a = part.firstPage;
+    const b = part.lastPage;
+    const base = d.name.replace(/\.[a-z0-9]+$/i, '');
+    const title = base.replace(/_+/g, ' ');
+    try {
+      let doc = null;
+      if (a === 1 && b === d.pages) doc = (ws.docs || []).slice().reverse().find((x) => x && x.offeringId === o.id && x.sha256 === d.sha256 && x.fileName === d.name) || null;
+      if (!doc) {
+        await loadScript(WRITER);
+        const L = window.PDFLib;
+        const src = await L.PDFDocument.load(new Uint8Array(await d.file.arrayBuffer()), { ignoreEncryption: true });
+        const out = await L.PDFDocument.create();
+        const idx = [];
+        for (let i = a - 1; i < b; i++) idx.push(i);
+        (await out.copyPages(src, idx)).forEach((pg) => out.addPage(pg));
+        const bytes = await out.save();
+        const sha256 = NS.audit ? NS.audit.sha256(bytes) : '';
+        const id = 'doc-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        await NS.ops.files.put(id, new Blob([bytes], { type: 'application/pdf' }));
+        doc = { id, title: `Subscription Agreement (pages ${a} to ${b} of ${title})`, fileName: `${base} - Subscription Agreement (pages ${a}-${b}).pdf`, type: 'application/pdf', size: bytes.length, sha256, cat: 'Legal', offeringId: o.id, audience: 'fund', investors: [], date: today(), taxYear: '', publishedAt: new Date().toISOString(), publishedBy: NS.app && NS.app.actor ? NS.app.actor() : NS.EDITION && NS.EDITION.diy ? `${ws.tenant.shortName} admin` : 'Carrow & Vale staff', offeringDoc: true, hidden: !opts.publish };
+        ws.docs = ws.docs || [];
+        ws.docs.push(doc);
+        if (NS.audit) NS.audit.log(ws, { action: 'Subscription agreement found in the offering documents', fund: o.id, record: id, detail: `${o.name}: pages ${a} to ${b} of ${d.name} (SHA-256 ${String(sha256).slice(0, 12)}…)` });
+        if (NS.workspace) NS.workspace.save(ws);
+      }
+      entry.docId = doc.id;
+      // An agreement or a draft made meanwhile stands; the stored document stays with the offering's documents.
+      if (es.subscriptionTemplate(ws, o.id) || (ws.envelopes || []).some((e) => e.agreementFor === o.id && e.status === 'draft')) {
+        Object.assign(entry, { state: 'done', why: 'kept' });
+      } else {
+        const env = await es.agreementDraft(ws, o.id, { docId: doc.id, title: 'Subscription Agreement' });
+        if (env) env.fromDocuments = `${d.name}, pages ${a} to ${b}`;
+        if (env && es.saveAgreement) es.saveAgreement(ws, env);
+        if (NS.workspace) NS.workspace.save(ws);
+        const tpl = es.subscriptionTemplate(ws, o.id);
+        Object.assign(entry, { state: 'done', saved: !!tpl, fields: tpl ? (tpl.fields || []).length : env ? (env.fields || []).length : 0, why: (env && env.read && env.read.server && env.read.server.why) || '' });
+      }
+    } catch (e) {
+      Object.assign(entry, { state: 'failed', why: String((e && (e.code || e.message)) || 'failed').slice(0, 120) });
+    }
+    entry.ended = Date.now();
+    // The screen follows only where it shows this reading, so a sponsor typing elsewhere is never interrupted.
+    const at = typeof location !== 'undefined' ? location.hash : '';
+    if (NS.app && (at === '#console-intake' || at === '#console-offering-' + o.id)) NS.app.render();
+  }
+  /**
    * Prepare the offering's subscription agreement from its documents (esign.js places the fields at the PDF's signature
    * lines and leaves a draft for the firm to check). Nothing happens when the offering already has an agreement or a draft,
    * when no document reads as one, or when the PDF cannot be prepared (the firm then adds it on the offering page).
+   * D-44: when the reading found the agreement's pages inside an uploaded PDF (opts.agreement), those pages are prepared in
+   * the background instead (readPart) and this returns at once, so the terms are saved and the done screen shows first.
    */
-  async function prepareAgreement(ws, o) {
+  async function prepareAgreement(ws, o, opts) {
     const es = NS.esign;
     if (!es || !es.agreementDraft || !es.subscriptionTemplate) return null;
     if (es.subscriptionTemplate(ws, o.id) || (ws.envelopes || []).some((e) => e.agreementFor === o.id && e.status === 'draft')) return null;
+    const part = opts && opts.agreement;
+    const src = part ? ((opts.docs || []).find((x) => x && x.name === part.name && x.file) || null) : null;
+    if (src) {
+      const entry = { state: 'reading', name: part.name, pages: part.pages, firstPage: part.firstPage, lastPage: part.lastPage, started: Date.now(), why: '', saved: false, fields: 0 };
+      readings.set(o.id, entry);
+      readPart(ws, o, opts, src, part, entry);
+      return null;
+    }
     const d = agreementDoc(ws, o);
     if (!d) return null;
     try {
@@ -964,5 +1092,7 @@ Reporting. Members will receive quarterly reports and annual Schedule K-1s. The 
   NS.intake.RANGE_BYTES = 31 * 1024 * 1024;
   NS.intake.unreadablePages = unreadablePages;
   NS.intake.pageTexts = pageTexts;
+  NS.intake.agreementPart = agreementPart;
+  NS.intake.agreementReading = (offeringId) => readings.get(offeringId) || null;
   NS.readingFetch = readingFetch;
 })(window.CVPortal);
