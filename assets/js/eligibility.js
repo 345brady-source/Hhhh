@@ -161,13 +161,16 @@
    * percent of the greater of their income or net worth (organizations: revenue or net assets). rows: { investorId,
    * attested (true; false when left unticked; null when the answer carries no attestation) }. notAttested: how many rows do
    * not attest. The portal takes no figures and works out no limit: the issuer relies on the investor's statement (Rule
-   * 251(d)(2)(i)(C)). Empty unless the offering is Tier 2 and not listed on an exchange.
+   * 251(d)(2)(i)(C)). unanswered: [{ investorId }], the subscribers whose latest answer leaves the accredited question
+   * open (or who have no answers on file): they were not asked about the limit, so the sponsor sees them apart. Empty
+   * unless the offering is Tier 2 and not listed on an exchange.
    */
   function regAStatus(ws, o) {
-    const out = { rows: [], notAttested: 0 };
+    const out = { rows: [], notAttested: 0, unanswered: [] };
     if (regime(o) !== 'regA2') return out;
     tally(ws, o).forEach((e, id) => {
-      if (!e.qual || e.qual.accredited !== false) return;
+      if (!e.qual || typeof e.qual.accredited !== 'boolean') return void out.unanswered.push({ investorId: id });
+      if (e.qual.accredited !== false) return;
       const ra = e.qual.regA && typeof e.qual.regA === 'object' ? e.qual.regA : null;
       const attested = ra && typeof ra.attested === 'boolean' ? ra.attested : null;
       out.rows.push({ investorId: id, attested });

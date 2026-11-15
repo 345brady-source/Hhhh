@@ -538,10 +538,13 @@
       .join('');
     const yes = s.rows.filter((r) => r.attested === true).map((r) => nameOf(r.investorId));
     const attestedLine = yes.length ? `<p class="cs-muted cs-elig-attested">Attested to the 10 percent limit: ${h(yes.join(', '))}</p>` : '';
+    // D-06, D-30: one line, only when someone left the accredited question unanswered (no limit was asked of them).
+    const open = s.unanswered.map((x) => nameOf(x.investorId));
+    const openLine = open.length ? `<p class="cs-muted cs-elig-unanswered">Left the accredited question unanswered, so not asked about the 10 percent limit: ${h(open.join(', '))}</p>` : '';
     return panel(
       'Investor eligibility',
       `<p class="cs-elig-count"><strong>Regulation A Tier 2: ${h(String(n))} non-accredited subscriber${n === 1 ? '' : 's'}, ${h(String(s.notAttested))} not attested to the 10 percent limit</strong></p>
-      ${not}${attestedLine}
+      ${not}${attestedLine}${openLine}
       <p class="cs-hint">An investor who is not accredited may put no more than 10 percent of the greater of their annual income and net worth (for an organization, its revenue and net assets for the most recent fiscal year) into this offering. Each one is asked to attest to it; the portal asks for no figures. Declined subscriptions are not counted, and accredited investors have no limit.</p>`
     );
   }

@@ -179,6 +179,35 @@ const cases = {
     check('the latest answer decides: an investor who later said accredited has no row', E.regAStatus({ offerings: [o], requests: [c(sub('x', 'o1', 'pending', qa(false)), 100), c(sub('x', 'o1', 'pending', { regime: 'regA2', accredited: true }), 100)] }, o).rows.length === 0);
     check('the latest answer decides: a later attestation replaces an earlier one left unticked', E.regAStatus({ offerings: [o], requests: [c(sub('x', 'o1', 'pending', qa(false)), 100), c(sub('x', 'o1', 'pending', qa(true)), 100)] }, o).rows[0].attested === true);
   },
+  /** Verifier warning 1 (plan 06-11): Tier 2 subscribers who left the accredited question unanswered, listed apart. */
+  'rega-unanswered'({ check }) {
+    const E = eligibility();
+    const o = off('o1', 'Regulation A Tier 2');
+    const ws = {
+      offerings: [o],
+      requests: [
+        sub('a', 'o1', 'pending', { regime: 'regA2', accredited: false, basis: '', regA: { attested: true } }),
+        sub('u1', 'o1', 'pending', { regime: 'regA2', accredited: null, basis: '' }),
+        sub('u2', 'o1', 'approved'),
+        sub('u3', 'o1', 'pending', { regime: 'regA2', basis: '' }),
+        sub('acc', 'o1', 'pending', { regime: 'regA2', accredited: true, basis: 'x' }),
+        sub('d', 'o1', 'rejected', { regime: 'regA2', accredited: null }),
+        sub('x', 'o2', 'pending', { regime: 'regA2', accredited: null }),
+        sub('later', 'o1', 'pending', { regime: 'regA2', accredited: null }),
+        sub('later', 'o1', 'pending', { regime: 'regA2', accredited: false, regA: { attested: false } })
+      ]
+    };
+    const s = E.regAStatus(ws, o);
+    check('unanswered lists the Tier 2 subscribers with no accredited answer (null, missing, or no answers at all), once each', Array.isArray(s.unanswered) && same(s.unanswered.map((x) => x.investorId), ['u1', 'u2', 'u3']), s.unanswered);
+    check('unanswered entries carry the investor only (no amount, no limit)', Array.isArray(s.unanswered) && s.unanswered.every((x) => Object.keys(x).join() === 'investorId'), s.unanswered);
+    check('declined subscriptions, other offerings, accredited investors and an investor whose latest answer is "no" are not listed', Array.isArray(s.unanswered) && !s.unanswered.some((x) => ['d', 'x', 'acc', 'later', 'a'].indexOf(x.investorId) >= 0), s.unanswered);
+    check('the rows are unchanged: a and later, apart from the unanswered', same(s.rows.map((r) => r.investorId), ['a', 'later']) && s.notAttested === 1, s);
+    check('an untiered "Regulation A" offering lists them too', (E.regAStatus(ws, off('o1', 'Regulation A')).unanswered || []).length === 3);
+    ['Regulation A Tier 1', 'Regulation A Tier 2, exchange-listed', 'Rule 506(b)'].forEach((ex) => {
+      const r = E.regAStatus(ws, off('o1', ex));
+      check(`nothing listed when the offering is "${ex}"`, Array.isArray(r.unanswered) && r.unanswered.length === 0, r);
+    });
+  },
   raflags({ check }) {
     const E = eligibility();
     const o = off('o1', 'Regulation A Tier 2');

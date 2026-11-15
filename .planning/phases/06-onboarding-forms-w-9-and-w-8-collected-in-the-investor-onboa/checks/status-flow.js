@@ -48,7 +48,10 @@ L.describeShots([
   ['portal-address-box.png', 'Self-serve portal (plan 06-08): the subscribe address for an investor on file shows only the "Continue your subscription" box, no form and no accredited tick.'],
   ['portal-console-3.png', 'Console offering page after the three portal subscriptions: "Non-accredited purchasers: 3 of 35".'],
   [/^portal-other-.*\.png$/, 'Self-serve portal (plan 06-08): Regulation A, benefit plan, unanswered and withdrawn-ground subscriptions reached from the portal.'],
-  ['portal-managed-subscribe.png', 'Managed edition (plan 06-08, C-03): the portal subscribe page unchanged, with its accredited tick.']
+  ['portal-managed-subscribe.png', 'Managed edition (plan 06-08, C-03): the portal subscribe page unchanged, with its accredited tick.'],
+  ['rega-unanswered-status.png', 'Status step under Regulation A Tier 2 (plan 06-11) with the accredited question left unanswered: no statement about the limit is shown.'],
+  ['rega-unanswered-subscribe.png', 'Subscribe step (plan 06-11) after the accredited question was left unanswered.'],
+  ['rega-unanswered-console.png', 'Console offering page (plan 06-11): the Regulation A panel names the Tier 2 subscriber who left the accredited question unanswered, in one line.']
 ]);
 fs.mkdirSync(SHOTS, { recursive: true });
 const INV = { name: 'Dana Whitfield', email: 'dana.whitfield@example.com' };
@@ -1698,6 +1701,42 @@ const parts = {
     const row1 = await requestRow(p, 'ra-earlier');
     const row2 = await requestRow(p, r && r.id);
     check('neither the earlier nor the new request carries the Regulation A flag', !!row1 && !!row2 && !RA_FLAG.test(row1) && !RA_FLAG.test(row2), [row1, row2]);
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  },
+
+  /**
+   * Verifier warning 1 (plan 06-11, D-06, D-30): a Tier 2 subscriber who leaves the accredited question unanswered is named
+   * on the Regulation A panel in one line, shown only when there is someone to name; nothing is flagged or blocked.
+   */
+  async 'rega-unanswered'({ check, S }) {
+    let before = null;
+    const { A, p, off, inv, w, R } = await regAFlow(S, {
+      exemption: 'Regulation A Tier 2',
+      tag: 'rega-unanswered',
+      acc: '',
+      amount: 60000,
+      before: async (page, o) => {
+        await consoleOffering(page, o.offeringId);
+        before = { el: await eligibilityText(page), line: await page.locator('.cs-elig-unanswered').count() };
+      }
+    });
+    check('before anyone subscribes, the panel has no unanswered line', !!before && /Regulation A Tier 2: 0 non-accredited subscribers/.test(before.el) && before.line === 0 && !/unanswered/.test(before.el), before);
+    check('the investor reaches the agreement with the accredited question left open, no field error', w.reached && w.errors.length === 0 && w.seen.some((s) => /\| Investor status$/.test(s)), { seen: w.seen, errors: w.errors });
+    check('with the question open, no statement about the limit is shown and the subscribe step has no warning', R.attestQ === 0 && !R.warn, R);
+    const r = await requestOf(p, inv.investorId, off.offeringId);
+    check('request.qual: regA2, accredited null, no regA', !!r && r.qual.regime === 'regA2' && r.qual.accredited === null && r.qual.regA === undefined, r && r.qual);
+    await consoleOffering(p, off.offeringId);
+    const el = await eligibilityText(p);
+    await p.screenshot({ path: path.join(SHOTS, 'rega-unanswered-console.png'), fullPage: true });
+    check('the panel names the subscriber in one line: "Left the accredited question unanswered, so not asked about the 10 percent limit: Dana Whitfield"', (await p.locator('.cs-elig-unanswered').count()) === 1 && /Left the accredited question unanswered, so not asked about the 10 percent limit: Dana Whitfield/.test(el), el);
+    check('the subscriber is not counted as non-accredited or as not attested', /Regulation A Tier 2: 0 non-accredited subscribers, 0 not attested to the 10 percent limit/.test(el) && (await p.locator('.cs-elig-noattest').count()) === 0, el);
+    await consoleRequests(p);
+    const row = await requestRow(p, r && r.id);
+    check('the request row carries no Regulation A flag and keeps Approve', !!row && !RA_FLAG.test(row) && (await p.locator(`[data-action=req-approve][data-id="${r && r.id}"]`).count()) === 1, row);
+    const lk = L.leakCheck([R.status, R.sub, el].join('\n'));
+    check('white label: status, subscribe and panel pass the leak check', lk.ok, lk.hits);
     check('no script error in the browser', A.errors.length === 0, A.errors);
     check('no request left the check server', A.net.external.length === 0, A.net.external);
     await A.context.close();
