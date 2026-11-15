@@ -5,7 +5,7 @@
 // console (one context) sends the invitation with its own form; the investor's device (a second context, empty storage,
 // the portal page listing the server as the firm publishes it) opens the ?server= link, answers the status step,
 // subscribes and signs; the console imports with its own "Check now" and counts the answers exactly as in local mode.
-//   NODE_PATH=$(npm root -g) node server-mode.js [--only b506,regA,full,existing,repack,clean]
+//   NODE_PATH=$(npm root -g) node server-mode.js [--only b506,regA,full,existing,withdraw,repack,clean,signed]
 // The last line is "SERVER MODE: PASS (parts run: N)" or "SERVER MODE: FAIL (parts run: N) - <failed parts>".
 const path = require('path');
 const fs = require('fs');
@@ -40,6 +40,13 @@ L.describeShots([
   ['existing-subscribe.png', 'Investor on file: subscribe step (accredited investor).'],
   ['existing-done.png', 'Investor on file: done screen.'],
   ['existing-console-offering.png', 'Console offering page after import: the Benefit plan investors panel with the investor’s answer now "none".'],
+  ['withdraw-status.png', 'Investor on file with a self-certified ground, own device: status step answered "not accredited" (sophistication answers).'],
+  ['withdraw-subscribe.png', 'Investor on file: subscribe step stating the account is not an accredited investor.'],
+  ['withdraw-done.png', 'Investor on file: done screen after answering "not accredited".'],
+  ['withdraw-console-offering.png', 'Console offering page after import: "Non-accredited purchasers: 1 of 35"; the investor record no longer holds the self-certified ground.'],
+  ['withdrawB-status.png', 'Investor on file whose ground a third party verified: status step answered "not accredited".'],
+  ['withdrawB-subscribe.png', 'Investor on file (verified ground): subscribe step.'],
+  ['withdrawB-done.png', 'Investor on file (verified ground): done screen; the verified ground stays on the console record.'],
   ['repack-status.png', 'Investor’s device: status step with the purchaser representative’s acknowledgment attached.'],
   ['repack-subscribe.png', 'Investor’s device: subscribe step (not accredited, representative named).'],
   ['repack-done.png', 'Investor’s device: done screen; the acknowledgment went with the completion.'],
@@ -530,6 +537,168 @@ const parts = {
       check('white label: the status and subscribe screens and the benefit plan panel pass the leak check', lk.ok, lk.hits);
     } finally {
       await F.close();
+    }
+  },
+
+  /**
+   * Verifier gap 2 / T-06-21 in server mode (plan 06-09): an investor on file with a self-certified ground (dated 2026-04-16,
+   * with the self-certification verification record made from it) answers "not accredited" on their own device. After the
+   * console's import its record no longer holds the ground, exactly as onboarding.js withdrawGround leaves it in local mode
+   * (basis and date cleared, the ground kept as superseded, the self-certification record withdrawn). Run B: a ground a third
+   * party verified (verifiedBy) stays exactly as it was.
+   */
+  async withdraw({ check, S }) {
+    const OLD = '2026-04-16';
+    const pick = (third) => async (cp, off, out) => {
+      out.who = await cp.evaluate(
+        ({ oid, OLD, third }) => {
+          const NS = window.CVPortal;
+          const ws = NS.state.ws;
+          const i = ws.investors.find((x) => x.onboarding && x.onboarding.status === 'complete' && x.type === 'individual' && x.accreditation && x.accreditation.basis && !x.accreditation.verifiedBy && x.email && !(x.positions || []).some((y) => y.offeringId === oid));
+          if (!i) return null;
+          const basis = i.accreditation.basis;
+          if (third) {
+            i.accreditation = { basis, date: OLD, verifiedBy: 'Example Verification Services', expires: '2027-04-16' };
+          } else {
+            // The firm accepts self-certification: the ground made the self-certification record when it was given.
+            NS.integrations.ensure(ws).use.accreditation = ['self'];
+            i.accreditation = { basis, date: OLD };
+            const at = `${OLD}T12:00:00Z`;
+            i.verify = {
+              identity: { status: 'passed', completedAt: at },
+              aml: { status: 'clear', completedAt: at },
+              accreditation: { status: 'verified', method: `Self-certified: ${basis}`, connection: 'self', via: NS.integrations.conn(ws, 'self').name, how: 'self', completedAt: at, verifiedAt: OLD, expiresAt: '2027-04-16' },
+              decision: { status: 'approved', at, by: 'automatic', reason: 'all checks passed' }
+            };
+          }
+          NS.app.save(true);
+          const parts = String(i.contact).trim().split(/\s+/);
+          return { id: i.id, name: i.contact, first: parts[0], last: parts.slice(1).join(' ') || parts[0], email: i.email, basis, before: JSON.parse(JSON.stringify({ accreditation: i.accreditation, verify: i.verify || null })) };
+        },
+        { oid: off.offeringId, OLD, third }
+      );
+    };
+    const answers = { acc: 'no', exp: 'Ten years of private fund commitments', edu: 'Engineer', rep: 'no', amount: 60000 };
+    const record = (page, id) =>
+      page.evaluate((iid) => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const i = ws.investors.find((x) => x.id === iid) || {};
+        return { accreditation: i.accreditation || null, verify: i.verify ? JSON.parse(JSON.stringify(i.verify)) : null, today: NS.dates.today(), log: (ws.audit || []).filter((e) => e.record === iid).map((e) => ({ action: e.action, detail: e.detail })) };
+      }, id);
+
+    // Run A: a self-certified ground.
+    const F = await serverFlow(S, check, { tag: 'withdraw', exemption: 'Rule 506(b)', answers, beforeInvite: pick(false) });
+    try {
+      const who = F.who || {};
+      check('withdraw A: an active investor on file with a self-certified ground dated 2026-04-16 and its self-certification record', !!who.basis && who.before.accreditation.date === OLD && !!who.before.verify && who.before.verify.accreditation.connection === 'self', who);
+      commonChecks(check, F);
+      const q = (F.req && F.req.qual) || {};
+      check('withdraw A: the imported request records accredited false (regime 506b)', q.regime === '506b' && q.accredited === false, q);
+      const r = await record(F.A.page, who.id);
+      const a = r.accreditation || {};
+      check('withdraw A: the console record no longer holds the ground: basis and date cleared, kept as superseded with when it was given (2026-04-16) and withdrawn (today)', a.basis === '' && a.date === '' && !!a.superseded && a.superseded.basis === who.basis && a.superseded.date === OLD && a.superseded.at === r.today && !a.verifiedBy, a);
+      const va = (r.verify || {}).accreditation || {};
+      check('withdraw A: the self-certification verification record made from the ground is withdrawn: not started, with the superseded record', va.status === 'not_started' && !!va.superseded && va.superseded.method === `Self-certified: ${who.basis}` && va.superseded.verifiedAt === OLD && /^\d{4}-\d{2}-\d{2}T/.test(va.superseded.at || ''), va);
+      check('withdraw A: a change-log entry from the investor’s device says the ground no longer applies', r.log.some((e) => e.action === 'Investor status answered' && /no longer applies/.test(e.detail) && /from the investor.s device/.test(e.detail)), r.log);
+      const cp = F.A.page;
+      await L.consoleRoute(cp, 'console-offering-' + F.off.offeringId);
+      const el = await panelText(cp, 'Investor eligibility');
+      await cp.screenshot({ path: path.join(SHOTS, 'withdraw-console-offering.png'), fullPage: true });
+      check('withdraw A: the console offering page reads "Non-accredited purchasers: 1 of 35"', /Non-accredited purchasers: 1 of 35/.test(el), el);
+    } finally {
+      await F.close();
+    }
+
+    // Run B: the same answer over a ground a third party verified: it stays.
+    const G = await serverFlow(S, check, { tag: 'withdrawB', exemption: 'Rule 506(b)', answers, beforeInvite: pick(true) });
+    try {
+      const who = G.who || {};
+      check('withdraw B: an investor on file whose ground a third party verified (verifiedBy)', !!who.basis && !!who.before.accreditation.verifiedBy, who);
+      const q = (G.req && G.req.qual) || {};
+      check('withdraw B: the imported request records accredited false', q.accredited === false, q);
+      const r = await record(G.A.page, who.id);
+      check('withdraw B: the verified ground stays exactly as it was', isDeepStrictEqual(r.accreditation, who.before.accreditation), { now: r.accreditation, before: who.before.accreditation });
+      check('withdraw B: the console’s own change-log entry says the verified accreditation stays on the record', r.log.some((e) => e.action === 'Accreditation kept' && /verified by Example Verification Services/.test(e.detail) && e.detail.indexOf(who.basis) >= 0 && !/from the investor.s device/.test(e.detail)), r.log);
+      // Recorded for the summary, not asserted: what the device's own change-log entry for the answer says in this case.
+      console.log('INFO withdraw B: device change-log entries for the answer:', JSON.stringify(r.log.filter((e) => e.action === 'Investor status answered')));
+      check('withdraw B: no script error on either side', G.A.errors.length === 0 && G.B.errors.length === 0, { A: G.A.errors, B: G.B.errors });
+    } finally {
+      await G.close();
+    }
+  },
+
+  /**
+   * Deferred item 2 / T-06-20 (plan 06-09): an imported request's signedBy and signedAt are the console's, never the device's.
+   * Each run alters the stored request before import (signedAt 2001-01-02T00:00:00Z, signedBy "Someone Else"):
+   *   envelope   signedBy is the console's investor name; signedAt is the kept envelope's investor signature time
+   *   unsigned   the envelope arrives with the investor's signature not made (they stopped before signing): signedAt ''
+   *   noenvelope a request signed without an envelope: the integration server's completion time
+   * every time inside the invitation window (from its sending to now).
+   */
+  async signed({ check, S }) {
+    const answers = { acc: 'no', exp: 'Six years of private fund commitments', edu: 'Architect', rep: 'no', amount: 60000 };
+    const FAKE = { signedAt: '2001-01-02T00:00:00Z', signedBy: 'Someone Else' };
+    const runs = [
+      ['envelope', (s) => Object.assign(s.request, FAKE)],
+      [
+        'unsigned',
+        (s) => {
+          Object.assign(s.request, FAKE);
+          s.envelope.status = 'sent';
+          s.envelope.completedAt = null;
+          s.envelope.signers.forEach((x) => x.role === 'investor' && Object.assign(x, { status: 'waiting', signedAt: null, signature: null, initials: null }));
+        }
+      ],
+      [
+        'noenvelope',
+        (s) => {
+          Object.assign(s.request, FAKE);
+          delete s.request.envelopeId;
+          s.envelope = null;
+        }
+      ]
+    ];
+    for (const [name, change] of runs) {
+      const F = await serverFlow(S, check, {
+        tag: `signed-${name}`,
+        exemption: 'Rule 506(b)',
+        answers,
+        beforeImport: async (srv, inv) => {
+          srv.alter(inv.serverId, change);
+          return srv.submission(inv.serverId);
+        }
+      });
+      try {
+        const st = (F.stored && F.stored.request) || {};
+        check(`signed ${name}: the stored request was altered before import (signedAt 2001-01-02, signedBy "Someone Else")`, st.signedAt === FAKE.signedAt && st.signedBy === FAKE.signedBy, { signedAt: st.signedAt, signedBy: st.signedBy });
+        commonChecks(check, F);
+        const got = await F.A.page.evaluate(({ rid, iid, ivid }) => {
+          const ws = window.CVPortal.state.ws;
+          const r = ws.requests.find((x) => x.id === rid) || {};
+          const i = ws.investors.find((x) => x.id === ivid) || {};
+          const it = ws.invitations.find((x) => x.id === iid) || {};
+          const e = r.envelopeId ? ws.envelopes.find((x) => x.id === r.envelopeId) : null;
+          const sg = e ? e.signers.find((x) => x.role === 'investor') : null;
+          return { signedAt: r.signedAt, signedBy: r.signedBy, envelopeId: r.envelopeId || '', envStatus: e ? e.status : '', signer: sg ? { status: sg.status, signedAt: sg.signedAt } : null, contact: i.contact, title: i.title, sentAt: it.sentAt, now: new Date().toISOString() };
+        }, { rid: F.req && F.req.id, iid: F.inv.id, ivid: F.inv.investorId });
+        const inWindow = (t) => !!t && Date.parse(t) >= Date.parse(got.sentAt) - 1000 && Date.parse(t) <= Date.parse(got.now);
+        check(`signed ${name}: signedBy is the console’s own investor name, not the device’s`, got.signedBy === (got.contact || got.title) && got.signedBy !== FAKE.signedBy, got);
+        if (name === 'envelope') {
+          const want = got.signer && got.signer.status === 'signed' ? String(got.signer.signedAt || '').replace(/\.\d{3}Z$/, 'Z') : '(unsigned)';
+          check('signed envelope: the request is tied to the kept envelope, whose investor signature is made', !!got.envelopeId && !!got.signer && got.signer.status === 'signed', got);
+          check('signed envelope: signedAt is the kept envelope’s investor signature time, inside the invitation window', got.signedAt === want && inWindow(got.signedAt), got);
+        } else if (name === 'unsigned') {
+          check('signed unsigned: the kept envelope’s investor signature is not made', !!got.envelopeId && !!got.signer && got.signer.status !== 'signed', got);
+          check('signed unsigned: signedAt is empty, whatever the device sent', got.signedAt === '', got);
+        } else {
+          const done = String((F.stored && F.stored.completedAt) || '').replace(/\.\d{3}Z$/, 'Z');
+          check('signed noenvelope: the request has no envelope', !got.envelopeId, got);
+          check('signed noenvelope: signedAt is the integration server’s completion time, inside the invitation window', !!done && got.signedAt === done && inWindow(got.signedAt), { got, serverCompletedAt: F.stored && F.stored.completedAt });
+        }
+      } finally {
+        await F.close();
+      }
     }
   },
 

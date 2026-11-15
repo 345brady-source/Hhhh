@@ -798,6 +798,7 @@
     // An invitation to subscribe sent to an investor on file: their record here is the one that counts, whatever its status now.
     const onFile = !!it.existing && !!inv;
     let taken = false;
+    let withdrawn = false; // a self-certified ground withdrawn from a verification record: decided again below
     let stamped = false;
     if (!inv) {
       inv = { id: it.investorId, contact: '', title: '', type: 'individual', email: '', onboarding: {}, payment: { method: 'check', bank: null }, positions: [] };
@@ -829,6 +830,25 @@
       const basis = sa && typeof sa.basis === 'string' ? sa.basis.trim().slice(0, 300) : '';
       const verified = !!(inv.accreditation && inv.accreditation.verifiedBy);
       if (!taken && basis && !verified && sq && sq.accredited === true && sq.basis === basis) inv.accreditation = Object.assign({}, inv.accreditation, { basis, date: isDay(sa.date) && sa.date <= today() ? sa.date : today() });
+      // The investor answered "not accredited" (the request records it) and no verification was taken: a ground they
+      // self-certified no longer applies. It is withdrawn with the same rule and record as onboarding.js withdrawGround in
+      // local mode (kept as superseded, with when it was given and withdrawn), and so is the self-certification record made
+      // from it. A ground a third party verified (verifiedBy) is never touched.
+      const held = inv.accreditation;
+      if (!taken && sq && sq.accredited === false && held && typeof held === 'object' && held.basis && !held.verifiedBy) {
+        inv.accreditation = Object.assign({}, held, { basis: '', date: '', superseded: { basis: held.basis, date: held.date || '', at: today() } });
+        const N = NS.integrations;
+        if (N && N.recorded && N.recorded(inv)) {
+          const v = inv.verify.accreditation;
+          const fromIt = v && (N.selfCertified(v) || (v.legacy && v.method === held.basis));
+          if (fromIt && v.status !== 'not_started') inv.verify.accreditation = { status: 'not_started', superseded: { method: String(v.method || ''), verifiedAt: v.verifiedAt || '', at: nowIso() } };
+          withdrawn = true;
+        }
+      } else if (!taken && sq && sq.accredited === false && held && typeof held === 'object' && held.basis && held.verifiedBy) {
+        // The device's copy of the record cannot tell a verified ground from a self-certified one, so its own change-log entry
+        // may say the ground no longer applies: the console says what its record holds.
+        audit(ws, 'Accreditation kept', `${inv.title || inv.contact || inv.id} answered "not accredited" on their device. The accreditation verified by ${held.verifiedBy} (${held.basis}) stays on the record; review it with the investor.`, it.offeringId, inv.id);
+      }
       if (!inv.onboarding || typeof inv.onboarding !== 'object') inv.onboarding = {};
     } else {
       Object.keys(src).forEach((k) => {
@@ -979,9 +999,30 @@
       ws.envelopes.push(envIn);
     }
     if (rIn) {
+      const namedEnvelope = !!rIn.envelopeId;
       // Signed through the envelope that came with it, or not through an envelope at all: never through another envelope here
       // (automatic acceptance would otherwise take someone else's, or an earlier, signed agreement for this subscription).
       if (rIn.envelopeId && (!envIn || rIn.envelopeId !== envIn.id)) delete rIn.envelopeId;
+      // Who signed and when are this console's to say, never the device's (T-06-20): the investor's name on this record, and
+      // the signature the kept envelope records for the investor (none made: not signed), or, for a request signed without an
+      // envelope, the time the integration server recorded the completion. Always from the invitation's sending to now.
+      rIn.signedBy = String(inv.contact || inv.title || '').trim();
+      const sentMs = Date.parse(it.sentAt || '');
+      const clampAt = (t) => {
+        const ms = Date.parse(t || '');
+        if (!isFinite(ms)) return '';
+        const at = Math.min(Date.now(), Math.max(isFinite(sentMs) ? sentMs : ms, ms));
+        return new Date(at).toISOString().replace(/\.\d{3}Z$/, 'Z');
+      };
+      if (rIn.envelopeId) {
+        const signer = envIn.signers.find((s) => s.role === 'investor');
+        rIn.signedAt = signer && signer.status === 'signed' ? clampAt(signer.signedAt) : '';
+      } else if (namedEnvelope) {
+        // Signed through an envelope that was not imported: no signature here to date it by.
+        rIn.signedAt = '';
+      } else {
+        rIn.signedAt = clampAt(sub.completedAt) || clampAt(nowIso());
+      }
       ws.requests.push(rIn);
     }
     if (dropped) audit(ws, 'Subscription not imported', `${inv.title || inv.id}: the subscription request from the investor's device was not added to the portal: ${dropped}${tied && envIn ? '; the agreement signed for it is kept, voided' : ''}. Ask them to subscribe again.`, it.offeringId, inv.id);
@@ -1008,8 +1049,9 @@
     });
     Object.assign(it, { status: 'completed', completedAt: sub.completedAt || it.completedAt || new Date().toISOString(), stepKey: 'done', stepLabel: 'Done', stepIndex: it.stepCount || it.stepIndex });
     await reconfirm(ws, inv, it);
-    // An investor on file is decided again only when the link brought a new result; otherwise their record is as it was.
-    if (onFile && taken && I && I.active(ws) && inv.verify) {
+    // An investor on file is decided again only when the link brought a new result or withdrew a self-certified ground from
+    // their verification record (as withdrawGround does in local mode); otherwise their record is as it was.
+    if (onFile && (taken || withdrawn) && I && I.active(ws) && inv.verify) {
       I.decide(ws, inv);
       I.syncKyc(ws, inv);
     }
