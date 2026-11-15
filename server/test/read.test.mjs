@@ -172,7 +172,7 @@ test('a malformed request is 400 invalid; pages over 600, text over 4 MB or more
 });
 
 /* ---------- The real reader through the installed client library ---------- */
-test('the request: model, adaptive thinking, effort high, the answer schema, the document before the text, no tools, the key from CARROWVALE_API_KEY only', () =>
+test('the request: model (D-39), adaptive thinking, effort high, the answer schema, the document before the text, no tools, the key from CARROWVALE_API_KEY only', () =>
   withAmbient(async () => {
     const svc = fakeService({ reply: () => ({ texts: [JSON.stringify(ANSWER).slice(0, 40), JSON.stringify(ANSWER).slice(40)] }) });
     await withServer({ env: { CARROWVALE_API_KEY: KEY }, fetch: svc }, async (base) => {
@@ -195,7 +195,7 @@ test('the request: model, adaptive thinking, effort high, the answer schema, the
       assert.ok(![...call.headers.values()].some((v) => /ambient/.test(v)), 'no ambient credential in any header');
       assert.match(call.headers.get('anthropic-beta') || '', /server-side-fallback-2026-07-01/);
       const b = call.body;
-      assert.equal(b.model, 'claude-opus-5-5');
+      assert.equal(b.model, 'claude-fable-5-2');
       assert.equal(b.max_tokens, 64000);
       assert.deepEqual(b.thinking, { type: 'adaptive' });
       assert.deepEqual(b.output_config, { effort: 'high', format: { type: 'json_schema', schema: JSON.parse(JSON.stringify(ANSWER_SCHEMA)) } });
@@ -392,7 +392,7 @@ test('the read log holds one line per call of numbers and enums only; the usage 
       assert.equal(row.pages, 2);
       assert.equal(row.candidates, 8);
       assert.deepEqual(row.usage, { input_tokens: 5200, output_tokens: 900, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 });
-      assert.ok(Math.abs(row.cost - (5200 * 4 + 900 * 20) / 1e6) < 1e-12);
+      assert.ok(Math.abs(row.cost - (5200 * 8 + 900 * 40) / 1e6) < 1e-12);
       assert.match(row.at, /^\d{4}-\d{2}-\d{2}T/);
       assert.equal(text.includes(PDF), false, 'no document bytes');
       assert.equal(text.includes('[#1]'), false, 'no document text');

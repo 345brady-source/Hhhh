@@ -3038,7 +3038,7 @@
     res.fields.forEach((p) => {
       // The firm signs only where the agreement has a signature line for it: with none, its blanks get no field.
       const unplaced = () => read.left.indexOf(p.page) < 0 && read.left.push(p.page);
-      if (p.role === 'firm' && !res.firmPages.length && !res.server) {
+      if (p.role === 'firm' && !res.firmPages.length) {
         if (read.firmLeftPages.indexOf(p.page) < 0) read.firmLeftPages.push(p.page);
         unplaced();
         return read.firmLeft++;
@@ -3143,7 +3143,6 @@
       const sig = (role) => (p) => p.type === 'signature' && p.role === role;
       const next = Object.assign({}, res, {
         fields,
-        server: true,
         places: fields.length + out.dropped,
         left: [],
         boxes: fields.filter((p) => p.type === 'checkbox').length,

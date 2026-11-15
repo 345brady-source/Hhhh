@@ -6,7 +6,7 @@
  *
  *   api       the workspace has a reading server (server/index.mjs in this process, with API_TOKEN and a fake reader
  *             that picks from the numbered places it receives: the first place (page 1's, or the first page with a
- *             place when page 1 has none) as the sponsor's text, then
+ *             place when page 1 has none) as the sponsor's signature, then
  *             every place on the last page as the investor's signature, skipping a place whose box overlaps one already
  *             picked). The first agreement is uploaded as a sponsor does: the editor's fields are exactly the picked
  *             places, one each, each on its place's box, each for the picked person (sponsor = the countersigner); the
@@ -84,7 +84,8 @@ function fakeReader(run) {
 }
 /**
  * The fixed rule: the first numbered place (page 1's first, or the first page with a place when page 1 has none) as the
- * sponsor's text, then every place on the last page as the investor's signature.
+ * sponsor's signature, then every place on the last page as the investor's signature. (A sponsor field needs a sponsor
+ * signature on the agreement, as for the in-page reading, so the sponsor's pick is a signature.)
  */
 function picks(list) {
   const box = (e) => ({ id: e[0], page: e[1], x0: e[2], y0: e[3], x1: e[4], y1: e[5] });
@@ -94,7 +95,7 @@ function picks(list) {
   order.forEach((e, k) => {
     const b = box(e);
     if (out.some((o) => o.page === b.page && hit(o, b))) return;
-    out.push(Object.assign(b, k === 0 ? { kind: 'text', person: 'sponsor' } : { kind: 'signature', person: 'investor' }));
+    out.push(Object.assign(b, k === 0 ? { kind: 'signature', person: 'sponsor' } : { kind: 'signature', person: 'investor' }));
   });
   return out;
 }
