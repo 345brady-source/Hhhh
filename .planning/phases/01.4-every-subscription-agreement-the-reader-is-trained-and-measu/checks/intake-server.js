@@ -49,6 +49,16 @@
  *              found" stops the run: outcome failed, why no-readable-text. --fake (on the broken PDF) proves a cap that
  *              refuses 64000 output tokens but fits a lower limit (default cap 2.00), a page-limit case (<dir>/pages/,
  *              cap 1.00) and the below-the-cap case.
+ *   measure --combined (plan 01.4-71, D-44): one PPM with the subscription agreement inside, once, through the intake
+ *              screen: Read documents, the range on review, Create the offering, the done step, then the background
+ *              agreement reading awaited (up to 1800 s). One attempt only: no test-cap fitting and no TEST_PAGE_LIMIT
+ *              (D-38). Real mode: spawnServer as above (--cap default 6.00, --max-tokens default 64000, both routes on one
+ *              server, one budget, one read log in <dir>), with the same one retry without the proxy setting. --fake:
+ *              a server in this process with an intake answering the fictional fund plus subscriptionAgreement from
+ *              --range a-b and a fake agreement reader (the fixed picks rule, fake usage 50000 in and 5000 out). A PPM
+ *              reading that is not read (the probe's refusal) ends there. Writes <dir>/raw.json, profile.json and
+ *              result.json (range, reviewLine, ppm, agreement, cost, spent, cap, maxTokens, model, seconds, nameMissing;
+ *              counts and page numbers only) and prints one COMBINED line.
  *
  * A missing harness or document prints "NOT RUN: (what)" and the exit status is 2. Output holds counts and the fictional
  * fund's name only. One line per check; last line "INTAKE SERVER: PASS" or "INTAKE SERVER: FAIL"; exit 0 or 1.
@@ -75,6 +85,7 @@ const notRun = (what) => (console.log('NOT RUN: ' + what), process.exit(2));
 PARTS.forEach((p) => ALL.includes(p) || notRun(`--only ${p} is not a part (${ALL.join(', ')})`));
 if (!fs.existsSync(HARNESS)) notRun('the check browser is missing (' + HARNESS + ')');
 const FAKE = flag('fake');
+const COMBINED = flag('combined');
 const DOC = arg('doc');
 const OUT = arg('out');
 if (PARTS.some((p) => ['unreadable', 'wholetext', 'mixedpages'].includes(p))) {
@@ -92,6 +103,14 @@ if (PARTS.includes('measure')) {
   if (!DOC || !fs.existsSync(DOC)) notRun('the document to measure is missing (--doc ' + (DOC || '') + ')');
   if (!OUT) notRun('no output folder (--out)');
   if (!FAKE && !String(process.env.CARROWVALE_API_KEY || '').trim()) notRun('CARROWVALE_API_KEY is not set (real mode reads on the key; use --fake to prove the tool)');
+  if (COMBINED && FAKE && arg('range') && !/^\d+-\d+$/.test(arg('range'))) notRun('--range must be a-b (pages of --doc)');
+  if (COMBINED && FAKE) ['pdftotext', 'pdfinfo'].forEach((t) => {
+    try {
+      execFileSync(t, ['-v'], { stdio: 'ignore' });
+    } catch (e) {
+      if (e.code === 'ENOENT') notRun(t + ' is not installed');
+    }
+  });
 }
 
 const fails = [];
@@ -103,19 +122,19 @@ const line = (ok, text) => {
 
 /* ---------- Part unchanged ---------- */
 const SLICES = [
-  ['assets/js/intake.js', '  function instructions() {', '39dc2cf7c0171a1e'], // owner 2026-11-15: seven reading rules added after the blind PPM test (tiers as stated, class terms only when class-specific, no padded lists, fill every stated term); done directly at the owner's request
+  ['assets/js/intake.js', '  function instructions() {', '87b2745e6c7f7e99'], // plan 71: D-44 adds one shape item (subscriptionAgreement { document, firstPage, lastPage } or null) and one rule line (its page range in the uploaded file's own pages, ending before attached tax forms per D-46); was 39dc2cf7c0171a1e (owner's D-45 rules)
   ['assets/js/intake.js', '  function corpus(docs, limit) {', '09fdeeb8ddad65e2'],
   ['assets/js/intake.js', '  function normalize(raw) {', 'f8b9b49acf5d16fb'],
   ['assets/js/intake.js', '  function fromOffering(ws, o) {', '3a54b2ccc3f83fc5'],
-  ['assets/js/intake.js', '  async function apply(ws, prof, opts) {', '0de69fa96168ce4f'], // plan 64 Task 3: white-label renames only (D-16, D-31); intake behaviour unchanged per D-36
+  ['assets/js/intake.js', '  async function apply(ws, prof, opts) {', '795bfb2d7ea5929e'], // plan 71: D-44 its last call passes opts to prepareAgreement (the agreement's pages found inside an uploaded PDF); was 0de69fa96168ce4f
   ['assets/js/intake.js', '  function filled(p) {', 'f02ce693e7be7276'],
   ['assets/js/intake.js', '  async function readFile(file) {', 'ae6aa343b3a8e0e3'],
   ['assets/js/intake.js', '  const TERMS = ', 'bff29f3668ceae40', true],
   ['assets/js/intake.js', '  const readWithRules = ', '954471e2c2951273', true],
   ['assets/js/intake.js', '  NS.intake = {', '48f32cb9213f564a', true], // plan 64 Task 3: white-label renames only (D-16, D-31); intake behaviour unchanged per D-36
-  ['assets/js/console.js', "  NS.actions['ik-read'] = async () => {", 'b6e0356fd10fd2da', false, '  };'], // plan 68: D-38 routes a picture-only PDF to the PDF path instead of 'No readable text was found'
+  ['assets/js/console.js', "  NS.actions['ik-read'] = async () => {", '71a3c3180bd145c8', false, '  };'], // plan 71: D-44 one statement after normalize: st.agreement from the raw answer (agreementPart), automatic reading only; was b6e0356fd10fd2da (plan 68)
   ['assets/js/console.js', '  function ikUpload() {', '276f15a55bd2a8b9'], // plan 69 Task 3: D-38 removes the allow wording; behaviour unchanged
-  ['assets/js/console.js', '  function ikReview() {', '635f88df5f398127']
+  ['assets/js/console.js', '  function ikReview() {', '49bec195af63b595'] // plan 71: D-44 the Subscription agreement panel after the head when st.agreement is set (same output as before without it); was 635f88df5f398127
 ];
 /** The slice from the first line starting with `start` to the first later line equal to `end` (or that line alone). */
 function sliceHash(file, start, single, end) {
@@ -165,12 +184,12 @@ const FUND = {
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** The portal's server in this process (server/index.mjs) with a given intake; resolves to { base, token, close }. */
-async function portalServer(intake, extraEnv) {
+async function portalServer(intake, extraEnv, reader) {
   const { createServer } = await import(pathToFileURL(path.join(ROOT, 'server/index.mjs')).href);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'intake-check-'));
   const token = crypto.randomBytes(16).toString('hex');
   const env = Object.assign({ NODE_ENV: 'test', STORE_FILE: path.join(dir, 'store.json'), API_TOKEN: token, PORTAL_ORIGIN: '' }, extraEnv || {});
-  const server = createServer({ env, intake });
+  const server = createServer(reader ? { env, intake, reader } : { env, intake });
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
   return {
@@ -1323,6 +1342,7 @@ async function spawnServer(dir, cap, maxTokens, proxy) {
   return null;
 }
 async function partMeasure(h, page) {
+  if (COMBINED) return combinedMeasure(h, page);
   const M = await import(pathToFileURL(path.join(ROOT, 'server/lib/model.mjs')).href);
   fs.mkdirSync(OUT, { recursive: true });
   const say = (tag, x) => `measure ${tag}: outcome ${x.run.outcome}${x.run.why ? ' (' + x.run.why + ')' : ''}, ${x.run.seconds} s, cost $${Number(x.run.cost || 0).toFixed(4)}, ${x.r && x.r.profile ? x.r.filled : 0} terms filled, sent ${x.run.sent || 'nothing'}${x.run.sent === 'pdf' ? ` (ranges ${x.run.ranges.map((g) => g.join(' to ')).join(', ')} of ${x.run.pdfOf})` : ''}`;
@@ -1385,6 +1405,355 @@ async function partMeasure(h, page) {
   }
   console.log(`measure spent in this folder $${a.run.spent.toFixed(4)}, counted ${a.run.counted === null ? 'none' : a.run.counted} tokens`);
   line(a.run.outcome !== 'failed', say('real', a));
+}
+
+/* ---------- Plan 01.4-71 (D-44): one upload of a PPM with the subscription agreement inside ---------- */
+const OUT71 = path.join(SCRATCH, 'edgar/measure/out-71');
+const hitBox = (a, b) => Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0) > 0 && Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0) > 0;
+/**
+ * server-read.js's fixed rule: the first numbered place as the sponsor's signature, then every place on the last page as
+ * the investor's signature (overlapping places once).
+ */
+function agreementPicks(list) {
+  const box = (e) => ({ id: e[0], page: e[1], x0: e[2], y0: e[3], x1: e[4], y1: e[5] });
+  const last = Math.max.apply(null, list.map((e) => e[1]));
+  const order = [list[0]].concat(list.filter((e) => e[1] === last && e !== list[0])).filter(Boolean);
+  const out = [];
+  order.forEach((e, k) => {
+    const b = box(e);
+    if (out.some((o) => o.page === b.page && hitBox(o, b))) return;
+    out.push(Object.assign(b, k === 0 ? { kind: 'signature', person: 'sponsor' } : { kind: 'signature', person: 'investor' }));
+  });
+  return out;
+}
+/**
+ * A fake agreement reader for /v1/read: the fixed rule's picks with fake usage (50000 input, 5000 output tokens), every
+ * request recorded. opts.fail: answer unavailable (503) every time; opts.wait: wait that long first (a hang).
+ */
+function fakeAgreementReader(budget, opts) {
+  const o = opts || {};
+  const seen = [];
+  return {
+    seen,
+    budget: budget || null,
+    maxTokens: () => 64000,
+    count: async () => 1000,
+    available: async () => true,
+    async read(req, ctx) {
+      seen.push(req);
+      if (o.wait) await new Promise((r) => {
+        const t = setTimeout(r, o.wait);
+        if (ctx && ctx.signal) ctx.signal.addEventListener('abort', () => (clearTimeout(t), r()), { once: true });
+      });
+      if (o.fail) return { ok: false, reason: 'unavailable', ms: 5, model: '', usage: { input_tokens: 0, output_tokens: 0 } };
+      const chose = agreementPicks(req.list || []);
+      return { ok: true, fields: chose.map((c) => ({ id: c.id, kind: c.kind, person: c.person, group: 'all' })), missing: [], ms: 40, model: 'fake-model', stopReason: 'end_turn', usage: { input_tokens: 50000, output_tokens: 5000, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 } };
+    }
+  };
+}
+/** A PDF's page count (pdfinfo). */
+const pdfPageCount = (file) => Number((/Pages:\s+(\d+)/.exec(execFileSync('pdfinfo', [file], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })) || [])[1] || 0);
+/** One page's text (pdftotext), spacing collapsed. */
+const pageTextOf = (file, n) => execFileSync('pdftotext', ['-q', '-f', String(n), '-l', String(n), file, '-'], { encoding: 'utf8' }).replace(/\s+/g, ' ').trim();
+/**
+ * The combined flow on the real screens against srv: file(s) uploaded on a fresh intake, Read documents pressed; at review
+ * the agreement's pages as found (opts.review may change them); Create the offering pressed (opts.target: apply to that
+ * offering instead); the done step, then the background reading awaited. Requests to /v1/intake are captured unchanged
+ * (answers) and to /v1/read in numbers only (pages, images). Never prints document text.
+ */
+async function combinedFlow(h, page, srv, file, opts) {
+  const o = opts || {};
+  const cap = { intake: [], read: [], readAfterApply: 0 };
+  let applied = false;
+  await allow(h, srv.base, async (route) => {
+    const req = route.request();
+    if (req.method() === 'POST' && /\/v1\/intake$/.test(req.url())) {
+      const entry = { sent: sentOf(req.postData() || ''), status: 0, body: '' };
+      cap.intake.push(entry);
+      const resp = await route.fetch({ timeout: 700000 });
+      entry.body = await resp.text();
+      entry.status = resp.status();
+      return route.fulfill({ response: resp, body: entry.body });
+    }
+    if (req.method() === 'POST' && /\/v1\/read$/.test(req.url())) {
+      let b = null;
+      try {
+        b = JSON.parse(req.postData() || '');
+      } catch (e) {
+        b = null;
+      }
+      cap.read.push({ pages: b && Number(b.pages) ? Number(b.pages) : 0, images: b && Array.isArray(b.images) ? b.images.length : 0, range: b && Array.isArray(b.range) ? b.range.slice() : null });
+      if (applied) cap.readAfterApply += 1;
+    }
+    return route.continue();
+  });
+  await setServer(page, srv.base, srv.token);
+  if (o.before) await o.before(page);
+  const t0 = Date.now();
+  let r = null;
+  try {
+    r = await readOutcome(page, file, o.timeout || 1800000);
+  } catch (e) {
+    r = null;
+  }
+  const ppmSeconds = Math.round((Date.now() - t0) / 100) / 10;
+  const answers = cap.intake.filter((c) => c.status === 200).map((c) => {
+    const ls = c.body.split('\n').filter((l) => l.trim());
+    try {
+      const m = JSON.parse(ls[ls.length - 1]);
+      return m && m.ok ? m.json : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const noText = !!r && r.step === 'upload' && r.error === NO_TEXT;
+  const read = !!r && r.step === 'review' && r.method === 'auto' && answers.length > 0 && answers.every(Boolean);
+  const capped = cap.intake.some((c) => c.status === 402);
+  const outcome = !r || noText ? 'failed' : capped ? 'cap' : read ? 'read' : r.method === 'rules' ? 'fallback' : 'failed';
+  const lastReq = cap.intake.length ? cap.intake[cap.intake.length - 1] : null;
+  let last = null;
+  if (lastReq && lastReq.status === 200) {
+    const ls = lastReq.body.split('\n').filter((l) => l.trim());
+    try {
+      last = ls.length ? JSON.parse(ls[ls.length - 1]) : null;
+    } catch (e) {
+      last = null;
+    }
+  }
+  const why = noText ? 'no-readable-text' : !r ? 'the review step was not reached' : !lastReq ? 'no request reached the reading server' : lastReq.status !== 200 ? 'http ' + lastReq.status : last && typeof last.ok === 'boolean' ? (last.ok ? '' : String(last.reason || '')) : 'no last line';
+  const out = { r, answers, outcome, why, ppmSeconds, cap, read, agreement: null, reviewLine: '', reviewHint: '', panel: false, nameMissing: false, applied: false };
+  if (r && r.step === 'review') {
+    const rv = await page.evaluate(() => {
+      const st = window.CVPortal.state.ui.intake;
+      const found = document.getElementById('ika-found');
+      const hint = document.getElementById('ika-hint');
+      return { agreement: st.agreement ? Object.assign({}, st.agreement) : null, line: found ? found.textContent : '', hint: hint ? hint.textContent : '', panel: !!document.getElementById('ika-use') };
+    });
+    Object.assign(out, { agreement: rv.agreement, reviewLine: rv.line, reviewHint: rv.hint, panel: rv.panel });
+  }
+  if (outcome !== 'read' && !o.applyAnyway) return out;
+  if (!r || r.step !== 'review') return out;
+  if (o.review) await o.review(page);
+  // The offering name is the one thing apply asks for: a placeholder through the binder when the reading left it empty.
+  out.nameMissing = await page.evaluate(() => {
+    const NS = window.CVPortal;
+    const st = NS.state.ui.intake;
+    if (String(st.profile.offering.name || '').trim()) return false;
+    NS.binders.ik('offering.name', 'Measured offering');
+    return true;
+  });
+  if (out.nameMissing) console.log('      combined: nameMissing true (the reading left the offering name empty; a placeholder was entered)');
+  if (o.target) await page.evaluate((id) => (window.CVPortal.state.ui.intake.target = id), o.target);
+  out.agreementAtApply = await page.evaluate(() => {
+    const a = window.CVPortal.state.ui.intake.agreement;
+    return a ? Object.assign({}, a) : null;
+  });
+  out.docsBefore = await page.evaluate(() => (window.CVPortal.state.ws.docs || []).length);
+  const t1 = Date.now();
+  applied = true;
+  out.applied = true;
+  await page.click('[data-action=ik-apply]');
+  await page.waitForFunction(() => window.CVPortal.state.ui.intake && window.CVPortal.state.ui.intake.step === 'done', null, { timeout: 120000 });
+  out.doneMs = Date.now() - t1;
+  const oid = await page.evaluate(() => window.CVPortal.state.ui.intake.done);
+  out.oid = oid;
+  out.atDone = await page.evaluate((oid) => {
+    const NS = window.CVPortal;
+    const e = NS.intake.agreementReading(oid);
+    const o = NS.state.ws.offerings.find((x) => x.id === oid);
+    return { state: e ? e.state : null, name: o ? o.name : '', mgmtFee: o && o.accounting ? o.accounting.mgmtFee : null, text: document.getElementById('view').innerText, addButton: !!document.querySelector(`[data-action="es-agreement-new"][data-offering="${oid}"]`), uploadButtons: document.querySelectorAll('#agreement [data-action^="es-agreement"]').length };
+  }, oid);
+  if (o.atDone) await o.atDone(page, out);
+  await page.waitForFunction(
+    (oid) => {
+      const e = window.CVPortal.intake.agreementReading(oid);
+      return !e || e.state !== 'reading';
+    },
+    oid,
+    { timeout: 1800000, polling: 500 }
+  );
+  out.agreementSeconds = Math.round((Date.now() - t1) / 100) / 10;
+  out.after = await page.evaluate((oid) => {
+    const NS = window.CVPortal;
+    const ws = NS.state.ws;
+    const o = ws.offerings.find((x) => x.id === oid);
+    const e = NS.intake.agreementReading(oid);
+    const tpl = NS.esign.subscriptionTemplate(ws, oid);
+    const draft = (ws.envelopes || []).find((x) => x.agreementFor === oid && x.status === 'draft');
+    const src = tpl || draft || null;
+    const fields = src ? src.fields || [] : [];
+    const roleOf = (f) => {
+      if (f.signerRole) return f.signerRole === 'Investor' ? 'investor' : f.signerRole === 'Sponsor' ? 'sponsor' : 'other';
+      const sg = draft ? draft.signers.find((s) => s.id === f.signerId) : null;
+      return sg ? (sg.role === 'investor' ? 'investor' : sg.role === 'countersigner' ? 'sponsor' : 'other') : 'other';
+    };
+    const doc = e && e.docId ? (ws.docs || []).find((d) => d.id === e.docId) : null;
+    return {
+      name: o ? o.name : '',
+      mgmtFee: o && o.accounting ? o.accounting.mgmtFee : null,
+      entry: e ? Object.assign({}, e) : null,
+      saved: !!tpl,
+      tplId: tpl ? tpl.id : null,
+      templates: (ws.esignTemplates || []).filter((t) => t.offeringId === oid && t.subscription !== false).length,
+      fields: fields.length,
+      investor: fields.filter((f) => roleOf(f) === 'investor').length,
+      sponsor: fields.filter((f) => roleOf(f) === 'sponsor').length,
+      review: src ? NS.placement.reviewCount(src) : 0,
+      pages: src ? src.pages : null,
+      fieldShape: fields.map((f) => [f.page, f.type, roleOf(f), Math.round(f.x * 1e4), Math.round(f.y * 1e4), Math.round(f.w * 1e4), Math.round(f.h * 1e4)]).sort().map(String),
+      doc: doc ? { id: doc.id, offeringDoc: !!doc.offeringDoc, title: doc.title, fileName: doc.fileName, sha256: doc.sha256, hidden: !!doc.hidden } : null,
+      docs: (ws.docs || []).length,
+      step: NS.state.ui.intake ? NS.state.ui.intake.step : ''
+    };
+  }, oid);
+  if (out.after.doc) {
+    out.after.storedSha = await page.evaluate(async (id) => {
+      const NS = window.CVPortal;
+      const b = await NS.ops.files.get(id);
+      return b ? NS.audit.sha256(new Uint8Array(await b.arrayBuffer())) : '';
+    }, out.after.doc.id);
+  }
+  return out;
+}
+/** The measure in --combined mode (D-44): one PPM with the agreement inside, both readings, result.json and one line. */
+async function combinedMeasure(h, page) {
+  const M = await import(pathToFileURL(path.join(ROOT, 'server/lib/model.mjs')).href);
+  fs.mkdirSync(OUT, { recursive: true });
+  const cap = arg('cap') || '6.00';
+  const maxTokens = Number(arg('max-tokens') || 64000);
+  const readLog = path.join(OUT, 'read.log');
+  const before = readRows(readLog);
+  let reader = null;
+  let x = null;
+  const tStart = Date.now();
+  if (FAKE) {
+    const rg = (arg('range') || '').split('-').map(Number);
+    const env = { CARROWVALE_SPEND_CAP_USD: String(cap), CARROWVALE_READ_LOG: readLog, CARROWVALE_READ_MAX_TOKENS: String(maxTokens) };
+    const budget = M.createBudget(env);
+    const answer = Object.assign({}, FUND, { subscriptionAgreement: rg[0] ? { document: path.basename(DOC), firstPage: rg[0], lastPage: rg[1] } : null });
+    const intake = Object.assign(recordingIntake(() => answer), { budget, maxTokens: () => maxTokens });
+    reader = fakeAgreementReader(budget);
+    const srv = await portalServer(intake, env, reader);
+    try {
+      x = await combinedFlow(h, page, srv, DOC);
+    } finally {
+      await srv.close();
+    }
+  } else {
+    // Real mode: server/index.mjs on port 8798 with the key from the inherited environment; one retry without the proxy
+    // setting when the network failed before any model call (as partMeasure).
+    const noCall = (row) => !!row && ((['failed', 'timeout'].includes(row.outcome) && !row.model && !(row.usage && row.usage.input_tokens)) || (row.outcome === 'spend_cap' && row.counted === null));
+    for (const proxy of [true, false]) {
+      const srv = await spawnServer(OUT, cap, maxTokens, proxy);
+      if (!line(!!srv, 'measure the reading server answered /health with reader true within 20 s' + (proxy ? '' : ' (retry)'))) return;
+      const was = readRows(readLog).length;
+      try {
+        x = await combinedFlow(h, page, srv, DOC);
+      } finally {
+        await srv.close();
+      }
+      const fresh = readRows(readLog).slice(was).filter((row) => row.route === 'intake');
+      if (proxy && (x.outcome === 'fallback' || x.outcome === 'cap') && fresh.length && noCall(fresh[fresh.length - 1])) {
+        console.log('measure the network failed before any reading; retried once without the proxy setting');
+        continue;
+      }
+      break;
+    }
+  }
+  const seconds = Math.round((Date.now() - tStart) / 100) / 10;
+  const rows = readRows(readLog);
+  const mine = rows.slice(before.length);
+  const costIn = (list) => list.reduce((a, row) => a + M.costOf(row.usage, row.model).usd, 0);
+  const intakeRows = mine.filter((row) => row.route === 'intake');
+  const readRowsOf = mine.filter((row) => row.route === 'read');
+  const msIn = (list) => list.reduce((a, row) => a + (Number(row.ms) || 0), 0);
+  const firstIntake = intakeRows.find((row) => typeof row.counted === 'number') || intakeRows[0] || null;
+  const pdfReqs = x.cap.intake.filter((c) => c.sent.pdf);
+  const ag = x.agreementAtApply || x.agreement;
+  const e = x.after ? x.after.entry : null;
+  const result = {
+    range: x.agreement ? { firstPage: x.agreement.foundFirst, lastPage: x.agreement.foundLast, pages: x.agreement.pages } : null,
+    reviewLine: x.reviewLine || '',
+    ppm: {
+      outcome: x.outcome,
+      why: x.why,
+      method: x.r ? x.r.method : '',
+      filled: x.r && x.r.profile ? x.r.filled : 0,
+      seconds: x.ppmSeconds,
+      readingMs: intakeRows.length ? msIn(intakeRows) : null,
+      counted: firstIntake ? firstIntake.counted : null,
+      cost: costIn(intakeRows),
+      sent: !x.cap.intake.length ? null : pdfReqs.length ? 'pdf' : 'text',
+      ranges: pdfReqs.map((c) => c.sent.range),
+      pdfOf: pdfReqs.length ? pdfReqs[0].sent.of : null,
+      requests: x.cap.intake.length
+    },
+    agreement: {
+      started: !!e,
+      state: e ? e.state : 'not started',
+      why: e ? e.why || '' : '',
+      requests: x.cap.read.length,
+      cutPages: x.after && x.after.pages ? x.after.pages : ag && x.applied && e ? ag.lastPage - ag.firstPage + 1 : null,
+      images: x.cap.read.reduce((a, q) => a + q.images, 0),
+      saved: !!(x.after && x.after.saved),
+      fields: x.after ? x.after.fields : 0,
+      investor: x.after ? x.after.investor : 0,
+      sponsor: x.after ? x.after.sponsor : 0,
+      review: x.after ? x.after.review : 0,
+      seconds: x.applied ? x.agreementSeconds : null,
+      readingMs: readRowsOf.length ? msIn(readRowsOf) : null,
+      cost: costIn(readRowsOf)
+    },
+    cost: costIn(mine),
+    spent: costIn(rows),
+    cap: Number(cap),
+    maxTokens,
+    model: (mine.find((row) => row.model) || {}).model || '',
+    seconds,
+    nameMissing: !!x.nameMissing
+  };
+  const raw = x.read ? (x.answers.length === 1 ? x.answers[0] : x.answers) : null;
+  fs.writeFileSync(path.join(OUT, 'raw.json'), JSON.stringify(raw, null, 2));
+  fs.writeFileSync(path.join(OUT, 'profile.json'), JSON.stringify(x.r && x.r.profile ? x.r.profile : null, null, 2));
+  fs.writeFileSync(path.join(OUT, 'result.json'), JSON.stringify(result, null, 2));
+  const usd = (n) => '$' + Number(n || 0).toFixed(4);
+  const A = result.agreement;
+  const said = `COMBINED: ${result.range ? `range ${result.range.firstPage} to ${result.range.lastPage} of ${result.range.pages}` : 'no subscription agreement found'}; PPM ${result.ppm.outcome}, ${result.ppm.filled} terms filled; agreement ${A.state}, ${A.fields} fields placed (investor ${A.investor}, sponsor ${A.sponsor}, ${A.review} marked for review), saved ${A.saved ? 'yes' : 'no'}; cost ${usd(result.cost)} (PPM ${usd(result.ppm.cost)}, agreement ${usd(A.cost)}) of $${Number(cap).toFixed(2)}; seconds ${seconds} (PPM ${result.ppm.seconds}, agreement ${A.seconds === null ? 0 : A.seconds})`;
+  console.log(said);
+  if (!FAKE) {
+    line(result.ppm.outcome !== 'failed', `measure combined PPM outcome ${result.ppm.outcome}${result.ppm.why ? ' (' + result.ppm.why + ')' : ''}`);
+    if (A.started) line(A.state !== 'failed', `measure combined agreement reading ${A.state}${A.why ? ' (' + A.why + ')' : ''}`);
+    return;
+  }
+
+  // Fake-mode proof: the range came through, the cut has exactly those pages, the reading started by itself with it, and
+  // the offering ends with both terms and fields.
+  const rg = (arg('range') || '').split('-').map(Number);
+  const want = rg[1] - rg[0] + 1;
+  line(!!x.agreement && x.agreement.foundFirst === rg[0] && x.agreement.foundLast === rg[1] && x.agreement.name === path.basename(DOC) && x.reviewLine.indexOf(`Subscription agreement found on pages ${rg[0]} to ${rg[1]}`) === 0, `measure combined review: st.agreement ${x.agreement ? `${x.agreement.foundFirst} to ${x.agreement.foundLast} of ${x.agreement.name}` : 'none'}; the screen says "${x.reviewLine.slice(0, 60)}"`);
+  line(x.applied && !!x.after && x.after.name === FUND.offering.name && x.after.mgmtFee === FUND.fees.mgmtFee, `measure combined after apply: done step in ${x.doneMs} ms; the offering has the fund's name and management fee ${x.after ? x.after.mgmtFee : 'none'}`);
+  const req = reader.seen[0] || null;
+  let same = false;
+  let pages = 0;
+  if (req) {
+    const sent = path.join(OUT, 'sent-cut.pdf');
+    fs.writeFileSync(sent, Buffer.from(req.pdf, 'base64'));
+    pages = pdfPageCount(sent);
+    same = pages === want;
+    for (let i = 1; same && i <= want; i++) if (pageTextOf(sent, i) !== pageTextOf(DOC, rg[0] - 1 + i)) same = false;
+  }
+  line(!!req && x.cap.readAfterApply >= 1 && same && Array.isArray(req.images) && req.images.length > 0, `measure combined the reading server received the cut with no action after apply: ${reader.seen.length} request(s), ${pages} pages, page text equal to pages ${rg[0]} to ${rg[1]}: ${same ? 'yes' : 'no'}, ${req && req.images ? req.images.length : 0} pictures`);
+  const reqSha = req ? sha(Buffer.from(req.pdf, 'base64')) : '';
+  line(!!x.after && !!x.after.doc && x.after.doc.offeringDoc && x.after.storedSha === reqSha && x.after.doc.sha256 === reqSha, `measure combined ws.docs holds the cut (offeringDoc ${x.after && x.after.doc ? x.after.doc.offeringDoc : 'none'}); its stored bytes hash equal to the sent PDF: ${x.after && x.after.storedSha === reqSha ? 'yes' : 'no'}`);
+  const nPicks = req ? agreementPicks(req.list || []).length : -1;
+  line(!!x.after && x.after.saved && x.after.fields === nPicks && x.after.investor > 0 && x.after.sponsor > 0 && !!e && e.state === 'done' && e.saved === true, `measure combined the agreement is saved: ${x.after ? x.after.fields : 0} fields (the picks: ${nPicks}; investor ${x.after ? x.after.investor : 0}, sponsor ${x.after ? x.after.sponsor : 0}); agreementReading ${e ? e.state : 'none'}, saved ${e ? e.saved : false}`);
+  const keys = ['range', 'reviewLine', 'ppm', 'agreement', 'cost', 'spent', 'cap', 'maxTokens', 'model', 'seconds', 'nameMissing'];
+  const ppmKeys = ['outcome', 'why', 'method', 'filled', 'seconds', 'readingMs', 'counted', 'cost', 'sent', 'ranges'];
+  const agKeys = ['started', 'state', 'why', 'requests', 'cutPages', 'images', 'saved', 'fields', 'investor', 'sponsor', 'review', 'seconds', 'readingMs', 'cost'];
+  const written = JSON.parse(fs.readFileSync(path.join(OUT, 'result.json'), 'utf8'));
+  const allKeys = keys.every((k) => k in written) && ppmKeys.every((k) => k in written.ppm) && agKeys.every((k) => k in written.agreement);
+  const fakeCost = M.costOf({ input_tokens: 1200, output_tokens: 300 }, 'fake-model').usd * intakeRows.length + M.costOf({ input_tokens: 50000, output_tokens: 5000 }, 'fake-model').usd * readRowsOf.filter((row) => row.outcome === 'read').length;
+  line(allKeys && intakeRows.length >= 1 && readRowsOf.length >= 1 && Math.abs(written.cost - fakeCost) < 1e-9, `measure combined result.json has every documented field: ${allKeys ? 'yes' : 'no'}; cost $${Number(written.cost).toFixed(4)} = the fake usage priced over both routes ($${fakeCost.toFixed(4)}, ${intakeRows.length} intake and ${readRowsOf.length} read rows)`);
 }
 
 (async () => {

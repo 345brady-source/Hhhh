@@ -2308,6 +2308,25 @@
       'console-intake'
     );
   }
+  /**
+   * D-44: the subscription agreement the reading found inside an uploaded PDF, on the review screen: the pages found, the
+   * pages that will be used (the sponsor can change them) and whether to use them. Applying uses whatever stands here.
+   */
+  function ikAgreement(st, target) {
+    const a = st.agreement;
+    const kept = !!(target && NS.esign && NS.esign.subscriptionTemplate && NS.esign.subscriptionTemplate(W(), target.id));
+    const off = a.use === false ? ' disabled' : '';
+    return panel(
+      'Subscription agreement',
+      `<p id="ika-found">Subscription agreement found on pages ${a.foundFirst} to ${a.foundLast} of ${h(a.name)}.</p>
+      <div class="cs-grid cs-grid-3">
+        <label class="cs-check cs-wide" for="ika-use"><input id="ika-use" type="checkbox" data-bind="ika:use"${a.use !== false ? ' checked' : ''}><span>Use these pages as this offering’s subscription agreement</span></label>
+        <label class="cs-field" for="ika-first"><span>First page</span><input id="ika-first" type="number" min="1" max="${a.pages}" step="1" data-bind="ika:firstPage" data-change="ika-pages" value="${a.firstPage}"${off}></label>
+        <label class="cs-field" for="ika-last"><span>Last page</span><input id="ika-last" type="number" min="1" max="${a.pages}" step="1" data-bind="ika:lastPage" data-change="ika-pages" value="${a.lastPage}"${off}></label>
+      </div>
+      <p class="cs-hint" id="ika-hint">${kept ? 'This offering already has a subscription agreement; it is kept.' : 'When you apply, these pages become the offering’s subscription agreement, read and placed automatically as if you had uploaded it on its own. Change the pages if the agreement starts or ends elsewhere.'}</p>`
+    );
+  }
   function ikReview() {
     const st = ikState();
     const p = st.profile;
@@ -2319,7 +2338,7 @@
     const n = IK().filled(p);
     const tiersHint = 'Tiers run in order: return of capital, preferred return (simple or compounding), GP catch-up, then splits that end when investors reach an IRR or a multiple of their capital. Leave empty to use carry and preferred return with a full catch-up.';
     return shell(
-      `${head(target && st.method === 'manual' ? `Structure: ${h(target.name)}` : 'Review the setup', st.method === 'manual' ? 'Edit the offering’s structure and terms, then apply.' : `${method} from ${st.docs.filter((d) => d.text != null).length} document${st.docs.filter((d) => d.text != null).length === 1 ? '' : 's'}: ${n} terms found${st.trimmed ? ' (long documents: the cover pages and every passage that mentions terms were read)' : ''}. Check each term against its source, then apply.`, `<button class="cs-btn" type="button" data-action="ik-restart">${st.method === 'manual' ? 'Cancel' : 'Start over'}</button><button class="cs-btn cs-btn-primary" type="button" data-action="ik-apply"${st.busy ? ' disabled' : ''}>${target ? `Apply to ${h(target.shortName || target.name)}` : 'Create the offering'}</button>`)}
+      `${head(target && st.method === 'manual' ? `Structure: ${h(target.name)}` : 'Review the setup', st.method === 'manual' ? 'Edit the offering’s structure and terms, then apply.' : `${method} from ${st.docs.filter((d) => d.text != null).length} document${st.docs.filter((d) => d.text != null).length === 1 ? '' : 's'}: ${n} terms found${st.trimmed ? ' (long documents: the cover pages and every passage that mentions terms were read)' : ''}. Check each term against its source, then apply.`, `<button class="cs-btn" type="button" data-action="ik-restart">${st.method === 'manual' ? 'Cancel' : 'Start over'}</button><button class="cs-btn cs-btn-primary" type="button" data-action="ik-apply"${st.busy ? ' disabled' : ''}>${target ? `Apply to ${h(target.shortName || target.name)}` : 'Create the offering'}</button>`)}${st.agreement && st.method !== 'manual' ? ikAgreement(st, target) : ''}
       ${p.notes.length ? panel('Notes', `<ul class="cs-list">${p.notes.map((x) => `<li>${h(x)}</li>`).join('')}</ul>`) : ''}
       ${panel('Offering', `<div class="cs-grid cs-grid-3">
         ${ikField('Name', 'offering.name', { wide: true })}
@@ -2458,6 +2477,37 @@
     NS.app.setPath(st.profile, path, v);
     if (/\.kind$|^offering\.type$|^term\.basis$|^liquidity\.frequency$/.test(path)) NS.app.render();
   };
+  /*
+   * D-44: the agreement's pages on review. use is a tick box (the screen follows it). A page is a whole number kept within
+   * 1 to the file's pages; it is stored as typed, without redrawing the screen, so typing is never interrupted. When the
+   * field is left (ika-pages) and the edit put the first page after the last, the other page is set equal to the edited one.
+   */
+  const ikaOrder = (a) => {
+    if (a.firstPage <= a.lastPage) return false;
+    if (a.edited === 'lastPage') a.firstPage = a.lastPage;
+    else a.lastPage = a.firstPage;
+    return true;
+  };
+  NS.binders.ika = (path, v) => {
+    const a = ikState().agreement;
+    if (!a) return;
+    if (path === 'use') {
+      a.use = !!v;
+      return NS.app.render();
+    }
+    if ((path !== 'firstPage' && path !== 'lastPage') || v === '' || !Number.isFinite(Number(v))) return;
+    a[path] = Math.min(a.pages, Math.max(1, Math.round(Number(v))));
+    a.edited = path;
+  };
+  NS.changes['ika-pages'] = () => {
+    const a = ikState().agreement;
+    if (!a) return;
+    ikaOrder(a);
+    const first = document.getElementById('ika-first');
+    const last = document.getElementById('ika-last');
+    if (first && String(first.value) !== String(a.firstPage)) first.value = a.firstPage;
+    if (last && String(last.value) !== String(a.lastPage)) last.value = a.lastPage;
+  };
   NS.actions['ik-row-add'] = (el) => {
     const list = el.getAttribute('data-list');
     const arr = ikVal(list) || [];
@@ -2532,6 +2582,7 @@
     }
     if (!raw) raw = IK().readWithRules(corp.text);
     const prof = IK().normalize(raw);
+    st.agreement = method === 'auto' ? IK().agreementPart(raw, st.docs) : null;
     if (why) prof.notes.unshift(`${why}The built-in reader was used instead.`);
     st.profile = prof;
     st.method = method;
@@ -2546,7 +2597,11 @@
     st.busy = true;
     NS.app.render();
     const docs = st.docs.filter((d) => d.text != null).map((d) => ({ name: d.name, sha256: d.sha256, pages: d.pages, chars: d.chars, size: d.size || (d.text || '').length, type: d.type || '', file: d.file || null }));
-    const o = await IK().apply(W(), st.profile, { targetId: st.target, docs, publish: st.publish, method: st.method, fields: IK().filled(st.profile) });
+    // D-44: the agreement's pages as they stand on review (none when unticked or not found).
+    const ag = st.agreement && st.agreement.use !== false && st.method !== 'manual' ? st.agreement : null;
+    if (ag) ikaOrder(ag);
+    const agreement = ag ? { name: ag.name, pages: ag.pages, firstPage: ag.firstPage, lastPage: ag.lastPage } : null;
+    const o = await IK().apply(W(), st.profile, { targetId: st.target, docs, publish: st.publish, method: st.method, fields: IK().filled(st.profile), agreement });
     NS.app.save(true);
     st.busy = false;
     st.done = o.id;
