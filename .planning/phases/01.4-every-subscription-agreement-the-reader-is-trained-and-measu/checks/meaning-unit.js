@@ -226,5 +226,65 @@ const c4 = M.calibrate(tab, 1.5);
 const c5 = M.calibrate(tab, 0.9);
 line(Math.abs(c1 - 0.4) < 1e-12 && Math.abs(c2 - 0.1) < 1e-12 && c3 === 0 && c4 === 1 && Math.abs(c5 - (0.7 + 0.3 * 0.75)) < 1e-12, 'calibrate: linear interpolation in an isotonic table', `${c1}, ${c2}, ${c3}, ${c4}, ${c5}`);
 
+// Missing values (plan 31): NaN goes left, or right where m[i] is 1, exactly as the trainer sends it.
+const xn = new Float64Array(L);
+xn[0] = NaN;
+const mtree = (m) => ({ v: 1, classes: ['no', 'yes'], base: [0], trees: [Object.assign({ f: [0, -1, -1], t: [0.5, 0, 0], l: [1, -1, -1], r: [2, -1, -1], v: [0, 1, -1] }, m ? { m } : {})] });
+const nl = M.predict(mtree(null), xn);
+const nr = M.predict(mtree([1, 0, 0]), xn);
+line(nl && nr && Math.abs(nl[1] - 1 / (1 + Math.exp(-1))) < 1e-12 && Math.abs(nr[1] - 1 / (1 + Math.exp(1))) < 1e-12, 'predict: a missing value goes left, or right where m is 1', nl && nr ? `${nl[1]}, ${nr[1]}` : 'null');
+
+// Block aggregates (plan 31): the mean over a row's block (same page, same block slots) of its kind and party slots.
+const ai = (n) => M.FEATURE_NAMES.indexOf(n);
+const mkRow = (pid, page, blkN, kind) => {
+  const r = new Float64Array(L);
+  r[ai('blk:n')] = blkN;
+  r[ai(`dec:kind:${kind}`)] = 1;
+  r[ai('blk:index')] = pid;
+  return { pid, page, box: [0, 0, 1, 1], x: r };
+};
+const ag = M.aggregate([mkRow(0, 1, 7, 'signature'), mkRow(1, 1, 7, 'date'), mkRow(2, 1, 9, 'signature'), mkRow(3, 2, 7, 'signature')]);
+const aSig = M.FEATURE_NAMES.length + M.AGG_NAMES.indexOf('agg:dec:kind:signature');
+line(ag.length === 4 && ag[0].x.length === L + M.AGG_NAMES.length && ag[0].x[aSig] === 0.5 && ag[1].x[aSig] === 0.5 && ag[2].x[aSig] === 1 && ag[3].x[aSig] === 1 && ag[0].x[ai('blk:n')] === 7,
+  'aggregate: block means of the kind and party slots, block by page and block slots', ag.map((r) => r.x[aSig]).join(', '));
+
+// Parity (plan 31): the exported models give the trainer's own probabilities, raw and calibrated, to 1e-6.
+const pi = process.argv.indexOf('--parity');
+if (pi >= 0) {
+  const pfile = process.argv[pi + 1] || '';
+  const mfile = path.join(ROOT, 'assets/vendor/formread/meaning-model.js');
+  if (!pfile || !fs.existsSync(pfile) || !fs.existsSync(mfile)) {
+    console.log(`NOT RUN parity: ${!pfile || !fs.existsSync(pfile) ? 'the parity rows are missing (' + pfile + ')' : 'assets/vendor/formread/meaning-model.js is missing'}`);
+    console.log('MEANING UNIT: FAIL');
+    process.exit(2);
+  }
+  const mctx = { self: {} };
+  vm.createContext(mctx);
+  vm.runInContext(fs.readFileSync(mfile, 'utf8'), mctx, { filename: 'meaning-model.js' });
+  const MM = mctx.self.FORMREAD_MEANING;
+  const P = JSON.parse(fs.readFileSync(pfile, 'utf8'));
+  const tol = P.tolerance || 1e-6;
+  ['kind', 'what', 'owner', 'keep'].forEach((name) => {
+    const model = MM && MM.models && MM.models[name];
+    const rows = P.models && P.models[name];
+    if (!model || !rows) return line(false, `parity ${name}`, 'model or rows missing');
+    let dp = 0;
+    let dc = 0;
+    let nan = 0;
+    rows.x.forEach((xr, k) => {
+      const xv = Float64Array.from(xr, (v) => (v === null ? NaN : v));
+      if (xr.some((v) => v === null)) nan++;
+      const p = M.predict(model, xv) || [];
+      model.classes.forEach((cl, c) => {
+        dp = Math.max(dp, Math.abs((p[c] === undefined ? Infinity : p[c]) - rows.p[k][c]));
+        dc = Math.max(dc, Math.abs(M.calibrate(MM.iso[name][cl], p[c]) - rows.cal[k][c]));
+      });
+    });
+    const same = JSON.stringify(model.classes) === JSON.stringify(rows.classes);
+    line(same && rows.x.length >= 1000 && dp <= tol && dc <= tol, `parity ${name}`,
+      `${rows.x.length} rows (${nan} with missing values), ${model.trees.length} trees, largest difference raw ${dp.toExponential(2)}, calibrated ${dc.toExponential(2)} (at most ${tol})`);
+  });
+}
+
 console.log(`MEANING UNIT: ${bad ? 'FAIL' : 'PASS'}`);
 process.exit(bad ? 1 : 0);
