@@ -130,7 +130,10 @@ function cleanOffering(x) {
       exemption: clip(o.exemption, 120),
       classes: cleanJson(o.classes, 64 * KB, 'offering.classes'),
       currency,
-      documents
+      documents,
+      // C-01: one flag the console worked out when it sent the invitation (Rule 506(b): this investor would pass the 35th
+      // purchaser who is not accredited). Kept only as true or false: never a count, a name or another investor's detail.
+      nonAccreditedFull: o.nonAccreditedFull === true
     },
     files
   };

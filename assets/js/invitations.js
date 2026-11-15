@@ -437,7 +437,8 @@
         exemption: (off.structure || {}).exemption || '',
         classes: openClasses(off).map((c) => ({ id: c.id, name: c.name, minimum: c.minimum, currency: c.currency || '', mgmtFee: c.mgmtFee, carry: c.carry, subscribedBy: c.subscribedBy || '' })),
         currency: curOf(off),
-        documents: docs
+        documents: docs,
+        nonAccreditedFull: nonAccreditedFull(ws, off, inv)
       };
       const tpl = NS.esign && NS.esign.subscriptionTemplate ? NS.esign.subscriptionTemplate(ws, off.id) : null;
       const ready = tpl && (!NS.esign.templateReady || NS.esign.templateReady(ws, off.id));
@@ -466,6 +467,17 @@
     };
   }
 
+  /**
+   * C-01 in server mode: whether a Rule 506(b) offering may already have as many purchasers who are not accredited as it can
+   * accept, for this investor, worked out on the whole workspace when the invitation is sent: the place this investor would
+   * take among them (their own place when already counted) is past the 35th. One boolean only: the investor's device never
+   * learns the count or anything about another investor. The console counts again on every render; this is the warning only.
+   */
+  function nonAccreditedFull(ws, off, inv) {
+    const EL = NS.eligibility;
+    if (!EL || !off || EL.regime(off) !== '506b') return false;
+    return EL.place(ws, off, inv ? inv.id : '') > EL.LIMIT_506B;
+  }
   /**
    * What the investor's device needs about an investor already on file: whether their accreditation is current (and until when)
    * and whether they already hold the offering. No personal details: the account stays in this console.

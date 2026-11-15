@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// Server mode for the investor status answers (phase 6, plan 06-06; D-01, C-01, D-30, white label, C-05).
+// Server mode for the investor status answers (phase 6, plans 06-06 and 06-07; D-01, C-01, D-30, white label, C-05).
 // Real invitations go through the firm's integration server. Each part runs the real server code (server/index.mjs)
 // in this process and two separate browser contexts that share nothing except through that server: the sponsor's
 // console (one context) sends the invitation with its own form; the investor's device (a second context, empty storage,
 // the portal page listing the server as the firm publishes it) opens the ?server= link, answers the status step,
 // subscribes and signs; the console imports with its own "Check now" and counts the answers exactly as in local mode.
-//   NODE_PATH=$(npm root -g) node server-mode.js [--only b506,regA]
+//   NODE_PATH=$(npm root -g) node server-mode.js [--only b506,regA,full,existing,repack,clean]
 // The last line is "SERVER MODE: PASS (parts run: N)" or "SERVER MODE: FAIL (parts run: N) - <failed parts>".
 const path = require('path');
 const fs = require('fs');
@@ -40,6 +40,39 @@ const consoleRequest = (page, investorId, offeringId) =>
   }, { investorId, offeringId });
 
 /**
+ * n investors on file who are not accredited, each with a pending subscription to the offering (NS.ops.submitSubscription)
+ * and the answers a 506(b) investor gives (qual.accredited false), in the console. The same seeding as status-flow.js.
+ */
+const seedNonAccredited = (page, offeringId, n, prefix) =>
+  page.evaluate(
+    ({ offeringId, n, prefix }) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const o = ws.offerings.find((x) => x.id === offeringId);
+      const tpl = ws.investors[0];
+      for (let k = 0; k < n; k++) {
+        const i = JSON.parse(JSON.stringify(tpl));
+        i.id = `${prefix}-inv-${k + 1}`;
+        i.title = i.contact = `Seeded Purchaser ${prefix.toUpperCase()}${k + 1}`;
+        i.email = `${prefix}${k + 1}@example.com`;
+        i.positions = [];
+        if (i.onboarding) i.onboarding = Object.assign({}, i.onboarding, { flow: undefined });
+        ws.investors.push(i);
+        const r = NS.ops.submitSubscription(ws, i, o, { cents: 5000000, signature: i.contact });
+        r.id = `${prefix}-req-${k + 1}`;
+        r.qual = { regime: '506b', at: new Date().toISOString(), accredited: false, basis: '', sophistication: { experience: 'Years of private fund commitments', education: 'Accountant', rep: null } };
+      }
+      NS.app.save(true);
+      return NS.eligibility.nonAccredited(ws, o).count;
+    },
+    { offeringId, n, prefix }
+  );
+
+/** The investor status warning C-01 (the one the status step shows when the offering may be full), or ''. */
+const FULL_WARN = /may already have as many investors who are not accredited as it is able to accept/;
+const warnText = (page) => page.evaluate(() => Array.from(document.querySelectorAll('.ivf-form .wire-warn')).map((x) => x.innerText).join('\n'));
+
+/**
  * One server-mode case end to end. o: { tag, exemption, invite (extra form fields), answers (lib walk answers),
  * onStatus(page, R), onSubscribe(page, R), beforeImport(srv, inv, sub) }. Returns everything the part asserts on; the
  * caller closes ctx.close().
@@ -66,6 +99,7 @@ async function serverFlow(S, check, o) {
       await cp.waitForTimeout(300);
     }
     out.exemption = await cp.evaluate((id) => (window.CVPortal.state.ws.offerings.find((x) => x.id === id).structure || {}).exemption, off.offeringId);
+    if (o.beforeInvite) await o.beforeInvite(cp, off, out);
     out.serverOn = await srv.configure(cp);
     const inv = await L.inviteFromConsole(cp, Object.assign({ first: INV.first, last: INV.last, email: INV.email, offeringId: off.offeringId }, o.invite || {}));
     out.inv = inv;
@@ -78,6 +112,16 @@ async function serverFlow(S, check, o) {
     closers.push(() => B.context.close());
     out.B = B;
     const ip = B.page;
+    // The snapshot exactly as the investor's page receives it from the server (GET /v1/invite), read in this context.
+    out.snaps = [];
+    ip.on('response', async (res) => {
+      if (res.request().method() !== 'GET' || !/\/v1\/invite$/.test(res.url().replace(/[?#].*$/, ''))) return;
+      try {
+        out.snaps.push(await res.json());
+      } catch (e) {
+        out.snaps.push({ unreadable: String(e) });
+      }
+    });
     await ip.goto(inv.link);
     // Workspace keys in this browser's storage (the edition's prefix, then ws:<id>).
     out.storageBefore = await ip.evaluate(() => Object.keys(localStorage).filter((k) => /ws:/.test(k)));
@@ -148,7 +192,81 @@ function commonChecks(check, F) {
   check('no script error on the investor’s device', F.B.errors.length === 0, F.B.errors);
 }
 
+/**
+ * C-01 in server mode, one boundary: n non-accredited purchasers counted in the console before the invitation is sent.
+ * Returns the flow with R.warnBefore (warning count before the investor answers), R.warn (warning text after answering no).
+ */
+function fullFlow(S, check, n, tag) {
+  const answers = { acc: 'no', exp: 'Eight years of private real estate commitments', edu: 'Physician', rep: 'no', amount: 60000 };
+  return serverFlow(S, check, {
+    tag,
+    exemption: 'Rule 506(b)',
+    answers,
+    beforeInvite: async (cp, off, out) => {
+      out.counted = await seedNonAccredited(cp, off.offeringId, n, tag);
+    },
+    onStatusStep: async (p, R) => {
+      R.warnBefore = await p.locator('.ivf-form .wire-warn').count();
+    },
+    onStatus: async (p, R) => {
+      R.warn = await warnText(p);
+    }
+  });
+}
+
 const parts = {
+  /**
+   * C-01 in server mode (plan 06-07): the invitation's snapshot carries offering.nonAccreditedFull, a boolean the console
+   * works out when it sends. With 34 non-accredited purchasers counted the invited investor would be the 35th: false, and
+   * no warning on their device. With 35 counted they would be the 36th: true, and the investor answering "not accredited"
+   * sees the plain warning (no number, no name), still completes, and the console flags the request 36 of 35.
+   */
+  async full({ check, S }) {
+    // 34 counted: the boundary below the limit.
+    const F34 = await fullFlow(S, check, 34, 'full34');
+    try {
+      check('34 non-accredited purchasers counted in the console before the invitation', F34.counted === 34, F34.counted);
+      const sn = F34.snaps[0] || {};
+      check('with 34 counted the snapshot the investor’s page receives carries offering.nonAccreditedFull === false', F34.snaps.length >= 1 && !!sn.offering && sn.offering.nonAccreditedFull === false, sn.offering && { nonAccreditedFull: sn.offering.nonAccreditedFull });
+      check('with 34 counted the investor answering "not accredited" sees no warning (before or after answering)', F34.R.warnBefore === 0 && !FULL_WARN.test(F34.R.warn || '') && !FULL_WARN.test(F34.R.status || ''), { before: F34.R.warnBefore, warn: F34.R.warn });
+      commonChecks(check, F34);
+      await F34.A.page.screenshot({ path: path.join(SHOTS, 'full34-console.png'), fullPage: true }).catch(() => {});
+    } finally {
+      await F34.close();
+    }
+    // 35 counted: the invited investor would be the 36th.
+    const F = await fullFlow(S, check, 35, 'full35');
+    try {
+      check('35 non-accredited purchasers counted in the console before the invitation', F.counted === 35, F.counted);
+      const sn = F.snaps[0] || {};
+      check('with 35 counted the snapshot the investor’s page receives carries offering.nonAccreditedFull === true', F.snaps.length >= 1 && !!sn.offering && sn.offering.nonAccreditedFull === true, sn.offering && { nonAccreditedFull: sn.offering.nonAccreditedFull });
+      check('the investor’s server-mode workspace holds the flag as a boolean on its offering', (await F.B.page.evaluate(() => window.CVPortal.state.ws.offerings[0].nonAccreditedFull)) === true);
+      check('no warning before the investor answers', F.R.warnBefore === 0, F.R.warnBefore);
+      const warn = F.R.warn || '';
+      check('after answering "not accredited" the status step warns the offering may already be full, and that they can still subscribe', FULL_WARN.test(warn) && /You can still subscribe/.test(warn) && /reviews every subscription/.test(warn), warn);
+      check('the warning shows no number and the screen names no other investor (T-06-04)', !!warn && !/\d/.test(warn) && !/Seeded Purchaser/.test(F.R.status || ''), { warn, st: (F.R.status || '').slice(0, 800) });
+      check('the warning does not block: the investor completes the subscription and the agreement', F.walk.reached && F.walk.errors.length === 0 && /\S/.test(F.done || ''), { seen: F.walk.seen, errors: F.walk.errors });
+      commonChecks(check, F);
+      const q = (F.req && F.req.qual) || {};
+      check('qual: regime 506b, accredited false', q.regime === '506b' && q.accredited === false, q);
+      const cp = F.A.page;
+      await L.consoleRoute(cp, 'console-offering-' + F.off.offeringId);
+      const el = await panelText(cp, 'Investor eligibility');
+      await cp.screenshot({ path: path.join(SHOTS, 'full35-console-offering.png'), fullPage: true });
+      check('the console counts the imported request: "Non-accredited purchasers: 36 of 35"', /Non-accredited purchasers: 36 of 35/.test(el), el);
+      await L.consoleRoute(cp, 'console-requests', '[data-action=req-tab][data-t=all]');
+      await cp.click('[data-action=req-tab][data-t=all]');
+      await cp.waitForTimeout(300);
+      const row = F.req ? await requestRow(cp, F.req.id) : '';
+      await cp.screenshot({ path: path.join(SHOTS, 'full35-requests.png'), fullPage: true });
+      check('the request row carries "Would be non-accredited purchaser 36 of the 35 allowed under Rule 506(b)"', /Would be non-accredited purchaser 36 of the 35 allowed under Rule 506\(b\)/.test(row), row);
+      const lk = L.leakCheck([F.R.status, el, row].join('\n'));
+      check('white label: the warning screen and the console pages pass the leak check', lk.ok, lk.hits);
+    } finally {
+      await F.close();
+    }
+  },
+
   /**
    * D-01, C-01 in server mode: a non-accredited 506(b) investor with sophistication answers and plan '4975' completes on
    * their own device; the console imports and shows 1 of 35 with 1 pending, and the benefit plan figure counts the request.

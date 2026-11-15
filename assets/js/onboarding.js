@@ -905,7 +905,9 @@
         structure: { exemption: str(so.exemption, 60) },
         classes: (Array.isArray(so.classes) ? so.classes : []).slice(0, 20).map((c) => ({ id: str(c.id, 60), name: str(c.name, 80), minimum: c.minimum, currency: c.currency ? str(c.currency, 3) : '', mgmtFee: c.mgmtFee, carry: c.carry, subscribedBy: c.subscribedBy ? str(c.subscribedBy, 10) : '' })),
         update: '',
-        achOverride: { companyName: '', companyId: '' }
+        achOverride: { companyName: '', companyId: '' },
+        // C-01: the console's answer when it sent the invitation (this device holds no other investor's subscription).
+        nonAccreditedFull: so.nonAccreditedFull === true
       };
       if (so.currency) o.currency = str(so.currency, 3);
       ws.offerings.push(o);
@@ -1515,8 +1517,9 @@
     const no = d.stAcc === 'no' && b506;
     // C-01: the offering may already have as many purchasers who are not accredited as Rule 506(b) allows. The investor is
     // told so plainly and can still subscribe; the firm decides. No count and no other investor is ever shown (T-06-04).
-    // Local mode only: in server mode this browser holds no other investor's subscription.
-    const full = no && !isRemote(c.ws) && EL().place(c.ws, c.off, c.inv.id) > EL().LIMIT_506B;
+    // In server mode this browser holds no other investor's subscription: the console worked out the one flag when it sent
+    // the invitation (offering.nonAccreditedFull, a boolean on the snapshot); in local mode the live count decides.
+    const full = no && (isRemote(c.ws) ? !!c.off && c.off.nonAccreditedFull === true : EL().place(c.ws, c.off, c.inv.id) > EL().LIMIT_506B);
     const fullNote = full ? `<p class="wire-warn field-wide" role="note">${icon('alert')}<span>This offering may already have as many investors who are not accredited as it is able to accept. You can still subscribe: ${h(t.shortName)} reviews every subscription and will let you know if yours cannot be accepted.</span></p>` : '';
     // Rule 506(c) (accreditation verified in its own step), or no accredited question for this offering: the benefit plan
     // questions only.
