@@ -1,0 +1,1285 @@
+{
+ "file": "set-a/a050/doc.pdf",
+ "id": "a050",
+ "pages": 22,
+ "page_size_pt": [
+  612.0,
+  792.0
+ ],
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ],
+  "5": [
+   612.0,
+   792.0
+  ],
+  "6": [
+   612.0,
+   792.0
+  ],
+  "7": [
+   612.0,
+   792.0
+  ],
+  "8": [
+   612.0,
+   792.0
+  ],
+  "9": [
+   612.0,
+   792.0
+  ],
+  "10": [
+   612.0,
+   792.0
+  ],
+  "11": [
+   612.0,
+   792.0
+  ],
+  "12": [
+   612.0,
+   792.0
+  ],
+  "13": [
+   612.0,
+   792.0
+  ],
+  "14": [
+   612.0,
+   792.0
+  ],
+  "15": [
+   612.0,
+   792.0
+  ],
+  "16": [
+   612.0,
+   792.0
+  ],
+  "17": [
+   612.0,
+   792.0
+  ],
+  "18": [
+   612.0,
+   792.0
+  ],
+  "19": [
+   612.0,
+   792.0
+  ],
+  "20": [
+   612.0,
+   792.0
+  ],
+  "21": [
+   612.0,
+   792.0
+  ],
+  "22": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text",
+  "5": "text",
+  "6": "text",
+  "7": "text",
+  "8": "text",
+  "9": "text",
+  "10": "text",
+  "11": "text",
+  "12": "text",
+  "13": "text",
+  "14": "text",
+  "15": "text",
+  "16": "text",
+  "17": "text",
+  "18": "text",
+  "19": "text",
+  "20": "text",
+  "21": "text",
+  "22": "text"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
+ "signing": {
+  "investor_pages": [
+   20,
+   22
+  ],
+  "firm_pages": [
+   19
+  ],
+  "co_investor": false,
+  "third_parties": [],
+  "kind": "Warrant to purchase common stock (subscription agreement exhibit): the company completes the warrant face on page 1 and signs on page 19; the registered holder uses the exercise notice (page 20) and the assignment form (page 22) only when exercising or assigning. No third party."
+ },
+ "counts_per_page": {
+  "1": {
+   "total": 6,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 6,
+   "signature": 0,
+   "date": 0
+  },
+  "19": {
+   "total": 1,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 0,
+   "signature": 1,
+   "date": 0
+  },
+  "20": {
+   "total": 17,
+   "tickbox": 4,
+   "initials": 0,
+   "blank": 11,
+   "signature": 1,
+   "date": 1
+  },
+  "22": {
+   "total": 6,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 4,
+   "signature": 1,
+   "date": 1
+  }
+ },
+ "counts_total": {
+  "total": 30,
+  "tickbox": 4,
+  "initials": 0,
+  "blank": 21,
+  "signature": 3,
+  "date": 2
+ },
+ "counts_by_owner": {
+  "firm": 7,
+  "investor": 23
+ },
+ "sure_per_page": {
+  "1": "unsure whether the warrant-face blanks count: they are completed by the issuer when issuing the warrant (kept as firm places with a doubt)",
+  "2": "draft",
+  "3": "draft",
+  "4": "draft",
+  "5": "draft",
+  "6": "draft",
+  "7": "draft",
+  "8": "draft",
+  "9": "draft",
+  "10": "draft",
+  "11": "draft",
+  "12": "draft",
+  "13": "draft",
+  "14": "draft",
+  "15": "draft",
+  "16": "draft",
+  "17": "draft",
+  "18": "draft",
+  "19": "sure",
+  "20": "sure; the short lines before the two exercise options are tick boxes; the forms are used only on exercise, so nothing is must",
+  "21": "draft",
+  "22": "sure; used only on assignment"
+ },
+ "not_fields": {
+  "1": [
+   "the legends and the warrant terms"
+  ],
+  "19": [
+   "the printed officer name and title"
+  ],
+  "20": [
+   "the company and counsel addresses; the Name: and Title: captions under the signature (no line printed)"
+  ],
+  "21": [
+   "exhibit label only"
+  ],
+  "22": [
+   "the note under the form"
+  ],
+  "2": [
+   "prose only"
+  ],
+  "3": [
+   "prose only"
+  ],
+  "4": [
+   "prose only"
+  ],
+  "5": [
+   "prose only"
+  ],
+  "6": [
+   "prose only"
+  ],
+  "7": [
+   "prose only"
+  ],
+  "8": [
+   "prose only"
+  ],
+  "9": [
+   "prose only"
+  ],
+  "10": [
+   "prose only"
+  ],
+  "11": [
+   "prose only"
+  ],
+  "12": [
+   "prose only"
+  ],
+  "13": [
+   "prose only"
+  ],
+  "14": [
+   "prose only"
+  ],
+  "15": [
+   "prose only"
+  ],
+  "16": [
+   "prose only"
+  ],
+  "17": [
+   "prose only"
+  ],
+  "18": [
+   "prose only; the signature-page-follows line"
+  ]
+ },
+ "places": [
+  {
+   "id": "p01-001",
+   "page": 1,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Warrant number",
+   "printed_label": "Warrant No.: B-",
+   "must": true,
+   "x0": 99.7,
+   "y0": 299.9,
+   "x1": 124.7,
+   "y1": 315.4,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Warrant No.: B-",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      99.7,
+      299.9,
+      124.7,
+      315.4
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "completed by the issuer when issuing the warrant"
+  },
+  {
+   "id": "p01-002",
+   "page": 1,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Number of shares of common stock (warrant face)",
+   "printed_label": "Number of Shares of Common Stock:",
+   "must": true,
+   "x0": 186.6,
+   "y0": 313.7,
+   "x1": 251.5,
+   "y1": 329.2,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Number of Shares of Common Stock",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "amount",
+     "box": [
+      186.6,
+      313.7,
+      251.5,
+      329.2
+     ]
+    }
+   },
+   "what": "amount",
+   "doubt": "completed by the issuer when issuing the warrant"
+  },
+  {
+   "id": "p01-003",
+   "page": 1,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Date of issuance",
+   "printed_label": "Date of Issuance:",
+   "must": true,
+   "x0": 107.1,
+   "y0": 325.7,
+   "x1": 147.1,
+   "y1": 341.2,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Date of Issuance",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "date",
+     "box": [
+      107.1,
+      325.7,
+      147.1,
+      341.2
+     ]
+    }
+   },
+   "what": "date",
+   "doubt": "completed by the issuer when issuing the warrant"
+  },
+  {
+   "id": "p01-004",
+   "page": 1,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Name of the registered holder",
+   "must": true,
+   "x0": 288.4,
+   "y0": 363.2,
+   "x1": 348.4,
+   "y1": 378.7,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "which are hereby acknowledged",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      288.4,
+      363.2,
+      348.4,
+      378.7
+     ]
+    }
+   },
+   "what": "name",
+   "doubt": "completed by the issuer when issuing the warrant"
+  },
+  {
+   "id": "p01-005",
+   "page": 1,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Number of warrant shares (in words)",
+   "must": true,
+   "x0": 105.0,
+   "y0": 426.2,
+   "x1": 175.0,
+   "y1": 441.7,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Date as defined below",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "date",
+     "box": [
+      105.0,
+      426.2,
+      175.0,
+      441.7
+     ]
+    }
+   },
+   "what": "amount",
+   "doubt": "completed by the issuer when issuing the warrant"
+  },
+  {
+   "id": "p01-006",
+   "page": 1,
+   "kind": "blank",
+   "owner": "firm",
+   "label": "Number of warrant shares (in figures)",
+   "printed_label": "(",
+   "must": true,
+   "x0": 183.1,
+   "y0": 426.2,
+   "x1": 248.1,
+   "y1": 441.7,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      183.1,
+      426.2,
+      248.1,
+      441.7
+     ]
+    }
+   },
+   "what": "amount",
+   "doubt": "completed by the issuer when issuing the warrant"
+  },
+  {
+   "id": "p19-001",
+   "page": 19,
+   "kind": "signature",
+   "owner": "firm",
+   "label": "Company signature (warrant)",
+   "printed_label": "By:",
+   "must": true,
+   "x0": 327.7,
+   "y0": 146.1,
+   "x1": 513.7,
+   "y1": 161.6,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "firm",
+    "field_label": "Signature",
+    "candidate": "rule",
+    "why": "reader marked it: Could not tell whether the investor or your firm fills this ",
+    "initial": {
+     "kind": "signature",
+     "owner": "firm",
+     "what": null,
+     "box": [
+      327.7,
+      146.1,
+      513.7,
+      161.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "p20-001",
+   "page": 20,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Exercise notice: number of warrant shares exercised",
+   "printed_label": "the right to purchase",
+   "must": false,
+   "x0": 346.5,
+   "y0": 331.7,
+   "x1": 431.5,
+   "y1": 347.2,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "the right to purchase",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      346.5,
+      331.7,
+      431.5,
+      347.2
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p20-002",
+   "page": 20,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Exercise notice: cash exercise",
+   "printed_label": "a \u201cCash Exercise\u201d",
+   "must": false,
+   "x0": 107.2,
+   "y0": 418.7,
+   "x1": 167.2,
+   "y1": 434.2,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "initials",
+    "field_owner": "investor",
+    "field_label": "Initials",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "initials",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      107.2,
+      418.7,
+      167.2,
+      434.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p20-003",
+   "page": 20,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Exercise notice: warrant shares under cash exercise",
+   "printed_label": "with respect to",
+   "must": false,
+   "x0": 316.3,
+   "y0": 418.7,
+   "x1": 401.3,
+   "y1": 434.2,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Exercise with respect to",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      316.3,
+      418.7,
+      401.3,
+      434.2
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p20-004",
+   "page": 20,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Exercise notice: cashless exercise",
+   "printed_label": "a \u201cCashless Exercise\u201d",
+   "must": false,
+   "x0": 107.2,
+   "y0": 444.2,
+   "x1": 167.2,
+   "y1": 459.7,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "initials",
+    "field_owner": "investor",
+    "field_label": "Initials",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "initials",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      107.2,
+      444.2,
+      167.2,
+      459.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p20-005",
+   "page": 20,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Exercise notice: warrant shares under cashless exercise",
+   "printed_label": "with respect to",
+   "must": false,
+   "x0": 331.3,
+   "y0": 444.2,
+   "x1": 406.3,
+   "y1": 459.7,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Exercise with respect to",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      331.3,
+      444.2,
+      406.3,
+      459.7
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p20-006",
+   "page": 20,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Exercise notice: aggregate exercise price paid",
+   "printed_label": "in the sum of $",
+   "must": false,
+   "x0": 481.8,
+   "y0": 481.7,
+   "x1": 576.7,
+   "y1": 497.2,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "2. Payment of Exercise Price. In the event that the holder h",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "amount",
+     "box": [
+      481.8,
+      481.7,
+      576.7,
+      497.2
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p20-007",
+   "page": 20,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Exercise notice: warrant shares to deliver to the holder",
+   "printed_label": "The Company shall deliver to the holder",
+   "must": false,
+   "x0": 366.9,
+   "y0": 519.2,
+   "x1": 416.9,
+   "y1": 534.7,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "deliver to the holder",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      366.9,
+      519.2,
+      416.9,
+      534.7
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p20-008",
+   "page": 20,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Exercise notice: delivery address",
+   "printed_label": "to the following address",
+   "must": false,
+   "x0": 231.1,
+   "y0": 531.2,
+   "x1": 426.0,
+   "y1": 546.7,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "to the following address",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      231.1,
+      531.2,
+      426.0,
+      546.7
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p20-009",
+   "page": 20,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Exercise notice: warrant shares remaining subject to the warrant",
+   "printed_label": "Shares,",
+   "must": false,
+   "x0": 66.9,
+   "y0": 543.9,
+   "x1": 131.9,
+   "y1": 559.4,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Shares",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      66.9,
+      543.9,
+      131.9,
+      559.4
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p20-010",
+   "page": 20,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Exercise notice: date (month and day)",
+   "printed_label": "Date:",
+   "must": false,
+   "x0": 59.4,
+   "y0": 568.7,
+   "x1": 134.4,
+   "y1": 584.2,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "date",
+    "field_owner": "firm",
+    "field_label": "Date signed",
+    "candidate": "underscore",
+    "why": "reader marked it: Could not tell whether the investor or your firm fills this ",
+    "initial": {
+     "kind": "blank",
+     "owner": "firm",
+     "what": "date",
+     "box": [
+      59.4,
+      568.7,
+      134.4,
+      584.2
+     ]
+    }
+   }
+  },
+  {
+   "id": "p20-011",
+   "page": 20,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Exercise notice: date (year)",
+   "printed_label": ",",
+   "must": false,
+   "x0": 151.9,
+   "y0": 568.7,
+   "x1": 181.8,
+   "y1": 584.2,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Year",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      151.9,
+      568.7,
+      181.8,
+      584.2
+     ]
+    }
+   },
+   "what": "date"
+  },
+  {
+   "id": "p20-012",
+   "page": 20,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Exercise notice: name of registered holder",
+   "printed_label": "Name of Registered Holder",
+   "must": false,
+   "x0": 35.2,
+   "y0": 606.2,
+   "x1": 180.2,
+   "y1": 621.7,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Investor name",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "name",
+     "box": [
+      35.2,
+      606.2,
+      180.2,
+      621.7
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p20-013",
+   "page": 20,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Exercise notice: holder signature",
+   "printed_label": "By:",
+   "must": false,
+   "x0": 52.2,
+   "y0": 656.4,
+   "x1": 182.1,
+   "y1": 671.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "firm",
+    "field_label": "Signature",
+    "candidate": "underscore",
+    "why": "reader marked it: Could not tell whether the investor or your firm fills this ",
+    "initial": {
+     "kind": "signature",
+     "owner": "firm",
+     "what": null,
+     "box": [
+      52.2,
+      656.4,
+      182.1,
+      671.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p20-014",
+   "page": 20,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Exercise notice: e-mail for confirmation",
+   "printed_label": "E-mail:",
+   "must": false,
+   "x0": 79.2,
+   "y0": 730.4,
+   "x1": 256.6,
+   "y1": 745.9,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Email",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "email",
+     "box": [
+      79.2,
+      730.4,
+      256.6,
+      745.9
+     ]
+    }
+   },
+   "what": "email"
+  },
+  {
+   "id": "p20-015",
+   "page": 20,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Exercise notice: fax for confirmation",
+   "printed_label": "Fax:",
+   "must": false,
+   "x0": 338.3,
+   "y0": 730.4,
+   "x1": 508.3,
+   "y1": 745.9,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Fax",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "phone",
+     "box": [
+      338.3,
+      730.4,
+      508.3,
+      745.9
+     ]
+    }
+   },
+   "what": "phone"
+  },
+  {
+   "id": "p20-016",
+   "page": 20,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Exercise notice: confirm by e-mail",
+   "printed_label": "E-mail:",
+   "must": false,
+   "x0": 35.2,
+   "y0": 735.6,
+   "x1": 44.2,
+   "y1": 745.6,
+   "printed_as": "measure candidate: tick (box glyph)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "checkbox",
+    "field_owner": "investor",
+    "field_label": "E-mail",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      35.2,
+      735.6,
+      44.2,
+      745.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "p20-017",
+   "page": 20,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Exercise notice: confirm by fax",
+   "printed_label": "Fax:",
+   "must": false,
+   "x0": 306.6,
+   "y0": 735.6,
+   "x1": 315.6,
+   "y1": 745.6,
+   "printed_as": "measure candidate: tick (box glyph)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "checkbox",
+    "field_owner": "investor",
+    "field_label": "Fax",
+    "candidate": "tick",
+    "initial": {
+     "kind": "tickbox",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      306.6,
+      735.6,
+      315.6,
+      745.6
+     ]
+    }
+   }
+  },
+  {
+   "id": "p22-001",
+   "page": 22,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Assignment: assignee name",
+   "printed_label": "Name:",
+   "must": false,
+   "x0": 309.0,
+   "y0": 193.4,
+   "x1": 576.7,
+   "y1": 208.9,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Please Print",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "name",
+     "box": [
+      309.0,
+      193.4,
+      576.7,
+      208.9
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p22-002",
+   "page": 22,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Assignment: assignee address",
+   "printed_label": "Address:",
+   "must": false,
+   "x0": 309.0,
+   "y0": 218.9,
+   "x1": 576.7,
+   "y1": 234.4,
+   "printed_as": "measure candidate: rule (drawn rule)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Address",
+    "candidate": "rule",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      309.0,
+      218.9,
+      576.7,
+      234.4
+     ]
+    }
+   },
+   "what": "address"
+  },
+  {
+   "id": "p22-003",
+   "page": 22,
+   "kind": "date",
+   "owner": "investor",
+   "label": "Assignment: date (month and day)",
+   "printed_label": "Dated:",
+   "must": false,
+   "x0": 64.4,
+   "y0": 242.4,
+   "x1": 139.4,
+   "y1": 257.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "date",
+    "field_owner": "firm",
+    "field_label": "Date signed",
+    "candidate": "underscore",
+    "why": "reader marked it: Could not tell whether the investor or your firm fills this ",
+    "initial": {
+     "kind": "date",
+     "owner": "firm",
+     "what": null,
+     "box": [
+      64.4,
+      242.4,
+      139.4,
+      257.9
+     ]
+    }
+   }
+  },
+  {
+   "id": "p22-004",
+   "page": 22,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Assignment: date (year)",
+   "printed_label": ",",
+   "must": false,
+   "x0": 156.9,
+   "y0": 242.4,
+   "x1": 186.8,
+   "y1": 257.9,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Year",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      156.9,
+      242.4,
+      186.8,
+      257.9
+     ]
+    }
+   },
+   "what": "date"
+  },
+  {
+   "id": "p22-005",
+   "page": 22,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "Assignment: holder's signature",
+   "printed_label": "Holder\u2019s Signature:",
+   "must": false,
+   "x0": 116.1,
+   "y0": 255.2,
+   "x1": 241.1,
+   "y1": 270.7,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "investor",
+    "field_label": "Holder\u2019s Signature",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "signature",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      116.1,
+      255.2,
+      241.1,
+      270.7
+     ]
+    }
+   }
+  },
+  {
+   "id": "p22-006",
+   "page": 22,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Assignment: holder's address",
+   "printed_label": "Holder\u2019s Address:",
+   "must": false,
+   "x0": 110.0,
+   "y0": 267.9,
+   "x1": 240.0,
+   "y1": 283.4,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Holder\u2019s Address",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      110.0,
+      267.9,
+      240.0,
+      283.4
+     ]
+    }
+   },
+   "what": "address"
+  }
+ ],
+ "may_fill": [],
+ "source": "hand",
+ "mode": "train",
+ "prefilled": {
+  "when": "2026-11-15T01:02:47Z",
+  "candidates": "629050fb96e3707d-f01586d5.json",
+  "result": "out-set-a/a050/result.json",
+  "fields": 30,
+  "counted_candidates": 30
+ },
+ "done": "2026-11-15T01:04:01Z"
+}

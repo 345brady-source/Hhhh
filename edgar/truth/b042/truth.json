@@ -212,8 +212,11 @@
   ],
   "firm_pages": [],
   "co_investor": true,
-  "third_parties": [],
-  "kind": ""
+  "third_parties": [
+   "broker-dealer",
+   "custodian"
+  ],
+  "kind": "Fund share subscription agreement printed as pictures (every odd page a picture, every even page blank): the investor completes sections 1 to 6 (pages 1-17), initials the representations in a primary column with a co-investor column beside it (pages 21-33), and signs on page 33 with the co-investor or custodian beside; the investor representative completes section 7 (page 17) and the financial advisor and branch manager sign on page 19; the custodian stamps on page 5. No issuer acceptance block."
  },
  "counts_per_page": {
   "1": {
@@ -313,10 +316,10 @@
    "date": 0
   },
   "25": {
-   "total": 10,
+   "total": 8,
    "tickbox": 0,
    "initials": 8,
-   "blank": 2,
+   "blank": 0,
    "signature": 0,
    "date": 0
   },
@@ -345,79 +348,179 @@
    "date": 0
   },
   "33": {
-   "total": 16,
+   "total": 6,
    "tickbox": 0,
-   "initials": 3,
-   "blank": 12,
-   "signature": 1,
-   "date": 0
+   "initials": 2,
+   "blank": 0,
+   "signature": 2,
+   "date": 2
   },
   "37": {
-   "total": 19,
+   "total": 13,
    "tickbox": 13,
    "initials": 0,
-   "blank": 6,
+   "blank": 0,
    "signature": 0,
    "date": 0
   }
  },
  "counts_total": {
-  "total": 345,
+  "total": 327,
   "tickbox": 92,
-  "initials": 74,
-  "blank": 173,
-  "signature": 4,
-  "date": 2
+  "initials": 73,
+  "blank": 153,
+  "signature": 5,
+  "date": 4
  },
  "counts_by_owner": {
-  "co-investor": 33,
-  "investor": 211,
+  "co-investor": 59,
+  "investor": 167,
   "investor-entity": 62,
   "investor-individual": 21,
   "third-party": 18
  },
  "sure_per_page": {
-  "1": "draft",
+  "1": "sure",
   "2": "draft",
-  "3": "draft",
+  "3": "sure",
   "4": "draft",
-  "5": "draft",
+  "5": "sure; the custodian stamp frame is recorded as the custodian's signature place",
   "6": "draft",
-  "7": "draft",
+  "7": "sure; the UGMA custodian block is read as the investor's (the adult acting for the minor account holder)",
   "8": "draft",
-  "9": "draft",
+  "9": "sure",
   "10": "draft",
-  "11": "draft",
+  "11": "sure; the percentage blanks after Primary and Secondary were added by hand",
   "12": "draft",
-  "13": "draft",
+  "13": "sure",
   "14": "draft",
-  "15": "draft",
+  "15": "sure",
   "16": "draft",
-  "17": "draft",
+  "17": "sure",
   "18": "draft",
-  "19": "draft",
+  "19": "sure",
   "20": "draft",
-  "21": "draft",
+  "21": "sure",
   "22": "draft",
-  "23": "draft",
+  "23": "sure",
   "24": "draft",
-  "25": "draft",
+  "25": "sure",
   "26": "draft",
-  "27": "draft",
+  "27": "sure",
   "28": "draft",
-  "29": "draft",
+  "29": "sure",
   "30": "draft",
-  "31": "draft",
+  "31": "sure",
   "32": "draft",
-  "33": "draft",
+  "33": "sure; the second signature is co-investor or custodian",
   "34": "draft",
   "35": "draft",
   "36": "draft",
-  "37": "draft",
+  "37": "unsure whether the document squares are tick boxes or list bullets; kept as tick boxes with a doubt",
   "38": "draft",
   "39": "draft"
  },
- "not_fields": {},
+ "not_fields": {
+  "1": [
+   "the logo; the bank wire details and the bracketed reference line; footnotes"
+  ],
+  "3": [
+   "section headings; the Appendix A reference"
+  ],
+  "5": [
+   "the C of Custodian (not a box); headings"
+  ],
+  "9": [
+   "the C of Zip Code (not a box)"
+  ],
+  "13": [
+   "the C of Zip Code (not a box); the ERISA footnotes"
+  ],
+  "15": [
+   "the residence paragraphs"
+  ],
+  "17": [
+   "the representative's warranty paragraphs"
+  ],
+  "19": [
+   "the electronic delivery paragraphs and the identity paragraph"
+  ],
+  "21": [
+   "the item paragraphs"
+  ],
+  "25": [
+   "the top edge of the Kansas initials cell at the foot of the page (no room: the cell is on page 27)"
+  ],
+  "33": [
+   "the W-9 certification items and their numbers; the bold declaration; the grey band"
+  ],
+  "37": [
+   "the table rules between account types"
+  ],
+  "35": [
+   "miscellaneous terms and the mailing address: printed information, no place"
+  ],
+  "2": [
+   "blank page"
+  ],
+  "4": [
+   "blank page"
+  ],
+  "6": [
+   "blank page"
+  ],
+  "8": [
+   "blank page"
+  ],
+  "10": [
+   "blank page"
+  ],
+  "12": [
+   "blank page"
+  ],
+  "14": [
+   "blank page"
+  ],
+  "16": [
+   "blank page"
+  ],
+  "18": [
+   "blank page"
+  ],
+  "20": [
+   "blank page"
+  ],
+  "22": [
+   "blank page"
+  ],
+  "24": [
+   "blank page"
+  ],
+  "26": [
+   "blank page"
+  ],
+  "28": [
+   "blank page"
+  ],
+  "30": [
+   "blank page"
+  ],
+  "32": [
+   "blank page"
+  ],
+  "34": [
+   "blank page"
+  ],
+  "36": [
+   "blank page"
+  ],
+  "38": [
+   "blank page"
+  ],
+  "39": [
+   "blank page"
+  ]
+ },
  "places": [
   {
    "id": "p01-002",
@@ -5961,6 +6064,36 @@
    }
   },
   {
+   "id": "p11-044",
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "TOD beneficiary 1: primary percentage",
+   "printed_label": "Primary __%",
+   "must": false,
+   "x0": 489.7,
+   "y0": 471.9,
+   "x1": 498.3,
+   "y1": 480.9,
+   "printed_as": "measured by hand",
+   "what": "percentage"
+  },
+  {
+   "id": "p11-045",
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "TOD beneficiary 1: secondary percentage",
+   "printed_label": "Secondary __%",
+   "must": false,
+   "x0": 495.2,
+   "y0": 481.9,
+   "x1": 504.3,
+   "y1": 490.9,
+   "printed_as": "measured by hand",
+   "what": "percentage"
+  },
+  {
    "id": "p11-028",
    "page": 11,
    "kind": "tickbox",
@@ -6196,6 +6329,36 @@
    }
   },
   {
+   "id": "p11-046",
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "TOD beneficiary 2: primary percentage",
+   "printed_label": "Primary __%",
+   "must": false,
+   "x0": 489.7,
+   "y0": 511.4,
+   "x1": 498.3,
+   "y1": 520.4,
+   "printed_as": "measured by hand",
+   "what": "percentage"
+  },
+  {
+   "id": "p11-047",
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "TOD beneficiary 2: secondary percentage",
+   "printed_label": "Secondary __%",
+   "must": false,
+   "x0": 495.2,
+   "y0": 521.5,
+   "x1": 504.3,
+   "y1": 530.5,
+   "printed_as": "measured by hand",
+   "what": "percentage"
+  },
+  {
    "id": "p11-035",
    "page": 11,
    "kind": "tickbox",
@@ -6429,6 +6592,36 @@
      ]
     }
    }
+  },
+  {
+   "id": "p11-048",
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "TOD beneficiary 3: primary percentage",
+   "printed_label": "Primary __%",
+   "must": false,
+   "x0": 489.7,
+   "y0": 551.0,
+   "x1": 498.3,
+   "y1": 560.0,
+   "printed_as": "measured by hand",
+   "what": "percentage"
+  },
+  {
+   "id": "p11-049",
+   "page": 11,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "TOD beneficiary 3: secondary percentage",
+   "printed_label": "Secondary __%",
+   "must": false,
+   "x0": 495.2,
+   "y0": 561.1,
+   "x1": 504.3,
+   "y1": 570.1,
+   "printed_as": "measured by hand",
+   "what": "percentage"
   },
   {
    "id": "p11-042",
@@ -8175,6 +8368,21 @@
    }
   },
   {
+   "id": "p19-007",
+   "page": 19,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "E-mail address for electronic delivery (if blank, the Section 2 e-mail is used)",
+   "printed_label": "E-mail address",
+   "must": false,
+   "x0": 103.7,
+   "y0": 519.5,
+   "x1": 520.8,
+   "y1": 535.0,
+   "printed_as": "picture pixels at the picture's resolution: snapped to the printed stroke(s) within 6 pt",
+   "what": "email"
+  },
+  {
    "id": "p21-002",
    "page": 21,
    "kind": "initials",
@@ -8975,13 +9183,13 @@
    "page": 25,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Alabama residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 416.1,
-   "y0": 351.4,
+   "y0": 228.0,
    "x1": 460.8,
-   "y1": 366.9,
+   "y1": 365.7,
    "printed_as": "measure candidate: rule (top or foot of a drawn frame)",
    "prefill": {
     "origin": "field+candidate",
@@ -9001,21 +9209,20 @@
       366.9
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p25-002",
    "page": 25,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Alabama residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
-   "y0": 351.7,
+   "y0": 228.0,
    "x1": 529.2,
-   "y1": 367.2,
+   "y1": 365.7,
    "printed_as": "measure candidate: rule (top or foot of a drawn frame)",
    "prefill": {
     "origin": "field+candidate",
@@ -9035,17 +9242,16 @@
       367.2
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p25-003",
    "page": 25,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, California residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 389.8,
    "x1": 461.3,
@@ -9069,17 +9275,16 @@
       456.7
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p25-004",
    "page": 25,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, California residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 389.8,
    "x1": 529.2,
@@ -9103,17 +9308,16 @@
       456.7
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p25-005",
    "page": 25,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Idaho residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 480.9,
    "x1": 461.3,
@@ -9137,17 +9341,16 @@
       516.9
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p25-006",
    "page": 25,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Idaho residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 480.9,
    "x1": 529.2,
@@ -9171,19 +9374,18 @@
       516.9
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p25-007",
    "page": 25,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Iowa residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 416.1,
-   "y0": 644.3,
+   "y0": 515.8,
    "x1": 460.8,
    "y1": 659.8,
    "printed_as": "measure candidate: rule (top or foot of a drawn frame)",
@@ -9205,19 +9407,18 @@
       659.8
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p25-008",
    "page": 25,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Iowa residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
-   "y0": 644.3,
+   "y0": 515.8,
    "x1": 529.2,
    "y1": 659.8,
    "printed_as": "measure candidate: rule (top or foot of a drawn frame)",
@@ -9239,87 +9440,16 @@
       659.8
      ]
     }
-   },
-   "doubt": "check"
-  },
-  {
-   "id": "p25-009",
-   "page": 25,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Text",
-   "printed_label": "",
-   "must": false,
-   "x0": 416.1,
-   "y0": 669.0,
-   "x1": 460.3,
-   "y1": 684.5,
-   "printed_as": "measure candidate: rule (dark stroke)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Text",
-    "candidate": "rule",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      416.1,
-      669.0,
-      460.3,
-      684.5
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
-   "id": "p25-010",
-   "page": 25,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Text",
-   "printed_label": "",
-   "must": false,
-   "x0": 479.8,
-   "y0": 669.0,
-   "x1": 528.7,
-   "y1": 684.5,
-   "printed_as": "measure candidate: rule (dark stroke)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Text",
-    "candidate": "rule",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      479.8,
-      669.0,
-      528.7,
-      684.5
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
+   }
   },
   {
    "id": "p27-001",
    "page": 27,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Kansas residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 117.3,
    "x1": 461.3,
@@ -9343,17 +9473,16 @@
       204.7
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p27-002",
    "page": 27,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Kansas residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 117.3,
    "x1": 529.2,
@@ -9377,17 +9506,16 @@
       204.7
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p27-003",
    "page": 27,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Kentucky residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 228.3,
    "x1": 461.3,
@@ -9411,17 +9539,16 @@
       284.9
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p27-004",
    "page": 27,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Kentucky residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 228.3,
    "x1": 529.2,
@@ -9445,17 +9572,16 @@
       284.9
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p27-005",
    "page": 27,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Maine residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 318.9,
    "x1": 461.3,
@@ -9479,17 +9605,16 @@
       386.2
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p27-006",
    "page": 27,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Maine residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 318.9,
    "x1": 529.2,
@@ -9513,19 +9638,18 @@
       386.2
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p27-007",
    "page": 27,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Massachusetts residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 416.1,
-   "y0": 503.4,
+   "y0": 410.0,
    "x1": 460.8,
    "y1": 518.9,
    "printed_as": "measure candidate: rule (top or foot of a drawn frame)",
@@ -9547,19 +9671,18 @@
       518.9
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p27-008",
    "page": 27,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Massachusetts residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
-   "y0": 503.4,
+   "y0": 410.0,
    "x1": 529.2,
    "y1": 518.9,
    "printed_as": "measure candidate: rule (top or foot of a drawn frame)",
@@ -9581,17 +9704,16 @@
       518.9
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p27-009",
    "page": 27,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Mississippi residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 541.5,
    "x1": 461.3,
@@ -9615,17 +9737,16 @@
       608.4
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p27-010",
    "page": 27,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Mississippi residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 541.5,
    "x1": 529.2,
@@ -9649,17 +9770,16 @@
       608.4
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p27-011",
    "page": 27,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Missouri residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 632.6,
    "x1": 461.3,
@@ -9684,16 +9804,16 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "split by page break"
   },
   {
    "id": "p27-012",
    "page": 27,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Missouri residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 632.6,
    "x1": 529.2,
@@ -9718,16 +9838,16 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "split by page break"
   },
   {
    "id": "p29-001",
    "page": 29,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Missouri residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 416.6,
    "y0": 103.8,
    "x1": 460.8,
@@ -9752,16 +9872,16 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "split by page break"
   },
   {
    "id": "p29-002",
    "page": 29,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Missouri residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 480.3,
    "y0": 103.8,
    "x1": 528.7,
@@ -9786,16 +9906,16 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "split by page break"
   },
   {
    "id": "p29-003",
    "page": 29,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Nebraska residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 141.9,
    "x1": 461.3,
@@ -9819,17 +9939,16 @@
       209.3
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p29-004",
    "page": 29,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Nebraska residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 141.9,
    "x1": 529.2,
@@ -9853,19 +9972,18 @@
       209.3
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p29-005",
    "page": 29,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, New Jersey residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 416.1,
-   "y0": 356.8,
+   "y0": 233.0,
    "x1": 460.8,
    "y1": 372.3,
    "printed_as": "measure candidate: rule (top or foot of a drawn frame)",
@@ -9887,19 +10005,18 @@
       372.3
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p29-006",
    "page": 29,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, New Jersey residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
-   "y0": 356.8,
+   "y0": 233.0,
    "x1": 529.2,
    "y1": 372.3,
    "printed_as": "measure candidate: rule (top or foot of a drawn frame)",
@@ -9921,17 +10038,16 @@
       372.3
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p29-007",
    "page": 29,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, New Mexico residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 405.3,
    "x1": 461.3,
@@ -9955,17 +10071,16 @@
       493.2
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p29-008",
    "page": 29,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, New Mexico residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 405.3,
    "x1": 529.2,
@@ -9989,17 +10104,16 @@
       493.2
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p29-009",
    "page": 29,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, North Dakota residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 516.9,
    "x1": 461.3,
@@ -10023,17 +10137,16 @@
       573.4
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p29-010",
    "page": 29,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, North Dakota residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 516.9,
    "x1": 529.2,
@@ -10057,17 +10170,16 @@
       573.4
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p29-011",
    "page": 29,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Ohio residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 597.1,
    "x1": 461.3,
@@ -10092,16 +10204,16 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "split by page break"
   },
   {
    "id": "p29-012",
    "page": 29,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Ohio residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 597.1,
    "x1": 529.2,
@@ -10126,16 +10238,16 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "split by page break"
   },
   {
    "id": "p31-001",
    "page": 31,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Ohio residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 117.3,
    "x1": 461.3,
@@ -10160,16 +10272,16 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "split by page break"
   },
   {
    "id": "p31-002",
    "page": 31,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Ohio residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 117.3,
    "x1": 529.2,
@@ -10194,16 +10306,16 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "split by page break"
   },
   {
    "id": "p31-003",
    "page": 31,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Oklahoma residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 170.2,
    "x1": 461.3,
@@ -10227,17 +10339,16 @@
       206.2
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p31-004",
    "page": 31,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Oklahoma residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 170.2,
    "x1": 529.2,
@@ -10261,17 +10372,16 @@
       206.2
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p31-005",
    "page": 31,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Oregon residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 240.7,
    "x1": 461.3,
@@ -10295,17 +10405,16 @@
       327.6
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p31-006",
    "page": 31,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Oregon residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 240.7,
    "x1": 529.2,
@@ -10329,17 +10438,16 @@
       327.6
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p31-007",
    "page": 31,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Pennsylvania residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 351.8,
    "x1": 461.3,
@@ -10363,17 +10471,16 @@
       387.8
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p31-008",
    "page": 31,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Pennsylvania residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 351.8,
    "x1": 529.2,
@@ -10397,17 +10504,16 @@
       387.8
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p31-009",
    "page": 31,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Puerto Rico residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 411.4,
    "x1": 461.3,
@@ -10431,17 +10537,16 @@
       499.4
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p31-010",
    "page": 31,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Puerto Rico residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 411.4,
    "x1": 529.2,
@@ -10465,17 +10570,16 @@
       499.4
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p31-011",
    "page": 31,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Tennessee residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 532.8,
    "x1": 461.3,
@@ -10499,17 +10603,16 @@
       600.2
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p31-012",
    "page": 31,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Tennessee residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 532.8,
    "x1": 529.2,
@@ -10533,17 +10636,16 @@
       600.2
      ]
     }
-   },
-   "doubt": "check"
+   }
   },
   {
    "id": "p31-013",
    "page": 31,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Vermont residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 415.5,
    "y0": 623.8,
    "x1": 461.3,
@@ -10568,16 +10670,16 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "split by page break"
   },
   {
    "id": "p31-014",
    "page": 31,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Vermont residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 479.8,
    "y0": 623.8,
    "x1": 529.2,
@@ -10602,16 +10704,16 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "split by page break"
   },
   {
    "id": "p33-001",
    "page": 33,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Item 12, Vermont residents: primary investor initials",
+   "printed_label": "Primary Investor Initials",
+   "must": false,
    "x0": 416.6,
    "y0": 103.8,
    "x1": 460.8,
@@ -10636,16 +10738,16 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "split by page break"
   },
   {
    "id": "p33-002",
    "page": 33,
    "kind": "initials",
-   "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "owner": "co-investor",
+   "label": "Item 12, Vermont residents: co-investor initials",
+   "printed_label": "Co-Investor Initials",
+   "must": false,
    "x0": 480.3,
    "y0": 103.8,
    "x1": 528.7,
@@ -10670,339 +10772,16 @@
      ]
     }
    },
-   "doubt": "check"
-  },
-  {
-   "id": "p33-003",
-   "page": 33,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
-   "must": false,
-   "x0": 130.6,
-   "y0": 318.0,
-   "x1": 227.3,
-   "y1": 333.5,
-   "printed_as": "measure candidate: rule (dark stroke)",
-   "doubt": "candidate only",
-   "prefill": {
-    "origin": "candidate",
-    "candidate": "rule",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      130.6,
-      318.0,
-      227.3,
-      333.5
-     ]
-    }
-   },
-   "what": "text"
-  },
-  {
-   "id": "p33-004",
-   "page": 33,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
-   "must": false,
-   "x0": 236.6,
-   "y0": 318.0,
-   "x1": 271.5,
-   "y1": 333.5,
-   "printed_as": "measure candidate: rule (dark stroke)",
-   "doubt": "candidate only",
-   "prefill": {
-    "origin": "candidate",
-    "candidate": "rule",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      236.6,
-      318.0,
-      271.5,
-      333.5
-     ]
-    }
-   },
-   "what": "text"
-  },
-  {
-   "id": "p33-005",
-   "page": 33,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
-   "must": false,
-   "x0": 275.1,
-   "y0": 318.0,
-   "x1": 293.7,
-   "y1": 333.5,
-   "printed_as": "measure candidate: rule (dark stroke)",
-   "doubt": "candidate only",
-   "prefill": {
-    "origin": "candidate",
-    "candidate": "rule",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      275.1,
-      318.0,
-      293.7,
-      333.5
-     ]
-    }
-   },
-   "what": "text"
-  },
-  {
-   "id": "p33-006",
-   "page": 33,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
-   "must": false,
-   "x0": 308.1,
-   "y0": 318.0,
-   "x1": 374.9,
-   "y1": 333.5,
-   "printed_as": "measure candidate: rule (dark stroke)",
-   "doubt": "candidate only",
-   "prefill": {
-    "origin": "candidate",
-    "candidate": "rule",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      308.1,
-      318.0,
-      374.9,
-      333.5
-     ]
-    }
-   },
-   "what": "text"
-  },
-  {
-   "id": "p33-007",
-   "page": 33,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
-   "must": false,
-   "x0": 378.5,
-   "y0": 318.0,
-   "x1": 520.5,
-   "y1": 333.5,
-   "printed_as": "measure candidate: rule (dark stroke)",
-   "doubt": "candidate only",
-   "prefill": {
-    "origin": "candidate",
-    "candidate": "rule",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      378.5,
-      318.0,
-      520.5,
-      333.5
-     ]
-    }
-   },
-   "what": "text"
-  },
-  {
-   "id": "p33-008",
-   "page": 33,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "SUBSTITUTE IRS FORM W-9 CERTIFICATIONS (required",
-   "printed_label": "",
-   "must": false,
-   "x0": 246.7,
-   "y0": 343.4,
-   "x1": 521.3,
-   "y1": 355.5,
-   "printed_as": "reader field (no printed candidate under it)",
-   "prefill": {
-    "origin": "field",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "SUBSTITUTE IRS FORM W-9 CERTIFICATIONS (required",
-    "candidate": null,
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      246.7,
-      343.4,
-      521.3,
-      355.5
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "field only"
-  },
-  {
-   "id": "p33-009",
-   "page": 33,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Text",
-   "printed_label": "",
-   "must": false,
-   "x0": 112.3,
-   "y0": 362.5,
-   "x1": 141.2,
-   "y1": 373.6,
-   "printed_as": "reader field (no printed candidate under it)",
-   "prefill": {
-    "origin": "field",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Text",
-    "candidate": null,
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      112.3,
-      362.5,
-      141.2,
-      373.6
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "field only"
-  },
-  {
-   "id": "p33-010",
-   "page": 33,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "a",
-   "printed_label": "",
-   "must": true,
-   "x0": 115.4,
-   "y0": 394.2,
-   "x1": 141.7,
-   "y1": 409.6,
-   "printed_as": "reader field (no printed candidate under it)",
-   "prefill": {
-    "origin": "field",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "a",
-    "candidate": null,
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      115.4,
-      394.2,
-      141.7,
-      409.6
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "field only"
-  },
-  {
-   "id": "p33-011",
-   "page": 33,
-   "kind": "signature",
-   "owner": "investor",
-   "label": "Signature",
-   "printed_label": "",
-   "must": true,
-   "x0": 110.8,
-   "y0": 441.6,
-   "x1": 164.5,
-   "y1": 452.5,
-   "printed_as": "reader field (no printed candidate under it)",
-   "prefill": {
-    "origin": "field",
-    "field_kind": "signature",
-    "field_owner": "investor",
-    "field_label": "Signature",
-    "candidate": null,
-    "initial": {
-     "kind": "signature",
-     "owner": "investor",
-     "what": null,
-     "box": [
-      110.8,
-      441.6,
-      164.5,
-      452.5
-     ]
-    }
-   },
-   "doubt": "field only"
-  },
-  {
-   "id": "p33-012",
-   "page": 33,
-   "kind": "initials",
-   "owner": "investor",
-   "label": "4.",
-   "printed_label": "",
-   "must": true,
-   "x0": 115.4,
-   "y0": 468.8,
-   "x1": 143.8,
-   "y1": 488.6,
-   "printed_as": "reader field (no printed candidate under it)",
-   "prefill": {
-    "origin": "field",
-    "field_kind": "initials",
-    "field_owner": "investor",
-    "field_label": "4.",
-    "candidate": null,
-    "initial": {
-     "kind": "initials",
-     "owner": "investor",
-     "what": null,
-     "box": [
-      115.4,
-      468.8,
-      143.8,
-      488.6
-     ]
-    }
-   },
-   "doubt": "field only"
+   "doubt": "split by page break"
   },
   {
    "id": "p33-013",
    "page": 33,
-   "kind": "blank",
+   "kind": "signature",
    "owner": "investor",
-   "label": "Box",
-   "printed_label": "",
-   "must": false,
+   "label": "Signature of investor (subscriber signatures and W-9 certification)",
+   "printed_label": "Signature of Investor",
+   "must": true,
    "x0": 129.1,
    "y0": 587.3,
    "x1": 258.7,
@@ -11026,18 +10805,16 @@
       626.9
      ]
     }
-   },
-   "what": "text",
-   "doubt": "check"
+   }
   },
   {
    "id": "p33-014",
    "page": 33,
-   "kind": "blank",
+   "kind": "date",
    "owner": "investor",
-   "label": "Date",
-   "printed_label": "",
-   "must": false,
+   "label": "Date beside investor signature",
+   "printed_label": "Date",
+   "must": true,
    "x0": 257.1,
    "y0": 587.3,
    "x1": 309.6,
@@ -11061,17 +10838,15 @@
       626.9
      ]
     }
-   },
-   "what": "date",
-   "doubt": "check"
+   }
   },
   {
    "id": "p33-015",
    "page": 33,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Box",
-   "printed_label": "",
+   "kind": "signature",
+   "owner": "co-investor",
+   "label": "Signature of co-investor or custodian (if applicable)",
+   "printed_label": "Signature of Co-Investor or Custodian (If applicable)",
    "must": false,
    "x0": 334.3,
    "y0": 587.3,
@@ -11097,23 +10872,22 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "doubt": "owner: co-investor or custodian (third party)"
   },
   {
    "id": "p33-016",
    "page": 33,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "kind": "date",
+   "owner": "co-investor",
+   "label": "Date beside co-investor or custodian signature",
+   "printed_label": "Date",
    "must": false,
    "x0": 462.3,
    "y0": 587.3,
    "x1": 514.8,
    "y1": 626.9,
    "printed_as": "measure candidate: box (enclosed light rectangle)",
-   "doubt": "candidate only",
+   "doubt": "owner: co-investor or custodian (third party)",
    "prefill": {
     "origin": "candidate",
     "candidate": "box",
@@ -11128,16 +10902,15 @@
       626.9
      ]
     }
-   },
-   "what": "text"
+   }
   },
   {
    "id": "p37-001",
    "page": 37,
    "kind": "tickbox",
    "owner": "investor",
-   "label": "[fa non-U.S. person, Form W-8BEN",
-   "printed_label": "",
+   "label": "Supporting documents, individual: Form W-8BEN if a non-U.S. person",
+   "printed_label": "If a non-U.S. person, Form W-8BEN",
    "must": false,
    "x0": 253.0,
    "y0": 167.7,
@@ -11163,46 +10936,15 @@
      ]
     }
    },
-   "doubt": "check"
-  },
-  {
-   "id": "p37-002",
-   "page": 37,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
-   "must": false,
-   "x0": 103.9,
-   "y0": 172.2,
-   "x1": 492.7,
-   "y1": 187.7,
-   "printed_as": "measure candidate: rule (dark stroke)",
-   "doubt": "candidate only",
-   "prefill": {
-    "origin": "candidate",
-    "candidate": "rule",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      103.9,
-      172.2,
-      492.7,
-      187.7
-     ]
-    }
-   },
-   "what": "text"
+   "doubt": "document checklist square: tick box or list bullet"
   },
   {
    "id": "p37-003",
    "page": 37,
    "kind": "tickbox",
    "owner": "investor",
-   "label": "For cach non-U.S. Person account holder, Form W-8B",
-   "printed_label": "",
+   "label": "Supporting documents, joint: Form W-8BEN for each non-U.S. person holder",
+   "printed_label": "For each non-U.S. Person account holder, Form W-8BEN",
    "must": false,
    "x0": 253.0,
    "y0": 188.7,
@@ -11228,50 +10970,15 @@
      ]
     }
    },
-   "doubt": "check"
-  },
-  {
-   "id": "p37-004",
-   "page": 37,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Common, Community Property)",
-   "printed_label": "",
-   "must": true,
-   "x0": 103.9,
-   "y0": 212.3,
-   "x1": 492.7,
-   "y1": 227.8,
-   "printed_as": "measure candidate: rule (dark stroke)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Common, Community Property)",
-    "candidate": "rule",
-    "why": "reader marked it: The words before this blank may not be its label: check what",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      103.9,
-      212.3,
-      492.7,
-      227.8
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
+   "doubt": "document checklist square: tick box or list bullet"
   },
   {
    "id": "p37-005",
    "page": 37,
    "kind": "tickbox",
    "owner": "investor",
-   "label": "None",
-   "printed_label": "",
+   "label": "Supporting documents, IRA: none",
+   "printed_label": "None",
    "must": false,
    "x0": 253.0,
    "y0": 228.9,
@@ -11297,50 +11004,15 @@
      ]
     }
    },
-   "doubt": "check"
-  },
-  {
-   "id": "p37-006",
-   "page": 37,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Inherited)",
-   "printed_label": "",
-   "must": true,
-   "x0": 103.9,
-   "y0": 242.1,
-   "x1": 492.7,
-   "y1": 257.6,
-   "printed_as": "measure candidate: rule (dark stroke)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Inherited)",
-    "candidate": "rule",
-    "why": "reader marked it: The words before this blank may not be its label: check what",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      103.9,
-      242.1,
-      492.7,
-      257.6
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
+   "doubt": "document checklist square: tick box or list bullet"
   },
   {
    "id": "p37-007",
    "page": 37,
    "kind": "tickbox",
    "owner": "investor",
-   "label": "Certification of Investment Powers Form or First and Last Pa",
-   "printed_label": "",
+   "label": "Supporting documents, trust: Certification of Investment Powers Form or trust pages",
+   "printed_label": "Certification of Investment Powers Form or First and Last Page of Trust Documents",
    "must": false,
    "x0": 254.1,
    "y0": 259.7,
@@ -11366,15 +11038,15 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "document checklist square: tick box or list bullet"
   },
   {
    "id": "p37-008",
    "page": 37,
    "kind": "tickbox",
    "owner": "investor",
-   "label": "Appropriate W-8 series form",
-   "printed_label": "",
+   "label": "Supporting documents, trust: W-8 series form",
+   "printed_label": "Appropriate W-8 series form",
    "must": false,
    "x0": 253.0,
    "y0": 280.3,
@@ -11400,46 +11072,15 @@
      ]
     }
    },
-   "doubt": "check"
-  },
-  {
-   "id": "p37-009",
-   "page": 37,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
-   "must": false,
-   "x0": 103.9,
-   "y0": 295.1,
-   "x1": 492.7,
-   "y1": 310.6,
-   "printed_as": "measure candidate: rule (dark stroke)",
-   "doubt": "candidate only",
-   "prefill": {
-    "origin": "candidate",
-    "candidate": "rule",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      103.9,
-      295.1,
-      492.7,
-      310.6
-     ]
-    }
-   },
-   "what": "text"
+   "doubt": "document checklist square: tick box or list bullet"
   },
   {
    "id": "p37-010",
    "page": 37,
    "kind": "tickbox",
    "owner": "investor",
-   "label": "Formation documents",
-   "printed_label": "",
+   "label": "Supporting documents, corporation: formation documents",
+   "printed_label": "Formation documents",
    "must": false,
    "x0": 253.0,
    "y0": 311.1,
@@ -11465,15 +11106,15 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "document checklist square: tick box or list bullet"
   },
   {
    "id": "p37-011",
    "page": 37,
    "kind": "tickbox",
    "owner": "investor",
-   "label": "Articles of incorporation",
-   "printed_label": "",
+   "label": "Supporting documents, corporation: articles of incorporation",
+   "printed_label": "Articles of incorporation",
    "must": false,
    "x0": 253.0,
    "y0": 323.0,
@@ -11499,15 +11140,15 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "document checklist square: tick box or list bullet"
   },
   {
    "id": "p37-012",
    "page": 37,
    "kind": "tickbox",
    "owner": "investor",
-   "label": "Authorized signatory list",
-   "printed_label": "",
+   "label": "Supporting documents, corporation: authorized signatory list",
+   "printed_label": "Authorized signatory list",
    "must": false,
    "x0": 253.0,
    "y0": 334.3,
@@ -11533,15 +11174,15 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "document checklist square: tick box or list bullet"
   },
   {
    "id": "p37-013",
    "page": 37,
    "kind": "tickbox",
    "owner": "investor",
-   "label": "Appropriate W-8 series form",
-   "printed_label": "",
+   "label": "Supporting documents, corporation: W-8 series form",
+   "printed_label": "Appropriate W-8 series form",
    "must": false,
    "x0": 253.0,
    "y0": 346.1,
@@ -11567,46 +11208,15 @@
      ]
     }
    },
-   "doubt": "check"
-  },
-  {
-   "id": "p37-014",
-   "page": 37,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
-   "must": false,
-   "x0": 104.4,
-   "y0": 360.4,
-   "x1": 492.2,
-   "y1": 375.9,
-   "printed_as": "measure candidate: rule (dark stroke)",
-   "doubt": "candidate only",
-   "prefill": {
-    "origin": "candidate",
-    "candidate": "rule",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      104.4,
-      360.4,
-      492.2,
-      375.9
-     ]
-    }
-   },
-   "what": "text"
+   "doubt": "document checklist square: tick box or list bullet"
   },
   {
    "id": "p37-015",
    "page": 37,
    "kind": "tickbox",
    "owner": "investor",
-   "label": "Formation documents",
-   "printed_label": "",
+   "label": "Supporting documents, partnership: formation documents",
+   "printed_label": "Formation documents",
    "must": false,
    "x0": 253.0,
    "y0": 377.0,
@@ -11632,15 +11242,15 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "document checklist square: tick box or list bullet"
   },
   {
    "id": "p37-016",
    "page": 37,
    "kind": "tickbox",
    "owner": "investor",
-   "label": "Authorized signatory list",
-   "printed_label": "",
+   "label": "Supporting documents, partnership: authorized signatory list",
+   "printed_label": "Authorized signatory list",
    "must": false,
    "x0": 254.6,
    "y0": 389.8,
@@ -11666,15 +11276,15 @@
      ]
     }
    },
-   "doubt": "check"
+   "doubt": "document checklist square: tick box or list bullet"
   },
   {
    "id": "p37-017",
    "page": 37,
    "kind": "tickbox",
    "owner": "investor",
-   "label": "Appropriate W-8 series form",
-   "printed_label": "",
+   "label": "Supporting documents, partnership: W-8 series form",
+   "printed_label": "Appropriate W-8 series form",
    "must": false,
    "x0": 253.0,
    "y0": 400.1,
@@ -11700,46 +11310,15 @@
      ]
     }
    },
-   "doubt": "check"
-  },
-  {
-   "id": "p37-018",
-   "page": 37,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
-   "must": false,
-   "x0": 103.9,
-   "y0": 414.9,
-   "x1": 492.7,
-   "y1": 430.4,
-   "printed_as": "measure candidate: rule (dark stroke)",
-   "doubt": "candidate only",
-   "prefill": {
-    "origin": "candidate",
-    "candidate": "rule",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      103.9,
-      414.9,
-      492.7,
-      430.4
-     ]
-    }
-   },
-   "what": "text"
+   "doubt": "document checklist square: tick box or list bullet"
   },
   {
    "id": "p37-019",
    "page": 37,
    "kind": "tickbox",
    "owner": "investor",
-   "label": "Certification of Investment Powers Form",
-   "printed_label": "",
+   "label": "Supporting documents, pension plan: Certification of Investment Powers Form",
+   "printed_label": "Certification of Investment Powers Form",
    "must": false,
    "x0": 257.7,
    "y0": 431.0,
@@ -11765,117 +11344,11 @@
      ]
     }
    },
-   "doubt": "check"
-  },
-  {
-   "id": "p11-044",
-   "page": 11,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "TOD beneficiary 1: primary percentage",
-   "printed_label": "Primary __%",
-   "must": false,
-   "x0": 489.7,
-   "y0": 471.9,
-   "x1": 498.3,
-   "y1": 480.9,
-   "printed_as": "measured by hand",
-   "what": "percentage"
-  },
-  {
-   "id": "p11-045",
-   "page": 11,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "TOD beneficiary 1: secondary percentage",
-   "printed_label": "Secondary __%",
-   "must": false,
-   "x0": 495.2,
-   "y0": 481.9,
-   "x1": 504.3,
-   "y1": 490.9,
-   "printed_as": "measured by hand",
-   "what": "percentage"
-  },
-  {
-   "id": "p11-046",
-   "page": 11,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "TOD beneficiary 2: primary percentage",
-   "printed_label": "Primary __%",
-   "must": false,
-   "x0": 489.7,
-   "y0": 511.4,
-   "x1": 498.3,
-   "y1": 520.4,
-   "printed_as": "measured by hand",
-   "what": "percentage"
-  },
-  {
-   "id": "p11-047",
-   "page": 11,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "TOD beneficiary 2: secondary percentage",
-   "printed_label": "Secondary __%",
-   "must": false,
-   "x0": 495.2,
-   "y0": 521.5,
-   "x1": 504.3,
-   "y1": 530.5,
-   "printed_as": "measured by hand",
-   "what": "percentage"
-  },
-  {
-   "id": "p11-048",
-   "page": 11,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "TOD beneficiary 3: primary percentage",
-   "printed_label": "Primary __%",
-   "must": false,
-   "x0": 489.7,
-   "y0": 551.0,
-   "x1": 498.3,
-   "y1": 560.0,
-   "printed_as": "measured by hand",
-   "what": "percentage"
-  },
-  {
-   "id": "p11-049",
-   "page": 11,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "TOD beneficiary 3: secondary percentage",
-   "printed_label": "Secondary __%",
-   "must": false,
-   "x0": 495.2,
-   "y0": 561.1,
-   "x1": 504.3,
-   "y1": 570.1,
-   "printed_as": "measured by hand",
-   "what": "percentage"
-  },
-  {
-   "id": "p19-007",
-   "page": 19,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "E-mail address for electronic delivery (if blank, the Section 2 e-mail is used)",
-   "printed_label": "E-mail address",
-   "must": false,
-   "x0": 103.7,
-   "y0": 519.5,
-   "x1": 520.8,
-   "y1": 535.0,
-   "printed_as": "picture pixels at the picture's resolution: snapped to the printed stroke(s) within 6 pt",
-   "what": "email"
+   "doubt": "document checklist square: tick box or list bullet"
   }
  ],
  "may_fill": [],
  "source": "hand",
- "draft": true,
  "mode": "train",
  "prefilled": {
   "when": "2026-11-15T00:44:24Z",
@@ -11883,5 +11356,6 @@
   "result": "out-quick/b042/result.json",
   "fields": 326,
   "counted_candidates": 324
- }
+ },
+ "done": "2026-11-15T00:53:15Z"
 }
