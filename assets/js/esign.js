@@ -1678,13 +1678,13 @@
   /**
    * Reads the agreement's PDF again and merges the new fields with the draft's (the rules are at the top of this block).
    * Returns { ok, replaced, added, own, review, removed }, also kept as env.reread; when the text cannot be read, ok is
-   * false and no field is changed.
+   * false and no field is changed. Pages with no text are read from their picture, as on upload (opts.step shows which).
    */
   async function rereadAgreement(env, opts) {
     const fresh = Object.assign({}, env, { fields: [] });
     delete fresh.read;
     try {
-      await autoFields(fresh, opts);
+      await autoFields(fresh, Object.assign({}, opts, { pictures: true }));
     } catch (e) {
       fresh.read = null;
     }
@@ -1748,40 +1748,15 @@
       : '';
   /** The same button as words at the end of the read summary: shown where the left column lies across the top (narrower screens), so it takes no height from the document. */
   const rereadInlineHTML = (env) => (env.agreementFor && env.docId ? ' <button class="es-read-again" type="button" data-action="es-reread">Read the PDF again</button>' : '');
-  /**
-   * The offer under the read summary while pages with no text were left unread: the portal reads them from their
-   * picture only when the sponsor asks, because every field placed that way has to be checked.
-   */
-  const unreadPages = (env) => (env.agreementFor && env.docId && env.read && !env.read.asked ? (env.read.scanned || []).length : 0);
-  const picturesOfferHTML = (env) =>
-    unreadPages(env)
-      ? `<p class="es-note es-offer">${icon('alert')}<span>${unreadPages(env) === 1 ? 'One page has' : `${unreadPages(env)} pages have`} no text, only a picture of the page, so nothing was placed there. The portal can try to read ${unreadPages(env) === 1 ? 'that page from its picture' : 'those pages from their picture'}. It takes a few seconds a page, and every field it places that way must be checked.</span><button class="cs-btn cs-btn-small" type="button" data-action="es-read-pictures">Read these pages from their picture</button></p>`
-      : '';
   // The progress while pages are read from their picture: the page whose words are read, or, after the time for words is
   // used up, the page whose boxes are found.
   const pictureStep = (i, all, boxes) => (boxes ? `Finding the boxes on page ${i} of ${all}…` : `Reading page ${i} of ${all} from its picture…`);
-  async function readPictures(env, el) {
-    if (el.disabled) return;
-    el.disabled = true;
-    el.textContent = 'Reading the PDF…';
-    await rereadAgreement(env, { pictures: true, step: (i, all, boxes) => (el.textContent = pictureStep(i, all, boxes)) });
-    if (editorEnv() !== env) return NS.app.save(true);
-    if (!env.fields.some((f) => f.id === esUi().sel)) esUi().sel = null;
-    NS.app.save(true);
-    NS.app.render();
-    const note = document.querySelector('.es-reread');
-    if (note) note.focus();
-  }
-  NS.actions['es-read-pictures'] = (el) => {
-    const env = editorEnv();
-    if (env && env.agreementFor) readPictures(env, el);
-  };
   NS.actions['es-reread'] = () => {
     const env = editorEnv();
     if (!env || !env.agreementFor) return;
     U.dialog(
       `<div class="dlg-head"><div><h2>Read the PDF again?</h2><p>The portal reads ${h(env.fileName)} again. Fields it placed that you have not changed are replaced by the new reading. Fields you placed yourself, moved or changed stay as they are. Undo in the editor takes this back.</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
-      <div class="dlg-body"><div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog" autofocus>Keep the fields as they are</button>${unreadPages(env) || (env.read && env.read.asked) ? '<button class="cs-btn" type="button" data-action="es-reread-yes" data-pictures="1">Read these pages from their picture</button>' : ''}<button class="cs-btn cs-btn-primary" type="button" data-action="es-reread-yes">Read the PDF again</button></div></div>`,
+      <div class="dlg-body"><div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog" autofocus>Keep the fields as they are</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-reread-yes">Read the PDF again</button></div></div>`,
       'dlg-es'
     );
   };
@@ -1791,7 +1766,7 @@
     if (el.disabled) return;
     el.disabled = true;
     el.textContent = 'Reading the PDF…';
-    await rereadAgreement(env, { pictures: el.getAttribute('data-pictures') === '1', step: (i, all, boxes) => (el.textContent = pictureStep(i, all, boxes)) });
+    await rereadAgreement(env, { step: (i, all, boxes) => (el.textContent = pictureStep(i, all, boxes)) });
     U.closeDialog();
     if (editorEnv() !== env) return NS.app.save(true);
     if (!env.fields.some((f) => f.id === esUi().sel)) esUi().sel = null;
@@ -1904,7 +1879,7 @@
     const before = alone ? 'before your firm signs' : 'before saving';
     const headHTML = env.agreementFor
       ? `${K.head(`${alone ? 'Agreement' : 'Subscription agreement'}${agr ? ` · ${h(agr.name)}` : ''}`, `${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'} · ${alone ? 'signed only by your firm; investors do not sign it' : 'place the fields once; each investor fills them in and signs during onboarding'}`, `<a class="cs-btn" href="#console-offering-${h(env.agreementFor)}">${icon('back')}Offering</a><button class="cs-btn" type="button" data-action="es-agreement-cancel" data-id="${h(env.id)}">Cancel</button>${alone ? `<button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-firm-sign" data-id="${h(env.id)}">${PEN}Sign it for your firm</button>` : `<button class="cs-btn cs-btn-primary" type="button" data-action="es-agreement-save" data-id="${h(env.id)}">Save subscription agreement</button>`}`)}
-        <div class="es-read"><p class="cs-hint es-agr-note">${env.read ? `${h(readNote(env))} ${marked ? (PL().reviewFields(env).some((f) => f.checkBy) ? `Fields marked Review must be confirmed or moved to the right place ${before}: on a page read from its picture, check every field and choose “I have checked this page”; a field the portal could not name, or whose owner it is unsure of, is confirmed by itself. ` : `Fields marked Review are listed on the left: confirm each one or move it to the right place ${before}. `) : env.autoPlaced ? 'Check the fields, move or resize as needed, and add any others. ' : ''}` : ''}${alone ? '' : 'Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.'}${rereadInlineHTML(env)}</p>${picturesOfferHTML(env)}${rereadNoteHTML(env)}</div>`
+        <div class="es-read"><p class="cs-hint es-agr-note">${env.read ? `${h(readNote(env))} ${marked ? (PL().reviewFields(env).some((f) => f.checkBy) ? `Fields marked Review must be confirmed or moved to the right place ${before}: on a page read from its picture, check every field and choose “I have checked this page”; a field the portal could not name, or whose owner it is unsure of, is confirmed by itself. ` : `Fields marked Review are listed on the left: confirm each one or move it to the right place ${before}. `) : env.autoPlaced ? 'Check the fields, move or resize as needed, and add any others. ' : ''}` : ''}${alone ? '' : 'Fields for “Investor” are completed by each investor. Fields set to be filled in from onboarding arrive completed and locked; the investor completes the rest. Nothing is sent from here.'}${rereadInlineHTML(env)}</p>${rereadNoteHTML(env)}</div>`
       : `${K.head(h(env.title), `Draft · ${h(env.fileName)} · ${env.pages} page${env.pages === 1 ? '' : 's'}`, `<a class="cs-btn" href="#console-esign">${icon('back')}E-sign</a><button class="cs-btn" type="button" data-action="es-delete" data-id="${h(env.id)}">Delete draft</button><button class="cs-btn" type="button" data-action="es-save-tpl" data-id="${h(env.id)}">Save as template</button><button class="cs-btn cs-btn-primary" type="button" data-action="es-review" data-id="${h(env.id)}">Review and send</button>`)}`;
     // The editor itself (the fields to add, the document, the selected field) is fieldeditor.js.
     return K.shell(`${headHTML}${NS.fieldEditor.html(editorCtx(env))}`, 'console-esign');
@@ -2936,8 +2911,8 @@
    * drawn or searched it comes back as a scan with unread saying why: 'time' (the page took too long) or 'fail'. Words are
    * read for at most limitMs for one document (the time spent in NS.textread.page): after that each remaining such page
    * is still drawn and searched without its words (reader 'limit'), so its boxes get fields named by their shape and
-   * marked, and nothing already placed is taken away. opts: { pictures: true to read such pages from their picture (the
-   * sponsor asked for it); step(page, pages, boxes) called before each such page is read (boxes true when only its boxes
+   * marked, and nothing already placed is taken away. opts: { pictures: true to read such pages from their picture (every
+   * reading of an agreement, on upload and when read again, sets it); step(page, pages, boxes) called before each such page is read (boxes true when only its boxes
    * are found); limitMs (PICTURE_LIMIT_MS when not given);
    * kept: true to use the last reading of this file, or read without pictures (for snapping, where waiting is not worth it) }.
    */
@@ -2970,8 +2945,8 @@
             });
           let use = raw;
           let unread = '';
-          // A page with no text is read from its picture only when the sponsor asked for it (op.pictures): otherwise it
-          // is reported as a page that could not be read, and nothing is placed on it.
+          // A page with no text is read from its picture whenever an agreement is read (op.pictures); a reading that does
+          // not set it (snapping, which uses the kept reading) reports such a page as one that could not be read.
           if (NS.textread && op.pictures && !op.kept && NS.anchors.textless(raw)) {
             // Past the time for words, the page is still drawn and searched: its boxes are found, their words not read.
             const late = spent > limitMs;
@@ -3015,7 +2990,6 @@
       const t = T();
       const o = W().offerings.find((x) => x.id === (env.agreementFor || env.offeringId)) || {};
       const layout = await pageLayout(env.docId, { step: opts && opts.step, pictures: !!(opts && opts.pictures), limitMs: opts && opts.limitMs });
-      read.asked = !!(opts && opts.pictures);
       // Pages with no text that could not be read from their pictures either, by reason.
       layout.forEach((pg) => pg.unread && (read.unread[pg.unread] = read.unread[pg.unread] || []).push(pg.page));
       res = NS.placement.read(layout, { firmNames: [t.name, t.legalName, t.shortName], fundNames: [o.name, o.shortName] });
@@ -3229,7 +3203,8 @@
       makeSigner(env, { investorId: AGR_INVESTOR, name: 'Investor (each subscriber)', email: '', account: '' });
       makeSigner(env, { name: `${T().shortName} (countersigns)`, email: T().support.email || '' });
       if (tpl) applyTemplateFields(env, tpl);
-      else env.autoPlaced = await autoFields(env, { step: src.step, pictures: !!src.pictures });
+      // Every page with no text is read from its picture on this first reading: the sponsor only uploads.
+      else env.autoPlaced = await autoFields(env, { step: src.step, pictures: true });
       addEvent(env, staffActor(), 'Created', `Subscription agreement for ${o.name}`);
       envs(ws).push(env);
       NS.app.save(true);
