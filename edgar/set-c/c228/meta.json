@@ -1,0 +1,56 @@
+{
+  "id": "c228",
+  "url": "https://www.sec.gov/Archives/edgar/data/938113/000101540203004003/doc3.txt",
+  "cik": "938113",
+  "issuer": "APOLLO GOLD CORP",
+  "form": "S-1",
+  "file_date": "2003-10-06",
+  "year": 2003,
+  "exhibit": "EX-4.12",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.txt",
+  "source_sha256": "0dbd320398fe2a88dfe7024e3ea07d781be4e7ce6074cf1d621a87d6b2ed16bb",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": true,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 45
+  },
+  "pages": 7,
+  "page_kinds": {
+    "text": 7
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "5ce5db4ef0db7f5fec53284bedf902319cba738ef0cd4451feb4be0bacd17f24",
+  "broker_dealer": false
+}

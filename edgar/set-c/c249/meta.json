@@ -1,0 +1,54 @@
+{
+  "id": "c249",
+  "url": "https://www.sec.gov/Archives/edgar/data/1484740/000147793210000111/ex1_1.htm",
+  "cik": "1484740",
+  "issuer": "Acquisition Capital Group, Inc.",
+  "form": "S-11",
+  "file_date": "2010-03-01",
+  "year": 2010,
+  "exhibit": "EX-1.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "916a4e00dbdcbbd8262f3be6f135216f2744d265454541884728bda7268712c9",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 16,
+    "tables": 1,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 39
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 3,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "42484da8a42b2a53a49d400e55023515dd8a668f44a1c40e0378b1073f92b164",
+  "broker_dealer": false
+}

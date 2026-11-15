@@ -1,0 +1,51 @@
+{
+  "id": "c164",
+  "url": "https://www.sec.gov/Archives/edgar/data/2048820/000109690625001085/ex_d_sub_bk.pdf",
+  "cik": "2048820",
+  "issuer": "SHaD Momentum, LLC",
+  "form": "C/A",
+  "file_date": "2025-07-03",
+  "year": 2025,
+  "exhibit": "EX-99",
+  "exhibit_description": "COMPANY SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "f987d6f62fd706fba1271430697fd812187f3d009132300b7365e0cb96f0d502",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 27,
+    "tables": 0,
+    "questionnaire": true,
+    "joint": true,
+    "custodian": false,
+    "ira": true,
+    "brokerdealer": false,
+    "countersign": true,
+    "underscores": 31,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 11,
+  "page_kinds": {
+    "text": 11
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "f987d6f62fd706fba1271430697fd812187f3d009132300b7365e0cb96f0d502",
+  "broker_dealer": false
+}

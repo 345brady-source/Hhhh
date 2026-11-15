@@ -1,0 +1,62 @@
+{
+  "id": "c008",
+  "url": "https://www.sec.gov/Archives/edgar/data/1541354/000101968715003469/aspirity_ex0404.htm",
+  "cik": "1541354",
+  "issuer": "ASPIRITY HOLDINGS LLC",
+  "form": "S-1/A",
+  "file_date": "2015-09-16",
+  "year": 2015,
+  "exhibit": "EX-4.4",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "fd420f76ab2e1a94e58e2f7dcbf8e9391e6a2d6cd71163c344923207abed4e0d",
+  "extra_files": [
+    "aspirity_logo.jpg",
+    "table_1.jpg",
+    "table_2.jpg",
+    "table_3.jpg",
+    "table_4.jpg",
+    "table_5.jpg"
+  ],
+  "layout_notes": [],
+  "how_made": "picture-print",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 4,
+    "tables": 6,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 6,
+    "underscores": 10
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text+picture": 1,
+    "text": 2,
+    "picture": 1
+  },
+  "page_kind_list": [
+    "text+picture",
+    "text",
+    "text",
+    "picture"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "7bc3f0754794608d4a96bab7b7b5e3daf716eee28777198e4f4977aec928c9ff",
+  "broker_dealer": true
+}

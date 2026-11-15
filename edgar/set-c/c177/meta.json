@@ -1,0 +1,52 @@
+{
+  "id": "c177",
+  "url": "https://www.sec.gov/Archives/edgar/data/1232633/000095017205002557/ny785145.txt",
+  "cik": "1232633",
+  "issuer": "BTOP50 CTA INDEX FUND",
+  "form": "N-2/A",
+  "file_date": "2005-08-08",
+  "year": 2005,
+  "exhibit": "EX-99.2P",
+  "exhibit_description": "EXHIBIT 99(P) - FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "landscape",
+  "source_file": "source.txt",
+  "source_sha256": "0eb9452afe79ad9b37072aaad9b73e2aaff83c4cf2a0ad6c8e3e7a7b601b72a4",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 5,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 0
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "9a9c561fb6c350442102e5d34eec8cdf9a977945937b39d1087a0feafbff9440",
+  "broker_dealer": false
+}

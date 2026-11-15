@@ -1,0 +1,59 @@
+{
+  "id": "c112",
+  "url": "https://www.sec.gov/Archives/edgar/data/1959961/000119312523245765/d15907d424b3.htm",
+  "cik": "1959961",
+  "issuer": "IPC Alternative Real Estate Income Trust, Inc.",
+  "form": "424B3",
+  "file_date": "2023-09-28",
+  "year": 2023,
+  "exhibit": "424B3",
+  "exhibit_description": "424B3",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "98256f3f926f972c23028ffc6a8e903dbf2985aec93d2f8172e35bd6b20cc03a",
+  "extra_files": [],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX B: FORM OF SUBSCRIPTION AGREEMENT",
+    "end_heading": "APPENDIX C: PRIOR PERFORMANCE TABLES"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 11,
+  "page_kinds": {
+    "text": 9,
+    "little or no text": 2
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "3f0511c75d4c02eed82578c2c3fb9153ff799e0f169b4fbdb7259330d530ad07",
+  "broker_dealer": true
+}

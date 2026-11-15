@@ -1,0 +1,75 @@
+{
+  "id": "c095",
+  "url": "https://www.sec.gov/Archives/edgar/data/1684682/000138713118000873/cnl-s1a_030118.htm",
+  "cik": "1684682",
+  "issuer": "CNL Strategic Capital, LLC",
+  "form": "S-1/A",
+  "file_date": "2018-03-01",
+  "year": 2018,
+  "exhibit": "S-1/A",
+  "exhibit_description": "PRE-EFFECTIVE AMENDMENT TO FORM S-1",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "deab6ae01d2ef2434c404baa698fec8a10c6c14b1b1fdb2a3c68a9f160b8a01e",
+  "extra_files": [
+    "ex001.jpg",
+    "ex002.jpg",
+    "ex003.jpg",
+    "ex004.jpg",
+    "ex005.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX B: FORM OF SUBSCRIPTION AGREEMENT",
+    "end_heading": "PART II INFORMATION NOT REQUIRED IN PROS"
+  },
+  "how_made": "picture-print",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 18,
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 5,
+    "picture+ocr-text": 5,
+    "blank": 5,
+    "text": 2
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "blank",
+    "picture",
+    "picture+ocr-text",
+    "blank",
+    "picture",
+    "picture+ocr-text",
+    "blank",
+    "picture",
+    "picture+ocr-text",
+    "blank",
+    "picture",
+    "picture+ocr-text",
+    "text",
+    "text",
+    "blank"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "ef02f21e088e1d7c21f859d4074afddb546b2a3c9439321a6f0e27c38163893e",
+  "broker_dealer": true
+}

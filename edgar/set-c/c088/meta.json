@@ -1,0 +1,61 @@
+{
+  "id": "c088",
+  "url": "https://www.sec.gov/Archives/edgar/data/1614502/000119312515338558/d52652d424b3.htm",
+  "cik": "1614502",
+  "issuer": "Resource Innovation Office REIT, Inc.",
+  "form": "424B3",
+  "file_date": "2015-10-06",
+  "year": 2015,
+  "exhibit": "424B3",
+  "exhibit_description": "424(B)(3)",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "6595098553baebfef8473fa1b25957c0b95caa8a1b795f5eb4e31243de7aaa36",
+  "extra_files": [
+    "g52652appb_pg001.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX B: | FORM OF SUBSCRIPTION AGREEMENT",
+    "end_heading": "APPENDIX C:"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 11,
+  "page_kinds": {
+    "text": 10,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "e43a66e01ecc0a62611dd2c5e997caa038f517166af04bbe8824d7ecddf9e061",
+  "broker_dealer": true
+}

@@ -1,0 +1,48 @@
+{
+  "id": "c135",
+  "url": "https://www.sec.gov/Archives/edgar/data/1718118/000171811821000003/exgsubscripagr.pdf",
+  "cik": "1718118",
+  "issuer": "Traipse PBC",
+  "form": "C/A",
+  "file_date": "2021-07-12",
+  "year": 2021,
+  "exhibit": "EX-99",
+  "exhibit_description": null,
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "2fe17d6bd7b45595d033205bff9920058f5c1226a6ab34c2d31c743bb87c7c48",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "underscores": 18,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 7,
+  "page_kinds": {
+    "text": 6,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "2fe17d6bd7b45595d033205bff9920058f5c1226a6ab34c2d31c743bb87c7c48",
+  "broker_dealer": false
+}

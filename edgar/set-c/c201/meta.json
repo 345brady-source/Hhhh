@@ -1,0 +1,54 @@
+{
+  "id": "c201",
+  "url": "https://www.sec.gov/Archives/edgar/data/1679836/000159406216000601/ex105.htm",
+  "cik": "1679836",
+  "issuer": "Kelvin Medical, Inc.",
+  "form": "S-1/A",
+  "file_date": "2016-09-12",
+  "year": 2016,
+  "exhibit": "EX-10.5",
+  "exhibit_description": "FORM OF SUBSCRIPTION",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "2ef4e8623c2e5c3506030a250144b8b7676d0403ecf1dfd52ed1612eb896e5d7",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 16,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 31
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 3,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "4f459599c9a465e055fa44f160261558790799b7539bd1db00f197dbb0c32c03",
+  "broker_dealer": false
+}

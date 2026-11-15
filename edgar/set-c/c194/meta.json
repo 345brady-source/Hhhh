@@ -1,0 +1,57 @@
+{
+  "id": "c194",
+  "url": "https://www.sec.gov/Archives/edgar/data/1562872/000147793213003516/equisource_ex11.htm",
+  "cik": "1562872",
+  "issuer": "Equisource Hotel Fund I, LLP",
+  "form": "8-K",
+  "file_date": "2013-08-08",
+  "year": 2013,
+  "exhibit": "EX-1.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "66c007d8ab2cc10e44df8b8a3cf2c19b432b66330bfc2d2bbf60b37365e14445",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 8,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 24
+  },
+  "pages": 8,
+  "page_kinds": {
+    "text": 8
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "5e15d6f56f18ce0bb886041ae23612a6f5153a9894c74c9ca085b5a93d2519c5",
+  "broker_dealer": false
+}

@@ -1,0 +1,49 @@
+{
+  "id": "c133",
+  "url": "https://www.sec.gov/Archives/edgar/data/1739584/000178043921000007/EXHIBITCsubagreement.pdf",
+  "cik": "1739584",
+  "issuer": "Crypto Asset Rating Inc.",
+  "form": "C/A",
+  "file_date": "2021-02-10",
+  "year": 2021,
+  "exhibit": "EX-99",
+  "exhibit_description": "EXHIBIT C - SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "ffdbaa98e8e3671af616353c38c560ac43d65ed10745ebc25916c38eeb796896",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "underscores": 8,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 9,
+  "page_kinds": {
+    "text": 9
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "ffdbaa98e8e3671af616353c38c560ac43d65ed10745ebc25916c38eeb796896",
+  "broker_dealer": false
+}

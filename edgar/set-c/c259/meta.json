@@ -1,0 +1,62 @@
+{
+  "id": "c259",
+  "url": "https://www.sec.gov/Archives/edgar/data/1083866/000106299312000165/exhibit10-1.htm",
+  "cik": "1083866",
+  "issuer": "EDEN ENERGY CORP",
+  "form": "8-K",
+  "file_date": "2012-01-17",
+  "year": 2012,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF DEBT SETTLEMENT AND SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "f7a0bd6e84a79e2205e9c9397be1bb02fa5d427420db9efc82588ee1620d64c2",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 35,
+    "tables": 19,
+    "questionnaire": true,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 4
+  },
+  "pages": 13,
+  "page_kinds": {
+    "text": 13
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "ec62e61449935022dfe9fbfd5892c9f8f4d6e113b1e9415f3d095c2e27178977",
+  "broker_dealer": false
+}

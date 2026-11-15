@@ -1,0 +1,43 @@
+{
+  "id": "c138",
+  "url": "https://www.sec.gov/Archives/edgar/data/1534155/000089109222000959/ex99-3.pdf",
+  "cik": "1534155",
+  "issuer": "Ameri Metro, Inc. (formerly Yellowwood)",
+  "form": "8-K/A",
+  "file_date": "2022-03-15",
+  "year": 2022,
+  "exhibit": "EX-99.3",
+  "exhibit_description": "PDF OF NOTICE TO CLASS B SHAREHOLDERS",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "e348a8a4b6d368e61e529975df8e6564902d5ba3a708c87bf03c3bac7c81fe2b",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "underscores": 8,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "e348a8a4b6d368e61e529975df8e6564902d5ba3a708c87bf03c3bac7c81fe2b",
+  "broker_dealer": false
+}

@@ -1,0 +1,52 @@
+{
+  "id": "c189",
+  "url": "https://www.sec.gov/Archives/edgar/data/1529140/000134100412000392/exh_p.htm",
+  "cik": "1529140",
+  "issuer": "BlackRock Alternatives Allocation FB Portfolio LLC",
+  "form": "N-2/A",
+  "file_date": "2012-03-08",
+  "year": 2012,
+  "exhibit": "EX-99.2P STOCK LTR",
+  "exhibit_description": "EXHIBIT (P) - FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "6d73fdcfa1a3fbc080f4d51226c8338cc6d8c5d650d67cb5a545c36309dbe45f",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 3,
+    "tables": 1,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 3
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "52c171e429b2f8df9f4ff00be41f4717d01f5b144317d2dc6fe888b8353ba642",
+  "broker_dealer": false
+}

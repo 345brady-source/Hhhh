@@ -1,0 +1,54 @@
+{
+  "id": "c297",
+  "url": "https://www.sec.gov/Archives/edgar/data/1985554/000168316823006691/londax_ex1003.htm",
+  "cik": "1985554",
+  "issuer": "Londax Corp.",
+  "form": "S-1/A",
+  "file_date": "2023-09-26",
+  "year": 2023,
+  "exhibit": "EX-10.3",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "f3b8b2fcd7cc5f9e564931b7d00434444994590c6b87372660c95929100849f9",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 8,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 8
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 3,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "0e7353c0fccc65a6867f11b60bf11924b7e069d5825c7f5ff9a3507f7622badb",
+  "broker_dealer": false
+}

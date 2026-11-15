@@ -1,0 +1,63 @@
+{
+  "id": "c283",
+  "url": "https://www.sec.gov/Archives/edgar/data/1481832/000148183219000092/pac-19638xv2xsubscription_.htm",
+  "cik": "1481832",
+  "issuer": "PREFERRED APARTMENT COMMUNITIES INC",
+  "form": "8-K",
+  "file_date": "2019-10-02",
+  "year": 2019,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "EXHIBIT 10.1 - FORM OF ESCROW AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "b2370de8c414ee967298dcf4f7722dc246967ee07dce5b6e261ca581b23bd482",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 6,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 14
+  },
+  "pages": 14,
+  "page_kinds": {
+    "text": 14
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "29f7a09f2325bac2ece74f179e16ec9f8e9a6386db942115d29549b695120ede",
+  "broker_dealer": false
+}

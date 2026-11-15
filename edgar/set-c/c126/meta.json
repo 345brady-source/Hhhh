@@ -1,0 +1,46 @@
+{
+  "id": "c126",
+  "url": "https://www.sec.gov/Archives/edgar/data/1740883/000174088319000001/LRR_SubscriptionAgreement.pdf",
+  "cik": "1740883",
+  "issuer": "Big Belly Brewing LLC",
+  "form": "C/A",
+  "file_date": "2019-01-31",
+  "year": 2019,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT FOR EQUITY",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "edcb16aba5af98cb96722814722ab747cf3aedeb883dff0724950510a9afb060",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": true,
+    "underscores": 2,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 6,
+  "page_kinds": {
+    "text": 6
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "edcb16aba5af98cb96722814722ab747cf3aedeb883dff0724950510a9afb060",
+  "broker_dealer": false
+}

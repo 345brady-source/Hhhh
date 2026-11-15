@@ -1,0 +1,80 @@
+{
+  "id": "c075",
+  "url": "https://www.sec.gov/Archives/edgar/data/1490927/000114420411002470/v206723_n2a.htm",
+  "cik": "1490927",
+  "issuer": "Business Development Corp of America",
+  "form": "N-2/A",
+  "file_date": "2011-01-14",
+  "year": 2011,
+  "exhibit": "N-2/A",
+  "exhibit_description": null,
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "0df35f67e28813467f39138b219496f0fb27a99a016203797994fc833bea06eb",
+  "extra_files": [
+    "line.gif",
+    "logo_bdca.jpg",
+    "spacer.gif"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "Appendix A: Form of Subscription Agreement | BUSINESS DEVELO",
+    "end_heading": "END"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 24
+  },
+  "pages": 27,
+  "page_kinds": {
+    "text": 23,
+    "blank": 3,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "blank",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "blank",
+    "text",
+    "blank",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "8cdd211cce4fda11fcef9448767f81866d35f2f72534ab47dcced9cf33b5bcf5",
+  "broker_dealer": true
+}

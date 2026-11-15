@@ -1,0 +1,71 @@
+{
+  "id": "c091",
+  "url": "https://www.sec.gov/Archives/edgar/data/1572702/000119312516518281/d84322ds1a.htm",
+  "cik": "1572702",
+  "issuer": "Atlas Growth Partners, L.P.",
+  "form": "S-1/A",
+  "file_date": "2016-03-25",
+  "year": 2016,
+  "exhibit": "S-1/A",
+  "exhibit_description": "AMENDMENT NO. 6 TO FORM S-1",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "7010b30a00b0ee19102485709d2c2045ae5767c165f75e7e171365ab16ccdbc2",
+  "extra_files": [
+    "g84322g27m07.jpg",
+    "g84322g28q57.jpg",
+    "g84322g56f03.jpg",
+    "g84322g64a89.jpg",
+    "g84322g94j46.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "Exhibit C to Prospectus | SUBSCRIPTION AGREEMENT",
+    "end_heading": "Exhibit D to Prospectus"
+  },
+  "how_made": "picture-print",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 16,
+  "page_kinds": {
+    "text": 6,
+    "little or no text": 2,
+    "picture": 8
+  },
+  "page_kind_list": [
+    "text",
+    "little or no text",
+    "text",
+    "picture",
+    "picture",
+    "text",
+    "picture",
+    "picture",
+    "text",
+    "picture",
+    "picture",
+    "text",
+    "picture",
+    "text",
+    "picture",
+    "little or no text"
+  ],
+  "page_content": "mixed: 2 little or no text, 8 picture, 6 text",
+  "doc_sha256": "13542770d3dbfbe12735005c3cb696923ddd8e34881eb4f5808ade1b08b0e282",
+  "broker_dealer": true
+}

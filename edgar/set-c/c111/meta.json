@@ -1,0 +1,62 @@
+{
+  "id": "c111",
+  "url": "https://www.sec.gov/Archives/edgar/data/1942722/000110465923077681/tm2226053-19_s11a.htm",
+  "cik": "1942722",
+  "issuer": "BGO Industrial Real Estate Income Trust, Inc.",
+  "form": "S-11/A",
+  "file_date": "2023-07-03",
+  "year": 2023,
+  "exhibit": "S-11/A",
+  "exhibit_description": "AMENDMENT TO FORM S-11",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "8f61822c99d871f799532734f064847d2cd465842da1ffa580e4665fed757880",
+  "extra_files": [
+    "lg_ireitbybgo-4clr.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX C: FORM OF SUBSCRIPTION AGREEMENT | \u200b | \u200b",
+    "end_heading": "APPENDIX D: DATA PRIVACY NOTICE"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 1
+  },
+  "pages": 11,
+  "page_kinds": {
+    "text": 9,
+    "little or no text": 1,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "1f79846835102811bf3694db330a68e1fc24d777e93187de3907a90218eb4a76",
+  "broker_dealer": true
+}

@@ -1,0 +1,67 @@
+{
+  "id": "c097",
+  "url": "https://www.sec.gov/Archives/edgar/data/1615222/000138713118003235/mnrtii-424b3_071918.htm",
+  "cik": "1615222",
+  "issuer": "Moody National REIT II, Inc.",
+  "form": "424B3",
+  "file_date": "2018-07-20",
+  "year": 2018,
+  "exhibit": "424B3",
+  "exhibit_description": "PROSPECTUS",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "0dc7f31a7ab9478d918a01b911c027361bfc2a655cc715159932092ddfbe4b24",
+  "extra_files": [
+    "mnrtii424b3007.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX A",
+    "end_heading": "END"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 2
+  },
+  "pages": 17,
+  "page_kinds": {
+    "text": 15,
+    "little or no text": 2
+  },
+  "page_kind_list": [
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "848e515a359201c9818492192b7cb7ccaa319063fd4cacda68969a03df8998e2",
+  "broker_dealer": true
+}

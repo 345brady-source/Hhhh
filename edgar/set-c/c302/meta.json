@@ -1,0 +1,59 @@
+{
+  "id": "c302",
+  "url": "https://www.sec.gov/Archives/edgar/data/1131903/000109690625001698/fccn_ex10z2.htm",
+  "cik": "1131903",
+  "issuer": "SPECTRAL CAPITAL Corp  (FCCN)",
+  "form": "8-K",
+  "file_date": "2025-10-16",
+  "year": 2025,
+  "exhibit": "EX-10.2",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT RELATING TO THE PRIVATE PLACEMENT DATED OCTOBER 2, 2025.",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "947819cc8910ce1f5894efc170159512d35dec9b8c5b11012c520aab6bce61db",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 6,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 9
+  },
+  "pages": 10,
+  "page_kinds": {
+    "text": 10
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "1085c668de856339292d4b09a7eaf2a6dcb0cede3ff0a37506ea725f12da1a28",
+  "broker_dealer": false
+}

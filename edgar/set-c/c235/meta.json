@@ -1,0 +1,54 @@
+{
+  "id": "c235",
+  "url": "https://www.sec.gov/Archives/edgar/data/1116539/000106299305001605/exhibit10-1.htm",
+  "cik": "1116539",
+  "issuer": "GARUDA CAPITAL CORP",
+  "form": "8-K",
+  "file_date": "2005-07-11",
+  "year": 2005,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENTS DATED AS OF JUNE 30, 2005",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "cde6a41eb2d9c90daa778b245aa3756ca07e84a40699ce1af3c22e910b55e25c",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 8,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 4
+  },
+  "pages": 5,
+  "page_kinds": {
+    "text": 5
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "c51532888edf6d1be8af095739b9459ca0b546e85741b941b6c580ca1daaac24",
+  "broker_dealer": false
+}

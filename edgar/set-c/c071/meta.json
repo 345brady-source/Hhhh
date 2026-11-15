@@ -1,0 +1,58 @@
+{
+  "id": "c071",
+  "url": "https://www.sec.gov/Archives/edgar/data/1310383/000110465909037787/a08-28759_3424b3.htm",
+  "cik": "1310383",
+  "issuer": "Cornerstone Core Properties REIT, Inc.",
+  "form": "424B3",
+  "file_date": "2009-06-11",
+  "year": 2009,
+  "exhibit": "424B3",
+  "exhibit_description": "424B3",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "247e6790c984bd30eca7ab144c39c90d7041d8ade09df586a8ef764a13679fbe",
+  "extra_files": [
+    "g287593hfi001.jpg",
+    "g287593hfi002.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX A | Instructions For Completing CORNERSTONE CORE PR",
+    "end_heading": "APPENDIX B"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 8,
+  "page_kinds": {
+    "text": 8
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "5e132cd3a06bbe10dd10f264a01ee1e658a43ceb1633a04915a15bd7572c423b",
+  "broker_dealer": true
+}

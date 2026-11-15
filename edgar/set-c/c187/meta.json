@@ -1,0 +1,54 @@
+{
+  "id": "c187",
+  "url": "https://www.sec.gov/Archives/edgar/data/1469284/000107878210002857/oicco1s1a8ex99b.htm",
+  "cik": "1469284",
+  "issuer": "OICCO ACQUISITION I, INC.",
+  "form": "S-1/A",
+  "file_date": "2010-12-08",
+  "year": 2010,
+  "exhibit": "EX-99",
+  "exhibit_description": "EX 99B SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "8d631eadb19637dfdb54205fdaa943a6c928fe39b2a0ce79f972d6f46621736b",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 2,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 11
+  },
+  "pages": 5,
+  "page_kinds": {
+    "text": 5
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "5a778b688f44dc3926ec21b556ca883d4488c31ed5222d721a6178708a511f9b",
+  "broker_dealer": false
+}

@@ -1,0 +1,52 @@
+{
+  "id": "c303",
+  "url": "https://www.sec.gov/Archives/edgar/data/2064314/000121390025117365/ea026780601ex10-12_21shares.htm",
+  "cik": "2064314",
+  "issuer": "21Shares Dogecoin ETF",
+  "form": "S-1/A",
+  "file_date": "2025-12-02",
+  "year": 2025,
+  "exhibit": "EX-10.12",
+  "exhibit_description": "INITIAL SEED CREATION SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "2ac2cc47c86dafaf8da952d0e953c9062a3fc370f0ec0ff41efe07c3cb125832",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 4,
+    "tables": 2,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 0
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "0bd1414830c20ce0f4e1905f347da783e2060122a70959b8ef16056c5edb426c",
+  "broker_dealer": false
+}

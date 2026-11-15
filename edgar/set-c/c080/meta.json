@@ -1,0 +1,72 @@
+{
+  "id": "c080",
+  "url": "https://www.sec.gov/Archives/edgar/data/1501745/000114420411048006/v232440_424b3.htm",
+  "cik": "1501745",
+  "issuer": "American Realty Capital Daily Net Asset Value Trust, Inc.",
+  "form": "424B3",
+  "file_date": "2011-08-16",
+  "year": 2011,
+  "exhibit": "424B3",
+  "exhibit_description": null,
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "e5d94475b5229e07c4476c798b47d5e58e5406f5afeb20a86e72b16ed99a48e4",
+  "extra_files": [
+    "line.gif",
+    "spacer.gif"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX C | American Realty Capital Daily Net Asset Value T",
+    "end_heading": "APPENDIX E Letter of Direction"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 6
+  },
+  "pages": 21,
+  "page_kinds": {
+    "text": 18,
+    "little or no text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "a324d571fc46cf2ecc7d79d18c0f9814d0e879dc53dafa2e03118b0d0be64501",
+  "broker_dealer": true
+}

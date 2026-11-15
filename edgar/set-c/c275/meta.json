@@ -1,0 +1,51 @@
+{
+  "id": "c275",
+  "url": "https://www.sec.gov/Archives/edgar/data/1704523/000147793217003999/loyal_ex104.htm",
+  "cik": "1704523",
+  "issuer": "Loyal Source Market Services Inc",
+  "form": "S-1/A",
+  "file_date": "2017-08-16",
+  "year": 2017,
+  "exhibit": "EX-10.4",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "afc6e9671b7048578ac14b946093d1819a42e1f656b025a72fdeb499b6a6b1b1",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 4,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 1
+  },
+  "pages": 2,
+  "page_kinds": {
+    "text": 2
+  },
+  "page_kind_list": [
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "89c9a1700d7bc660ef34c0eccd923d636185fccd87991e8aa7986c87e70dbb07",
+  "broker_dealer": false
+}

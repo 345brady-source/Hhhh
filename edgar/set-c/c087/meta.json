@@ -1,0 +1,72 @@
+{
+  "id": "c087",
+  "url": "https://www.sec.gov/Archives/edgar/data/1648383/000119312515273024/d57354ds11.htm",
+  "cik": "1648383",
+  "issuer": "CNL Healthcare Properties II, Inc.",
+  "form": "S-11",
+  "file_date": "2015-07-31",
+  "year": 2015,
+  "exhibit": "S-11",
+  "exhibit_description": "FORM S-11",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "7fca6828d40c8bf8c98e9beae3121adfce62fec5d7f243b2919e85baeb0d2e01",
+  "extra_files": [
+    "g57354appb_pg01.jpg",
+    "g57354appb_pg02.jpg",
+    "g57354appb_pg03.jpg",
+    "g57354appb_pg04.jpg",
+    "g57354appb_pg05.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX B | FORM OF SUBSCRIPTION AGREEMENT",
+    "end_heading": "APPENDIX C"
+  },
+  "how_made": "picture-print",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 17,
+  "page_kinds": {
+    "little or no text": 7,
+    "picture": 5,
+    "picture+ocr-text": 5
+  },
+  "page_kind_list": [
+    "little or no text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "d55246e03e8c03793c8994f2ad488e7f234e7534dab758998b45b4638bddde4b",
+  "broker_dealer": true
+}

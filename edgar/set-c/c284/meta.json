@@ -1,0 +1,52 @@
+{
+  "id": "c284",
+  "url": "https://www.sec.gov/Archives/edgar/data/1786960/000178696019000005/qolm_ex4b2.htm",
+  "cik": "1786960",
+  "issuer": "QUALITY OF LIFE MARKETING INC",
+  "form": "1-A/A",
+  "file_date": "2019-12-23",
+  "year": 2019,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "635e2d4c1928cf331e07e2264484189cdd0beea30f248fc844cb37d22702120f",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 7,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 8
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "a638c9e2a4a2bb5e63e688000f12e76cc296977f23a74851ec6e800cf2a3697d",
+  "broker_dealer": false
+}

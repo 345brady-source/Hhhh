@@ -1,0 +1,54 @@
+{
+  "id": "c252",
+  "url": "https://www.sec.gov/Archives/edgar/data/1498210/000107997310001198/ex1-1.htm",
+  "cik": "1498210",
+  "issuer": "RJD Green, Inc.",
+  "form": "S-1/A",
+  "file_date": "2010-11-12",
+  "year": 2010,
+  "exhibit": "EX-1.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "638ad8d44e7edec92d81b706f5519a79fb1399a6125b56f238f5ebf9c7a90f89",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 16,
+    "tables": 2,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 39
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 3,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "94d5f9335aad19b3c07da7a78e07587fc45c7e9bc5803050c2cc44f58b5d8b8c",
+  "broker_dealer": false
+}

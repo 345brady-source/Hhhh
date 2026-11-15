@@ -1,0 +1,66 @@
+{
+  "id": "c055",
+  "url": "https://www.sec.gov/Archives/edgar/data/1279088/000095013704007676/a99888a5sv11za.htm",
+  "cik": "1279088",
+  "issuer": "A REIT INC",
+  "form": "S-11/A",
+  "file_date": "2004-09-13",
+  "year": 2004,
+  "exhibit": "S-11/A",
+  "exhibit_description": "FORM S-11 AMENDMENT NO. 5",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "cc1bcbab57c19d8a278ff30be1fa7c109f70afe3a461e71d394f4e302e9748e9",
+  "extra_files": [
+    "a99888a5a9988808.gif",
+    "a99888a5a9988809.gif"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "EXHIBIT B | SUBSCRIPTION AGREEMENT",
+    "end_heading": "EXHIBIT C"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 12
+  },
+  "pages": 14,
+  "page_kinds": {
+    "text": 12,
+    "picture": 1,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "picture",
+    "text",
+    "text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "c0aa9a7850d04331d7fa24457ec45037841b7e886af83fd8493aef04775a1721",
+  "broker_dealer": true
+}

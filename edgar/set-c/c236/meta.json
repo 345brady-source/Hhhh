@@ -1,0 +1,59 @@
+{
+  "id": "c236",
+  "url": "https://www.sec.gov/Archives/edgar/data/1302177/000119312505157657/dex1016.htm",
+  "cik": "1302177",
+  "issuer": "POKERTEK INC",
+  "form": "S-1",
+  "file_date": "2005-08-04",
+  "year": 2005,
+  "exhibit": "EX-10.16",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "bba4a1bfcd75735aeb8a92208004e34fd058cf4addb35e819e0c8dbbd3d5feaa",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 10,
+    "tables": 9,
+    "questionnaire": true,
+    "joint": true,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 0
+  },
+  "pages": 9,
+  "page_kinds": {
+    "text": 8,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "fbfdee250c8e308b040d0e85e7f0b71e4686109d1fdde85529b54aaa3ad3e528",
+  "broker_dealer": false
+}

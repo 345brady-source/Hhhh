@@ -1,0 +1,68 @@
+{
+  "id": "c009",
+  "url": "https://www.sec.gov/Archives/edgar/data/1444403/000135448815005037/cdgr_ex991.htm",
+  "cik": "1444403",
+  "issuer": "CODE GREEN APPAREL CORP  (CGAC)",
+  "form": "S-1/A",
+  "file_date": "2015-11-13",
+  "year": 2015,
+  "exhibit": "EX-99.1",
+  "exhibit_description": "INVESTOR SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "e1f27c403be89eb7ba5f7a8cc42b35750138ff97d419e8cd1813163b82fb1401",
+  "extra_files": [
+    "ex991_1.jpg",
+    "ex991_2.jpg",
+    "ex991_3.jpg",
+    "ex991_4.jpg"
+  ],
+  "layout_notes": [],
+  "how_made": "picture-print",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 4,
+    "underscores": 0
+  },
+  "pages": 12,
+  "page_kinds": {
+    "text": 1,
+    "picture": 8,
+    "blank": 3
+  },
+  "page_kind_list": [
+    "text",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "92b4fd9d2eff6a644e096e548c149c6f15440fa811924eafdae562f20a5fdcba",
+  "broker_dealer": false
+}

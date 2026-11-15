@@ -1,0 +1,51 @@
+{
+  "id": "c165",
+  "url": "https://www.sec.gov/Archives/edgar/data/2008780/000207002425000004/EXCsubscriptionagmtRec.pdf",
+  "cik": "2008780",
+  "issuer": "MRH CF, LLC",
+  "form": "C/A",
+  "file_date": "2025-07-18",
+  "year": 2025,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "f4ae240e5e70080c632469ef4624e49def237ea0aa3ad378cac0aa9d95d5d24d",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 16,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "underscores": 0,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 11,
+  "page_kinds": {
+    "text": 11
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "f4ae240e5e70080c632469ef4624e49def237ea0aa3ad378cac0aa9d95d5d24d",
+  "broker_dealer": false
+}

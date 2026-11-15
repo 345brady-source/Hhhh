@@ -1,0 +1,52 @@
+{
+  "id": "c175",
+  "url": "https://www.sec.gov/Archives/edgar/data/1272415/000107997304000365/delmars11_ex103.txt",
+  "cik": "1272415",
+  "issuer": "DEL MAR INCOME PARTNERS LTD",
+  "form": "S-11",
+  "file_date": "2004-08-10",
+  "year": 2004,
+  "exhibit": "EX-10.3",
+  "exhibit_description": "FORM OF COVER LETTER AND SUBSCRIPTION AGMT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "landscape",
+  "source_file": "source.txt",
+  "source_sha256": "c1abaa878808583b958d440782a99b32a9d99b8f7da0245aa0b4dd080c211aa6",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 6
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "eb36d5b526360286d52b48b1e6ad62421f37a0346b762527025589ce8fd1f9b4",
+  "broker_dealer": false
+}

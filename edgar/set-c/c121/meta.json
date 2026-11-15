@@ -1,0 +1,52 @@
+{
+  "id": "c121",
+  "url": "https://www.sec.gov/Archives/edgar/data/1667014/000166701417000001/BBHC_subscription.pdf",
+  "cik": "1667014",
+  "issuer": "Big Brother Holding Company, LLC",
+  "form": "C/A",
+  "file_date": "2017-03-13",
+  "year": 2017,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "c1125b8ec8312f99583d5cf338fc5159bcb90f27002471cbf38549614b10525a",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": true,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "underscores": 59,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 12,
+  "page_kinds": {
+    "text": 12
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "c1125b8ec8312f99583d5cf338fc5159bcb90f27002471cbf38549614b10525a",
+  "broker_dealer": false
+}

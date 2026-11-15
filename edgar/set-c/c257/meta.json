@@ -1,0 +1,52 @@
+{
+  "id": "c257",
+  "url": "https://www.sec.gov/Archives/edgar/data/1517462/000134100411001608/ex-p.htm",
+  "cik": "1517462",
+  "issuer": "BlackRock Preferred Partners LLC",
+  "form": "N-2/A",
+  "file_date": "2011-08-12",
+  "year": 2011,
+  "exhibit": "EX-99.2P STOCK LTR",
+  "exhibit_description": "EXHIBIT (P) - FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "81b4fcbe6f485a6c294a792a29454f09cd9ec16b91eb52196560acf1f5a8758a",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 2,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 3
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "c2a1145bb3bcc0c1a1e7e41c8d6ef58c1426a073dcff4a16b4989f655360bff3",
+  "broker_dealer": false
+}

@@ -1,0 +1,52 @@
+{
+  "id": "c246",
+  "url": "https://www.sec.gov/Archives/edgar/data/1448695/000101376208002254/ex102.htm",
+  "cik": "1448695",
+  "issuer": "Adventure Energy, Inc.",
+  "form": "S-1",
+  "file_date": "2008-10-29",
+  "year": 2008,
+  "exhibit": "EX-10.2",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT FOR WELL",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "32c9812549999e00c3111888536d5b0e5bbf919bd13f1ab9d1240d33da340e0c",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 17,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 15
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "1c658cf0ef5cc1fa6f1d668cd462c640ab825cdbcd6e6642d5d5cf38000764b9",
+  "broker_dealer": false
+}

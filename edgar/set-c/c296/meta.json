@@ -1,0 +1,57 @@
+{
+  "id": "c296",
+  "url": "https://www.sec.gov/Archives/edgar/data/1836875/000121390023046701/ea179794ex10-1_nuvve.htm",
+  "cik": "1836875",
+  "issuer": "Nuvve Holding Corp.  (NVVE, NVVEW)",
+  "form": "8-K",
+  "file_date": "2023-06-06",
+  "year": 2023,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT BETWEEN THE COMPANY AND THE PURCHASER, DATED JUNE",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "b2ac0b0f06f4721f30a01cb2fe0cb413b9df373ab29e474c326c01362b6033b5",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 5,
+    "questionnaire": true,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 12
+  },
+  "pages": 8,
+  "page_kinds": {
+    "text": 8
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "4d5cba7686a906eae77ce9164049557fdeca422102518145e8c6cca7908cf433",
+  "broker_dealer": false
+}

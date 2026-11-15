@@ -1,0 +1,70 @@
+{
+  "id": "c007",
+  "url": "https://www.sec.gov/Archives/edgar/data/1589029/000119312515126278/d850302dex99p1.htm",
+  "cik": "1589029",
+  "issuer": "Blackstone Real Estate Income Fund II",
+  "form": "POS 8C",
+  "file_date": "2015-04-10",
+  "year": 2015,
+  "exhibit": "EX-99.P1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT FOR MORGAN STANLEY SMITH BARNEY LLC.",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "3a3346a0136467b11ae207cdb12492a46daceb0c4be0a40ab0f2593b81a2b76e",
+  "extra_files": [
+    "g850302dsp_024.jpg",
+    "g850302dsp_025.jpg",
+    "g850302dsp_030.jpg"
+  ],
+  "layout_notes": [],
+  "how_made": "picture-print",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 4,
+    "tables": 11,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": true,
+    "countersign": false,
+    "imgs": 3,
+    "underscores": 0
+  },
+  "pages": 14,
+  "page_kinds": {
+    "text": 6,
+    "picture": 3,
+    "picture+ocr-text": 3,
+    "blank": 2
+  },
+  "page_kind_list": [
+    "text",
+    "picture",
+    "picture+ocr-text",
+    "blank",
+    "picture",
+    "picture+ocr-text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "blank",
+    "picture",
+    "picture+ocr-text"
+  ],
+  "page_content": "mixed: 2 blank, 3 picture, 3 picture+ocr-text, 6 text",
+  "doc_sha256": "878207a3ae309d2298e9f2732051a434a7cff2b1f47724682a77821d8f1668b4",
+  "broker_dealer": true
+}

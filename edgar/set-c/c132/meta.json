@@ -1,0 +1,50 @@
+{
+  "id": "c132",
+  "url": "https://www.sec.gov/Archives/edgar/data/1833372/000109690621000219/pk_ex4z1.pdf",
+  "cik": "1833372",
+  "issuer": "PK Kirk Inc.",
+  "form": "1-A",
+  "file_date": "2021-02-02",
+  "year": 2021,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "681999d17279b34e14cfcbd70a503ac50f7107ac0e065d3e6bc46dac2d359206",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 5,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "underscores": 1,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 10,
+  "page_kinds": {
+    "text": 10
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "681999d17279b34e14cfcbd70a503ac50f7107ac0e065d3e6bc46dac2d359206",
+  "broker_dealer": false
+}

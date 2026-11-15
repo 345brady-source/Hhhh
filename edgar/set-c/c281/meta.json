@@ -1,0 +1,60 @@
+{
+  "id": "c281",
+  "url": "https://www.sec.gov/Archives/edgar/data/728447/000121390019001852/f8k020119ex10-3_evotrans.htm",
+  "cik": "728447",
+  "issuer": "EVO Transportation & Energy Services, Inc.",
+  "form": "8-K",
+  "file_date": "2019-02-07",
+  "year": 2019,
+  "exhibit": "EX-10.3",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT DATED FEBRUARY 1, 2019 BETWEEN EVO TRANSPORTATION & ENERGY SERVICES, INC. AND URSULA LAMPSA",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "9cb448cac941d9916b9de1bc106dd710112c456c444073f79e252b31587ef6ee",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 20,
+    "tables": 26,
+    "questionnaire": true,
+    "joint": true,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 5
+  },
+  "pages": 11,
+  "page_kinds": {
+    "text": 11
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "f54c843f0c93eff312ffb02f4afd4ccd2d8bc2a15abea7c4c8285107ea74f8f1",
+  "broker_dealer": false
+}

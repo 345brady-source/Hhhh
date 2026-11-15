@@ -1,0 +1,48 @@
+{
+  "id": "c140",
+  "url": "https://www.sec.gov/Archives/edgar/data/1815146/000147793222006415/aeroexc.pdf",
+  "cik": "1815146",
+  "issuer": "Aeroponics Integrated Systems Inc.",
+  "form": "C/A",
+  "file_date": "2022-08-23",
+  "year": 2022,
+  "exhibit": "EX-99",
+  "exhibit_description": "EXHIBIT C",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "a3d962965011ae75d265b3d4bdbbe6550b4be49e9514797c964d1c20a8ec25fd",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": true,
+    "brokerdealer": false,
+    "countersign": true,
+    "underscores": 9,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 8,
+  "page_kinds": {
+    "text": 8
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "a3d962965011ae75d265b3d4bdbbe6550b4be49e9514797c964d1c20a8ec25fd",
+  "broker_dealer": false
+}

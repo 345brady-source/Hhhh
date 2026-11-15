@@ -1,0 +1,55 @@
+{
+  "id": "c290",
+  "url": "https://www.sec.gov/Archives/edgar/data/1591615/000116169722000068/ex4-1.htm",
+  "cik": "1591615",
+  "issuer": "VirExit Technologies, Inc.",
+  "form": "1-A",
+  "file_date": "2022-01-24",
+  "year": 2022,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "39033afcdfc7413c71f47b2fd205f9d55724a6b84e69cf66d8fa0593de948296",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 5,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 1
+  },
+  "pages": 6,
+  "page_kinds": {
+    "text": 6
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "44f47bb8c543add485b65cc29d1d333b936872aafe256e4069df925910e4a91b",
+  "broker_dealer": false
+}

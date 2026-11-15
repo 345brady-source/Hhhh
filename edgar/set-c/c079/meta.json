@@ -1,0 +1,71 @@
+{
+  "id": "c079",
+  "url": "https://www.sec.gov/Archives/edgar/data/1440292/000095012311043740/d79284b3e424b3.htm",
+  "cik": "1440292",
+  "issuer": "United Development Funding IV",
+  "form": "424B3",
+  "file_date": "2011-05-03",
+  "year": 2011,
+  "exhibit": "424B3",
+  "exhibit_description": "424B3",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "da87c3d5e88e8d814827749039610f1b8bbdbc7cde34af96b3fdb57e362a7810",
+  "extra_files": [
+    "d79284b3d7928400.gif",
+    "d79284b3d7928422.gif",
+    "d79284b3d7928423.gif",
+    "d79284b3d7928424.gif"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "EXHIBIT B | FORM OF SUBSCRIPTION AGREEMENT",
+    "end_heading": "EXHIBIT C"
+  },
+  "how_made": "picture-print",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 17,
+  "page_kinds": {
+    "text": 9,
+    "little or no text": 5,
+    "picture": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "little or no text",
+    "picture",
+    "little or no text",
+    "little or no text",
+    "picture",
+    "little or no text",
+    "picture",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "821bdb79cfb5bc75a1ffc8e56f5df05553fd016ef60088b0044228e5230dd8cb",
+  "broker_dealer": true
+}

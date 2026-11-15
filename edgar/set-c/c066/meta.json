@@ -1,0 +1,53 @@
+{
+  "id": "c066",
+  "url": "https://www.sec.gov/Archives/edgar/data/1387061/000110465908003498/a07-12529_7424b3.htm",
+  "cik": "1387061",
+  "issuer": "Behringer Harvard Opportunity REIT II, Inc.",
+  "form": "424B3",
+  "file_date": "2008-01-18",
+  "year": 2008,
+  "exhibit": "424B3",
+  "exhibit_description": "PROSPECTUS FILED PURSUANT TO RULE 424(B)(3)",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "edf6ff9d5fff5b788986be069b225790765a0d93d7e817f81c0d1f0c6fbc2a2d",
+  "extra_files": [
+    "g125297bw07i001.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "EXHIBIT B",
+    "end_heading": "EXHIBIT C DISTRIBUTION REINVESTMENT PLAN"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 4
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "38b851c19e7cb788956b1fd3310c4f91fc796c48fe2974d20654fbabb121aa53",
+  "broker_dealer": true
+}

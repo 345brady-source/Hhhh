@@ -1,0 +1,58 @@
+{
+  "id": "c100",
+  "url": "https://www.sec.gov/Archives/edgar/data/1690012/000119312519138519/d674628d424b3.htm",
+  "cik": "1690012",
+  "issuer": "InPoint Commercial Real Estate Income, Inc.  (ICRP, ICR-PA)",
+  "form": "424B3",
+  "file_date": "2019-05-07",
+  "year": 2019,
+  "exhibit": "424B3",
+  "exhibit_description": "424B3",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "e8673930eddc7ca1d5b5c9c56ccc0b38046be07120800e9fcd444d4643632c31",
+  "extra_files": [
+    "g674628g70h96.jpg",
+    "g674628g74w70.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX B: SUBSCRIPTION AGREEMENT",
+    "end_heading": "APPENDIX C: PRIVACY POLICY NOTICE"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 7,
+  "page_kinds": {
+    "text": 6,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "1534a72b47ce7a08217ca8cd24864e4a45d20c0fa130ae84e8183666f90cc265",
+  "broker_dealer": true
+}

@@ -1,0 +1,56 @@
+{
+  "id": "c209",
+  "url": "https://www.sec.gov/Archives/edgar/data/1758533/000175853319000002/subscriptionagreement.htm",
+  "cik": "1758533",
+  "issuer": "Evolution Development Group, Inc.",
+  "form": "1-A",
+  "file_date": "2019-12-04",
+  "year": 2019,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "",
+  "offering_kind": "Regulation A",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "dcfacd2e100b1f61cc90c4371d218195e0cc1e1b3c6c5efb035a4ced58b7f675",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": true,
+    "brokerdealer": true,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 16
+  },
+  "pages": 7,
+  "page_kinds": {
+    "text": 7
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "7a5642e19a47c6296ec542e9ad698c4f789b6eff5a25348db126173c0cd18600",
+  "broker_dealer": false
+}

@@ -1,0 +1,48 @@
+{
+  "id": "c161",
+  "url": "https://www.sec.gov/Archives/edgar/data/2054179/000205417925000003/subscription2.pdf",
+  "cik": "2054179",
+  "issuer": "PPW Productions, LLC",
+  "form": "C/A",
+  "file_date": "2025-03-03",
+  "year": 2025,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "58bc16de233cc2f7644c3ad151ddc79da97c8a91c262dd57b46d586c1f643de3",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "underscores": 10,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 8,
+  "page_kinds": {
+    "text": 8
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "58bc16de233cc2f7644c3ad151ddc79da97c8a91c262dd57b46d586c1f643de3",
+  "broker_dealer": false
+}

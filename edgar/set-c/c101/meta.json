@@ -1,0 +1,59 @@
+{
+  "id": "c101",
+  "url": "https://www.sec.gov/Archives/edgar/data/1802892/000147793220000749/ooof_ex41.htm",
+  "cik": "1802892",
+  "issuer": "Own Our Own Fund I, LLC",
+  "form": "1-A",
+  "file_date": "2020-02-18",
+  "year": 2020,
+  "exhibit": "EX1A-4 SUBS AGMT.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "ed9983a127722f001ef3ee9e2613c24f6ab6ef2ef6f3062004df00379d28b67a",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 18,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 14
+  },
+  "pages": 10,
+  "page_kinds": {
+    "text": 10
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "9a8a950eaf079779f2d071529140c5533432288b46a4ec5478b2c297037f75d5",
+  "broker_dealer": true
+}

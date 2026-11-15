@@ -1,0 +1,54 @@
+{
+  "id": "c220",
+  "url": "https://www.sec.gov/Archives/edgar/data/936538/000102140801503228/dex992.txt",
+  "cik": "936538",
+  "issuer": "INCARA PHARMACEUTICALS CORP",
+  "form": "S-1",
+  "file_date": "2001-07-10",
+  "year": 2001,
+  "exhibit": "EX-99.2",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.txt",
+  "source_sha256": "6a3b81bf8d4db21ec5a65a3a790c20f092cee5f5ce363372c270be4b43436e5a",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": true,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 15
+  },
+  "pages": 5,
+  "page_kinds": {
+    "text": 5
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "06941159310250a88d2e7ec2cf1193811b1b22ce0cd5e53df837a7b54b6ef147",
+  "broker_dealer": false
+}

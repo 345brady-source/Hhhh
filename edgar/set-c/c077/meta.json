@@ -1,0 +1,78 @@
+{
+  "id": "c077",
+  "url": "https://www.sec.gov/Archives/edgar/data/1499875/000114420411009880/v211699_424b3.htm",
+  "cik": "1499875",
+  "issuer": "AMERICAN REALTY CAPITAL HEALTHCARE TRUST INC",
+  "form": "424B3",
+  "file_date": "2011-02-18",
+  "year": 2011,
+  "exhibit": "424B3",
+  "exhibit_description": null,
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "440fe10f883c2c3fc58ebbe3fdfeb1dde32a6fd833fd6b8654efed048564a2cb",
+  "extra_files": [
+    "line.gif",
+    "logo_arcap-ht.jpg",
+    "spacer.gif"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX C | AMERICAN REALTY CAPITAL HEALTHCARE TRUST, INC. ",
+    "end_heading": "APPENDIX E LETTER OF DIRECTION"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 4
+  },
+  "pages": 25,
+  "page_kinds": {
+    "text": 21,
+    "little or no text": 3,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "blank",
+    "text",
+    "text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "c4419eb0561c2fdadc7ba064f50a9b481aa5409a521a9c442cfd7d1e7e52496d",
+  "broker_dealer": true
+}

@@ -1,0 +1,51 @@
+{
+  "id": "c205",
+  "url": "https://www.sec.gov/Archives/edgar/data/1717976/000114420418004951/tv484465_ex99-p.htm",
+  "cik": "1717976",
+  "issuer": "Weiss Strategic Interval Fund",
+  "form": "N-2",
+  "file_date": "2018-02-01",
+  "year": 2018,
+  "exhibit": "EX-99.P",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "7bb967a9de4889b5de62eb0692c3e49306312bcde1f90a393b0381311d31f6ba",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 6,
+    "tables": 9,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 0
+  },
+  "pages": 2,
+  "page_kinds": {
+    "text": 2
+  },
+  "page_kind_list": [
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "7e881a3360e8fc2e9cb97bbabfe64a35197f4c4d3e8e92a2a2e9dd5bc7f18fff",
+  "broker_dealer": false
+}

@@ -1,0 +1,67 @@
+{
+  "id": "c074",
+  "url": "https://www.sec.gov/Archives/edgar/data/1503109/000114420410053384/v198574_s-11.htm",
+  "cik": "1503109",
+  "issuer": "Corporate Income Properties - ARC, Inc.",
+  "form": "S-11",
+  "file_date": "2010-10-12",
+  "year": 2010,
+  "exhibit": "S-11",
+  "exhibit_description": null,
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "9ee2c5eb5314368fafe36dffbb34c87f3a6d2c50b76706cddec51f3c9ccdc6a7",
+  "extra_files": [],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX C | CORPORATE INCOME PROPERTIES \u2013 ARC, INC. | SUBSC",
+    "end_heading": "APPENDIX D"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 92
+  },
+  "pages": 19,
+  "page_kinds": {
+    "text": 18,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "1eb2821cbf66730dbdfebbb94163b08c23a3406166e5c060592d32b23efff284",
+  "broker_dealer": true
+}

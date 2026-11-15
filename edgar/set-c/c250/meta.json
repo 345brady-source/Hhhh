@@ -1,0 +1,52 @@
+{
+  "id": "c250",
+  "url": "https://www.sec.gov/Archives/edgar/data/1367408/000100201410000427/exh991.htm",
+  "cik": "1367408",
+  "issuer": "RAPHAEL INDUSTRIES LTD.  (OILY)",
+  "form": "POS AM",
+  "file_date": "2010-06-03",
+  "year": 2010,
+  "exhibit": "EX-99.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT.",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "06e3ebb553349b1b92cc2ac24cc8f560744010a0943b55f98e61820b34d3834f",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 3,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 15
+  },
+  "pages": 2,
+  "page_kinds": {
+    "text": 1,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "1da92945f37092313be3240c0445655b511022b205cacc8af69a711425a749fb",
+  "broker_dealer": false
+}

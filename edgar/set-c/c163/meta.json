@@ -1,0 +1,45 @@
+{
+  "id": "c163",
+  "url": "https://www.sec.gov/Archives/edgar/data/2062402/000206240225000005/SubscriptionA01_1.pdf",
+  "cik": "2062402",
+  "issuer": "Be Belong Group Corp.",
+  "form": "C/A",
+  "file_date": "2025-05-29",
+  "year": 2025,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION DIRECTOR",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "48b7ca9fa0a98533cc1684bb6d5568dbfaa25dc26f93edfc4da6becec52e5066",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": true,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "underscores": 8,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 5,
+  "page_kinds": {
+    "text": 5
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "48b7ca9fa0a98533cc1684bb6d5568dbfaa25dc26f93edfc4da6becec52e5066",
+  "broker_dealer": false
+}

@@ -1,0 +1,49 @@
+{
+  "id": "c122",
+  "url": "https://www.sec.gov/Archives/edgar/data/1730206/000173020618000004/ag_subscription.pdf",
+  "cik": "1730206",
+  "issuer": "Acropolis Games LLC",
+  "form": "C/A",
+  "file_date": "2018-03-16",
+  "year": 2018,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "f61ed732aefcb87317f625476b7914a0869eecb0e22cbdd4a3ce917970adb0cf",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": true,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "underscores": 0,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 9,
+  "page_kinds": {
+    "text": 9
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "f61ed732aefcb87317f625476b7914a0869eecb0e22cbdd4a3ce917970adb0cf",
+  "broker_dealer": false
+}

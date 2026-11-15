@@ -1,0 +1,62 @@
+{
+  "id": "c076",
+  "url": "https://www.sec.gov/Archives/edgar/data/1498864/000093041311000327/c62553_424b3.htm",
+  "cik": "1498864",
+  "issuer": "Apple REIT Ten, Inc.",
+  "form": "424B3",
+  "file_date": "2011-01-20",
+  "year": 2011,
+  "exhibit": "424B3",
+  "exhibit_description": null,
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "c61e7e4fc3c52bc561168143bbdd3d5c28bf4c3c0ca5de39d86761db36e0ca33",
+  "extra_files": [
+    "c62553xlogo.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX A | SUBSCRIPTION AGREEMENT",
+    "end_heading": "Appendix A"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 13,
+  "page_kinds": {
+    "text": 13
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "4f144adcce04856ef14cc9589f4d664f3ad48704d63f3668212e09318e1cebba",
+  "broker_dealer": true
+}

@@ -1,0 +1,72 @@
+{
+  "id": "c084",
+  "url": "https://www.sec.gov/Archives/edgar/data/1588272/000119312514259354/d689242dn2a.htm",
+  "cik": "1588272",
+  "issuer": "NexPoint Capital, Inc.  (NXPT)",
+  "form": "N-2/A",
+  "file_date": "2014-07-02",
+  "year": 2014,
+  "exhibit": "N-2/A",
+  "exhibit_description": "PRE-EFFECTIVE AMENDMENT NO. 1",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "a24b6084c7f9722bbf3ebaadd6d290c392fac609ddc4be9af92c180614f554cc",
+  "extra_files": [],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX A: FORM OF SUBSCRIPTION AGREEMENT | NEXPOINT CAPITA",
+    "end_heading": "END"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 24,
+  "page_kinds": {
+    "text": 23,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "1e608d93bc517e328741d777a96cf52a2009ed49387d5ce82133fce75d28f8e4",
+  "broker_dealer": true
+}

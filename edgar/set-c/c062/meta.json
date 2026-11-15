@@ -1,0 +1,51 @@
+{
+  "id": "c062",
+  "url": "https://www.sec.gov/Archives/edgar/data/1066656/000091412107001775/ms9514922-ex10_09.txt",
+  "cik": "1066656",
+  "issuer": "MORGAN STANLEY CHARTER GRAHAM LP/",
+  "form": "8-K",
+  "file_date": "2007-07-23",
+  "year": 2007,
+  "exhibit": "EX-10.09",
+  "exhibit_description": "SPECIMEN FORM OF ADDITIONAL SUBSCRIPTION AGREEMENT",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.txt",
+  "source_sha256": "c2d89c3458cc0fb9cc996c0a9896bb66100ffcfcb7defd65c831055ef780dd63",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": true,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 3
+  },
+  "pages": 2,
+  "page_kinds": {
+    "text": 2
+  },
+  "page_kind_list": [
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "f6767ce5607c9e5b921c3864ae1130fc07e7cb28e5dd06808bf7869d60feef94",
+  "broker_dealer": true
+}

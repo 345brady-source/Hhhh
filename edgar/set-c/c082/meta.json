@@ -1,0 +1,69 @@
+{
+  "id": "c082",
+  "url": "https://www.sec.gov/Archives/edgar/data/1536256/000114420412020314/v307667_s11a.htm",
+  "cik": "1536256",
+  "issuer": "United Realty Trust Inc",
+  "form": "S-11/A",
+  "file_date": "2012-04-05",
+  "year": 2012,
+  "exhibit": "S-11/A",
+  "exhibit_description": "AMENDMENT NO.3 TO FORM S-11",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "fdc77bcf5f56d00508119cf7b624886decb7e47f1b806fc59aa694ea91a2cc5d",
+  "extra_files": [
+    "line.gif",
+    "logo_cabotlodge.jpg",
+    "spacer.gif"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX B FORM OF SUBSCRIPTION AGREEMENT | B-1",
+    "end_heading": "APPENDIX C"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 62
+  },
+  "pages": 17,
+  "page_kinds": {
+    "little or no text": 5,
+    "text": 12
+  },
+  "page_kind_list": [
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "little or no text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "ceccd9e88e99afb55b12781420aabaecb1113086c261d2f08a20524295cca38d",
+  "broker_dealer": true
+}

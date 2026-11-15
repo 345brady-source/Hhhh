@@ -1,0 +1,1160 @@
+<DOCUMENT>
+<TYPE>EX-2.4
+<SEQUENCE>3
+<FILENAME>ex2-4_purchaseagt.txt
+<DESCRIPTION>PURCHASE & SUBSCRIPTION AGREEMENT
+<TEXT>
+                                                       Execution Version
+
+
+                       PURCHASE AND SUBSCRIPTION AGREEMENT
+
+                  THIS PURCHASE AND SUBSCRIPTION AGREEMENT, dated as of October
+17, 2003 (this "Agreement"), is by and among TalkPoint Communications Inc., a
+Delaware corporation (the "Company"), Moneyline Networks, LLC, a Delaware
+limited liability company ("MLN"), each party whose name appears on the
+signature pages of this Agreement (each an "Investor" and, collectively, the
+"Investors") and, with respect to Sections 4(e) and 13 hereof, Moneyline
+Telerate Holdings, a Delaware corporation ("MTH").
+
+                                    RECITALS
+
+                  WHEREAS, MLN beneficially owns 33,289,824 shares (the "MLN
+Shares") of common stock, par value $0.01 per share (the "Common Stock") of the
+Company, which represents approximately 57% of the aggregate number of
+outstanding shares of Common Stock;
+
+                  WHEREAS, each of the Investors desires to make a cash
+investment in the Company in exchange for (i) newly issued shares of Common
+Stock (the "Newly Issued Common Stock") and (ii) a note of the Company
+convertible into Common Stock substantially in the form attached hereto as
+Exhibit A (a "Convertible Note") secured by certain assets of the Company
+pursuant to a Security Agreement substantially in the form attached hereto as
+Exhibit B (the "Security Agreement"), with the minimum aggregate investment of
+the Investors being $1,200,000;
+
+                  WHEREAS, each of the Investors desires to purchase from MLN,
+simultaneously with the purchase of the Newly Issued Common Stock and the
+Convertible Note, a number of MLN Shares (the transfer of such MLN Shares
+together with the issuance of the Newly Issued Common Stock and the Convertible
+Notes, the "Investment Transaction");
+
+                  WHEREAS, in connection with the Investment Transaction, MLN
+and the Company will enter into a distribution and licensing agreement
+substantially in the form attached hereto as Exhibit C (the "Distribution
+Agreement"), (the "Distribution Transaction" and, together with the Investment
+Transaction, the "Transactions");
+
+                  WHEREAS, in connection with the consummation of the
+Transactions, MTH and the Company will terminate the Secured Credit Agreement
+(as defined below) and all obligations and agreements related thereto; and
+
+                  WHEREAS, a special committee of independent directors of the
+Board of Directors of the Company has reviewed and evaluated the terms and
+conditions of the Transactions and deems the consummation of the Transactions to
+be fair to the Company.
+
+                                    AGREEMENT
+
+                  NOW, THEREFORE, in consideration of the mutual covenants and
+agreements and the representations and warranties herein contained, and for
+other good and valuable consideration, the receipt and sufficiency of which are
+hereby acknowledged, the parties hereto hereby agree as follows:
+
+<PAGE>
+
+                1. Definitions. For purposes of this Agreement:
+
+                           "Affiliate" or "Affiliates" shall have the meaning
+         ascribed to such term by Rule 144 promulgated under the Securities Act
+         of 1933, as amended (the "Securities Act").
+
+                           "Governmental Authority" means any nation or
+         government, any state or other political subdivision thereof or court,
+         arbitral or other tribunal and any entity properly exercising
+         executive, legislative, judicial, regulatory or administrative
+         functions of government.
+
+                           "Lien" means any charge, equitable interest, lien,
+         encumbrance, claim, option, proxy by way of security, pledge, security
+         interest, mortgage, right of first refusal, right of preemption,
+         transfer or retention of title agreement, or restriction by way of
+         security of any kind or nature, including any restriction on use,
+         voting, transfer, receipt of income or exercise of any other attribute
+         of ownership.
+
+                           "Material Adverse Effect" means, as to any person,
+         any change event or effect that is materially adverse to (a) the
+         business, assets, financial condition, operations or results of
+         operations of such person and its subsidiaries taken as a whole; or (b)
+         the ability of such person to consummate the transactions contemplated
+         by this Agreement or perform its obligations with respect thereto;
+         provided, however, that in no event shall a decline in the market price
+         of any person's publicly traded securities, in and of itself,
+         constitute a Material Adverse Effect.
+
+                           "Requirements of Law" means, as to any person, the
+         certificates of incorporation and bylaws or other organizational or
+         governing documents of such person, and all federal, state, local and
+         foreign laws, rules and regulations, including, without limitation,
+         securities, antitrust, communications, licensing, health, safety, labor
+         and trade laws, rules and regulations, and all orders, judgments,
+         decrees and other determinations of any Governmental Authority or
+         arbitrator, applicable to or binding upon such person or any of its
+         property or to which such person or any of its property is subject.
+
+                           "Transaction Documents" means this Agreement, the
+         Security Agreement, the Convertible Notes, the Distribution Agreement
+         and any other documents delivered by a party at the Closing.
+
+                           "Transfer Agent" means Continental Stock Transfer &
+         Trust Company, in its capacity as transfer agent for the Common Stock.
+
+                2.       Consummation of the Investment Transaction. On the
+         terms and subject to the conditions set forth in this Agreement and in
+         reliance upon the representations, warranties, covenants and agreements
+         contained herein, each of the parties hereto shall take all actions
+         necessary to consummate the Investment Transaction at the Closing (as
+         defined in Section 4(a)), including, without limitation, the following:
+
+                                       2
+<PAGE>
+                (a)      Purchase and Sale of the Newly Issued Common Stock. The
+         Company shall issue and sell to each Investor, and each Investor shall
+         purchase from the Company, the number of shares of Newly Issued Common
+         Stock specified opposite such Investor's name on Schedule I hereto.
+
+                (b)      Purchase and Issuance of the Convertible Notes. The
+         Company shall issue and sell to each Investor, and each Investor shall
+         purchase from the Company, a Convertible Note in the principal amount
+         specified opposite such Investor's name on Schedule I hereto.
+
+                (c)      Purchase Price for Securities; Allocation of Purchase
+         Price for Newly Issued Common Stock and Convertible Notes. The Company
+         shall issue the Newly Issued Common Stock and the Convertible Notes in
+         exchange for payment to the Company of the applicable purchase price as
+         indicated in Schedule I hereto. The total purchase price payable by
+         each Investor (as reflected on Schedule I hereto) shall be allocated
+         75% and 25% to the Newly Issued Common Stock and the Convertible Notes,
+         respectively.
+
+                (d)      Purchase and Sale of the MLN Shares. MLN shall sell to
+         each Investor, and each Investor shall purchase from MLN, the number of
+         MLN Shares specified opposite such Investor's name on Schedule I hereto
+         in exchange for an aggregate purchase price of $1.00 to be paid by each
+         Investor to MLN.
+
+        3.       Consummation of the Distribution Transaction. On the terms and
+subject to the conditions set forth in this Agreement and in reliance upon the
+representations, warranties, covenants and agreements contained herein, MLN and
+the Company shall execute and deliver the Distribution Agreement to each other.
+
+        4.       Closing.
+
+                (a)      Closing. The closing of the Investment Transaction (the
+         "Closing") will take place at the offices of Latham & Watkins LLP, 885
+         Third Avenue, New York, New York 10022 on the date hereof (the "Closing
+         Date").
+
+                (b)      Deliveries by the Company. At the Closing or promptly
+         thereafter, the Company shall deliver: (i) to the Transfer Agent
+         instructions, together with any required legal opinions, to issue
+         certificates registered in the name of each of the Investors,
+         representing the shares of Newly Issued Common Stock purchased by such
+         Investor and bearing the legends required pursuant to Section 16(p)
+         hereof, (ii) to each Investor, a duly executed Convertible Note in the
+         principal amount set forth in Schedule I for such Investor and a duly
+         executed copy of this Agreement and the Security Agreement and (iii) to
+         MLN, (A) a duly executed copy of this Agreement and the Distribution
+         Agreement and (B) $1.00, which represents consideration for the
+         cancellation of outstanding warrants pursuant to Section 14 hereof and
+         (iv) to MTH, a duly executed copy of this Agreement.
+
+                (c)      Deliveries  by MLN. At the Closing or promptly
+         thereafter,  MLN shall (i) surrender to the Transfer Agent certificates
+
+                                       3
+<PAGE>
+         representing its shares of Common Stock to be acquired by the Investors
+         as contemplated  by Section  2(d)  hereof,  such certificates  to be
+         accompanied by stock powers duly executed in blank by MLN with such
+         other  agreements and  instruments as the Transfer Agent may require to
+         effect the transfer of such  securities,  (ii) deliver to the Transfer
+         Agent instructions, together with any required legal opinions, to issue
+         certificates representing  shares of Common Stock to be acquired by the
+         Investors  pursuant to Section 2(d) to each of the  Investors,  and
+         bearing the legends  required  pursuant to Section  16(p) hereof,  and
+         (iii)  deliver a duly executed copy of this  Agreement and the
+         Distribution  Agreement to the Company and a duly executed copy of this
+         Agreement to the Investors.
+
+                (d)      Deliveries by the Investor. At the Closing, each
+         Investor shall deliver (i) to the Company, by wire transfer of
+         immediately available funds to an account maintained at a commercial
+         bank located in the United States and designated by the Company, or by
+         such other method as the Company and such Investor shall mutually agree
+         , an amount equal to the purchase price specified opposite such
+         Investor's name on Schedule I hereto, (ii) to MLN, $1.00, which
+         represents the purchase price for the MLN Shares purchased by such
+         Investor, and (iii) to each of the Company and MLN, a duly executed
+         copy of this Agreement and the Security Agreement.
+
+                (e)      Deliveries by MTH. At the Closing, MTH shall deliver a
+         duly executed copy of this Agreement to the Company and the Investors.
+
+        5.       Representations and Warranties of the Company. The Company
+hereby represents and warrants to MLN and each Investor as follows:
+
+                (a)      Organization. The Company is a corporation duly
+         organized, validly existing and in good standing under the laws of the
+         State of Delaware. The Company has corporate power and authority to
+         enter into this Agreement and the other Transaction Documents to which
+         it is a party, to issue the Newly Issued Common Stock and the
+         Convertible Notes, to perform its obligations hereunder and thereunder
+         and to consummate the transactions contemplated hereby and thereby.
+
+                (b)      Authority.  The  execution  and delivery of this
+         Agreement and the other  Transaction  Documents to which it is a party,
+         the  issuance  of the Convertible  Notes  by the Company, and  the
+         performance by the Company of its obligations hereunder and thereunder
+         have been duly  authorized  by all  requisite  corporate  action by the
+         Company,  and no other  corporate or other proceeding is necessary for
+         the execution and delivery of this Agreement or the other  Transaction
+         Documents to which it is a party, the issuance of the Convertible
+         Notes, the performance by the Company of its obligations  hereunder and
+         thereunder and the  consummation  by the  Company  of the  transactions
+         contemplated  hereby  and  thereby.  This  Agreement  and the  other
+         Transaction Documents to which it is a party have been duly and validly
+         executed and delivered by the Company,  and, upon the execution and
+         delivery by the other parties hereto and thereto,  will constitute the
+         legal, valid  and binding obligations  of the Company,  enforceable
+         against the Company in  accordance with  their terms, except  to  the
+         extent that such  validly binding effect  and enforceability may  be
+         limited by applicable  bankruptcy,  reorganization,  insolvency,
+          moratorium and other laws affecting creditors' rights generally.
+
+                                       4
+<PAGE>
+
+                (c)      Capitalization. The Newly Issued Common Stock has been
+        duly authorized and, when issued in accordance with this Agreement, will
+        be validly issued, fully paid and nonassessable. The MLN Shares have
+        been duly authorized and validly issued and are fully paid and
+        nonassessable. The Common Stock issuable upon conversion of each
+        Convertible Note has been duly authorized and, when issued in accordance
+        with the terms of such Convertible Note, will be validly issued, fully
+        paid and nonassessable.
+
+                (d)      Non-Contravention; Consents.
+
+                        (i)      Neither  the  execution  and  delivery by the
+                  Company of, nor the consummation or performance by the Company
+                  of any of the transactions to be consummated or performed by
+                  it under, this Agreement or the other Transaction Documents to
+                  which it is a party will directly or  indirectly  (with or
+                  without notice or lapse of time): (A) violate any provision of
+                  the Company's  Certificate of Incorporation or Bylaws, (B)
+                  constitute or result in a breach or default by the Company or
+                  any of its subsidiaries, or give rise to a right of
+                  termination,  amendment,  cancellation or acceleration on the
+                  part  of any other  party, or result in the  creation or
+                  imposition  of any Lien on the  Company's  assets  (except as
+                  provided  in the  Security  Agreement),  under  any  agreement
+                  or  instrument to which the Company or any of its subsidiaries
+                  is a party or by which the  Company or any of its subsidiaries
+                  is  bound,  which breach,  default, termination  or Lien would
+                  have a Material  Adverse  Effect on the  Company,  or (C)
+                  constitute  a violation  by the Company or any of its
+                  subsidiaries  of any  Requirements  of Law that would  have a
+                  Material  Adverse  Effect on the Company.
+
+                        (ii)    No consent, approval, order or authorization of,
+                  or registration,  qualification,  designation,  declaration or
+                  filing with, any  Governmental  Authority  or other  person on
+                  the part of the Company or any of its subsidiaries is required
+                  in connection  with the execution,  delivery and  performance
+                  by the Company of this Agreement or the other  Transaction
+                  Documents to which it is a party or the consummation of the
+                  transactions  contemplated hereby or thereby,  except for the
+                  consents of MLN provided herein,  filings  required under
+                  federal or states  securities laws to effect a Rule 506  or
+                  similar  exemption  under  the  Securities Act and  such other
+                  consents,  approvals,  orders,  authorizations, registrations,
+                  qualifications,  designations,  declarations or filings the
+                  failure of which to have or to make would not have a Material
+                  Adverse Effect on the Company.
+
+                (e)      SEC Filings.  Since  October 16, 2002,  the Company has
+         properly  filed all forms,  schedules,  reports,  prospectuses,  proxy
+         statements and documents required to be filed by the Company with the
+         Securities and Exchange  Commission (the "TalkPoint SEC Reports").  The
+         TalkPoint  SEC  Reports (i) at the  time they  were filed, complied  in
+         all  material  respects  with the requirements of the Securities Act or
+         the Securities  Exchange Act of 1934, as amended, as the case may be,
+
+                                       5
+ <PAGE>
+         and the rules and regulations  promulgated  thereunder,  and (ii) did
+         not at the time they were filed (or if amended or superseded by the
+         filing prior to the date of this  Agreement,  then on the date of such
+         filing)  contain any untrue  statement  of a material  fact or omit to
+         state a material fact required to be stated  therein or necessary in
+         order to make the  statements  therein,  in light of the circumstances
+         under which they were made, not misleading.  The Company makes no
+         representation or warranty  whatsoever concerning the TalkPoint SEC
+         Reports as of any time other than the time they were filed.
+
+                (f)      Relationship with MLN. The Company has no material
+         agreements with MLN other than this Agreement, the Distribution
+         Agreement, the Stock Purchase Agreement, dated May 16, 2002, by and
+         among MLN, B2BVideo Network Corp. ("B2B") and the Company, the
+         Strategic Alliance Agreement, dated as of May 16, 2002, by and among
+         MLN, B2B and the Company, the two Technology License Agreements entered
+         into in connection therewith, and the Guarantee by Moneyline Telerate,
+         an affiliate of MLN, in connection with the Agreement of Lease, dated
+         as of July 7, 1999, between the Company and WU/Lighthouse 100 William,
+         L.L.C., as amended. The Company has no outstanding indebtedness owed to
+         MLN.
+                  EXCEPT AS SPECIFICALLY SET FORTH IN THIS SECTION 5 OR THE
+OTHER TRANSACTION DOCUMENTS, THE COMPANY IS NOT MAKING ANY REPRESENTATIONS AND
+WARRANTIES, ORAL OR WRITTEN, EXPRESS OR IMPLIED, TO MLN OR ANY INVESTOR WITH
+RESPECT TO THE TRANSACTIONS CONTEMPLATED BY THE TRANSACTION DOCUMENTS.
+
+        6.       Representations and Warranties of MLN. MLN hereby represents
+and warrants to the Company and each Investor as follows:
+
+                (a)      Organization. MLN is a limited liability company duly
+         organized, validly existing and in good standing under the laws of the
+         State of Delaware. MLN has the requisite limited liability company
+         power and authority to enter into this Agreement and the other
+         Transaction Documents to which it is a party, to perform its
+         obligations hereunder and thereunder and to consummate the transactions
+         contemplated hereby and thereby.
+
+                (b)      Authority.  The execution and delivery of this
+         Agreement and the other  Transaction  Documents to which it is a party
+         by MLN, and the  performance by MLN of its obligations  hereunder and
+         thereunder have been duly authorized by all necessary limited liability
+         company  action by MLN, and no other  proceeding is necessary  for the
+         execution and delivery of this  Agreement or the other  Transaction
+         Documents to which it is a party,  the performance by MLN of its
+         obligations hereunder and thereunder and the consummation by MLN of the
+         transactions  contemplated  hereby and thereby.  This Agreement and the
+         other  Transaction Documents  to which it is a party have been duly and
+         validly  executed  and  delivered  by MLN,  and upon the  execution and
+         delivery  by the other  parties  hereto  and  thereto,  will constitute
+         the legal,  valid and  binding  obligations of MLN, enforceable against
+         MLN in  accordance  with  its  terms,  except  to the  extent that such
+         validly  binding effect and enforceability may be limited by applicable
+         bankruptcy,  reorganization, insolvency,  moratorium and  other laws
+         affecting creditors'  rights generally.  The MLN  Shares have been duly
+         authorized  and  validly  issued and are fully  paid and nonassessable.
+
+                                       6
+<PAGE>
+
+                (c)      Non-Contravention; Consents.
+
+                        (i)      Neither the execution and delivery by MLN of,
+                  nor the  consummation  or  performance by MLN of any of the
+                  transactions  to be consummated or performed by it under, this
+                  Agreement or the other  Transaction  Documents to which it is
+                  a party will directly or indirectly (with or without notice or
+                  lapse of time): (A) violate any provision of MLN's Certificate
+                  of Formation,  Limited Liability Company Agreement or other
+                  similar organizational documents (B) constitute or result in
+                  a breach or default by MLN, or give rise to a right of
+                  termination,  amendment,  cancellation or acceleration on the
+                  part of any other party, or result in the creation or
+                  imposition of any Lien on MLN's assets, under any agreement or
+                  instrument to which MLN is a party or by which MLN is bound,
+                  which breach, default,  termination or Lien would have a
+                  Material  Adverse  Effect on MLN, or (C) constitute a
+                  violation by MLN of any  Requirements of Law that would have a
+                  Material Adverse Effect on MLN.
+
+                        (ii)     No consent, approval, order or authorization of
+                  , or registration, qualification, designation, declaration or
+                  filing with, any Governmental Authority or other person on the
+                  part of MLN is required in connection with the execution,
+                  delivery and performance by MLN of this Agreement or the other
+                  Transaction Documents to which it is a party or the
+                  consummation of the transactions contemplated hereby or
+                  thereby, except for the consents of MLN provided herein and
+                  such other consents, approvals, orders, authorizations,
+                  registrations, qualifications, designations, declarations or
+                  filings the failure of which to have or to make would not have
+                  a Material Adverse Effect on MLN.
+
+                 (d)      MLN Shares. MLN is the record holder of the MLN Shares
+         being transferred to the Investors, which shares are free and clear of
+         any Liens. MLN is not bound with respect to the MLN Shares being
+         transferred by (i) any subscription, option or other agreement pursuant
+         to which MLN is or may become obligated to sell such shares or (ii) any
+         voting or similar agreements other than the Stockholders Agreement that
+         is being terminated pursuant to Section 16(a)(iii) hereof.
+
+                  EXCEPT AS SPECIFICALLY SET FORTH IN THIS SECTION 6 OR THE
+OTHER TRANSACTION DOCUMENTS, MLN IS NOT MAKING ANY REPRESENTATIONS AND
+WARRANTIES, ORAL OR WRITTEN, EXPRESS OR IMPLIED, TO THE COMPANY OR ANY INVESTOR
+WITH RESPECT TO THE TRANSACTIONS CONTEMPLATED BY THE TRANSACTION DOCUMENTS.
+
+        7.       Representations and Warranties of the Investor. Each Investor
+represents and warrants to MLN and the Company as follows:
+
+                                       7
+<PAGE>
+
+                (a)      Organization. Such Investor, if not a natural person,
+         is an entity duly organized, validly existing and in good standing
+         under the laws of the state of its jurisdiction of organization.
+
+                (b)      Authority.  Such Investor has full power and authority
+         to enter into this  Agreement  and the other  Transaction  Documents to
+         which it is a party,  to perform its obligations  hereunder and
+         thereunder and to consummate  the  transactions contemplated hereby and
+         thereby.  Such Investor that is a natural  person has the requisite
+         capacity to execute and deliver this Agreement and the other
+         Transaction  Documents to which it is a party, to perform its
+         obligations  hereunder  and  thereunder  and to consummate the
+         transactions  contemplated hereby and thereby.  This Agreement and the
+         other Transaction  Documents to which it is a party have been duly and
+         validly  executed and delivered by such  Investor and, upon  execution
+         and delivery by the other parties hereto and thereto,  will constitute
+         the legal, valid and binding  obligations of such Investor, enforceable
+         against such Investor in accordance  with their terms,  except to the
+         extent that such validly binding effect and  enforceability  may be
+         limited by  applicable bankruptcy, reorganization, insolvency,
+         moratorium  and other laws  affecting  creditors'  rights generally.
+
+                (c)      Non-Contravention; Consents.
+
+                        (i)      Neither the execution and delivery by such
+                  Investor of, nor the  consummation  or  performance  by such
+                  Investor of any of the transactions to be consummated or
+                  performed by it under, this Agreement or the other Transaction
+                  Documents to which it is a party will directly or  indirectly
+                  (with or without  notice or lapse of time):  (A) violate any
+                  provision of such Investor's organizational or other governing
+                  documents, (B) constitute or result in a breach or default by
+                  such Investor or any of its subsidiaries, or give rise to a
+                  right of termination,  amendment, cancellation or acceleration
+                  on the part of any other party, or result in the creation or
+                  imposition of any Lien on such Investor's assets,  under
+                  any agreement or instrument  to which such Investor or any of
+                  its  subsidiaries  is a party or by which such Investor or any
+                  of its subsidiaries is bound, which breach, default,
+                  termination or Lien would have a Material Adverse Effect on
+                  such Investor,  or (C) constitute a violation by such Investor
+                  or any of its  subsidiaries of any  Requirements of Law that
+                  would have a Material Adverse Effect on such Investor.
+
+                        (ii)    No consent, approval, order or authorization of,
+                  or registration, qualification, designation, declaration or
+                  filing with, any Governmental Authority or other person on the
+                  part of such Investor or any of its subsidiaries is required
+                  in connection with the execution, delivery and performance by
+                  such Investor of this Agreement or the other Transaction
+                  Documents to which it is a party or the consummation of the
+                  transactions contemplated hereby and thereby, except for the
+                  consents of MLN provided herein and such other consents,
+                  approvals, orders, authorizations, registrations,
+                  qualifications, designations, declarations or filings the
+                  failure of which to have or to make would not have a Material
+                  Adverse Effect on such Investor.
+
+                                        8
+<PAGE>
+
+                (d)      Investment Intention; No Resales. Such Investor
+         understands that the Newly Issued Common Stock and the MLN Shares
+         (together, the "Purchased Securities") being purchased by it hereunder
+         are "restricted securities" (as defined under Rule 144 under the
+         Securities Act) and have not been registered under the Securities Act
+         or any applicable state securities law, and such Investor is acquiring
+         the Purchased Securities for the purpose of investment and for its own
+         account and not with a view to, or for resale in connection with, the
+         distribution thereof.
+
+                (e)      Purchased  Securities  Unregistered;  Accredited
+         Investor. Such Investor has been advised that (i) the offer and sale of
+         the Purchased  Securities has not been registered  under the Securities
+         Act and (ii) the Purchased  Securities being purchased by such Investor
+         hereunder may need to be held  indefinitely.  Such Investor  represents
+         and warrants that (i) such Investor is an "Accredited  Investor" under
+         Rule 501(a) of the Securities Act; (ii) such  Investor's knowledge and
+         experience in  financial and business  matters are such  that  such
+         Investor  is capable of evaluating  the merits and  risks  of  its
+         investment  in such Purchased  Securities,  or such  Investor has been
+         advised by a  representative possessing such knowledge and  experience;
+         (iii) such Investor and such Investor's representatives, including such
+         Investor's  professional,  financial,  tax and other advisors,  if any,
+         have carefully  considered the proposed investment by such Investor in
+         the Purchased  Securities,  and such Investor  understands and has
+         taken cognizance of (or has been advised by its  representatives as to)
+         the risk factors related to the acquisition of such Purchased
+         Securities,  and no  representations  or warranties  (oral or written)
+         have been made to such Investor or its representatives concerning the
+         Purchased  Securities, the Company  or the  Company's business,
+         operations, financial  condition or prospects  or other  matters except
+         as expressly set forth herein; (iv) in making its decision to purchase
+         the Purchased Securities being purchased by it hereunder, such Investor
+         has relied upon independent  investigations made by such  Investor and,
+         to  the extent believed by  such Investor to be  appropriate, such
+         Investor's  representatives, including such Investor's  professional,
+         financial, tax and other advisors, if any; (v) such Investor and its
+         representatives  have been given the opportunity  to request to examine
+         all documents of, and to ask questions of, and to receive answers from,
+         the Company and its representatives  concerning the Company (including
+         without limitation,  its prospects, intended use of proceeds, financial
+         condition,  results of operations and matters pertaining to the grand
+         jury investigation  conducted by the U.S.  Department  of Justice,  as
+         described in the Company's Quarterly Report on Form 10-Q for the period
+         ended June 30, 2003) and the terms and conditions of the acquisition of
+         the Purchased Securities being purchased by such Investor hereunder and
+         to obtain any additional  information which such Investor or its
+         representatives  deem necessary; (vi) such Investor can sustain without
+         adverse  consequence a loss of its entire investment made hereby; (vii)
+         such Investor is not acquiring the Purchased Securities as a result of
+         or  subsequent to any  advertisement, article,  notice  or  other
+         communication published, or broadcast in any newspaper, magazine, radio
+         , television,  internet or other media of any type whatsoever, or
+         presented at any seminar  or  meeting;  (viii)  such  Investor is not a
+         non-resident  alien for  federal  income  tax  purposes  or a foreign
+         corporation,  foreign trust, foreign estate or foreign company, as such
+         terms are used in the Internal Revenue Code of 1986 as amended and the
+         regulations and  interpretations thereunder;  (ix)  such  Investor
+         acknowledges that the Company is entering into this Agreement in
+         reliance upon such  Investor's  representations  and warranties herein;
+         and (x) such Investor has not relied on any representations or
+         warranties of MLN or its  representatives,  oral or written, express or
+         implied,  other than those representations and warranties expressly
+         made by MLN in Section 6 hereof.
+
+                                      9
+
+<PAGE>
+
+                (f)      Brokers. No person is entitled to any broker's,
+         finder's, financial adviser's or other similar fee or commission from
+         such Investor in connection with the transactions contemplated hereby.
+
+                  EXCEPT AS SPECIFICALLY SET FORTH IN THIS SECTION 7 OR THE
+OTHER TRANSACTION DOCUMENTS, SUCH INVESTOR IS NOT MAKING ANY REPRESENTATIONS AND
+WARRANTIES, ORAL OR WRITTEN, EXPRESS OR IMPLIED, TO MLN OR THE COMPANY WITH
+RESPECT TO THE TRANSACTIONS CONTEMPLATED BY THE TRANSACTION DOCUMENTS.
+
+        8. Right of First Offer for Common Stock. Subject to the terms and
+conditions specified in this Section 8, the Company hereby grants to each of (i)
+MLN and (ii) the Investors that own beneficially more than ten (10%) percent of
+the Common Stock, as determined in accordance with Rule 13d-3 promulgated under
+the Securities Exchange Act of 1934, as amended, after taking into account the
+effect of the consummation of the Investment Transaction (the "Significant
+Investors"), a right of first offer with respect to future issuances by the
+Company of its Common Stock or any other instruments convertible into or
+exercisable for Common Stock (collectively, the "Covered Shares") solely for
+cash. Each of MLN and the Significant Investors may designate as purchasers
+under such right itself or its partners, members or affiliates in such
+proportions as it deems appropriate.
+
+                  Each time the Company proposes to offer any Covered Shares,
+the Company shall first make an offering of such Covered Shares to each of MLN
+and the Significant Investors in accordance with the following provisions:
+
+              (a) The Company shall deliver a notice (the "Notice") to each of
+                  MLN and the Significant Investors stating (i) its bona fide
+                  intention to offer such Covered Shares, (ii) the number of
+                  such Covered Shares to be offered, and (iii) the price and
+                  terms, if any, upon which it proposes to offer such Covered
+                  Shares. Within 15 days after receipt of the Notice, each of
+                  MLN and the Significant Investors may elect to purchase or
+                  obtain, at the price and on the terms specified in the Notice,
+                  all or any number of the Covered Shares.
+
+              (b) The Company may, during the 60-day period following the
+                  expiration of the period provided in Section 8(a) hereof,
+                  offer the remaining unsubscribed portion of the Covered Shares
+                  to any person or persons at a price not less than and upon
+                  terms no more favorable to the offeree than those specified in
+                  the Notice. If the Company does not enter into an agreement
+                  for the sale of the Covered Shares within such period, or if
+                  such agreement is not consummated within 60 days of the
+                  execution thereof, the right provided hereunder shall be
+                  deemed to be revived and such Covered Shares shall not be
+                  offered unless first reoffered to each of MLN and the
+                  Significant Investors in accordance herewith.
+
+                                       10
+<PAGE>
+              (c) Notwithstanding  any of the  foregoing,  the  provisions  of
+                  this Section 8 shall (i) terminate on the earlier to occur of
+                 (A) the third anniversary of the date hereof or (B) with
+                 respect to MLN or any of the Significant Investors individually
+                 ,  on the date such party ceases to own beneficially  more than
+                 ten (10%) percent of the Common Stock, as determined in
+                 accordance with Rule 13d-3  promulgated  under the  Securities
+                 Exchange Act of 1934, as amended  (provided  that a termination
+                 event arising under this clause (B) with respect to a party
+                 individually shall not affect the rights of the other parties
+                 hereunder),  (ii) not apply to (A) any public  offering of
+                 Covered  Shares  (including  the exercise or conversion  of any
+                 warrants,  options or other rights to acquire Covered Shares
+                 issued in such public offering), (B) warrants, options or other
+                 rights to acquire Covered Shares outstanding as of the date
+                 hereof  (including  such rights granted  pursuant to the
+                 Convertible  Notes),  (C) issuances of any Covered Shares to
+                 employees, directors, consultants or other agents of the
+                 Company or its Affiliates, and (D) Common Stock issued pursuant
+                 to a  conversion  or exchange of Covered  Shares and (iii) only
+                 entitle each of MLN and the Significant  Investors to maintain
+                 up to its Percentage Interest (as defined) in effect
+                 immediately  prior to the giving of the Notice.  The term
+                 "Percentage  Interest"  shall mean the  quotient obtained  by
+                 dividing  the number of shares of Common Stock  (without giving
+                 effect to options,  warrants or other rights to acquire  Common
+                 Stock) owned by MLN or the applicable Investor,  as applicable,
+                 immediately  prior to the date of the  Notice  divided  by the
+                 number of  shares of Common  Stock outstanding (without giving
+                 effect to any treasury shares) immediately prior to the date of
+                 the Notice.
+
+                        9.           Restriction on Transfer of Common Stock.
+
+                                (a) MLN hereby agrees that it shall not, for a
+                  period of one (1) year after the date hereof, offer to sell
+                  any Common Stock pursuant to a registered public offering or
+                  in open market transactions; it being understood that nothing
+                  in this Section 9 shall limit the ability of MLN to sell any
+                  or all of the Common Stock owned by it pursuant to a private
+                  placement.
+
+                                (b) Each of the Investors hereby agrees that it
+                  shall not, for a period of one (1) year after the date hereof,
+                  offer to sell any of the Purchased Securities pursuant to a
+                  registered public offering or in open market transactions; it
+                  being understood that nothing in this Section 9 shall limit
+                  the ability of any of the Investors to sell any or all of the
+                  Purchased Securities owned by it pursuant to a private
+                  placement.
+
+                                (c) Each of MLN and the Investors hereby
+                  consents to the submission of a stop transfer order to the
+                  Transfer Agent to give effect to this Section 9.
+
+                10.     Conditions to the Investor's Obligations. The obligation
+of the Investors to purchase the Purchased Securities and the Convertible Notes
+is subject to the representations and warranties of the Company and MLN
+contained in Section 5 and Section 6, respectively, being true and correct as of
+the Closing Date, which condition may be waived by the Investors, and the
+delivery by the parties hereto of the Transaction Documents as specified in
+Section 4.
+
+                11.     Conditions to MLN's Obligations. The obligation of MLN
+to sell any of the MLN Shares is subject to (i) the representations and
+
+                                       11
+<PAGE>
+
+warranties of the Company and the Investors contained in Section 5 and Section
+7, respectively, being true and correct as of the Closing Date, which condition
+may be waived by MLN, (ii) the delivery by the parties hereto of the Transaction
+Documents as specified in Section 4 and (iii) the receipt by the Company of
+funds from the Investors in a minimum aggregate amount of $1,200,000.
+
+                12.     Conditions to the Company's Obligations. The obligation
+of the Company to issue and sell the Newly Issued Common Stock or the
+Convertible Notes is subject to (i) the representations and warranties of MLN
+and the Investors contained in Section 6 and Section 7, respectively, being true
+and correct as of the Closing Date, which condition may be waived by the Company
+, (ii) the delivery by the parties hereto of the Transaction Documents as
+specified in Section 4 and (iii) the receipt by the Company of funds from the
+Investors in a minimum aggregate amount of $1,200,000.
+
+                13.     Termination of Secured Credit Agreement. Pursuant to
+Section 6.4 of that certain Secured Credit Agreement, dated as of August 12,
+2003 (the "Secured Credit Agreement"), by and between MTH and the Company, MTH
+and the Company hereby agree that the Secured Credit Agreement, the related
+Security Agreement, dated as of August 12, 2003 (the "MTH Security Agreement"),
+by and between MTH and the Company, and all obligations and agreements related
+thereto shall terminate upon the consummation of the Transactions, provided that
+the Company shall repay MTH in full the aggregate principal amount of all Loans
+(as defined in the Secured Credit Agreement) outstanding and all accrued and
+unpaid interest thereon, if any, at the Closing. The security interests granted
+to MTH under the MTH Security Agreement shall terminate pursuant to Section 10
+thereof when all Loans have been fully and indefeasibly repaid to MTH. MTH
+acknowledges that no amounts are owed to it under this facility.
+
+                14.   Cancellation of Warrants. MLN hereby (i) agrees that all
+outstanding warrants relating to the Common Stock of the Company registered in
+its name shall be cancelled and all obligations with respect thereto shall be
+terminated upon the consummation of the Investment Transaction in exchange for
+consideration of $1.00 to be delivered by the Company and to deliver such
+warrants and such other documents as the Company reasonably requests to effect
+such cancellation and termination, (ii) represents and warrants to the Company
+that all of such warrants hereof are identified on Schedule II annexed hereto
+and that such party has sole record and beneficial ownership of such warrants
+and (iii) represents and warrants to the Company that it has not, during the one
+year preceding the date hereof, sold, assigned or transferred any warrants or
+other rights to acquire Common Stock to any person other than those identified
+on Schedule II hereto.
+
+                15.   Indemnification of Directors and Officers.
+
+                        (a) The Company shall maintain and perform its
+                  obligations under its existing indemnification and exculpation
+                  provisions with respect to present and former directors and
+                  officers of the Company for all losses, claims, damages,
+                  expenses or liabilities arising out of actions or omissions or
+                  alleged actions or omissions occurring at or prior to the date
+                  hereof to the extent permitted or required under applicable
+                  law and the Company's Certificate of Incorporation and Bylaws
+                  in effect as of the date of this Agreement (to the extent
+                  consistent with applicable law), for a period of not less than
+                  six years after the Closing.
+
+                                       12
+<PAGE>
+                        (b) On the date hereof, the Company shall obtain run-off
+                  directors' and officers' liability insurance covering the
+                  current and former officers, directors and employees of the
+                  Company and its subsidiaries who are currently covered by the
+                  Company's existing directors' and officers' liability
+                  insurance, on terms and conditions no less favorable in any
+                  material respect to such directors and officers than those in
+                  effect on the date of this Agreement, and shall maintain such
+                  insurance for a period of not less than six years; provided
+                  that the cost of such insurance shall be paid by MLN.
+
+                16.        Miscellaneous.
+
+                        (a) MLN Waiver of Preemptive Rights; Consent to Issuance
+                  of Newly Issued Common Stock and Revision of Bylaws;
+                  Termination of Stockholders Agreement.
+
+                                (i) MLN hereby waives its preemptive rights,
+                  granted pursuant to Section 3.1 of that certain Stockholders
+                  Agreement, dated as of May 16, 2002 (the "Stockholders
+                  Agreement"), by and among MLN, the Company and the Management
+                  Stockholders party thereto, with regard to the issuance and
+                  sale of the Newly Issued Common Stock to the Investors as
+                  contemplated in this Agreement.
+
+                                (ii) MLN hereby consents, as required by Section
+                  4.1 of the Stockholders Agreement, to (A) the issuance of the
+                  Newly Issued Common Stock, (B) the revision of the Bylaws of
+                  the Company by the Board of Directors of the Company to effect
+                  any and all amendments thereto, and (C) the consummation of
+                  the transactions provided for herein and contemplated hereby.
+
+                                (iii) MLN and the Company hereby agree, and the
+                  Investors acknowledge, that the Stockholders Agreement and all
+                  obligations of any parties thereto shall terminate
+                  simultaneously with the consummation of the Transactions.
+
+                        (b)               Further Assurances. From time to time,
+at the other party's request and without further consideration, each party
+hereto shall execute and deliver such additional documents and take all such
+further action as may be necessary or desirable to consummate the transactions
+contemplated by this Agreement.
+
+                        (c) Blue Sky. The parties hereto agree to use their
+reasonable efforts to comply at the Company's expense with all state securities
+and "blue sky" laws which might be applicable to the sale of the Purchased
+Securities to the Investor; provided, however, that nothing herein shall require
+the company to qualify as a foreign corporation in any jurisdiction or subject
+it generally to taxation or to general service of process in any jurisdiction.
+
+                        (d) Survival of Representations and Warranties. The
+representations and warranties of each party hereto contained in this Agreement
+
+                                       13
+<PAGE>
+shall survive for one year following the Closing Date and then terminate and
+expire with respect to any theretofore unasserted claims arising out of any
+breach or inaccuracy thereof.
+
+                        (e) Successors and Assigns. This Agreement shall be
+binding upon and inure to the benefit of the parties named herein and their
+respective successors and permitted assigns. Notwithstanding the preceding
+sentence, neither MLN nor the Company may assign either this Agreement or any of
+its rights, interests or obligations hereunder without the prior written
+approval of each Investor; provided, however, that the obligations of MLN
+and the Investors pursuant to Section 9 hereof shall be binding upon all
+transferees of (i) the Common Stock held by MLN after the consummation of the
+Investment Transaction and the Purchased Securities, as applicable, and (ii) the
+Convertible Notes.
+
+                        (f) Severability. The invalidity, illegality or
+unenforceability  of one or more of the provisions of this Agreement in any
+jurisdiction shall not affect the validity, legality or enforceability of the
+remainder of this Agreement in such jurisdiction or the validity, legality or
+enforceability of this Agreement, including any such provision, in any other
+jurisdiction, it being intended that all rights and obligations of the parties
+hereunder shall be enforceable to the fullest extent permitted by law.
+
+                        (g) Amendment. This Agreement may be amended, modified
+or supplemented only by a written instrument executed by or on behalf of each of
+the parties hereto.
+
+                        (h) Waiver.  Any party  hereto  may,  with  respect to
+any other  party  hereto,  (i) extend the time for the  performance  of any
+obligations or other acts,  (ii) waive any  inaccuracies  in the representations
+and warranties  contained  herein or in any document  delivered  hereto or (iii)
+waive  compliance  with any of the agreements or conditions  contained  herein.
+Any such extension  or waiver  shall be valid if set forth in writing  signed by
+the party or parties to be bound  thereby.  No failure or delay on the part of
+any party  hereto in the exercise of any right hereunder shall impair such right
+or  be construed to  be a  waiver of, or acquiescence in, any  breach of any
+representation,  warranty or agreement herein,  nor shall any single or partial
+exercise  of any such  right  preclude  other or  further exercise thereof or of
+any other  right.  All rights and remedies under this Agreement are cumulative
+to, and not exclusive of, any rights or remedies otherwise available.
+
+                        (i) Entire Agreement. This Agreement supersedes all
+prior discussions, understandings and agreements between the parties with
+respect to the subject matter hereof and this Agreement contains the sole and
+entire agreement between the parties to this Agreement with respect to the
+subject matter hereof. Schedule I and Schedule II to this Agreement are
+incorporated into and form an integral part of this Agreement.
+
+                        (j) No Third Party Beneficiaries. The terms and
+provisions of this Agreement are intended solely for the benefit of each party
+
+                                     14
+<PAGE>
+
+hereto and their respective successors and assigns, and it is not the intention
+of the parties to confer, and no provision hereof shall confer, third party
+beneficiary rights upon any other person.
+
+                        (k) Expenses. Each party hereto agrees to bear its own
+expenses in connection with this Agreement; provided, however, that the Company
+agrees to pay the expenses of the Investors represented by Graubard Miller up to
+an aggregate amount equal to $10,000 (inclusive of payment of reasonable out-of-
+pocket expenses).
+
+                        (l) Headings. The headings used in this Agreement have
+been inserted for convenience of reference only and do not define or limit the
+provisions hereof.
+
+                        (m) Governing Law. All questions concerning the
+construction, validity and interpretation of this Agreement and the exhibits
+hereto will be governed by and construed in accordance with the domestic laws of
+the State of New York, without giving effect to any choice of law or conflict of
+law provision or rule (whether of the State of New York or any other
+jurisdiction) that would cause the application of the laws of any jurisdiction
+other than the State of New York.
+
+                        (n) Remedies.  In the event of a breach  by any  party
+to this  Agreement  of its  obligations  under  this  Agreement,  any party
+injured by such breach,  in addition to being  entitled to exercise all rights
+granted by law,  including  recovery of damages and costs  (including reasonable
+attorneys'  fees),  will be  entitled  to  specific  performance  of its rights
+under this Agreement.  The parties agree that the  provisions of this Agreement
+shall be  specifically  enforceable,  it being agreed by the  parties  that the
+remedy at law,  including  monetary  damages,  for  breach of any such provision
+will be  inadequate compensation for any loss and that any defense in any action
+for specific  performance that a remedy at law would be adequate is waived.
+Notwithstanding  any of the  foregoing,  the parties  hereto expressly waive and
+forego any right to recover any lost profits, exemplary, consequential,
+incidental,  special,  punitive or similar  damages in any arbitration, lawsuit,
+litigation  or  proceeding  arising  out of or  resulting  from any  controversy
+or claim  arising out of or relating to this Agreement or the acquisition of the
+Purchased Securities.
+
+                        (o) Counterparts. This Agreement may be executed in any
+number of counterparts, each of which will be deemed an original, but all of
+which together will constitute one and the same instrument.
+
+                        (p) Securities Act.
+
+                                (i) Each certificate representing the Purchased
+                  Securities and the certificate representing the MLN Shares
+                  held by MLN after the consummation of the Investment
+                  Transaction shall be endorsed with the following legends and
+                  such other legends as may be required by law or as counsel for
+                  the Company reasonably deems appropriate:
+
+                           "THE SECURITIES REPRESENTED BY THIS CERTIFICATE ARE
+                           SUBJECT TO THE PURCHASE AND SUBSCRIPTION AGREEMENT,
+
+                                       15
+<PAGE>
+                           DATED AS OF OCTOBER 17, 2003, AS SUCH AGREEMENT MAY
+                           BE AMENDED, RESTATED OR MODIFIED FROM TIME TO TIME,
+                           AND MAY NOT BE TRANSFERRED, SOLD, ASSIGNED, PLEDGED,
+                           HYPOTHECATED OR OTHERWISE DISPOSED OF EXCEPT IN
+                           ACCORDANCE WITH THE PROVISIONS THEREOF AND ANY
+                           TRANSFEREE OF THESE SECURITIES SHALL BE SUBJECT TO
+                           THE TERMS OF SUCH AGREEMENT. COPIES OF THE FOREGOING
+                           AGREEMENT ARE MAINTAINED WITH THE CORPORATE RECORDS
+                           OF THE ISSUER AND ARE AVAILABLE FOR INSPECTION AT THE
+                           PRINCIPAL OFFICES OF THE ISSUER."
+
+                           "THE SECURITIES REPRESENTED BY THIS CERTIFICATE HAVE
+                           NOT BEEN REGISTERED UNDER THE SECURITIES ACT OF 1933,
+                           AS AMENDED, OR ANY STATE SECURITIES LAWS, AND MAY NOT
+                           BE OFFERED, SOLD OR TRANSFERRED EXCEPT PURSUANT TO
+                           (I) AN EFFECTIVE REGISTRATION STATEMENT UNDER THE
+                           SECURITIES ACT OF 1933, AS AMENDED, AND IN COMPLIANCE
+                           WITH APPLICABLE STATE SECURITIES LAWS OR (II) AN
+                           APPLICABLE EXEMPTION FROM REGISTRATION THEREUNDER OR
+                           UNDER APPLICABLE STATE SECURITIES LAWS, AND, IF AN
+                           EXEMPTION SHALL BE APPLICABLE, THE HOLDER OF THIS
+                           CERTIFICATE SHALL HAVE DELIVERED AN OPINION OF
+                           COUNSEL REASONABLY ACCEPTABLE TO THE COMPANY THAT
+                           SUCH REGISTRATION IS NOT REQUIRED."
+
+                                (ii) Any certificate issued at any time in
+         exchange or substitution for any certificate bearing such legends
+         (except a new certificate issued upon the completion of a transfer
+         pursuant to a registered public offering under the Securities Act and
+         made in accordance with the Securities Act) shall also bear such
+         legends, unless in the opinion of counsel for the Company, the
+         Purchased Securities represented thereby are no longer subject to the
+         provisions of this Agreement or the restrictions imposed under the
+         Securities Act or state securities laws, in which case the applicable
+         legend (or legends) may be removed.
+
+                        (q)      Notices. All notices, requests and other
+communications hereunder must be in writing and will be deemed to have been duly
+given only if delivered personally against written receipt or by facsimile
+transmission or mailed (by registered or certified mail, return receipt
+requested) or by reputable overnight courier, fee prepaid to the parties at the
+following addresses or facsimile numbers:
+
+                         (i)    If to the Investors, at the addresses set forth
+        on the signature pages hereto.
+
+
+                                       16
+<PAGE>
+                                   with copies to:
+
+                                    Graubard Miller
+                                    600 Third Avenue
+                                    New York, New York  10016
+                                    Facsimile:       (212) 818 8881
+                                    Attention:       David Miller
+
+                           (ii)     If to MLN or MTH:
+
+                                    Moneyline Networks, LLC
+                                    c/o Moneyline Telerate Holdings
+                                    233 Broadway
+                                    New York, New York  10279
+                                    Facsimile:       (212) 553-2290
+                                    Attention:       General Counsel
+
+                                    with copies to
+
+                                    Latham & Watkins LLP
+                                    885 Third Avenue
+                                    New York, New York  10022
+                                    Facsimile:       (212) 751-4864
+                                    Attention:       R. Ron Hopkinson
+                                                     David S. Allinson
+
+                           (ii)     If to the Company:
+
+                                    TalkPoint Communications Inc.
+                                    100 William Street
+                                    New York, New York 10004
+                                    Facsimile:       (212) 404-1537
+                                    Attention:       Chief Executive Officer
+
+                                    with copies to
+
+                                    Robinson Brog Leinwand Greene
+                                        Genovese & Gluck PC
+                                    1345 Avenue of the Americas
+                                    New York, New York  10105
+                                    Facsimile:       (212) 956-2164
+                                    Attention:       Asher Gaffney
+
+                  All such notices, requests and other communications will (w)
+if delivered personally to the address as provided in this Section 16(q) be
+deemed given upon delivery, (x) if delivered by facsimile transmission to the
+facsimile number as provided in this Section 16(q) be deemed given upon receipt,
+(y) if delivered by mail in the manner described above to the address as
+provided in this Section 16(q), be deemed given upon receipt and (z) if
+delivered by reputable overnight courier to the address as provided in this
+Section 16(q), be deemed given upon receipt. Any party from time to time may
+change its address, facsimile number or other information for the purpose of
+notices to that party by giving notice specifying such change to the other
+parties hereto.
+
+                                       17
+<PAGE>
+                        (r) Appointment of Collateral Agent. The Investors
+         hereby appoint Michael Collado, Esq. to serve as collateral agent with
+         respect to the Security Agreement and hereby grant and delegate to such
+         person the powers, rights, duties and obligations, as more fully set
+         forth in the Security Agreement.
+
+                        (s) Consent to  Jurisdiction  and Service of Process.
+         EACH OF THE PARTIES HERETO  CONSENTS TO THE EXCLUSIVE  JURISDICTION  OF
+         ANY STATE OR FEDERAL COURT LOCATED WITHIN THE STATE OF NEW YORK AND
+         IRREVOCABLY  AGREES THAT ALL ACTIONS OR PROCEEDINGS  RELATING TO THIS
+         AGREEMENT SHALL BE LITIGATED IN SUCH COURTS. EACH OF THE PARTIES HERETO
+         ACCEPTS FOR ITSELF AND IN CONNECTION  WITH ITS RESPECTIVE  PROPERTIES,
+         GENERALLY AND UNCONDITIONALLY,  THE EXCLUSIVE JURISDICTION OF THE
+         AFORESAID COURTS AND WAIVES ANY DEFENSE OF FORUM NON CONVENIENS,  AND
+         IRREVOCABLY AGREES TO BE BOUND BY ANY FINAL AND NONAPPEALABLE  JUDGMENT
+         RENDERED THEREBY IN CONNECTION WITH THIS AGREEMENT. EACH OF THE PARTIES
+         HERETO FURTHER  IRREVOCABLY  CONSENTS TO THE SERVICE OF PROCESS OUT OF
+         ANY OF THE AFOREMENTIONED  COURTS IN ANY SUCH ACTION OR PROCEEDING BY
+         THE MAILING OF COPIES THEREOF VIA OVERNIGHT COURIER,  TO SUCH PARTY AT
+         THE ADDRESS  SPECIFIED IN THIS AGREEMENT,  SUCH SERVICE TO BECOME
+         EFFECTIVE  FOURTEEN  CALENDAR DAYS AFTER SUCH MAILING.  NOTHING  HEREIN
+         SHALL IN ANY WAY BE DEEMED TO LIMIT THE  ABILITY OF EITHER PARTY HERETO
+         TO SERVE ANY SUCH  LEGAL PROCESS,  SUMMONS,  NOTICES AND DOCUMENTS IN
+         ANY OTHER MANNER PERMITTED BY APPLICABLE LAW OR TO OBTAIN JURISDICTION
+         OVER OR TO BRING ACTIONS,  SUITS OR PROCEEDINGS AGAINST THE OTHER PARTY
+         HERETO IN SUCH OTHER  JURISDICTIONS,  AND IN SUCH MANNER, AS MAY BE
+         PERMITTED BY ANY APPLICABLE LAW.
+
+
+                            (signature page follows)
+
+                                       18
+<PAGE>
+                      (Purchase and Subscription Agreement)
+
+                  IN WITNESS WHEREOF, the parties hereto have caused this
+Agreement to be executed and delivered as of the date first above written.
+
+
+
+                                          TALKPOINT COMMUNICATIONS INC.
+
+
+
+                                           By:  ________________________________
+                                                Name:  Nicholas Balletta
+                                                Title: Chief Executive Officer
+
+
+
+
+                                           MONEYLINE NETWORKS, LLC
+
+
+
+                                           By:  ________________________________
+                                                Name:
+                                                Title:
+
+
+
+                                            With respect to Sections 4(e) and 13
+                                            hereof:
+
+                                            MONEYLINE TELERATE HOLDINGS
+
+
+
+                                            By:  _______________________________
+                                                 Name:
+                                                 Title:
+
+                      (Purchase and Subscription Agreement)
+
+<PAGE>
+
+
+
+
+                                              [INVESTOR]
+
+
+
+                                             By:  _____________________________
+                                                  Name:
+                                                  Title:
+
+
+                                                  Address:
+
+                                                 [___________________________]
+                                                 [___________________________]
+                                                 [___________________________]
+                                                  Facsimile:   [_______________]
+                                                  Attention:   [_______________]
+
+
+<PAGE>
+                                                                   Schedule I
+
+
+                             Investment Transaction
+
+
+<TABLE>
+<CAPTION>
+<S>        <C>                  <C>                 <C>                  <C>                   <C>              <C>
+
+
+
+                                                                                                   Total        Number of MLN
+                                                     Shares of Newly     Principal Amount of   Purchase Price       Shares
+           Investor                 SSN/EIN #      Issued Common Stock    Convertible Note                       Transferred
+------------------------------- ------------------ -------------------- ---------------------- --------------- -----------------
+Investor A                                              1,125,000               $75,000            $300,000        4,763,653
+------------------------------- ------------------ -------------------- ---------------------- --------------- -----------------
+Investor B                                                562,500               $37,500            $150,000        2,381,827
+------------------------------- ------------------ -------------------- ---------------------- --------------- -----------------
+Investor C                                                562,500               $37,500            $150,000        2,381,827
+------------------------------ ------------------ -------------------- ---------------------- --------------- -----------------
+Investor D                                                562,500               $37,500            $150,000        2,381,827
+------------------------------- ------------------ -------------------- ---------------------- --------------- -----------------
+Investor E                                                562,500               $37,500            $150,000        2,381,827
+------------------------------- ------------------ -------------------- ---------------------- --------------- -----------------
+Investor F                                                393,750               $26,250            $105,000        1,667,270
+------------------------------- ------------------ -------------------- ---------------------- --------------- -----------------
+Investor G                                                375,000               $25,000            $100,000        1,587,885
+------------------------------- ------------------ -------------------- ---------------------- --------------- -----------------
+Investor H                                                375,000               $25,000            $100,000        1,587,885
+------------------------------- ------------------ -------------------- ---------------------- --------------- -----------------
+Investor I                                                187,500               $12,500             $50,000          793,943
+------------------------------- ------------------ -------------------- ---------------------- --------------- -----------------
+Investor J                                                112,500                $7,500             $30,000          476,366
+------------------------------- ------------------ -------------------- ---------------------- --------------- -----------------
+Investor K                                                 56,250                $3,750             $15,000          238,183
+------------------------------- ------------------ -------------------- ---------------------- --------------- -----------------
+TOTAL                                                   4,875,000              $325,000          $1,300,000       20,642,493
+------------------------------- ------------------ -------------------- ---------------------- --------------- -----------------
+
+</TABLE>
+
+                                                                   Schedule II
+
+<TABLE>
+<CAPTION>
+<S>                                                    <C>
+
+Warrant holder                                         Number of shares of common stock issuable upon exercise of
+                                                       Warrant1
+------------------------------------------------------ ------------------------------------------------------------
+Moneyline Networks, LLC                                100,000
+------------------------------------------------------ ------------------------------------------------------------
+</TABLE>
+
+
+1 Without regard to antidilution adjustments other than those based on stock
+  splits, reverse splits, recombinations, reclassifications and other similar
+  events.
+
+<PAGE>
+
+                                                                       EXHIBIT A
+                                                        FORM OF CONVERTIBLE NOTE
+<PAGE>
+
+EXHIBIT B
+FORM OF SECURITY AGREEMENT
+
+<PAGE>
+
+</TEXT>
+</DOCUMENT>

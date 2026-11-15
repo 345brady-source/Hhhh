@@ -1,0 +1,173 @@
+<DOCUMENT>
+<TYPE>EX-1.1
+<SEQUENCE>3
+<FILENAME>subscriptionagrmt.txt
+<DESCRIPTION>SUBSCRIPTION AGREEMENT
+<TEXT>
+                                                                     Exhibit 1.1
+
+                             SUBSCRIPTION AGREEMENT
+
+
+99 Cent Stuff, Inc.
+1801 Clint Moore Road
+Boca Raton, Florida 33431
+
+Attn: Mr. Raymond Zimmerman
+
+Gentlemen:
+
+1. Subscription. The undersigned hereby subscribes to purchase shares (the
+"Shares") of the common stock, par value $.01 per share (the "Common Stock"), of
+99 Cent Stuff, Inc., a Florida corporation (the "Company"), on the terms and
+conditions of this Agreement.
+
+2. Receipt of Prospectus. The undersigned hereby acknowledges that the
+undersigned has received a copy of the Company's Prospectus, dated as of
+_________________ ___, 2002 (the "Prospectus"), with respect to the offering of
+the Common Stock.
+
+3. Purchase of Shares. The undersigned hereby subscribes for the number of
+Shares specified below:
+
+Number of Shares to be purchased:                     _______  Shares
+(minimum of 100 Shares)
+
+Price per Share:                                      x  $5.00
+
+Total purchase price:                                $____________
+
+Amount of enclosed check:
+
+($5.00 per Share times
+number of Shares purchased)                          $____________
+
+4. Payment of Purchase Price. The undersigned has enclosed with this Agreement
+the undersigned's personal check (or a certified check, bank check or money
+order) payable to "Bank of America -- Escrow Agent for 99 Cent Stuff, Inc." in
+payment for the number of Shares listed in Section 3.
+
+
+
+<PAGE>
+
+
+5. Title to Shares. The undersigned hereby requests that the Shares be issued as
+follows:
+
+Title to be Taken - (check one)
+                                                             -------------------
+[  ] Individual ownership                                    (Name as
+                                                             it should appear
+                                                             on the Company's
+                                                             stock register -
+                                                             two names for
+                                                             joint owners -
+                                                             please print or
+                                                             type)
+
+
+[ ] Joint tenants with right of survivorship
+
+[ ] Other-specify: ______________
+                                                             -------------------
+                                                             (Residence Address)
+
+Social Security No. or                                       ___________________
+Taxpayer Identification No:                                  (Home Phone)
+
+                                                             -------------------
+                                                             (Business Phone)
+
+     If you would like to have the shares delivered to your broker account,
+please have the broker fill in this section. [Once the subscription closes, we
+will contact the name and phone number below, to have the deposit initiated on
+the DWAC system at DTC.]
+
+----------------------------,                ---------------------------
+Phone Number                                            Contact Name
+
+---------------------------------------------------------
+Name of Cleaning Broker
+
+6. Escrow Agreement. The undersigned acknowledges and agrees that the
+undersigned's funds will be held in escrow in accordance with the terms of the
+Escrow Agreement dated ________ __, 2002 by and between the Company and Bank of
+America, as escrow agent.
+
+7. Certain Acknowledgments. The undersigned is fully aware that:
+
+         (a) The subscription offer set forth in this Agreement may be accepted
+or rejected in whole or in part by the Company in its sole and absolute
+discretion.
+
+         (b) The subscription offer set forth in this Agreement is and shall be
+irrevocable, except as set forth in the Prospectus, provided that the
+undersigned shall have no obligations under this Agreement in the event that the
+subscription offer set forth in this Agreement is rejected or the offering
+described in the Prospectus is canceled or withdrawn.
+
+         (c) No federal or state agency has made any finding or determination as
+to the fairness of the offering for public investment, and no such agency has
+made any recommendation or endorsement of the Shares.
+
+         (d) There is no public market for the Shares.
+
+
+<PAGE>
+
+8. Miscellaneous
+
+         (a) Modification. Neither this Agreement nor any provisions of this
+Agreement shall be modified, discharged or terminated except by an instrument in
+writing signed by the party against whom any waiver, change, discharge or
+termination is sought.
+
+         (b) Binding Effect. This Agreement shall be binding upon and inure to
+the benefit of the parties and their heirs, executors, administrators,
+successors, legal representatives and permitted assigns. If the undersigned is
+more than one person, the obligation of the undersigned shall be joint and
+several and the agreements, representations, warranties and acknowledgments
+contained in this Agreement shall be deemed to be made by and be binding upon
+each such person and his heirs, executors, administrators and successors.
+
+         (c) Assignability. This Agreement is not transferable or assignable by
+the undersigned. Any purported transfer or assignment by the undersigned
+shall be null and void.
+
+          (d) Applicable Law. This Agreement shall be governed by and construed
+in accordance with the laws of Florida.
+
+     IN WITNESS WHEREOF, the undersigned has executed this Subscription
+Agreement on this ____ day of ___________________, 200__.
+
+
+
+                                           -------------------------------
+                                           Signature
+
+
+
+                                           -------------------------------
+                                           Signature (Second signature
+                                           required for joint ownership)
+
+
+ACCEPTANCE OF SUBSCRIPTION:
+
+     99 Cent Stuff, Inc. hereby accepts the subscription offer set forth in this
+Agreement for ________ Shares, with $________ of proceeds to be deposited in the
+escrow account.
+
+
+                                           99 CENT STUFF, INC.
+
+
+
+                                           By:_____________________________
+                                                    Its:  Chairman
+                                                    Name:  Raymond Zimmerman
+
+
+</TEXT>
+</DOCUMENT>

@@ -1,0 +1,43 @@
+{
+  "id": "c120",
+  "url": "https://www.sec.gov/Archives/edgar/data/1650352/000165035215000004/subscription.pdf",
+  "cik": "1650352",
+  "issuer": "Media Assets Group, Inc.",
+  "form": "1-A",
+  "file_date": "2015-10-02",
+  "year": 2015,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "1825a6fc34322910a35cae97e8b39bcc74317d5fcfbbd95feaa8f76743f72281",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "underscores": 22,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "1825a6fc34322910a35cae97e8b39bcc74317d5fcfbbd95feaa8f76743f72281",
+  "broker_dealer": false
+}

@@ -1,0 +1,59 @@
+{
+  "id": "c306",
+  "url": "https://www.sec.gov/Archives/edgar/data/1936756/000119983526000119/nbh-ex10_57.htm",
+  "cik": "1936756",
+  "issuer": "Next Bridge Hydrocarbons, Inc.",
+  "form": "S-1/A",
+  "file_date": "2026-05-06",
+  "year": 2026,
+  "exhibit": "EX-10.57",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "879f431d5758be07705990c3244a485983b2165a7d2307f00bd466f15ed0930b",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 2,
+    "tables": 3,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 4
+  },
+  "pages": 10,
+  "page_kinds": {
+    "text": 10
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "60eea3aca91b21cc0ff9081b73dcf60c0aadbd8b6a9407cd83958920c2853be0",
+  "broker_dealer": false
+}

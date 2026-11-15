@@ -1,0 +1,53 @@
+{
+  "id": "c287",
+  "url": "https://www.sec.gov/Archives/edgar/data/1759186/000121390020033271/fs12020a4ex10-9_bullhornhold.htm",
+  "cik": "1759186",
+  "issuer": "Bull Horn Holdings Corp.  (COEP, COEPW)",
+  "form": "S-1/A",
+  "file_date": "2020-10-26",
+  "year": 2020,
+  "exhibit": "EX-10.9",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT BETWEEN THE SPONSOR AND THE ANCHOR INVESTORS",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "e30ad9238833b5e9aae4b9365fd56fef8d67304253929fcda6d6d43ce9e177ee",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 14,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 4
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 4
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "71301fc88a0ce35c3c927f9c7d11fda923925efbe16b3dd8b6e3b9ee47d67a11",
+  "broker_dealer": false
+}

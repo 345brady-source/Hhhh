@@ -1,0 +1,58 @@
+{
+  "id": "c067",
+  "url": "https://www.sec.gov/Archives/edgar/data/1418121/000119312508092187/d424b3.htm",
+  "cik": "1418121",
+  "issuer": "Apple REIT Nine, Inc.  (APLE)",
+  "form": "424B3",
+  "file_date": "2008-04-28",
+  "year": 2008,
+  "exhibit": "424B3",
+  "exhibit_description": "PROSPECTUS",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "9aed56b5f6c855c2855112ad95c7248fd672fd9648f033f755fe68cbf6fda85f",
+  "extra_files": [
+    "g30265g06p71.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX A | SUBSCRIPTION AGREEMENT | To:",
+    "end_heading": "Appendix A"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 9,
+  "page_kinds": {
+    "text": 9
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "d046cd309551056b1efa58d7054f64625d61c30b6331c06d95a9b3eaf7e59d37",
+  "broker_dealer": true
+}

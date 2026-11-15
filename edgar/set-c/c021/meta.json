@@ -1,0 +1,62 @@
+{
+  "id": "c021",
+  "url": "https://www.sec.gov/Archives/edgar/data/1398488/000157570519000107/ex4_1.htm",
+  "cik": "1398488",
+  "issuer": "World Mortgage Exchange Group, Inc.",
+  "form": "1-A",
+  "file_date": "2019-11-05",
+  "year": 2019,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "472bc56c703b731c0bddeaa6e46ab87a46ec0adf1e266ec8ff9917b1929cd94a",
+  "extra_files": [
+    "ex4_1-001.jpg",
+    "ex4_1-002.jpg"
+  ],
+  "layout_notes": [],
+  "how_made": "picture-print",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 2,
+    "underscores": 0
+  },
+  "pages": 8,
+  "page_kinds": {
+    "text": 1,
+    "picture": 4,
+    "blank": 3
+  },
+  "page_kind_list": [
+    "text",
+    "picture",
+    "picture",
+    "blank",
+    "blank",
+    "picture",
+    "picture",
+    "blank"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "379ca6b90901ad9c244a3f6e5631b5d9fa34343641fa82e198f60abcd9473180",
+  "broker_dealer": false
+}

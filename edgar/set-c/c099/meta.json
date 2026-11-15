@@ -1,0 +1,55 @@
+{
+  "id": "c099",
+  "url": "https://www.sec.gov/Archives/edgar/data/1145765/000161577419007069/s117978_424b3.htm",
+  "cik": "1145765",
+  "issuer": "GLOBAL MACRO TRUST",
+  "form": "424B3",
+  "file_date": "2019-05-03",
+  "year": 2019,
+  "exhibit": "424B3",
+  "exhibit_description": "424B3",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "26f6669bf6d7337fcc9247c6e8a287db3da4217284122b39b67c342d19e64808",
+  "extra_files": [],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "EXHIBIT C | The execution copy of the Subscription Agreement",
+    "end_heading": "END"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 8
+  },
+  "pages": 8,
+  "page_kinds": {
+    "text": 8
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "b7189bb540f39a83eec8e1290c6f1a71fd664dc3ee42bcc580b71bdd03980804",
+  "broker_dealer": true
+}

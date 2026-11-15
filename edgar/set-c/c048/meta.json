@@ -1,0 +1,61 @@
+{
+  "id": "c048",
+  "url": "https://www.sec.gov/Archives/edgar/data/1166203/000113542802000039/sub-questionandagmt.txt",
+  "cik": "1166203",
+  "issuer": "ACP STRATEGIC OPPORTUNITIES FUND II LLC",
+  "form": "N-2",
+  "file_date": "2002-02-13",
+  "year": 2002,
+  "exhibit": "EX-99.2P",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT & POWE OF ATTORNEY",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.txt",
+  "source_sha256": "ca0b4aa7aa7961c1f6253e87937ba9beb30a98662cb819c61b09b9e90b3b0822",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": true,
+    "joint": true,
+    "custodian": false,
+    "ira": true,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 32
+  },
+  "pages": 12,
+  "page_kinds": {
+    "text": 12
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "17cb1f68c52247a1fa2169ce544630f29d0c6c05526c34326723c31d0854b94a",
+  "broker_dealer": true
+}

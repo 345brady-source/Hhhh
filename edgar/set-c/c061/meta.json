@@ -1,0 +1,51 @@
+{
+  "id": "c061",
+  "url": "https://www.sec.gov/Archives/edgar/data/925263/000091412107001780/ms9514338-ex10_14.txt",
+  "cik": "925263",
+  "issuer": "MORGAN STANLEY SPECTRUM STRATEGIC LP",
+  "form": "8-K",
+  "file_date": "2007-07-23",
+  "year": 2007,
+  "exhibit": "EX-10.14",
+  "exhibit_description": "SPECIMEN FORM OF ADDITIONAL SUBSCRIPTION AGREEMENT",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.txt",
+  "source_sha256": "6963b3d98614d05d2dec1d12ebc23a20cdb9f389f579e382e22fdeded5234bae",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": true,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 3
+  },
+  "pages": 2,
+  "page_kinds": {
+    "text": 2
+  },
+  "page_kind_list": [
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "d4a44c30f3cf1cec2cde4f873dfc62d8c8f25d30261367f223277c3ca2ba7247",
+  "broker_dealer": true
+}

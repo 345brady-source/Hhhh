@@ -1,0 +1,63 @@
+{
+  "id": "c264",
+  "url": "https://www.sec.gov/Archives/edgar/data/1309082/000143209312000708/ex10-1.htm",
+  "cik": "1309082",
+  "issuer": "LUCAS ENERGY, INC.  (CEIN)",
+  "form": "8-K",
+  "file_date": "2012-09-11",
+  "year": 2012,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT BY AND BETWEEN THE COMPANY AND EACH INVESTOR DATE",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "a0f551b7c530c3ab91c0e8dd02e163c11a67bb0c405c852f0f1f7947e24b91a0",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 6,
+    "questionnaire": true,
+    "joint": false,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 20
+  },
+  "pages": 12,
+  "page_kinds": {
+    "text": 9,
+    "blank": 2,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "blank",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "3cc0d5ea5eb32645549e663a881b057b09c66f703ea7f3b7a2f0a5bf0eb5493b",
+  "broker_dealer": false
+}

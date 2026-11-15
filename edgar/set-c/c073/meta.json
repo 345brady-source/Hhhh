@@ -1,0 +1,57 @@
+{
+  "id": "c073",
+  "url": "https://www.sec.gov/Archives/edgar/data/1261159/000119312510087676/d424b3.htm",
+  "cik": "1261159",
+  "issuer": "CNL LIFESTYLE PROPERTIES INC",
+  "form": "424B3",
+  "file_date": "2010-04-20",
+  "year": 2010,
+  "exhibit": "424B3",
+  "exhibit_description": "FINAL  PROSPECTUS",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "a6e895436dda41bbae40df1aa713e1cdbf54ba2e63a9e165092746124e48eea2",
+  "extra_files": [
+    "g18395g89v99.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX B | SUBSCRIPTION AGREEMENT",
+    "end_heading": "END"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 4
+  },
+  "pages": 7,
+  "page_kinds": {
+    "little or no text": 1,
+    "text": 6
+  },
+  "page_kind_list": [
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "88c99b73059fe939bb90712260ed97e0d53337b1531d73937c3cb05c7fd1bb65",
+  "broker_dealer": true
+}

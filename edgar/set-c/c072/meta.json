@@ -1,0 +1,62 @@
+{
+  "id": "c072",
+  "url": "https://www.sec.gov/Archives/edgar/data/1451319/000095012309038772/d65627a2sv11za.htm",
+  "cik": "1451319",
+  "issuer": "CM REIT, Inc.",
+  "form": "S-11/A",
+  "file_date": "2009-08-27",
+  "year": 2009,
+  "exhibit": "S-11/A",
+  "exhibit_description": "FORM S-11/A",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "d12708f6d1ad14c58b5b13f8a7e8e49993aaf34f10eb235c3ca6a191caf379af",
+  "extra_files": [],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX C | Subscription Agreement",
+    "end_heading": "APPENDIX D"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 14,
+  "page_kinds": {
+    "text": 11,
+    "little or no text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "b275abeb8db21cd85ee702c483ec798370d9dd244868674ada52be2407596d5d",
+  "broker_dealer": true
+}

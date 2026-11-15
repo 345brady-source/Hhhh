@@ -1,0 +1,1457 @@
+<DOCUMENT>
+<TYPE>EX-4.8
+<SEQUENCE>3
+<FILENAME>b315337_ex4-8.txt
+<DESCRIPTION>SERIES A PREFERRED STOCK SUBSCRIPTION AGREEMENT
+<TEXT>
+<PAGE>
+
+                                                                     Exhibit 4.8
+
+
+                             SUBSCRIPTION AGREEMENT
+
+         SUBSCRIPTION AGREEMENT (this "Agreement") made as of the date set forth
+on the signature page hereof between Innovative Drug Delivery Systems, Inc. (the
+"Company"), and the undersigned (the "Subscriber").
+
+                                   WITNESSETH
+
+         WHEREAS, the Company has retained Paramount Capital, Inc. ("Paramount")
+to act as a non-exclusive finder, on a "best efforts" basis, in a private
+offering (the "Offering") of "Units" consisting of 25,000 shares of Series A
+Convertible Preferred Stock, par value $.001 per share, stated value $4.00 per
+share (the "Units") of the Company;
+
+         WHEREAS, the Company desires to issue a minimum of 50 Units (the
+"Minimum Offering") and a maximum of 100 Units (the "Maximum Offering") with an
+option in favor of the Company to offer up to an additional 50 Units to cover
+over-allotments, each "Unit" consisting of shares of 25,000 shares of Preferred
+Stock. Each share of Preferred Stock is convertible at the option of the holder
+thereof into one (1) share of common stock, par value $.001 per share, of the
+Company (the "Common Stock"), initially at a conversion price equal to $4.00 per
+share of Common Stock (the Preferred Stock and the Common Stock issuable upon
+conversion of the Preferred Stock are sometimes hereinafter collectively
+referred to as the "Securities");
+
+         WHEREAS, the Subscriber desires to purchase that number of Units set
+forth on the signature page hereof on the terms and conditions hereinafter set
+forth;
+
+         NOW, THEREFORE, in consideration of the premises and the mutual
+representations and covenants hereinafter set forth, the parties hereto do
+hereby agree as follows:
+
+I.       SUBSCRIPTION FOR UNITS AND REPRESENTATIONS BY SUBSCRIBER
+
+         1.1 Subject to the terms and conditions hereinafter set forth, the
+Subscriber hereby subscribes for and agrees to purchase from the Company such
+number of Units, or fractions thereof, and the Company agrees to sell such
+number of Units to the Subscriber as is set forth on the signature page hereof *
+at a price per Unit equal to $100,000 per Unit (the "Initial Offering Price").
+The purchase price is payable by personal or business check or money order made
+payable to "State Street Bank and Trust Company, N.A., Escrow Agent, F/B/O
+Innovative Drug Delivery System, Inc." contemporaneously with the execution and
+delivery of this Agreement by the Subscriber. Subscribers may also pay the
+subscription amount by wire transfer of immediately available funds to:
+
+
+<PAGE>
+
+
+
+          State Street Bank & Trust Company, N.A.
+          Corporate Trust Dept.
+          61 Broadway, 15th floor
+          New York, New York 10006
+          Attn:   Jean Clarke
+
+          ABA Routing Number:
+          Account Name: State Street Bank Corporate Trust
+          Account Number:
+          Sub Account Name: Innovative Drug Delivery Systems Inc.
+          Sub Account Number (SEI#):
+          Name of Subscriber: [Insert Investor Name]
+
+
+The certificates representing the Units shall be delivered by the Company within
+10 business days following the consummation of the Offering. The Subscriber
+understands, however, that this purchase of the Units is contingent upon the
+Company making sales of the Minimum Offering amount prior to the Final Closing
+Date (as defined below) of the Offering.
+
+         1.2 The Subscriber recognizes that the purchase of the Units involves a
+high degree of risk including, but not limited to, the following: (a) the
+Company remains a development stage business with limited operating history and
+requires substantial funds in addition to the proceeds of the Offering; (b) an
+investment in the Company is highly speculative, and only investors who can
+afford the loss of their entire investment should consider investing in the
+Company and the Units; (c) the Subscriber may not be able to liquidate its
+investment; (d) transferability of the Securities is extremely limited; (e) in
+the event of a disposition, the Subscriber could sustain the loss of its entire
+investment; and (f) the Company has not paid any dividends since its inception
+and does not anticipate paying any dividends, even if declared by the Board of
+Directors pursuant to the terms of the Preferred Stock. Such risks are more
+fully set forth in the Confidential Private Placement Memorandum dated August
+10, 2000, as supplemented and amended, and the attachments and exhibits thereto,
+all of which constitute an integral part thereof furnished by the Company to the
+Subscriber (the "Memorandum").
+
+         1.3 The Subscriber represents that the Subscriber is an "accredited
+investor" as such term is defined in Rule 501 of Regulation D ("Regulation D")
+promulgated under the Securities Act of 1933, as amended (the "Securities Act"),
+as indicated by the Subscriber's responses to the questions contained in Article
+VII hereof, and that the Subscriber is able to bear the economic risk of an
+investment in the Unit
+
+         1.4 The Subscriber hereby acknowledges and represents that (a) the
+Subscriber has knowledge and experience in business and financial matters, prior
+investment experience, including investment in securities that are non-listed,
+unregistered and/or not traded on a national securities exchange nor on the
+National Association of Securities Dealers, Inc. (the "NASD") automated
+quotation system ("NASDAQ"), or the Subscriber has employed the services of a
+"purchaser representative" (as defined in Rule 501 of Regulation
+
+
+                                       2
+<PAGE>
+
+D) attorney and/or accountant to read all of the documents furnished or made
+available by the Company both to the Subscriber and to all other prospective
+investors in the Units and to evaluate the merits and risks of such an
+investment on the Subscriber's behalf; (b) the Subscriber recognizes the highly
+speculative nature of this investment; and (c) the Subscriber is able to bear
+the economic risk that the Subscriber hereby assumes.
+
+         1.5 The Subscriber hereby acknowledges receipt and careful review of
+the Memorandum, including, without limitation, the "Risk Factors" included
+therein, the form of Certificate of Designations attached thereto and this
+Agreement (collectively referred to as the "Offering Materials") and hereby
+represents that the Subscriber has been furnished by the Company during the
+course of the Offering with all information regarding the Company that the
+Subscriber has requested or desired to know, has been afforded the opportunity
+to ask questions of and receive answers from duly authorized officers or other
+representatives of the Company concerning the terms and conditions of the
+Offering and has received any additional information that the Subscriber has
+requested.
+
+         1.6 (a) In making the decision to invest in the Units the Subscriber
+has relied solely upon the information provided by the Company in the Offering
+Materials. To the extent necessary, the Subscriber has retained, at its own
+expense, and relied upon appropriate professional advice regarding the
+investment, tax and legal merits and consequences of this Agreement and the
+purchase of the Units hereunder. The Subscriber disclaims reliance on any
+statements made or information provided by any person or entity in the course of
+Subscriber's consideration of an investment in the Units other than the Offering
+Materials. The Subscriber acknowledges and agrees that (i) the Company has
+prepared the Memorandum and that no other person, including without limitation,
+Paramount, has supplied any information for inclusion in the Memorandum other
+than information furnished in writing to the Company by Paramount specifically
+for inclusion in such parts of the Memorandum relating specifically to
+Paramount, (ii) Paramount has no responsibility for the accuracy or completeness
+of the Memorandum and (iii) the Subscriber has not relied upon the independent
+investigation or verification, if any, that may have been undertaken by
+Paramount.
+
+         (b) The Subscriber represents that (i) the Subscriber was contacted
+regarding the sale of the Units by the Company (or an authorized agent or
+representative thereof) with whom the Subscriber had a prior substantial
+pre-existing relationship and (ii) no Units were offered or sold to it by means
+of any form of general solicitation or general advertising and in connection
+therewith, the Subscriber did not (A) receive or review any advertisement,
+article, notice or other communication published in a newspaper or magazine or
+similar media or broadcast over television or radio, whether closed circuit, or
+generally available; or (B) attend any seminar meeting or industry investor
+conference whose attendees were invited by any general solicitation or general
+advertising.
+
+         1.7 The Subscriber hereby represents that the Subscriber, either by
+reason of the Subscriber's business or financial experience or the business or
+financial experience of the Subscriber's professional advisors (who are
+unaffiliated with and not compensated by the Company or any affiliate or selling
+agent of the Company, including Paramount, directly or
+
+
+                                       3
+<PAGE>
+
+indirectly), has the capacity to protect the Subscriber's own interests in
+connection with the transaction contemplated hereby.
+
+         1.8 The Subscriber hereby acknowledges that the Offering has not been
+reviewed by the United States Securities and Exchange Commission (the "SEC") nor
+any state regulatory authority since the Offering is intended to be exempt from
+the registration requirements of Section 5 of the Securities Act pursuant to
+Regulation D promulgated under the Securities Act. The Subscriber understands
+that the Securities have not been registered under the Securities Act and agrees
+not to sell or otherwise transfer the Securities unless they are registered
+under the Securities Act or unless an exemption from such registration is
+available.
+
+         1.9 The Subscriber understands that the Securities comprising the Units
+have not been registered under the Securities Act by reason of a claimed
+exemption under the provisions of the Securities Act that depends, in part, upon
+the Subscriber's investment intention. In this connection, the Subscriber hereby
+represents that the Subscriber is purchasing the Securities for the
+Subscriber's own account for investment and not with a view toward the resale or
+distribution to others. The Subscriber, if an entity, further represents that it
+was not formed for the purpose of purchasing the Securities.
+
+         1.10 The Subscriber understands that there is no public market for the
+Units nor the Securities comprising the Units and that no market may develop for
+any of such Securities. The Subscriber understands that even if a public market
+develops for such securities, Rule 144 ("Rule 144") promulgated under the
+Securities Act requires for non-affiliates, among other conditions, a one-year
+holding period prior to the resale (in limited amounts) of securities acquired
+in a non-public offering without having to satisfy the registration requirements
+under the Securities Act. The Subscriber understands and hereby acknowledges
+that the Company is under no obligation to register any of the Units or any of
+the Securities comprising the Units under the Securities Act or any state
+securities or "blue sky" laws other than as set forth in Article V. The
+Subscriber agrees to hold the Company and its directors, officers, employees,
+affiliates, controlling persons and agents (including Paramount and its
+officers, directors, employees, counsel, controlling persons and agents) and
+their respective heirs, representatives, successors and assigns harmless and to
+indemnify them against all liabilities, costs and expenses incurred by them as a
+result of (a) any misrepresentation made by the Subscriber contained in this
+Agreement (including the Confidential Investor Questionnaire contained in
+Articles VII herein); (b) any sale or distribution by the Subscriber in
+violation of the Securities Act or any applicable state securities or "blue sky"
+laws; or (c) any untrue statement of a material fact made by the Subscriber and
+contained herein.
+
+
+         1.11 The Subscriber consents to the placement of a legend on any
+certificate or other document evidencing the Securities that such Securities
+have not been registered under the Securities Act or any state securities or
+"blue sky" laws and setting forth or referring to the restrictions on
+transferability and sale thereof contained in this Agreement. The Subscriber is
+
+
+                                       4
+<PAGE>
+
+aware that the Company will make a notation in its appropriate records with
+respect to the restrictions on the transferability of such Securities.
+
+         1.12 The Subscriber understands that the Company will review this
+Agreement and is hereby given authority by the Subscriber to call Subscriber's
+bank or place of employment or otherwise review the financial standing of the
+Subscriber; and it is further agreed that the Company, at its sole discretion,
+reserves the unrestricted right, without further documentation or agreement on
+the part of the Subscriber, to reject or limit any subscription, to accept
+subscriptions for fractional Units and to close the Offering to the Subscriber
+at any time and will issue stop transfer instructions to its transfer agent with
+respect to such Securities.
+
+         1.13 The Subscriber hereby represents that the address of the
+Subscriber furnished by Subscriber on the signature page hereof is the
+Subscriber's principal residence if Subscriber is an individual or its principal
+business address if it is a corporation or other entity.
+
+         1.14 The Subscriber represents that the Subscriber has full power and
+authority (corporate, statutory and otherwise) to execute and deliver this
+Agreement and to purchase the Units and the Securities underlying the Units.
+This Agreement constitutes the legal, valid and binding obligation of the
+Subscriber, enforceable against the Subscriber in accordance with its terms.
+
+         1.15 If the Subscriber is a corporation, partnership, limited liability
+company, trust, employee benefit plan, individual retirement account, Keogh
+Plan, or other tax-exempt entity, it is authorized and qualified to invest in
+the Company and the person signing this Agreement on behalf of such entity has
+been duly authorized by such entity to do so.
+
+         1.16 The Subscriber acknowledges that if he or she is a Registered
+Representative of an NASD member firm, he or she must give such firm the notice
+required by the NASD's Rules of Fair Practice, receipt of which must be
+acknowledged by such firm in Section 7.4 below.
+
+         1.17 The Subscriber acknowledges that at such time, if ever, as the
+Securities are registered, sales of the Securities will be subject to state
+securities laws.
+
+         1.18 (a) Subject to the provision below and Section 1.18(b), the
+Subscriber hereby agrees that from the earlier to occur of (i) the date of the
+initial public offering of the Common Stock (the "IPO") or (ii) the first date
+(the "Trading Date") on which the Common Stock (or securities received in
+exchange for Common Stock) trades on a national securities exchange or on
+the NASDAQ (a "Trading Event") and continuing for a period of six months
+thereafter or such longer period as may be requested by the underwriter or
+underwriters, in the case of an IPO (the "Lock-Up Period"), the Subscriber will
+not, without the prior written consent of Paramount, offer, pledge, sell,
+contract to sell, grant any option for the sale of, or otherwise dispose of,
+directly or indirectly, the Registrable Securities (as defined in Section 5.1)
+purchased or acquired by the Subscriber. In addition, the Subscriber agrees that
+during the
+
+
+                                       5
+<PAGE>
+
+period from the date that Subscriber was first contacted with respect to the
+potential purchase of the Units through the last date upon which Subscriber
+holds any Securities or Registrable Securities, the Subscriber will not directly
+or indirectly, through related parties, affiliates or otherwise sell "short" or
+"short against the box" (as those terms are generally understood) any equity
+security of the Company; provided, however, that it shall not be a violation of
+this Section 1.18, if the Subscriber places a sell order for Registrable
+Securities prior to the conversion of the Units.
+
+         (b) In connection with any subsequent public offering of the Company's
+securities, the Holder hereby agrees to be subject to a lock-up for a period of
+60 days or such longer period following such public offering as required by the
+underwriter or underwriters of such public offering. The foregoing lock-ups
+shall be applicable regardless of whether the securities are then registered for
+re-sale under the Securities Act. This Section 1.18 shall be binding upon any
+transferee of the Securities.
+
+         (c) In order to enforce the foregoing covenant, the Company may impose
+stop-transfer instructions with respect to the Registrable Securities (as
+defined below) of each Holder (as defined below) (and the shares or securities
+of every other person subject to the foregoing restriction) until the end of
+such period.
+
+         1.19 (a) The Subscriber agrees not to issue any public statement with
+respect to the Subscriber's investment or proposed investment in the Company or
+the terms of any agreement or covenant between them and the Company without the
+Company's prior written consent, except such disclosures as may be required
+under applicable law or under any applicable order, rule or regulation.
+
+         (b) The Company agrees not to disclose the names, addresses or any
+other information about the Subscriber, except as required by law; provided,
+that the Company may use the name (but not the address) of the Subscriber in any
+registration statement filed pursuant to Article V in which the Subscriber's
+shares are included.
+
+         1.20 The Subscriber represents and warrants that it has not engaged,
+consented to or authorized any broker, finder or intermediary to act on its
+behalf, directly or indirectly, as a broker, finder or intermediary in
+connection with the transactions contemplated by this Agreement. The Subscriber
+hereby agrees to indemnify and hold harmless the Company from and against all
+fees, commissions or other payments owing to any such person or firm acting on
+behalf of such Subscriber hereunder.
+
+II.      REPRESENTATIONS BY AND COVENANTS OF THE COMPANY
+
+         The Company hereby represents and warrants to the Subscriber that:
+
+         2.1 Organization, Good Standing and Qualification. The Company is a
+corporation duly organized, validly existing and in good standing under the laws
+of the State of
+
+
+                                       6
+<PAGE>
+
+Delaware and has full corporate power and authority to conduct its business as
+described in the Memorandum.
+
+         2.2 Capitalization and Voting Rights. The authorized, issued and
+outstanding capital stock of the Company is as set forth in the Memorandum and
+all issued and outstanding shares of the Company are validly issued, fully paid
+and nonassessable. The Securities comprising the Units, when issued and paid for
+in accordance with the terms of this Agreement, will be validly issued, fully
+paid and nonassessable. The Company shall at all times during the period that
+any of the shares of Preferred Stock remain outstanding and unexercised have
+authorized and reserved for issuance a sufficient number of shares of Common
+Stock to provide for conversion of the Preferred Stock. Except as set forth in
+the Memorandum, there are no outstanding options, warrants, agreements,
+convertible securities, preemptive rights or other rights to subscribe for or to
+purchase any shares of capital stock of the Company. Except as set forth in the
+Offering Materials and as otherwise required by law, there are no restrictions
+upon the voting or transfer of any of the shares of capital stock of the Company
+pursuant to the Company's Certificate of Incorporation, as amended (the
+"Certificate of Incorporation"), By-Laws or other governing documents or any
+agreement or other instruments to which the Company is a party or by which the
+Company is bound.
+
+         2.3 Authorization; Enforceability. The Company has all corporate right,
+power and authority to enter into this Agreement and to consummate the
+transactions contemplated hereby. All corporate action on the part of the
+Company, its directors and stockholders necessary for the authorization (i)
+proposed merger with Pain Management, Inc. with and into the Company, (ii)
+execution, delivery and performance of this Agreement by the Company, (iii) the
+authorization, sale, issuance and delivery of the Securities contemplated hereby
+and the performance of the Company's obligations hereunder has been taken. This
+Agreement has been duly executed and delivered by the Company and constitutes a
+legal, valid and binding obligation of the Company, enforceable against the
+Company in accordance with its terms, subject to laws of general application
+relating to bankruptcy, insolvency and the relief of debtors and rules of law
+governing specific performance, injunctive relief or other equitable remedies,
+and to limitations of public policy. Upon the issuance and delivery of the Units
+as contemplated by this Agreement, such Units will be validly issued, fully paid
+and nonassessable. Upon the issuance and delivery of the Common Stock issuable
+upon conversion of the Preferred Stock (including the Preferred Stock issuable
+upon exercise of the Paramount Warrants (as defined in the Memorandum)), and
+upon compliance by the Subscriber with the terms hereof, the Common Stock will
+be validly issued, fully paid and nonassessable. The issuance and sale of the
+Units contemplated hereby and the issuance and sale of the Common Stock
+underlying the Preferred Stock (including the Preferred Stock issuable upon
+exercise of the Paramount Warrants), will not give rise to any preemptive rights
+or rights of first refusal on behalf of any person.
+
+         2.4 Certificate of Designations of Preferred Stock. The Preferred Stock
+has all of the rights, preferences and privileges substantially as set forth in
+the Form of Certificate of Designations attached as Exhibit A to the Memorandum.
+
+
+                                       7
+<PAGE>
+
+         2.5 No Conflict; Governmental Consents.
+
+         (a) The execution and delivery by the Company of this Agreement and the
+consummation of the transactions contemplated hereby will not result in the
+violation of any material law, statute, rule, regulation, order, writ,
+injunction, judgment or decree of any court or governmental authority to or by
+which the Company is bound, or of any provision of the Certificate of
+Incorporation or By-Laws of the Company, and will not conflict with, or result
+in a material breach or violation of, any of the terms or provisions of, or
+constitute (with due notice or lapse of time or both) a default under, any
+lease, loan agreement, mortgage, security agreement, trust indenture or other
+agreement or instrument to which the Company is a party or by which it is bound
+or to which any of its properties or assets is subject, nor result in the
+creation or imposition of any lien upon any of the properties or assets of the
+Company.
+
+         (b) No consent, approval, authorization or other order of any
+governmental authority is required to be obtained by the Company in connection
+with the authorization, execution and delivery of this Agreement or with the
+authorization, issue and sale of the Units or the Securities comprising the
+Units, except such filings as may be required to be made with the SEC, the NASD,
+NASDAQ and with any state or foreign blue sky or securities regulatory
+authority.
+
+         2.6 Licenses. Except as otherwise set forth in the Memorandum, the
+Company has sufficient licenses, permits and other governmental authorizations
+currently required for the conduct of its business or ownership of properties
+and is in all material respects complying therewith.
+
+         2.7 Litigation. The Company knows of no pending or threatened legal or
+governmental proceedings against the Company that would materially adversely
+affect the business, property, financial condition or operations of the Company.
+
+         2.8 Memorandum, Disclosure. The information set forth in the Memorandum
+as of the date thereof contains no untrue statement of a material fact nor omits
+to state a material fact necessary in order to make the statements contained
+therein, in light of the circumstances under which they were made, not
+misleading.
+
+         2.9 Investment Company. The Company is not an "investment company"
+within the meaning of such term under the Investment Company Act of 1940, as
+amended, and the rules and regulations of the SEC thereunder.
+
+         2.10 Finder. The Company has engaged, consented to and authorized
+Paramount to act as finder for the Company in connection with the transactions
+contemplated by this Agreement. The Company will pay Paramount a commission as
+set forth in the Memorandum and will reimburse Paramount's reasonable
+out-of-pocket expenses incurred in connection with the Offering, and the Company
+agrees to indemnify and hold harmless the Subscribers from and against all fees,
+commissions or other payments owing by the Company to Paramount or any other
+person or firm acting on behalf of the Company hereunder.
+
+
+                                       8
+<PAGE>
+
+III.     TERMS OF SUBSCRIPTION
+
+         3.1 The Company desires to issue at least the Minimum Offering amount
+and at most the Maximum Offering amount with an option in favor of Paramount to
+offer up to an additional 50 Units to cover over-allotments. Each share of
+Preferred Stock is convertible at the option of the holder thereof into one
+shares of Common Stock of the Company, initially at a conversion price equal to
+$4.00 per share of Common Stock. Upon receipt of the Minimum Offering amount,
+the Company may conduct a closing (the "Initial Closing Date") and may conduct
+subsequent closings on an interim basis (each a "Closing") until the Maximum
+Offering amount has been reached (the "Final Closing Date").
+
+         3.2 Placement of the Units will be made by the Company, who will remit
+certain compensation to Paramount for introduction to investors and other
+services described in the Memorandum.
+
+         3.3 Pending the sale of the Units, all funds paid hereunder shall be
+deposited by the Company in escrow with State Street Bank and Trust Company,
+N.A., having a branch at 61 Broadway, New York, New York, 10006. If the Company
+shall not have obtained subscriptions (including this subscription) for
+purchases of the Minimum Offering amount on or before the Final Closing Date,
+then this subscription shall be void and all funds paid hereunder by the
+Subscriber shall be promptly returned to the Subscriber.
+
+         3.4 The Subscriber hereby authorizes and directs the Company to deliver
+the certificates representing the shares of Units to be issued to the Subscriber
+pursuant to this Agreement directly to the Subscriber's account maintained by
+Paramount, if any, or, if no such account exists, to the residential or business
+address indicated on the signature page hereto.
+
+         3.5 The Subscriber hereby Authorizes and directs the Company to return
+any funds for unaccepted subscriptions to the same account from which the funds
+were drawn, including any customer account maintained with Paramount.
+
+IV.      CONDITIONS TO OBLIGATIONS OF THE SUBSCRIBERS
+
+         4.1 The Subscriber's obligation to purchase the Units at the Closings
+is subject to the fulfillment on or prior to each Closing of the following
+conditions, which said conditions may be waived at the option of each Subscriber
+to the extent permitted by law:
+
+         (a) Representations and Warranties Correct. The representations and
+warranties made by the Company in Article II hereof shall be true and correct in
+all material respects when made, and shall be true and correct in all material
+respects on each Closing with the same force and effect as if they had been made
+on and as of said date.
+
+
+                                       9
+<PAGE>
+
+         (b) Covenants. All covenants, agreements and conditions contained in
+this Agreement to be performed by the Company on or prior to such purchase shall
+have been performed or complied with in all material respects.
+
+         (c) No Legal Order Pending. There shall not then be in effect any legal
+or other order enjoining or restraining the transactions contemplated by this
+Agreement.
+
+         (d) No Law Prohibiting or Restricting Such Sale. There shall not be in
+effect any law, rule or regulation prohibiting or restricting such sale or
+requiring any consent or approval of any person, which shall not have been
+obtained, to issue the Securities (except as otherwise provided in this
+Agreement).
+
+         (e) Minimum Subscriptions. The Company shall have received binding
+subscriptions for at least the Minimum Offering amount.
+
+         (f) License Agreement. The Company shall have executed a valid and
+binding definitive agreement, relating to the acquisition by the Company of the
+world wide rights to certain compounds as described in the Memorandum, with West
+Pharmaceutical Services, Inc.
+
+         (g) Merger. A duly authorized Certificate of Merger, relating to the
+merger of the Company with Pain Management, Inc., shall have been filed with the
+Secretary of State of the State of Delaware.
+
+V.       REGISTRATION RIGHTS
+
+         5.1 Definitions. As used in this Agreement, the following terms shall
+have the following meanings.
+
+         (a) The term "Holder" shall mean any person owning or having the right
+to acquire Registrable Securities or any permitted transferee of a Holder.
+
+         (b) The terms "register", "registered" and "registration" refer to a
+registration effected by preparing and filing a registration statement or
+similar document in compliance with the Securities Act, and the declaration or
+order of effectiveness of such registration statement or document.
+
+         (c) The term "Registrable Securities" shall mean (i) the shares of
+Common Stock issuable upon conversion of the Preferred Stock underlying the
+Units; (ii) the shares of Common Stock issuable upon conversion of the Preferred
+Stock underlying the Paramount Warrants; and (iii) any shares of Common Stock
+issued (or issuable upon the conversion or exercise of any warrant, right or
+other security that is issued) pursuant to this Agreement or issuable pursuant
+to a dividend or other distribution with respect to or in replacement of the
+Units; provided, however, that securities shall only be treated as Registrable
+Securities if and only for so long as they (A) have not been disposed of
+pursuant to
+
+
+                                       10
+<PAGE>
+
+a registration statement declared effective by the SEC, (B) have not been sold
+in a transaction exempt from the registration and prospectus delivery
+requirements of the Securities Act so that all transfer restrictions and
+restrictive legends with respect thereto are removed upon the consummation of
+such sale and (C) are held by a Holder or a permitted transfers of a Holder
+pursuant to Section 5.11.
+
+5.2      Piggyback Registration.
+
+         (a) The Company agrees that if, at any time, and from time to time,
+after the earlier to occur of (i) an IPO and (ii) a Trading Event, and ending on
+the date that is five years from the date hereof, the Board of Directors of the
+Company (the "Board") shall authorize the filing of a registration statement
+under the Securities Act (other than the initial public offering of the
+Company's Common Stock or a registration statement on Form S-8, Form S-4 or any
+other form that does not include substantially the same information as would be
+required in a form for the general registration of securities) in connection
+with the proposed offer of any of its securities by it or any of its
+stockholders, the Company shall: (A) promptly notify the Holder that such
+registration statement will be filed and that the Registrable Securities then
+held by the Holder will be included in such registration statement at the
+Holder's request; (B) cause such registration statement to cover all of such
+Registrable Securities issued to the Holder for which the Holder requests
+inclusion; (C) use its reasonable best efforts to cause such registration
+statement to become effective as soon as practicable; and (D) take all other
+action necessary under any Federal or state law or regulation of any
+governmental authority to permit all such Registrable Securities that have been
+issued to the Holder to be sold or otherwise disposed of, and will maintain such
+compliance with each such Federal and state law and regulation of any
+governmental authority for the period necessary for the Holder to effect the
+proposed sale or other disposition.
+
+         (b) Notwithstanding any other provision of this Article V, the Company
+may at any time, abandon or delay any registration commenced by the Company. In
+the event of such an abandonment by the Company, the Company shall not be
+required to continue registration of shares requested by the Holder for
+inclusion and the Holder shall retain the right to request inclusion of shares
+as set forth above.
+
+         (c) Each Holder shall have the right to request inclusion of any of its
+Registrable Securities in a registration statement as described in this Section
+5.2, up to four times.
+
+5.3      Demand Registration.
+
+         (a) Registration on Request. (1) The Company further agrees that if, at
+any time, and from time to time, but at least 180 days after the earlier to
+occur of (i) an IPO and (ii) a Trading Event, and ending on the date that is
+five years from the date hereof, the Holders desire to effect the registration
+under the Securities Act of outstanding Registrable Securities, the Holders may
+make a written request that the Company effect such registration; provided that
+such registration covers at least 51% of the Registrable Securities owned by the
+
+
+                                       11
+<PAGE>
+
+Holders at such time. Such request will specify the number of shares of
+Registrable Securities proposed to be sold and will also specify the intended
+method of disposition thereof. The Company will use its best efforts to file,
+within 30 days of such demand, the registration under the Securities Act of the
+Registrable Securities which the Company has been so requested to register by
+such Holders pursuant to this Section 5.3(a)(i), to the extent necessary to
+permit the disposition (in accordance with the intended methods thereof as
+aforesaid) of the Registrable Securities to be registered; provided, further,
+that the Holders shall be only one demand registration.
+
+                  (ii) Notwithstanding Sections 5.3(a)(i),
+
+
+                  (A) the Company shall not be obligated to file a registration
+         statement relating to a registration request pursuant to this Section
+         5.3 at any time during the six-month period immediately following the
+         effective date of another registration statement filed by the Company
+         (other than a registration statement on Form S-4 or Form S-8 or any
+         successor or similar form);
+
+                  (B) the Company shall not be obligated to file pursuant to
+         this Section 5.3 more than one registration statement on Form S-4, S-2
+         or S-3 initiated by the Holders, it being understood that the aggregate
+         price to the public with respect to each such registration statement on
+         Form S-3 must be expected to be not less than $1 million; and
+
+                  (C) if the Board determines, in its good faith reasonable
+         judgment, that the Company should not file any registration statement
+         otherwise required to be filed pursuant to Section 5.3(a) or should
+         withdraw any such previously filed registration statement because the
+         Company is engaged in or in good faith plans to engage in any
+         financing, acquisition or other material transaction which would be
+         adversely affected by the filing or maintenance of a registration
+         statement otherwise required to be filed or maintained pursuant to this
+         Section 5.3, or that the Company is in the possession of material
+         nonpublic information required to be disclosed in such registration
+         statement or an amendment or supplement thereto, the disclosure of
+         which in such registration statement would be materially
+         disadvantageous to the Company (a "Disadvantageous Condition"), the
+         Company shall be entitled to postpone for the r shortest reasonable
+         period of time (but not exceeding 180 days from the date of the
+         determination), the filing of such registration statement or, if such
+         registration statement has already been filed, may withdraw such
+         registration statement and shall promptly give the Holders written
+         notice of such determination, containing a general statement of the
+         reasons for such postponement and an approximation of the anticipated
+         delay. If the Company shall so postpone the filing or effect the
+         withdrawal of the registration statement, the Holders who made the
+         request for registration shall have the right to withdraw the request
+         for registration by giving written notice to the Company within 30 days
+         after receipt of the notice of postponement. The Company's right to
+         delay a
+
+
+                                       12
+<PAGE>
+
+         request for registration or to withdraw a registration statement
+         pursuant to this Section 5.3 may not be exercised more than once in any
+         one-year period.
+
+         (b) Pursuant to Section 5.2, after the receipt of a registration
+request hereunder, the Company shall notify the Holders of any other Person
+requesting shares of Registrable Securities to be included therein and the
+number of shares of Common Stock requested to be included therein. If the
+Company determines to take any action pursuant to clause (D) above, the Company
+shall deliver a notice to the Holders to such effect. Upon the receipt of any
+such notice, such Holders shall forthwith discontinue use of the prospectus
+contained in such registration statement and, if so directed by the Company,
+shall deliver to the Company all copies of the prospectus then covering such
+Registrable Securities current at the time of receipt of such notice (or, if no
+registration statement has yet been filed, all drafts of the prospectus covering
+such Registrable Securities). If any Disadvantageous Condition shall cease to
+exist, the Company shall promptly notify the Holders to such effect. If any
+registration statement shall have been withdrawn, the Company shall, if
+requested by the Holders who made the request for registration, at such time as
+it is possible or, if earlier, at the end of the 180-day period following such
+withdrawal, file a new registration statement covering the Registrable
+Securities that were covered by such withdrawn registration statement, and the
+effectiveness of such registration statement shall be maintained for such time
+as may be necessary so that the period of effectiveness of such new registration
+statement, when aggregated with the period during which such withdrawn
+registration statement was effective, if any, shall be such time as may be
+otherwise required by this Agreement.
+
+         5.3 Whenever required under this Article V to include Registrable
+Securities in a Company registration statement, the Company shall, as
+expeditiously as reasonably possible:
+
+         (a) Use its best efforts to (i) cause such registration statement to
+become effective, and, and (ii) cause such Registration Statement to remain
+effective until such date as the holders of the Shares have completed the
+distribution described in the Registration Statement or until such time that all
+of such Shares are no longer, by reason of Rule 144(k) under the Act, required
+to be registered for the sale thereof by such holders. The Company will also use
+its best efforts to, during the period that such Registration Statement is
+required to be maintained hereunder, file such post-effective amendments and
+supplements thereto as may be required by the Securities Act and the rules and
+regulations thereunder or otherwise to ensure that the Registration Statement
+does not contain any untrue statement of material fact or omit to state a fact
+required to be stated therein or necessary to make the statements contained
+therein, in light of the circumstances under which they are made, not
+misleading; provided, however, that if applicable rules under the Securities Act
+governing the obligation to file a post-effective amendment permits, in lieu of
+filing a post-effective amendment that (i) includes any prospectus required by
+Section 10(a) of the Securities Act or (ii) reflects facts or events
+representing a material or fundamental change in the information set forth in
+the registration statement, the Company may incorporate by reference information
+required to be included in (i) and (ii) above to the extent such information is
+contained in periodic reports filed pursuant to Section 13 or 15(d) of the
+Exchange Act in the registration statement.
+
+
+                                       13
+<PAGE>
+
+         (b) Prepare and file with the SEC such amendments and supplements to
+such registration statement, and the prospectus used in connection with such
+registration statement, as may be necessary to comply with the provisions of the
+Securities Act with respect to the disposition of all securities covered by such
+registration statement.
+
+         (c) Furnish to the Holders such numbers of copies of a prospectus,
+including a preliminary prospectus as amended or supplemented from time to time,
+in conformity with the requirements of the Securities Act, and such other
+documents as they may reasonably request in order to facilitate the disposition
+of Registrable Securities owned by them.
+
+         (d) Use its best efforts to register and qualify the securities covered
+by such registration statement under such other federal or state securities laws
+of such jurisdictions as shall be reasonably requested by the Holders; provided,
+however, that the Company shall not be required in connection therewith or as a
+condition thereto to qualify to do business or to file a general consent to
+service of process in any such states or jurisdictions, unless the Company is
+already subject to service in such jurisdiction and except as may be required by
+the Securities Act.
+
+         (e) In the event of any underwritten public offering, enter into and
+perform its obligations under an underwriting agreement, in usual and customary
+form, with the managing underwriter of such offering. Each Holder participating
+in such underwriting shall also enter into and perform its obligations under
+such an agreement.
+
+         (f) Notify each Holder of Registrable Securities covered by such
+registration statement, at any time when a prospectus relating thereto is
+required to be delivered under the Securities Act, (i) when the registration
+statement or any post-effective amendment and supplement thereto has become
+effective; (ii) of the issuance by the SEC of any stop order or the initiation
+of proceedings for that purpose (in which event the Company shall make every
+effort to obtain the withdrawal of any order suspending effectiveness of the
+registration statement at the earliest possible time or prevent the entry
+thereto); of the receipt by the Company of any notification with respect to the
+suspension of the qualification of the Registrable Securities for sale in any
+jurisdiction or the initiation of any proceeding for such purpose; and (iv) of
+the happening of any event as a result of which the prospectus included in such
+registration statement, as then in effect, includes an untrue statement of a
+material fact or omits to state a material fact required to be stated therein or
+necessary to make the statements therein not misleading in the light of the
+circumstances then existing.
+
+         (g) Cause all such Registrable Securities registered hereunder to be
+listed on each securities exchange or quotation service on which similar
+securities issued by the Company are then listed or quoted.
+
+
+                                       14
+<PAGE>
+
+         (h) Provide a transfer agent and registrar for all Registrable
+Securities registered pursuant hereunder and CUSIP number for all such
+Registrable Securities, in each case not later than the effective date of such
+registration.
+
+         5.5 Furnish Information. It shall be a condition precedent to the
+obligation of the Company to take any action pursuant to this Article V with
+respect to the Registrable Securities of any selling Holder that such Holder
+shall furnish to the Company such information regarding the Holder, the
+Registrable Securities held by the Holder, and the intended method of
+disposition of such securities as shall be reasonably required by the Company to
+effect the registration of such Holder's Registrable Securities.
+
+         5.6 Expenses of Company Registration. The Company shall bear and pay
+all expenses incurred in connection with any registration, filing or
+qualification of Registrable Securities with respect to the registrations
+pursuant to Section 5.2 for each Holder, including (without limitation) all
+registration, filing, and qualification fees, printers and accounting fees
+relating or apportionable thereto, but excluding underwriting discounts and
+commissions relating to Registrable Securities; provided, however, that the
+Company shall not bear the cost of any professional fees or costs of accounting,
+financial or legal advisors to any of the Holders. Notwithstanding the
+foregoing, each Holder shall pay all registration expenses that such Holder is
+required to pay under applicable law.
+
+         5.7 Underwriting Requirements. In connection with any offering
+involving an underwriting of shares of the Company's capital stock, the Company
+shall not be required under Section 5.2 to include any of the Holders'
+Registrable Securities in such underwriting unless they accept the terms of the
+underwriting as agreed upon between the Company and the underwriters selected by
+it (or by other persons entitled to select the underwriters), and then only in
+such quantity as the underwriters determine in their sole discretion will not
+jeopardize the success of the offering by the Company. If the total amount of
+securities, including Registrable Securities, requested by stockholders to be
+included in such offering exceeds the amount of securities sold other than by
+the Company that the underwriters determine in their sole discretion is
+compatible with the success of the offering, then the Company shall be required
+to include in the offering only that number of such securities, including
+Registrable Securities, which the underwriters determine in their sole
+discretion will not jeopardize the success of the offering (the securities so
+included to be apportioned pro rata among the selling stockholders according to
+the total amount of securities entitled to be included therein owned by each
+selling stockholder or in such other proportions as shall mutually be agreed to
+by such selling stockholders). For purposes of the preceding parenthetical
+concerning apportionment, for any selling stockholder who is a holder of
+Registrable Securities and is a partnership or corporation, the partners,
+retired partners and stockholders of such holder, or the estates and family
+members of any such partners and retired partners and any trusts for the benefit
+of any of the foregoing persons shall be deemed to be a single "selling
+stockholder", and any pro-rata reduction with respect to such "selling
+stockholder" shall be based upon the aggregate amount of shares carrying
+registration rights owned by all entities and individuals included in such
+"selling stockholder", as defined in this sentence.
+
+
+                                       15
+<PAGE>
+
+         5.8 Delay of Registration. No Holder shall have any right to obtain or
+seek an injunction restraining or otherwise delaying any such registration as
+the result of any controversy that might arise with respect to the
+interpretation or implementation of this Article.
+
+         5.9 Indemnification. In the event that any Registrable Securities are
+included in a registration statement under this Article V.
+
+         (a) To the extent permitted by law, the Company will indemnify and hold
+harmless each Holder, any underwriter (as defined in the Securities Act) for
+such Holder and each person, if any, who controls such Holder or underwriter
+within the meaning of the Securities Act or the Exchange Act, against any
+losses, claims, damages, or liabilities (joint or several) to which they may
+become subject under the Securities Act, or the Exchange Act, insofar as such
+losses, claims, damages, or liabilities (or actions in respect thereof) arise
+out of or are based upon any of the following statements, omissions or
+violations (collectively a "Violation"): (i) any untrue statement or alleged
+untrue statement of a material fact contained in such registration statement,
+including any preliminary prospectus or final prospectus contained therein or
+any amendments or supplements thereto, (ii) the omission or alleged omission to
+state therein a material fact required to be stated therein, or necessary to
+make the statements therein not misleading, or (iii) any violation or alleged
+violation by the Company of the Securities Act, the Exchange Act, or any rule or
+regulation promulgated under the Securities Act, or the Exchange Act, and the
+Company will pay to each such Holder, underwriter or controlling person, as
+incurred, any legal or other expenses reasonably incurred by them in connection
+with investigating or defending any such loss, claim, damage, liability, or
+action; provided, however, that the indemnity agreement contained in this
+Section 5.9(a) shall not apply to amounts paid in settlement of any such loss,
+claim, damage, liability, or action if such settlement is effected without the
+consent of the Company (which consent shall not be unreasonably withheld), nor
+shall the Company be liable in any such case for any such loss, claim, damage,
+liability, or action to the extent that it arises out of or is based upon a
+Violation which occurs in reliance upon and in conformity with written
+information furnished expressly for use in connection with such registration by
+any such Holder, underwriter or controlling person.
+
+         (b) To the extent permitted by law, each selling Holder will indemnify
+and hold harmless the Company, each of its directors, each of its officers, each
+person, if any, who controls the Company within the meaning of the Securities
+Act, any underwriter, any other Holder selling securities in such registration
+statement and any controlling person of any such underwriter or other Holder,
+against any losses, claims, damages, or liabilities (joint or several) to which
+any of the foregoing persons may become subject, under the Securities Act, or
+the Exchange Act, insofar as such losses, claims, damages, or liabilities (or
+action in respect thereto) arise out of or are based upon any Violation, in each
+case to the extent (and only to the extent) that such Violation occurs in
+reliance upon and in conformity with written information furnished by such
+Holder expressly for use in connection with such registration; and each such
+Holder will pay, as incurred, any legal or other expenses reasonably incurred by
+any person intended to be indemnified pursuant to this Section 5.9(b), in
+connection with investigating or defending any such loss, claim,
+
+
+                                       16
+<PAGE>
+
+damage, liability, or action; provided, however, that the indemnity agreement
+contained in this Section 5.9(b) shall not apply to amounts paid in settlement
+of any such loss, claim, damage, liability or action if such settlement is
+effected without the Consent of the Holder, which consent shall not be
+unreasonably withheld; provided, further, that, in no event shall any indemnity
+under this Section 5.9(b) exceed the greater of the cash value of the (i) gross
+proceeds from the offering received by such Holder or (ii) Holder's investment
+pursuant to this Agreement as set forth on the signature page attached hereto.
+
+         (c) Promptly after receipt by an indemnified party under this Section
+5.9 of notice of the commencement of any action (including any governmental
+action), such indemnified party shall, if a claim in respect thereof is to be
+made against any indemnifying party under this Section 5.9, deliver to the
+indemnifying party a written notice of the commencement thereof and the
+indemnifying party shall have the right to participate in, and, to the extent
+the indemnifying party so desires, jointly with any other indemnifying party
+similarly notified, to assume the defense thereof with counsel selected by the
+indemnifying party and approved by the indemnified party (whose approval shall
+not be unreasonably withheld); provided, however, that an indemnified party
+(together with all other indemnified parties which may be represented without
+conflict by one counsel) shall have the right to retain one separate counsel,
+with the fees and expenses to be paid by the indemnifying party, if
+representation of such indemnified party by the counsel retained by the
+indemnifying party would be inappropriate due to actual or potential differing
+interests between such indemnified party and any other party represented by such
+counsel in such proceeding. The failure to deliver written notice to the
+indemnifying party within a reasonable time of the commencement of any such
+action, if prejudicial to its ability to defend such action, shall relieve such
+indemnifying party of any liability to the indemnified party under this Section
+5.9, but the omission so to deliver written notice to the indemnifying party
+will not relieve it of any liability that it may have to any indemnified party
+otherwise than under this Section 5.9.
+
+         (d) If the indemnification provided for in this Section 5.9 is held by
+a court of competent jurisdiction to be unavailable to an indemnified party with
+respect to any loss, liability, claim, damage, or expense referred to therein,
+then the indemnifying party, in lieu of indemnifying such indemnified party
+hereunder, shall contribute to the amount paid or payable by such indemnified
+party as a result of such loss, liability, claim, damage, or expense in such
+proportion as is appropriate to reflect the relative fault of the indemnifying
+party on the one hand and of the indemnified party on the other in connection
+with the statements or omissions that resulted in such loss, liability, claim,
+damage, or expense as well as any other relevant equitable considerations. The
+relative fault of the indemnifying party and of the indemnified party shall be
+determined by reference to, among other things, whether the untrue or alleged
+untrue statement of a material fact or the alleged omission to state a material
+fact relates to information supplied by the indemnifying party or by the
+indemnified party and the parties' relative intent, knowledge, access to
+information, and opportunity to correct or prevent such statement or omission.
+
+         (e) Notwithstanding the foregoing, to the extent that the provisions on
+indemnification and contribution contained in the underwriting agreement entered
+into in
+
+
+                                       17
+<PAGE>
+
+connection with the underwritten public offering are in conflict with the
+foregoing provisions, the provisions in the underwriting agreement shall
+control.
+
+         (f) The obligations of the Company and Holders under this Section 5.9
+shall survive the completion of any offering of Registrable Securities in a
+registration statement under this Article V, and otherwise.
+
+         5.10 Reports Under Securities Exchange Act of 1934 . With a view to
+making available to the Holders the benefits of Rule 144 and any other rule or
+regulation of the SEC that may at any time permit a Holder to sell securities of
+the Company to the public without registration or pursuant to a registration on
+Form S-3, the Company agrees to:
+
+         (a) make and keep public information available, as those terms are
+understood and defined in Rule 144, at all times after 90 days after the
+effective date of the registration statement filed in connection with an IPO by
+the Company;
+
+         (b) file with the SEC in a timely manner all reports and other
+documents required of the Company under the Securities Act and the Exchange Act;
+and
+
+         (c) furnish to any Holder, so long as the Holder owns any Registrable
+Securities, forthwith upon request (i) a copy of the nest recent annual or
+quarterly report of the Company and such other reports and documents so filed by
+the Company, and (ii) such other information as may be reasonably requested in
+availing any Holder of any rule or regulation of the SEC which permits the
+selling of any such securities without registration or pursuant to such form.
+
+         5.11 Permitted Transferees. The rights to cause the Company to register
+Registrable Securities granted to the Holders by the Company under this Article
+5 may be assigned in full by a Holder in connection with a transfer by such
+Holder of its Registrable Securities if: (a) such Holder gives prior written
+notice to the Company; (b) such transferee agrees to comply with the terms and
+provisions of this Agreement; (c) such transfer is otherwise in compliance with
+this Agreement and (d) such transfer is otherwise be effected in accordance with
+applicable securities laws. Except as specifically permitted by this Section
+5.11, the rights of a Holder with respect to Registrable Securities as set out
+herein shall not be transferable to any other Person, and any attempted transfer
+shall cause all rights of such Holder therein to be forfeited.
+
+         5.12 Termination of Registration Rights. The right of any Holder to
+request or demand inclusion in any registration pursuant to Section 5.2 and
+Section 5.3 shall terminate if all shares of Registrable Securities held by such
+Holder may immediately be sold under Rule 144(k).
+
+VI.      MISCELLANEOUS
+
+
+                                       18
+<PAGE>
+
+         6.1 Any notice or other communication given hereunder shall be deemed
+sufficient if in writing and sent by registered or certified mail, return
+receipt requested. or delivered by hand against written receipt therefor,
+addressed to: c/o Innovative Drug Delivery Systems, Inc., 787 Seventh Avenue,
+48th Floor, New York, NY 10019, Attn: David M. Tanen, with a copy to c/o
+Paramount Capital, Inc. 787 Seventh Avenue, 48th Floor, New York, NY 10019,
+Attn: Stephen C. Rocamboli, and to the Subscriber at the Subscriber's address
+indicated on the signature page of this Agreement. Notices shall be deemed to
+have been given or delivered on the date of mailing, except notices of change of
+address, which shall be deemed to have been given or delivered when received.
+
+         6.2 Except as otherwise provided herein, this Agreement shall not be
+changed, modified or amended except by a writing signed by the parties to be
+charged, and this Agreement may not be discharged except by performance in
+accordance with its terms or by a writing signed by the party to be charged.
+
+         6.3 Subject to the provisions of Section 5.11 and 6.13, this Agreement
+shall be binding upon and inure to the benefit of the parties hereto and to
+their respective heirs, legal representatives, successors and assigns. This
+Agreement sets forth the entire agreement and understanding between the parties
+as to the subject matter hereof and merges and supersedes all prior discussions,
+agreements and understandings of any and every nature among them.
+
+         6.4 Upon the execution and delivery of this Agreement by the
+Subscriber, this Agreement shall become a binding obligation of the Subscriber
+with respect to the purchase of Units as herein provided, subject, however, to
+the right hereby reserved by the Company to enter into the same agreements with
+other subscribers and to add and/or delete other persons as subscribers.
+
+         6.5 NOTWITHSTANDING THE PLACE WHERE THIS AGREEMENT MAY BE EXECUTED BY
+ANY OF THE PARTIES HERETO, THE PARTIES EXPRESSLY AGREE THAT ALL THE TERMS AND
+PROVISIONS HEREOF SHALL BE CONSTRUED IN ACCORDANCE WITH AND GOVERNED BY THE LAWS
+OF THE STATE OF NEW YORK WITHOUT REGARD TO SUCH STSTES PRINCIPLES OF CONFLICTS
+OF LAW. IN THE EVENT THAT A JUDICIAL PROCEEDING IS NECESSARY, THE SOLE FORUM FOR
+RESOLVING DISPUTES ARISING OUT OF OR RELATING TO THIS AGREEMENT IS THE SUPREME
+COURT OF THE STATE OF NEW YORK IN AND FOR THE COUNTY OF NEW YORK OR THE FEDERAL
+COURTS FOR SUCH STATE AND COUNTY, AND ALL RELATED APPELLATE COURTS. THE PARTIES
+HEREBY IRREVOCABLY CONSENT TO THE JURISDICTION OF SUCH COURTS AND AGREE TO SAID
+VENUE.
+
+         6.6 In order to discourage frivolous claims the parties agree that
+unless a claimant in any proceeding arising out of this Agreement succeeds in
+establishing his claim and recovering a judgment against another party
+(regardless of whether such claimant succeeds against one of the other parties
+to the action), then the other party shall be entitled to recover
+
+
+                                       19
+<PAGE>
+
+from such claimant all of its/their reasonable legal costs and expenses relating
+to such proceeding and/or incurred in preparation therefor.
+
+         6.7 The holding of any provision of this Agreement to be invalid or
+unenforceable by a court of competent jurisdiction shall not affect any other
+provision of this Agreement, which shall remain in full force and effect. If any
+provision of this Agreement shall be declared by a court of competent
+jurisdiction to be invalid, illegal or incapable of being enforced in whole or
+in part, such provision shall be interpreted so as to remain enforceable to the
+maximum extent permissible consistent with applicable law and the remaining
+conditions and provisions or portions thereof shall nevertheless remain in full
+force and effect and enforceable to the extent they are valid, legal and
+enforceable, and no provisions shall be deemed dependent upon any other covenant
+or provision unless so expressed herein.
+
+         6.8 It is agreed that a waiver by either party of a breach of any
+provision of this Agreement shall not operate, or be construed, as a waiver of
+any subsequent breach by that same party.
+
+         6.9 The parties agree to execute and deliver all such further
+documents, agreements and instruments and take such other and further action as
+may be necessary or appropriate to carry out the purposes and intent of this
+Agreement.
+
+         6.10 This Agreement may be executed in two or more counterparts each of
+which shall be deemed an original, but all of which shall together constitute
+one and the same instrument.
+
+         6.11 Nothing in this Agreement shall create or be deemed to create any
+rights in any person or entity not a party to this Agreement, except (a) for the
+holders of Registrable Securities and (b) for Paramount pursuant to Sections
+1.6(a) and 2.10 hereto
+
+
+                  [REMAINDER OF PAGE INTENTIONALLY LEFT BLANK]
+
+
+                                       20
+<PAGE>
+
+VII.     CONFIDENTIAL INVESTOR QUESTIONNAIRE
+
+
+         7.1 The Subscriber represents and warrants that he, she or it comes
+within one category marked below, and that for any category marked, he, she or
+it has truthfully set forth, where applicable, the factual basis or reason the
+Subscriber comes within that category. ALL INFORMATION IN RESPONSE TO THIS
+SECTION WILL BE KEPT STRICTLY CONFIDENTIAL. The undersigned agrees to furnish
+any additional information which the Company deems necessary in order to verify
+the answers set forth below.
+
+Category A __              The undersigned is an individual (not a partnership,
+                           corporation, etc.) whose individual net worth, or
+                           joint net worth with his or her spouse, presently
+                           exceeds $1,000,000.
+
+                           Explanation. In calculating net worth you may include
+                           equity in personal property and real estate,
+                           including your principal residence, cash, short-term
+                           investments, stock and securities. Equity in personal
+                           property and real estate should be based on the fair
+                           market value of such property, less debt secured by
+                           such property.
+
+Category B __              The undersigned is an individual (not a partnership,
+                           corporation, etc.) who had an income in excess of
+                           $200,000 in each of the two most recent years, or
+                           joint income with his or her spouse in excess of
+                           $300,000 in each of those years (in each case
+                           including foreign income, tax exempt income and full
+                           amount of capital gains and losses but excluding any
+                           income of other family members and any unrealized
+                           capital appreciation) and has a reasonable
+                           expectation of reaching the same income level in the
+                           current year.
+
+Category C __              The undersigned is a director or executive officer of
+                           the Company which is issuing and selling the Units.
+
+Category D __              The undersigned is a bank; a savings and loan
+                           association; insurance company; registered investment
+                           company; registered business development company;
+                           licensed small business investment company ("SBIC");
+                           or employee benefit plan within the meaning of Title
+                           1 of ERISA and (a) the investment decision is made by
+                           a plan fiduciary which is either a bank, savings and
+                           loan association, insurance company or registered
+                           investment advisor, or (b) the plan has total assets
+                           in excess of $5,000,000 or (c) is a self directed
+                           plan with investment decisions made solely by persons
+                           that are accredited investors. (describe entity)
+
+                           -----------------------------------------------------
+
+                           -----------------------------------------------------
+
+
+                                       21
+<PAGE>
+
+Category E __              The undersigned is a private business development
+                           company as defined in section 202(a)(22) of the
+                           Investment Advisors Act of 1940. (describe entity)
+
+                           -----------------------------------------------------
+
+                           -----------------------------------------------------
+
+Category F __              The undersigned is either a corporation, partnership,
+                           Massachusetts business trust, or non-profit
+                           organization within the meaning of Section 501(c)(3)
+                           of the Internal Revenue Code, in each case not formed
+                           for the specific purpose of acquiring the Units and
+                           with total assets in excess of $5,000,000. (describe
+                           entity)
+
+                           -----------------------------------------------------
+
+                           -----------------------------------------------------
+
+Category G __              The undersigned is a trust with total assets in
+                           excess of $5,000,000, not formed for the specific
+                           purpose of acquiring the Units, where the purchase is
+                           directed by a "sophisticated investor" as defined in
+                           Regulation 506(b)(2)(ii) under the Act.
+
+Category H __              The undersigned is an entity (other than a trust) in
+                           which all of the equity owners are "accredited
+                           investors" within one or more of the above
+                           categories. If relying upon this Category alone, each
+                           equity owner must complete a separate copy of this
+                           Agreement. (describe entity)
+
+                           -----------------------------------------------------
+
+Category I __              The undersigned is not within any of the categories
+                           above and is therefore not an accredited investor.
+
+                           The undersigned agrees that the undersigned will
+                           notify the Company at any time on or prior to the
+                           Closing Date in the event that the representations
+                           and warranties in this Agreement shall cease to be
+                           true, accurate and complete.
+
+7.2      SUITABILITY (please answer each question)
+
+         (a) For an individual Subscriber, please describe your current
+employment, including the company by which you are employed and its principal
+business:
+
+         -----------------------------------------------------------------------
+
+         -----------------------------------------------------------------------
+
+         -----------------------------------------------------------------------
+
+         -----------------------------------------------------------------------
+
+
+                                       22
+<PAGE>
+
+         (b) For an individual Subscriber, please describe any college or
+graduate degrees held by you:
+
+         -----------------------------------------------------------------------
+
+         -----------------------------------------------------------------------
+
+         -----------------------------------------------------------------------
+
+         -----------------------------------------------------------------------
+
+
+         (c) For all Subscribers, please list types of prior investments:
+
+         -----------------------------------------------------------------------
+
+         -----------------------------------------------------------------------
+
+         -----------------------------------------------------------------------
+
+         -----------------------------------------------------------------------
+
+
+         (d) For all Subscribers, please state whether you have you participated
+in other private placements before:
+
+                       YES _____                 NO _____
+
+         (e) If your answer to question (d) above was "YES", please indicate
+frequency of such prior participation in private placements of:
+
+                  Public            Private            Public or Private
+                  Companies         Companies          Biotechnology Companies
+                  ---------         ---------          -----------------------
+
+Frequently        _________         __________         __________
+Occasionally      _________         __________         __________
+Never             _________         __________         __________
+
+         (f) For individual Subscribers, do you expect your current level of
+income to significantly decrease in the foreseeable future:
+
+                       YES _____                 NO _____
+
+         (g) For trust, corporate, partnership and other institutional
+Subscribers, do you expect your total assets to significantly decrease in the
+foreseeable future:
+
+                       YES _____                 NO _____
+
+         (h) For all Subscribers, do you have any other investments or
+contingent liabilities which you reasonably anticipate could cause you to need
+sudden cash requirements in excess of cash readily available to you:
+
+                       YES _____                 NO _____
+
+
+                                       23
+<PAGE>
+
+          (i) For all Subscribers, are you familiar with the risk aspects and
+the non-liquidity of investments such as the securities for which you seek to
+subscribe?
+
+                       YES _____                 NO _____
+
+          (j) For all Subscribers, do you understand that there is no guarantee
+of financial return on this investment and that you run the risk of losing your
+entire investment?
+
+                       YES _____                 NO _____
+
+
+         7.3      MANNER IN WHICH TITLE IS TO BE HELD. (circle one)
+
+                            (a)     Individual Ownership
+                            (b)     Community Property
+                            (c)     Joint Tenant with Right of Survivorship
+                                      (both parties must sign)
+                            (d)     Partnership*
+                            (e)     Tenants in Common
+                            (f)     Company*
+                            (g)     Trust*
+                            (h)     Other
+
+         * If Units are being subscribed for by an entity, the attached
+Certificate of Signatory must also be completed.
+
+
+                                       24
+<PAGE>
+
+         7.4      NASD AFFILIATION.
+
+Are you affiliated or associated with an NASD member firm (please check one):
+
+YES _____                 NO _____
+
+
+If Yes, please describe:
+
+-----------------------------------------------------------------------
+
+-----------------------------------------------------------------------
+
+-----------------------------------------------------------------------
+
+*If Subscriber is a Registered Representative with an NASD member firm, have the
+following acknowledgment signed by the appropriate party:
+
+The undersigned NASD member firm acknowledges receipt of the notice required by
+Article 3, Sections 28(a) and (b) of the Rules of Fair Practice.
+
+
+------------------------------------
+Name of NASD Member Firm
+
+
+By:
+   ---------------------------------
+          Authorized Officer
+
+Date:
+     --------------------------------
+
+
+         7.5 The undersigned is informed of the significance to the Company of
+the foregoing representations and answers contained in the Confidential Investor
+Questionnaire contained in this Article VII and such answers have been provided
+under the assumption that the Company will rely on them.
+
+
+
+                  [REMAINDER OF PAGE INTENTIONALLY LEFT BLANK]
+
+
+                                       25
+<PAGE>
+
+NUMBER OF UNITS ______ X $100,000 = _______ (the "Purchase Price")
+
+
+
+------------------------------------      --------------------------------------
+Signature                                 Signature (if purchasing jointly)
+
+
+------------------------------------      --------------------------------------
+Name Typed or Printed                     Name Typed or Printed
+
+
+------------------------------------      --------------------------------------
+Entity Name                               Entity Name
+
+
+------------------------------------      --------------------------------------
+Address                                   Address
+
+
+------------------------------------      --------------------------------------
+City, State and Zip Code                  City, State and Zip Code
+
+
+------------------------------------      --------------------------------------
+Telephone-Business                        Telephone-Business
+
+
+------------------------------------      --------------------------------------
+Telephone-Residence                       Telephone-Residence
+
+
+------------------------------------      --------------------------------------
+Facsimile-Business                        Facsimile-Business
+
+
+------------------------------------      --------------------------------------
+Facsimile-Residence                       Facsimile-Residence
+
+
+------------------------------------      --------------------------------------
+Tax ID # or Social Security #             Tax ID # or Social Security #
+
+
+
+Name in which securities should be issued:
+                                          --------------------------------------
+
+
+Dated: ________________, 2000
+
+
+         This Subscription Agreement is agreed to and accepted as of
+_______________, 2000
+
+
+                                   INNOVATIVE DRUG DELIVERY SYSTEMS, INC.
+
+
+                                   By:
+                                          ----------------------------------
+                                   Name:   Fred H. Mermelstein, Ph.D
+                                   Title:
+
+
+<PAGE>
+
+                            CERTIFICATE OF SIGNATORY
+
+                          (To be completed if Units are
+                       being subscribed for by an entity)
+
+I, ___________________________, am the____________________________ of
+_____________________________________ (the "Entity").
+
+
+I certify that I am empowered and duly authorized by the Entity to execute and
+carry out the terms of the Subscription Agreement and to purchase and hold the
+Units, and certify further that the Subscription Agreement has been duly and
+validly executed on behalf of the Entity and constitutes a legal and binding
+obligation of the Entity.
+
+IN WITNESS WHEREOF, I have set my hand this ____ day of ________________, _____.
+
+
+                                       ---------------------------------
+                                       (Signature)
+
+
+
+
+
+</TEXT>
+</DOCUMENT>

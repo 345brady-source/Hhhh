@@ -1,0 +1,63 @@
+{
+  "id": "c078",
+  "url": "https://www.sec.gov/Archives/edgar/data/1503993/000119312511047566/ds11a.htm",
+  "cik": "1503993",
+  "issuer": "O'Donnell Strategic Industrial REIT, Inc.",
+  "form": "S-11/A",
+  "file_date": "2011-02-25",
+  "year": 2011,
+  "exhibit": "S-11/A",
+  "exhibit_description": "AMENDMENT NO. 2 TO FORM S-11",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "393fe07ad818a0956c1a8fcd4157c8aa26e371bbd2b04a3de1609cc78b475547",
+  "extra_files": [],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX A | FORM OF SUBSCRIPTION AGREEMENT | INVESTOR INSTR",
+    "end_heading": "APPENDIX B"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 16,
+  "page_kinds": {
+    "text": 16
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "1757a6d6961b09693f3e799cbbc1e5b8a43204e4b653ee717588775196690416",
+  "broker_dealer": true
+}

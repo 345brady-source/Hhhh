@@ -1,0 +1,61 @@
+{
+  "id": "c059",
+  "url": "https://www.sec.gov/Archives/edgar/data/1326101/000095013705012315/c96114a1sv1za.txt",
+  "cik": "1326101",
+  "issuer": "MAN-AHL 130, LLC",
+  "form": "S-1/A",
+  "file_date": "2005-10-11",
+  "year": 2005,
+  "exhibit": "S-1/A",
+  "exhibit_description": "AMENDMENT TO FORM S-1",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.txt",
+  "source_sha256": "b987656a65584d9452277e34153a6d48cc4c60f1b04d473ffb8e4dbacc443119",
+  "extra_files": [],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "EXHIBIT B | MAN-AHL 130, LLC",
+    "end_heading": "PART II"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 47
+  },
+  "pages": 14,
+  "page_kinds": {
+    "text": 14
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "9f30daa6789f85c0a2f79621e50506d7c2f214697420daf87394014c09a98941",
+  "broker_dealer": true
+}

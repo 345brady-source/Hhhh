@@ -1,0 +1,46 @@
+{
+  "id": "c146",
+  "url": "https://www.sec.gov/Archives/edgar/data/1879942/000119312523209141/d459559dex994.pdf",
+  "cik": "1879942",
+  "issuer": "Hawaiian Bros Inc.",
+  "form": "C/A",
+  "file_date": "2023-08-10",
+  "year": 2023,
+  "exhibit": "EX-99",
+  "exhibit_description": "EXHIBIT D - SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "2d54a12b29ba2ad80aab84b4a35967b97d93c599ccb3968ca2c98baec7642b28",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": true,
+    "underscores": 6,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 6,
+  "page_kinds": {
+    "text": 6
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "2d54a12b29ba2ad80aab84b4a35967b97d93c599ccb3968ca2c98baec7642b28",
+  "broker_dealer": false
+}

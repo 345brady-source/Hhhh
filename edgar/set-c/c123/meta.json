@@ -1,0 +1,46 @@
+{
+  "id": "c123",
+  "url": "https://www.sec.gov/Archives/edgar/data/1752109/000175210918000005/subscription.pdf",
+  "cik": "1752109",
+  "issuer": "ROOTS & VINE PRODUCE & CAFE, INC",
+  "form": "C/A",
+  "file_date": "2018-11-19",
+  "year": 2018,
+  "exhibit": "EX-99",
+  "exhibit_description": null,
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "8451be2218653971a190cbf0c2a5493f28a45107249bd6487d00b1c19d306da4",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "underscores": 8,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 6,
+  "page_kinds": {
+    "text": 6
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "8451be2218653971a190cbf0c2a5493f28a45107249bd6487d00b1c19d306da4",
+  "broker_dealer": false
+}

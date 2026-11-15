@@ -1,0 +1,63 @@
+{
+  "id": "c215",
+  "url": "https://www.sec.gov/Archives/edgar/data/1871772/000147793221004674/amazon_4.htm",
+  "cik": "1871772",
+  "issuer": "Amazon Gold, LLC",
+  "form": "1-A",
+  "file_date": "2021-07-16",
+  "year": 2021,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "f48b5477cb07fe12c4263316da103b61501fb144d1e17856570202ee46f9ab52",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 14,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 13
+  },
+  "pages": 13,
+  "page_kinds": {
+    "text": 12,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "ec5ca394745f733be871e22774597f0b47ad18589b626b7c2b00714c2b7737b3",
+  "broker_dealer": false
+}

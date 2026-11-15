@@ -1,0 +1,62 @@
+{
+  "id": "c103",
+  "url": "https://www.sec.gov/Archives/edgar/data/1654948/000165494820000060/a424b3xxiposam2eff727.htm",
+  "cik": "1654948",
+  "issuer": "Hartman vREIT XXI, Inc.",
+  "form": "424B3",
+  "file_date": "2020-07-31",
+  "year": 2020,
+  "exhibit": "424B3",
+  "exhibit_description": "424B3",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "25a2414d32f382f8604643cd9caa9ea23987aa47dcb1bb26967b2c4572996287",
+  "extra_files": [],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX A: | FORM OF SUBSCRIPTION AGREEMENT | Hartman vREIT",
+    "end_heading": "APPENDIX B:"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 54
+  },
+  "pages": 14,
+  "page_kinds": {
+    "text": 12,
+    "blank": 2
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "blank",
+    "text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "d73a2baa9be635dd76b8a03ed2d173791be1ab43b869898405415c720eb4bdf7",
+  "broker_dealer": true
+}

@@ -1,0 +1,72 @@
+{
+  "id": "c058",
+  "url": "https://www.sec.gov/Archives/edgar/data/1308711/000116796605001348/t424b3-7667.htm",
+  "cik": "1308711",
+  "issuer": "Behringer Harvard Opportunity REIT I, Inc.",
+  "form": "424B3",
+  "file_date": "2005-09-22",
+  "year": 2005,
+  "exhibit": "424B3",
+  "exhibit_description": "BEHRINGER HARVARD OPPORTUNITY REIT 424B3",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "1a54315a6ea5b83daa7eaa8e67cf846a18bc13402cef43a0826855caaa43ff0c",
+  "extra_files": [
+    "logo1.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "EXHIBIT B | SUBSCRIPTION AGREEMENT | BEHRINGER HARVARD OPPOR",
+    "end_heading": "EXHIBIT C"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 57
+  },
+  "pages": 21,
+  "page_kinds": {
+    "text": 18,
+    "little or no text": 2,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "8f07e57a97c62d0e943cfa6dbea2f41638b4d127d2d71f0a7842ac3dd1defc70",
+  "broker_dealer": true
+}

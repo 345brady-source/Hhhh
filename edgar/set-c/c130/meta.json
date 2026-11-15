@@ -1,0 +1,53 @@
+{
+  "id": "c130",
+  "url": "https://www.sec.gov/Archives/edgar/data/1811482/000178043920000070/EXHIBITCsubagreement.pdf",
+  "cik": "1811482",
+  "issuer": "Lunchwale,Inc.",
+  "form": "C/A",
+  "file_date": "2020-12-01",
+  "year": 2020,
+  "exhibit": "EX-99",
+  "exhibit_description": "EXHIBIT C - SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "f7b87613516b888db18eee8248ea14c0d21af64a49d3e6bf0f1b937d98c4bf01",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "underscores": 12,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 13,
+  "page_kinds": {
+    "text": 13
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "f7b87613516b888db18eee8248ea14c0d21af64a49d3e6bf0f1b937d98c4bf01",
+  "broker_dealer": false
+}

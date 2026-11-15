@@ -1,0 +1,55 @@
+{
+  "id": "c083",
+  "url": "https://www.sec.gov/Archives/edgar/data/1581405/000114420413064496/v361469_424b3.htm",
+  "cik": "1581405",
+  "issuer": "Phillips Edison - ARC Grocery Center REIT II, Inc.",
+  "form": "424B3",
+  "file_date": "2013-11-27",
+  "year": 2013,
+  "exhibit": "424B3",
+  "exhibit_description": "424B3",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "ec0231c548d2dd1b03fc3e6de6f4d76811270296754e3d795b08f76993841beb",
+  "extra_files": [
+    "spacer.gif"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX D | TRANSFER ON DEATH DESIGNATION | Phillips Edison",
+    "end_heading": "APPENDIX E"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 5,
+  "page_kinds": {
+    "text": 4,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "d28b80616e41b1bd6fdb518cf5b9440b7bc51087c3110add7b80f11be23cb208",
+  "broker_dealer": true
+}

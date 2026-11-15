@@ -1,0 +1,47 @@
+{
+  "id": "c155",
+  "url": "https://www.sec.gov/Archives/edgar/data/2016675/000182912624004417/myskorlando_exb.pdf",
+  "cik": "2016675",
+  "issuer": "Mysk Orlando Growth Fund LLC",
+  "form": "C/A",
+  "file_date": "2024-06-25",
+  "year": 2024,
+  "exhibit": "EX-99",
+  "exhibit_description": "EXHIBIT B",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "30b516a4f1a61f3754e0f2246d72110256b2cc460da0d99fe5cb5681e3ece936",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": false,
+    "underscores": 4,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 7,
+  "page_kinds": {
+    "text": 7
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "30b516a4f1a61f3754e0f2246d72110256b2cc460da0d99fe5cb5681e3ece936",
+  "broker_dealer": false
+}

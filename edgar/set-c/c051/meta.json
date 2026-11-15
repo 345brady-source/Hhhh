@@ -1,0 +1,52 @@
+{
+  "id": "c051",
+  "url": "https://www.sec.gov/Archives/edgar/data/1157614/000095013102003918/d424b3.txt",
+  "cik": "1157614",
+  "issuer": "GEN-NET LEASE INCOME TRUST INC",
+  "form": "424B3",
+  "file_date": "2002-10-18",
+  "year": 2002,
+  "exhibit": "424B3",
+  "exhibit_description": "FORM 424B3",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.txt",
+  "source_sha256": "ee0741c9cb086d0ca2f0a3041736cb97688c73646e21fe7b7da6527095216b55",
+  "extra_files": [],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "EXHIBIT A | ORDER FORM",
+    "end_heading": "EXHIBIT B"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 57
+  },
+  "pages": 5,
+  "page_kinds": {
+    "text": 5
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "5cd31233c38fde1d1e5db6f2787e3ba2656635d6c591b985326c1931bfd683ef",
+  "broker_dealer": true
+}

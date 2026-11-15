@@ -1,0 +1,47 @@
+{
+  "id": "c124",
+  "url": "https://www.sec.gov/Archives/edgar/data/1743800/000174380018000004/Exhib_C_SubsAgreB.pdf",
+  "cik": "1743800",
+  "issuer": "Greg Miller Project, LLC",
+  "form": "C/A",
+  "file_date": "2018-11-21",
+  "year": 2018,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT CLASS B",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "d70e389040f59ef86e817cf42acfce72cae47f65b3e1feba264725beb713da72",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "underscores": 8,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 7,
+  "page_kinds": {
+    "text": 7
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "d70e389040f59ef86e817cf42acfce72cae47f65b3e1feba264725beb713da72",
+  "broker_dealer": false
+}

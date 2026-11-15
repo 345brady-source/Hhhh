@@ -1,0 +1,70 @@
+{
+  "id": "c085",
+  "url": "https://www.sec.gov/Archives/edgar/data/1619239/000119312515091351/d794665dn2a.htm",
+  "cik": "1619239",
+  "issuer": "Credit Suisse Park View BDC, Inc.",
+  "form": "N-2/A",
+  "file_date": "2015-03-13",
+  "year": 2015,
+  "exhibit": "N-2/A",
+  "exhibit_description": "CREDIT SUISSE PARK VIEW BDC, INC.",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "ba95488664088540e13189d1b3808466711360eab8b8ba2d975fea0970d97d98",
+  "extra_files": [
+    "g794665g58r28.jpg",
+    "g794665g88s71.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX A | Form of Subscription Agreement",
+    "end_heading": "APPENDIX B"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 17,
+  "page_kinds": {
+    "text": 14,
+    "text+picture": 1,
+    "little or no text": 1,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text+picture",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "45148c06d21966652801251e126d964adee9a61c5663b7fa0ec8d2a0a98e5985",
+  "broker_dealer": true
+}

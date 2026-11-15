@@ -1,0 +1,60 @@
+{
+  "id": "c172",
+  "url": "https://www.sec.gov/Archives/edgar/data/1175790/000095013402007505/v77095a2exv99w1.txt",
+  "cik": "1175790",
+  "issuer": "WESTERN UNITED HOLDING CO",
+  "form": "S-1/A",
+  "file_date": "2002-06-21",
+  "year": 2002,
+  "exhibit": "EX-99.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "landscape",
+  "source_file": "source.txt",
+  "source_sha256": "2116ea73be8134c69e0f1025f46a097e2309b782992f2d22f82329aa4eff3807",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 78,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 2
+  },
+  "pages": 11,
+  "page_kinds": {
+    "text": 11
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "a154d7f62cfb10071839f8612853a4d974b5a6a9e45bb2b8d90c4f7620910eb5",
+  "broker_dealer": false
+}

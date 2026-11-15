@@ -1,0 +1,53 @@
+{
+  "id": "c262",
+  "url": "https://www.sec.gov/Archives/edgar/data/1532383/000153238312000003/Ex-99.1.htm",
+  "cik": "1532383",
+  "issuer": "Vantone Realty Corp  (VNJA)",
+  "form": "S-1/A",
+  "file_date": "2012-03-05",
+  "year": 2012,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "8758b3a28bf23a80d9fbe2f84b350d3eff0f566fd39e203837c408dfba141bdf",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 10,
+    "tables": 5,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 11
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 4
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "944c8c539ef7492b12e38831ad112a8b075049aef9d9ccc14d35548762996367",
+  "broker_dealer": false
+}

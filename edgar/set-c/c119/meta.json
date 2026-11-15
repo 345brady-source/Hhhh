@@ -1,0 +1,77 @@
+{
+  "id": "c119",
+  "url": "https://www.sec.gov/Archives/edgar/data/1690536/000110465926069936/tm2615020-3_424b3.htm",
+  "cik": "1690536",
+  "issuer": "FS Credit Real Estate Income Trust, Inc.",
+  "form": "424B3",
+  "file_date": "2026-06-03",
+  "year": 2026,
+  "exhibit": "424B3",
+  "exhibit_description": "424B3",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "5160abc9e7b481f65e80af8d2950f29c317e3b4404910e5db39555926cd878d8",
+  "extra_files": [
+    "pg_futurestandard01-bw.jpg",
+    "pg_futurestandard02-bw.jpg",
+    "pg_futurestandard03-bw.jpg",
+    "pg_futurestandard04-bw.jpg",
+    "pg_futurestandard05-bw.jpg",
+    "pg_futurestandard06-bw.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX A | Subscription agreement Class D, Class I, Class ",
+    "end_heading": "APPENDIX B"
+  },
+  "how_made": "picture-print",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 20,
+  "page_kinds": {
+    "little or no text": 7,
+    "picture": 6,
+    "picture+ocr-text": 6,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "blank"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "40ad7ece1746592f0a86578f4d9f4a117f34eaf8208f9d040405431dc5d296f2",
+  "broker_dealer": true
+}

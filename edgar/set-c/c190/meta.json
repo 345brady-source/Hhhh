@@ -1,0 +1,55 @@
+{
+  "id": "c190",
+  "url": "https://www.sec.gov/Archives/edgar/data/1550737/000147793212001822/sector_ex991.htm",
+  "cik": "1550737",
+  "issuer": "Sector 5, Inc.",
+  "form": "S-1",
+  "file_date": "2012-05-29",
+  "year": 2012,
+  "exhibit": "EX-99.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "a3202bb314ee98a7ee3b4ad27898848f54757821fa8dbd2836f14e0e59a33750",
+  "extra_files": [
+    "img002.jpg"
+  ],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 14,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 1,
+    "underscores": 3
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 4
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "4a3c0f867b09f6d0dba2aefe3a6501db0556a65c63b9bc3480798d8681279d98",
+  "broker_dealer": false
+}

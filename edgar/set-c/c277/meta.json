@@ -1,0 +1,55 @@
+{
+  "id": "c277",
+  "url": "https://www.sec.gov/Archives/edgar/data/1718873/000171887317000003/exfsubscragmt_ex4z1.htm",
+  "cik": "1718873",
+  "issuer": "Stone Bancshares, Inc.",
+  "form": "1-A",
+  "file_date": "2017-10-30",
+  "year": 2017,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "965a3929d376a0306763f35dc5269716adb05c837c1b186fd187c710a5a04250",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 16
+  },
+  "pages": 5,
+  "page_kinds": {
+    "text": 4,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "3f014ab75b004f854391353a4618ec458963e2790581ff400a70e7d28dd33760",
+  "broker_dealer": false
+}

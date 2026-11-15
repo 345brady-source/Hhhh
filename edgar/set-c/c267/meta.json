@@ -1,0 +1,53 @@
+{
+  "id": "c267",
+  "url": "https://www.sec.gov/Archives/edgar/data/1616678/000119312514351997/d791791dex99p.htm",
+  "cik": "1616678",
+  "issuer": "BlackRock Science & Technology Trust  (BST)",
+  "form": "N-2/A",
+  "file_date": "2014-09-25",
+  "year": 2014,
+  "exhibit": "EX-99.(P)",
+  "exhibit_description": "FORM OF INITIAL SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "162ae7bb0f543548bdcec68d13d5bbec414eb0002dcb58088d7261f3c30c3104",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 3,
+    "tables": 1,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 0
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 4
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "0b3b3d67a88805670b83c976b6c9d7c7fccb250d5657674369175f1041515bb0",
+  "broker_dealer": false
+}

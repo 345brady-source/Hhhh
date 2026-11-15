@@ -1,0 +1,48 @@
+{
+  "id": "c034",
+  "url": "https://www.sec.gov/Archives/edgar/data/1943732/000194373222000003/T_Pictures_Sub_Agreement.pdf",
+  "cik": "1943732",
+  "issuer": "TESTAMENT PICTURES, LLC",
+  "form": "C/A",
+  "file_date": "2022-10-25",
+  "year": 2022,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "scan",
+  "source_file": "source.pdf",
+  "source_sha256": "a50f1297ae78080efc49223a0ab4f65df28a901973402143802dd3dabeecac74",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "scan",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "underscores": 0,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 8,
+  "page_kinds": {
+    "picture+ocr-text": 8
+  },
+  "page_kind_list": [
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "picture+ocr-text"
+  ],
+  "page_content": "pictures with a text layer (OCR or hidden text)",
+  "doc_sha256": "a50f1297ae78080efc49223a0ab4f65df28a901973402143802dd3dabeecac74",
+  "broker_dealer": false
+}

@@ -1,0 +1,59 @@
+{
+  "id": "c242",
+  "url": "https://www.sec.gov/Archives/edgar/data/1384034/000116552707000343/ex10-1.txt",
+  "cik": "1384034",
+  "issuer": "Shopper's Wallet, Inc.",
+  "form": "8-K",
+  "file_date": "2007-06-19",
+  "year": 2007,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "general",
+  "source_file": "source.txt",
+  "source_sha256": "783a2fb0401c9147b91eaf30f4730b916afede346d1a759ec3149a47416a7b55",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": true,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 15
+  },
+  "pages": 10,
+  "page_kinds": {
+    "text": 10
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "d947c80b4af0976b5db6f09f6a59e875cc61bc497010c0f32e79b879fac46d1d",
+  "broker_dealer": false
+}

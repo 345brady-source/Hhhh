@@ -1,0 +1,54 @@
+{
+  "id": "c218",
+  "url": "https://www.sec.gov/Archives/edgar/data/2028834/000121390025092490/ea025880501ex10-11_21shares.htm",
+  "cik": "2028834",
+  "issuer": "21Shares Solana ETF",
+  "form": "S-1/A",
+  "file_date": "2025-09-29",
+  "year": 2025,
+  "exhibit": "EX-10.11",
+  "exhibit_description": "INITIAL SEED CREATION SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "6235ec28dd07a1c0b8adfda1a14f62dbc4ce7e5474cef6a2d6d7d278705d65a5",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 4,
+    "tables": 3,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 0
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 3,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "little or no text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "486d74f9e8133325cafd88da90793ab802cf2cd0abdb664c84533465167c13a6",
+  "broker_dealer": false
+}

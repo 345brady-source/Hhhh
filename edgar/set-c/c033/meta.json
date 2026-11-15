@@ -1,0 +1,47 @@
+{
+  "id": "c033",
+  "url": "https://www.sec.gov/Archives/edgar/data/1391267/000139126722000004/TT_Sub_Agreement.pdf",
+  "cik": "1391267",
+  "issuer": "Truth & Treason LLC",
+  "form": "C/A",
+  "file_date": "2022-10-25",
+  "year": 2022,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "scan",
+  "source_file": "source.pdf",
+  "source_sha256": "be605f25a0e1b3d43a5a9bde77204aed32162694753db5ea1829ff4ad4d75d9a",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "scan",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": true,
+    "brokerdealer": false,
+    "countersign": true,
+    "underscores": 0,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 7,
+  "page_kinds": {
+    "picture+ocr-text": 7
+  },
+  "page_kind_list": [
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "picture+ocr-text"
+  ],
+  "page_content": "pictures with a text layer (OCR or hidden text)",
+  "doc_sha256": "be605f25a0e1b3d43a5a9bde77204aed32162694753db5ea1829ff4ad4d75d9a",
+  "broker_dealer": false
+}

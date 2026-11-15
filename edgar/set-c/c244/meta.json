@@ -1,0 +1,63 @@
+{
+  "id": "c244",
+  "url": "https://www.sec.gov/Archives/edgar/data/860401/000136927008000052/f20080313exhibitsubscription.htm",
+  "cik": "860401",
+  "issuer": "CHINA TITANIUM & CHEMICAL CORP.",
+  "form": "8-K",
+  "file_date": "2008-04-08",
+  "year": 2008,
+  "exhibit": "EX-10",
+  "exhibit_description": "EXHIBIT 10.1 SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "bb296ffac0588fabe3ccb38930d916126b357cd93771422e65b150a445a01b31",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 4,
+    "questionnaire": true,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 4
+  },
+  "pages": 14,
+  "page_kinds": {
+    "text": 14
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "a02701f4b8e0ba55a104bda1af4ac7f8da511e82d18781dc8cd5c9a65a70d51d",
+  "broker_dealer": false
+}

@@ -1,0 +1,52 @@
+{
+  "id": "c207",
+  "url": "https://www.sec.gov/Archives/edgar/data/1721478/000159991618000139/ex992.htm",
+  "cik": "1721478",
+  "issuer": "Finest Acquisition, Inc.",
+  "form": "POS AM",
+  "file_date": "2018-07-30",
+  "year": 2018,
+  "exhibit": "EX-99.2",
+  "exhibit_description": "SAMPLE SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "a2ab7043be5b2b729357bf396c2e6ff3f2ed0c46819c2d6091c4af961fe407a0",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 18,
+    "tables": 10,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 6
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "2a70428ea67dce5313691d142372ba1db1e3a0177cb167d8cb8b2dd895bf3592",
+  "broker_dealer": false
+}

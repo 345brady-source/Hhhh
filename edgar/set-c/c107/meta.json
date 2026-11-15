@@ -1,0 +1,79 @@
+{
+  "id": "c107",
+  "url": "https://www.sec.gov/Archives/edgar/data/1869453/000119312522046615/d217881d424b3.htm",
+  "cik": "1869453",
+  "issuer": "Owl Rock Technology Income Corp.",
+  "form": "424B3",
+  "file_date": "2022-02-18",
+  "year": 2022,
+  "exhibit": "424B3",
+  "exhibit_description": "424B3",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "6aaaae353db6817be66d519fed540790c062273f1b56dced44583c3c1b7ce41e",
+  "extra_files": [
+    "g217881dsp001.jpg",
+    "g217881dsp002.jpg",
+    "g217881dsp003.jpg",
+    "g217881dsp004.jpg",
+    "g217881dsp005.jpg",
+    "g217881dsp006.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "Appendix A | Owl Rock | A Division of Blue Owl Owl Rock Tech",
+    "end_heading": "END"
+  },
+  "how_made": "picture-print",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 22,
+  "page_kinds": {
+    "little or no text": 6,
+    "picture": 6,
+    "picture+ocr-text": 6,
+    "text": 4
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "8ec49a41ca517b65ad4cc8233d46349cf4d8197c96e040d65b30032e024aba31",
+  "broker_dealer": true
+}

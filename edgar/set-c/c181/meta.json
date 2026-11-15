@@ -1,0 +1,70 @@
+{
+  "id": "c181",
+  "url": "https://www.sec.gov/Archives/edgar/data/1309710/000095013607000223/file2.htm",
+  "cik": "1309710",
+  "issuer": "HANDHELD ENTERTAINMENT, INC.",
+  "form": "8-K",
+  "file_date": "2007-01-18",
+  "year": 2007,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "3bc0a5d3dec8ef93ba5a3165aaa976f1cfcda0f06d4c0947ec8117bb47fd779d",
+  "extra_files": [
+    "ebox.gif",
+    "xbox.gif"
+  ],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 41,
+    "questionnaire": true,
+    "joint": true,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 2,
+    "underscores": 9
+  },
+  "pages": 17,
+  "page_kinds": {
+    "text": 15,
+    "blank": 2
+  },
+  "page_kind_list": [
+    "text",
+    "blank",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "blank",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "772ecc08d7fcca531454a9b54cf59a9dcdde9305a0373fb21ff1f04e850a5215",
+  "broker_dealer": false
+}

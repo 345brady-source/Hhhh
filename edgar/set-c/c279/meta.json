@@ -1,0 +1,70 @@
+{
+  "id": "c279",
+  "url": "https://www.sec.gov/Archives/edgar/data/786035/000138713118004273/ex99-k4.htm",
+  "cik": "786035",
+  "issuer": "LIBERTY ALL STAR GROWTH FUND INC.  (ASG)",
+  "form": "N-2/A",
+  "file_date": "2018-08-27",
+  "year": 2018,
+  "exhibit": "EX-99.K4",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "9d14f6e9b57765dbe3c1d5218455998c04e0429619f2c773a907e69cb07dc3ad",
+  "extra_files": [
+    "ex99k4-001.jpg"
+  ],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 45,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 1,
+    "underscores": 11
+  },
+  "pages": 18,
+  "page_kinds": {
+    "text": 15,
+    "little or no text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "little or no text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "f312f48ee034e144b01ea2600630ea947ec6d882c1d22a7f343daebf2586b4bf",
+  "broker_dealer": false
+}

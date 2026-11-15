@@ -1,0 +1,81 @@
+{
+  "id": "c105",
+  "url": "https://www.sec.gov/Archives/edgar/data/1625941/000155837021010169/tmb-20210804x424b3.htm",
+  "cik": "1625941",
+  "issuer": "BLACK CREEK INDUSTRIAL REIT IV Inc.",
+  "form": "424B3",
+  "file_date": "2021-08-04",
+  "year": 2021,
+  "exhibit": "424B3",
+  "exhibit_description": "424B3",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "f2d1cb2894d48c2f2a0f0ba84417c97500c28e3512f19946c1ba9f62cac5ec23",
+  "extra_files": [
+    "tmb-20210804x424b3022.jpg",
+    "tmb-20210804x424b3023.jpg",
+    "tmb-20210804x424b3024.jpg",
+    "tmb-20210804x424b3025.jpg",
+    "tmb-20210804x424b3026.jpg",
+    "tmb-20210804x424b3027.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX A: FORM OF SUBSCRIPTION AGREEMENT | \u200b",
+    "end_heading": "END"
+  },
+  "how_made": "picture-print",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 24,
+  "page_kinds": {
+    "little or no text": 6,
+    "picture+ocr-text": 6,
+    "picture": 6,
+    "text": 6
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture+ocr-text",
+    "picture",
+    "little or no text",
+    "picture+ocr-text",
+    "picture",
+    "little or no text",
+    "picture+ocr-text",
+    "picture",
+    "little or no text",
+    "picture+ocr-text",
+    "picture",
+    "little or no text",
+    "picture+ocr-text",
+    "picture",
+    "little or no text",
+    "picture+ocr-text",
+    "picture",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "b1999bb1f3d7b351eb6a2382a1c54e63792500a3b5d01cf862ff1b7c76cb231c",
+  "broker_dealer": true
+}

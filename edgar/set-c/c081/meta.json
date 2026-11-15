@@ -1,0 +1,58 @@
+{
+  "id": "c081",
+  "url": "https://www.sec.gov/Archives/edgar/data/805022/000119312512051090/d298350dex101.htm",
+  "cik": "805022",
+  "issuer": "BUCKEYE PARTNERS, L.P.",
+  "form": "8-K",
+  "file_date": "2012-02-10",
+  "year": 2012,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION  AGREEMENT",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "21cbf83f8288bad0acd002bb9250a954428e5e5cdf496824e4fa6b1aead93f56",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 5,
+    "questionnaire": true,
+    "joint": false,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 0
+  },
+  "pages": 9,
+  "page_kinds": {
+    "text": 9
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "fc3b5a0f24ffe8c91f22923cf36afb02c6bf22321f89d8312a946b63e83e1730",
+  "broker_dealer": true
+}

@@ -1,0 +1,59 @@
+{
+  "id": "c089",
+  "url": "https://www.sec.gov/Archives/edgar/data/1572758/000119312515347163/d32048d424b3.htm",
+  "cik": "1572758",
+  "issuer": "Cole Office & Industrial REIT (CCIT II), Inc.",
+  "form": "424B3",
+  "file_date": "2015-10-19",
+  "year": 2015,
+  "exhibit": "424B3",
+  "exhibit_description": "424B3",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "293ba05f1780f7d4416be3c5970a869374acec60b0ed306d42f277b753fcd8cc",
+  "extra_files": [
+    "g32048g19x35.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX B",
+    "end_heading": "APPENDIX C"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 9,
+  "page_kinds": {
+    "text": 8,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "f787b157a504bb0e3a4f428f92e815bc07169ec91bf9e9e4fcf1d6c6a6c4eed1",
+  "broker_dealer": true
+}

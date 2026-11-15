@@ -1,0 +1,55 @@
+{
+  "id": "c093",
+  "url": "https://www.sec.gov/Archives/edgar/data/1654595/000114420416112275/v442515_ex4-1.htm",
+  "cik": "1654595",
+  "issuer": "Medalist Diversified REIT, Inc.",
+  "form": "1-A/A",
+  "file_date": "2016-07-08",
+  "year": 2016,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EXHIBIT 4.1",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "b68e4352b6e62d2482f89b5e9498f40273c8f696726a845e96cdb99dfaa55b7e",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 32,
+    "tables": 10,
+    "questionnaire": true,
+    "joint": true,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": true,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 7
+  },
+  "pages": 6,
+  "page_kinds": {
+    "text": 6
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "506cb32e92fa4cffd4aa0bffa75672bf1a0d4db691dd4bc0bf71744983834a54",
+  "broker_dealer": true
+}

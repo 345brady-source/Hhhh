@@ -1,0 +1,53 @@
+{
+  "id": "c204",
+  "url": "https://www.sec.gov/Archives/edgar/data/1702916/000159991617000022/sub.htm",
+  "cik": "1702916",
+  "issuer": "Majulah Investment, Inc.",
+  "form": "S-1/A",
+  "file_date": "2017-11-16",
+  "year": 2017,
+  "exhibit": "EX-99.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT SPECIMEN",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "fe29546f04d2324e4e485a9759ff57bda4f06f4174d020cb09f8d110d3388ad0",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 18,
+    "tables": 9,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 18
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 4
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "45df08a1df65d7fce029e9c561d51ada650cac47eda00244ee8c9b5394b5cc0a",
+  "broker_dealer": false
+}

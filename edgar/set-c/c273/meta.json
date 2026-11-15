@@ -1,0 +1,56 @@
+{
+  "id": "c273",
+  "url": "https://www.sec.gov/Archives/edgar/data/1696195/000169619517000002/kineticgsa.htm",
+  "cik": "1696195",
+  "issuer": "KINETIC GROUP INC.  (KNIT)",
+  "form": "S-1",
+  "file_date": "2017-02-14",
+  "year": 2017,
+  "exhibit": "EX-4",
+  "exhibit_description": "EXHIBIT 4.2 SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "efa438c1a9e017115e42e2e33dd11face6a44057b9bda422921372faf683b707",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 3,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 7
+  },
+  "pages": 6,
+  "page_kinds": {
+    "text": 5,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "6665f0a01b78a3120ea7cbf845388f2084456e0ac0515d83a45d7449b0a519c4",
+  "broker_dealer": false
+}

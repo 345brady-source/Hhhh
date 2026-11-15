@@ -1,0 +1,46 @@
+{
+  "id": "c144",
+  "url": "https://www.sec.gov/Archives/edgar/data/1967437/000196743723000002/exasubk.pdf",
+  "cik": "1967437",
+  "issuer": "Super Crowd, Inc.",
+  "form": "C/A",
+  "file_date": "2023-03-22",
+  "year": 2023,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "0fef8ac81bdd7419085e10b4c70899ba979dffae5cfc56fd27afc5ad054df745",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "underscores": 22,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 6,
+  "page_kinds": {
+    "text": 6
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "0fef8ac81bdd7419085e10b4c70899ba979dffae5cfc56fd27afc5ad054df745",
+  "broker_dealer": false
+}

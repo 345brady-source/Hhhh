@@ -1,0 +1,55 @@
+{
+  "id": "c198",
+  "url": "https://www.sec.gov/Archives/edgar/data/1651721/000116169715000391/exhibit_4-1.htm",
+  "cik": "1651721",
+  "issuer": "GENERATION INCOME PROPERTIES, INC.",
+  "form": "1-A",
+  "file_date": "2015-09-16",
+  "year": 2015,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "b2fa68ea0cf935040fa8f638c13177181f6ac7203ea8233ab7f3a5ca950c2b31",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 8,
+    "tables": 4,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 16
+  },
+  "pages": 6,
+  "page_kinds": {
+    "text": 6
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "9b17b61bbc522663a536db0dbbfe718dfcd3fe64abc59611c29323cc2e81aae8",
+  "broker_dealer": false
+}

@@ -1,0 +1,55 @@
+{
+  "id": "c308",
+  "url": "https://www.sec.gov/Archives/edgar/data/2053339/000205333926000011/formofseedcapital.htm",
+  "cik": "2053339",
+  "issuer": "Savvly Fund #3",
+  "form": "N-2/A",
+  "file_date": "2026-08-05",
+  "year": 2026,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION FORM OF SEED CAPITAL",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "5b355a5603acb51843c9b2a2661453551545244b37371e3cdb228851e90e43c6",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 1,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 3
+  },
+  "pages": 6,
+  "page_kinds": {
+    "text": 6
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "404d4a9408adc6133c1daf88fd1bccee618f1bb43d618b6a6cf3bcb30a8bb246",
+  "broker_dealer": false
+}

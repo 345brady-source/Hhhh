@@ -1,0 +1,53 @@
+{
+  "id": "c270",
+  "url": "https://www.sec.gov/Archives/edgar/data/1679629/000159406216000568/ex105.htm",
+  "cik": "1679629",
+  "issuer": "Koo'Toor Design Inc.",
+  "form": "S-1/A",
+  "file_date": "2016-08-19",
+  "year": 2016,
+  "exhibit": "EX-10.5",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "c381b45e9b601545efa04ce822f6937dc77fe6f7742d36be9ba563191218eae1",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 16,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 31
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 2,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "38cb2bfc1b0b7a6b1f5d0696c6a30301839179a47d8ef8d09a543b533251c41a",
+  "broker_dealer": false
+}

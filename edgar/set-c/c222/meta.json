@@ -1,0 +1,52 @@
+{
+  "id": "c222",
+  "url": "https://www.sec.gov/Archives/edgar/data/1161676/000095012301509198/y55003n2ex99-p.txt",
+  "cik": "1161676",
+  "issuer": "EQUITY SECURITIES TRUST II",
+  "form": "N-2/A",
+  "file_date": "2001-12-12",
+  "year": 2001,
+  "exhibit": "EX-99.P",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.txt",
+  "source_sha256": "071618ec11e1dca663c907808c41267ea15f6d3bcc8d24e3cf90a101da484cab",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 3,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 0
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "9bbf6ffa20417c02bbb4d6de9c5310f835134a1a741424cd1a71d0a893956ad2",
+  "broker_dealer": false
+}

@@ -1,0 +1,54 @@
+{
+  "id": "c180",
+  "url": "https://www.sec.gov/Archives/edgar/data/1309402/000119312506143753/dex102.htm",
+  "cik": "1309402",
+  "issuer": "GREEN PLAINS RENEWABLE ENERGY, INC.  (GPRE)",
+  "form": "8-K",
+  "file_date": "2006-07-10",
+  "year": 2006,
+  "exhibit": "EX-10.2",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "123e7d09452712d090600ffed60952b6ece5233fa0131336608a84a4bc913ba2",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 10,
+    "tables": 15,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 0
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 3,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "little or no text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "21a283430bb3200fc407403d9d1e3d32003b427f4e3f36606e6f4d67db741ab2",
+  "broker_dealer": false
+}

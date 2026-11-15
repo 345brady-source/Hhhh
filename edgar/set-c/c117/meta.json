@@ -1,0 +1,77 @@
+{
+  "id": "c117",
+  "url": "https://www.sec.gov/Archives/edgar/data/1838126/000119312525337297/d63593dn2.htm",
+  "cik": "1838126",
+  "issuer": "HPS Corporate Lending Fund",
+  "form": "N-2",
+  "file_date": "2025-12-30",
+  "year": 2025,
+  "exhibit": "N-2",
+  "exhibit_description": "N-2",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "b84353ccc311906a687276f5fc21014f03c609a6399d5072fda484f9c8c83872",
+  "extra_files": [
+    "g63593g01a08.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "Appendix A",
+    "end_heading": "EXHIBIT INDEX"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 27,
+  "page_kinds": {
+    "text": 26,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "9996a5abea730de1265a0747b5857a1cc8bf13f3397f710b6cbf1cbc4b44b5ed",
+  "broker_dealer": true
+}

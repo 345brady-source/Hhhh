@@ -1,0 +1,52 @@
+{
+  "id": "c301",
+  "url": "https://www.sec.gov/Archives/edgar/data/2086503/000168316825007279/yanchuang_ex9901.htm",
+  "cik": "2086503",
+  "issuer": "YAN CHUANG GROUP INC.",
+  "form": "S-1",
+  "file_date": "2025-09-29",
+  "year": 2025,
+  "exhibit": "EX-99.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "f2d029dc3ed157daafcc7ad547c989fd6a90b92f05cc1d7fb17c92e8da976511",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 16,
+    "tables": 3,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 36
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "7519af971ea195052fb4a7d3e0cf48a715e1662eada0f865848d8fd68ee09c68",
+  "broker_dealer": false
+}

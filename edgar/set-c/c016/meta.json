@@ -1,0 +1,61 @@
+{
+  "id": "c016",
+  "url": "https://www.sec.gov/Archives/edgar/data/1669368/000149315217015303/ex3-1.htm",
+  "cik": "1669368",
+  "issuer": "ASI Aviation, Inc.",
+  "form": "1-A",
+  "file_date": "2017-12-29",
+  "year": 2017,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "",
+  "offering_kind": "Regulation A",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "d1b81d6b48e777e871a33033f0d6fe219d04ef414379a4395f01775e9f4b371e",
+  "extra_files": [
+    "ex3-1_1.jpg",
+    "ex3-1_2.jpg"
+  ],
+  "layout_notes": [],
+  "how_made": "picture-print",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 2,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 2,
+    "underscores": 0
+  },
+  "pages": 7,
+  "page_kinds": {
+    "little or no text": 1,
+    "picture": 4,
+    "blank": 2
+  },
+  "page_kind_list": [
+    "little or no text",
+    "picture",
+    "picture",
+    "blank",
+    "picture",
+    "picture",
+    "blank"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "6897384aeff34470949bee1a0766461f749be7ea662d000877290e864f049e52",
+  "broker_dealer": false
+}

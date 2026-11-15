@@ -1,0 +1,55 @@
+{
+  "id": "c069",
+  "url": "https://www.sec.gov/Archives/edgar/data/1436975/000114420409010427/v140354_424b3.htm",
+  "cik": "1436975",
+  "issuer": "LIGHTSTONE VALUE PLUS REAL ESTATE INVESTMENT TRUST II INC",
+  "form": "424B3",
+  "file_date": "2009-02-23",
+  "year": 2009,
+  "exhibit": "424B3",
+  "exhibit_description": null,
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "9d2776b78c7393bb3fb4b34f7e58646012f6626af6ba2687884e14f4cb5ad684",
+  "extra_files": [
+    "line.gif",
+    "logo_lightstone.jpg",
+    "spacer.gif"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX C | LIGHTSTONE VALUE PLUS REAL ESTATE INVESTMENT TR",
+    "end_heading": "END"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 2
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 4
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "fd0df0f7adc74424dbaabd00e40423dcb308dc06680ab202db1aedce024f6b18",
+  "broker_dealer": true
+}

@@ -1,0 +1,54 @@
+{
+  "id": "c184",
+  "url": "https://www.sec.gov/Archives/edgar/data/1449446/000144028008000135/ex991.htm",
+  "cik": "1449446",
+  "issuer": "Terra Grande Development Corp",
+  "form": "S-1",
+  "file_date": "2008-12-22",
+  "year": 2008,
+  "exhibit": "EX-99.1",
+  "exhibit_description": "TERRA GRANDE SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "9a67e97e6ac37551ecf38a7f07dc69a693f06f026dca47b0df1eca1ae2f7dc6b",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 15,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 11
+  },
+  "pages": 5,
+  "page_kinds": {
+    "text": 5
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "3215164f4951875b8d473dc3d8021ec2a3e55d476059d65c8be9e0c0f5a7b4e2",
+  "broker_dealer": false
+}

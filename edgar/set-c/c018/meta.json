@@ -1,0 +1,59 @@
+{
+  "id": "c018",
+  "url": "https://www.sec.gov/Archives/edgar/data/1753267/000137647418000155/fjc_ex4.htm",
+  "cik": "1753267",
+  "issuer": "First Jersey Cannabis Corp",
+  "form": "1-A/A",
+  "file_date": "2018-12-12",
+  "year": 2018,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "c940b362db78eed3f08c6a2192c4ec8317dce20248fd62431eb26acd54c3fe88",
+  "extra_files": [
+    "fjcex41.jpg",
+    "fjcex42.jpg",
+    "fjcex43.jpg",
+    "fjcex44.jpg"
+  ],
+  "layout_notes": [],
+  "how_made": "picture-print",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 4,
+    "underscores": 0
+  },
+  "pages": 4,
+  "page_kinds": {
+    "picture+ocr-text": 1,
+    "picture": 3
+  },
+  "page_kind_list": [
+    "picture+ocr-text",
+    "picture",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "81c4baca9aacb824d2e89646b076aa663b51f0cb24b94ed0532aa29f276be73b",
+  "broker_dealer": false
+}

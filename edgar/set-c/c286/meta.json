@@ -1,0 +1,63 @@
+{
+  "id": "c286",
+  "url": "https://www.sec.gov/Archives/edgar/data/1818936/000110465920115581/tm2030739d2_ex4.htm",
+  "cik": "1818936",
+  "issuer": "Veritransfer Inc.",
+  "form": "1-A/A",
+  "file_date": "2020-10-16",
+  "year": 2020,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "EXHIBIT 4",
+  "offering_kind": "Regulation A",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "e220a1f5991e091d88e9c2bc5ffc6a456dacda86935a9a1cf8857ebbdd5426bf",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 18,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 1
+  },
+  "pages": 14,
+  "page_kinds": {
+    "text": 14
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "7d55af4f737cfa0bed153d2893acc722c72a779aabc24282577b9eb752e7418e",
+  "broker_dealer": false
+}

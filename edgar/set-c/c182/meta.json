@@ -1,0 +1,60 @@
+{
+  "id": "c182",
+  "url": "https://www.sec.gov/Archives/edgar/data/1434830/000113709108000317/ex_99-1.htm",
+  "cik": "1434830",
+  "issuer": "GMS Capital Corp.",
+  "form": "S-1",
+  "file_date": "2008-06-16",
+  "year": 2008,
+  "exhibit": "EX-99.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "24045be9d3ddf95ede51b0b0f5a4d97d6dea3bc5a881cfb5001fcd1f86d05025",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 7,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 31
+  },
+  "pages": 11,
+  "page_kinds": {
+    "text": 11
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "0925489fabd16a4c57ca7ba787f0fb8cc30ea67a41345ab4bcd7792c94dc0dfa",
+  "broker_dealer": false
+}

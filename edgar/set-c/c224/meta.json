@@ -1,0 +1,52 @@
+{
+  "id": "c224",
+  "url": "https://www.sec.gov/Archives/edgar/data/1176435/000111650202000907/subscriptionagrmt.txt",
+  "cik": "1176435",
+  "issuer": "99 CENT STUFF INC",
+  "form": "S-1",
+  "file_date": "2002-07-05",
+  "year": 2002,
+  "exhibit": "EX-1.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.txt",
+  "source_sha256": "0a7fd23e3a11d9e31031d0386cf010289208795d36d5a157f266410861c95e3f",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 3,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 11
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "9a3fa5201717b137b1c19273ba5f767e5aafc22a7ae03457cb0ff0abbb091fbf",
+  "broker_dealer": false
+}

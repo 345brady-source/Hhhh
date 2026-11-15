@@ -1,0 +1,66 @@
+{
+  "id": "c052",
+  "url": "https://www.sec.gov/Archives/edgar/data/1133505/000116923203004611/d56288_424b3.txt",
+  "cik": "1133505",
+  "issuer": "GLOBAL EXPRESS CAPITAL REAL ESTATE INVESTMENT FUND I LLC",
+  "form": "424B3",
+  "file_date": "2003-07-17",
+  "year": 2003,
+  "exhibit": "424B3",
+  "exhibit_description": "PROSPECTUS SUPPLEMENT",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.txt",
+  "source_sha256": "bdf95e65c41f9e38afa00127ada03c657663238a68e2d83b28a7a825f413fa35",
+  "extra_files": [],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "EXHIBIT C | --------- | GLOBAL EXPRESS CAPITAL",
+    "end_heading": "APPENDIX A"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 284
+  },
+  "pages": 19,
+  "page_kinds": {
+    "text": 19
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "64a5ef24b543afcad5930fd352361fd206ffdc94ab839ebb202556b35831b2c8",
+  "broker_dealer": true
+}

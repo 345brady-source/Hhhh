@@ -1,0 +1,1306 @@
+<DOCUMENT>
+<TYPE>EX-1
+<SEQUENCE>3
+<FILENAME>dex1.txt
+<DESCRIPTION>SHARE SUB AGREEMENT - SEAN
+<TEXT>
+<PAGE>
+
+                                                                       EXHIBIT I
+
+                          SHARE SUBSCRIPTION AGREEMENT
+
+THIS SHARE SUBSCRIPTION AGREEMENT ("Agreement") is made and entered into as of
+the 22 day of October, 2002 (the "Effective Date"), by and between INTERNATIONAL
+ASSETS HOLDING CORPORATION, a Delaware corporation (the "Company"), and SEAN M.
+O'CONNOR (the "Investor").
+
+                                 R E C I T A L S
+
+A. The Company, directly or through its subsidiaries, operates a financial
+services company, including a market making and proprietary trading brokerage
+firm specializing in global securities.
+
+B. The Company is a publicly held entity, having previously offered shares of
+the Company's common stock pursuant to a registration statement, and continues
+to file reports as to the Company's business.
+
+C. The Board of Directors of the Company (the "Board") considers it essential to
+the best interests of the Company that (i) additional common equity and (ii)
+preferred equity will be sold to the Investor subject to the terms of this
+Agreement.
+
+D. The Investor is an "accredited investor" as such term is defined in Appendix
+1, and is capable of evaluating the merits and risks of an investment in the
+Company.
+
+NOW THEREFORE, in consideration of the mutual covenants and agreements set forth
+hereinafter, the Company and the Investor agree as follows:
+
+1.   Recitals. All of the above recitals are true and correct.
+
+2.   Term. This Agreement shall commence on the Effective Date and shall
+terminate at 12:01 a.m. EST on the date that is the later of five (5) business
+days from the date of receipt by the Company of (i) the audited consolidated
+financial statements for the fiscal year ended September 30, 2002; or (ii)
+written confirmation from NASDAQ with respect to the transactions evidenced by
+this Agreement, but in no event later than December 15, 2002 (the "Termination
+Date") unless the Closing, as hereafter defined, has occurred before the
+Termination Date. This Agreement may be extended by the mutual written agreement
+of the Company and the Investor prior to the Termination Date.
+
+3.   Purchase of Securities.
+
+     (a) Subject to the terms and conditions of this Agreement, the Company
+offers to the Investor and the Investor hereby subscribes to purchase (i)
+182,061 shares of common stock, $.01 par value per share of the Company (such
+shares of common stock are referred to herein as the "Common Securities"), and
+(ii) 700,292 shares of preferred stock, $.01 par value per share of the Company
+(such shares of preferred stock are referred to herein as the "Preferred
+Securities") (the Common Securities and the Preferred Securities are
+collectively referred to as the "Securities"), each at a fixed price per share
+
+<PAGE>
+
+equal to $1.70 (the "Per Share Purchase Price"). The aggregate purchase price
+for the purchased Securities shall be equal to the product of the Per Share
+Purchase Price and the aggregate number of Common Securities and Preferred
+Securities purchased by the Investor (the "Aggregate Purchase Price").
+
+     (b) The Preferred Securities will have the preferences, privileges,
+restrictions and rights specified in Exhibit "A" to this Agreement. The Board
+will promptly approve the terms of the Preferred Securities by adopting an
+amendment to the Company's Certificate of Incorporation in the form of Exhibit
+"A".
+
+4.   Earnest Money. The Investor will pay the Company a deposit in the amount of
+$80,000 within three (3) days of the execution of this Agreement (the
+"Deposit"). At the Closing, the Company will apply the Deposit to the Aggregate
+Purchase Price as provided in Section 5. If the Agreement is terminated before
+the Closing, as hereafter defined, pursuant to Subsection 7(a)(i), (ii) or (iii)
+or Section 10 hereof, the Company will return the Deposit to the Investor. If
+the Agreement is terminated before the Closing pursuant to Subsection 7(a)(iv)
+hereof or if the Investor is unable to make full payment to the Company for the
+purchased shares at Closing, the Investor will forfeit the Deposit.
+
+5.   Closing and Payment. The closing of the acquisition provided for in Section
+3 of this Agreement (the "Closing") shall occur on a mutually agreeable date
+prior to the Termination Date at the offices of Holland & Knight LLP in Orlando,
+Florida or at such other time and place as the parties may agree. At the
+Closing: (i) the Investor will pay the Aggregate Purchase Price less the Deposit
+by either endorsing a certified or cashier's check made payable to the Company
+or wiring immediately available funds to the Company's bank account (which
+account number has been previously provided to the Investor), and (ii) the
+Company will reimburse the Investor, together with the other Approved Investors,
+up to the aggregate sum of $20,000 for amounts paid by the Approved Investors to
+any intermediaries or brokers and for the legal and out-of-pocket expenses
+incurred by the Approved Investors, provided that the Approved Investors shall
+not be entitled to such reimbursement if the Closing does not occur for any
+reason.
+
+6.   Conditions Precedent.
+
+
+(a) The respective obligations of the Company and the Investor to effect the
+Closing are subject to the satisfaction or waiver by the Company and the
+Investor, prior to the Closing of each of the following conditions:
+
+     (i) There being no provision of applicable Law or any Court Order that
+     prohibits or otherwise makes illegal the consummation of the Closing.
+
+     (ii) All regulatory approvals required to consummate the transaction
+     contemplated hereby (other than the shareholder approval required for the
+     conversion of Preferred Securities) shall have been obtained and shall
+     remain in full force and effect.
+
+     (iii) No investigation, action, suit or proceeding by a Governmental
+     Authority shall be pending on the date of Closing, which challenges, or
+     might reasonably be
+
+                                       2
+
+<PAGE>
+
+          expected to result in a challenge to this Agreement, or which might
+          reasonably be expected to give rise to a claim for damages in a
+          material amount as a result of the consummation of the transaction
+          contemplated by this Agreement.
+
+          (iv) The Company shall have consummated simultaneously with the
+          Closing, the transactions contemplated by Share Subscription
+          Agreements of even date herewith entered into by and between the
+          Company and each of Scott J. Branch and John Radziwill, or any
+          assignee of each which has been approved in writing by the Company
+          (such persons, together with the Investor, the "Approved Investors").
+
+          (v) The Company shall have received the written confirmation from
+          NASDAQ that the transactions evidenced by this Agreement do not
+          require prior stockholder approval.
+
+(b) The obligation of the Investor to effect the Closing is subject to the
+satisfaction or waiver by the Investor of the following additional conditions:
+
+               (i) The Company shall have performed in all material respects all
+of its material obligations under this Agreement required to be performed by it
+at or before the Closing.
+
+               (ii) Any representation or warranties of the Company contained in
+this Agreement shall be true and correct in all material respects as of the
+Closing, as if made at and as of such time.
+
+               (iii) The Company and the Investor shall have entered into an
+Employment Agreement in the form attached hereto as Exhibit "B" (the "Employment
+Agreement").
+
+               (iv) The Company and the Investor shall have entered into a
+Registration Rights Agreement in the form attached hereto as Exhibit "C" (the
+"Registration Rights Agreement").
+
+               (v) The Board shall have duly adopted resolutions: (1) approving
+the terms of (i) this Agreement, (ii) the terms of the Preferred Securities,
+(iii) the Employment Agreement, and (iv) the Registration Rights Agreement; (2)
+authorizing an employee share incentive program to allow for options to be
+issued as provided in the Employment Agreement (the "Option Plan") to be
+proposed to the stockholders of the Company for approval at the next convened
+annual general meeting of stockholders currently scheduled to occur on or before
+February 14, 2003 (the "Annual Meeting"); and (3) approving an amendment to (i)
+the bylaws of the Company to require a supermajority vote of the greater of (A)
+at least five directors or (B) at least seventy-five percent (75%) of the
+directors to remove or change the Chairman of the Board, and (ii) the
+Certificate of Incorporation of the Company to also require a vote of at least
+seventy-five percent (75%) of the shares of common stock to remove or change the
+Chairman of the Board to be proposed to the stockholders of the Company at the
+Annual Meeting. Copies of these
+
+                                       3
+
+<PAGE>
+
+Board resolutions certified by the Secretary of the Company shall be made
+available to the Investor no later than 14 business days after execution of this
+Agreement.
+
+               (vi) The Company will have received a release from UBS Warburg
+waiving any claim to compensation arising from this Agreement or the share
+purchase evidenced hereby.
+
+               (vii) The Company will have secured letters of resignation from
+all current directors not shown on Appendix 2 and shall appoint all new
+directors shown on Appendix 2 effective as of the Closing.
+
+               (viii) The Company shall have entered into Employment Agreements
+with Diego Veitia, Edward Cofrancesco, Charles Lyons, Brian Garrow, Will Dennis,
+Jr., Doug Ross, Chris Myers and Michael Flannigan. Neither Diego Veitia nor
+Edward Cofrancesco shall have terminated their Employment Agreement with the
+Company.
+
+(c) The Obligation of the Company to effect the Closing is subject to
+satisfaction or waiver by the Company of the following conditions:
+
+               (i) The Investor shall have performed in all material respects
+all of its material obligations under this Agreement required to be performed by
+it at or before the Closing.
+
+               (ii) Any representation or warranties of the Investor contained
+in this Agreement shall be true and correct in all material respects as of the
+Closing, as if made at and as of such time.
+
+7.  Termination.
+
+     (a) This Agreement may be terminated at any time before the Closing:
+
+               (i) by the mutual agreement of the Investor and the Company;
+
+               (ii) By either the Company or the Investor, if the Closing has
+not occurred by December 15, 2002, provided that the right to terminate this
+Agreement under this clause will not be available to any party whose failure to
+fulfill any of its obligations under this Agreement resulted in the failure to
+consummate the Closing by such date;
+
+               (iii) By the Investor, if there has been a material breach of any
+representation, warranty or covenant in this Agreement by the Company; or
+
+               (iv) By the Company, if there has been a material breach of any
+representation, warranty or covenant in this Agreement by the Investor.
+
+     (b) The party terminating this Agreement pursuant to this Section will give
+written notice of termination to the other party.
+
+                                       4
+
+<PAGE>
+
+8.   Stockholder Approval. At the Annual Meeting, the Company shall seek the
+approval of the stockholders of the Company: (i) to allow conversion of the
+Preferred Securities to Common Securities; (ii) to adopt the Option Plan; (iii)
+to elect the persons listed on Appendix 2 to the Board; and (iv) to amend the
+Certificate of Incorporation of the Company to require a seventy-five percent
+(75%) vote of the stockholders to remove or change the Chairman of the Board.
+Upon the approval of the stockholders at the Annual Meeting, the Preferred
+Securities will automatically be converted into the Common Securities pursuant
+to the conversion provisions included in Exhibit "A" hereto (the "Conversion").
+
+9.   Redemption and Repurchase Rights.
+
+
+     (a) In the event the stockholders do not approve the resolutions permitting
+conversion of the Preferred Securities into common stock and the amendment to
+the Company's Certificate of Incorporation to require a seventy-five percent
+(75%) vote of the stockholders to remove or change the Chairman of the Board at
+the Annual Meeting: (i) the Investor will, at a redemption price equal to the
+Aggregate Purchase Price, have the option to cause the Company to repurchase the
+Common Securities and the Preferred Securities for a period beginning fifteen
+(15) days after the Annual Meeting and extending to the date that is six months
+from the Closing (the "Redemption Right"), and (ii) the Company will have the
+right to repurchase the Common Securities and the Preferred Securities from the
+Investor for a period beginning fifteen (15) days after the Annual Meeting and
+extending to the date that is six months from the Closing at a price equal to
+the Aggregate Purchase Price (the "Repurchase Right").
+
+     (b) In the event that prior to the Conversion: (i) the Investor's
+employment is terminated by the Company (other than for Cause, as such term is
+defined in the Employment Agreement); or (ii) the Investor is removed as a
+director of the Company; or (iii) Sean O'Connor's employment is terminated by
+the Company (other than for Cause, as defined in the Employment Agreement of
+even date herewith between the Company and Sean O'Connor); or (iv) either Sean
+O'Connor or the nominee of John Radziwill is removed from the Board, then the
+Company, at the Investor's option, shall repurchase the Common Securities and
+the Preferred Securities from the Investor at a price equal to the Aggregate
+Purchase Price within fifteen (15) days of such termination of employment or
+removal of director. In the event that prior to the Conversion, the Investor's
+employment is terminated by the Company for Cause, as such term is defined in
+the Employment Agreement, the Company shall have the option to repurchase the
+Common Securities and the Preferred Securities from the Investor at a price
+equal to the Aggregate Purchase Price within fifteen (15) days of such
+termination of employment.
+
+     (c) In the event the Annual Meeting is not held on or before March 15,
+2003, the Investor will, at a redemption price equal to the Aggregate Purchase
+Price, have the option to cause the Company to repurchase the Common Securities
+and the Preferred Securities from the Investor at a price equal to the Aggregate
+Purchase Price on or before March 30, 2003.
+
+10.  Adjusted Stockholders Equity Per Share. Notwithstanding anything to the
+contrary in this Agreement, either party shall have the option to terminate this
+Agreement
+
+                                       5
+
+<PAGE>
+
+prior to Closing in the event that stockholders' equity per share as determined
+and adjusted pursuant to this Section (the "Adjusted Stockholders Equity Per
+Share") is greater than $1.75 or less than $1.45. Stockholder equity per share
+shall be determined as of September 30, 2002 by the independent public
+accountants then regularly servicing the Company, in accordance with generally
+accepted accounting principles consistently applied, based on the audited
+consolidated financial statements of the Company, which determination shall be
+binding on the parties hereto. Subject to compliance with auditor independence
+and corporate governance considerations as effective or proposed by the SEC or
+NASDAQ, the Investor shall have the right to consult with the independent public
+accountants determining the Stockholder equity per share prior to such
+determination and to approve any new accounting firm if the Company's accounting
+firm as of the date of this Agreement resigns or is otherwise replaced.
+Stockholders equity per share as so determined by the Company's accounting firm
+shall then be adjusted as follows to determine the Adjusted Stockholders Equity
+Per Share:
+
+          a. Stockholders equity per share shall include the value of the
+          Company's technology assets (which shall be deemed to be $300,000 in
+          aggregate at September 30, 2002) and the Company's deferred tax assets
+          (which shall be deemed to be $540,766 at September 30, 2002),
+          irrespective of the auditor's treatment thereof;
+
+          b. All costs related to the transaction contemplated by this Agreement
+          shall not be expensed but rather shall be debited directly against the
+          capital investment made by the Approved Investors. Such expenses shall
+          include legal and tax advisory fees, amounts paid to any
+          intermediaries or brokers and the legal and out of pocket expenses
+          incurred by the Investor (in aggregate with all other Approved
+          Investors, not to exceed $20,000). The aggregate of all such expenses
+          for entire aggregate investment by the Approved Investors is not to
+          exceed $200,000. Any excess beyond $200,000 to be deducted against
+          stockholder's equity per share; and
+
+          c. The resulting Stockholders equity per share shall then be reduced
+          by 7.5%.
+
+     11.  Representations by the Investor. In connection with the purchase of
+     the Securities, the Investor acknowledges, warrants and represents to the
+     Company as follows:
+
+          a. The Investor is acquiring the Securities for investment for his own
+          account and without the intention of participating, directly or
+          indirectly, in a distribution of the Securities, and not with a view
+          to resale or any distribution of the Securities, or any portion
+          thereof.
+
+          b. The Investor has knowledge and experience in financial and business
+          matters and has consulted with its own professional representatives as
+          it has considered appropriate to assist in evaluating the merits and
+          risks of this investment. The Investor has had access to and an
+          opportunity to question the officers of the Company, or persons acting
+          on their behalf, with respect to material information about the
+          Company and, in connection with the evaluation of this investment,
+          has,
+
+                                       6
+
+<PAGE>
+
+          to the best of his knowledge, received all information and data with
+          respect to the Company that the Investor has requested. The Investor
+          has carefully reviewed all of the Company's filings with the
+          Securities and Exchange Commission. The Investor is acquiring the
+          Securities based solely upon its independent examination and judgment
+          as to the prospects of the Company.
+
+          c. The Securities were not offered to the Investor by means of
+          publicly disseminated advertisements or sales literature.
+
+          d. The Investor is acquiring the Securities without being furnished
+          any offering materials or prospectus.
+
+          e. The Investor acknowledges that an investment in the Securities is
+          speculative and involves a high degree of risk, including a risk of
+          loss of the entire investment in the Company, and the Investor may
+          have to continue to bear the economic risk of the investment in the
+          Securities for an indefinite period. The Investor acknowledges that
+          the Securities are being sold to the Investor without registration
+          under any state or federal law requiring the registration of
+          securities for sale, and accordingly will constitute "restricted
+          securities" as defined in Rule 144 promulgated under the Securities
+          Act of 1933, as amended (the "Act"). The transferability of the
+          Securities is therefor restricted by applicable United States Federal
+          and state securities laws.
+
+          f. The Investor acknowledges that each certificate representing
+          Securities shall be subject to a legend substantially in the following
+          form:
+
+          "The securities represented hereby have not been registered under the
+          Securities Act of 1933, as amended or any state securities laws and
+          neither the securities nor any interest therein may be offered, sold,
+          transferred, pledged, or otherwise disposed of except pursuant to an
+          effective registration statement under such act or such laws or an
+          exemption from registration under such act and such laws which, in the
+          opinion of counsel for the holder, which counsel and opinion are
+          reasonably satisfactory to counsel for this entity, is available."
+
+     12.  Representations and Warranties of the Company. The Company hereby
+     represents and warrants to the Investor except as set forth on a Schedule
+     of Exceptions (the "Schedule of Exceptions") furnished to the Investor and
+     its counsel, and attached as Exhibit D hereto, specifically identifying the
+     relevant section hereof, which exceptions shall be deemed to be
+     representations and warranties as if made hereunder:
+
+          a. Corporate Existence. The Company and each of its subsidiaries are
+          entities duly formed under the laws of their respective places of
+          formation, are each in good standing and have a legal existence, with
+          full power and authority to own, operate or lease their respective
+          properties and conduct their respective businesses in the manner and
+          in the places where such properties are owned or leased or such
+          businesses are conducted.
+
+                                       7
+
+<PAGE>
+
+          b. Authorization of Transaction. Subject to the receipt of necessary
+          third party approvals or confirmations listed on Appendix 3 hereto
+          (the "Required Approvals"), the Company has the full power and
+          authority to execute, deliver and perform this Agreement and the other
+          agreements to be executed and delivered pursuant to this Agreement
+          (the "Ancillary Agreements"); to perform its obligations hereunder and
+          thereunder, and to carry out the transactions contemplated hereby and
+          thereby. All necessary action, corporate or otherwise, will have been
+          taken by the Company prior to the Closing to authorize the execution,
+          delivery and performance of this Agreement and each of the Ancillary
+          Agreements and the transactions contemplated hereby and thereby. Each
+          of this Agreement and the Ancillary Agreements has been, or will be at
+          the Closing, duly executed and delivered by the Company, and each of
+          this Agreement and the Ancillary Agreements is, or upon the Closing
+          will be, the legal, valid and binding obligation of the Company,
+          enforceable against the Company in accordance with its terms except
+          (a) as limited by applicable bankruptcy, insolvency or other laws of
+          general application affecting enforcement of creditors' rights; and
+          (b) general principles of equity that restrict the availability of
+          equitable remedies.
+
+          c. Capitalization. As of the date of this Agreement, the authorized
+          capital stock of the Company consists of 8,000,000 shares of common
+          stock, par value $.01 per share of which 2,375,575 shares are validly
+          issued and outstanding, fully paid and nonassessable on the date
+          hereof, and 5,000,000 shares of preferred stock, par value $.01 per
+          share, none of which are issued or outstanding. In addition, on the
+          date hereof, 527,224 shares of common stock are subject to issuance
+          pursuant to presently existing options and warrants. There are no
+          other outstanding options, warrants, rights, convertible securities or
+          exchange offers providing for the issuance of common stock or any
+          other capital stock of the Company.
+
+          d. Securities Duly Issued. Upon the issuance of the Securities at the
+          Closing, the Securities will be duly and validly issued, fully paid
+          and nonassessable, and will not be subject to any restrictions on
+          transfer other than those arising under applicable federal and state
+          securities laws.
+
+          e. Present Compliance with Obligations and Laws. Neither the Company
+          nor any of its subsidiaries are: (i) in violation of their respective
+          Organizational Documents; (ii) in default in the performance of any
+          obligation, agreement or condition of any debt instrument which (with
+          or without the passage of time or the giving of notice) affords to any
+          person the right to accelerate any indebtedness or terminate any
+          right; (iii) in default of or in breach of (with or without the
+          passage of time or the giving of notice) any other contract to which
+          it is a party or by which it or its assets are bound; or (iv) in
+          violation of any Court Order or Governmental Authorization that is
+          held by the Company or its subsidiaries or is applicable to any of the
+          Company or its subsidiaries or their respective businesses or assets.
+          Except as set forth on Section 12(e) of the Schedule of Exceptions,
+          the Company and its subsidiaries have conducted and are now conducting
+          their businesses and the ownership and operation of their assets in
+          compliance with all applicable Laws, except where the failure to be in
+          such compliance would not have a Material Adverse Effect.
+
+                                       8
+
+<PAGE>
+
+          f. No Conflict of Transaction With Obligations and Laws. Except as set
+          forth on Schedule 12(f) of the Schedule of Exceptions, neither the
+          execution, delivery and performance of this Agreement or any Ancillary
+          Agreement, nor the performance of the transactions contemplated hereby
+          or thereby, will: (a) conflict with or constitute a breach or
+          violation of any provision of the Organizational Documents of the
+          Company or any of its subsidiaries; (b) require any Governmental
+          Authorization, (c) require any consent of any parties to loans,
+          contracts, leases, licenses and other agreements to which the Company
+          is a party; (d) constitute (with or without the passage of time or the
+          giving of notice) a breach of, or default under, any debt instrument
+          to which the Company or any of its subsidiaries is a party, or give
+          any person the right to accelerate any indebtedness or terminate,
+          modify or cancel any right; (e) constitute (with or without the
+          passage of time or giving of notice) a default under or breach of any
+          other agreement, instrument or obligation to which the Company or any
+          of its subsidiaries is a party or by which it or its assets are bound;
+          (f) result in the creation of any encumbrance upon any capital stock
+          or any of the assets of the Company or its subsidiaries; (g) conflict
+          with or result in a violation of any Court Order or Law, or give to
+          any other person, the right to exercise any remedy or obtain any
+          relief under any Court Order or Law, to which the Company or any of
+          its subsidiaries is subject or by which the properties or assets of
+          the Company or any of its subsidiaries are bound, or (h) result in a
+          violation of any of the terms or requirements of, or give any
+          Governmental Authority the right to revoke, suspend or otherwise
+          modify, any Government Authorization.
+
+          g. SEC Reports. The financial statements of the Company and the
+          related notes contained in the Company's Annual Report on Form 10-K
+          for the fiscal year ended September 30, 2001 and its Quarterly Report
+          on Form 10-Q for the quarter ended June 30, 2002 present fairly the
+          financial position of the Company as of the dates indicated therein
+          and the results of its operations and cash flows for the periods
+          therein specified. Such financial statements (including the related
+          notes) have been prepared in accordance with generally accepted
+          accounting principles applied on a consistent basis throughout the
+          periods therein specified and are true, correct and complete in all
+          respects.
+
+          h. Contracts and Commitments. Set forth on Section 12(h) of the
+          Schedule of Exceptions is a list of all (i) contracts, mortgages,
+          indentures, agreements, instruments and transactions to which the
+          Company or any of its subsidiaries is a party or by which the Company
+          or any of its subsidiaries are bound which involve obligations of, or
+          payments to, such company in excess of $100,000 in the aggregate; (ii)
+          agreements between the Company or any of its subsidiaries and the
+          Investor; (iii) agreements between the Company or any of its
+          subsidiaries and any officer, director, consultant, stockholder,
+          employee, affiliate or predecessor company; and (iv) contracts,
+          agreements, arrangements or understandings which are material to the
+          business of the Company or any of its subsidiaries (collectively
+          referred to as the "Material Contracts"). Copies of all Material
+          Contracts listed in Section 12(h) of the Schedule of Exceptions have
+          previously been made available to the Investor. All of the Material
+          Contracts are valid, binding and in full force
+
+                                       9
+
+<PAGE>
+
+          and effect in all material respects, subject to the effect of
+          applicable bankruptcy, insolvency, reorganization, moratorium or other
+          laws of general application relating to or affecting enforcement of
+          the creditors' rights and rules or laws concerning equitable remedies.
+          Neither the Company nor any of its subsidiaries are in material
+          default under any such contract. Except as set forth in Section 12(h)
+          of the Schedule of Exceptions, with respect to each Material Contract,
+          (a) the Company or its subsidiaries, as the case may be, has performed
+          in all material respects all obligations required to be performed to
+          date under such Material Contract; (b) to the best knowledge of the
+          Company, no party to such Material Contract is in default, breach or
+          arrears under the terms of such Material Contract; and (c) to the best
+          knowledge of the Company, no condition exists or event has occurred
+          that, with the giving of notice or lapse of time or both, would
+          constitute a material default under such Material Contract.
+
+          i. Litigation. Except as set forth in Section 12(i) of the Schedule of
+          Exceptions, there is no action, suit, claim, proceeding, investigation
+          or arbitration proceeding pending (or to the best knowledge of the
+          Company, threatened in writing) against or otherwise involving the
+          Company or any of its subsidiaries and there are no outstanding Court
+          Orders to which the Company or any of its subsidiaries is a party or
+          by which any of their respective assets are bound.
+
+          j. ERISA and Employee Benefits. Except as set forth on Section 12(j)
+          of the Schedule of Exceptions, neither the Company nor any of its
+          subsidiaries has contributed to or participated in any employee
+          benefit plan subject to the Employee Retirement Income Security Act of
+          1974 ("ERISA"), other than medical benefit plans listed in Section
+          12(j) of the Schedule of Exceptions with respect to which the Company
+          or its subsidiary, as the case may be, has made all required
+          contributions. The Company and its subsidiary are in compliance with
+          all laws and regulations applicable to such plans under ERISA, the
+          violation of which, singly or in the aggregate, could have a Material
+          Adverse Effect.
+
+          k. Government Authorizations. The Company and each of its subsidiaries
+          holds all Government Authorizations which are required to own their
+          respective properties and assets and to permit the Company and its
+          subsidiaries to conduct their respective businesses as presently
+          conducted, except where the failure to hold such Governmental
+          Authorization would not have a Material Adverse Effect. Set forth in
+          Section 12(k) of the Schedule of Exceptions is a listing of all such
+          Government Authorizations held by the Company and its subsidiaries. No
+          consent, approval or authorization of (or designation, declaration of
+          filing with) any Governmental Authority by the Company or any of its
+          subsidiaries is required in connection with the valid execution and
+          delivery of this Agreement, the Ancillary Agreements, or the offer or
+          sale of the Common Securities or the Preferred Securities, or the
+          consummation of any other transaction contemplated hereby or under the
+          Ancillary Agreements, except for Required Approvals shown on Appendix
+          3.
+
+          l. Related-Party Transactions. To the knowledge of the Company, except
+          as disclosed in SEC Filings made by the Company or listed on Section
+          12(1) of the
+
+                                       10
+
+<PAGE>
+
+          Schedule to Exceptions, no employee, officer, director or stockholder
+          of the Company or any of its subsidiaries or member of his or her
+          immediate family is directly or indirectly interested in any material
+          contract with the Company or any of its subsidiaries.
+
+     13. Affirmative Covenants of the Company. The Company hereby covenants with
+     the Investor that between the date of this Agreement and the Closing,
+     except as the Investor shall otherwise consent, the Company will do the
+     following:
+
+          a. Conduct its business only in the ordinary course of business
+          consistent with past practice and refrain from changing or introducing
+          any method of management or operations except in the ordinary course
+          of business and consistent with prior practices;
+
+          b. Refrain from incurring any contingent liability as a guarantor or
+          otherwise with respect to the obligations of others, and from
+          incurring any other contingent or fixed obligations or liabilities
+          except those that are usual and normal in the ordinary course of
+          business;
+
+          c. Maintain its equipment and other assets in good working condition
+          and repair according to the standards that it maintained to the date
+          of this Agreement, subject only to ordinary wear and tear;
+
+          d. Refrain from making any change or incurring any obligation to make
+          a change in its Organizational Documents or its authorized or issued
+          capital stock;
+
+          e. Refrain from declaring, setting aside or paying any dividend or
+          making any other distribution in respect of capital stock, or making
+          any direct or indirect redemption, purchase or other acquisition of
+          its capital stock;
+
+          f. Refrain from merging, consolidating or reorganizing with, or
+          acquiring, any entity;
+
+          g. Use its best efforts to keep intact its business organization, to
+          keep available its present officers, agents and employees and to
+          preserve the goodwill of all suppliers, customers and others having
+          business relations with it;
+
+          h. Maintain true, correct and complete books of accounts and records
+          relating to its business;
+
+          i. Comply in all respects with all Laws applicable to the conduct of
+          its business or its properties or assets;
+
+          j. Promptly upon its knowledge thereof, advise the Investor in writing
+          of the termination or resignation of any key employee and the
+          circumstances therefore;
+
+          k. Pay all taxes, assessments, governmental charges or levies imposed
+          upon it or its income, profits or assets, or otherwise required to be
+          paid by it, nor fail to
+
+                                       11
+
+<PAGE>
+
+          pay when due any liability or charge that if, unpaid, might become an
+          Encumbrance upon any such Company's assets; and
+
+          l. Promptly upon its knowledge thereof, advise the Investor in writing
+          of (i) any event, condition or circumstance occurring from the date
+          hereof until the Closing that would constitute a violation or breach
+          of any representation, warranty, covenant, agreement or provision
+          contained in this Agreement (provided, however, that such disclosure
+          shall not be deemed to cure any violation or breach of any such
+          representation, warranty, covenant, agreement or provision), or (ii)
+          any event, occurrence, transaction or other item that would have been
+          or required to have been disclosed on any Schedule, delivered
+          hereunder, had such event, occurrence, transaction or item existed on
+          the date hereof, and use its commercially reasonable efforts to
+          prevent or promptly remedy the same.
+
+          m. The Company will not, directly or indirectly, through any officer,
+          director, affiliate, agent or otherwise, solicit, initiate or
+          encourage submission of any proposal or offer from any person or
+          entity relating to the acquisition or merger of the Company or any of
+          its securities or assets or participate in any discussions or
+          negotiations regarding, furnish to any other person any information
+          with respect to, or otherwise cooperate in any way with, or assist or
+          participate in, or facilitate or encourage any effort or attempt by
+          any other person or entity to do or seek, any of the foregoing.
+
+     14. Consummation of Agreement. The Company and the Investor shall each use
+     their best efforts to perform and fulfill all conditions and obligations on
+     their respective parts to be performed and fulfilled under this Agreement,
+     to the end that the transaction contemplated by this Agreement shall be
+     fully carried out. To this end, each of the Company and the Investor will
+     use best efforts to obtain all Required Approvals.
+
+     15. Survival of Representations and Warranties. All of the representations
+     and warranties of the Company and the Investor contained in Sections 12 and
+     11, respectively, of this Agreement shall survive from the date of this
+     Agreement until the Conversion.
+
+     16. Restrictions on Sale. In consideration of the acceptance of this
+     subscription, the Investor agrees that the Securities will not be offered
+     for sale, sold or transferred by the Investor other than pursuant to (i) an
+     effective registration under the Securities Act, an exemption available
+     under the Securities Act or a transaction that is otherwise in compliance
+     with the Securities Act; and (ii) an effective registration under the
+     securities law of any state or other jurisdiction applicable to the
+     transaction, an exemption available under such laws, or a transaction that
+     is otherwise in compliance with such laws.
+
+     17. No Review. The Investor understands that no U.S. federal or state
+     agency has passed upon the offering of the Securities or has made any
+     finding or determination as to the fairness of any investment in the
+     Securities.
+
+     18. Confidentiality. The Investor agrees not to disclose or use any
+     information provided to the Investor by the Company or any of its agents in
+     connection with the
+
+                                       12
+
+<PAGE>
+
+     offering of the Securities, except for the purpose of evaluating an
+     investment in the Securities.
+
+     19.  Indemnification.
+
+          a. Indemnification by Investor. The Investor agrees to indemnify and
+          hold harmless the Company and its officers, directors, partners,
+          employees, agents, and affiliates against any and all loss, liability,
+          claim, damage, and expense whatsoever (including, but not limited to,
+          any and all expenses reasonably incurred in investigating, preparing,
+          or defending against any litigation commenced or threatened or any
+          claim whatsoever) arising out of or based upon any false
+          representation or warranty or breach or failure by the Investor to
+          comply with any covenant or agreement made by the Investor herein or
+          in any other document furnished by the Investor to the Company to the
+          Investor in connection with this transaction.
+
+          b. Indemnification by Company. The Company agrees to indemnify and
+          hold harmless the Investor against any and all loss, liability, claim,
+          damage, and expense whatsoever (including, but not limited to, any and
+          all expenses reasonably incurred in investigating, preparing, or
+          defending against any litigation commenced or threatened or any claim
+          whatsoever) arising out of or based upon any false representation or
+          warranty or breach or failure by the Company to comply with any
+          covenant or agreement made by the Company herein or in any other
+          document furnished by the Company to the Investor in connection with
+          this transaction.
+
+     20.  Definitions. In addition to the terms defined throughout this
+     Agreement, the following terms shall have the indicated respective
+     meanings:
+
+          "Court Order" shall mean a court order, judgment, administrative or
+judicial order, writ, decree, stipulation, arbitration award or injunction.
+
+          "Encumbrance" shall mean any lien, option (including right of first
+refusal or first offer), encumbrance, charge, restriction, mortgage, pledge,
+security interest, title exception, restriction, claim or charge of any kind or
+character.
+
+          "Force Majeure" shall mean failure of any party to perform its
+obligations under this Agreement due to fire, flood, strikes or other industrial
+disturbances, accidents, war, acts of terrorism, riot, insurrection or other
+causes beyond the reasonable control of the such party.
+
+          "Governmental Authority" shall mean any governmental body, whether
+national, state, regional, local, or any subdivision or agency of any of the
+foregoing.
+
+          "Governmental Authorization" shall mean any license, permit, order,
+franchise agreement, concession, grant, authorization, consent or approval from
+a Governmental Authority.
+
+          "Law" shall include any statute, law, ordinance, rule or regulation of
+a
+
+                                       13
+
+<PAGE>
+
+Governmental Authority.
+
+     "Material Adverse Effect" shall mean an event which causes a material
+adverse change in the condition, financial or otherwise, business operations,
+properties, assets or liabilities of the Company except any material adverse
+change resulting from a Force Majeure.
+
+     "NASDAQ" shall mean The Nasdaq Stock Market.
+
+     "Organizational Documents" shall mean the Certificate of Incorporation of
+the Company as filed with the Secretary of State of the State of Delaware on the
+date of this Agreement, as the same may be amended from time to time.
+
+     "SEC" shall mean the Securities and Exchange Commission.
+
+     "Securities Act" shall mean the Securities Act of 1933.
+
+21.  Publicity and Disclosures. Except as may be otherwise required for
+compliance with applicable stock exchange rules or securities laws, neither the
+Investor nor the Company shall issue nor approve any news release or other
+public announcement concerning this Agreement (or any schedules or exhibits
+hereto) prior to the Closing without the prior written approval of the other.
+
+22.  Irrevocability; Binding Effect. The Investor hereby acknowledges and agrees
+that the subscription hereunder is irrevocable by the Investor, that, except as
+required by law, the Investor is not entitled to cancel, terminate, or revoke
+this Agreement or any agreements of the Investor hereunder, and that this
+Agreement and such other agreements shall survive the death or disability of the
+Investor and shall be binding upon and inure to the benefit of the parties and
+their heirs, executors, administrators, successors, legal representatives, and
+permitted assigns. If the Investor is more than one person, the obligations of
+the Investor hereunder shall be joint and several and the agreements,
+representations, warranties, and acknowledgments herein contained shall be
+deemed to be made by and be binding upon each such person and his heirs,
+executors, administrators, successors, legal representatives, and permitted
+assigns.
+
+23.  Modification. Neither this Agreement nor any provisions hereof shall be
+waived, modified, discharged, or terminated except by an instrument in writing
+signed by the party against whom any such waiver, modification, discharge, or
+termination is sought.
+
+24.  Notices. Any notice or other communication required or permitted to be
+given hereunder shall by in writing and shall be mailed by certified mail,
+return receipt requested, or delivered against receipt to the party to whom it
+is to be given (a) if to the Company, at the address set on the signature page
+hereof, or (b) if to the Investor, at the address set forth on the signature
+page hereof (or, in either case, to such other address as the party shall have
+furnished in writing in accordance with the provisions of this Section 25). Any
+notice or other communication given by certified mail shall be deemed given at
+the time of certification thereof, except for a notice changing a party's
+address which shall be deemed given at the time of receipt thereof.
+
+                                       14
+
+<PAGE>
+
+25.  Assignability. This Agreement and the rights and obligations hereunder are
+not transferable or assignable by any party without the prior written consent of
+the other party.
+
+26.  Applicable Law. This Agreement shall be governed by and construed in
+accordance with the laws of the State of Florida as applied to residents of that
+state executing contracts wholly to be performed in that state.
+
+27.  Arbitration. Any dispute or controversy arising under or in connection with
+this Agreement shall be settled exclusively by binding arbitration in Orlando,
+Florida in accordance with the rules of American Arbitration Association then in
+effect.
+
+28.  NOTICE TO FLORIDA RESIDENTS. PURSUANT TO SECTION 517.061(11)(A)(5) OF THE
+FLORIDA SECURITIES AND INVESTOR PROTECTION ACT, A FLORIDA SUBSCRIBER HAS A RIGHT
+TO RESCIND THE SUBSCRIPTION BY GIVING NOTICE OF SUCH RESCISSION BY TELEPHONE,
+TELEGRAPH OR LETTER, WITHIN THREE DAYS AFTER THE CONSIDERATION HEREUNDER IS
+FIRST TENDERED TO THE COMPANY. IF THE NOTICE IS TENDERED ORALLY, A WRITTEN
+CONFIRMATION THAT IT HAS BEEN RECEIVED SHOULD BE REQUESTED. IT IS PRUDENT TO
+SEND NOTICE OF RESCISSION BY CERTIFIED MAIL, RETURN RECEIPT REQUESTED, TO INSURE
+THAT IT WAS RECEIVED. IF NOTICE IS NOT RECEIVED BY SUCH TIME, THE FOREGOING
+RIGHT OF RESCISSION SHALL BE NULL AND VOID.
+
+     IN WITNESS WHEREOF, the parties hereto have executed, or caused to be
+executed by their authorized official, this Agreement, effective as of the date
+first above written.
+
+                                  INTERNATIONAL ASSETS HOLDING
+                                  CORPORATION
+
+                                  By: /s/ Diego J. Veitia
+                                     ----------------------------------------
+                                  Printed Name: Diego J. Veitia
+                                               ------------------------------
+                                  Title: Chairman of the Board
+                                         ------------------------------------
+                                  Address:
+                                  ___________________________________________
+
+
+
+                                  INVESTOR:
+
+
+
+                                    /s/ Sean M. O'Connor
+                                  -------------------------------------------
+                                  SEAN M. O'CONNOR
+                                  Address:
+                                          ___________________________________
+
+                                  ___________________________________________
+
+
+                                       15
+
+<PAGE>
+
+                        APPENDIX 1 - ACCREDITED INVESTOR
+
+An "Accredited Investor" within the meaning of Regulation D under the Securities
+Act of 1933 (the "Act") includes the following:
+
+Organizations
+
+     (1) A bank as defined in section 3(a)(2) of the Act, or any savings and
+loan association or other institution as defined in section 3(a)(5)(A) of the
+Act, whether acting in its individual or fiduciary capacity; a broker or dealer
+registered pursuant to section 15 of the Securities Exchange Act of 1934;
+insurance company as defined in section 2(13) of the Act; an investment company
+registered under the Investment Company Act of 1940 or a business development
+company as defined in section 2(a)(48) of that act; a Small Business Investment
+Company licensed by the U.S. Small Business Administration under section 301(c)
+or (d) of the Small Business Investment Act of 1958; an employee benefit plan
+within the meaning of Title I of the Employee Retirement Income Security Act of
+1974, if the investment decision is made by a plan fiduciary, as defined in
+section 3(21) of such act, which is either a bank, savings and loan association,
+insurance company, or registered investment adviser, or if the employee benefit
+plan has total assets in excess of $5,000,000 or, if a self-directed plan, with
+investment decisions made solely by persons that are accredited investors.
+
+     (2) A private business development company as defined in Section 202(a)(22)
+of the Investment Advisers Act of 1940.
+
+     (3) A trust (i) with total assets in excess of $5,000,000, (ii) not formed
+for the specific purpose of acquiring the Securities, (iii) whose purchase is
+directed by a person who, either alone or with his/her purchaser representative,
+has such knowledge and experience in financial and business matters that he/she
+is capable of evaluating the merits and risks of the proposed investment.
+
+     (4) A corporation, business trust, partnership, or an organization
+described in section 501(c)(3) of the Internal Revenue Code, which was not
+formed for the specific purpose of acquiring the Securities, and which has total
+assets in excess of $5,000,000.
+
+     (5) Any entity in which all of the equity owners are "accredited
+investors".
+
+Individuals
+
+     (6) Individuals with income from all sources for each of the last two full
+calendar years whose reasonably expected income for this calendar year exceeds
+either of:
+
+         (i)  $200,000 individual income; or
+
+         (ii) $300,000 joint income with spouse.
+
+NOTE: Your "income" for a particular year may be calculated by adding to your
+adjusted gross income as calculated for Federal income tax purposes any
+deduction for long term capital gains, any deduction for depletion allowance,
+any exclusion for tax exempt interest and any losses of a partnership allocated
+to you as a partner.
+
+<PAGE>
+
+     (7)  Individuals with net worth as of the date hereof (individually or
+jointly with your spouse), including the value of home, furnishings, and
+automobiles, in excess of $1,000,000.
+
+     (8)  Directors, executive officers or general partners of the Issuer.
+
+<PAGE>
+
+                          APPENDIX 2 - DIRECTORS SLATE
+
+Diego Veitia                         Scott Branch
+Edward Cofrancesco                   Sean O'Connor
+Dr. Robert A. Miller                 [nominee of John Radziwill]
+
+
+
+
+
+<PAGE>
+
+                       APPENDIX 3 - THIRD PARTY APPROVALS
+
+Written confirmation from NASDAQ.
+
+<PAGE>
+
+
+                    INTERNATIONAL ASSETS HOLDING CORPORATION
+
+                           CERTIFICATE OF DESIGNATION
+                                       OF
+                            SERIES A PREFERRED STOCK
+
+
+     The undersigned, Diego J. Veitia, certifies that he is the Chairman of the
+Board of INTERNATIONAL ASSETS HOLDING CORPORATION, a corporation organized and
+existing under the laws of the State of Delaware (the "Company"), and hereby
+further certifies as follows:
+
+A.   Under the Certificate of Incorporation of the Company, the Company is
+     authorized to issue 5,000,000 shares, of preferred stock, par value $.01
+     per share (the "Preferred Stock").
+
+B.   Pursuant to the provisions of the Certificate of Incorporation of the
+     Company, the Board of Directors has adopted the following resolution
+     creating a series of Preferred Stock designated as "Series A Preferred
+     Stock":
+
+               RESOLVED, that pursuant to the authority vested in the Board of
+          Directors of the corporation in accordance with the provisions of the
+          Certificate of Incorporation, a series of preferred stock, par value
+          $.01 per share, of the corporation be and hereby are created, and that
+          the designation and number of shares thereof and the voting and other
+          powers, preferences and relative, participating, optional or other
+          rights of the shares of such series and the qualifications,
+          limitations and restrictions thereof are as follows:
+
+          1.   DIVIDEND RIGHTS.
+
+               (a) Participating Dividends. Holders of Series A Preferred shall
+be entitled to receive, when and as declared by the Board of Directors, any
+dividends payable to the holders of the Common Stock on the basis that the
+Series A Preferred have been converted into Common Stock as of the record date
+of such dividend pursuant to the provisions of Section 4.
+
+          2.   VOTING RIGHTS.
+
+               (a) No General Rights. Except as otherwise provided herein or as
+required by law, the Series A Preferred shall not be entitled to any voting
+rights.
+
+               (b) Separate Vote of Series A Preferred. For so long as any share
+of Series A Preferred remain outstanding, in addition to any other vote or
+consent required herein or by law, the vote or written consent of the holders of
+more than fifty percent (50%) of the then outstanding Series A Preferred shall
+be necessary for effecting or validating the following actions:
+
+                                       1
+
+<PAGE>
+
+                (i)   Any amendment, alteration, waiver or repeal of any
+provision of the Certificate of Incorporation or the Bylaws of the Company
+(including any filing of a Certificate of Designation); or
+
+                (ii)  Any increase or decrease (other than by redemption or
+conversion) in the authorized number of shares of Series A Preferred; or
+
+                (iii) Any issuance of any stock or any other securities
+convertible into equity securities of the Company, other than the issuance of
+common stock, par value $.01 per share (the "Common Stock"), upon the conversion
+of the Series A Preferred or the issuance of Common Stock upon the conversion of
+any convertible security outstanding as of October __, 2002; or
+
+                (iv)  Any redemption or repurchase of shares of any stock or
+other  equity security of the Company; or
+
+                (v)   Any agreement by the Company or its stockholders regarding
+an Asset Transfer or Acquisition (each as defined in Section 3(c)); or
+
+                (vi)  Any action that results in the payment or declaration of a
+dividend on any shares of Common Stock or Preferred Stock.
+
+     3.     LIQUIDATION RIGHTS.
+
+            (a) Liquidation Preference. Upon any liquidation, dissolution, or
+winding up of the Company, whether voluntary or involuntary, before any
+distribution or payment shall be made to the holders of any other class of stock
+(a "Junior Stock"), the holders of Series A Preferred shall be entitled to be
+paid out of the assets of the Company an amount per share of Series A Preferred
+equal to the price paid for each share of Series A Preferred (the "Original
+Issue Price") (as adjusted for any stock dividends, combinations, splits,
+recapitalization and the like with respect to such shares) for each share of
+Series A Preferred held by them (the "Liquidation Preference").
+
+            (b) Deemed Liquidations. The following events shall be considered a
+liquidation under this Section 3:
+
+                (i) Any consolidation or merger of the Company with or into any
+other corporation or other entity or person, or any other corporate
+reorganization, in which the stockholders of the Company immediately prior to
+such consolidation, merger or reorganization, own less than 50% of the Company's
+voting power immediately after such consolidation, merger or reorganization, or
+any transaction or series of related transactions to which the Company is a
+party in which in excess of fifty percent (50%) of the Company's voting power is
+transferred (an "Acquisition"); or
+
+                (ii) A sale, lease or other disposition of all or substantially
+all of the assets of the Company (an "Asset Transfer"); or
+
+                                       2
+
+<PAGE>
+
+               (c) Pro Rata Distribution. If, upon any liquidation,
+distribution, or winding up, the assets of the Company shall be insufficient to
+make payment in full to all holders of Series A Preferred of the Liquidation
+Preference set forth in Section 3(a), then such assets shall be distributed
+among the holders of Series A Preferred at the time outstanding, ratably in
+proportion to the full amounts to which they would otherwise be respectively
+entitled.
+
+            4. CONVERSION.
+
+    The Series A Preferred shall be converted into shares of Common Stock on the
+following terms:
+
+               (a) Automatic Conversion. Subject to and in compliance with the
+provisions of this Section 4, upon the approval by the shareholders of the
+Company of the conversion provided for in this Section 4, the shares of Series A
+Preferred will be automatically converted into fully-paid and nonassessable
+shares of Common Stock. The number of shares of Common Stock to which a holder
+of Series A Preferred shall be entitled upon conversion shall be the product
+obtained by multiplying the "Series A Preferred Conversion Rate" then in effect
+(determined as provided in Section 4(b)) by the number of shares of Series A
+Preferred being converted.
+
+               (b) Series A Preferred Conversion Rate. The conversion rate in
+effect at any time for conversion of the Series A Preferred (the "Series A
+Preferred Conversion Rate") shall be the quotient obtained by dividing the
+Liquidation Preference of the Series A Preferred by the "Series A Preferred
+Conversion Price," calculated as provided in Section 4(c).
+
+               (c) Series A Preferred Conversion Price. The conversion price for
+the Series A Preferred (the "Series A Preferred Conversion Price") shall
+initially be the Original Issue Price of the Series A Preferred. Such initial
+Series A Preferred Conversion Price shall be adjusted from time to time in
+accordance with this Section 4. All references to the Series A Preferred
+Conversion Price herein shall mean the Series A Preferred Conversion Price as so
+adjusted.
+
+               (d) Mechanics of Conversion. Upon the conversion of the Series A
+Preferred pursuant to this Section 4, the holder of the Series A Preferred shall
+surrender the certificate or certificates therefor, duly endorsed, at the office
+of the Company or any transfer agent for the Series A Preferred. Thereupon, the
+Company shall promptly issue and deliver at such office to such holder a
+certificate or certificates for the number of shares of Common Stock to which
+such holder is entitled. Such conversion shall be deemed to have been made at
+the close of business on the date on which the Series A Preferred are converted
+pursuant to Section 4(a), and the person entitled to receive the shares of
+Common Stock issuable upon such conversion shall be treated for all purposes as
+the record holder of such shares of Common Stock as of the close of business on
+such date.
+
+               (e) Adjustment for Stock Splits and Combinations. If the Company
+shall at any time or from time to time after the date that the first share of
+Series A Preferred is issued (the "Original Issue Date") effect a subdivision of
+the outstanding Common Stock without a
+
+                                       3
+
+<PAGE>
+
+corresponding subdivision of the Preferred Stock, the Series A Preferred
+Conversion Price in effect immediately before that subdivision shall be
+proportionately decreased. Conversely, if the Company shall at any time or from
+time to time after the Original Issue Date combine the outstanding shares of
+Common Stock into a smaller number of shares without a corresponding combination
+of the Preferred Stock, the Series A Preferred Conversion Price in effect
+immediately before the combination shall be proportionately increased. Any
+adjustment under this Section 4(e) shall become effective at the close of
+business on the date the subdivision or combination becomes effective.
+
+               (f) Adjustment for Common Stock Dividends and Distributions. If
+the Company at any time or from time to time after the Original Issue Date
+makes, or fixes a record date for the determination of holders of Common Stock
+entitled to receive, a dividend or other distribution payable in additional
+shares of Common Stock, in each such event the Series A Preferred Conversion
+Price that is then in effect shall be decreased as of the time of such issuance
+or, in the event such record date is fixed, as of the close of business on such
+record date, by multiplying the Series A Preferred Conversion Price then in
+effect by a fraction (i) the numerator of which is the total number of shares of
+Common Stock issued and outstanding immediately prior to the time of such
+issuance or the close of business on such record date, and (ii) the denominator
+of which is the total number of shares of Common Stock issued and outstanding
+immediately prior to the time of such issuance or the close of business on such
+record date plus the number of shares of Common Stock issuable in payment of
+such dividend or distribution; provided, however, that if such record date is
+fixed and such dividend is not fully paid or if such distribution is not fully
+made on the date fixed therefor, the Series A Preferred Conversion Price shall
+be recomputed accordingly as of the close of business on such record date and
+thereafter the Series A Preferred Conversion Price shall be adjusted pursuant to
+this Section 4(f) to reflect the actual payment of such dividend or
+distribution.
+
+               (g) Adjustment for Reclassification, Exchange and Substitution.
+If at any time or from time to time after the Original Issue Date, the Common
+Stock issuable upon the conversion of the Series A Preferred is changed into the
+same or a different number of shares of any class or classes of stock, whether
+by recapitalization, reclassification or otherwise (other than an Acquisition or
+Asset Transfer as defined in Section 3(b) or a subdivision or combination of
+shares or stock dividend or a reorganization, merger, consolidation or sale of
+assets provided for elsewhere in this Section 4), in any such event each holder
+of Series A Preferred shall have the right thereafter to convert such stock into
+the kind and amount of stock and other securities and property receivable upon
+such recapitalization, reclassification or other change by holders of the
+maximum number of shares of Common Stock into which such shares of Series A
+Preferred could have been converted immediately prior to such recapitalization,
+reclassification or change, all subject to further adjustment as provided herein
+or with respect to such other securities or property by the terms thereof.
+
+               (h) Reorganizations, Mergers, Consolidations or Sales of Assets.
+If at any time or from time to time after the Original Issue Date, there is a
+capital reorganization of the Common Stock (other than an Acquisition or Asset
+Transfer as defined in Section 3(b) or a recapitalization, subdivision,
+combination, reclassification, exchange or substitution of shares provided for
+elsewhere in this Section 4), as a part of such capital reorganization,
+provision shall be
+
+                                       4
+
+<PAGE>
+
+made so that the holders of the Series A Preferred shall thereafter be entitled
+to receive upon conversion of the Series A Preferred the number of shares of
+stock or other securities or property of the Company to which a holder of the
+number of shares of Common Stock deliverable upon conversion would have been
+entitled on such capital reorganization, subject to adjustment in respect of
+such stock or securities by the terms thereof. In any such case, appropriate
+adjustment shall be made in the application of the provisions of this Section 4
+with respect to the rights of the holders of Series A Preferred after the
+capital reorganization to the end that the provisions of this Section 4
+(including adjustment of the Series A Preferred Conversion Price then in effect
+and the number of shares issuable upon conversion of the Series A Preferred)
+shall be applicable after that event and be as nearly equivalent as practicable.
+
+               (i) Notices of Record Date. Upon (i) any taking by the Company of
+a record of the holders of any class of securities for the purpose of
+determining the holders thereof who are entitled to receive any dividend or
+other distribution, or (ii) any Acquisition (as defined in Section 3(b)) or
+other capital reorganization of the Company, any reclassification or
+recapitalization of the capital stock of the Company, any merger or
+consolidation of the Company with or into any other corporation, or any Asset
+Transfer (as defined in Section 3(b)), or any voluntary or involuntary
+dissolution, liquidation or winding up of the Company, the Company shall mail to
+each holder of Series A Preferred at least twenty (20) days prior to the record
+date specified therein a notice specifying (A) the date on which any such record
+is to be taken for the purpose of such dividend or distribution and a
+description of such dividend or distribution, (B) the date on which any such
+Acquisition, reorganization, reclassification, transfer, consolidation, merger,
+Asset Transfer, dissolution, liquidation or winding up is expected to become
+effective, and (C) the date, if any, that is to be fixed as to when the holders
+of record of Common Stock (or other securities) shall be entitled to exchange
+their shares of Common Stock (or other securities) for securities or other
+property deliverable upon such Acquisition, reorganization, reclassification,
+transfer, consolidation, merger, Asset Transfer, dissolution, liquidation or
+winding up.
+
+               (j) Fractional Shares. No fractional shares of Common Stock shall
+be issued upon conversion of Series A Preferred. All shares of Common Stock
+(including fractions thereof) issuable upon conversion of more than one share of
+Series A Preferred by a holder thereof shall be aggregated for purposes of
+determining whether the conversion would result in the issuance of any
+fractional share. If, after the aforementioned aggregation, the conversion would
+result in the issuance of any fractional share, the Company shall, in lieu of
+issuing any fractional share, pay cash equal to the product of such fraction
+multiplied by the Common Stock's fair market value (as determined by the Board
+of Directors) on the date of conversion.
+
+               (k) Reservation of Stock Issuable Upon Conversion. The Company
+shall at all times reserve and keep available out of its authorized but unissued
+shares of Common Stock, solely for the purpose of effecting the conversion of
+the shares of the Series A Preferred, such number of its shares of Common Stock
+as shall from time to time be sufficient to effect the conversion of all
+outstanding shares of the Series A Preferred. If at any time the number of
+authorized but unissued shares of Common Stock shall not be sufficient to effect
+the conversion of all then outstanding shares of the Series A Preferred, the
+Company will take such corporate action as
+
+                                       5
+
+<PAGE>
+
+may, in the opinion of its counsel, be necessary to increase its authorized but
+unissued shares of Common Stock to such number of shares as shall be sufficient
+for such purpose.
+
+               (l) Payment of Taxes. The Company will pay all taxes (other than
+taxes based upon income) and other governmental charges that may be imposed with
+respect to the issue or delivery of shares of Common Stock upon conversion of
+shares of Series A Preferred, excluding any tax or other charge imposed in
+connection with any transfer involved in the issue and delivery of shares of
+Common Stock in a name other than that in which the shares of Series A Preferred
+so converted were registered.
+
+               (m) No Dilution or Impairment. Without the consent of the holders
+of then outstanding Series A Preferred as required under Section 2(b), the
+Company shall not amend its Amended and Restated Certificate of Incorporation or
+participate in any reorganization, transfer of assets, consolidation, merger,
+dissolution, issue or sale of securities or take any other voluntary action, for
+the purpose of avoiding or seeking to avoid the observance or performance of any
+of the terms to be observed or performed hereunder by the Company, but shall at
+all times in good faith assist in carrying out all such action as may be
+reasonably necessary or appropriate in order to protect the conversion rights of
+the holders of the Series A Preferred against dilution or other impairment.
+
+         5.    NO REISSUANCE OF SERIES A PREFERRED.
+
+         No share or shares of Series A Preferred acquired by the Company by
+reason of redemption, purchase, conversion or otherwise shall be reissued.
+
+C.       This Certificate of Designation has been duly adopted in accordance
+         with the provisions of Sections 151 of the General Corporation Law of
+         the State of Delaware by the Board of Directors of the Company.
+
+         IN WITNESS WHEREOF, International Assets Holding Corporation has caused
+this Certificate of Designation be signed by its Chairman of the Board, on this
+22 day of October, 2002.
+
+                                       INTERNATIONAL ASSETS HOLDING
+                                       CORPORATION
+
+                                       By:  /s/ Diego J. Veitia
+                                            ------------------------------------
+                                          Diego J. Veitia, Chairman of the Board
+
+
+                                       6
+
+</TEXT>
+</DOCUMENT>

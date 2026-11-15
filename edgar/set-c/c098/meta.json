@@ -1,0 +1,59 @@
+{
+  "id": "c098",
+  "url": "https://www.sec.gov/Archives/edgar/data/1766343/000147793219000312/cardone_ex4.htm",
+  "cik": "1766343",
+  "issuer": "Cardone Equity Fund VI, LLC",
+  "form": "1-A",
+  "file_date": "2019-01-31",
+  "year": 2019,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "e671df5f3f6ca508af262e845d3f6bf4f2dc4718ec2abc9644cfcc766d4b4a11",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 19,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 14
+  },
+  "pages": 10,
+  "page_kinds": {
+    "text": 10
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "9185e70e0304fe9f06e3151cd4a2ef7d11225e18b3bdf63f1d59de745639ccf5",
+  "broker_dealer": true
+}

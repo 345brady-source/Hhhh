@@ -1,0 +1,75 @@
+{
+  "id": "c068",
+  "url": "https://www.sec.gov/Archives/edgar/data/1327978/000104746908011272/a2188673z424b3.htm",
+  "cik": "1327978",
+  "issuer": "Dividend Capital Total Realty Trust Inc.",
+  "form": "424B3",
+  "file_date": "2008-10-28",
+  "year": 2008,
+  "exhibit": "424B3",
+  "exhibit_description": "424B3",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "ff75146c91a4d517789076f30107f17fd1e9491a67896e99b690043bc3034a23",
+  "extra_files": [
+    "g112065.jpg",
+    "g438795.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX A FORM OF SUBSCRIPTION AGREEMENT | Ladies and Gentl",
+    "end_heading": "END"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 24,
+  "page_kinds": {
+    "text": 23,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "03b6526c85e4b082bf8b7d9070d28e423d6b5a57d865cd7b83a3546868c97ce2",
+  "broker_dealer": true
+}

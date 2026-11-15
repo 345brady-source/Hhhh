@@ -1,0 +1,51 @@
+{
+  "id": "c137",
+  "url": "https://www.sec.gov/Archives/edgar/data/1837104/000178043921000016/EXHIBITCsubagreementrev.pdf",
+  "cik": "1837104",
+  "issuer": "Rockval Inc",
+  "form": "C/A",
+  "file_date": "2021-11-05",
+  "year": 2021,
+  "exhibit": "EX-99",
+  "exhibit_description": "EXHIBIT C: SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "cef6db0961f85e8d7b5dca9bfa35b0d5d7b13b9f968277fa32d336a25533c005",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "underscores": 12,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 11,
+  "page_kinds": {
+    "text": 11
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "cef6db0961f85e8d7b5dca9bfa35b0d5d7b13b9f968277fa32d336a25533c005",
+  "broker_dealer": false
+}

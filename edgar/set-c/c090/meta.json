@@ -1,0 +1,62 @@
+{
+  "id": "c090",
+  "url": "https://www.sec.gov/Archives/edgar/data/1645148/000121390016010324/f1a0915a6ex4i_awagroup.htm",
+  "cik": "1645148",
+  "issuer": "AWA Group LP",
+  "form": "1-A/A",
+  "file_date": "2016-01-22",
+  "year": 2016,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "b1307dd8436e4204f2604f469bc9fec10802606fd4e097c9f5ad38d251c3427d",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 10,
+    "tables": 8,
+    "questionnaire": true,
+    "joint": true,
+    "custodian": false,
+    "ira": true,
+    "brokerdealer": true,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 28
+  },
+  "pages": 13,
+  "page_kinds": {
+    "text": 13
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "df368041a3b328824d47fb849c165ab0d477381e1934a18ca55833dcb0904abe",
+  "broker_dealer": true
+}

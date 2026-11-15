@@ -1,0 +1,51 @@
+{
+  "id": "c265",
+  "url": "https://www.sec.gov/Archives/edgar/data/1580552/000116552713000620/ex99-1.txt",
+  "cik": "1580552",
+  "issuer": "Tenaya Acquisitions Co",
+  "form": "S-1",
+  "file_date": "2013-07-12",
+  "year": 2013,
+  "exhibit": "EX-99.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.txt",
+  "source_sha256": "23c51da5e850452e367c3caffe6e21f78f63397f327315073dcc3bc535e4e019",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 10,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 9
+  },
+  "pages": 2,
+  "page_kinds": {
+    "text": 2
+  },
+  "page_kind_list": [
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "ad5d2671ce9ac5b98f6d699f8e6e596a00adb59d177933b0fdbe9291482d6fac",
+  "broker_dealer": false
+}

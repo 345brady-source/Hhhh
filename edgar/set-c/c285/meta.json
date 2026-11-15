@@ -1,0 +1,53 @@
+{
+  "id": "c285",
+  "url": "https://www.sec.gov/Archives/edgar/data/1804060/000121390020006342/ea119532ex4-1_remembrance.htm",
+  "cik": "1804060",
+  "issuer": "Remembrance Group, Inc.",
+  "form": "1-A",
+  "file_date": "2020-03-13",
+  "year": 2020,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "fa391091950a376eb84abf316fbcfda6573af21720a88749ea641baa3b58f624",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 5,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 2
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 4
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "a4c89d79d2c93c76f52b608fcd2e64f1860b680224268040bf92f3c58d0c427d",
+  "broker_dealer": false
+}

@@ -1,0 +1,62 @@
+{
+  "id": "c197",
+  "url": "https://www.sec.gov/Archives/edgar/data/1620704/000147793215005601/medx_ex41.htm",
+  "cik": "1620704",
+  "issuer": "MED-X, INC.",
+  "form": "1-A",
+  "file_date": "2015-08-27",
+  "year": 2015,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION DOCUMENTS",
+  "offering_kind": "Regulation A",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "72792ddd4d13aee63b2031ecebee56e6a74921ca132726c51741336ff098a87b",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 74,
+    "tables": 25,
+    "questionnaire": true,
+    "joint": true,
+    "custodian": false,
+    "ira": true,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 32
+  },
+  "pages": 12,
+  "page_kinds": {
+    "text": 11,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "a2d58528e314f0051fabce3c8d924086646c0ce19b7b2e63f63c1b6d1a5ead0a",
+  "broker_dealer": false
+}

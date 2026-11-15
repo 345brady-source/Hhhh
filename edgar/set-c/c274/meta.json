@@ -1,0 +1,52 @@
+{
+  "id": "c274",
+  "url": "https://www.sec.gov/Archives/edgar/data/1710243/000147793217003128/refg_ex41.htm",
+  "cik": "1710243",
+  "issuer": "Medical Cannabis Payment Solutions",
+  "form": "1-A",
+  "file_date": "2017-06-30",
+  "year": 2017,
+  "exhibit": "EX1A-4 SUBS AGMT.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "aa2f8f999eb5167d20ae522d777741e49e5b6623c58c6cd2a04b71c82c03b1c5",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 4,
+    "tables": 6,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 3
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "d78ec15502d661e79a1a42554831464d246d4db9f1b8c477594c4c2acbb3fd03",
+  "broker_dealer": false
+}

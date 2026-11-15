@@ -1,0 +1,63 @@
+{
+  "id": "c094",
+  "url": "https://www.sec.gov/Archives/edgar/data/1680232/000119312517086999/d18754d424b3.htm",
+  "cik": "1680232",
+  "issuer": "Strategic Storage Trust IV, Inc.",
+  "form": "424B3",
+  "file_date": "2017-03-17",
+  "year": 2017,
+  "exhibit": "424B3",
+  "exhibit_description": "FORM 424(B)(3)",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "696c79efaf327b56ac63a59edabce22e15e2e630034c2877917e26e8b0f2d403",
+  "extra_files": [
+    "g18754g57a18.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX A",
+    "end_heading": "APPENDIX B"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 13,
+  "page_kinds": {
+    "text": 10,
+    "little or no text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "bd3a4096ced4fed2bb603e21c24c6134b81139aaa52d72ae5746e669b6facc89",
+  "broker_dealer": true
+}

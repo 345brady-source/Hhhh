@@ -1,0 +1,57 @@
+{
+  "id": "c268",
+  "url": "https://www.sec.gov/Archives/edgar/data/1652452/000137647415000406/cmx_ex4z1.htm",
+  "cik": "1652452",
+  "issuer": "CMX GOLD & SILVER CORP.",
+  "form": "1-A",
+  "file_date": "2015-10-23",
+  "year": 2015,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation A",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "9d2393222de46d0e757db49b7e17fb5873864ca9b2202ecae4801da579c39238",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 2,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 1
+  },
+  "pages": 7,
+  "page_kinds": {
+    "text": 4,
+    "little or no text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "little or no text",
+    "text",
+    "little or no text",
+    "text",
+    "little or no text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "a4cc22e856e9bc78bcc6ee11d0ea36b0ec407f5db473bb899ddd9cbefd04bbf4",
+  "broker_dealer": false
+}

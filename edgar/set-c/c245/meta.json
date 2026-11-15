@@ -1,0 +1,60 @@
+{
+  "id": "c245",
+  "url": "https://www.sec.gov/Archives/edgar/data/1424280/000142428008000005/ex10-2.htm",
+  "cik": "1424280",
+  "issuer": "IVT SOFTWARE INC",
+  "form": "S-1",
+  "file_date": "2008-06-05",
+  "year": 2008,
+  "exhibit": "EX-10.2",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "507bcc22e362e17adf222d1d6fcf82be6119a340f061c20aaa395a91e485bc38",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 11,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 29
+  },
+  "pages": 11,
+  "page_kinds": {
+    "text": 11
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "fb24a8de5983f48dcceecdf23e14e994774cfb0765d4f5d98a806f527a265b0c",
+  "broker_dealer": false
+}

@@ -1,0 +1,49 @@
+{
+  "id": "c131",
+  "url": "https://www.sec.gov/Archives/edgar/data/1742162/000174216220000011/SubscriptionAgreement1.pdf",
+  "cik": "1742162",
+  "issuer": "Consumer Cooperative Group Inc",
+  "form": "C/A",
+  "file_date": "2020-12-03",
+  "year": 2020,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTIONAGREEMENT",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "5ba842102e22d376d84c6dd02c0aaa27238cb2959ea66b3fadcdeb73694a0d7e",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "scan",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "underscores": 0,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 8,
+  "page_kinds": {
+    "picture+ocr-text": 7,
+    "text": 1
+  },
+  "page_kind_list": [
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "picture+ocr-text",
+    "text",
+    "picture+ocr-text"
+  ],
+  "page_content": "pictures with a text layer (OCR or hidden text)",
+  "doc_sha256": "5ba842102e22d376d84c6dd02c0aaa27238cb2959ea66b3fadcdeb73694a0d7e",
+  "broker_dealer": false
+}

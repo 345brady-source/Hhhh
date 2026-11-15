@@ -1,0 +1,55 @@
+{
+  "id": "c004",
+  "url": "https://www.sec.gov/Archives/edgar/data/889609/000101968714000228/cps_s1a1-ex0405.htm",
+  "cik": "889609",
+  "issuer": "CONSUMER PORTFOLIO SERVICES INC  (CPSS)",
+  "form": "S-1/A",
+  "file_date": "2014-01-23",
+  "year": 2014,
+  "exhibit": "EX-4.5",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "scan",
+  "source_file": "source.htm",
+  "source_sha256": "7d1031f11653b21153cd81c583601deb6f3e1b98171f812bd9d00749114f16b6",
+  "extra_files": [
+    "cpss_ex0405.jpg"
+  ],
+  "layout_notes": [],
+  "how_made": "picture-print",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 1,
+    "underscores": 0
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 1,
+    "picture": 2
+  },
+  "page_kind_list": [
+    "text",
+    "picture",
+    "picture"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "fbef5bbfc978b71d51bf53471aa3c2be30fc187a7b40b1ba52cc1197eb5b644b",
+  "broker_dealer": true
+}

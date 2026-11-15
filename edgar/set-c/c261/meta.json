@@ -1,0 +1,53 @@
+{
+  "id": "c261",
+  "url": "https://www.sec.gov/Archives/edgar/data/1517956/000107878212000552/s1a2_ex99zc.htm",
+  "cik": "1517956",
+  "issuer": "STUART KING CAPITAL CORP",
+  "form": "S-1/A",
+  "file_date": "2012-02-28",
+  "year": 2012,
+  "exhibit": "EX-99.C",
+  "exhibit_description": "EXHIBIT 99C SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "c073014c47d534463de5f97cc2e0f5d68fb7a1b04278d7ea64c922955aa85cca",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 2,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 11
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 2,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "blank",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "a2f919684199dca9128d6ff4cef5d5d3b8f1f88f7861ce79731faf71459ec292",
+  "broker_dealer": false
+}

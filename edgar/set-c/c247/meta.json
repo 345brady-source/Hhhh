@@ -1,0 +1,61 @@
+{
+  "id": "c247",
+  "url": "https://www.sec.gov/Archives/edgar/data/947011/000106299309003607/exhibit10-13.htm",
+  "cik": "947011",
+  "issuer": "Smart-tek Solutions Inc",
+  "form": "10-K",
+  "file_date": "2009-10-13",
+  "year": 2009,
+  "exhibit": "EX-10.13",
+  "exhibit_description": "FORM OF DEBT SETTLEMENT AND SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "b3c26e3b046c46782c07d1c893568d7184473535c6a1b99a26850f65e2fb3f4c",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 7,
+    "tables": 14,
+    "questionnaire": true,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 9
+  },
+  "pages": 12,
+  "page_kinds": {
+    "text": 12
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "9541a397dbfde14d90f7ae314cf4d39b574956e2d01f54ef9cb5dd3b11410188",
+  "broker_dealer": false
+}

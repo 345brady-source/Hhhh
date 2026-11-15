@@ -1,0 +1,59 @@
+{
+  "id": "c049",
+  "url": "https://www.sec.gov/Archives/edgar/data/1115295/000107261302000651/ex10-18_11175.txt",
+  "cik": "1115295",
+  "issuer": "SB MERGER CORP",
+  "form": "POS AM",
+  "file_date": "2002-04-15",
+  "year": 2002,
+  "exhibit": "EX-10.18",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.txt",
+  "source_sha256": "b97cd2a5e1257d0d2badaf8e3464c6faa60cabfbc0738145f1e6ac69daa7dd38",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": true,
+    "joint": true,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 17
+  },
+  "pages": 9,
+  "page_kinds": {
+    "text": 8,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "0b8cfd54783ae3835a41667d8531e481d720079af364e4e441e473eedd39285e",
+  "broker_dealer": true
+}

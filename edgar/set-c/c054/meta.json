@@ -1,0 +1,52 @@
+{
+  "id": "c054",
+  "url": "https://www.sec.gov/Archives/edgar/data/913957/000095012904004302/amreit1.txt",
+  "cik": "913957",
+  "issuer": "AMREIT",
+  "form": "S-11/A",
+  "file_date": "2004-06-24",
+  "year": 2004,
+  "exhibit": "S-11/A",
+  "exhibit_description": "AMENDMENT NO. 1 TO 333-114432",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.txt",
+  "source_sha256": "4f02e8d085764b7c418691e65de9748ac01cbef680f36fb2ce8dce02282c76b5",
+  "extra_files": [],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "EXHIBIT A | SUBSCRIPTION AGREEMENT",
+    "end_heading": "EXHIBIT B"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 3
+  },
+  "pages": 5,
+  "page_kinds": {
+    "text": 5
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "db0a83b51c28be8a7084ad89431c690e75eae3b5f9f6f6536000d71368e1ed37",
+  "broker_dealer": true
+}

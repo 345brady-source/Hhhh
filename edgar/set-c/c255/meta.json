@@ -1,0 +1,62 @@
+{
+  "id": "c255",
+  "url": "https://www.sec.gov/Archives/edgar/data/1522164/000093980211000158/forms1063011ex10-1.htm",
+  "cik": "1522164",
+  "issuer": "Westpoint Energy, Inc.",
+  "form": "S-1",
+  "file_date": "2011-07-01",
+  "year": 2011,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF REGULATION D SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "d62367f01df2515bb452a9c2bfe56739a74a44871dc1bc4de6a11921fd056f6d",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 7,
+    "questionnaire": true,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 31
+  },
+  "pages": 13,
+  "page_kinds": {
+    "text": 13
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "1d0944de696bc684bcfb4794eac273c05654613b15f164d5ca7c2e9c4584fd76",
+  "broker_dealer": false
+}

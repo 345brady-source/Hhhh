@@ -1,0 +1,61 @@
+{
+  "id": "c050",
+  "url": "https://www.sec.gov/Archives/edgar/data/1042776/000093176302002535/d424b3.htm",
+  "cik": "1042776",
+  "issuer": "WELLS REAL ESTATE INVESTMENT TRUST INC  (PDM)",
+  "form": "424B3",
+  "file_date": "2002-07-26",
+  "year": 2002,
+  "exhibit": "424B3",
+  "exhibit_description": "4TH OFFERING PROSPECTUS",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "1eaffca0c10931aa9e3764ad7e5a605f20e4378bb39d0c4e3a32a1667eb3d083",
+  "extra_files": [
+    "g69560g32z59.jpg",
+    "g69560g49l41.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "EXHIBIT A | SUBSCRIPTION AGREEMENT",
+    "end_heading": "EXHIBIT B"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 9,
+  "page_kinds": {
+    "text": 6,
+    "picture": 2,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "picture",
+    "picture",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "1a02926747abb2742b8d1f2da1b0e5fde94511f7a84f4007ac412bdcb14aa983",
+  "broker_dealer": true
+}

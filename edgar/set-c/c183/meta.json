@@ -1,0 +1,52 @@
+{
+  "id": "c183",
+  "url": "https://www.sec.gov/Archives/edgar/data/1442376/000144237608000002/luxdigitialsub_agmt.htm",
+  "cik": "1442376",
+  "issuer": "Lux Digital Pictures, Inc.",
+  "form": "S-1",
+  "file_date": "2008-09-16",
+  "year": 2008,
+  "exhibit": "EX-1.1",
+  "exhibit_description": "LUX DIGITAL PICTURES, INC. SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "a5e109957b5e1e0c57da59dc41c6e235b1148742bace3ba5f6621dfb9a199f8f",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 4,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 15
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "88c3915c37c9ea72476734544cfe872bdfd48a65efbd54a9f8ab520440917977",
+  "broker_dealer": false
+}

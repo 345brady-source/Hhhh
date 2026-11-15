@@ -1,0 +1,61 @@
+{
+  "id": "c237",
+  "url": "https://www.sec.gov/Archives/edgar/data/1332896/000095012305012192/y10922a3exv10w14.htm",
+  "cik": "1332896",
+  "issuer": "Cogdell Spencer Inc.",
+  "form": "S-11/A",
+  "file_date": "2005-10-17",
+  "year": 2005,
+  "exhibit": "EX-10.14",
+  "exhibit_description": "EX-10.14: FORM OF IRREVOCABLE EXCHANGE AND SUBSCRIPTION AGREEMENT",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "e2b673d2491c269155926ac853b54fdbcefa14018e48fe5b27094eab9549fe0f",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 4,
+    "questionnaire": true,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 4
+  },
+  "pages": 12,
+  "page_kinds": {
+    "text": 12
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "f560b7eed8dc80dbb5ddb0cfc8bba9c9d5adfc83a0921877f1709f15a188c354",
+  "broker_dealer": false
+}

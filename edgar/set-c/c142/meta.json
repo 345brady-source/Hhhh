@@ -1,0 +1,53 @@
+{
+  "id": "c142",
+  "url": "https://www.sec.gov/Archives/edgar/data/1955986/000195598623000002/gdpsubagreement.pdf",
+  "cik": "1955986",
+  "issuer": "Genesis Development Capital, LLC",
+  "form": "C/A",
+  "file_date": "2023-02-06",
+  "year": 2023,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "c1a8da1b0f51298e0436340e7faa2446e2cc752677e7ae60c711afeb33d06806",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 6,
+    "tables": 0,
+    "questionnaire": true,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "underscores": 30,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 13,
+  "page_kinds": {
+    "text": 13
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "c1a8da1b0f51298e0436340e7faa2446e2cc752677e7ae60c711afeb33d06806",
+  "broker_dealer": false
+}

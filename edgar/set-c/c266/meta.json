@@ -1,0 +1,51 @@
+{
+  "id": "c266",
+  "url": "https://www.sec.gov/Archives/edgar/data/1596062/000139390514000018/ismo_ex99.htm",
+  "cik": "1596062",
+  "issuer": "ISMO Tech Solutions, Inc.  (QBIO)",
+  "form": "S-1",
+  "file_date": "2014-01-13",
+  "year": 2014,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "0bd3e1b3c475ba992709ba12017f32e2c0dc2444f298085d439f85c024306370",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 10,
+    "tables": 3,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 5
+  },
+  "pages": 2,
+  "page_kinds": {
+    "text": 2
+  },
+  "page_kind_list": [
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "09213d740f6e056476906d0aa9e95ba6ff9fe5e6314aa52360e3cbb42a0bb4bf",
+  "broker_dealer": false
+}

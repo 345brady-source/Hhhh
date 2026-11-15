@@ -1,0 +1,58 @@
+{
+  "id": "c230",
+  "url": "https://www.sec.gov/Archives/edgar/data/944948/000117091803000540/ex99-2.txt",
+  "cik": "944948",
+  "issuer": "TARRANT APPAREL GROUP",
+  "form": "8-K",
+  "file_date": "2003-10-27",
+  "year": 2003,
+  "exhibit": "EX-99",
+  "exhibit_description": "EX-99.2 FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "general",
+  "source_file": "source.txt",
+  "source_sha256": "2505d72f0f1e9dcbb8dd45e91f3f0791de3e586356d44b6d54af12e5d8a48280",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": true,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 2
+  },
+  "pages": 9,
+  "page_kinds": {
+    "text": 9
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "84a71145c0e6c81d2bad0cecec84fcc09a05fd44b3c82defffcc1377b22b246b",
+  "broker_dealer": false
+}

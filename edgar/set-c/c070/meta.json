@@ -1,0 +1,60 @@
+{
+  "id": "c070",
+  "url": "https://www.sec.gov/Archives/edgar/data/1378774/000110465909024763/a09-9745_1posam.htm",
+  "cik": "1378774",
+  "issuer": "Cornerstone Growth & Income REIT, Inc.",
+  "form": "POS AM",
+  "file_date": "2009-04-17",
+  "year": 2009,
+  "exhibit": "POS AM",
+  "exhibit_description": "POS AM",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "219db0dec0e9d378e0894f5ea0f2669cde28074a298b70bc3af72728cb13d072",
+  "extra_files": [
+    "g97451bui001.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX A | SUBSCRIPTION AGREEMENT (SAMPLE) WITH INSTRUCTIO",
+    "end_heading": "APPENDIX B"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 11,
+  "page_kinds": {
+    "text": 11
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "4a68e3967a8c143dc8ca829dbf50b80aa13e954b7fa44ab8e9ba15921fb33d2c",
+  "broker_dealer": true
+}

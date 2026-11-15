@@ -1,0 +1,80 @@
+{
+  "id": "c092",
+  "url": "https://www.sec.gov/Archives/edgar/data/1631256/000119312516546888/d150353ds11a.htm",
+  "cik": "1631256",
+  "issuer": "KBS Growth & Income REIT, Inc.",
+  "form": "S-11/A",
+  "file_date": "2016-04-20",
+  "year": 2016,
+  "exhibit": "S-11/A",
+  "exhibit_description": "S-11/A",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "93b17828cbc0f5c9a74659a892cb8d82db4b9c7ef41f74ee882a4bce32d77e53",
+  "extra_files": [
+    "g150353new01.jpg",
+    "g150353new02.jpg",
+    "g150353new03.jpg",
+    "g150353new04.jpg",
+    "g150353new05.jpg",
+    "g150353new06.jpg",
+    "g150353new07.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX A | FORM OF | SUBSCRIPTION AGREEMENT WITH INSTRUCTI",
+    "end_heading": "APPENDIX B"
+  },
+  "how_made": "picture-print",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 22,
+  "page_kinds": {
+    "text": 1,
+    "picture": 7,
+    "picture+ocr-text": 7,
+    "little or no text": 7
+  },
+  "page_kind_list": [
+    "text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text",
+    "picture",
+    "picture+ocr-text",
+    "little or no text"
+  ],
+  "page_content": "pictures (no text layer)",
+  "doc_sha256": "65aefb6e66670eb434b6aed55e10870a4ae3f181e0bb65180c35e6362ffbbd9a",
+  "broker_dealer": true
+}

@@ -1,0 +1,66 @@
+{
+  "id": "c047",
+  "url": "https://www.sec.gov/Archives/edgar/data/1101851/000112528201500945/b311998_s1.txt",
+  "cik": "1101851",
+  "issuer": "CREDIT STORE INC",
+  "form": "S-1/A",
+  "file_date": "2001-06-19",
+  "year": 2001,
+  "exhibit": "S-1/A",
+  "exhibit_description": "AMENDMENT NO. 1",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.txt",
+  "source_sha256": "9b1e92d376c170183e76337bb324b49b90fbb036dedbf8ea5bad488f5c4c2b61",
+  "extra_files": [],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "Annex A | [The Credit Store and logo]",
+    "end_heading": "PART II"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 44
+  },
+  "pages": 19,
+  "page_kinds": {
+    "text": 19
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "dd2ed4d019b2af7e742f13d9523022a4f5822415a62a889fe12c8107fee8fcd0",
+  "broker_dealer": true
+}

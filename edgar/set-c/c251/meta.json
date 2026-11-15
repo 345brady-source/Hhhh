@@ -1,0 +1,54 @@
+{
+  "id": "c251",
+  "url": "https://www.sec.gov/Archives/edgar/data/1490711/000107704810000068/ex10-1.htm",
+  "cik": "1490711",
+  "issuer": "Sterilite Solutions, Corp.",
+  "form": "S-1/A",
+  "file_date": "2010-07-30",
+  "year": 2010,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "aa4ff6149a52d08ed6f381c35ade91dfd1f0fa28dc47b58d643feb527a76d9b4",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 12,
+    "tables": 8,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 20
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 3,
+    "blank": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "blank"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "854237716679ed76350ceecb5078d6c5e669751e274278c044b0a8cbac940720",
+  "broker_dealer": false
+}

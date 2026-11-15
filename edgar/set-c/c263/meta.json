@@ -1,0 +1,52 @@
+{
+  "id": "c263",
+  "url": "https://www.sec.gov/Archives/edgar/data/1547389/000107878212001075/s1_ex99zc.htm",
+  "cik": "1547389",
+  "issuer": "GREAT IDEA CORP",
+  "form": "S-1",
+  "file_date": "2012-04-17",
+  "year": 2012,
+  "exhibit": "EX-99.C",
+  "exhibit_description": "EXHIBIT 99C SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "f8c28c4e66a75b0056e30c7c259528d65ab6a06d78e2443291094d05ab6ab5e5",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 2,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 11
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "975abeeae27d5a8708e73894ef06076b7f30950622c76feb2f1daeddfacafc0c",
+  "broker_dealer": false
+}

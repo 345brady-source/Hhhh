@@ -1,0 +1,51 @@
+{
+  "id": "c233",
+  "url": "https://www.sec.gov/Archives/edgar/data/1163429/000110889004000335/commercialexhi99-1031102.txt",
+  "cik": "1163429",
+  "issuer": "COMMERCIAL EVALUATIONS INC",
+  "form": "POS AM",
+  "file_date": "2004-05-25",
+  "year": 2004,
+  "exhibit": "EX-99.A4",
+  "exhibit_description": "EXHIBIT 99.1 SUBSCRIPTION AGREEMENT - COMMON ST.",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.txt",
+  "source_sha256": "866b93c67116d2496fe40df01ef9b5e3592ac4fea9c23261d82cb789b5cab18d",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 11
+  },
+  "pages": 2,
+  "page_kinds": {
+    "text": 2
+  },
+  "page_kind_list": [
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "c4c4306eaf0ef1463595719e6086a0078849aa539d4de1ee8d0975bc7646603e",
+  "broker_dealer": false
+}

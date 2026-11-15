@@ -1,0 +1,70 @@
+{
+  "id": "c056",
+  "url": "https://www.sec.gov/Archives/edgar/data/1230634/000095012904009274/a03489b3e424b3.htm",
+  "cik": "1230634",
+  "issuer": "VESTIN FUND III LLC",
+  "form": "424B3",
+  "file_date": "2004-11-22",
+  "year": 2004,
+  "exhibit": "424B3",
+  "exhibit_description": "VESTIN FUND III, LLC - REGISTRATION NO. 333-105017",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "eccf098f13592f86f9293e7973016f388225f0e98331428f93b13da72f39ec67",
+  "extra_files": [],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "EXHIBIT B | BY EXECUTING THIS SUBSCRIPTION AGREEMENT, AN INV",
+    "end_heading": "APPENDIX A"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 22,
+  "page_kinds": {
+    "text": 18,
+    "little or no text": 4
+  },
+  "page_kind_list": [
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "little or no text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "3be0cada7cc788026dc324daa80274ce60bb9c7525661e9ec4ac3c5fe4ccd9a6",
+  "broker_dealer": true
+}

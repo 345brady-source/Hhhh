@@ -1,0 +1,61 @@
+{
+  "id": "c291",
+  "url": "https://www.sec.gov/Archives/edgar/data/1575295/000147793222002106/alid_ex4.htm",
+  "cik": "1575295",
+  "issuer": "Allied Corp.",
+  "form": "1-A",
+  "file_date": "2022-04-06",
+  "year": 2022,
+  "exhibit": "EX1A-4 SUBS AGMT",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT FOR OFFERING",
+  "offering_kind": "Regulation A",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "86bd36928bee25db77f393b28d05d81d72b6d9c69f7f0293ed2c3c33ca0745c1",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 22,
+    "tables": 42,
+    "questionnaire": true,
+    "joint": true,
+    "custodian": true,
+    "ira": true,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 15
+  },
+  "pages": 11,
+  "page_kinds": {
+    "text": 10,
+    "little or no text": 1
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "little or no text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "cfeb5edcdd47ea24b13e1dd1e5cdee180b1f97138f9ffa435f1e9c40f6a631d7",
+  "broker_dealer": false
+}

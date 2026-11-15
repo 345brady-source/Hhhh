@@ -1,0 +1,58 @@
+{
+  "id": "c269",
+  "url": "https://www.sec.gov/Archives/edgar/data/949721/000135448816006747/mrdn_ex101.htm",
+  "cik": "949721",
+  "issuer": "Meridian Waste Solutions, Inc.",
+  "form": "8-K",
+  "file_date": "2016-03-29",
+  "year": 2016,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "59776c9fa04edb1e9355b594a695873cab3ed51f67c091b2d96b5057d1f6046a",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 2,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 12
+  },
+  "pages": 9,
+  "page_kinds": {
+    "text": 9
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "89b1bbe7efefcdfa564a087636583eebb8a8748ef1162457f6f3a641c02b267c",
+  "broker_dealer": false
+}

@@ -1,0 +1,52 @@
+{
+  "id": "c125",
+  "url": "https://www.sec.gov/Archives/edgar/data/1743861/000174386119000002/ExhibitA-SubscriptionAgrmnt.pdf",
+  "cik": "1743861",
+  "issuer": "10XTS INC",
+  "form": "C/A",
+  "file_date": "2019-01-31",
+  "year": 2019,
+  "exhibit": "EX-99",
+  "exhibit_description": "SUBSCRIPTION AGREEMENT FOR 10XTS",
+  "offering_kind": "Regulation Crowdfunding",
+  "collected_as": "pdf",
+  "source_file": "source.pdf",
+  "source_sha256": "1eb08fcfbeb8e291c2c383b29f6fc41975f1441de1f070f9f6f374374fb06a68",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "filed-pdf",
+  "features": {
+    "boxes": 0,
+    "tables": 0,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "underscores": 0,
+    "fields": 0,
+    "acroform": "none"
+  },
+  "pages": 12,
+  "page_kinds": {
+    "text": 12
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "1eb08fcfbeb8e291c2c383b29f6fc41975f1441de1f070f9f6f374374fb06a68",
+  "broker_dealer": false
+}

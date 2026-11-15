@@ -1,0 +1,61 @@
+{
+  "id": "c086",
+  "url": "https://www.sec.gov/Archives/edgar/data/1558441/000119312515152591/d916029d424b3.htm",
+  "cik": "1558441",
+  "issuer": "INDUSTRIAL PROPERTY TRUST INC.",
+  "form": "424B3",
+  "file_date": "2015-04-28",
+  "year": 2015,
+  "exhibit": "424B3",
+  "exhibit_description": "424B3",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.htm",
+  "source_sha256": "75a01e7ffd8216080bd903831011018d1b1ad45b946733f16da10e293498f2a1",
+  "extra_files": [
+    "g916029g17g56.jpg",
+    "g916029g59e21.jpg"
+  ],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX B: FORM OF SUBSCRIPTION AGREEMENT",
+    "end_heading": "END"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 11,
+  "page_kinds": {
+    "text": 11
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "027601012a84994cc4da83bd9ef281d198bb4315ff18aa33140c62427776e9c0",
+  "broker_dealer": true
+}

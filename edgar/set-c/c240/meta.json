@@ -1,0 +1,53 @@
+{
+  "id": "c240",
+  "url": "https://www.sec.gov/Archives/edgar/data/849636/000119312507009309/dex12.htm",
+  "cik": "849636",
+  "issuer": "CORTEX PHARMACEUTICALS INC/DE/  (RSPI)",
+  "form": "8-K",
+  "file_date": "2007-01-19",
+  "year": 2007,
+  "exhibit": "EX-1.2",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "8eb668d15aa65e21e17c7217f14ba1334df9e0c2eb01a5da0f74c796ab50ba5a",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 1,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": true,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 3
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 4
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "622b13304d44755ae20aae94325d8f9ae6b0bffd723341c439674a0ad8eefc19",
+  "broker_dealer": false
+}

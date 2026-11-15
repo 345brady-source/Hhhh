@@ -1,0 +1,56 @@
+{
+  "id": "c045",
+  "url": "https://www.sec.gov/Archives/edgar/data/1132747/000100515001500028/form424.txt",
+  "cik": "1132747",
+  "issuer": "APPLE HOSPITALITY TWO INC",
+  "form": "424B3",
+  "file_date": "2001-04-20",
+  "year": 2001,
+  "exhibit": "424B3",
+  "exhibit_description": "FORM 424(B)(3)",
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.txt",
+  "source_sha256": "eb0234d9013fe0d5d469c7a94c1382ffa37b764422ec50ee896360f32c96267f",
+  "extra_files": [],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "APPENDIX A | SUBSCRIPTION AGREEMENT",
+    "end_heading": "END"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 4
+  },
+  "pages": 9,
+  "page_kinds": {
+    "text": 9
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "454821bd68fb298987f39215597ac1efffc76ee61a1d6f9265c9a2728eacc926",
+  "broker_dealer": true
+}

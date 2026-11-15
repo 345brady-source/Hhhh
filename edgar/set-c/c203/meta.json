@@ -1,0 +1,52 @@
+{
+  "id": "c203",
+  "url": "https://www.sec.gov/Archives/edgar/data/1693801/000162746917000047/subscription_sample.htm",
+  "cik": "1693801",
+  "issuer": "Global Bridge Capital, Inc.",
+  "form": "S-1/A",
+  "file_date": "2017-07-12",
+  "year": 2017,
+  "exhibit": "EX-99.1",
+  "exhibit_description": "SAMPLE SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "ce7dd67b048cc321f2d9acccd86af5598cfde53367d7114f9854d07aba75c572",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 8,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 7
+  },
+  "pages": 3,
+  "page_kinds": {
+    "text": 3
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "b9ec761dc687aefcbe4940a22525abe2c2e092292e6c306e76fc85c901b45d62",
+  "broker_dealer": false
+}

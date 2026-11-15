@@ -1,0 +1,53 @@
+{
+  "id": "c196",
+  "url": "https://www.sec.gov/Archives/edgar/data/1576720/000107878214001850/s1a100914_ex99zb.htm",
+  "cik": "1576720",
+  "issuer": "Granito Acquisition I, Inc.",
+  "form": "S-1/A",
+  "file_date": "2014-10-15",
+  "year": 2014,
+  "exhibit": "EX-99.B",
+  "exhibit_description": "EXHIBIT 99B SUBSCRIPTION AGREEMENT",
+  "offering_kind": "small-company registered offering (S-1/SB-2)",
+  "collected_as": "landscape",
+  "source_file": "source.htm",
+  "source_sha256": "c4fcbc362700161690e6aabfbe49373d7ed940bd77c35197b696b3f61b48adba",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-landscape",
+  "owner_method": true,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "landscape",
+    "background_graphics": true,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 0,
+    "tables": 2,
+    "questionnaire": false,
+    "joint": true,
+    "custodian": true,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 11
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 4
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "b6c13e4196e1e8b43163219f7ab9eeb6f7c780ae3265c17674f1d02d3498e016",
+  "broker_dealer": false
+}

@@ -1,0 +1,53 @@
+{
+  "id": "c288",
+  "url": "https://www.sec.gov/Archives/edgar/data/1421636/000121390020043531/ea131733ex10-1_cbondsystem.htm",
+  "cik": "1421636",
+  "issuer": "C-Bond Systems, Inc  (CBNT)",
+  "form": "8-K",
+  "file_date": "2020-12-18",
+  "year": 2020,
+  "exhibit": "EX-10.1",
+  "exhibit_description": "FORM OF SUBSCRIPTION AGREEMENT, DATED DECEMBER 14, 2020, BETWEEN C-BOND SYSTEMS, INC. AND INVESTOR",
+  "offering_kind": "fund or LP/LLC program",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "f6d9adc5776548ae79a36288fbe7a43015d0b6ae513e152cafc196da5b0cd251",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": true,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 8,
+    "tables": 6,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": true,
+    "imgs": 0,
+    "underscores": 7
+  },
+  "pages": 4,
+  "page_kinds": {
+    "text": 4
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "793a7dde0fa056d8cd0f500809d1e52bad08071d0ba93ba7c43d26c50932e5a4",
+  "broker_dealer": false
+}

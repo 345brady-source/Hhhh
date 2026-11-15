@@ -1,0 +1,51 @@
+{
+  "id": "c295",
+  "url": "https://www.sec.gov/Archives/edgar/data/1841425/000121390023011573/ea173567ex10-2_cenaq.htm",
+  "cik": "1841425",
+  "issuer": "CENAQ Energy Corp.  (VGAS, VGASW)",
+  "form": "8-K",
+  "file_date": "2023-02-14",
+  "year": 2023,
+  "exhibit": "EX-10.2",
+  "exhibit_description": "FORM OF SUBSCRIPTION TERMINATION AGREEMENT",
+  "offering_kind": "Regulation D / private placement exhibit",
+  "collected_as": "general",
+  "source_file": "source.htm",
+  "source_sha256": "4d807ca57df5f12dbf51d52f5be64f75d82182cf194af21dc3d5f3be874b3d63",
+  "extra_files": [],
+  "layout_notes": [],
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": true,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "boxes": 1,
+    "tables": 4,
+    "questionnaire": false,
+    "joint": false,
+    "custodian": false,
+    "ira": false,
+    "brokerdealer": false,
+    "countersign": false,
+    "imgs": 0,
+    "underscores": 0
+  },
+  "pages": 2,
+  "page_kinds": {
+    "text": 2
+  },
+  "page_kind_list": [
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "708e44de0c57548582ecb7d3a40f8253dedb89b1cb94e1ad31eff6ae6c5844eb",
+  "broker_dealer": false
+}

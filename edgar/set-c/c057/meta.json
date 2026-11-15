@@ -1,0 +1,55 @@
+{
+  "id": "c057",
+  "url": "https://www.sec.gov/Archives/edgar/data/1185198/000118519804000032/post25-6.txt",
+  "cik": "1185198",
+  "issuer": "AEI INCOME & GROWTH FUND 25 LLC",
+  "form": "POS AM",
+  "file_date": "2004-12-16",
+  "year": 2004,
+  "exhibit": "POS AM",
+  "exhibit_description": null,
+  "offering_kind": "non-traded REIT / BDC / interval or registered fund (broker-dealer form)",
+  "collected_as": "bd",
+  "source_file": "source.txt",
+  "source_sha256": "dbf0298cb802ac54cbe0b330bd740d018f2d44f8442beed277ab22d5fc44ac01",
+  "extra_files": [],
+  "layout_notes": [],
+  "cut": {
+    "from": "prospectus appendix",
+    "start_heading": "EXHIBIT D | AEI INCOME & GROWTH FUND 25 LLC | SUBSCRIPTION A",
+    "end_heading": "PART II"
+  },
+  "how_made": "browser-portrait",
+  "owner_method": false,
+  "print_settings": {
+    "browser": "Chromium (headless, Playwright)",
+    "paper": "Letter",
+    "orientation": "portrait",
+    "background_graphics": false,
+    "headers_and_footers": false,
+    "margins_in": 0.4,
+    "scale": 1.0
+  },
+  "features": {
+    "custodian": true,
+    "brokerdealer": true,
+    "underscores": 0
+  },
+  "pages": 8,
+  "page_kinds": {
+    "text": 8
+  },
+  "page_kind_list": [
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text",
+    "text"
+  ],
+  "page_content": "real text",
+  "doc_sha256": "3ba98b1f99632e2838a4cf8c5307346fa6ebfd68286c0b965e35cf0917b44f4f",
+  "broker_dealer": true
+}
