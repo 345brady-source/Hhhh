@@ -2928,6 +2928,7 @@
     const out = [];
     let spent = 0;
     let pictured = false;
+    let modelPlaces = 0; // places the place model saw on pages read from their picture, each snapped to what is printed
     const limitMs = op.limitMs > 0 ? op.limitMs : PICTURE_LIMIT_MS;
     try {
       for (let i = 1; i <= doc.numPages; i++) {
@@ -2955,6 +2956,7 @@
             try {
               use = await NS.textread.page(page, raw, late ? { words: false, reader: 'limit' } : undefined);
               pictured = true;
+              modelPlaces += use.modelPlaces || 0;
             } catch (e) {
               console.error('Reading page ' + i + ' of the agreement from its picture failed:', e);
               unread = (e && e.code) || 'fail';
@@ -2972,6 +2974,7 @@
       doc.destroy();
       if (NS.textread && op.pictures && !op.kept) NS.textread.stop();
     }
+    out.modelPlaces = modelPlaces;
     if (!op.kept) layoutKept = pictured ? { docId, pages: out } : null;
     return out;
   }
@@ -2992,6 +2995,7 @@
       const layout = await pageLayout(env.docId, { step: opts && opts.step, pictures: !!(opts && opts.pictures), limitMs: opts && opts.limitMs });
       // Pages with no text that could not be read from their pictures either, by reason.
       layout.forEach((pg) => pg.unread && (read.unread[pg.unread] = read.unread[pg.unread] || []).push(pg.page));
+      read.modelPlaces = layout.modelPlaces || 0;
       res = NS.placement.read(layout, { firmNames: [t.name, t.legalName, t.shortName], fundNames: [o.name, o.shortName] });
     } catch (e) {
       // Not the PDF's fault unless the reader says so: the reason is kept and logged, and the message says only what is known.
