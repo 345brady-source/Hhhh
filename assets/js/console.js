@@ -410,6 +410,23 @@
       </div>
     </div>`;
   }
+  /**
+   * Rule 506(b) eligibility (self-serve edition, D-01, C-02): purchasers who are not accredited, counted once per investor
+   * from the status answers on this offering's subscription requests, against the limit of 35. Declined ones are left out;
+   * pending ones are counted and shown apart.
+   */
+  function eligibilityPanel(o) {
+    const EL = NS.eligibility;
+    if (!E.diy || !EL || EL.regime(o) !== '506b') return '';
+    const n = EL.nonAccredited(W(), o);
+    const a = n.accepted.length;
+    const p = n.pending.length;
+    return panel(
+      'Investor eligibility',
+      `<p class="cs-elig-count"><strong>Non-accredited purchasers: ${h(String(n.count))} of ${h(String(EL.LIMIT_506B))}</strong></p>
+      <p class="cs-muted">${h(String(a))} accepted${p ? ` and ${h(String(p))} more pending` : ''}. Declined subscriptions are not counted.</p>`
+    );
+  }
   /** The read-only view of an offering for people who cannot configure it. */
   function offReadOnly(o) {
     const n = holdersCount(o.id);
@@ -424,7 +441,7 @@
       <p class="cs-muted cs-locked-note">${icon('lock')}${E.managed ? 'Set up and maintained by Carrow &amp; Vale. To change anything on this offering, contact your Carrow &amp; Vale team.' : 'Set up and maintained by your admins. To change anything on this offering, ask an admin on your team.'}</p>
       <div class="cs-split">
         <div class="cs-split-main">
-          ${panel('Basics', kv([['Short name', h(o.shortName)], ['Status', h(o.status)], ['Closing date', date(o.closeDate)], ['Minimum investment', usd(o.minimum || 0)], ['Description', h(o.summary || '')]]))}
+          ${panel('Offering details', kv([['Short name', h(o.shortName)], ['Status', h(o.status)], ['Closing date', date(o.closeDate)], ['Minimum investment', usd(o.minimum || 0)], ['Description', h(o.summary || '')]]))}
           ${NS.esign && NS.esign.agreementPanel ? NS.esign.agreementPanel(W(), o, false) : ''}
           ${panel('Exit timing', kv([[h(x.label), h(x.value)], ['How exit is defined', h((BASIS.find((b) => b[0] === (o.exit || {}).basis) || ['', ''])[1])], ['Note shown to investors', h((o.exit || {}).note || '')]]))}
           ${panel('Distributions', kv([['Frequency', h(d.frequency || '')], ['Payment day', periodMonths(d.frequency) && d.day ? NS.data.ordinal(Number(d.day)) + ' of the month' : ''], ['Next payment', nextOf(o) ? date(nextOf(o).date, 'wd') : ''], ['Payment type', h(d.type || '')], ['Target or rate', h(d.target || '')]]))}
@@ -493,7 +510,7 @@
         ${head(h(o.name), `${h(o.type)} · ${n} investor${n === 1 ? '' : 's'} · ${usd(raised(o.id))} raised`, `${E.diy && o.status === 'Raising' ? `<button class="cs-btn" type="button" data-action="join-link" data-id="${h(o.id)}">Investor sign-up link</button>` : ''}${n ? `<button class="cs-btn" type="button" data-action="off-preview">Preview as investor</button>` : ''}`)}
         <div class="cs-split">
           <div class="cs-split-main">
-            ${panel('Basics', `<div class="cs-grid">
+            ${panel('Offering details', `<div class="cs-grid">
               ${offField('Offering name', 'name', { wide: true, max: 90 })}
               ${offField('Short name', 'shortName', { max: 32 })}
               ${offField('Type', 'type', { select: Object.keys(NS.OFFERING_TYPES) })}
@@ -503,6 +520,7 @@
               ${offField('Minimum investment ($)', 'minimum', { type: 'number' })}
               ${offField('Securities exemption', 'structure.exemption', { select: exemptionOptions(o), hint: E.diy ? 'Rule 506(c) offerings take verified accredited investors only: investors verify their status while they onboard, before they can subscribe.' : '' })}
             </div>`)}
+            ${eligibilityPanel(o)}
             ${NS.esign && NS.esign.agreementPanel ? NS.esign.agreementPanel(W(), o, true) : ''}
             ${panel('Exit timing', `<div class="cs-grid">
               ${offField('How exit is defined', 'exit.basis', { select: BASIS, wide: true })}
