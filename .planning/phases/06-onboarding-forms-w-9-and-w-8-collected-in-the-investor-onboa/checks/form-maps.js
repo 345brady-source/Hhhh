@@ -1,13 +1,14 @@
 #!/usr/bin/env node
-// The official tax forms and their maps (plan 06-10, D-04, D-05), no browser:
-//   node form-maps.js [--only W-9,W-8BEN]
+// The official tax forms and their maps (plans 06-10 and 06-12, D-04, D-05), no browser:
+//   node form-maps.js [--only W-9,W-8BEN,W-8BEN-E]
 // For each form: the bundled file's pin (SHA256SUMS, the map and the D-05 value agree with the file); the file's own field
 // list read live and compared with the map both ways (every field mapped, unused or removed; every mapped name in the
 // file; kinds, lengths and on-values as the file has them; the same names as the planner's listing); a copy with one byte
 // changed is refused; sample fills each leave zero fields, every filled value inside its own field's rectangle and
 // nowhere else (pdftotext -bbox against the blank form), each ticked box inked inside its rectangle and nothing else on
 // the page changed (pixel comparison with the blank form); a fill with every answer empty prints the blank form's text;
-// the e-sign places lie on the page beside their printed words. Filled pages are written to SCRATCH/exec-06-10/filled/.
+// the e-sign places lie on the page beside their printed words. Every page of a form is checked (the W-8BEN-E has 8).
+// Filled pages are written to SCRATCH/exec-06-10/filled/ (a form part may name its own folder and pages).
 // The last line is "FORM MAPS: PASS (forms run: N)" or "FORM MAPS: FAIL (forms run: N) - <failed forms>".
 const fs = require('fs');
 const path = require('path');
@@ -181,23 +182,75 @@ function formPart(spec) {
 
     // each mapped field is the one its key means: the words printed beside it on the blank form (above it, left or
     // right of it on its line, or under it) match the key's label, so a swapped name puts a value beside the wrong label
-    const printed = words(file, 1).words;
+    const nPages = (await L.PDFDocument.load(bytes)).getPageCount();
+    const blankWords = {};
+    for (let p = 1; p <= nPages; p++) blankWords[p] = words(file, p);
+
+    // spec.partsNamed: every unused group's reason starts with the Part its fields lie in ("Part XIV, ..."), and each of
+    // its fields lies in that Part on the printed form. A Part runs from its printed header ("Part" and its numeral at
+    // the left margin) to the next header, across pages.
+    if (spec.partsNamed) {
+      const heads = [];
+      for (let p = 1; p <= nPages; p++) {
+        const ws = blankWords[p].words;
+        ws.forEach((w) => {
+          if (w.t !== 'Part' || w.x0 > 66 || w.y1 - w.y0 < 11) return;
+          const n = ws.find((v) => v !== w && v.x0 < 70 && Math.abs(v.y0 - w.y0) < 1 && /^[IVX]+$/.test(v.t));
+          if (n) heads.push({ page: p, top: w.y0, part: n.t });
+        });
+      }
+      const ROMAN = Array.from({ length: 30 }, (_, i) => {
+        let n = i + 1;
+        let r = '';
+        [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']].forEach(([v, c]) => {
+          while (n >= v) {
+            r += c;
+            n -= v;
+          }
+        });
+        return r;
+      });
+      const found = heads.map((h) => h.part).filter((x, i, a) => a.indexOf(x) === i);
+      check(`the printed form's Parts are found in order, Part I to Part ${ROMAN[spec.partsNamed - 1]}`, JSON.stringify(found) === JSON.stringify(ROMAN.slice(0, spec.partsNamed)), found);
+      const partOf = (r) => {
+        let cur = null;
+        heads.forEach((h) => {
+          if (h.page < r.page || (h.page === r.page && h.top <= r.top)) cur = h.part;
+        });
+        return cur;
+      };
+      const partBad = [];
+      Object.keys(map.unused || {}).forEach((reason) => {
+        const m = /^Part ([IVX]+)\b/.exec(reason);
+        if (!m || ROMAN.indexOf(m[1]) < 0 || ROMAN.indexOf(m[1]) >= spec.partsNamed) return partBad.push(`reason does not start with its Part: "${reason.slice(0, 60)}"`);
+        map.unused[reason].forEach((n) => {
+          const l = byName[n];
+          const at = l && partOf(l.rects[0]);
+          if (at !== m[1]) partBad.push(`${n}: listed under Part ${m[1]}, lies in Part ${at}`);
+        });
+      });
+      check('every unused group names the Part its fields lie in', !partBad.length, partBad);
+    }
     const groupOf = {};
     Object.keys(map.groups || {}).forEach((g) => map.groups[g].forEach((k, i) => (groupOf[k] = { g, i })));
-    const needAnchor = Object.keys(map.fields).filter((k) => !groupOf[k] || groupOf[k].i === 0);
+    // a field with no printed words of its own (a table row under the first) is checked as the row under an anchored one
+    const needAnchor = Object.keys(map.fields).filter((k) => (!groupOf[k] || groupOf[k].i === 0) && !(spec.below || {})[k]);
     const noAnchor = needAnchor.filter((k) => !(spec.anchors || {})[k]);
     check('every mapped field has a printed label to be checked against', !noAnchor.length, noAnchor);
-    const besideText = (r, mode) => {
+    // reach: how far to the right a 'right' label may start (points past the field; 90 unless the anchor gives more)
+    const besideText = (r, mode, reach) => {
+      const printed = blankWords[r.page].words;
       const mid = r.top + r.h / 2;
       const sameLine = (w) => Math.abs((w.y0 + w.y1) / 2 - mid) < 5;
       let ws = [];
       if (mode === 'above') ws = printed.filter((w) => w.y1 <= r.top + 1 && w.y1 >= r.top - 12 && w.x1 > r.x && w.x0 < r.x + r.w);
       else if (mode === 'under') ws = printed.filter((w) => w.y0 >= r.top + r.h - 1 && w.y0 <= r.top + r.h + 12 && w.x1 > r.x && w.x0 < r.x + r.w);
       else if (mode === 'left') ws = printed.filter((w) => sameLine(w) && w.x1 <= r.x + 1);
-      else if (mode === 'right') ws = printed.filter((w) => sameLine(w) && w.x0 >= r.x + r.w - 1 && w.x0 <= r.x + r.w + 90);
-      return ws
-        .sort((a, b) => (mode === 'left' || mode === 'right' ? a.x0 - b.x0 : a.y0 - b.y0 || a.x0 - b.x0))
-        .map((w) => w.t)
+      else if (mode === 'right') ws = printed.filter((w) => sameLine(w) && w.x0 >= r.x + r.w - 1 && w.x0 <= r.x + r.w + (reach || 90));
+      if (mode === 'left' || mode === 'right') return ws.sort((a, b) => a.x0 - b.x0).map((w) => w.t).join(' ');
+      // above and under: printed lines in reading order (words of one line can differ in top by a fraction of a point)
+      return lines(ws)
+        .map((l) => l.words.map((w) => w.t).join(' '))
         .join(' ');
     };
     const labelBad = [];
@@ -205,9 +258,12 @@ function formPart(spec) {
       const f = map.fields[k];
       const l = f && byName[f.name];
       if (!l) return labelBad.push(`${k}: not in the map or the file`);
-      const [mode, re] = spec.anchors[k];
-      const t = besideText(l.rects[0], mode);
-      if (!re.test(t)) labelBad.push(`${k} (${mode}): "${t.slice(0, 80)}" does not match ${re}`);
+      // one anchor [mode, re, reach] or several [[mode, re], ...], all of which must hold
+      const list = Array.isArray(spec.anchors[k][0]) ? spec.anchors[k] : [spec.anchors[k]];
+      list.forEach(([mode, re, reach]) => {
+        const t = besideText(l.rects[0], mode, reach);
+        if (!re.test(t)) labelBad.push(`${k} (${mode}): "${t.slice(0, 80)}" does not match ${re}`);
+      });
     });
     Object.keys(spec.below || {}).forEach((k) => {
       const a = byName[(map.fields[k] || {}).name];
@@ -217,6 +273,7 @@ function formPart(spec) {
       const rb = b.rects[0];
       const gap = ra.top - (rb.top + rb.h);
       if (!(gap >= 0 && gap < 30)) labelBad.push(`${k}: not the row under ${spec.below[k]} (gap ${gap.toFixed(1)})`);
+      if (!(ra.page === rb.page && ra.x < rb.x + rb.w && rb.x < ra.x + ra.w)) labelBad.push(`${k}: not in the column of ${spec.below[k]}`);
     });
     Object.keys(map.groups || {}).forEach((g) => {
       const rs = map.groups[g].map((k) => byName[(map.fields[k] || {}).name]).map((l) => l && l.rects[0]);
@@ -256,11 +313,13 @@ function formPart(spec) {
       check('a taxpayer number with the wrong digit count is refused', !!e3 && /digits/.test(e3.message), e3 && e3.message);
     }
 
-    // blank references
-    const blankWords = words(file, 1);
-    const blankImg = gray(file, 1, 100, 'blank');
+    // blank references, every page
+    const blankImg = {};
+    for (let p = 1; p <= nPages; p++) blankImg[p] = gray(file, p, 100, 'blank-' + p);
     const blankText = allText(file);
     const K = 100 / 72;
+    const outDir = process.env.FORM_MAPS_OUT || spec.out || OUT;
+    fs.mkdirSync(outDir, { recursive: true });
 
     for (const c of spec.cases) {
       const tag = `${map.form}-${c.id}`;
@@ -271,9 +330,9 @@ function formPart(spec) {
         check(`${c.id}: filled`, false, e.stack);
         continue;
       }
-      const of = path.join(OUT, tag + '.pdf');
+      const of = path.join(outDir, tag + '.pdf');
       fs.writeFileSync(of, out);
-      spawnSync('pdftoppm', ['-png', '-r', '100', '-f', '1', '-l', '1', '-singlefile', of, path.join(OUT, tag)]);
+      (spec.images || [1]).forEach((p) => spawnSync('pdftoppm', ['-png', '-r', '100', '-f', String(p), '-l', String(p), '-singlefile', of, path.join(outDir, spec.images ? `${tag}-p${p}` : tag)]));
       const again = await L.PDFDocument.load(out);
       const left = again.getForm().getFields().length;
       check(`${c.id}: zero fields left after flattening`, left === 0, left);
@@ -300,13 +359,20 @@ function formPart(spec) {
           at += n;
         });
       });
-      const W = words(of, 1).words;
-      const fresh = W.filter((w) => !blankWords.words.some((b) => b.t === w.t && Math.abs(b.x0 - w.x0) < 0.6 && Math.abs(b.y0 - w.y0) < 0.6));
-      const vanished = blankWords.words.filter((b) => !W.some((w) => w.t === b.t && Math.abs(b.x0 - w.x0) < 0.6 && Math.abs(b.y0 - w.y0) < 0.6));
-      check(`${c.id}: every printed word of the blank form is still there`, !vanished.length, vanished.slice(0, 5));
+      // new words per page: those not printed at the same place on the blank page
+      const fresh = {};
+      const vanished = [];
+      const same = (a, b) => a.t === b.t && Math.abs(a.x0 - b.x0) < 0.6 && Math.abs(a.y0 - b.y0) < 0.6;
+      for (let p = 1; p <= nPages; p++) {
+        const W = words(of, p).words;
+        const B = blankWords[p].words;
+        fresh[p] = W.filter((w) => !B.some((b) => same(b, w)));
+        B.filter((b) => !W.some((w) => same(b, w))).forEach((b) => vanished.push(`p${p} ${b.t}`));
+      }
+      check(`${c.id}: every printed word of the blank form is still there (${nPages} pages)`, !vanished.length, vanished.slice(0, 5));
       const wrong = [];
       expect.forEach((e) => {
-        const here = fresh.filter((w) => inside(w, e.r, 1)).sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0);
+        const here = fresh[e.r.page].filter((w) => inside(w, e.r, 1)).sort((a, b) => a.y0 - b.y0 || a.x0 - b.x0);
         const said = here.map((w) => w.t).join('').replace(/\s+/g, '');
         if (said !== e.text.replace(/\s+/g, '')) wrong.push(`${e.key}: expected "${e.text}", found "${here.map((w) => w.t).join(' ')}"`);
         here.forEach((w) => {
@@ -314,13 +380,16 @@ function formPart(spec) {
         });
       });
       check(`${c.id}: every filled value is inside its own field (${expect.length} fields)`, !wrong.length && expect.length > 0, wrong);
-      const stray = fresh.filter((w) => !expect.some((e) => inside(w, e.r, 1)));
-      check(`${c.id}: no filled text anywhere else`, !stray.length, stray.map((w) => `${w.t}@${w.x0.toFixed(0)},${w.y0.toFixed(0)}`));
+      const stray = [];
+      for (let p = 1; p <= nPages; p++) fresh[p].filter((w) => !expect.some((e) => e.r.page === p && inside(w, e.r, 1))).forEach((w) => stray.push(`p${p} ${w.t}@${w.x0.toFixed(0)},${w.y0.toFixed(0)}`));
+      check(`${c.id}: no filled text anywhere else`, !stray.length, stray);
       if (c.exact) c.exact.forEach((s) => check(`${c.id}: "${s}" prints exactly`, allText(of).indexOf(s) >= 0));
 
-      // ink: ticked boxes inked inside their rectangles, every other box and the rest of the page unchanged
-      const img = gray(of, 1, 100, 'out');
-      check(`${c.id}: the render has the blank form's size`, img.w === blankImg.w && img.h === blankImg.h, [img.w, img.h, blankImg.w, blankImg.h]);
+      // ink: ticked boxes inked inside their rectangles, every other box and the rest of every page unchanged
+      const imgs = {};
+      for (let p = 1; p <= nPages; p++) imgs[p] = gray(of, p, 100, 'out-' + p);
+      const sizeBad = Object.keys(imgs).filter((p) => imgs[p].w !== blankImg[p].w || imgs[p].h !== blankImg[p].h);
+      check(`${c.id}: the render has the blank form's size`, !sizeBad.length, sizeBad);
       const box = (r, pad) => [Math.floor((r.x - pad) * K), Math.floor((r.top - pad) * K), Math.ceil((r.x + r.w + pad) * K), Math.ceil((r.top + r.h + pad) * K)];
       // New ink: dark in the filled page with no dark pixel of the blank page within one pixel; lost ink the other way
       // round. A printed line that rasterises one pixel row lower after flattening is neither; a value or tick is.
@@ -329,34 +398,39 @@ function formPart(spec) {
         for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (dark(im, x + dx, y + dy)) return true;
         return false;
       };
-      const diffAt = (x, y) => (dark(img, x, y) && !near(blankImg, x, y)) || (dark(blankImg, x, y) && !near(img, x, y));
-      const newInk = (b) => {
+      const diffAt = (img, bl, x, y) => (dark(img, x, y) && !near(bl, x, y)) || (dark(bl, x, y) && !near(img, x, y));
+      const newInk = (p, b) => {
+        const img = imgs[p];
         let n = 0;
-        for (let y = Math.max(0, b[1]); y < Math.min(img.h, b[3]); y++) for (let x = Math.max(0, b[0]); x < Math.min(img.w, b[2]); x++) if (dark(img, x, y) && !near(blankImg, x, y)) n++;
+        for (let y = Math.max(0, b[1]); y < Math.min(img.h, b[3]); y++) for (let x = Math.max(0, b[0]); x < Math.min(img.w, b[2]); x++) if (dark(img, x, y) && !near(blankImg[p], x, y)) n++;
         return n;
       };
       const ticks = [];
-      const allowed = expect.map((e) => box(e.r, 2));
+      const allowed = expect.map((e) => ({ p: e.r.page, b: box(e.r, 2) }));
       Object.keys(map.fields).forEach((k) => {
         const f = map.fields[k];
         if (f.kind !== 'check') return;
         const r = byName[f.name].rects[0];
         const on = c.answers[k] === true;
-        const d = newInk(box(r, 0));
-        if (on) allowed.push(box(r, 1));
+        const d = newInk(r.page, box(r, 0));
+        if (on) allowed.push({ p: r.page, b: box(r, 1) });
         if (on ? d < 6 : d !== 0) ticks.push(`${k}: ${on ? 'ticked' : 'not ticked'}, new ink ${d} px`);
       });
       check(`${c.id}: ticked boxes show ink, the others none`, !ticks.length, ticks);
       let changed = 0;
       const sample = [];
-      for (let y = 0; y < img.h; y++)
-        for (let x = 0; x < img.w; x++) {
-          if (!diffAt(x, y)) continue;
-          if (allowed.some((b) => x >= b[0] && x < b[2] && y >= b[1] && y < b[3])) continue;
-          changed++;
-          if (sample.length < 5) sample.push(`${(x / K).toFixed(0)},${(y / K).toFixed(0)}`);
-        }
-      check(`${c.id}: nothing else on the page changed`, changed === 0, { changed, at: sample });
+      for (let p = 1; p <= nPages; p++) {
+        const img = imgs[p];
+        const here = allowed.filter((a) => a.p === p).map((a) => a.b);
+        for (let y = 0; y < img.h; y++)
+          for (let x = 0; x < img.w; x++) {
+            if (!diffAt(img, blankImg[p], x, y)) continue;
+            if (here.some((b) => x >= b[0] && x < b[2] && y >= b[1] && y < b[3])) continue;
+            changed++;
+            if (sample.length < 5) sample.push(`p${p} ${(x / K).toFixed(0)},${(y / K).toFixed(0)}`);
+          }
+      }
+      check(`${c.id}: nothing else on any page changed`, changed === 0, { changed, at: sample });
     }
 
     // every answer empty: the blank form's text, zero fields
@@ -366,7 +440,7 @@ function formPart(spec) {
     });
     Object.keys(map.groups || {}).forEach((g) => (empty[g] = ''));
     const eo = await NS.taxforms.fill(L, bytes, map, empty, fillOpts);
-    const ef = path.join(OUT, `${map.form}-empty.pdf`);
+    const ef = path.join(outDir, `${map.form}-empty.pdf`);
     fs.writeFileSync(ef, eo);
     check('every answer empty: the text is the blank form\'s', allText(ef) === blankText);
     check('every answer empty: zero fields left', (await L.PDFDocument.load(eo)).getForm().getFields().length === 0);
@@ -382,18 +456,23 @@ function formPart(spec) {
     });
     ['sign', 'date', 'caption'].forEach((k) => check(`overlay ${k} is given`, !!ov[k]));
     if (ov.sign && ov.date && ov.caption) {
-      const pw = blankWords.w;
-      const ph = blankWords.h;
+      const sp = ov.sign.page;
+      check('sign, date and caption are on one page', ov.date.page === sp && ov.caption.page === sp, [ov.sign.page, ov.date.page, ov.caption.page]);
+      const ow = blankWords[sp] || blankWords[1];
+      const pw = ow.w;
+      const ph = ow.h;
       ['sign', 'date', 'caption'].forEach((k) => {
         const r = pts(ov[k], pw, ph);
-        const hit = blankWords.words.filter((w) => overlaps(w, r));
+        const hit = ow.words.filter((w) => overlaps(w, r));
         check(`overlay ${k} covers no printed word`, !hit.length, hit.map((w) => w.t));
       });
       const s = pts(ov.sign, pw, ph);
       const cap = pts(ov.caption, pw, ph);
+      // against the signature place; a form that prints a label directly under the signature place puts the caption
+      // under that label (spec.captionGap), and its own overlay check proves only that label lies between them
       const gap = Math.min(Math.abs(cap.top - (s.top + s.h)), Math.abs(s.top - (cap.top + cap.h)));
-      check('overlay caption sits against the signature place', gap <= 3 && cap.x >= s.x - 1 && cap.x + cap.w <= s.x + s.w + 1, { gap, cap, s });
-      await spec.overlays({ check, map, ov, words: blankWords, byName, pw, ph });
+      check('overlay caption sits against the signature place', gap <= (spec.captionGap || 3) && cap.x >= s.x - 1 && cap.x + cap.w <= s.x + s.w + 1, { gap, cap, s });
+      await spec.overlays({ check, map, ov, words: ow, byName, pw, ph });
     }
   };
 }
@@ -432,6 +511,290 @@ const W9_CASES = [
     answers: { name: 'Harbor Light Association', business: 'Harbor Light Sailing', other: true, otherText: 'Unincorporated association', exemptPayee: '5', fatcaCode: 'B', address: '7 Pier Road', cityStateZip: 'Mystic, CT 06355', requester: 'Cedar Lane Fund I LP', accounts: 'A-17, A-18', ein: '98-7654321' }
   }
 ];
+
+// W-8BEN-E: sample entities in the statuses the portal fills in (research Pattern 3)
+const W8BENE_CASES = [
+  {
+    id: 'active-nffe',
+    answers: {
+      name: 'Blue Reef Trading Ltd.',
+      country: 'Cayman Islands',
+      ch3Corporation: true,
+      ch4ActiveNffe: true,
+      street: '94 Solaris Avenue, Camana Bay',
+      cityLine: 'George Town, Grand Cayman KY1-1108',
+      residenceCountry: 'Cayman Islands',
+      ftin: 'KY-482139',
+      activeNffe: true,
+      capacity: true,
+      printName: 'Marisol Ebanks'
+    },
+    exact: ['Blue Reef Trading Ltd.', 'George Town, Grand Cayman KY1-1108']
+  },
+  {
+    id: 'passive-owners',
+    answers: {
+      name: 'Les Érables Holding SAS',
+      country: 'France',
+      ch3Corporation: true,
+      ch4PassiveNffe: true,
+      street: '12 Rue de Rivoli',
+      cityLine: '75004 Paris',
+      residenceCountry: 'France',
+      ftin: '732829320',
+      passiveNffe: true,
+      passiveOwnersListed: true,
+      owner1Name: 'Jonathan Reyes',
+      owner1Address: '410 Park Avenue, New York, NY 10022',
+      owner1Tin: '123-45-6789',
+      owner2Name: 'Amelia Chen-Watts',
+      owner2Address: '2200 Market Street, San Francisco, CA 94114',
+      owner2Tin: '987-65-4320',
+      capacity: true,
+      printName: 'Camille Dubois'
+    },
+    exact: ['Les Érables Holding SAS']
+  },
+  {
+    id: 'passive-none',
+    answers: {
+      name: 'Kestrel Pine Holdings Pte. Ltd.',
+      country: 'Singapore',
+      ch3Corporation: true,
+      ch4PassiveNffe: true,
+      street: '8 Marina View #22-01',
+      cityLine: 'Singapore 018960',
+      residenceCountry: 'Singapore',
+      ftin: '201912345K',
+      passiveNffe: true,
+      passiveNoOwners: true,
+      capacity: true,
+      printName: 'Lim Wei Ling'
+    }
+  },
+  {
+    id: 'ffi-model1',
+    answers: {
+      name: 'Nordhavn Kapital A/S',
+      country: 'Denmark',
+      ch3Corporation: true,
+      ch4ReportingModel1Ffi: true,
+      street: 'Strandvejen 60',
+      cityLine: '2900 Hellerup',
+      residenceCountry: 'Denmark',
+      giin: '98Q96B.00000.LE.250',
+      ftin: '12345678',
+      capacity: true,
+      printName: 'Søren Kjær'
+    },
+    exact: ['Søren Kjær', '98Q96B.00000.LE.250']
+  },
+  {
+    id: 'ffi-participating',
+    answers: {
+      name: 'Alpenrose Privatbank AG',
+      country: 'Switzerland',
+      ch3Corporation: true,
+      ch4ParticipatingFfi: true,
+      street: 'Bahnhofstrasse 21',
+      cityLine: '8001 Zürich',
+      residenceCountry: 'Switzerland',
+      giin: 'A1B2C3.00001.ME.756',
+      ftin: 'CHE-123.456.789',
+      capacity: true,
+      printName: 'Lukas Meier'
+    }
+  },
+  {
+    id: 'ffi-model2',
+    answers: {
+      name: 'Sakura Trust Bank K.K.',
+      country: 'Japan',
+      ch3Corporation: true,
+      ch4ReportingModel2Ffi: true,
+      street: '1-6-6 Marunouchi, Chiyoda-ku',
+      cityLine: 'Tokyo 100-0005',
+      residenceCountry: 'Japan',
+      giin: 'Z9Y8X7.00002.SL.392',
+      ftin: '1234567890123',
+      capacity: true,
+      printName: 'Haruto Sato'
+    }
+  },
+  {
+    id: 'treaty',
+    answers: {
+      name: 'Rheinblick Beteiligungs GmbH',
+      country: 'Germany',
+      ch3Corporation: true,
+      ch4ActiveNffe: true,
+      street: 'Rheinallee 7',
+      cityLine: '40213 Düsseldorf',
+      residenceCountry: 'Germany',
+      ftin: '5133081508159',
+      treatyResident: true,
+      treatyCountry: 'Germany',
+      treatyLob: true,
+      lobActiveTrade: true,
+      treatyArticle: '10(2)(a)',
+      treatyRate: '5',
+      treatyIncome: 'Dividends',
+      treatyExplain1: 'Art. 28(4)',
+      treatyExplain2: 'Owns at least 10 percent of the voting stock of the U.S. company paying the dividends',
+      activeNffe: true,
+      capacity: true,
+      printName: 'Jürgen Weiß'
+    },
+    exact: ['Jürgen Weiß', '40213 Düsseldorf']
+  },
+  {
+    // every text field of the map at once (all nine owner rows), with the remaining Part III boxes and the hybrid yes
+    id: 'every-text-field',
+    answers: Object.assign(
+      {
+        name: 'Ostrava Partners k.s.',
+        country: 'Czech Republic',
+        disregardedName: 'Ostrava Partners Branch s.r.o.',
+        ch3Partnership: true,
+        hybridYes: true,
+        ch4PassiveNffe: true,
+        street: 'Nádražní 112',
+        cityLine: '702 00 Ostrava',
+        residenceCountry: 'Czech Republic',
+        mailStreet: 'P.O. Box 41',
+        mailCityLine: '702 00 Ostrava 2',
+        mailCountry: 'Czech Republic',
+        usTin: '98-7654321',
+        giin: '',
+        ftin: 'CZ12345678',
+        reference: 'CV-2026-0042',
+        treatyResident: true,
+        treatyCountry: 'Czech Republic',
+        treatyLob: true,
+        lobOther: true,
+        lobOtherText: 'Article 17(1)(c)',
+        treatyUsSource: true,
+        treatyArticle: '11(1)',
+        treatyRate: '0',
+        treatyIncome: 'Interest',
+        treatyExplain1: 'None',
+        treatyExplain2: 'The partners are residents of the Czech Republic',
+        treatyExplain3: 'and the partnership is fiscally transparent there',
+        passiveNffe: true,
+        passiveOwnersListed: true,
+        capacity: true,
+        printName: 'Tomáš Dvořák'
+      },
+      ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => ({
+        [`owner${i}Name`]: `Owner ${i} Smith`,
+        [`owner${i}Address`]: `${100 + i} Main Street, Springfield, IL 6270${i}`,
+        [`owner${i}Tin`]: `${i}${i}${i}-0${i}-123${i}`
+      }))
+    ),
+    exact: ['Tomáš Dvořák', 'Nádražní 112']
+  }
+];
+
+// the words printed beside each mapped field on the blank W-8BEN-E (pdftotext of the bundled file)
+const W8BENE_ANCHORS = {
+  name: ['above', /1 Name of organization that is the beneficial owner$/],
+  country: ['above', /^2 Country of incorporation or organization$/],
+  disregardedName: ['above', /^3 Name of disregarded entity receiving the payment/],
+  ch3Corporation: [['right', /^Corporation$/], ['left', /^4 Chapter 3 Status \(entity type\)/]],
+  ch3Partnership: ['right', /^Partnership$/],
+  ch3SimpleTrust: ['right', /^Simple trust$/],
+  ch3TaxExempt: ['right', /^Tax-exempt organization$/],
+  ch3ComplexTrust: ['right', /^Complex trust$/],
+  ch3GovControlled: ['right', /^Foreign Government - Controlled Entity$/, 150],
+  ch3CentralBank: ['right', /^Central Bank of Issue$/],
+  ch3PrivateFoundation: ['right', /^Private foundation$/],
+  ch3Estate: ['right', /^Estate$/],
+  ch3GovIntegral: ['right', /^Foreign Government - Integral Part$/, 150],
+  ch3GrantorTrust: ['right', /^Grantor trust$/],
+  ch3Disregarded: ['right', /^Disregarded entity$/],
+  ch3IntlOrg: ['right', /^International organization$/],
+  hybridYes: [['right', /^Yes No$/], ['left', /hybrid making a treaty claim\? If .Yes,. complete Part III\.$/]],
+  hybridNo: [['right', /^No$/], ['left', /complete Part III\. Yes$/]],
+  // chapter 4: the whole label of each box (the left column's labels end before the right column's boxes at x 326)
+  ch4NonparticipatingFfi: ['right', /^Nonparticipating FFI \(including an FFI related to a Reporting IGA/, 250],
+  ch4ParticipatingFfi: ['right', /^Participating FFI\.$/, 250],
+  ch4ReportingModel1Ffi: ['right', /^Reporting Model 1 FFI\.$/, 250],
+  ch4ReportingModel2Ffi: ['right', /^Reporting Model 2 FFI\.$/, 250],
+  ch4RegisteredDeemedCompliant: ['right', /^Registered deemed-compliant FFI \(other than a reporting Model 1/, 250],
+  ch4SponsoredFfi: ['right', /^Sponsored FFI\. Complete Part IV\.$/, 250],
+  ch4NonregisteringLocalBank: ['right', /^Certified deemed-compliant nonregistering local bank\./, 250],
+  ch4LowValueAccounts: ['right', /^Certified deemed-compliant FFI with only low-value accounts\./, 250],
+  ch4SponsoredCloselyHeld: ['right', /^Certified deemed-compliant sponsored, closely held/, 250],
+  ch4LimitedLifeDebt: ['right', /^Certified deemed-compliant limited life debt investment entity\./, 250],
+  ch4InvestmentNoAccounts: ['right', /^Certain investment entities that do not maintain financial accounts\./, 250],
+  ch4OwnerDocumentedFfi: ['right', /^Owner-documented FFI\. Complete Part X\.$/, 250],
+  ch4RestrictedDistributor: ['right', /^Restricted distributor\. Complete Part XI\.$/, 250],
+  ch4NonreportingIgaFfi: ['right', /^Nonreporting IGA FFI\. Complete Part XII\./, 250],
+  ch4ForeignGovernment: ['right', /^Foreign government, government of a U\.S\. possession, or foreign/, 250],
+  ch4IntlOrg: ['right', /^International organization\. Complete Part XIV\.$/, 250],
+  ch4ExemptRetirementPlan: ['right', /^Exempt retirement plans\. Complete Part XV\.$/, 250],
+  ch4OwnedByExemptOwners: ['right', /^Entity wholly owned by exempt beneficial owners\. Complete Part XVI\.$/, 250],
+  ch4TerritoryFi: ['right', /^Territory financial institution\. Complete Part XVII\.$/, 250],
+  ch4ExceptedGroupEntity: ['right', /^Excepted nonfinancial group entity\. Complete Part XVIII\.$/, 250],
+  ch4ExceptedStartUp: ['right', /^Excepted nonfinancial start-up company\. Complete Part XIX\.$/, 250],
+  ch4ExceptedLiquidation: ['right', /^Excepted nonfinancial entity in liquidation or bankruptcy\./, 250],
+  ch4Org501c: ['right', /^501\(c\) organization\. Complete Part XXI\.$/, 250],
+  ch4Nonprofit: ['right', /^Nonprofit organization\. Complete Part XXII\.$/, 250],
+  ch4PubliclyTradedNffe: ['right', /^Publicly traded NFFE or NFFE affiliate of a publicly traded/, 250],
+  ch4ExceptedTerritoryNffe: ['right', /^Excepted territory NFFE\. Complete Part XXIV\.$/, 250],
+  ch4ActiveNffe: ['right', /^Active NFFE\. Complete Part XXV\.$/, 250],
+  ch4PassiveNffe: ['right', /^Passive NFFE\. Complete Part XXVI\.$/, 250],
+  ch4InterAffiliateFfi: ['right', /^Excepted inter-affiliate FFI\. Complete Part XXVII\.$/, 250],
+  ch4DirectReportingNffe: ['right', /^Direct reporting NFFE\.$/, 250],
+  ch4SponsoredDirectReportingNffe: ['right', /^Sponsored direct reporting NFFE\. Complete Part XXVIII\.$/, 250],
+  ch4NotFinancialAccount: ['right', /^Account that is not a financial account\.$/, 250],
+  street: ['above', /6 Permanent residence address \(street, apt\. or suite no\., or rural route\)/],
+  cityLine: ['above', /^City or town, state or province\. Include postal code where appropriate\.$/],
+  residenceCountry: ['above', /^Country$/],
+  mailStreet: ['above', /^7 Mailing address \(if different from above\)$/],
+  mailCityLine: ['above', /^City or town, state or province\. Include postal code where appropriate\.$/],
+  mailCountry: ['above', /^Country$/],
+  usTin: ['above', /^8 U\.S\. taxpayer identification number \(TIN\), if required$/],
+  giin: ['above', /^9a GIIN$/],
+  ftin: ['above', /^b Foreign TIN$/],
+  noFtin: ['left', /^c Check if FTIN not legally required/],
+  reference: ['above', /^Reference number\(s\) \(see instructions\)$/],
+  activeNffe: [['left', /^39$/], ['above', /XXV/]],
+  // Part III
+  treatyResident: [['left', /^a$/], ['right', /^The beneficial owner is a resident of$/, 140]],
+  treatyCountry: [['left', /a The beneficial owner is a resident of$/], ['right', /^within the meaning of the income tax$/, 160]],
+  treatyLob: [['left', /^b$/], ['right', /^The beneficial owner derives the item \(or items\) of income for which the treaty benefits are claimed/, 480]],
+  lobGovernment: ['right', /^Government$/, 160],
+  lobPension: ['right', /^Tax-exempt pension trust or pension fund$/, 160],
+  lobTaxExempt: ['right', /^Other tax-exempt organization$/, 160],
+  lobPubliclyTraded: ['right', /^Publicly traded corporation$/, 160],
+  lobSubsidiary: ['right', /^Subsidiary of a publicly traded corporation$/, 160],
+  lobOwnershipBaseErosion: ['right', /^Company that meets the ownership and base erosion test$/, 320],
+  lobDerivative: ['right', /^Company that meets the derivative benefits test$/, 320],
+  lobActiveTrade: ['right', /^Company with an item of income that meets active trade or business test$/, 320],
+  lobDiscretionary: ['right', /^Favorable discretionary determination by the U\.S\. competent authority received$/, 320],
+  lobNoArticle: ['right', /^No LOB article in treaty$/, 320],
+  lobOther: ['right', /^Other \(specify Article and paragraph\):$/, 140],
+  lobOtherText: ['left', /Other \(specify Article and paragraph\):$/],
+  treatyUsSource: [['left', /^c$/], ['right', /^The beneficial owner is claiming treaty benefits for U\.S\. source dividends/, 480]],
+  treatyArticle: ['left', /claiming the provisions of Article and paragraph$/],
+  treatyRate: [['left', /the treaty identified on line 14a above to claim a$/], ['right', /^% rate of withholding on \(specify type of income\):/, 250]],
+  treatyIncome: ['left', /% rate of withholding on \(specify type of income\):$/],
+  treatyExplain1: ['left', /meets to be eligible for the rate of withholding:$/],
+  treatyExplain2: ['above', /^Explain the additional conditions in the Article/],
+  // Part XXVI
+  passiveNffe: [['left', /^40a$/], ['above', /XXVI/], ['right', /^I certify that the entity identified in Part I is a foreign entity that is not a financial institution/, 480]],
+  passiveNoOwners: [['left', /^b$/], ['right', /^I further certify that the entity identified in Part I has no substantial U\.S\. owners/, 480]],
+  passiveOwnersListed: [['left', /^c$/], ['right', /^I further certify that the entity identified in Part I has provided the name, address, and TIN of each substantial U\.S\. owner/, 520]],
+  // Part XXIX: the column heads over the first row; every other row is checked as the row under the one above
+  owner1Name: ['above', /^Name$/],
+  owner1Address: ['above', /^Address$/],
+  owner1Tin: ['above', /^TIN$/],
+  capacity: ['right', /^I certify that I have the capacity to sign for the entity identified on line 1/, 400],
+  printName: ['under', /^Print Name$/]
+};
+const W8BENE_BELOW = { cityLine: 'street', residenceCountry: 'street', mailStreet: 'cityLine', mailCityLine: 'mailStreet', mailCountry: 'mailStreet', treatyExplain3: 'treatyExplain2' };
+[2, 3, 4, 5, 6, 7, 8, 9].forEach((i) => ['Name', 'Address', 'Tin'].forEach((c) => (W8BENE_BELOW[`owner${i}${c}`] = `owner${i - 1}${c}`)));
 
 const parts = {
   'W-9': formPart({
@@ -605,6 +968,44 @@ const parts = {
       const under = (r) => bw.words.filter((w) => w.y0 >= r.top + r.h - 0.5 && w.y0 <= r.top + r.h + 4 && w.x1 > r.x && w.x0 < r.x + r.w).map((w) => w.t).join(' ');
       check('the signature label is printed just under sign', /^Signature of beneficial owner/.test(under(s)), under(s));
       check('the date label is printed just under date', /^Date \(MM-DD-YYYY\)/.test(under(d)), under(d));
+    }
+  }),
+  'W-8BEN-E': formPart({
+    key: 'W-8BEN-E 2021-10',
+    d05: 'd67fc5abae5af11df5d6168a60f7a7e7f27044efa63f660cb76c0e47a241ef6e',
+    listing: 'W-8BEN-E',
+    counts: { total: 179, text: 66, comb: 0, check: 112, sig: 1, other: 0 },
+    out: path.join(Lib.SCRATCH, 'exec-06-12', 'filled'),
+    images: [1, 2, 7, 8],
+    // page 8 prints the signature label directly under the signature place; the caption goes under that label
+    captionGap: 12,
+    // the form's Parts I to XXX: every unused group is named by the Part its fields lie in
+    partsNamed: 30,
+    cases: W8BENE_CASES,
+    anchors: W8BENE_ANCHORS,
+    below: W8BENE_BELOW,
+    overlays: async ({ check, map, ov, words: bw, byName, pw, ph }) => {
+      const P = 'topmostSubform[0].Page8[0].';
+      const sig = byName[P + 'f8_30[0]'];
+      const date = byName[P + 'f8_32[0]'];
+      check('the signature field and the date field are in the file, on page 8', !!sig && !!date && sig.kind === 'sig' && date.kind === 'text' && sig.rects[0].page === 8 && date.rects[0].page === 8);
+      if (!sig || !date) return;
+      check('the signature field is removed before flattening', (map.removeBeforeFlatten || []).indexOf(P + 'f8_30[0]') >= 0);
+      const fill = Object.keys(map.fields).filter((k) => map.fields[k].name === P + 'f8_32[0]');
+      const unused = Object.keys(map.unused || {}).filter((r) => map.unused[r].indexOf(P + 'f8_32[0]') >= 0);
+      check('the date field is never filled: unused, with the reason naming the e-sign date overlay', !fill.length && unused.length === 1 && /date overlay/.test(unused[0]), { fill, unused });
+      const same = (o, r) => o.page === r.page && Math.abs(o.x * pw - r.x) < 0.01 && Math.abs(o.y * ph - r.top) < 0.01 && Math.abs(o.w * pw - r.w) < 0.01 && Math.abs(o.h * ph - r.h) < 0.01;
+      check("sign is the signature field's rectangle (page 8)", same(ov.sign, sig.rects[0]), { sign: pts(ov.sign, pw, ph), field: sig.rects[0] });
+      check("date is the date field's rectangle (page 8), MM-DD-YYYY", same(ov.date, date.rects[0]) && ov.date.fmt === 'MM-DD-YYYY', { date: pts(ov.date, pw, ph), fmt: ov.date.fmt, field: date.rects[0] });
+      const s = pts(ov.sign, pw, ph);
+      const d = pts(ov.date, pw, ph);
+      const cap = pts(ov.caption, pw, ph);
+      const under = (r) => bw.words.filter((w) => w.y0 >= r.top + r.h - 0.5 && w.y0 <= r.top + r.h + 4 && w.x1 > r.x && w.x0 < r.x + r.w).map((w) => w.t).join(' ');
+      check('the signature label is printed just under sign', /^Signature of individual authorized to sign for beneficial owner$/.test(under(s)), under(s));
+      check('the date label is printed just under date', /^Date \(MM-DD-YYYY\)/.test(under(d)), under(d));
+      // between the signature place and the caption lies only that printed label
+      const between = bw.words.filter((w) => w.y1 > s.top + s.h && w.y0 < cap.top && w.x1 > cap.x && w.x0 < cap.x + cap.w).map((w) => w.t).join(' ');
+      check('only the signature label lies between sign and the caption under it', between === 'Signature of individual authorized to sign for beneficial owner' && cap.top > s.top + s.h, between);
     }
   })
 };
