@@ -2997,6 +2997,15 @@
       layout.forEach((pg) => pg.unread && (read.unread[pg.unread] = read.unread[pg.unread] || []).push(pg.page));
       read.modelPlaces = layout.modelPlaces || 0;
       res = NS.placement.read(layout, { firmNames: [t.name, t.legalName, t.shortName], fundNames: [o.name, o.shortName] });
+      // The meaning layer's rows for every proposal, only when the measure's own runner asks (window.__readerDump):
+      // kept in memory for that runner to read, never stored, sent or shown, and no field depends on them.
+      if (typeof window !== 'undefined' && window.__readerDump === true && NS.meaning) {
+        try {
+          NS.meaning.lastRows = NS.meaning.features(layout, res);
+        } catch (e) {
+          NS.meaning.lastRows = { error: String((e && e.message) || e) };
+        }
+      }
     } catch (e) {
       // Not the PDF's fault unless the reader says so: the reason is kept and logged, and the message says only what is known.
       console.error('Reading the agreement failed:', e);
