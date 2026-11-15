@@ -133,6 +133,40 @@ const cases = {
     check('holders of the offering with no subscription made here are counted as without an answer, once each', r.unanswered === 3 && r.holders === 2 && r.count === 1, r);
     check('a holder of another offering is not counted', E.nonAccredited({ offerings: [o], investors: [inv('x', ['o2'])], requests: [] }, o).unanswered === 0);
   },
+  managed({ check }) {
+    // C-03: the managed edition's onboarding is left as it is in phase 6. Each slice runs from its first line to the next
+    // line that closes it at the same indent; the recorded hashes are those of plan 06-01's base commit,
+    // 414fd9a2b6eb4e423e1a41fed9a21935c724ea47 (sha256 of the slice's lines joined with \n, first 16 hex digits).
+    const SLICES = [
+      ['assets/js/onboarding.js', '  const LABELS = {', '4fa6f6fc0b8759be', false, '  };'],
+      ['assets/js/onboarding.js', '  function stepsFor(mode) {', '0fa03c54b5cc28dd'],
+      ['assets/js/onboarding.js', '  function stepAccreditation(verified, opts) {', '73e617b210a0b0dd'],
+      ['assets/js/onboarding.js', '  function stepReview() {', '3f94f46405a65dfa'],
+      ['assets/js/onboarding.js', '  function validate(step) {', '756467c16d196fc5'],
+      ['assets/js/onboarding.js', '  NS.views.onboarding = {', '777c8ec499ced579', false, '  };'],
+      ['assets/js/data.js', '  const ACCRED = ', 'c5ec1b6df6b607c1', true]
+    ];
+    const hashOf = (file, start, single, end) => {
+      const lines = SRC(file).split('\n');
+      const a = lines.findIndex((l) => l.startsWith(start));
+      if (a < 0) return 'missing';
+      const z = single ? a : lines.findIndex((l, i) => i > a && l === (end || '  }'));
+      if (z < 0) return 'unterminated';
+      return require('crypto').createHash('sha256').update(lines.slice(a, z + 1).join('\n')).digest('hex').slice(0, 16);
+    };
+    SLICES.forEach(([file, start, want, single, end]) => {
+      const got = hashOf(file, start, single, end);
+      check(`managed edition unchanged: ${path.basename(file)} "${start.trim()}" hashes as at the base commit`, got === want, { got, want });
+    });
+    check('the slice test notices a change (a copy of stepsFor with one character altered hashes differently)', (() => {
+      const lines = SRC('assets/js/onboarding.js').split('\n');
+      const a = lines.findIndex((l) => l.startsWith('  function stepsFor(mode) {'));
+      const z = lines.findIndex((l, i) => i > a && l === '  }');
+      const body = lines.slice(a, z + 1).join('\n');
+      const h = (s) => require('crypto').createHash('sha256').update(s).digest('hex').slice(0, 16);
+      return h(body) === '0fa03c54b5cc28dd' && h(body.replace('mode', 'Mode')) !== '0fa03c54b5cc28dd';
+    })());
+  },
   titles({ check }) {
     const text = SRC('assets/js/console.js');
     const titles = [];

@@ -523,6 +523,121 @@ const parts = {
     await A.context.close();
   },
 
+  /**
+   * Rule 501(i): the investor uploads a written acknowledgment of their purchaser representative; a renamed text file and a
+   * 26 MB file are refused with nothing stored; the sponsor sees the representative and downloads the same bytes.
+   */
+  async repack({ check, S }) {
+    const A = await L.open(S, { context: { acceptDownloads: true } });
+    const p = A.page;
+    const off = await L.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+    const inv = await L.createInvitation(p, { name: INV.name, email: INV.email, offeringId: off.offeringId, cents: 0 });
+    await p.goto(`${S.base}?tenant=${inv.tenant}#invite-${inv.token}`);
+    const PDF = Buffer.from('%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\n% acknowledgment of purchaser representative, signed by Dana Whitfield\ntrailer << /Root 1 0 R >>\n%%EOF\n');
+    const storedRep = () =>
+      p.evaluate(
+        (invId) =>
+          new Promise((res) => {
+            const r = indexedDB.open('cvp-documents', 1);
+            r.onsuccess = () => {
+              const t = r.result.transaction('files', 'readonly').objectStore('files').getAllKeys();
+              t.onsuccess = () => res(t.result.filter((k) => String(k).indexOf(`rep-${invId}-`) === 0));
+              t.onerror = () => res(['ERROR']);
+            };
+            r.onerror = () => res(['ERROR']);
+          }),
+        inv.investorId
+      );
+    const msg = () => p.locator('#err-stRepFile').innerText().catch(() => '');
+    const fileId = () => p.evaluate(() => (window.CVPortal.state.ui.ob || { d: {} }).d.stRepFileId || '');
+    const R = {};
+    const w = await L.walk(p, {
+      name: INV.name,
+      acc: 'no',
+      exp: 'Four years of real estate syndications',
+      edu: 'Nurse',
+      rep: 'yes',
+      repName: 'Morgan Ellery',
+      repFirm: 'Ellery Advisory Partners',
+      amount: 60000,
+      onFilled: async (hd) => {
+        if (hd !== 'Investor status') return;
+        R.input = await p.locator('#ob-stRepFile').count();
+        R.label = await p.locator('label[for="ob-stRepFile"]').innerText().catch(() => '');
+        await p.setInputFiles('#ob-stRepFile', { name: 'acknowledgment.pdf', mimeType: 'application/pdf', buffer: Buffer.from('This is a plain text note, not a PDF.\n') });
+        await p.waitForTimeout(400);
+        R.textMsg = await msg();
+        R.textId = await fileId();
+        R.textStored = await storedRep();
+        const big = Buffer.alloc(26 * 1024 * 1024, 0x20);
+        PDF.copy(big, 0);
+        await p.setInputFiles('#ob-stRepFile', { name: 'large.pdf', mimeType: 'application/pdf', buffer: big });
+        await p.waitForTimeout(800);
+        R.bigMsg = await msg();
+        R.bigId = await fileId();
+        R.bigStored = await storedRep();
+        await p.screenshot({ path: path.join(SHOTS, 'repack-refused.png'), fullPage: true });
+        await p.setInputFiles('#ob-stRepFile', { name: 'acknowledgment.pdf', mimeType: 'application/pdf', buffer: PDF });
+        await p.waitForTimeout(400);
+        R.okMsg = await msg();
+        R.okId = await fileId();
+        R.okStored = await storedRep();
+        R.hint = await p.locator('#hint-stRepFile').innerText().catch(() => '');
+        R.screen = await L.screenText(p);
+        await p.screenshot({ path: path.join(SHOTS, 'repack-attached.png'), fullPage: true });
+      }
+    });
+    check('the status step offers the acknowledgment upload under the representative’s name and firm, marked optional', R.input === 1 && /written acknowledgment that this person is your purchaser representative/.test(R.label) && /Optional/.test(R.label), R.label);
+    check('a text file renamed .pdf is refused with a plain message and nothing is stored', /not a PDF, PNG or JPEG/.test(R.textMsg) && !R.textId && R.textStored && R.textStored.length === 0, { msg: R.textMsg, id: R.textId, stored: R.textStored });
+    check('a 26 MB file is refused with a plain message and nothing is stored', /26 MB, more than the 25 MB/.test(R.bigMsg) && !R.bigId && R.bigStored && R.bigStored.length === 0, { msg: R.bigMsg, id: R.bigId, stored: R.bigStored });
+    check('a PDF is accepted and stored as rep-{investor id}-{time in base 36}', !R.okMsg && new RegExp(`^rep-${inv.investorId}-[0-9a-z]+$`).test(R.okId) && R.okStored.length === 1 && R.okStored[0] === R.okId && /Attached: acknowledgment\.pdf/.test(R.hint), R);
+    check('the investor continues to the agreement with no field error', w.reached && w.errors.length === 0, { seen: w.seen, errors: w.errors });
+    const leak = L.leakCheck(R.screen || '');
+    check('white label: the status screen with the upload passes the leak check', leak.ok, leak.hits);
+    const r = await requestOf(p, inv.investorId, off.offeringId);
+    const rep = (r && r.qual && r.qual.sophistication && r.qual.sophistication.rep) || {};
+    check('qual.sophistication.rep has name, firm, fileId and fileName', rep.name === 'Morgan Ellery' && rep.firm === 'Ellery Advisory Partners' && rep.fileId === R.okId && rep.fileName === 'acknowledgment.pdf', rep);
+    // A refused file after the request is made: the investor still continues, and the acknowledgment on file stays.
+    check('Back reaches the status step', await backTo(p, 'Investor status'), await L.heading(p));
+    await p.setInputFiles('#ob-stRepFile', { name: 'notes.pdf', mimeType: 'application/pdf', buffer: Buffer.from('plain words') });
+    await p.waitForTimeout(400);
+    const again = await msg();
+    await L.submit(p);
+    const hd = await L.heading(p);
+    const errs = await L.fieldErrors(p);
+    const r2 = await requestOf(p, inv.investorId, off.offeringId);
+    const rep2 = (r2 && r2.qual && r2.qual.sophistication && r2.qual.sophistication.rep) || {};
+    check('after a refused file the investor can still continue (no field error), and the earlier acknowledgment stays', /not a PDF, PNG or JPEG/.test(again) && hd === 'Tax certification' && errs.length === 0 && rep2.fileId === R.okId, { again, hd, errs, rep2 });
+    // A second request naming a representative with no file, for the row's other wording.
+    await p.evaluate((offId) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const i = JSON.parse(JSON.stringify(ws.investors[0]));
+      i.id = 'rep-check-inv';
+      i.title = i.contact = 'Avery Lindqvist';
+      i.positions = [];
+      ws.investors.push(i);
+      const q = NS.ops.submitSubscription(ws, i, ws.offerings.find((x) => x.id === offId), { cents: 5000000, signature: i.contact });
+      q.id = 'rep-check-req';
+      q.qual = { regime: '506b', at: new Date().toISOString(), accredited: false, basis: '', sophistication: { experience: '', education: '', rep: { name: 'Jordan Pike', firm: 'Pike Wealth' } } };
+      NS.app.save(true);
+    }, off.offeringId);
+    await consoleRequests(p);
+    const row = await requestRow(p, r.id);
+    await p.screenshot({ path: path.join(SHOTS, 'repack-requests.png'), fullPage: true });
+    check('the request row shows "Purchaser representative: Morgan Ellery, Ellery Advisory Partners" and the download', /Purchaser representative: Morgan Ellery, Ellery Advisory Partners/.test(row) && /Download the written acknowledgment/.test(row), row);
+    const row2 = await requestRow(p, 'rep-check-req');
+    check('a representative named without a file reads "no written acknowledgment uploaded"', /Purchaser representative: Jordan Pike, Pike Wealth; no written acknowledgment uploaded/.test(row2), row2);
+    const [dl] = await Promise.all([p.waitForEvent('download', { timeout: 15000 }), p.click(`[data-action=kyc-iv-file][data-id="${R.okId}"]`)]);
+    const got = fs.readFileSync(await dl.path());
+    check('the download returns the same bytes, under the uploaded name', got.equals(PDF) && dl.suggestedFilename() === 'acknowledgment.pdf', { size: got.length, want: PDF.length, name: dl.suggestedFilename() });
+    const leakR = L.leakCheck(await L.screenText(p));
+    check('white label: the requests view passes the leak check', leakR.ok, leakR.hits);
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  },
+
   /** A flow saved at the old self-certified Accreditation step resumes at the status step with its answers. */
   async resume({ check, S }) {
     const A = await L.open(S);
