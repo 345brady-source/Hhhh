@@ -198,9 +198,9 @@ function commonChecks(check, F) {
  * C-01 in server mode, one boundary: n non-accredited purchasers counted in the console before the invitation is sent.
  * Returns the flow with R.warnBefore (warning count before the investor answers), R.warn (warning text after answering no).
  */
-function fullFlow(S, check, n, tag) {
+function fullFlow(S, check, n, tag, extra) {
   const answers = { acc: 'no', exp: 'Eight years of private real estate commitments', edu: 'Physician', rep: 'no', amount: 60000 };
-  return serverFlow(S, check, {
+  return serverFlow(S, check, Object.assign({
     tag,
     exemption: 'Rule 506(b)',
     answers,
@@ -213,7 +213,7 @@ function fullFlow(S, check, n, tag) {
     onStatus: async (p, R) => {
       R.warn = await warnText(p);
     }
-  });
+  }, extra || {}));
 }
 
 const parts = {
@@ -224,10 +224,37 @@ const parts = {
    * sees the plain warning (no number, no name), still completes, and the console flags the request 36 of 35.
    */
   async full({ check, S }) {
-    // 34 counted: the boundary below the limit.
-    const F34 = await fullFlow(S, check, 34, 'full34');
+    // 34 counted: the boundary below the limit. Before the console imports, the stored request's dates are altered (a device
+    // that backdates its subscription): the console sets the submitted day and the closing date itself.
+    const F34 = await fullFlow(S, check, 34, 'full34', {
+      beforeImport: async (srv, inv) => {
+        srv.alter(inv.serverId, (s) => {
+          s.request.submitted = '2001-01-02';
+          s.request.dealing = '1999-12-31';
+        });
+        return srv.submission(inv.serverId);
+      }
+    });
     try {
       check('34 non-accredited purchasers counted in the console before the invitation', F34.counted === 34, F34.counted);
+      // The requests page's Date column is the subscription's closing date (closed-end offering) or effective date (open-ended),
+      // not the day the request was made (that is the Submitted column). Both are the console's own, never the device's.
+      const dates = await F34.A.page.evaluate(({ rid, oid, iid }) => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const r = ws.requests.find((x) => x.id === rid) || {};
+        const o = ws.offerings.find((x) => x.id === oid) || {};
+        const it = ws.invitations.find((x) => x.id === iid) || {};
+        return { submitted: r.submitted, dealing: r.dealing, closeDate: o.closeDate, open: NS.ops.isOpen(o), want: NS.ops.isOpen(o) ? NS.ops.subscriptionDate(NS.dates.today()) : o.closeDate, today: NS.dates.today(), sentDay: String(it.sentAt || '').slice(0, 10) };
+      }, { rid: F34.req && F34.req.id, oid: F34.off.offeringId, iid: F34.inv.id });
+      check('the stored request was backdated before import (submitted 2001-01-02, dealing 1999-12-31)', !!F34.stored && F34.stored.request && F34.stored.request.submitted === '2001-01-02' && F34.stored.request.dealing === '1999-12-31', F34.stored && F34.stored.request && { submitted: F34.stored.request.submitted, dealing: F34.stored.request.dealing });
+      check('the console sets the request’s own dates: submitted is today (not before the invitation), the Date column’s date is the offering’s closing or effective date', dates.submitted === dates.today && dates.submitted >= dates.sentDay && dates.dealing === dates.want, dates);
+      await L.consoleRoute(F34.A.page, 'console-requests', '[data-action=req-tab][data-t=all]');
+      await F34.A.page.click('[data-action=req-tab][data-t=all]');
+      await F34.A.page.waitForTimeout(300);
+      const row34 = F34.req ? await requestRow(F34.A.page, F34.req.id) : '';
+      await F34.A.page.screenshot({ path: path.join(SHOTS, 'full34-requests.png'), fullPage: true });
+      check('the request row shows no backdated date (2001 or 1999)', !!row34 && !/\b(2001|1999)\b/.test(row34), row34);
       const sn = F34.snaps[0] || {};
       check('with 34 counted the snapshot the investor’s page receives carries offering.nonAccreditedFull === false', F34.snaps.length >= 1 && !!sn.offering && sn.offering.nonAccreditedFull === false, sn.offering && { nonAccreditedFull: sn.offering.nonAccreditedFull });
       check('with 34 counted the investor answering "not accredited" sees no warning (before or after answering)', F34.R.warnBefore === 0 && !FULL_WARN.test(F34.R.warn || '') && !FULL_WARN.test(F34.R.status || ''), { before: F34.R.warnBefore, warn: F34.R.warn });
