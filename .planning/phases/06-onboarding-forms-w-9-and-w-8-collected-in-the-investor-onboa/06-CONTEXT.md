@@ -6,3 +6,11 @@
 - D-03 (2026-11-15, 01.4 D-46): tax forms attached to a subscription agreement get no fields from the subscription reader; this step collects them instead.
 - D-04 (owner, 2026-11-15, verbatim: "for the w-9 use a fillable version of the form if possible"): the W-9 is the official IRS fillable PDF, filled through its own form fields, then e-signed; the same for the W-8 forms where the IRS fillable PDF allows it.
 - Carried from earlier phases: two people only, investor and sponsor (D-30); investor fields never mandatory; white label; the word "basic" is never used.
+
+## Orchestrator choices while the owner is asleep (2026-11-16; owner may override any of them)
+- C-01: An over-limit Reg A Tier 2 commitment, or a 36th non-accredited 506(b) purchaser: the investor sees a plain warning and the sponsor is flagged; nothing is blocked (consistent with D-30, no investor field mandatory). Why: the sponsor, not the portal, decides whether to accept a subscription.
+- C-02: The 35 non-accredited purchasers are counted per offering, with a note to the sponsor that offerings within 90 days may be integrated. Why: the portal knows offerings, not the issuer's whole history.
+- C-03: The managed (Carrow & Vale) edition's onboarding is left as it is in this phase. Why: smallest change; the DIY flow is the product being launched.
+- C-04: The exemption list splits Regulation A into Tier 1 and Tier 2; an existing untiered value is treated as Tier 2. Why: the 10 percent limit applies only to Tier 2.
+- C-05: Build order: the investor-status step first (needs no IRS file and fixes the forced "accredited" answer that stops non-accredited investors subscribing today), the tax forms second.
+- Open for the owner (asked in the morning summary): (a) tax forms in-house (research recommends: white label, no third party sees full SSNs) or an outside service (about $2-3 per form, own branding, TIN matching which the owner excluded); (b) the official IRS PDFs (fw9.pdf Rev. March 2024, fw8ben.pdf and fw8bene.pdf Rev. October 2021): this session cannot reach irs.gov, so either allow www.irs.gov in the environment's network settings or upload the three files. The tax-form plan's first task (listing the real form fields) waits for them; no field name is guessed.
