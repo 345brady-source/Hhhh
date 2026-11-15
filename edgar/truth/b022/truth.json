@@ -1,0 +1,867 @@
+{
+ "file": "set-b/b022/doc.pdf",
+ "id": "b022",
+ "pages": 4,
+ "page_size_pt": [
+  612.0,
+  792.0
+ ],
+ "page_sizes": {
+  "1": [
+   612.0,
+   792.0
+  ],
+  "2": [
+   612.0,
+   792.0
+  ],
+  "3": [
+   612.0,
+   792.0
+  ],
+  "4": [
+   612.0,
+   792.0
+  ]
+ },
+ "page_kinds": {
+  "1": "text",
+  "2": "text",
+  "3": "text",
+  "4": "text"
+ },
+ "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
+ "signing": {
+  "investor_pages": [
+   3
+  ],
+  "firm_pages": [],
+  "co_investor": true,
+  "third_parties": [
+   "branch-manager",
+   "financial-consultant"
+  ],
+  "kind": "Futures fund subscription agreement exhibit (1998 plain text): the subscriber completes amount, broker account number, account name, residence and circles an account type (page 3), signs with title and date (pages 3-4, a joint subscriber in the second column); the branch manager attests and the financial consultant completes the broker section (page 4). No issuer acceptance block."
+ },
+ "counts_per_page": {
+  "3": {
+   "total": 16,
+   "tickbox": 8,
+   "initials": 0,
+   "blank": 6,
+   "signature": 2,
+   "date": 0
+  },
+  "4": {
+   "total": 11,
+   "tickbox": 0,
+   "initials": 0,
+   "blank": 8,
+   "signature": 1,
+   "date": 2
+  }
+ },
+ "counts_total": {
+  "total": 27,
+  "tickbox": 8,
+  "initials": 0,
+  "blank": 14,
+  "signature": 3,
+  "date": 2
+ },
+ "counts_by_owner": {
+  "co-investor": 3,
+  "investor": 17,
+  "third-party": 7
+ },
+ "sure_per_page": {
+  "1": "draft",
+  "2": "draft",
+  "3": "sure of the boxes; the account type options are circled (no printed box, kept as tick places with a doubt); the signature table prints two columns one under the other",
+  "4": "sure; the second column's title and date lines belong to the joint subscriber; the branch and consultant section is the broker's"
+ },
+ "not_fields": {
+  "2": [
+   "the dashed separators between paragraphs"
+  ],
+  "3": [
+   "the digit separators inside the account number box; headings and the payment paragraph"
+  ],
+  "4": [
+   "the printed security number; the send-to address; the dashed rule"
+  ],
+  "1": [
+   "prose only"
+  ]
+ },
+ "places": [
+  {
+   "id": "p03-003",
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "subscription amount",
+   "printed_label": "SUBSCRIPTION AMOUNT",
+   "must": true,
+   "x0": 57.2,
+   "y0": 250.0,
+   "x1": 151.2,
+   "y1": 275.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      57.2,
+      261.3,
+      151.2,
+      276.8
+     ]
+    }
+   },
+   "what": "amount"
+  },
+  {
+   "id": "p03-004",
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "broker account number",
+   "printed_label": "ACCOUNT NUMBER",
+   "must": true,
+   "x0": 303.8,
+   "y0": 250.0,
+   "x1": 474.0,
+   "y1": 275.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: A blank inside a sentence: check what goes here and who fill",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      303.8,
+      261.3,
+      474.0,
+      276.8
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p03-005",
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "account name",
+   "printed_label": "ACCOUNT NAME",
+   "must": true,
+   "x0": 151.1,
+   "y0": 306.3,
+   "x1": 409.4,
+   "y1": 321.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Investor name",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "name",
+     "box": [
+      151.1,
+      306.3,
+      409.4,
+      321.8
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p03-006",
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "account name, second line",
+   "must": false,
+   "x0": 151.2,
+   "y0": 328.8,
+   "x1": 409.4,
+   "y1": 344.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      151.2,
+      328.8,
+      409.4,
+      344.3
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p03-007",
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "state or country of residence",
+   "printed_label": "STATE OR COUNTRY OF RESIDENCE",
+   "must": true,
+   "x0": 151.1,
+   "y0": 351.3,
+   "x1": 409.4,
+   "y1": 366.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "STATE OR COUNTRY OF RESIDENCE",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "address",
+     "box": [
+      151.1,
+      351.3,
+      409.4,
+      366.8
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p03-011",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "account type: individual account",
+   "printed_label": "1 INDIVIDUAL ACCOUNT",
+   "must": false,
+   "x0": 33.7,
+   "y0": 434.3,
+   "x1": 151.1,
+   "y1": 444.0,
+   "printed_as": "measured by hand",
+   "doubt": "circle the option: no printed box"
+  },
+  {
+   "id": "p03-013",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "account type: corporation",
+   "printed_label": "3 CORPORATION",
+   "must": false,
+   "x0": 227.5,
+   "y0": 434.3,
+   "x1": 303.8,
+   "y1": 444.0,
+   "printed_as": "measured by hand",
+   "doubt": "circle the option: no printed box"
+  },
+  {
+   "id": "p03-016",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "account type: IRA, KEOGH, SEP",
+   "printed_label": "6 IRA, KEOGH, SEP",
+   "must": false,
+   "x0": 485.7,
+   "y0": 434.3,
+   "x1": 562.0,
+   "y1": 444.0,
+   "printed_as": "measured by hand",
+   "doubt": "circle the option: no printed box"
+  },
+  {
+   "id": "p03-012",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "account type: joint account",
+   "printed_label": "2 JOINT ACCOUNT",
+   "must": false,
+   "x0": 33.7,
+   "y0": 456.8,
+   "x1": 121.8,
+   "y1": 466.5,
+   "printed_as": "measured by hand",
+   "doubt": "circle the option: no printed box"
+  },
+  {
+   "id": "p03-014",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "account type: partnership",
+   "printed_label": "4 PARTNERSHIP",
+   "must": false,
+   "x0": 227.5,
+   "y0": 456.8,
+   "x1": 303.8,
+   "y1": 466.5,
+   "printed_as": "measured by hand",
+   "doubt": "circle the option: no printed box"
+  },
+  {
+   "id": "p03-017",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "account type: employee benefit plan",
+   "printed_label": "7 EMPLOYEE BENEFIT PLAN",
+   "must": false,
+   "x0": 485.7,
+   "y0": 456.8,
+   "x1": 544.4,
+   "y1": 466.5,
+   "printed_as": "measured by hand",
+   "doubt": "circle the option: no printed box"
+  },
+  {
+   "id": "p03-015",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "account type: trust",
+   "printed_label": "5 TRUST",
+   "must": false,
+   "x0": 227.5,
+   "y0": 479.3,
+   "x1": 268.6,
+   "y1": 489.0,
+   "printed_as": "measured by hand",
+   "doubt": "circle the option: no printed box"
+  },
+  {
+   "id": "p03-018",
+   "page": 3,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "account type: other",
+   "printed_label": "8 OTHER",
+   "must": false,
+   "x0": 485.7,
+   "y0": 479.3,
+   "x1": 491.6,
+   "y1": 489.0,
+   "printed_as": "measured by hand",
+   "doubt": "circle the option: no printed box"
+  },
+  {
+   "id": "p03-008",
+   "page": 3,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "account type: other (specify)",
+   "printed_label": "OTHER",
+   "must": false,
+   "x0": 63.1,
+   "y0": 486.3,
+   "x1": 157.0,
+   "y1": 501.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "OTHER",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      63.1,
+      486.3,
+      157.0,
+      501.8
+     ]
+    }
+   },
+   "what": "text"
+  },
+  {
+   "id": "p03-009",
+   "page": 3,
+   "kind": "signature",
+   "owner": "investor",
+   "label": "subscriber signature (first column)",
+   "printed_label": "SUBSCRIBER'S SIGNATURE",
+   "must": true,
+   "x0": 33.7,
+   "y0": 723.8,
+   "x1": 385.9,
+   "y1": 736.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "investor",
+    "field_label": "Signature",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "signature",
+     "owner": "investor",
+     "what": null,
+     "box": [
+      33.7,
+      722.5,
+      385.9,
+      738.0
+     ]
+    }
+   }
+  },
+  {
+   "id": "p03-010",
+   "page": 3,
+   "kind": "signature",
+   "owner": "co-investor",
+   "label": "joint subscriber signature (second column; its caption is printed on the next page)",
+   "printed_label": "SUBSCRIBER'S SIGNATURE",
+   "must": false,
+   "x0": 33.7,
+   "y0": 735.0,
+   "x1": 385.9,
+   "y1": 747.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor",
+     "what": "text",
+     "box": [
+      33.7,
+      733.8,
+      385.9,
+      749.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-001",
+   "page": 4,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "signatory title (first column)",
+   "printed_label": "TITLE",
+   "must": false,
+   "x0": 33.7,
+   "y0": 48.8,
+   "x1": 385.9,
+   "y1": 61.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-entity",
+    "field_label": "Title",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-entity",
+     "what": "title",
+     "box": [
+      33.7,
+      47.5,
+      385.9,
+      63.0
+     ]
+    }
+   },
+   "what": "title"
+  },
+  {
+   "id": "p04-002",
+   "page": 4,
+   "kind": "blank",
+   "owner": "co-investor",
+   "label": "joint signatory title (second column)",
+   "printed_label": "TITLE",
+   "must": false,
+   "x0": 33.7,
+   "y0": 60.0,
+   "x1": 385.9,
+   "y1": 72.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-entity",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-entity",
+     "what": "title",
+     "box": [
+      33.7,
+      58.8,
+      385.9,
+      74.3
+     ]
+    }
+   },
+   "what": "title"
+  },
+  {
+   "id": "p04-003",
+   "page": 4,
+   "kind": "date",
+   "owner": "investor",
+   "label": "subscriber signing date (first column)",
+   "printed_label": "DATE",
+   "must": true,
+   "x0": 33.7,
+   "y0": 105.0,
+   "x1": 385.9,
+   "y1": 117.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "date",
+    "field_owner": "investor-entity",
+    "field_label": "Date signed",
+    "candidate": "underscore",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-entity",
+     "what": "date",
+     "box": [
+      33.7,
+      103.8,
+      385.9,
+      119.3
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-004",
+   "page": 4,
+   "kind": "date",
+   "owner": "co-investor",
+   "label": "joint subscriber signing date (second column)",
+   "printed_label": "DATE",
+   "must": false,
+   "x0": 33.7,
+   "y0": 116.3,
+   "x1": 385.9,
+   "y1": 129.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "investor-entity",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
+    "initial": {
+     "kind": "blank",
+     "owner": "investor-entity",
+     "what": "date",
+     "box": [
+      33.7,
+      115.0,
+      385.9,
+      130.5
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-005",
+   "page": 4,
+   "kind": "signature",
+   "owner": "third-party",
+   "label": "branch manager attestation signature",
+   "printed_label": "Branch Manager's Signature",
+   "must": true,
+   "x0": 192.2,
+   "y0": 317.5,
+   "x1": 385.9,
+   "y1": 333.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "signature",
+    "field_owner": "third-party",
+    "field_label": "Branch Manager's Signature",
+    "candidate": "underscore",
+    "why": "reader marked it: This line looks meant for a second signer, a witness or a no",
+    "initial": {
+     "kind": "signature",
+     "owner": "third-party",
+     "what": null,
+     "box": [
+      192.2,
+      317.5,
+      385.9,
+      333.0
+     ]
+    }
+   }
+  },
+  {
+   "id": "p04-006",
+   "page": 4,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "branch manager printed name",
+   "printed_label": "Print Name:",
+   "must": true,
+   "x0": 104.2,
+   "y0": 340.0,
+   "x1": 385.9,
+   "y1": 355.5,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "name",
+    "field_owner": "third-party",
+    "field_label": "Print Name",
+    "candidate": "underscore",
+    "why": "reader marked it: This place carries words of acceptance and also names anothe",
+    "initial": {
+     "kind": "blank",
+     "owner": "third-party",
+     "what": "name",
+     "box": [
+      104.2,
+      340.0,
+      385.9,
+      355.5
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p04-007",
+   "page": 4,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "short line in the branch / consultant table (IOI entry or check-one line)",
+   "printed_label": "FOR BRANCH USE ENTER IOI FOR SECURITY NO.",
+   "must": false,
+   "x0": 33.7,
+   "y0": 463.8,
+   "x1": 80.7,
+   "y1": 479.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "third-party",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: This place carries words of acceptance and also names anothe",
+    "initial": {
+     "kind": "blank",
+     "owner": "third-party",
+     "what": "name",
+     "box": [
+      33.7,
+      463.8,
+      80.7,
+      479.3
+     ]
+    }
+   },
+   "what": "text",
+   "doubt": "the two table columns are printed one under the other: this short line may be the branch IOI entry or the check-one line"
+  },
+  {
+   "id": "p04-008",
+   "page": 4,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "financial consultant name",
+   "printed_label": "FINANCIAL CONSULTANT NAME",
+   "must": true,
+   "x0": 33.7,
+   "y0": 476.3,
+   "x1": 344.9,
+   "y1": 489.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "third-party",
+    "field_label": "Text",
+    "candidate": "underscore",
+    "why": "reader marked it: This place carries words of acceptance and also names anothe",
+    "initial": {
+     "kind": "blank",
+     "owner": "third-party",
+     "what": "phone",
+     "box": [
+      33.7,
+      475.0,
+      344.9,
+      490.5
+     ]
+    }
+   },
+   "what": "name",
+   "doubt": "the line under the consultant name caption may be meant for the consultant's signature (a print name line follows)"
+  },
+  {
+   "id": "p04-009",
+   "page": 4,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "financial consultant printed name",
+   "printed_label": "PRINT NAME",
+   "must": true,
+   "x0": 98.3,
+   "y0": 486.3,
+   "x1": 344.9,
+   "y1": 501.8,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "name",
+    "field_owner": "third-party",
+    "field_label": "PRINT NAME",
+    "candidate": "underscore",
+    "why": "reader marked it: This place carries words of acceptance and also names anothe",
+    "initial": {
+     "kind": "blank",
+     "owner": "third-party",
+     "what": "name",
+     "box": [
+      98.3,
+      486.3,
+      344.9,
+      501.8
+     ]
+    }
+   },
+   "what": "name"
+  },
+  {
+   "id": "p04-010",
+   "page": 4,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "financial consultant telephone number",
+   "printed_label": "FC TELEPHONE NO.",
+   "must": true,
+   "x0": 133.5,
+   "y0": 497.5,
+   "x1": 344.9,
+   "y1": 513.0,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "third-party",
+    "field_label": "FC TELEPHONE NO",
+    "candidate": "underscore",
+    "why": "reader marked it: This place carries words of acceptance and also names anothe",
+    "initial": {
+     "kind": "blank",
+     "owner": "third-party",
+     "what": "phone",
+     "box": [
+      133.5,
+      497.5,
+      344.9,
+      513.0
+     ]
+    }
+   },
+   "what": "phone"
+  },
+  {
+   "id": "p04-011",
+   "page": 4,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "financial consultant wire code",
+   "printed_label": "FC WIRE CODE",
+   "must": true,
+   "x0": 110.1,
+   "y0": 508.8,
+   "x1": 344.9,
+   "y1": 524.3,
+   "printed_as": "measure candidate: underscore (run of underscores)",
+   "prefill": {
+    "origin": "field+candidate",
+    "field_kind": "text",
+    "field_owner": "third-party",
+    "field_label": "FC WIRE CODE",
+    "candidate": "underscore",
+    "why": "reader marked it: This place carries words of acceptance and also names anothe",
+    "initial": {
+     "kind": "blank",
+     "owner": "third-party",
+     "what": "text",
+     "box": [
+      110.1,
+      508.8,
+      344.9,
+      524.3
+     ]
+    }
+   },
+   "what": "text"
+  }
+ ],
+ "may_fill": [],
+ "source": "hand",
+ "mode": "train",
+ "prefilled": {
+  "when": "2026-11-15T00:56:56Z",
+  "candidates": "8a9b94eb22c3b951-f01586d5.json",
+  "result": "out-set-b/b022/result.json",
+  "fields": 21,
+  "counted_candidates": 23
+ },
+ "done": "2026-11-15T01:00:48Z"
+}

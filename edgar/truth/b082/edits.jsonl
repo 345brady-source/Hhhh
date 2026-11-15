@@ -77,3 +77,155 @@
 {"when": "2026-11-15T00:50:05Z", "op": "set", "place": "p07-005", "changes": ["kind=tickbox", "what=", "must=false", "label=custodial account: simplified employee pension/trust (SEP)", "printed_label=Simplified Employee Pension/Trust (SEP)", "doubt="], "why": null}
 {"when": "2026-11-15T00:50:05Z", "op": "add", "place": "p07-006", "why": null}
 {"when": "2026-11-15T00:50:05Z", "op": "set", "place": "p08-001", "changes": ["kind=tickbox", "what=", "must=false", "label=custodial account: pension or profit-sharing plan", "printed_label=Pension or Profit-Sharing Plan", "doubt="], "why": null}
+{"when": "2026-11-15T00:50:05Z", "op": "set", "place": "p08-002", "changes": ["kind=tickbox", "what=", "must=false", "label=custodial account: uniform gift to minors act", "printed_label=Uniform Gift to Minors Act", "doubt="], "why": null}
+{"when": "2026-11-15T00:50:05Z", "op": "set", "place": "p08-003", "changes": ["what=text", "must=false", "label=UGMA state", "printed_label=State of:"], "why": null}
+{"when": "2026-11-15T00:50:05Z", "op": "set", "place": "p08-004", "changes": ["owner=investor", "what=name", "must=false", "label=UGMA: custodian for (name of the minor)", "printed_label=Custodian for:", "doubt="], "why": null}
+{"when": "2026-11-15T00:50:06Z", "op": "set", "place": "p08-005", "changes": ["kind=tickbox", "what=", "must=false", "label=custodial account: other", "printed_label=Other (Specify):", "doubt="], "why": null}
+{"when": "2026-11-15T00:50:06Z", "op": "add", "place": "p08-006", "why": null}
+{"when": "2026-11-15T00:50:06Z", "op": "add", "place": "p08-007", "why": null}
+{"when": "2026-11-15T00:50:06Z", "op": "add", "place": "p08-008", "why": null}
+{"when": "2026-11-15T00:50:06Z", "op": "add", "place": "p08-009", "why": null}
+{"when": "2026-11-15T00:50:06Z", "op": "add", "place": "p08-010", "why": null}
+{"when": "2026-11-15T00:50:06Z", "op": "add", "place": "p08-011", "why": null}
+{"when": "2026-11-15T00:50:06Z", "op": "add", "place": "p08-012", "why": null}
+{"when": "2026-11-15T00:50:07Z", "op": "add", "place": "p08-013", "why": null}
+{"when": "2026-11-15T00:50:07Z", "op": "add", "place": "p08-014", "why": null}
+{"when": "2026-11-15T00:50:07Z", "op": "add", "place": "p09-001", "why": null}
+{"when": "2026-11-15T00:50:07Z", "op": "add", "place": "p09-002", "why": null}
+{"when": "2026-11-15T00:50:07Z", "op": "add", "place": "p09-003", "why": null}
+{"when": "2026-11-15T00:50:07Z", "op": "add", "place": "p09-004", "why": null}
+{"when": "2026-11-15T00:50:07Z", "op": "add", "place": "p09-005", "why": null}
+{"when": "2026-11-15T00:50:07Z", "op": "add", "place": "p09-006", "why": null}
+{"when": "2026-11-15T00:50:07Z", "op": "add", "place": "p09-007", "why": null}
+{"when": "2026-11-15T00:50:07Z", "op": "add", "place": "p10-001", "why": null}
+{"when": "2026-11-15T00:50:08Z", "op": "add", "place": "p10-002", "why": null}
+{"when": "2026-11-15T00:50:08Z", "op": "add", "place": "p10-003", "why": null}
+{"when": "2026-11-15T00:50:08Z", "op": "add", "place": "p10-004", "why": null}
+{"when": "2026-11-15T00:50:08Z", "op": "add", "place": "p10-005", "why": null}
+{"when": "2026-11-15T00:50:08Z", "op": "add", "place": "p10-006", "why": null}
+{"when": "2026-11-15T00:50:08Z", "op": "add", "place": "p10-007", "why": null}
+{"when": "2026-11-15T00:50:08Z", "op": "add", "place": "p10-008", "why": null}
+{"when": "2026-11-15T00:50:09Z", "op": "add", "place": "p10-009", "why": null}
+{"when": "2026-11-15T00:50:09Z", "op": "add", "place": "p10-010", "why": null}
+{"when": "2026-11-15T00:50:09Z", "op": "add", "place": "p10-011", "why": null}
+{"when": "2026-11-15T00:50:09Z", "op": "add", "place": "p10-012", "why": null}
+{"when": "2026-11-15T00:50:09Z", "op": "add", "place": "p10-013", "why": null}
+{"when": "2026-11-15T00:50:09Z", "op": "add", "place": "p10-014", "why": null}
+{"when": "2026-11-15T00:50:10Z", "op": "add", "place": "p10-015", "why": null}
+{"when": "2026-11-15T00:50:10Z", "op": "add", "place": "p10-016", "why": null}
+{"when": "2026-11-15T00:50:10Z", "op": "add", "place": "p10-017", "why": null}
+{"when": "2026-11-15T00:50:10Z", "op": "add", "place": "p10-018", "why": null}
+{"when": "2026-11-15T00:50:10Z", "op": "add", "place": "p10-019", "why": null}
+{"when": "2026-11-15T00:50:10Z", "op": "add", "place": "p10-020", "why": null}
+{"when": "2026-11-15T00:50:10Z", "op": "add", "place": "p10-021", "why": null}
+{"when": "2026-11-15T00:50:10Z", "op": "add", "place": "p10-022", "why": null}
+{"when": "2026-11-15T00:50:10Z", "op": "add", "place": "p10-023", "why": null}
+{"when": "2026-11-15T00:50:10Z", "op": "add", "place": "p10-024", "why": null}
+{"when": "2026-11-15T00:50:10Z", "op": "add", "place": "p10-025", "why": null}
+{"when": "2026-11-15T00:50:10Z", "op": "add", "place": "p10-026", "why": null}
+{"when": "2026-11-15T00:50:10Z", "op": "add", "place": "p10-027", "why": null}
+{"when": "2026-11-15T00:50:11Z", "op": "add", "place": "p10-028", "why": null}
+{"when": "2026-11-15T00:50:11Z", "op": "add", "place": "p10-029", "why": null}
+{"when": "2026-11-15T00:50:11Z", "op": "add", "place": "p10-030", "why": null}
+{"when": "2026-11-15T00:50:11Z", "op": "add", "place": "p10-031", "why": null}
+{"when": "2026-11-15T00:50:11Z", "op": "add", "place": "p10-032", "why": null}
+{"when": "2026-11-15T00:50:11Z", "op": "add", "place": "p12-001", "why": null}
+{"when": "2026-11-15T00:50:11Z", "op": "add", "place": "p12-002", "why": null}
+{"when": "2026-11-15T00:50:11Z", "op": "add", "place": "p12-003", "why": null}
+{"when": "2026-11-15T00:50:11Z", "op": "add", "place": "p12-004", "why": null}
+{"when": "2026-11-15T00:50:11Z", "op": "add", "place": "p12-005", "why": null}
+{"when": "2026-11-15T00:50:11Z", "op": "add", "place": "p12-006", "why": null}
+{"when": "2026-11-15T00:50:11Z", "op": "add", "place": "p12-007", "why": null}
+{"when": "2026-11-15T00:50:11Z", "op": "add", "place": "p12-008", "why": null}
+{"when": "2026-11-15T00:50:12Z", "op": "add", "place": "p12-009", "why": null}
+{"when": "2026-11-15T00:50:12Z", "op": "add", "place": "p12-010", "why": null}
+{"when": "2026-11-15T00:50:12Z", "op": "add", "place": "p12-011", "why": null}
+{"when": "2026-11-15T00:50:12Z", "op": "add", "place": "p12-012", "why": null}
+{"when": "2026-11-15T00:50:12Z", "op": "add", "place": "p12-013", "why": null}
+{"when": "2026-11-15T00:50:12Z", "op": "add", "place": "p12-014", "why": null}
+{"when": "2026-11-15T00:50:12Z", "op": "add", "place": "p12-015", "why": null}
+{"when": "2026-11-15T00:50:12Z", "op": "add", "place": "p12-016", "why": null}
+{"when": "2026-11-15T00:50:12Z", "op": "add", "place": "p12-017", "why": null}
+{"when": "2026-11-15T00:50:12Z", "op": "add", "place": "p13-001", "why": null}
+{"when": "2026-11-15T00:50:12Z", "op": "add", "place": "p13-002", "why": null}
+{"when": "2026-11-15T00:50:12Z", "op": "add", "place": "p13-003", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "set", "place": "p14-001", "changes": ["kind=tickbox", "what=", "must=false", "label=suitability: net worth of at least $70,000 and gross income of at least $70,000 (or the higher state requirement)", "printed_label=", "doubt="], "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "set", "place": "p14-002", "changes": ["kind=tickbox", "what=", "must=false", "label=non-custodial: participate in the distribution reinvestment plan", "printed_label=", "doubt="], "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "set", "place": "p14-003", "changes": ["kind=tickbox", "what=", "must=false", "label=non-custodial: distributions paid by check to the registration address", "printed_label=", "doubt="], "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "set", "place": "p14-004", "changes": ["kind=tickbox", "what=", "must=false", "label=non-custodial: distributions deposited directly into the account below", "printed_label=", "doubt="], "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "set", "place": "p14-016", "changes": ["kind=tickbox", "what=", "must=false", "label=custodial: participate in the distribution reinvestment plan", "printed_label=", "doubt="], "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "set", "place": "p14-017", "changes": ["kind=tickbox", "what=", "must=false", "label=custodial: distributions sent to the custodian", "printed_label=", "doubt="], "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p14-018", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p14-019", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p14-020", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p14-021", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p14-022", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p14-023", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p14-024", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p14-025", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p14-026", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p14-027", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p15-001", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p15-002", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p15-003", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p15-004", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p15-005", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p15-006", "why": null}
+{"when": "2026-11-15T00:50:13Z", "op": "add", "place": "p15-007", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p15-008", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p15-009", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p15-010", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p15-011", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p15-012", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p15-013", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p15-014", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p15-015", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p15-016", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p15-017", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p15-018", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p15-019", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p16-001", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p16-002", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p16-003", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "add", "place": "p16-004", "why": null}
+{"when": "2026-11-15T00:50:14Z", "op": "set", "place": "p17-002", "changes": ["kind=tickbox", "what=", "must=false", "label=payment method: by mail (check)", "printed_label=By Mail", "doubt="], "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "set", "place": "p17-003", "changes": ["kind=tickbox", "what=", "must=false", "label=payment method: by wire transfer", "printed_label=By Wire Transfer", "doubt="], "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "set", "place": "p17-004", "changes": ["kind=tickbox", "what=", "must=false", "label=consent to electronic delivery of reports", "printed_label=", "doubt="], "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p18-001", "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p19-001", "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p19-002", "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p19-003", "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p19-004", "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p19-005", "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p19-006", "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p19-007", "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p19-008", "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p19-009", "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p20-001", "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p21-001", "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p21-002", "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p21-003", "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p21-004", "why": null}
+{"when": "2026-11-15T00:50:15Z", "op": "add", "place": "p21-005", "why": null}
+{"when": "2026-11-15T00:50:16Z", "op": "add", "place": "p21-006", "why": null}
+{"when": "2026-11-15T00:50:16Z", "op": "add", "place": "p21-007", "why": null}
+{"when": "2026-11-15T00:50:16Z", "op": "add", "place": "p21-008", "why": null}
+{"when": "2026-11-15T00:50:16Z", "op": "add", "place": "p21-009", "why": null}
+{"when": "2026-11-15T00:50:16Z", "op": "add", "place": "p21-010", "why": null}
+{"when": "2026-11-15T00:50:16Z", "op": "add", "place": "p21-011", "why": null}
+{"when": "2026-11-15T00:50:16Z", "op": "add", "place": "p21-012", "why": null}
+{"when": "2026-11-15T00:50:21Z", "op": "add", "place": "p08-015", "why": null}
+{"when": "2026-11-15T00:50:21Z", "op": "add", "place": "p08-016", "why": null}
+{"when": "2026-11-15T00:50:21Z", "op": "add", "place": "p08-017", "why": null}
+{"when": "2026-11-15T00:50:21Z", "op": "add", "place": "p08-018", "why": null}
+{"when": "2026-11-15T00:50:21Z", "op": "add", "place": "p10-033", "why": null}
+{"when": "2026-11-15T00:50:21Z", "op": "add", "place": "p10-034", "why": null}
+{"when": "2026-11-15T00:50:21Z", "op": "add", "place": "p10-035", "why": null}
+{"when": "2026-11-15T00:50:21Z", "op": "add", "place": "p12-018", "why": null}
+{"when": "2026-11-15T00:50:21Z", "op": "add", "place": "p12-019", "why": null}
+{"when": "2026-11-15T00:50:21Z", "op": "add", "place": "p12-020", "why": null}
+{"when": "2026-11-15T00:50:49Z", "op": "meta", "changes": ["signing.kind=Non-traded REIT subscription agreement (landscape print of an appendix): the investor completes sections 1-7 and 9-10 (pages 6-18) and signs on page 19 (individual owner) or page 21 (trust, corporation, partnership); a joint owner signs and initials beside them; a custodian signs custodial accounts; the registered representative and an authorized principal of the broker-dealer complete section 8 and sign (pages 15-16). No issuer acceptance block.", "signing.third_parties=broker-dealer,custodian"], "why": null}
+{"when": "2026-11-15T00:50:49Z", "op": "meta", "changes": ["sure.6=sure", "sure.7=sure", "sure.8=sure; the custodian table is completed by the investor about their custodian; the digit-mark rows are one place per number", "sure.9=sure", "sure.10=sure of the places; the table captions sit at the top of each band (the writing room is under the caption); the joint table is captioned joint owner or minor (co-investor; for a minor the custodian writes it)", "sure.12=sure; the trust and entity tables are separated from the individual table", "sure.13=sure", "sure.14=sure", "sure.15=sure; the whole section is completed by the broker-dealer", "sure.16=sure; the second signature band has no room under its caption", "sure.17=sure", "sure.18=sure", "sure.19=sure; the custodian's signature band has no room under its caption; the custodian's name band is cut by the page break", "sure.20=sure; the tail of the custodian name band", "sure.21=sure"], "why": null}
+{"when": "2026-11-15T00:50:49Z", "op": "meta", "changes": ["not.1=the issuer's address block, the prospectus date gap (issuer) and the paragraphs", "not.2=prose only", "not.3=instructions only", "not.4=instructions only", "not.5=instructions only", "not.6=the frame under the RIA sentence; headings", "not.7=the page footer", "not.8=the funds-to gap in the registration paragraph (issuer); headings", "not.9=the empty captionless band at the top (the social security cell continued over the page break) and the empty captionless band at the foot of the table", "not.11=blank page with a footer", "not.12=the investor / co-investor column headings over the initials; the empty captionless band at the foot of the entity table", "not.13=the paragraphs", "not.14=the voided-check note", "not.15=the warranty paragraphs", "not.17=the company contact information (printed issuer details, its empty e-mail line included); the escrow and wire details", "not.18=the declaration paragraph", "not.19=the certification paragraphs", "not.22=the stockholder notice: prose only", "not.23=prose only", "not.24=prose only"], "why": null}
+{"when": "2026-11-15T00:50:54Z", "op": "del", "place": ["p14-015"], "n": 1, "why": null}
+{"when": "2026-11-15T00:50:56Z", "op": "done"}
