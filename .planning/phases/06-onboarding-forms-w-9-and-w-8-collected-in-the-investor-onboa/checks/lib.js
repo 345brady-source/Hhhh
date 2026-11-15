@@ -13,10 +13,16 @@ const SCRATCH = path.join(os.tmpdir(), 'claude-0/-home-user-Hhhh/718a3a12-5721-5
 const VENDOR = process.env.VENDOR_DIR || path.join(SCRATCH, 'vendor');
 const OUT = process.env.P6_OUT || path.join(SCRATCH, 'exec-06-01', 'checks-out');
 fs.mkdirSync(OUT, { recursive: true });
-// Phase 4's agreement and its fields are reused; its PDF goes into this check's folder, not phase 4's.
-if (!process.env.SIGN_OUT) process.env.SIGN_OUT = path.join(OUT, 'p4');
-const P4 = require(path.join(ROOT, '.planning/phases/04-signing-inside-onboarding/checks/lib.js'));
-const { chromium } = require('playwright');
+// Phase 4's agreement and its fields are reused; its PDF goes into this check's folder, not phase 4's. Loaded only when a
+// browser check needs it, so the pure checks (status-math.js) run with plain node and no browser package.
+let p4 = null;
+function P4() {
+  if (!p4) {
+    if (!process.env.SIGN_OUT) process.env.SIGN_OUT = path.join(OUT, 'p4');
+    p4 = require(path.join(ROOT, '.planning/phases/04-signing-inside-onboarding/checks/lib.js'));
+  }
+  return p4;
+}
 
 const LOCAL = {
   'pdf.js/3.11.174/pdf.min.js': path.join(VENDOR, 'pdfjs/package/build/pdf.min.js'),
@@ -55,6 +61,7 @@ function serve() {
 async function start() {
   const server = await serve();
   const origin = `http://127.0.0.1:${server.address().port}`;
+  const { chromium } = require('playwright');
   const browser = await chromium.launch();
   const stop = async () => {
     await browser.close().catch(() => {});
@@ -103,7 +110,7 @@ async function setupPortal(S, A, opts) {
     const ws = window.CVPortal.state.ws;
     return (ws.offerings.find((x) => x.status === 'Raising') || ws.offerings[0]).name;
   });
-  const b64 = await P4.agreementPdf(A.context, offName);
+  const b64 = await P4().agreementPdf(A.context, offName);
   return page.evaluate(
     async ({ b64, fields, exemption }) => {
       const NS = window.CVPortal;
@@ -130,12 +137,12 @@ async function setupPortal(S, A, opts) {
       NS.app.save(true);
       return { offeringId: o.id, offeringName: o.name, ready: NS.esign.templateReady(ws, o.id), exemption: o.structure.exemption };
     },
-    { b64, fields: P4.TEMPLATE_FIELDS, exemption: opts.exemption || 'Rule 506(b)' }
+    { b64, fields: P4().TEMPLATE_FIELDS, exemption: opts.exemption || 'Rule 506(b)' }
   );
 }
 
-const createInvitation = P4.createInvitation;
-const sandbox = P4.sandbox;
+const createInvitation = (...a) => P4().createInvitation(...a);
+const sandbox = (...a) => P4().sandbox(...a);
 const heading = (page) => page.locator('.ivf-form h1').first().innerText().catch(() => '');
 async function submit(page) {
   await page.click('.ivf-form .ob-actions button[type=submit]');
@@ -311,4 +318,4 @@ async function runParts(parts, opts) {
   process.exit(failed.length ? 1 : 0);
 }
 
-module.exports = { ROOT, SCRATCH, VENDOR, OUT, chromium, missingVendor, serve, start, open, setupPortal, createInvitation, sandbox, heading, submit, fieldErrors, walk, screenText, leakCheck, reporter, runParts, VENDORS, VENDOR_RE, WORD_RE };
+module.exports = { ROOT, SCRATCH, VENDOR, OUT, missingVendor, serve, start, open, setupPortal, createInvitation, sandbox, heading, submit, fieldErrors, walk, screenText, leakCheck, reporter, runParts, VENDORS, VENDOR_RE, WORD_RE };
