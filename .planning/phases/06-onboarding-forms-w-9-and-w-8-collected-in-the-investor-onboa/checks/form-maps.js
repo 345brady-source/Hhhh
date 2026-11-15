@@ -185,6 +185,52 @@ function formPart(spec) {
     const nPages = (await L.PDFDocument.load(bytes)).getPageCount();
     const blankWords = {};
     for (let p = 1; p <= nPages; p++) blankWords[p] = words(file, p);
+
+    // spec.partsNamed: every unused group's reason starts with the Part its fields lie in ("Part XIV, ..."), and each of
+    // its fields lies in that Part on the printed form. A Part runs from its printed header ("Part" and its numeral at
+    // the left margin) to the next header, across pages.
+    if (spec.partsNamed) {
+      const heads = [];
+      for (let p = 1; p <= nPages; p++) {
+        const ws = blankWords[p].words;
+        ws.forEach((w) => {
+          if (w.t !== 'Part' || w.x0 > 66 || w.y1 - w.y0 < 11) return;
+          const n = ws.find((v) => v !== w && v.x0 < 70 && Math.abs(v.y0 - w.y0) < 1 && /^[IVX]+$/.test(v.t));
+          if (n) heads.push({ page: p, top: w.y0, part: n.t });
+        });
+      }
+      const ROMAN = Array.from({ length: 30 }, (_, i) => {
+        let n = i + 1;
+        let r = '';
+        [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']].forEach(([v, c]) => {
+          while (n >= v) {
+            r += c;
+            n -= v;
+          }
+        });
+        return r;
+      });
+      const found = heads.map((h) => h.part).filter((x, i, a) => a.indexOf(x) === i);
+      check(`the printed form's Parts are found in order, Part I to Part ${ROMAN[spec.partsNamed - 1]}`, JSON.stringify(found) === JSON.stringify(ROMAN.slice(0, spec.partsNamed)), found);
+      const partOf = (r) => {
+        let cur = null;
+        heads.forEach((h) => {
+          if (h.page < r.page || (h.page === r.page && h.top <= r.top)) cur = h.part;
+        });
+        return cur;
+      };
+      const partBad = [];
+      Object.keys(map.unused || {}).forEach((reason) => {
+        const m = /^Part ([IVX]+)\b/.exec(reason);
+        if (!m || ROMAN.indexOf(m[1]) < 0 || ROMAN.indexOf(m[1]) >= spec.partsNamed) return partBad.push(`reason does not start with its Part: "${reason.slice(0, 60)}"`);
+        map.unused[reason].forEach((n) => {
+          const l = byName[n];
+          const at = l && partOf(l.rects[0]);
+          if (at !== m[1]) partBad.push(`${n}: listed under Part ${m[1]}, lies in Part ${at}`);
+        });
+      });
+      check('every unused group names the Part its fields lie in', !partBad.length, partBad);
+    }
     const groupOf = {};
     Object.keys(map.groups || {}).forEach((g) => map.groups[g].forEach((k, i) => (groupOf[k] = { g, i })));
     // a field with no printed words of its own (a table row under the first) is checked as the row under an anchored one
@@ -484,6 +530,168 @@ const W8BENE_CASES = [
       printName: 'Marisol Ebanks'
     },
     exact: ['Blue Reef Trading Ltd.', 'George Town, Grand Cayman KY1-1108']
+  },
+  {
+    id: 'passive-owners',
+    answers: {
+      name: 'Les Érables Holding SAS',
+      country: 'France',
+      ch3Corporation: true,
+      ch4PassiveNffe: true,
+      street: '12 Rue de Rivoli',
+      cityLine: '75004 Paris',
+      residenceCountry: 'France',
+      ftin: '732829320',
+      passiveNffe: true,
+      passiveOwnersListed: true,
+      owner1Name: 'Jonathan Reyes',
+      owner1Address: '410 Park Avenue, New York, NY 10022',
+      owner1Tin: '123-45-6789',
+      owner2Name: 'Amelia Chen-Watts',
+      owner2Address: '2200 Market Street, San Francisco, CA 94114',
+      owner2Tin: '987-65-4320',
+      capacity: true,
+      printName: 'Camille Dubois'
+    },
+    exact: ['Les Érables Holding SAS']
+  },
+  {
+    id: 'passive-none',
+    answers: {
+      name: 'Kestrel Pine Holdings Pte. Ltd.',
+      country: 'Singapore',
+      ch3Corporation: true,
+      ch4PassiveNffe: true,
+      street: '8 Marina View #22-01',
+      cityLine: 'Singapore 018960',
+      residenceCountry: 'Singapore',
+      ftin: '201912345K',
+      passiveNffe: true,
+      passiveNoOwners: true,
+      capacity: true,
+      printName: 'Lim Wei Ling'
+    }
+  },
+  {
+    id: 'ffi-model1',
+    answers: {
+      name: 'Nordhavn Kapital A/S',
+      country: 'Denmark',
+      ch3Corporation: true,
+      ch4ReportingModel1Ffi: true,
+      street: 'Strandvejen 60',
+      cityLine: '2900 Hellerup',
+      residenceCountry: 'Denmark',
+      giin: '98Q96B.00000.LE.250',
+      ftin: '12345678',
+      capacity: true,
+      printName: 'Søren Kjær'
+    },
+    exact: ['Søren Kjær', '98Q96B.00000.LE.250']
+  },
+  {
+    id: 'ffi-participating',
+    answers: {
+      name: 'Alpenrose Privatbank AG',
+      country: 'Switzerland',
+      ch3Corporation: true,
+      ch4ParticipatingFfi: true,
+      street: 'Bahnhofstrasse 21',
+      cityLine: '8001 Zürich',
+      residenceCountry: 'Switzerland',
+      giin: 'A1B2C3.00001.ME.756',
+      ftin: 'CHE-123.456.789',
+      capacity: true,
+      printName: 'Lukas Meier'
+    }
+  },
+  {
+    id: 'ffi-model2',
+    answers: {
+      name: 'Sakura Trust Bank K.K.',
+      country: 'Japan',
+      ch3Corporation: true,
+      ch4ReportingModel2Ffi: true,
+      street: '1-6-6 Marunouchi, Chiyoda-ku',
+      cityLine: 'Tokyo 100-0005',
+      residenceCountry: 'Japan',
+      giin: 'Z9Y8X7.00002.SL.392',
+      ftin: '1234567890123',
+      capacity: true,
+      printName: 'Haruto Sato'
+    }
+  },
+  {
+    id: 'treaty',
+    answers: {
+      name: 'Rheinblick Beteiligungs GmbH',
+      country: 'Germany',
+      ch3Corporation: true,
+      ch4ActiveNffe: true,
+      street: 'Rheinallee 7',
+      cityLine: '40213 Düsseldorf',
+      residenceCountry: 'Germany',
+      ftin: '5133081508159',
+      treatyResident: true,
+      treatyCountry: 'Germany',
+      treatyLob: true,
+      lobActiveTrade: true,
+      treatyArticle: '10(2)(a)',
+      treatyRate: '5',
+      treatyIncome: 'Dividends',
+      treatyExplain1: 'Art. 28(4)',
+      treatyExplain2: 'Owns at least 10 percent of the voting stock of the U.S. company paying the dividends',
+      activeNffe: true,
+      capacity: true,
+      printName: 'Jürgen Weiß'
+    },
+    exact: ['Jürgen Weiß', '40213 Düsseldorf']
+  },
+  {
+    // every text field of the map at once (all nine owner rows), with the remaining Part III boxes and the hybrid yes
+    id: 'every-text-field',
+    answers: Object.assign(
+      {
+        name: 'Ostrava Partners k.s.',
+        country: 'Czech Republic',
+        disregardedName: 'Ostrava Partners Branch s.r.o.',
+        ch3Partnership: true,
+        hybridYes: true,
+        ch4PassiveNffe: true,
+        street: 'Nádražní 112',
+        cityLine: '702 00 Ostrava',
+        residenceCountry: 'Czech Republic',
+        mailStreet: 'P.O. Box 41',
+        mailCityLine: '702 00 Ostrava 2',
+        mailCountry: 'Czech Republic',
+        usTin: '98-7654321',
+        giin: '',
+        ftin: 'CZ12345678',
+        reference: 'CV-2026-0042',
+        treatyResident: true,
+        treatyCountry: 'Czech Republic',
+        treatyLob: true,
+        lobOther: true,
+        lobOtherText: 'Article 17(1)(c)',
+        treatyUsSource: true,
+        treatyArticle: '11(1)',
+        treatyRate: '0',
+        treatyIncome: 'Interest',
+        treatyExplain1: 'None',
+        treatyExplain2: 'The partners are residents of the Czech Republic',
+        treatyExplain3: 'and the partnership is fiscally transparent there',
+        passiveNffe: true,
+        passiveOwnersListed: true,
+        capacity: true,
+        printName: 'Tomáš Dvořák'
+      },
+      ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => ({
+        [`owner${i}Name`]: `Owner ${i} Smith`,
+        [`owner${i}Address`]: `${100 + i} Main Street, Springfield, IL 6270${i}`,
+        [`owner${i}Tin`]: `${i}${i}${i}-0${i}-123${i}`
+      }))
+    ),
+    exact: ['Tomáš Dvořák', 'Nádražní 112']
   }
 ];
 
@@ -552,10 +760,41 @@ const W8BENE_ANCHORS = {
   noFtin: ['left', /^c Check if FTIN not legally required/],
   reference: ['above', /^Reference number\(s\) \(see instructions\)$/],
   activeNffe: [['left', /^39$/], ['above', /XXV/]],
+  // Part III
+  treatyResident: [['left', /^a$/], ['right', /^The beneficial owner is a resident of$/, 140]],
+  treatyCountry: [['left', /a The beneficial owner is a resident of$/], ['right', /^within the meaning of the income tax/]],
+  treatyLob: [['left', /^b$/], ['right', /^The beneficial owner derives the item \(or items\) of income for which the treaty benefits are claimed/, 480]],
+  lobGovernment: ['right', /^Government$/, 160],
+  lobPension: ['right', /^Tax-exempt pension trust or pension fund$/, 160],
+  lobTaxExempt: ['right', /^Other tax-exempt organization$/, 160],
+  lobPubliclyTraded: ['right', /^Publicly traded corporation$/, 160],
+  lobSubsidiary: ['right', /^Subsidiary of a publicly traded corporation$/, 160],
+  lobOwnershipBaseErosion: ['right', /^Company that meets the ownership and base erosion test$/, 320],
+  lobDerivative: ['right', /^Company that meets the derivative benefits test$/, 320],
+  lobActiveTrade: ['right', /^Company with an item of income that meets active trade or business test$/, 320],
+  lobDiscretionary: ['right', /^Favorable discretionary determination by the U\.S\. competent authority received$/, 320],
+  lobNoArticle: ['right', /^No LOB article in treaty$/, 320],
+  lobOther: ['right', /^Other \(specify Article and paragraph\):$/, 140],
+  lobOtherText: ['left', /Other \(specify Article and paragraph\):$/],
+  treatyUsSource: [['left', /^c$/], ['right', /^The beneficial owner is claiming treaty benefits for U\.S\. source dividends/, 480]],
+  treatyArticle: ['left', /claiming the provisions of Article and paragraph$/],
+  treatyRate: [['left', /the treaty identified on line 14a above to claim a$/], ['right', /^% rate of withholding on \(specify type of income\):/, 250]],
+  treatyIncome: ['left', /% rate of withholding on \(specify type of income\):$/],
+  treatyExplain1: ['left', /meets to be eligible for the rate of withholding:$/],
+  treatyExplain2: ['above', /^Explain the additional conditions in the Article/],
+  // Part XXVI
+  passiveNffe: [['left', /^40a$/], ['above', /XXVI/], ['right', /^I certify that the entity identified in Part I is a foreign entity that is not a financial institution/, 480]],
+  passiveNoOwners: [['left', /^b$/], ['right', /^I further certify that the entity identified in Part I has no substantial U\.S\. owners/, 480]],
+  passiveOwnersListed: [['left', /^c$/], ['right', /^I further certify that the entity identified in Part I has provided the name, address, and TIN of each substantial U\.S\. owner/, 520]],
+  // Part XXIX: the column heads over the first row; every other row is checked as the row under the one above
+  owner1Name: ['above', /^Name$/],
+  owner1Address: ['above', /^Address$/],
+  owner1Tin: ['above', /^TIN$/],
   capacity: ['right', /^I certify that I have the capacity to sign for the entity identified on line 1/, 400],
   printName: ['under', /^Print Name$/]
 };
-const W8BENE_BELOW = { cityLine: 'street', residenceCountry: 'street', mailStreet: 'cityLine', mailCityLine: 'mailStreet', mailCountry: 'mailStreet' };
+const W8BENE_BELOW = { cityLine: 'street', residenceCountry: 'street', mailStreet: 'cityLine', mailCityLine: 'mailStreet', mailCountry: 'mailStreet', treatyExplain3: 'treatyExplain2' };
+[2, 3, 4, 5, 6, 7, 8, 9].forEach((i) => ['Name', 'Address', 'Tin'].forEach((c) => (W8BENE_BELOW[`owner${i}${c}`] = `owner${i - 1}${c}`)));
 
 const parts = {
   'W-9': formPart({
@@ -740,6 +979,8 @@ const parts = {
     images: [1, 2, 7, 8],
     // page 8 prints the signature label directly under the signature place; the caption goes under that label
     captionGap: 12,
+    // the form's Parts I to XXX: every unused group is named by the Part its fields lie in
+    partsNamed: 30,
     cases: W8BENE_CASES,
     anchors: W8BENE_ANCHORS,
     below: W8BENE_BELOW,
