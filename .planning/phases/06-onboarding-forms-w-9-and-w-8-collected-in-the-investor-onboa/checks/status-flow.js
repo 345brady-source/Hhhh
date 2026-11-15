@@ -37,6 +37,21 @@ async function consoleRequests(page) {
   await page.waitForTimeout(300);
 }
 
+/**
+ * The sponsor chooses the offering's exemption on the console offering page, with the page's own select (C-04). Returns
+ * the value then stored on the offering and the options the select offers.
+ */
+async function chooseExemption(page, offeringId, value) {
+  await consoleOffering(page, offeringId);
+  await page.selectOption('#of-structure-exemption', value);
+  await page.waitForTimeout(300);
+  return page.evaluate((id) => {
+    const o = window.CVPortal.state.ws.offerings.find((x) => x.id === id);
+    const sel = document.getElementById('of-structure-exemption');
+    return { stored: (o.structure || {}).exemption, options: sel ? Array.from(sel.options).map((x) => x.value) : [], selected: sel ? sel.value : '', hints: Array.from(document.querySelectorAll('#of-structure-exemption ~ .cs-hint, label[for="of-structure-exemption"] .cs-hint')).map((x) => x.innerText).join('\n') };
+  }, offeringId);
+}
+
 /** The eligibility panel's text on the console offering page ('' when there is none). */
 const eligibilityText = (page) =>
   page.evaluate(() => {
@@ -722,6 +737,85 @@ const parts = {
     check('from there the investor reaches the agreement with no field error', w.reached && w.errors.length === 0 && /\| Investor status$/.test(w.seen[0]), { seen: w.seen, errors: w.errors });
     const r = await requestOf(p, inv.investorId, off.offeringId);
     check('the request carries the status answer', !!r && r.qual && r.qual.accredited === false, r && r.qual);
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  },
+
+  /**
+   * D-01, C-01, C-04: the sponsor picks Regulation A Tier 2 on the offering page; a person who is not accredited gives income
+   * 150,000 and net worth 400,000, sees a $40,000 limit, commits $50,000, is warned and still subscribes; the request keeps
+   * the figures and the limit; the sponsor's panel lists the investor as over their limit.
+   */
+  async regA({ check, S }) {
+    const A = await L.open(S);
+    const p = A.page;
+    const off = await L.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+    const ex = await chooseExemption(p, off.offeringId, 'Regulation A Tier 2');
+    check('the offering page’s select offers the three Regulation A choices and stores "Regulation A Tier 2"', ex.stored === 'Regulation A Tier 2' && ex.selected === 'Regulation A Tier 2' && ['Regulation A Tier 1', 'Regulation A Tier 2', 'Regulation A Tier 2, exchange-listed'].every((v) => ex.options.indexOf(v) >= 0) && ex.options.indexOf('Regulation A') < 0, ex);
+    const inv = await L.createInvitation(p, { name: INV.name, email: INV.email, offeringId: off.offeringId, cents: 0 });
+    await p.goto(`${S.base}?tenant=${inv.tenant}#invite-${inv.token}`);
+    const R = {};
+    const w = await L.walk(p, {
+      name: INV.name,
+      acc: 'no',
+      amount: 50000,
+      onStep: async (hd) => {
+        if (hd === 'Investor status') R.limitBefore = await p.locator('#ra-limit').count();
+      },
+      onFilled: async (hd) => {
+        if (hd === 'Investor status') {
+          R.kind = await p.evaluate(() => (document.querySelector('input[name="ob-stRaKind"]:checked') || {}).value || '');
+          R.soph = await p.locator('#ob-stExp, #ob-stEdu, input[name="ob-stRep"]').count();
+          R.emptyLine = await p.locator('#ra-limit').innerText().catch(() => 'MISSING');
+          await p.click('#ob-stIncome');
+          await p.keyboard.type('150000');
+          R.afterIncome = await p.locator('#ra-limit').innerText().catch(() => '');
+          R.focusIncome = await p.evaluate(() => (document.activeElement || {}).id || '');
+          await p.click('#ob-stWorth');
+          await p.keyboard.type('400000');
+          R.limit = await p.locator('#ra-limit').innerText().catch(() => '');
+          R.focusWorth = await p.evaluate(() => (document.activeElement || {}).id || '');
+          R.status = await L.screenText(p);
+          await p.screenshot({ path: path.join(SHOTS, 'regA-status.png'), fullPage: true });
+        }
+        if (hd === 'Subscription') {
+          await p.click('#ob-amount', { clickCount: 3 });
+          await p.keyboard.type('50000');
+          R.focusAmount = await p.evaluate(() => (document.activeElement || {}).id || '');
+          R.sub = await p.locator('#ra-sub').innerText().catch(() => '');
+          R.warn = await p.locator('#ra-sub .wire-warn').innerText().catch(() => '');
+          R.subScreen = await L.screenText(p);
+          await p.screenshot({ path: path.join(SHOTS, 'regA-subscribe.png'), fullPage: true });
+        }
+      }
+    });
+    check('the investor reaches the subscription agreement with no field error (the warning never blocks)', w.reached && w.errors.length === 0 && w.seen.some((s) => /\| Investor status$/.test(s)), { seen: w.seen, errors: w.errors });
+    check('no limit line before the investor answers not accredited', R.limitBefore === 0, R.limitBefore);
+    check('an individual account is prefilled as a person; no Rule 506(b) sophistication questions', R.kind === 'person' && R.soph === 0, R);
+    check('nothing is shown as the limit while no figure is given', R.emptyLine === '', R.emptyLine);
+    check('typing the income shows a limit at once, and focus stays in the field', R.afterIncome === 'Your investment limit in this offering: $15,000' && R.focusIncome === 'ob-stIncome', { line: R.afterIncome, focus: R.focusIncome });
+    check('with net worth 400,000 the status step shows "Your investment limit in this offering: $40,000", focus kept', R.limit === 'Your investment limit in this offering: $40,000' && R.focusWorth === 'ob-stWorth', { line: R.limit, focus: R.focusWorth });
+    check('the status step asks annual income and net worth not counting the primary residence', /Annual income/.test(R.status || '') && /Net worth, not counting your primary residence/.test(R.status || ''), (R.status || '').slice(0, 1500));
+    check('the subscribe step shows the limit', /Your investment limit in this offering under Regulation A: \$40,000/.test(R.sub || ''), R.sub);
+    check('the subscribe step warns plainly that the commitment is above the limit and the investor can still subscribe', /above your investment limit under Regulation A/.test(R.warn || '') && /You can still subscribe/.test(R.warn || '') && /reviews every subscription/.test(R.warn || ''), R.warn);
+    check('typing the amount keeps focus in the field', R.focusAmount === 'ob-amount', R.focusAmount);
+    const r = await requestOf(p, inv.investorId, off.offeringId);
+    const ra = (r && r.qual && r.qual.regA) || {};
+    check('request.qual: regime regA2, accredited false', !!r && r.qual.regime === 'regA2' && r.qual.accredited === false, r && r.qual);
+    check('request.qual.regA: person, income 150000, net worth 400000, limitCents 4000000, commitmentCents 5000000, overLimit true', ra.kind === 'person' && ra.income === 150000 && ra.netWorth === 400000 && ra.limitCents === 4000000 && ra.commitmentCents === 5000000 && ra.overLimit === true, ra);
+    check('the change log keeps the figures and the limit (T-06-08)', !!r && r.log.some((e) => e.action === 'Investor status answered' && /annual income \$150,000, net worth \$400,000; investment limit \$40,000/.test(e.detail)), r && r.log);
+    await consoleOffering(p, off.offeringId);
+    const el = await eligibilityText(p);
+    await p.screenshot({ path: path.join(SHOTS, 'regA-console.png'), fullPage: true });
+    check('the console panel: "Regulation A Tier 2: 1 non-accredited subscriber, 1 over their 10 percent limit"', /Regulation A Tier 2: 1 non-accredited subscriber, 1 over their 10 percent limit/.test(el), el);
+    check('the console panel lists the investor as over their limit, with the red badge', /Over the limit\s*Dana Whitfield: \$50,000 committed in this offering, limit \$40,000/.test(el) && (await p.locator('.cs-panel .cs-elig-over .cs-badge-bad').count()) === 1, el);
+    check('no Rule 506(b) count on a Regulation A offering', !/Non-accredited purchasers/.test(el), el);
+    const cons = await L.screenText(p);
+    [['status', R.status], ['subscribe', R.subScreen], ['console', cons]].forEach(([k, t]) => {
+      const lk = L.leakCheck(t || '');
+      check(`white label: the ${k} screen passes the leak check`, !!t && lk.ok, lk.hits);
+    });
     check('no script error in the browser', A.errors.length === 0, A.errors);
     check('no request left the check server', A.net.external.length === 0, A.net.external);
     await A.context.close();

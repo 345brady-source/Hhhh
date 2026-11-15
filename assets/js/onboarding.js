@@ -621,13 +621,22 @@
       const st = document.getElementById('routing-status');
       if (st) st.outerHTML = routingStatus(v);
     }
+    // Regulation A Tier 2: the limit follows the figures, and the subscribe step's warning the amount, without a redraw.
+    if (['stIncome', 'stWorth', 'stRevenue', 'stAssets'].indexOf(path) >= 0) {
+      const el2 = document.getElementById('ra-limit');
+      if (el2) el2.outerHTML = raLimitLine(fctx(), ob().d);
+    }
+    if (path === 'amount') {
+      const el2 = document.getElementById('ra-sub');
+      if (el2) el2.outerHTML = raSubLine(fctx(), ob().d);
+    }
     // The name fields change with the kind of account: a message about a field no longer shown goes with it.
     if (path === 'type') ['title', 'first', 'last', 'first2', 'last2'].forEach((k) => delete ob().errors[k]);
     if (['first', 'last', 'first2', 'last2', 'tenancy'].indexOf(path) >= 0) {
       const note = document.getElementById('hint-tenancy');
       if (note) note.textContent = jointHint(ob().d);
     }
-    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stRep'].indexOf(path) >= 0) {
+    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stRep', 'stRaKind'].indexOf(path) >= 0) {
       NS.app.render();
       // Keep keyboard focus on the control that changed (the page was redrawn).
       const again = el.type === 'radio' ? document.querySelector(`input[name="${el.name}"][value="${CSS.escape(el.value)}"]`) : el.id && document.getElementById(el.id);
@@ -1123,7 +1132,48 @@
    */
   const EL = () => NS.eligibility;
   const regimeOf = (c) => (EL() && c.off ? EL().regime(c.off) : '');
-  const statusStep = (c) => !!EL() && !accVerifiedFor(c) && (regimeOf(c) === '506b' || !!c.ws.tenant.onboarding.accreditation);
+  const statusStep = (c) => !!EL() && !accVerifiedFor(c) && (regimeOf(c) === '506b' || regimeOf(c) === 'regA2' || !!c.ws.tenant.onboarding.accreditation);
+  /** Regulation A Tier 2 asks a person for annual income and net worth, an organization for revenue and net assets. */
+  const raKindDefault = (c, d) => (['trust', 'entity'].indexOf(d.type || c.inv.type) >= 0 ? 'entity' : 'person');
+  /** The figures the investor gave on the status step, as whole dollars (null when not given or not a number that counts). */
+  function raFigures(c, d) {
+    const kind = d.stRaKind === 'entity' || d.stRaKind === 'person' ? d.stRaKind : raKindDefault(c, d);
+    const n = (x) => {
+      const v = EL().figure(String(x == null ? '' : x).replace(/[\s,$]/g, ''));
+      return v == null ? null : Math.round(v);
+    };
+    return kind === 'entity' ? { kind, revenue: n(d.stRevenue), netAssets: n(d.stAssets) } : { kind, income: n(d.stIncome), netWorth: n(d.stWorth) };
+  }
+  /** Under Regulation A Tier 2, an investor who said they are not accredited has a limit (when their figures give one). */
+  const raAsked = (c, d) => statusStep(c) && regimeOf(c) === 'regA2' && d.stAcc === 'no';
+  /** T-06-08: the Regulation A figures and the limit, for the change log. */
+  function raLogText(c, d) {
+    const f = raFigures(c, d);
+    const lim = EL().regALimitCents(f);
+    const usd = (n) => EL().usd(n * 100);
+    const given = (f.kind === 'entity' ? [['revenue', f.revenue], ['net assets', f.netAssets]] : [['annual income', f.income], ['net worth', f.netWorth]]).filter((x) => x[1] != null).map((x) => `${x[0]} ${usd(x[1])}`);
+    return `; Regulation A Tier 2 figures (${f.kind === 'entity' ? 'organization' : 'person'}): ${given.length ? given.join(', ') : 'not given'}; investment limit ${lim == null ? 'not known' : EL().usd(lim)}`;
+  }
+  /** The investor's limit as they type their figures (NS.binders.ob redraws it in place): nothing while it is not known. */
+  function raLimitLine(c, d) {
+    const lim = c && raAsked(c, d) ? EL().regALimitCents(raFigures(c, d)) : null;
+    return `<p class="field-wide ivf-ra-limit" id="ra-limit" role="status">${lim == null ? '' : `Your investment limit in this offering: <strong>${h(EL().usd(lim))}</strong>`}</p>`;
+  }
+  /**
+   * C-01 on the subscribe step: the limit, and a plain warning when the commitment (typed or set by the firm, with the
+   * investor's earlier subscriptions to the offering) is above it. The investor can still subscribe; nothing is required.
+   */
+  function raSubLine(c, d) {
+    const lim = c && c.off && raAsked(c, d) ? EL().regALimitCents(raFigures(c, d)) : null;
+    if (lim == null) return '<div class="field-wide" id="ra-sub" hidden></div>';
+    const earlier = EL().committedCents(c.ws, c.off, c.inv.id);
+    const now = c.it.cents > 0 ? c.it.cents : Math.round((Number(d.amount) || 0) * 100);
+    const over = now + earlier > lim;
+    const t = c.ws.tenant;
+    return `<div class="field-wide" id="ra-sub"><p class="meta">Your investment limit in this offering under Regulation A: <strong>${h(EL().usd(lim))}</strong>${earlier ? `. You have already committed ${h(EL().usd(earlier))} to it` : ''}.</p>${
+      over ? `<p class="wire-warn" role="note">${icon('alert')}<span>This commitment${earlier ? ', together with your earlier subscriptions to this offering,' : ''} is above your investment limit under Regulation A. You can still subscribe: ${h(t.shortName)} reviews every subscription and will let you know if yours cannot be accepted.</span></p>` : ''
+    }</div>`;
+  }
   /** The status answers kept on the subscription request (request.qual). */
   function qualFrom(c, d) {
     const reg = regimeOf(c);
@@ -1135,6 +1185,14 @@
       // Rule 501(i): the investor's written acknowledgment of the representative, when uploaded (rep-<investor>-<time>).
       const file = d.stRepFileId ? { fileId: String(d.stRepFileId), fileName: String(d.stRepFileName || '') } : {};
       q.sophistication = { experience: String(d.stExp || '').trim(), education: String(d.stEdu || '').trim(), rep: d.stRep === 'yes' ? Object.assign({ name, firm }, file) : null };
+    }
+    if (accredited === false && reg === 'regA2') {
+      // The console works the limit and the total out again from these figures and the requests (T-06-06): overLimit is
+      // what this device showed the investor, kept with the rest.
+      const f = raFigures(c, d);
+      const limitCents = EL().regALimitCents(f);
+      const commitmentCents = c.off ? EL().committedCents(c.ws, c.off, c.inv.id) : 0;
+      q.regA = Object.assign(f, { limitCents, commitmentCents, overLimit: limitCents != null && commitmentCents > limitCents });
     }
     return q;
   }
@@ -1219,6 +1277,12 @@
           stRepFirm: '',
           stRepFileId: '',
           stRepFileName: '',
+          // Regulation A Tier 2 (D-01): person or organization (set from the account type when the step is shown), and figures.
+          stRaKind: '',
+          stIncome: '',
+          stWorth: '',
+          stRevenue: '',
+          stAssets: '',
           accAttest: false,
           accFile: '',
           usPerson: '',
@@ -1381,9 +1445,27 @@
     const reg = regimeOf(c);
     const t = c.ws.tenant;
     const b506 = reg === '506b';
+    const ra2 = reg === 'regA2';
+    const raName = /\bTier\s*(?:2|II|two)\b/i.test(String((c.off && c.off.structure && c.off.structure.exemption) || '')) ? 'Tier 2 of Regulation A' : 'Regulation A';
     const lede = b506
       ? `${h(c.off.name)} is offered under Rule 506(b) of Regulation D. ${h(t.shortName)} may accept a limited number of investors who are not accredited, so it asks about your status and, if you are not accredited, about your experience with investments like this one.`
-      : `${h(t.shortName)} asks each investor whether they are an accredited investor under Regulation D.`;
+      : ra2
+        ? `${h(c.off.name)} is offered under ${raName}. If you are not an accredited investor, what you may put into this offering is limited to 10 percent of your annual income or your net worth, whichever is greater (for an organization, its revenue or its net assets for the most recent fiscal year). ${h(t.shortName)} asks for these figures so it can show you your limit.`
+        : `${h(t.shortName)} asks each investor whether they are an accredited investor under Regulation D.`;
+    // Regulation A Tier 2, not accredited: person or organization (from the account type until the investor changes it), figures, limit.
+    if (ra2 && d.stAcc === 'no' && d.stRaKind !== 'person' && d.stRaKind !== 'entity') d.stRaKind = raKindDefault(c, d);
+    const joint = (d.type || c.inv.type) === 'joint';
+    const num = { type: 'number', mode: 'numeric' };
+    const raFields =
+      ra2 && d.stAcc === 'no'
+        ? `${radios('stRaKind', 'Whose figures are these?', [['person', 'A person’s', 'Annual income and net worth'], ['entity', 'An organization’s', 'Revenue and net assets for the most recent fiscal year']])}
+        ${
+          d.stRaKind === 'entity'
+            ? `${input('stRevenue', 'Revenue for the most recent fiscal year ($)', num)}${input('stAssets', 'Net assets at the end of that year ($)', num)}`
+            : `${input('stIncome', 'Annual income ($)', Object.assign({ hint: joint ? 'For a joint account, income and net worth may be given together with a spouse or spousal equivalent.' : 'In US dollars.' }, num))}${input('stWorth', 'Net worth, not counting your primary residence ($)', num)}`
+        }
+        ${raLimitLine(c, d)}`
+        : '';
     const no = d.stAcc === 'no' && b506;
     // C-01: the offering may already have as many purchasers who are not accredited as Rule 506(b) allows. The investor is
     // told so plainly and can still subscribe; the firm decides. No count and no other investor is ever shown (T-06-04).
@@ -1396,6 +1478,7 @@
         ${radios('stAcc', `Is ${h(c.inv.title)} an accredited investor?`, [['yes', 'Yes'], ['no', 'No']])}
         ${fullNote}
         ${d.stAcc === 'yes' ? radios('stBasis', 'Which ground applies?', groundsFor(d)) : ''}
+        ${raFields}
         ${
           no
             ? `${input('stExp', 'Your investment experience', { wide: true, max: 400, hint: 'For example, the kinds of investments you have made and for how many years.' })}
@@ -1498,6 +1581,7 @@
             ? `<label class="field" for="ob-amount"><span>Commitment</span><input id="ob-amount" type="text" value="${money(o, c.it.cents / 100)}" readonly><span class="hint">Set by ${h(t.shortName)} for this invitation.</span></label>`
             : `<label class="field" for="ob-amount"><span>Commitment (${curOf(o) === 'USD' ? '$' : h(curOf(o))})</span><input id="ob-amount" type="number" inputmode="numeric" min="${min}" step="1000" data-bind="ob:amount" value="${h(d.amount)}"${e.amount ? ' aria-invalid="true" aria-describedby="err-amount"' : ''}><span class="hint">Minimum ${money(o, min)}.</span>${err('amount')}</label>`
         }
+        ${raSubLine(c, d)}
         ${classes.length > 1 ? `<label class="field" for="ob-cls"><span>Share class</span><select id="ob-cls" data-bind="ob:cls"${clsLocked ? ' disabled' : ''}>${classes.map((x) => `<option value="${h(x.id)}"${x.id === d.cls ? ' selected' : ''}>${h(x.name)}${x.minimum ? `, minimum ${money(o, Number(x.minimum))}` : ''}</option>`).join('')}</select>${clsLocked ? `<span class="hint">Set by ${h(t.shortName)} for this invitation.</span>` : ''}</label>` : ''}
         <label class="field field-wide" for="ob-acct"><span>Investing as</span><input id="ob-acct" type="text" value="${h(c.inv.title)} (${h((NS.ENTITY_TYPES[c.inv.type] || {}).label || c.inv.type)})" readonly></label>
         ${accTick}
@@ -1749,7 +1833,7 @@
         else if (IV()) IV().decide(ws, i);
       } else if (d.stAcc === 'no') gone = withdrawGround(c);
       const said = d.stAcc === 'yes' ? `accredited investor${d.stBasis ? ` (${d.stBasis})` : ', ground not given'}` : d.stAcc === 'no' ? 'not an accredited investor' : 'not answered';
-      log('Investor status answered', `${said}${gone ? `; the self-certified ground on the record (${gone}) no longer applies` : ''}`);
+      log('Investor status answered', `${said}${gone ? `; the self-certified ground on the record (${gone}) no longer applies` : ''}${raAsked(c, d) ? raLogText(c, d) : ''}`);
       // Corrected after subscribing: a request still pending carries the new answers; a decided one keeps what it was decided on.
       if (c.req && c.req.status === 'pending') {
         c.req.qual = qualFrom(c, d);
