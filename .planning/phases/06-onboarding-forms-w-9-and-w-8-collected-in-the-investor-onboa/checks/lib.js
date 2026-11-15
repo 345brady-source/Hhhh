@@ -184,7 +184,9 @@ async function walk(page, answers) {
       await page.fill('#ob-st', 'TX');
       await page.fill('#ob-zip', '78701');
       await page.fill('#ob-phone', '+1 512 555 0101');
-      await page.fill('#ob-dob', '1980-04-02');
+      // A person's account asks for the date of birth; an IRA, trust or entity asks for its custodian or place of formation.
+      if (await page.locator('#ob-dob').count()) await page.fill('#ob-dob', '1980-04-02');
+      if ((await page.locator('#ob-formation').count()) && !(await page.inputValue('#ob-formation'))) await page.fill('#ob-formation', 'Harbor Trust Company');
       await page.fill('#ob-tin', '123456789');
       await page.check('input[name="ob-pep"][value="no"]');
     } else if (/Identity verification/.test(hd)) {

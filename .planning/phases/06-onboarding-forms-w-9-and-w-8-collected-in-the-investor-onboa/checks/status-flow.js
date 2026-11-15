@@ -109,12 +109,15 @@ async function regAFlow(S, o) {
         R.figFields = await p.locator('#ob-stIncome, #ob-stWorth, #ob-stRevenue, #ob-stAssets').count();
         R.fieldIds = await p.evaluate(() => Array.from(document.querySelectorAll('#ob-stIncome, #ob-stWorth, #ob-stRevenue, #ob-stAssets')).map((x) => x.id));
         R.limit = (await p.locator('#ra-limit').count()) ? await p.locator('#ra-limit').innerText() : null;
+        R.accQ = await p.locator('input[name="ob-stAcc"]').count();
+        R.planQ = await p.locator('input[name="ob-stPlan"]').count();
         R.status = await L.screenText(p);
         await p.screenshot({ path: path.join(SHOTS, `${tag}-status.png`), fullPage: true });
       }
       if (hd === 'Subscription') {
         R.raSub = (await p.locator('#ra-sub').count()) ? await p.locator('#ra-sub').innerText() : '';
         R.warn = (await p.locator('#ra-sub .wire-warn').count()) ? await p.locator('#ra-sub .wire-warn').innerText() : '';
+        R.subAcc = await p.locator('#ob-subAcc').count();
         R.sub = await L.screenText(p);
         await p.screenshot({ path: path.join(SHOTS, `${tag}-subscribe.png`), fullPage: true });
       }
@@ -132,6 +135,13 @@ const eligibilityText = (page) =>
     const s = Array.from(document.querySelectorAll('.cs-panel')).find((x) => /^Investor eligibility$/.test((x.querySelector('.cs-panel-head h2') || {}).textContent || ''));
     return s ? s.innerText : '';
   });
+
+/** The text of the console panel with the given title on the page now on screen ('' when there is none). */
+const panelText = (page, title) =>
+  page.evaluate((t) => {
+    const s = Array.from(document.querySelectorAll('.cs-panel')).find((x) => ((x.querySelector('.cs-panel-head h2') || {}).textContent || '') === t);
+    return s ? s.innerText : '';
+  }, title);
 
 /** The text of the requests table row for one request id ('' when not shown). */
 const requestRow = (page, id) =>
@@ -471,7 +481,114 @@ const parts = {
     await A.context.close();
   },
 
-  /** Another exemption: with the firm's toggle on, the accredited question only; with it off, no status step. */
+  /**
+   * D-01: an IRA investor in a Rule 506(c) offering of one class goes through the verification step as before, then the
+   * status step shows only the benefit plan questions, prefilled as a Code section 4975 plan. Their commitment takes the
+   * class from under 25 to 25 percent or more: the pending request's if-accepted figure and its row are flagged, Approve
+   * still works, and once approved the class line is red. None of it reaches the investor's screens (T-06-09).
+   */
+  async erisa({ check, S }) {
+    const A = await L.open(S);
+    const p = A.page;
+    const off = await L.setupPortal(S, A, { exemption: 'Rule 506(c)' });
+    check('the offering is Rule 506(c) with its agreement ready', off.ready && off.exemption === 'Rule 506(c)', off);
+    const before = await p.evaluate((oid) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const o = ws.offerings.find((x) => x.id === oid);
+      o.classes = [{ id: 'cls-erisa', name: 'Class A Interests' }];
+      let holders = 0;
+      ws.investors.forEach((i) => {
+        if (!(i.positions || []).some((x) => x.offeringId === oid)) return;
+        i.erisa = { plan: 'none', planPct: null, controlling: false, at: new Date().toISOString() };
+        holders++;
+      });
+      NS.app.save(true);
+      return { holders, rows: NS.eligibility.erisa(ws, o) };
+    }, off.offeringId);
+    const row0 = before.rows[0] || {};
+    check('one class, whose sample holders answered "none of these": 0 percent held by benefit plan investors', before.holders > 0 && before.rows.length === 1 && row0.name === 'Class A Interests' && row0.total > 0 && row0.pct === 0, before);
+    // A commitment of at least a third of the class's value brings an IRA (counted in full) to 25 percent or more.
+    const cents = Math.ceil(row0.total / 3 / 10000000) * 10000000;
+    const inv = await L.createInvitation(p, { name: INV.name, email: INV.email, type: 'ira', offeringId: off.offeringId, cents });
+    await p.goto(`${S.base}?tenant=${inv.tenant}#invite-${inv.token}`);
+    const R = {};
+    const w = await L.walk(p, {
+      name: INV.name,
+      onStep: async (hd) => {
+        if (hd !== 'Investor status') return;
+        R.pre = await p.evaluate(() => (document.querySelector('input[name="ob-stPlan"]:checked') || {}).value || '');
+        R.accQ = await p.locator('input[name="ob-stAcc"]').count();
+        R.planQ = await p.locator('input[name="ob-stPlan"]').count();
+        R.ctrlQ = await p.locator('input[name="ob-stCtrl"]').count();
+        R.status = await L.screenText(p);
+        await p.screenshot({ path: path.join(SHOTS, 'erisa-status.png'), fullPage: true });
+      },
+      onFilled: async (hd) => {
+        if (hd === 'Subscription') {
+          R.sub = await L.screenText(p);
+          await p.screenshot({ path: path.join(SHOTS, 'erisa-subscribe.png'), fullPage: true });
+        }
+      }
+    });
+    const heads = w.seen.map((x) => x.split(' | ').pop());
+    check('the investor reaches the subscription agreement with no field error', w.reached && w.errors.length === 0, { seen: w.seen, errors: w.errors });
+    check('the verification step is unchanged and comes just before the status step', heads.indexOf('Accredited investor verification') >= 0 && heads.indexOf('Investor status') === heads.indexOf('Accredited investor verification') + 1, w.seen);
+    check('eleven steps in all for a new investor under Rule 506(c)', w.seen.every((x) => /^Step \d+ of 11:/.test(x)), w.seen);
+    check('under Rule 506(c) the status step shows only the benefit plan questions, and its lede says so', R.accQ === 0 && R.planQ === 5 && R.ctrlQ === 2 && /verified in its own step, so this step asks only whether/.test(R.status || ''), { accQ: R.accQ, planQ: R.planQ, ctrlQ: R.ctrlQ, st: (R.status || '').slice(0, 1200) });
+    check('the IRA is prefilled as a plan or account under Code section 4975', R.pre === '4975', R.pre);
+    check('the IRA examples are named on the 4975 choice', /section 4975 of the Internal Revenue Code/.test(R.status || '') && /Such as an IRA or a Keogh plan/.test(R.status || ''), (R.status || '').slice(0, 1500));
+    check('the status step says any question may be left unanswered', /leave any question unanswered/i.test(R.status || ''));
+    check('T-06-09: no class figure or other investor reaches the investor screens', !/% of value|benefit plan investors would hold|Class A Interests: /.test((R.status || '') + (R.sub || '')), '');
+    const r = await requestOf(p, inv.investorId, off.offeringId);
+    const e = (r && r.qual && r.qual.erisa) || {};
+    check('request.qual.erisa: plan 4975, no percentage, control not answered, share 1', !!r && e.plan === '4975' && e.planPct === null && e.controlling === null && e.share === 1, r && r.qual);
+    const rec = await p.evaluate((id) => (window.CVPortal.state.ws.investors.find((x) => x.id === id) || {}).erisa || null, inv.investorId);
+    check('the investor record keeps the answers to prefill the next subscription', !!rec && rec.plan === '4975' && rec.planPct === null && rec.controlling === null && /^\d{4}-\d{2}-\d{2}T/.test(rec.at || ''), rec);
+    check('the change log records the benefit plan answer', !!r && r.log.some((x) => x.action === 'Investor status answered' && /benefit plan: a plan or account under Code section 4975/.test(x.detail)), r && r.log);
+    const done = await finishAgreement(p);
+    check('the done summary keeps the verified accreditation row', /Accreditation\s+Verified/.test(done), done);
+
+    await consoleOffering(p, off.offeringId);
+    const field = await exemptionField(p);
+    check('the exemption hint carries the Rule 506(c) note under Rule 506(c)', /Rule 506\(c\) offerings take verified accredited investors only/.test(field.hints), field.hints);
+    let bp = await panelText(p, 'Benefit plan investors');
+    await p.screenshot({ path: path.join(SHOTS, 'erisa-console-pending.png'), fullPage: true });
+    const pend = await p.evaluate((rid) => {
+      const x = document.querySelector(`.cs-bpi-if[data-request="${CSS.escape(rid)}"]`);
+      return x ? { text: x.innerText, warn: !!x.querySelector('.cs-badge-warn') } : null;
+    }, r.id);
+    const ifPct = pend ? Number((pend.text.match(/is accepted: ([\d.]+)% of Class A Interests/) || [])[1]) : NaN;
+    check('before acceptance the class line reads 0% and is not red', /Class A Interests: 0% of value held by benefit plan investors/.test(bp) && (await p.locator('.cs-bpi-line.is-over').count()) === 0, bp);
+    check('the pending request if-accepted figure is 25 percent or more, marked', !!pend && ifPct >= 25 && pend.warn, pend);
+    await consoleRequests(p);
+    const row = await requestRow(p, r.id);
+    await p.screenshot({ path: path.join(SHOTS, 'erisa-requests.png'), fullPage: true });
+    check('the request row is flagged "If accepted, benefit plan investors would hold N% of Class A Interests (25 percent or more)"', row.indexOf(`If accepted, benefit plan investors would hold ${ifPct}% of Class A Interests (25 percent or more)`) >= 0, row);
+    check('the flagged row keeps Approve and Decline (nothing blocked)', (await p.locator(`[data-action=req-approve][data-id="${r.id}"]`).count()) === 1 && (await p.locator(`[data-action=req-decline][data-id="${r.id}"]`).count()) === 1);
+    const lkRow = L.leakCheck(await L.screenText(p));
+    for (let k = 0; k < 2; k++) {
+      if ((await p.evaluate((id) => (window.CVPortal.state.ws.requests.find((x) => x.id === id) || {}).status, r.id)) !== 'pending') break;
+      await p.click(`[data-action=req-approve][data-id="${r.id}"]`);
+      await p.waitForTimeout(400);
+    }
+    const st = await p.evaluate((id) => (window.CVPortal.state.ws.requests.find((x) => x.id === id) || {}).status, r.id);
+    check('Approve works on the flagged request', st === 'approved', st);
+    await consoleOffering(p, off.offeringId);
+    bp = await panelText(p, 'Benefit plan investors');
+    await p.screenshot({ path: path.join(SHOTS, 'erisa-console-approved.png'), fullPage: true });
+    const now = Number((bp.match(/Class A Interests: ([\d.]+)% of value held by benefit plan investors/) || [])[1]);
+    check('after approval the class line is red at the if-accepted figure, with the plain sentence', now === ifPct && now >= 25 && (await p.locator('.cs-bpi-line.is-over .cs-badge-bad').count()) === 1 && /may be treated as plan assets under ERISA/.test(bp), bp);
+    check('no if-accepted line is left for the approved request', (await p.locator(`.cs-bpi-if[data-request="${r.id}"]`).count()) === 0);
+    const lk = L.leakCheck([R.status, R.sub, done, bp].join('\n'));
+    check('white label: status, subscribe, done screens and the panel pass the leak check', lk.ok, lk.hits);
+    check('white label: the requests view passes the leak check', lkRow.ok, lkRow.hits);
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  },
+
+  /** Another exemption: with the firm's toggle on, the accredited question; with it off, the benefit plan questions only (06-04). */
   async other({ check, S }) {
     const A = await L.open(S);
     const p = A.page;
@@ -509,9 +626,21 @@ const parts = {
     });
     const inv2 = await L.createInvitation(p, { name: 'Lee Ortiz', email: 'lee.ortiz@example.com', offeringId: off.offeringId, cents: 0 });
     await p.goto(`${S.base}?tenant=${inv2.tenant}#invite-${inv2.token}`);
-    const w2 = await L.walk(p, { name: 'Lee Ortiz', amount: 60000 });
-    check('toggle off: no status step, and the investor reaches the agreement', w2.reached && w2.errors.length === 0 && !w2.seen.some((s) => /Investor status/.test(s)), { seen: w2.seen, errors: w2.errors });
-    const leak = L.leakCheck(st + '\n' + done);
+    let st2 = '';
+    let q2 = -1;
+    const w2 = await L.walk(p, {
+      name: 'Lee Ortiz',
+      amount: 60000,
+      onFilled: async (hd) => {
+        if (hd !== 'Investor status') return;
+        st2 = await L.screenText(p);
+        q2 = await p.locator('input[name="ob-stAcc"]').count();
+      }
+    });
+    // Plan 06-04, D-01: every invitation with an offering now has the status step for the benefit plan questions; with the
+    // toggle off it asks nothing about accreditation (before 06-04 there was no status step here).
+    check('toggle off: the status step asks only the benefit plan questions, and the investor reaches the agreement', w2.reached && w2.errors.length === 0 && w2.seen.some((s) => /\| Investor status$/.test(s)) && q2 === 0 && /asks only whether Lee Ortiz invests on behalf of a benefit plan/.test(st2), { seen: w2.seen, errors: w2.errors, q2, st2: st2.slice(0, 900) });
+    const leak = L.leakCheck(st + '\n' + done + '\n' + st2);
     check('white label: the status and done screens pass the leak check', leak.ok, leak.hits);
     check('no script error in the browser', A.errors.length === 0, A.errors);
     check('no request left the check server', A.net.external.length === 0, A.net.external);
@@ -949,7 +1078,7 @@ const parts = {
     await A.context.close();
   },
 
-  /** Regulation A Tier 1 (firm's toggle off): no status step, no figures, no limit, no panel. */
+  /** Regulation A Tier 1 (firm's toggle off): the benefit plan questions only (06-04), no figures, no limit, no panel. */
   async tier1({ check, S }) {
     const off0 = (p) => p.evaluate(() => {
       window.CVPortal.state.ws.tenant.onboarding.accreditation = false;
@@ -957,7 +1086,12 @@ const parts = {
     });
     const { A, p, off, inv, w, R, ex } = await regAFlow(S, { exemption: 'Regulation A Tier 1', tag: 'tier1', before: off0, amount: 60000 });
     check('the select stores "Regulation A Tier 1"', ex.stored === 'Regulation A Tier 1', ex);
-    check('no status step, and the investor reaches the agreement', w.reached && w.errors.length === 0 && !w.seen.some((s) => /Investor status/.test(s)), { seen: w.seen, errors: w.errors });
+    // Rule 1 fix with plan 06-04: the Rule 506(c) note shows only under Rule 506(c).
+    check('the exemption hint carries no Rule 506(c) note under Tier 1', !/506\(c\)/.test(ex.hints), ex.hints);
+    // Plan 06-04, D-01: the status step now appears with the benefit plan questions only (before 06-04: no status step).
+    check('the status step asks only the benefit plan questions, and the investor reaches the agreement', w.reached && w.errors.length === 0 && w.seen.some((s) => /\| Investor status$/.test(s)) && R.accQ === 0 && R.planQ === 5 && R.figFields === 0, { seen: w.seen, errors: w.errors, accQ: R.accQ, planQ: R.planQ });
+    // Rule 1 fix with plan 06-04: any investor may buy a Tier 1 offering, so no accreditation statement is offered.
+    check('the subscribe step offers no "is an accredited investor" tick and says why', R.subAcc === 0 && !/is an accredited investor/.test(R.sub || '') && /does not limit this offering to accredited investors/.test(R.sub || ''), { subAcc: R.subAcc, sub: (R.sub || '').slice(0, 1500) });
     check('the subscribe step shows no limit and no warning', !R.raSub && !R.warn && !/investment limit/.test(R.sub || ''), R.raSub);
     const r = await requestOf(p, inv.investorId, off.offeringId);
     check('request.qual: regime regA1, no regA', !!r && r.qual.regime === 'regA1' && r.qual.regA === undefined, r && r.qual);
@@ -968,7 +1102,7 @@ const parts = {
     await A.context.close();
   },
 
-  /** Regulation A Tier 2 listed on an exchange (firm's toggle off): no limit applies, nothing asked or shown. */
+  /** Regulation A Tier 2 listed on an exchange (firm's toggle off): no limit applies; the benefit plan questions only (06-04). */
   async listed({ check, S }) {
     const off0 = (p) => p.evaluate(() => {
       window.CVPortal.state.ws.tenant.onboarding.accreditation = false;
@@ -976,7 +1110,12 @@ const parts = {
     });
     const { A, p, off, inv, w, R, ex } = await regAFlow(S, { exemption: 'Regulation A Tier 2, exchange-listed', tag: 'listed', before: off0, amount: 60000 });
     check('the select stores "Regulation A Tier 2, exchange-listed"', ex.stored === 'Regulation A Tier 2, exchange-listed', ex);
-    check('no status step, and the investor reaches the agreement', w.reached && w.errors.length === 0 && !w.seen.some((s) => /Investor status/.test(s)), { seen: w.seen, errors: w.errors });
+    // Rule 1 fix with plan 06-04: the Rule 506(c) note shows only under Rule 506(c).
+    check('the exemption hint carries no Rule 506(c) note for an exchange-listed offering', !/506\(c\)/.test(ex.hints), ex.hints);
+    // Plan 06-04, D-01: the status step now appears with the benefit plan questions only (before 06-04: no status step).
+    check('the status step asks only the benefit plan questions, and the investor reaches the agreement', w.reached && w.errors.length === 0 && w.seen.some((s) => /\| Investor status$/.test(s)) && R.accQ === 0 && R.planQ === 5 && R.figFields === 0, { seen: w.seen, errors: w.errors, accQ: R.accQ, planQ: R.planQ });
+    // Rule 1 fix with plan 06-04: any investor may buy an exchange-listed Tier 2 offering, so no accreditation statement is offered.
+    check('the subscribe step offers no "is an accredited investor" tick and says why', R.subAcc === 0 && !/is an accredited investor/.test(R.sub || '') && /does not limit this offering to accredited investors/.test(R.sub || ''), { subAcc: R.subAcc, sub: (R.sub || '').slice(0, 1500) });
     check('the subscribe step shows no limit and no warning', !R.raSub && !R.warn && !/investment limit/.test(R.sub || ''), R.raSub);
     const r = await requestOf(p, inv.investorId, off.offeringId);
     check('request.qual: regime regA2listed, no regA', !!r && r.qual.regime === 'regA2listed' && r.qual.regA === undefined, r && r.qual);
@@ -1007,7 +1146,8 @@ const parts = {
     });
     check('the offering page’s select still shows the current value "Regulation A", with the tiers offered', !!field && field.selected === 'Regulation A' && field.options.indexOf('Regulation A') >= 0 && field.options.indexOf('Regulation A Tier 2') >= 0, field);
     check('the offering page asks the sponsor to choose Tier 1 or Tier 2, and says investors get the Tier 2 questions until then', !!field && /choose Tier 1 or Tier 2/.test(field.hints) && /asked the Tier 2 questions/.test(field.hints), field && field.hints);
-    check('the hint keeps the existing Rule 506(c) note with it', !!field && /Rule 506\(c\) offerings take verified accredited investors only/.test(field.hints), field && field.hints);
+    // Rule 1 fix with plan 06-04 (reported by 06-01 to 06-03): the Rule 506(c) note shows only under Rule 506(c).
+    check('the hint carries no Rule 506(c) note (the offering is not Rule 506(c))', !!field && !/506\(c\)/.test(field.hints), field && field.hints);
     check('the investor reaches the agreement with no field error, through the status step', w.reached && w.errors.length === 0 && w.seen.some((s) => /\| Investor status$/.test(s)), { seen: w.seen, errors: w.errors });
     check('the Tier 2 questions are asked; the step names Regulation A without claiming a tier', R.kind === 'person' && R.figFields === 2 && /is offered under Regulation A\./.test(R.status) && !/Tier 2 of Regulation A/.test(R.status), R);
     check('income 100,000 alone gives "Your investment limit in this offering: $10,000"', R.limit === 'Your investment limit in this offering: $10,000', R.limit);
