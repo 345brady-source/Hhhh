@@ -129,7 +129,7 @@ Plans:
   5. Nothing that works today regresses: the owner's documents A 29 of 29, B 2 of 2 places, C 138 of 138, the picture form 241 of 241, the first agreement's 47 fields with none marked, the public documents' pins, the nine check files, the class pages and the walks
   6. After the reader is frozen, 100 fresh agreements and 50 more made picture-only (half clean, half with scan effects), drawn at random from EDGAR and new to every set, are read by the frozen reader and scored (the measure on all 150, exact scores on a random 20 and 10), and the results reach the owner failures first
   7. The owner has checked agreements the reader has never seen in the republished preview
-**Plans:** 58 plans
+**Plans:** 58 plans (4 dropped by D-28: 20, 21, 56, 57; 4 added: 59 to 62)
 
 Plans:
 - [ ] 01.4-01-PLAN.md — The measure sees what it was blind to (fallback glyph boxes, letter boxes, dates in parts, shared lines, illustrations), calibrated
@@ -151,9 +151,7 @@ Plans:
 - [ ] 01.4-17-PLAN.md — Full answer sheets for batch PS03 (5 added picture, scan or broker-dealer train documents)
 - [ ] 01.4-18-PLAN.md — Biggest-yield vector classes: fallback-glyph boxes, missed squares, short-rule choices, shared lines, single lines, hyphen blanks
 - [ ] 01.4-19-PLAN.md — Dates in parts and letter-box rows end to end (field model, editor, signing, PDF), fill-in cells, signature blocks
-- [ ] 01.4-20-PLAN.md — Every picture read wherever it is (under a text layer, inside a text page, cut by a page break), tinted and coloured boxes
-- [ ] 01.4-21-PLAN.md — Rings, letter boxes on pictures, scans and illustrations
-- [ ] 01.4-22-PLAN.md — Bootstrap labels: accept where the improved reader and the measure agree, adjudicate only disagreements; noise measured
+- [ ] 01.4-22-PLAN.md — Fast path: automatic labels for every typed train document, quality measured against hand sheets, a small review sample, trust by a fixed rule
 - [ ] 01.4-23-PLAN.md — The meaning layer's blocks, features and evaluator in the page; features dumped for train documents
 - [ ] 01.4-24-PLAN.md — Adjudicate bootstrap batch BT01 (about 36 train documents, disagreements only)
 - [ ] 01.4-25-PLAN.md — Adjudicate bootstrap batch BT02 (about 36 train documents, disagreements only)
@@ -182,14 +180,16 @@ Plans:
 - [ ] 01.4-48-PLAN.md — Held-out B answer sheets, batch B10, by an agent who builds nothing
 - [ ] 01.4-49-PLAN.md — Held-out B answer sheets, batch B11, by an agent who builds nothing
 - [ ] 01.4-50-PLAN.md — Held-out B scored once, everything in one final run, and the reader frozen at a recorded commit
-- [ ] 01.4-51-PLAN.md — Final check (D-25, D-26): 100 fresh agreements and 50 more made picture-only, drawn at random after the freeze, read by the frozen reader and measured
+- [ ] 01.4-51-PLAN.md — Final check (D-25, D-28): 100 fresh typed or filed agreements drawn at random after the freeze, new to every set, read by the frozen reader and measured
 - [ ] 01.4-52-PLAN.md — Fresh-check answer sheets, batch F01, by an agent who builds nothing
 - [ ] 01.4-53-PLAN.md — Fresh-check answer sheets, batch F02, by an agent who builds nothing
 - [ ] 01.4-54-PLAN.md — Fresh-check answer sheets, batch F03, by an agent who builds nothing
 - [ ] 01.4-55-PLAN.md — Fresh-check answer sheets, batch F04, by an agent who builds nothing
-- [ ] 01.4-56-PLAN.md — Picture-check answer sheets, batch P01, by an agent who builds nothing
-- [ ] 01.4-57-PLAN.md — Picture-check answer sheets, batch P02, by an agent who builds nothing
-- [ ] 01.4-58-PLAN.md — Exact scores of the fresh 30, the owner's report failures first, and the owner's check
+- [ ] 01.4-58-PLAN.md — Exact scores of the fresh 20 against the D-28 bar, the owner's report failures first, fix and test again (D-27), and the owner's check
+- [ ] 01.4-59-PLAN.md — Picture notice on upload and proof step 5 re-pinned at the frozen picture state (D-28)
+- [ ] 01.4-60-PLAN.md — set-e: about 2,000 more typed and filed agreements, one shared rate limiter, lean storage, backed up to reader-data
+- [ ] 01.4-61-PLAN.md — set-e labelled by three voters, the agreement rule and trust chosen on hand sheets, one review tranche sized
+- [ ] 01.4-62-PLAN.md — set-e review tranche ET01 with spot checks of the automatic labels
 
 ### Phase 2: Field Editor
 **Goal**: A sponsor can adjust fields by hand quickly and without frustration, in an editor that looks professionally made
