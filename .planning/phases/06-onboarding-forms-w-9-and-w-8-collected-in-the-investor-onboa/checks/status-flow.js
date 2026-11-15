@@ -478,12 +478,21 @@ const parts = {
     await A.context.close();
   },
 
-  /** A corrected answer while the request is pending updates request.qual, with a change-log entry; once decided, it does not. */
+  /**
+   * A corrected answer while the request is pending updates request.qual, with a change-log entry; once decided, it does not.
+   * The investor record follows every correction: a "no" withdraws the ground self-certified with an earlier "yes".
+   */
   async back({ check, S }) {
     const A = await L.open(S);
     const p = A.page;
     const off = await L.setupPortal(S, A, { exemption: 'Rule 506(b)' });
-    const bases = await p.evaluate(() => window.CVPortal.eligibility.BASES);
+    // The firm accepts self-certification for Rule 506(b): a "yes" makes the record of it, so its withdrawal can be seen.
+    const bases = await p.evaluate(() => {
+      const NS = window.CVPortal;
+      NS.integrations.ensure(NS.state.ws).use.accreditation = ['self'];
+      NS.app.save(true);
+      return NS.eligibility.BASES;
+    });
     const inv = await L.createInvitation(p, { name: INV.name, email: INV.email, offeringId: off.offeringId, cents: 0 });
     await p.goto(`${S.base}?tenant=${inv.tenant}#invite-${inv.token}`);
     const w = await L.walk(p, { name: INV.name, acc: 'no', exp: 'Ten years of private credit funds', edu: 'Lawyer', rep: 'no', amount: 60000 });
@@ -499,22 +508,48 @@ const parts = {
     check('while pending, the corrected answer updates request.qual (accredited true, the ground, no sophistication answers)', q1.accredited === true && q1.basis === bases[0] && !q1.sophistication && r1.id === r0.id, q1);
     const upd = (r1 && r1.log.filter((e) => e.action === 'Investor status updated')) || [];
     check('"Investor status updated" is in the change log under the request id', upd.length === 1 && upd[0].record === r1.id, r1 && r1.log);
+    check('the investor record holds the ground answered yes, with the self-certification record', !!r1 && !!r1.accreditation && r1.accreditation.basis === bases[0] && !!r1.verify && r1.verify.connection === 'self' && r1.verify.status === 'verified', r1 && { accreditation: r1.accreditation, verify: r1.verify });
     check('Continue moves on to the next step', (await L.heading(p)) === 'Tax certification', await L.heading(p));
+
+    // Corrected from yes to no while pending: the request, and now the investor record, follow the correction.
+    check('Back reaches the status step to correct yes to no', await backTo(p, 'Investor status'), await L.heading(p));
+    await p.check('input[name="ob-stAcc"][value="no"]');
+    await L.submit(p);
+    const rn = await requestOf(p, inv.investorId, off.offeringId);
+    const qn = (rn && rn.qual) || {};
+    check('yes corrected to no while pending: request.qual.accredited is false again', qn.accredited === false && qn.basis === '', qn);
+    const accN = (rn && rn.accreditation) || {};
+    check('yes corrected to no: the investor record no longer holds the ground (kept as superseded, with when it was given and withdrawn)', !accN.basis && !accN.date && !!accN.superseded && accN.superseded.basis === bases[0] && /^\d{4}-\d{2}-\d{2}$/.test(accN.superseded.date || '') && /^\d{4}-\d{2}-\d{2}$/.test(accN.superseded.at || ''), accN);
+    check('yes corrected to no: the self-certification record made from that ground is withdrawn', !!rn && !!rn.verify && rn.verify.status !== 'verified' && String(rn.verify.method || '').indexOf(bases[0]) < 0, rn && rn.verify);
+    check('yes corrected to no: the change log says the self-certified ground no longer applies', !!rn && rn.log.some((e) => e.action === 'Investor status answered' && /not an accredited investor/.test(e.detail) && e.detail.indexOf(`self-certified ground on the record (${bases[0]}) no longer applies`) >= 0), rn && rn.log);
+    check('Continue moves on after the correction (nothing required)', (await L.heading(p)) === 'Tax certification', await L.heading(p));
+
+    // Back to yes, so the decided case below starts from an accredited answer on the request.
+    check('Back reaches the status step to answer yes again', await backTo(p, 'Investor status'), await L.heading(p));
+    await p.check('input[name="ob-stAcc"][value="yes"]');
+    await p.check('input[name="ob-stBasis"] >> nth=0');
+    await L.submit(p);
+    const r3 = await requestOf(p, inv.investorId, off.offeringId);
+    const q3 = (r3 && r3.qual) || {};
+    check('answered yes again: request.qual and the investor record hold the ground', q3.accredited === true && q3.basis === bases[0] && !!r3.accreditation && r3.accreditation.basis === bases[0], { q3, accreditation: r3 && r3.accreditation });
+    check('each correction while pending made one "Investor status updated" entry (three in all)', !!r3 && r3.log.filter((e) => e.action === 'Investor status updated').length === 3, r3 && r3.log);
     // The sponsor approves the subscription: the request is no longer pending.
     await p.evaluate((rid) => {
       const NS = window.CVPortal;
       const ws = NS.state.ws;
       NS.ops.decide(ws, ws.requests.find((x) => x.id === rid), true);
       NS.app.render();
-    }, r1.id);
+    }, r3.id);
     await p.waitForTimeout(300);
     check('Back reaches the status step again', await backTo(p, 'Investor status'), await L.heading(p));
     await p.check('input[name="ob-stAcc"][value="no"]');
     await L.submit(p);
     const r2 = await requestOf(p, inv.investorId, off.offeringId);
     const q2 = (r2 && r2.qual) || {};
-    check('once the request is no longer pending, a change leaves request.qual as it was', q2.accredited === true && q2.basis === bases[0] && q2.at === q1.at, q2);
-    check('and adds no "Investor status updated" entry', r2 && r2.log.filter((e) => e.action === 'Investor status updated').length === 1, r2 && r2.log);
+    check('once the request is no longer pending, a change leaves request.qual as it was', q2.accredited === true && q2.basis === bases[0] && q2.at === q3.at, q2);
+    check('and adds no "Investor status updated" entry', r2 && r2.log.filter((e) => e.action === 'Investor status updated').length === 3, r2 && r2.log);
+    const acc2 = (r2 && r2.accreditation) || {};
+    check('the investor record follows the investor’s latest answer (no ground) also after the request was decided', !acc2.basis && !!acc2.superseded && acc2.superseded.basis === bases[0], acc2);
     await consoleOffering(p, off.offeringId);
     const el = await eligibilityText(p);
     check('the panel follows the request: 0 of 35', /Non-accredited purchasers: 0 of 35/.test(el), el);
