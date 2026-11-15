@@ -106,7 +106,7 @@ async function investorAt(browser, opts) {
         name: INV.name,
         onStep: async (hd) => pages.push({ hd, hash: await p.evaluate(() => location.hash), path: await p.evaluate(() => location.pathname), text: await p.locator('main').innerText(), pw: await p.locator('main input[type=password]').count(), out: await p.evaluate(() => Array.from(document.querySelectorAll('main a[href]')).map((a) => a.getAttribute('href')).filter((x) => /^https?:/i.test(x) && x.indexOf(location.origin) !== 0)) })
       });
-      check('SIGN-02 the invited investor reaches the signing step with no action by the sponsor', r.reached && r.seen.some((s) => /Step 9 of 10: Subscription agreement/.test(s)), r.seen);
+      check('SIGN-02 the invited investor reaches the signing step with no action by the sponsor', r.reached && r.seen.some((s) => /Step 10 of 11: Subscription agreement/.test(s)), r.seen);
       const afterLogin = pages.slice(pages.findIndex((x) => /Create your login/.test(x.hd)) + 1);
       check('SIGN-01 every step is the same wizard page (same file, the invitation link’s address)', pages.every((x) => /diy\.html$/.test(x.path) && x.hash === `#invite-${inv.token}`), pages.map((x) => x.path + x.hash));
       check('SIGN-01 no step after the portal login asks for another account, password or sign-up', afterLogin.length >= 6 && afterLogin.every((x) => x.pw === 0 && !ANOTHER_ACCOUNT.test(x.text)), afterLogin.filter((x) => x.pw || ANOTHER_ACCOUNT.test(x.text)).map((x) => x.hd));
