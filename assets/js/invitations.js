@@ -999,9 +999,30 @@
       ws.envelopes.push(envIn);
     }
     if (rIn) {
+      const namedEnvelope = !!rIn.envelopeId;
       // Signed through the envelope that came with it, or not through an envelope at all: never through another envelope here
       // (automatic acceptance would otherwise take someone else's, or an earlier, signed agreement for this subscription).
       if (rIn.envelopeId && (!envIn || rIn.envelopeId !== envIn.id)) delete rIn.envelopeId;
+      // Who signed and when are this console's to say, never the device's (T-06-20): the investor's name on this record, and
+      // the signature the kept envelope records for the investor (none made: not signed), or, for a request signed without an
+      // envelope, the time the integration server recorded the completion. Always from the invitation's sending to now.
+      rIn.signedBy = String(inv.contact || inv.title || '').trim();
+      const sentMs = Date.parse(it.sentAt || '');
+      const clampAt = (t) => {
+        const ms = Date.parse(t || '');
+        if (!isFinite(ms)) return '';
+        const at = Math.min(Date.now(), Math.max(isFinite(sentMs) ? sentMs : ms, ms));
+        return new Date(at).toISOString().replace(/\.\d{3}Z$/, 'Z');
+      };
+      if (rIn.envelopeId) {
+        const signer = envIn.signers.find((s) => s.role === 'investor');
+        rIn.signedAt = signer && signer.status === 'signed' ? clampAt(signer.signedAt) : '';
+      } else if (namedEnvelope) {
+        // Signed through an envelope that was not imported: no signature here to date it by.
+        rIn.signedAt = '';
+      } else {
+        rIn.signedAt = clampAt(sub.completedAt) || clampAt(nowIso());
+      }
       ws.requests.push(rIn);
     }
     if (dropped) audit(ws, 'Subscription not imported', `${inv.title || inv.id}: the subscription request from the investor's device was not added to the portal: ${dropped}${tied && envIn ? '; the agreement signed for it is kept, voided' : ''}. Ask them to subscribe again.`, it.offeringId, inv.id);
