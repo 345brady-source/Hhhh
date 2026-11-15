@@ -1,0 +1,140 @@
+{"when": "2026-11-15T00:52:34Z", "op": "del", "place": ["p01-001"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:34Z", "op": "set", "place": "p06-001", "changes": ["what=amount", "label=Number of shares", "printed_label=# of Shares", "must=true", "doubt=caption printed under the line at the top of the next page"], "why": null}
+{"when": "2026-11-15T00:52:34Z", "op": "set", "place": "p06-002", "changes": ["what=amount", "label=Total dollars invested", "printed_label=Total $ Invested", "must=true", "doubt=caption printed under the line at the top of the next page"], "why": null}
+{"when": "2026-11-15T00:52:34Z", "op": "add", "place": "p07-027", "why": null}
+{"when": "2026-11-15T00:52:34Z", "op": "add", "place": "p07-028", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "set", "place": "p07-001", "changes": ["what=text", "label=State in which the sale was made", "printed_label=State in which sale was made", "must=false", "owner_also_ok=third-party", "doubt=owner: investor (section 1 is the investor's) or the broker-dealer"], "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-029", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-030", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-031", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-032", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-033", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-034", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-035", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-036", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-037", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-038", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-039", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-040", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-041", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-042", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-043", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "set", "place": "p07-002", "changes": ["what=name", "label=Other trust: name of the trust", "printed_label=Other Trust of", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "set", "place": "p07-003", "changes": ["owner=investor", "what=name", "label=Custodian ownership: as custodian for (minor)", "printed_label=As Custodian for", "must=false", "doubt=caption wrapped from the right column"], "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "set", "place": "p07-004", "changes": ["what=name", "label=Other trust: for the benefit of", "printed_label=for the Benefit of", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "set", "place": "p07-005", "changes": ["what=text", "label=Custodian ownership: state of the minors act", "printed_label=Minors Act of the State of", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "set", "place": "p07-006", "changes": ["what=text", "label=Type of ownership: other, specify", "printed_label=Other", "must=false", "doubt=line wrapped from the right column Other option"], "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-044", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-045", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-046", "why": null}
+{"when": "2026-11-15T00:52:35Z", "op": "add", "place": "p07-047", "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "add", "place": "p07-048", "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "add", "place": "p07-049", "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "add", "place": "p07-050", "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "set", "place": "p07-007", "changes": ["what=title", "label=Registration title: other, specify", "printed_label=Other", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "set", "place": "p07-008", "changes": ["what=name", "label=Registration name(s)", "printed_label=Name", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "set", "place": "p07-009", "changes": ["x1=573.8", "what=tax number", "label=Taxpayer identification number, part 1 of 2", "printed_label=Taxpayer Identification Number", "must=false", "doubt=one number in digit cells wrapped onto two lines: part 1 of 2", "printed_as=five digit cells"], "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "del", "place": ["p07-010"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "del", "place": ["p07-011"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "del", "place": ["p07-012"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "del", "place": ["p07-013"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "set", "place": "p07-014", "changes": ["x1=121.8", "what=tax number", "label=Taxpayer identification number, part 2 of 2", "printed_label=Taxpayer Identification Number", "must=false", "doubt=one number in digit cells wrapped onto two lines: part 2 of 2", "printed_as=four digit cells"], "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "del", "place": ["p07-015"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "del", "place": ["p07-016"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "del", "place": ["p07-017"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "set", "place": "p07-018", "changes": ["x1=556.2", "what=tax number", "label=Social security number, part 1 of 2", "printed_label=Social Security Number", "must=false", "doubt=one number in digit cells wrapped onto two lines: part 1 of 2", "printed_as=four digit cells with a hyphen"], "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "del", "place": ["p07-019"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "del", "place": ["p07-020"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "del", "place": ["p07-021"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "set", "place": "p07-022", "changes": ["x1=157.0", "what=tax number", "label=Social security number, part 2 of 2", "printed_label=Social Security Number", "must=false", "doubt=one number in digit cells wrapped onto two lines: part 2 of 2", "printed_as=five digit cells with a hyphen"], "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "del", "place": ["p07-023"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "del", "place": ["p07-024"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "del", "place": ["p07-025"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "del", "place": ["p07-026"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "add", "place": "p07-051", "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "add", "place": "p07-052", "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "add", "place": "p07-053", "why": null}
+{"when": "2026-11-15T00:52:36Z", "op": "add", "place": "p07-054", "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "add", "place": "p07-055", "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "add", "place": "p07-056", "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "add", "place": "p07-057", "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "add", "place": "p07-058", "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "add", "place": "p07-059", "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "add", "place": "p08-014", "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "add", "place": "p08-015", "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "add", "place": "p08-016", "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "add", "place": "p08-017", "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "add", "place": "p08-018", "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "add", "place": "p08-019", "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "add", "place": "p08-020", "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "set", "place": "p08-001", "changes": ["what=title", "label=Investor (if different) title: other, specify", "printed_label=Other", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "set", "place": "p08-002", "changes": ["what=name", "label=Investor name (if different from registration)", "printed_label=Name", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "set", "place": "p08-003", "changes": ["x1=556.2", "what=tax number", "label=Investor (if different) social security number, part 1 of 2", "printed_label=Social Security Number", "must=false", "doubt=one number in digit cells wrapped onto two lines: part 1 of 2", "printed_as=four digit cells with a hyphen"], "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "del", "place": ["p08-004"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "del", "place": ["p08-005"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "del", "place": ["p08-006"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "set", "place": "p08-007", "changes": ["x1=157.0", "what=tax number", "label=Investor (if different) social security number, part 2 of 2", "printed_label=Social Security Number", "must=false", "doubt=one number in digit cells wrapped onto two lines: part 2 of 2", "printed_as=five digit cells with a hyphen"], "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "del", "place": ["p08-008"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "del", "place": ["p08-009"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "del", "place": ["p08-010"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "del", "place": ["p08-011"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:37Z", "op": "add", "place": "p08-021", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p08-022", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p08-023", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p08-024", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p08-025", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p08-026", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p08-027", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p08-028", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p08-029", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "set", "place": "p08-012", "changes": ["label=Initial item (a): prospectus received five business days before signing", "printed_label=(a)", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "set", "place": "p08-013", "changes": ["label=Initial item (b): net worth and income standards", "printed_label=(b)", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "set", "place": "p09-001", "changes": ["label=Initial item (c): purchasing for own account or with authority", "printed_label=(c)", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "set", "place": "p09-002", "changes": ["label=Initial item (d): shares are not liquid", "printed_label=(d)", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "set", "place": "p09-003", "changes": ["label=Initial item (e): if an affiliate, purchasing for investment", "printed_label=(e)", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "set", "place": "p09-004", "changes": ["kind=date", "label=Agreement dated", "printed_label=Agreement Dated", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "del", "place": ["p09-005"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "set", "place": "p09-006", "changes": ["kind=signature", "label=Signature of the registered owner", "printed_label=Signature-Registered Owner", "must=true", "doubt=signature line wrapped from the right column to the left margin"], "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "set", "place": "p09-007", "changes": ["owner=third-party", "what=name", "label=Printed name of custodian or trustee", "printed_label=(Print Name of Custodian or Trustee)", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "set", "place": "p09-008", "changes": ["kind=signature", "owner=third-party", "label=Authorized signature of custodian or trustee (required for IRA, Keogh or qualified plan)", "printed_label=Authorized Signature (Custodian or Trustee)", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "set", "place": "p09-009", "changes": ["kind=signature", "owner=co-investor", "label=Signature of the co-owner", "printed_label=Signature-Co-Owner", "must=false", "doubt=signature line wrapped from the right column to the left margin"], "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p09-011", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p09-012", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "set", "place": "p09-010", "changes": ["label=Dividend reinvestment: other percentage", "printed_label=%", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p09-013", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p09-014", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p09-015", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p09-016", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p09-017", "why": null}
+{"when": "2026-11-15T00:52:38Z", "op": "add", "place": "p09-018", "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "add", "place": "p09-019", "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "add", "place": "p09-020", "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "add", "place": "p09-021", "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "add", "place": "p09-022", "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "add", "place": "p09-023", "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "add", "place": "p10-016", "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "add", "place": "p10-017", "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "add", "place": "p10-018", "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "add", "place": "p10-019", "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "add", "place": "p10-020", "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "add", "place": "p10-021", "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "add", "place": "p10-022", "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "add", "place": "p10-023", "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "set", "place": "p10-001", "changes": ["kind=signature", "owner=third-party", "label=Broker-dealer signature, if required", "printed_label=Broker-Dealer Signature, if required", "must=false", "doubt=", "printed_as=hyphen run"], "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "set", "place": "p10-002", "changes": ["kind=signature", "owner=third-party", "label=Registered representative signature", "printed_label=Registered Representative Signature", "must=true", "doubt=hyphen rule wrapped: its tail is on the next line", "printed_as=hyphen run"], "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "del", "place": ["p10-003"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "set", "place": "p10-004", "changes": ["owner=third-party", "owner_also_ok=firm", "what=amount", "label=Company use: amount", "printed_label=Amount", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "set", "place": "p10-005", "changes": ["kind=blank", "what=date", "owner=third-party", "owner_also_ok=firm", "label=Company use: date", "printed_label=Date", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "set", "place": "p10-006", "changes": ["owner=third-party", "owner_also_ok=firm", "what=text", "label=Company use: check number", "printed_label=Check No.", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "set", "place": "p10-007", "changes": ["owner=third-party", "owner_also_ok=firm", "what=text", "label=Company use: certificate number", "printed_label=Certificate No.", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "set", "place": "p10-008", "changes": ["label=Company acceptance: received and subscription accepted by", "printed_label=By:", "must=true", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "set", "place": "p10-009", "changes": ["owner=third-party", "owner_also_ok=firm", "what=text", "label=Company use: company registered representative number", "printed_label=Registered Representative #", "must=false", "doubt="], "why": null}
+{"when": "2026-11-15T00:52:39Z", "op": "set", "place": "p10-010", "changes": ["owner=third-party", "owner_also_ok=firm", "what=text", "label=Company use: account number", "printed_label=Account #", "must=false", "doubt=captions wrapped: which of these two lines is Account # and which Broker-Dealer # is not certain"], "why": null}
+{"when": "2026-11-15T00:52:40Z", "op": "set", "place": "p10-011", "changes": ["owner=third-party", "owner_also_ok=firm", "what=text", "label=Company use: broker-dealer number", "printed_label=Broker-Dealer #", "must=false", "doubt=captions wrapped: which of these two lines is Account # and which Broker-Dealer # is not certain"], "why": null}
+{"when": "2026-11-15T00:52:40Z", "op": "del", "place": ["p10-012"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:40Z", "op": "del", "place": ["p10-013"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:40Z", "op": "del", "place": ["p10-014"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:40Z", "op": "del", "place": ["p10-015"], "n": 1, "why": null}
+{"when": "2026-11-15T00:52:40Z", "op": "meta", "changes": ["signing.kind=the registered owner signs (co-owner and custodian or trustee where they apply), the broker-dealer's registered representative signs, the company accepts in its company-use block", "signing.third_parties=custodian,broker-dealer", "not.1=the prospectus date blank (the issuer completes it before sending)", "not.6=instruction text on pages 1-6; only the two investment lines at the foot of page 6 are places", "not.7=filing markup words <Table>, <S>, <C>", "not.10=the prospectus-delivery legend date (Until ____ 2004), the back-cover rules and the back-cover date", "sure.1=sure", "sure.2=sure | no places", "sure.3=sure | no places", "sure.4=sure | no places", "sure.5=sure | no places", "sure.6=sure", "sure.7=places sure | caption-only places have no printed blank, boxes are the rest of the caption line", "sure.8=places sure | same caption-only rule", "sure.9=places sure | signature table wrapped, lines matched to captions by column", "sure.10=places sure | company-use captions wrapped", "sure.11=sure | no places"], "why": null}
+{"when": "2026-11-15T00:52:59Z", "op": "meta", "changes": ["not.9=filing markup words <Table>, <S>, <C>; the 20 printed inside the agreement date line belongs to that one date place"], "why": null}
+{"when": "2026-11-15T00:53:00Z", "op": "done"}

@@ -67,23 +67,20 @@
  },
  "coordinates": "PDF points, origin top-left, y grows downward. Underscore run or drawn rule: its x extent, from 14 pt above the line to 1.5 pt under it. Cell or box: its drawn edges. Tick box: the printed square. Picture pages: the picture's pixels through the page's drawing matrix.",
  "signing": {
-  "investor_pages": [],
+  "investor_pages": [
+   9
+  ],
   "firm_pages": [
    10
   ],
-  "co_investor": false,
-  "third_parties": [],
-  "kind": ""
+  "co_investor": true,
+  "third_parties": [
+   "custodian",
+   "broker-dealer"
+  ],
+  "kind": "the registered owner signs (co-owner and custodian or trustee where they apply), the broker-dealer's registered representative signs, the company accepts in its company-use block"
  },
  "counts_per_page": {
-  "1": {
-   "total": 1,
-   "tickbox": 0,
-   "initials": 0,
-   "blank": 1,
-   "signature": 0,
-   "date": 0
-  },
   "6": {
    "total": 2,
    "tickbox": 0,
@@ -93,110 +90,91 @@
    "date": 0
   },
   "7": {
-   "total": 26,
-   "tickbox": 0,
+   "total": 45,
+   "tickbox": 24,
    "initials": 0,
-   "blank": 26,
+   "blank": 21,
    "signature": 0,
    "date": 0
   },
   "8": {
-   "total": 13,
-   "tickbox": 0,
+   "total": 22,
+   "tickbox": 7,
    "initials": 2,
-   "blank": 11,
+   "blank": 13,
    "signature": 0,
    "date": 0
   },
   "9": {
-   "total": 10,
-   "tickbox": 0,
+   "total": 22,
+   "tickbox": 2,
    "initials": 3,
-   "blank": 7,
-   "signature": 0,
-   "date": 0
+   "blank": 13,
+   "signature": 3,
+   "date": 1
   },
   "10": {
-   "total": 15,
+   "total": 18,
    "tickbox": 0,
    "initials": 0,
-   "blank": 13,
-   "signature": 1,
-   "date": 1
+   "blank": 15,
+   "signature": 3,
+   "date": 0
   }
  },
  "counts_total": {
-  "total": 67,
-  "tickbox": 0,
+  "total": 109,
+  "tickbox": 33,
   "initials": 5,
-  "blank": 60,
-  "signature": 1,
+  "blank": 64,
+  "signature": 6,
   "date": 1
  },
  "counts_by_owner": {
-  "firm": 2,
-  "investor": 61,
-  "investor-entity": 1,
-  "third-party": 3
+  "co-investor": 1,
+  "firm": 1,
+  "investor": 83,
+  "third-party": 24
  },
  "sure_per_page": {
-  "1": "draft",
-  "2": "draft",
-  "3": "draft",
-  "4": "draft",
-  "5": "draft",
-  "6": "draft",
-  "7": "draft",
-  "8": "draft",
-  "9": "draft",
-  "10": "draft",
-  "11": "draft"
+  "1": "sure",
+  "2": "sure | no places",
+  "3": "sure | no places",
+  "4": "sure | no places",
+  "5": "sure | no places",
+  "6": "sure",
+  "7": "places sure | caption-only places have no printed blank, boxes are the rest of the caption line",
+  "8": "places sure | same caption-only rule",
+  "9": "places sure | signature table wrapped, lines matched to captions by column",
+  "10": "places sure | company-use captions wrapped",
+  "11": "sure | no places"
  },
- "not_fields": {},
+ "not_fields": {
+  "1": [
+   "the prospectus date blank (the issuer completes it before sending)"
+  ],
+  "6": [
+   "instruction text on pages 1-6; only the two investment lines at the foot of page 6 are places"
+  ],
+  "7": [
+   "filing markup words <Table>, <S>, <C>"
+  ],
+  "10": [
+   "the prospectus-delivery legend date (Until ____ 2004), the back-cover rules and the back-cover date"
+  ],
+  "9": [
+   "filing markup words <Table>, <S>, <C>; the 20 printed inside the agreement date line belongs to that one date place"
+  ]
+ },
  "places": [
-  {
-   "id": "p01-001",
-   "page": 1,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Company dated",
-   "printed_label": "Company dated",
-   "must": true,
-   "x0": 115.9,
-   "y0": 271.0,
-   "x1": 162.9,
-   "y1": 286.5,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Company dated",
-    "candidate": "underscore",
-    "why": "reader marked it: The words before this blank may not be its label: check what",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "date",
-     "box": [
-      115.9,
-      271.0,
-      162.9,
-      286.5
-     ]
-    }
-   },
-   "what": "date",
-   "doubt": "check"
-  },
   {
    "id": "p06-001",
    "page": 6,
    "kind": "blank",
    "owner": "investor",
-   "label": "Text",
-   "printed_label": "",
-   "must": false,
+   "label": "Number of shares",
+   "printed_label": "# of Shares",
+   "must": true,
    "x0": 57.2,
    "y0": 745.0,
    "x1": 180.5,
@@ -221,17 +199,17 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "what": "amount",
+   "doubt": "caption printed under the line at the top of the next page"
   },
   {
    "id": "p06-002",
    "page": 6,
    "kind": "blank",
    "owner": "investor",
-   "label": "PAYABLE TO",
-   "printed_label": "",
-   "must": false,
+   "label": "Total dollars invested",
+   "printed_label": "Total $ Invested",
+   "must": true,
    "x0": 239.2,
    "y0": 745.0,
    "x1": 356.6,
@@ -256,17 +234,45 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "what": "amount",
+   "doubt": "caption printed under the line at the top of the next page"
+  },
+  {
+   "id": "p07-027",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Initial investment",
+   "printed_label": "Initial Investment",
+   "must": false,
+   "x0": 403.6,
+   "y0": 40.5,
+   "x1": 421.2,
+   "y1": 50.3,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-028",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Additional investment",
+   "printed_label": "Additional Investment",
+   "must": false,
+   "x0": 403.6,
+   "y0": 63.0,
+   "x1": 421.2,
+   "y1": 72.8,
+   "printed_as": "slash pair / /"
   },
   {
    "id": "p07-001",
    "page": 7,
    "kind": "blank",
    "owner": "investor",
-   "label": "which sale was made",
-   "printed_label": "made",
-   "must": true,
+   "label": "State in which the sale was made",
+   "printed_label": "State in which sale was made",
+   "must": false,
    "x0": 63.1,
    "y0": 92.5,
    "x1": 204.0,
@@ -292,16 +298,159 @@
     }
    },
    "what": "text",
-   "doubt": "check"
+   "doubt": "owner: investor (section 1 is the investor's) or the broker-dealer",
+   "owner_also_ok": [
+    "third-party"
+   ]
+  },
+  {
+   "id": "p07-029",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Elect the deferred commission option",
+   "printed_label": "Check the following box to elect the Deferred Commission Option:",
+   "must": false,
+   "x0": 456.4,
+   "y0": 119.3,
+   "x1": 462.3,
+   "y1": 129.0,
+   "printed_as": "box glyph printed as a question mark"
+  },
+  {
+   "id": "p07-030",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Plan to make additional investments",
+   "printed_label": "Please check if you plan to make additional investments in the Company:",
+   "must": false,
+   "x0": 456.4,
+   "y0": 175.5,
+   "x1": 462.3,
+   "y1": 185.3,
+   "printed_as": "box glyph printed as a hyphen"
+  },
+  {
+   "id": "p07-031",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: IRA",
+   "printed_label": "IRA",
+   "must": false,
+   "x0": 57.2,
+   "y0": 276.8,
+   "x1": 74.8,
+   "y1": 286.5,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-038",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: individual",
+   "printed_label": "Individual",
+   "must": false,
+   "x0": 444.7,
+   "y0": 276.8,
+   "x1": 462.3,
+   "y1": 286.5,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-032",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: Keogh",
+   "printed_label": "Keogh",
+   "must": false,
+   "x0": 57.2,
+   "y0": 288.0,
+   "x1": 74.8,
+   "y1": 297.8,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-039",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: joint tenants with right of survivorship",
+   "printed_label": "Joint Tenants With Right of Survivorship",
+   "must": false,
+   "x0": 444.7,
+   "y0": 288.0,
+   "x1": 462.3,
+   "y1": 297.8,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-033",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: qualified pension plan",
+   "printed_label": "Qualified Pension Plan",
+   "must": false,
+   "x0": 57.2,
+   "y0": 310.5,
+   "x1": 74.8,
+   "y1": 320.3,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-040",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: community property",
+   "printed_label": "Community Property",
+   "must": false,
+   "x0": 444.7,
+   "y0": 310.5,
+   "x1": 462.3,
+   "y1": 320.3,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-034",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: qualified profit sharing plan",
+   "printed_label": "Qualified Profit Sharing Plan",
+   "must": false,
+   "x0": 57.2,
+   "y0": 321.8,
+   "x1": 74.8,
+   "y1": 331.5,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-041",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: tenants in common",
+   "printed_label": "Tenants in Common",
+   "must": false,
+   "x0": 444.7,
+   "y0": 321.8,
+   "x1": 462.3,
+   "y1": 331.5,
+   "printed_as": "slash pair / /"
   },
   {
    "id": "p07-002",
    "page": 7,
    "kind": "blank",
    "owner": "investor",
-   "label": "Common Other Trust of",
-   "printed_label": "/ / Other Trust of",
-   "must": true,
+   "label": "Other trust: name of the trust",
+   "printed_label": "Other Trust of",
+   "must": false,
    "x0": 174.6,
    "y0": 328.8,
    "x1": 356.6,
@@ -326,16 +475,43 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "what": "name"
+  },
+  {
+   "id": "p07-035",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: other trust",
+   "printed_label": "Other Trust of",
+   "must": false,
+   "x0": 57.2,
+   "y0": 333.0,
+   "x1": 74.8,
+   "y1": 342.8,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-042",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: custodian under the gifts or transfers to minors act",
+   "printed_label": "Custodian:",
+   "must": false,
+   "x0": 444.7,
+   "y0": 333.0,
+   "x1": 462.3,
+   "y1": 342.8,
+   "printed_as": "slash pair / /"
   },
   {
    "id": "p07-003",
    "page": 7,
    "kind": "blank",
-   "owner": "third-party",
-   "label": "Custodian",
-   "printed_label": "Custodian for",
+   "owner": "investor",
+   "label": "Custodian ownership: as custodian for (minor)",
+   "printed_label": "As Custodian for",
    "must": false,
    "x0": 115.9,
    "y0": 340.0,
@@ -360,16 +536,17 @@
      ]
     }
    },
-   "what": "text"
+   "what": "name",
+   "doubt": "caption wrapped from the right column"
   },
   {
    "id": "p07-004",
    "page": 7,
    "kind": "blank",
    "owner": "investor",
-   "label": "for the Benefit of",
+   "label": "Other trust: for the benefit of",
    "printed_label": "for the Benefit of",
-   "must": true,
+   "must": false,
    "x0": 198.1,
    "y0": 351.3,
    "x1": 344.9,
@@ -394,17 +571,30 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "what": "name"
+  },
+  {
+   "id": "p07-036",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: company",
+   "printed_label": "Company",
+   "must": false,
+   "x0": 57.2,
+   "y0": 378.0,
+   "x1": 74.8,
+   "y1": 387.8,
+   "printed_as": "slash pair / /"
   },
   {
    "id": "p07-005",
    "page": 7,
    "kind": "blank",
    "owner": "investor",
-   "label": "of the State of",
+   "label": "Custodian ownership: state of the minors act",
    "printed_label": "Minors Act of the State of",
-   "must": true,
+   "must": false,
    "x0": 192.2,
    "y0": 385.0,
    "x1": 268.5,
@@ -429,23 +619,50 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "what": "text"
+  },
+  {
+   "id": "p07-037",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: corporation",
+   "printed_label": "Corporation",
+   "must": false,
+   "x0": 57.2,
+   "y0": 400.5,
+   "x1": 74.8,
+   "y1": 410.3,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-043",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Type of ownership: other",
+   "printed_label": "Other",
+   "must": false,
+   "x0": 444.7,
+   "y0": 400.5,
+   "x1": 462.3,
+   "y1": 410.3,
+   "printed_as": "slash pair / /"
   },
   {
    "id": "p07-006",
    "page": 7,
    "kind": "blank",
    "owner": "investor",
-   "label": "4. REGISTRATION NAME AND ADDRESS",
-   "printed_label": "4. REGISTRATION NAME AND ADDRESS",
+   "label": "Type of ownership: other, specify",
+   "printed_label": "Other",
    "must": false,
    "x0": 33.7,
    "y0": 407.5,
    "x1": 309.6,
    "y1": 423.0,
    "printed_as": "measure candidate: underscore (run of underscores)",
-   "doubt": "candidate only",
+   "doubt": "line wrapped from the right column Other option",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -461,16 +678,16 @@
      ]
     }
    },
-   "what": "address"
+   "what": "text"
   },
   {
    "id": "p07-007",
    "page": 7,
    "kind": "blank",
    "owner": "investor",
-   "label": "Other",
-   "printed_label": "/ PhD / / DDS / / Other",
-   "must": true,
+   "label": "Registration title: other, specify",
+   "printed_label": "Other",
+   "must": false,
    "x0": 462.3,
    "y0": 463.8,
    "x1": 573.8,
@@ -495,15 +712,112 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "what": "title"
+  },
+  {
+   "id": "p07-044",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Registration title: Mr",
+   "printed_label": "Mr",
+   "must": false,
+   "x0": 33.7,
+   "y0": 468.0,
+   "x1": 51.4,
+   "y1": 477.8,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-045",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Registration title: Mrs",
+   "printed_label": "Mrs",
+   "must": false,
+   "x0": 92.4,
+   "y0": 468.0,
+   "x1": 110.1,
+   "y1": 477.8,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-046",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Registration title: Ms",
+   "printed_label": "Ms",
+   "must": false,
+   "x0": 157.0,
+   "y0": 468.0,
+   "x1": 174.6,
+   "y1": 477.8,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-047",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Registration title: MD",
+   "printed_label": "MD",
+   "must": false,
+   "x0": 215.7,
+   "y0": 468.0,
+   "x1": 233.3,
+   "y1": 477.8,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-048",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Registration title: PhD",
+   "printed_label": "PhD",
+   "must": false,
+   "x0": 274.4,
+   "y0": 468.0,
+   "x1": 292.0,
+   "y1": 477.8,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-049",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Registration title: DDS",
+   "printed_label": "DDS",
+   "must": false,
+   "x0": 339.0,
+   "y0": 468.0,
+   "x1": 356.6,
+   "y1": 477.8,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p07-050",
+   "page": 7,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Registration title: other",
+   "printed_label": "Other",
+   "must": false,
+   "x0": 403.6,
+   "y0": 468.0,
+   "x1": 421.2,
+   "y1": 477.8,
+   "printed_as": "slash pair / /"
   },
   {
    "id": "p07-008",
    "page": 7,
    "kind": "blank",
    "owner": "investor",
-   "label": "Investor name",
+   "label": "Registration name(s)",
    "printed_label": "Name",
    "must": true,
    "x0": 63.1,
@@ -536,14 +850,14 @@
    "page": 7,
    "kind": "blank",
    "owner": "investor",
-   "label": "Taxpayer ID",
-   "printed_label": "Social",
-   "must": true,
+   "label": "Taxpayer identification number, part 1 of 2",
+   "printed_label": "Taxpayer Identification Number",
+   "must": false,
    "x0": 456.4,
    "y0": 520.0,
-   "x1": 474.0,
+   "x1": 573.8,
    "y1": 535.5,
-   "printed_as": "measure candidate: underscore (run of underscores)",
+   "printed_as": "five digit cells",
    "prefill": {
     "origin": "field+candidate",
     "field_kind": "text",
@@ -562,161 +876,22 @@
      ]
     }
    },
-   "what": "tax number"
-  },
-  {
-   "id": "p07-010",
-   "page": 7,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Text",
-   "printed_label": "Social",
-   "must": false,
-   "x0": 479.9,
-   "y0": 520.0,
-   "x1": 497.5,
-   "y1": 535.5,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Text",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      479.9,
-      520.0,
-      497.5,
-      535.5
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
-   "id": "p07-011",
-   "page": 7,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "-",
-   "printed_label": "Security",
-   "must": false,
-   "x0": 509.2,
-   "y0": 520.0,
-   "x1": 526.8,
-   "y1": 535.5,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "-",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      509.2,
-      520.0,
-      526.8,
-      535.5
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
-   "id": "p07-012",
-   "page": 7,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "-",
-   "printed_label": "Security",
-   "must": false,
-   "x0": 532.7,
-   "y0": 520.0,
-   "x1": 550.3,
-   "y1": 535.5,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "-",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      532.7,
-      520.0,
-      550.3,
-      535.5
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
-   "id": "p07-013",
-   "page": 7,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "-",
-   "printed_label": "",
-   "must": false,
-   "x0": 556.2,
-   "y0": 520.0,
-   "x1": 573.8,
-   "y1": 535.5,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "-",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      556.2,
-      520.0,
-      573.8,
-      535.5
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
+   "what": "tax number",
+   "doubt": "one number in digit cells wrapped onto two lines: part 1 of 2"
   },
   {
    "id": "p07-014",
    "page": 7,
    "kind": "blank",
    "owner": "investor",
-   "label": "Number",
-   "printed_label": "Number",
+   "label": "Taxpayer identification number, part 2 of 2",
+   "printed_label": "Taxpayer Identification Number",
    "must": false,
    "x0": 33.7,
    "y0": 531.3,
-   "x1": 51.4,
+   "x1": 121.8,
    "y1": 546.8,
-   "printed_as": "measure candidate: underscore (run of underscores)",
+   "printed_as": "four digit cells",
    "prefill": {
     "origin": "field+candidate",
     "field_kind": "text",
@@ -736,127 +911,22 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
-   "id": "p07-015",
-   "page": 7,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Text",
-   "printed_label": "Number",
-   "must": false,
-   "x0": 57.2,
-   "y0": 531.3,
-   "x1": 74.8,
-   "y1": 546.8,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Text",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      57.2,
-      531.3,
-      74.8,
-      546.8
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
-   "id": "p07-016",
-   "page": 7,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Text",
-   "printed_label": "",
-   "must": false,
-   "x0": 80.7,
-   "y0": 531.3,
-   "x1": 98.3,
-   "y1": 546.8,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Text",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      80.7,
-      531.3,
-      98.3,
-      546.8
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
-   "id": "p07-017",
-   "page": 7,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Text",
-   "printed_label": "",
-   "must": false,
-   "x0": 104.2,
-   "y0": 531.3,
-   "x1": 121.8,
-   "y1": 546.8,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Text",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      104.2,
-      531.3,
-      121.8,
-      546.8
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
+   "what": "tax number",
+   "doubt": "one number in digit cells wrapped onto two lines: part 2 of 2"
   },
   {
    "id": "p07-018",
    "page": 7,
    "kind": "blank",
    "owner": "investor",
-   "label": "Text",
-   "printed_label": "",
+   "label": "Social security number, part 1 of 2",
+   "printed_label": "Social Security Number",
    "must": false,
    "x0": 456.4,
    "y0": 565.0,
-   "x1": 474.0,
+   "x1": 556.2,
    "y1": 580.5,
-   "printed_as": "measure candidate: underscore (run of underscores)",
+   "printed_as": "four digit cells with a hyphen",
    "prefill": {
     "origin": "field+candidate",
     "field_kind": "text",
@@ -876,125 +946,22 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
-   "id": "p07-019",
-   "page": 7,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Text",
-   "printed_label": "",
-   "must": false,
-   "x0": 479.9,
-   "y0": 565.0,
-   "x1": 497.5,
-   "y1": 580.5,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Text",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      479.9,
-      565.0,
-      497.5,
-      580.5
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
-   "id": "p07-020",
-   "page": 7,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Text",
-   "printed_label": "",
-   "must": false,
-   "x0": 503.4,
-   "y0": 565.0,
-   "x1": 521.0,
-   "y1": 580.5,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Text",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      503.4,
-      565.0,
-      521.0,
-      580.5
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
-   "id": "p07-021",
-   "page": 7,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "-",
-   "printed_label": "",
-   "must": true,
-   "x0": 538.6,
-   "y0": 565.0,
-   "x1": 556.2,
-   "y1": 580.5,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "-",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      538.6,
-      565.0,
-      556.2,
-      580.5
-     ]
-    }
-   },
-   "what": "text"
+   "what": "tax number",
+   "doubt": "one number in digit cells wrapped onto two lines: part 1 of 2"
   },
   {
    "id": "p07-022",
    "page": 7,
    "kind": "blank",
    "owner": "investor",
-   "label": "Street Address or P.O. Box",
-   "printed_label": "Street",
+   "label": "Social security number, part 2 of 2",
+   "printed_label": "Social Security Number",
    "must": false,
    "x0": 33.7,
    "y0": 576.3,
-   "x1": 51.4,
+   "x1": 157.0,
    "y1": 591.8,
-   "printed_as": "measure candidate: underscore (run of underscores)",
+   "printed_as": "five digit cells with a hyphen",
    "prefill": {
     "origin": "field+candidate",
     "field_kind": "text",
@@ -1014,149 +981,161 @@
      ]
     }
    },
+   "what": "tax number",
+   "doubt": "one number in digit cells wrapped onto two lines: part 2 of 2"
+  },
+  {
+   "id": "p07-051",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Registration street address or P.O. box",
+   "printed_label": "Street Address or P.O. Box",
+   "must": true,
+   "x0": 192.2,
+   "y0": 598.8,
+   "x1": 573.8,
+   "y1": 614.3,
+   "printed_as": "measured by hand",
    "what": "address",
-   "doubt": "check"
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
   },
   {
-   "id": "p07-023",
+   "id": "p07-052",
    "page": 7,
    "kind": "blank",
    "owner": "investor",
-   "label": "-",
-   "printed_label": "",
+   "label": "Registration city",
+   "printed_label": "City",
    "must": true,
-   "x0": 69.0,
-   "y0": 576.3,
-   "x1": 86.6,
-   "y1": 591.8,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "-",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      69.0,
-      576.3,
-      86.6,
-      591.8
-     ]
-    }
-   },
-   "what": "text"
+   "x0": 63.1,
+   "y0": 621.3,
+   "x1": 292.0,
+   "y1": 636.8,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
   },
   {
-   "id": "p07-024",
+   "id": "p07-053",
    "page": 7,
    "kind": "blank",
    "owner": "investor",
-   "label": "-",
-   "printed_label": "",
+   "label": "Registration state",
+   "printed_label": "State",
    "must": true,
+   "x0": 333.1,
+   "y0": 621.3,
+   "x1": 544.4,
+   "y1": 636.8,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p07-054",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Registration ZIP code",
+   "printed_label": "Zip Code",
+   "must": true,
+   "x0": 550.3,
+   "y0": 632.5,
+   "x1": 573.8,
+   "y1": 648.0,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; no room after the caption, writing room taken under it"
+  },
+  {
+   "id": "p07-055",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Registration home telephone",
+   "printed_label": "Home Telephone No.",
+   "must": false,
+   "x0": 151.1,
+   "y0": 655.0,
+   "x1": 409.4,
+   "y1": 670.5,
+   "printed_as": "measured by hand",
+   "what": "phone",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p07-056",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Registration business telephone",
+   "printed_label": "Business Telephone No.",
+   "must": false,
+   "x0": 45.5,
+   "y0": 670.5,
+   "x1": 409.4,
+   "y1": 681.8,
+   "printed_as": "measured by hand",
+   "what": "phone",
+   "doubt": "no printed blank; caption and area code bracket wrapped from the line above"
+  },
+  {
+   "id": "p07-057",
+   "page": 7,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Registration birthdate",
+   "printed_label": "Birthdate",
+   "must": false,
    "x0": 92.4,
-   "y0": 576.3,
-   "x1": 110.1,
-   "y1": 591.8,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "-",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      92.4,
-      576.3,
-      110.1,
-      591.8
-     ]
-    }
-   },
-   "what": "text"
+   "y0": 688.8,
+   "x1": 409.4,
+   "y1": 704.3,
+   "printed_as": "measured by hand",
+   "what": "date",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
   },
   {
-   "id": "p07-025",
+   "id": "p07-058",
    "page": 7,
    "kind": "blank",
    "owner": "investor",
-   "label": "-",
-   "printed_label": "or",
-   "must": true,
-   "x0": 115.9,
-   "y0": 576.3,
-   "x1": 133.5,
-   "y1": 591.8,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "-",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      115.9,
-      576.3,
-      133.5,
-      591.8
-     ]
-    }
-   },
-   "what": "text"
+   "label": "Registration occupation",
+   "printed_label": "Occupation",
+   "must": false,
+   "x0": 480.0,
+   "y0": 688.8,
+   "x1": 573.8,
+   "y1": 704.3,
+   "printed_as": "measured by hand",
+   "what": "text",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
   },
   {
-   "id": "p07-026",
+   "id": "p07-059",
    "page": 7,
    "kind": "blank",
    "owner": "investor",
-   "label": "-",
-   "printed_label": "P.O",
-   "must": true,
-   "x0": 139.4,
-   "y0": 576.3,
-   "x1": 157.0,
-   "y1": 591.8,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "-",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      139.4,
-      576.3,
-      157.0,
-      591.8
-     ]
-    }
-   },
-   "what": "text"
+   "label": "Registration email address (optional)",
+   "printed_label": "Email Address",
+   "must": false,
+   "x0": 151.2,
+   "y0": 722.5,
+   "x1": 573.8,
+   "y1": 738.0,
+   "printed_as": "measured by hand",
+   "what": "email",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
   },
   {
    "id": "p08-001",
    "page": 8,
    "kind": "blank",
    "owner": "investor",
-   "label": "Other",
-   "printed_label": "/ PhD / / DDS / / Other",
-   "must": true,
+   "label": "Investor (if different) title: other, specify",
+   "printed_label": "Other",
+   "must": false,
    "x0": 462.3,
    "y0": 36.3,
    "x1": 573.8,
@@ -1181,17 +1160,114 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "what": "title"
+  },
+  {
+   "id": "p08-014",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Investor (if different) title: Mr",
+   "printed_label": "Mr",
+   "must": false,
+   "x0": 33.7,
+   "y0": 40.5,
+   "x1": 51.4,
+   "y1": 50.3,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p08-015",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Investor (if different) title: Mrs",
+   "printed_label": "Mrs",
+   "must": false,
+   "x0": 92.4,
+   "y0": 40.5,
+   "x1": 110.1,
+   "y1": 50.3,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p08-016",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Investor (if different) title: Ms",
+   "printed_label": "Ms",
+   "must": false,
+   "x0": 157.0,
+   "y0": 40.5,
+   "x1": 174.6,
+   "y1": 50.3,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p08-017",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Investor (if different) title: MD",
+   "printed_label": "MD",
+   "must": false,
+   "x0": 215.7,
+   "y0": 40.5,
+   "x1": 233.3,
+   "y1": 50.3,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p08-018",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Investor (if different) title: PhD",
+   "printed_label": "PhD",
+   "must": false,
+   "x0": 274.4,
+   "y0": 40.5,
+   "x1": 292.0,
+   "y1": 50.3,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p08-019",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Investor (if different) title: DDS",
+   "printed_label": "DDS",
+   "must": false,
+   "x0": 339.0,
+   "y0": 40.5,
+   "x1": 356.6,
+   "y1": 50.3,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p08-020",
+   "page": 8,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Investor (if different) title: other",
+   "printed_label": "Other",
+   "must": false,
+   "x0": 403.6,
+   "y0": 40.5,
+   "x1": 421.2,
+   "y1": 50.3,
+   "printed_as": "slash pair / /"
   },
   {
    "id": "p08-002",
    "page": 8,
    "kind": "blank",
    "owner": "investor",
-   "label": "Name",
+   "label": "Investor name (if different from registration)",
    "printed_label": "Name",
-   "must": true,
+   "must": false,
    "x0": 63.1,
    "y0": 81.3,
    "x1": 274.4,
@@ -1222,14 +1298,14 @@
    "page": 8,
    "kind": "blank",
    "owner": "investor",
-   "label": "Number",
-   "printed_label": "",
+   "label": "Investor (if different) social security number, part 1 of 2",
+   "printed_label": "Social Security Number",
    "must": false,
    "x0": 456.4,
    "y0": 81.3,
-   "x1": 474.0,
+   "x1": 556.2,
    "y1": 96.8,
-   "printed_as": "measure candidate: underscore (run of underscores)",
+   "printed_as": "four digit cells with a hyphen",
    "prefill": {
     "origin": "field+candidate",
     "field_kind": "text",
@@ -1249,125 +1325,22 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
-   "id": "p08-004",
-   "page": 8,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Number",
-   "printed_label": "",
-   "must": false,
-   "x0": 479.9,
-   "y0": 81.3,
-   "x1": 497.5,
-   "y1": 96.8,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Number",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      479.9,
-      81.3,
-      497.5,
-      96.8
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
-   "id": "p08-005",
-   "page": 8,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Number",
-   "printed_label": "",
-   "must": false,
-   "x0": 503.3,
-   "y0": 81.3,
-   "x1": 521.0,
-   "y1": 96.8,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Number",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      503.3,
-      81.3,
-      521.0,
-      96.8
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
-  },
-  {
-   "id": "p08-006",
-   "page": 8,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "-",
-   "printed_label": "",
-   "must": true,
-   "x0": 538.6,
-   "y0": 81.3,
-   "x1": 556.2,
-   "y1": 96.8,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "-",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      538.6,
-      81.3,
-      556.2,
-      96.8
-     ]
-    }
-   },
-   "what": "text"
+   "what": "tax number",
+   "doubt": "one number in digit cells wrapped onto two lines: part 1 of 2"
   },
   {
    "id": "p08-007",
    "page": 8,
    "kind": "blank",
    "owner": "investor",
-   "label": "Text",
-   "printed_label": "",
+   "label": "Investor (if different) social security number, part 2 of 2",
+   "printed_label": "Social Security Number",
    "must": false,
    "x0": 33.7,
    "y0": 92.5,
-   "x1": 51.4,
+   "x1": 157.0,
    "y1": 108.0,
-   "printed_as": "measure candidate: underscore (run of underscores)",
+   "printed_as": "five digit cells with a hyphen",
    "prefill": {
     "origin": "field+candidate",
     "field_kind": "text",
@@ -1387,148 +1360,160 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "what": "tax number",
+   "doubt": "one number in digit cells wrapped onto two lines: part 2 of 2"
   },
   {
-   "id": "p08-008",
+   "id": "p08-021",
    "page": 8,
    "kind": "blank",
    "owner": "investor",
-   "label": "-",
-   "printed_label": "",
-   "must": true,
-   "x0": 69.0,
-   "y0": 92.5,
-   "x1": 86.6,
-   "y1": 108.0,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "-",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      69.0,
-      92.5,
-      86.6,
-      108.0
-     ]
-    }
-   },
-   "what": "text"
+   "label": "Investor (if different) street address or P.O. box",
+   "printed_label": "Street Address or P.O. Box",
+   "must": false,
+   "x0": 192.2,
+   "y0": 126.3,
+   "x1": 573.8,
+   "y1": 141.8,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
   },
   {
-   "id": "p08-009",
+   "id": "p08-022",
    "page": 8,
    "kind": "blank",
    "owner": "investor",
-   "label": "-",
-   "printed_label": "",
-   "must": true,
+   "label": "Investor (if different) city",
+   "printed_label": "City",
+   "must": false,
+   "x0": 63.1,
+   "y0": 148.8,
+   "x1": 292.0,
+   "y1": 164.3,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p08-023",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor (if different) state",
+   "printed_label": "State",
+   "must": false,
+   "x0": 333.1,
+   "y0": 148.8,
+   "x1": 544.4,
+   "y1": 164.3,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p08-024",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor (if different) ZIP code",
+   "printed_label": "Zip Code",
+   "must": false,
+   "x0": 550.3,
+   "y0": 160.0,
+   "x1": 573.8,
+   "y1": 175.5,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; no room after the caption, writing room taken under it"
+  },
+  {
+   "id": "p08-025",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor (if different) home telephone",
+   "printed_label": "Home Telephone No.",
+   "must": false,
+   "x0": 151.1,
+   "y0": 182.5,
+   "x1": 409.4,
+   "y1": 198.0,
+   "printed_as": "measured by hand",
+   "what": "phone",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p08-026",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor (if different) business telephone",
+   "printed_label": "Business Telephone No.",
+   "must": false,
+   "x0": 45.5,
+   "y0": 198.0,
+   "x1": 409.4,
+   "y1": 209.3,
+   "printed_as": "measured by hand",
+   "what": "phone",
+   "doubt": "no printed blank; caption and area code bracket wrapped from the line above"
+  },
+  {
+   "id": "p08-027",
+   "page": 8,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Investor (if different) birthdate",
+   "printed_label": "Birthdate",
+   "must": false,
    "x0": 92.4,
-   "y0": 92.5,
-   "x1": 110.1,
-   "y1": 108.0,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "-",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      92.4,
-      92.5,
-      110.1,
-      108.0
-     ]
-    }
-   },
-   "what": "text"
+   "y0": 216.3,
+   "x1": 409.4,
+   "y1": 231.8,
+   "printed_as": "measured by hand",
+   "what": "date",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
   },
   {
-   "id": "p08-010",
+   "id": "p08-028",
    "page": 8,
    "kind": "blank",
    "owner": "investor",
-   "label": "-",
-   "printed_label": "",
-   "must": true,
-   "x0": 115.9,
-   "y0": 92.5,
-   "x1": 133.5,
-   "y1": 108.0,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "-",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      115.9,
-      92.5,
-      133.5,
-      108.0
-     ]
-    }
-   },
-   "what": "text"
+   "label": "Investor (if different) occupation",
+   "printed_label": "Occupation",
+   "must": false,
+   "x0": 480.0,
+   "y0": 216.3,
+   "x1": 573.8,
+   "y1": 231.8,
+   "printed_as": "measured by hand",
+   "what": "text",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
   },
   {
-   "id": "p08-011",
+   "id": "p08-029",
    "page": 8,
    "kind": "blank",
    "owner": "investor",
-   "label": "-",
-   "printed_label": "",
-   "must": true,
-   "x0": 139.4,
-   "y0": 92.5,
-   "x1": 157.0,
-   "y1": 108.0,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "-",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      139.4,
-      92.5,
-      157.0,
-      108.0
-     ]
-    }
-   },
-   "what": "text"
+   "label": "Investor (if different) email address (optional)",
+   "printed_label": "Email Address",
+   "must": false,
+   "x0": 151.2,
+   "y0": 250.0,
+   "x1": 573.8,
+   "y1": 265.5,
+   "printed_as": "measured by hand",
+   "what": "email",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
   },
   {
    "id": "p08-012",
    "page": 8,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
+   "label": "Initial item (a): prospectus received five business days before signing",
+   "printed_label": "(a)",
    "must": true,
    "x0": 33.7,
    "y0": 576.3,
@@ -1559,8 +1544,8 @@
    "page": 8,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
+   "label": "Initial item (b): net worth and income standards",
+   "printed_label": "(b)",
    "must": true,
    "x0": 33.7,
    "y0": 666.3,
@@ -1591,8 +1576,8 @@
    "page": 9,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
+   "label": "Initial item (c): purchasing for own account or with authority",
+   "printed_label": "(c)",
    "must": true,
    "x0": 33.7,
    "y0": 70.0,
@@ -1623,8 +1608,8 @@
    "page": 9,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
+   "label": "Initial item (d): shares are not liquid",
+   "printed_label": "(d)",
    "must": true,
    "x0": 33.7,
    "y0": 148.8,
@@ -1655,9 +1640,9 @@
    "page": 9,
    "kind": "initials",
    "owner": "investor",
-   "label": "Initials",
-   "printed_label": "",
-   "must": true,
+   "label": "Initial item (e): if an affiliate, purchasing for investment",
+   "printed_label": "(e)",
+   "must": false,
    "x0": 33.7,
    "y0": 171.3,
    "x1": 51.4,
@@ -1685,9 +1670,9 @@
   {
    "id": "p09-004",
    "page": 9,
-   "kind": "blank",
+   "kind": "date",
    "owner": "investor",
-   "label": "Agreement Dated",
+   "label": "Agreement dated",
    "printed_label": "Agreement Dated",
    "must": true,
    "x0": 127.7,
@@ -1714,50 +1699,15 @@
      ]
     }
    },
-   "what": "date",
-   "doubt": "check"
-  },
-  {
-   "id": "p09-005",
-   "page": 9,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "20",
-   "printed_label": "20",
-   "must": true,
-   "x0": 262.7,
-   "y0": 248.9,
-   "x1": 298.9,
-   "y1": 264.8,
-   "printed_as": "reader field (no printed candidate under it)",
-   "prefill": {
-    "origin": "field",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "20",
-    "candidate": null,
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      262.7,
-      248.9,
-      298.9,
-      264.8
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "field only"
+   "what": "date"
   },
   {
    "id": "p09-006",
    "page": 9,
-   "kind": "blank",
+   "kind": "signature",
    "owner": "investor",
-   "label": "X",
-   "printed_label": "/X/",
+   "label": "Signature of the registered owner",
+   "printed_label": "Signature-Registered Owner",
    "must": true,
    "x0": 51.4,
    "y0": 261.3,
@@ -1783,16 +1733,15 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "doubt": "signature line wrapped from the right column to the left margin"
   },
   {
    "id": "p09-007",
    "page": 9,
    "kind": "blank",
-   "owner": "investor",
-   "label": "Owner",
-   "printed_label": "Owner (Print Name of Custodian or Trustee)",
+   "owner": "third-party",
+   "label": "Printed name of custodian or trustee",
+   "printed_label": "(Print Name of Custodian or Trustee)",
    "must": false,
    "x0": 33.7,
    "y0": 272.5,
@@ -1818,16 +1767,15 @@
      ]
     }
    },
-   "what": "name",
-   "doubt": "check"
+   "what": "name"
   },
   {
    "id": "p09-008",
    "page": 9,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "/X/",
-   "printed_label": "/X/ Authorized Signature (Custodian or Trustee)",
+   "kind": "signature",
+   "owner": "third-party",
+   "label": "Authorized signature of custodian or trustee (required for IRA, Keogh or qualified plan)",
+   "printed_label": "Authorized Signature (Custodian or Trustee)",
    "must": false,
    "x0": 33.7,
    "y0": 317.5,
@@ -1852,18 +1800,16 @@
       333.0
      ]
     }
-   },
-   "what": "text",
-   "doubt": "check"
+   }
   },
   {
    "id": "p09-009",
    "page": 9,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "X",
-   "printed_label": "/X/",
-   "must": true,
+   "kind": "signature",
+   "owner": "co-investor",
+   "label": "Signature of the co-owner",
+   "printed_label": "Signature-Co-Owner",
+   "must": false,
    "x0": 51.4,
    "y0": 328.8,
    "x1": 327.2,
@@ -1888,17 +1834,16 @@
      ]
     }
    },
-   "what": "text",
-   "doubt": "check"
+   "doubt": "signature line wrapped from the right column to the left margin"
   },
   {
    "id": "p09-010",
    "page": 9,
    "kind": "blank",
    "owner": "investor",
-   "label": "of participation 100 Other",
-   "printed_label": "of participation: 100% / / Other / /",
-   "must": true,
+   "label": "Dividend reinvestment: other percentage",
+   "printed_label": "%",
+   "must": false,
    "x0": 315.5,
    "y0": 396.3,
    "x1": 344.9,
@@ -1923,23 +1868,353 @@
      ]
     }
    },
-   "what": "percentage",
-   "doubt": "check"
+   "what": "percentage"
+  },
+  {
+   "id": "p09-011",
+   "page": 9,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Dividend reinvestment participation: 100%",
+   "printed_label": "100%",
+   "must": false,
+   "x0": 233.3,
+   "y0": 400.5,
+   "x1": 250.9,
+   "y1": 410.3,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p09-012",
+   "page": 9,
+   "kind": "tickbox",
+   "owner": "investor",
+   "label": "Dividend reinvestment participation: other percentage",
+   "printed_label": "Other",
+   "must": false,
+   "x0": 292.0,
+   "y0": 400.5,
+   "x1": 309.6,
+   "y1": 410.3,
+   "printed_as": "slash pair / /"
+  },
+  {
+   "id": "p09-013",
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Dividend payee (other than registered owner): name",
+   "printed_label": "Name",
+   "must": false,
+   "x0": 63.1,
+   "y0": 463.8,
+   "x1": 573.8,
+   "y1": 479.3,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p09-014",
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Dividend payee: account number",
+   "printed_label": "Account Number",
+   "must": false,
+   "x0": 121.8,
+   "y0": 486.3,
+   "x1": 573.8,
+   "y1": 501.8,
+   "printed_as": "measured by hand",
+   "what": "text",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p09-015",
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Dividend payee: street address or P.O. box",
+   "printed_label": "Street Address or P.O. Box",
+   "must": false,
+   "x0": 192.2,
+   "y0": 508.8,
+   "x1": 573.8,
+   "y1": 524.3,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p09-016",
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Dividend payee: city",
+   "printed_label": "City",
+   "must": false,
+   "x0": 63.1,
+   "y0": 531.3,
+   "x1": 292.0,
+   "y1": 546.8,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p09-017",
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Dividend payee: state",
+   "printed_label": "State",
+   "must": false,
+   "x0": 333.1,
+   "y0": 531.3,
+   "x1": 544.4,
+   "y1": 546.8,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p09-018",
+   "page": 9,
+   "kind": "blank",
+   "owner": "investor",
+   "label": "Dividend payee: ZIP code",
+   "printed_label": "Zip Code",
+   "must": false,
+   "x0": 550.3,
+   "y0": 542.5,
+   "x1": 573.8,
+   "y1": 558.0,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; no room after the caption, writing room taken under it"
+  },
+  {
+   "id": "p09-019",
+   "page": 9,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Broker-dealer name",
+   "printed_label": "Broker-Dealer Name",
+   "must": true,
+   "x0": 145.3,
+   "y0": 699.8,
+   "x1": 427.0,
+   "y1": 715.5,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p09-020",
+   "page": 9,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Broker-dealer telephone",
+   "printed_label": "Telephone No.",
+   "must": false,
+   "x0": 515.1,
+   "y0": 699.8,
+   "x1": 573.8,
+   "y1": 715.5,
+   "printed_as": "measured by hand",
+   "what": "phone",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p09-021",
+   "page": 9,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Broker-dealer street address",
+   "printed_label": "Broker-Dealer Street Address",
+   "must": false,
+   "x0": 209.8,
+   "y0": 722.5,
+   "x1": 573.8,
+   "y1": 738.0,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p09-022",
+   "page": 9,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Broker-dealer city",
+   "printed_label": "City",
+   "must": false,
+   "x0": 63.1,
+   "y0": 745.0,
+   "x1": 292.0,
+   "y1": 760.5,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p09-023",
+   "page": 9,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Broker-dealer state",
+   "printed_label": "State",
+   "must": false,
+   "x0": 333.1,
+   "y0": 745.0,
+   "x1": 544.4,
+   "y1": 760.5,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p10-016",
+   "page": 10,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Broker-dealer ZIP code",
+   "printed_label": "Zip Code",
+   "must": false,
+   "x0": 550.3,
+   "y0": 25.0,
+   "x1": 573.8,
+   "y1": 40.5,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; caption at the foot of the previous page, writing room taken under it on this page"
+  },
+  {
+   "id": "p10-017",
+   "page": 10,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Registered representative name",
+   "printed_label": "Registered Representative Name",
+   "must": true,
+   "x0": 215.7,
+   "y0": 47.5,
+   "x1": 427.0,
+   "y1": 63.0,
+   "printed_as": "measured by hand",
+   "what": "name",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p10-018",
+   "page": 10,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Registered representative telephone",
+   "printed_label": "Telephone No.",
+   "must": false,
+   "x0": 515.1,
+   "y0": 47.5,
+   "x1": 573.8,
+   "y1": 63.0,
+   "printed_as": "measured by hand",
+   "what": "phone",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p10-019",
+   "page": 10,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Registered representative street address",
+   "printed_label": "Reg. Rep. Street Address",
+   "must": false,
+   "x0": 192.2,
+   "y0": 70.0,
+   "x1": 573.8,
+   "y1": 85.5,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p10-020",
+   "page": 10,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Registered representative city",
+   "printed_label": "City",
+   "must": false,
+   "x0": 63.1,
+   "y0": 92.5,
+   "x1": 292.0,
+   "y1": 108.0,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p10-021",
+   "page": 10,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Registered representative state",
+   "printed_label": "State",
+   "must": false,
+   "x0": 333.1,
+   "y0": 92.5,
+   "x1": 544.4,
+   "y1": 108.0,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
+  },
+  {
+   "id": "p10-022",
+   "page": 10,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Registered representative ZIP code",
+   "printed_label": "Zip Code",
+   "must": false,
+   "x0": 550.3,
+   "y0": 103.8,
+   "x1": 573.8,
+   "y1": 119.3,
+   "printed_as": "measured by hand",
+   "what": "address",
+   "doubt": "no printed blank; no room after the caption, writing room taken under it"
+  },
+  {
+   "id": "p10-023",
+   "page": 10,
+   "kind": "blank",
+   "owner": "third-party",
+   "label": "Registered representative email address (optional)",
+   "printed_label": "Email Address",
+   "must": false,
+   "x0": 151.2,
+   "y0": 137.5,
+   "x1": 573.8,
+   "y1": 153.0,
+   "printed_as": "measured by hand",
+   "what": "email",
+   "doubt": "no printed blank; writing room taken as the rest of the caption line"
   },
   {
    "id": "p10-001",
    "page": 10,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
+   "kind": "signature",
+   "owner": "third-party",
+   "label": "Broker-dealer signature, if required",
+   "printed_label": "Broker-Dealer Signature, if required",
    "must": false,
    "x0": 33.7,
    "y0": 157.6,
    "x1": 250.9,
    "y1": 173.1,
-   "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "printed_as": "hyphen run",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1954,23 +2229,22 @@
       173.1
      ]
     }
-   },
-   "what": "text"
+   }
   },
   {
    "id": "p10-002",
    "page": 10,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
-   "must": false,
+   "kind": "signature",
+   "owner": "third-party",
+   "label": "Registered representative signature",
+   "printed_label": "Registered Representative Signature",
+   "must": true,
    "x0": 397.7,
    "y0": 157.6,
    "x1": 573.8,
    "y1": 173.1,
-   "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
+   "printed_as": "hyphen run",
+   "doubt": "hyphen rule wrapped: its tail is on the next line",
    "prefill": {
     "origin": "candidate",
     "candidate": "underscore",
@@ -1985,48 +2259,16 @@
       173.1
      ]
     }
-   },
-   "what": "text"
-  },
-  {
-   "id": "p10-003",
-   "page": 10,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Broker-Dealer",
-   "printed_label": "Broker-Dealer",
-   "must": false,
-   "x0": 33.7,
-   "y0": 168.9,
-   "x1": 115.9,
-   "y1": 184.4,
-   "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
-   "prefill": {
-    "origin": "candidate",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      33.7,
-      168.9,
-      115.9,
-      184.4
-     ]
-    }
-   },
-   "what": "text"
+   }
   },
   {
    "id": "p10-004",
    "page": 10,
    "kind": "blank",
-   "owner": "investor-entity",
-   "label": "Amount",
+   "owner": "third-party",
+   "label": "Company use: amount",
    "printed_label": "Amount",
-   "must": true,
+   "must": false,
    "x0": 380.1,
    "y0": 306.3,
    "x1": 515.1,
@@ -2050,14 +2292,17 @@
      ]
     }
    },
-   "what": "amount"
+   "what": "amount",
+   "owner_also_ok": [
+    "firm"
+   ]
   },
   {
    "id": "p10-005",
    "page": 10,
-   "kind": "date",
+   "kind": "blank",
    "owner": "third-party",
-   "label": "Date",
+   "label": "Company use: date",
    "printed_label": "Date",
    "must": false,
    "x0": 63.1,
@@ -2082,16 +2327,20 @@
       333.0
      ]
     }
-   }
+   },
+   "what": "date",
+   "owner_also_ok": [
+    "firm"
+   ]
   },
   {
    "id": "p10-006",
    "page": 10,
    "kind": "blank",
-   "owner": "investor",
-   "label": "Check No",
-   "printed_label": "Check No",
-   "must": true,
+   "owner": "third-party",
+   "label": "Company use: check number",
+   "printed_label": "Check No.",
+   "must": false,
    "x0": 397.7,
    "y0": 328.8,
    "x1": 515.1,
@@ -2117,16 +2366,18 @@
     }
    },
    "what": "text",
-   "doubt": "check"
+   "owner_also_ok": [
+    "firm"
+   ]
   },
   {
    "id": "p10-007",
    "page": 10,
    "kind": "blank",
-   "owner": "firm",
-   "label": "Certificate No",
-   "printed_label": "Certificate No",
-   "must": true,
+   "owner": "third-party",
+   "label": "Company use: certificate number",
+   "printed_label": "Certificate No.",
+   "must": false,
    "x0": 127.7,
    "y0": 340.0,
    "x1": 204.0,
@@ -2152,15 +2403,17 @@
     }
    },
    "what": "text",
-   "doubt": "check"
+   "owner_also_ok": [
+    "firm"
+   ]
   },
   {
    "id": "p10-008",
    "page": 10,
    "kind": "signature",
    "owner": "firm",
-   "label": "Signature",
-   "printed_label": "By",
+   "label": "Company acceptance: received and subscription accepted by",
+   "printed_label": "By:",
    "must": true,
    "x0": 51.4,
    "y0": 362.5,
@@ -2190,8 +2443,8 @@
    "id": "p10-009",
    "page": 10,
    "kind": "blank",
-   "owner": "investor",
-   "label": "Registered Representative #",
+   "owner": "third-party",
+   "label": "Company use: company registered representative number",
    "printed_label": "Registered Representative #",
    "must": false,
    "x0": 339.0,
@@ -2219,14 +2472,16 @@
     }
    },
    "what": "text",
-   "doubt": "check"
+   "owner_also_ok": [
+    "firm"
+   ]
   },
   {
    "id": "p10-010",
    "page": 10,
    "kind": "blank",
-   "owner": "investor",
-   "label": "Account #",
+   "owner": "third-party",
+   "label": "Company use: account number",
    "printed_label": "Account #",
    "must": false,
    "x0": 33.7,
@@ -2254,15 +2509,18 @@
     }
    },
    "what": "text",
-   "doubt": "check"
+   "doubt": "captions wrapped: which of these two lines is Account # and which Broker-Dealer # is not certain",
+   "owner_also_ok": [
+    "firm"
+   ]
   },
   {
    "id": "p10-011",
    "page": 10,
    "kind": "blank",
-   "owner": "investor",
-   "label": "Text",
-   "printed_label": "Account # Broker-Dealer #",
+   "owner": "third-party",
+   "label": "Company use: broker-dealer number",
+   "printed_label": "Broker-Dealer #",
    "must": false,
    "x0": 33.7,
    "y0": 385.0,
@@ -2289,142 +2547,14 @@
     }
    },
    "what": "text",
-   "doubt": "check"
-  },
-  {
-   "id": "p10-012",
-   "page": 10,
-   "kind": "blank",
-   "owner": "third-party",
-   "label": "Until",
-   "printed_label": "Until",
-   "must": false,
-   "x0": 69.0,
-   "y0": 486.3,
-   "x1": 180.5,
-   "y1": 501.8,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "third-party",
-    "field_label": "Until",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "third-party",
-     "what": "text",
-     "box": [
-      69.0,
-      486.3,
-      180.5,
-      501.8
-     ]
-    }
-   },
-   "what": "text"
-  },
-  {
-   "id": "p10-013",
-   "page": 10,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
-   "must": false,
-   "x0": 239.2,
-   "y0": 641.4,
-   "x1": 297.9,
-   "y1": 656.9,
-   "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
-   "prefill": {
-    "origin": "candidate",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      239.2,
-      641.4,
-      297.9,
-      656.9
-     ]
-    }
-   },
-   "what": "text"
-  },
-  {
-   "id": "p10-014",
-   "page": 10,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "blank",
-   "printed_label": "",
-   "must": false,
-   "x0": 239.2,
-   "y0": 686.4,
-   "x1": 297.9,
-   "y1": 701.9,
-   "printed_as": "measure candidate: underscore (run of hyphens typed as a blank)",
-   "doubt": "candidate only",
-   "prefill": {
-    "origin": "candidate",
-    "candidate": "underscore",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      239.2,
-      686.4,
-      297.9,
-      701.9
-     ]
-    }
-   },
-   "what": "text"
-  },
-  {
-   "id": "p10-015",
-   "page": 10,
-   "kind": "blank",
-   "owner": "investor",
-   "label": "Text",
-   "printed_label": "",
-   "must": false,
-   "x0": 215.7,
-   "y0": 733.8,
-   "x1": 292.0,
-   "y1": 749.3,
-   "printed_as": "measure candidate: underscore (run of underscores)",
-   "prefill": {
-    "origin": "field+candidate",
-    "field_kind": "text",
-    "field_owner": "investor",
-    "field_label": "Text",
-    "candidate": "underscore",
-    "why": "reader marked it: The agreement prints a line here, but the portal could not t",
-    "initial": {
-     "kind": "blank",
-     "owner": "investor",
-     "what": "text",
-     "box": [
-      215.7,
-      733.8,
-      292.0,
-      749.3
-     ]
-    }
-   },
-   "what": "text",
-   "doubt": "check"
+   "doubt": "captions wrapped: which of these two lines is Account # and which Broker-Dealer # is not certain",
+   "owner_also_ok": [
+    "firm"
+   ]
   }
  ],
  "may_fill": [],
  "source": "hand",
- "draft": true,
  "mode": "train",
  "prefilled": {
   "when": "2026-11-15T00:42:27Z",
@@ -2432,5 +2562,6 @@
   "result": "out-set-b/b065/result.json",
   "fields": 61,
   "counted_candidates": 66
- }
+ },
+ "done": "2026-11-15T00:52:59Z"
 }
