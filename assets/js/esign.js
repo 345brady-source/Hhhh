@@ -3082,7 +3082,7 @@
     }
     const made = r.boxes + r.blanks + r.signatures;
     // Mostly pictures of pages: said first, as the thing the sponsor has to act on.
-    if (!made && r.scanned.length >= r.pages) return `Most of this PDF could not be read: ${r.scanned.length} of its ${r.scanned.length + r.pages + r.failed.length} pages are pictures, as in a scan. No field was placed. ${lost.length ? lost.join(' ') + ' Or' : 'Upload the PDF the agreement was made from, or'} add each field by hand.`;
+    if (!made && r.scanned.length >= r.pages) return `Most of this PDF could not be read: ${r.scanned.length} of its ${r.scanned.length + r.pages + r.failed.length} pages are pictures, as in a scan. No field was placed. ${lost.length ? lost.join(' ') + ' Or' : 'Upload the PDF the agreement was made from, or'} add each field by hand.${(r.pictured || []).length ? ' ' + PICTURE_NOTICE : ''}`;
     // Places for initials are counted apart from signature lines (signatures holds both); a draft read before they were
     // has no count of them and reads as before.
     const ini = r.initials > 0 ? r.initials : 0;
@@ -3130,8 +3130,12 @@
     } else if (r.firmPages.length) out.push(`Your firm’s signature line was found on ${on(r.firmPages)}.`);
     else if (doubt.length) out.push(`No signature line that is clearly your firm’s was found${firmLeft}. ${doubt.length === 1 ? `A signature place on ${on(doubt)} carries words of acceptance but names another party, so it is marked Review: set it to your firm if your firm signs there.` : `Signature places on ${on(doubt)} carry words of acceptance but name another party, so they are marked Review: set them to your firm if your firm signs there.`}`);
     else out.push(`No signature line for your firm was found, so your firm does not sign this agreement${firmLeft}. Add a signature field for your firm if it should.`);
+    // D-28: a document with any page read from its picture says so once, with how to get a better reading. Fields are
+    // placed exactly as before; this is words only.
+    if (seen) out.push(PICTURE_NOTICE);
     return out.join(' ');
   }
+  const PICTURE_NOTICE = 'This document was read from page pictures, which is common when a document is printed to PDF. For better accuracy, upload a PDF with selectable text.';
   /**
    * A document only the firm signs: an offering's draft whose reading is good, found at least one signature line of the
    * firm and none of the investor, and in which no field is the investor's or the co-investor's (a place for somebody
