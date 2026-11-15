@@ -437,8 +437,7 @@
         exemption: (off.structure || {}).exemption || '',
         classes: openClasses(off).map((c) => ({ id: c.id, name: c.name, minimum: c.minimum, currency: c.currency || '', mgmtFee: c.mgmtFee, carry: c.carry, subscribedBy: c.subscribedBy || '' })),
         currency: curOf(off),
-        documents: docs,
-        nonAccreditedFull: nonAccreditedFull(ws, off, inv)
+        documents: docs
       };
       const tpl = NS.esign && NS.esign.subscriptionTemplate ? NS.esign.subscriptionTemplate(ws, off.id) : null;
       const ready = tpl && (!NS.esign.templateReady || NS.esign.templateReady(ws, off.id));
@@ -468,22 +467,15 @@
   }
 
   /**
-   * C-01 in server mode: whether a Rule 506(b) offering may already have as many purchasers who are not accredited as it can
-   * accept, for this investor, worked out on the whole workspace when the invitation is sent: the place this investor would
-   * take among them (their own place when already counted) is past the 35th. One boolean only: the investor's device never
-   * learns the count or anything about another investor. The console counts again on every render; this is the warning only.
+   * D-01, D-08 (1): the benefit plan answers as known fields only: plan (one of the known values, or ''), planPct (0 to 100,
+   * or null). 'other' is an answer an earlier version offered (a governmental, church or non-U.S. plan: not a benefit plan
+   * investor). The control question is no longer asked (plan 06-15).
    */
-  function nonAccreditedFull(ws, off, inv) {
-    const EL = NS.eligibility;
-    if (!EL || !off || EL.regime(off) !== '506b') return false;
-    return EL.place(ws, off, inv ? inv.id : '') > EL.LIMIT_506B;
-  }
-  /** D-01: the benefit plan answers as known fields only: plan (one of five values, or ''), planPct (0 to 100, or null), controlling (true, false or null). */
   const PLANS = ['title1', '4975', 'planAssets', 'other', 'none'];
   function cleanErisa(e) {
     if (!e || typeof e !== 'object' || Array.isArray(e)) return null;
     const pct = typeof e.planPct === 'number' && isFinite(e.planPct) && e.planPct >= 0 && e.planPct <= 100 ? e.planPct : null;
-    return { plan: PLANS.indexOf(e.plan) >= 0 ? e.plan : '', planPct: pct, controlling: e.controlling === true ? true : e.controlling === false ? false : null };
+    return { plan: PLANS.indexOf(e.plan) >= 0 ? e.plan : '', planPct: pct };
   }
   /**
    * What the investor's device needs about an investor already on file: whether their accreditation is current (and until when)
@@ -822,7 +814,7 @@
       if (src.esignConsent && typeof src.esignConsent === 'object') inv.esignConsent = clone(src.esignConsent);
       // D-01: the status answers the link collected. The benefit plan answers, cleaned to known fields (T-06-17).
       const e = cleanErisa(src.erisa);
-      if (e && (e.plan || e.controlling != null)) inv.erisa = Object.assign(e, { at: nowIso() });
+      if (e && e.plan) inv.erisa = Object.assign(e, { at: nowIso() });
       // The ground the investor self-certified on the status step, when no verification was taken: only the answer the request
       // records (accredited, on this ground), and never over an accreditation a third party verified (that keeps today's rules).
       const sq = sub.request && typeof sub.request === 'object' && sub.request.qual && typeof sub.request.qual === 'object' ? sub.request.qual : null;

@@ -627,7 +627,7 @@
       const note = document.getElementById('hint-tenancy');
       if (note) note.textContent = jointHint(ob().d);
     }
-    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stRep', 'stPlan', 'stCtrl'].indexOf(path) >= 0) {
+    if (['type', 'method', 'country', 'citizen', 'usPerson', 'noFtin', 'stAcc', 'stSoph', 'stPlan'].indexOf(path) >= 0) {
       NS.app.render();
       // Keep keyboard focus on the control that changed (the page was redrawn).
       const again = el.type === 'radio' ? document.querySelector(`input[name="${el.name}"][value="${CSS.escape(el.value)}"]`) : el.id && document.getElementById(el.id);
@@ -904,9 +904,7 @@
         structure: { exemption: str(so.exemption, 60) },
         classes: (Array.isArray(so.classes) ? so.classes : []).slice(0, 20).map((c) => ({ id: str(c.id, 60), name: str(c.name, 80), minimum: c.minimum, currency: c.currency ? str(c.currency, 3) : '', mgmtFee: c.mgmtFee, carry: c.carry, subscribedBy: c.subscribedBy ? str(c.subscribedBy, 10) : '' })),
         update: '',
-        achOverride: { companyName: '', companyId: '' },
-        // C-01: the console's answer when it sent the invitation (this device holds no other investor's subscription).
-        nonAccreditedFull: so.nonAccreditedFull === true
+        achOverride: { companyName: '', companyId: '' }
       };
       if (so.currency) o.currency = str(so.currency, 3);
       ws.offerings.push(o);
@@ -946,9 +944,9 @@
     const exBasis = ex && typeof ex.accBasis === 'string' ? str(ex.accBasis, 300) : '';
     const exPlan = ex && ex.erisa && typeof ex.erisa === 'object' ? ex.erisa : null;
     const exErisa = exPlan
-      ? { plan: ['title1', '4975', 'planAssets', 'other', 'none'].indexOf(exPlan.plan) >= 0 ? exPlan.plan : '', planPct: typeof exPlan.planPct === 'number' && isFinite(exPlan.planPct) && exPlan.planPct >= 0 && exPlan.planPct <= 100 ? exPlan.planPct : null, controlling: exPlan.controlling === true ? true : exPlan.controlling === false ? false : null }
+      ? { plan: ['title1', '4975', 'planAssets', 'other', 'none'].indexOf(exPlan.plan) >= 0 ? exPlan.plan : '', planPct: typeof exPlan.planPct === 'number' && isFinite(exPlan.planPct) && exPlan.planPct >= 0 && exPlan.planPct <= 100 ? exPlan.planPct : null }
       : null;
-    ws.investors.push(Object.assign({ id: invId, contact: str(si.contact, 120), title: str(si.title || si.contact, 160), type: NS.ENTITY_TYPES[si.type] ? si.type : 'individual', email: str(si.email, 160), phone: '', address: '', tinLast4: '', accreditation: { basis: exBasis, date: '' }, taxForm: '', edelivery: false, onboarding: { status: ex ? 'complete' : 'invited', step: 0, invited: NS.dates.today(), completed: '', source: 'invitation', invitationId: str(snap.id, 80), offeringId: so ? str(so.id, 80) : '' }, payment: { method: 'check', bank: null }, positions: [] }, onFile ? { verify: onFile } : {}, exErisa && (exErisa.plan || exErisa.controlling != null) ? { erisa: exErisa } : {}));
+    ws.investors.push(Object.assign({ id: invId, contact: str(si.contact, 120), title: str(si.title || si.contact, 160), type: NS.ENTITY_TYPES[si.type] ? si.type : 'individual', email: str(si.email, 160), phone: '', address: '', tinLast4: '', accreditation: { basis: exBasis, date: '' }, taxForm: '', edelivery: false, onboarding: { status: ex ? 'complete' : 'invited', step: 0, invited: NS.dates.today(), completed: '', source: 'invitation', invitationId: str(snap.id, 80), offeringId: so ? str(so.id, 80) : '' }, payment: { method: 'check', bank: null }, positions: [] }, onFile ? { verify: onFile } : {}, exErisa && exErisa.plan ? { erisa: exErisa } : {}));
     ws.invitations.push(Object.assign({ id: str(snap.id, 80) || uid('invt'), serverId: str(snap.id, 80), investorId: invId, offeringId: so ? str(so.id, 80) : '', cents: Math.max(0, Math.round(Number(sv.cents) || 0)), cls: str(sv.cls, 60), note: str(sv.note, 2000), token: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: str(sv.sentAt || snap.sentAt, 40), openedAt: nowIso(), completedAt: '', expiresAt: str(sv.expiresAt || snap.expiresAt, 40), emailStatus: '', emailError: '', importedAt: '', sentBy: str(sv.senderName || sv.sentBy || snap.sentBy, 120) }, ex ? { existing: true, holds: ex.holds === true } : {}));
     const v = snap.verification || {};
     ws.integrations = { connections: Array.isArray(v.connections) ? clone(v.connections) : [], use: v.use && typeof v.use === 'object' ? clone(v.use) : {}, rules: v.rules && typeof v.rules === 'object' ? clone(v.rules) : {}, server: { url: server, token: '' }, configured: true };
@@ -1156,27 +1154,24 @@
     if (/\bRegulation S(?![\w-])|\bReg\.? S(?![\w-])/.test(ex)) return 'regS';
     return '';
   };
-  /** The note shown on the subscribe step in place of the accreditation tick, by the kind of open offering. */
-  const OPEN_NOTE = {
-    regA: 'Regulation A does not limit this offering to accredited investors, so no statement about accreditation is asked for here.',
-    regCF: 'Regulation Crowdfunding is open to investors who are not accredited, so this step asks for no statement on accreditation.',
-    regS: 'Regulation S is not limited to accredited investors, so you are not asked to state whether you are one.'
-  };
-  /** The benefit plan answers on the form: { plan, planPct (0 to 100, or null), controlling (true, false or null), share }. */
+  /**
+   * The benefit plan answer on the form (D-08 (1)): { plan, planPct (an entity holding plan assets: 0 to 100, or null) }.
+   * 'other' is an answer an earlier version offered (a governmental, church or non-U.S. plan); it is kept as given.
+   */
   function erisaFrom(d) {
     const plan = ['title1', '4975', 'planAssets', 'other', 'none'].indexOf(d.stPlan) >= 0 ? d.stPlan : '';
     const planPct = plan === 'planAssets' ? EL().planPct(String(d.stPlanPct == null ? '' : d.stPlanPct).trim()) : null;
-    const controlling = d.stCtrl === 'yes' ? true : d.stCtrl === 'no' ? false : null;
-    return { plan, planPct, controlling, share: EL().bpiShare({ plan, planPct }) };
+    return { plan, planPct };
   }
-  const PLAN_SAID = { title1: 'a plan under Title I of ERISA', 4975: 'a plan or account under Code section 4975', planAssets: 'an entity holding plan assets', other: 'a governmental, church or non-U.S. plan', none: 'none of these' };
-  /** T-06-01: the benefit plan answers, for the change log. */
+  const PLAN_SAID = { title1: 'a plan under Title I of ERISA', 4975: 'a plan or account under Code section 4975', planAssets: 'an entity holding plan assets', other: 'a governmental, church or non-U.S. plan', none: 'not a benefit plan investor' };
+  /** T-06-01: the benefit plan answer, for the change log. */
   function erisaLogText(d) {
     const e = erisaFrom(d);
     const plan = e.plan ? `${PLAN_SAID[e.plan]}${e.plan === 'planAssets' ? ` (${e.planPct == null ? 'percentage not given' : `${e.planPct}% held by benefit plan investors`})` : ''}` : 'not answered';
-    const ctrl = e.controlling === true ? 'yes' : e.controlling === false ? 'no' : 'not answered';
-    return `benefit plan: ${plan}; authority, control or paid advice over the offering’s assets: ${ctrl}`;
+    return `benefit plan: ${plan}`;
   }
+  /** D-08 (2): the answer to Rule 506(b)(2)(ii)'s question ('alone', 'rep', 'no' or ''); an earlier version's "representative: yes" reads as 'rep'. */
+  const sophOf = (d) => (['alone', 'rep', 'no'].indexOf(d.stSoph) >= 0 ? d.stSoph : d.stRep === 'yes' ? 'rep' : '');
   /** Regulation A Tier 2: a person attests against annual income or net worth, an organization against revenue or net assets. */
   const raKindDefault = (c, d) => (['trust', 'entity'].indexOf(d.type || c.inv.type) >= 0 ? 'entity' : 'person');
   /** Under Regulation A Tier 2, an investor who said they are not accredited is asked to attest to the 10 percent limit. */
@@ -1210,10 +1205,12 @@
     const q = { regime: reg, at: nowIso(), accredited, basis: accredited === true && asked && d.stAcc === 'yes' ? String(d.stBasis || '') : '' };
     if (accredited === false && reg === '506b') {
       const name = String(d.stRepName || '').trim();
-      const firm = String(d.stRepFirm || '').trim();
       // Rule 501(i): the investor's written acknowledgment of the representative, when uploaded (rep-<investor>-<time>).
       const file = d.stRepFileId ? { fileId: String(d.stRepFileId), fileName: String(d.stRepFileName || '') } : {};
-      q.sophistication = { experience: String(d.stExp || '').trim(), education: String(d.stEdu || '').trim(), rep: d.stRep === 'yes' ? Object.assign({ name, firm }, file) : null };
+      // D-08 (2) (owner, plan 06-15): only what Rule 506(b)(2)(ii) and Rule 501(i) need: whether the investor, alone or with a
+      // purchaser representative, has the knowledge and experience to evaluate the investment, and who the representative is.
+      const soph = sophOf(d);
+      q.sophistication = { knowledge: soph, rep: soph === 'rep' ? Object.assign({ name }, file) : null };
     }
     if (accredited === false && reg === 'regA2') {
       // D-07: the attestation only (true ticked, false shown and left unticked, null when the step never showed it).
@@ -1297,18 +1294,14 @@
           // Investor status (D-01): prefilled only from an accreditation basis already on the record; never required.
           stAcc: i.accreditation && i.accreditation.basis ? 'yes' : '',
           stBasis: (i.accreditation && i.accreditation.basis) || '',
-          stExp: '',
-          stEdu: '',
-          stRep: '',
+          stSoph: '',
           stRepName: '',
-          stRepFirm: '',
           stRepFileId: '',
           stRepFileName: '',
-          // Benefit plan questions (D-01): from the answers on the investor record (an IRA starts at Code section 4975 when
-          // the step is first shown: fStatus); never required.
+          // The benefit plan question (D-01, D-08 (1)): from the answer on the investor record (an IRA starts at Code section
+          // 4975 when the step is first shown: planQuestions); never required.
           stPlan: (i.erisa && i.erisa.plan) || '',
           stPlanPct: i.erisa && i.erisa.planPct != null ? String(i.erisa.planPct) : '',
-          stCtrl: i.erisa && i.erisa.controlling === true ? 'yes' : i.erisa && i.erisa.controlling === false ? 'no' : '',
           // Regulation A Tier 2 (D-07): the investor's attestation to the 10 percent limit, never required.
           stRaAttest: false,
           accAttest: false,
@@ -1471,81 +1464,58 @@
   function fStatus(c) {
     const d = ob().d;
     const reg = regimeOf(c);
-    const t = c.ws.tenant;
-    const b506 = reg === '506b';
-    const ra2 = reg === 'regA2';
+    // D-06 (plan 06-15): no lede beyond the one notice the law asks for: under Regulation A Tier 2 the investor is told of the
+    // 10 percent limit (Rule 251(d)(2)(i)(C)). The "506(b) may be full" warning, the explanations of the firm's reasons, the
+    // "you may leave any question unanswered" line and the "kept with your subscription" note are gone.
     const raName = /\bTier\s*(?:2|II|two)\b/i.test(String((c.off && c.off.structure && c.off.structure.exemption) || '')) ? 'Tier 2 of Regulation A' : 'Regulation A';
-    const lede = b506
-      ? `${h(c.off.name)} is offered under Rule 506(b) of Regulation D. ${h(t.shortName)} may accept a limited number of investors who are not accredited, so it asks about your status and, if you are not accredited, about your experience with investments like this one.`
-      : ra2
-        ? `${h(c.off.name)} is offered under ${raName}. If you are not an accredited investor, what you may put into this offering is limited to 10 percent of your annual income or your net worth, whichever is greater (for an organization, its revenue or its net assets for the most recent fiscal year). ${h(t.shortName)} asks you to confirm that your investment is within that limit.`
-        : `${h(t.shortName)} asks each investor whether they are an accredited investor under Regulation D.`;
-    // Regulation A Tier 2, not accredited: the attestation (D-07), optional.
-    const raFields = ra2 && d.stAcc === 'no' ? check('stRaAttest', raAttestText(c, d)) : '';
-    const no = d.stAcc === 'no' && b506;
-    // C-01: the offering may already have as many purchasers who are not accredited as Rule 506(b) allows. The investor is
-    // told so plainly and can still subscribe; the firm decides. No count and no other investor is ever shown (T-06-04).
-    // In server mode this browser holds no other investor's subscription: the console worked out the one flag when it sent
-    // the invitation (offering.nonAccreditedFull, a boolean on the snapshot); in local mode the live count decides.
-    const full = no && (isRemote(c.ws) ? !!c.off && c.off.nonAccreditedFull === true : EL().place(c.ws, c.off, c.inv.id) > EL().LIMIT_506B);
-    const fullNote = full ? `<p class="wire-warn field-wide" role="note">${icon('alert')}<span>This offering may already have as many investors who are not accredited as it is able to accept. You can still subscribe: ${h(t.shortName)} reviews every subscription and will let you know if yours cannot be accepted.</span></p>` : '';
-    // Rule 506(c) (accreditation verified in its own step), or no accredited question for this offering: the benefit plan
-    // questions only.
-    if (!accAsked(c)) {
-      const only = accVerifiedFor(c)
-        ? `Your accreditation is verified in its own step, so this step asks only whether ${h(c.inv.title)} invests on behalf of a benefit plan.`
-        : `This step asks only whether ${h(c.inv.title)} invests on behalf of a benefit plan.`;
-      return `${ivfH1(FL.status)}
-      <p class="lede">${only} You may leave any question unanswered.</p>
-      ${planQuestions(c, d)}
-      <p class="meta">Your answers are kept with your subscription and shared only with ${h(t.shortName)}.</p>`;
-    }
+    const lede = reg === 'regA2' && accAsked(c) ? `<p class="lede">${h(c.off.name)} is offered under ${raName}. If you are not an accredited investor, what you may put into this offering is limited to 10 percent of your annual income or your net worth, whichever is greater (for an organization, its revenue or its net assets for the most recent fiscal year).</p>` : '';
+    if (!accAsked(c)) return `${ivfH1(FL.status)}${planQuestions(c, d, false)}`;
+    // Rule 506(b), not accredited: Rule 506(b)(2)(ii)'s question and, with a representative, who it is and the investor's
+    // written acknowledgment (Rule 501(i)). D-08 (2): nothing else.
+    const no = d.stAcc === 'no' && reg === '506b';
+    const soph = sophOf(d);
+    const who = h(c.inv.title);
     return `${ivfH1(FL.status)}
-      <p class="lede">${lede} You may leave any question unanswered.</p>
+      ${lede}
       <div class="form-grid">
-        ${radios('stAcc', `Is ${h(c.inv.title)} an accredited investor?`, [['yes', 'Yes'], ['no', 'No']])}
-        ${fullNote}
+        ${radios('stAcc', `Is ${who} an accredited investor?`, [['yes', 'Yes'], ['no', 'No']])}
         ${d.stAcc === 'yes' ? radios('stBasis', 'Which ground applies?', groundsFor(d)) : ''}
-        ${raFields}
+        ${reg === 'regA2' && d.stAcc === 'no' ? check('stRaAttest', raAttestText(c, d)) : ''}
         ${
           no
-            ? `${input('stExp', 'Your investment experience', { wide: true, max: 400, hint: 'For example, the kinds of investments you have made and for how many years.' })}
-        ${input('stEdu', 'Your education or profession', { wide: true, max: 200 })}
-        ${radios('stRep', 'Is a purchaser representative advising you on this investment?', [['yes', 'Yes'], ['no', 'No']])}
-        ${d.stRep === 'yes' ? `${input('stRepName', 'Representative’s name', { max: 120 })}${input('stRepFirm', 'Representative’s firm', { max: 160 })}${repFile(d)}` : ''}`
+            ? `${radios('stSoph', `Does ${who}, alone or with a purchaser representative, have enough knowledge and experience in financial and business matters to evaluate the merits and risks of this investment?`, [['alone', 'Yes, alone'], ['rep', 'Yes, with a purchaser representative'], ['no', 'No']])}
+        ${soph === 'rep' ? `${input('stRepName', 'Purchaser representative’s name', { max: 120 })}${repFile(d)}` : ''}`
             : ''
         }
       </div>
-      ${c.off ? planQuestions(c, d) : ''}
-      <p class="meta">Your answers are kept with your subscription and shared only with ${h(t.shortName)}.</p>`;
+      ${c.off ? planQuestions(c, d, true) : ''}`;
   }
   /**
-   * The benefit plan (ERISA) questions on the status step (D-01), none required (D-30). When benefit plan investors hold
-   * 25 percent or more of any class, the offering's assets can be treated as plan assets, so the firm follows that share.
+   * The benefit plan question on the status step (D-01, D-08 (1)), not required (D-30): whether the account is a benefit plan
+   * investor (29 CFR 2510.3-101(f)(2)) and, for an entity holding plan assets, the share of its equity held by benefit plan
+   * investors (the 25 percent count needs it). The sponsor judges the 25 percent test from the plain list of who said yes.
    * An IRA account starts at Code section 4975 the first time the step is shown in a session; the investor can change it.
+   * withHead: a heading over the question when it follows the accredited questions on the same screen.
    */
-  function planQuestions(c, d) {
+  function planQuestions(c, d, withHead) {
     const o = ob();
     if (!o.planSeen) {
       o.planSeen = true;
       if (!d.stPlan && (d.type || c.inv.type) === 'ira') d.stPlan = '4975';
     }
     const who = h(c.inv.title);
-    return `<h2 class="ivf-h2">Benefit plans</h2>
-      <p class="meta">When benefit plan investors come to hold 25 percent or more of a class of interests in this offering, its assets can be treated as plan assets under ERISA. ${h(c.ws.tenant.shortName)} uses these answers to follow that share.</p>
+    const opts = [
+      ['title1', 'Yes: an employee benefit plan subject to Title I of ERISA', 'Such as a company pension or 401(k) plan'],
+      ['4975', 'Yes: a plan or account subject to section 4975 of the Internal Revenue Code', 'Such as an IRA or a Keogh plan'],
+      ['planAssets', 'Yes: an entity whose assets include plan assets', 'Such as a fund or account in which benefit plans invest'],
+      ['none', 'No']
+    ];
+    // An answer an earlier version offered stays visible and selected until changed.
+    if (d.stPlan === 'other') opts.push(['other', 'A governmental, church or non-U.S. plan', 'Your earlier answer']);
+    return `${withHead ? '<h2 class="ivf-h2">Benefit plans</h2>' : ''}
       <div class="form-grid">
-        ${radios('stPlan', `Which of these describes ${who}?`, [
-          ['title1', 'An employee benefit plan covered by ERISA’s fiduciary rules (Title I, Part 4)', 'Such as a company pension or 401(k) plan'],
-          ['4975', 'A plan or account covered by section 4975 of the Internal Revenue Code', 'Such as an IRA or a Keogh plan'],
-          ['planAssets', 'An entity whose assets include plan assets', 'Such as a fund or account in which benefit plans invest'],
-          ['other', 'A governmental, church or non-U.S. plan', 'Plans outside those rules'],
-          ['none', 'None of these']
-        ])}
-        ${d.stPlan === 'planAssets' ? input('stPlanPct', 'Share of the entity’s equity held by benefit plan investors (%)', { type: 'number', mode: 'decimal', narrow: true, hint: 'From 0 to 100. Only that part of this investment is counted as plan money.' }) : ''}
-        ${radios('stCtrl', `Does ${who}, or an affiliate, have discretionary authority or control over this offering’s assets, or give paid investment advice about them?`, [
-          ['yes', 'Yes'],
-          ['no', 'No']
-        ])}
+        ${radios('stPlan', `Is ${who} a benefit plan investor?`, opts)}
+        ${d.stPlan === 'planAssets' ? input('stPlanPct', 'Share of the entity’s equity held by benefit plan investors (%)', { type: 'number', mode: 'decimal', narrow: true }) : ''}
       </div>`;
   }
   function fTax(c) {
@@ -1618,14 +1588,11 @@
     // The accreditation tick follows the investor status answer (D-01) and is never required (D-30). Without the
     // accredited question (verified accreditation, or no question asked) today's sentence stays, except where the offering
     // is open to investors who are not accredited (Regulation A Tier 1, Tier 2 listed on an exchange, Regulation
-    // Crowdfunding, Regulation S): there no statement about accreditation is asked for, and a short note says why.
-    // Plan 06-05 (Rule 1 fix): Regulation Crowdfunding and Regulation S are treated the same way.
-    const open = openToAll(c) ? 'regA' : openKind(c);
-    const accAns = accVerifiedFor(c) ? 'yes' : accAsked(c) ? d.stAcc : open ? 'open' : 'yes';
+    // Crowdfunding, Regulation S): there no statement about accreditation is asked for. Plan 06-15 (owner): the tick is
+    // simply left out there, with no sentence saying why.
+    const accAns = accVerifiedFor(c) ? 'yes' : accAsked(c) ? d.stAcc : openToAll(c) || openKind(c) ? '' : 'yes';
     const accTick =
-      accAns === 'open'
-        ? `<p class="field-wide meta ivf-acc-open">${OPEN_NOTE[open]}</p>`
-        : accAns === 'yes'
+      accAns === 'yes'
         ? check('subAcc', `${h(c.inv.title)} is an accredited investor${acc ? ` (${h(acc)})` : ''}, and this remains accurate.`)
         : accAns === 'no'
           ? check('subAcc', `${h(c.inv.title)} is not an accredited investor, and the answers given under Investor status remain accurate.`)
@@ -1900,7 +1867,7 @@
       } else if (asked && d.stAcc === 'no') gone = withdrawGround(c);
       // D-01: the benefit plan answers are kept on the investor record to prefill their next subscription.
       const e = c.off ? erisaFrom(d) : null;
-      if (e && (e.plan || e.controlling != null)) i.erisa = { plan: e.plan, planPct: e.planPct, controlling: e.controlling, at: nowIso() };
+      if (e && e.plan) i.erisa = { plan: e.plan, planPct: e.planPct, at: nowIso() };
       const accSaid = d.stAcc === 'yes' ? `accredited investor${d.stBasis ? ` (${d.stBasis})` : ', ground not given'}` : d.stAcc === 'no' ? 'not an accredited investor' : 'not answered';
       const said = asked ? accSaid : e ? erisaLogText(d) : 'not answered';
       log('Investor status answered', `${said}${gone ? `; the self-certified ground on the record (${gone}) no longer applies` : ''}${raAsked(c, d) ? raLogText(c, d) : ''}${asked && e ? `; ${erisaLogText(d)}` : ''}`);

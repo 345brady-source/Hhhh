@@ -434,70 +434,28 @@
     return exemptionPanel(o) + bpiPanel(o);
   }
   /**
-   * D-01: the share of value held by benefit plan investors in each class of the offering, against 25 percent, for every
-   * offering (the sponsor's view only: T-06-09). Red at 25 or more. Each pending subscription shows the class's figure if
-   * it is accepted; such a request is flagged on its row (NS.eligibility.flags), never blocked.
+   * D-08 (1) (owner, plan 06-15): the investors who answered that they are benefit plan investors, with what each has
+   * committed and what is pending, for the sponsor's own judgment of the 25 percent test (the sponsor's view only: T-06-09).
+   * No percentages are worked out and nothing is flagged.
    */
+  const PLAN_SAID = { title1: 'Employee benefit plan under Title I of ERISA', 4975: 'Plan or account under Code section 4975 (such as an IRA)', planAssets: 'Entity holding plan assets' };
   function bpiPanel(o) {
     const EL = NS.eligibility;
-    const rows = NS.eligibility.erisa(W(), o);
-    const lim = EL.BPI_LIMIT;
-    const nameOf = (id) => {
-      const inv = invById(id);
-      return inv ? inv.title : id;
-    };
-    const lines = rows
-      .map((r) => {
-        const over = r.pct >= lim;
-        const pend = r.ifAccepted
-          .map((x) => `<p class="cs-muted cs-bpi-if" data-request="${h(x.requestId)}">If ${h(nameOf(x.investorId))}’s pending subscription of ${h(EL.usd(x.cents))} is accepted: ${h(EL.pctText(x.pct))}% of ${h(r.name)}${x.pct >= lim ? ` ${badge('warn', '25 percent or more')}` : ''}</p>`)
-          .join('');
-        const left = r.holders.filter((x) => x.controlling && x.share === 0);
-        const leftLine = left.length ? `<p class="cs-muted cs-bpi-left" data-class="${h(r.classId)}">Left out of ${h(r.name)} as held by controlling persons or affiliates: ${h(EL.usd(r.disregarded))} (${left.map((x) => h(nameOf(x.investorId))).join(', ')})</p>` : '';
-        const basis = r.basis === 'capital' ? `value by capital balances at ${date(r.asOf, 'long')}` : 'value by commitments and subscribed amounts';
-        const n = r.unanswered.length;
-        const naLine = n ? `<p class="cs-muted cs-bpi-unanswered" data-class="${h(r.classId)}">Not answered: ${n} ${n === 1 ? 'holder' : 'holders'} of ${h(r.name)}, each counted here as not a benefit plan investor: ${r.unanswered.map((id) => h(nameOf(id))).join(', ')}</p>` : '';
-        return `<p class="cs-bpi-line${over ? ' is-over' : ''}" data-class="${h(r.classId)}"><strong>${h(r.name)}: ${h(EL.pctText(r.pct))}% of value held by benefit plan investors</strong>${over ? ` ${badge('bad', '25 percent or more')}` : ''} <span class="cs-muted cs-bpi-basis">(${h(basis)})</span></p>
-        ${over ? `<p class="cs-hint">Benefit plan investors hold 25 percent or more of ${h(r.name)}, so the offering’s assets may be treated as plan assets under ERISA.</p>` : ''}${leftLine}${naLine}${pend}`;
+    const rows = EL.planInvestors(W(), o);
+    const list = rows
+      .map((x) => {
+        const inv = invById(x.investorId);
+        const what = `${PLAN_SAID[x.plan]}${x.plan === 'planAssets' ? (x.planPct == null ? ', share held by benefit plan investors not given' : `, ${h(String(x.planPct))}% of its equity held by benefit plan investors`) : ''}`;
+        const money = [x.cents ? `${h(EL.usd(x.cents))} committed` : '', x.pendingCents ? `${h(EL.usd(x.pendingCents))} pending` : ''].filter(Boolean).join(' · ') || 'nothing committed yet';
+        return `<li class="cs-bpi-row" data-investor="${h(x.investorId)}"><strong>${h(inv ? inv.title : x.investorId)}</strong> · ${what} · ${money}</li>`;
       })
-      .join('');
-    // D-01: the sponsor's own marks, one per holder of the offering; a holder whose own answers say so is shown as such.
-    const seen = new Set();
-    const holders = [];
-    rows.forEach((r) =>
-      r.holders.forEach((x) => {
-        if (seen.has(x.investorId)) return;
-        seen.add(x.investorId);
-        holders.push(x);
-      })
-    );
-    holders.sort((a, b) => String(nameOf(a.investorId)).localeCompare(String(nameOf(b.investorId))));
-    const can = canConfigure();
-    const marks = holders
-      .map((x) => `<li><label class="cs-check" for="bpi-ctrl-${h(x.investorId)}"><input id="bpi-ctrl-${h(x.investorId)}" type="checkbox" data-action="bpi-ctrl" data-id="${h(x.investorId)}"${x.marked ? ' checked' : ''}${can ? '' : ' disabled'}><span>${h(nameOf(x.investorId))}${x.own ? '<span class="cs-hint">Its own answers say it has control over these assets or gives paid advice about them.</span>' : ''}</span></label></li>`)
       .join('');
     return panel(
       'Benefit plan investors',
-      `${lines}
-      <p class="cs-hint">Value is each holder’s capital balance at the last month end when every holder of the offering has one; otherwise it is what each holder has committed or subscribed, with accepted subscriptions not yet funded. Each class is worked out on its own. A holder counts by their latest answers to the benefit plan questions; one who has not answered counts as not a benefit plan investor and is listed. A pending subscription’s figure is on commitments, as it has no capital balance until it is funded.</p>
-      <p class="cs-bpi-ctrl-head"><strong>Controlling persons and affiliates</strong></p>
-      <p class="cs-hint">Tick each holder that has discretionary authority or control over this offering’s assets or is paid for investment advice about them, or is an affiliate of such a person. That includes holdings of your firm and its affiliates recorded here as investors. The value they hold is left out of the class total, unless they are benefit plan investors themselves.</p>
-      ${holders.length ? `<ul class="cs-checks cs-bpi-ctrl">${marks}</ul>` : '<p class="cs-muted">No holders yet.</p>'}`
+      `<p class="cs-hint">Investors who answered that they are benefit plan investors, with what each has committed. Whether benefit plan investors hold 25 percent or more of a class is for you to judge.</p>
+      ${rows.length ? `<ul class="cs-bpi-list">${list}</ul>` : '<p class="cs-muted cs-bpi-none">No investor has answered that they are a benefit plan investor.</p>'}`
     );
   }
-  /** D-01: the sponsor marks or unmarks a holder as a controlling person or affiliate for the 25 percent test; each change is logged. */
-  NS.actions['bpi-ctrl'] = staffGuard((el) => {
-    const o = curOff();
-    const id = el.getAttribute('data-id');
-    const inv = invById(id);
-    if (!o || !inv) return;
-    const list = Array.isArray(o.erisaControlling) ? o.erisaControlling.filter((x) => typeof x === 'string' && x) : [];
-    const on = list.indexOf(id) < 0;
-    o.erisaControlling = on ? list.concat(id) : list.filter((x) => x !== id);
-    NS.app.save();
-    audit(on ? 'Marked as a controlling person or affiliate for the 25 percent test' : 'Unmarked as a controlling person or affiliate for the 25 percent test', `${inv.title} in ${o.name}`, o.id, inv.id);
-    NS.app.render();
-  });
   /** The panel for the offering's exemption: Rule 506(b)'s count, or Regulation A Tier 2's limits; none for others. */
   function exemptionPanel(o) {
     const EL = NS.eligibility;

@@ -19,7 +19,7 @@ L.describeShots([
   ['b506-status.png', 'Investor’s own device (server mode), status step, Rule 506(b), answered "not accredited" with a purchaser representative and plan 4975.'],
   ['b506-subscribe.png', 'Investor’s device, subscribe step: it states the account is not an accredited investor.'],
   ['b506-done.png', 'Investor’s device, done screen after the completion went to the integration server.'],
-  ['b506-console-offering.png', 'Console after import: "Non-accredited purchasers: 1 of 35", and the Benefit plan investors panel with the request’s if-accepted figure.'],
+  ['b506-console-offering.png', 'Console after import: "Non-accredited purchasers: 1 of 35", and the Benefit plan investors list naming the investor with the pending subscription (D-08).'],
   ['regA-status.png', 'Investor’s device, Regulation A Tier 2 status step (D-07): "not accredited", the one statement about the 10 percent limit left unticked, no figures asked.'],
   ['regA-subscribe.png', 'Investor’s device, subscribe step: the warning that the investor has not confirmed the limit, which does not block.'],
   ['regA-done.png', 'Investor’s device, done screen (Regulation A).'],
@@ -30,16 +30,16 @@ L.describeShots([
   ['full34-done.png', 'Investor’s device, done screen (34 counted).'],
   ['full34-console-offering.png', 'Console offering page after import with 34 counted before: "Non-accredited purchasers: 35 of 35", at the limit (the warning badge, not the red one).'],
   ['full34-requests.png', 'Console requests page after a backdated completion: the Submitted and Date columns are the console’s own (today; the offering’s closing date), not 2001 or 1999.'],
-  ['full35-status.png', 'Investor’s device with 35 counted when invited: status step answered "not accredited" with the plain warning that the offering may already be full (no number, no names).'],
-  ['full35-subscribe.png', 'Investor’s device, subscribe step after the warning: the investor can still subscribe.'],
-  ['full35-done.png', 'Investor’s device, done screen: the warning did not block the subscription.'],
+  ['full35-status.png', 'Investor’s device with 35 counted when invited: status step answered "not accredited", no warning (owner, plan 06-15); the sponsor’s flag stays.'],
+  ['full35-subscribe.png', 'Investor’s device, subscribe step (35 counted).'],
+  ['full35-done.png', 'Investor’s device, done screen (35 counted).'],
   ['full35-console-offering.png', 'Console offering page after import: "Non-accredited purchasers: 36 of 35".'],
   ['full35-requests.png', 'Console requests page: "Would be non-accredited purchaser 36 of the 35 allowed under Rule 506(b)" on the new request.'],
-  ['existing-status-prefilled.png', 'Investor on file, own device: the status step prefilled from the console (accredited, the ground on file, plan Title I, control yes), before the investor changes the plan to "none".'],
+  ['existing-status-prefilled.png', 'Investor on file, own device: the status step prefilled from the console (accredited, the ground on file, plan Title I; no control question), before the investor changes the plan to "none".'],
   ['existing-status.png', 'Investor on file: status step after changing the benefit plan answer to "none of these".'],
   ['existing-subscribe.png', 'Investor on file: subscribe step (accredited investor).'],
   ['existing-done.png', 'Investor on file: done screen.'],
-  ['existing-console-offering.png', 'Console offering page after import: the Benefit plan investors panel with the investor’s answer now "none".'],
+  ['existing-console-offering.png', 'Console offering page after import: the Benefit plan investors list, which no longer names the investor (answer now "no").'],
   ['withdraw-status.png', 'Investor on file with a self-certified ground, own device: status step answered "not accredited" (sophistication answers).'],
   ['withdraw-subscribe.png', 'Investor on file: subscribe step stating the account is not an accredited investor.'],
   ['withdraw-done.png', 'Investor on file: done screen after answering "not accredited".'],
@@ -50,12 +50,12 @@ L.describeShots([
   ['repack-status.png', 'Investor’s device: status step with the purchaser representative’s acknowledgment attached.'],
   ['repack-subscribe.png', 'Investor’s device: subscribe step (not accredited, representative named).'],
   ['repack-done.png', 'Investor’s device: done screen; the acknowledgment went with the completion.'],
-  ['repack-requests.png', 'Console requests page after import: "Purchaser representative: Morgan Ellery, Ellery Advisory Partners" with "Download the written acknowledgment" (returns the same bytes).'],
+  ['repack-requests.png', 'Console requests page after import: "Purchaser representative: Morgan Ellery" with "Download the written acknowledgment" (returns the same bytes).'],
   ['repbig-status.png', 'Investor’s device: a 25 MB acknowledgment attached (accepted, but it cannot go with the signed agreement).'],
   ['repbig-subscribe.png', 'Investor’s device: subscribe step (25 MB acknowledgment case).'],
   ['repbig-done.png', 'Investor’s device, done screen: "The acknowledgment of your purchaser representative you uploaded could not be sent with your details".'],
   ['repbig-requests.png', 'Console requests page: the representative with the note that the acknowledgment did not fit and to ask the investor for it (no download).'],
-  ['clean-status.png', 'Investor’s device with 35 other non-accredited purchasers on the console: status step answered "not accredited", the warning from the one true or false value, nothing about the others.']
+  ['clean-status.png', 'Investor’s device with 35 other non-accredited purchasers on the console: status step answered "not accredited", no warning and nothing about the others.']
 ]);
 fs.mkdirSync(SHOTS, { recursive: true });
 const INV = { first: 'Dana', last: 'Whitfield', name: 'Dana Whitfield', email: 'dana.whitfield@example.com' };
@@ -104,7 +104,7 @@ const seedNonAccredited = (page, offeringId, n, prefix) =>
         ws.investors.push(i);
         const r = NS.ops.submitSubscription(ws, i, o, { cents: 5000000, signature: i.contact });
         r.id = `${prefix}-req-${k + 1}`;
-        r.qual = { regime: '506b', at: new Date().toISOString(), accredited: false, basis: '', sophistication: { experience: 'Years of private fund commitments', education: 'Accountant', rep: null } };
+        r.qual = { regime: '506b', at: new Date().toISOString(), accredited: false, basis: '', sophistication: { knowledge: 'alone', rep: null } };
       }
       NS.app.save(true);
       return NS.eligibility.nonAccredited(ws, o).count;
@@ -112,7 +112,7 @@ const seedNonAccredited = (page, offeringId, n, prefix) =>
     { offeringId, n, prefix }
   );
 
-/** The investor status warning C-01 (the one the status step shows when the offering may be full), or ''. */
+/** The investor status warning C-01 an earlier version showed when the offering may be full (removed by the owner, plan 06-15). */
 const FULL_WARN = /may already have as many investors who are not accredited as it is able to accept/;
 const warnText = (page) => page.evaluate(() => Array.from(document.querySelectorAll('.ivf-form .wire-warn')).map((x) => x.innerText).join('\n'));
 
@@ -262,10 +262,9 @@ function fullFlow(S, check, n, tag, extra) {
 
 const parts = {
   /**
-   * C-01 in server mode (plan 06-07): the invitation's snapshot carries offering.nonAccreditedFull, a boolean the console
-   * works out when it sends. With 34 non-accredited purchasers counted the invited investor would be the 35th: false, and
-   * no warning on their device. With 35 counted they would be the 36th: true, and the investor answering "not accredited"
-   * sees the plain warning (no number, no name), still completes, and the console flags the request 36 of 35.
+   * C-01 in server mode (plan 06-07, changed by plan 06-15): the owner removed the investor-side "506(b) may be full" warning,
+   * so the snapshot carries no offering.nonAccreditedFull and the investor sees no warning at 34 or 35 counted. The sponsor's
+   * count and flag stay: with 35 counted the investor (the 36th) completes and the console flags the request 36 of 35.
    */
   async full({ check, S }) {
     // 34 counted: the boundary below the limit. Before the console imports, the stored request's dates are altered (a device
@@ -300,7 +299,8 @@ const parts = {
       await F34.A.page.screenshot({ path: path.join(SHOTS, 'full34-requests.png'), fullPage: true });
       check('the request row shows no backdated date (2001 or 1999)', !!row34 && !/\b(2001|1999)\b/.test(row34), row34);
       const sn = F34.snaps[0] || {};
-      check('with 34 counted the snapshot the investor’s page receives carries offering.nonAccreditedFull === false', F34.snaps.length >= 1 && !!sn.offering && sn.offering.nonAccreditedFull === false, sn.offering && { nonAccreditedFull: sn.offering.nonAccreditedFull });
+      // Owner (plan 06-15): the snapshot no longer carries the "may be full" boolean.
+      check('with 34 counted the snapshot the investor’s page receives carries no offering.nonAccreditedFull', F34.snaps.length >= 1 && !!sn.offering && !('nonAccreditedFull' in sn.offering), sn.offering && Object.keys(sn.offering));
       check('with 34 counted the investor answering "not accredited" sees no warning (before or after answering)', F34.R.warnBefore === 0 && !FULL_WARN.test(F34.R.warn || '') && !FULL_WARN.test(F34.R.status || ''), { before: F34.R.warnBefore, warn: F34.R.warn });
       commonChecks(check, F34);
       await L.consoleRoute(F34.A.page, 'console-offering-' + F34.off.offeringId);
@@ -315,13 +315,11 @@ const parts = {
     try {
       check('35 non-accredited purchasers counted in the console before the invitation', F.counted === 35, F.counted);
       const sn = F.snaps[0] || {};
-      check('with 35 counted the snapshot the investor’s page receives carries offering.nonAccreditedFull === true', F.snaps.length >= 1 && !!sn.offering && sn.offering.nonAccreditedFull === true, sn.offering && { nonAccreditedFull: sn.offering.nonAccreditedFull });
-      check('the investor’s server-mode workspace holds the flag as a boolean on its offering', (await F.B.page.evaluate(() => window.CVPortal.state.ws.offerings[0].nonAccreditedFull)) === true);
-      check('no warning before the investor answers', F.R.warnBefore === 0, F.R.warnBefore);
-      const warn = F.R.warn || '';
-      check('after answering "not accredited" the status step warns the offering may already be full, and that they can still subscribe', FULL_WARN.test(warn) && /You can still subscribe/.test(warn) && /reviews every subscription/.test(warn), warn);
-      check('the warning shows no number and the screen names no other investor (T-06-04)', !!warn && !/\d/.test(warn) && !/Seeded Purchaser/.test(F.R.status || ''), { warn, st: (F.R.status || '').slice(0, 800) });
-      check('the warning does not block: the investor completes the subscription and the agreement', F.walk.reached && F.walk.errors.length === 0 && /\S/.test(F.done || ''), { seen: F.walk.seen, errors: F.walk.errors });
+      check('with 35 counted the snapshot the investor’s page receives carries no offering.nonAccreditedFull', F.snaps.length >= 1 && !!sn.offering && !('nonAccreditedFull' in sn.offering), sn.offering && Object.keys(sn.offering));
+      check('the investor’s server-mode workspace holds no such flag on its offering', (await F.B.page.evaluate(() => 'nonAccreditedFull' in window.CVPortal.state.ws.offerings[0])) === false);
+      check('no warning before or after the investor answers "not accredited" (owner, plan 06-15)', F.R.warnBefore === 0 && !FULL_WARN.test(F.R.warn || '') && !FULL_WARN.test(F.R.status || ''), { before: F.R.warnBefore, warn: F.R.warn });
+      check('the screen names no other investor (T-06-04)', !/Seeded Purchaser/.test(F.R.status || ''), (F.R.status || '').slice(0, 800));
+      check('the investor completes the subscription and the agreement', F.walk.reached && F.walk.errors.length === 0 && /\S/.test(F.done || ''), { seen: F.walk.seen, errors: F.walk.errors });
       commonChecks(check, F);
       const q = (F.req && F.req.qual) || {};
       check('qual: regime 506b, accredited false', q.regime === '506b' && q.accredited === false, q);
@@ -337,18 +335,19 @@ const parts = {
       await cp.screenshot({ path: path.join(SHOTS, 'full35-requests.png'), fullPage: true });
       check('the request row carries "Would be non-accredited purchaser 36 of the 35 allowed under Rule 506(b)"', /Would be non-accredited purchaser 36 of the 35 allowed under Rule 506\(b\)/.test(row), row);
       const lk = L.leakCheck([F.R.status, el, row].join('\n'));
-      check('white label: the warning screen and the console pages pass the leak check', lk.ok, lk.hits);
+      check('white label: the status screen and the console pages pass the leak check', lk.ok, lk.hits);
     } finally {
       await F.close();
     }
   },
 
   /**
-   * D-01, C-01 in server mode: a non-accredited 506(b) investor with sophistication answers and plan '4975' completes on
-   * their own device; the console imports and shows 1 of 35 with 1 pending, and the benefit plan figure counts the request.
+   * D-01, C-01 in server mode: a non-accredited 506(b) investor answering Rule 506(b)(2)(ii)'s question (with a purchaser
+   * representative, D-08 (2)) and plan '4975' completes on their own device; the console imports and shows 1 of 35 with 1
+   * pending, and the benefit plan list names the investor with the pending subscription (D-08 (1), plan 06-15).
    */
   async b506({ check, S }) {
-    const answers = { acc: 'no', exp: 'Twelve years of private real estate and venture fund commitments', edu: 'Civil engineer, MBA', rep: 'yes', repName: 'Morgan Ellery', repFirm: 'Ellery Advisory Partners', amount: 60000 };
+    const answers = { acc: 'no', exp: 'Twelve years of private real estate and venture fund commitments', edu: 'Civil engineer, MBA', rep: 'yes', soph: 'rep', repName: 'Morgan Ellery', amount: 60000 };
     const F = await serverFlow(S, check, {
       tag: 'b506',
       exemption: 'Rule 506(b)',
@@ -364,14 +363,14 @@ const parts = {
     try {
       check('the offering is Rule 506(b) with its agreement ready', F.off.ready && F.exemption === 'Rule 506(b)', { off: F.off, exemption: F.exemption });
       const st = F.R.status || '';
-      check('the status step on the investor’s device asks the accredited, sophistication and benefit plan questions', /Is Dana Whitfield an accredited investor\?/.test(st) && /investment experience/i.test(st) && /purchaser representative/i.test(st) && F.R.plan === '4975', { plan: F.R.plan, st: st.slice(0, 1500) });
+      check('the status step on the investor’s device asks the accredited question, Rule 506(b)(2)(ii)’s question and the benefit plan question (D-08)', /Is Dana Whitfield an accredited investor\?/.test(st) && /alone or with a purchaser representative, have enough knowledge and experience/.test(st) && !/investment experience/i.test(st) && /a benefit plan investor\?/.test(st) && F.R.plan === '4975', { plan: F.R.plan, st: st.slice(0, 1500) });
       check('the subscribe step states the account is not accredited', /is not an accredited investor/.test(F.R.sub || ''), (F.R.sub || '').slice(0, 1200));
       commonChecks(check, F);
       const q = (F.req && F.req.qual) || {};
       const so = q.sophistication || {};
       check('qual: regime 506b, accredited false', q.regime === '506b' && q.accredited === false, q);
-      check('qual: the sophistication answers and the purchaser representative arrive as typed', so.experience === answers.exp && so.education === answers.edu && !!so.rep && so.rep.name === answers.repName && so.rep.firm === answers.repFirm, so);
-      check('qual.erisa arrives intact: plan 4975, share 1', !!q.erisa && q.erisa.plan === '4975' && q.erisa.share === 1, q.erisa);
+      check('qual: the sophistication answer and the purchaser representative arrive as given, nothing else (D-08 (2))', so.knowledge === 'rep' && !!so.rep && so.rep.name === answers.repName && so.experience === undefined && so.rep.firm === undefined, so);
+      check('qual.erisa arrives intact: exactly { plan: 4975, planPct: null }', JSON.stringify(q.erisa) === '{"plan":"4975","planPct":null}', q.erisa);
       check('the investor’s change-log entry for the answer reached the console', await F.A.page.evaluate((id) => (window.CVPortal.state.ws.audit || []).some((e) => e.record === id && e.action === 'Investor status answered' && /not an accredited investor/.test(e.detail) && /from the investor.s device/.test(e.detail)), F.inv.investorId));
       // The console's offering page counts the imported answers exactly as in local mode.
       const cp = F.A.page;
@@ -380,19 +379,10 @@ const parts = {
       await cp.screenshot({ path: path.join(SHOTS, 'b506-console-offering.png'), fullPage: true });
       check('the console offering page shows "Non-accredited purchasers: 1 of 35"', /Non-accredited purchasers: 1 of 35/.test(ct), ct.slice(0, 2500));
       check('the console offering page shows "0 accepted and 1 more pending"', /\b0 accepted and 1 more pending\b/.test(ct), ct.slice(0, 2500));
-      // The benefit plan figure: the request's if-accepted share, worked out here from the holders' commitments.
-      const T = await cp.evaluate((oid) => {
-        let cents = 0;
-        window.CVPortal.state.ws.investors.forEach((i) => (i.positions || []).filter((x) => x.offeringId === oid && !x.redeemed).forEach((x) => (cents += Math.round((x.commitment != null ? x.commitment : x.amount) * 100))));
-        return cents;
-      }, F.off.offeringId);
-      const X = F.req ? F.req.cents : 0;
-      const want = Math.round(((1 * X) / (T + X)) * 1000) / 10;
+      // D-08 (1) (plan 06-15): the plain list of who answered yes, with the pending subscription; no figure worked out.
       const bp = await panelText(cp, 'Benefit plan investors');
-      const cls = await cp.evaluate(() => (document.querySelector('.cs-bpi-line') || {}).innerText || '');
-      const ifLine = F.req ? await cp.evaluate((rid) => (document.querySelector(`.cs-bpi-if[data-request="${CSS.escape(rid)}"]`) || {}).innerText || '', F.req.id) : '';
-      check('before acceptance the class line reads 0% (no holder answered)', /^All interests: 0% of value held by benefit plan investors/.test(cls), { cls, bp: bp.slice(0, 1200) });
-      check(`the benefit plan panel counts the new request: if accepted, ${want}% of All interests (share 1 of $${X / 100})`, X === 6000000 && Number((ifLine.match(/is accepted: ([\d.]+)% of All interests/) || [])[1]) === want, { ifLine, want, T, X });
+      const rowB = await cp.evaluate((iid) => (document.querySelector(`.cs-bpi-row[data-investor="${CSS.escape(iid)}"]`) || {}).innerText || '', F.inv.investorId);
+      check('the benefit plan list names the investor, the section 4975 answer and the $60,000 pending; no percentage', /Code section 4975/.test(rowB) && /\$60,000 pending/.test(rowB) && !/%/.test(bp), { rowB, bp: bp.slice(0, 1200) });
       const leakSt = L.leakCheck(st);
       const leakC = L.leakCheck(ct);
       check('white label: the investor’s status screen passes the leak check', leakSt.ok, leakSt.hits);
@@ -485,7 +475,8 @@ const parts = {
           acc: (document.querySelector('input[name="ob-stAcc"]:checked') || {}).value || '',
           basis: (document.querySelector('input[name="ob-stBasis"]:checked') || {}).value || '',
           plan: (document.querySelector('input[name="ob-stPlan"]:checked') || {}).value || '',
-          ctrl: (document.querySelector('input[name="ob-stCtrl"]:checked') || {}).value || ''
+          ctrl: (document.querySelector('input[name="ob-stCtrl"]:checked') || {}).value || '',
+          ctrlQ: document.querySelectorAll('input[name="ob-stCtrl"]').length
         }));
         await p.screenshot({ path: path.join(SHOTS, 'existing-status-prefilled.png'), fullPage: true });
         await p.check('input[name="ob-stPlan"][value="none"]');
@@ -500,20 +491,21 @@ const parts = {
       check('an active individual investor on file with a self-certified ground, not holding the offering', !!F.who && !!who.basis, F.who);
       check('the invitation is to subscribe (the investor is on file)', (await F.A.page.evaluate((id) => !!(window.CVPortal.state.ws.invitations.find((x) => x.id === id) || {}).existing, F.inv.id)) && F.inv.investorId === who.id, F.inv);
       const ex = ((F.snaps[0] || {}).investor || {}).existing || {};
-      check('the snapshot’s on-file summary carries the ground and the benefit plan answers, cleaned to known fields', ex.accBasis === who.basis && isDeepStrictEqual(ex.erisa, { plan: 'title1', planPct: null, controlling: true }), ex);
+      // D-08 (1) (plan 06-15): the control answer an earlier version kept on the record is not sent (no longer asked).
+      check('the snapshot’s on-file summary carries the ground and the benefit plan answer, cleaned to known fields (no control answer)', ex.accBasis === who.basis && isDeepStrictEqual(ex.erisa, { plan: 'title1', planPct: null }), ex);
       check('the on-file summary carries no personal details (no address, phone, taxpayer ID, bank or positions)', isDeepStrictEqual(Object.keys(ex).sort(), ['accBasis', 'accredited', 'accreditedUntil', 'erisa', 'holds']), Object.keys(ex));
-      check('the status step on the investor’s device is prefilled: accredited yes, the ground on file, plan title1, control yes', !!F.R.pre && F.R.pre.acc === 'yes' && F.R.pre.basis === who.basis && F.R.pre.plan === 'title1' && F.R.pre.ctrl === 'yes', { pre: F.R.pre, basis: who.basis });
+      check('the status step on the investor’s device is prefilled: accredited yes, the ground on file, plan title1; no control question', !!F.R.pre && F.R.pre.acc === 'yes' && F.R.pre.basis === who.basis && F.R.pre.plan === 'title1' && F.R.pre.ctrl === '' && F.R.pre.ctrlQ === 0, { pre: F.R.pre, basis: who.basis });
       check('the investor changed the plan to none', F.R.plan === 'none', F.R.plan);
       const heads = F.walk.seen.map((x) => x.split(' | ').pop());
       check('steps: welcome, status, subscribe, agreement', /^Welcome/.test(heads[0]) && heads.slice(1).join(',') === 'Investor status,Subscription,Subscription agreement', F.walk.seen);
       commonChecks(check, F);
       const q = (F.req && F.req.qual) || {};
-      check('qual: regime 506b, accredited true, the ground on file, plan none', q.regime === '506b' && q.accredited === true && q.basis === who.basis && !!q.erisa && q.erisa.plan === 'none' && q.erisa.share === 0, q);
+      check('qual: regime 506b, accredited true, the ground on file, plan none', q.regime === '506b' && q.accredited === true && q.basis === who.basis && !!q.erisa && q.erisa.plan === 'none' && !('share' in q.erisa), q);
       const rec = await F.A.page.evaluate((id) => {
         const i = window.CVPortal.state.ws.investors.find((x) => x.id === id) || {};
         return { erisa: i.erisa || null, accreditation: i.accreditation || null };
       }, who.id);
-      check('after import the console’s investor.erisa is the answer the link collected: plan none, controlling yes', !!rec.erisa && rec.erisa.plan === 'none' && rec.erisa.planPct === null && rec.erisa.controlling === true, rec.erisa);
+      check('after import the console’s investor.erisa is the answer the link collected: plan none, no control answer', !!rec.erisa && rec.erisa.plan === 'none' && rec.erisa.planPct === null && !('controlling' in rec.erisa), rec.erisa);
       check('the self-certified ground is kept, dated by this answer (not the old date)', !!rec.accreditation && rec.accreditation.basis === who.basis && rec.accreditation.basis === q.basis && rec.accreditation.date !== OLD_DATE && /^\d{4}-\d{2}-\d{2}$/.test(rec.accreditation.date || ''), rec.accreditation);
       const cp = F.A.page;
       await L.consoleRoute(cp, 'console-offering-' + F.off.offeringId);
@@ -696,7 +688,7 @@ const parts = {
    */
   async repack({ check, S }) {
     const PDF = Buffer.from('%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\n% acknowledgment of purchaser representative, signed by Dana Whitfield\ntrailer << /Root 1 0 R >>\n%%EOF\n');
-    const answers = { acc: 'no', exp: 'Four years of real estate syndications', edu: 'Nurse', rep: 'yes', repName: 'Morgan Ellery', repFirm: 'Ellery Advisory Partners', amount: 60000 };
+    const answers = { acc: 'no', exp: 'Four years of real estate syndications', edu: 'Nurse', rep: 'yes', soph: 'rep', repName: 'Morgan Ellery', amount: 60000 };
     const F = await serverFlow(S, check, {
       tag: 'repack',
       exemption: 'Rule 506(b)',
@@ -729,7 +721,7 @@ const parts = {
       await cp.waitForTimeout(300);
       const row = F.req ? await requestRow(cp, F.req.id) : '';
       await cp.screenshot({ path: path.join(SHOTS, 'repack-requests.png'), fullPage: true });
-      check('the request row shows "Purchaser representative: Morgan Ellery, Ellery Advisory Partners" and the download', /Purchaser representative: Morgan Ellery, Ellery Advisory Partners/.test(row) && /Download the written acknowledgment/.test(row), row);
+      check('the request row shows "Purchaser representative: Morgan Ellery" and the download (D-08 (2): name only)', /Purchaser representative: Morgan Ellery ·/.test(row) && /Download the written acknowledgment/.test(row), row);
       let got = null;
       let name = '';
       if (id && (await cp.locator(`[data-action=kyc-iv-file][data-id="${id}"]`).count())) {
@@ -770,7 +762,7 @@ const parts = {
       await cp.waitForTimeout(300);
       const row = G.req ? await requestRow(cp, G.req.id) : '';
       await cp.screenshot({ path: path.join(SHOTS, 'repbig-requests.png'), fullPage: true });
-      check('the request row gives the note instead of a download', /Purchaser representative: Morgan Ellery, Ellery Advisory Partners; The written acknowledgment/.test(row) && !/Download the written acknowledgment/.test(row), row);
+      check('the request row gives the note instead of a download', /Purchaser representative: Morgan Ellery; The written acknowledgment/.test(row) && !/Download the written acknowledgment/.test(row), row);
       check('no script error on either side', G.A.errors.length === 0 && G.B.errors.length === 0, { A: G.A.errors, B: G.B.errors });
     } finally {
       await G.close();
@@ -779,8 +771,9 @@ const parts = {
 
   /**
    * T-06-15 (plan 06-07): what the investor's page receives from the server, read in the investor's own context, carries
-   * the C-01 answer only as true or false and nothing else about other investors: no count, no name, no email, no id and no
-   * request of the 35 non-accredited purchasers already on the console. The investor's own workspace holds only them.
+   * nothing about other investors: no count, no name, no email, no id and no request of the 35 non-accredited purchasers
+   * already on the console, and (owner, plan 06-15) no longer even the C-01 "may be full" boolean. The investor's own
+   * workspace holds only them.
    */
   async clean({ check, S }) {
     const srv = await L.serverPortal(S);
@@ -824,7 +817,8 @@ const parts = {
       } catch (e) {
         snap = {};
       }
-      check('offering.nonAccreditedFull is a boolean, true (this investor would be the 36th)', typeof (snap.offering || {}).nonAccreditedFull === 'boolean' && snap.offering.nonAccreditedFull === true, snap.offering && snap.offering.nonAccreditedFull);
+      // Owner (plan 06-15): the investor-side warning and its snapshot boolean are removed.
+      check('the snapshot carries no offering.nonAccreditedFull', !('nonAccreditedFull' in (snap.offering || {})), snap.offering && Object.keys(snap.offering));
       // Every key anywhere in the snapshot: none that could carry a count, a list of investors or requests, or a place.
       const keys = new Set();
       const walkKeys = (x) => {
@@ -832,19 +826,19 @@ const parts = {
         if (x && typeof x === 'object') Object.keys(x).forEach((k) => (keys.add(k), walkKeys(x[k])));
       };
       walkKeys(snap);
-      const bad = Array.from(keys).filter((k) => /^(count|ranked|place|purchasers|investors|requests|positions|accepted|pending|unanswered|holders)$|^nonAccredited(?!Full$)/.test(k));
+      const bad = Array.from(keys).filter((k) => /^(count|ranked|place|purchasers|investors|requests|positions|accepted|pending|unanswered|holders)$|^nonAccredited/.test(k));
       check('no key in the snapshot could carry a count, a place or other investors or requests', bad.length === 0, bad);
-      check('the offering in the snapshot has only its known fields', Object.keys(snap.offering || {}).every((k) => ['id', 'name', 'shortName', 'type', 'summary', 'minimum', 'closeDate', 'terms', 'exemption', 'classes', 'currency', 'documents', 'nonAccreditedFull'].indexOf(k) >= 0), Object.keys(snap.offering || {}));
+      check('the offering in the snapshot has only its known fields', Object.keys(snap.offering || {}).every((k) => ['id', 'name', 'shortName', 'type', 'summary', 'minimum', 'closeDate', 'terms', 'exemption', 'classes', 'currency', 'documents'].indexOf(k) >= 0), Object.keys(snap.offering || {}));
       check('the investor in the snapshot is the invited investor alone', !!snap.investor && snap.investor.id === inv.investorId && Object.keys(snap.investor).every((k) => ['id', 'contact', 'title', 'type', 'email', 'existing'].indexOf(k) >= 0), snap.investor);
       const text = raw.join('\n');
       const found = [].concat(others.names, others.emails, others.ids, others.requests).filter((v) => v && text.indexOf(v) >= 0);
       check(`none of the others’ ${others.names.length} names, emails, investor ids or request ids appears in what the page received`, others.names.length === 35 && found.length === 0 && !/Seeded Purchaser/.test(text), found.slice(0, 10));
       const dev = await ip.evaluate(() => {
         const ws = window.CVPortal.state.ws;
-        return { investors: ws.investors.map((i) => i.id), requests: (ws.requests || []).length, offerings: ws.offerings.length, flag: ws.offerings[0] && ws.offerings[0].nonAccreditedFull };
+        return { investors: ws.investors.map((i) => i.id), requests: (ws.requests || []).length, offerings: ws.offerings.length, flag: !!ws.offerings[0] && 'nonAccreditedFull' in ws.offerings[0] };
       });
-      check('the investor’s workspace holds one investor (them), one offering with the flag as true, and no request', dev.investors.length === 1 && dev.investors[0] === inv.investorId && dev.offerings === 1 && dev.flag === true && dev.requests === 0, dev);
-      // The status step from it: the warning, no number and no name.
+      check('the investor’s workspace holds one investor (them), one offering with no flag, and no request', dev.investors.length === 1 && dev.investors[0] === inv.investorId && dev.offerings === 1 && dev.flag === false && dev.requests === 0, dev);
+      // The status step from it: no warning, no number and no name.
       const w = await L.walk(ip, {
         name: INV.name,
         acc: 'no',
@@ -859,7 +853,7 @@ const parts = {
           await ip.screenshot({ path: path.join(SHOTS, 'clean-status.png'), fullPage: true });
         }
       });
-      check('the status step warns from the flag, with no number and no other investor named', FULL_WARN.test(dev.warn || '') && !/\d/.test(dev.warn || '') && !/Seeded Purchaser/.test(dev.st || ''), { warn: dev.warn, seen: w.seen });
+      check('the status step shows no warning and names no other investor', !FULL_WARN.test(dev.warn || '') && !/Seeded Purchaser/.test(dev.st || ''), { warn: dev.warn, seen: w.seen });
       const lk = L.leakCheck(dev.st || '');
       check('white label: the status screen passes the leak check', lk.ok, lk.hits);
       check('no script error on either side', A.errors.length === 0 && B.errors.length === 0, { A: A.errors, B: B.errors });
