@@ -595,10 +595,11 @@ async function investorType({ check, S }) {
   const view = () =>
     page.evaluate(() => {
       const f = document.querySelector('.ivf-form');
-      return { text: f.innerText, w8: !!document.getElementById('ob-w8'), usPerson: document.querySelectorAll('input[name="ob-usPerson"]').length, submit: (f.querySelector('button[type=submit]') || {}).innerText || '' };
+      // plan 06-18: the foreign individual's tax step leads to the official W-8BEN (before it, the typed certification)
+      return { text: f.innerText, w8: /Your Form W-8BEN is filled in from your answers/.test(f.innerText), usPerson: document.querySelectorAll('input[name="ob-usPerson"]').length, submit: (f.querySelector('button[type=submit]') || {}).innerText || '' };
     });
   const v1 = await view();
-  check('the foreign individual is shown the foreign form (W-8BEN), with no question about U.S. status', v1.w8 && /Form W-8BEN certification/.test(v1.text) && v1.usPerson === 0, v1.text.slice(0, 300));
+  check('the foreign individual is shown the foreign form (W-8BEN), with no question about U.S. status', v1.w8 && v1.usPerson === 0, v1.text.slice(0, 300));
   check('one plain line corrects the type: "A U.S. citizen or resident, or a U.S. entity? Use Form W-9"', /A U\.S\. citizen or resident, or a U\.S\. entity\? Use Form W-9/.test(v1.text), v1.text);
   await page.click('[data-action="ivf-taxwho"]');
   await page.waitForTimeout(200);
