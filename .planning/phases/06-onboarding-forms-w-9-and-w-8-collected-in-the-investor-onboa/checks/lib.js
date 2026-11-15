@@ -281,9 +281,16 @@ async function walk(page, answers) {
         if (a.exp != null && (await page.locator('#ob-stExp').count())) await page.fill('#ob-stExp', a.exp);
         if (a.edu != null && (await page.locator('#ob-stEdu').count())) await page.fill('#ob-stEdu', a.edu);
         if (a.rep && (await page.locator('input[name="ob-stRep"]').count())) await page.check(`input[name="ob-stRep"][value="${a.rep}"]`);
-        if (a.rep === 'yes') {
+        // Plan 06-15 (D-08 (2)): one question, alone / with a purchaser representative / no (a.soph; a.rep 'yes' reads as
+        // 'rep' and 'no' as 'alone'). An older tree asks experience, education and a yes or no on the representative (above).
+        const soph = a.soph || (a.rep === 'yes' ? 'rep' : a.rep === 'no' ? 'alone' : '');
+        if (soph && (await page.locator('input[name="ob-stSoph"]').count())) {
+          await page.check(`input[name="ob-stSoph"][value="${soph}"]`);
+          await page.waitForTimeout(150);
+        }
+        if (a.rep === 'yes' || soph === 'rep') {
           if (a.repName != null) await page.fill('#ob-stRepName', a.repName);
-          if (a.repFirm != null) await page.fill('#ob-stRepFirm', a.repFirm);
+          if (a.repFirm != null && (await page.locator('#ob-stRepFirm').count())) await page.fill('#ob-stRepFirm', a.repFirm);
         }
       }
     } else if (/Accredit/.test(hd)) {
@@ -478,11 +485,11 @@ async function importFromConsole(page, invitationId) {
   await page.waitForTimeout(300);
 }
 
-/** The agreement on screen: Finish (D-30: nothing on it is required), then the done summary's text. */
+/** The agreement on screen: Finish (D-30: nothing on it is required), then the done screen's text (plan 06-15: no summary list; an older tree has one). */
 async function finishAgreement(page) {
   await page.waitForSelector('.es-finish', { timeout: 30000 });
   await page.click('.es-finish');
-  await page.waitForSelector('.ivf-done .ivf-summary', { timeout: 30000 });
+  await page.waitForSelector('.ivf-done .ivf-need, .ivf-done .ivf-summary', { timeout: 30000 });
   await page.waitForTimeout(300);
   return page.locator('.ivf-done').innerText();
 }

@@ -146,28 +146,20 @@ const png = Buffer.from('89504e470d0a1a0a0000000d4948445200000001000000010806000
 const jpeg = Buffer.from('ffd8ffe000104a46494600010100000100010000ffd9', 'hex');
 const getInvite = (base, token) => j(base, 'GET', '/v1/invite', { token, auth: false });
 
-test('offering.nonAccreditedFull (C-01) is kept only as true or false, and the investor’s page gets nothing else about other investors', () =>
+test('offering.nonAccreditedFull is not kept (owner, plan 06-15), and the investor’s page gets nothing about other investors', () =>
   start(async (base) => {
     const off = payload().offering;
-    const cases = [
-      [true, true],
-      [false, false],
-      ['true', false],
-      [1, false],
-      [{ count: 36 }, false],
-      [undefined, false]
-    ];
-    for (const [sent, kept] of cases) {
+    for (const sent of [true, false, 'true', 1, { count: 36 }, undefined]) {
       const r = await invite(base, { offering: Object.assign({}, off, { nonAccreditedFull: sent, nonAccreditedCount: 36, purchasers: ['Seeded Purchaser 1'] }) });
       const v = await getInvite(base, r.token);
       assert.equal(v.status, 200, JSON.stringify(v.body));
-      assert.strictEqual(v.body.offering.nonAccreditedFull, kept, `sent ${JSON.stringify(sent)}`);
+      assert.ok(!('nonAccreditedFull' in v.body.offering), `sent ${JSON.stringify(sent)}: the flag is not kept`);
       assert.ok(!('nonAccreditedCount' in v.body.offering) && !('purchasers' in v.body.offering), 'unknown offering fields are not kept');
       assert.ok(!JSON.stringify(v.body).includes('Seeded Purchaser'), 'no other investor’s name reaches the investor’s page');
     }
   }));
 
-test('the on-file summary keeps accBasis as clipped text and erisa as plan, planPct and controlling only', () =>
+test('the on-file summary keeps accBasis as clipped text and erisa as plan and planPct only (D-08 (1): no control answer)', () =>
   start(async (base) => {
     const inv = payload().investor;
     const send = async (existing) => {
@@ -178,18 +170,18 @@ test('the on-file summary keeps accBasis as clipped text and erisa as plan, plan
     };
     const basis = 'Net worth over $1 million, not counting the primary residence';
     let e = await send({ accredited: false, accreditedUntil: '', holds: false, accBasis: basis, erisa: { plan: 'title1', planPct: null, controlling: true, at: '2026-01-02T00:00:00Z', ssn: '123-45-6789' }, address: '12 Elm Street' });
-    assert.deepEqual(e, { accredited: false, accreditedUntil: '', holds: false, accBasis: basis, erisa: { plan: 'title1', planPct: null, controlling: true } });
+    assert.deepEqual(e, { accredited: false, accreditedUntil: '', holds: false, accBasis: basis, erisa: { plan: 'title1', planPct: null } });
     // Long text is clipped; a plan outside the five values is not kept; a percentage outside 0 to 100 or not a number is null;
-    // controlling is true, false or null.
+    // a control answer an earlier version sent is dropped.
     e = await send({ accredited: true, accreditedUntil: '2027-01-01', holds: true, accBasis: 'z'.repeat(5000), erisa: { plan: 'evil', planPct: 140, controlling: 'yes' } });
     assert.equal(e.accBasis.length, 300);
-    assert.deepEqual(e.erisa, { plan: '', planPct: null, controlling: null });
+    assert.deepEqual(e.erisa, { plan: '', planPct: null });
     e = await send({ accBasis: 42, erisa: { plan: 'planAssets', planPct: 37.5, controlling: false } });
     assert.ok(!('accBasis' in e), 'a ground that is not text is left out');
     assert.deepEqual(await send({ accredited: true, accreditedUntil: '2027-03-01', holds: false, accBasis: '' }), { accredited: true, accreditedUntil: '2027-03-01', holds: false }, 'no answers on file: the summary stays as before plan 06-07');
-    assert.deepEqual(e.erisa, { plan: 'planAssets', planPct: 37.5, controlling: false });
+    assert.deepEqual(e.erisa, { plan: 'planAssets', planPct: 37.5 });
     e = await send({ erisa: { plan: 'planAssets', planPct: '40', controlling: null } });
-    assert.deepEqual(e.erisa, { plan: 'planAssets', planPct: null, controlling: null }, 'a percentage given as text is not a number');
+    assert.deepEqual(e.erisa, { plan: 'planAssets', planPct: null }, 'a percentage given as text is not a number');
     e = await send({ erisa: 'title1' });
     assert.ok(!('erisa' in e), 'erisa that is not an object is left out');
     for (const plan of ['title1', '4975', 'planAssets', 'other', 'none']) assert.equal((await send({ erisa: { plan } })).erisa.plan, plan);
