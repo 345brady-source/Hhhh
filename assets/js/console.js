@@ -421,9 +421,12 @@
     const n = EL.nonAccredited(W(), o);
     const a = n.accepted.length;
     const p = n.pending.length;
+    const lim = EL.LIMIT_506B;
+    // C-01: the sponsor is told, nothing is blocked. At the limit a warning, past it the red badge.
+    const state = n.count > lim ? ` ${badge('bad', 'Over the limit')}` : n.count === lim ? ` ${badge('warn', 'At the limit')}` : '';
     return panel(
       'Investor eligibility',
-      `<p class="cs-elig-count"><strong>Non-accredited purchasers: ${h(String(n.count))} of ${h(String(EL.LIMIT_506B))}</strong></p>
+      `<p class="cs-elig-count"><strong>Non-accredited purchasers: ${h(String(n.count))} of ${h(String(lim))}</strong>${state}</p>
       <p class="cs-muted">${h(String(a))} accepted${p ? ` and ${h(String(p))} more pending` : ''}. Declined subscriptions are not counted.</p>`
     );
   }
@@ -1908,7 +1911,9 @@
           if (r.status === 'pending') act = `<button class="cs-btn cs-btn-small cs-btn-primary" type="button" data-action="req-approve" data-id="${h(r.id)}">Approve</button> <button class="cs-btn cs-btn-small" type="button" data-action="req-decline" data-id="${h(r.id)}">Decline</button>`;
           else if (r.status === 'approved' && r.type === 'redemption') act = r.dealing <= lastEnd ? `<button class="cs-btn cs-btn-small" type="button" data-action="req-paid" data-id="${h(r.id)}">Record payment</button>` : `<span class="sub">Payable after ${date(r.dealing)}</span>`;
           else if (r.status === 'approved') act = `<button class="cs-btn cs-btn-small" type="button" data-action="req-funded" data-id="${h(r.id)}">${OPS().isOpen(o) ? 'Record funding' : 'Countersign'}</button>`;
-          return `<tr><td class="nowrap">${date(r.submitted)}</td><td>${h(inv.title)}<span class="sub">${h(inv.id)}</span></td><td>${h(o.shortName || o.name)}</td><td>${h(reqLabel(r, o))}<span class="sub">E-signed by ${h(r.signedBy || inv.contact)}</span></td><td class="nowrap">${r.dealing ? date(r.dealing) : '—'}<span class="sub">${r.type === 'redemption' ? 'Dealing date' : OPS().isOpen(o) ? 'Effective' : 'Closing'}</span></td><td class="num">${est}</td><td>${reqStatus(r)}</td><td class="num nowrap">${act}</td></tr>`;
+          // Eligibility warnings (C-01): shown under the request; Approve stays as it is, the sponsor decides.
+          const warn = E.diy && NS.eligibility ? NS.eligibility.flags(w, r).map((f) => `<span class="sub"><span class="iv-warn">${h(f)}</span></span>`).join('') : '';
+          return `<tr><td class="nowrap">${date(r.submitted)}</td><td>${h(inv.title)}<span class="sub">${h(inv.id)}</span></td><td>${h(o.shortName || o.name)}</td><td>${h(reqLabel(r, o))}${warn}<span class="sub">E-signed by ${h(r.signedBy || inv.contact)}</span></td><td class="nowrap">${r.dealing ? date(r.dealing) : '—'}<span class="sub">${r.type === 'redemption' ? 'Dealing date' : OPS().isOpen(o) ? 'Effective' : 'Closing'}</span></td><td class="num">${est}</td><td>${reqStatus(r)}</td><td class="num nowrap">${act}</td></tr>`;
         })
         .join('');
       return shell(

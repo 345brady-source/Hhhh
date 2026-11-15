@@ -1360,10 +1360,16 @@
       ? `${h(c.off.name)} is offered under Rule 506(b) of Regulation D. ${h(t.shortName)} may accept a limited number of investors who are not accredited, so it asks about your status and, if you are not accredited, about your experience with investments like this one.`
       : `${h(t.shortName)} asks each investor whether they are an accredited investor under Regulation D.`;
     const no = d.stAcc === 'no' && b506;
+    // C-01: the offering may already have as many purchasers who are not accredited as Rule 506(b) allows. The investor is
+    // told so plainly and can still subscribe; the firm decides. No count and no other investor is ever shown (T-06-04).
+    // Local mode only: in server mode this browser holds no other investor's subscription.
+    const full = no && !isRemote(c.ws) && EL().place(c.ws, c.off, c.inv.id) > EL().LIMIT_506B;
+    const fullNote = full ? `<p class="wire-warn field-wide" role="note">${icon('alert')}<span>This offering may already have as many investors who are not accredited as it is able to accept. You can still subscribe: ${h(t.shortName)} reviews every subscription and will let you know if yours cannot be accepted.</span></p>` : '';
     return `${ivfH1(FL.status)}
       <p class="lede">${lede} You may leave any question unanswered.</p>
       <div class="form-grid">
         ${radios('stAcc', `Is ${h(c.inv.title)} an accredited investor?`, [['yes', 'Yes'], ['no', 'No']])}
+        ${fullNote}
         ${d.stAcc === 'yes' ? radios('stBasis', 'Which ground applies?', EL().BASES.map((x) => [x, x])) : ''}
         ${
           no
