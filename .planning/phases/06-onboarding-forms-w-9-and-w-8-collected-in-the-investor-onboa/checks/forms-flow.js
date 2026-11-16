@@ -2750,7 +2750,8 @@ async function toggleOffCase({ check, S }) {
       const s = Array.from(document.querySelectorAll('section.cs-panel')).find((x) => /^Investor onboarding$/.test(((x.querySelector('.cs-panel-head h2') || {}).textContent || '').trim()));
       return s ? s.innerText.replace(/\s+/g, ' ').trim() : '(no Investor onboarding panel)';
     });
-  const HINT = 'Rule 506(b) and Regulation A Tier 2 offerings always ask, and Rule 506(c) offerings verify it. Turn this on to ask in every other invitation too.';
+  // plan 06-25: accurate under every "Require verified accreditation" rule (Rule 506(c) under "Never" asks too)
+  const HINT = 'Rule 506(b), Rule 506(c) and Regulation A Tier 2 offerings always ask: through a verification where your Integrations rules require one, otherwise as the investor’s own answer. Turn this on to ask in every other invitation too.';
   // the typed activation (no open invitation), resumed at its last step: Review and sign
   const typedReview = async (page, who) => {
     await page.evaluate((who) => {
