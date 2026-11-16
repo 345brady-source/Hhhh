@@ -244,6 +244,12 @@
    * exemption and the firm asks about accreditation. Another offering being Rule 506(c) does not make it required:
    * subscribing to that offering is gated on its own (subscribeGate, and the invitation flow's offering check).
    */
+  /**
+   * Plan 06-25: what the sponsor is told when the rule is "Never". Rule 506(c) allows accredited purchasers only, and the
+   * issuer must take reasonable steps to verify their status (Rule 506(c)(2)(ii)); with no verification step, investors in
+   * those offerings answer the accredited question themselves, and the verification is the sponsor's to do.
+   */
+  const NOTE_506C_NEVER = 'Rule 506(c) offerings take accredited investors only, and you must take reasonable steps to verify that each one is accredited. With this rule, investors in those offerings only answer the accredited question themselves: taking those verification steps is your responsibility.';
   function needsAccreditation(ws, inv, offering) {
     const r = ensure(ws).rules;
     if (r.accreditationFor === 'all') return true;
@@ -1040,7 +1046,7 @@
           'Approval rules',
           `<div class="cs-grid cs-grid-3">
             <label class="cs-check" for="iv-auto"><input id="iv-auto" type="checkbox" data-bind="ivr:autoApprove"${r.autoApprove ? ' checked' : ''}><span>Approve investors automatically when every check passes<span class="cs-hint">Anything flagged waits on the AML/KYC page for your team.</span></span></label>
-            <label class="cs-field" for="iv-accfor"><span>Require verified accreditation</span><select id="iv-accfor" data-bind="ivr:accreditationFor"><option value="506c"${r.accreditationFor === '506c' ? ' selected' : ''}>For Rule 506(c) offerings</option><option value="all"${r.accreditationFor === 'all' ? ' selected' : ''}>For every offering</option><option value="none"${r.accreditationFor === 'none' ? ' selected' : ''}>Never (self-certification only)</option></select></label>
+            <label class="cs-field" for="iv-accfor"><span>Require verified accreditation</span><select id="iv-accfor" data-bind="ivr:accreditationFor"><option value="506c"${r.accreditationFor === '506c' ? ' selected' : ''}>For Rule 506(c) offerings</option><option value="all"${r.accreditationFor === 'all' ? ' selected' : ''}>For every offering</option><option value="none"${r.accreditationFor === 'none' ? ' selected' : ''}>Never (self-certification only)</option></select>${r.accreditationFor === 'none' ? `<span class="cs-hint iv-warn" id="iv-accfor-note">${h(NOTE_506C_NEVER)}</span>` : ''}</label>
             <label class="cs-field" for="iv-valid"><span>Accreditation valid for (days)</span><input id="iv-valid" type="number" min="30" max="365" step="1" data-bind="ivr:validDays" value="${h(r.validDays)}"><span class="cs-hint">90 days is the common practice for Rule 506(c). A provider’s shorter expiry wins.</span></label>
             <label class="cs-field" for="iv-rescreen"><span>Re-screen investors every (days)</span><input id="iv-rescreen" type="number" min="1" max="365" step="1" data-bind="ivr:rescreenDays" value="${h(r.rescreenDays)}"></label>
             <label class="cs-check" for="iv-pep"><input id="iv-pep" type="checkbox" data-bind="ivr:holdOnPep"${r.holdOnPep ? ' checked' : ''}><span>Hold politically exposed persons for enhanced due diligence</span></label>
@@ -1086,6 +1092,12 @@
     const r = ensure(W()).rules;
     if (RULE_DAYS[path]) r[path] = days(v, r[path], RULE_DAYS[path][0], RULE_DAYS[path][1]);
     else r[path] = v;
+    // The note under "Require verified accreditation" follows the choice (plan 06-25).
+    if (path === 'accreditationFor') {
+      NS.app.render();
+      const again = document.getElementById('iv-accfor');
+      if (again) again.focus();
+    }
   };
   NS.binders.ivserver = (path, v) => {
     if (path === 'url' || path === 'token') ensure(W()).server[path] = String(v).trim();
@@ -1328,5 +1340,5 @@
     return `<div class="iv-banner" role="status">${icon('alert')}<span>${msg}</span></div>`;
   });
 
-  NS.integrations = { CHECKS, KINDS, SHORT, HOW, BUILTINS, RECORD, ensure, active, ready, isLive, serverUrl, conn, activeFor, options, activeNames, via, linkError, fillLink, vOf, peek, seedFromKyc, seedFromLegacy: seedFromKyc, recorded, selfCertified, status, needsAccreditation, accreditationValid, start, complete, screen, recordable, awaitingTeam, resume, recordResult, decide, decideManually, due, rescreenDue, poll, finishOnboarding, subscribeGate, stepPanel, canContinue, syncKyc, legacy };
+  NS.integrations = { NOTE_506C_NEVER, CHECKS, KINDS, SHORT, HOW, BUILTINS, RECORD, ensure, active, ready, isLive, serverUrl, conn, activeFor, options, activeNames, via, linkError, fillLink, vOf, peek, seedFromKyc, seedFromLegacy: seedFromKyc, recorded, selfCertified, status, needsAccreditation, accreditationValid, start, complete, screen, recordable, awaitingTeam, resume, recordResult, decide, decideManually, due, rescreenDue, poll, finishOnboarding, subscribeGate, stepPanel, canContinue, syncKyc, legacy };
 })(window.CVPortal);

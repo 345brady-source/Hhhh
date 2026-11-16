@@ -1179,10 +1179,14 @@
    * accredited question only). Every invitation with an offering to subscribe to also asks the benefit plan (ERISA)
    * questions there, under every exemption: under Rule 506(c) the verification step is unchanged and the status step
    * shows only those questions. Nothing on it is required (D-30).
+   * Rule 506(c) with the firm's rule "Require verified accreditation: Never" (plan 06-25): Rule 506(c) allows accredited
+   * purchasers only, so with no verification step the status step asks the accredited question (self-certified) and the
+   * request records the answer, null when it is left open: nobody is recorded as accredited without an answer. The
+   * reasonable steps to verify it are the sponsor's (the console says so).
    */
   const EL = () => NS.eligibility;
   const regimeOf = (c) => (EL() && c.off ? EL().regime(c.off) : '');
-  const accAsked = (c) => !!EL() && !accVerifiedFor(c) && (regimeOf(c) === '506b' || regimeOf(c) === 'regA2' || !!c.ws.tenant.onboarding.accreditation);
+  const accAsked = (c) => !!EL() && !accVerifiedFor(c) && (regimeOf(c) === '506b' || regimeOf(c) === '506c' || regimeOf(c) === 'regA2' || !!c.ws.tenant.onboarding.accreditation);
   const statusStep = (c) => accAsked(c) || (!!EL() && !!c.off);
   /** Offerings any investor may buy, accredited or not, with no investment limit: Regulation A Tier 1, and Tier 2 listed on an exchange. */
   const openToAll = (c) => regimeOf(c) === 'regA1' || regimeOf(c) === 'regA2listed';
@@ -2655,7 +2659,7 @@
     }
     if (key === 'status') {
       let gone = '';
-      // The accredited answer is saved only where the step asked it (under Rule 506(c) the verification step decides).
+      // The accredited answer is saved only where the step asked it (where a verification is required, its step decides).
       const asked = accAsked(c);
       if (asked && d.stAcc === 'yes' && d.stBasis) {
         i.accreditation = Object.assign({}, i.accreditation, { basis: d.stBasis, date: NS.dates.today() });

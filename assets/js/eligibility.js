@@ -137,12 +137,25 @@
       return row && row.attested !== true ? [RA_NOT_ATTESTED] : [];
     }
     const q = qualOf(r);
+    // Rule 506(c) under the firm's rule "Never" (plan 06-25): no verification step ran, so each subscription says what the
+    // sponsor still has to do. Where a verification is required (the default rule) the verification step covers it.
+    if (off && regime(off) === '506c') {
+      const I = NS.integrations;
+      if (!I || !ws || I.needsAccreditation(ws, null, off)) return [];
+      if (q && q.accredited === false) return [C506_NO];
+      if (q && q.accredited === true) return [C506_SELF];
+      return [C506_OPEN];
+    }
     if (!q || q.accredited !== false) return [];
     if (!off || regime(off) !== '506b') return [];
     const k = nonAccredited(ws, off).ranked.indexOf(r.investorId);
     if (k < LIMIT_506B) return [];
     return [`Would be non-accredited purchaser ${k + 1} of the ${LIMIT_506B} allowed under Rule 506(b)`];
   }
+  /** Plan 06-25: the sponsor's flags on a Rule 506(c) subscription when no verification is required (shown, never blocking). */
+  const C506_NO = 'Answered not accredited: Rule 506(c) allows accredited investors only';
+  const C506_OPEN = 'Accredited status not answered: Rule 506(c) allows accredited investors only';
+  const C506_SELF = 'Self-certified as accredited: Rule 506(c) needs reasonable steps to verify it, which are yours to take';
   /** The sponsor's flag on a Tier 2 subscription without the investor's attestation (D-07, C-01: shown, never blocking). */
   const RA_NOT_ATTESTED = 'Not accredited and has not attested to the Regulation A Tier 2 limit (10 percent of income or net worth)';
   /**

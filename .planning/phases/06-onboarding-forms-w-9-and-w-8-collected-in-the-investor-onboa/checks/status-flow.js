@@ -2038,7 +2038,7 @@ const parts = {
     check('no: the subscribe step states the account is not an accredited investor', no.subAcc === 1 && /Tobias Achterberg is not an accredited investor/.test(no.subText), no.subText);
     check('open: request.qual records accredited null (never accredited without an answer)', !!open.req && q(open).accredited === null && q(open).basis === '', q(open));
     check('open: the subscribe step makes no statement about accreditation', open.subAcc === 0 && !/is an accredited investor|is not an accredited investor/.test(open.sub), { subAcc: open.subAcc, sub: open.sub.slice(0, 900) });
-    check('open: the change log says the accredited question was not answered', !!open.req && open.req.log.some((e) => e.action === 'Investor status answered' && /^not answered/.test(e.detail)), open.req && open.req.log);
+    check('open: the change log says the accredited question was not answered', !!open.req && open.req.log.some((e) => e.action === 'Investor status answered' && /^Wren Abernathy: not answered;/.test(e.detail)), open.req && open.req.log);
     check('open: no accreditation ground on the investor record', !!open.req && !((open.req.accreditation || {}).basis), open.req && open.req.accreditation);
     // The sponsor's request rows: each Rule 506(c) subscription under Never says what the sponsor still has to do.
     await consoleRequests(p);
