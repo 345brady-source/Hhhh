@@ -149,6 +149,19 @@
     return `<span class="sub">${h(tc.form)} signed ${date(String(tc.at || '').slice(0, 10))}${tc.validUntil ? `, valid until ${date(tc.validUntil)}` : ''}${doc ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(doc.id)}" data-name="${h(doc.fileName || 'tax-form.pdf')}">Download</button>` : ''}</span>`;
   }
 
+  /**
+   * Plan 06-26: the Type column. A foreign investor shows the investor type the sponsor chose (D-09): "Foreign individual"
+   * or "Foreign entity", or the kind of account marked foreign when it is another (a foreign joint account, a foreign trust).
+   * A U.S. investor shows the kind of account, as before.
+   */
+  function typeLabel(i) {
+    const acct = (NS.ENTITY_TYPES[i.type] || {}).label || i.type;
+    const kind = NS.INVESTOR_TYPES && /^foreign-/.test(i.taxType || '') ? NS.INVESTOR_TYPES[i.taxType] : null;
+    if (!kind) return acct;
+    if ((i.taxType === 'foreign-individual' && (i.type || 'individual') === 'individual') || (i.taxType === 'foreign-entity' && i.type === 'entity')) return kind.label;
+    return `${acct} (foreign)`;
+  }
+
   /** Net asset value and capital by fund at the last month-end (from the capital accounts in audit.js). */
   function fundsPanel(w) {
     if (!NS.audit || !w.offerings.length) return '';
@@ -790,7 +803,7 @@
           // The committed line shows only while some of the commitment is still to be called (compared in cents).
           return `<tr>
             <th scope="row"><span class="strong">${h(i.title)}</span><span class="sub">${h(i.contact)} · ${h(i.email)}</span>${NS.coInvestor ? NS.coInvestor.statusHTML(w, i) : ''}</th>
-            <td>${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</td>
+            <td>${h(typeLabel(i))}</td>
             <td class="num">${usd(invested)}<span class="sub">${committed > Math.round(invested * 100) ? `${usd(committed / 100)} committed · ` : ''}${i.positions.length} investment${i.positions.length === 1 ? '' : 's'}</span></td>
             <td>${activation(i)}${taxLine(w, i)}</td>
             <td>${payLabel(i)}</td>
