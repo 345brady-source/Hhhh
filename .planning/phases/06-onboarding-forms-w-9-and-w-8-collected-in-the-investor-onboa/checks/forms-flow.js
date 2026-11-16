@@ -3499,12 +3499,12 @@ async function includeTaxCase({ check, S }) {
 
   // A list import: the box shows only when the list reaches an investor on file, unticked; ticked, it applies to them.
   await openInvite(page, 'bulk');
-  await page.fill('#iv-csv', `first name,last name,email,offering\nPerpetua,Lindqvist-Amadi,perpetua.lindqvist@example.net,${off.offeringName}`);
+  await page.fill('#iv-csv', `first name,last name,email,offering\nPerpetua,Lindqvist-Amadi,perpetua.lindqvist@example.net,"${off.offeringName}"`);
   await page.click('[data-form="invite-bulk"] button[type=submit]');
   await page.waitForTimeout(300);
   const noBox = await page.locator('#iv-bulkTax').count();
   check('a list of new investors only shows no "Include tax form" box', noBox === 0, noBox);
-  await page.fill('#iv-csv', `first name,last name,email,offering\n${c.first},${c.last},${c.email},${off.offeringName}\nPerpetua,Lindqvist-Amadi,perpetua.lindqvist@example.net,${off.offeringName}`);
+  await page.fill('#iv-csv', `first name,last name,email,offering\n${c.first},${c.last},${c.email},"${off.offeringName}"\nPerpetua,Lindqvist-Amadi,perpetua.lindqvist@example.net,"${off.offeringName}"`);
   await page.click('[data-form="invite-bulk"] button[type=submit]');
   await page.waitForTimeout(300);
   const bulk = await page.evaluate(() => {
