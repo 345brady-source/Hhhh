@@ -500,7 +500,8 @@ async function inviteFromConsole(page, o) {
   if (!(await page.locator('#iv-more[open]').count())) await page.click('#iv-more summary');
   await page.selectOption('#iv-off', o.offeringId);
   await page.waitForTimeout(300);
-  if (o.type) await page.selectOption('#iv-type', o.type);
+  // Plan 06-29: "Investor type" is hidden for an investor on file's email (their record's type applies).
+  if (o.type && (await page.locator('#iv-type').isVisible())) await page.selectOption('#iv-type', o.type);
   if (o.account) await page.fill('#iv-title', o.account);
   if (o.amount) await page.fill('#iv-amt', String(o.amount));
   // Plan 06-27 (D-10): "Include tax form" for an investor on file (a tree without the box leaves the invitation as it is)

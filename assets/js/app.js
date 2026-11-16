@@ -70,6 +70,7 @@
     const d = document.getElementById('dlg');
     d.className = 'dlg ' + (cls || '');
     d.innerHTML = html;
+    if (!d.open && !d.hasAttribute('open')) markDialog();
     if (typeof d.showModal === 'function') {
       if (!d.open) d.showModal();
     } else d.setAttribute('open', '');
@@ -80,6 +81,58 @@
     const d = document.getElementById('dlg');
     if (d.close) d.close();
     else d.removeAttribute('open');
+  }
+  /*
+   * Browser back while a dialog is open closes the dialog instead of changing the page under it (plan 06-29). Opening one
+   * adds a history entry with the same address, and marks the entry below it with the same id; back from it closes the
+   * dialog. A dialog closed any other way (its X, Escape, an action) leaves that entry behind, spent: it shows the same page
+   * as the entry below, so a later back or forward passes over it and one press still moves one page. History is traversed
+   * here only in answer to the person's own back or forward, never after the portal's own navigation, so nothing races it.
+   */
+  let dlgMark = '';
+  let skipping = false;
+  let lastState = {};
+  const histState = () => (history.state && typeof history.state === 'object' ? history.state : {});
+  function markDialog() {
+    try {
+      const st = histState();
+      // Opened again on a spent entry: that entry serves this dialog too.
+      if (st.dlg) return (dlgMark = st.dlg);
+      const id = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      history.replaceState(Object.assign({}, st, { dlgBase: id }), '');
+      history.pushState({ dlg: id }, '');
+      dlgMark = id;
+      lastState = histState();
+    } catch (e) {
+      dlgMark = '';
+    }
+  }
+  function onHistory() {
+    const st = histState();
+    const prev = lastState;
+    lastState = st;
+    if (skipping) {
+      skipping = false;
+      return;
+    }
+    const d = document.getElementById('dlg');
+    const open = !!(d && d.open);
+    const pass = (dir) => {
+      skipping = true;
+      setTimeout(() => (skipping = false), 1500);
+      if (dir > 0) history.forward();
+      else history.back();
+    };
+    // Back from the open dialog's entry: the dialog closes, the page stays.
+    if (open && dlgMark && st.dlgBase === dlgMark) {
+      dlgMark = '';
+      closeDialog();
+      return;
+    }
+    // A spent dialog entry: passed over in the direction of travel (forward when coming from the entry below it).
+    if (st.dlg && !(open && st.dlg === dlgMark)) return pass(prev.dlgBase === st.dlg ? 1 : -1);
+    // Back from a spent entry onto the same page below it: one more step, so the press leaves the page.
+    if (!open && st.dlgBase && prev.dlg === st.dlgBase) pass(-1);
   }
   /** Offer a generated file: the viewer's save prompt when the page runs inside the host assistant, a normal download elsewhere. */
   async function download(filename, data, opts) {
@@ -559,6 +612,8 @@
       if (e.target === dlg) closeDialog();
     });
     window.addEventListener('hashchange', onRoute);
+    window.addEventListener('popstate', onHistory);
+    window.addEventListener('hashchange', () => (lastState = histState()));
 
     const r = parseHash();
     state.route = r.key;

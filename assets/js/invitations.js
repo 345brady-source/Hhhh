@@ -1384,9 +1384,13 @@
     const k = path === 'offeringId' ? 'offering' : path === 'first' || path === 'last' ? 'name' : path;
     if (d.errors[k]) delete d.errors[k];
     // Plan 06-27 (D-10): "Include tax form" shows while the email is an investor on file's (shown in place: no re-render while typing).
+    // Plan 06-29: an investor on file keeps the type on their record, so "Investor type" is hidden for their email.
     if (path === 'email') {
+      const onFile = onFileEmail(W(), v);
       const row = document.getElementById('iv-tax-row');
-      if (row) row.hidden = !onFileEmail(W(), v);
+      if (row) row.hidden = !onFile;
+      const type = document.getElementById('iv-type-row');
+      if (type) type.hidden = onFile;
     }
     if (path === 'offeringId') {
       d.cls = '';
@@ -1418,7 +1422,7 @@
       <label class="cs-field" for="iv-last"><span>Last name</span><input id="iv-last" name="last" maxlength="60" autocomplete="off" data-bind="inv8:last" value="${h(d.last || '')}"${inval(d, 'name')}>${fieldErr(d, 'name')}</label>
       <label class="cs-field cs-wide" for="iv-email"><span>Email</span><input id="iv-email" name="email" type="email" maxlength="120" autocomplete="off" data-bind="inv8:email" value="${h(d.email)}"${inval(d, 'email')}>${fieldErr(d, 'email')}</label>
       <label class="cs-check cs-wide inv8-tax" id="iv-tax-row" for="iv-includeTax"${onFileEmail(w, d.email) ? '' : ' hidden'}><input id="iv-includeTax" name="includeTax" type="checkbox" data-bind="inv8:includeTax"${d.includeTax ? ' checked' : ''}><span>Include tax form</span></label>
-      <label class="cs-field cs-wide" for="iv-type"><span>Investor type</span><select id="iv-type" name="type" data-bind="inv8:type">${NS.investorKindOptions(d.type, h)}</select><span class="cs-hint">Decides the tax form they are shown. They can correct it during onboarding.</span></label>
+      <label class="cs-field cs-wide" id="iv-type-row" for="iv-type"${onFileEmail(w, d.email) ? ' hidden' : ''}><span>Investor type</span><select id="iv-type" name="type" data-bind="inv8:type">${NS.investorKindOptions(d.type, h)}</select><span class="cs-hint">Decides the tax form they are shown. They can correct it during onboarding.</span></label>
       <p class="cs-hint cs-wide inv8-what" id="iv-what">${what}</p>
       ${agreement === 'missing' ? `<p class="cs-hint cs-hint-warn cs-wide inv8-warn" id="iv-agreement-warn">${h(off.name.replace(/\.$/, ''))} has no subscription agreement yet. <a href="#console-offering-${h(off.id)}">Add it on the offering</a> so investors sign it during onboarding.</p>` : ''}
       <details class="cs-wide inv8-more" id="iv-more"${moreOpen ? ' open' : ''}>

@@ -385,6 +385,58 @@
   NS.esignKit.unicodeFont = unicodeFont;
 
   /* ---------- Page images (rendered once per stored file, kept as object URLs) ---------- */
+  /** A PDF's pages drawn with pdf.js as PNG object URLs: { pages: [{ url, w, h }], encrypted }. */
+  async function pageImages(bytes) {
+    const lib = await pdfjs();
+    const doc = await lib.getDocument({ data: bytes, isEvalSupported: false }).promise;
+    // An owner password (no open password) still opens here, but the PDF cannot be signed: see es-create.
+    let encrypted = false;
+    try {
+      const meta = await doc.getMetadata();
+      encrypted = !!(meta && meta.info && meta.info.EncryptFilterName) || (await doc.getPermissions()) != null;
+    } catch (e) {
+      encrypted = false;
+    }
+    const out = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const v1 = page.getViewport({ scale: 1 });
+      const vp = page.getViewport({ scale: Math.min(2.4, 1300 / v1.width) });
+      const cv = document.createElement('canvas');
+      cv.width = Math.ceil(vp.width);
+      cv.height = Math.ceil(vp.height);
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, cv.width, cv.height);
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      const b = await new Promise((res) => cv.toBlob(res, 'image/png'));
+      out.push({ url: URL.createObjectURL(b), w: v1.width, h: v1.height });
+      page.cleanup();
+    }
+    doc.destroy();
+    return { pages: out, encrypted };
+  }
+  /**
+   * A stored PDF shown in a dialog's body as its pages, drawn in the page like the signing pages: not in the browser's own
+   * PDF viewer, which Chrome refuses inside a sandboxed frame (the published preview) and which kept Escape from closing
+   * the dialog once it had focus. download: the dialog has a Download button (named when the file cannot be drawn).
+   */
+  let viewUrls = [];
+  async function viewPdf(body, blob, title, download) {
+    let pages = null;
+    try {
+      pages = (await pageImages(new Uint8Array(await blob.arrayBuffer()))).pages;
+    } catch (e) {
+      pages = null;
+    }
+    if (!body.isConnected) return (pages || []).forEach((p) => URL.revokeObjectURL(p.url));
+    viewUrls.forEach((u) => URL.revokeObjectURL(u));
+    viewUrls = (pages || []).map((p) => p.url);
+    body.innerHTML =
+      pages && pages.length
+        ? `<div class="doc-pages" tabindex="0" role="document" aria-label="${h(title)}">${pages.map((p, i) => `<img class="doc-page" src="${p.url}" width="${Math.round(p.w)}" height="${Math.round(p.h)}" alt="Page ${i + 1} of ${pages.length}">`).join('')}</div>`
+        : `<p class="empty">This PDF cannot be shown here.${download ? ' Use Download to open it.' : ''}</p>`;
+  }
   const pageCache = {};
   function loadPages(docId) {
     let c = pageCache[docId];
@@ -393,34 +445,9 @@
     c.promise = (async () => {
       const blob = await files().get(docId);
       if (!blob) throw new Error('This document is stored in a different browser. In production, envelopes are kept in the document vault.');
-      const bytes = new Uint8Array(await blob.arrayBuffer());
-      const lib = await pdfjs();
-      const doc = await lib.getDocument({ data: bytes, isEvalSupported: false }).promise;
-      // An owner password (no open password) still opens here, but the PDF cannot be signed: see es-create.
-      try {
-        const meta = await doc.getMetadata();
-        c.encrypted = !!(meta && meta.info && meta.info.EncryptFilterName) || (await doc.getPermissions()) != null;
-      } catch (e) {
-        c.encrypted = false;
-      }
-      const out = [];
-      for (let i = 1; i <= doc.numPages; i++) {
-        const page = await doc.getPage(i);
-        const v1 = page.getViewport({ scale: 1 });
-        const vp = page.getViewport({ scale: Math.min(2.4, 1300 / v1.width) });
-        const cv = document.createElement('canvas');
-        cv.width = Math.ceil(vp.width);
-        cv.height = Math.ceil(vp.height);
-        const ctx = cv.getContext('2d');
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, cv.width, cv.height);
-        await page.render({ canvasContext: ctx, viewport: vp }).promise;
-        const b = await new Promise((res) => cv.toBlob(res, 'image/png'));
-        out.push({ url: URL.createObjectURL(b), w: v1.width, h: v1.height });
-        page.cleanup();
-      }
-      doc.destroy();
-      return out;
+      const r = await pageImages(new Uint8Array(await blob.arrayBuffer()));
+      c.encrypted = r.encrypted;
+      return r.pages;
     })().then(
       (pages) => {
         c.status = 'ready';
@@ -2420,7 +2447,7 @@
         .map((f) => (f.signerId === s.id ? myFieldHTML(env, s, f, st, preview || st.busy) : filledFieldHTML(env, f, s)))
         .join('');
     // The guide (Start, Next, what is left, Finish, zoom) is signflow.js; it also marks the fields once the page is drawn.
-    return wrap(`${note}${NS.signflow.barHTML(env, s, st, { ctx: opts.ctx, preview })}
+    return wrap(`${note}${NS.signflow.barHTML(env, s, st, { ctx: opts.ctx, preview, back: opts.back })}
       <div class="es-doc es-doc-sign">${pagesHTML(env, layer)}</div>`);
   }
   /* What the signing guide (signflow.js) reads from this file. */
@@ -2693,9 +2720,7 @@
         const body = document.querySelector('#dlg .dlg-body');
         if (!body) return;
         if (!blob) return (body.innerHTML = '<p class="empty">This file was stored in a different browser. In production, documents are kept in the document vault and open on any device.</p>');
-        if (S().ui.esDocUrl) URL.revokeObjectURL(S().ui.esDocUrl);
-        const url = (S().ui.esDocUrl = URL.createObjectURL(blob));
-        body.innerHTML = `<iframe class="doc-frame" src="${url}" title="${h(d.title)}"></iframe>`;
+        return viewPdf(body, blob, d.title, true);
       })
       .catch(() => {
         const body = document.querySelector('#dlg .dlg-body');
@@ -2822,11 +2847,12 @@
   /* ---------- Signing inside another page (the investor onboarding flow, onboarding.js) ---------- */
   const flowSigner = (env, investorId) => (env ? env.signers.find((x) => x.investorId === investorId) || null : null);
   /** The signing experience for an investor, without the portal page around it. */
-  function embed(envId, investorId) {
+  // back: the action of the step's Back (onboarding.js), drawn in the signing guide so it stays on screen beside the progress.
+  function embed(envId, investorId, back) {
     const env = envById(W(), envId);
     const s = flowSigner(env, investorId);
     if (!env || !s) return `<section class="es-card"><h2>This document is not available</h2><p>Contact ${h(T().support.team)} at ${h(T().support.email)}.</p></section>`;
-    return signHTML(env, s, { ctx: 'flow' });
+    return signHTML(env, s, { ctx: 'flow', back });
   }
   /** What the signing page does after it renders: the first view is recorded, and focus goes where signing left it. */
   function embedAfter(envId, investorId) {
@@ -2972,9 +2998,7 @@
         const body = document.querySelector('#dlg .dlg-body');
         if (!body) return;
         if (!blob) return (body.innerHTML = '<p class="empty">This file was stored in a different browser. In production, documents are kept in the document vault and open on any device.</p>');
-        if (S().ui.esDocUrl) URL.revokeObjectURL(S().ui.esDocUrl);
-        const url = (S().ui.esDocUrl = URL.createObjectURL(blob));
-        body.innerHTML = `<iframe class="doc-frame" src="${url}" title="${h(env.title)}"></iframe>`;
+        return viewPdf(body, blob, env.title, false);
       })
       .catch(() => {
         const body = document.querySelector('#dlg .dlg-body');
@@ -3933,7 +3957,7 @@
   };
   NS.esignKit = Object.assign(NS.esignKit || {}, { pageLayout, readNote, agreementTodo, fileRefusal, firmOnly });
   NS.coSigning = { coOf, coPlaces, coAttach, coDetach, coUpdate, coHolding, coEnvelopes, mySigner };
-  NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
+  NS.esign = { saveAgreement, pendingFor, createFromTemplate, send, statusLabel, signedBlob, remind, void: voidEnvelope, currentSigners, subscriptionTemplate, templateReady, embed, embedAfter, recordConsent, onSigned, refreshSubscription, canResign, resign, viewPdf, investorDocsHTML, agreementPanel, agreementDraft, autoFields, agreementTodo, pageLayout, fieldsOf, readNote };
   // How long the upload waits for the reading server before the in-page reading stands (a check may shorten it).
   NS.esign.createFromPdf = createFromPdf;
   NS.esign.SERVER_LIMIT_MS = 330000;

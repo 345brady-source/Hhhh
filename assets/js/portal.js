@@ -1063,10 +1063,10 @@
           body.innerHTML = '<p class="empty">This file was published from a different browser. In production, documents are stored in the document vault and open on any device.</p>';
           return;
         }
-        if (S().ui.upUrl) URL.revokeObjectURL(S().ui.upUrl);
-        const url = (S().ui.upUrl = URL.createObjectURL(blob));
         if (/^text\//.test(blob.type) || /\.(txt|md)$/i.test(doc.fileName)) return blob.text().then((t) => (body.innerHTML = `<pre class="doc-text">${h(t)}</pre>`));
-        body.innerHTML = /pdf/i.test(blob.type) || /\.pdf$/i.test(doc.fileName) ? `<iframe class="doc-frame" src="${url}" title="${h(doc.title)}"></iframe>` : '<p class="empty">Preview is not available for this file type. Use Download.</p>';
+        // A PDF is drawn in the page (esign.js viewPdf): the browser's own PDF viewer is refused inside a sandboxed frame.
+        if (/pdf/i.test(blob.type) || /\.pdf$/i.test(doc.fileName)) return NS.esign.viewPdf(body, blob, doc.title, true);
+        body.innerHTML = '<p class="empty">Preview is not available for this file type. Use Download.</p>';
       })
       .catch(() => {
         const body = document.querySelector('#dlg .dlg-body');
