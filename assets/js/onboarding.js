@@ -815,7 +815,14 @@
   async function remoteCall(server, token, method, path, body) {
     const headers = { 'X-Invite-Token': token };
     if (body) headers['Content-Type'] = 'application/json';
-    const res = await fetch(server + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    let res;
+    try {
+      res = await fetch(server + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    } catch (e) {
+      const err = new Error('The connection failed.');
+      err.network = true;
+      throw err;
+    }
     let data = null;
     try {
       data = await res.json();
@@ -2382,7 +2389,9 @@
         const todo = o.finishContact ? `Contact ${h(sup.team || 'investor relations')}${sup.email ? ` at ${h(sup.email)}` : ''}${sup.phone ? ` or ${h(sup.phone)}` : ''} for help.` : 'Check your connection, then try again. Nothing you entered is lost.';
         const resign = o.finishContact && o.canResign;
         const action = !o.finishContact ? '<button class="btn btn-primary" type="button" data-action="ivf-retry">Try again</button>' : resign ? '<button class="btn btn-primary" type="button" data-action="ivf-resign">Sign again</button>' : '';
-        return `${ivfH1('Almost done')}<p class="lede" role="alert">We could not send your details to ${h(t.name)}${why} ${todo}</p>
+        // No answer from the firm's server (offline, the server down): one plain sentence, never the browser's error text.
+        const said = o.finishNetwork && !o.finishContact ? `We could not reach ${h(t.name)} to send your details, but nothing you entered is lost: check your connection, then try again.` : `We could not send your details to ${h(t.name)}${why} ${todo}`;
+        return `${ivfH1('Almost done')}<p class="lede" role="alert">${said}</p>
           ${resign ? `<p class="meta ivf-why">Or sign the agreement again on this page: ${h(t.shortName)}’s agreement is prepared again with the same details and commitment, and your details are sent once you sign it.</p>` : ''}
           ${action ? `<div class="ob-actions">${action}</div>` : ''}`;
       }
@@ -3006,6 +3015,7 @@
     o.finishing = true;
     o.finishError = '';
     o.finishContact = false;
+    o.finishNetwork = false;
     NS.app.render();
     try {
       const i = c.inv;
@@ -3046,6 +3056,7 @@
       if (first && !isRemote(ws)) U.toast(c.it.existing ? 'Subscription submitted' : 'Account activated');
     } catch (e) {
       o.finishError = (e && e.message) || 'Something went wrong.';
+      o.finishNetwork = !!(e && e.network);
       // Retrying cannot help: the signed agreement cannot be sent from this device (sendCompletion), or the link no longer
       // works (expired, cancelled or replaced: the server's message says which). The page says who to contact instead.
       o.finishContact = !!(e && (e.contact || gone(e)));
@@ -3463,7 +3474,7 @@
     // This device's notice of the first signature names an envelope the firm never receives.
     c.ws.notifications = (c.ws.notifications || []).filter((n) => n.route !== `console-envelope-${old.id}`);
     if (NS.audit) NS.audit.log(c.ws, { action: 'Subscription agreement prepared again', record: c.req.id, fund: c.off.id, detail: `${c.inv.title}: the copy signed earlier could not be sent from the investor's device, so a new copy was prepared from the template with the same details and commitment, for the investor to sign`, actor: `${c.inv.title} (investor)` });
-    Object.assign(o, { finishError: '', finishContact: false, canResign: false, triedFinish: false });
+    Object.assign(o, { finishError: '', finishContact: false, finishNetwork: false, canResign: false, triedFinish: false });
     moveTo(c, 'agreement');
   };
   NS.actions['ivf-reload'] = () => {
