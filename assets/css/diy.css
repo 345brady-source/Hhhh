@@ -224,7 +224,8 @@
 .inv8-meta dt { color: var(--fg-3); font-weight: 500; }
 .inv8-meta dd { margin: 0; color: var(--fg); overflow-wrap: anywhere; }
 .inv8-subject { font-weight: 500; }
-.inv8-email .email { width: 100%; }
+/* The email card keeps its full height: its overflow:hidden (rounded corners) would otherwise let this column squash it, so the email was cut off with nothing left to scroll. The dialog body scrolls instead. */
+.inv8-email .email { width: 100%; flex-shrink: 0; }
 .inv8-raw { font-size: var(--text-xs); color: var(--fg-3); overflow-wrap: anywhere; }
 .inv8-linkfield input { font-size: var(--text-sm); }
 .inv8-actions { margin-top: 0; }
