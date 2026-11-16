@@ -1003,13 +1003,15 @@
       ? { plan: ['title1', '4975', 'planAssets', 'other', 'none'].indexOf(exPlan.plan) >= 0 ? exPlan.plan : '', planPct: typeof exPlan.planPct === 'number' && isFinite(exPlan.planPct) && exPlan.planPct >= 0 && exPlan.planPct <= 100 ? exPlan.planPct : null }
       : null;
     // Plan 06-26: a tax-form request pre-fills the official form from the console's record (no taxpayer ID ever travels).
-    const tp = ex && sv.taxRequest === true && si.taxPrefill && typeof si.taxPrefill === 'object' ? si.taxPrefill : null;
+    // Plan 06-27 (D-10): so does an invitation to subscribe the sponsor included the tax form in.
+    const withTax = !!(ex && sv.includeTax === true && so && sv.taxRequest !== true);
+    const tp = ex && ((sv.taxRequest === true && !so) || withTax) && si.taxPrefill && typeof si.taxPrefill === 'object' ? si.taxPrefill : null;
     const tpAt = tp && /^\d{4}-\d{2}-\d{2}T/.test(String(tp.consentAt || '')) ? str(tp.consentAt, 40) : '';
     const tpFill = tp
       ? Object.assign({ address: str(tp.address, 300), country: str(tp.country, 60) }, tp.citizen === 'us' || tp.citizen === 'other' ? { citizenship: tp.citizen } : {}, tp.citizenship ? { knownCitizenship: str(tp.citizenship, 60) } : {}, tpAt ? { esignConsent: { at: tpAt, scope: 'Electronic records and signatures (ESIGN Act, UETA)' } } : {})
       : null;
     ws.investors.push(Object.assign({ id: invId, contact: str(si.contact, 120), title: str(si.title || si.contact, 160), type: NS.ENTITY_TYPES[si.type] ? si.type : 'individual', taxType: NS.INVESTOR_TYPES[si.taxType] ? si.taxType : '', email: str(si.email, 160), phone: '', address: '', tinLast4: '', accreditation: { basis: exBasis, date: '' }, taxForm: '', edelivery: false, onboarding: { status: ex ? 'complete' : 'invited', step: 0, invited: NS.dates.today(), completed: '', source: 'invitation', invitationId: str(snap.id, 80), offeringId: so ? str(so.id, 80) : '' }, payment: { method: 'check', bank: null }, positions: [] }, onFile ? { verify: onFile } : {}, exErisa && exErisa.plan ? { erisa: exErisa } : {}, tpFill || {}));
-    ws.invitations.push(Object.assign({ id: str(snap.id, 80) || uid('invt'), serverId: str(snap.id, 80), investorId: invId, offeringId: so ? str(so.id, 80) : '', cents: Math.max(0, Math.round(Number(sv.cents) || 0)), cls: str(sv.cls, 60), note: str(sv.note, 2000), token: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: str(sv.sentAt || snap.sentAt, 40), openedAt: nowIso(), completedAt: '', expiresAt: str(sv.expiresAt || snap.expiresAt, 40), emailStatus: '', emailError: '', importedAt: '', sentBy: str(sv.senderName || sv.sentBy || snap.sentBy, 120) }, ex ? { existing: true, holds: ex.holds === true } : {}, ex && sv.taxRequest === true && !so ? { taxRequest: true } : {}));
+    ws.invitations.push(Object.assign({ id: str(snap.id, 80) || uid('invt'), serverId: str(snap.id, 80), investorId: invId, offeringId: so ? str(so.id, 80) : '', cents: Math.max(0, Math.round(Number(sv.cents) || 0)), cls: str(sv.cls, 60), note: str(sv.note, 2000), token: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: str(sv.sentAt || snap.sentAt, 40), openedAt: nowIso(), completedAt: '', expiresAt: str(sv.expiresAt || snap.expiresAt, 40), emailStatus: '', emailError: '', importedAt: '', sentBy: str(sv.senderName || sv.sentBy || snap.sentBy, 120) }, ex ? { existing: true, holds: ex.holds === true } : {}, ex && sv.taxRequest === true && !so ? { taxRequest: true } : {}, withTax ? { includeTax: true } : {}));
     const v = snap.verification || {};
     ws.integrations = { connections: Array.isArray(v.connections) ? clone(v.connections) : [], use: v.use && typeof v.use === 'object' ? clone(v.use) : {}, rules: v.rules && typeof v.rules === 'object' ? clone(v.rules) : {}, server: { url: server, token: '' }, configured: true };
     if (NS.integrations) NS.integrations.ensure(ws);
@@ -1186,6 +1188,9 @@
       if (c.fl.accStep) s.push('accreditation');
       // A new Rule 506(b) offering (or the firm's accreditation question) asks an investor on file about their status too.
       if (statusStep(c)) s.push('status');
+      // Plan 06-27 (D-10): the sponsor chose "Include tax form" on this invitation: the tax step (the official form for the
+      // investor's type, pre-filled from the record, signed or uploaded; nothing required) comes before subscribe.
+      if (c.it.includeTax) s.push('tax');
       subSteps(c, s);
       s.push('done');
       return s;
@@ -3143,11 +3148,11 @@
         delete c.fl.d;
         // Plan 06-26: what a tax-form request brought, kept on the flow (the done screen reads it after a send in server mode
         // has deleted the device's copy of the record).
-        if (c.it.taxRequest) c.fl.taxOutcome = taxOutcome(c);
+        if (c.it.taxRequest || c.it.includeTax) c.fl.taxOutcome = taxOutcome(c);
         const st = IV() ? IV().status(ws, i) : { key: 'approved', label: 'Verified' };
         const tx = c.fl.taxOutcome;
         if (NS.audit && c.it.taxRequest) NS.audit.log(ws, { action: 'Tax form request finished', record: i.id, fund: '', detail: `${i.title}: ${tx.how === 'none' ? 'no tax form completed' : `Form ${tx.form} ${tx.how === 'unsigned' ? 'not signed' : tx.how}`}`, actor: `${i.title} (investor)` });
-        else if (NS.audit && c.it.existing) NS.audit.log(ws, { action: 'Invitation to subscribe finished', record: i.id, fund: c.off ? c.off.id : c.it.offeringId, detail: `${i.title}: ${c.req && c.off ? `subscription of ${money(c.off, c.req.cents / 100)} submitted from the invitation link` : 'no subscription: the offering is no longer raising'}`, actor: `${i.title} (investor)` });
+        else if (NS.audit && c.it.existing) NS.audit.log(ws, { action: 'Invitation to subscribe finished', record: i.id, fund: c.off ? c.off.id : c.it.offeringId, detail: `${i.title}: ${c.req && c.off ? `subscription of ${money(c.off, c.req.cents / 100)} submitted from the invitation link` : 'no subscription: the offering is no longer raising'}${c.it.includeTax && tx ? `; ${tx.how === 'none' ? 'no tax form completed' : `Form ${tx.form} ${tx.how === 'unsigned' ? 'not signed' : tx.how}`}` : ''}`, actor: `${i.title} (investor)` });
         else if (NS.audit) NS.audit.log(ws, { action: 'Account activated', record: i.id, fund: c.off ? c.off.id : '', detail: `${i.title}: onboarding finished from the invitation link; ${i.taxForm && !taxOnFile(i) ? `${i.taxForm} not signed; distribution account confirmed` : `${i.taxForm || 'tax form'} and distribution account confirmed`}; verification ${st.label.toLowerCase()}${c.req && c.off ? `; subscription of ${money(c.off, c.req.cents / 100)} submitted` : ''}`, actor: `${i.title} (investor)` });
         if (st.key === 'review') notify(ws, 'verification_review', `${i.title} is held for verification review`, ((IV().peek ? IV().peek(i) : IV().vOf(i)).decision.reason || 'A check needs a person to look at it') + '. Their paperwork is complete.', 'console-kyc');
         NS.app.save(true);

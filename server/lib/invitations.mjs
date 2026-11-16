@@ -109,7 +109,8 @@ function cleanInvestor(x) {
     const plan = obj(e.erisa);
     if (plan) out.existing.erisa = cleanErisa(plan);
   }
-  // Plan 06-26: a tax-form request (see create, which keeps this for such an invitation only) carries what the official form
+  // Plan 06-26: a tax-form request (see create, which keeps this for such an invitation only, and for an invitation to subscribe
+  // that includes the tax form, plan 06-27) carries what the official form
   // prints and the console holds: the address, the country, U.S. or other citizenship, the country of citizenship given on an
   // earlier W-8BEN, and when the investor consented to electronic records and signatures. Never a taxpayer ID or bank detail.
   const p = obj(i.taxPrefill);
@@ -177,7 +178,8 @@ function cleanInvitation(x, nowMs, maxDays) {
   const expires = Number.isFinite(asked) && asked > nowMs ? Math.min(asked, max) : max;
   // access: a link for an investor already on file (added by the firm from paper documents) to open their portal: nothing to fill in.
   // taxRequest (plan 06-26): a link for an investor already on file to complete their tax form again, nothing else.
-  return Object.assign({ cents, cls: clip(i.cls, 64), note: clip(i.note, 2000), senderName: clip(i.senderName, 120) }, i.existing === true ? { existing: true } : {}, i.existing === true && i.access === true ? { access: true } : {}, i.existing === true && i.taxRequest === true ? { taxRequest: true } : {}, { expiresAt: new Date(expires).toISOString() });
+  // includeTax (plan 06-27, D-10): an invitation to subscribe for an investor already on file that also holds the tax step.
+  return Object.assign({ cents, cls: clip(i.cls, 64), note: clip(i.note, 2000), senderName: clip(i.senderName, 120) }, i.existing === true ? { existing: true } : {}, i.existing === true && i.access === true ? { access: true } : {}, i.existing === true && i.taxRequest === true ? { taxRequest: true } : {}, i.existing === true && i.includeTax === true ? { includeTax: true } : {}, { expiresAt: new Date(expires).toISOString() });
 }
 function cleanEsign(x) {
   const e = obj(x);
@@ -282,7 +284,9 @@ function cleanSubmission(body, rec, snap) {
   // (a tax-form request, plan 06-26).
   const tc = obj(out.investor.taxCert);
   const taxName = new RegExp(`^tax-${reEsc(rec.investorId)}-[a-z0-9]+$`);
-  const keepsTax = !(snap.invitation && snap.invitation.existing) || taxReq;
+  // Plan 06-27 (D-10): or the sponsor included the tax form in this invitation to subscribe.
+  const withTax = !!(snap.invitation && snap.invitation.existing && snap.invitation.includeTax && snap.offering);
+  const keepsTax = !(snap.invitation && snap.invitation.existing) || taxReq || withTax;
   if (tc && tc.uploaded === true && typeof tc.fileId === 'string' && taxName.test(tc.fileId) && keepsTax && !allowed[tc.fileId]) allowed[tc.fileId] = 'evidence';
   // Plan 06-22 (research Pattern 6, T-06-47): the investor's official tax form (W-9, W-8BEN or W-8BEN-E), the envelope esign.js
   // made on the tax step (kind 'tax'), kept only when this investor is its one signer (no countersigner: nobody else signs a
@@ -294,7 +298,8 @@ function cleanSubmission(body, rec, snap) {
     const ts = Array.isArray(tax.signers) ? tax.signers : [];
     const own = ts.length === 1 && obj(ts[0]) && ts[0].role === 'investor' && String(ts[0].investorId || '') === rec.investorId;
     // never the agreement's own id (its signed copy would pass as a tax form), and nothing for an investor already on file,
-    // whose tax form stays as the console holds it, unless the console asked for it again (a tax-form request, plan 06-26)
+    // whose tax form stays as the console holds it, unless the console asked for it again (a tax-form request, plan 06-26, or
+    // an invitation to subscribe that includes it, plan 06-27)
     if (!/^[\w.-]{1,70}$/.test(String(tax.id || '')) || tax.kind !== 'tax' || !own || (env && String(env.id) === String(tax.id)) || !keepsTax) tax = null;
   }
   out.taxEnvelope = tax;
@@ -469,13 +474,21 @@ export function summarize(sub, snap, checks) {
   if (existing && /^(Not started|Not required)$/.test(accreditation)) accreditation = 'On file';
   if (existing) rows.push(['Accredited investor', accreditation], ['Subscription agreement', agreement]);
   else rows.push(['Identity', identity], ['Sanctions screening', aml], ['Accredited investor', accreditation], ['Subscription agreement', agreement]);
+  // Plan 06-27 (D-10): the sponsor included the tax form in this invitation to subscribe: which form came back, and how.
+  if (existing && snap.invitation.includeTax && offering) {
+    const tc = obj(inv.taxCert) || {};
+    const te = sub.taxEnvelope;
+    const taxState = te && te.status === 'completed' ? 'signed' : tc.uploaded === true ? 'uploaded' : tc.signed === false ? 'not signed' : 'not returned';
+    const taxForm = line((te && te.taxForm && te.taxForm.form) || tc.form || taxFormOf(snap.investor), 40);
+    rows.push(['Tax form', taxState === 'not returned' ? 'Not returned' : `Form ${taxForm}, ${taxState}`]);
+  }
   const held = /review|Pending|Potential|Not confirmed|Not started|To be confirmed/.test(existing ? accreditation : `${identity} ${aml} ${accreditation}`);
   const next = waiting
     ? `Next: countersign the subscription agreement in the console.${held ? ' Verification is not complete yet, so the subscription is accepted once it clears.' : ''}`
     : req
       ? `Next: review the subscription in the console.${held ? ' Verification is not complete yet.' : ''}`
       : 'Next: review the investor’s details in the console.';
-  return { rows, next, identity, aml, accreditation, agreement, existing, requested: !!req };
+  return Object.assign({ rows, next, identity, aml, accreditation, agreement, existing, requested: !!req }, existing && snap.invitation.includeTax && offering ? { includeTax: true } : {});
 }
 
 /* ---------- The routes ---------- */
@@ -788,7 +801,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       firm: snap.firm,
       investor: snap.investor,
       offering: snap.offering ? Object.assign({}, snap.offering, { documents }) : null,
-      invitation: Object.assign({ cents: snap.invitation.cents, cls: snap.invitation.cls, note: snap.invitation.note, senderName: snap.invitation.senderName }, snap.invitation.existing ? { existing: true } : {}, snap.invitation.access ? { access: true } : {}, snap.invitation.taxRequest ? { taxRequest: true } : {}, { expiresAt: rec.expiresAt }),
+      invitation: Object.assign({ cents: snap.invitation.cents, cls: snap.invitation.cls, note: snap.invitation.note, senderName: snap.invitation.senderName }, snap.invitation.existing ? { existing: true } : {}, snap.invitation.access ? { access: true } : {}, snap.invitation.taxRequest ? { taxRequest: true } : {}, snap.invitation.includeTax ? { includeTax: true } : {}, { expiresAt: rec.expiresAt }),
       verification: snap.verification || {},
       esign
     };
@@ -936,10 +949,11 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     const invitation = cleanInvitation(body.invitation, now(), INVITE_DAYS);
     // Plan 06-26: a tax-form request is for an investor already on file and has no offering; only it carries the form's
     // pre-fill (an invitation to subscribe, or to a new investor, never carries an address).
-    if (!(invitation.existing && invitation.taxRequest && !offering)) {
-      delete invitation.taxRequest;
-      delete inv.taxPrefill;
-    }
+    if (!(invitation.existing && invitation.taxRequest && !offering)) delete invitation.taxRequest;
+    // Plan 06-27 (D-10): the sponsor's "Include tax form" counts only on an invitation to subscribe for an investor on file;
+    // it carries the same pre-fill.
+    if (!(invitation.existing && invitation.includeTax && offering && !invitation.taxRequest)) delete invitation.includeTax;
+    if (!invitation.taxRequest && !invitation.includeTax) delete inv.taxPrefill;
     const verification = cleanJson(obj(body.verification) || {}, 64 * KB, 'verification') || {};
     const { esign, pdf } = cleanEsign(body.esign);
     const consoleUrl = returnTo(body.consoleUrl) || `${portalUrl.split('#')[0]}#console-investors`;

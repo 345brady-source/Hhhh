@@ -4,7 +4,7 @@
 // one investor with the signature and date at the form's own places, the investor signs it in the portal, and the stored
 // signed PDF is read back: Documents category Tax for that investor alone, zero form fields, each value inside its own
 // field, the signature ink inside the sign place, the "Signed electronically" caption, the date, the certificate page.
-//   NODE_PATH=$(npm root -g) node forms-flow.js [--case toggle-off,sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned,us-llc,us-ccorp,us-trust,us-disregarded,us-ira,us-joint,foreign-entity,passive-owners,passive-none,ffi-giin,treaty-entity,route,upload,upload-ira,upload-refused,typed-route,tax-request,owner-set]
+//   NODE_PATH=$(npm root -g) node forms-flow.js [--case toggle-off,sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned,us-llc,us-ccorp,us-trust,us-disregarded,us-ira,us-joint,foreign-entity,passive-owners,passive-none,ffi-giin,treaty-entity,route,upload,upload-ira,upload-refused,typed-route,tax-request,include-tax,owner-set]
 // The last line is "FORMS FLOW: PASS (cases run: N)" or "FORMS FLOW: FAIL (cases run: N) - <failed cases>". Exits 2
 // (NOT RUN) when the bundled forms do not match assets/forms/SHA256SUMS.
 const path = require('path');
@@ -3317,6 +3317,279 @@ async function taxRequestCase({ check, S }) {
   await M.context.close();
 }
 
+/* ---------- Plan 06-27 (D-10): the sponsor chooses to include the tax form when inviting an investor on file ---------- */
+
+/** The console's invite panel open on one tab ('single' or 'bulk'). */
+async function openInvite(page, tab) {
+  await Lib.consoleRoute(page, 'console-investors', '[data-action=invite-toggle]');
+  if ((await page.locator('.inv8-form, [data-form="invite-bulk"]').count()) === 0) await page.click('[data-action=invite-toggle]');
+  await page.waitForSelector('[data-action="invite-tab"]', { timeout: 10000 });
+  await page.click(`[data-action="invite-tab"][data-t="${tab}"]`);
+  await page.waitForTimeout(250);
+}
+/** The visible controls of the console's single invite form, by id, and whether the "Include tax form" box is visible and ticked. */
+const inviteControls = (page) =>
+  page.evaluate(() => {
+    const f = document.querySelector('.inv8-form[data-form="invite-one"]');
+    const vis = (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+    const box = document.getElementById('iv-includeTax');
+    const lab = box ? box.closest('label') : null;
+    return { ids: f ? Array.from(f.querySelectorAll('input, select, textarea')).filter((el) => el.type !== 'hidden' && vis(el)).map((el) => el.id || el.name) : [], box: !!box && vis(box), checked: !!box && box.checked, label: lab ? lab.innerText.replace(/\s+/g, ' ').trim() : '' };
+  });
+/** The invitations of one investor: flags, steps and token. */
+const invitesOf = (page, id) =>
+  page.evaluate((iid) => {
+    const NS = window.CVPortal;
+    const ws = NS.state.ws;
+    return (ws.invitations || []).filter((x) => x.investorId === iid).map((x) => ({ id: x.id, token: x.token, status: x.status, existing: !!x.existing, includeTax: x.includeTax === true, taxRequest: !!x.taxRequest, offeringId: x.offeringId, steps: NS.inviteFlow.steps(ws, x) }));
+  }, id);
+
+/**
+ * Plan 06-27 (local mode; D-10, D-09, D-30, D-06, C-03). Inviting an investor already on file, the sponsor gets one choice,
+ * "Include tax form", unticked by default and shown only for an investor on file. Ticked, the short flow is welcome, status,
+ * tax, subscribe, agreement, done: the tax step is the official form for the investor's type, pre-filled from the record
+ * (a U.S. individual's W-9 asks only the taxpayer ID), signed on the page; the signed form reaches the record and the row.
+ * Not ticked, the flow is unchanged. The same choice on a list import that reaches an investor on file, carried by "Invite
+ * again"; never added to the investor's own portal subscribe entry point; absent from the managed edition.
+ */
+async function includeTaxCase({ check, S }) {
+  const A = await Lib.open(S, { context: { acceptDownloads: true } });
+  const page = A.page;
+  const dir = path.join(OUT, 'include-tax');
+  fs.mkdirSync(dir, { recursive: true });
+  const off = await Lib.setupPortal(S, A);
+  const SSN = '529047318';
+  const screens = [];
+  // Five active investors on file, none with an open invitation: a (invited with the box ticked, walks it), b (not ticked),
+  // c (a list import with the box ticked), e (subscribes from the portal on their own).
+  const who = await page.evaluate((oid) => {
+    const NS = window.CVPortal;
+    const ws = NS.state.ws;
+    const OPEN = ['sent', 'opened', 'in_progress', 'expired'];
+    const free = ws.investors.filter((x) => x.onboarding && x.onboarding.status === 'complete' && x.type === 'individual' && x.email && !(ws.invitations || []).some((y) => y.investorId === x.id && OPEN.indexOf(y.status) >= 0) && !(ws.requests || []).some((r) => r.investorId === x.id && r.offeringId === oid && r.status === 'pending'));
+    const [a, b, c, e] = free;
+    if (!e) return null;
+    const consent = { at: '2026-03-02T15:04:05Z', scope: 'Electronic records and signatures (ESIGN Act, UETA)' };
+    Object.assign(a, { contact: 'Ingrid Achterberg-Sowell', title: 'Ingrid Achterberg-Sowell', taxType: 'us-individual', address: '1418 Juniper Hollow Road, Missoula, MT 59801', country: 'United States', citizenship: 'us', esignConsent: consent, taxForm: 'W-9', taxCert: { form: 'W-9', revision: 'Rev. March 2024', envelopeId: 'env-old-unsigned', at: '2025-02-01T10:00:00Z', signed: false, signedBy: '' } });
+    [b, c, e].forEach((x) => (x.esignConsent = consent));
+    NS.app.save(true);
+    return [a, b, c, e].map((x) => {
+      const parts = String(x.contact).trim().split(/\s+/);
+      return { id: x.id, email: x.email, name: x.contact, first: parts[0], last: parts.slice(1).join(' ') || parts[0] };
+    });
+  }, off.offeringId);
+  check('four active investors on file with no open invitation', !!who, who);
+  if (!who) return A.context.close();
+  const [a, b, c, e] = who;
+
+  // The single invite form: the box shows only for an investor on file, unticked; nothing else is added.
+  await openInvite(page, 'single');
+  if (!(await page.locator('#iv-more[open]').count())) await page.click('#iv-more summary');
+  await page.selectOption('#iv-off', off.offeringId);
+  await page.waitForTimeout(250);
+  await page.fill('#iv-contact', 'Wilhelmina');
+  await page.fill('#iv-last', 'Okonkwo-Brandt');
+  await page.fill('#iv-email', 'wilhelmina.okonkwo@example.net');
+  await page.waitForTimeout(150);
+  const fresh = await inviteControls(page);
+  await page.fill('#iv-contact', a.first);
+  await page.fill('#iv-last', a.last);
+  await page.fill('#iv-email', a.email);
+  await page.waitForTimeout(150);
+  const onFile = await inviteControls(page);
+  await page.screenshot({ path: path.join(dir, 'include-tax-invite-form.png'), fullPage: false });
+  check('a new investor’s email shows no "Include tax form" box (their onboarding has the tax step anyway)', !fresh.box, fresh);
+  check('an investor on file shows one "Include tax form" box, unticked by default', onFile.box && !onFile.checked && onFile.label === 'Include tax form', onFile);
+  const added = onFile.ids.filter((x) => fresh.ids.indexOf(x) < 0);
+  check('D-06 (the 06-15 standard): the only control added for an investor on file is that one box', JSON.stringify(added) === JSON.stringify(['iv-includeTax']) && fresh.ids.every((x) => onFile.ids.indexOf(x) >= 0), { fresh: fresh.ids, onFile: onFile.ids });
+  if (!onFile.box) {
+    await A.context.close();
+    return;
+  }
+  await page.check('#iv-includeTax');
+  await page.click('.inv8-form[data-form="invite-one"] button[type=submit]');
+  await page.waitForSelector('#dlg[open] .inv8-email', { timeout: 15000 });
+  const mail = (await page.locator('#dlg').innerText()).replace(/\s+/g, ' ');
+  screens.push(mail);
+  await page.screenshot({ path: path.join(dir, 'include-tax-email.png'), fullPage: false });
+  check('the email to send names the tax form among what the link takes them through', /subscribe to/.test(mail) && /your tax form/.test(mail) && !/photo ID|bank account details/i.test(mail), mail.slice(0, 700));
+  await page.click('#dlg [data-action="close-dialog"]').catch(() => {});
+  const ia = (await invitesOf(page, a.id)).pop() || {};
+  check('ticked: one invitation to subscribe for the investor on file, marked to include the tax form', ia.existing && ia.includeTax && !ia.taxRequest && ia.offeringId === off.offeringId, ia);
+  check('ticked: the short flow is welcome, status, tax, subscribe, agreement, done', JSON.stringify(ia.steps) === JSON.stringify(['welcome', 'status', 'tax', 'subscribe', 'agreement', 'done']), ia.steps);
+  const lg = await page.evaluate((iid) => (window.CVPortal.state.ws.audit || []).filter((x) => x.record === iid).map((x) => `${x.action} :: ${x.detail}`), a.id);
+  check('the change log says the invitation includes the tax form', lg.some((l) => /^Investor invited to subscribe :: .*tax form/.test(l)), lg.slice(-3));
+
+  // Not ticked: the flow is unchanged.
+  await openInvite(page, 'single');
+  if (!(await page.locator('#iv-more[open]').count())) await page.click('#iv-more summary');
+  await page.selectOption('#iv-off', off.offeringId);
+  await page.waitForTimeout(250);
+  await page.fill('#iv-contact', b.first);
+  await page.fill('#iv-last', b.last);
+  await page.fill('#iv-email', b.email);
+  await page.waitForTimeout(150);
+  const bForm = await inviteControls(page);
+  check('the box starts unticked on the next invitation too', bForm.box && !bForm.checked, bForm);
+  await page.click('.inv8-form[data-form="invite-one"] button[type=submit]');
+  await page.waitForSelector('#dlg[open] .inv8-email', { timeout: 15000 });
+  const mailB = (await page.locator('#dlg').innerText()).replace(/\s+/g, ' ');
+  await page.click('#dlg [data-action="close-dialog"]').catch(() => {});
+  const ib = (await invitesOf(page, b.id)).pop() || {};
+  check('not ticked: the invitation is to subscribe, with no tax form, and its flow is welcome, status, subscribe, agreement, done', ib.existing && !ib.includeTax && JSON.stringify(ib.steps) === JSON.stringify(['welcome', 'status', 'subscribe', 'agreement', 'done']) && !/tax form/.test(mailB), { it: ib, mail: mailB.slice(0, 300) });
+
+  // The investor opens the ticked invitation and walks it.
+  await page.evaluate((t) => (location.hash = 'invite-' + t), ia.token);
+  let tax = null;
+  const w = await Lib.walk(page, {
+    name: a.name,
+    amount: 75000,
+    taxStep: async (pg) => {
+      const count = await pg.locator('.ivf-progress .ob-count').innerText().catch(() => '');
+      tax = { count, shown: await visibleInputs(pg), text: await pg.locator('.ivf-form').innerText() };
+      screens.push(tax.text);
+      await pg.screenshot({ path: path.join(dir, 'include-tax-w9-step.png'), fullPage: true });
+      await pg.fill('#ob-tin', SSN);
+      await Lib.submit(pg);
+      await pg.waitForSelector('.ivf-tax-sign .es-finish', { timeout: 60000 });
+      tax.env = await pg.evaluate((iid) => {
+        const ws = window.CVPortal.state.ws;
+        const i = ws.investors.find((x) => x.id === iid);
+        const en = (ws.envelopes || []).find((x) => x.id === (i.onboarding.flow || {}).taxEnvelopeId);
+        return en ? { id: en.id, form: en.taxForm.form, sig: (en.fields.find((f) => f.type === 'signature') || {}).id } : null;
+      }, a.id);
+      await pg.screenshot({ path: path.join(dir, 'include-tax-w9-signing.png'), fullPage: true });
+      await Lib.finishTaxForm(pg, signTaxForm(tax.env && tax.env.sig));
+    }
+  });
+  const heads = w.seen.map((s) => s.split(' | ').pop());
+  check('the investor walks welcome, status, tax, subscription to the agreement with no field error, six steps in all', w.reached && w.errors.length === 0 && /^Welcome/.test(heads[0]) && heads.slice(1).join(',') === 'Investor status,Tax certification,Subscription,Subscription agreement' && w.seen.every((s) => /^Step \d of 6/.test(s)), { seen: w.seen, errors: w.errors });
+  check('the tax step is the official W-9 pre-filled from the record: only the taxpayer ID is asked', !!tax && JSON.stringify(tax.shown) === JSON.stringify(['ob-tin']) && /Form W-9/.test(tax.text), tax && { shown: tax.shown, text: tax.text.slice(0, 300) });
+  check('Continue builds the official W-9 for this investor', !!tax && !!tax.env && tax.env.form === 'W-9', tax && tax.env);
+  const done = w.reached ? await Lib.finishAgreement(page).catch((x) => `(not finished: ${x.message})`) : '';
+  screens.push(done);
+  await page.screenshot({ path: path.join(dir, 'include-tax-done.png'), fullPage: true });
+  check('the investor finishes: the subscription is submitted', /Your subscription to .* is submitted/.test(done), String(done).slice(0, 400));
+  const rec = await page.evaluate((iid) => {
+    const NS = window.CVPortal;
+    const ws = NS.state.ws;
+    const i = ws.investors.find((x) => x.id === iid);
+    return { taxForm: i.taxForm || '', taxCert: JSON.parse(JSON.stringify(i.taxCert || null)), onFile: NS.inviteFlow.taxOnFile(i), address: i.address, status: i.onboarding.status, reqs: (ws.requests || []).filter((r) => r.investorId === iid && r.type === 'subscription' && r.status === 'pending').length, log: (ws.audit || []).filter((x) => x.record === iid).map((x) => `${x.action} :: ${x.detail}`) };
+  }, a.id);
+  check('the record now holds the W-9 signed on this invitation (on file); address and status unchanged; the subscription is pending', rec.taxForm === 'W-9' && !!rec.taxCert && rec.taxCert.signed === true && rec.taxCert.envelopeId === (tax && tax.env && tax.env.id) && rec.onFile === true && rec.address === '1418 Juniper Hollow Road, Missoula, MT 59801' && rec.status === 'complete' && rec.reqs === 1, rec);
+  check('the change log records the subscription finished with the Form W-9 signed', rec.log.some((l) => /^Invitation to subscribe finished :: .*subscription of .*Form W-9 signed/.test(l)), rec.log.slice(-4));
+  check('no saved workspace or change-log entry holds the full taxpayer ID', !(await page.evaluate((s) => JSON.stringify(window.CVPortal.state.ws).indexOf(s) >= 0 || Object.keys(localStorage).some((k) => String(localStorage.getItem(k)).indexOf(s) >= 0), SSN)));
+  const row = await investorRow(page, a.email);
+  check('the console row reads "W-9 signed <date>" with a Download', /W-9 signed [A-Z][a-z]+ \d{1,2}, \d{4}/.test(row.text) && (await row.row.locator('[data-action="kyc-iv-file"]').count()) >= 1, row.text.slice(0, 300));
+  await page.screenshot({ path: path.join(dir, 'include-tax-console-after.png'), fullPage: false });
+  let dl = '';
+  try {
+    const [d] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), row.row.locator('[data-action="kyc-iv-file"]').first().click()]);
+    dl = fs.readFileSync(await d.path());
+  } catch (x) {
+    dl = '';
+  }
+  const stored = await page.evaluate(async (id) => {
+    const NS = window.CVPortal;
+    const en = NS.state.ws.envelopes.find((x) => x.id === id);
+    const bl = en && en.signedDocId ? await NS.ops.files.get(en.signedDocId) : null;
+    return bl ? Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', await bl.arrayBuffer())), (x) => x.toString(16).padStart(2, '0')).join('') : '';
+  }, tax && tax.env && tax.env.id);
+  check('the Download is the signed W-9 stored for this invitation (same SHA-256)', !!dl.length && sha(dl) === stored, { download: dl.length ? sha(dl) : 'none', stored });
+
+  // A list import: the box shows only when the list reaches an investor on file, unticked; ticked, it applies to them.
+  await openInvite(page, 'bulk');
+  await page.fill('#iv-csv', `first name,last name,email,offering\nPerpetua,Lindqvist-Amadi,perpetua.lindqvist@example.net,"${off.offeringName}"`);
+  await page.click('[data-form="invite-bulk"] button[type=submit]');
+  await page.waitForTimeout(300);
+  const noBox = await page.locator('#iv-bulkTax').count();
+  check('a list of new investors only shows no "Include tax form" box', noBox === 0, noBox);
+  await page.fill('#iv-csv', `first name,last name,email,offering\n${c.first},${c.last},${c.email},"${off.offeringName}"\nPerpetua,Lindqvist-Amadi,perpetua.lindqvist@example.net,"${off.offeringName}"`);
+  await page.click('[data-form="invite-bulk"] button[type=submit]');
+  await page.waitForTimeout(300);
+  const bulk = await page.evaluate(() => {
+    const box = document.getElementById('iv-bulkTax');
+    const lab = box ? box.closest('label') : null;
+    return { box: !!box, checked: !!box && box.checked, label: lab ? lab.innerText.replace(/\s+/g, ' ').trim() : '' };
+  });
+  await page.screenshot({ path: path.join(dir, 'include-tax-list.png'), fullPage: false });
+  check('a list that reaches an investor on file shows one "Include tax form" box, unticked', bulk.box && !bulk.checked && bulk.label === 'Include tax form', bulk);
+  if (bulk.box) {
+    await page.check('#iv-bulkTax');
+    await page.click('[data-action="invite-bulk-add"]');
+    await page.waitForFunction((iid) => (window.CVPortal.state.ws.invitations || []).some((x) => x.investorId === iid && x.status === 'sent'), c.id, { timeout: 15000 }).catch(() => {});
+  }
+  const ic = (await invitesOf(page, c.id)).pop() || {};
+  const np = await page.evaluate(() => {
+    const ws = window.CVPortal.state.ws;
+    const i = ws.investors.find((x) => x.email === 'perpetua.lindqvist@example.net');
+    const it = i && (ws.invitations || []).filter((x) => x.investorId === i.id).pop();
+    return it ? { existing: !!it.existing, includeTax: it.includeTax === true } : null;
+  });
+  check('ticked on the list: the investor on file’s invitation includes the tax form (tax step before subscribe)', ic.existing && ic.includeTax && JSON.stringify(ic.steps) === JSON.stringify(['welcome', 'status', 'tax', 'subscribe', 'agreement', 'done']), ic);
+  check('the new investor on the same list gets the usual onboarding, not marked', !!np && !np.existing && !np.includeTax, np);
+
+  // "Invite again" after a cancelled invitation keeps the choice made on it.
+  const again = await page.evaluate(async (ids) => {
+    const NS = window.CVPortal;
+    const ws = NS.state.ws;
+    const out = {};
+    for (const iid of ids) {
+      const it = (ws.invitations || []).filter((x) => x.investorId === iid).pop();
+      await NS.invitations.cancel(ws, it);
+      const el = document.createElement('button');
+      el.setAttribute('data-id', it.id);
+      await NS.actions['inv8-reinvite'](el);
+      const nx = (ws.invitations || []).filter((x) => x.investorId === iid).pop();
+      out[iid] = { fresh: nx.id !== it.id, status: nx.status, includeTax: nx.includeTax === true, steps: NS.inviteFlow.steps(ws, nx) };
+    }
+    return out;
+  }, [c.id, b.id]);
+  await page.click('#dlg [data-action="close-dialog"]').catch(() => {});
+  check('"Invite again" for a cancelled invitation that included the tax form includes it again', !!again[c.id] && again[c.id].fresh && again[c.id].includeTax && again[c.id].steps.indexOf('tax') >= 0, again[c.id]);
+  check('"Invite again" for one that did not, does not', !!again[b.id] && again[b.id].fresh && !again[b.id].includeTax && again[b.id].steps.indexOf('tax') < 0, again[b.id]);
+
+  // The investor's own subscribe entry point in the portal (plan 06-08) is unchanged: no tax step.
+  const own = await page.evaluate(({ eid, oid }) => {
+    const NS = window.CVPortal;
+    const ws = NS.state.ws;
+    const i = ws.investors.find((x) => x.id === eid);
+    const it = NS.inviteFlow.selfInvite(ws, i, ws.offerings.find((x) => x.id === oid), { existing: true });
+    return { existing: !!it.existing, includeTax: it.includeTax === true, steps: NS.inviteFlow.steps(ws, it) };
+  }, { eid: e.id, oid: off.offeringId });
+  check('the investor’s own portal subscribe entry point has no tax step (only the sponsor’s choice adds it)', own.existing && !own.includeTax && own.steps.indexOf('tax') < 0, own);
+
+  const lk = Lib.leakCheck(screens.join('\n'));
+  check('white label: no vendor name or forbidden word on these screens', lk.ok, lk.hits);
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
+
+  // C-03: the managed edition's invite form has no such choice.
+  const M = await Lib.open(S);
+  const mp = M.page;
+  await mp.goto(`${S.origin}/index.html`);
+  await mp.evaluate(() => Object.keys(localStorage).forEach((k) => localStorage.removeItem(k)));
+  await mp.goto(`${S.origin}/index.html`);
+  await mp.waitForFunction(() => window.CVPortal && window.CVPortal.state && window.CVPortal.state.ws, null, { timeout: 20000 });
+  const m = await mp.evaluate(() => {
+    const NS = window.CVPortal;
+    NS.state.role = NS.EDITION.owner;
+    NS.store.set('role', NS.EDITION.owner);
+    NS.state.ui.inviteOpen = true;
+    NS.app.go('console-investors');
+    return { ed: NS.EDITION.id, email: (NS.state.ws.investors.find((x) => x.onboarding && x.onboarding.status === 'complete' && x.email) || {}).email };
+  });
+  await mp.waitForSelector('.cs-tbl', { timeout: 20000 });
+  await mp.waitForTimeout(300);
+  if (await mp.locator('[data-form="invite-one"] input[type=email], [data-form="invite-one"] input[name=email]').count()) await mp.locator('[data-form="invite-one"] input[type=email], [data-form="invite-one"] input[name=email]').first().fill(m.email || '');
+  await mp.waitForTimeout(200);
+  const mt = await mp.evaluate(() => document.body.innerText);
+  check('managed (C-03): no "Include tax form" choice on its invite form', m.ed === 'managed' && (await mp.locator('[data-form="invite-one"]').count()) > 0 && (await mp.locator('#iv-includeTax, #iv-bulkTax').count()) === 0 && !/Include tax form/.test(mt), m);
+  check('managed: no script error in the browser', M.errors.length === 0, M.errors);
+  await M.context.close();
+}
+
 /**
  * Plan 06-24, the owner's check (CLAUDE.md: tested on answers the code has never seen, shown plainly, failures first).
  * Four new investors, with names, addresses, taxpayer IDs and dates written for this run only and used by no earlier
@@ -3527,6 +3800,7 @@ const cases = {
   'upload-refused': uploadRefusedCase,
   'typed-route': typedRouteCase,
   'tax-request': taxRequestCase,
+  'include-tax': includeTaxCase,
   'owner-set': ownerSetCase
 };
 
