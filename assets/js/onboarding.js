@@ -2798,6 +2798,29 @@
     const so = r && r.qual && typeof r.qual === 'object' ? r.qual.sophistication : null;
     return so && typeof so === 'object' && so.rep && typeof so.rep === 'object' ? so.rep : null;
   };
+  /**
+   * Research Pitfall 2 (plan 06-23, T-06-50): once the firm has confirmed it received the investor's details, this device (it
+   * may be a shared computer) keeps no copy that carries the full taxpayer ID. Every file of this investor's tax envelopes
+   * goes (the filled form, its work and signed copies, the files of a form voided on the way), and the tax form they uploaded
+   * instead (tax-<investor id>-<time>); so do the Documents entries for them, and the envelopes, which would point at files
+   * no longer here. Called only after the send is confirmed: a send that fails keeps everything, so Try again sends the same
+   * file.
+   */
+  async function wipeTax(c, tc) {
+    const ws = c.ws;
+    const i = c.inv;
+    const envs = (ws.envelopes || []).filter((e) => e.kind === 'tax' && !!signerOf(e, i));
+    const ids = new Set();
+    envs.forEach((e) => [e.docId, e.workDocId, e.signedDocId, `${e.id}-orig`, `${e.id}-work`, `${e.id}-signed`].forEach((x) => x && String(x).indexOf(e.id) === 0 && ids.add(String(x))));
+    if (tc && typeof tc.fileId === 'string' && new RegExp(`^tax-${reEsc(i.id)}-[a-z0-9]+$`).test(tc.fileId)) ids.add(tc.fileId);
+    if (NS.ops && NS.ops.files) await Promise.all(Array.from(ids).map((id) => NS.ops.files.del(id).catch(() => {})));
+    const gone = new Set(envs.map((e) => e.id));
+    ws.envelopes = (ws.envelopes || []).filter((e) => !gone.has(e.id));
+    ws.docs = (ws.docs || []).filter((d) => !(d.envelopeId && gone.has(d.envelopeId)) && !ids.has(d.id));
+    gone.forEach((id) => delete BUILT[id]);
+    delete c.fl.taxEnvelopeId;
+    delete c.fl.taxView;
+  }
   async function sendCompletion(c) {
     const ws = c.ws;
     const i = c.inv;
@@ -2921,6 +2944,13 @@
     await remote.complete(ws.invite.server, ws.invite.token, payload);
     c.fl.sentAt = nowIso();
     if (unsent.length) c.fl.unsent = unsent.map((x) => x.kind);
+    // The send is confirmed: no copy of the full taxpayer ID stays on this device (research Pitfall 2).
+    // A wipe that fails never turns the confirmed send into an error.
+    try {
+      await wipeTax(c, tc);
+    } catch (e) {
+      if (window.console) console.error(e);
+    }
     // This device keeps only what the summary shows (the last four digits of the bank account), and never the
     // invitation token: on a shared device the next person finds the summary, not the investor's details.
     if (i.payment && i.payment.bank) i.payment.bank = Object.assign({}, i.payment.bank, { account: '****' + U.last4(i.payment.bank.account), routing: '****' + U.last4(i.payment.bank.routing), holder: '' });
