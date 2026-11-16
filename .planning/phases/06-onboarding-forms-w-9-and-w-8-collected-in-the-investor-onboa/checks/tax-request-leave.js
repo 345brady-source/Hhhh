@@ -8,7 +8,7 @@
 //   request    the investor opens the request from the portal: Back on its first step returns to the portal; from the form,
 //              Back then Back; the step's content is unchanged; the request is still offered and opens again where it was
 //   phone      the same on a phone-sized touch screen
-//   preview    the sponsor's own investor preview ("View portal"): Back returns to the preview, whose "Back to console" works
+//   preview    the sponsor's own investor preview ("View portal"): Back returns to the portal, whose demo bar leads to the console
 //   welcome    a request for an investor with no consent on record starts on Welcome: Back there returns to the portal
 //   onboarding a new investor's invitation is unchanged: no Back on Welcome, Back on the next step
 //   NODE_PATH=$(npm root -g) node tax-request-leave.js [--only request,phone,preview,welcome,onboarding]
@@ -197,12 +197,15 @@ async function previewPart({ check, S }) {
     await fr.waitForTimeout(600);
     s = await stepState(fr);
   }
-  check('Back returns to the investor preview, with its "Back to console" bar', s.hash === '#overview' && s.previewBar, { hash: s.hash, previewBar: s.previewBar });
-  if (s.previewBar) {
-    await fr.click('.pvbar-back');
+  // Opening an invitation signs in as its investor (onboarding.js ensureFlow), so Back lands on the investor's portal, where
+  // the demo bar's "Signed in as" takes the sponsor back to the console.
+  const bar = await fr.locator('#demo-role').count();
+  check('Back returns to the portal, where the demo bar’s "Signed in as" is offered again', s.hash === '#overview' && !s.count && bar === 1, { hash: s.hash, demoRole: bar });
+  if (bar) {
+    await fr.selectOption('#demo-role', 'admin');
     await fr.waitForTimeout(600);
     s = await stepState(fr);
-    check('"Back to console" returns the sponsor to the console', s.hash === '#console', s.hash);
+    check('"Signed in as" Admin returns the sponsor to the console', s.hash === '#console', s.hash);
   }
   check('no script error in the browser', A.errors.length === 0, A.errors);
   await A.context.close();

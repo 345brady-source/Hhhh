@@ -3273,7 +3273,9 @@
       const body = taxEnv ? fTaxSign(c, taxEnv) : { welcome: fWelcome, login: fLogin, profile: fProfile, identity: fIdentity, status: fStatus, accreditation: () => stepAccreditation(accVerifiedFor(c), { why: accWhy(c) }).replace(/^\s*<h1>[^<]*<\/h1>\s*<p class="lede">[\s\S]*?<\/p>/, () => ivfH1(h(stepLabel(c, 'accreditation'))) + (c.fl.accLate ? `<p class="meta ivf-why">${lateNote(c)}</p>` : '')), tax: fTax, payment: () => stepPayment().replace(/^\s*<h1>/, '<h1 tabindex="-1">'), subscribe: fSubscribe, agreement: fAgreement, done: fDone }[key](c);
       // the upload view (plan 06-21): Back returns to the tax answers, not to the step before
       const upView = key === 'tax' && c.fl.taxView === 'upload';
-      const back = upView ? '<button class="btn" type="button" data-action="ivf-taxanswers">Back</button>' : n > 0 && key !== 'done' && !(key === 'subscribe' && c.req && envOf(c) && signerOf(envOf(c), c.inv) && signerOf(envOf(c), c.inv).status === 'signed') ? '<button class="btn" type="button" data-action="ivf-back">Back</button>' : '';
+      // A tax-form request (plan 06-26) is opened from the portal and starts on its tax step (or Welcome): Back on that first
+      // step returns to the portal, so the pre-filled form can be left without finishing it (the page has no menu).
+      const back = upView ? '<button class="btn" type="button" data-action="ivf-taxanswers">Back</button>' : n === 0 && c.it.taxRequest && key !== 'done' ? '<button class="btn" type="button" data-action="ivf-leave">Back</button>' : n > 0 && key !== 'done' && !(key === 'subscribe' && c.req && envOf(c) && signerOf(envOf(c), c.inv) && signerOf(envOf(c), c.inv).status === 'signed') ? '<button class="btn" type="button" data-action="ivf-back">Back</button>' : '';
       const submit = { welcome: 'Get started', tax: key === 'tax' && !upView && taxKey(c, o.d) ? 'Continue to the form' : '', subscribe: c.req ? 'Continue' : tplReady(c) ? 'Continue to the agreement' : 'Sign and submit subscription' }[key] || (steps[n + 1] === 'done' ? 'Finish' : 'Continue');
       const saved = key === 'welcome' ? '' : '<p class="ivf-saved">Your progress is saved. You can come back with your invitation link at any time.</p>';
       const inner =
@@ -3468,6 +3470,12 @@
     NS.app.render();
     const f = document.getElementById(`ob-e8Owner${n}Name`);
     if (f) f.focus();
+  };
+  /** Back on the first step of a tax-form request: to the portal it was opened from (its done screen goes there too). */
+  NS.actions['ivf-leave'] = () => {
+    const c = fctx();
+    if (!c || !c.it.taxRequest || ob().busy) return;
+    NS.app.go('overview');
   };
   NS.actions['ivf-taxanswers'] = () => {
     const c = fctx();
