@@ -3660,26 +3660,68 @@
     const oid = el.getAttribute('data-offering') || '';
     const o = w.offerings.find((x) => x.id === oid) || null;
     const pdfs = (w.docs || []).filter((d) => d && (!o || d.offeringId === o.id) && (/pdf/i.test(d.type || '') || /\.pdf$/i.test(d.fileName || '')));
-    // Pre-selected: a document whose name reads as a subscription agreement, by the intake's shared rule (a misspelt
-    // "Subscrpition" or "Sub_Docs" included), or, as before, any name with "subscri" in it.
-    const rule = NS.intake && NS.intake.agreementName instanceof RegExp ? NS.intake.agreementName : null;
-    const guess = pdfs.find((d) => {
-      const s = `${d.title || ''} ${d.fileName || ''}`;
-      return /subscri/i.test(s) || (!!rule && rule.test(s));
-    });
+    // D-11: pre-selected is the document whose pages read as the subscription agreement, by the intake's recognition kept
+    // on it (agrRead reads a document that has none once the dialog is open). Its name never decides.
+    const IKN = NS.intake || {};
+    const choice = IKN.agreementChoice ? IKN.agreementChoice(pdfs.slice().reverse()) : null;
+    const guess = choice ? choice.doc : null;
+    const known = pdfs.every((d) => d.recognised && d.recognised.v === IKN.REC_VERSION);
     U.dialog(
       `<form class="es-dlg-form" data-form="es-agreement" data-offering="${h(oid)}"><div class="dlg-head"><div><h2>Subscription agreement</h2><p>${o ? `For ${h(o.name)}. ` : ''}Investors sign it during onboarding; you place the fields once.</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
       <div class="dlg-body"><div class="cs-grid">
         ${o ? '' : `<label class="cs-field cs-wide" for="es-agr-off"><span>Offering</span><select id="es-agr-off" name="offeringId" required><option value="">Choose an offering</option>${w.offerings.filter((x) => x.status === 'Raising').concat(w.offerings.filter((x) => x.status !== 'Raising')).map((x) => `<option value="${h(x.id)}">${h(x.name)}</option>`).join('')}</select></label>`}
         <label class="cs-field cs-wide" for="es-agr-file"><span>Subscription agreement (PDF)</span><input id="es-agr-file" name="file" type="file" accept="application/pdf,.pdf" data-change="es-agr-file"><span class="cs-hint">One PDF, up to 25 MB. A word-processing document has to be saved as a PDF first.</span></label>
-        ${pdfs.length ? `<label class="cs-field cs-wide" for="es-agr-doc"><span>Or use a document already on this offering</span><select id="es-agr-doc" name="docId" data-change="es-agr-doc"><option value="">None</option>${pdfs.map((d) => `<option value="${h(d.id)}"${guess && guess.id === d.id ? ' selected' : ''}>${h(d.title || d.fileName)} (${h(d.fileName || '')})</option>`).join('')}</select></label>` : ''}
+        ${pdfs.length ? `<label class="cs-field cs-wide" for="es-agr-doc"><span>Or use a document already on this offering</span><select id="es-agr-doc" name="docId" data-change="es-agr-doc" data-read="${known ? 'done' : 'reading'}"><option value="">None</option>${pdfs.map((d) => `<option value="${h(d.id)}"${guess && guess.id === d.id ? ' selected' : ''}>${h(d.title || d.fileName)} (${h(d.fileName || '')})</option>`).join('')}</select><span class="cs-hint" id="es-agr-found" aria-live="polite">${h(agrFoundText(guess, known))}</span></label>` : ''}
         <label class="cs-field cs-wide" for="es-agr-title"><span>Title</span><input id="es-agr-title" name="title" type="text" maxlength="120" value="Subscription Agreement"></label>
       </div>
       <p class="cs-hint">The portal reads the PDF and places a field on each line, blank and tick box the agreement prints, and nowhere else. Your firm signs only if the agreement has a signature line for it. You are told what was found; where the portal is not sure, it marks the field and asks you to confirm it.</p>
       <div class="cs-row cs-row-end"><button class="cs-btn" type="button" data-action="close-dialog">Cancel</button><button class="cs-btn cs-btn-primary" type="submit">Continue to place fields</button></div></div></form>`,
       'dlg-es'
     );
+    if (pdfs.length && !known) agrRead(document.querySelector('form[data-form="es-agreement"]'), pdfs);
   };
+  /** The dialog's line under the documents: what the chosen document's pages read as (D-11). */
+  function agrFoundText(d, known) {
+    const r = d && d.recognised && NS.intake && d.recognised.v === NS.intake.REC_VERSION ? d.recognised : null;
+    if (r && r.kind === 'combined') return `Its pages ${r.firstPage} to ${r.lastPage} read as the subscription agreement; only those pages are used.`;
+    if (r && r.kind === 'agreement') return 'This document reads as the subscription agreement.';
+    return known ? '' : 'Reading the documents on this offering…';
+  }
+  const agrFound = (form) => {
+    const sel = form && form.querySelector('#es-agr-doc');
+    const line = form && form.querySelector('#es-agr-found');
+    if (!sel || !line) return;
+    const d = sel.value ? (W().docs || []).find((x) => x.id === sel.value) : null;
+    line.textContent = agrFoundText(d, sel.dataset.read === 'done');
+  };
+  /**
+   * D-11: the documents on the offering that carry no recognition are read once the dialog is open (their pages, never
+   * their names); each keeps what was decided. Unless the sponsor has chosen meanwhile, the document whose pages read as
+   * the subscription agreement is then selected. The select's data-read says "done" when the reading has ended.
+   */
+  async function agrRead(form, pdfs) {
+    const sel = form && form.querySelector('#es-agr-doc');
+    const IKN = NS.intake;
+    if (!sel) return;
+    if (IKN && IKN.recogniseFile) {
+      for (const d of pdfs) {
+        if (d.recognised && d.recognised.v === IKN.REC_VERSION) continue;
+        try {
+          const blob = await files().get(d.id);
+          if (blob) d.recognised = await IKN.recogniseFile(blob);
+        } catch (e) {
+          /* a document that cannot be read is offered as before, never pre-selected */
+        }
+        if (!sel.isConnected) break;
+      }
+      NS.app.save(true);
+    }
+    if (!sel.isConnected) return;
+    const c = IKN && IKN.agreementChoice ? IKN.agreementChoice(pdfs.slice().reverse()) : null;
+    if (!form.touched && c) sel.value = c.doc.id;
+    sel.dataset.read = 'done';
+    agrFound(form);
+  }
   /**
    * The agreement dialog's notice for a file that is not a PDF: shown inside the dialog above its buttons, with
    * role="alert", until another file is chosen (msg '' removes it).
@@ -3711,7 +3753,13 @@
     if (refused) el.value = '';
   };
   // Choosing a document already on the offering instead: the notice about a refused file goes.
-  NS.changes['es-agr-doc'] = (el) => agrRefusal(el.closest('form'), '');
+  NS.changes['es-agr-doc'] = (el) => {
+    const form = el.closest('form');
+    agrRefusal(form, '');
+    // The sponsor's own choice stands: the dialog's reading no longer changes the selection.
+    if (form) form.touched = true;
+    agrFound(form);
+  };
   NS.forms['es-agreement'] = async (form) => {
     const w = W();
     const oid = form.getAttribute('data-offering') || (form.offeringId ? form.offeringId.value : '');
@@ -3731,7 +3779,18 @@
       const step = (i, all, boxes) => btn && (btn.textContent = pictureStep(i, all, boxes));
       // While the reading server reads the agreement, the button says so; afterwards it reads as before.
       const wait = (text) => btn && (btn.textContent = text || 'Reading the PDF…');
-      const env = await agreementDraft(w, oid, { file: file || null, docId: file ? '' : docId, title: form.title.value, step, wait });
+      // D-11: a document on the offering whose pages read as the agreement inside another document gives only those pages.
+      let pick = file || null;
+      const chosen = !file && docId ? (w.docs || []).find((d) => d.id === docId) : null;
+      const rec = chosen && chosen.recognised && NS.intake && chosen.recognised.v === NS.intake.REC_VERSION ? chosen.recognised : null;
+      if (rec && rec.kind === 'combined' && NS.intake.cutPages) {
+        const blob = await files().get(chosen.id);
+        if (blob) {
+          const base = String(chosen.fileName || chosen.title || 'Document').replace(/\.[a-z0-9]+$/i, '');
+          pick = new File([await NS.intake.cutPages(blob, rec.firstPage, rec.lastPage)], `${base} - Subscription Agreement (pages ${rec.firstPage}-${rec.lastPage}).pdf`, { type: 'application/pdf' });
+        }
+      }
+      const env = await agreementDraft(w, oid, { file: pick, docId: pick ? '' : docId, title: form.title.value, step, wait });
       U.closeDialog();
       // The editor always opens on a new agreement: the sponsor sees what was read and where each field sits, then saves.
       openAgreement(env);
