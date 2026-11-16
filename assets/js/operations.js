@@ -358,12 +358,36 @@
     // Files this browser would not keep (private browsing, a full disk, or the portal shown inside another page) are
     // held here for as long as the page is open, so an upload and a signing still work; the person is told (app.js).
     const held = new Map();
+    // Every file kept in this session is also held here, up to RECENT_MAX bytes in all (the oldest go first), so a file
+    // just written (the document being signed, its signed copy) is read back from memory: a browser that stops answering
+    // or loses a stored file during the session (Safari on an iPhone does both) never stops a signing.
+    const recent = new Map();
+    const RECENT_MAX = 64 * 1024 * 1024;
+    let recentBytes = 0;
+    const remember = (id, blob) => {
+      forget(id);
+      if (!blob || blob.size > RECENT_MAX) return;
+      recent.set(id, blob);
+      recentBytes += blob.size;
+      for (const [k, b] of recent) {
+        if (recentBytes <= RECENT_MAX) break;
+        recent.delete(k);
+        recentBytes -= b.size;
+      }
+    };
+    const forget = (id) => {
+      const b = recent.get(id);
+      if (!b) return;
+      recent.delete(id);
+      recentBytes -= b.size;
+    };
     let refused = false;
     const refuse = () => {
       if (refused) return;
       refused = true;
       if (NS.app && NS.app.storageNote) NS.app.storageNote();
     };
+    const unreadable = () => new Error('This browser could not read its saved copy of this file. Reload the page and try again.');
     /** The browser's file store, or null when the browser will not open it. */
     function db() {
       if (dbp) return dbp;
@@ -383,28 +407,83 @@
       });
       return dbp;
     }
-    const tx = (mode, fn) => db().then((d) => d && new Promise((res, rej) => {
-      const t = d.transaction('files', mode);
-      const req = fn(t.objectStore('files'));
-      t.oncomplete = () => res(req && req.result);
-      t.onerror = () => rej(t.error);
-      t.onabort = () => rej(t.error);
-    }));
+    // A transaction the store refuses (or that cannot start: Safari closes the connection of a page left in the background)
+    // fails here as a rejection, and the next call opens the store again.
+    const tx = (mode, fn) =>
+      db().then(
+        (d) =>
+          d &&
+          new Promise((res, rej) => {
+            const fail = (e) => {
+              if (dbp) dbp = null;
+              try {
+                d.close();
+              } catch (x) {
+                /* already closed */
+              }
+              rej(e);
+            };
+            try {
+              const t = d.transaction('files', mode);
+              const req = fn(t.objectStore('files'));
+              t.oncomplete = () => res(req && req.result);
+              t.onerror = () => fail(t.error);
+              t.onabort = () => fail(t.error);
+            } catch (e) {
+              fail(e);
+            }
+          })
+      );
+    /*
+     * A file is kept as its bytes and type, never as a Blob: Safari can lose the data behind a Blob it kept in IndexedDB,
+     * and reading it then fails with "The object can not be found here." (owner, iPhone: Finish on the W-9). A Blob kept
+     * by an earlier version is read at once, so a lost one is reported here in plain words and never in a signing.
+     */
+    const unpack = async (v) => {
+      if (!v) return undefined;
+      if (v instanceof Blob) {
+        try {
+          return new Blob([await v.arrayBuffer()], { type: v.type });
+        } catch (e) {
+          throw unreadable();
+        }
+      }
+      if (v.bytes instanceof ArrayBuffer) return new Blob([v.bytes], { type: v.type || '' });
+      return undefined;
+    };
     return {
       /** Keep a file. One the browser will not keep is held in memory instead, so this never fails for that reason. */
       put: (id, blob) => {
         const hold = () => {
           refuse();
+          forget(id);
           held.set(id, blob);
         };
-        return tx('readwrite', (s) => s.put(blob, id)).then((ok) => {
-          if (ok == null) hold();
-          else held.delete(id);
-        }, hold);
+        return Promise.resolve()
+          .then(() => blob.arrayBuffer())
+          .then(
+            (bytes) => {
+              const type = blob.type || '';
+              remember(id, new Blob([bytes], { type }));
+              return tx('readwrite', (s) => s.put({ type, bytes }, id)).then((ok) => {
+                if (ok == null) hold();
+                else held.delete(id);
+              }, hold);
+            },
+            hold
+          );
       },
-      get: (id) => (held.has(id) ? Promise.resolve(held.get(id)) : tx('readonly', (s) => s.get(id)).then((b) => b || undefined)),
+      /** A kept file (a Blob in memory), or undefined when there is none. Never fails with the browser's own error text. */
+      get: (id) => {
+        if (held.has(id)) return Promise.resolve(held.get(id));
+        if (recent.has(id)) return Promise.resolve(recent.get(id));
+        return tx('readonly', (s) => s.get(id)).then(unpack, () => {
+          throw unreadable();
+        });
+      },
       del: (id) => {
         held.delete(id);
+        forget(id);
         return tx('readwrite', (s) => s.delete(id)).then(() => undefined);
       },
       /** True once a file could not be kept by the browser in this session. */
