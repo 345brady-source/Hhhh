@@ -536,7 +536,7 @@ function subscribeMessage({ firm, name, offering, invitation, link, expiresAt })
     note: invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: invitation.note } : null,
     button: { label: 'Review and subscribe', href: link },
     after: [
-      'The link takes you through your subscription in one place: the offering documents, your commitment and the subscription agreement, which you sign online. Your account details are already on file. It takes about 5 minutes.',
+      `The link takes you through your subscription in one place: the offering documents, ${invitation.includeTax ? 'your tax form, ' : ''}your commitment and the subscription agreement, which you sign online. Your account details are already on file. It takes about 5 minutes.`,
       `This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`,
       `Questions? Reply to this email or contact ${supportLine(firm)}.`
     ]
@@ -660,7 +660,7 @@ export function notificationMessage({ firm, investor, offering, summary, console
       none
         ? 'Nothing is added to their investor record; the details you already hold for them stay as they are.'
         : existing
-        ? 'Their subscription, signed agreement and any new accreditation result are added to your investor records the next time the console is open. The details you already hold for them stay as they are.'
+        ? `Their subscription, signed agreement${summary.includeTax ? ', tax form' : ''} and any new accreditation result are added to your investor records the next time the console is open. The details you already hold for them stay as they are.`
         : 'Their details, verification results, documents and signed agreement are added to your investor records the next time the console is open.'
     ]
   });

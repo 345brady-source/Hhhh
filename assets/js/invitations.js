@@ -143,6 +143,8 @@
   const forInvestor = (ws, investorId) => list(ws).filter((x) => x.investorId === investorId).pop() || null;
   const byEmail = (ws, email) => ws.investors.find((i) => String(i.email || '').trim().toLowerCase() === String(email || '').trim().toLowerCase()) || null;
   const active = (inv) => !!(inv && inv.onboarding && inv.onboarding.status === 'complete');
+  /** Plan 06-27 (D-10): an email that belongs to an investor on file (an active account), whom an invitation asks to subscribe only. */
+  const onFileEmail = (ws, email) => isEmail(String(email || '').trim()) && active(byEmail(ws, email));
   /** In the portal for good: an active account, or an invitation already finished. */
   const settled = (ws, inv) => active(inv) || list(ws).some((x) => x.investorId === inv.id && x.status === 'completed');
   /** The end of a sentence after a name that may already end with a period ("Fund II, L.P."). */
@@ -248,11 +250,14 @@
     if (existing && o.access && !off) invitation.access = true;
     // Plan 06-26: the sponsor asks an investor on file for their tax form again: the tax step and the done screen only.
     if (existing && o.taxRequest && !off) invitation.taxRequest = true;
+    // Plan 06-27 (D-10): the sponsor chose "Include tax form" inviting an investor on file to subscribe: the short flow holds
+    // the tax step too (before subscribe). Never on the investor's own portal entry points (onboarding.js selfInvite).
+    if (existing && o.includeTax === true && off && !invitation.taxRequest) invitation.includeTax = true;
     if (token) invitation.link = linkFor(ws, invitation);
     if (!have) ws.investors.push(investor);
     list(ws).push(invitation);
     if (invitation.taxRequest) audit(ws, 'Tax form requested', `${investor.title} (${email}): Form ${taxFormFor(investor)}, the tax step only`, '', investor.id);
-    else audit(ws, invitation.access ? 'Portal link sent to investor' : existing ? 'Investor invited to subscribe' : have ? 'Investor invited again' : 'Investor invited', `${investor.title} (${email})${off ? `: ${off.name}${invitation.cents ? `, ${money(off, invitation.cents)} commitment` : ''}` : invitation.access ? ': added manually, account already set up' : ': account only'}`, off ? off.id : '', investor.id);
+    else audit(ws, invitation.access ? 'Portal link sent to investor' : existing ? 'Investor invited to subscribe' : have ? 'Investor invited again' : 'Investor invited', `${investor.title} (${email})${off ? `: ${off.name}${invitation.cents ? `, ${money(off, invitation.cents)} commitment` : ''}${invitation.includeTax ? `; tax form included (Form ${taxFormFor(investor)})` : ''}` : invitation.access ? ': added manually, account already set up' : ': account only'}`, off ? off.id : '', investor.id);
     return { invitation, investor };
   }
 
@@ -277,7 +282,7 @@
     if (it.note) lines.push(it.note);
     if (it.taxRequest) lines.push(`The link below opens your ${form}, filled in from the details we hold. You check it and sign it online, or upload a completed form instead. Nothing else is asked.`);
     else if (it.access) lines.push('Your account is already set up from the documents you completed with us, so there is nothing to fill in. The link below opens your portal.');
-    else if (it.existing && off) lines.push('The link below takes you through your subscription in one place: the offering documents, your commitment and the subscription agreement, which you sign online. Your account details are already on file.');
+    else if (it.existing && off) lines.push(`The link below takes you through your subscription in one place: the offering documents, ${it.includeTax ? 'your tax form, ' : ''}your commitment and the subscription agreement, which you sign online. Your account details are already on file.`);
     else
       lines.push(
         `The link below takes you through everything in one place, in about 10 to 15 minutes: your login, investor information, identity verification${off ? ', accreditation' : ''}, tax certification, where to send distributions${off ? ', and your subscription documents, which you sign online' : ''}. Your progress is saved, so you can stop and come back.`,
@@ -351,6 +356,13 @@
   /** The investor has signed and the account's co-investor has not yet. */
   const waitingCo = (env) => !!env && env.status === 'sent' && env.signers.some((s) => s.co && s.status !== 'signed') && env.signers.some((s) => s.investorId && !s.co && s.status === 'signed');
   const waitingCountersign = (env) => !!env && env.status === 'sent' && NS.esign && NS.esign.currentSigners(env).some((s) => s.role === 'countersigner');
+  /** Plan 06-26 / 06-27: what a tax-form request, or an invitation that included the tax form, brought back (the record's tax form when made after it was sent). */
+  function taxText(inv, it) {
+    const tc = inv && inv.taxCert && typeof inv.taxCert === 'object' ? inv.taxCert : null;
+    const form = (tc && tc.form) || (inv ? taxFormFor(inv) : 'W-9');
+    const fresh = !!tc && Date.parse(tc.at || '') >= Date.parse(it.sentAt || '') - 60000;
+    return !fresh ? 'no tax form returned' : tc.received === false ? `Form ${form} ${tc.uploaded ? 'uploaded' : 'signed'}, copy not received: ask the investor for it` : tc.uploaded ? `Form ${form} uploaded` : tc.signed === false ? `Form ${form} not signed` : `Form ${form} signed`;
+  }
   /** Who finished, for what, and where things stand: the completion notice and the list. */
   function outcome(ws, it) {
     const inv = invOf(ws, it.investorId);
@@ -360,19 +372,15 @@
     const st = inv && IV() && IV().active(ws) ? IV().status(ws, inv) : null;
     const parts = [];
     // Plan 06-26: a tax-form request: the form that came back, and how (its record is the one rule taxOnFile reads).
-    if (it.taxRequest) {
-      const tc = inv && inv.taxCert && typeof inv.taxCert === 'object' ? inv.taxCert : null;
-      const form = (tc && tc.form) || (inv ? taxFormFor(inv) : 'W-9');
-      const fresh = !!tc && Date.parse(tc.at || '') >= Date.parse(it.sentAt || '') - 60000;
-      const how = !fresh ? 'no tax form returned' : tc.received === false ? `Form ${form} ${tc.uploaded ? 'uploaded' : 'signed'}, copy not received: ask the investor for it` : tc.uploaded ? `Form ${form} uploaded` : tc.signed === false ? `Form ${form} not signed` : `Form ${form} signed`;
-      return { text: how, route: 'console-investors', inv, off: null, r: null, env: null };
-    }
+    if (it.taxRequest) return { text: taxText(inv, it), route: 'console-investors', inv, off: null, r: null, env: null };
     // A request this invitation's import dropped comes first: an earlier request for the same offering is not this one.
     if (it.requestDropped) parts.push(`${it.existing ? 'Their' : 'Account activated; their'} subscription${off ? ` to ${off.name}` : ''} from their device was not imported (${it.requestDropped}); ask them to subscribe again`);
     else if (r && off) parts.push(`${money(off, r.cents)} subscription to ${off.name}`);
     else if (off && !it.existing) parts.push(`Account activated; no subscription to ${off.name}${off.status !== 'Raising' ? ', which stopped raising before they reached that step' : ''}`);
     else if (off) parts.push(`No subscription to ${off.name}${off.status !== 'Raising' ? ', which stopped raising before they reached that step' : ''}`);
     else parts.push('Account activated');
+    // Plan 06-27 (D-10): the tax form the sponsor included in this invitation to subscribe, and how it came back.
+    if (it.includeTax && it.existing) parts.push(taxText(inv, it));
     if (st) parts.push(st.key === 'approved' ? 'verified' : st.key === 'review' ? 'verification held for your review' : st.key === 'rejected' ? 'verification not approved' : 'verification in progress');
     if (env) parts.push(env.status === 'completed' ? 'agreement fully signed' : waitingCountersign(env) ? 'agreement signed, waiting for your countersignature' : waitingCo(env) ? 'agreement signed by the investor, waiting for the co-investor to sign' : 'agreement not signed yet');
     return { text: parts.join('; '), route: waitingCountersign(env) ? `console-envelope-${env.id}` : st && st.key === 'review' ? 'console-kyc' : 'console-investors', inv, off, r, env };
@@ -482,9 +490,9 @@
       consoleUrl: `${portalPage()}#console-investors`,
       notifyEmail: senderEmail(ws),
       firm: { name: t.name, shortName: t.shortName, legalName: t.legalName, supportTeam: t.support.team, supportEmail: isEmail(t.support.email) ? t.support.email : '', supportPhone: t.support.phone || '', colors: { primary: t.colors.primary, accent: t.colors.accent }, logo, portalName: t.portalName, disclaimer: t.disclaimer || '', onboarding: clone(t.onboarding || {}) },
-      investor: Object.assign({ id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email }, NS.INVESTOR_TYPES[inv.taxType] ? { taxType: inv.taxType } : it.taxRequest ? { taxType: NS.investorKind(NS.investorKindOf(inv)).taxType } : {}, it.existing ? { existing: onFileSummary(ws, inv, it) } : {}, it.taxRequest ? { taxPrefill: taxPrefill(inv) } : {}),
+      investor: Object.assign({ id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email }, NS.INVESTOR_TYPES[inv.taxType] ? { taxType: inv.taxType } : it.taxRequest || it.includeTax ? { taxType: NS.investorKind(NS.investorKindOf(inv)).taxType } : {}, it.existing ? { existing: onFileSummary(ws, inv, it) } : {}, it.taxRequest || it.includeTax ? { taxPrefill: taxPrefill(inv) } : {}),
       offering,
-      invitation: Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}, it.taxRequest ? { taxRequest: true } : {}),
+      invitation: Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}, it.taxRequest ? { taxRequest: true } : {}, it.includeTax ? { includeTax: true } : {}),
       verification: { connections: clone(c.connections), use: clone(c.use), rules: clone(c.rules), accreditationRequired },
       esign
     };
@@ -613,7 +621,8 @@
     const inv = invOf(ws, it.investorId);
     if (!inv || it.status !== 'cancelled') return null;
     const off = offOf(ws, it.offeringId);
-    const o = { name: inv.contact, email: inv.email, type: NS.investorKindOf(inv), account: inv.title, offeringId: off && off.status === 'Raising' ? off.id : '', cents: off && off.status === 'Raising' ? it.cents : 0, cls: it.cls, note: it.note };
+    // Plan 06-27 (D-10): the sponsor's "Include tax form" choice on the cancelled invitation is kept.
+    const o = { name: inv.contact, email: inv.email, type: NS.investorKindOf(inv), account: inv.title, offeringId: off && off.status === 'Raising' ? off.id : '', cents: off && off.status === 'Raising' ? it.cents : 0, cls: it.cls, note: it.note, includeTax: it.includeTax === true };
     const e = validate(ws, o);
     if (e.amount || e.cls) Object.assign(o, { cents: 0, cls: '' });
     const again = validate(ws, o);
@@ -852,7 +861,10 @@
     // Plan 06-26: a tax-form request to an investor on file brings back their tax form (and nothing else): it is taken as a
     // new investor's is (plans 06-22, 06-23), checked against what came; the rest of the record stays as this console holds it.
     const taxReq = onFile && !!it.taxRequest;
-    const takesTax = !onFile || taxReq;
+    // Plan 06-27 (D-10): an invitation to subscribe that included the tax form brings it back too, taken the same way; the
+    // subscription and the agreement are imported as for any invitation to subscribe.
+    const withTax = onFile && !taxReq && it.includeTax === true;
+    const takesTax = !onFile || taxReq || withTax;
     let taken = false;
     let withdrawn = false; // a self-certified ground withdrawn from a verification record: decided again below
     let stamped = false;
@@ -877,7 +889,7 @@
       }
       if (src.esignConsent && typeof src.esignConsent === 'object') inv.esignConsent = clone(src.esignConsent);
       // the tax form this request brought: the device's record of it, checked below against the envelope and files that came
-      if (taxReq && src.taxCert && typeof src.taxCert === 'object' && typeof src.taxCert.form === 'string' && src.taxCert.form) {
+      if ((taxReq || withTax) && src.taxCert && typeof src.taxCert === 'object' && typeof src.taxCert.form === 'string' && src.taxCert.form) {
         inv.taxCert = clone(src.taxCert);
         inv.taxForm = String(src.taxCert.form).slice(0, 40);
       }
@@ -1358,6 +1370,9 @@
     }
     return u.inv8;
   }
+  NS.binders.inv8b = (path, v) => {
+    if (path === 'includeTax') S().ui.bulkTax = !!v;
+  };
   /** The invite form's optional fields, kept under More options. */
   const MORE_FIELDS = ['type', 'account', 'offeringId', 'amount', 'cls', 'note'];
   NS.binders.inv8 = (path, v) => {
@@ -1368,6 +1383,11 @@
     if (path === 'first' || path === 'last') d.name = [d.first, d.last].map((x) => String(x || '').trim()).filter(Boolean).join(' ');
     const k = path === 'offeringId' ? 'offering' : path === 'first' || path === 'last' ? 'name' : path;
     if (d.errors[k]) delete d.errors[k];
+    // Plan 06-27 (D-10): "Include tax form" shows while the email is an investor on file's (shown in place: no re-render while typing).
+    if (path === 'email') {
+      const row = document.getElementById('iv-tax-row');
+      if (row) row.hidden = !onFileEmail(W(), v);
+    }
     if (path === 'offeringId') {
       d.cls = '';
       NS.app.render();
@@ -1397,6 +1417,7 @@
       <label class="cs-field" for="iv-contact"><span>First name</span><input id="iv-contact" name="contact" maxlength="60" autocomplete="off" data-bind="inv8:first" value="${h(d.first || '')}"${inval(d, 'name')}></label>
       <label class="cs-field" for="iv-last"><span>Last name</span><input id="iv-last" name="last" maxlength="60" autocomplete="off" data-bind="inv8:last" value="${h(d.last || '')}"${inval(d, 'name')}>${fieldErr(d, 'name')}</label>
       <label class="cs-field cs-wide" for="iv-email"><span>Email</span><input id="iv-email" name="email" type="email" maxlength="120" autocomplete="off" data-bind="inv8:email" value="${h(d.email)}"${inval(d, 'email')}>${fieldErr(d, 'email')}</label>
+      <label class="cs-check cs-wide inv8-tax" id="iv-tax-row" for="iv-includeTax"${onFileEmail(w, d.email) ? '' : ' hidden'}><input id="iv-includeTax" name="includeTax" type="checkbox" data-bind="inv8:includeTax"${d.includeTax ? ' checked' : ''}><span>Include tax form</span></label>
       <label class="cs-field cs-wide" for="iv-type"><span>Investor type</span><select id="iv-type" name="type" data-bind="inv8:type">${NS.investorKindOptions(d.type, h)}</select><span class="cs-hint">Decides the tax form they are shown. They can correct it during onboarding.</span></label>
       <p class="cs-hint cs-wide inv8-what" id="iv-what">${what}</p>
       ${agreement === 'missing' ? `<p class="cs-hint cs-hint-warn cs-wide inv8-warn" id="iv-agreement-warn">${h(off.name.replace(/\.$/, ''))} has no subscription agreement yet. <a href="#console-offering-${h(off.id)}">Add it on the offering</a> so investors sign it during onboarding.</p>` : ''}
@@ -1419,6 +1440,7 @@
       <label class="cs-field" for="iv-file"><span>Upload a CSV or Excel file</span><input id="iv-file" name="file" type="file" accept="${FILE_ACCEPT}" data-change="inv8-file"${ui.bulkFileError ? ' aria-invalid="true" aria-describedby="iv-file-msg"' : ''}><span class="cs-hint">A .csv or .xlsx file with one investor per row. Columns: first name, last name, email, then optionally offering, commitment and investor type. A header row is recognized; the first worksheet of an Excel file is read.</span>${ui.bulkFileError ? `<span class="cs-error" id="iv-file-msg" role="alert">${h(ui.bulkFileError)}</span>` : ui.bulkFileNote ? `<span class="cs-hint inv8-file-note" id="iv-file-msg" role="status">${h(ui.bulkFileNote)}</span>` : ''}</label>
       <label class="cs-field" for="iv-csv"><span>Or paste a list: first name, last name, email, offering, commitment</span><textarea id="iv-csv" name="csv" rows="6" spellcheck="false" placeholder="first name,last name,email,offering,commitment&#10;Anita,Shah,anita.shah@example.com,${eg},100000&#10;Ravi,Patel,ravi.patel@example.com">${h(ui.bulkText || '')}</textarea><span class="cs-hint">One investor per line. Offering and commitment are optional; the offering can be its short name or full name. Add a last column for the investor type: individual, joint, trust, entity or IRA (all U.S.), foreign individual or foreign entity. Without it: U.S. individual. A list with the full name in one column (name, email, offering, commitment) also works.</span></label>
       ${ui.bulkResult || ''}
+      ${(ui.bulkRows || []).some((r) => r.offeringId && onFileEmail(w, r.email)) ? `<label class="cs-check inv8-tax" for="iv-bulkTax"><input id="iv-bulkTax" name="includeTax" type="checkbox" data-bind="inv8b:includeTax"${ui.bulkTax ? ' checked' : ''}><span>Include tax form</span></label>` : ''}
       <div class="cs-row"><button class="cs-btn" type="submit">Check list</button>${ui.bulkRows && ui.bulkRows.length ? `<button class="cs-btn cs-btn-primary" type="button" data-action="invite-bulk-add"${ui.bulkBusy ? ' disabled aria-busy="true"' : ''}>${ui.bulkBusy ? 'Sending…' : `Send ${ui.bulkRows.length} invitation${ui.bulkRows.length === 1 ? '' : 's'}`}</button>` : ''}</div>
     </form>`;
     const srvUrl = serverOn(w) ? IV().serverUrl(w) : '';
@@ -1619,7 +1641,7 @@
     const v = (n) => (f.elements[n] ? String(f.elements[n].value || '') : '');
     const first = v('contact').trim();
     const last = v('last').trim();
-    return { first, last, name: [first, last].filter(Boolean).join(' '), email: v('email').trim(), type: v('type') || 'individual', account: v('title').trim(), offeringId: v('offering'), amount: v('amount').trim(), cls: v('cls'), note: v('note').trim() };
+    return { first, last, name: [first, last].filter(Boolean).join(' '), email: v('email').trim(), type: v('type') || 'individual', account: v('title').trim(), offeringId: v('offering'), amount: v('amount').trim(), cls: v('cls'), note: v('note').trim(), includeTax: !!(f.elements.includeTax && f.elements.includeTax.checked) };
   }
   async function submitInvite(f) {
     const w = W();
@@ -1640,7 +1662,7 @@
       if (first) first.focus();
       return;
     }
-    const r = create(w, { name: x.name, email: x.email, type: x.type, account: x.account, offeringId: x.offeringId, cents: cents || 0, cls: x.cls, note: x.note });
+    const r = create(w, { name: x.name, email: x.email, type: x.type, account: x.account, offeringId: x.offeringId, cents: cents || 0, cls: x.cls, note: x.note, includeTax: x.includeTax });
     NS.app.save(true);
     d.busy = true;
     S().ui.inv8Filter = 'open';
@@ -1812,6 +1834,8 @@
     ui.bulkText = String(text || '');
     const { rows, errors } = parseBulk(ui.bulkText);
     ui.bulkRows = rows;
+    // Plan 06-27 (D-10): "Include tax form" starts unticked for each list checked.
+    ui.bulkTax = false;
     ui.bulkResult = `<div class="cs-bulk">${rows.length ? `<div class="tbl-scroll"><table class="cs-tbl cs-tbl-compact inv8-bulk-tbl"><thead><tr><th scope="col">First name</th><th scope="col">Last name</th><th scope="col">Email</th><th scope="col">Offering</th><th scope="col" class="num">Commitment</th></tr></thead><tbody>${rows
       .map((r) => `<tr><td>${h(r.first)}</td><td>${h(r.last)}${r.type !== 'individual' ? `<span class="sub">${h(NS.investorKindLabel(r.type))}</span>` : ''}</td><td>${h(r.email)}</td><td>${r.offeringName ? h(r.offeringName) : '<span class="cs-muted">Account only</span>'}</td><td class="num">${r.cents ? h(money(offOf(w, r.offeringId), r.cents)) : '<span class="cs-muted">Investor chooses</span>'}</td></tr>`)
       .join('')}</tbody></table></div>` : ''}${errors.length ? `<ul class="cs-errors">${errors.map((e) => `<li>${h(e)}</li>`).join('')}</ul>` : ''}${!rows.length && !errors.length ? '<p class="cs-muted">No rows found.</p>' : ''}</div>`;
@@ -1944,11 +1968,12 @@
     const rows = (ui.bulkRows || []).filter((r) => !Object.keys(validate(w, { name: r.name, email: r.email, offeringId: r.offeringId, cents: r.cents })).length);
     ui.bulkBusy = true;
     NS.app.render();
-    const made = rows.map((r) => create(w, { name: r.name, email: r.email, type: r.type, offeringId: r.offeringId, cents: r.cents }).invitation);
+    // Plan 06-27 (D-10): "Include tax form" applies to the investors on file on the list (create ignores it for anyone else).
+    const made = rows.map((r) => create(w, { name: r.name, email: r.email, type: r.type, offeringId: r.offeringId, cents: r.cents, includeTax: ui.bulkTax === true }).invitation);
     NS.app.save(true);
     const res = [];
     for (const it of made) res.push(await send(w, it));
-    Object.assign(ui, { bulkBusy: false, bulkRows: null, bulkResult: '', bulkText: '', bulkFileNote: '', bulkFileError: '', inviteOpen: false, inv8Filter: 'open' });
+    Object.assign(ui, { bulkBusy: false, bulkRows: null, bulkResult: '', bulkText: '', bulkFileNote: '', bulkFileError: '', bulkTax: false, inviteOpen: false, inv8Filter: 'open' });
     NS.app.render();
     const manual = res.filter((r) => r.emailStatus === 'manual').length;
     const failed = res.filter((r) => r.emailStatus === 'failed').length;
