@@ -105,7 +105,9 @@
     const inv = viewer();
     const open = inv ? openOfferingsHTML(inv) : '';
     // A new subscriber (from an invitation or a sign-up link) sees the subscription they submitted, and can finish setting up.
-    const setup = inv && NS.inviteFlow ? NS.inviteFlow.openFor(W(), inv) : null;
+    // (a tax-form request, plan 06-26, is not account setup: the investmentsTop hook offers it)
+    const open1 = inv && NS.inviteFlow ? NS.inviteFlow.openFor(W(), inv) : null;
+    const setup = open1 && !open1.taxRequest ? open1 : null;
     const reqs = inv && myRequests(inv).length ? `<section class="sec">${sec('Your requests')}${requestsHTML(inv, null, true)}</section>` : '';
     const resume = setup ? `<div class="done-box"><p class="lede">Finish setting up your account. Your progress so far is saved.</p><a class="btn btn-primary" href="#invite-${h(setup.token)}">Continue account setup</a></div>` : '';
     return shell(`${title('Investments')}${resume}${inv ? NS.runHooks('investmentsTop', inv) : ''}${reqs}${open}<p class="empty">${open ? 'You have no investments yet. Offerings open for investment are listed above.' : 'No investments are recorded for this account yet. Your investments will appear here once your subscription is accepted and funded.'}</p>`, 'portfolio');

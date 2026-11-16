@@ -52,9 +52,19 @@
    */
   const probe = (inv) => (inv && !inv.verify ? Object.assign({}, inv) : inv);
   /** "finished onboarding", or for an investor already on file invited to another offering, "finished their subscription". */
-  const finishedWhat = (it) => (it && it.existing ? 'finished their subscription' : 'finished onboarding');
+  const finishedWhat = (it) => (it && it.taxRequest ? 'finished your tax form request' : it && it.existing ? 'finished their subscription' : 'finished onboarding');
   /** "started onboarding", or for an investor already on file, "started their subscription". */
-  const startedWhat = (it) => (it && it.existing ? 'started their subscription' : 'started onboarding');
+  const startedWhat = (it) => (it && it.taxRequest ? 'opened your tax form request' : it && it.existing ? 'started their subscription' : 'started onboarding');
+  /**
+   * Plan 06-26: the official form an investor's tax-form request is for, by the investor type the sponsor chose (D-09);
+   * an investor with none recorded is taken by their kind of account (a U.S. person: Form W-9).
+   */
+  const taxFormFor = (inv) => {
+    const t = inv && NS.INVESTOR_TYPES[inv.taxType] ? inv.taxType : NS.investorKind(NS.investorKindOf(inv)).taxType;
+    return (NS.INVESTOR_TYPES[t] || { form: 'W-9' }).form;
+  };
+  /** Plan 06-26: the investor's open tax-form request (one not completed, cancelled or expired), or null. */
+  const openTaxRequest = (ws, inv) => (ws && inv ? list(ws).filter((x) => x.investorId === inv.id && x.taxRequest && OPEN.indexOf(x.status) >= 0 && !expiredNow(x)).pop() || null : null);
 
   /* ---------- Records ---------- */
   const list = (ws) => (ws.invitations = ws.invitations || []);
@@ -236,10 +246,13 @@
     if (existing) invitation.existing = true;
     // An investor added manually (onboarded offline) who is sent a link to their portal: no offering, nothing to fill in.
     if (existing && o.access && !off) invitation.access = true;
+    // Plan 06-26: the sponsor asks an investor on file for their tax form again: the tax step and the done screen only.
+    if (existing && o.taxRequest && !off) invitation.taxRequest = true;
     if (token) invitation.link = linkFor(ws, invitation);
     if (!have) ws.investors.push(investor);
     list(ws).push(invitation);
-    audit(ws, invitation.access ? 'Portal link sent to investor' : existing ? 'Investor invited to subscribe' : have ? 'Investor invited again' : 'Investor invited', `${investor.title} (${email})${off ? `: ${off.name}${invitation.cents ? `, ${money(off, invitation.cents)} commitment` : ''}` : invitation.access ? ': added manually, account already set up' : ': account only'}`, off ? off.id : '', investor.id);
+    if (invitation.taxRequest) audit(ws, 'Tax form requested', `${investor.title} (${email}): Form ${taxFormFor(investor)}, the tax step only`, '', investor.id);
+    else audit(ws, invitation.access ? 'Portal link sent to investor' : existing ? 'Investor invited to subscribe' : have ? 'Investor invited again' : 'Investor invited', `${investor.title} (${email})${off ? `: ${off.name}${invitation.cents ? `, ${money(off, invitation.cents)} commitment` : ''}` : invitation.access ? ': added manually, account already set up' : ': account only'}`, off ? off.id : '', investor.id);
     return { invitation, investor };
   }
 
@@ -253,17 +266,17 @@
     const given = full.indexOf(',') > 0 ? full.split(',').slice(1).join(' ').trim() || full : full;
     const first = given.split(/\s+/)[0].replace(/[^\p{L}\p{M}'’.-]/gu, '') || 'there';
     const cls = off && it.cls ? openClasses(off).concat(off.classes || []).find((c) => c.id === it.cls) : null;
-    const subject = off ? `${t.name}: your invitation to invest in ${off.name}` : it.access ? `${t.name}: your investor portal` : `${t.name}: set up your investor account`;
+    const form = it.taxRequest ? `Form ${taxFormFor(inv)}` : '';
+    const subject = off ? `${t.name}: your invitation to invest in ${off.name}` : it.taxRequest ? `${t.name}: your ${form}` : it.access ? `${t.name}: your investor portal` : `${t.name}: set up your investor account`;
     const link = linkFor(ws, it);
     const by = date(String(it.expiresAt || '').slice(0, 10), 'long');
     const amount = off && it.cents ? `, for a commitment of ${money(off, it.cents)}${cls ? ` in ${cls.name}` : ''}` : '';
     const what = off ? `${it.existing ? 'subscribe to' : 'set up your investor account and your subscription to'} ${off.name}${amount}` : it.access ? 'open your investor portal' : 'set up your investor account';
-    const lines = [
-      `Dear ${first},`,
-      sentence(`${it.sentBy && it.sentBy !== t.support.team ? `${it.sentBy} at ${t.name}` : t.name} has invited you to ${what}`)
-    ];
+    const sender = it.sentBy && it.sentBy !== t.support.team ? `${it.sentBy} at ${t.name}` : t.name;
+    const lines = [`Dear ${first},`, it.taxRequest ? sentence(`${sender} asks you to complete your ${form}`) : sentence(`${sender} has invited you to ${what}`)];
     if (it.note) lines.push(it.note);
-    if (it.access) lines.push('Your account is already set up from the documents you completed with us, so there is nothing to fill in. The link below opens your portal.');
+    if (it.taxRequest) lines.push(`The link below opens your ${form}, filled in from the details we hold. You check it and sign it online, or upload a completed form instead. Nothing else is asked.`);
+    else if (it.access) lines.push('Your account is already set up from the documents you completed with us, so there is nothing to fill in. The link below opens your portal.');
     else if (it.existing && off) lines.push('The link below takes you through your subscription in one place: the offering documents, your commitment and the subscription agreement, which you sign online. Your account details are already on file.');
     else
       lines.push(
@@ -275,7 +288,7 @@
       `Questions? Contact ${t.support.team}${isEmail(t.support.email) ? ` at ${t.support.email}` : ''}${t.support.phone ? ` or ${t.support.phone}` : ''}.`
     ];
     const text = [lines.join('\n\n'), `Start here: ${link}`, tail.join('\n'), t.legalName || t.name].join('\n\n');
-    return { subject, lines, tail, link, text, to: inv.email, toName: inv.contact, fromName: t.name, replyTo: isEmail(t.support.email) ? t.support.email : '', button: off ? (it.existing ? 'Review and subscribe' : 'Start your onboarding') : it.access ? 'Open your portal' : 'Set up your account' };
+    return { subject, lines, tail, link, text, to: inv.email, toName: inv.contact, fromName: t.name, replyTo: isEmail(t.support.email) ? t.support.email : '', button: off ? (it.existing ? 'Review and subscribe' : 'Start your onboarding') : it.taxRequest ? 'Complete your tax form' : it.access ? 'Open your portal' : 'Set up your account' };
   }
   /** mailto: with the subject and body; CRLF line breaks (RFC 6068). */
   function mailtoFor(ws, it) {
@@ -346,6 +359,14 @@
     const env = envOf(ws, r);
     const st = inv && IV() && IV().active(ws) ? IV().status(ws, inv) : null;
     const parts = [];
+    // Plan 06-26: a tax-form request: the form that came back, and how (its record is the one rule taxOnFile reads).
+    if (it.taxRequest) {
+      const tc = inv && inv.taxCert && typeof inv.taxCert === 'object' ? inv.taxCert : null;
+      const form = (tc && tc.form) || (inv ? taxFormFor(inv) : 'W-9');
+      const fresh = !!tc && Date.parse(tc.at || '') >= Date.parse(it.sentAt || '') - 60000;
+      const how = !fresh ? 'no tax form returned' : tc.received === false ? `Form ${form} ${tc.uploaded ? 'uploaded' : 'signed'}, copy not received: ask the investor for it` : tc.uploaded ? `Form ${form} uploaded` : tc.signed === false ? `Form ${form} not signed` : `Form ${form} signed`;
+      return { text: how, route: 'console-investors', inv, off: null, r: null, env: null };
+    }
     // A request this invitation's import dropped comes first: an earlier request for the same offering is not this one.
     if (it.requestDropped) parts.push(`${it.existing ? 'Their' : 'Account activated; their'} subscription${off ? ` to ${off.name}` : ''} from their device was not imported (${it.requestDropped}); ask them to subscribe again`);
     else if (r && off) parts.push(`${money(off, r.cents)} subscription to ${off.name}`);
@@ -461,9 +482,9 @@
       consoleUrl: `${portalPage()}#console-investors`,
       notifyEmail: senderEmail(ws),
       firm: { name: t.name, shortName: t.shortName, legalName: t.legalName, supportTeam: t.support.team, supportEmail: isEmail(t.support.email) ? t.support.email : '', supportPhone: t.support.phone || '', colors: { primary: t.colors.primary, accent: t.colors.accent }, logo, portalName: t.portalName, disclaimer: t.disclaimer || '', onboarding: clone(t.onboarding || {}) },
-      investor: Object.assign({ id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email }, NS.INVESTOR_TYPES[inv.taxType] ? { taxType: inv.taxType } : {}, it.existing ? { existing: onFileSummary(ws, inv, it) } : {}),
+      investor: Object.assign({ id: inv.id, contact: inv.contact, title: inv.title, type: inv.type, email: inv.email }, NS.INVESTOR_TYPES[inv.taxType] ? { taxType: inv.taxType } : it.taxRequest ? { taxType: NS.investorKind(NS.investorKindOf(inv)).taxType } : {}, it.existing ? { existing: onFileSummary(ws, inv, it) } : {}, it.taxRequest ? { taxPrefill: taxPrefill(inv) } : {}),
       offering,
-      invitation: Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}),
+      invitation: Object.assign({ cents: it.cents, cls: it.cls, note: it.note, expiresAt: it.expiresAt, senderName: it.sentBy }, it.existing ? { existing: true } : {}, it.taxRequest ? { taxRequest: true } : {}),
       verification: { connections: clone(c.connections), use: clone(c.use), rules: clone(c.rules), accreditationRequired },
       esign
     };
@@ -499,6 +520,29 @@
     const e = cleanErisa(inv.erisa);
     if (e) out.erisa = e;
     return out;
+  }
+  /**
+   * Plan 06-26: what a tax-form request's device needs to pre-fill the official form, from this console's record: the
+   * address, the country, U.S. or other citizenship, the country of citizenship given on an earlier W-8BEN, and when the
+   * investor consented to electronic records and signatures. Never a taxpayer ID or bank detail.
+   */
+  function taxPrefill(inv) {
+    const tc = inv.taxCert && typeof inv.taxCert === 'object' ? inv.taxCert : {};
+    const at = inv.esignConsent && typeof inv.esignConsent === 'object' && /^\d{4}-\d{2}-\d{2}T/.test(String(inv.esignConsent.at || '')) ? String(inv.esignConsent.at) : '';
+    return { address: String(inv.address || '').slice(0, 300), country: String(inv.country || '').slice(0, 60), citizen: inv.citizenship === 'us' || inv.citizenship === 'other' ? inv.citizenship : '', citizenship: tc.form === 'W-8BEN' && typeof tc.citizenship === 'string' ? tc.citizenship.slice(0, 60) : '', consentAt: at };
+  }
+  /**
+   * Plan 06-26 (owner decision on the verification's human item 3): ask an investor on file for their tax form again. An
+   * open request is reused (in server mode its email is sent again with a new link); otherwise a new invitation holds the
+   * tax step and the done screen only. Resolves to { invitation, res, reused }.
+   */
+  async function requestTax(ws, inv) {
+    if (!inv || !active(inv)) throw new Error('Only an investor with an active account can be asked for their tax form here.');
+    const open = openTaxRequest(ws, inv);
+    if (open) return { invitation: open, reused: true, res: serverOn(ws) ? await resend(ws, open) : { emailStatus: 'manual' } };
+    const it = create(ws, { name: inv.contact, email: inv.email, type: NS.investorKindOf(inv), account: inv.title, taxRequest: true }).invitation;
+    NS.app.save(true);
+    return { invitation: it, reused: false, res: await send(ws, it) };
   }
   /** Send (or hand to the sponsor's email app). Resolves to { emailStatus, error? }. */
   async function send(ws, it) {
@@ -805,6 +849,10 @@
     let inv = invOf(ws, it.investorId);
     // An invitation to subscribe sent to an investor on file: their record here is the one that counts, whatever its status now.
     const onFile = !!it.existing && !!inv;
+    // Plan 06-26: a tax-form request to an investor on file brings back their tax form (and nothing else): it is taken as a
+    // new investor's is (plans 06-22, 06-23), checked against what came; the rest of the record stays as this console holds it.
+    const taxReq = onFile && !!it.taxRequest;
+    const takesTax = !onFile || taxReq;
     let taken = false;
     let withdrawn = false; // a self-certified ground withdrawn from a verification record: decided again below
     let stamped = false;
@@ -828,6 +876,11 @@
         delete inv.verify;
       }
       if (src.esignConsent && typeof src.esignConsent === 'object') inv.esignConsent = clone(src.esignConsent);
+      // the tax form this request brought: the device's record of it, checked below against the envelope and files that came
+      if (taxReq && src.taxCert && typeof src.taxCert === 'object' && typeof src.taxCert.form === 'string' && src.taxCert.form) {
+        inv.taxCert = clone(src.taxCert);
+        inv.taxForm = String(src.taxCert.form).slice(0, 40);
+      }
       // D-01: the status answers the link collected. The benefit plan answers, cleaned to known fields (T-06-17).
       const e = cleanErisa(src.erisa);
       if (e && e.plan) inv.erisa = Object.assign(e, { at: nowIso() });
@@ -896,7 +949,8 @@
     // The investor's request always arrives pending: only the firm accepts it, for the offering this invitation is for, and only
     // for an amount and share class that offering takes (requestProblem). A request that does not pass is not imported (the
     // agreement signed for it is kept only as a voided record), and the change log and the import notification say why.
-    const r = sub.request && typeof sub.request === 'object' ? clone(sub.request) : null;
+    // A tax-form request holds no subscription (and no agreement, below): nothing of that kind is imported from it.
+    const r = !taxReq && sub.request && typeof sub.request === 'object' ? clone(sub.request) : null;
     ws.requests = ws.requests || [];
     const off = offOf(ws, it.offeringId);
     // A request already here is this same import tried before (it stopped after storing the request): not added twice.
@@ -922,7 +976,7 @@
     }
     if (dropped) it.requestDropped = dropped;
     else delete it.requestDropped;
-    const env = sub.envelope && typeof sub.envelope === 'object' && sub.envelope.id ? clone(sub.envelope) : null;
+    const env = !taxReq && sub.envelope && typeof sub.envelope === 'object' && sub.envelope.id ? clone(sub.envelope) : null;
     ws.envelopes = ws.envelopes || [];
     // The agreement signed for a request that is not imported is kept as a record, voided (below): nobody is asked to sign it.
     const tied = !!(dropped && env && r.envelopeId === env.id);
@@ -969,12 +1023,12 @@
     if (repRec && repRec.fileId && repName.test(String(repRec.fileId))) allowed.push(String(repRec.fileId));
     // Plan 06-22: a new investor's signed tax form (an investor on file keeps the tax form this console holds), its signed copy
     // only: the original and the work copy stay on the device, so nothing here points at them.
-    const tx = !onFile && sub.taxEnvelope && typeof sub.taxEnvelope === 'object' ? clone(sub.taxEnvelope) : null;
+    const tx = takesTax && sub.taxEnvelope && typeof sub.taxEnvelope === 'object' ? clone(sub.taxEnvelope) : null;
     const taxIn = tx && taxCheck(ws, inv, tx, env) ? Object.assign(tx, { docId: null, workDocId: null, offeringId: null, requestId: null }) : null;
     if (taxIn) allowed.push(taxIn.signedDocId);
     // Plan 06-23 (T-06-51): a new investor's tax form uploaded instead, only the one file their record names under their own
     // tax- name (onboarding.js names it tax-<investor id>-<time>); the server applies the same test.
-    const upCert = !onFile && inv.taxCert && typeof inv.taxCert === 'object' && inv.taxCert.uploaded === true ? inv.taxCert : null;
+    const upCert = takesTax && inv.taxCert && typeof inv.taxCert === 'object' && inv.taxCert.uploaded === true ? inv.taxCert : null;
     const upId = upCert && typeof upCert.fileId === 'string' && new RegExp(`^tax-${reEsc(inv.id)}-[a-z0-9]+$`).test(upCert.fileId) ? upCert.fileId : '';
     if (upId) allowed.push(upId);
     const kept = {}; // id -> size, for each file this submission brought that is now stored here
@@ -1065,7 +1119,7 @@
     // A new investor's tax form record is the device's (one on file keeps the record held here), checked against what came:
     // whether it is signed is read from the kept envelope's own signature field, and a form the device calls signed whose
     // envelope and signed copy did not arrive is marked as not received (the investor row says to ask for it).
-    const tcert = !onFile && inv.taxCert && typeof inv.taxCert === 'object' ? inv.taxCert : null;
+    const tcert = takesTax && inv.taxCert && typeof inv.taxCert === 'object' ? inv.taxCert : null;
     if (tcert && !tcert.uploaded && tcert.envelopeId) {
       if (taxKept && tcert.envelopeId === taxIn.id) {
         const s0 = taxIn.signers[0];
@@ -1186,11 +1240,12 @@
             it.importedAt = new Date().toISOString();
             const x = outcome(ws, it);
             // An investor already on file finished a subscription only: their account stays as this console holds it.
-            if (it.existing) audit(ws, 'Subscription imported', `${x.inv ? x.inv.title : it.investorId}: the subscription from the investor's device added to the portal (${x.text}); the copy on the integration server is deleted`, it.offeringId, it.investorId);
+            if (it.taxRequest) audit(ws, 'Tax form imported', `${x.inv ? x.inv.title : it.investorId}: the tax form request from the investor's device added to the portal (${x.text}); the copy on the integration server is deleted`, '', it.investorId);
+            else if (it.existing) audit(ws, 'Subscription imported', `${x.inv ? x.inv.title : it.investorId}: the subscription from the investor's device added to the portal (${x.text}); the copy on the integration server is deleted`, it.offeringId, it.investorId);
             else audit(ws, 'Onboarding imported', `${x.inv ? x.inv.title : it.investorId}: records from the investor's device added to the portal (${x.text}); the copy on the integration server is deleted`, it.offeringId, it.investorId);
             notify(ws, 'onboarding_completed', `${x.inv ? x.inv.title : 'An investor'} ${finishedWhat(it)}`, x.text, x.route);
             n++;
-            if (it.existing) check.subscriptions++;
+            if (it.existing && !it.taxRequest) check.subscriptions++;
             changed = true;
             NS.app.save(true);
           }
@@ -1930,7 +1985,7 @@
     const m = emailFor(w, it);
     const local = !it.serverId;
     U.dialog(
-      `<div class="dlg-head"><div><h2>Invitation email</h2><p>${local ? 'Send it from your email app. The portal prepared it with the investor’s link.' : 'The email your integration server sends.'}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
+      `<div class="dlg-head"><div><h2>${it.taxRequest ? 'Tax form request email' : 'Invitation email'}</h2><p>${local ? 'Send it from your email app. The portal prepared it with the investor’s link.' : 'The email your integration server sends.'}</p></div><div class="dlg-actions"><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div></div>
       <div class="dlg-body inv8-email">
         <dl class="inv8-meta">
           <div><dt>From</dt><dd>${h(m.fromName)}${local ? ' <span class="cs-hint">(your own address, from your email app)</span>' : ''}</dd></div>
@@ -1962,6 +2017,31 @@
   }
   const itById = (el) => list(W()).find((x) => x.id === el.getAttribute('data-id'));
   NS.actions['inv8-email'] = (el) => showEmail(el.getAttribute('data-id'));
+  // Plan 06-26: "Request tax form" on the Investors page (console.js shows it for an active investor whose tax form is not on
+  // file: missing, not signed, or its signed copy not received). One request at a time per investor.
+  const asking = {};
+  NS.actions['tax-request'] = async (el) => {
+    if (!E.diy) return;
+    if (!NS.app.can('operate')) return U.toast('Only your team can ask investors for their tax form.');
+    const w = W();
+    const inv = invOf(w, el.getAttribute('data-id'));
+    if (!inv || asking[inv.id]) return;
+    asking[inv.id] = true;
+    let out = null;
+    try {
+      out = await requestTax(w, inv);
+    } catch (e) {
+      U.toast(String((e && e.message) || e));
+    } finally {
+      delete asking[inv.id];
+    }
+    NS.app.render();
+    if (!out) return;
+    const res = out.res || {};
+    if (res.emailStatus === 'manual') return showEmail(out.invitation.id);
+    if (res.emailStatus === 'failed') return U.toast(`The tax form request for ${inv.title} could not be sent: ${res.error}`);
+    U.toast(res.emailStatus === 'outbox' ? `Tax form request for ${inv.title} saved in the integration server outbox (no SMTP settings yet).` : `Tax form request emailed to ${inv.contact}.`);
+  };
   NS.actions['inv8-copy'] = (el) => {
     const it = itById(el);
     if (!it) return;
@@ -2128,7 +2208,7 @@
         const activity = [[unsent(it) ? 'Created' : 'Sent', it.sentAt], ['Opened', it.openedAt], ['Completed', it.completedAt]].filter((a) => a[1]).map((a) => `<span class="inv8-when">${a[0]} ${h(when(a[1]))}</span>`).join('');
         return `<tr data-invitation="${h(it.id)}">
           <th scope="row"><span class="strong">${h(inv.title)}</span><span class="sub">${h(inv.email)}</span></th>
-          <td>${off ? h(off.shortName || off.name) : '<span class="cs-muted">Account only</span>'}<span class="sub">${off ? (it.cents ? h(money(off, it.cents)) : 'Investor chooses') : ''}</span></td>
+          <td>${off ? h(off.shortName || off.name) : `<span class="cs-muted">${it.taxRequest ? 'Tax form only' : 'Account only'}</span>`}<span class="sub">${off ? (it.cents ? h(money(off, it.cents)) : 'Investor chooses') : ''}</span></td>
           <td>${badge(st[0], st[1])}<span class="sub inv8-step${!x && agreementUnsent(it) ? ' cs-error-text' : ''}">${h(x ? x.text : stepText(it))}</span>${it.waitingFor ? `<span class="sub">${h(it.waitingFor)}</span>` : ''}</td>
           <td class="inv8-activity">${activity}</td>
           <td>${em}</td>
@@ -2343,6 +2423,9 @@
     mailtoFor,
     sweep,
     serverOn,
+    requestTax,
+    openTaxRequest,
+    taxFormFor,
     forInvestor,
     activationLabel,
     invitePanel,

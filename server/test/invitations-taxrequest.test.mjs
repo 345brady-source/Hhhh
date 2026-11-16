@@ -14,7 +14,8 @@ const DAY = 864e5;
 const T0 = Date.parse('2026-11-10T12:00:00Z');
 const API = 'sponsor-api-token-taxrequest-0123456789';
 const KEY = randomBytes(32).toString('base64');
-const PORTAL = 'https://portal.example/diy.html?tenant=harbor';
+// The portal page's address (its name holds no product word: the email's white-label check reads the link too).
+const PORTAL = 'https://portal.example/portal.html?tenant=harbor';
 const pdf = (marker) => Buffer.from(`%PDF-1.4\n% ${marker}\n1 0 obj << >> endobj\ntrailer << >>\n%%EOF\n`);
 const FIRM = { name: 'Harbor Ridge Capital', shortName: 'Harbor Ridge', legalName: 'Harbor Ridge Capital Management LLC', supportTeam: 'Investor Relations', supportEmail: 'ir@harborridge.example', colors: { primary: '#123456', accent: '#1F7A8C' }, portalName: 'Harbor Ridge Investor Portal', onboarding: { accreditation: false } };
 // The form's pre-fill: the address, country and citizenship it prints, and when the investor consented to electronic

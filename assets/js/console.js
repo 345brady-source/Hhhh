@@ -130,6 +130,24 @@
    * (its Documents entry), or not signed, or uploaded (plan 06-21); nothing when the investor has no such form.
    */
   function taxLine(w, inv) {
+    return taxState(w, inv) + taxAsked(w, inv);
+  }
+  /**
+   * Plan 06-26: an open tax-form request, one line under the tax form's ("Tax form requested <date>"), while the investor has
+   * not finished it (invitations.js openTaxRequest; self-serve edition only).
+   */
+  function taxAsked(w, inv) {
+    const it = E.diy && NS.invitations && NS.invitations.openTaxRequest ? NS.invitations.openTaxRequest(w, inv) : null;
+    return it ? `<span class="sub">Tax form requested ${date(String(it.sentAt || '').slice(0, 10))}</span>` : '';
+  }
+  /**
+   * Plan 06-26 (owner decision on the verification's human item 3): "Request tax form" for an active investor whose tax form
+   * is not on file (missing, not signed, or its signed copy not received: NS.inviteFlow.taxOnFile, the one rule), in the
+   * self-serve edition only (C-03: the managed edition's Investors page is unchanged), for staff who may invite investors.
+   */
+  const taxAskButton = (i) =>
+    E.diy && NS.invitations && NS.invitations.requestTax && NS.inviteFlow && NS.app.can('operate') && i.onboarding.status === 'complete' && !NS.inviteFlow.taxOnFile(i) ? `<button class="cs-btn cs-btn-small" type="button" data-action="tax-request" data-id="${h(i.id)}">Request tax form</button>` : '';
+  function taxState(w, inv) {
     const tc = inv.taxCert;
     // plan 06-21 (D-01, T-06-45): a form completed elsewhere and uploaded by the investor, with a download of that file when
     // it is stored under the investor's own tax- id (onboarding.js names it tax-<investor id>-<time>)
@@ -809,7 +827,7 @@
             <td>${payLabel(i)}</td>
             <td class="cs-row-actions">${NS.coInvestor ? NS.coInvestor.recordButton(i) : ''}${
               done
-                ? `<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(i.id)}">View portal</button>`
+                ? `${taxAskButton(i)}<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(i.id)}">View portal</button>`
                 : `<button class="cs-btn cs-btn-small" type="button" data-action="invite-preview" data-id="${h(i.id)}">Invitation</button><button class="cs-btn cs-btn-small" type="button" data-action="remind" data-id="${h(i.id)}">Send reminder</button>`
             }</td>
           </tr>`;
