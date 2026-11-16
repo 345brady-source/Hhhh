@@ -6,8 +6,9 @@
 // the portal page listing the server as the firm publishes it) opens the ?server= link, answers the status step,
 // subscribes and signs; the console imports with its own "Check now" and counts the answers exactly as in local mode.
 // Plan 06-22 (research Pattern 6): the investor's signed tax form travels with the completion (parts tax-w9, tax-unsigned).
-// Plan 06-23 (research Pitfall 2): after a confirmed send the device keeps no copy of the full taxpayer ID (part tax-wipe).
-//   NODE_PATH=$(npm root -g) node server-mode.js [--only b506,regA,full,existing,withdraw,repack,clean,signed,tax-w9,tax-unsigned,tax-wipe]
+// Plan 06-23 (research Pitfall 2): after a confirmed send the device keeps no copy of the full taxpayer ID (part tax-wipe);
+// an uploaded tax form and the W-8BEN reach the console (parts tax-upload, tax-w8ben).
+//   NODE_PATH=$(npm root -g) node server-mode.js [--only b506,regA,full,existing,withdraw,repack,clean,signed,tax-w9,tax-unsigned,tax-wipe,tax-upload,tax-w8ben]
 // The last line is "SERVER MODE: PASS (parts run: N)" or "SERVER MODE: FAIL (parts run: N) - <failed parts>".
 const path = require('path');
 const fs = require('fs');
@@ -77,6 +78,18 @@ L.describeShots([
   ['tax-keep-subscribe.png', 'Investor’s device: subscribe step (server stopped later).'],
   ['tax-keep-failed.png', 'Investor’s device with the integration server stopped: "We could not send your details ... Check your connection, then try again." with Try again; nothing deleted.'],
   ['tax-keep-done.png', 'Investor’s device: done screen after Try again with the server back; the same signed W-9 was sent.'],
+  ['tax-upload-status.png', 'Investor’s device (server mode, plan 06-23): status step for Kittiwake Point Partners LP, invited as a foreign entity.'],
+  ['tax-upload-subscribe.png', 'Investor’s device: subscribe step after uploading a W-8IMY, going Back and uploading the corrected one.'],
+  ['tax-upload-done.png', 'Investor’s device: done screen; the uploaded W-8IMY went with the completion and left the device.'],
+  ['tax-upload-console.png', 'Console Investors page: "W-8IMY uploaded <date> · Download"; the Download returns the bytes the investor chose.'],
+  ['tax-upbig-status.png', 'Investor’s device: status step before a W-9 is uploaded (then made 25 MB on the device).'],
+  ['tax-upbig-subscribe.png', 'Investor’s device: subscribe step (uploaded W-9 too large to send).'],
+  ['tax-upbig-done.png', 'Investor’s device, done screen: "The Form W-9 you uploaded could not be sent with your details".'],
+  ['tax-upbig-console.png', 'Console Investors page: "W-9 uploaded, copy not received: ask the investor for it", no Download.'],
+  ['tax-w8ben-status.png', 'Investor’s device (server mode): status step for a foreign individual living in Germany.'],
+  ['tax-w8ben-subscribe.png', 'Investor’s device: subscribe step after signing the W-8BEN.'],
+  ['tax-w8ben-done.png', 'Investor’s device: done screen; the signed W-8BEN went with the completion.'],
+  ['tax-w8ben-console.png', 'Console Investors page: "W-8BEN signed <date>, valid until Dec 31, 2029 · Download".'],
   ['clean-status.png', 'Investor’s device with 35 other non-accredited purchasers on the console: status step answered "not accredited", no warning and nothing about the others.']
 ]);
 fs.mkdirSync(SHOTS, { recursive: true });
@@ -268,6 +281,56 @@ async function startServer(srv) {
   });
 }
 
+/* ---------- Uploaded tax forms and the W-8BEN in server mode (plan 06-23) ---------- */
+
+/** A one-page PDF carrying one line of text (a form completed outside the portal). */
+async function samplePdf(line) {
+  const PL = require(path.join(L.VENDOR, 'pdflib/package/dist/pdf-lib.min.js'));
+  const doc = await PL.PDFDocument.create();
+  const pg = doc.addPage([612, 792]);
+  pg.drawText(line, { x: 72, y: 700, size: 14, font: await doc.embedFont(PL.StandardFonts.Helvetica) });
+  return Buffer.from(await doc.save({ useObjectStreams: false }));
+}
+/** On the tax step's answers view: "Upload it instead", the form picked (form: null keeps the one chosen to start), the file, Continue. */
+async function uploadTaxForm(p, form, file) {
+  await p.waitForSelector('[data-action="ivf-taxupload"]', { timeout: 30000 });
+  await p.click('[data-action="ivf-taxupload"]');
+  await p.waitForSelector('#ob-taxUpFile', { timeout: 20000 });
+  if (form) await p.check(`input[name="ob-taxUpForm"][value="${form}"]`);
+  await p.setInputFiles('#ob-taxUpFile', file);
+  await p.waitForTimeout(400);
+  const hint = await p.locator('#hint-taxUpFile').innerText().catch(() => '');
+  await L.submit(p);
+  await p.waitForFunction(() => {
+    const h = document.querySelector('.ivf-form h1');
+    return h && h.innerText !== 'Tax certification';
+  }, null, { timeout: 30000 });
+  await p.waitForTimeout(200);
+  return hint;
+}
+/** The device's tax record and the SHA-256 of the upload it names. */
+const deviceUpload = (page) =>
+  page.evaluate(async () => {
+    const NS = window.CVPortal;
+    const i = NS.state.ws.investors[0];
+    const tc = i.taxCert || null;
+    const b = tc && tc.fileId ? await NS.ops.files.get(tc.fileId) : null;
+    const sha = b ? Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', await b.arrayBuffer())), (x) => x.toString(16).padStart(2, '0')).join('') : '';
+    return { id: i.id, taxForm: i.taxForm || '', taxCert: tc ? JSON.parse(JSON.stringify(tc)) : null, sha, size: b ? b.size : 0 };
+  });
+/** The console's record of the investor: taxForm, taxCert, and the SHA-256 of the file stored under id (when given). */
+const consoleRecord = (page, iid, id) =>
+  page.evaluate(
+    async ({ iid, id }) => {
+      const NS = window.CVPortal;
+      const i = NS.state.ws.investors.find((x) => x.id === iid) || {};
+      const b = id ? await NS.ops.files.get(id) : null;
+      const sha = b ? Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', await b.arrayBuffer())), (x) => x.toString(16).padStart(2, '0')).join('') : '';
+      return { taxForm: i.taxForm || '', taxCert: i.taxCert ? JSON.parse(JSON.stringify(i.taxCert)) : null, sha, onFile: NS.inviteFlow.taxOnFile(i) };
+    },
+    { iid, id: id || '' }
+  );
+
 /**
  * One server-mode case end to end. o: { tag, exemption, invite (extra form fields), answers (lib walk answers),
  * onStatus(page, R), onSubscribe(page, R), beforeImport(srv, inv, sub); plan 06-22: taxSign(page), onAnyStep(hd, page, R);
@@ -351,7 +414,7 @@ async function serverFlow(S, check, o) {
     // console form's default, U.S. individual, for a new investor; an investor on file from before has none).
     const snapInv = (out.snaps.find((x) => x && x.investor) || {}).investor || {};
     const deviceType = await ip.evaluate(() => ((window.CVPortal.state.ws || {}).investors || []).map((x) => x.taxType || ''));
-    const wantType = out.who ? undefined : 'us-individual';
+    const wantType = out.who ? undefined : (o.invite && o.invite.type) || 'us-individual';
     check('D-09: the snapshot carries the investor type the sponsor chose, and the investor’s device keeps it', snapInv.taxType === wantType && deviceType[0] === (wantType || ''), { snapshot: snapInv.taxType, device: deviceType });
     out.remote = await ip.evaluate(() => !!(window.CVPortal.state.remote && window.CVPortal.state.remote.server && !window.CVPortal.state.remote.refused));
     // The answers as the device holds them on its request, before it sends anything.
@@ -1278,6 +1341,188 @@ const parts = {
       check('keep: no script error on either side', G.A.errors.length === 0 && G.B.errors.length === 0, { A: G.A.errors, B: G.B.errors });
     } finally {
       await G.close();
+    }
+  },
+
+  /**
+   * Plan 06-23 (D-01, D-30, T-06-51): an uploaded tax form in server mode. Two runs.
+   *  upload   Kittiwake Point Partners LP, invited as a foreign entity, uploads a W-8IMY instead of the W-8BEN-E, goes Back
+   *           and uploads a corrected one (the first file leaves the device then). The second file passes the integration
+   *           server as evidence and reaches the console: the row reads "W-8IMY uploaded <date>" (no review mark, owner's
+   *           legal review) and its Download returns the same bytes. After the confirmed send the device holds no tax- file.
+   *  upbig    a U.S. individual uploads a W-9 that is then made 25 MB on the device: the completion still goes with the
+   *           agreement; the firm's copy of the record, its change log and the done screen each say so in one line, and the
+   *           console row says the upload was not received, with no Download.
+   */
+  async 'tax-upload'({ check, S }) {
+    const answers = { acc: 'no', exp: 'Twelve years of private fund commitments', edu: 'Fund administrator', rep: 'no', amount: 60000 };
+    const first = await samplePdf('Form W-8IMY - Kittiwake Point Partners LP (draft, replaced)');
+    const second = await samplePdf('Form W-8IMY - Kittiwake Point Partners LP (completed outside the portal)');
+    const F = await serverFlow(S, check, {
+      tag: 'tax-upload',
+      exemption: 'Rule 506(b)',
+      answers,
+      invite: { type: 'foreign-entity', account: 'Kittiwake Point Partners LP' },
+      onFilledAny: async (hd, p) => {
+        if (!/Investor information/.test(hd)) return;
+        await p.selectOption('#ob-country', 'Cayman Islands');
+        await p.waitForTimeout(200);
+        await p.fill('#ob-street', '94 Solaris Avenue');
+        await p.fill('#ob-city', 'Camana Bay');
+        await p.fill('#ob-st', 'Grand Cayman');
+        await p.fill('#ob-zip', 'KY1-1108');
+        await p.fill('#ob-formation', 'Cayman Islands');
+        await p.fill('#ob-tin', '');
+      },
+      taxStep: async (p, R) => {
+        R.hint1 = await uploadTaxForm(p, 'W-8IMY', { name: 'W-8IMY draft.pdf', mimeType: 'application/pdf', buffer: first });
+        R.first = await deviceUpload(p);
+        // Back to the tax step, and a corrected form uploaded in its place
+        await p.click('[data-action="ivf-back"]');
+        await p.waitForFunction(() => document.querySelector('.ivf-form h1') && document.querySelector('.ivf-form h1').innerText === 'Tax certification', null, { timeout: 20000 });
+        R.hint2 = await uploadTaxForm(p, 'W-8IMY', { name: 'W-8IMY Kittiwake Point.pdf', mimeType: 'application/pdf', buffer: second });
+        R.up = await deviceUpload(p);
+        R.mid = await deviceStore(p);
+      },
+      finish: async (p, out) => {
+        out.R.before = await deviceStore(p);
+        const done = await L.finishAgreement(p);
+        out.R.after = await deviceStore(p);
+        return done;
+      }
+    });
+    try {
+      commonChecks(check, F);
+      const R = F.R;
+      const up = R.up || {};
+      const tc = up.taxCert || {};
+      const own = new RegExp(`^tax-${String(F.inv.investorId).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-[a-z0-9]+$`);
+      check('upload: each file was attached on the upload view', /Attached: W-8IMY draft\.pdf/.test(R.hint1 || '') && /Attached: W-8IMY Kittiwake Point\.pdf/.test(R.hint2 || ''), { hint1: R.hint1, hint2: R.hint2 });
+      check('upload: the device’s record names the second W-8IMY under the investor’s own tax- id, bytes as chosen', up.taxForm === 'W-8IMY' && tc.uploaded === true && tc.form === 'W-8IMY' && own.test(tc.fileId || '') && tc.fileName === 'W-8IMY Kittiwake Point.pdf' && up.sha === sha256(second) && !!R.first && R.first.taxCert && R.first.taxCert.fileId !== tc.fileId, { first: R.first && R.first.taxCert, now: tc, sha: up.sha });
+      const ups = ((R.mid || {}).keys || []).filter((k) => /^tax-/.test(k));
+      check('upload: the replaced first file left the device when the second was stored (one tax- file)', ups.length === 1 && ups[0] === tc.fileId, ups);
+      const st = F.stored || {};
+      const held = st.files && st.files[tc.fileId] ? Buffer.from(st.files[tc.fileId], 'base64') : null;
+      check('upload: the server holds the uploaded W-8IMY byte for byte, and only it beside the agreement', !!held && sha256(held) === sha256(second) && Object.keys(st.files || {}).filter((k) => /^tax-/.test(k)).length === 1, { server: held ? sha256(held) : Object.keys(st.files || {}), want: sha256(second) });
+      check('upload: the server’s copy of the record names it', !!st.investor && !!st.investor.taxCert && st.investor.taxCert.fileId === tc.fileId && st.investor.taxCert.uploaded === true, st.investor && st.investor.taxCert);
+      const got = await consoleRecord(F.A.page, F.inv.investorId, tc.fileId);
+      check('upload: the console stored the same bytes and its record names the upload, on file', got.sha === sha256(second) && got.taxForm === 'W-8IMY' && !!got.taxCert && got.taxCert.fileId === tc.fileId && got.taxCert.received === undefined && got.onFile === true, got);
+      const row = await consoleTaxRow(F.A.page, INV.email, 'tax-upload-console.png');
+      check('upload: the investor row reads "W-8IMY uploaded <date>" with one Download (no review mark)', /W-8IMY uploaded [A-Z][a-z]+ \d{1,2}, \d{4}/.test(row.text) && row.downloads === 1 && !/review/i.test(row.text) && !/not received/.test(row.text), row.text.slice(0, 400));
+      check('upload: the Download returns exactly the bytes the investor chose', !!row.bytes && sha256(row.bytes) === sha256(second), { download: row.bytes ? sha256(row.bytes) : row.error });
+      const left = ((R.after || {}).keys || []).filter((k) => /^tax-/.test(k));
+      check('upload: after the confirmed send the device holds no tax- file', Array.isArray((R.after || {}).keys) && left.length === 0 && ((R.before || {}).keys || []).indexOf(tc.fileId) >= 0, { before: (R.before || {}).keys, after: (R.after || {}).keys });
+      const lk = L.leakCheck([F.done, row.text].join('\n'));
+      check('upload: white label: the done screen and the console row pass the leak check', lk.ok, lk.hits);
+    } finally {
+      await F.close();
+    }
+    // An upload that does not fit with the agreement.
+    const big = await samplePdf('Form W-9 - Dana Whitfield (completed outside the portal)');
+    const G = await serverFlow(S, check, {
+      tag: 'tax-upbig',
+      exemption: 'Rule 506(b)',
+      answers,
+      taxStep: async (p, R) => {
+        R.hint = await uploadTaxForm(p, null, { name: 'my-w9.pdf', mimeType: 'application/pdf', buffer: big });
+        R.up = await deviceUpload(p);
+        R.big = await p.evaluate(async () => {
+          const NS = window.CVPortal;
+          const tc = NS.state.ws.investors[0].taxCert || {};
+          if (!tc.fileId) return 0;
+          const b = new Uint8Array(25 * 1024 * 1024).fill(0x20);
+          b.set(Array.from('%PDF-1.4\n', (ch) => ch.charCodeAt(0)), 0);
+          await NS.ops.files.put(tc.fileId, new Blob([b], { type: 'application/pdf' }));
+          return (await NS.ops.files.get(tc.fileId)).size;
+        });
+      }
+    });
+    try {
+      const R = G.R;
+      const tc0 = (R.up || {}).taxCert || {};
+      check('upbig: the device stored the uploaded W-9, now 25 MB', tc0.uploaded === true && tc0.form === 'W-9' && R.big === 25 * 1024 * 1024, { taxCert: tc0, big: R.big });
+      const st = G.stored || {};
+      check('upbig: the completion still went, with the agreement and no tax- file', !!st.request && Object.keys(st.files || {}).length === 1 && !Object.keys(st.files || {}).some((k) => /^tax-/.test(k)), Object.keys(st.files || {}));
+      const tc = (st.investor || {}).taxCert || {};
+      check('upbig: the firm’s copy of the record says in one line that the uploaded W-9 did not fit and to ask for it, and names no file', /^The Form W-9 the investor uploaded \(my-w9\.pdf\) did not fit in the 25 MB that can be sent from the investor’s browser with the rest of their details, so it was not sent with their details\. Ask the investor for it\.$/.test(tc.note || '') && !tc.fileId, tc);
+      const log = await G.A.page.evaluate((id) => (window.CVPortal.state.ws.audit || []).filter((e) => e.record === id && /not sent/.test(e.action)).map((e) => `${e.action} :: ${e.detail}`), G.inv.investorId);
+      check('upbig: the firm’s change log records it in one entry', log.length === 1 && /^Uploaded tax form not sent :: .*Form W-9 the investor uploaded \(my-w9\.pdf\) did not fit in the 25 MB/.test(log[0]) && /ask the investor for it/.test(log[0]), log);
+      const doneLines = String(G.done || '').split('\n').filter((l) => /Form W-9 you uploaded/.test(l));
+      check('upbig: the done screen tells the investor in one line', doneLines.length === 1 && /The Form W-9 you uploaded could not be sent with your details, so .+ may ask you for it again\./.test(doneLines[0]), (G.done || '').slice(0, 1500));
+      const got = await consoleRecord(G.A.page, G.inv.investorId, '');
+      check('upbig: the console marks the upload not received and not on file', !!got.taxCert && got.taxCert.received === false && !got.taxCert.fileId && got.onFile === false, got);
+      const row = await consoleTaxRow(G.A.page, INV.email, 'tax-upbig-console.png');
+      check('upbig: the investor row says the uploaded W-9 was not received, with no Download', /W-9 uploaded, copy not received: ask the investor for it/.test(row.text) && row.downloads === 0, row.text.slice(0, 400));
+      check('upbig: no script error on either side', G.A.errors.length === 0 && G.B.errors.length === 0, { A: G.A.errors, B: G.B.errors });
+    } finally {
+      await G.close();
+    }
+  },
+
+  /**
+   * Plan 06-23 (D-01, research FORM-07): a foreign individual in server mode signs the pre-filled W-8BEN on their own device.
+   * The signed copy and its envelope pass the integration server, the record arrives with its validity date, and the console
+   * row reads "W-8BEN signed <date>, valid until Dec 31, <year + 3>" with a Download of the same bytes. After the confirmed
+   * send the device holds no file of the form and no run of the foreign tax ID.
+   */
+  async 'tax-w8ben'({ check, S }) {
+    const answers = { acc: 'no', exp: 'Ten years of private equity commitments', edu: 'Engineer', rep: 'no', amount: 60000 };
+    const FTIN = '86014520937';
+    const F = await serverFlow(S, check, {
+      tag: 'tax-w8ben',
+      exemption: 'Rule 506(b)',
+      answers,
+      invite: { type: 'foreign-individual' },
+      onFilledAny: async (hd, p) => {
+        if (/Investor information/.test(hd)) {
+          await p.selectOption('#ob-country', 'Germany');
+          await p.waitForTimeout(200);
+          if (await p.locator('input[name="ob-citizen"][value="other"]').count()) await p.check('input[name="ob-citizen"][value="other"]');
+          await p.fill('#ob-street', 'Königsallee 27');
+          await p.fill('#ob-city', 'Düsseldorf');
+          await p.fill('#ob-st', '');
+          await p.fill('#ob-zip', '40212');
+          await p.fill('#ob-tin', '');
+        }
+        if (/Tax certification/.test(hd) && (await p.locator('#ob-ftin').count())) await p.fill('#ob-ftin', FTIN);
+      },
+      taxSign: signTax,
+      onAnyStep: async (hd, p, R) => {
+        if (hd === 'Distribution payments' && !R.tax) R.tax = await deviceTax(p);
+      },
+      finish: async (p, out) => {
+        const dv = out.R.tax || {};
+        out.R.before = await deviceStore(p, dv.env ? dv.env.signedDocId : '');
+        const done = await L.finishAgreement(p);
+        out.R.after = await deviceStore(p, '');
+        out.R.ftinLeft = await p.evaluate((f) => JSON.stringify(window.CVPortal.state.ws).indexOf(f) >= 0 || Object.keys(localStorage).some((k) => String(localStorage.getItem(k)).indexOf(f) >= 0), FTIN);
+        return done;
+      }
+    });
+    try {
+      commonChecks(check, F);
+      const dv = F.R.tax || {};
+      const tc = dv.taxCert || {};
+      const year = Number(new Date().toISOString().slice(0, 4));
+      const until = `${year + 3}-12-31`;
+      check('w8ben: the device signed the W-8BEN: taxCert signed, valid until 31 December three years on, a completed tax envelope with this investor alone', tc.form === 'W-8BEN' && tc.signed === true && tc.validUntil === until && tc.ftinLast4 === FTIN.slice(-4) && !!dv.env && dv.env.kind === 'tax' && dv.env.status === 'completed' && dv.env.signers.length === 1 && dv.env.signers[0].investorId === F.inv.investorId && /^[0-9a-f]{64}$/.test(dv.sha), dv);
+      const st = F.stored || {};
+      const sid = dv.env ? dv.env.signedDocId : '';
+      const te = st.taxEnvelope || null;
+      const held = st.files && st.files[sid] ? Buffer.from(st.files[sid], 'base64') : null;
+      check('w8ben: the server holds the completed W-8BEN envelope and the signed copy byte for byte', !!te && te.status === 'completed' && te.taxForm && te.taxForm.form === 'W-8BEN' && !!held && sha256(held) === dv.sha, { te: te && { status: te.status, taxForm: te.taxForm }, server: held ? sha256(held) : Object.keys(st.files || {}), device: dv.sha });
+      check('w8ben: the server’s copy of the record carries the validity date', !!st.investor && !!st.investor.taxCert && st.investor.taxCert.validUntil === until && st.investor.taxForm === 'W-8BEN', st.investor && st.investor.taxCert);
+      const got = await consoleRecord(F.A.page, F.inv.investorId, sid);
+      check('w8ben: the console stored the signed W-8BEN byte for byte and its record keeps the validity date, on file', got.sha === dv.sha && got.taxForm === 'W-8BEN' && !!got.taxCert && got.taxCert.validUntil === until && got.taxCert.signed === true && got.onFile === true, got);
+      const row = await consoleTaxRow(F.A.page, INV.email, 'tax-w8ben-console.png');
+      check('w8ben: the investor row reads "W-8BEN signed <date>, valid until Dec 31, <year + 3>" with one Download', new RegExp(`W-8BEN signed [A-Z][a-z]+ \\d{1,2}, \\d{4}, valid until Dec 31, ${year + 3}`).test(row.text) && row.downloads === 1, row.text.slice(0, 400));
+      check('w8ben: the Download returns exactly the bytes the device produced', !!row.bytes && sha256(row.bytes) === dv.sha, { download: row.bytes ? sha256(row.bytes) : row.error, device: dv.sha });
+      const envIds = ((F.R.before || {}).envs || []).map((e) => e.id);
+      check('w8ben: after the confirmed send the device holds no file of the form, no Documents entry for it and no run of the foreign tax ID', envIds.length > 0 && Array.isArray((F.R.after || {}).keys) && taxKeys(F.R.after.keys, envIds).length === 0 && F.R.after.taxDocs.length === 0 && F.R.ftinLeft === false, { left: taxKeys((F.R.after || {}).keys, envIds), taxDocs: (F.R.after || {}).taxDocs, ftinLeft: F.R.ftinLeft });
+      const lk = L.leakCheck([F.done, row.text].join('\n'));
+      check('w8ben: white label: the done screen and the console row pass the leak check', lk.ok, lk.hits);
+    } finally {
+      await F.close();
     }
   }
 };
