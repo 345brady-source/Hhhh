@@ -3660,7 +3660,13 @@
     const oid = el.getAttribute('data-offering') || '';
     const o = w.offerings.find((x) => x.id === oid) || null;
     const pdfs = (w.docs || []).filter((d) => d && (!o || d.offeringId === o.id) && (/pdf/i.test(d.type || '') || /\.pdf$/i.test(d.fileName || '')));
-    const guess = pdfs.find((d) => /subscri/i.test(`${d.title || ''} ${d.fileName || ''}`));
+    // Pre-selected: a document whose name reads as a subscription agreement, by the intake's shared rule (a misspelt
+    // "Subscrpition" or "Sub_Docs" included), or, as before, any name with "subscri" in it.
+    const rule = NS.intake && NS.intake.agreementName instanceof RegExp ? NS.intake.agreementName : null;
+    const guess = pdfs.find((d) => {
+      const s = `${d.title || ''} ${d.fileName || ''}`;
+      return /subscri/i.test(s) || (!!rule && rule.test(s));
+    });
     U.dialog(
       `<form class="es-dlg-form" data-form="es-agreement" data-offering="${h(oid)}"><div class="dlg-head"><div><h2>Subscription agreement</h2><p>${o ? `For ${h(o.name)}. ` : ''}Investors sign it during onboarding; you place the fields once.</p></div><button class="icon-btn" type="button" data-action="close-dialog" aria-label="Close">${icon('close')}</button></div>
       <div class="dlg-body"><div class="cs-grid">
