@@ -113,8 +113,40 @@
     return pdf.save();
   }
 
+  // The three official forms shipped as a script (assets/forms/forms-data.js, generated from the pinned files), loaded on
+  // the first form built: the published preview's sandboxed frame may load scripts but refuses every fetch. The pin is still
+  // checked on the decoded bytes (fill, step 1). The file itself is fetched only when that script cannot be loaded.
+  const HERE = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
+  let FORMS_DATA = 'assets/forms/forms-data.js';
+  try {
+    if (HERE) FORMS_DATA = new URL('../forms/forms-data.js', HERE).href;
+  } catch (e) {
+    /* the page-relative path above */
+  }
+  /** The bundled official form's bytes (Uint8Array) for one map. */
+  async function formBytes(map) {
+    const kit = NS.esignKit;
+    const have = () => !!(NS.taxformsData && typeof NS.taxformsData[map.file] === 'string');
+    if (!have() && kit.loadScript) {
+      try {
+        await kit.loadScript(FORMS_DATA, have);
+      } catch (e) {
+        /* the shipped copy did not load; the file itself below */
+      }
+    }
+    if (have()) return kit.fromBase64(NS.taxformsData[map.file]);
+    let r;
+    try {
+      r = await fetch(map.file, { cache: 'no-store' });
+    } catch (e) {
+      r = null;
+    }
+    if (!r || !r.ok) throw new Error('This tax form could not be loaded. Check the connection and try again.');
+    return new Uint8Array(await r.arrayBuffer());
+  }
+
   /**
-   * In the browser (D-04): the bundled official form of formKey fetched, checked against its pin, filled through its own
+   * In the browser (D-04): the bundled official form of formKey (shipped as a script, see formBytes), checked against its pin, filled through its own
    * fields with the embedded Unicode font and flattened; returns the PDF as a Blob. A file that fails its pin gives the
    * investor one plain sentence naming the firm's support team, and nothing is filled.
    */
@@ -123,9 +155,7 @@
     if (!map) throw new Error('This tax form is not available.');
     const kit = NS.esignKit;
     const L = await kit.writer();
-    const r = await fetch(map.file, { cache: 'no-store' });
-    if (!r.ok) throw new Error('This tax form could not be loaded. Check the connection and try again.');
-    const bytes = new Uint8Array(await r.arrayBuffer());
+    const bytes = await formBytes(map);
     const { fontkit, fontBytes } = await kit.unicodeFont();
     let out;
     try {

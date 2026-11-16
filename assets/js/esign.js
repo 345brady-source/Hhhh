@@ -29,6 +29,18 @@
   // library that embeds a font file, and a font with a wide character set in two weights.
   const FONTKIT_URL = 'https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js';
   const UNICODE_FONT = { regular: 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf', bold: 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf' };
+  // The same two font files shipped with the portal as scripts (assets/vendor/textfont), loaded only when needed: a page
+  // that may load scripts but not fetch files (the published preview's sandboxed frame) still gets them. The address above
+  // is used only when the shipped copy cannot be loaded.
+  const HERE = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
+  const besideMe = (rel, fallback) => {
+    try {
+      return HERE ? new URL(rel, HERE).href : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  };
+  const FONT_DATA = { regular: besideMe('../vendor/textfont/text-regular.js', 'assets/vendor/textfont/text-regular.js'), bold: besideMe('../vendor/textfont/text-bold.js', 'assets/vendor/textfont/text-bold.js') };
   const MAX_BYTES = 25 * 1024 * 1024;
   const MIN_TEXT_PT = 5;
   const COLORS = ['#2563EB', '#D9480F', '#0F8A5F', '#C2255C', '#7048E8', '#0B7285'];
@@ -252,19 +264,33 @@
     if (!window.PDFLib) throw new Error('Could not load the PDF writer. Check the connection and try again.');
     return window.PDFLib;
   }
+  /** Base64 text as bytes. */
+  function fromBase64(s) {
+    const bin = atob(s);
+    const u8 = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    return u8;
+  }
   const fontFiles = {};
-  function fetchFont(url) {
-    if (!fontFiles[url])
-      fontFiles[url] = fetch(url)
-        .then((r) => {
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          return r.arrayBuffer();
-        })
-        .catch((e) => {
-          delete fontFiles[url];
-          throw e;
-        });
-    return fontFiles[url];
+  /** The Unicode font file of one weight ('regular' or 'bold') as an ArrayBuffer: the shipped copy, else its address. */
+  function fontFile(weight) {
+    if (!fontFiles[weight])
+      fontFiles[weight] = (async () => {
+        const have = () => !!(NS.fontData && typeof NS.fontData[weight] === 'string');
+        try {
+          await loadOnce(FONT_DATA[weight], have);
+        } catch (e) {
+          /* the shipped copy did not load; the font's address below */
+        }
+        if (have()) return fromBase64(NS.fontData[weight]).buffer;
+        const r = await fetch(UNICODE_FONT[weight]);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.arrayBuffer();
+      })().catch((e) => {
+        delete fontFiles[weight];
+        throw e;
+      });
+    return fontFiles[weight];
   }
   // Characters the standard PDF fonts print (WinAnsi): ASCII, Latin-1 and a few typographic marks.
   const WIN_ANSI_EXTRA = '€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ';
@@ -288,7 +314,7 @@
     else {
       try {
         await loadOnce(FONTKIT_URL, () => !!window.fontkit);
-        const [r, b] = await Promise.all([fetchFont(UNICODE_FONT.regular), fetchFont(UNICODE_FONT.bold)]);
+        const [r, b] = await Promise.all([fontFile('regular'), fontFile('bold')]);
         pdf.registerFontkit(window.fontkit);
         const regular = await pdf.embedFont(r, { subset: true });
         const bold = await pdf.embedFont(b, { subset: true });
@@ -380,9 +406,12 @@
   async function unicodeFont() {
     await loadOnce(FONTKIT_URL, () => !!window.fontkit);
     if (!window.fontkit) throw new Error('Could not load the PDF writer. Check the connection and try again.');
-    return { fontkit: window.fontkit, fontBytes: await fetchFont(UNICODE_FONT.regular) };
+    return { fontkit: window.fontkit, fontBytes: await fontFile('regular') };
   }
   NS.esignKit.unicodeFont = unicodeFont;
+  // For taxforms.js: the script loader (a failed load is forgotten) and the base64 decoder.
+  NS.esignKit.loadScript = loadOnce;
+  NS.esignKit.fromBase64 = fromBase64;
 
   /* ---------- Page images (rendered once per stored file, kept as object URLs) ---------- */
   /** A PDF's pages drawn with pdf.js as PNG object URLs: { pages: [{ url, w, h }], encrypted }. */
