@@ -4,7 +4,7 @@
 // one investor with the signature and date at the form's own places, the investor signs it in the portal, and the stored
 // signed PDF is read back: Documents category Tax for that investor alone, zero form fields, each value inside its own
 // field, the signature ink inside the sign place, the "Signed electronically" caption, the date, the certificate page.
-//   NODE_PATH=$(npm root -g) node forms-flow.js [--case toggle-off,sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned,us-llc,us-ccorp,us-trust,us-disregarded,us-ira,us-joint,foreign-entity,passive-owners,passive-none,ffi-giin,treaty-entity,route,upload,upload-ira,upload-refused,owner-set]
+//   NODE_PATH=$(npm root -g) node forms-flow.js [--case toggle-off,sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned,us-llc,us-ccorp,us-trust,us-disregarded,us-ira,us-joint,foreign-entity,passive-owners,passive-none,ffi-giin,treaty-entity,route,upload,upload-ira,upload-refused,typed-route,owner-set]
 // The last line is "FORMS FLOW: PASS (cases run: N)" or "FORMS FLOW: FAIL (cases run: N) - <failed cases>". Exits 2
 // (NOT RUN) when the bundled forms do not match assets/forms/SHA256SUMS.
 const path = require('path');
@@ -2750,7 +2750,8 @@ async function toggleOffCase({ check, S }) {
       const s = Array.from(document.querySelectorAll('section.cs-panel')).find((x) => /^Investor onboarding$/.test(((x.querySelector('.cs-panel-head h2') || {}).textContent || '').trim()));
       return s ? s.innerText.replace(/\s+/g, ' ').trim() : '(no Investor onboarding panel)';
     });
-  const HINT = 'Rule 506(b) and Regulation A Tier 2 offerings always ask, and Rule 506(c) offerings verify it. Turn this on to ask in every other invitation too.';
+  // plan 06-25: accurate under every "Require verified accreditation" rule (Rule 506(c) under "Never" asks too)
+  const HINT = 'Rule 506(b), Rule 506(c) and Regulation A Tier 2 offerings always ask: through a verification where your Integrations rules require one, otherwise as the investor’s own answer. Turn this on to ask in every other invitation too.';
   // the typed activation (no open invitation), resumed at its last step: Review and sign
   const typedReview = async (page, who) => {
     await page.evaluate((who) => {
@@ -2813,9 +2814,28 @@ async function toggleOffCase({ check, S }) {
     const bar = (seen) => seen.map((x) => x.replace(/ \|.*$/, ''));
     check('the screens walked to the tax step, with their step numbers, labels and totals, are the same with the switch saved off as on', bar(off.w.seen).length > 1 && JSON.stringify(bar(off.w.seen)) === JSON.stringify(bar(on.w.seen)), { off: off.w.seen, on: on.w.seen });
     check('the invitation\u2019s whole step list has the tax step and is the same with the switch saved off as on', Array.isArray(off.steps) && off.steps.indexOf('tax') >= 0 && JSON.stringify(off.steps) === JSON.stringify(on.steps), { off: off.steps, on: on.steps });
-    const typed = await typedReview(page, { taxForm: false, n: 9871, name: 'Odile Brennan-Sato', email: 'odile.brennan@example.com' });
-    await page.screenshot({ path: path.join(dir, 'toggle-off-selfserve-typed-review.png'), fullPage: true });
-    check('switch saved off: the typed activation (no open invitation) still asks for the W-9 certification', /Substitute Form W-9 certification/.test(typed.text) && typed.w9 === 1, typed.text.slice(0, 900));
+    // Plan 06-25 (gap 1 of 06-24): with no open invitation the self-serve investor goes through the guided invitation flow
+    // and its tax step, never the typed activation's U.S.-only certification (the case typed-route walks it to the end).
+    await page.evaluate(() => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      ws.tenant.onboarding.taxForm = false;
+      const i = { id: `${ws.tenant.idPrefix}-9871`, contact: 'Odile Brennan-Sato', title: 'Odile Brennan-Sato', type: 'individual', email: 'odile.brennan@example.com', phone: '', address: '', tinLast4: '', accreditation: { basis: '', date: '' }, taxForm: '', edelivery: false, onboarding: { status: 'in_progress', step: 99, invited: NS.dates.today(), completed: '', source: 'manual' }, payment: { method: 'check', bank: null }, positions: [] };
+      ws.investors.push(i);
+      NS.app.save(true);
+      NS.state.role = 'investor';
+      NS.store.set('role', 'investor');
+      NS.startOnboarding(i.id);
+    });
+    await page.waitForTimeout(800);
+    const typed = await page.evaluate(() => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const it = (ws.invitations || []).filter((x) => x.investorId === `${ws.tenant.idPrefix}-9871`).pop();
+      return { hash: location.hash, text: document.body.innerText, w9: document.querySelectorAll('#ob-w9').length, steps: it ? NS.inviteFlow.steps(ws, it) : null };
+    });
+    await page.screenshot({ path: path.join(dir, 'toggle-off-selfserve-typed-route.png'), fullPage: true });
+    check('switch saved off: an investor with no open invitation goes to the guided invitation flow with its tax step, not the typed W-9 certification', /^#invite-/.test(typed.hash) && Array.isArray(typed.steps) && typed.steps.indexOf('tax') >= 0 && !/Substitute Form W-9 certification/.test(typed.text) && typed.w9 === 0, { hash: typed.hash, steps: typed.steps, text: typed.text.slice(0, 600) });
     check('self-serve: no script error in the browser', A.errors.length === 0, A.errors);
     check('self-serve: no request left the check server', A.net.external.length === 0, A.net.external);
     await A.context.close();
@@ -2850,6 +2870,180 @@ async function toggleOffCase({ check, S }) {
     check('managed: no request left the check server', A.net.external.length === 0, A.net.external);
     await A.context.close();
   }
+}
+
+/**
+ * Plan 06-25 (gap 1 of 06-24, D-09, D-30, C-03): a self-serve investor with no open invitation, who activates from the
+ * portal (sign-in, the console's "Open activation", the role switch: every entry point calls NS.startOnboarding), is sent
+ * through the guided invitation flow, as the offering link (selfInvite) and the portal subscribe entry points (plan 06-08)
+ * already are, never the older typed activation with its U.S.-only substitute W-9 certification. Two investors:
+ *  - a foreign individual whose invitation was cancelled: a new invitation of their own for the account only (the
+ *    cancelled one is not reopened, no offering is added), the tax step's official W-8BEN, pre-filled, signed, read back;
+ *    then the rest of the flow to the done screen;
+ *  - a foreign entity the sponsor added by hand, never invited: the tax step's W-8BEN-E and its upload option.
+ * The managed edition's typed activation is unchanged (toggle-off's managed part).
+ */
+async function typedRouteCase({ check, S }) {
+  const A = await Lib.open(S, { context: { acceptDownloads: true } });
+  const page = A.page;
+  const dir = path.join(OUT, 'typed-route');
+  fs.mkdirSync(dir, { recursive: true });
+  const portal = await Lib.setupPortal(S, A);
+  const screens = [];
+  /** NS.startOnboarding as the portal's entry points call it, then where the investor landed. */
+  const activate = async (investorId) => {
+    const before = await page.evaluate((id) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const i = ws.investors.find((x) => x.id === id);
+      return { open: !!NS.inviteFlow.openFor(ws, i), ids: (ws.invitations || []).map((x) => x.id) };
+    }, investorId);
+    await page.evaluate((id) => {
+      const NS = window.CVPortal;
+      NS.state.role = 'investor';
+      NS.store.set('role', 'investor');
+      NS.startOnboarding(id);
+    }, investorId);
+    await page.waitForFunction(() => /^#(invite-|onboarding)/.test(location.hash) && (document.querySelector('.ivf-form h1') || document.querySelector('.ob-form h1')), null, { timeout: 20000 }).catch(() => {});
+    await page.waitForTimeout(400);
+    const after = await page.evaluate(
+      ({ id, ids }) => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const fresh = (ws.invitations || []).filter((x) => x.investorId === id && ids.indexOf(x.id) < 0);
+        return { hash: location.hash, text: document.body.innerText, typed: !!document.querySelector('.ob-form[data-form="ob-step"]') && !document.querySelector('.ivf-form'), w9: document.querySelectorAll('#ob-w9').length, fresh: JSON.parse(JSON.stringify(fresh)), steps: fresh[0] ? NS.inviteFlow.steps(ws, fresh[0]) : null };
+      },
+      { id: investorId, ids: before.ids }
+    );
+    screens.push(after.text);
+    return { before, after };
+  };
+
+  // 1. A foreign individual invited as one, whose invitation the sponsor then cancelled.
+  const name = 'Ilse Vandermeulen-Okafor';
+  const email = 'ilse.vandermeulen@example.org';
+  const FTIN = '82047719536';
+  const at = { country: 'Belgium', street: 'Rue des Tanneurs 14', city: 'Bruxelles', zip: '1000', dob: '1976-09-14' };
+  const inv = await Lib.createInvitation(page, { name, email, type: 'foreign-individual', offeringId: portal.offeringId });
+  await page.evaluate((id) => {
+    const NS = window.CVPortal;
+    const it = NS.state.ws.invitations.find((x) => x.id === id);
+    it.status = 'cancelled';
+    NS.app.save(true);
+  }, inv.invitationId);
+  const r1 = await activate(inv.investorId);
+  await page.screenshot({ path: path.join(dir, 'typed-route-w8ben-welcome.png'), fullPage: true });
+  check('the foreign individual has no open invitation before activating (the one sent was cancelled)', r1.before.open === false, r1.before);
+  check('self-serve: with no open invitation the investor is sent to the guided invitation flow, not the typed activation', /^#invite-/.test(r1.after.hash) && !r1.after.typed, { hash: r1.after.hash, text: r1.after.text.slice(0, 400) });
+  check('no "Substitute Form W-9 certification" and no #ob-w9 on the screen the investor lands on', !/Substitute Form W-9/i.test(r1.after.text) && r1.after.w9 === 0, r1.after.text.slice(0, 400));
+  const it1 = r1.after.fresh[0] || {};
+  check('one new invitation of the investor’s own, for the account only: no offering added, the cancelled one not reopened', r1.after.fresh.length === 1 && it1.offeringId === '' && it1.status !== 'cancelled' && !it1.existing && !!it1.token, r1.after.fresh);
+  check('the new invitation’s steps are the account steps with the tax step, and no subscription', Array.isArray(r1.after.steps) && r1.after.steps.indexOf('tax') >= 0 && r1.after.steps.indexOf('subscribe') < 0 && r1.after.steps[0] === 'welcome' && r1.after.steps[r1.after.steps.length - 1] === 'done', r1.after.steps);
+  const w = await Lib.walk(page, {
+    name,
+    until: /Tax certification/,
+    profile: { dob: at.dob },
+    onFilled: async (hd) => {
+      if (!/Investor information/.test(hd)) return;
+      await page.selectOption('#ob-country', at.country);
+      await page.waitForTimeout(200);
+      if (await page.locator('input[name="ob-citizen"][value="other"]').count()) await page.check('input[name="ob-citizen"][value="other"]');
+      await page.fill('#ob-street', at.street);
+      await page.fill('#ob-city', at.city);
+      await page.fill('#ob-st', '');
+      await page.fill('#ob-zip', at.zip);
+      await page.fill('#ob-tin', '');
+    }
+  });
+  check('the investor walks the guided flow to the tax step with no field error', w.reached && w.at === 'Tax certification' && w.errors.length === 0, { seen: w.seen, errors: w.errors });
+  const lede = await page.evaluate(() => Array.from(document.querySelectorAll('.ivf-form p.lede')).map((x) => x.innerText).join(' '));
+  screens.push(await Lib.screenText(page));
+  await page.screenshot({ path: path.join(dir, 'typed-route-w8ben-tax-step.png'), fullPage: true });
+  check(`the tax step is the invitation's: the official Form W-8BEN, filled in from the answers, with ${at.country} as the citizenship`, /Form W-8BEN is filled in from your answers/.test(lede) && lede.indexOf(`${at.country}, where you live, as your country of citizenship`) >= 0, lede);
+  check('the tax step offers the upload of a completed form instead', (await page.locator('[data-action="ivf-taxupload"]').count()) >= 1);
+  if (!w.reached) {
+    await A.context.close();
+    return;
+  }
+  await page.fill('#ob-ftin', FTIN);
+  await Lib.submit(page);
+  await page.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 });
+  await page.waitForTimeout(400);
+  const made = await flowW8(page, inv.investorId);
+  check('Continue built the official W-8BEN (Rev. October 2021) for this investor to sign', !!made.env && made.env.kind === 'tax' && made.env.taxForm.form === 'W-8BEN' && made.env.taxForm.revision === 'Rev. October 2021' && made.env.signers.length === 1 && made.env.signers[0].investorId === inv.investorId, made.env && made.env.taxForm);
+  await page.screenshot({ path: path.join(dir, 'typed-route-w8ben-signing.png'), fullPage: true });
+  await Lib.finishTaxForm(page, signTaxForm(made.env.fields.find((f) => f.type === 'signature').id));
+  check('signing moves on to Distribution payments', (await Lib.heading(page)) === 'Distribution payments', await Lib.heading(page));
+  const got = await flowW8(page, inv.investorId);
+  const tc = got.taxCert || {};
+  check('investor.taxForm is W-8BEN and taxCert says signed by the investor, with the tax residence and the FTIN last four', got.taxForm === 'W-8BEN' && tc.form === 'W-8BEN' && tc.signed === true && tc.signedBy === name && tc.country === at.country && tc.ftinLast4 === FTIN.slice(-4), { taxForm: got.taxForm, tc });
+  check('the full foreign tax ID is saved nowhere', got.all.indexOf(FTIN) < 0);
+  const signed = Buffer.from(got.finished || '', 'base64');
+  const signedFile = path.join(dir, 'typed-route-w8ben-signed.pdf');
+  fs.writeFileSync(signedFile, signed);
+  check('the stored file is the sealed signed copy', !!got.env && signed.length > 0 && got.env.sha256Signed === sha(signed), got.env && got.env.sha256Signed);
+  if (signed.length) {
+    const R = await rects(got.blank);
+    const W1 = words(signedFile, 1);
+    [
+      [name, 'f_1[0]', 'line 1 name'],
+      [at.country, 'f_2[0]', 'line 2 country of citizenship'],
+      [at.street, 'f_3[0]', 'line 3 street'],
+      [`${at.city} ${at.zip}`, 'f_4[0]', 'line 3 city line'],
+      [FTIN, 'f_10[0]', 'line 6a foreign tax ID'],
+      [mmddyyyy(at.dob), 'f_12[0]', 'line 8 date of birth (MM-DD-YYYY)']
+    ].forEach(([want, f, what]) => {
+      const inside = wordsIn(W1, R.of[W8 + f], 1);
+      check(`signed W-8BEN ${what}: "${want}" prints inside its own field`, inside === want, { field: f, inside });
+    });
+  }
+  const rest = await Lib.walk(page, { name, until: /all set|paperwork is complete/i });
+  screens.push(await Lib.screenText(page));
+  await page.screenshot({ path: path.join(dir, 'typed-route-w8ben-done.png'), fullPage: true });
+  check('the investor finishes the flow (payments, then the done screen) with no field error', rest.reached && rest.errors.length === 0, { seen: rest.seen, errors: rest.errors });
+  const fin = await page.evaluate((id) => {
+    const i = window.CVPortal.state.ws.investors.find((x) => x.id === id);
+    return { status: i.onboarding.status, taxForm: i.taxForm };
+  }, inv.investorId);
+  check('the account is activated with the W-8BEN on file (not "W-9")', fin.status === 'complete' && fin.taxForm === 'W-8BEN', fin);
+
+  // 2. A foreign entity the sponsor added by hand: no invitation was ever sent.
+  const ent = await page.evaluate(() => {
+    const NS = window.CVPortal;
+    const ws = NS.state.ws;
+    const i = { id: `${ws.tenant.idPrefix}-9925`, contact: 'Matthias Oyelowo-Lindgren', title: 'Brightwater Holdings Ltd.', type: 'entity', taxType: 'foreign-entity', email: 'matthias.oyelowo@example.org', phone: '', address: '', tinLast4: '', accreditation: { basis: '', date: '' }, taxForm: '', edelivery: false, onboarding: { status: 'invited', step: 0, invited: NS.dates.today(), completed: '', source: 'manual' }, payment: { method: 'check', bank: null }, positions: [] };
+    ws.investors.push(i);
+    NS.app.save(true);
+    return i.id;
+  });
+  const r2 = await activate(ent);
+  check('the foreign entity (never invited) is sent to the guided invitation flow too', /^#invite-/.test(r2.after.hash) && !r2.after.typed && r2.after.fresh.length === 1 && r2.after.fresh[0].offeringId === '', { hash: r2.after.hash, fresh: r2.after.fresh });
+  const w2 = await Lib.walk(page, {
+    name: 'Matthias Oyelowo-Lindgren',
+    until: /Tax certification/,
+    onFilled: async (hd) => {
+      if (!/Investor information/.test(hd)) return;
+      await page.selectOption('#ob-country', 'Bermuda');
+      await page.waitForTimeout(200);
+      await page.fill('#ob-street', '7 Par-la-Ville Road');
+      await page.fill('#ob-city', 'Hamilton');
+      await page.fill('#ob-st', '');
+      await page.fill('#ob-zip', 'HM 11');
+      await page.fill('#ob-formation', 'Bermuda');
+      await page.fill('#ob-tin', '');
+    }
+  });
+  check('the foreign entity reaches the tax step with no field error', w2.reached && w2.at === 'Tax certification' && w2.errors.length === 0, { seen: w2.seen, errors: w2.errors });
+  const lede2 = await page.evaluate(() => Array.from(document.querySelectorAll('.ivf-form p.lede')).map((x) => x.innerText).join(' '));
+  screens.push(await Lib.screenText(page));
+  await page.screenshot({ path: path.join(dir, 'typed-route-w8bene-tax-step.png'), fullPage: true });
+  check('its tax step is the official Form W-8BEN-E, with the upload option', /W-8BEN-E/.test(lede2) && (await page.locator('[data-action="ivf-taxupload"]').count()) >= 1, lede2);
+  check('no screen of either investor shows the typed substitute W-9 certification', !screens.some((x) => /Substitute Form W-9|I certify the statements above/i.test(x)), '');
+  const lk = Lib.leakCheck(screens.join('\n'));
+  check('white label: the screens pass the leak check', lk.ok, lk.hits);
+  check('no script error in the browser', A.errors.length === 0, A.errors);
+  check('no request left the check server', A.net.external.length === 0, A.net.external);
+  await A.context.close();
 }
 
 /**
@@ -3060,6 +3254,7 @@ const cases = {
   upload: uploadCase,
   'upload-ira': uploadIraCase,
   'upload-refused': uploadRefusedCase,
+  'typed-route': typedRouteCase,
   'owner-set': ownerSetCase
 };
 

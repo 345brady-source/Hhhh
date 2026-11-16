@@ -431,6 +431,8 @@
     const ex = ((o.structure || {}).exemption || '').trim();
     const reg = NS.eligibility.regime(o);
     if (reg === 'regA2' && !/\bTier\b/i.test(ex)) return 'This offering names Regulation A without a tier: choose Tier 1 or Tier 2 above. Until you do, investors who are not accredited are asked the Tier 2 questions and shown their 10 percent limit.';
+    // Plan 06-25: under the Integrations rule "Never" no verification step runs, so the hint says whose the verification is.
+    if (reg === '506c' && NS.integrations && !NS.integrations.needsAccreditation(W(), null, o)) return 'Rule 506(c) offerings take accredited investors only, and you must take reasonable steps to verify that each one is accredited. Your Integrations rules never require verified accreditation, so investors in this offering only answer the accredited question themselves: taking those verification steps is your responsibility.';
     if (reg === '506c') return 'Rule 506(c) offerings take verified accredited investors only: investors verify their status while they onboard, before they can subscribe.';
     return '';
   }
@@ -3154,7 +3156,7 @@
               ${seg('Appearance', 'appearance', [['system', 'Follow device'], ['light', 'Light'], ['dark', 'Dark']])}
             </div>`)}
             ${panel('Investor onboarding', `<div class="cs-grid">
-              ${tCheck('Ask for accreditation', 'onboarding.accreditation', E.diy ? 'Rule 506(b) and Regulation A Tier 2 offerings always ask, and Rule 506(c) offerings verify it. Turn this on to ask in every other invitation too.' : 'Regulation D 506(b) and 506(c) offerings.')}
+              ${tCheck('Ask for accreditation', 'onboarding.accreditation', E.diy ? 'Rule 506(b), Rule 506(c) and Regulation A Tier 2 offerings always ask: through a verification where your Integrations rules require one, otherwise as the investor’s own answer. Turn this on to ask in every other invitation too.' : 'Regulation D 506(b) and 506(c) offerings.')}
               ${/* Self-serve: no switch for the tax step. Every investor needs a W-9 or W-8 before distributions (owner, plan 06-24); the managed edition keeps it (C-03). */ E.diy ? '' : tCheck('Collect a substitute W-9 certification', 'onboarding.taxForm')}
               ${tCheck('Require consent to electronic delivery', 'onboarding.esign')}
               ${seg('Direct deposit', 'onboarding.ach', [['required', 'Required'], ['optional', 'Optional (check allowed)']])}

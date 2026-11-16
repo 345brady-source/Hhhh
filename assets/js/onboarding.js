@@ -24,6 +24,8 @@
   /**
    * The substitute W-9 certification of this typed activation. The managed edition's firm setting decides (C-03); the
    * self-serve edition has no switch for it: every investor needs a W-9 or W-8 before distributions (owner, plan 06-24).
+   * Since plan 06-25 a self-serve investor activates through the guided invitation flow (NS.startOnboarding), whose tax
+   * step is the official W-9 or W-8; here the self-serve edition only updates a bank account, which has no review step.
    */
   const substituteW9 = () => !!(NS.EDITION && NS.EDITION.diy) || !!T().onboarding.taxForm;
   function stepsFor(mode) {
@@ -198,6 +200,16 @@
     // DIY: an investor with an open invitation goes through the invitation flow (every step, one link).
     const open = mode !== 'bank' && NS.inviteFlow ? NS.inviteFlow.openFor(W(), inv) : null;
     if (open) return NS.app.go('invite-' + open.token);
+    // DIY with no open invitation (none was sent, or it expired or was cancelled): a guided invitation of the investor's own,
+    // for the account only, as the offering link gives (selfInvite). Its tax step is the official W-9, W-8BEN or W-8BEN-E by
+    // the investor's type (D-09), never the typed U.S.-only certification below (plan 06-25). The managed edition keeps the
+    // typed activation (C-03); an active account has nothing to activate.
+    if (mode !== 'bank' && NS.EDITION && NS.EDITION.diy && NS.inviteFlow) {
+      if (inv.onboarding.status === 'complete') return NS.app.go('overview');
+      const it = NS.inviteFlow.selfInvite(W(), inv, null, { portal: true });
+      NS.app.save(true);
+      return NS.app.go('invite-' + it.token);
+    }
     const bank = (inv.payment && inv.payment.bank) || {};
     const steps = stepsFor(mode);
     // onboarding.step counts completed steps, so it is also the index to resume at.
@@ -794,19 +806,22 @@
    * 06-08): an investor on file subscribing from the portal (offering link, Investments, a subscribe address) gets the
    * guided subscription an invitation to an investor on file gives (status step by exemption, subscription, agreement):
    * their open invitation for this same offering, never one for another offering, or a new one marked existing.
+   * opts.portal (plan 06-25): an investor activating from the portal with no open invitation (NS.startOnboarding).
    */
   function selfInvite(ws, inv, o, opts) {
     const onFile = !!(opts && opts.existing);
+    const portal = !onFile && !!(opts && opts.portal);
     const have = onFile ? (ws.invitations || []).filter((x) => x.investorId === inv.id && x.token && x.existing && x.offeringId === (o ? o.id : '') && ['cancelled', 'expired', 'completed'].indexOf(x.status) < 0 && !expired(x)).pop() || null : openFor(ws, inv);
     if (have) return have;
     const at = new Date().toISOString();
-    const it = { id: uid('invt'), investorId: inv.id, offeringId: o ? o.id : '', cents: 0, cls: '', note: '', token: newToken(), serverId: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: at, openedAt: at, completedAt: '', expiresAt: new Date(Date.now() + 30 * 864e5).toISOString(), emailStatus: 'not_sent', emailError: '', importedAt: '', sentBy: onFile ? 'Investor portal' : 'Offering sign-up link' };
+    const it = { id: uid('invt'), investorId: inv.id, offeringId: o ? o.id : '', cents: 0, cls: '', note: '', token: newToken(), serverId: '', link: '', status: 'opened', stepKey: '', stepLabel: '', stepIndex: 0, stepCount: 0, sentAt: at, openedAt: at, completedAt: '', expiresAt: new Date(Date.now() + 30 * 864e5).toISOString(), emailStatus: 'not_sent', emailError: '', importedAt: '', sentBy: onFile || portal ? 'Investor portal' : 'Offering sign-up link' };
     if (onFile) it.existing = true;
     it.link = `${location.origin}${location.pathname}?tenant=${encodeURIComponent(ws.tenant.id)}#invite-${it.token}`;
     ws.invitations = ws.invitations || [];
     ws.invitations.push(it);
     inv.onboarding = Object.assign({}, inv.onboarding, { invitationId: it.id, offeringId: it.offeringId });
     if (onFile) notify(ws, 'invite_opened', `${inv.title} started a subscription${o ? ` to ${o.name}` : ''}`, 'From the investor portal', 'console-investors');
+    else if (portal) notify(ws, 'invite_opened', `${inv.title} started activating their account`, 'From the investor portal, with no open invitation', 'console-investors');
     else notify(ws, 'invite_opened', `${inv.title} signed up${o ? ` for ${o.name}` : ''}`, 'From the offering sign-up link; onboarding has started', 'console-investors');
     return it;
   }
@@ -1164,10 +1179,14 @@
    * accredited question only). Every invitation with an offering to subscribe to also asks the benefit plan (ERISA)
    * questions there, under every exemption: under Rule 506(c) the verification step is unchanged and the status step
    * shows only those questions. Nothing on it is required (D-30).
+   * Rule 506(c) with the firm's rule "Require verified accreditation: Never" (plan 06-25): Rule 506(c) allows accredited
+   * purchasers only, so with no verification step the status step asks the accredited question (self-certified) and the
+   * request records the answer, null when it is left open: nobody is recorded as accredited without an answer. The
+   * reasonable steps to verify it are the sponsor's (the console says so).
    */
   const EL = () => NS.eligibility;
   const regimeOf = (c) => (EL() && c.off ? EL().regime(c.off) : '');
-  const accAsked = (c) => !!EL() && !accVerifiedFor(c) && (regimeOf(c) === '506b' || regimeOf(c) === 'regA2' || !!c.ws.tenant.onboarding.accreditation);
+  const accAsked = (c) => !!EL() && !accVerifiedFor(c) && (regimeOf(c) === '506b' || regimeOf(c) === '506c' || regimeOf(c) === 'regA2' || !!c.ws.tenant.onboarding.accreditation);
   const statusStep = (c) => accAsked(c) || (!!EL() && !!c.off);
   /** Offerings any investor may buy, accredited or not, with no investment limit: Regulation A Tier 1, and Tier 2 listed on an exchange. */
   const openToAll = (c) => regimeOf(c) === 'regA1' || regimeOf(c) === 'regA2listed';
@@ -2640,7 +2659,7 @@
     }
     if (key === 'status') {
       let gone = '';
-      // The accredited answer is saved only where the step asked it (under Rule 506(c) the verification step decides).
+      // The accredited answer is saved only where the step asked it (where a verification is required, its step decides).
       const asked = accAsked(c);
       if (asked && d.stAcc === 'yes' && d.stBasis) {
         i.accreditation = Object.assign({}, i.accreditation, { basis: d.stBasis, date: NS.dates.today() });

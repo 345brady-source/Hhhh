@@ -48,6 +48,10 @@ L.describeShots([
   ['portal-managed-subscribe.png', 'Managed edition (plan 06-08, C-03): the portal subscribe page unchanged, with its accredited tick.'],
   ['rega-unanswered-status.png', 'Status step under Regulation A Tier 2 (plan 06-11) with the accredited question left unanswered: no statement about the limit is shown.'],
   ['rega-unanswered-subscribe.png', 'Subscribe step (plan 06-11) after the accredited question was left unanswered.'],
+  [/^c506never-.*-status\.png$/, 'Status step under Rule 506(c) with the firm\'s rule "Require verified accreditation: Never" and the accreditation toggle off (plan 06-25): the accredited question (self-certified), then the benefit plan question.'],
+  [/^c506never-.*-subscribe\.png$/, 'Subscribe step under Rule 506(c) with the rule Never (plan 06-25): the statement follows the answer (accredited with its ground, not accredited, or none when left open).'],
+  ['c506never-integrations.png', 'Console Integrations page (plan 06-25): "Require verified accreditation: Never" with the note that Rule 506(c) allows accredited investors only and that the reasonable verification steps are the sponsor\'s responsibility.'],
+  ['c506never-requests.png', 'Console requests page (plan 06-25): the three Rule 506(c) subscriptions under the rule Never, each flagged with what the sponsor still has to do.'],
   ['rega-unanswered-console.png', 'Console offering page (plan 06-11): the Regulation A panel names the Tier 2 subscriber who left the accredited question unanswered, in one line.']
 ]);
 fs.mkdirSync(SHOTS, { recursive: true });
@@ -1934,6 +1938,121 @@ const parts = {
     const steps = (k) => W[k].seen.map((s) => s.split(' | ').pop());
     check('the steps are as before (no step removed or folded): 10 for a new individual under Rule 506(b), 11 under Rule 506(c), 5 for the investor on file', W['individual-506b'].seen.every((s) => /^Step \d+ of 10:/.test(s)) && W['ira-506c'].seen.every((s) => /^Step \d+ of 11:/.test(s)) && steps('onfile-506b').map((x) => (/^Welcome/.test(x) ? 'Welcome' : x)).join('|') === 'Welcome|Investor status|Subscription|Subscription agreement', { a: W['individual-506b'].seen, c: W['ira-506c'].seen, d: W['onfile-506b'].seen });
     check('Regulation A Tier 1 with the accredited question off: no accreditation tick on Subscription', !/accredited investor/.test(W['individual-rega1'].T.subscribe || ''), (W['individual-rega1'].T.subscribe || '').slice(0, 800));
+  },
+
+  /**
+   * Plan 06-25 (gap 2 of 06-24): Rule 506(c) with the firm's "Require verified accreditation: Never" and the accreditation
+   * toggle off. Rule 506(c) allows accredited purchasers only, with reasonable steps to verify; the portal must never record
+   * someone as accredited without an answer. The status step asks the accredited question (self-certified) and the record
+   * follows the answer: true with the ground, false, or null when left open (D-30: nothing required). The console tells the
+   * sponsor that 506(c) needs reasonable verification steps that are theirs to take: on the Integrations rule, the offering's
+   * exemption hint and each request row. The default rule keeps the verification step (part erisa).
+   */
+  async c506never({ check, S }) {
+    const A = await L.open(S);
+    const p = A.page;
+    const off = await L.setupPortal(S, A, { exemption: 'Rule 506(c)' });
+    check('the offering is Rule 506(c) with its agreement ready', off.ready && off.exemption === 'Rule 506(c)', off);
+    await p.evaluate(() => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      NS.integrations.ensure(ws).rules.accreditationFor = '506c';
+      ws.tenant.onboarding.accreditation = false;
+      NS.app.save(true);
+    });
+    // The Integrations rule: the sponsor chooses Never with the page's own select; the note appears with it.
+    await p.evaluate(() => (location.hash = 'console-integrations'));
+    await p.waitForTimeout(400);
+    if (await p.locator('#demo-role').count()) {
+      await p.selectOption('#demo-role', 'admin');
+      await p.waitForTimeout(400);
+      await p.evaluate(() => (location.hash = 'console-integrations'));
+    }
+    await p.waitForSelector('#iv-accfor', { timeout: 20000 });
+    const ruleText = () => p.evaluate(() => (document.getElementById('iv-accfor').closest('label') || {}).innerText || '');
+    const before = await ruleText();
+    await p.selectOption('#iv-accfor', 'none');
+    await p.waitForTimeout(400);
+    const after = await ruleText();
+    await p.screenshot({ path: path.join(SHOTS, 'c506never-integrations.png'), fullPage: true });
+    const NOTE = /Rule 506\(c\)[^]*reasonable steps to verify[^]*your responsibility/;
+    check('Integrations: no 506(c) note under "For Rule 506(c) offerings"', !NOTE.test(before), before);
+    check('Integrations: choosing "Never" shows that Rule 506(c) allows accredited investors only, needs reasonable steps to verify them, and that those steps are the sponsor’s responsibility', NOTE.test(after) && /accredited investors only/.test(after), after);
+    const rule = await p.evaluate(() => {
+      const NS = window.CVPortal;
+      NS.app.save(true);
+      return NS.integrations.ensure(NS.state.ws).rules.accreditationFor;
+    });
+    check('the rule is saved as Never', rule === 'none', rule);
+    await consoleOffering(p, off.offeringId);
+    const field = await exemptionField(p);
+    check('the offering’s exemption hint under Never says the reasonable verification steps are the sponsor’s, and no longer that investors verify while they onboard', NOTE.test(field.hints) && !/investors verify their status while they onboard/.test(field.hints), field.hints);
+    // Three investors: accredited (a ground), not accredited, and the question left open.
+    const R = {};
+    const one = async (tag, name, email, acc) => {
+      const inv = await L.createInvitation(p, { name, email, offeringId: off.offeringId, cents: 0 });
+      await p.goto(`${S.base}?tenant=${inv.tenant}#invite-${inv.token}`);
+      const x = { st: '', accQ: -1, soph: -1, sub: '', subAcc: -1, subText: '' };
+      x.w = await L.walk(p, {
+        name,
+        acc,
+        basis: acc === 'yes' ? 1 : undefined,
+        amount: 60000,
+        onStep: async (hd) => {
+          if (hd === 'Investor status') {
+            x.accQ = await p.locator('input[name="ob-stAcc"]').count();
+            x.soph = await p.locator('input[name="ob-stSoph"]').count();
+          }
+          if (hd === 'Subscription') {
+            x.sub = await L.screenText(p);
+            x.subAcc = await p.locator('#ob-subAcc').count();
+            x.subText = x.subAcc ? await p.locator('label[for="ob-subAcc"]').innerText() : '';
+            await p.screenshot({ path: path.join(SHOTS, `c506never-${tag}-subscribe.png`), fullPage: true });
+          }
+        },
+        onFilled: async (hd) => {
+          if (hd !== 'Investor status') return;
+          x.st = await L.screenText(p);
+          await p.screenshot({ path: path.join(SHOTS, `c506never-${tag}-status.png`), fullPage: true });
+        }
+      });
+      x.heads = x.w.seen.map((s) => s.split(' | ').pop());
+      x.req = await requestOf(p, inv.investorId, off.offeringId);
+      x.inv = inv;
+      R[tag] = x;
+      return x;
+    };
+    const yes = await one('yes', 'Priya Castellanos', 'priya.castellanos@example.com', 'yes');
+    const no = await one('no', 'Tobias Achterberg', 'tobias.achterberg@example.com', 'no');
+    const open = await one('open', 'Wren Abernathy', 'wren.abernathy@example.com', '');
+    ['yes', 'no', 'open'].forEach((k) => {
+      const x = R[k];
+      check(`${k}: the investor reaches the agreement with no field error, and there is no verification step`, x.w.reached && x.w.errors.length === 0 && x.heads.indexOf('Accredited investor verification') < 0 && x.heads.indexOf('Accreditation') < 0, { seen: x.w.seen, errors: x.w.errors });
+      check(`${k}: the status step asks the accredited question (yes or no) and no Rule 506(b) sophistication question`, x.accQ === 2 && x.soph === 0 && /an accredited investor\?/.test(x.st), { accQ: x.accQ, soph: x.soph, st: x.st.slice(0, 600) });
+    });
+    const q = (x) => (x.req && x.req.qual) || {};
+    check('yes: request.qual records accredited true with the ground chosen (self-certified)', q(yes).regime === '506c' && q(yes).accredited === true && /net worth/i.test(q(yes).basis || ''), q(yes));
+    check('yes: the investor record keeps the self-certified ground', !!yes.req && !!yes.req.accreditation && /net worth/i.test(yes.req.accreditation.basis || ''), yes.req && yes.req.accreditation);
+    check('yes: the subscribe step states the account is an accredited investor, with its ground', yes.subAcc === 1 && /Priya Castellanos is an accredited investor \(Net worth/.test(yes.subText), yes.subText);
+    check('no: request.qual records accredited false (no sophistication answers under Rule 506(c))', q(no).accredited === false && !q(no).sophistication, q(no));
+    check('no: the subscribe step states the account is not an accredited investor', no.subAcc === 1 && /Tobias Achterberg is not an accredited investor/.test(no.subText), no.subText);
+    check('open: request.qual records accredited null (never accredited without an answer)', !!open.req && q(open).accredited === null && q(open).basis === '', q(open));
+    check('open: the subscribe step makes no statement about accreditation', open.subAcc === 0 && !/is an accredited investor|is not an accredited investor/.test(open.sub), { subAcc: open.subAcc, sub: open.sub.slice(0, 900) });
+    check('open: the change log says the accredited question was not answered', !!open.req && open.req.log.some((e) => e.action === 'Investor status answered' && /^Wren Abernathy: not answered;/.test(e.detail)), open.req && open.req.log);
+    check('open: no accreditation ground on the investor record', !!open.req && !((open.req.accreditation || {}).basis), open.req && open.req.accreditation);
+    // The sponsor's request rows: each Rule 506(c) subscription under Never says what the sponsor still has to do.
+    await consoleRequests(p);
+    const rows = {};
+    for (const k of ['yes', 'no', 'open']) rows[k] = R[k].req ? await requestRow(p, R[k].req.id) : '';
+    await p.screenshot({ path: path.join(SHOTS, 'c506never-requests.png'), fullPage: true });
+    check('requests: the self-certified one says Rule 506(c) needs reasonable steps to verify it, which are the sponsor’s', /Self-certified as accredited: Rule 506\(c\) needs reasonable steps to verify it, which are yours to take/.test(rows.yes), rows.yes);
+    check('requests: the "not accredited" one says Rule 506(c) allows accredited investors only', /Answered not accredited: Rule 506\(c\) allows accredited investors only/.test(rows.no), rows.no);
+    check('requests: the unanswered one says the accredited status was not answered', /Accredited status not answered: Rule 506\(c\) allows accredited investors only/.test(rows.open), rows.open);
+    const lk = L.leakCheck([yes.st, no.st, open.st, yes.sub, no.sub, open.sub].join('\n'));
+    check('white label: the status and subscribe screens pass the leak check', lk.ok, lk.hits);
+    check('no script error in the browser', A.errors.length === 0, A.errors);
+    check('no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
   }
 };
 
