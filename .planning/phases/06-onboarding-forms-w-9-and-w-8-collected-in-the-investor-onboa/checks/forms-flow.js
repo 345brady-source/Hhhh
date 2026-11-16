@@ -45,6 +45,14 @@ function text(file, first, last) {
   if (r.status !== 0) throw new Error('pdftotext failed on ' + file);
   return r.stdout;
 }
+/**
+ * Plan 06-26: a tax form's certificate names the form it closes ("the last page of the signed Form W-9"), never "the
+ * signed agreement". Read from the certificate page's text, line breaks folded.
+ */
+function certNames(check, file, page, form) {
+  const t = text(file, page, page).replace(/\s+/g, ' ');
+  check(`the certificate says it is the last page of the signed Form ${form}, and does not call the form an agreement`, t.indexOf(`This certificate is the last page of the signed Form ${form}.`) >= 0 && !/agreement/i.test(t), (t.match(/This certificate[^.]*\./) || [t.slice(-400)])[0]);
+}
 /** A grey render of one page at dpi: { w, h, px }. */
 function gray(file, page, dpi) {
   const pre = file.replace(/\.pdf$/, `-g${page}`);
@@ -221,6 +229,7 @@ function formCase(spec) {
     check('zero form fields in the signed copy', sPdf.getForm().getFields().length === 0, sPdf.getForm().getFields().length);
     const formPages = fPdf.getPageCount();
     check('the certificate page is appended after the form pages', sPdf.getPageCount() > formPages && /Certificate of completion/.test(text(signedFile, formPages + 1)), { signed: sPdf.getPageCount(), form: formPages });
+    certNames(check, signedFile, formPages + 1, spec.form);
 
     // every value inside its own field rectangle (read from the bundled form)
     const R = await rects(made.blank);
@@ -416,6 +425,7 @@ function usIndividualCase(spec) {
   const sPdf = await PL.PDFDocument.load(signed, { updateMetadata: false });
   check('zero form fields in the signed copy', sPdf.getForm().getFields().length === 0, sPdf.getForm().getFields().length);
   check('the certificate page follows the 6 form pages', sPdf.getPageCount() > 6 && /Certificate of completion/.test(text(signedFile, 7)), sPdf.getPageCount());
+  certNames(check, signedFile, 7, 'W-9');
   const R = await rects(made.blank);
   const W1 = words(signedFile, 1);
   [
@@ -1217,6 +1227,7 @@ function foreignIndividualCase(spec) {
   const sPdf = await PL.PDFDocument.load(signed, { updateMetadata: false });
   check('zero form fields in the signed copy', sPdf.getForm().getFields().length === 0, sPdf.getForm().getFields().length);
   check('the certificate page follows the one form page', sPdf.getPageCount() > 1 && /Certificate of completion/.test(text(signedFile, 2)), sPdf.getPageCount());
+  certNames(check, signedFile, 2, 'W-8BEN');
   const R = await rects(got.blank);
   const W1 = words(signedFile, 1);
   [
@@ -1263,6 +1274,8 @@ function foreignIndividualCase(spec) {
   const rowText = (await row.innerText().catch(() => '')).replace(/\s+/g, ' ');
   await row.scrollIntoViewIfNeeded().catch(() => {});
   await page.screenshot({ path: path.join(dir, `${spec.id}-console.png`), fullPage: false });
+  const typeCell = (await row.locator('td').first().innerText().catch(() => '')).trim();
+  check('the console type column shows the investor type the sponsor chose (D-09): "Foreign individual", not "Individual"', typeCell === 'Foreign individual', typeCell);
   check(`the console row reads "W-8BEN signed <date>, valid until Dec 31, ${year + 3}"`, new RegExp(`W-8BEN signed [A-Z][a-z]+ \\d{1,2}, ${year}, valid until Dec 31, ${year + 3}`).test(rowText), rowText.slice(0, 300));
   let dlSha = '';
   try {
@@ -2057,6 +2070,7 @@ function w8eCase(spec) {
     const sPdf = await PL.PDFDocument.load(signed, { updateMetadata: false });
     check('zero form fields in the signed copy', sPdf.getForm().getFields().length === 0, sPdf.getForm().getFields().length);
     check('the certificate page follows the 8 form pages', sPdf.getPageCount() === 9 && /Certificate of completion/.test(text(signedFile, 9, 9)), sPdf.getPageCount());
+    certNames(check, signedFile, 9, 'W-8BEN-E');
     const read = await e8Read(signedFile, dir, made.blank, made.fields);
     e8Expect(check, 'signed W-8BEN-E', read, spec.want);
     if (spec.exact) spec.exact.forEach((s) => check(`"${s}" prints exactly`, text(signedFile, 1, 8).indexOf(s) >= 0));
