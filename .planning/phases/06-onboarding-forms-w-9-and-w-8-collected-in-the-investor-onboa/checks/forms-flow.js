@@ -3401,7 +3401,9 @@ async function includeTaxCase({ check, S }) {
   check('a new investor’s email shows no "Include tax form" box (their onboarding has the tax step anyway)', !fresh.box, fresh);
   check('an investor on file shows one "Include tax form" box, unticked by default', onFile.box && !onFile.checked && onFile.label === 'Include tax form', onFile);
   const added = onFile.ids.filter((x) => fresh.ids.indexOf(x) < 0);
-  check('D-06 (the 06-15 standard): the only control added for an investor on file is that one box', JSON.stringify(added) === JSON.stringify(['iv-includeTax']) && fresh.ids.every((x) => onFile.ids.indexOf(x) >= 0), { fresh: fresh.ids, onFile: onFile.ids });
+  // Plan 06-29 (the owner's deferred item from 06-27): "Investor type" does not apply to an investor on file and is hidden for their email.
+  const removed = fresh.ids.filter((x) => onFile.ids.indexOf(x) < 0);
+  check('D-06 (the 06-15 standard): the only control added for an investor on file is that one box; the only one taken away is "Investor type" (plan 06-29)', JSON.stringify(added) === JSON.stringify(['iv-includeTax']) && JSON.stringify(removed) === JSON.stringify(['iv-type']), { fresh: fresh.ids, onFile: onFile.ids });
   if (!onFile.box) {
     await A.context.close();
     return;
