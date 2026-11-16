@@ -790,6 +790,13 @@
     const active = inv.onboarding.status === 'complete';
     return (ws.invitations || []).filter((x) => x.investorId === inv.id && x.token && (!active || x.existing) && ['cancelled', 'expired', 'completed'].indexOf(x.status) < 0 && !expired(x)).pop() || null;
   }
+  /** Server mode: the invitation of an investor on file this device opened from the integration server, until it is finished. */
+  function remoteOpen(ws, inv) {
+    if (!ED.diy || !isRemote(ws) || !inv) return null;
+    const it = (ws.invitations || [])[0];
+    const fl = inv.onboarding.flow;
+    return it && it.investorId === inv.id && it.existing && ['cancelled', 'expired', 'completed'].indexOf(it.status) < 0 && !expired(it) && !(fl && fl.itId === it.id && fl.completedAt) ? it : null;
+  }
   function byToken(ws, token) {
     if (!ws || !token) return null;
     if (INV8().byToken) {
@@ -3279,8 +3286,9 @@
       // the upload view (plan 06-21): Back returns to the tax answers, not to the step before
       const upView = key === 'tax' && c.fl.taxView === 'upload';
       // A tax-form request (plan 06-26) is opened from the portal and starts on its tax step (or Welcome): Back on that first
-      // step returns to the portal, so the pre-filled form can be left without finishing it (the page has no menu).
-      const back = upView ? '<button class="btn" type="button" data-action="ivf-taxanswers">Back</button>' : n === 0 && c.it.taxRequest && key !== 'done' ? '<button class="btn" type="button" data-action="ivf-leave">Back</button>' : n > 0 && key !== 'done' && !(key === 'subscribe' && c.req && envOf(c) && signerOf(envOf(c), c.inv) && signerOf(envOf(c), c.inv).status === 'signed') ? '<button class="btn" type="button" data-action="ivf-back">Back</button>' : '';
+      // step returns to the portal, so the pre-filled form can be left without finishing it (the page has no menu). The same
+      // for an investor on file's invitation to subscribe (plan 06-29): its Welcome returns to the portal that offers it.
+      const back = upView ? '<button class="btn" type="button" data-action="ivf-taxanswers">Back</button>' : n === 0 && (c.it.taxRequest || c.it.existing) && key !== 'done' ? '<button class="btn" type="button" data-action="ivf-leave">Back</button>' : n > 0 && key !== 'done' && !(key === 'subscribe' && c.req && envOf(c) && signerOf(envOf(c), c.inv) && signerOf(envOf(c), c.inv).status === 'signed') ? '<button class="btn" type="button" data-action="ivf-back">Back</button>' : '';
       const submit = { welcome: 'Get started', tax: key === 'tax' && !upView && taxKey(c, o.d) ? 'Continue to the form' : '', subscribe: c.req ? 'Continue' : tplReady(c) ? 'Continue to the agreement' : 'Sign and submit subscription' }[key] || (steps[n + 1] === 'done' ? 'Finish' : 'Continue');
       const saved = key === 'welcome' ? '' : '<p class="ivf-saved">Your progress is saved. You can come back with your invitation link at any time.</p>';
       const inner =
@@ -3476,10 +3484,10 @@
     const f = document.getElementById(`ob-e8Owner${n}Name`);
     if (f) f.focus();
   };
-  /** Back on the first step of a tax-form request: to the portal it was opened from (its done screen goes there too). */
+  /** Back on the first step of a tax-form request or an investor on file's invitation: to the portal it is offered on (its done screen goes there too). */
   NS.actions['ivf-leave'] = () => {
     const c = fctx();
-    if (!c || !c.it.taxRequest || ob().busy) return;
+    if (!c || !(c.it.taxRequest || c.it.existing) || ob().busy) return;
     NS.app.go('overview');
   };
   NS.actions['ivf-taxanswers'] = () => {
@@ -3617,11 +3625,14 @@
   // An active investor invited to subscribe to a new offering finds the invitation on their Investments page too.
   if (ED.diy) {
     NS.hooks.investmentsTop.push((inv) => {
-      const it = inv && inv.onboarding.status === 'complete' ? openFor(W(), inv) : null;
+      const ws = W();
+      const it = inv && inv.onboarding.status === 'complete' ? openFor(ws, inv) || remoteOpen(ws, inv) : null;
+      // Server mode (plan 06-29): the invitation this device opened has no token here; its page is opened by its key.
+      const href = it ? `#invite-${h(it.token || ws.invite.key)}` : '';
       // Plan 06-26: the sponsor asked for the investor's tax form again
-      if (it && it.taxRequest) return `<div class="done-box ivf-invited"><p class="lede">${h(T().shortName)} asked you for your tax form.</p><a class="btn btn-primary" href="#invite-${h(it.token)}">Complete your tax form</a></div>`;
-      const o = it && W().offerings.find((x) => x.id === it.offeringId && x.status === 'Raising');
-      return o ? `<div class="done-box ivf-invited"><p class="lede">${h(T().shortName)} invited you to subscribe to ${h(o.name)}.</p><a class="btn btn-primary" href="#invite-${h(it.token)}">Continue your subscription</a></div>` : '';
+      if (it && it.taxRequest) return `<div class="done-box ivf-invited"><p class="lede">${h(T().shortName)} asked you for your tax form.</p><a class="btn btn-primary" href="${href}">Complete your tax form</a></div>`;
+      const o = it && ws.offerings.find((x) => x.id === it.offeringId && x.status === 'Raising');
+      return o ? `<div class="done-box ivf-invited"><p class="lede">${h(T().shortName)} invited you to subscribe to ${h(o.name)}.</p><a class="btn btn-primary" href="${href}">Continue your subscription</a></div>` : '';
     });
   }
 
