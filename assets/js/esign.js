@@ -2420,7 +2420,7 @@
         .map((f) => (f.signerId === s.id ? myFieldHTML(env, s, f, st, preview || st.busy) : filledFieldHTML(env, f, s)))
         .join('');
     // The guide (Start, Next, what is left, Finish, zoom) is signflow.js; it also marks the fields once the page is drawn.
-    return wrap(`${note}${NS.signflow.barHTML(env, s, st, { ctx: opts.ctx, preview })}
+    return wrap(`${note}${NS.signflow.barHTML(env, s, st, { ctx: opts.ctx, preview, back: opts.back })}
       <div class="es-doc es-doc-sign">${pagesHTML(env, layer)}</div>`);
   }
   /* What the signing guide (signflow.js) reads from this file. */
@@ -2822,11 +2822,12 @@
   /* ---------- Signing inside another page (the investor onboarding flow, onboarding.js) ---------- */
   const flowSigner = (env, investorId) => (env ? env.signers.find((x) => x.investorId === investorId) || null : null);
   /** The signing experience for an investor, without the portal page around it. */
-  function embed(envId, investorId) {
+  // back: the action of the step's Back (onboarding.js), drawn in the signing guide so it stays on screen beside the progress.
+  function embed(envId, investorId, back) {
     const env = envById(W(), envId);
     const s = flowSigner(env, investorId);
     if (!env || !s) return `<section class="es-card"><h2>This document is not available</h2><p>Contact ${h(T().support.team)} at ${h(T().support.email)}.</p></section>`;
-    return signHTML(env, s, { ctx: 'flow' });
+    return signHTML(env, s, { ctx: 'flow', back });
   }
   /** What the signing page does after it renders: the first view is recorded, and focus goes where signing left it. */
   function embedAfter(envId, investorId) {

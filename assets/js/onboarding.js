@@ -2270,7 +2270,7 @@
   function fTaxSign(c, env) {
     return `${ivfH1(FL.tax)}
       <p class="lede">Check your Form ${h((env.taxForm && env.taxForm.form) || 'W-9')}, sign it, then select Finish.</p>
-      ${NS.esign.embed(env.id, c.inv.id)}`;
+      ${NS.esign.embed(env.id, c.inv.id, 'ivf-taxanswers')}`;
   }
   /** The answers without the tax numbers, in key order: what BUILT keeps and compares (memory only). */
   const plainAnswers = (a) => JSON.stringify(Object.keys(a).filter((k) => !secretAnswer(k)).sort().map((k) => [k, a[k]]));
@@ -2452,7 +2452,7 @@
     return `${ivfH1(FL.agreement)}
       <p class="lede">${declined ? `You declined to sign. ${h(c.ws.tenant.support.team)} has been told and will contact you; you can also reach them at ${h(c.ws.tenant.support.email)}.` : 'Select Start to go to each field that needs you, then Finish.'}</p>
       ${c.fl.resignAt && !declined ? '<p class="meta ivf-why">The copy you signed earlier could not be sent from this device, so this is a new copy to sign. Your details and commitment are the same.</p>' : ''}
-      ${env ? NS.esign.embed(env.id, c.inv.id) : ''}`;
+      ${env ? NS.esign.embed(env.id, c.inv.id, 'ivf-back') : ''}`;
   }
   function fDone(c) {
     const t = c.ws.tenant;

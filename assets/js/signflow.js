@@ -86,6 +86,7 @@
           <button class="sf-zoom-btn" type="button" data-action="sf-zoom" data-d="1" aria-label="Zoom in"${z === ZOOMS[ZOOMS.length - 1] ? ' disabled' : ''}>${PLUS}</button>
         </div>
         <div class="sf-acts">
+          ${o.back ? `<button class="${cls(false, 'sf-back')}" type="button" data-action="${h(o.back)}">Back</button>` : ''}
           <button class="${cls(m.left > 0, 'sf-next')}" type="button" data-action="es-next"${o.preview || st.busy ? ' disabled' : ''}${m.left || m.open ? '' : ' hidden'}><span>${st.started ? 'Next' : 'Start'}</span>${icon('arrow')}</button>
           <button class="${cls(!m.left, 'es-finish sf-finish')}" type="button" data-action="es-finish" ${ids}${o.preview || st.busy ? ' disabled' : ''}${m.left ? ' aria-disabled="true"' : ''}>${st.busy ? 'Finishing…' : 'Finish'}</button>
         </div>

@@ -446,7 +446,8 @@
   .sf-bar.has-tray .sf-status, .sf-bar.has-tray .sf-zoom { align-self: center; }
   .sf-bar .sf-acts .btn, .sf-bar .sf-acts .cs-btn { flex: 1 1 auto; padding-left: var(--space-md); padding-right: var(--space-md); }
   .sf-bar .sf-acts .sf-next { flex-grow: 3; }
-  .sf-bar.has-tray .sf-finish[aria-disabled="true"] { display: none; }
+  .sf-bar .sf-acts .sf-back { flex: none; }
+  .sf-bar.has-tray .sf-finish[aria-disabled="true"], .sf-bar.has-tray .sf-back { display: none; }
   .sf-zoom-fit { display: none; }
   .es-sign-row .es-decline { margin-left: calc(var(--space-md) * -1); }
   /* Inside the wizard the tray runs to the panel's edges, so the page is as wide as the phone allows. */
