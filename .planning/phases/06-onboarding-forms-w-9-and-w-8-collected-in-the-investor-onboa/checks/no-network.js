@@ -166,14 +166,14 @@ function part(spec) {
     await A.page.screenshot({ path: path.join(OUT, `${spec.id}-${v.signing && v.pages ? 'signing' : 'error'}.png`), fullPage: false });
     check(`Continue opens the signing view with the filled ${spec.form} drawn in the page and no error on screen`, v.signing && v.pages >= 1 && !v.error, v);
     const files = await readTaxFiles(fr, inv.investorId);
-    check(`the filled ${spec.form} is a PDF with no form field left, written in the embedded Unicode font`, !!files.filled && files.filled.head === '%PDF-' && files.filled.fields === 0 && files.filled.fonts.some((f) => /^\/DejaVuSans$/.test(f)) && !!files.env && files.env.form === spec.form, { env: files.env, filled: files.filled });
+    check(`the filled ${spec.form} is a PDF with no form field left, written in the embedded Unicode font`, !!files.filled && files.filled.head === '%PDF-' && files.filled.fields === 0 && files.filled.fonts.some((f) => /^\/DejaVuSans(-\d+)?$/.test(f)) && !!files.env && files.env.form === spec.form, { env: files.env, filled: files.filled });
     if (v.signing && v.pages && files.sigFid) {
       await sign(fr, files.sigFid);
       await Lib.finishTaxForm(fr);
       const next = await Lib.heading(fr);
       check('finishing the signed form moves on to the next step', next === 'Distribution payments', next);
       const after = await readTaxFiles(fr, inv.investorId);
-      check(`the signed ${spec.form} is stored and its added text uses the embedded Unicode fonts, regular and bold`, !!after.signed && after.signed.head === '%PDF-' && after.signed.fonts.some((f) => /^\/DejaVuSans$/.test(f)) && after.signed.fonts.some((f) => /^\/DejaVuSans-Bold$/.test(f)), { env: after.env, signed: after.signed });
+      check(`the signed ${spec.form} is stored and its added text uses the embedded Unicode fonts, regular and bold`, !!after.signed && after.signed.head === '%PDF-' && after.signed.fonts.some((f) => /^\/DejaVuSans(-\d+)?$/.test(f)) && after.signed.fonts.some((f) => /^\/DejaVuSans-Bold(-\d+)?$/.test(f)), { env: after.env, signed: after.signed });
     } else check(`the ${spec.form} could be signed and finished`, false, 'the signing view never opened');
     const refused = await fr.evaluate(() => window.__cspv.slice());
     check('no fetch or XHR was attempted (no refused connection) on the whole way', refused.length === 0, refused);
