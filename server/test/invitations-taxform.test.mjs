@@ -246,3 +246,64 @@ test('an investor already on file brings back no tax form (the console keeps the
     assert.ok(!('env-t1-signed' in got.body.files), 'no signed tax copy');
     assert.equal((got.body.docs || []).filter((d) => d.cat === 'Tax').length, 0, 'no tax listing');
   }));
+
+// Plan 06-23 (D-01, D-30, T-06-51): a tax form the investor completed elsewhere and uploaded instead (onboarding.js stores it
+// as tax-<investor id>-<time in base 36> and names it in investor.taxCert { uploaded: true, fileId }). The server keeps that
+// one file as evidence (a PDF, PNG or JPEG), sealed like the rest; any other tax- file is dropped unread.
+const jpeg = Buffer.from('ffd8ffe000104a46494600010100000100010000ffd9', 'hex');
+const UP = 'tax-HRC-0042-mh2x1q';
+/** The completion of an investor who uploaded their form (no tax envelope): the file under id, the record naming named. */
+function uploadSub(buf, { id = UP, named = id, cert = {} } = {}) {
+  const s = submission({ taxEnvelope: null, docs: [] });
+  s.investor = Object.assign({}, s.investor, { taxForm: 'W-8IMY', taxCert: Object.assign({ form: 'W-8IMY', uploaded: true, fileId: named, fileName: 'W-8IMY Kittiwake.pdf', at: '2026-11-10T12:10:00Z' }, cert) });
+  s.files = { 'env-s1-work': pdf('AGREEMENT SIGNED').toString('base64'), [id]: buf.toString('base64') };
+  return s;
+}
+
+test('an uploaded tax form named by investor.taxCert.fileId under the record’s investor id reaches the pickup as evidence (PDF, PNG or JPEG), sealed at rest', () =>
+  start(async (base, server) => {
+    for (const [what, buf] of [['a PDF', pdf('UPLOADED W-8IMY')], ['a PNG', png], ['a JPEG', jpeg]]) {
+      const { r, c, got } = await run(base, uploadSub(buf));
+      assert.deepEqual(c.body, { ok: true }, `${what}: ${JSON.stringify(c.body)}`);
+      assert.equal(got.status, 200);
+      assert.equal(got.body.files[UP], buf.toString('base64'), `${what}: the upload comes back byte for byte`);
+      assert.equal(got.body.investor.taxCert.fileId, UP, `${what}: the record still names it`);
+      agreementIntact(got.body, what);
+      assert.equal(got.body.taxEnvelope, null, `${what}: no tax envelope`);
+      const rec = server.store.get('invitations', r.id);
+      for (const k of rec.submissionBlobs) assert.ok(!server.store.getBlob(k).includes(Buffer.from('UPLOADED W-8IMY')), `${what}: ${k} is sealed`);
+    }
+  }));
+
+test('a tax- file the record does not name, another investor’s, an uppercase id, an empty suffix, one not marked uploaded or for an investor on file is dropped; the subscription is unaffected', () =>
+  start(async (base) => {
+    const cases = [
+      ['another investor’s id', uploadSub(pdf('OTHER'), { id: 'tax-HRC-0099-mh2x1q' })],
+      ['a file the record does not name', uploadSub(pdf('UNNAMED'), { id: 'tax-HRC-0042-zz9', named: UP })],
+      ['no file named at all', uploadSub(pdf('UNNAMED'), { cert: { fileId: undefined } })],
+      ['an uppercase id', uploadSub(pdf('UPPER'), { id: 'tax-HRC-0042-MH2X1Q' })],
+      ['an empty suffix', uploadSub(pdf('EMPTY'), { id: 'tax-HRC-0042-' })],
+      ['a lookalike prefix', uploadSub(pdf('LOOKALIKE'), { id: 'tax-HRC-00420-mh2x1q' })],
+      ['not marked uploaded', uploadSub(pdf('NOT UPLOADED'), { cert: { uploaded: false } })]
+    ];
+    for (const [what, s] of cases) {
+      const id = Object.keys(s.files).find((k) => k !== 'env-s1-work');
+      const { c, got } = await run(base, s);
+      assert.deepEqual(c.body, { ok: true }, `${what}: the completion still succeeds (${JSON.stringify(c.body)})`);
+      assert.ok(!(id in got.body.files), `${what}: ${id} is dropped`);
+      assert.deepEqual(Object.keys(got.body.files), ['env-s1-work'], `${what}: only the agreement arrives`);
+      agreementIntact(got.body, what);
+    }
+    // An investor already on file keeps the tax form the console holds: their upload is not taken.
+    const { c, got } = await run(base, uploadSub(pdf('ON FILE')), { investor: Object.assign({}, INVESTOR, { existing: { accredited: true, accreditedUntil: '2027-03-01', holds: true } }), invitation: { cents: 6000000, existing: true, expiresAt: new Date(T0 + 30 * DAY).toISOString() } });
+    assert.equal(c.status, 200, JSON.stringify(c.body));
+    assert.ok(!(UP in got.body.files), 'an investor on file: the upload is dropped');
+  }));
+
+test('a named upload that is not a PDF, PNG or JPEG is refused (400), as other evidence is', () =>
+  start(async (base) => {
+    const r = await invite(base);
+    const c = await complete(base, r.token, uploadSub(Buffer.from('GIF89a not one of the three')));
+    assert.equal(c.status, 400, JSON.stringify(c.body));
+    assert.match(String(c.body.error), new RegExp(`files\\.${UP} is not a PDF, PNG or JPEG`));
+  }));

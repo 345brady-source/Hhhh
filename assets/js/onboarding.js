@@ -2407,7 +2407,7 @@
     } else if (c.closed) next.push(`${closedName} stopped accepting subscriptions before you reached that step, so no subscription was made. ${h(t.support.team)} has been told and will contact you about it.`);
     else next.push('Your investments, distributions, statements and tax documents will appear in your portal.');
     // Evidence the integration server could not take with the rest (sendCompletion): the investor hears it from this page first.
-    const unsent = (c.fl.unsent || []).map((k) => (k === 'identity' ? 'the ID you uploaded' : k === 'rep' ? 'the acknowledgment of your purchaser representative you uploaded' : k === 'tax' ? (c.inv.taxForm ? `the Form ${h(c.inv.taxForm)} you signed` : 'the tax form you signed') : 'the verification letter you uploaded'));
+    const unsent = (c.fl.unsent || []).map((k) => (k === 'identity' ? 'the ID you uploaded' : k === 'rep' ? 'the acknowledgment of your purchaser representative you uploaded' : k === 'tax' ? (c.inv.taxForm ? `the Form ${h(c.inv.taxForm)} you signed` : 'the tax form you signed') : k === 'taxup' ? (c.inv.taxForm && c.inv.taxForm !== 'Tax form' ? `the Form ${h(c.inv.taxForm)} you uploaded` : 'the tax form you uploaded') : 'the verification letter you uploaded'));
     if (unsent.length) next.push(`${unsent.join(' and ').replace(/^t/, 'T')} could not be sent with your details, so ${h(t.support.team)} may ask you for ${unsent.length > 1 ? 'them' : 'it'} again.`);
     next.push(`Questions? ${h(t.support.team)}${t.support.email ? ` at ${h(t.support.email)}` : ''}${t.support.phone ? ` or ${h(t.support.phone)}` : ''}.`);
     const lede = c.it.existing
@@ -2553,8 +2553,12 @@
     delete W8MEM[i.id];
     delete TINS[i.id];
     ['tin', 'ownerTin', 'ftin', 'w8UsTin', 'e8UsTin'].concat(E8_OWNER_TINS).forEach((k) => (d[k] = ''));
+    // An upload this one replaces leaves this browser's file store (plan 06-23, research Pitfall 2: a completed form carries
+    // the full taxpayer ID, and nothing points at it any more).
+    const prev = i.taxCert && i.taxCert.uploaded === true && typeof i.taxCert.fileId === 'string' && i.taxCert.fileId !== id && new RegExp(`^tax-${reEsc(i.id)}-[a-z0-9]+$`).test(i.taxCert.fileId) ? i.taxCert.fileId : '';
     i.taxForm = form;
     i.taxCert = { form, uploaded: true, fileId: id, fileName: up.name, at: nowIso() };
+    if (prev) await NS.ops.files.del(prev).catch(() => {});
     i.taxType = usTax(c, d) ? (PERSONAL(d.type) ? 'us-individual' : 'us-entity') : PERSONAL(d.type) ? 'foreign-individual' : 'foreign-entity';
     log('Tax form uploaded', form === 'Tax form' ? 'a completed tax form' : `Form ${form}, completed outside the portal`);
   }
@@ -2798,6 +2802,29 @@
     const so = r && r.qual && typeof r.qual === 'object' ? r.qual.sophistication : null;
     return so && typeof so === 'object' && so.rep && typeof so.rep === 'object' ? so.rep : null;
   };
+  /**
+   * Research Pitfall 2 (plan 06-23, T-06-50): once the firm has confirmed it received the investor's details, this device (it
+   * may be a shared computer) keeps no copy that carries the full taxpayer ID. Every file of this investor's tax envelopes
+   * goes (the filled form, its work and signed copies, the files of a form voided on the way), and the tax form they uploaded
+   * instead (tax-<investor id>-<time>); so do the Documents entries for them, and the envelopes, which would point at files
+   * no longer here. Called only after the send is confirmed: a send that fails keeps everything, so Try again sends the same
+   * file.
+   */
+  async function wipeTax(c, tc) {
+    const ws = c.ws;
+    const i = c.inv;
+    const envs = (ws.envelopes || []).filter((e) => e.kind === 'tax' && !!signerOf(e, i));
+    const ids = new Set();
+    envs.forEach((e) => [e.docId, e.workDocId, e.signedDocId, `${e.id}-orig`, `${e.id}-work`, `${e.id}-signed`].forEach((x) => x && String(x).indexOf(e.id) === 0 && ids.add(String(x))));
+    if (tc && typeof tc.fileId === 'string' && new RegExp(`^tax-${reEsc(i.id)}-[a-z0-9]+$`).test(tc.fileId)) ids.add(tc.fileId);
+    if (NS.ops && NS.ops.files) await Promise.all(Array.from(ids).map((id) => NS.ops.files.del(id).catch(() => {})));
+    const gone = new Set(envs.map((e) => e.id));
+    ws.envelopes = (ws.envelopes || []).filter((e) => !gone.has(e.id));
+    ws.docs = (ws.docs || []).filter((d) => !(d.envelopeId && gone.has(d.envelopeId)) && !ids.has(d.id));
+    gone.forEach((id) => delete BUILT[id]);
+    delete c.fl.taxEnvelopeId;
+    delete c.fl.taxView;
+  }
   async function sendCompletion(c) {
     const ws = c.ws;
     const i = c.inv;
@@ -2814,6 +2841,10 @@
     const taxEnv = tc && !tc.uploaded && tc.signed === true && tc.envelopeId ? (ws.envelopes || []).find((e) => e.id === tc.envelopeId && e.kind === 'tax' && e.status === 'completed' && e.signedDocId === `${e.id}-signed` && !!signerOf(e, i)) || null : null;
     const taxId = taxEnv ? taxEnv.signedDocId : '';
     if (taxId && ids.indexOf(taxId) < 0) ids.push(taxId);
+    // Or the tax form they uploaded instead of filling one in (plan 06-23, D-01): the file their record names under their own
+    // tax- name (the integration server and the console take no other), a PDF, PNG or JPEG.
+    const upId = tc && tc.uploaded === true && typeof tc.fileId === 'string' && new RegExp(`^tax-${reEsc(i.id)}-[a-z0-9]+$`).test(tc.fileId) ? tc.fileId : '';
+    if (upId && ids.indexOf(upId) < 0) ids.push(upId);
     // Then the investor's evidence: the ID or verification letter they uploaded for the firm to review.
     const v = i.verify || {};
     const kindOf = {};
@@ -2854,6 +2885,11 @@
         unsent.push({ kind: 'tax', name: (taxEnv.taxForm && taxEnv.taxForm.form) || tc.form || '', why: !b ? 'could not be read from the storage of the investor’s browser' : !fits ? (b.size > MAX_FILES ? `is ${mb(b.size)} MB, more than the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser` : `did not fit in the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser with the rest of their details`) : 'is not a PDF file' });
         continue;
       }
+      if (id === upId) {
+        // The uploaded tax form that cannot go never stops the completion either: reported like unsent evidence (below).
+        unsent.push({ kind: 'taxup', name: tc.form && tc.form !== 'Tax form' ? tc.form : '', file: str(tc.fileName, 120), why: !b ? 'could not be read from the storage of the investor’s browser' : !fits ? (b.size > MAX_FILES ? `is ${mb(b.size)} MB, more than the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser` : `did not fit in the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser with the rest of their details`) : 'is not a PDF, PNG or JPEG file' });
+        continue;
+      }
       if (id === agreement) {
         // Never sent without the agreement signed here: the firm could neither countersign nor accept the subscription.
         // The investor is told why, and who to contact (Try again cannot make the file smaller). code: 'missing' (gone from
@@ -2878,15 +2914,23 @@
     }
     // Evidence left on this device: the firm's copy of the record says what happened and to ask the investor for it, and
     // points at no file (the console would offer a file it never received). This device's own record is left as it is.
-    const what = (x) => (x.kind === 'tax' ? `the Form ${x.name || 'tax form'} the investor signed` : `${x.kind === 'identity' ? 'the ID' : x.kind === 'rep' ? 'the written acknowledgment of their purchaser representative' : 'the verification letter'} the investor uploaded${x.name ? ` (${x.name})` : ''}`);
+    const what = (x) => (x.kind === 'tax' ? `the Form ${x.name || 'tax form'} the investor signed` : x.kind === 'taxup' ? `the ${x.name ? `Form ${x.name}` : 'tax form'} the investor uploaded${x.file ? ` (${x.file})` : ''}` : `${x.kind === 'identity' ? 'the ID' : x.kind === 'rep' ? 'the written acknowledgment of their purchaser representative' : 'the verification letter'} the investor uploaded${x.name ? ` (${x.name})` : ''}`);
     // The signed tax form that stays on this device: the firm's copy of the record says so in one line (its envelope and copy
     // are not sent, so the firm's console says the copy was not received).
     unsent.filter((x) => x.kind === 'tax').forEach((x) => {
       if (investor.taxCert && typeof investor.taxCert === 'object') investor.taxCert.note = `${what(x).replace(/^t/, 'T')} ${x.why}, so it was not sent with their details. Ask the investor for it.`;
     });
-    const evidence = unsent.filter((x) => x.kind !== 'tax');
+    // The uploaded tax form that stays on this device: the same one line, and the firm's copy points at no file (the console
+    // says the upload was not received).
+    unsent.filter((x) => x.kind === 'taxup').forEach((x) => {
+      if (!investor.taxCert || typeof investor.taxCert !== 'object') return;
+      investor.taxCert.note = `${what(x).replace(/^t/, 'T')} ${x.why}, so it was not sent with their details. Ask the investor for it.`;
+      delete investor.taxCert.fileId;
+      delete investor.taxCert.fileName;
+    });
+    const evidence = unsent.filter((x) => x.kind !== 'tax' && x.kind !== 'taxup');
     unsent.forEach((x) => {
-      if (x.kind === 'rep' || x.kind === 'tax') return;
+      if (x.kind === 'rep' || x.kind === 'tax' || x.kind === 'taxup') return;
       const r = investor.verify && investor.verify[x.kind];
       if (!r || typeof r !== 'object') return;
       const note = `${what(x).replace(/^t/, 'T')} ${x.why}, so it was not sent with their details. Ask the investor for it.`;
@@ -2917,10 +2961,17 @@
     };
     // One entry in the firm's change log for it (on the payload only: a retry must not log it twice on this device).
     if (evidence.length) payload.audit.push({ at: nowIso(), actor: 'Portal (automatic)', action: 'Uploaded evidence not sent', detail: `${i.title}: ${evidence.map((x) => `${what(x)} ${x.why}`).join('; ')}; ask the investor for ${evidence.length > 1 ? 'them' : 'it'}`, fund: c.off ? c.off.id : c.it.offeringId || '', record: i.id });
-    unsent.filter((x) => x.kind === 'tax').forEach((x) => payload.audit.push({ at: nowIso(), actor: 'Portal (automatic)', action: 'Signed tax form not sent', detail: `${i.title}: ${what(x)} ${x.why}; ask the investor for it`, fund: c.off ? c.off.id : c.it.offeringId || '', record: i.id }));
+    unsent.filter((x) => x.kind === 'tax' || x.kind === 'taxup').forEach((x) => payload.audit.push({ at: nowIso(), actor: 'Portal (automatic)', action: x.kind === 'tax' ? 'Signed tax form not sent' : 'Uploaded tax form not sent', detail: `${i.title}: ${what(x)} ${x.why}; ask the investor for it`, fund: c.off ? c.off.id : c.it.offeringId || '', record: i.id }));
     await remote.complete(ws.invite.server, ws.invite.token, payload);
     c.fl.sentAt = nowIso();
     if (unsent.length) c.fl.unsent = unsent.map((x) => x.kind);
+    // The send is confirmed: no copy of the full taxpayer ID stays on this device (research Pitfall 2).
+    // A wipe that fails never turns the confirmed send into an error.
+    try {
+      await wipeTax(c, tc);
+    } catch (e) {
+      if (window.console) console.error(e);
+    }
     // This device keeps only what the summary shows (the last four digits of the bank account), and never the
     // invitation token: on a shared device the next person finds the summary, not the investor's details.
     if (i.payment && i.payment.bank) i.payment.bank = Object.assign({}, i.payment.bank, { account: '****' + U.last4(i.payment.bank.account), routing: '****' + U.last4(i.payment.bank.routing), holder: '' });

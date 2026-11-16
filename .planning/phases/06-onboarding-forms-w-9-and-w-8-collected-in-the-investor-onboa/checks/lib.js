@@ -279,7 +279,8 @@ async function walk(page, answers) {
       // A person's account asks for the date of birth; an IRA, trust or entity asks for its custodian or place of formation.
       if (await page.locator('#ob-dob').count()) await page.fill('#ob-dob', '1980-04-02');
       if ((await page.locator('#ob-formation').count()) && !(await page.inputValue('#ob-formation'))) await page.fill('#ob-formation', 'Harbor Trust Company');
-      await page.fill('#ob-tin', '123456789');
+      // a.tin: the taxpayer ID typed here (plan 06-23 searches the device for one no other answer contains)
+      await page.fill('#ob-tin', a.tin || '123456789');
       await page.check('input[name="ob-pep"][value="no"]');
     } else if (/Identity verification/.test(hd)) {
       await sandbox(page, 'identity', 'passed');
@@ -314,8 +315,13 @@ async function walk(page, answers) {
         await page.fill('#ob-taxSig', a.name);
       } else {
         // Plan 06-16: the answers view continued as it stands, then the official form finished without a signature (D-30),
-        // or signed first when a.taxSign(page) is given (plan 06-22).
+        // or signed first when a.taxSign(page) is given (plan 06-22); a.taxStep(page) works the whole step itself and moves
+        // on (plan 06-23: an upload instead of the form).
         if (a.onFilled) await a.onFilled(hd);
+        if (a.taxStep) {
+          await a.taxStep(page);
+          continue;
+        }
         await submit(page);
         await finishTaxForm(page, a.taxSign);
         continue;
@@ -493,6 +499,7 @@ async function inviteFromConsole(page, o) {
   await page.selectOption('#iv-off', o.offeringId);
   await page.waitForTimeout(300);
   if (o.type) await page.selectOption('#iv-type', o.type);
+  if (o.account) await page.fill('#iv-title', o.account);
   if (o.amount) await page.fill('#iv-amt', String(o.amount));
   await page.click('.inv8-form[data-form="invite-one"] button[type=submit]');
   await page.waitForFunction((email) => {
