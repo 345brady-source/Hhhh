@@ -895,9 +895,18 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
     await prepareAgreement(ws, o, opts);
     return o;
   }
+  /**
+   * A title or file name that reads as a subscription agreement: "subscription" or "subscriber" anywhere; any word
+   * starting "subscr" (so a misspelt "Subscrpition" still reads); or "sub" before agreement, agmt, doc(s), document(s),
+   * booklet, packet or package, joined or separated by spaces, underscores, dots or hyphens ("Sub_Docs", "SubDocs").
+   * The two "subscr"/"sub" parts need a non-letter before them, so "Unsubscribe" does not read as one; "Substitute",
+   * "Subordination" or "Sublease" do not either ("sub" is not followed by one of the words above).
+   * Shared with the agreement dialog's pre-selection (esign.js), so both decide alike. No g or y flag: test() keeps no state.
+   */
+  const AGREEMENT_NAME = /subscri(?:ption|ber)|(?:^|[^a-z])subscr|(?:^|[^a-z])sub[\s_.-]*(?:agreements?|agmt|docs?|documents?|booklet|packet|package)(?![a-z])/i;
   /** A PDF among an offering's documents that reads as its subscription agreement (by its name), newest first. */
   function agreementDoc(ws, o) {
-    const named = /subscri(ption|ber)|\bsub[\s_.-]*(agreement|agmt|docs?)\b/i;
+    const named = AGREEMENT_NAME;
     return (
       (ws.docs || [])
         .slice()
@@ -1094,5 +1103,6 @@ Reporting. Members will receive quarterly reports and annual Schedule K-1s. The 
   NS.intake.pageTexts = pageTexts;
   NS.intake.agreementPart = agreementPart;
   NS.intake.agreementReading = (offeringId) => readings.get(offeringId) || null;
+  NS.intake.agreementName = AGREEMENT_NAME;
   NS.readingFetch = readingFetch;
 })(window.CVPortal);
