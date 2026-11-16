@@ -3154,8 +3154,8 @@
               ${seg('Appearance', 'appearance', [['system', 'Follow device'], ['light', 'Light'], ['dark', 'Dark']])}
             </div>`)}
             ${panel('Investor onboarding', `<div class="cs-grid">
-              ${tCheck('Ask for accreditation', 'onboarding.accreditation', 'Regulation D 506(b) and 506(c) offerings.')}
-              ${tCheck('Collect a substitute W-9 certification', 'onboarding.taxForm')}
+              ${tCheck('Ask for accreditation', 'onboarding.accreditation', E.diy ? 'Rule 506(b) and Regulation A Tier 2 offerings always ask, and Rule 506(c) offerings verify it. Turn this on to ask in every other invitation too.' : 'Regulation D 506(b) and 506(c) offerings.')}
+              ${/* Self-serve: no switch for the tax step. Every investor needs a W-9 or W-8 before distributions (owner, plan 06-24); the managed edition keeps it (C-03). */ E.diy ? '' : tCheck('Collect a substitute W-9 certification', 'onboarding.taxForm')}
               ${tCheck('Require consent to electronic delivery', 'onboarding.esign')}
               ${seg('Direct deposit', 'onboarding.ach', [['required', 'Required'], ['optional', 'Optional (check allowed)']])}
             </div>`)}
