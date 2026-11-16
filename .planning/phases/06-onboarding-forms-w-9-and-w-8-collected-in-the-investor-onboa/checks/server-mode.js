@@ -6,7 +6,8 @@
 // the portal page listing the server as the firm publishes it) opens the ?server= link, answers the status step,
 // subscribes and signs; the console imports with its own "Check now" and counts the answers exactly as in local mode.
 // Plan 06-22 (research Pattern 6): the investor's signed tax form travels with the completion (parts tax-w9, tax-unsigned).
-//   NODE_PATH=$(npm root -g) node server-mode.js [--only b506,regA,full,existing,withdraw,repack,clean,signed,tax-w9,tax-unsigned]
+// Plan 06-23 (research Pitfall 2): after a confirmed send the device keeps no copy of the full taxpayer ID (part tax-wipe).
+//   NODE_PATH=$(npm root -g) node server-mode.js [--only b506,regA,full,existing,withdraw,repack,clean,signed,tax-w9,tax-unsigned,tax-wipe]
 // The last line is "SERVER MODE: PASS (parts run: N)" or "SERVER MODE: FAIL (parts run: N) - <failed parts>".
 const path = require('path');
 const fs = require('fs');
@@ -68,6 +69,14 @@ L.describeShots([
   ['tax-toolarge-subscribe.png', 'Investor’s device: subscribe step (signed W-9 too large to send).'],
   ['tax-toolarge-done.png', 'Investor’s device, done screen: "The Form W-9 you signed could not be sent with your details".'],
   ['tax-toolarge-console.png', 'Console Investors page: the investor row reads "W-9 signed, copy not received: ask the investor for it".'],
+  ['tax-wipe-status.png', 'Investor’s device (server mode, plan 06-23): status step before the W-9 is built, left by Back, and signed.'],
+  ['tax-wipe-subscribe.png', 'Investor’s device: subscribe step after signing the second W-9.'],
+  ['tax-wipe-done.png', 'Investor’s device: done screen; after the confirmed send it holds no tax file and no Documents entry for it.'],
+  ['tax-wipe-console.png', 'Console Investors page: "W-9 signed <date> · Download"; the Download returns the bytes the device sent before wiping its copy.'],
+  ['tax-keep-status.png', 'Investor’s device: status step (the integration server is stopped before the agreement is finished).'],
+  ['tax-keep-subscribe.png', 'Investor’s device: subscribe step (server stopped later).'],
+  ['tax-keep-failed.png', 'Investor’s device with the integration server stopped: "We could not send your details ... Check your connection, then try again." with Try again; nothing deleted.'],
+  ['tax-keep-done.png', 'Investor’s device: done screen after Try again with the server back; the same signed W-9 was sent.'],
   ['clean-status.png', 'Investor’s device with 35 other non-accredited purchasers on the console: status step answered "not accredited", no warning and nothing about the others.']
 ]);
 fs.mkdirSync(SHOTS, { recursive: true });
@@ -202,9 +211,67 @@ async function consoleTaxRow(page, email, shot) {
 }
 const sha256 = (b) => require('crypto').createHash('sha256').update(b).digest('hex');
 
+/* ---------- The device keeps no full taxpayer ID after a confirmed send (plan 06-23, research Pitfall 2) ---------- */
+
+/** The taxpayer ID the tax-wipe walk types at Investor information (no other answer of the walk contains it). */
+const WIPE_SSN = '468023917';
+/** The number in every way it can be written, and every piece of it longer than its last four digits (as forms-flow tin). */
+const WIPE_SSN_RE = ['468[-\\s.]?02[-\\s.]?3917', '468[-\\s.]?02', '02[-\\s.]?3917', '8023917', '680239'];
+
+/**
+ * What the investor's device holds that could carry the full taxpayer ID: every id in its file store (the portal's own
+ * IndexedDB store), its tax envelopes and their file ids, its Documents entries for them, the uploaded file the record
+ * names, the SHA-256 of one file (sha: its id), and which ways of writing the number appear anywhere in the workspace JSON,
+ * local storage or session storage.
+ */
+const deviceStore = (page, sha) =>
+  page.evaluate(
+    async ({ pats, sha }) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      const i = ws.investors[0] || {};
+      const keys = await new Promise((res) => {
+        const r = indexedDB.open('cvp-documents', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('files');
+        r.onerror = () => res(null);
+        r.onsuccess = () => {
+          const q = r.result.transaction('files', 'readonly').objectStore('files').getAllKeys();
+          q.onsuccess = () => res(q.result.map(String));
+          q.onerror = () => res(null);
+        };
+      });
+      const envs = (ws.envelopes || []).filter((e) => e.kind === 'tax').map((e) => ({ id: e.id, status: e.status, docId: e.docId || '', workDocId: e.workDocId || '', signedDocId: e.signedDocId || '' }));
+      const taxDocs = (ws.docs || []).filter((d) => d.cat === 'Tax' || envs.some((e) => e.id === d.envelopeId)).map((d) => d.id);
+      const tc = i.taxCert || null;
+      let digest = '';
+      const b = sha ? await NS.ops.files.get(sha) : null;
+      if (b) digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', await b.arrayBuffer())), (x) => x.toString(16).padStart(2, '0')).join('');
+      const ls = Object.keys(localStorage).map((k) => `${k}=${localStorage.getItem(k)}`).join('\n');
+      const ss = Object.keys(sessionStorage).map((k) => `${k}=${sessionStorage.getItem(k)}`).join('\n');
+      const all = `${JSON.stringify(ws)}\n${ls}\n${ss}`;
+      return { keys, envs, taxDocs, upload: tc && tc.fileId ? tc.fileId : '', sha: digest, hits: pats.filter((p) => new RegExp(p).test(all)) };
+    },
+    { pats: WIPE_SSN_RE, sha: sha || '' }
+  );
+/** The file-store ids that belong to a tax envelope seen on the device (by its id) or to a tax upload (tax-...). */
+const taxKeys = (keys, envIds) => (keys || []).filter((k) => /^tax-/.test(k) || envIds.some((id) => k.indexOf(id) === 0));
+/** Stop the integration server in place (its store stays), and start it again on the same address. */
+async function stopServer(srv) {
+  srv.server.closeAllConnections();
+  await new Promise((r) => srv.server.close(r));
+}
+async function startServer(srv) {
+  const port = Number(new URL(srv.base).port);
+  await new Promise((r, j) => {
+    srv.server.once('error', j);
+    srv.server.listen(port, '127.0.0.1', r);
+  });
+}
+
 /**
  * One server-mode case end to end. o: { tag, exemption, invite (extra form fields), answers (lib walk answers),
- * onStatus(page, R), onSubscribe(page, R), beforeImport(srv, inv, sub) }. Returns everything the part asserts on; the
+ * onStatus(page, R), onSubscribe(page, R), beforeImport(srv, inv, sub); plan 06-22: taxSign(page), onAnyStep(hd, page, R);
+ * plan 06-23: onFilledAny(hd, page, R), taxStep(page, R), finish(page, out) }. Returns everything the part asserts on; the
  * caller closes ctx.close().
  */
 async function serverFlow(S, check, o) {
@@ -257,13 +324,14 @@ async function serverFlow(S, check, o) {
     await ip.goto(inv.link);
     // Workspace keys in this browser's storage (the edition's prefix, then ws:<id>).
     out.storageBefore = await ip.evaluate(() => Object.keys(localStorage).filter((k) => /ws:/.test(k)));
-    const answers = Object.assign({}, o.answers, o.taxSign ? { taxSign: o.taxSign } : {}, {
+    const answers = Object.assign({}, o.answers, o.taxSign ? { taxSign: o.taxSign } : {}, o.taxStep ? { taxStep: () => o.taxStep(ip, out.R) } : {}, {
       name: who.name,
       onStep: async (hd) => {
         if (hd === 'Investor status' && o.onStatusStep) await o.onStatusStep(ip, out.R);
         if (o.onAnyStep) await o.onAnyStep(hd, ip, out.R);
       },
       onFilled: async (hd) => {
+        if (o.onFilledAny) await o.onFilledAny(hd, ip, out.R);
         if (hd === 'Investor status') {
           if (o.onStatus) await o.onStatus(ip, out.R);
           out.R.status = await L.screenText(ip);
@@ -291,7 +359,8 @@ async function serverFlow(S, check, o) {
       const r = ((window.CVPortal.state.ws || {}).requests || []).filter((x) => x.type === 'subscription').pop();
       return r ? JSON.parse(JSON.stringify(r.qual === undefined ? '(none)' : r.qual)) : '(no request)';
     });
-    out.done = await L.finishAgreement(ip);
+    // o.finish(page, out): the agreement finished another way (plan 06-23: the server stopped first, then Try again)
+    out.done = o.finish ? await o.finish(ip, out) : await L.finishAgreement(ip);
     await ip.screenshot({ path: path.join(SHOTS, `${o.tag}-done.png`), fullPage: true });
     out.row = await srv.waitCompleted(inv.serverId);
     out.storageAfter = await ip.evaluate(() => Object.keys(localStorage).filter((k) => /ws:/.test(k)));
@@ -1087,6 +1156,126 @@ const parts = {
       const row = await consoleTaxRow(G.A.page, INV.email, 'tax-toolarge-console.png');
       check('toolarge: the investor row says the signed copy was not received, with no Download', /W-9 signed, copy not received: ask the investor for it/.test(row.text) && row.downloads === 0, row.text.slice(0, 400));
       check('toolarge: no script error on either side', G.A.errors.length === 0 && G.B.errors.length === 0, { A: G.A.errors, B: G.B.errors });
+    } finally {
+      await G.close();
+    }
+  },
+
+  /**
+   * Plan 06-23 (research Pitfall 2, T-06-50): an investor may finish onboarding on a shared computer, so once the firm has the
+   * tax form the device keeps no copy of the full taxpayer ID. Two runs in server mode.
+   *  wipe  a U.S. individual (SSN 468-02-3917) builds the W-9, goes Back and types the number again (the first form is voided),
+   *        signs the second and completes. After the confirmed send the device's file store holds no file of any of its tax
+   *        envelopes and no tax upload, its Documents list has no tax entry, no tax envelope points at a file, and the
+   *        workspace JSON, local and session storage hold no run of the number. The signed W-9 still reached the console.
+   *  keep  the integration server is stopped before the agreement is finished: the send fails and nothing is deleted (the
+   *        tax files, the Documents entry, the signed copy's SHA-256); with the server back, Try again sends the same file
+   *        (SHA-256 equal on the server), and only then is it wiped.
+   */
+  async 'tax-wipe'({ check, S }) {
+    const answers = { acc: 'no', exp: 'Six years of private fund commitments', edu: 'Architect', rep: 'no', amount: 60000, tin: WIPE_SSN };
+    const F = await serverFlow(S, check, {
+      tag: 'tax-wipe',
+      exemption: 'Rule 506(b)',
+      answers,
+      taxSign: signTax,
+      onAnyStep: async (hd, p, R) => {
+        if (hd === 'Tax certification' && !R.backed) {
+          // the W-9 built from the answers, then Back: the number left memory with the form, so it is typed again (a change)
+          R.backed = true;
+          await L.submit(p);
+          await p.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 60000 });
+          await p.click('.ivf-tax-sign [data-action="ivf-taxanswers"]');
+          await p.waitForSelector('#ob-tin', { timeout: 20000 });
+          await p.fill('#ob-tin', WIPE_SSN);
+        }
+        if (hd === 'Distribution payments' && !R.tax) R.tax = await deviceTax(p);
+      },
+      finish: async (p, out) => {
+        const dv = out.R.tax || {};
+        out.R.before = await deviceStore(p, dv.env ? dv.env.signedDocId : '');
+        const done = await L.finishAgreement(p);
+        out.R.after = await deviceStore(p, dv.env ? dv.env.signedDocId : '');
+        return done;
+      }
+    });
+    try {
+      commonChecks(check, F);
+      const R = F.R;
+      const dv = R.tax || {};
+      const b = R.before || {};
+      const a = R.after || {};
+      const envIds = (b.envs || []).map((e) => e.id);
+      const voided = (b.envs || []).filter((e) => e.status === 'voided');
+      const done = (b.envs || []).filter((e) => e.status === 'completed');
+      check('wipe: before sending, the device holds a voided W-9 (Back, the number typed again) and the signed one', voided.length === 1 && done.length === 1 && !!dv.taxCert && dv.taxCert.signed === true && !!dv.env && dv.env.id === done[0].id, { envs: b.envs, taxCert: dv.taxCert });
+      const held = taxKeys(b.keys, envIds);
+      check('wipe: before sending, the signed W-9’s files are in the device’s file store and listed under Documents', !!done[0] && held.indexOf(done[0].docId) >= 0 && held.indexOf(done[0].signedDocId) >= 0 && b.taxDocs.indexOf(done[0].signedDocId) >= 0 && /^[0-9a-f]{64}$/.test(b.sha), { held, taxDocs: b.taxDocs, sha: b.sha });
+      check('wipe: before sending, nothing saved outside the file store holds a run of the number (the search covers the workspace, local and session storage)', Array.isArray(b.hits) && b.hits.length === 0, b.hits);
+      const st = F.stored || {};
+      const sid = done[0] ? done[0].signedDocId : '';
+      const sent = st.files && st.files[sid] ? sha256(Buffer.from(st.files[sid], 'base64')) : '';
+      check('wipe: the signed W-9 reached the server byte for byte (the send was confirmed)', !!sent && sent === b.sha, { server: sent || Object.keys(st.files || {}), device: b.sha });
+      const left = taxKeys(a.keys, envIds);
+      check('wipe: after the confirmed send the device’s file store holds no file of any tax envelope (original, work, signed, voided) and no tax upload', Array.isArray(a.keys) && left.length === 0, { left, keys: a.keys });
+      check('wipe: after the confirmed send the device’s Documents list has no tax entry', Array.isArray(a.taxDocs) && a.taxDocs.length === 0, a.taxDocs);
+      check('wipe: no tax envelope on the device points at a file any more', (a.envs || []).every((e) => !e.docId && !e.workDocId && !e.signedDocId), a.envs);
+      check('wipe: the workspace JSON, local and session storage hold no run of the number', Array.isArray(a.hits) && a.hits.length === 0, a.hits);
+      check('wipe: the agreement’s own signed copy stays on the device (only the tax files go)', (a.keys || []).some((k) => /-work$|-signed$/.test(k) && envIds.every((id) => k.indexOf(id) !== 0)), a.keys);
+      const row = await consoleTaxRow(F.A.page, INV.email, 'tax-wipe-console.png');
+      check('wipe: the console row reads "W-9 signed <date>" and its Download returns the bytes the device sent', /W-9 signed [A-Z][a-z]+ \d{1,2}, \d{4}/.test(row.text) && !!row.bytes && sha256(row.bytes) === b.sha, { text: row.text.slice(0, 300), download: row.bytes ? sha256(row.bytes) : row.error });
+    } finally {
+      await F.close();
+    }
+    // The server is stopped before the agreement is finished: nothing is deleted until a send is confirmed.
+    const G = await serverFlow(S, check, {
+      tag: 'tax-keep',
+      exemption: 'Rule 506(b)',
+      answers,
+      taxSign: signTax,
+      onAnyStep: async (hd, p, R) => {
+        if (hd === 'Distribution payments' && !R.tax) R.tax = await deviceTax(p);
+      },
+      finish: async (p, out) => {
+        const R = out.R;
+        const sid = R.tax && R.tax.env ? R.tax.env.signedDocId : '';
+        R.before = await deviceStore(p, sid);
+        await stopServer(out.srv);
+        try {
+          await p.waitForSelector('.es-finish', { timeout: 30000 });
+          await p.click('.es-finish');
+          await p.waitForSelector('[data-action="ivf-retry"]', { timeout: 30000 });
+          await p.waitForTimeout(300);
+          R.failed = await L.screenText(p);
+          await p.screenshot({ path: path.join(SHOTS, 'tax-keep-failed.png'), fullPage: true });
+          R.during = await deviceStore(p, sid);
+        } finally {
+          await startServer(out.srv);
+        }
+        await p.click('[data-action="ivf-retry"]');
+        await p.waitForSelector('.ivf-done .ivf-need, .ivf-done .ivf-summary', { timeout: 30000 });
+        await p.waitForTimeout(300);
+        R.after = await deviceStore(p, sid);
+        return p.locator('.ivf-done').innerText();
+      }
+    });
+    try {
+      const R = G.R;
+      const b = R.before || {};
+      const d = R.during || {};
+      const a = R.after || {};
+      const envIds = (b.envs || []).map((e) => e.id);
+      const sid = R.tax && R.tax.env ? R.tax.env.signedDocId : '';
+      check('keep: with the server stopped the send fails and the investor is offered Try again', /We could not send your details/.test(R.failed || '') && /Check your connection, then try again/.test(R.failed || ''), (R.failed || '').slice(0, 600));
+      const kb = taxKeys(b.keys, envIds).sort();
+      const kd = taxKeys(d.keys, envIds).sort();
+      check('keep: after the failed send every tax file is still on the device', kb.length > 0 && kb.indexOf(sid) >= 0 && JSON.stringify(kb) === JSON.stringify(kd), { before: kb, during: kd });
+      check('keep: after the failed send the Documents entry and the signed copy are unchanged (SHA-256)', /^[0-9a-f]{64}$/.test(b.sha) && d.sha === b.sha && JSON.stringify(d.taxDocs) === JSON.stringify(b.taxDocs) && b.taxDocs.indexOf(sid) >= 0, { before: [b.sha, b.taxDocs], during: [d.sha, d.taxDocs] });
+      const st = G.stored || {};
+      const sent = st.files && st.files[sid] ? sha256(Buffer.from(st.files[sid], 'base64')) : '';
+      check('keep: with the server back, Try again sends the same signed W-9 (SHA-256 equal on the server)', !!sent && sent === b.sha, { server: sent || Object.keys(st.files || {}), device: b.sha });
+      check('keep: once that send is confirmed the tax files and the Documents entry are gone from the device', Array.isArray(a.keys) && taxKeys(a.keys, envIds).length === 0 && Array.isArray(a.taxDocs) && a.taxDocs.length === 0, { left: taxKeys(a.keys, envIds), taxDocs: a.taxDocs });
+      check('keep: no script error on either side', G.A.errors.length === 0 && G.B.errors.length === 0, { A: G.A.errors, B: G.B.errors });
     } finally {
       await G.close();
     }
