@@ -4,7 +4,7 @@
 // one investor with the signature and date at the form's own places, the investor signs it in the portal, and the stored
 // signed PDF is read back: Documents category Tax for that investor alone, zero form fields, each value inside its own
 // field, the signature ink inside the sign place, the "Signed electronically" caption, the date, the certificate page.
-//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned,us-llc,us-ccorp,us-trust,us-disregarded,us-ira,us-joint,foreign-entity,passive-owners,passive-none,ffi-giin,treaty-entity,route,upload,upload-ira,upload-refused]
+//   NODE_PATH=$(npm root -g) node forms-flow.js [--case toggle-off,sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned,us-llc,us-ccorp,us-trust,us-disregarded,us-ira,us-joint,foreign-entity,passive-owners,passive-none,ffi-giin,treaty-entity,route,upload,upload-ira,upload-refused]
 // The last line is "FORMS FLOW: PASS (cases run: N)" or "FORMS FLOW: FAIL (cases run: N) - <failed cases>". Exits 2
 // (NOT RUN) when the bundled forms do not match assets/forms/SHA256SUMS.
 const path = require('path');
@@ -2687,7 +2687,126 @@ const usDate = (iso) => {
 const W9 = 'topmostSubform[0].Page1[0].';
 const W8 = 'topmostSubform[0].Page1[0].';
 
+/**
+ * Plan 06-24 (owner-accepted removal, 2026-11-16; C-03): the self-serve edition has no on/off switch for the tax step.
+ * Every investor needs a W-9 or a W-8 before distributions, so the console's "Collect a substitute W-9 certification"
+ * toggle is gone from the self-serve settings, and a firm saved earlier with it off (tenant.onboarding.taxForm false) still
+ * gets the tax step in every invitation, with every other step the same, and the certification in the typed activation
+ * used when an investor has no open invitation. The accreditation toggle's hint says which offerings always ask. The
+ * managed edition keeps its toggle, its hint and its behavior (the certification follows the toggle there).
+ */
+async function toggleOffCase({ check, S }) {
+  const dir = path.join(OUT, 'toggle-off');
+  fs.mkdirSync(dir, { recursive: true });
+  const panelText = (page) =>
+    page.evaluate(() => {
+      const s = Array.from(document.querySelectorAll('section.cs-panel')).find((x) => /^Investor onboarding$/.test(((x.querySelector('.cs-panel-head h2') || {}).textContent || '').trim()));
+      return s ? s.innerText.replace(/\s+/g, ' ').trim() : '(no Investor onboarding panel)';
+    });
+  const HINT = 'Rule 506(b) and Regulation A Tier 2 offerings always ask, and Rule 506(c) offerings verify it. Turn this on to ask in every other invitation too.';
+  // the typed activation (no open invitation), resumed at its last step: Review and sign
+  const typedReview = async (page, who) => {
+    await page.evaluate((who) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      ws.tenant.onboarding.taxForm = who.taxForm;
+      let i = ws.investors.find((x) => x.email === who.email);
+      if (!i) {
+        i = { id: `${ws.tenant.idPrefix}-${who.n}`, contact: who.name, title: who.name, type: 'individual', email: who.email, phone: '', address: '', tinLast4: '', accreditation: { basis: '', date: '' }, taxForm: '', edelivery: false, onboarding: { status: 'in_progress', step: 99, invited: NS.dates.today(), completed: '', source: 'manual' }, payment: { method: 'check', bank: null }, positions: [] };
+        ws.investors.push(i);
+      }
+      NS.app.save(true);
+      NS.state.role = 'investor';
+      NS.store.set('role', 'investor');
+      NS.startOnboarding(i.id);
+    }, who);
+    await page.waitForFunction(() => /Review and sign/.test(document.body.innerText), null, { timeout: 20000 });
+    await page.waitForTimeout(300);
+    return { text: await Lib.screenText(page), w9: await page.locator('#ob-w9').count() };
+  };
+
+  // Self-serve: the settings, then two invitations walked to the tax step, one with the old switch off and one with it on.
+  {
+    const A = await Lib.open(S);
+    const page = A.page;
+    const portal = await Lib.setupPortal(S, A);
+    await Lib.consoleRoute(page, 'console-brand', 'section.cs-panel');
+    const pt = await panelText(page);
+    await page.locator('section.cs-panel', { has: page.locator('.cs-panel-head h2', { hasText: 'Investor onboarding' }) }).first().screenshot({ path: path.join(dir, 'toggle-off-selfserve-settings.png') });
+    check('self-serve settings: no "Collect a substitute W-9 certification" toggle and no switch bound to onboarding.taxForm', !/substitute W-9/i.test(pt) && (await page.locator('[data-bind="tenant:onboarding.taxForm"]').count()) === 0, pt);
+    check('self-serve settings: no other tax-form switch in the Investor onboarding panel', !/W-9|W-8|tax form/i.test(pt), pt);
+    check(`self-serve settings: the accreditation toggle's hint reads "${HINT}"`, pt.indexOf(`Ask for accreditation${HINT}`) >= 0 || pt.indexOf(`Ask for accreditation ${HINT}`) >= 0, pt);
+    check('self-serve settings: the electronic delivery toggle and the direct deposit choice are still there', /Require consent to electronic delivery/.test(pt) && /Direct deposit/.test(pt), pt);
+    const walkTo = async (taxForm, name, email) => {
+      await page.evaluate((v) => {
+        const NS = window.CVPortal;
+        NS.state.ws.tenant.onboarding.taxForm = v;
+        NS.state.role = 'investor';
+        NS.app.save(true);
+      }, taxForm);
+      const inv = await Lib.createInvitation(page, { name, email, type: 'individual', offeringId: portal.offeringId });
+      await page.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
+      const w = await Lib.walk(page, { name, acc: 'yes', basis: 0, until: /Tax certification/ });
+      // the whole step list of the invitation (NS.inviteFlow.steps: the flow's own list, after the tax step too)
+      const steps = await page.evaluate((id) => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        return NS.inviteFlow.steps(ws, (ws.invitations || []).find((x) => x.id === id));
+      }, inv.invitationId);
+      return { w, steps, inv };
+    };
+    const off = await walkTo(false, 'Marisol Quennell-Achebe', 'marisol.quennell@example.com');
+    await page.screenshot({ path: path.join(dir, 'toggle-off-tax-step.png'), fullPage: true });
+    check('switch saved off: the invited U.S. individual still reaches the tax step (Tax certification)', off.w.reached && off.w.at === 'Tax certification' && off.w.errors.length === 0, { seen: off.w.seen, errors: off.w.errors });
+    const offView = await page.evaluate(() => (document.querySelector('.ivf-form') || {}).innerText || '');
+    check('switch saved off: the tax step leads to the official Form W-9', /Continue to the form/.test(offView), offView.slice(0, 300));
+    const on = await walkTo(true, 'Desmond Okonkwo-Varga', 'desmond.okonkwo@example.com');
+    check('switch on: the tax step is there too', on.w.reached && on.w.at === 'Tax certification', on.w.seen);
+    // the progress line of each screen ("Step 3 of 10: Investor information"); the headings differ only by the welcomed name
+    const bar = (seen) => seen.map((x) => x.replace(/ \|.*$/, ''));
+    check('the screens walked to the tax step, with their step numbers, labels and totals, are the same with the switch saved off as on', bar(off.w.seen).length > 1 && JSON.stringify(bar(off.w.seen)) === JSON.stringify(bar(on.w.seen)), { off: off.w.seen, on: on.w.seen });
+    check('the invitation\u2019s whole step list has the tax step and is the same with the switch saved off as on', Array.isArray(off.steps) && off.steps.indexOf('tax') >= 0 && JSON.stringify(off.steps) === JSON.stringify(on.steps), { off: off.steps, on: on.steps });
+    const typed = await typedReview(page, { taxForm: false, n: 9871, name: 'Odile Brennan-Sato', email: 'odile.brennan@example.com' });
+    await page.screenshot({ path: path.join(dir, 'toggle-off-selfserve-typed-review.png'), fullPage: true });
+    check('switch saved off: the typed activation (no open invitation) still asks for the W-9 certification', /Substitute Form W-9 certification/.test(typed.text) && typed.w9 === 1, typed.text.slice(0, 900));
+    check('self-serve: no script error in the browser', A.errors.length === 0, A.errors);
+    check('self-serve: no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  }
+
+  // Managed (C-03): the toggle, its label and hint, and the certification following it, as before.
+  {
+    const A = await Lib.open(S);
+    const page = A.page;
+    await page.goto(`${S.origin}/index.html`);
+    await page.evaluate(() => Object.keys(localStorage).forEach((k) => localStorage.removeItem(k)));
+    await page.goto(`${S.origin}/index.html`);
+    await page.waitForFunction(() => window.CVPortal && window.CVPortal.state && window.CVPortal.state.ws, null, { timeout: 20000 });
+    const ed = await page.evaluate(() => {
+      const NS = window.CVPortal;
+      NS.state.role = NS.EDITION.owner;
+      NS.store.set('role', NS.EDITION.owner);
+      NS.app.go('console-brand');
+      return NS.EDITION.id;
+    });
+    await page.waitForSelector('section.cs-panel', { timeout: 20000 });
+    await page.waitForTimeout(300);
+    const pt = await panelText(page);
+    await page.locator('section.cs-panel', { has: page.locator('.cs-panel-head h2', { hasText: 'Investor onboarding' }) }).first().screenshot({ path: path.join(dir, 'toggle-off-managed-settings.png') }).catch(() => {});
+    check('managed: the edition is managed and its settings keep "Collect a substitute W-9 certification" bound to onboarding.taxForm', ed === 'managed' && /Collect a substitute W-9 certification/.test(pt) && (await page.locator('[data-bind="tenant:onboarding.taxForm"]').count()) === 1, { ed, pt });
+    check('managed: the accreditation hint is unchanged ("Regulation D 506(b) and 506(c) offerings.")', /Ask for accreditation ?Regulation D 506\(b\) and 506\(c\) offerings\./.test(pt), pt);
+    const offT = await typedReview(page, { taxForm: false, n: 9872, name: 'Odile Brennan-Sato', email: 'odile.brennan@example.com' });
+    check('managed: with the toggle off the review step has no W-9 certification (as before)', !/Substitute Form W-9 certification/.test(offT.text) && offT.w9 === 0, offT.text.slice(0, 900));
+    const onT = await typedReview(page, { taxForm: true, n: 9872, name: 'Odile Brennan-Sato', email: 'odile.brennan@example.com' });
+    check('managed: with the toggle on the review step has the W-9 certification (as before)', /Substitute Form W-9 certification/.test(onT.text) && onT.w9 === 1, onT.text.slice(0, 900));
+    check('managed: no script error in the browser', A.errors.length === 0, A.errors);
+    check('managed: no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  }
+}
+
 const cases = {
+  'toggle-off': toggleOffCase,
   'sign-w9': formCase({
     id: 'sign-w9',
     key: 'W-9 2024-03',
