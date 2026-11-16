@@ -8,7 +8,7 @@
 // Plan 06-22 (research Pattern 6): the investor's signed tax form travels with the completion (parts tax-w9, tax-unsigned).
 // Plan 06-23 (research Pitfall 2): after a confirmed send the device keeps no copy of the full taxpayer ID (part tax-wipe);
 // an uploaded tax form and the W-8BEN reach the console (parts tax-upload, tax-w8ben).
-//   NODE_PATH=$(npm root -g) node server-mode.js [--only b506,regA,full,existing,withdraw,repack,clean,signed,tax-w9,tax-unsigned,tax-wipe,tax-upload,tax-w8ben]
+//   NODE_PATH=$(npm root -g) node server-mode.js [--only b506,regA,full,existing,withdraw,repack,clean,signed,tax-w9,tax-unsigned,tax-wipe,tax-upload,tax-w8ben,tax-request]
 // The last line is "SERVER MODE: PASS (parts run: N)" or "SERVER MODE: FAIL (parts run: N) - <failed parts>".
 const path = require('path');
 const fs = require('fs');
@@ -1473,6 +1473,7 @@ const parts = {
   async 'tax-w8ben'({ check, S }) {
     const answers = { acc: 'no', exp: 'Ten years of private equity commitments', edu: 'Engineer', rep: 'no', amount: 60000 };
     const FTIN = '86014520937';
+    const out = {};
     const F = await serverFlow(S, check, {
       tag: 'tax-w8ben',
       exemption: 'Rule 506(b)',
@@ -1489,7 +1490,12 @@ const parts = {
           await p.fill('#ob-zip', '40212');
           await p.fill('#ob-tin', '');
         }
-        if (/Tax certification/.test(hd) && (await p.locator('#ob-ftin').count())) await p.fill('#ob-ftin', FTIN);
+        if (/Tax certification/.test(hd) && (await p.locator('#ob-ftin').count())) {
+          // plan 06-26: the country of citizenship is asked on the step (nothing chosen), not taken from the residence
+          out.cit = await p.locator('#ob-w8Citizen').inputValue().catch(() => '(not asked)');
+          if (out.cit === '') await p.selectOption('#ob-w8Citizen', 'Austria');
+          await p.fill('#ob-ftin', FTIN);
+        }
       },
       taxSign: signTax,
       onAnyStep: async (hd, p, R) => {
@@ -1516,6 +1522,7 @@ const parts = {
       const te = st.taxEnvelope || null;
       const held = st.files && st.files[sid] ? Buffer.from(st.files[sid], 'base64') : null;
       check('w8ben: the server holds the completed W-8BEN envelope and the signed copy byte for byte', !!te && te.status === 'completed' && te.taxForm && te.taxForm.form === 'W-8BEN' && !!held && sha256(held) === dv.sha, { te: te && { status: te.status, taxForm: te.taxForm }, server: held ? sha256(held) : Object.keys(st.files || {}), device: dv.sha });
+      check('w8ben: the tax step asked the country of citizenship with nothing chosen; the record keeps the one chosen (Austria), the residence stays Germany', out.cit === '' && tc.citizenship === 'Austria' && tc.country === 'Germany' && tc.treatyCountry === 'Germany', { asked: out.cit, citizenship: tc.citizenship, country: tc.country, treaty: tc.treatyCountry });
       check('w8ben: the server’s copy of the record carries the validity date', !!st.investor && !!st.investor.taxCert && st.investor.taxCert.validUntil === until && st.investor.taxForm === 'W-8BEN', st.investor && st.investor.taxCert);
       const got = await consoleRecord(F.A.page, F.inv.investorId, sid);
       check('w8ben: the console stored the signed W-8BEN byte for byte and its record keeps the validity date, on file', got.sha === dv.sha && got.taxForm === 'W-8BEN' && !!got.taxCert && got.taxCert.validUntil === until && got.taxCert.signed === true && got.onFile === true, got);
@@ -1528,6 +1535,117 @@ const parts = {
       check('w8ben: white label: the done screen and the console row pass the leak check', lk.ok, lk.hits);
     } finally {
       await F.close();
+    }
+  },
+  /**
+   * Plan 06-26 (owner decision on the verification's human item 3; D-01, D-30, research Pitfall 2). An investor on file
+   * whose signed W-9 never reached the console ("copy not received"): the sponsor's "Request tax form" sends, through the
+   * integration server, an invitation holding the tax step and the done screen only, with the form's pre-fill (address,
+   * consent date) and no other personal detail. On their own device the investor signs the pre-filled W-9 (only the
+   * taxpayer ID asked), the signed copy travels back as in plan 06-22, the console imports it, and the row reads "W-9 signed
+   * <date>" with a Download of the bytes the device sent. After the confirmed send the device holds no file of the form and
+   * no run of the taxpayer ID (plan 06-23's wipe). The rest of the console's record is unchanged.
+   */
+  async 'tax-request'({ check, S }) {
+    const srv = await L.serverPortal(S);
+    const closers = [];
+    try {
+      const A = await L.open(S, { allow: [srv.base], init: srv.init, context: { acceptDownloads: true } });
+      closers.push(() => A.context.close());
+      const cp = A.page;
+      await L.setupPortal(S, A, { exemption: 'Rule 506(b)' });
+      check('tax-request: the console uses the integration server', (await srv.configure(cp)) === true);
+      // An investor on file whose signed W-9 did not reach the console (plan 06-22's "copy not received").
+      const who = await cp.evaluate(() => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const i = ws.investors.find((x) => x.onboarding && x.onboarding.status === 'complete' && x.type === 'individual' && x.email);
+        Object.assign(i, { contact: 'Marisol Ekwueme-Hart', title: 'Marisol Ekwueme-Hart', taxType: 'us-individual', address: '41 Larkspur Lane, Santa Fe, NM 87501', country: 'United States', citizenship: 'us', esignConsent: { at: '2026-03-02T15:04:05Z', scope: 'Electronic records and signatures (ESIGN Act, UETA)' }, taxForm: 'W-9', taxCert: { form: 'W-9', revision: 'Rev. March 2024', envelopeId: 'env-never-came', at: new Date().toISOString(), signed: true, signedBy: 'Marisol Ekwueme-Hart', tinLast4: '3917', backupWithholding: false, received: false } });
+        NS.app.save(true);
+        return { id: i.id, email: i.email, keep: JSON.parse(JSON.stringify({ address: i.address, payment: i.payment, positions: i.positions, onboarding: { status: i.onboarding.status }, accreditation: i.accreditation })) };
+      });
+      const rowOf = () => cp.locator('table.cs-tbl:has(th:text-is("Paid by")) tbody tr', { hasText: who.email }).first();
+      const before = await consoleTaxRow(cp, who.email);
+      check('tax-request: the row reads "W-9 signed, copy not received" and offers "Request tax form"', /W-9 signed, copy not received/.test(before.text) && (await rowOf().locator('[data-action="tax-request"]').count()) === 1, before.text.slice(0, 300));
+      await rowOf().locator('[data-action="tax-request"]').click();
+      await cp.waitForFunction((iid) => (window.CVPortal.state.ws.invitations || []).some((x) => x.investorId === iid && x.taxRequest && (x.serverId || x.emailStatus === 'failed')), who.id, { timeout: 30000 });
+      const it = await cp.evaluate((iid) => {
+        const ws = window.CVPortal.state.ws;
+        const x = (ws.invitations || []).filter((y) => y.investorId === iid && y.taxRequest).pop();
+        return { id: x.id, serverId: x.serverId || '', link: x.link || '', emailStatus: x.emailStatus, existing: !!x.existing, log: (ws.audit || []).filter((e) => e.record === iid).map((e) => `${e.action} :: ${e.detail}`) };
+      }, who.id);
+      check('tax-request: the request went to the integration server as an invitation to the investor on file, logged', /^ivt_/.test(it.serverId) && it.existing && it.link.indexOf(`server=${encodeURIComponent(srv.base)}`) > 0 && it.log.some((l) => /^Tax form requested :: .*Form W-9/.test(l)), it);
+      const mail = (await srv.call('GET', `/v1/outbox?invitation=${encodeURIComponent(it.serverId)}`)).body.messages || [];
+      check('tax-request: the server’s email to the investor asks for their Form W-9', mail.length === 1 && mail[0].subject === 'Kestrel Bay Capital: your Form W-9', mail.map((m) => m.subject));
+
+      // The investor's device.
+      const B = await L.open(S, { allow: [srv.base], init: srv.init });
+      closers.push(() => B.context.close());
+      const ip = B.page;
+      const snaps = [];
+      let sent = null;
+      ip.on('response', async (res) => {
+        if (res.request().method() === 'GET' && /\/v1\/invite$/.test(res.url().replace(/[?#].*$/, ''))) snaps.push(await res.json().catch(() => null));
+      });
+      ip.on('request', (rq) => {
+        if (rq.method() === 'POST' && /\/v1\/invite\/complete$/.test(rq.url())) sent = rq.postData();
+      });
+      await ip.goto(it.link);
+      await ip.waitForSelector('.ivf-form h1', { timeout: 30000 });
+      const snap = snaps.find((x) => x && x.investor) || {};
+      const sj = JSON.stringify(snap);
+      check('tax-request: the snapshot is a tax-form request with no offering, carrying the form’s pre-fill and no taxpayer ID, bank or other record detail', !!snap.invitation && snap.invitation.taxRequest === true && snap.offering === null && !!snap.investor && !!snap.investor.taxPrefill && snap.investor.taxPrefill.address === '41 Larkspur Lane, Santa Fe, NM 87501' && sj.indexOf('3917') < 0 && !/routing|"account"/.test(sj), snap.investor);
+      const head = await L.heading(ip);
+      const count = await ip.locator('.ivf-progress .ob-count').innerText().catch(() => '');
+      const shown = await ip.evaluate(() => Array.from(document.querySelectorAll('.ivf-form input, .ivf-form select')).filter((el) => el.type !== 'hidden' && (el.offsetWidth || el.offsetHeight)).map((el) => el.id));
+      const steps = await ip.evaluate(() => {
+        const ws = window.CVPortal.state.ws;
+        return window.CVPortal.inviteFlow.steps(ws, ws.invitations[0]);
+      });
+      await ip.screenshot({ path: path.join(SHOTS, 'tax-request-step.png'), fullPage: true });
+      check('tax-request: the device opens on "Step 1 of 2: Tax certification"; the steps are the tax step and the done screen', head === 'Tax certification' && /Step 1 of 2/.test(count) && JSON.stringify(steps) === JSON.stringify(['tax', 'done']), { head, count, steps });
+      check('tax-request: the W-9 is pre-filled from the console’s record: only the taxpayer ID is asked', JSON.stringify(shown) === JSON.stringify(['ob-tin']), shown);
+      if (head !== 'Tax certification' || shown.indexOf('ob-tin') < 0) return;
+      await ip.fill('#ob-tin', WIPE_SSN);
+      await L.submit(ip);
+      await L.finishTaxForm(ip, signTax);
+      await ip.waitForSelector('.ivf-done .ivf-need', { timeout: 30000 });
+      const done = await ip.locator('.ivf-done').innerText();
+      await ip.screenshot({ path: path.join(SHOTS, 'tax-request-done.png'), fullPage: true });
+      check('tax-request: the done screen says the Form W-9 is signed and sent to the firm', /Your Form W-9 is signed and sent to Kestrel Bay Capital/.test(done) && !/subscri/i.test(done), done.slice(0, 400));
+      const after = await deviceStore(ip, '');
+      const body = sent ? JSON.parse(sent) : {};
+      const te = body.taxEnvelope || null;
+      const devBytes = te && body.files && body.files[te.signedDocId] ? Buffer.from(body.files[te.signedDocId], 'base64') : null;
+      check('tax-request: the device sent the completed W-9 envelope with its signed copy, and no subscription or agreement', !!te && te.kind === 'tax' && te.status === 'completed' && !!devBytes && !body.request && !body.envelope, { te: te && { status: te.status, form: te.taxForm }, request: body.request, envelope: !!body.envelope });
+      check('tax-request: after the confirmed send the device holds no file of the form, no Documents entry for it and no run of the taxpayer ID', Array.isArray(after.keys) && taxKeys(after.keys, te ? [te.id] : []).length === 0 && after.taxDocs.length === 0 && after.hits.length === 0, { left: taxKeys(after.keys, te ? [te.id] : []), taxDocs: after.taxDocs, hits: after.hits });
+      await srv.waitCompleted(it.serverId);
+      const stored = await srv.submission(it.serverId);
+      const held = stored && te && stored.files && stored.files[te.signedDocId] ? Buffer.from(stored.files[te.signedDocId], 'base64') : null;
+      check('tax-request: the server holds the W-9 envelope and the signed copy byte for byte, no request and no agreement', !!stored && !!stored.taxEnvelope && !!held && !!devBytes && sha256(held) === sha256(devBytes) && stored.request === null && stored.envelope === null, { server: held ? sha256(held) : null, device: devBytes ? sha256(devBytes) : null, request: stored && stored.request });
+
+      // The console imports.
+      await L.importFromConsole(cp, it.id);
+      const rec = await consoleRecord(cp, who.id, te ? te.signedDocId : '');
+      check('tax-request: the console stored the signed W-9 byte for byte; the record is signed and on file (no longer "copy not received")', !!devBytes && !!te && rec.sha === sha256(devBytes) && rec.taxForm === 'W-9' && !!rec.taxCert && rec.taxCert.signed === true && rec.taxCert.received === undefined && rec.taxCert.envelopeId === te.id && rec.onFile === true, rec);
+      const row = await consoleTaxRow(cp, who.email, 'tax-request-console.png');
+      check('tax-request: the row reads "W-9 signed <date>" with one Download and no "Request tax form"', /W-9 signed [A-Z][a-z]+ \d{1,2}, \d{4}/.test(row.text) && !/copy not received|Tax form requested/.test(row.text) && row.downloads === 1 && (await rowOf().locator('[data-action="tax-request"]').count()) === 0, row.text.slice(0, 300));
+      check('tax-request: the Download returns exactly the bytes the device sent', !!row.bytes && !!devBytes && sha256(row.bytes) === sha256(devBytes), { download: row.bytes ? sha256(row.bytes) : row.error });
+      const kept = await cp.evaluate((iid) => {
+        const ws = window.CVPortal.state.ws;
+        const i = ws.investors.find((x) => x.id === iid);
+        return { keep: JSON.parse(JSON.stringify({ address: i.address, payment: i.payment, positions: i.positions, onboarding: { status: i.onboarding.status }, accreditation: i.accreditation })), reqs: (ws.requests || []).filter((r) => r.investorId === iid && r.submitted === window.CVPortal.dates.today()).length, log: (ws.audit || []).filter((e) => e.record === iid).map((e) => e.action) };
+      }, who.id);
+      check('tax-request: the rest of the console’s record is unchanged and no subscription was added', isDeepStrictEqual(kept.keep, who.keep) && kept.reqs === 0, { before: who.keep, after: kept.keep, reqs: kept.reqs });
+      check('tax-request: the change log has the request and the import', kept.log.indexOf('Tax form requested') >= 0 && kept.log.indexOf('Tax form imported') >= 0, kept.log.slice(-6));
+      check('tax-request: the console deleted its copy on the server after importing', ((await srv.rows()).find((x) => x.id === it.serverId) || {}).hasSubmission === false);
+      const lk = L.leakCheck([done, row.text, mail[0] ? mail[0].text : ''].join('\n'));
+      check('tax-request: white label: the email, the done screen and the console row pass the leak check', lk.ok, lk.hits);
+      check('tax-request: no script error in the console or on the device', A.errors.length === 0 && B.errors.length === 0, A.errors.concat(B.errors));
+      check('tax-request: nothing outside but the integration server, from either side', A.net.external.length === 0 && B.net.external.length === 0, A.net.external.concat(B.net.external));
+    } finally {
+      for (const c of closers.reverse()) await c().catch(() => {});
+      await srv.close();
     }
   }
 };

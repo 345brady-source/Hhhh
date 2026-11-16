@@ -474,6 +474,7 @@ export function invitationMessage({ firm, investor, offering, invitation, link, 
   const name = investor.contact || investor.title || 'investor';
   if (invitation.existing && offering && offering.name) return subscribeMessage({ firm, name, offering, invitation, link, expiresAt });
   if (invitation.existing && invitation.access) return accessMessage({ firm, name, invitation, link, expiresAt });
+  if (invitation.existing && invitation.taxRequest) return taxRequestMessage({ firm, name, investor, invitation, link, expiresAt });
   const subject = offering && offering.name ? `${offering.name}: complete your investor onboarding` : `Complete your investor onboarding with ${firm.name}`;
   const rows = [];
   if (offering && offering.name) rows.push(['Offering', offering.name]);
@@ -507,6 +508,23 @@ function accessMessage({ firm, name, invitation, link, expiresAt, again }) {
   });
 }
 
+/** Plan 06-26: the official form a tax-form request is for, by the investor type the sponsor chose (D-09). */
+const taxFormOf = (investor) => ({ 'foreign-individual': 'W-8BEN', 'foreign-entity': 'W-8BEN-E' })[investor && investor.taxType] || 'W-9';
+/** Plan 06-26: an investor already on file asked to complete their tax form again: that form only, nothing else asked. */
+function taxRequestMessage({ firm, name, investor, invitation, link, expiresAt, again }) {
+  const form = `Form ${taxFormOf(investor)}`;
+  return compose(firm, `${again ? 'Reminder: ' : ''}${firm.name}: your ${form}`, {
+    greeting: `Dear ${name},`,
+    paras: [
+      again ? `Here is a new link to complete your ${form} for ${firm.name}. Any earlier link we sent no longer works.` : `${firm.name} asks you to complete your ${form}.`,
+      `The link below opens your ${form}, filled in from the details we hold. You check it and sign it online, or upload a completed form instead. Nothing else is asked.`
+    ],
+    note: invitation.note ? { from: `A note from ${invitation.senderName || firm.name}`, text: invitation.note } : null,
+    button: { label: 'Complete your tax form', href: link },
+    after: [`This link is personal to you, so please do not forward it. It expires on ${longDate(expiresAt)}.`, `Questions? Reply to this email or contact ${supportLine(firm)}.`]
+  });
+}
+
 /** An investor already on file, invited to subscribe to another offering: no ID or bank details needed. */
 function subscribeMessage({ firm, name, offering, invitation, link, expiresAt }) {
   const rows = [['Offering', offering.name]];
@@ -529,6 +547,7 @@ function subscribeMessage({ firm, name, offering, invitation, link, expiresAt })
 export function resendMessage({ firm, investor, offering, invitation, link, expiresAt, started }) {
   const name = investor.contact || investor.title || 'investor';
   if (invitation.existing && invitation.access && !(offering && offering.name)) return accessMessage({ firm, name, invitation, link, expiresAt, again: true });
+  if (invitation.existing && invitation.taxRequest && !(offering && offering.name)) return taxRequestMessage({ firm, name, investor, invitation, link, expiresAt, again: true });
   if (invitation.existing && offering && offering.name) {
     return compose(firm, `Reminder: ${offering.name}: your subscription`, {
       greeting: `Dear ${name},`,
@@ -558,11 +577,20 @@ export function resendMessage({ firm, investor, offering, invitation, link, expi
  * on its own) before the date, or the investor's paperwork is gone. For an investor already on file (existing) it is their
  * subscription that waits: the console keeps the record it holds and adds only what the link collected.
  */
-export function reminderMessage({ firm, investor, offering, consoleUrl, completedAt, deleteOn, existing }) {
+export function reminderMessage({ firm, investor, offering, consoleUrl, completedAt, deleteOn, existing, taxRequest }) {
   const who = investor.contact || investor.title || 'An investor';
   const rows = [['Investor', who], ['Email', investor.email]];
   if (offering && offering.name) rows.push(['Offering', offering.name]);
   rows.push(['Finished', longDate(completedAt)], ['Deleted on', longDate(deleteOn)]);
+  // Plan 06-26: a tax-form request waiting to be imported.
+  if (existing && taxRequest) {
+    return compose(firm, `Waiting in your console: ${who}’s tax form`, {
+      paras: [`${who} finished your request for their Form ${taxFormOf(investor)} on ${longDate(completedAt)}, but the console has not added it to your records yet.`],
+      rows,
+      button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
+      after: [`Open the console before ${longDate(deleteOn)}: it adds the form as soon as it opens.`, 'After that date the form is deleted from the integration server to protect it, and the investor would have to complete it again.']
+    });
+  }
   if (existing) {
     return compose(firm, `Waiting in your console: ${who}’s subscription`, {
       paras: [`${who} finished their subscription${offering && offering.name ? ` to ${offering.name}` : ''} on ${longDate(completedAt)}, but the console has not added it to your records yet.`],
@@ -596,6 +624,17 @@ export function notificationMessage({ firm, investor, offering, summary, console
       rows: summary.rows,
       button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
       after: [summary.next]
+    });
+  }
+  // Plan 06-26: a tax-form request: which form came back, and how; nothing else in the record changes.
+  if (summary && summary.taxRequest) {
+    const form = `Form ${summary.taxForm || taxFormOf(investor)}`;
+    const back = summary.taxState === 'signed' || summary.taxState === 'uploaded';
+    return compose(firm, back ? `${who} returned their ${form}` : summary.taxState === 'not signed' ? `${who} finished your tax form request without signing` : `${who} finished your tax form request without a form`, {
+      paras: [`${who} went through your request for their ${form} on ${longDate(completedAt)}.`],
+      rows: summary.rows,
+      button: consoleUrl ? { label: 'Open the console', href: consoleUrl } : null,
+      after: [summary.next, 'Nothing else in their investor record changes.']
     });
   }
   // An investor on file who reached the end without subscribing (the offering stopped accepting subscriptions first).

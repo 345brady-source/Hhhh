@@ -109,8 +109,23 @@ function cleanInvestor(x) {
     const plan = obj(e.erisa);
     if (plan) out.existing.erisa = cleanErisa(plan);
   }
+  // Plan 06-26: a tax-form request (see create, which keeps this for such an invitation only) carries what the official form
+  // prints and the console holds: the address, the country, U.S. or other citizenship, the country of citizenship given on an
+  // earlier W-8BEN, and when the investor consented to electronic records and signatures. Never a taxpayer ID or bank detail.
+  const p = obj(i.taxPrefill);
+  if (p) {
+    out.taxPrefill = {
+      address: clip(p.address, 300).trim(),
+      country: clip(p.country, 60).trim(),
+      citizen: p.citizen === 'us' || p.citizen === 'other' ? p.citizen : '',
+      citizenship: clip(p.citizenship, 60).trim(),
+      consentAt: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?Z$/.test(String(p.consentAt || '')) ? String(p.consentAt) : ''
+    };
+  }
   return out;
 }
+/** Plan 06-26: the official form a tax-form request is for, by the investor type the sponsor chose (D-09). */
+export const taxFormOf = (investor) => ({ 'foreign-individual': 'W-8BEN', 'foreign-entity': 'W-8BEN-E' })[investor && investor.taxType] || 'W-9';
 /** D-01, D-08 (1): benefit plan answers as known fields only (assets/js/onboarding.js erisaFrom): plan, planPct (0 to 100 or null). */
 const PLANS = ['title1', '4975', 'planAssets', 'other', 'none'];
 function cleanErisa(e) {
@@ -161,7 +176,8 @@ function cleanInvitation(x, nowMs, maxDays) {
   const asked = Date.parse(i.expiresAt || '');
   const expires = Number.isFinite(asked) && asked > nowMs ? Math.min(asked, max) : max;
   // access: a link for an investor already on file (added by the firm from paper documents) to open their portal: nothing to fill in.
-  return Object.assign({ cents, cls: clip(i.cls, 64), note: clip(i.note, 2000), senderName: clip(i.senderName, 120) }, i.existing === true ? { existing: true } : {}, i.existing === true && i.access === true ? { access: true } : {}, { expiresAt: new Date(expires).toISOString() });
+  // taxRequest (plan 06-26): a link for an investor already on file to complete their tax form again, nothing else.
+  return Object.assign({ cents, cls: clip(i.cls, 64), note: clip(i.note, 2000), senderName: clip(i.senderName, 120) }, i.existing === true ? { existing: true } : {}, i.existing === true && i.access === true ? { access: true } : {}, i.existing === true && i.taxRequest === true ? { taxRequest: true } : {}, { expiresAt: new Date(expires).toISOString() });
 }
 function cleanEsign(x) {
   const e = obj(x);
@@ -229,7 +245,9 @@ function cleanSubmission(body, rec, snap) {
   }
   const envelope = body.envelope === undefined || body.envelope === null ? null : obj(body.envelope);
   if (body.envelope && !envelope) throw fail(400, 'envelope must be an object or null');
-  out.envelope = envelope ? cleanEnvelope(cleanJson(envelope, 1 * MB, 'envelope'), snap) : null;
+  // Plan 06-26: a tax-form request holds no subscription agreement, so none is kept (nor its files, below).
+  const taxReq = !!(snap.invitation && snap.invitation.existing && snap.invitation.taxRequest);
+  out.envelope = envelope && !taxReq ? cleanEnvelope(cleanJson(envelope, 1 * MB, 'envelope'), snap) : null;
   const env = out.envelope;
   // The files this submission may carry: what it produced itself. Its envelope's copies keep esign.js's names (<envelope id>-work
   // once the investor has signed, <envelope id>-signed once everyone has, so only for a completed envelope), and evidence is
@@ -260,10 +278,12 @@ function cleanSubmission(body, rec, snap) {
   if (rp && typeof rp.fileId === 'string' && repName.test(rp.fileId) && !allowed[rp.fileId]) allowed[rp.fileId] = 'evidence';
   // Plan 06-23 (D-01, T-06-51): a tax form the investor completed elsewhere and uploaded instead, named by their record
   // (investor.taxCert { uploaded: true, fileId }) under this investor's tax- name (onboarding.js: tax-<investor id>-<time>).
-  // Never for an investor already on file, whose tax form stays as the console holds it.
+  // Never for an investor already on file, whose tax form stays as the console holds it, unless the console asked for it again
+  // (a tax-form request, plan 06-26).
   const tc = obj(out.investor.taxCert);
   const taxName = new RegExp(`^tax-${reEsc(rec.investorId)}-[a-z0-9]+$`);
-  if (tc && tc.uploaded === true && typeof tc.fileId === 'string' && taxName.test(tc.fileId) && !(snap.invitation && snap.invitation.existing) && !allowed[tc.fileId]) allowed[tc.fileId] = 'evidence';
+  const keepsTax = !(snap.invitation && snap.invitation.existing) || taxReq;
+  if (tc && tc.uploaded === true && typeof tc.fileId === 'string' && taxName.test(tc.fileId) && keepsTax && !allowed[tc.fileId]) allowed[tc.fileId] = 'evidence';
   // Plan 06-22 (research Pattern 6, T-06-47): the investor's official tax form (W-9, W-8BEN or W-8BEN-E), the envelope esign.js
   // made on the tax step (kind 'tax'), kept only when this investor is its one signer (no countersigner: nobody else signs a
   // tax form). Its signed copy, under esign.js's name, is allowed only once it is completed.
@@ -274,9 +294,8 @@ function cleanSubmission(body, rec, snap) {
     const ts = Array.isArray(tax.signers) ? tax.signers : [];
     const own = ts.length === 1 && obj(ts[0]) && ts[0].role === 'investor' && String(ts[0].investorId || '') === rec.investorId;
     // never the agreement's own id (its signed copy would pass as a tax form), and nothing for an investor already on file,
-    // whose tax form stays as the console holds it
-    const existing = !!(snap.invitation && snap.invitation.existing);
-    if (!/^[\w.-]{1,70}$/.test(String(tax.id || '')) || tax.kind !== 'tax' || !own || (env && String(env.id) === String(tax.id)) || existing) tax = null;
+    // whose tax form stays as the console holds it, unless the console asked for it again (a tax-form request, plan 06-26)
+    if (!/^[\w.-]{1,70}$/.test(String(tax.id || '')) || tax.kind !== 'tax' || !own || (env && String(env.id) === String(tax.id)) || !keepsTax) tax = null;
   }
   out.taxEnvelope = tax;
   let taxSignedId = '';
@@ -437,6 +456,16 @@ export function summarize(sub, snap, checks) {
     const r = [['Investor', snap.investor.contact], ['Email', snap.investor.email]];
     return { rows: r, next: 'Nothing to do: their record stays as you hold it.', identity: '', aml: '', accreditation: '', agreement: '', existing: true, access: true, requested: false };
   }
+  // A tax-form request (plan 06-26): which form came back, and how.
+  if (existing && snap.invitation.taxRequest && !offering) {
+    const tc = obj(inv.taxCert) || {};
+    const te = sub.taxEnvelope;
+    const taxState = te && te.status === 'completed' ? 'signed' : tc.uploaded === true ? 'uploaded' : tc.signed === false ? 'not signed' : 'not returned';
+    const taxForm = line((te && te.taxForm && te.taxForm.form) || tc.form || taxFormOf(snap.investor), 40);
+    const r = [['Investor', snap.investor.contact], ['Email', snap.investor.email], ['Tax form', taxState === 'not returned' ? 'Not returned' : `Form ${taxForm}, ${taxState}`]];
+    const back = taxState === 'signed' || taxState === 'uploaded';
+    return { rows: r, next: back ? 'Next: the console adds the form to the investor’s record the next time it is open.' : 'Next: ask the investor for their tax form again if you still need it.', identity: '', aml: '', accreditation: '', agreement: '', existing: true, taxRequest: true, taxState, taxForm, requested: false };
+  }
   if (existing && /^(Not started|Not required)$/.test(accreditation)) accreditation = 'On file';
   if (existing) rows.push(['Accredited investor', accreditation], ['Subscription agreement', agreement]);
   else rows.push(['Identity', identity], ['Sanctions screening', aml], ['Accredited investor', accreditation], ['Subscription agreement', agreement]);
@@ -532,7 +561,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
           out.reminders++;
           const snap = unseal(rec, 'snapshot');
           if (snap && snap.notifyEmail) {
-            const msg = reminderMessage({ firm: snap.firm, investor: snap.investor, offering: snap.offering, consoleUrl: snap.consoleUrl, completedAt: rec.completedAt, deleteOn: iso(deleteAt), existing: !!(snap.invitation && snap.invitation.existing) });
+            const msg = reminderMessage({ firm: snap.firm, investor: snap.investor, offering: snap.offering, consoleUrl: snap.consoleUrl, completedAt: rec.completedAt, deleteOn: iso(deleteAt), existing: !!(snap.invitation && snap.invitation.existing), taxRequest: !!(snap.invitation && snap.invitation.taxRequest) });
             const rid = rec.id;
             if (!(snap.invitation && snap.invitation.access && !snap.offering)) mailer
               .send(Object.assign({ kind: 'submission_reminder', invitationId: rid, workspace: rec.workspace, fromName: snap.firm.name, replyTo: snap.firm.supportEmail, to: snap.notifyEmail, toName: snap.firm.supportTeam || snap.firm.name, headers: { 'Auto-Submitted': 'auto-generated' } }, msg))
@@ -759,7 +788,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
       firm: snap.firm,
       investor: snap.investor,
       offering: snap.offering ? Object.assign({}, snap.offering, { documents }) : null,
-      invitation: Object.assign({ cents: snap.invitation.cents, cls: snap.invitation.cls, note: snap.invitation.note, senderName: snap.invitation.senderName }, snap.invitation.existing ? { existing: true } : {}, snap.invitation.access ? { access: true } : {}, { expiresAt: rec.expiresAt }),
+      invitation: Object.assign({ cents: snap.invitation.cents, cls: snap.invitation.cls, note: snap.invitation.note, senderName: snap.invitation.senderName }, snap.invitation.existing ? { existing: true } : {}, snap.invitation.access ? { access: true } : {}, snap.invitation.taxRequest ? { taxRequest: true } : {}, { expiresAt: rec.expiresAt }),
       verification: snap.verification || {},
       esign
     };
@@ -905,6 +934,12 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
     const inv = cleanInvestor(body.investor);
     const { offering, files } = cleanOffering(body.offering);
     const invitation = cleanInvitation(body.invitation, now(), INVITE_DAYS);
+    // Plan 06-26: a tax-form request is for an investor already on file and has no offering; only it carries the form's
+    // pre-fill (an invitation to subscribe, or to a new investor, never carries an address).
+    if (!(invitation.existing && invitation.taxRequest && !offering)) {
+      delete invitation.taxRequest;
+      delete inv.taxPrefill;
+    }
     const verification = cleanJson(obj(body.verification) || {}, 64 * KB, 'verification') || {};
     const { esign, pdf } = cleanEsign(body.esign);
     const consoleUrl = returnTo(body.consoleUrl) || `${portalUrl.split('#')[0]}#console-investors`;

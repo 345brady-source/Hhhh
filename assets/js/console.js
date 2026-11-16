@@ -130,6 +130,24 @@
    * (its Documents entry), or not signed, or uploaded (plan 06-21); nothing when the investor has no such form.
    */
   function taxLine(w, inv) {
+    return taxState(w, inv) + taxAsked(w, inv);
+  }
+  /**
+   * Plan 06-26: an open tax-form request, one line under the tax form's ("Tax form requested <date>"), while the investor has
+   * not finished it (invitations.js openTaxRequest; self-serve edition only).
+   */
+  function taxAsked(w, inv) {
+    const it = E.diy && NS.invitations && NS.invitations.openTaxRequest ? NS.invitations.openTaxRequest(w, inv) : null;
+    return it ? `<span class="sub">Tax form requested ${date(String(it.sentAt || '').slice(0, 10))}</span>` : '';
+  }
+  /**
+   * Plan 06-26 (owner decision on the verification's human item 3): "Request tax form" for an active investor whose tax form
+   * is not on file (missing, not signed, or its signed copy not received: NS.inviteFlow.taxOnFile, the one rule), in the
+   * self-serve edition only (C-03: the managed edition's Investors page is unchanged), for staff who may invite investors.
+   */
+  const taxAskButton = (i) =>
+    E.diy && NS.invitations && NS.invitations.requestTax && NS.inviteFlow && NS.app.can('operate') && i.onboarding.status === 'complete' && !NS.inviteFlow.taxOnFile(i) ? `<button class="cs-btn cs-btn-small" type="button" data-action="tax-request" data-id="${h(i.id)}">Request tax form</button>` : '';
+  function taxState(w, inv) {
     const tc = inv.taxCert;
     // plan 06-21 (D-01, T-06-45): a form completed elsewhere and uploaded by the investor, with a download of that file when
     // it is stored under the investor's own tax- id (onboarding.js names it tax-<investor id>-<time>)
@@ -147,6 +165,19 @@
     const doc = (w.docs || []).find((d) => d.envelopeId === tc.envelopeId && (d.investors || []).indexOf(inv.id) >= 0);
     // plans 06-18 and 06-20: a W-8BEN or W-8BEN-E also says until when it is valid (31 December of the third year after signing)
     return `<span class="sub">${h(tc.form)} signed ${date(String(tc.at || '').slice(0, 10))}${tc.validUntil ? `, valid until ${date(tc.validUntil)}` : ''}${doc ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(doc.id)}" data-name="${h(doc.fileName || 'tax-form.pdf')}">Download</button>` : ''}</span>`;
+  }
+
+  /**
+   * Plan 06-26: the Type column. A foreign investor shows the investor type the sponsor chose (D-09): "Foreign individual"
+   * or "Foreign entity", or the kind of account marked foreign when it is another (a foreign joint account, a foreign trust).
+   * A U.S. investor shows the kind of account, as before.
+   */
+  function typeLabel(i) {
+    const acct = (NS.ENTITY_TYPES[i.type] || {}).label || i.type;
+    const kind = NS.INVESTOR_TYPES && /^foreign-/.test(i.taxType || '') ? NS.INVESTOR_TYPES[i.taxType] : null;
+    if (!kind) return acct;
+    if ((i.taxType === 'foreign-individual' && (i.type || 'individual') === 'individual') || (i.taxType === 'foreign-entity' && i.type === 'entity')) return kind.label;
+    return `${acct} (foreign)`;
   }
 
   /** Net asset value and capital by fund at the last month-end (from the capital accounts in audit.js). */
@@ -790,13 +821,13 @@
           // The committed line shows only while some of the commitment is still to be called (compared in cents).
           return `<tr>
             <th scope="row"><span class="strong">${h(i.title)}</span><span class="sub">${h(i.contact)} · ${h(i.email)}</span>${NS.coInvestor ? NS.coInvestor.statusHTML(w, i) : ''}</th>
-            <td>${h((NS.ENTITY_TYPES[i.type] || {}).label || i.type)}</td>
+            <td>${h(typeLabel(i))}</td>
             <td class="num">${usd(invested)}<span class="sub">${committed > Math.round(invested * 100) ? `${usd(committed / 100)} committed · ` : ''}${i.positions.length} investment${i.positions.length === 1 ? '' : 's'}</span></td>
             <td>${activation(i)}${taxLine(w, i)}</td>
             <td>${payLabel(i)}</td>
             <td class="cs-row-actions">${NS.coInvestor ? NS.coInvestor.recordButton(i) : ''}${
               done
-                ? `<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(i.id)}">View portal</button>`
+                ? `${taxAskButton(i)}<button class="cs-btn cs-btn-small" type="button" data-action="view-as" data-id="${h(i.id)}">View portal</button>`
                 : `<button class="cs-btn cs-btn-small" type="button" data-action="invite-preview" data-id="${h(i.id)}">Invitation</button><button class="cs-btn cs-btn-small" type="button" data-action="remind" data-id="${h(i.id)}">Send reminder</button>`
             }</td>
           </tr>`;

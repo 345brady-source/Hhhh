@@ -40,6 +40,40 @@ function consoleExemptions() {
   return m ? Array.from(m[1].matchAll(/\[\s*'([^']+)'\s*,/g)).map((x) => x[1]) : [];
 }
 
+/**
+ * C-03 (plan 06-26): the managed edition's onboarding code paths, sliced from onboarding.js and data.js, against plan
+ * 06-01's base 414fd9a2. [file, first line, base hash, one line only, closing line, accepted expression]. The accepted
+ * expression is what substituteW9() replaced in that slice (plan 06-24); any other change fails.
+ */
+const MANAGED_SLICES = [
+  ['assets/js/onboarding.js', '  const LABELS = {', '4fa6f6fc0b8759be', false, '  };'],
+  ['assets/js/onboarding.js', '  function stepsFor(mode) {', '0fa03c54b5cc28dd'],
+  ['assets/js/onboarding.js', '  function stepAccreditation(verified, opts) {', '73e617b210a0b0dd'],
+  ['assets/js/onboarding.js', '  function stepReview() {', '3f94f46405a65dfa', false, '  }', 't.onboarding.taxForm'],
+  ['assets/js/onboarding.js', '  function validate(step) {', '756467c16d196fc5', false, '  }', 't.onboarding.taxForm'],
+  ['assets/js/onboarding.js', '  function applyToInvestor(final) {', '291d584733d767df', false, '  }', 'T().onboarding.taxForm'],
+  ['assets/js/onboarding.js', '  NS.views.onboarding = {', '777c8ec499ced579', false, '  };'],
+  ['assets/js/data.js', '  const ACCRED = ', 'c5ec1b6df6b607c1', true]
+];
+const MANAGED_DEF = '  const substituteW9 = () => !!(NS.EDITION && NS.EDITION.diy) || !!T().onboarding.taxForm;';
+function managedSlices(onboardingSrc, dataSrc) {
+  const hash = (s) => require('crypto').createHash('sha256').update(s).digest('hex').slice(0, 16);
+  const out = MANAGED_SLICES.map(([file, start, want, single, end, accept]) => {
+    const lines = (file === 'assets/js/data.js' ? dataSrc : onboardingSrc).split('\n');
+    const a = lines.findIndex((l) => l.startsWith(start));
+    const z = a < 0 ? -1 : single ? a : lines.findIndex((l, i) => i > a && l === (end || '  }'));
+    let got = a < 0 ? 'missing' : z < 0 ? 'unterminated' : null;
+    if (!got) {
+      let body = lines.slice(a, z + 1).join('\n');
+      if (accept) body = body.split('substituteW9()').join(accept);
+      got = hash(body);
+    }
+    return { file: path.basename(file), start: start.trim(), want, got, accept: accept || '' };
+  });
+  out.def = onboardingSrc.split('\n').find((l) => l.startsWith('  const substituteW9 = ')) || 'missing';
+  return out;
+}
+
 const cases = {
   regime({ check }) {
     const E = eligibility();
@@ -296,6 +330,26 @@ const cases = {
     check('both offering views headed "Offering details"', titles.filter((t) => t === 'Offering details').length === 2, titles.filter((t) => /Offering details/.test(t)));
     check('the eligibility panel is headed "Investor eligibility"', titles.indexOf('Investor eligibility') >= 0);
     check('the word check matches what it must and nothing else', ['Basic', 'basics', 'BASICALLY', 'a basic step'].every((x) => L.WORD_RE.test(x)) && ['basis', 'basin', 'Basicity'].every((x) => !L.WORD_RE.test(x)));
+  },
+  managed({ check }) {
+    // C-03 (plan 06-26, restoring the guard plan 06-15 removed): the managed edition's onboarding is left as it is in phase
+    // 6. Each slice runs from its first line to the next line that closes it at the same indent; the recorded hashes are
+    // those of plan 06-01's base commit 414fd9a2b6eb4e423e1a41fed9a21935c724ea47 (sha256 of the slice's lines joined with
+    // \n, first 16 hex digits). One change is accepted, and only where it was made (plan 06-24): the firm's setting
+    // t.onboarding.taxForm (T().onboarding.taxForm) read through substituteW9(), which in the managed edition returns
+    // exactly that setting. A slice is compared after turning substituteW9() back into the expression it replaced there.
+    const r = managedSlices(SRC('assets/js/onboarding.js'), SRC('assets/js/data.js'));
+    r.forEach((x) => check(`managed edition unchanged: ${x.file} "${x.start}" hashes as at the base commit${x.accept ? ` (with ${x.accept} read through substituteW9())` : ''}`, x.got === x.want, { got: x.got, want: x.want }));
+    check('substituteW9() in the managed edition is the firm setting t.onboarding.taxForm (always on only in the self-serve edition)', r.def === MANAGED_DEF, r.def);
+    // The guard notices a change: a copy of the sources with one character altered in a slice, a second substituteW9() in an
+    // accepted slice, or substituteW9() made to answer otherwise in the managed edition, each fails.
+    const ob = SRC('assets/js/onboarding.js');
+    const bad1 = managedSlices(ob.replace('  function stepsFor(mode) {\n    const t = T();', '  function stepsFor(mode) {\n    const t = T() ;'), SRC('assets/js/data.js'));
+    check('the slice test notices a change (stepsFor with one character added hashes differently)', bad1.some((x) => x.start === 'function stepsFor(mode) {' && x.got !== x.want), bad1.map((x) => x.got === x.want));
+    const bad2 = managedSlices(ob.replace("if (substituteW9() && !d.w9) e.w9 = 'Certify", "if (substituteW9() && substituteW9() && !d.w9) e.w9 = 'Certify"), SRC('assets/js/data.js'));
+    check('the accepted change is accepted only as made (a second substituteW9() in validate fails)', bad2.some((x) => x.start === 'function validate(step) {' && x.got !== x.want));
+    const bad3 = managedSlices(ob.replace(MANAGED_DEF, MANAGED_DEF.replace('|| !!T().onboarding.taxForm', '|| true')), SRC('assets/js/data.js'));
+    check('a substituteW9() that no longer returns the firm setting in the managed edition fails', bad3.def !== MANAGED_DEF);
   },
   gate({ check }) {
     const run = (args) => spawnSync(process.execPath, [__filename].concat(args), { encoding: 'utf8' });

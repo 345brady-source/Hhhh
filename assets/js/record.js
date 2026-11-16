@@ -460,9 +460,12 @@
       y -= by.length * 11 + 1.5;
     });
 
+    // Plan 06-26: a tax form's certificate names the form (envelope kind 'tax', esign.js createFromPdf), not an agreement.
+    const taxName = env.kind === 'tax' && env.taxForm && env.taxForm.form ? `Form ${env.taxForm.form}` : '';
+    const what = taxName ? `the signed ${taxName}` : 'the signed agreement';
     const note = opts.standalone
-      ? `This certificate was issued on its own, after the agreement was completed. ${firm} keeps the record of this signing: the events above and the SHA-256 of the original document and of the signed PDF. A copy can be checked against the record; a file changed after completion does not match.`
-      : `This certificate is the last page of the signed agreement. ${firm} keeps the record of this signing: the events above, the SHA-256 of the original document and the SHA-256 of this complete file. A copy can be checked against the record; a file changed after completion does not match.`;
+      ? `This certificate was issued on its own, after ${taxName ? `the ${taxName}` : 'the agreement'} was completed. ${firm} keeps the record of this signing: the events above and the SHA-256 of the original document and of the signed PDF. A copy can be checked against the record; a file changed after completion does not match.`
+      : `This certificate is the last page of ${what}. ${firm} keeps the record of this signing: the events above, the SHA-256 of the original document and the SHA-256 of this complete file. A copy can be checked against the record; a file changed after completion does not match.`;
     const lines = wrap(tx(`${note} Signed electronically under the U.S. ESIGN Act and the Uniform Electronic Transactions Act (UETA).`), font, 7.5, CW);
     need(lines.length * 10 + 8);
     y -= 8;
