@@ -263,6 +263,303 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
   }
 
   /*
+   * D-11 (owner, verbatim: "The name of the file should have nothing to do with anything"). Which uploaded PDF is the
+   * subscription agreement, and for a file that holds another document too (a PPM or an offering circular with the
+   * agreement attached) which pages are, is decided from what the pages say. A file's name is shown, never read here.
+   *
+   * Each page is read for: a title of subscription documents (Subscription Agreement, Booklet, Documents, Application,
+   * investor questionnaire, accredited investor certification), the subscribing sentence ("the undersigned hereby
+   * subscribes"), the subscriber's signature block, how often it speaks of the subscriber; and against them: the headings
+   * of an offering document (memorandum, offering circular, prospectus, risk factors, use of proceeds, financial
+   * statements ...), the title of another kind of document (an operating or partnership agreement, a warrant, a note ...),
+   * an issuer writing "we", and a tax form (W-9, the W-8 series: the agreement ends before it, D-46 of phase 01.4).
+   * The agreement runs from a page that opens subscription documents to the page before another document starts.
+   * Tuned and measured on public SEC filings only (06-28-SUMMARY.md has the counts).
+   */
+  const REC_FLAT = (t) => String(t || '').replace(/[‘’ʼ]/g, "'").replace(/[“”]/g, '"').replace(/[‐-―]/g, '-').replace(/ /g, ' ');
+  const REC_TITLE = /\b(?:subscription|subscriber)\s+(?:agreement|booklet|documents?|documentation|package|application|form|materials|papers|instructions|signature\s+page|information\s+form)s?\b|\b(?:investor|purchaser|subscriber|prospective\s+investor)\s+(?:suitability\s+)?questionnaire\b|\baccredited\s+investor\s+(?:questionnaire|certification|certificate|verification|status)\b|\bsignature\s+page\s+(?:to|for)\s+(?:the\s+)?subscription\b|\b(?:investor|account|subscription|purchase|investment|share\s+purchase)\s+application(?:\s+form)?\b/i;
+  // The same title run into the words around it by a text layer that kept no line breaks (capitals or capitalised).
+  const REC_RUN_IN = /(?<!\b(?:[Tt]he|THE|[Tt]his|[Ss]uch|[Aa]ny|[Ss]aid|of|to|by|in|under|[Aa]n?|[Yy]our|[Oo]ur|[Ii]ts|with|and)\s|["“'‘])(?:FORM OF |Form of )?(?:SUBSCRIPTION (?:AGREEMENT|BOOKLET|DOCUMENTS|APPLICATION|FORM)|Subscription (?:Agreement|Booklet|Documents|Application|Form))(?![a-z])/;
+  const REC_SUBSCRIBES = /\bhereby\s+(?:irrevocably\s+)?(?:subscribes?|tenders?|offers?\s+to\s+(?:purchase|subscribe)|applies\s+(?:to\s+purchase|for))\b|\bundersigned\s+(?:\([^)]{0,40}\)\s+)?(?:hereby\s+)?(?:irrevocably\s+)?(?:subscribes|agrees\s+to\s+(?:purchase|subscribe|acquire)|desires\s+to\s+(?:purchase|subscribe|acquire))\b|\bsubscriber\s+hereby\b|\bi\s+hereby\s+subscribe\b|\bagrees?\s+to\s+subscribe\s+for\b|\b(?:subscriber|undersigned|investor|purchaser)\b[^.\n]{0,80}\bsubscribes\s+for\b/i;
+  // The signer's block; the last pattern (the bare word) adds to a page's score but is not a signature block.
+  const REC_SIGN = [
+    /\bsignature\s+of\s+(?:the\s+)?(?:subscriber|investor|purchaser|co-?subscriber|joint|holder|authorized)/i,
+    /\b(?:subscriber|investor|purchaser|co-?owner|owner)['s]*\s+signature\b/i,
+    /\bprint(?:ed)?\s+name\b|\bname\s+\(print\)|\(print\)/i,
+    /\bsocial\s+security\b|\btax(?:payer)?\s+identification\s+(?:no|number)\b|\b(?:ssn|tin|ein)\s*(?:or|\/|:)/i,
+    /\b(?:accepted|agreed\s+(?:to\s+)?and\s+accepted)\b[^\n]{0,40}\b(?:by|this|as\s+of|on)\b/i,
+    /\bin\s+witness\s+whereof\b/i,
+    /\bdate(?:d)?\s*:\s*_{3,}|_{6,}\s*\n?\s*(?:signature|date|name|title)\b|\bby\s*:\s*(?:_{3,}|-{5,})/i,
+    /\b(?:executed|dated|signed)\s+(?:on\s+)?this\s+_{2,}|\bday\s+of\s+_{3,}|_{2,}\s*day\s+of\b/i,
+    /\bsignatures?\b/i
+  ];
+  const REC_QUESTIONNAIRE = /\baccredited\s+investor\b|\bqualified\s+purchaser\b|\bnet\s+worth\b/i;
+  // Headings of an offering document, of financial statements or of a filing.
+  const REC_OFFER = /^(?:part\s+[iv]+\s*[-:.]?\s*)?(?:(?:confidential\s+)?(?:private\s+(?:placement|offering)\s+|offering\s+|information\s+|investment\s+)?memorandum|(?:preliminary\s+|final\s+)?offering\s+circular|(?:preliminary\s+)?prospectus(?:\s+supplement)?|(?:offering\s+circular\s+)?supplement\s+no\.?\s*\d+|risk\s+factors|use\s+of\s+proceeds|plan\s+of\s+distribution|offering\s+summary|summary(?:\s+of\s+(?:the\s+)?(?:offering|terms|circular|memorandum|prospectus))?|terms\s+of\s+the\s+offering|management['s]*\s+discussion(?:\s+and\s+analysis)?.*|description\s+of\s+(?:the\s+)?(?:business|securities|capital\s+stock|property|properties|shares|notes|units|interests)(?:\s+being\s+offered)?|securities\s+being\s+offered|directors,?\s+(?:executive\s+officers|officers).*|executive\s+compensation|compensation\s+of\s+(?:directors|executive\s+officers).*|security\s+ownership.*|interests?\s+of\s+management.*|certain\s+relationships.*|conflicts\s+of\s+interest|legal\s+proceedings|where\s+you\s+can\s+find.*|(?:report\s+of\s+)?independent\s+(?:registered\s+public\s+)?(?:auditor|accountant|accounting\s+firm)s?['s]*(?:\s+report)?|(?:consolidated\s+)?balance\s+sheets?|(?:consolidated\s+)?statements?\s+of\s+(?:operations|cash\s+flows?|income|changes|stockholders|shareholders|members|partners|financial\s+condition|comprehensive).*|notes\s+to\s+(?:the\s+)?(?:consolidated\s+)?(?:unaudited\s+)?financial\s+statements.*|(?:consolidated\s+|unaudited\s+|audited\s+)*financial\s+statements.*|prior\s+performance.*|investment\s+(?:objectives?|strategy|policies).*|(?:material\s+)?(?:u\.s\.\s+)?federal\s+income\s+tax\s+(?:considerations|consequences).*|erisa\s+considerations|distribution\s+reinvestment\s+plan|dividend\s+policy|market\s+for\s+(?:our|the\s+registrant)|forward-looking\s+statements|cautionary\s+(?:note|statement).*|questions\s+and\s+answers.*|estimated\s+use\s+of\s+proceeds|selected\s+financial\s+data|our\s+(?:company|manager|sponsor|structure|properties|portfolio)|item\s+\d+[a-z]?\.?\s+.*)$/i;
+  // Single words that head a section of an offering document only in capitals (they also label a form's fields).
+  const REC_OFFER_WEAK = /^(?:(?:our\s+)?business|(?:our\s+)?management|(?:the\s+)?offering|dilution|capitali[sz]ation|experts|legal\s+matters|additional\s+information)$/i;
+  // The title of another kind of document.
+  const REC_OTHER = /^(?:exhibit\s+[a-z0-9.\-]+\s*[:\-.]?\s*|appendix\s+[a-z0-9]+\s*[:\-.]?\s*|annex\s+[a-z0-9]+\s*[:\-.]?\s*)?(?:form\s+of\s+)?(?:(?:the\s+)?(?:amended\s+and\s+restated|second\s+amended\s+and\s+restated|third\s+amended\s+and\s+restated|restated|amended)\s+)?(?:[a-z0-9&.,'\- ]{0,50}\s)?(?:limited\s+liability\s+company\s+(?:operating\s+)?agreement|operating\s+agreement|(?:agreement|certificate)\s+of\s+limited\s+partnership|limited\s+partnership\s+agreement|partnership\s+agreement|series\s+(?:designation|agreement)|bylaws|by-laws|articles\s+of\s+(?:incorporation|organization|association)|certificate\s+of\s+(?:incorporation|formation|designations?|amendment)|escrow\s+(?:services\s+)?agreement|(?:common\s+stock\s+purchase\s+)?warrant(?:\s+agreement)?|(?:subordinated\s+|convertible\s+|secured\s+)?promissory\s+note|indemnification\s+agreement|employment\s+agreement|(?:management|advisory|services|consulting|license|licensing|posting|broker-dealer\s+services|selling\s+agent|placement\s+agent|engagement|administration|custody|servicing|loan|credit|security|pledge|guaranty|lease|master\s+lease|purchase\s+and\s+sale|asset\s+purchase|merger|registration\s+rights|voting|lock-up|debenture\s+purchase|unit\s+purchase|note\s+purchase|stock\s+purchase|share\s+exchange|joint\s+venture|trust|indenture|declaration\s+of\s+trust)\s+agreement|indenture|declaration\s+of\s+trust|certification\s+pursuant\s+to.*|consent\s+of\s+independent.*|legal\s+opinion|opinion\s+of\s+counsel)$/i;
+  const REC_TAX = /\brequest\s+for\s+taxpayer\s+identification\s+number\s+and\s+certification\b|\bcertificate\s+of\s+(?:foreign\s+)?status\s+of\s+beneficial\s+owner\b|\bform\s+w-?8\s*(?:ben(?:-e)?|eci|exp|imy)\b|^\s*(?:substitute\s+)?form\s+w-?9\b|\bgeneral\s+instructions\b[^\n]*\bw-?9\b/im;
+  // The signature page of a filing (an offering statement or a report), not of an investor.
+  const REC_FILING_SIGNED = /\bpursuant\s+to\s+the\s+requirements\s+of\s+(?:regulation\s+a|the\s+securities(?:\s+exchange)?\s+act)/i;
+  // A running header that names an offering document.
+  const REC_MEMO_RUN = /\b(?:placement|offering|information)\s+memorandum\b|\boffering\s+circular\b|\bprospectus\b/i;
+  const REC_LISTING = /^\s*(?:table\s+of\s+contents|contents|index\s+(?:to|of)\s+exhibits|exhibit\s+index|list\s+of\s+exhibits)\s*$/im;
+  const REC_LISTED = /(?:\.{3,}|\s{2,}|\t|\s)\s*(?:[A-Z]-)?\d{1,3}$/;
+  const recLines = (t) => t.split('\n').map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  /** A heading: a short line (at most 12 words) in capitals or with every main word capitalised, not a sentence or a form's field. */
+  function recHeading(l) {
+    if (/[,;:]$/.test(l) || (/\.$/.test(l) && /[a-z]/.test(l)) || /_{3,}|[☐☑☒□¨]|\|_\|/.test(l) || (/:/.test(l) && !/^(?:part|appendix|exhibit|annex|schedule|item|article|section)\b[^:]{0,12}:/i.test(l))) return '';
+    const s = l.replace(/^(?:\s|[\-–—*•.:]|\(?\d{1,3}[.)]|\(?[ivxlc]{1,5}[.)]|\(?[a-z][.)])+/i, '').replace(/[\s.:;,\-–—]+$/, '');
+    if (!s || s.length > 100) return '';
+    const words = s.split(/\s+/);
+    if (words.length > 12) return '';
+    const letters = s.replace(/[^A-Za-z]/g, '');
+    if (letters.length < 4) return '';
+    const caps = s.replace(/[^A-Z]/g, '').length / letters.length;
+    const small = /^(?:of|the|and|a|an|to|for|in|on|by|with|or|as|at|from|its|our|your|this|that|be|is|are)$/i;
+    const titled = words.filter((w) => /[a-z]/i.test(w) && !small.test(w)).every((w) => /^[^a-z]*[A-Z0-9]/.test(w));
+    return caps >= 0.6 || titled ? s : '';
+  }
+  /** What one page says (its running headers already left out). */
+  function recSignals(raw) {
+    const t = REC_FLAT(raw);
+    const lines = recLines(t);
+    const words = (t.match(/[A-Za-z]{2,}/g) || []).length;
+    const numbered = t.split('\n').filter((l) => l.trim().length > 6 && REC_LISTED.test(l.trim()) && /[A-Za-z]{3}/.test(l)).length;
+    // An index of exhibits: "Exhibit" and "Description" over lines that start with an exhibit number (4.1, 10.2).
+    const exhibits = /\bexhibits?\b/i.test(t) && /\bdescription\b/i.test(t) && lines.filter((l) => /^(?:ex(?:hibit)?[-\s]?)?\d{1,2}\.\d{1,2}[a-z]?\b/i.test(l)).length >= 2;
+    const listing = numbered >= 8 || (REC_LISTING.test(t) && numbered >= 4) || exhibits;
+    const heads = lines.map(recHeading).filter(Boolean);
+    const top = lines.slice(0, 8).map(recHeading).filter(Boolean);
+    const runIn = lines.slice(0, 2).some((l) => l.length > 120 && REC_RUN_IN.test(l.slice(0, 100)));
+    const subTitle = !listing && (runIn || heads.some((s) => REC_TITLE.test(s) && !/\b(?:procedures|how\s+to)\b/i.test(s)));
+    const offerHead =
+      (listing ? 1 : 0) +
+      (REC_FILING_SIGNED.test(t) ? 1 : 0) +
+      heads.filter((h) => {
+        const s = h.replace(/^(?:exhibit|appendix|annex)\s+[a-z0-9.\-]+\s*[:\-.]?\s*/i, '');
+        return REC_OFFER.test(s) || (REC_OFFER_WEAK.test(s) && s === s.toUpperCase());
+      }).length;
+    const otherTitle = !listing && top.some((s) => REC_OTHER.test(s) && !/subscri|investor|purchaser|accredit|signature/i.test(s));
+    const subj = (t.match(/\bsubscriber(?:s|'s|s')?\b|\bthe\s+undersigned\b|\bco-?subscriber\b/gi) || []).length;
+    const purch = (t.match(/\b(?:Purchaser|Investor|Subscriber|PURCHASER|INVESTOR)(?:'s)?\b(?!s)/g) || []).length;
+    // "We", "our" and "us" as an issuer writes them; "I (we)", "my/our" and the like on a form are the investor's.
+    const we = (t.replace(/\b(?:i|me|my|mine)\s*(?:\(\s*|\/\s*|\s+or\s+)(?:we|us|our|ours)\b\s*\)?/gi, ' ').match(/\b(?:we|our|us)\b/gi) || []).length;
+    const clause = REC_SUBSCRIBES.test(t);
+    const tax = REC_TAX.test(t) && /\bcertif/i.test(t) && /\b(?:taxpayer|withholding|internal\s+revenue|irs|beneficial\s+owner)\b/i.test(t) && !clause && subj <= 2;
+    const sign = REC_SIGN.filter((re) => re.test(t)).length;
+    const strong = REC_SIGN.slice(0, -1).some((re) => re.test(t));
+    const quest = REC_QUESTIONNAIRE.test(t);
+    const boxes = (t.match(/[☐☑☒□■¨]|\[\s?\]|\(\s\)/g) || []).length;
+    return { listing, subTitle, offerHead, otherTitle, tax, subj, purch, we, clause, sign, strong, quest, boxes, blank: words < 15 };
+  }
+  /** How much a page reads as a subscription agreement (agree) and as an offering or another document (offer). */
+  function recScore(s) {
+    let agree = (s.subTitle ? 4 : 0) + (s.clause ? 3 : 0) + Math.min(3, s.subj / 3) + Math.min(2, s.purch / 6);
+    if (s.sign) agree += 1 + Math.min(2, (s.sign - 1) * 0.75);
+    if (s.quest) agree += 0.5;
+    if (s.boxes >= 4) agree += 1;
+    const offer = Math.min(6, 3 * s.offerHead) + (s.otherTitle ? 5 : 0) + Math.min(3, Math.max(0, s.we - 2) / 6) + (s.listing ? 2 : 0);
+    return { agree, offer };
+  }
+  /**
+   * recognise(pages) -> { kind, firstPage, lastPage, pages, score }, pages: one text per page (a page read from its
+   * picture, or '' when it was not read).
+   *   kind 'agreement'  the whole file is a subscription agreement (firstPage..lastPage: its own pages, tax forms after
+   *                     them left out)
+   *        'combined'   the agreement is pages firstPage..lastPage of a file that holds another document too
+   *        'none'       no subscription agreement
+   */
+  function recognise(pages) {
+    const n = (pages || []).length;
+    const none = { kind: 'none', firstPage: 0, lastPage: 0, pages: n, score: 0 };
+    if (!n) return none;
+    // A line at the head or foot of many pages (a running header or footer: "Table of Contents", the issuer's name, a
+    // browser's date and address) is left out, unless it is a title of subscription documents.
+    const key = (l) => l.toLowerCase().replace(/[0-9]+/g, '#').replace(/\s+/g, ' ').trim();
+    const seen = new Map();
+    pages.forEach((t) => {
+      const ls = recLines(REC_FLAT(t));
+      new Set(ls.slice(0, 3).concat(ls.slice(-3)).map(key)).forEach((k) => seen.set(k, (seen.get(k) || 0) + 1));
+    });
+    const most = Math.max(3, Math.ceil(0.3 * n));
+    const running = new Set(Array.from(seen).filter(([k, c]) => c >= most && k.length > 2 && !REC_TITLE.test(k)).map(([k]) => k));
+    const clean = running.size ? pages.map((t) => REC_FLAT(t).split('\n').filter((l) => !running.has(key(l.replace(/\s+/g, ' ').trim()))).join('\n')) : pages;
+    const sig = clean.map(recSignals);
+    // A running header that names an offering document ("Confidential Private Placement Memorandum") says what its pages
+    // are: each page that carries it counts it as an offering heading.
+    const named = Array.from(running).filter((k) => REC_MEMO_RUN.test(k));
+    if (named.length) pages.forEach((t, i) => REC_FLAT(t).split('\n').some((l) => named.indexOf(key(l.replace(/\s+/g, ' ').trim())) >= 0) && (sig[i].offerHead += 1));
+    const sc = sig.map(recScore);
+    // T a tax form, X another document's title, O an offering heading, A the agreement, B blank, N anything else.
+    const kind = sc.map((x, i) => {
+      const s = sig[i];
+      if (s.tax) return 'T';
+      if (s.otherTitle && !s.subTitle) return 'X';
+      if (x.offer >= 3 && x.offer > x.agree && (s.offerHead || s.listing)) return 'O';
+      if (x.agree >= 3 && x.agree >= x.offer) return 'A';
+      return s.blank ? 'B' : 'N';
+    });
+    const anchor = (i) => kind[i] === 'A' && (sig[i].subTitle || sig[i].clause);
+    // Runs: from a page that opens subscription documents (a title or the subscribing sentence) through the pages that
+    // follow until another document starts (an offering heading, another document's title), a tax form, or more than ten
+    // pages that read as nothing of the agreement.
+    let runs = [];
+    for (let i = 0; i < n; i++) {
+      if (!anchor(i)) continue;
+      let j = i;
+      let quiet = 0;
+      let k = i + 1;
+      for (; k < n; k++) {
+        // An offering heading on a page that still reads as the agreement, followed by such a page, does not end it.
+        if (kind[k] === 'O' && sc[k].agree >= 1.5 && k + 1 < n && ['O', 'X', 'T'].indexOf(kind[k + 1]) < 0 && sc[k + 1].agree >= 1.5) {
+          quiet = 0;
+          continue;
+        }
+        if (kind[k] === 'O' || kind[k] === 'X' || kind[k] === 'T') break;
+        if (kind[k] === 'A') (j = k), (quiet = 0);
+        else if (sc[k].agree >= 1.5 && sc[k].agree > sc[k].offer) quiet = 0;
+        else if (++quiet > 10) break;
+      }
+      // Pages after the last agreement page stay with it up to a tax form or the end of the file (a form's last pages
+      // carry few words); never past another document's heading.
+      runs.push({ a: i, b: k >= n || kind[k] === 'T' ? k - 1 : j });
+      i = Math.max(i, runs[runs.length - 1].b);
+    }
+    // Two runs with at most two pages between them and no other document's title there are one agreement.
+    runs = runs.reduce((acc, r) => {
+      const last = acc[acc.length - 1];
+      if (last && r.a - last.b - 1 <= 2 && kind.slice(last.b + 1, r.a).every((k) => k === 'O' || k === 'B' || k === 'N')) last.b = r.b;
+      else acc.push(r);
+      return acc;
+    }, []);
+    runs.forEach((r) => {
+      Object.assign(r, { total: 0, titles: 0, clauses: 0, signs: 0 });
+      for (let p = r.a; p <= r.b; p++) {
+        r.total += Math.max(0, sc[p].agree - sc[p].offer);
+        if (sig[p].subTitle) r.titles++;
+        if (sig[p].clause) r.clauses++;
+        if (sig[p].strong) r.signs++;
+      }
+    });
+    // Pages of another document anywhere in the file ask for stronger evidence.
+    const offering = kind.some((k) => k === 'O' || k === 'X');
+    const good = runs.filter((r) => (r.clauses || r.titles) && ((r.total >= 8 && r.signs) || (r.total >= 12 && r.titles + r.clauses >= 2) || (!offering && r.total >= 4)));
+    if (!good.length) return none;
+    good.sort((x, y) => y.total - x.total || x.a - y.a);
+    const best = good[0];
+    // Another document outside the agreement makes the file a combined one: offering headings, another document's title
+    // and the pages after it until a page that opens subscription documents, and pages an issuer writes ("we").
+    let other = 0;
+    let context = false;
+    for (let p = 0; p < n; p++) {
+      if (kind[p] === 'X') context = true;
+      else if (anchor(p)) context = false;
+      if (p >= best.a && p <= best.b) continue;
+      if (kind[p] === 'O' || kind[p] === 'X' || (kind[p] === 'N' && (context || (sc[p].offer >= 2 && sc[p].agree < 1.5)))) other++;
+    }
+    const whole = other <= Math.max(2, Math.floor(0.15 * n));
+    return { kind: whole ? 'agreement' : 'combined', firstPage: best.a + 1, lastPage: best.b + 1, pages: n, score: Math.round(best.total * 10) / 10 };
+  }
+  /** What is kept of a recognition on a document (ws.docs[].recognised): the decision only, never page text. */
+  const REC_VERSION = 1;
+  const recKeep = (r, unread, pictures) => ({ v: REC_VERSION, kind: r.kind, firstPage: r.firstPage, lastPage: r.lastPage, pages: r.pages, score: r.score, unread: unread || 0, pictures: pictures || 0 });
+  /** Recognitions of the PDFs read through the intake in this session, by SHA-256. */
+  const recognitions = new Map();
+  /** A page whose text layer has fewer words than this is read from its picture when the file is mostly pictures. */
+  const REC_FEW_WORDS = 15;
+  /** Pictures read per file at most, and the time one may take: enough for a title page and a signature page. */
+  const REC_PICTURES = 5;
+  const REC_PICTURE_MS = 25000;
+  const fewWords = (t) => (String(t || '').match(/[A-Za-z]{2,}/g) || []).length < REC_FEW_WORDS;
+  /**
+   * The text of a page that is a picture, read by the portal's own text reader (NS.textengine, no request leaves the
+   * page) from the page drawn at about 150 dots an inch; '' when the reader cannot start or the page is not read in time.
+   */
+  async function pictureText(page) {
+    try {
+      if (!NS.textengine) await loadScript(new URL('assets/js/textengine.js', document.baseURI).href);
+      await NS.textengine.start();
+      const v1 = page.getViewport({ scale: 1 });
+      const vp = page.getViewport({ scale: Math.min(150 / 72, Math.sqrt(8e6 / (v1.width * v1.height))) });
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.ceil(vp.width);
+      canvas.height = Math.ceil(vp.height);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      const blocks = await NS.textengine.read(canvas, 'block', REC_PICTURE_MS);
+      return (blocks || []).map((b) => (b.paragraphs || []).map((p) => (p.lines || []).map((l) => (l.words || []).map((w) => w.text).join(' ')).join('\n')).join('\n')).join('\n');
+    } catch (e) {
+      return '';
+    }
+  }
+  /**
+   * D-11: the recognition of one PDF (a Blob, File or bytes) from its pages: the text layer as the intake reads it and,
+   * when most pages carry no text, up to REC_PICTURES of those pages read from their pictures (the first ones and the
+   * last one: a title page and a signature page). Resolves to what recKeep keeps.
+   */
+  async function recogniseFile(src) {
+    const bytes = src instanceof Uint8Array ? src : new Uint8Array(await src.arrayBuffer());
+    const lib = await pdfLib();
+    const doc = await lib.getDocument({ data: bytes.slice(0), isEvalSupported: false }).promise;
+    const texts = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      texts.push(pageText((await page.getTextContent()).items).replace(/[ \t]+\n/g, '\n').replace(/ {2,}/g, ' ').trim());
+    }
+    const bare = texts.map((t, i) => (fewWords(t) ? i : -1)).filter((i) => i >= 0);
+    let pictures = 0;
+    if (bare.length && bare.length >= 0.5 * texts.length) {
+      const want = bare.slice(0, REC_PICTURES - 1).concat(bare.length >= REC_PICTURES ? [bare[bare.length - 1]] : []);
+      for (const i of want) {
+        const t = await pictureText(await doc.getPage(i + 1));
+        if (t.trim()) (texts[i] = t), pictures++;
+      }
+    }
+    doc.destroy();
+    return recKeep(recognise(texts), bare.length, pictures);
+  }
+  /** readFile as the intake calls it: a readable PDF's recognition is kept by its SHA-256 for prepareAgreement. */
+  async function readAndRecognise(file) {
+    const r = await readFile(file);
+    if (r && r.pages && r.text != null && r.sha256) {
+      const texts = pageTexts(r.text);
+      recognitions.set(r.sha256, recKeep(recognise(texts), texts.filter(fewWords).length, 0));
+    }
+    return r;
+  }
+  /** Better first: a whole agreement before an agreement inside another document, then the stronger reading. */
+  const recRank = (r) => (r && r.kind === 'agreement' ? 2 : r && r.kind === 'combined' ? 1 : 0);
+  /**
+   * The subscription agreement among documents that carry a recognition (d.recognised), as { doc, rec }, or null. Given
+   * newest first, the newest wins a tie. Shared with the agreement dialog (esign.js), so both decide alike.
+   */
+  function agreementChoice(docs) {
+    let best = null;
+    for (const d of docs || []) {
+      const r = d && d.recognised && d.recognised.v === REC_VERSION ? d.recognised : null;
+      if (!recRank(r)) continue;
+      if (!best || recRank(r) > recRank(best.rec) || (recRank(r) === recRank(best.rec) && r.score > best.rec.score)) best = { doc: d, rec: r };
+    }
+    return best;
+  }
+  /** Pages a..b (from 1) of a PDF as a PDF of their own (bytes), by the PDF writer the portal already loads. */
+  async function cutPages(src, a, b) {
+    await loadScript(WRITER);
+    const L = window.PDFLib;
+    const from = await L.PDFDocument.load(src instanceof Uint8Array ? src : new Uint8Array(await src.arrayBuffer()), { ignoreEncryption: true });
+    const out = await L.PDFDocument.create();
+    const idx = [];
+    for (let i = a - 1; i < b; i++) idx.push(i);
+    (await out.copyPages(from, idx)).forEach((pg) => out.addPage(pg));
+    return out.save();
+  }
+
+  /*
    * D-38: transient failures never show. One request to the reading server, sent again on a network error or a status
    * 429, 500, 502, 503, 504 or 529: at most 3 attempts, after waits of 2 s and then 6 s. The caller's signal (its own time
    * limit, or Stop) ends the waiting and the attempts at once. Anything else (an answer, 400, 401, 402, 413, ...) is
@@ -895,24 +1192,45 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
     await prepareAgreement(ws, o, opts);
     return o;
   }
+  const isPdf = (d) => /pdf/i.test(d.type || '') || /\.pdf$/i.test(d.fileName || '');
   /**
-   * A title or file name that reads as a subscription agreement: "subscription" or "subscriber" anywhere; any word
-   * starting "subscr" (so a misspelt "Subscrpition" still reads); or "sub" before agreement, agmt, doc(s), document(s),
-   * booklet, packet or package, joined or separated by spaces, underscores, dots or hyphens ("Sub_Docs", "SubDocs").
-   * The two "subscr"/"sub" parts need a non-letter before them, so "Unsubscribe" does not read as one; "Substitute",
-   * "Subordination" or "Sublease" do not either ("sub" is not followed by one of the words above).
-   * Shared with the agreement dialog's pre-selection (esign.js), so both decide alike. No g or y flag: test() keeps no state.
+   * D-11: the PDF among an offering's documents whose pages read as its subscription agreement as a whole (by the
+   * recognition kept on it, never by its name), newest first; null when none does.
    */
-  const AGREEMENT_NAME = /subscri(?:ption|ber)|(?:^|[^a-z])subscr|(?:^|[^a-z])sub[\s_.-]*(?:agreements?|agmt|docs?|documents?|booklet|packet|package)(?![a-z])/i;
-  /** A PDF among an offering's documents that reads as its subscription agreement (by its name), newest first. */
   function agreementDoc(ws, o) {
-    const named = AGREEMENT_NAME;
-    return (
-      (ws.docs || [])
-        .slice()
-        .reverse()
-        .find((d) => d && d.offeringId === o.id && named.test(`${d.title || ''} ${d.fileName || ''}`) && (/pdf/i.test(d.type || '') || /\.pdf$/i.test(d.fileName || ''))) || null
-    );
+    const pdfs = (ws.docs || []).slice().reverse().filter((d) => d && d.offeringId === o.id && isPdf(d));
+    const c = agreementChoice(pdfs);
+    return c && c.rec.kind === 'agreement' ? c.doc : null;
+  }
+  /**
+   * D-11: the documents this intake stored for the offering get their recognition (kept from readFile, or read now from
+   * the uploaded file), and the subscription agreement among them is chosen by agreementChoice: { doc, rec, src } with
+   * src the uploaded file it came from, or null.
+   */
+  async function agreementAmong(ws, o, opts) {
+    const ups = (opts && opts.docs) || [];
+    const pdfs = (ws.docs || []).slice().reverse().filter((d) => d && d.offeringId === o.id && isPdf(d));
+    for (const d of pdfs) {
+      if (d.recognised && d.recognised.v === REC_VERSION) continue;
+      const src = ups.find((x) => x && x.file && x.sha256 && x.sha256 === d.sha256) || null;
+      if (!src) continue;
+      let rec = recognitions.get(d.sha256) || null;
+      // A file that is mostly pictures (or was never read here) is read again, its picture pages through the text reader.
+      if (!rec || (rec.kind === 'none' && rec.unread >= 0.5 * rec.pages)) {
+        try {
+          rec = await recogniseFile(src.file);
+        } catch (e) {
+          rec = rec || null;
+        }
+      }
+      if (rec) {
+        d.recognised = rec;
+        recognitions.set(d.sha256, rec);
+      }
+    }
+    const c = agreementChoice(pdfs);
+    if (!c) return null;
+    return Object.assign(c, { src: ups.find((x) => x && x.file && x.sha256 && x.sha256 === c.doc.sha256) || null });
   }
   /**
    * D-44: the subscription agreement the reading server found inside an uploaded PDF (raw.subscriptionAgreement, read
@@ -953,18 +1271,13 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
       let doc = null;
       if (a === 1 && b === d.pages) doc = (ws.docs || []).slice().reverse().find((x) => x && x.offeringId === o.id && x.sha256 === d.sha256 && x.fileName === d.name) || null;
       if (!doc) {
-        await loadScript(WRITER);
-        const L = window.PDFLib;
-        const src = await L.PDFDocument.load(new Uint8Array(await d.file.arrayBuffer()), { ignoreEncryption: true });
-        const out = await L.PDFDocument.create();
-        const idx = [];
-        for (let i = a - 1; i < b; i++) idx.push(i);
-        (await out.copyPages(src, idx)).forEach((pg) => out.addPage(pg));
-        const bytes = await out.save();
+        const bytes = await cutPages(d.file, a, b);
         const sha256 = NS.audit ? NS.audit.sha256(bytes) : '';
         const id = 'doc-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
         await NS.ops.files.put(id, new Blob([bytes], { type: 'application/pdf' }));
         doc = { id, title: `Subscription Agreement (pages ${a} to ${b} of ${title})`, fileName: `${base} - Subscription Agreement (pages ${a}-${b}).pdf`, type: 'application/pdf', size: bytes.length, sha256, cat: 'Legal', offeringId: o.id, audience: 'fund', investors: [], date: today(), taxYear: '', publishedAt: new Date().toISOString(), publishedBy: NS.app && NS.app.actor ? NS.app.actor() : NS.EDITION && NS.EDITION.diy ? `${ws.tenant.shortName} admin` : 'Carrow & Vale staff', offeringDoc: true, hidden: !opts.publish };
+        // The cut is the agreement as a whole (D-11: the dialog offers it by this, not by its name).
+        doc.recognised = recKeep({ kind: 'agreement', firstPage: 1, lastPage: b - a + 1, pages: b - a + 1, score: 0 });
         ws.docs = ws.docs || [];
         ws.docs.push(doc);
         if (NS.audit) NS.audit.log(ws, { action: 'Subscription agreement found in the offering documents', fund: o.id, record: id, detail: `${o.name}: pages ${a} to ${b} of ${d.name} (SHA-256 ${String(sha256).slice(0, 12)}…)` });
@@ -996,6 +1309,8 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
    * when no document reads as one, or when the PDF cannot be prepared (the firm then adds it on the offering page).
    * D-44: when the reading found the agreement's pages inside an uploaded PDF (opts.agreement), those pages are prepared in
    * the background instead (readPart) and this returns at once, so the terms are saved and the done screen shows first.
+   * D-11: with no such pages, the uploaded documents are recognised by what their pages say (agreementAmong); an
+   * agreement inside a file that holds another document too is prepared in the background in the same way.
    */
   async function prepareAgreement(ws, o, opts) {
     const es = NS.esign;
@@ -1009,8 +1324,19 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
       readPart(ws, o, opts, src, part, entry);
       return null;
     }
-    const d = agreementDoc(ws, o);
-    if (!d) return null;
+    // D-11: otherwise the agreement among the uploaded documents is found by what their pages say. Inside a file that
+    // holds another document too, its pages are cut and read in the background, as for pages a reading server found.
+    const found = await agreementAmong(ws, o, opts);
+    if (!found) return null;
+    if (found.rec.kind === 'combined') {
+      if (!found.src) return null;
+      const range = { name: found.src.name, pages: found.rec.pages, firstPage: found.rec.firstPage, lastPage: found.rec.lastPage };
+      const entry = { state: 'reading', name: range.name, pages: range.pages, firstPage: range.firstPage, lastPage: range.lastPage, started: Date.now(), why: '', saved: false, fields: 0 };
+      readings.set(o.id, entry);
+      readPart(ws, o, opts, found.src, range, entry);
+      return null;
+    }
+    const d = found.doc;
     try {
       const env = await es.agreementDraft(ws, o.id, { docId: d.id, title: d.title || 'Subscription Agreement' });
       if (env) env.fromDocuments = d.fileName || d.title || 'your documents';
@@ -1103,6 +1429,12 @@ Reporting. Members will receive quarterly reports and annual Schedule K-1s. The 
   NS.intake.pageTexts = pageTexts;
   NS.intake.agreementPart = agreementPart;
   NS.intake.agreementReading = (offeringId) => readings.get(offeringId) || null;
-  NS.intake.agreementName = AGREEMENT_NAME;
+  // D-11: documents recognised by what their pages say. readFile as the intake calls it also keeps a PDF's recognition.
+  NS.intake.readFile = readAndRecognise;
+  NS.intake.recognise = recognise;
+  NS.intake.recogniseFile = recogniseFile;
+  NS.intake.agreementChoice = agreementChoice;
+  NS.intake.cutPages = cutPages;
+  NS.intake.REC_VERSION = REC_VERSION;
   NS.readingFetch = readingFetch;
 })(window.CVPortal);
