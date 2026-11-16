@@ -1473,6 +1473,7 @@ const parts = {
   async 'tax-w8ben'({ check, S }) {
     const answers = { acc: 'no', exp: 'Ten years of private equity commitments', edu: 'Engineer', rep: 'no', amount: 60000 };
     const FTIN = '86014520937';
+    const out = {};
     const F = await serverFlow(S, check, {
       tag: 'tax-w8ben',
       exemption: 'Rule 506(b)',
@@ -1489,7 +1490,12 @@ const parts = {
           await p.fill('#ob-zip', '40212');
           await p.fill('#ob-tin', '');
         }
-        if (/Tax certification/.test(hd) && (await p.locator('#ob-ftin').count())) await p.fill('#ob-ftin', FTIN);
+        if (/Tax certification/.test(hd) && (await p.locator('#ob-ftin').count())) {
+          // plan 06-26: the country of citizenship is asked on the step (nothing chosen), not taken from the residence
+          out.cit = await p.locator('#ob-w8Citizen').inputValue().catch(() => '(not asked)');
+          if (out.cit === '') await p.selectOption('#ob-w8Citizen', 'Austria');
+          await p.fill('#ob-ftin', FTIN);
+        }
       },
       taxSign: signTax,
       onAnyStep: async (hd, p, R) => {
@@ -1516,6 +1522,7 @@ const parts = {
       const te = st.taxEnvelope || null;
       const held = st.files && st.files[sid] ? Buffer.from(st.files[sid], 'base64') : null;
       check('w8ben: the server holds the completed W-8BEN envelope and the signed copy byte for byte', !!te && te.status === 'completed' && te.taxForm && te.taxForm.form === 'W-8BEN' && !!held && sha256(held) === dv.sha, { te: te && { status: te.status, taxForm: te.taxForm }, server: held ? sha256(held) : Object.keys(st.files || {}), device: dv.sha });
+      check('w8ben: the tax step asked the country of citizenship with nothing chosen; the record keeps the one chosen (Austria), the residence stays Germany', out.cit === '' && tc.citizenship === 'Austria' && tc.country === 'Germany' && tc.treatyCountry === 'Germany', { asked: out.cit, citizenship: tc.citizenship, country: tc.country, treaty: tc.treatyCountry });
       check('w8ben: the server’s copy of the record carries the validity date', !!st.investor && !!st.investor.taxCert && st.investor.taxCert.validUntil === until && st.investor.taxForm === 'W-8BEN', st.investor && st.investor.taxCert);
       const got = await consoleRecord(F.A.page, F.inv.investorId, sid);
       check('w8ben: the console stored the signed W-8BEN byte for byte and its record keeps the validity date, on file', got.sha === dv.sha && got.taxForm === 'W-8BEN' && !!got.taxCert && got.taxCert.validUntil === until && got.taxCert.signed === true && got.onFile === true, got);

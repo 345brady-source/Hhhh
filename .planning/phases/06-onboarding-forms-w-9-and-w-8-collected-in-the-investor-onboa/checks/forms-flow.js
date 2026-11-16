@@ -1160,8 +1160,11 @@ const w8Printed = (W1, R, names) => names.map((f) => [f, wordsIn(W1, R.of[W8 + f
  * W-8BEN from what onboarding knows; she signs it on the page and moves on. The signed copy is read back field by field.
  */
 // spec (plan 06-24, so the owner set runs every check of this case on its own answers): { id, name, email, ftin, at:
-// { country (a treaty country of the list), street, city, zip, dob } }; the defaults are this case's own answers.
-const foreignIndividual = foreignIndividualCase({ id: 'foreign-individual', name: 'Zoë Müller-Łukasz', email: 'zoe.muller-lukasz@example.com', ftin: '12345678901' });
+// { country (a treaty country of the list), street, city, zip, dob, citizenship (plan 06-26: chosen on the tax step; the
+// country of residence when not given) } }; the defaults are this case's own answers. Plan 06-26: this case's own investor
+// lives in Germany and is a citizen of Austria, so line 2 carries the country she chose, never the one where she lives,
+// and line 9 (the treaty country) still follows her residence.
+const foreignIndividual = foreignIndividualCase({ id: 'foreign-individual', name: 'Zoë Müller-Łukasz', email: 'zoe.muller-lukasz@example.com', ftin: '12345678901', at: { citizenship: 'Austria' } });
 function foreignIndividualCase(spec) {
   return async ({ check, S }) => {
   const A = await Lib.open(S, { context: { acceptDownloads: true } });
@@ -1173,14 +1176,18 @@ function foreignIndividualCase(spec) {
   const FTIN = spec.ftin;
   const at = Object.assign({ country: 'Germany', street: 'Königsallee 27', city: 'Düsseldorf', zip: '40212', dob: '1980-04-02' }, spec.at || {});
   const C = at.country;
+  const CIT = at.citizenship || C;
   const { inv, w } = await toW8Step(S, A, { name, email }, at);
   check('the invited foreign individual reaches the tax step', w.reached && w.at === 'Tax certification' && w.errors.length === 0, { seen: w.seen, errors: w.errors });
   const screens = [await Lib.screenText(page)];
   const shown = await visibleInputs(page);
   const lede = await page.evaluate(() => Array.from(document.querySelectorAll('.ivf-form p.lede')).map((x) => x.innerText).join(' '));
   await page.screenshot({ path: path.join(dir, `${spec.id}-answers.png`), fullPage: true });
-  check('the tax step asks only for the foreign tax ID or the not-required tick', JSON.stringify(shown) === JSON.stringify(['ob-ftin', 'ob-noFtin']), shown);
-  check(`the step says the form is the W-8BEN, filled in from the answers, with ${C} (where the investor lives) as the citizenship`, /Form W-8BEN is filled in from your answers/.test(lede) && lede.indexOf(`${C}, where you live, as your country of citizenship`) >= 0, lede);
+  // plan 06-26 (owner decision on the verification's human item 2): the citizenship is asked, never copied from the residence
+  const citPick = await page.locator('#ob-w8Citizen').inputValue().catch(() => '(no country of citizenship asked)');
+  check('the tax step asks the country of citizenship (one country choice, nothing chosen: the investor gave none earlier), then the foreign tax ID or its tick', JSON.stringify(shown) === JSON.stringify(['ob-w8Citizen', 'ob-ftin', 'ob-noFtin']) && citPick === '', { shown, citPick });
+  check('the step says the form is the W-8BEN, filled in from the answers, and no sentence takes the country where the investor lives as the citizenship', /Form W-8BEN is filled in from your answers/.test(lede) && !/where you live, as your country of citizenship/.test(lede), lede);
+  if (citPick === '') await page.selectOption('#ob-w8Citizen', CIT);
   check('the button goes to the form', /Continue to the form/.test(await page.locator('.ivf-form button[type=submit]').innerText()), await page.locator('.ivf-form button[type=submit]').innerText());
   await page.fill('#ob-ftin', FTIN);
   await Lib.submit(page);
@@ -1208,6 +1215,7 @@ function foreignIndividualCase(spec) {
     tc.form === 'W-8BEN' && tc.revision === 'Rev. October 2021' && tc.envelopeId === made.envId && /^\d{4}-\d{2}-\d{2}T/.test(tc.at || '') && tc.signed === true && tc.signedBy === name && tc.country === C && tc.ftinLast4 === FTIN.slice(-4) && tc.noFtin === false && tc.treatyCountry === C,
     tc
   );
+  check(`investor.taxCert keeps the country of citizenship the investor chose (${CIT}), so a later W-8BEN starts from it`, tc.citizenship === CIT, tc.citizenship);
   check(`validUntil is 31 December of the third calendar year after signing (${year + 3}-12-31)`, tc.validUntil === `${year + 3}-12-31`, tc.validUntil);
   check('the change log says the tax form was signed', got.log.some((l) => /^Tax form signed :: .*W-8BEN/.test(l)), got.log.slice(-4));
   check('no saved workspace, storage or change-log entry holds the full foreign tax ID', got.all.indexOf(FTIN) < 0 && !got.log.some((l) => l.indexOf(FTIN) >= 0));
@@ -1232,13 +1240,13 @@ function foreignIndividualCase(spec) {
   const W1 = words(signedFile, 1);
   [
     [name, 'f_1[0]', 'line 1 name'],
-    [C, 'f_2[0]', 'line 2 country of citizenship'],
+    [CIT, 'f_2[0]', 'line 2 country of citizenship (the country chosen)'],
     [at.street, 'f_3[0]', 'line 3 street'],
     [`${at.city} ${at.zip}`, 'f_4[0]', 'line 3 city line'],
     [C, 'f_5[0]', 'line 3 country'],
     [FTIN, 'f_10[0]', 'line 6a foreign tax ID'],
     [mmddyyyy(at.dob), 'f_12[0]', 'line 8 date of birth (MM-DD-YYYY)'],
-    [C, 'f_13[0]', 'line 9 treaty country'],
+    [C, 'f_13[0]', 'line 9 treaty country (the country of residence)'],
     [name, 'f_21[0]', 'Part III print name']
   ].forEach(([want, f, what]) => {
     const at = wordsIn(W1, R.of[W8 + f], 1);
@@ -2973,7 +2981,9 @@ async function typedRouteCase({ check, S }) {
   const lede = await page.evaluate(() => Array.from(document.querySelectorAll('.ivf-form p.lede')).map((x) => x.innerText).join(' '));
   screens.push(await Lib.screenText(page));
   await page.screenshot({ path: path.join(dir, 'typed-route-w8ben-tax-step.png'), fullPage: true });
-  check(`the tax step is the invitation's: the official Form W-8BEN, filled in from the answers, with ${at.country} as the citizenship`, /Form W-8BEN is filled in from your answers/.test(lede) && lede.indexOf(`${at.country}, where you live, as your country of citizenship`) >= 0, lede);
+  const citPick = await page.locator('#ob-w8Citizen').inputValue().catch(() => '(no country of citizenship asked)');
+  check(`the tax step is the invitation's: the official Form W-8BEN, filled in from the answers, asking the country of citizenship (nothing chosen), not taking ${at.country} where she lives`, /Form W-8BEN is filled in from your answers/.test(lede) && !/where you live, as your country of citizenship/.test(lede) && citPick === '', { lede, citPick });
+  if (citPick === '') await page.selectOption('#ob-w8Citizen', at.country);
   check('the tax step offers the upload of a completed form instead', (await page.locator('[data-action="ivf-taxupload"]').count()) >= 1);
   if (!w.reached) {
     await A.context.close();
