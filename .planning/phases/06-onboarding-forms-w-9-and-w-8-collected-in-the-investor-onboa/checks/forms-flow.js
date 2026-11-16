@@ -4,7 +4,7 @@
 // one investor with the signature and date at the form's own places, the investor signs it in the portal, and the stored
 // signed PDF is read back: Documents category Tax for that investor alone, zero form fields, each value inside its own
 // field, the signature ink inside the sign place, the "Signed electronically" caption, the date, the certificate page.
-//   NODE_PATH=$(npm root -g) node forms-flow.js [--case sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned,us-llc,us-ccorp,us-trust,us-disregarded,us-ira,us-joint,foreign-entity,passive-owners,passive-none,ffi-giin,treaty-entity,route,upload,upload-ira,upload-refused]
+//   NODE_PATH=$(npm root -g) node forms-flow.js [--case toggle-off,sign-w9,sign-w8ben,us-individual,investor-type,unsigned,legacy,empty,tin,backup,foreign,foreign-individual,noftin,edit,editsigned,us-llc,us-ccorp,us-trust,us-disregarded,us-ira,us-joint,foreign-entity,passive-owners,passive-none,ffi-giin,treaty-entity,route,upload,upload-ira,upload-refused,owner-set]
 // The last line is "FORMS FLOW: PASS (cases run: N)" or "FORMS FLOW: FAIL (cases run: N) - <failed cases>". Exits 2
 // (NOT RUN) when the bundled forms do not match assets/forms/SHA256SUMS.
 const path = require('path');
@@ -311,17 +311,24 @@ function formCase(spec) {
  * next step. The stored signed copy is read back, and the sponsor's investor list shows "W-9 signed" with a download of
  * the same bytes.
  */
-async function usIndividual({ check, S }) {
+// spec (plan 06-24, so the owner set runs every check of this case on its own answers): { id, name, email, tin (nine
+// digits), profile: { street, city, st, zip, dob } for Investor information }; the defaults are this case's own answers.
+const usIndividual = usIndividualCase({ id: 'us-individual', name: 'Renée Zoë Ångström', email: 'renee.angstrom@example.com' });
+function usIndividualCase(spec) {
+  return async ({ check, S }) => {
   const A = await Lib.open(S, { context: { acceptDownloads: true } });
   const page = A.page;
-  const dir = path.join(OUT, 'us-individual');
+  const dir = path.join(OUT, spec.id);
   fs.mkdirSync(dir, { recursive: true });
   const portal = await Lib.setupPortal(S, A);
-  const name = 'Renée Zoë Ångström';
-  const email = 'renee.angstrom@example.com';
+  const name = spec.name;
+  const email = spec.email;
+  const tin = spec.tin || '123456789';
+  const pf = Object.assign({ street: '12 Elm Street', city: 'Austin', st: 'TX', zip: '78701' }, spec.profile || {});
+  const tinRe = new RegExp(`${tin.slice(0, 3)}-?${tin.slice(3, 5)}-?${tin.slice(5)}`);
   const inv = await Lib.createInvitation(page, { name, email, type: 'individual', offeringId: portal.offeringId });
   await page.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
-  const w = await Lib.walk(page, { name, acc: 'yes', basis: 0, until: /Tax certification/ });
+  const w = await Lib.walk(page, { name, acc: 'yes', basis: 0, until: /Tax certification/, tin, profile: spec.profile });
   check('the invited U.S. individual reaches the tax step', w.reached && w.at === 'Tax certification', w.seen);
   const screens = [];
   const ask = await page.evaluate(() => {
@@ -331,7 +338,7 @@ async function usIndividual({ check, S }) {
     return { inputs: inputs.map((el) => el.id || el.name), submit: (f.querySelector('button[type=submit]') || {}).innerText || '', lede: Array.from(f.querySelectorAll('p.lede')).map((x) => x.innerText) };
   });
   screens.push(await Lib.screenText(page));
-  await page.screenshot({ path: path.join(dir, 'us-individual-answers.png'), fullPage: true });
+  await page.screenshot({ path: path.join(dir, `${spec.id}-answers.png`), fullPage: true });
   check('the tax step asks no question (nothing missing)', ask.inputs.length === 0, ask.inputs);
   check('the tax step is one sentence and the button to the form', ask.lede.length === 1 && /Continue to the form/.test(ask.submit), ask);
   await Lib.submit(page);
@@ -350,7 +357,7 @@ async function usIndividual({ check, S }) {
   check('Continue made a tax envelope for the W-9 with this investor as its one signer', !!made.env && made.env.kind === 'tax' && made.env.taxForm.form === 'W-9' && made.env.signers.length === 1 && made.env.signers[0].investorId === made.invId, made.env && { kind: made.env.kind, taxForm: made.env.taxForm });
   check('the envelope title names the account', !!made.env && made.env.title === `Form W-9 - ${made.title}`, made.env && made.env.title);
   screens.push(await Lib.screenText(page));
-  await page.screenshot({ path: path.join(dir, 'us-individual-signing.png'), fullPage: true });
+  await page.screenshot({ path: path.join(dir, `${spec.id}-signing.png`), fullPage: true });
   const sigFid = made.env.fields.find((f) => f.type === 'signature').id;
   await Lib.finishTaxForm(page, async (pg) => {
     if (await pg.locator('#es-consent-box').count()) {
@@ -394,10 +401,10 @@ async function usIndividual({ check, S }) {
   );
   const tc = got.taxCert || {};
   check('investor.taxForm is W-9', got.taxForm === 'W-9', got.taxForm);
-  check('investor.taxCert records the form, revision, envelope, time, signature, signer, last four digits and no backup withholding', tc.form === 'W-9' && tc.revision === 'Rev. March 2024' && tc.envelopeId === made.envId && /^\d{4}-\d{2}-\d{2}T/.test(tc.at || '') && tc.signed === true && tc.signedBy === name && tc.tinLast4 === '6789' && tc.backupWithholding === false, tc);
+  check('investor.taxCert records the form, revision, envelope, time, signature, signer, last four digits and no backup withholding', tc.form === 'W-9' && tc.revision === 'Rev. March 2024' && tc.envelopeId === made.envId && /^\d{4}-\d{2}-\d{2}T/.test(tc.at || '') && tc.signed === true && tc.signedBy === name && tc.tinLast4 === tin.slice(5) && tc.backupWithholding === false, tc);
   check('the change log says the tax form was signed', got.log.some((l) => /^Tax form signed :: /.test(l)), got.log.slice(-4));
-  check('no change-log entry holds the taxpayer ID', !got.log.some((l) => /123-?45-?6789/.test(l)), got.log.filter((l) => /6789/.test(l)));
-  check('the saved workspace and local storage hold no full taxpayer ID', !/123-?45-?6789/.test(got.all));
+  check('no change-log entry holds the taxpayer ID', !got.log.some((l) => tinRe.test(l)), got.log.filter((l) => l.indexOf(tin.slice(5)) >= 0));
+  check('the saved workspace and local storage hold no full taxpayer ID', !tinRe.test(got.all));
   const doc = got.docs[0] || {};
   check('one Documents entry for the signed W-9, category Tax, for this investor alone', got.docs.length === 1 && doc.cat === 'Tax' && JSON.stringify(doc.investors) === JSON.stringify([made.invId]), got.docs);
   const signedFile = path.join(dir, 'signed.pdf');
@@ -413,17 +420,17 @@ async function usIndividual({ check, S }) {
   const W1 = words(signedFile, 1);
   [
     [name, W9 + 'f1_01[0]'],
-    ['12 Elm Street', W9 + 'Address_ReadOrder[0].f1_07[0]'],
-    ['Austin, TX 78701', W9 + 'Address_ReadOrder[0].f1_08[0]'],
+    [pf.street, W9 + 'Address_ReadOrder[0].f1_07[0]'],
+    [`${pf.city}, ${pf.st} ${pf.zip}`, W9 + 'Address_ReadOrder[0].f1_08[0]'],
     [made.firm, W9 + 'f1_09[0]']
   ].forEach(([want, fname]) => {
     const at = wordsIn(W1, R.of[fname], 1);
     check(`"${want}" prints inside its own field`, at === want, { field: fname, inside: at });
   });
   [
-    ['123', W9 + 'f1_11[0]'],
-    ['45', W9 + 'f1_12[0]'],
-    ['6789', W9 + 'f1_13[0]']
+    [tin.slice(0, 3), W9 + 'f1_11[0]'],
+    [tin.slice(3, 5), W9 + 'f1_12[0]'],
+    [tin.slice(5), W9 + 'f1_13[0]']
   ].forEach(([want, fname]) => {
     const at = wordsIn(W1, R.of[fname], 1).replace(/\s+/g, '');
     check(`the SSN ${want.length}-digit group prints inside its own comb field`, at === want, { field: fname, inside: at });
@@ -460,6 +467,7 @@ async function usIndividual({ check, S }) {
   const capAt = wordsIn(W1, pts(made.overlays.caption, R.pw, R.ph), 1.5);
   check('"Signed electronically <date time> UTC" in the caption place, dated today (UTC)', capAt === cap && signedAt.slice(0, 10) === new Date().toISOString().slice(0, 10), { want: cap, got: capAt });
 
+  if (spec.finish) await spec.finish({ page, check, dir, id: spec.id });
   // the sponsor's investor list: one line under Activation, and the download of the stored copy
   await page.evaluate(() => {
     window.CVPortal.state.role = 'sponsor';
@@ -467,8 +475,9 @@ async function usIndividual({ check, S }) {
   await Lib.consoleRoute(page, 'console-investors', '.cs-tbl');
   const row = page.locator('table.cs-tbl:has(th:text-is("Paid by")) tbody tr', { hasText: email }).first();
   const rowText = (await row.innerText().catch(() => '')).replace(/\s+/g, ' ');
+  await row.scrollIntoViewIfNeeded().catch(() => {});
   check('the console row reads "W-9 signed <date>"', /W-9 signed [A-Z][a-z]+ \d{1,2}, \d{4}/.test(rowText), rowText.slice(0, 300));
-  await page.screenshot({ path: path.join(dir, 'us-individual-console.png'), fullPage: false });
+  await page.screenshot({ path: path.join(dir, `${spec.id}-console.png`), fullPage: false });
   let dlSha = '';
   try {
     const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), row.locator('[data-action="kyc-iv-file"]').first().click()]);
@@ -482,6 +491,7 @@ async function usIndividual({ check, S }) {
   check('no script error in the browser', A.errors.length === 0, A.errors);
   check('no request left the check server', A.net.external.length === 0, A.net.external);
   await A.context.close();
+  };
 }
 
 /**
@@ -1074,15 +1084,16 @@ async function backupCase({ check, S }) {
 async function toW8Step(S, A, who, at) {
   const page = A.page;
   return toTaxStep(S, A, Object.assign({ taxType: 'foreign-individual' }, who), {
+    profile: at && at.dob ? { dob: at.dob } : undefined,
     onFilled: async (hd) => {
       if (!/Investor information/.test(hd)) return;
-      await page.selectOption('#ob-country', 'Germany');
+      await page.selectOption('#ob-country', (at && at.country) || 'Germany');
       await page.waitForTimeout(200);
       if (await page.locator('input[name="ob-citizen"][value="other"]').count()) await page.check('input[name="ob-citizen"][value="other"]');
       await page.fill('#ob-street', (at && at.street) || 'Königsallee 27');
-      await page.fill('#ob-city', 'Düsseldorf');
+      await page.fill('#ob-city', (at && at.city) || 'Düsseldorf');
       await page.fill('#ob-st', '');
-      await page.fill('#ob-zip', '40212');
+      await page.fill('#ob-zip', (at && at.zip) || '40212');
     }
   });
 }
@@ -1138,22 +1149,28 @@ const w8Printed = (W1, R, names) => names.map((f) => [f, wordsIn(W1, R.of[W8 + f
  * walks to the tax step, which asks only for her foreign tax ID (or the not-required tick). Continue fills the official
  * W-8BEN from what onboarding knows; she signs it on the page and moves on. The signed copy is read back field by field.
  */
-async function foreignIndividual({ check, S }) {
+// spec (plan 06-24, so the owner set runs every check of this case on its own answers): { id, name, email, ftin, at:
+// { country (a treaty country of the list), street, city, zip, dob } }; the defaults are this case's own answers.
+const foreignIndividual = foreignIndividualCase({ id: 'foreign-individual', name: 'Zoë Müller-Łukasz', email: 'zoe.muller-lukasz@example.com', ftin: '12345678901' });
+function foreignIndividualCase(spec) {
+  return async ({ check, S }) => {
   const A = await Lib.open(S, { context: { acceptDownloads: true } });
   const page = A.page;
-  const dir = path.join(OUT, 'foreign-individual');
+  const dir = path.join(OUT, spec.id);
   fs.mkdirSync(dir, { recursive: true });
-  const name = 'Zoë Müller-Łukasz';
-  const email = 'zoe.muller-lukasz@example.com';
-  const FTIN = '12345678901';
-  const { inv, w } = await toW8Step(S, A, { name, email });
+  const name = spec.name;
+  const email = spec.email;
+  const FTIN = spec.ftin;
+  const at = Object.assign({ country: 'Germany', street: 'Königsallee 27', city: 'Düsseldorf', zip: '40212', dob: '1980-04-02' }, spec.at || {});
+  const C = at.country;
+  const { inv, w } = await toW8Step(S, A, { name, email }, at);
   check('the invited foreign individual reaches the tax step', w.reached && w.at === 'Tax certification' && w.errors.length === 0, { seen: w.seen, errors: w.errors });
   const screens = [await Lib.screenText(page)];
   const shown = await visibleInputs(page);
   const lede = await page.evaluate(() => Array.from(document.querySelectorAll('.ivf-form p.lede')).map((x) => x.innerText).join(' '));
-  await page.screenshot({ path: path.join(dir, 'foreign-individual-answers.png'), fullPage: true });
+  await page.screenshot({ path: path.join(dir, `${spec.id}-answers.png`), fullPage: true });
   check('the tax step asks only for the foreign tax ID or the not-required tick', JSON.stringify(shown) === JSON.stringify(['ob-ftin', 'ob-noFtin']), shown);
-  check('the step says the form is the W-8BEN, filled in from her answers, with Germany (where she lives) as her citizenship', /Form W-8BEN is filled in from your answers/.test(lede) && /Germany, where you live, as your country of citizenship/.test(lede), lede);
+  check(`the step says the form is the W-8BEN, filled in from the answers, with ${C} (where the investor lives) as the citizenship`, /Form W-8BEN is filled in from your answers/.test(lede) && lede.indexOf(`${C}, where you live, as your country of citizenship`) >= 0, lede);
   check('the button goes to the form', /Continue to the form/.test(await page.locator('.ivf-form button[type=submit]').innerText()), await page.locator('.ivf-form button[type=submit]').innerText());
   await page.fill('#ob-ftin', FTIN);
   await Lib.submit(page);
@@ -1165,7 +1182,7 @@ async function foreignIndividual({ check, S }) {
   check('the envelope title is "Form W-8BEN - <name>"', !!made.env && made.env.title === `Form W-8BEN - ${name}`, made.env && made.env.title);
   check('the full foreign tax ID is not saved anywhere once the form is built', made.all.indexOf(FTIN) < 0);
   screens.push(await Lib.screenText(page));
-  await page.screenshot({ path: path.join(dir, 'foreign-individual-signing.png'), fullPage: true });
+  await page.screenshot({ path: path.join(dir, `${spec.id}-signing.png`), fullPage: true });
   const sigFid = made.env.fields.find((f) => f.type === 'signature').id;
   await Lib.finishTaxForm(page, signTaxForm(sigFid));
   const next = await Lib.heading(page);
@@ -1178,7 +1195,7 @@ async function foreignIndividual({ check, S }) {
   check('investor.taxForm is W-8BEN', got.taxForm === 'W-8BEN', got.taxForm);
   check(
     'investor.taxCert keeps form, revision, envelope, time, signed, signer, tax residence, FTIN last four, treaty country and validUntil',
-    tc.form === 'W-8BEN' && tc.revision === 'Rev. October 2021' && tc.envelopeId === made.envId && /^\d{4}-\d{2}-\d{2}T/.test(tc.at || '') && tc.signed === true && tc.signedBy === name && tc.country === 'Germany' && tc.ftinLast4 === '8901' && tc.noFtin === false && tc.treatyCountry === 'Germany',
+    tc.form === 'W-8BEN' && tc.revision === 'Rev. October 2021' && tc.envelopeId === made.envId && /^\d{4}-\d{2}-\d{2}T/.test(tc.at || '') && tc.signed === true && tc.signedBy === name && tc.country === C && tc.ftinLast4 === FTIN.slice(-4) && tc.noFtin === false && tc.treatyCountry === C,
     tc
   );
   check(`validUntil is 31 December of the third calendar year after signing (${year + 3}-12-31)`, tc.validUntil === `${year + 3}-12-31`, tc.validUntil);
@@ -1204,13 +1221,13 @@ async function foreignIndividual({ check, S }) {
   const W1 = words(signedFile, 1);
   [
     [name, 'f_1[0]', 'line 1 name'],
-    ['Germany', 'f_2[0]', 'line 2 country of citizenship'],
-    ['Königsallee 27', 'f_3[0]', 'line 3 street'],
-    ['Düsseldorf 40212', 'f_4[0]', 'line 3 city line'],
-    ['Germany', 'f_5[0]', 'line 3 country'],
+    [C, 'f_2[0]', 'line 2 country of citizenship'],
+    [at.street, 'f_3[0]', 'line 3 street'],
+    [`${at.city} ${at.zip}`, 'f_4[0]', 'line 3 city line'],
+    [C, 'f_5[0]', 'line 3 country'],
     [FTIN, 'f_10[0]', 'line 6a foreign tax ID'],
-    ['04-02-1980', 'f_12[0]', 'line 8 date of birth (MM-DD-YYYY)'],
-    ['Germany', 'f_13[0]', 'line 9 treaty country'],
+    [mmddyyyy(at.dob), 'f_12[0]', 'line 8 date of birth (MM-DD-YYYY)'],
+    [C, 'f_13[0]', 'line 9 treaty country'],
     [name, 'f_21[0]', 'Part III print name']
   ].forEach(([want, f, what]) => {
     const at = wordsIn(W1, R.of[W8 + f], 1);
@@ -1236,6 +1253,7 @@ async function foreignIndividual({ check, S }) {
   const ink = inkBetween(filledFile, signedFile, pts(got.overlays.sign, R.pw, R.ph), 100);
   check('the signature ink lies inside the sign place', ink > 60, ink);
 
+  if (spec.finish) await spec.finish({ page, check, dir, id: spec.id });
   // the sponsor's investor list: "W-8BEN signed <date>, valid until <date>"
   await page.evaluate(() => {
     window.CVPortal.state.role = 'sponsor';
@@ -1243,7 +1261,8 @@ async function foreignIndividual({ check, S }) {
   await Lib.consoleRoute(page, 'console-investors', '.cs-tbl');
   const row = page.locator('table.cs-tbl:has(th:text-is("Paid by")) tbody tr', { hasText: email }).first();
   const rowText = (await row.innerText().catch(() => '')).replace(/\s+/g, ' ');
-  await page.screenshot({ path: path.join(dir, 'foreign-individual-console.png'), fullPage: false });
+  await row.scrollIntoViewIfNeeded().catch(() => {});
+  await page.screenshot({ path: path.join(dir, `${spec.id}-console.png`), fullPage: false });
   check(`the console row reads "W-8BEN signed <date>, valid until Dec 31, ${year + 3}"`, new RegExp(`W-8BEN signed [A-Z][a-z]+ \\d{1,2}, ${year}, valid until Dec 31, ${year + 3}`).test(rowText), rowText.slice(0, 300));
   let dlSha = '';
   try {
@@ -1258,6 +1277,7 @@ async function foreignIndividual({ check, S }) {
   check('no script error in the browser', A.errors.length === 0, A.errors);
   check('no request left the check server', A.net.external.length === 0, A.net.external);
   await A.context.close();
+  };
 }
 
 /**
@@ -1517,7 +1537,7 @@ async function w9Read(pdfFile, dir, blank) {
 
 /** The expected text of each W-9 field from { name, business, llcLetter, otherText, exemptPayee, ssn, ein, ... }. */
 function w9Want(want, firm) {
-  const t = { address: '12 Elm Street', cityStateZip: 'Austin, TX 78701', requester: firm };
+  const t = { address: want.address || '12 Elm Street', cityStateZip: want.cityStateZip || 'Austin, TX 78701', requester: firm };
   ['name', 'business', 'llcLetter', 'otherText', 'exemptPayee'].forEach((k) => want[k] && (t[k] = want[k]));
   if (want.ssn) Object.assign(t, { ssn1: want.ssn.slice(0, 3), ssn2: want.ssn.slice(3, 5), ssn3: want.ssn.slice(5) });
   if (want.ein) Object.assign(t, { ein1: want.ein.slice(0, 2), ein2: want.ein.slice(2) });
@@ -1551,7 +1571,7 @@ function w9Expect(check, label, got, want, firm) {
  */
 function w9AccountCase(spec) {
   return async ({ check, S }) => {
-    const A = await Lib.open(S);
+    const A = await Lib.open(S, spec.console ? { context: { acceptDownloads: true } } : undefined);
     const page = A.page;
     const dir = path.join(OUT, spec.id);
     fs.mkdirSync(dir, { recursive: true });
@@ -1629,6 +1649,27 @@ function w9AccountCase(spec) {
     const cap = `Signed electronically ${signedAt.slice(0, 10)} ${signedAt.slice(11, 16)} UTC`;
     const capAt = wordsIn(words(signedFile, 1), pts(made.overlays.caption, read.R.pw, read.R.ph), 1.5);
     check('"Signed electronically <date time> UTC" in the caption place on page 1', capAt === cap, { want: cap, got: capAt });
+    if (spec.finish) await spec.finish({ page, check, dir, id: spec.id });
+    // spec.console (plan 06-24's owner set): the sponsor's investor row and its download, as us-individual checks them
+    if (spec.console) {
+      await page.evaluate(() => {
+        window.CVPortal.state.role = 'sponsor';
+      });
+      await Lib.consoleRoute(page, 'console-investors', '.cs-tbl');
+      const row = page.locator('table.cs-tbl:has(th:text-is("Paid by")) tbody tr', { hasText: spec.email }).first();
+      const rowText = (await row.innerText().catch(() => '')).replace(/\s+/g, ' ');
+      await row.scrollIntoViewIfNeeded().catch(() => {});
+      await page.screenshot({ path: path.join(dir, `${spec.id}-console.png`), fullPage: false });
+      check('the console row reads "W-9 signed <date>"', /W-9 signed [A-Z][a-z]+ \d{1,2}, \d{4}/.test(rowText), rowText.slice(0, 300));
+      let dlSha = '';
+      try {
+        const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), row.locator('[data-action="kyc-iv-file"]').first().click()]);
+        dlSha = sha(fs.readFileSync(await dl.path()));
+      } catch (e) {
+        dlSha = String(e.message || e).slice(0, 200);
+      }
+      check('the console download is the stored signed copy (same SHA-256)', dlSha === sha(signed), { download: dlSha, stored: sha(signed) });
+    }
     if (spec.after) await spec.after({ page, check, dir, made, inv });
     const scr = Lib.leakCheck(screens.join('\n'));
     check('white label: no vendor name or forbidden word on the tax screens', scr.ok, scr.hits);
@@ -1650,7 +1691,7 @@ const radioState = (page, name) =>
  * radios; LLC is chosen (its name says LLC), the tax letter P is picked, line 3b is offered for it and ticked; the EIN
  * typed at Investor information goes into the EIN boxes; line 1 is the LLC's name.
  */
-const usLlc = w9AccountCase({
+const US_LLC = {
   id: 'us-llc',
   name: 'Søren Ibáñez-Holt',
   email: 'soren.ibanez@example.com',
@@ -1673,7 +1714,8 @@ const usLlc = w9AccountCase({
     await page.check('#ob-w9Foreign');
   },
   want: { name: 'Lakeshore Ridge Holdings LLC', llcLetter: 'P', ein: '123456789', boxes: ['llc', 'foreignOwners'] }
-});
+};
+const usLlc = w9AccountCase(US_LLC);
 
 /** us-ccorp: a corporation (its name does not say how it is taxed): nothing is chosen for it; C corporation and its EIN. */
 const usCcorp = w9AccountCase({
@@ -2031,6 +2073,7 @@ function w8eCase(spec) {
     let ink = 0;
     for (let y = Math.floor(sp.top * k); y < Math.ceil((sp.top + sp.h) * k); y++) for (let x = Math.floor(sp.x * k); x < Math.ceil((sp.x + sp.w) * k); x++) if (fA.px[y * fA.w + x] - fB.px[y * fB.w + x] > 80) ink++;
     check('the signature ink lies inside the sign place on page 8', ink > 60, ink);
+    if (spec.finish) await spec.finish({ page, check, dir, id: spec.id });
     if (spec.console) {
       await page.evaluate(() => {
         window.CVPortal.state.role = 'sponsor';
@@ -2038,6 +2081,7 @@ function w8eCase(spec) {
       await Lib.consoleRoute(page, 'console-investors', '.cs-tbl');
       const row = page.locator('table.cs-tbl:has(th:text-is("Paid by")) tbody tr', { hasText: spec.email }).first();
       const rowText = (await row.innerText().catch(() => '')).replace(/\s+/g, ' ');
+      await row.scrollIntoViewIfNeeded().catch(() => {});
       await page.screenshot({ path: path.join(dir, `${spec.id}-console.png`), fullPage: false });
       check(`the console row reads "W-8BEN-E signed <date>, valid until Dec 31, ${year + 3}"`, new RegExp(`W-8BEN-E signed [A-Z][a-z]+ \\d{1,2}, ${year}, valid until Dec 31, ${year + 3}`).test(rowText), rowText.slice(0, 300));
       let dlSha = '';
@@ -2070,13 +2114,15 @@ async function pickRadio(page, name, value) {
  * line 2 the country named by the formation answer, line 6 the address, and the controlling person as print name with the
  * capacity box ticked. Part XXV is ticked for the Active NFFE.
  */
-const foreignEntity = w8eCase({
+const FOREIGN_ENTITY = {
   id: 'foreign-entity',
   name: 'Annika Lindqvist-Barros',
   email: 'annika.lindqvist@example.com',
   account: 'Coral Reef Capital Ltd.',
   console: true,
+  ftin: 'KY48213907',
   secrets: ['KY48213907'],
+  // this: the spec (w8eCase calls spec.atTax), so a copy with another ftin types its own
   async atTax({ page, check, shown, radios }) {
     check('the step asks only the two statuses (as one group of radios each) and the foreign tax ID or its tick', JSON.stringify(shown.filter((x) => x !== 'ob-e8Ch3' && x !== 'ob-e8Ch4')) === JSON.stringify(['ob-ftin', 'ob-noFtin']) && radios.ch3.values.length >= 4 && radios.ch4.values.length >= 5, shown);
     check('the chapter 3 radios offer corporation, simple trust, complex trust and estate, in the form’s order, nothing chosen', JSON.stringify(radios.ch3.values.slice(0, 4)) === JSON.stringify(['corporation', 'simpleTrust', 'complexTrust', 'estate']) && radios.ch3.chosen === '', radios.ch3);
@@ -2085,7 +2131,7 @@ const foreignEntity = w8eCase({
     await pickRadio(page, 'ob-e8Ch4', 'activeNffe');
     const after = await visibleInputs(page);
     check('an Active NFFE is asked nothing more', JSON.stringify(after.filter((x) => x !== 'ob-e8Ch3' && x !== 'ob-e8Ch4')) === JSON.stringify(['ob-ftin', 'ob-noFtin']), after);
-    await page.fill('#ob-ftin', 'KY48213907');
+    await page.fill('#ob-ftin', this.ftin);
   },
   want: {
     text: { name: 'Coral Reef Capital Ltd.', country: 'Cayman Islands', street: '94 Solaris Avenue', cityLine: 'Camana Bay, Grand Cayman KY1-1108', residenceCountry: 'Cayman Islands', ftin: 'KY48213907', printName: 'Annika Lindqvist-Barros' },
@@ -2093,7 +2139,8 @@ const foreignEntity = w8eCase({
   },
   exact: ['Annika Lindqvist-Barros'],
   cert: { chapter3: 'Corporation', chapter4: 'Active NFFE', country: 'Cayman Islands', ftinLast4: '3907' }
-});
+};
+const foreignEntity = w8eCase(FOREIGN_ENTITY);
 
 /* ---------- Plan 06-20 Task 2: Passive NFFEs, FFIs, the treaty lines, and routing what the form cannot cover ---------- */
 
@@ -2687,7 +2734,261 @@ const usDate = (iso) => {
 const W9 = 'topmostSubform[0].Page1[0].';
 const W8 = 'topmostSubform[0].Page1[0].';
 
+/**
+ * Plan 06-24 (owner-accepted removal, 2026-11-16; C-03): the self-serve edition has no on/off switch for the tax step.
+ * Every investor needs a W-9 or a W-8 before distributions, so the console's "Collect a substitute W-9 certification"
+ * toggle is gone from the self-serve settings, and a firm saved earlier with it off (tenant.onboarding.taxForm false) still
+ * gets the tax step in every invitation, with every other step the same, and the certification in the typed activation
+ * used when an investor has no open invitation. The accreditation toggle's hint says which offerings always ask. The
+ * managed edition keeps its toggle, its hint and its behavior (the certification follows the toggle there).
+ */
+async function toggleOffCase({ check, S }) {
+  const dir = path.join(OUT, 'toggle-off');
+  fs.mkdirSync(dir, { recursive: true });
+  const panelText = (page) =>
+    page.evaluate(() => {
+      const s = Array.from(document.querySelectorAll('section.cs-panel')).find((x) => /^Investor onboarding$/.test(((x.querySelector('.cs-panel-head h2') || {}).textContent || '').trim()));
+      return s ? s.innerText.replace(/\s+/g, ' ').trim() : '(no Investor onboarding panel)';
+    });
+  const HINT = 'Rule 506(b) and Regulation A Tier 2 offerings always ask, and Rule 506(c) offerings verify it. Turn this on to ask in every other invitation too.';
+  // the typed activation (no open invitation), resumed at its last step: Review and sign
+  const typedReview = async (page, who) => {
+    await page.evaluate((who) => {
+      const NS = window.CVPortal;
+      const ws = NS.state.ws;
+      ws.tenant.onboarding.taxForm = who.taxForm;
+      let i = ws.investors.find((x) => x.email === who.email);
+      if (!i) {
+        i = { id: `${ws.tenant.idPrefix}-${who.n}`, contact: who.name, title: who.name, type: 'individual', email: who.email, phone: '', address: '', tinLast4: '', accreditation: { basis: '', date: '' }, taxForm: '', edelivery: false, onboarding: { status: 'in_progress', step: 99, invited: NS.dates.today(), completed: '', source: 'manual' }, payment: { method: 'check', bank: null }, positions: [] };
+        ws.investors.push(i);
+      }
+      NS.app.save(true);
+      NS.state.role = 'investor';
+      NS.store.set('role', 'investor');
+      NS.startOnboarding(i.id);
+    }, who);
+    await page.waitForFunction(() => /Review and sign/.test(document.body.innerText), null, { timeout: 20000 });
+    await page.waitForTimeout(300);
+    return { text: await Lib.screenText(page), w9: await page.locator('#ob-w9').count() };
+  };
+
+  // Self-serve: the settings, then two invitations walked to the tax step, one with the old switch off and one with it on.
+  {
+    const A = await Lib.open(S);
+    const page = A.page;
+    const portal = await Lib.setupPortal(S, A);
+    await Lib.consoleRoute(page, 'console-brand', 'section.cs-panel');
+    const pt = await panelText(page);
+    await page.locator('section.cs-panel', { has: page.locator('.cs-panel-head h2', { hasText: 'Investor onboarding' }) }).first().screenshot({ path: path.join(dir, 'toggle-off-selfserve-settings.png') });
+    check('self-serve settings: no "Collect a substitute W-9 certification" toggle and no switch bound to onboarding.taxForm', !/substitute W-9/i.test(pt) && (await page.locator('[data-bind="tenant:onboarding.taxForm"]').count()) === 0, pt);
+    check('self-serve settings: no other tax-form switch in the Investor onboarding panel', !/W-9|W-8|tax form/i.test(pt), pt);
+    check(`self-serve settings: the accreditation toggle's hint reads "${HINT}"`, pt.indexOf(`Ask for accreditation${HINT}`) >= 0 || pt.indexOf(`Ask for accreditation ${HINT}`) >= 0, pt);
+    check('self-serve settings: the electronic delivery toggle and the direct deposit choice are still there', /Require consent to electronic delivery/.test(pt) && /Direct deposit/.test(pt), pt);
+    const walkTo = async (taxForm, name, email) => {
+      await page.evaluate((v) => {
+        const NS = window.CVPortal;
+        NS.state.ws.tenant.onboarding.taxForm = v;
+        NS.state.role = 'investor';
+        NS.app.save(true);
+      }, taxForm);
+      const inv = await Lib.createInvitation(page, { name, email, type: 'individual', offeringId: portal.offeringId });
+      await page.evaluate((t) => (location.hash = 'invite-' + t), inv.token);
+      const w = await Lib.walk(page, { name, acc: 'yes', basis: 0, until: /Tax certification/ });
+      // the whole step list of the invitation (NS.inviteFlow.steps: the flow's own list, after the tax step too)
+      const steps = await page.evaluate((id) => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        return NS.inviteFlow.steps(ws, (ws.invitations || []).find((x) => x.id === id));
+      }, inv.invitationId);
+      return { w, steps, inv };
+    };
+    const off = await walkTo(false, 'Marisol Quennell-Achebe', 'marisol.quennell@example.com');
+    await page.screenshot({ path: path.join(dir, 'toggle-off-tax-step.png'), fullPage: true });
+    check('switch saved off: the invited U.S. individual still reaches the tax step (Tax certification)', off.w.reached && off.w.at === 'Tax certification' && off.w.errors.length === 0, { seen: off.w.seen, errors: off.w.errors });
+    const offView = await page.evaluate(() => (document.querySelector('.ivf-form') || {}).innerText || '');
+    check('switch saved off: the tax step leads to the official Form W-9', /Continue to the form/.test(offView), offView.slice(0, 300));
+    const on = await walkTo(true, 'Desmond Okonkwo-Varga', 'desmond.okonkwo@example.com');
+    check('switch on: the tax step is there too', on.w.reached && on.w.at === 'Tax certification', on.w.seen);
+    // the progress line of each screen ("Step 3 of 10: Investor information"); the headings differ only by the welcomed name
+    const bar = (seen) => seen.map((x) => x.replace(/ \|.*$/, ''));
+    check('the screens walked to the tax step, with their step numbers, labels and totals, are the same with the switch saved off as on', bar(off.w.seen).length > 1 && JSON.stringify(bar(off.w.seen)) === JSON.stringify(bar(on.w.seen)), { off: off.w.seen, on: on.w.seen });
+    check('the invitation\u2019s whole step list has the tax step and is the same with the switch saved off as on', Array.isArray(off.steps) && off.steps.indexOf('tax') >= 0 && JSON.stringify(off.steps) === JSON.stringify(on.steps), { off: off.steps, on: on.steps });
+    const typed = await typedReview(page, { taxForm: false, n: 9871, name: 'Odile Brennan-Sato', email: 'odile.brennan@example.com' });
+    await page.screenshot({ path: path.join(dir, 'toggle-off-selfserve-typed-review.png'), fullPage: true });
+    check('switch saved off: the typed activation (no open invitation) still asks for the W-9 certification', /Substitute Form W-9 certification/.test(typed.text) && typed.w9 === 1, typed.text.slice(0, 900));
+    check('self-serve: no script error in the browser', A.errors.length === 0, A.errors);
+    check('self-serve: no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  }
+
+  // Managed (C-03): the toggle, its label and hint, and the certification following it, as before.
+  {
+    const A = await Lib.open(S);
+    const page = A.page;
+    await page.goto(`${S.origin}/index.html`);
+    await page.evaluate(() => Object.keys(localStorage).forEach((k) => localStorage.removeItem(k)));
+    await page.goto(`${S.origin}/index.html`);
+    await page.waitForFunction(() => window.CVPortal && window.CVPortal.state && window.CVPortal.state.ws, null, { timeout: 20000 });
+    const ed = await page.evaluate(() => {
+      const NS = window.CVPortal;
+      NS.state.role = NS.EDITION.owner;
+      NS.store.set('role', NS.EDITION.owner);
+      NS.app.go('console-brand');
+      return NS.EDITION.id;
+    });
+    await page.waitForSelector('section.cs-panel', { timeout: 20000 });
+    await page.waitForTimeout(300);
+    const pt = await panelText(page);
+    await page.locator('section.cs-panel', { has: page.locator('.cs-panel-head h2', { hasText: 'Investor onboarding' }) }).first().screenshot({ path: path.join(dir, 'toggle-off-managed-settings.png') }).catch(() => {});
+    check('managed: the edition is managed and its settings keep "Collect a substitute W-9 certification" bound to onboarding.taxForm', ed === 'managed' && /Collect a substitute W-9 certification/.test(pt) && (await page.locator('[data-bind="tenant:onboarding.taxForm"]').count()) === 1, { ed, pt });
+    check('managed: the accreditation hint is unchanged ("Regulation D 506(b) and 506(c) offerings.")', /Ask for accreditation ?Regulation D 506\(b\) and 506\(c\) offerings\./.test(pt), pt);
+    const offT = await typedReview(page, { taxForm: false, n: 9872, name: 'Odile Brennan-Sato', email: 'odile.brennan@example.com' });
+    check('managed: with the toggle off the review step has no W-9 certification (as before)', !/Substitute Form W-9 certification/.test(offT.text) && offT.w9 === 0, offT.text.slice(0, 900));
+    const onT = await typedReview(page, { taxForm: true, n: 9872, name: 'Odile Brennan-Sato', email: 'odile.brennan@example.com' });
+    check('managed: with the toggle on the review step has the W-9 certification (as before)', /Substitute Form W-9 certification/.test(onT.text) && onT.w9 === 1, onT.text.slice(0, 900));
+    check('managed: no script error in the browser', A.errors.length === 0, A.errors);
+    check('managed: no request left the check server', A.net.external.length === 0, A.net.external);
+    await A.context.close();
+  }
+}
+
+/**
+ * Plan 06-24, the owner's check (CLAUDE.md: tested on answers the code has never seen, shown plainly, failures first).
+ * Four new investors, with names, addresses, taxpayer IDs and dates written for this run only and used by no earlier
+ * check, each walk the full invitation and sign their official form: a U.S. individual (W-9), a U.S. LLC taxed as a
+ * partnership with foreign partners (W-9), a foreign individual with an accented name (W-8BEN) and a foreign Active NFFE
+ * corporation (W-8BEN-E). Every check of the matching case (us-individual, us-llc, foreign-individual, foreign-entity)
+ * runs on these outputs. The signed PDFs, page images of their form pages and certificate, and screenshots of each tax
+ * step and of the console's investor list are copied to the owner's folder (P6_OWNER, else "owner" beside P6_OUT) with
+ * index.txt: failures first, then each file and what it shows, then the answers each form must carry.
+ */
+async function ownerSetCase({ check, S }) {
+  const OWNER = process.env.P6_OWNER || path.join(path.dirname(Lib.OUT), 'owner');
+  fs.rmSync(OWNER, { recursive: true, force: true });
+  fs.mkdirSync(OWNER, { recursive: true });
+  // After the tax form: the rest of the invitation (payments, subscription, agreement) to the done screen, so the console
+  // row the owner sees is a finished investor.
+  const finish = async ({ page, check, dir, id }) => {
+    const w = await Lib.walk(page, { acc: 'yes', basis: 0 });
+    check('the investor walks on from the tax step through payments and the subscription to the agreement', w.reached && w.errors.length === 0, { seen: w.seen, errors: w.errors });
+    if (!w.reached) return;
+    const done = await Lib.finishAgreement(page).catch((e) => `(not finished: ${e.message})`);
+    await page.screenshot({ path: path.join(dir, `${id}-done.png`), fullPage: true });
+    check('the investor finishes the invitation (the done screen)', /all set|Thank you|submitted/i.test(done), String(done).slice(0, 400));
+  };
+  const runs = [
+    {
+      n: 1,
+      key: 'W-9-us-individual',
+      label: 'Form W-9, U.S. individual',
+      id: 'owner-w9-individual',
+      pages: [1],
+      answers: ['Invited as: U.S. individual', 'Name: Theodora Kowalczyk-Brandt', 'Email: theodora.kowalczyk@example.net', 'Address: 2287 Willow Bend Drive, Boise, ID 83706', 'Phone: +1 208 555 0143', 'Date of birth: 1967-11-08 (not on the W-9)', 'SSN typed at Investor information: 987-65-4326 (a number the SSA reserves for examples, never issued)', 'Expected on the W-9: line 1 the name; box "Individual/sole proprietor" ticked; lines 5 and 6 the address; requester the firm; SSN 987 65 4326; signed and dated today'],
+      run: usIndividualCase({ finish, id: 'owner-w9-individual', name: 'Theodora Kowalczyk-Brandt', email: 'theodora.kowalczyk@example.net', tin: '987654326', profile: { street: '2287 Willow Bend Drive', city: 'Boise', st: 'ID', zip: '83706', phone: '+1 208 555 0143', dob: '1967-11-08' } })
+    },
+    {
+      n: 2,
+      key: 'W-9-us-llc-partnership',
+      label: 'Form W-9, U.S. LLC taxed as a partnership with foreign partners',
+      id: 'owner-w9-llc',
+      pages: [1],
+      answers: ['Invited as: U.S. entity (LLC or corporation)', 'Account: Cedar Hollow Ventures LLC', 'Controlling person who signs: Rafael Oyelaran-Whitcombe (rafael.oyelaran@example.net)', 'Address: 960 Quarry Road Suite 300, Burlington, VT 05401', 'Formed in: Vermont', 'EIN typed at Investor information: 47-3810562', 'Tax step answers: classification LLC, taxed as P (partnership), line 3b ticked (foreign partners)', 'Expected on the W-9: line 1 Cedar Hollow Ventures LLC; LLC box ticked with P; line 3b ticked; the address; requester the firm; EIN 47 3810562; signed and dated today'],
+      run: w9AccountCase(Object.assign({}, US_LLC, { finish, id: 'owner-w9-llc', name: 'Rafael Oyelaran-Whitcombe', email: 'rafael.oyelaran@example.net', account: 'Cedar Hollow Ventures LLC', tinLast4: '0562', console: true, walk: { tin: '473810562', profile: { street: '960 Quarry Road Suite 300', city: 'Burlington', st: 'VT', zip: '05401', phone: '+1 802 555 0177', formation: 'Vermont' } }, want: { name: 'Cedar Hollow Ventures LLC', llcLetter: 'P', ein: '473810562', boxes: ['llc', 'foreignOwners'], address: '960 Quarry Road Suite 300', cityStateZip: 'Burlington, VT 05401' } }))
+    },
+    {
+      n: 3,
+      key: 'W-8BEN-foreign-individual',
+      label: 'Form W-8BEN, foreign individual with an accented name',
+      id: 'owner-w8ben',
+      pages: [1],
+      answers: ['Invited as: foreign individual', 'Name: Joaquín Peñalosa Ibáñez (joaquin.penalosa@example.net)', 'Lives in: Spain, Calle de Zurbarán 18, Madrid 28010 (citizenship "another country")', 'Date of birth: 1974-09-23', 'Foreign tax ID typed on the tax step: 50738214K', 'Expected on the W-8BEN: line 1 the name exactly as typed; line 2 Spain; line 3 Calle de Zurbarán 18 / Madrid 28010 / Spain; line 6a 50738214K; line 8 09-23-1974; line 9 Spain (treaty); print name the same; signed, dated today as MM-DD-YYYY'],
+      run: foreignIndividualCase({ finish, id: 'owner-w8ben', name: 'Joaquín Peñalosa Ibáñez', email: 'joaquin.penalosa@example.net', ftin: '50738214K', at: { country: 'Spain', street: 'Calle de Zurbarán 18', city: 'Madrid', zip: '28010', dob: '1974-09-23' } })
+    },
+    {
+      n: 4,
+      key: 'W-8BEN-E-active-nffe',
+      label: 'Form W-8BEN-E, foreign Active NFFE corporation',
+      id: 'owner-w8bene',
+      pages: [1, 2, 3, 4, 5, 6, 7, 8],
+      answers: ['Invited as: foreign entity', 'Account: Glenmara Logistics Holdings Limited', 'Controlling person who signs: Fionnuala Ní Bhriain (fionnuala.nibhriain@example.net)', 'Address: 41 Fitzwilliam Lane, Dublin, Co. Dublin D02 YX88, Ireland', 'Formed in: Ireland', 'Tax step answers: chapter 3 Corporation, chapter 4 Active NFFE, foreign tax ID 3814207TH', 'Expected on the W-8BEN-E: line 1 the company; line 2 Ireland; line 4 Corporation; line 5 Active NFFE; line 6 the address with Ireland; line 9b 3814207TH; Part XXV ticked; page 8 print name Fionnuala Ní Bhriain, capacity box ticked, signed, dated today as MM-DD-YYYY'],
+      run: w8eCase(Object.assign({}, FOREIGN_ENTITY, { finish, id: 'owner-w8bene', name: 'Fionnuala Ní Bhriain', email: 'fionnuala.nibhriain@example.net', account: 'Glenmara Logistics Holdings Limited', ftin: '3814207TH', secrets: ['3814207TH'], profile: { country: 'Ireland', street: '41 Fitzwilliam Lane', city: 'Dublin', st: 'Co. Dublin', zip: 'D02 YX88', formation: 'Ireland' }, want: { text: { name: 'Glenmara Logistics Holdings Limited', country: 'Ireland', street: '41 Fitzwilliam Lane', cityLine: 'Dublin, Co. Dublin D02 YX88', residenceCountry: 'Ireland', ftin: '3814207TH', printName: 'Fionnuala Ní Bhriain' }, boxes: ['ch3Corporation', 'ch4ActiveNffe', 'activeNffe', 'capacity'] }, exact: ['Fionnuala Ní Bhriain', 'Glenmara Logistics Holdings Limited'], cert: { chapter3: 'Corporation', chapter4: 'Active NFFE', country: 'Ireland', ftinLast4: '07TH' } }))
+    }
+  ];
+  const lines = { fail: [], files: [], answers: [], counts: [] };
+  for (const r of runs) {
+    const res = { pass: 0, fail: [] };
+    const ck = (name, ok, info) => {
+      if (ok) res.pass++;
+      else res.fail.push(name);
+      check(`${r.label}: ${name}`, ok, info);
+    };
+    try {
+      await r.run({ check: ck, S });
+    } catch (e) {
+      ck('ran to the end', false, String(e && e.stack ? e.stack : e).slice(0, 1500));
+    }
+    const src = path.join(OUT, r.id);
+    const pre = `${r.n}-${r.key}`;
+    const copy = (from, to, what) => {
+      const f = path.join(src, from);
+      if (fs.existsSync(f) && fs.statSync(f).size > 0) {
+        fs.copyFileSync(f, path.join(OWNER, to));
+        lines.files.push(`${to}\n    ${what}`);
+        return true;
+      }
+      lines.fail.push(`${r.label}: file not produced: ${from} (${what})`);
+      return false;
+    };
+    if (copy('signed.pdf', `${pre}-signed.pdf`, `${r.label}: the signed official form exactly as stored for the sponsor (the console's Download gives the same bytes), with the certificate of completion as its last page`)) {
+      const pdf = await PL.PDFDocument.load(fs.readFileSync(path.join(OWNER, `${pre}-signed.pdf`)), { updateMetadata: false });
+      const last = pdf.getPageCount();
+      r.pages.concat([last]).forEach((pg) => {
+        const out = path.join(OWNER, `${pre}-page-${pg}`);
+        const x = spawnSync('pdftoppm', ['-png', '-r', '110', '-f', String(pg), '-l', String(pg), '-singlefile', path.join(OWNER, `${pre}-signed.pdf`), out]);
+        const name = `${pre}-page-${pg}.png`;
+        if (x.status === 0 && fs.existsSync(out + '.png')) lines.files.push(`${name}\n    ${pg === last ? 'the certificate of completion page (who signed, when, the document fingerprint)' : `page ${pg} of the signed form`}, as an image`);
+        else lines.fail.push(`${r.label}: page ${pg} could not be rendered`);
+      });
+    }
+    copy(`${r.id}-answers.png`, `${pre}-tax-step.png`, `${r.label}: the tax step as the investor first sees it`);
+    if (fs.existsSync(path.join(src, `${r.id}-answered.png`))) copy(`${r.id}-answered.png`, `${pre}-tax-step-answered.png`, `${r.label}: the tax step with its answers given, before Continue`);
+    copy(`${r.id}-signing.png`, `${pre}-signing.png`, `${r.label}: the official form on the page, ready to sign`);
+    copy(`${r.id}-done.png`, `${pre}-done.png`, `${r.label}: the investor's last screen once the whole invitation is finished`);
+    copy(`${r.id}-console.png`, `${pre}-console.png`, `${r.label}: the sponsor console's investor list with this investor's row (form, date signed, Download)`);
+    res.fail.forEach((f) => lines.fail.push(`${r.label}: check failed: ${f}`));
+    lines.counts.push(`${r.label}: ${res.pass} checks passed, ${res.fail.length} failed`);
+    lines.answers.push(`${r.n}. ${r.label}\n${r.answers.map((a) => `    ${a}`).join('\n')}`);
+  }
+  const idx = [
+    'The owner’s check, plan 06-24: four official tax forms signed through the real invitation flow on answers written for this run only.',
+    'Nothing here is called ready until the owner has looked at each form.',
+    '',
+    'FAILURES FIRST',
+    lines.fail.length ? lines.fail.map((f) => `  ${f}`).join('\n') : '  None: every check of the four forms passed and every file below was produced.',
+    '',
+    'CHECKS RUN ON EACH FORM (every check of the matching case: us-individual, us-llc, foreign-individual, foreign-entity)',
+    lines.counts.map((c) => `  ${c}`).join('\n'),
+    '',
+    'WHAT TO LOOK AT',
+    '  For each form: is every answer below in the right box of the official form, are the signature, the date and the',
+    '  "Signed electronically" caption in the right place, and do the tax step and the console screens read plainly?',
+    '  After the tax form each investor finishes the whole invitation. The bank account (ending 6789) and the $100,000',
+    '  subscription are the check walker\u2019s usual answers; they appear on no tax form. The subscription is pending, so the',
+    '  console row shows 0 investments until the sponsor accepts it.',
+    '',
+    'FILES',
+    lines.files.map((f) => `  ${f}`).join('\n'),
+    '',
+    'THE ANSWERS EACH FORM MUST CARRY (invented for this run; used by no earlier check)',
+    lines.answers.join('\n'),
+    ''
+  ].join('\n');
+  fs.writeFileSync(path.join(OWNER, 'index.txt'), idx);
+  check('the owner’s folder has the four signed forms and index.txt, failures first', runs.every((r) => fs.existsSync(path.join(OWNER, `${r.n}-${r.key}-signed.pdf`))) && /^FAILURES FIRST$/m.test(idx), { owner: OWNER, files: fs.readdirSync(OWNER) });
+}
+
 const cases = {
+  'toggle-off': toggleOffCase,
   'sign-w9': formCase({
     id: 'sign-w9',
     key: 'W-9 2024-03',
@@ -2758,7 +3059,8 @@ const cases = {
   route: routeCase,
   upload: uploadCase,
   'upload-ira': uploadIraCase,
-  'upload-refused': uploadRefusedCase
+  'upload-refused': uploadRefusedCase,
+  'owner-set': ownerSetCase
 };
 
 // The bundled forms must match their pins before anything runs.

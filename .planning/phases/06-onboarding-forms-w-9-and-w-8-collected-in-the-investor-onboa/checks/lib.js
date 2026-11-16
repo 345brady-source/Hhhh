@@ -271,14 +271,16 @@ async function walk(page, answers) {
       await page.fill('#ob-password', 'investor-pass-123');
       await page.fill('#ob-password2', 'investor-pass-123');
     } else if (/Investor information/.test(hd)) {
-      await page.fill('#ob-street', '12 Elm Street');
-      await page.fill('#ob-city', 'Austin');
-      await page.fill('#ob-st', 'TX');
-      await page.fill('#ob-zip', '78701');
-      await page.fill('#ob-phone', '+1 512 555 0101');
+      // a.profile: other answers for this screen (plan 06-24's owner set: answers no earlier check used)
+      const pf = a.profile || {};
+      await page.fill('#ob-street', pf.street || '12 Elm Street');
+      await page.fill('#ob-city', pf.city || 'Austin');
+      await page.fill('#ob-st', pf.st || 'TX');
+      await page.fill('#ob-zip', pf.zip || '78701');
+      await page.fill('#ob-phone', pf.phone || '+1 512 555 0101');
       // A person's account asks for the date of birth; an IRA, trust or entity asks for its custodian or place of formation.
-      if (await page.locator('#ob-dob').count()) await page.fill('#ob-dob', '1980-04-02');
-      if ((await page.locator('#ob-formation').count()) && !(await page.inputValue('#ob-formation'))) await page.fill('#ob-formation', 'Harbor Trust Company');
+      if (await page.locator('#ob-dob').count()) await page.fill('#ob-dob', pf.dob || '1980-04-02');
+      if ((await page.locator('#ob-formation').count()) && !(await page.inputValue('#ob-formation'))) await page.fill('#ob-formation', pf.formation || 'Harbor Trust Company');
       // a.tin: the taxpayer ID typed here (plan 06-23 searches the device for one no other answer contains)
       await page.fill('#ob-tin', a.tin || '123456789');
       await page.check('input[name="ob-pep"][value="no"]');

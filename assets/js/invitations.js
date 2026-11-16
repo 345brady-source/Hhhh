@@ -2296,7 +2296,15 @@
   async function inviteCall(server, token, method, path, body) {
     const headers = { 'X-Invite-Token': token, Accept: 'application/json' };
     if (body) headers['Content-Type'] = 'application/json';
-    const res = await fetch(String(server).replace(/\/+$/, '') + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    let res;
+    try {
+      res = await fetch(String(server).replace(/\/+$/, '') + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    } catch (e) {
+      // No answer at all (offline, the server down): marked so the page says it plainly, never the browser's own text.
+      const err = new Error('The connection failed.');
+      err.network = true;
+      throw err;
+    }
     let data = null;
     try {
       data = await res.json();

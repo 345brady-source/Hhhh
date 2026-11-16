@@ -76,7 +76,7 @@ L.describeShots([
   ['tax-wipe-console.png', 'Console Investors page: "W-9 signed <date> · Download"; the Download returns the bytes the device sent before wiping its copy.'],
   ['tax-keep-status.png', 'Investor’s device: status step (the integration server is stopped before the agreement is finished).'],
   ['tax-keep-subscribe.png', 'Investor’s device: subscribe step (server stopped later).'],
-  ['tax-keep-failed.png', 'Investor’s device with the integration server stopped: "We could not send your details ... Check your connection, then try again." with Try again; nothing deleted.'],
+  ['tax-keep-failed.png', 'Investor’s device with the integration server stopped: "We could not reach <firm> to send your details, but nothing you entered is lost: check your connection, then try again." with Try again; nothing deleted.'],
   ['tax-keep-done.png', 'Investor’s device: done screen after Try again with the server back; the same signed W-9 was sent.'],
   ['tax-upload-status.png', 'Investor’s device (server mode, plan 06-23): status step for Kittiwake Point Partners LP, invited as a foreign entity.'],
   ['tax-upload-subscribe.png', 'Investor’s device: subscribe step after uploading a W-8IMY, going Back and uploading the corrected one.'],
@@ -1310,6 +1310,7 @@ const parts = {
           await p.waitForSelector('[data-action="ivf-retry"]', { timeout: 30000 });
           await p.waitForTimeout(300);
           R.failed = await L.screenText(p);
+          R.alert = await p.locator('.ivf-form p.lede[role=alert], p.lede[role=alert]').first().innerText().catch(() => '');
           await p.screenshot({ path: path.join(SHOTS, 'tax-keep-failed.png'), fullPage: true });
           R.during = await deviceStore(p, sid);
         } finally {
@@ -1329,7 +1330,11 @@ const parts = {
       const a = R.after || {};
       const envIds = (b.envs || []).map((e) => e.id);
       const sid = R.tax && R.tax.env ? R.tax.env.signedDocId : '';
-      check('keep: with the server stopped the send fails and the investor is offered Try again', /We could not send your details/.test(R.failed || '') && /Check your connection, then try again/.test(R.failed || ''), (R.failed || '').slice(0, 600));
+      check('keep: with the server stopped the send fails and the investor is offered Try again', /Almost done/.test(R.failed || '') && /Try again/.test(R.failed || ''), (R.failed || '').slice(0, 600));
+      // Plan 06-24 (deferred from 06-23): one plain sentence, never the browser's own error text.
+      const alert = (R.alert || '').replace(/\s+/g, ' ').trim();
+      check('keep: the page says it in one plain sentence: "We could not reach <firm> to send your details, but nothing you entered is lost: check your connection, then try again."', /^We could not reach [^.:]+ to send your details, but nothing you entered is lost: check your connection, then try again\.$/.test(alert), alert);
+      check('keep: no browser error text on the page (Failed to fetch, NetworkError, Load failed, TypeError)', !/Failed to fetch|NetworkError|Load failed|TypeError/i.test(R.failed || ''), (R.failed || '').slice(0, 600));
       const kb = taxKeys(b.keys, envIds).sort();
       const kd = taxKeys(d.keys, envIds).sort();
       check('keep: after the failed send every tax file is still on the device', kb.length > 0 && kb.indexOf(sid) >= 0 && JSON.stringify(kb) === JSON.stringify(kd), { before: kb, during: kd });

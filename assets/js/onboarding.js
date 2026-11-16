@@ -21,6 +21,11 @@
     payment: 'Distribution payments',
     review: 'Review and sign'
   };
+  /**
+   * The substitute W-9 certification of this typed activation. The managed edition's firm setting decides (C-03); the
+   * self-serve edition has no switch for it: every investor needs a W-9 or W-8 before distributions (owner, plan 06-24).
+   */
+  const substituteW9 = () => !!(NS.EDITION && NS.EDITION.diy) || !!T().onboarding.taxForm;
   function stepsFor(mode) {
     const t = T();
     if (mode === 'bank') return ['payment'];
@@ -442,7 +447,7 @@
       <div class="form-grid">
         ${t.onboarding.esign ? check('edelivery', `I consent to receive statements, tax documents and notices electronically through this portal. I can withdraw consent at any time by contacting ${h(t.support.team)}.`) : ''}
         ${
-          t.onboarding.taxForm
+          substituteW9()
             ? `<div class="field-wide cert"><p class="cert-title">Substitute Form W-9 certification</p><p>Under penalties of perjury, I certify that: (1) the taxpayer identification number shown above is correct; (2) I am not subject to backup withholding; (3) I am a U.S. citizen or other U.S. person; and (4) any FATCA code entered is correct.</p></div>
           ${check('w9', 'I certify the statements above.')}`
             : ''
@@ -506,7 +511,7 @@
     if (step === 'review') {
       const t = T();
       if (t.onboarding.esign && !d.edelivery) e.edelivery = 'Electronic delivery is required for this portal.';
-      if (t.onboarding.taxForm && !d.w9) e.w9 = 'Certify the W-9 statements to continue.';
+      if (substituteW9() && !d.w9) e.w9 = 'Certify the W-9 statements to continue.';
       // The name to sign with is the one given in the investor information step (it becomes the name on file below).
       if (!sameName(d.signature, personOf(d, inv()))) e.signature = `Type your name exactly as ${personOf(d, inv())}.`;
     }
@@ -534,7 +539,7 @@
     i.phone = d.phone;
     i.tinLast4 = d.tin.replace(/\D/g, '').slice(-4);
     if (T().onboarding.accreditation && !accVerified()) i.accreditation = { basis: d.accBasis, date: now };
-    if (T().onboarding.taxForm) i.taxForm = 'W-9';
+    if (substituteW9()) i.taxForm = 'W-9';
     i.edelivery = !!d.edelivery;
     i.payment = d.method === 'ach' ? { method: 'ach', bank: { holder: bankHolder(d), routing: d.routing.replace(/\D/g, ''), account: d.account.replace(/\D/g, ''), type: d.acctType } } : { method: 'check', bank: null };
     i.onboarding = Object.assign({}, i.onboarding, { status: 'complete', step: 5, completed: now });
@@ -810,7 +815,14 @@
   async function remoteCall(server, token, method, path, body) {
     const headers = { 'X-Invite-Token': token };
     if (body) headers['Content-Type'] = 'application/json';
-    const res = await fetch(server + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    let res;
+    try {
+      res = await fetch(server + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    } catch (e) {
+      const err = new Error('The connection failed.');
+      err.network = true;
+      throw err;
+    }
     let data = null;
     try {
       data = await res.json();
@@ -2377,7 +2389,9 @@
         const todo = o.finishContact ? `Contact ${h(sup.team || 'investor relations')}${sup.email ? ` at ${h(sup.email)}` : ''}${sup.phone ? ` or ${h(sup.phone)}` : ''} for help.` : 'Check your connection, then try again. Nothing you entered is lost.';
         const resign = o.finishContact && o.canResign;
         const action = !o.finishContact ? '<button class="btn btn-primary" type="button" data-action="ivf-retry">Try again</button>' : resign ? '<button class="btn btn-primary" type="button" data-action="ivf-resign">Sign again</button>' : '';
-        return `${ivfH1('Almost done')}<p class="lede" role="alert">We could not send your details to ${h(t.name)}${why} ${todo}</p>
+        // No answer from the firm's server (offline, the server down): one plain sentence, never the browser's error text.
+        const said = o.finishNetwork && !o.finishContact ? `We could not reach ${h(t.name)} to send your details, but nothing you entered is lost: check your connection, then try again.` : `We could not send your details to ${h(t.name)}${why} ${todo}`;
+        return `${ivfH1('Almost done')}<p class="lede" role="alert">${said}</p>
           ${resign ? `<p class="meta ivf-why">Or sign the agreement again on this page: ${h(t.shortName)}’s agreement is prepared again with the same details and commitment, and your details are sent once you sign it.</p>` : ''}
           ${action ? `<div class="ob-actions">${action}</div>` : ''}`;
       }
@@ -3001,6 +3015,7 @@
     o.finishing = true;
     o.finishError = '';
     o.finishContact = false;
+    o.finishNetwork = false;
     NS.app.render();
     try {
       const i = c.inv;
@@ -3041,6 +3056,7 @@
       if (first && !isRemote(ws)) U.toast(c.it.existing ? 'Subscription submitted' : 'Account activated');
     } catch (e) {
       o.finishError = (e && e.message) || 'Something went wrong.';
+      o.finishNetwork = !!(e && e.network);
       // Retrying cannot help: the signed agreement cannot be sent from this device (sendCompletion), or the link no longer
       // works (expired, cancelled or replaced: the server's message says which). The page says who to contact instead.
       o.finishContact = !!(e && (e.contact || gone(e)));
@@ -3458,7 +3474,7 @@
     // This device's notice of the first signature names an envelope the firm never receives.
     c.ws.notifications = (c.ws.notifications || []).filter((n) => n.route !== `console-envelope-${old.id}`);
     if (NS.audit) NS.audit.log(c.ws, { action: 'Subscription agreement prepared again', record: c.req.id, fund: c.off.id, detail: `${c.inv.title}: the copy signed earlier could not be sent from the investor's device, so a new copy was prepared from the template with the same details and commitment, for the investor to sign`, actor: `${c.inv.title} (investor)` });
-    Object.assign(o, { finishError: '', finishContact: false, canResign: false, triedFinish: false });
+    Object.assign(o, { finishError: '', finishContact: false, finishNetwork: false, canResign: false, triedFinish: false });
     moveTo(c, 'agreement');
   };
   NS.actions['ivf-reload'] = () => {
