@@ -175,6 +175,8 @@ async function consoleTaxRow(page, email, shot) {
   const row = page.locator('table.cs-tbl:has(th:text-is("Paid by")) tbody tr', { hasText: email }).first();
   const text = (await row.innerText().catch(() => '')).replace(/\s+/g, ' ');
   await row.scrollIntoViewIfNeeded().catch(() => {});
+  // the import's messages fade first, so the owner's screenshot shows the row they would cover
+  if (shot) await page.waitForTimeout(4500);
   if (shot) await page.screenshot({ path: path.join(SHOTS, shot), fullPage: true });
   const downloads = await row.locator('[data-action="kyc-iv-file"]').count();
   let bytes = null;

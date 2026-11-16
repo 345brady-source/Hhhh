@@ -234,7 +234,8 @@ function cleanSubmission(body, rec, snap) {
   // The files this submission may carry: what it produced itself. Its envelope's copies keep esign.js's names (<envelope id>-work
   // once the investor has signed, <envelope id>-signed once everyone has, so only for a completed envelope), and evidence is
   // the investor's own upload named by their verification record (integrations.js names uploads kyc-<investor id>-<time>), or
-  // their purchaser representative's acknowledgment named by the request (rep-<investor id>-<time>).
+  // their purchaser representative's acknowledgment named by the request (rep-<investor id>-<time>), or the signed copy of
+  // their official tax form (<tax envelope id>-signed, plan 06-22: only for a completed tax envelope this investor alone signed).
   // The console imports nothing else either (assets/js/invitations.js merge). An investor already on file brings back an
   // accreditation check at most, so only its evidence.
   const allowed = Object.create(null); // file id -> 'agreement' (a PDF) or 'evidence' (a PDF, PNG or JPEG)
@@ -256,6 +257,20 @@ function cleanSubmission(body, rec, snap) {
   const rp = so && obj(so.rep);
   const repName = new RegExp(`^rep-${reEsc(rec.investorId)}-[a-z0-9]+$`);
   if (rp && typeof rp.fileId === 'string' && repName.test(rp.fileId) && !allowed[rp.fileId]) allowed[rp.fileId] = 'evidence';
+  // Plan 06-22 (research Pattern 6, T-06-47): the investor's official tax form (W-9, W-8BEN or W-8BEN-E), the envelope esign.js
+  // made on the tax step (kind 'tax'), kept only when this investor is its one signer (no countersigner: nobody else signs a
+  // tax form). Its signed copy, under esign.js's name, is allowed only once it is completed.
+  const taxIn = body.taxEnvelope === undefined || body.taxEnvelope === null ? null : obj(body.taxEnvelope);
+  if (body.taxEnvelope && !taxIn) throw fail(400, 'taxEnvelope must be an object or null');
+  let tax = taxIn ? cleanJson(taxIn, 1 * MB, 'taxEnvelope') : null;
+  if (tax) {
+    const ts = Array.isArray(tax.signers) ? tax.signers : [];
+    const own = ts.length === 1 && obj(ts[0]) && ts[0].role === 'investor' && String(ts[0].investorId || '') === rec.investorId;
+    if (!/^[\w.-]{1,70}$/.test(String(tax.id || '')) || tax.kind !== 'tax' || !own) tax = null;
+  }
+  out.taxEnvelope = tax;
+  let taxSignedId = '';
+  if (tax && tax.status === 'completed' && tax.signedDocId === `${tax.id}-signed` && !allowed[tax.signedDocId]) allowed[(taxSignedId = tax.signedDocId)] = 'agreement';
   if (body.docs !== undefined && !Array.isArray(body.docs)) throw fail(400, 'docs must be a list');
   if ((body.docs || []).length > 50) throw fail(400, 'docs: at most 50 entries');
   const docs = (cleanJson(body.docs || [], 1 * MB, 'docs') || []).filter(obj);
@@ -320,6 +335,29 @@ function cleanSubmission(body, rec, snap) {
         }
       ]
     : [];
+  if (tax) {
+    // Only the signed copy travels (the original and the work copy stay on the device); complete only with it.
+    tax.docId = null;
+    if (tax.workDocId && !got.has(tax.workDocId)) tax.workDocId = null;
+    if (tax.status === 'completed' && !(taxSignedId && got.has(taxSignedId))) Object.assign(tax, { status: 'sent', completedAt: null, signedDocId: null, sha256Signed: null });
+    else if (tax.signedDocId && !got.has(tax.signedDocId)) tax.signedDocId = null;
+  }
+  // Its listing (esign.js lists a completed tax form under Tax for its signer): rebuilt from known fields, for this investor
+  // alone, never an offering document (T-06-49).
+  const taxListed = tax && taxSignedId && tax.status === 'completed' && got.has(taxSignedId) ? docs.find((d) => d.id === taxSignedId) || {} : null;
+  if (taxListed)
+    out.docs.push({
+      id: taxSignedId,
+      title: clip(taxListed.title || tax.title, 200) || 'Tax form',
+      fileName: fileName(taxListed.fileName, 'Tax_form_signed.pdf'),
+      type: 'application/pdf',
+      cat: 'Tax',
+      date: /^\d{4}-\d{2}-\d{2}$/.test(String(taxListed.date || '')) ? String(taxListed.date) : '',
+      audience: 'investors',
+      investors: [rec.investorId],
+      offeringId: null,
+      envelopeId: String(tax.id)
+    });
   return out;
 }
 
@@ -912,7 +950,7 @@ export function createInvitations({ env, store, publicUrl, returnTo, limited, no
         const buf = getBlob(f.blob);
         if (buf) files[docId] = buf.toString('base64');
       }
-      return reply(res, 200, { invitationId: rec.id, investorId: rec.investorId, completedAt: rec.completedAt, investor: sub.investor, request: sub.request, envelope: sub.envelope, files, docs: sub.docs, audit: sub.audit, notifications: sub.notifications, checks: sub.checks || null });
+      return reply(res, 200, { invitationId: rec.id, investorId: rec.investorId, completedAt: rec.completedAt, investor: sub.investor, request: sub.request, envelope: sub.envelope, taxEnvelope: sub.taxEnvelope || null, files, docs: sub.docs, audit: sub.audit, notifications: sub.notifications, checks: sub.checks || null });
     }
     if (action === 'submission' && req.method === 'DELETE') {
       const had = !!rec.submission;

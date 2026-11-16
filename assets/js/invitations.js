@@ -757,6 +757,19 @@
     env.docId = docId;
     return { firm };
   }
+  /**
+   * Plan 06-22 (research Pattern 6, T-06-47): the tax envelope from the investor's device (the W-9, W-8BEN or W-8BEN-E esign.js
+   * made on the tax step) with envelopeCheck's id and investor tests: new to this console (and not the agreement's own id), a
+   * tax form, this investor as its one signer (nobody countersigns a tax form), and completed with esign.js's name for the
+   * signed copy. Whether that copy came is checked once the files are stored.
+   */
+  function taxCheck(ws, inv, env, agreement) {
+    if (!/^[\w.-]{1,70}$/.test(String(env.id)) || ws.envelopes.some((x) => x.id === env.id) || (agreement && agreement.id === env.id) || env.kind !== 'tax') return false;
+    const signers = Array.isArray(env.signers) ? env.signers : [];
+    const s = signers[0];
+    if (signers.length !== 1 || !s || typeof s !== 'object' || s.role !== 'investor' || s.investorId !== inv.id) return false;
+    return env.status === 'completed' && env.signedDocId === `${env.id}-signed`;
+  }
   /** Same bytes: the file is already here from an earlier attempt at this same import (never a different file). */
   async function sameFile(a, b) {
     if (!a || !b || a.size !== b.size) return false;
@@ -954,6 +967,11 @@
     const repRec = so && typeof so === 'object' && so.rep && typeof so.rep === 'object' ? so.rep : null;
     const repName = new RegExp(`^rep-${reEsc(inv.id)}-[a-z0-9]+$`);
     if (repRec && repRec.fileId && repName.test(String(repRec.fileId))) allowed.push(String(repRec.fileId));
+    // Plan 06-22: a new investor's signed tax form (an investor on file keeps the tax form this console holds), its signed copy
+    // only: the original and the work copy stay on the device, so nothing here points at them.
+    const tx = !onFile && sub.taxEnvelope && typeof sub.taxEnvelope === 'object' ? clone(sub.taxEnvelope) : null;
+    const taxIn = tx && taxCheck(ws, inv, tx, env) ? Object.assign(tx, { docId: null, workDocId: null, offeringId: null, requestId: null }) : null;
+    if (taxIn) allowed.push(taxIn.signedDocId);
     const kept = {}; // id -> size, for each file this submission brought that is now stored here
     for (const id of allowed) {
       if (kept[id] !== undefined || !sent(id) || !/^[\w.-]{1,120}$/.test(id)) continue;
@@ -1028,6 +1046,16 @@
     const d = signedId && (Array.isArray(sub.docs) ? sub.docs : []).find((x) => x && typeof x === 'object' && x.id === signedId);
     if (d && !ws.docs.some((x) => x.id === signedId)) {
       ws.docs.push({ id: signedId, title: String(d.title || envIn.title || 'Subscription agreement').slice(0, 200), fileName: String(d.fileName || 'Subscription_agreement_signed.pdf').slice(0, 160), type: 'application/pdf', size: kept[signedId], sha256: String(envIn.sha256Signed || ''), cat: 'Legal', offeringId: envIn.offeringId || it.offeringId || null, audience: 'investors', investors: [inv.id], date: isDay(d.date) && d.date <= today() ? d.date : today(), taxYear: '', publishedAt: new Date().toISOString(), publishedBy: 'E-sign', envelopeId: envIn.id });
+    }
+    // Plan 06-22: the signed tax form, kept only with the signed copy this submission brought, listed under Tax for this
+    // investor alone (T-06-49), its SHA-256 worked out here from the stored copy.
+    const taxKept = taxIn && kept[taxIn.signedDocId] !== undefined ? await getFile(taxIn.signedDocId) : null;
+    if (taxKept) {
+      const tid = taxIn.signedDocId;
+      taxIn.sha256Signed = NS.audit && NS.audit.sha256 ? NS.audit.sha256(new Uint8Array(await taxKept.arrayBuffer())) : String(taxIn.sha256Signed || '');
+      ws.envelopes.push(taxIn);
+      const td = (Array.isArray(sub.docs) ? sub.docs : []).find((x) => x && typeof x === 'object' && x.id === tid) || {};
+      if (!ws.docs.some((x) => x.id === tid)) ws.docs.push({ id: tid, title: String(td.title || taxIn.title || 'Tax form').slice(0, 200), fileName: String(td.fileName || 'Tax_form_signed.pdf').slice(0, 160), type: 'application/pdf', size: kept[tid], sha256: taxIn.sha256Signed, cat: 'Tax', offeringId: null, audience: 'investors', investors: [inv.id], date: isDay(td.date) && td.date <= today() ? td.date : today(), taxYear: '', publishedAt: new Date().toISOString(), publishedBy: 'E-sign', envelopeId: taxIn.id });
     }
     // The device's own change-log entries: always this investor's, dated between the invitation's sending and now, for this
     // offering and this investor, and marked as coming from their device (never a member of staff, never backdated).

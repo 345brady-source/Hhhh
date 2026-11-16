@@ -2806,6 +2806,13 @@
     // everyone has signed, otherwise the work copy with the investor's signature, which the firm countersigns.
     const agreement = env ? (env.status === 'completed' ? env.signedDocId : env.workDocId) : null;
     const ids = agreement ? [agreement] : [];
+    // Then the investor's official tax form (plan 06-22, research Pattern 6): the signed copy of the W-9, W-8BEN or W-8BEN-E
+    // they signed on the tax step, with its envelope (the integration server and the console take it only for a completed tax
+    // envelope this investor alone signed). A form finished without a signature is recorded as not signed and sends no file.
+    const tc = i.taxCert || null;
+    const taxEnv = tc && !tc.uploaded && tc.signed === true && tc.envelopeId ? (ws.envelopes || []).find((e) => e.id === tc.envelopeId && e.kind === 'tax' && e.status === 'completed' && e.signedDocId === `${e.id}-signed` && !!signerOf(e, i)) || null : null;
+    const taxId = taxEnv ? taxEnv.signedDocId : '';
+    if (taxId && ids.indexOf(taxId) < 0) ids.push(taxId);
     // Then the investor's evidence: the ID or verification letter they uploaded for the firm to review.
     const v = i.verify || {};
     const kindOf = {};
@@ -2835,11 +2842,12 @@
         b = null;
       }
       const fits = !!b && total + b.size <= MAX_FILES;
-      if (fits && (await sendable(b, id === agreement))) {
+      if (fits && (await sendable(b, id === agreement || id === taxId))) {
         total += b.size;
         files[id] = await blobB64(b);
         continue;
       }
+      if (id === taxId) continue;
       if (id === agreement) {
         // Never sent without the agreement signed here: the firm could neither countersign nor accept the subscription.
         // The investor is told why, and who to contact (Try again cannot make the file smaller). code: 'missing' (gone from
@@ -2888,6 +2896,8 @@
       investor,
       request,
       envelope: env ? clone(env) : null,
+      // the tax envelope only with its signed copy: without the file the firm's console could not show the form
+      taxEnvelope: taxEnv && files[taxId] ? clone(taxEnv) : null,
       files,
       docs: (ws.docs || []).filter((x) => !x.fromSnapshot).map(clone),
       audit: (ws.audit || []).map((x) => ({ at: x.at, actor: x.actor, action: x.action, detail: x.detail, fund: x.fund || '', record: x.record || '' })),
