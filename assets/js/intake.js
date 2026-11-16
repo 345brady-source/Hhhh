@@ -1324,8 +1324,12 @@ investorTerms: 6 to 12 key terms an investor would want on their investment page
       readPart(ws, o, opts, src, part, entry);
       return null;
     }
-    // D-11: otherwise the agreement among the uploaded documents is found by what their pages say. Inside a file that
-    // holds another document too, its pages are cut and read in the background, as for pages a reading server found.
+    // A reading server read the documents (automatic reading): its answer decides, as before; no agreement in it (or the
+    // sponsor unticked the one found) means none is prepared here.
+    if (opts && opts.method === 'auto') return null;
+    // D-11: otherwise (the built-in reader) the agreement among the uploaded documents is found by what their pages say.
+    // Inside a file that holds another document too, its pages are cut and read in the background, as for pages a
+    // reading server found.
     const found = await agreementAmong(ws, o, opts);
     if (!found) return null;
     if (found.rec.kind === 'combined') {
