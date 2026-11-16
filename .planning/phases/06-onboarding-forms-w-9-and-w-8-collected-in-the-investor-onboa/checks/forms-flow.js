@@ -2910,7 +2910,7 @@ async function typedRouteCase({ check, S }) {
         const NS = window.CVPortal;
         const ws = NS.state.ws;
         const fresh = (ws.invitations || []).filter((x) => x.investorId === id && ids.indexOf(x.id) < 0);
-        return { hash: location.hash, text: document.body.innerText, typed: !!document.querySelector('.ob-form'), w9: document.querySelectorAll('#ob-w9').length, fresh: JSON.parse(JSON.stringify(fresh)), steps: fresh[0] ? NS.inviteFlow.steps(ws, fresh[0]) : null };
+        return { hash: location.hash, text: document.body.innerText, typed: !!document.querySelector('.ob-form[data-form="ob-step"]') && !document.querySelector('.ivf-form'), w9: document.querySelectorAll('#ob-w9').length, fresh: JSON.parse(JSON.stringify(fresh)), steps: fresh[0] ? NS.inviteFlow.steps(ws, fresh[0]) : null };
       },
       { id: investorId, ids: before.ids }
     );
