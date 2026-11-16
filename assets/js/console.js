@@ -134,6 +134,8 @@
     // plan 06-21 (D-01, T-06-45): a form completed elsewhere and uploaded by the investor, with a download of that file when
     // it is stored under the investor's own tax- id (onboarding.js names it tax-<investor id>-<time>)
     if (tc && tc.uploaded && tc.form) {
+      // plan 06-23: uploaded on the investor's device in server mode, but the file did not reach this console
+      if (tc.received === false) return `<span class="sub">${h(tc.form)} uploaded, copy not received: ask the investor for it</span>`;
       const idRe = String(inv.id).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const own = typeof tc.fileId === 'string' && new RegExp('^tax-' + idRe + '-[a-z0-9]+$').test(tc.fileId);
       return `<span class="sub">${h(tc.form)} uploaded ${date(String(tc.at || '').slice(0, 10))}${own ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(tc.fileId)}" data-name="${h(tc.fileName || 'tax-form')}">Download</button>` : ''}</span>`;

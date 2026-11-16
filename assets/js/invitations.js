@@ -972,6 +972,11 @@
     const tx = !onFile && sub.taxEnvelope && typeof sub.taxEnvelope === 'object' ? clone(sub.taxEnvelope) : null;
     const taxIn = tx && taxCheck(ws, inv, tx, env) ? Object.assign(tx, { docId: null, workDocId: null, offeringId: null, requestId: null }) : null;
     if (taxIn) allowed.push(taxIn.signedDocId);
+    // Plan 06-23 (T-06-51): a new investor's tax form uploaded instead, only the one file their record names under their own
+    // tax- name (onboarding.js names it tax-<investor id>-<time>); the server applies the same test.
+    const upCert = !onFile && inv.taxCert && typeof inv.taxCert === 'object' && inv.taxCert.uploaded === true ? inv.taxCert : null;
+    const upId = upCert && typeof upCert.fileId === 'string' && new RegExp(`^tax-${reEsc(inv.id)}-[a-z0-9]+$`).test(upCert.fileId) ? upCert.fileId : '';
+    if (upId) allowed.push(upId);
     const kept = {}; // id -> size, for each file this submission brought that is now stored here
     for (const id of allowed) {
       if (kept[id] !== undefined || !sent(id) || !/^[\w.-]{1,120}$/.test(id)) continue;
@@ -1067,6 +1072,15 @@
         tcert.signed = (Array.isArray(taxIn.fields) ? taxIn.fields : []).some((f) => f && f.signerId === s0.id && f.type === 'signature' && !!f.value);
         delete tcert.received;
       } else if (tcert.signed !== false) tcert.received = false;
+    } else if (tcert && tcert.uploaded) {
+      // The uploaded form: the record points at it only when this submission brought it under the investor's own name;
+      // otherwise the pointer goes and the form is marked as not received (the investor row says to ask for it).
+      if (upId && kept[upId] !== undefined) delete tcert.received;
+      else {
+        delete tcert.fileId;
+        delete tcert.fileName;
+        tcert.received = false;
+      }
     }
     // The device's own change-log entries: always this investor's, dated between the invitation's sending and now, for this
     // offering and this investor, and marked as coming from their device (never a member of staff, never backdated).

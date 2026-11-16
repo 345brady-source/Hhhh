@@ -235,7 +235,8 @@ function cleanSubmission(body, rec, snap) {
   // once the investor has signed, <envelope id>-signed once everyone has, so only for a completed envelope), and evidence is
   // the investor's own upload named by their verification record (integrations.js names uploads kyc-<investor id>-<time>), or
   // their purchaser representative's acknowledgment named by the request (rep-<investor id>-<time>), or the signed copy of
-  // their official tax form (<tax envelope id>-signed, plan 06-22: only for a completed tax envelope this investor alone signed).
+  // their official tax form (<tax envelope id>-signed, plan 06-22: only for a completed tax envelope this investor alone signed),
+  // or the tax form they uploaded instead, named by their record (tax-<investor id>-<time>, plan 06-23).
   // The console imports nothing else either (assets/js/invitations.js merge). An investor already on file brings back an
   // accreditation check at most, so only its evidence.
   const allowed = Object.create(null); // file id -> 'agreement' (a PDF), 'evidence' (a PDF, PNG or JPEG) or 'tax' (a PDF, else dropped)
@@ -257,6 +258,12 @@ function cleanSubmission(body, rec, snap) {
   const rp = so && obj(so.rep);
   const repName = new RegExp(`^rep-${reEsc(rec.investorId)}-[a-z0-9]+$`);
   if (rp && typeof rp.fileId === 'string' && repName.test(rp.fileId) && !allowed[rp.fileId]) allowed[rp.fileId] = 'evidence';
+  // Plan 06-23 (D-01, T-06-51): a tax form the investor completed elsewhere and uploaded instead, named by their record
+  // (investor.taxCert { uploaded: true, fileId }) under this investor's tax- name (onboarding.js: tax-<investor id>-<time>).
+  // Never for an investor already on file, whose tax form stays as the console holds it.
+  const tc = obj(out.investor.taxCert);
+  const taxName = new RegExp(`^tax-${reEsc(rec.investorId)}-[a-z0-9]+$`);
+  if (tc && tc.uploaded === true && typeof tc.fileId === 'string' && taxName.test(tc.fileId) && !(snap.invitation && snap.invitation.existing) && !allowed[tc.fileId]) allowed[tc.fileId] = 'evidence';
   // Plan 06-22 (research Pattern 6, T-06-47): the investor's official tax form (W-9, W-8BEN or W-8BEN-E), the envelope esign.js
   // made on the tax step (kind 'tax'), kept only when this investor is its one signer (no countersigner: nobody else signs a
   // tax form). Its signed copy, under esign.js's name, is allowed only once it is completed.
