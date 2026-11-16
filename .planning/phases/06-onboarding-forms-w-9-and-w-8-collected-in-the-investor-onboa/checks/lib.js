@@ -503,6 +503,8 @@ async function inviteFromConsole(page, o) {
   if (o.type) await page.selectOption('#iv-type', o.type);
   if (o.account) await page.fill('#iv-title', o.account);
   if (o.amount) await page.fill('#iv-amt', String(o.amount));
+  // Plan 06-27 (D-10): "Include tax form" for an investor on file (a tree without the box leaves the invitation as it is)
+  if (o.includeTax && (await page.locator('#iv-includeTax').count())) await page.check('#iv-includeTax');
   await page.click('.inv8-form[data-form="invite-one"] button[type=submit]');
   await page.waitForFunction((email) => {
     const ws = window.CVPortal.state.ws;
