@@ -156,3 +156,93 @@ test('every other file id is still dropped unread with a tax envelope present', 
     assert.deepEqual(Object.keys(got.body.files).sort(), ['env-s1-work', 'env-t1-signed']);
     assert.equal(taxDocs(got.body).length, 1);
   }));
+
+/** The subscription envelope and its work copy arrive exactly as without a tax form. */
+function agreementIntact(b, what) {
+  assert.ok(b.envelope && b.envelope.id === 'env-s1' && b.envelope.workDocId === 'env-s1-work', `${what}: the subscription envelope is unaffected`);
+  assert.equal(b.files['env-s1-work'], pdf('AGREEMENT SIGNED').toString('base64'), `${what}: the agreement still arrives`);
+  assert.equal(b.request && b.request.id, 'req-tax-1', `${what}: the request still arrives`);
+}
+/** No signed tax copy and no tax listing reached the pickup, and no completed tax envelope points at a file. */
+function nothingTax(b, what, id = 'env-t1') {
+  assert.ok(!(`${id}-signed` in b.files), `${what}: the signed copy is dropped`);
+  assert.deepEqual(Object.keys(b.files).filter((k) => k !== 'env-s1-work'), [], `${what}: no other file arrives`);
+  assert.equal((b.docs || []).filter((d) => d.cat === 'Tax' || d.id === `${id}-signed` || d.envelopeId === id).length, 0, `${what}: no tax listing`);
+  const t = b.taxEnvelope;
+  assert.ok(!t || (t.status !== 'completed' && !t.signedDocId), `${what}: no completed tax envelope pointing at a file (${JSON.stringify(t && { status: t.status, signedDocId: t.signedDocId })})`);
+}
+
+test('forged tax envelopes (another investor, a countersigner, another kind, the agreement’s id) bring no file and no listing; the subscription is unaffected', () =>
+  start(async (base) => {
+    const cases = [
+      ['another investor’s id', taxEnv({ signers: [{ id: 'sg-1', role: 'investor', investorId: 'HRC-0099', name: 'Lee Okafor', status: 'signed' }] })],
+      ['a countersigner', taxEnv({ signers: taxEnv().signers.concat([{ id: 'sg-2', role: 'countersigner', name: 'Investor Relations', status: 'signed' }]) })],
+      ['the investor twice', taxEnv({ signers: taxEnv().signers.concat([Object.assign({}, taxEnv().signers[0], { id: 'sg-2' })]) })],
+      ['no signer', taxEnv({ signers: [] })],
+      ['a signer with no investor id', taxEnv({ signers: [{ id: 'sg-1', role: 'investor', name: 'Dana Whitfield', status: 'signed' }] })],
+      ['kind agreement', taxEnv({ kind: 'agreement' })],
+      ['no kind', taxEnv({ kind: undefined })],
+      ['kind TAX', taxEnv({ kind: 'TAX' })]
+    ];
+    for (const [what, t] of cases) {
+      const { c, got } = await run(base, submission({ taxEnvelope: t }));
+      assert.deepEqual(c.body, { ok: true }, `${what}: the completion still succeeds`);
+      assert.equal(got.body.taxEnvelope, null, `${what}: the tax envelope is not kept`);
+      nothingTax(got.body, what);
+      agreementIntact(got.body, what);
+    }
+    // A tax envelope carrying the agreement's own id would make the agreement's signed copy pass as a tax form.
+    const s = submission({ taxEnvelope: taxEnv({ id: 'env-s1', signedDocId: 'env-s1-signed' }), docs: [taxDoc({ id: 'env-s1-signed', envelopeId: 'env-s1' })] });
+    s.files = { 'env-s1-work': pdf('AGREEMENT SIGNED').toString('base64'), 'env-s1-signed': pdf('PASSED OFF').toString('base64') };
+    const { c, got } = await run(base, s);
+    assert.deepEqual(c.body, { ok: true });
+    assert.equal(got.body.taxEnvelope, null, 'the agreement’s id: the tax envelope is not kept');
+    nothingTax(got.body, 'the agreement’s id', 'env-s1');
+    agreementIntact(got.body, 'the agreement’s id');
+  }));
+
+test('a signed tax copy that is not a PDF is dropped, never refusing the completion; a -signed file for a tax envelope not completed is dropped', () =>
+  start(async (base) => {
+    // Not a PDF (a PNG, then plain words): dropped; the envelope is not complete without it.
+    for (const [what, buf] of [['a PNG', png], ['plain words', Buffer.from('plain words, not a PDF')]]) {
+      const s = submission();
+      s.files = Object.assign({}, s.files, { 'env-t1-signed': buf.toString('base64') });
+      const { c, got } = await run(base, s);
+      assert.deepEqual(c.body, { ok: true }, `${what}: the completion still succeeds (${JSON.stringify(c.body)})`);
+      nothingTax(got.body, what);
+      agreementIntact(got.body, what);
+    }
+    // Not valid base64 at all: dropped unread.
+    const u = submission();
+    u.files = Object.assign({}, u.files, { 'env-t1-signed': '%%% not base64 %%%' });
+    const ur = await run(base, u);
+    assert.deepEqual(ur.c.body, { ok: true }, `not base64: ${JSON.stringify(ur.c.body)}`);
+    nothingTax(ur.got.body, 'not base64');
+    agreementIntact(ur.got.body, 'not base64');
+    // Not completed (sent, or completed without esign.js's name for the copy): the -signed file is dropped.
+    for (const [what, t] of [['sent', taxEnv({ status: 'sent', completedAt: null })], ['voided', taxEnv({ status: 'voided' })], ['another copy name', taxEnv({ signedDocId: 'env-t1-final' })]]) {
+      const s = submission({ taxEnvelope: t });
+      if (what === 'another copy name') s.files = Object.assign({}, s.files, { 'env-t1-final': pdf('FINAL').toString('base64') });
+      const { c, got } = await run(base, s);
+      assert.deepEqual(c.body, { ok: true }, what);
+      nothingTax(got.body, what);
+      assert.ok(!('env-t1-final' in got.body.files), `${what}: no file under another name`);
+      agreementIntact(got.body, what);
+    }
+    // Completed, but the copy did not come: kept as not complete, pointing at nothing.
+    const m = submission();
+    delete m.files['env-t1-signed'];
+    const mr = await run(base, m);
+    assert.deepEqual(mr.c.body, { ok: true });
+    assert.ok(mr.got.body.taxEnvelope && mr.got.body.taxEnvelope.status === 'sent' && mr.got.body.taxEnvelope.signedDocId === null, JSON.stringify(mr.got.body.taxEnvelope && mr.got.body.taxEnvelope.status));
+    nothingTax(mr.got.body, 'no copy sent');
+  }));
+
+test('an investor already on file brings back no tax form (the console keeps the one it holds)', () =>
+  start(async (base) => {
+    const { c, got } = await run(base, submission(), { investor: Object.assign({}, INVESTOR, { existing: { accredited: true, accreditedUntil: '2027-03-01', holds: true } }), invitation: { cents: 6000000, existing: true, expiresAt: new Date(T0 + 30 * DAY).toISOString() } });
+    assert.equal(c.status, 200, JSON.stringify(c.body));
+    assert.equal(got.body.taxEnvelope, null);
+    assert.ok(!('env-t1-signed' in got.body.files), 'no signed tax copy');
+    assert.equal((got.body.docs || []).filter((d) => d.cat === 'Tax').length, 0, 'no tax listing');
+  }));
