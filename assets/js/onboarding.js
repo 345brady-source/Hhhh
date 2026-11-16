@@ -1381,8 +1381,9 @@
           treaty: '',
           // The W-8BEN's answers the investor changed on the tax step (plan 06-18; empty: taken from Investor information).
           w8Name: '',
-          w8Citizen: '',
-          w8CitizenOther: '',
+          // plan 06-26: the country of citizenship is asked on the W-8BEN, pre-selected only from the investor's own earlier answer
+          w8Citizen: citizenPick(givenCitizenship(i)).pick,
+          w8CitizenOther: citizenPick(givenCitizenship(i)).other,
           w8Street: '',
           w8City: '',
           w8Country: '',
@@ -1689,11 +1690,26 @@
    * account), the permanent residence, the date of birth and, for another citizenship, the residence country as the country
    * of citizenship (the step says so); the treaty country is the residence country when it has a treaty (TREATY).
    */
+  /**
+   * Plan 06-26 (owner decision on the verification's human item 2): the W-8BEN's country of citizenship (line 2) is the
+   * investor's own answer, never the residence country copied in its place (a resident of a country is not always its citizen,
+   * and line 2 is signed under penalties of perjury). The one earlier answer it is pre-selected from: the citizenship given on
+   * a W-8BEN this investor completed before (taxCert.citizenship, kept on the record from plan 06-26 on).
+   */
+  function givenCitizenship(i) {
+    const tc = i && i.taxCert;
+    return tc && tc.form === 'W-8BEN' && typeof tc.citizenship === 'string' && tc.citizenship !== US ? tc.citizenship.trim().slice(0, 60) : '';
+  }
+  /** A country name as the W-8BEN country choice holds it: one of the list, or "Another country" with the name typed beside it. */
+  function citizenPick(name) {
+    if (!name) return { pick: '', other: '' };
+    return COUNTRIES.indexOf(name) >= 0 && name !== OTHER_COUNTRY ? { pick: name, other: '' } : { pick: OTHER_COUNTRY, other: name };
+  }
   function w8Known(c, d) {
     const res = realCountry(d.country);
     const place = [tidy(d.city), tidy(d.st)].filter(Boolean).join(', ');
     const cityLine = [place, tidy(d.zip)].filter(Boolean).join(' ');
-    return { name: tidy(c.inv.contact), citizenship: d.citizen === 'other' ? res : '', street: tidy(d.street), cityLine, country: res, countryPick: res || (d.country === OTHER_COUNTRY ? OTHER_COUNTRY : ''), dob: /^\d{4}-\d{2}-\d{2}$/.test(String(d.dob || '')) ? d.dob : '', treaty: TREATY.indexOf(res) >= 0 ? res : '' };
+    return { name: tidy(c.inv.contact), citizenship: givenCitizenship(c.inv), street: tidy(d.street), cityLine, country: res, countryPick: res || (d.country === OTHER_COUNTRY ? OTHER_COUNTRY : ''), dob: /^\d{4}-\d{2}-\d{2}$/.test(String(d.dob || '')) ? d.dob : '', treaty: TREATY.indexOf(res) >= 0 ? res : '' };
   }
   /** The W-8BEN's answers, by the map's own keys: what onboarding knows, with any answer changed on this step. */
   function w8Answers(c, d) {
@@ -2091,15 +2107,15 @@
     } else {
       if (!k.name && !tidy(d.w8Name)) body += input('w8Name', 'Name of the individual who is the beneficial owner', { wide: true, max: 120 });
       if (!k.country && !w8CountryOf(d, 'w8Country')) body += w8CountryField('w8Country', 'Country of permanent residence', 'Choose a country');
-      if (!k.citizenship && !w8CountryOf(d, 'w8Citizen')) body += w8CountryField('w8Citizen', 'Country of citizenship', 'Choose a country');
+      // plan 06-26: always asked (one country choice), pre-selected only from the investor's own earlier answer
+      body += w8CountryField('w8Citizen', 'Country of citizenship', 'Choose a country');
       if (!k.street && !tidy(d.w8Street)) body += input('w8Street', 'Permanent residence address (street, apt. or suite no.)', { wide: true, max: 120, auto: 'street-address' });
       if (!k.cityLine && !tidy(d.w8City)) body += input('w8City', 'City or town, state or province, and postal code', { wide: true, max: 120 });
       body += ftin;
     }
-    const assumed = !edit && k.citizenship && !w8CountryOf(d, 'w8Citizen') ? ` It gives ${h(k.citizenship)}, where you live, as your country of citizenship.` : '';
     const holder = d.type === 'joint' ? `<p class="meta">This is the form of ${h(k.name)}, the first holder of the account.</p>` : '';
     return `${ivfH1(FL.tax)}
-      <p class="lede">Your Form W-8BEN is filled in from your answers${!edit ? ', except what is asked below' : ''}.${assumed} You check it and sign it on the next screen.</p>
+      <p class="lede">Your Form W-8BEN is filled in from your answers${!edit ? ', except what is asked below' : ''}. You check it and sign it on the next screen.</p>
       ${holder}
       <div class="form-grid">${body}</div>
       ${edit ? '' : '<p class="meta ivf-taxedit"><button class="link-btn" type="button" data-action="ivf-taxedit">Change your answers</button></p>'}
@@ -2259,7 +2275,7 @@
       if (tidy(d.ftin)) m.ftin = tidy(d.ftin);
       if (digitsOf(d.w8UsTin).length === 9) m.usTin = digitsOf(d.w8UsTin);
       const f = String(a.ftin || '').replace(/[\s-]/g, '');
-      fl.taxW8 = { country: a.country || '', ftinLast4: f ? f.slice(-4) : '', noFtin: !!a.noFtin, treatyCountry: a.treatyCountry || '' };
+      fl.taxW8 = { country: a.country || '', citizenship: a.citizenship || '', ftinLast4: f ? f.slice(-4) : '', noFtin: !!a.noFtin, treatyCountry: a.treatyCountry || '' };
       i.taxType = 'foreign-individual';
       d.ftin = d.w8UsTin = '';
     } else if (w8e) {
@@ -2316,7 +2332,7 @@
         // a W-8BEN or W-8BEN-E stays valid until 31 December of the third calendar year after the year it was signed
         const w = fl.taxW8 || {};
         const until = signed ? `${signYear(env, signer) + 3}-12-31` : '';
-        const facts = env.taxForm.form === 'W-8BEN' ? { country: w.country || '', ftinLast4: w.ftinLast4 || '', noFtin: !!w.noFtin, treatyCountry: w.treatyCountry || '' } : { chapter3: w.chapter3 || '', chapter4: w.chapter4 || '', country: w.country || '', ftinLast4: w.ftinLast4 || '', noFtin: !!w.noFtin };
+        const facts = env.taxForm.form === 'W-8BEN' ? { country: w.country || '', citizenship: w.citizenship || '', ftinLast4: w.ftinLast4 || '', noFtin: !!w.noFtin, treatyCountry: w.treatyCountry || '' } : { chapter3: w.chapter3 || '', chapter4: w.chapter4 || '', country: w.country || '', ftinLast4: w.ftinLast4 || '', noFtin: !!w.noFtin };
         i.taxCert = Object.assign(base, facts, { validUntil: until });
         delete W8MEM[i.id];
       } else i.taxCert = Object.assign(base, { tinLast4: fl.taxTinLast4 || '', backupWithholding: !!fl.taxBackup });
