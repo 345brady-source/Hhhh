@@ -233,7 +233,14 @@ async function submit(page) {
   await page.waitForTimeout(150);
 }
 /** Field errors on screen now. */
-const fieldErrors = (page) => page.locator('.field-error').allInnerTexts().catch(() => []);
+// Only messages: the signing dialog leaves an empty role="alert" paragraph (signature.js #es-adopt-err) in the page once a
+// signature was adopted (plan 06-21 found it); an empty one holds no message (plan 06-22: a signed W-9 in a walk).
+const fieldErrors = (page) =>
+  page
+    .locator('.field-error')
+    .allInnerTexts()
+    .then((a) => a.filter((t) => String(t).trim()))
+    .catch(() => []);
 
 /**
  * Walk the invited investor's onboarding until the subscription agreement is on screen. The status step is filled from
@@ -306,10 +313,11 @@ async function walk(page, answers) {
         await page.check('#ob-w9');
         await page.fill('#ob-taxSig', a.name);
       } else {
-        // Plan 06-16: the answers view continued as it stands, then the official form finished without a signature (D-30).
+        // Plan 06-16: the answers view continued as it stands, then the official form finished without a signature (D-30),
+        // or signed first when a.taxSign(page) is given (plan 06-22).
         if (a.onFilled) await a.onFilled(hd);
         await submit(page);
-        await finishTaxForm(page);
+        await finishTaxForm(page, a.taxSign);
         continue;
       }
     } else if (/Distribution payments/.test(hd)) {

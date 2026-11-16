@@ -1625,7 +1625,8 @@
    * investor's Account page, the audit's tax-forms check and register). A form finished without a signature
    * (taxCert.signed false) is not on file; a record from before signing existed (no signed flag) still is.
    */
-  const taxOnFile = (i) => !!(i && i.taxForm) && (i.taxCert || {}).signed !== false;
+  // plan 06-22: a signed form whose copy the firm's console did not receive (received false, set by the console's import) is not on file
+  const taxOnFile = (i) => !!(i && i.taxForm) && (i.taxCert || {}).signed !== false && (i.taxCert || {}).received !== false;
   const foreignType = (i) => /^foreign-/.test((i && i.taxType) || '');
   /** A U.S. person for the tax form: an IRA always (its custodian is one); otherwise the investor type, as corrected here. */
   const usTax = (c, d) => d.type === 'ira' || (d.usPerson ? d.usPerson === 'yes' : !foreignType(c.inv));
@@ -2406,7 +2407,7 @@
     } else if (c.closed) next.push(`${closedName} stopped accepting subscriptions before you reached that step, so no subscription was made. ${h(t.support.team)} has been told and will contact you about it.`);
     else next.push('Your investments, distributions, statements and tax documents will appear in your portal.');
     // Evidence the integration server could not take with the rest (sendCompletion): the investor hears it from this page first.
-    const unsent = (c.fl.unsent || []).map((k) => (k === 'identity' ? 'the ID you uploaded' : k === 'rep' ? 'the acknowledgment of your purchaser representative you uploaded' : 'the verification letter you uploaded'));
+    const unsent = (c.fl.unsent || []).map((k) => (k === 'identity' ? 'the ID you uploaded' : k === 'rep' ? 'the acknowledgment of your purchaser representative you uploaded' : k === 'tax' ? (c.inv.taxForm ? `the Form ${h(c.inv.taxForm)} you signed` : 'the tax form you signed') : 'the verification letter you uploaded'));
     if (unsent.length) next.push(`${unsent.join(' and ').replace(/^t/, 'T')} could not be sent with your details, so ${h(t.support.team)} may ask you for ${unsent.length > 1 ? 'them' : 'it'} again.`);
     next.push(`Questions? ${h(t.support.team)}${t.support.email ? ` at ${h(t.support.email)}` : ''}${t.support.phone ? ` or ${h(t.support.phone)}` : ''}.`);
     const lede = c.it.existing
@@ -2806,6 +2807,13 @@
     // everyone has signed, otherwise the work copy with the investor's signature, which the firm countersigns.
     const agreement = env ? (env.status === 'completed' ? env.signedDocId : env.workDocId) : null;
     const ids = agreement ? [agreement] : [];
+    // Then the investor's official tax form (plan 06-22, research Pattern 6): the signed copy of the W-9, W-8BEN or W-8BEN-E
+    // they signed on the tax step, with its envelope (the integration server and the console take it only for a completed tax
+    // envelope this investor alone signed). A form finished without a signature is recorded as not signed and sends no file.
+    const tc = i.taxCert || null;
+    const taxEnv = tc && !tc.uploaded && tc.signed === true && tc.envelopeId ? (ws.envelopes || []).find((e) => e.id === tc.envelopeId && e.kind === 'tax' && e.status === 'completed' && e.signedDocId === `${e.id}-signed` && !!signerOf(e, i)) || null : null;
+    const taxId = taxEnv ? taxEnv.signedDocId : '';
+    if (taxId && ids.indexOf(taxId) < 0) ids.push(taxId);
     // Then the investor's evidence: the ID or verification letter they uploaded for the firm to review.
     const v = i.verify || {};
     const kindOf = {};
@@ -2835,9 +2843,15 @@
         b = null;
       }
       const fits = !!b && total + b.size <= MAX_FILES;
-      if (fits && (await sendable(b, id === agreement))) {
+      if (fits && (await sendable(b, id === agreement || id === taxId))) {
         total += b.size;
         files[id] = await blobB64(b);
+        continue;
+      }
+      if (id === taxId) {
+        // The signed tax form that cannot go (planner's choice, plan 06-22: after the agreement, before evidence) never stops
+        // the completion: reported like unsent evidence (below).
+        unsent.push({ kind: 'tax', name: (taxEnv.taxForm && taxEnv.taxForm.form) || tc.form || '', why: !b ? 'could not be read from the storage of the investor’s browser' : !fits ? (b.size > MAX_FILES ? `is ${mb(b.size)} MB, more than the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser` : `did not fit in the ${mb(MAX_FILES)} MB that can be sent from the investor’s browser with the rest of their details`) : 'is not a PDF file' });
         continue;
       }
       if (id === agreement) {
@@ -2864,9 +2878,15 @@
     }
     // Evidence left on this device: the firm's copy of the record says what happened and to ask the investor for it, and
     // points at no file (the console would offer a file it never received). This device's own record is left as it is.
-    const what = (x) => `${x.kind === 'identity' ? 'the ID' : x.kind === 'rep' ? 'the written acknowledgment of their purchaser representative' : 'the verification letter'} the investor uploaded${x.name ? ` (${x.name})` : ''}`;
+    const what = (x) => (x.kind === 'tax' ? `the Form ${x.name || 'tax form'} the investor signed` : `${x.kind === 'identity' ? 'the ID' : x.kind === 'rep' ? 'the written acknowledgment of their purchaser representative' : 'the verification letter'} the investor uploaded${x.name ? ` (${x.name})` : ''}`);
+    // The signed tax form that stays on this device: the firm's copy of the record says so in one line (its envelope and copy
+    // are not sent, so the firm's console says the copy was not received).
+    unsent.filter((x) => x.kind === 'tax').forEach((x) => {
+      if (investor.taxCert && typeof investor.taxCert === 'object') investor.taxCert.note = `${what(x).replace(/^t/, 'T')} ${x.why}, so it was not sent with their details. Ask the investor for it.`;
+    });
+    const evidence = unsent.filter((x) => x.kind !== 'tax');
     unsent.forEach((x) => {
-      if (x.kind === 'rep') return;
+      if (x.kind === 'rep' || x.kind === 'tax') return;
       const r = investor.verify && investor.verify[x.kind];
       if (!r || typeof r !== 'object') return;
       const note = `${what(x).replace(/^t/, 'T')} ${x.why}, so it was not sent with their details. Ask the investor for it.`;
@@ -2888,13 +2908,16 @@
       investor,
       request,
       envelope: env ? clone(env) : null,
+      // the tax envelope only with its signed copy: without the file the firm's console could not show the form
+      taxEnvelope: taxEnv && files[taxId] ? clone(taxEnv) : null,
       files,
       docs: (ws.docs || []).filter((x) => !x.fromSnapshot).map(clone),
       audit: (ws.audit || []).map((x) => ({ at: x.at, actor: x.actor, action: x.action, detail: x.detail, fund: x.fund || '', record: x.record || '' })),
       notifications: (ws.notifications || []).filter((n) => n.kind !== 'onboarding_completed').map(clone)
     };
     // One entry in the firm's change log for it (on the payload only: a retry must not log it twice on this device).
-    if (unsent.length) payload.audit.push({ at: nowIso(), actor: 'Portal (automatic)', action: 'Uploaded evidence not sent', detail: `${i.title}: ${unsent.map((x) => `${what(x)} ${x.why}`).join('; ')}; ask the investor for ${unsent.length > 1 ? 'them' : 'it'}`, fund: c.off ? c.off.id : c.it.offeringId || '', record: i.id });
+    if (evidence.length) payload.audit.push({ at: nowIso(), actor: 'Portal (automatic)', action: 'Uploaded evidence not sent', detail: `${i.title}: ${evidence.map((x) => `${what(x)} ${x.why}`).join('; ')}; ask the investor for ${evidence.length > 1 ? 'them' : 'it'}`, fund: c.off ? c.off.id : c.it.offeringId || '', record: i.id });
+    unsent.filter((x) => x.kind === 'tax').forEach((x) => payload.audit.push({ at: nowIso(), actor: 'Portal (automatic)', action: 'Signed tax form not sent', detail: `${i.title}: ${what(x)} ${x.why}; ask the investor for it`, fund: c.off ? c.off.id : c.it.offeringId || '', record: i.id }));
     await remote.complete(ws.invite.server, ws.invite.token, payload);
     c.fl.sentAt = nowIso();
     if (unsent.length) c.fl.unsent = unsent.map((x) => x.kind);

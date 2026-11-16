@@ -5,7 +5,8 @@
 // console (one context) sends the invitation with its own form; the investor's device (a second context, empty storage,
 // the portal page listing the server as the firm publishes it) opens the ?server= link, answers the status step,
 // subscribes and signs; the console imports with its own "Check now" and counts the answers exactly as in local mode.
-//   NODE_PATH=$(npm root -g) node server-mode.js [--only b506,regA,full,existing,withdraw,repack,clean,signed]
+// Plan 06-22 (research Pattern 6): the investor's signed tax form travels with the completion (parts tax-w9, tax-unsigned).
+//   NODE_PATH=$(npm root -g) node server-mode.js [--only b506,regA,full,existing,withdraw,repack,clean,signed,tax-w9,tax-unsigned]
 // The last line is "SERVER MODE: PASS (parts run: N)" or "SERVER MODE: FAIL (parts run: N) - <failed parts>".
 const path = require('path');
 const fs = require('fs');
@@ -55,6 +56,18 @@ L.describeShots([
   ['repbig-subscribe.png', 'Investor’s device: subscribe step (25 MB acknowledgment case).'],
   ['repbig-done.png', 'Investor’s device, done screen: "The acknowledgment of your purchaser representative you uploaded could not be sent with your details".'],
   ['repbig-requests.png', 'Console requests page: the representative with the note that the acknowledgment did not fit and to ask the investor for it (no download).'],
+  ['tax-w9-status.png', 'Investor’s own device (server mode, plan 06-22): status step before the tax step where the W-9 is signed.'],
+  ['tax-w9-subscribe.png', 'Investor’s device: subscribe step after signing the W-9.'],
+  ['tax-w9-done.png', 'Investor’s device: done screen; the signed W-9 went with the completion.'],
+  ['tax-w9-console.png', 'Console Investors page after import: the investor row reads "W-9 signed <date> · Download"; the Download returns the bytes the device produced.'],
+  ['tax-unsigned-status.png', 'Investor’s device (server mode): status step before a W-9 finished without a signature.'],
+  ['tax-unsigned-subscribe.png', 'Investor’s device: subscribe step (W-9 not signed).'],
+  ['tax-unsigned-done.png', 'Investor’s device: done screen; no tax form was sent.'],
+  ['tax-unsigned-console.png', 'Console Investors page after import: the investor row reads "W-9 not signed", no Download.'],
+  ['tax-toolarge-status.png', 'Investor’s device: status step before the W-9 is signed (its signed copy is then made 25 MB).'],
+  ['tax-toolarge-subscribe.png', 'Investor’s device: subscribe step (signed W-9 too large to send).'],
+  ['tax-toolarge-done.png', 'Investor’s device, done screen: "The Form W-9 you signed could not be sent with your details".'],
+  ['tax-toolarge-console.png', 'Console Investors page: the investor row reads "W-9 signed, copy not received: ask the investor for it".'],
   ['clean-status.png', 'Investor’s device with 35 other non-accredited purchasers on the console: status step answered "not accredited", no warning and nothing about the others.']
 ]);
 fs.mkdirSync(SHOTS, { recursive: true });
@@ -116,6 +129,79 @@ const seedNonAccredited = (page, offeringId, n, prefix) =>
 const FULL_WARN = /may already have as many investors who are not accredited as it is able to accept/;
 const warnText = (page) => page.evaluate(() => Array.from(document.querySelectorAll('.ivf-form .wire-warn')).map((x) => x.innerText).join('\n'));
 
+/* ---------- The signed tax form in server mode (plan 06-22) ---------- */
+
+/** Adopt a signature on the tax step's embedded W-9 (consent first when it is asked): the investor signs it. */
+async function signTax(pg) {
+  if (await pg.locator('#es-consent-box').count()) {
+    await pg.check('#es-consent-box');
+    await pg.click('[data-action="es-consent"]');
+    await pg.waitForSelector('.ivf-tax-sign .es-doc-sign .es-page img', { timeout: 30000 });
+  }
+  const fid = await pg.evaluate(() => {
+    const ws = window.CVPortal.state.ws;
+    const fl = ws.investors[0].onboarding.flow || {};
+    const env = (ws.envelopes || []).find((e) => e.id === fl.taxEnvelopeId);
+    const f = env && env.fields.find((x) => x.type === 'signature');
+    return f ? f.id : '';
+  });
+  if (!fid) throw new Error('the tax form on the device has no signature field');
+  await pg.locator(`.es-doc-sign [data-fid="${fid}"]`).scrollIntoViewIfNeeded();
+  await pg.click(`.es-doc-sign [data-fid="${fid}"]`);
+  await pg.waitForTimeout(200);
+  if (await pg.evaluate(() => document.getElementById('dlg').open)) {
+    await pg.click('[data-action="es-adopt"]');
+    await pg.waitForFunction(() => !document.getElementById('dlg').open);
+  }
+}
+
+/**
+ * What the investor's device holds for its tax form once the step is behind it (read on the next screen, before anything is
+ * sent): the record's taxCert and taxForm, the envelope it names, and the SHA-256 and size of the signed copy it stored.
+ */
+const deviceTax = (page) =>
+  page.evaluate(async () => {
+    const NS = window.CVPortal;
+    const ws = NS.state.ws;
+    const i = ws.investors[0];
+    const tc = i.taxCert || null;
+    const env = tc && tc.envelopeId ? (ws.envelopes || []).find((e) => e.id === tc.envelopeId) : null;
+    let sha = '';
+    let size = 0;
+    const b = env && env.signedDocId ? await NS.ops.files.get(env.signedDocId) : null;
+    if (b) {
+      size = b.size;
+      const d = new Uint8Array(await crypto.subtle.digest('SHA-256', await b.arrayBuffer()));
+      sha = Array.from(d, (x) => x.toString(16).padStart(2, '0')).join('');
+    }
+    return { taxForm: i.taxForm || '', taxCert: tc ? JSON.parse(JSON.stringify(tc)) : null, env: env ? { id: env.id, kind: env.kind, status: env.status, signedDocId: env.signedDocId || '', signers: env.signers.map((s) => ({ role: s.role, investorId: s.investorId || '' })) } : null, sha, size };
+  });
+
+/** The console's tax line for one investor on the Investors page, and the bytes its Download returns (null when none). */
+async function consoleTaxRow(page, email, shot) {
+  await L.consoleRoute(page, 'console-investors', '.cs-tbl');
+  const row = page.locator('table.cs-tbl:has(th:text-is("Paid by")) tbody tr', { hasText: email }).first();
+  const text = (await row.innerText().catch(() => '')).replace(/\s+/g, ' ');
+  await row.scrollIntoViewIfNeeded().catch(() => {});
+  // the import's messages fade first, so the owner's screenshot shows the row they would cover
+  if (shot) await page.waitForTimeout(4500);
+  if (shot) await page.screenshot({ path: path.join(SHOTS, shot), fullPage: true });
+  const downloads = await row.locator('[data-action="kyc-iv-file"]').count();
+  let bytes = null;
+  let name = '';
+  let error = downloads ? '' : 'no Download in the row';
+  if (downloads)
+    try {
+      const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), row.locator('[data-action="kyc-iv-file"]').first().click()]);
+      bytes = fs.readFileSync(await dl.path());
+      name = dl.suggestedFilename();
+    } catch (e) {
+      error = String(e.message || e).slice(0, 200);
+    }
+  return { text, bytes, name, error, downloads };
+}
+const sha256 = (b) => require('crypto').createHash('sha256').update(b).digest('hex');
+
 /**
  * One server-mode case end to end. o: { tag, exemption, invite (extra form fields), answers (lib walk answers),
  * onStatus(page, R), onSubscribe(page, R), beforeImport(srv, inv, sub) }. Returns everything the part asserts on; the
@@ -171,10 +257,11 @@ async function serverFlow(S, check, o) {
     await ip.goto(inv.link);
     // Workspace keys in this browser's storage (the edition's prefix, then ws:<id>).
     out.storageBefore = await ip.evaluate(() => Object.keys(localStorage).filter((k) => /ws:/.test(k)));
-    const answers = Object.assign({}, o.answers, {
+    const answers = Object.assign({}, o.answers, o.taxSign ? { taxSign: o.taxSign } : {}, {
       name: who.name,
       onStep: async (hd) => {
         if (hd === 'Investor status' && o.onStatusStep) await o.onStatusStep(ip, out.R);
+        if (o.onAnyStep) await o.onAnyStep(hd, ip, out.R);
       },
       onFilled: async (hd) => {
         if (hd === 'Investor status') {
@@ -867,6 +954,141 @@ const parts = {
     } finally {
       for (const c of closers.reverse()) await c().catch(() => {});
       await srv.close();
+    }
+  },
+
+  /**
+   * Plan 06-22 (research Pattern 6 and Pitfall 3; D-01): a U.S. individual in server mode signs the pre-filled W-9 on their
+   * own device and completes. The tax envelope and its signed copy travel with the completion, pass the integration server's
+   * allowlist (one Tax listing, for this investor alone), and arrive in the console, whose investor row reads "W-9 signed
+   * <date>" with a Download returning exactly the bytes the device produced (SHA-256 read on the device before sending).
+   */
+  async 'tax-w9'({ check, S }) {
+    const answers = { acc: 'no', exp: 'Six years of private fund commitments', edu: 'Architect', rep: 'no', amount: 60000 };
+    const F = await serverFlow(S, check, {
+      tag: 'tax-w9',
+      exemption: 'Rule 506(b)',
+      answers,
+      taxSign: signTax,
+      onAnyStep: async (hd, p, R) => {
+        if (hd === 'Distribution payments' && !R.tax) R.tax = await deviceTax(p);
+      }
+    });
+    try {
+      commonChecks(check, F);
+      const dv = F.R.tax || {};
+      const id = dv.env ? dv.env.id : '';
+      const sid = id ? `${id}-signed` : '';
+      check('the device signed the W-9: taxCert signed, a completed tax envelope with this investor as its one signer, its signed copy stored', !!dv.taxCert && dv.taxCert.signed === true && dv.taxCert.form === 'W-9' && !!dv.env && dv.env.kind === 'tax' && dv.env.status === 'completed' && dv.env.signedDocId === sid && dv.env.signers.length === 1 && dv.env.signers[0].role === 'investor' && dv.env.signers[0].investorId === F.inv.investorId && /^[0-9a-f]{64}$/.test(dv.sha), dv);
+      const st = F.stored || {};
+      const te = st.taxEnvelope || null;
+      check('the server holds the tax envelope, completed, pointing at its signed copy', !!te && te.id === id && te.kind === 'tax' && te.status === 'completed' && te.signedDocId === sid, te && { id: te.id, kind: te.kind, status: te.status, signedDocId: te.signedDocId });
+      const held = st.files && st.files[sid] ? Buffer.from(st.files[sid], 'base64') : null;
+      check('the server holds the signed W-9 byte for byte as the device produced it', !!held && sha256(held) === dv.sha, { server: held ? sha256(held) : Object.keys(st.files || {}), device: dv.sha });
+      const listed = (st.docs || []).filter((d) => d.cat === 'Tax');
+      check('the server lists it once, category Tax, for this investor alone', listed.length === 1 && listed[0].id === sid && listed[0].envelopeId === id && listed[0].audience === 'investors' && JSON.stringify(listed[0].investors) === JSON.stringify([F.inv.investorId]) && listed[0].offeringId === null, st.docs);
+      const cp = F.A.page;
+      const got = await cp.evaluate(async ({ iid, eid, sid }) => {
+        const NS = window.CVPortal;
+        const ws = NS.state.ws;
+        const i = ws.investors.find((x) => x.id === iid) || {};
+        const e = (ws.envelopes || []).find((x) => x.id === eid) || null;
+        const docs = (ws.docs || []).filter((d) => d.envelopeId === eid);
+        const b = await NS.ops.files.get(sid);
+        let sha = '';
+        if (b) sha = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', await b.arrayBuffer())), (x) => x.toString(16).padStart(2, '0')).join('');
+        return { taxForm: i.taxForm, taxCert: i.taxCert || null, env: e ? { kind: e.kind, status: e.status, signedDocId: e.signedDocId, docId: e.docId || null, workDocId: e.workDocId || null } : null, docs: docs.map((d) => ({ id: d.id, cat: d.cat, investors: d.investors, audience: d.audience })), sha };
+      }, { iid: F.inv.investorId, eid: id, sid });
+      check('the console imported the tax envelope, completed, with only its signed copy', !!got.env && got.env.kind === 'tax' && got.env.status === 'completed' && got.env.signedDocId === sid && !got.env.docId && !got.env.workDocId, got.env);
+      check('the console stored the signed W-9 byte for byte', got.sha === dv.sha, { console: got.sha, device: dv.sha });
+      check('the console lists it once, category Tax, for this investor alone', got.docs.length === 1 && got.docs[0].id === sid && got.docs[0].cat === 'Tax' && got.docs[0].audience === 'investors' && JSON.stringify(got.docs[0].investors) === JSON.stringify([F.inv.investorId]), got.docs);
+      check('the console’s record names the signed W-9', got.taxForm === 'W-9' && !!got.taxCert && got.taxCert.envelopeId === id && got.taxCert.signed === true, got.taxCert);
+      const row = await consoleTaxRow(cp, INV.email, 'tax-w9-console.png');
+      check('the investor row reads "W-9 signed <date>" with one Download', /W-9 signed [A-Z][a-z]+ \d{1,2}, \d{4}/.test(row.text) && row.downloads === 1, row.text.slice(0, 400));
+      check('the Download returns exactly the bytes the device produced', !!row.bytes && sha256(row.bytes) === dv.sha, { download: row.bytes ? sha256(row.bytes) : row.error, device: dv.sha });
+      const lk = L.leakCheck([F.done, row.text].join('\n'));
+      check('white label: the done screen and the console row pass the leak check', lk.ok, lk.hits);
+    } finally {
+      await F.close();
+    }
+  },
+
+  /**
+   * Plan 06-22 (D-30, research Pitfall 3). Two runs in server mode.
+   *  unsigned  the W-9 finished without a signature: no tax envelope and no signed copy leave the device, the firm's record
+   *            says the form was not signed, and the console row reads "W-9 not signed" with no Download.
+   *  toolarge  the W-9 signed, but its signed copy does not fit in what is left of the 25 MB after the agreement (the stored
+   *            copy is made 25 MB on the device before it completes): the completion still goes with the agreement, the
+   *            firm's copy of the record and its change log say so in one line each, the done screen tells the investor,
+   *            and the console row says the signed copy was not received.
+   */
+  async 'tax-unsigned'({ check, S }) {
+    const answers = { acc: 'no', exp: 'Six years of private fund commitments', edu: 'Architect', rep: 'no', amount: 60000 };
+    const F = await serverFlow(S, check, {
+      tag: 'tax-unsigned',
+      exemption: 'Rule 506(b)',
+      answers,
+      onAnyStep: async (hd, p, R) => {
+        if (hd === 'Distribution payments' && !R.tax) R.tax = await deviceTax(p);
+      }
+    });
+    try {
+      commonChecks(check, F);
+      const dv = F.R.tax || {};
+      check('unsigned: the device recorded the W-9 as finished without a signature', !!dv.taxCert && dv.taxCert.form === 'W-9' && dv.taxCert.signed === false && !!dv.env && dv.env.status === 'completed', dv);
+      const st = F.stored || {};
+      check('unsigned: no tax envelope and no signed tax copy reached the server', !st.taxEnvelope && Object.keys(st.files || {}).every((k) => !dv.env || k.indexOf(dv.env.id) !== 0), { taxEnvelope: st.taxEnvelope, files: Object.keys(st.files || {}) });
+      check('unsigned: the server lists no tax form', !(st.docs || []).some((d) => d.cat === 'Tax'), st.docs);
+      check('unsigned: the firm’s copy of the record says the W-9 was not signed', !!st.investor && !!st.investor.taxCert && st.investor.taxCert.signed === false && st.investor.taxForm === 'W-9', st.investor && st.investor.taxCert);
+      const cp = F.A.page;
+      const got = await cp.evaluate((iid) => {
+        const ws = window.CVPortal.state.ws;
+        return { envs: (ws.envelopes || []).filter((e) => e.kind === 'tax' && e.signers.some((s) => s.investorId === iid)).length, docs: (ws.docs || []).filter((d) => d.cat === 'Tax' && (d.investors || []).indexOf(iid) >= 0).length };
+      }, F.inv.investorId);
+      check('unsigned: the console has no tax envelope and no tax listing for the investor', got.envs === 0 && got.docs === 0, got);
+      const row = await consoleTaxRow(cp, INV.email, 'tax-unsigned-console.png');
+      check('unsigned: the investor row reads "W-9 not signed" with no Download', /W-9 not signed/.test(row.text) && !/W-9 signed/.test(row.text) && row.downloads === 0, row.text.slice(0, 400));
+    } finally {
+      await F.close();
+    }
+    // The signed copy does not fit with the agreement.
+    const G = await serverFlow(S, check, {
+      tag: 'tax-toolarge',
+      exemption: 'Rule 506(b)',
+      answers,
+      taxSign: signTax,
+      onAnyStep: async (hd, p, R) => {
+        if (hd !== 'Distribution payments' || R.tax) return;
+        R.tax = await deviceTax(p);
+        R.big = await p.evaluate(async () => {
+          const NS = window.CVPortal;
+          const ws = NS.state.ws;
+          const i = ws.investors[0];
+          const env = (ws.envelopes || []).find((e) => e.id === (i.taxCert || {}).envelopeId);
+          if (!env || !env.signedDocId) return 0;
+          const big = new Uint8Array(25 * 1024 * 1024).fill(0x20);
+          big.set(Array.from('%PDF-1.4\n', (ch) => ch.charCodeAt(0)), 0);
+          await NS.ops.files.put(env.signedDocId, new Blob([big], { type: 'application/pdf' }));
+          return (await NS.ops.files.get(env.signedDocId)).size;
+        });
+      }
+    });
+    try {
+      const dv = G.R.tax || {};
+      check('toolarge: the device signed the W-9 and its stored signed copy is now 25 MB', !!dv.taxCert && dv.taxCert.signed === true && G.R.big === 25 * 1024 * 1024, { taxCert: dv.taxCert, big: G.R.big });
+      const st = G.stored || {};
+      check('toolarge: the completion still went, with the agreement and no tax copy or tax envelope', !!st.request && Object.keys(st.files || {}).length === 1 && /-work$|-signed$/.test(Object.keys(st.files || {})[0] || '') && !Object.keys(st.files || {}).some((k) => dv.env && k.indexOf(dv.env.id) === 0) && !st.taxEnvelope, { files: Object.keys(st.files || {}), taxEnvelope: !!st.taxEnvelope });
+      const tc = (st.investor || {}).taxCert || {};
+      check('toolarge: the firm’s copy of the record says in one line that the signed W-9 did not fit and to ask for it', /^The Form W-9 the investor signed did not fit in the 25 MB that can be sent from the investor’s browser with the rest of their details, so it was not sent with their details\. Ask the investor for it\.$/.test(tc.note || ''), tc);
+      const log = await G.A.page.evaluate((id) => (window.CVPortal.state.ws.audit || []).filter((e) => e.record === id && e.action === 'Signed tax form not sent').map((e) => e.detail), G.inv.investorId);
+      check('toolarge: the firm’s change log records it in one entry', log.length === 1 && /Form W-9 the investor signed did not fit in the 25 MB/.test(log[0]) && /ask the investor for it/.test(log[0]), log);
+      const doneLines = String(G.done || '').split('\n').filter((l) => /Form W-9 you signed/.test(l));
+      check('toolarge: the done screen tells the investor in one line', doneLines.length === 1 && /The Form W-9 you signed could not be sent with your details, so .+ may ask you for it again\./.test(doneLines[0]), (G.done || '').slice(0, 1500));
+      const row = await consoleTaxRow(G.A.page, INV.email, 'tax-toolarge-console.png');
+      check('toolarge: the investor row says the signed copy was not received, with no Download', /W-9 signed, copy not received: ask the investor for it/.test(row.text) && row.downloads === 0, row.text.slice(0, 400));
+      check('toolarge: no script error on either side', G.A.errors.length === 0 && G.B.errors.length === 0, { A: G.A.errors, B: G.B.errors });
+    } finally {
+      await G.close();
     }
   }
 };
