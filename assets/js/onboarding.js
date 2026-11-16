@@ -1960,7 +1960,7 @@
     if (!ira && !d.usPerson) d.usPerson = foreignType(c.inv) ? 'no' : 'yes';
     if (c.fl.taxView === 'upload') return taxUploadView(c, d);
     const usp = usTax(c, d);
-    const who = ira ? '' :`<p class="meta ivf-taxwho">${usp ? 'Not a U.S. person for tax purposes?' : 'A U.S. citizen or resident, or a U.S. entity?'} <button class="link-btn" type="button" data-action="ivf-taxwho">${usp ? 'Use the form for foreign investors' : 'Use Form W-9'}</button></p>`;
+    const who = ira ? '' : `<p class="meta ivf-taxwho">${usp ? 'Not a U.S. person for tax purposes?' : 'A U.S. citizen or resident, or a U.S. entity?'} <button class="link-btn" type="button" data-action="ivf-taxwho">${usp ? 'Use the form for foreign investors' : 'Use Form W-9'}</button></p>`;
     if (usp) return w9View(c, d, who);
     if (PERSONAL(d.type)) return w8View(c, d, who);
     return w8eView(c, d, who);
