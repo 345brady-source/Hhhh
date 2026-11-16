@@ -139,6 +139,8 @@
       return `<span class="sub">${h(tc.form)} uploaded ${date(String(tc.at || '').slice(0, 10))}${own ? ` · <button class="link-btn" type="button" data-action="kyc-iv-file" data-id="${h(tc.fileId)}" data-name="${h(tc.fileName || 'tax-form')}">Download</button>` : ''}</span>`;
     }
     if (!tc || !tc.envelopeId || !tc.form) return '';
+    // plan 06-22: signed on the investor's device in server mode, but its signed copy did not reach this console
+    if (tc.received === false) return `<span class="sub">${h(tc.form)} signed, copy not received: ask the investor for it</span>`;
     if (!NS.inviteFlow.taxOnFile(inv)) return `<span class="sub">${h(tc.form)} not signed</span>`;
     const doc = (w.docs || []).find((d) => d.envelopeId === tc.envelopeId && (d.investors || []).indexOf(inv.id) >= 0);
     // plans 06-18 and 06-20: a W-8BEN or W-8BEN-E also says until when it is valid (31 December of the third year after signing)

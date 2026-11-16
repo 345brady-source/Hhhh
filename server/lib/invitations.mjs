@@ -238,7 +238,7 @@ function cleanSubmission(body, rec, snap) {
   // their official tax form (<tax envelope id>-signed, plan 06-22: only for a completed tax envelope this investor alone signed).
   // The console imports nothing else either (assets/js/invitations.js merge). An investor already on file brings back an
   // accreditation check at most, so only its evidence.
-  const allowed = Object.create(null); // file id -> 'agreement' (a PDF) or 'evidence' (a PDF, PNG or JPEG)
+  const allowed = Object.create(null); // file id -> 'agreement' (a PDF), 'evidence' (a PDF, PNG or JPEG) or 'tax' (a PDF, else dropped)
   let signedId = '';
   if (env && /^[\w.-]{1,70}$/.test(String(env.id || ''))) {
     if (env.workDocId === `${env.id}-work`) allowed[env.workDocId] = 'agreement';
@@ -266,11 +266,14 @@ function cleanSubmission(body, rec, snap) {
   if (tax) {
     const ts = Array.isArray(tax.signers) ? tax.signers : [];
     const own = ts.length === 1 && obj(ts[0]) && ts[0].role === 'investor' && String(ts[0].investorId || '') === rec.investorId;
-    if (!/^[\w.-]{1,70}$/.test(String(tax.id || '')) || tax.kind !== 'tax' || !own) tax = null;
+    // never the agreement's own id (its signed copy would pass as a tax form), and nothing for an investor already on file,
+    // whose tax form stays as the console holds it
+    const existing = !!(snap.invitation && snap.invitation.existing);
+    if (!/^[\w.-]{1,70}$/.test(String(tax.id || '')) || tax.kind !== 'tax' || !own || (env && String(env.id) === String(tax.id)) || existing) tax = null;
   }
   out.taxEnvelope = tax;
   let taxSignedId = '';
-  if (tax && tax.status === 'completed' && tax.signedDocId === `${tax.id}-signed` && !allowed[tax.signedDocId]) allowed[(taxSignedId = tax.signedDocId)] = 'agreement';
+  if (tax && tax.status === 'completed' && tax.signedDocId === `${tax.id}-signed` && !allowed[tax.signedDocId]) allowed[(taxSignedId = tax.signedDocId)] = 'tax';
   if (body.docs !== undefined && !Array.isArray(body.docs)) throw fail(400, 'docs must be a list');
   if ((body.docs || []).length > 50) throw fail(400, 'docs: at most 50 entries');
   const docs = (cleanJson(body.docs || [], 1 * MB, 'docs') || []).filter(obj);
@@ -297,6 +300,23 @@ function cleanSubmission(body, rec, snap) {
     // agreement template (envelope.docId), and the investor's submission must not fail for a file the console never takes.
     if (!Object.prototype.hasOwnProperty.call(allowed, k)) {
       out.dropped++;
+      continue;
+    }
+    // The signed tax form never stops the completion: a copy that is unreadable, not a PDF, or more than the room left is
+    // dropped (its envelope is then not complete, below), and the subscription goes on as without it.
+    if (allowed[k] === 'tax') {
+      let tb = null;
+      try {
+        tb = decode64(val, INVITE_LIMITS.files, `files.${k}`);
+      } catch {
+        tb = null;
+      }
+      if (!tb || !isPdf(tb) || total + tb.length > INVITE_LIMITS.files) {
+        out.dropped++;
+        continue;
+      }
+      total += tb.length;
+      out.fileBufs.push([k, tb]);
       continue;
     }
     const buf = decode64(val, INVITE_LIMITS.files, `files.${k}`);

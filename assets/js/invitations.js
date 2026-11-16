@@ -1057,6 +1057,17 @@
       const td = (Array.isArray(sub.docs) ? sub.docs : []).find((x) => x && typeof x === 'object' && x.id === tid) || {};
       if (!ws.docs.some((x) => x.id === tid)) ws.docs.push({ id: tid, title: String(td.title || taxIn.title || 'Tax form').slice(0, 200), fileName: String(td.fileName || 'Tax_form_signed.pdf').slice(0, 160), type: 'application/pdf', size: kept[tid], sha256: taxIn.sha256Signed, cat: 'Tax', offeringId: null, audience: 'investors', investors: [inv.id], date: isDay(td.date) && td.date <= today() ? td.date : today(), taxYear: '', publishedAt: new Date().toISOString(), publishedBy: 'E-sign', envelopeId: taxIn.id });
     }
+    // A new investor's tax form record is the device's (one on file keeps the record held here), checked against what came:
+    // whether it is signed is read from the kept envelope's own signature field, and a form the device calls signed whose
+    // envelope and signed copy did not arrive is marked as not received (the investor row says to ask for it).
+    const tcert = !onFile && inv.taxCert && typeof inv.taxCert === 'object' ? inv.taxCert : null;
+    if (tcert && !tcert.uploaded && tcert.envelopeId) {
+      if (taxKept && tcert.envelopeId === taxIn.id) {
+        const s0 = taxIn.signers[0];
+        tcert.signed = (Array.isArray(taxIn.fields) ? taxIn.fields : []).some((f) => f && f.signerId === s0.id && f.type === 'signature' && !!f.value);
+        delete tcert.received;
+      } else if (tcert.signed !== false) tcert.received = false;
+    }
     // The device's own change-log entries: always this investor's, dated between the invitation's sending and now, for this
     // offering and this investor, and marked as coming from their device (never a member of staff, never backdated).
     const from = Date.parse(it.sentAt || '');
