@@ -18,8 +18,9 @@
 #    so does a run in which no phase 11 check ran.
 #    Steps 3 and 4 run each check with P11_ROOT and P10_ROOT set to GATE_OUT/gate/base-tree (the base tree step 1
 #    extracted), P6_OUT=GATE_OUT/gate/checks-out and P6_SHOTS=GATE_OUT/gate/shots; browser checks go through heavy.sh.
-# The last line is GATE_EXIT=0 or GATE_EXIT=1. Once it is known, the base tree, the screenshots, the reference copy and a
-# server/node_modules link the gate made are removed.
+# The last line is GATE_EXIT=0 or GATE_EXIT=1. Once it is known, the base tree, the screenshots, the checks' page
+# captures and PDFs (checks-out, the owner's folder), the reference copy and a server/node_modules link the gate made
+# are removed.
 # --self-test proves the gate can fail, on stand-ins and with none of the long steps: "GATE11 SELF-TEST: PASS (6)".
 #
 # The GATE11_* variables below are for the self-test's stand-ins only. They are read only together with
@@ -49,8 +50,9 @@ bad() { echo "GATE FAIL $1"; FAIL=1; }
 quote() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"; }
 finish() {
   [ "$LINKED" = 1 ] && rm -f "$ROOT/server/node_modules"
-  # Disk is short: the base tree and the screenshots go as soon as the result is known.
-  [ -n "$G" ] && rm -rf "$G/base-tree" "$G/shots" "$G/reference-run.sh"
+  # Disk is short: the base tree, the screenshots and the checks' page captures and PDFs (checks-out: about 200 MB a
+  # run; the owner's folder) go as soon as the result is known. The text output of every step stays in GATE_OUT/gate.
+  [ -n "$G" ] && rm -rf "$G/base-tree" "$G/shots" "$G/reference-run.sh" "$G/checks-out" "$G/owner"
   if [ "$STANDIN" = 1 ] && [ "$FAIL" = 0 ]; then echo "GATE_EXIT=0 (stand-in)"; else echo "GATE_EXIT=$FAIL"; fi
   exit $FAIL
 }
