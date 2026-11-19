@@ -25,6 +25,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 7: Help chatbot**
 - [ ] **Phase 8: Verification package and ongoing compliance**
 - [ ] **Phase 9: Filings tab: Form D and blue sky**
+- [ ] **Phase 10: Investor tax documents and withholding**
+- [ ] **Phase 11: Fund accounting and the CPA year-end package**
 
 ## Phase Details
 
@@ -347,3 +349,15 @@ Plans:
 - [ ] 09-08-PLAN.md — The EDGAR API route behind the same interface and guard: not autonomous; opens with the owner making the SEC toolkit readable and confirming two technical administrators; tokens only in the server's settings (D-02) (wave 3)
 - [ ] 09-09-PLAN.md — The link between the tab and the server: a signed-off order is sent, staff's results come back, the filed notice shows its accession number and the annual reminder follows; state orders the same way (D-02, D-03) (wave 4)
 - [ ] 09-10-PLAN.md — The state fee table read from the official matrix, each row with its source and date; needs the matrix file from the owner before it can start (D-03, D-04) (wave 4)
+
+### Phase 10: Investor tax documents and withholding
+
+**Goal:** (set by the planner after research) K-1s prepared by the sponsor's CPA are split by investor, confirmed by the sponsor, delivered in the portal and tracked; 1099s are filled from figures the sponsor or CPA confirms, validated, delivered and prepared for e-filing; 1042-S for foreign investors; the withholding the law requires is applied at the distribution and recorded
+**Depends on:** Phase 6
+**Plans:** not yet planned
+
+### Phase 11: Fund accounting and the CPA year-end package
+
+**Goal:** (set by the planner after research) A double-entry ledger every money event posts to, trial balance, fees and expenses, NAV for open-ended funds, bank reconciliation from an uploaded statement, the financial statements a private fund issues, and a one-click year-end package for the sponsor's CPA
+**Depends on:** Phase 10
+**Plans:** not yet planned
