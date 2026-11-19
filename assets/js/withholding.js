@@ -184,7 +184,8 @@
     if (!i.taxForm) return `${head}: no tax form is on file.`;
     if (i.taxForm !== 'W-9') return `${head}: the form on file is not a W-9.`;
     if (cert(i).uploaded === true) return `${head}: the W-9 on file was uploaded and the portal has no record of its signature.`;
-    if (!(taxOnFile(i) && cert(i).signed === true)) return `${head}: the W-9 on file is not signed.`;
+    if (!taxOnFile(i) || cert(i).signed === false) return `${head}: the W-9 on file is not signed.`;
+    if (cert(i).signed !== true) return `${head}: the portal has no record of the W-9’s signature.`;
     return `${head}: the W-9 on file carries no taxpayer number.`;
   }
   /** The IRS notice recorded for the investor, when it is in effect on the day (arrived on or before it, not ended by it). */

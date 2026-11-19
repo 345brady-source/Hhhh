@@ -257,6 +257,11 @@ const cases = {
       const unsigned = w9('4821', false);
       unsigned.taxCert.signed = false;
       check('C4: a W-9 completed without a signature: 24%, 120,000', a(unsigned) === 'A-1001:backup:500000x24=120000:rule', a(unsigned));
+      const whyOf = (rec) => (drafts(NS, setup(NS, 'notes', rec)).find((x) => x.investorId === 'A-1001') || {}).why || '';
+      check('the reason says "not signed" only when the W-9 was completed without a signature', /W-9 on file is not signed/.test(whyOf(unsigned)), whyOf(unsigned));
+      check('a W-9 with no signature record (a record imported or seeded without one) says the portal has no record of its signature', /no record of the W-9’s signature/.test(whyOf(nosig)) && !/is not signed/.test(whyOf(nosig)), whyOf(nosig));
+      const seeded = { taxType: 'us-individual', taxForm: 'W-9', tinLast4: '4821' };
+      check('C4 as written: a W-9 on the record with no taxCert at all (as the sample firms hold them): 24%, 120,000', a(seeded) === 'A-1001:backup:500000x24=120000:rule' && /no record of the W-9’s signature/.test(whyOf(seeded)), [a(seeded), whyOf(seeded)]);
       const fallback = w9('4821', false);
       fallback.taxCert.tinLast4 = '';
       check('C4: the last four fall back to the investor record (taxCert empty, record 4821): no line', a(fallback) === '', a(fallback));
