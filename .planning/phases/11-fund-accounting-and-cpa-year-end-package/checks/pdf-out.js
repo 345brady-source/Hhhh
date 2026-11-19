@@ -168,6 +168,34 @@ const parts = {
     const amounts = Array.from(text.matchAll(/^\s*Row (\d+)\s+\$(\d+)\.(\d\d)\s*$/gm)).map((m) => [+m[1], +m[2] * 100 + +m[3]]);
     check('300 row lines read back, each with its own cents', amounts.length === 300 && amounts.every(([k, c]) => k === c), amounts.filter(([k, c]) => k !== c).slice(0, 10));
     check('the rows read back add up to 45,150 cents', amounts.reduce((a, [, c]) => a + c, 0) === 45150, amounts.reduce((a, [, c]) => a + c, 0));
+
+    // A sheet too wide for one page (shaped like the Audit page's 19-column investor register): no figure, date or heading
+    // word is broken, and it prints in parts that each begin with the investor's id and name.
+    const wcols = [COL('Investor ID'), COL('Investor'), COL('Primary contact'), COL('Investing as'), COL('Subscription date', 'date')]
+      .concat(['Commitment', 'Contributed to date', 'Unfunded commitment', 'Distributed to date', 'Ending capital'].map((h) => COL(h, 'money')))
+      .concat([COL('Ownership', 'pct'), COL('Tax form'), COL('Taxpayer ID'), COL('Accreditation'), COL('AML/KYC'), COL('Next KYC review', 'date'), COL('Portal account'), COL('Distribution method'), COL('Notes')]);
+    const wrows = [];
+    for (let i = 1; i <= 12; i++)
+      wrows.push([`KBC-10${10 + i}`, `Millbrook Trust Co. FBO Investor ${i} IRA`, `Contact ${i}`, 'IRA (through a custodian)', '2019-09-30', 75000000 + i, 75000000 + i, 0, 23250000 + i, 125259580 + i, 0.1176, 'W-9 on file', `ending ${1400 + i}`, `Verified accredited investor, Jul ${i}, 2026`, 'Verification in progress', '2027-01-15', 'Active', `ACH, checking ending ${6200 + i}`, `Note ${i}`]);
+    const wide = { title: 'Wide', desc: 'Nineteen columns', cols: wcols, rows: wrows, total: ['Total', null, null, null, null, 900000078, 900000078, 0, 279000078, 1503115038, 1.4112, null, null, null, null, null, null, null, null], currency: 'USD' };
+    const wfile = save(folder('wide'), 'wide.pdf', await NS.files.pdf({ title: 'Kestrel Bay Fund II', sheets: [wide], footer: 'Kestrel Bay Capital' }, kit));
+    const wtext = textOf(wfile);
+    const wpages = pagesOf(wtext);
+    const shown = (c, v) => (v == null || v === '' ? '' : c.t === 'money' && v < 0 ? `(${NS.audit.display(c, -v)})` : NS.audit.display(c, v));
+    const figures = {};
+    wrows.concat([wide.total]).forEach((r) => wcols.forEach((c, i) => c.t !== 'text' && shown(c, r[i]) && (figures[shown(c, r[i])] = (figures[shown(c, r[i])] || 0) + 1)));
+    const broken = Object.keys(figures).filter((f) => wtext.split(f).length - 1 < figures[f]);
+    check('every figure and date of the wide sheet is whole on one line', Object.keys(figures).length > 20 && broken.length === 0, broken.slice(0, 10));
+    const headWords = [...new Set(wcols.map((c) => c.h).join(' ').split(' '))];
+    const cutHead = headWords.filter((w) => !new RegExp(`(^|\\s)${w.replace(/[/]/g, '\\/')}(\\s|$)`, 'm').test(wtext));
+    check('no heading word of the wide sheet is broken', cutHead.length === 0, cutHead);
+    const titles = wpages.map((p) => (p.match(/^\s*Wide, part (\d+) of (\d+)/m) || []).slice(1).map(Number));
+    const K = titles[0] && titles[0][1];
+    check('the wide sheet prints in parts ("Wide, part k of K")', K > 1 && titles.every((t) => t.length === 2 && t[1] === K), titles);
+    const idOnce = wrows.filter((r) => (wtext.match(new RegExp(`\\b${r[0]}\\b`, 'g')) || []).length !== K).map((r) => r[0]);
+    check('each part repeats every investor id', K > 1 && idOnce.length === 0, idOnce);
+    const lostWords = [...new Set(wrows.map((r) => wcols.map((c, i) => (c.t === 'text' ? r[i] : '')).join(' ')).join(' ').split(/\s+/).filter(Boolean))].filter((w) => !new RegExp(`(^|\\s)${w.replace(/[().]/g, '\\$&')}(\\s|$)`, 'm').test(wtext));
+    check('every word of the wide sheet\'s text cells is whole in the text', lostWords.length === 0, lostWords.slice(0, 10));
   },
 
   /** Negative money in parentheses, percentages, the other number types and dates as the Audit page shows them; one title per sheet. */
