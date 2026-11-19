@@ -407,7 +407,10 @@ const byEmails = (p, emails) =>
     emails.forEach((e) => {
       const inv = ws.investors.find((i) => String(i.email || '').toLowerCase() === e.toLowerCase());
       const it = inv && (ws.invitations || []).filter((x) => x.investorId === inv.id).pop();
-      out[e] = it ? { id: it.id, pkg: it.package === true, serverId: it.serverId || '', emailStatus: it.emailStatus } : null;
+      // pkg: the invitation carries the package, as the sponsor's tick (true) or, once the server's list has reported it,
+      // as the server's word ({ tier, status }, plan 08-05), which replaces the tick
+      const word = it && it.package && typeof it.package === 'object' && it.package.tier ? it.package : null;
+      out[e] = it ? { id: it.id, pkg: it.package === true || !!word, word, serverId: it.serverId || '', emailStatus: it.emailStatus } : null;
     });
     return out;
   }, emails);
